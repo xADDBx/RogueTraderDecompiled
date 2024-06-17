@@ -1,0 +1,35 @@
+namespace Kingmaker.UI.Common;
+
+public enum ItemsItemType
+{
+	Weapon = 0,
+	Shield = 1,
+	Armor = 2,
+	Ring = 3,
+	Belt = 4,
+	Feet = 5,
+	Gloves = 6,
+	Head = 7,
+	Neck = 8,
+	Shoulders = 9,
+	Wrist = 10,
+	Usable = 11,
+	NonUsable = 12,
+	Other = 13,
+	Glasses = 14,
+	Shirt = 15,
+	Mechadendrite = 16,
+	StarshipItem = 99,
+	StarshipWeapon = 100,
+	StarshipAmmo = 101,
+	StarshipPlasmaDrives = 102,
+	StarshipWarpDrives = 103,
+	StarshipGellerFieldDevice = 104,
+	StarshipVoidShieldGenerator = 105,
+	StarshipLifeSustainer = 106,
+	StarshipBridge = 107,
+	StarshipAugerArray = 109,
+	StarshipArmorPlating = 111,
+	ResourceMiner = 200,
+	ColonyFoundation = 201
+}

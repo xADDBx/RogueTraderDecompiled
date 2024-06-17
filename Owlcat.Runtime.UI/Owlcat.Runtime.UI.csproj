@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Owlcat.Runtime.UI</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="Rewired_Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Rewired_Core.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UniRx">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UniRx.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Owlcat.Runtime.UniRx">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.UniRx.dll</HintPath>
+    </Reference>
+    <Reference Include="DOTween">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\DOTween.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Assembly-CSharp-firstpass</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="GUITable.Runtime">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GUITable.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Rewired_Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewired.Integration.UnityI">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Rewired.Integration.UnityI.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewited.Internal">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Rewited.Internal.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.UnityExtensions">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.UnityExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="RootMotion.Shared.Runtime">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RootMotion.Shared.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

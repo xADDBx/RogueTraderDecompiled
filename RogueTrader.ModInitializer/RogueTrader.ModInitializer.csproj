@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>RogueTrader.ModInitializer</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Steamworks.NET">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Steamworks.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\com.rlabrecque.steamworks.net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="RogueTrader.GameCore">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.GameCore.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.ModsInfo">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.ModsInfo.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.ResourceReplacementProvider">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.ResourceReplacementProvider.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.UnityExtensions">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.UnityExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="PFlog">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\PFlog.dll</HintPath>
+    </Reference>
+    <Reference Include="Owlcat.Runtime.Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="UnityModManagerBridge">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityModManagerBridge.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.Stores">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Stores.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.GameInfo">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.GameInfo.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Core.Overlays</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="Core.Cheats">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Core.Cheats.dll</HintPath>
+    </Reference>
+    <Reference Include="Core.Cheats.Attribute">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Core.Cheats.Attribute.dll</HintPath>
+    </Reference>
+    <Reference Include="Owlcat.Runtime.Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

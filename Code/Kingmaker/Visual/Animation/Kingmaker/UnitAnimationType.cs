@@ -1,0 +1,38 @@
+namespace Kingmaker.Visual.Animation.Kingmaker;
+
+public enum UnitAnimationType
+{
+	Unused = -1,
+	None = 0,
+	LocoMotion = 1,
+	MainHandAttack = 2,
+	MainHandEquip = 3,
+	MainHandUnequip = 4,
+	OffHandAttack = 5,
+	OffHandEquip = 6,
+	OffHandUnequip = 7,
+	Prone = 8,
+	SpecialAttack = 10,
+	CastSpell = 11,
+	Interact = 12,
+	MicroIdle = 13,
+	Dodge = 14,
+	Hit = 15,
+	Dialog = 18,
+	VariantIdle = 21,
+	Stunned = 23,
+	OnFire = 24,
+	BadlyHurt = 25,
+	ForceMove = 26,
+	PsyAttack = 27,
+	Reload = 28,
+	Death = 29,
+	Cover = 30,
+	JumpAsideDodge = 31,
+	TraverseNodeLink = 32,
+	Parry = 33,
+	DollRoomLocoMotion = 34,
+	DollRoomVariantIdle = 35,
+	DollRoomMicroIdle = 36,
+	BuffLoopAction = 37
+}

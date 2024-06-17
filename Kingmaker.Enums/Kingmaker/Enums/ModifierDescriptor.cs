@@ -1,0 +1,36 @@
+namespace Kingmaker.Enums;
+
+public enum ModifierDescriptor
+{
+	None = 0,
+	Racial = 1,
+	Difficulty = 34,
+	BaseStatBonus = 35,
+	Polymorph = 39,
+	UniqueItem = 48,
+	RighteousFury = 50,
+	ArmorAbsorption = 51,
+	ArmorDeflection = 52,
+	AreaOfEffectAbilityMiss = 53,
+	DegreeOfSuccess = 55,
+	ScatterShot = 56,
+	ArmorPenalty = 57,
+	AttackerPerception = 58,
+	WeaponSkillDifference = 59,
+	BurstFirePenalty = 60,
+	Weapon = 61,
+	AttackerWeaponSkill = 62,
+	OriginAdvancement = 63,
+	CareerAdvancement = 64,
+	OtherAdvancement = 65,
+	Immunity = 66,
+	HitChanceOverkill = 67,
+	DistanceToTarget = 68,
+	BaseValue = 69,
+	UntypedStackable = 70,
+	UntypedUnstackable = 71,
+	Wounds = 72,
+	Trauma = 73,
+	ShipSystemComponent = 74,
+	AttackerAgility = 75
+}

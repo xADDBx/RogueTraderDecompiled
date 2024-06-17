@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Kingmaker.Stores</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Discord">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Discord.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.Stores.DlcInterfaces">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Stores.DlcInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="PFlog">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\PFlog.dll</HintPath>
+    </Reference>
+    <Reference Include="Owlcat.Runtime.Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="GameCore.Mics.InterfaceServiceLocator.InterfaceServiceLocator">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GameCore.Mics.InterfaceServiceLocator.InterfaceServiceLocator.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="Steamworks.NET">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Steamworks.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="GogGalaxy">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GogGalaxy.dll</HintPath>
+    </Reference>
+    <Reference Include="EOSSDK">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\EOSSDK.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.DotNetExtensions">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.DotNetExtensions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

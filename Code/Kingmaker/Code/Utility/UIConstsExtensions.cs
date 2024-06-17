@@ -1,0 +1,54 @@
+using System.Linq;
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.DialogSystem;
+using Kingmaker.DialogSystem.Blueprints;
+using Kingmaker.Settings;
+using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Alignments;
+using Kingmaker.Utility.DotNetExtensions;
+
+namespace Kingmaker.Code.Utility;
+
+public static class UIConstsExtensions
+{
+	public static string GetValueWithSign(int value)
+	{
+		return UIUtility.AddSign(value);
+	}
+
+	public static string GetAnswerString(BlueprintAnswer answer, string bind, int index)
+	{
+		bool flag = Game.Instance.DialogController.Dialog.Type == DialogType.Book;
+		string checkFormat = (flag ? UIDialog.Instance.AnswerStringWithCheckBeFormat : UIDialog.Instance.AnswerStringWithCheckFormat);
+		string format = (flag ? UIDialog.Instance.AnswerDialogueBeFormat : UIDialog.Instance.AnswerDialogueFormat);
+		GameDialogsSettings dialogs = SettingsRoot.Game.Dialogs;
+		string text = string.Empty;
+		if ((bool)dialogs.ShowSkillcheckDC)
+		{
+			text = answer.SkillChecks.Aggregate("", (string current, CheckData skillCheck) => current + string.Format(checkFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, skillCheck.Type), LocalizedTexts.Instance.Stats.GetText(skillCheck.Type), skillCheck.DC));
+		}
+		string text2 = string.Empty;
+		if (answer.HasExchangeData)
+		{
+			text2 = string.Format(UIConfig.Instance.UIDialogExchangeLinkFormat, answer.AssetGuid);
+		}
+		string empty = string.Empty;
+		if ((bool)dialogs.ShowAlignmentRequirements && !answer.SoulMarkRequirement.Empty)
+		{
+			string arg = UIUtility.GetSoulMarkDirectionText(answer.SoulMarkRequirement.Direction).Text ?? "";
+			string arg2 = UIUtility.GetSoulMarkRankText(SoulMarkShiftExtension.GetSoulMarkRankIndex(answer.SoulMarkRequirement.Direction, answer.SoulMarkRequirement.Value) + 1).Text ?? "";
+			text = string.Format(UIDialog.Instance.AlignmentRequirementLabel, arg, arg2) + text;
+		}
+		if ((bool)dialogs.ShowSkillcheckResult && answer.HasShowCheck)
+		{
+			text = string.Format(UIDialog.Instance.AnswerShowCheckFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, answer.ShowCheck.Type), LocalizedTexts.Instance.Stats.GetText(answer.ShowCheck.Type), text);
+		}
+		if ((bool)dialogs.ShowAlignmentShiftsInAnswer && answer.SoulMarkRequirement.Empty && answer.SoulMarkShift.Value != 0 && (bool)dialogs.ShowAlignmentShiftsInAnswer)
+		{
+			text = string.Format(UIDialog.Instance.AligmentShiftedFormat, UIUtility.GetSoulMarkDirectionText(answer.SoulMarkShift.Direction).Text) + text;
+		}
+		string stringByBinding = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName(bind));
+		return string.Format(format, stringByBinding.Empty() ? index.ToString() : stringByBinding, empty + text + (text.Empty() ? string.Empty : " ") + text2 + ((!answer.IsSoulMarkRequirementSatisfied()) ? "" : answer.DisplayText));
+	}
+}
