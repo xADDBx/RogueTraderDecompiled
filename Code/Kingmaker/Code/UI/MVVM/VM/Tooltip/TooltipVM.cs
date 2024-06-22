@@ -21,13 +21,15 @@ public class TooltipVM : InfoBaseVM
 
 	public readonly InfoCallConsoleMethod InfoCallConsoleMethod;
 
-	public readonly int MaxHeight;
+	public int MaxHeight;
 
 	public readonly int PreferredHeight;
 
 	public readonly int Width;
 
 	public readonly bool IsGlossary;
+
+	public readonly bool HasScroll;
 
 	public readonly List<Vector2> PriorityPivots;
 
@@ -39,7 +41,7 @@ public class TooltipVM : InfoBaseVM
 
 	protected override TooltipTemplateType TemplateType => TooltipTemplateType.Tooltip;
 
-	public TooltipVM(TooltipData data, bool isComparative = false, bool shouldNotHideLittleTooltip = false)
+	public TooltipVM(TooltipData data, bool isComparative = false, bool shouldNotHideLittleTooltip = false, bool hasScroll = false)
 		: base(data.MainTemplate)
 	{
 		PriorityPivots = data.Config.PriorityPivots;
@@ -54,6 +56,7 @@ public class TooltipVM : InfoBaseVM
 		IsGlossary = data.Config.IsGlossary;
 		ShouldNotHideLittleTooltip = shouldNotHideLittleTooltip;
 		OwnerNavigationBehaviour = data.OwnerNavigationBehaviour;
+		HasScroll = hasScroll;
 		if (Game.Instance.IsControllerMouse && !data.Config.IsEncyclopedia)
 		{
 			SetupPCInteractionHint();
@@ -87,5 +90,10 @@ public class TooltipVM : InfoBaseVM
 	private void AddHintBrick(string hintString)
 	{
 		HintBricks.Add(new TooltipBrickHintVM(hintString));
+	}
+
+	public void OverrideMaxHeight(int height)
+	{
+		MaxHeight = height;
 	}
 }

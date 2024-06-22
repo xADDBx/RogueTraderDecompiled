@@ -147,7 +147,7 @@ public class ItemEnchantment : MechanicEntityFact<ItemEntity>, IHashable
 		{
 			using (m_CurrentContext.GetDataScope(target))
 			{
-				action.Run();
+				base.RunActionInContext(action, target);
 			}
 		}
 	}

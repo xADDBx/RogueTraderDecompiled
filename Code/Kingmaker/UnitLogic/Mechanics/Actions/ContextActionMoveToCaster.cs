@@ -14,7 +14,7 @@ public class ContextActionMoveToCaster : ContextAction
 		return "Move to caster";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Caster is BaseUnitEntity baseUnitEntity) || !(base.Target?.Entity is BaseUnitEntity baseUnitEntity2) || !(baseUnitEntity2.View != null) || !baseUnitEntity2.CanMove)
 		{

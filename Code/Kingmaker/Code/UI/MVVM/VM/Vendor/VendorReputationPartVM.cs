@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Cargo;
 using Kingmaker.Code.UI.MVVM.View.Vendor;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
@@ -15,6 +16,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -22,7 +24,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.Vendor;
 
 public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorAddToSellCargoHandler, ISubscriber, IGainFactionReputationHandler
 {
-	public InventoryCargoVM InventoryCargoVM;
+	public readonly InventoryCargoVM InventoryCargoVM;
 
 	public readonly ReactiveProperty<int> VendorReputationLevel = new ReactiveProperty<int>();
 
@@ -30,7 +32,7 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 
 	public readonly ReactiveProperty<float> VendorCurrentReputationProgress = new ReactiveProperty<float>();
 
-	public VendorReputationForItemWindowVM VendorReputationForItemWindow;
+	public readonly VendorReputationForItemWindowVM VendorReputationForItemWindow;
 
 	public readonly LensSelectorVM Selector;
 
@@ -42,11 +44,11 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 
 	public readonly ReactiveProperty<float> Difference = new ReactiveProperty<float>();
 
-	public ReactiveProperty<int> ExchangeValue = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> ExchangeValue = new ReactiveProperty<int>();
 
 	public readonly List<ItemsItemOrigin> AcceptItems = new List<ItemsItemOrigin>();
 
-	public BoolReactiveProperty CanSellCargo = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty CanSellCargo = new BoolReactiveProperty();
 
 	public readonly ReactiveProperty<List<ContextMenuCollectionEntity>> ContextMenu = new ReactiveProperty<List<ContextMenuCollectionEntity>>();
 
@@ -54,32 +56,40 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 
 	public readonly bool NeedHidePfAndReputation;
 
+	public readonly BoolReactiveProperty HasItemsToSell = new BoolReactiveProperty();
+
 	public readonly string VendorFractionName;
 
 	private VendorLogic Vendor => VendorHelper.Vendor;
+
+	private BlueprintVendorFaction VendorFaction => Game.Instance.Vendor.VendorFaction;
 
 	public VendorReputationPartVM(InventoryCargoVM inventoryCargoVM)
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		InventoryCargoVM = inventoryCargoVM;
 		NeedHidePfAndReputation = Vendor.NeedHidePfAndReputation;
-		VendorReputationLevel.Value = ReputationHelper.GetCurrentReputationLevel(Game.Instance.Vendor.VendorFaction.FactionType);
-		VendorReputationProgressToNextLevel.Value = ReputationHelper.GetNextLevelReputationPoints(Game.Instance.Vendor.VendorFaction.FactionType);
-		VendorCurrentReputationProgress.Value = ReputationHelper.GetCurrentReputationPoints(Game.Instance.Vendor.VendorFaction.FactionType);
-		ReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, VendorReputationLevel.Value);
-		NextLevelReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, VendorReputationLevel.Value + 1);
+		VendorReputationLevel.Value = ReputationHelper.GetCurrentReputationLevel(VendorFaction.FactionType);
+		VendorReputationProgressToNextLevel.Value = ReputationHelper.GetNextLevelReputationPoints(VendorFaction.FactionType);
+		VendorCurrentReputationProgress.Value = ReputationHelper.GetCurrentReputationPoints(VendorFaction.FactionType);
+		ReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(VendorFaction.FactionType, VendorReputationLevel.Value);
+		NextLevelReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(VendorFaction.FactionType, VendorReputationLevel.Value + 1);
 		Delta.Value = (NextLevelReputationPoints.Value - ReputationPoints.Value).Value;
 		Difference.Value = (VendorCurrentReputationProgress.Value - (float?)ReputationPoints.Value).Value;
-		VendorFractionName = Game.Instance.Vendor.VendorFaction.DisplayName.Text;
+		VendorFractionName = VendorFaction.DisplayName.Text;
 		AcceptItems = Vendor.VendorFaction.CargoTypes.ToList();
 		AddDisposable(VendorReputationForItemWindow = new VendorReputationForItemWindowVM(AcceptItems));
 		AddDisposable(Selector = new LensSelectorVM());
-		IsMaxLevel.Value = ReputationHelper.IsMaxReputation(Game.Instance.Vendor.VendorFaction.FactionType);
-	}
-
-	public void SellCargo()
-	{
-		Game.Instance.GameCommandQueue.DealSellCargoes(Vendor.VendorEntity);
+		IsMaxLevel.Value = ReputationHelper.IsMaxReputation(VendorFaction.FactionType);
+		AddDisposable(InventoryCargoVM.CargoSlots.ObserveAdd().Subscribe(delegate
+		{
+			CheckItemsToSell();
+		}));
+		AddDisposable(InventoryCargoVM.CargoSlots.ObserveRemove().Subscribe(delegate
+		{
+			CheckItemsToSell();
+		}));
+		CheckItemsToSell();
 	}
 
 	protected override void DisposeImplementation()
@@ -87,10 +97,17 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 		UnselectAll();
 	}
 
+	public void SellCargo()
+	{
+		UISounds.Instance.Sounds.Vendor.SellCargo.Play();
+		Game.Instance.GameCommandQueue.DealSellCargoes(Vendor.VendorEntity);
+	}
+
 	public void HandleSellChange()
 	{
 		CanSellCargo.Value = Vendor.CargoesToSell.Count > 0;
 		ChangeRepValue();
+		CheckItemsToSell();
 	}
 
 	public void ChangeRepValue()
@@ -107,6 +124,11 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 	{
 		UnselectAll();
 		InventoryCargoVM.SwitchUnrelevantVisibility();
+	}
+
+	public void CheckItemsToSell()
+	{
+		HasItemsToSell.Value = InventoryCargoVM.CargoSlots.Any((CargoSlotVM x) => x.CanCheck);
 	}
 
 	public void SelectAll()
@@ -133,17 +155,17 @@ public class VendorReputationPartVM : BaseDisposable, IViewModel, IBaseDisposabl
 
 	public void HandleGainFactionReputation(FactionType factionType, int count)
 	{
-		int currentReputationPoints = ReputationHelper.GetCurrentReputationPoints(Game.Instance.Vendor.VendorFaction.FactionType);
+		int currentReputationPoints = ReputationHelper.GetCurrentReputationPoints(VendorFaction.FactionType);
 		if (!IsMaxLevel.Value)
 		{
-			VendorReputationLevel.Value = ReputationHelper.GetCurrentReputationLevel(Game.Instance.Vendor.VendorFaction.FactionType);
-			VendorReputationProgressToNextLevel.Value = ReputationHelper.GetNextLevelReputationPoints(Game.Instance.Vendor.VendorFaction.FactionType);
-			ReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, VendorReputationLevel.Value);
-			NextLevelReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, VendorReputationLevel.Value + 1);
+			VendorReputationLevel.Value = ReputationHelper.GetCurrentReputationLevel(VendorFaction.FactionType);
+			VendorReputationProgressToNextLevel.Value = ReputationHelper.GetNextLevelReputationPoints(VendorFaction.FactionType);
+			ReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(VendorFaction.FactionType, VendorReputationLevel.Value);
+			NextLevelReputationPoints.Value = ReputationHelper.GetReputationPointsByLevel(VendorFaction.FactionType, VendorReputationLevel.Value + 1);
 			Delta.Value = (NextLevelReputationPoints.Value - ReputationPoints.Value).Value;
 			Difference.Value = (currentReputationPoints - ReputationPoints.Value).Value;
 		}
 		VendorCurrentReputationProgress.Value = currentReputationPoints;
-		IsMaxLevel.Value = ReputationHelper.IsMaxReputation(Game.Instance.Vendor.VendorFaction.FactionType);
+		IsMaxLevel.Value = ReputationHelper.IsMaxReputation(VendorFaction.FactionType);
 	}
 }

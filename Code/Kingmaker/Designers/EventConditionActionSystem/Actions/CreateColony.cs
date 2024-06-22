@@ -50,7 +50,7 @@ public class CreateColony : GameAction
 		return "Create colony from component";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Planet.Get().GetComponent<ColonyComponent>() == null || !(Game.Instance.CurrentlyLoadedArea is BlueprintStarSystemMap) || !(Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity entity) => entity.Blueprint == Planet.Get()) is PlanetEntity planetEntity))
 		{

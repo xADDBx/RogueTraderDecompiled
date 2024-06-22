@@ -16,6 +16,9 @@ public class JournalRumourPCView : BaseJournalItemPCView
 	[SerializeField]
 	private Image m_RumourAreaMarker;
 
+	[SerializeField]
+	private TextMeshProUGUI m_RumourAreaMarkerLabel;
+
 	[Header("Completion")]
 	[SerializeField]
 	private GameObject m_CompletionItem;
@@ -57,6 +60,10 @@ public class JournalRumourPCView : BaseJournalItemPCView
 		m_TitleLabel.SetText(string.Empty, base.ViewModel.Title);
 		m_RumourAreaMarker.gameObject.SetActive(base.ViewModel.IsAtDestinationSystem);
 		m_RumourAreaMarker.SetHint(UIStrings.Instance.QuesJournalTexts.RumourPlaceMarker);
+		if (m_RumourAreaMarkerLabel != null)
+		{
+			m_RumourAreaMarkerLabel.text = UIStrings.Instance.QuesJournalTexts.YouAreWithinRange;
+		}
 	}
 
 	private void SetupBody()

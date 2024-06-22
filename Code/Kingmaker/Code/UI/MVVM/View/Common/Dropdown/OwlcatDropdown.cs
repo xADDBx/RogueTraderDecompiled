@@ -86,6 +86,8 @@ public class OwlcatDropdown : ViewBase<OwlcatDropdownVM>, IConsoleEntityProxy, I
 
 	public int VMCollectionCount => base.ViewModel.VMCollection.Count;
 
+	public InputLayer InputLayer => m_InputLayer;
+
 	protected override void BindViewImplementation()
 	{
 		m_ScrollRect.gameObject.SetActive(value: false);

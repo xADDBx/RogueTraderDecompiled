@@ -226,6 +226,9 @@ public class EquipmentEntity : ScriptableObject, IResource
 	[Tooltip("If this is checked, player won't be able to hide this part in DollRoom Settings. Works with helmets only")]
 	public bool CantBeHiddenByDollRoom;
 
+	[Tooltip("For showing helmet and other base outfit that players want to see even if they wear armor")]
+	public bool ShowAboveAllIgnoreLayer;
+
 	public int Layer;
 
 	[LongAsEnumFlags(typeof(BodyPartType))]

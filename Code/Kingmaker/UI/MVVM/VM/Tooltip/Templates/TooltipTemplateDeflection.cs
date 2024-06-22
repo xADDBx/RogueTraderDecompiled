@@ -36,10 +36,10 @@ public class TooltipTemplateDeflection : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		list.Add(new TooltipBrickSeparator());
 		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.CharacterSheet.Equipment, $"{m_StatsRule.ResultBaseDeflection}", null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
 		AddDodgeModifiers(list);
 		list.Add(new TooltipBrickText(UIStrings.Instance.Inspect.UnconditionalModifiers, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(m_DeflectionGlossaryEntry?.GetDescription()));
 		return list;
 	}

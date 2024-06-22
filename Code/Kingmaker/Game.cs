@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Code.GameCore.Editor.Blueprints.BlueprintUnitEditorChecker;
 using Code.GameCore.Mics;
 using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.AI;
 using Kingmaker.AreaLogic.Cutscenes.Commands.Timeline;
+using Kingmaker.AreaLogic.SceneControllables;
 using Kingmaker.AreaLogic.SummonPool;
 using Kingmaker.AreaLogic.TimeOfDay;
 using Kingmaker.Assets.Controllers.GlobalMap;
@@ -31,6 +33,7 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.GlobalMap;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.MapObjects;
+using Kingmaker.Controllers.MovePrediction;
 using Kingmaker.Controllers.Net;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.Controllers.Projectiles;
@@ -83,7 +86,6 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
-using Kingmaker.Utility.StateContext;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View;
 using Kingmaker.Visual;
@@ -336,6 +338,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public readonly ForcedCoversController ForcedCoversController = new ForcedCoversController();
 
+	public readonly SceneControllablesController SceneControllables = new SceneControllablesController();
+
+	public readonly MovePredictionController MovePredictionController = new MovePredictionController();
+
 	public readonly PointerController DefaultPointerController = new PointerController(new ClickWithSelectedAbilityHandler(), new ClickUnitHandler(), new ClickMapObjectHandler(), new SectorMapClickObjectHandler(), new ClickGroundHandler(), new ClickOnDetectClicksObjectHandler(), new ClickSurfaceDeploymentHandler());
 
 	public readonly SaveManager SaveManager = new SaveManager();
@@ -491,7 +497,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	{
 		get
 		{
-			if (s_Instance == null && Application.isPlaying)
+			if (s_Instance == null && (Application.isPlaying || ContextData<BlueprintUnitCheckerInEditorContextData>.Current != null))
 			{
 				EnsureGameLifetimeServices();
 				s_Instance = new Game();
@@ -660,9 +666,9 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	private void TryDoPauseRequest()
 	{
-		if (!IsInMainMenu && (IsPaused || PauseController.IsPausedByPlayers || PauseController.IsManualPause) != PauseRequestLastValue)
+		if (!IsInMainMenu)
 		{
-			GameCommandQueue.RequestPauseUi(PauseRequestLastValue);
+			PauseController.RequestPauseUi(PauseRequestLastValue);
 		}
 	}
 
@@ -763,7 +769,8 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 				}
 				CheatsManagerHolder.System.Database.SetExternals(SmartConsole.CommandNames);
 			}
-			Keyboard.Bind("Pause", PauseAndTryEndTurnBind);
+			Keyboard.Bind("Pause", Pause);
+			Keyboard.Bind("EndTurn", TryEndTurnBind);
 			Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.SkipBark.name, GameCommandQueue.SkipBark);
 			Keyboard.Bind("UnpauseOn", UnpauseBindOn);
 			Keyboard.Bind("UnpauseOff", UnpauseBindOff);
@@ -777,7 +784,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 	}
 
-	private void PauseAndTryEndTurnBind()
+	private void Pause()
 	{
 		if (IsPaused)
 		{
@@ -786,6 +793,13 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		else if (!UIUtility.IsGlobalMap())
 		{
 			PauseBind();
+		}
+	}
+
+	private void TryEndTurnBind()
+	{
+		if (!IsPaused && !UIUtility.IsGlobalMap())
+		{
 			EndTurnBind();
 		}
 	}
@@ -884,30 +898,28 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	public void Tick()
 	{
 		StateUnchangedOutsideTickCheck.BeforeTick();
-		using (ContextData<EditStateContext>.Request())
+		bool isLoadingInProcess = LoadingProcess.Instance.IsLoadingInProcess;
+		LoadingProcess.Instance.Tick();
+		NetworkingManager.ReceivePackets();
+		int num = 9;
+		do
 		{
-			bool isLoadingInProcess = LoadingProcess.Instance.IsLoadingInProcess;
-			LoadingProcess.Instance.Tick();
-			NetworkingManager.ReceivePackets();
-			int num = 9;
-			do
+			TickInternal(isLoadingInProcess);
+			ContextData.Check();
+			num--;
+			if (num == 0)
 			{
-				TickInternal(isLoadingInProcess);
-				num--;
-				if (num == 0)
+				if (!BuildModeUtility.Data.LimitDeltaTimeForProfiling)
 				{
-					if (!BuildModeUtility.Data.LimitDeltaTimeForProfiling)
-					{
-						PFLog.Replay.Log("Game.Tick: max tick count per frame has been exceeded!");
-					}
-					break;
+					PFLog.Replay.Log("Game.Tick: max tick count per frame has been exceeded!");
 				}
+				break;
 			}
-			while (RealTimeController.OneMoreTick);
-			StateUnchangedOutsideTickCheck.AfterTick();
-			Services.GetInstance<CharacterAtlasService>()?.Update();
-			Services.GetInstance<FXPrewarmService>()?.Update();
 		}
+		while (RealTimeController.OneMoreTick);
+		StateUnchangedOutsideTickCheck.AfterTick();
+		Services.GetInstance<CharacterAtlasService>()?.Update();
+		Services.GetInstance<FXPrewarmService>()?.Update();
 	}
 
 	private void TickInternal(bool wasLoadingInProcess)
@@ -921,7 +933,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			}
 			TryDoPauseRequest();
 			GameCommandQueue.Tick();
-			if (m_WasLoadingForTheAssert && !RealTimeController.IsSystemTick)
+			if (m_WasLoadingForTheAssert && !RealTimeController.IsSimulationTick)
 			{
 				throw new Exception("Logic error in loading process. Expecting System tick as first tick after loading");
 			}
@@ -1779,6 +1791,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	private void OnAreaLoaded()
 	{
 		TryFixPartyPositions();
+		Instance.SceneControllables.Rescan();
 		HandleActiveAreaChanged(wasSwitched: false);
 	}
 
@@ -1916,7 +1929,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void MaybeSuggestDLCImport()
 	{
-		if (Player.StartPreset?.CampaignDlc != null)
+		if (Player.StartPreset?.Campaign.DlcReward != null)
 		{
 			return;
 		}
@@ -1987,109 +2000,127 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void LoadNewGame(BlueprintAreaPreset preset, SaveInfo importFrom = null)
 	{
-		using (ContextData<EditStateContext>.Request())
+		BaseUnitEntity baseUnitEntity;
+		if (NewGameUnit != null)
 		{
-			BaseUnitEntity baseUnitEntity;
-			if (NewGameUnit != null)
-			{
-				baseUnitEntity = NewGameUnit;
-				NewGameUnit = null;
-				State.PlayerState.CrossSceneState.AddEntityData(baseUnitEntity);
-			}
-			else
-			{
-				BlueprintUnit unit = preset.PlayerCharacter ?? BlueprintRoot.Instance.DefaultPlayerCharacter;
-				baseUnitEntity = AddUnitToPersistentSate(unit);
-				baseUnitEntity.Alignment.Initialize(preset.Alignment);
-			}
-			BaseUnitEntity baseUnitEntity2;
-			if (NewGameShip != null)
-			{
-				baseUnitEntity2 = NewGameShip;
-				NewGameShip = null;
-				State.PlayerState.CrossSceneState.AddEntityData(baseUnitEntity2);
-			}
-			else
-			{
-				BlueprintUnit unit2 = preset.PlayerShip ?? BlueprintRoot.Instance.DefaultPlayerShip;
-				baseUnitEntity2 = AddUnitToPersistentSate(unit2);
-			}
-			State.PlayerState.SetMainStarship(baseUnitEntity2);
-			State.PlayerState.InitMainStarship(preset);
-			State.PlayerState.SetMainCharacter(baseUnitEntity);
-			State.PlayerState.GameId = Guid.NewGuid().ToString("N");
-			foreach (BlueprintUnitReference companion in preset.Companions)
-			{
-				if ((bool)companion.Get())
-				{
-					BaseUnitEntity baseUnitEntity3 = AddUnitToPersistentSate(companion.Get());
-					if ((bool)baseUnitEntity3.Faction != (bool)BlueprintRoot.Instance.PlayerFaction)
-					{
-						baseUnitEntity3.Faction.Set(BlueprintRoot.Instance.PlayerFaction);
-					}
-					if (!baseUnitEntity3.IsPet)
-					{
-						Player.AddCompanion(baseUnitEntity3);
-					}
-				}
-			}
-			foreach (BlueprintUnitReference exCompanion in preset.ExCompanions)
-			{
-				if ((bool)exCompanion.Get() && !preset.Companions.Contains(exCompanion))
-				{
-					BaseUnitEntity baseUnitEntity4 = AddUnitToPersistentSate(exCompanion.Get());
-					baseUnitEntity4.IsInGame = false;
-					baseUnitEntity4.GetOrCreate<UnitPartCompanion>().SetState(CompanionState.ExCompanion);
-				}
-			}
-			foreach (BlueprintUnitReference item in preset.CompanionsRemote)
-			{
-				if ((bool)item.Get() && !preset.ExCompanions.Contains(item) && !preset.Companions.Contains(item))
-				{
-					BaseUnitEntity baseUnitEntity5 = AddUnitToPersistentSate(item.Get());
-					baseUnitEntity5.IsInGame = false;
-					baseUnitEntity5.GetOrCreate<UnitPartCompanion>().SetState(CompanionState.Remote);
-				}
-			}
-			EntitySpawner.Tick();
-			try
-			{
-				preset.SetupState();
-			}
-			catch (Exception ex)
-			{
-				if (preset.IsNewGamePreset)
-				{
-					throw;
-				}
-				Logger.Exception(ex);
-			}
-			Player.MinDifficultyController.UpdateMinDifficulty(force: true);
-			Player.InvalidateCharacterLists();
-			AreaDataStash.ClearDirectory();
-			AreaDataStash.PrepareFirstLaunch();
-			LoadArea(preset.EnterPoint, preset.MakeAutosave ? AutoSaveMode.AfterEntry : AutoSaveMode.None);
-			LoadingProcess.Instance.StartLoadingProcess(Enumerable.Empty<object>().GetEnumerator(), delegate
-			{
-				PFLog.Default.Log("Running start-game actions");
-				BlueprintRoot.Instance.StartGameActions.Run();
-				preset.StartGameActions.Run();
-				if (importFrom != null && importFrom.DLCCampaign == null && preset.CampaignDlc != null)
-				{
-					PFLog.Default.Log($"Importing from main campaign save {importFrom}");
-					BlueprintDlcRewardCampaign campaignDlc = preset.CampaignDlc;
-					if (campaignDlc.Campaign.IsImportRequired && campaignDlc.Campaign.ImportFromMainCampaign.Condition.Check())
-					{
-						campaignDlc.Campaign.ImportFromMainCampaign.DoImport(importFrom);
-					}
-					Player.UsedDlcRewards.Add(campaignDlc);
-				}
-			});
-			LoadingProcess.Instance.StartLoadingProcess(Enumerable.Empty<object>().GetEnumerator(), delegate
-			{
-				SettingsController.Instance.StartInSaveSettings();
-			});
+			baseUnitEntity = NewGameUnit;
+			NewGameUnit = null;
+			State.PlayerState.CrossSceneState.AddEntityData(baseUnitEntity);
 		}
+		else
+		{
+			BlueprintUnit unit = preset.PlayerCharacter ?? BlueprintRoot.Instance.DefaultPlayerCharacter;
+			baseUnitEntity = AddUnitToPersistentSate(unit);
+			baseUnitEntity.Alignment.Initialize(preset.Alignment);
+		}
+		BaseUnitEntity baseUnitEntity2;
+		if (NewGameShip != null)
+		{
+			baseUnitEntity2 = NewGameShip;
+			NewGameShip = null;
+			State.PlayerState.CrossSceneState.AddEntityData(baseUnitEntity2);
+		}
+		else
+		{
+			BlueprintUnit unit2 = preset.PlayerShip ?? BlueprintRoot.Instance.DefaultPlayerShip;
+			baseUnitEntity2 = AddUnitToPersistentSate(unit2);
+		}
+		State.PlayerState.SetMainStarship(baseUnitEntity2);
+		State.PlayerState.InitMainStarship(preset);
+		State.PlayerState.SetMainCharacter(baseUnitEntity);
+		State.PlayerState.GameId = Guid.NewGuid().ToString("N");
+		Player.StartDate = DateTime.UtcNow;
+		foreach (BlueprintUnitReference companion in preset.Companions)
+		{
+			if ((bool)companion.Get())
+			{
+				BaseUnitEntity baseUnitEntity3 = AddUnitToPersistentSate(companion.Get());
+				if ((bool)baseUnitEntity3.Faction != (bool)BlueprintRoot.Instance.PlayerFaction)
+				{
+					baseUnitEntity3.Faction.Set(BlueprintRoot.Instance.PlayerFaction);
+				}
+				if (!baseUnitEntity3.IsPet)
+				{
+					Player.AddCompanion(baseUnitEntity3);
+				}
+			}
+		}
+		foreach (BlueprintUnitReference exCompanion in preset.ExCompanions)
+		{
+			if ((bool)exCompanion.Get() && !preset.Companions.Contains(exCompanion))
+			{
+				BaseUnitEntity baseUnitEntity4 = AddUnitToPersistentSate(exCompanion.Get());
+				baseUnitEntity4.IsInGame = false;
+				baseUnitEntity4.GetOrCreate<UnitPartCompanion>().SetState(CompanionState.ExCompanion);
+			}
+		}
+		foreach (BlueprintUnitReference item in preset.CompanionsRemote)
+		{
+			if ((bool)item.Get() && !preset.ExCompanions.Contains(item) && !preset.Companions.Contains(item))
+			{
+				BaseUnitEntity baseUnitEntity5 = AddUnitToPersistentSate(item.Get());
+				baseUnitEntity5.IsInGame = false;
+				baseUnitEntity5.GetOrCreate<UnitPartCompanion>().SetState(CompanionState.Remote);
+			}
+		}
+		EntitySpawner.Tick();
+		try
+		{
+			preset.SetupState();
+		}
+		catch (Exception ex)
+		{
+			if (preset.IsNewGamePreset)
+			{
+				throw;
+			}
+			Logger.Exception(ex);
+		}
+		Player.MinDifficultyController.UpdateMinDifficulty(force: true);
+		Player.InvalidateCharacterLists();
+		AreaDataStash.ClearDirectory();
+		AreaDataStash.PrepareFirstLaunch();
+		LoadArea(preset.EnterPoint, preset.MakeAutosave ? AutoSaveMode.AfterEntry : AutoSaveMode.None);
+		LoadingProcess.Instance.StartLoadingProcess(Enumerable.Empty<object>().GetEnumerator(), delegate
+		{
+			PFLog.Default.Log("Running start-game actions");
+			BlueprintRoot.Instance.StartGameActions.Run();
+			preset.StartGameActions.Run();
+			if (importFrom != null && importFrom.Campaign.DlcReward == null && preset.Campaign != null)
+			{
+				PFLog.Default.Log($"Importing from main campaign save {importFrom}");
+				BlueprintCampaign campaign = preset.Campaign;
+				if (campaign.IsImportRequired && campaign.ImportFromMainCampaign.Condition.Check())
+				{
+					campaign.ImportFromMainCampaign.DoImport(importFrom);
+				}
+			}
+			BlueprintCampaign campaign2 = preset.Campaign;
+			if (campaign2 != null && campaign2.DlcReward != null)
+			{
+				Player.UsedDlcRewards.Add(preset.Campaign.DlcReward);
+			}
+			if (preset.Campaign != null)
+			{
+				foreach (BlueprintDlc item2 in preset.Campaign.AdditionalContentDlc)
+				{
+					if (item2.IsActive)
+					{
+						foreach (IBlueprintDlcReward reward in item2.Rewards)
+						{
+							if (reward is BlueprintDlcRewardCampaignAdditionalContent blueprintDlcRewardCampaignAdditionalContent && blueprintDlcRewardCampaignAdditionalContent.Campaign == preset.Campaign)
+							{
+								Player.UsedDlcRewards.Add(blueprintDlcRewardCampaignAdditionalContent);
+							}
+						}
+					}
+				}
+			}
+		});
+		LoadingProcess.Instance.StartLoadingProcess(Enumerable.Empty<object>().GetEnumerator(), delegate
+		{
+			SettingsController.Instance.StartInSaveSettings();
+		});
 	}
 
 	public void ResetToMainMenu(Exception exception = null)
@@ -2232,10 +2263,13 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			if (!SaveManager.IsSaveAllowed(saveInfo.Type))
 			{
-				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+				if (saveInfo.Type != SaveInfo.SaveType.Auto)
 				{
-					h.HandleWarning(WarningNotificationType.SavingImpossible);
-				});
+					EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+					{
+						h.HandleWarning(WarningNotificationType.SavingImpossible);
+					});
+				}
 				return;
 			}
 			if (saveInfo.Type != SaveInfo.SaveType.Bugreport && (bool)SettingsRoot.Difficulty.OnlyOneSave)
@@ -2244,7 +2278,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 				{
 					EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 					{
-						h.HandleWarning(WarningNotificationType.SavingImpossibleIronman);
+						h.HandleWarning(WarningNotificationType.SavingImpossibleIronmanWillSavedAutomaticaly, addToLog: true, WarningNotificationFormat.Short);
 					});
 					return;
 				}
@@ -2252,7 +2286,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 				{
 					EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 					{
-						h.HandleWarning(WarningNotificationType.SavingImpossibleIronman);
+						h.HandleWarning(WarningNotificationType.SavingImpossibleIronmanWillSavedAutomaticaly, addToLog: true, WarningNotificationFormat.Short);
 					});
 					return;
 				}

@@ -103,16 +103,22 @@ public class UIGraphicsSettings : IUISettingsSheet
 			list.Add($"{resolution.width}x{resolution.height}");
 		}
 		ScreenResolution.SetLocalizedValues(list);
-		UpdateInteractable();
 	}
 
-	public void UpdateInteractable()
+	public void UpdateInteractable(bool initialize)
 	{
 		FrameRateLimitEnabled.ModificationAllowedCheck = () => SettingsRoot.Graphics.VSyncMode.GetTempValue() == VSyncModeOptions.Off;
 		FrameRateLimitEnabled.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.FrameRateLimitEnabled);
 		if (SettingsRoot.Graphics.VSyncMode.GetTempValue() != 0)
 		{
-			FrameRateLimitEnabled.SetTempValue(value: false);
+			if (initialize)
+			{
+				FrameRateLimitEnabled.SetValueAndConfirm(value: false);
+			}
+			else
+			{
+				FrameRateLimitEnabled.SetTempValue(value: false);
+			}
 		}
 		FrameRateLimit.ModificationAllowedCheck = () => SettingsRoot.Graphics.VSyncMode.GetTempValue() == VSyncModeOptions.Off && SettingsRoot.Graphics.FrameRateLimitEnabled.GetTempValue();
 		FrameRateLimit.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.FrameRateLimit);
@@ -122,15 +128,18 @@ public class UIGraphicsSettings : IUISettingsSheet
 		}
 		FsrSharpness.ModificationAllowedCheck = () => SettingsRoot.Graphics.FsrMode.GetTempValue() != Kingmaker.Settings.FsrMode.Off;
 		FsrSharpness.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.FsrSharpness);
-		if (SettingsRoot.Graphics.FsrMode.GetTempValue() == Kingmaker.Settings.FsrMode.Off)
-		{
-			FsrSharpness.SetTempValue(0f);
-		}
 		AntialiasingQuality.ModificationAllowedCheck = () => SettingsRoot.Graphics.AntialiasingMode.GetTempValue() == Kingmaker.Settings.AntialiasingMode.SMAA || SettingsRoot.Graphics.AntialiasingMode.GetTempValue() == Kingmaker.Settings.AntialiasingMode.TAA;
 		AntialiasingQuality.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.AntialiasingQuality);
 		if (SettingsRoot.Graphics.AntialiasingMode.GetTempValue() != Kingmaker.Settings.AntialiasingMode.SMAA && SettingsRoot.Graphics.AntialiasingMode.GetTempValue() != Kingmaker.Settings.AntialiasingMode.TAA)
 		{
-			AntialiasingQuality.SetTempValue(QualityOption.Low);
+			if (initialize)
+			{
+				AntialiasingQuality.SetValueAndConfirm(QualityOption.Low);
+			}
+			else
+			{
+				AntialiasingQuality.SetTempValue(QualityOption.Low);
+			}
 		}
 	}
 }

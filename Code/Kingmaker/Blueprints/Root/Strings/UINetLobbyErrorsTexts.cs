@@ -17,6 +17,8 @@ public class UINetLobbyErrorsTexts
 
 	public LocalizedString LobbyNotFoundErrorMessage;
 
+	public LocalizedString LobbyFullErrorMessage;
+
 	public LocalizedString JoinLobbyErrorMessage;
 
 	public LocalizedString CreatingLobbyErrorMessage;
@@ -33,6 +35,8 @@ public class UINetLobbyErrorsTexts
 
 	public LocalizedString SendMessageFailErrorMessage;
 
+	public LocalizedString NoPlaystationPlusErrorMessage;
+
 	public LocalizedString UnknownExceptionMessage;
 
 	public string GetErrorMessage(NetLobbyErrorHandler.NetLobbyErrorType type)
@@ -44,14 +48,15 @@ public class UINetLobbyErrorsTexts
 			NetLobbyErrorHandler.NetLobbyErrorType.GetAuthDataError => GetAuthDataErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.ChangeRegionError => ChangeRegionErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.LobbyNotFoundError => LobbyNotFoundErrorMessage, 
+			NetLobbyErrorHandler.NetLobbyErrorType.LobbyFullError => LobbyFullErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.JoinLobbyError => JoinLobbyErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.CreatingLobbyError => CreatingLobbyErrorMessage, 
-			NetLobbyErrorHandler.NetLobbyErrorType.PhotonDisconnectedError => PhotonDisconnectedErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.PhotonCustomAuthenticationFailedError => PhotonCustomAuthenticationFailedErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.SaveSourceDisconnectedError => SaveSourceDisconnectedErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.SaveReceiveError => SaveReceiveErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.SaveNotFoundError => SaveNotFoundErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.SendMessageFailError => SendMessageFailErrorMessage, 
+			NetLobbyErrorHandler.NetLobbyErrorType.NoPlaystationPlusError => NoPlaystationPlusErrorMessage, 
 			_ => UnknownExceptionMessage, 
 		};
 	}

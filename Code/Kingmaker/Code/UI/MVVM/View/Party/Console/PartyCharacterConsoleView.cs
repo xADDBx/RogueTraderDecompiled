@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.View.Party.PC;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.EntitySystem;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
@@ -38,7 +38,7 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 	private MoveAnimator m_SelectorMoveAnimator;
 
 	[SerializeField]
-	private GameObject m_LinkIcon;
+	private List<Image> m_LinksImages = new List<Image>();
 
 	[Header("Buttons Part")]
 	[SerializeField]
@@ -81,8 +81,6 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 
 	private Action<PartyCharacterPCView> m_SwitchAction;
 
-	public BaseUnitEntity UnitEntityData => base.ViewModel?.UnitEntityData;
-
 	public void Initialize(Action<PartyCharacterPCView> switchAction)
 	{
 		m_SwitchAction = switchAction;
@@ -100,14 +98,22 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 		m_PortraitView.Bind(base.ViewModel.PortraitPartVM);
 		m_BuffView.Bind(base.ViewModel.BuffPartVM);
 		m_BarkBlockView.Bind(base.ViewModel.BarkPartVM);
-		AddDisposable(base.ViewModel.CharacterEncumbrance.CombineLatest(base.ViewModel.PartyEncumbrance, (Encumbrance encumbrance, Encumbrance encumbrance1) => true).Subscribe(delegate
+		AddDisposable(base.ViewModel.CharacterEncumbrance.CombineLatest(base.ViewModel.PartyEncumbrance, (Encumbrance _, Encumbrance _) => true).Subscribe(delegate
 		{
 			UpdateEncumbrance();
 		}));
 		AddDisposable(base.ViewModel.IsEnable.Subscribe(base.gameObject.SetActive));
 		AddDisposable(base.ViewModel.IsLevelUp.Subscribe(m_LevelUpButton.gameObject.SetActive));
 		AddDisposable(base.ViewModel.IsSingleSelected.Subscribe(SetSelected));
-		AddDisposable(base.ViewModel.IsLinked.Subscribe(m_LinkIcon.SetActive));
+		AddDisposable(base.ViewModel.IsLinked.Subscribe(delegate(bool value)
+		{
+			Color white = Color.white;
+			white.a = (value ? 1f : 0f);
+			foreach (Image linksImage in m_LinksImages)
+			{
+				linksImage.color = white;
+			}
+		}));
 		if (m_NetLock != null)
 		{
 			AddDisposable(base.ViewModel.NetAvatar.Subscribe(delegate(Sprite value)

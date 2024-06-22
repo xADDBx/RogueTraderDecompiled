@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
 using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.View.ContextMenu.Common;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
+using Kingmaker.DLC;
+using Kingmaker.Stores;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Controls.Button;
 using TMPro;
 using UnityEngine;
@@ -62,11 +66,56 @@ public class MainMenuButtonFx : ContextButtonFx
 	[SerializeField]
 	private float m_ShowDelay;
 
+	[Header("LookAtMe")]
+	[SerializeField]
+	private bool m_LookAtMeEnable;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private bool m_IsAddonsWindow;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private CanvasGroup m_LookAtMeCanvasGroup;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private float m_LookAtMeFadeIn = 1.5f;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private float m_LookAtMeFadeOut = 1.5f;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private float m_LookAtMeStayOnScreen;
+
+	[ShowIf("m_LookAtMeEnable")]
+	[SerializeField]
+	private float m_LookAtMeInterval;
+
 	private Sequence m_HoveredFxSequence;
 
 	private const float DefaultBump = 0.2f;
 
 	private static readonly int BumpScale = Shader.PropertyToID("_BumpScale");
+
+	private Sequence m_LookAtMeSequence;
+
+	private void OnEnable()
+	{
+		if (m_LookAtMeEnable && !(m_LookAtMeCanvasGroup == null))
+		{
+			if (m_IsAddonsWindow)
+			{
+				StartLookAtMeAnimationAddons();
+			}
+			else
+			{
+				StartLookAtMeAnimation();
+			}
+		}
+	}
 
 	private void OnDisable()
 	{
@@ -74,6 +123,8 @@ public class MainMenuButtonFx : ContextButtonFx
 		{
 			m_FxMaterial.SetFloat(BumpScale, 0.2f);
 		}
+		m_LookAtMeSequence.Kill();
+		m_LookAtMeSequence = null;
 	}
 
 	public void PlayFXSequence(EffectSettings effectSettings)
@@ -149,5 +200,41 @@ public class MainMenuButtonFx : ContextButtonFx
 		m_GlitchFX.color = new Color(1f, 1f, 1f, 0f);
 		m_BlinkBackground.alpha = 0f;
 		m_HoverCanvasGroup.alpha = 0f;
+	}
+
+	private void StartLookAtMeAnimation()
+	{
+		m_LookAtMeSequence = DOTween.Sequence();
+		m_LookAtMeSequence.Append(m_LookAtMeCanvasGroup.DOFade(1f, m_LookAtMeFadeIn));
+		m_LookAtMeSequence.AppendInterval(m_LookAtMeStayOnScreen);
+		m_LookAtMeSequence.Append(m_LookAtMeCanvasGroup.DOFade(0f, m_LookAtMeFadeOut));
+		m_LookAtMeSequence.AppendInterval(m_LookAtMeInterval);
+		m_LookAtMeSequence.Play().SetUpdate(isIndependentUpdate: true).SetLoops(-1, LoopType.Restart);
+	}
+
+	private void StartLookAtMeAnimationAddons()
+	{
+		if (!CheckSomeDlcNichtGesehen())
+		{
+			return;
+		}
+		m_LookAtMeSequence = DOTween.Sequence();
+		m_LookAtMeSequence.Append(m_LookAtMeCanvasGroup.DOFade(1f, m_LookAtMeFadeIn));
+		m_LookAtMeSequence.AppendInterval(m_LookAtMeStayOnScreen);
+		m_LookAtMeSequence.Append(m_LookAtMeCanvasGroup.DOFade(0f, m_LookAtMeFadeOut));
+		m_LookAtMeSequence.AppendInterval(m_LookAtMeInterval);
+		m_LookAtMeSequence.OnStepComplete(delegate
+		{
+			if (!CheckSomeDlcNichtGesehen())
+			{
+				m_LookAtMeSequence.Kill();
+			}
+		});
+		m_LookAtMeSequence.Play().SetUpdate(isIndependentUpdate: true).SetLoops(-1, LoopType.Restart);
+	}
+
+	private bool CheckSomeDlcNichtGesehen()
+	{
+		return StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Any((BlueprintDlc dlc) => PlayerPrefs.GetInt("DLCMANAGER_I_SAW_" + dlc.name, 0) == 0);
 	}
 }

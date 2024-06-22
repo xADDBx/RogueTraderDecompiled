@@ -82,6 +82,25 @@ public static class BarkPlayer
 		return entity.Name + ": " + text;
 	}
 
+	public static IBarkHandle BarkSubtitle(LocalizedString text, float duration = -1f, LocalizedString speakerName = null)
+	{
+		return BarkSubtitle(text.Text, duration, speakerName);
+	}
+
+	public static IBarkHandle BarkSubtitle(string text, float duration = -1f, LocalizedString speakerName = null)
+	{
+		return new SubtitleBarkHandle(GetSubtitleText(speakerName, text), duration, VoiceOverPlayer.PlayVoiceOver(text));
+	}
+
+	private static string GetSubtitleText(LocalizedString speakerName, string text)
+	{
+		if (speakerName != null && !speakerName.IsEmpty())
+		{
+			return speakerName.Text + ": " + text;
+		}
+		return text;
+	}
+
 	private static IBarkHandle BarkExploration(Entity entity, string text, float duration = -1f, string voiceOver = null)
 	{
 		VoiceOverStatus voiceOverStatus = ((voiceOver != null) ? VoiceOverPlayer.PlayVoiceOver(voiceOver, entity?.View?.GO) : null);

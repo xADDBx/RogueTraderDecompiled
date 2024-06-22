@@ -49,9 +49,12 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 	[JsonProperty(PropertyName = "s")]
 	public BaseSettingNetData[] settings;
 
+	[JsonProperty(PropertyName = "p")]
+	public PortraitSaveMetaData[] portraitsSaveMeta;
+
 	static SaveMetaData()
 	{
-		MaxPacketSize = 65536;
+		MaxPacketSize = 49152;
 		RegisterFormatter();
 	}
 
@@ -78,6 +81,10 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 		{
 			MemoryPackFormatterProvider.Register(new ArrayFormatter<BaseSettingNetData>());
 		}
+		if (!MemoryPackFormatterProvider.IsRegistered<PortraitSaveMetaData[]>())
+		{
+			MemoryPackFormatterProvider.Register(new ArrayFormatter<PortraitSaveMetaData>());
+		}
 	}
 
 	[Preserve]
@@ -88,13 +95,14 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(7, in value.length);
+		writer.WriteUnmanagedWithObjectHeader(8, in value.length);
 		writer.WriteString(value.saveName);
 		writer.WriteString(value.saveId);
 		writer.WriteUnmanaged(in value.randomNoise);
 		writer.WriteUnmanagedArray(value.actorNumbersAtStart);
 		writer.WriteArray(value.dlcs);
 		writer.WriteArray(value.settings);
+		writer.WritePackableArray(value.portraitsSaveMeta);
 	}
 
 	[Preserve]
@@ -110,9 +118,10 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 		PhotonActorNumber[] value4;
 		string[] value5;
 		BaseSettingNetData[] value6;
+		PortraitSaveMetaData[] value7;
 		string text;
 		string text2;
-		if (memberCount == 7)
+		if (memberCount == 8)
 		{
 			if (value != null)
 			{
@@ -123,6 +132,7 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 				value4 = value.actorNumbersAtStart;
 				value5 = value.dlcs;
 				value6 = value.settings;
+				value7 = value.portraitsSaveMeta;
 				reader.ReadUnmanaged<int>(out value2);
 				text = reader.ReadString();
 				text2 = reader.ReadString();
@@ -130,7 +140,8 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 				reader.ReadUnmanagedArray(ref value4);
 				reader.ReadArray(ref value5);
 				reader.ReadArray(ref value6);
-				goto IL_018e;
+				reader.ReadPackableArray(ref value7);
+				goto IL_01bf;
 			}
 			reader.ReadUnmanaged<int>(out value2);
 			text = reader.ReadString();
@@ -139,12 +150,13 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 			value4 = reader.ReadUnmanagedArray<PhotonActorNumber>();
 			value5 = reader.ReadArray<string>();
 			value6 = reader.ReadArray<BaseSettingNetData>();
+			value7 = reader.ReadPackableArray<PortraitSaveMetaData>();
 		}
 		else
 		{
-			if (memberCount > 7)
+			if (memberCount > 8)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SaveMetaData), 7, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SaveMetaData), 8, memberCount);
 				return;
 			}
 			if (value == null)
@@ -156,6 +168,7 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 				value4 = null;
 				value5 = null;
 				value6 = null;
+				value7 = null;
 			}
 			else
 			{
@@ -166,6 +179,7 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 				value4 = value.actorNumbersAtStart;
 				value5 = value.dlcs;
 				value6 = value.settings;
+				value7 = value.portraitsSaveMeta;
 			}
 			if (memberCount != 0)
 			{
@@ -188,7 +202,11 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 									if (memberCount != 6)
 									{
 										reader.ReadArray(ref value6);
-										_ = 7;
+										if (memberCount != 7)
+										{
+											reader.ReadPackableArray(ref value7);
+											_ = 8;
+										}
 									}
 								}
 							}
@@ -198,7 +216,7 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 			}
 			if (value != null)
 			{
-				goto IL_018e;
+				goto IL_01bf;
 			}
 		}
 		value = new SaveMetaData
@@ -209,10 +227,11 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 			randomNoise = value3,
 			actorNumbersAtStart = value4,
 			dlcs = value5,
-			settings = value6
+			settings = value6,
+			portraitsSaveMeta = value7
 		};
 		return;
-		IL_018e:
+		IL_01bf:
 		value.length = value2;
 		value.saveName = text;
 		value.saveId = text2;
@@ -220,5 +239,6 @@ public class SaveMetaData : IMemoryPackable<SaveMetaData>, IMemoryPackFormatterR
 		value.actorNumbersAtStart = value4;
 		value.dlcs = value5;
 		value.settings = value6;
+		value.portraitsSaveMeta = value7;
 	}
 }

@@ -9,6 +9,8 @@ using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using UniRx;
+using Warhammer.SpaceCombat.Blueprints.Slots;
+using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SpaceCombat.Components;
 
@@ -31,7 +33,7 @@ public class AbilitiesGroupVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		EmptySlots.Clear();
 	}
 
-	public void SetAbilities(IEnumerable<Ability> abilities, BaseUnitEntity owner)
+	public void SetAbilities(IEnumerable<Ability> abilities, BaseUnitEntity owner, WeaponSlotType weaponSlotType = WeaponSlotType.None)
 	{
 		Clear();
 		if (abilities != null)
@@ -42,7 +44,20 @@ public class AbilitiesGroupVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				{
 					Ability = abilities.ToList()[i].Data,
 					Unit = owner
-				}, i));
+				}, i, isInCharScreen: false, null, weaponSlotType));
+			}
+		}
+	}
+
+	public void SetWeaponSlotAbilities(List<WeaponSlot> weaponSlots, BaseUnitEntity owner, WeaponSlotType weaponSlotType = WeaponSlotType.None)
+	{
+		Clear();
+		if (weaponSlots != null)
+		{
+			for (int i = 0; i < weaponSlots.Count; i++)
+			{
+				MechanicActionBarShipWeaponSlot abs = new MechanicActionBarShipWeaponSlot(weaponSlots[i], owner);
+				Slots.Add(new ActionBarSlotVM(abs, i, isInCharScreen: false, null, weaponSlotType));
 			}
 		}
 	}

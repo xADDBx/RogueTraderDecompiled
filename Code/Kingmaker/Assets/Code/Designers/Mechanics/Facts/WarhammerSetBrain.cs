@@ -17,7 +17,7 @@ public class WarhammerSetBrain : ContextAction
 		return "Set new brain for unit";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Target.Entity is BaseUnitEntity baseUnitEntity))
 		{

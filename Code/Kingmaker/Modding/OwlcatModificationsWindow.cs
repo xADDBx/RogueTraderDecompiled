@@ -43,8 +43,40 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 
 	public IDisposable Bind()
 	{
+		OwlcatModificationsManager instance = OwlcatModificationsManager.Instance;
+		instance.OnShowModSettingsCalled = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Combine(instance.OnShowModSettingsCalled, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsCalled));
 		m_KeyBindSubscription = Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.OpenModificationsWindow.name, SwitchVisible);
 		return this;
+	}
+
+	private void OnShowModSettingsCalled(string modId)
+	{
+		if (s_Instance == null)
+		{
+			PFLog.Mods.Error("No instance of OwlcatModificationWindow found");
+			return;
+		}
+		OwlcatModification[] installedModifications = OwlcatModificationsManager.Instance.InstalledModifications;
+		foreach (OwlcatModification owlcatModification in installedModifications)
+		{
+			if (owlcatModification.UniqueName == modId)
+			{
+				s_Instance.m_SelectedModification = owlcatModification;
+			}
+		}
+		if (s_Instance.m_SelectedModification == null)
+		{
+			PFLog.Mods.Error("No modification with " + modId + " found in OwlcatModManager");
+		}
+		else if (s_Instance.m_SelectedModification.OnShowGUI == null)
+		{
+			s_Instance.m_SelectedModification = null;
+			PFLog.Mods.Error("Mod " + modId + " has no OnShowGui");
+		}
+		else
+		{
+			Show();
+		}
 	}
 
 	private static void Show()
@@ -161,44 +193,44 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 		bool? flag = null;
 		try
 		{
-			flag = modification.IsEnabled?.Invoke();
+			flag = modification.Enabled;
 		}
 		catch (Exception ex)
 		{
 			PFLog.Mods.Exception(ex);
 		}
-		bool flag2 = flag.HasValue && modification.OnSetEnabled != null;
-		bool flag3 = GUI.enabled;
+		bool hasValue = flag.HasValue;
+		bool flag2 = GUI.enabled;
 		try
 		{
-			GUI.enabled = flag2;
-			bool? flag4 = flag;
+			GUI.enabled = hasValue;
+			bool? flag3 = flag;
 			int num;
 			object text;
-			if (!flag4.HasValue)
+			if (!flag3.HasValue)
 			{
 				num = 1;
 			}
 			else
 			{
-				num = (flag4.GetValueOrDefault() ? 1 : 0);
+				num = (flag3.GetValueOrDefault() ? 1 : 0);
 				if (num == 0)
 				{
 					text = "Disabled";
-					goto IL_00ec;
+					goto IL_00c9;
 				}
 			}
 			text = "Enabled";
-			goto IL_00ec;
-			IL_00ec:
+			goto IL_00c9;
+			IL_00c9:
 			GUILayout.Label((string)text);
 			GUILayout.Space(3f);
-			bool flag5 = GUILayout.Toggle((byte)num != 0, GUIContent.none);
-			if (flag.HasValue && flag5 != flag && flag2)
+			bool flag4 = GUILayout.Toggle((byte)num != 0, GUIContent.none);
+			if (flag.HasValue && flag4 != flag && hasValue)
 			{
 				try
 				{
-					modification.OnSetEnabled(flag5);
+					OwlcatModificationsManager.Instance.EnableMod(modification.UniqueName, flag4);
 				}
 				catch (Exception ex2)
 				{
@@ -208,7 +240,7 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 		}
 		finally
 		{
-			GUI.enabled = flag3;
+			GUI.enabled = flag2;
 		}
 		GUILayout.Space(15f);
 		if (!detailed && modification.OnDrawGUI != null && GUILayout.Button("Settings"))
@@ -224,8 +256,8 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 
 	private void DrawModificationsList()
 	{
-		OwlcatModification[] appliedModifications = OwlcatModificationsManager.Instance.AppliedModifications;
-		foreach (OwlcatModification owlcatModification in appliedModifications)
+		OwlcatModification[] installedModifications = OwlcatModificationsManager.Instance.InstalledModifications;
+		foreach (OwlcatModification owlcatModification in installedModifications)
 		{
 			using (new GUILayout.HorizontalScope("box"))
 			{
@@ -277,6 +309,8 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 
 	public void Dispose()
 	{
+		OwlcatModificationsManager instance = OwlcatModificationsManager.Instance;
+		instance.OnShowModSettingsCalled = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Combine(instance.OnShowModSettingsCalled, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsCalled));
 		m_KeyBindSubscription.Dispose();
 		Hide();
 	}

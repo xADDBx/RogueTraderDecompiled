@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Kingmaker.UI.MVVM.VM.BugReport;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -10,7 +11,6 @@ using Owlcat.Runtime.UniRx;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UI.Extensions;
 
 namespace Kingmaker.UI.MVVM.View.BugReport;
 
@@ -35,36 +35,53 @@ public class BugDuplicateItemView : ViewBase<BugDuplicateItemVM>, IWidgetView, I
 	protected TextMeshProUGUI m_DistanceText;
 
 	[SerializeField]
+	protected TextMeshProUGUI m_CreatedText;
+
+	[SerializeField]
+	protected TextMeshProUGUI m_FixVersionText;
+
+	[SerializeField]
 	protected TextMeshProUGUI m_AssigneeText;
-
-	[SerializeField]
-	protected Image m_SpacingImage;
-
-	[SerializeField]
-	protected Image m_TypeIcon;
 
 	[SerializeField]
 	protected Image m_PriorityIcon;
 
+	[SerializeField]
+	private Image m_FixedImage;
+
 	[Header("Colors")]
 	[SerializeField]
-	private Color m_SpacingTaskColor;
+	private Color m_NonFixedColor;
 
 	[SerializeField]
-	private Color m_SpacingBugTaskColor;
+	private Color m_FixedColor;
+
+	[Space]
+	[SerializeField]
+	private Color m_CreatedTimeNewColor;
 
 	[SerializeField]
-	private Color m_NumberTaskColor;
+	private Color m_CreatedTimeMiddleColor;
+
+	[SerializeField]
+	private Color m_CreatedTimeOldColor;
 
 	[Header("Sprites")]
 	[SerializeField]
-	private Sprite m_TaskIcon;
-
-	[SerializeField]
-	private Sprite m_BugIcon;
-
-	[SerializeField]
 	private List<Sprite> m_PriorityIcons;
+
+	[Header("Buttons")]
+	[SerializeField]
+	private OwlcatButton m_OpenButton;
+
+	[SerializeField]
+	private OwlcatButton m_MetButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_OpenButtonText;
+
+	[SerializeField]
+	private TextMeshProUGUI m_MetButtonText;
 
 	public MonoBehaviour MonoBehaviour => this;
 
@@ -72,17 +89,25 @@ public class BugDuplicateItemView : ViewBase<BugDuplicateItemVM>, IWidgetView, I
 	{
 		m_Button.OnLeftClickAsObservable().Subscribe(OpenUrl);
 		m_Button.OnConfirmClickAsObservable().Subscribe(OpenUrl);
-		m_SpacingImage.color = (base.ViewModel.IsTask ? m_SpacingTaskColor : m_SpacingBugTaskColor);
-		string text = HexRGB.ColorToHex(m_NumberTaskColor);
-		string text2 = (base.ViewModel.IsFixed ? ("<s>" + base.ViewModel.NumberTask + "</s>") : base.ViewModel.NumberTask);
-		m_TitleText.text = "<color=" + text + ">" + text2 + "</color> " + base.ViewModel.Title;
+		m_OpenButton.OnLeftClickAsObservable().Subscribe(OpenUrl);
+		m_MetButton.OnLeftClickAsObservable().Subscribe(OpenMet);
+		DateTime result;
+		double num = (DateTime.TryParse(base.ViewModel.Created, out result) ? (DateTime.UtcNow - result).TotalDays : 0.0);
+		TextMeshProUGUI createdText = m_CreatedText;
+		Color color = ((num > 356.0) ? m_CreatedTimeOldColor : ((!(num > 60.0)) ? m_CreatedTimeNewColor : m_CreatedTimeMiddleColor));
+		createdText.color = color;
+		m_FixedImage.color = (base.ViewModel.IsFixed ? m_FixedColor : m_NonFixedColor);
+		m_TitleText.text = base.ViewModel.Title;
 		m_StatusText.text = base.ViewModel.Status;
 		m_BuildStatusText.text = base.ViewModel.BuildStatus;
 		TextMeshProUGUI distanceText = m_DistanceText;
 		int distance = base.ViewModel.Distance;
 		distanceText.text = distance.ToString();
-		m_AssigneeText.text = base.ViewModel.Creator ?? "";
-		m_TypeIcon.sprite = (base.ViewModel.IsTask ? m_TaskIcon : m_BugIcon);
+		m_CreatedText.text = base.ViewModel.Created;
+		m_FixVersionText.text = base.ViewModel.FixVersion;
+		m_AssigneeText.text = base.ViewModel.Assignee ?? "";
+		m_OpenButtonText.text = "Open";
+		m_MetButtonText.text = "Met";
 		m_PriorityIcon.sprite = m_PriorityIcons[base.ViewModel.PriorityType - 1];
 	}
 
@@ -90,9 +115,14 @@ public class BugDuplicateItemView : ViewBase<BugDuplicateItemVM>, IWidgetView, I
 	{
 	}
 
-	private void OpenUrl()
+	public void OpenUrl()
 	{
-		Application.OpenURL(base.ViewModel.Url);
+		Application.OpenURL(base.ViewModel.JiraTaskUrl);
+	}
+
+	public void OpenMet()
+	{
+		Application.OpenURL(base.ViewModel.MetUrl);
 	}
 
 	public void BindWidgetVM(IViewModel vm)

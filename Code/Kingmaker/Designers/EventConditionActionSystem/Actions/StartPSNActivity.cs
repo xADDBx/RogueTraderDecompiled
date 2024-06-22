@@ -16,17 +16,17 @@ public class StartPSNActivity : GameAction
 		return "Start PSN activity (" + m_ActivityId + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (string.IsNullOrEmpty(m_ActivityId))
 		{
-			PFLog.Actions.Error("StartPSNActivity: Activity id is null or empty");
+			Element.LogError("StartPSNActivity: Activity id is null or empty");
 			return;
 		}
 		PSNObjectsManager pSNObjects = Game.Instance.Player.PSNObjects;
 		if (pSNObjects == null)
 		{
-			PFLog.Actions.Error("PSNObjectsManager is null");
+			Element.LogError("PSNObjectsManager is null");
 		}
 		else
 		{

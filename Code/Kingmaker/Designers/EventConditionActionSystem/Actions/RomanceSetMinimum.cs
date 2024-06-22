@@ -27,7 +27,7 @@ public class RomanceSetMinimum : GameAction
 		return $"Выставляет новый минимум {ValueEvaluator} для романса {Romance}\n" + "ВНИМАНИЕ! Флаги, используемые в романсе, анлокаются при первом обращении к романсу и остаются анлокнутыми даже после лока романса.\nПри работе с романсами не используйте блоки для работы с флагами.";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		int value = ValueEvaluator.GetValue();
 		Romance.UnlockFlags();

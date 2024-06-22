@@ -45,7 +45,7 @@ public class ContextMenuView : ViewBase<ContextMenuVM>
 		AddDisposable(DelayedInvoker.InvokeInTime(delegate
 		{
 			base.gameObject.SetActive(value: true);
-			UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.Owner);
+			UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.Owner, Vector2.zero);
 		}, 0.1f));
 	}
 

@@ -28,7 +28,7 @@ public class LowerSectorMapPassageDifficulty : GameAction
 		return $"Lower difficulty of passage from {PassageFrom} to {PassageTo}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (RequiredNavigatorResource > Game.Instance.Player.WarpTravelState.NavigatorResource)
 		{

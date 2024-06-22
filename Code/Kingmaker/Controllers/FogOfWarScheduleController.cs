@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Controllers.FogOfWar.Culling;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
@@ -9,13 +10,13 @@ using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Visual.FogOfWar;
-using Owlcat.Runtime.Visual.FogOfWar.Culling;
 using Owlcat.Runtime.Visual.SceneHelpers;
 using Owlcat.Runtime.Visual.Waaagh.RendererFeatures.FogOfWar;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.Controllers;
 
@@ -59,7 +60,7 @@ public class FogOfWarScheduleController : IControllerTick, IController, IControl
 
 	public FogOfWarScheduleController()
 	{
-		FogOfWarBlocker.IsStatic = (FogOfWarBlocker blocker) => IsBlockerStatic(blocker);
+		FogOfWarCullingBlocker.IsStatic = (FogOfWarBlocker blocker) => IsBlockerStatic(blocker);
 	}
 
 	public void OnStart()
@@ -176,12 +177,11 @@ public class FogOfWarScheduleController : IControllerTick, IController, IControl
 								fogOfWarRevealerSettings.Radius = 1f;
 							}
 						}
-						Vector2 vector = FogOfWarRevealerSettings.CalculateHeightMinMax(allBaseUnit.Position.y);
 						RevealerProperties revealerProperties = default(RevealerProperties);
 						revealerProperties.Center = new float2(allBaseUnit.Position.x, allBaseUnit.Position.z);
 						revealerProperties.Radius = CalculateFullRevealerRadius(fogOfWarRevealerSettings);
-						revealerProperties.HeightMin = vector.x;
-						revealerProperties.HeightMax = vector.y;
+						revealerProperties.HeightMin = fogOfWarRevealerSettings.Revealer.HeightMinMax.x;
+						revealerProperties.HeightMax = fogOfWarRevealerSettings.Revealer.HeightMinMax.y;
 						RevealerProperties value = revealerProperties;
 						results.Add(in value);
 						if (fowFeature != null)
@@ -197,24 +197,40 @@ public class FogOfWarScheduleController : IControllerTick, IController, IControl
 			}
 			using (ProfileScope.New("Additional"))
 			{
-				foreach (Transform additionalRevealer in additionalRevealers)
+				List<RevealerProperties> value2;
+				using (CollectionPool<List<RevealerProperties>, RevealerProperties>.Get(out value2))
 				{
-					bool alreadyExists;
-					FogOfWarRevealerSettings fogOfWarRevealerSettings2 = additionalRevealer.EnsureComponent<FogOfWarRevealerSettings>(out alreadyExists);
-					if (!alreadyExists)
+					foreach (Transform additionalRevealer in additionalRevealers)
 					{
-						fogOfWarRevealerSettings2.Radius = 22f;
+						bool alreadyExists;
+						FogOfWarRevealerSettings fogOfWarRevealerSettings2 = additionalRevealer.EnsureComponent<FogOfWarRevealerSettings>(out alreadyExists);
+						if (!alreadyExists)
+						{
+							fogOfWarRevealerSettings2.Radius = 22f;
+						}
+						RevealerProperties revealerProperties = default(RevealerProperties);
+						revealerProperties.Center = new float2(fogOfWarRevealerSettings2.Revealer.Position.x, fogOfWarRevealerSettings2.Revealer.Position.z);
+						revealerProperties.Radius = CalculateFullRevealerRadius(fogOfWarRevealerSettings2);
+						revealerProperties.HeightMin = fogOfWarRevealerSettings2.Revealer.HeightMinMax.x;
+						revealerProperties.HeightMax = fogOfWarRevealerSettings2.Revealer.HeightMinMax.y;
+						RevealerProperties item = revealerProperties;
+						value2.Add(item);
+						if (fowFeature != null)
+						{
+							FogOfWarRevealer.All.Add(fogOfWarRevealerSettings2.Revealer);
+						}
 					}
-					RevealerProperties revealerProperties = default(RevealerProperties);
-					revealerProperties.Center = new float2(additionalRevealer.transform.position.x, additionalRevealer.transform.position.z);
-					revealerProperties.Radius = CalculateFullRevealerRadius(fogOfWarRevealerSettings2);
-					revealerProperties.HeightMin = fogOfWarRevealerSettings2.Revealer.HeightMinMax.x;
-					revealerProperties.HeightMax = fogOfWarRevealerSettings2.Revealer.HeightMinMax.y;
-					RevealerProperties value2 = revealerProperties;
-					results.Add(in value2);
-					if (fowFeature != null)
+					using (ProfileScope.New("Sort"))
 					{
-						FogOfWarRevealer.All.Add(fogOfWarRevealerSettings2.Revealer);
+						value2.Sort(RevealerProperties.Comparison);
+					}
+					using (ProfileScope.New("Copy"))
+					{
+						foreach (RevealerProperties item2 in value2)
+						{
+							RevealerProperties value3 = item2;
+							results.Add(in value3);
+						}
 					}
 				}
 			}

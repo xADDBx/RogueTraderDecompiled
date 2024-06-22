@@ -256,7 +256,7 @@ public abstract class AbstractUnitCommand
 
 	protected void ScheduleAct(float delay = 1f)
 	{
-		PretendActTime = TimeSinceStart + delay;
+		PretendActTime = TimeSinceStart + delay / Game.CombatAnimSpeedUp;
 	}
 
 	protected void StartAnimation(UnitAnimationType animationType, [CanBeNull] Action<UnitAnimationActionHandle> initializer = null)

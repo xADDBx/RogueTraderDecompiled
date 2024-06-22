@@ -237,7 +237,7 @@ public class UnitBarksManager
 			num = SettingsRoot.Sound.VoicedAskFrequency.GetValue() switch
 			{
 				VoiceAskFrequency.Never => 0f, 
-				VoiceAskFrequency.Occasionally => num / 3f, 
+				VoiceAskFrequency.Occasionally => num / 6f, 
 				VoiceAskFrequency.Frequently => num / 2f, 
 				VoiceAskFrequency.Constantly => 1f, 
 				_ => throw new ArgumentOutOfRangeException(), 

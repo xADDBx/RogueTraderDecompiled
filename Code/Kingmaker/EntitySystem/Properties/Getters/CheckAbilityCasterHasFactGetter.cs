@@ -20,8 +20,8 @@ public class CheckAbilityCasterHasFactGetter : PropertyGetter, PropertyContextAc
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Ability is Charge";
+		return "Ability caster has fact";
 	}
 }

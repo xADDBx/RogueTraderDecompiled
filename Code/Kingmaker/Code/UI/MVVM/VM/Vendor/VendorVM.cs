@@ -57,7 +57,7 @@ public class VendorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.Vendor);
 		});
 		AddDisposable(StashVM = new InventoryStashVM(inventory: true));
-		AddDisposable(InventoryCargoVM = new InventoryCargoVM(InventoryCargoViewType.Vendor));
+		AddDisposable(InventoryCargoVM = new InventoryCargoVM(InventoryCargoViewType.Vendor, null, null, fromPointOfInterest: false, fromVendor: true));
 		AddDisposable(VendorTabNavigationVM = new VendorTabNavigationVM());
 		AddDisposable(VendorTabNavigationVM.ActiveTab.Subscribe(delegate(VendorWindowsTab val)
 		{

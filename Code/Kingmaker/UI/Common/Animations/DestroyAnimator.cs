@@ -59,7 +59,7 @@ public class DestroyAnimator : MonoBehaviour, IUIAnimator
 		m_PermanentBlockRaycast = null;
 		if (DestroyFxObject == null)
 		{
-			PFLog.Default.Error(base.gameObject?.ToString() + " doesn't have DestroyFx");
+			PFLog.UI.Error(base.gameObject?.ToString() + " doesn't have DestroyFx");
 		}
 	}
 

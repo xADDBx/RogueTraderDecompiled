@@ -32,7 +32,7 @@ public class MakeItemNonRemovable : GameAction
 		return string.Format("Make {0} {1}removable)", Item, NonRemovable ? "non-" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ItemEntity itemEntity = GameHelper.GetPlayerCharacter().Inventory.Items.FirstOrDefault((ItemEntity i) => i.Blueprint == Item);
 		if (itemEntity != null)

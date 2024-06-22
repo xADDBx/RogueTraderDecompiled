@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Localization;
+using Kingmaker.Networking.Platforms.Session;
 
 namespace Kingmaker.Blueprints.Root.Strings;
 
@@ -33,6 +34,8 @@ public class UINetLobbyTexts
 	public LocalizedString ChooseSaveHeader;
 
 	public LocalizedString ChooseSaveHint;
+
+	public LocalizedString WillShowNotAllSavesBecauseOfDlc;
 
 	public LocalizedString LaunchInGameHint;
 
@@ -101,4 +104,61 @@ public class UINetLobbyTexts
 	public LocalizedString CanBeAProblemsWithMods;
 
 	public LocalizedString NeedSaveForStartGame;
+
+	public LocalizedString StoreOverlayIsNotAvailable;
+
+	public LocalizedString PlayerHasNoDlcs;
+
+	public LocalizedString YouAreTheHostNow;
+
+	public LocalizedString BlockedPlayerInLobby;
+
+	public LocalizedString CantJoinLobbyDuePrivacySettings;
+
+	public LocalizedString ShowPlayerInformation;
+
+	public LocalizedString ShowGamerCard;
+
+	public LocalizedString DlcList;
+
+	public LocalizedString HostsDlcList;
+
+	public LocalizedString HostHasNoDlc;
+
+	public LocalizedString CantChooseAnySavesBecauseOfDlc;
+
+	public LocalizedString DlcSharedByHost;
+
+	public LocalizedString JoinableUserTypesLabel;
+
+	public LocalizedString InvitableUserTypesLabel;
+
+	public LocalizedString UserTypeDropdownNoOne;
+
+	public LocalizedString UserTypeDropdownAnyone;
+
+	public LocalizedString UserTypeDropdownFriends;
+
+	public LocalizedString UserTypeDropdownLeader;
+
+	public string GetJoinableUserTypeLabel(JoinableUserTypes type)
+	{
+		return type switch
+		{
+			JoinableUserTypes.NoOne => UserTypeDropdownNoOne, 
+			JoinableUserTypes.Anyone => UserTypeDropdownAnyone, 
+			JoinableUserTypes.Friends => UserTypeDropdownFriends, 
+			_ => string.Empty, 
+		};
+	}
+
+	public string GetInvitableUserTypeLabel(InvitableUserTypes type)
+	{
+		return type switch
+		{
+			InvitableUserTypes.Anyone => UserTypeDropdownAnyone, 
+			InvitableUserTypes.Leader => UserTypeDropdownLeader, 
+			_ => string.Empty, 
+		};
+	}
 }

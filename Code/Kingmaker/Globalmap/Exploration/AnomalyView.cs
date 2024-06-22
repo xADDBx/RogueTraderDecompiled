@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.GlobalMap;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.Globalmap.Exploration;
 
+[KnowledgeDatabaseID("c5e5cb6942bb46cda47cbfd039659697")]
 public class AnomalyView : StarSystemObjectView
 {
 	private bool m_WasStarShipInInteractionRadius;
@@ -34,14 +36,16 @@ public class AnomalyView : StarSystemObjectView
 	{
 		if (Data.CanInteract() && Data.InteractTime != BlueprintAnomaly.AnomalyInteractTime.ByClick)
 		{
+			if (BlueprintAnomaly.InteractTime == BlueprintAnomaly.AnomalyInteractTime.OnTouch)
+			{
+				return;
+			}
 			if (IsInInteractionZone())
 			{
 				if (!m_WasStarShipInInteractionRadius || StarSystemMapClickObjectHandler.DestinationSso == this)
 				{
-					StarSystemMapMoveController.StopPlayerShip();
-					Data.Interact();
+					InteractWithAnomaly();
 					m_WasStarShipInInteractionRadius = true;
-					StarSystemMapClickObjectHandler.DestinationSso = null;
 				}
 			}
 			else
@@ -68,13 +72,29 @@ public class AnomalyView : StarSystemObjectView
 		}
 	}
 
+	public void InteractWithAnomaly()
+	{
+		StarSystemMapMoveController.StopPlayerShip();
+		Data.Interact();
+		StarSystemMapClickObjectHandler.DestinationSso = null;
+	}
+
 	private bool IsInInteractionZone()
 	{
 		StarSystemShip starSystemShip = Game.Instance.StarSystemMapController.StarSystemShip;
+		if (BlueprintAnomaly.InteractTime == BlueprintAnomaly.AnomalyInteractTime.OnTouch)
+		{
+			return false;
+		}
 		if (m_ScriptZone != null)
 		{
 			return m_ScriptZone.Contains(starSystemShip.Position);
 		}
-		return (starSystemShip.Position - base.transform.position).magnitude <= BlueprintAnomaly.InteractDistance;
+		return (starSystemShip.Position - base.transform.position).magnitude <= Data.InteractDistance;
+	}
+
+	public override bool CheckLanding()
+	{
+		return BlueprintAnomaly.InteractTime == BlueprintAnomaly.AnomalyInteractTime.OnTouch;
 	}
 }

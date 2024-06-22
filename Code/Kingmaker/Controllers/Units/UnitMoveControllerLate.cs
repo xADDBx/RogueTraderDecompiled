@@ -18,14 +18,11 @@ public class UnitMoveControllerLate : IControllerTick, IController
 
 	public void Tick()
 	{
-		if (!(Game.Instance.TimeController.GameDeltaTimeInterpolation < m_MinDeltaTime))
+		MovableEntitiesEnumerable.Enumerator enumerator = default(MovableEntitiesEnumerable).GetEnumerator();
+		while (enumerator.MoveNext())
 		{
-			MovableEntitiesEnumerable.Enumerator enumerator = default(MovableEntitiesEnumerable).GetEnumerator();
-			while (enumerator.MoveNext())
-			{
-				AbstractUnitEntity current = enumerator.Current;
-				TickUnit(current);
-			}
+			AbstractUnitEntity current = enumerator.Current;
+			TickUnit(current);
 		}
 	}
 

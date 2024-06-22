@@ -25,5 +25,6 @@ public enum ItemsFilterType
 	Dorsal,
 	Prow,
 	Port,
-	Starboard
+	Starboard,
+	Arsenal
 }

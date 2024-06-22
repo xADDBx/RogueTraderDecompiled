@@ -34,7 +34,7 @@ public class UnlockFlag : GameAction, IUnlockableFlagReference
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!flag.IsUnlocked)
 		{

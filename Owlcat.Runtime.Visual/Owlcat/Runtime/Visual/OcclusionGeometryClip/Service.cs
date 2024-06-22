@@ -415,7 +415,7 @@ internal sealed class Service : IDisposable
 		jobData.rendererOpacityArray = m_GeometryRegistry.RendererOpacityArray;
 		jobData.rendererDirtyFlagsArray = m_GeometryRegistry.RendererDirtyFlagsArray;
 		jobData.rendererOccludeTimestampArray = m_GeometryRegistry.RendererOccludeTimestampArray;
-		return jobData.Schedule(m_GeometryRegistry.RendererOpacityArray.Length, 128, dependsOn);
+		return IJobParallelForExtensions.Schedule(jobData, m_GeometryRegistry.RendererOpacityArray.Length, 128, dependsOn);
 	}
 
 	private void PopulateHierarchyCastData()

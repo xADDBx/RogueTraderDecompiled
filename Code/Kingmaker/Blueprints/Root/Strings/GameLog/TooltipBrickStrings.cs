@@ -144,6 +144,8 @@ public class TooltipBrickStrings
 
 	public LocalizedString AssassinLethality;
 
+	public LocalizedString AutoCrit;
+
 	[Space]
 	public LocalizedString Initiator;
 

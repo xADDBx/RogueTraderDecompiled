@@ -1,4 +1,5 @@
 using System;
+using Core.Cheats;
 using Kingmaker.Networking.Desync;
 using Kingmaker.Networking.Hash;
 using Kingmaker.StateHasher;
@@ -7,7 +8,7 @@ namespace Kingmaker.Networking;
 
 public class SyncNetManager
 {
-	private readonly BaseDesyncDetectionStrategy m_DesyncDetectionStrategy;
+	private BaseDesyncDetectionStrategy m_DesyncDetectionStrategy;
 
 	public Type StrategyType => m_DesyncDetectionStrategy.GetType();
 
@@ -47,5 +48,11 @@ public class SyncNetManager
 	private string GetExpandedRoomId()
 	{
 		return PhotonManager.Instance.Region + "_" + PhotonManager.Instance.RoomName;
+	}
+
+	[Cheat(Name = "net_desync_default", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void ForceDefaultDesyncDetectionStrategy()
+	{
+		PhotonManager.Sync.m_DesyncDetectionStrategy = new DefaultDesyncDetectionStrategy();
 	}
 }

@@ -119,21 +119,12 @@ public class VendorReputationPartView<TInventoryCargo, TVendorReputationForItem>
 		m_InventoryCargoPCView.m_ListContentFadeAnimator.AppearAnimation();
 		m_ShowUnrelevantLabel.text = UIStrings.Instance.Vendor.HideUnrelevant;
 		m_SellButtonText.text = UIStrings.Instance.Vendor.Exchange;
-		AddDisposable(base.ViewModel.CanSellCargo.Subscribe(delegate(bool val)
-		{
-			SellButton.Interactable = val;
-		}));
+		AddDisposable(base.ViewModel.CanSellCargo.Subscribe(SellButton.SetInteractable));
 		m_ShowUnrelevantToggle.Set(base.ViewModel.InventoryCargoVM.HideUnrelevant.Value);
 		m_ToggleDisposable = m_ShowUnrelevantToggle.IsOn.Skip(1).Subscribe(delegate
 		{
 			base.ViewModel.HideUnrelevant();
 		});
-	}
-
-	private void SetReputation(bool value)
-	{
-		m_VendorInfoGroup.gameObject.SetActive(!value);
-		m_VendorHidenReputationGroup.gameObject.SetActive(value);
 	}
 
 	protected override void DestroyViewImplementation()
@@ -142,5 +133,11 @@ public class VendorReputationPartView<TInventoryCargo, TVendorReputationForItem>
 		m_ToggleDisposable?.Dispose();
 		m_ToggleDisposable = null;
 		base.gameObject.SetActive(value: false);
+	}
+
+	private void SetReputation(bool value)
+	{
+		m_VendorInfoGroup.gameObject.SetActive(!value);
+		m_VendorHidenReputationGroup.gameObject.SetActive(value);
 	}
 }

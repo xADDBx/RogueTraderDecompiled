@@ -19,11 +19,11 @@ public class NamedParameterPosition : PositionEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find position " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find position {0} in context parameters", Parameter);
 		}
 		if (value != null && !(value is Vector3))
 		{
-			PFLog.Default.Warning("WTF");
+			Element.LogError(this, "WTF");
 		}
 		if (value != null)
 		{

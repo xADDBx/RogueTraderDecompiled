@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UI.Common;
 using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
 using UnityEngine;
@@ -30,9 +29,10 @@ public class ItemsFilterConsoleView : ItemsFilterPCView, ICullFocusHandler, ISub
 	[SerializeField]
 	private ConsoleHint m_SortingHint;
 
-	private ItemsFilterType m_FirstFilter;
+	[SerializeField]
+	private ConsoleHint m_ToggleShowUnavailableHint;
 
-	private ItemsFilterType m_LastFilter;
+	private CompositeDisposable m_DropdownDisposables = new CompositeDisposable();
 
 	private IConsoleEntity m_CulledEntity;
 
@@ -43,8 +43,6 @@ public class ItemsFilterConsoleView : ItemsFilterPCView, ICullFocusHandler, ISub
 		{
 			m_SearchView.Or(null)?.Initialize();
 		}
-		m_FirstFilter = m_SortedFiltersList.FirstOrDefault();
-		m_LastFilter = m_SortedFiltersList.LastOrDefault();
 	}
 
 	protected override void BindViewImplementation()
@@ -67,27 +65,55 @@ public class ItemsFilterConsoleView : ItemsFilterPCView, ICullFocusHandler, ISub
 		}));
 	}
 
-	public void AddInput(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enabledHints = null)
+	protected override void DestroyViewImplementation()
 	{
-		AddDisposable(m_PreviousFilterHint.Bind(inputLayer.AddButton(OnPrevious, 14, enabledHints)));
-		AddDisposable(m_NextFilterHint.Bind(inputLayer.AddButton(OnNext, 15, enabledHints)));
-		if ((bool)m_SortingHint)
+		base.DestroyViewImplementation();
+		m_DropdownDisposables.Clear();
+	}
+
+	public void AddInput(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enabledHints = null, ConsoleHintsWidget temp = null)
+	{
+		foreach (IDisposable item in AddInputDisposable(inputLayer, enabledHints))
 		{
-			AddDisposable(m_SortingHint.Bind(inputLayer.AddButton(ShowSortingMenu, 17, enabledHints, InputActionEventType.ButtonJustReleased)));
+			AddDisposable(item);
 		}
-		(m_SearchView as ItemsFilterSearchConsoleView)?.AddInput(inputLayer, enabledHints);
 	}
 
 	public IEnumerable<IDisposable> AddInputDisposable(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enabledHints = null)
 	{
+		InputBindStruct inputBindStruct = inputLayer.AddButton(base.OnPrevious, 14, enabledHints);
+		InputBindStruct inputBindStruct2 = inputLayer.AddButton(base.OnNext, 15, enabledHints);
 		List<IDisposable> list = new List<IDisposable>
 		{
-			m_PreviousFilterHint.Bind(inputLayer.AddButton(OnPrevious, 14, enabledHints)),
-			m_NextFilterHint.Bind(inputLayer.AddButton(OnNext, 15, enabledHints))
+			inputBindStruct,
+			m_PreviousFilterHint.Bind(inputBindStruct),
+			inputBindStruct2,
+			m_NextFilterHint.Bind(inputBindStruct2)
 		};
 		if ((bool)m_SortingHint)
 		{
-			list.Add(m_SortingHint.Bind(inputLayer.AddButton(ShowSortingMenu, 17, enabledHints, InputActionEventType.ButtonJustReleased)));
+			InputBindStruct inputBindStruct3 = inputLayer.AddButton(ShowSortingMenu, 17, enabledHints, InputActionEventType.ButtonJustReleased);
+			list.Add(m_SortingHint.Bind(inputBindStruct3));
+			list.Add(inputBindStruct3);
+		}
+		if ((bool)m_ToggleShowUnavailableHint && m_ShowToggle)
+		{
+			AddDisposable(m_SorterDropdown.IsOn.Subscribe(delegate(bool value)
+			{
+				if (value)
+				{
+					DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+					{
+						m_DropdownDisposables.Clear();
+						InputBindStruct inputBindStruct4 = m_SorterDropdown.InputLayer.AddButton(delegate
+						{
+							ToggleShowItems();
+						}, 11);
+						m_DropdownDisposables.Add(m_ToggleShowUnavailableHint.Bind(inputBindStruct4));
+						m_DropdownDisposables.Add(inputBindStruct4);
+					});
+				}
+			}));
 		}
 		list.Add((m_SearchView as ItemsFilterSearchConsoleView)?.AddInputDisposable(inputLayer, enabledHints));
 		return list;
@@ -113,30 +139,6 @@ public class ItemsFilterConsoleView : ItemsFilterPCView, ICullFocusHandler, ISub
 		}
 	}
 
-	private void OnPrevious(InputActionEventData data)
-	{
-		if (BuildModeUtility.Data.CloudSwitchSettings && base.ViewModel.CurrentFilter.Value == m_FirstFilter)
-		{
-			base.ViewModel.SetCurrentFilter(m_LastFilter);
-			return;
-		}
-		int value = m_SortedFiltersList.IndexOf(base.ViewModel.CurrentFilter.Value) - 1;
-		value = Mathf.Clamp(value, 0, m_SortedFiltersList.Count - 1);
-		base.ViewModel.SetCurrentFilter(m_SortedFiltersList.ElementAt(value));
-	}
-
-	private void OnNext(InputActionEventData data)
-	{
-		if (BuildModeUtility.Data.CloudSwitchSettings && base.ViewModel.CurrentFilter.Value == m_LastFilter)
-		{
-			base.ViewModel.SetCurrentFilter(m_FirstFilter);
-			return;
-		}
-		int value = m_SortedFiltersList.IndexOf(base.ViewModel.CurrentFilter.Value) + 1;
-		value = Mathf.Clamp(value, 0, m_SortedFiltersList.Count - 1);
-		base.ViewModel.SetCurrentFilter(m_SortedFiltersList.ElementAt(value));
-	}
-
 	public void HandleRemoveFocus()
 	{
 		GridConsoleNavigationBehaviour navigationBehaviour = m_SorterDropdown.GetNavigationBehaviour();
@@ -154,5 +156,10 @@ public class ItemsFilterConsoleView : ItemsFilterPCView, ICullFocusHandler, ISub
 			m_SorterDropdown.GetNavigationBehaviour()?.FocusOnEntityManual(m_CulledEntity);
 		}
 		m_CulledEntity = null;
+	}
+
+	private void ToggleShowItems()
+	{
+		m_Toggle.Set(!m_Toggle.IsOn.Value);
 	}
 }

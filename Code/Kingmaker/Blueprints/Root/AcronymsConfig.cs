@@ -43,6 +43,7 @@ public class AcronymsConfig
 			Locale.jaJP => jaJPWordsToExclude, 
 			Locale.trTR => trTRWordsToExclude, 
 			Locale.Sound => string.Empty, 
+			Locale.dev => string.Empty, 
 			_ => throw new ArgumentOutOfRangeException("locale", locale, null), 
 		};
 		List<string> list = new List<string>();

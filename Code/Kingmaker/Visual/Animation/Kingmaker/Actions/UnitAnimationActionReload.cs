@@ -16,6 +16,8 @@ public class UnitAnimationActionReload : UnitAnimationAction
 		[SerializeField]
 		private WeaponAnimationStyle m_Style;
 
+		public bool IsOffHand;
+
 		[AssetPicker("")]
 		[SerializeField]
 		private AnimationClipWrapper m_Clip;
@@ -51,7 +53,11 @@ public class UnitAnimationActionReload : UnitAnimationAction
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
-		AnimationClipWrapper animationClipWrapper = m_StyleSettings.FirstOrDefault((WeaponStyleSettings v) => v.Style == handle.AttackWeaponStyle)?.Clip;
+		AnimationClipWrapper animationClipWrapper = m_StyleSettings.FirstOrDefault((WeaponStyleSettings v) => v.Style == handle.AttackWeaponStyle && v.IsOffHand == handle.CastInOffhand)?.Clip;
+		if (!animationClipWrapper)
+		{
+			animationClipWrapper = m_StyleSettings.FirstOrDefault((WeaponStyleSettings v) => v.Style == handle.AttackWeaponStyle)?.Clip;
+		}
 		if (!animationClipWrapper)
 		{
 			animationClipWrapper = m_DefaultClip;

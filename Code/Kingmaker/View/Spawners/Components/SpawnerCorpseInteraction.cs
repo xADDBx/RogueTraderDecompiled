@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -18,6 +19,7 @@ using UnityEngine;
 namespace Kingmaker.View.Spawners.Components;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
+[KnowledgeDatabaseID("4cc3ab944f8c67e49bb75ef42129855a")]
 public class SpawnerCorpseInteraction : EntityPartComponent<SpawnerCorpseInteraction.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

@@ -38,7 +38,7 @@ public class RemoveMechadendriteFromUnit : GameAction
 		return "Удаляет игроку указанный мехадендрит.\n";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ItemEntity item = ItemToGive.CreateEntity();
 		RemoveItem(item);

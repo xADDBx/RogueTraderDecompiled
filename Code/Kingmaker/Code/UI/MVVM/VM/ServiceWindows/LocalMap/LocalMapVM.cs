@@ -36,7 +36,7 @@ public class LocalMapVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	private Action m_Close;
 
-	public readonly ReactiveCommand<Vector3> CoopPingPosition = new ReactiveCommand<Vector3>();
+	public readonly ReactiveCommand<(NetPlayer, Vector3)> CoopPingPosition = new ReactiveCommand<(NetPlayer, Vector3)>();
 
 	public readonly LocalMapLegendBlockVM LocalMapLegendBlockVM;
 
@@ -186,6 +186,10 @@ public class LocalMapVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void HandlePingPosition(NetPlayer player, Vector3 position)
 	{
-		CoopPingPosition.Execute(position);
+		CoopPingPosition.Execute((player, position));
+	}
+
+	public void HandlePingPositionSound(GameObject gameObject)
+	{
 	}
 }

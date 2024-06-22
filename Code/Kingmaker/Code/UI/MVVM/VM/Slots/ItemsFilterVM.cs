@@ -16,6 +16,8 @@ public class ItemsFilterVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public readonly ReactiveProperty<ItemsSorterType> CurrentSorter;
 
+	public readonly ReactiveProperty<bool> ShowUnavailable;
+
 	public readonly ItemsFilterSearchVM ItemsFilterSearchVM;
 
 	public OwlcatDropdownVM SorterDropdownVM;
@@ -32,6 +34,7 @@ public class ItemsFilterVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		ISlotsGroupVM slotsGroupVM = slotsGroupVms[0];
 		CurrentFilter = slotsGroupVM.FilterType;
 		CurrentSorter = slotsGroupVM.SorterType;
+		ShowUnavailable = slotsGroupVM.ShowUnavailable;
 		AddDisposable(ItemsFilterSearchVM = new ItemsFilterSearchVM(slotsGroupVM.SearchString));
 		AddDisposable(CurrentFilter.Subscribe(delegate(ItemsFilterType value)
 		{
@@ -78,10 +81,13 @@ public class ItemsFilterVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		for (int i = 0; i < values.Length; i++)
 		{
 			ItemsSorterType itemsSorterType = (ItemsSorterType)values.GetValue(i);
-			list.Add(new DropdownItemVM(LocalizedTexts.Instance.ItemsFilter.GetText(itemsSorterType)));
-			if (itemsSorterType == CurrentSorter.Value)
+			if (itemsSorterType != ItemsSorterType.CargoValue)
 			{
-				index = i;
+				list.Add(new DropdownItemVM(LocalizedTexts.Instance.ItemsFilter.GetText(itemsSorterType)));
+				if (itemsSorterType == CurrentSorter.Value)
+				{
+					index = i;
+				}
 			}
 		}
 		AddDisposable(SorterDropdownVM = new OwlcatDropdownVM(list, index));

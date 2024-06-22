@@ -26,7 +26,7 @@ public static class DlcSaveImporter
 		{
 			return null;
 		}
-		return Game.Instance.SaveManager.Where((SaveInfo saveInfo) => saveInfo.DLCCampaign?.Get() == dlcCampaign.Campaign && saveInfo.Type == SaveInfo.SaveType.ForImport).ToList();
+		return Game.Instance.SaveManager.Where((SaveInfo saveInfo) => saveInfo.Campaign == dlcCampaign.Campaign && saveInfo.Type == SaveInfo.SaveType.ForImport).ToList();
 	}
 
 	public static BaseUnitEntity ImportPlayerState(SaveInfo save, BlueprintUnit playerUnitBlueprint, bool asExCompanion, BlueprintUnlockableFlag[] flags)
@@ -124,6 +124,6 @@ public static class DlcSaveImporter
 		{
 			return null;
 		}
-		return Game.Instance.SaveManager.Where((SaveInfo saveInfo) => saveInfo.DLCCampaign?.Get() == campaign && saveInfo.Type == SaveInfo.SaveType.ForImport).ToList();
+		return Game.Instance.SaveManager.Where((SaveInfo saveInfo) => saveInfo.Campaign == campaign && saveInfo.Type == SaveInfo.SaveType.ForImport).ToList();
 	}
 }

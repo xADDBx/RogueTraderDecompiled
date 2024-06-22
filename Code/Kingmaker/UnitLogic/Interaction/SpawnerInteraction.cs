@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
@@ -11,6 +12,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Interaction;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
+[KnowledgeDatabaseID("95d03dcfa566f5a4cadd0988cd234972")]
 public abstract class SpawnerInteraction : EntityPartComponent<SpawnerInteractionPart>
 {
 	[JsonProperty]

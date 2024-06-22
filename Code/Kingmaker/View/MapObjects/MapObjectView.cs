@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.EntitySystem;
@@ -23,6 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;
 
+[KnowledgeDatabaseID("037fe06a751be534fa04d8b0764331d1")]
 public class MapObjectView : MechanicEntityView, IDetectHover, IEntitySubscriber, IAwarenessHandler<EntitySubscriber>, IAwarenessHandler, ISubscriber<IMapObjectEntity>, ISubscriber, IEventTag<IAwarenessHandler, EntitySubscriber>, IAreaHandler, IResource
 {
 	[SerializeField]

@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.UI.MVVM.View.NetLobby.Base;
+using Kingmaker.UI.MVVM.View.NetLobby.Console.DlcList;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -29,11 +31,28 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 	[SerializeField]
 	private OwlcatButton m_SavePartFocusButton;
 
+	[SerializeField]
+	private NetLobbyDlcListConsoleView m_DlcListConsoleView;
+
 	private IConsoleHint m_ContinueHint;
 
 	private readonly BoolReactiveProperty m_SaveSlotIsFocused = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_EpicGamesIsFocused = new BoolReactiveProperty();
+
+	private InputLayer m_GamersTagsInputLayer;
+
+	private GridConsoleNavigationBehaviour m_GamersTagsNavigationBehavior;
+
+	private readonly BoolReactiveProperty m_GamersTagsMode = new BoolReactiveProperty();
+
+	private GridConsoleNavigationBehaviour m_MainNavigationBehavior;
+
+	public override void Initialize()
+	{
+		base.Initialize();
+		m_DlcListConsoleView.Initialize();
+	}
 
 	protected override void BindViewImplementation()
 	{
@@ -42,10 +61,13 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 		{
 			m_PlayerList[i].Bind(base.ViewModel.PlayerVms[i]);
 		}
+		AddDisposable(base.ViewModel.DlcListVM.Subscribe(m_DlcListConsoleView.Bind));
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+		m_GamersTagsNavigationBehavior?.UnFocusCurrentEntity();
+		m_GamersTagsNavigationBehavior?.Clear();
 		m_SaveSlotIsFocused.Value = false;
 		base.DestroyViewImplementation();
 	}
@@ -54,11 +76,15 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 	{
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.Disconnect();
-		}, 9, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsPlayingState.Not()).ToReactiveProperty()), UIStrings.Instance.CharGen.Back));
+			base.ViewModel.ShowDlcList();
+		}, 14, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.DlcList));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.Disconnect();
+			base.ViewModel.Disconnect("Close_NotPlayingState");
+		}, 9, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsPlayingState.Not()).ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.CharGen.Back));
+		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
+		{
+			base.ViewModel.Disconnect("Close_PlayingState");
 		}, 9, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsPlayingState).ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.NetLobbyTexts.DisconnectLobby));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
@@ -67,7 +93,7 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.ShowNetLobbyTutorial();
-		}, 19, base.ViewModel.IsAnyTutorialBlocks.And(IsInLobbyPart).ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.NetLobbyTexts.HowToPlay));
+		}, 19, base.ViewModel.IsAnyTutorialBlocks.And(IsInLobbyPart).And(base.ViewModel.CanConfirmLaunch.Not()).ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.NetLobbyTexts.HowToPlay));
 		AddDisposable(m_CopyLobbyCodeHint.Bind(inputLayer.AddButton(delegate
 		{
 			CopyLobbyId();
@@ -85,22 +111,19 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.ResetCurrentSave();
-		}, 11, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost).And(base.ViewModel.IsSaveAllowed)
-			.And(m_SaveSlotIsFocused)
+		}, 11, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost).And(m_SaveSlotIsFocused)
 			.And(ResetCurrentSaveActive)
 			.ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.ResetCurrentSave));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.ChooseSave();
 		}, 8, IsInLobbyPart.And(LaunchButtonActive.Not()).And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost)
-			.And(base.ViewModel.IsSaveAllowed)
 			.And(m_SaveSlotIsFocused)
 			.ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.ChooseSave();
-		}, 10, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost).And(base.ViewModel.IsSaveAllowed)
-			.And(m_SaveSlotIsFocused)
+		}, 10, IsInLobbyPart.And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost).And(m_SaveSlotIsFocused)
 			.And(LaunchButtonActive)
 			.ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
@@ -117,15 +140,64 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 		{
 			Launch();
 		}, 8, IsInLobbyPart.And(LaunchButtonActive).And(base.ViewModel.CanConfirmLaunch.Not()).And(base.ViewModel.IsHost)
-			.And(base.ViewModel.IsSaveAllowed)
 			.And(base.ViewModel.NeedReconnect.Not())
 			.ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed)));
 		m_ContinueHint.SetLabel(UIStrings.Instance.NetLobbyTexts.Launch);
 		AddDisposable(LaunchButtonText.Subscribe(m_ContinueHint.SetLabel));
 		m_PlayerList.ForEach(delegate(NetLobbyPlayerConsoleView p)
 		{
-			p.AddPlayerInput(inputLayer, hintsWidget);
+			p.AddPlayerInput(inputLayer, hintsWidget, ShowGamersTagsMode, base.ViewModel.CanConfirmLaunch);
 		});
+	}
+
+	private void AddGamersTagsInput(ConsoleHintsWidget hintsWidget)
+	{
+		AddDisposable(m_GamersTagsNavigationBehavior = new GridConsoleNavigationBehaviour());
+		m_GamersTagsInputLayer = m_GamersTagsNavigationBehavior?.GetInputLayer(new InputLayer
+		{
+			ContextName = "GamersTags"
+		});
+		m_PlayerList.ForEach(delegate(NetLobbyPlayerConsoleView p)
+		{
+			p.AddGamerTagInput(m_GamersTagsInputLayer, hintsWidget, CloseGamersTagsMode, base.ViewModel.CanConfirmLaunch);
+		});
+	}
+
+	private void ShowGamersTagsMode()
+	{
+		m_GamersTagsMode.Value = true;
+		SetGamersTagsNavigation();
+		NetLobbyPlayerConsoleView focusedPlayer = m_PlayerList.FirstOrDefault((NetLobbyPlayerConsoleView p) => p.IsFocused.Value);
+		GamerTagAndNameBaseView gamerTagAndNameBaseView = m_GamersTagsNavigationBehavior?.Entities.OfType<GamerTagAndNameBaseView>().FirstOrDefault((GamerTagAndNameBaseView e) => e.GetUserId() == focusedPlayer.Or(null)?.GetUserId());
+		GamePad.Instance.PushLayer(m_GamersTagsInputLayer);
+		m_MainNavigationBehavior.UnFocusCurrentEntity();
+		if (gamerTagAndNameBaseView != null)
+		{
+			m_GamersTagsNavigationBehavior?.FocusOnEntityManual(gamerTagAndNameBaseView);
+		}
+		else
+		{
+			m_GamersTagsNavigationBehavior?.FocusOnFirstValidEntity();
+		}
+	}
+
+	private void CloseGamersTagsMode()
+	{
+		m_GamersTagsNavigationBehavior?.UnFocusCurrentEntity();
+		m_MainNavigationBehavior?.FocusOnCurrentEntity();
+		m_GamersTagsMode.Value = false;
+		GamePad.Instance.PopLayer(m_GamersTagsInputLayer);
+	}
+
+	private void SetGamersTagsNavigation()
+	{
+		m_GamersTagsNavigationBehavior?.Clear();
+		List<IConsoleEntity> list = new List<IConsoleEntity>();
+		list.AddRange(m_PlayerList.Select((NetLobbyPlayerConsoleView player) => player.GamerTagAndName));
+		if (list.Any())
+		{
+			m_GamersTagsNavigationBehavior?.SetEntitiesHorizontal(list);
+		}
 	}
 
 	private void Launch()
@@ -164,6 +236,7 @@ public class NetLobbyLobbyPartConsoleView : NetLobbyLobbyPartBaseView
 			}
 		}));
 		AddDisposable(navigationBehaviour.Focus.Subscribe(OnFocusEntity));
+		m_MainNavigationBehavior = navigationBehaviour;
 	}
 
 	private void OnFocusEntity(IConsoleEntity entity)

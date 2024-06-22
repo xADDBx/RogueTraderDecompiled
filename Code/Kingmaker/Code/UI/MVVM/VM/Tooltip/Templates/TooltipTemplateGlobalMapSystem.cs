@@ -52,16 +52,19 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 		if (m_SectorMapObject != null && !m_SectorMapObject.Data.IsVisited)
 		{
 			list.Add(new TooltipBrickUnifiedStatus(UnifiedStatus.Colonized, UIStrings.Instance.GlobalMap.UnknownSystem));
+			AddSectorMapRumoursInRangeInfo(list);
 			AddQuestsInfo(list);
 			AddRumoursInfo(list);
 			return list;
 		}
 		AddColonizationStatus(list);
+		AddSectorMapRumoursInRangeInfo(list);
 		AddQuestsInfo(list);
 		AddRumoursInfo(list);
 		AddActiveAnomaliesInfo(list, UIStrings.Instance.GlobalMap.HasEnemiesInSystem, allAnomalies: false, BlueprintAnomaly.AnomalyObjectType.Enemy);
 		AddPlanetsInfo(list);
 		AddOtherObjectsInfo(list);
+		AddAdditionalAnomaliesInfo(list);
 		return list;
 	}
 
@@ -110,6 +113,24 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 		}
 	}
 
+	private void AddSectorMapRumoursInRangeInfo(List<ITooltipBrick> bricks)
+	{
+		if (m_SectorMapObject == null)
+		{
+			return;
+		}
+		List<QuestObjective> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(m_SectorMapObject);
+		if (rumoursForSectorMap != null && rumoursForSectorMap.Any())
+		{
+			List<string> list = rumoursForSectorMap.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestObjective rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
+			if (list.Any())
+			{
+				string text = string.Join(", ", list);
+				bricks.Add(new TooltipBrickUnifiedStatus(UnifiedStatus.Rumour, UIStrings.Instance.GlobalMap.WithinRumourRange.Text + ": " + text));
+			}
+		}
+	}
+
 	private void AddPlanetsInfo(List<ITooltipBrick> bricks)
 	{
 		List<BlueprintPlanet> list = ((m_SectorMapObject != null) ? m_SectorMapObject.Data.Planets : m_Area.Planets.Dereference().ToList());
@@ -148,6 +169,23 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 			if (list.Where((BlueprintAnomaly an) => !ia.Contains(an) && !an.HideInUI && (allAnomalies || an.AnomalyType == type)).ToList().Count != 0)
 			{
 				bricks.Add(new TooltipBrickUnifiedStatus(UnifiedStatus.Enemies, label));
+			}
+		}
+	}
+
+	private void AddAdditionalAnomaliesInfo(List<ITooltipBrick> bricks)
+	{
+		List<BlueprintAnomaly> list = ((!(m_SectorMapObject != null)) ? m_Area?.Anomalies?.Dereference()?.Where((BlueprintAnomaly anomaly) => anomaly.ShowOnGlobalMap).EmptyIfNull().ToList() : ObjectExtensions.Or(m_SectorMapObject, null)?.Data?.AnomaliesForGlobalMap);
+		if (list == null || list.Count == 0)
+		{
+			return;
+		}
+		Game.Instance.Player.StarSystemsState.InteractedAnomalies.TryGetValue(m_SectorMapObject.Data.StarSystemArea ?? m_Area, out var value);
+		foreach (BlueprintAnomaly item in value.EmptyIfNull())
+		{
+			if (list.Contains(item) && !item.HideInUI)
+			{
+				bricks.Add(new TooltipBrickAnomalyInfo(item, m_Area));
 			}
 		}
 	}

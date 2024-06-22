@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
@@ -237,25 +239,60 @@ public class UnitDescription
 	}
 
 	[JsonObject]
-	public class StatsData
+	public class StatsData : IEnumerable<string>, IEnumerable
 	{
 		[JsonProperty]
-		public int Str;
+		public string WarhammerBallisticSkill;
 
 		[JsonProperty]
-		public int Dex;
+		public string WarhammerWeaponSkill;
 
 		[JsonProperty]
-		public int Con;
+		public string WarhammerStrength;
 
 		[JsonProperty]
-		public int Int;
+		public string WarhammerToughness;
 
 		[JsonProperty]
-		public int Wis;
+		public string WarhammerAgility;
 
 		[JsonProperty]
-		public int Cha;
+		public string WarhammerIntelligence;
+
+		[JsonProperty]
+		public string WarhammerWillpower;
+
+		[JsonProperty]
+		public string WarhammerPerception;
+
+		[JsonProperty]
+		public string WarhammerFellowship;
+
+		public IEnumerable<string> All
+		{
+			get
+			{
+				yield return WarhammerBallisticSkill;
+				yield return WarhammerWeaponSkill;
+				yield return WarhammerStrength;
+				yield return WarhammerToughness;
+				yield return WarhammerAgility;
+				yield return WarhammerIntelligence;
+				yield return WarhammerWillpower;
+				yield return WarhammerPerception;
+				yield return WarhammerFellowship;
+			}
+		}
+
+		public IEnumerator<string> GetEnumerator()
+		{
+			return All.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
 	}
 
 	[JsonObject]
@@ -342,6 +379,12 @@ public class UnitDescription
 
 	[JsonProperty]
 	public int TemporaryHP;
+
+	[JsonProperty]
+	public float InitialMovementPoints;
+
+	[JsonProperty]
+	public float InitialActionPoints;
 
 	[JsonProperty]
 	public int FastHealing;

@@ -6,6 +6,8 @@ using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.ActivatableAbilities;
+using Kingmaker.UnitLogic.Levelup.Selections;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.UI.Tooltips;
@@ -15,7 +17,9 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 
 public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 {
-	public readonly BlueprintFeatureBase Feature;
+	public readonly BlueprintFeature Feature;
+
+	public readonly BlueprintAbility Ability;
 
 	public string Name;
 
@@ -27,25 +31,40 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 
 	public TooltipBaseTemplate Tooltip;
 
-	public bool IsHeader;
+	public readonly bool IsHeader;
 
 	public bool AvailableBackground;
 
-	public FeatureTypes Type;
+	public readonly string AdditionalField1;
 
-	public string AdditionalField1;
+	public readonly string AdditionalField2;
 
-	public string AdditionalField2;
+	public readonly MechanicEntity Caster;
 
-	public MechanicEntity Caster;
+	public readonly TalentIconInfo TalentIconsInfo;
 
-	public TooltipBrickFeatureVM(BlueprintFeatureBase feature, bool isHeader, bool available, bool showIcon = true, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common, MechanicEntity caster = null)
+	public readonly bool IsHidden;
+
+	public bool HasFeature => Feature != null;
+
+	public bool HasAbility => Ability != null;
+
+	public TooltipBrickFeatureVM(BlueprintFeature feature, bool isHeader, bool available, bool showIcon = true, TooltipBaseTemplate tooltip = null, MechanicEntity caster = null, bool forceSetName = false, bool isHidden = false)
 	{
 		Feature = feature;
 		Caster = caster;
 		IsHeader = isHeader;
-		Name = feature.Name;
-		Type = type;
+		IsHidden = isHidden;
+		string name = feature.Name;
+		if (feature != null)
+		{
+			TalentIconsInfo = feature.TalentIconInfo;
+			if (forceSetName && !string.IsNullOrWhiteSpace(feature.ForceSetNameForItemTooltip))
+			{
+				name = feature.ForceSetNameForItemTooltip;
+			}
+		}
+		Name = name;
 		if (showIcon)
 		{
 			if (feature.Icon != null)
@@ -67,25 +86,27 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		}
 	}
 
-	public TooltipBrickFeatureVM(string name, Sprite icon, bool isHeader, bool available, bool showIcon = true, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common, MechanicEntity caster = null)
+	public TooltipBrickFeatureVM(string name, Sprite icon, bool isHeader, bool available, bool showIcon = true, TooltipBaseTemplate tooltip = null, MechanicEntity caster = null)
 	{
 		Caster = caster;
 		IsHeader = isHeader;
 		Name = name;
-		Type = type;
 		if (showIcon)
 		{
 			Icon = icon;
 			IconColor = Color.white;
 		}
 		AvailableBackground = !available;
+		Tooltip = tooltip;
 	}
 
-	public TooltipBrickFeatureVM(BlueprintAbility ability, bool isHeader, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common, MechanicEntity caster = null)
+	public TooltipBrickFeatureVM(BlueprintAbility ability, bool isHeader, TooltipBaseTemplate tooltip = null, MechanicEntity caster = null, bool isHidden = false)
 	{
+		Ability = ability;
+		Caster = caster;
 		IsHeader = isHeader;
+		IsHidden = isHidden;
 		Name = ability.Name;
-		Type = type;
 		if (ability.Icon != null)
 		{
 			Icon = ability.Icon;
@@ -100,11 +121,10 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		Tooltip = tooltip ?? new TooltipTemplateAbility(ability, null, caster);
 	}
 
-	public TooltipBrickFeatureVM(ActivatableAbility activatableAbility, bool isHeader, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common)
+	public TooltipBrickFeatureVM(ActivatableAbility activatableAbility, bool isHeader, TooltipBaseTemplate tooltip = null)
 	{
 		IsHeader = isHeader;
 		Name = activatableAbility.Name;
-		Type = type;
 		if (activatableAbility.Icon != null)
 		{
 			Icon = activatableAbility.Icon;
@@ -119,11 +139,10 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		Tooltip = tooltip ?? new TooltipTemplateActivatableAbility(activatableAbility);
 	}
 
-	public TooltipBrickFeatureVM(BlueprintActivatableAbility activatableAbility, bool isHeader, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common)
+	public TooltipBrickFeatureVM(BlueprintActivatableAbility activatableAbility, bool isHeader, TooltipBaseTemplate tooltip = null)
 	{
 		IsHeader = isHeader;
 		Name = activatableAbility.Name;
-		Type = type;
 		if (activatableAbility.Icon != null)
 		{
 			Icon = activatableAbility.Icon;
@@ -138,11 +157,10 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		Tooltip = tooltip ?? new TooltipTemplateActivatableAbility(activatableAbility);
 	}
 
-	public TooltipBrickFeatureVM(IUIDataProvider dataProvider, bool isHeader, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common)
+	public TooltipBrickFeatureVM(IUIDataProvider dataProvider, bool isHeader, TooltipBaseTemplate tooltip = null)
 	{
 		IsHeader = isHeader;
 		Name = dataProvider.Name;
-		Type = type;
 		if (dataProvider.Icon != null)
 		{
 			Icon = dataProvider.Icon;
@@ -168,11 +186,10 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		}
 	}
 
-	public TooltipBrickFeatureVM(UIUtilityItem.UIAbilityData uiAbilityData, bool isHeader, TooltipBaseTemplate tooltip = null, FeatureTypes type = FeatureTypes.Common)
+	public TooltipBrickFeatureVM(UIUtilityItem.UIAbilityData uiAbilityData, bool isHeader, TooltipBaseTemplate tooltip = null)
 	{
 		IsHeader = isHeader;
 		Name = uiAbilityData.Name;
-		Type = type;
 		if (uiAbilityData.Icon != null)
 		{
 			Icon = uiAbilityData.Icon;
@@ -194,7 +211,7 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 			AdditionalField1 = UIStrings.Instance.Tooltips.DesperateMeasureAbility;
 			break;
 		default:
-			AdditionalField1 = ((!uiAbilityData.IsSpaceCombatAbility) ? uiAbilityData.CostAP : string.Empty);
+			AdditionalField1 = ((!uiAbilityData.IsSpaceCombatAbility) ? (UIStrings.Instance.Tooltips.CostAP.Text + " " + uiAbilityData.CostAP) : string.Empty);
 			break;
 		}
 		if (uiAbilityData.BurstAttacksCount > 1)
@@ -218,5 +235,18 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 
 	protected TooltipBrickFeatureVM()
 	{
+	}
+
+	public UnitPartCultAmbush.VisibilityStatuses UpdateCultAmbushVisibility()
+	{
+		if (HasAbility)
+		{
+			return Ability.CultAmbushVisibility((BaseUnitEntity)Caster, isFirstShow: true);
+		}
+		if (HasFeature)
+		{
+			return Feature.CultAmbushVisibility((BaseUnitEntity)Caster, isFirstShow: true);
+		}
+		return UnitPartCultAmbush.VisibilityStatuses.Visible;
 	}
 }

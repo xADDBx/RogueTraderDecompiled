@@ -1491,6 +1491,11 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 		base.transform.rotation = Quaternion.Euler(0f, cameraRotation, 0f);
 	}
 
+	public void ResetCameraRotate()
+	{
+		RotateToTimed(90f, 0.4f);
+	}
+
 	public void OnGameModeStart(GameModeType gameMode)
 	{
 		Game.Instance.CursorController.ClearCursor();

@@ -27,7 +27,7 @@ public class SetDeviceState : GameAction
 		return $"Set device state ({Device}:{State})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Device.GetValue().GetOptional<InteractionDevicePart>()?.SetState(State.GetValue());
 	}

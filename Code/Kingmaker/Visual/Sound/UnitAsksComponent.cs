@@ -86,6 +86,11 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 
 		public float Cooldown;
 
+		public bool OverrideCooldownOnGamepad;
+
+		[ShowIf("OverrideCooldownOnGamepad")]
+		public float CooldownGamepad;
+
 		public bool InterruptOthers;
 
 		public float DelayMin;
@@ -108,6 +113,15 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 		[ShowIf("EnablePrioritization")]
 		[Range(0f, 10f)]
 		public int Priority;
+
+		public float GetCooldown()
+		{
+			if (!OverrideCooldownOnGamepad || !Game.Instance.IsControllerGamepad)
+			{
+				return Cooldown;
+			}
+			return CooldownGamepad;
+		}
 
 		public virtual bool CheckBarkChance(float chanceValue)
 		{

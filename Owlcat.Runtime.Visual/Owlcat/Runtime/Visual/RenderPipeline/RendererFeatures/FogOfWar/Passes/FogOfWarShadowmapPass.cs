@@ -77,8 +77,7 @@ public class FogOfWarShadowmapPass : ScriptableRenderPass
 			{
 				try
 				{
-					float num = item.Position.y + settings.ShadowCullingHeightOffset;
-					item.HeightMinMax = new Vector2(num, num + settings.ShadowCullingHeight);
+					item.HeightMinMax = settings.CalculateHeightMinMax(item.Position.y);
 					item.RebuildShadowMesh();
 				}
 				finally

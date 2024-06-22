@@ -24,6 +24,10 @@ public class CharGenPortraitGroupVM : BaseDisposable, IViewModel, IBaseDisposabl
 		PortraitCategory = portraitCategory;
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void Add(CharGenPortraitSelectorItemVM portrait)
 	{
 		PortraitCollection.Add(portrait);
@@ -51,9 +55,5 @@ public class CharGenPortraitGroupVM : BaseDisposable, IViewModel, IBaseDisposabl
 	public CharGenPortraitSelectorItemVM GetByIdOrFirstValid(string id)
 	{
 		return PortraitCollection.FirstOrDefault((CharGenPortraitSelectorItemVM i) => i.PortraitData?.CustomId == id) ?? PortraitCollection.FirstOrDefault((CharGenPortraitSelectorItemVM i) => !i.CustomPortraitCreatorItem);
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

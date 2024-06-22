@@ -42,6 +42,8 @@ public class UnitAnimationActionHandle : AnimationActionHandle, ICloneable
 
 	public bool IsBurst { get; set; }
 
+	public AnimationAlternativeStyle AlternativeStyle { get; set; }
+
 	public bool IsCornerAttack { get; set; }
 
 	public int BurstCount { get; set; }
@@ -60,7 +62,11 @@ public class UnitAnimationActionHandle : AnimationActionHandle, ICloneable
 
 	public bool DoesNotPreventMovement { get; set; }
 
+	public bool NeedAttackAfterJump { get; set; }
+
 	public float CastingTime { get; set; }
+
+	public float JumpTime { get; set; }
 
 	public UnitAnimationActionCastSpell.CastAnimationStyle CastStyle { get; set; }
 

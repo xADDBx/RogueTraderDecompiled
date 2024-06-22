@@ -29,6 +29,7 @@ public class NetInitializingState : StateLongAsync
 	{
 		if (PhotonManager.Instance == null)
 		{
+			await Awaiters.UnityThread;
 			PhotonManager.CreateInstance();
 		}
 		await PlatformServices.Platform.User.Initialize();

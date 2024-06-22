@@ -1,8 +1,7 @@
 using System;
-using Kingmaker.Blueprints;
-using Kingmaker.GameCommands;
-using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Owlcat.Runtime.UI.MVVM;
 
 namespace Kingmaker.UI.MVVM.VM.Colonization.Projects;
@@ -25,11 +24,12 @@ public class ColonyProjectsBuiltListAddElemVM : BaseDisposable, IViewModel, IBas
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsBuiltListNewElementButtonVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			PFLog.UI.Error("ColonyProjectsBuiltListNewElementButtonVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			return;
 		}
-		else
+		EventBus.RaiseEvent(delegate(IColonizationProjectsUIHandler h)
 		{
-			Game.Instance.GameCommandQueue.ColonyProjectsUIOpen(m_Colony.Blueprint.ToReference<BlueprintColonyReference>());
-		}
+			h.HandleColonyProjectsUIOpen(m_Colony);
+		});
 	}
 }

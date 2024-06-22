@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.QA;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CommandLineArgs;
 using Owlcat.Runtime.Core.Logging;
@@ -37,6 +39,11 @@ public static class LogSinkFactory
 		return new GameHistoryLogSink(AreaDataStash.GameHistoryFile);
 	}
 
+	public static ILogSink CreateElementsDebugger()
+	{
+		return new ElementsDebugger.LogSink();
+	}
+
 	private static void BackUpLog(string filename, string path)
 	{
 		string text = Path.Combine(path, filename);
@@ -61,5 +68,10 @@ public static class LogSinkFactory
 			text = (commandLineArguments.Contains("-skipLogChannels") ? commandLineArguments.Get("-skipLogChannels") : null);
 		}
 		return text?.Split(';') ?? Array.Empty<string>();
+	}
+
+	public static IDisposableLogSink CreateSpamDetector()
+	{
+		return StackTraceSpamDetector.LogSink;
 	}
 }

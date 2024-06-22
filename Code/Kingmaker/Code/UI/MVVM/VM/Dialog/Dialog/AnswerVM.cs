@@ -61,6 +61,10 @@ public class AnswerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void OnChooseAnswer()
 	{
 		if (!Enable.Value || m_ChooseCharacterInit || !UINetUtility.IsControlMainCharacterWithWarning(needSignalHowToPing: true))
@@ -80,10 +84,6 @@ public class AnswerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 		ChoosedAnswer.Value = Answer.Value.Text;
 		WasChoose.Value = true;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	public bool IsAlreadySelected()

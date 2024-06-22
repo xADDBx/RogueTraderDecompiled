@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -77,6 +78,11 @@ public class CharGenPortraitView : ViewBase<CharGenPortraitVM>
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	private bool CheckPortrait()
 	{
 		return m_Size switch
@@ -90,6 +96,10 @@ public class CharGenPortraitView : ViewBase<CharGenPortraitVM>
 
 	private void SetupView()
 	{
+		if (m_Portrait != null && m_Portrait.Or(null)?.transform != null)
+		{
+			m_Portrait.transform.localScale = new Vector3((!base.ViewModel.PortraitData.FlipFullLengthPortraitInDialog) ? 1 : (-1), 1f, 1f);
+		}
 		switch (m_Size)
 		{
 		case PortraitSize.Small:
@@ -143,10 +153,5 @@ public class CharGenPortraitView : ViewBase<CharGenPortraitVM>
 			base.gameObject.SetActive(value: false);
 		}
 		m_IsShown = false;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 }

@@ -47,9 +47,9 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	public readonly ReactiveProperty<Vector3> CameraDistance = new ReactiveProperty<Vector3>();
 
-	public BoolReactiveProperty HasSurrounding = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HasSurrounding = new BoolReactiveProperty();
 
-	public BoolReactiveProperty IsChosen = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsChosen = new BoolReactiveProperty();
 
 	public bool ImmediatelyDestroyActivated;
 

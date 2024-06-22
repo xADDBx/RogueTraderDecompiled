@@ -4,5 +4,7 @@ namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.C
 
 public interface ICareerPathSelectionTabPCView : ICareerPathSelectionTabView
 {
+	bool CanCommit { get; }
+
 	void SetButtonsBlock(CareerButtonsBlock buttonsBlock);
 }

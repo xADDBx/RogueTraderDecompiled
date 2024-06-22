@@ -19,7 +19,7 @@ public class BuffActionAddStatBonus : BuffAction
 		return "BuffActionAddStatBonus, invalid, do nothing";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 	}
 }

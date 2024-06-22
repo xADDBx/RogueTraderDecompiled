@@ -29,6 +29,8 @@ public class StarshipEvasionModifier : UnitFactComponentDelegate, IInitiatorRule
 
 	public int EvasionBonusPct;
 
+	public bool GrantSuperEvasion;
+
 	[SerializeField]
 	private BlueprintFeatureReference m_CheckEnemyFeature;
 
@@ -39,6 +41,10 @@ public class StarshipEvasionModifier : UnitFactComponentDelegate, IInitiatorRule
 		if ((modifyWhen != 0 || (evt.Initiator == base.Owner && CheckF(evt.Target))) && (modifyWhen != ModifyWhen.IsTarget || (evt.Target == base.Owner && CheckF(evt.Initiator))))
 		{
 			evt.BonusEvasionChance += EvasionBonusPct;
+			if (GrantSuperEvasion)
+			{
+				evt.SuperEvasion = true;
+			}
 		}
 	}
 

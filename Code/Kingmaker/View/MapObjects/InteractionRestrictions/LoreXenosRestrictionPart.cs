@@ -6,11 +6,13 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.InteractionRestrictions;
 
-public class LoreXenosRestrictionPart : SkillUseWithoutItemRestrictionPart<LoreXenosRestrictionSettings>, IHashable
+public class LoreXenosRestrictionPart : SkillUseWithoutItemRestrictionPart<LoreXenosRestrictionSettings>, ISkillUseRestrictionWithoutItem, IHashable
 {
 	public override InteractionActorType Type => InteractionActorType.LoreXenos;
 
 	public override StatType Skill => base.Settings.GetSkill();
+
+	public int DCOverrideValue => DCOverride;
 
 	public override string GetInteractionName()
 	{

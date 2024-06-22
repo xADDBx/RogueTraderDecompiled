@@ -21,7 +21,7 @@ public class NamedParameterUnit : AbstractUnitEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find unit " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find unit {0} in context parameters", Parameter);
 		}
 		if (value is string uniqueId)
 		{

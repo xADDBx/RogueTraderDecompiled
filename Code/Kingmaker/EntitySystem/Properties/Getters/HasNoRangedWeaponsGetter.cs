@@ -9,9 +9,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("250de3495a5143389abd428fcfd0325d")]
 public class HasNoRangedWeaponsGetter : UnitPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Both weapons are not ranged";
+		return "Both weapons of " + FormulaTargetScope.Current + " are not ranged";
 	}
 
 	protected override int GetBaseValue()

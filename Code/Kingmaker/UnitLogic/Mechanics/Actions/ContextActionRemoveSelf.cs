@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.UnitLogic.Abilities.Components.AreaEffects;
 using Kingmaker.UnitLogic.Buffs;
@@ -13,7 +14,7 @@ public class ContextActionRemoveSelf : ContextAction
 		return "Remove self";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Buff.Data current = ContextData<Buff.Data>.Current;
 		if (current != null)
@@ -25,10 +26,8 @@ public class ContextActionRemoveSelf : ContextAction
 		if (current2 != null)
 		{
 			current2.Entity.ForceEnd();
+			return;
 		}
-		else
-		{
-			PFLog.Default.Error(this, $"RemoveSelf can only apply to buffs or area effects! Context.AssociatedBlueprint = {base.Context?.AssociatedBlueprint}");
-		}
+		Element.LogError(this, "RemoveSelf can only apply to buffs or area effects! Context.AssociatedBlueprint = {0}", base.Context?.AssociatedBlueprint);
 	}
 }

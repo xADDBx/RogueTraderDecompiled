@@ -26,7 +26,7 @@ public class HideWeapons : GameAction
 		return (Hide ? "Hide" : "Show") + " weapons for " + (Target ? Target.GetCaption() : "???");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Target.GetValue().View.ForcePeacefulLook(Hide);
 	}

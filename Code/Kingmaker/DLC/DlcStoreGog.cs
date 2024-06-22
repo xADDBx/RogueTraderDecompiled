@@ -13,9 +13,14 @@ public class DlcStoreGog : DlcStore, IDLCStoreGog
 	[SerializeField]
 	private ulong m_GogId;
 
+	[SerializeField]
+	private string m_ShopLink = "https://www.gog.com/en/game/warhammer_40000_rogue_trader/";
+
 	public ulong GogId => m_GogId;
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.GoG;
+
+	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on GOG (ID {GogId}).";
 
 	public override IDLCStatus GetStatus()
 	{
@@ -45,5 +50,24 @@ public class DlcStoreGog : DlcStore, IDLCStoreGog
 			return null;
 		}
 		return DLCStatus.Available;
+	}
+
+	public override bool OpenShop()
+	{
+		if (!IsSuitable)
+		{
+			return false;
+		}
+		bool result = false;
+		try
+		{
+			Application.OpenURL(m_ShopLink);
+			result = true;
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Exception(ex, ExceptionMessage);
+		}
+		return result;
 	}
 }

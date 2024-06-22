@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using UniRx;
@@ -15,10 +16,13 @@ public class SaveSlotsExpandableTitleVM : ExpandableTitleVM
 
 	public readonly ReactiveProperty<List<ContextMenuCollectionEntity>> ContextMenu = new ReactiveProperty<List<ContextMenuCollectionEntity>>();
 
-	public SaveSlotsExpandableTitleVM(string title, Action<bool> @switch, bool defaultExpanded = true, Action deleteAll = null)
+	public readonly SaveInfo SaveInfo;
+
+	public SaveSlotsExpandableTitleVM(string title, Action<bool> @switch, bool defaultExpanded = true, Action deleteAll = null, SaveInfo saveInfo = null)
 		: base(title, @switch, defaultExpanded)
 	{
 		m_DeleteAll = deleteAll;
+		SaveInfo = saveInfo;
 	}
 
 	public void DeleteAll()

@@ -34,6 +34,7 @@ public class AOETargetSelector : AbilityTargetSelector
 		float num = 0f;
 		float hitUnintendedTargetPenalty = context.Unit.Brain.HitUnintendedTargetPenalty;
 		List<MechanicEntity> abilityTargets = TempList.Get<MechanicEntity>();
+		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
 		foreach (CustomGridNodeBase item in hashSet)
 		{
 			if (item == casterNode)
@@ -41,42 +42,48 @@ public class AOETargetSelector : AbilityTargetSelector
 				continue;
 			}
 			abilityTargets.Clear();
-			GatherAffectedTargets(casterNode, item, in abilityTargets);
+			BaseUnitEntity unit = null;
+			if (flag && !item.TryGetUnit(out unit))
+			{
+				continue;
+			}
+			TargetWrapper targetWrapper = (flag ? new TargetWrapper(unit) : new TargetWrapper(item.Vector3Position));
+			GatherAffectedTargets(casterNode, targetWrapper, in abilityTargets);
 			if (abilityTargets.Count == 0)
 			{
 				continue;
 			}
 			float num2 = 0f;
 			int num3 = 0;
-			BaseUnitEntity unit = context.Unit;
+			BaseUnitEntity unit2 = context.Unit;
 			Vector3 vector3Position = item.Vector3Position;
-			bool flag = AbilityInfo.aoeIntendedTargets == TargetType.Ally;
-			bool flag2 = !flag && !unit.IsPlayerEnemy;
+			bool flag2 = AbilityInfo.aoeIntendedTargets == TargetType.Ally;
+			bool flag3 = !flag2 && !unit2.IsPlayerEnemy;
 			foreach (MechanicEntity item2 in abilityTargets)
 			{
 				if (!IsTargetCounts(item2))
 				{
 					continue;
 				}
-				if (unit.CombatGroup.IsEnemy(item2))
+				if (unit2.CombatGroup.IsEnemy(item2))
 				{
-					num2 += ((!flag) ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : ((0f - hitUnintendedTargetPenalty) * 10000f));
-					num3 += ((!flag) ? 1 : 0);
+					num2 += ((!flag2) ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : ((0f - hitUnintendedTargetPenalty) * 10000f));
+					num3 += ((!flag2) ? 1 : 0);
 				}
-				else if (unit.CombatGroup.IsAlly(item2))
+				else if (unit2.CombatGroup.IsAlly(item2))
 				{
-					if (flag2 && item2.IsInPlayerParty)
+					if (flag3 && item2.IsInPlayerParty)
 					{
 						num2 = float.MinValue;
 						break;
 					}
-					num2 += (flag ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : ((0f - hitUnintendedTargetPenalty) * 10000f));
-					num3 += (flag ? 1 : 0);
+					num2 += (flag2 ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : ((0f - hitUnintendedTargetPenalty) * 10000f));
+					num3 += (flag2 ? 1 : 0);
 				}
-				else if (item2 == unit)
+				else if (item2 == unit2)
 				{
-					num2 += (flag ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : (-2f * hitUnintendedTargetPenalty * 10000f));
-					num3 += (flag ? 1 : 0);
+					num2 += (flag2 ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : (-2f * hitUnintendedTargetPenalty * 10000f));
+					num3 += (flag2 ? 1 : 0);
 				}
 			}
 			if (num3 >= (AbilityInfo.settings?.MustHitTargetsCount ?? 0) && num2 > num)
@@ -89,10 +96,9 @@ public class AOETargetSelector : AbilityTargetSelector
 			}
 		}
 		base.SelectedTarget = null;
-		bool flag3 = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
 		if (num > 0f)
 		{
-			base.SelectedTarget = (flag3 ? new TargetWrapper(node.GetUnit()) : new TargetWrapper(point));
+			base.SelectedTarget = (flag ? new TargetWrapper(node.GetUnit()) : new TargetWrapper(point));
 		}
 		return base.SelectedTarget;
 	}
@@ -139,7 +145,10 @@ public class AOETargetSelector : AbilityTargetSelector
 			}
 			if (flag)
 			{
-				hashSet.Add(intendedTarget.Node);
+				if (AbilityInfo.ability.CanTargetFromNode(casterNode, intendedTarget.Node, new TargetWrapper(intendedTarget.Entity), out var _, out var _))
+				{
+					hashSet.Add(intendedTarget.Node);
+				}
 				continue;
 			}
 			for (int i = AbilityInfo.patternBounds.xmin; i <= AbilityInfo.patternBounds.xmax; i++)
@@ -192,9 +201,9 @@ public class AOETargetSelector : AbilityTargetSelector
 		return context.HatedTargets;
 	}
 
-	private void GatherAffectedTargets(CustomGridNodeBase castNode, CustomGridNodeBase targetNode, in List<MechanicEntity> abilityTargets)
+	private void GatherAffectedTargets(CustomGridNodeBase castNode, TargetWrapper targetWrapper, in List<MechanicEntity> abilityTargets)
 	{
-		if (!AbilityInfo.ability.CanTargetFromNode(castNode, targetNode, new TargetWrapper(targetNode.Vector3Position), out var _, out var _))
+		if (!AbilityInfo.ability.CanTargetFromNode(castNode, targetWrapper.NearestNode, targetWrapper, out var _, out var _))
 		{
 			return;
 		}
@@ -203,7 +212,7 @@ public class AOETargetSelector : AbilityTargetSelector
 		{
 			return;
 		}
-		foreach (CustomGridNodeBase node in patternProvider.GetOrientedPattern(AbilityInfo, castNode, targetNode, coveredTargetsOnly: true).Nodes)
+		foreach (CustomGridNodeBase node in patternProvider.GetOrientedPattern(AbilityInfo, castNode, targetWrapper.NearestNode, coveredTargetsOnly: true).Nodes)
 		{
 			if (node.TryGetUnit(out var unit))
 			{

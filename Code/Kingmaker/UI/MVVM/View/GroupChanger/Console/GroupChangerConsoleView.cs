@@ -4,7 +4,9 @@ using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using Owlcat.Runtime.UniRx;
 using Rewired;
+using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.GroupChanger.Console;
@@ -38,14 +40,14 @@ public class GroupChangerConsoleView : GroupChangerBaseView, IConsoleNavigationO
 
 	private void CreateNavigation()
 	{
-		if (m_RemoteCharacterViews.Count <= 6)
+		if (RemoteCharacterViews.Count <= 6)
 		{
-			m_NavigationBehaviour.AddRow(m_RemoteCharacterViews);
+			m_NavigationBehaviour.AddRow(RemoteCharacterViews);
 		}
 		else
 		{
-			m_NavigationBehaviour.AddRow(m_RemoteCharacterViews.GetRange(0, 6));
-			m_NavigationBehaviour.AddRow(m_RemoteCharacterViews.GetRange(6, m_RemoteCharacterViews.Count - 6));
+			m_NavigationBehaviour.AddRow(RemoteCharacterViews.GetRange(0, 6));
+			m_NavigationBehaviour.AddRow(RemoteCharacterViews.GetRange(6, RemoteCharacterViews.Count - 6));
 		}
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
 	}
@@ -56,12 +58,12 @@ public class GroupChangerConsoleView : GroupChangerBaseView, IConsoleNavigationO
 		{
 			ContextName = "GroupChanger"
 		}, null, leftStick: true, rightStick: true);
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
-		{
-			OnCancel();
-		}, 9), UIStrings.Instance.CommonTexts.Cancel));
 		if (UINetUtility.IsControlMainCharacter())
 		{
+			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
+			{
+				OnCancel();
+			}, 9, base.ViewModel.CloseActionsIsSame.Not().And(base.ViewModel.CloseEnabled).ToReactiveProperty()), UIStrings.Instance.CommonTexts.Cancel));
 			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 			{
 				OnAccept();

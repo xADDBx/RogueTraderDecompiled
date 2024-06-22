@@ -27,7 +27,7 @@ public class ContextActionRotate : ContextAction
 		return $"Rotate target on {Angle} degrees to the {m_Direction}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity is BaseUnitEntity baseUnitEntity)
 		{

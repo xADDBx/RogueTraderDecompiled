@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -64,7 +65,7 @@ public class VendorCargoSlotView : VirtualListElementViewBase<CargoSlotVM>, IHas
 		}));
 		AddDisposable(base.ViewModel.TotalFillValue.Subscribe(delegate(int value)
 		{
-			m_FillValue.text = $"{value}%";
+			m_FillValue.text = UIConfig.Instance.PercentHelper.AddPercentTo(value);
 			AvailableToSellOrNot();
 		}));
 		AddDisposable(m_MainButton.OnHoverAsObservable().Subscribe(ShowInteractableCubeSize));

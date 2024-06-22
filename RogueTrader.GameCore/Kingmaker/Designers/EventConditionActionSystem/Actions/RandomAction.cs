@@ -21,7 +21,7 @@ public class RandomAction : GameAction
 		return $"Random action ({Actions.EmptyIfNull().Count()} variants)";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ActionAndWeight[] array = (from a in Actions.EmptyIfNull()
 			where a.Conditions.Check()

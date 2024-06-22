@@ -355,6 +355,9 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public readonly HashSet<BlueprintItem> ItemsToCargo = new HashSet<BlueprintItem>();
 
 	[JsonProperty]
+	private readonly Dictionary<BlueprintDlc, bool> m_StartNewGameAdditionalContentDlcStatus = new Dictionary<BlueprintDlc, bool>();
+
+	[JsonProperty]
 	public readonly List<BlueprintDlcReward> UsedDlcRewards = new List<BlueprintDlcReward>();
 
 	[JsonProperty]
@@ -441,6 +444,8 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public UnitReference MainCharacter { get; private set; }
 
 	public BaseUnitEntity MainCharacterEntity => MainCharacter.Entity.ToBaseUnitEntity();
+
+	public UnitReference MainCharacterBeforeChange { get; private set; }
 
 	[JsonProperty]
 	public int MythicExperience { get; private set; }
@@ -587,7 +592,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 		}
 	}
 
-	public BlueprintCampaign Campaign => SimpleBlueprintExtendAsObject.Or(StartPreset, null)?.CampaignDlc?.Campaign;
+	public BlueprintCampaign Campaign => SimpleBlueprintExtendAsObject.Or(StartPreset, null)?.Campaign;
 
 	public UnlockableFlagsManager UnlockableFlags => m_UnlockableFlags;
 
@@ -831,6 +836,19 @@ public sealed class Player : Entity, IDisposable, IHashable
 				h.HandleAddCompanion();
 			}, isCheckRuntime: true);
 		}
+		MainCharacter = unit.FromAbstractUnitEntity();
+		m_CharacterListsValid = false;
+		MainCharacter.Entity.ToAbstractUnitEntity().GetOrCreate<UnitPartMainCharacter>();
+		MainCharacterBeforeChange = MainCharacter;
+	}
+
+	public void SetCompanionToMainCharacter(BaseUnitEntity unit)
+	{
+		if (MainCharacter != null && MainCharacterEntity != null)
+		{
+			MainCharacterEntity.Remove<UnitPartMainCharacter>();
+		}
+		unit?.GetOrCreate<UnitPartCompanion>().SetState(CompanionState.InParty);
 		MainCharacter = unit.FromAbstractUnitEntity();
 		m_CharacterListsValid = false;
 		MainCharacter.Entity.ToAbstractUnitEntity().GetOrCreate<UnitPartMainCharacter>();
@@ -1431,6 +1449,19 @@ public sealed class Player : Entity, IDisposable, IHashable
 		}
 	}
 
+	public void UpdateAdditionalContentDlcStatus(BlueprintDlc dlc, bool status)
+	{
+		if (!m_StartNewGameAdditionalContentDlcStatus.TryAdd(dlc, status))
+		{
+			m_StartNewGameAdditionalContentDlcStatus[dlc] = status;
+		}
+	}
+
+	public bool GetAdditionalContentDlcStatus(BlueprintDlc dlc)
+	{
+		return m_StartNewGameAdditionalContentDlcStatus.GetValueOrDefault(dlc, defaultValue: false);
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -1658,13 +1689,29 @@ public sealed class Player : Entity, IDisposable, IHashable
 			}
 			result.Append(num3);
 		}
+		Dictionary<BlueprintDlc, bool> startNewGameAdditionalContentDlcStatus = m_StartNewGameAdditionalContentDlcStatus;
+		if (startNewGameAdditionalContentDlcStatus != null)
+		{
+			int val55 = 0;
+			foreach (KeyValuePair<BlueprintDlc, bool> item7 in startNewGameAdditionalContentDlcStatus)
+			{
+				Hash128 hash4 = default(Hash128);
+				Hash128 val56 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item7.Key);
+				hash4.Append(ref val56);
+				bool obj8 = item7.Value;
+				Hash128 val57 = UnmanagedHasher<bool>.GetHash128(ref obj8);
+				hash4.Append(ref val57);
+				val55 ^= hash4.GetHashCode();
+			}
+			result.Append(ref val55);
+		}
 		List<BlueprintDlcReward> usedDlcRewards = UsedDlcRewards;
 		if (usedDlcRewards != null)
 		{
 			for (int num4 = 0; num4 < usedDlcRewards.Count; num4++)
 			{
-				Hash128 val55 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(usedDlcRewards[num4]);
-				result.Append(ref val55);
+				Hash128 val58 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(usedDlcRewards[num4]);
+				result.Append(ref val58);
 			}
 		}
 		List<BlueprintDlcReward> claimedDlcRewards = ClaimedDlcRewards;
@@ -1672,44 +1719,44 @@ public sealed class Player : Entity, IDisposable, IHashable
 		{
 			for (int num5 = 0; num5 < claimedDlcRewards.Count; num5++)
 			{
-				Hash128 val56 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(claimedDlcRewards[num5]);
-				result.Append(ref val56);
+				Hash128 val59 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(claimedDlcRewards[num5]);
+				result.Append(ref val59);
 			}
 		}
 		HashSet<BlueprintCampaign> importedCampaigns = ImportedCampaigns;
 		if (importedCampaigns != null)
 		{
 			int num6 = 0;
-			foreach (BlueprintCampaign item7 in importedCampaigns)
+			foreach (BlueprintCampaign item8 in importedCampaigns)
 			{
-				num6 ^= Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item7).GetHashCode();
+				num6 ^= Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item8).GetHashCode();
 			}
 			result.Append(num6);
 		}
 		Dictionary<BlueprintCampaign, CampaignImportSettings> campaignsToOfferImport = CampaignsToOfferImport;
 		if (campaignsToOfferImport != null)
 		{
-			int val57 = 0;
-			foreach (KeyValuePair<BlueprintCampaign, CampaignImportSettings> item8 in campaignsToOfferImport)
+			int val60 = 0;
+			foreach (KeyValuePair<BlueprintCampaign, CampaignImportSettings> item9 in campaignsToOfferImport)
 			{
-				Hash128 hash4 = default(Hash128);
-				Hash128 val58 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item8.Key);
-				hash4.Append(ref val58);
-				Hash128 val59 = ClassHasher<CampaignImportSettings>.GetHash128(item8.Value);
-				hash4.Append(ref val59);
-				val57 ^= hash4.GetHashCode();
+				Hash128 hash5 = default(Hash128);
+				Hash128 val61 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item9.Key);
+				hash5.Append(ref val61);
+				Hash128 val62 = ClassHasher<CampaignImportSettings>.GetHash128(item9.Value);
+				hash5.Append(ref val62);
+				val60 ^= hash5.GetHashCode();
 			}
-			result.Append(ref val57);
+			result.Append(ref val60);
 		}
-		Hash128 val60 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
-		result.Append(ref val60);
+		Hash128 val63 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
+		result.Append(ref val63);
 		List<string> brokenEntities = BrokenEntities;
 		if (brokenEntities != null)
 		{
 			for (int num7 = 0; num7 < brokenEntities.Count; num7++)
 			{
-				Hash128 val61 = StringHasher.GetHash128(brokenEntities[num7]);
-				result.Append(ref val61);
+				Hash128 val64 = StringHasher.GetHash128(brokenEntities[num7]);
+				result.Append(ref val64);
 			}
 		}
 		return result;

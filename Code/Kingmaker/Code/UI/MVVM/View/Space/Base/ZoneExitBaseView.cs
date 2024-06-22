@@ -1,7 +1,9 @@
 using Kingmaker.Code.UI.MVVM.VM.Space;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.View.Space.Base;
 
@@ -24,7 +26,7 @@ public class ZoneExitBaseView : ViewBase<ZoneExitVM>, IAreaHandler, ISubscriber
 	{
 		if (Game.Instance.Player.IsForceOpenVoidshipUpgrade && base.ViewModel.HasAccessStarshipInventory.Value)
 		{
-			base.ViewModel.OpenShipCustomization();
+			DelayedInvoker.InvokeWhenTrue(base.ViewModel.OpenShipCustomization, () => !LoadingProcess.Instance.IsLoadingScreenActive);
 			Game.Instance.Player.IsForceOpenVoidshipUpgrade = false;
 		}
 	}

@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Controllers.Dialog;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -78,21 +79,23 @@ public class BookEventConsoleView : BookEventBaseView
 		m_GlossaryDisposable = null;
 	}
 
-	protected override void CreateInputImpl(InputLayer inputLayer)
+	protected override void CreateInputImpl(InputLayer inputLayer, GridConsoleNavigationBehaviour behaviour)
 	{
-		base.CreateInputImpl(inputLayer);
+		base.CreateInputImpl(inputLayer, behaviour);
 		AddDisposable(m_GlossaryNavigationBehavior = new FloatConsoleNavigationBehaviour(m_NavigationParameters));
 		m_GlossaryInputLayer = m_GlossaryNavigationBehavior.GetInputLayer(new InputLayer
 		{
 			ContextName = "DialogGlossary"
 		});
 		AddDisposable(m_GlossaryNavigationBehavior.DeepestFocusAsObservable.Subscribe(OnGlossaryFocusChanged));
+		AddDisposable(behaviour.Focus.Subscribe(ScrollMenu));
 		AddDisposable(m_ConsoleHintsWidget.BindHint(Layer.AddButton(ShowGlossary, 11, m_HasGlossaryPoints.And(m_VotesMode.Not()).ToReactiveProperty()), UIStrings.Instance.Dialog.OpenGlossary));
 		AddDisposable(m_ConsoleHintsWidget.BindHint(m_GlossaryInputLayer.AddButton(CloseGlossary, 9, m_GlossaryMode.And(m_VotesMode.Not()).ToReactiveProperty()), UIStrings.Instance.Dialog.CloseGlossary));
 		AddDisposable(m_ConsoleHintsWidget.BindHint(Layer.AddButton(delegate
 		{
 			ShowVotes();
 		}, 19, m_VotesMode.Not().And(VotesIsActive).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.Dialog.ShowVotes));
+		AddDisposable(Layer.AddButton(OnShowEscMenu, 16, InputActionEventType.ButtonJustReleased));
 		AddVotesInput();
 	}
 
@@ -286,6 +289,22 @@ public class BookEventConsoleView : BookEventBaseView
 		if (num)
 		{
 			action();
+		}
+	}
+
+	public void OnShowEscMenu(InputActionEventData data)
+	{
+		EventBus.RaiseEvent(delegate(IEscMenuHandler h)
+		{
+			h.HandleOpen();
+		});
+	}
+
+	private void ScrollMenu(IConsoleEntity entity)
+	{
+		if (entity is MonoBehaviour monoBehaviour)
+		{
+			m_AnswersScrollRect.EnsureVisibleVertical(monoBehaviour.transform as RectTransform, 50f, smoothly: false, needPinch: false);
 		}
 	}
 }

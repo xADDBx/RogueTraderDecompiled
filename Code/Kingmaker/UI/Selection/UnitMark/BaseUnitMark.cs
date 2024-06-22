@@ -11,6 +11,7 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.Core.Registry;
 using Owlcat.Runtime.Core.Updatables;
@@ -19,7 +20,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Selection.UnitMark;
 
-public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, IUnitSizeHandler<EntitySubscriber>, IUnitSizeHandler, ISubscriber<IMechanicEntity>, IEntitySubscriber, IEventTag<IUnitSizeHandler, EntitySubscriber>, IDialogCueHandler, IUnitHighlightUIHandler, IInteractionHighlightUIHandler, IGameModeHandler, ITurnStartHandler, IInterruptTurnStartHandler, ITurnBasedModeResumeHandler, IUIVisibilityHandler, ILateUpdatable, IDialogFinishHandler
+public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, IUnitSizeHandler<EntitySubscriber>, IUnitSizeHandler, ISubscriber<IMechanicEntity>, IEntitySubscriber, IEventTag<IUnitSizeHandler, EntitySubscriber>, IDialogCueHandler, IUnitHighlightUIHandler, IInteractionHighlightUIHandler, IGameModeHandler, ITurnStartHandler, IInterruptTurnStartHandler, ITurnBasedModeResumeHandler, IUIVisibilityHandler, ILateUpdatable, IDialogFinishHandler, IAbilityTargetSelectionUIHandler
 {
 	private static readonly int _Color = Shader.PropertyToID("_BaseColor");
 
@@ -41,7 +42,7 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 		Unit = unit;
 		if (Math.Abs(unit.Corpulence) < Mathf.Epsilon)
 		{
-			PFLog.Default.Log("Non initialized unit: " + unit, unit.View);
+			PFLog.UI.Log("Non initialized unit: " + unit, unit.View);
 		}
 		HandleStateChanged();
 		UpdateUnitCurrentTurnState();
@@ -146,7 +147,7 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 		UpdateUnitCurrentTurnState();
 	}
 
-	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn()
+	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateUnitCurrentTurnState();
 	}
@@ -184,6 +185,10 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 	{
 		HandleStateChanged();
 	}
+
+	public abstract void HandleAbilityTargetSelectionStart(AbilityData ability);
+
+	public abstract void HandleAbilityTargetSelectionEnd(AbilityData ability);
 
 	public virtual void SetGamepadSelected(bool selected)
 	{

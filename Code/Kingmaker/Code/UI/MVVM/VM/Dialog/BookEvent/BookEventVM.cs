@@ -72,6 +72,13 @@ public class BookEventVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		}));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		ClearAnswers();
+		ClearCues();
+		ClearHistoryCues();
+	}
+
 	private void OnUpdate()
 	{
 		if (m_PlayingVoiceOver == null || m_PlayingVoiceOver.IsEnded)
@@ -168,13 +175,6 @@ public class BookEventVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 	private void SetMirror(BlueprintBookPage page)
 	{
 		Mirror.Value = Game.Instance.Player.MainCharacterEntity.Portrait.FullLengthPortrait;
-	}
-
-	protected override void DisposeImplementation()
-	{
-		ClearAnswers();
-		ClearCues();
-		ClearHistoryCues();
 	}
 
 	public void HandleOnBookPageShow(BlueprintBookPage page, List<CueShowData> cues, List<BlueprintAnswer> answers)

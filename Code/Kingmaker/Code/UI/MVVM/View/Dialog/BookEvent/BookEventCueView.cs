@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Common.DebugInformation;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -13,7 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.Dialog.BookEvent;
 
-public class BookEventCueView : ViewBase<CueVM>
+public class BookEventCueView : ViewBase<CueVM>, IHasBlueprintInfo
 {
 	[Serializable]
 	public class BookEventCueStyle
@@ -89,6 +91,8 @@ public class BookEventCueView : ViewBase<CueVM>
 
 	public List<SkillCheckResult> SkillChecks => base.ViewModel?.SkillChecks;
 
+	public BlueprintScriptableObject Blueprint => base.ViewModel?.BlueprintCue;
+
 	public void Initialize(Action destroyAction, DialogColors dialogColors)
 	{
 		m_DestroyAction = destroyAction;
@@ -109,6 +113,12 @@ public class BookEventCueView : ViewBase<CueVM>
 		AddDisposable(m_Text.SetLinkTooltip(null, base.ViewModel.SkillChecks, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		m_DestroyAction?.Invoke();
+	}
+
 	public void SetText(string text)
 	{
 		m_Text.text = text;
@@ -124,11 +134,5 @@ public class BookEventCueView : ViewBase<CueVM>
 	public void Shade()
 	{
 		m_ShadeText.ApplyStyleTo(m_Text, SettingsRoot.Accessiability.FontSizeMultiplier);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		m_DestroyAction?.Invoke();
 	}
 }

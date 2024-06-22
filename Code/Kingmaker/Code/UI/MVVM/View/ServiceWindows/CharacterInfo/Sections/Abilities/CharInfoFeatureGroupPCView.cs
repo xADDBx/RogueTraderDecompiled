@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UnityEngine;
 
@@ -17,14 +18,17 @@ public class CharInfoFeatureGroupPCView : ViewBase<CharInfoFeatureGroupVM>, IWid
 	protected WidgetListMVVM m_WidgetList;
 
 	[SerializeField]
-	private CharInfoFeatureBaseView m_WidgetEntityView;
+	private CharInfoFeatureSimpleBaseView m_WidgetEntityView;
 
 	[SerializeField]
 	protected ExpandableCollapseMultiButtonPC m_ExpandableElement;
 
+	[SerializeField]
+	protected CharInfoFeatureGroupVM.FeatureGroupType m_GroupType;
+
 	private AccessibilityTextHelper m_TextHelper;
 
-	public bool IsEmpty => base.ViewModel.IsEmpty;
+	public bool IsEmpty => base.ViewModel?.IsEmpty ?? true;
 
 	public MonoBehaviour MonoBehaviour => this;
 
@@ -34,13 +38,15 @@ public class CharInfoFeatureGroupPCView : ViewBase<CharInfoFeatureGroupVM>, IWid
 		{
 			m_TextHelper = new AccessibilityTextHelper(m_Label);
 		}
-		base.gameObject.SetActive(!base.ViewModel.IsEmpty);
-		if (!base.ViewModel.IsEmpty)
+		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+		{
+			base.gameObject.SetActive(!IsEmpty);
+		});
+		if (!IsEmpty)
 		{
 			SetupLabel();
 			DrawEntities();
 			m_TextHelper.UpdateTextSize();
-			_ = base.ViewModel.TooltipKey;
 		}
 	}
 
@@ -74,6 +80,10 @@ public class CharInfoFeatureGroupPCView : ViewBase<CharInfoFeatureGroupVM>, IWid
 
 	public bool CheckType(IViewModel viewModel)
 	{
-		return viewModel is CharInfoFeatureGroupVM;
+		if (viewModel is CharInfoFeatureGroupVM charInfoFeatureGroupVM)
+		{
+			return charInfoFeatureGroupVM.GroupType == m_GroupType;
+		}
+		return false;
 	}
 }

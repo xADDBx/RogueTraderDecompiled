@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.View.Equipment;
 using Kingmaker.View.Mechadendrites;
+using Kingmaker.Visual.OcclusionGeometryClip;
 
 namespace Kingmaker.View.Mechanics.Entities;
 
+[KnowledgeDatabaseID("6d7bfae7c43946179659fed18d0333c5")]
 public sealed class LightweightUnitEntityView : AbstractUnitEntityView
 {
 	private List<ItemEntity> m_Mechadendrites = new List<ItemEntity>();
@@ -34,6 +37,10 @@ public sealed class LightweightUnitEntityView : AbstractUnitEntityView
 			foreach (MechadendriteSettings settings in componentsInChildren)
 			{
 				orCreate.RegisterMechadendrite(settings);
+			}
+			if (!TryGetComponent<OcclusionGeometryClipEntityProxy>(out var _))
+			{
+				base.gameObject.AddComponent<OcclusionGeometryClipEntityProxy>();
 			}
 		}
 	}

@@ -24,8 +24,8 @@ public class CheckBlueprintGetter : MechanicEntityPropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return string.Format("CurrentEntity BP is {0}", (Blueprint != null) ? ((object)Blueprint) : ((object)"<null>"));
+		return string.Format("{0} BP is {1}", FormulaTargetScope.Current, (Blueprint != null) ? ((object)Blueprint) : ((object)"<null>"));
 	}
 }

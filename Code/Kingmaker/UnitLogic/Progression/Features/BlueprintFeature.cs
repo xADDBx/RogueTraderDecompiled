@@ -12,6 +12,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Obsolete;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Prerequisites;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Selection;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using MemoryPack;
@@ -57,10 +58,27 @@ public class BlueprintFeature : BlueprintFeatureBase, IFeatureSelectionItem, IUI
 
 	public List<FeatureType> FeatureTypes = new List<FeatureType>();
 
+	public TalentIconInfo TalentIconInfo = new TalentIconInfo();
+
 	[SerializeField]
 	private LocalizedString m_Acronym;
 
 	public bool ShowInDialogue;
+
+	public bool IsStarshipFeature;
+
+	public string ForceSetNameForItemTooltip
+	{
+		get
+		{
+			AddForceSetName component = this.GetComponent<AddForceSetName>();
+			if (component != null)
+			{
+				return component.ForceName;
+			}
+			return string.Empty;
+		}
+	}
 
 	FeatureParam IFeatureSelectionItem.Param => null;
 

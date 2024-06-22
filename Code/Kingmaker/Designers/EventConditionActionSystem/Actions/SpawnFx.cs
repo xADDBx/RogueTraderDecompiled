@@ -17,7 +17,7 @@ public class SpawnFx : GameAction
 
 	public GameObject FxPrefab;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)Target)
 		{

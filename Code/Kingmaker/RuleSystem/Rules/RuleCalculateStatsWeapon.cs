@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Ecnchantments;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem;
@@ -16,6 +17,7 @@ using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components.ProjectileAttack;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility.DotNetExtensions;
@@ -118,23 +120,33 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		if (base.Initiator != Weapon?.Wielder)
-		{
-			ApplyEnchantmentsManually();
-		}
+		TryApplyEnchantmentsManually();
 		ItemEntityWeapon weapon = Weapon;
 		if (weapon != null && weapon.Blueprint.AttackType == AttackType.Melee)
 		{
 			AbilityData ability = Ability;
-			if ((object)ability != null && ability.Blueprint.IsWeaponAbility && !(base.Reason.Fact is Buff))
+			if ((object)ability != null && ability.Blueprint.IsWeaponAbility)
 			{
-				DamageBonusAttribute = MeleeDamageStat;
+				goto IL_0091;
 			}
 		}
+		AbilityData ability2 = Ability;
+		if ((object)ability2 != null && ability2.Blueprint?.GetComponent<FakeAttackType>()?.CountAsMelee == true)
+		{
+			goto IL_0091;
+		}
+		goto IL_00b8;
+		IL_0091:
+		if (!(base.Reason.Fact is Buff))
+		{
+			DamageBonusAttribute = MeleeDamageStat;
+		}
+		goto IL_00b8;
+		IL_00b8:
 		if (Ability != null)
 		{
-			AbilityData ability2 = Ability;
-			if ((object)ability2 != null && ability2.Blueprint.IsWeaponAbility)
+			AbilityData ability3 = Ability;
+			if ((object)ability3 != null && ability3.Blueprint.IsWeaponAbility)
 			{
 				ItemEntityWeapon weapon2 = Weapon;
 				if (weapon2 != null && weapon2.Blueprint.AttackType == AttackType.Ranged && Ability.IsAOE && !(Ability.Blueprint.PatternSettings is ScatterPattern) && !(base.Reason.Fact is Buff))
@@ -179,15 +191,32 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 		}
 	}
 
-	private void ApplyEnchantmentsManually()
+	private void TryApplyEnchantmentsManually()
 	{
-		if (Weapon == null)
+		if (Weapon != null && base.Initiator != Weapon.Wielder)
+		{
+			foreach (ItemEnchantment enchantment in Weapon.Enchantments)
+			{
+				enchantment.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsWeapon> c)
+				{
+					try
+					{
+						c.OnEventAboutToTrigger(this);
+					}
+					catch (Exception ex2)
+					{
+						PFLog.Default.Exception(ex2);
+					}
+				});
+			}
+		}
+		if (base.ConcreteInitiator.Buffs.IsSubscribedOnEventBus)
 		{
 			return;
 		}
-		foreach (ItemEnchantment enchantment in Weapon.Enchantments)
+		foreach (Buff rawFact in base.ConcreteInitiator.Buffs.RawFacts)
 		{
-			enchantment.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsWeapon> c)
+			rawFact.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsWeapon> c)
 			{
 				try
 				{

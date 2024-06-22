@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Projectiles;
+using Kingmaker.ElementsSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -20,13 +21,13 @@ public class ContextActionProjectileFx : ContextAction
 		return "Spawn Projectile FX: " + ((Projectile != null) ? Projectile.name : "unspecified");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!base.Context.DisableFx)
 		{
 			if (base.Context.MaybeCaster == null)
 			{
-				PFLog.Default.Error(this, "Caster is missing");
+				Element.LogError(this, "Caster is missing");
 			}
 			else
 			{

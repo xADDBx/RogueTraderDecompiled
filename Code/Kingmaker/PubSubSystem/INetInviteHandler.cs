@@ -6,4 +6,6 @@ namespace Kingmaker.PubSubSystem;
 public interface INetInviteHandler : ISubscriber
 {
 	void HandleInvite(Action<bool> callback);
+
+	void HandleInviteAccepted(bool accepted);
 }

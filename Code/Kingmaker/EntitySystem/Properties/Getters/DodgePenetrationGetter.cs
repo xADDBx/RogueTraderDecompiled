@@ -37,8 +37,12 @@ public class DodgePenetrationGetter : MechanicEntityPropertyGetter, PropertyCont
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Dodge Penetration";
+		if (NoTarget)
+		{
+			return "Dodge Penetration of " + FormulaTargetScope.Current + " against abstract target";
+		}
+		return "Dodge Penetration of " + FormulaTargetScope.Current + " against " + Target.Colorized();
 	}
 }

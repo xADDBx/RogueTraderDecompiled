@@ -21,7 +21,7 @@ public class ClearVendorTable : GameAction
 		return $"Clear vendor table: {Table}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.SharedVendorTables.GetCollection(Table).RemoveAll();
 	}

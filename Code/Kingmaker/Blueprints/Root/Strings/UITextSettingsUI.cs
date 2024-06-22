@@ -115,4 +115,10 @@ public class UITextSettingsUI
 	public LocalizedString DeleteStatisticsData;
 
 	public LocalizedString DeleteStatisticsDataDialogue;
+
+	public LocalizedString AreYouSureSwitchOnGrimDarkness;
+
+	public LocalizedString GrimDaknessSettingsWarning;
+
+	public LocalizedString AreYouSureSwitchOffGrimDarkness;
 }

@@ -181,7 +181,11 @@ public class UITextCharSheet
 
 	public LocalizedString CareerUpgradeHeader;
 
+	public LocalizedString ShipCareerUpgradeHeader;
+
 	public LocalizedString CareerUpgradeDescription;
+
+	public LocalizedString ShipCareerUpgradeDescription;
 
 	public LocalizedString CareerUpgradedDescription;
 
@@ -262,6 +266,14 @@ public class UITextCharSheet
 	public LocalizedString NoFeaturesInFilter;
 
 	public LocalizedString AlreadyInLevelUp;
+
+	public LocalizedString ShowUnitPanel;
+
+	public LocalizedString ShowTooltip;
+
+	public LocalizedString ShowUnavailableFeatures;
+
+	public LocalizedString HideUnavailableFeatures;
 
 	[Header("Feature Groups")]
 	public LocalizedString AttributeFeatureGroupLabel;
@@ -406,6 +418,8 @@ public class UITextCharSheet
 
 	public LocalizedString VisualSettingsShowHelmet;
 
+	public LocalizedString VisualSettingsShowHelmetAboveAll;
+
 	public LocalizedString VisualSettingsShowBackpack;
 
 	public LocalizedString VisualSettingsShowCloth;
@@ -436,6 +450,10 @@ public class UITextCharSheet
 	public LocalizedString OriginFilterHint;
 
 	public LocalizedString WarpFilterHint;
+
+	public LocalizedString ShowUnavailableFeaturesHint;
+
+	public LocalizedString HideUnavailableFeaturesHint;
 
 	public string GetMenuLabel(CharInfoPageType pageType)
 	{
@@ -495,6 +513,7 @@ public class UITextCharSheet
 			FeatureGroup.CommonTalent => CommonTalentFeatureGroupLabel, 
 			FeatureGroup.BackgroundFeature => BackgroundAbilityFeatureGroupLabel, 
 			FeatureGroup.UltimateAbility => UltimateAbilityFeatureGroupLabel, 
+			FeatureGroup.ShipTotalAbility => ActiveAbilityFeatureGroupLabel, 
 			_ => throw new ArgumentOutOfRangeException("featureGroup", featureGroup, "GetFeatureGroupLabel"), 
 		};
 	}
@@ -535,6 +554,7 @@ public class UITextCharSheet
 			FeatureGroup.AdvancedAbility => canChoose ? ChooseAdvancedAbilityGroupHint : ActiveAdvancedAbilityGroupHint, 
 			FeatureGroup.ShipActiveAbility => canChoose ? ChooseShipActiveAbilityGroupHint : ActiveShipActiveAbilityGroupHint, 
 			FeatureGroup.ShipUltimateAbility => canChoose ? ChooseShipUltimateAbilityGroupHint : ActiveShipUltimateAbilityGroupHint, 
+			FeatureGroup.ShipTotalAbility => canChoose ? ChooseShipUpgradeGroupHint : ActiveShipUpgradeGroupHint, 
 			_ => string.Empty, 
 		};
 	}

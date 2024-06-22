@@ -22,6 +22,10 @@ public interface IInteractionVariantActor
 
 	StatType Skill { get; }
 
+	bool CheckOnlyOnce { get; }
+
+	bool CanUse { get; }
+
 	[CanBeNull]
 	string GetInteractionName();
 

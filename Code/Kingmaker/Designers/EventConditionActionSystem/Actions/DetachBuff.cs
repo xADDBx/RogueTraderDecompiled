@@ -29,7 +29,7 @@ public class DetachBuff : GameAction
 		return $"Снимает бафф {Buff} с цели {Target}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		GameHelper.RemoveBuff(Target.GetValue(), Buff);
 	}

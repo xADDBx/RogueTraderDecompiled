@@ -22,7 +22,7 @@ public class AbilityRestrictionStrategist : BlueprintComponent, IAbilityRestrict
 	public bool IsAbilityRestrictionPassed(AbilityData ability)
 	{
 		PartyStrategistManager strategistManager = Game.Instance.Player.StrategistManager;
-		if (Game.Instance.TurnController.CombatRound < 2 && !strategistManager.IsAlreadyCastedThisTurn(ability))
+		if (strategistManager.AllowFirstRoundRule && Game.Instance.TurnController.CombatRound < 2 && !strategistManager.IsAlreadyCastedThisTurn(ability))
 		{
 			return true;
 		}

@@ -6,6 +6,8 @@ public interface IDlcStore
 
 	bool AllowsPurchase { get; }
 
+	bool ComingSoon { get; }
+
 	IDLCStatus GetStatus();
 
 	bool OpenShop();

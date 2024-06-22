@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
@@ -9,7 +11,8 @@ namespace Kingmaker.DLC;
 [TypeId("fd601a0246034ca38414c127dbcc65ea")]
 public class DlcStoreCheat : DlcStore
 {
-	private static readonly Dictionary<IBlueprintDlc, DLCStatus> OverrideDlcStates = new Dictionary<IBlueprintDlc, DLCStatus>();
+	[SerializeField]
+	private string m_TestShopLink = "https://roguetrader.owlcat.games/";
 
 	[SerializeField]
 	[Tooltip("Is the DLC available in editor playmode")]
@@ -19,57 +22,74 @@ public class DlcStoreCheat : DlcStore
 	[Tooltip("Is the DLC available in development build")]
 	private bool m_IsAvailableInDevBuild;
 
+	private static Dictionary<string, bool> s_OverrideEnable = new Dictionary<string, bool>();
+
 	public bool IsAvailableInEditor => m_IsAvailableInEditor;
 
 	public bool IsAvailableInDevBuild => m_IsAvailableInDevBuild;
 
 	public override bool IsSuitable => GetStatus() != null;
 
-	public static void EnableDlc(IBlueprintDlc dlc)
-	{
-		OverrideDlcState(dlc, isEnabled: true);
-	}
-
-	public static void DisableDlc(IBlueprintDlc dlc)
-	{
-		OverrideDlcState(dlc, isEnabled: false);
-	}
-
-	private static void OverrideDlcState(IBlueprintDlc dlc, bool isEnabled)
-	{
-		DLCStatus value = new DLCStatus
-		{
-			Purchased = true,
-			DownloadState = DownloadState.Loaded,
-			IsMounted = true,
-			IsEnabled = isEnabled
-		};
-		if (!OverrideDlcStates.ContainsKey(dlc))
-		{
-			OverrideDlcStates.Add(dlc, value);
-		}
-		else
-		{
-			OverrideDlcStates[dlc] = value;
-		}
-	}
+	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on StoreCheat.";
 
 	public override IDLCStatus GetStatus()
 	{
-		bool flag = false;
-		if (!(base.OwnerBlueprint is IBlueprintDlc key) || !OverrideDlcStates.TryGetValue(key, out var value))
+		_ = (base.OwnerBlueprint as IBlueprintDlc)?.DlcType ?? DlcTypeEnum.CosmeticDlc;
+		if (0 == 0)
 		{
-			if (!flag)
-			{
-				return null;
-			}
-			return DLCStatus.Available;
+			return null;
 		}
-		return value;
+		return DLCStatus.Available;
+	}
+
+	public override bool OpenShop()
+	{
+		bool result = false;
+		if (!IsSuitable)
+		{
+			return false;
+		}
+		try
+		{
+			Application.OpenURL(m_TestShopLink);
+			result = true;
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Exception(ex, ExceptionMessage);
+		}
+		return result;
 	}
 
 	public override bool Mount()
 	{
 		return false;
+	}
+
+	public static void EnableDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null && !string.IsNullOrEmpty(dlc.AssetGuid) && !s_OverrideEnable.TryAdd(dlc.AssetGuid, value: true))
+		{
+			s_OverrideEnable[dlc.AssetGuid] = true;
+		}
+	}
+
+	public static void DisableDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null && !string.IsNullOrEmpty(dlc.AssetGuid) && !s_OverrideEnable.TryAdd(dlc.AssetGuid, value: false))
+		{
+			s_OverrideEnable[dlc.AssetGuid] = false;
+		}
+	}
+
+	public static bool TryIsDlcEnable([CanBeNull] BlueprintDlc dlc, out bool result)
+	{
+		result = false;
+		if (dlc == null || string.IsNullOrEmpty(dlc.AssetGuid) || !s_OverrideEnable.ContainsKey(dlc.AssetGuid))
+		{
+			return false;
+		}
+		result = s_OverrideEnable[dlc.AssetGuid];
+		return true;
 	}
 }

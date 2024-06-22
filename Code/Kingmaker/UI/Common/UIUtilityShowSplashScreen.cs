@@ -11,7 +11,7 @@ public static class UIUtilityShowSplashScreen
 	public static void ShowSplashScreen(SplashScreenController.ScreenUnit su, Sequence sequence, GameObject soundGameObject, CanvasGroup additionalCanvasGroup = null)
 	{
 		CanvasGroup cg = su.CanvasGroup;
-		PFLog.Default.Log("SplashScreenController: Activating " + cg.name);
+		PFLog.UI.Log("SplashScreenController: Activating " + cg.name);
 		cg.gameObject.SetActive(value: true);
 		cg.alpha = 0f;
 		sequence.AppendCallback(delegate

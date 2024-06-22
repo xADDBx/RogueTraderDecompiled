@@ -4,9 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Loot;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
@@ -23,7 +21,7 @@ public class OpenLootContainerWithoutObject : GameAction
 	{
 		private ItemsCollection m_Items { get; set; }
 
-		public string Name => ContextData<StarSystemContextData>.Current?.StarSystemObject?.Blueprint.Name;
+		public string Name => Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject?.Blueprint.Name;
 
 		public string Description => null;
 
@@ -37,7 +35,7 @@ public class OpenLootContainerWithoutObject : GameAction
 
 		public LootList(List<LootEntry> loot)
 		{
-			m_Items = new ItemsCollection(ContextData<StarSystemContextData>.Current?.StarSystemObject);
+			m_Items = new ItemsCollection(Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject);
 			foreach (LootEntry item in loot)
 			{
 				m_Items.Add(item.Item, item.Count);
@@ -53,7 +51,7 @@ public class OpenLootContainerWithoutObject : GameAction
 		return "Открывает лут контейнер с заданным списком лута";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		LootList lootList = new LootList(m_ExplorationLoot);
 		LootList[] iLootables = new LootList[1] { lootList };

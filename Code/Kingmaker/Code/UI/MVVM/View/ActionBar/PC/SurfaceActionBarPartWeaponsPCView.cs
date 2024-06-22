@@ -6,6 +6,7 @@ using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -26,13 +27,17 @@ public class SurfaceActionBarPartWeaponsPCView : ViewBase<SurfaceActionBarPartWe
 	private SurfaceActionBarWeaponSetPCView m_WeaponSetPrefab;
 
 	[SerializeField]
+	private OwlcatMultiButton m_ConvertButton;
+
+	[Header("WeaponSets")]
+	[SerializeField]
 	private RectTransform m_WeaponSetsContainer;
 
 	[SerializeField]
 	private MoveAnimator m_WeaponSetsMoveAnimator;
 
 	[SerializeField]
-	private OwlcatMultiButton m_ConvertButton;
+	private FadeAnimator m_WeaponSetsFadeAnimator;
 
 	[Header("Hotkey block")]
 	[SerializeField]
@@ -129,12 +134,14 @@ public class SurfaceActionBarPartWeaponsPCView : ViewBase<SurfaceActionBarPartWe
 		{
 			m_ConvertButton.SetActiveLayer("Active");
 			m_WeaponSetsMoveAnimator.AppearAnimation();
+			m_WeaponSetsFadeAnimator.Or(null)?.AppearAnimation();
 			UISounds.Instance.Sounds.ActionBar.WeaponListOpen.Play();
 		}
 		else
 		{
 			m_ConvertButton.SetActiveLayer("Normal");
 			m_WeaponSetsMoveAnimator.DisappearAnimation();
+			m_WeaponSetsFadeAnimator.Or(null)?.DisappearAnimation();
 			UISounds.Instance.Sounds.ActionBar.WeaponListClose.Play();
 		}
 	}

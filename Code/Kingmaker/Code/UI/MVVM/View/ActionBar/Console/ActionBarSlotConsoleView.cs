@@ -1,4 +1,6 @@
 using Kingmaker.Code.UI.MVVM.VM.ActionBar;
+using Kingmaker.UI.Models.UnitSettings;
+using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
@@ -25,13 +27,18 @@ public class ActionBarSlotConsoleView : ViewBase<ActionBarSlotVM>, IConsoleNavig
 	[SerializeField]
 	private ActionBarConvertedConsoleView m_ConvertedView;
 
+	[SerializeField]
+	private bool m_ShowConvertButton;
+
+	[SerializeField]
+	[ShowIf("m_ShowConvertButton")]
+	private GameObject m_ConvertButton;
+
 	private RectTransform m_RectTransform;
 
 	private CanvasGroup m_CanvasGroup;
 
-	private RectTransform RectTransform => m_RectTransform.Or(null) ?? (m_RectTransform = base.transform as RectTransform);
-
-	private CanvasGroup CanvasGroup => m_CanvasGroup.Or(null) ?? (m_CanvasGroup = base.gameObject.EnsureComponent<CanvasGroup>());
+	public ActionBarConvertedConsoleView ConvertedView => m_ConvertedView;
 
 	protected override void BindViewImplementation()
 	{
@@ -42,7 +49,15 @@ public class ActionBarSlotConsoleView : ViewBase<ActionBarSlotVM>, IConsoleNavig
 		if ((bool)m_ConvertedView)
 		{
 			AddDisposable(base.ViewModel.HasConvert.And(base.ViewModel.IsPossibleActive).Subscribe(m_ConvertedView.gameObject.SetActive));
-			AddDisposable(base.ViewModel.ConvertedVm.Subscribe(m_ConvertedView.Bind));
+			AddDisposable(base.ViewModel.ConvertedVm.Skip(1).Subscribe(delegate(ActionBarConvertedVM vms)
+			{
+				SetFocus(vms == null);
+				m_ConvertedView.Bind(vms);
+			}));
+			AddDisposable(base.ViewModel.HasConvert.Subscribe(delegate(bool value)
+			{
+				m_ConvertButton.Or(null)?.SetActive(value && m_ShowConvertButton);
+			}));
 		}
 	}
 
@@ -86,5 +101,17 @@ public class ActionBarSlotConsoleView : ViewBase<ActionBarSlotVM>, IConsoleNavig
 	public TooltipBaseTemplate TooltipTemplate()
 	{
 		return base.ViewModel.Tooltip.Value;
+	}
+
+	public void ShowConvertRequest()
+	{
+		if (base.ViewModel.MechanicActionBarSlot is MechanicActionBarShipWeaponSlot variantsShipWeaponSlot)
+		{
+			base.ViewModel.OnShowVariantsConvertRequest(variantsShipWeaponSlot);
+		}
+		else
+		{
+			base.ViewModel.OnShowConvertRequest();
+		}
 	}
 }

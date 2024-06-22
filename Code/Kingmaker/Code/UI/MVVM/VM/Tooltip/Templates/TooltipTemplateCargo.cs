@@ -25,13 +25,10 @@ public class TooltipTemplateCargo : TooltipBaseTemplate
 
 	private readonly CargoSlotVM m_CargoSlotVM;
 
-	private readonly bool m_ShowDetailsOnLeftClick;
-
-	public TooltipTemplateCargo(BlueprintCargo blueprintCargo, bool showDetailsOnLeftClick = false)
+	public TooltipTemplateCargo(BlueprintCargo blueprintCargo)
 	{
 		if (blueprintCargo != null)
 		{
-			m_ShowDetailsOnLeftClick = showDetailsOnLeftClick;
 			m_Title = blueprintCargo.Name;
 			m_Description = blueprintCargo.Description;
 			ItemsItemOrigin originType = blueprintCargo.OriginType;
@@ -47,7 +44,7 @@ public class TooltipTemplateCargo : TooltipBaseTemplate
 	}
 
 	public TooltipTemplateCargo(CargoSlotVM cargoSlotVM)
-		: this(cargoSlotVM?.CargoEntity?.Blueprint, showDetailsOnLeftClick: true)
+		: this(cargoSlotVM?.CargoEntity?.Blueprint)
 	{
 		m_CargoSlotVM = cargoSlotVM;
 	}
@@ -79,10 +76,6 @@ public class TooltipTemplateCargo : TooltipBaseTemplate
 			yield return new TooltipBricksGroupStart();
 			yield return new TooltipBrickCargoCapacity(m_CargoSlotVM);
 			yield return new TooltipBricksGroupEnd();
-			if (hasDescription)
-			{
-				yield return new TooltipBrickSpace();
-			}
 		}
 		if (hasDescription)
 		{

@@ -19,7 +19,7 @@ public class ContextActionHealWounds : ContextAction
 		return "Heal Wounds" + (AllowOldWounds ? " [fresh and old]" : " [fresh only]") + (Stacks.IsZero ? " (all stacks)" : $" ({Stacks} stacks)");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		PartHealth partHealth = base.Target.Entity?.GetHealthOptional();
 		if (partHealth != null)

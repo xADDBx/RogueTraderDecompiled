@@ -24,7 +24,7 @@ public class RecalculateColonyResources : GameAction
 		return "For player upgrader only!";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ProfitFactor profitFactor = Game.Instance.Player.ProfitFactor;
 		foreach (ProfitFactorModifier item in profitFactor.GetModifiersByType(ProfitFactorModifierType.ResourceShortage))

@@ -244,6 +244,11 @@ public class CharGenContext : IDisposable, ICharGenDollStateHandler, ISubscriber
 		Doll.SetEquipColors(primaryIndex, secondaryIndex);
 	}
 
+	void ICharGenDollStateHandler.HandleShowCloth(bool showCloth)
+	{
+		Doll.ShowCloth = showCloth;
+	}
+
 	public void Dispose()
 	{
 		LevelUpManager.Value?.Dispose();

@@ -65,4 +65,16 @@ public class SettingsEntityStatisticsOptOutPCView : SettingsEntityView<SettingsE
 	{
 		SetupColor(isHighlighted: false);
 	}
+
+	protected override void UpdateLocalization()
+	{
+		base.UpdateLocalization();
+		SetButtonsTexts();
+	}
+
+	private void SetButtonsTexts()
+	{
+		m_GoToStatisticsButtonLabel.text = UIStrings.Instance.SettingsUI.ShowStatistics;
+		m_DeleteDataButtonLabel.text = UIStrings.Instance.SettingsUI.DeleteStatisticsData;
+	}
 }

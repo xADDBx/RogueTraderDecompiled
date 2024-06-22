@@ -96,9 +96,9 @@ internal readonly struct SurfaceJobDataFactory
 			m_CellUnions.ResizeUninitialized(m_CellsCapacity);
 			m_CellAreaMasks.ResizeUninitialized(m_CellsCapacity);
 			m_ChunkAreaMasks.ResizeUninitialized(m_ChunksCapacity);
-			m_CellUnionsPtr = (CellUnion*)m_CellUnions.GetUnsafePtr();
-			m_CellAreaMasksPtr = (ushort*)m_CellAreaMasks.GetUnsafePtr();
-			m_ChunkAreaMasksPtr = (ushort*)m_ChunkAreaMasks.GetUnsafePtr();
+			m_CellUnionsPtr = m_CellUnions.GetUnsafePtr();
+			m_CellAreaMasksPtr = m_CellAreaMasks.GetUnsafePtr();
+			m_ChunkAreaMasksPtr = m_ChunkAreaMasks.GetUnsafePtr();
 		}
 
 		public unsafe void Dispose()
@@ -267,7 +267,7 @@ internal readonly struct SurfaceJobDataFactory
 			m_ChunkAreaMasks.SetCapacity(minCapacity);
 			m_ChunksCapacity = m_ChunkAreaMasks.Capacity;
 			m_ChunkAreaMasks.ResizeUninitialized(m_ChunksCapacity);
-			m_ChunkAreaMasksPtr = (ushort*)m_ChunkAreaMasks.GetUnsafePtr();
+			m_ChunkAreaMasksPtr = m_ChunkAreaMasks.GetUnsafePtr();
 		}
 
 		private unsafe void GrowCellContainers(int minCapacity)
@@ -277,8 +277,8 @@ internal readonly struct SurfaceJobDataFactory
 			m_CellsCapacity = m_CellUnions.Capacity;
 			m_CellUnions.ResizeUninitialized(m_CellsCapacity);
 			m_CellAreaMasks.ResizeUninitialized(m_CellsCapacity);
-			m_CellUnionsPtr = (CellUnion*)m_CellUnions.GetUnsafePtr();
-			m_CellAreaMasksPtr = (ushort*)m_CellAreaMasks.GetUnsafePtr();
+			m_CellUnionsPtr = m_CellUnions.GetUnsafePtr();
+			m_CellAreaMasksPtr = m_CellAreaMasks.GetUnsafePtr();
 		}
 	}
 

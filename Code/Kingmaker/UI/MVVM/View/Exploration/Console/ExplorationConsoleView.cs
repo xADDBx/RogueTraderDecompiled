@@ -220,7 +220,7 @@ public class ExplorationConsoleView : ExplorationBaseView
 		{
 			CancelScan();
 		}, 9, m_IsScanning), UIStrings.Instance.CommonTexts.Cancel, ConsoleHintsWidget.HintPosition.Right));
-		m_CombatLogConsoleView.AddInput(inputLayer);
+		m_CombatLogConsoleView.AddInputToExploration(inputLayer);
 		AddDisposable(m_ConsoleHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			InteractCurrentFocusedEntity();

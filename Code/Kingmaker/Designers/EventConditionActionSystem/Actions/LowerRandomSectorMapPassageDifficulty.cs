@@ -27,7 +27,7 @@ public class LowerRandomSectorMapPassageDifficulty : GameAction
 		return $"Lower difficulty of passage from {SectorMapPoint} to random system";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (RequiredNavigatorResource > Game.Instance.Player.WarpTravelState.NavigatorResource)
 		{

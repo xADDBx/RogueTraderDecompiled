@@ -1,10 +1,12 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.Utility.Attributes;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -30,6 +32,9 @@ public class ContextActionCastSpell : ContextAction
 
 	public bool CastByTarget;
 
+	[Tooltip("Enables animation for casting and initiates full UseAbility command instead of simply triggering cast rule")]
+	public bool UseFullAbilityCastCycle;
+
 	public BlueprintAbility Spell => m_Spell?.Get();
 
 	public override string GetCaption()
@@ -37,12 +42,12 @@ public class ContextActionCastSpell : ContextAction
 		return $"Cast spell {Spell}" + (OverrideDC ? $" DC: {DC}" : "") + (OverrideSpellLevel ? $" SL: {SpellLevel}" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity mechanicEntity = (CastByTarget ? base.Target.Entity : base.Context.MaybeCaster);
 		if (mechanicEntity == null)
 		{
-			PFLog.Default.Error(this, "Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		AbilityData abilityData = mechanicEntity.Facts.Get<Ability>(Spell)?.Data ?? new AbilityData(Spell, mechanicEntity);
@@ -58,11 +63,24 @@ public class ContextActionCastSpell : ContextAction
 			{
 				abilityData.OverrideSpellLevel = SpellLevel.Calculate(base.Context);
 			}
+			if (UseFullAbilityCastCycle)
+			{
+				PartUnitCommands commandsOptional = base.Caster.GetCommandsOptional();
+				if (commandsOptional != null)
+				{
+					UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, base.Target)
+					{
+						IgnoreCooldown = true,
+						FreeAction = true
+					};
+					commandsOptional.AddToQueue(cmdParams);
+					return;
+				}
+			}
 			RulePerformAbility obj = new RulePerformAbility(abilityData, base.Target)
 			{
 				IgnoreCooldown = true,
-				ForceFreeAction = true,
-				ExecutionActionContext = base.Context
+				ForceFreeAction = true
 			};
 			Rulebook.Trigger(obj);
 			obj.Context.RewindActionIndex();

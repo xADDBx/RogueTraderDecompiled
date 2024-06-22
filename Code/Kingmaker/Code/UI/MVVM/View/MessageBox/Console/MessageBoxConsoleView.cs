@@ -4,8 +4,10 @@ using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UniRx;
+using Rewired;
 using UniRx;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 
@@ -72,6 +74,10 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 		m_InputField.Abort();
 	}
 
+	protected override void BindProgressBar()
+	{
+	}
+
 	private void CreateInput()
 	{
 		m_InputLayer = new InputLayer
@@ -87,18 +93,19 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 		AddDisposable(m_DeclineHint = hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			OnDeclineClick();
-		}, 9)) as ConsoleHintDescription);
+		}, 9, base.ViewModel.ShowDecline)) as ConsoleHintDescription);
 		AddDisposable(m_ConfirmHint = hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			OnConfirmClick();
-		}, 8, ConfirmBindActive)) as ConsoleHintDescription);
+		}, 8, ConfirmBindActive.And(base.ViewModel.IsProgressBar.Not()).ToReactiveProperty())) as ConsoleHintDescription);
 		AddDisposable(inputLayer.AddButton(delegate
 		{
-			if (base.ViewModel != null && !base.ViewModel.ShowDecline)
+			if (!base.ViewModel.ShowDecline.Value && !base.ViewModel.IsProgressBar.Value)
 			{
 				OnDeclineClick();
 			}
 		}, 9));
+		AddDisposable(inputLayer.AddAxis(Scroll, 3, repeat: true));
 	}
 
 	protected virtual void OnConfirmClick()
@@ -109,6 +116,18 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 	protected virtual void OnDeclineClick()
 	{
 		base.ViewModel.OnDeclinePressed();
+	}
+
+	public void Scroll(InputActionEventData arg1, float x)
+	{
+		Scroll(x);
+	}
+
+	private void Scroll(float x)
+	{
+		PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+		pointerEventData.scrollDelta = new Vector2(0f, x * m_ScrollRect.scrollSensitivity);
+		m_ScrollRect.OnSmoothlyScroll(pointerEventData);
 	}
 
 	private void OnCurrentInputLayerChanged()

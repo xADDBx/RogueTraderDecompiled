@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Stats;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
@@ -22,7 +25,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 
 [AllowedOn(typeof(BlueprintStarship))]
 [TypeId("c679873c7dfdc494bbf909ab871de9cb")]
-public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ITargetRulebookSubscriber, IUnitMovementHandler, IHashable
+public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ITargetRulebookSubscriber, IUnitMovementHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IHashable
 {
 	[SerializeField]
 	private int HpPerUnit = 1;
@@ -40,6 +43,19 @@ public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHand
 
 	private StarshipEntity Carrier => (base.Owner as StarshipEntity)?.GetSummonedMonsterOption()?.Summoner as StarshipEntity;
 
+	private void RemoveExcessTeamObjects(BaseUnitEntity unit)
+	{
+		Transform transform = unit.View.gameObject.transform.Find("Team");
+		if (!(transform == null))
+		{
+			int num = UnitsAlive(unit);
+			for (int num2 = transform.childCount - 1; num2 >= num; num2--)
+			{
+				Object.DestroyImmediate(transform.GetChild(num2).gameObject);
+			}
+		}
+	}
+
 	private List<GameObject> GetTeamObjects(BaseUnitEntity unit)
 	{
 		GameObject gameObject = unit.View.gameObject;
@@ -56,25 +72,27 @@ public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHand
 		return list;
 	}
 
-	public int UnitsAlive(BaseUnitEntity unit, List<GameObject> teamList = null)
+	public int UnitsAlive(BaseUnitEntity unit)
 	{
 		PartHealth partHealth = unit?.Health;
 		if (partHealth == null)
 		{
 			return 1;
 		}
-		int num = partHealth.HitPointsLeft / HpPerUnit;
-		if (partHealth.HitPointsLeft % HpPerUnit != 0)
+		ModifiableValue stat = unit.Stats.GetStat(StatType.MilitaryRating);
+		int num = HpPerUnit + stat.ModifiedValue - stat.BaseValue;
+		int num2 = partHealth.HitPointsLeft / num;
+		if (partHealth.HitPointsLeft % num != 0)
 		{
-			num++;
+			num2++;
 		}
-		return num;
+		return num2;
 	}
 
 	private void UpdateVisible(BaseUnitEntity unit)
 	{
 		List<GameObject> teamObjects = GetTeamObjects(unit);
-		int num = UnitsAlive(unit, teamObjects);
+		int num = UnitsAlive(unit);
 		for (int i = 0; i < teamObjects.Count; i++)
 		{
 			teamObjects[i].SetActive(i < num);
@@ -84,6 +102,15 @@ public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHand
 	public void HandleUnitJoinCombat()
 	{
 		if (EventInvokerExtensions.Entity == base.Owner)
+		{
+			RemoveExcessTeamObjects(base.Owner);
+			UpdateVisible(base.Owner);
+		}
+	}
+
+	public void HandleUnitStartTurn(bool isTurnBased)
+	{
+		if (EventInvokerExtensions.MechanicEntity == base.Owner)
 		{
 			UpdateVisible(base.Owner);
 		}

@@ -31,7 +31,7 @@ public class StartEtude : GameAction, IEtudeReference
 		return string.Format("Стартует этюд {0})", (!Evaluate) ? sb.NameSafe() : (EtudeEvaluator ? EtudeEvaluator.GetCaption() : "??"));
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BlueprintEtude bp = ((!Evaluate) ? Etude.Get() : (EtudeEvaluator ? ((BlueprintEtude)EtudeEvaluator.GetValue()) : null));
 		if (StartImmediately)

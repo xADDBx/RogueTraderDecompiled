@@ -23,7 +23,7 @@ public class ShowMultiEntrance : GameAction
 		return "Show entrance map " + Entrance;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)Entrance)
 		{

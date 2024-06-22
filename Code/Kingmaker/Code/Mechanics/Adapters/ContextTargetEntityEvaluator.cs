@@ -2,7 +2,7 @@ using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.UnitLogic.Mechanics;
 
 namespace Kingmaker.Code.Mechanics.Adapters;
@@ -16,7 +16,7 @@ public class ContextTargetEntityEvaluator : MechanicEntityEvaluator
 		return "Evaluate target entity of Context";
 	}
 
-	protected override MechanicEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		return ContextData<MechanicsContext.Data>.Current?.CurrentTarget?.Entity;
 	}

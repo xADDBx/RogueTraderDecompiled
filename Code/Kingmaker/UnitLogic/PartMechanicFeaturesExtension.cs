@@ -71,6 +71,11 @@ public static class PartMechanicFeaturesExtension
 			MechanicsFeatureType.SuppressedDismember => features.SuppressedDismember, 
 			MechanicsFeatureType.SuppressedDecomposition => features.SuppressedDecomposition, 
 			MechanicsFeatureType.ShapeFlames => features.ShapeFlames, 
+			MechanicsFeatureType.AutoDodgeFriendlyFire => features.AutoDodgeFriendlyFire, 
+			MechanicsFeatureType.HealInsteadOfDamageForDOTs => features.HealInsteadOfDamageForDOTs, 
+			MechanicsFeatureType.RangedParry => features.RangedParry, 
+			MechanicsFeatureType.CanUseBothDesperateMeasureAndHeroicAct => features.CanUseBothDesperateMeasureAndHeroicAct, 
+			MechanicsFeatureType.HalfSuperiorityCriticalChance => features.HalfSuperiorityCriticalChance, 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}

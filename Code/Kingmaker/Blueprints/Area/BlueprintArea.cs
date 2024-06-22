@@ -51,6 +51,8 @@ public class BlueprintArea : BlueprintAreaPart
 		AntonKharybin = 13,
 		[Description("doronin")]
 		GeorgiiDoronin = 14,
+		[Description("shanhiev")]
+		EvgeniyShanhiev = 15,
 		[Description("al.gusev")]
 		Unknown = -1
 	}

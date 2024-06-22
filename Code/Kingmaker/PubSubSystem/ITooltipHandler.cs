@@ -8,7 +8,7 @@ namespace Kingmaker.PubSubSystem;
 
 public interface ITooltipHandler : ISubscriber
 {
-	void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false);
+	void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false, bool showScrollbar = false);
 
 	void HandleInfoRequest(TooltipBaseTemplate template, ConsoleNavigationBehaviour ownerNavigationBehaviour = null, bool shouldNotHideLittleTooltip = false);
 
@@ -18,5 +18,5 @@ public interface ITooltipHandler : ISubscriber
 
 	void HandleHintRequest(HintData data, bool shouldShow);
 
-	void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data);
+	void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data, bool showScrollbar = false);
 }

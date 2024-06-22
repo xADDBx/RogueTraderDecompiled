@@ -82,11 +82,6 @@ public class RankEntryFeatureDescriptionConsoleView : BaseCareerPathSelectionTab
 		base.ViewModel.CareerPathVM.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
-	{
-		base.ViewModel.CareerPathVM.SetFirstSelectableRankEntry();
-	}
-
 	public override void AddInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget)
 	{
 		if (InputAdded)
@@ -121,7 +116,7 @@ public class RankEntryFeatureDescriptionConsoleView : BaseCareerPathSelectionTab
 		}, 1);
 		if (entity is IHasTooltipTemplate hasTooltipTemplate)
 		{
-			TooltipBaseTemplate entryTooltip = null;
+			TooltipBaseTemplate entryTooltip = hasTooltipTemplate.TooltipTemplate();
 			if (hasTooltipTemplate.TooltipTemplate() is TooltipTemplateGlossary tooltipTemplateGlossary)
 			{
 				entryTooltip = new TooltipTemplateGlossary(tooltipTemplateGlossary.GlossaryEntry);

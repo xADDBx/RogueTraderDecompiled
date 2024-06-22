@@ -85,6 +85,8 @@ public static class GridPatterns
 		void Write(ref T context, int xBegin, int xEnd, int y);
 	}
 
+	private static BitPattern2D s_BitPattern = new BitPattern2D();
+
 	private static (int left1, int left2, int right1, int right2) GetNeighboursIdx(Int3 origin, Int3 end)
 	{
 		Int3 @int = end - origin;
@@ -147,6 +149,12 @@ public static class GridPatterns
 		return array;
 	}
 
+	public static void AddCircleNodes(BitPattern2D nodes, int radius, Size entitySizeRect = Size.Medium)
+	{
+		AccumulateNodesInRadius(radius, nodes);
+		ExtendAreaByEntitySize(nodes, entitySizeRect);
+	}
+
 	public static void AddCircleNodes(HashSet<Vector2Int> nodes, int radius, Size entitySizeRect = Size.Medium)
 	{
 		AccumulateNodesInRadius(radius, nodes);
@@ -155,12 +163,13 @@ public static class GridPatterns
 
 	public static PatternGridData ConstructPattern(PatternType pattern, int radius, int angle, Vector2 direction, Size entitySizeRect)
 	{
-		HashSet<Vector2Int> hashSet = TempHashSet.Get<Vector2Int>();
-		GetOrientedNodes(hashSet, pattern, radius, angle, direction, entitySizeRect);
-		return PatternGridData.Create(hashSet, disposable: true);
+		s_BitPattern.Clear();
+		BitPattern2D bitPattern2D = s_BitPattern;
+		GetOrientedNodes(bitPattern2D, pattern, radius, angle, direction, entitySizeRect);
+		return PatternGridData.Create(bitPattern2D, disposable: true);
 	}
 
-	private static void GetOrientedNodes(HashSet<Vector2Int> result, PatternType pattern, int radius, int angle, Vector2 direction, Size entitySizeRect)
+	private static void GetOrientedNodes(BitPattern2D result, PatternType pattern, int radius, int angle, Vector2 direction, Size entitySizeRect)
 	{
 		float sqrMagnitude = direction.sqrMagnitude;
 		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
@@ -183,6 +192,43 @@ public static class GridPatterns
 			break;
 		default:
 			throw new ArgumentOutOfRangeException("pattern", pattern, null);
+		}
+	}
+
+	private static void ExtendAreaByEntitySize(BitPattern2D nodes, Size entitySizeRect)
+	{
+		if (entitySizeRect.Is1x1())
+		{
+			return;
+		}
+		IntRect rectForSize = SizePathfindingHelper.GetRectForSize(entitySizeRect);
+		for (int i = rectForSize.ymin; i <= rectForSize.ymax; i++)
+		{
+			if (i == 0)
+			{
+				continue;
+			}
+			foreach (Vector2Int item in nodes.ToList())
+			{
+				if (!nodes.Contains(item + Vector2Int.up * i))
+				{
+					nodes.Add(item + Vector2Int.up * i);
+				}
+			}
+		}
+		for (int j = rectForSize.xmin; j <= rectForSize.xmax; j++)
+		{
+			if (j == 0)
+			{
+				continue;
+			}
+			foreach (Vector2Int item2 in nodes.ToList())
+			{
+				if (!nodes.Contains(item2 + Vector2Int.right * j))
+				{
+					nodes.Add(item2 + Vector2Int.right * j);
+				}
+			}
 		}
 	}
 
@@ -223,6 +269,21 @@ public static class GridPatterns
 		}
 	}
 
+	private static void AccumulateNodesInRadius(int radius, BitPattern2D nodes)
+	{
+		for (int i = -radius; i < radius + 1; i++)
+		{
+			for (int j = -radius; j < radius + 1; j++)
+			{
+				Vector2Int vector2Int = new Vector2Int(i, j);
+				if (!nodes.Has(vector2Int) && CustomGraphHelper.GetWarhammerLength(vector2Int) <= radius)
+				{
+					nodes.Add(vector2Int);
+				}
+			}
+		}
+	}
+
 	private static void AccumulateNodesInRadius(int radius, HashSet<Vector2Int> nodes)
 	{
 		for (int i = -radius; i < radius + 1; i++)
@@ -238,7 +299,7 @@ public static class GridPatterns
 		}
 	}
 
-	public static void AddConeNodes(HashSet<Vector2Int> nodes, int radius, float degrees, Vector2 dir)
+	public static void AddConeNodes(BitPattern2D nodes, int radius, float degrees, Vector2 dir)
 	{
 		float sqrMagnitude = dir.sqrMagnitude;
 		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
@@ -250,52 +311,80 @@ public static class GridPatterns
 			throw new ArgumentException("Angle must be less then 180", "degrees");
 		}
 		AddRayNodes(nodes, radius, dir);
-		float realRadius = nodes.MaxBy((Vector2Int v) => v.sqrMagnitude).magnitude;
+		float num = 0f;
+		Vector2Int vector2Int = default(Vector2Int);
+		foreach (Vector2Int node in nodes)
+		{
+			int sqrMagnitude2 = node.sqrMagnitude;
+			if ((float)sqrMagnitude2 > num)
+			{
+				num = sqrMagnitude2;
+				vector2Int = node;
+			}
+		}
+		float realRadius = vector2Int.magnitude;
 		Vector2 vector = Quaternion.Euler(0f, 0f, degrees / 2f) * dir;
 		Vector2 vector2 = Quaternion.Euler(0f, 0f, (0f - degrees) / 2f) * dir;
 		AddRayNodes(nodes, (Vector2Int n) => Vector2.Dot(dir, n) <= realRadius, vector);
 		Vector2Int leftSideVertex = nodes.MaxBy((Vector2Int v) => CustomGraphHelper.GetWarhammerLength(v));
 		AddRayNodes(nodes, (Vector2Int n) => Vector2.Dot(dir, n) <= realRadius, vector2);
 		nodes.Except((Vector2Int v) => v == leftSideVertex).MaxBy((Vector2Int v) => CustomGraphHelper.GetWarhammerLength(v));
-		float num = Math.Min(Vector2.Dot(dir, vector), Vector3.Dot(dir, vector2));
-		int num2 = 0;
+		float num2 = Math.Min(Vector2.Dot(dir, vector), Vector3.Dot(dir, vector2));
 		int num3 = 0;
 		int num4 = 0;
 		int num5 = 0;
-		foreach (Vector2Int node in nodes)
+		int num6 = 0;
+		foreach (Vector2Int node2 in nodes)
 		{
-			if (node.x < num2)
+			if (node2.x < num3)
 			{
-				num2 = node.x;
+				num3 = node2.x;
 			}
-			if (node.x > num3)
+			if (node2.x > num4)
 			{
-				num3 = node.x;
+				num4 = node2.x;
 			}
-			if (node.y < num5)
+			if (node2.y < num6)
 			{
-				num5 = node.y;
+				num6 = node2.y;
 			}
-			if (node.y > num4)
+			if (node2.y > num5)
 			{
-				num4 = node.y;
+				num5 = node2.y;
 			}
 		}
-		for (int i = num2; i < num3 + 1; i++)
+		for (int i = num3; i < num4 + 1; i++)
 		{
-			for (int j = num5; j < num4 + 1; j++)
+			for (int j = num6; j < num5 + 1; j++)
 			{
-				Vector2Int vector2Int = new Vector2Int(i, j);
-				float num6 = Vector2.Dot(dir, vector2Int);
-				if (!nodes.Contains(vector2Int) && num6 / vector2Int.magnitude >= num && num6 <= realRadius)
+				Vector2Int vector2Int2 = new Vector2Int(i, j);
+				float num7 = Vector2.Dot(dir, vector2Int2);
+				if (num7 / vector2Int2.magnitude >= num2 && num7 <= realRadius)
 				{
-					nodes.Add(vector2Int);
+					nodes.Add(vector2Int2);
 				}
 			}
 		}
 	}
 
 	private static void AddRayNodes(HashSet<Vector2Int> nodes, Func<Vector2Int, bool> pred, Vector2 dir)
+	{
+		float sqrMagnitude = dir.sqrMagnitude;
+		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
+		{
+			throw new ArgumentException("Need nonzero vector", "dir");
+		}
+		foreach (Vector2Int item in new Linecast.Ray2NodeOffsets(Vector2Int.zero, dir))
+		{
+			if (!pred(item))
+			{
+				break;
+			}
+			nodes.Add(item);
+		}
+	}
+
+	private static void AddRayNodes(BitPattern2D nodes, Func<Vector2Int, bool> pred, Vector2 dir)
 	{
 		float sqrMagnitude = dir.sqrMagnitude;
 		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
@@ -329,7 +418,24 @@ public static class GridPatterns
 		}
 	}
 
-	public static void AddSectorNodes(HashSet<Vector2Int> nodes, int radius, int degrees, Vector2 dir)
+	public static void AddRayNodes(BitPattern2D nodes, int length, Vector2 dir)
+	{
+		float sqrMagnitude = dir.sqrMagnitude;
+		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
+		{
+			throw new ArgumentException("Need nonzero vector", "dir");
+		}
+		foreach (Vector2Int item in new Linecast.Ray2NodeOffsets(Vector2Int.zero, dir))
+		{
+			if (CustomGraphHelper.GetWarhammerLength(item) > length)
+			{
+				break;
+			}
+			nodes.Add(item);
+		}
+	}
+
+	public static void AddSectorNodes(BitPattern2D nodes, int radius, int degrees, Vector2 dir)
 	{
 		float sqrMagnitude = dir.sqrMagnitude;
 		if (sqrMagnitude > 1.1f || sqrMagnitude < 0.9f)
@@ -346,7 +452,7 @@ public static class GridPatterns
 			for (int j = -radius; j < radius + 1; j++)
 			{
 				Vector2Int vector2Int = new Vector2Int(i, j);
-				if (!nodes.Contains(vector2Int) && Vector2.Dot(dir, new Vector2(vector2Int.x, vector2Int.y).normalized) >= num && CustomGraphHelper.GetWarhammerLength(vector2Int) <= radius)
+				if (!nodes.Has(vector2Int) && Vector2.Dot(dir, new Vector2(vector2Int.x, vector2Int.y).normalized) >= num && CustomGraphHelper.GetWarhammerLength(vector2Int) <= radius)
 				{
 					nodes.Add(vector2Int);
 				}

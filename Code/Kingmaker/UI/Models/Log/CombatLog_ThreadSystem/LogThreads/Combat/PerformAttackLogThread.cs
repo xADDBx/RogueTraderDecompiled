@@ -22,6 +22,7 @@ using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks.CombatLog;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UI.SurfaceCombatHUD;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Mechanics.Damage;
@@ -90,6 +91,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		GameLogContext.AttackNumber = rule.BurstIndex + 1;
 		AbilityTargetUIData orCreate = AbilityTargetUIDataCache.Instance.GetOrCreate(rule.Ability, evt.Target, evt.Attacker.Position);
 		GameLogContext.TotalHitChance = Mathf.RoundToInt((orCreate.BurstHitChances != null && orCreate.BurstHitChances.Count > rule.BurstIndex && rule.BurstIndex >= 0) ? orCreate.BurstHitChances[rule.BurstIndex] : orCreate.HitWithAvoidanceChance);
+		GameLogContext.Text = null;
 		GameLogContext.Tooltip = null;
 		GameLogContext.Description = (evt.IsOverpenetrationTrigger ? LogThreadBase.Strings.TooltipBrickStrings.TriggersOverpenetration.Text : null);
 		CombatLogMessage combatLogMessage = GetMessage(evt, overrideDealDamage).CreateCombatLogMessage(null, null, isPerformAttackMessage: true, rule.ConcreteTarget);
@@ -224,7 +226,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 						}
 					}
 					yield return new TooltipBrickTextValue(s.BaseModifier.Text, rule.ResultDodgeRule.ChancesRule.BaseValue + "%", 2);
-					IEnumerable<ITooltipBrick> enumerable4 = CreateDogeBrickModifiers(rule.ResultDodgeRule.ChancesRule.AllModifiersList, valueIsPercent: true, null, 2);
+					IEnumerable<ITooltipBrick> enumerable4 = CreateDogeBrickModifiers(rule.ResultDodgeRule.ChancesRule.AllModifiersList, rule.ResultDodgeRule.ChancesRule.WeaponDodgePenetrationModifiers, valueIsPercent: true, null, 2);
 					foreach (ITooltipBrick item4 in enumerable4)
 					{
 						yield return item4;
@@ -274,24 +276,41 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		}
 		if (resultDamage != null && !resultDamage.Damage.CalculatedValue.HasValue)
 		{
+			bool autoCrit = rule.RollPerformAttackRule.HitChanceRule.AutoCrits.Value;
 			int criticalNestedLevel = 1;
-			yield return new TooltipBrickChance(s.CriticalHit.Text, Math.Clamp(GameLogContext.RfChance.Value, 0, 100), Math.Clamp(GameLogContext.RfD100.Value.Result, 0, 100), criticalNestedLevel, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: false, isBeigeBackground: true);
+			yield return new TooltipBrickChance(s.CriticalHit.Text, Math.Clamp(autoCrit ? 100 : GameLogContext.RfChance.Value, 0, 100), Math.Clamp(GameLogContext.RfD100.Value.Result, 0, 100), criticalNestedLevel, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: false, isBeigeBackground: true);
 			if (isInfotip)
 			{
-				if (rule.RollPerformAttackRule.HitChanceRule.IsMelee)
+				if (autoCrit)
+				{
+					List<FeatureCountableFlag.BuffList.Element> list = new List<FeatureCountableFlag.BuffList.Element>();
+					foreach (Modifier item7 in rule.RollPerformAttackRule.HitChanceRule.AutoCrits.List)
+					{
+						if (item7.Fact != null)
+						{
+							list.Add(new FeatureCountableFlag.BuffList.Element(item7.Fact));
+						}
+						else if (item7.Item != null)
+						{
+							list.Add(new FeatureCountableFlag.BuffList.Element(item7.Item));
+						}
+					}
+					yield return new TooltipBrickTriggeredAuto(s.AutoCrit.Text, list, isSuccess: true);
+				}
+				else if (rule.RollPerformAttackRule.HitChanceRule.IsMelee)
 				{
 					IEnumerable<ITooltipBrick> enumerable7 = CreateMeleeCritHitModifiers(evt.InitiatorWeaponSkillModifierValues, evt.TargetWeaponSkillModifierValues, rule.RollPerformAttackRule.HitChanceRule, criticalNestedLevel + 1);
-					foreach (ITooltipBrick item7 in enumerable7)
+					foreach (ITooltipBrick item8 in enumerable7)
 					{
-						yield return item7;
+						yield return item8;
 					}
 				}
 				else
 				{
 					IEnumerable<ITooltipBrick> enumerable8 = LogThreadBase.CreateBrickModifiers(rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.AllModifiersList, valueIsPercent: true, null, criticalNestedLevel, isResultValue: false, isFirstWithoutPlus: true);
-					foreach (ITooltipBrick item8 in enumerable8)
+					foreach (ITooltipBrick item9 in enumerable8)
 					{
-						yield return item8;
+						yield return item9;
 					}
 					yield return LogThreadBase.MinMaxChanceBorder(rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.RawResult, 100, criticalNestedLevel);
 				}
@@ -312,9 +331,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			if (isInfotip && minMaxModifiers.Any())
 			{
 				yield return new TooltipBrickTextValue(s.BaseModifier.Text, damage.MinValueBase + " — " + damage.MaxValueBase, 2, isResultValue: true);
-				foreach (ITooltipBrick item9 in minMaxModifiers)
+				foreach (ITooltipBrick item10 in minMaxModifiers)
 				{
-					yield return item9;
+					yield return item10;
 				}
 			}
 			if (!damage.CalculatedValue.HasValue && damage.IsCritical)
@@ -324,9 +343,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				if (isInfotip)
 				{
 					IEnumerable<ITooltipBrick> enumerable9 = LogThreadBase.CreateBrickModifiers(damage.CriticalDamageModifiers.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true);
-					foreach (ITooltipBrick item10 in enumerable9)
+					foreach (ITooltipBrick item11 in enumerable9)
 					{
-						yield return item10;
+						yield return item11;
 					}
 				}
 			}
@@ -338,9 +357,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				yield return new TooltipBrickIconTextValue(s.AdditionalDamage.Text, "<b>" + UIUtility.AddSign(num3) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 				if (isInfotip)
 				{
-					foreach (ITooltipBrick item11 in initialDamageModifiers)
+					foreach (ITooltipBrick item12 in initialDamageModifiers)
 					{
-						yield return item11;
+						yield return item12;
 					}
 				}
 			}
@@ -359,9 +378,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 					if (isInfotip)
 					{
 						IEnumerable<ITooltipBrick> enumerable10 = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true, isFirstWithoutPlus: true);
-						foreach (ITooltipBrick item12 in enumerable10)
+						foreach (ITooltipBrick item13 in enumerable10)
 						{
-							yield return item12;
+							yield return item13;
 						}
 					}
 				}
@@ -376,18 +395,18 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 						IEnumerable<ITooltipBrick> enumerable11 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
 						if (enumerable11.Count() > 1)
 						{
-							foreach (ITooltipBrick item13 in enumerable11)
+							foreach (ITooltipBrick item14 in enumerable11)
 							{
-								yield return item13;
+								yield return item14;
 							}
 						}
 						yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 						enumerable11 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
 						if (enumerable11.Count() > 1)
 						{
-							foreach (ITooltipBrick item14 in enumerable11)
+							foreach (ITooltipBrick item15 in enumerable11)
 							{
-								yield return item14;
+								yield return item15;
 							}
 						}
 						int num4 = 100 - (int)GameLogContext.Absorption + (int)GameLogContext.Penetration;
@@ -402,9 +421,13 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		{
 			yield return LogThreadBase.ShowTooltipBrickDamageNullifier(nullifyInformation, resultDamage.ResultValue.FinalValue);
 		}
-		else if (resultDamage != null && resultDamage.RollDamageRule.MinimumDamageValue > resultDamage.ResultValue.FinalValue)
+		else if (resultDamage != null && resultDamage.RollDamageRule.UIMinimumDamageValue > resultDamage.ResultValue.FinalValue)
 		{
-			yield return new TooltipBrickMinimalAdmissibleDamage(resultDamage.RollDamageRule.MinimumDamageValue);
+			yield return new TooltipBrickMinimalAdmissibleDamage(resultDamage.RollDamageRule.UIMinimumDamageValue, resultDamage.RollDamageRule.UIMinimumDamageValue.ToString());
+		}
+		else if (resultDamage != null && resultDamage.Result > resultDamage.ResultValue.FinalValue && resultDamage.RollDamageRule.UIMinimumDamagePercent > 0)
+		{
+			yield return new TooltipBrickMinimalAdmissibleDamage(resultDamage.Result, ">" + resultDamage.RollDamageRule.UIMinimumDamagePercent + "%");
 		}
 		string value4;
 		if (nullifyInformation != null && nullifyInformation.HasDamageNullify)
@@ -507,6 +530,10 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				{
 					return LogThreadBase.Strings.WarhammerRFHit;
 				}
+				if (!LogThreadBase.IsPreviousMessageUseSomething)
+				{
+					return LogThreadBase.Strings.WarhammerSourceDealDamage;
+				}
 				return LogThreadBase.Strings.WarhammerDealDamage;
 			}
 			RulePerformDodge resultDodgeRule = rule.ResultDodgeRule;
@@ -534,11 +561,15 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				}
 				return LogThreadBase.Strings.WarhammerMeleeRFHitSuperiority;
 			}
-			if (!flag)
+			if (flag)
 			{
-				return LogThreadBase.Strings.WarhammerDealDamage;
+				return LogThreadBase.Strings.WarhammerMeleeHitSuperiority;
 			}
-			return LogThreadBase.Strings.WarhammerMeleeHitSuperiority;
+			if (!LogThreadBase.IsPreviousMessageUseSomething)
+			{
+				return LogThreadBase.Strings.WarhammerSourceDealDamage;
+			}
+			return LogThreadBase.Strings.WarhammerDealDamage;
 		}
 		RulePerformDodge resultDodgeRule2 = rule.ResultDodgeRule;
 		if (resultDodgeRule2 != null && resultDodgeRule2.Result)
@@ -562,7 +593,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		return LogThreadBase.Strings.WarhammerMiss;
 	}
 
-	private static IEnumerable<ITooltipBrick> CreateDogeBrickModifiers(IEnumerable<Modifier> allModifiers, bool valueIsPercent = false, string additionText = null, int nestedLevel = 0, bool isResultValue = false, bool isFirstWithoutPlus = false)
+	private static IEnumerable<ITooltipBrick> CreateDogeBrickModifiers(IEnumerable<Modifier> allModifiers, CompositeModifiersManager weaponModifiers, bool valueIsPercent = false, string additionText = null, int nestedLevel = 0, bool isResultValue = false, bool isFirstWithoutPlus = false)
 	{
 		List<Modifier> list = allModifiers.ToList();
 		int num = list.FindLastIndex((Modifier o) => o.Descriptor == ModifierDescriptor.ArmorPenalty);
@@ -574,17 +605,38 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			list.RemoveAt(num);
 			list.Insert(list.IndexOf(item), item2);
 		}
-		foreach (Modifier item3 in list)
+		bool printWeaponModifiers = false;
+		foreach (Modifier modifier in list)
 		{
-			if (item3.Descriptor == ModifierDescriptor.Difficulty && SettingsHelper.CalculateCRModifier() < 1f)
+			if (modifier.Descriptor == ModifierDescriptor.Difficulty && SettingsHelper.CalculateCRModifier() < 1f)
 			{
 				additionText = additionText + " (" + UIStrings.Instance.Tooltips.DifficultyReduceDescription.Text + ")";
 			}
-			ITooltipBrick tooltipBrick = LogThreadBase.CreateBrickModifier(item3, valueIsPercent, additionText, nestedLevel, isResultValue, isFirstWithoutPlus);
-			isFirstWithoutPlus = false;
-			if (tooltipBrick != null)
+			ITooltipBrick tooltipBrick = LogThreadBase.CreateBrickModifier(modifier, valueIsPercent, additionText, nestedLevel, isResultValue, isFirstWithoutPlus);
+			if (tooltipBrick == null)
 			{
-				yield return tooltipBrick;
+				continue;
+			}
+			isFirstWithoutPlus = false;
+			yield return tooltipBrick;
+			if (modifier.Descriptor != ModifierDescriptor.Weapon || printWeaponModifiers)
+			{
+				continue;
+			}
+			printWeaponModifiers = true;
+			if (weaponModifiers == null)
+			{
+				continue;
+			}
+			isFirstWithoutPlus = true;
+			foreach (Modifier valueModifiers in weaponModifiers.ValueModifiersList)
+			{
+				ITooltipBrick tooltipBrick2 = LogThreadBase.CreateBrickModifier(valueModifiers, valueIsPercent, additionText, nestedLevel + 1, isResultValue, isFirstWithoutPlus);
+				if (tooltipBrick2 != null)
+				{
+					isFirstWithoutPlus = false;
+					yield return tooltipBrick2;
+				}
 			}
 		}
 	}

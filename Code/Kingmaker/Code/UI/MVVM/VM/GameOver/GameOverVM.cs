@@ -5,8 +5,10 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using UniRx;
 
@@ -18,12 +20,18 @@ public class GameOverVM : CommonStaticComponentVM
 
 	public readonly ReactiveProperty<bool> CanQuickLoad = new ReactiveProperty<bool>(initialValue: false);
 
+	private SaveManager SaveManager => Game.Instance.SaveManager;
+
+	public bool IsIronMan => SettingsRoot.Difficulty.OnlyOneSave;
+
+	public bool HasDowngradedIronManSave => SaveManager.HasDowngradedIronManSave;
+
 	public GameOverVM()
 	{
 		Reason.Value = GetReasonString();
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			CanQuickLoad.Value = Game.Instance.SaveManager.GetLatestSave() != null;
+			CanQuickLoad.Value = SaveManager.GetLatestSave() != null;
 		}));
 	}
 
@@ -71,12 +79,29 @@ public class GameOverVM : CommonStaticComponentVM
 	{
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			Game.Instance.LoadGame(Game.Instance.SaveManager.GetLatestSave());
+			Game.Instance.LoadGame(SaveManager.GetLatestSave());
 		}));
 	}
 
 	public void OnButtonMainMenu()
 	{
 		Game.Instance.ResetToMainMenu();
+	}
+
+	public void OnIronManDeleteSave()
+	{
+		if (HasDowngradedIronManSave)
+		{
+			SaveManager.DeleteDowngradedIronManSave();
+		}
+		OnButtonMainMenu();
+	}
+
+	public void OnIronManContinueGame()
+	{
+		if (HasDowngradedIronManSave)
+		{
+			SaveManager.LoadDowngradedIronManSave();
+		}
 	}
 }

@@ -3,6 +3,8 @@ using System.Linq;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
+using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
@@ -37,14 +39,9 @@ public class CareerPathsListsCommonView : CharInfoComponentView<UnitProgressionV
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		if (m_RankExpCounterCommonView != null)
-		{
-			m_RankExpCounterCommonView.Bind(base.ViewModel.CharInfoExperienceVM);
-		}
-		if (m_UnitBackgroundBlockCommonView != null)
-		{
-			m_UnitBackgroundBlockCommonView.Bind(base.ViewModel.UnitBackgroundBlockVM);
-		}
+		m_RankExpCounterCommonView.Or(null)?.Bind(base.ViewModel.CharInfoExperienceVM);
+		m_UnitBackgroundBlockCommonView.Or(null)?.Bind(base.ViewModel.UnitBackgroundBlockVM);
+		CreateCharGenLines();
 	}
 
 	protected override void DestroyViewImplementation()
@@ -65,5 +62,22 @@ public class CareerPathsListsCommonView : CharInfoComponentView<UnitProgressionV
 	{
 		m_FadeAnimator.PlayAnimation(visible);
 		m_IsShown.Value = visible;
+	}
+
+	[ContextMenu("TestMe")]
+	public void CreateCharGenLines()
+	{
+		if (!base.ViewModel.IsCharGen)
+		{
+			return;
+		}
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			List<CareerPathListItemCommonView> allCareerViews = m_CareerPathsLists.SelectMany((CareerPathsListCommonView l) => l.ItemViews).ToList();
+			m_CareerPathsLists.ForEach(delegate(CareerPathsListCommonView l)
+			{
+				l.CreateLines(allCareerViews);
+			});
+		}, 1);
 	}
 }

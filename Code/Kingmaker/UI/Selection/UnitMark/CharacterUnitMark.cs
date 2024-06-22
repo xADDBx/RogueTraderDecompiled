@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.DotNetExtensions;
@@ -35,6 +37,9 @@ public class CharacterUnitMark : BaseSurfaceUnitMark, INetRoleSetHandler, ISubsc
 	[SerializeField]
 	private UnitMarkDecal m_CombatCurrentTurnDecal;
 
+	[SerializeField]
+	private UnitMarkDecal m_CombatAbilityTargetDecal;
+
 	[Header("Other Player")]
 	[SerializeField]
 	private UnitMarkDecal m_CombatOtherPlayerDecal;
@@ -62,6 +67,11 @@ public class CharacterUnitMark : BaseSurfaceUnitMark, INetRoleSetHandler, ISubsc
 			m_ExplorationSelectedDecal, m_ExplorationOtherPlayerDecal, m_ExplorationDialogCurrentSpeakerDecal, m_ExplorationDialogCurrentSpeakerDecal, m_CombatDecal, m_CombatSelectedDecal, m_CombatCurrentTurnDecal, m_CombatOtherPlayerDecal, m_CombatSelectedOtherPlayerDecal, m_CombatCurrentTurnOtherPlayerDecal,
 			m_GamepadSelectedDecal
 		};
+	}
+
+	protected override UnitMarkDecal GetAbilityTargetDecal()
+	{
+		return m_CombatAbilityTargetDecal;
 	}
 
 	public override void Initialize(AbstractUnitEntity unit)
@@ -118,17 +128,37 @@ public class CharacterUnitMark : BaseSurfaceUnitMark, INetRoleSetHandler, ISubsc
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		if (entity == base.Unit)
+		if (entity != base.Unit)
 		{
-			m_PingTween?.Kill();
-			m_PingTarget?.SetActive(state: true);
-			m_PingTween = DOTween.To(() => 1f, delegate
+			return;
+		}
+		m_PingTween?.Kill();
+		int index = player.Index - 1;
+		m_PingTarget.SetMaterial(BlueprintRoot.Instance.UIConfig.CoopPlayersPingsMaterials[index]);
+		m_PingTarget?.SetActive(state: true);
+		EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+		{
+			h.HandleAddPingEntityMarker(entity);
+		});
+		m_PingTween = DOTween.To(() => 1f, delegate
+		{
+		}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+		{
+			m_PingTarget?.SetActive(state: false);
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
 			{
-			}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+				h.HandleRemovePingEntityMarker(entity);
+			});
+			m_PingTween = null;
+		})
+			.OnKill(delegate
 			{
 				m_PingTarget?.SetActive(state: false);
+				EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+				{
+					h.HandleRemovePingEntityMarker(entity);
+				});
 				m_PingTween = null;
 			});
-		}
 	}
 }

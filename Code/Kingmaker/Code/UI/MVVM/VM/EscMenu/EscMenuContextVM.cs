@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.InputSystems;
@@ -18,9 +19,14 @@ public class EscMenuContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(RequestEscMenu));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		DisposeEscMenu();
+	}
+
 	private void RequestEscMenu()
 	{
-		if (!Game.Instance.Player.Tutorial.HasShownData && !Game.Instance.RootUiContext.IsMainMenu && !LoadingProcess.Instance.IsLoadingScreenActive && EscMenu.Value == null)
+		if (!Game.Instance.Player.Tutorial.HasShownData && !Game.Instance.RootUiContext.IsMainMenu && !LoadingProcess.Instance.IsLoadingScreenActive && !Game.Instance.RootUiContext.ServiceWindowNowIsOpening && (!Game.Instance.Player.WarpTravelState.IsInWarpTravel || !(Game.Instance.CurrentMode == GameModeType.GlobalMap)) && EscMenu.Value == null)
 		{
 			EscMenu.Value = new EscMenuVM(DisposeEscMenu);
 		}
@@ -30,11 +36,6 @@ public class EscMenuContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		EscMenu.Value?.Dispose();
 		EscMenu.Value = null;
-	}
-
-	protected override void DisposeImplementation()
-	{
-		DisposeEscMenu();
 	}
 
 	void IEscMenuHandler.HandleOpen()

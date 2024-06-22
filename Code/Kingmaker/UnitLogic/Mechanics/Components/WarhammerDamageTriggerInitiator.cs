@@ -5,7 +5,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UnitLogic.FactLogic;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
 using Kingmaker.Mechanics.Entities;
@@ -18,15 +17,11 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Mechanics.Components;
 
 [Serializable]
+[AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("a5cbfd1546727ec418590630a6ea2400")]
 public class WarhammerDamageTriggerInitiator : WarhammerDamageTrigger, IInitiatorRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
-	private class ComponentData : IEntityFactComponentTransientData
-	{
-		public int OldWounds { get; set; }
-	}
-
 	public ActionList Actions;
 
 	public ActionList ActionsOnAttacker;
@@ -37,10 +32,6 @@ public class WarhammerDamageTriggerInitiator : WarhammerDamageTrigger, IInitiato
 
 	void IRulebookHandler<RuleDealDamage>.OnEventAboutToTrigger(RuleDealDamage rule)
 	{
-		if (rule.TargetHealth != null)
-		{
-			RequestTransientData<ComponentData>().OldWounds = rule.TargetHealth.HitPointsLeft;
-		}
 	}
 
 	void IRulebookHandler<RuleDealDamage>.OnEventDidTrigger(RuleDealDamage rule)
@@ -64,8 +55,8 @@ public class WarhammerDamageTriggerInitiator : WarhammerDamageTrigger, IInitiato
 				}
 				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.DamageOverflow)
 				{
-					int num = RequestTransientData<ComponentData>()?.OldWounds ?? 0;
-					base.Context[ContextPropertyName] = Math.Max(rule.Result - num, 0);
+					int hPBeforeDamage = rule.HPBeforeDamage;
+					base.Context[ContextPropertyName] = Math.Max(rule.Result - hPBeforeDamage, 0);
 				}
 				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.Penetration)
 				{

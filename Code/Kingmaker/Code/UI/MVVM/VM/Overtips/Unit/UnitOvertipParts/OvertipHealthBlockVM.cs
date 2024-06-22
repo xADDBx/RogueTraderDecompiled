@@ -127,8 +127,8 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 		}
 		else if (healPredictionData != null)
 		{
-			MinDamage.Value = -healPredictionData.Value;
-			MaxDamage.Value = -healPredictionData.Value;
+			MinDamage.Value = -healPredictionData.MinValue;
+			MaxDamage.Value = -healPredictionData.MaxValue;
 			CanDie.Value = false;
 		}
 		else

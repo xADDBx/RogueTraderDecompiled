@@ -6,7 +6,7 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("f42258a78a4b4c8490804ac5e91d095c")]
 public class VeilStressGetter : PropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Veil fracture";
 	}

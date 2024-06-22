@@ -1,23 +1,26 @@
 using System;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace Kingmaker.QA.Arbiter;
 
 public class MeasurementCounter
 {
-	private Func<float> m_MeasurementGetter;
+	private readonly Func<float> m_MeasurementGetter;
 
 	private const int ArrayLength = 1048576;
 
-	private float[] m_Array;
+	private readonly float[] m_Array;
 
 	private int m_Index;
 
 	private bool m_IsFull;
 
-	public string? Name { get; private set; }
+	private float m_LastValue;
 
-	public MeasurementCounter(Func<float> measurementGetter, string? name = null)
+	public string Name { get; private set; }
+
+	public MeasurementCounter([NotNull] Func<float> measurementGetter, [NotNull] string name)
 	{
 		m_MeasurementGetter = measurementGetter ?? throw new ArgumentNullException("measurementGetter");
 		Name = name;
@@ -31,12 +34,13 @@ public class MeasurementCounter
 		m_Index = 0;
 		Array.Clear(m_Array, 0, 1048576);
 		m_IsFull = false;
+		m_LastValue = 0f;
 	}
 
 	public void Measure()
 	{
-		float num = m_MeasurementGetter();
-		m_Array[m_Index++] = num;
+		m_LastValue = m_MeasurementGetter();
+		m_Array[m_Index++] = m_LastValue;
 		if (m_Index > 1048576)
 		{
 			m_Index = 0;
@@ -68,6 +72,11 @@ public class MeasurementCounter
 		int num4 = (int)num3;
 		float num5 = num3 - (float)num4;
 		return m_Array[num4 - 1] + num5 * (m_Array[num4] - m_Array[num4 - 1]);
+	}
+
+	public float GetLastValue()
+	{
+		return m_LastValue;
 	}
 
 	public float GetAvgValue(int percentile = 100)

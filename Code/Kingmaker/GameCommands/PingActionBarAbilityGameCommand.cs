@@ -5,6 +5,7 @@ using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Internal;
 using Newtonsoft.Json;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.GameCommands;
 
@@ -39,6 +40,10 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 	[MemoryPackInclude]
 	private int m_SlotIndex;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	private WeaponSlotType m_WeaponSlotType;
+
 	public override bool IsSynchronized => true;
 
 	[JsonConstructor]
@@ -47,18 +52,19 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 	}
 
 	[MemoryPackConstructor]
-	public PingActionBarAbilityGameCommand(string m_keyName, Entity m_characterEntityRef, int m_slotIndex)
+	public PingActionBarAbilityGameCommand(string m_keyName, Entity m_characterEntityRef, int m_slotIndex, WeaponSlotType m_weaponSlotType)
 		: this()
 	{
 		m_KeyName = m_keyName;
 		m_CharacterEntityRef = m_characterEntityRef.Ref;
 		m_SlotIndex = m_slotIndex;
+		m_WeaponSlotType = m_weaponSlotType;
 	}
 
 	protected override void ExecuteInternal()
 	{
 		NetPlayer playerOrEmpty = GameCommandPlayer.GetPlayerOrEmpty();
-		PhotonManager.Ping.PingActionBarAbilityLocally(playerOrEmpty, m_KeyName, m_CharacterEntityRef, m_SlotIndex);
+		PhotonManager.Ping.PingActionBarAbilityLocally(playerOrEmpty, m_KeyName, m_CharacterEntityRef, m_SlotIndex, m_WeaponSlotType);
 	}
 
 	static PingActionBarAbilityGameCommand()
@@ -77,6 +83,10 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 		{
 			MemoryPackFormatterProvider.Register(new ArrayFormatter<PingActionBarAbilityGameCommand>());
 		}
+		if (!MemoryPackFormatterProvider.IsRegistered<WeaponSlotType>())
+		{
+			MemoryPackFormatterProvider.Register(new UnmanagedFormatter<WeaponSlotType>());
+		}
 	}
 
 	[Preserve]
@@ -87,10 +97,10 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteObjectHeader(3);
+		writer.WriteObjectHeader(4);
 		writer.WriteString(value.m_KeyName);
 		writer.WritePackable(in value.m_CharacterEntityRef);
-		writer.WriteUnmanaged(in value.m_SlotIndex);
+		writer.WriteUnmanaged(in value.m_SlotIndex, in value.m_WeaponSlotType);
 	}
 
 	[Preserve]
@@ -103,30 +113,33 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 		}
 		EntityRef value2;
 		int value3;
+		WeaponSlotType value4;
 		string keyName;
-		if (memberCount == 3)
+		if (memberCount == 4)
 		{
 			if (value == null)
 			{
 				keyName = reader.ReadString();
 				value2 = reader.ReadPackable<EntityRef>();
-				reader.ReadUnmanaged<int>(out value3);
+				reader.ReadUnmanaged<int, WeaponSlotType>(out value3, out value4);
 			}
 			else
 			{
 				keyName = value.m_KeyName;
 				value2 = value.m_CharacterEntityRef;
 				value3 = value.m_SlotIndex;
+				value4 = value.m_WeaponSlotType;
 				keyName = reader.ReadString();
 				reader.ReadPackable(ref value2);
 				reader.ReadUnmanaged<int>(out value3);
+				reader.ReadUnmanaged<WeaponSlotType>(out value4);
 			}
 		}
 		else
 		{
-			if (memberCount > 3)
+			if (memberCount > 4)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PingActionBarAbilityGameCommand), 3, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PingActionBarAbilityGameCommand), 4, memberCount);
 				return;
 			}
 			if (value == null)
@@ -134,12 +147,14 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 				keyName = null;
 				value2 = default(EntityRef);
 				value3 = 0;
+				value4 = WeaponSlotType.Dorsal;
 			}
 			else
 			{
 				keyName = value.m_KeyName;
 				value2 = value.m_CharacterEntityRef;
 				value3 = value.m_SlotIndex;
+				value4 = value.m_WeaponSlotType;
 			}
 			if (memberCount != 0)
 			{
@@ -150,12 +165,16 @@ public sealed class PingActionBarAbilityGameCommand : GameCommand, IMemoryPackab
 					if (memberCount != 2)
 					{
 						reader.ReadUnmanaged<int>(out value3);
-						_ = 3;
+						if (memberCount != 3)
+						{
+							reader.ReadUnmanaged<WeaponSlotType>(out value4);
+							_ = 4;
+						}
 					}
 				}
 			}
 			_ = value;
 		}
-		value = new PingActionBarAbilityGameCommand(keyName, value2, value3);
+		value = new PingActionBarAbilityGameCommand(keyName, value2, value3, value4);
 	}
 }

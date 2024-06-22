@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.MVVM.VM.CombatLog;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -83,11 +84,14 @@ public class CombatLogPCView : CombatLogBaseView
 		{
 			m_VirtualList.ScrollController.ForceScrollToBottom();
 		}));
-		foreach (OwlcatToggle toggle in m_Toggles)
+		foreach (CombatLogToggleWithCustomHint toggle in m_Toggles)
 		{
 			AddDisposable(toggle.SetHint(base.ViewModel.GetChannelName(m_Toggles.IndexOf(toggle))));
 		}
-		AddDisposable(m_ToggleGroup.ActiveToggle.Subscribe(HandleActiveToggleChanged));
+		AddDisposable(m_ToggleGroup.ActiveToggle.Subscribe(delegate(OwlcatToggle toggle)
+		{
+			HandleActiveToggleChanged(toggle as CombatLogToggleWithCustomHint);
+		}));
 		m_IsFiltersVisible = IsPinned.Or(m_IsMoseHovered).ToReadOnlyReactiveProperty();
 		AddDisposable(m_IsFiltersVisible.Subscribe(SwitchFiltersVisibility));
 		UISounds.Instance.SetClickAndHoverSound(m_SwitchPinButton, UISounds.ButtonSoundsEnum.PlastickSound);
@@ -95,8 +99,12 @@ public class CombatLogPCView : CombatLogBaseView
 		{
 			IsPinned.Value = !IsPinned.Value;
 		}));
-		AddDisposable(m_SwitchPinButton.SetHint(UIStrings.Instance.CombatTexts.CombatLogShowHide));
+		AddDisposable(m_SwitchPinButton.SetHint(UIStrings.Instance.CombatTexts.CombatLogShowHide, "ShowHideCombatLog"));
 		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().Subscribe(OnLateUpdate));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.ShowHideCombatLog.name, delegate
+		{
+			IsPinned.Value = !IsPinned.Value;
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -171,7 +179,7 @@ public class CombatLogPCView : CombatLogBaseView
 		if (pinned)
 		{
 			m_SwitchPinButton.SetActiveLayer("Pinned");
-			MoveContainer(m_PinnedContainer, m_PinnedContainerShowSettings, animated: true);
+			SetContainerState(state: true);
 		}
 		else
 		{
@@ -179,7 +187,7 @@ public class CombatLogPCView : CombatLogBaseView
 		}
 	}
 
-	private void HandleActiveToggleChanged(OwlcatToggle active)
+	private void HandleActiveToggleChanged(CombatLogToggleWithCustomHint active)
 	{
 		if (active == null)
 		{
@@ -196,7 +204,7 @@ public class CombatLogPCView : CombatLogBaseView
 				continue;
 			}
 			image.enabled = true;
-			m_StartedTweeners.Add(image.rectTransform.DOShakeScale(0.1f, 1f, 10, 45f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true));
+			StartedTweeners.Add(image.rectTransform.DOShakeScale(0.1f, 1f, 10, 45f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true));
 		}
 	}
 }

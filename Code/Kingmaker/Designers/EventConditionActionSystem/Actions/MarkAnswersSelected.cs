@@ -46,7 +46,7 @@ public class MarkAnswersSelected : GameAction
 		return "Mark Answers Selected (" + text + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BlueprintAnswer answer in Answers)
 		{

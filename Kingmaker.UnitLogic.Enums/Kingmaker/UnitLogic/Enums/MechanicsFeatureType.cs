@@ -56,5 +56,10 @@ public enum MechanicsFeatureType
 	RemoveFromInitiative,
 	BlockOverpenetration,
 	IsLastInFight,
-	ShapeFlames
+	ShapeFlames,
+	AutoDodgeFriendlyFire,
+	HealInsteadOfDamageForDOTs,
+	RangedParry,
+	CanUseBothDesperateMeasureAndHeroicAct,
+	HalfSuperiorityCriticalChance
 }

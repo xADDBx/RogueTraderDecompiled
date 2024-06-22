@@ -112,7 +112,7 @@ public class BaseJournalItemConsoleView : BaseJournalItemBaseView
 		m_CompletedMark.SetActive(base.ViewModel.IsCompleted);
 		m_UpdatedMark.SetActive(base.ViewModel.IsUpdated);
 		m_PostponedMark.SetActive(base.ViewModel.IsPostponed);
-		int num = ((!base.ViewModel.IsNew || base.ViewModel.QuestIsViewed) ? (base.ViewModel.IsUpdated ? 1 : (base.ViewModel.IsCompleted ? 2 : (-1))) : 0);
+		int num = ((!base.ViewModel.IsNew || base.ViewModel.QuestIsViewed) ? (base.ViewModel.IsUpdated ? 1 : (base.ViewModel.IsCompleted ? 2 : (base.ViewModel.IsFailed ? 3 : (-1)))) : 0);
 		m_StatusLabel.color = GetStatusColor();
 		if (num == -1)
 		{

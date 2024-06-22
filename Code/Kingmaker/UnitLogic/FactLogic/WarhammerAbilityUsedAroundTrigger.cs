@@ -19,17 +19,22 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[KDB("A global trigger. Reacts to RulePerformAbility.OnEventDidTrigger.\r\nCan filter events by range from fact owner, by caster/target faction and by overwatch area.\r\nCan run specified actions in context of either caster or target, but not fact owner.\r\n\t")]
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("fc7d47b2586912942938f8a813b52e9b")]
 public class WarhammerAbilityUsedAroundTrigger : UnitFactComponentDelegate, IGlobalRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IGlobalRulebookSubscriber, IHashable
 {
+	[KDB("Caster must be from this faction")]
 	public ParticipantFaction caster;
 
+	[KDB("Target must be from this faction")]
 	public ParticipantFaction target;
 
+	[KDB("Selects context in which actions will be run (caster/target)")]
 	public TargetSelection targetSelector;
 
+	[KDB("Filter events by range from fact owner")]
 	public bool limitByRange;
 
 	[ShowIf("limitByRange")]
@@ -38,8 +43,10 @@ public class WarhammerAbilityUsedAroundTrigger : UnitFactComponentDelegate, IGlo
 	[ShowIf("limitByRange")]
 	public int maxRange;
 
+	[KDB("Only react to events inside fact owner's overwatch zone")]
 	public bool checkForOverwatch;
 
+	[KDB("Actions to run when event is triggered and all filters are passed")]
 	public ActionList Actions;
 
 	private void RunAction(AbilityData _, MechanicEntity initiator, TargetWrapper target)

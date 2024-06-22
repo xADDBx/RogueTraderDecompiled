@@ -191,20 +191,20 @@ public class CargoSlotVM : VirtualListElementVMBase
 		{
 			if (Game.Instance.IsControllerMouse)
 			{
-				AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 8, 16, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 16));
+				AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 8, 16, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 16));
 			}
 			else
 			{
-				AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 6, 12, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 12));
+				AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 6, 12, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 12));
 			}
 		}
 		else if (Game.Instance.IsControllerMouse)
 		{
-			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 6, 12, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 12));
+			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 6, 12, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 12));
 		}
 		else
 		{
-			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 5, 10, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 10));
+			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, 5, 10, ItemsFilterType.NoFilter, ItemsSorterType.NotSorted, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Cargo, needMaximumLimit: true, 10));
 		}
 		ItemSlotsGroup.SearchString.Value = m_SearchString;
 		AddDisposable(UniRxExtensionMethods.Subscribe(ItemSlotsGroup.CollectionChangedCommand, delegate
@@ -264,8 +264,7 @@ public class CargoSlotVM : VirtualListElementVMBase
 
 	public void UpdateValues(bool needUpdateActive)
 	{
-		int num = ((!IsEmpty) ? CargoEntity.FilledVolumePercent : 0);
-		TotalFillValue.Value = ((num > 100) ? 100 : num);
+		TotalFillValue.Value = ((!IsEmpty) ? CargoEntity.FilledVolumePercent : 0);
 		UnusableFillValue.Value = ((!IsEmpty) ? CargoEntity.UnusableVolumePercent : 0);
 		if (needUpdateActive)
 		{

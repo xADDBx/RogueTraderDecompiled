@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameCommands;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -25,6 +26,7 @@ using Kingmaker.UI.MVVM.VM.CharGen.Phases.Stats;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Summary;
 using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
+using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Levelup.Selections.Doll;
@@ -76,6 +78,8 @@ public class CharGenVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public readonly ReactiveCommand<bool> CheckCoopControls = new ReactiveCommand<bool>();
 
 	public readonly BoolReactiveProperty IsMainCharacter = new BoolReactiveProperty();
+
+	private bool m_PortraitSynchronizingInProgress;
 
 	public IReadOnlyReactiveCollection<CharGenPhaseBaseVM> PhasesCollection => m_PhasesCollection;
 
@@ -144,17 +148,38 @@ public class CharGenVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 
 	public void Complete()
 	{
-		Game.Instance.GameCommandQueue.CharGenClose(withComplete: true);
+		UISounds.Instance.Play(UISounds.Instance.Sounds.Buttons.FinishChargenButtonClick, isButton: false, playAnyway: true);
+		bool syncPortrait = PhotonManager.Lobby.IsActive && PhotonManager.Initialized && PhotonManager.Instance.PortraitSyncer.IsNeedSyncPortrait();
+		Game.Instance.GameCommandQueue.CharGenClose(withComplete: true, syncPortrait);
 	}
 
 	public void Close()
 	{
-		Game.Instance.GameCommandQueue.CharGenClose(withComplete: false);
+		Game.Instance.GameCommandQueue.CharGenClose(withComplete: false, syncPortrait: false);
 	}
 
-	void ICharGenCloseHandler.HandleClose(bool withComplete)
+	async void ICharGenCloseHandler.HandleClose(bool withComplete, bool syncPortrait)
 	{
-		if (withComplete)
+		if (syncPortrait)
+		{
+			if (!m_PortraitSynchronizingInProgress)
+			{
+				m_PortraitSynchronizingInProgress = true;
+				try
+				{
+					await PhotonManager.Instance.PortraitSyncer.SyncPortraits(UINetUtility.IsControlMainCharacter());
+				}
+				finally
+				{
+					m_PortraitSynchronizingInProgress = false;
+				}
+				if (UINetUtility.IsControlMainCharacter())
+				{
+					Game.Instance.GameCommandQueue.CharGenClose(withComplete, syncPortrait: false);
+				}
+			}
+		}
+		else if (withComplete)
 		{
 			CloseWithComplete();
 		}

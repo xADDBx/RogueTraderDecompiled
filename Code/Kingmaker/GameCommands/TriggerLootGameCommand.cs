@@ -66,7 +66,7 @@ public sealed class TriggerLootGameCommand : GameCommandWithSynchronized, IMemor
 	public TriggerLootGameCommand(InteractionLootPart interactionLootPart, TriggerType type, ItemEntity item)
 		: this(interactionLootPart, (byte)type, item)
 	{
-		m_IsSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<GameCommandContext>.Current;
+		m_IsSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
 	}
 
 	protected override void ExecuteInternal()

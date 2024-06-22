@@ -6,7 +6,7 @@ namespace Kingmaker.UnitLogic.Mechanics.Actions;
 [TypeId("6b1117fd331ad53419ba9a408e756209")]
 public class WarhammerContexActionChangeWeaponSet : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		PartUnitBody partUnitBody = base.Target?.Entity?.GetBodyOptional();
 		if (partUnitBody != null)

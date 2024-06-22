@@ -54,10 +54,12 @@ public class BarkHandle : IBarkHandle, IUpdatable
 		if (!IsPlayingBark())
 		{
 			InterruptBark();
+			return;
 		}
-		else
+		m_RemainingTime -= Game.Instance.TimeController.DeltaTime;
+		if (!m_Entity.IsInGame)
 		{
-			m_RemainingTime -= Game.Instance.TimeController.DeltaTime;
+			InterruptBark();
 		}
 	}
 

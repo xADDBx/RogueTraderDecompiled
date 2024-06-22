@@ -22,6 +22,10 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString NoResources;
 
+	public LocalizedString NoResourcesWounds;
+
+	public LocalizedString NoResourcesBuff;
+
 	public LocalizedString OutOfSpellsPerDay;
 
 	public LocalizedString NotInSpellList;
@@ -108,6 +112,8 @@ public class ReasonStrings : StringsContainer
 	public LocalizedString TargetHasMeleeWeapon;
 
 	public LocalizedString TargetHasNoMeleeWeapon;
+
+	public LocalizedString CasterHasNoWeaponOfClassification;
 
 	public LocalizedString TargetIsDeadCompanion;
 

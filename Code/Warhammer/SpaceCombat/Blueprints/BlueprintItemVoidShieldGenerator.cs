@@ -25,6 +25,9 @@ public class BlueprintItemVoidShieldGenerator : BlueprintStarshipItem
 	[ShowIf("HasExtraResistance")]
 	public int extraResistanceDamageReductionPercent;
 
+	[Header("Shields are not spent when ramming")]
+	public bool offOnRam;
+
 	public bool HasExtraResistance => damageExtraResistance != DamageType.Direct;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipVoidShieldGenerator;

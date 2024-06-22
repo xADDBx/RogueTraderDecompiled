@@ -38,6 +38,11 @@ public class LocaleData
 	public string OriginalText = "";
 
 	[CanBeNull]
+	[JsonProperty(PropertyName = "translation_comment", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+	[DefaultValue("")]
+	public string TranslationComment = "";
+
+	[CanBeNull]
 	[JsonProperty(PropertyName = "traits", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
 	[DefaultValue(null)]
 	public List<TraitData> Traits;

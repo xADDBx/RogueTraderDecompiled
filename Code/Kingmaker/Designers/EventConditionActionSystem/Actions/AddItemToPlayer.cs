@@ -10,7 +10,6 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
-using Kingmaker.QA;
 using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.Attributes;
@@ -107,7 +106,7 @@ public class AddItemToPlayer : GameAction
 		return "Добавляет игроку указанные предметы.\nПредметы можно сразу идентифицировать\nОдеваемые предметы можно одеть на указанного юнита";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)ContextData<UnitHelper.DoNotCreateItems>.Current)
 		{
@@ -213,7 +212,7 @@ public class AddItemToPlayer : GameAction
 			}
 			if (ErrorIfDidNotEquip && itemSlot?.MaybeItem == null)
 			{
-				PFLog.Default.ErrorWithReport(base.Owner, $"{base.Owner}: Cannot equip {item} on {baseUnitEntity}: not slot available");
+				Element.LogError(base.Owner, "{0}: Cannot equip {1} on {2}: not slot available", base.Owner, item, baseUnitEntity);
 			}
 		}
 	}

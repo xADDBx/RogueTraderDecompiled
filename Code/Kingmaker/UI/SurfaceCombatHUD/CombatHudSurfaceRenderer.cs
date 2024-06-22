@@ -187,11 +187,11 @@ public sealed class CombatHudSurfaceRenderer : MonoBehaviour
 		}
 		foreach (AreaSourceData allyStratagemAreaData in AllyStratagemAreaDataList)
 		{
-			surfaceServiceRequest.Areas.Add(new AreaData(512u, allyStratagemAreaData.source, 1, isStratagem: true));
+			surfaceServiceRequest.Areas.Add(new AreaData(512u, allyStratagemAreaData.Source, 1, isStratagem: true));
 		}
 		foreach (AreaSourceData hostileStratagemAreaData in HostileStratagemAreaDataList)
 		{
-			surfaceServiceRequest.Areas.Add(new AreaData(2048u, hostileStratagemAreaData.source, 1, isStratagem: true));
+			surfaceServiceRequest.Areas.Add(new AreaData(2048u, hostileStratagemAreaData.Source, 1, isStratagem: true));
 		}
 		bool num = DeploymentPermittedAreaSource != null;
 		bool flag = MovementAreaSource != null;
@@ -215,17 +215,18 @@ public sealed class CombatHudSurfaceRenderer : MonoBehaviour
 			{
 				combatHudCommand2.PushCommand(surfaceServiceRequest, m_MaterialBindingDataSource);
 			}
-			int j = 0;
-			for (int count = AllyStratagemAreaDataList.Count; j < count; j++)
+			foreach (AreaSourceData allyStratagemAreaData2 in AllyStratagemAreaDataList)
 			{
 				array2 = combatHudSurfaceRendererAsset.allyStratagemLoopCommands;
 				foreach (CombatHudCommand combatHudCommand3 in array2)
 				{
-					m_MaterialBindingDataSource.SetIcon(IconOverrideSource.Stratagem, AllyStratagemAreaDataList[j].icon);
+					m_MaterialBindingDataSource.SetIcon(IconOverrideSource.Stratagem, allyStratagemAreaData2.IconTexture);
+					m_MaterialBindingDataSource.SetMaterialRemap(allyStratagemAreaData2.MaterialRemapAsset);
 					combatHudCommand3.PushCommand(surfaceServiceRequest, m_MaterialBindingDataSource, num2);
 				}
 				num2++;
 			}
+			m_MaterialBindingDataSource.SetMaterialRemap(null);
 			array2 = combatHudSurfaceRendererAsset.allyStratagemFinishCommands;
 			foreach (CombatHudCommand combatHudCommand4 in array2)
 			{
@@ -239,17 +240,18 @@ public sealed class CombatHudSurfaceRenderer : MonoBehaviour
 			{
 				combatHudCommand5.PushCommand(surfaceServiceRequest, m_MaterialBindingDataSource);
 			}
-			int k = 0;
-			for (int count2 = HostileStratagemAreaDataList.Count; k < count2; k++)
+			foreach (AreaSourceData hostileStratagemAreaData2 in HostileStratagemAreaDataList)
 			{
 				array2 = combatHudSurfaceRendererAsset.hostileStratagemLoopCommands;
 				foreach (CombatHudCommand combatHudCommand6 in array2)
 				{
-					m_MaterialBindingDataSource.SetIcon(IconOverrideSource.Stratagem, HostileStratagemAreaDataList[k].icon);
+					m_MaterialBindingDataSource.SetIcon(IconOverrideSource.Stratagem, hostileStratagemAreaData2.IconTexture);
+					m_MaterialBindingDataSource.SetMaterialRemap(hostileStratagemAreaData2.MaterialRemapAsset);
 					combatHudCommand6.PushCommand(surfaceServiceRequest, m_MaterialBindingDataSource, num2);
 				}
 				num2++;
 			}
+			m_MaterialBindingDataSource.SetMaterialRemap(null);
 			array2 = combatHudSurfaceRendererAsset.hostileStratagemFinishCommands;
 			foreach (CombatHudCommand combatHudCommand7 in array2)
 			{

@@ -16,9 +16,9 @@ public class TooltipTemplateGlossary : TooltipBaseTemplate
 {
 	public readonly BlueprintEncyclopediaGlossaryEntry GlossaryEntry;
 
-	private bool m_IsHistory;
+	private readonly bool m_IsHistory;
 
-	private bool m_IsEncyclopedia;
+	private readonly bool m_IsEncyclopedia;
 
 	public TooltipTemplateGlossary(string key, bool isHistory = false, bool isEncyclopedia = false)
 	{
@@ -65,12 +65,14 @@ public class TooltipTemplateGlossary : TooltipBaseTemplate
 	{
 		if (!string.IsNullOrEmpty(GlossaryEntry?.GetDescription()))
 		{
-			TooltipTextType tooltipTextType = TooltipTextType.Paragraph | TooltipTextType.BlackColor;
+			TooltipTextType flags = TooltipTextType.Paragraph | TooltipTextType.BlackColor;
 			if ((type != TooltipTemplateType.Info || !m_IsHistory) && m_IsEncyclopedia)
 			{
-				tooltipTextType |= TooltipTextType.GlossarySize;
+				flags |= TooltipTextType.GlossarySize;
 			}
-			yield return new TooltipBrickText(GlossaryEntry?.GetDescription(), tooltipTextType);
+			string description = UIUtilityTexts.UpdateDescriptionWithUIProperties(GlossaryEntry?.GetDescription(), null);
+			yield return new TooltipBrickSeparator();
+			yield return new TooltipBrickText(description, flags);
 		}
 		yield return null;
 	}

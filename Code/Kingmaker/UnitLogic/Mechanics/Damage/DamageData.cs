@@ -18,6 +18,8 @@ public class DamageData
 
 	public readonly CompositeModifiersManager CriticalDamageModifiers = new CompositeModifiersManager();
 
+	public readonly CompositeModifiersManager PureCriticalDamageModifiers = new CompositeModifiersManager();
+
 	public readonly CompositeModifiersManager Absorption = new CompositeModifiersManager(0);
 
 	public readonly CompositeModifiersManager Deflection = new CompositeModifiersManager(0);
@@ -113,7 +115,7 @@ public class DamageData
 			{
 				return 0;
 			}
-			return Mathf.Max(0, Modifiers.ApplyPctMulExtra(CriticalDamageModifiers.Apply(MinValueBaseWithMinModifiers) - MinValueBaseWithMinModifiers));
+			return Mathf.Max(0, PureCriticalDamageModifiers.Apply(Modifiers.ApplyPctMulExtra(CriticalDamageModifiers.Apply(MinValueBaseWithMinModifiers) - MinValueBaseWithMinModifiers)));
 		}
 	}
 
@@ -125,7 +127,7 @@ public class DamageData
 			{
 				return 0;
 			}
-			return Mathf.Max(0, Modifiers.ApplyPctMulExtra(CriticalDamageModifiers.Apply(MaxValueBaseWithMaxModifiers) - MaxValueBaseWithMaxModifiers));
+			return Mathf.Max(0, PureCriticalDamageModifiers.Apply(Modifiers.ApplyPctMulExtra(CriticalDamageModifiers.Apply(MaxValueBaseWithMaxModifiers) - MaxValueBaseWithMaxModifiers)));
 		}
 	}
 
@@ -228,6 +230,7 @@ public class DamageData
 		MinValueModifiers.CopyFrom(source.MinValueModifiers);
 		MaxValueModifiers.CopyFrom(source.MaxValueModifiers);
 		CriticalDamageModifiers.CopyFrom(source.CriticalDamageModifiers);
+		PureCriticalDamageModifiers.CopyFrom(source.PureCriticalDamageModifiers);
 		Absorption.CopyFrom(source.Absorption);
 		Deflection.CopyFrom(source.Deflection);
 		Penetration.CopyFrom(source.Penetration);

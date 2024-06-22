@@ -16,6 +16,7 @@ public class TaskNodeSelectReferenceAbility : TaskNode
 		{
 			AbilityData abilityData = (decisionContext2.Ability = decisionContext.GetBestAbility());
 		}
+		AbilityTargetingCache.Instance.SetActive();
 		AILogger.Instance.Log(AILogAbility.ReferenceAbilitySelected(decisionContext.Ability));
 		return Status.Success;
 	}

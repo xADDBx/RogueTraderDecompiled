@@ -53,7 +53,7 @@ public class LootCollectorConsoleView : LootCollectorView
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
-	private BoolReactiveProperty m_IsFocused = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_IsFocused = new BoolReactiveProperty();
 
 	protected override void BindViewImplementation()
 	{
@@ -69,7 +69,7 @@ public class LootCollectorConsoleView : LootCollectorView
 
 	public void AddInput(InputLayer inputLayer)
 	{
-		AddDisposable(m_CollectAllHint.Bind(inputLayer.AddButton(CollectAll, 10, base.ViewModel.NoLoot.Not().And(base.ViewModel.ExtendedView.Not()).ToReactiveProperty(), InputActionEventType.ButtonJustReleased)));
+		AddDisposable(m_CollectAllHint.Bind(inputLayer.AddButton(Collect, 10, base.ViewModel.NoLoot.Not().And(base.ViewModel.ExtendedView.Not()).ToReactiveProperty(), InputActionEventType.ButtonJustReleased)));
 		m_CollectAllHint.SetLabel(UIStrings.Instance.LootWindow.CollectAll);
 		AddDisposable(m_CollectAllLongHint.Bind(inputLayer.AddButton(CollectAllAndScrollToTop, 10, base.ViewModel.NoLoot.Not().And(base.ViewModel.ExtendedView).ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed)));
 		m_CollectAllLongHint.SetLabel(UIStrings.Instance.LootWindow.CollectAll);
@@ -122,6 +122,11 @@ public class LootCollectorConsoleView : LootCollectorView
 		return m_NavigationBehaviour;
 	}
 
+	public IConsoleEntity GetCurrentFocus()
+	{
+		return m_NavigationBehaviour?.DeepestNestedFocus;
+	}
+
 	protected override void Hide()
 	{
 		m_NavigationBehaviour?.Clear();
@@ -143,12 +148,12 @@ public class LootCollectorConsoleView : LootCollectorView
 	{
 		m_ScrollRect.ScrollToTop();
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
-		CollectAll(data);
+		Collect(data);
 	}
 
-	private void CollectAll(InputActionEventData data)
+	private void Collect(InputActionEventData data)
 	{
-		base.ViewModel.CollectAll();
+		CollectAll();
 		UISounds.Instance.Sounds.Buttons.LootCollectAllButtonClick.Play();
 	}
 

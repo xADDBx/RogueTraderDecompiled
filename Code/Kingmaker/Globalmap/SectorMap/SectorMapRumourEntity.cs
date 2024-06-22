@@ -4,6 +4,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.StateHasher.Hashers;
 using Newtonsoft.Json;
@@ -50,12 +51,22 @@ public class SectorMapRumourEntity : Entity, IQuestObjectiveHandler, ISubscriber
 		UpdateState(m_BlueprintQuestObjective);
 	}
 
+	protected override void OnViewDidAttach()
+	{
+		base.OnViewDidAttach();
+		UpdateState(m_BlueprintQuestObjective);
+	}
+
 	private void UpdateState(BlueprintQuestObjective objective)
 	{
 		if (m_BlueprintQuestObjective == objective)
 		{
 			QuestObjectiveState objectiveState = Game.Instance.Player.QuestBook.GetObjectiveState(m_BlueprintQuestObjective);
 			IsQuestObjectiveActive = objectiveState == QuestObjectiveState.Started;
+			EventBus.RaiseEvent(delegate(IRumourObjectiveStateHandler h)
+			{
+				h.HandleRumourObjectiveActiveStateChanged(objective, IsQuestObjectiveActive);
+			});
 			View.Or(null)?.UpdateVisibility();
 		}
 	}

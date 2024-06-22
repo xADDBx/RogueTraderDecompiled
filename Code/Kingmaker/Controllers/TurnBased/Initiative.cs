@@ -56,6 +56,7 @@ public class Initiative : IHashable
 		Order = 0;
 		InterruptingOrder = 0;
 		Roll = 0f;
+		WasPreparedForRound = 0;
 	}
 
 	public bool ShouldActNow(bool isTurnBased, Event @event, out int actRound)

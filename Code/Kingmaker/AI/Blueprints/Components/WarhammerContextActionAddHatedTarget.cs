@@ -12,7 +12,7 @@ public class WarhammerContextActionAddHatedTarget : ContextAction
 		return "Add caster to hated targets";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.TargetEntity.GetBrainOptional()?.AddCustomHatedTarget(base.Caster);
 	}

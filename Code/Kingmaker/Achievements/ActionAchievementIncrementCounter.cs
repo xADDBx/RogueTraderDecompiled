@@ -22,7 +22,7 @@ public class ActionAchievementIncrementCounter : GameAction
 		return "Increment achievement counter: " + Achievement.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.Achievements.IncrementCounter(Achievement);
 	}

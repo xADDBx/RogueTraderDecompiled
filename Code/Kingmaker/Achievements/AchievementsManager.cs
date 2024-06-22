@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core.Cheats;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings.Difficulty;
@@ -48,6 +49,10 @@ public class AchievementsManager : IReadOnlyCollection<AchievementEntity>, IEnum
 
 	public void Activate()
 	{
+		if (NetworkingManager.IsMultiplayer && !NetworkingManager.IsGameOwner)
+		{
+			m_Achievements.Clear();
+		}
 		foreach (AchievementData achData in BlueprintRoot.Instance.Achievements.List)
 		{
 			if (!m_Achievements.HasItem((AchievementEntity a) => a.Data == achData))

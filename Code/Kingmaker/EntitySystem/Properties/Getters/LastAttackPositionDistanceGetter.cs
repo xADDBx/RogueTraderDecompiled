@@ -20,8 +20,8 @@ public class LastAttackPositionDistanceGetter : UnitPropertyGetter
 		return base.CurrentEntity.DistanceToInCells(lastAttackPosition.Value);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Last attack position distance";
+		return "Distance from " + FormulaTargetScope.Current + " to its last attack position";
 	}
 }

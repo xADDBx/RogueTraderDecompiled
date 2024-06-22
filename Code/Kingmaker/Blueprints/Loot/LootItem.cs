@@ -26,11 +26,11 @@ public class LootItem : ISerializationCallbackReceiver
 
 	[SerializeField]
 	[ShowIf("CanOverridePFCost")]
-	private long m_ProfitFactorCost;
+	private int m_ProfitFactorCost;
 
 	public BlueprintItem Item => m_Item.Get();
 
-	public long? ProfitFactorCostOverride
+	public int? ProfitFactorCostOverride
 	{
 		get
 		{
@@ -54,6 +54,12 @@ public class LootItem : ISerializationCallbackReceiver
 			}
 			return false;
 		}
+	}
+
+	public void OverrideProfitFactorCostFromImport(int pf)
+	{
+		m_OverrideProfitFactorCost = true;
+		m_ProfitFactorCost = pf;
 	}
 
 	public void AddItemTo(List<LootEntry> targetList, int count, int reputationPointsToUnlock)

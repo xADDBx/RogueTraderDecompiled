@@ -97,36 +97,4 @@ public class WeaponAbilitiesGroupBaseView : ViewBase<AbilitiesGroupVM>
 		SlotsList.ForEach(WidgetFactory.DisposeWidget);
 		SlotsList.Clear();
 	}
-
-	private void Show()
-	{
-		if (!m_IsActive)
-		{
-			m_Animation?.Complete();
-			m_Animation = DOTween.Sequence();
-			m_Animation.Append(CanvasGroup.DOFade(1f, m_AnimationDuration));
-			m_Animation.Join(m_GroupLabel.DOFade(1f, m_AnimationDuration));
-			m_Animation.AppendCallback(delegate
-			{
-				m_IsActive = true;
-			});
-			m_Animation.SetUpdate(isIndependentUpdate: true).Play();
-		}
-	}
-
-	private void Hide()
-	{
-		if (m_IsActive)
-		{
-			m_Animation?.Complete();
-			m_Animation = DOTween.Sequence();
-			m_Animation.Append(CanvasGroup.DOFade(0f, m_AnimationDuration));
-			m_Animation.Join(m_GroupLabel.DOFade(0f, m_AnimationDuration));
-			m_Animation.AppendCallback(delegate
-			{
-				m_IsActive = false;
-			});
-			m_Animation.SetUpdate(isIndependentUpdate: true).Play();
-		}
-	}
 }

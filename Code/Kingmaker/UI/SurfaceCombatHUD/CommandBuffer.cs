@@ -29,11 +29,21 @@ public struct CommandBuffer : IDisposable
 
 	public void CopyFrom(ref CommandBuffer src)
 	{
-		recordList.CopyFrom(src.recordList.AsArray());
-		writeFillCommandDataList.CopyFrom(src.writeFillCommandDataList.AsArray());
-		buildFillCommandDataList.CopyFrom(src.buildFillCommandDataList.AsArray());
-		composeOutlineMeshCommandDataList.CopyFrom(src.composeOutlineMeshCommandDataList.AsArray());
-		appendMeshCommandDataList.CopyFrom(src.appendMeshCommandDataList.AsArray());
+		ref NativeList<CommandRecord> reference = ref recordList;
+		NativeArray<CommandRecord> other = src.recordList.AsArray();
+		reference.CopyFrom(in other);
+		ref NativeList<WriteFillCommandData> reference2 = ref writeFillCommandDataList;
+		NativeArray<WriteFillCommandData> other2 = src.writeFillCommandDataList.AsArray();
+		reference2.CopyFrom(in other2);
+		ref NativeList<BuildFillCommandData> reference3 = ref buildFillCommandDataList;
+		NativeArray<BuildFillCommandData> other3 = src.buildFillCommandDataList.AsArray();
+		reference3.CopyFrom(in other3);
+		ref NativeList<ComposeOutlineMeshCommandData> reference4 = ref composeOutlineMeshCommandDataList;
+		NativeArray<ComposeOutlineMeshCommandData> other4 = src.composeOutlineMeshCommandDataList.AsArray();
+		reference4.CopyFrom(in other4);
+		ref NativeList<AppendMeshCommandData> reference5 = ref appendMeshCommandDataList;
+		NativeArray<AppendMeshCommandData> other5 = src.appendMeshCommandDataList.AsArray();
+		reference5.CopyFrom(in other5);
 	}
 
 	public void Clear()

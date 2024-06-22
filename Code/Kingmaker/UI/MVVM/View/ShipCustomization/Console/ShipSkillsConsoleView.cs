@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
+using Kingmaker.UI.MVVM.View.Tooltip.PC.Bricks.CombatLog;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -20,7 +21,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 
-public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionTabsConsoleView>
+public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionTabsConsoleView>, IShipCustomizationPage
 {
 	private readonly ReactiveProperty<bool> m_CanReset = new ReactiveProperty<bool>();
 
@@ -194,16 +195,26 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 		}
 		else
 		{
+			bool flag = m_PreviousNavigation == m_RightNavigation;
 			m_InfoDisposables.Clear();
 			foreach (var (consoleNavigationBehaviour2, currentEntity) in m_PreviousEntities)
 			{
 				consoleNavigationBehaviour2.SetCurrentEntity(currentEntity);
 			}
 			m_NavigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_ScreenNavigation);
-			m_PreviousNavigation.FocusOnEntityManual(m_PreviousEntities[m_PreviousNavigation]);
-			m_NavigationBehaviour.FocusOnEntityManual(m_ScreenNavigation);
-			m_ScreenNavigation.FocusOnEntityManual(m_PreviousNavigation);
-			m_NavigationBehaviour.FocusOnEntityManual(m_ScreenNavigation);
+			m_NavigationBehaviour.SetCurrentEntity(m_ScreenNavigation);
+			if (flag)
+			{
+				m_ScreenNavigation.FocusOnEntityManual(m_RightNavigation);
+				m_NavigationBehaviour.FocusOnEntityManual(m_ScreenNavigation);
+			}
+			else
+			{
+				m_PreviousNavigation.FocusOnEntityManual(m_PreviousEntities[m_PreviousNavigation]);
+				m_ScreenNavigation.FocusOnEntityManual(m_PreviousNavigation);
+				m_NavigationBehaviour.FocusOnEntityManual(m_ScreenNavigation);
+				m_RightNavigation.UnFocusCurrentEntity();
+			}
 		}
 		m_IsInScreenNavigation.Value = !m_IsInScreenNavigation.Value;
 		m_NavigationBehaviour.UpdateDeepestFocusObserve();
@@ -238,12 +249,6 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 		return m_NavigationBehaviour;
 	}
 
-	private void ToggleTooltip()
-	{
-		m_ShowTooltip = !m_ShowTooltip;
-		OnFocusEntity(m_NavigationBehaviour.DeepestNestedFocus);
-	}
-
 	private void HandleTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
@@ -254,6 +259,14 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 		if (!m_IsInScreenNavigation.Value && m_ShowTooltip && (bool)monoBehaviour && tooltipBaseTemplate != null)
 		{
 			monoBehaviour.ShowConsoleTooltip(tooltipBaseTemplate, m_NavigationBehaviour, m_TooltipConfig);
+		}
+		if (entity is IPrerequisiteLinkEntity prerequisiteLinkEntity)
+		{
+			m_CanShowInfo.Value = base.ViewModel.ShipProgressionVM.CurrentRankEntryItem.Value.ContainsFeature(prerequisiteLinkEntity.LinkId);
+		}
+		else
+		{
+			m_CanShowInfo.Value = false;
 		}
 	}
 
@@ -272,9 +285,11 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 			AddDisposable(inputBindStruct);
 			InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 			{
-				ToggleTooltip();
+				m_PreviousEntities.Remove(m_RightNavigation);
+				(m_NavigationBehaviour.DeepestNestedFocus as IConfirmClickHandler)?.OnConfirmClick();
+				AddDisposable(DelayedInvoker.InvokeInFrames(ToggleInfoNavigation, 2));
 			}, 8, m_CanShowInfo);
-			AddDisposable(hintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information));
+			AddDisposable(hintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.Tooltips.ToCurrentPrerequisiteFeature));
 			AddDisposable(inputBindStruct2);
 			InputBindStruct inputBindStruct3 = inputLayer.AddButton(delegate
 			{
@@ -376,5 +391,10 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 	private void Scroll(InputActionEventData obj, float value)
 	{
 		m_InfoSection.Scroll(value);
+	}
+
+	public bool CanOverrideClose()
+	{
+		return false;
 	}
 }

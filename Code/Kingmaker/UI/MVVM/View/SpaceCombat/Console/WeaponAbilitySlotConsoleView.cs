@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.SpaceCombat.Console;
 
-public class WeaponAbilitySlotConsoleView : ActionBarBaseSlotView, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IHasTooltipTemplate
+public class WeaponAbilitySlotConsoleView : ActionBarBaseSlotView, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IFunc02ClickHandler, IHasTooltipTemplate
 {
 	[Header("ConsoleSlot")]
 	[SerializeField]
@@ -48,5 +48,20 @@ public class WeaponAbilitySlotConsoleView : ActionBarBaseSlotView, IConsoleNavig
 	public TooltipBaseTemplate TooltipTemplate()
 	{
 		return base.ViewModel.Tooltip.Value;
+	}
+
+	public bool CanFunc02Click()
+	{
+		return base.ViewModel.HasConvert.Value;
+	}
+
+	public void OnFunc02Click()
+	{
+		m_SlotConsoleView.ShowConvertRequest();
+	}
+
+	public string GetFunc02ClickHint()
+	{
+		return string.Empty;
 	}
 }

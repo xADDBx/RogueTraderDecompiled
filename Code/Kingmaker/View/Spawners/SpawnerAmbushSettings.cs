@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic;
@@ -9,6 +10,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawner))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("37e99300b8a24a429ee0076686fe7e50")]
 public class SpawnerAmbushSettings : EntityPartComponent<SpawnerAmbushSettings.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

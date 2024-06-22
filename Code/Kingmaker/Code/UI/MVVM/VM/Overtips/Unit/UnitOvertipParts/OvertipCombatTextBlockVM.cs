@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit.UnitOvertipParts;
 
-public class OvertipCombatTextBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEntitySubscriber, IGlobalRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IGlobalRulebookSubscriber, IGlobalRulebookHandler<RulePerformSavingThrow>, IRulebookHandler<RulePerformSavingThrow>, IWarhammerAttackHandler, IHealingHandler, IDamageHandler, IAttackOfOpportunityHandler<EntitySubscriber>, IAttackOfOpportunityHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IAttackOfOpportunityHandler, EntitySubscriber>, IStarshipAttackHandler, IGlobalRulebookHandler<RuleDealStarshipMoraleDamage>, IRulebookHandler<RuleDealStarshipMoraleDamage>, IGlobalRulebookHandler<RuleHealStarshipMoraleDamage>, IRulebookHandler<RuleHealStarshipMoraleDamage>, ICustomCombatText
+public class OvertipCombatTextBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEntitySubscriber, IGlobalRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IGlobalRulebookSubscriber, IGlobalRulebookHandler<RulePerformSavingThrow>, IRulebookHandler<RulePerformSavingThrow>, IWarhammerAttackHandler, IHealingHandler, IDamageHandler, IAttackOfOpportunityHandler<EntitySubscriber>, IAttackOfOpportunityHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IAttackOfOpportunityHandler, EntitySubscriber>, IStarshipAttackHandler, IGlobalRulebookHandler<RuleDealStarshipMoraleDamage>, IRulebookHandler<RuleDealStarshipMoraleDamage>, IGlobalRulebookHandler<RuleHealStarshipMoraleDamage>, IRulebookHandler<RuleHealStarshipMoraleDamage>, ICustomCombatText, IUICultAmbushVisibilityChangeHandler
 {
 	public readonly ReactiveCommand<CombatMessageBase> CombatMessage = new ReactiveCommand<CombatMessageBase>();
 
@@ -235,6 +235,15 @@ public class OvertipCombatTextBlockVM : BaseDisposable, IViewModel, IBaseDisposa
 			{
 				Text = text
 			});
+		}
+	}
+
+	public void HandleCultAmbushVisibilityChange()
+	{
+		BaseUnitEntity baseUnitEntity = EventInvokerExtensions.BaseUnitEntity;
+		if (baseUnitEntity != null && baseUnitEntity == m_MechanicEntity)
+		{
+			CombatMessage.Execute(new CombatMessageCultAmbush());
 		}
 	}
 

@@ -14,7 +14,7 @@ internal readonly struct ShadowConstantBufferWriter
 
 	public unsafe ShadowConstantBufferWriter(in NativeReference<ShadowConstantBuffer> bufferReference)
 	{
-		m_BufferPtr = (ShadowConstantBuffer*)bufferReference.GetUnsafePtr();
+		m_BufferPtr = bufferReference.GetUnsafePtr();
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

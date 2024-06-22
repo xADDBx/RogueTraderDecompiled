@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar;
+using Kingmaker.Networking;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models.UnitSettings;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -22,7 +24,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 
 	[Header("Icon Block")]
 	[SerializeField]
-	private Image m_Icon;
+	protected Image m_Icon;
 
 	private VisibilityController m_IconVisibility;
 
@@ -153,7 +155,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		{
 			SetLayer();
 		}));
-		AddDisposable(base.ViewModel.IsPossibleActive.CombineLatest(base.ViewModel.ResourceCount, base.ViewModel.HasConvert, base.ViewModel.HasAvailableConvert, base.ViewModel.IsFake, delegate(bool active, int count, bool convert, bool convertAvailable, bool fake)
+		AddDisposable(base.ViewModel.IsPossibleWithoutNetRole.CombineLatest(base.ViewModel.ResourceCount, base.ViewModel.HasConvert, base.ViewModel.HasAvailableConvert, base.ViewModel.IsFake, delegate(bool active, int count, bool convert, bool convertAvailable, bool fake)
 		{
 			if (active && convert)
 			{
@@ -183,7 +185,10 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 				}
 			}
 		}));
-		AddDisposable(base.ViewModel.CoopPingActionBarSlot.Subscribe(PingActionBarAbility));
+		AddDisposable(base.ViewModel.CoopPingActionBarSlot.Subscribe(delegate((NetPlayer player, bool show) value)
+		{
+			PingActionBarAbility(value.player, value.show);
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -205,7 +210,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		MainButton.Interactable = value;
 	}
 
-	private void SetLayer()
+	protected void SetLayer()
 	{
 		ActionBarSlotVM viewModel = base.ViewModel;
 		if (viewModel == null || viewModel.IsEmpty.Value)
@@ -218,7 +223,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		}
 	}
 
-	private void SetIcon()
+	protected void SetIcon()
 	{
 		Sprite value = base.ViewModel.Icon.Value;
 		bool visible = value != null;
@@ -285,7 +290,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		m_SlotVisibility.SetVisible(visible);
 	}
 
-	public void PingActionBarAbility(bool show)
+	public void PingActionBarAbility(NetPlayer player, bool show)
 	{
 		if (m_TargetPingEntity == null)
 		{
@@ -303,6 +308,12 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 			return;
 		}
 		m_PingDelay?.Dispose();
+		int index = player.Index - 1;
+		Image component = m_TargetPingEntity.GetComponent<Image>();
+		if (component != null)
+		{
+			component.color = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+		}
 		m_TargetPingEntity.AppearAnimation();
 		m_IsPingInProcess = true;
 		m_PingDelay = DelayedInvoker.InvokeInTime(delegate

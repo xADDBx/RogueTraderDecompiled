@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.Common;
@@ -13,6 +14,7 @@ using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Globalmap.SystemMap;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -110,6 +112,9 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 	[SerializeField]
 	private FadeAnimator m_TargetPingEntity;
 
+	[SerializeField]
+	private List<Image> m_AdditionalTargetPingImages;
+
 	[Header("Noise")]
 	[SerializeField]
 	private Image m_NoiseAroundImage;
@@ -151,16 +156,16 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		if (m_TargetPingEntity.CanvasGroup != null)
+		if (m_TargetPingEntity.Or(null)?.CanvasGroup != null)
 		{
 			m_TargetPingEntity.CanvasGroup.alpha = 0f;
 		}
-		m_TargetPingEntity.DisappearAnimation();
-		AddDisposable(ObservableExtensions.Subscribe(m_PlanetButton.OnLeftClickAsObservable(), delegate
+		m_TargetPingEntity.Or(null)?.DisappearAnimation();
+		AddDisposable(ObservableExtensions.Subscribe(m_PlanetButton.Or(null)?.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.RequestVisit();
 		}));
-		SystemObject = base.ViewModel.PlanetObject.View;
+		SystemObject = base.ViewModel.PlanetObject?.View;
 		AddDisposable(EventBus.Subscribe(this));
 		AddDisposable(base.ViewModel.PlanetIsScanned.Subscribe(delegate
 		{
@@ -170,11 +175,11 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 		m_ExtractorResourcesTitle.text = UIStrings.Instance.ExplorationTexts.ResourceMining;
 		SetPlanetIconStates();
 		SetOvertipSize();
-		AddDisposable(m_PlanetButton.OnHoverAsObservable().Subscribe(delegate(bool state)
+		AddDisposable(m_PlanetButton.Or(null)?.OnHoverAsObservable().Subscribe(SwitchPlanetOrbits));
+		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(delegate((NetPlayer player, Entity entity) value)
 		{
-			SwitchPlanetOrbits(state);
+			PingEntity(value.player, value.entity);
 		}));
-		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(PingEntity));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -189,24 +194,30 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 	{
 		if (m_PlanetOrbitsVisual == null)
 		{
-			if (SystemObject.transform.parent != null && SystemObject.transform.parent.transform.parent != null)
+			if (SystemObject.Or(null)?.transform.parent != null && SystemObject.Or(null)?.transform.parent.transform.parent != null)
 			{
-				m_PlanetOrbitsVisual = SystemObject.transform.parent.transform.parent.GetComponent<SolarSystemStellarBodyVisual>();
+				m_PlanetOrbitsVisual = SystemObject.Or(null)?.transform.parent.transform.parent.GetComponent<SolarSystemStellarBodyVisual>();
 			}
 			if (m_PlanetOrbitsVisual == null)
 			{
 				return;
 			}
 		}
-		m_PlanetOrbitsVisual.SelectorMarkerRing.gameObject.SetActive(!state);
-		if (m_PlanetOrbitsVisual.SecondaryOrbits.Count > 0)
+		SolarSystemStellarBodyVisual solarSystemStellarBodyVisual = m_PlanetOrbitsVisual.Or(null);
+		if ((object)solarSystemStellarBodyVisual != null)
 		{
-			m_PlanetOrbitsVisual.SecondaryOrbits.ForEach(delegate(LineRenderer o)
+			solarSystemStellarBodyVisual.SelectorMarkerRing.Or(null)?.gameObject.SetActive(!state);
+		}
+		SolarSystemStellarBodyVisual solarSystemStellarBodyVisual2 = m_PlanetOrbitsVisual.Or(null);
+		if ((object)solarSystemStellarBodyVisual2 != null && solarSystemStellarBodyVisual2.SecondaryOrbits?.Count > 0)
+		{
+			m_PlanetOrbitsVisual.Or(null)?.SecondaryOrbits?.ForEach(delegate(LineRenderer o)
 			{
 				o.gameObject.SetActive(!state);
 			});
 		}
-		Material material = m_PlanetOrbitsVisual.Visual.Or(null)?.GetComponentInChildren<MeshRenderer>()?.material;
+		SolarSystemStellarBodyVisual solarSystemStellarBodyVisual3 = m_PlanetOrbitsVisual.Or(null);
+		Material material = (((object)solarSystemStellarBodyVisual3 == null) ? null : solarSystemStellarBodyVisual3.Visual.Or(null)?.GetComponentInChildren<MeshRenderer>()?.material);
 		if (material != null)
 		{
 			material.SetInt("_Rim_light", state ? 1 : 0);
@@ -215,7 +226,7 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 
 	void IChangePlanetTypeHandler.HandleChangePlanetType()
 	{
-		if (EventInvokerExtensions.Entity == SystemObject.Data)
+		if (EventInvokerExtensions.Entity == SystemObject.Or(null)?.Data)
 		{
 			SetPlanetName();
 		}
@@ -223,7 +234,7 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 
 	public void SetFocus(bool value)
 	{
-		m_PlanetButton.SetFocus(value);
+		m_PlanetButton.Or(null)?.SetFocus(value);
 	}
 
 	public bool IsValid()
@@ -247,14 +258,14 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 
 	public void UnfocusButton()
 	{
-		m_PlanetButton.OnPointerExit();
+		m_PlanetButton.Or(null)?.OnPointerExit();
 	}
 
 	public void SetPlanetName()
 	{
 		bool value = base.ViewModel.PlanetIsScanned.Value;
-		m_PlanetNameLabel.gameObject.SetActive(value);
-		m_UnknownPlanetNameImage.gameObject.SetActive(!value);
+		m_PlanetNameLabel.Or(null)?.gameObject.SetActive(value);
+		m_UnknownPlanetNameImage.Or(null)?.gameObject.SetActive(!value);
 		if (!value)
 		{
 			m_UnknownPlanetNameImage.sprite = UIConfig.Instance.UIIcons.TooltipIcons.UnknownPlanet;
@@ -294,10 +305,10 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 		float num = UnityEngine.Random.Range(15f, 25f);
 		m_TopInformation.transform.parent.transform.rotation *= Quaternion.Euler(0f, 0f, num);
 		m_TopInformation.transform.rotation *= Quaternion.Euler(0f, 0f, 0f - num);
-		SphereCollider component = SystemObject.gameObject.GetComponent<SphereCollider>();
-		if (!(component == null))
+		SphereCollider sphereCollider = SystemObject.Or(null)?.gameObject.GetComponent<SphereCollider>();
+		if (!(sphereCollider == null))
 		{
-			Vector3 size = component.bounds.size;
+			Vector3 size = sphereCollider.bounds.size;
 			m_CanvasRectTransform.sizeDelta = new Vector2(size.x * 12f, size.y * 12f);
 		}
 	}
@@ -406,13 +417,27 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 		}));
 	}
 
-	private void PingEntity(Entity entity)
+	private void PingEntity(NetPlayer player, Entity entity)
 	{
 		m_PingDelay?.Dispose();
 		if (entity != base.ViewModel.PlanetObject)
 		{
 			m_TargetPingEntity.DisappearAnimation();
 			return;
+		}
+		int index = player.Index - 1;
+		Image component = m_TargetPingEntity.GetComponent<Image>();
+		Color currentColor = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+		if (component != null)
+		{
+			component.color = currentColor;
+		}
+		if (m_AdditionalTargetPingImages != null && m_AdditionalTargetPingImages.Any())
+		{
+			m_AdditionalTargetPingImages.ForEach(delegate(Image i)
+			{
+				i.color = currentColor;
+			});
 		}
 		m_TargetPingEntity.AppearAnimation();
 		m_PingDelay = DelayedInvoker.InvokeInTime(delegate

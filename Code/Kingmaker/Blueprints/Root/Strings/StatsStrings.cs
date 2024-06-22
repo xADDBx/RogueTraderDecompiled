@@ -91,7 +91,7 @@ public class StatsStrings : StringsContainer, ISerializationCallbackReceiver
 	{
 		if (!m_WeaponCategoryCache.TryGetValue(stat, out var value))
 		{
-			return stat.ToString();
+			return UIStrings.Instance.WeaponCategories.GetWeaponCategoryLabel(stat);
 		}
 		return value;
 	}
@@ -100,7 +100,7 @@ public class StatsStrings : StringsContainer, ISerializationCallbackReceiver
 	{
 		if (!m_WeaponFamilyCache.TryGetValue(stat, out var value))
 		{
-			return stat.ToString();
+			return UIStrings.Instance.WeaponCategories.GetWeaponFamilyLabel(stat);
 		}
 		return value;
 	}

@@ -29,7 +29,7 @@ public class ContextActionRunActionOnNearestUnit : ContextAction
 		return "Run action on nearest unit, that meets the conditions";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)

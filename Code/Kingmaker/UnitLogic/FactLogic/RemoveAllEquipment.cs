@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
@@ -156,66 +157,69 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 	protected override void OnFactAttached()
 	{
 		base.OnFactAttached();
-		Data data = base.Fact.RequestSavableData<Data>(this);
-		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
-		if (bodyOptional == null)
+		using (ContextData<ItemsCollection.SuppressEvents>.Request())
 		{
-			return;
-		}
-		data.Armor = bodyOptional.Armor.MaybeItem?.Blueprint as BlueprintItemArmor;
-		UnequipItem(bodyOptional.Armor);
-		data.Shirt = bodyOptional.Shirt.MaybeItem?.Blueprint as BlueprintItemEquipmentShirt;
-		UnequipItem(bodyOptional.Shirt);
-		data.Belt = bodyOptional.Belt.MaybeItem?.Blueprint as BlueprintItemEquipmentBelt;
-		UnequipItem(bodyOptional.Belt);
-		data.Head = bodyOptional.Head.MaybeItem?.Blueprint as BlueprintItemEquipmentHead;
-		UnequipItem(bodyOptional.Head);
-		data.Glasses = bodyOptional.Glasses.MaybeItem?.Blueprint as BlueprintItemEquipmentGlasses;
-		UnequipItem(bodyOptional.Glasses);
-		data.Feet = bodyOptional.Feet.MaybeItem?.Blueprint as BlueprintItemEquipmentFeet;
-		UnequipItem(bodyOptional.Feet);
-		data.Gloves = bodyOptional.Gloves.MaybeItem?.Blueprint as BlueprintItemEquipmentGloves;
-		UnequipItem(bodyOptional.Gloves);
-		data.Neck = bodyOptional.Neck.MaybeItem?.Blueprint as BlueprintItemEquipmentNeck;
-		UnequipItem(bodyOptional.Neck);
-		data.Ring1 = bodyOptional.Ring1.MaybeItem?.Blueprint as BlueprintItemEquipmentRing;
-		UnequipItem(bodyOptional.Ring1);
-		data.Ring2 = bodyOptional.Ring2.MaybeItem?.Blueprint as BlueprintItemEquipmentRing;
-		UnequipItem(bodyOptional.Ring2);
-		data.Wrist = bodyOptional.Wrist.MaybeItem?.Blueprint as BlueprintItemEquipmentWrist;
-		UnequipItem(bodyOptional.Wrist);
-		data.Shoulders = bodyOptional.Shoulders.MaybeItem?.Blueprint as BlueprintItemEquipmentShoulders;
-		UnequipItem(bodyOptional.Shoulders);
-		if (bodyOptional.QuickSlots != null)
-		{
-			UsableSlot[] quickSlots = bodyOptional.QuickSlots;
-			foreach (UsableSlot usableSlot in quickSlots)
+			Data data = base.Fact.RequestSavableData<Data>(this);
+			PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
+			if (bodyOptional == null)
 			{
-				data.QuickSlots.Add(usableSlot.MaybeItem?.Blueprint as BlueprintItemEquipmentUsable);
-				UnequipItem(usableSlot);
+				return;
 			}
-		}
-		foreach (HandsEquipmentSet handsEquipmentSet in bodyOptional.HandsEquipmentSets)
-		{
-			HandEquipmentSetItems item = new HandEquipmentSetItems
+			data.Armor = bodyOptional.Armor.MaybeItem?.Blueprint as BlueprintItemArmor;
+			UnequipItem(bodyOptional.Armor);
+			data.Shirt = bodyOptional.Shirt.MaybeItem?.Blueprint as BlueprintItemEquipmentShirt;
+			UnequipItem(bodyOptional.Shirt);
+			data.Belt = bodyOptional.Belt.MaybeItem?.Blueprint as BlueprintItemEquipmentBelt;
+			UnequipItem(bodyOptional.Belt);
+			data.Head = bodyOptional.Head.MaybeItem?.Blueprint as BlueprintItemEquipmentHead;
+			UnequipItem(bodyOptional.Head);
+			data.Glasses = bodyOptional.Glasses.MaybeItem?.Blueprint as BlueprintItemEquipmentGlasses;
+			UnequipItem(bodyOptional.Glasses);
+			data.Feet = bodyOptional.Feet.MaybeItem?.Blueprint as BlueprintItemEquipmentFeet;
+			UnequipItem(bodyOptional.Feet);
+			data.Gloves = bodyOptional.Gloves.MaybeItem?.Blueprint as BlueprintItemEquipmentGloves;
+			UnequipItem(bodyOptional.Gloves);
+			data.Neck = bodyOptional.Neck.MaybeItem?.Blueprint as BlueprintItemEquipmentNeck;
+			UnequipItem(bodyOptional.Neck);
+			data.Ring1 = bodyOptional.Ring1.MaybeItem?.Blueprint as BlueprintItemEquipmentRing;
+			UnequipItem(bodyOptional.Ring1);
+			data.Ring2 = bodyOptional.Ring2.MaybeItem?.Blueprint as BlueprintItemEquipmentRing;
+			UnequipItem(bodyOptional.Ring2);
+			data.Wrist = bodyOptional.Wrist.MaybeItem?.Blueprint as BlueprintItemEquipmentWrist;
+			UnequipItem(bodyOptional.Wrist);
+			data.Shoulders = bodyOptional.Shoulders.MaybeItem?.Blueprint as BlueprintItemEquipmentShoulders;
+			UnequipItem(bodyOptional.Shoulders);
+			if (bodyOptional.QuickSlots != null)
 			{
-				PrimaryHand = handsEquipmentSet.PrimaryHand.MaybeItem?.Blueprint,
-				SecondaryHand = handsEquipmentSet.SecondaryHand.MaybeItem?.Blueprint
-			};
-			data.HandSets.Add(item);
-			UnequipItem(handsEquipmentSet.PrimaryHand);
-			UnequipItem(handsEquipmentSet.SecondaryHand);
-		}
-		HandsEquipmentSet polymorphHandsEquipmentSet = bodyOptional.PolymorphHandsEquipmentSet;
-		if (polymorphHandsEquipmentSet != null)
-		{
-			data.PolymorphHandsEquipmentSet = new HandEquipmentSetItems
+				UsableSlot[] quickSlots = bodyOptional.QuickSlots;
+				foreach (UsableSlot usableSlot in quickSlots)
+				{
+					data.QuickSlots.Add(usableSlot.MaybeItem?.Blueprint as BlueprintItemEquipmentUsable);
+					UnequipItem(usableSlot);
+				}
+			}
+			foreach (HandsEquipmentSet handsEquipmentSet in bodyOptional.HandsEquipmentSets)
 			{
-				PrimaryHand = polymorphHandsEquipmentSet.PrimaryHand.MaybeItem?.Blueprint,
-				SecondaryHand = polymorphHandsEquipmentSet.SecondaryHand.MaybeItem?.Blueprint
-			};
-			UnequipItem(polymorphHandsEquipmentSet.PrimaryHand);
-			UnequipItem(polymorphHandsEquipmentSet.SecondaryHand);
+				HandEquipmentSetItems item = new HandEquipmentSetItems
+				{
+					PrimaryHand = handsEquipmentSet.PrimaryHand.MaybeItem?.Blueprint,
+					SecondaryHand = handsEquipmentSet.SecondaryHand.MaybeItem?.Blueprint
+				};
+				data.HandSets.Add(item);
+				UnequipItem(handsEquipmentSet.PrimaryHand);
+				UnequipItem(handsEquipmentSet.SecondaryHand);
+			}
+			HandsEquipmentSet polymorphHandsEquipmentSet = bodyOptional.PolymorphHandsEquipmentSet;
+			if (polymorphHandsEquipmentSet != null)
+			{
+				data.PolymorphHandsEquipmentSet = new HandEquipmentSetItems
+				{
+					PrimaryHand = polymorphHandsEquipmentSet.PrimaryHand.MaybeItem?.Blueprint,
+					SecondaryHand = polymorphHandsEquipmentSet.SecondaryHand.MaybeItem?.Blueprint
+				};
+				UnequipItem(polymorphHandsEquipmentSet.PrimaryHand);
+				UnequipItem(polymorphHandsEquipmentSet.SecondaryHand);
+			}
 		}
 	}
 

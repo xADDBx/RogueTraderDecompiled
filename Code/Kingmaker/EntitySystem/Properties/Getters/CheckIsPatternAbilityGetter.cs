@@ -15,7 +15,7 @@ public class CheckIsPatternAbilityGetter : PropertyGetter, PropertyContextAccess
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Is Pattern Ability";
 	}

@@ -6,6 +6,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
+using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,6 +47,10 @@ public class SurfaceActionBarPCView : ViewBase<SurfaceActionBarVM>
 	[SerializeField]
 	private Image m_AttackAbilityGroupCooldownAlertGroup;
 
+	[Header("Other")]
+	[SerializeField]
+	private TextMeshProUGUI m_AnotherPlayerTurnLabel;
+
 	public void Initialize()
 	{
 		m_Animator.SetAlwaysActive(state: true);
@@ -79,6 +84,11 @@ public class SurfaceActionBarPCView : ViewBase<SurfaceActionBarVM>
 		AddDisposable(base.ViewModel.IsAttackAbilityGroupCooldownAlertActive.Subscribe(m_AttackAbilityGroupCooldownAlertGroup.gameObject.SetActive));
 		AddDisposable(m_AttackAbilityGroupCooldownAlertGroup.SetHint(UIStrings.Instance.Tooltips.AttackAbilityGroupCooldown));
 		AddDisposable(m_ClearMPAlertGroup.SetHint(UIStrings.Instance.Tooltips.SpendAllMovementPoints));
+		AddDisposable(base.ViewModel.IsNotControllableCharacter.CombineLatest(base.ViewModel.ControllablePlayerNickname, (bool notControllable, string playerNickName) => new { notControllable, playerNickName }).Subscribe(value =>
+		{
+			m_AnotherPlayerTurnLabel.transform.parent.parent.gameObject.SetActive(value.notControllable);
+			m_AnotherPlayerTurnLabel.text = ((!string.IsNullOrWhiteSpace(value.playerNickName)) ? string.Format(UIStrings.Instance.ActionBar.AnotherPlayerTurnWithNickname, value.playerNickName) : ((string)UIStrings.Instance.ActionBar.AnotherPlayerTurn));
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 

@@ -1,3 +1,4 @@
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using TMPro;
@@ -29,10 +30,23 @@ public class ItemsFilterSearchPCView : ItemsFilterSearchBaseView
 			AddDisposable(m_Dropdown.onValueChanged.AsObservable().Subscribe(SetValueFromDropdown));
 			SetupDropdown();
 		}
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.OpenSearchInventory.name, ActivateDeactivateInputField));
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	public void ActivateDeactivateInputField()
+	{
+		if (m_InputField.isFocused)
+		{
+			m_InputField.DeactivateInputField();
+		}
+		else
+		{
+			m_InputField.ActivateInputField();
+		}
 	}
 
 	private void SetValueFromDropdown(int value)

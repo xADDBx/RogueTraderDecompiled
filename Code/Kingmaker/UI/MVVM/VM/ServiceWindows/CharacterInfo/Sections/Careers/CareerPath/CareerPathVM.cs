@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
-using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores.Experience;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
@@ -28,7 +26,6 @@ using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.Utility.DotNetExtensions;
-using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
@@ -42,8 +39,6 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 	public readonly BaseUnitEntity Unit;
 
 	public readonly BlueprintCareerPath CareerPath;
-
-	public readonly bool IsCharGen;
 
 	public readonly string Name;
 
@@ -115,8 +110,6 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public readonly ReactiveProperty<IRankEntrySelectItem> PointerItem = new ReactiveProperty<IRankEntrySelectItem>();
 
-	private IRankEntrySelectItem m_LastEntryToUpgrade;
-
 	public readonly Sprite PlayerShipSprite;
 
 	private AddedOnLevelUpFeatures m_AddedOnLevelUpFeatures;
@@ -127,7 +120,7 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public TooltipBaseTemplate CareerHintTemplate => new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.CareerPathHeader, UIStrings.Instance.CharacterSheet.CareerPathDescription);
 
-	public TooltipBaseTemplate CareerTooltip => m_CareerTooltip ?? (m_CareerTooltip = new TooltipTemplateCareer(this));
+	public TooltipBaseTemplate CareerTooltip => m_CareerTooltip ?? (m_CareerTooltip = new TooltipTemplateCareer(this, isScreenView: true));
 
 	private TooltipBaseTemplate CareerProgressionTooltip => m_CareerProgressionTooltip ?? (m_CareerProgressionTooltip = new TooltipTemplateCareerProgression(this));
 
@@ -141,20 +134,9 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public BaseUnitProgressionVM UnitProgressionVM { get; }
 
-	public Action<bool> OnHover { get; private set; }
+	public IEnumerable<RankEntrySelectionVM> AllSelections => RankEntries.SelectMany((CareerPathRankEntryVM i) => i.Selections);
 
-	private IEnumerable<RankEntrySelectionVM> AllSelections => RankEntries.SelectMany((CareerPathRankEntryVM i) => i.Selections);
-
-	private IEnumerable<RankEntryFeatureItemVM> AllFeatures => RankEntries.SelectMany((CareerPathRankEntryVM i) => i.Features);
-
-	public IEnumerable<RankEntryFeatureItemVM> AvailableFeatures
-	{
-		get
-		{
-			(int Min, int Max) levelRange = GetCurrentLevelupRange();
-			return AllFeatures.Where((RankEntryFeatureItemVM i) => levelRange.Min <= i.Rank && i.Rank <= levelRange.Max);
-		}
-	}
+	public List<IRankEntrySelectItem> VisitedFeatures => RankEntriesScan.Except(FeaturesToVisit.ToList()).ToList();
 
 	public IEnumerable<RankEntrySelectionVM> AvailableSelections
 	{
@@ -165,7 +147,9 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		}
 	}
 
-	public IRankEntrySelectItem LastEntryToUpgrade => m_LastEntryToUpgrade;
+	public IRankEntrySelectItem LastEntryToUpgrade { get; private set; }
+
+	public IRankEntrySelectItem FirstEntryToUpgrade { get; private set; }
 
 	public bool IsInProgress => IsCareerInProgress(CareerPath, canUsePreviewUnit: true);
 
@@ -221,18 +205,17 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public bool HasDifferentFirstSelectable => UnitProgressionVM.CurrentRankEntryItem.Value != FirstSelectable;
 
-	public CareerPathVM(BaseUnitEntity unit, BlueprintCareerPath careerPath, BaseUnitProgressionVM progressionVM, bool isCharGen = false)
+	public CareerPathVM(BaseUnitEntity unit, BlueprintCareerPath careerPath, BaseUnitProgressionVM progressionVM)
 		: base(allowSwitchOff: true)
 	{
 		Unit = unit;
 		CareerPath = careerPath;
 		UnitProgressionVM = progressionVM;
-		IsCharGen = isCharGen;
 		Name = careerPath.Name;
 		Description = careerPath.Description;
 		MaxRank = careerPath.Ranks;
 		Icon.Value = CareerPath.Icon;
-		ItemState.Value = (IsUnlocked ? CareerItemState.Unlocked : CareerItemState.Locked);
+		ItemState.Value = ((IsUnlocked || CanShowToAnotherCoopPlayer()) ? CareerItemState.Unlocked : CareerItemState.Locked);
 		Prerequisite = CalculatedPrerequisite.Calculate(CareerPath, Unit);
 		CareerPathUIMetaData = careerPath.GetComponent<CareerPathUIMetaData>();
 		AddDisposable(AvailableRanksVM = new CharInfoAvailableRanksVM(this));
@@ -301,11 +284,6 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		return null;
 	}
 
-	public void SetOnHover(Action<bool> onHover)
-	{
-		OnHover = onHover;
-	}
-
 	public (int Min, int Max) GetCurrentLevelupRange()
 	{
 		PartUnitProgression progression = Unit.Progression;
@@ -355,10 +333,10 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	private void CreateFeaturesToVisit()
 	{
-		IRankEntrySelectItem nextRankItem = GetNextRankItem(null);
+		IRankEntrySelectItem nextRankItem = GetNextRankItem(null, skipSelected: false);
 		FeaturesToVisit.Clear();
 		(int, int) currentLevelupRange = GetCurrentLevelupRange();
-		if (!IsSelectedAndInProgress || AlreadyInLevelupOther || (currentLevelupRange.Item1 == -1 && currentLevelupRange.Item2 == -1))
+		if (!IsInProgress || AlreadyInLevelupOther || (currentLevelupRange.Item1 == -1 && currentLevelupRange.Item2 == -1))
 		{
 			PointerItem.Value = null;
 			return;
@@ -366,9 +344,12 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		while (nextRankItem != null)
 		{
 			FeaturesToVisit.Add(nextRankItem);
-			nextRankItem = GetNextRankItem(nextRankItem);
+			nextRankItem = GetNextRankItem(nextRankItem, skipSelected: false);
 		}
 		PointerItem.Value = FeaturesToVisit.FirstOrDefault();
+		FirstEntryToUpgrade = FeaturesToVisit.FirstOrDefault();
+		LastEntryToUpgrade = FeaturesToVisit.LastOrDefault();
+		UpdateRanks();
 	}
 
 	public bool IsVisited(IRankEntrySelectItem item)
@@ -381,11 +362,16 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		UnitProgressionVM.SetRankEntry(rankEntryItem);
 		UpdateState(updateRanks: true);
 		UpdateSelectedItemInfoSection(rankEntryItem);
+		rankEntryItem?.UpdateReadOnlyState();
 		FeatureGroup? featureGroup = rankEntryItem?.GetFeatureGroup();
 		if (m_AddedOnLevelUpFeatures != null && featureGroup.HasValue && m_AddedOnLevelUpFeatures.NeedUpdateFor(featureGroup.Value))
 		{
 			rankEntryItem.UpdateFeatures();
 		}
+		EventBus.RaiseEvent(delegate(IRankEntryConfirmClickHandler h)
+		{
+			h.OnRankEntryConfirmClick();
+		});
 	}
 
 	public void SetFirstSelectableRankEntry()
@@ -393,9 +379,9 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		FirstSelectable?.HandleClick();
 	}
 
-	public void SelectNextItem()
+	public void SelectNextItem(bool skipSelected = true)
 	{
-		IRankEntrySelectItem nextRankItem = GetNextRankItem();
+		IRankEntrySelectItem nextRankItem = GetNextRankItem(skipSelected);
 		if (nextRankItem is RankEntrySelectionVM rankEntrySelectionVM)
 		{
 			rankEntrySelectionVM.HandleClick();
@@ -451,7 +437,18 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		CareerPathRankEntryVM careerPathRankEntryVM2 = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Selections.Contains(currentItem)) ?? source.FirstOrDefault((CareerPathRankEntryVM re) => re.Features.Contains(currentItem));
 		if (careerPathRankEntryVM2 == null)
 		{
-			return FirstSelectable;
+			firstSelectable = FirstSelectable;
+			IRankEntrySelectItem rankEntrySelectItem2 = firstSelectable;
+			if (rankEntrySelectItem2 == null)
+			{
+				CareerPathRankEntryVM careerPathRankEntryVM3 = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == levelsRange.Max);
+				if (careerPathRankEntryVM3 == null)
+				{
+					return null;
+				}
+				rankEntrySelectItem2 = careerPathRankEntryVM3.GetLastItem();
+			}
+			return rankEntrySelectItem2;
 		}
 		int currentRank = careerPathRankEntryVM2.Rank;
 		RankEntrySelectionVM firstSelectable2 = FirstSelectable;
@@ -460,25 +457,25 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 			return FirstSelectable;
 		}
 		firstSelectable = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank)?.GetPreviousFor(currentItem);
-		IRankEntrySelectItem rankEntrySelectItem2 = firstSelectable;
-		if (rankEntrySelectItem2 == null)
+		IRankEntrySelectItem rankEntrySelectItem3 = firstSelectable;
+		if (rankEntrySelectItem3 == null)
 		{
-			CareerPathRankEntryVM careerPathRankEntryVM3 = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank - 1);
-			if (careerPathRankEntryVM3 == null)
+			CareerPathRankEntryVM careerPathRankEntryVM4 = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank - 1);
+			if (careerPathRankEntryVM4 == null)
 			{
 				return null;
 			}
-			rankEntrySelectItem2 = careerPathRankEntryVM3.GetLastItem();
+			rankEntrySelectItem3 = careerPathRankEntryVM4.GetLastItem();
 		}
-		return rankEntrySelectItem2;
+		return rankEntrySelectItem3;
 	}
 
-	private IRankEntrySelectItem GetNextRankItem()
+	private IRankEntrySelectItem GetNextRankItem(bool skipSelected)
 	{
-		return GetNextRankItem(UnitProgressionVM.CurrentRankEntryItem.Value);
+		return GetNextRankItem(UnitProgressionVM.CurrentRankEntryItem.Value, skipSelected);
 	}
 
-	private IRankEntrySelectItem GetNextRankItem(IRankEntrySelectItem currentItem)
+	private IRankEntrySelectItem GetNextRankItem(IRankEntrySelectItem currentItem, bool skipSelected)
 	{
 		(int Min, int Max) levelsRange = GetCurrentLevelupRange();
 		if (currentItem == null)
@@ -489,6 +486,10 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		CareerPathRankEntryVM careerPathRankEntryVM = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Selections.Contains(currentItem)) ?? source.FirstOrDefault((CareerPathRankEntryVM re) => re.Features.Contains(currentItem));
 		if (careerPathRankEntryVM == null)
 		{
+			if (!skipSelected)
+			{
+				return RankEntries.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == levelsRange.Min)?.GetFirstItem();
+			}
 			return FirstSelectable;
 		}
 		int currentRank = careerPathRankEntryVM.Rank;
@@ -506,10 +507,11 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		return rankEntrySelectItem2;
 	}
 
-	private IRankEntrySelectItem GetLastEntryToUpgrade()
+	private void UpdateFirstLastEntriesToUpgrade()
 	{
 		(int Min, int Max) levelsRange = GetCurrentLevelupRange();
-		return RankEntries.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == levelsRange.Max)?.GetLastItem();
+		LastEntryToUpgrade = RankEntries.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == levelsRange.Max)?.GetLastItem();
+		FirstEntryToUpgrade = RankEntries.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == levelsRange.Min)?.GetFirstItem();
 	}
 
 	protected override void DoSelectMe()
@@ -539,52 +541,17 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		OnCommit.Execute();
 	}
 
-	private static IEnumerable<TSource> DistinctBy<TSource, TKey>(IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-	{
-		HashSet<TKey> seenKeys = new HashSet<TKey>();
-		foreach (TSource item in source)
-		{
-			if (seenKeys.Add(keySelector(item)))
-			{
-				yield return item;
-			}
-		}
-	}
-
-	public List<VirtualListElementVMBase> GetAllRanks()
-	{
-		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
-		foreach (CareerPathRankEntryVM rankEntry in RankEntries)
-		{
-			string title = string.Format(UIStrings.Instance.CharacterSheet.RankLabel.Text, rankEntry.Rank);
-			list.Add(new ExpandableTitleVM(title, null));
-			list.AddRange(rankEntry.Features);
-			list.AddRange(rankEntry.Selections);
-		}
-		return list;
-	}
-
-	public List<VirtualListElementVMBase> GetRanksToCommit()
-	{
-		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
-		(int Min, int Max) levelRange = GetCurrentLevelupRange();
-		foreach (CareerPathRankEntryVM item in RankEntries.Where((CareerPathRankEntryVM entry) => levelRange.Min <= entry.Rank && entry.Rank <= levelRange.Max))
-		{
-			string title = string.Format(UIStrings.Instance.CharacterSheet.RankLabel.Text, item.Rank);
-			list.Add(new ExpandableTitleVM(title, null));
-			list.AddRange(item.Features);
-			list.AddRange(item.Selections);
-		}
-		return list;
-	}
-
 	private bool IsCareerInProgress(BlueprintCareerPath careerPath, bool canUsePreviewUnit)
 	{
 		BaseUnitEntity baseUnitEntity = GetLevelupManager()?.PreviewUnit;
 		int num = ((baseUnitEntity != null && canUsePreviewUnit) ? baseUnitEntity.Progression.Features.GetRank(careerPath) : Unit.Progression.Features.GetRank(careerPath));
 		if (num != 0)
 		{
-			return num != careerPath.Ranks;
+			if (num == careerPath.Ranks)
+			{
+				return !IsFinished;
+			}
+			return true;
 		}
 		return false;
 	}
@@ -599,6 +566,15 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		if (GetLevelupManager() == null && Unit.Progression.CanUpgradePath(CareerPath))
 		{
 			return !Unit.IsInCombat;
+		}
+		return false;
+	}
+
+	public bool CanShowToAnotherCoopPlayer()
+	{
+		if (!Unit.CanEditCareer())
+		{
+			return CanUpgradeCareer();
 		}
 		return false;
 	}
@@ -636,8 +612,8 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 				num--;
 			}
 			RankEntries.AddRange(list);
-			m_LastEntryToUpgrade = GetLastEntryToUpgrade();
 		}
+		UpdateFirstLastEntriesToUpgrade();
 	}
 
 	public void UpdateState(bool updateRanks)
@@ -663,8 +639,7 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		Prerequisite = CalculatedPrerequisite.Calculate(CareerPath, Unit);
 		CurrentRank.Value = ((LevelUpManager == null) ? Unit.Progression.Features.GetRank(CareerPath) : LevelUpManager.PreviewUnit.Progression.Features.GetRank(CareerPath));
 		Progress.Value = (float)CurrentRank.Value / (float)MaxRank;
-		bool flag = Unit.CanBeControlled();
-		flag |= IsCharGen;
+		bool flag = Unit.CanEditCareer();
 		ReadOnly.Value = LevelUpManager == null || LevelUpManager.TargetUnit != Unit || !flag;
 		CanUpgrade.Value = CanUpgradeCareer() && flag;
 		CanCommit.Value = CanCommitChanges();
@@ -681,11 +656,10 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		int num2 = Unit.Progression.GetSelectionsByPath(CareerPath).Count();
 		CareerUpgrades.Value = num + num2;
 		CurrentProgress.Value = AvailableSelections.FirstOrDefault((RankEntrySelectionVM s) => !s.SelectionMade)?.Rank ?? CurrentProgress.Value;
-		IRankEntrySelectItem rankEntrySelectItem = UnitProgressionVM?.CurrentRankEntryItem.Value;
-		if (rankEntrySelectItem != null)
+		IRankEntrySelectItem currentEntry = UnitProgressionVM?.CurrentRankEntryItem.Value;
+		if (currentEntry != null)
 		{
-			bool flag = ((rankEntrySelectItem is RankEntryFeatureItemVM || rankEntrySelectItem is RankEntrySelectionVM { SelectionMade: not false }) ? true : false);
-			if (flag || rankEntrySelectItem == FirstSelectable)
+			if ((currentEntry is RankEntryFeatureItemVM && !FeaturesToVisit.Any((IRankEntrySelectItem f) => f is RankEntrySelectionVM { SelectionMade: false } && f.EntryRank < currentEntry.EntryRank)) || currentEntry is RankEntrySelectionVM { SelectionMade: not false } || currentEntry == FirstSelectable)
 			{
 				FeaturesToVisit.RemoveAll((IRankEntrySelectItem f) => (f is RankEntryFeatureItemVM && FeaturesToVisit.IndexOf(f) <= FeaturesToVisit.IndexOf(UnitProgressionVM.CurrentRankEntryItem.Value)) || (f is RankEntrySelectionVM rankEntrySelectionVM2 && rankEntrySelectionVM2.SelectionMade));
 				AllVisited.Value = FeaturesToVisit.Count == 0;
@@ -732,22 +706,6 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		}
 	}
 
-	private IEnumerable<string> GetStatAdvancementsLabels<T>() where T : BlueprintStatAdvancement
-	{
-		return (from T statAdvancement in from selectionItem in CareerPath.RankEntries.SelectMany((BlueprintPath.RankEntry rankEntry) => rankEntry.Selections).Cast<BlueprintSelectionFeature>().SelectMany(delegate(BlueprintSelectionFeature selectionFeature)
-				{
-					if (selectionFeature != null)
-					{
-						return selectionFeature.GetSelectionItems(Unit, CareerPath);
-					}
-					throw new ArgumentNullException(CareerPath.name, "Selections contains NULL");
-				})
-				select selectionItem.Feature into blueprintFeature
-				where blueprintFeature is T
-				select blueprintFeature
-			select LocalizedTexts.Instance.Stats.GetText(statAdvancement.Stat)).Distinct();
-	}
-
 	private IEnumerable<T> GetStatAdvancements<T>() where T : BlueprintStatAdvancement
 	{
 		return (from selectionItem in CareerPath.RankEntries.SelectMany((BlueprintPath.RankEntry rankEntry) => rankEntry.Selections).Cast<BlueprintSelectionFeature>().SelectMany(delegate(BlueprintSelectionFeature selectionFeature)
@@ -792,10 +750,6 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public void HandleUnitGainExperience(int gained, bool withSound = false)
 	{
-		if (!IsPreviewUnitDisposed)
-		{
-			UpdateState(updateRanks: true);
-		}
 	}
 
 	private void UpdateTabSectionTooltip(TooltipBaseTemplate template)

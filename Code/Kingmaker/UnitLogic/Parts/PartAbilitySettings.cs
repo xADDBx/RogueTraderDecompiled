@@ -1,17 +1,28 @@
 using System.Collections.Generic;
+using Kingmaker.Controllers.TurnBased;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
+using Newtonsoft.Json;
 using StateHasher.Core;
+using StateHasher.Core.Hashers;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class PartAbilitySettings : UnitPart, IHashable
+public class PartAbilitySettings : UnitPart, IInterruptTurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnEndHandler, IHashable
 {
+	[JsonProperty]
+	public RestrictionCalculator InterruptionAbilityRestrictions;
+
 	private readonly List<(EntityFactComponent Runtime, OverrideAbilityThreatenedAreaSetting Component)> m_ThreatenedAreaEntries = new List<(EntityFactComponent, OverrideAbilityThreatenedAreaSetting)>();
 
 	public static BlueprintAbility.UsingInThreateningAreaType GetThreatenedAreaSetting(AbilityData ability)
@@ -54,11 +65,29 @@ public class PartAbilitySettings : UnitPart, IHashable
 		}
 	}
 
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		if (EventInvokerExtensions.MechanicEntity == base.Owner)
+		{
+			InterruptionAbilityRestrictions = interruptionData.RestrictionsOnInterrupt;
+		}
+	}
+
+	public void HandleUnitEndInterruptTurn()
+	{
+		if (EventInvokerExtensions.MechanicEntity == base.Owner)
+		{
+			InterruptionAbilityRestrictions = null;
+		}
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
+		Hash128 val2 = ClassHasher<RestrictionCalculator>.GetHash128(InterruptionAbilityRestrictions);
+		result.Append(ref val2);
 		return result;
 	}
 }

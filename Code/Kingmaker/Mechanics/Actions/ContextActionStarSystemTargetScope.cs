@@ -1,9 +1,7 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
@@ -28,7 +26,7 @@ public class ContextActionStarSystemTargetScope : ContextAction
 		return "Run actions with specific target type that differs from main";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Target == TargetType.Party)
 		{
@@ -44,8 +42,8 @@ public class ContextActionStarSystemTargetScope : ContextAction
 		BaseUnitEntity baseUnitEntity = null;
 		baseUnitEntity = Target switch
 		{
-			TargetType.ScannerUnit => ContextData<StarSystemContextData>.Current?.TargetUnit, 
-			TargetType.Starship => ContextData<StarSystemContextData>.Current?.Starship, 
+			TargetType.ScannerUnit => Game.Instance.Player.StarSystemsState.StarSystemContextData.TargetUnit, 
+			TargetType.Starship => Game.Instance.Player.StarSystemsState.StarSystemContextData.Starship, 
 			_ => throw new ArgumentOutOfRangeException(), 
 		};
 		using (base.Context.GetDataScope(baseUnitEntity.ToTargetWrapper()))

@@ -28,7 +28,7 @@ public class RollPartySkillCheck : GameAction
 
 	public ActionList OnFailure;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		RulePerformPartySkillCheck check = new RulePerformPartySkillCheck(Stat, DC)
 		{

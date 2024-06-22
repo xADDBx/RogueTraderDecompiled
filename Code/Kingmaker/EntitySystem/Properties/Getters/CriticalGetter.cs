@@ -36,12 +36,12 @@ public class CriticalGetter : MechanicEntityPropertyGetter, PropertyContextAcces
 		};
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return CriticalParameterType switch
 		{
-			CriticalParameterType.BonusCriticalHitChance => "Bonus Critical Hit Chance", 
-			CriticalParameterType.BonusCriticalDamage => "Bonus Critical Damage", 
+			CriticalParameterType.BonusCriticalHitChance => "Bonus Critical Hit Chance of " + FormulaTargetScope.Current, 
+			CriticalParameterType.BonusCriticalDamage => "Bonus Critical Damage of " + FormulaTargetScope.Current, 
 			_ => "", 
 		};
 	}

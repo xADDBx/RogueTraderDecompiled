@@ -17,6 +17,7 @@ using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
 using UnityEngine;
@@ -32,6 +33,9 @@ public class ColonyManagementConsoleView : ColonyManagementBaseView
 	[SerializeField]
 	[UsedImplicitly]
 	private ColonyManagementPageConsoleView m_Page;
+
+	[SerializeField]
+	private CanvasGroup m_PageCanvasGroup;
 
 	[Header("Input")]
 	[SerializeField]
@@ -61,6 +65,10 @@ public class ColonyManagementConsoleView : ColonyManagementBaseView
 
 	private bool m_ShowTooltip;
 
+	private bool m_LockInput;
+
+	private Sequence m_PageAnimator;
+
 	private InputLayer m_ResourcesInputLayer;
 
 	private GridConsoleNavigationBehaviour m_ResourcesNavigationBehavior;
@@ -81,6 +89,13 @@ public class ColonyManagementConsoleView : ColonyManagementBaseView
 		m_Navigation.Bind(base.ViewModel.NavigationVM);
 		AddDisposable(base.ViewModel.ColonyManagementPage.Subscribe(m_Page.Bind));
 		base.BindViewImplementation();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_PageAnimator?.Kill();
+		m_PageAnimator = null;
+		base.DestroyViewImplementation();
 	}
 
 	protected override void OnHideImpl()
@@ -186,16 +201,38 @@ public class ColonyManagementConsoleView : ColonyManagementBaseView
 
 	private void SelectPrevColony()
 	{
-		m_Navigation.SelectPrevColony();
-		m_SelectorView.ChangeTab(m_Navigation.GetActiveColonyIndex());
-		BuildNavigation();
+		if (!m_LockInput)
+		{
+			PlayPageAnimation();
+			m_Navigation.SelectPrevColony();
+			m_SelectorView.ChangeTab(m_Navigation.GetActiveColonyIndex());
+			BuildNavigation();
+		}
 	}
 
 	private void SelectNextColony()
 	{
-		m_Navigation.SelectNextColony();
-		m_SelectorView.ChangeTab(m_Navigation.GetActiveColonyIndex());
-		BuildNavigation();
+		if (!m_LockInput)
+		{
+			PlayPageAnimation();
+			m_Navigation.SelectNextColony();
+			m_SelectorView.ChangeTab(m_Navigation.GetActiveColonyIndex());
+			BuildNavigation();
+		}
+	}
+
+	private void PlayPageAnimation()
+	{
+		m_LockInput = true;
+		m_PageAnimator?.Kill();
+		m_PageAnimator = DOTween.Sequence().SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
+		m_PageAnimator.Append(m_PageCanvasGroup.DOFade(0f, 0.1f));
+		m_PageAnimator.Append(m_PageCanvasGroup.DOFade(1f, 0.2f));
+		m_PageAnimator.Play();
+		DelayedInvoker.InvokeInTime(delegate
+		{
+			m_LockInput = false;
+		}, 0.3f);
 	}
 
 	protected override void OnFocusChangedImpl(IConsoleEntity entity)
@@ -300,16 +337,22 @@ public class ColonyManagementConsoleView : ColonyManagementBaseView
 
 	private void OpenColonyProjects()
 	{
-		base.ViewModel.OpenColonyProjects();
+		if (!m_LockInput)
+		{
+			base.ViewModel.OpenColonyProjects();
+		}
 	}
 
 	private void ShowResources()
 	{
-		m_NavigationBehaviour.UnFocusCurrentEntity();
-		m_ResourcesMode.Value = true;
-		SetResourcesNavigation();
-		GamePad.Instance.PushLayer(m_ResourcesInputLayer);
-		m_ResourcesNavigationBehavior.FocusOnFirstValidEntity();
+		if (!m_LockInput)
+		{
+			m_NavigationBehaviour.UnFocusCurrentEntity();
+			m_ResourcesMode.Value = true;
+			SetResourcesNavigation();
+			GamePad.Instance.PushLayer(m_ResourcesInputLayer);
+			m_ResourcesNavigationBehavior.FocusOnFirstValidEntity();
+		}
 	}
 
 	private void CloseResources()

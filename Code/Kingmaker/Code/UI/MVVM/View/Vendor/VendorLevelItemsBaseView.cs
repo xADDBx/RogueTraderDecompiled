@@ -1,5 +1,6 @@
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.UI.Common;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
@@ -26,6 +27,9 @@ public class VendorLevelItemsBaseView : ViewBase<VendorLevelItemsVM>, IWidgetVie
 	[SerializeField]
 	protected Image m_FillAmount;
 
+	[SerializeField]
+	protected GameObject m_LastItemMark;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
@@ -34,6 +38,7 @@ public class VendorLevelItemsBaseView : ViewBase<VendorLevelItemsVM>, IWidgetVie
 		m_LevelValue.text = base.ViewModel.ReputationLevelVM.ReputationLevel.ToString();
 		m_LockButton.SetActiveLayer(base.ViewModel.ReputationLevelVM.Locked ? "Locked" : "Unlocked");
 		m_FillAmount.fillAmount = (float)base.ViewModel.ReputationLevelVM.Difference / (float)base.ViewModel.ReputationLevelVM.Delta;
+		m_LastItemMark.Or(null)?.SetActive(base.ViewModel.IsLastList);
 	}
 
 	private void DrawEntities()

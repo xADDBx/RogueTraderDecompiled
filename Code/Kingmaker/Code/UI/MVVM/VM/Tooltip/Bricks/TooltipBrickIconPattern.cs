@@ -1,5 +1,6 @@
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 
@@ -20,7 +21,11 @@ public class TooltipBrickIconPattern : ITooltipBrick
 
 	private readonly Sprite m_Icon;
 
-	private readonly Color32? m_FrameColor;
+	private readonly IconPatternMode m_IconMode;
+
+	private readonly string m_Acronym;
+
+	private readonly TalentIconInfo m_TalentIconsInfo;
 
 	private readonly UIUtilityItem.UIPatternData m_PatternData;
 
@@ -32,18 +37,20 @@ public class TooltipBrickIconPattern : ITooltipBrick
 
 	private readonly TooltipBaseTemplate m_Tooltip;
 
-	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, TextFieldValues titleValues, TextFieldValues secondaryValues = null, TextFieldValues tertiaryValues = null, Color32? frameColor = null, TooltipBaseTemplate tooltip = null)
+	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, TextFieldValues titleValues, TextFieldValues secondaryValues = null, TextFieldValues tertiaryValues = null, TooltipBaseTemplate tooltip = null, IconPatternMode iconMode = IconPatternMode.SkillMode, string acronym = null, TalentIconInfo iconsInfo = null)
 	{
 		m_Icon = icon;
 		m_PatternData = patternData;
 		m_TitleValues = titleValues;
 		m_SecondaryValues = secondaryValues;
 		m_TertiaryValues = tertiaryValues;
-		m_FrameColor = frameColor;
 		m_Tooltip = tooltip;
+		m_IconMode = iconMode;
+		m_Acronym = acronym;
+		m_TalentIconsInfo = iconsInfo;
 	}
 
-	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, string title, string secondary = null, string tertiary = null, Color32? frameColor = null, TooltipBaseTemplate tooltip = null)
+	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, string title, string secondary = null, string tertiary = null, TooltipBaseTemplate tooltip = null, IconPatternMode iconMode = IconPatternMode.SkillMode)
 		: this(icon, patternData, new TextFieldValues
 		{
 			Text = title
@@ -53,12 +60,12 @@ public class TooltipBrickIconPattern : ITooltipBrick
 		}, new TextFieldValues
 		{
 			Text = tertiary
-		}, frameColor, tooltip)
+		}, tooltip, iconMode)
 	{
 	}
 
 	public TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickIconPatternVM(m_Icon, m_PatternData, m_TitleValues, m_SecondaryValues, m_TertiaryValues, m_FrameColor, m_Tooltip);
+		return new TooltipBrickIconPatternVM(m_Icon, m_PatternData, m_TitleValues, m_SecondaryValues, m_TertiaryValues, m_Tooltip, m_IconMode, m_Acronym, m_TalentIconsInfo);
 	}
 }

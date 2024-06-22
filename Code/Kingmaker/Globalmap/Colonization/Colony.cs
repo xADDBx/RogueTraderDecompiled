@@ -7,7 +7,6 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.Globalmap.Colonization;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem.Blueprints;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.Colonization;
@@ -96,6 +95,10 @@ public class Colony : IHashable
 
 	[JsonProperty]
 	public List<ColonyProject> FinishedProjectsSinceLastVisit = new List<ColonyProject>();
+
+	public bool HasStartedChronicles => StartedChronicles.Any();
+
+	public bool HasFinishedProjectsSinceLastVisit => FinishedProjectsSinceLastVisit.Any();
 
 	[MemoryPackConstructor]
 	public Colony(JsonConstructorMark _)
@@ -268,6 +271,10 @@ public class Colony : IHashable
 			ChangeContentment(trait.ContentmentModifier, ColonyStatModifierType.Trait, trait);
 			ChangeEfficiency(trait.EfficiencyModifier, ColonyStatModifierType.Trait, trait);
 			ChangeSecurity(trait.SecurityModifier, ColonyStatModifierType.Trait, trait);
+			if (trait.OnStartActions != null && trait.OnStartActions.HasActions)
+			{
+				trait.OnStartActions.Run();
+			}
 			EventBus.RaiseEvent(delegate(IColonizationTraitHandler h)
 			{
 				h.HandleTraitStarted(this, trait);
@@ -283,6 +290,10 @@ public class Colony : IHashable
 			Efficiency.Modifiers.Remove((ColonyStatModifier modifier) => modifier.Modifier == trait);
 			Security.Modifiers.Remove((ColonyStatModifier modifier) => modifier.Modifier == trait);
 			ColonyTraits.Remove(trait);
+			if (trait.OnEndActions != null && trait.OnEndActions.HasActions)
+			{
+				trait.OnEndActions.Run();
+			}
 			EventBus.RaiseEvent(delegate(IColonizationTraitHandler h)
 			{
 				h.HandleTraitEnded(this, trait);
@@ -361,9 +372,9 @@ public class Colony : IHashable
 	{
 		if (StartedEvents.Contains(colonyEvent))
 		{
-			DialogData dialogData = DialogController.SetupDialogWithoutTarget(colonyEvent.Event, null);
-			dialogData.AddContextData<ColonyContextData>().Setup(this, colonyEvent);
-			Game.Instance.DialogController.StartDialog(dialogData);
+			DialogData data = DialogController.SetupDialogWithoutTarget(colonyEvent.Event, null);
+			Game.Instance.Player.ColoniesState.ColonyContextData.Setup(this, colonyEvent);
+			Game.Instance.DialogController.StartDialog(data);
 			if (!colonyEvent.CanBeRepeated)
 			{
 				FinishEvent(colonyEvent, null);
@@ -382,9 +393,9 @@ public class Colony : IHashable
 
 	public void StartChronicle(BlueprintDialog chronicle)
 	{
-		DialogData dialogData = DialogController.SetupDialogWithoutTarget(chronicle, null);
-		dialogData.AddContextData<ColonyContextData>().Setup(this, null);
-		Game.Instance.DialogController.StartDialog(dialogData);
+		DialogData data = DialogController.SetupDialogWithoutTarget(chronicle, null);
+		Game.Instance.Player.ColoniesState.ColonyContextData.Setup(this, null);
+		Game.Instance.DialogController.StartDialog(data);
 	}
 
 	public void AddStartedChronicle(BlueprintDialog chronicle)
@@ -474,10 +485,8 @@ public class Colony : IHashable
 			component.Apply(this);
 		}
 		StarSystemObjectEntity sso2 = Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity sso) => sso.Blueprint == Planet);
-		using (ContextData<StarSystemContextData>.Request().Setup(sso2, Game.Instance.Player.MainCharacterEntity, Game.Instance.Player.PlayerShip))
-		{
-			project.ActionsOnStart?.Run();
-		}
+		Game.Instance.Player.StarSystemsState.StarSystemContextData.Setup(sso2, Game.Instance.Player.MainCharacterEntity, Game.Instance.Player.PlayerShip);
+		project.ActionsOnStart?.Run();
 		EventBus.RaiseEvent(delegate(IColonizationProjectsHandler h)
 		{
 			h.HandleColonyProjectStarted(this, newProject);
@@ -504,10 +513,8 @@ public class Colony : IHashable
 			component.ReceiveReward(this);
 		}
 		StarSystemObjectEntity sso2 = Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity sso) => sso.Blueprint == Planet);
-		using (ContextData<StarSystemContextData>.Request().Setup(sso2, Game.Instance.Player.MainCharacterEntity, Game.Instance.Player.PlayerShip))
-		{
-			project.Blueprint.ActionsOnFinish?.Run();
-		}
+		Game.Instance.Player.StarSystemsState.StarSystemContextData.Setup(sso2, Game.Instance.Player.MainCharacterEntity, Game.Instance.Player.PlayerShip);
+		project.Blueprint.ActionsOnFinish?.Run();
 		FinishedProjectsSinceLastVisit.Add(project);
 		EventBus.RaiseEvent(delegate(IColonizationProjectsHandler h)
 		{
@@ -536,11 +543,11 @@ public class Colony : IHashable
 	public Dictionary<BlueprintResource, int> RequiredResourcesForColony()
 	{
 		Dictionary<BlueprintResource, int> dictionary = new Dictionary<BlueprintResource, int>();
-		foreach (ColonyProject item in Projects.Where((ColonyProject proj) => proj.IsFinished))
+		foreach (ColonyProject project in Projects)
 		{
-			foreach (KeyValuePair<BlueprintResource, int> item2 in item.UsedResourcesFromPool)
+			foreach (KeyValuePair<BlueprintResource, int> item in project.UsedResourcesFromPool)
 			{
-				item2.Deconstruct(out var key, out var value);
+				item.Deconstruct(out var key, out var value);
 				BlueprintResource blueprintResource = key;
 				int num = value;
 				if (dictionary.ContainsKey(blueprintResource))

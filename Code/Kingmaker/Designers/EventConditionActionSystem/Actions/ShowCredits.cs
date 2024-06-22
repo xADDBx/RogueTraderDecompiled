@@ -12,7 +12,7 @@ public class ShowCredits : GameAction
 		return "Show Credits";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		EventBus.RaiseEvent(delegate(ICreditsWindowUIHandler h)
 		{

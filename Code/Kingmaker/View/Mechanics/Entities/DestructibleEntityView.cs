@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.SystemMechanics;
 using Kingmaker.EntitySystem.Entities;
@@ -18,6 +19,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Mechanics.Entities;
 
+[KnowledgeDatabaseID("4426ea04e605432f9c469c7a6a4eebe0")]
 public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 {
 	[Serializable]

@@ -127,7 +127,7 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 		CleanVirtualPosition();
 	}
 
-	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn()
+	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		CleanVirtualPosition();
 	}

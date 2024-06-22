@@ -43,10 +43,19 @@ public class CheckIsHeavyWeaponGetter : PropertyGetter, PropertyContextAccessor.
 			}
 			return 1;
 		}
+		if (rule is RuleCalculateRighteousFuryChance ruleCalculateRighteousFuryChance)
+		{
+			AbilityData ability3 = ruleCalculateRighteousFuryChance.Ability;
+			if ((object)ability3 == null || ability3.GetWeaponStats().Weapon?.Blueprint.Heaviness != WeaponHeaviness.Heavy)
+			{
+				return 0;
+			}
+			return 1;
+		}
 		throw new ElementLogicException(this);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check if attack weapon is heavy";
 	}

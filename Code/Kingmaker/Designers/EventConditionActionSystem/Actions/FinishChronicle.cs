@@ -27,7 +27,7 @@ public class FinishChronicle : GameAction
 		return "Add chronicle to log";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)Chronicle && ColonyBlueprint != null)
 		{

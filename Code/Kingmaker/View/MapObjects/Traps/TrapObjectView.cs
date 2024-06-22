@@ -1,5 +1,6 @@
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -11,6 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.Traps;
 
+[KnowledgeDatabaseID("0dfa673c30fe07e4f98b465b99e2b915")]
 public abstract class TrapObjectView : MapObjectView, IReloadMechanicsHandler, ISubscriber
 {
 	public TrapObjectView LinkedTrap;

@@ -13,6 +13,8 @@ public interface ISlotsGroupVM : IDisposable
 
 	ReactiveProperty<ItemsSorterType> SorterType { get; }
 
+	ReactiveProperty<bool> ShowUnavailable { get; }
+
 	ReactiveProperty<string> SearchString { get; }
 
 	ItemSlotsGroupType Type { get; }

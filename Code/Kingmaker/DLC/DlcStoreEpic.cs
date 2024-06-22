@@ -14,20 +14,25 @@ public class DlcStoreEpic : DlcStore, IDLCStoreEpic
 	[SerializeField]
 	private string m_EpicId;
 
+	[SerializeField]
+	private string m_ShopLink = "https://store.epicgames.com/en-US/p/warhammer-40000-rogue-trader/";
+
 	public string EpicId => m_EpicId;
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.EpicGames;
 
+	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {m_EpicId}).";
+
 	public override IDLCStatus GetStatus()
 	{
-		bool flag = false;
+		IDLCStatus result = null;
 		try
 		{
 			OwnershipStatus ownershipStatus = EpicGamesManager.DlcHelper.GetOwnershipStatus(m_EpicId);
 			if (ownershipStatus == OwnershipStatus.Owned)
 			{
+				result = DLCStatus.Available;
 				PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Epic (ID {m_EpicId}).");
-				flag = true;
 			}
 			else
 			{
@@ -36,12 +41,27 @@ public class DlcStoreEpic : DlcStore, IDLCStoreEpic
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex, $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {m_EpicId}).");
+			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
-		if (!flag)
+		return result;
+	}
+
+	public override bool OpenShop()
+	{
+		if (!IsSuitable)
 		{
-			return null;
+			return false;
 		}
-		return DLCStatus.Available;
+		bool result = false;
+		try
+		{
+			Application.OpenURL(m_ShopLink);
+			result = true;
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Exception(ex, ExceptionMessage);
+		}
+		return result;
 	}
 }

@@ -132,7 +132,7 @@ public static class ResourcesLibrary
 	{
 		if (s_PreloadActionsQueue.Count > 0)
 		{
-			PFLog.Default.Error("Stopping preloading while there are still preload requests pending");
+			PFLog.Resources.Error("Stopping preloading while there are still preload requests pending");
 			s_PreloadActionsQueue.Clear();
 		}
 		s_Preloading = false;
@@ -150,7 +150,7 @@ public static class ResourcesLibrary
 			}
 			catch (Exception ex)
 			{
-				PFLog.Default.Exception(ex);
+				PFLog.Resources.Exception(ex);
 			}
 		}
 		stopwatch.Stop();
@@ -161,7 +161,7 @@ public static class ResourcesLibrary
 	{
 		if (!s_Preloading)
 		{
-			PFLog.Default.Error("Resources preloading is only allowed in preloading mode");
+			PFLog.Resources.Error("Resources preloading is only allowed in preloading mode");
 		}
 		else
 		{
@@ -171,7 +171,7 @@ public static class ResourcesLibrary
 			}
 			if (IsAssetInBundle(assetId) && !BundlesLoadService.Instance.HasLocation(assetId))
 			{
-				PFLog.Default.Error("Resources preloading: {0} has no bundle location", assetId);
+				PFLog.Resources.Error("Resources preloading: {0} has no bundle location", assetId);
 				return;
 			}
 			LoadedResource loadedResource = s_LoadedResources.Get(assetId);
@@ -226,7 +226,7 @@ public static class ResourcesLibrary
 	{
 		if (s_Preloading && !ignorePreloadWarning)
 		{
-			PFLog.Default.Error("Resources loading is forbidden in preloading mode");
+			PFLog.Resources.Error("Resources loading is forbidden in preloading mode");
 			return null;
 		}
 		LoadedResource loadedResource = s_LoadedResources.Get(assetId);
@@ -236,7 +236,7 @@ public static class ResourcesLibrary
 			{
 				loadedResource = new LoadedResource();
 				LoadResource<TResource>(assetId, loadedResource);
-				PFLog.Default.Log($"Loaded non-preloaded resource {assetId} ({loadedResource.Resource})");
+				PFLog.Resources.Log($"Loaded non-preloaded resource {assetId} ({loadedResource.Resource})");
 				s_LoadedResources[assetId] = loadedResource;
 			}
 			finally
@@ -264,7 +264,7 @@ public static class ResourcesLibrary
 	{
 		if (s_Preloading && !ignorePreloadWarning)
 		{
-			PFLog.Default.Error("Resources loading is forbidden in preloading mode");
+			PFLog.Resources.Error("Resources loading is forbidden in preloading mode");
 			return null;
 		}
 		LoadedResource loaded = s_LoadedResources.Get(assetId);
@@ -274,7 +274,7 @@ public static class ResourcesLibrary
 			{
 				loaded = new LoadedResource();
 				await LoadResourceAsync<TResource>(assetId, loaded);
-				PFLog.Default.Log($"Loaded non-preloaded resource {assetId} ({loaded.Resource})");
+				PFLog.Resources.Log($"Loaded non-preloaded resource {assetId} ({loaded.Resource})");
 				s_LoadedResources[assetId] = loaded;
 			}
 			finally
@@ -365,7 +365,7 @@ public static class ResourcesLibrary
 	{
 		if (s_Preloading)
 		{
-			PFLog.Default.Error("Cannot Cleanup cache in preloading mode");
+			PFLog.Resources.Error("Cannot Cleanup cache in preloading mode");
 			return;
 		}
 		List<string> list = Pathfinding.Util.ListPool<string>.Claim();
@@ -458,7 +458,7 @@ public static class ResourcesLibrary
 				}
 				if (val == null)
 				{
-					PFLog.Default.Warning("Could not load resource (id = " + assetId + ")");
+					PFLog.Resources.Warning("Could not load resource (id = " + assetId + ")");
 					loaded.Unload();
 				}
 				else
@@ -512,7 +512,7 @@ public static class ResourcesLibrary
 				}
 				if (resource == null)
 				{
-					PFLog.Default.Warning("Could not load resource (id = " + assetId + ")");
+					PFLog.Resources.Warning("Could not load resource (id = " + assetId + ")");
 					loaded.Unload();
 				}
 				else

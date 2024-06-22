@@ -46,7 +46,7 @@ public class MarkCuesSeen : GameAction
 		return "Mark Cues Seen(" + text + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BlueprintCueBase cue in Cues)
 		{

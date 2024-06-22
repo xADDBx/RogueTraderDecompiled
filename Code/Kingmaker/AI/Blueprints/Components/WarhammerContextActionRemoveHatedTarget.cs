@@ -12,7 +12,7 @@ public class WarhammerContextActionRemoveHatedTarget : ContextAction
 		return "Remove caster from hated targets";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.TargetEntity.GetBrainOptional()?.RemoveCustomHatedTarget(base.Caster);
 	}

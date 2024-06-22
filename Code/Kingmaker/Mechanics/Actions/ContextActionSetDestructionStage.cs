@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Parts;
@@ -16,11 +17,11 @@ public class ContextActionSetDestructionStage : ContextAction
 		return $"Set destruction stage to {Stage}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error("Target unit is missing");
+			Element.LogError(this, "Target unit is missing");
 			return;
 		}
 		PartHealth required = base.Target.Entity.GetRequired<PartHealth>();

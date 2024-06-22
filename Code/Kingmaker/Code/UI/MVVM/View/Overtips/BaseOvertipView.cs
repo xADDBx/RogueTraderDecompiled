@@ -26,6 +26,10 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 
 	private Rect m_ParentRect;
 
+	private int m_LastScreenWidth = -1;
+
+	private int m_LastScreenHeight = -1;
+
 	protected abstract bool CheckVisibility { get; }
 
 	protected CanvasGroup CanvasGroup
@@ -47,7 +51,7 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 
 	protected override void BindViewImplementation()
 	{
-		m_ParentRect = ((RectTransform)base.transform.parent.parent).rect;
+		UpdateParentRect();
 		SetCanvasGroupVisible(isVisible: false);
 		m_OwnRectTransform = (RectTransform)base.transform;
 		RectTransform ownRectTransform = m_OwnRectTransform;
@@ -113,8 +117,19 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 		CanvasGroup.blocksRaycasts = isVisible;
 	}
 
+	private void UpdateParentRect()
+	{
+		m_ParentRect = ((RectTransform)base.transform.parent.parent).rect;
+		m_LastScreenWidth = Screen.width;
+		m_LastScreenHeight = Screen.height;
+	}
+
 	private void UpdatePosition(Vector3 canvasPosition)
 	{
+		if (Screen.width != m_LastScreenWidth || Screen.height != m_LastScreenHeight)
+		{
+			UpdateParentRect();
+		}
 		PositionCorrection = PositionCorrectionFromView + new Vector2(0f, base.ViewModel.OvertipVerticalCorrection);
 		m_OvertipPosition = UIUtilityGetRect.PixelPositionInRect(m_ParentRect, canvasPosition, m_OwnRectTransform.parent);
 		m_OwnRectTransform.anchoredPosition = m_OvertipPosition + PositionCorrection;

@@ -101,6 +101,10 @@ public class SpaceSystemNavigationButtonsVM : BaseDisposable, IViewModel, IBaseD
 		}));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	private void OnUpdateHandler()
 	{
 		if (!(Game.Instance.CurrentMode != GameModeType.GlobalMap))
@@ -111,8 +115,8 @@ public class SpaceSystemNavigationButtonsVM : BaseDisposable, IViewModel, IBaseD
 
 	private void CheckEverything()
 	{
-		m_CanVisit = SectorMapObject?.View?.StarSystemToTransit != null;
-		IsExplored.Value = SectorMapObject.IsExplored;
+		m_CanVisit = SectorMapObject?.View != null && SectorMapObject.View.StarSystemToTransit != null;
+		IsExplored.Value = SectorMapObject?.View != null && SectorMapObject.View.IsExploredOrHasQuests;
 		ReactiveProperty<bool> isDialogActive = IsDialogActive;
 		BlueprintDialog blueprintDialog = Game.Instance.DialogController?.Dialog;
 		isDialogActive.Value = blueprintDialog != null && (bool)blueprintDialog;
@@ -132,10 +136,6 @@ public class SpaceSystemNavigationButtonsVM : BaseDisposable, IViewModel, IBaseD
 			IsInformationWindowsInspectMode.Value = SectorMapController.IsInformationWindowInspectMode;
 			IsAvailable.Value = SectorMapObject.IsAvailable;
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	public void SpaceSystemCreateWay()

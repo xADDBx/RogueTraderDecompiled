@@ -25,7 +25,7 @@ public class RemoveAmbush : GameAction
 		return "Remove ambush from " + m_Unit?.ToString() + (m_ExitStealth ? " and exit stealth" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(m_Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

@@ -34,6 +34,10 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 	[HideInInspector]
 	public bool IsDraggable = true;
 
+	private TooltipConfig m_CompareConfig = new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None);
+
+	private TooltipConfig m_MainConfig = new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None);
+
 	public readonly ReactiveCommand OnBeginDragCommand = new ReactiveCommand();
 
 	public readonly ReactiveCommand OnEndDragCommand = new ReactiveCommand();
@@ -53,11 +57,7 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		AddDisposable(this.SetTooltip(base.ViewModel.Tooltip, new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None, isGlossary: false, isEncyclopedia: false, GetParentContainer(), 0, 0, 0, new List<Vector2>
-		{
-			new Vector2(0f, 0.5f),
-			new Vector2(1f, 0.5f)
-		})));
+		CreateTooltip();
 		AddDisposable(this.SetContextMenu(base.ViewModel.ContextMenu));
 		m_BeginDrag = false;
 		SubscribeInteractions();
@@ -71,6 +71,28 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 			DragNDropManager.Instance.Or(null)?.CancelDrag();
 			m_BeginDrag = false;
 		}
+	}
+
+	private void CreateTooltip()
+	{
+		TooltipPlaces componentInParent = GetComponentInParent<TooltipPlaces>();
+		if (componentInParent == null)
+		{
+			m_MainConfig.TooltipPlace = GetParentContainer();
+			m_CompareConfig.TooltipPlace = GetParentContainer();
+			m_MainConfig.PriorityPivots = new List<Vector2>
+			{
+				new Vector2(0f, 0.5f),
+				new Vector2(1f, 0.5f)
+			};
+		}
+		else
+		{
+			m_MainConfig = componentInParent.GetMainTooltipConfig(m_MainConfig);
+			m_CompareConfig = componentInParent.GetCompareTooltipConfig(m_CompareConfig);
+			m_CompareConfig.MaxHeight = ((base.ViewModel.Tooltip.Value.Count > 2) ? 450 : 0);
+		}
+		AddDisposable(this.SetTooltip(base.ViewModel.Tooltip, m_MainConfig, m_CompareConfig));
 	}
 
 	private void SubscribeInteractions()

@@ -111,6 +111,8 @@ public class DollState : ICanConvertPropertiesToReactive
 
 	private bool m_ShowHelm = true;
 
+	private bool m_ShowHelmAboveAll;
+
 	private bool m_ShowBackpack = true;
 
 	[NotNull]
@@ -228,6 +230,22 @@ public class DollState : ICanConvertPropertiesToReactive
 			if (m_ShowHelm != value)
 			{
 				m_ShowHelm = value;
+				Updated();
+			}
+		}
+	}
+
+	public bool ShowHelmAboveAll
+	{
+		get
+		{
+			return m_ShowHelmAboveAll;
+		}
+		set
+		{
+			if (m_ShowHelmAboveAll != value)
+			{
+				m_ShowHelmAboveAll = value;
 				Updated();
 			}
 		}

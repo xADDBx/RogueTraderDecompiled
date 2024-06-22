@@ -2,8 +2,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem.Blueprints;
-using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.Globalmap.SystemMap;
 using UnityEngine;
 
 namespace Kingmaker.Globalmap.Exploration;
@@ -18,11 +16,10 @@ public class AnomalyDialog : AnomalyInteraction
 
 	public override void Interact()
 	{
-		if (ContextData<StarSystemContextData>.Current?.StarSystemObject is AnomalyEntityData anomalyEntityData)
+		if (Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject is AnomalyEntityData)
 		{
-			DialogData dialogData = DialogController.SetupDialogWithoutTarget(Dialog, null);
-			dialogData.AddContextData<StarSystemContextData>().Setup(anomalyEntityData, null, null, anomalyEntityData.OnInteractionEnded);
-			Game.Instance.DialogController.StartDialog(dialogData);
+			DialogData data = DialogController.SetupDialogWithoutTarget(Dialog, null);
+			Game.Instance.DialogController.StartDialog(data);
 		}
 	}
 }

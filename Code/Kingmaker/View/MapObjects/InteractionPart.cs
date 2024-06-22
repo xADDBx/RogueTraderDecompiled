@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Controllers;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
@@ -88,6 +89,8 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		}
 	}
 
+	public List<BaseUnitEntity> UnitsCanInteract { get; private set; }
+
 	public bool Enabled
 	{
 		get
@@ -159,6 +162,7 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		{
 			Settings.Trap.TrappedObject = this;
 		}
+		UnitsCanInteract = GetMaxUnitsToInteract();
 	}
 
 	public void Interact(BaseUnitEntity user)
@@ -193,7 +197,17 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 						h.HandleInteractWithVariantActor(this, ContextData<InteractionVariantData>.Current.VariantActor);
 					});
 				}
-				OnInteract(user);
+				if (flag)
+				{
+					Game.Instance.CoroutinesController.InvokeInTime(delegate
+					{
+						OnInteract(user);
+					}, 0.2f.Seconds());
+				}
+				else
+				{
+					OnInteract(user);
+				}
 				foreach (InteractionRestrictionPart item in restrictions)
 				{
 					item.OnDidInteract(user);
@@ -236,6 +250,29 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 				h.HandleObjectInteractChanged();
 			}, isCheckRuntime: true);
 		}
+	}
+
+	private List<BaseUnitEntity> GetMaxUnitsToInteract()
+	{
+		List<BaseUnitEntity> list = null;
+		IEnumerable<ISkillUseRestrictionWithoutItem> enumerable = (from i in GetRestrictions()
+			where i is ISkillUseRestrictionWithoutItem
+			select i).OfType<ISkillUseRestrictionWithoutItem>();
+		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		{
+			foreach (ISkillUseRestrictionWithoutItem item2 in enumerable)
+			{
+				if (InteractionHelper.GetInteractionSkillCheckChance(item, item2.Skill, item2.DCOverrideValue) > 0)
+				{
+					if (list == null)
+					{
+						list = new List<BaseUnitEntity>();
+					}
+					list.Add(item);
+				}
+			}
+		}
+		return list;
 	}
 
 	private List<InteractionRestrictionPart> GetRestrictions()
@@ -345,6 +382,11 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		return SelectUnitInternal(units.Where((BaseUnitEntity u) => CanBeSelected(u)).ToTempList(), muteEvents, skillFromVariant);
 	}
 
+	public virtual List<BaseUnitEntity> SelectAllUnits(ReadonlyList<BaseUnitEntity> units)
+	{
+		return units.Where((BaseUnitEntity u) => CanBeSelected(u)).ToTempList();
+	}
+
 	private bool CanBeSelected(BaseUnitEntity unit)
 	{
 		if (unit.CanAct)
@@ -418,11 +460,11 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		}
 	}
 
-	public virtual bool IsEnoughCloseForInteraction(BaseUnitEntity unit)
+	public virtual bool IsEnoughCloseForInteraction(BaseUnitEntity unit, Vector3? position = null)
 	{
 		Vector3 point = Owner.Position;
 		bool num = Mathf.Min(Math.Abs(unit.EyePosition.y - point.y), Math.Abs(unit.Position.y - point.y)) < GraphParamsMechanicsCache.GridCellSize * 2f;
-		Vector3 start = (num ? unit.Position.ToXZ() : unit.Position);
+		Vector3 start = (num ? unit.Position.ToXZ() : (position ?? unit.Position));
 		Vector3 end = (num ? unit.EyePosition.ToXZ() : unit.EyePosition);
 		if (num)
 		{
@@ -431,9 +473,16 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		return Mathf.RoundToInt(UnitMovementAgentBase.GetDistanceToSegment(start, end, point) / GraphParamsMechanicsCache.GridCellSize) <= ApproachRadius;
 	}
 
+	public virtual bool IsEnoughCloseForInteraction(Vector3 unitPosition)
+	{
+		Vector3 position = Owner.Position;
+		return Mathf.CeilToInt(Vector3.Distance(unitPosition, position) / GraphParamsMechanicsCache.GridCellSize) <= ApproachRadius;
+	}
+
 	public bool IsEnoughCloseForInteractionFromDesiredPosition(BaseUnitEntity unit)
 	{
-		return UnitMovementAgentBase.GetDistanceToSegment(Game.Instance.VirtualPositionController.GetDesiredPosition(unit), point: Owner.Position, end: unit.EyePosition) / GraphParamsMechanicsCache.GridCellSize <= (float)ApproachRadius;
+		Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(unit);
+		return IsEnoughCloseForInteraction(unit, desiredPosition);
 	}
 
 	public bool HasEnoughActionPoints(BaseUnitEntity unit)

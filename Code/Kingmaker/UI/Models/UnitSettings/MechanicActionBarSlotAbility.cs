@@ -35,7 +35,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		}
 	}
 
-	private bool IsVariantAbility => Ability.IsVariable;
+	private bool IsVariantAbility => Ability?.IsVariable ?? false;
 
 	public override string KeyName => Ability?.Blueprint?.name;
 
@@ -68,7 +68,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 	{
 		if (!base.IsBad() && Ability?.Fact != null)
 		{
-			return Ability.Caster == null;
+			return Ability?.Caster == null;
 		}
 		return true;
 	}
@@ -113,6 +113,10 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 	public override void OnHover(bool state)
 	{
 		base.OnHover(state);
+		if (Ability == null)
+		{
+			return;
+		}
 		EventBus.RaiseEvent(delegate(IAbilityTargetHoverUIHandler h)
 		{
 			h.HandleAbilityTargetHover(Ability, state);
@@ -142,7 +146,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		{
 			return -1;
 		}
-		return Ability.GetAvailableForCastCount();
+		return Ability?.GetAvailableForCastCount() ?? 0;
 	}
 
 	public override int GetResourceCost()
@@ -151,7 +155,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		{
 			return -1;
 		}
-		return Ability.GetResourceCost();
+		return Ability?.GetResourceCost() ?? 0;
 	}
 
 	public override int GetResourceAmount()
@@ -160,7 +164,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		{
 			return -1;
 		}
-		return Ability.GetResourceAmount();
+		return Ability?.GetResourceAmount() ?? 0;
 	}
 
 	public override int ActionPointCost()
@@ -169,12 +173,12 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		{
 			return -1;
 		}
-		return Ability.CalculateActionPointCost();
+		return Ability?.CalculateActionPointCost() ?? 0;
 	}
 
 	public override bool IsWeaponAttackThatRequiresAmmo()
 	{
-		return Ability.IsWeaponAttackThatRequiresAmmo;
+		return Ability?.IsWeaponAttackThatRequiresAmmo ?? false;
 	}
 
 	public override int MaxAmmo()
@@ -189,21 +193,25 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 
 	public override Sprite GetIcon()
 	{
-		return Ability.Icon;
+		return Ability?.Icon;
 	}
 
 	public override string GetTitle()
 	{
-		return Ability.Name;
+		return Ability?.Name;
 	}
 
 	public override string GetDescription()
 	{
-		return Ability.ShortenedDescription;
+		return Ability?.ShortenedDescription;
 	}
 
 	public override bool HasWeaponAbilityGroup()
 	{
+		if (Ability == null)
+		{
+			return false;
+		}
 		foreach (BlueprintAbilityGroup abilityGroup in Ability.Blueprint.AbilityGroups)
 		{
 			if (abilityGroup.NameSafe() == "WeaponAttackAbilityGroup")
@@ -237,7 +245,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		string text = base.WarningMessage(castPosition);
 		if (string.IsNullOrEmpty(text))
 		{
-			return Ability.GetUnavailableReason(castPosition);
+			return Ability?.GetUnavailableReason(castPosition);
 		}
 		return text;
 	}
@@ -253,12 +261,16 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 
 	public override TooltipBaseTemplate GetTooltipTemplate()
 	{
+		if (!(Ability != null))
+		{
+			return null;
+		}
 		return new TooltipTemplateAbility(Ability);
 	}
 
 	public override int AmmoCost()
 	{
-		return Ability.AmmoRequired;
+		return Ability?.AmmoRequired ?? 0;
 	}
 
 	public override Hash128 GetHash128()

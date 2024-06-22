@@ -1,4 +1,5 @@
 using Kingmaker.UI.InputSystems;
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -35,6 +36,14 @@ public class CreditsPCView : CreditsBaseView
 		}));
 		AddDisposable(m_SearchButton.OnLeftClickAsObservable().Subscribe(base.OnFind));
 		CreateInput();
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, delegate
+		{
+			ChangeTab(direction: false);
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, delegate
+		{
+			ChangeTab(direction: true);
+		}));
 	}
 
 	private void CreateInput()

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Base;
@@ -5,6 +6,7 @@ using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Portrait;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.Base;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Pages;
@@ -12,6 +14,7 @@ using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.Selections.CharacterGender;
 using Kingmaker.UnitLogic.Levelup.Selections.Doll;
+using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UniRx;
@@ -100,7 +103,18 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 	{
 		foreach (CharGenAppearancePageType item in CharGenAppearancePages.PagesOrder.Where(IsPageEnabled))
 		{
-			m_Pages.Add(AddDisposableAndReturn(new CharGenAppearancePageVM(CharGenContext, item, base.IsInDetailedView)));
+			CharGenAppearancePageVM disposable = new CharGenAppearancePageVM(CharGenContext, item, base.IsInDetailedView);
+			m_Pages.Add(AddDisposableAndReturn(disposable));
+		}
+		CoroutineRunner.Start(PrewarmPagesCo());
+	}
+
+	private IEnumerator PrewarmPagesCo()
+	{
+		foreach (CharGenAppearancePageVM page in m_Pages)
+		{
+			yield return null;
+			page.CreateComponentsIfNeeded();
 		}
 	}
 
@@ -120,8 +134,6 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 
 	private void OnCurrentPageChanged(CharGenAppearancePageVM pageVM)
 	{
-		ClearPortrait();
-		VirtualListCollection.Clear();
 		if (pageVM != null)
 		{
 			Game.Instance.GameCommandQueue.CharGenChangeAppearancePage(pageVM.PageType);
@@ -138,7 +150,10 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 			PFLog.UI.Error($"CharGenAppearancePageVM not found {pageType}");
 			return;
 		}
-		CurrentPageVM.Value = charGenAppearancePageVM;
+		if (!UINetUtility.IsControlMainCharacter())
+		{
+			CurrentPageVM.Value = charGenAppearancePageVM;
+		}
 		charGenAppearancePageVM.BeginPageView();
 		foreach (BaseCharGenAppearancePageComponentVM component in charGenAppearancePageVM.Components)
 		{

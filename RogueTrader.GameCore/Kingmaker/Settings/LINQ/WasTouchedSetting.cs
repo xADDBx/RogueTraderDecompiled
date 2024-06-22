@@ -4,7 +4,7 @@ namespace Kingmaker.Settings.LINQ;
 
 public class WasTouchedSetting<TSource> : SettingsEntityBool
 {
-	private TSource m_DefaultValue;
+	private readonly TSource m_DefaultValue;
 
 	public WasTouchedSetting(SettingsEntity<TSource> source)
 		: base(source.settingsController, source.Key + "-was-touched", defaultValue: false, source.SaveDependent)

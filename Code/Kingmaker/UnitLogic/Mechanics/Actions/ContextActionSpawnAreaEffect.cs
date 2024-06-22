@@ -2,8 +2,11 @@ using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
+using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -24,6 +27,9 @@ public class ContextActionSpawnAreaEffect : ContextAction
 
 	public bool OnUnit;
 
+	[Tooltip("Set FactData ContextData as SourceFact")]
+	public bool SetSourceFact;
+
 	public BlueprintAbilityAreaEffect AreaEffect => m_AreaEffect?.Get();
 
 	public override string GetCaption()
@@ -32,7 +38,7 @@ public class ContextActionSpawnAreaEffect : ContextAction
 		return $"Spawn {arg} for {DurationValue}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{
@@ -40,6 +46,10 @@ public class ContextActionSpawnAreaEffect : ContextAction
 		}
 		TimeSpan seconds = DurationValue.Calculate(base.Context).Seconds;
 		AreaEffectEntity areaEffectEntity = (OnUnit ? AreaEffectsController.SpawnAttachedToTarget(base.Context, AreaEffect, (BaseUnitEntity)base.Target.Entity, seconds) : AreaEffectsController.Spawn(base.Context, AreaEffect, base.Target, seconds));
+		if (SetSourceFact && areaEffectEntity != null && ContextData<FactData>.Current?.Fact is UnitFact { SourceFact: { } sourceFact } unitFact && sourceFact.Owner is Entity)
+		{
+			areaEffectEntity.SourceFact = new EntityFactRef(unitFact.SourceFact);
+		}
 		if (areaEffectEntity == null || base.AbilityContext == null)
 		{
 			return;

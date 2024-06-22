@@ -29,7 +29,7 @@ public class SetObjectiveStatus : GameAction, IQuestObjectiveReference
 
 	public BlueprintQuestObjective Objective => m_Objective?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (StartObjectiveIfNone && GameHelper.Quests.GetObjectiveState(Objective) == QuestObjectiveState.None)
 		{

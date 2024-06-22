@@ -26,6 +26,8 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public ReactiveProperty<InitiativeTrackerUnitVM> HoveredUnit = new ReactiveProperty<InitiativeTrackerUnitVM>();
 
+	public ReactiveProperty<InitiativeTrackerUnitVM> SquadLeaderUnit = new ReactiveProperty<InitiativeTrackerUnitVM>();
+
 	public InitiativeTrackerUnitVM RoundVM;
 
 	public readonly ReactiveCommand UnitsUpdated = new ReactiveCommand();
@@ -253,6 +255,16 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	{
 		if (isHover)
 		{
+			BaseUnitEntity baseUnitEntity = unitEntityView.EntityData.ToBaseUnitEntity();
+			if (baseUnitEntity.IsInSquad)
+			{
+				PartSquad squadOptional = baseUnitEntity.GetSquadOptional();
+				BaseUnitEntity leader = squadOptional?.Leader ?? ((squadOptional != null) ? squadOptional.Units.FirstOrDefault().ToBaseUnitEntity() : null);
+				if (leader != null)
+				{
+					SquadLeaderUnit.Value = Units.LastOrDefault((InitiativeTrackerUnitVM unit) => unit.Unit == leader);
+				}
+			}
 			HoveredUnit.Value = Units.LastOrDefault((InitiativeTrackerUnitVM unit) => unit.Unit?.View == unitEntityView);
 			{
 				foreach (InitiativeTrackerUnitVM unit in Units)
@@ -285,7 +297,7 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		m_NeedUpdate = true;
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		m_NeedUpdate = true;
 	}

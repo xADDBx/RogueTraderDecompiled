@@ -55,22 +55,28 @@ public abstract class CombatStartWindowView : ViewBase<CombatStartWindowVM>
 		m_CanDeployLabel.gameObject.SetActive(base.ViewModel.CanDeploy);
 		m_CannotDeployLabel.gameObject.SetActive(!base.ViewModel.CanDeploy);
 		m_Canvas.sortingOrder = ((!base.ViewModel.CanDeploy) ? 100 : 0);
-		AddDisposable(base.ViewModel.CanStartCombat.Subscribe(delegate(bool can)
+		AddDisposable(base.ViewModel.CanStartCombat.CombineLatest(base.ViewModel.CannotStartCombatReason, (bool can, string reason) => new { can, reason }).Subscribe(value =>
 		{
-			m_StartBattleButton.Interactable = can;
-			if (can)
+			m_StartBattleButton.Interactable = value.can;
+			if (value.can)
 			{
 				m_CantStartBattleHint?.Dispose();
 			}
 			else
 			{
-				m_CantStartBattleHint = m_StartBattleButton.SetHint(UIStrings.Instance.TurnBasedTexts.CannotStartbattle.Text);
+				m_CantStartBattleHint = m_StartBattleButton.SetHint(value.reason);
 			}
 		}));
 		if (m_ProgressBaseView != null)
 		{
 			m_ProgressBaseView.Bind(base.ViewModel.CoopProgressVM);
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		Disappear();
+		m_CantStartBattleHint?.Dispose();
 	}
 
 	private void Appear()
@@ -81,11 +87,5 @@ public abstract class CombatStartWindowView : ViewBase<CombatStartWindowVM>
 	private void Disappear()
 	{
 		m_FadeAnimator.DisappearAnimation();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Disappear();
-		m_CantStartBattleHint?.Dispose();
 	}
 }

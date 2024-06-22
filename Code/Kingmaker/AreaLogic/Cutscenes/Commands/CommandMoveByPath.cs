@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
@@ -70,10 +71,10 @@ public class CommandMoveByPath : CommandBase
 				commandData.Unit.Translocate(list.LastItem(), null);
 				return;
 			}
-			UnitMoveAlongPathParams cmdParams = new UnitMoveAlongPathParams(list)
+			UnitMoveToParams cmdParams = new UnitMoveToParams(ForcedPath.Construct(list), new Vector3(0f, 0f, 0f))
 			{
-				OverrideSpeed = (OverrideSpeed ? new float?(Speed) : null),
-				MovementType = ((Animation == WalkSpeedType.Sprint) ? WalkSpeedType.Walk : Animation)
+				MovementType = ((Animation == WalkSpeedType.Sprint) ? WalkSpeedType.Walk : Animation),
+				OverrideSpeed = (OverrideSpeed ? new float?(Speed) : null)
 			};
 			commandData.CommandHandle = commandData.Unit.Commands.Run(cmdParams);
 			commandData.Unit.View.MovementAgent.AvoidanceDisabled = true;

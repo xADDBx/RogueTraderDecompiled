@@ -28,7 +28,7 @@ public class SetPortrait : GameAction
 		return $"Set Portrait ({Portrait} to {Unit})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

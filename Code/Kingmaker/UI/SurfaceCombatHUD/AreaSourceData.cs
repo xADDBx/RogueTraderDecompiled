@@ -4,13 +4,9 @@ namespace Kingmaker.UI.SurfaceCombatHUD;
 
 public struct AreaSourceData
 {
-	public IAreaSource source;
+	public IAreaSource Source;
 
-	public Texture2D icon;
+	public Texture2D IconTexture;
 
-	public AreaSourceData(IAreaSource source, Texture2D icon)
-	{
-		this.source = source;
-		this.icon = icon;
-	}
+	public CombatHudMaterialRemapAsset MaterialRemapAsset;
 }

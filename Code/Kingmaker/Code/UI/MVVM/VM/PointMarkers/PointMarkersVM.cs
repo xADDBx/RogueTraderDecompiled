@@ -6,7 +6,9 @@ using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.DotNetExtensions;
@@ -16,17 +18,25 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.PointMarkers;
 
-public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISubscriber
+public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISubscriber, INetAddPingMarker
 {
 	public readonly ReactiveCollection<PointMarkerVM> PointMarkers = new ReactiveCollection<PointMarkerVM>();
 
 	protected readonly List<BaseUnitEntity> Units = new List<BaseUnitEntity>();
+
+	protected readonly List<Entity> AnotherEntities = new List<Entity>();
+
+	protected readonly List<GameObject> PingPositions = new List<GameObject>();
 
 	private Coroutine m_DirtyUnitsCoroutine;
 
 	public IEnumerable<PointMarkerVM> VisibleMarkers => PointMarkers.Where((PointMarkerVM vm) => vm.IsVisible.Value);
 
 	protected virtual IEnumerable<BaseUnitEntity> UnitsSelector => new List<BaseUnitEntity>();
+
+	protected virtual IEnumerable<Entity> AnotherEntitiesSelector => new List<Entity>();
+
+	protected virtual IEnumerable<GameObject> PingPositionSelector => new List<GameObject>();
 
 	protected PointMarkersVM()
 	{
@@ -55,6 +65,8 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 		});
 		PointMarkers.Clear();
 		Units.Clear();
+		AnotherEntities.Clear();
+		PingPositions.Clear();
 	}
 
 	private void UpdateHandler()
@@ -72,6 +84,16 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 		{
 			PointMarkers.Add(new PointMarkerVM(item));
 			Units.Add(item);
+		}
+		foreach (Entity item2 in AnotherEntitiesSelector)
+		{
+			PointMarkers.Add(new PointMarkerVM(item2));
+			AnotherEntities.Add(item2);
+		}
+		foreach (GameObject item3 in PingPositionSelector)
+		{
+			PointMarkers.Add(new PointMarkerVM(item3));
+			PingPositions.Add(item3);
 		}
 	}
 
@@ -113,5 +135,57 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 		{
 			pointMarkerVM.LineOfSight.Value = null;
 		}
+	}
+
+	private void AddPingEntity(Entity entity, GameObject pingPosition)
+	{
+		if (pingPosition != null)
+		{
+			PointMarkers.Add(new PointMarkerVM(pingPosition));
+			PingPositions.Add(pingPosition);
+		}
+		else
+		{
+			PointMarkers.Add(new PointMarkerVM(entity, isPing: true));
+			AnotherEntities.Add(entity);
+		}
+	}
+
+	private void RemovePingEntity(Entity entity, GameObject pingPosition)
+	{
+		if (pingPosition != null)
+		{
+			PointMarkerVM pointMarkerVM = PointMarkers.FirstOrDefault((PointMarkerVM m) => m.PingPosition == pingPosition);
+			pointMarkerVM?.Dispose();
+			PointMarkers.Remove(pointMarkerVM);
+			PingPositions.Remove(pingPosition);
+		}
+		else
+		{
+			PointMarkerVM pointMarkerVM2 = PointMarkers.FirstOrDefault((PointMarkerVM m) => m.AnotherEntity == entity);
+			pointMarkerVM2?.Dispose();
+			PointMarkers.Remove(pointMarkerVM2);
+			AnotherEntities.Remove(entity);
+		}
+	}
+
+	public void HandleAddPingEntityMarker(Entity entity)
+	{
+		AddPingEntity(entity, null);
+	}
+
+	public void HandleRemovePingEntityMarker(Entity entity)
+	{
+		RemovePingEntity(entity, null);
+	}
+
+	public void HandleAddPingPositionMarker(GameObject gameObject)
+	{
+		AddPingEntity(null, gameObject);
+	}
+
+	public void HandleRemovePingPositionMarker(GameObject gameObject)
+	{
+		RemovePingEntity(null, gameObject);
 	}
 }

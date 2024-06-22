@@ -42,7 +42,7 @@ public class PartyMembersDetachEvaluated : GameAction
 			select u?.ToString()) + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Player player = Game.Instance.Player;
 		if (DetachThese.Length != 0)

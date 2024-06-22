@@ -15,7 +15,7 @@ public class AbilityWeaponMaxDistanceGetter : PropertyGetter, PropertyContextAcc
 		return this.GetAbilityWeapon().Blueprint.WarhammerMaxDistance;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Ability Weapon Max Distance";
 	}

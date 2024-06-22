@@ -49,7 +49,6 @@ public class TooltipTemplateColonyStats : TooltipBaseTemplate
 			if (list2 != null && list2.Count != 0)
 			{
 				list.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.BonusesSum));
-				list.Add(new TooltipBrickSpace());
 				foreach (ColonyStatModifier item in list2)
 				{
 					string value = item.Value.ToString("+#;-#");
@@ -63,7 +62,6 @@ public class TooltipTemplateColonyStats : TooltipBaseTemplate
 			if (list3 != null && list3.Count != 0)
 			{
 				list.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.BonusesSum));
-				list.Add(new TooltipBrickSpace());
 				foreach (ColonyStatModifier item2 in list3)
 				{
 					string value2 = item2.Value.ToString("+#;-#");
@@ -77,7 +75,6 @@ public class TooltipTemplateColonyStats : TooltipBaseTemplate
 			if (list4 != null && list4.Count != 0)
 			{
 				list.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.BonusesSum));
-				list.Add(new TooltipBrickSpace());
 				foreach (ColonyStatModifier item3 in list4)
 				{
 					string value3 = item3.Value.ToString("+#;-#");
@@ -85,7 +82,6 @@ public class TooltipTemplateColonyStats : TooltipBaseTemplate
 				}
 			}
 		}
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(StatDescription));
 		return list;
 	}

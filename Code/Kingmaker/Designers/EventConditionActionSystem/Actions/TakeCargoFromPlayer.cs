@@ -32,7 +32,7 @@ public class TakeCargoFromPlayer : GameAction
 		return $"Takes {m_CargoAmount} {arg} from Player if he has it";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		IEnumerable<CargoEntity> cargoEntities = Game.Instance.Player.CargoState.CargoEntities;
 		if (cargoEntities.Empty())

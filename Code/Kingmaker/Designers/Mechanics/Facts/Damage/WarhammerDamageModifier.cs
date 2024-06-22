@@ -113,6 +113,11 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 				rule.ValueModifiers.Add(ModifierType.PctMul_Extra, UnmodifiablePercentDamageModifier.Calculate(base.Context), base.Fact, ModifierDescriptor);
 			}
 		}
+		OnApply();
+	}
+
+	protected virtual void OnApply()
+	{
 	}
 
 	public override Hash128 GetHash128()

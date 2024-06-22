@@ -48,7 +48,7 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 		return "Run a context action on random targets around";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current || base.Context.MaybeCaster == null)
 		{

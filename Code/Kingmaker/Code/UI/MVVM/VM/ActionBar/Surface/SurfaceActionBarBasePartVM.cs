@@ -12,6 +12,11 @@ public abstract class SurfaceActionBarBasePartVM : BaseDisposable, IViewModel, I
 
 	public readonly ReactiveCommand UnitChanged = new ReactiveCommand();
 
+	protected override void DisposeImplementation()
+	{
+		ClearSlots();
+	}
+
 	public void SetUnit(EntityRef<BaseUnitEntity> unit)
 	{
 		Unit = unit;
@@ -29,9 +34,4 @@ public abstract class SurfaceActionBarBasePartVM : BaseDisposable, IViewModel, I
 	protected abstract void OnUnitChanged();
 
 	protected abstract void ClearSlots();
-
-	protected override void DisposeImplementation()
-	{
-		ClearSlots();
-	}
 }

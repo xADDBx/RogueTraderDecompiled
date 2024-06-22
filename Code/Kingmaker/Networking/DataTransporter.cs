@@ -1,12 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
+using Kingmaker.Enums;
 using Kingmaker.Networking.Player;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Stores;
 using Kingmaker.Utility.DotNetExtensions;
+using Owlcat.Runtime.Core.Logging;
 using Photon.Realtime;
 using UnityEngine;
 
@@ -14,9 +19,25 @@ namespace Kingmaker.Networking;
 
 public class DataTransporter
 {
+	private readonly struct SenderInfo
+	{
+		public readonly DataSender Sender;
+
+		[CanBeNull]
+		public readonly TaskCompletionSource<bool> TaskCompletionSource;
+
+		public SenderInfo(DataSender sender, TaskCompletionSource<bool> taskCompletionSource = null)
+		{
+			Sender = sender;
+			TaskCompletionSource = taskCompletionSource;
+		}
+	}
+
 	private readonly PhotonManager m_PhotonManager;
 
-	private readonly List<DataSender> m_Senders = new List<DataSender>();
+	private readonly CustomPortraitsManager m_PortraitsManager;
+
+	private readonly List<SenderInfo> m_Senders = new List<SenderInfo>();
 
 	private readonly List<DataReceiver> m_Receivers = new List<DataReceiver>();
 
@@ -28,11 +49,31 @@ public class DataTransporter
 
 	private int m_SenderUniqueNumber;
 
+	public DataTransporterReceiversFactory ReceiversFactory { get; } = new DataTransporterReceiversFactory();
+
+
 	public static bool CheatAlwaysSendAvatarViaPhoton { get; set; }
 
-	public DataTransporter(PhotonManager photonManager)
+	public bool IsBusy
+	{
+		get
+		{
+			if (m_Senders.Count <= 0)
+			{
+				return m_Receivers.Count > 0;
+			}
+			return true;
+		}
+	}
+
+	public event Action<DataTransferProgressInfo> CustomPortraitProgress;
+
+	public event Action<DataReceiver> CreateNewReceiver;
+
+	public DataTransporter(PhotonManager photonManager, CustomPortraitsManager portraitsManager)
 	{
 		m_PhotonManager = photonManager;
+		m_PortraitsManager = portraitsManager;
 	}
 
 	public void SendSaveScreenshot(string saveId, byte[] saveScreenshotData)
@@ -67,9 +108,36 @@ public class DataTransporter
 			m_ScreenshotCts?.Cancel();
 			m_ScreenshotCts = new CancellationTokenSource();
 		}
-		ScreenshotSender item = new ScreenshotSender(targetActors, saveScreenshotData, ++m_SenderUniqueNumber, m_PhotonManager, m_ScreenshotCts.Token, m_SendersFullStopCts.Token);
-		m_Senders.Add(item);
+		ScreenshotSender sender = new ScreenshotSender(targetActors, saveScreenshotData, ++m_SenderUniqueNumber, m_PhotonManager, m_ScreenshotCts.Token, m_SendersFullStopCts.Token);
+		m_Senders.Add(new SenderInfo(sender));
 		ProcessSenders();
+	}
+
+	public async Task SendCustomPortrait(PortraitData portrait, List<PhotonActorNumber> targetActors, IProgress<DataTransferProgressInfo> progress, CancellationToken interruptSendingCancellationToken = default(CancellationToken), CancellationToken fullStopSendingCancellationToken = default(CancellationToken))
+	{
+		m_SenderUniqueNumber++;
+		PFLog.Net.Log($"[DataTransporter.SendCustomPortrait] id={portrait.CustomId}, N={m_SenderUniqueNumber}");
+		await using (fullStopSendingCancellationToken.Register(m_SendersFullStopCts.Cancel))
+		{
+			CustomPortraitSender sender = new CustomPortraitSender(targetActors, portrait, m_SenderUniqueNumber, m_PhotonManager, interruptSendingCancellationToken, m_SendersFullStopCts.Token, progress);
+			SenderInfo item = new SenderInfo(sender, new TaskCompletionSource<bool>());
+			m_Senders.Add(item);
+			ProcessSenders();
+			await item.TaskCompletionSource.Task;
+		}
+	}
+
+	public async Task SendSave(List<PhotonActorNumber> targetActors, ArraySegment<byte> saveBytes, CancellationToken cancellationToken, IProgress<DataTransferProgressInfo> progress)
+	{
+		PFLog.Net.Log("[DataTransporter.SendSave]");
+		await using (cancellationToken.Register(m_SendersFullStopCts.Cancel))
+		{
+			SaveSender sender = new SaveSender(targetActors, saveBytes, ++m_SenderUniqueNumber, m_PhotonManager, default(CancellationToken), m_SendersFullStopCts.Token, progress);
+			SenderInfo item = new SenderInfo(sender, new TaskCompletionSource<bool>());
+			m_Senders.Add(item);
+			ProcessSenders();
+			await item.TaskCompletionSource.Task;
+		}
 	}
 
 	public void OnMessage(byte code, PhotonActorNumber player, ReadOnlySpan<byte> bytes)
@@ -78,21 +146,30 @@ public class DataTransporter
 		{
 		case 21:
 		case 22:
+		case 23:
+		case 24:
 		{
-			PFLog.Net.Log($"[DataTransporter.OnMessage] create new receiver from {player}");
+			PFLog.Net.Log($"[DataTransporter.OnMessage] create new receiver ({code}) from {player}");
 			DataReceiver dataReceiver = CreateReceiver(code);
 			dataReceiver.OnMetaReceived(player, bytes);
 			m_Receivers.Add(dataReceiver);
 			ProcessReceivers();
 			break;
 		}
-		case 24:
+		case 31:
 			m_Receivers[0].OnDataReceived(player, bytes);
 			break;
-		case 23:
-			m_Senders[0].OnAck(player, bytes);
+		case 30:
+			if (m_Senders.Count > 0)
+			{
+				m_Senders[0].Sender.OnAck(player, bytes);
+			}
+			else
+			{
+				PFLog.Net.Error("[DataTransporter.OnMessage] empty senders list");
+			}
 			break;
-		case 25:
+		case 32:
 			m_Receivers[0].OnCancel();
 			break;
 		default:
@@ -101,20 +178,37 @@ public class DataTransporter
 		}
 		DataReceiver CreateReceiver(byte receiverType)
 		{
-			return receiverType switch
+			DataTransporterReceiversFactory.Args args = new DataTransporterReceiversFactory.Args(player, m_PhotonManager);
+			if (!ReceiversFactory.TryCreate(receiverType, args, out var receiver))
 			{
-				21 => new AvatarReceiver(player, m_PhotonManager, OnAvatarReceived), 
-				22 => new ScreenshotReceiver(player, m_PhotonManager, OnScreenshotReceived), 
-				_ => throw new ArgumentOutOfRangeException("receiverType", receiverType.ToString(), "Can't create receiver"), 
-			};
+				switch (receiverType)
+				{
+				case 21:
+					receiver = new AvatarReceiver(player, m_PhotonManager, OnAvatarReceived);
+					break;
+				case 22:
+					receiver = new ScreenshotReceiver(player, m_PhotonManager, OnScreenshotReceived);
+					break;
+				case 23:
+				{
+					Progress<DataTransferProgressInfo> progress = new Progress<DataTransferProgressInfo>(OnCustomPortraitProgress);
+					receiver = new CustomPortraitReceiver(player, m_PhotonManager, OnCustomPortraitReceived, OnCustomPortraitCancel, progress);
+					break;
+				}
+				default:
+					throw new ArgumentOutOfRangeException("receiverType", receiverType.ToString(), "Can't create receiver");
+				}
+			}
+			this.CreateNewReceiver?.Invoke(receiver);
+			return receiver;
 		}
 	}
 
 	public void OnPlayerLeftRoom(PhotonActorNumber player)
 	{
-		foreach (DataSender sender in m_Senders)
+		foreach (SenderInfo sender in m_Senders)
 		{
-			sender.OnPlayerLeftRoom(player);
+			sender.Sender.OnPlayerLeftRoom(player);
 		}
 		foreach (DataReceiver receiver in m_Receivers)
 		{
@@ -208,8 +302,8 @@ public class DataTransporter
 	private void SendAvatar([NotNull] List<PhotonActorNumber> targetActors, PlayerAvatar data)
 	{
 		PFLog.Net.Log("[DataTransporter.SendAvatar] to " + string.Join(", ", targetActors));
-		AvatarSender item = new AvatarSender(targetActors, data, ++m_SenderUniqueNumber, m_PhotonManager, CancellationToken.None, m_SendersFullStopCts.Token);
-		m_Senders.Add(item);
+		AvatarSender sender = new AvatarSender(targetActors, data, ++m_SenderUniqueNumber, m_PhotonManager, CancellationToken.None, m_SendersFullStopCts.Token);
+		m_Senders.Add(new SenderInfo(sender));
 		ProcessSenders();
 	}
 
@@ -242,6 +336,44 @@ public class DataTransporter
 		}
 	}
 
+	private void OnCustomPortraitProgress(DataTransferProgressInfo info)
+	{
+		this.CustomPortraitProgress?.Invoke(info);
+	}
+
+	private void OnCustomPortraitReceived(CustomPortraitReceiver.Result result)
+	{
+		LogChannel net = PFLog.Net;
+		object[] obj = new object[6] { result.PlayerSource, result.CustomPortraitId, result.PortraitGuid, null, null, null };
+		ArraySegment<byte> smallPortraitBytes = result.SmallPortraitBytes;
+		obj[3] = smallPortraitBytes.Count;
+		smallPortraitBytes = result.HalfPortraitBytes;
+		obj[4] = smallPortraitBytes.Count;
+		smallPortraitBytes = result.FullPortraitBytes;
+		obj[5] = smallPortraitBytes.Count;
+		net.Log(string.Format("[DataTransporter.OnCustomPortraitReceived] {0}, {1}/{2}, lengths={3}/{4}/{5}", obj));
+		PortraitData portraitData = m_PortraitsManager.CreateNew(fillDefaultPortraits: false);
+		PFLog.Net.Log("[CustomPortraitsCollector.CheckComplete] create new portrait folder " + portraitData.CustomId);
+		m_PortraitsManager.SetGuid(portraitData.CustomId, result.PortraitGuid);
+		string newPortraitId = portraitData.CustomId;
+		WriteToFile(PortraitType.SmallPortrait, result.SmallPortraitBytes);
+		WriteToFile(PortraitType.HalfLengthPortrait, result.HalfPortraitBytes);
+		WriteToFile(PortraitType.FullLengthPortrait, result.FullPortraitBytes);
+		PFLog.Net.Log("[CustomPortraitsCollector.CheckComplete] completed, write to " + newPortraitId);
+		void WriteToFile(PortraitType type, ArraySegment<byte> bytes)
+		{
+			string portraitPath = m_PortraitsManager.GetPortraitPath(newPortraitId, type);
+			Directory.CreateDirectory(Path.GetDirectoryName(portraitPath));
+			using FileStream output = File.Open(portraitPath, FileMode.Create);
+			using BinaryWriter binaryWriter = new BinaryWriter(output);
+			binaryWriter.Write(bytes.Array, bytes.Offset, bytes.Count);
+		}
+	}
+
+	private void OnCustomPortraitCancel(Guid originPortraitGuid)
+	{
+	}
+
 	private async void ProcessSenders()
 	{
 		if (m_Senders.Count > 1)
@@ -251,16 +383,20 @@ public class DataTransporter
 		}
 		while (m_Senders.Count > 0)
 		{
+			TaskCompletionSource<bool> tcs = m_Senders[0].TaskCompletionSource;
 			try
 			{
-				await m_Senders[0].Send();
+				await m_Senders[0].Sender.Send();
+				tcs?.TrySetResult(result: true);
 			}
 			catch (OperationCanceledException)
 			{
+				tcs?.TrySetCanceled();
 			}
 			catch (Exception ex2)
 			{
 				PFLog.Net.Exception(ex2);
+				tcs?.TrySetException(ex2);
 			}
 			m_Senders.RemoveAt(0);
 		}
@@ -286,6 +422,7 @@ public class DataTransporter
 			{
 				PFLog.Net.Exception(ex2);
 			}
+			m_Receivers[0].Dispose();
 			m_Receivers.RemoveAt(0);
 		}
 	}

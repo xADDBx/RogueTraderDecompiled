@@ -39,7 +39,7 @@ public class DollRoomBackground : MonoBehaviour
 		{
 			m_BlurMaterial = CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/MobileBlur"));
 		}
-		PFLog.Default.Log("MAT = " + m_BlurMaterial);
+		PFLog.UI.Log("MAT = " + m_BlurMaterial);
 	}
 
 	private void OnDisable()

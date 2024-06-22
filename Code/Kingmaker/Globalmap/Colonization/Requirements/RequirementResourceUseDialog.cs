@@ -32,6 +32,16 @@ public class RequirementResourceUseDialog : Requirement
 		{
 			return true;
 		}
+		return BaseResourceCheck(colony);
+	}
+
+	public bool BaseResourceCheck(Colony colony = null)
+	{
+		if (ResourceBlueprint == null)
+		{
+			PFLog.System.Error("RequirementResourceUseOrder - resources is null or empty!");
+			return true;
+		}
 		if (Game.Instance.ColonizationController.AllResourcesInPool().TryGetValue(ResourceBlueprint, out var value))
 		{
 			return value >= Count;

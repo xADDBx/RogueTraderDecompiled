@@ -23,7 +23,7 @@ public class DisableExperienceFromUnit : GameAction
 		return $"Disable experience from {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

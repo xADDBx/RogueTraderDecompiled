@@ -174,7 +174,10 @@ public class TutorialSmallWindowConsoleView : TutorialWindowConsoleView<Tutorial
 	{
 		IsPossibleGoToEncyclopedia.Value = TooltipHelper.GetLinkTooltipTemplate(key) is TooltipTemplateGlossary;
 		LinkKey = key;
-		StartCoroutine(DelayedEnsureVisible());
+		if (!(this == null))
+		{
+			StartCoroutine(DelayedEnsureVisible());
+		}
 	}
 
 	protected override void Focus()

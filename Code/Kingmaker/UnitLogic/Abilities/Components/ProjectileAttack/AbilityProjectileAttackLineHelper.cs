@@ -5,7 +5,9 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Controllers.Projectiles;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem;
@@ -13,6 +15,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Starships;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -48,52 +51,98 @@ public static class AbilityProjectileAttackLineHelper
 
 	public static IEnumerator<AbilityDeliveryTarget> DeliverLine(AbilityExecutionContext context, BlueprintProjectile projectileBlueprint, AbilityProjectileAttackLine attackLine)
 	{
-		CustomGridNodeBase fromNode = attackLine.FromNode;
-		AbilityProjectileAttackLine.HitData[] hits;
-		using (ProfileScope.New("CalculateHits"))
+		TargetWrapper targetWrapper = null;
+		while (true)
 		{
-			hits = attackLine.CalculateHits().ToArray();
-		}
-		ReadonlyList<CustomGridNodeBase> nodes = attackLine.Nodes;
-		if (nodes.Count < 1)
-		{
-			PFLog.Default.ErrorWithReport($"Can't make attack {attackLine.Index}: projectile path is empty");
-			yield break;
-		}
-		Vector3 vector3Position = fromNode.Vector3Position;
-		Vector3 vector3Position2 = nodes[nodes.Count - 1].Vector3Position;
-		Vector3 position = context.Caster.Position;
-		TargetWrapper projectileTarget = GetProjectileTarget(context, attackLine, hits);
-		Vector3 projectileMisdirectionOffset = GetProjectileMisdirectionOffset(position, projectileTarget.Point, 0.15f);
-		bool isCoverHit = false;
-		if (hits.Length != 0)
-		{
-			AbilityProjectileAttackLine.HitData[] array = hits;
-			for (int i = 0; i < array.Length; i++)
+			CustomGridNodeBase fromNode = attackLine.FromNode;
+			AbilityProjectileAttackLine.HitData[] hits;
+			using (ProfileScope.New("CalculateHits"))
 			{
-				AbilityProjectileAttackLine.HitData hitData = array[i];
-				if (hitData.RollPerformAttackRule.ResultIsCoverHit)
+				hits = attackLine.CalculateHits().ToArray();
+			}
+			ReadonlyList<CustomGridNodeBase> nodes = attackLine.Nodes;
+			if (nodes.Count < 1)
+			{
+				PFLog.Default.ErrorWithReport($"Can't make attack {attackLine.Index}: projectile path is empty");
+				break;
+			}
+			Vector3 vector3Position = fromNode.Vector3Position;
+			Vector3 vector3Position2 = nodes[nodes.Count - 1].Vector3Position;
+			Vector3 position = context.Caster.Position;
+			TargetWrapper projectileTarget = GetProjectileTarget(context, attackLine, hits);
+			Vector3 projectileMisdirectionOffset = GetProjectileMisdirectionOffset(position, projectileTarget.Point, 0.15f);
+			bool isCoverHit = false;
+			if (hits.Length != 0)
+			{
+				AbilityProjectileAttackLine.HitData[] array = hits;
+				for (int i = 0; i < array.Length; i++)
 				{
-					isCoverHit = hitData.RollPerformAttackRule.ResultIsCoverHit;
-					break;
+					AbilityProjectileAttackLine.HitData hitData = array[i];
+					if (hitData.RollPerformAttackRule.ResultIsCoverHit)
+					{
+						isCoverHit = hitData.RollPerformAttackRule.ResultIsCoverHit;
+						break;
+					}
 				}
 			}
-		}
-		TargetWrapper launcher = new TargetWrapper(position, null, context.Caster);
-		Projectile projectile = new ProjectileLauncher(projectileBlueprint, launcher, projectileTarget).Ability(context.Ability).MaxRangeCells(context.Ability.RangeCells).Index(attackLine.Index)
-			.MisdirectionOffset(projectileMisdirectionOffset)
-			.IsCoverHit(isCoverHit)
-			.Launch();
-		attackLine.Projectile = projectile;
-		Debug.DrawLine(vector3Position, vector3Position2, Color.yellow);
-		yield return null;
-		AbilityProjectileAttackLine.HitData[] array2 = hits;
-		foreach (AbilityProjectileAttackLine.HitData hitData2 in array2)
-		{
-			foreach (AbilityDeliveryTarget item in HandleHit(attackLine, hitData2))
+			TargetWrapper targetWrapper2 = ((targetWrapper != null) ? targetWrapper : new TargetWrapper(position, null, context.Caster));
+			int value = context.Ability.RangeCells;
+			if (hits.Length != 0)
 			{
-				yield return item;
+				AbilityProjectileAttackLine.HitData[] array = hits;
+				for (int i = 0; i < array.Length; i++)
+				{
+					AbilityProjectileAttackLine.HitData hitData2 = array[i];
+					if (hitData2.IsRedirecting)
+					{
+						isCoverHit = true;
+						value = WarhammerGeometryUtils.DistanceToInCells(targetWrapper2.Point, default(IntRect), hitData2.Entity.Center, default(IntRect));
+						break;
+					}
+				}
 			}
+			Projectile projectile = new ProjectileLauncher(projectileBlueprint, targetWrapper2, projectileTarget).Ability(context.Ability).MaxRangeCells(value).Index(attackLine.Index)
+				.MisdirectionOffset(projectileMisdirectionOffset)
+				.IsCoverHit(isCoverHit)
+				.Launch();
+			attackLine.Projectile = projectile;
+			Debug.DrawLine(vector3Position, vector3Position2, Color.yellow);
+			yield return null;
+			AbilityProjectileAttackLine.HitData[] array2 = hits;
+			foreach (AbilityProjectileAttackLine.HitData hitData3 in array2)
+			{
+				foreach (AbilityDeliveryTarget item in HandleHit(attackLine, hitData3))
+				{
+					yield return item;
+				}
+			}
+			if (hits.Length == 0 || !hits.Last().IsRedirecting)
+			{
+				break;
+			}
+			MechanicEntity deflector = hits.Last().Entity;
+			if (deflector == null)
+			{
+				break;
+			}
+			List<MechanicEntity> list = (from p in Game.Instance.State.AllUnits
+				where !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && p.Health.HitPointsLeft > 0
+				where p.Facts.GetComponents<WarhammerDeflectionTarget>().Any((WarhammerDeflectionTarget c) => c.Caster == deflector)
+				select p).Cast<MechanicEntity>().ToList();
+			list.Remove(hits.Last().Entity);
+			list.RemoveAll((MechanicEntity p) => !p.IsEnemy(deflector));
+			list.RemoveAll((MechanicEntity p) => !deflector.HasLOS(p));
+			list.RemoveAll((MechanicEntity p) => deflector.DistanceToInCells(p) > context.Ability.RangeCells);
+			if (!list.Empty())
+			{
+				MechanicEntity target = list.MinBy((MechanicEntity p) => deflector.DistanceToInCells(p));
+				(List<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple = AbilityProjectileAttack.CollectNodes((CustomGridNodeBase)deflector.CurrentNode.node, target, context.Ability.RangeCells);
+				attackLine = new AbilityProjectileAttackLine(attackLine.ProjectileAttack, attackLine.Index, tuple.Item2, tuple.Item3, tuple.Item1, attackLine.WeaponAttackDamageDisabled, disableDodgeForAlly: true);
+				targetWrapper = new TargetWrapper(deflector.Center, null, null);
+				hits = null;
+				continue;
+			}
+			break;
 		}
 	}
 
@@ -322,7 +371,7 @@ public static class AbilityProjectileAttackLineHelper
 				if (unit == null)
 				{
 					num2 = 0f;
-					goto IL_01a8;
+					goto IL_019d;
 				}
 				using (ProfileScope.New("IsNodeAffected"))
 				{
@@ -330,9 +379,9 @@ public static class AbilityProjectileAttackLineHelper
 					{
 						continue;
 					}
-					goto IL_01a8;
+					goto IL_019d;
 				}
-				IL_01a8:
+				IL_019d:
 				if (unit != null)
 				{
 					hashSet.Add(unit);

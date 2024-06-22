@@ -60,7 +60,7 @@ public class WarhammerContextActionSetStarshipDirection : ContextAction
 		};
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Target.Entity is StarshipEntity starshipEntity) || !(base.Caster is StarshipEntity caster))
 		{

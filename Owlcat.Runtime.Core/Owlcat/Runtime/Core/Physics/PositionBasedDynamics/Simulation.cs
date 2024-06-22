@@ -526,7 +526,7 @@ public class Simulation
 			jobData.ColliderAabbMin = m_Broadphase.AabbSoA.AabbMin;
 			jobData.ColliderAabbMax = m_Broadphase.AabbSoA.AabbMax;
 			jobData.BatchOffset = i;
-			lastJobHandle = jobData.Schedule(num, 1, lastJobHandle);
+			lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 			lastJobHandle.Complete();
 		}
 		return lastJobHandle;
@@ -575,7 +575,7 @@ public class Simulation
 			jobData.AabbOffset = m_Broadphase.ForceVolumesAabbOffset;
 			jobData.ForceVolumeEmissionParameters = m_MemoryManager.ForceVolumesSoA.EmissionParameters;
 			jobData.BatchOffset = i;
-			lastJobHandle = jobData.Schedule(num, 1, lastJobHandle);
+			lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 		}
 		return lastJobHandle;
 	}
@@ -606,7 +606,7 @@ public class Simulation
 				jobData.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
 				jobData.Position = m_MemoryManager.ParticlesSoA.Position;
 				jobData.Mass = m_MemoryManager.ParticlesSoA.Mass;
-				lastJobHandle = jobData.Schedule(num, 1, lastJobHandle);
+				lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 				lastJobHandle.Complete();
 				num2 += math.min(num, 256);
 				num = 0;
@@ -632,7 +632,7 @@ public class Simulation
 				jobData2.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
 				jobData2.Position = m_MemoryManager.ParticlesSoA.Position;
 				jobData2.Mass = m_MemoryManager.ParticlesSoA.Mass;
-				lastJobHandle = jobData2.Schedule(num, 1, lastJobHandle);
+				lastJobHandle = IJobParallelForExtensions.Schedule(jobData2, num, 1, lastJobHandle);
 				lastJobHandle.Complete();
 				num2 += math.min(num, 256);
 				num = 0;
@@ -652,7 +652,7 @@ public class Simulation
 		jobData.Radius = m_MemoryManager.ParticlesSoA.Radius;
 		jobData.AabbMin = m_Broadphase.AabbSoA.AabbMin;
 		jobData.AabbMax = m_Broadphase.AabbSoA.AabbMax;
-		lastJobHandle = jobData.Schedule(m_MemoryManager.BodyDescriptorsMap.Count, 1, lastJobHandle);
+		lastJobHandle = IJobParallelForExtensions.Schedule(jobData, m_MemoryManager.BodyDescriptorsMap.Count, 1, lastJobHandle);
 		return lastJobHandle;
 	}
 
@@ -710,7 +710,7 @@ public class Simulation
 		{
 			force.SetupSimulationJob(ref job);
 		}
-		lastJobHandle = job.Schedule(m_MemoryManager.BodyDescriptorsMap.Count, 1, lastJobHandle);
+		lastJobHandle = IJobParallelForExtensions.Schedule(job, m_MemoryManager.BodyDescriptorsMap.Count, 1, lastJobHandle);
 		return lastJobHandle;
 	}
 
@@ -747,7 +747,7 @@ public class Simulation
 				jobData.Uvs = m_MemoryManager.MeshBodyVerticesSoA.Uvs;
 				jobData.VertexTriangleMap = m_MemoryManager.MeshBodyVertexTriangleMapSoA.Array;
 				jobData.VertexTriangleMapOffsetCount = m_MemoryManager.MeshBodyVertexTriangleMapOffsetCountSoA.Array;
-				lastJobHandle = jobData.Schedule(num, 1, lastJobHandle);
+				lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 				num2 += num;
 				num = 0;
 			}

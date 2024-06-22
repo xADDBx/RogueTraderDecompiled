@@ -26,6 +26,8 @@ public class RuleStarshipCalculateHitChances : RulebookTargetEvent<StarshipEntit
 
 	public int BonusEvasionChance { get; set; }
 
+	public bool SuperEvasion { get; set; }
+
 	public bool IsTorpedoDirectHitAttempt { get; set; }
 
 	public RuleStarshipCalculateHitChances([NotNull] StarshipEntity initiator, [NotNull] StarshipEntity target, ItemEntityStarshipWeapon weapon)
@@ -49,6 +51,10 @@ public class RuleStarshipCalculateHitChances : RulebookTargetEvent<StarshipEntit
 			}
 			else
 			{
+				if (Weapon.Ammo.Blueprint.IsIgnoreEvasion)
+				{
+					ResultEvasionChance = (SuperEvasion ? (ResultEvasionChance * 60 / 100) : 0);
+				}
 				ResultHitChance = ResultHitChance * (100 - ResultEvasionChance) / 100;
 			}
 		}
@@ -73,10 +79,6 @@ public class RuleStarshipCalculateHitChances : RulebookTargetEvent<StarshipEntit
 
 	public int CalculateTargetEvasion(ItemEntityStarshipWeapon weapon)
 	{
-		if (weapon.Ammo.Blueprint.IsIgnoreEvasion)
-		{
-			return 0;
-		}
 		return Mathf.RoundToInt((float)base.Target.Starship.Evasion * SpacecombatDifficultyHelper.StarshipAvoidanceMod(base.Target));
 	}
 }

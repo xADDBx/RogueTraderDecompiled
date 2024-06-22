@@ -68,7 +68,7 @@ public static class ElementsDescription
 	private static void AppendElement(StringBuilder sb, Element element, int indent)
 	{
 		sb.AppendIndent(indent);
-		sb.Append(element?.GetCaption() ?? "").Append('\n');
+		sb.Append(element?.GetCaption(useLineBreaks: false) ?? "").Append('\n');
 		if (element is OrAndLogic orAndLogic)
 		{
 			Condition[] conditions = orAndLogic.ConditionsChecker.Conditions;

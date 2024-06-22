@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
-using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Globalmap.Blueprints;
@@ -8,6 +8,7 @@ using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
@@ -15,7 +16,7 @@ using UnityEngine;
 
 namespace Kingmaker.Globalmap.Exploration;
 
-public class AnomalyEntityData : StarSystemObjectEntity, IHashable
+public class AnomalyEntityData : StarSystemObjectEntity, IDialogFinishHandler, ISubscriber, IHashable
 {
 	[JsonProperty]
 	public new MainAnomalyFact MainFact;
@@ -27,8 +28,6 @@ public class AnomalyEntityData : StarSystemObjectEntity, IHashable
 	public bool IsInteractedAtLeastOnce;
 
 	private AnomalyInteraction m_CurrentInteraction;
-
-	private StarSystemContextData m_ContextForInteraction;
 
 	[JsonProperty]
 	public bool IsMoving;
@@ -99,11 +98,9 @@ public class AnomalyEntityData : StarSystemObjectEntity, IHashable
 	{
 		if (!IsInteracted)
 		{
-			AnomalyInteraction component = Blueprint.GetComponent<AnomalyInteraction>();
-			m_ContextForInteraction?.Dispose();
-			m_CurrentInteraction = component;
-			m_ContextForInteraction = ContextData<StarSystemContextData>.Request().Setup(this);
-			component?.Interact();
+			AnomalyInteraction anomalyInteraction = (m_CurrentInteraction = Blueprint.GetComponent<AnomalyInteraction>());
+			Game.Instance.Player.StarSystemsState.StarSystemContextData.Setup(this);
+			anomalyInteraction?.Interact();
 		}
 	}
 
@@ -135,6 +132,7 @@ public class AnomalyEntityData : StarSystemObjectEntity, IHashable
 			{
 				base.IsInGame = false;
 			}
+			Game.Instance.Player.StarSystemsState.StarSystemContextData.Reset();
 		}
 	}
 
@@ -145,12 +143,6 @@ public class AnomalyEntityData : StarSystemObjectEntity, IHashable
 		RemoveAfterMove = removeAfterMove;
 	}
 
-	protected override void OnDispose()
-	{
-		base.OnDispose();
-		m_ContextForInteraction?.Dispose();
-	}
-
 	public void SetNonInteractable()
 	{
 		IsInteractedAtLeastOnce = true;
@@ -158,6 +150,14 @@ public class AnomalyEntityData : StarSystemObjectEntity, IHashable
 		if (Blueprint.RemoveAfterInteraction)
 		{
 			base.IsInGame = false;
+		}
+	}
+
+	public void HandleDialogFinished(BlueprintDialog dialog, bool success)
+	{
+		if (Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject as AnomalyEntityData == this)
+		{
+			OnInteractionEnded();
 		}
 	}
 

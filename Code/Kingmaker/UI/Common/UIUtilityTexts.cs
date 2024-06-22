@@ -16,6 +16,7 @@ using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
 using Kingmaker.Localization;
+using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -26,7 +27,6 @@ using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.UnitLogic.UI;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.StatefulRandom;
-using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -42,13 +42,13 @@ public static class UIUtilityTexts
 
 	private static readonly string s_ColorPenaty = ColorUtility.ToHtmlStringRGB(BlueprintRoot.Instance.UIConfig.TooltipColors.Penaty);
 
-	public static string ForceTextSymbol = "<sprite name=\"Force\">";
+	public static readonly string ForceTextSymbol = "<sprite name=\"Force\">";
 
 	public static string DirectTextSymbol = "<sprite name=\"Direct\">";
 
 	public static string EnhancementTextSymbol = "<sprite name=\"Enhancement\">";
 
-	public static char NewLineChar = '\n';
+	public static readonly char NewLineChar = '\n';
 
 	private static UITooltips UITooltips => LocalizedTexts.Instance.UserInterfacesText.Tooltips;
 
@@ -87,7 +87,7 @@ public static class UIUtilityTexts
 	public static string GetSkillCheckThrow(SkillCheckResult result)
 	{
 		UISkillcheckTooltip skillcheckTooltips = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.SkillcheckTooltips;
-		return string.Concat(string.Concat("" + string.Format(TooltipString.SimpleParameter, skillcheckTooltips.RollResult, result.RollResult), string.Format(TooltipString.ComponentParameter, skillcheckTooltips.RollD100, result.D100)), string.Format(TooltipString.ComponentParameter, skillcheckTooltips.SkillValue, UIConstsExtensions.GetValueWithSign(result.StatValue)));
+		return string.Concat(string.Concat(string.Empty + string.Format(TooltipString.SimpleParameter, skillcheckTooltips.RollResult, result.RollResult), string.Format(TooltipString.ComponentParameter, skillcheckTooltips.RollD100, result.D100)), string.Format(TooltipString.ComponentParameter, skillcheckTooltips.SkillValue, UIConstsExtensions.GetValueWithSign(result.StatValue)));
 	}
 
 	public static string GetSkillCheckDC(SkillCheckResult result)
@@ -104,7 +104,7 @@ public static class UIUtilityTexts
 			return null;
 		}
 		UISkillcheckTooltip skillcheckTooltips = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.SkillcheckTooltips;
-		string text = "";
+		string text = string.Empty;
 		foreach (SkillCheckResult skillCheckDatum in skillCheckData)
 		{
 			string arg;
@@ -251,11 +251,11 @@ public static class UIUtilityTexts
 
 	public static string GetSpellDescriptorsText(BlueprintAbility abilityBlueprint)
 	{
-		if (abilityBlueprint == null)
+		if (abilityBlueprint != null)
 		{
-			return "";
+			return GetSpellDescriptor(abilityBlueprint.SpellDescriptor);
 		}
-		return GetSpellDescriptor(abilityBlueprint.SpellDescriptor);
+		return string.Empty;
 	}
 
 	public static string GetLongOrShortText(string description, bool state)
@@ -296,9 +296,11 @@ public static class UIUtilityTexts
 					text = text4;
 					continue;
 				}
-				int startIndex6 = num + 9;
-				string text5 = text.Substring(startIndex6);
-				text = text4 + text5;
+				int num2 = num + 9;
+				string text5 = text;
+				int num3 = num2;
+				string text6 = text5.Substring(num3, text5.Length - num3);
+				text = text4 + text6;
 			}
 		}
 		return text;
@@ -306,20 +308,20 @@ public static class UIUtilityTexts
 
 	public static string GetAbilityActionText(BlueprintAbility blueprint, BlueprintItemEquipmentUsable item = null)
 	{
-		if (blueprint == null)
+		if (blueprint != null)
 		{
-			return "";
+			return "<obsolete>";
 		}
-		return "<obsolete>";
+		return string.Empty;
 	}
 
 	public static string GetAbilityActionText(AbilityData dataAbilityData)
 	{
-		if (dataAbilityData == null)
+		if (!(dataAbilityData == null))
 		{
-			return "";
+			return "<obsolete>";
 		}
-		return "<obsolete>";
+		return string.Empty;
 	}
 
 	public static string GetSpellDescriptor(SpellDescriptor spellDescriptor)
@@ -358,7 +360,7 @@ public static class UIUtilityTexts
 	{
 		if (!string.IsNullOrEmpty(input))
 		{
-			return input.First().ToString().ToUpper() + input.Substring(1);
+			return input.First().ToString().ToUpper() + input.Substring(1, input.Length - 1);
 		}
 		return input;
 	}
@@ -398,7 +400,7 @@ public static class UIUtilityTexts
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
 			int num = 0;
-			string text = "";
+			string text = string.Empty;
 			try
 			{
 				while (num < description.Length)
@@ -472,45 +474,43 @@ public static class UIUtilityTexts
 		}
 	}
 
-	public static string GetCanDoText(ItemEntity item, TooltipTemplateType type)
+	public static (string, ItemHeaderType) GetItemHeaderText(ItemEntity item)
 	{
 		BaseUnitEntity currentSelectedUnit = UIUtility.GetCurrentSelectedUnit();
 		if (item == null || currentSelectedUnit == null)
 		{
-			return string.Empty;
+			return (string.Empty, ItemHeaderType.Header);
 		}
-		string wielderSlot = UIUtilityItem.GetWielderSlot(item);
 		string itemOwnerName = UIUtilityItem.GetItemOwnerName(item);
-		TooltipColors tooltipColors = UIConfig.Instance.TooltipColors;
-		Color32 color = ((type == TooltipTemplateType.Tooltip) ? tooltipColors.Equiped : tooltipColors.EquipedInfo);
-		Color32 color2 = ((type == TooltipTemplateType.Tooltip) ? tooltipColors.Default : tooltipColors.DefaultInfo);
-		Color32 color3 = ((type == TooltipTemplateType.Tooltip) ? tooltipColors.CanNotEquip : tooltipColors.CanNotEquipInfo);
 		if (item is ItemEntityWeapon || item is ItemEntityArmor || item is ItemEntityShield || item.Blueprint is BlueprintItemEquipment)
 		{
 			if (item.Owner == null)
 			{
 				if (item.CanBeEquippedBy(currentSelectedUnit))
 				{
-					return GetEquipPosibilityString(UITooltips.CanBeEquip, color2);
+					return (UITooltips.CanBeEquip, ItemHeaderType.Header);
 				}
-				return GetEquipPosibilityString(UITooltips.CannotbeEquip, color3);
+				return (UITooltips.CannotbeEquip, ItemHeaderType.CanNotEquip);
 			}
 			if (UIUtility.GetGroup().Contains(item.Owner))
 			{
-				return GetEquipPosibilityString(wielderSlot + " " + itemOwnerName, color);
+				return (itemOwnerName, ItemHeaderType.Equipped);
 			}
 		}
-		else if (item is ItemEntityUsable)
+		else if (item is ItemEntityUsable itemEntityUsable)
 		{
-			ItemEntityUsable itemEntityUsable = item as ItemEntityUsable;
 			bool flag = UIUtilityItem.IsItemAbilityInSpellListOfUnit(itemEntityUsable.Blueprint, currentSelectedUnit);
-			if (itemEntityUsable.Blueprint.Abilities.FirstOrDefault() == null || flag || itemEntityUsable.Blueprint.Type == UsableItemType.Potion || itemEntityUsable.Blueprint.Type == UsableItemType.Other)
+			if (!(itemEntityUsable.Blueprint.Abilities.FirstOrDefault() == null || flag))
 			{
-				return GetEquipPosibilityString(UITooltips.CanBeUsed, color2);
+				UsableItemType type = itemEntityUsable.Blueprint.Type;
+				if (type != UsableItemType.Potion && type != 0)
+				{
+					return (UITooltips.CannotbeUsed, ItemHeaderType.CanNotEquip);
+				}
 			}
-			return GetEquipPosibilityString(UITooltips.CannotbeUsed, color3);
+			return (UITooltips.CanBeUsed, ItemHeaderType.Header);
 		}
-		return string.Empty;
+		return (string.Empty, ItemHeaderType.Header);
 	}
 
 	public static string GetPercentString(float value)

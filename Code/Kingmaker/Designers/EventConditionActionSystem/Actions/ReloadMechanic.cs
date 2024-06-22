@@ -12,7 +12,7 @@ public class ReloadMechanic : GameAction
 
 	public bool ClearFx = true;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.ReloadAreaMechanic(ClearFx);
 	}

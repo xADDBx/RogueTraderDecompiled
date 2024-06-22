@@ -8,10 +8,13 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 
-public class AbilitySelectorWindowVM : SelectorWindowVM<CharInfoFeatureVM>
+public class AbilitySelectorWindowVM : SelectorWindowVM<FeatureSelectorSlotVM>
 {
-	public AbilitySelectorWindowVM(Action<CharInfoFeatureVM> onConfirm, Action onDecline, BaseUnitEntity unit)
-		: base(onConfirm, onDecline, UIUtilityUnit.CollectAbilitiesVMs(unit).ToList(), (ReactiveProperty<CharInfoFeatureVM>)null, (EquipSlotVM)null)
+	public readonly Action<CharInfoFeatureVM> OnFeatureFocused;
+
+	public AbilitySelectorWindowVM(Action<CharInfoFeatureVM> onConfirm, Action onDecline, BaseUnitEntity unit, Action<CharInfoFeatureVM> onFeatureFocused)
+		: base((Action<FeatureSelectorSlotVM>)onConfirm, onDecline, UIUtilityUnit.CollectAbilitiesVMs(unit).ToList(), (ReactiveProperty<FeatureSelectorSlotVM>)null, (EquipSlotVM)null)
 	{
+		OnFeatureFocused = onFeatureFocused;
 	}
 }

@@ -99,13 +99,18 @@ public class SurfaceCombatInputLayer : SurfaceMainInputLayer
 
 	private void UpdateEnemyList()
 	{
+		Game gameInstance = Game.Instance;
 		m_EnemyList.RemoveAll((BaseUnitEntity unit) => !IsValidEnemy(unit));
-		m_EnemyList.AddRange(Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity unit) => IsValidEnemy(unit) && !m_EnemyList.Contains(unit)));
+		m_EnemyList.AddRange(gameInstance.State.AllBaseUnits.Where((BaseUnitEntity unit) => IsValidEnemy(unit) && !m_EnemyList.Contains(unit)));
 		m_EnemyList.Sort(delegate(BaseUnitEntity e1, BaseUnitEntity e2)
 		{
-			BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnit.Value;
-			float num = e1.DistanceTo(value);
-			float num2 = e2.DistanceTo(value);
+			BaseUnitEntity baseUnitEntity = gameInstance.SelectionCharacter.SelectedUnit.Value ?? gameInstance.SelectionCharacter.ActualGroup.FirstOrDefault((BaseUnitEntity u) => u == gameInstance.TurnController.CurrentUnit);
+			if (baseUnitEntity == null)
+			{
+				return 1;
+			}
+			float num = e1.DistanceTo(baseUnitEntity);
+			float num2 = e2.DistanceTo(baseUnitEntity);
 			return (num > num2) ? 1 : (-1);
 		});
 	}

@@ -31,7 +31,7 @@ public class UnequipAllItems : GameAction
 		return $"Unequip all items from ({Target}) inventory";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Target.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

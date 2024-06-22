@@ -23,7 +23,7 @@ public class NetRolesPlayerCharacterConsoleView : NetRolesPlayerCharacterBaseVie
 	[SerializeField]
 	private ConsoleHint m_HintDown;
 
-	private readonly BoolReactiveProperty m_IsFocused = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsFocused = new BoolReactiveProperty();
 
 	protected override void BindViewImplementation()
 	{
@@ -43,7 +43,7 @@ public class NetRolesPlayerCharacterConsoleView : NetRolesPlayerCharacterBaseVie
 		{
 			UISounds.Instance.Sounds.Buttons.ButtonHover.Play();
 		}
-		m_IsFocused.Value = value;
+		IsFocused.Value = value;
 		m_FocusButton.gameObject.SetActive(value);
 	}
 
@@ -56,16 +56,16 @@ public class NetRolesPlayerCharacterConsoleView : NetRolesPlayerCharacterBaseVie
 	{
 		if (base.ViewModel != null)
 		{
-			AddDisposable(m_HintUp.BindCustomAction(6, inputLayer, base.ViewModel.CanUp.And(m_IsFocused).ToReactiveProperty()));
+			AddDisposable(m_HintUp.BindCustomAction(6, inputLayer, base.ViewModel.CanUp.And(IsFocused).ToReactiveProperty()));
 			AddDisposable(inputLayer.AddButton(delegate
 			{
 				base.ViewModel.MoveRoleCharacterUp();
-			}, 6, base.ViewModel.CanUp.And(m_IsFocused).ToReactiveProperty()));
-			AddDisposable(m_HintDown.BindCustomAction(7, inputLayer, base.ViewModel.CanDown.And(m_IsFocused).ToReactiveProperty()));
+			}, 6, base.ViewModel.CanUp.And(IsFocused).ToReactiveProperty()));
+			AddDisposable(m_HintDown.BindCustomAction(7, inputLayer, base.ViewModel.CanDown.And(IsFocused).ToReactiveProperty()));
 			AddDisposable(inputLayer.AddButton(delegate
 			{
 				base.ViewModel.MoveRoleCharacterDown();
-			}, 7, base.ViewModel.CanDown.And(m_IsFocused).ToReactiveProperty()));
+			}, 7, base.ViewModel.CanDown.And(IsFocused).ToReactiveProperty()));
 		}
 	}
 }

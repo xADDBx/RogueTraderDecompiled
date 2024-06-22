@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.SystemMap;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Globalmap.Exploration;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
@@ -66,6 +70,12 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 	[SerializeField]
 	private FadeAnimator m_TargetPingEntity;
 
+	[SerializeField]
+	private List<Image> m_AdditionalTargetPingImages;
+
+	[SerializeField]
+	private Image m_QuestStateIcon;
+
 	private readonly string[] m_ObjectLatinLetters = new string[6] { "UNKNOWN", "SSI", "ENM", "GAS", "WPH", "LOT" };
 
 	private MapObjectView m_SystemObject;
@@ -102,7 +112,18 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 		SetAnomalyName();
 		SetOvertipSize();
 		SetAnomalyTopIcon();
-		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(PingEntity));
+		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(delegate((NetPlayer player, Entity entity) value)
+		{
+			PingEntity(value.player, value.entity);
+		}));
+		AddDisposable(base.ViewModel.HasQuest.CombineLatest(base.ViewModel.QuestObjectiveName, (bool isQuest, string questObjectiveName) => new { isQuest, questObjectiveName }).Subscribe(value =>
+		{
+			m_QuestStateIcon.gameObject.SetActive(value.isQuest);
+			if (value.isQuest && value.questObjectiveName != null)
+			{
+				AddDisposable(m_QuestStateIcon.SetHint(base.ViewModel.QuestObjectiveName.Value));
+			}
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -230,13 +251,27 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 		m_EnemyCircle.SetActive(anomalyType == BlueprintAnomaly.AnomalyObjectType.Enemy);
 	}
 
-	private void PingEntity(Entity entity)
+	private void PingEntity(NetPlayer player, Entity entity)
 	{
 		m_PingDelay?.Dispose();
 		if (entity != base.ViewModel.SystemMapObject)
 		{
 			m_TargetPingEntity.DisappearAnimation();
 			return;
+		}
+		int index = player.Index - 1;
+		Image component = m_TargetPingEntity.GetComponent<Image>();
+		Color currentColor = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+		if (component != null)
+		{
+			component.color = currentColor;
+		}
+		if (m_AdditionalTargetPingImages != null && m_AdditionalTargetPingImages.Any())
+		{
+			m_AdditionalTargetPingImages.ForEach(delegate(Image i)
+			{
+				i.color = currentColor;
+			});
 		}
 		m_TargetPingEntity.AppearAnimation();
 		m_PingDelay = DelayedInvoker.InvokeInTime(delegate

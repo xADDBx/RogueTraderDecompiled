@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -9,7 +10,7 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.QA;
-using Kingmaker.ResourceLinks;
+using Kingmaker.UnitLogic.Customization;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using Owlcat.QA.Validation;
@@ -21,6 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("6011d470489d44f18bb1b158e71ade47")]
 public abstract class UnitSpawnerBase : EntityViewBase
 {
 	public class MyData : SimpleEntity, IHashable
@@ -200,6 +202,10 @@ public abstract class UnitSpawnerBase : EntityViewBase
 	[SerializeField]
 	private ConditionsReference m_spawnConditions;
 
+	[HideInInspector]
+	[SerializeField]
+	private UnitCustomizationVariation m_SelectedCustomizationVariation;
+
 	public bool HasSpawned
 	{
 		get
@@ -254,6 +260,10 @@ public abstract class UnitSpawnerBase : EntityViewBase
 	public new MyData Data => (MyData)base.Data;
 
 	public override bool CreatesDataOnLoad => true;
+
+	public bool HasCustomizationPreset => Blueprint?.CustomizationPreset != null;
+
+	public UnitCustomizationVariation SelectedCustomizationVariation => m_SelectedCustomizationVariation;
 
 	public virtual void HandleAreaSpawnerInit()
 	{
@@ -356,24 +366,5 @@ public abstract class UnitSpawnerBase : EntityViewBase
 
 	protected virtual void OnInitialize(AbstractUnitEntity unit)
 	{
-	}
-
-	[NotNull]
-	protected UnitViewLink SelectPrefab()
-	{
-		SpawnerCustomization component = GetComponent<SpawnerCustomization>();
-		if ((bool)component && component.SelectedPrefab.Exists())
-		{
-			return component.SelectedPrefab;
-		}
-		if (Blueprint == null)
-		{
-			throw new Exception("UnitSpawner.SelectPrefab: missing blueprint");
-		}
-		if (Blueprint.Prefab == null)
-		{
-			throw new Exception("UnitSpawner.SelectPrefab: prefab is null");
-		}
-		return Blueprint.Prefab;
 	}
 }

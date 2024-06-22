@@ -136,9 +136,30 @@ public abstract class CreditsBaseView : ViewBase<CreditsVM>, ICreditsView, IInit
 		m_SelectorView.Bind(base.ViewModel.Selector);
 		StartCreditsCoroutine(base.ViewModel.Groups?.FirstOrDefault(), 0, -1, withSound: false);
 		m_PlayPagesCoroutineIsPlaying = true;
+		AddDisposable(m_SearchField.ObserveEveryValueChanged((TMP_InputField f) => f.text).Subscribe(delegate(string t)
+		{
+			base.ViewModel.CheckInputFieldAnySymbols(t);
+		}));
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
 		{
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.Credits);
+		});
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		if (m_CurrentBlock != null)
+		{
+			StopAllCoroutines();
+			m_CurrentBlock.Hide();
+			m_CurrentBlock = null;
+		}
+		m_PlayPagesCoroutineIsPlaying = false;
+		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
+		base.gameObject.SetActive(value: false);
+		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
+		{
+			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.Credits);
 		});
 	}
 
@@ -162,26 +183,9 @@ public abstract class CreditsBaseView : ViewBase<CreditsVM>, ICreditsView, IInit
 		}
 		catch (Exception ex)
 		{
-			PFLog.System.Error(ex);
+			PFLog.UI.Exception(ex);
 			throw;
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		if (m_CurrentBlock != null)
-		{
-			StopAllCoroutines();
-			m_CurrentBlock.Hide();
-			m_CurrentBlock = null;
-		}
-		m_PlayPagesCoroutineIsPlaying = false;
-		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
-		base.gameObject.SetActive(value: false);
-		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
-		{
-			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.Credits);
-		});
 	}
 
 	public void OnNextPage(Action nextChapterAction = null)
@@ -355,7 +359,20 @@ public abstract class CreditsBaseView : ViewBase<CreditsVM>, ICreditsView, IInit
 	{
 		m_TitleLabel.text = UIStrings.Instance.MainMenu.Credits;
 		m_SearchButtonText.text = UIStrings.Instance.CommonTexts.Search;
-		m_SearchField.text = UIStrings.Instance.Credits.EnterSearchNameHere;
+		m_SearchField.placeholder.GetComponent<TextMeshProUGUI>().text = UIStrings.Instance.Credits.EnterSearchNameHere;
 		m_Filter = string.Empty;
+	}
+
+	protected void ChangeTab(bool direction)
+	{
+		if (direction)
+		{
+			m_MenuSelector.OnNext();
+		}
+		else
+		{
+			m_MenuSelector.OnPrev();
+		}
+		m_SelectorView.ChangeTab(base.ViewModel.SelectedMenuIndex);
 	}
 }

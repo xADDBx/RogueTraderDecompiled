@@ -6,10 +6,10 @@ public static class DlcConditionExtension
 {
 	public static bool IsDlcRestricted(this BlueprintScriptableObject blueprint)
 	{
-		if (blueprint == null)
+		if (blueprint != null)
 		{
-			return false;
+			return !(blueprint.GetComponent<DlcCondition>()?.IsFullFilled() ?? true);
 		}
-		return !(blueprint.GetComponent<DlcCondition>()?.IsFullfilled() ?? true);
+		return false;
 	}
 }

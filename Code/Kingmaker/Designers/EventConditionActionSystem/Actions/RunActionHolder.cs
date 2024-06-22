@@ -15,7 +15,7 @@ public class RunActionHolder : GameAction
 		return "Run Action Holder (" + Comment + " )";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Holder.Get()?.Actions.Run();
 	}

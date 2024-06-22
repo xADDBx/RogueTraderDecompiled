@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
@@ -38,6 +40,8 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	private UnitAnimationActionCastSpell.CastAnimationStyle m_CastAnimStyle;
 
 	private float m_CastTime;
+
+	private PlayLoopAnimationByBuff m_loopingAnimationBuff;
 
 	[JsonProperty]
 	public WeaponSlot Hand { get; private set; }
@@ -78,7 +82,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			{
 				return WeaponAnimationStyle.Fist;
 			}
-			return base.Executor.Body.PrimaryHand?.GetWeaponStyle() ?? WeaponAnimationStyle.None;
+			return Ability.Weapon?.GetAnimationStyle() ?? base.Executor.Body.PrimaryHand?.GetWeaponStyle() ?? WeaponAnimationStyle.None;
 		}
 	}
 
@@ -101,6 +105,12 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 
 	protected override void TriggerAnimation()
 	{
+		IEnumerable<PlayLoopAnimationByBuff> components = base.Executor.OwnerEntity.Facts.GetComponents<PlayLoopAnimationByBuff>();
+		if (!components.Empty())
+		{
+			m_loopingAnimationBuff = components.First();
+			m_loopingAnimationBuff.TryResetAction();
+		}
 		base.Executor.View.HideOffWeapon(hide: true);
 		IAbilityCustomAnimation component = Ability.Blueprint.GetComponent<IAbilityCustomAnimation>();
 		if (component != null)
@@ -129,7 +139,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		}
 		else
 		{
-			StartAnimation(Ability.Blueprint.IsSpell ? UnitAnimationType.CastSpell : UnitAnimationType.MainHandAttack, UnitAnimationActionHandleInitializer);
+			StartAnimation(Ability.Blueprint.IsSpell ? UnitAnimationType.CastSpell : (IsMainHandAttack(Ability) ? UnitAnimationType.MainHandAttack : UnitAnimationType.OffHandAttack), UnitAnimationActionHandleInitializer);
 		}
 		base.TriggerAnimation();
 		void UnitAnimationActionHandleInitializer(UnitAnimationActionHandle h)
@@ -248,9 +258,33 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			UnitAnimationActionHandle animation = base.Animation;
 			if (animation == null || animation.IsReleased)
 			{
+				RestoreLoopAnimation();
 				ForceFinish(ResultType.Success);
 			}
 		}
+	}
+
+	private void RestoreLoopAnimation()
+	{
+		if (m_loopingAnimationBuff != null)
+		{
+			m_loopingAnimationBuff.TrySetAction();
+			m_loopingAnimationBuff = null;
+		}
+	}
+
+	private bool IsMainHandAttack(AbilityData ability)
+	{
+		PartUnitBody bodyOptional = ability.Caster.GetBodyOptional();
+		if (bodyOptional == null)
+		{
+			return true;
+		}
+		if (ability.Caster?.GetOptional<UnitPartMechadendrites>() == null)
+		{
+			return ability.Weapon == bodyOptional.PrimaryHand?.MaybeWeapon;
+		}
+		return true;
 	}
 
 	protected override ResultType OnAction()
@@ -260,14 +294,17 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			if (CurrentActionIndex >= ActionsCount)
 			{
 				PFLog.Default.Error("CurrentActionIndex >= ActionsCount");
+				RestoreLoopAnimation();
 				return ResultType.Fail;
 			}
 			if (ExecutionProcess == null)
 			{
 				PFLog.Default.Error("ExecutionProcess == null");
+				RestoreLoopAnimation();
 				return ResultType.Fail;
 			}
 			ExecutionProcess.Context.NextAction();
+			RestoreLoopAnimation();
 			if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 			{
 				return ResultType.Success;
@@ -277,6 +314,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		AbilityExecutionContext context = Ability.CreateExecutionContext(Target);
 		ExecutionProcess = Game.Instance.AbilityExecutor.Execute(context);
 		ExecutionProcess.Context.NextAction();
+		RestoreLoopAnimation();
 		if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 		{
 			return ResultType.Success;

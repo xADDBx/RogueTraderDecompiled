@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Parts;
 using UnityEngine;
@@ -19,12 +20,12 @@ public class WarhammerContextActionRemoveGroupCooldown : ContextAction
 		return "Reset cooldown for " + m_AbilityGroup.Get().name + " ability group";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)
 		{
-			PFLog.Default.Error("Target is missing");
+			Element.LogError(this, "Target is missing");
 		}
 		else
 		{

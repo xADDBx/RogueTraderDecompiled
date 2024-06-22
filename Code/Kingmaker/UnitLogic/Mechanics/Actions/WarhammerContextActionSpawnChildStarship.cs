@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
@@ -39,12 +40,12 @@ public class WarhammerContextActionSpawnChildStarship : ContextAction
 		return "Spawn " + Blueprint.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster == null)
 		{
-			PFLog.Default.Error(this, "Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		BaseUnitEntity entity = SpawnStarship(Blueprint, base.Target.Point, null, maybeCaster, ActBeforeSummoner);
@@ -60,7 +61,7 @@ public class WarhammerContextActionSpawnChildStarship : ContextAction
 		GraphNode node = ObstacleAnalyzer.GetNearestNode(position).node;
 		if (WarhammerBlockManager.Instance.NodeContainsAny(node))
 		{
-			PFLog.Default.Error("Can't spawn on blocked cell");
+			Element.LogError(Blueprint, "Can't spawn on blocked cell");
 			return null;
 		}
 		position = (Vector3)node.position;
@@ -85,6 +86,10 @@ public class WarhammerContextActionSpawnChildStarship : ContextAction
 		}
 		baseUnitEntity.GetOrCreate<UnitPartSummonedMonster>().Init(caster);
 		SetInitiative(baseUnitEntity, caster, actBeforeSummoner);
+		foreach (StarshipAddFeaturesOnSummon component in caster.Facts.GetComponents<StarshipAddFeaturesOnSummon>())
+		{
+			component.ProcessUnit(baseUnitEntity);
+		}
 		return baseUnitEntity;
 		Quaternion GetRotation()
 		{

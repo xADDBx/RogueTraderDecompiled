@@ -15,7 +15,7 @@ public class ChangeNewPassageCost : GameAction
 		return "Change cost of creating new passage";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.WarpTravelState.CreateNewPassageCost = NewCost;
 	}

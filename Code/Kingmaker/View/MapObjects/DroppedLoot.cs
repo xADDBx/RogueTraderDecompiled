@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -18,6 +19,7 @@ using UnityEngine;
 namespace Kingmaker.View.MapObjects;
 
 [RequireComponent(typeof(InteractionLoot))]
+[KnowledgeDatabaseID("e543a12d94400d9448819b9e7206cf65")]
 public class DroppedLoot : MapObjectView, IResource
 {
 	public class EntityPartBreathOfMoney : EntityPart<EntityData>, IAreaHandler, ISubscriber, IHashable

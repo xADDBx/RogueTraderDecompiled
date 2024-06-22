@@ -245,27 +245,59 @@ public static class InitiativeHelper
 			{
 				continue;
 			}
-			IEnumerable<InitiativePlaceholderEntity> source = multiInitiative.EnsurePlaceholders();
-			int num = multiInitiative.AdditionalTurnsCount + 1;
-			List<float> list = (from unit in Game.Instance.TurnController.AllUnits
-				where unit.IsInCombat && unit.IsEnemy(entity)
-				select unit.Initiative.Value into i
-				orderby i descending
-				select i).ToList();
-			float num2 = (float)list.Count() / (float)num;
-			int num3 = 1;
-			foreach (MechanicEntity item in source.Append(entity))
+			if (multiInitiative.ByEnemiesCount)
 			{
-				int num4 = Mathf.FloorToInt(num2 * (float)num3);
-				if (num4 >= list.Count() - 1)
+				multiInitiative.AdditionalTurnsCount = Game.Instance.TurnController.AllUnits.Count((MechanicEntity e) => !e.IsDeadOrUnconscious && e.IsInCombat && entity.IsEnemy(e)) - 1;
+			}
+			IEnumerable<InitiativePlaceholderEntity> enumerable = multiInitiative.EnsurePlaceholders();
+			multiInitiative.Placeholders = enumerable.ToList();
+			int num = multiInitiative.AdditionalTurnsCount + 1;
+			MechanicEntity[] array = (from unit in Game.Instance.TurnController.AllUnits
+				where unit.IsInCombat && unit.IsEnemy(entity)
+				select unit into u
+				orderby u.Initiative.Value descending
+				select u).ToArray();
+			float[] array2 = array.Select((MechanicEntity unit) => unit.Initiative.Value).ToArray();
+			float num2 = (float)array2.Count() / (float)num;
+			int num3 = 0;
+			int num4;
+			foreach (InitiativePlaceholderEntity item in enumerable)
+			{
+				num4 = Mathf.FloorToInt(num2 * (float)num3);
+				if (num4 >= array2.Count() - 1)
 				{
-					OverrideInitiative(item, list.Last() / 2f);
+					OverrideInitiative(item, array2.Last() / 2f);
+					if (multiInitiative.ByEnemiesCount)
+					{
+						item.CorrespondingEnemy = array.Last();
+					}
 				}
 				else
 				{
-					OverrideInitiative(item, (list[num4] + list[num4 + 1]) / 2f);
+					OverrideInitiative(item, (array2[num4] + array2[num4 + 1]) / 2f);
+					if (multiInitiative.ByEnemiesCount)
+					{
+						item.CorrespondingEnemy = array[num4];
+					}
 				}
 				num3++;
+			}
+			num4 = Mathf.FloorToInt(num2 * (float)num3);
+			if (num4 >= array2.Count() - 1)
+			{
+				OverrideInitiative(entity, array2.Last() / 2f);
+				if (multiInitiative.ByEnemiesCount)
+				{
+					multiInitiative.CorrespondingEnemy = array.Last();
+				}
+			}
+			else
+			{
+				OverrideInitiative(entity, (array2[num4] + array2[num4 + 1]) / 2f);
+				if (multiInitiative.ByEnemiesCount)
+				{
+					multiInitiative.CorrespondingEnemy = array[num4];
+				}
 			}
 			void OverrideInitiative(MechanicEntity e, float value)
 			{

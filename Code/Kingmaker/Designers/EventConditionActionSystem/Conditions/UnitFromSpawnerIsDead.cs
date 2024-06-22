@@ -3,7 +3,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Persistence.Versioning;
-using Kingmaker.QA;
 using Kingmaker.View.Spawners;
 using Owlcat.QA.Validation;
 
@@ -29,7 +28,7 @@ public class UnitFromSpawnerIsDead : Condition
 		UnitSpawner unitSpawner = Target.FindView() as UnitSpawner;
 		if (unitSpawner == null)
 		{
-			PFLog.Default.ErrorWithReport("Cannot find spawner {0} in {1} ({2})", Target, name, base.Owner.ToString());
+			Element.LogError("Cannot find spawner {0} in {1} ({2})", Target, name, base.Owner);
 		}
 		if (!unitSpawner)
 		{

@@ -154,27 +154,21 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 			}
 		}
 		m_Title.text = page?.Title;
-		if (m_ImageContainer != null)
+		m_ImageContainer.gameObject.SetActive((page?.Picture != null && page.Picture.Exists()) || (page?.Video != null && page.Video.Exists()) || m_DefaultSprite != null);
+		if (IsShowDefaultSprite)
 		{
-			m_ImageContainer.gameObject.SetActive((page?.Picture != null && page.Picture.Exists()) || (page?.Video != null && page.Video.Exists()) || m_DefaultSprite != null);
-		}
-		if (m_Image != null)
-		{
-			if (IsShowDefaultSprite)
+			m_Image.gameObject.SetActive(page != null && (page.Video == null || !page.Video.Exists()));
+			if (page != null && (page.Video == null || !page.Video.Exists()))
 			{
-				m_Image.gameObject.SetActive(page != null && (page.Video == null || !page.Video.Exists()));
-				if (page != null && (page.Video == null || !page.Video.Exists()))
-				{
-					m_Image.sprite = ((page.Picture != null && page.Picture.Exists()) ? page.Picture.Load() : m_DefaultSprite);
-				}
+				m_Image.sprite = ((page.Picture != null && page.Picture.Exists()) ? page.Picture.Load() : m_DefaultSprite);
 			}
-			else
+		}
+		else
+		{
+			m_Image.gameObject.SetActive(page?.Picture != null && page.Picture.Exists());
+			if (page?.Picture != null)
 			{
-				m_Image.gameObject.SetActive(page?.Picture != null && page.Picture.Exists());
-				if (page?.Picture != null)
-				{
-					m_Image.sprite = page.Picture.Load();
-				}
+				m_Image.sprite = page.Picture.Load();
 			}
 		}
 		bool valueOrDefault = (page?.Video?.Exists()).GetValueOrDefault();

@@ -31,7 +31,7 @@ public class RemoveColonyEvent : GameAction
 		return $"Remove colony event {Event}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ColoniesGenerator.RemoveEventFromColonies(Event, m_AddToExclusivePlanet, m_ReplaceWithOtherEvent);
 	}

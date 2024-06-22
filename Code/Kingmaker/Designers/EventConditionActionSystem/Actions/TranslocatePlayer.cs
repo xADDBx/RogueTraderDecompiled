@@ -29,7 +29,7 @@ public class TranslocatePlayer : GameAction
 
 	public bool ByFormationAndWithPets;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Vector3 position = transolcatePosition.FindView().ViewTransform.position;
 		Quaternion rotation = transolcatePosition.FindView().ViewTransform.rotation;

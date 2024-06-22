@@ -2,6 +2,7 @@ using System.Linq;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UniRx;
+using Rewired;
 using UniRx;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ public class PageNavigationConsole : PageNavigationBase
 	[SerializeField]
 	private ConsoleHint m_NextHint;
 
-	private CompositeDisposable m_Disposable = new CompositeDisposable();
+	private readonly CompositeDisposable m_Disposable = new CompositeDisposable();
 
 	public new BoolReactiveProperty HasPrevious { get; } = new BoolReactiveProperty();
 
@@ -29,11 +30,11 @@ public class PageNavigationConsole : PageNavigationBase
 		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 		{
 			OnPreviousClick();
-		}, 14, isActive.And(HasPrevious).ToReactiveProperty());
+		}, 14, isActive.And(HasPrevious).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
 		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 		{
 			OnNextClick();
-		}, 15, isActive.And(HasNext).ToReactiveProperty());
+		}, 15, isActive.And(HasNext).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
 		if (showHints)
 		{
 			m_Disposable.Add(m_PreviousHint.Bind(inputBindStruct));

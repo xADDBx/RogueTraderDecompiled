@@ -25,7 +25,7 @@ public class StarshipUltimateAbilityBuff : ContextAction
 		return "Apply " + Buff.NameSafe() + " with post officer skill dependant duration";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!base.Caster.Buffs.Contains(Buff))
 		{

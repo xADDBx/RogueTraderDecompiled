@@ -25,6 +25,10 @@ public class KeyRestrictionPart : InteractionRestrictionPart<KeyRestrictionSetti
 
 	public StatType Skill => StatType.Unknown;
 
+	public bool CheckOnlyOnce => false;
+
+	public bool CanUse => true;
+
 	protected override string GetDefaultBark(BaseUnitEntity baseUnitEntity, bool restricted)
 	{
 		return restricted ? Game.Instance.BlueprintRoot.LocalizedTexts.LockedwithKey : Game.Instance.BlueprintRoot.LocalizedTexts.UnlockedWithKey;

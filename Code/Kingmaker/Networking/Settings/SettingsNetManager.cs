@@ -16,14 +16,14 @@ public sealed class SettingsNetManager
 
 	public void Init()
 	{
-		SettingsForSync = new ISettingsEntity[39]
+		SettingsForSync = new ISettingsEntity[40]
 		{
 			SettingsRoot.Difficulty.GameDifficulty,
+			SettingsRoot.Difficulty.OnlyOneSave,
 			SettingsRoot.Difficulty.CombatEncountersCapacity,
 			SettingsRoot.Difficulty.AutoLevelUp,
 			SettingsRoot.Difficulty.RespecAllowed,
 			SettingsRoot.Difficulty.AdditionalAIBehaviors,
-			SettingsRoot.Difficulty.OnlyOneSave,
 			SettingsRoot.Difficulty.LimitedAI,
 			SettingsRoot.Difficulty.EnemyDodgePercentModifier,
 			SettingsRoot.Difficulty.CoverHitBonusHalfModifier,
@@ -53,6 +53,7 @@ public sealed class SettingsNetManager
 			SettingsRoot.Game.TurnBased.SpeedUpMode,
 			SettingsRoot.Game.TurnBased.FastMovement,
 			SettingsRoot.Game.TurnBased.FastPartyCast,
+			SettingsRoot.Game.TurnBased.DisableActionCamera,
 			SettingsRoot.Game.TurnBased.TimeScaleInPlayerTurn,
 			SettingsRoot.Game.TurnBased.TimeScaleInNonPlayerTurn,
 			SettingsRoot.Game.Main.BloodOnCharacters,
@@ -68,6 +69,7 @@ public sealed class SettingsNetManager
 
 	public BaseSettingNetData[] CollectState()
 	{
+		SettingsController.Instance.RevertAllTempValues();
 		BaseSettingNetData[] settingsState = m_SettingsState;
 		int i = 0;
 		for (int num = SettingsForSync.Length; i < num; i++)
@@ -83,6 +85,7 @@ public sealed class SettingsNetManager
 		{
 			return;
 		}
+		List<BaseSettingNetData> list = null;
 		int i = 0;
 		for (int count = settings.Count; i < count; i++)
 		{
@@ -90,8 +93,16 @@ public sealed class SettingsNetManager
 			int num = SettingsForSync.IndexOf(settingsEntity);
 			if (num != -1)
 			{
-				Game.Instance.GameCommandQueue.SetSettings(SettingsEntityToNetData(settingsEntity, num));
+				if (list == null)
+				{
+					list = new List<BaseSettingNetData>(settings.Count);
+				}
+				list.Add(SettingsEntityToNetData(settingsEntity, num));
 			}
+		}
+		if (0 < list.TryCount())
+		{
+			Game.Instance.GameCommandQueue.SetSettings(list);
 		}
 		int num2 = settings.Count - 1;
 		while (0 <= num2)

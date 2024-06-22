@@ -48,7 +48,7 @@ public class SummonUnitCopy : GameAction
 		return $"Sumon unit copy ({CopyFrom} at {Locator})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(CopyFrom.GetValue() is BaseUnitEntity source))
 		{
@@ -62,7 +62,7 @@ public class SummonUnitCopy : GameAction
 		LocatorEntity value = Locator.GetValue();
 		if (CopyBlueprint == null)
 		{
-			PFLog.Default.Error("CopyBlueprint is not set: " + GetCaption());
+			Element.LogError("CopyBlueprint is not set: " + GetCaption());
 			return;
 		}
 		BaseUnitEntity baseUnitEntity = CreateCopy(source, CopyBlueprint, value.HoldingState, DoNotCreateItems);

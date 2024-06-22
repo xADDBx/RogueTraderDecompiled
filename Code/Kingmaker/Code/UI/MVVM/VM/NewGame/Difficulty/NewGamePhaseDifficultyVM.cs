@@ -37,6 +37,7 @@ public class NewGamePhaseDifficultyVM : NewGamePhaseBaseVm, ISettingsDescription
 		SwitchSettingsScreen(UISettingsManager.SettingsScreen.Difficulty);
 		m_SettingEntities.ForEach(base.AddDisposable);
 		SettingsRoot.Difficulty.GameDifficulty.SetValueAndConfirm(GameDifficultyOption.Normal);
+		SettingsRoot.Difficulty.OnlyOneSave.SetValueAndConfirm(value: false);
 		IsDefaultButtonInteractable.Value = CheckDefaultButton();
 		AddDisposable(InfoVM = new InfoSectionVM());
 		AddDisposable(ReactiveTooltipTemplate.Subscribe(InfoVM.SetTemplate));

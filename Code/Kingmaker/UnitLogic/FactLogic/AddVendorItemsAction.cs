@@ -23,7 +23,7 @@ public class AddVendorItemsAction : GameAction
 		return $"Добавить {m_VendorTable.Get().NameSafe()} торговцу {m_VendorEvaluator}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BlueprintUnitLoot loot = m_VendorTable.Get();
 		m_VendorEvaluator.GetValue().AddLoot(loot);

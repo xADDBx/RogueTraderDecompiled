@@ -20,7 +20,7 @@ namespace Kingmaker.UnitLogic.FactLogic;
 
 [Serializable]
 [TypeId("05a79e0f416f45e5a96ce2156a15828e")]
-public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnStartHandler, IHashable
+public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnStartHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, IHashable
 {
 	public class SavableData : IEntityFactComponentSavableData, IHashable
 	{
@@ -41,6 +41,8 @@ public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITur
 	[SerializeField]
 	[ValidateNotNull]
 	private BlueprintMechanicEntityFact.Reference m_FactBlueprint;
+
+	public bool IncludingInterrupts;
 
 	public BlueprintMechanicEntityFact FactBlueprint => m_FactBlueprint;
 
@@ -66,9 +68,25 @@ public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITur
 		}
 	}
 
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		if (IncludingInterrupts && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
+		{
+			UpdateFact(add: true);
+		}
+	}
+
 	public void HandleUnitEndTurn(bool isTurnBased)
 	{
 		if (isTurnBased && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
+		{
+			UpdateFact(add: false);
+		}
+	}
+
+	public void HandleUnitEndInterruptTurn()
+	{
+		if (IncludingInterrupts && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
 		{
 			UpdateFact(add: false);
 		}

@@ -25,7 +25,7 @@ public class RespecCompanion : GameAction
 		return "Respecialize companion";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Player player = Game.Instance.Player;
 		List<BaseUnitEntity> respecUnits = (from ch in player.AllCrossSceneUnits.Where(delegate(BaseUnitEntity u)
@@ -49,7 +49,7 @@ public class RespecCompanion : GameAction
 			respecUnits = respecUnits.Where((BaseUnitEntity ch) => (float)ch.Progression.GetRespecCost() <= player.ProfitFactor.Total).ToList();
 			if (respecUnits.Empty())
 			{
-				PFLog.Default.Error("Has no enough profit factor for respec companion");
+				Element.LogError(this, "Has no enough profit factor for respec companion");
 				return;
 			}
 		}

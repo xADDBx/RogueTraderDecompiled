@@ -16,6 +16,7 @@ using Owlcat.Runtime.Core.Utility.Locator;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.Dependencies;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.UI.Sound;
 
@@ -169,7 +170,7 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 	{
 		if (item == null)
 		{
-			PFLog.Default.Error("Item for PlayItemSound cannot be null");
+			PFLog.UI.Error("Item for PlayItemSound cannot be null");
 			return;
 		}
 		string text = string.Empty;
@@ -235,17 +236,28 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		Play(Instance.Sounds.Coop.MobPing);
+		if (entity?.View == null)
+		{
+			Play(Instance.Sounds.Coop.MobPing);
+		}
+		else
+		{
+			Play(Instance.Sounds.Coop.MobPing, entity.View.GO);
+		}
 	}
 
 	public void HandlePingPosition(NetPlayer player, Vector3 position)
 	{
-		Play(Instance.Sounds.Coop.GroundPing);
 	}
 
-	public void HandlePingActionBarAbility(NetPlayer player, string keyName, Entity characterEntityRef, int slotIndex)
+	public void HandlePingPositionSound(GameObject gameObject)
 	{
-		Play(Instance.Sounds.Coop.GroundPing);
+		Play(Instance.Sounds.Coop.GroundPing, gameObject);
+	}
+
+	public void HandlePingActionBarAbility(NetPlayer player, string keyName, Entity characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
+	{
+		Play(Instance.Sounds.Coop.ActionBarAbilityPing);
 	}
 
 	public void SetClickAndHoverSound(OwlcatSelectable soundObject, ButtonSoundsEnum soundType)

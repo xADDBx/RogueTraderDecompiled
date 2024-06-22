@@ -4,7 +4,6 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -43,9 +42,8 @@ public class ShipStatsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		if (m_Dirty)
 		{
 			StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
-			UIUtility.GetCurrentSelectedUnit();
 			Speed.Value = playerShip.CombatState.WarhammerInitialAPBlue.ModifiedValue.ToString();
-			Inertia.Value = playerShip.Stats.GetStat(StatType.Inertia).ModifiedValue.ToString();
+			Inertia.Value = (6 - playerShip.Stats.GetStat(StatType.Inertia)?.ModifiedValue).ToString();
 		}
 	}
 

@@ -1,6 +1,7 @@
 using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.PagesMenu;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Utility;
@@ -36,6 +37,8 @@ public class CharInfoPagesMenuPCView : ViewBase<SelectionGroupRadioVM<CharInfoPa
 		{
 			DrawEntities();
 		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, SelectPrev));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, SelectNext));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -50,5 +53,15 @@ public class CharInfoPagesMenuPCView : ViewBase<SelectionGroupRadioVM<CharInfoPa
 		{
 			(e as CharInfoPagesMenuEntityPCView)?.SetupLens(m_Lens, m_LendDistanceThreshold, m_LensAnimationDuration);
 		});
+	}
+
+	protected void SelectPrev()
+	{
+		base.ViewModel.SelectPrevValidEntity();
+	}
+
+	protected void SelectNext()
+	{
+		base.ViewModel.SelectNextValidEntity();
 	}
 }

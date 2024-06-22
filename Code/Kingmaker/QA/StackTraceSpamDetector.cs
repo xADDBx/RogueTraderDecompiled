@@ -1,18 +1,33 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Core.Cheats;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CommandLineArgs;
+using Kingmaker.Utility.DotNetExtensions;
+using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Kingmaker.QA;
 
 public static class StackTraceSpamDetector
 {
-	private const string ReportMessageStackTrace = "Spam with stack trace rendered detected!";
+	private class StackTraceSpamDetectorDisposableLogSink : IDisposableLogSink, ILogSink, IDisposable
+	{
+		public void Log(LogInfo logInfo)
+		{
+			LogCallback(logInfo);
+		}
+
+		public void Destroy()
+		{
+		}
+
+		public void Dispose()
+		{
+		}
+	}
 
 	private const string ReportMessagePrompt = "Put a bug on this, because there will be lags on consolas!";
 
@@ -30,15 +45,16 @@ public static class StackTraceSpamDetector
 
 	private static DateTime s_CooldownTimer = DateTime.MinValue;
 
-	private static long s_SpamsDetectedWhileCooldown = 0L;
+	private static bool s_SuppressStackTraceDetection;
 
-	private static bool s_MSuppressStackTraceDetection;
+	public static IDisposableLogSink LogSink { get; } = new StackTraceSpamDetectorDisposableLogSink();
+
 
 	private static bool IsDetectionEnabled
 	{
 		get
 		{
-			if ((!Application.isEditor || BuildModeUtility.ForceSpamDetectionInEditor) && !BuildModeUtility.StackTraceSpamDetectionDisabled && BuildModeUtility.IsDevelopment)
+			if ((!Application.isEditor || BuildModeUtility.ForceSpamDetectionInEditor) && Application.isPlaying && !BuildModeUtility.StackTraceSpamDetectionDisabled && BuildModeUtility.IsDevelopment)
 			{
 				return s_FrameSize > TimeSpan.Zero;
 			}
@@ -49,12 +65,7 @@ public static class StackTraceSpamDetector
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 	public static void Init()
 	{
-		s_MSuppressStackTraceDetection = CommandLineArguments.Parse().Contains("-suppressStackTraceSpamDetection");
-		if (!s_MSuppressStackTraceDetection)
-		{
-			Assert.raiseExceptions = false;
-			Application.logMessageReceivedThreaded += LogCallback;
-		}
+		s_SuppressStackTraceDetection = CommandLineArguments.Parse().Contains("-suppressStackTraceSpamDetection");
 	}
 
 	[Cheat(Name = "spam_stacktrace_detection")]
@@ -83,9 +94,10 @@ public static class StackTraceSpamDetector
 		s_CooldownTime = TimeSpan.FromMilliseconds(cooldown);
 	}
 
-	private static void LogCallback(string condition, string stacktrace, LogType type)
+	private static void LogCallback(LogInfo logInfo)
 	{
-		if (!IsDetectionEnabled || !IsDetectionAllowed() || string.IsNullOrWhiteSpace(stacktrace))
+		LogSeverity severity = logInfo.Severity;
+		if ((severity != LogSeverity.Error && severity != LogSeverity.Warning) || !IsDetectionAllowed() || logInfo.Callstack == null || logInfo.Callstack.Empty())
 		{
 			return;
 		}
@@ -96,31 +108,27 @@ public static class StackTraceSpamDetector
 			s_BufferPointer = 0;
 		}
 		DateTime dateTime = s_Buffer[num];
-		s_Messages[num] = condition.Trim();
+		s_Messages[num] = $"[{logInfo.GetTimeStampAsString()} - {logInfo.Channel?.Name}][{logInfo.Severity:G}]: {logInfo.Message}";
 		s_Buffer[num] = now;
-		if (now - dateTime > s_FrameSize)
+		if (now - dateTime > s_FrameSize || !(now > s_CooldownTimer))
 		{
 			return;
 		}
-		if (now > s_CooldownTimer)
+		StringBuilder stringBuilder = new StringBuilder("Logging calls that triggered a Spam exception\n");
+		foreach (int item in Enumerable.Range(s_BufferPointer, s_MaxAllowedExceptionsPerFrame - s_BufferPointer).Concat(Enumerable.Range(0, s_BufferPointer)))
 		{
-			DateTime cur = s_Buffer[num];
-			List<string> times = (from tm in s_Buffer.Skip(num + 1).Concat(s_Buffer.Take(num + 1))
-				select (tm - cur).ToString("ss'.'fff")).ToList();
-			string text = string.Join("\n", s_Messages.Skip(num + 1).Concat(s_Messages.Take(num + 1)).Select((string msg, int i) => "[-" + times[i] + "] " + msg));
-			string exceptionMessage = string.Format("{0} + {1} more times\n\n", "Spam with stack trace rendered detected!", s_SpamsDetectedWhileCooldown) + "[time]Last messages:\n\n" + text;
-			QAModeExceptionEvents.Instance.MaybeShowError(string.Format("{0}\nGameModeType:{1}", "Put a bug on this, because there will be lags on consolas!", Game.Instance.CurrentMode), new SpamDetectingException(exceptionMessage, Game.Instance.CurrentMode));
-			s_CooldownTimer = now + s_CooldownTime;
-			s_SpamsDetectedWhileCooldown = 0L;
+			stringBuilder.AppendLine(s_Messages[item]);
 		}
-		else
-		{
-			s_SpamsDetectedWhileCooldown++;
-		}
+		QAModeExceptionEvents.Instance.MaybeShowError(string.Format("{0}\nGameModeType:{1}", "Put a bug on this, because there will be lags on consolas!", Game.Instance.CurrentMode), new SpamDetectingException(stringBuilder.ToString(), Game.Instance.CurrentMode));
+		s_CooldownTimer = now + s_CooldownTime;
 	}
 
 	private static bool IsDetectionAllowed()
 	{
+		if (!IsDetectionEnabled)
+		{
+			return false;
+		}
 		try
 		{
 			if (LoadingProcess.Instance.IsLoadingInProcess)

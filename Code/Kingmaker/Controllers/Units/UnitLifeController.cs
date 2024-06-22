@@ -7,6 +7,7 @@ using Kingmaker.Designers;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
@@ -15,6 +16,7 @@ using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.Visual.Animation.Kingmaker;
 using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
@@ -45,6 +47,14 @@ public class UnitLifeController : BaseUnitController
 		unit.LifeState.MarkedForDeath = false;
 		UnitLifeState newLifeState = CalculateLifeState(unit);
 		SetLifeState(unit, newLifeState);
+		if ((bool)unit.Features.Immortality && !unit.LifeState.ScriptedKill && !Game.Instance.TurnController.TbActive && !LoadingProcess.Instance.IsLoadingInProcess)
+		{
+			UnitAnimationManager maybeAnimationManager = unit.MaybeAnimationManager;
+			if ((object)maybeAnimationManager != null && maybeAnimationManager.IsGoingProne)
+			{
+				unit.LifeState.Resurrect();
+			}
+		}
 	}
 
 	private static UnitLifeState CalculateLifeState(AbstractUnitEntity unit)

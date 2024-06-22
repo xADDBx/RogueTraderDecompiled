@@ -1,8 +1,14 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks.AbilityPattern;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Levelup.Selections;
+using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
 using UnityEngine;
@@ -12,15 +18,26 @@ namespace Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
 
 public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIconPatternVM>
 {
-	[Header("Icon")]
+	[Header("SkillBlock")]
+	[SerializeField]
+	private Image m_SkillIcon;
+
+	[SerializeField]
+	private Image m_AcronymBackground;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AcronymText;
+
+	[SerializeField]
+	private TalentGroupView m_TalentGroup;
+
+	[Header("IconBlock")]
 	[SerializeField]
 	private Image m_Icon;
 
+	[Tooltip("Has one of states of IconPatternMode enum : SkillMode, IconMode, NoneMode")]
 	[SerializeField]
-	private Image m_Frame;
-
-	[SerializeField]
-	private GameObject m_IconBlock;
+	private OwlcatMultiSelectable m_FrameSelectable;
 
 	[Header("Pattern")]
 	[SerializeField]
@@ -62,15 +79,23 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 
 	protected override void BindViewImplementation()
 	{
-		m_DefaultFrameColor = ((m_Frame != null) ? new Color32?(m_Frame.color) : null);
 		base.BindViewImplementation();
 		m_AbilityPatternView.Initialize(base.ViewModel.PatternData);
 		m_Icon.sprite = base.ViewModel.Icon;
-		m_IconBlock.SetActive(base.ViewModel.Icon != null);
-		if ((bool)m_Frame && base.ViewModel.FrameColor.HasValue)
+		m_AcronymText.text = base.ViewModel.Acronym;
+		bool flag = !string.IsNullOrEmpty(base.ViewModel.Acronym);
+		(flag ? m_AcronymBackground : m_SkillIcon).sprite = base.ViewModel.Icon;
+		m_AcronymBackground.gameObject.SetActive(flag);
+		m_SkillIcon.gameObject.SetActive(!flag);
+		m_AcronymBackground.color = UIUtility.GetColorByText(base.ViewModel.Acronym);
+		if (m_TalentGroup != null)
 		{
-			m_Frame.color = base.ViewModel.FrameColor.Value;
+			m_TalentGroup.SetupView(base.ViewModel.TalentIconInfo);
 		}
+		TextMeshProUGUI acronymText = m_AcronymText;
+		TalentIconInfo talentIconInfo = base.ViewModel.TalentIconInfo;
+		acronymText.color = ((talentIconInfo != null && talentIconInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
+		m_FrameSelectable.Or(null)?.SetActiveLayer(base.ViewModel.IconMode.ToString());
 		ApplyValues(m_TitleText, null, base.ViewModel.TitleValues);
 		ApplyValues(m_SecondaryText, m_SecondaryValue, base.ViewModel.SecondaryValues);
 		ApplyValues(m_TertiaryText, m_TertiaryValue, base.ViewModel.TertiaryValues);
@@ -78,7 +103,7 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 		AddDisposable(m_TertiaryText.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
 		if (base.ViewModel.Tooltip != null)
 		{
-			AddDisposable(m_Icon.SetTooltip(base.ViewModel.Tooltip));
+			AddDisposable(m_SkillIcon.SetTooltip(base.ViewModel.Tooltip));
 		}
 		SetTextSize();
 	}
@@ -96,10 +121,6 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 	protected override void DestroyViewImplementation()
 	{
 		m_AbilityPatternView.Destroy();
-		if ((bool)m_Frame && m_DefaultFrameColor.HasValue)
-		{
-			m_Frame.color = m_DefaultFrameColor.Value;
-		}
 	}
 
 	private void ApplyValues(TextMeshProUGUI text, TextMeshProUGUI value, TooltipBrickIconPattern.TextFieldValues textFieldValues)

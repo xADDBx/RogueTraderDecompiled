@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Parts;
@@ -9,6 +10,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawner))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("b388b496d46f4b1887fc7ba2996dae11")]
 public class SpawnerNoLootDrop : EntityPartComponent<SpawnerNoLootDrop.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

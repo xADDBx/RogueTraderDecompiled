@@ -9,11 +9,15 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.IngameMenu;
 
-public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, ISubscriber, INetEvents
+public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, ISubscriber, INetEvents, IPauseHandler, IAreaHandler
 {
 	public readonly BoolReactiveProperty PlayerHaveRoles = new BoolReactiveProperty();
 
 	public readonly BoolReactiveProperty NetFirstLoadState = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty ShowPauseButton = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty IsPause = new BoolReactiveProperty();
 
 	private bool IsNotServiceWindow => Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.None;
 
@@ -21,8 +25,14 @@ public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, 
 
 	public IngameMenuSettingsButtonVM()
 	{
+		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace;
+		IsPause.Value = Game.Instance.IsPaused && !Game.Instance.PauseController.IsPausedByPlayers;
 		HandleRoleSet(string.Empty);
 		NetFirstLoadState.Value = PhotonManager.Lobby.IsActive;
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void OpenEscMenu()
@@ -33,16 +43,17 @@ public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, 
 		});
 	}
 
+	public void Pause()
+	{
+		Game.Instance.PauseBind();
+	}
+
 	public void OpenNetRoles()
 	{
 		EventBus.RaiseEvent(delegate(INetRolesRequest h)
 		{
 			h.HandleNetRolesRequest();
 		});
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	protected override void UpdateHandler()
@@ -75,5 +86,20 @@ public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, 
 	public void HandleNLoadingScreenClosed()
 	{
 		NetFirstLoadState.Value = PhotonManager.Lobby.IsActive;
+	}
+
+	public void OnPauseToggled()
+	{
+		IsPause.Value = Game.Instance.IsPaused && !Game.Instance.PauseController.IsPausedByPlayers;
+	}
+
+	public void OnAreaBeginUnloading()
+	{
+	}
+
+	public void OnAreaDidLoad()
+	{
+		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace;
+		IsPause.Value = Game.Instance.IsPaused && !Game.Instance.PauseController.IsPausedByPlayers;
 	}
 }

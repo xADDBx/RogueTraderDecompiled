@@ -15,11 +15,15 @@ public abstract class BaseCareerPathSelectionTabCommonView<TViewModel> : ViewBas
 	[SerializeField]
 	protected TextMeshProUGUI m_HeaderLabel;
 
-	protected ReactiveProperty<string> NextButtonLabel = new ReactiveProperty<string>();
+	protected readonly ReactiveProperty<string> NextButtonLabel = new ReactiveProperty<string>();
 
-	protected ReactiveProperty<string> BackButtonLabel = new ReactiveProperty<string>();
+	protected readonly ReactiveProperty<string> BackButtonLabel = new ReactiveProperty<string>();
 
-	protected ReactiveProperty<bool> IsTabActiveProp = new ReactiveProperty<bool>();
+	protected readonly ReactiveProperty<string> FinishButtonLabel = new ReactiveProperty<string>();
+
+	protected readonly ReactiveProperty<bool> IsTabActiveProp = new ReactiveProperty<bool>();
+
+	protected RectTransform RectTransform;
 
 	protected AccessibilityTextHelper TextHelper;
 
@@ -27,6 +31,7 @@ public abstract class BaseCareerPathSelectionTabCommonView<TViewModel> : ViewBas
 	{
 		Hide();
 		TextHelper = new AccessibilityTextHelper(m_HeaderLabel);
+		RectTransform = GetComponent<RectTransform>();
 	}
 
 	protected override void BindViewImplementation()
@@ -80,6 +85,11 @@ public abstract class BaseCareerPathSelectionTabCommonView<TViewModel> : ViewBas
 		BackButtonLabel.Value = text;
 	}
 
+	protected void SetFinishButtonLabel(string text)
+	{
+		FinishButtonLabel.Value = text;
+	}
+
 	public virtual void UpdateState()
 	{
 	}
@@ -92,7 +102,7 @@ public abstract class BaseCareerPathSelectionTabCommonView<TViewModel> : ViewBas
 	{
 	}
 
-	protected virtual void HandleFirstSelectableClick()
+	protected virtual void HandleClickFinish()
 	{
 	}
 

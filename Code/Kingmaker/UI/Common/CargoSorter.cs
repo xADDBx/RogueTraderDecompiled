@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Cargo;
+using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.Items;
 using Kingmaker.Utility.DotNetExtensions;
 
@@ -48,6 +49,7 @@ public static class CargoSorter
 			ItemsSorterType.NameDown => -CompareByName(a, b), 
 			ItemsSorterType.DateUp => CompareByDate(a, b), 
 			ItemsSorterType.DateDown => -CompareByDate(a, b), 
+			ItemsSorterType.CargoValue => -CompareByValue(a, b), 
 			_ => 0, 
 		};
 	}
@@ -67,5 +69,16 @@ public static class CargoSorter
 		TimeSpan timeSpan = ((a?.Inventory?.Items).Empty<ItemEntity>() ? default(TimeSpan) : a.Inventory.Items.Max((ItemEntity i) => i.Time));
 		TimeSpan value = ((b?.Inventory?.Items).Empty<ItemEntity>() ? default(TimeSpan) : b.Inventory.Items.Max((ItemEntity i) => i.Time));
 		return timeSpan.CompareTo(value);
+	}
+
+	private static int CompareByValue(CargoEntity a, CargoEntity b)
+	{
+		int num = ((a != null && VendorHelper.Vendor.VendorFaction.CargoTypes.Contains(a.Blueprint.OriginType)) ? Game.Instance.BlueprintRoot.SystemMechanics.CargoRoot.GetTemplate(a.Blueprint.OriginType).ReputationPointsCost : 0);
+		int value = ((b != null && VendorHelper.Vendor.VendorFaction.CargoTypes.Contains(b.Blueprint.OriginType)) ? Game.Instance.BlueprintRoot.SystemMechanics.CargoRoot.GetTemplate(b.Blueprint.OriginType).ReputationPointsCost : 0);
+		if (num.CompareTo(value) != 0)
+		{
+			return num.CompareTo(value);
+		}
+		return string.Compare(a?.Name, b?.Name, StringComparison.Ordinal);
 	}
 }

@@ -31,8 +31,6 @@ public class CareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCommonV
 
 	private ConsoleHintsWidget m_HintsWidget;
 
-	public SelectionTab? CurrentTab => SavedTab;
-
 	public override void Initialize()
 	{
 		Tabs = new List<ICareerPathSelectionTabView> { m_CareerPathDescriptionConsoleView, m_CareerPathSelectionsSummaryConsoleView, m_RankEntryFeatureDescriptionConsoleView, m_RankEntryFeatureSelectionConsoleView };
@@ -48,9 +46,6 @@ public class CareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCommonV
 		{
 		case SelectionTab.CareerPathDescription:
 			m_CareerPathDescriptionConsoleView.Bind(base.ViewModel);
-			break;
-		case SelectionTab.Summary:
-			m_CareerPathSelectionsSummaryConsoleView.Bind(base.ViewModel);
 			break;
 		case SelectionTab.FeatureDescription:
 			m_RankEntryFeatureDescriptionConsoleView.Bind(currentItem as RankEntryFeatureItemVM);
@@ -78,9 +73,6 @@ public class CareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCommonV
 			{
 			case SelectionTab.CareerPathDescription:
 				gridConsoleNavigationBehaviour = m_CareerPathDescriptionConsoleView.GetNavigationBehaviour();
-				break;
-			case SelectionTab.Summary:
-				gridConsoleNavigationBehaviour = m_CareerPathSelectionsSummaryConsoleView.GetNavigationBehaviour();
 				break;
 			case SelectionTab.FeatureDescription:
 				gridConsoleNavigationBehaviour = m_RankEntryFeatureDescriptionConsoleView.GetNavigationBehaviour();

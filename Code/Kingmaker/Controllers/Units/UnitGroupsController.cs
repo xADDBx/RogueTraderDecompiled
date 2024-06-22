@@ -39,7 +39,7 @@ public class UnitGroupsController : IControllerEnable, IController, IControllerT
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

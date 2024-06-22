@@ -24,7 +24,8 @@ public class UnitDeathTrigger : UnitFactComponentDelegate, IUnitHandler, IUnitSp
 	{
 		Any,
 		Ally,
-		Enemy
+		Enemy,
+		Companions
 	}
 
 	public bool AnyRadius;
@@ -47,14 +48,14 @@ public class UnitDeathTrigger : UnitFactComponentDelegate, IUnitHandler, IUnitSp
 	public void HandleUnitDeath()
 	{
 		BaseUnitEntity baseUnitEntity = EventInvokerExtensions.BaseUnitEntity;
-		if (baseUnitEntity == base.Owner)
+		if (baseUnitEntity == base.Owner || baseUnitEntity == null)
 		{
 			return;
 		}
 		if (Faction != 0)
 		{
 			bool flag = base.Owner.CombatGroup.IsEnemy(baseUnitEntity);
-			if ((flag && Faction == FactionType.Ally) || (!flag && Faction == FactionType.Enemy))
+			if ((flag && Faction == FactionType.Ally) || (!flag && Faction == FactionType.Enemy) || (Faction == FactionType.Companions && (!baseUnitEntity.IsPlayerFaction || !baseUnitEntity.IsInCompanionRoster())))
 			{
 				return;
 			}

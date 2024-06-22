@@ -190,7 +190,7 @@ public class SpaceCombatServicePanelPCView : ViewBase<SpaceCombatServicePanelVM>
 
 	private void SetEndTurnBindText(KeyBindingPair keyBindingPair = default(KeyBindingPair))
 	{
-		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "Pause"));
-		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("Pause"));
+		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "EndTurn"));
+		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("EndTurn"));
 	}
 }

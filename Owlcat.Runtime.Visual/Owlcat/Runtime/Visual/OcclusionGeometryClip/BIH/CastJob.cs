@@ -1,4 +1,3 @@
-#define OWLCAT_BIH_DEBUG
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
@@ -54,7 +53,6 @@ internal struct CastJob<TGeometry, TCastGeometry, TFlag> where TGeometry : unman
 			}
 			TCastGeometry val = castGeometryArray[castGeometryArrayIndex];
 			ABox a = val.GetBounds();
-			IncrementInnerNodeAabbTestCount();
 			if (!Intersects(in a, in sceneBounds))
 			{
 				return;
@@ -66,20 +64,13 @@ internal struct CastJob<TGeometry, TCastGeometry, TFlag> where TGeometry : unman
 				nodeBounds = sceneBounds,
 				axis = 0
 			};
-			UpdateMaxFrameStackSize(num2);
 			do
 			{
 				CastJobStackFrame castJobStackFrame = framesStack[--num2];
 				int nodeIndex = castJobStackFrame.nodeIndex;
 				ABox b = castJobStackFrame.nodeBounds;
 				int axis = castJobStackFrame.axis;
-				IncrementInnerNodeAabbTestCount();
-				if (!IntersectsAxis(in a, in b, axis))
-				{
-					continue;
-				}
-				IncrementInnerNodeGeometryTestCount();
-				if (!val.IntersectsNode(b))
+				if (!IntersectsAxis(in a, in b, axis) || !val.IntersectsNode(b))
 				{
 					continue;
 				}
@@ -90,7 +81,6 @@ internal struct CastJob<TGeometry, TCastGeometry, TFlag> where TGeometry : unman
 					for (int num3 = node.LeafOffset + node.LeafSize; i < num3; i++)
 					{
 						TGeometry bounds = geometryArray[i];
-						IncrementLeafNodeTestCount();
 						if (val.IntersectsLeaf(bounds))
 						{
 							(int begin, int end) indexRange = bounds.GetIndexRange();
@@ -126,7 +116,6 @@ internal struct CastJob<TGeometry, TCastGeometry, TFlag> where TGeometry : unman
 				}
 			}
 			while (num2 > 0);
-			StoreDebugData(in debugData);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

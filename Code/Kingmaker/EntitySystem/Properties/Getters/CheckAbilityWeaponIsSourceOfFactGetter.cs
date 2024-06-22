@@ -8,7 +8,7 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("3584620744644ad6932525e79c8ca8e6")]
 public class CheckAbilityWeaponIsSourceOfFactGetter : PropertyGetter, PropertyContextAccessor.IOptionalAbilityWeapon, PropertyContextAccessor.IOptional, PropertyContextAccessor.IBase, PropertyContextAccessor.IOptionalFact
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Is Fact From Weapon";
 	}

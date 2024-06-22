@@ -11,7 +11,8 @@ public class GameOverIronmanController : IControllerEnable, IController
 		if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
 		{
 			PFLog.System.Log("Deleting ironman save: " + Game.Instance.SaveManager.GetIronmanSave().FolderName);
-			Game.Instance.SaveManager.DeleteSave(Game.Instance.SaveManager.GetIronmanSave());
+			SaveInfo ironmanSave = Game.Instance.SaveManager.GetIronmanSave();
+			Game.Instance.SaveManager.DowngradeSaveFromIronMan(ironmanSave);
 		}
 		LoadingProcess.Instance.ResetManualLoadingScreen();
 	}

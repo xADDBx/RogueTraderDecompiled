@@ -27,6 +27,7 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.CutsceneAttack;
 using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
@@ -133,6 +134,8 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	public bool NotOffensive;
 
 	public bool ShowInDialogue;
+
+	public bool IsStarshipAbility;
 
 	public AbilityEffectOnUnit EffectOnAlly;
 
@@ -343,7 +346,17 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	public bool IsAoEDamage => base.ElementsArray.HasItem((Element e) => e is ContextActionDealDamage contextActionDealDamage && contextActionDealDamage.IsAoE);
 
-	public bool IsAoE => this.GetComponent<AbilityTargetsInPattern>() != null;
+	public bool IsAoE
+	{
+		get
+		{
+			if (this.GetComponent<AbilityTargetsInPattern>() == null)
+			{
+				return this.GetComponent<WarhammerAbilityAttackDelivery>()?.IsPattern ?? false;
+			}
+			return true;
+		}
+	}
 
 	public bool TolerantForInvisible => m_TolerantForInvisible;
 
@@ -355,15 +368,22 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		{
 			if (warhammerAbilityAttackDelivery.IsBurst)
 			{
-				goto IL_0026;
+				goto IL_0038;
 			}
 		}
-		else if (i is AbilityCutsceneAttack { IsBurst: not false })
+		else if (i is AbilityCutsceneAttack abilityCutsceneAttack)
 		{
-			goto IL_0026;
+			if (abilityCutsceneAttack.IsBurst)
+			{
+				goto IL_0038;
+			}
+		}
+		else if (i is AbilityCustomBladeDance || i is AbilityMeleeBurst)
+		{
+			goto IL_0038;
 		}
 		return false;
-		IL_0026:
+		IL_0038:
 		return true;
 	});
 
@@ -425,20 +445,39 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	private AttackAbilityType? GetAttackType()
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		for (int i = 0; i < componentsArray.Length; i++)
+		foreach (FakeAttackType item in base.ComponentsArray.OfType<FakeAttackType>())
 		{
-			if (componentsArray[i] is WarhammerAbilityAttackDelivery warhammerAbilityAttackDelivery)
+			if (item.CountAsMelee)
 			{
-				if (warhammerAbilityAttackDelivery.IsMelee)
+				return AttackAbilityType.Melee;
+			}
+			if (item.CountAsScatter)
+			{
+				return AttackAbilityType.Scatter;
+			}
+			if (item.CountAsAoE)
+			{
+				return AttackAbilityType.Pattern;
+			}
+			if (item.CountAsSingleShot)
+			{
+				return AttackAbilityType.SingleShot;
+			}
+		}
+		using (IEnumerator<WarhammerAbilityAttackDelivery> enumerator2 = base.ComponentsArray.OfType<WarhammerAbilityAttackDelivery>().GetEnumerator())
+		{
+			if (enumerator2.MoveNext())
+			{
+				WarhammerAbilityAttackDelivery current2 = enumerator2.Current;
+				if (current2.IsMelee)
 				{
 					return AttackAbilityType.Melee;
 				}
-				if (warhammerAbilityAttackDelivery.IsScatter)
+				if (current2.IsScatter)
 				{
 					return AttackAbilityType.Scatter;
 				}
-				if (warhammerAbilityAttackDelivery.IsPattern)
+				if (current2.IsPattern)
 				{
 					return AttackAbilityType.Pattern;
 				}

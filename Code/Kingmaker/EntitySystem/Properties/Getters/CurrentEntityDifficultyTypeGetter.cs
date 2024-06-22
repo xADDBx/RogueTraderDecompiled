@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("20908d2906855504abc36ab381c7ea6f")]
 public class CurrentEntityDifficultyTypeGetter : UnitPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Difficulty Type";
+		return "Difficulty Type of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

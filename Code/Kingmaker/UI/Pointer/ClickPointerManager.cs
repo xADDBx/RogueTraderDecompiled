@@ -235,7 +235,7 @@ public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber,
 		m_UnitMarksLocalMap.Clear();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		CancelPreview();
 	}

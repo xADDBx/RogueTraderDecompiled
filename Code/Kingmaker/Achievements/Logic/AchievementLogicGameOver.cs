@@ -21,7 +21,7 @@ public class AchievementLogicGameOver : AchievementLogic, IGameOverHandler, ISub
 
 	public void HandleGameOver(Player.GameOverReasonType reason)
 	{
-		if (reason == Player.GameOverReasonType.Won && Game.Instance.Player.StartPreset?.CampaignDlc == null)
+		if (reason == Player.GameOverReasonType.Won && Game.Instance.Player.Campaign.DlcReward == null)
 		{
 			DifficultyPreset minDifficulty = Game.Instance.Player.MinDifficultyController.MinDifficulty;
 			if ((!m_MinDifficultyForAchievement || minDifficulty.CompareTo(m_MinDifficultyForAchievement.Preset) >= 0) && (!m_IronMan || (bool)SettingsRoot.Difficulty.OnlyOneSave))

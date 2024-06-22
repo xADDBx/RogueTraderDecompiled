@@ -18,11 +18,13 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Selection;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
 using UnityEngine;
 
@@ -125,10 +127,10 @@ public static class UIUtilityUnit
 		return enumerable;
 	}
 
-	public static IEnumerable<CharInfoFeatureVM> CollectAbilitiesVMs(BaseUnitEntity unit)
+	public static IEnumerable<FeatureSelectorSlotVM> CollectAbilitiesVMs(BaseUnitEntity unit)
 	{
 		return from a in CollectAbilities(unit)
-			select new CharInfoFeatureVM(a, unit);
+			select new FeatureSelectorSlotVM(a, unit);
 	}
 
 	public static IEnumerable<ActivatableAbility> CollectActivatableAbilities(BaseUnitEntity unit)
@@ -233,5 +235,20 @@ public static class UIUtilityUnit
 			1 => SkillRecommendationEnum.Normal, 
 			_ => SkillRecommendationEnum.Bad, 
 		};
+	}
+
+	public static bool IsCastingAbility([CanBeNull] this BaseUnitEntity unit)
+	{
+		return unit?.Commands?.Current is UnitUseAbility;
+	}
+
+	public static bool InPartyAndControllable(this MechanicEntity unit)
+	{
+		PartFaction factionOptional = unit.GetFactionOptional();
+		if ((object)factionOptional != null && factionOptional.IsDirectlyControllable)
+		{
+			return unit.CanBeControlled();
+		}
+		return false;
 	}
 }

@@ -4,12 +4,15 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.MVVM.View.NetLobby.Base;
 using Kingmaker.UI.MVVM.View.NetRoles.Base;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UniRx;
+using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.NetRoles.Console;
@@ -26,6 +29,12 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 	private InputLayer m_InputLayer;
 
 	private GridConsoleNavigationBehaviour m_PlayerListNavigationBehaviour;
+
+	private InputLayer m_GamersTagsInputLayer;
+
+	private GridConsoleNavigationBehaviour m_GamersTagsNavigationBehavior;
+
+	private readonly BoolReactiveProperty m_GamersTagsMode = new BoolReactiveProperty();
 
 	public override void Initialize()
 	{
@@ -46,6 +55,18 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		CreateInput();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		if (m_GamersTagsNavigationBehavior != null)
+		{
+			m_GamersTagsNavigationBehavior.UnFocusCurrentEntity();
+			m_GamersTagsNavigationBehavior.Clear();
+		}
+		m_PlayerListNavigationBehaviour.UnFocusCurrentEntity();
+		m_PlayerListNavigationBehaviour.Clear();
+		base.DestroyViewImplementation();
+	}
+
 	private void CreateInput()
 	{
 		AddDisposable(m_PlayerListNavigationBehaviour = new GridConsoleNavigationBehaviour());
@@ -64,11 +85,11 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		AddDisposable(m_CommonHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnClose();
-		}, 9), UIStrings.Instance.CommonTexts.CloseWindow));
-		AddDisposable(m_CommonHintsWidget.BindHint(inputLayer.AddButton(delegate
+		}, 8), base.ViewModel.IsRoomOwner ? UIStrings.Instance.SettingsUI.Apply : UIStrings.Instance.CommonTexts.CloseWindow));
+		AddDisposable(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnClose();
-		}, 8), base.ViewModel.IsRoomOwner ? UIStrings.Instance.SettingsUI.Apply : UIStrings.Instance.CommonTexts.CloseWindow));
+		}, 9));
 		if (m_Players == null || !m_Players.Any())
 		{
 			return;
@@ -118,10 +139,53 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		}, 1);
 	}
 
-	protected override void DestroyViewImplementation()
+	private void AddGamersTagsInput(ConsoleHintsWidget hintsWidget)
 	{
+		AddDisposable(m_GamersTagsNavigationBehavior = new GridConsoleNavigationBehaviour());
+		m_GamersTagsInputLayer = m_GamersTagsNavigationBehavior.GetInputLayer(new InputLayer
+		{
+			ContextName = "GamersTags"
+		});
+		m_Players.ForEach(delegate(NetRolesPlayerConsoleView p)
+		{
+			p.AddGamerTagInput(m_GamersTagsInputLayer, hintsWidget, CloseGamersTagsMode);
+		});
+	}
+
+	private void ShowGamersTagsMode()
+	{
+		m_GamersTagsMode.Value = true;
+		SetGamersTagsNavigation();
+		NetRolesPlayerConsoleView focusedPlayer = m_Players.FirstOrDefault((NetRolesPlayerConsoleView p) => p.Characters.FirstOrDefault((NetRolesPlayerCharacterConsoleView c) => c.IsFocused.Value));
+		GamerTagAndNameBaseView gamerTagAndNameBaseView = m_GamersTagsNavigationBehavior.Entities.OfType<GamerTagAndNameBaseView>().FirstOrDefault((GamerTagAndNameBaseView e) => e.GetUserId() == focusedPlayer.Or(null)?.GetUserId());
+		GamePad.Instance.PushLayer(m_GamersTagsInputLayer);
 		m_PlayerListNavigationBehaviour.UnFocusCurrentEntity();
-		m_PlayerListNavigationBehaviour.Clear();
-		base.DestroyViewImplementation();
+		if (gamerTagAndNameBaseView != null)
+		{
+			m_GamersTagsNavigationBehavior.FocusOnEntityManual(gamerTagAndNameBaseView);
+		}
+		else
+		{
+			m_GamersTagsNavigationBehavior.FocusOnFirstValidEntity();
+		}
+	}
+
+	private void CloseGamersTagsMode()
+	{
+		m_GamersTagsNavigationBehavior?.UnFocusCurrentEntity();
+		m_PlayerListNavigationBehaviour?.FocusOnCurrentEntity();
+		m_GamersTagsMode.Value = false;
+		GamePad.Instance.PopLayer(m_GamersTagsInputLayer);
+	}
+
+	private void SetGamersTagsNavigation()
+	{
+		m_GamersTagsNavigationBehavior.Clear();
+		List<IConsoleEntity> list = new List<IConsoleEntity>();
+		list.AddRange(m_Players.Select((NetRolesPlayerConsoleView player) => player.GamerTagAndName));
+		if (list.Any())
+		{
+			m_GamersTagsNavigationBehavior.SetEntitiesVertical(list);
+		}
 	}
 }

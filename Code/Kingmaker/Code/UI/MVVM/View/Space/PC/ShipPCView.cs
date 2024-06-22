@@ -165,8 +165,10 @@ public class ShipPCView : ViewBase<ShipVM>
 		}));
 		ShieldsTooltip = new TooltipTemplateGlossary("SpeedSpace");
 		HullTooltip = new TooltipTemplateSimple(UIStrings.Instance.ShipCustomization.ArmorPlating, UIStrings.Instance.ShipCustomization.ArmorPlatingDescription);
-		ProwRamDamageTooltip = new TooltipTemplateSimple(UIStrings.Instance.ShipCustomization.RamDamageBonus, UIStrings.Instance.ShipCustomization.RamDamageBonusDescription);
-		ProwRamSelfDamageReduceTooltip = new TooltipTemplateSimple(UIStrings.Instance.ShipCustomization.RamDamageReduction, UIStrings.Instance.ShipCustomization.RamDamageReductionDescription.Text);
+		string header = UIStrings.Instance.ShipCustomization.RamDamageBonus.Text + " (" + UIStrings.Instance.ShipCustomization.Ram.Text + ")";
+		ProwRamDamageTooltip = new TooltipTemplateSimple(header, UIStrings.Instance.ShipCustomization.RamDamageBonusDescription);
+		string header2 = UIStrings.Instance.ShipCustomization.RamDamageReduction.Text + " (" + UIStrings.Instance.ShipCustomization.Ram.Text + ")";
+		ProwRamSelfDamageReduceTooltip = new TooltipTemplateSimple(header2, UIStrings.Instance.ShipCustomization.RamDamageReductionDescription.Text);
 		AddDisposable(m_ProwRamDamageBlock.SetTooltip(ProwRamDamageTooltip, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, TooltipPlace.transform as RectTransform)));
 		AddDisposable(m_ProwRamSelfDamageReduceBlock.SetTooltip(ProwRamSelfDamageReduceTooltip, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, TooltipPlace.transform as RectTransform)));
 		AddDisposable(base.ViewModel.ShouldShow.Subscribe(delegate

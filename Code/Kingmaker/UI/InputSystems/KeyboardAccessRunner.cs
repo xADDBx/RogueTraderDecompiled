@@ -16,7 +16,7 @@ public class KeyboardAccessRunner : MonoBehaviour
 			s_ActiveRunner = this;
 			return;
 		}
-		PFLog.Default.Error("Previous KeyboardAccessRunner was not disabled properly! Current: '" + base.transform.GetHierarchyPath("/") + "' Previous: '" + s_ActiveRunner.transform.GetHierarchyPath("/") + "'");
+		PFLog.UI.Error("Previous KeyboardAccessRunner was not disabled properly! Current: '" + base.transform.GetHierarchyPath("/") + "' Previous: '" + s_ActiveRunner.transform.GetHierarchyPath("/") + "'");
 	}
 
 	private void OnDisable()
@@ -26,7 +26,7 @@ public class KeyboardAccessRunner : MonoBehaviour
 			s_ActiveRunner = null;
 			return;
 		}
-		PFLog.Default.Error("Another KeyboardAccessRunner was activated before disabling of current! Current: '" + base.transform.GetHierarchyPath("/") + "' Previous: '" + s_ActiveRunner.transform.GetHierarchyPath("/") + "'");
+		PFLog.UI.Error("Another KeyboardAccessRunner was activated before disabling of current! Current: '" + base.transform.GetHierarchyPath("/") + "' Previous: '" + s_ActiveRunner.transform.GetHierarchyPath("/") + "'");
 	}
 
 	private void Update()

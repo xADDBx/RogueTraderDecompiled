@@ -9,7 +9,6 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/MarkOnLocalMap")]
 [AllowMultipleComponents]
 [TypeId("2e7785dc3e816b94da09d0151bcd34b0")]
 public class MarkOnLocalMap : GameAction
@@ -26,19 +25,16 @@ public class MarkOnLocalMap : GameAction
 		return string.Format("{0} маркер для мапобжекта {1} на локальной карте\n", Hidden ? "Выключает" : "Включает", MapObject) + "Для работы на мапобжекте должен висеть компонент LocalMapMarker";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MapObjectEntity value = MapObject.GetValue();
-		if (value != null)
+		LocalMapMarkerPart optional = value.GetOptional<LocalMapMarkerPart>();
+		if (optional != null)
 		{
-			LocalMapMarkerPart optional = value.GetOptional<LocalMapMarkerPart>();
-			if ((bool)optional)
-			{
-				optional.SetHidden(Hidden);
-				return;
-			}
-			PFLog.Default.Error("Cannot mark " + value?.ToString() + ": no LocalMapMarker component.", value);
+			optional.SetHidden(Hidden);
+			return;
 		}
+		Element.LogError("Cannot mark {0}: no LocalMapMarker component.", value);
 	}
 
 	public override string GetCaption()

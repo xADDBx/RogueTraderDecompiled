@@ -5,11 +5,9 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Loot;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Globalmap.Interaction;
-using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -46,7 +44,7 @@ public class AnomalyResearch : AnomalyInteraction, ICheckForLoot
 
 	public override void Interact()
 	{
-		if (ContextData<StarSystemContextData>.Current?.StarSystemObject is AnomalyEntityData entity)
+		if (Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject is AnomalyEntityData entity)
 		{
 			EventBus.RaiseEvent(entity, delegate(IAnomalyResearchHandler e)
 			{
@@ -61,7 +59,7 @@ public class AnomalyResearch : AnomalyInteraction, ICheckForLoot
 
 	private SkillCheckResult HandleCheck(BaseUnitEntity unit, StatType statType)
 	{
-		if (!(ContextData<StarSystemContextData>.Current?.StarSystemObject is AnomalyEntityData anomalyEntityData) || anomalyEntityData.Blueprint != base.OwnerBlueprint)
+		if (!(Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject is AnomalyEntityData anomalyEntityData) || anomalyEntityData.Blueprint != base.OwnerBlueprint)
 		{
 			return null;
 		}
@@ -73,10 +71,8 @@ public class AnomalyResearch : AnomalyInteraction, ICheckForLoot
 		RulePerformSkillCheck evt = new RulePerformSkillCheck(unit, statType, statDC.DC);
 		m_Rule = Rulebook.Trigger(evt);
 		ActionList actions = (m_Rule.ResultIsSuccess ? Success : Fail);
-		using (ContextData<StarSystemContextData>.Request().Setup(anomalyEntityData, unit))
-		{
-			anomalyEntityData.MainFact.RunActionInContext(actions);
-		}
+		Game.Instance.Player.StarSystemsState.StarSystemContextData.Setup(anomalyEntityData, unit);
+		anomalyEntityData.MainFact.RunActionInContext(actions);
 		anomalyEntityData.OnInteractionEnded();
 		EventBus.RaiseEvent(anomalyEntityData, delegate(IAnomalyResearchHandler e)
 		{
@@ -106,7 +102,7 @@ public class AnomalyResearch : AnomalyInteraction, ICheckForLoot
 
 	public ILootable GetLoot()
 	{
-		AnomalyEntityData entity = ContextData<StarSystemContextData>.Current?.StarSystemObject as AnomalyEntityData;
+		AnomalyEntityData entity = Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject as AnomalyEntityData;
 		return new LootFromPointOfInterestHolder(m_Rule.ResultIsSuccess ? CheckPassedLoot : CheckFailedLoot, entity);
 	}
 }

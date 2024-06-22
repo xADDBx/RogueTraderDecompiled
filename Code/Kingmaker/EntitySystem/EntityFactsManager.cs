@@ -8,6 +8,8 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
@@ -231,6 +233,11 @@ public class EntityFactsManager : IDisposable, IHashable
 		if (ConcreteOwner.ForbidFactsAndPartsModifications && Owner.IsInitialized)
 		{
 			throw new Exception($"Can't add part to constant entity {Owner}");
+		}
+		if (fact is Feature && fact.Blueprint is BlueprintCareerPath { IsAvailable: false })
+		{
+			PFLog.EntityFact.Error("EntityFactsManager.Add: trying to add an unavailable career in fact " + fact.Name);
+			return null;
 		}
 		EntityFact entityFact = DelegatePrepareFactForAttach(fact);
 		if (entityFact == null)

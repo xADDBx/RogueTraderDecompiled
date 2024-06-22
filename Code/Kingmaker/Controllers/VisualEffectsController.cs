@@ -246,7 +246,10 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 				return;
 			}
 			ShieldHitEntry shieldHitEntry = BlueprintRoot.Instance.HitSystemRoot.ShieldHitEntrys.FirstOrDefault((ShieldHitEntry x) => x.Type == unitEntity.ShieldType);
-			if (shieldHitEntry != null)
+			bool flag = shieldHitEntry != null;
+			bool flag2 = !flag || shieldHitEntry.ShowImpact;
+			bool flag3 = !flag || shieldHitEntry.HitSoundEvent;
+			if (flag)
 			{
 				if (shieldHitEntry.ShowHitAnimation)
 				{
@@ -259,31 +262,51 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 						if (dealDamage.ConcreteTarget.View != null)
 						{
 							Vector3 vector = -((dealDamage.TargetUnit?.Position - dealDamage?.Projectile?.Launcher.Point) ?? Vector3.zero).normalized * (shieldHitEntry.SphereRadius * (dealDamage.ConcreteTarget.View.ParticlesSnapMap?.SizeScale ?? 1f));
-							FxHelper.SpawnFxOnPoint(shieldHitEntry.SpecialEffect, dealDamage.ConcreteTarget.View.transform.position + Vector3.up + vector);
+							GameObject gameObject = FxHelper.SpawnFxOnPoint(shieldHitEntry.SpecialEffect, dealDamage.ConcreteTarget.View.transform.position + Vector3.up + vector, Quaternion.FromToRotation(Vector3.forward, vector.normalized), !shieldHitEntry.OverrideTargetTypeSwitch);
+							if (shieldHitEntry.OverrideTargetTypeSwitch)
+							{
+								if (gameObject.TryGetComponent<SoundFx>(out var component))
+								{
+									component.BlockSoundFXPlaying = true;
+								}
+								gameObject.SetActive(value: true);
+							}
 						}
 					}
 					else
 					{
-						FxHelper.SpawnFxOnEntity(shieldHitEntry.SpecialEffect, dealDamage.ConcreteTarget.View);
+						GameObject gameObject2 = FxHelper.SpawnFxOnEntity(shieldHitEntry.SpecialEffect, dealDamage.ConcreteTarget.View, !shieldHitEntry.OverrideTargetTypeSwitch);
+						if (shieldHitEntry.OverrideTargetTypeSwitch)
+						{
+							if (gameObject2.TryGetComponent<SoundFx>(out var component2))
+							{
+								component2.BlockSoundFXPlaying = true;
+							}
+							gameObject2.SetActive(value: true);
+						}
 					}
-				}
-				if (!shieldHitEntry.ShowImpact)
-				{
-					return;
 				}
 			}
 			else
 			{
 				TryPlayAnimationHit(dealDamage);
 			}
-			FxHelper.SpawnFxOnEntity(BlueprintRoot.Instance.HitSystemRoot.GlobalHitEffect.HitMarkEffect.Load(), dealDamage.ConcreteTarget.View);
-			if (!(dealDamage.Reason.Fact is Buff buff) || !buff.Blueprint.PlayOnlyFirstHitSound || !buff.PlayedFirstHitSound)
+			if (flag2)
+			{
+				FxHelper.SpawnFxOnEntity(BlueprintRoot.Instance.HitSystemRoot.GlobalHitEffect.HitMarkEffect.Load(), dealDamage.ConcreteTarget.View);
+			}
+			if (flag3 && (!(dealDamage.Reason.Fact is Buff buff) || !buff.Blueprint.PlayOnlyFirstHitSound || !buff.PlayedFirstHitSound))
 			{
 				AkSoundEngine.SetSwitch("HitMainType", dealDamage.ResultIsCritical ? "Crit" : "Normal", dealDamage.ConcreteTarget.View.gameObject);
-				AkSwitchReference akSwitchReference = BlueprintRoot.Instance.HitSystemRoot.HitEffects.FirstOrDefault((HitEntry x) => x.Type == unitEntity.Blueprint.VisualSettings.SurfaceType)?.Switch;
+				AkSwitchReference akSwitchReference = ((flag && shieldHitEntry.OverrideTargetTypeSwitch) ? shieldHitEntry.TargetTypeSwitch : BlueprintRoot.Instance.HitSystemRoot.HitEffects.FirstOrDefault((HitEntry x) => x.Type == unitEntity.Blueprint.VisualSettings.SurfaceType)?.Switch);
 				if (akSwitchReference != null)
 				{
 					AkSoundEngine.SetSwitch(akSwitchReference.Group, akSwitchReference.Value, unitEntity.View.gameObject);
+				}
+				AkSwitchReference akSwitchReference2 = ((flag && shieldHitEntry.OverrideTargetTypeSwitch) ? shieldHitEntry.MuffledTypeSwitch : null);
+				if (akSwitchReference2 != null)
+				{
+					AkSoundEngine.SetSwitch(akSwitchReference2.Group, akSwitchReference2.Value, unitEntity.View.gameObject);
 				}
 				if (dealDamage.Reason.Fact is Buff buff2)
 				{
@@ -303,15 +326,15 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 				{
 					try
 					{
-						AkSwitchReference akSwitchReference2 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
-						if (akSwitchReference2 != null)
-						{
-							AkSoundEngine.SetSwitch(akSwitchReference2.Group, akSwitchReference2.Value, unitEntity.View.gameObject);
-						}
-						AkSwitchReference akSwitchReference3 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.MuffledTypeSwitch;
+						AkSwitchReference akSwitchReference3 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
 						if (akSwitchReference3 != null)
 						{
 							AkSoundEngine.SetSwitch(akSwitchReference3.Group, akSwitchReference3.Value, unitEntity.View.gameObject);
+						}
+						AkSwitchReference akSwitchReference4 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.MuffledTypeSwitch;
+						if (akSwitchReference4 != null)
+						{
+							AkSoundEngine.SetSwitch(akSwitchReference4.Group, akSwitchReference4.Value, unitEntity.View.gameObject);
 						}
 					}
 					catch
@@ -334,10 +357,10 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 				AkSoundEngine.SetSwitch(hitEntry.Switch.Group, hitEntry.Switch.Value, destructibleEntity.View.gameObject);
 				try
 				{
-					AkSwitchReference akSwitchReference4 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
-					if (akSwitchReference4 != null)
+					AkSwitchReference akSwitchReference5 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
+					if (akSwitchReference5 != null)
 					{
-						AkSoundEngine.SetSwitch(akSwitchReference4.Group, akSwitchReference4.Value, destructibleEntity.View.gameObject);
+						AkSoundEngine.SetSwitch(akSwitchReference5.Group, akSwitchReference5.Value, destructibleEntity.View.gameObject);
 					}
 				}
 				catch
@@ -363,10 +386,10 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		AkSoundEngine.SetSwitch(hitEntry2.Switch.Group, hitEntry2.Switch.Value, starshipEntity.View.gameObject);
 		try
 		{
-			AkSwitchReference akSwitchReference5 = dealDamage.Reason.Ability?.StarshipWeapon?.Blueprint.SoundTypeSwitch;
-			if (akSwitchReference5 != null)
+			AkSwitchReference akSwitchReference6 = dealDamage.Reason.Ability?.StarshipWeapon?.Blueprint.SoundTypeSwitch;
+			if (akSwitchReference6 != null)
 			{
-				AkSoundEngine.SetSwitch(akSwitchReference5.Group, akSwitchReference5.Value, starshipEntity.View.gameObject);
+				AkSoundEngine.SetSwitch(akSwitchReference6.Group, akSwitchReference6.Value, starshipEntity.View.gameObject);
 			}
 		}
 		catch

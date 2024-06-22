@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem.Rules;
@@ -97,9 +98,10 @@ public class CommandUnitCastSpell : CommandBase
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
-		if (!(m_UnitEvaluator.GetValue() is BaseUnitEntity caster))
+		AbstractUnitEntity value = m_UnitEvaluator.GetValue();
+		if (!(value is BaseUnitEntity caster))
 		{
-			string message = $"[IS NOT BASE UNIT ENTITY] Cutscene command {this}, {m_UnitEvaluator} is not BaseUnitEntity";
+			string message = $"[IS NOT BASE UNIT ENTITY] Cutscene command {this}, {m_UnitEvaluator} returns {value} of type {value.GetType()} that is not BaseUnitEntity";
 			if (!QAModeExceptionReporter.MaybeShowError(message))
 			{
 				UberDebug.LogError(message);

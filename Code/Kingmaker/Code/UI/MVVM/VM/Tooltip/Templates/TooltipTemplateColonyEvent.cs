@@ -33,8 +33,7 @@ public class TooltipTemplateColonyEvent : TooltipBaseTemplate
 	{
 		List<ITooltipBrick> obj = new List<ITooltipBrick>
 		{
-			new TooltipBrickText(EventDescription),
-			new TooltipBrickSpace()
+			new TooltipBrickText(EventDescription)
 		};
 		string text = (IsColonyManagement ? UIStrings.Instance.ColonyEventsTexts.NeedsVisitMechanicString.Text : UIStrings.Instance.ColonyEventsTexts.NeedsResolveMechanicString.Text);
 		obj.Add(new TooltipBrickText("<i>" + text + "</i>"));

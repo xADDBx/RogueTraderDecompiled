@@ -21,7 +21,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 
-public class UnitOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityUnitVM>, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IGameModeHandler, IReloadMechanicsHandler, IAreaActivationHandler, IAreaHandler, ISurroundingInteractableObjectsCountHandler, IEntitySuppressedHandler, ISubscriber<IEntity>
+public class UnitOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityUnitVM>, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IGameModeHandler, IReloadMechanicsHandler, IAreaActivationHandler, IAreaHandler, ISurroundingInteractableObjectsCountHandler, IEntitySuppressedHandler, ISubscriber<IEntity>, IInGameHandler
 {
 	private static readonly float DeathEntityRemoveDelay = 4f;
 
@@ -33,7 +33,14 @@ public class UnitOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityUnitVM
 
 	protected override IEnumerable<Entity> Entities => Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity e) => e.IsInGame && !e.Suppressed);
 
-	protected override Func<OvertipEntityUnitVM, Entity, bool> OvertipGetter => (OvertipEntityUnitVM vm, Entity entity) => vm.Unit == entity as MechanicEntity || vm.UnitUIWrapper.UniqueId == entity.UniqueId;
+	protected override bool OvertipGetter(OvertipEntityUnitVM vm, Entity entity)
+	{
+		if (vm.Unit != entity as MechanicEntity)
+		{
+			return vm.UnitUIWrapper.UniqueId == entity.UniqueId;
+		}
+		return true;
+	}
 
 	public UnitOvertipsCollectionVM()
 	{
@@ -198,5 +205,14 @@ public class UnitOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityUnitVM
 	public void HandleSurroundingInteractableObjectsCountChanged(EntityViewBase entity, bool isInNavigation, bool isChosen)
 	{
 		GetOvertip(entity.Data.ToEntity())?.HandleSurroundingObjectsChanged(isInNavigation, isChosen);
+	}
+
+	public void HandleObjectInGameChanged()
+	{
+		AbstractUnitEntity abstractUnitEntity = EventInvokerExtensions.AbstractUnitEntity;
+		if (abstractUnitEntity != null && !(abstractUnitEntity is LightweightUnitEntity) && abstractUnitEntity.IsInGame)
+		{
+			AddEntity(abstractUnitEntity);
+		}
 	}
 }

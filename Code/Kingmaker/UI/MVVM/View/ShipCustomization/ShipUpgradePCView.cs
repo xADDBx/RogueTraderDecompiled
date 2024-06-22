@@ -74,9 +74,13 @@ public class ShipUpgradePCView : ShipUpgradeBaseView<ShipInventoryStashView, Shi
 		m_VoidShieldGenerator.Bind(base.ViewModel.VoidShieldGenerator);
 		m_AugerArray.Bind(base.ViewModel.AugerArray);
 		m_ArmorPlating.Bind(base.ViewModel.ArmorPlating);
-		for (int i = 0; i < m_WeaponSlots.Length; i++)
+		for (int i = 0; i < m_ArsenalSlots.Length; i++)
 		{
-			m_WeaponSlots[i].Bind(base.ViewModel.Weapons[i]);
+			m_ArsenalSlots[i].Bind(base.ViewModel.Arsenals[i]);
+		}
+		for (int j = 0; j < m_WeaponSlots.Length; j++)
+		{
+			m_WeaponSlots[j].Bind(base.ViewModel.Weapons[j]);
 		}
 		m_UpgradeStructureSlot.Bind(base.ViewModel.InternalStructure);
 		m_UpgradeProwRamSlot.Bind(base.ViewModel.ProwRam);

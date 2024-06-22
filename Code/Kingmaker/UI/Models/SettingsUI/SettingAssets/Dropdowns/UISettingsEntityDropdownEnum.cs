@@ -10,12 +10,12 @@ namespace Kingmaker.UI.Models.SettingsUI.SettingAssets.Dropdowns;
 
 public class UISettingsEntityDropdownEnum<TEnum> : UISettingsEntityDropdown<TEnum> where TEnum : Enum
 {
-	private IReadOnlyList<string> m_CashedLocalizedValues;
+	public IReadOnlyList<string> m_CashedLocalizedValues;
 
-	private Locale m_CachedLocale;
+	protected Locale m_CachedLocale;
 
 	[SerializeField]
-	private LocalizedString[] values = Array.Empty<LocalizedString>();
+	protected LocalizedString[] values = Array.Empty<LocalizedString>();
 
 	public override IReadOnlyList<string> LocalizedValues
 	{

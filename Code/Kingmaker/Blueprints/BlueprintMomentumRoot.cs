@@ -40,6 +40,9 @@ public class BlueprintMomentumRoot : BlueprintScriptableObject
 	private BlueprintBuffReference m_HeroicActBuff;
 
 	[SerializeField]
+	private BlueprintBuffReference m_HeroicActBuffCounter;
+
+	[SerializeField]
 	private BlueprintBuffReference m_DesperateMeasureBuff;
 
 	public BlueprintMomentumGroup PartyGroup => m_PartyGroup;
@@ -47,6 +50,8 @@ public class BlueprintMomentumRoot : BlueprintScriptableObject
 	public BlueprintMomentumGroup DefaultEnemyGroup => m_DefaultEnemyGroup;
 
 	public BlueprintBuff HeroicActBuff => m_HeroicActBuff;
+
+	public BlueprintBuff HeroicActBuffCounter => m_HeroicActBuffCounter;
 
 	public BlueprintBuff DesperateMeasureBuff => m_DesperateMeasureBuff;
 

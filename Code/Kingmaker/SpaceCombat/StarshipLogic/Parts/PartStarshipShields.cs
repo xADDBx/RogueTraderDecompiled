@@ -223,45 +223,74 @@ public class PartStarshipShields : StarshipPart, ITurnStartHandler, ISubscriber<
 		return AbsorbSector((int)(hitLocation - 1), damage, damageType, isPredictionOnly);
 	}
 
+	public void DamageAdjacent2Sectors(StarshipHitLocation hitLocation, int damage)
+	{
+		int num;
+		int num2;
+		switch (hitLocation)
+		{
+		default:
+			return;
+		case StarshipHitLocation.Fore:
+		case StarshipHitLocation.Aft:
+			num = 1;
+			num2 = 2;
+			break;
+		case StarshipHitLocation.Port:
+		case StarshipHitLocation.Starboard:
+			num = 0;
+			num2 = 3;
+			break;
+		}
+		AddSectorDamage(m_SectorShields[num], damage);
+		AddSectorDamage(m_SectorShields[num2], damage);
+	}
+
+	private void AddSectorDamage(StarshipSectorShields sectorShields, int shieldStrengthLoss)
+	{
+		shieldStrengthLoss = Math.Min(sectorShields.Max - sectorShields.Damage, shieldStrengthLoss);
+		if (shieldStrengthLoss > 0)
+		{
+			sectorShields.WasHitLastTurn = true;
+		}
+		sectorShields.Damage += shieldStrengthLoss;
+		if (sectorShields.Current <= 0)
+		{
+			sectorShields.Reinforced = false;
+			TurnOffShieldSectorFX(sectorShields);
+		}
+		EventBus.RaiseEvent((IStarshipEntity)base.Owner, (Action<IShieldAbsorbsDamageHandler>)delegate(IShieldAbsorbsDamageHandler h)
+		{
+			h.HandleShieldAbsorbsDamage(shieldStrengthLoss, sectorShields.Current, sectorShields.Sector);
+		}, isCheckRuntime: true);
+	}
+
 	private (int absorbedDamage, int shieldDamage) AbsorbSector(int sectorIndex, int damage, DamageType damageType, bool isPredictionOnly)
 	{
-		StarshipSectorShields sectorShields = m_SectorShields[sectorIndex];
+		StarshipSectorShields starshipSectorShields = m_SectorShields[sectorIndex];
 		int num;
-		int shieldStrengthLoss;
+		int num2;
 		if (damageType == DamageType.Ram)
 		{
-			num = sectorShields.Current / sectorShields.RamAbsorbMod;
-			shieldStrengthLoss = sectorShields.Current;
+			num = starshipSectorShields.Current / starshipSectorShields.RamAbsorbMod;
+			num2 = starshipSectorShields.Current;
 		}
 		else
 		{
-			int num2 = (sectorShields.Reinforced ? 200 : 100);
+			int num3 = (starshipSectorShields.Reinforced ? 200 : 100);
 			BlueprintItemVoidShieldGenerator voidShieldGenerator = VoidShieldGenerator;
 			if (voidShieldGenerator != null && voidShieldGenerator.HasExtraResistance && VoidShieldGenerator.damageExtraResistance == damageType)
 			{
-				num2 += VoidShieldGenerator.extraResistanceDamageReductionPercent;
+				num3 += VoidShieldGenerator.extraResistanceDamageReductionPercent;
 			}
-			num = Math.Min(sectorShields.Current * num2 / 100, damage);
-			shieldStrengthLoss = num * 100 / num2;
+			num = Math.Min(starshipSectorShields.Current * num3 / 100, damage);
+			num2 = num * 100 / num3;
 		}
 		if (!isPredictionOnly)
 		{
-			if (shieldStrengthLoss > 0)
-			{
-				sectorShields.WasHitLastTurn = true;
-			}
-			sectorShields.Damage += shieldStrengthLoss;
-			if (sectorShields.Current <= 0)
-			{
-				sectorShields.Reinforced = false;
-				TurnOffShieldSectorFX(sectorShields);
-			}
-			EventBus.RaiseEvent((IStarshipEntity)base.Owner, (Action<IShieldAbsorbsDamageHandler>)delegate(IShieldAbsorbsDamageHandler h)
-			{
-				h.HandleShieldAbsorbsDamage(shieldStrengthLoss, sectorShields.Current, sectorShields.Sector);
-			}, isCheckRuntime: true);
+			AddSectorDamage(starshipSectorShields, num2);
 		}
-		return (absorbedDamage: num, shieldDamage: shieldStrengthLoss);
+		return (absorbedDamage: num, shieldDamage: num2);
 	}
 
 	private void TurnOnShieldsFX()

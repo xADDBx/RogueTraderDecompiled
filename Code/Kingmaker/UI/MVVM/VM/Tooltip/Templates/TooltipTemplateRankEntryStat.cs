@@ -31,7 +31,7 @@ public class TooltipTemplateRankEntryStat : TooltipTemplateStat
 		CalculatedPrerequisite calculatedPrerequisite = m_SelectionState.Value?.GetCalculatedPrerequisite(m_SelectionItem);
 		if (calculatedPrerequisite != null)
 		{
-			list.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.Prerequisites, TooltipTextType.BoldCentered));
+			list.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.Prerequisites, TooltipTitleType.H2));
 			list.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(calculatedPrerequisite)));
 		}
 		return list;

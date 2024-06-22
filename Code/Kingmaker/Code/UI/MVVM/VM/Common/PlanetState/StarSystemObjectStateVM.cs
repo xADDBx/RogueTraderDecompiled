@@ -54,7 +54,7 @@ public class StarSystemObjectStateVM : BaseDisposable, IViewModel, IBaseDisposab
 		StarSystemObjectView starSystemObjectView = explorationObjectView as StarSystemObjectView;
 		if (starSystemObjectView == null)
 		{
-			PFLog.System.Error("StarSystemObjectStateVM.OpenExplorationScreen - unsupported MapObjectView type!");
+			PFLog.UI.Error("StarSystemObjectStateVM.OpenExplorationScreen - unsupported MapObjectView type!");
 			return;
 		}
 		StarSystemObjectView.Value = starSystemObjectView;

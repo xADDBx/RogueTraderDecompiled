@@ -62,6 +62,8 @@ public class ControlsKeybindingsGeneralSettingsDefaultValues
 
 	public KeyBindingPair CameraRotateRight;
 
+	public KeyBindingPair CameraRotateToPointNorth;
+
 	public KeyBindingPair FollowUnit;
 
 	public KeyBindingPair SkipBark;
@@ -79,4 +81,20 @@ public class ControlsKeybindingsGeneralSettingsDefaultValues
 	public KeyBindingPair SpeedUpEnemiesTurn;
 
 	public KeyBindingPair SwitchUIVisibility;
+
+	public KeyBindingPair ShowHideCombatLog;
+
+	public KeyBindingPair EndTurn;
+
+	public KeyBindingPair OpenSearchInventory;
+
+	public KeyBindingPair CollectAllLoot;
+
+	public KeyBindingPair PrevTab;
+
+	public KeyBindingPair NextTab;
+
+	public KeyBindingPair PrevCharacter;
+
+	public KeyBindingPair NextCharacter;
 }

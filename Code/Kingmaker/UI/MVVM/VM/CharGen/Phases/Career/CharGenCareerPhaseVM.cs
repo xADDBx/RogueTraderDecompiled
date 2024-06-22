@@ -125,13 +125,8 @@ public class CharGenCareerPhaseVM : CharGenPhaseBaseVM, ICareerPathHoverHandler,
 			m_SelectionStateFeature.Select(value);
 		}
 		UpdateIsCompleted();
-		UpdateCareerPathsHighlight(careerPathVM);
 		base.PhaseNextHint.Value = string.Empty;
 		UpdateTooltipTemplate();
-	}
-
-	private void UpdateCareerPathsHighlight(CareerPathVM preselectedCareer)
-	{
 	}
 
 	private void HandleLevelUpManager(LevelUpManager manager)
@@ -178,7 +173,7 @@ public class CharGenCareerPhaseVM : CharGenPhaseBaseVM, ICareerPathHoverHandler,
 				}
 				else
 				{
-					allCareerPath.ItemState.Value = (allCareerPath.IsUnlocked ? CareerItemState.Unlocked : CareerItemState.Locked);
+					allCareerPath.ItemState.Value = ((allCareerPath.IsUnlocked || allCareerPath.CanShowToAnotherCoopPlayer()) ? CareerItemState.Unlocked : CareerItemState.Locked);
 				}
 			}
 		}
@@ -208,7 +203,7 @@ public class CharGenCareerPhaseVM : CharGenPhaseBaseVM, ICareerPathHoverHandler,
 			}
 			else
 			{
-				allCareerPath.ItemState.Value = (allCareerPath.IsUnlocked ? CareerItemState.Unlocked : CareerItemState.Locked);
+				allCareerPath.ItemState.Value = ((allCareerPath.IsUnlocked || allCareerPath.CanShowToAnotherCoopPlayer()) ? CareerItemState.Unlocked : CareerItemState.Locked);
 			}
 		}
 	}

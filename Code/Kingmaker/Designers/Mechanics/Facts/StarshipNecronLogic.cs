@@ -109,7 +109,7 @@ public class StarshipNecronLogic : UnitFactComponentDelegate, IUnitCombatHandler
 		if (evt.HPBeforeDamage > 0 && base.Owner.Health.Damage >= (int)base.Owner.Health.HitPoints && base.Owner.Buffs.GetBuff(UndeathBuff) == null)
 		{
 			base.Owner.Health.SetDamage(0);
-			base.Owner.Buffs.Add(UndeathBuff, evt.ConcreteInitiator, new BuffDuration(null, BuffEndCondition.CombatEnd));
+			base.Owner.Buffs.Add(UndeathBuff, base.Owner, new BuffDuration(null, BuffEndCondition.CombatEnd));
 			using (base.Context.GetDataScope(base.Owner.ToITargetWrapper()))
 			{
 				ActionsOnUndeathEvent.Run();

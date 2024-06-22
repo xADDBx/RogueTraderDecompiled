@@ -27,8 +27,8 @@ public class HasFactGetter : PropertyGetter, PropertyContextAccessor.ITargetByTy
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Check if Unit has " + m_Fact.NameSafe();
+		return "Check if " + Target.Colorized() + " has " + m_Fact.NameSafe();
 	}
 }

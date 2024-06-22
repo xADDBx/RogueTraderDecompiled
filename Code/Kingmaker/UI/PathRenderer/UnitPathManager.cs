@@ -45,6 +45,11 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		public float PathCost;
 	}
 
+	private class PingData
+	{
+		public IDisposable PingDelay { get; set; }
+	}
+
 	public static UnitPathManager Instance;
 
 	[Header("Path Rendering")]
@@ -74,9 +79,9 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 	private GameObject m_PingDecal;
 
 	[SerializeField]
-	private Color m_PingDecalColor;
+	private GameObject m_SpacePingDecal;
 
-	private GameObject m_CreatedPingDecal;
+	private readonly GameObject[] m_CreatedPingDecals = new GameObject[6];
 
 	[Header("Suicide")]
 	[SerializeField]
@@ -91,13 +96,6 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	[SerializeField]
 	private Color m_SpacePathEndDecalColor;
-
-	[Header("SpacePingDecal")]
-	[SerializeField]
-	private GameObject m_SpacePingDecal;
-
-	[SerializeField]
-	private Color m_SpacePingDecalColor;
 
 	private GameObject m_CreatedSuicideDecal;
 
@@ -139,7 +137,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	private bool m_AbilityHover;
 
-	private IDisposable m_PingDelay;
+	private readonly Dictionary<NetPlayer, PingData> m_PlayerPingData = new Dictionary<NetPlayer, PingData>();
 
 	public List<Vector3> PointerCellDecalCornersPositions => m_CreatedPointerCellDecal.Or(null)?.CornersPositions ?? new List<Vector3> { PointerWorldCorrectedPosition };
 
@@ -185,7 +183,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	private void OnEnable()
 	{
-		if (Instance == null)
+		if (!(Instance != null))
 		{
 			Instance = this;
 			EventBus.Subscribe(this);
@@ -203,22 +201,29 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		UnityEngine.Object.Destroy(m_CreatedPathEndDecal);
 		UnityEngine.Object.Destroy(m_CreatedSuicideDecal);
 		UnityEngine.Object.Destroy(m_CreatedPointerCellDecal.gameObject);
-		UnityEngine.Object.Destroy(m_CreatedPingDecal);
+		m_CreatedPingDecals.ForEach(UnityEngine.Object.Destroy);
 		m_UpdateTaskCancelToken.Cancel();
 	}
 
 	public void OnAreaDidLoad()
 	{
 		m_ShouldHide = false;
+		List<Color> coopPlayersPingsColors = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors;
 		if (Game.Instance.IsSpaceCombat)
 		{
 			m_CreatedPathEndDecal = CreateDecal(m_SpacePathEndDecal, m_SpacePathEndDecalColor);
-			m_CreatedPingDecal = CreateDecal(m_SpacePingDecal, m_SpacePingDecalColor);
+			for (int i = 0; i < m_CreatedPingDecals.Length; i++)
+			{
+				m_CreatedPingDecals[i] = CreateDecal(m_SpacePingDecal, coopPlayersPingsColors[i]);
+			}
 		}
 		else
 		{
 			m_CreatedPathEndDecal = CreateDecal(m_PathEndDecal, m_PathEndDecalColor);
-			m_CreatedPingDecal = CreateDecal(m_PingDecal, m_PingDecalColor);
+			for (int j = 0; j < m_CreatedPingDecals.Length; j++)
+			{
+				m_CreatedPingDecals[j] = CreateDecal(m_PingDecal, coopPlayersPingsColors[j]);
+			}
 		}
 		m_CreatedSuicideDecal = CreateDecal(m_SuicideDecal, m_SuicideDecalColor);
 		m_CreatedPointerCellDecal = UnityEngine.Object.Instantiate((Game.Instance.CurrentMode == GameModeType.SpaceCombat) ? m_PointerCellDecalSpace : m_PointerCellDecal, base.transform, worldPositionStays: true);
@@ -333,18 +338,27 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	private void UpdatePredict()
 	{
-		if (CurrentNode != null)
+		if (CurrentNode == null)
 		{
-			if (InvalidNode(CurrentNode, PointerWorldCorrectedPosition))
+			return;
+		}
+		if (InvalidNode(CurrentNode, PointerWorldCorrectedPosition))
+		{
+			UpdateInvalid(PointerWorldCorrectedPosition);
+		}
+		else if (SelectedUnit == null)
+		{
+			MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+			if (currentUnit != null && currentUnit.IsDirectlyControllable)
 			{
-				UpdateInvalid(PointerWorldCorrectedPosition);
+				UpdateInactiveState();
 			}
-			else if (SelectedUnit != null)
-			{
-				m_CurrentDecalPosition = CurrentNode.Vector3Position + m_DecalOffset;
-				SetDecalPosition(m_CreatedPointerCellDecal.transform, CurrentNode, m_CurrentDecalPosition);
-				UpdatePredictState(CurrentNode);
-			}
+		}
+		else
+		{
+			m_CurrentDecalPosition = CurrentNode.Vector3Position + m_DecalOffset;
+			SetDecalPosition(m_CreatedPointerCellDecal.transform, CurrentNode, m_CurrentDecalPosition);
+			UpdatePredictState(CurrentNode);
 		}
 	}
 
@@ -373,9 +387,9 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 			}
 			Vector2Int coordinatesInGrid = nearestNodeXZUnwalkable.CoordinatesInGrid;
 			Vector2Int coordinatesInGrid2 = node.CoordinatesInGrid;
-			if (occupiedNodes.Contains(node) && coordinatesInGrid2 != coordinatesInGrid)
+			if (occupiedNodes.Contains(node))
 			{
-				return false;
+				return coordinatesInGrid2 == coordinatesInGrid;
 			}
 			return true;
 		}
@@ -392,6 +406,21 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 			Game.Instance.CursorController.ClearComponents();
 		}
 		UpdatePredictState(null);
+	}
+
+	private void UpdateInactiveState()
+	{
+		m_CurrentDecalPosition = CurrentNode.Vector3Position + m_DecalOffset;
+		SetDecalPosition(m_CreatedPointerCellDecal.transform, CurrentNode, m_CurrentDecalPosition);
+		bool flag = m_TbActive && (m_IsPlayerTurn || m_DeploymentPhase) && !m_ShouldHide;
+		m_CreatedPointerCellDecal.SetVisible(flag);
+		if (flag)
+		{
+			m_CreatedPointerCellDecal.SetTargetType(PointerCellDecal.TargetType.Ground);
+			UpdateMoveMarker();
+			m_CreatedPointerCellDecal.SetActionType(PointerCellDecal.ActionType.Unable);
+			UnitPredictionManager.Instance.Or(null)?.ResetVirtualHoverPosition();
+		}
 	}
 
 	private void UpdatePredictState(GraphNode node)
@@ -475,6 +504,10 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 			}
 			BaseUnitEntity unit = SelectedUnit;
 			if (unit == null || unit.CombatState.ActionPointsBlue == 0f)
+			{
+				ClearActivePath();
+			}
+			else if (unit.IsCastingAbility())
 			{
 				ClearActivePath();
 			}
@@ -624,7 +657,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	public void DrawDecalAt(GameObject decal, GraphNode node, Vector3? overridePosition = null)
 	{
-		if (decal != null)
+		if (!(decal == null))
 		{
 			SetDecalVisibility(decal, isVisible: true);
 			SetDecalPosition(decal.transform, node, overridePosition);
@@ -718,7 +751,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		UpdatePlayerTurn();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdatePlayerTurn();
 	}
@@ -825,17 +858,50 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	public void HandlePingPosition(NetPlayer player, Vector3 position)
 	{
-		m_PingDelay?.Dispose();
+		if (Game.Instance.CurrentMode == GameModeType.GlobalMap || Game.Instance.CurrentMode == GameModeType.StarSystem)
+		{
+			return;
+		}
+		int playerIndex = player.Index - 1;
+		if (m_PlayerPingData.ContainsKey(player))
+		{
+			m_PlayerPingData[player].PingDelay?.Dispose();
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+			{
+				h.HandleRemovePingPositionMarker(m_CreatedPingDecals[playerIndex]);
+			});
+		}
+		else
+		{
+			m_PlayerPingData[player] = new PingData();
+		}
 		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)AstarPath.active.GetNearest(position).node;
 		if (TurnController.IsInTurnBasedCombat())
 		{
 			position = customGridNodeBase.Vector3Position;
 		}
-		DrawDecalAt(m_CreatedPingDecal, customGridNodeBase, position);
-		m_PingDelay = DelayedInvoker.InvokeInTime(delegate
+		PingData pingData = m_PlayerPingData[player];
+		DrawDecalAt(m_CreatedPingDecals[playerIndex], customGridNodeBase, position);
+		EventBus.RaiseEvent(delegate(INetPingPosition h)
 		{
-			SetDecalVisibility(m_CreatedPingDecal, isVisible: false);
+			h.HandlePingPositionSound(m_CreatedPingDecals[playerIndex]);
+		});
+		EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+		{
+			h.HandleAddPingPositionMarker(m_CreatedPingDecals[playerIndex]);
+		});
+		pingData.PingDelay = DelayedInvoker.InvokeInTime(delegate
+		{
+			SetDecalVisibility(m_CreatedPingDecals[playerIndex], isVisible: false);
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+			{
+				h.HandleRemovePingPositionMarker(m_CreatedPingDecals[playerIndex]);
+			});
 		}, 7.5f);
+	}
+
+	public void HandlePingPositionSound(GameObject gameObject)
+	{
 	}
 
 	private void ClearActivePath()

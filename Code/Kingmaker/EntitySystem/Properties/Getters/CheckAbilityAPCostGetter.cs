@@ -13,7 +13,7 @@ public class CheckAbilityAPCostGetter : PropertyGetter, PropertyContextAccessor.
 		return this.GetAbility().CalculateActionPointCost();
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Ability is Charge";
 	}

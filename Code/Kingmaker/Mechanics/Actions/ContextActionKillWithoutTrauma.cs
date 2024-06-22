@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Mechanics.Actions;
@@ -16,13 +17,13 @@ public class ContextActionKillWithoutTrauma : ContextAction
 		return "Kill target without trauma.";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		PartLifeState partLifeState = base.Target.Entity?.GetLifeStateOptional();
 		PartHealth partHealth = base.Target.Entity?.GetHealthOptional();
 		if (partLifeState == null || partHealth == null)
 		{
-			PFLog.Default.Error(this, "Invalid target for effect '{0}'", GetType().Name);
+			Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 		}
 		else if (base.Context.MaybeCaster == null || !base.Context.MaybeCaster.IsAttackingGreenNPC(base.Target.Entity))
 		{

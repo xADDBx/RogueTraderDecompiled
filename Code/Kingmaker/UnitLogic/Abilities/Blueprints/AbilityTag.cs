@@ -7,5 +7,6 @@ public enum AbilityTag
 	ThrowingGrenade,
 	UsingCombatDrug,
 	StarshipShotAbility,
-	StarshipUltimateAbility
+	StarshipUltimateAbility,
+	Trap
 }

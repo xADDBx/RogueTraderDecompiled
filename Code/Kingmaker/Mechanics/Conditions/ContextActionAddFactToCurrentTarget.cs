@@ -18,7 +18,7 @@ public class ContextActionAddFactToCurrentTarget : ContextAction
 		return "Add fact to Current Target";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.Target.Entity?.AddFact(Fact)?.TryAddSource(this);
 	}

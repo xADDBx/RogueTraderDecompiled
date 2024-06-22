@@ -32,7 +32,7 @@ public class RaiseDead : GameAction
 		return "Raise Dead Companions";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (riseAllCompanions)
 		{

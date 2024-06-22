@@ -24,7 +24,8 @@ public static class EntityLink
 		UnitStat,
 		Unknown,
 		Empty,
-		DialogConditions
+		DialogConditions,
+		Highlight
 	}
 
 	private static Dictionary<Type, string> m_Tags = new Dictionary<Type, string>
@@ -96,6 +97,10 @@ public static class EntityLink
 		{
 			Type.DialogConditions,
 			"DialogConditions"
+		},
+		{
+			Type.Highlight,
+			"Highlight"
 		}
 	};
 

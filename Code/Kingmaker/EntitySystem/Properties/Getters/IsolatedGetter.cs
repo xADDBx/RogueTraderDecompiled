@@ -20,8 +20,8 @@ public class IsolatedGetter : UnitPropertyGetter, PropertyContextAccessor.IOptio
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "1 if target has no allies around it, 0 if it has some";
+		return "1 if " + FormulaTargetScope.Current + " has no allies around it, 0 if it has some";
 	}
 }

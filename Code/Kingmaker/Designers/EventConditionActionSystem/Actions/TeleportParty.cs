@@ -38,7 +38,7 @@ public class TeleportParty : GameAction, IAreaEnterPointReference
 
 	private bool CanHaveActions => AutoSaveMode == AutoSaveMode.None;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (exitPositon.Area == Game.Instance.CurrentlyLoadedArea)
 		{

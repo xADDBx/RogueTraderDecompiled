@@ -46,6 +46,12 @@ public class ApplyCareerPath : UnitFactComponentDelegate, IHashable
 				return items;
 			}
 		}
+
+		public void AddItem(BlueprintFeature feature)
+		{
+			Array.Resize(ref m_Items, m_Items.Length + 1);
+			m_Items[^1] = feature.ToReference<BlueprintFeature.Reference>();
+		}
 	}
 
 	[SerializeField]
@@ -56,10 +62,24 @@ public class ApplyCareerPath : UnitFactComponentDelegate, IHashable
 
 	public SelectionEntry[] Selections = new SelectionEntry[0];
 
-	public BlueprintPath CareerPath => m_CareerPath;
+	public BlueprintPath CareerPath
+	{
+		get
+		{
+			return m_CareerPath;
+		}
+		set
+		{
+			m_CareerPath = value.ToReference<BlueprintPath.Reference>();
+		}
+	}
 
 	protected override void OnActivate()
 	{
+		if (CareerPath is BlueprintCareerPath { IsAvailable: false })
+		{
+			return;
+		}
 		bool num = CareerPath is BlueprintOriginPath;
 		int num2 = (num ? int.MaxValue : (base.Owner.OriginalBlueprint.GetComponent<CharacterLevelLimit>()?.LevelLimit ?? int.MaxValue));
 		int rank = base.Owner.Progression.GetRank(CareerPath);

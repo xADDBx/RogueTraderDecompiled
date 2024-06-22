@@ -38,6 +38,8 @@ public class UIBugReport
 
 	public LocalizedString EditScreenShotTitleText;
 
+	public LocalizedString DuplicateBugsShortTitleText;
+
 	public LocalizedString DuplicateBugsTitleText;
 
 	public LocalizedString LoadingProcessDuplicatesListText;
@@ -57,4 +59,8 @@ public class UIBugReport
 	public LocalizedString BugReportContinue;
 
 	public LocalizedString AdditionalPlaceholderText;
+
+	public LocalizedString OpenJiraTask;
+
+	public LocalizedString OpenMet;
 }

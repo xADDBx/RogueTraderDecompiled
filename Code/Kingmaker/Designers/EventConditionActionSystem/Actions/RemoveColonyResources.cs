@@ -18,7 +18,7 @@ public class RemoveColonyResources : GameAction
 		return "Remove resources from pool";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ResourceData[] resources = Resources;
 		foreach (ResourceData resourceData in resources)

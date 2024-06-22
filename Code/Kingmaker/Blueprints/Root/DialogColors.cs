@@ -15,6 +15,8 @@ public class DialogColors
 
 	public Color32 FocusAnswer = new Color32(byte.MaxValue, byte.MaxValue, 132, byte.MaxValue);
 
+	public Color32 FocusSelectedAnswer = new Color32(byte.MaxValue, byte.MaxValue, 132, byte.MaxValue);
+
 	public Color32 FocusDisableAnswer = new Color32(byte.MaxValue, byte.MaxValue, 132, 123);
 
 	public Color32 NormalAnswer;

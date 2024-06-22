@@ -4,6 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
@@ -31,11 +32,11 @@ public class StarshipMicroabilityCooldown : ContextAction
 		return "Start random cooldown for starship microability";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Caster is StarshipEntity))
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		int num = ((!m_UpgradedCooldown) ? 30 : 0);

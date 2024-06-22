@@ -1,16 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Code.GameCore.ElementsSystem;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Progression.Prerequisites;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.QA.Validation;
+using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Progression;
 
 [Serializable]
-public class PrerequisitesList : IFeaturePrerequisite
+public class PrerequisitesList : ElementsList, IFeaturePrerequisite, IHashable
 {
 	private class ToStringMark : ContextFlag<ToStringMark>
 	{
@@ -22,26 +26,41 @@ public class PrerequisitesList : IFeaturePrerequisite
 	[ValidateNoNullEntries]
 	public Prerequisite[] List = new Prerequisite[0];
 
+	public override IEnumerable<Element> Elements => List;
+
 	public bool Any => List.Any();
 
 	public bool Empty => !Any;
 
 	public bool Meet(IBaseUnitEntity unit)
 	{
-		Prerequisite[] list = List;
-		for (int i = 0; i < list.Length; i++)
+		using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(this);
+		try
 		{
-			bool flag = list[i].Meet(unit);
-			if (flag && Composition == FeaturePrerequisiteComposition.Or)
+			Prerequisite[] list = List;
+			for (int i = 0; i < list.Length; i++)
 			{
-				return true;
+				bool flag = list[i].Meet(unit);
+				if (flag && Composition == FeaturePrerequisiteComposition.Or)
+				{
+					elementsDebugger?.SetResult(1);
+					return true;
+				}
+				if (!flag && Composition == FeaturePrerequisiteComposition.And)
+				{
+					elementsDebugger?.SetResult(0);
+					return false;
+				}
 			}
-			if (!flag && Composition == FeaturePrerequisiteComposition.And)
-			{
-				return false;
-			}
+			bool flag2 = Composition == FeaturePrerequisiteComposition.And;
+			elementsDebugger?.SetResult(flag2 ? 1 : 0);
+			return flag2;
 		}
-		return Composition == FeaturePrerequisiteComposition.And;
+		catch (Exception exception)
+		{
+			elementsDebugger?.SetException(exception);
+			return false;
+		}
 	}
 
 	public override string ToString()
@@ -67,7 +86,7 @@ public class PrerequisitesList : IFeaturePrerequisite
 				{
 					flag2 = false;
 				}
-				builder.Append(prerequisite.GetCaption());
+				builder.Append(prerequisite.GetCaption(useLineBreaks: false));
 			}
 			if (flag)
 			{
@@ -75,5 +94,13 @@ public class PrerequisitesList : IFeaturePrerequisite
 			}
 			return builder.ToString();
 		}
+	}
+
+	public override Hash128 GetHash128()
+	{
+		Hash128 result = default(Hash128);
+		Hash128 val = base.GetHash128();
+		result.Append(ref val);
+		return result;
 	}
 }

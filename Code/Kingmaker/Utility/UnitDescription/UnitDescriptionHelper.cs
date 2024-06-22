@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Facts;
@@ -10,6 +11,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.RuleSystem.Rules;
@@ -184,13 +186,27 @@ public static class UnitDescriptionHelper
 	{
 		return new UnitDescription.StatsData
 		{
-			Str = 0,
-			Dex = 0,
-			Con = 0,
-			Int = 0,
-			Wis = 0,
-			Cha = 0
+			WarhammerBallisticSkill = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerBallisticSkill)),
+			WarhammerWeaponSkill = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerWeaponSkill)),
+			WarhammerStrength = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerStrength)),
+			WarhammerToughness = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerToughness)),
+			WarhammerAgility = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerAgility)),
+			WarhammerIntelligence = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerIntelligence)),
+			WarhammerWillpower = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerWillpower)),
+			WarhammerPerception = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerPerception)),
+			WarhammerFellowship = PrepareStats(unit.Stats.GetAttribute(StatType.WarhammerFellowship))
 		};
+	}
+
+	private static string PrepareStats(ModifiableValueAttributeStat stat)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.AppendLine($"{stat.Type}: {stat.ModifiedValue.ToString()}");
+		foreach (ModifiableValue.Modifier modifier in stat.Modifiers)
+		{
+			stringBuilder.AppendLine($"\t\t\t\tModifier Descriptor[{modifier.ModDescriptor}]:{modifier.ModValue.ToString()}");
+		}
+		return stringBuilder.ToString();
 	}
 
 	private static UnitDescription.SavesData ExtractSaves(BaseUnitEntity unit)
@@ -293,5 +309,38 @@ public static class UnitDescriptionHelper
 				select ad.Blueprint);
 		}
 		return list.ToArray();
+	}
+
+	public static UnitDescription GetDescriptionForEditorCheck(BlueprintUnit blueprint)
+	{
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			BaseUnitEntity baseUnitEntity = null;
+			string text = Uuid.Instance.CreateString();
+			try
+			{
+				baseUnitEntity = blueprint.CreateEntity("description-helper-unit-" + text, isInGame: false);
+				return GetDescriptionForEditorCheck(baseUnitEntity);
+			}
+			finally
+			{
+				baseUnitEntity?.Dispose();
+			}
+		}
+	}
+
+	private static UnitDescription GetDescriptionForEditorCheck(BaseUnitEntity unit)
+	{
+		using (ContextData<GameLogDisabled>.Request())
+		{
+			return new UnitDescription
+			{
+				Blueprint = unit.Blueprint,
+				HP = unit.Health.MaxHitPoints,
+				Stats = ExtractStats(unit),
+				InitialMovementPoints = unit.CombatState.WarhammerInitialAPBlue.ModifiedValue,
+				InitialActionPoints = unit.CombatState.WarhammerInitialAPYellow.ModifiedValue
+			};
+		}
 	}
 }

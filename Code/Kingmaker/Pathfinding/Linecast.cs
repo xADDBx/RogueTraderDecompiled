@@ -211,7 +211,7 @@ public static class Linecast
 		return LinecastGrid(graph, origin, end, hint, out hit, DefaultConstraint, ref condition);
 	}
 
-	public static bool LinecastGrid<T>(NavGraph graph, Vector3 origin, Vector3 end, GraphNode hint, out GraphHitInfo hit, NNConstraint constraint, ref T condition) where T : ICanTransitionBetweenCells
+	public static bool LinecastGrid<T>(NavGraph graph, Vector3 origin, Vector3 end, GraphNode hint, out GraphHitInfo hit, NNConstraint constraint, ref T condition, float precision = 0.01f) where T : ICanTransitionBetweenCells
 	{
 		hit = default(GraphHitInfo);
 		if (float.IsNaN(origin.x + origin.y + origin.z))
@@ -287,7 +287,7 @@ public static class Linecast
 				point = vector7;
 				num5 = factor3;
 			}
-			else if (Math.Abs(factor - factor3) < 0.01f)
+			else if (Math.Abs(factor - factor3) < precision)
 			{
 				direction = num3;
 				point = ((factor < factor3) ? vector6 : vector7);

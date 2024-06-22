@@ -26,7 +26,7 @@ public class DealtDamageGetter : PropertyGetter, PropertyContextAccessor.IRule, 
 		throw new ElementLogicException(this);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Damage";
 	}

@@ -11,8 +11,8 @@ public class BlueprintUnitMPGetter : UnitPropertyGetter
 		return base.CurrentEntity.Blueprint.WarhammerInitialAPBlue;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Get BlueprintUnit's WarhammerInitialAPBlue";
+		return "WarhammerInitialAPBlue from " + FormulaTargetScope.Current + " blueprint";
 	}
 }

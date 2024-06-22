@@ -28,7 +28,7 @@ public class SpotUnit : GameAction
 		return $"{Spotter} spot unit {Target}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BaseUnitEntity spotter = Game.Instance.Player.MainCharacterEntity;
 		if (Spotter != null)

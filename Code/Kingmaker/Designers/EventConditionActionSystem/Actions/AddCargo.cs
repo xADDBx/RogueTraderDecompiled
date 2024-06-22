@@ -26,7 +26,7 @@ public class AddCargo : GameAction
 		return $"Create and add cargo from {Loot}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		CargoEntity cargoEntity = null;
 		List<CargoEntity> cargoes = new List<CargoEntity>();

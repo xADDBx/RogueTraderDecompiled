@@ -10,7 +10,7 @@ namespace Kingmaker.Mechanics.Actions;
 [TypeId("6daf9ce41e164e3f80752d49caa70da5")]
 public class ContextActionPropheticIntervention : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		UnitEntity target = base.Context.MainTarget.Entity as UnitEntity;
 		UnitEntity obj = base.Context.MaybeCaster as UnitEntity;

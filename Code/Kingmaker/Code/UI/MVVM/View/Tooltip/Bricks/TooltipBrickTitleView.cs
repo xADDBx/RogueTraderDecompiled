@@ -19,12 +19,6 @@ public class TooltipBrickTitleView : TooltipBaseBrickView<TooltipBrickTitleVM>
 	[SerializeField]
 	private List<LayoutGroup> m_LayoutGroups;
 
-	[SerializeField]
-	private List<float> m_DefaultFontSizes = new List<float> { 27f, 25f, 22f, 18f, 14f, 16f };
-
-	[SerializeField]
-	private List<float> m_DefaultConsoleFontSizes = new List<float> { 27f, 25f, 22f, 18f, 14f, 16f };
-
 	private AccessibilityTextHelper m_TextHelper;
 
 	protected override void BindViewImplementation()

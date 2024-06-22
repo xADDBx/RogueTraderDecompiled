@@ -250,7 +250,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 	{
 		if (m_Background == null)
 		{
-			PFLog.TechArt.Error("Can't find doll room background object", base.gameObject);
+			PFLog.TechArt.Error(base.gameObject, "Can't find doll room background object");
 			return;
 		}
 		if (m_DollPostProcessOverride == null && m_DollRoomPostProcessVolume != null)
@@ -259,7 +259,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 		}
 		if (m_DollPostProcessOverride == null)
 		{
-			PFLog.TechArt.Error("Can't find post process override for doll room", base.gameObject);
+			PFLog.TechArt.Error(base.gameObject, "Can't find post process override for doll room");
 			return;
 		}
 		if (m_DollBackgroundProperty == null)
@@ -268,7 +268,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 		}
 		if (m_DollBackgroundProperty == null)
 		{
-			PFLog.TechArt.Error("Can't find dissolve property in post process override for doll room", base.gameObject);
+			PFLog.TechArt.Error(base.gameObject, "Can't find dissolve property in post process override for doll room");
 		}
 		else
 		{

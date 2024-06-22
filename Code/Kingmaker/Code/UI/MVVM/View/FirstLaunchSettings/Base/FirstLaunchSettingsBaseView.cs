@@ -9,6 +9,7 @@ using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Legacy.MainMenuUI;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility.GameConst;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -179,7 +180,7 @@ public abstract class FirstLaunchSettingsBaseView : ViewBase<FirstLaunchSettings
 
 	private void OnComplete()
 	{
-		SoundBanksManager.UnloadBank("SplashScreen");
+		SoundBanksManager.UnloadBank(UIConsts.SplashScreens);
 		SoundState.Instance.ResetState(SoundStateType.MainMenu);
 		base.ViewModel.Close();
 	}

@@ -63,6 +63,9 @@ public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPl
 	[SerializeField]
 	private MoveAnimator m_CandlesAnimator;
 
+	[SerializeField]
+	private ExitLocationWindowBaseView m_ExitLocationWindow;
+
 	protected readonly ReactiveCommand OnPanelsChanged = new ReactiveCommand();
 
 	private bool m_RightPanelIsShown;
@@ -81,6 +84,7 @@ public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPl
 		m_LeftWindow.Initialize();
 		m_BackgroundBlurWithFade.Initialize();
 		m_CandlesAnimator.Initialize();
+		m_ExitLocationWindow.Initialize();
 		m_LeaveZoneButtonText.text = UIStrings.Instance.LootWindow.LeaveZone;
 	}
 
@@ -92,6 +96,7 @@ public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPl
 		m_PlayerStash.Bind(base.ViewModel.PlayerStash);
 		m_Inventory.Bind(base.ViewModel.InventoryStash);
 		m_Cargo.Bind(base.ViewModel.CargoInventory);
+		AddDisposable(base.ViewModel.ExitLocationWindowVM.Subscribe(m_ExitLocationWindow.Bind));
 		if (base.ViewModel.IsOneSlot)
 		{
 			ShowPanels(showLeft: false, showRight: true, force: true);
@@ -129,6 +134,11 @@ public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPl
 				h.HandleWarning(UIStrings.Instance.LootWindow.CollectAllBeforeLeave.Text, addToLog: false, WarningNotificationFormat.Attention);
 			});
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
 	}
 
 	private void ShowPanels(bool showLeft, bool showRight, bool force = false)
@@ -180,10 +190,5 @@ public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPl
 		ContextMenuHelper.HideContextMenu();
 		m_Animator.DisappearAnimation();
 		UISounds.Instance.Sounds.Loot.LootWindowClose.Play();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 }

@@ -24,7 +24,7 @@ public class ShowDialogBox : GameAction
 		return "Show dialog box " + Text;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		NamedParametersContext parameters = null;
 		ParametrizedContextSetter.ParameterEntry[] array = (Parameters?.Parameters).EmptyIfNull();

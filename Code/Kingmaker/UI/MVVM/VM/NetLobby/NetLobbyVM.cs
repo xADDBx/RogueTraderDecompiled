@@ -8,20 +8,27 @@ using Kingmaker.Code.UI.MVVM.VM.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
+using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Platforms;
+using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Player;
 using Kingmaker.Networking.Save;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.VM.NetLobby.DlcList;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using Photon.Realtime;
 using UniRx;
 using UnityEngine;
@@ -31,6 +38,10 @@ namespace Kingmaker.UI.MVVM.VM.NetLobby;
 public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetEvents, ISubscriber, ISavesUpdatedHandler, IAreaHandler, INetLobbyPlayersHandler, INetSaveSelectHandler, INetLobbyEpicGamesEvents, INetCheckUsersModsHandler, INetLobbyRequest
 {
 	private const string NET_LOBBY_TUTORIAL_PREF_KEY = "first_open_net_lobby_tutorial";
+
+	private const string NET_LOBBY_LAST_SELECTED_JOINABLE_USER_PREF_KEY = "net_lobby_selected_joinable_user";
+
+	private const string NET_LOBBY_LAST_SELECTED_INVITABLE_USER_PREF_KEY = "net_lobby_selected_invitable_user";
 
 	private readonly Action m_CloseAction;
 
@@ -82,6 +93,14 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public readonly ReactiveProperty<NetLobbyTutorialPartVM> NetLobbyTutorialPartVM = new ReactiveProperty<NetLobbyTutorialPartVM>();
 
+	public readonly ReactiveProperty<NetLobbyDlcListVM> DlcListVM = new ReactiveProperty<NetLobbyDlcListVM>();
+
+	private readonly Dictionary<string, List<IBlueprintDlc>> m_DifferentDlcWithSaveProblems = new Dictionary<string, List<IBlueprintDlc>>();
+
+	public readonly Dictionary<string, List<IBlueprintDlc>> ProblemsToShowInSaveList = new Dictionary<string, List<IBlueprintDlc>>();
+
+	public readonly ReactiveCommand<Dictionary<string, List<IBlueprintDlc>>> CheckProblemsWithDlcs = new ReactiveCommand<Dictionary<string, List<IBlueprintDlc>>>();
+
 	public readonly BoolReactiveProperty NetLobbyTutorialOnScreen = new BoolReactiveProperty();
 
 	public readonly BoolReactiveProperty IsAnyTutorialBlocks = new BoolReactiveProperty();
@@ -101,6 +120,14 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	public readonly ReactiveProperty<NetLobbyInvitePlayerDifferentPlatformsVM> DifferentPlatformInviteVM = new ReactiveProperty<NetLobbyInvitePlayerDifferentPlatformsVM>();
 
 	public readonly StringReactiveProperty PlayersDifferentMods = new StringReactiveProperty();
+
+	public OwlcatDropdownVM JoinableUserTypesDropdownVM;
+
+	public OwlcatDropdownVM InvitableUserTypesDropdownVM;
+
+	public readonly ReactiveProperty<JoinableUserTypes> CurrentJoinableUserType = new ReactiveProperty<JoinableUserTypes>();
+
+	public readonly ReactiveProperty<InvitableUserTypes> CurrentInvitableUserType = new ReactiveProperty<InvitableUserTypes>();
 
 	private static bool NetLobbyTutorialHasShown => PlayerPrefs.GetInt("first_open_net_lobby_tutorial", 0) == 1;
 
@@ -123,7 +150,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		AddDisposable(EventBus.Subscribe(this));
 		ActivateNetHandlers();
 		m_CloseAction = closeAction;
-		IsAnyTutorialBlocks.Value = Enumerable.Any(UIConfig.Instance.BlueprintUINetLobbyTutorial.TutorialBlocksInfo);
+		IsAnyTutorialBlocks.Value = UIConfig.Instance.BlueprintUINetLobbyTutorial.TutorialBlocksInfo.Any();
 		IsSaveAllowed.Value = !LoadingProcess.Instance.IsLoadingInProcess && Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual, IsMainMenu);
 		PhotonManager.NetGame.StartNetGameIfNeeded();
 		for (int i = 0; i < 6; i++)
@@ -184,7 +211,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			});
 			m_SaveSlotVMs.Clear();
 		}));
-		AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
+		AddDisposable(ObservableExtensions.Subscribe(MainThreadDispatcher.UpdateAsObservable(), delegate
 		{
 			OnUpdate();
 		}));
@@ -199,6 +226,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			HandleSetEpicGamesUserName(secondaryPlatform.IsInitialized(), secondaryPlatform.User.NickName);
 		}
 		PhotonManager.IdleConnection.LobbyViewOpened = true;
+		SetUserTypesDropdowns();
 	}
 
 	protected override void DisposeImplementation()
@@ -218,8 +246,33 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		m_SaveSlotVMs.Clear();
 		RegionDropdownVM.Value?.Dispose();
 		RegionDropdownVM.Value = null;
+		m_DifferentDlcWithSaveProblems?.Clear();
 		DeactivateNetHandlers();
 		PhotonManager.IdleConnection.LobbyViewOpened = false;
+	}
+
+	private void SetUserTypesDropdowns()
+	{
+	}
+
+	private void SetUserTypeDropdown<TEnum>(string playerPrefName, Func<TEnum> getter, Action<TEnum> setter, out OwlcatDropdownVM dropdownVM, IEnumerable<TEnum> options, ReactiveProperty<TEnum> property, Func<TEnum, string> labelGetter, TEnum defaultValue)
+	{
+		int @int = PlayerPrefs.GetInt(playerPrefName, 0);
+		setter(Enum.IsDefined(typeof(TEnum), @int) ? ((TEnum)(object)@int) : defaultValue);
+		property.Value = getter();
+		List<DropdownItemVM> vmCollection = options.Select((TEnum type) => new DropdownItemVM(labelGetter(type))).ToList();
+		AddDisposable(dropdownVM = new OwlcatDropdownVM(vmCollection));
+		AddDisposable(property.Subscribe(setter));
+	}
+
+	public void SetJoinableUserType(int type)
+	{
+		CurrentJoinableUserType.Value = (JoinableUserTypes)type;
+	}
+
+	public void SetInvitableUserType(int type)
+	{
+		CurrentInvitableUserType.Value = (InvitableUserTypes)type;
 	}
 
 	private void ActivateNetHandlers()
@@ -264,9 +317,13 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		RegionDropdownVM.Value = new OwlcatDropdownVM(list, index);
 		AddDisposable(RegionDropdownVM.Value.SelectedVM.Subscribe(delegate(IViewModel itemVM)
 		{
-			if (itemVM is NetLobbyRegionDropdownVM netLobbyRegionDropdownVM)
+			NetLobbyRegionDropdownVM regionVM = itemVM as NetLobbyRegionDropdownVM;
+			if (regionVM != null)
 			{
-				PhotonManager.NetGame.ChangeRegion(netLobbyRegionDropdownVM.Region);
+				DelayedInvoker.InvokeInFrames(delegate
+				{
+					PhotonManager.NetGame.ChangeRegion(regionVM.Region);
+				}, 1);
 			}
 		}));
 	}
@@ -304,7 +361,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			{
 				if (button == DialogMessageBoxBase.BoxButton.Yes)
 				{
-					Disconnect();
+					Disconnect("OnClose");
 					m_CloseAction?.Invoke();
 				}
 			});
@@ -317,6 +374,8 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void CreateLobby()
 	{
+		PlayerPrefs.SetInt("net_lobby_selected_invitable_user", (int)PhotonManager.NetGame.CurrentInvitableUserType);
+		PlayerPrefs.SetInt("net_lobby_selected_joinable_user", (int)PhotonManager.NetGame.CurrentJoinableUserType);
 		PhotonManager.NetGame.CreateNewLobby();
 	}
 
@@ -328,12 +387,12 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void StopWaiting()
 	{
-		Disconnect();
+		Disconnect("StopWaiting");
 	}
 
-	public void Disconnect()
+	public void Disconnect(string reason)
 	{
-		PhotonManager.Instance.StopPlaying();
+		PhotonManager.Instance.StopPlaying(reason);
 	}
 
 	public bool Launch()
@@ -358,11 +417,20 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			CanConfirmLaunch.Value = flag;
 			return flag;
 		}
-		if ((PhotonManager.Sync.HasDesync || IsSaveAllowed.Value) && !IsMainMenu)
+		if ((PhotonManager.Sync.HasDesync || IsSaveAllowed.Value || CurrentSave.Value?.Reference != null) && !IsMainMenu)
 		{
+			if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
+			{
+				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+				{
+					h.HandleWarning(UIStrings.Instance.SaveLoadTexts.CannotLoadIronManSaveInCoop, addToLog: false, WarningNotificationFormat.Attention);
+				});
+				return false;
+			}
 			bool num2 = Game.Instance.Player.CheckDlcAvailable();
 			bool isDlcsInLobbyReady = PhotonManager.DLC.IsDLCsInLobbyReady;
-			if (!num2 || !isDlcsInLobbyReady)
+			bool flag2 = m_DifferentDlcWithSaveProblems.Values.Any((List<IBlueprintDlc> v) => Game.Instance.Player.DlcRewardsToSave.Any((BlueprintDlcReward dr) => dr.Dlcs.Any(v.Contains)));
+			if (!num2 || !isDlcsInLobbyReady || flag2)
 			{
 				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 				{
@@ -370,9 +438,9 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 				});
 				return false;
 			}
-			bool flag2 = PhotonManager.NetGame.StartGameWithoutSave();
-			CanConfirmLaunch.Value = flag2;
-			return flag2;
+			bool flag3 = PhotonManager.NetGame.StartGameWithoutSave();
+			CanConfirmLaunch.Value = flag3;
+			return flag3;
 		}
 		ChooseSave();
 		CanConfirmLaunch.Value = false;
@@ -398,10 +466,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void ChooseSave()
 	{
-		SaveSlotCollectionVm.Value = new SaveSlotCollectionVM(SaveLoadMode, CurrentSave, delegate
-		{
-			OnClose();
-		});
+		SaveSlotCollectionVm.Value = new SaveSlotCollectionVM(SaveLoadMode, CurrentSave, OnClose);
 		Game.Instance.SaveManager.UpdateSaveListAsync();
 		ShowWaitingSaveAnim.Value = true;
 	}
@@ -460,6 +525,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void HandleNLoadingScreenClosed()
 	{
+		CanConfirmLaunch.Value = false;
 	}
 
 	public void OnSaveListUpdated()
@@ -471,13 +537,47 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
 			ShowWaitingSaveAnim.Value = false;
+			ProblemsToShowInSaveList.Clear();
 			List<SaveInfo> referenceCollection = new List<SaveInfo>(Game.Instance.SaveManager);
 			referenceCollection.RemoveAll(SaveManager.IsCoopSave);
+			referenceCollection.RemoveAll((SaveInfo si) => si != null && si.Type == SaveInfo.SaveType.IronMan);
+			if (m_DifferentDlcWithSaveProblems.Any())
+			{
+				List<SaveInfo> source = referenceCollection.Where((SaveInfo s) => s.DlcRewards != null && s.DlcRewards.Any()).ToList();
+				IEnumerable<SaveInfo> savesToHide = source.Where((SaveInfo s) => s.GetRequiredDLCMap().Contains((List<IBlueprintDlc> requiredDLCList) => requiredDLCList.Contains(delegate(IBlueprintDlc requiredDLC)
+				{
+					IEnumerable<KeyValuePair<string, List<IBlueprintDlc>>> enumerable = m_DifferentDlcWithSaveProblems.Where((KeyValuePair<string, List<IBlueprintDlc>> i) => i.Value.Contains(requiredDLC) || requiredDLC.Rewards.Any(delegate(IBlueprintDlcReward r)
+					{
+						BlueprintDlcReward reward = r as BlueprintDlcReward;
+						return reward != null && i.Value.Any((IBlueprintDlc item) => reward.Dlcs.Contains(item));
+					}));
+					if (!enumerable.Any())
+					{
+						return false;
+					}
+					foreach (KeyValuePair<string, List<IBlueprintDlc>> pd in enumerable)
+					{
+						if (!ProblemsToShowInSaveList.ContainsKey(pd.Key))
+						{
+							ProblemsToShowInSaveList[pd.Key] = pd.Value;
+						}
+						else
+						{
+							foreach (IBlueprintDlc item in pd.Value.Where((IBlueprintDlc value) => !ProblemsToShowInSaveList[pd.Key].Contains(value)))
+							{
+								ProblemsToShowInSaveList[pd.Key].Add(item);
+							}
+						}
+					}
+					return true;
+				})));
+				referenceCollection.RemoveAll((SaveInfo r) => savesToHide.Contains(r));
+			}
 			referenceCollection.Sort((SaveInfo s1, SaveInfo s2) => -s1.SystemSaveTime.CompareTo(s2.SystemSaveTime));
 			bool allowSwitchOff = Game.Instance.ControllerMode == Game.ControllerModeType.Gamepad;
 			foreach (SaveInfo saveInfo in referenceCollection)
 			{
-				if (!Enumerable.Any(m_SaveSlotVMs, (SaveSlotVM vm) => vm.ReferenceSaveEquals(saveInfo)))
+				if (!m_SaveSlotVMs.Any((SaveSlotVM vm) => vm.ReferenceSaveEquals(saveInfo)))
 				{
 					SaveSlotVM saveSlotVM = new SaveSlotVM(saveInfo, SaveLoadMode, new SaveLoadActions
 					{
@@ -502,21 +602,43 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 				}
 			}
 			List<SaveSlotVM> list = new List<SaveSlotVM>();
-			foreach (SaveSlotVM item in m_SaveSlotVMs.Where((SaveSlotVM saveSlotVm) => !Enumerable.Any(referenceCollection, saveSlotVm.ReferenceSaveEquals)))
+			foreach (SaveSlotVM item2 in m_SaveSlotVMs.Where((SaveSlotVM saveSlotVm) => !referenceCollection.Any(saveSlotVm.ReferenceSaveEquals)))
 			{
-				item.Dispose();
-				list.Add(item);
+				item2.Dispose();
+				list.Add(item2);
 			}
-			foreach (SaveSlotVM item2 in list)
+			foreach (SaveSlotVM item3 in list)
 			{
-				SaveSlotCollectionVm.Value.HandleDeleteSave(item2);
-				m_SaveSlotVMs.Remove(item2);
+				SaveSlotCollectionVm.Value.HandleDeleteSave(item3);
+				m_SaveSlotVMs.Remove(item3);
 			}
 			SaveListAreEmpty.Value = m_SaveSlotVMs.Count == 0;
 		}));
 	}
 
 	private void SetSelectSaveAction(SaveInfo saveInfo)
+	{
+		bool num = saveInfo != null && saveInfo.Type == SaveInfo.SaveType.IronMan;
+		if (IsMainMenu)
+		{
+			_ = 1;
+		}
+		else
+			_ = !SettingsRoot.Difficulty.OnlyOneSave;
+		if (num)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.SaveLoadTexts.CannotLoadIronManSaveInCoop, addToLog: false, WarningNotificationFormat.Attention);
+			});
+		}
+		else
+		{
+			SetSave(saveInfo);
+		}
+	}
+
+	private void SetSave(SaveInfo saveInfo)
 	{
 		SaveSlotVM saveSlotVM = new SaveSlotVM(saveInfo, new ReactiveProperty<SaveLoadMode>());
 		if (saveSlotVM.Reference != null && !saveSlotVM.Reference.CheckDlcAvailable())
@@ -631,11 +753,6 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	private void CheckProblemsWithMods()
 	{
-		if (PhotonManager.Mods.IsSameMods)
-		{
-			PlayersDifferentMods.Value = string.Empty;
-			return;
-		}
 		Dictionary<string, ModData[]> dictionary = new Dictionary<string, ModData[]>();
 		foreach (PlayerInfo allPlayer in PhotonManager.Instance.AllPlayers)
 		{
@@ -649,27 +766,99 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 				Mods = pair.Value
 			} into user
 			group user by user.Mods).SelectMany(group => group.Select(user => user.Mods)).ToList();
-		if (!Enumerable.Any(list))
+		if (!list.Any())
 		{
 			PlayersDifferentMods.Value = string.Empty;
 			return;
 		}
 		List<string> list2 = new List<string>();
 		int num = 0;
-		for (int i = 0; i < list.Count; i++)
+		foreach (ModData[] item2 in list)
 		{
-			ModData[] array = list[i];
-			for (int j = 0; j < array.Length; j++)
+			if (item2 == null || !item2.Any())
 			{
-				string item = $"{num + 1}. {array[j]}";
-				list2.Add(item);
-				num++;
+				continue;
+			}
+			ModData[] array = item2;
+			foreach (ModData mod in array)
+			{
+				if (!list2.Any((string s) => s.Contains(mod.ToString())))
+				{
+					string item = $"{num + 1}. {mod}";
+					list2.Add(item);
+					num++;
+				}
 			}
 		}
-		if (Enumerable.Any(list2))
+		PlayersDifferentMods.Value = ((!list2.Any()) ? string.Empty : (UIStrings.Instance.NetLobbyTexts.CanBeAProblemsWithMods.Text + ":" + Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, list2)));
+	}
+
+	public void ShowDlcList()
+	{
+		PlayerInfo playerInfo = PhotonManager.Instance.AllPlayers.FirstOrDefault((PlayerInfo p) => p.Player.ActorNumber == PhotonManager.Instance.MasterClientId);
+		if (!string.IsNullOrWhiteSpace(playerInfo.UserId))
 		{
-			PlayersDifferentMods.Value = UIStrings.Instance.NetLobbyTexts.CanBeAProblemsWithMods.Text + ":" + Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, list2);
+			ReactiveProperty<NetLobbyDlcListVM> dlcListVM = DlcListVM;
+			if (dlcListVM.Value == null)
+			{
+				NetLobbyDlcListVM netLobbyDlcListVM2 = (dlcListVM.Value = new NetLobbyDlcListVM(CloseAction, GetPlayerDlcs(playerInfo.UserId)));
+			}
 		}
+		void CloseAction()
+		{
+			DlcListVM.Value?.Dispose();
+			DlcListVM.Value = null;
+		}
+	}
+
+	private List<IBlueprintDlc> GetPlayerDlcs(string userID)
+	{
+		if (PhotonManager.DLC.TryGetPlayerDLC(userID, out var playerDLCs))
+		{
+			return playerDLCs;
+		}
+		PFLog.UI.Log("[NetLobbyPlayerVM.RefreshDLCsList] DLCs for user='" + userID + "' not found!");
+		return new List<IBlueprintDlc>();
+	}
+
+	private void CompareHostAndPlayerDlcs()
+	{
+		m_DifferentDlcWithSaveProblems.Clear();
+		ReadonlyList<PlayerInfo> allPlayers = PhotonManager.Instance.AllPlayers;
+		PlayerInfo playerInfo = allPlayers.FirstOrDefault((PlayerInfo p) => p.Player.ActorNumber == PhotonManager.Instance.MasterClientId);
+		if (string.IsNullOrWhiteSpace(playerInfo.UserId))
+		{
+			CheckProblemsWithDlcs.Execute(m_DifferentDlcWithSaveProblems);
+			return;
+		}
+		List<BlueprintDlc> first = GetPlayerDlcs(playerInfo.UserId).OfType<BlueprintDlc>().Where(delegate(BlueprintDlc dlc)
+		{
+			DlcTypeEnum dlcType = dlc.DlcType;
+			return dlcType != DlcTypeEnum.CosmeticDlc && dlcType != DlcTypeEnum.PromotionalDlc;
+		}).ToList();
+		foreach (PlayerInfo item in allPlayers)
+		{
+			if (playerInfo.UserId == item.UserId)
+			{
+				continue;
+			}
+			List<IBlueprintDlc> playerDlcs = GetPlayerDlcs(item.UserId);
+			List<IBlueprintDlc> list = first.Except(playerDlcs).ToList();
+			if (list.Any())
+			{
+				string nickName;
+				string key = ((PhotonManager.Player.GetNickName(item.Player, out nickName) && !string.IsNullOrWhiteSpace(nickName)) ? nickName : item.UserId);
+				if (!m_DifferentDlcWithSaveProblems.ContainsKey(key))
+				{
+					m_DifferentDlcWithSaveProblems.Add(key, list);
+				}
+				else
+				{
+					m_DifferentDlcWithSaveProblems[key].AddRange(list);
+				}
+			}
+		}
+		CheckProblemsWithDlcs.Execute(m_DifferentDlcWithSaveProblems);
 	}
 
 	public void HandleSetEpicGamesButtonActive(bool state)
@@ -686,6 +875,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	public void HandleCheckUsersMods()
 	{
 		CheckProblemsWithMods();
+		CompareHostAndPlayerDlcs();
 	}
 
 	public void HandleNetLobbyRequest(bool isMainMenu = false)

@@ -23,7 +23,7 @@ namespace Kingmaker.UnitLogic.FactLogic;
 [Serializable]
 [AllowMultipleComponents]
 [TypeId("c0692276882a413b95b13da9c5ffdf23")]
-public class AddFactsToParty : MechanicEntityFactComponentDelegate, IAreaHandler, ISubscriber, ICompanionStateChanged<EntitySubscriber>, ICompanionStateChanged, ISubscriber<IMechanicEntity>, IEventTag<ICompanionStateChanged, EntitySubscriber>, IHashable
+public class AddFactsToParty : MechanicEntityFactComponentDelegate, IAreaHandler, ISubscriber, ICompanionStateChanged<EntitySubscriber>, ICompanionStateChanged, ISubscriber<IMechanicEntity>, IEventTag<ICompanionStateChanged, EntitySubscriber>, IAcceptChangeGroupHandler, IHashable
 {
 	public RestrictionCalculator Restriction;
 
@@ -107,6 +107,11 @@ public class AddFactsToParty : MechanicEntityFactComponentDelegate, IAreaHandler
 		{
 			RemoveFacts(mechanicEntity);
 		}
+	}
+
+	public void HandleAcceptChangeGroup()
+	{
+		UpdateFacts();
 	}
 
 	private void UpdateFacts()

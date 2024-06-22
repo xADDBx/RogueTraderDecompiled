@@ -9,9 +9,11 @@ using Kingmaker.Code.UI.MVVM.VM.Common.PlanetState;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.CounterWindow;
+using Kingmaker.Code.UI.MVVM.VM.DlcManager;
 using Kingmaker.Code.UI.MVVM.VM.EscMenu;
 using Kingmaker.Code.UI.MVVM.VM.Fade;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.Code.UI.MVVM.VM.Pause;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.Settings;
@@ -52,7 +54,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Common;
 
-public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IDialogMessageBoxUIHandler, ICounterWindowUIHandler, IContextMenuHandler, ISaveLoadUIHandler, IUILoadService, ISettingsUIHandler, IAreaHandler, IBugReportUIHandler, IFullScreenUIHandler, INetLobbyRequest, INetRolesRequest, INetInviteHandler, INetLobbyPlayersHandler, IEndGameTitlesUIHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler
+public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IDialogMessageBoxUIHandler, ICounterWindowUIHandler, IContextMenuHandler, ISaveLoadUIHandler, IUILoadService, ISettingsUIHandler, IAreaHandler, IBugReportUIHandler, IFullScreenUIHandler, INetLobbyRequest, INetRolesRequest, INetInviteHandler, INetLobbyPlayersHandler, IEndGameTitlesUIHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler, IDlcManagerUIHandler
 {
 	public readonly UIVisibilityVM UIVisibilityVM;
 
@@ -69,6 +71,8 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	public readonly StarSystemObjectStateVM StarSystemObjectStateVM;
 
 	public readonly WarningsTextVM WarningsTextVM;
+
+	public readonly PauseNotificationVM PauseNotificationVM;
 
 	public readonly FadeVM FadeVM;
 
@@ -90,6 +94,8 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public readonly ReactiveProperty<NetRolesVM> NetRolesVM = new ReactiveProperty<NetRolesVM>(null);
 
+	public readonly ReactiveProperty<DlcManagerVM> DlcManagerVM = new ReactiveProperty<DlcManagerVM>(null);
+
 	public readonly ReactiveProperty<TitlesVM> TitlesVM = new ReactiveProperty<TitlesVM>();
 
 	private readonly Queue<MessageBoxVM> m_MessageQueue = new Queue<MessageBoxVM>();
@@ -109,6 +115,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		AddDisposable(UnitStatesHolderVM = new UnitStatesHolderVM());
 		AddDisposable(StarSystemObjectStateVM = new StarSystemObjectStateVM());
 		AddDisposable(WarningsTextVM = new WarningsTextVM());
+		AddDisposable(PauseNotificationVM = new PauseNotificationVM());
 		AddDisposable(FadeVM = new FadeVM());
 		AddDisposable(TutorialVM = new TutorialVM());
 		AddDisposable(Game.Instance.Keyboard.Bind("SwitchUIVisibility", UIVisibilityState.SwitchVisibility));
@@ -165,16 +172,19 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 	}
 
-	public void HandleOpen(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue)
+	public void HandleOpen(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue, FloatReactiveProperty loadingProgress = null, ReactiveCommand loadingProgressCloseTrigger = null)
 	{
-		MessageBoxVM messageBoxVM = new MessageBoxVM(messageText, boxType, onClose, onLinkInvoke, yesLabel, noLabel, onTextResult, inputText, inputPlaceholder, waitTime, DisposeMessageBox);
-		if (MessageBoxVM.Value == null)
+		if (!RootUIContext.Instance.IsLoadingScreen)
 		{
-			MessageBoxVM.Value = messageBoxVM;
-		}
-		else
-		{
-			m_MessageQueue.Enqueue(messageBoxVM);
+			MessageBoxVM messageBoxVM = new MessageBoxVM(messageText, boxType, onClose, onLinkInvoke, yesLabel, noLabel, onTextResult, inputText, inputPlaceholder, waitTime, DisposeMessageBox, loadingProgress, loadingProgressCloseTrigger);
+			if (MessageBoxVM.Value == null)
+			{
+				MessageBoxVM.Value = messageBoxVM;
+			}
+			else
+			{
+				m_MessageQueue.Enqueue(messageBoxVM);
+			}
 		}
 	}
 
@@ -330,6 +340,24 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 	}
 
+	public void HandleOpenDlcManager(bool onlyMods = false)
+	{
+		if (DlcManagerVM.Value == null)
+		{
+			DlcManagerVM.Value = new DlcManagerVM(DisposeDlcManager, onlyMods);
+		}
+	}
+
+	public void HandleCloseDlcManager()
+	{
+	}
+
+	private void DisposeDlcManager()
+	{
+		DlcManagerVM.Value?.Dispose();
+		DlcManagerVM.Value = null;
+	}
+
 	public void HandleNetRolesRequest()
 	{
 		NetRolesVM.Value = new NetRolesVM(DisposeNetRoles);
@@ -361,6 +389,10 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		{
 			callback?.Invoke(button == DialogMessageBoxBase.BoxButton.Yes);
 		});
+	}
+
+	public void HandleInviteAccepted(bool accepted)
+	{
 	}
 
 	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
@@ -406,12 +438,18 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public void HandleRoomOwnerChanged()
 	{
+		if (PhotonManager.Instance.IsRoomOwner)
+		{
+			UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.YouAreTheHostNow, DialogMessageBoxBase.BoxType.Message, delegate
+			{
+			});
+		}
 	}
 
 	public void HandleFullScreenUiChanged(bool state, FullScreenUIType fullScreenUIType)
 	{
 		Game instance = Game.Instance;
-		if (fullScreenUIType != FullScreenUIType.LocalMap && NetLobbyVM.Value == null && NetRolesVM.Value == null && SaveLoadVM.Value == null && SettingsVM.Value == null && BugReportVM.Value == null)
+		if (fullScreenUIType != FullScreenUIType.LocalMap && NetLobbyVM.Value == null && NetRolesVM.Value == null && SaveLoadVM.Value == null && SettingsVM.Value == null && BugReportVM.Value == null && DlcManagerVM.Value == null)
 		{
 			instance.RequestPauseUi(state);
 		}

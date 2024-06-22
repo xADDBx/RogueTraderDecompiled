@@ -42,7 +42,7 @@ public class ContextActionAddBonusAbilityUsage : ContextAction
 		return "Add bonus ability usage to target";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)

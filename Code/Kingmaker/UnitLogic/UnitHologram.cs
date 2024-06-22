@@ -107,7 +107,6 @@ public class UnitHologram : MonoBehaviour
 		component.IsInDollRoom = true;
 		component.ForbidBeltItemVisualization = originalAvatar.ForbidBeltItemVisualization;
 		component.AnimatorPrefab = originalAvatar.AnimatorPrefab;
-		component.CopyEquipmentFrom(originalAvatar);
 		component.OnStart();
 		if (component.Animator != null)
 		{

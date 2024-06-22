@@ -14,9 +14,14 @@ public class FakeLoadingProcessCoroutine : IDisposable
 		LoadingProcess.Instance.StartLoadingProcess(Load(), null, processTag);
 	}
 
-	public void Dispose()
+	public void Hide()
 	{
 		m_InProgress = false;
+	}
+
+	public void Dispose()
+	{
+		Hide();
 	}
 
 	private IEnumerator Load()

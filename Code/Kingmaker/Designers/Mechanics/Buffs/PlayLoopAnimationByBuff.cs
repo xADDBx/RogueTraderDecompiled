@@ -12,6 +12,8 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IHashable
 {
 	public WarhammerBuffLoopAction BuffLoopAction;
 
+	private UnitAnimationManager m_UnitAnimationManager;
+
 	protected override void OnActivateOrPostLoad()
 	{
 		TrySetAction();
@@ -36,27 +38,35 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IHashable
 		base.OnViewDidAttach();
 	}
 
-	private void TrySetAction()
+	public void TrySetAction()
 	{
-		UnitAnimationManager unitAnimationManager = base.Owner?.View?.AnimationManager;
-		if (unitAnimationManager != null)
+		InitUnitAnimationManager();
+		if (m_UnitAnimationManager != null)
 		{
-			UnitAnimationActionHandle unitAnimationActionHandle = (UnitAnimationActionHandle)unitAnimationManager.CreateHandle(BuffLoopAction);
-			unitAnimationManager.Execute(unitAnimationActionHandle);
-			unitAnimationManager.BuffLoopAction = unitAnimationActionHandle;
+			UnitAnimationActionHandle unitAnimationActionHandle = (UnitAnimationActionHandle)m_UnitAnimationManager.CreateHandle(BuffLoopAction);
+			m_UnitAnimationManager.Execute(unitAnimationActionHandle);
+			m_UnitAnimationManager.BuffLoopAction = unitAnimationActionHandle;
 		}
 	}
 
-	private void TryResetAction()
+	public void TryResetAction()
 	{
-		UnitAnimationManager unitAnimationManager = base.Owner?.View?.AnimationManager;
-		if (unitAnimationManager != null && unitAnimationManager.BuffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction)
+		InitUnitAnimationManager();
+		if (m_UnitAnimationManager != null && m_UnitAnimationManager.BuffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction)
 		{
-			warhammerBuffLoopAction.SwitchToExit(unitAnimationManager.BuffLoopAction);
+			warhammerBuffLoopAction.SwitchToExit(m_UnitAnimationManager.BuffLoopAction);
 		}
-		else if (unitAnimationManager != null && unitAnimationManager.BuffLoopAction != null)
+		else if (m_UnitAnimationManager != null && m_UnitAnimationManager.BuffLoopAction != null)
 		{
-			unitAnimationManager.BuffLoopAction.Release();
+			m_UnitAnimationManager.BuffLoopAction.Release();
+		}
+	}
+
+	private void InitUnitAnimationManager()
+	{
+		if (m_UnitAnimationManager == null)
+		{
+			m_UnitAnimationManager = base.Owner?.View?.AnimationManager;
 		}
 	}
 

@@ -2,6 +2,7 @@ using Kingmaker.Code.UI.MVVM.View.Party.PC;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -51,15 +52,15 @@ public class PartySelectorItemConsoleView : ViewBase<PartyCharacterVM>, IConsole
 		if (!RootUIContext.Instance.IsSpace)
 		{
 			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
-			if (loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode)
+			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && UnitEntityData.IsDirectlyControllable())
 			{
 				AddDisposable(base.ViewModel.IsLinked.Subscribe(m_ConnectedIcon.SetActive));
-				goto IL_00a2;
+				goto IL_00af;
 			}
 		}
 		m_ConnectedIcon.SetActive(value: false);
-		goto IL_00a2;
-		IL_00a2:
+		goto IL_00af;
+		IL_00af:
 		AddDisposable(base.ViewModel.IsLevelUp.Subscribe(m_LevelUpObject.SetActive));
 	}
 

@@ -8,6 +8,7 @@ using Kingmaker.Blueprints.Base;
 using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Equipment;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Code.Enums.Helper;
@@ -53,6 +54,7 @@ using UnityEngine;
 namespace Kingmaker.View;
 
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("bbf398b7d73be774299f8a932569287e")]
 public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<EntitySubscriber>, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitEquipmentHandler, EntitySubscriber>, IUnitActiveEquipmentSetHandler<EntitySubscriber>, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitActiveEquipmentSetHandler, EntitySubscriber>, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, ILootDroppedAsAttachedHandler<EntitySubscriber>, ILootDroppedAsAttachedHandler, IEventTag<ILootDroppedAsAttachedHandler, EntitySubscriber>, ICellAbilityHandler, IShowAoEAffectedUIHandler
 {
 	private const string FogOfWarKeyword = "FOG_OF_WAR_AFFECTED";

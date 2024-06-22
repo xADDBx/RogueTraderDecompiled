@@ -38,14 +38,14 @@ public class CharGenCustomPortraitGroupView : ViewBase<CharGenPortraitGroupVM>, 
 		DrawEntities();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void DrawEntities()
 	{
 		AddDisposable(m_WidgetList.DrawMultiEntries(base.ViewModel.PortraitCollection, new List<IWidgetView> { m_Prefab, m_CreatorItemPrefab }));
 		UpdateNavigation();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	private void UpdateNavigation()

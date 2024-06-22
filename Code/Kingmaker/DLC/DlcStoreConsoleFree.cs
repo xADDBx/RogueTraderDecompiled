@@ -23,12 +23,19 @@ public class DlcStoreConsoleFree : DlcStore
 
 	public override bool IsSuitable => GetStatus() != null;
 
+	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on DlcStoreConsoleFree";
+
 	public override IDLCStatus GetStatus()
 	{
-		if (!AvailableOn.HasFlag(PlatformsType.PC))
+		IDLCStatus result = null;
+		try
 		{
-			return null;
+			result = (AvailableOn.HasFlag(PlatformsType.PC) ? DLCStatus.Available : null);
 		}
-		return DLCStatus.Available;
+		catch (Exception ex)
+		{
+			PFLog.Default.Exception(ex, ExceptionMessage);
+		}
+		return result;
 	}
 }

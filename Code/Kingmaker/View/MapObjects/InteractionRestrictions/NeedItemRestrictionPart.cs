@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -18,7 +19,7 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public BlueprintItem RequiredItem => base.Settings.GetItem();
 
-	public int? InteractionDC => null;
+	public int? InteractionDC => (InteractionPart.Settings as InteractionSkillCheckSettings)?.GetDC();
 
 	public virtual InteractionActorType Type
 	{
@@ -42,7 +43,11 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public InteractionPart InteractionPart => base.ConcreteOwner.GetAll<InteractionPart>().FirstOrDefault();
 
-	public StatType Skill => StatType.Unknown;
+	public StatType Skill => (InteractionPart.Settings as InteractionSkillCheckSettings)?.Skill ?? StatType.Unknown;
+
+	public virtual bool CheckOnlyOnce => (InteractionPart.Settings as InteractionSkillCheckSettings)?.OnlyCheckOnce ?? false;
+
+	public virtual bool CanUse => true;
 
 	protected override string GetDefaultBark(BaseUnitEntity baseUnitEntity, bool restricted)
 	{
@@ -89,6 +94,10 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public virtual string GetInteractionName()
 	{
+		if (InteractionPart.Settings is InteractionSkillCheckSettings interactionSkillCheckSettings)
+		{
+			return LocalizedTexts.Instance.Stats.GetText(interactionSkillCheckSettings.Skill);
+		}
 		return base.Settings?.GetItem()?.Name;
 	}
 

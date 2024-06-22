@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
+using Kingmaker.UnitLogic.Abilities;
 using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
@@ -25,18 +26,19 @@ public class CheckAbilityGroupGetter : PropertyGetter, PropertyContextAccessor.I
 
 	protected override int GetBaseValue()
 	{
-		if (!(this.GetAbility() != null))
+		AbilityData ability = this.GetAbility();
+		if (!(ability != null))
 		{
 			return 0;
 		}
-		if (Groups.FirstOrDefault(this.GetAbility().Blueprint.AbilityGroups.HasReference) == null)
+		if (Groups.FirstOrDefault(ability.Blueprint.AbilityGroups.HasReference) == null)
 		{
 			return 0;
 		}
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "AbilityGroup is " + string.Join("|", from i in Groups
 			where i != null

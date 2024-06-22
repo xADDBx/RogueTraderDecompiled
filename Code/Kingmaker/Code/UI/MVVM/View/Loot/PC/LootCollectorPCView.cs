@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -42,7 +43,7 @@ public class LootCollectorPCView : LootCollectorView
 	public override void Initialize()
 	{
 		base.Initialize();
-		m_CollectAllButtonLabel.text = UIStrings.Instance.LootWindow.CollectAll;
+		m_CollectAllButtonLabel.text = UIStrings.Instance.LootWindow.CollectAll.Text + " [" + UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("CollectAllLoot")) + "]";
 	}
 
 	protected override void BindViewImplementation()
@@ -56,7 +57,7 @@ public class LootCollectorPCView : LootCollectorView
 		});
 		AddDisposable(m_CollectAllButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.CollectAll();
+			CollectAll();
 		}));
 		AddDisposable(base.ViewModel.NoLoot.Subscribe(SetupButtons));
 		if (m_AllToCargoButton != null && m_AllToInventoryButton != null)
@@ -88,6 +89,17 @@ public class LootCollectorPCView : LootCollectorView
 		}
 		m_ToCargoText.SetHint(UIStrings.Instance.LootWindow.TrashLootObjectDescr.Text);
 		m_ToInventoryText.SetHint(UIStrings.Instance.LootWindow.ItemsLootObjectDescr.Text);
+		if (base.ViewModel.NoLoot.Value)
+		{
+			return;
+		}
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.CollectAllLoot.name, delegate
+		{
+			if (!base.ViewModel.NoLoot.Value)
+			{
+				CollectAll();
+			}
+		}));
 	}
 
 	private void SetupButtons(bool noLoot)

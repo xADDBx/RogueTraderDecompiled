@@ -53,7 +53,7 @@ public class CheckAbilityWeaponChosenGetter : PropertyGetter, PropertyContextAcc
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Ability Weapon Family";
 	}

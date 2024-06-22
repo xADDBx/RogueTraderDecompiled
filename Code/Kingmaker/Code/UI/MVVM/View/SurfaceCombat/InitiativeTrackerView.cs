@@ -145,19 +145,21 @@ public abstract class InitiativeTrackerView : ViewBase<InitiativeTrackerVM>, IGa
 		}
 		UISounds.Instance.Sounds.Combat.NewRound.Play();
 		TimeSurvival component = Game.Instance.CurrentlyLoadedArea.GetComponent<TimeSurvival>();
-		if (component == null)
+		if (component != null && !component.UnlimitedTime)
+		{
+			string warningText = component.RoundsLeft.ToString();
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(warningText, addToLog: false, WarningNotificationFormat.Counter);
+			});
+		}
+		else
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{
 				h.HandleWarning($"{UIStrings.Instance.TurnBasedTexts.Round.Text} {round}", addToLog: false);
 			});
-			return;
 		}
-		string warningText = component.RoundsLeft.ToString();
-		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-		{
-			h.HandleWarning(warningText, addToLog: false, WarningNotificationFormat.Counter);
-		});
 	}
 
 	protected abstract void PrepareInitiativeTracker();

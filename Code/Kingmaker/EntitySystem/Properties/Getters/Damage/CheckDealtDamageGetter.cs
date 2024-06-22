@@ -21,8 +21,8 @@ public class CheckDealtDamageGetter : CheckDamageGetter, PropertyContextAccessor
 		return true;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return base.GetInnerCaption() + " (Dealt Damage)";
+		return base.GetInnerCaption(useLineBreaks: false) + " (Dealt Damage)";
 	}
 }

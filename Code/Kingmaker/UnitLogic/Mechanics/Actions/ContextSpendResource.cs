@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Utility.Attributes;
 using UnityEngine;
@@ -26,12 +27,12 @@ public class ContextSpendResource : ContextAction
 		return "Spend resourse";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster == null)
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		PartAbilityResourceCollection abilityResourcesOptional = maybeCaster.GetAbilityResourcesOptional();

@@ -68,9 +68,6 @@ internal struct BuildJob<TGeometry> where TGeometry : unmanaged, IGeometry
 				geoSize = geometryArray.Length,
 				buildBounds = sceneBounds
 			};
-			value.maxFrameStackSize = num2;
-			value.minLeafSize = int.MaxValue;
-			value.maxLeafSize = int.MinValue;
 			do
 			{
 				StackFrame stackFrame = frameStack[--num2];
@@ -82,15 +79,11 @@ internal struct BuildJob<TGeometry> where TGeometry : unmanaged, IGeometry
 				num3 = math.max(num3, depth);
 				if (depth >= maxDepthLimit || geoSize <= maxLeafSize)
 				{
-					value.minLeafSize = math.min(value.minLeafSize, geoSize);
-					value.maxLeafSize = math.max(value.maxLeafSize, geoSize);
 					nodeList[nodeIndex] = Node.MakeLeaf(geoOffset, geoSize);
 					continue;
 				}
 				if (!Sort(in buildBounds, geoOffset, geoSize, out var leftSize, out var leftPlane, out var rightPlane, out var axis))
 				{
-					value.minLeafSize = math.min(value.minLeafSize, geoSize);
-					value.maxLeafSize = math.max(value.maxLeafSize, geoSize);
 					nodeList[nodeIndex] = Node.MakeLeaf(geoOffset, geoSize);
 					continue;
 				}
@@ -123,7 +116,6 @@ internal struct BuildJob<TGeometry> where TGeometry : unmanaged, IGeometry
 					geoSize = geoSize - leftSize,
 					buildBounds = buildBounds3
 				};
-				value.maxFrameStackSize = math.max(value.maxFrameStackSize, num2);
 			}
 			while (num2 > 0);
 			treeInfoArray[0] = new BihTreeInfo

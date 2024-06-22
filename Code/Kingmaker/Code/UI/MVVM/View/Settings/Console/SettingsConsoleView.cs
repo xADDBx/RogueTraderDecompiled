@@ -82,9 +82,12 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 		[SerializeField]
 		private SettingsEntitySliderFontSizeConsoleView m_SettingEntityFontSizeViewPrefab;
 
+		[SerializeField]
+		private SettingsEntityBoolOnlyOneSaveConsoleView m_SettingsEntityBoolOnlyOneSaveViewPrefab;
+
 		public void InitializeVirtualList(VirtualListComponent virtualListComponent)
 		{
-			virtualListComponent.Initialize(new VirtualListElementTemplate<SettingsEntityHeaderVM>(m_SettingsEntityHeaderViewPrefab), new VirtualListElementTemplate<SettingsEntityBoolVM>(m_SettingsEntityBoolViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownVM>(m_SettingsEntityDropdownViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderViewPrefab, 0), new VirtualListElementTemplate<SettingEntityKeyBindingVM>(m_SettingEntityKeyBindingViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownGameDifficultyVM>(m_SettingsEntityDropdownGameDifficultyViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderGammaCorrectionViewPrefab, 1), new VirtualListElementTemplate<SettingsEntityStatisticsOptOutVM>(m_SettingsEntityStatisticsOptOutViewPrefab), new VirtualListElementTemplate<SettingsEntityDisplayImagesVM>(m_SettingEntityDisplayImagesViewPrefab), new VirtualListElementTemplate<SettingsEntityAccessibilityImageVM>(m_SettingEntityAccessibilityImageViewPrefab), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingEntityFontSizeViewPrefab, 2));
+			virtualListComponent.Initialize(new VirtualListElementTemplate<SettingsEntityHeaderVM>(m_SettingsEntityHeaderViewPrefab), new VirtualListElementTemplate<SettingsEntityBoolVM>(m_SettingsEntityBoolViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownVM>(m_SettingsEntityDropdownViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderViewPrefab, 0), new VirtualListElementTemplate<SettingEntityKeyBindingVM>(m_SettingEntityKeyBindingViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownGameDifficultyVM>(m_SettingsEntityDropdownGameDifficultyViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderGammaCorrectionViewPrefab, 1), new VirtualListElementTemplate<SettingsEntityStatisticsOptOutVM>(m_SettingsEntityStatisticsOptOutViewPrefab), new VirtualListElementTemplate<SettingsEntityDisplayImagesVM>(m_SettingEntityDisplayImagesViewPrefab), new VirtualListElementTemplate<SettingsEntityAccessibilityImageVM>(m_SettingEntityAccessibilityImageViewPrefab), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingEntityFontSizeViewPrefab, 2), new VirtualListElementTemplate<SettingsEntityBoolOnlyOneSaveVM>(m_SettingsEntityBoolOnlyOneSaveViewPrefab));
 		}
 	}
 
@@ -241,6 +244,14 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 		BindHints();
 		Show();
 		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		GamePad.Instance.BaseLayer?.Bind();
+		Hide();
+		m_ConsoleHintsWidget.Dispose();
+		SettingsRoot.Display.SafeZoneOffset.OnTempValueChanged -= OnSafeZoneChanged;
 	}
 
 	private void FocusOnValidEntity(GridConsoleNavigationBehaviour navigationBehavior)
@@ -481,14 +492,6 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 		m_ConfirmHint.SetLabel(UIStrings.Instance.CommonTexts.Accept);
 		AddDisposable(m_DeclineHint = m_ConsoleHintsWidget.BindHint(m_DeclineStruct, "", ConsoleHintsWidget.HintPosition.Left));
 		m_DeclineHint.SetLabel(UIStrings.Instance.CommonTexts.CloseWindow);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		GamePad.Instance.BaseLayer?.Bind();
-		Hide();
-		m_ConsoleHintsWidget.Dispose();
-		SettingsRoot.Display.SafeZoneOffset.OnTempValueChanged -= OnSafeZoneChanged;
 	}
 
 	private void Show()

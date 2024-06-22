@@ -251,7 +251,7 @@ public class HighlightingFeature : ScriptableRendererFeature
 		CullingJob jobData = default(CullingJob);
 		jobData.Bounds = m_Bounds;
 		jobData.CameraPlanes = m_CameraPlanes;
-		m_JobHandle = jobData.Schedule(m_RendererInfos.Count, 32);
+		m_JobHandle = IJobParallelForExtensions.Schedule(jobData, m_RendererInfos.Count, 32);
 		CountJob jobData2 = default(CountJob);
 		jobData2.Bounds = m_Bounds.Slice(0, m_RendererInfos.Count);
 		jobData2.Count = m_Count;

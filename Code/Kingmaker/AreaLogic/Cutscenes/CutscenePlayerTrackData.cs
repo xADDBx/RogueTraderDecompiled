@@ -71,11 +71,7 @@ public class CutscenePlayerTrackData : IHashable
 			try
 			{
 				commandBase.SetTime(PlayTime, player);
-				if (skipping)
-				{
-					commandBase.SkipByPlayer();
-				}
-				if (commandBase.CanBeSkipped && skipping)
+				if (skipping && commandBase.TrySkip(player))
 				{
 					commandBase.Interrupt(player);
 				}

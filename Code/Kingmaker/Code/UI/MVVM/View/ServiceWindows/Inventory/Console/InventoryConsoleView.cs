@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
@@ -40,13 +39,13 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 {
 	[Header("Console")]
 	[SerializeField]
+	private TooltipPlaces m_StashTooltipPlaces;
+
+	[SerializeField]
 	private ConsoleHintsWidget m_ConsoleHintsWidget;
 
 	[SerializeField]
-	private RectTransform m_TooltipPlaceLeft;
-
-	[SerializeField]
-	private RectTransform m_TooltipPlaceRight;
+	private RectTransform m_TooltipPlaceCenter;
 
 	[Header("Animation Settings")]
 	[SerializeField]
@@ -74,8 +73,6 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 
 	private readonly BoolReactiveProperty m_FocusOnRightPanel = new BoolReactiveProperty(initialValue: true);
 
-	private readonly BoolReactiveProperty m_ShowTooltip = new BoolReactiveProperty();
-
 	private readonly BoolReactiveProperty m_HasTooltip = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_HasContextMenu = new BoolReactiveProperty();
@@ -99,6 +96,22 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private bool m_ShowTooltipPrevValue;
 
 	private IConsoleHint m_FuncAddHint;
+
+	private IConsoleHint m_TooltipHint;
+
+	private readonly BoolReactiveProperty m_ShowTooltip = new BoolReactiveProperty();
+
+	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
+
+	private TooltipConfig m_CompareTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
+
+	private bool m_IsCurrentTooltipComparative;
 
 	private IConsoleEntity m_CulledFocus;
 
@@ -202,9 +215,10 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.CloseWindow));
 		AddDisposable(inputBindStruct);
 		InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased);
-		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(m_TooltipHint = m_ConsoleHintsWidget.BindHint(inputBindStruct2));
 		AddDisposable(inputBindStruct2);
-		m_StashView.ItemsFilter.AddInput(m_InputLayer, m_FocusOnRightPanel);
+		m_TooltipHint.SetLabel(UIStrings.Instance.CommonTexts.Information);
+		m_StashView.ItemsFilter.AddInput(m_InputLayer, m_FocusOnRightPanel, m_ConsoleHintsWidget);
 		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.AddInput(m_InputLayer, m_ConsoleHintsWidget);
 		m_DollView.AddInput(m_InputLayer, m_ConsoleHintsWidget);
 		if (m_NameAndPortraitPCView is CharInfoNameAndPortraitConsoleView charInfoNameAndPortraitConsoleView)
@@ -302,14 +316,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private void UpdateTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
-		RectTransform tooltipPlace = (m_FocusOnRightPanel.Value ? m_TooltipPlaceLeft : m_TooltipPlaceRight);
-		TooltipConfig tooltipConfig = default(TooltipConfig);
-		tooltipConfig.TooltipPlace = tooltipPlace;
-		tooltipConfig.PriorityPivots = new List<Vector2>
-		{
-			new Vector2(0.5f, 0.5f)
-		};
-		TooltipConfig config = tooltipConfig;
+		m_IsCurrentTooltipComparative = false;
+		UpdateTooltipConfigs();
 		if (entity == null)
 		{
 			m_HasTooltip.Value = false;
@@ -325,7 +333,7 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, config);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: true);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
@@ -334,19 +342,38 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			m_HasTooltip.Value = list.Count > 0;
 			if (m_HasTooltip.Value && m_ShowTooltip.Value)
 			{
+				m_IsCurrentTooltipComparative = list.Count > 1;
 				if (list.Count > 1)
 				{
-					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), config);
+					m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
+					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
 				}
 				else
 				{
-					monoBehaviour.ShowConsoleTooltip(list.ElementAt(0), m_NavigationBehaviour, config);
+					monoBehaviour.ShowConsoleTooltip(list.LastOrDefault(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: true);
 				}
 			}
 		}
 		else
 		{
 			m_HasTooltip.Value = false;
+		}
+	}
+
+	private void UpdateTooltipConfigs()
+	{
+		if (m_FocusOnRightPanel.Value && (bool)m_StashTooltipPlaces)
+		{
+			m_MainTooltipConfig = m_StashTooltipPlaces.GetMainTooltipConfig(m_MainTooltipConfig);
+			m_CompareTooltipConfig = m_StashTooltipPlaces.GetCompareTooltipConfig(m_CompareTooltipConfig);
+		}
+		else
+		{
+			m_MainTooltipConfig.TooltipPlace = m_TooltipPlaceCenter;
+			m_MainTooltipConfig.PriorityPivots = new List<Vector2>
+			{
+				new Vector2(0.5f, 0.5f)
+			};
 		}
 	}
 
@@ -380,6 +407,11 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private void Close()
 	{
 		TooltipHelper.HideTooltip();
+		if (m_HasTooltip.Value && m_ShowTooltip.Value)
+		{
+			m_ShowTooltip.Value = false;
+			return;
+		}
 		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 		{
 			h.HandleCloseAll();

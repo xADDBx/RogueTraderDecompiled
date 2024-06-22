@@ -18,7 +18,7 @@ public class ContextActionProlongBuff : ContextAction
 
 	public BlueprintBuff Buff => m_Buff?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)

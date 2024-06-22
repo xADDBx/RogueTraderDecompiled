@@ -208,7 +208,7 @@ internal sealed class ShadowManager
 
 	private unsafe void CreateRenderListsForRequestsList(NativeList<ShadowRenderRequest> requestList, ScriptableRenderContext context, in RenderingData renderingData, bool useRenderingLayerMask)
 	{
-		ShadowRenderRequest* unsafePtr = (ShadowRenderRequest*)requestList.GetUnsafePtr();
+		ShadowRenderRequest* unsafePtr = requestList.GetUnsafePtr();
 		int length = requestList.Length;
 		for (int i = 0; i < length; i++)
 		{

@@ -27,6 +27,13 @@ public class StopPlayingState : IStateAsync
 		{
 			await m_PhotonManager.LeaveRoomAsync();
 		}
+		else
+		{
+			EventBus.RaiseEvent(delegate(INetLobbyRequest h)
+			{
+				h.HandleNetLobbyRequest();
+			});
+		}
 		await Awaiters.UnityThread;
 		m_PhotonManager.ClearState(m_ShouldLeaveLobby);
 		await WaitPhotonStableState();

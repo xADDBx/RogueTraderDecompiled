@@ -146,7 +146,7 @@ public class WarhammerRestoreResourcesSet : ContextAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{

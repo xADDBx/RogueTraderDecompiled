@@ -35,12 +35,12 @@ public class CommandsRunnerTask : ArbiterTask
 	protected override IEnumerator Routine()
 	{
 		m_Finished = false;
-		ArbiterMeasurements.StartProfilerRecorders();
-		ArbiterMeasurements.StartEveryFrameMeasurements();
+		ArbiterClientMeasurements.StartProfilerRecorders();
+		ArbiterClientMeasurements.StartEveryFrameMeasurements();
 		EnableImmortality();
 		while (!m_Finished)
 		{
-			ArbiterMeasurements.TickEveryFrameMeasurements();
+			ArbiterClientMeasurements.TickEveryFrameMeasurements();
 			HandleGameModeChange();
 			HandleCameraPosition();
 			if (IsWaitingForCutscene())
@@ -57,10 +57,10 @@ public class CommandsRunnerTask : ArbiterTask
 			TickCurrentTask();
 			yield return null;
 		}
-		ArbiterMeasurements.StopEveryFrameMeasurements();
-		ArbiterMeasurements.StopProfilerRecorders();
+		ArbiterClientMeasurements.StopEveryFrameMeasurements();
+		ArbiterClientMeasurements.StopProfilerRecorders();
 		DynamicProbeData dynamicProbeData = new DynamicProbeData();
-		dynamicProbeData.AddCustomMeasurements(ArbiterMeasurements.GetEveryFrameMeasurements());
+		dynamicProbeData.AddCustomMeasurements(ArbiterClientMeasurements.GetEveryFrameMeasurements());
 		m_ProbeData.ProbeDataList.Add(dynamicProbeData);
 	}
 

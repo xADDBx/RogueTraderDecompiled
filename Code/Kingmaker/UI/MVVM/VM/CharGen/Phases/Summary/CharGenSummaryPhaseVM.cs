@@ -16,6 +16,7 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.CharGen;
 using Kingmaker.UnitLogic.Levelup.Selections.CharacterName;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
@@ -65,6 +66,7 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 		SetupTooltipTemplate();
 		if (m_Subscribed)
 		{
+			SetDefaultNameIfNeeded();
 			return;
 		}
 		AddDisposable(CharGenNameVM = new CharGenNameVM(CharGenContext.CurrentUnit, CharGenContext.LevelUpManager, GetRandomName, SetName));
@@ -84,6 +86,7 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 			}
 		}));
 		AddDisposable(EventBus.Subscribe(this));
+		SetDefaultNameIfNeeded();
 		m_Subscribed = true;
 	}
 
@@ -135,7 +138,16 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 		{
 			return string.Empty;
 		}
-		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetRandomName(CharGenContext.Doll.Race.RaceId, CharGenContext.Doll.Gender);
+		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetRandomName(CharGenContext.Doll.Race.RaceId, CharGenContext.Doll.Gender, CharGenContext.CharGenConfig.Mode, CharGenNameVM.UnitName.Value);
+	}
+
+	private void SetDefaultNameIfNeeded()
+	{
+		if (CharGenContext.IsCustomCharacter.Value && CharGenContext.LevelUpManager.Value.PreviewUnit.GetDescriptionOptional()?.CustomName == null && CharGenContext.Doll?.Race != null)
+		{
+			string defaultName = BlueprintCharGenRoot.Instance.PregenCharacterNames.GetDefaultName(CharGenContext.Doll.Race.RaceId, CharGenContext.Doll.Gender, CharGenContext.CharGenConfig.Mode, CharGenNameVM.UnitName.Value);
+			SetName(defaultName);
+		}
 	}
 
 	public override void InterruptChargen(Action onComplete)

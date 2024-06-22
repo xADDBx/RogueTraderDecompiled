@@ -18,33 +18,33 @@ public class DodgeAlliesAutomatically : UnitFactComponentDelegate, IInitiatorRul
 
 	public void OnEventAboutToTrigger(RuleCalculateHitChances evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && evt.InitiatorUnit != null && evt.TargetUnit != null && evt.InitiatorUnit.IsAlly(evt.TargetUnit) && !evt.TargetUnit.Features.AutoDodge)
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && evt.InitiatorUnit != null && evt.TargetUnit != null && evt.InitiatorUnit.IsAlly(evt.TargetUnit) && !evt.TargetUnit.Features.AutoDodge && !evt.TargetUnit.Features.AutoDodgeFriendlyFire)
 		{
-			evt.TargetUnit.Features.AutoDodge.Retain();
+			evt.TargetUnit.Features.AutoDodgeFriendlyFire.Retain();
 		}
 	}
 
 	public void OnEventDidTrigger(RuleCalculateHitChances evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.TargetUnit?.Features.AutoDodge)
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.TargetUnit?.Features.AutoDodgeFriendlyFire)
 		{
-			evt.TargetUnit?.Features.AutoDodge.Release();
+			evt.TargetUnit?.Features.AutoDodgeFriendlyFire.Release();
 		}
 	}
 
 	public void OnEventAboutToTrigger(RulePerformAttack evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && evt.InitiatorUnit != null && evt.TargetUnit != null && evt.InitiatorUnit.IsAlly(evt.TargetUnit) && !evt.TargetUnit.Features.AutoDodge)
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && evt.InitiatorUnit != null && evt.TargetUnit != null && evt.InitiatorUnit.IsAlly(evt.TargetUnit) && !evt.TargetUnit.Features.AutoDodge && !evt.TargetUnit.Features.AutoDodgeFriendlyFire)
 		{
-			evt.TargetUnit.Features.AutoDodge.Retain();
+			evt.TargetUnit.Features.AutoDodgeFriendlyFire.Retain();
 		}
 	}
 
 	public void OnEventDidTrigger(RulePerformAttack evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.TargetUnit?.Features.AutoDodge)
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.TargetUnit?.Features.AutoDodgeFriendlyFire)
 		{
-			evt.TargetUnit?.Features.AutoDodge.Release();
+			evt.TargetUnit?.Features.AutoDodgeFriendlyFire.Release();
 		}
 	}
 
@@ -53,18 +53,18 @@ public class DodgeAlliesAutomatically : UnitFactComponentDelegate, IInitiatorRul
 		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability))
 		{
 			MechanicEntity maybeAttacker = evt.MaybeAttacker;
-			if (maybeAttacker != null && maybeAttacker.IsAlly(evt.Defender) && !evt.Defender.Features.AutoDodge)
+			if (maybeAttacker != null && maybeAttacker.IsAlly(evt.Defender) && !evt.Defender.Features.AutoDodge && !evt.Defender.Features.AutoDodgeFriendlyFire)
 			{
-				evt.Defender.Features.AutoDodge.Retain();
+				evt.Defender.Features.AutoDodgeFriendlyFire.Retain();
 			}
 		}
 	}
 
 	public void OnEventDidTrigger(RuleCalculateDodgeChance evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.Defender.Features.AutoDodge)
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Ability) && (bool)evt.Defender.Features.AutoDodgeFriendlyFire)
 		{
-			evt.Defender.Features.AutoDodge.Release();
+			evt.Defender.Features.AutoDodgeFriendlyFire.Release();
 		}
 	}
 

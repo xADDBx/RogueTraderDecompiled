@@ -32,7 +32,7 @@ public class RewardAddFeatureUI : RewardUI<RewardAddFeature>
 	{
 		if (base.Reward.Fact == null)
 		{
-			PFLog.System.Error("RewardAddFeature.GetUITooltip - Fact is null!");
+			PFLog.UI.Error("RewardAddFeature.GetUITooltip - Fact is null!");
 			return null;
 		}
 		if (base.Reward.Fact is BlueprintFeature feature)
@@ -50,7 +50,7 @@ public class RewardAddFeatureUI : RewardUI<RewardAddFeature>
 	{
 		if (base.Reward.Fact == null)
 		{
-			PFLog.System.Error("RewardAddFeature.GetDescription - Fact is null!");
+			PFLog.UI.Error("RewardAddFeature.GetDescription - Fact is null!");
 			return string.Empty;
 		}
 		if (base.Reward.AddToParty)
@@ -63,9 +63,9 @@ public class RewardAddFeatureUI : RewardUI<RewardAddFeature>
 		}
 		if (base.Reward.UnitEvaluator != null)
 		{
-			return string.Format(UIStrings.Instance.ColonyProjectsRewards.RewardAddFeature, base.Reward.UnitEvaluator, base.Reward.Fact.Name);
+			return string.Format(UIStrings.Instance.ColonyProjectsRewards.RewardAddFeature, base.Reward.UnitEvaluator.GetValue().Name, base.Reward.Fact.Name);
 		}
-		PFLog.System.Error("RewardAddFeature.GetDescription - m_Unit is null!");
+		PFLog.UI.Error("RewardAddFeature.GetDescription - m_Unit is null!");
 		return string.Empty;
 	}
 }

@@ -30,7 +30,7 @@ public class CharInfoStatusEffectsView : CharInfoComponentView<CharInfoStatusEff
 	protected WidgetListMVVM m_WidgetList;
 
 	[SerializeField]
-	private CharInfoFeatureBaseView m_WidgetEntityView;
+	private StatusEffectBaseView m_WidgetEntityView;
 
 	private AccessibilityTextHelper m_TextHelper;
 

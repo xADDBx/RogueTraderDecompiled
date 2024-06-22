@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Loot;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
@@ -11,6 +12,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawner))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("91a03409306240bea3fb42e764c1c2d4")]
 public class SpawnerLootSettings : EntityPartComponent<SpawnerLootSettings.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

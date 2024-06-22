@@ -33,7 +33,7 @@ public class DodgeActions : ContextAction
 		return "Run ActionsOnHit, do nothing else";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ActionsOnHit.Run();
 	}

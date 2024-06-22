@@ -70,7 +70,7 @@ public class MultilevelGridBroadphase : BroadphaseBase
 		jobData.AabbMax = base.AabbSoA.AabbMax;
 		jobData.SceneAabb = m_SceneAabb;
 		jobData.Hash = m_HashSoA.Array;
-		lastJobHandle = jobData.Schedule(num, 1, lastJobHandle);
+		lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 		QuickSortJob<KeyValuePairComparable<uint, uint>> jobData2 = default(QuickSortJob<KeyValuePairComparable<uint, uint>>);
 		jobData2.Entries = m_HashSoA.Array;
 		jobData2.StartIndex = 0;
@@ -94,7 +94,7 @@ public class MultilevelGridBroadphase : BroadphaseBase
 		jobData4.Hash = m_HashSoA.Array;
 		jobData4.BodyColliderPairs = m_BodyColliderPairsSoA.Array;
 		jobData4.BodyForceVolumePairs = m_BodyForceVolumePairsSoA.Array;
-		lastJobHandle = jobData4.Schedule(m_BodiesCount, 1, lastJobHandle);
+		lastJobHandle = IJobParallelForExtensions.Schedule(jobData4, m_BodiesCount, 1, lastJobHandle);
 		return lastJobHandle;
 	}
 }

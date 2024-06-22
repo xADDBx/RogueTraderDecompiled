@@ -45,7 +45,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	public readonly BlueprintItem SourceItem;
 
-	private readonly MechanicEntity m_Caster;
+	public readonly MechanicEntity Caster;
 
 	private string m_Name = string.Empty;
 
@@ -93,6 +93,8 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private bool m_IsOnTimeInBattleAbility;
 
+	private bool m_IsScreenWindowTooltip;
+
 	private bool IsWeaponAbility
 	{
 		get
@@ -116,21 +118,23 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		}
 	}
 
-	public TooltipTemplateAbility(BlueprintAbility blueprintAbility, BlueprintItem sourceItem = null, MechanicEntity caster = null)
+	public TooltipTemplateAbility(BlueprintAbility blueprintAbility, BlueprintItem sourceItem = null, MechanicEntity caster = null, bool isScreenWindowTooltip = false)
 	{
 		BlueprintAbility = blueprintAbility;
 		SourceItem = sourceItem;
-		m_Caster = caster;
+		Caster = caster;
+		m_IsScreenWindowTooltip = isScreenWindowTooltip;
 	}
 
-	public TooltipTemplateAbility(AbilityData abilityData)
+	public TooltipTemplateAbility(AbilityData abilityData, bool isScreenWindowTooltip = false)
 	{
 		AbilityData = abilityData;
 		m_DamageInfo = null;
 		BlueprintAbility = abilityData.Blueprint;
-		m_Caster = abilityData.Caster;
+		Caster = abilityData.Caster;
 		SourceItem = abilityData.SourceItem?.Blueprint;
 		m_Weapon = abilityData.SourceItem as ItemEntityWeapon;
+		m_IsScreenWindowTooltip = isScreenWindowTooltip;
 	}
 
 	private void FillBlueprintAbilityData(BlueprintAbility blueprintAbility)
@@ -153,7 +157,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			m_LongDescriptionText = blueprintAbility.Description;
 			m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
 			m_ActionTime = UIUtilityTexts.GetAbilityActionText(blueprintAbility);
-			m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItem, m_Caster);
+			m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItem, Caster);
 			m_IsReload = UIUtilityItem.IsReload(blueprintAbility);
 		}
 		catch (Exception arg)
@@ -168,7 +172,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		{
 			using (GameLogContext.Scope)
 			{
-				GameLogContext.UnitEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)m_Caster;
+				GameLogContext.UnitEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)Caster;
 				m_Name = abilityData.Name;
 				m_Icon = abilityData.Icon;
 				m_Type = GetAbilityType(abilityData.Blueprint);
@@ -247,11 +251,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		{
 			tertiaryValues = new TooltipBrickIconPattern.TextFieldValues
 			{
-				Text = string.Format(UIStrings.Instance.Tooltips.ShotsCount, m_UIAbilityData.BurstAttacksCount.ToString()),
-				TextParams = new TextFieldParams
-				{
-					FontColor = Color.black
-				}
+				Text = string.Format(UIStrings.Instance.Tooltips.ShotsCount, m_UIAbilityData.BurstAttacksCount.ToString())
 			};
 		}
 		if (m_IsReload)
@@ -262,11 +262,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 				int warhammerMaxAmmo = m_Weapon.Blueprint.WarhammerMaxAmmo;
 				tertiaryValues = new TooltipBrickIconPattern.TextFieldValues
 				{
-					Text = string.Format(UIStrings.Instance.Tooltips.ShotsCount, $"{currentAmmo}/{warhammerMaxAmmo}"),
-					TextParams = new TextFieldParams
-					{
-						FontColor = Color.black
-					}
+					Text = string.Format(UIStrings.Instance.Tooltips.ShotsCount, $"{currentAmmo}/{warhammerMaxAmmo}")
 				};
 			}
 			else
@@ -285,8 +281,8 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			textFieldValues.TextParams.FontColor = UIConfig.Instance.TooltipColors.DesperateMeasureAbility;
 			break;
 		default:
-			textFieldValues.Text = ((!IsSpaceCombatAbility) ? m_UIAbilityData.CostAP : string.Empty);
-			textFieldValues.TextParams.FontColor = Color.black;
+			textFieldValues.Text = ((!IsSpaceCombatAbility) ? UIStrings.Instance.Tooltips.CostAP.Text : string.Empty);
+			textFieldValues.Value = ((!IsSpaceCombatAbility) ? m_UIAbilityData.CostAP : string.Empty);
 			break;
 		}
 		return new TooltipBrickIconPattern(m_UIAbilityData.Icon, null, titleValues, textFieldValues, tertiaryValues);
@@ -364,7 +360,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private void AddTarget(List<ITooltipBrick> bricks)
 	{
-		if (!m_IsReload && !string.IsNullOrEmpty(m_Target))
+		if (!m_IsReload && !string.IsNullOrEmpty(m_Target) && !(m_TargetIcon == null))
 		{
 			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
 			{
@@ -374,7 +370,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			{
 				Text = m_Target
 			};
-			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues));
+			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -390,7 +386,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			{
 				Text = UIUtilityTexts.WrapWithWeight(m_Duration, TextFontWeight.SemiBold)
 			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -402,11 +398,17 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			{
 				Text = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Cooldown)
 			};
-			TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
+			TooltipBrickIconPattern.TextFieldValues textFieldValues = new TooltipBrickIconPattern.TextFieldValues();
+			if (m_IsOnTimeInBattleAbility)
 			{
-				Text = UIUtilityTexts.WrapWithWeight((!m_IsOnTimeInBattleAbility) ? string.Concat(UIStrings.Instance.TurnBasedTexts.Rounds, ": ", m_Cooldown) : ((string)UIStrings.Instance.TurnBasedTexts.CanUseOneTimeInCombat), TextFontWeight.SemiBold)
-			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Cooldown, null, titleValues, secondaryValues, null, new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, 0)));
+				textFieldValues.Text = UIUtilityTexts.WrapWithWeight(UIStrings.Instance.TurnBasedTexts.CanUseOneTimeInCombat, TextFontWeight.SemiBold);
+			}
+			else
+			{
+				textFieldValues.Text = UIStrings.Instance.TurnBasedTexts.Rounds;
+				textFieldValues.Value = m_Cooldown;
+			}
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Cooldown, null, titleValues, textFieldValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -429,13 +431,13 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		}
 		else
 		{
-			bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Tooltips.HitChances, $"{m_UIAbilityData.HitChance}%"));
+			bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Tooltips.HitChances, UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.HitChance)));
 		}
 	}
 
 	private void AddRangeHitChances(List<ITooltipBrick> bricks)
 	{
-		TextFieldParams textFieldParams = new TextFieldParams
+		TextFieldParams textParams = new TextFieldParams
 		{
 			FontStyles = TMPro.FontStyles.Bold
 		};
@@ -446,18 +448,16 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
 		{
 			Text = UIStrings.Instance.Tooltips.HitChancesEffectiveDistance,
-			Value = $"{m_UIAbilityData.HitChance}%",
-			TextParams = textFieldParams,
-			ValueParams = textFieldParams
+			Value = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.HitChance),
+			TextParams = textParams
 		};
 		TooltipBrickIconPattern.TextFieldValues tertiaryValues = new TooltipBrickIconPattern.TextFieldValues
 		{
 			Text = UIStrings.Instance.Tooltips.HitChancesMaxDistance,
-			Value = $"{m_UIAbilityData.HitChance / 2}%",
-			TextParams = textFieldParams,
-			ValueParams = textFieldParams
+			Value = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.HitChance / 2),
+			TextParams = textParams
 		};
-		bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.HitChances, null, titleValues, secondaryValues, tertiaryValues));
+		bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.HitChances, null, titleValues, secondaryValues, tertiaryValues, null, IconPatternMode.IconMode));
 	}
 
 	private void AddScatterHitChances(List<ITooltipBrick> bricks)
@@ -467,14 +467,14 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.HitChances, TooltipTitleType.H1));
 		bricks.Add(new TooltipBricksGroupStart());
 		bricks.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.HitChancesEffectiveDistance, TooltipTextType.Bold));
-		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterMainLineClose, $"{scatterHitChanceData.MainLineClose}%"));
-		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterClose, $"{scatterHitChanceData.ScatterClose}%"));
+		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterMainLineClose, UIConfig.Instance.PercentHelper.AddPercentTo(scatterHitChanceData.MainLineClose)));
+		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterClose, UIConfig.Instance.PercentHelper.AddPercentTo(scatterHitChanceData.ScatterClose)));
 		bricks.Add(new TooltipBricksGroupEnd());
 		bricks.Add(new TooltipBricksGroupStart());
 		bricks.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.HitChancesMaxDistance, TooltipTextType.Bold));
-		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterMainLine, $"{scatterHitChanceData.MainLine}%"));
-		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterNear, $"{scatterHitChanceData.ScatterNear}%"));
-		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterFar, $"{scatterHitChanceData.ScatterFar}%"));
+		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterMainLine, UIConfig.Instance.PercentHelper.AddPercentTo(scatterHitChanceData.MainLine)));
+		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterNear, UIConfig.Instance.PercentHelper.AddPercentTo(scatterHitChanceData.ScatterNear)));
+		bricks.Add(new TooltipBrickIconStatValue(tooltips.ScatterFar, UIConfig.Instance.PercentHelper.AddPercentTo(scatterHitChanceData.ScatterFar)));
 		bricks.Add(new TooltipBricksGroupEnd());
 	}
 
@@ -501,8 +501,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		if (!m_IsReload)
 		{
 			string baseDamageText = m_UIAbilityData.BaseDamageText;
-			_ = m_UIAbilityData.DamageText;
-			string valueRight = m_UIAbilityData.Penetration + "%";
+			string valueRight = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.Penetration);
 			if (!string.IsNullOrEmpty(baseDamageText))
 			{
 				Sprite damage = UIConfig.Instance.UIIcons.Damage;
@@ -529,9 +528,9 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		description = TooltipTemplateUtils.AggregateDescription(description, TooltipTemplateUtils.GetAdditionalDescription(BlueprintAbility));
 		if (!string.IsNullOrEmpty(description))
 		{
-			description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, m_Caster);
+			description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, Caster);
 			description = UpdateDescriptionWithUICommonProperties(description);
-			bricks.Add(new TooltipBrickText("\n" + description + "\n\n", TooltipTextType.Paragraph));
+			bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
 		}
 	}
 
@@ -554,7 +553,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			string link = description.Substring(num + 6, num2 - num - 6);
 			EntityProperty link2 = StatTypeFromString(link);
 			num = num2 + 1;
-			link = GetCommonPropertyStringFromStatType(link2, m_Caster as UnitEntity);
+			link = GetCommonPropertyStringFromStatType(link2, Caster as UnitEntity);
 			text += link;
 		}
 		return text;
@@ -694,7 +693,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	{
 		if (!string.IsNullOrEmpty(m_EndTurn))
 		{
-			bricks.Add(new TooltipBrickIconValueStat(m_EndTurn, null, UIConfig.Instance.UIIcons.TooltipIcons.MoveEndPoints, TooltipIconValueStatType.NameTextNormal, isWhite: true, needChangeSize: true, 18, 18, needChangeColor: false, default(Color), default(Color), useSecondaryLabelColor: true));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.MoveEndPoints, null, m_EndTurn, null, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -706,7 +705,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			{
 				bricks.Add(new TooltipBrickSeparator(TooltipBrickElementType.Small));
 			}
-			bricks.Add(new TooltipBrickIconValueStat(m_AttackAbilityGroupCooldown, null, UIConfig.Instance.UIIcons.TooltipIcons.ActionEndPoints, TooltipIconValueStatType.NameTextNormal, isWhite: true, needChangeSize: true, 18, 18, needChangeColor: false, default(Color), default(Color), useSecondaryLabelColor: true));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.ActionEndPoints, null, m_AttackAbilityGroupCooldown, null, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -718,7 +717,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			{
 				bricks.Add(new TooltipBrickSeparator(TooltipBrickElementType.Small));
 			}
-			bricks.Add(new TooltipBrickIconValueStat(m_Veil, null, UIConfig.Instance.UIIcons.TooltipIcons.Vail, TooltipIconValueStatType.NameTextNormal, isWhite: true, needChangeSize: true, 18, 18, needChangeColor: false, default(Color), default(Color), useSecondaryLabelColor: true));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Vail, null, m_Veil, null, null, null, IconPatternMode.IconMode));
 		}
 	}
 }

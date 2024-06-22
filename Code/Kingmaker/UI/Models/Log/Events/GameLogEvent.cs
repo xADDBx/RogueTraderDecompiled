@@ -52,7 +52,7 @@ public abstract class GameLogEvent
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.UI.Exception(ex);
 			return false;
 		}
 	}
@@ -68,19 +68,19 @@ public abstract class GameLogEvent
 		{
 			if (@event.ParentEvent != null)
 			{
-				PFLog.Default.ErrorWithReport("GameLogEvent: attempt to swallow event which ParentEvent != null");
+				PFLog.UI.ErrorWithReport("GameLogEvent: attempt to swallow event which ParentEvent != null");
 				return false;
 			}
 			bool num = TrySwallowEventInternal(@event);
 			if (num && !TryAddInnerEvent(@event))
 			{
-				PFLog.Default.ErrorWithReport("GameLogEvent: failed to merge events");
+				PFLog.UI.ErrorWithReport("GameLogEvent: failed to merge events");
 			}
 			return num;
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.UI.Exception(ex);
 			return false;
 		}
 	}

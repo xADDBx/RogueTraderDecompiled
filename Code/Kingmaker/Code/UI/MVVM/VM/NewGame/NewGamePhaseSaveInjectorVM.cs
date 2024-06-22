@@ -18,13 +18,13 @@ public class NewGamePhaseSaveInjectorVM : NewGamePhaseBaseVm
 {
 	private readonly ReactiveProperty<string> m_CharacterName = new ReactiveProperty<string>();
 
-	private ReactiveProperty<Sprite> m_Portrait = new ReactiveProperty<Sprite>();
+	private readonly ReactiveProperty<Sprite> m_Portrait = new ReactiveProperty<Sprite>();
 
-	public readonly SaveSlotCollectionVM SaveSlotCollectionVm;
+	private readonly SaveSlotCollectionVM m_SaveSlotCollectionVm;
 
 	private readonly List<SaveSlotVM> m_SaveSlotVMs = new List<SaveSlotVM>();
 
-	public readonly ReactiveCommand CollectionWasUpdated = new ReactiveCommand();
+	private readonly ReactiveCommand m_CollectionWasUpdated = new ReactiveCommand();
 
 	private readonly ReactiveProperty<SaveLoadMode> m_Mode = new ReactiveProperty<SaveLoadMode>(SaveLoadMode.Load);
 
@@ -41,39 +41,43 @@ public class NewGamePhaseSaveInjectorVM : NewGamePhaseBaseVm
 				return false;
 			}
 			bool flag = false;
-			foreach (NewGameRoot.StoryEntity story in BlueprintRoot.Instance.NewGameSettings.StoryList)
+			foreach (BlueprintCampaign storyCampaign in BlueprintRoot.Instance.NewGameSettings.StoryCampaigns)
 			{
-				if (!story.ComingSoon && story.DlcReward != null && Game.NewGamePreset == story.DlcReward.Campaign.StartGamePreset)
+				if (!storyCampaign.ComingSoon && Game.NewGamePreset == storyCampaign.StartGamePreset)
 				{
-					flag = story.DlcReward.Campaign.ImportFromMainCampaign.CanImport;
+					flag = storyCampaign.ImportFromMainCampaign.CanImport;
 					break;
 				}
 			}
-			if (!flag)
+			if (flag)
 			{
-				return false;
+				return CheckSaves();
 			}
-			return CheckSaves();
+			return false;
 		}
 	}
 
 	private bool CheckSaves()
 	{
 		Game.Instance.SaveManager.UpdateSaveListIfNeeded();
-		List<SaveInfo> list = Game.Instance.SaveManager.Where((SaveInfo si) => si.DLCCampaign == null).ToList();
-		if (list.Any())
+		List<SaveInfo> list = Game.Instance.SaveManager.Where((SaveInfo si) => si.Campaign == null).ToList();
+		if (!list.Any())
 		{
-			UpdateSavesCollection(list);
-			return true;
+			return false;
 		}
-		return false;
+		UpdateSavesCollection(list);
+		return true;
 	}
 
 	public NewGamePhaseSaveInjectorVM(Action backStep, Action nextStep)
 		: base(backStep, nextStep)
 	{
 		AddDisposable(MainMenuChargenUnits.Instance.CurrentPregenUnit.Subscribe(SetUnitProperties));
-		AddDisposable(SaveSlotCollectionVm = new SaveSlotCollectionVM(new ReactiveProperty<SaveLoadMode>(SaveLoadMode.Load)));
+		AddDisposable(m_SaveSlotCollectionVm = new SaveSlotCollectionVM(new ReactiveProperty<SaveLoadMode>(SaveLoadMode.Load)));
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	private void SetUnitProperties([CanBeNull] ChargenUnit chargenUnit)
@@ -99,7 +103,7 @@ public class NewGamePhaseSaveInjectorVM : NewGamePhaseBaseVm
 			{
 				SaveSlotVM saveSlotVM = new SaveSlotVM(saveInfo, m_Mode);
 				AddDisposable(saveSlotVM);
-				SaveSlotCollectionVm.HandleNewSave(saveSlotVM);
+				m_SaveSlotCollectionVm.HandleNewSave(saveSlotVM);
 				m_SaveSlotVMs.Add(saveSlotVM);
 			}
 		}
@@ -111,10 +115,10 @@ public class NewGamePhaseSaveInjectorVM : NewGamePhaseBaseVm
 		}
 		foreach (SaveSlotVM item2 in list)
 		{
-			SaveSlotCollectionVm.HandleDeleteSave(item2);
+			m_SaveSlotCollectionVm.HandleDeleteSave(item2);
 			m_SaveSlotVMs.Remove(item2);
 		}
-		CollectionWasUpdated.Execute();
+		m_CollectionWasUpdated.Execute();
 	}
 
 	public void AcceptSave()
@@ -142,9 +146,5 @@ public class NewGamePhaseSaveInjectorVM : NewGamePhaseBaseVm
 			return false;
 		}
 		return base.SetEnabled(value, direction);
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

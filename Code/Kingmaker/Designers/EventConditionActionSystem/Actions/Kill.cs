@@ -60,7 +60,7 @@ public class Kill : GameAction
 		return $"Убивает цель {Target}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
 		if (DisableBattleLog)

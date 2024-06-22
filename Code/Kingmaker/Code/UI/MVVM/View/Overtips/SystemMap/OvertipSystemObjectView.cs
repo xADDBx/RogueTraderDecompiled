@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.SystemMap;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -10,6 +12,7 @@ using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Globalmap.SystemMap;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
@@ -61,6 +64,9 @@ public abstract class OvertipSystemObjectView : BaseOvertipView<OvertipEntitySys
 	[SerializeField]
 	private FadeAnimator m_TargetPingEntity;
 
+	[SerializeField]
+	private List<Image> m_AdditionalTargetPingImages;
+
 	private MapObjectView m_SystemObject;
 
 	private bool m_Visible;
@@ -93,7 +99,10 @@ public abstract class OvertipSystemObjectView : BaseOvertipView<OvertipEntitySys
 			SetSystemObjectName();
 		}));
 		SetOvertipSize();
-		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(PingEntity));
+		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(delegate((NetPlayer player, Entity entity) value)
+		{
+			PingEntity(value.player, value.entity);
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -238,13 +247,27 @@ public abstract class OvertipSystemObjectView : BaseOvertipView<OvertipEntitySys
 		return text;
 	}
 
-	private void PingEntity(Entity entity)
+	private void PingEntity(NetPlayer player, Entity entity)
 	{
 		m_PingDelay?.Dispose();
 		if (entity != base.ViewModel.SystemMapObject)
 		{
 			m_TargetPingEntity.DisappearAnimation();
 			return;
+		}
+		int index = player.Index - 1;
+		Image component = m_TargetPingEntity.GetComponent<Image>();
+		Color currentColor = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+		if (component != null)
+		{
+			component.color = currentColor;
+		}
+		if (m_AdditionalTargetPingImages != null && m_AdditionalTargetPingImages.Any())
+		{
+			m_AdditionalTargetPingImages.ForEach(delegate(Image i)
+			{
+				i.color = currentColor;
+			});
 		}
 		m_TargetPingEntity.AppearAnimation();
 		m_PingDelay = DelayedInvoker.InvokeInTime(delegate

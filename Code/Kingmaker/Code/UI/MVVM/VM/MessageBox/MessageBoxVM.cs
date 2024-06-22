@@ -22,11 +22,13 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public readonly string InputPlaceholder;
 
-	public readonly bool ShowDecline;
+	public readonly BoolReactiveProperty ShowDecline = new BoolReactiveProperty();
 
 	public readonly ReactiveProperty<string> InputText = new ReactiveProperty<string>();
 
 	public readonly ReactiveProperty<int> WaitTime = new ReactiveProperty<int>(0);
+
+	public readonly BoolReactiveProperty IsProgressBar = new BoolReactiveProperty();
 
 	private readonly Action<DialogMessageBoxBase.BoxButton> m_OnClose;
 
@@ -36,7 +38,11 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	private readonly Action m_DisposeAction;
 
-	public MessageBoxVM(string messageText, DialogMessageBoxBase.BoxType boxType, Action<DialogMessageBoxBase.BoxButton> onClose, Action<TMP_LinkInfo> onLinkInvoke, string yesLabel, string noLabel, Action<string> onTextClose, string inputText, string inputPlaceholder, int waitTime, Action disposeAction)
+	public readonly FloatReactiveProperty LoadingProgress;
+
+	public readonly ReactiveCommand LoadingProgressCloseTrigger;
+
+	public MessageBoxVM(string messageText, DialogMessageBoxBase.BoxType boxType, Action<DialogMessageBoxBase.BoxButton> onClose, Action<TMP_LinkInfo> onLinkInvoke, string yesLabel, string noLabel, Action<string> onTextClose, string inputText, string inputPlaceholder, int waitTime, Action disposeAction, FloatReactiveProperty loadingProgress, ReactiveCommand loadingProgressCloseTrigger)
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		BoxType = boxType;
@@ -44,7 +50,8 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		MessageText = messageText;
 		AcceptText = (string.IsNullOrEmpty(yesLabel) ? ((string)commonTexts.Accept) : yesLabel);
 		DeclineText = (string.IsNullOrEmpty(noLabel) ? ((string)commonTexts.Cancel) : noLabel);
-		ShowDecline = boxType != DialogMessageBoxBase.BoxType.Message;
+		IsProgressBar.Value = boxType == DialogMessageBoxBase.BoxType.ProgressBar;
+		ShowDecline.Value = boxType != 0 && !IsProgressBar.Value;
 		m_OnClose = onClose;
 		m_TextClose = onTextClose;
 		m_LinkInvoke = onLinkInvoke;
@@ -56,6 +63,8 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		{
 			WaitTime.Value = value;
 		}, 0, waitTime).SetUpdate(isIndependentUpdate: true);
+		LoadingProgress = loadingProgress;
+		LoadingProgressCloseTrigger = loadingProgressCloseTrigger;
 	}
 
 	protected override void DisposeImplementation()
@@ -83,7 +92,10 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public void HandleNetLobbyRequest(bool isMainMenu = false)
 	{
-		OnDeclinePressed();
+		if (!IsProgressBar.Value)
+		{
+			OnDeclinePressed();
+		}
 	}
 
 	public void HandleNetLobbyClose()

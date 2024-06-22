@@ -27,7 +27,9 @@ public static class UnitHologramExtension
 		}
 		Skeleton skeleton = unit.View.CharacterAvatar.Skeleton;
 		HologramRaceFx[] hologramPrefabs = BlueprintRoot.Instance.FxRoot.HologramPrefabs;
-		foreach (HologramRaceFx hologramRaceFx in hologramPrefabs)
+		Transform transform = null;
+		HologramRaceFx[] array = hologramPrefabs;
+		foreach (HologramRaceFx hologramRaceFx in array)
 		{
 			if (hologramRaceFx.Race == null)
 			{
@@ -40,8 +42,14 @@ public static class UnitHologramExtension
 			else if (hologramRaceFx.Race == skeleton)
 			{
 				unitEntityView = SetupHologramPrefab(hologramRaceFx.HologramPrefab, unit);
+				transform = unitEntityView.transform.FindChildRecursive("R_WeaponBone");
 				break;
 			}
+		}
+		GameObject gameObject = null;
+		if (unit.Body.PrimaryHand.HasWeapon)
+		{
+			gameObject = UnityEngine.Object.Instantiate(unit.Body.PrimaryHand.Weapon.Blueprint.VisualParameters.Model);
 		}
 		if (unitEntityView == null && BlueprintRoot.Instance.FxRoot.DefaultHologramPrefab != null)
 		{
@@ -59,6 +67,13 @@ public static class UnitHologramExtension
 			unitEntityView.GetComponentsInChildren<UnitMovementAgent>().ForEach(UnityEngine.Object.Destroy);
 			unitHologram = unitEntityView.gameObject.EnsureComponent<UnitHologram>();
 			unitEntityView.CharacterAvatar = unitEntityView.GetComponent<Character>();
+			if (gameObject != null && transform != null)
+			{
+				gameObject.transform.position = transform.position;
+				gameObject.transform.parent = transform.transform;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+			}
 			unitHologram.Setup(unitEntityView, unit.View);
 		}
 		catch (Exception ex)

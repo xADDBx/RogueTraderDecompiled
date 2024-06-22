@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Starships;
@@ -15,11 +16,11 @@ public class WarhammerContextActionIncreaseMilitaryRating : ContextAction
 		return $"Increase Military Rating by {Value}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Context.MainTarget?.Entity is StarshipEntity target))
 		{
-			PFLog.Default.Error(this, "Target is missing");
+			Element.LogError(this, "Target is missing");
 		}
 		else
 		{

@@ -20,7 +20,7 @@ public class ShowMessageBox : GameAction
 		return "Show message box";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		UIUtility.ShowMessageBox(Text, DialogMessageBoxBase.BoxType.Message, delegate
 		{

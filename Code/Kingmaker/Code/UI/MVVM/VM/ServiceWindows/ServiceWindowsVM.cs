@@ -17,11 +17,8 @@ using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.TurnBased;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
-using Kingmaker.GameCommands;
-using Kingmaker.GameCommands.Colonization;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Items;
@@ -40,7 +37,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 
-public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INewServiceWindowUIHandler, ISubscriber, IGameModeHandler, ILevelUpCompleteUIHandler, ISubscriber<IBaseUnitEntity>, IEncyclopediaHandler, ILevelUpInitiateUIHandler, IShipCustomizationForceUIHandler, IAreaHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler, ICommandServiceWindowUIHandler, IFormationWindowUIHandler, ICharInfoAbilitiesChooseModeHandler
+public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INewServiceWindowUIHandler, ISubscriber, IGameModeHandler, ILevelUpCompleteUIHandler, ISubscriber<IBaseUnitEntity>, IEncyclopediaHandler, ILevelUpInitiateUIHandler, IShipCustomizationForceUIHandler, IAreaHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler, IFormationWindowUIHandler, ICharInfoAbilitiesChooseModeHandler
 {
 	public readonly ReactiveProperty<ServiceWindowsMenuVM> ServiceWindowsMenuVM = new ReactiveProperty<ServiceWindowsMenuVM>();
 
@@ -80,9 +77,9 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private INode m_OpenEncyclopediaPage;
 
-	private bool m_ServiceWindowNowIsOpening;
-
 	public bool CharInfoAbilitiesChooseMode => m_CharInfoAbilitiesChooseMode;
+
+	public CharInfoPageType CharInfoPageType => m_CharInfoPageType;
 
 	private bool IsInSpace
 	{
@@ -98,16 +95,28 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private bool FormationIsOpened => FormationVM.Instance != null;
 
+	private bool ServiceWindowNowIsOpening
+	{
+		get
+		{
+			return RootUIContext.Instance.ServiceWindowNowIsOpening;
+		}
+		set
+		{
+			RootUIContext.Instance.ServiceWindowNowIsOpening = value;
+		}
+	}
+
 	public ServiceWindowsVM()
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		BindKeys();
-		m_ServiceWindowNowIsOpening = false;
+		ServiceWindowNowIsOpening = false;
 	}
 
 	protected override void DisposeImplementation()
 	{
-		m_ServiceWindowNowIsOpening = false;
+		ServiceWindowNowIsOpening = false;
 		HideMenu();
 		HideWindow(CurrentWindow);
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
@@ -143,23 +152,20 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				HandleOpenShipCustomization();
 			}));
 		}
-		if (UIUtility.IsShipArea())
+		AddDisposable(Game.Instance.Keyboard.Bind("OpenColonyManagement", delegate
 		{
-			AddDisposable(Game.Instance.Keyboard.Bind("OpenColonyManagement", delegate
+			if (Game.Instance.Player.CanAccessStarshipInventory && !Game.Instance.Player.ColoniesState.ForbidColonization)
 			{
-				if (Game.Instance.Player.CanAccessStarshipInventory && !Game.Instance.Player.ColoniesState.ForbidColonization)
-				{
-					Game.Instance.GameCommandQueue.ColonyManagementUIOpen();
-				}
-			}));
-		}
+				HandleOpenColonyManagement();
+			}
+		}));
 		if (IsInSpace)
 		{
 			return;
 		}
 		AddDisposable(Game.Instance.Keyboard.Bind("OpenFormation", delegate
 		{
-			if (!RootUIContext.Instance.IsBlockedFullScreenUIType() && !IsInSpace)
+			if (!RootUIContext.Instance.IsBlockedFullScreenUIType() && !IsInSpace && !RootUIContext.Instance.ServiceWindowNowIsOpening)
 			{
 				if (FormationIsOpened)
 				{
@@ -189,11 +195,6 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public void HandleOpenWindowOfType(ServiceWindowsType type)
 	{
 		HandleOpenWindow(type);
-	}
-
-	void ICommandServiceWindowUIHandler.HandleOpenWindowOfType(ServiceWindowsType type)
-	{
-		HandleOpenWindow(type, onlyAnotherWindow: false);
 	}
 
 	public void HandleOpenInventory()
@@ -272,32 +273,26 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		HandleOpenWindow(ServiceWindowsType.CargoManagement);
 	}
 
-	public void HandleOpenShipCustomization()
+	public void HandleOpenShipCustomization(bool force = false)
 	{
-		m_ShipCustomizationTabType = ShipCustomizationTab.Upgrade;
-		HandleOpenWindow(ServiceWindowsType.ShipCustomization);
+		if (Game.Instance.Player.CanAccessStarshipInventory || force)
+		{
+			m_ShipCustomizationTabType = ShipCustomizationTab.Upgrade;
+			HandleOpenWindow(ServiceWindowsType.ShipCustomization);
+		}
 	}
 
 	private void HandleOpenWindow(ServiceWindowsType type)
-	{
-		HandleOpenWindow(type, onlyAnotherWindow: true);
-	}
-
-	private void HandleOpenWindow(ServiceWindowsType type, bool onlyAnotherWindow)
 	{
 		UIVisibilityState.ShowAllUI();
 		EventBus.RaiseEvent(delegate(IFormationWindowUIHandler h)
 		{
 			h.HandleCloseFormation();
 		});
-		if (!m_ServiceWindowNowIsOpening && (!RootUIContext.Instance.IsBlockedFullScreenUIType() || (CanShowEncyclopedia() && Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Chargen)))
+		if (!ServiceWindowNowIsOpening && !RootUIContext.Instance.IsVendorShow && (!RootUIContext.Instance.IsBlockedFullScreenUIType() || (CanShowEncyclopedia() && Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Chargen)))
 		{
-			m_ServiceWindowNowIsOpening = true;
-			bool hasColonyManagementUIGameCommandContext = ContextData<ColonyManagementUIGameCommand.Context>.Current;
-			Game.Instance.CoroutinesController.InvokeInTicks(delegate
-			{
-				HandleOpenWindowDelayed(type, onlyAnotherWindow, hasColonyManagementUIGameCommandContext);
-			}, 1);
+			ServiceWindowNowIsOpening = true;
+			HandleOpenWindowDelayed(type);
 		}
 		bool CanShowEncyclopedia()
 		{
@@ -313,28 +308,25 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 	}
 
-	private void HandleOpenWindowDelayed(ServiceWindowsType type, bool onlyAnotherWindow, bool hasColonyManagementUIGameCommandContext)
+	private void HandleOpenWindowDelayed(ServiceWindowsType type)
 	{
 		if (RootUIContext.Instance.IsExplorationWindow)
 		{
-			m_ServiceWindowNowIsOpening = false;
+			ServiceWindowNowIsOpening = false;
 			return;
 		}
 		if (ServiceWindowsMenuVM.Value == null)
 		{
-			if ((type == CurrentWindow || type == ServiceWindowsType.None) && onlyAnotherWindow)
+			if (type == CurrentWindow || type == ServiceWindowsType.None)
 			{
-				m_ServiceWindowNowIsOpening = false;
+				ServiceWindowNowIsOpening = false;
 				return;
 			}
 			ForceHideBackground.Value = type == ServiceWindowsType.ShipCustomization;
 			ShowMenu();
 		}
-		using (ContextData<ColonyManagementUIGameCommand.Context>.RequestIf(hasColonyManagementUIGameCommandContext))
-		{
-			OnOpen?.Execute(type);
-			ServiceWindowsMenuVM.Value?.SelectWindow(type);
-		}
+		OnOpen?.Execute(type);
+		ServiceWindowsMenuVM.Value?.SelectWindow(type);
 	}
 
 	private void OnSelectWindow(ServiceWindowsType type)
@@ -351,18 +343,11 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 						DoSelectWindow(type);
 					}
 				});
-				m_ServiceWindowNowIsOpening = false;
+				ServiceWindowNowIsOpening = false;
 				return;
 			}
 		}
-		if (CurrentWindow == ServiceWindowsType.ColonyManagement && Game.Instance.GameCommandQueue.ColonyManagementUIClose(type))
-		{
-			m_ServiceWindowNowIsOpening = false;
-		}
-		else
-		{
-			DoSelectWindow(type);
-		}
+		DoSelectWindow(type);
 	}
 
 	private void DoSelectWindow(ServiceWindowsType type)
@@ -376,15 +361,12 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				h.HandleFullScreenUiChanged(state: false, GetFullScreenUIType(CurrentWindow));
 			});
 			CurrentWindow = ServiceWindowsType.None;
-			m_ServiceWindowNowIsOpening = false;
+			ServiceWindowNowIsOpening = false;
 		}
 		else
 		{
-			Game.Instance.CoroutinesController.InvokeInTicks(delegate
-			{
-				CurrentWindow = type;
-				ShowWindow(type);
-			}, 1);
+			CurrentWindow = type;
+			ShowWindow(type);
 		}
 	}
 
@@ -406,6 +388,10 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			CharacterInfoVM disposable8 = (CharacterInfoVM.Value = new CharacterInfoVM(m_CharInfoPageType));
 			AddDisposable(disposable8);
+			AddDisposable(CharacterInfoVM.Value.PageType.Subscribe(delegate(CharInfoPageType value)
+			{
+				m_CharInfoPageType = value;
+			}));
 			break;
 		}
 		case ServiceWindowsType.Journal:
@@ -446,7 +432,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			break;
 		}
 		}
-		m_ServiceWindowNowIsOpening = false;
+		ServiceWindowNowIsOpening = false;
 		if (Game.Instance.ClickEventsController != null && Game.Instance.ClickEventsController.Mode != 0 && !IsInSpace)
 		{
 			Game.Instance.ClickEventsController.ClearPointerMode();
@@ -564,7 +550,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void HandleForceOpenShipCustomization()
 	{
-		HandleOpenShipCustomization();
+		HandleOpenShipCustomization(force: true);
 	}
 
 	public void HandleForceCloseAllComponentsMenu()

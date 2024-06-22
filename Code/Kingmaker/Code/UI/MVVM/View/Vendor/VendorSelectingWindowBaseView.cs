@@ -7,6 +7,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.InputSystems;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UnityEngine;
@@ -38,6 +39,7 @@ public class VendorSelectingWindowBaseView : ViewBase<VendorSelectingWindowVM>, 
 		DrawEntities();
 		m_Header.text = UIStrings.Instance.Vendor.ChooseVendorForTrade;
 		AddDisposable(EventBus.Subscribe(this));
+		AddDisposable(EscHotkeyManager.Instance.Subscribe(OnCloseClick));
 	}
 
 	protected override void DestroyViewImplementation()

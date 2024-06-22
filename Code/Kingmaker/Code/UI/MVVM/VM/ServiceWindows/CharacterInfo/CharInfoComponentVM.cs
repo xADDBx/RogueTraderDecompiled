@@ -30,11 +30,11 @@ public abstract class CharInfoComponentVM : BaseDisposable, IViewModel, IBaseDis
 		}));
 	}
 
-	protected virtual void RefreshData()
+	protected override void DisposeImplementation()
 	{
 	}
 
-	protected override void DisposeImplementation()
+	protected virtual void RefreshData()
 	{
 	}
 
@@ -50,7 +50,7 @@ public abstract class CharInfoComponentVM : BaseDisposable, IViewModel, IBaseDis
 	{
 	}
 
-	public void HandleUICommitChanges()
+	public virtual void HandleUICommitChanges()
 	{
 		RefreshData();
 	}

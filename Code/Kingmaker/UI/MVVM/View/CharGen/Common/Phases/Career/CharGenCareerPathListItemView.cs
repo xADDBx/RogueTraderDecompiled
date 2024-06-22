@@ -40,18 +40,7 @@ public class CharGenCareerPathListItemView : CareerPathListItemCommonView, IFunc
 
 	protected override void HandleClick()
 	{
-		if (base.ViewModel.Unit.IsDirectlyControllable)
-		{
-			if (!base.ViewModel.Unit.IsDirectlyControllable())
-			{
-				return;
-			}
-		}
-		else if (!UINetUtility.IsControlMainCharacter())
-		{
-			return;
-		}
-		if (base.ViewModel.CareerPath.Tier == CareerPathTier.One)
+		if (base.ViewModel.Unit.CanEditCareer() && base.ViewModel.CareerPath.Tier == CareerPathTier.One)
 		{
 			base.ViewModel.SetSelectedFromView(state: true);
 		}

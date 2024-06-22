@@ -13,7 +13,7 @@ public class AbilityWeaponBlueprintRateOfFireGetter : PropertyGetter, PropertyCo
 		return this.GetAbilityWeapon()?.Blueprint.RateOfFire ?? 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Unmodified Rate of Fire (from blueprint)";
 	}

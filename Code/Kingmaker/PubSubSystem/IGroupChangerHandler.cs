@@ -8,7 +8,7 @@ namespace Kingmaker.PubSubSystem;
 
 public interface IGroupChangerHandler : ISubscriber
 {
-	void HandleCall(Action goAction, Action closeAction, bool isCapital);
+	void HandleCall(Action goAction, Action closeAction, bool isCapital, bool sameFinishActions = false, bool canCancel = true);
 
 	void HandleSetLastUnits(List<UnitReference> lastUnits);
 

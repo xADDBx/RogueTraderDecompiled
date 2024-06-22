@@ -16,9 +16,9 @@ public class CheckAssassinOpeningGetter : PropertyGetter, PropertyContextAccesso
 {
 	public PropertyTargetType Target;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Hit an Assassin Opening";
+		return "Hit an Assassin Opening on " + Target.Colorized();
 	}
 
 	protected override int GetBaseValue()

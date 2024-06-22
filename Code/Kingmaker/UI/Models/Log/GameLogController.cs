@@ -11,8 +11,9 @@ using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem;
 using Kingmaker.UI.Models.Log.Events;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns;
-using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.MergeEvent;
+using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.AddPatterns;
 using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.MergeEvent.Comparers;
+using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.PostAddPatterns;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Core.Utility.Locator;
@@ -64,17 +65,15 @@ public class GameLogController : IControllerStart, IController, IControllerEnabl
 	void IControllerStart.OnStart()
 	{
 		PatternCollection.Instance.Cleanup();
-		PatternCollection.Instance.AddPattern(MergeEventPattern<GameLogRuleEvent<RulePerformSavingThrow>>.Create(PerformSavingThrowComparer.Create())).AddPattern(MergeEventPattern<GameLogEventItemsCollection>.Create(ItemsCollectionComparer.Create())).AddPattern(MergeEventPattern<GameLogEventCargoCollection>.Create(CargoCollectionComparer.Create()))
-			.AddPattern(MergeEventPattern<GameLogRuleEvent<RuleStarshipPerformAttack>>.Create(PerformStarshipAttackComparer.Create()))
-			.AddPattern(RemoveDealDamagePattern.Create())
-			.AddPattern(AttackEventChildrenSortPattern.Create())
-			.AddPattern(GrenadeAttackEventChildrenSortPattern.Create())
-			.AddPattern(MergeEventPattern<GameLogRuleEvent<RuleCalculateCanApplyBuff>>.Create(CalculateCanApplyBuffComparer.Create()))
-			.AddPattern(DeathMomentumPattern.Create())
-			.AddPattern(InsertSeparatorPattern.Create())
-			.AddPattern(SwitchApplyBuffAndDependAbilityPattern.Create())
-			.AddPattern(ConvertToEventScatterDealDamage.Create())
-			.AddPattern(ConvertToEventAoeDealDamage.Create());
+		PatternCollection.Instance.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RulePerformSavingThrow>>.Create(PerformSavingThrowComparer.Create())).AddPattern(PatternAddEventMergeEvent<GameLogEventItemsCollection>.Create(ItemsCollectionComparer.Create())).AddPattern(PatternAddEventMergeEvent<GameLogEventCargoCollection>.Create(CargoCollectionComparer.Create()))
+			.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RuleStarshipPerformAttack>>.Create(PerformStarshipAttackComparer.Create()))
+			.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RuleCalculateCanApplyBuff>>.Create(CalculateCanApplyBuffComparer.Create()))
+			.AddPattern(PatternAddEventInsertSeparator.Create())
+			.AddPattern(PatternAddEventConvertToEventScatterDealDamage.Create())
+			.AddPattern(PatternAddEventConvertToEventAoeDealDamage.Create());
+		PatternCollection.Instance.AddPattern(PatternPostAddEventAttackEventChildrenSort.Create()).AddPattern(PatternPostAddEventGrenadeAttackEventChildrenSort.Create()).AddPattern(PatternPostAddEventDeathMomentum.Create())
+			.AddPattern(PatternPostAddEventSwitchApplyBuffAndDependAbility.Create())
+			.AddPattern(PatternPostAddEventRemoveDealDamage.Create());
 		ClearEvents();
 		m_GameEventsHandlers.Clear();
 		Type[] gameEventsHandlerTypes = GameEventsHandlerTypes;
@@ -134,7 +133,7 @@ public class GameLogController : IControllerStart, IController, IControllerEnabl
 					}
 					catch (Exception ex)
 					{
-						PFLog.Default.Exception(ex);
+						PFLog.UI.Exception(ex);
 					}
 				}
 			}
@@ -207,15 +206,7 @@ public class GameLogController : IControllerStart, IController, IControllerEnabl
 				m_EventsQueue.RemoveAt(m_EventsQueue.Count - 1);
 			}
 		}
-		AddEventImpl(m_EventsQueue, @event);
-	}
-
-	private static void AddEventImpl(List<GameLogEvent> eventsQueue, GameLogEvent @event)
-	{
-		if (!PatternCollection.Instance.ApplyPatterns(eventsQueue, @event))
-		{
-			eventsQueue.Add(@event);
-		}
+		PatternCollection.Instance.ApplyPatterns(m_EventsQueue, @event);
 	}
 
 	private void Setup()

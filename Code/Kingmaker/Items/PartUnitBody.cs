@@ -373,6 +373,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			IsInitializing = true;
 			BlueprintUnit.UnitBody body = base.Owner.OriginalBlueprint.Body;
+			base.Owner.OriginalBlueprint.TrySetupOverridenUnitBodyHandsSettings();
 			for (int i = 0; i < body.AdditionalLimbs.Length; i++)
 			{
 				if (!HandsAreEnabled && m_HandsEquipmentSets[0].PrimaryHand.MaybeItem == null)
@@ -430,11 +431,12 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			IsInitializing = true;
 			if (HandsAreEnabled)
 			{
-				m_CurrentHandsEquipmentSetIndex = ((eq.ActiveHandSet >= 0 && eq.ActiveHandSet < 2) ? eq.ActiveHandSet : 0);
+				UnitItemEquipmentHandSettings currentUnitItemEquipmentHandSettings = GetCurrentUnitItemEquipmentHandSettings(eq);
+				m_CurrentHandsEquipmentSetIndex = ((currentUnitItemEquipmentHandSettings.ActiveHandSet >= 0 && currentUnitItemEquipmentHandSettings.ActiveHandSet < 2) ? currentUnitItemEquipmentHandSettings.ActiveHandSet : 0);
 				for (int i = 0; i < 2; i++)
 				{
-					BlueprintItemEquipmentHand handEquipment = eq.GetHandEquipment(i, main: true);
-					BlueprintItemEquipmentHand handEquipment2 = eq.GetHandEquipment(i, main: false);
+					BlueprintItemEquipmentHand handEquipment = eq.GetHandEquipment(i, main: true, currentUnitItemEquipmentHandSettings);
+					BlueprintItemEquipmentHand handEquipment2 = eq.GetHandEquipment(i, main: false, currentUnitItemEquipmentHandSettings);
 					m_HandsEquipmentSets[i].PrimaryHand.UpdateActive();
 					m_HandsEquipmentSets[i].SecondaryHand.UpdateActive();
 					TryInsertItem(handEquipment, m_HandsEquipmentSets[i].PrimaryHand);
@@ -446,6 +448,11 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			IsInitializing = false;
 		}
+	}
+
+	private static UnitItemEquipmentHandSettings GetCurrentUnitItemEquipmentHandSettings(BlueprintUnit.UnitBody eq)
+	{
+		return eq.OverridenUnitItemEquipmentHandSettings ?? eq.ItemEquipmentHandSettings;
 	}
 
 	public void UpgradeHandsFromBlueprint()

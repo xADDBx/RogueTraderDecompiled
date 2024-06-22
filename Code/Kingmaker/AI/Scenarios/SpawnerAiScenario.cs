@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -17,6 +18,7 @@ using UnityEngine;
 namespace Kingmaker.AI.Scenarios;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
+[KnowledgeDatabaseID("0bf4f33922f76254cb6cf08686361e27")]
 public class SpawnerAiScenario : EntityPartComponent<SpawnerAiScenario.Part>
 {
 	public class Part : ViewBasedPart, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IHashable

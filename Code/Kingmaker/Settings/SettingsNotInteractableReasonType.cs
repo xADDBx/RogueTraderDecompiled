@@ -4,6 +4,7 @@ public enum SettingsNotInteractableReasonType
 {
 	Language,
 	OnlyOneSave,
+	OnlyOneSaveSwitchOn,
 	FrameRateLimitEnabled,
 	FrameRateLimit,
 	FsrSharpness,

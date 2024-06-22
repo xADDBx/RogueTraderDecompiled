@@ -16,6 +16,7 @@ public static class PlatformInviteFactory
 			StoreType.Steam => new SteamPlatformInvite(), 
 			StoreType.EpicGames => new EpicGamesStorePlatformInvite(), 
 			StoreType.GoG => new GoGPlatformInvite(), 
+			StoreType.PS5 => new PS5PlatformInvite(), 
 			_ => new DummyPlatformInvite(), 
 		};
 	}

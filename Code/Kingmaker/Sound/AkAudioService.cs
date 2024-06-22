@@ -41,6 +41,8 @@ public class AkAudioService : IService, IDisposable
 
 	public static readonly LogChannel Log = PFLog.Audio;
 
+	public static readonly LogChannel LogRTPC = PFLog.WWiseRTPC;
+
 	private static ServiceProxy<AkAudioService> s_Proxy;
 
 	private bool m_IsInitialized;
@@ -89,13 +91,18 @@ public class AkAudioService : IService, IDisposable
 			Log.Error("WwiseUnity: Failed to initialize sound engine.");
 			return;
 		}
-		AkCallbackManager.SetMonitoringCallback(AkMonitorErrorLevel.ErrorLevel_All, OnAkLog);
-		AudioFilePackagesSettings.Instance.LoadPackages();
+		if (Application.isEditor)
+		{
+			AkCallbackManager.SetMonitoringCallback(AkMonitorErrorLevel.ErrorLevel_All, OnAkLog);
+		}
+		AudioFilePackagesSettings.Instance.LoadPackagesChunk(AudioFilePackagesSettings.AudioChunk.MainGame);
 		AkSoundEngine.SetAkCallbacks(new AkSetup());
 		Log.Log("WwiseUnity: Audio service started.");
 		m_Driver = new GameObject("[AkSoundService]").AddComponent<AudioServiceDrivingBehaviour>();
 		UnityEngine.Object.DontDestroyOnLoad(m_Driver);
 		m_IsInitialized = true;
+		AudioFilePackagesSettings.Instance.LoadBanksChunk(AudioFilePackagesSettings.AudioChunk.MainGame);
+		AkSoundEngineController.Instance?.LateUpdate();
 		Runner.EnsureBasicAudioBanks();
 		foreach (AudioObject item in ObjectRegistry<AudioObject>.Instance.EmptyIfNull())
 		{
@@ -122,7 +129,14 @@ public class AkAudioService : IService, IDisposable
 		}
 		if (in_errorlevel == AkMonitorErrorLevel.ErrorLevel_Error)
 		{
-			Log.Error(gameObject, in_msg);
+			if (in_msg.Contains("RTPC"))
+			{
+				LogRTPC.Error(gameObject, in_msg);
+			}
+			else
+			{
+				Log.Error(gameObject, in_msg);
+			}
 		}
 		else
 		{
@@ -180,7 +194,7 @@ public class AkAudioService : IService, IDisposable
 		{
 			AkWwiseInitializationSettings.Instance.TerminateSoundEngine();
 			m_IsInitialized = false;
-			AudioFilePackagesSettings.Instance.UnloadPackages();
+			AudioFilePackagesSettings.Instance.UnloadPackagesChunk(AudioFilePackagesSettings.AudioChunk.MainGame);
 		}
 		if ((bool)m_Driver)
 		{

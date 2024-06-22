@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.UI.MVVM.View.NetLobby.Base;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -12,11 +13,11 @@ namespace Kingmaker.UI.MVVM.View.NetLobby.Console;
 
 public class NetLobbyPlayerConsoleView : NetLobbyPlayerBaseView, IConsoleNavigationEntity, IConsoleEntity
 {
-	private readonly BoolReactiveProperty m_IsFocused = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsFocused = new BoolReactiveProperty();
 
 	public void SetFocus(bool value)
 	{
-		m_IsFocused.Value = value;
+		IsFocused.Value = value;
 		m_MainButton.SetFocus(value);
 	}
 
@@ -58,19 +59,26 @@ public class NetLobbyPlayerConsoleView : NetLobbyPlayerBaseView, IConsoleNavigat
 		}
 	}
 
-	public void AddPlayerInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget)
+	public void AddPlayerInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, Action showGamersTagModeAction, BoolReactiveProperty canConfirmLaunch)
 	{
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			InviteEpicPlayer();
-		}, 10, InviteButtonInteractable.And(m_IsFocused).And(base.ViewModel.EpicGamesAuthorized).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.InviteEpicGamesPlayer));
+		}, 10, InviteButtonInteractable.And(IsFocused).And(base.ViewModel.EpicGamesAuthorized).And(canConfirmLaunch.Not())
+			.ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.InviteEpicGamesPlayer));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			InvitePlayer();
-		}, 8, InviteButtonInteractable.And(m_IsFocused).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.InvitePlayer));
+		}, 8, InviteButtonInteractable.And(IsFocused).And(canConfirmLaunch.Not()).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.InvitePlayer));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			KickPlayer();
-		}, 11, KickButtonInteractable.And(m_IsFocused).And(base.ViewModel.IsMeHost).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.KickPlayer));
+		}, 11, KickButtonInteractable.And(IsFocused).And(base.ViewModel.IsMeHost).And(canConfirmLaunch.Not())
+			.ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.NetLobbyTexts.KickPlayer));
+	}
+
+	public void AddGamerTagInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, Action hideGamersTagModeAction, BoolReactiveProperty canConfirmLaunch)
+	{
+		m_GamerTagAndName.AddGamerTagInput(inputLayer, hintsWidget, hideGamersTagModeAction, canConfirmLaunch);
 	}
 }

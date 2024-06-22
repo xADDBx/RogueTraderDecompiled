@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -19,18 +20,18 @@ public class WarhammerContextActionStarshipRam : ContextAction
 		return "Starship Ram";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity starshipEntity = (StarshipEntity)base.Context.MaybeCaster;
 		if (starshipEntity == null)
 		{
-			PFLog.Default.Error(this, "Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		StarshipEntity starshipEntity2 = (StarshipEntity)base.Target.Entity;
 		if (starshipEntity2 == null)
 		{
-			PFLog.Default.Error(this, "Target is missing");
+			Element.LogError(this, "Target is missing");
 			return;
 		}
 		int num = Damage;

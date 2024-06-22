@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap.Common.LocalMapLegendBlock;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap.Common.Markers;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Markers;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Utils;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
@@ -32,6 +34,11 @@ namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap;
 
 public class LocalMapBaseView : ViewBase<LocalMapVM>
 {
+	private class PingData
+	{
+		public IDisposable PingDelay { get; set; }
+	}
+
 	[Header("Common Block")]
 	[SerializeField]
 	private ScrambledTMP m_Title;
@@ -102,7 +109,7 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 	protected float CurrentZoom;
 
 	[SerializeField]
-	private FadeAnimator m_TargetPingEntity;
+	private List<FadeAnimator> m_TargetPingEntitys = new List<FadeAnimator>();
 
 	[SerializeField]
 	private Vector2 m_CorrectTargetPositionPoint;
@@ -119,7 +126,7 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 	[SerializeField]
 	private float m_CorrectBiggerMinusY = 90f;
 
-	private IDisposable m_PingDelay;
+	private readonly Dictionary<NetPlayer, PingData> m_PlayerPingData = new Dictionary<NetPlayer, PingData>();
 
 	private static UIMeinMenuTexts UIMainMenuTexts => UIStrings.Instance.MainMenu;
 
@@ -143,13 +150,25 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 		base.gameObject.SetActive(value: true);
 		UISounds.Instance.Sounds.LocalMap.MapOpen.Play();
 		m_TitleLabelMap.text = UIMainMenuTexts.LocalMap;
-		if (m_TargetPingEntity != null)
+		foreach (FadeAnimator item in m_TargetPingEntitys.Where((FadeAnimator entity) => entity != null))
 		{
-			if (m_TargetPingEntity.CanvasGroup != null)
+			if (item.CanvasGroup != null)
 			{
-				m_TargetPingEntity.CanvasGroup.alpha = 0f;
+				item.CanvasGroup.alpha = 0f;
 			}
-			m_TargetPingEntity.DisappearAnimation();
+			item.DisappearAnimation();
+		}
+		for (int i = 0; i < m_TargetPingEntitys.Count; i++)
+		{
+			Image component = m_TargetPingEntitys[i].GetComponent<Image>();
+			if (!(component == null))
+			{
+				if (BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors.Count < i)
+				{
+					break;
+				}
+				component.color = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[i];
+			}
 		}
 		SetMaxSize();
 		AddDisposable(base.ViewModel.Title.Subscribe(delegate(string value)
@@ -159,7 +178,10 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 		AddDisposable(base.ViewModel.DrawResult.Subscribe(SetDrawResult));
 		AddDisposable(base.ViewModel.CompassAngle.Subscribe(SetFrameAngle));
 		AddDisposable(m_MapHistoryButton.OnHoverAsObservable().Subscribe(ShowLocalMapHistory));
-		AddDisposable(base.ViewModel.CoopPingPosition.Subscribe(PingPosition));
+		AddDisposable(base.ViewModel.CoopPingPosition.Subscribe(delegate((NetPlayer, Vector3) value)
+		{
+			PingPosition(value.Item1, value.Item2);
+		}));
 		OpenLocalMapFirstZoomSettings();
 		SetMarkersVM();
 		m_LegendBlockView.Bind(base.ViewModel.LocalMapLegendBlockVM);
@@ -171,6 +193,17 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
 		{
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.LocalMap);
+		});
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		SetMapRotation(0f);
+		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
+		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
+		{
+			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.LocalMap);
 		});
 	}
 
@@ -266,17 +299,6 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 	private void SetFrameAngle(float z)
 	{
 		m_Frame.eulerAngles = new Vector3(0f, 0f, 0f - z);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		SetMapRotation(0f);
-		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
-		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
-		{
-			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.LocalMap);
-		});
 	}
 
 	private void AddLocalMapMarker(LocalMapMarkerVM localMapMarkerVM)
@@ -424,22 +446,28 @@ public class LocalMapBaseView : ViewBase<LocalMapVM>
 		return GetViewportPos(eventData.position);
 	}
 
-	private void PingPosition(Vector3 position)
+	private void PingPosition(NetPlayer player, Vector3 position)
 	{
-		if (!(m_TargetPingEntity == null))
+		int playerIndex = player.Index - 1;
+		if (m_PlayerPingData.ContainsKey(player))
 		{
-			m_PingDelay?.Dispose();
-			Vector3 vector = WarhammerLocalMapRenderer.Instance.WorldToViewportPoint(position);
-			RectTransform rectTransform = m_TargetPingEntity.transform as RectTransform;
-			if (rectTransform != null)
-			{
-				rectTransform.anchoredPosition = new Vector2(m_Image.rectTransform.sizeDelta.x * vector.x, m_Image.rectTransform.sizeDelta.y * vector.y) - m_CorrectTargetPositionPoint;
-			}
-			m_TargetPingEntity.AppearAnimation();
-			m_PingDelay = DelayedInvoker.InvokeInTime(delegate
-			{
-				m_TargetPingEntity.DisappearAnimation();
-			}, 7.5f);
+			m_PlayerPingData[player].PingDelay?.Dispose();
 		}
+		else
+		{
+			m_PlayerPingData[player] = new PingData();
+		}
+		Vector3 vector = WarhammerLocalMapRenderer.Instance.WorldToViewportPoint(position);
+		PingData pingData = m_PlayerPingData[player];
+		RectTransform rectTransform = m_TargetPingEntitys[playerIndex].transform as RectTransform;
+		if (rectTransform != null)
+		{
+			rectTransform.anchoredPosition = new Vector2(m_Image.rectTransform.sizeDelta.x * vector.x, m_Image.rectTransform.sizeDelta.y * vector.y) - m_CorrectTargetPositionPoint;
+		}
+		m_TargetPingEntitys[playerIndex].AppearAnimation();
+		pingData.PingDelay = DelayedInvoker.InvokeInTime(delegate
+		{
+			m_TargetPingEntitys[playerIndex].DisappearAnimation();
+		}, 7.5f);
 	}
 }

@@ -9,8 +9,10 @@ using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -20,6 +22,7 @@ using Pathfinding;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints;
 using Warhammer.SpaceCombat.Blueprints.Slots;
 using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 
@@ -48,8 +51,10 @@ public class WeaponSlot : ItemSlot, IHashable
 
 		public bool CheckDirection(Vector3 direction)
 		{
-			float num = Vector3.SignedAngle(m_ArcLeftSide, direction, Vector3.up);
-			float x = Vector3.SignedAngle(m_ArcLeftSide, m_ArcRightSide, Vector3.up);
+			Vector3 from = new Vector3(MathF.Round(m_ArcLeftSide.x, 6), m_ArcLeftSide.y, MathF.Round(m_ArcLeftSide.z, 6));
+			Vector3 to = new Vector3(MathF.Round(m_ArcRightSide.x, 6), m_ArcRightSide.y, MathF.Round(m_ArcRightSide.z, 6));
+			float num = Vector3.SignedAngle(from, direction, Vector3.up);
+			float x = Vector3.SignedAngle(from, to, Vector3.up);
 			if (num >= 0f)
 			{
 				return MathF.Round(num, 2) <= MathF.Round(x, 2);
@@ -138,11 +143,30 @@ public class WeaponSlot : ItemSlot, IHashable
 	[JsonProperty]
 	public AmmoSlot AmmoSlot;
 
+	[JsonProperty]
+	private readonly List<ItemEntityStarshipWeapon> ArsenalWeapons = new List<ItemEntityStarshipWeapon>();
+
+	[JsonProperty]
+	private readonly List<BlueprintStarshipAmmo> ArsenalAmmo = new List<BlueprintStarshipAmmo>();
+
+	[JsonProperty]
+	private int m_ActiveWeaponIndex;
+
 	private static readonly ThreadLocal<Dictionary<FiringArcSourceNode, PooledList<CustomGridNodeBase>>> Nodes = new ThreadLocal<Dictionary<FiringArcSourceNode, PooledList<CustomGridNodeBase>>>(() => new Dictionary<FiringArcSourceNode, PooledList<CustomGridNodeBase>>());
 
 	private static readonly StaticCache<SourceNodesKey, Vector2Int[]> Offsets = new StaticCache<SourceNodesKey, Vector2Int[]>(ArcSourceNodesImpl);
 
-	public ItemEntityStarshipWeapon Weapon => base.Item as ItemEntityStarshipWeapon;
+	public ItemEntityStarshipWeapon Weapon
+	{
+		get
+		{
+			if (ActiveWeaponIndex == 0)
+			{
+				return base.MaybeItem as ItemEntityStarshipWeapon;
+			}
+			return ArsenalWeapons[ActiveWeaponIndex - 1];
+		}
+	}
 
 	public RestrictedFiringArc FiringArc => Type switch
 	{
@@ -154,29 +178,35 @@ public class WeaponSlot : ItemSlot, IHashable
 		_ => RestrictedFiringArc.None, 
 	};
 
-	public Ability ActiveAbility
+	public int ActiveWeaponIndex
 	{
 		get
 		{
-			if (AmmoSlot.HasItem)
-			{
-				List<Ability> abilities = AmmoSlot.Item.Abilities;
-				if (abilities.Count > 0)
-				{
-					return abilities[0];
-				}
-			}
-			if (HasItem)
-			{
-				List<Ability> abilities2 = base.Item.Abilities;
-				if (abilities2.Count > 0)
-				{
-					return abilities2[0];
-				}
-			}
-			return null;
+			return m_ActiveWeaponIndex;
+		}
+		set
+		{
+			m_ActiveWeaponIndex = Math.Clamp(value, 0, ArsenalWeapons.Count);
+			Weapon.UpdateAbilities(base.Owner, base.Item);
+			SetupAmmo();
 		}
 	}
+
+	public IEnumerable<ItemEntityStarshipWeapon> WeaponVariants
+	{
+		get
+		{
+			yield return base.Item as ItemEntityStarshipWeapon;
+			foreach (ItemEntityStarshipWeapon arsenalWeapon in ArsenalWeapons)
+			{
+				yield return arsenalWeapon;
+			}
+		}
+	}
+
+	public IEnumerable<Ability> AbilityVariants => WeaponVariants.Select((ItemEntityStarshipWeapon item) => item.Abilities.FirstOrDefault());
+
+	public Ability ActiveAbility => Weapon?.Abilities.FirstOrDefault();
 
 	public WeaponSlot(BaseUnitEntity owner, WeaponSlotData slotData)
 		: base(owner)
@@ -239,17 +269,57 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public void SetupAmmo()
 	{
-		if (Weapon.Blueprint.DefaultAmmo != null)
+		BlueprintStarshipAmmo blueprintStarshipAmmo = ((ActiveWeaponIndex > 0 && ArsenalAmmo.Count >= ActiveWeaponIndex) ? ArsenalAmmo[ActiveWeaponIndex - 1] : Weapon.Blueprint.DefaultAmmo);
+		if (blueprintStarshipAmmo != null)
 		{
-			ItemEntityStarshipAmmo itemEntityStarshipAmmo = Entity.Initialize(new ItemEntityStarshipAmmo(Weapon.Blueprint.DefaultAmmo));
-			(base.Owner as StarshipEntity).Inventory.Add(itemEntityStarshipAmmo);
+			ItemEntityStarshipAmmo itemEntityStarshipAmmo = Entity.Initialize(new ItemEntityStarshipAmmo(blueprintStarshipAmmo));
+			(base.Owner as StarshipEntity)?.Inventory.Add(itemEntityStarshipAmmo);
 			EquipAmmo(itemEntityStarshipAmmo, reloadInstantly: true);
 		}
 	}
 
 	protected override void OnItemInserted()
 	{
+		RefreshArsenals();
 		SetupAmmo();
+	}
+
+	public void RefreshArsenals()
+	{
+		ArsenalWeapons.Clear();
+		ArsenalAmmo.Clear();
+		if (!(base.Owner is StarshipEntity starshipEntity) || base.MaybeItem == null)
+		{
+			return;
+		}
+		List<ArsenalSlot> arsenals = starshipEntity.Hull.HullSlots.Arsenals;
+		if ((arsenals?.Count ?? 0) <= 0)
+		{
+			return;
+		}
+		BlueprintStarshipWeapon wbp = (base.MaybeItem as ItemEntityStarshipWeapon)?.Blueprint;
+		if (wbp == null)
+		{
+			return;
+		}
+		foreach (BlueprintItemArsenal item in from aSlot in arsenals
+			where aSlot.HasItem
+			select aSlot.MaybeItem?.Blueprint as BlueprintItemArsenal into a
+			where a != null && a.AppliedWeaponType == wbp.WeaponType && (a.FilterDamageType == DamageType.None || wbp.DefaultAmmo?.DamageType.Type == a.FilterDamageType) && (a.VariantWeapon == null || a.VariantWeapon.AllowedSlots.Contains(Type))
+			select a)
+		{
+			ItemEntityStarshipWeapon itemEntityStarshipWeapon = Entity.Initialize(new ItemEntityStarshipWeapon(item.VariantWeapon ?? wbp));
+			itemEntityStarshipWeapon.HoldingSlot = this;
+			itemEntityStarshipWeapon.PrepareAbilities(base.Owner, base.MaybeItem);
+			ArsenalWeapons.Add(itemEntityStarshipWeapon);
+			ArsenalAmmo.Add(item.VariantAmmo ?? itemEntityStarshipWeapon.Blueprint.DefaultAmmo ?? wbp.DefaultAmmo);
+			starshipEntity.Inventory.Add(itemEntityStarshipWeapon);
+		}
+	}
+
+	public void Reload()
+	{
+		(base.Item as ItemEntityStarshipWeapon)?.Reload();
 	}
 
 	public bool IsTargetInsideRestrictedFiringArc(TargetWrapper target, int range, RestrictedFiringAreaComponent restrictedFiringAreaComponent, CustomGridNodeBase overridePosition = null, int? overrideDirection = null)
@@ -682,6 +752,25 @@ public class WeaponSlot : ItemSlot, IHashable
 		result.Append(ref BatteryWidth);
 		Hash128 val2 = ClassHasher<AmmoSlot>.GetHash128(AmmoSlot);
 		result.Append(ref val2);
+		List<ItemEntityStarshipWeapon> arsenalWeapons = ArsenalWeapons;
+		if (arsenalWeapons != null)
+		{
+			for (int i = 0; i < arsenalWeapons.Count; i++)
+			{
+				Hash128 val3 = ClassHasher<ItemEntityStarshipWeapon>.GetHash128(arsenalWeapons[i]);
+				result.Append(ref val3);
+			}
+		}
+		List<BlueprintStarshipAmmo> arsenalAmmo = ArsenalAmmo;
+		if (arsenalAmmo != null)
+		{
+			for (int j = 0; j < arsenalAmmo.Count; j++)
+			{
+				Hash128 val4 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(arsenalAmmo[j]);
+				result.Append(ref val4);
+			}
+		}
+		result.Append(ref m_ActiveWeaponIndex);
 		return result;
 	}
 }

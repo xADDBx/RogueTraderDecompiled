@@ -3,6 +3,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.QA.Validation;
 
@@ -16,7 +17,7 @@ public class MechanicLightRootEvaluator : MechanicEntityEvaluator
 	[ValidateNotEmpty]
 	public EntityReference MechanicLightRoot;
 
-	protected override MechanicEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		MechanicLightRootView mechanicLightRootView = MechanicLightRoot.FindView() as MechanicLightRootView;
 		if (!(mechanicLightRootView != null))

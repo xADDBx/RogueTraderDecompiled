@@ -24,9 +24,11 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 
 	private readonly CommandQueue<SynchronizedData> m_DataQueue = new CommandQueue<SynchronizedData>();
 
-	private (byte, Vector3, Quaternion, Vector4, Vector3) m_LastLocalCamera;
+	private (byte, Vector3, Quaternion, Vector4, Vector3, bool) m_LastLocalCamera;
 
 	private bool m_HasLeftStickMovementData;
+
+	private int m_LeftStickMovementDataFrame;
 
 	private UnitReference m_Unit;
 
@@ -50,7 +52,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	public void Tick()
@@ -142,8 +144,9 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 	{
 		m_LastReceivedMatrix.Clear();
 		m_DataQueue.Reset();
-		m_LastLocalCamera = default((byte, Vector3, Quaternion, Vector4, Vector3));
+		m_LastLocalCamera = default((byte, Vector3, Quaternion, Vector4, Vector3, bool));
 		m_HasLeftStickMovementData = false;
+		m_LeftStickMovementDataFrame = 0;
 		m_Unit = default(UnitReference);
 		m_MoveDirection = default(Vector2);
 		m_StickDeflection = 0f;
@@ -212,7 +215,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 		Camera activeMainCamera = CameraStackManager.Instance.ActiveMainCamera;
 		if (activeMainCamera == null)
 		{
-			m_LastLocalCamera = default((byte, Vector3, Quaternion, Vector4, Vector3));
+			m_LastLocalCamera = default((byte, Vector3, Quaternion, Vector4, Vector3, bool));
 			return new SynchronizedData(data, 1);
 		}
 		bool num = CameraRig.Instance != null && CameraRig.Instance.Camera == activeMainCamera;
@@ -225,8 +228,8 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 		value = value.Round(6);
 		value2 = value2.Round(6);
 		byte b = (byte)(num ? 3 : 4);
-		bool isScrollingByRoutine = num && CameraRig.Instance.IsScrollingByRoutine;
-		(byte, Vector3, Quaternion, Vector4, Vector3) tuple = (b, position, rotation, value, value2);
+		bool flag = num && CameraRig.Instance.IsScrollingByRoutine;
+		(byte, Vector3, Quaternion, Vector4, Vector3, bool) tuple = (b, position, rotation, value, value2, flag);
 		if (m_LastLocalCamera.Equals(tuple))
 		{
 			return new SynchronizedData(data, 2);
@@ -238,7 +241,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 			rotation = rotation,
 			projParams = value,
 			parentPosition = value2,
-			isScrollingByRoutine = isScrollingByRoutine
+			isScrollingByRoutine = flag
 		};
 		return new SynchronizedData(data, b, camera);
 	}
@@ -249,7 +252,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 		y = (sbyte)Mathf.Round(Mathf.Clamp(moveDirection.y * stickDeflection * 126f, -127f, 127f));
 	}
 
-	public static void DecompressStickData(LeftStickData stickData, ref Vector2 moveDirection, out float stickDeflection)
+	public static void DecompressStickData(LeftStickData stickData, out Vector2 moveDirection, out float stickDeflection)
 	{
 		if (stickData.moveDirectionX == 0 && stickData.moveDirectionY == 0)
 		{
@@ -268,6 +271,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 	public void PushLeftStickMovement(BaseUnitEntity unit, Vector2 moveDirection, float stickDeflection)
 	{
 		m_HasLeftStickMovementData = true;
+		m_LeftStickMovementDataFrame = 0;
 		m_Unit = unit.FromBaseUnitEntity();
 		m_MoveDirection = moveDirection;
 		m_MoveDirection.x = (float)Math.Round(m_MoveDirection.x, 2);
@@ -288,21 +292,22 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 
 	private SynchronizedData FillLeftStickData(SynchronizedData data)
 	{
-		if (m_HasLeftStickMovementData)
+		if (m_HasLeftStickMovementData || m_LeftStickMovementDataFrame == Time.frameCount)
 		{
 			CompressStickData(m_MoveDirection, m_StickDeflection, out var x, out var y);
+			byte version = (byte)(Game.Instance.RealTimeController.CurrentNetworkTick % 255);
 			data.leftStick = new LeftStickData
 			{
+				version = version,
 				unit = m_Unit,
 				moveDirectionX = x,
 				moveDirectionY = y,
 				selectedUnits = m_SelectedUnits
 			};
+			DecompressStickData(data.leftStick, out var moveDirection, out var stickDeflection);
+			Game.Instance.MovePredictionController.PushLeftStickMovement(version, m_Unit, moveDirection, stickDeflection);
 			m_HasLeftStickMovementData = false;
-			m_Unit = default(UnitReference);
-			m_MoveDirection = default(Vector2);
-			m_StickDeflection = 0f;
-			m_SelectedUnits = null;
+			m_LeftStickMovementDataFrame = Time.frameCount;
 		}
 		return data;
 	}

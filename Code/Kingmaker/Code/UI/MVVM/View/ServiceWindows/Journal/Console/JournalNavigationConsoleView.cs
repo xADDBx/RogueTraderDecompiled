@@ -80,14 +80,4 @@ public class JournalNavigationConsoleView : JournalNavigationBaseView
 		}
 		return list;
 	}
-
-	public void OnPrevActiveTab()
-	{
-		base.ViewModel.OnPrevActiveTab();
-	}
-
-	public void OnNextActiveTab()
-	{
-		base.ViewModel.OnNextActiveTab();
-	}
 }

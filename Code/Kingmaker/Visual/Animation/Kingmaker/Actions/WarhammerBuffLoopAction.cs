@@ -86,7 +86,7 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 		AnimationEntry animation = GetAnimation(handle);
 		if ((bool)animation?.EnterWrapper)
 		{
-			handle.StartClip(animation.EnterWrapper, ClipDurationType.Endless);
+			handle.StartClip(animation.EnterWrapper, ClipDurationType.Oneshot);
 			handle.ActiveAnimation.DoNotZeroOtherAnimations = true;
 			HandleData actionData = new HandleData
 			{
@@ -109,7 +109,7 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 			AnimationEntry animation = GetAnimation(handle);
 			if ((bool)animation?.LoopWrapper)
 			{
-				handle.StartClip(animation.LoopWrapper, ClipDurationType.Endless);
+				handle.StartClip(animation.LoopWrapper, ClipDurationType.Oneshot);
 			}
 			else
 			{

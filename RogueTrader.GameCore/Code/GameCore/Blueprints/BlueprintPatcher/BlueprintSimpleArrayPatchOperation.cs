@@ -1,11 +1,10 @@
 using System;
 using System.Collections;
+using System.Linq;
 using System.Reflection;
 using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Utility.UnityExtensions;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Code.GameCore.Blueprints.BlueprintPatcher;
@@ -19,66 +18,37 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 	[ModsPatchSerializable]
 	public object Value;
 
-	[SerializeField]
-	public string TargetValueGuid;
-
 	[ModsPatchSerializable]
 	public object TargetValue;
 
 	private Type GetArrayElementType(FieldInfo fieldInfo)
 	{
-		Type elementType = fieldInfo.FieldType.GetElementType();
-		if (elementType == null)
+		Type listElementType = BlueprintPatchOperation.GetListElementType(fieldInfo.FieldType);
+		if (listElementType == null)
 		{
 			throw new Exception($"Failed to get ElementType for {concreteBlueprintType} {fieldInfo.Name}");
 		}
-		return elementType;
+		return listElementType;
 	}
 
 	public override void Apply(SimpleBlueprint bp)
 	{
-		if (OperationType == BlueprintPatchOperationType.Undefined)
-		{
-			throw new Exception("Corrupted patch. Undefined operation type is given.");
-		}
 		PFLog.Mods.Log("Patching array " + FieldName + " of " + TargetGuid);
 		base.Apply(bp);
-		bool flag = CheckTypeIsArrayOrListOfBlueprintReferences(fieldType);
-		if (flag && OperationType == BlueprintPatchOperationType.ReplaceElement)
+		switch (OperationType)
 		{
-			ReplaceElement();
-		}
-		else if (flag && OperationType == BlueprintPatchOperationType.RemoveElement)
-		{
-			RemoveElement();
-		}
-		else if (flag && (OperationType == BlueprintPatchOperationType.InsertLast || OperationType == BlueprintPatchOperationType.InsertAfterElement || OperationType == BlueprintPatchOperationType.InsertBeforeElement || OperationType == BlueprintPatchOperationType.InsertAtBeginning))
-		{
+		case BlueprintPatchOperationType.InsertAfterElement:
+		case BlueprintPatchOperationType.InsertBeforeElement:
+		case BlueprintPatchOperationType.InsertAtBeginning:
+		case BlueprintPatchOperationType.InsertLast:
 			InsertElement();
-		}
-		else if (CheckTypeIsList(fieldType) && OperationType == BlueprintPatchOperationType.Override)
-		{
-			OverrideArray();
-		}
-		else if (CheckTypeIsList(fieldType) && OperationType == BlueprintPatchOperationType.Union)
-		{
-			UnionList();
-		}
-		else if (CheckTypeIsList(fieldType) && OperationType == BlueprintPatchOperationType.UnionDistinct)
-		{
-			UnionDistinctList();
-		}
-		else if (fieldType.IsArray && OperationType == BlueprintPatchOperationType.Override)
-		{
-			OverrideArray();
-		}
-		else if (fieldType.IsArray && OperationType == BlueprintPatchOperationType.Union)
-		{
-			UnionArrays();
-		}
-		else if (fieldType.IsArray && OperationType == BlueprintPatchOperationType.UnionDistinct)
-		{
-			UnionDistinctArrays();
+			break;
+		case BlueprintPatchOperationType.RemoveElement:
+			RemoveElement();
+			break;
+		default:
+			PFLog.Mods.Error($"Current patch operation type is unsupported {OperationType}");
+			break;
 		}
 	}
 
@@ -92,7 +62,7 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 		Type arrayElementType = GetArrayElementType(field);
 		IList list = (IList)field.GetValue(fieldHolder);
 		IList list2 = (IList)Value;
-		IList list3 = Array.CreateInstance(arrayElementType, list.Count + list2.Count);
+		IList list3 = MaybeToList(Array.CreateInstance(arrayElementType, list.Count + list2.Count), this);
 		for (int i = 0; i < list.Count; i++)
 		{
 			list3[i] = list[i];
@@ -109,7 +79,7 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 		Type arrayElementType = GetArrayElementType(field);
 		IList list = (IList)field.GetValue(fieldHolder);
 		IList list2 = (IList)Value;
-		IList list3 = Array.CreateInstance(arrayElementType, list.Count + list2.Count);
+		IList list3 = MaybeToList(Array.CreateInstance(arrayElementType, list.Count + list2.Count), this);
 		for (int i = 0; i < list.Count; i++)
 		{
 			list3[i] = list[i];
@@ -149,51 +119,89 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 
 	private void ReplaceElement()
 	{
-		if (TargetValueGuid.IsNullOrEmpty())
-		{
-			throw new Exception("Null target value guid given in patch operation");
-		}
 		Type arrayElementType = GetArrayElementType(field);
 		IList list = (IList)field.GetValue(fieldHolder);
-		IList list2 = Array.CreateInstance(arrayElementType, list.Count);
+		IList list2 = MaybeToList(Array.CreateInstance(arrayElementType, list.Count), this);
+		Type type = Value.GetType();
+		PFLog.Mods.Log($"Raw Value type : {type}");
+		PFLog.Mods.Log($"List element type : {arrayElementType}");
+		object obj = Value;
+		if (obj.GetType() != arrayElementType && !arrayElementType.IsAssignableFrom(type) && !type.IsAssignableFrom(arrayElementType))
+		{
+			PFLog.Mods.Log("Patch value and field element type mismatch. Try to treat the field like BlueprintReference.");
+			obj = BlueprintPatchObjectComparator.TryFixFalseSerializedBlueprintReference(Value, arrayElementType);
+			if (obj == null)
+			{
+				PFLog.Mods.Error("Unable to fix " + FieldName + " patch value.");
+				return;
+			}
+			PFLog.Mods.Log("Value fixed as BlueprintReference.");
+		}
 		for (int i = 0; i < list.Count; i++)
 		{
-			object obj = list[i];
-			BlueprintReferenceBase blueprintReferenceBase = (BlueprintReferenceBase)obj;
-			if (blueprintReferenceBase != null && blueprintReferenceBase.Guid == TargetValueGuid)
+			object obj2 = list[i];
+			if (BlueprintPatchObjectComparator.ObjectsAreEqual(TargetValue, obj2, FieldName))
 			{
-				obj = ((JObject)Value).ToObject(arrayElementType);
+				obj2 = obj;
 			}
-			list2[i] = obj;
+			list2[i] = obj2;
 		}
 		field.SetValue(fieldHolder, list2);
 	}
 
+	private static IList MaybeToList(IList array, BlueprintSimpleArrayPatchOperation patchOp)
+	{
+		if (!patchOp.CheckTypeIsList(patchOp.fieldType))
+		{
+			return array;
+		}
+		Type elementType = array.GetType().GetElementType();
+		Type[] typeArguments = new Type[1] { elementType };
+		object[] parameters = new object[1] { array };
+		return (IList)typeof(Enumerable).GetMethod("ToList", BindingFlags.Static | BindingFlags.Public).MakeGenericMethod(typeArguments).Invoke(null, parameters);
+	}
+
 	private void RemoveElement()
 	{
-		if (TargetValueGuid.IsNullOrEmpty())
-		{
-			throw new Exception("Null target value guid given in patch operation");
-		}
 		Type arrayElementType = GetArrayElementType(field);
 		IList list = (IList)field.GetValue(fieldHolder);
-		IList list2 = Array.CreateInstance(arrayElementType, list.Count - 1);
-		int num = 0;
+		IList list2 = MaybeToList(Array.CreateInstance(arrayElementType, list.Count - 1), this);
+		Type type = Value.GetType();
+		PFLog.Mods.Log($"Raw Value type : {type}");
+		PFLog.Mods.Log($"List element type : {arrayElementType}");
+		object obj = Value;
+		if (obj.GetType() != arrayElementType && !arrayElementType.IsAssignableFrom(type) && !type.IsAssignableFrom(arrayElementType))
+		{
+			PFLog.Mods.Log("Patch value and field element type mismatch. Try to treat the field like BlueprintReference.");
+			obj = BlueprintPatchObjectComparator.TryFixFalseSerializedBlueprintReference(Value, arrayElementType);
+			if (obj == null)
+			{
+				PFLog.Mods.Error("Unable to fix " + FieldName + " patch value.");
+				return;
+			}
+			PFLog.Mods.Log("Value fixed as BlueprintReference.");
+		}
+		int num = -1;
 		for (int i = 0; i < list.Count; i++)
 		{
-			object obj = list[i];
-			BlueprintReferenceBase blueprintReferenceBase = (BlueprintReferenceBase)obj;
-			if (blueprintReferenceBase != null)
+			if (BlueprintPatchObjectComparator.ObjectsAreEqual(list[i], obj, FieldName))
 			{
-				if (!(blueprintReferenceBase.Guid != TargetValueGuid))
-				{
-					num = i;
-					break;
-				}
-				list2[i] = obj;
+				num = i;
+				break;
 			}
+			if (i >= list2.Count)
+			{
+				PFLog.Mods.Error("Item was not found in target list, and there's danger of IndexOutOfRange");
+				break;
+			}
+			list2[i] = list[i];
 		}
-		for (int j = num; j < list.Count; j++)
+		if (num == -1)
+		{
+			PFLog.Mods.Error("No item to remove found in target list field " + FieldName);
+			return;
+		}
+		for (int j = num + 1; j < list.Count; j++)
 		{
 			list2[j - 1] = list[j];
 		}
@@ -204,18 +212,33 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 	{
 		Type arrayElementType = GetArrayElementType(field);
 		IList list = (IList)field.GetValue(fieldHolder);
-		IList list2 = Array.CreateInstance(arrayElementType, list.Count + 1);
+		IList list2 = MaybeToList(Array.CreateInstance(arrayElementType, list.Count + 1), this);
 		int num = CalculateReplaceIndex(list);
 		if (num == -1)
 		{
-			throw new Exception("Couldn't find index in array " + field.Name + " by given target value");
+			PFLog.Mods.Error("Couldn't find index in array " + field.Name + " by given target value. Aborting patch...");
+			return;
 		}
 		for (int i = 0; i < num; i++)
 		{
 			list2[i] = list[i];
 		}
-		object value = ((JObject)Value).ToObject(arrayElementType);
-		list2[num] = value;
+		Type type = Value.GetType();
+		PFLog.Mods.Log($"Raw Value type : {type}");
+		PFLog.Mods.Log($"element type : {arrayElementType}");
+		object obj = Value;
+		if (obj.GetType() != arrayElementType && !arrayElementType.IsAssignableFrom(type) && !type.IsAssignableFrom(arrayElementType))
+		{
+			PFLog.Mods.Log("Patch value and field element type mismatch. Try to treat the field like BlueprintReference.");
+			obj = BlueprintPatchObjectComparator.TryFixFalseSerializedBlueprintReference(Value, arrayElementType);
+			if (obj == null)
+			{
+				PFLog.Mods.Error("Unable to fix " + FieldName + " patch value.");
+				return;
+			}
+			PFLog.Mods.Log("Value fixed as BlueprintReference.");
+		}
+		list2[num] = obj;
 		for (int j = num; j < list.Count; j++)
 		{
 			list2[j + 1] = list[j];
@@ -225,74 +248,34 @@ public class BlueprintSimpleArrayPatchOperation : BlueprintPatchOperation
 
 	private int CalculateReplaceIndex(IList array)
 	{
-		if (OperationType == BlueprintPatchOperationType.Override || OperationType == BlueprintPatchOperationType.Union || OperationType == BlueprintPatchOperationType.UnionDistinct)
+		int num = -1;
+		switch (OperationType)
 		{
-			throw new Exception($"Replace index cannot be calculated for operation type {OperationType}");
+		case BlueprintPatchOperationType.InsertAtBeginning:
+			return 0;
+		case BlueprintPatchOperationType.InsertLast:
+			return array.Count;
+		case BlueprintPatchOperationType.InsertAfterElement:
+		case BlueprintPatchOperationType.InsertBeforeElement:
+		{
+			for (int i = 0; i < array.Count; i++)
+			{
+				if (BlueprintPatchObjectComparator.ObjectsAreEqual(array[i], TargetValue, FieldName))
+				{
+					num = ((OperationType == BlueprintPatchOperationType.InsertAfterElement) ? (i + 1) : i);
+					break;
+				}
+			}
+			if (num == -1)
+			{
+				PFLog.Mods.Error("Failed to calculate insert index, target item not found for field " + FieldName);
+			}
+			return num;
 		}
-		if (array.Count == 0)
-		{
+		default:
+			PFLog.Mods.Error($"Unsupported BlueprintPatchOperationType given while calculating Insert Index {OperationType}");
 			return -1;
 		}
-		int result = 0;
-		if (OperationType == BlueprintPatchOperationType.InsertAtBeginning)
-		{
-			result = 0;
-		}
-		if (OperationType == BlueprintPatchOperationType.InsertLast)
-		{
-			result = array.Count;
-		}
-		if (OperationType == BlueprintPatchOperationType.InsertAfterElement)
-		{
-			if (typeof(BlueprintReferenceBase).IsAssignableFrom(array[0].GetType()))
-			{
-				for (int i = 0; i < array.Count; i++)
-				{
-					if (!(((BlueprintReferenceBase)array[i]).Guid != TargetValueGuid))
-					{
-						result = i + 1;
-						break;
-					}
-				}
-			}
-			else
-			{
-				for (int j = 0; j < array.Count; j++)
-				{
-					if (array[j] != TargetValue)
-					{
-						result = j + 1;
-						break;
-					}
-				}
-			}
-		}
-		if (OperationType == BlueprintPatchOperationType.InsertBeforeElement)
-		{
-			if (typeof(BlueprintReferenceBase).IsAssignableFrom(array[0].GetType()))
-			{
-				for (int k = 0; k < array.Count; k++)
-				{
-					if (!(((BlueprintReferenceBase)array[k]).Guid != TargetValueGuid))
-					{
-						result = k;
-						break;
-					}
-				}
-			}
-			else
-			{
-				for (int l = 0; l < array.Count; l++)
-				{
-					if (array[l] != TargetValue)
-					{
-						result = l;
-						break;
-					}
-				}
-			}
-		}
-		return result;
 	}
 
 	public override string ToString()

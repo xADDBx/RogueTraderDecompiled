@@ -1,8 +1,6 @@
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.GameCommands;
-using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
@@ -118,20 +116,7 @@ public class PortraitSelectorCommonView : BaseCharGenAppearancePageComponentView
 		}));
 		if ((bool)m_ChangePortraitButton)
 		{
-			bool flag = UINetUtility.IsControlMainCharacter();
-			m_ChangePortraitButton.Or(null)?.SetInteractable(flag);
-			if (!flag)
-			{
-				return;
-			}
-			AddDisposable(base.ViewModel.PortraitVM.Subscribe(delegate(CharGenPortraitVM value)
-			{
-				m_ChangePortraitButton.SetInteractable(value.PortraitData.IsCustom);
-			}));
-			AddDisposable(ObservableExtensions.Subscribe(m_ChangePortraitButton.OnLeftClickAsObservable(), delegate
-			{
-				base.ViewModel.OpenCustomPortraitCreator();
-			}));
+			SetChangePortraitButton();
 		}
 		AddDisposable(base.ViewModel.CurrentTab.Subscribe(delegate(CharGenPortraitTabVM tab)
 		{
@@ -146,13 +131,25 @@ public class PortraitSelectorCommonView : BaseCharGenAppearancePageComponentView
 		m_IsInputAdded = false;
 	}
 
+	private void SetChangePortraitButton()
+	{
+		bool flag = UINetUtility.IsControlMainCharacter();
+		m_ChangePortraitButton.Or(null)?.SetInteractable(flag);
+		if (flag)
+		{
+			AddDisposable(base.ViewModel.PortraitVM.Subscribe(delegate(CharGenPortraitVM value)
+			{
+				m_ChangePortraitButton.SetInteractable(value.PortraitData.IsCustom);
+			}));
+			AddDisposable(ObservableExtensions.Subscribe(m_ChangePortraitButton.OnLeftClickAsObservable(), delegate
+			{
+				base.ViewModel.OpenCustomPortraitCreator();
+			}));
+		}
+	}
+
 	private void OnSwitchTab(CharGenPortraitTab tab)
 	{
-		if (tab != 0 && NetworkingManager.IsActive)
-		{
-			UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.NotAvailableInCoopMode, DialogMessageBoxBase.BoxType.Message, null);
-			tab = CharGenPortraitTab.Default;
-		}
 		Game.Instance.GameCommandQueue.CharGenSwitchPortraitTab(tab);
 	}
 

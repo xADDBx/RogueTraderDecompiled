@@ -32,6 +32,10 @@ public class ScanStarSystemObjectGameCommand : GameCommand, IMemoryPackable<Scan
 	[MemoryPackInclude]
 	private EntityRef<StarSystemObjectEntity> m_StarSystemObjectRef;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	private bool m_FinishScan;
+
 	public override bool IsSynchronized => true;
 
 	[MemoryPackConstructor]
@@ -40,20 +44,36 @@ public class ScanStarSystemObjectGameCommand : GameCommand, IMemoryPackable<Scan
 	}
 
 	[JsonConstructor]
-	public ScanStarSystemObjectGameCommand(StarSystemObjectEntity starSystemObject)
+	public ScanStarSystemObjectGameCommand(StarSystemObjectEntity starSystemObject, bool finishScan)
 	{
 		m_StarSystemObjectRef = starSystemObject;
+		m_FinishScan = finishScan;
 	}
 
 	protected override void ExecuteInternal()
 	{
 		StarSystemObjectEntity entity = m_StarSystemObjectRef.Entity;
-		if (entity != null)
+		if (entity == null)
 		{
-			EventBus.RaiseEvent(entity, delegate(IScanStarSystemObjectHandler h)
-			{
-				h.HandleStartScanningStarSystemObject();
-			});
+			return;
+		}
+		if (m_FinishScan)
+		{
+			FinishScan(entity);
+			return;
+		}
+		EventBus.RaiseEvent(entity, delegate(IScanStarSystemObjectHandler h)
+		{
+			h.HandleStartScanningStarSystemObject();
+		});
+	}
+
+	private static void FinishScan(StarSystemObjectEntity entity)
+	{
+		if (!entity.IsScanned)
+		{
+			entity.Scan();
+			entity.PlayBarkBanter();
 		}
 	}
 
@@ -83,8 +103,9 @@ public class ScanStarSystemObjectGameCommand : GameCommand, IMemoryPackable<Scan
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteObjectHeader(1);
+		writer.WriteObjectHeader(2);
 		writer.WritePackable(in value.m_StarSystemObjectRef);
+		writer.WriteUnmanaged(in value.m_FinishScan);
 	}
 
 	[Preserve]
@@ -96,40 +117,59 @@ public class ScanStarSystemObjectGameCommand : GameCommand, IMemoryPackable<Scan
 			return;
 		}
 		EntityRef<StarSystemObjectEntity> value2;
-		if (memberCount == 1)
+		bool value3;
+		if (memberCount == 2)
 		{
 			if (value != null)
 			{
 				value2 = value.m_StarSystemObjectRef;
+				value3 = value.m_FinishScan;
 				reader.ReadPackable(ref value2);
-				goto IL_0070;
+				reader.ReadUnmanaged<bool>(out value3);
+				goto IL_00a1;
 			}
 			value2 = reader.ReadPackable<EntityRef<StarSystemObjectEntity>>();
+			reader.ReadUnmanaged<bool>(out value3);
 		}
 		else
 		{
-			if (memberCount > 1)
+			if (memberCount > 2)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(ScanStarSystemObjectGameCommand), 1, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(ScanStarSystemObjectGameCommand), 2, memberCount);
 				return;
 			}
-			value2 = ((value != null) ? value.m_StarSystemObjectRef : default(EntityRef<StarSystemObjectEntity>));
+			if (value == null)
+			{
+				value2 = default(EntityRef<StarSystemObjectEntity>);
+				value3 = false;
+			}
+			else
+			{
+				value2 = value.m_StarSystemObjectRef;
+				value3 = value.m_FinishScan;
+			}
 			if (memberCount != 0)
 			{
 				reader.ReadPackable(ref value2);
-				_ = 1;
+				if (memberCount != 1)
+				{
+					reader.ReadUnmanaged<bool>(out value3);
+					_ = 2;
+				}
 			}
 			if (value != null)
 			{
-				goto IL_0070;
+				goto IL_00a1;
 			}
 		}
 		value = new ScanStarSystemObjectGameCommand
 		{
-			m_StarSystemObjectRef = value2
+			m_StarSystemObjectRef = value2,
+			m_FinishScan = value3
 		};
 		return;
-		IL_0070:
+		IL_00a1:
 		value.m_StarSystemObjectRef = value2;
+		value.m_FinishScan = value3;
 	}
 }

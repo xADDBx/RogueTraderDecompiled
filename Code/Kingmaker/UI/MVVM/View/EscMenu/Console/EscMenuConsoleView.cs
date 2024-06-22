@@ -1,5 +1,8 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.BugReport;
+using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
+using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
+using Kingmaker.Code.UI.MVVM.View.Common.InputField;
 using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.UI.Common;
@@ -35,8 +38,14 @@ public class EscMenuConsoleView : EscMenuBaseView
 		AddDisposable(m_QuickSave.OnConfirmClickAsObservable().Subscribe(base.ViewModel.OnQuickSave));
 		AddDisposable(m_QuickLoad.OnConfirmClickAsObservable().Subscribe(OnQuickLoadConfirm));
 		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
-		m_QuickSave.Interactable = base.ViewModel.IsSavingAllowed;
+		m_QuickSave.SetInteractable(base.ViewModel.IsSavingAllowed);
 		base.BindViewImplementation();
+	}
+
+	protected override void UpdateInteractableButtonsImpl()
+	{
+		base.UpdateInteractableButtonsImpl();
+		m_QuickSave.SetInteractable(base.ViewModel.IsSavingAllowed);
 	}
 
 	protected override void BuildNavigationImpl(GridConsoleNavigationBehaviour navigationBehaviour)
@@ -72,10 +81,11 @@ public class EscMenuConsoleView : EscMenuBaseView
 
 	private void OnCurrentInputLayerChanged()
 	{
-		if (GamePad.Instance.CurrentInputLayer != InputLayer && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(GamePad.Instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName))
+		GamePad instance = GamePad.Instance;
+		if (instance.CurrentInputLayer != InputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName))
 		{
-			GamePad.Instance.PopLayer(InputLayer);
-			GamePad.Instance.PushLayer(InputLayer);
+			instance.PopLayer(InputLayer);
+			instance.PushLayer(InputLayer);
 		}
 	}
 

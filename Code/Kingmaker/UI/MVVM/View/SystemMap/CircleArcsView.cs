@@ -1,5 +1,6 @@
 using DG.Tweening;
 using Kingmaker.UI.MVVM.VM.CircleArc;
+using Kingmaker.UI.Sound;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -25,6 +26,9 @@ public class CircleArcsView : ViewBase<BaseCircleArcsVM>
 	[SerializeField]
 	private CircleArtRotation m_CircleArtRotation;
 
+	[SerializeField]
+	private bool m_WithSound;
+
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(base.ViewModel.IsCorrectGameMode.Subscribe(base.gameObject.SetActive));
@@ -33,6 +37,10 @@ public class CircleArcsView : ViewBase<BaseCircleArcsVM>
 		{
 			SetRandomImages();
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
 	}
 
 	private void SetRandomImages()
@@ -46,6 +54,17 @@ public class CircleArcsView : ViewBase<BaseCircleArcsVM>
 	{
 		RectTransform circleArt = m_CircleArtRotation.CircleArt;
 		float duration = (move ? m_CircleArtRotation.CircleArtAnimationDuration : m_CircleArtRotation.CircleArtCloseAnimationDuration);
+		if (m_WithSound)
+		{
+			if (move)
+			{
+				UISounds.Instance.Play(UISounds.Instance.Sounds.SpaceExploration.CircleArcsShow, isButton: false, playAnyway: true);
+			}
+			else
+			{
+				UISounds.Instance.Sounds.SpaceExploration.CircleArcsHide.Play();
+			}
+		}
 		circleArt.DOKill();
 		circleArt.DOScale(move ? m_CircleArtRotation.CircleArtMoveScale : m_CircleArtRotation.CircleArtDefaultScale, duration);
 		circleArt.DORotate(move ? new Vector3(0f, 0f, Random.Range(m_CircleArtRotation.CircleArtMinRotation, m_CircleArtRotation.CircleArtMaxRotation) * (float)((Random.Range(0, 2) != 0) ? 1 : (-1))) : Vector3.zero, duration);
@@ -53,9 +72,5 @@ public class CircleArcsView : ViewBase<BaseCircleArcsVM>
 		{
 			m_Shadows.DOFade(move ? 1f : 0f, duration);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

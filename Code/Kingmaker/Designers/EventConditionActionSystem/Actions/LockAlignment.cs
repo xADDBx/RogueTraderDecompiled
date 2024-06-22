@@ -36,7 +36,7 @@ public class LockAlignment : GameAction
 		return $"Locks alignment mask for: {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

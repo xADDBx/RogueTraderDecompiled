@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Progression;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -47,7 +48,7 @@ public class BlueprintSelectionFeature : BlueprintSelection
 			Debug.LogError("Features contains NULL: " + unit.Blueprint?.name + " path: " + path?.name);
 		}
 		return source.SelectMany((AddFeaturesToLevelUp allFeatures) => from f in allFeatures.Features
-			where f != null
+			where f != null && !f.IsDlcRestricted()
 			select f into feature
 			select CreateItem(feature, allFeatures)).ToArray();
 		FeatureSelectionItem CreateItem(BlueprintFeature feature, AddFeaturesToLevelUp pool)

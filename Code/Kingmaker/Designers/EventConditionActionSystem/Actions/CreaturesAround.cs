@@ -35,7 +35,7 @@ public class CreaturesAround : GameAction
 		return $"Crearures around {Center} (Radius:{Radius})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BaseUnitEntity item in GameHelper.GetTargetsAround(Center.GetValue(), Radius.GetValue(), CheckLos, IncludeDead))
 		{

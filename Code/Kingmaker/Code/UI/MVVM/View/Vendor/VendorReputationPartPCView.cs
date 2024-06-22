@@ -32,6 +32,8 @@ public class VendorReputationPartPCView : VendorReputationPartView<InventoryCarg
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		AddDisposable(base.ViewModel.HasItemsToSell.Subscribe(m_SelectAllButton.SetInteractable));
+		AddDisposable(base.ViewModel.CanSellCargo.Subscribe(m_UnselectAllButton.SetInteractable));
 		AddDisposable(SellButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.SellCargo();
@@ -50,14 +52,8 @@ public class VendorReputationPartPCView : VendorReputationPartView<InventoryCarg
 		{
 			SellButton.Interactable = val;
 		}));
-		AddDisposable(base.ViewModel.InventoryCargoVM.HasVisibleCargo.Subscribe(delegate(bool val)
-		{
-			m_CargoButton.Interactable = val;
-		}));
-		AddDisposable(base.ViewModel.InventoryCargoVM.HasVisibleCargo.Subscribe(delegate(bool val)
-		{
-			m_ListButton.Interactable = val;
-		}));
+		AddDisposable(base.ViewModel.InventoryCargoVM.HasVisibleCargo.Subscribe(m_CargoButton.SetInteractable));
+		AddDisposable(base.ViewModel.InventoryCargoVM.HasVisibleCargo.Subscribe(m_ListButton.SetInteractable));
 		m_SelectAllButtonText.text = UIStrings.Instance.Vendor.SelectAllRelevant;
 		m_UnselectButtonText.text = UIStrings.Instance.Vendor.UnselectAllRelevant;
 	}

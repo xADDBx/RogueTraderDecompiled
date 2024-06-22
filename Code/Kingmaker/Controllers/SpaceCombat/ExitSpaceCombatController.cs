@@ -37,7 +37,12 @@ public class ExitSpaceCombatController : BaseUnitController, IControllerStart, I
 
 	protected override void TickOnUnit(AbstractUnitEntity unit)
 	{
-		if (unit != Game.Instance.Player.PlayerShip || unit.IsInCombat || s_ExitSpaceCombatRequested || ((bool)m_TimeSurvival && m_TimeSurvival.RoundsLeft > 0))
+		if (unit != Game.Instance.Player.PlayerShip || unit.IsInCombat || s_ExitSpaceCombatRequested)
+		{
+			return;
+		}
+		TimeSurvival timeSurvival = m_TimeSurvival;
+		if (timeSurvival != null && !timeSurvival.UnlimitedTime && timeSurvival.RoundsLeft > 0)
 		{
 			return;
 		}

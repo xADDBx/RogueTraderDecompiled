@@ -116,8 +116,8 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			}
 			DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
 			HealPredictionData healPrediction = Ability.GetHealPrediction(target);
-			MinDamage = damagePrediction?.MinDamage ?? healPrediction?.Value ?? 0;
-			MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.Value ?? 0;
+			MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
+			MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
 		}
 	}
 
@@ -136,8 +136,8 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		}
 		DamagePredictionData damagePrediction = Ability.GetDamagePrediction(Target, CasterPosition);
 		HealPredictionData healPrediction = Ability.GetHealPrediction(Target);
-		MinDamage = damagePrediction?.MinDamage ?? healPrediction?.Value ?? 0;
-		MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.Value ?? 0;
+		MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
+		MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
 	}
 
 	private void UpdateWithWeapon(AbilityData ability, MechanicEntity target, Vector3 casterPosition, ItemEntityWeapon weapon)

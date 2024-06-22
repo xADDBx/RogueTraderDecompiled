@@ -186,6 +186,11 @@ public class FxRoot : BlueprintScriptableObject
 
 	public BlueprintFxLocatorGroup LocatorGroupTorsoCenterFX => m_LocatorGroupTorsoCenterFX;
 
+	public void Deinit()
+	{
+		m_DeathFxsInitialized = false;
+	}
+
 	private void InitializeDeathFxs()
 	{
 		if (!m_DeathFxsInitialized)

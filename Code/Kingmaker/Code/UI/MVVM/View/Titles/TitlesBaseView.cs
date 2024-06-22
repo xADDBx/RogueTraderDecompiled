@@ -249,11 +249,11 @@ public abstract class TitlesBaseView : ViewBase<TitlesVM>, ICreditsView, IInitia
 
 	private void SetSoundSettings(bool state)
 	{
-		SoundState.Instance.OnMusicStateChange((!state) ? MusicStateHandler.MusicState.MainMenu : MusicStateHandler.MusicState.Credits);
 		EventBus.RaiseEvent(delegate(IModalWindowUIHandler h)
 		{
 			h.HandleModalWindowUiChanged(state, ModalWindowUIType.GameEndingTitles);
 		});
+		SoundState.Instance.OnMusicStateChange((!state) ? MusicStateHandler.MusicState.MainMenu : MusicStateHandler.MusicState.Credits);
 	}
 
 	private void ClearBackgrounds()

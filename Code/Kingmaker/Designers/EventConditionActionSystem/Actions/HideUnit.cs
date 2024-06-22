@@ -32,7 +32,7 @@ public class HideUnit : GameAction
 		return (Unhide ? "Show " : "Hide") + Target?.GetCaption();
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
 		AbstractUnitEntityView view = value.View;

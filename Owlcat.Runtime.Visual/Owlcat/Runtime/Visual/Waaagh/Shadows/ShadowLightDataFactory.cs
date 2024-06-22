@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
+using Owlcat.Runtime.Visual.Lighting;
 using Owlcat.Runtime.Visual.Waaagh.Lighting;
 using Unity.Burst;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Shadows;
 
@@ -17,9 +17,9 @@ internal struct ShadowLightDataFactory
 
 	private readonly int2 m_ScreenResolution;
 
-	private readonly int m_SpotLightResolutionMax;
+	private readonly ShadowResolutionSettings m_SpotLightResolution;
 
-	private readonly int m_PointLightResolutionMax;
+	private readonly ShadowResolutionSettings m_PointLightResolution;
 
 	private readonly int m_DirectionalLightResolutionMax;
 
@@ -30,8 +30,8 @@ internal struct ShadowLightDataFactory
 	public unsafe ShadowLightDataFactory(in RenderingData renderingData)
 	{
 		m_ScreenResolution = new int2(renderingData.CameraData.CameraTargetDescriptor.width, renderingData.CameraData.CameraTargetDescriptor.height);
-		m_SpotLightResolutionMax = (int)renderingData.ShadowData.SpotLightResolution;
-		m_PointLightResolutionMax = (int)renderingData.ShadowData.PointLightResolution;
+		m_SpotLightResolution = renderingData.ShadowData.SpotLightResolution;
+		m_PointLightResolution = renderingData.ShadowData.PointLightResolution;
 		m_DirectionalLightResolutionMax = (int)renderingData.ShadowData.DirectionalLightCascadeResolution;
 		m_LightTypeToFaceCountMap[0] = 1;
 		m_LightTypeToFaceCountMap[1] = renderingData.ShadowData.DirectionalLightCascades.Count;
@@ -56,7 +56,7 @@ internal struct ShadowLightDataFactory
 		result.SpotAngle = lightDescriptor.VisibleLight.spotAngle;
 		result.ShadowNearPlane = lightDescriptor.ShadowNearPlane;
 		result.Shadows = lightDescriptor.Shadows;
-		result.Resolution = GetShadowMapResolution(in lightDescriptor.VisibleLight);
+		result.Resolution = GetShadowMapResolution(in lightDescriptor);
 		result.FaceCount = GetShadowMapFaceCount(lightDescriptor.VisibleLight.lightType);
 		result.ViewportCount = GetShadowMapViewportCount(lightDescriptor.VisibleLight.lightType);
 		result.DepthBias = lightDescriptor.ShadowDepthBias;
@@ -82,25 +82,41 @@ internal struct ShadowLightDataFactory
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	[BurstCompile]
-	private int GetShadowMapResolution(in VisibleLight visibleLight)
+	private int GetShadowMapResolution(in LightDescriptor lightDescriptor)
 	{
-		return visibleLight.lightType switch
+		return lightDescriptor.VisibleLight.lightType switch
 		{
-			LightType.Spot => GetPunctualLightShadowMapResolution(m_SpotLightResolutionMax, visibleLight.screenRect), 
+			LightType.Spot => GetPunctualLightShadowMapResolution(in lightDescriptor, in m_SpotLightResolution), 
 			LightType.Directional => m_DirectionalLightResolutionMax, 
-			LightType.Point => GetPunctualLightShadowMapResolution(m_PointLightResolutionMax, visibleLight.screenRect), 
+			LightType.Point => GetPunctualLightShadowMapResolution(in lightDescriptor, in m_PointLightResolution), 
 			_ => 0, 
 		};
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private int GetPunctualLightShadowMapResolution(int maxResolution, Rect screenRect)
+	private int GetPunctualLightShadowMapResolution(in LightDescriptor lightDescriptor, in ShadowResolutionSettings resolutionSettings)
 	{
+		Rect screenRect = lightDescriptor.VisibleLight.screenRect;
 		int num = Mathf.ClosestPowerOfTwo((int)math.max((float)m_ScreenResolution.x * screenRect.width, (float)m_ScreenResolution.y * screenRect.height));
 		if (num < 128)
 		{
 			return 128;
 		}
-		return math.min(num, maxResolution);
+		return math.min(num, (ShadowResolutionTier)(lightDescriptor.ShadowmapResolution switch
+		{
+			LightShadowmapResolution.Default => (int)resolutionSettings.DefaultTier, 
+			LightShadowmapResolution.Low => 0, 
+			LightShadowmapResolution.Medium => 1, 
+			LightShadowmapResolution.High => 2, 
+			LightShadowmapResolution.Ultra => 3, 
+			_ => (int)resolutionSettings.DefaultTier, 
+		}) switch
+		{
+			ShadowResolutionTier.Low => (int)resolutionSettings.Low, 
+			ShadowResolutionTier.Medium => (int)resolutionSettings.Medium, 
+			ShadowResolutionTier.High => (int)resolutionSettings.High, 
+			ShadowResolutionTier.Ultra => (int)resolutionSettings.Ultra, 
+			_ => (int)resolutionSettings.Low, 
+		});
 	}
 }

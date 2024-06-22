@@ -60,8 +60,9 @@ public class UnitPartJumpAsideDodge : UnitPart, IEntitySubscriber, ITurnEndHandl
 	public void Dodge(ForcedPath safePath, int pathCost)
 	{
 		SpentMovePoints += pathCost;
-		UnitJumpAsideDodgeParams cmdParams = new UnitJumpAsideDodgeParams(safePath);
-		base.Owner.Commands.Run(cmdParams);
+		UnitJumpAsideDodgeParams unitJumpAsideDodgeParams = new UnitJumpAsideDodgeParams(safePath);
+		unitJumpAsideDodgeParams.ApproachRadius = safePath?.LengthInCells() ?? 1;
+		base.Owner.Commands.Run(unitJumpAsideDodgeParams);
 	}
 
 	public void HandleUnitEndTurn(bool isTurnBased)

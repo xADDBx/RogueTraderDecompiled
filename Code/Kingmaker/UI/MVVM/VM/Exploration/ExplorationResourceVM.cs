@@ -18,15 +18,15 @@ namespace Kingmaker.UI.MVVM.VM.Exploration;
 
 public class ExplorationResourceVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IMiningUIHandler, ISubscriber
 {
-	public ReactiveProperty<Sprite> Icon = new ReactiveProperty<Sprite>();
+	public readonly ReactiveProperty<Sprite> Icon = new ReactiveProperty<Sprite>();
 
-	public ReactiveProperty<string> Name = new ReactiveProperty<string>();
+	public readonly ReactiveProperty<string> Name = new ReactiveProperty<string>();
 
-	public ReactiveProperty<int> Count = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> Count = new ReactiveProperty<int>();
 
-	public ReactiveProperty<string> Description = new ReactiveProperty<string>();
+	public readonly ReactiveProperty<string> Description = new ReactiveProperty<string>();
 
-	public ReactiveProperty<bool> IsBeingMined = new ReactiveProperty<bool>();
+	public readonly ReactiveProperty<bool> IsBeingMined = new ReactiveProperty<bool>();
 
 	private readonly BlueprintResource m_BlueprintResource;
 

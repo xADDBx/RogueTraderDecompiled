@@ -18,11 +18,11 @@ public class CharInfoPagesMenuConsoleView : CharInfoPagesMenuPCView
 	{
 		AddDisposable(m_PreviousFilterHint.Bind(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.SelectPrevValidEntity();
+			SelectPrev();
 		}, 14, enabledHints)));
 		AddDisposable(m_NextFilterHint.Bind(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.SelectNextValidEntity();
+			SelectNext();
 		}, 15, enabledHints)));
 	}
 }

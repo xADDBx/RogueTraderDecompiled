@@ -17,11 +17,17 @@ public static class UIConstsExtensions
 		return UIUtility.AddSign(value);
 	}
 
-	public static string GetAnswerString(BlueprintAnswer answer, string bind, int index)
+	public static string GetAnswerFormattedString(BlueprintAnswer answer, string bind, int index)
+	{
+		string format = ((Game.Instance.DialogController.Dialog.Type == DialogType.Book) ? UIDialog.Instance.AnswerDialogueBeFormat : UIDialog.Instance.AnswerDialogueFormat);
+		string stringByBinding = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName(bind));
+		return string.Format(format, stringByBinding.Empty() ? index.ToString() : stringByBinding, GetAnswerText(answer));
+	}
+
+	public static string GetAnswerText(BlueprintAnswer answer)
 	{
 		bool flag = Game.Instance.DialogController.Dialog.Type == DialogType.Book;
 		string checkFormat = (flag ? UIDialog.Instance.AnswerStringWithCheckBeFormat : UIDialog.Instance.AnswerStringWithCheckFormat);
-		string format = (flag ? UIDialog.Instance.AnswerDialogueBeFormat : UIDialog.Instance.AnswerDialogueFormat);
 		GameDialogsSettings dialogs = SettingsRoot.Game.Dialogs;
 		string text = string.Empty;
 		if ((bool)dialogs.ShowSkillcheckDC)
@@ -33,7 +39,6 @@ public static class UIConstsExtensions
 		{
 			text2 = string.Format(UIConfig.Instance.UIDialogExchangeLinkFormat, answer.AssetGuid);
 		}
-		string empty = string.Empty;
 		if ((bool)dialogs.ShowAlignmentRequirements && !answer.SoulMarkRequirement.Empty)
 		{
 			string arg = UIUtility.GetSoulMarkDirectionText(answer.SoulMarkRequirement.Direction).Text ?? "";
@@ -48,7 +53,6 @@ public static class UIConstsExtensions
 		{
 			text = string.Format(UIDialog.Instance.AligmentShiftedFormat, UIUtility.GetSoulMarkDirectionText(answer.SoulMarkShift.Direction).Text) + text;
 		}
-		string stringByBinding = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName(bind));
-		return string.Format(format, stringByBinding.Empty() ? index.ToString() : stringByBinding, empty + text + (text.Empty() ? string.Empty : " ") + text2 + ((!answer.IsSoulMarkRequirementSatisfied()) ? "" : answer.DisplayText));
+		return text + (text.Empty() ? string.Empty : " ") + text2 + ((!answer.IsSoulMarkRequirementSatisfied()) ? "" : answer.DisplayText);
 	}
 }

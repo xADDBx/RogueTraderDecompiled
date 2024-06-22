@@ -27,6 +27,7 @@ using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 
@@ -42,7 +43,7 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 
 	private MechanicEntityUIWrapper m_UnitUIWrapper;
 
-	private InspectReactiveData m_InspectReactiveData;
+	private readonly InspectReactiveData m_InspectReactiveData;
 
 	public TooltipTemplateUnitInspect(BaseUnitEntity unit)
 	{
@@ -255,11 +256,14 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Inspect.StatusEffectsTitle.Text));
 		if (m_InspectReactiveData != null)
 		{
-			bricks.Add(new TooltipBrickWidget(m_InspectReactiveData.TooltipBrickBuffs, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
-			return;
+			ReactiveCollection<ITooltipBrick> tooltipBrickBuffs = m_InspectReactiveData.TooltipBrickBuffs;
+			bricks.Add(new TooltipBrickWidget(tooltipBrickBuffs, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
 		}
-		ReactiveCollection<ITooltipBrick> buffsTooltipBricks = InspectExtensions.GetBuffsTooltipBricks(m_Unit);
-		bricks.Add(new TooltipBrickWidget(buffsTooltipBricks, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
+		else
+		{
+			ReactiveCollection<ITooltipBrick> buffsTooltipBricks = InspectExtensions.GetBuffsTooltipBricks(m_Unit);
+			bricks.Add(new TooltipBrickWidget(buffsTooltipBricks, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
+		}
 	}
 
 	protected void AddWeapon(List<ITooltipBrick> bricks)
@@ -300,18 +304,22 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		{
 			return;
 		}
+		if (!(m_Unit.Blueprint is BlueprintStarship))
+		{
+			abilities = abilities.Where((BlueprintAbility a) => !a.IsStarshipAbility).ToArray();
+		}
 		switch (type)
 		{
 		case TooltipTemplateType.Tooltip:
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			BlueprintAbility[] array = abilities;
-			foreach (BlueprintAbility blueprintAbility in array)
+			foreach (BlueprintAbility blueprintAbility2 in array)
 			{
-				if (!string.IsNullOrEmpty(blueprintAbility.Name))
+				if (!string.IsNullOrEmpty(blueprintAbility2.Name))
 				{
 					UIUtilityTexts.TryAddWordSeparator(stringBuilder, ", ");
-					stringBuilder.Append(blueprintAbility.Name);
+					stringBuilder.Append(blueprintAbility2.Name);
 				}
 			}
 			if (stringBuilder.Length != 0)
@@ -325,9 +333,12 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		case TooltipTemplateType.Info:
 		{
 			BlueprintAbility[] array = abilities;
-			foreach (BlueprintAbility ability in array)
+			foreach (BlueprintAbility blueprintAbility in array)
 			{
-				bricks.Add(new TooltipBrickFeature(ability, isHeader: false, FeatureTypes.Common, m_Unit));
+				if (blueprintAbility.CultAmbushVisibility(m_Unit) != 0)
+				{
+					bricks.Add(new TooltipBrickFeature(blueprintAbility, isHeader: false, m_Unit));
+				}
 			}
 			break;
 		}
@@ -339,6 +350,10 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		if (features.Empty())
 		{
 			return;
+		}
+		if (!(m_Unit.Blueprint is BlueprintStarship))
+		{
+			features = features.Where((FeatureUIData f) => !f.Feature.IsStarshipFeature).ToArray();
 		}
 		switch (type)
 		{
@@ -368,9 +383,9 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			for (int i = 0; i < array.Length; i++)
 			{
 				BlueprintFeature feature = array[i].Feature;
-				if (!string.IsNullOrEmpty(feature.Name) && !feature.HideInUI)
+				if (!string.IsNullOrEmpty(feature.Name) && !feature.HideInUI && feature.CultAmbushVisibility(m_Unit) != 0)
 				{
-					bricks.Add(new TooltipBrickFeature(feature, isHeader: false, available: true, showIcon: true, FeatureTypes.Common, m_Unit));
+					bricks.Add(new TooltipBrickFeature(feature, isHeader: false, available: true, showIcon: true, m_Unit));
 				}
 			}
 			break;

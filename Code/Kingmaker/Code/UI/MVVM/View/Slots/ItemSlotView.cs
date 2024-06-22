@@ -136,7 +136,7 @@ public class ItemSlotView<TViewModel> : VirtualListElementViewBase<TViewModel>, 
 	{
 		m_Icon.gameObject.SetActive(value: false);
 		m_Icon.sprite = null;
-		if (m_Count != null)
+		if (!(m_Count == null))
 		{
 			if (m_CountBackground != null)
 			{

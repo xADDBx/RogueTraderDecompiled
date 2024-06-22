@@ -53,6 +53,8 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 
 	public UISettingsEntityKeyBinding CameraRotateRight;
 
+	public UISettingsEntityKeyBinding CameraRotateToPointNorth;
+
 	public UISettingsEntityKeyBinding FollowUnit;
 
 	public UISettingsEntityKeyBinding SkipBark;
@@ -64,6 +66,22 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 	public UISettingsEntityKeyBinding SpeedUpEnemiesTurn;
 
 	public UISettingsEntityKeyBinding SwitchUIVisibility;
+
+	public UISettingsEntityKeyBinding ShowHideCombatLog;
+
+	public UISettingsEntityKeyBinding EndTurn;
+
+	public UISettingsEntityKeyBinding OpenSearchInventory;
+
+	public UISettingsEntityKeyBinding CollectAllLoot;
+
+	public UISettingsEntityKeyBinding PrevTab;
+
+	public UISettingsEntityKeyBinding NextTab;
+
+	public UISettingsEntityKeyBinding PrevCharacter;
+
+	public UISettingsEntityKeyBinding NextCharacter;
 
 	public void LinkToSettings()
 	{
@@ -90,12 +108,21 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 		CameraRight.LinkSetting(SettingsRoot.Controls.Keybindings.General.CameraRight);
 		CameraRotateLeft.LinkSetting(SettingsRoot.Controls.Keybindings.General.CameraRotateLeft);
 		CameraRotateRight.LinkSetting(SettingsRoot.Controls.Keybindings.General.CameraRotateRight);
+		CameraRotateToPointNorth.LinkSetting(SettingsRoot.Controls.Keybindings.General.CameraRotateToPointNorth);
 		FollowUnit.LinkSetting(SettingsRoot.Controls.Keybindings.General.FollowUnit);
 		SkipBark.LinkSetting(SettingsRoot.Controls.Keybindings.General.SkipBark);
 		SkipCutscene.LinkSetting(SettingsRoot.Controls.Keybindings.General.SkipCutscene);
 		OpenModificationsWindow.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenModificationWindow);
 		SpeedUpEnemiesTurn.LinkSetting(SettingsRoot.Controls.Keybindings.General.SpeedUpEnemiesTurn);
 		SwitchUIVisibility.LinkSetting(SettingsRoot.Controls.Keybindings.General.SwitchUIVisibility);
+		ShowHideCombatLog.LinkSetting(SettingsRoot.Controls.Keybindings.General.ShowHideCombatLog);
+		EndTurn.LinkSetting(SettingsRoot.Controls.Keybindings.General.EndTurn);
+		OpenSearchInventory.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenSearchInventory);
+		CollectAllLoot.LinkSetting(SettingsRoot.Controls.Keybindings.General.CollectAllLoot);
+		PrevTab.LinkSetting(SettingsRoot.Controls.Keybindings.General.PrevTab);
+		NextTab.LinkSetting(SettingsRoot.Controls.Keybindings.General.NextTab);
+		PrevCharacter.LinkSetting(SettingsRoot.Controls.Keybindings.General.PrevCharacter);
+		NextCharacter.LinkSetting(SettingsRoot.Controls.Keybindings.General.NextCharacter);
 	}
 
 	public void InitializeSettings()

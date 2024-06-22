@@ -67,7 +67,7 @@ public class GenerateCombatRandomEncounterAndTeleport : GameAction
 		return "Run CombatRandomEncounterGenerator and teleport party to area";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.RequestPauseUi(isPaused: true);
 		Game.Instance.CombatRandomEncounterController.ActivateCombatRandomEncounter(m_Area, m_OverrideEnterPoint, m_OverrideRandomGroup);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Code.Enums;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -11,7 +12,6 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Items;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UnitLogic.Mechanics.Damage;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.UnityExtensions;
 using Warhammer.SpaceCombat.Blueprints;
 using Warhammer.SpaceCombat.Blueprints.Slots;
@@ -54,7 +54,11 @@ public static class ItemsFilter
 			}
 			return true;
 		case ItemsFilterType.Usable:
-			return blueprintItem is BlueprintItemEquipmentUsable;
+			if (!(blueprintItem is BlueprintItemEquipmentUsable))
+			{
+				return blueprintItem.Tag != ItemTag.None;
+			}
+			return true;
 		case ItemsFilterType.Notable:
 			if (!blueprintItem.IsNotable)
 			{
@@ -62,9 +66,9 @@ public static class ItemsFilter
 			}
 			return true;
 		case ItemsFilterType.NonUsable:
-			if (!blueprintItem.IsNotable && !(blueprintItem is BlueprintItemEquipmentUsable) && !(blueprintItem is BlueprintItemWeapon) && !(blueprintItem is BlueprintItemArmor) && !(blueprintItem is BlueprintItemShield) && !(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentShirt) && !(blueprintItem is BlueprintItemEquipmentBelt))
+			if (!blueprintItem.IsNotable && !(blueprintItem is BlueprintItemEquipmentUsable) && !(blueprintItem is BlueprintItemWeapon) && !(blueprintItem is BlueprintItemArmor) && !(blueprintItem is BlueprintItemShield) && !(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentShirt) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintStarshipItem))
 			{
-				return !(blueprintItem is BlueprintStarshipItem);
+				return blueprintItem.Tag == ItemTag.None;
 			}
 			return false;
 		case ItemsFilterType.ShipNoFilter:
@@ -109,6 +113,8 @@ public static class ItemsFilter
 				return blueprintStarshipWeapon.AllowedSlots.Contains(WeaponSlotType.Starboard);
 			}
 			return false;
+		case ItemsFilterType.Arsenal:
+			return blueprintItem is BlueprintItemArsenal;
 		default:
 			throw new ArgumentOutOfRangeException("filter", filter, null);
 		}
@@ -205,10 +211,17 @@ public static class ItemsFilter
 		switch (type)
 		{
 		case ItemsSorterType.TypeUp:
-			items.Sort((ItemEntity a, ItemEntity b) => CompareByTypeAndName(a, b, filter));
+			items.Sort((ItemEntity a, ItemEntity b) => CompareByType(a, b, filter));
 			break;
 		case ItemsSorterType.TypeDown:
-			items.Sort((ItemEntity a, ItemEntity b) => CompareByTypeAndName(a, b, filter));
+			items.Sort((ItemEntity a, ItemEntity b) => CompareByType(a, b, filter));
+			items.Reverse();
+			break;
+		case ItemsSorterType.CharacteristicsUp:
+			items.Sort((ItemEntity a, ItemEntity b) => CompareByCharacteristic(a, b, filter));
+			break;
+		case ItemsSorterType.CharacteristicsDown:
+			items.Sort((ItemEntity a, ItemEntity b) => CompareByCharacteristic(a, b, filter));
 			items.Reverse();
 			break;
 		case ItemsSorterType.DateUp:
@@ -244,13 +257,34 @@ public static class ItemsFilter
 		return num;
 	}
 
-	private static int CompareByTypeAndName(ItemEntity a, ItemEntity b, ItemsFilterType filter)
+	private static int CompareByType(ItemEntity a, ItemEntity b, ItemsFilterType filter)
 	{
-		if (GetItemType(a, filter) == GetItemType(b, filter))
+		int typeCompareValue = TypeSorter.GetTypeCompareValue(a, filter);
+		int typeCompareValue2 = TypeSorter.GetTypeCompareValue(b, filter);
+		if (typeCompareValue == typeCompareValue2)
 		{
-			return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+			return 0;
 		}
-		return GetItemType(a, filter).CompareTo(GetItemType(b, filter));
+		if (typeCompareValue >= typeCompareValue2)
+		{
+			return 1;
+		}
+		return -1;
+	}
+
+	private static int CompareByCharacteristic(ItemEntity a, ItemEntity b, ItemsFilterType filter)
+	{
+		int defaultTypeCompareValue = CharacteristicSorter.GetDefaultTypeCompareValue(a, filter);
+		int defaultTypeCompareValue2 = CharacteristicSorter.GetDefaultTypeCompareValue(b, filter);
+		if (defaultTypeCompareValue == defaultTypeCompareValue2)
+		{
+			return 0;
+		}
+		if (defaultTypeCompareValue >= defaultTypeCompareValue2)
+		{
+			return 1;
+		}
+		return -1;
 	}
 
 	private static int CompareByName(ItemEntity a, ItemEntity b, ItemsFilterType filter)
@@ -258,61 +292,12 @@ public static class ItemsFilter
 		int num = GetItemType(a, filter).CompareTo(ItemsItemType.Other);
 		int num2 = GetItemType(b, filter).CompareTo(ItemsItemType.Other);
 		int result = GetItemType(a, filter).CompareTo(GetItemType(b, filter));
-		int result2 = string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+		int result2 = string.Compare(a.Name.TrimStart('['), b.Name.TrimStart('['), StringComparison.Ordinal);
 		if (num == -1 && num2 == -1)
 		{
 			return result2;
 		}
 		return result;
-	}
-
-	private static int CompareByPrice(ItemEntity a, ItemEntity b, ItemsFilterType filter)
-	{
-		int num = GetItemType(a, filter).CompareTo(ItemsItemType.Other);
-		int num2 = GetItemType(b, filter).CompareTo(ItemsItemType.Other);
-		int num3 = Game.Instance.Vendor.GetItemBuyPrice(a.Blueprint).CompareTo(Game.Instance.Vendor.GetItemBuyPrice(b.Blueprint));
-		if (num == -1 && num2 == -1)
-		{
-			if (num3 == 0)
-			{
-				return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
-			}
-			return num3;
-		}
-		return GetItemType(a, filter).CompareTo(GetItemType(b, filter));
-	}
-
-	private static int CompareByWeight(ItemEntity a, ItemEntity b, ItemsFilterType filter)
-	{
-		int num = GetItemType(a, filter).CompareTo(ItemsItemType.Other);
-		int num2 = GetItemType(b, filter).CompareTo(ItemsItemType.Other);
-		int num3 = (a.Blueprint.Weight * (float)a.Count).CompareTo(b.Blueprint.Weight * (float)b.Count);
-		if (num == -1 && num2 == -1)
-		{
-			if (num3 != 0)
-			{
-				return num3;
-			}
-			return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
-		}
-		return GetItemType(a, filter).CompareTo(GetItemType(b, filter));
-	}
-
-	private static int CompareByReputation(ItemEntity a, ItemEntity b, ItemsFilterType filter)
-	{
-		int num = GetItemType(a, filter).CompareTo(ItemsItemType.Other);
-		int num2 = GetItemType(b, filter).CompareTo(ItemsItemType.Other);
-		PartVendor vendorInventory = Game.Instance.Vendor.VendorInventory;
-		int num3 = vendorInventory.GetReputationToUnlock(a.Blueprint).CompareTo(vendorInventory.GetReputationToUnlock(b.Blueprint));
-		if (num == -1 && num2 == -1)
-		{
-			if (num3 != 0)
-			{
-				return num3;
-			}
-			return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
-		}
-		return GetItemType(a, filter).CompareTo(GetItemType(b, filter));
 	}
 
 	public static ItemsItemType GetItemType(ItemEntity item, ItemsFilterType filter = ItemsFilterType.NoFilter)
@@ -352,11 +337,35 @@ public static class ItemsFilter
 													{
 														if (!(blueprintItem is BlueprintItemEquipmentWrist))
 														{
-															if (blueprintItem is BlueprintItemEquipmentUsable)
+															if (!(blueprintItem is BlueprintItemEquipmentUsable))
 															{
-																return ItemsItemType.Usable;
+																if (!(blueprintItem is BlueprintItemVoidShieldGenerator))
+																{
+																	if (!(blueprintItem is BlueprintItemPlasmaDrives))
+																	{
+																		if (!(blueprintItem is BlueprintItemArmorPlating))
+																		{
+																			if (!(blueprintItem is BlueprintItemArsenal))
+																			{
+																				if (!(blueprintItem is BlueprintItemAugerArray))
+																				{
+																					if (blueprintItem is BlueprintStarshipWeapon)
+																					{
+																						return ItemsItemType.StarshipWeapon;
+																					}
+																					return ItemsItemType.NonUsable;
+																				}
+																				return ItemsItemType.StarshipAugerArray;
+																			}
+																			return ItemsItemType.StarshipArsenal;
+																		}
+																		return ItemsItemType.StarshipArmorPlating;
+																	}
+																	return ItemsItemType.StarshipPlasmaDrives;
+																}
+																return ItemsItemType.StarshipVoidShieldGenerator;
 															}
-															return ItemsItemType.NonUsable;
+															return ItemsItemType.Usable;
 														}
 														return ItemsItemType.Wrist;
 													}

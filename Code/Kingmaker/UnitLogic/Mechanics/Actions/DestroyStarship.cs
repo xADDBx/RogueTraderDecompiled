@@ -21,7 +21,7 @@ public class DestroyStarship : ContextAction
 		return "Destroy owner starship";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeOwner = base.Context.MaybeOwner;
 		StarshipEntity starship = maybeOwner as StarshipEntity;

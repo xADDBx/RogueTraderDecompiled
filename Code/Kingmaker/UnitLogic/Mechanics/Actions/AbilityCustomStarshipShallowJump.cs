@@ -71,8 +71,8 @@ public class AbilityCustomStarshipShallowJump : AbilityCustomLogic, ICustomShipP
 			foreach (StarshipEntity item in jumpedOverUnits)
 			{
 				int maxHitPoints = item.Health.MaxHitPoints;
-				int min = maxHitPoints * jumpedOverPctDamageMin / 100;
-				int max = maxHitPoints * jumpedOverPctDamageMax / 100;
+				int min = (maxHitPoints * jumpedOverPctDamageMin + 50) / 100;
+				int max = (maxHitPoints * jumpedOverPctDamageMax + 50) / 100;
 				DamageData damage = new DamageData(DamageType.Warp, min, max);
 				Rulebook.Trigger(new RuleDealDamage(starship, item, damage));
 			}
@@ -114,7 +114,7 @@ public class AbilityCustomStarshipShallowJump : AbilityCustomLogic, ICustomShipP
 		int direction = CustomGraphHelper.GuessDirection(v3direction);
 		int width = starship.SizeRect.Width;
 		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
-		IEnumerable<StarshipEntity> source = (createJumpedOverList ? Game.Instance.State.AllAwakeUnits.Where((AbstractUnitEntity p) => p is StarshipEntity).Cast<StarshipEntity>() : null);
+		IEnumerable<StarshipEntity> source = (createJumpedOverList ? Game.Instance.State.AllAwakeUnits.Where((AbstractUnitEntity p) => p is StarshipEntity && p != starship).Cast<StarshipEntity>() : null);
 		HashSet<StarshipEntity> hashSet = (createJumpedOverList ? new HashSet<StarshipEntity>() : null);
 		int num = AdjustDistance(MinDistance);
 		int num2 = AdjustDistance(MaxDistance);

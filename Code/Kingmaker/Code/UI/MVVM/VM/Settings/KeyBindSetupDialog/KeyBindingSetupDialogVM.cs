@@ -14,27 +14,27 @@ public class KeyBindingSetupDialogVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	private readonly Action m_CloseAction;
 
-	private KeyBindingData m_CurrentKeyBinding;
+	public KeyBindingData CurrentKeyBinding { get; private set; }
 
-	private bool m_CurrentBindingIsOccupied;
-
-	public KeyBindingData CurrentKeyBinding => m_CurrentKeyBinding;
-
-	public bool CurrentBindingIsOccupied => m_CurrentBindingIsOccupied;
+	public bool CurrentBindingIsOccupied { get; private set; }
 
 	public KeyBindingSetupDialogVM(UISettingsEntityKeyBinding uiSettingsEntity, int bindingIndex, Action closeAction)
 	{
 		m_UISettingsEntity = uiSettingsEntity;
 		m_BindingIndex = bindingIndex;
 		m_CloseAction = closeAction;
-		m_CurrentKeyBinding = uiSettingsEntity.GetBinding(bindingIndex);
+		CurrentKeyBinding = uiSettingsEntity.GetBinding(bindingIndex);
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void OnBindingChosen(KeyBindingData keyBindingData)
 	{
-		m_CurrentKeyBinding = keyBindingData;
-		m_CurrentBindingIsOccupied = !m_UISettingsEntity.TrySetBinding(keyBindingData, m_BindingIndex);
-		if (!m_CurrentBindingIsOccupied)
+		CurrentKeyBinding = keyBindingData;
+		CurrentBindingIsOccupied = !m_UISettingsEntity.TrySetBinding(keyBindingData, m_BindingIndex);
+		if (!CurrentBindingIsOccupied)
 		{
 			Close();
 		}
@@ -52,9 +52,5 @@ public class KeyBindingSetupDialogVM : BaseDisposable, IViewModel, IBaseDisposab
 	public void Close()
 	{
 		m_CloseAction?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

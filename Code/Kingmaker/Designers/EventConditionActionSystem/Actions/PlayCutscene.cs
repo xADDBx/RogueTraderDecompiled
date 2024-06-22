@@ -55,7 +55,7 @@ public class PlayCutscene : GameAction, ICutsceneReference
 
 	public CutscenePlayerData CutsceneData => m_CutscenePlayerView?.PlayerData;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{
@@ -78,6 +78,7 @@ public class PlayCutscene : GameAction, ICutsceneReference
 		SceneEntitiesState state = ContextData<SpawnedUnitData>.Current?.State;
 		m_CutscenePlayerView = CutscenePlayerView.Play(Cutscene, Parameters, PutInQueue, state);
 		m_CutscenePlayerView.PlayerData.PlayActionId = name;
+		m_CutscenePlayerView.PlayerData.OriginBlueprint = base.Owner;
 	}
 
 	public override string GetCaption()

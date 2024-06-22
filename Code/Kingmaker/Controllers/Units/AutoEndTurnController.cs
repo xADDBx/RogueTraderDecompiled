@@ -64,7 +64,7 @@ public class AutoEndTurnController : IControllerTick, IController
 	{
 		if (!IsLocked && !Game.Instance.TurnController.EndTurnRequested)
 		{
-			Game.Instance.GameCommandQueue.EndTurnManually();
+			Game.Instance.GameCommandQueue.EndTurnManually(Game.Instance.TurnController.CurrentUnit);
 			m_LockedUntilTick = CurrentTick + 9;
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{

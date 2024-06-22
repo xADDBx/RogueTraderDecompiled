@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -12,6 +13,7 @@ using UnityEngine;
 
 namespace Kingmaker.Tutorial.Triggers;
 
+[AllowMultipleComponents]
 [TypeId("1711006cc1e74dbca3a18881ed67850e")]
 public class TutorialTriggerUnitGainFact : TutorialTrigger, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable
 {

@@ -28,7 +28,7 @@ public class AddLootToVendorTable : GameAction
 		return $"Add loot {Loot} to vendor table {Table}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.SharedVendorTables.AddLoot(Table, Loot);
 	}

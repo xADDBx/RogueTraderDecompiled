@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Networking;
+using Kingmaker.QA.Overlays;
 using Kingmaker.Replay;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
@@ -27,11 +28,9 @@ public class RealTimeController
 
 	private bool m_ForceSystemTick;
 
-	public bool IsSystemTick;
+	public bool IsSimulationTick;
 
 	public const long NetworkStepMs = 50L;
-
-	public bool IsNetworkTick;
 
 	private TimeSpan m_InterpolationTime;
 
@@ -47,7 +46,7 @@ public class RealTimeController
 	{
 		get
 		{
-			if (!IsNetworkTick)
+			if (!IsSimulationTick)
 			{
 				return TimeSpan.Zero;
 			}
@@ -91,7 +90,7 @@ public class RealTimeController
 	{
 		get
 		{
-			if (!IsSystemTick)
+			if (!IsSimulationTick)
 			{
 				return TimeSpan.Zero;
 			}
@@ -113,11 +112,6 @@ public class RealTimeController
 	private int GetNetworkTick(TimeSpan timeSpan)
 	{
 		return (int)(timeSpan.Ticks / NetworkStepTimeSpan.Ticks);
-	}
-
-	private bool CheckIsNetworkTick(TimeSpan timeSpan)
-	{
-		return timeSpan.Ticks % NetworkStepTimeSpan.Ticks == 0;
 	}
 
 	private bool IsStepAvailable(out bool commandsReady)
@@ -176,7 +170,7 @@ public class RealTimeController
 			}
 			m_DeltaTimeToProcess = TimeSpan.FromTicks(Math.Min(m_DeltaTimeToProcess.Ticks, MaxDeltaTime.Ticks));
 			m_DeltaTimeInterpolation += m_DeltaTimeToProcess - deltaTimeToProcess;
-			m_InterpolationTime = new TimeSpan(Math.Min(m_DeltaTimeInterpolation.Ticks, 5 * SystemStepTimeSpan.Ticks));
+			m_InterpolationTime = new TimeSpan(Math.Min(m_DeltaTimeInterpolation.Ticks, 2 * SystemStepTimeSpan.Ticks));
 			m_TickAtFrame = 0;
 			if (SystemStepTimeSpan <= m_DeltaTimeToProcess)
 			{
@@ -184,7 +178,7 @@ public class RealTimeController
 			}
 		}
 		TimeSpan realTime = Game.Instance.Player.RealTime;
-		if (IsStepAvailable(out var _))
+		if (IsStepAvailable(out var commandsReady))
 		{
 			long num = GetSystemStepIndex(realTime);
 			num++;
@@ -194,17 +188,17 @@ public class RealTimeController
 			m_DeltaTimeToProcess -= systemStepTimeSpan;
 			m_DeltaTimeInterpolation = new TimeSpan(m_DeltaTimeToProcess.Ticks % SystemStepTimeSpan.Ticks);
 			m_InterpolationTime = m_DeltaTimeInterpolation;
-			IsSystemTick = true;
-			IsNetworkTick = CheckIsNetworkTick(Game.Instance.Player.RealTime);
+			IsSimulationTick = true;
 			m_IsEndFrameTickProcessing = false;
+			NetworkingOverlay.NewTick();
 		}
 		else
 		{
-			if (flag)
+			if (flag && !commandsReady)
 			{
+				NetworkingOverlay.AddSkipTick();
 			}
-			IsSystemTick = false;
-			IsNetworkTick = false;
+			IsSimulationTick = false;
 			m_IsEndFrameTickProcessing = 0 < m_TickAtFrame;
 		}
 		Kingmaker.Replay.Replay.SaveState();
@@ -226,6 +220,6 @@ public class RealTimeController
 
 	public int SystemStepIndexAfter(TimeSpan value)
 	{
-		return CurrentSystemStepIndex + (int)Math.Ceiling(value.TotalSeconds * (double)SystemStepDurationSeconds);
+		return CurrentSystemStepIndex + (int)Math.Ceiling(value.TotalSeconds / (double)SystemStepDurationSeconds);
 	}
 }

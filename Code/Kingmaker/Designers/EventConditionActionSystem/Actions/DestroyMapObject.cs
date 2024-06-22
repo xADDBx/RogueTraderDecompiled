@@ -17,18 +17,18 @@ public class DestroyMapObject : GameAction
 	[SerializeReference]
 	public MapObjectEvaluator MapObject;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MapObjectEntity mapObjectEntity = (MapObject ? MapObject.GetValue() : null);
 		if (mapObjectEntity == null)
 		{
-			PFLog.Default.Error(this, "Cannot find map object");
+			Element.LogError(this, "Cannot find map object");
 			return;
 		}
 		DestructionPart optional = mapObjectEntity.GetOptional<DestructionPart>();
 		if (optional == null)
 		{
-			PFLog.Default.Error(this, "Map object " + mapObjectEntity.View?.name + " does not have an Destruction component");
+			Element.LogError(this, "Map object {0} does not have an Destruction component", mapObjectEntity.View?.name);
 		}
 		else
 		{

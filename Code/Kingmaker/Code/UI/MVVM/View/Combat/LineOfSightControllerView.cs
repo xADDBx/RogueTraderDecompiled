@@ -27,14 +27,14 @@ public class LineOfSightControllerView : ViewBase<LineOfSightControllerVM>
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void DrawLine(LineOfSightVM vm)
 	{
 		LineOfSightView widget = WidgetFactory.GetWidget(m_SightPCView);
 		widget.Bind(vm);
 		widget.transform.SetParent(base.transform, worldPositionStays: false);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

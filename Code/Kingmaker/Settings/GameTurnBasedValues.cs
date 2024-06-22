@@ -34,6 +34,9 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 	public bool FastPartyCast { get; set; }
 
 	[JsonProperty]
+	public bool DisableActionCamera { get; set; }
+
+	[JsonProperty]
 	public float TimeScaleInPlayerTurn { get; set; }
 
 	[JsonProperty]
@@ -72,9 +75,10 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 		SpeedUpMode value2 = value.SpeedUpMode;
 		bool value3 = value.FastMovement;
 		bool value4 = value.FastPartyCast;
-		float value5 = value.TimeScaleInPlayerTurn;
-		float value6 = value.TimeScaleInNonPlayerTurn;
-		writer.WriteUnmanagedWithObjectHeader(5, in value2, in value3, in value4, in value5, in value6);
+		bool value5 = value.DisableActionCamera;
+		float value6 = value.TimeScaleInPlayerTurn;
+		float value7 = value.TimeScaleInNonPlayerTurn;
+		writer.WriteUnmanagedWithObjectHeader(6, in value2, in value3, in value4, in value5, in value6, in value7);
 	}
 
 	[Preserve]
@@ -88,31 +92,34 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 		SpeedUpMode value2;
 		bool value3;
 		bool value4;
-		float value5;
+		bool value5;
 		float value6;
-		if (memberCount == 5)
+		float value7;
+		if (memberCount == 6)
 		{
 			if (value != null)
 			{
 				value2 = value.SpeedUpMode;
 				value3 = value.FastMovement;
 				value4 = value.FastPartyCast;
-				value5 = value.TimeScaleInPlayerTurn;
-				value6 = value.TimeScaleInNonPlayerTurn;
+				value5 = value.DisableActionCamera;
+				value6 = value.TimeScaleInPlayerTurn;
+				value7 = value.TimeScaleInNonPlayerTurn;
 				reader.ReadUnmanaged<SpeedUpMode>(out value2);
 				reader.ReadUnmanaged<bool>(out value3);
 				reader.ReadUnmanaged<bool>(out value4);
-				reader.ReadUnmanaged<float>(out value5);
+				reader.ReadUnmanaged<bool>(out value5);
 				reader.ReadUnmanaged<float>(out value6);
-				goto IL_011f;
+				reader.ReadUnmanaged<float>(out value7);
+				goto IL_014d;
 			}
-			reader.ReadUnmanaged<SpeedUpMode, bool, bool, float, float>(out value2, out value3, out value4, out value5, out value6);
+			reader.ReadUnmanaged<SpeedUpMode, bool, bool, bool, float, float>(out value2, out value3, out value4, out value5, out value6, out value7);
 		}
 		else
 		{
-			if (memberCount > 5)
+			if (memberCount > 6)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(GameTurnBasedValues), 5, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(GameTurnBasedValues), 6, memberCount);
 				return;
 			}
 			if (value == null)
@@ -120,16 +127,18 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 				value2 = SpeedUpMode.Off;
 				value3 = false;
 				value4 = false;
-				value5 = 0f;
+				value5 = false;
 				value6 = 0f;
+				value7 = 0f;
 			}
 			else
 			{
 				value2 = value.SpeedUpMode;
 				value3 = value.FastMovement;
 				value4 = value.FastPartyCast;
-				value5 = value.TimeScaleInPlayerTurn;
-				value6 = value.TimeScaleInNonPlayerTurn;
+				value5 = value.DisableActionCamera;
+				value6 = value.TimeScaleInPlayerTurn;
+				value7 = value.TimeScaleInNonPlayerTurn;
 			}
 			if (memberCount != 0)
 			{
@@ -142,11 +151,15 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 						reader.ReadUnmanaged<bool>(out value4);
 						if (memberCount != 3)
 						{
-							reader.ReadUnmanaged<float>(out value5);
+							reader.ReadUnmanaged<bool>(out value5);
 							if (memberCount != 4)
 							{
 								reader.ReadUnmanaged<float>(out value6);
-								_ = 5;
+								if (memberCount != 5)
+								{
+									reader.ReadUnmanaged<float>(out value7);
+									_ = 6;
+								}
 							}
 						}
 					}
@@ -154,7 +167,7 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 			}
 			if (value != null)
 			{
-				goto IL_011f;
+				goto IL_014d;
 			}
 		}
 		value = new GameTurnBasedValues
@@ -162,15 +175,17 @@ public class GameTurnBasedValues : IMemoryPackable<GameTurnBasedValues>, IMemory
 			SpeedUpMode = value2,
 			FastMovement = value3,
 			FastPartyCast = value4,
-			TimeScaleInPlayerTurn = value5,
-			TimeScaleInNonPlayerTurn = value6
+			DisableActionCamera = value5,
+			TimeScaleInPlayerTurn = value6,
+			TimeScaleInNonPlayerTurn = value7
 		};
 		return;
-		IL_011f:
+		IL_014d:
 		value.SpeedUpMode = value2;
 		value.FastMovement = value3;
 		value.FastPartyCast = value4;
-		value.TimeScaleInPlayerTurn = value5;
-		value.TimeScaleInNonPlayerTurn = value6;
+		value.DisableActionCamera = value5;
+		value.TimeScaleInPlayerTurn = value6;
+		value.TimeScaleInNonPlayerTurn = value7;
 	}
 }

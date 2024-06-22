@@ -18,7 +18,7 @@ public class SetForcedSoundState : GameAction
 	[SerializeField]
 	private bool m_ProlongTillNextCombat;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		SoundState.Instance.MusicStateHandler.SetMusicStoryType(m_State, m_ProlongTillNextCombat);
 	}

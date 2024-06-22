@@ -120,7 +120,7 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 			m_HealthTextView.gameObject.SetActive(value);
 			base.ViewModel.OnCharacterHover(value);
 		}));
-		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsLevelUpCurrent, base.ViewModel.IsLevelUpInProgress, (bool _, bool _, bool _) => true).Subscribe(delegate
+		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsLevelUpCurrent, base.ViewModel.IsLevelUpInProgress, base.ViewModel.IsInCombat, (bool _, bool _, bool _, bool _) => true).Subscribe(delegate
 		{
 			UpdateLevelUp();
 		}));
@@ -203,7 +203,7 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 
 	private void UpdateLevelUp()
 	{
-		m_LevelUpButton.gameObject.SetActive(base.ViewModel.IsLevelUp.Value);
+		m_LevelUpButton.gameObject.SetActive(base.ViewModel.IsLevelUp.Value && !base.ViewModel.IsInCombat.Value);
 		string activeLayer = "Default";
 		if (base.ViewModel.IsLevelUpInProgress.Value)
 		{

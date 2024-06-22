@@ -15,4 +15,6 @@ public class FullscreenDebugPassData : PassDataBase
 	public TextureHandle CameraFinalTarget;
 
 	public TextureHandle TempTarget;
+
+	public ComputeBufferHandle FullScreenDebugBuffer;
 }

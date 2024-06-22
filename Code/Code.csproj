@@ -18,6 +18,9 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="Kingmaker.Enums">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Enums.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
@@ -41,6 +44,9 @@
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.Blueprints.JsonSystem.Hepers">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Blueprints.JsonSystem.Hepers.dll</HintPath>
     </Reference>
     <Reference Include="StateHasher">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\StateHasher.dll</HintPath>
@@ -69,15 +75,9 @@
     <Reference Include="Kingmaker.Blueprints.Attributes">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Blueprints.Attributes.dll</HintPath>
     </Reference>
-    <Reference Include="Kingmaker.Blueprints.JsonSystem.Hepers">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Blueprints.JsonSystem.Hepers.dll</HintPath>
-    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="Kingmaker.EntitySystem.Stats.Base">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.EntitySystem.Stats.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="Kingmaker.Enums">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Enums.dll</HintPath>
     </Reference>
     <Reference Include="AK.Wwise.Unity.API">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\AK.Wwise.Unity.API.dll</HintPath>
@@ -108,9 +108,6 @@
     </Reference>
     <Reference Include="Kingmaker.AreaLogic.TimeOfDay">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.AreaLogic.TimeOfDay.dll</HintPath>
-    </Reference>
-    <Reference Include="ReadOnlyState">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\ReadOnlyState.dll</HintPath>
     </Reference>
     <Reference Include="Kingmaker.Controllers.Interfaces">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Controllers.Interfaces.dll</HintPath>
@@ -250,6 +247,9 @@
     <Reference Include="Kingmaker.Localization.Enums">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Localization.Enums.dll</HintPath>
     </Reference>
+    <Reference Include="RogueTrader.NetPlayer">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.NetPlayer.dll</HintPath>
+    </Reference>
     <Reference Include="System.IO.Compression">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\System.IO.Compression.dll</HintPath>
     </Reference>
@@ -261,9 +261,6 @@
     </Reference>
     <Reference Include="Kingmaker.Settings.Interfaces">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Settings.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="RogueTrader.NetPlayer">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.NetPlayer.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Physics2DModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
@@ -322,6 +319,9 @@
     <Reference Include="RogueTrader.SharedTypes">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.SharedTypes.dll</HintPath>
     </Reference>
+    <Reference Include="CircularBuffer">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\CircularBuffer.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="UnitLogic.Alignments.Enums">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnitLogic.Alignments.Enums.dll</HintPath>
@@ -368,11 +368,11 @@
     <Reference Include="AK.Wwise.Unity.MonoBehaviour">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\AK.Wwise.Unity.MonoBehaviour.dll</HintPath>
     </Reference>
-    <Reference Include="CircularBuffer">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\CircularBuffer.dll</HintPath>
-    </Reference>
     <Reference Include="Kingmaker.Utility.Random">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Utility.Random.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.Visual.Base">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Visual.Base.dll</HintPath>
     </Reference>
     <Reference Include="Owlcat.Runtime.UniRx">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.UniRx.dll</HintPath>
@@ -382,6 +382,9 @@
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.ExtendedModInfo">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.ExtendedModInfo.dll</HintPath>
     </Reference>
     <Reference Include="GogGalaxy">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GogGalaxy.dll</HintPath>
@@ -412,9 +415,6 @@
     </Reference>
     <Reference Include="GuidUtility">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GuidUtility.dll</HintPath>
-    </Reference>
-    <Reference Include="Kingmaker.Visual.Base">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Visual.Base.dll</HintPath>
     </Reference>
     <Reference Include="RootMotion.Shared.Runtime">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RootMotion.Shared.Runtime.dll</HintPath>

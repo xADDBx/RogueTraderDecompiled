@@ -34,9 +34,4 @@ public class PropertyCalculatorComponent : BlueprintComponent
 	{
 		return Value.GetValue(context);
 	}
-
-	public (bool Success, int Value) GetValueSafe(PropertyContext context)
-	{
-		return Value.GetValueSafe(context);
-	}
 }

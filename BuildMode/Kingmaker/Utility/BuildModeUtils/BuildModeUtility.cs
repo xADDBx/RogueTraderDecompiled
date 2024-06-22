@@ -38,6 +38,8 @@ public class BuildModeUtility
 
 	public static bool ForceSpamDetectionInEditor => Data?.forceSpamDetectionInEditor ?? false;
 
+	public static string AnalyticsUrl => Data?.analyticsUrl;
+
 	public static bool ForceAnalyticsInEditor => Data?.forceAnalyticsInEditor ?? false;
 
 	public static string LogsDir => Data?.logsDir;

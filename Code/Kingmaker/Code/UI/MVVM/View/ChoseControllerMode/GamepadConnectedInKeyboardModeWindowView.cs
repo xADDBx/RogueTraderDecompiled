@@ -20,12 +20,12 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 	[SerializeField]
 	private ConsoleHint m_ConfirmHint;
 
-	private BoolReactiveProperty m_CanConfirm = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_CanConfirm = new BoolReactiveProperty();
 
 	[SerializeField]
 	private ConsoleHint m_DeclineHint;
 
-	private BoolReactiveProperty m_CanDecline = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_CanDecline = new BoolReactiveProperty();
 
 	[SerializeField]
 	private WindowAnimator m_WindowAnimator;
@@ -38,7 +38,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 
 	private bool m_IsOpened;
 
-	private float m_MinimumDelayBetweenPrompts = 1f;
+	private readonly float m_MinimumDelayBetweenPrompts = 1f;
 
 	private float m_LastInput = float.MinValue;
 
@@ -70,6 +70,12 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 			}));
 			GamepadConnectedOnStart();
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_Disposable?.Dispose();
+		m_Disposable = null;
 	}
 
 	private InputLayer GetInputLayer()
@@ -271,11 +277,5 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 		Game.Instance.RequestPauseUi(value);
 		m_CanConfirm.Value = value;
 		m_CanDecline.Value = value;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_Disposable?.Dispose();
-		m_Disposable = null;
 	}
 }

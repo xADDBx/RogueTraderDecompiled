@@ -22,7 +22,7 @@ public class ContextActionRunPsychicPhenomena : ContextAction
 		return "Run psychic phenomena";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (UsePerilsEffect)
 		{

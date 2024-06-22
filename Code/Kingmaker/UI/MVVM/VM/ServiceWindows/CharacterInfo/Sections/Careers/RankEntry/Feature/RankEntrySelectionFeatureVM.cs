@@ -11,6 +11,7 @@ using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
+using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.VirtualListSystem;
 using UniRx;
@@ -46,8 +47,6 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 	}
 
 	public bool IsCommonFeature => RankEntryUtils.IsCommonSelectionItem(SelectionItem);
-
-	public bool CanSelectItem => (SelectionState?.Value?.CanSelect(SelectionItem)).GetValueOrDefault();
 
 	public bool UnitHasFeature => m_UnitHasFeature;
 
@@ -113,9 +112,9 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 				FeatureState.Value = RankFeatureState.Committed;
 			}
 		}
-		else if ((!Owner.IsFirstSelectable && Owner.SelectedFeature.Value == null) || Owner.CareerPathVM.ReadOnly.Value)
+		else if (IsReadOnlyItem())
 		{
-			FeatureState.Value = StateForReadOnly();
+			FeatureState.Value = RankFeatureState.NotActive;
 		}
 		else if (SelectionState.Value != null)
 		{
@@ -124,13 +123,36 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 		}
 	}
 
-	public virtual RankFeatureState StateForReadOnly()
+	public void UpdateStateForReadOnly()
 	{
-		if (!m_UnitHasFeature)
+		if (!IsReadOnlyItem() || m_IsSelected)
 		{
-			return RankFeatureState.NotActive;
+			return;
 		}
-		return RankFeatureState.NotSelectable;
+		if (m_UnitHasFeature)
+		{
+			FeatureState.Value = RankFeatureState.NotSelectable;
+			return;
+		}
+		BaseUnitEntity baseUnitEntity = base.UnitProgressionVM?.LevelUpManager?.PreviewUnit ?? base.UnitProgressionVM?.Unit.Value;
+		if (baseUnitEntity != null)
+		{
+			CalculatedPrerequisite calculatedPrerequisite = CalculatedPrerequisite.Calculate(null, SelectionItem, baseUnitEntity);
+			FeatureState.Value = ((calculatedPrerequisite == null || calculatedPrerequisite.Value) ? RankFeatureState.NotActive : RankFeatureState.NotSelectable);
+		}
+		else
+		{
+			FeatureState.Value = RankFeatureState.NotActive;
+		}
+	}
+
+	private bool IsReadOnlyItem()
+	{
+		if (Owner.IsFirstSelectable || Owner.SelectedFeature.Value != null)
+		{
+			return Owner.CareerPathVM.ReadOnly.Value;
+		}
+		return true;
 	}
 
 	private void UpdateUnitHasFeature()
@@ -149,6 +171,6 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 	private void OverrideTooltip()
 	{
 		BlueprintAbility abilityFromFeature = RankEntryUtils.GetAbilityFromFeature(UIFeature.Feature);
-		base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, CareerPathVM.Unit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, CareerPathVM.Unit)));
+		base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit)));
 	}
 }

@@ -283,11 +283,6 @@ public static class PFStatefulRandom
 		list.Remove(Camera);
 		list.Remove(NonDeterministic);
 		list.RemoveAll((Kingmaker.Utility.StatefulRandom.StatefulRandom r) => PFUuid.NonSerializable.Contains((Uuid uuid) => uuid.Random == r));
-		int i = 0;
-		for (int count = list.Count; i < count; i++)
-		{
-			list[i].NeedToCheckReadOnlyState = true;
-		}
 		return list.ToArray();
 	}
 
@@ -357,5 +352,11 @@ public static class PFStatefulRandom
 	{
 		s_UiContext++;
 		return default(RandomContextHandler);
+	}
+
+	[RuntimeInitializeOnLoadMethod]
+	private static void InitializeOnLoad()
+	{
+		SetStates(new List<SerializableRandState>());
 	}
 }

@@ -6,6 +6,7 @@ using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.GameCommands;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -349,11 +350,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 	{
 		if (byPlayer)
 		{
-			Run(new InterruptMoveUnitCommandParams
-			{
-				IsSynchronized = true,
-				CanBeAccelerated = true
-			});
+			Game.Instance.GameCommandQueue.InterruptMoveUnit(base.Owner);
 		}
 		else
 		{

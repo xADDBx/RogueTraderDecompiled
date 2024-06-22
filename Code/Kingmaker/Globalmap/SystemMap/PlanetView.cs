@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Owlcat.Runtime.Core.Utility;
@@ -5,6 +6,7 @@ using UnityEngine;
 
 namespace Kingmaker.Globalmap.SystemMap;
 
+[KnowledgeDatabaseID("909dc9cf108a4a1e9aaa09f9ce83d7d5")]
 public class PlanetView : StarSystemObjectView
 {
 	public new PlanetEntity Data => base.Data as PlanetEntity;

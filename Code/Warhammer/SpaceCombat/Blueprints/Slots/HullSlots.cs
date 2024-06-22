@@ -35,6 +35,9 @@ public class HullSlots
 	[SerializeField]
 	private BlueprintItemArmorPlatingReference m_ArmorPlating;
 
+	[SerializeField]
+	private BlueprintItemArsenalReference[] m_Arsenals;
+
 	public List<WeaponSlotData> Weapons;
 
 	public BlueprintItemPlasmaDrives PlasmaDrives
@@ -130,6 +133,15 @@ public class HullSlots
 		set
 		{
 			m_ArmorPlating = value.ToReference<BlueprintItemArmorPlatingReference>();
+		}
+	}
+
+	public ReferenceArrayProxy<BlueprintItemArsenal> Arsenals
+	{
+		get
+		{
+			BlueprintReference<BlueprintItemArsenal>[] arsenals = m_Arsenals;
+			return arsenals;
 		}
 	}
 }

@@ -20,8 +20,8 @@ public class CheckIsUnitInSquadGetter : PropertyGetter, PropertyContextAccessor.
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"{Target} is in squad";
+		return Target.Colorized() + " is in squad";
 	}
 }

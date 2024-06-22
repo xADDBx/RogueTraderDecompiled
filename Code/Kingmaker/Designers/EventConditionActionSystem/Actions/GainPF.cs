@@ -18,7 +18,7 @@ public class GainPF : GameAction
 		return $"Change total PF on {Value}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ProfitFactorModifierType type = ((base.Owner is BlueprintCue) ? ProfitFactorModifierType.Cue : ((base.Owner is BlueprintAnswer) ? ProfitFactorModifierType.Answer : ProfitFactorModifierType.Other));
 		Game.Instance.Player.ProfitFactor.AddModifier(Value, type, base.Owner as BlueprintScriptableObject);

@@ -3,7 +3,6 @@ using System.Collections;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
-using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
@@ -13,9 +12,9 @@ using Kingmaker.Code.UI.MVVM.VM.TermOfUse;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.Scenes;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.QA.Analytics;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.UI.Common;
@@ -60,7 +59,7 @@ public class MainMenuVM : VMBase, IUIMainMenu
 
 	private readonly ReactiveCommand m_PlayFirstLaunchFXCommand = new ReactiveCommand();
 
-	private static bool m_EnterGameStarted;
+	private bool m_EnterGameStarted;
 
 	public IObservable<Unit> OpenCharGenCommand => m_OpenCharGenCommand;
 
@@ -77,28 +76,43 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		AddDisposable(CharGenContextVM = new CharGenContextVM());
 		if (!FirstLaunchSettingsVM.HasShown)
 		{
-			AddDisposable(FirstLaunchSettings.Value = new FirstLaunchSettingsVM(delegate
-			{
-				OnCloseFirstLaunchSettingsVM();
-			}));
+			AddDisposable(FirstLaunchSettings.Value = new FirstLaunchSettingsVM(OnCloseFirstLaunchSettingsVM));
 		}
+	}
+
+	protected override void DisposeImplementation()
+	{
+		DisposeNewGame();
+		SoundBanksManager.UnloadVoiceBanks();
+		MainMenuUI.Instance = null;
+		SaveScreenshotManager.Instance.Cleanup();
 	}
 
 	private void OnCloseFirstLaunchSettingsVM()
 	{
 		FirstLaunchSettings.Value.Dispose();
 		FirstLaunchSettings.Value = null;
-		ShowLicense();
+		ShowLicense(delegate
+		{
+			PhotonManager.Invite.CheckAvailableInvite();
+		});
 	}
 
 	public void ShowNewGameSetup()
 	{
-		Action backStep = delegate
+		m_NewGameIsActive.Value = true;
+		ReactiveProperty<NewGameVM> newGameVM = NewGameVM;
+		if (newGameVM.Value == null)
+		{
+			NewGameVM newGameVM3 = (newGameVM.Value = new NewGameVM(BackStep, NextStep, m_NewGameIsActive));
+		}
+		UpdateSoundState();
+		void BackStep()
 		{
 			DisposeNewGame();
 			UpdateSoundState();
-		};
-		Action nextStep = delegate
+		}
+		void NextStep()
 		{
 			m_NewGameIsActive.Value = false;
 			if (m_ChargenUnit == null)
@@ -125,20 +139,6 @@ public class MainMenuVM : VMBase, IUIMainMenu
 					m_NewGameIsActive.Value = true;
 				})
 				.OpenUI();
-		};
-		m_NewGameIsActive.Value = true;
-		ReactiveProperty<NewGameVM> newGameVM = NewGameVM;
-		if (newGameVM.Value == null)
-		{
-			NewGameVM newGameVM3 = (newGameVM.Value = new NewGameVM(backStep, nextStep, m_NewGameIsActive));
-		}
-		UpdateSoundState();
-		if (!OwlcatAnalytics.Instance.IsOptInConsentShown)
-		{
-			EventBus.RaiseEvent(delegate(IDialogMessageBoxUIHandler w)
-			{
-				w.HandleOpen(UIStrings.Instance.CommonTexts.GameStatisticEnabledDialogue, DialogMessageBoxBase.BoxType.Dialog, OnEnableGameStatistic, OnLinkInvoke, UIStrings.Instance.CommonTexts.Accept, UIStrings.Instance.CommonTexts.Cancel);
-			});
 		}
 	}
 
@@ -172,6 +172,14 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		});
 	}
 
+	public void ShowDlcManager()
+	{
+		EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
+		{
+			h.HandleOpenDlcManager();
+		});
+	}
+
 	public void OpenSettings()
 	{
 		EventBus.RaiseEvent(delegate(ISettingsUIHandler h)
@@ -187,7 +195,17 @@ public class MainMenuVM : VMBase, IUIMainMenu
 
 	public void ShowLicense()
 	{
-		Action closeAction = delegate
+		ShowLicense(null);
+	}
+
+	private void ShowLicense(Action onClose)
+	{
+		ReactiveProperty<TermsOfUseVM> termsOfUseVM = TermsOfUseVM;
+		if (termsOfUseVM.Value == null)
+		{
+			TermsOfUseVM termsOfUseVM3 = (termsOfUseVM.Value = new TermsOfUseVM(CloseAction));
+		}
+		void CloseAction()
 		{
 			TermsOfUseVM.Value?.Dispose();
 			TermsOfUseVM.Value = null;
@@ -195,12 +213,8 @@ public class MainMenuVM : VMBase, IUIMainMenu
 			{
 				FirstLaunchSettingsVM.SetFirstLaunchPrefs();
 				PlayFirstLaunchFX();
+				onClose?.Invoke();
 			}
-		};
-		ReactiveProperty<TermsOfUseVM> termsOfUseVM = TermsOfUseVM;
-		if (termsOfUseVM.Value == null)
-		{
-			TermsOfUseVM termsOfUseVM3 = (termsOfUseVM.Value = new TermsOfUseVM(closeAction));
 		}
 	}
 
@@ -223,15 +237,15 @@ public class MainMenuVM : VMBase, IUIMainMenu
 
 	public void ShowFeedback()
 	{
-		Action closeAction = delegate
-		{
-			FeedbackPopupVM.Value?.Dispose();
-			FeedbackPopupVM.Value = null;
-		};
 		ReactiveProperty<FeedbackPopupVM> feedbackPopupVM = FeedbackPopupVM;
 		if (feedbackPopupVM.Value == null)
 		{
-			FeedbackPopupVM feedbackPopupVM3 = (feedbackPopupVM.Value = new FeedbackPopupVM(closeAction));
+			FeedbackPopupVM feedbackPopupVM3 = (feedbackPopupVM.Value = new FeedbackPopupVM(CloseAction));
+		}
+		void CloseAction()
+		{
+			FeedbackPopupVM.Value?.Dispose();
+			FeedbackPopupVM.Value = null;
 		}
 	}
 
@@ -239,7 +253,7 @@ public class MainMenuVM : VMBase, IUIMainMenu
 	{
 		if (m_EnterGameStarted)
 		{
-			PFLog.Default.Error("Double game start detected!");
+			PFLog.UI.Error("Double game start detected!");
 		}
 		else
 		{
@@ -303,13 +317,5 @@ public class MainMenuVM : VMBase, IUIMainMenu
 			Application.OpenURL("https://unity3d.com/legal/privacy-policy");
 			break;
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
-		DisposeNewGame();
-		SoundBanksManager.UnloadVoiceBanks();
-		MainMenuUI.Instance = null;
-		SaveScreenshotManager.Instance.Cleanup();
 	}
 }

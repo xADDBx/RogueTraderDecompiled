@@ -32,7 +32,7 @@ public class PlayerStarshipDescriptiveDamageAction : GameAction
 	[SerializeField]
 	private bool IsWarp;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
 		int num = damageValue switch

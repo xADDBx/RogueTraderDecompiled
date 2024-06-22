@@ -211,7 +211,7 @@ public class CharGenCareerPhaseDetailedConsoleView : CharGenCareerPhaseDetailedV
 		bool flag2 = flag && base.ViewModel.UnitProgressionVM.AllCareerPaths.Any((CareerPathVM path) => path.IsSelected.Value);
 		bool flag3 = IsSelectedOrHighTier(entity);
 		flag2 = flag2 && flag3;
-		m_CanConfirm.Value = m_ActivePhaseNavigation.Value == ActivePhaseNavigation.Content && !flag2 && ((entity as IConfirmClickHandler)?.CanConfirmClick() ?? false);
+		m_CanConfirm.Value = m_ActivePhaseNavigation.Value == ActivePhaseNavigation.Content && !flag2 && !(flag && flag3) && ((entity as IConfirmClickHandler)?.CanConfirmClick() ?? false);
 		if (entity is TMPLinkNavigationEntity)
 		{
 			m_CanConfirm.Value = false;
@@ -285,6 +285,6 @@ public class CharGenCareerPhaseDetailedConsoleView : CharGenCareerPhaseDetailedV
 		DelayedInvoker.InvokeInFrames(delegate
 		{
 			OnFocusEntity(m_Navigation.DeepestNestedFocus);
-		}, 1);
+		}, 3);
 	}
 }

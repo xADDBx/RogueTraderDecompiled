@@ -1,6 +1,9 @@
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +27,9 @@ public class TooltipBrickFeatureHeaderView : TooltipBaseBrickView<TooltipBrickFe
 	[SerializeField]
 	private TextMeshProUGUI m_Acronym;
 
+	[SerializeField]
+	private TalentGroupView m_TalentGroupView;
+
 	[Header("Font size")]
 	[SerializeField]
 	private float m_DefaultFontSize = 22f;
@@ -44,6 +50,10 @@ public class TooltipBrickFeatureHeaderView : TooltipBaseBrickView<TooltipBrickFe
 		m_Icon.sprite = base.ViewModel.Icon;
 		m_Icon.color = base.ViewModel.IconColor;
 		m_Acronym.text = base.ViewModel.Acronym;
+		m_TalentGroupView.SetupView(base.ViewModel.TalentIconsInfo);
+		TextMeshProUGUI acronym = m_Acronym;
+		TalentIconInfo talentIconsInfo = base.ViewModel.TalentIconsInfo;
+		acronym.color = ((talentIconsInfo != null && talentIconsInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
 		AddDisposable(this.SetTooltip(base.ViewModel.Tooltip));
 		m_AdditionalDescription1.text = base.ViewModel.AdditionalField1;
 		m_AdditionalDescription2.text = base.ViewModel.AdditionalField2;

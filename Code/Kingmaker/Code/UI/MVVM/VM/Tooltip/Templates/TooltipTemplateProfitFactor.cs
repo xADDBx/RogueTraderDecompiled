@@ -33,10 +33,6 @@ public class TooltipTemplateProfitFactor : TooltipBaseTemplate
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		string profitFactorFormatted = UIUtility.GetProfitFactorFormatted(m_ProfitFactorVM.TotalValue.Value);
 		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.ProfitFactorTexts.TotalValue, profitFactorFormatted, null, null, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
-		string profitFactorFormatted2 = UIUtility.GetProfitFactorFormatted(m_ProfitFactorVM.CurrentValue.Value);
-		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.ProfitFactorTexts.AvailableToUseValue, profitFactorFormatted2, null, null, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
-		string profitFactorFormatted3 = UIUtility.GetProfitFactorFormatted(m_ProfitFactorVM.InitialValue.Value);
-		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.ProfitFactorTexts.Initial, profitFactorFormatted3, null, null, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
 		IEnumerable<ProfitFactorModifierVM> enumerable = m_ProfitFactorVM.Modifiers.Where((ProfitFactorModifierVM mod) => mod.IsNegative);
 		IEnumerable<ProfitFactorModifierVM> enumerable2 = m_ProfitFactorVM.Modifiers.Except(enumerable);
 		if (enumerable2.Any() || enumerable.Any())
@@ -45,7 +41,6 @@ public class TooltipTemplateProfitFactor : TooltipBaseTemplate
 		}
 		AddModifiers(list, UIStrings.Instance.ProfitFactorTexts.Income, enumerable2, isPositive: true);
 		AddModifiers(list, UIStrings.Instance.ProfitFactorTexts.Loss, enumerable, isPositive: false);
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(UIStrings.Instance.ProfitFactorTexts.Description));
 		return list;
 	}
@@ -79,7 +74,6 @@ public class TooltipTemplateProfitFactor : TooltipBaseTemplate
 
 	private static string GetModifierName(ProfitFactorModifierVM mod)
 	{
-		string text = "";
 		switch (mod.Type)
 		{
 		case ProfitFactorModifierType.Project:

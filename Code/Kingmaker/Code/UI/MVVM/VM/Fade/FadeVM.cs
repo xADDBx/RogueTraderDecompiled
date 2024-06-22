@@ -30,7 +30,7 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 	{
 		if (m_State != LoadingScreenState.Shown && m_State != LoadingScreenState.ShowAnimation)
 		{
-			PFLog.Default.Log("Show fade");
+			PFLog.UI.Log("Show fade");
 			m_State = LoadingScreenState.ShowAnimation;
 			LoadingScreen.Value = true;
 		}
@@ -42,7 +42,7 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		{
 			return;
 		}
-		PFLog.Default.Log("Hide fade");
+		PFLog.UI.Log("Hide fade");
 		m_State = LoadingScreenState.HideAnimation;
 		LoadingScreen.Value = false;
 		if (Game.Instance.CurrentMode == GameModeType.StarSystem)

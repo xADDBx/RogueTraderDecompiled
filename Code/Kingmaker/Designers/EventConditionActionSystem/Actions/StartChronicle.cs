@@ -31,7 +31,7 @@ public class StartChronicle : GameAction
 		return $"Start chronicle {Chronicle}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!Chronicle || ColonyBlueprint == null)
 		{

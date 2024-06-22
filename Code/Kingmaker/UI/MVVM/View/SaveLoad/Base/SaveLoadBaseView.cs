@@ -209,4 +209,16 @@ public class SaveLoadBaseView : ViewBase<SaveLoadVM>, IInitializable
 	{
 		m_ScrollRect.ScrollToTop();
 	}
+
+	protected void SelectPrev()
+	{
+		base.ViewModel.SaveLoadMenuVM.SelectionGroup.SelectPrevValidEntity();
+		m_SlotCollectionView.ScrollToTop();
+	}
+
+	protected void SelectNext()
+	{
+		base.ViewModel.SaveLoadMenuVM.SelectionGroup.SelectNextValidEntity();
+		m_SlotCollectionView.ScrollToTop();
+	}
 }

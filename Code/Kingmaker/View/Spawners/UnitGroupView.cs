@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("b94416fff5c65f44e9ec143a7ceb887e")]
 public class UnitGroupView : EntityViewBase
 {
 	public class UnitGroupData : SimpleEntity, IHashable

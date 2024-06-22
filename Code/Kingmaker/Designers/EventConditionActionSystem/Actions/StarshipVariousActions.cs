@@ -4,6 +4,7 @@ using Code.GameCore.Blueprints;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.RuleSystem.Rules.Starships;
@@ -17,6 +18,8 @@ using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints;
+using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
@@ -32,7 +35,9 @@ public class StarshipVariousActions : ContextAction
 		RemoveBuffFromPlayerEnemies,
 		SetFactionUnitsAsOnlyLowPriorityToOwnerBrain,
 		ReduceBuffStackDuration,
-		ApplyBuffToPlayerStarship
+		ApplyBuffToPlayerStarship,
+		RunActionsOnStarshipsWithBlueprintAsTarget,
+		BlockRandomWeapons
 	}
 
 	public ActionType actionType;
@@ -59,6 +64,14 @@ public class StarshipVariousActions : ContextAction
 	[ShowIf("DemandsChances")]
 	private int Chances;
 
+	[SerializeField]
+	[ShowIf("DemandsStarshipBlueprint")]
+	private BlueprintStarshipReference m_StarshipBlueprint;
+
+	[SerializeField]
+	[ShowIf("DemandsActions")]
+	private ActionList Actions;
+
 	public bool DemandsBuff
 	{
 		get
@@ -75,20 +88,36 @@ public class StarshipVariousActions : ContextAction
 
 	public bool DemandsFaction => actionType == ActionType.SetFactionUnitsAsOnlyLowPriorityToOwnerBrain;
 
-	public bool DemandsIntValue => actionType == ActionType.ReduceBuffStackDuration;
+	public bool DemandsIntValue
+	{
+		get
+		{
+			if (actionType != ActionType.ReduceBuffStackDuration)
+			{
+				return actionType == ActionType.BlockRandomWeapons;
+			}
+			return true;
+		}
+	}
 
 	public bool DemandsChances => actionType == ActionType.ReduceBuffStackDuration;
+
+	public bool DemandsStarshipBlueprint => actionType == ActionType.RunActionsOnStarshipsWithBlueprintAsTarget;
+
+	public bool DemandsActions => actionType == ActionType.RunActionsOnStarshipsWithBlueprintAsTarget;
 
 	public BlueprintFaction Faction => m_Faction?.Get();
 
 	public BlueprintBuff Buff => m_Buff?.Get();
+
+	public BlueprintStarship StarshipBlueprint => m_StarshipBlueprint?.Get();
 
 	public override string GetCaption()
 	{
 		return $"Perform action: [{actionType}]";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		switch (actionType)
 		{
@@ -103,6 +132,12 @@ public class StarshipVariousActions : ContextAction
 			return;
 		case ActionType.ApplyBuffToPlayerStarship:
 			ApplyBuffToPlayerStarship();
+			return;
+		case ActionType.RunActionsOnStarshipsWithBlueprintAsTarget:
+			RunActionsOnUnitsWithStarshipBlueprintAsTarget();
+			return;
+		case ActionType.BlockRandomWeapons:
+			BlockRandomWeapons(base.Target.Entity as StarshipEntity, Value);
 			return;
 		}
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
@@ -177,5 +212,29 @@ public class StarshipVariousActions : ContextAction
 	{
 		BuffDuration duration = new BuffDuration(null, BuffEndCondition.SpaceCombatExit);
 		Game.Instance.Player.PlayerShip.Buffs.Add(Buff, duration);
+	}
+
+	private void RunActionsOnUnitsWithStarshipBlueprintAsTarget()
+	{
+		foreach (BaseUnitEntity item in Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity u) => u != base.Context.MaybeCaster && (u as StarshipEntity)?.Blueprint == StarshipBlueprint))
+		{
+			using (base.Context.GetDataScope(new TargetWrapper(item)))
+			{
+				Actions.Run();
+			}
+		}
+	}
+
+	private void BlockRandomWeapons(StarshipEntity starship, int blockCount)
+	{
+		if (starship != null)
+		{
+			List<WeaponSlot> list = starship.Hull.WeaponSlots.Where((WeaponSlot slot) => slot.Item != null).ToList();
+			list.Shuffle(PFStatefulRandom.SpaceCombat);
+			list.Take(blockCount).ForEach(delegate(WeaponSlot slot)
+			{
+				slot.Item.Charges = 0;
+			});
+		}
 	}
 }

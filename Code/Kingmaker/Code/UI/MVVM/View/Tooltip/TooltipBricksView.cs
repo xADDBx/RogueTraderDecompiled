@@ -85,6 +85,8 @@ public class TooltipBricksView : MonoBehaviour
 
 	public TooltipBrickOtherObjectsInfoView OtherObjectsInfoView;
 
+	public TooltipBrickAnomalyInfoView AnomalyInfoView;
+
 	public TooltipBrickResourceInfoView ResourceInfoView;
 
 	public TooltipBrickUnifiedStatusView UnifiedStatusView;
@@ -126,6 +128,8 @@ public class TooltipBricksView : MonoBehaviour
 	public TooltipBrickTextBackgroundView BrickTextBackgroundView;
 
 	public TooltipBrickAttributeView BrickAttributeView;
+
+	public TooltipBrickItemHeaderView BrickItemHeaderView;
 
 	[Header("Combat Log")]
 	public TooltipBrickChanceView BrickChanceView;

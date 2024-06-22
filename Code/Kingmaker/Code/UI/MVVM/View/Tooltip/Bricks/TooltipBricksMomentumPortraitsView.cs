@@ -33,8 +33,7 @@ public class TooltipBricksMomentumPortraitsView : TooltipBaseBrickView<TooltipBr
 	{
 		for (int i = 0; i < MomentumPortraitViews.Count; i++)
 		{
-			MomentumPortraitViews[i].GetViewModel().Dispose();
+			MomentumPortraitViews[i].GetViewModel()?.Dispose();
 		}
-		MomentumPortraitViews.Clear();
 	}
 }

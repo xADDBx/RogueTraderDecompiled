@@ -36,9 +36,6 @@ public class CareerPathsListCommonView : ViewBase<CareerPathsListVM>
 	private TextMeshProUGUI m_UnlockPavelLabel;
 
 	[SerializeField]
-	private List<GameObject> m_Lines;
-
-	[SerializeField]
 	private OwlcatMultiSelectable m_CareerStateSelectable;
 
 	[Header("Selected Career")]
@@ -57,6 +54,8 @@ public class CareerPathsListCommonView : ViewBase<CareerPathsListVM>
 	private ReactiveProperty<int> m_CurrentRank;
 
 	private AccessibilityTextHelper m_TextHelper;
+
+	public IEnumerable<CareerPathListItemCommonView> ItemViews => m_WidgetList.Entries.Cast<CareerPathListItemCommonView>();
 
 	public void Initialize()
 	{
@@ -85,17 +84,6 @@ public class CareerPathsListCommonView : ViewBase<CareerPathsListVM>
 			UpdateNavigation();
 			UpdateSelectedCareerState();
 		}));
-		for (int j = 0; j < base.ViewModel.CareerPathVMs.Count; j++)
-		{
-			int i1 = j;
-			base.ViewModel.CareerPathVMs[j].SetOnHover(delegate(bool state)
-			{
-				if (base.gameObject.activeInHierarchy)
-				{
-					m_Lines.ElementAtOrDefault(i1)?.SetActive(state);
-				}
-			});
-		}
 		SetupView();
 		DrawEntries();
 		AddDisposable(base.ViewModel.IsUnlocked.Subscribe(delegate
@@ -108,10 +96,6 @@ public class CareerPathsListCommonView : ViewBase<CareerPathsListVM>
 	protected override void DestroyViewImplementation()
 	{
 		m_WidgetList.Clear();
-		m_Lines.ForEach(delegate(GameObject line)
-		{
-			line.SetActive(value: false);
-		});
 		m_TextHelper.Dispose();
 	}
 
@@ -194,5 +178,13 @@ public class CareerPathsListCommonView : ViewBase<CareerPathsListVM>
 		string text = base.ViewModel.GetLevelToUnlock() + " " + UIStrings.Instance.CharacterSheet.LvlShort.Text;
 		m_LockPavelLabel.text = text;
 		m_UnlockPavelLabel.text = text;
+	}
+
+	public void CreateLines(List<CareerPathListItemCommonView> allCareers)
+	{
+		ItemViews.ToList().ForEach(delegate(CareerPathListItemCommonView c)
+		{
+			c.CreateLines(allCareers);
+		});
 	}
 }

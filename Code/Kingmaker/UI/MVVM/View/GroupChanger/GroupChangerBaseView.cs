@@ -11,6 +11,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using UnityEngine;
@@ -37,9 +38,9 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 	[SerializeField]
 	private WindowAnimator m_WindowAnimator;
 
-	protected readonly List<GroupChangerCharacterBaseView> m_PartyCharacterViews = new List<GroupChangerCharacterBaseView>();
+	private readonly List<GroupChangerCharacterBaseView> m_PartyCharacterViews = new List<GroupChangerCharacterBaseView>();
 
-	protected readonly List<GroupChangerCharacterBaseView> m_RemoteCharacterViews = new List<GroupChangerCharacterBaseView>();
+	protected readonly List<GroupChangerCharacterBaseView> RemoteCharacterViews = new List<GroupChangerCharacterBaseView>();
 
 	public void Initialize()
 	{
@@ -50,6 +51,7 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 	protected override void BindViewImplementation()
 	{
 		m_WindowAnimator.AppearAnimation();
+		UISounds.Instance.Sounds.GroupChanger.GroupChangerOpen.Play();
 		foreach (GroupChangerCharacterVM item in base.ViewModel.PartyCharacter.Concat(base.ViewModel.RemoteCharacter))
 		{
 			CreateCharacterView(item, m_PartyCharacterView, AddToParty);
@@ -61,6 +63,19 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.GroupChanger);
 		});
 		AddDisposable(EventBus.Subscribe(this));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_PartyCharacterViews.ForEach(WidgetFactory.DisposeWidget);
+		m_PartyCharacterViews.Clear();
+		RemoteCharacterViews.ForEach(WidgetFactory.DisposeWidget);
+		RemoteCharacterViews.Clear();
+		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
+		{
+			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.GroupChanger);
+		});
+		base.gameObject.SetActive(value: false);
 	}
 
 	protected void OnAccept()
@@ -79,6 +94,7 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 			{
 				Game.Instance.GameCommandQueue.AddCommand(new CloseChangeGroupGameCommand());
 			});
+			UISounds.Instance.Sounds.GroupChanger.GroupChangerClose.Play();
 		}
 	}
 
@@ -102,21 +118,8 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 
 	private void AddToReserve(GroupChangerCharacterBaseView pcView)
 	{
-		m_RemoteCharacterViews.Add(pcView);
+		RemoteCharacterViews.Add(pcView);
 		pcView.transform.SetParent(m_RemoteContainer, worldPositionStays: false);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_PartyCharacterViews.ForEach(WidgetFactory.DisposeWidget);
-		m_PartyCharacterViews.Clear();
-		m_RemoteCharacterViews.ForEach(WidgetFactory.DisposeWidget);
-		m_RemoteCharacterViews.Clear();
-		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
-		{
-			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.GroupChanger);
-		});
-		base.gameObject.SetActive(value: false);
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)

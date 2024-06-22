@@ -19,7 +19,7 @@ public class WarhammerContextActionOverrideBrain : ContextAction
 		return "Set brain to " + Brain.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.TargetEntity?.GetOptional<PartUnitBrain>()?.SetBrain(Brain);
 	}

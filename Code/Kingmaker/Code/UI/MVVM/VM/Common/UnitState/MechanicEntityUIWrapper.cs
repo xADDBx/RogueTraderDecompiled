@@ -113,6 +113,8 @@ public readonly struct MechanicEntityUIWrapper
 
 	public bool IsPlayerEnemy => m_MechanicEntity.Entity?.IsPlayerEnemy ?? false;
 
+	public bool IsNeutral => m_MechanicEntity.Entity?.IsNeutral ?? false;
+
 	public bool IsSquadLeader => m_MechanicEntity.Entity?.IsSquadLeader ?? false;
 
 	public bool IsInSquad => m_MechanicEntity.Entity?.IsInSquad ?? false;

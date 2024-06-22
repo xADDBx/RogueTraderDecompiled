@@ -29,6 +29,9 @@ public class LeftStickData : IMemoryPackable<LeftStickData>, IMemoryPackFormatte
 		}
 	}
 
+	[JsonProperty(PropertyName = "v")]
+	public byte version;
+
 	[JsonProperty(PropertyName = "u")]
 	public UnitReference unit;
 
@@ -71,7 +74,7 @@ public class LeftStickData : IMemoryPackable<LeftStickData>, IMemoryPackFormatte
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteObjectHeader(4);
+		writer.WriteUnmanagedWithObjectHeader(5, in value.version);
 		writer.WritePackable(in value.unit);
 		writer.WriteUnmanaged(in value.moveDirectionX, in value.moveDirectionY);
 		writer.WritePackableArray(value.selectedUnits);
@@ -85,89 +88,102 @@ public class LeftStickData : IMemoryPackable<LeftStickData>, IMemoryPackFormatte
 			value = null;
 			return;
 		}
-		UnitReference value2;
-		sbyte value3;
+		byte value2;
+		UnitReference value3;
 		sbyte value4;
-		UnitReference[] value5;
-		if (memberCount == 4)
+		sbyte value5;
+		UnitReference[] value6;
+		if (memberCount == 5)
 		{
 			if (value != null)
 			{
-				value2 = value.unit;
-				value3 = value.moveDirectionX;
-				value4 = value.moveDirectionY;
-				value5 = value.selectedUnits;
-				reader.ReadPackable(ref value2);
-				reader.ReadUnmanaged<sbyte>(out value3);
+				value2 = value.version;
+				value3 = value.unit;
+				value4 = value.moveDirectionX;
+				value5 = value.moveDirectionY;
+				value6 = value.selectedUnits;
+				reader.ReadUnmanaged<byte>(out value2);
+				reader.ReadPackable(ref value3);
 				reader.ReadUnmanaged<sbyte>(out value4);
-				reader.ReadPackableArray(ref value5);
-				goto IL_00fd;
+				reader.ReadUnmanaged<sbyte>(out value5);
+				reader.ReadPackableArray(ref value6);
+				goto IL_0131;
 			}
-			value2 = reader.ReadPackable<UnitReference>();
-			reader.ReadUnmanaged<sbyte, sbyte>(out value3, out value4);
-			value5 = reader.ReadPackableArray<UnitReference>();
+			reader.ReadUnmanaged<byte>(out value2);
+			value3 = reader.ReadPackable<UnitReference>();
+			reader.ReadUnmanaged<sbyte, sbyte>(out value4, out value5);
+			value6 = reader.ReadPackableArray<UnitReference>();
 		}
 		else
 		{
-			if (memberCount > 4)
+			if (memberCount > 5)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(LeftStickData), 4, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(LeftStickData), 5, memberCount);
 				return;
 			}
 			if (value == null)
 			{
-				value2 = default(UnitReference);
-				value3 = 0;
+				value2 = 0;
+				value3 = default(UnitReference);
 				value4 = 0;
-				value5 = null;
+				value5 = 0;
+				value6 = null;
 			}
 			else
 			{
-				value2 = value.unit;
-				value3 = value.moveDirectionX;
-				value4 = value.moveDirectionY;
-				value5 = value.selectedUnits;
+				value2 = value.version;
+				value3 = value.unit;
+				value4 = value.moveDirectionX;
+				value5 = value.moveDirectionY;
+				value6 = value.selectedUnits;
 			}
 			if (memberCount != 0)
 			{
-				reader.ReadPackable(ref value2);
+				reader.ReadUnmanaged<byte>(out value2);
 				if (memberCount != 1)
 				{
-					reader.ReadUnmanaged<sbyte>(out value3);
+					reader.ReadPackable(ref value3);
 					if (memberCount != 2)
 					{
 						reader.ReadUnmanaged<sbyte>(out value4);
 						if (memberCount != 3)
 						{
-							reader.ReadPackableArray(ref value5);
-							_ = 4;
+							reader.ReadUnmanaged<sbyte>(out value5);
+							if (memberCount != 4)
+							{
+								reader.ReadPackableArray(ref value6);
+								_ = 5;
+							}
 						}
 					}
 				}
 			}
 			if (value != null)
 			{
-				goto IL_00fd;
+				goto IL_0131;
 			}
 		}
 		value = new LeftStickData
 		{
-			unit = value2,
-			moveDirectionX = value3,
-			moveDirectionY = value4,
-			selectedUnits = value5
+			version = value2,
+			unit = value3,
+			moveDirectionX = value4,
+			moveDirectionY = value5,
+			selectedUnits = value6
 		};
 		return;
-		IL_00fd:
-		value.unit = value2;
-		value.moveDirectionX = value3;
-		value.moveDirectionY = value4;
-		value.selectedUnits = value5;
+		IL_0131:
+		value.version = value2;
+		value.unit = value3;
+		value.moveDirectionX = value4;
+		value.moveDirectionY = value5;
+		value.selectedUnits = value6;
 	}
 
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
+		result.Append(ref version);
 		UnitReference obj = unit;
 		Hash128 val = UnitReferenceHasher.GetHash128(ref obj);
 		result.Append(ref val);

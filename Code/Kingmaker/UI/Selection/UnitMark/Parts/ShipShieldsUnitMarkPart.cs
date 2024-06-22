@@ -163,10 +163,19 @@ public class ShipShieldsUnitMarkPart : MonoBehaviour, IDisposable
 				SetShieldColor(shieldDecalData);
 				AnimateHit(shieldDecalData, isAnyShieldHighlighted);
 			}
-			if (shields.Current == 0 && !shieldDecalData.IsDead)
+			int current = shields.Current;
+			if (current <= 0)
 			{
-				shieldDecalData.Renderer.gameObject.SetActive(value: false);
-				shieldDecalData.IsDead = true;
+				if (current == 0 && !shieldDecalData.IsDead)
+				{
+					shieldDecalData.Renderer.gameObject.SetActive(value: false);
+					shieldDecalData.IsDead = true;
+				}
+			}
+			else if (shieldDecalData.IsDead)
+			{
+				shieldDecalData.Renderer.gameObject.SetActive(value: true);
+				shieldDecalData.IsDead = false;
 			}
 			if (m_ShieldReinforcementDecals.Length != 0)
 			{

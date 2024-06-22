@@ -41,7 +41,7 @@ public class ListPropertyGetter : PropertyGetter
 
 	public PropertyCalculator Value;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"{m_List}: {m_Operation} {Value}";
 	}

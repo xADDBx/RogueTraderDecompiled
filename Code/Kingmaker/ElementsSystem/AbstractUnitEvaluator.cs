@@ -2,6 +2,7 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 
 namespace Kingmaker.ElementsSystem;
@@ -25,7 +26,7 @@ public abstract class AbstractUnitEvaluator : MechanicEntityEvaluator, IEvaluato
 		return false;
 	}
 
-	protected sealed override MechanicEntity GetValueInternal()
+	protected sealed override Entity GetValueInternal()
 	{
 		return GetAbstractUnitEntityInternal();
 	}

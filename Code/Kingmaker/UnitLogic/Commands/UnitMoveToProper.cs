@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.PathRenderer;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.CodeTimer;
+using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using Pathfinding;
 using UnityEngine;
@@ -39,6 +40,25 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 	public override bool AwaitMovementFinish => true;
 
 	public override bool IsMoveUnit => true;
+
+	public override bool CanStart
+	{
+		get
+		{
+			if (base.Params.IsSynchronized && base.Executor.IsInCombat)
+			{
+				float num = 0.5f * GraphParamsMechanicsCache.GridCellSize;
+				Vector3 vector = base.ForcedPath.vectorPath.Get(0);
+				Vector3 position = base.Executor.Position;
+				if (num * num < (vector - position).sqrMagnitude)
+				{
+					PFLog.Default.Error($"UnitMoveToProper cannot be started! Executor is too far from the starting point. Start={vector} current={position}");
+					return false;
+				}
+			}
+			return true;
+		}
+	}
 
 	public UnitMoveToProper([NotNull] UnitMoveToProperParams @params)
 		: base(@params)
@@ -155,7 +175,7 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 		if (!WarhammerBlockManager.Instance.NodeContainsInvisibleAnyExcept(node, base.Executor.View.MovementAgent.Blocker))
 		{
 			base.Executor.Position = position;
-			Vector3 forward = CustomGraphHelper.AdjustDirection(base.Executor.Forward);
+			Vector3 forward = CustomGraphHelper.AdjustDirection(base.Executor.MovementAgent.FinalDirection);
 			base.Executor.SetOrientation(Quaternion.LookRotation(forward).eulerAngles.y);
 		}
 		UnitPredictionManager.Instance.ClearHologram(base.Executor);

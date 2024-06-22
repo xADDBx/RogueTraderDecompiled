@@ -11,6 +11,8 @@ public interface IUnitAbilityCooldownHandler : ISubscriber<IMechanicEntity>, ISu
 	void HandleAbilityCooldownStarted(AbilityData ability);
 
 	void HandleGroupCooldownRemoved(BlueprintAbilityGroup group);
+
+	void HandleCooldownReset();
 }
 public interface IUnitAbilityCooldownHandler<TTag> : IUnitAbilityCooldownHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitAbilityCooldownHandler, TTag>
 {

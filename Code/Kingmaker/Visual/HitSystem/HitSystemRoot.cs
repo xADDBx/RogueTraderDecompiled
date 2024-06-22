@@ -92,6 +92,11 @@ public class HitSystemRoot : BlueprintScriptableObject
 
 	private Dictionary<SurfaceType, HitEntry> m_CachedHitEntryBySurfaceType;
 
+	public void Deinit()
+	{
+		m_Initialized = false;
+	}
+
 	private void Initialize()
 	{
 		if (!m_Initialized)

@@ -30,7 +30,7 @@ public class SwitchFaction : GameAction
 
 	public BlueprintFaction Faction => m_Faction?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Target.GetValue() is BaseUnitEntity { CombatGroup: var combatGroup } baseUnitEntity))
 		{

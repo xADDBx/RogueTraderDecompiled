@@ -14,9 +14,9 @@ public class BaseCircleArcsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveProperty<bool> ShouldMoveArcs = new ReactiveProperty<bool>();
 
-	protected GameModeType m_PreviousMode;
+	protected GameModeType PreviousMode;
 
-	public BaseCircleArcsVM()
+	protected BaseCircleArcsVM()
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		OnGameModeStart(Game.Instance.CurrentMode);
@@ -37,7 +37,7 @@ public class BaseCircleArcsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
-		m_PreviousMode = gameMode;
+		PreviousMode = gameMode;
 		OnGameModeStopImpl(gameMode);
 	}
 

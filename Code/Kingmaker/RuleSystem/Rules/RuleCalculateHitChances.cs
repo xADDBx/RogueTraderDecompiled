@@ -233,7 +233,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		ResultWeaponSkillPenalty = Rulebook.Trigger(new RuleCalculateAttackPenalty((MechanicEntity)base.Initiator, Ability)).ResultWeaponSkillPenalty;
 		int num4 = Math.Max(num3 - ResultWeaponSkillPenalty, 0) + InitiatorWeaponSkillValueModifiers.Value;
 		int num5 = (((MechanicEntity)Target).GetAttributeOptional(StatType.WarhammerWeaponSkill)?.ModifiedValue ?? 0) + TargetWeaponSkillValueModifiers.Value;
-		int num6 = num4 - num5 + ResultTargetSuperiorityPenalty;
+		int num6 = num4 - num5 + (base.TargetUnit?.Features?.HalfSuperiorityCriticalChance ? (ResultTargetSuperiorityPenalty / 2) : ResultTargetSuperiorityPenalty);
 		if (num6 != 0)
 		{
 			RighteousFuryChanceRule.ChanceModifiers.Add(num6, this, StatType.WarhammerWeaponSkill);

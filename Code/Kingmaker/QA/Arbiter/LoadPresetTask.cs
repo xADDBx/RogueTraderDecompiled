@@ -18,7 +18,7 @@ public class LoadPresetTask : ArbiterTask
 	protected override IEnumerator Routine()
 	{
 		base.Status = "Load preset '" + m_Preset.Area.Name + "'";
-		using (ArbiterMeasurements.StartTimer("StartNewGameFromPreset"))
+		using (ArbiterClientMeasurements.StartTimer("StartNewGameFromPreset"))
 		{
 			Runner.ClearError();
 			m_Preset.OverrideGameDifficulty = BlueprintRoot.Instance.DifficultyList.CoreDifficulty;

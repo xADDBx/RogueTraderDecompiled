@@ -32,12 +32,12 @@ public class RecruitInactive : GameAction
 
 	public BlueprintUnit CompanionBlueprint => m_CompanionBlueprint?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BaseUnitEntity baseUnitEntity = Game.Instance.Player.AllCharacters.FirstOrDefault((BaseUnitEntity c) => c.Blueprint == CompanionBlueprint);
 		if (baseUnitEntity != null && baseUnitEntity.GetOptional<UnitPartCompanion>() != null && baseUnitEntity.GetOptional<UnitPartCompanion>().State != CompanionState.ExCompanion)
 		{
-			PFLog.Default.Error(this, "Attempted to double-recruit " + CompanionBlueprint?.ToString() + " in " + this);
+			Element.LogError(this, "Attempted to double-recruit {0} in {1}", CompanionBlueprint, this);
 			return;
 		}
 		BaseUnitEntity baseUnitEntity2 = ((baseUnitEntity != null && baseUnitEntity.GetOptional<UnitPartCompanion>()?.State == CompanionState.ExCompanion) ? baseUnitEntity : null);

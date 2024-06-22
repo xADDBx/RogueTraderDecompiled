@@ -25,7 +25,7 @@ public class SyncStateCheckerController : IControllerTick, IController, IControl
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	void IControllerTick.Tick()

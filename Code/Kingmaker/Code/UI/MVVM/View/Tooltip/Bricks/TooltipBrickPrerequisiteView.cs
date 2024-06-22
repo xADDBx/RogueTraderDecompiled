@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using Owlcat.Runtime.UI.Utility;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
@@ -31,7 +32,13 @@ public class TooltipBrickPrerequisiteView : TooltipBaseBrickView<TooltipBrickPre
 	private void CreateNavigation()
 	{
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
-		m_NavigationBehaviour.AddColumn(m_WidgetList.GetNavigationEntities());
+		foreach (IWidgetView entry in m_WidgetList.Entries)
+		{
+			if (entry is PrerequisiteEntryView prerequisiteEntryView)
+			{
+				m_NavigationBehaviour.AddRow<FloatConsoleNavigationBehaviour>(prerequisiteEntryView.GetNavigation());
+			}
+		}
 	}
 
 	public IConsoleEntity GetConsoleEntity()

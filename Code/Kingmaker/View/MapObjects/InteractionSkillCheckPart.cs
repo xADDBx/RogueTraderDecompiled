@@ -37,10 +37,10 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 	[JsonProperty]
 	public readonly HashSet<UnitReference> InteractedUnits = new HashSet<UnitReference>();
 
-	private bool m_InteractOnlyByNotInteractedUnit;
-
 	[JsonProperty]
 	private HashSet<UnitReference> m_PunishedUsers = new HashSet<UnitReference>();
+
+	private bool m_InteractOnlyByNotInteractedUnit;
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int DCOverride { get; set; }
@@ -57,6 +57,8 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public StatType SkillOverride { get; private set; }
 
+	public override bool InteractThroughVariants { get; protected set; }
+
 	public bool IsFailed
 	{
 		get
@@ -69,15 +71,12 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 		}
 	}
 
-	public override bool InteractThroughVariants { get; protected set; }
-
 	protected override void OnSettingsDidSet(bool isNewSettings)
 	{
 		base.OnSettingsDidSet(isNewSettings);
 		if (isNewSettings)
 		{
-			int dC = base.Settings.GetDC();
-			DCOverride = ((dC == 0 || base.Settings.Exact) ? dC : (dC + RandomDCMod(base.Owner.UniqueId)));
+			DCOverride = base.Settings.GetDC();
 		}
 	}
 
@@ -88,7 +87,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 			return base.CanInteract();
 		}
 		ConditionsReference condition = base.Settings.Condition;
-		if ((bool)condition?.Get() && condition.Get().Conditions.HasConditions)
+		if (condition != null && condition.Get()?.Conditions.HasConditions == true)
 		{
 			using (ContextData<MechanicEntityData>.Request().Setup(base.Owner))
 			{
@@ -137,7 +136,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 		bool isCriticalFail = false;
 		bool flag = false;
 		StatType skill = GetSkill();
-		if (!base.Settings.OnlyCheckOnce || !AlreadyUsed)
+		if (!base.Settings.OnlyCheckOnce || !AlreadyUsed || (base.Settings.CheckConditionsOnEveryInteraction && !base.Settings.OnlyCheckOnce))
 		{
 			int num = ((DCOverride == 0) ? base.Settings.GetDC() : DCOverride);
 			int num2 = SettingsRoot.Difficulty.SkillCheckModifier;
@@ -323,11 +322,6 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 			}
 		}
 		return baseUnitEntity;
-	}
-
-	public static int RandomDCMod(string id)
-	{
-		return 0;
 	}
 
 	public bool GetUsagesFor(BlueprintAreaEnterPoint point)

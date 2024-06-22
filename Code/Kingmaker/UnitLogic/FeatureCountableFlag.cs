@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -26,6 +28,18 @@ public class FeatureCountableFlag
 			public Element(Buff buff)
 			{
 				BuffInformation = NullifyInformation.BuffInformation.Create(buff.Blueprint);
+				m_Counter++;
+			}
+
+			public Element(EntityFact fact)
+			{
+				BuffInformation = NullifyInformation.BuffInformation.Create(fact);
+				m_Counter++;
+			}
+
+			public Element(ItemEntity item)
+			{
+				BuffInformation = NullifyInformation.BuffInformation.Create(item);
 				m_Counter++;
 			}
 

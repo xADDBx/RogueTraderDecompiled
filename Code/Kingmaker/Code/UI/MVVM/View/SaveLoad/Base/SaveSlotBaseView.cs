@@ -5,7 +5,10 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.Console;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.PC;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.UI.Common;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup.View;
 using Owlcat.Runtime.UI.Utility;
@@ -50,6 +53,9 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 	[SerializeField]
 	private GameObject m_QuickSaveMark;
 
+	[SerializeField]
+	private Image m_IronManIcon;
+
 	[Header("Portraits")]
 	[SerializeField]
 	private SaveLoadPortraitBaseView m_PortraitPrefab;
@@ -86,6 +92,12 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 		AddDisposable(base.ViewModel.ShowAutoSaveMark.Subscribe(ShowAutoSaveMark));
 		AddDisposable(base.ViewModel.ShowQuickSaveMark.Subscribe(ShowQuickSaveMark));
 		base.ViewModel.UpdateScreenshot();
+		bool flag = base.ViewModel.Reference.Type == SaveInfo.SaveType.IronMan;
+		m_IronManIcon.Or(null)?.gameObject.SetActive(flag);
+		if (flag && m_IronManIcon != null)
+		{
+			m_IronManIcon.SetHint(UIStrings.Instance.SaveLoadTexts.SaveHasIronManMode);
+		}
 	}
 
 	protected override void DestroyViewImplementation()
@@ -179,12 +191,5 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 	public bool CheckType(IViewModel viewModel)
 	{
 		return viewModel is SaveSlotVM;
-	}
-
-	public override void SetFocus(bool value)
-	{
-		base.SetFocus(value);
-		base.ViewModel.SetSelectedFromView(value);
-		m_Button.CanConfirm = true;
 	}
 }

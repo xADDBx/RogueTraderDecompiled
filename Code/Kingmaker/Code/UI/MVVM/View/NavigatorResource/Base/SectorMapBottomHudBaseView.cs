@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.VM.NavigatorResource;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
@@ -44,6 +45,13 @@ public class SectorMapBottomHudBaseView : ViewBase<SectorMapBottomHudVM>
 
 	[SerializeField]
 	protected OwlcatMultiButton m_ScanButton;
+
+	[Header("NavigatorResourceChangedAnimator")]
+	[SerializeField]
+	private TextMeshProUGUI m_PlusNavigatorResourceObject;
+
+	[SerializeField]
+	private FadeAnimator m_PlusNavigatorResourceAnimator;
 
 	private Tweener m_NeedScanTween;
 
@@ -126,6 +134,7 @@ public class SectorMapBottomHudBaseView : ViewBase<SectorMapBottomHudVM>
 			Sequence s = DOTween.Sequence();
 			s.Append(m_ResourceCurrentValueText.DOColor(endValue, 1f));
 			s.Append(m_ResourceCurrentValueText.DOColor(m_NormalTextColor, 1f));
+			HandleCostChanged();
 		}
 	}
 
@@ -151,5 +160,25 @@ public class SectorMapBottomHudBaseView : ViewBase<SectorMapBottomHudVM>
 	public void SetScanButtonActiveLayer(string layer)
 	{
 		m_ScanButton.SetActiveLayer(layer);
+	}
+
+	private void HandleCostChanged()
+	{
+		int currentValueOfResourcesChangeCount = base.ViewModel.CurrentValueOfResourcesChangeCount;
+		if (currentValueOfResourcesChangeCount != 0)
+		{
+			string text = ((currentValueOfResourcesChangeCount > 0) ? "+" : string.Empty);
+			m_PlusNavigatorResourceObject.text = text + currentValueOfResourcesChangeCount;
+			m_PlusNavigatorResourceAnimator.AppearAnimation(delegate
+			{
+				m_PlusNavigatorResourceAnimator.DisappearAnimation();
+			});
+			Sequence s = DOTween.Sequence();
+			s.Append(m_PlusNavigatorResourceObject.gameObject.transform.DOLocalMoveY(136f, 0.5f));
+			s.AppendInterval(0.5f);
+			s.Append(m_PlusNavigatorResourceObject.gameObject.transform.DOLocalMoveY(186f, 1f));
+			s.Append(m_PlusNavigatorResourceObject.gameObject.transform.DOLocalMoveY(Vector3.zero.y, 0f));
+			base.ViewModel.CurrentValueOfResourcesChangeCount = 0;
+		}
 	}
 }

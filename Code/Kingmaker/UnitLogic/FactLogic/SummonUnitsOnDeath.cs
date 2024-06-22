@@ -60,6 +60,7 @@ public class SummonUnitsOnDeath : UnitFactComponentDelegate, IUnitDieHandler<Ent
 		BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(blueprint, base.Owner.Position, Quaternion.Euler(0f, base.Owner.Orientation, 0f), base.Owner.HoldingState);
 		baseUnitEntity.CombatGroup.Id = base.Owner.CombatGroup.Id;
 		baseUnitEntity.SnapToGrid();
+		baseUnitEntity.GiveExperienceOnDeath = base.Owner.GiveExperienceOnDeath;
 		if (base.Owner.SpawnFromPsychicPhenomena)
 		{
 			baseUnitEntity.MarkSpawnFromPsychicPhenomena();

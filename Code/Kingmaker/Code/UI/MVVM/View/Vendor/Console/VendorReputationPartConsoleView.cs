@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
+using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement.Components;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -38,9 +39,17 @@ public class VendorReputationPartConsoleView : VendorReputationPartView<Inventor
 
 	public IConsoleEntity m_CurrentFocus;
 
+	protected ContextMenuCollectionEntity m_SelectAllEntity;
+
+	protected ContextMenuCollectionEntity m_UnselectAllEntity;
+
+	public readonly ReactiveCommand OnNeedRefocus = new ReactiveCommand();
+
 	public InventoryCargoConsoleView CargoConsoleView => m_InventoryCargoPCView;
 
 	public BoolReactiveProperty CanSell => base.ViewModel?.CanSellCargo;
+
+	public GridConsoleNavigationBehaviour NavigationBehaviour => m_NavigationBehaviour;
 
 	protected override void BindViewImplementation()
 	{
@@ -50,11 +59,23 @@ public class VendorReputationPartConsoleView : VendorReputationPartView<Inventor
 		{
 			ChangeView();
 		}));
-		AddDisposable(CargoConsoleView.HasVisibleCargo.Subscribe(delegate(bool value)
-		{
-			m_ReputationPartTabsBlock.gameObject.SetActive(value);
-		}));
+		AddDisposable(CargoConsoleView.HasVisibleCargo.Subscribe(m_ReputationPartTabsBlock.gameObject.SetActive));
 		SetupContextMenu();
+		AddDisposable(base.ViewModel.HasItemsToSell.Subscribe(delegate
+		{
+			UpdateContextMenu();
+		}));
+		AddDisposable(base.ViewModel.CanSellCargo.Subscribe(delegate
+		{
+			UpdateContextMenu();
+		}));
+		if (m_InventoryCargoPCView.m_CargoZoneView is CargoDetailedZoneConsoleView cargoDetailedZoneConsoleView)
+		{
+			AddDisposable(cargoDetailedZoneConsoleView.OnHideSlot.Subscribe(delegate
+			{
+				HandleRemoveCargo();
+			}));
+		}
 	}
 
 	private void ChangeView()
@@ -93,11 +114,9 @@ public class VendorReputationPartConsoleView : VendorReputationPartView<Inventor
 	public void SetupContextMenu()
 	{
 		UIVendor vendor = UIStrings.Instance.Vendor;
-		base.ViewModel.ContextMenu.Value = new List<ContextMenuCollectionEntity>
-		{
-			new ContextMenuCollectionEntity(vendor.SelectAllRelevant, base.ViewModel.SelectAll),
-			new ContextMenuCollectionEntity(vendor.UnselectAllRelevant, base.ViewModel.UnselectAll)
-		};
+		m_SelectAllEntity = new ContextMenuCollectionEntity(vendor.SelectAllRelevant, base.ViewModel.SelectAll, condition: true, base.ViewModel.HasItemsToSell.Value);
+		m_UnselectAllEntity = new ContextMenuCollectionEntity(vendor.UnselectAllRelevant, base.ViewModel.UnselectAll, condition: true, base.ViewModel.CanSellCargo.Value);
+		base.ViewModel.ContextMenu.Value = new List<ContextMenuCollectionEntity> { m_SelectAllEntity, m_UnselectAllEntity };
 	}
 
 	public void HandleContextMenu()
@@ -128,5 +147,18 @@ public class VendorReputationPartConsoleView : VendorReputationPartView<Inventor
 	public void SetUnrelevantToggle()
 	{
 		m_ShowUnrelevantToggle.Set(!m_ShowUnrelevantToggle.IsOn.Value);
+	}
+
+	private void UpdateContextMenu()
+	{
+		m_SelectAllEntity.ForceUpdateInteractive(base.ViewModel.HasItemsToSell.Value);
+		m_UnselectAllEntity.ForceUpdateInteractive(base.ViewModel.CanSellCargo.Value);
+	}
+
+	public void HandleRemoveCargo()
+	{
+		m_InventoryCargoPCView.m_CargoZoneView.ScrollToTop();
+		m_NavigationBehaviour.FocusOnEntityManual(m_InventoryCargoPCView.GetCurrentStateNavigation().Entities.FirstOrDefault((IConsoleEntity x) => x != null));
+		OnNeedRefocus?.Execute();
 	}
 }

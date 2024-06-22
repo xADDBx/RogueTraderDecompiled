@@ -2,7 +2,6 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
-using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Localization;
@@ -30,19 +29,6 @@ public class InteractionSkillCheckSettings : InteractionSettings
 		Debuff
 	}
 
-	[Serializable]
-	public class Experience
-	{
-		public EncounterType Encounter = EncounterType.SkillCheck;
-
-		public float Modifier = 1f;
-
-		public bool CRByZone = true;
-
-		[HideIf("CRByZone")]
-		public int CR;
-	}
-
 	[Space(20f)]
 	public bool FadeOnSuccess;
 
@@ -58,13 +44,15 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	[ShowIf("CanUseWithoutSupply")]
 	public bool NeedSupply = true;
 
+	public SkillCheckDifficulty Difficulty;
+
+	[ShowIf("DifficultyIsCustom")]
 	public int DC;
 
-	public bool Exact;
+	[ShowIf("DifficultyIsCustom")]
+	public ViewDCModifier[] DCModifiers = new ViewDCModifier[0];
 
 	public FakeType FakeResult;
-
-	public ViewDCModifier[] DCModifiers = new ViewDCModifier[0];
 
 	[Space(10f)]
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
@@ -72,9 +60,6 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
 	public SharedStringAsset ShortDescription;
-
-	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
-	public SharedStringAsset TooltipKeyword;
 
 	[Space(10f)]
 	[CanBeNull]
@@ -87,6 +72,9 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	[ConditionalHide("DisableAfterUse")]
 	public bool OnlyCheckOnce = true;
+
+	[ConditionalHide("OnlyCheckOnce")]
+	public bool CheckConditionsOnEveryInteraction;
 
 	[ConditionalShow("OnlyCheckOnce")]
 	public bool TriggerActionsEveryClick;
@@ -129,8 +117,6 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	[Tooltip("Show bark on MapObject user. By default bark is shown on MapObject.")]
 	public bool ShowOnUser;
 
-	public Experience Exp;
-
 	public bool CanUseWithoutSupply
 	{
 		get
@@ -144,18 +130,25 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	public BlueprintAreaEnterPoint TeleportOnFail => m_TeleportOnFail?.Get();
 
+	private bool DifficultyIsCustom => Difficulty == SkillCheckDifficulty.Custom;
+
 	public int GetDC()
 	{
-		int num = DC;
-		if (DCModifiers != null)
+		if (Difficulty != 0)
 		{
-			ViewDCModifier[] dCModifiers = DCModifiers;
-			foreach (ViewDCModifier viewDCModifier in dCModifiers)
+			return Difficulty.GetDC();
+		}
+		if (DCModifiers == null)
+		{
+			return DC;
+		}
+		int num = DC;
+		ViewDCModifier[] dCModifiers = DCModifiers;
+		foreach (ViewDCModifier viewDCModifier in dCModifiers)
+		{
+			if (viewDCModifier != null && viewDCModifier.Conditions?.Get().Check() == true)
 			{
-				if (viewDCModifier != null && viewDCModifier.Conditions != null && viewDCModifier.Conditions.Get().Check())
-				{
-					num += viewDCModifier.Mod;
-				}
+				num += viewDCModifier.Mod;
 			}
 		}
 		return num;

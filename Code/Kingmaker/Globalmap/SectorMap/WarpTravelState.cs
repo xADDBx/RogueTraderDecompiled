@@ -54,6 +54,9 @@ public class WarpTravelState : IHashable
 	public BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> TriggeredEtude;
 
 	[JsonProperty]
+	public List<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>> TriggeredEtudeInMiddleOfJump = new List<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>>();
+
+	[JsonProperty]
 	public bool AllRoutesNotDeadlyFlag;
 
 	[JsonProperty]
@@ -113,6 +116,16 @@ public class WarpTravelState : IHashable
 		BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> obj2 = TriggeredEtude;
 		Hash128 val6 = StructHasher<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>>.GetHash128(ref obj2);
 		result.Append(ref val6);
+		List<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>> triggeredEtudeInMiddleOfJump = TriggeredEtudeInMiddleOfJump;
+		if (triggeredEtudeInMiddleOfJump != null)
+		{
+			for (int k = 0; k < triggeredEtudeInMiddleOfJump.Count; k++)
+			{
+				BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> obj3 = triggeredEtudeInMiddleOfJump[k];
+				Hash128 val7 = StructHasher<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>>.GetHash128(ref obj3);
+				result.Append(ref val7);
+			}
+		}
 		result.Append(ref AllRoutesNotDeadlyFlag);
 		result.Append(ref AllRoutesNotDeadlyChanged);
 		result.Append(ref CreateNewPassageCost);

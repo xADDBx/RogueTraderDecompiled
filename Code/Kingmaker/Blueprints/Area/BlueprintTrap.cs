@@ -4,10 +4,11 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Utility.Attributes;
+using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.Traps;
 using Kingmaker.Visual.Animation.Kingmaker;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Kingmaker.Blueprints.Area;
 
@@ -34,6 +35,10 @@ public class BlueprintTrap : BlueprintMapObject
 		}
 	}
 
+	public SkillCheckDifficulty AwarenessDifficulty;
+
+	[SerializeField]
+	[HideIf("AwarenessDifficultyIsCustom")]
 	public int AwarenessDC = 15;
 
 	public float AwarenessRadius = 7f;
@@ -48,10 +53,6 @@ public class BlueprintTrap : BlueprintMapObject
 
 	public UnitAnimationInteractionType DisarmAnimation = UnitAnimationInteractionType.DisarmTrap;
 
-	[SerializeField]
-	[FormerlySerializedAs("Actor")]
-	private BlueprintUnitReference m_Actor;
-
 	public ConditionsChecker TriggerConditions;
 
 	public ConditionsChecker DisableConditions;
@@ -62,7 +63,7 @@ public class BlueprintTrap : BlueprintMapObject
 
 	public StatType DisarmSkill = StatType.SkillDemolition;
 
-	public BlueprintUnit Actor => m_Actor?.Get();
+	private bool AwarenessDifficultyIsCustom => AwarenessDifficulty == SkillCheckDifficulty.Custom;
 
 	protected override Type GetFactType()
 	{

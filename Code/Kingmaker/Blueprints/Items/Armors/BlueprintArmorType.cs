@@ -59,6 +59,10 @@ public class BlueprintArmorType : BlueprintScriptableObject
 	[SerializeField]
 	private int m_ForcedRampColorPresetIndex;
 
+	[SerializeField]
+	[Range(-1f, 100f)]
+	private int m_DodgeArmorPercentPenalty = 25;
+
 	public LocalizedString TypeName => m_TypeNameText;
 
 	public LocalizedString DefaultName => m_DefaultNameText;
@@ -96,6 +100,8 @@ public class BlueprintArmorType : BlueprintScriptableObject
 	public int DamageAbsorption => m_DamageAbsorption;
 
 	public int DamageDeflection => m_DamageDeflection;
+
+	public int DodgeArmorPercentPenalty => m_DodgeArmorPercentPenalty;
 
 	public float Weight => m_Weight;
 }

@@ -221,6 +221,10 @@ public class WarhammerOverrideGroupCooldown : UnitBuffComponentDelegate, IInitia
 	{
 	}
 
+	public void HandleCooldownReset()
+	{
+	}
+
 	private bool CheckAbility(AbilityData ability, BlueprintAbilityGroup specifiedAbilityGroup = null)
 	{
 		ComponentData componentData = RequestSavableData<ComponentData>();

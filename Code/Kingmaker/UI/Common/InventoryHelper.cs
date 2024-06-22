@@ -342,7 +342,7 @@ public static class InventoryHelper
 			{
 				if (cargoEntity.Blueprint.Integral)
 				{
-					PFLog.Default.Log("Cannot transfer items from this cargo cause Integral true");
+					PFLog.UI.Log("Cannot transfer items from this cargo cause Integral true");
 				}
 				else if (!CargoHelper.CanTransferFromCargo(from.ItemEntity))
 				{
@@ -350,11 +350,11 @@ public static class InventoryHelper
 					{
 						h.HandleWarning(UIStrings.Instance.CargoTexts.TrashItemCargo.Text, addToLog: false, WarningNotificationFormat.Short);
 					});
-					PFLog.Default.Log($"Cannot transfer items from this cargo cause {from.ItemEntity} is trash item");
+					PFLog.UI.Log($"Cannot transfer items from this cargo cause {from.ItemEntity} is trash item");
 				}
 				else
 				{
-					PFLog.Default.Log("Cannot transfer items from this cargo cause CanRemoveItems false");
+					PFLog.UI.Log("Cannot transfer items from this cargo cause CanRemoveItems false");
 				}
 				return;
 			}
@@ -362,15 +362,15 @@ public static class InventoryHelper
 			{
 				if (cargoEntity2.Blueprint.Integral)
 				{
-					PFLog.Default.Log("Cannot add to cargo cause Integral true");
+					PFLog.UI.Log("Cannot add to cargo cause Integral true");
 				}
 				else if (!cargoEntity2.CorrectOrigin(from.ItemEntity.Blueprint.Origin))
 				{
-					PFLog.Default.Log("Cannot add to cargo cause item origin not correct");
+					PFLog.UI.Log("Cannot add to cargo cause item origin not correct");
 				}
 				else
 				{
-					PFLog.Default.Log("Cannot add to cargo cause is is full");
+					PFLog.UI.Log("Cannot add to cargo cause is is full");
 				}
 				UISounds.Instance.Sounds.Combat.CombatGridCantPerformActionClick.Play();
 				return;
@@ -446,7 +446,6 @@ public static class InventoryHelper
 			if (from.Group == to.Group && from.Group != null && !fromShip)
 			{
 				from.Group.SorterType.Value = ItemsSorterType.NotSorted;
-				from.Group.FilterType.Value = ItemsFilterType.NoFilter;
 			}
 			Game.Instance.GameCommandQueue.SwapSlots(from.ItemEntity.Owner, fromRef, toRef, isLootOrCargo);
 			break;
@@ -608,6 +607,7 @@ public static class InventoryHelper
 			ShipComponentSlotType.AugerArray => partUnitBody.AugerArray, 
 			ShipComponentSlotType.PlasmaDrives => partUnitBody.PlasmaDrives, 
 			ShipComponentSlotType.VoidShieldGenerator => partUnitBody.VoidShieldGenerator, 
+			ShipComponentSlotType.Arsenal => partUnitBody.Arsenals[handSetIndex], 
 			ShipComponentSlotType.Dorsal => partUnitBody.WeaponSlots[handSetIndex], 
 			ShipComponentSlotType.Prow1 => partUnitBody.WeaponSlots[handSetIndex], 
 			ShipComponentSlotType.Prow2 => partUnitBody.WeaponSlots[handSetIndex], 

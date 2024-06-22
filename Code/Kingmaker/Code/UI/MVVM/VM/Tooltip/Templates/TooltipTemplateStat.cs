@@ -54,7 +54,6 @@ public class TooltipTemplateStat : TooltipBaseTemplate
 		AddTotalValue(list);
 		AddStatBonusesGroup(list);
 		AddCompanionsStats(list);
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(Desc));
 		return list;
 	}
@@ -75,7 +74,10 @@ public class TooltipTemplateStat : TooltipBaseTemplate
 
 	private void AddStatBonusesGroup(List<ITooltipBrick> bricks)
 	{
-		bricks.Add(new TooltipBrickTextValue(UIStrings.Instance.Tooltips.BaseValue, StatData.BaseValue.ToString(), 1));
+		if (StatData.Group != StatGroup.Skill && StatData.BaseValue != 0)
+		{
+			bricks.Add(new TooltipBrickTextValue(UIStrings.Instance.Tooltips.BaseValue, StatData.BaseValue.ToString(), 1));
+		}
 		if (!StatData.Breakdown.HasBonuses)
 		{
 			return;

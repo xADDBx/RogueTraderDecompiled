@@ -30,7 +30,7 @@ public class StartTrade : GameAction
 		return $"Start Trade {Vendor}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_IsUnitVendor)
 		{

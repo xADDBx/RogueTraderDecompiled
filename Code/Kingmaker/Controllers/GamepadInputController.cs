@@ -40,8 +40,7 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 			{
 				return;
 			}
-			Vector2 moveDirection = Vector2.zero;
-			SynchronizedDataController.DecompressStickData(leftStickData, ref moveDirection, out var stickDeflection);
+			SynchronizedDataController.DecompressStickData(leftStickData, out var moveDirection, out var stickDeflection);
 			UnitMovementAgentBase unitMovementAgentBase = unit.View.Or(null)?.MovementAgent.Or(null);
 			if ((object)unitMovementAgentBase != null && unitMovementAgentBase.IsTraverseInProgress)
 			{
@@ -98,7 +97,7 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 
 		private static void MakeCompanionsFollow(NetPlayer player, BaseUnitEntity unit, UnitReference[] selectedUnits)
 		{
-			Vector3 forward = unit.View.transform.forward;
+			Vector3 forward = unit.Forward;
 			List<BaseUnitEntity> list = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable(player)).ToList();
 			int unitIndex = list.IndexOf(unit);
 			Vector3 worldPosition = PartyFormationHelper.FindFormationCenterFromOneUnit(FormationAnchor.Front, forward, unitIndex, unit.Position, list, selectedUnits);

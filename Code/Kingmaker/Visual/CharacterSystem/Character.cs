@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
@@ -30,6 +31,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Visual.CharacterSystem;
 
+[KnowledgeDatabaseID("49ec7da2c03301e4ca927c5c1a2e00ed")]
 public class Character : RegisteredBehaviour, IUpdatable
 {
 	public enum AtlasSize
@@ -181,6 +183,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private bool m_ShowBackpack = true;
 
+	private bool m_ShowHelmetAboveAll;
+
 	private bool m_BackEquipmentIsDirty;
 
 	public Func<EquipmentEntity.OutfitPart, GameObject, bool> OutfitFilter;
@@ -198,6 +202,12 @@ public class Character : RegisteredBehaviour, IUpdatable
 	public bool canNotBeRebaked;
 
 	public ClothCollider[] ClothColliders;
+
+	private EquipmentEntity m_AlwaysVisibleHelmetEe;
+
+	private EquipmentEntity m_ProxyHelmetEe;
+
+	private List<EquipmentEntity> m_ProxyEquipmentEntities = new List<EquipmentEntity>();
 
 	private Dictionary<string, Transform> m_AttachBonesCache = new Dictionary<string, Transform>();
 
@@ -233,6 +243,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 	}
 
 	public bool IsCharacterStudio { get; set; }
+
+	public bool HasBonesList => m_BonesList != null;
 
 	public List<EquipmentEntityLink> SavedEquipmentEntities
 	{
@@ -566,6 +578,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true, delayTextureCreation: true);
 		}
+		StandardMaterialController component = base.gameObject.GetComponent<StandardMaterialController>();
+		if (component != null)
+		{
+			component.InvalidateMaterialsTextures();
+		}
 		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(m_Atlases, AtlasMaterial, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
 		m_EquipmentEntitiesTextures.Clear();
 	}
@@ -642,7 +659,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 		for (int i = 0; i < Skeleton.Bones.Count; i++)
 		{
 			Skeleton.Bone bone2 = Skeleton.Bones[i];
-			array[i] = m_BonesList.GetByName(bone2.Name);
+			if (m_BonesList == null)
+			{
+				PFLog.Default.Error(base.gameObject, base.gameObject?.name + ": m_BonesList is null, Character.OnStart() has not been called or failed?");
+			}
+			else
+			{
+				array[i] = m_BonesList.GetByName(bone2.Name);
+			}
 		}
 		m_BonesForJob = new TransformAccessArray(array);
 		m_BoneUpdateJob = new BoneUpdateJob
@@ -967,10 +991,83 @@ public class Character : RegisteredBehaviour, IUpdatable
 		return true;
 	}
 
+	private void SetAlwaysVisibleHelmetProxyEe()
+	{
+		if (!m_ShowHelmetAboveAll)
+		{
+			m_AlwaysVisibleHelmetEe = null;
+			m_ProxyHelmetEe = null;
+			return;
+		}
+		foreach (EquipmentEntity equipmentEntity in EquipmentEntities)
+		{
+			if (equipmentEntity.ShowAboveAllIgnoreLayer)
+			{
+				m_AlwaysVisibleHelmetEe = equipmentEntity;
+				m_ProxyHelmetEe = CreateProxyHeadwearEe(equipmentEntity);
+				break;
+			}
+		}
+	}
+
+	private EquipmentEntity CreateProxyHeadwearEe(EquipmentEntity ee)
+	{
+		EquipmentEntity equipmentEntity = ScriptableObject.CreateInstance<EquipmentEntity>();
+		equipmentEntity.CantBeHiddenByDollRoom = ee.CantBeHiddenByDollRoom;
+		equipmentEntity.ShowAboveAllIgnoreLayer = ee.ShowAboveAllIgnoreLayer;
+		equipmentEntity.Layer = 999999;
+		equipmentEntity.HideBodyParts = ee.HideBodyParts;
+		equipmentEntity.ShowLowerMaterials = ee.ShowLowerMaterials;
+		equipmentEntity.SkeletonModifiers = ee.SkeletonModifiers;
+		if (ee.PrimaryColorsProfile != null)
+		{
+			equipmentEntity.PrimaryColorsProfile = ee.PrimaryColorsProfile;
+			List<Texture2D> primaryRamps = ee.PrimaryRamps;
+			if (primaryRamps != null && primaryRamps.Count > 0)
+			{
+				equipmentEntity.PrimaryRamps = ee.PrimaryRamps.ToList();
+			}
+		}
+		if (ee.SecondaryColorsProfile != null)
+		{
+			equipmentEntity.SecondaryColorsProfile = ee.SecondaryColorsProfile;
+			List<Texture2D> primaryRamps = ee.SecondaryRamps;
+			if (primaryRamps != null && primaryRamps.Count > 0)
+			{
+				equipmentEntity.SecondaryRamps = ee.SecondaryRamps.ToList();
+			}
+		}
+		if (ee.ColorPresets != null)
+		{
+			equipmentEntity.ColorPresets = ee.ColorPresets;
+		}
+		equipmentEntity.BodyParts = ee.BodyParts;
+		equipmentEntity.OutfitParts = ee.OutfitParts;
+		equipmentEntity.ForcedPrimaryIndex = ee.ForcedPrimaryIndex;
+		equipmentEntity.ForcedSecondaryIndex = ee.ForcedSecondaryIndex;
+		return equipmentEntity;
+	}
+
+	private void SetAlwaysVisibleHelmet()
+	{
+		SetAlwaysVisibleHelmetProxyEe();
+		if (m_ShowHelmetAboveAll)
+		{
+			m_ProxyEquipmentEntities.Remove(m_AlwaysVisibleHelmetEe);
+			m_ProxyEquipmentEntities.Add(m_ProxyHelmetEe);
+		}
+	}
+
 	private void UpdateCharacter()
 	{
+		m_ProxyEquipmentEntities.Clear();
+		foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
+		{
+			m_ProxyEquipmentEntities.Add(equipmentEntity2);
+		}
+		SetAlwaysVisibleHelmet();
 		Dictionary<BodyPart, EquipmentEntity> dictionary = new Dictionary<BodyPart, EquipmentEntity>();
-		foreach (EquipmentEntity item in from ee in EquipmentEntities
+		foreach (EquipmentEntity item in from ee in m_ProxyEquipmentEntities
 			where ee != null && ee.BodyParts.Count > 0
 			orderby ee.Layer
 			select ee)
@@ -980,11 +1077,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 				continue;
 			}
 			BodyPartType bodyPartType = (BodyPartType)0L;
-			foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
+			foreach (EquipmentEntity proxyEquipmentEntity in m_ProxyEquipmentEntities)
 			{
-				if (!(equipmentEntity2 == null) && !(item == equipmentEntity2) && !IsHelmetThatShouldBeHidden(equipmentEntity2))
+				if (!(proxyEquipmentEntity == null) && !(item == proxyEquipmentEntity) && !IsHelmetThatShouldBeHidden(proxyEquipmentEntity))
 				{
-					bodyPartType |= equipmentEntity2.HideBodyParts;
+					bodyPartType |= proxyEquipmentEntity.HideBodyParts;
 				}
 			}
 			foreach (BodyPart bodyPart in item.BodyParts)
@@ -1006,7 +1103,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 			var (bodyPart3, entity) = (KeyValuePair<BodyPart, EquipmentEntity>)(ref item2);
 			if (entity.ShowLowerMaterials)
 			{
-				foreach (EquipmentEntity item3 in from ee in EquipmentEntities
+				foreach (EquipmentEntity item3 in from ee in m_ProxyEquipmentEntities
 					where ee != null && ee != entity && ee.Layer < entity.Layer && !IsHelmetThatShouldBeHidden(ee)
 					orderby ee.Layer
 					select ee)
@@ -1015,7 +1112,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 				}
 			}
 			AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, entity);
-			foreach (EquipmentEntity item4 in from ee in EquipmentEntities
+			foreach (EquipmentEntity item4 in from ee in m_ProxyEquipmentEntities
 				where ee != null && ee != entity && ee.Layer > entity.Layer && !IsHelmetThatShouldBeHidden(ee)
 				orderby ee.Layer
 				select ee)
@@ -1057,7 +1154,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 			{
 				if (texture.GetSourceTexture() == null)
 				{
-					PFLog.Default.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+					if (Application.isEditor)
+					{
+						PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+					}
 					flag = false;
 					break;
 				}
@@ -1356,6 +1456,15 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 	}
 
+	public void UpdateHelmetVisibilityAboveAll(bool showHelmetAboveAll)
+	{
+		if (m_ShowHelmetAboveAll == !showHelmetAboveAll)
+		{
+			IsDirty = true;
+			m_ShowHelmetAboveAll = showHelmetAboveAll;
+		}
+	}
+
 	public void UpdateClothVisibility(bool showCloth)
 	{
 		if (m_ShowCloth == !showCloth)
@@ -1577,6 +1686,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 		foreach (CharacterAtlas atlase in m_Atlases)
 		{
 			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true, delayTextureCreation: true);
+		}
+		StandardMaterialController component = base.gameObject.GetComponent<StandardMaterialController>();
+		if (component != null)
+		{
+			component.InvalidateMaterialsTextures();
 		}
 		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(m_Atlases, AtlasMaterial, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
 		m_EquipmentEntitiesTextures.Clear();

@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic.Levelup;
@@ -14,7 +15,6 @@ using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
-using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.CharGen.Phases.BackgroundBase;
@@ -43,7 +43,7 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 
 	private SelectionStateFeature m_SelectionStateFeature;
 
-	private IDisposable m_DelayedApplySelection;
+	private readonly IDelayedSelector m_DelayedApplySelection;
 
 	protected Action OnSelectionApplied;
 
@@ -52,6 +52,18 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 	protected CharGenBackgroundBasePhaseVM(CharGenContext charGenContext, FeatureGroup featureGroup, CharGenPhaseType phaseType, ReactiveProperty<CharGenPhaseBaseVM> currentPhase = null)
 		: base(charGenContext, phaseType)
 	{
+		IDelayedSelector delayedApplySelection;
+		if (!(Game.Instance.SceneLoader.LoadedUIScene == GameScenes.MainMenu))
+		{
+			IDelayedSelector delayedSelector = new InGameSelector();
+			delayedApplySelection = delayedSelector;
+		}
+		else
+		{
+			IDelayedSelector delayedSelector = new MainMenuSelector();
+			delayedApplySelection = delayedSelector;
+		}
+		m_DelayedApplySelection = delayedApplySelection;
 		CurrentPhase = currentPhase;
 		FeatureGroup = featureGroup;
 		SelectionGroup = new SelectionGroupRadioVM<TViewModel>(Items, SelectedItem);
@@ -100,10 +112,9 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 
 	protected virtual void Clear()
 	{
-		if (m_DelayedApplySelection != null)
+		if (m_DelayedApplySelection.IsRunning)
 		{
-			m_DelayedApplySelection.Dispose();
-			m_DelayedApplySelection = null;
+			m_DelayedApplySelection.Clear();
 			ApplySelection();
 		}
 		Items.ForEach(delegate(TViewModel vm)
@@ -200,12 +211,16 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 
 	void ICharGenSelectItemHandler.HandleSelectItem(FeatureGroup featureGroup, BlueprintFeature blueprintFeature)
 	{
-		if (FeatureGroup == featureGroup)
+		if (FeatureGroup != featureGroup)
+		{
+			return;
+		}
+		if (!UINetUtility.IsControlMainCharacter())
 		{
 			TViewModel value = ((blueprintFeature != null) ? Items.FirstOrDefault((TViewModel item) => blueprintFeature == item?.Feature) : null);
 			SelectedItem.Value = value;
-			DelayedApplySelection();
 		}
+		DelayedApplySelection();
 	}
 
 	public bool GoNextPage()
@@ -220,8 +235,8 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 
 	private void DelayedApplySelection()
 	{
-		m_DelayedApplySelection?.Dispose();
-		m_DelayedApplySelection = DelayedInvoker.InvokeInFrames(ApplySelection, 1);
+		m_DelayedApplySelection.Stop();
+		m_DelayedApplySelection.InvokeNextFrame(ApplySelection);
 		SetupTooltipTemplate();
 	}
 
@@ -237,7 +252,7 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 				OnSelectionApplied?.Invoke();
 			}
 			RefreshVisualSettings();
-			m_DelayedApplySelection = null;
+			m_DelayedApplySelection.Clear();
 			UpdateIsCompleted();
 		}
 	}

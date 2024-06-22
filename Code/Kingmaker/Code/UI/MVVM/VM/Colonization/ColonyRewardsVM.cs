@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Colonization;
 
-public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISubscriber, IColonyManagementRewardsUIHandler
+public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISubscriber
 {
 	public readonly ReactiveProperty<bool> ShouldShow = new ReactiveProperty<bool>(initialValue: false);
 
@@ -89,7 +89,6 @@ public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISu
 				RewardUI reward = RewardUIFactory.GetReward(component);
 				SetRewards(reward);
 			}
-			colony.ClearFinishedProjectsSinceLastVisit();
 		}
 		SetItems(colony.LootToReceive.Items);
 		SetCargo(colony.LootToReceive.Cargo);
@@ -98,6 +97,7 @@ public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISu
 
 	public void HandleHide()
 	{
+		ClearFinishedProjects();
 		AddRewards();
 		ShouldShow.Value = false;
 		HasStats.Value = false;
@@ -109,14 +109,12 @@ public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISu
 		OtherRewards.Clear();
 	}
 
-	void IColonyRewardsUIHandler.HandleColonyRewardsShow()
+	void IColonyRewardsUIHandler.HandleColonyRewardsShow(Colony colony)
 	{
-		ShowRewards();
-	}
-
-	void IColonyManagementRewardsUIHandler.HandleColonyRewardsShow()
-	{
-		ShowRewards();
+		if (m_Colony == colony)
+		{
+			ShowRewards();
+		}
 	}
 
 	private void ShowRewards()
@@ -205,6 +203,17 @@ public class ColonyRewardsVM : ColonyUIComponentVM, IColonyRewardsUIHandler, ISu
 
 	private void AddRewards()
 	{
-		Game.Instance.GameCommandQueue.ReceiveLootFromColony(m_Colony);
+		if (m_Colony != null)
+		{
+			Game.Instance.GameCommandQueue.ReceiveLootFromColony((ColonyRef)m_Colony);
+		}
+	}
+
+	private void ClearFinishedProjects()
+	{
+		if (m_Colony != null)
+		{
+			Game.Instance.GameCommandQueue.ClearFinishedProjectsSinceLastVisit((ColonyRef)m_Colony);
+		}
 	}
 }

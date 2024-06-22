@@ -10,9 +10,9 @@ public class SimplePropertyGetter : PropertyGetter
 {
 	public EntityProperty Property;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"${Property}";
+		return $"${Property} of {FormulaTargetScope.Current}";
 	}
 
 	protected override int GetBaseValue()

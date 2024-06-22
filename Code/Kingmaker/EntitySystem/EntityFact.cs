@@ -542,9 +542,12 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 		{
 			PFLog.Default.ErrorWithReport("There is no Context in " + GetType().Name + ": '" + Name + "' [" + UniqueId + "]. Blueprint: '" + Blueprint?.name + "' [" + Blueprint?.AssetGuid + "]");
 		}
-		using (MaybeContext?.GetDataScope(target))
+		using (ContextData<FactData>.Request().Setup(this))
 		{
-			actions.Run();
+			using (MaybeContext?.GetDataScope(target))
+			{
+				actions.Run();
+			}
 		}
 	}
 

@@ -22,6 +22,8 @@ public class UIMeinMenuTexts
 
 	public LocalizedString Exit;
 
+	public LocalizedString Addons;
+
 	public LocalizedString MotivationStartPart;
 
 	public LocalizedString MotivationStartPartFormat;

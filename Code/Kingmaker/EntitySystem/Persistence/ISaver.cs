@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using Kingmaker.Utility.UnityExtensions;
 
 namespace Kingmaker.EntitySystem.Persistence;
 
@@ -40,4 +42,21 @@ public interface ISaver : IDisposable
 	ISaver Clone();
 
 	void MoveTo(string newName);
+
+	static string GetNewStagingFileName()
+	{
+		string text = ApplicationPaths.temporaryCachePath + "/save-staging.zip";
+		try
+		{
+			if (File.Exists(text))
+			{
+				File.Delete(text);
+			}
+		}
+		catch (IOException)
+		{
+			text = $"{ApplicationPaths.temporaryCachePath}/save-staging-{Guid.NewGuid():N}.zip";
+		}
+		return text;
+	}
 }

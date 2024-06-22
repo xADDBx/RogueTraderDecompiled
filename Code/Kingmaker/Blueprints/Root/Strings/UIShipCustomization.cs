@@ -77,6 +77,8 @@ public class UIShipCustomization
 
 	public LocalizedString Starboard;
 
+	public LocalizedString Arsenal;
+
 	public LocalizedString Ram;
 
 	public LocalizedString Repair;

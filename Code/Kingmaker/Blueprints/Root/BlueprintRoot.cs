@@ -141,8 +141,6 @@ public class BlueprintRoot : BlueprintScriptableObject
 
 	public GameObject ExitStealthEffectPrefab;
 
-	public WeaponModelSizeSettings WeaponModelSizing;
-
 	public SoundRoot Sound;
 
 	[SerializeField]

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Kingmaker.Blueprints;
 using Kingmaker.Designers.EventConditionActionSystem.Events;
 using Kingmaker.EntitySystem;
+using Kingmaker.QA;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 
@@ -75,15 +77,90 @@ public class EtudesTree : EntityFactsProcessor<Etude>
 		foreach (BlueprintEtudeReference item in etude.Blueprint.StartsWith)
 		{
 			BlueprintEtude blueprint = item.Get();
-			if (!system.EtudeIsCompleted(blueprint) && !base.RawFacts.HasItem((Etude x) => x.Blueprint == blueprint))
+			if (blueprint == null)
+			{
+				PFLog.Etudes.Error("Can't find Blueprint with guid " + item.Guid);
+			}
+			else if (!system.EtudeIsCompleted(blueprint) && !base.RawFacts.HasItem((Etude x) => x.Blueprint == blueprint))
 			{
 				system.StartEtude(blueprint);
 			}
 		}
+		foreach (Etude item2 in etude.Children.ToTempList())
+		{
+			FixupEtudeStartsWith(system, item2);
+		}
+	}
+
+	public void CheckEtudeHierarchyForErrors()
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		foreach (Etude rawFact in base.RawFacts)
+		{
+			if (rawFact.Blueprint == null)
+			{
+				PFLog.Etudes.Error($"Can't find Blueprint for etude {rawFact}");
+			}
+			else
+			{
+				stringBuilder.Append(GetEtudeHierarchyError(rawFact));
+			}
+		}
+		if (stringBuilder.Length > 0)
+		{
+			PFLog.Default.ErrorWithReport(stringBuilder.ToString());
+		}
+	}
+
+	private string GetEtudeHierarchyError(Etude etude)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append(CheckEtudeParent(etude));
+		stringBuilder.Append(CheckEtudeParentRunning(etude));
+		stringBuilder.Append(CheckEtudeChildren(etude));
+		return stringBuilder.ToString();
+	}
+
+	private string CheckEtudeParent(Etude etude)
+	{
+		if (etude.Parent?.Blueprint != etude.Blueprint.Parent?.Get())
+		{
+			return $"[Etude Hierarchy] {etude} Parent mismatch! Blueprint: {etude.Blueprint.Parent?.Get()}, State: {etude.Parent?.Blueprint} \n";
+		}
+		return string.Empty;
+	}
+
+	private string CheckEtudeParentRunning(Etude etude)
+	{
+		if (etude.Blueprint.StartsParent && !Game.Instance.Player.EtudesSystem.EtudeIsNotStarted(etude.Blueprint) && Game.Instance.Player.EtudesSystem.EtudeIsNotStarted(etude.Parent?.Blueprint))
+		{
+			return $"[Etude Hierarchy] {etude} should start parent, but {etude.Parent?.Blueprint} is not started! \n";
+		}
+		return string.Empty;
+	}
+
+	private string CheckEtudeChildren(Etude etude)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		HashSet<BlueprintEtude> hashSet = (from e in etude.Blueprint.StartsWith
+			where e.Get() != null
+			select e.Get()).ToHashSet();
+		HashSet<BlueprintEtude> hashSet2 = etude.Children.Select((Etude e) => e.Blueprint).ToHashSet();
+		hashSet.IntersectWith(hashSet2);
+		hashSet2.SymmetricExceptWith(hashSet);
 		foreach (Etude child in etude.Children)
 		{
-			FixupEtudeStartsWith(system, child);
+			if (child.Parent == etude)
+			{
+				hashSet2.Remove(child.Blueprint);
+			}
 		}
+		if (hashSet2.Count > 0)
+		{
+			string arg = hashSet2.Aggregate(string.Empty, (string result, BlueprintEtude etude) => result + etude.name + ", ");
+			stringBuilder.Append($"[Etude Hierarchy] {etude} Children mismatch!, State has etudes: {arg}but BP hasn't!\n");
+		}
+		return stringBuilder.ToString();
 	}
 
 	public void MaybeDeactivateCompletedEtudes()

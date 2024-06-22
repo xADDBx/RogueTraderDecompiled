@@ -37,7 +37,7 @@ public class CharInfoStatusEffectsConsoleView : CharInfoStatusEffectsView, IChar
 		}
 		foreach (IWidgetView entry in m_WidgetList.Entries)
 		{
-			m_NavigationBehaviour.AddRow<CharInfoFeatureConsoleView>(entry as CharInfoFeatureConsoleView);
+			m_NavigationBehaviour.AddRow<StatusEffectConsoleView>(entry as StatusEffectConsoleView);
 		}
 	}
 

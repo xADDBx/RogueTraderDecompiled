@@ -29,7 +29,7 @@ public class UseActionPoints : GameAction
 		return string.Format("Use {0} action points ({1} AP, {2} MP){3}", Unit, AP, MP, EndTurn ? " and end turn" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

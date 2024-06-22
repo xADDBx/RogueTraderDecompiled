@@ -23,6 +23,8 @@ using Kingmaker.UI.MVVM.View.SurfaceCombat.PC;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GameConst;
+using Kingmaker.View;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -41,6 +43,9 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 
 	[SerializeField]
 	private MoveAnimator m_EndTurnButtonAnimator;
+
+	[SerializeField]
+	private FadeAnimator m_EndTurnButtonFadeAnimator;
 
 	[SerializeField]
 	private TextMeshProUGUI m_EndTurnBindText;
@@ -156,9 +161,34 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 		{
 			SpeedUp(state: false);
 		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.CameraRotateToPointNorth.name, CameraRig.Instance.ResetCameraRotate));
 		m_SkipText.text = UISettingsRoot.Instance.UIKeybindGeneralSettings.SkipCutscene.GetBinding(0).GetPrettyString() + " " + UIStrings.Instance.CommonTexts.SkipHold;
 		m_FillImage.fillAmount = 0f;
 		m_SkipCutsceneHintHolderFade.DisappearAnimation();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		m_PauseBind.OnValueChanged -= SetEndTurnBindText;
+		m_PauseBind = null;
+		m_SelectedUnitSubscribtion?.Dispose();
+		m_SelectedUnitSubscribtion = null;
+		m_TurnUnitSubscribtion?.Dispose();
+		m_TurnUnitSubscribtion = null;
+		if (m_HideCloseCutsceneHint != null)
+		{
+			HideCutsceneHints();
+			StopCoroutine(m_HideCloseCutsceneHint);
+			m_HideCloseCutsceneHint = null;
+		}
+		if (m_FillSkipCutsceneCoroutine != null)
+		{
+			HideCutsceneHints();
+			StopCoroutine(m_FillSkipCutsceneCoroutine);
+			m_FillSkipCutsceneCoroutine = null;
+		}
+		m_CurrentFill.Value = 0f;
 	}
 
 	private void SetSkipCutsceneSettings()
@@ -319,46 +349,24 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 		Game.Instance.SpeedUp(state);
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		m_PauseBind.OnValueChanged -= SetEndTurnBindText;
-		m_PauseBind = null;
-		m_SelectedUnitSubscribtion?.Dispose();
-		m_SelectedUnitSubscribtion = null;
-		m_TurnUnitSubscribtion?.Dispose();
-		m_TurnUnitSubscribtion = null;
-		if (m_HideCloseCutsceneHint != null)
-		{
-			HideCutsceneHints();
-			StopCoroutine(m_HideCloseCutsceneHint);
-			m_HideCloseCutsceneHint = null;
-		}
-		if (m_FillSkipCutsceneCoroutine != null)
-		{
-			HideCutsceneHints();
-			StopCoroutine(m_FillSkipCutsceneCoroutine);
-			m_FillSkipCutsceneCoroutine = null;
-		}
-		m_CurrentFill.Value = 0f;
-	}
-
 	private void ShowEndTurnButton(bool val)
 	{
 		if (val)
 		{
 			base.gameObject.SetActive(value: true);
 			m_EndTurnButtonAnimator.AppearAnimation();
+			m_EndTurnButtonFadeAnimator.Or(null)?.AppearAnimation();
 		}
 		else
 		{
 			m_EndTurnButtonAnimator.DisappearAnimation();
+			m_EndTurnButtonFadeAnimator.Or(null)?.DisappearAnimation();
 		}
 	}
 
 	private void SetEndTurnBindText(KeyBindingPair keyBindingPair = default(KeyBindingPair))
 	{
-		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "Pause"));
-		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("Pause"));
+		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "EndTurn"));
+		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("EndTurn"));
 	}
 }

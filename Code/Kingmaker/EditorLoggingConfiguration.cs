@@ -14,5 +14,6 @@ public class EditorLoggingConfiguration : ILoggingConfiguration
 		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateHistory());
 		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateFull(logFilePath, "EditorLogFull.txt"));
 		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateShort(logFilePath, "EditorLog.txt"));
+		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateElementsDebugger());
 	}
 }

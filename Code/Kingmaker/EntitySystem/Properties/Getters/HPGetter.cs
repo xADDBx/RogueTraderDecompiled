@@ -22,17 +22,17 @@ public class HPGetter : MechanicEntityPropertyGetter
 
 	public HPType HealthType;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!HPPercent)
 		{
 			if (!MaxHP)
 			{
-				return "Hit Points";
+				return "Hit Points of " + FormulaTargetScope.Current;
 			}
-			return "Maximum Hit Points";
+			return "Maximum Hit Points of " + FormulaTargetScope.Current;
 		}
-		return "Hit Points percent";
+		return "Hit Points percent of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

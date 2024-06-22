@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Enums;
 using Kingmaker.Mechanics.Entities;
@@ -9,6 +10,7 @@ using UnityEngine;
 namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
+[KnowledgeDatabaseID("ba187735840a5ff4dbccadf936eeffed")]
 public class SpawnerPetSettings : EntityPartComponent<SpawnerPetSettings.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

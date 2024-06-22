@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
@@ -34,7 +35,7 @@ public class MapObjectOvertipSkillCheckBlockView : ViewBase<OvertipMapObjectVM>
 		}));
 		AddDisposable(base.ViewModel.IsEnabled.CombineLatest(base.ViewModel.MapObjectIsHighlited, base.ViewModel.ForceHotKeyPressed, base.ViewModel.IsMouseOverUI, base.ViewModel.ObjectDescription, base.ViewModel.ObjectSkillCheckText, base.ViewModel.ForceHideInCombat, (bool enable, bool hover, bool force, bool mouseOver, string descr, string skillcheck, bool forceHideInCombat) => enable && !forceHideInCombat && (hover || force || mouseOver) && (!descr.IsNullOrEmpty() || !skillcheck.IsNullOrEmpty())).Subscribe(delegate(bool value)
 		{
-			m_FadeAnimator.PlayAnimation(value);
+			m_FadeAnimator.PlayAnimation(value && Game.Instance.SelectionCharacter.SelectedUnit.Value.IsMyNetRole());
 		}));
 	}
 

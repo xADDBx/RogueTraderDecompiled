@@ -40,8 +40,23 @@ public class StarshipHitCritModifier : UnitFactComponentDelegate, IInitiatorRule
 	[ShowIf("CheckWeaponType")]
 	public StarshipWeaponType WeaponType;
 
+	public bool CheckWeaponBlueprint;
+
+	[SerializeField]
+	[ShowIf("CheckWeaponBlueprint")]
+	private BlueprintStarshipWeaponReference[] m_WeaponBlueprints;
+
 	[SerializeField]
 	private BlueprintFeatureReference[] m_TargetAnyFeatureRequired = new BlueprintFeatureReference[0];
+
+	public ReferenceArrayProxy<BlueprintStarshipWeapon> WeaponBlueprints
+	{
+		get
+		{
+			BlueprintReference<BlueprintStarshipWeapon>[] weaponBlueprints = m_WeaponBlueprints;
+			return weaponBlueprints;
+		}
+	}
 
 	public ReferenceArrayProxy<BlueprintFeature> TargetAnyFeatureRequired
 	{
@@ -54,7 +69,7 @@ public class StarshipHitCritModifier : UnitFactComponentDelegate, IInitiatorRule
 
 	public void OnEventAboutToTrigger(RuleStarshipCalculateHitChances evt)
 	{
-		if ((modifyWhen != 0 || evt.Initiator == base.Owner) && (modifyWhen != ModifyWhen.IsTarget || evt.Target == base.Owner) && (!CheckWeaponType || evt.Weapon.Blueprint.WeaponType == WeaponType) && (TargetAnyFeatureRequired.Length == 0 || TargetAnyFeatureRequired.Any((BlueprintFeature feature) => evt.Target.Facts.Contains(feature))))
+		if ((modifyWhen != 0 || evt.Initiator == base.Owner) && (modifyWhen != ModifyWhen.IsTarget || evt.Target == base.Owner) && (!CheckWeaponType || evt.Weapon.Blueprint.WeaponType == WeaponType) && (!CheckWeaponBlueprint || WeaponBlueprints.Contains(evt.Weapon.Blueprint)) && (TargetAnyFeatureRequired.Length == 0 || TargetAnyFeatureRequired.Any((BlueprintFeature feature) => evt.Target.Facts.Contains(feature))))
 		{
 			evt.BonusHitChance += HitBonusPct;
 			evt.BonusCritChance += CritBonusPct;

@@ -37,7 +37,7 @@ public class RollSkillCheck : GameAction
 
 	public ActionList OnFailure;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		RulePerformSkillCheck rulePerformSkillCheck = new RulePerformSkillCheck(Unit.GetValue(), Stat, DC);
 		if (Voice)

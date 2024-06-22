@@ -15,4 +15,7 @@ public class StarshipRamModifiers : BlueprintComponent
 {
 	[SerializeField]
 	public float DamageReturningMod;
+
+	[SerializeField]
+	public int RamDistanceBonus;
 }

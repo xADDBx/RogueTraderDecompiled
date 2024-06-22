@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
+using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules.Damage;
 
@@ -23,9 +24,19 @@ public class RuleCalculateHeal : RulebookTargetEvent
 
 	public readonly List<Tuple<int, string>> UIPercentCriticalBonuses = new List<Tuple<int, string>>();
 
+	public bool UseDiceFormula { get; private set; }
+
 	public DiceFormula HealFormula { get; private set; }
 
 	public int DiceResult { get; private set; }
+
+	public int MinHealing { get; private set; }
+
+	public int MaxHealing { get; private set; }
+
+	public int MinHealingModified { get; private set; }
+
+	public int MaxHealingModified { get; private set; }
 
 	public int ValueWithoutReduction { get; private set; }
 
@@ -60,22 +71,46 @@ public class RuleCalculateHeal : RulebookTargetEvent
 	{
 	}
 
+	public RuleCalculateHeal([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, int min, int max, int bonus)
+		: base(initiator, target)
+	{
+		TargetHealth = target.GetHealthOptional();
+		MinHealing = min;
+		MaxHealing = max;
+		Bonus = bonus;
+		UseDiceFormula = false;
+	}
+
 	public RuleCalculateHeal([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, DiceFormula dice, int bonus)
 		: base(initiator, target)
 	{
 		TargetHealth = target.GetHealthOptional();
 		HealFormula = dice;
 		Bonus = bonus;
+		UseDiceFormula = true;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		if (TargetHealth != null && !this.SkipBecauseOfShadow())
 		{
-			HealFormula = new DiceFormula(HealFormula.Rolls, HealFormula.Dice);
-			DiceResult = Dice.D(HealFormula);
-			int val = DiceResult + Bonus;
-			ValueWithoutReduction = Math.Max(0, val);
+			int num = 0;
+			if (UseDiceFormula)
+			{
+				HealFormula = new DiceFormula(HealFormula.Rolls, HealFormula.Dice);
+				MinHealingModified = HealFormula.MinValue(Bonus + FlatBonus) * (100 + PercentBonus) / 100;
+				MaxHealingModified = HealFormula.MaxValue(Bonus + FlatBonus) * (100 + PercentBonus) / 100;
+				DiceResult = Dice.D(HealFormula);
+			}
+			else
+			{
+				float num2 = Math.Clamp((float)Dice.D(new DiceFormula(1, DiceType.D100)) / 100f, 0f, 1f);
+				MinHealingModified = (MinHealing + Bonus + FlatBonus) * (100 + PercentBonus) / 100;
+				MaxHealingModified = (MaxHealing + Bonus + FlatBonus) * (100 + PercentBonus) / 100;
+				DiceResult = MinHealing + Mathf.RoundToInt((float)(MaxHealing - MinHealing) * num2);
+			}
+			num += DiceResult + Bonus;
+			ValueWithoutReduction = Math.Max(0, num);
 			UIValueBase = Math.Min(ValueWithoutReduction, TargetHealth.Damage);
 			UIValueWithoutCriticalBonus = (UIValueBase + FlatBonus) * (100 + PercentBonus - UIPercentCriticalBonus) / 100;
 			Value = (Math.Min(ValueWithoutReduction, TargetHealth.Damage) + FlatBonus) * (100 + PercentBonus) / 100;

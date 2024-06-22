@@ -70,7 +70,7 @@ public class StarshipPathController : IControllerTick, IController, IControllerS
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}

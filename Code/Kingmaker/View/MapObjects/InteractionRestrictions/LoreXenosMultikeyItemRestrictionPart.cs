@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Interaction;
 using StateHasher.Core;
@@ -15,7 +16,7 @@ public class LoreXenosMultikeyItemRestrictionPart : SkillUseRestrictionPart<Lore
 
 	public override string GetInteractionName()
 	{
-		return base.Settings?.GetItem()?.Name;
+		return LocalizedTexts.Instance.Stats.GetText(base.Settings.GetSkill());
 	}
 
 	public override Hash128 GetHash128()

@@ -47,7 +47,7 @@ public class UIGameMainSettings : IUISettingsSheet
 
 	public void UpdateInteractable()
 	{
-		Localization.ModificationAllowedCheck = () => RootUIContext.CanChangeLanguage();
+		Localization.ModificationAllowedCheck = RootUIContext.CanChangeLanguage;
 		Localization.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.Language);
 	}
 }

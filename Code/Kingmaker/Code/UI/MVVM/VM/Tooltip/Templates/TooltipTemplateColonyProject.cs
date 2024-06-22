@@ -42,11 +42,9 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 		{
 			int num = Mathf.Clamp(Mathf.FloorToInt((float)(Game.Instance.TimeController.GameTime - colonyProject.StartTime).TotalSegments() / (float)m_Colony.SegmentsToBuildProject(m_BlueprintColonyProject) * 100f), 0, 100);
 			list.Add(new TooltipBrickColonyProjectProgress(UIConfig.Instance.UIIcons.TooltipIcons.Duration, string.Format(UIStrings.Instance.ColonyProjectsTexts.BuildingInProgress.Text, num.ToString())));
-			list.Add(new TooltipBrickSpace());
 		}
 		list.Add(new TooltipBricksGroupStart());
 		list.Add(new TooltipBrickText(UIStrings.Instance.ColonyProjectsTexts.ProjectRewards, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
-		list.Add(new TooltipBrickSpace());
 		foreach (Reward component in m_BlueprintColonyProject.GetComponents<Reward>())
 		{
 			RewardUI reward = RewardUIFactory.GetReward(component);
@@ -79,13 +77,10 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 			{
 				list.Add(new TooltipBrickItemIconAndName(reward.Icon, reward.Description));
 			}
-			list.Add(new TooltipBrickSpace());
 		}
 		list.Add(new TooltipBricksGroupEnd());
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBricksGroupStart());
 		list.Add(new TooltipBrickText(UIStrings.Instance.ColonyProjectsTexts.ProjectRequirements, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
-		list.Add(new TooltipBrickSpace());
 		foreach (Requirement component2 in m_BlueprintColonyProject.GetComponents<Requirement>())
 		{
 			RequirementUI requirement = RequirementUIFactory.GetRequirement(component2);
@@ -104,10 +99,8 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 			{
 				list.Add(new TooltipBrickPFIconAndName(requirement.Icon, requirement.Description));
 			}
-			list.Add(new TooltipBrickSpace());
 		}
 		list.Add(new TooltipBricksGroupEnd());
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(m_BlueprintColonyProject.Description, TooltipTextType.Italic));
 		return list;
 	}

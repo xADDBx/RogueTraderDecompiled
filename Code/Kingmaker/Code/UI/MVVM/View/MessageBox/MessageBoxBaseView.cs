@@ -1,6 +1,8 @@
 using System;
 using System.Text;
+using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Sound;
 using Kingmaker.UI.TMPExtention;
@@ -20,6 +22,22 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	[SerializeField]
 	private TMPLinkHandler m_LinkHandler;
 
+	[Header("Progress Bar")]
+	[SerializeField]
+	private RectTransform m_ProgressParent;
+
+	[SerializeField]
+	private RectTransform m_ProgressTransform;
+
+	[SerializeField]
+	private TextMeshProUGUI m_PercentText;
+
+	[Header("ScrollBar")]
+	[SerializeField]
+	protected ScrollRectExtended m_ScrollRect;
+
+	private Tweener m_ProgressTweener;
+
 	public virtual void Initialize()
 	{
 		base.gameObject.SetActive(value: false);
@@ -30,6 +48,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 		base.gameObject.SetActive(value: true);
 		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 		m_MessageText.text = base.ViewModel.MessageText;
+		ScrollToTop();
 		AddDisposable(base.ViewModel.WaitTime.Subscribe(delegate(int value)
 		{
 			StringBuilder stringBuilder = new StringBuilder(base.ViewModel.AcceptText);
@@ -54,17 +73,61 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 			base.ViewModel.OnLinkInvoke(value.Item2);
 		}));
 		BindTextField();
+		SetProgressBar();
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(delegate
 		{
-			base.ViewModel.OnDeclinePressed();
+			if (!base.ViewModel.IsProgressBar.Value)
+			{
+				base.ViewModel.OnDeclinePressed();
+			}
 		}));
 	}
 
 	protected override void DestroyViewImplementation()
 	{
 		DestroyTextField();
+		m_ProgressTweener?.Kill();
+		m_ProgressTweener = null;
 		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 		base.gameObject.SetActive(value: false);
+	}
+
+	private void SetProgressBar()
+	{
+		m_ProgressParent.gameObject.SetActive(base.ViewModel.IsProgressBar.Value);
+		m_ProgressTransform.sizeDelta = new Vector2(0f, m_ProgressTransform.rect.height);
+		m_PercentText.text = Mathf.CeilToInt(0f) + "%";
+		if (!base.ViewModel.IsProgressBar.Value)
+		{
+			return;
+		}
+		BindProgressBar();
+		if (base.ViewModel.LoadingProgress != null)
+		{
+			AddDisposable(base.ViewModel.LoadingProgressCloseTrigger.Subscribe(delegate
+			{
+				base.ViewModel.OnAcceptPressed();
+			}));
+			AddDisposable(base.ViewModel.LoadingProgress.Subscribe(SetLoadingProgress));
+		}
+	}
+
+	private void SetLoadingProgress(float virtualProgress)
+	{
+		virtualProgress = Mathf.Clamp01(virtualProgress);
+		float progressWidth = m_ProgressParent.rect.width;
+		float startValue = ((m_ProgressTransform.rect.width > 0f && progressWidth > 0f) ? (m_ProgressTransform.rect.width / progressWidth) : 0f);
+		m_ProgressTweener?.Kill();
+		m_ProgressTweener = DOTween.To(delegate
+		{
+			m_ProgressTransform.sizeDelta = new Vector2(virtualProgress * progressWidth, m_ProgressTransform.rect.height);
+			m_PercentText.text = Mathf.CeilToInt(virtualProgress * 100f) + "%";
+		}, startValue, virtualProgress, 0.5f).SetEase(Ease.Linear);
+	}
+
+	private void ScrollToTop()
+	{
+		m_ScrollRect.ScrollToTop();
 	}
 
 	protected virtual void OnTextInputChanged(string value)
@@ -81,4 +144,6 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	protected abstract void BindTextField();
 
 	protected abstract void DestroyTextField();
+
+	protected abstract void BindProgressBar();
 }

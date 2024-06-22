@@ -34,7 +34,11 @@ public class TooltipBrickFeatureConsoleView : TooltipBrickFeatureView, IConsoleT
 
 	public TooltipBaseTemplate TooltipTemplate()
 	{
-		return base.ViewModel.Tooltip;
+		if (!base.ViewModel.IsHidden)
+		{
+			return base.ViewModel.Tooltip;
+		}
+		return null;
 	}
 
 	bool IConsoleTooltipBrick.get_IsBinded()

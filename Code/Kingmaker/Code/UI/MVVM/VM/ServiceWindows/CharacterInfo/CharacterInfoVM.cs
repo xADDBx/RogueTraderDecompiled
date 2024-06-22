@@ -29,9 +29,11 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 {
 	public readonly Dictionary<CharInfoComponentType, ReactiveProperty<CharInfoComponentVM>> ComponentVMs = new Dictionary<CharInfoComponentType, ReactiveProperty<CharInfoComponentVM>>();
 
-	public SelectionGroupRadioVM<CharInfoPagesMenuEntityVM> PagesSelectionGroupRadioVM;
+	public readonly SelectionGroupRadioVM<CharInfoPagesMenuEntityVM> PagesSelectionGroupRadioVM;
 
 	public readonly ReactiveCommand BiographyUpdated = new ReactiveCommand();
+
+	public readonly ReactiveProperty<CharInfoPageType> PageType = new ReactiveProperty<CharInfoPageType>();
 
 	private readonly IReactiveProperty<BaseUnitEntity> m_Unit;
 
@@ -75,6 +77,13 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	public CharacterInfoVM(CharInfoPageType selectedPageType = CharInfoPageType.Summary)
 	{
 		AddDisposable(m_CharInfoPages = new CharInfoPagesPC());
+		AddDisposable(m_CurrentPage.Subscribe(delegate(CharInfoPagesMenuEntityVM value)
+		{
+			if (value != null)
+			{
+				PageType.Value = value.PageType;
+			}
+		}));
 		ReactiveProperty<BaseUnitEntity> selectedUnitInUI = Game.Instance.SelectionCharacter.SelectedUnitInUI;
 		if (selectedUnitInUI.Value == null)
 		{
@@ -131,6 +140,16 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 				BiographyUpdated.Execute();
 			}
 		}));
+	}
+
+	protected override void DisposeImplementation()
+	{
+		foreach (CharInfoComponentType value in Enum.GetValues(typeof(CharInfoComponentType)))
+		{
+			ComponentVMs[value].Value?.Dispose();
+			ComponentVMs[value].Value = null;
+		}
+		m_LevelUpManager.Value = null;
 	}
 
 	public void SetCurrentPage(CharInfoPageType pageType)
@@ -215,21 +234,11 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		{
 			return UnitType.Companion;
 		}
-		if (unit.IsPet)
+		if (!unit.IsPet)
 		{
-			return UnitType.Pet;
+			return UnitType.Unknown;
 		}
-		return UnitType.Unknown;
-	}
-
-	protected override void DisposeImplementation()
-	{
-		foreach (CharInfoComponentType value in Enum.GetValues(typeof(CharInfoComponentType)))
-		{
-			ComponentVMs[value].Value?.Dispose();
-			ComponentVMs[value].Value = null;
-		}
-		m_LevelUpManager.Value = null;
+		return UnitType.Pet;
 	}
 
 	public void ClearProgressionIfNeeded(BaseUnitEntity newUnitEntity)

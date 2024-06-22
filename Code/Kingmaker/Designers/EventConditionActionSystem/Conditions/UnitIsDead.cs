@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 
-[ComponentName("Condition/UnitIsDead")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("af04b660ed2c54f439b2dec09c84f5ad")]

@@ -13,7 +13,7 @@ public class TurnOnTriggerTimer : GameAction
 		return "Turn on Tutorial Triggers Counter";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		EventBus.RaiseEvent(delegate(ITutorialTriggerTimerHandler i)
 		{

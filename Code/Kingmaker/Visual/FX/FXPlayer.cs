@@ -54,7 +54,7 @@ public static class FXPlayer
 			VisualFXSettings visualFXSettings = effect.Settings.FXs.Random(PFStatefulRandom.Visuals.Fx);
 			if (visualFXSettings != null)
 			{
-				return PlayFX(visualFXSettings, caster, target, effect.Target, ability);
+				return PlayFX(visualFXSettings, caster, target, effect.Target, ability, effect.OverrideTargetOrientationSource);
 			}
 			return Array.Empty<GameObject>();
 		}
@@ -62,12 +62,12 @@ public static class FXPlayer
 		VisualFXSettings[] fXs = effect.Settings.FXs;
 		foreach (VisualFXSettings fx in fXs)
 		{
-			list.AddRange(PlayFX(fx, caster, target, effect.Target, ability));
+			list.AddRange(PlayFX(fx, caster, target, effect.Target, ability, effect.OverrideTargetOrientationSource));
 		}
 		return list.ToArray();
 	}
 
-	private static GameObject[] PlayFX(VisualFXSettings fx, MechanicEntity caster, [CanBeNull] TargetWrapper target, FXTarget targetType, [CanBeNull] AbilityData ability)
+	private static GameObject[] PlayFX(VisualFXSettings fx, MechanicEntity caster, [CanBeNull] TargetWrapper target, FXTarget targetType, [CanBeNull] AbilityData ability, bool overrideOrientationSource = false)
 	{
 		GameObject gameObject = fx.Prefab?.Load();
 		SoundFx component;
@@ -76,7 +76,7 @@ public static class FXPlayer
 		{
 		case FXTarget.Caster:
 		{
-			GameObject[] array = new GameObject[1] { FxHelper.SpawnFxOnEntity(gameObject, caster.View) };
+			GameObject[] array = new GameObject[1] { FxHelper.SpawnFxOnEntity(gameObject, caster.View, enableFxObject: true, overrideOrientationSource) };
 			if (flag && array.Length != 0)
 			{
 				GameObject[] array2 = array;
@@ -92,7 +92,7 @@ public static class FXPlayer
 		}
 		case FXTarget.Target:
 		{
-			GameObject[] array = ((target != null && target.Entity != null) ? new GameObject[1] { FxHelper.SpawnFxOnEntity(gameObject, target.Entity.View) } : ((!(target != null) || !target.IsPoint) ? Array.Empty<GameObject>() : new GameObject[1] { FxHelper.SpawnFxOnPoint(gameObject, target.Point) }));
+			GameObject[] array = ((target != null && target.Entity != null) ? new GameObject[1] { FxHelper.SpawnFxOnEntity(gameObject, target.Entity.View, enableFxObject: true, overrideOrientationSource) } : ((!(target != null) || !target.IsPoint) ? Array.Empty<GameObject>() : new GameObject[1] { FxHelper.SpawnFxOnPoint(gameObject, target.Point) }));
 			if (flag && array.Length != 0)
 			{
 				GameObject[] array2 = array;

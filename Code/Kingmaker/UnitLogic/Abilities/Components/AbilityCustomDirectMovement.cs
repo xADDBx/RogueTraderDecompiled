@@ -415,16 +415,26 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.CanNotReachTarget;
 			return false;
 		}
-		if (MustStandInTarget && !pathNodes.Empty())
+		if (MustStandInTarget)
 		{
-			MechanicEntity caster = ability.Caster;
-			List<CustomGridNodeBase> list = pathNodes;
-			if (!caster.CanStandHere(list[list.Count - 1]))
+			if (!pathNodes.Empty())
 			{
-				failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsInvalid;
-				return false;
+				List<CustomGridNodeBase> list = pathNodes;
+				if (list[list.Count - 1] == nearestNode)
+				{
+					MechanicEntity caster = ability.Caster;
+					List<CustomGridNodeBase> list2 = pathNodes;
+					if (caster.CanStandHere(list2[list2.Count - 1]))
+					{
+						goto IL_00d9;
+					}
+				}
 			}
+			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsInvalid;
+			return false;
 		}
+		goto IL_00d9;
+		IL_00d9:
 		if (!StepThroughTarget && !IsPathToTargetReachDestination(ability.Caster, nearestNode, pathNodes))
 		{
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsTooFar;

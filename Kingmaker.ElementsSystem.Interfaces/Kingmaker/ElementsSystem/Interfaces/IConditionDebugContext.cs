@@ -1,8 +1,9 @@
-using UnityEngine;
+using JetBrains.Annotations;
 
 namespace Kingmaker.ElementsSystem.Interfaces;
 
 public interface IConditionDebugContext
 {
-	void AddConditionDebugMessage(string message, Color color);
+	[StringFormatMethod("messageFormat")]
+	void AddConditionDebugMessage(object element, bool result, string messageFormat, params object[] @params);
 }

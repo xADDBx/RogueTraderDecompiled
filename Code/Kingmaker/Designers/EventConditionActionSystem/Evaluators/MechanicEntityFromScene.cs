@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.View.Mechanics;
 using Owlcat.QA.Validation;
@@ -16,7 +17,7 @@ public class MechanicEntityFromScene : MechanicEntityEvaluator
 	[ValidateNotEmpty]
 	public EntityReference EntityRef;
 
-	protected override MechanicEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		return EntityRef.FindData() as MechanicEntity;
 	}

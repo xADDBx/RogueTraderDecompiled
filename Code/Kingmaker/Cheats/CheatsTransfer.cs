@@ -8,7 +8,6 @@ using Kingmaker.Blueprints.Area;
 using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
 using Kingmaker.Controllers.TurnBased;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Mechanics.Entities;
@@ -18,7 +17,6 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.BuildModeUtils;
-using Kingmaker.Utility.StateContext;
 using Kingmaker.View;
 using UnityEngine;
 
@@ -144,15 +142,12 @@ internal static class CheatsTransfer
 
 	public static void LocalTeleport(Vector3 tpPosition, IEnumerable<BaseUnitEntity> units)
 	{
-		using (ContextData<EditStateContext>.Request())
+		foreach (BaseUnitEntity unit in units)
 		{
-			foreach (BaseUnitEntity unit in units)
-			{
-				unit.Commands.InterruptAllInterruptible();
-				Vector3 position = (TurnController.IsInTurnBasedCombat() ? (tpPosition.GetNearestNodeXZ()?.Vector3Position ?? tpPosition) : tpPosition);
-				unit.Position = position;
-				unit.MovementAgent.Blocker.BlockAtCurrentPosition();
-			}
+			unit.Commands.InterruptAllInterruptible();
+			Vector3 position = (TurnController.IsInTurnBasedCombat() ? (tpPosition.GetNearestNodeXZ()?.Vector3Position ?? tpPosition) : tpPosition);
+			unit.Position = position;
+			unit.MovementAgent.Blocker.BlockAtCurrentPosition();
 		}
 	}
 

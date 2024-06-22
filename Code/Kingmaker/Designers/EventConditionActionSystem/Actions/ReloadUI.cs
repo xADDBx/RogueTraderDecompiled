@@ -13,7 +13,7 @@ public class ReloadUI : GameAction
 		return "Reload UI";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.ResetUI();
 	}

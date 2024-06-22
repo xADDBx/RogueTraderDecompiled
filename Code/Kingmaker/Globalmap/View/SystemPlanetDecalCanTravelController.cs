@@ -64,6 +64,6 @@ public class SystemPlanetDecalCanTravelController : MonoBehaviour
 
 	public void SetVisibility(bool visible)
 	{
-		Visible = m_SectorMapObject.Data.IsExplored && visible;
+		Visible = visible;
 	}
 }

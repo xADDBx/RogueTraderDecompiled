@@ -1,4 +1,3 @@
-using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.View.Mechanics.Entities;
 using UnityEngine;
@@ -56,6 +55,7 @@ public class ViewInterpolationHelper
 		m_ShouldRecalculateNextInterpolationPosition = true;
 		m_ForceUpdatePosition = forceUpdatePositions;
 		m_PreviousInterpolationPosition = m_NextInterpolationPosition;
+		m_NextInterpolationPosition = GetViewPosition(m_View.EntityData.Position);
 		m_PreviousOrientation = m_View.EntityData.Movable.PreviousOrientation;
 	}
 
@@ -68,10 +68,6 @@ public class ViewInterpolationHelper
 
 	public Vector3 GetViewPosition(Vector3 mechanicsPosition)
 	{
-		if (m_View.MovementAgent.NodeLinkTraverser.IsTraverseNow)
-		{
-			return SizePathfindingHelper.FromMechanicsToViewPosition(m_View.EntityData, mechanicsPosition);
-		}
-		return m_View.GetViewPositionOnGround(mechanicsPosition);
+		return m_View.GetViewPosition(mechanicsPosition);
 	}
 }

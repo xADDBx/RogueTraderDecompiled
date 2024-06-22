@@ -12,9 +12,9 @@ public class FirstWeaponRateOfFireGetter : UnitPropertyGetter
 {
 	public bool ChosenWeapon;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "First weapon Rate of Fire";
+		return "First weapon of " + FormulaTargetScope.Current + " Rate of Fire";
 	}
 
 	protected override int GetBaseValue()

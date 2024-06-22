@@ -16,7 +16,7 @@ public class UnitCommandController : BaseUnitController
 {
 	public override TickType GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	protected sealed override void TickOnUnit(AbstractUnitEntity unit)

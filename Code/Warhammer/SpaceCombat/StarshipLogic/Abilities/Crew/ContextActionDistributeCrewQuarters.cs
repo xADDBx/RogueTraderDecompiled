@@ -16,7 +16,7 @@ public class ContextActionDistributeCrewQuarters : ContextAction
 		return $"Distribute {m_DistributeCount} from crew quarters to modules";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target?.Entity is StarshipEntity starshipEntity)
 		{

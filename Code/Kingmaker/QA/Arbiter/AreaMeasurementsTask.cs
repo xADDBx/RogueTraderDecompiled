@@ -1,10 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Kingmaker.Controllers;
-using Kingmaker.QA.Arbiter.Profiling;
-using Owlcat.Runtime.Core.ProfilingCounters;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -69,22 +66,18 @@ public class AreaMeasurementsTask : ArbiterTask
 					Sample = m_AreaCheckerComponent.GetSampleId(point).ToString()
 				};
 				PFLog.Arbiter.Log("Sample data created");
-				ArbiterMeasurements.StartEveryFrameMeasurements();
+				ArbiterClientMeasurements.StartEveryFrameMeasurements();
 				i = 0;
 				while (i < 120)
 				{
 					yield return null;
-					ArbiterMeasurements.TickEveryFrameMeasurements();
+					ArbiterClientMeasurements.TickEveryFrameMeasurements();
 					int num = i + 1;
 					i = num;
 				}
-				ArbiterMeasurements.StopEveryFrameMeasurements();
+				ArbiterClientMeasurements.StopEveryFrameMeasurements();
 				sampleData.StaticScene = areaPartTest.StaticSceneName;
-				sampleData.CustomMeasurements = ArbiterMeasurements.GetAreaPointMeasurements();
-				Kingmaker.QA.Arbiter.Profiling.Counters.All.ForEach(delegate(Counter x)
-				{
-					sampleData.CustomMeasurements.Add(x.Name, x.GetMedian().ToString("0.00", CultureInfo.InvariantCulture));
-				});
+				sampleData.CustomMeasurements = ArbiterClientMeasurements.GetAreaPointMeasurements();
 				PFLog.Arbiter.Log("Custom measurements added");
 				m_ProbeData.ProbeDataList.Add(sampleData);
 				FogOfWarControllerData.RemoveRevealer(m_Revealer.transform);

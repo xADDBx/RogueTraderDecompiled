@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.StateHasher.Hashers;
 using Newtonsoft.Json;
@@ -58,6 +59,20 @@ public class AchievementEntity : IHashable
 		{
 			NeedCommit = false;
 			Manager.OnAchievementUnlocked(this);
+		}
+	}
+
+	public void SynchronizeCounter(int progressValue)
+	{
+		if (!IsDisabled && !IsUnlocked && HasCounter)
+		{
+			int counter = Counter;
+			Counter = Math.Max(counter, progressValue);
+			if (progressValue < counter)
+			{
+				NeedCommit = true;
+				Manager.OnAchievementProgressUpdated(this);
+			}
 		}
 	}
 

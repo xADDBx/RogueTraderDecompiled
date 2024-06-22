@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.DragNDrop;
@@ -32,9 +33,14 @@ public class SurfaceActionBarSlotAbilityPCView : SurfaceActionBarSlotAbilityView
 		{
 			AddDisposable(base.ViewModel.IsEmpty.Subscribe(delegate(bool empty)
 			{
-				m_DragNDropHandler.CanDrag = !empty && base.ViewModel.MechanicActionBarSlot?.Unit != null && base.ViewModel.MechanicActionBarSlot.Unit.IsMyNetRole();
+				BaseUnitEntity baseUnitEntity = base.ViewModel.MechanicActionBarSlot?.Unit;
+				m_DragNDropHandler.CanDrag = !empty && baseUnitEntity != null && (baseUnitEntity.IsMyNetRole() || baseUnitEntity.InPartyAndControllable());
 			}));
 			AddDisposable(m_DragNDropHandler.OnDragEnd.Subscribe(OnDragEnd));
+			AddDisposable(base.ViewModel.UpdateDragAndDropState.Subscribe(delegate
+			{
+				UpdateDragAndDropStateNet();
+			}));
 		}
 	}
 
@@ -65,5 +71,10 @@ public class SurfaceActionBarSlotAbilityPCView : SurfaceActionBarSlotAbilityView
 	public override void SetTooltipCustomPosition(RectTransform rectTransform, List<Vector2> pivots = null)
 	{
 		m_SlotPCView.SetTooltipCustomPosition(rectTransform, pivots);
+	}
+
+	public void UpdateDragAndDropStateNet()
+	{
+		m_DragNDropHandler.CanDrag = !base.ViewModel.IsEmpty.Value && base.ViewModel.MechanicActionBarSlot?.Unit != null && base.ViewModel.MechanicActionBarSlot.Unit.IsMyNetRole();
 	}
 }

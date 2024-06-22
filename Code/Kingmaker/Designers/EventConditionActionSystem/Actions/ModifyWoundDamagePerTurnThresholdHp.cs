@@ -17,7 +17,7 @@ public class ModifyWoundDamagePerTurnThresholdHp : GameAction
 		return $"Wounds threshold hp for player's party will be greater on {WoundDamagePerTurnThresholdHPFractionModifier} percent";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.TraumasModification.WoundDamagePerTurnThresholdHPFractionModifier += WoundDamagePerTurnThresholdHPFractionModifier;
 	}

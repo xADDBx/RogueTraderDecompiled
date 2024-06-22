@@ -129,6 +129,8 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 
 	public bool IsMechadendrite { get; set; }
 
+	public bool HitAnimationIsActive { get; set; }
+
 	public bool BlockAttackAnimation
 	{
 		get
@@ -220,7 +222,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 	{
 		get
 		{
-			if (IsInCombat && View is UnitEntityView unitEntityView && (unitEntityView.Data != Game.Instance.TurnController.CurrentUnit || unitEntityView.Data == null || unitEntityView.Data.IsInPlayerParty) && InCutsceneCoverAvailable && View != null && View.Data?.Commands.Current is UnitUseAbility unitUseAbility && unitUseAbility.Target != unitUseAbility.Executor)
+			if (IsInCombat && View is UnitEntityView && InCutsceneCoverAvailable && View != null && View.Data?.Commands.Current is UnitUseAbility unitUseAbility && unitUseAbility.Target != unitUseAbility.Executor)
 			{
 				return CoverType == LosCalculations.CoverType.Full;
 			}
@@ -545,6 +547,11 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 	{
 		if (IsInCombat && (bool)m_MicroIdle)
 		{
+			if (IsInDollRoom && GetAction(UnitAnimationType.DollRoomMicroIdle) != null)
+			{
+				CombatMicroIdle = CombatMicroIdle.Weapon;
+				deltaTime = 0.05f;
+			}
 			switch (CombatMicroIdle)
 			{
 			case CombatMicroIdle.None:
@@ -711,8 +718,11 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		case ExclusiveStateType.None:
 			break;
 		}
-		string arg = ((View == null) ? "View is null" : ((View.EntityData == null) ? "View.EntityData is null" : $"{View.EntityData}"));
-		Debug.Log($"{arg}: {m_ExclusiveState} -> {state}");
+		if (m_ExclusiveState != state)
+		{
+			string arg = ((View == null) ? "View is null" : ((View.EntityData == null) ? "View.EntityData is null" : $"{View.EntityData}"));
+			Debug.Log($"{arg}: {m_ExclusiveState} -> {state}");
+		}
 		m_ExclusiveState = state;
 	}
 

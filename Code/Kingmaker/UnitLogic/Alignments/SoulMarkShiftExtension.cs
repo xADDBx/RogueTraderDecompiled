@@ -40,14 +40,19 @@ public static class SoulMarkShiftExtension
 			throw new Exception("No predefined soul marks on main character");
 		}
 		int value = shift.Value;
-		if (source != null)
+		if (source == null)
 		{
-			EntityFactSource item = new EntityFactSource(source, value);
-			if (!soulMark.Sources.ToList().HasItem(item))
+			return;
+		}
+		EntityFactSource item = new EntityFactSource(source, value);
+		if (!soulMark.Sources.ToList().HasItem(item))
+		{
+			soulMark.AddSource(source, value);
+			soulMark.AddRank(value);
+			EventBus.RaiseEvent(delegate(ISoulMarkShiftRewardHandler h)
 			{
-				soulMark.AddSource(source, value);
-				soulMark.AddRank(value);
-			}
+				h.HandleSoulMarkShift(shift);
+			});
 		}
 	}
 

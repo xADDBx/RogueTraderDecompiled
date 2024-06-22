@@ -71,12 +71,18 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 		AddDisposable(base.ViewModel.Enable.Subscribe(m_OwlcatButton.SetInteractable));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		WidgetFactory.DisposeWidget(this);
+	}
+
 	protected void SetAnswer(BlueprintAnswer answer)
 	{
 		m_DialogVotesBlock.Or(null)?.ShowHideHover(state: false);
 		DialogType type = Game.Instance.DialogController.Dialog.Type;
 		string text = $"DialogChoice{base.ViewModel.Index}";
-		SetAnswerText((type == DialogType.Epilog) ? answer.DisplayText : UIConstsExtensions.GetAnswerString(answer, text, base.ViewModel.Index));
+		SetAnswerText((type == DialogType.Epilog) ? answer.DisplayText : UIConstsExtensions.GetAnswerFormattedString(answer, text, base.ViewModel.Index));
 		if ((type == DialogType.Common || type == DialogType.StarSystemEvent) && answer.SelectConditions.HasConditions)
 		{
 			string text2 = string.Empty;
@@ -131,12 +137,6 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 				base.ViewModel?.OnChooseAnswer();
 			}, 1);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		WidgetFactory.DisposeWidget(this);
 	}
 
 	public virtual void SetFocus(bool value)

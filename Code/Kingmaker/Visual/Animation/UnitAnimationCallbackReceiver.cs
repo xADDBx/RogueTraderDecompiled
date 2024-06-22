@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
@@ -70,7 +71,10 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 		{
 			if (m_UnitView.EntityData == null)
 			{
-				PFLog.Default.Error(this, $"No unit for view {m_UnitView}");
+				if (m_UnitView.gameObject.GetComponent<UnitHologram>() == null)
+				{
+					PFLog.Default.Error(this, $"No unit for view {m_UnitView}");
+				}
 				return 0u;
 			}
 			float in_value = ((!m_UnitView.EntityData.IsInFogOfWar) ? 1f : (m_UnitView.EntityData.IsRevealed ? 0.5f : 0f));

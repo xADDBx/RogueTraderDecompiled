@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Globalmap.SectorMap;
+using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -20,7 +22,7 @@ public class RevealWarpRoute : GameAction
 		return $"Reveal warp route {m_System1} <-> {m_System2}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_System1 == null || m_System2 == null)
 		{
@@ -28,9 +30,16 @@ public class RevealWarpRoute : GameAction
 		}
 		SectorMapObjectEntity system1Entity = m_System1.GetValue() as SectorMapObjectEntity;
 		SectorMapObjectEntity system2Entity = m_System2.GetValue() as SectorMapObjectEntity;
-		if (system1Entity != null && system2Entity != null)
+		if (system1Entity == null || system2Entity == null)
 		{
-			SectorMapPassageEntity sectorMapPassageEntity = Game.Instance.State.Entities.All.OfType<SectorMapPassageEntity>().FirstOrDefault((SectorMapPassageEntity r) => (r.View.StarSystem1 == system1Entity.View && r.View.StarSystem2 == system2Entity.View) || (r.View.StarSystem1 == system2Entity.View && r.View.StarSystem2 == system1Entity.View));
+			return;
+		}
+		IEnumerable<SectorMapPassageEntity> list = from r in Game.Instance.State.Entities.All.OfType<SectorMapPassageEntity>()
+			where (r.View.StarSystem1 == system1Entity.View && r.View.StarSystem2 == system2Entity.View) || (r.View.StarSystem1 == system2Entity.View && r.View.StarSystem2 == system1Entity.View)
+			select r;
+		if (list.EmptyIfNull().FirstOrDefault((SectorMapPassageEntity r) => r.IsExplored) == null)
+		{
+			SectorMapPassageEntity sectorMapPassageEntity = list.EmptyIfNull().First();
 			if (sectorMapPassageEntity != null)
 			{
 				sectorMapPassageEntity.IsInGame = true;

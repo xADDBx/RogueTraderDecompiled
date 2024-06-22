@@ -131,7 +131,7 @@ public class GameCommandQueue
 		{
 			using (ContextData<GameCommandContext>.Request())
 			{
-				if (!Game.Instance.RealTimeController.IsSystemTick)
+				if (!Game.Instance.RealTimeController.IsSimulationTick)
 				{
 					return;
 				}

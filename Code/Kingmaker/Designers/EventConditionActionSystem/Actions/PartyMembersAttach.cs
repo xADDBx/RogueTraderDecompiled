@@ -17,7 +17,7 @@ public class PartyMembersAttach : GameAction
 		return "Combine party";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BaseUnitEntity allCrossSceneUnit in Game.Instance.Player.AllCrossSceneUnits)
 		{

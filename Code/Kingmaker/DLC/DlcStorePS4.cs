@@ -32,8 +32,7 @@ public class DlcStorePS4 : DlcStore, IDLCStorePS4
 		{
 			Purchased = purchased,
 			DownloadState = (flag ? DownloadState.Loaded : DownloadState.NotLoaded),
-			IsMounted = flag,
-			IsEnabled = true
+			IsMounted = flag
 		};
 	}
 

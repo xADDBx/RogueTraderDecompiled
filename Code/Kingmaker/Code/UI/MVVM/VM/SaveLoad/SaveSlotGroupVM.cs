@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.EntitySystem.Persistence;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -10,7 +11,7 @@ public class SaveSlotGroupVM : VirtualListElementVMBase
 {
 	public readonly ReactiveCommand<SaveSlotVM> OnAddSave = new ReactiveCommand<SaveSlotVM>();
 
-	public SaveSlotsExpandableTitleVM ExpandableTitleVM;
+	public readonly SaveSlotsExpandableTitleVM ExpandableTitleVM;
 
 	public readonly string GameId;
 
@@ -20,7 +21,7 @@ public class SaveSlotGroupVM : VirtualListElementVMBase
 
 	private bool m_IsFirst;
 
-	public BoolReactiveProperty IsExpanded = new BoolReactiveProperty(initialValue: false);
+	public readonly BoolReactiveProperty IsExpanded = new BoolReactiveProperty(initialValue: false);
 
 	private readonly Action m_DeleteAll;
 
@@ -68,7 +69,11 @@ public class SaveSlotGroupVM : VirtualListElementVMBase
 		m_DeleteAll = deleteAll;
 		AddDisposable(IsExpanded.Subscribe(ExpandChanged));
 		string characterName = CharacterName;
-		AddDisposable(ExpandableTitleVM = new SaveSlotsExpandableTitleVM(characterName, SwitchExpand, defaultExpanded: true, HandleDeleteAllSlotsInGroup));
+		AddDisposable(ExpandableTitleVM = new SaveSlotsExpandableTitleVM(characterName, SwitchExpand, defaultExpanded: true, HandleDeleteAllSlotsInGroup, (slot.Reference.Type == SaveInfo.SaveType.IronMan) ? slot.Reference : null));
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void HandleDeleteAllSlotsInGroup()
@@ -88,7 +93,7 @@ public class SaveSlotGroupVM : VirtualListElementVMBase
 	{
 		if (SaveLoadSlots == null)
 		{
-			SaveLoadSlots = new List<SaveSlotVM>();
+			List<SaveSlotVM> list2 = (SaveLoadSlots = new List<SaveSlotVM>());
 		}
 		slot.Active.Value = IsExpanded.Value;
 		SaveLoadSlots.Add(slot);
@@ -118,9 +123,5 @@ public class SaveSlotGroupVM : VirtualListElementVMBase
 		{
 			f.SetAvailableAndActive(expand);
 		});
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

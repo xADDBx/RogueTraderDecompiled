@@ -130,7 +130,7 @@ public class SwitchAIScenario : GameAction
 		return $"Deactivate {Unit} scenario";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

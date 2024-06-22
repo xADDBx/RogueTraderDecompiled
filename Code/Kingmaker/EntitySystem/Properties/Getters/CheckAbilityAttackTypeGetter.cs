@@ -1,8 +1,11 @@
 using System;
+using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.FactLogic;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
 
@@ -12,7 +15,7 @@ public class CheckAbilityAttackTypeGetter : PropertyGetter, PropertyContextAcces
 {
 	public AttackAbilityType Type;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Ability AttackType is {Type}";
 	}
@@ -24,14 +27,37 @@ public class CheckAbilityAttackTypeGetter : PropertyGetter, PropertyContextAcces
 		{
 			return 0;
 		}
-		if (Type == ability.Blueprint.AttackType)
+		switch (Type)
 		{
+		case AttackAbilityType.Melee:
+			if (!ability.IsMelee)
+			{
+				return 0;
+			}
+			return 1;
+		case AttackAbilityType.Scatter:
+			if (!ability.IsScatter)
+			{
+				return 0;
+			}
+			return 1;
+		case AttackAbilityType.Pattern:
+		{
+			bool flag = ability.Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType fake) => fake.CountAsAoE && fake.CountAsScatter);
+			if (!((ability.IsAOE && !ability.IsScatter) || flag))
+			{
+				return 0;
+			}
 			return 1;
 		}
-		if (Type == AttackAbilityType.Pattern && ability.Blueprint.AttackType != AttackAbilityType.Scatter && ability.Blueprint.PatternSettings != null)
-		{
+		case AttackAbilityType.SingleShot:
+			if (!ability.IsSingleShot)
+			{
+				return 0;
+			}
 			return 1;
+		default:
+			return 0;
 		}
-		return 0;
 	}
 }

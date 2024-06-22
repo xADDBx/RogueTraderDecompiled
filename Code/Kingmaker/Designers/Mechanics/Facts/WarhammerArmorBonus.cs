@@ -8,6 +8,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -22,10 +23,36 @@ public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiat
 
 	public ContextValueModifierWithType BonusAbsorptionValue;
 
+	public bool ForceDeflectionMinimum;
+
+	[ShowIf("ForceDeflectionMinimum")]
+	public int PctDeflectionMinimum;
+
+	[ShowIf("ForceDeflectionMinimum")]
+	public int DeflectionMinimumValue;
+
+	public bool ForceAbsorptionMinimum;
+
+	[ShowIf("ForceAbsorptionMinimum")]
+	public int PctAbsorptionMinimum;
+
+	[ShowIf("ForceAbsorptionMinimum")]
+	public int AbsorptionMinimumValue;
+
 	public ModifierDescriptor ModifierDescriptor;
 
 	public void OnEventAboutToTrigger(RuleCalculateStatsArmor evt)
 	{
+		if (ForceDeflectionMinimum)
+		{
+			evt.MinDeflectionValue = DeflectionMinimumValue;
+			evt.PctMinDeflection = PctDeflectionMinimum;
+		}
+		if (ForceAbsorptionMinimum)
+		{
+			evt.MinAbsorptionValue = AbsorptionMinimumValue;
+			evt.PctMinAbsorption = PctAbsorptionMinimum;
+		}
 		BonusDeflectionValue.TryApply(evt.DeflectionCompositeModifiers, base.Fact, ModifierDescriptor);
 		BonusAbsorptionValue.TryApply(evt.AbsorptionCompositeModifiers, base.Fact, ModifierDescriptor);
 	}

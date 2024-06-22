@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.UI.MVVM.View.NetLobby.Base;
+using Kingmaker.UI.MVVM.View.NetLobby.PC.DlcList;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -23,6 +24,12 @@ public class NetLobbyLobbyPartPCView : NetLobbyLobbyPartBaseView
 
 	[SerializeField]
 	private TextMeshProUGUI m_DisconnectButtonText;
+
+	[SerializeField]
+	private OwlcatButton m_DlcListButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DlcListButtonButtonText;
 
 	[SerializeField]
 	private OwlcatButton m_LaunchButton;
@@ -54,13 +61,18 @@ public class NetLobbyLobbyPartPCView : NetLobbyLobbyPartBaseView
 	[SerializeField]
 	private NetLobbyInvitePlayerDifferentPlatformsPCView m_DifferentPlatformsInvitePCView;
 
+	[SerializeField]
+	private NetLobbyDlcListPCView m_DlcListPCView;
+
 	public override void Initialize()
 	{
 		base.Initialize();
 		m_LobbyIdCopyButtonText.text = UIStrings.Instance.NetLobbyTexts.CopyLobbyId;
 		m_DisconnectButtonText.text = UIStrings.Instance.NetLobbyTexts.DisconnectLobby;
+		m_DlcListButtonButtonText.text = UIStrings.Instance.NetLobbyTexts.DlcList;
 		m_SaveListBackButtonText.text = UIStrings.Instance.CommonTexts.Back;
 		m_DifferentPlatformsInvitePCView.Initialize();
+		m_DlcListPCView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -77,26 +89,27 @@ public class NetLobbyLobbyPartPCView : NetLobbyLobbyPartBaseView
 		}));
 		AddDisposable(base.ViewModel.IsSaveTransfer.Subscribe(delegate(bool value)
 		{
-			m_LaunchButton.SetInteractable(!value && base.ViewModel.IsSaveAllowed.Value);
+			m_LaunchButton.SetInteractable(!value && LaunchButtonActive.Value);
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_DisconnectButton.OnLeftClickAsObservable(), delegate
 		{
-			base.ViewModel.Disconnect();
+			base.ViewModel.Disconnect("DisconnectButton");
+		}));
+		AddDisposable(ObservableExtensions.Subscribe(m_DlcListButton.OnLeftClickAsObservable(), delegate
+		{
+			base.ViewModel.ShowDlcList();
 		}));
 		AddDisposable(LaunchButtonInteractable.Subscribe(m_LaunchButton.SetInteractable));
 		AddDisposable(m_LaunchButton.OnPointerClickAsObservable().Subscribe(delegate
 		{
-			if (base.ViewModel.IsSaveAllowed.Value && !LaunchButtonInteractable.Value)
+			if (!LaunchButtonInteractable.Value)
 			{
 				base.ViewModel.Launch();
 			}
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_LaunchButton.OnLeftClickAsObservable(), delegate
 		{
-			if (base.ViewModel.IsSaveAllowed.Value)
-			{
-				m_LaunchButton.SetInteractable(!base.ViewModel.Launch());
-			}
+			m_LaunchButton.SetInteractable(!base.ViewModel.Launch());
 		}));
 		for (int i = 0; i < m_PlayerList.Count; i++)
 		{
@@ -129,9 +142,8 @@ public class NetLobbyLobbyPartPCView : NetLobbyLobbyPartBaseView
 			base.ViewModel.OpenEpicGamesLayer();
 		}));
 		AddDisposable(m_LobbyIdShowHideButton.SetHint(UIStrings.Instance.NetLobbyTexts.ShowLobbyCode));
-		m_LaunchButton.SetInteractable(base.ViewModel.IsSaveAllowed.Value);
-		TrySetHints();
 		AddDisposable(base.ViewModel.DifferentPlatformInviteVM.Subscribe(m_DifferentPlatformsInvitePCView.Bind));
+		AddDisposable(base.ViewModel.DlcListVM.Subscribe(m_DlcListPCView.Bind));
 	}
 
 	private void TrySetHints()

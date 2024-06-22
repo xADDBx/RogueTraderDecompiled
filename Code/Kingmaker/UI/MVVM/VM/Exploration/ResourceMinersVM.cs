@@ -19,8 +19,11 @@ public class ResourceMinersVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveProperty<TooltipBaseTemplate> Tooltip = new ReactiveProperty<TooltipBaseTemplate>();
 
-	public ResourceMinersVM()
+	public readonly ReactiveProperty<bool> HasColony;
+
+	public ResourceMinersVM(ReactiveProperty<bool> hasColony)
 	{
+		HasColony = hasColony;
 		AddDisposable(EventBus.Subscribe(this));
 		Tooltip.Value = new TooltipTemplateSimple(UIStrings.Instance.ExplorationTexts.ResourceMiner.Text, UIStrings.Instance.ExplorationTexts.ResourceMinerDesc.Text);
 	}

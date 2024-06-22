@@ -21,7 +21,7 @@ public class UnitLookAt : GameAction
 		return Unit?.ToString() + " look at " + Position;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Unit.GetValue().LookAt(Position.GetValue());
 	}

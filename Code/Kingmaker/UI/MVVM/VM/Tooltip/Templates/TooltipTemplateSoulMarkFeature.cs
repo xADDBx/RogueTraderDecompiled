@@ -55,14 +55,13 @@ public class TooltipTemplateSoulMarkFeature : TooltipBaseTemplate
 		bool isLocked = m_MainDirection.HasValue && m_MainDirection.Value != m_SoulMarkDirection && m_Tier > 2;
 		if (!m_MainDirection.HasValue || m_MainDirection.Value == m_SoulMarkDirection)
 		{
-			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkMayBeLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 17);
+			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkMayBeLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
 		}
 		else if (isLocked)
 		{
-			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkIsLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 17);
+			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkIsLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
 		}
-		yield return new TooltipBrickText(m_BlueprintSoulMark.Description, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 17);
-		yield return new TooltipBrickSpace(5f);
+		yield return new TooltipBrickText(m_BlueprintSoulMark.Description, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
 		if (!isLocked)
 		{
 			yield return new TooltipBricksGroupStart(hasBackground: true, null, Color.white);

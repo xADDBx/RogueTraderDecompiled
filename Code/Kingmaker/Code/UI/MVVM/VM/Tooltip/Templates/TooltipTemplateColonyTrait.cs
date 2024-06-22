@@ -43,9 +43,7 @@ public class TooltipTemplateColonyTrait : TooltipBaseTemplate
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		list.Add(new TooltipBrickText(TraitDescription));
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText("<i>" + TraitMechanicString + "</i>"));
-		list.Add(new TooltipBrickSpace());
 		UIColonizationTexts.ColonyStatsStrings[] statStrings = UIStrings.Instance.ColonizationTexts.StatStrings;
 		if (EfficiencyModifier != 0)
 		{

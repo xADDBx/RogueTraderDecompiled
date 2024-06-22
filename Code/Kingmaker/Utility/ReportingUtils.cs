@@ -215,7 +215,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		CrashReportHandler.SetUserMetadata("Store", StoreManager.Store.ToString());
 		Task.Delay(10000).ContinueWith(delegate
 		{
-			Assignees = Task.Run(() => AssigneeContainer.LoadAssigneesAsync("WH", m_Cts.Token));
+			Assignees = (BuildModeUtility.IsDevelopment ? Task.Run(() => AssigneeContainer.LoadAssigneesAsync("WH", m_Cts.Token)) : Task.FromCanceled<AssigneeModelRoot>(CancellationToken.None));
 			ReportSender = new ReportSender("WH", m_GameVersion, m_Cts.Token);
 		});
 	}
@@ -438,6 +438,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			}
 			string labels = "";
 			List<string> list = new List<string>();
+			string coopPlayersCount = "";
 			foreach (KeyValuePair<string, bool> item in m_labelsDictionary)
 			{
 				if (item.Value)
@@ -448,6 +449,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			if (NetworkingManager.IsActive)
 			{
 				list.Add("Coop");
+				coopPlayersCount = NetworkingManager.PlayersCount.ToString();
 			}
 			if (m_Context.Type == BugContext.ContextType.Encounter)
 			{
@@ -526,7 +528,9 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				Store = StoreManager.Store.ToString(),
 				ControllerModeType = Convert.ToString(Game.Instance.ControllerMode),
 				Platform = Application.platform.ToString(),
-				Exception = JsonConvert.SerializeObject(m_Exception)
+				ConsoleHardwareType = getConsoleHardwareType(),
+				Exception = JsonConvert.SerializeObject(m_Exception),
+				CoopPlayersCount = coopPlayersCount
 			};
 			JsonSerializerSettings settings = new JsonSerializerSettings
 			{
@@ -550,6 +554,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		{
 			LogReporterError("Failed create parameters file: \n" + ex4.Message + "\n" + ex4.StackTrace);
 			return message;
+		}
+		static string getConsoleHardwareType()
+		{
+			return string.Empty;
 		}
 	}
 
@@ -1023,6 +1031,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				m_ContextVariants.Add(new BugContext(BugContext.ContextType.Coop));
 			}
+			if (PhotonManager.Initialized && PhotonManager.Sync.HasDesync)
+			{
+				m_ContextVariants.Add(new BugContext(BugContext.ContextType.Desync));
+			}
 			m_ContextVariants.Remove((BugContext x) => x.Type == BugContext.ContextType.Area && x.ContextObject == null);
 			m_ContextVariants.Sort();
 			if (!flag && blueprintUnit != null)
@@ -1158,8 +1170,14 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		}
 	}
 
-	public void SendReport(string message, string email, string uniqueIdentifier, string issueType, string additionalContacts = "", bool isSendMarketing = false)
+	public void SendReport(string message, string email, string uniqueIdentifier, string issueType, string additionalContacts = "", bool isSendMarketing = false, string id = null)
 	{
+		if (id == null && NetworkingManager.IsMultiplayer)
+		{
+			id = Guid.NewGuid().ToString("N");
+			message = "[" + id + "] " + message;
+			PFLog.Net.Log($"New multiplayer bug report id={id} player={NetworkingManager.LocalNetPlayer.Index}/{NetworkingManager.PlayersCount}");
+		}
 		try
 		{
 			if (string.IsNullOrEmpty(CurrentReportFolder))
@@ -1170,64 +1188,64 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				Directory.CreateDirectory(CurrentReportFolder);
 			}
-			if (string.IsNullOrEmpty(CurrentReportFolder))
+			if (!string.IsNullOrEmpty(CurrentReportFolder))
 			{
-				return;
-			}
-			Utilities.CreateGameHistoryLog();
-			string text = CreateSaveFileForBugReport(CurrentReportFolder);
-			List<string> historyLog = new List<string>();
-			try
-			{
-				string fullName = new DirectoryInfo(text).FullName;
-				fullName = fullName.Substring(0, fullName.LastIndexOf(Path.DirectorySeparatorChar));
-				fullName = Path.Combine(fullName, "history");
-				if (!string.IsNullOrEmpty(text))
+				Utilities.CreateGameHistoryLog();
+				string text = CreateSaveFileForBugReport(CurrentReportFolder);
+				List<string> historyLog = new List<string>();
+				try
 				{
-					using (ZipArchive zipArchive = ZipFile.OpenRead(text))
+					string fullName = new DirectoryInfo(text).FullName;
+					fullName = fullName.Substring(0, fullName.LastIndexOf(Path.DirectorySeparatorChar));
+					fullName = Path.Combine(fullName, "history");
+					if (!string.IsNullOrEmpty(text))
 					{
-						using IEnumerator<ZipArchiveEntry> enumerator = zipArchive.Entries.Where((ZipArchiveEntry e) => e.Name.Equals("history")).GetEnumerator();
-						if (enumerator.MoveNext())
+						using (ZipArchive zipArchive = ZipFile.OpenRead(text))
 						{
-							enumerator.Current.ExtractToFile(fullName);
+							using IEnumerator<ZipArchiveEntry> enumerator = zipArchive.Entries.Where((ZipArchiveEntry e) => e.Name.Equals("history")).GetEnumerator();
+							if (enumerator.MoveNext())
+							{
+								enumerator.Current.ExtractToFile(fullName);
+							}
+						}
+						if (File.Exists(fullName))
+						{
+							historyLog = File.ReadAllLines(fullName).ToList();
+							File.Delete(fullName);
 						}
 					}
-					if (File.Exists(fullName))
-					{
-						historyLog = File.ReadAllLines(fullName).ToList();
-						File.Delete(fullName);
-					}
 				}
+				catch (Exception ex)
+				{
+					Logger.Exception(ex, "Exception trying parse history");
+				}
+				CreateSystemInfoFile();
+				SettingsController.Instance.ConfirmAllTempValues();
+				SettingsController.Instance.SaveAll();
+				CopyLogFiles();
+				string message2 = CreateParametersFile(email, uniqueIdentifier, issueType, message, historyLog, additionalContacts, isSendMarketing);
+				CreateMessageFile(message2);
+				CreateReporterErrorLog();
+				CreateCombatLogFile();
+				m_DiscordContacts = additionalContacts;
+				string text2 = CurrentReportFolder + ".zks";
+				ZipFile.CreateFromDirectory(CurrentReportFolder, text2);
+				Logger.Log("Create " + text2);
+				if (Directory.Exists(CurrentReportFolder))
+				{
+					Directory.Delete(CurrentReportFolder, recursive: true);
+				}
+				Logger.Log("Delete folder '" + CurrentReportFolder + "'");
+				LastEntry = ReportSender?.Enqueue(text2);
+				CurrentReportFolder = string.Empty;
+				PlayerPrefs.SetInt("BugReportMarketingMaterialsToggle", isSendMarketing ? 1 : 0);
 			}
-			catch (Exception ex)
-			{
-				Logger.Exception(ex, "Exception trying parse history");
-			}
-			CreateSystemInfoFile();
-			SettingsController.Instance.ConfirmAllTempValues();
-			SettingsController.Instance.SaveAll();
-			CopyLogFiles();
-			string message2 = CreateParametersFile(email, uniqueIdentifier, issueType, message, historyLog, additionalContacts, isSendMarketing);
-			CreateMessageFile(message2);
-			CreateReporterErrorLog();
-			CreateCombatLogFile();
-			m_DiscordContacts = additionalContacts;
-			string text2 = CurrentReportFolder + ".zks";
-			ZipFile.CreateFromDirectory(CurrentReportFolder, text2);
-			Logger.Log("Create " + text2);
-			if (Directory.Exists(CurrentReportFolder))
-			{
-				Directory.Delete(CurrentReportFolder, recursive: true);
-			}
-			Logger.Log("Delete folder '" + CurrentReportFolder + "'");
-			LastEntry = ReportSender?.Enqueue(text2);
-			CurrentReportFolder = string.Empty;
-			PlayerPrefs.SetInt("BugReportMarketingMaterialsToggle", isSendMarketing ? 1 : 0);
 		}
 		catch (Exception ex2)
 		{
 			Logger.Exception(ex2, "Failed send report {0}", CurrentReportFolder);
 		}
+		PhotonManager.BugReport.Sync(id, message, issueType);
 	}
 
 	public void Clear()

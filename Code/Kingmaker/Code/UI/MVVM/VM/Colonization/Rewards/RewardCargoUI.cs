@@ -40,7 +40,7 @@ public class RewardCargoUI : RewardUI<RewardCargo>
 	{
 		if (base.Reward.Cargo == null)
 		{
-			PFLog.System.Error("RewardCargo.GetUITooltip - Cargo is null!");
+			PFLog.UI.Error("RewardCargo.GetUITooltip - Cargo is null!");
 			return null;
 		}
 		return new TooltipTemplateCargo(base.Reward.Cargo);

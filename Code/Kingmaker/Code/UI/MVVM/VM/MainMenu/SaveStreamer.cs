@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
 
@@ -82,8 +81,6 @@ public class SaveStreamer
 				saver.SaveBytes("header.png", bytes);
 				saver.SaveBytes("highres.png", bytes2);
 				UberDebug.Log($"------------> {saveIndex}/{savesCount} Wrote header");
-				UberDebug.Log(string.Format("------------> {0}/{1} Copying {2} to {3}", saveIndex, savesCount, text, ApplicationPaths.temporaryCachePath + "/save-staging.zip"));
-				File.Copy(text, ApplicationPaths.temporaryCachePath + "/save-staging.zip", overwrite: true);
 				UberDebug.Log($"------------> {saveIndex}/{savesCount} Started stating");
 			}
 			catch (Exception arg)

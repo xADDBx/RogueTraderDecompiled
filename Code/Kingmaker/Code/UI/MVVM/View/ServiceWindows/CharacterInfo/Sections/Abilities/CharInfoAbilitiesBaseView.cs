@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ActionBar;
@@ -17,7 +18,10 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	protected WidgetListMVVM m_WidgetList;
 
 	[SerializeField]
-	private CharInfoFeatureGroupPCView m_WidgetEntityView;
+	private CharInfoFeatureGroupPCView m_WidgetAbilitiesView;
+
+	[SerializeField]
+	private CharInfoFeatureGroupPCView m_WidgetTalentsView;
 
 	[SerializeField]
 	protected ScrollRectExtended m_ScrollRect;
@@ -74,6 +78,7 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	{
 		m_ScrollRect.ScrollToTop();
 		m_ActionBarPartAbilitiesView.Bind(base.ViewModel.ActionBarPartAbilitiesVM);
+		m_WidgetList.DrawEntries(null, m_WidgetAbilitiesView, strictMatching: true);
 		AddDisposable(ActiveAbilitiesSelected.Subscribe(delegate
 		{
 			UpdateAbilitiesSelectableView();
@@ -100,7 +105,11 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	private void DrawEntities()
 	{
 		AutoDisposingList<CharInfoFeatureGroupVM> vmCollection = (ActiveAbilitiesSelected.Value ? base.ViewModel.ActiveAbilities : base.ViewModel.PassiveAbilities);
-		m_WidgetList.DrawEntries(vmCollection, m_WidgetEntityView, strictMatching: true);
+		m_WidgetList.Entries?.ForEach(delegate(IWidgetView e)
+		{
+			e.MonoBehaviour.gameObject.SetActive(value: false);
+		});
+		AddDisposable(m_WidgetList.DrawMultiEntries(vmCollection, new List<CharInfoFeatureGroupPCView> { m_WidgetAbilitiesView, m_WidgetTalentsView }));
 		if (m_ExpandAll)
 		{
 			Expand();

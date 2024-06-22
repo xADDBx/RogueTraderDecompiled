@@ -60,7 +60,13 @@ public class ExpandableTitleView : VirtualListElementViewBase<ExpandableTitleVM>
 				Switch();
 			}));
 		}
+		m_ConsoleFocusButton.SetFocus(value: false);
+		m_ExpandButton.SetFocus(value: false);
 		m_ExpandArrow.Or(null)?.gameObject.SetActive(base.ViewModel.IsSwitchable);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
 	}
 
 	private void ExpandStatedChanged(bool expanded)
@@ -83,10 +89,6 @@ public class ExpandableTitleView : VirtualListElementViewBase<ExpandableTitleVM>
 	public void Switch()
 	{
 		base.ViewModel.Switch();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public void SetFocus(bool value)

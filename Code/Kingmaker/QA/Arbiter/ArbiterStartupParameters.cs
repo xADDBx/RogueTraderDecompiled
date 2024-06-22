@@ -37,6 +37,9 @@ public class ArbiterStartupParameters
 	[CanBeNull]
 	public string ArbiterInstruction { get; set; }
 
+	[CanBeNull]
+	public string ArbiterInstructionsFile { get; set; }
+
 	public bool ArbiterTakeMemorySnapshots { get; set; }
 
 	public bool ArbiterKeepFilesAfterUpload { get; set; }

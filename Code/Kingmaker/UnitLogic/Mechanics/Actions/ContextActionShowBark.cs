@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Localization;
@@ -28,7 +29,7 @@ public class ContextActionShowBark : ContextAction
 		return "Show bark on target unit";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)
@@ -40,7 +41,7 @@ public class ContextActionShowBark : ContextAction
 		{
 			if (base.Context.MaybeCaster == null)
 			{
-				PFLog.Default.Error(this, "Caster is missing");
+				Element.LogError(this, "Caster is missing");
 				return;
 			}
 			LocalizedString localizedString = (WhatToBarkShared ? WhatToBarkShared.String : WhatToBark);

@@ -37,6 +37,11 @@ public sealed class SteamPlatformInvite : IPlatformInvite, IDisposable
 		return ParseString(pszCommandLine, out roomServer, out roomName);
 	}
 
+	public bool IsSupportInviteWindow()
+	{
+		return true;
+	}
+
 	void IPlatformInvite.ShowInviteWindow()
 	{
 		if (FormatString(Region, RoomName, out var output))
@@ -87,6 +92,18 @@ public sealed class SteamPlatformInvite : IPlatformInvite, IDisposable
 
 	public void Dispose()
 	{
+	}
+
+	public void SetPlayedWith(string userId)
+	{
+		if (ulong.TryParse(userId, out var result))
+		{
+			SteamFriends.SetPlayedWith(new CSteamID(result));
+		}
+		else
+		{
+			PFLog.Net.Error("[SteamPlatformInvite.SetPlayedWith] invalid userId='" + userId + "'");
+		}
 	}
 
 	private static bool FormatString(string server, string room, out string output)

@@ -18,8 +18,8 @@ public class IsEngagedGetter : MechanicEntityPropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Is engaged in melee combat.";
+		return "Is " + FormulaTargetScope.Current + " engaged in melee combat.";
 	}
 }

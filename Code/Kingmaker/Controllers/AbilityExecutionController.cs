@@ -58,6 +58,16 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		m_Abilities.Remove(process);
 	}
 
+	public void DetachAll()
+	{
+		foreach (AbilityExecutionProcess ability in m_Abilities)
+		{
+			PFLog.Ability.Log("[AbilityExecutionController] '" + ability.GetType().Name + "' will be detached...");
+			ability.Context.ClearBlockedNodes();
+		}
+		m_Abilities.Clear();
+	}
+
 	public TickType GetTickType()
 	{
 		return TickType.Simulation;
@@ -95,11 +105,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 
 	void IControllerStop.OnStop()
 	{
-		foreach (AbilityExecutionProcess ability in m_Abilities)
-		{
-			ability.Context.ClearBlockedNodes();
-		}
-		m_Abilities.Clear();
+		DetachAll();
 		m_Enabled = false;
 	}
 }

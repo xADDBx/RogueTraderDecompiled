@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
@@ -8,7 +9,6 @@ using Kingmaker.Blueprints.Cargo;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Cargo;
-using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers.EventConditionActionSystem.Events;
 using Kingmaker.ElementsSystem.ContextData;
@@ -25,6 +25,7 @@ using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.SectorMap;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Items;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
@@ -37,6 +38,7 @@ using Kingmaker.View.MapObjects;
 using Kingmaker.Visual.CharacterSystem;
 using Pathfinding;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 using Warhammer.SpaceCombat.StarshipLogic.Equipment;
 using Warhammer.SpaceCombat.StarshipLogic.Posts;
 
@@ -70,11 +72,11 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new PostSaveCallbackCommand(saveInfo, dto));
 	}
 
-	public static void EndTurnManually([NotNull] this GameCommandQueue gameCommandQueue)
+	public static void EndTurnManually([NotNull] this GameCommandQueue gameCommandQueue, MechanicEntity entity)
 	{
-		if (!gameCommandQueue.ContainsCommand<EndTurnGameCommand>())
+		if (!gameCommandQueue.ContainsCommand((EndTurnGameCommand cmd) => cmd.MechanicEntity == entity))
 		{
-			gameCommandQueue.AddCommand(new EndTurnGameCommand());
+			gameCommandQueue.AddCommand(new EndTurnGameCommand(entity));
 		}
 	}
 
@@ -85,7 +87,10 @@ public static class GameCommandQueueExtensions
 
 	public static void RequestPauseUi([NotNull] this GameCommandQueue gameCommandQueue, bool toPause)
 	{
-		gameCommandQueue.AddCommand(new RequestPauseGameCommand(toPause));
+		if (!gameCommandQueue.ContainsCommand((RequestPauseGameCommand cmd) => cmd.ToPause == toPause))
+		{
+			gameCommandQueue.AddCommand(new RequestPauseGameCommand(toPause));
+		}
 	}
 
 	public static void DialogAnswer([NotNull] this GameCommandQueue gameCommandQueue, int tick, [NotNull] string answer)
@@ -213,9 +218,9 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new SetInventorySorterGameCommand(sorterType));
 	}
 
-	public static void ScanStarSystemObject([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] StarSystemObjectEntity starSystemObject)
+	public static void ScanStarSystemObject([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] StarSystemObjectEntity starSystemObject, bool finishScan = false)
 	{
-		gameCommandQueue.AddCommand(new ScanStarSystemObjectGameCommand(starSystemObject));
+		gameCommandQueue.AddCommand(new ScanStarSystemObjectGameCommand(starSystemObject, finishScan));
 	}
 
 	public static void CloseExplorationScreen([NotNull] this GameCommandQueue gameCommandQueue)
@@ -231,14 +236,6 @@ public static class GameCommandQueueExtensions
 	public static void SetCurrentQuest([NotNull] this GameCommandQueue gameCommandQueue, Quest quest)
 	{
 		gameCommandQueue.AddCommand(new SetCurrentQuestGameCommand(quest));
-	}
-
-	public static void SaveSettings([NotNull] this GameCommandQueue gameCommandQueue)
-	{
-		if (!gameCommandQueue.ContainsCommand<SaveSettingsGameCommand>())
-		{
-			gameCommandQueue.AddCommand(new SaveSettingsGameCommand());
-		}
 	}
 
 	public static void CommitLvlUp([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] LevelUpManager levelUpManager)
@@ -279,16 +276,6 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new CreateColonyGameCommand(planet, events, isPlayerCommand));
 	}
 
-	public static void ColonyProjectsUIOpen([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BlueprintColonyReference colony)
-	{
-		gameCommandQueue.AddCommand(new ColonyProjectsUIOpenGameCommand(colony));
-	}
-
-	public static void ColonyProjectsUIClose([NotNull] this GameCommandQueue gameCommandQueue)
-	{
-		gameCommandQueue.AddCommand(new ColonyProjectsUICloseGameCommand());
-	}
-
 	public static void StartColonyProject([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BlueprintColonyReference colony, [NotNull] BlueprintColonyProjectReference project)
 	{
 		gameCommandQueue.AddCommand(new StartColonyProjectGameCommand(colony, project));
@@ -297,21 +284,6 @@ public static class GameCommandQueueExtensions
 	public static void StartColonyEvent([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BlueprintColony colony, [NotNull] BlueprintColonyEvent colonyEvent)
 	{
 		gameCommandQueue.AddCommand(new StartColonyEventGameCommand(colony, colonyEvent));
-	}
-
-	public static void ColonyManagementUIOpen([NotNull] this GameCommandQueue gameCommandQueue)
-	{
-		gameCommandQueue.AddCommand(new ColonyManagementUIGameCommand(ServiceWindowsType.ColonyManagement));
-	}
-
-	public static bool ColonyManagementUIClose([NotNull] this GameCommandQueue gameCommandQueue, ServiceWindowsType nextWindow)
-	{
-		if ((bool)ContextData<ColonyManagementUIGameCommand.Context>.Current)
-		{
-			return false;
-		}
-		gameCommandQueue.AddCommand(new ColonyManagementUIGameCommand(nextWindow));
-		return true;
 	}
 
 	public static void StartWarpTravel([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] SectorMapObjectEntity from, [NotNull] SectorMapObjectEntity to)
@@ -386,7 +358,7 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new InteractWithStarSystemObjectGameCommand(starSystemObjectEntity, position));
 	}
 
-	public static void SetSettings([NotNull] this GameCommandQueue gameCommandQueue, BaseSettingNetData settingCommand)
+	public static void SetSettings([NotNull] this GameCommandQueue gameCommandQueue, List<BaseSettingNetData> settingCommand)
 	{
 		gameCommandQueue.AddCommand(new SettingGameCommand(settingCommand));
 	}
@@ -431,9 +403,9 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new PingDialogAnswerVoteGameCommand(answer));
 	}
 
-	public static void PingActionBarAbility([NotNull] this GameCommandQueue gameCommandQueue, string keyName, Entity characterEntityRef, int slotIndex)
+	public static void PingActionBarAbility([NotNull] this GameCommandQueue gameCommandQueue, string keyName, Entity characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
 	{
-		gameCommandQueue.AddCommand(new PingActionBarAbilityGameCommand(keyName, characterEntityRef, slotIndex));
+		gameCommandQueue.AddCommand(new PingActionBarAbilityGameCommand(keyName, characterEntityRef, slotIndex, weaponSlotType));
 	}
 
 	public static void ChangePlayerRole([NotNull] this GameCommandQueue gameCommandQueue, string entityId, NetPlayer player, bool enable)
@@ -443,8 +415,11 @@ public static class GameCommandQueueExtensions
 
 	public static void StopStarSystemStarShip([NotNull] this GameCommandQueue gameCommandQueue)
 	{
-		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<GameCommandContext>.Current;
-		gameCommandQueue.AddCommand(new StopStarSystemStarShipGameCommand(isSynchronized));
+		bool flag = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
+		if (!flag || UINetUtility.IsControlMainCharacter())
+		{
+			gameCommandQueue.AddCommand(new StopStarSystemStarShipGameCommand(flag));
+		}
 	}
 
 	public static void UseResourceMiner([NotNull] this GameCommandQueue gameCommandQueue, BlueprintStarSystemObject sso, BlueprintResource resource)
@@ -529,12 +504,27 @@ public static class GameCommandQueueExtensions
 
 	public static void SelectColony([NotNull] this GameCommandQueue gameCommandQueue, Colony colony)
 	{
-		gameCommandQueue.AddCommand(new SelectColonyGameCommand(colony));
+		bool isSynchronized = colony.StartedChronicles.Any();
+		gameCommandQueue.AddCommand(new SelectColonyGameCommand(colony, isSynchronized));
 	}
 
-	public static void ReceiveLootFromColony([NotNull] this GameCommandQueue gameCommandQueue, Colony colony)
+	public static void StartChronicleUI([NotNull] this GameCommandQueue gameCommandQueue, Colony colony)
 	{
-		gameCommandQueue.AddCommand(new ReceiveLootFromColonyGameCommand(colony));
+		if (colony != null && (colony.HasStartedChronicles || colony.HasFinishedProjectsSinceLastVisit))
+		{
+			bool hasStartedChronicles = colony.HasStartedChronicles;
+			gameCommandQueue.AddCommand(new StartChronicleUIGameCommand(colony, hasStartedChronicles));
+		}
+	}
+
+	public static void ClearFinishedProjectsSinceLastVisit([NotNull] this GameCommandQueue gameCommandQueue, ColonyRef colonyRef)
+	{
+		gameCommandQueue.AddCommand(new ClearFinishedProjectsSinceLastVisitGameCommand(colonyRef));
+	}
+
+	public static void ReceiveLootFromColony([NotNull] this GameCommandQueue gameCommandQueue, ColonyRef colonyRef)
+	{
+		gameCommandQueue.AddCommand(new ReceiveLootFromColonyGameCommand(colonyRef));
 	}
 
 	public static void UIEventTrigger([NotNull] this GameCommandQueue gameCommandQueue, UIEventTrigger uiEventTrigger)
@@ -554,7 +544,7 @@ public static class GameCommandQueueExtensions
 
 	public static void ClearMovePrediction([NotNull] this GameCommandQueue gameCommandQueue)
 	{
-		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<GameCommandContext>.Current;
+		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
 		gameCommandQueue.AddCommand(new ClearMovePredictionGameCommand(isSynchronized));
 	}
 
@@ -575,13 +565,13 @@ public static class GameCommandQueueExtensions
 
 	public static void SetToCargoAutomatically([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BlueprintItem blueprint, bool toCargo)
 	{
-		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<GameCommandContext>.Current;
+		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
 		gameCommandQueue.AddCommand(new SetToCargoAutomaticallyGameCommand(blueprint, toCargo, isSynchronized));
 	}
 
 	public static void ClearPointerMode([NotNull] this GameCommandQueue gameCommandQueue)
 	{
-		if (!ContextData<GameCommandContext>.Current && !ContextData<GameCommandContext>.Current)
+		if (!ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current)
 		{
 			Game.Instance.ClickEventsController.ClearPointerMode();
 		}
@@ -589,5 +579,10 @@ public static class GameCommandQueueExtensions
 		{
 			gameCommandQueue.AddCommand(new ClearPointerModeGameCommand());
 		}
+	}
+
+	public static void InterruptMoveUnit([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] AbstractUnitEntity unit)
+	{
+		gameCommandQueue.AddCommand(new InterruptMoveUnitGameCommand(unit));
 	}
 }

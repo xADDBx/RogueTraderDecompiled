@@ -97,7 +97,7 @@ public class CharGenView : ViewBase<CharGenVM>, IFullScreenUIHandler, ISubscribe
 
 	protected bool CurrentPhaseIsFirst => base.ViewModel.CurrentPhaseVM.Value == base.ViewModel.PhasesCollection.First();
 
-	protected bool CurrentPhaseIsLast => base.ViewModel.CurrentPhaseVM.Value == base.ViewModel.PhasesCollection.Last();
+	protected bool CurrentPhaseIsLast => base.ViewModel?.CurrentPhaseVM?.Value == base.ViewModel?.PhasesCollection?.Last();
 
 	public virtual void Initialize()
 	{
@@ -188,8 +188,12 @@ public class CharGenView : ViewBase<CharGenVM>, IFullScreenUIHandler, ISubscribe
 
 	void ICharGenChangePhaseHandler.HandlePhaseChange(CharGenPhaseType phaseType)
 	{
-		CharGenPhaseBaseVM viewModel = base.ViewModel.PhasesCollection.FirstOrDefault((CharGenPhaseBaseVM phase) => phase.PhaseType == phaseType);
-		CurrentPhaseChangedImpl(viewModel);
+		CharGenPhaseBaseVM charGenPhaseBaseVM = base.ViewModel.PhasesCollection.FirstOrDefault((CharGenPhaseBaseVM phase) => phase.PhaseType == phaseType);
+		if (!UINetUtility.IsControlMainCharacter())
+		{
+			base.ViewModel.CurrentPhaseVM.Value = charGenPhaseBaseVM;
+		}
+		CurrentPhaseChangedImpl(charGenPhaseBaseVM);
 	}
 
 	public virtual void CurrentPhaseChangedImpl(CharGenPhaseBaseVM viewModel)
@@ -245,7 +249,7 @@ public class CharGenView : ViewBase<CharGenVM>, IFullScreenUIHandler, ISubscribe
 		{
 			ContextName = InputLayerContextName
 		});
-		CreateInputImpl(inputLayer, base.ViewModel.IsMainCharacter);
+		CreateInputImpl(inputLayer, base.ViewModel?.IsMainCharacter ?? new BoolReactiveProperty(UINetUtility.IsControlMainCharacter()));
 		return inputLayer;
 	}
 

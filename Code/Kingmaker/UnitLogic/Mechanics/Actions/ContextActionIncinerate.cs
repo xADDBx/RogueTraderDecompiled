@@ -32,7 +32,7 @@ public class ContextActionIncinerate : ContextAction
 		return "Launch projectile from each target with buff and save half their burning damage";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		MechanicEntity entity = base.Target.Entity;
@@ -59,7 +59,7 @@ public class ContextActionIncinerate : ContextAction
 			dOTTypes = DOTTypes;
 			foreach (DOT type2 in dOTTypes)
 			{
-				num += DOTLogic.GetCurrentDamageOfType(item, type2);
+				num += DOTLogic.GetBasicDamageOfType(item, type2);
 			}
 			base.Context[ContextPropertyName] += num / 2;
 			new ProjectileLauncher(Projectile, item, entity).Ability(base.AbilityContext?.Ability).Launch();

@@ -14,27 +14,35 @@ public class MessageNetManager
 
 		public const byte SaveMeta = 3;
 
-		public const byte Save = 4;
+		public const byte SaveMetaAcknowledge = 4;
 
-		public const byte SaveAcknowledge = 5;
+		public const byte Commands = 7;
 
-		public const byte Commands = 6;
-
-		public const byte Lock = 7;
+		public const byte Lock = 8;
 
 		public const byte Kick = 9;
 
 		public const byte ContinueLoading = 11;
 
+		public const byte BugReport = 12;
+
 		public const byte AvatarMeta = 21;
 
 		public const byte ScreenshotMeta = 22;
 
-		public const byte Ack = 23;
+		public const byte CustomPortraitMeta = 23;
 
-		public const byte DataSend = 24;
+		public const byte SaveMetaDataSender = 24;
 
-		public const byte CancelDataSend = 25;
+		public const byte Ack = 30;
+
+		public const byte DataSend = 31;
+
+		public const byte CancelDataSend = 32;
+
+		public const byte SyncPortraitCommand = 40;
+
+		public const byte SyncPortraitAck = 41;
 
 		public const byte Max = 200;
 	}
@@ -52,21 +60,18 @@ public class MessageNetManager
 			switch (code)
 			{
 			case 2:
-				PhotonManager.Save.OnRequestSave(player);
+				PhotonManager.Save.OnRequestSave(photonActorNumber);
 				break;
 			case 3:
 				PhotonManager.Save.OnSaveMetaReceived(photonActorNumber, bytes);
 				break;
 			case 4:
-				PhotonManager.Save.OnSaveReceived(photonActorNumber, bytes);
-				break;
-			case 5:
-				PhotonManager.Save.OnSaveAcknowledge(player, bytes);
-				break;
-			case 6:
-				PhotonManager.Command.OnCommandsReceived(player, bytes);
+				PhotonManager.Save.OnSaveMetaAcknowledge(player, photonActorNumber, bytes);
 				break;
 			case 7:
+				PhotonManager.Command.OnCommandsReceived(player, bytes);
+				break;
+			case 8:
 				PhotonManager.Lock.OnLockReceived(player, bytes);
 				break;
 			case 1:
@@ -78,12 +83,21 @@ public class MessageNetManager
 			case 11:
 				PhotonManager.Instance.OnContinueLoadingReceived();
 				break;
+			case 40:
+			case 41:
+				PhotonManager.Instance.PortraitSyncer.OnMessage(code, photonActorNumber, bytes);
+				break;
 			case 21:
 			case 22:
 			case 23:
 			case 24:
-			case 25:
+			case 30:
+			case 31:
+			case 32:
 				PhotonManager.Instance.DataTransporter.OnMessage(code, photonActorNumber, bytes);
+				break;
+			case 12:
+				PhotonManager.BugReport.OnMessage(bytes);
 				break;
 			default:
 				PFLog.Net.Error($"Unexpected code={code}!");

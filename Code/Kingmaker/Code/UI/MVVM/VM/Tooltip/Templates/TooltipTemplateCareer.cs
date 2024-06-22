@@ -66,7 +66,7 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 		{
 			List<StatType> careerRecommendedStats = CharGenUtility.GetCareerRecommendedStats<BlueprintAttributeAdvancement>(m_CareerPathUIMetaData);
 			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharacterSheet.Stats.Text, TooltipTitleType.H5));
-			bricks.Add(new TooltipBricksGroupStart());
+			bricks.Add(new TooltipBricksGroupStart(hasBackground: true, GetStatLayoutParams()));
 			foreach (BlueprintAttributeAdvancement advancementAttribute in m_CareerPath.AdvancementAttributes)
 			{
 				string text = LocalizedTexts.Instance.Stats.GetText(advancementAttribute.Stat);
@@ -83,7 +83,7 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 		}
 		List<StatType> careerRecommendedStats2 = CharGenUtility.GetCareerRecommendedStats<BlueprintSkillAdvancement>(m_CareerPathUIMetaData);
 		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharacterSheet.Skills.Text, TooltipTitleType.H5));
-		bricks.Add(new TooltipBricksGroupStart());
+		bricks.Add(new TooltipBricksGroupStart(hasBackground: true, GetStatLayoutParams()));
 		foreach (BlueprintSkillAdvancement advancementSkill in m_CareerPath.AdvancementSkills)
 		{
 			string text2 = LocalizedTexts.Instance.Stats.GetText(advancementSkill.Stat);
@@ -131,7 +131,7 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 
 	private void AddPrerequisites(List<ITooltipBrick> bricks)
 	{
-		if (m_CareerPath.Prerequisite != null)
+		if (m_CareerPath.Prerequisite != null && !m_CareerPath.IsUnlocked)
 		{
 			bricks.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(m_CareerPath.Prerequisite)));
 		}
@@ -139,12 +139,33 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 
 	private TooltipBricksGroupLayoutParams GetLayoutParams()
 	{
+		float value = (Game.Instance.IsControllerGamepad ? 76f : 62f);
 		if (m_IsScreenView)
 		{
 			return new TooltipBricksGroupLayoutParams
 			{
-				Padding = new RectOffset(11, 11, 6, 6),
-				LayoutType = TooltipBricksGroupLayoutType.Vertical
+				LayoutType = TooltipBricksGroupLayoutType.Grid,
+				Padding = new RectOffset(0, 0, -6, 0),
+				Spacing = new Vector2(0f, -4f),
+				ColumnCount = 1,
+				PreferredElementHeight = value
+			};
+		}
+		return null;
+	}
+
+	private TooltipBricksGroupLayoutParams GetStatLayoutParams()
+	{
+		float value = (Game.Instance.IsControllerGamepad ? 40f : 35f);
+		if (m_IsScreenView)
+		{
+			return new TooltipBricksGroupLayoutParams
+			{
+				LayoutType = TooltipBricksGroupLayoutType.Grid,
+				Padding = new RectOffset(0, 0, 0, 0),
+				Spacing = new Vector2(0f, 3f),
+				ColumnCount = 1,
+				PreferredElementHeight = value
 			};
 		}
 		return null;

@@ -44,9 +44,13 @@ public class StarSystemMapClickObjectHandler : IClickEventHandler
 
 	public bool OnClick(GameObject gameObject, Vector3 worldPosition, int button, bool simulate = false, bool muteEvents = false)
 	{
+		float num = Mathf.Clamp(worldPosition.z, -50f, 40f);
+		float num2 = (num + 50f) / 90f;
+		float x = Mathf.Clamp(worldPosition.x, 0f - (80f - num2 * 17f), 80f - num2 * 17f);
+		Vector3 clampedWorldPosition = new Vector3(x, worldPosition.y, num);
 		if (PhotonManager.Ping.CheckPingCoop(delegate
 		{
-			PhotonManager.Ping.PingPosition(worldPosition);
+			PhotonManager.Ping.PingPosition(clampedWorldPosition);
 		}))
 		{
 			return false;
@@ -57,7 +61,7 @@ public class StarSystemMapClickObjectHandler : IClickEventHandler
 		}
 		StarSystemObjectView starSystemObject = GetStarSystemObject(gameObject);
 		StarSystemObjectEntity starSystemObjectEntity = ((starSystemObject != null) ? starSystemObject.Data : null);
-		Game.Instance.GameCommandQueue.InteractWithStarSystemObjectGameCommand(starSystemObjectEntity, worldPosition);
+		Game.Instance.GameCommandQueue.InteractWithStarSystemObjectGameCommand(starSystemObjectEntity, clampedWorldPosition);
 		return true;
 	}
 

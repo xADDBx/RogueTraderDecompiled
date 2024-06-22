@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.DLC;
-using Kingmaker.Localization;
+using System.Linq;
 using UnityEngine;
 
 namespace Kingmaker.Blueprints.Root;
@@ -9,22 +8,26 @@ namespace Kingmaker.Blueprints.Root;
 [Serializable]
 public class NewGameRoot
 {
-	[Serializable]
-	public class StoryEntity
+	[SerializeField]
+	private BlueprintCampaignReference[] m_StoryCampaigns;
+
+	private BlueprintCampaignReference m_MainCampaignReference;
+
+	public IEnumerable<BlueprintCampaign> StoryCampaigns => m_StoryCampaigns?.Dereference();
+
+	public BlueprintCampaign MainCampaign
 	{
-		[SerializeField]
-		private BlueprintDlcRewardCampaignReference m_DlcReward;
-
-		public LocalizedString Title;
-
-		public LocalizedString Description;
-
-		public Sprite KeyArt;
-
-		public bool ComingSoon;
-
-		public BlueprintDlcRewardCampaign DlcReward => m_DlcReward;
+		get
+		{
+			if (m_MainCampaignReference == null || m_MainCampaignReference.IsEmpty())
+			{
+				m_MainCampaignReference = StoryCampaigns.FirstOrDefault((BlueprintCampaign bp) => bp.IsMainGameContent)?.ToReference<BlueprintCampaignReference>();
+			}
+			if (m_MainCampaignReference != null && !m_MainCampaignReference.IsEmpty())
+			{
+				return m_MainCampaignReference?.Get();
+			}
+			return null;
+		}
 	}
-
-	public List<StoryEntity> StoryList;
 }

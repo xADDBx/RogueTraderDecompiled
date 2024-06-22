@@ -15,4 +15,9 @@ public class ReportUploadStatus
 
 	[JsonProperty("original_file_name")]
 	public string OriginalFileName { get; set; }
+
+	public override string ToString()
+	{
+		return string.Format("{0}(Success: {1}, Error: {2}, ReportId: {3}, FileName: {4})", "ReportUploadStatus", Success, Error, ReportId, OriginalFileName);
+	}
 }

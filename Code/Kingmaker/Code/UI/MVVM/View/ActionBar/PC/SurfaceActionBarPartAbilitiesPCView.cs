@@ -55,6 +55,15 @@ public class SurfaceActionBarPartAbilitiesPCView : SurfaceActionBarPartAbilities
 		DrawEntries();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		foreach (SurfaceActionBarAbilitiesRowView item in m_RowsPool)
+		{
+			item.Dispose();
+			item.gameObject.SetActive(value: false);
+		}
+	}
+
 	private void DrawEntries()
 	{
 		int count = base.ViewModel.Slots.Count;
@@ -110,15 +119,6 @@ public class SurfaceActionBarPartAbilitiesPCView : SurfaceActionBarPartAbilities
 			m_RowsPool[i].Dispose();
 			m_RowsPool[i].gameObject.SetActive(value: false);
 			i++;
-		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		foreach (SurfaceActionBarAbilitiesRowView item in m_RowsPool)
-		{
-			item.Dispose();
-			item.gameObject.SetActive(value: false);
 		}
 	}
 }

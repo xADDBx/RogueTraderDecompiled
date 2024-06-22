@@ -1,4 +1,5 @@
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 
@@ -8,7 +9,11 @@ public class TooltipBrickIconPatternVM : TooltipBaseBrickVM
 {
 	public readonly Sprite Icon;
 
-	public readonly Color32? FrameColor;
+	public readonly IconPatternMode IconMode;
+
+	public readonly string Acronym;
+
+	public readonly TalentIconInfo TalentIconInfo;
 
 	public readonly UIUtilityItem.UIPatternData PatternData;
 
@@ -20,14 +25,16 @@ public class TooltipBrickIconPatternVM : TooltipBaseBrickVM
 
 	public readonly TooltipBaseTemplate Tooltip;
 
-	public TooltipBrickIconPatternVM(Sprite icon, UIUtilityItem.UIPatternData patternData, TooltipBrickIconPattern.TextFieldValues titleValues, TooltipBrickIconPattern.TextFieldValues secondaryValues, TooltipBrickIconPattern.TextFieldValues tertiaryValues, Color32? frameColor, TooltipBaseTemplate tooltip)
+	public TooltipBrickIconPatternVM(Sprite icon, UIUtilityItem.UIPatternData patternData, TooltipBrickIconPattern.TextFieldValues titleValues, TooltipBrickIconPattern.TextFieldValues secondaryValues, TooltipBrickIconPattern.TextFieldValues tertiaryValues, TooltipBaseTemplate tooltip, IconPatternMode iconMode, string acronym, TalentIconInfo talentIconsInfo)
 	{
 		Icon = icon;
 		PatternData = patternData;
 		TitleValues = titleValues;
 		SecondaryValues = secondaryValues;
 		TertiaryValues = tertiaryValues;
-		FrameColor = frameColor;
 		Tooltip = tooltip;
+		IconMode = iconMode;
+		Acronym = acronym;
+		TalentIconInfo = talentIconsInfo;
 	}
 }

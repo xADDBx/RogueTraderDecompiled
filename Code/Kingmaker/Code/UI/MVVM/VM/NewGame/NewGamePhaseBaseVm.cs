@@ -14,7 +14,7 @@ public abstract class NewGamePhaseBaseVm : VMBase
 	public BoolReactiveProperty IsEnabled { get; } = new BoolReactiveProperty();
 
 
-	public virtual BoolReactiveProperty IsNextButtonAvailable { get; } = new BoolReactiveProperty();
+	public BoolReactiveProperty IsNextButtonAvailable { get; } = new BoolReactiveProperty();
 
 
 	protected NewGamePhaseBaseVm(Action backStep, Action nextStep)
@@ -22,6 +22,12 @@ public abstract class NewGamePhaseBaseVm : VMBase
 		m_NextStep = nextStep;
 		m_BackStep = backStep;
 		IsEnabled.Value = false;
+	}
+
+	protected override void DisposeImplementation()
+	{
+		m_NextStep = null;
+		m_BackStep = null;
 	}
 
 	public virtual void OnNext()
@@ -33,12 +39,6 @@ public abstract class NewGamePhaseBaseVm : VMBase
 	public virtual void OnBack()
 	{
 		m_BackStep?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_NextStep = null;
-		m_BackStep = null;
 	}
 
 	public virtual bool SetEnabled(bool value, bool? direction = null)

@@ -17,7 +17,7 @@ public class UseActionCommand : ClockworkCommand
 	public override ClockworkRunnerTask GetTask(ClockworkRunner runner)
 	{
 		Complete();
-		action.RunAction();
+		action.Run();
 		return null;
 	}
 

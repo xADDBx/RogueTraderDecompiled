@@ -25,9 +25,9 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly EncumbranceVM EncumbranceVM;
 
-	public IReactiveProperty<long> Money = new ReactiveProperty<long>();
+	public readonly IReactiveProperty<long> Money = new ReactiveProperty<long>();
 
-	public InventoryDropZoneVM DropZoneVM;
+	public readonly InventoryDropZoneVM DropZoneVM;
 
 	private ItemsCollection ItemsCollection => Game.Instance.Player.Inventory;
 
@@ -41,7 +41,7 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		if (canInsertItem == null)
 		{
-			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));
+			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(ItemSlotsGroup));
 			AddDisposable(ItemSlotsGroup.CollectionChangedCommand.Subscribe(delegate
 			{
@@ -50,7 +50,7 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 		else
 		{
-			AddDisposable(InsertableSlotsGroup = new InsertableLootSlotsGroupVM(ItemsCollection, canInsertItem, 9, 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter));
+			AddDisposable(InsertableSlotsGroup = new InsertableLootSlotsGroupVM(ItemsCollection, canInsertItem, 9, 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(InsertableSlotsGroup));
 			AddDisposable(InsertableSlotsGroup.CollectionChangedCommand.Subscribe(delegate
 			{
@@ -66,12 +66,20 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				Game.Instance.GameCommandQueue.SetInventorySorter(value);
 			}
 		}));
+		AddDisposable(ItemsFilter.ShowUnavailable.Subscribe(delegate(bool value)
+		{
+			Game.Instance.Player.UISettings.ShowUnavailableItems = value;
+		}));
 		AddDisposable(CurrentFilter.Subscribe(delegate(ItemsFilterType value)
 		{
 			Game.Instance.Player.UISettings.InventoryFilter = value;
 		}));
 		AddDisposable(DropZoneVM = new InventoryDropZoneVM(null));
 		AddDisposable(EventBus.Subscribe(this));
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void CollectionChanged()
@@ -104,10 +112,6 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public void ChangePartyEncumbrance(Encumbrance prevEncumbrance)
 	{
 		UpdateCapacity();
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	void ISetInventorySorterHandler.HandleSetInventorySorter(ItemsSorterType sorterType)

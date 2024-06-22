@@ -134,6 +134,12 @@ public class SpaceSystemInformationWindowConsoleView : SpaceSystemInformationWin
 				where block.gameObject.activeInHierarchy
 				select block).Cast<IConsoleNavigationEntity>().ToList());
 		}
+		if (m_WidgetListAdditionalAnomalies.Entries != null && m_WidgetListAdditionalAnomalies.Entries.OfType<AdditionalAnomaliesInfoSpaceSystemInformationWindowView>().Any())
+		{
+			list.AddRange((from block in m_WidgetListAdditionalAnomalies.Entries.OfType<AdditionalAnomaliesInfoSpaceSystemInformationWindowView>()
+				where block.gameObject.activeInHierarchy
+				select block).Cast<IConsoleNavigationEntity>().ToList());
+		}
 		if (!list.Any())
 		{
 			return;

@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.Localization;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.Utility.Attributes;
@@ -41,6 +42,10 @@ public class BlueprintColonyTrait : BlueprintScriptableObject, IUIDataProvider
 	public int TraitDuration;
 
 	public bool IsHistorical;
+
+	public ActionList OnStartActions;
+
+	public ActionList OnEndActions;
 
 	public string Name => m_Name.Text;
 

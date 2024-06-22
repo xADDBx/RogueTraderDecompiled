@@ -5,7 +5,8 @@ namespace Kingmaker.Globalmap.CombatRandomEncounters;
 [Flags]
 public enum UnitRole
 {
-	None = 0,
+	Nothing = 0,
+	Everything = -1,
 	Sniper = 2,
 	Melee = 4,
 	FlameThrower = 8,

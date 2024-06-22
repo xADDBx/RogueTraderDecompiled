@@ -4,6 +4,7 @@ using Kingmaker.Globalmap.SectorMap;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Pointer;
 using Owlcat.Runtime.UI.ConsoleTools;
+using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -12,14 +13,14 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.Overtips.SectorMap.Console;
 
-public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity
+public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler
 {
 	[Header("SpaceSystemPopup")]
 	[SerializeField]
 	private SpaceSystemNavigationButtonsConsoleView m_SpaceSystemNavigationButtonsConsoleView;
 
 	[SerializeField]
-	protected OwlcatButton m_HoverButton;
+	private OwlcatButton m_HoverButton;
 
 	public readonly BoolReactiveProperty IsNavigationValid = new BoolReactiveProperty(initialValue: true);
 
@@ -39,6 +40,10 @@ public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigati
 			}
 			SetFocus(state);
 		}));
+		AddDisposable(m_HoverButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			CheckPing();
+		}));
 		AddDisposable(base.ViewModel.SpaceSystemNavigationButtonsVM.Subscribe(m_SpaceSystemNavigationButtonsConsoleView.Bind));
 	}
 
@@ -49,9 +54,14 @@ public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigati
 
 	public void SetFocus(bool value)
 	{
-		if (IsFocused != value)
+		if (IsFocused == value)
 		{
-			IsFocused = value;
+			return;
+		}
+		IsFocused = value;
+		GetSectorMapObject().SetConsoleFocusState(value);
+		if (UINetUtility.IsControlMainCharacter())
+		{
 			if (value)
 			{
 				base.ViewModel.ShowSpaceSystemPopup();
@@ -60,7 +70,6 @@ public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigati
 			{
 				base.ViewModel.CloseSpaceSystemPopup();
 			}
-			GetSectorMapObject().SetConsoleFocusState(value);
 		}
 	}
 
@@ -85,6 +94,14 @@ public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigati
 		return false;
 	}
 
+	private void CheckPing()
+	{
+		if (base.ViewModel.IsNotMainCharacter.Value && IsFocused)
+		{
+			base.ViewModel.CheckPingCoop();
+		}
+	}
+
 	public Vector2 GetPosition()
 	{
 		return base.transform.position;
@@ -93,5 +110,20 @@ public class OvertipSystemConsoleView : OvertipSystemView, IFloatConsoleNavigati
 	public List<IFloatConsoleNavigationEntity> GetNeighbours()
 	{
 		return null;
+	}
+
+	public bool CanConfirmClick()
+	{
+		return IsFocused;
+	}
+
+	public void OnConfirmClick()
+	{
+		CheckPing();
+	}
+
+	public string GetConfirmClickHint()
+	{
+		return string.Empty;
 	}
 }

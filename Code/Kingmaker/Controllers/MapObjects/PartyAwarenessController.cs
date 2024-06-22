@@ -1,14 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.BuildModeUtils;
@@ -17,8 +20,10 @@ using Kingmaker.View.MapObjects.Traps;
 
 namespace Kingmaker.Controllers.MapObjects;
 
-public class PartyAwarenessController : IControllerTick, IController
+public class PartyAwarenessController : IControllerTick, IController, IEntityPositionChangedHandler, ISubscriber<IEntity>, ISubscriber
 {
+	private HashSet<BaseUnitEntity> m_ForceUpdateCharacterMap = new HashSet<BaseUnitEntity>();
+
 	public TickType GetTickType()
 	{
 		return TickType.Simulation;
@@ -28,9 +33,13 @@ public class PartyAwarenessController : IControllerTick, IController
 	{
 		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			if (!partyAndPet.Movable.HasMotionThisSimulationTick)
+			if (!partyAndPet.Movable.HasMotionThisSimulationTick && !m_ForceUpdateCharacterMap.Contains(partyAndPet))
 			{
 				continue;
+			}
+			if (m_ForceUpdateCharacterMap.Contains(partyAndPet))
+			{
+				m_ForceUpdateCharacterMap.Remove(partyAndPet);
 			}
 			foreach (MapObjectEntity mapObject in Game.Instance.State.MapObjects)
 			{
@@ -82,7 +91,7 @@ public class PartyAwarenessController : IControllerTick, IController
 
 	private static void RollAwareness(BaseUnitEntity character, MapObjectEntity data)
 	{
-		int dC = data.View.AwarenessCheckComponent.DC;
+		int dC = data.View.AwarenessCheckComponent.GetDC();
 		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(character, StatType.SkillAwareness, dC)
 		{
 			Reason = data
@@ -99,6 +108,14 @@ public class PartyAwarenessController : IControllerTick, IController
 		else if (BuildModeUtility.IsDevelopment)
 		{
 			UIUtility.SendWarning($"Perception failed on {data}");
+		}
+	}
+
+	public void HandleEntityPositionChanged()
+	{
+		if (Game.Instance.TurnController.IsPreparationTurn && EventInvokerExtensions.Entity is BaseUnitEntity baseUnitEntity && Game.Instance.Player.PartyAndPets.Contains(baseUnitEntity) && baseUnitEntity.IsInCombat)
+		{
+			m_ForceUpdateCharacterMap.Add(baseUnitEntity);
 		}
 	}
 }

@@ -16,12 +16,12 @@ public class ContextActionConditionalSaved : ContextAction
 		return "Conditional saved";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		RulePerformSavingThrow savingThrow = base.Context.SavingThrow;
 		if (savingThrow == null)
 		{
-			PFLog.Default.Error(this, "Can't use ContextActionConditionalSaved if no saving throw rolled");
+			Element.LogError(this, "Can't use ContextActionConditionalSaved if no saving throw rolled");
 		}
 		else if (savingThrow.IsPassed)
 		{

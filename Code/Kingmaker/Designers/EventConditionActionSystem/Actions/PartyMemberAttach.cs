@@ -18,7 +18,7 @@ public class PartyMemberAttach : GameAction
 		return "Attach companion " + Unit?.NameSafe() + " to party";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BaseUnitEntity allCrossSceneUnit in Game.Instance.Player.AllCrossSceneUnits)
 		{

@@ -95,7 +95,14 @@ public class CharacterAtlas
 			PFLog.Default.Warning($"Wrong texture channel {bodyPartType} {textureDesc.GetMainTextureName()}!");
 			return;
 		}
-		if (!m_TexturesTypesMap.TryGetValue(textureDesc.GetSourceTexture(), out var value))
+		HashSet<BodyPartType> value;
+		bool flag = m_TexturesTypesMap.TryGetValue(textureDesc.GetSourceTexture(), out value);
+		if (flag && value.Contains(bodyPartType))
+		{
+			m_TexturesTypesMap.Remove(textureDesc.GetSourceTexture());
+			flag = false;
+		}
+		if (!flag)
 		{
 			value = new HashSet<BodyPartType>();
 			m_TexturesTypesMap[textureDesc.GetSourceTexture()] = value;

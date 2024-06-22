@@ -127,7 +127,7 @@ public class SlowMoController : IUnitCommandStartHandler, ISubscriber<IMechanicE
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

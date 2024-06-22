@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
+using Kingmaker.Stores;
 using Kingmaker.UnitLogic.Visual.Blueprints;
 using Kingmaker.Utility.FlagCountable;
 using UnityEngine;
@@ -139,8 +142,8 @@ public class MusicStateHandler
 			m_ActiveBossFight.Retain();
 			if (IsOverrideAvailable(unitEntity.MusicBossFightType.Group, isMainMenuState: false))
 			{
-				AkSoundEngine.SetState(unitEntity.MusicBossFightType.Group, unitEntity.MusicBossFightType.Value);
 				SetMusicState(MusicState.BossFight);
+				AkSoundEngine.SetState(unitEntity.MusicBossFightType.Group, unitEntity.MusicBossFightType.Value);
 			}
 		}
 	}
@@ -206,9 +209,15 @@ public class MusicStateHandler
 		{
 			SetDefaultState();
 		}
-		if (IsOverrideAvailable("MusicState", state == MusicState.MainMenu))
+		string text = string.Empty;
+		if (state == MusicState.MainMenu)
 		{
-			AkSoundEngine.SetState("MusicState", state.ToString());
+			BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().LastOrDefault();
+			text = ((!string.IsNullOrWhiteSpace(blueprintDlc?.MusicSetting?.Value)) ? blueprintDlc.MusicSetting.Value : string.Empty);
+		}
+		if (IsOverrideAvailable("MusicState", state == MusicState.MainMenu || state == MusicState.Credits))
+		{
+			AkSoundEngine.SetState("MusicState", (!string.IsNullOrWhiteSpace(text)) ? text : state.ToString());
 		}
 	}
 

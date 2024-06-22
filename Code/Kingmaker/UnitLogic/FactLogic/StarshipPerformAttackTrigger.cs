@@ -1,3 +1,4 @@
+using System.Linq;
 using Code.GameCore.Blueprints;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
@@ -16,6 +17,7 @@ using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
@@ -71,6 +73,12 @@ public class StarshipPerformAttackTrigger : UnitFactComponentDelegate, IInitiato
 	[ShowIf("CheckInitiatorFaction")]
 	private BlueprintFactionReference m_Faction;
 
+	public bool CheckWeaponBlueprint;
+
+	[SerializeField]
+	[ShowIf("CheckWeaponBlueprint")]
+	private BlueprintStarshipWeaponReference[] m_WeaponBlueprints;
+
 	[SerializeField]
 	private ActionList Actions;
 
@@ -80,6 +88,15 @@ public class StarshipPerformAttackTrigger : UnitFactComponentDelegate, IInitiato
 	[SerializeField]
 	[ShowIf("IsAttachedToAbility")]
 	private bool TriggerForThisAbilityOnly = true;
+
+	public ReferenceArrayProxy<BlueprintStarshipWeapon> WeaponBlueprints
+	{
+		get
+		{
+			BlueprintReference<BlueprintStarshipWeapon>[] weaponBlueprints = m_WeaponBlueprints;
+			return weaponBlueprints;
+		}
+	}
 
 	public BlueprintFaction Faction => m_Faction?.Get();
 
@@ -133,7 +150,7 @@ public class StarshipPerformAttackTrigger : UnitFactComponentDelegate, IInitiato
 
 	public void OnEventDidTrigger(RuleStarshipPerformAttack evt)
 	{
-		if ((triggerType == TriggerType.AsInitiator && evt.Initiator != base.Owner) || (triggerType == TriggerType.AsTarget && evt.Target != base.Owner) || (aeType == AEType.Require && !evt.Weapon.IsAEAmmo) || (aeType == AEType.Exclude && evt.Weapon.IsAEAmmo) || (CheckInitiatorFaction && evt.Initiator.Faction.Blueprint != Faction) || (IsAttachedToAbility && TriggerForThisAbilityOnly && evt.Ability.Blueprint != base.OwnerBlueprint))
+		if ((triggerType == TriggerType.AsInitiator && evt.Initiator != base.Owner) || (triggerType == TriggerType.AsTarget && evt.Target != base.Owner) || (aeType == AEType.Require && !evt.Weapon.IsAEAmmo) || (aeType == AEType.Exclude && evt.Weapon.IsAEAmmo) || (CheckInitiatorFaction && evt.Initiator.Faction.Blueprint != Faction) || (CheckWeaponBlueprint && !WeaponBlueprints.Contains(evt.Weapon.Blueprint)) || (IsAttachedToAbility && TriggerForThisAbilityOnly && evt.Ability.Blueprint != base.OwnerBlueprint))
 		{
 			return;
 		}

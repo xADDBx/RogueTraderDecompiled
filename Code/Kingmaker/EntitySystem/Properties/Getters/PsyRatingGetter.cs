@@ -7,9 +7,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("8b570f3f321a21e4ba220a9d20cb6190")]
 public class PsyRatingGetter : MechanicEntityPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "PR";
+		return "PR of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

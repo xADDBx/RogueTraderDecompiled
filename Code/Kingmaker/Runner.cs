@@ -18,6 +18,7 @@ using Kingmaker.QA.Arbiter.Profiling;
 using Kingmaker.QA.Overlays;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
+using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Core.Overlays;
@@ -57,6 +58,11 @@ public class Runner : MonoBehaviour
 			Physics.autoSimulation = false;
 			OverlayService.EnsureOverlaysInitialized();
 			OverlayService.Instance.RegisterOverlay(new CountersOverlay());
+			OverlayService.Instance.RegisterOverlay(new NetworkingOverlay());
+			if (BuildModeUtility.IsDevelopment)
+			{
+				OverlayService.Instance.RegisterOverlay(new WwiseMonitorOverlay());
+			}
 			PhotonManager.NetGame.InitPlatform();
 		}
 	}
@@ -123,7 +129,6 @@ public class Runner : MonoBehaviour
 			if (!SkipInit)
 			{
 				AkAudioService.EnsureAudioInitialized();
-				EnsureBasicAudioBanks();
 				SettingsController.Instance.InitializeSoundController();
 				Game.EnsureGameLifetimeServices();
 				ModInitializer.InitializeMods();
@@ -166,19 +171,6 @@ public class Runner : MonoBehaviour
 
 	public static void EnsureBasicAudioBanks()
 	{
-		SoundBanksManager.LoadBankSync("Main");
-		SoundBanksManager.LoadBankSync("VFX");
-		SoundBanksManager.LoadBankSync("Interface");
-		SoundBanksManager.LoadBankSync("Music");
-		SoundBanksManager.LoadBankSync("Foley");
-		SoundBanksManager.LoadBankSync("Tech");
-		SoundBanksManager.LoadBankSync("Dialogues");
-		SoundBanksManager.LoadBankSync("Weapons");
-		SoundBanksManager.LoadBankSync("Weather");
-		SoundBanksManager.LoadBankSync("InteractiveObjects");
-		SoundBanksManager.LoadBankSync("NARR_Interchapters");
-		SoundBanksManager.LoadBankSync("SplashScreen");
-		AkSoundEngineController.Instance?.LateUpdate();
 		Runner.OnBasicAudioBanksLoaded?.Invoke();
 		BasicAudioBanksLoaded = true;
 	}

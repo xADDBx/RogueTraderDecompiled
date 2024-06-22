@@ -17,7 +17,7 @@ public class AddNavigatorResource : GameAction
 		return "Add navigator resource";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.SectorMapController.ChangeNavigatorResourceCount(AddCount);
 	}

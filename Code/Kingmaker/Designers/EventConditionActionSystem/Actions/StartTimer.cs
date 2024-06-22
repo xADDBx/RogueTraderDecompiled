@@ -28,11 +28,14 @@ public class StartTimer : GameAction
 		return "Start timer";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_Conditions.Check())
 		{
-			SimpleTimer timer = new SimpleTimer(m_Actions.Run, TimerTime.GetValue().Time);
+			SimpleTimer timer = new SimpleTimer(delegate
+			{
+				m_Actions.Run();
+			}, TimerTime.GetValue().Time);
 			EventBus.RaiseEvent(delegate(ITimerHandler e)
 			{
 				e.SubscribeTimer(timer);

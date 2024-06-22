@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Localization;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.RuleSystem.Rules.Modifiers;
@@ -31,8 +32,9 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 			ResultValue = resultValue;
 			m_KeyOrders = new List<string>();
 			m_Values = new Dictionary<string, int>();
-			m_KeyOrders.Add("Base");
-			m_Values.Add("Base", baseValue);
+			LocalizedString baseValue2 = LocalizedTexts.Instance.Descriptors.BaseValue;
+			m_KeyOrders.Add(baseValue2);
+			m_Values.Add(baseValue2, baseValue);
 		}
 
 		public void AddModifier(ModifiableValue.Modifier modifier)
@@ -83,7 +85,7 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 	[CanBeNull]
 	private List<GameLogRuleEvent<RuleDealDamage>> m_TargetDamageList;
 
-	private Dictionary<MechanicsFeatureType, List<FeatureCountableFlag.BuffList.Element>> m_AssociatedBuffs = new Dictionary<MechanicsFeatureType, List<FeatureCountableFlag.BuffList.Element>>();
+	private readonly Dictionary<MechanicsFeatureType, List<FeatureCountableFlag.BuffList.Element>> m_AssociatedBuffs = new Dictionary<MechanicsFeatureType, List<FeatureCountableFlag.BuffList.Element>>();
 
 	private readonly List<FeatureCountableFlag.BuffList.Element> m_Empty = new List<FeatureCountableFlag.BuffList.Element>();
 
@@ -123,7 +125,7 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 
 	public bool IsPushTrigger { get; private set; }
 
-	public int? AssassinLethality { get; private set; }
+	public int? AssassinLethality { get; }
 
 	public GameLogEventAttack(RulePerformAttack rule)
 		: base(rule)
@@ -152,7 +154,8 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 			new Tuple<BaseUnitEntity, List<MechanicsFeatureType>>(base.Rule.TargetUnit, new List<MechanicsFeatureType>
 			{
 				MechanicsFeatureType.AutoDodge,
-				MechanicsFeatureType.AutoParry
+				MechanicsFeatureType.AutoParry,
+				MechanicsFeatureType.AutoDodgeFriendlyFire
 			})
 		})
 		{
@@ -204,7 +207,12 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 
 	public IReadOnlyList<FeatureCountableFlag.BuffList.Element> GetAutoDodgeAssociatedBuffs()
 	{
-		return GetMechanicFeatureAssociatedBuffs(MechanicsFeatureType.AutoDodge);
+		IReadOnlyList<FeatureCountableFlag.BuffList.Element> mechanicFeatureAssociatedBuffs = GetMechanicFeatureAssociatedBuffs(MechanicsFeatureType.AutoDodge);
+		if (!mechanicFeatureAssociatedBuffs.Equals(m_Empty))
+		{
+			return mechanicFeatureAssociatedBuffs;
+		}
+		return GetMechanicFeatureAssociatedBuffs(MechanicsFeatureType.AutoDodgeFriendlyFire);
 	}
 
 	public IReadOnlyList<FeatureCountableFlag.BuffList.Element> GetAutoParryAssociatedBuffs()

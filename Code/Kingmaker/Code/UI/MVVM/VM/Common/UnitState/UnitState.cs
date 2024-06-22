@@ -167,7 +167,7 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 		UpdateTBMUnit();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateTBMUnit();
 	}
@@ -360,18 +360,36 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		if (entity == Unit.MechanicEntity)
+		if (entity != Unit.MechanicEntity)
 		{
-			IsPingUnit.Value = true;
-			m_PingTween?.Kill();
-			m_PingTween = DOTween.To(() => 1f, delegate
+			return;
+		}
+		IsPingUnit.Value = true;
+		EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+		{
+			h.HandleAddPingEntityMarker(entity);
+		});
+		m_PingTween?.Kill();
+		m_PingTween = DOTween.To(() => 1f, delegate
+		{
+		}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+		{
+			IsPingUnit.Value = false;
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
 			{
-			}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+				h.HandleRemovePingEntityMarker(entity);
+			});
+			m_PingTween = null;
+		})
+			.OnKill(delegate
 			{
 				IsPingUnit.Value = false;
+				EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+				{
+					h.HandleRemovePingEntityMarker(entity);
+				});
 				m_PingTween = null;
 			});
-		}
 	}
 
 	public void HandleLootDroppedAsAttached()

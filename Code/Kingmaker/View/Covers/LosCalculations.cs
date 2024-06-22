@@ -34,6 +34,11 @@ public static class LosCalculations
 			Height = height;
 			Node = node;
 		}
+
+		public override string ToString()
+		{
+			return $"{Node} H={Height} ({Factor * 100f}%)";
+		}
 	}
 
 	private struct HeightAccumulatorVisitor : Linecast.ICanTransitionBetweenCells
@@ -294,7 +299,7 @@ public static class LosCalculations
 			}
 			int count = nodeHeights.Count;
 			HeightAccumulatorVisitor condition = new HeightAccumulatorVisitor(((Vector3)from.position).y, nodeHeights);
-			if (Linecast.LinecastGrid((CustomGridGraph)from.Graph, (Vector3)from.position, (Vector3)to.position + dstOffset, from, out var hit, null, ref condition))
+			if (Linecast.LinecastGrid((CustomGridGraph)from.Graph, (Vector3)from.position, (Vector3)to.position + dstOffset, from, out var hit, null, ref condition, 0.0001f))
 			{
 				obstacle = new Obstacle((CustomGridNodeBase)hit.node);
 				return false;

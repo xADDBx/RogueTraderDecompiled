@@ -1,3 +1,4 @@
+using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -52,18 +53,18 @@ public sealed class UnitMoveContinuously : UnitCommand<UnitMoveContinuouslyParam
 		}
 		unitMovementAgentContinuous.DirectionFromController = base.Params.Direction;
 		unitMovementAgentContinuous.DirectionFromControllerMagnitude = base.Params.Multiplier;
-		if (base.Params.Multiplier >= 0.7f)
-		{
-			Accelerate();
-		}
-		else
-		{
-			Decelerate();
-		}
+		UpdateMovementType(base.Params.Multiplier);
 		if (!unitMovementAgentContinuous.WantsToMove && !unitMovementAgentContinuous.IsTraverseInProgress)
 		{
 			OnEnded();
 		}
+	}
+
+	private void UpdateMovementType(float multiplier)
+	{
+		UnitMoveContinuouslyParams @params = base.Params;
+		WalkSpeedType movementType = ((!(multiplier > 0.95f)) ? ((!(multiplier > 0.7f)) ? WalkSpeedType.Walk : WalkSpeedType.Run) : WalkSpeedType.Sprint);
+		@params.MovementType = movementType;
 	}
 
 	protected override void OnEnded()

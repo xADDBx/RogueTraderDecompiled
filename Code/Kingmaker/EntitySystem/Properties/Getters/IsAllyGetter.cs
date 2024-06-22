@@ -24,8 +24,8 @@ public class IsAllyGetter : MechanicEntityPropertyGetter, PropertyContextAccesso
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"Is ally to {Target}";
+		return "Is " + FormulaTargetScope.Current + " ally to " + Target.Colorized();
 	}
 }

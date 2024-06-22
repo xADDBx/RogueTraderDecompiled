@@ -2,6 +2,7 @@ using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.ElementsSystem;
 using Kingmaker.UI.Common;
 using TMPro;
 using UnityEngine;
@@ -16,7 +17,7 @@ public class ShowFeedbackMessageBox : ShowMessageBox
 		return "Show feedback message box";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		UIUtility.ShowMessageBox(Text, DialogMessageBoxBase.BoxType.Message, delegate
 		{
@@ -29,11 +30,11 @@ public class ShowFeedbackMessageBox : ShowMessageBox
 		FeedbackPopupItem value;
 		if (!Enum.TryParse<FeedbackPopupItemType>(linkInfo.GetLinkID(), out var result))
 		{
-			PFLog.UI.Error("Cannot parse link feedback type!");
+			Element.LogError("Cannot parse link feedback type!");
 		}
 		else if (!FeedbackPopupConfigLoader.Instance.ItemsMap.TryGetValue(result, out value))
 		{
-			PFLog.UI.Error($"Cannot get feedback item with type: {result}!");
+			Element.LogError($"Cannot get feedback item with type: {result}!");
 		}
 		else
 		{

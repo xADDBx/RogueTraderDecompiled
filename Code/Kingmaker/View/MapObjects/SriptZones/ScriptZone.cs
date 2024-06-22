@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
@@ -11,6 +12,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.View.MapObjects.SriptZones;
 
+[KnowledgeDatabaseID("166fbc22bc0f466428491ffb6056bb27")]
 public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 {
 	[Serializable]

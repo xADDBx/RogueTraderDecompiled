@@ -1,13 +1,17 @@
 using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
+using Kingmaker.Utility.CodeTimer;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.View.Mechanics;
 using Kingmaker.Visual.Particles;
@@ -17,6 +21,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;
 
+[KnowledgeDatabaseID("6c9e918a566788343b39a46a9e3f3a1c")]
 public class AreaEffectView : MechanicEntityView
 {
 	[SerializeField]
@@ -33,6 +38,8 @@ public class AreaEffectView : MechanicEntityView
 	private TimeSpan m_CreationTime;
 
 	private TimeSpan? m_Duration;
+
+	private OverrideAreaEffectPatternData? m_OverridePatternData;
 
 	private GameObject m_SpawnedFx;
 
@@ -51,13 +58,14 @@ public class AreaEffectView : MechanicEntityView
 
 	public new AreaEffectEntity Data => (AreaEffectEntity)base.Data;
 
-	public void InitAtRuntime([NotNull] MechanicsContext context, [NotNull] BlueprintAbilityAreaEffect blueprint, [NotNull] TargetWrapper target, TimeSpan creationTime, TimeSpan? duration)
+	public void InitAtRuntime([NotNull] MechanicsContext context, [NotNull] BlueprintAbilityAreaEffect blueprint, [NotNull] TargetWrapper target, TimeSpan creationTime, TimeSpan? duration, OverrideAreaEffectPatternData? overridenPatternData = null)
 	{
 		m_Blueprint = blueprint.ToReference<BlueprintAbilityAreaEffectReference>();
 		m_Context = context;
 		m_Target = target;
 		m_CreationTime = creationTime;
 		m_Duration = duration;
+		m_OverridePatternData = overridenPatternData;
 		base.name = $"Area effect ({blueprint})";
 		base.ViewTransform.position = (OnUnit ? target.Point : target.NearestNode.Vector3Position);
 		IScriptZoneShape shape;
@@ -110,7 +118,35 @@ public class AreaEffectView : MechanicEntityView
 		IL_00ae:
 		CustomGridNodeBase actualCastNode;
 		OrientedPatternData pattern = AoEPatternHelper.GetOrientedPattern(null, caster, blueprint.Pattern, blueprint, nearestNodeXZUnwalkable, m_TargetNode, castOnSameLevel: false, directional: false, coveredTargetsOnly: false, out actualCastNode);
+		if (m_OverridePatternData.HasValue)
+		{
+			actualCastNode = m_OverridePatternData.Value.Pattern.ApplicationNode ?? actualCastNode;
+			if (m_OverridePatternData.Value.OverridePatternWithAttackPattern)
+			{
+				CustomGridNodeBase appliedNode = actualCastNode;
+				float y = actualCastNode.Vector3Position.y;
+				OrientedPatternData pattern2 = m_OverridePatternData.Value.Pattern;
+				scriptZonePattern.SetPattern(appliedNode, y, in pattern2);
+				return;
+			}
+			if (m_TargetNode == null)
+			{
+				throw new Exception("AreaEffectView[" + base.name + "]: m_TargetNode is null");
+			}
+			pattern = SetupAreaEffectPatternNotFromPatternCenter(blueprint, base.EntityData, nearestNodeXZUnwalkable, actualCastNode, m_TargetNode);
+		}
 		scriptZonePattern.SetPattern(actualCastNode, actualCastNode.Vector3Position.y, in pattern);
+	}
+
+	private static OrientedPatternData SetupAreaEffectPatternNotFromPatternCenter(BlueprintAbilityAreaEffect blueprint, MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase applicationNode, [NotNull] CustomGridNodeBase targetNode)
+	{
+		CustomGridNodeBase innerNodeNearestToTarget = caster.GetInnerNodeNearestToTarget(casterNode, targetNode.Vector3Position);
+		CustomGridNodeBase outerNodeNearestToTarget = caster.GetOuterNodeNearestToTarget(casterNode, targetNode.Vector3Position);
+		using (ProfileScope.New("GetOriented from AreaEffectView"))
+		{
+			Vector3 castDirection = AoEPattern.GetCastDirection(blueprint.Pattern.Type, innerNodeNearestToTarget, applicationNode, targetNode);
+			return blueprint.Pattern.GetOriented(innerNodeNearestToTarget, outerNodeNearestToTarget, castDirection, ((IAbilityAoEPatternProvider)blueprint).IsIgnoreLos, ((IAbilityAoEPatternProvider)blueprint).IsIgnoreLevelDifference, isDirectional: true, coveredTargetsOnly: false, blueprint.UseMeleeLos);
+		}
 	}
 
 	public bool Contains(BaseUnitEntity unit)

@@ -13,6 +13,15 @@ public static class Vector2Extensions
 		return false;
 	}
 
+	public static bool Approximately(this Vector2 a, Vector2 b)
+	{
+		if (Mathf.Approximately(a.x, b.x))
+		{
+			return Mathf.Approximately(a.y, b.y);
+		}
+		return false;
+	}
+
 	public static Vector2 RotateTowards(this Vector2 current, Vector2 target, float maxRadiansDelta, float maxMagnitudeDelta)
 	{
 		return Vector3.RotateTowards(current, target, maxRadiansDelta, maxMagnitudeDelta);

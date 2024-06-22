@@ -1,6 +1,7 @@
 using System;
 using Kingmaker;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Base;
 using Kingmaker.Blueprints.JsonSystem.Converters;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Newtonsoft.Json.Linq;
@@ -51,6 +52,15 @@ public class BlueprintFieldOverrideOperation : BlueprintPatchOperation
 			field.SetValue(fieldHolder, obj2);
 			return;
 		}
+		if (typeof(IReferenceBase).IsAssignableFrom(fieldType))
+		{
+			object obj3 = BlueprintPatchObjectComparator.TryFixFalseSerializedBlueprintReference(FieldValue, fieldType);
+			if (obj3 != null)
+			{
+				field.SetValue(fieldHolder, obj3);
+				return;
+			}
+		}
 		try
 		{
 			field.SetValue(fieldHolder, FieldValue);
@@ -84,6 +94,10 @@ public class BlueprintFieldOverrideOperation : BlueprintPatchOperation
 
 	public override string ToString()
 	{
-		return base.ToString() + " \n BlueprintFieldOverrideOperation " + FieldValue.ToString();
+		if (FieldValue != null)
+		{
+			return base.ToString() + " \n BlueprintFieldOverrideOperation " + FieldValue.ToString();
+		}
+		return base.ToString() + " \n BlueprintFieldOverrideOperation null";
 	}
 }

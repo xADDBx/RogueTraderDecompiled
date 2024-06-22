@@ -20,7 +20,7 @@ public class SpawnByUnitGroup : GameAction
 
 	public ActionList ActionsOnSpawn;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		UnitGroupView unitGroupView = m_Group.FindView() as UnitGroupView;
 		if (unitGroupView == null)

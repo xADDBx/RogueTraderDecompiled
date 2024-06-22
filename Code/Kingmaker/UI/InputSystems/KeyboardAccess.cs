@@ -124,6 +124,11 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 			stringBuilder.Append(UIStrings.Instance.KeyboardTexts.GetStringByKeyCode(Key));
 			return stringBuilder.ToString();
 		}
+
+		public override string ToString()
+		{
+			return $"{Name} ({GameMode}) [{GetDisplayText()}]";
+		}
 	}
 
 	private readonly Dictionary<string, List<Action>> m_BindingCallbacks = new Dictionary<string, List<Action>>();
@@ -217,7 +222,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 
 	private void OnCallbackByBinding(Binding binding, bool force = false)
 	{
-		if (binding.GameMode != Game.Instance.CurrentMode || (Game.Instance.IsPaused && Game.Instance.PauseController.IsPausedByLocalPlayer && !binding.WorksWhenUIPaused) || !m_BindingCallbacks.TryGetValue(binding.Name, out var value) || value.Count == 0 || (!binding.InputMatched() && !force) || (OwlcatModificationsWindow.IsActive && UISettingsRoot.Instance.UIKeybindGeneralSettings.OpenModificationsWindow.name != binding.Name))
+		if (binding.GameMode != Game.Instance.CurrentMode || (Game.Instance.PauseController.IsPausedByLocalPlayer && !binding.WorksWhenUIPaused) || !m_BindingCallbacks.TryGetValue(binding.Name, out var value) || value.Count == 0 || (!binding.InputMatched() && !force) || (OwlcatModificationsWindow.IsActive && UISettingsRoot.Instance.UIKeybindGeneralSettings.OpenModificationsWindow.name != binding.Name))
 		{
 			return;
 		}
@@ -233,7 +238,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.UI.Exception(ex);
 		}
 	}
 
@@ -290,7 +295,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 				{
 					return;
 				}
-				PFLog.Default.Warning("Key binding {0}[shift={1}; alt={2}; ctrl={3}; side={4}; worksWhenUIPaused={5}] conflicts with {6}", name, binding.IsShiftDown, binding.IsCtrlDown, binding.IsAltDown, binding.Side, binding.WorksWhenUIPaused, binding.Name);
+				PFLog.UI.Warning("Key binding {0}[shift={1}; alt={2}; ctrl={3}; side={4}; worksWhenUIPaused={5}] conflicts with {6}", name, binding.IsShiftDown, binding.IsCtrlDown, binding.IsAltDown, binding.Side, binding.WorksWhenUIPaused, binding.Name);
 			}
 		}
 		Binding item = new Binding(name, key, gameMode, ctrl, alt, shift, release, side, worksWhenUIPaused);
@@ -339,7 +344,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		}
 		if (m_Bindings.All((Binding b) => b.Name != bindingName))
 		{
-			PFLog.Default.Warning("Bind: no binding named {0}", bindingName);
+			PFLog.UI.Warning("Bind: no binding named {0}", bindingName);
 		}
 		m_BindingsToUnbind.RemoveAll((BindingPair v) => v.BindName == bindingName && v.Callback == callback);
 		if (!m_BindingCallbacks.TryGetValue(bindingName, out var value))
@@ -372,7 +377,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 	{
 		if (m_Bindings.All((Binding b) => b.Name != bindingName))
 		{
-			PFLog.Default.Warning("Bind: no binding named {0}", bindingName);
+			PFLog.UI.Warning("Bind: no binding named {0}", bindingName);
 		}
 		if (m_BindingCallbacks.TryGetValue(bindingName, out var value))
 		{
@@ -442,6 +447,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 			RegisterBinding("ReloadUI", KeyCode.R, gameModesArray, ctrl: true, alt: false, shift: false);
 			RegisterBinding("ChangeUINextPlatform", KeyCode.RightArrow, gameModesArray, ctrl: false, alt: true, shift: true);
 			RegisterBinding("ChangeUIPrevPlatform", KeyCode.LeftArrow, gameModesArray, ctrl: false, alt: true, shift: true);
+			RegisterBinding("ShowDebugBubble", KeyCode.E, gameModesArray, ctrl: true, alt: true, shift: false);
 		}
 		else
 		{

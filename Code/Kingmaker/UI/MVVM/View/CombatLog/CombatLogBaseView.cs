@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using Kingmaker.Code.UI.MVVM.View.Other;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -35,22 +34,20 @@ public abstract class CombatLogBaseView : ViewBase<CombatLogVM>, IResizeElement,
 	[SerializeField]
 	private FadeAnimator m_Animator;
 
-	[Header("Combat Log Modes")]
-	[SerializeField]
-	private float m_MoveAnimationTime = 0.2f;
-
+	[Header("PinnedContainer")]
 	[SerializeField]
 	protected RectTransform m_PinnedContainer;
 
 	[SerializeField]
-	protected CanvasTransformSettings m_PinnedContainerShowSettings;
+	protected MoveAnimator m_ContainerMoveAnimator;
 
 	[SerializeField]
-	private CanvasTransformSettings m_PinnedContainerHideSettings;
+	protected FadeAnimator m_ContainerFadeAnimator;
 
 	[Header("Channels")]
+	[Space]
 	[SerializeField]
-	protected List<OwlcatToggle> m_Toggles;
+	protected List<CombatLogToggleWithCustomHint> m_Toggles;
 
 	[SerializeField]
 	protected List<TextMeshProUGUI> m_ToggleTexts;
@@ -64,12 +61,12 @@ public abstract class CombatLogBaseView : ViewBase<CombatLogVM>, IResizeElement,
 
 	protected bool CombatLogVisible = true;
 
-	protected readonly List<Tweener> m_StartedTweeners = new List<Tweener>();
+	protected readonly List<Tweener> StartedTweeners = new List<Tweener>();
 
 	public virtual void Initialize()
 	{
 		m_VirtualList.Initialize(new VirtualListElementTemplate<CombatLogItemVM>(m_LogItemView), new VirtualListElementTemplate<CombatLogSeparatorVM>(m_LogSeparatorView));
-		MoveContainer(m_PinnedContainer, m_PinnedContainerHideSettings, animated: false);
+		SetContainerState(state: false);
 	}
 
 	protected override void BindViewImplementation()
@@ -87,11 +84,11 @@ public abstract class CombatLogBaseView : ViewBase<CombatLogVM>, IResizeElement,
 
 	protected override void DestroyViewImplementation()
 	{
-		m_StartedTweeners.ForEach(delegate(Tweener t)
+		StartedTweeners.ForEach(delegate(Tweener t)
 		{
 			t.Kill();
 		});
-		m_StartedTweeners.Clear();
+		StartedTweeners.Clear();
 	}
 
 	private void OnItemsAdded(int count)
@@ -166,27 +163,22 @@ public abstract class CombatLogBaseView : ViewBase<CombatLogVM>, IResizeElement,
 		}
 		else
 		{
-			MoveContainer(m_PinnedContainer, m_PinnedContainerHideSettings, animated: true);
+			SetContainerState(state: false);
 			UISounds.Instance.Sounds.CombatLog.CombatLogClose.Play();
 		}
 	}
 
-	protected void MoveContainer(RectTransform rectTransform, CanvasTransformSettings settings, bool animated)
+	protected void SetContainerState(bool state)
 	{
-		if (!(rectTransform == null))
+		if (state)
 		{
-			if (animated)
-			{
-				m_StartedTweeners.Add(rectTransform.DORotateQuaternion(Quaternion.Euler(settings.Rotation), m_MoveAnimationTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true));
-				m_StartedTweeners.Add(rectTransform.DOAnchorPos(settings.LocalPosition, m_MoveAnimationTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true));
-				m_StartedTweeners.Add(rectTransform.DOScale(settings.LocalScale, m_MoveAnimationTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true));
-			}
-			else
-			{
-				rectTransform.rotation = Quaternion.Euler(settings.Rotation);
-				rectTransform.anchoredPosition = settings.LocalPosition;
-				rectTransform.localScale = settings.LocalScale;
-			}
+			m_ContainerMoveAnimator.Or(null)?.AppearAnimation();
+			m_ContainerFadeAnimator.Or(null)?.AppearAnimation();
+		}
+		else
+		{
+			m_ContainerMoveAnimator.Or(null)?.DisappearAnimation();
+			m_ContainerFadeAnimator.Or(null)?.DisappearAnimation();
 		}
 	}
 

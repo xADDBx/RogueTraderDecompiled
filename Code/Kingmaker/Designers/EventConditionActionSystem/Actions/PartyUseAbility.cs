@@ -15,11 +15,11 @@ public class PartyUseAbility : GameAction
 		return string.Format("Party use ability{0}: {1}", AllowItems ? " (items allowed)" : "", Description);
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!AbilitiesHelper.PartyUseAbility(Description, AllowItems, spend: true))
 		{
-			PFLog.Default.Error($"Party can't use ability {Description}");
+			Element.LogError("Party can't use ability {0}", Description);
 		}
 	}
 }

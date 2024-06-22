@@ -101,6 +101,8 @@ public class UICharGen
 
 	public LocalizedString Pregen;
 
+	public LocalizedString CustomCharacterPregen;
+
 	public LocalizedString CreateCustomCharacter;
 
 	public LocalizedString AvailableStatsPointLeft;
@@ -192,12 +194,23 @@ public class UICharGen
 
 	public LocalizedString AddPortrait;
 
+	public LocalizedString WaitForDownloadingPortraits;
+
 	[Header("Buttons Hints")]
 	public LocalizedString SelectDoctrineHint;
 
 	public LocalizedString SpreadOutPointsHint;
 
 	public LocalizedString SkillPointsContainerHint;
+
+	[Header("Pregens")]
+	public LocalizedString CreateNewCompanion;
+
+	public LocalizedString CreateNewCompanionDescription;
+
+	public LocalizedString CreateNewNavigator;
+
+	public LocalizedString CreateNewNavigatorDescription;
 
 	public string GetPageLabelByType(CharGenAppearancePageType pageType)
 	{

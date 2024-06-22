@@ -7,6 +7,7 @@ using Kingmaker.DLC;
 using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.LevelUp;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
@@ -101,6 +102,10 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 			m_Subscribed = true;
 		}
 		TrySelectItem();
+		if (!m_ShipNameWasEdited)
+		{
+			SetName(GetDefaultName());
+		}
 	}
 
 	protected virtual void Clear()
@@ -146,7 +151,10 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 			PFLog.UI.Error("[HandleSetShip] Item was not found! Blueprint=" + blueprintStarship.AssetGuid);
 			return;
 		}
-		SelectedShipEntity.Value = charGenShipItemVM;
+		if (!UINetUtility.IsControlMainCharacter())
+		{
+			SelectedShipEntity.Value = charGenShipItemVM;
+		}
 		m_SelectionStateShip?.SelectShip(charGenShipItemVM.ChargenUnit.Unit);
 		if (!m_ShipNameWasEdited)
 		{
@@ -202,7 +210,12 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 
 	public string GetRandomName()
 	{
-		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetRandomShipName();
+		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetRandomShipName(ShipName.Value);
+	}
+
+	private string GetDefaultName()
+	{
+		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetDefaultShipName(string.Empty);
 	}
 
 	public void ShowChangeNameMessageBox(Action onComplete = null)

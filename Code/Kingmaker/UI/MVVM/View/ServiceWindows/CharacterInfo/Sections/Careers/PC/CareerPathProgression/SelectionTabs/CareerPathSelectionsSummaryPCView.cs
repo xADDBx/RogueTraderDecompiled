@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
+using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using UniRx;
 using UnityEngine;
 
@@ -22,15 +23,17 @@ public class CareerPathSelectionsSummaryPCView : BaseCareerPathSelectionTabPCVie
 	{
 		base.BindViewImplementation();
 		SetHeader(null);
+		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
 		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
-		AddDisposable(base.ViewModel.CanCommit.CombineLatest(base.ViewModel.AllVisited, (bool canCommit, bool allVisited) => canCommit && allVisited).Subscribe(delegate(bool value)
+		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
+		SetNextButtonInteractable(value: true);
+		SetBackButtonInteractable(value: false);
+		AddDisposable(base.ViewModel.CanCommit.CombineLatest(base.ViewModel.PointerItem, (bool canCommit, IRankEntrySelectItem pointerItem) => canCommit && pointerItem == null).Subscribe(delegate(bool value)
 		{
-			string nextButtonLabel = (value ? UIStrings.Instance.CharGen.Complete : UIStrings.Instance.CharGen.Next);
-			SetNextButtonLabel(nextButtonLabel);
+			base.CanCommit = value;
+			SetFinishInteractable(value);
 		}));
 		m_InfoView.Bind(base.ViewModel.TabInfoSectionVM);
-		SetFirstSelectableVisibility(base.ViewModel.HasDifferentFirstSelectable);
-		SetFirstSelectableInteractable(base.ViewModel.HasDifferentFirstSelectable);
 		SetButtonVisibility(base.ViewModel.IsInLevelupProcess);
 	}
 
@@ -42,19 +45,12 @@ public class CareerPathSelectionsSummaryPCView : BaseCareerPathSelectionTabPCVie
 
 	public override void UpdateState()
 	{
+		SetButtonVisibility(base.ViewModel.IsInLevelupProcess && (!base.ViewModel.IsSelected.Value || base.ViewModel.CurrentRank.Value != 0));
 	}
 
 	protected override void HandleClickNext()
 	{
-		if (base.ViewModel.CanCommit.Value && base.ViewModel.AllVisited.Value)
-		{
-			base.ViewModel.Commit();
-			SetButtonVisibility(value: false);
-		}
-		else
-		{
-			base.ViewModel.SelectNextItem();
-		}
+		base.ViewModel.SelectNextItem();
 	}
 
 	protected override void HandleClickBack()
@@ -62,8 +58,8 @@ public class CareerPathSelectionsSummaryPCView : BaseCareerPathSelectionTabPCVie
 		base.ViewModel.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
+	protected override void HandleClickFinish()
 	{
-		base.ViewModel.SetFirstSelectableRankEntry();
+		base.ViewModel.Commit();
 	}
 }

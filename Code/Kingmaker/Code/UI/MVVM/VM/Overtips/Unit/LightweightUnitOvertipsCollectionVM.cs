@@ -19,7 +19,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 
-public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<LightweightUnitOvertipVM>, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IGameModeHandler, IReloadMechanicsHandler, IAreaActivationHandler, IAreaHandler, ISurroundingInteractableObjectsCountHandler, IEntitySuppressedHandler, ISubscriber<IEntity>
+public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<LightweightUnitOvertipVM>, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IGameModeHandler, IReloadMechanicsHandler, IAreaActivationHandler, IAreaHandler, ISurroundingInteractableObjectsCountHandler, IEntitySuppressedHandler, ISubscriber<IEntity>, IInGameHandler
 {
 	private static readonly float DeathEntityRemoveDelay = 4f;
 
@@ -31,7 +31,14 @@ public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<Lightwei
 
 	protected override IEnumerable<Entity> Entities => Game.Instance.State.AllUnits.All.Where((AbstractUnitEntity e) => e.IsInGame && e is LightweightUnitEntity);
 
-	protected override Func<LightweightUnitOvertipVM, Entity, bool> OvertipGetter => (LightweightUnitOvertipVM vm, Entity entity) => vm.Unit == entity as MechanicEntity || vm.UnitUIWrapper.UniqueId == entity.UniqueId;
+	protected override bool OvertipGetter(LightweightUnitOvertipVM vm, Entity entity)
+	{
+		if (vm.Unit != entity as MechanicEntity)
+		{
+			return vm.UnitUIWrapper.UniqueId == entity.UniqueId;
+		}
+		return true;
+	}
 
 	public LightweightUnitOvertipsCollectionVM()
 	{
@@ -186,5 +193,14 @@ public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<Lightwei
 	public void HandleSurroundingInteractableObjectsCountChanged(EntityViewBase entity, bool isInNavigation, bool isChosen)
 	{
 		GetOvertip(entity.Data.ToEntity())?.HandleSurroundingObjectsChanged(isInNavigation, isChosen);
+	}
+
+	public void HandleObjectInGameChanged()
+	{
+		AbstractUnitEntity abstractUnitEntity = EventInvokerExtensions.AbstractUnitEntity;
+		if (abstractUnitEntity is LightweightUnitEntity)
+		{
+			AddEntity(abstractUnitEntity);
+		}
 	}
 }

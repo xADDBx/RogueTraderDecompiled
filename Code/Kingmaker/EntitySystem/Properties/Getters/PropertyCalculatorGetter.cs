@@ -10,6 +10,8 @@ public class PropertyCalculatorGetter : PropertyGetter
 {
 	public PropertyCalculator Value;
 
+	public override bool IsSimple => Value.IsSimple;
+
 	public override bool AddBracketsAroundInnerCaption => false;
 
 	protected override int GetBaseValue()
@@ -17,8 +19,8 @@ public class PropertyCalculatorGetter : PropertyGetter
 		return Value.GetValue(base.PropertyContext);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return Value.ToString();
+		return Value.GenerateDescription(useLineBreaks);
 	}
 }

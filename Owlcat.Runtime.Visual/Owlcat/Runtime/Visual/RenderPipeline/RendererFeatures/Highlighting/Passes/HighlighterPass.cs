@@ -189,7 +189,7 @@ public class HighlighterPass : ScriptableRenderPass
 		cameraPlanes.CopyFrom(m_CameraPlanesTemp);
 		m_Job.Bounds = m_Feature.Bounds;
 		m_Job.CameraPlanes = cameraPlanes;
-		m_JobHandle = m_Job.Schedule(m_Renderers.Count, 4);
+		m_JobHandle = IJobParallelForExtensions.Schedule(m_Job, m_Renderers.Count, 4);
 	}
 
 	public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)

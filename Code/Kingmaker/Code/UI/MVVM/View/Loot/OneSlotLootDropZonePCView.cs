@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement.Components;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
@@ -7,6 +8,7 @@ using Kingmaker.UI.Common.Animations;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
+using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,6 +22,9 @@ public class OneSlotLootDropZonePCView : ViewBase<OneSlotLootDropZoneVM>, IItemD
 
 	[SerializeField]
 	private FadeAnimator m_FadeAnimator;
+
+	[SerializeField]
+	private TextMeshProUGUI m_UnsupportedItemText;
 
 	public bool Interactable => true;
 
@@ -39,6 +44,7 @@ public class OneSlotLootDropZonePCView : ViewBase<OneSlotLootDropZoneVM>, IItemD
 			}));
 		}
 		AddDisposable(this.OnDropAsObservable().Subscribe(OnDrop));
+		m_UnsupportedItemText.text = UIStrings.Instance.LootWindow.DropZoneUnsupportedItem;
 	}
 
 	protected override void DestroyViewImplementation()

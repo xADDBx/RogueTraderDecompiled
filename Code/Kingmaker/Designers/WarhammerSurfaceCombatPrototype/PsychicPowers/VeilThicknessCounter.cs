@@ -47,7 +47,7 @@ public class VeilThicknessCounter : IUnitCommandEndHandler, ISubscriber<IMechani
 
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand command)
 	{
-		if (command.Executor.IsInCombat && command is UnitUseAbility unitUseAbility && unitUseAbility != null && unitUseAbility.Ability.Blueprint.AbilityParamsSource == WarhammerAbilityParamsSource.PsychicPower)
+		if (command.Executor.IsInCombat && command is UnitUseAbility unitUseAbility && unitUseAbility.Ability.Blueprint.AbilityParamsSource == WarhammerAbilityParamsSource.PsychicPower && !unitUseAbility.IsInterruptible)
 		{
 			Value = Rulebook.Trigger(new RuleCalculateVeilCount(command.Executor, unitUseAbility.Ability)).Result;
 		}

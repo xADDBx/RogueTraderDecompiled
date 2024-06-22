@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.Utility;
+using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
@@ -32,4 +33,9 @@ public abstract class ContextAction : GameAction
 
 	[CanBeNull]
 	protected RulePerformAttack AttackRule => ContextData<AbilityExecutionContext.Data>.Current?.AttackRule;
+
+	public virtual bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
+	{
+		return true;
+	}
 }

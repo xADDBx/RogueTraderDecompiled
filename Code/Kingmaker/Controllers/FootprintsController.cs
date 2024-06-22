@@ -112,14 +112,20 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 		List<Footprint> list = TempList.Get<Footprint>();
 		foreach (KeyValuePair<EntityRef<AbstractUnitEntity>, List<Footprint>> unitFootprint in m_UnitFootprints)
 		{
-			unitFootprint.Deconstruct(out var _, out var value);
+			unitFootprint.Deconstruct(out var key, out var value);
+			EntityRef<AbstractUnitEntity> entityRef = key;
 			List<Footprint> list2 = value;
 			Footprint footprint = list2.FirstItem();
-			if (footprint != null && !footprint.FadeOutTime.HasValue && ((float)list2.Count > (float)fxRoot.MaxFootprintsCountPerPlayerUnit * 0.75f || footprint.TimeLeft <= 0f))
+			if (footprint != null)
 			{
-				footprint.TimeLeft = null;
-				footprint.FadeOutTime = 0f;
-				footprint.MeshRenderer.material.renderQueue = 2000;
+				int num = ((entityRef.Entity?.IsInPlayerParty ?? false) ? fxRoot.MaxFootprintsCountPerPlayerUnit : Mathf.RoundToInt((float)fxRoot.MaxFootprintsCountPerPlayerUnit * fxRoot.MaxFootprintsCountModForNPC));
+				if ((double)list2.Count > (double)num * 0.75 || footprint.TimeLeft <= 0f)
+				{
+					footprint.TimeLeft = null;
+					float num2 = ((list2.Count > num) ? (fxRoot.FadeOutTimeSeconds * (1f - 1f / (float)(list2.Count - num))) : 0f);
+					footprint.FadeOutTime = ((!footprint.FadeOutTime.HasValue) ? num2 : Math.Max(num2, footprint.FadeOutTime.Value));
+					footprint.MeshRenderer.material.renderQueue = 2000;
+				}
 			}
 		}
 		foreach (Footprint footprint2 in m_Footprints)
@@ -134,9 +140,13 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 					list.Add(footprint2);
 				}
 			}
-			else if (footprint2.TimeLeft.HasValue && footprint2.TimeLeft > 0f)
+			else
 			{
-				footprint2.TimeLeft -= deltaTime;
+				float? timeLeft = footprint2.TimeLeft;
+				if (timeLeft.HasValue && timeLeft.GetValueOrDefault() > 0f)
+				{
+					footprint2.TimeLeft -= deltaTime;
+				}
 			}
 		}
 		foreach (Footprint item in list)

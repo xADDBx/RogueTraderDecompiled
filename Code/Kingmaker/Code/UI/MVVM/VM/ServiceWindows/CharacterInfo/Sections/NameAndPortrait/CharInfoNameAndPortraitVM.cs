@@ -12,7 +12,7 @@ public class CharInfoNameAndPortraitVM : CharInfoComponentWithLevelUpVM
 {
 	public readonly ReactiveProperty<string> UnitName = new ReactiveProperty<string>();
 
-	public ReactiveProperty<int> GroupCount = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> GroupCount = new ReactiveProperty<int>();
 
 	public Sprite UnitPortraitSmall => PreviewUnit.Value?.UISettings.Portrait?.SmallPortrait;
 

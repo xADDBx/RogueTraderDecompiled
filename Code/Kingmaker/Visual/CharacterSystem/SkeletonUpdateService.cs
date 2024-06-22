@@ -73,9 +73,12 @@ public class SkeletonUpdateService : RegisteredObjectBase, IService, ILateUpdata
 			}
 			foreach (Character item2 in value)
 			{
-				ref NativeList<JobHandle> jobHandles = ref m_JobHandles;
-				JobHandle value2 = item2.ScheduleBoneUpdateJob();
-				jobHandles.Add(in value2);
+				if (item2.HasBonesList)
+				{
+					ref NativeList<JobHandle> jobHandles = ref m_JobHandles;
+					JobHandle value2 = item2.ScheduleBoneUpdateJob();
+					jobHandles.Add(in value2);
+				}
 			}
 			JobHandle.CompleteAll(m_JobHandles);
 			foreach (Character item3 in value)

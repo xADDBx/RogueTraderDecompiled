@@ -40,21 +40,27 @@ public class BaseItemPart : TooltipBaseTemplate
 
 	protected readonly ItemTooltipData CompareItemTooltipData;
 
+	protected readonly bool IsScreenWindowTooltip;
+
 	protected bool HasCompareItem => CompareItemTooltipData != null;
 
-	public BaseItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
+	public BaseItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
 	{
 		Item = item;
 		BlueprintItem = item.Blueprint;
 		ItemTooltipData = itemTooltipData;
 		CompareItemTooltipData = compareItemTooltipData;
+		IsScreenWindowTooltip = isScreenWindowTooltip;
+		ContentSpacing = 0f;
 	}
 
-	public BaseItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
+	public BaseItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
 	{
 		BlueprintItem = blueprintItem;
 		ItemTooltipData = itemTooltipData;
 		CompareItemTooltipData = compareItemTooltipData;
+		IsScreenWindowTooltip = isScreenWindowTooltip;
+		ContentSpacing = 0f;
 	}
 
 	public override IEnumerable<ITooltipBrick> GetHeader(TooltipTemplateType type)
@@ -76,8 +82,8 @@ public class BaseItemPart : TooltipBaseTemplate
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		ItemsItemOrigin origin = BlueprintItem?.Origin ?? ItemsItemOrigin.None;
-		Sprite iconByOrigin = UIConfig.Instance.UIIcons.CargoTooltipIcons.GetIconByOrigin(origin);
 		string labelByOrigin = UIStrings.Instance.CargoTexts.GetLabelByOrigin(origin);
+		Sprite icon = (IsScreenWindowTooltip ? UIConfig.Instance.UIIcons.CargoIcons.GetIconByOrigin(origin) : UIConfig.Instance.UIIcons.CargoTooltipIcons.GetIconByOrigin(origin));
 		string rightLine = string.Empty;
 		if (!string.IsNullOrEmpty(labelByOrigin))
 		{
@@ -86,26 +92,8 @@ public class BaseItemPart : TooltipBaseTemplate
 			string arg = string.Format(UIStrings.Instance.Tooltips.ItemFooterLabel, labelByOrigin);
 			rightLine = string.Format(tooltipItemFooterFormat, text, arg);
 		}
-		List<ITooltipBrick> list2 = new List<ITooltipBrick>();
-		string endTurn = GetEndTurn(BlueprintItem);
-		Sprite moveEndPoints = UIConfig.Instance.UIIcons.TooltipIcons.MoveEndPoints;
-		string attackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(BlueprintItem);
-		Sprite actionEndPoints = UIConfig.Instance.UIIcons.TooltipIcons.ActionEndPoints;
-		if (!string.IsNullOrWhiteSpace(endTurn) || !string.IsNullOrWhiteSpace(attackAbilityGroupCooldown))
-		{
-			TextFieldParams textFieldParams = new TextFieldParams
-			{
-				FontColor = UIConfig.Instance.TooltipColors.Default,
-				FontStyles = FontStyles.Strikethrough
-			};
-			list2.Add(new TooltipBrickTripleText(endTurn, attackAbilityGroupCooldown, string.Empty, moveEndPoints, actionEndPoints, null, textFieldParams, textFieldParams, textFieldParams));
-		}
-		if (list2.Count > 0)
-		{
-			list.Add(new TooltipBrickSeparator(TooltipBrickElementType.Medium));
-			list.AddRange(list2);
-		}
-		list.Add(new TooltipBrickItemFooter(string.Empty, rightLine, iconByOrigin));
+		AddEndTurnInfo(list, type);
+		list.Add(new TooltipBrickItemFooter(string.Empty, rightLine, icon));
 		return list;
 	}
 
@@ -187,7 +175,7 @@ public class BaseItemPart : TooltipBaseTemplate
 		{
 			text = text2;
 		}
-		string text3 = ItemTooltipData.GetText(TooltipElement.Penetration) + "%";
+		string text3 = UIConfig.Instance.PercentHelper.AddPercentTo(ItemTooltipData.GetText(TooltipElement.Penetration));
 		if (!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(text3))
 		{
 			ComparisonResult comparisonLeft = ComparisonResult.Equal;
@@ -208,9 +196,7 @@ public class BaseItemPart : TooltipBaseTemplate
 				highlightLeft = blueprintItemWeapon2.WarhammerDamage > blueprintItemWeapon.WarhammerDamage;
 				highlightRight = blueprintItemWeapon2.WarhammerPenetration > blueprintItemWeapon.WarhammerPenetration;
 			}
-			Sprite damage = UIConfig.Instance.UIIcons.TooltipIcons.Damage;
-			Sprite penetration = UIConfig.Instance.UIIcons.TooltipIcons.Penetration;
-			bricks.Add(new TooltipBrickTwoColumnsStat(ItemTooltipData.GetLabel(TooltipElement.Damage), ItemTooltipData.GetLabel(TooltipElement.Penetration), text, text3, damage, penetration, comparisonLeft, comparisonRight, highlightLeft, highlightRight));
+			bricks.Add(new TooltipBrickTwoColumnsStat(ItemTooltipData.GetLabel(TooltipElement.Damage), ItemTooltipData.GetLabel(TooltipElement.Penetration), text, text3, null, null, comparisonLeft, comparisonRight, highlightLeft, highlightRight));
 		}
 	}
 
@@ -222,7 +208,6 @@ public class BaseItemPart : TooltipBaseTemplate
 		}
 		if (ItemTooltipData.Restrictions.Any() && type == TooltipTemplateType.Info)
 		{
-			bricks.Add(new TooltipBrickSpace());
 			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.Prerequisites, TooltipTitleType.H2));
 		}
 		bool flag = false;
@@ -269,8 +254,8 @@ public class BaseItemPart : TooltipBaseTemplate
 					}
 					else
 					{
-						int num = ((type == TooltipTemplateType.Info) ? 100 : 70);
-						bricks.Add(new TooltipBrickText($"<size={num}%>{UIStrings.Instance.Tooltips.or.Text}</size>"));
+						int num = ((type == TooltipTemplateType.Info) ? 100 : UIConfig.Instance.SubTextPercentSize);
+						bricks.Add(new TooltipBrickItemHeader($"<size={num}%>{UIStrings.Instance.Tooltips.or.Text}</size>"));
 						flag5 = false;
 					}
 				}
@@ -278,7 +263,7 @@ public class BaseItemPart : TooltipBaseTemplate
 				{
 					if (restrictionItem.UnitFact is BlueprintFeature feature)
 					{
-						bricks.Add(new TooltipBrickFeature(feature, isHeader: false, restrictionItem.MeetPrerequisite, type == TooltipTemplateType.Info));
+						bricks.Add(new TooltipBrickFeature(feature, isHeader: false, restrictionItem.MeetPrerequisite, type == TooltipTemplateType.Info, null, forceSetName: true));
 					}
 					else
 					{
@@ -302,16 +287,28 @@ public class BaseItemPart : TooltipBaseTemplate
 		{
 			return;
 		}
-		bricks.Add(new TooltipBrickSpace());
 		foreach (UIUtilityItem.UIAbilityData ability in ItemTooltipData.Abilities)
 		{
-			TooltipTemplateAbility tooltipTemplateAbility = new TooltipTemplateAbility(ability.BlueprintAbility, BlueprintItem);
-			Sprite icon = ability.Icon;
-			UIUtilityItem.UIPatternData patternData = ability.PatternData;
-			string name = ability.Name;
-			string costAP = ability.CostAP;
-			TooltipBaseTemplate tooltip = tooltipTemplateAbility;
-			bricks.Add(new TooltipBrickIconPattern(icon, patternData, name, costAP, null, null, tooltip));
+			TooltipTemplateAbility tooltip = new TooltipTemplateAbility(ability.BlueprintAbility, BlueprintItem);
+			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
+			{
+				Text = ability.Name
+			};
+			TooltipBrickIconPattern.TextFieldValues textFieldValues = new TooltipBrickIconPattern.TextFieldValues
+			{
+				Text = UIStrings.Instance.Tooltips.CostAP.Text,
+				Value = ability.CostAP
+			};
+			if (!IsScreenWindowTooltip)
+			{
+				TooltipBrickIconPattern.TextFieldValues textFieldValues2 = textFieldValues;
+				if (textFieldValues2.TextParams == null)
+				{
+					textFieldValues2.TextParams = new TextFieldParams();
+				}
+				textFieldValues.TextParams.FontColor = UIConfig.Instance.TooltipColors.TooltipValue;
+			}
+			bricks.Add(new TooltipBrickIconPattern(ability.Icon, ability.PatternData, titleValues, textFieldValues, null, tooltip));
 			if (!ability.UIProperties.Any())
 			{
 				continue;
@@ -353,7 +350,6 @@ public class BaseItemPart : TooltipBaseTemplate
 		string text = ItemTooltipData.GetText(TooltipElement.Replenishing);
 		if (!string.IsNullOrEmpty(text))
 		{
-			bricks.Add(new TooltipBrickSpace());
 			bricks.Add(new TooltipBrickText(text, TooltipTextType.Italic));
 		}
 	}
@@ -383,37 +379,31 @@ public class BaseItemPart : TooltipBaseTemplate
 				}
 			}
 			text6 = TooltipTemplateUtils.AggregateDescription(text6, additionalDescription);
-			bricks.Add(new TooltipBrickSpace());
 			bricks.Add(new TooltipBrickText(text6, TooltipTextType.Paragraph));
 			break;
 		}
 		case TooltipTemplateType.Info:
 			if (!string.IsNullOrEmpty(text2) && !text3.Equals(text2) && !text.Equals(text2))
 			{
-				bricks.Add(new TooltipBrickSpace());
 				bricks.Add(new TooltipBrickText(text2, TooltipTextType.Italic));
 			}
 			if (!string.IsNullOrEmpty(text3))
 			{
 				text3 = TooltipTemplateUtils.AggregateDescription(text3, additionalDescription);
-				bricks.Add(new TooltipBrickSpace());
 				bricks.Add(new TooltipBrickText(text3, TooltipTextType.Paragraph));
 			}
 			else if (!string.IsNullOrEmpty(text))
 			{
 				text = TooltipTemplateUtils.AggregateDescription(text, additionalDescription);
-				bricks.Add(new TooltipBrickSpace());
 				bricks.Add(new TooltipBrickText(text, TooltipTextType.Paragraph));
 			}
 			else if (additionalDescription.Count > 0)
 			{
 				string text5 = TooltipTemplateUtils.AggregateDescription("", additionalDescription);
-				bricks.Add(new TooltipBrickSpace());
 				bricks.Add(new TooltipBrickText(text5, TooltipTextType.Paragraph));
 			}
 			if (!string.IsNullOrEmpty(text4))
 			{
-				bricks.Add(new TooltipBrickSpace());
 				bricks.Add(new TooltipBrickText(text4, TooltipTextType.Paragraph));
 			}
 			break;
@@ -422,6 +412,51 @@ public class BaseItemPart : TooltipBaseTemplate
 		if (item != null && item.HasUniqueSourceDescription)
 		{
 			bricks.Add(new TooltipBrickText(Item?.UniqueSourceDescription ?? "", TooltipTextType.Italic));
+		}
+	}
+
+	private void AddEndTurnInfo(List<ITooltipBrick> bricks, TooltipTemplateType type)
+	{
+		string endTurn = GetEndTurn(BlueprintItem);
+		Sprite moveEndPoints = UIConfig.Instance.UIIcons.TooltipIcons.MoveEndPoints;
+		string attackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(BlueprintItem);
+		Sprite actionEndPoints = UIConfig.Instance.UIIcons.TooltipIcons.ActionEndPoints;
+		if (type == TooltipTemplateType.Info)
+		{
+			if (!string.IsNullOrEmpty(endTurn) || !string.IsNullOrEmpty(attackAbilityGroupCooldown))
+			{
+				bricks.Add(new TooltipBrickSeparator(TooltipBrickElementType.Medium));
+			}
+			if (!string.IsNullOrEmpty(endTurn))
+			{
+				bricks.Add(new TooltipBrickIconValueStat(endTurn, null, moveEndPoints, TooltipIconValueStatType.NameTextNormal, isWhite: true, needChangeSize: true, 18, 18, needChangeColor: false, default(Color), default(Color), useSecondaryLabelColor: true));
+			}
+			if (!string.IsNullOrEmpty(attackAbilityGroupCooldown))
+			{
+				if (!string.IsNullOrEmpty(endTurn))
+				{
+					bricks.Add(new TooltipBrickSeparator(TooltipBrickElementType.Small));
+				}
+				bricks.Add(new TooltipBrickIconValueStat(attackAbilityGroupCooldown, null, actionEndPoints, TooltipIconValueStatType.NameTextNormal, isWhite: true, needChangeSize: true, 18, 18, needChangeColor: false, default(Color), default(Color), useSecondaryLabelColor: true));
+			}
+		}
+		else
+		{
+			List<ITooltipBrick> list = new List<ITooltipBrick>();
+			if (!string.IsNullOrWhiteSpace(endTurn) || !string.IsNullOrWhiteSpace(attackAbilityGroupCooldown))
+			{
+				TextFieldParams textFieldParams = new TextFieldParams
+				{
+					FontColor = UIConfig.Instance.TooltipColors.Default,
+					FontStyles = FontStyles.Strikethrough
+				};
+				list.Add(new TooltipBrickTripleText(endTurn, attackAbilityGroupCooldown, string.Empty, moveEndPoints, actionEndPoints, null, textFieldParams, textFieldParams, textFieldParams));
+			}
+			if (list.Count > 0)
+			{
+				bricks.Add(new TooltipBrickSeparator(TooltipBrickElementType.Medium));
+				bricks.AddRange(list);
+			}
 		}
 	}
 

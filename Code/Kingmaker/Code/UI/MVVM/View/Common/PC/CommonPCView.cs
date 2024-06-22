@@ -4,15 +4,18 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ChoseControllerMode;
 using Kingmaker.Code.UI.MVVM.View.ContextMenu.PC;
 using Kingmaker.Code.UI.MVVM.View.CounterWindow;
+using Kingmaker.Code.UI.MVVM.View.DlcManager.PC;
 using Kingmaker.Code.UI.MVVM.View.EscMenu.PC;
 using Kingmaker.Code.UI.MVVM.View.Fade;
 using Kingmaker.Code.UI.MVVM.View.MessageBox.PC;
+using Kingmaker.Code.UI.MVVM.View.Pause.PC;
 using Kingmaker.Code.UI.MVVM.View.Settings.PC;
 using Kingmaker.Code.UI.MVVM.View.Titles;
 using Kingmaker.Code.UI.MVVM.View.Tooltip.PC;
 using Kingmaker.Code.UI.MVVM.View.UIVisibility;
 using Kingmaker.Code.UI.MVVM.View.WarningNotification;
 using Kingmaker.Code.UI.MVVM.VM.Common;
+using Kingmaker.Code.UI.MVVM.VM.DlcManager;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.Settings;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
@@ -24,7 +27,6 @@ using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.View.BugReport.PC;
 using Kingmaker.UI.MVVM.View.NetLobby.PC;
 using Kingmaker.UI.MVVM.View.NetRoles.PC;
-using Kingmaker.UI.MVVM.View.Pause;
 using Kingmaker.UI.MVVM.View.QuestNotification;
 using Kingmaker.UI.MVVM.View.SaveLoad.PC;
 using Kingmaker.UI.MVVM.View.Tutorial.PC;
@@ -85,7 +87,7 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 	private GamepadConnectedInKeyboardModeWindowView m_GamepadConnectedInKeyboardModeWindowView;
 
 	[SerializeField]
-	private PauseNotification m_PauseNotification;
+	private PauseNotificationPCView m_PauseNotification;
 
 	[SerializeField]
 	private WarningsTextView m_WarningsTextView;
@@ -114,6 +116,9 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 	private UIViewLink<NetRolesPCView, NetRolesVM> m_NetRolesPCView;
 
 	[SerializeField]
+	private UIViewLink<DlcManagerPCView, DlcManagerVM> m_DlcManagerPCView;
+
+	[SerializeField]
 	private UIViewLink<TitlesBaseView, TitlesVM> m_TitlesView;
 
 	private Coroutine m_DisappearAnimationCoroutine;
@@ -132,7 +137,6 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 		m_CounterWindowPCView.Initialize();
 		m_ContextMenuPCView.Initialize();
 		m_GamepadConnectedInKeyboardModeWindowView.Initialize();
-		m_PauseNotification.Initialize();
 		m_WarningsTextView.Initialize();
 		m_FadeView.Initialize();
 		m_DragNDropManager.Initialize();
@@ -152,6 +156,7 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 		m_WarningsTextView.Bind(base.ViewModel.WarningsTextVM);
 		m_FadeView.Bind(base.ViewModel.FadeVM);
 		m_TutorialPCView.Bind(base.ViewModel.TutorialVM);
+		m_PauseNotification.Bind(base.ViewModel.PauseNotificationVM);
 		AddDisposable(base.ViewModel.MessageBoxVM.Subscribe(m_MessageBoxPCView.Bind));
 		AddDisposable(base.ViewModel.CounterWindowVM.Subscribe(m_CounterWindowPCView.Bind));
 		AddDisposable(base.ViewModel.ContextMenuVM.Subscribe(m_ContextMenuPCView.Bind));
@@ -161,11 +166,24 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 		AddDisposable(base.ViewModel.BugReportVM.Subscribe(m_BugReportView.Bind));
 		AddDisposable(base.ViewModel.NetLobbyVM.Subscribe(m_NetLobbyPCView.Bind));
 		AddDisposable(base.ViewModel.NetRolesVM.Subscribe(m_NetRolesPCView.Bind));
+		AddDisposable(base.ViewModel.DlcManagerVM.Subscribe(m_DlcManagerPCView.Bind));
 		AddDisposable(base.ViewModel.TitlesVM.Subscribe(m_TitlesView.Bind));
 		AddDisposable(UIVisibilityState.VisibilityPreset.Skip(1).Subscribe(delegate
 		{
 			UIVisibilityChange();
 		}));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_DragNDropManager.Dispose();
+		if (m_DisappearAnimationCoroutine != null)
+		{
+			StopCoroutine(m_DisappearAnimationCoroutine);
+			m_DisappearAnimationCoroutine = null;
+		}
+		m_EscHotkey?.Dispose();
+		m_EscHotkey = null;
 	}
 
 	private void UIVisibilityChange()
@@ -202,17 +220,5 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 		yield return new WaitForSecondsRealtime(1f);
 		m_UIVisibilityFadeAnimator.DisappearAnimation();
 		m_DisappearAnimationCoroutine = null;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_DragNDropManager.Dispose();
-		if (m_DisappearAnimationCoroutine != null)
-		{
-			StopCoroutine(m_DisappearAnimationCoroutine);
-			m_DisappearAnimationCoroutine = null;
-		}
-		m_EscHotkey?.Dispose();
-		m_EscHotkey = null;
 	}
 }

@@ -48,7 +48,7 @@ public class StopCutscene : GameAction
 
 	private bool ShowCheck => WithUnit != null;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{

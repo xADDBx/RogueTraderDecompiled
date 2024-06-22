@@ -26,7 +26,7 @@ public class CheckAbilityIsBurstGetter : PropertyGetter, PropertyContextAccessor
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check if ability is burst shot";
 	}

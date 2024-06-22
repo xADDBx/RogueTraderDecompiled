@@ -15,6 +15,7 @@ using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization;
 
@@ -47,8 +48,9 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 	[SerializeField]
 	protected FlexibleLensSelectorView m_SelectorView;
 
+	[FormerlySerializedAs("m_ShipUpgradePCView")]
 	[SerializeField]
-	protected TShipUpgradeView m_ShipUpgradePCView;
+	protected TShipUpgradeView m_ShipUpgradeView;
 
 	[Header("Skills And Posts")]
 	[SerializeField]
@@ -67,7 +69,7 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 	[SerializeField]
 	protected TextMeshProUGUI LockStateText;
 
-	private BoolReactiveProperty m_NeedShowShipLevel = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_NeedShowShipLevel = new BoolReactiveProperty();
 
 	public virtual void Initialize()
 	{
@@ -136,10 +138,22 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 		}
 	}
 
-	protected void SetupAdditionalWindows(bool value)
+	private void SetupAdditionalWindows(bool value)
 	{
 		m_SpaceShipPCView.gameObject.SetActive(value);
 		m_ShipStatsPCView.gameObject.SetActive(value);
+	}
+
+	protected void SetPrevTab()
+	{
+		m_SelectorView.SetPrevTab();
+		m_ShipTabsNavigationPCView.SetPrevTab();
+	}
+
+	protected void SetNextTab()
+	{
+		m_SelectorView.SetNextTab();
+		m_ShipTabsNavigationPCView.SetNextTab();
 	}
 
 	private void ShowWindow()
@@ -180,7 +194,7 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 		base.gameObject.SetActive(value: false);
 	}
 
-	protected void Close()
+	protected virtual void Close()
 	{
 		EventBus.RaiseEvent(delegate(IShipCustomizationForceUIHandler h)
 		{

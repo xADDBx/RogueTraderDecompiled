@@ -47,11 +47,11 @@ public class MovePartyItemsAction : GameAction
 		return "Pick up party items";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (TargetCollection == null || !TargetCollection.TryGetValue(out var value))
 		{
-			PFLog.Default.Error(this, $"Не удалось получить ItemsCollection из {TargetCollection}");
+			Element.LogError(this, "Не удалось получить ItemsCollection из {0}", TargetCollection);
 			return;
 		}
 		MoveItemsBetweenCollections(Game.Instance.Player.Inventory, value);

@@ -67,4 +67,8 @@ public class SimpleInviteNetPopup : MonoBehaviour, INetInviteHandler, ISubscribe
 		};
 		base.gameObject.SetActive(value: true);
 	}
+
+	public void HandleInviteAccepted(bool accepted)
+	{
+	}
 }

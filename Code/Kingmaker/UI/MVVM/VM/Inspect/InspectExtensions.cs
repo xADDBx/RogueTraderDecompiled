@@ -12,6 +12,7 @@ using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
+using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UI.MVVM.VM.Inspect;
 
@@ -54,7 +55,12 @@ public class InspectExtensions
 
 	public static List<TooltipBrickBuff> GetBuffs(BaseUnitEntity unit)
 	{
-		return (from b in unit.Buffs.RawFacts
+		List<Buff> source = unit.Buffs.RawFacts;
+		if (!(unit.Blueprint is BlueprintStarship))
+		{
+			source = source.Where((Buff b) => !b.Blueprint.IsStarshipBuff).ToList();
+		}
+		return (from b in source
 			where !b.Blueprint.IsHiddenInUI
 			select b into buff
 			select new TooltipBrickBuff(buff)).ToList();
@@ -62,6 +68,11 @@ public class InspectExtensions
 
 	public static ReactiveCollection<ITooltipBrick> GetBuffsTooltipBricks(BaseUnitEntity unit)
 	{
-		return unit.Buffs.RawFacts.Where((Buff b) => !b.Blueprint.IsHiddenInUI).Select((Func<Buff, ITooltipBrick>)((Buff buff) => new TooltipBrickBuff(buff))).ToReactiveCollection();
+		List<Buff> source = unit.Buffs.RawFacts;
+		if (!(unit.Blueprint is BlueprintStarship))
+		{
+			source = source.Where((Buff b) => !b.Blueprint.IsStarshipBuff).ToList();
+		}
+		return source.Where((Buff b) => !b.Blueprint.IsHiddenInUI).Select((Func<Buff, ITooltipBrick>)((Buff buff) => new TooltipBrickBuff(buff))).ToReactiveCollection();
 	}
 }

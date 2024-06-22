@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Kingmaker.Networking.Platforms.Authentication;
+using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Platforms.User;
 using Kingmaker.Stores;
 
@@ -16,6 +17,8 @@ public abstract class Platform
 
 	public virtual IPlatformInvite Invite => PhotonManager.Invite.m_PlatformInvite;
 
+	public IPlatformSession Session { get; }
+
 	public virtual bool HasSecondaryPlatform => false;
 
 	public virtual Platform SecondaryPlatform => null;
@@ -30,6 +33,7 @@ public abstract class Platform
 		StoreType = store;
 		User = PlatformServices.CreatePlatformUser(store);
 		AuthService = PlatformServices.CreateAuthService(store);
+		Session = PlatformServices.CreatePlatformSession(store);
 	}
 
 	public abstract bool IsInitialized();

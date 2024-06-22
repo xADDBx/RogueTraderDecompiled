@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
@@ -65,6 +66,12 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 
 	private bool m_IsInit;
 
+	private List<ServiceWindowsType> m_WindowsWithoutBgr = new List<ServiceWindowsType>
+	{
+		ServiceWindowsType.ShipCustomization,
+		ServiceWindowsType.Inventory
+	};
+
 	public void Initialize()
 	{
 		if (!m_IsInit)
@@ -118,7 +125,7 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 		}));
 		AddDisposable(base.ViewModel.OnOpen.Subscribe(delegate(ServiceWindowsType vm)
 		{
-			if (vm != ServiceWindowsType.ShipCustomization)
+			if (!m_WindowsWithoutBgr.Contains(vm))
 			{
 				m_Background.Or(null)?.AppearAnimation();
 			}

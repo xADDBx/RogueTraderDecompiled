@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem;
@@ -230,6 +231,7 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 		CustomGridNodeBase customGridNodeBase = (UseBestShootingPosition ? LosCalculations.GetBestShootingNode(context.Caster.CurrentUnwalkableNode, context.Caster.SizeRect, nearestNodeXZUnwalkable, target.SizeRect) : context.Caster.CurrentUnwalkableNode);
 		CustomGridNodeBase actualCastNode = AoEPatternHelper.GetActualCastNode(context.Caster, customGridNodeBase.Vector3Position, target.Point);
 		AbilityAoEPatternAttack abilityAoEPatternAttack = new AbilityAoEPatternAttack(context, this, PartAbilityPatternSettings.GetAbilityPatternSettings(context.Ability, m_PatternSettings), customGridNodeBase, actualCastNode);
+		TrySpawnAreaEffect(context, target);
 		if (m_DisableWeaponAttackDamage)
 		{
 			abilityAoEPatternAttack.DisableWeaponAttackDamage();
@@ -239,6 +241,11 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 			abilityAoEPatternAttack.DisableDodgeForAlly();
 		}
 		return abilityAoEPatternAttack;
+	}
+
+	public static void TrySpawnAreaEffect(AbilityExecutionContext context, TargetWrapper target)
+	{
+		context.AbilityBlueprint.GetComponent<WarhammerAreaEffectSimultaneousWithAttack>()?.SpawnAreaEffect(context, target);
 	}
 
 	private IEnumerator<AbilityDeliveryTarget> DeliverSimpleImmediately(AbilityExecutionContext context, TargetWrapper target)

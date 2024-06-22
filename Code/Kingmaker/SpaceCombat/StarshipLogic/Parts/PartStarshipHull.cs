@@ -115,6 +115,7 @@ public class PartStarshipHull : StarshipPart, IHashable
 			weaponSlot.PrePostLoad(base.Owner);
 			weaponSlot.AmmoSlot.PrePostLoad(base.Owner);
 		}
+		FixStarshipPosts();
 	}
 
 	protected override void OnPostLoad()
@@ -157,6 +158,29 @@ public class PartStarshipHull : StarshipPart, IHashable
 			int num = base.Owner.Stats.GetStat(statType);
 			int num2 = base.Owner.Facts.GetComponents<StarshipArmorBonus>().Select(fBonusArmor).Aggregate(fItemArmor(base.Owner.ArmorPlatings).GetValueOrDefault(), (int a, int b) => a + b);
 			return num + num2;
+		}
+	}
+
+	private void FixStarshipPosts()
+	{
+		if (Posts.Select((Post p) => p.PostType).Distinct().Count() == Posts.Count)
+		{
+			return;
+		}
+		int i;
+		for (i = Posts.Count - 1; i >= 0; i--)
+		{
+			if (Posts.Count((Post p) => p.PostType == Posts[i].PostType) > 1)
+			{
+				Posts.RemoveAt(i);
+			}
+		}
+		foreach (PostData postData in base.Owner.Blueprint?.Posts?.EmptyIfNull())
+		{
+			if (Posts.FirstOrDefault((Post p) => p.PostType == postData.type) == null)
+			{
+				AddPost(postData);
+			}
 		}
 	}
 

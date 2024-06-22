@@ -22,7 +22,7 @@ public class TooltipBrickProfitFactorView : TooltipBaseBrickView<TooltipBrickPro
 		{
 			m_TotalValueText.text = value.ToString("0.#");
 		}));
-		AddDisposable(base.ViewModel.ProfitFactorVM.CurrentValue.Subscribe(delegate(float value)
+		AddDisposable(base.ViewModel.ProfitFactorVM.TotalValue.Subscribe(delegate(float value)
 		{
 			m_CurrentValueText.text = value.ToString("0.#");
 		}));

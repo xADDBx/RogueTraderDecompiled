@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.GameCommands;
 using Kingmaker.Globalmap.Blueprints;
@@ -30,12 +31,9 @@ public class TransitionEntryVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 	public TransitionEntryVM(BlueprintMultiEntranceEntry entry, Action closeAction)
 	{
 		CloseAction = closeAction;
-		ClickAction = delegate
-		{
-			Enter();
-		};
+		ClickAction = Enter;
 		Entry = entry;
-		Name.Value = entry.Name;
+		Name.Value = GetPointName();
 		Attention.Value = entry.GetLinkedObjectives().Count > 0;
 		IsVisible.Value = entry.IsVisible;
 		IsInteractable.Value = entry.IsInteractable;
@@ -44,6 +42,20 @@ public class TransitionEntryVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 
 	protected override void DisposeImplementation()
 	{
+	}
+
+	private string GetPointName()
+	{
+		ChangeTransitionPointName component = Entry.GetComponent<ChangeTransitionPointName>();
+		if (component == null || !component.Conditions.HasConditions)
+		{
+			return Entry.Name;
+		}
+		if (component.Conditions.Check() && !string.IsNullOrWhiteSpace(component.AnotherName))
+		{
+			return component.AnotherName;
+		}
+		return Entry.Name;
 	}
 
 	public void Enter()

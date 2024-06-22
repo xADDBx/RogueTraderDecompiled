@@ -24,7 +24,7 @@ public class UISettingsManager
 
 	private bool m_KeyBindingsCached;
 
-	private Dictionary<string, UISettingsEntityKeyBinding> m_KeyBindCache = new Dictionary<string, UISettingsEntityKeyBinding>();
+	private readonly Dictionary<string, UISettingsEntityKeyBinding> m_KeyBindCache = new Dictionary<string, UISettingsEntityKeyBinding>();
 
 	public bool IsNewKeyBindingSelectionHappening;
 
@@ -60,8 +60,7 @@ public class UISettingsManager
 		{
 			BuildKeyBindCache();
 		}
-		UISettingsEntityKeyBinding value = null;
-		m_KeyBindCache.TryGetValue(name, out value);
+		m_KeyBindCache.TryGetValue(name, out var value);
 		return value;
 	}
 

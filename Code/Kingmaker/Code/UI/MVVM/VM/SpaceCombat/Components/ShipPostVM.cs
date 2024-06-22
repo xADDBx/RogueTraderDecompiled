@@ -135,7 +135,7 @@ public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		HandleUnitStartTurnInternal();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleUnitStartTurnInternal();
 	}

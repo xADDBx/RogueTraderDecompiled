@@ -36,7 +36,7 @@ public class ContextActionChangeRankInFact : ContextAction
 		return $"Change rank(s) by {m_Value} in {arg} fact feature.";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{

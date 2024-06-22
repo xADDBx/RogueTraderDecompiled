@@ -40,7 +40,7 @@ public class ShowTutorial : GameAction
 		return "Show Tutorial (" + text + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Delay <= 0f)
 		{

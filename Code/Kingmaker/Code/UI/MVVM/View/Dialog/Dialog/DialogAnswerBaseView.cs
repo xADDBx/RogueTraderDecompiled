@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
@@ -13,6 +14,7 @@ using Kingmaker.Networking.Player;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
@@ -32,7 +34,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Dialog.Dialog;
 
-public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, ISettingsFontSizeUIHandler, ISubscriber
+public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, ISettingsFontSizeUIHandler, ISubscriber, IHasBlueprintInfo
 {
 	[SerializeField]
 	protected TextMeshProUGUI m_AnswerText;
@@ -65,6 +67,8 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 
 
 	public DialogVotesBlockView DialogVotesBlock => m_DialogVotesBlock;
+
+	public BlueprintScriptableObject Blueprint => base.ViewModel?.Answer?.Value;
 
 	public void Initialize(DialogColors dialogColors, RectTransform tooltipPlace = null)
 	{
@@ -104,21 +108,37 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 
 	private void SetAnswer(BlueprintAnswer answer)
 	{
-		m_DialogVotesBlock.Or(null)?.ShowHideHover(state: false);
+		ObjectExtensions.Or(m_DialogVotesBlock, null)?.ShowHideHover(state: false);
 		DialogType type = Game.Instance.DialogController.Dialog.Type;
 		string text = $"DialogChoice{base.ViewModel.Index}";
-		SetAnswerText((type == DialogType.Epilog) ? answer.DisplayText : UIConstsExtensions.GetAnswerString(answer, text, base.ViewModel.Index));
+		bool hasConditionsForTooltip = answer.HasConditionsForTooltip;
+		string text2 = "";
 		Color32 color = m_DialogColors.NormalAnswer;
-		if (type == DialogType.Common || type == DialogType.StarSystemEvent)
+		switch (type)
 		{
+		case DialogType.Epilog:
+			text2 = answer.DisplayText;
+			break;
+		case DialogType.Common:
+		case DialogType.StarSystemEvent:
 			color = ((!answer.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer));
-			if (answer.HasConditionsForTooltip && !answer.CanSelect())
+			if (hasConditionsForTooltip)
 			{
-				string arg = "UI_Dialog_ConditionFail";
-				string text2 = string.Format(UIConfig.Instance.UIDialogConditionsLinkFormat, answer.AssetGuid, arg);
-				SetAnswerText(string.Format(UIDialog.Instance.AnswerDialogueFormat, base.ViewModel.Index, text2 + " " + answer.DisplayText));
+				string arg = (answer.CanSelect() ? "UI_Dialog_ConditionSuccess" : "UI_Dialog_ConditionFail");
+				string text3 = string.Format(UIConfig.Instance.UIDialogConditionsLinkFormat, answer.AssetGuid, arg);
+				string text4 = (answer.CanSelect() ? UIConstsExtensions.GetAnswerText(answer) : answer.DisplayText);
+				text2 = string.Format(UIDialog.Instance.AnswerDialogueFormat, base.ViewModel.Index, text3 + text4);
 			}
+			else
+			{
+				text2 = UIConstsExtensions.GetAnswerFormattedString(answer, text, base.ViewModel.Index);
+			}
+			break;
+		default:
+			text2 = UIConstsExtensions.GetAnswerFormattedString(answer, text, base.ViewModel.Index);
+			break;
 		}
+		SetAnswerText(text2);
 		m_AnswerText.color = color;
 		AddDisposable(Game.Instance.Keyboard.Bind(text, Confirm));
 		if (base.ViewModel.IsSystem)
@@ -182,7 +202,7 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 		}
 		else
 		{
-			m_AnswerText.color = ((!hasAnyFocus) ? ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer)) : (base.ViewModel.Answer.Value.CanSelect() ? m_DialogColors.FocusAnswer : m_DialogColors.FocusDisableAnswer));
+			m_AnswerText.color = ((!hasAnyFocus) ? ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer)) : ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.FocusDisableAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.FocusSelectedAnswer : m_DialogColors.FocusAnswer)));
 		}
 	}
 

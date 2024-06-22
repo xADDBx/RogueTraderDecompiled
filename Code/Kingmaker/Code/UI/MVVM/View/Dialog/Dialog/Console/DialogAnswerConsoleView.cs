@@ -19,11 +19,21 @@ public class DialogAnswerConsoleView : DialogAnswerBaseView
 
 	private readonly ReactiveProperty<bool> m_Focused = new ReactiveProperty<bool>();
 
+	private readonly BoolReactiveProperty m_CanShowTooltip = new BoolReactiveProperty(initialValue: true);
+
+	public bool HasTooltip => base.ViewModel.AnswerTooltip.Value != null;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
 		m_ConsoleHint.sprite = ConsoleRoot.Instance.Icons.GetIcon(RewiredActionType.Confirm);
 		SetTextFontSize(base.ViewModel.FontSizeMultiplier);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_CanShowTooltip.Dispose();
 	}
 
 	private void SetTextFontSize(float multiplier)
@@ -49,7 +59,7 @@ public class DialogAnswerConsoleView : DialogAnswerBaseView
 
 	private void UpdateHint(bool visible)
 	{
-		if (visible)
+		if (visible && m_CanShowTooltip.Value)
 		{
 			this.ShowTooltip(base.ViewModel.AnswerTooltip.Value, TooltipConfig);
 		}
@@ -63,5 +73,14 @@ public class DialogAnswerConsoleView : DialogAnswerBaseView
 	{
 		SetTextFontSize(multiplier);
 		base.UpdateTextSize(multiplier);
+	}
+
+	public void UpdateCanShowTooltip(bool canShow)
+	{
+		if (m_CanShowTooltip.Value != canShow)
+		{
+			m_CanShowTooltip.Value = canShow;
+			UpdateHint(m_Focused.Value);
+		}
 	}
 }

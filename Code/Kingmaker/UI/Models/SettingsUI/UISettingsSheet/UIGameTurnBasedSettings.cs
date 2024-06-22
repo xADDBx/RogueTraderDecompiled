@@ -20,6 +20,8 @@ public class UIGameTurnBasedSettings : IUISettingsSheet
 
 	public UISettingsEntityBool FastPartyCast;
 
+	public UISettingsEntityBool DisableActionCamera;
+
 	public UISettingsEntitySliderFloat TimeScaleInPlayerTurn;
 
 	public UISettingsEntitySliderFloat TimeScaleInNonPlayerTurn;
@@ -34,6 +36,7 @@ public class UIGameTurnBasedSettings : IUISettingsSheet
 		SpeedUpMode.LinkSetting(SettingsRoot.Game.TurnBased.SpeedUpMode);
 		FastMovement.LinkSetting(SettingsRoot.Game.TurnBased.FastMovement);
 		FastPartyCast.LinkSetting(SettingsRoot.Game.TurnBased.FastPartyCast);
+		DisableActionCamera.LinkSetting(SettingsRoot.Game.TurnBased.DisableActionCamera);
 		TimeScaleInPlayerTurn.LinkSetting(SettingsRoot.Game.TurnBased.TimeScaleInPlayerTurn);
 		TimeScaleInNonPlayerTurn.LinkSetting(SettingsRoot.Game.TurnBased.TimeScaleInNonPlayerTurn);
 		AutoSelectWeaponAbility.LinkSetting(SettingsRoot.Game.TurnBased.AutoSelectWeaponAbility);

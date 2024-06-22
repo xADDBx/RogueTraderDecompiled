@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Networking.Serialization;
-using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Visual.CharactersRigidbody;
 using Newtonsoft.Json;
 using StateHasher.Core;
@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.Visual.CharacterSystem;
 
-public class PartSavedRagdollState : BaseUnitPart, IHashable
+public class PartSavedRagdollState : EntityPart, IHashable
 {
 	[JsonProperty]
 	[GameStateIgnore]

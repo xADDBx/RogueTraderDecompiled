@@ -439,6 +439,13 @@ public static class GridAreaHelper
 	}
 
 	[ItemNotNull]
+	public static NodeList GetOccupiedNodes(this MechanicEntity unit, GraphNode node)
+	{
+		IntRect rect = ((!unit.IsInCombat && unit.IsInPlayerParty) ? new IntRect(0, 0, 0, 0) : unit.SizeRect);
+		return GetNodes(node, rect);
+	}
+
+	[ItemNotNull]
 	public static NodeList GetOccupiedNodes(this MechanicEntity unit)
 	{
 		IntRect rect = ((!unit.IsInCombat && unit.IsInPlayerParty) ? new IntRect(0, 0, 0, 0) : unit.SizeRect);

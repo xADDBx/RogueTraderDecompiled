@@ -41,6 +41,8 @@ public class StartupJson
 
 	public bool stackTraceSpamDetectionDisabled;
 
+	public string analyticsUrl;
+
 	public bool forceAnalyticsInEditor;
 
 	public bool forceSpamDetectionInEditor;
@@ -72,8 +74,6 @@ public class StartupJson
 	public bool UsePackedLocalization;
 
 	public bool NoCommonDeps;
-
-	public bool LoadAssignees;
 
 	public bool UseLightController;
 

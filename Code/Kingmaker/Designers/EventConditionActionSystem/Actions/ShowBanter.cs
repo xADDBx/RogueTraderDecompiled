@@ -22,7 +22,7 @@ public class ShowBanter : GameAction
 		return "Show Banter";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_BarkBanterEvaluator.TryGetValue(out var barkBanter))
 		{

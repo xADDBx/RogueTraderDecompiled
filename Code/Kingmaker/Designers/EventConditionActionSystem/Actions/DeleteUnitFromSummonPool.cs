@@ -45,7 +45,7 @@ public class DeleteUnitFromSummonPool : GameAction
 		return $"Delete {Unit} from summon pool {SummonPool}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.SummonPools.Unregister(SummonPool, Unit.GetValue());
 	}

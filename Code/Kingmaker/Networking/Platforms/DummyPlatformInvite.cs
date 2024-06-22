@@ -12,6 +12,12 @@ public sealed class DummyPlatformInvite : IPlatformInvite, IDisposable
 		return false;
 	}
 
+	public bool IsSupportInviteWindow()
+	{
+		PFLog.Net.Error("[DummyPlatformInvite] ShowInviteWindow");
+		return false;
+	}
+
 	void IPlatformInvite.ShowInviteWindow()
 	{
 		PFLog.Net.Error("[DummyPlatformInvite] ShowInviteWindow");

@@ -15,7 +15,7 @@ public class ContextActionRepeat : ContextAction
 		return "Repeats action several times";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		int num = RepeatNumber.Calculate(base.Context);
 		for (int i = 0; i < num; i++)

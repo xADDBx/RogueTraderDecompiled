@@ -2,30 +2,41 @@ using System;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Levelup.Selections;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.VirtualListSystem;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.PC.CareerPathProgression.SelectionTabs;
 
-public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<RankEntrySelectionVM>
+public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<RankEntrySelectionVM>, IUIHighlighter, ISubscriber
 {
 	[Header("UltimateFeatures")]
 	[SerializeField]
-	private CharInfoFeaturePCView m_UltimateFeaturePCView;
+	private CharInfoFeatureSimpleBaseView m_UltimateFeaturePCView;
 
 	[Header("Filters")]
 	[SerializeField]
 	private FeaturesFilterBaseView m_FeaturesFilter;
+
+	[SerializeField]
+	private OwlcatMultiButton m_ShowUnavailableButton;
 
 	[SerializeField]
 	private TextMeshProUGUI m_NoFeaturesText;
@@ -52,7 +63,11 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 
 	private Action<bool> m_ReturnAction;
 
+	private IDisposable m_HintsDisposables;
+
 	private readonly ReactiveCollection<VirtualListElementVMBase> m_VMCollection = new ReactiveCollection<VirtualListElementVMBase>();
+
+	RectTransform IUIHighlighter.RectTransform => RectTransform;
 
 	public override void Initialize()
 	{
@@ -64,6 +79,7 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		m_UltimateFeaturePCView.SetActiveState(base.ViewModel.UltimateFeature != null);
 		m_UltimateFeaturePCView.Bind(base.ViewModel.UltimateFeature);
 		AddDisposable(base.ViewModel.EntryState.Subscribe(delegate
 		{
@@ -71,7 +87,17 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		}));
 		AddDisposable(m_VirtualList.Subscribe(m_VMCollection));
 		m_FeaturesFilter.Or(null)?.Bind(base.ViewModel.FeaturesFilterVM);
-		AddDisposable(base.ViewModel.OnFilterChange.Subscribe(delegate
+		if ((bool)m_ShowUnavailableButton)
+		{
+			m_ShowUnavailableButton.gameObject.SetActive(base.ViewModel.FeaturesFilterVM != null);
+			UpdateUnavailableFeaturesButtonHint();
+			AddDisposable(ObservableExtensions.Subscribe(m_ShowUnavailableButton.OnLeftClickAsObservable(), delegate
+			{
+				base.ViewModel.ToggleShowUnavailableFeatures();
+				UpdateUnavailableFeaturesButtonHint();
+			}));
+		}
+		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.OnFilterChange, delegate
 		{
 			UpdateCollection();
 		}));
@@ -79,12 +105,15 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		{
 			m_VirtualList.ScrollController.ForceScrollToElement(base.ViewModel.SelectedFeature.Value);
 		}
-		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.Subscribe(delegate(bool canCommit)
+		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
+		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
+		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
+		SetButtonSound(UISounds.ButtonSoundsEnum.DoctrineNextSound);
+		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.Subscribe(base.SetFinishInteractable));
+		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.CombineLatest(base.ViewModel.CareerPathVM.PointerItem, (bool canCommit, IRankEntrySelectItem pointerItem) => canCommit && pointerItem == null).Subscribe(delegate(bool value)
 		{
-			bool flag = canCommit && base.ViewModel.CareerPathVM.LastEntryToUpgrade == base.ViewModel;
-			SetNextButtonLabel(flag ? UIStrings.Instance.CharacterSheet.ToSummaryTab : UIStrings.Instance.CharGen.Next);
-			SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
-			SetButtonSound(flag ? UISounds.ButtonSoundsEnum.NormalSound : UISounds.ButtonSoundsEnum.DoctrineNextSound);
+			base.CanCommit = value;
+			SetFinishInteractable(value);
 		}));
 		AddDisposable(base.ViewModel.CareerPathVM.ReadOnly.Subscribe(delegate(bool ro)
 		{
@@ -92,6 +121,7 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		}));
 		SetupNoFeaturesText();
 		UpdateCollection();
+		AddDisposable(EventBus.Subscribe(this));
 		TextHelper.AppendTexts(m_NoFeaturesText);
 	}
 
@@ -108,6 +138,8 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		}
 		m_VMCollection.Clear();
 		m_FeaturesFilter.Or(null)?.Unbind();
+		m_HintsDisposables?.Dispose();
+		m_HighlightButton.Or(null)?.gameObject.SetActive(value: false);
 	}
 
 	private void UpdateCollection()
@@ -117,14 +149,16 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		{
 			m_VMCollection.Add(filteredGroup);
 		}
-		m_NoFeaturesText.gameObject.SetActive(!base.ViewModel.FilteredGroupList.Any());
+		m_NoFeaturesText.gameObject.SetActive(!Enumerable.Any(base.ViewModel.FilteredGroupList));
 	}
 
 	public override void UpdateState()
 	{
-		SetButtonInteractable(base.ViewModel.SelectionMadeAndValid);
-		SetFirstSelectableVisibility(base.ViewModel.CareerPathVM.FirstSelectable != null);
-		SetFirstSelectableInteractable(base.ViewModel.CareerPathVM.HasDifferentFirstSelectable);
+		bool flag = base.ViewModel.CanSelect() && base.ViewModel.SelectionMadeAndValid && base.ViewModel.CareerPathVM.LastEntryToUpgrade != base.ViewModel;
+		SetNextButtonInteractable(flag);
+		m_HighlightButton.Or(null)?.gameObject.SetActive(!flag);
+		bool backButtonInteractable = base.ViewModel.CareerPathVM.FirstEntryToUpgrade != base.ViewModel;
+		SetBackButtonInteractable(backButtonInteractable);
 		HintText.Value = GetHintText();
 	}
 
@@ -154,9 +188,9 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		base.ViewModel.CareerPathVM.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
+	protected override void HandleClickFinish()
 	{
-		base.ViewModel.CareerPathVM.SetFirstSelectableRankEntry();
+		base.ViewModel.CareerPathVM.Commit();
 	}
 
 	private void SetupNoFeaturesText()
@@ -177,5 +211,51 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 			_ => UIStrings.Instance.CharacterSheet.NoFeaturesInFilter, 
 		};
 		m_NoFeaturesText.text = text;
+	}
+
+	public void StartHighlight(string key)
+	{
+	}
+
+	public void StopHighlight(string key)
+	{
+	}
+
+	public void Highlight(string key)
+	{
+	}
+
+	public void HighlightOnce(string key)
+	{
+		if (m_VMCollection == null)
+		{
+			return;
+		}
+		int itemId = m_VMCollection.FindIndex((VirtualListElementVMBase vm) => (vm as RankEntrySelectionFeatureVM)?.Feature.AssetGuid == key);
+		if (itemId < 0)
+		{
+			if (base.ViewModel.ContainsFeature(key) && !Game.Instance.Player.UISettings.ShowUnavailableFeatures)
+			{
+				base.ViewModel.ToggleShowUnavailableFeatures();
+				HighlightOnce(key);
+			}
+			return;
+		}
+		m_VirtualList.ScrollController.ForceScrollToElement(m_VMCollection.ElementAt(itemId));
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			(m_VirtualList.Elements.ElementAt(itemId).View as RankEntryFeatureItemCommonView)?.StartHighlight(key);
+			EventBus.RaiseEvent(delegate(IUIHighlighter h)
+			{
+				h.StopHighlight(key);
+			});
+		}, 1);
+	}
+
+	private void UpdateUnavailableFeaturesButtonHint()
+	{
+		m_HintsDisposables?.Dispose();
+		string text = (Game.Instance.Player.UISettings.ShowUnavailableFeatures ? UIStrings.Instance.CharacterSheet.HideUnavailableFeaturesHint : UIStrings.Instance.CharacterSheet.ShowUnavailableFeaturesHint);
+		m_HintsDisposables = m_ShowUnavailableButton.SetHint(text);
 	}
 }

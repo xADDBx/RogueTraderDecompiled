@@ -67,6 +67,8 @@ public class RuleStarshipPerformAttack : RulebookTargetEvent<StarshipEntity, Sta
 
 	public bool IsPredictionOnly { get; set; }
 
+	public bool DamageAdjacentShields { get; set; }
+
 	public StarshipHitLocation ResultHitLocation
 	{
 		get
@@ -183,6 +185,10 @@ public class RuleStarshipPerformAttack : RulebookTargetEvent<StarshipEntity, Sta
 			AttackRollRule.Trigger(IsPredictionOnly, IsTorpedoDirectHitAttempt);
 		}
 		Result = (AttackRollRule.ResultIsCrit ? AttackResult.RighteousFury : (AttackRollRule.ResultIsHit ? AttackResult.Hit : AttackResult.Miss));
+		if (Weapon?.Ammo == null)
+		{
+			return;
+		}
 		m_BaseDamageMin = Weapon.Ammo.Blueprint.Damage;
 		m_BaseDamageMax = Weapon.Ammo.Blueprint.MaxDamage;
 		m_DamageDifficultyModifier = SpacecombatDifficultyHelper.StarshipDamageMod(base.Initiator);
@@ -234,6 +240,10 @@ public class RuleStarshipPerformAttack : RulebookTargetEvent<StarshipEntity, Sta
 		{
 			(int, int) tuple = base.Target.Shields.Absorb(ShieldAbsorptionRollRule.ResultHitLocation, ShieldAbsorptionRollRule.ResultAbsorbedDamage, Weapon.DamageType, IsPredictionOnly);
 			(ResultAbsorbedDamage, ResultShieldStrengthLoss) = tuple;
+			if (DamageAdjacentShields)
+			{
+				base.Target.Shields.DamageAdjacent2Sectors(ShieldAbsorptionRollRule.ResultHitLocation, ResultShieldStrengthLoss);
+			}
 		}
 		ResultDamageBeforeDeflection = ResultDamageBeforeAbsorption - ResultAbsorbedDamage;
 		if (ResultDamageBeforeDeflection == 0)

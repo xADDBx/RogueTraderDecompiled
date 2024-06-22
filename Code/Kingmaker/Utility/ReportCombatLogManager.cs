@@ -310,6 +310,10 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 
 	private static string ReplaceNameWithBlueprint(string str, MechanicEntity entity, string name)
 	{
+		if (name == null)
+		{
+			return str;
+		}
 		string text = entity.UniqueId;
 		string text2 = entity.Blueprint.NameSafe();
 		int num = text.IndexOf('-');

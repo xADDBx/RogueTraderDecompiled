@@ -106,6 +106,7 @@ internal class CheatsDebug
 			SmartConsole.RegisterCommand("set_fov_min_max", SetCameraFovMinMax);
 			SmartConsole.RegisterCommand("unscene", UnloadScene);
 			SmartConsole.RegisterCommand("reload", ReloadLastSave);
+			SmartConsole.RegisterCommand("check_build_removal", CheckBuildRemoval);
 			SmartConsole.RegisterCommand("tex_dump", TexturesDumpBuild);
 			SmartConsole.RegisterCommand("tex_dump_csv", TexturesDumpCSVNoResolve);
 			SmartConsole.RegisterCommand("mesh_dump_csv", MeshesDumpCSVNoResolve);
@@ -174,6 +175,13 @@ internal class CheatsDebug
 	public static void QuitForce()
 	{
 		Application.Quit(1);
+	}
+
+	[Cheat(Name = "wwise_profile", Description = "Launch Wwise profiler session")]
+	public static void WwiseProfilerCapture()
+	{
+		AKRESULT aKRESULT = AkSoundEngine.StartProfilerCapture(Path.Combine(ApplicationPaths.DevelopmentDataPath, "WwiseProfilerSession.prof"));
+		PFLog.Audio.Log((aKRESULT == AKRESULT.AK_Success) ? "Wwise Profiler Started" : $"Failed to start Wwise Profiler {aKRESULT}");
 	}
 
 	private static void DebugPointerController(string parameters)
@@ -785,6 +793,12 @@ internal class CheatsDebug
 		{
 			Game.Instance.LoadGame(Game.Instance.SaveManager.GetLatestSave());
 		}
+	}
+
+	private static void CheckBuildRemoval(string parameters = null)
+	{
+		RemoveOnBuild[] array = UnityEngine.Object.FindObjectsOfType<RemoveOnBuild>(includeInactive: true);
+		SmartConsole.Print("Removal objects found : " + array.Length);
 	}
 
 	[Cheat(Name = "return_to_main_menu")]

@@ -9,7 +9,7 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("92afe7375fcc46cea53424f91e0480b5")]
 public class CurrentBurstIndexAbilityGetter : PropertyGetter, PropertyContextAccessor.IRule, PropertyContextAccessor.IRequired, PropertyContextAccessor.IBase
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Current burst index";
 	}

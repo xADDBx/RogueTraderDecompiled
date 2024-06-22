@@ -18,7 +18,7 @@ public class FixStarshipPosts : GameAction
 		return "Fix starship posts";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
 		PartStarshipHull hull = playerShip.GetHull();

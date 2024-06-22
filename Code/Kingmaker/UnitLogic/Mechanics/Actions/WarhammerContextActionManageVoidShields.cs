@@ -44,7 +44,7 @@ public class WarhammerContextActionManageVoidShields : ContextAction
 		};
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity starshipEntity = (StarshipEntity)base.Context.MainTarget.Entity;
 		if (starshipEntity != null)

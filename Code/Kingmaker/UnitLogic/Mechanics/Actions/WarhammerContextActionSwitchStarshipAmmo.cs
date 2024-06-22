@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using UnityEngine;
@@ -24,17 +25,17 @@ public class WarhammerContextActionSwitchStarshipAmmo : ContextAction
 		return "Switch " + m_Weapon?.Get()?.name + " ammo to " + m_Ammo?.Get()?.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Target.Entity is StarshipEntity starshipEntity))
 		{
-			PFLog.Default.Error(this, "Target starship is missing");
+			Element.LogError(this, "Target starship is missing");
 			return;
 		}
 		WeaponSlot weaponSlot = starshipEntity.Hull.WeaponSlots.Find((WeaponSlot x) => x.Weapon.Blueprint == m_Weapon?.Get());
 		if (weaponSlot == null)
 		{
-			PFLog.Default.Error(this, "Target hasn't required weapon");
+			Element.LogError(this, "Target hasn't required weapon");
 		}
 		else
 		{

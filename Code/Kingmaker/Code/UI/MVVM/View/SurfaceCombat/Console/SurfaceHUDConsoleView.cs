@@ -310,7 +310,9 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 		{
 		}, 12)));
 		m_HighlightObjectsCombatHint.SetLabel(UIStrings.Instance.HUDTexts.HighlightObjects);
-		AddDisposable(m_EndTurnCombatHint.Bind(inputLayer.AddButton(EndTurn, 17, base.ViewModel.DeploymentPhase.Not().ToReactiveProperty())));
+		AddDisposable(m_EndTurnCombatHint.Bind(inputLayer.AddButton(EndTurn, 17, base.ViewModel.DeploymentPhase.Not().And(base.ViewModel.IsTurnBasedActive).And(base.ViewModel.ShowEndTurn)
+			.And(base.ViewModel.CanEndTurn)
+			.ToReactiveProperty())));
 		m_EndTurnCombatHint.SetLabel(UIStrings.Instance.HUDTexts.EndTurn);
 		AddDisposable(m_StartBattleHint.Bind(inputLayer.AddButton(EndTurn, 17, base.ViewModel.DeploymentPhase)));
 		m_StartBattleHint.SetLabel(UIStrings.Instance.TurnBasedTexts.StartBattle);
@@ -525,9 +527,7 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 	{
 		UISounds.Instance.Play(UISounds.Instance.Sounds.Buttons.ButtonClick);
 		Game.Instance.Player.IsCameraRotateMode = !Game.Instance.Player.IsCameraRotateMode;
-		bool isCameraRotateMode = Game.Instance.Player.IsCameraRotateMode;
-		bool flag = Game.Instance.SelectionCharacter.SelectedUnit.Value == null && Game.Instance.SelectionCharacter.SelectedUnits.Count == 0;
-		if (isCameraRotateMode && flag)
+		if (Game.Instance.SelectionCharacter.SelectedUnit.Value == null && Game.Instance.SelectionCharacter.SelectedUnits.Count == 0)
 		{
 			Game.Instance.CameraController?.Follower?.ScrollTo(Game.Instance.Player.MainCharacterEntity);
 		}

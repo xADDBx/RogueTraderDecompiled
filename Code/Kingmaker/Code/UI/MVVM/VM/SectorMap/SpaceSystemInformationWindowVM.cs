@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.SectorMap;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.Exploration;
@@ -28,6 +29,8 @@ public class SpaceSystemInformationWindowVM : BaseDisposable, IViewModel, IBaseD
 
 	public readonly AutoDisposingList<OtherObjectsInfoSpaceSystemInformationWindowVM> OtherObjects = new AutoDisposingList<OtherObjectsInfoSpaceSystemInformationWindowVM>();
 
+	public readonly AutoDisposingList<AdditionalAnomaliesInfoSpaceSystemInformationWindowVM> AdditionalAnomalies = new AutoDisposingList<AdditionalAnomaliesInfoSpaceSystemInformationWindowVM>();
+
 	public readonly List<BlueprintAnomaly> Anomalies = new List<BlueprintAnomaly>();
 
 	public readonly ReactiveProperty<Sprite> StarSystemSprite = new ReactiveProperty<Sprite>();
@@ -53,6 +56,7 @@ public class SpaceSystemInformationWindowVM : BaseDisposable, IViewModel, IBaseD
 	{
 		Planets.Clear();
 		OtherObjects.Clear();
+		AdditionalAnomalies.Clear();
 		Anomalies.Clear();
 		Instance = null;
 	}
@@ -90,6 +94,7 @@ public class SpaceSystemInformationWindowVM : BaseDisposable, IViewModel, IBaseD
 		StarSystemSprite.Value = SectorMapObjectEntity.Value.StarSystemSprite;
 		AddPlanetsInfo();
 		AddOtherObjectsInfo();
+		AddAdditionalAnomaliesInfo();
 	}
 
 	private void AddPlanetsInfo()
@@ -116,6 +121,24 @@ public class SpaceSystemInformationWindowVM : BaseDisposable, IViewModel, IBaseD
 			{
 				OtherObjects.Add(new OtherObjectsInfoSpaceSystemInformationWindowVM(obj, Area));
 			});
+		}
+	}
+
+	private void AddAdditionalAnomaliesInfo()
+	{
+		AdditionalAnomalies.Clear();
+		List<BlueprintAnomaly> list = ((SectorMapObjectEntity?.Value == null) ? Area?.Anomalies?.Dereference()?.Where((BlueprintAnomaly anomaly) => anomaly.ShowOnGlobalMap).EmptyIfNull().ToList() : SectorMapObjectEntity?.Value?.AnomaliesForGlobalMap);
+		if (list == null || list.Count == 0)
+		{
+			return;
+		}
+		Game.Instance.Player.StarSystemsState.InteractedAnomalies.TryGetValue(SectorMapObjectEntity?.Value?.StarSystemArea ?? Area, out var value);
+		foreach (BlueprintAnomaly item in value.EmptyIfNull())
+		{
+			if (list.Contains(item) && !item.HideInUI)
+			{
+				AdditionalAnomalies.Add(new AdditionalAnomaliesInfoSpaceSystemInformationWindowVM(item, Area));
+			}
 		}
 	}
 

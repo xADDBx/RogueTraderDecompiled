@@ -73,7 +73,7 @@ public class SystemNameController : MonoBehaviour, ILocalizationHandler, ISubscr
 
 	public void SetVisibility(bool visible)
 	{
-		Visible = m_SectorMapObject.Data.IsExplored && visible;
+		Visible = visible;
 		ForceUpdate();
 	}
 

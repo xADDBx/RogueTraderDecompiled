@@ -27,11 +27,11 @@ public class ExplorationResourcePointBaseView : ViewBase<ExplorationResourceVM>,
 
 	protected override void BindViewImplementation()
 	{
-		AddDisposable(base.ViewModel.Icon.Subscribe(delegate(Sprite val)
+		AddDisposable(base.ViewModel?.Icon.Subscribe(delegate(Sprite val)
 		{
 			m_Icon.sprite = val;
 		}));
-		AddDisposable(base.ViewModel.IsBeingMined.Subscribe(m_ActiveImage.gameObject.SetActive));
+		AddDisposable(base.ViewModel?.IsBeingMined.Subscribe(m_ActiveImage.gameObject.SetActive));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -51,7 +51,7 @@ public class ExplorationResourcePointBaseView : ViewBase<ExplorationResourceVM>,
 
 	public void SetFocus(bool value)
 	{
-		base.ViewModel.SetFocus(value);
+		base.ViewModel?.SetFocus(value);
 		SetFocusImpl(value);
 	}
 
@@ -76,7 +76,7 @@ public class ExplorationResourcePointBaseView : ViewBase<ExplorationResourceVM>,
 
 	protected void HandleClick()
 	{
-		base.ViewModel.Interact();
+		base.ViewModel?.Interact();
 	}
 
 	public bool CanInteract()
@@ -91,7 +91,7 @@ public class ExplorationResourcePointBaseView : ViewBase<ExplorationResourceVM>,
 
 	public void Interact()
 	{
-		base.ViewModel.Interact();
+		base.ViewModel?.Interact();
 	}
 
 	public void ShowTooltip()

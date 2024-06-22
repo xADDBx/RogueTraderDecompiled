@@ -42,7 +42,7 @@ public class SummonPoolUnits : GameAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		IEnumerable<AbstractUnitEntity> enumerable = Game.Instance.SummonPools.Get(SummonPool)?.Units;
 		if (enumerable == null)

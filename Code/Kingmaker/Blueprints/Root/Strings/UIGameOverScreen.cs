@@ -14,5 +14,17 @@ public class UIGameOverScreen
 
 	public LocalizedString QuestIsFailedLabel;
 
+	public LocalizedString GameOverIronManDescription;
+
+	public LocalizedString QuickLoadLabel;
+
+	public LocalizedString LoadLabel;
+
+	public LocalizedString MainMenuLabel;
+
+	public LocalizedString IronManDeleteSaveLabel;
+
+	public LocalizedString IronManContinueGameLabel;
+
 	public static UIGameOverScreen Instance => UIStrings.Instance.GameOverScreen;
 }

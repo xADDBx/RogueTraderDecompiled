@@ -193,32 +193,12 @@ public class CharGenAppearancePhaseDetailedConsoleView : CharGenAppearancePhaseD
 		return false;
 	}
 
-	private void HandlePageChanged(CharGenAppearancePageType pageType)
+	protected override void HandlePageChanged(CharGenAppearancePageType pageType)
 	{
 		if (m_ActivePhaseNavigation.Value != 0)
 		{
 			m_VirtualList.ScrollController.ForceScrollToTop();
-			switch (pageType)
-			{
-			case CharGenAppearancePageType.Hair:
-				base.ViewModel.DollState.ShowHelmTemp = false;
-				base.ViewModel.DollState.ShowClothTemp = true;
-				m_CharacterController.ZoomMin();
-				break;
-			case CharGenAppearancePageType.Tattoo:
-				base.ViewModel.DollState.ShowClothTemp = false;
-				m_CharacterController.ZoomMax();
-				break;
-			case CharGenAppearancePageType.Implants:
-				base.ViewModel.DollState.ShowClothTemp = false;
-				m_CharacterController.ZoomMin();
-				break;
-			default:
-				base.ViewModel.DollState.ShowHelmTemp = true;
-				base.ViewModel.DollState.ShowClothTemp = true;
-				m_CharacterController.ZoomMax();
-				break;
-			}
+			base.HandlePageChanged(pageType);
 			UpdateContentNavigation();
 		}
 	}

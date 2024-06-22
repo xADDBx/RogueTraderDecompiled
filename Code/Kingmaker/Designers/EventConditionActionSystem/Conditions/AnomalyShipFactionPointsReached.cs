@@ -2,9 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Exploration;
-using Kingmaker.Globalmap.SystemMap;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
@@ -22,7 +20,7 @@ public class AnomalyShipFactionPointsReached : Condition
 
 	protected override bool CheckCondition()
 	{
-		AnomalyStarShip anomalyStarShip = (ContextData<StarSystemContextData>.Current?.StarSystemObject)?.Blueprint.GetComponent<AnomalyStarShip>();
+		AnomalyStarShip anomalyStarShip = Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject?.Blueprint.GetComponent<AnomalyStarShip>();
 		if (anomalyStarShip == null || anomalyStarShip.HasFaction)
 		{
 			return false;

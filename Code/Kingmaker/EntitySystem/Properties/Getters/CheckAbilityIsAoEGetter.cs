@@ -28,7 +28,7 @@ public class CheckAbilityIsAoEGetter : PropertyGetter, PropertyContextAccessor.I
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check if ability has pattern";
 	}

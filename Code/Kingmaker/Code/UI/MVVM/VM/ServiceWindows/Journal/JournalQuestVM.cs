@@ -142,7 +142,9 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			ColonyProjectsRewardElementVM item2 = new ColonyProjectsRewardElementVM(component3);
 			Rewards.Add(item2);
 		}
-		IsOrderCompleted.Value = false;
+		ReactiveProperty<bool> isOrderCompleted = IsOrderCompleted;
+		QuestState state = quest.State;
+		isOrderCompleted.Value = state == QuestState.Completed || state == QuestState.Failed;
 		m_SelectQuestCallback = selectQuestCallback;
 		if (selectedQuest != null)
 		{
@@ -178,6 +180,18 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			Objectives?.Add(new JournalQuestObjectiveVM(item4));
 		}
 		UpdateData();
+	}
+
+	protected override void DisposeImplementation()
+	{
+		Rewards.Clear();
+		Requirements.Clear();
+		ResourcesVMs.Clear();
+		Objectives.ForEach(delegate(JournalQuestObjectiveVM obj)
+		{
+			obj.Dispose();
+		});
+		Objectives.Clear();
 	}
 
 	private void Clear()
@@ -277,9 +291,9 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		}
 		IsNew = quest.State == QuestState.Started;
 		IsCompleted = quest.State == QuestState.Completed;
-		IsUpdated = quest.IsViewed && ActiveObjectives.Any((QuestObjective o) => !o.IsViewed);
 		IsPostponed = quest.State == QuestState.Postponed;
 		IsFailed = quest.State == QuestState.Failed;
+		IsUpdated = quest.IsViewed && ActiveObjectives.Any((QuestObjective o) => !o.IsViewed) && quest.State != QuestState.Completed && quest.State != QuestState.Failed;
 	}
 
 	private static int Comparison(QuestObjective o1, QuestObjective o2)
@@ -289,18 +303,6 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			return o2.Order.CompareTo(o1.Order);
 		}
 		return o1.State.CompareTo(o2.State);
-	}
-
-	protected override void DisposeImplementation()
-	{
-		Rewards.Clear();
-		Requirements.Clear();
-		ResourcesVMs.Clear();
-		Objectives.ForEach(delegate(JournalQuestObjectiveVM obj)
-		{
-			obj.Dispose();
-		});
-		Objectives.Clear();
 	}
 
 	private void UpdateCanCompleteState()

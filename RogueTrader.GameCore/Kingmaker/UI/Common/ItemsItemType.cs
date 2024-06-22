@@ -30,6 +30,7 @@ public enum ItemsItemType
 	StarshipBridge = 107,
 	StarshipAugerArray = 109,
 	StarshipArmorPlating = 111,
+	StarshipArsenal = 112,
 	ResourceMiner = 200,
 	ColonyFoundation = 201
 }

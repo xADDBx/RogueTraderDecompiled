@@ -1,5 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.QA;
+using Kingmaker.ElementsSystem;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
@@ -11,8 +11,8 @@ public class ContextActionOutOfCombatHeal : ContextAction
 		return "Deprecated, use ContextActionMedicae instead";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		PFLog.Default.ErrorWithReport("ContextActionOutOfCombatHeal is deprecated, use ContextActionMedicae instead");
+		Element.LogError(this, "ContextActionOutOfCombatHeal is deprecated, use ContextActionMedicae instead");
 	}
 }

@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.SystemMap;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -149,6 +150,10 @@ public class OvertipTransitionVM : BaseOvertipMapObjectVM
 			if (path.error)
 			{
 				PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+			}
+			else if (unit.IsMovementLockedByGameModeOrCombat())
+			{
+				PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 			}
 			else
 			{

@@ -43,7 +43,7 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 
 	private InputLayer m_InputLayer;
 
-	private BoolReactiveProperty m_IsGamepadConnected = new BoolReactiveProperty(initialValue: true);
+	private readonly BoolReactiveProperty m_IsGamepadConnected = new BoolReactiveProperty(initialValue: true);
 
 	private bool m_IsOpened;
 
@@ -82,6 +82,15 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 			m_ConfirmLabel.text = UIStrings.Instance.ControllerModeTexts.ConfirmSwitchText.Text;
 			m_DeclineLabel.text = UIStrings.Instance.CommonTexts.Cancel.Text;
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		if (m_IsOpened)
+		{
+			Hide();
+		}
+		ClearKeyboard();
 	}
 
 	private void GamepadConnected()
@@ -199,14 +208,5 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 	private void Sub()
 	{
 		AddDisposable(m_KeyboardInput = MainThreadDispatcher.LateUpdateAsObservable().Subscribe(OnLateUpdate));
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		if (m_IsOpened)
-		{
-			Hide();
-		}
-		ClearKeyboard();
 	}
 }

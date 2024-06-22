@@ -50,7 +50,7 @@ public class OvertipPointBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
 	}

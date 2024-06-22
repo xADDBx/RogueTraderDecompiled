@@ -132,5 +132,13 @@ public class UIStrings : StringsContainer
 
 	public UIEscapeMenu EscapeMenu;
 
+	public UIEpilogues Epilogues;
+
+	public UIDlcManager DlcManager;
+
+	public UIPopupWindows PopUps;
+
+	public UIWeaponCategories WeaponCategories;
+
 	public static UIStrings Instance => LocalizedTexts.Instance.UserInterfacesText;
 }

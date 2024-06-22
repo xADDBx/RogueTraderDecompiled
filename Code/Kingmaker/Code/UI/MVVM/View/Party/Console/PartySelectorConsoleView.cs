@@ -70,7 +70,7 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 
 	private IReadOnlyReactiveProperty<PartySelectorItemConsoleView> m_SelectedEntity;
 
-	private BoolReactiveProperty m_IsLevelUp = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_IsLevelUp = new BoolReactiveProperty();
 
 	private bool IsInHub
 	{
@@ -190,7 +190,7 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 	{
 		m_Content.constraintCount = 1;
 		List<PartySelectorItemConsoleView> range = m_Characters.GetRange(0, m_Characters.Count);
-		m_NavigationBehaviour.AddRow(range.ToList());
+		m_NavigationBehaviour.AddRow(range.Where((PartySelectorItemConsoleView item) => item.IsBinded && item.UnitEntityData.InPartyAndControllable()).ToList());
 	}
 
 	private void CreateTwoColumnsNavigation()
@@ -200,7 +200,7 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 		int num2 = Mathf.CeilToInt(1f * (float)m_Characters.Count / (float)num);
 		List<PartySelectorItemConsoleView> range = m_Characters.GetRange(0, num2);
 		List<PartySelectorItemConsoleView> range2 = m_Characters.GetRange(num2, m_Characters.Count - num2);
-		m_NavigationBehaviour.AddRow(range.ToList());
+		m_NavigationBehaviour.AddRow(range.Where((PartySelectorItemConsoleView item) => item.IsBinded && item.UnitEntityData.InPartyAndControllable()).ToList());
 		m_NavigationBehaviour.AddRow(range2.ToList());
 	}
 
@@ -211,27 +211,33 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 			AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 			return;
 		}
-		AddDisposable(m_LinkHint.Bind(m_InputLayer.AddButton(SetLink, 11, InputActionEventType.ButtonJustReleased)));
-		AddDisposable(m_LinkAllHint.Bind(m_InputLayer.AddButton(SetMassLink, 11, InputActionEventType.ButtonJustLongPressed)));
-		AddDisposable(m_LevelUpHint.Bind(m_InputLayer.AddButton(LevelUp, 10, m_IsLevelUp)));
-		m_LevelUpHint.SetLabel(UIStrings.Instance.MainMenu.LevelUp);
-		AddDisposable(m_MoveToNextHint.Bind(m_InputLayer.AddButton(delegate
+		if (m_Characters.Any((PartySelectorItemConsoleView c) => c.UnitEntityData.IsDirectlyControllable()))
 		{
-			MoveCharacter(next: true);
-		}, 15)));
-		AddDisposable(m_MoveToPreviousHint.Bind(m_InputLayer.AddButton(delegate
-		{
-			MoveCharacter(next: false);
-		}, 14)));
+			AddDisposable(m_LinkHint.Bind(m_InputLayer.AddButton(SetLink, 11, InputActionEventType.ButtonJustReleased)));
+			AddDisposable(m_LinkAllHint.Bind(m_InputLayer.AddButton(SetMassLink, 11, InputActionEventType.ButtonJustLongPressed)));
+			AddDisposable(m_LevelUpHint.Bind(m_InputLayer.AddButton(LevelUp, 10, m_IsLevelUp)));
+			m_LevelUpHint.SetLabel(UIStrings.Instance.MainMenu.LevelUp);
+			AddDisposable(m_MoveToNextHint.Bind(m_InputLayer.AddButton(delegate
+			{
+				MoveCharacter(next: true);
+			}, 15)));
+			AddDisposable(m_MoveToPreviousHint.Bind(m_InputLayer.AddButton(delegate
+			{
+				MoveCharacter(next: false);
+			}, 14)));
+		}
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 
 	private void SetLink(InputActionEventData data)
 	{
-		BlueprintUISound.UISoundPartySelectorConsole partySelectorConsole = UISounds.Instance.Sounds.PartySelectorConsole;
-		((m_SelectedEntity.Value.Or(null)?.IsLinked?.Value).GetValueOrDefault() ? partySelectorConsole.UnselectOne : partySelectorConsole.SelectOne).Play();
-		m_SelectedEntity?.Value.SetLink();
-		OnFocusChanged();
+		if (m_SelectedEntity != null && m_SelectedEntity.Value.UnitEntityData.IsDirectlyControllable())
+		{
+			BlueprintUISound.UISoundPartySelectorConsole partySelectorConsole = UISounds.Instance.Sounds.PartySelectorConsole;
+			((m_SelectedEntity.Value.Or(null)?.IsLinked?.Value).GetValueOrDefault() ? partySelectorConsole.UnselectOne : partySelectorConsole.SelectOne).Play();
+			m_SelectedEntity?.Value.SetLink();
+			OnFocusChanged();
+		}
 	}
 
 	private void SetMassLink(InputActionEventData data)

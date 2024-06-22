@@ -743,10 +743,10 @@ public static class Replay
 
 	private static void SaveState(bool force)
 	{
-		if (force || Game.Instance.RealTimeController.IsNetworkTick)
+		if (force || Game.Instance.RealTimeController.IsSimulationTick)
 		{
 			int num = Game.Instance.RealTimeController.CurrentNetworkTick;
-			if (s_IsFirstTick && Game.Instance.RealTimeController.IsNetworkTick)
+			if (s_IsFirstTick && Game.Instance.RealTimeController.IsSimulationTick)
 			{
 				num--;
 			}

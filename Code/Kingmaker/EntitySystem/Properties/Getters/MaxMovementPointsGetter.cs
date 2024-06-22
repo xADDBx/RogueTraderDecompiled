@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("c8ec1a8f34944ea68f48a475ea7e5e60")]
 public class MaxMovementPointsGetter : UnitPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Max MP";
+		return "Max MP of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

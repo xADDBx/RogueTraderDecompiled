@@ -37,16 +37,16 @@ public abstract class SettingsEntityConsoleView<TSettingsEntityVM> : VirtualList
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	protected virtual void UpdateLocalization()
 	{
 		if (m_Title != null)
 		{
 			m_Title.text = base.ViewModel.Title;
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public void BindWidgetVM(IViewModel vm)

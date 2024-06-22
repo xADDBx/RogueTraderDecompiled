@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.Base;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.DLC;
 using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.MVVM.VM.NetLobby;
 using Kingmaker.UI.TMPExtention.ScrambledTextMeshPro;
 using Owlcat.Runtime.Core.Utility;
@@ -87,12 +91,18 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 	[SerializeField]
 	private TextMeshProUGUI m_TransferSaveProgressSize;
 
+	[SerializeField]
+	private TextMeshProUGUI m_WillShowNotAllSavesBecauseOfDlcLabel;
+
 	[Header("Save List Part")]
 	[SerializeField]
 	private GameObject m_WaitingForSaveList;
 
 	[SerializeField]
 	private TextMeshProUGUI m_EmptyListHint;
+
+	[SerializeField]
+	private TextMeshProUGUI m_EmptyListHintBecauseDlcs;
 
 	[Header("Save List Part")]
 	[SerializeField]
@@ -126,6 +136,7 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 		base.gameObject.SetActive(value: false);
 		m_LobbyIdHintText.text = UIStrings.Instance.NetLobbyTexts.CopyLobbyIdHint;
 		m_SaveBlockHintHeader.text = UIStrings.Instance.NetLobbyTexts.ChooseSaveHint;
+		m_WillShowNotAllSavesBecauseOfDlcLabel.text = UIStrings.Instance.NetLobbyTexts.WillShowNotAllSavesBecauseOfDlc;
 		m_EmptyListHint.text = UIStrings.Instance.SaveLoadTexts.EmptySaveListHint.Text + Environment.NewLine + Environment.NewLine + UIStrings.Instance.NetLobbyTexts.NeedSaveForStartGame.Text;
 		m_CurrentVersionHeader.text = UIStrings.Instance.NetLobbyTexts.CoopVer;
 		m_LobbyNotEnoughPlayersText.text = UIStrings.Instance.NetLobbyTexts.IsNotEnoughPlayersForGame;
@@ -137,8 +148,8 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 
 	protected override void BindViewImplementation()
 	{
-		LaunchButtonInteractable.Value = base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync && base.ViewModel.IsSaveAllowed.Value;
-		m_SaveBlockHeader.text = (base.ViewModel.IsSaveAllowed.Value ? UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader : UIStrings.Instance.NetLobbyTexts.ImpossibleToStartCoopGameInThisMoment);
+		LaunchButtonInteractable.Value = (base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync && base.ViewModel.IsSaveAllowed.Value) || (base.ViewModel.CurrentSave.Value?.Reference != null && !base.ViewModel.IsMainMenu);
+		m_SaveBlockHeader.text = UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader;
 		AddDisposable(base.ViewModel.IsInRoom.CombineLatest(base.ViewModel.NetGameCurrentState, base.ViewModel.SaveSlotCollectionVm, base.ViewModel.IsHost, (bool inRoom, NetGame.State state, SaveSlotCollectionVM collection, bool host) => new { inRoom, state, collection, host }).Subscribe(value =>
 		{
 			bool isConnectingNetGameCurrentState = base.ViewModel.IsConnectingNetGameCurrentState;
@@ -164,9 +175,9 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 		AddDisposable(base.ViewModel.IsSaveAllowed.CombineLatest(base.ViewModel.IsHost, base.ViewModel.NeedReconnect, base.ViewModel.IsEnoughPlayersForGame, (bool isSaveAllowed, bool isHost, bool reconnect, bool enoughPlayers) => new { isSaveAllowed, isHost, reconnect, enoughPlayers }).Subscribe(value =>
 		{
 			m_LaunchInGameHintText.gameObject.SetActive(value.isSaveAllowed && value.isHost && !base.ViewModel.IsMainMenu);
-			string arg = (value.reconnect ? UIStrings.Instance.NetLobbyTexts.Reconnect : UIStrings.Instance.NetLobbyTexts.Launch);
-			m_LaunchInGameHintText.text = string.Format(UIStrings.Instance.NetLobbyTexts.LaunchInGameHint, arg);
-			LaunchButtonInteractable.Value = (base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync) || (!value.reconnect && value.enoughPlayers && value.isSaveAllowed);
+			string arg3 = (value.reconnect ? UIStrings.Instance.NetLobbyTexts.Reconnect : UIStrings.Instance.NetLobbyTexts.Launch);
+			m_LaunchInGameHintText.text = string.Format(UIStrings.Instance.NetLobbyTexts.LaunchInGameHint, arg3);
+			LaunchButtonInteractable.SetValueAndForceNotify((base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync) || (!value.reconnect && value.enoughPlayers && value.isSaveAllowed) || base.ViewModel.CurrentSave.Value?.Reference != null);
 		}));
 		AddDisposable(base.ViewModel.CurrentRegion.Subscribe(delegate(string value)
 		{
@@ -179,12 +190,12 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 		AddDisposable(base.ViewModel.IsSaveTransfer.Subscribe(delegate(bool value)
 		{
 			m_TransferSavePart.SetActive(value);
-			m_SaveBlockHintHeader.gameObject.SetActive(!value && !base.ViewModel.IsHost.Value && base.ViewModel.IsSaveAllowed.Value);
+			m_SaveBlockHintHeader.gameObject.SetActive(!value && !base.ViewModel.IsHost.Value);
 		}));
 		AddDisposable(base.ViewModel.CurrentSave.CombineLatest(base.ViewModel.IsHost, (SaveSlotVM save, bool isHost) => new { save, isHost }).Subscribe(value =>
 		{
 			m_SaveSlot.Bind(value.save);
-			m_SaveBlockHintHeader.gameObject.SetActive(!value.isHost && value.save == null && base.ViewModel.IsSaveAllowed.Value);
+			m_SaveBlockHintHeader.gameObject.SetActive(!value.isHost && value.save == null);
 			m_EmptySaveSlotButton.gameObject.SetActive(value.save == null && value.isHost);
 			ResetCurrentSaveActive.Value = value.save != null && value.isHost;
 		}));
@@ -210,27 +221,49 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 			{
 				IsLaunchSound = true;
 				LaunchButtonText.Value = UIStrings.Instance.NetLobbyTexts.Launch;
-				LaunchButtonInteractable.Value = value.enoughPlayers && value.saveAllowed;
+				LaunchButtonInteractable.SetValueAndForceNotify(value.enoughPlayers);
 			}
 			else if (value.reconnect)
 			{
 				IsLaunchSound = true;
 				LaunchButtonText.Value = UIStrings.Instance.NetLobbyTexts.Reconnect;
-				LaunchButtonInteractable.Value = value.saveAllowed;
+				LaunchButtonInteractable.SetValueAndForceNotify(value.saveAllowed);
 			}
 			else
 			{
 				IsLaunchSound = value.saveAllowed && !base.ViewModel.IsMainMenu;
 				LaunchButtonText.Value = ((value.saveAllowed && !base.ViewModel.IsMainMenu) ? UIStrings.Instance.NetLobbyTexts.Launch : UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader);
-				LaunchButtonInteractable.Value = (base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync) || (value.enoughPlayers && value.saveAllowed);
+				LaunchButtonInteractable.SetValueAndForceNotify((base.ViewModel.CurrentSave.Value?.Reference == null && !PhotonManager.Sync.HasDesync) || (value.enoughPlayers && value.saveAllowed));
 			}
 		}));
 		AddDisposable(base.ViewModel.ShowWaitingSaveAnim.Subscribe(m_WaitingForSaveList.SetActive));
-		AddDisposable(base.ViewModel.SaveListAreEmpty.Subscribe(m_EmptyListHint.gameObject.SetActive));
+		AddDisposable(base.ViewModel.SaveListAreEmpty.Subscribe(delegate(bool value)
+		{
+			m_EmptyListHint.gameObject.SetActive(value && !base.ViewModel.ProblemsToShowInSaveList.Any());
+			m_EmptyListHintBecauseDlcs.transform.parent.gameObject.SetActive(value: false);
+			if (base.ViewModel.ProblemsToShowInSaveList.Any() && value)
+			{
+				IEnumerable<string> values = base.ViewModel.ProblemsToShowInSaveList.Values.SelectMany((List<IBlueprintDlc> dlcs) => dlcs).Select(delegate(IBlueprintDlc playerDLC)
+				{
+					if (!(playerDLC is BlueprintDlc blueprintDlc))
+					{
+						return (string)null;
+					}
+					return string.IsNullOrEmpty(blueprintDlc.DefaultTitle) ? blueprintDlc.name : ((string)blueprintDlc.DefaultTitle);
+				});
+				string arg = string.Join(", ", values);
+				string arg2 = string.Join(", ", base.ViewModel.ProblemsToShowInSaveList.Keys.ToList());
+				m_EmptyListHintBecauseDlcs.text = string.Format(UIStrings.Instance.NetLobbyTexts.CantChooseAnySavesBecauseOfDlc, arg, arg2);
+				m_EmptyListHintBecauseDlcs.transform.parent.gameObject.SetActive(value: true);
+			}
+		}));
+		AddDisposable(base.ViewModel.CheckProblemsWithDlcs.Subscribe(delegate(Dictionary<string, List<IBlueprintDlc>> value)
+		{
+			m_WillShowNotAllSavesBecauseOfDlcLabel.transform.parent.gameObject.SetActive(value.Count > 0);
+		}));
 		AddDisposable(m_CurrentVersion.SetHint(UIStrings.Instance.NetLobbyTexts.CoopVerTooltip));
 		AddDisposable(m_CurrentRegionText.SetHint(UIStrings.Instance.NetLobbyTexts.CoopRegionTooltip));
 		AddDisposable(m_LobbyIdText.SetHint(UIStrings.Instance.NetLobbyTexts.CoopLobbyCodeTooltip));
-		m_EmptySaveSlotButton.SetInteractable(base.ViewModel.IsSaveAllowed.Value);
 		AddDisposable(base.ViewModel.EpicGamesButtonActive.CombineLatest(base.ViewModel.EpicGamesUserName, base.ViewModel.EpicGamesAuthorized, (bool buttonsActive, string userName, bool isAuthorized) => new { buttonsActive, userName, isAuthorized }).Subscribe(value =>
 		{
 			m_ConnectEpicGamesToSteam.gameObject.SetActive(value.buttonsActive);

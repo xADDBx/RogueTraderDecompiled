@@ -9,7 +9,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Menu;
 
 public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public SelectionGroupRadioVM<ServiceWindowsMenuEntityVM> SelectionGroup;
+	public readonly SelectionGroupRadioVM<ServiceWindowsMenuEntityVM> SelectionGroup;
 
 	private List<ServiceWindowsMenuEntityVM> m_EntitiesList;
 
@@ -25,7 +25,11 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 		CreateEntities();
 		SelectedEntity = new ReactiveProperty<ServiceWindowsMenuEntityVM>();
 		AddDisposable(SelectionGroup = new SelectionGroupRadioVM<ServiceWindowsMenuEntityVM>(m_EntitiesList, SelectedEntity));
-		AddDisposable(SelectedEntity.Subscribe(OnEntitySelected));
+		AddDisposable(SelectedEntity.Skip(1).Subscribe(OnEntitySelected));
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void SelectWindow(ServiceWindowsType type)
@@ -57,10 +61,9 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public void Close()
 	{
-		m_OnSelect?.Invoke(ServiceWindowsType.None);
-	}
-
-	protected override void DisposeImplementation()
-	{
+		if (!Game.Instance.RootUiContext.ServiceWindowNowIsOpening)
+		{
+			m_OnSelect?.Invoke(ServiceWindowsType.None);
+		}
 	}
 }

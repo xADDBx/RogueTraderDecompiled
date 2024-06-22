@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -10,11 +11,21 @@ namespace Kingmaker.Controllers.TurnBased;
 [TypeId("62eaff56c12a477e97986b3780f11dd2")]
 public class EnableMultiInitiative : MechanicEntityFactComponentDelegate, IHashable
 {
+	public bool TurnPerEnemy;
+
+	[HideIf("TurnPerEnemy")]
 	public int AdditionalTurns = 1;
 
 	protected override void OnActivateOrPostLoad()
 	{
-		base.Owner.GetOrCreate<PartMultiInitiative>().Setup(AdditionalTurns);
+		if (TurnPerEnemy)
+		{
+			base.Owner.GetOrCreate<PartMultiInitiative>().SetupByEnemiesCount();
+		}
+		else
+		{
+			base.Owner.GetOrCreate<PartMultiInitiative>().Setup(AdditionalTurns);
+		}
 		base.Owner.Initiative.Clear();
 	}
 

@@ -26,7 +26,7 @@ public class GiveExpeditionReward : GameAction
 		return "Have expedition from " + m_StarSystemObject?.Get()?.Name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (LootEntry item in (Enumerable.FirstOrDefault(Game.Instance.Player.StarSystemsState.SentExpedition, (ExpeditionInfo expedition) => expedition.StarSystemObject == m_StarSystemObject.Get() && (m_PointOfInterest?.Get() == null || expedition.PointOfInterest == m_PointOfInterest.Get()))?.Loot).EmptyIfNull())
 		{

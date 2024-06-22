@@ -1,3 +1,5 @@
+using Kingmaker.Blueprints;
+using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.Sound;
 using UniRx;
 using UniRx.Triggers;
@@ -6,10 +8,12 @@ using UnityEngine.EventSystems;
 
 namespace Kingmaker.Code.UI.MVVM.View.Dialog.BookEvent;
 
-public class BookEventAnswerPCView : BookEventAnswerView
+public class BookEventAnswerPCView : BookEventAnswerView, IHasBlueprintInfo
 {
 	[SerializeField]
 	private float m_DefaultFontSize = 18f;
+
+	public BlueprintScriptableObject Blueprint => base.ViewModel?.Answer?.Value;
 
 	protected override void BindViewImplementation()
 	{

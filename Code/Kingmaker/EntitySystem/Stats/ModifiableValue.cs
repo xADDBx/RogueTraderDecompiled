@@ -291,7 +291,10 @@ public class ModifiableValue : IHashable
 		{
 			m_Dependents = new List<ModifiableValue>();
 		}
-		m_Dependents.Add(dependent);
+		if (!m_Dependents.HasItem(dependent))
+		{
+			m_Dependents.Add(dependent);
+		}
 	}
 
 	public void RemoveDependentValue(ModifiableValue dependent)

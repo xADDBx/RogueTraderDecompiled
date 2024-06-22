@@ -40,6 +40,10 @@ public class TransitionEntryBaseView : ViewBase<TransitionEntryVM>
 		CheckEntriesEnabled();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void CheckEntriesEnabled()
 	{
 		m_MapButton.gameObject.SetActive(base.ViewModel.IsVisible.Value);
@@ -47,9 +51,5 @@ public class TransitionEntryBaseView : ViewBase<TransitionEntryVM>
 		{
 			m_MapButton.SetInteractable(base.ViewModel.IsInteractable.Value);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

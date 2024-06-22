@@ -44,9 +44,6 @@ public class CareerPathSelectionTabsPCView : CareerPathSelectionTabsCommonView
 		case SelectionTab.CareerPathDescription:
 			m_CareerPathDescriptionPCView.Bind(base.ViewModel);
 			break;
-		case SelectionTab.Summary:
-			m_CareerPathSelectionsSummaryPCView.Bind(base.ViewModel);
-			break;
 		case SelectionTab.FeatureDescription:
 			m_RankEntryFeatureDescriptionPCView.Bind(currentItem as RankEntryFeatureItemVM);
 			break;

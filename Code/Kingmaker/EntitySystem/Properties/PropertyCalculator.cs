@@ -1,16 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Code.GameCore.ElementsSystem;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
-using Kingmaker.QA;
+using Kingmaker.EntitySystem.Properties.Getters;
+using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Properties;
 
 [Serializable]
-public class PropertyCalculator
+public class PropertyCalculator : ElementsList
 {
 	public enum OperationType
 	{
@@ -45,36 +49,86 @@ public class PropertyCalculator
 	[SerializeReference]
 	public PropertyGetter[] Getters = new PropertyGetter[0];
 
+	public override IEnumerable<Element> Elements => Getters;
+
 	public bool Any => Getters.Length != 0;
 
 	public bool Empty => Getters.Length < 1;
 
+	public bool IsSimple
+	{
+		get
+		{
+			if (Getters.Length > 2)
+			{
+				return false;
+			}
+			PropertyGetter[] getters = Getters;
+			foreach (PropertyGetter propertyGetter in getters)
+			{
+				if (propertyGetter is PropertyCalculatorGetter propertyCalculatorGetter)
+				{
+					if (propertyCalculatorGetter.Value.Getters.Length > 1)
+					{
+						return false;
+					}
+					if (propertyCalculatorGetter.Value.Getters.Length == 1 && !propertyCalculatorGetter.Value.Getters[0].IsSimple)
+					{
+						return false;
+					}
+				}
+				else if (!propertyGetter.IsSimple)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	public bool IsBool
+	{
+		get
+		{
+			OperationType operation = Operation;
+			return operation == OperationType.And || operation == OperationType.Or || operation == OperationType.BoolAnd || operation == OperationType.BoolOr || operation == OperationType.G || operation == OperationType.GE || operation == OperationType.L || operation == OperationType.LE || operation == OperationType.Eq || operation == OperationType.NEq;
+		}
+	}
+
 	public int GetValue(PropertyContext context)
 	{
-		try
+		using (ProfileScope.New("Calculator"))
 		{
-			if (TargetType != 0)
+			using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(this);
+			try
 			{
-				MechanicEntity targetEntity = context.GetTargetEntity(TargetType);
-				if (targetEntity == null)
+				if (TargetType != 0)
 				{
-					if (!FailSilentlyIfNoTarget)
+					MechanicEntity targetEntity = context.GetTargetEntity(TargetType);
+					if (targetEntity == null)
 					{
-						PFLog.Default.ErrorWithReport($"Can't switch target to {TargetType}: inaccessible in context");
+						if (!FailSilentlyIfNoTarget)
+						{
+							throw new Exception($"Can't switch target to {TargetType}: inaccessible in context (Fact={context.Fact}, Ability={context.Ability})");
+						}
+						elementsDebugger?.SetResult(0);
+						return 0;
 					}
-					return 0;
+					context = context.WithCurrentEntity(targetEntity);
 				}
-				context = context.WithCurrentEntity(targetEntity);
+				using (ContextData<PropertyContextData>.Request().Setup(context))
+				{
+					int result = PropertyCalculatorHelper.CalculateValue(Getters, Operation, this);
+					elementsDebugger?.SetResult(result);
+					return result;
+				}
 			}
-			using (ContextData<PropertyContextData>.Request().Setup(context))
+			catch (Exception ex)
 			{
-				return GetValueInternal();
+				PFLog.Default.Exception(ex, "Exception in PropertyCalculator");
+				elementsDebugger?.SetException(ex);
+				return 0;
 			}
-		}
-		catch (Exception exception)
-		{
-			PFLog.Default.ExceptionWithReport(exception, "Exception in PropertyCalculator");
-			return 0;
 		}
 	}
 
@@ -83,70 +137,168 @@ public class PropertyCalculator
 		return GetValue(context) != 0;
 	}
 
-	public (bool Success, int Value) GetValueSafe(PropertyContext context)
+	public string GenerateDescription(bool useLineBreaks)
 	{
-		try
-		{
-			int value = GetValue(context);
-			return (Success: true, Value: value);
-		}
-		catch
-		{
-			return (Success: false, Value: 0);
-		}
-	}
-
-	private int GetValueInternal()
-	{
-		return PropertyCalculatorHelper.CalculateValue(Getters, Operation);
-	}
-
-	public override string ToString()
-	{
+		bool flag = true;
 		if (Getters.Length == 0)
 		{
 			return "[0]";
 		}
-		if (Getters.Length == 1)
+		using (FormulaTargetScope.Enter(TargetType, useLineBreaks))
 		{
-			if (TargetType == PropertyTargetType.CurrentEntity)
+			if (Getters.Length == 1)
 			{
-				return Getters[0].GetCaption();
+				if (Getters[0].IsSimple)
+				{
+					return Getters[0].GetCaption(useLineBreaks);
+				}
+				using PooledStringBuilder pooledStringBuilder = ContextData<PooledStringBuilder>.Request();
+				StringBuilder builder = pooledStringBuilder.Builder;
+				if (useLineBreaks)
+				{
+					builder.Append('\n');
+				}
+				builder.AppendIndentedFormula('(');
+				using (FormulaScope.Enter(useLineBreaks))
+				{
+					builder.Append(Getters[0].GetCaption(useLineBreaks));
+				}
+				builder.AppendIndentedFormula(')');
+				if (useLineBreaks)
+				{
+					builder.Append('\n');
+				}
+				return builder.ToString();
 			}
-			using PooledStringBuilder pooledStringBuilder = ContextData<PooledStringBuilder>.Request();
-			StringBuilder builder = pooledStringBuilder.Builder;
-			builder.Append(TargetType.ToShortString());
-			builder.Append('{');
-			builder.Append(Getters[0].GetCaption());
-			builder.Append('}');
-		}
-		using PooledStringBuilder pooledStringBuilder2 = ContextData<PooledStringBuilder>.Request();
-		StringBuilder builder2 = pooledStringBuilder2.Builder;
-		string value = OperationToString(Operation);
-		if (TargetType != 0)
-		{
-			builder2.Append(TargetType.ToShortString());
-			builder2.Append('{');
-		}
-		if (Operation == OperationType.Max || Operation == OperationType.Min)
-		{
-			builder2.Append(Operation);
-		}
-		builder2.Append('(');
-		for (int i = 0; i < Getters.Length; i++)
-		{
-			if (i != 0)
+			using PooledStringBuilder pooledStringBuilder2 = ContextData<PooledStringBuilder>.Request();
+			StringBuilder builder2 = pooledStringBuilder2.Builder;
+			if (!IsSimple && useLineBreaks)
 			{
-				builder2.Append(value);
+				builder2.Append('\n');
 			}
-			builder2.Append(Getters[i].GetCaption());
+			string text = OperationToString(Operation);
+			if (Operation == OperationType.Max || Operation == OperationType.Min)
+			{
+				if (useLineBreaks)
+				{
+					if (!IsSimple)
+					{
+						string arg = (flag ? "cyan" : "#888888");
+						if (useLineBreaks)
+						{
+							builder2.AppendIndentedFormula($"<color='{arg}'>{Operation}</color>");
+						}
+						else
+						{
+							builder2.AppendIndentedFormula(Operation.ToString());
+						}
+						if (useLineBreaks)
+						{
+							builder2.Append('\n');
+						}
+					}
+					else
+					{
+						builder2.Append(Operation.ToString());
+					}
+				}
+				else
+				{
+					builder2.Append(Operation.ToString());
+				}
+			}
+			else if (useLineBreaks)
+			{
+				text = "<b>" + text + "</b>";
+			}
+			if (IsSimple)
+			{
+				builder2.Append('(');
+			}
+			else
+			{
+				builder2.AppendIndentedFormula('(');
+			}
+			if (Getters[0].IsSimple && useLineBreaks && !IsSimple && useLineBreaks)
+			{
+				builder2.Append('\n');
+			}
+			using (FormulaScope.Enter(useLineBreaks))
+			{
+				bool flag2 = false;
+				for (int i = 0; i < Getters.Length; i++)
+				{
+					if (i != 0)
+					{
+						if (builder2[builder2.Length - 1] == '\n')
+						{
+							builder2.Remove(builder2.Length - 1, 1);
+							flag2 = true;
+						}
+						if (Getters[i - 1].IsSimple || flag2)
+						{
+							builder2.Append(text);
+						}
+						else
+						{
+							builder2.AppendIndentedFormula(text);
+						}
+						if (useLineBreaks && Getters[i].IsSimple && !IsSimple)
+						{
+							builder2.Append("\n");
+						}
+						flag2 = false;
+					}
+					if (Getters[i].IsSimple && !IsSimple)
+					{
+						builder2.AppendIndentedFormula(Getters[i].GetCaption(useLineBreaks));
+						continue;
+					}
+					bool flag3 = Getters[i] is ConditionalGetter;
+					if (flag3 && useLineBreaks)
+					{
+						builder2.Append('\n');
+						builder2.AppendIndentedFormula("(");
+					}
+					using (FormulaScope.Enter(useLineBreaks && flag3))
+					{
+						builder2.Append(Getters[i].GetCaption(useLineBreaks));
+					}
+					if (flag3 && useLineBreaks)
+					{
+						builder2.AppendIndentedFormula(")");
+						flag2 = true;
+					}
+				}
+			}
+			if (!IsSimple && useLineBreaks)
+			{
+				builder2.Append('\n');
+			}
+			if (IsSimple)
+			{
+				builder2.Append(')');
+			}
+			else
+			{
+				builder2.AppendIndentedFormula(')');
+			}
+			if (!IsSimple && useLineBreaks)
+			{
+				builder2.Append('\n');
+			}
+			return builder2.ToString();
 		}
-		builder2.Append(')');
-		if (TargetType != 0)
+	}
+
+	public override string ToString()
+	{
+		string text = GenerateDescription(useLineBreaks: false);
+		if (text.Length > 50)
 		{
-			builder2.Append('}');
+			text = text.Substring(0, 50) + "...";
 		}
-		return builder2.ToString();
+		return text;
 	}
 
 	private static string OperationToString(OperationType operation)

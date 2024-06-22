@@ -77,7 +77,7 @@ public abstract class TutorialWindowConsoleView<TViewModel> : TutorialWindowBase
 			tooltipTemplateGlossary.EncyclopediaCallback();
 		}
 		TooltipHelper.HideTooltip();
-		base.ViewModel.TemporarilyHide();
+		base.ViewModel?.TemporarilyHide();
 	}
 
 	protected void SelectDeselectToggle(InputActionEventData eventData)

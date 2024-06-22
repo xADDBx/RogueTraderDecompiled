@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
@@ -13,6 +14,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Portrait;
 using Kingmaker.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.UI.Sound;
@@ -34,7 +36,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Dialog.SurfaceDialog;
 
-public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclopediaGlossaryModeHandler, ISubscriber, ICargoRewardsUIHandler, ISettingsFontSizeUIHandler, IInitializable where TAnswerView : DialogAnswerBaseView
+public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclopediaGlossaryModeHandler, ISubscriber, ICargoRewardsUIHandler, ISettingsFontSizeUIHandler, IInitializable, IHasBlueprintInfo where TAnswerView : DialogAnswerBaseView
 {
 	[Header("Speaker Portrait")]
 	[SerializeField]
@@ -176,13 +178,15 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 
 	private RectTransform RectTransform => m_RectTransform = (m_RectTransform ? m_RectTransform : GetComponent<RectTransform>());
 
+	public BlueprintScriptableObject Blueprint => Game.Instance.DialogController.Dialog;
+
 	public virtual void Initialize()
 	{
 		m_DialogColors = ((m_DialogConfig != null) ? m_DialogConfig.DialogColors : GetComponent<DialogColorsConfig>().DialogColors);
 		m_CueView.Initialize(null, m_DialogColors, m_CuesTooltipPlace);
 		base.gameObject.SetActive(value: true);
 		SetVisible(state: false, force: true);
-		m_PortraitFullView.Or(null)?.Initialize();
+		ObjectExtensions.Or(m_PortraitFullView, null)?.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -247,8 +251,8 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		StartUpdateCoroutine();
 		m_TopDialogVotesBlock.Bind(base.ViewModel.DialogVotesBlockVM);
 		m_BottomDialogVotesBlock.Bind(base.ViewModel.DialogVotesBlockVM);
-		m_TopDialogVotesBlock.Or(null)?.ShowHideHover(state: false);
-		m_BottomDialogVotesBlock.Or(null)?.ShowHideHover(state: false);
+		ObjectExtensions.Or(m_TopDialogVotesBlock, null)?.ShowHideHover(state: false);
+		ObjectExtensions.Or(m_BottomDialogVotesBlock, null)?.ShowHideHover(state: false);
 		AddDisposable(m_TopVotesShowCommand.Subscribe(delegate(List<PlayerInfo> value)
 		{
 			VotesShow(value, m_TopDialogVotesBlock);
@@ -320,8 +324,8 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 
 	private void ClearAnswers()
 	{
-		m_TopDialogVotesBlock.Or(null)?.ShowHideHover(state: false);
-		m_BottomDialogVotesBlock.Or(null)?.ShowHideHover(state: false);
+		ObjectExtensions.Or(m_TopDialogVotesBlock, null)?.ShowHideHover(state: false);
+		ObjectExtensions.Or(m_BottomDialogVotesBlock, null)?.ShowHideHover(state: false);
 		Answers.ForEach(delegate(TAnswerView a)
 		{
 			WidgetFactory.DisposeWidget(a);

@@ -9,6 +9,7 @@ using Kingmaker.Blueprints.JsonSystem.EditorDatabase;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.Designers;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -561,6 +562,19 @@ internal class CheatsCombat
 		{
 			combatStateOptional.SetActionPoints(yellow);
 		}
+	}
+
+	[Cheat(Name = "add_bonus_ability_usage", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void AddBonusAbilityUsage(int count = 1, int costBonus = -5, RestrictionsHolder restrictions = null)
+	{
+		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+		if (currentUnit == null)
+		{
+			PFLog.Default.Log("No current unit in turn base");
+			return;
+		}
+		EntityFactSource source = new EntityFactSource(currentUnit);
+		currentUnit.GetOrCreate<UnitPartBonusAbility>().AddBonusAbility(source, count, costBonus, restrictions.ToReference<RestrictionsHolder.Reference>());
 	}
 
 	private static void Iddqd(string parameters)

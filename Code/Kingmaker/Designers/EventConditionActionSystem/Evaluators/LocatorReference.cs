@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.View;
 using Owlcat.QA.Validation;
@@ -14,7 +15,7 @@ public class LocatorReference : LocatorEvaluator
 	[ValidateNotEmpty]
 	public EntityReference Locator;
 
-	protected override LocatorEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		if (Locator == null)
 		{

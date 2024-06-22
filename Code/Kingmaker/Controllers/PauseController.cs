@@ -1,4 +1,5 @@
 using Kingmaker.Controllers.Interfaces;
+using Kingmaker.GameCommands;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 
@@ -45,6 +46,14 @@ public class PauseController : IControllerTick, IController, IControllerReset
 		m_Update = true;
 	}
 
+	public void RequestPauseUi(bool isPaused)
+	{
+		if (isPaused != IsPausedByLocalPlayer)
+		{
+			Game.Instance.GameCommandQueue.RequestPauseUi(isPaused);
+		}
+	}
+
 	public void SetPlayer(NetPlayer player, bool isPaused)
 	{
 		NetPlayerGroup netPlayerGroup = (isPaused ? m_PausedPlayer.Add(player) : m_PausedPlayer.Del(player));
@@ -63,9 +72,6 @@ public class PauseController : IControllerTick, IController, IControllerReset
 
 	public void OnPlayerLeftRoom()
 	{
-		if (NetworkingManager.IsActive)
-		{
-			m_Update = true;
-		}
+		m_Update = true;
 	}
 }

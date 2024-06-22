@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Kingmaker.Blueprints.Encyclopedia;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.Utility;
@@ -36,10 +37,10 @@ public class TooltipTemplateAbsorption : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
-		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.CharacterSheet.Equipment, $"{m_StatsRule.ResultBaseAbsorption}%", null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
+		list.Add(new TooltipBrickSeparator());
+		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.CharacterSheet.Equipment, UIConfig.Instance.PercentHelper.AddPercentTo(m_StatsRule.ResultBaseAbsorption), null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
 		AddDodgeModifiers(list);
 		list.Add(new TooltipBrickText(UIStrings.Instance.Inspect.UnconditionalModifiers, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(m_AbsorptionGlossaryEntry?.GetDescription()));
 		return list;
 	}
@@ -72,7 +73,7 @@ public class TooltipTemplateAbsorption : TooltipBaseTemplate
 				text = text + " [" + sortedBonuse.Source + "]";
 			}
 			TooltipBrickIconStatValueType type = ((sortedBonuse.Bonus >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
-			string value = (isValueModifiers ? (UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus) + "%") : ("×" + ((float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
+			string value = (isValueModifiers ? UIConfig.Instance.PercentHelper.AddPercentTo(UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus)) : ("×" + ((float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
 			bricks.Add(new TooltipBrickIconStatValue(text, value, null, null, type));
 		}
 	}

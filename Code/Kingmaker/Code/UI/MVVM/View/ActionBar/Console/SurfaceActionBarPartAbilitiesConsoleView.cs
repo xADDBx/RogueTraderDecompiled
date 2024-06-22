@@ -7,6 +7,7 @@ using Kingmaker.Code.UI.MVVM.View.SurfaceCombat.MomentumAndVeil.Console;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
+using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
@@ -21,6 +22,7 @@ using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Tooltips;
+using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
@@ -28,7 +30,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ActionBar.Console;
 
-public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbilitiesBaseView, ICullFocusHandler, ISubscriber
+public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbilitiesBaseView, ICullFocusHandler, ISubscriber, ICharInfoAbilitiesChooseModeHandler
 {
 	[SerializeField]
 	private SurfaceActionBarAbilitiesRowView m_Row;
@@ -76,6 +78,8 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 
 	private SurfaceActionBarSlotAbilityConsoleView m_CurrentAbilitySlot;
 
+	private SurfaceActionBarSlotAbilityConsoleView m_LastAbilitySlot;
+
 	private MechanicActionBarSlot m_CurrentMechanicSlot;
 
 	private int m_CurrentIndex;
@@ -103,8 +107,28 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		{
 			AddDisposable(base.ViewModel.AbilitySelectorWindowVM.Subscribe(m_AbilitySelectorWindowConsoleView.Bind));
 		}
+		AddDisposable(base.ViewModel.AbilitySelectorWindowVM.Subscribe(delegate(AbilitySelectorWindowVM value)
+		{
+			if (value == null && (bool)m_LastAbilitySlot)
+			{
+				IConsoleEntity entity = m_NavigationBehaviour.Entities.FirstOrDefault((IConsoleEntity e) => e is SurfaceActionBarSlotAbilityConsoleView surfaceActionBarSlotAbilityConsoleView && surfaceActionBarSlotAbilityConsoleView == m_CurrentAbilitySlot);
+				m_NavigationBehaviour.FocusOnEntityManual(entity);
+				m_LastAbilitySlot = null;
+			}
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 		OnUnitChanged();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_PageNavigation.Dispose();
+		OnMoveMode(on: false);
+		OnActive(active: false);
+		m_Row.Dispose();
+		m_ShowTooltip = true;
+		m_InputLayer = null;
+		m_MoveAbilityInputLayer = null;
 	}
 
 	private void OnIndexChanged(int newIndex)
@@ -171,13 +195,12 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 
 	public void AddInput(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enable, bool inCombat)
 	{
-		AddDisposable(inCombat ? m_ActivateInCombatHint.Bind(inputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 		{
 			Activate();
-		}, 11, enable)) : m_ActivateHint.Bind(inputLayer.AddButton(delegate
-		{
-			Activate();
-		}, 11, enable)));
+		}, 11, enable);
+		AddDisposable(inCombat ? m_ActivateInCombatHint.Bind(inputBindStruct) : m_ActivateHint.Bind(inputBindStruct));
+		AddDisposable(inputBindStruct);
 	}
 
 	public void Activate()
@@ -210,19 +233,24 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(ShowContextMenu, 10, m_HasContextMenu);
 		AddDisposable(inputBindStruct3);
 		AddDisposable(m_HintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.ContextMenu.ContextMenu));
-		InputBindStruct disposable2 = m_MoveAbilityInputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct4 = m_MoveAbilityInputLayer.AddButton(delegate
 		{
+			EventBus.RaiseEvent(delegate(IActionBarPartAbilitiesHandler h)
+			{
+				h.DeleteSlot(m_CurrentIndex);
+			});
 			EventBus.RaiseEvent(delegate(IActionBarPartAbilitiesHandler h)
 			{
 				h.SetMoveAbilityMode(on: false);
 			});
 		}, 9, base.ViewModel.MoveAbilityMode);
-		AddDisposable(disposable2);
-		InputBindStruct inputBindStruct4 = m_MoveAbilityInputLayer.AddButton(delegate
+		AddDisposable(inputBindStruct4);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.CommonTexts.Cancel));
+		InputBindStruct inputBindStruct5 = m_MoveAbilityInputLayer.AddButton(delegate
 		{
 		}, 8, base.ViewModel.MoveAbilityMode);
-		AddDisposable(inputBindStruct4);
-		AddDisposable(m_HintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.ActionTexts.MoveItem));
+		AddDisposable(inputBindStruct5);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct5, UIStrings.Instance.ActionTexts.MoveItem));
 		m_PageNavigation.AddInput(m_MoveAbilityInputLayer, base.ViewModel.MoveAbilityMode);
 		m_PageNavigation.AddInput(m_InputLayer, base.ViewModel.IsActive);
 		AddDisposable(m_NavigationBehaviour.Focus.Subscribe(OnFocusEntity));
@@ -231,6 +259,7 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	public void AddInputToPages(InputLayer inputLayer, BoolReactiveProperty active)
 	{
 		m_PageNavigation.AddInput(inputLayer, active);
+		m_ShowTooltip = false;
 	}
 
 	private void OnActive(bool active)
@@ -240,7 +269,18 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 			m_MoveAnimator.Or(null)?.AppearAnimation();
 			Game.Instance.ClickEventsController.ClearPointerMode();
 			GamePad.Instance.PushLayer(m_InputLayer);
-			m_NavigationBehaviour.FocusOnEntityManual(m_Row.GetFirstValidEntity());
+			GridConsoleNavigationBehaviour navigationBehaviour = m_NavigationBehaviour;
+			IConsoleNavigationEntity entity;
+			if (!(m_LastAbilitySlot != null))
+			{
+				entity = m_Row.GetFirstValidEntity();
+			}
+			else
+			{
+				IConsoleNavigationEntity lastAbilitySlot = m_LastAbilitySlot;
+				entity = lastAbilitySlot;
+			}
+			navigationBehaviour.FocusOnEntityManual(entity);
 		}
 		else
 		{
@@ -253,6 +293,7 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	private void OnDecline(InputActionEventData data)
 	{
 		base.ViewModel.IsActive.Value = false;
+		m_LastAbilitySlot = null;
 	}
 
 	private void OnMoveMode(bool on)
@@ -270,6 +311,10 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	private void OnFocusEntity(IConsoleEntity entity)
 	{
 		m_CurrentAbilitySlot = entity as SurfaceActionBarSlotAbilityConsoleView;
+		if (entity is SurfaceActionBarSlotAbilityConsoleView lastAbilitySlot)
+		{
+			m_LastAbilitySlot = lastAbilitySlot;
+		}
 		m_MomentumConsoleView.Or(null)?.OnFocusEntity(entity);
 		m_HasContextMenu.Value = (bool)m_CurrentAbilitySlot && m_CurrentAbilitySlot.Index != -1;
 		TooltipBaseTemplate tooltipBaseTemplate = (entity as IHasTooltipTemplate)?.TooltipTemplate();
@@ -317,17 +362,6 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		}
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		m_PageNavigation.Dispose();
-		OnMoveMode(on: false);
-		OnActive(active: false);
-		m_Row.Dispose();
-		m_ShowTooltip = true;
-		m_InputLayer = null;
-		m_MoveAbilityInputLayer = null;
-	}
-
 	public void HandleRemoveFocus()
 	{
 		m_CulledFocus = m_NavigationBehaviour.DeepestNestedFocus;
@@ -342,5 +376,17 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 			m_NavigationBehaviour.UpdateDeepestFocusObserve();
 		}
 		m_CulledFocus = null;
+	}
+
+	public void HandleChooseMode(bool active)
+	{
+		if (!active)
+		{
+			(from s in m_Row.GetSlots()
+				select s as SurfaceActionBarSlotAbilityConsoleView).ForEach(delegate(SurfaceActionBarSlotAbilityConsoleView slot)
+			{
+				slot.SetSelectionActiveState(isActive: false);
+			});
+		}
 	}
 }

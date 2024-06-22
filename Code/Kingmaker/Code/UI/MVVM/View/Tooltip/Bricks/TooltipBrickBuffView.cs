@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using TMPro;
@@ -30,16 +31,22 @@ public class TooltipBrickBuffView : TooltipBrickFeatureView, IWidgetView
 		AddDisposable((base.ViewModel as TooltipBrickBuffVM)?.Duration.Subscribe(delegate(string t)
 		{
 			m_Duration.text = t;
-			if (t == "")
+			if (t == string.Empty)
 			{
 				base.gameObject.SetActive(value: false);
 			}
 		}));
 		if (base.ViewModel is TooltipBrickBuffVM tooltipBrickBuffVM)
 		{
-			m_SourcePanel.SetActive(!string.IsNullOrEmpty(tooltipBrickBuffVM.SourceName));
-			m_SourceName.text = tooltipBrickBuffVM.SourceName;
-			m_StackText.text = tooltipBrickBuffVM.Stack;
+			m_SourcePanel.Or(null)?.SetActive(!string.IsNullOrWhiteSpace(tooltipBrickBuffVM.SourceName));
+			if (m_SourceName != null)
+			{
+				m_SourceName.text = tooltipBrickBuffVM.SourceName;
+			}
+			if (m_StackText != null)
+			{
+				m_StackText.text = tooltipBrickBuffVM.Stack;
+			}
 		}
 	}
 

@@ -20,6 +20,8 @@ public class WarhammerUnitAnimationActionParry : UnitAnimationAction
 	{
 		public WeaponAnimationStyle Style;
 
+		public bool IsOffHand;
+
 		public AnimationClipWrapper Start;
 
 		[HideInInspector]
@@ -65,7 +67,15 @@ public class WarhammerUnitAnimationActionParry : UnitAnimationAction
 	{
 		Data data = new Data();
 		handle.ActionData = data;
-		WeaponStyleSettings weaponStyleSettings = Settings.FirstOrDefault((WeaponStyleSettings x) => x.Style == handle.Manager.ActiveMainHandWeaponStyle);
+		WeaponStyleSettings weaponStyleSettings = Settings.FirstOrDefault((WeaponStyleSettings x) => x.Style == (handle.CastInOffhand ? handle.Manager.ActiveOffHandWeaponStyle : handle.Manager.ActiveMainHandWeaponStyle) && handle.CastInOffhand == x.IsOffHand);
+		if (weaponStyleSettings == null)
+		{
+			weaponStyleSettings = Settings.FirstOrDefault((WeaponStyleSettings x) => x.Style == handle.Manager.ActiveMainHandWeaponStyle);
+		}
+		if (weaponStyleSettings == null)
+		{
+			weaponStyleSettings = Settings.FirstOrDefault((WeaponStyleSettings x) => x.Style == handle.Manager.ActiveOffHandWeaponStyle);
+		}
 		if (weaponStyleSettings == null)
 		{
 			handle.Release();

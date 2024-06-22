@@ -34,11 +34,11 @@ public class UnlockCompanionStory : GameAction
 		return "Unlock companion story: " + Story;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!Story)
 		{
-			PFLog.Default.Error("Can't unlock story: missing");
+			Element.LogError("Can't unlock story: missing");
 		}
 		else
 		{

@@ -16,7 +16,7 @@ public class TeleportToPointTask : ArbiterTask
 
 	protected override IEnumerator Routine()
 	{
-		using (ArbiterMeasurements.StartTimer("TeleportToPoint"))
+		using (ArbiterClientMeasurements.StartTimer("TeleportToPoint"))
 		{
 			ArbiterClientIntegration.TeleportToEnterPoint(m_BlueprintAreaEnterPointReference);
 			yield return null;

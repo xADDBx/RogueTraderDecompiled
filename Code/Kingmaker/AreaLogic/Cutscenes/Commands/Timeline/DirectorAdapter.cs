@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
@@ -18,6 +19,7 @@ using UnityEngine.Timeline;
 namespace Kingmaker.AreaLogic.Cutscenes.Commands.Timeline;
 
 [RequireComponent(typeof(PlayableDirector))]
+[KnowledgeDatabaseID("f4300d2db0efe6649aff80a306e1305e")]
 public class DirectorAdapter : EntityViewBase, IUpdatable, IInterpolatable
 {
 	[Serializable]

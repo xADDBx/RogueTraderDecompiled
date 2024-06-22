@@ -22,7 +22,7 @@ public class UnitsFromSpawnersInUnitGroup : GameAction
 
 	public ActionList Actions;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		IEntityViewBase entityViewBase = m_Group.FindView();
 		if (entityViewBase == null)

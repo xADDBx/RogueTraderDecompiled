@@ -53,7 +53,7 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UpdateCover();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateCover();
 	}

@@ -83,14 +83,14 @@ public class ConsoleInputField : MonoBehaviour, IConsoleNavigationEntity, IConso
 		set
 		{
 			m_InputText = value;
-			m_InputField.text = value ?? "";
+			m_InputField.text = value ?? string.Empty;
 		}
 	}
 
 	public void Bind(string defaultText, Action<string> onEndEditAction)
 	{
 		m_OnEndEdit = onEndEditAction;
-		Text = defaultText;
+		SetPlaceholderText(defaultText);
 	}
 
 	public void SetTittle(string text)
@@ -101,7 +101,7 @@ public class ConsoleInputField : MonoBehaviour, IConsoleNavigationEntity, IConso
 	public void SetPlaceholderText(string text)
 	{
 		m_PlaceholderText = text;
-		PlaceholderTextLabel.text = text ?? "";
+		PlaceholderTextLabel.text = text ?? string.Empty;
 	}
 
 	public void SetLanguage(Locale language)

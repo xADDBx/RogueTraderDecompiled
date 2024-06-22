@@ -22,6 +22,13 @@ namespace Kingmaker.UnitLogic.FactLogic;
 [TypeId("4c9ef06897b84501961d3f21f4f33afa")]
 public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<RulePerformDodge>, IRulebookHandler<RulePerformDodge>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
+	public enum TriggerOnlyOn
+	{
+		All,
+		Melee,
+		Ranged
+	}
+
 	public class Data : IEntityFactComponentSavableData, IHashable
 	{
 		public int UsedInRound { get; set; }
@@ -36,7 +43,7 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 	}
 
 	[SerializeField]
-	private bool m_TriggerOnlyOnMelee;
+	private TriggerOnlyOn m_TriggerOnlyOn;
 
 	[SerializeField]
 	private bool m_ChooseSpaceRandomly;
@@ -46,7 +53,7 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 
 	public void OnEventAboutToTrigger(RulePerformDodge evt)
 	{
-		if (base.Owner == Game.Instance.TurnController.CurrentUnit || (m_TriggerOnlyOnMelee && !evt.IsMelee) || evt.Ability.IsAOE)
+		if (base.Owner == Game.Instance.TurnController.CurrentUnit || (m_TriggerOnlyOn == TriggerOnlyOn.Melee && !evt.IsMelee) || (m_TriggerOnlyOn == TriggerOnlyOn.Ranged && !evt.IsRanged) || evt.Ability.IsAOE)
 		{
 			return;
 		}
@@ -66,7 +73,11 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 
 	public void OnEventDidTrigger(RulePerformDodge evt)
 	{
-		base.Fact.RunActionInContext(m_ActionAfterDodge);
+		ActionList actionAfterDodge = m_ActionAfterDodge;
+		if (actionAfterDodge != null && actionAfterDodge.HasActions)
+		{
+			base.Fact.RunActionInContext(m_ActionAfterDodge);
+		}
 	}
 
 	private UnitMoveToProperParams CreateMoveParams(RulePerformDodge evt)

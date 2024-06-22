@@ -15,5 +15,6 @@ public enum WarningNotificationType
 	EquipInCombatIsImpossible,
 	SavingError,
 	NoQuickSaves,
-	SavingFailed
+	SavingFailed,
+	SavingImpossibleIronmanWillSavedAutomaticaly
 }

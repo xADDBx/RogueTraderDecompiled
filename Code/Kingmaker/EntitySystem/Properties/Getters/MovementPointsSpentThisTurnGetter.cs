@@ -12,8 +12,8 @@ public class MovementPointsSpentThisTurnGetter : UnitPropertyGetter
 		return Mathf.RoundToInt(base.CurrentEntity.CombatState.ActionPointsBlueSpentThisTurn);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "MP spent this turn";
+		return FormulaTargetScope.Current + " MP spent this turn";
 	}
 }

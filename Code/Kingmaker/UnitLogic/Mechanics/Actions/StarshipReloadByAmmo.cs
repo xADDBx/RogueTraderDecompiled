@@ -31,7 +31,7 @@ public class StarshipReloadByAmmo : ContextAction
 		return "Run actions if starship weapon requires reloading";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Context?.MaybeCaster is StarshipEntity starshipEntity))
 		{

@@ -1,7 +1,9 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
+using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.Core.Utility;
 using UniRx;
 using UnityEngine;
 
@@ -17,12 +19,14 @@ public class RankEntryFeatureDescriptionPCView : BaseCareerPathSelectionTabPCVie
 	{
 		base.BindViewImplementation();
 		m_InfoView.Bind(base.ViewModel.InfoVM);
-		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.Subscribe(delegate(bool canCommit)
+		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
+		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
+		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
+		SetButtonSound(UISounds.ButtonSoundsEnum.DoctrineNextSound);
+		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.CombineLatest(base.ViewModel.CareerPathVM.PointerItem, (bool canCommit, IRankEntrySelectItem pointerItem) => canCommit && pointerItem == null).Subscribe(delegate(bool value)
 		{
-			bool flag = canCommit && base.ViewModel.CareerPathVM.LastEntryToUpgrade == base.ViewModel;
-			SetNextButtonLabel(flag ? UIStrings.Instance.CharacterSheet.ToSummaryTab : UIStrings.Instance.CharGen.Next);
-			SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
-			SetButtonSound(flag ? UISounds.ButtonSoundsEnum.NormalSound : UISounds.ButtonSoundsEnum.DoctrineNextSound);
+			base.CanCommit = value;
+			SetFinishInteractable(value);
 		}));
 		AddDisposable(base.ViewModel.CareerPathVM.CurrentRank.Subscribe(delegate(int value)
 		{
@@ -33,11 +37,15 @@ public class RankEntryFeatureDescriptionPCView : BaseCareerPathSelectionTabPCVie
 		{
 			SetButtonVisibility(!ro);
 		}));
-		SetFirstSelectableVisibility(base.ViewModel.CareerPathVM.FirstSelectable != null);
 	}
 
 	public override void UpdateState()
 	{
+		bool flag = base.ViewModel.CanSelect() && base.ViewModel.CareerPathVM.LastEntryToUpgrade != base.ViewModel;
+		SetNextButtonInteractable(flag);
+		m_HighlightButton.Or(null)?.gameObject.SetActive(!flag);
+		bool backButtonInteractable = base.ViewModel.CareerPathVM.FirstEntryToUpgrade != base.ViewModel;
+		SetBackButtonInteractable(backButtonInteractable);
 	}
 
 	protected override void HandleClickNext()
@@ -57,8 +65,8 @@ public class RankEntryFeatureDescriptionPCView : BaseCareerPathSelectionTabPCVie
 		base.ViewModel.CareerPathVM.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
+	protected override void HandleClickFinish()
 	{
-		base.ViewModel.CareerPathVM.SetFirstSelectableRankEntry();
+		base.ViewModel.CareerPathVM.Commit();
 	}
 }

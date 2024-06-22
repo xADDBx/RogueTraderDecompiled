@@ -13,6 +13,8 @@ public class GameMainSettings
 
 	public readonly SettingsEntityBool LootInCombat;
 
+	public readonly SettingsEntityString SendGameStatisticServer;
+
 	public readonly SettingsEntityBool SendGameStatistic;
 
 	public readonly IReadOnlySettingEntity<bool> AskedSendGameStatistic;
@@ -36,6 +38,7 @@ public class GameMainSettings
 		Localization = new SettingsEntityEnum<Locale>(settingsController, "locale", defaultValues.Localization, saveDependent: false, requireReboot: true);
 		AutofillActionbarSlots = new SettingsEntityBool(settingsController, "autofill-actionbar-slots", defaultValues.AutofillActionbarSlots);
 		LootInCombat = new SettingsEntityBool(settingsController, "loot-in-combat", defaultValues.LootInCombat);
+		SendGameStatisticServer = new SettingsEntityString(settingsController, "send-game-statistics-server", null);
 		SendGameStatistic = new SettingsEntityBool(settingsController, "send-game-statistics", defaultValues.SendGameStatistic);
 		AskedSendGameStatistic = SendGameStatistic.WasTouched();
 		SendSaves = new SettingsEntityBool(settingsController, "send-saves", defaultValues.SendSaves);

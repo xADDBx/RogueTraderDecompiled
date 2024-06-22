@@ -32,7 +32,7 @@ public class SetScreenResolutionTask : ArbiterTask
 		if (Screen.currentResolution.width != width || Screen.currentResolution.height != height)
 		{
 			PFLog.Arbiter.Error($"Unable to set resolution to {width}x{height} " + $"(current is {Screen.currentResolution.width}x{Screen.currentResolution.height}). " + "Stop Arbiter due to critical issue");
-			Application.Quit(-1);
+			Application.Quit(2);
 		}
 	}
 }

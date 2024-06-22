@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.UI.Common;
+using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Controls.Button;
 using UnityEngine;
 
@@ -23,6 +24,11 @@ public class TransitionMapPart
 	public CanvasGroup LightBeamCanvas;
 
 	public List<PointOnMap> PointsOnMap;
+
+	public bool CustomPantographMaxY;
+
+	[ShowIf("CustomPantographMaxY")]
+	public float CustomPantographMaxYValue;
 
 	public OwlcatButton Close;
 

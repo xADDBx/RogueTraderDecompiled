@@ -33,14 +33,11 @@ public class TooltipBrickRankEntrySelectionView : TooltipBaseBrickView<TooltipBr
 	[SerializeField]
 	private TextMeshProUGUI m_SelectionLabel;
 
-	[SerializeField]
-	private float m_DefaultFontSizeLabel = 20f;
-
-	[SerializeField]
-	private float m_DefaultConsoleFontSizeLabel = 24f;
+	private AccessibilityTextHelper m_TextHelper;
 
 	protected override void BindViewImplementation()
 	{
+		m_TextHelper = new AccessibilityTextHelper(m_SelectionLabel);
 		base.BindViewImplementation();
 		AddDisposable(base.ViewModel.RankEntrySelectionVM.SelectedFeature.Subscribe(delegate(RankEntrySelectionFeatureVM featureVM)
 		{
@@ -64,7 +61,13 @@ public class TooltipBrickRankEntrySelectionView : TooltipBaseBrickView<TooltipBr
 			m_SelectionLabel.text = text;
 		}));
 		AddDisposable(base.ViewModel.RankEntrySelectionVM.EntryState.Subscribe(UpdateState));
-		m_SelectionLabel.fontSize = (Game.Instance.IsControllerMouse ? m_DefaultFontSizeLabel : m_DefaultConsoleFontSizeLabel) * FontMultiplier;
+		m_TextHelper.UpdateTextSize();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_TextHelper.Dispose();
 	}
 
 	private void UpdateState(RankEntryState entryState)

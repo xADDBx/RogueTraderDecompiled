@@ -80,6 +80,14 @@ public class PlayerUISettings : IHashable
 	public ItemsSorterType InventorySorter;
 
 	[JsonProperty]
+	[GameStateIgnore]
+	public bool ShowUnavailableItems = true;
+
+	[JsonProperty]
+	[GameStateIgnore]
+	public bool ShowUnavailableFeatures = true;
+
+	[JsonProperty]
 	public readonly ItemsCollection ItemsForBuy = new ItemsCollection(null)
 	{
 		IsVendorTable = true

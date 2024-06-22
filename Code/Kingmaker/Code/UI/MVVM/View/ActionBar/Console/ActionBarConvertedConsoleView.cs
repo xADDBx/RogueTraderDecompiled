@@ -34,6 +34,9 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 	[SerializeField]
 	protected RectTransform m_TooltipPlace;
 
+	[SerializeField]
+	private int ColumnsCount = 2;
+
 	private bool m_IsInit;
 
 	private readonly List<ActionBarBaseSlotView> m_Slots = new List<ActionBarBaseSlotView>();
@@ -46,8 +49,6 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 
 	private readonly BoolReactiveProperty m_HasTooltip = new BoolReactiveProperty();
 
-	private const int ColumnsCount = 2;
-
 	private VisibilityController m_Visibility;
 
 	private void Awake()
@@ -58,6 +59,7 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 
 	protected override void BindViewImplementation()
 	{
+		TryFindConsoleHintWidget();
 		CreateInput();
 		foreach (ActionBarSlotVM slot in base.ViewModel.Slots)
 		{
@@ -69,7 +71,7 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 		}
 		AddDisposable(EventBus.Subscribe(this));
 		SetConsoleEntities();
-		GamePad.Instance.PushLayer(m_InputLayer);
+		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
 		m_Visibility.SetVisible(visible: true);
 	}
@@ -88,8 +90,8 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 	{
 		m_NavigationBehaviour.Clear();
 		List<IConsoleNavigationEntity> list = m_Slots.Select((ActionBarBaseSlotView x) => (IConsoleNavigationEntity)x).ToList();
-		m_NavigationBehaviour.AddRow(list.GetRange(0, 2));
-		m_NavigationBehaviour.AddRow(list.GetRange(2, list.Count - 2));
+		m_NavigationBehaviour.AddRow(list.GetRange(0, ColumnsCount));
+		m_NavigationBehaviour.AddRow(list.GetRange(ColumnsCount, list.Count - ColumnsCount));
 	}
 
 	private void CreateInput()
@@ -99,9 +101,16 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 		{
 			ContextName = "ActionBarConvertedConsoleView"
 		});
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(OnDecline, 9), UIStrings.Instance.CommonTexts.Cancel, ConsoleHintsWidget.HintPosition.Left));
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information, ConsoleHintsWidget.HintPosition.Left));
-		AddDisposable(m_NavigationBehaviour.Focus.Subscribe(OnFocusEntity));
+		if (!(m_HintsWidget == null))
+		{
+			InputBindStruct inputBindStruct = m_InputLayer.AddButton(OnDecline, 9);
+			AddDisposable(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Cancel, ConsoleHintsWidget.HintPosition.Left));
+			AddDisposable(inputBindStruct);
+			InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased);
+			AddDisposable(m_HintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information, ConsoleHintsWidget.HintPosition.Left));
+			AddDisposable(inputBindStruct2);
+			AddDisposable(m_NavigationBehaviour.Focus.Subscribe(OnFocusEntity));
+		}
 	}
 
 	private void OnDecline(InputActionEventData data)
@@ -139,5 +148,17 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 	public void HandleClickMechanicActionBarSlot(MechanicActionBarSlot ability)
 	{
 		base.ViewModel.Close();
+	}
+
+	private void TryFindConsoleHintWidget()
+	{
+		if (!(m_HintsWidget != null))
+		{
+			ConsoleHintWidgetContainer componentInParent = GetComponentInParent<ConsoleHintWidgetContainer>();
+			if ((bool)componentInParent)
+			{
+				m_HintsWidget = componentInParent.GetConsoleHintWidget();
+			}
+		}
 	}
 }

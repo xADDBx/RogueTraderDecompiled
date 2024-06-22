@@ -45,7 +45,8 @@ public class BugContext : IComparable<BugContext>
 		SpaceCombat,
 		Encounter,
 		Debug,
-		Coop
+		Coop,
+		Desync
 	}
 
 	public enum AspectType
@@ -437,7 +438,7 @@ public class BugContext : IComparable<BugContext>
 		}
 		if (Type == ContextType.ExceptionSpam)
 		{
-			return "[SpamDetection]";
+			return "[ExceptionSpam]";
 		}
 		if (Type == ContextType.Exception)
 		{
@@ -454,6 +455,10 @@ public class BugContext : IComparable<BugContext>
 		if (Type == ContextType.Coop)
 		{
 			return "[Coop]";
+		}
+		if (Type == ContextType.Desync)
+		{
+			return "[Desync]";
 		}
 		string blueprintName = Utilities.GetBlueprintName(currentArea);
 		if (blueprintName != null)

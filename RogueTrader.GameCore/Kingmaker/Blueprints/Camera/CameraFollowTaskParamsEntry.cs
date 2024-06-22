@@ -22,4 +22,6 @@ public class CameraFollowTaskParamsEntry
 	[ShowIf("SkipIfOnScreen")]
 	[Tooltip("Подлёта камеры не будет, но изменение таймскейла отработает")]
 	public bool ForceTimescale;
+
+	public CameraTaskType TaskType;
 }

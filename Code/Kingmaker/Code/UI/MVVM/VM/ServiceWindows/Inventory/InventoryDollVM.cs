@@ -85,7 +85,13 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		AddDisposable(CurrentSet.Subscribe(OnWeaponSetChanged));
 		AddDisposable(EncumbranceVM = new CharInfoEncumbranceVM(unit));
 		AddDisposable(InventorySelectorWindowVM = new ReactiveProperty<InventorySelectorWindowVM>());
-		AddDisposable(EventBus.Subscribe(this));
+	}
+
+	protected override void DisposeImplementation()
+	{
+		base.DisposeImplementation();
+		ChooseSlotMode.Value = false;
+		HideSelectionWindow();
 	}
 
 	private void OnWeaponSetChanged(WeaponSetVM set)
@@ -101,6 +107,10 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 	{
 		InventorySelectorWindowVM.Value?.Dispose();
 		InventorySelectorWindowVM.Value = null;
+	}
+
+	public override void HandleUICommitChanges()
+	{
 	}
 
 	protected override void RefreshData()
@@ -169,19 +179,7 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 			m_AllEquipSlots.Add(WeaponSets[k].Secondary);
 		}
 		CurrentSet.Value = WeaponSets[Unit.Value.Body.CurrentHandEquipmentSetIndex];
-		if (VisualSettingsVM.Value != null)
-		{
-			HideVisualSettings();
-			ShowVisualSettings();
-		}
-	}
-
-	public void UpdateSlotsData()
-	{
-		m_AllEquipSlots.ForEach(delegate(EquipSlotVM slot)
-		{
-			slot.UpdateSlotData();
-		});
+		UpdateVisualSettings();
 	}
 
 	private void ClearEquipSlots()
@@ -213,6 +211,14 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 	public void HideVisualSettings()
 	{
 		DisposeAndRemove(VisualSettingsVM);
+	}
+
+	private void UpdateVisualSettings()
+	{
+		if (VisualSettingsVM.Value != null && VisualSettingsVM.Value.Unit != Unit.Value)
+		{
+			HideVisualSettings();
+		}
 	}
 
 	public void HandleChangeItem(EquipSlotVM slot)

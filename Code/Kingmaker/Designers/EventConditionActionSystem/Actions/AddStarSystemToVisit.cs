@@ -16,7 +16,7 @@ public class AddStarSystemToVisit : GameAction
 		return "Add StarSystem " + StarSystemMap.NameSafe() + " To Visit when warp travel to it";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (StarSystemMap != null && !Game.Instance.Player.StarSystemsState.StarSystemsToVisit.Contains(StarSystemMap))
 		{

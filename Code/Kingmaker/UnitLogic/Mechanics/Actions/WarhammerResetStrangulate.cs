@@ -6,7 +6,7 @@ namespace Kingmaker.UnitLogic.Mechanics.Actions;
 [TypeId("000982a9766f40b198b4be10465175b0")]
 public class WarhammerResetStrangulate : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.Context?.MaybeCaster?.GetOptional<WarhammerUnitPartStrangulateController>()?.RemoveAllBuffs();
 	}

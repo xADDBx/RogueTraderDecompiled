@@ -49,7 +49,6 @@ public class TooltipBrickItemFooterView : TooltipBaseBrickView<TooltipBrickItemF
 			m_RightSide.EnsureComponent<HorizontalLayoutGroup>().childAlignment = base.ViewModel.RightAlignment;
 			if (base.ViewModel.Icon != null)
 			{
-				m_Icon.sprite = base.ViewModel.Icon;
 				m_Icon.color = Color.white;
 			}
 		}
@@ -62,6 +61,7 @@ public class TooltipBrickItemFooterView : TooltipBaseBrickView<TooltipBrickItemF
 			m_RightSide.SetActive(!string.IsNullOrEmpty(base.ViewModel.RightLine));
 			m_RightSide.EnsureComponent<HorizontalLayoutGroup>().childAlignment = base.ViewModel.RightAlignment;
 		}
+		m_Icon.sprite = base.ViewModel.Icon;
 		m_TextHelper.UpdateTextSize();
 	}
 

@@ -46,11 +46,10 @@ public class UIHighlighter : MonoBehaviour, IUIHighlighter, ISubscriber
 		});
 	}
 
-	public void StartHighlight(string key, ref IUIHighlighter highlighter)
+	public void StartHighlight(string key)
 	{
 		if (!(key != m_Key) && m_HighlightEnabled())
 		{
-			highlighter = this;
 			DoStartHighlight();
 		}
 	}

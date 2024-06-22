@@ -32,7 +32,7 @@ public class TransferItemsToCargoGameAction : GameAction
 		return $"Transfer all ({ItemToSell}) to cargo";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == ItemToSell) > 0)
 		{

@@ -36,7 +36,7 @@ public class RotationAngleGetter : PropertyGetter
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Rotation angle from {From} to {To}";
 	}

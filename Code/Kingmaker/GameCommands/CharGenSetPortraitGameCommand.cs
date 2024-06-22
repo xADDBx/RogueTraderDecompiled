@@ -1,6 +1,7 @@
 using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using MemoryPack;
@@ -33,25 +34,43 @@ public sealed class CharGenSetPortraitGameCommand : GameCommand, IMemoryPackable
 	[MemoryPackInclude]
 	private readonly BlueprintPortraitReference m_Blueprint;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	private readonly Guid m_CustomPortraitGuid;
+
 	public override bool IsSynchronized => true;
 
 	[JsonConstructor]
 	[MemoryPackConstructor]
-	private CharGenSetPortraitGameCommand([NotNull] BlueprintPortraitReference m_blueprint)
+	private CharGenSetPortraitGameCommand([NotNull] BlueprintPortraitReference m_blueprint, Guid m_customPortraitGuid)
 	{
 		if (m_blueprint == null)
 		{
 			throw new ArgumentNullException("m_blueprint");
 		}
 		m_Blueprint = m_blueprint;
+		m_CustomPortraitGuid = m_customPortraitGuid;
 	}
 
 	public CharGenSetPortraitGameCommand([NotNull] BlueprintPortrait blueprint)
-		: this(blueprint.ToReference<BlueprintPortraitReference>())
 	{
 		if (blueprint == null)
 		{
 			throw new ArgumentNullException("blueprint");
+		}
+		m_Blueprint = blueprint.ToReference<BlueprintPortraitReference>();
+		PortraitData data = blueprint.Data;
+		if (SavePacker.TryGetGuidFromPortrait(data, out m_CustomPortraitGuid))
+		{
+			PFLog.GameCommands.Log($"[CharGenSetPortraitGameCommand] [Create] CustomPortrait '{data.CustomId}' -> '{m_CustomPortraitGuid}'");
+			if (PhotonManager.Initialized)
+			{
+				PhotonManager.Instance.PortraitSyncer.SetNewPortraitForSending(m_CustomPortraitGuid);
+			}
+		}
+		else if (PhotonManager.Initialized)
+		{
+			PhotonManager.Instance.PortraitSyncer.ClearPortraitForSending();
 		}
 	}
 
@@ -62,6 +81,21 @@ public sealed class CharGenSetPortraitGameCommand : GameCommand, IMemoryPackable
 		{
 			PFLog.GameCommands.Log("[CharGenSetPortraitGameCommand] BlueprintPortrait was not found id=" + m_Blueprint.Guid);
 			return;
+		}
+		if (m_CustomPortraitGuid != Guid.Empty)
+		{
+			string portraitId;
+			bool flag = SavePacker.TryGetPortraitIdFromGuid(m_CustomPortraitGuid, out portraitId);
+			PFLog.GameCommands.Log($"[CharGenSetPortraitGameCommand] [Execute] CustomPortrait '{m_CustomPortraitGuid}' -> '{portraitId}' found={flag}");
+			if (PhotonManager.Initialized)
+			{
+				PhotonManager.Instance.PortraitSyncer.SetPortraitForReceiving(m_CustomPortraitGuid, blueprint, flag);
+				if (!flag)
+				{
+					return;
+				}
+			}
+			blueprint.Data = new PortraitData(portraitId);
 		}
 		EventBus.RaiseEvent(delegate(ICharGenPortraitHandler h)
 		{
@@ -95,8 +129,9 @@ public sealed class CharGenSetPortraitGameCommand : GameCommand, IMemoryPackable
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteObjectHeader(1);
+		writer.WriteObjectHeader(2);
 		writer.WritePackable(in value.m_Blueprint);
+		writer.WriteUnmanaged(in value.m_CustomPortraitGuid);
 	}
 
 	[Preserve]
@@ -108,33 +143,50 @@ public sealed class CharGenSetPortraitGameCommand : GameCommand, IMemoryPackable
 			return;
 		}
 		BlueprintPortraitReference value2;
-		if (memberCount == 1)
+		Guid value3;
+		if (memberCount == 2)
 		{
 			if (value == null)
 			{
 				value2 = reader.ReadPackable<BlueprintPortraitReference>();
+				reader.ReadUnmanaged<Guid>(out value3);
 			}
 			else
 			{
 				value2 = value.m_Blueprint;
+				value3 = value.m_CustomPortraitGuid;
 				reader.ReadPackable(ref value2);
+				reader.ReadUnmanaged<Guid>(out value3);
 			}
 		}
 		else
 		{
-			if (memberCount > 1)
+			if (memberCount > 2)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(CharGenSetPortraitGameCommand), 1, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(CharGenSetPortraitGameCommand), 2, memberCount);
 				return;
 			}
-			value2 = ((value != null) ? value.m_Blueprint : null);
+			if (value == null)
+			{
+				value2 = null;
+				value3 = default(Guid);
+			}
+			else
+			{
+				value2 = value.m_Blueprint;
+				value3 = value.m_CustomPortraitGuid;
+			}
 			if (memberCount != 0)
 			{
 				reader.ReadPackable(ref value2);
-				_ = 1;
+				if (memberCount != 1)
+				{
+					reader.ReadUnmanaged<Guid>(out value3);
+					_ = 2;
+				}
 			}
 			_ = value;
 		}
-		value = new CharGenSetPortraitGameCommand(value2);
+		value = new CharGenSetPortraitGameCommand(value2, value3);
 	}
 }

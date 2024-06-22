@@ -3,10 +3,12 @@ using System.Text;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility;
@@ -16,7 +18,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.EscMenu;
 
-public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorUIHandler, ISubscriber<IMechanicEntity>, ISubscriber, IGameModeHandler
 {
 	private readonly Action m_CloseAction;
 
@@ -26,18 +28,22 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 
 	public bool InternalWindowOpened;
 
+	public readonly ReactiveCommand UpdateButtonsInteractable = new ReactiveCommand();
+
+	public readonly ReactiveCommand UpdateButtonsFocus = new ReactiveCommand();
+
 	public bool IsSavingAllowed { get; private set; }
 
-	public bool IsOptionsAllowed { get; }
+	public bool IsOptionsAllowed { get; private set; }
 
-	public bool IsFormationAllowed { get; }
+	public bool IsFormationAllowed { get; private set; }
 
 	public EscMenuVM(Action closeAction)
 	{
-		IsInSpace.Value = Game.Instance.CurrentMode == GameModeType.SpaceCombat || Game.Instance.CurrentMode == GameModeType.StarSystem || Game.Instance.CurrentMode == GameModeType.GlobalMap;
-		IsInCutscene.Value = Game.Instance.CurrentMode == GameModeType.Cutscene;
+		IsInSpace.Value = Game.Instance.IsModeActive(GameModeType.SpaceCombat) || Game.Instance.IsModeActive(GameModeType.StarSystem) || Game.Instance.IsModeActive(GameModeType.GlobalMap);
+		IsInCutscene.Value = Game.Instance.IsModeActive(GameModeType.Cutscene);
 		IsOptionsAllowed = !IsInCutscene.Value;
-		IsFormationAllowed = !IsInCutscene.Value && Game.Instance.CurrentMode != GameModeType.Dialog;
+		IsFormationAllowed = !IsInCutscene.Value && !Game.Instance.IsModeActive(GameModeType.Dialog);
 		m_CloseAction = closeAction;
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
@@ -58,7 +64,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OnSave()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(ISaveLoadUIHandler h)
 		{
 			h.HandleOpenSaveLoad(SaveLoadMode.Save, singleMode: false);
@@ -68,7 +74,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OnLoad()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(ISaveLoadUIHandler h)
 		{
 			h.HandleOpenSaveLoad(SaveLoadMode.Load, !IsSavingAllowed);
@@ -88,7 +94,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	{
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			m_CloseAction?.Invoke();
+			OnClose();
 			Game.Instance.QuickLoadGame();
 		}));
 	}
@@ -96,7 +102,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OpenFormation()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(IFormationWindowUIHandler h)
 		{
 			h.HandleOpenFormation();
@@ -106,17 +112,27 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OnSettings()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(ISettingsUIHandler h)
 		{
 			h.HandleOpenSettings();
 		});
 	}
 
+	public void OnMods()
+	{
+		InternalWindowOpened = true;
+		OnClose();
+		EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
+		{
+			h.HandleOpenDlcManager(onlyMods: true);
+		});
+	}
+
 	public void OnBugReport()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(IBugReportUIHandler h)
 		{
 			h.HandleBugReportOpen(IsInCutscene.Value);
@@ -143,7 +159,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 		{
 			return;
 		}
-		m_CloseAction?.Invoke();
+		OnClose();
 		if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
 		{
 			MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
@@ -174,7 +190,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 		UIUtility.ShowMessageBox(stringBuilder.ToString(), DialogMessageBoxBase.BoxType.Dialog, OnQuitAction);
 	}
 
-	private static void OnQuitAction(DialogMessageBoxBase.BoxButton button)
+	private void OnQuitAction(DialogMessageBoxBase.BoxButton button)
 	{
 		SoundState.Instance.MusicStateHandler.StartMusicStopEvent();
 		if (button != DialogMessageBoxBase.BoxButton.Yes)
@@ -197,7 +213,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OnMultiplayer()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(INetLobbyRequest h)
 		{
 			h.HandleNetLobbyRequest();
@@ -207,10 +223,32 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void OnMultiplayerRoles()
 	{
 		InternalWindowOpened = true;
-		m_CloseAction?.Invoke();
+		OnClose();
 		EventBus.RaiseEvent(delegate(INetRolesRequest h)
 		{
 			h.HandleNetRolesRequest();
 		});
+	}
+
+	public void HandleTradeStarted()
+	{
+		OnClose();
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+		IsInSpace.Value = Game.Instance.IsModeActive(GameModeType.SpaceCombat) || Game.Instance.IsModeActive(GameModeType.StarSystem) || Game.Instance.IsModeActive(GameModeType.GlobalMap);
+		IsInCutscene.Value = Game.Instance.IsModeActive(GameModeType.Cutscene);
+		IsOptionsAllowed = !IsInCutscene.Value;
+		IsFormationAllowed = !IsInCutscene.Value && !Game.Instance.IsModeActive(GameModeType.Dialog);
+		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
+		{
+			IsSavingAllowed = Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual) && !SettingsRoot.Difficulty.OnlyOneSave;
+		}));
+		UpdateButtonsInteractable.Execute();
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
 	}
 }

@@ -67,6 +67,8 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 		}
 	}
 
+	public CursorType CurrentType => m_CurrentType;
+
 	public IDisposable Bind()
 	{
 		m_CursorTransform.gameObject.SetActive(value: false);

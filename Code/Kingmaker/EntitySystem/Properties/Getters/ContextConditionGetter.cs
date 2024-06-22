@@ -20,7 +20,7 @@ public class ContextConditionGetter : MechanicEntityPropertyGetter, PropertyCont
 		}
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (Conditions.Conditions == null || Conditions.Conditions.Length < 1)
 		{

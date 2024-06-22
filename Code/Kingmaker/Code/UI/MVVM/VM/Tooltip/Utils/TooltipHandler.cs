@@ -73,19 +73,13 @@ public class TooltipHandler : IDisposable
 	public TooltipHandler(MonoBehaviour component, IEnumerable<TooltipData> tooltipDatas, TooltipConfig config)
 		: this(component, config)
 	{
-		if (config.TooltipPlace == null)
-		{
-			config.TooltipPlace = component.transform as RectTransform;
-		}
+		TooltipHelper.EnsureTooltipPlace(component, config);
 		m_TooltipDatas = tooltipDatas;
 	}
 
 	private TooltipHandler(MonoBehaviour component, TooltipConfig config)
 	{
-		if (config.TooltipPlace == null)
-		{
-			config.TooltipPlace = component.transform as RectTransform;
-		}
+		TooltipHelper.EnsureTooltipPlace(component, config);
 		m_Component = component;
 		m_Config = config;
 		Subscribe(m_Config);
@@ -93,10 +87,7 @@ public class TooltipHandler : IDisposable
 
 	public void UpdateTooltip(TooltipBaseTemplate template, TooltipConfig config = default(TooltipConfig))
 	{
-		if (config.TooltipPlace == null)
-		{
-			config.TooltipPlace = m_Component.transform as RectTransform;
-		}
+		TooltipHelper.EnsureTooltipPlace(m_Component, config);
 		m_Config = config;
 		m_SingleData = null;
 		m_SingleTemplate = template;

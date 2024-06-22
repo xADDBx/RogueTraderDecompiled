@@ -83,32 +83,42 @@ internal class UploadAndStartLoadingState : StateLongAsync
 		PFLog.Net.Exception(exception);
 		await Awaiters.UnityThread;
 		bool shouldLeaveLobby = true;
-		if (!(exception is SendMessageFailException))
+		if (!(exception is DataTransportAllTargetsLeftException))
 		{
-			if (exception is SaveNotFoundException)
+			if (!(exception is SendMessageFailException))
 			{
-				shouldLeaveLobby = false;
-				EventBus.RaiseEvent(delegate(INetSaveUploadDownloadErrorHandler h)
+				if (exception is SaveNotFoundException)
 				{
-					h.HandleSaveNotFoundError();
-				});
+					shouldLeaveLobby = false;
+					EventBus.RaiseEvent(delegate(INetSaveUploadDownloadErrorHandler h)
+					{
+						h.HandleSaveNotFoundError();
+					});
+				}
+				else
+				{
+					EventBus.RaiseEvent(delegate(INetSaveUploadDownloadErrorHandler h)
+					{
+						h.HandleUnknownException();
+					});
+				}
 			}
 			else
 			{
 				EventBus.RaiseEvent(delegate(INetSaveUploadDownloadErrorHandler h)
 				{
-					h.HandleUnknownException();
+					h.HandleSendMessageFailError();
 				});
 			}
 		}
 		else
 		{
-			EventBus.RaiseEvent(delegate(INetSaveUploadDownloadErrorHandler h)
+			EventBus.RaiseEvent(delegate(INetLobbyPlayersHandler h)
 			{
-				h.HandleSendMessageFailError();
+				h.HandleLastPlayerLeftLobby();
 			});
 		}
-		m_NetGame.StopPlaying(shouldLeaveLobby);
+		m_NetGame.StopPlaying(shouldLeaveLobby, "UploadAndStartLoadingState");
 	}
 
 	private static async Task<SaveInfoKey> CreateSave(CancellationToken cancellationToken)
@@ -152,7 +162,7 @@ internal class UploadAndStartLoadingState : StateLongAsync
 		await PhotonManager.Save.UploadSave(saveInfo, randomNoise, cancellationToken);
 		PFStatefulRandom.OverrideRandomNoise(randomNoise);
 		Game.Instance.LoadGameLocal(saveInfo, Utils.CallbackToTask(out var task));
-		loadingCoroutine.Dispose();
+		loadingCoroutine.Hide();
 		await task.OrCancelledBy(cancellationToken);
 		action?.Invoke();
 	}

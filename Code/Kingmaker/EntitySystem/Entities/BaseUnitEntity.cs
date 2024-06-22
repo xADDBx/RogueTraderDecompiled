@@ -499,6 +499,7 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 		GetOrCreate<PartAbilityCooldowns>();
 		GetOrCreate<EntityBoundsPart>();
 		GetOrCreate<PartProvidesFullCover>();
+		GetOrCreate<PartAbilitySettings>();
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{
 			GetOrCreate<PartPreviewUnit>();
@@ -775,6 +776,33 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 					base.DisposeImplementation();
 				}
 			}
+		}
+	}
+
+	protected override void OnPreSave()
+	{
+		base.OnPreSave();
+		if (Game.Instance.UnitMovableAreaController.TryGetInitialPosition(this, out var initialPosition))
+		{
+			UnitPartDeploymentPhaseInitialPosition orCreate = GetOrCreate<UnitPartDeploymentPhaseInitialPosition>();
+			if (orCreate != null)
+			{
+				orCreate.InitialPosition = initialPosition;
+			}
+		}
+	}
+
+	protected override void OnPrePostLoad()
+	{
+		base.OnPrePostLoad();
+		UnitPartDeploymentPhaseInitialPosition optional = GetOptional<UnitPartDeploymentPhaseInitialPosition>();
+		if (optional != null)
+		{
+			if (IsInCombat)
+			{
+				Game.Instance.UnitMovableAreaController.ApplyInitialPosition(this, optional.InitialPosition);
+			}
+			Remove<UnitPartDeploymentPhaseInitialPosition>();
 		}
 	}
 

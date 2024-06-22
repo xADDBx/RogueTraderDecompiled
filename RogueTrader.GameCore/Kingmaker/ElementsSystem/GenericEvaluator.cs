@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem.Interfaces;
@@ -12,7 +13,22 @@ public abstract class GenericEvaluator<T> : Evaluator, IEvaluator<T>
 
 	public T GetValue()
 	{
-		return GetValueInternal() ?? throw new FailToEvaluateException(this);
+		using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(null, this);
+		try
+		{
+			T valueInternal = GetValueInternal();
+			if (valueInternal == null)
+			{
+				throw new FailToEvaluateException(this);
+			}
+			elementsDebugger?.SetResult((!(valueInternal is int num)) ? 1 : num);
+			return valueInternal;
+		}
+		catch (Exception exception)
+		{
+			elementsDebugger?.SetException(exception);
+			throw;
+		}
 	}
 
 	public bool CanEvaluate()

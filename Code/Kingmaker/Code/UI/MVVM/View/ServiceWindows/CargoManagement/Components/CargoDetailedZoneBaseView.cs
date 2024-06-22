@@ -35,15 +35,15 @@ public class CargoDetailedZoneBaseView : ViewBase<CargoDetailedZoneVM>
 	[SerializeField]
 	private float m_ScrollToCargoDelay = 0.2f;
 
-	private List<CargoDetailedPCView> m_CargoList = new List<CargoDetailedPCView>();
+	public List<CargoDetailedPCView> m_CargoList = new List<CargoDetailedPCView>();
 
 	public BoolReactiveProperty HasCargo = new BoolReactiveProperty();
 
-	public ReactiveCommand OnEnableSlotsChange = new ReactiveCommand();
+	public readonly ReactiveCommand OnEnableSlotsChange = new ReactiveCommand();
 
-	public ReactiveCommand NeedRefocus = new ReactiveCommand();
+	public readonly ReactiveCommand NeedRefocus = new ReactiveCommand();
 
-	public ReactiveCommand<CargoSlotVM> ScrolledEntity = new ReactiveCommand<CargoSlotVM>();
+	public readonly ReactiveCommand<CargoSlotVM> ScrolledEntity = new ReactiveCommand<CargoSlotVM>();
 
 	private IDisposable m_ScrollToDisposable;
 
@@ -70,22 +70,19 @@ public class CargoDetailedZoneBaseView : ViewBase<CargoDetailedZoneVM>
 		SearchView.Or(null)?.Bind(base.ViewModel.ItemsFilterSearchVM);
 		if (SearchView != null)
 		{
-			AddDisposable(HasCargo.Subscribe(delegate(bool val)
-			{
-				SearchView.gameObject.SetActive(val);
-			}));
+			AddDisposable(HasCargo.Subscribe(SearchView.gameObject.SetActive));
 		}
 		AddDisposable(base.ViewModel.SlotToScroll.Subscribe(ScrollToCargoItemDelayed));
-	}
-
-	public void Hide()
-	{
-		m_FadeAnimator.DisappearAnimation();
 	}
 
 	protected override void DestroyViewImplementation()
 	{
 		m_CargoList.Clear();
+		m_FadeAnimator.DisappearAnimation();
+	}
+
+	public void Hide()
+	{
 		m_FadeAnimator.DisappearAnimation();
 	}
 
@@ -110,5 +107,10 @@ public class CargoDetailedZoneBaseView : ViewBase<CargoDetailedZoneVM>
 	{
 		m_VirtualList.ScrollController.ForceScrollToElement(cargoSlotVM);
 		ScrolledEntity?.Execute(cargoSlotVM);
+	}
+
+	public void ScrollToTop()
+	{
+		m_VirtualList.ScrollController.ForceScrollToTop();
 	}
 }

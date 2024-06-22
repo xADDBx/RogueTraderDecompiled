@@ -6,7 +6,5 @@ public enum TickType : byte
 	Any,
 	BeginOfFrame,
 	EndOfFrame,
-	Simulation,
-	Network,
-	System
+	Simulation
 }

@@ -12,6 +12,8 @@ public class UIDifficultySettings : IUISettingsSheet
 {
 	public UISettingsEntityGameDifficulty GameDifficulty;
 
+	public UISettingsEntityBoolOnlyOneSave OnlyOneSave;
+
 	public UISettingsEntityDropdownCombatEncountersCapacity CombatEncountersCapacity;
 
 	public UISettingsEntityDropdownAutoLevelUp AutoLevelUp;
@@ -19,8 +21,6 @@ public class UIDifficultySettings : IUISettingsSheet
 	public UISettingsEntityBool RespecAllowed;
 
 	public UISettingsEntityBool AdditionalAIBehaviors;
-
-	public UISettingsEntityBool OnlyOneSave;
 
 	public UISettingsEntityBool LimitedAI;
 
@@ -61,11 +61,11 @@ public class UIDifficultySettings : IUISettingsSheet
 	public void LinkToSettings()
 	{
 		GameDifficulty.LinkSetting(SettingsRoot.Difficulty.GameDifficulty);
+		OnlyOneSave.LinkSetting(SettingsRoot.Difficulty.OnlyOneSave);
 		CombatEncountersCapacity.LinkSetting(SettingsRoot.Difficulty.CombatEncountersCapacity);
 		AutoLevelUp.LinkSetting(SettingsRoot.Difficulty.AutoLevelUp);
 		RespecAllowed.LinkSetting(SettingsRoot.Difficulty.RespecAllowed);
 		AdditionalAIBehaviors.LinkSetting(SettingsRoot.Difficulty.AdditionalAIBehaviors);
-		OnlyOneSave.LinkSetting(SettingsRoot.Difficulty.OnlyOneSave);
 		LimitedAI.LinkSetting(SettingsRoot.Difficulty.LimitedAI);
 		EnemyDodgePercentModifier.LinkSetting(SettingsRoot.Difficulty.EnemyDodgePercentModifier);
 		CoverHitBonusHalfModifier.LinkSetting(SettingsRoot.Difficulty.CoverHitBonusHalfModifier);
@@ -86,9 +86,14 @@ public class UIDifficultySettings : IUISettingsSheet
 		SpaceCombatDifficulty.LinkSetting(SettingsRoot.Difficulty.SpaceCombatDifficulty);
 	}
 
+	public void UpdateInteractable()
+	{
+		InitializeSettings();
+	}
+
 	public void InitializeSettings()
 	{
-		OnlyOneSave.ModificationAllowedCheck = () => MainMenuUI.IsActive;
-		OnlyOneSave.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.OnlyOneSave);
+		OnlyOneSave.ModificationAllowedCheck = () => MainMenuUI.IsActive || OnlyOneSave.Setting.GetValue();
+		OnlyOneSave.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.OnlyOneSaveSwitchOn);
 	}
 }

@@ -8,7 +8,6 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Items;
-using Kingmaker.QA;
 using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
@@ -85,33 +84,38 @@ public class RemoveItemFromPlayer : GameAction
 		return ((Quantity != 0) ? $"x{Quantity}" : "") + ((Quantity != 0 && !Mathf.Approximately(Percentage, 0f)) ? " + " : "") + ((Percentage != 0f) ? $"{Percentage}%" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		using (ContextData<GameLogDisabled>.RequestIf(m_Silent))
 		{
-			PFLog.Default.Log("RemoveItemFromPlayer: Want remove " + GetAmount() + " " + (Money ? "Coins" : $"Items ({ItemToRemove}") + " from the player.");
+			Element.LogError("{0}: Want remove {1} {2} from the player.", new object[3]
+			{
+				"RemoveItemFromPlayer",
+				GetAmount(),
+				Money ? "Coins" : $"Items ({ItemToRemove}"
+			});
 			BlueprintItem itemToRemove = ItemToRemove;
 			bool flag = Money || (bool)ItemToRemove.GetComponent<MoneyReplacement>();
 			long num = (flag ? Game.Instance.Player.Money : GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == itemToRemove));
 			long num2 = (RemoveAll ? num : (Quantity + (long)((decimal)num / 100.0m * (decimal)Percentage + 0.5m)));
 			if (num < 0)
 			{
-				PFLog.Default.ErrorWithReport(base.Owner, string.Format("{0}: Player has {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num, Money ? "Coins" : $"Items ({itemToRemove}"));
+				Element.LogError(this, "{0}: Player has {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num, Money ? ((object)"Coins") : ((object)itemToRemove));
 				return;
 			}
 			if (num2 < 0)
 			{
-				PFLog.Default.ErrorWithReport(base.Owner, string.Format("{0}: Trying to remove {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num2, Money ? "Coins" : $"Items ({itemToRemove}"));
+				Element.LogError(this, "{0}: Trying to remove {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num2, Money ? ((object)"Coins") : ((object)itemToRemove));
 				return;
 			}
 			if (num2 > num)
 			{
-				PFLog.Default.Log(string.Format("{0}: Trying to remove {1} {2}, but player has only {3}. Will remove only the amount the player has.", "RemoveItemFromPlayer", num2, Money ? "Coins" : $"Items ({itemToRemove}", num));
+				Element.LogInfo(this, "{0}: Trying to remove {1} {2}, but player has only {3}. Will remove only the amount the player has.", "RemoveItemFromPlayer", num2, Money ? ((object)"Coins") : ((object)itemToRemove), num);
 				num2 = num;
 			}
 			if (num2 == 0L)
 			{
-				PFLog.Default.Log("RemoveItemFromPlayer: Will remove no " + (Money ? "Coins" : $"Items ({itemToRemove}") + " from the player.");
+				Element.LogInfo(this, "{0}: Will remove no {1} from the player.", "RemoveItemFromPlayer", Money ? ((object)"Coins") : ((object)itemToRemove));
 				return;
 			}
 			GameHelper.GetPlayerCharacter().Inventory.Remove(itemToRemove, (int)num2);

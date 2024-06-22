@@ -1,9 +1,7 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Exploration;
-using Kingmaker.Globalmap.SystemMap;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 
@@ -19,6 +17,6 @@ public class AnomalyShipTemper : Condition
 
 	protected override bool CheckCondition()
 	{
-		return (ContextData<StarSystemContextData>.Current?.StarSystemObject)?.Blueprint.GetComponent<AnomalyStarShip>()?.Temper == Temper;
+		return Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject?.Blueprint.GetComponent<AnomalyStarShip>()?.Temper == Temper;
 	}
 }

@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.GameCommands;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.View.SystemMapNotification.Base;
 using Kingmaker.UI.MVVM.VM.SystemMapNotification;
 using UniRx;
@@ -21,7 +22,10 @@ public class ColonyNotificationPCView : BaseSystemMapNotificationPCView<ColonyNo
 
 	protected override void OnButtonClickImpl()
 	{
-		Game.Instance.GameCommandQueue.ColonyManagementUIOpen();
+		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
+		{
+			h.HandleOpenColonyManagement();
+		});
 	}
 
 	private void SetData(ColonyNotificationData data)

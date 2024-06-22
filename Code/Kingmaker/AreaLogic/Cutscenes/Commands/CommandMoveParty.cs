@@ -38,6 +38,8 @@ public class CommandMoveParty : CommandBase
 
 		public Vector3 TargetPosition;
 
+		public Quaternion TargetRotation;
+
 		public bool Interrupt;
 	}
 
@@ -79,6 +81,11 @@ public class CommandMoveParty : CommandBase
 				TargetPosition = targetPosition,
 				Interrupt = skipping
 			};
+			Transform transform = Targets[num % positions.Length]?.FindData()?.View?.ViewTransform;
+			if (!MoveWithFormation && transform != null)
+			{
+				affectedUnit.TargetRotation = transform.rotation;
+			}
 			commandData.AffectedUnits.Add(affectedUnit);
 			if (skipping)
 			{
@@ -187,21 +194,24 @@ public class CommandMoveParty : CommandBase
 	{
 		Data commandData = player.GetCommandData<Data>(this);
 		TeleportEveryoneFailedToArrive(commandData);
-		if (!DisableAvoidance)
+		if (DisableAvoidance)
 		{
-			return;
+			foreach (UnitData affectedUnit in commandData.AffectedUnits)
+			{
+				BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
+				if (baseUnitEntity == null)
+				{
+					CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
+				}
+				else
+				{
+					baseUnitEntity.View.MovementAgent.AvoidanceDisabled = false;
+				}
+			}
 		}
-		foreach (UnitData affectedUnit in commandData.AffectedUnits)
+		foreach (UnitData affectedUnit2 in commandData.AffectedUnits)
 		{
-			BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
-			if (baseUnitEntity == null)
-			{
-				CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
-			}
-			else
-			{
-				baseUnitEntity.View.MovementAgent.AvoidanceDisabled = false;
-			}
+			((BaseUnitEntity)affectedUnit2.Unit).SetOrientation(affectedUnit2.TargetRotation.eulerAngles.y);
 		}
 	}
 

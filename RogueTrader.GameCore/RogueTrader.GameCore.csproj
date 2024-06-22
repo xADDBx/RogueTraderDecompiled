@@ -37,14 +37,20 @@
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Controllers.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="StateHasher">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\StateHasher.dll</HintPath>
+    </Reference>
     <Reference Include="RogueTrader.SharedTypes">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.SharedTypes.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="StateHasher">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\StateHasher.dll</HintPath>
+    <Reference Include="Owlcat.Runtime.Core">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.Blueprints.Base">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Blueprints.Base.dll</HintPath>
     </Reference>
     <Reference Include="Kingmaker.PubSubSystem.Core.Interfaces">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.PubSubSystem.Core.Interfaces.dll</HintPath>
@@ -54,9 +60,6 @@
     </Reference>
     <Reference Include="Kingmaker.Enums">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Enums.dll</HintPath>
-    </Reference>
-    <Reference Include="Kingmaker.Blueprints.Base">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.Blueprints.Base.dll</HintPath>
     </Reference>
     <Reference Include="ContextData">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\ContextData.dll</HintPath>
@@ -73,11 +76,11 @@
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
-    <Reference Include="Owlcat.Runtime.Core">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
-    </Reference>
     <Reference Include="BundlesBaseTypes">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\BundlesBaseTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="Utility.ExtendedModInfo">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.ExtendedModInfo.dll</HintPath>
     </Reference>
     <Reference Include="Kingmaker.ResourceReplacementProvider">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.ResourceReplacementProvider.dll</HintPath>
@@ -187,11 +190,11 @@
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
-    <Reference Include="RogueTrader.QA.QAModeExceptionEvents">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.QA.QAModeExceptionEvents.dll</HintPath>
-    </Reference>
     <Reference Include="GuidUtility">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GuidUtility.dll</HintPath>
+    </Reference>
+    <Reference Include="RogueTrader.QA.QAModeExceptionEvents">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\RogueTrader.QA.QAModeExceptionEvents.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>

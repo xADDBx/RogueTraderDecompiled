@@ -60,6 +60,8 @@ public class TooltipBrickTwoColumnsStatView : TooltipBaseBrickView<TooltipBrickT
 		m_ValueRight.text = base.ViewModel.ValueRight;
 		m_IconLeft.sprite = base.ViewModel.IconLeft;
 		m_IconRight.sprite = base.ViewModel.IconRight;
+		m_IconContainerLeft.SetActive(base.ViewModel.IconLeft != null);
+		m_IconContainerRight.SetActive(base.ViewModel.IconRight != null);
 		m_ComparisonLeft.gameObject.SetActive(base.ViewModel.ComparisonLeft != ComparisonResult.Equal);
 		m_ComparisonLeft.SetActiveLayer(base.ViewModel.ComparisonLeft.ToString());
 		m_ComparisonRight.gameObject.SetActive(base.ViewModel.ComparisonRight != ComparisonResult.Equal);

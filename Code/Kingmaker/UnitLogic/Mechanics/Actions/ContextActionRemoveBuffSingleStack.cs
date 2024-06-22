@@ -20,7 +20,7 @@ public class ContextActionRemoveBuffSingleStack : ContextAction
 		return "Remove one stack of Buff: " + (TargetBuff ? TargetBuff.Name : "<not specified>");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.Target.Entity.Buffs.GetBuff(TargetBuff)?.Remove();
 	}

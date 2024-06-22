@@ -50,7 +50,7 @@ public class CrowdKill : UnitFactComponentDelegate, IInitiatorRulebookHandler<Ru
 		foreach (CustomGridNodeBase node in ability.GetPattern(evt.Reason.Context?.MainTarget ?? ((TargetWrapper)(evt.MaybeTarget ?? ability.Caster)), ability.Caster.Position).Nodes)
 		{
 			BaseUnitEntity unit = node.GetUnit();
-			if (unit != null && unit != ability.Caster && (m_Faction != FactionType.Ally || unit.IsAlly(ability.Caster)) && (m_Faction != FactionType.Enemy || !unit.IsAlly(ability.Caster)))
+			if (unit != null && unit != ability.Caster && !unit.IsDead && (m_Faction != FactionType.Ally || unit.IsAlly(ability.Caster)) && (m_Faction != FactionType.Enemy || !unit.IsAlly(ability.Caster)))
 			{
 				num++;
 			}

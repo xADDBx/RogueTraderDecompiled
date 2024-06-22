@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.CombatLog;
 
-public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICombatLogChangeStateHandler, ISubscriber, IUnitGetAbilityPush
+public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICombatLogChangeStateHandler, ISubscriber, ICombatLogForceDeactivateControlsHandler, IUnitGetAbilityPush
 {
 	public class PushAction
 	{
@@ -54,11 +54,11 @@ public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 
 	private PushAction m_PushAction;
 
-	protected ReactiveProperty<bool> m_IsActive = new ReactiveProperty<bool>();
+	protected readonly ReactiveProperty<bool> m_IsActive = new ReactiveProperty<bool>();
 
-	protected ReactiveProperty<bool> m_IsControlActive = new ReactiveProperty<bool>();
+	protected readonly ReactiveProperty<bool> m_IsControlActive = new ReactiveProperty<bool>();
 
-	public ReactiveProperty<int> CurrentSizeIndex = new ReactiveProperty<int>(Game.Instance.Player.UISettings.CombatLogSizeIndex);
+	public readonly ReactiveProperty<int> CurrentSizeIndex = new ReactiveProperty<int>(Game.Instance.Player.UISettings.CombatLogSizeIndex);
 
 	private static LogThreadService LogThreadService => LogThreadService.Instance;
 
@@ -77,6 +77,18 @@ public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		m_AddSubscription?.Dispose();
+		m_RemoveSubscription?.Dispose();
+		foreach (CombatLogChannel channel in m_Channels)
+		{
+			channel.Dispose();
+		}
+		m_Channels.Clear();
+		Items.Dispose();
+	}
+
 	private void CreateInGameChannels()
 	{
 		m_CommonChannel = new CombatLogChannel(LogThreadService.GetThreadsByChannelType(LogChannelType.Common, LogChannelType.Dialog, LogChannelType.LifeEvents, LogChannelType.DialogAndLife, LogChannelType.AnyCombat, LogChannelType.InGameCombat), UIStrings.Instance.InventoryScreen.FilterTextAll);
@@ -90,11 +102,11 @@ public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 
 	public string GetChannelName(int id)
 	{
-		if (id > m_Channels.Count)
+		if (id <= m_Channels.Count)
 		{
-			return string.Empty;
+			return m_Channels[id].ChannelName;
 		}
-		return m_Channels[id].ChannelName;
+		return string.Empty;
 	}
 
 	private void SetCurrentChannel(CombatLogChannel channel)
@@ -167,18 +179,6 @@ public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		Items.Remove(Items.FirstOrDefault((CombatLogBaseVM z) => z.Message == message));
 	}
 
-	protected override void DisposeImplementation()
-	{
-		m_AddSubscription?.Dispose();
-		m_RemoveSubscription?.Dispose();
-		foreach (CombatLogChannel channel in m_Channels)
-		{
-			channel.Dispose();
-		}
-		m_Channels.Clear();
-		Items.Dispose();
-	}
-
 	public void HandleUnitResultPush(int distanceInCells, MechanicEntity caster, MechanicEntity target, Vector3 fromPoint)
 	{
 		m_PushAction = new PushAction(distanceInCells, caster, target, fromPoint);
@@ -204,6 +204,11 @@ public class CombatLogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 			Activate();
 		}
 		ActivateControls();
+	}
+
+	public void HandleCombatLogForceDeactivateControls()
+	{
+		DeactivateControls();
 	}
 
 	public void Activate()

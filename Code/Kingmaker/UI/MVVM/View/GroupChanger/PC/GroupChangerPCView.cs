@@ -20,7 +20,7 @@ public class GroupChangerPCView : GroupChangerBaseView
 	private TextMeshProUGUI m_AcceptLabel;
 
 	[SerializeField]
-	private OwlcatMultiButton m_CloseButton;
+	private OwlcatButton m_CloseButton;
 
 	protected override void BindViewImplementation()
 	{
@@ -38,10 +38,14 @@ public class GroupChangerPCView : GroupChangerBaseView
 				m_AcceptLabel.text = UIStrings.Instance.CommonTexts.Accept;
 			}
 		}
-		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
+		m_CloseButton.Interactable = base.ViewModel.CloseEnabled.Value;
+		if (base.ViewModel.CloseEnabled.Value)
 		{
-			OnCancel();
-		}));
-		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.OnCancel));
+			AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				OnCancel();
+			}));
+			AddDisposable(EscHotkeyManager.Instance.Subscribe(base.OnCancel));
+		}
 	}
 }

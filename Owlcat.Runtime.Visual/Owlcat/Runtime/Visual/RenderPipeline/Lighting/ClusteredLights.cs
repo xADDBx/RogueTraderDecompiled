@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 using Owlcat.Runtime.Visual.Lighting;
 using Owlcat.Runtime.Visual.RenderPipeline.Shadows;
@@ -96,7 +97,7 @@ public class ClusteredLights
 		jobData.WorldToViewMatrix = matrix4x;
 		jobData.LightDescriptors = m_LightDescs;
 		jobData.MeanZ = meanZ;
-		JobHandle dependsOn = jobData.ScheduleParallel(length, 32, default(JobHandle));
+		JobHandle dependsOn = IJobForExtensions.ScheduleParallel(jobData, length, 32, default(JobHandle));
 		RadixSortJob jobData2 = default(RadixSortJob);
 		jobData2.Keys = meanZ.Reinterpret<int>();
 		jobData2.Indices = indices;
@@ -105,7 +106,7 @@ public class ClusteredLights
 		jobData3.Indices = indices;
 		jobData3.Input = m_LightDescs;
 		jobData3.Output = nativeArray;
-		JobHandle dependsOn2 = jobData3.ScheduleParallel(length, 32, dependency);
+		JobHandle dependsOn2 = IJobForExtensions.ScheduleParallel(jobData3, length, 32, dependency);
 		CopyArrayJob<LightDescriptor> jobData4 = default(CopyArrayJob<LightDescriptor>);
 		jobData4.Count = length;
 		jobData4.Input = nativeArray;
@@ -116,7 +117,7 @@ public class ClusteredLights
 		jobData5.LightDescriptors = m_LightDescs;
 		jobData5.LightData = m_LightDataRaw;
 		jobData5.LightVolumeData = m_LightVolumeDataRaw;
-		JobHandle dependency3 = jobData5.ScheduleParallel(num, 32, dependency2);
+		JobHandle dependency3 = IJobForExtensions.ScheduleParallel(jobData5, num, 32, dependency2);
 		ZBinningJob zBinningJob = default(ZBinningJob);
 		zBinningJob.ZBinFactor = w;
 		zBinningJob.CameraNearClip = camera.nearClipPlane;
@@ -125,7 +126,7 @@ public class ClusteredLights
 		zBinningJob.Lights = m_LightDescs;
 		zBinningJob.ZBins = m_ZBins;
 		ZBinningJob jobData6 = zBinningJob;
-		m_SetupJobsHandle = jobData6.ScheduleParallel(64, 1, dependency3);
+		m_SetupJobsHandle = IJobForExtensions.ScheduleParallel(jobData6, 64, 1, dependency3);
 		meanZ.Dispose(m_SetupJobsHandle);
 		indices.Dispose(m_SetupJobsHandle);
 		nativeArray.Dispose(m_SetupJobsHandle);
@@ -166,8 +167,8 @@ public class ClusteredLights
 
 	private bool InitializeSingleThreadedParameters(ref RenderingData renderingData)
 	{
-		ref NativeArray<VisibleLight> visibleLights = ref renderingData.LightData.VisibleLights;
-		int length = visibleLights.Length;
+		Span<VisibleLight> span = renderingData.LightData.VisibleLights.AsSpan();
+		int length = span.Length;
 		if (!m_LightDescs.IsCreated || m_LightDescs.Length < length)
 		{
 			if (m_LightDescs.IsCreated)
@@ -179,19 +180,22 @@ public class ClusteredLights
 		bool flag = false;
 		for (int i = 0; i < length; i++)
 		{
+			ref VisibleLight reference = ref span[i];
+			VisibleLight visibleLight = reference;
+			Light light = visibleLight.light;
 			LightDescriptor value = default(LightDescriptor);
-			VisibleLight visibleLight = (value.VisibleLight = visibleLights[i]);
-			if (visibleLight.light != null)
+			value.VisibleLight = reference;
+			if (light != null)
 			{
-				OwlcatAdditionalLightData component = visibleLight.light.GetComponent<OwlcatAdditionalLightData>();
-				if (component != null)
+				LightBakingOutput bakingOutput = light.bakingOutput;
+				if (light.TryGetComponent<OwlcatAdditionalLightData>(out var component))
 				{
 					value.SnapSpecularToInnerRadius = component.SnapSperularToInnerRadius;
 					value.LightFalloffType = component.FalloffType;
 					value.InnerRadius = component.InnerRadius;
 				}
-				value.InnerSpotAngle = visibleLight.light.innerSpotAngle;
-				value.IsBaked = visibleLight.light.bakingOutput.lightmapBakeType == LightmapBakeType.Baked;
+				value.InnerSpotAngle = light.innerSpotAngle;
+				value.IsBaked = bakingOutput.lightmapBakeType == LightmapBakeType.Baked;
 				if (m_ClusteredShadows.ShadowIndicesMap.TryGetValue(i, out var value2))
 				{
 					value.ShadowDataIndex = value2;
@@ -200,17 +204,17 @@ public class ClusteredLights
 				{
 					value.ShadowDataIndex = -1;
 				}
-				bool flag2 = RenderingUtils.IsBakedShadowMaskLight(visibleLight.light);
+				bool flag2 = RenderingUtils.IsBakedShadowMaskLight(in bakingOutput);
 				if (flag2)
 				{
-					value.ShadowmaskChannel = visibleLight.light.bakingOutput.occlusionMaskChannel;
+					value.ShadowmaskChannel = bakingOutput.occlusionMaskChannel;
 				}
 				else
 				{
 					value.ShadowmaskChannel = -1;
 				}
 				flag = flag || flag2;
-				value.ShadowStrength = visibleLight.light.shadowStrength;
+				value.ShadowStrength = light.shadowStrength;
 			}
 			else
 			{

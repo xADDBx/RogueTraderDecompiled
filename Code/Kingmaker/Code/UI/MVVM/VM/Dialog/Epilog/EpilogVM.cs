@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.BookEvent;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 using Kingmaker.Controllers.Dialog;
@@ -36,14 +37,13 @@ public class EpilogVM : BookEventVM
 	public EpilogVM()
 	{
 		Portrait.Value = null;
-		Title.Value = string.Empty;
+		Title.Value = UIStrings.Instance.Epilogues.EpiloguesPortraitTitle;
 	}
 
 	protected override void SetPage(BlueprintBookPage page, List<CueShowData> cues, List<BlueprintAnswer> answers)
 	{
 		base.SetPage(page, cues, answers);
 		SetPortrait(page);
-		SetTitle(page);
 		SetBackground(page);
 	}
 

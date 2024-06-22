@@ -14,7 +14,7 @@ public class DlcVisualSwitch : MonoBehaviour
 	[SerializeField]
 	private GameObject m_dlcVisual;
 
-	public bool IsDLCActive => m_Dlc.Get().IsAvailable;
+	public bool IsDLCActive => m_Dlc.Get().IsActive;
 
 	private void Start()
 	{

@@ -77,6 +77,8 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public SettingsVM(Action closeAction, bool isMainMenu = false)
 	{
+		UISettingsRoot.Instance.UIGraphicsSettings.UpdateInteractable(initialize: true);
+		UISettingsRoot.Instance.UIGameMainSettings.UpdateInteractable();
 		m_CloseAction = closeAction;
 		m_IsMainMenu = isMainMenu;
 		CreateMenuEntity(UIStrings.Instance.SettingsUI.SectionNameGame, UISettingsManager.SettingsScreen.Game);
@@ -96,7 +98,12 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			ApplySettings();
 		}
 		m_SelectedMenuEntity.Value = MenuEntitiesList.FirstOrDefault();
-		SetSettingsList(m_SelectedMenuEntity.Value?.SettingsScreenType ?? UISettingsManager.SettingsScreen.Game);
+		UISettingsManager.SettingsScreen settingsScreen = m_SelectedMenuEntity.Value?.SettingsScreenType ?? UISettingsManager.SettingsScreen.Game;
+		SetSettingsList(settingsScreen);
+		if (settingsScreen == UISettingsManager.SettingsScreen.Game)
+		{
+			UISettingsRoot.Instance.UIGameMainSettings.UpdateInteractable();
+		}
 		AddDisposable(InfoVM = new InfoSectionVM());
 		AddDisposable(ReactiveTooltipTemplate.Subscribe(InfoVM.SetTemplate));
 		AddDisposable(ObservableExtensions.Subscribe(LanguageChanged, delegate
@@ -206,12 +213,16 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 									{
 										if (!(uiSettingsEntity is UISettingsEntityDisplayImages uiSettingsEntity10))
 										{
-											if (uiSettingsEntity is UISettingsEntityAccessiabilityImage uiSettingsEntity11)
+											if (!(uiSettingsEntity is UISettingsEntityAccessiabilityImage uiSettingsEntity11))
 											{
-												return new SettingsEntityAccessibilityImageVM(uiSettingsEntity11);
+												if (uiSettingsEntity is UISettingsEntityBoolOnlyOneSave uiSettingsEntity12)
+												{
+													return new SettingsEntityBoolOnlyOneSaveVM(uiSettingsEntity12, isNewGame);
+												}
+												UberDebug.LogError($"Error: SettingsVM: GetVMForSettingsItem: uiSettingsEntity {uiSettingsEntity} is undefined");
+												return null;
 											}
-											UberDebug.LogError($"Error: SettingsVM: GetVMForSettingsItem: uiSettingsEntity {uiSettingsEntity} is undefined");
-											return null;
+											return new SettingsEntityAccessibilityImageVM(uiSettingsEntity11);
 										}
 										return new SettingsEntityDisplayImagesVM(uiSettingsEntity10);
 									}
@@ -387,7 +398,8 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	{
 		IsApplyButtonInteractable.Value = SettingsController.Instance.HasUnconfirmedSettings();
 		IsCancelButtonInteractable.Value = SettingsController.Instance.HasUnconfirmedSettings();
-		UISettingsRoot.Instance.UIGraphicsSettings.UpdateInteractable();
+		UISettingsRoot.Instance.UIDifficultySettings.UpdateInteractable();
+		UISettingsRoot.Instance.UIGraphicsSettings.UpdateInteractable(initialize: false);
 		UISettingsRoot.Instance.UIGameTutorialSettings.UpdateInteractable(key);
 	}
 

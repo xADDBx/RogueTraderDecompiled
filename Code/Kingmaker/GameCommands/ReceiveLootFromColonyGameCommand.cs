@@ -32,14 +32,9 @@ public sealed class ReceiveLootFromColonyGameCommand : GameCommand, IMemoryPacka
 	public override bool IsSynchronized => true;
 
 	[MemoryPackConstructor]
-	private ReceiveLootFromColonyGameCommand(ColonyRef m_colonyRef)
+	public ReceiveLootFromColonyGameCommand(ColonyRef m_colonyRef)
 	{
 		m_ColonyRef = m_colonyRef;
-	}
-
-	public ReceiveLootFromColonyGameCommand(Colony colony)
-		: this((ColonyRef)colony)
-	{
 	}
 
 	protected override void ExecuteInternal()

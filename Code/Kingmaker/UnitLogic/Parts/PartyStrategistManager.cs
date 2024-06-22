@@ -21,6 +21,9 @@ public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler,
 
 	public bool IsCastRestricted { get; set; }
 
+	public bool AllowFirstRoundRule { get; set; } = true;
+
+
 	public bool IsAlreadyCastedThisTurn(AbilityData ability)
 	{
 		StrategistTacticsAreaEffectType? strategistTacticsAreaEffectType = ability.Blueprint.ElementsArray.OfType<ContextActionSpawnAreaEffect>().FirstOrDefault()?.AreaEffect.TacticsAreaEffectType;
@@ -41,11 +44,10 @@ public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler,
 		if (!isTurnBased)
 		{
 			m_StrategistAreaEffectEntities.Clear();
+			return;
 		}
-		else
-		{
-			IsCastRestricted = false;
-		}
+		IsCastRestricted = false;
+		AllowFirstRoundRule = true;
 	}
 
 	public void HandleUnitStartTurn(bool isTurnBased)
@@ -53,10 +55,11 @@ public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler,
 		if (isTurnBased)
 		{
 			IsCastRestricted = false;
+			AllowFirstRoundRule = true;
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		IsCastRestricted = false;
 	}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
@@ -35,9 +36,33 @@ public class ArmyTypeGetter : UnitPropertyGetter
 		}
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Unit is from any of army type groups";
+		List<string> list = new List<string>();
+		if (SpecificArmyType)
+		{
+			BlueprintArmyDescriptionReference[] armies = m_Armies;
+			foreach (BlueprintArmyDescriptionReference blueprintArmyDescriptionReference in armies)
+			{
+				list.Add(blueprintArmyDescriptionReference.NameSafe());
+			}
+		}
+		else
+		{
+			if (Human)
+			{
+				list.Add("Human");
+			}
+			if (Xenos)
+			{
+				list.Add("Xenos");
+			}
+			if (Daemon)
+			{
+				list.Add("Daemon");
+			}
+		}
+		return FormulaTargetScope.Current + " is from any of army types (" + string.Join("|", list) + ")";
 	}
 
 	protected override int GetBaseValue()

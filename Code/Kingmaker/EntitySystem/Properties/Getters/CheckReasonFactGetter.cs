@@ -16,7 +16,7 @@ public class CheckReasonFactGetter : PropertyGetter, PropertyContextAccessor.IMe
 
 	public BlueprintUnitFact Blueprint => m_Blueprint;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Context BP is {Blueprint}";
 	}

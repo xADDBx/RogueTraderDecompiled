@@ -15,7 +15,7 @@ public class ContextActionChooseWeapon : ContextAction
 		return "Store equipped weapon into unit part for later use";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)

@@ -34,7 +34,7 @@ public class CheckAbilityWeaponRangeTypeGetter : PropertyGetter, PropertyContext
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		string text = ((m_RangeType == WeaponRangeType.Melee) ? "Melee" : "Ranged");
 		return "Ability Weapon Range is " + text;

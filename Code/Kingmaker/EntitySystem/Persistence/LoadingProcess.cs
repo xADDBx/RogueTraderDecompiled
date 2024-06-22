@@ -6,13 +6,11 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Code.UI.MVVM.VM.Fade;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Utility.CountingGuard;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.FlagCountable;
-using Kingmaker.Utility.StateContext;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
 
@@ -190,16 +188,13 @@ public class LoadingProcess : MonoBehaviour
 		{
 			return;
 		}
-		using (ContextData<EditStateContext>.Request())
+		try
 		{
-			try
-			{
-				Tick();
-			}
-			catch (Exception ex)
-			{
-				Runner.ReportException(ex);
-			}
+			Tick();
+		}
+		catch (Exception ex)
+		{
+			Runner.ReportException(ex);
 		}
 	}
 

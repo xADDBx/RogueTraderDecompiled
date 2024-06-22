@@ -6,6 +6,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Utility.Attributes;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -18,6 +19,9 @@ public class ShowPartySelection : GameAction
 
 	public ActionList ActionsAfterPartySelection;
 
+	public bool ActionsCannotBeCanceled;
+
+	[HideIf("ActionsCannotBeCanceled")]
 	public ActionList ActionsIfCanceled;
 
 	public override string GetCaption()
@@ -25,7 +29,7 @@ public class ShowPartySelection : GameAction
 		return "Show party selection";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		List<BlueprintUnitReference> requiredCompanions = m_RequiredCompanions;
 		if (requiredCompanions != null && requiredCompanions.Count > 0)
@@ -40,24 +44,37 @@ public class ShowPartySelection : GameAction
 		{
 			Game.Instance.RequestPauseUi(isPaused: true);
 		}
+		bool allMatchFinishActions = ActionsAfterPartySelection.Actions.All((GameAction a) => ActionsIfCanceled.Actions.Any((GameAction b) => b.GetCaption() == a.GetCaption())) && ActionsIfCanceled.Actions.All((GameAction a) => ActionsAfterPartySelection.Actions.Any((GameAction b) => b.GetCaption() == a.GetCaption()));
 		EventBus.RaiseEvent(delegate(IGroupChangerHandler h)
 		{
 			h.HandleCall(delegate
 			{
-				Game.Instance.Player.FixPartyAfterChange();
 				if (needPause)
 				{
 					Game.Instance.RequestPauseUi(isPaused: false);
 				}
-				ActionsAfterPartySelection.Run();
+				RunAfterPartyActions();
 			}, delegate
 			{
 				if (needPause)
 				{
 					Game.Instance.RequestPauseUi(isPaused: false);
 				}
-				ActionsIfCanceled.Run();
-			}, Game.Instance.LoadedAreaState.Settings.CapitalPartyMode);
+				if (!ActionsCannotBeCanceled)
+				{
+					ActionsIfCanceled.Run();
+				}
+				else
+				{
+					RunAfterPartyActions();
+				}
+			}, Game.Instance.LoadedAreaState.Settings.CapitalPartyMode, allMatchFinishActions, !ActionsCannotBeCanceled);
 		});
+	}
+
+	private void RunAfterPartyActions()
+	{
+		Game.Instance.Player.FixPartyAfterChange();
+		ActionsAfterPartySelection.Run();
 	}
 }

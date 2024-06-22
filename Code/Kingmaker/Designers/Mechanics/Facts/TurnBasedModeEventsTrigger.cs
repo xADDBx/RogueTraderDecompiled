@@ -41,13 +41,20 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 
 	public bool ActionsOnTheTurnOwner;
 
-	public ActionList UnitInterruptTurnStartActions;
-
+	[Space(4f)]
 	public ActionList UnitTurnStartActions;
 
+	public ActionList UnitTurnEndActions;
+
+	[Space(4f)]
+	[InspectorName("AdditionalTurnStart actions")]
+	public ActionList UnitInterruptTurnStartActions;
+
+	[InspectorName("AdditionalTurnEnd actions")]
 	public ActionList UnitInterruptTurnEndActions;
 
-	public ActionList UnitTurnEndActions;
+	[Space(4f)]
+	public bool DoNotApplyOnInterrupts;
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
@@ -182,8 +189,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
+		if (DoNotApplyOnInterrupts && !interruptionData.AsExtraTurn)
+		{
+			return;
+		}
 		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
 		{
 			if (!Restrictions.IsPassed(base.Fact, base.Owner))

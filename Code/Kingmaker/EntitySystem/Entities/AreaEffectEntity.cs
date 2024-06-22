@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Interfaces;
@@ -18,13 +19,13 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
-using Owlcat.Runtime.Visual.FogOfWar;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
 using UnityEngine;
@@ -479,13 +480,13 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			return true;
 		}
+		if (!IsEnded && (IsUnitInAnotherAreaOfCluster(entity.ToBaseUnitEntity()) || ShouldUnitBeInside(entity.ToIBaseUnitEntity())))
+		{
+			return false;
+		}
 		if (m_UnitsNotInside.HasItem((UnitReference i) => i == unit.Reference))
 		{
 			return true;
-		}
-		if (!IsEnded && ShouldUnitBeInside(entity.ToIBaseUnitEntity()))
-		{
-			return false;
 		}
 		m_UnitsNotInside.Add(unit.Reference);
 		using (ProfileScope.New("HandleUnitExit"))
@@ -510,7 +511,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			return true;
 		}
-		if (!ShouldUnitBeInside(unit.Entity.ToIBaseUnitEntity()))
+		if (IsUnitInAnotherAreaOfCluster(unit.Entity.ToBaseUnitEntity()) || !ShouldUnitBeInside(unit.Entity.ToIBaseUnitEntity()))
 		{
 			return false;
 		}
@@ -572,6 +573,15 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			return unit.IsInGame && (!unit.IsInFogOfWar || unit.IsInCombat || unit.AwakeTimer > 0f) && (!base.Blueprint.IgnoreSleepingUnits || !unit.IsSleeping) && (unit.LifeState.IsConscious || base.Blueprint.AffectDead) && IsSuitableTargetType(unit) && (base.Blueprint.IsAllArea || (Contains(unit) && !LineOfSightGeometry.Instance.HasObstacle(View.ViewTransform.position, unit.Position))) && !AbstractUnitCommand.CommandTargetUntargetable(this, unit) && (!unit.Features.Flying || !Context.SpellDescriptor.HasAnyFlag(SpellDescriptor.Ground));
 		}
+	}
+
+	private bool IsUnitInAnotherAreaOfCluster(BaseUnitEntity unit)
+	{
+		if (base.Blueprint.ClusterComponent != null)
+		{
+			return unit.IsCurrentlyInAnotherClusterArea(base.Blueprint.ClusterComponent.ClusterLogicBlueprint);
+		}
+		return false;
 	}
 
 	public bool IsSuitableTargetType(BaseUnitEntity unit)

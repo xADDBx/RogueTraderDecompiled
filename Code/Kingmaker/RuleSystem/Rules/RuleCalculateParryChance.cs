@@ -21,6 +21,8 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public readonly ValueModifiersManager DefenderCurrentAttackSkillValueModifiers = new ValueModifiersManager();
 
+	public readonly ValueModifiersManager DefenderAttackRedirectionChanceModifiers = new ValueModifiersManager();
+
 	public const int BaseMultiplier = 1;
 
 	public const int SuperiorityMultiplier = 10;
@@ -32,13 +34,19 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public int Result { get; private set; }
 
+	public int DeflectionResult { get; private set; }
+
 	public int BaseChances { get; private set; }
 
 	public int DefenderSkill { get; set; }
 
 	public int AttackerWeaponSkill { get; set; }
 
+	public int AttackerWeaponSkillOverride { get; set; }
+
 	public bool IsAutoParry { get; private set; }
+
+	public bool IsRangedParry { get; private set; }
 
 	private bool UseBallisticSkill => Defender.Features.CanUseBallisticSkillToParry.Value;
 
@@ -85,11 +93,13 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public int RawResult { get; private set; }
 
-	public RuleCalculateParryChance([NotNull] UnitEntity defender, [CanBeNull] MechanicEntity attacker = null, [CanBeNull] AbilityData ability = null, int resultSuperiorityNumber = 0)
+	public RuleCalculateParryChance([NotNull] UnitEntity defender, [CanBeNull] MechanicEntity attacker = null, [CanBeNull] AbilityData ability = null, int resultSuperiorityNumber = 0, bool isRangedParry = false, int attackerWeaponSkillOverride = 0)
 		: base(defender, attacker)
 	{
 		Ability = ability;
 		m_ResultSuperiorityNumber = resultSuperiorityNumber;
+		IsRangedParry = isRangedParry;
+		AttackerWeaponSkillOverride = attackerWeaponSkillOverride;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
@@ -99,16 +109,29 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 		int num2 = 0;
 		if (MaybeAttacker != null)
 		{
-			AttackerWeaponSkill = MaybeAttacker.GetAttributeOptional(StatType.WarhammerWeaponSkill)?.ModifiedValue ?? 0;
+			if (IsRangedParry)
+			{
+				AttackerWeaponSkill = AttackerWeaponSkillOverride;
+			}
+			else
+			{
+				AttackerWeaponSkill = MaybeAttacker.GetAttributeOptional(StatType.WarhammerWeaponSkill)?.ModifiedValue ?? 0;
+			}
 			RuleCalculateAttackPenalty ruleCalculateAttackPenalty = Rulebook.Trigger(new RuleCalculateAttackPenalty(MaybeAttacker, Ability));
 			AttackerWeaponSkill = Math.Max(AttackerWeaponSkill - ruleCalculateAttackPenalty.ResultWeaponSkillPenalty, 0);
 			num2 = AttackerWeaponSkill + AttackerWeaponSkillValueModifiers.Value;
+		}
+		else if (IsRangedParry)
+		{
+			AttackerWeaponSkill = AttackerWeaponSkillOverride;
+			num2 = AttackerWeaponSkill;
 		}
 		if (Defender.HasMechanicFeature(MechanicsFeatureType.HiveOutnumber) && m_ResultSuperiorityNumber > 0)
 		{
 			m_ResultSuperiorityNumber--;
 		}
 		RawResult = 20 + num - (num2 + m_ResultSuperiorityNumber * 10) + ParryValueModifiers.Value;
+		DeflectionResult = (IsRangedParry ? (Math.Clamp(RawResult / 2, 0, 100) + DefenderAttackRedirectionChanceModifiers.Value) : 0);
 		Result = Math.Clamp(RawResult, 0, 95);
 		SpecialOverrideWithFeatures();
 	}
@@ -119,12 +142,14 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 		{
 			RawResult = 0;
 			Result = 0;
+			DeflectionResult = 0;
 		}
 		else if ((bool)Defender.Features.AutoParry)
 		{
 			IsAutoParry = true;
 			RawResult = 100;
 			Result = 100;
+			DeflectionResult = (IsRangedParry ? 100 : 0);
 		}
 	}
 }

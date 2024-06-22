@@ -1,4 +1,5 @@
 using System.Linq;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Globalmap.Blueprints.SectorMap;
@@ -8,6 +9,7 @@ using UnityEngine;
 namespace Kingmaker.Globalmap.SectorMap;
 
 [RequireComponent(typeof(LineRenderer))]
+[KnowledgeDatabaseID("734b66bd11a64e7bb6c2469e683bf849")]
 public class SectorMapPassageView : EntityViewBase
 {
 	private bool m_VisibilityFromFilter = true;

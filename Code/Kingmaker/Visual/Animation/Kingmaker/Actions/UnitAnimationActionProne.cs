@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
@@ -159,22 +158,14 @@ public class UnitAnimationActionProne : UnitAnimationAction
 			handle.Release();
 			handle.Manager.Disabled = true;
 		}
-		else
+		else if (!actionData.StandUp)
 		{
-			if (actionData.StandUp)
-			{
-				return;
-			}
 			if (actionData.HasLyingClip && !actionData.FallingFinished)
 			{
 				actionData.FallingFinished = true;
 				AnimationClipWrapper lyingClip = GetLyingClip(handle);
 				handle.StartClip(lyingClip, ClipDurationType.Endless);
 				handle.ActiveAnimation.TransitionIn = m_TransitionToLyingTime;
-				if (handle.Unit.EntityData != null && (bool)handle.Unit.EntityData.Features.Immortality && !handle.Unit.EntityData.LifeState.ScriptedKill && !Game.Instance.TurnController.TbActive && !LoadingProcess.Instance.IsLoadingInProcess)
-				{
-					handle.Unit.EntityData.LifeState.Resurrect();
-				}
 			}
 			else
 			{

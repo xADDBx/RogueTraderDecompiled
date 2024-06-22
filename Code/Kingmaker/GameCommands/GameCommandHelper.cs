@@ -237,28 +237,15 @@ public static class GameCommandHelper
 
 	public static bool TryInsertItem(ItemSlot slot, ItemEntity item)
 	{
-		if (slot == null || item == null)
+		bool num = TryInsertItemTo(item, slot);
+		if (num)
 		{
-			EventBus.RaiseEvent((IItemEntity)item, (Action<IInsertItemFailHandler>)delegate(IInsertItemFailHandler h)
+			EventBus.RaiseEvent(delegate(IInsertItemHandler h)
 			{
-				h.HandleInsertFail(null);
-			}, isCheckRuntime: true);
-			return false;
+				h.HandleInsertItem(slot);
+			});
 		}
-		if (!slot.CanInsertItem(item) || (slot.HasItem && !slot.CanRemoveItem()))
-		{
-			EventBus.RaiseEvent((IItemEntity)item, (Action<IInsertItemFailHandler>)delegate(IInsertItemFailHandler h)
-			{
-				h.HandleInsertFail(slot.Owner);
-			}, isCheckRuntime: true);
-			return false;
-		}
-		slot.InsertItem(item);
-		EventBus.RaiseEvent(delegate(IInsertItemHandler h)
-		{
-			h.HandleInsertItem(slot);
-		});
-		return true;
+		return num;
 	}
 
 	public static void EquipItemAutomatically(ItemEntity item, BaseUnitEntity unit)
@@ -420,12 +407,17 @@ public static class GameCommandHelper
 								{
 									if (!(blueprint is BlueprintItemArmorPlating))
 									{
-										if (blueprint is BlueprintStarshipWeapon)
+										if (!(blueprint is BlueprintItemArsenal))
 										{
-											IEnumerable<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot> source = ship.Hull.WeaponSlots.Where((Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot slot) => slot.CanInsertItem(item));
-											return source.FirstOrDefault((Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot weaponSlot) => !weaponSlot.HasItem) ?? source.FirstOrDefault();
+											if (blueprint is BlueprintStarshipWeapon)
+											{
+												IEnumerable<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot> source = ship.Hull.WeaponSlots.Where((Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot slot) => slot.CanInsertItem(item));
+												return source.FirstOrDefault((Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot weaponSlot) => !weaponSlot.HasItem) ?? source.FirstOrDefault();
+											}
+											return null;
 										}
-										return null;
+										IEnumerable<ArsenalSlot> source2 = ship.Hull.HullSlots.Arsenals.Where((ArsenalSlot slot) => slot.CanInsertItem(item));
+										return source2.FirstOrDefault((ArsenalSlot slot) => !slot.HasItem) ?? source2.FirstOrDefault();
 									}
 									return ship.Hull.HullSlots.ArmorPlating;
 								}
@@ -446,11 +438,27 @@ public static class GameCommandHelper
 
 	private static bool TryInsertItemTo(ItemEntity item, ItemSlot targetSlot)
 	{
-		if (targetSlot == null || !targetSlot.CanInsertItem(item) || (targetSlot.HasItem && !targetSlot.CanRemoveItem()))
+		if (item == null)
+		{
+			EventBus.RaiseEvent(delegate(IInsertItemFailHandler h)
+			{
+				h.HandleInsertFail(targetSlot?.Owner);
+			});
+			return false;
+		}
+		if (targetSlot == null)
 		{
 			EventBus.RaiseEvent((IItemEntity)item, (Action<IInsertItemFailHandler>)delegate(IInsertItemFailHandler h)
 			{
-				h.HandleInsertFail(targetSlot?.Owner);
+				h.HandleInsertFail(null);
+			}, isCheckRuntime: true);
+			return false;
+		}
+		if (!targetSlot.CanInsertItem(item) || (targetSlot.HasItem && !targetSlot.CanRemoveItem()) || (item.HoldingSlot != null && item.HoldingSlot.Owner != targetSlot.Owner))
+		{
+			EventBus.RaiseEvent((IItemEntity)item, (Action<IInsertItemFailHandler>)delegate(IInsertItemFailHandler h)
+			{
+				h.HandleInsertFail(targetSlot.Owner);
 			}, isCheckRuntime: true);
 			return false;
 		}

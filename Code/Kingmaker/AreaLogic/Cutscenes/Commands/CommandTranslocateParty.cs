@@ -17,7 +17,7 @@ namespace Kingmaker.AreaLogic.Cutscenes.Commands;
 [TypeId("d1b13a2a9ce49e645a228792a62998f5")]
 public class CommandTranslocateParty : CommandBase
 {
-	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("Cutscene");
+	private static readonly LogChannel Logger = PFLog.Cutscene;
 
 	[SerializeField]
 	private Player.CharactersList m_UnitsList;

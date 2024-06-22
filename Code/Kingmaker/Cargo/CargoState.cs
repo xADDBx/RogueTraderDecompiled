@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Cargo;
 using Kingmaker.Controllers;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Enums;
 using Kingmaker.Items;
@@ -82,10 +83,13 @@ public class CargoState : IHashable
 		CargoEntity entity = Entity.Initialize(new CargoEntity(blueprint, Game.Instance.Player.PlayerShip));
 		entity.OnAdd();
 		m_CargoEntities.Add(entity);
-		EventBus.RaiseEvent(delegate(ICargoStateChangedHandler h)
+		if (!ContextData<ItemsCollection.SuppressEvents>.Current)
 		{
-			h.HandleCreateNewCargo(entity);
-		});
+			EventBus.RaiseEvent(delegate(ICargoStateChangedHandler h)
+			{
+				h.HandleCreateNewCargo(entity);
+			});
+		}
 		return entity;
 	}
 
@@ -191,10 +195,13 @@ public class CargoState : IHashable
 	{
 		entity.OnRemove();
 		m_CargoEntities.Remove(entity);
-		EventBus.RaiseEvent(delegate(ICargoStateChangedHandler h)
+		if (!ContextData<ItemsCollection.SuppressEvents>.Current)
 		{
-			h.HandleRemoveCargo(entity, fromMassSell);
-		});
+			EventBus.RaiseEvent(delegate(ICargoStateChangedHandler h)
+			{
+				h.HandleRemoveCargo(entity, fromMassSell);
+			});
+		}
 		foreach (CargoEntity cargoEntity in m_CargoEntities)
 		{
 			cargoEntity.ReapplyFactsForOwnerShip();

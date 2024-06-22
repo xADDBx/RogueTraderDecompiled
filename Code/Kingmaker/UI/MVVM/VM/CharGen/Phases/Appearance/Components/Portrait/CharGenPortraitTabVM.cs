@@ -12,8 +12,6 @@ public class CharGenPortraitTabVM : SelectionGroupEntityVM, INetLobbyPlayersHand
 {
 	public readonly CharGenPortraitTab Tab;
 
-	public readonly ReactiveCommand<bool> CheckCoopControls = new ReactiveCommand<bool>();
-
 	public readonly BoolReactiveProperty IsMainCharacter = new BoolReactiveProperty();
 
 	public CharGenPortraitTabVM(CharGenPortraitTab tab)
@@ -35,7 +33,6 @@ public class CharGenPortraitTabVM : SelectionGroupEntityVM, INetLobbyPlayersHand
 	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
 	{
 		IsMainCharacter.Value = UINetUtility.IsControlMainCharacter();
-		CheckCoopControls.Execute(UINetUtility.IsControlMainCharacter());
 	}
 
 	public void HandlePlayerChanged()

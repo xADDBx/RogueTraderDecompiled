@@ -14,7 +14,7 @@ public class StartEndGameTitles : GameAction
 	[SerializeField]
 	private bool m_LoadToMainMenu = true;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		EventBus.RaiseEvent(delegate(IEndGameTitlesUIHandler h)
 		{

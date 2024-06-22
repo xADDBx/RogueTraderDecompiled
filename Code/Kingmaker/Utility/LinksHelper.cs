@@ -115,7 +115,7 @@ public static class LinksHelper
 	{
 		if (linkKey.IsNullOrEmpty())
 		{
-			return "";
+			return string.Empty;
 		}
 		return "{uip|" + linkKey + "|" + blueprint.AssetGuid + "}";
 	}

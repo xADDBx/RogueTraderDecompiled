@@ -5,6 +5,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
+using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Localization;
 using Kingmaker.Networking;
@@ -41,6 +42,8 @@ public class SaveSlotVM : SelectionGroupEntityVM
 	public readonly ReactiveProperty<DateTime> SystemSaveTime = new ReactiveProperty<DateTime>();
 
 	public readonly BoolReactiveProperty ShowDlcRequiredLabel = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty IsCurrentIronManSave = new BoolReactiveProperty();
 
 	public List<List<string>> DlcRequiredMap = new List<List<string>>();
 
@@ -84,9 +87,22 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		SetSaveInfo(saveInfo);
 	}
 
+	protected override void DisposeImplementation()
+	{
+		base.DisposeImplementation();
+		Clear();
+	}
+
 	public void SaveOrLoad()
 	{
-		if (PhotonManager.Lobby.IsActive && !PhotonManager.DLC.IsDLCsInLobbyReady)
+		if (IsCurrentIronManSave.Value)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.SaveLoadTexts.CannotLoadCurrentIronManSave, addToLog: false, WarningNotificationFormat.Attention);
+			});
+		}
+		else if (PhotonManager.Lobby.IsActive && !PhotonManager.DLC.IsDLCsInLobbyReady)
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{
@@ -139,7 +155,7 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		CharacterName.Value = Reference.PlayerCharacterName;
 		GameName.Value = Reference.Name;
 		GameId.Value = Reference.GameId;
-		SaveName.Value = Reference.Name ?? "";
+		SaveName.Value = Reference.Name ?? string.Empty;
 		Description.Value = Reference.Description;
 		StringReactiveProperty locationName = LocationName;
 		object obj = Reference.AreaNameOverride;
@@ -151,7 +167,9 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		locationName.Value = (string)obj;
 		SystemSaveTime.Value = Reference.SystemSaveTime;
 		TimeInGame.Value = UIUtility.TimeSpanToInGameTime(Reference.GameTotalTime);
-		ShowAutoSaveMark.Value = Reference.Type == SaveInfo.SaveType.Auto;
+		BoolReactiveProperty showAutoSaveMark = ShowAutoSaveMark;
+		SaveInfo.SaveType type = Reference.Type;
+		showAutoSaveMark.Value = type == SaveInfo.SaveType.Auto || type == SaveInfo.SaveType.IronMan;
 		ShowQuickSaveMark.Value = Reference.Type == SaveInfo.SaveType.Quick;
 		if (Reference.PartyPortraits != null)
 		{
@@ -162,6 +180,7 @@ public class SaveSlotVM : SelectionGroupEntityVM
 			})
 				.ToList();
 		}
+		IsCurrentIronManSave.Value = saveInfo.Type == SaveInfo.SaveType.IronMan && !RootUIContext.Instance.IsMainMenu && saveInfo.GameId == Game.Instance.Player.GameId;
 		CheckDLC();
 	}
 
@@ -199,7 +218,8 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		DlcRequiredMap = new List<List<string>>();
 		foreach (List<IBlueprintDlc> item in Reference.GetRequiredDLCMap())
 		{
-			DlcRequiredMap.Add(item.Select((IBlueprintDlc t) => t.DlcDisplayName).ToList());
+			DlcRequiredMap.Add((from t in item.OfType<BlueprintDlc>()
+				select t.GetDlcName()).ToList());
 		}
 	}
 
@@ -213,13 +233,18 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		LocationName.Value = string.Empty;
 		TimeInGame.Value = string.Empty;
 		ShowDlcRequiredLabel.Value = false;
+		IsCurrentIronManSave.Value = false;
 		ShowAutoSaveMark.Value = false;
 		ShowQuickSaveMark.Value = false;
-		foreach (SaveLoadPortraitVM item in PartyPortraits.Value)
+		ReactiveProperty<List<SaveLoadPortraitVM>> partyPortraits = PartyPortraits;
+		if (partyPortraits != null && partyPortraits.Value != null)
 		{
-			item.Dispose();
+			foreach (SaveLoadPortraitVM item in PartyPortraits.Value)
+			{
+				item.Dispose();
+			}
+			PartyPortraits.Value = null;
 		}
-		PartyPortraits.Value = null;
 		ScreenShot.Value = null;
 		ScreenShotHighRes.Value = null;
 	}
@@ -264,11 +289,5 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		SaveScreenshotManager.Instance.DisposeScreenshotTexture(Reference.ScreenshotHighRes);
 		Reference.ScreenshotHighRes = null;
 		SetScreenShotHighRes();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		base.DisposeImplementation();
-		Clear();
 	}
 }

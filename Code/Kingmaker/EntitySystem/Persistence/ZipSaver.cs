@@ -9,13 +9,13 @@ namespace Kingmaker.EntitySystem.Persistence;
 
 public class ZipSaver : ISaver, IDisposable
 {
-	private string m_FolderName;
+	private string m_FileName;
 
 	private ZipArchive m_ZipFile;
 
 	private ISaver.Mode m_Mode;
 
-	public string FolderName => m_FolderName;
+	public string FileName => m_FileName;
 
 	private ZipArchive ZipFile
 	{
@@ -29,15 +29,23 @@ public class ZipSaver : ISaver, IDisposable
 			{
 				return null;
 			}
-			FileStream stream = File.Open(m_FolderName, (m_Mode == ISaver.Mode.Read) ? FileMode.Open : FileMode.OpenOrCreate, (m_Mode == ISaver.Mode.Read) ? FileAccess.Read : FileAccess.ReadWrite, (m_Mode == ISaver.Mode.Read) ? FileShare.Read : FileShare.None);
-			m_ZipFile = new ZipArchive(stream, (m_Mode != ISaver.Mode.Read) ? ZipArchiveMode.Update : ZipArchiveMode.Read);
+			FileStream fileStream = File.Open(m_FileName, (m_Mode == ISaver.Mode.Read) ? FileMode.Open : FileMode.OpenOrCreate, (m_Mode == ISaver.Mode.Read) ? FileAccess.Read : FileAccess.ReadWrite, (m_Mode == ISaver.Mode.Read) ? FileShare.Read : FileShare.None);
+			try
+			{
+				m_ZipFile = new ZipArchive(fileStream, (m_Mode != ISaver.Mode.Read) ? ZipArchiveMode.Update : ZipArchiveMode.Read);
+			}
+			catch (Exception)
+			{
+				fileStream?.Dispose();
+				throw;
+			}
 			return m_ZipFile;
 		}
 	}
 
-	public ZipSaver(string folderName, ISaver.Mode mode = ISaver.Mode.None)
+	public ZipSaver(string fileName, ISaver.Mode mode = ISaver.Mode.None)
 	{
-		m_FolderName = folderName;
+		m_FileName = fileName;
 		m_Mode = mode;
 	}
 
@@ -141,7 +149,7 @@ public class ZipSaver : ISaver, IDisposable
 		m_ZipFile = null;
 		try
 		{
-			File.Delete(m_FolderName);
+			File.Delete(m_FileName);
 		}
 		catch (IOException ex)
 		{
@@ -176,7 +184,7 @@ public class ZipSaver : ISaver, IDisposable
 		{
 			throw new Exception("Cant clone saver in write mode");
 		}
-		return new ZipSaver(m_FolderName, m_Mode);
+		return new ZipSaver(m_FileName, m_Mode);
 	}
 
 	public void Dispose()
@@ -187,7 +195,7 @@ public class ZipSaver : ISaver, IDisposable
 
 	public ulong GetFileSize()
 	{
-		return (ulong)new FileInfo(m_FolderName).Length;
+		return (ulong)new FileInfo(m_FileName).Length;
 	}
 
 	public void MoveTo(string newFileName)
@@ -196,8 +204,8 @@ public class ZipSaver : ISaver, IDisposable
 		{
 			File.Delete(newFileName);
 		}
-		File.Move(m_FolderName, newFileName);
-		m_FolderName = newFileName;
+		File.Move(m_FileName, newFileName);
+		m_FileName = newFileName;
 	}
 
 	private ZipArchiveEntry FindEntry(string fullName)

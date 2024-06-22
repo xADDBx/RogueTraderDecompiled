@@ -33,6 +33,12 @@ public static class DialogDebug
 
 	public static void Add([CanBeNull] BlueprintScriptableObject blueprint, [NotNull] string message, Color color)
 	{
+		Add(blueprint, color, message);
+	}
+
+	public static void Add([CanBeNull] BlueprintScriptableObject blueprint, Color color, [NotNull] string messageFormat, params object[] @params)
+	{
+		string message = string.Format(messageFormat, @params);
 		if (Application.isEditor || !Application.isPlaying)
 		{
 			if (blueprint == null || DebugMessages.Any((DebugMessage m) => m.Blueprint == blueprint && m.Message == message && m.Color == color))
@@ -43,6 +49,13 @@ public static class DialogDebug
 		}
 		PFLog.Default.Log(blueprint, $"Dialog {blueprint}: {message}");
 		GameHistoryLog.Instance.DialogEvent(blueprint, message);
+	}
+
+	[StringFormatMethod("messageFormat")]
+	public static void AddCondition([CanBeNull] BlueprintScriptableObject blueprint, bool result, [NotNull] string messageFormat, params object[] @params)
+	{
+		Color color = (result ? Color.green : Color.red);
+		Add(blueprint, color, messageFormat, @params);
 	}
 
 	public static void Add([CanBeNull] BlueprintScriptableObject blueprint, [NotNull] string message)

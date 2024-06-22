@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
@@ -37,6 +38,8 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 
 	public bool PercentDodgeModifier;
 
+	public bool PercentMultiplierModifier;
+
 	public bool SetMinimumDodgeChance;
 
 	[ShowIf("SetMinimumDodgeChance")]
@@ -56,6 +59,10 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 			{
 				rule.DodgePercentModifiers.Add(DodgeChance.Calculate(base.Context), base.Fact);
 			}
+			else if (PercentMultiplierModifier)
+			{
+				rule.DodgePercentMultiplierModifier.Add(ModifierType.PctMul_Extra, DodgeChance.Calculate(base.Context), base.Fact);
+			}
 			else
 			{
 				rule.DodgeValueModifiers.Add(DodgeChance.Calculate(base.Context), base.Fact);
@@ -65,6 +72,11 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 		{
 			rule.MinimumDodgeValueModifier.Add(MinimumDodgeChance.Calculate(base.Context), base.Fact);
 		}
+		OnApply();
+	}
+
+	protected virtual void OnApply()
+	{
 	}
 
 	public override Hash128 GetHash128()

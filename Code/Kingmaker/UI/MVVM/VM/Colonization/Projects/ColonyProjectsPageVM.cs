@@ -88,7 +88,7 @@ public class ColonyProjectsPageVM : BaseDisposable, IViewModel, IBaseDisposable,
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsPageVM.Refresh - colony is null!");
+			PFLog.UI.Error("ColonyProjectsPageVM.Refresh - colony is null!");
 			return;
 		}
 		Rewards.Clear();

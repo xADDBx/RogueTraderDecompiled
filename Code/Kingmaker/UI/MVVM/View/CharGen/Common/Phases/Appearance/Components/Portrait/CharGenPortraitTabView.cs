@@ -4,7 +4,6 @@ using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup.View;
 using Owlcat.Runtime.UI.Utility;
 using TMPro;
-using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Portrait;
@@ -19,8 +18,6 @@ public class CharGenPortraitTabView : SelectionGroupEntityView<CharGenPortraitTa
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		m_Button.SetInteractable(base.ViewModel.IsMainCharacter.Value);
-		AddDisposable(base.ViewModel.CheckCoopControls.Subscribe(m_Button.SetInteractable));
 		m_Label.text = UIUtility.GetCharGenPortraitTabLabel(base.ViewModel.Tab);
 	}
 

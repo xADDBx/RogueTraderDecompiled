@@ -42,6 +42,14 @@ public class RuleHealDamage : RulebookTargetEvent
 		Ability = abilityData;
 	}
 
+	public RuleHealDamage([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, int min, int max, int bonus, AbilityData abilityData = null)
+		: base(initiator, target)
+	{
+		TargetHealth = target.GetHealthOptional();
+		CalculateHealRule = new RuleCalculateHeal(initiator, target, min, max, bonus);
+		Ability = abilityData;
+	}
+
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		if (TargetHealth != null && !this.SkipBecauseOfShadow())

@@ -49,7 +49,7 @@ public class ContextActionApplyDOT : ContextAction
 	[ShowIf("UsePenetrationOverride")]
 	public ContextValue PenetrationOverride;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Target.Entity is BaseUnitEntity baseUnitEntity))
 		{

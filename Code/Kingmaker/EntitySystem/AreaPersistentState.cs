@@ -14,6 +14,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.StateHasher.Hashers;
+using Kingmaker.Utility.GuidUtility;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
@@ -78,6 +79,7 @@ public class AreaPersistentState : IHashable
 			orCreate.MinimalVailForCurrentArea = blueprint.StartVailValueForLocation;
 			orCreate.Vail = orCreate.MinimalVailForCurrentArea;
 		}
+		Uuid.Instance.CreateString();
 	}
 
 	public AreaPersistentState(string areaId)

@@ -51,6 +51,14 @@ public class FormationBaseView : ViewBase<FormationVM>
 		Game.Instance.RequestPauseUi(isPaused: true);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_FadeAnimator.DisappearAnimation();
+		UISounds.Instance.Sounds.Formation.FormationClose.Play();
+		Game.Instance.RequestPauseUi(isPaused: false);
+		m_FormationSelectorPCView.Unbind();
+	}
+
 	public virtual void OnFormationPresetIndexChanged(int formationPresetIndex)
 	{
 		OnFormationPresetChanged(formationPresetIndex);
@@ -79,11 +87,9 @@ public class FormationBaseView : ViewBase<FormationVM>
 		}
 	}
 
-	protected override void DestroyViewImplementation()
+	protected void OnSelectFormation()
 	{
-		m_FadeAnimator.DisappearAnimation();
-		UISounds.Instance.Sounds.Formation.FormationClose.Play();
-		Game.Instance.RequestPauseUi(isPaused: false);
-		m_FormationSelectorPCView.Unbind();
+		base.ViewModel.FormationSelector.SelectNextValidEntity();
+		base.ViewModel.FormationSelector.SelectedEntity.Value.SetSelectedFromView(state: true);
 	}
 }

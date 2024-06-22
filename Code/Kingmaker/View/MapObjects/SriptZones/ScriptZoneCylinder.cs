@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.View.Mechanics;
 using Kingmaker.Pathfinding;
 using Kingmaker.Utility;
@@ -12,6 +13,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.View.MapObjects.SriptZones;
 
+[KnowledgeDatabaseID("519b236c7f4dff540af422613b9656a0")]
 public class ScriptZoneCylinder : ScriptZoneShape
 {
 	private int m_PrevRadius;

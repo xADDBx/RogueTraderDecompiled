@@ -19,4 +19,6 @@ public class UIFormationTexts
 	public LocalizedString FormationPcHint;
 
 	public LocalizedString UneditableFormation;
+
+	public LocalizedString OptimizedFormation;
 }

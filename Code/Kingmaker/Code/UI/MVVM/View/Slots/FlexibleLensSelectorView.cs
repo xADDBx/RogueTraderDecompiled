@@ -49,6 +49,13 @@ public class FlexibleLensSelectorView : ViewBase<LensSelectorVM>
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
+		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
+		m_CurrentTabIndex = 0;
+	}
+
 	public void ForceFocus(RectTransform buttonTransform)
 	{
 		SetLensPosition(buttonTransform);
@@ -101,29 +108,37 @@ public class FlexibleLensSelectorView : ViewBase<LensSelectorVM>
 	{
 		DelayedInvoker.InvokeInFrames(delegate
 		{
-			Vector3 localPosition = buttonTransform.localPosition;
-			UIUtility.MoveLensPosition(target: new Vector3(localPosition.x - m_Offset, localPosition.y, localPosition.z), lens: m_Lens, duration: m_LensSwitchAnimationDuration, withSound: withSound);
-			if (m_Buttons.Length != 0)
+			if (!(buttonTransform == null) && !(m_Lens == null))
 			{
+				Vector3 localPosition = buttonTransform.localPosition;
+				UIUtility.MoveLensPosition(target: new Vector3(localPosition.x - m_Offset, localPosition.y, localPosition.z), lens: m_Lens, duration: m_LensSwitchAnimationDuration, withSound: withSound);
 				OwlcatMultiButton[] buttons = m_Buttons;
-				foreach (OwlcatMultiButton owlcatMultiButton in buttons)
+				if (buttons != null && buttons.Length > 0)
 				{
-					if (!(owlcatMultiButton.transform as RectTransform != buttonTransform))
+					buttons = m_Buttons;
+					foreach (OwlcatMultiButton owlcatMultiButton in buttons)
 					{
-						m_CurrentTabIndex = m_Buttons.IndexOf(owlcatMultiButton);
-						break;
+						if (!(owlcatMultiButton.transform as RectTransform != buttonTransform))
+						{
+							m_CurrentTabIndex = m_Buttons.IndexOf(owlcatMultiButton);
+							break;
+						}
 					}
 				}
-			}
-			else
-			{
-				OwlcatButton[] owlcatButtons = m_OwlcatButtons;
-				foreach (OwlcatButton owlcatButton in owlcatButtons)
+				else
 				{
-					if (!(owlcatButton.transform as RectTransform != buttonTransform))
+					OwlcatButton[] owlcatButtons = m_OwlcatButtons;
+					if (owlcatButtons != null && owlcatButtons.Length > 0)
 					{
-						m_CurrentTabIndex = m_OwlcatButtons.IndexOf(owlcatButton);
-						break;
+						owlcatButtons = m_OwlcatButtons;
+						foreach (OwlcatButton owlcatButton in owlcatButtons)
+						{
+							if (!(owlcatButton.transform as RectTransform != buttonTransform))
+							{
+								m_CurrentTabIndex = m_OwlcatButtons.IndexOf(owlcatButton);
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -177,12 +192,5 @@ public class FlexibleLensSelectorView : ViewBase<LensSelectorVM>
 			RectTransform buttonTransform2 = m_OwlcatButtons[num2].transform as RectTransform;
 			SetLensPosition(buttonTransform2);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
-		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
-		m_CurrentTabIndex = 0;
 	}
 }

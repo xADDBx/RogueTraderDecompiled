@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Stores.DlcInterfaces;
+using UnityEngine;
 
 namespace Kingmaker.DLC;
 
@@ -9,9 +10,14 @@ namespace Kingmaker.DLC;
 [AllowedOn(typeof(BlueprintDlc))]
 public abstract class DlcStore : BlueprintComponent, IDlcStore
 {
+	[SerializeField]
+	private bool m_ComingSoon;
+
 	public abstract bool IsSuitable { get; }
 
 	public virtual bool AllowsPurchase => false;
+
+	public bool ComingSoon => m_ComingSoon;
 
 	public virtual IDLCStatus GetStatus()
 	{

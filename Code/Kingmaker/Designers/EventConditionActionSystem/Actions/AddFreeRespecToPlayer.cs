@@ -23,7 +23,7 @@ public class AddFreeRespecToPlayer : GameAction
 		return "Добавляет всем текущим компаньонам бесплатный респек.";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (BaseUnitEntity item in (from ch in Game.Instance.Player.AllCrossSceneUnits.Where(delegate(BaseUnitEntity u)
 			{

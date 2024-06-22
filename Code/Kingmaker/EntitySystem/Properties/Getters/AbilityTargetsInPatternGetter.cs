@@ -28,7 +28,7 @@ public class AbilityTargetsInPatternGetter : PropertyGetter, PropertyContextAcce
 				return num;
 			}
 			NodeList nodes = rulePerformAbility.Context.Pattern.Nodes;
-			return num + nodes.Count((CustomGridNodeBase p) => p.GetUnit() != null);
+			return num + nodes.Count((CustomGridNodeBase p) => (!(p.GetUnit()?.IsDead)) ?? false);
 		}
 		foreach (CustomGridNodeBase node in (this.GetMechanicContext().SourceAbilityContext ?? throw new Exception("Can't count targets in pattern of not casted ability")).Pattern.Nodes)
 		{
@@ -40,8 +40,8 @@ public class AbilityTargetsInPatternGetter : PropertyGetter, PropertyContextAcce
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Ability Targets In Pattern";
+		return "Count of Targets in Pattern";
 	}
 }

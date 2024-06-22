@@ -13,7 +13,8 @@ public class BlueprintMultiEntrance : BlueprintScriptableObject
 	public enum BlueprintMultiEntranceMap
 	{
 		Footfall,
-		Voidship
+		Voidship,
+		DLC1Voidship
 	}
 
 	[Serializable]

@@ -5,7 +5,7 @@ namespace Kingmaker.UnitLogic.Mechanics.Actions;
 [TypeId("58368f2782b790b48872e76b8c337ebe")]
 public class WarhammerContextActionStateConditionChange : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 	}
 

@@ -34,6 +34,13 @@ namespace Kingmaker.Visual.Sound;
 
 public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IQuestHandler, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IAreaLoadingStagesHandler, IAwarenessHandler, ISubscriber<IMapObjectEntity>, ITimeOfDayChangedHandler, IAreaPartHandler, IPartyCombatHandler, IFullScreenUIHandler, IModalWindowUIHandler
 {
+	private enum DialogStates
+	{
+		Play,
+		Pause,
+		Stop
+	}
+
 	private const float MusicChangeDelay = 2f;
 
 	private const float DefaultCameraZoom = 0f;
@@ -67,11 +74,11 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 
 	private bool m_TurnWeatherOnNextFrame;
 
-	private bool m_DialogPaused = true;
-
 	private FullScreenUIType m_UIType;
 
 	private ModalWindowUIType m_ModalWindowUIType;
+
+	private DialogStates m_DialogState = DialogStates.Stop;
 
 	public static SoundState Instance
 	{
@@ -101,7 +108,6 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 	{
 		SetState();
 		UpdateScheduledAreaMusic();
-		UpdateDialogPaused();
 		UpdateCameraZoom();
 		SoundEvents.Update();
 	}
@@ -207,11 +213,26 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 			{
 				MusicStateHandler.ResetStoryMode();
 			}
+			UpdateDialogState(state, m_State);
 			m_State = state;
 			if (state == SoundStateType.MainMenu)
 			{
 				MusicStateHandler.SetMusicState(MusicStateHandler.MusicState.MainMenu);
 			}
+		}
+	}
+
+	private void UpdateDialogState(SoundStateType newState, SoundStateType oldState)
+	{
+		if (newState != SoundStateType.Dialog && m_DialogState == DialogStates.Play)
+		{
+			m_DialogState = DialogStates.Pause;
+			SoundEventsManager.PostEvent("PauseDialog", null);
+		}
+		if (newState == SoundStateType.Dialog && m_DialogState == DialogStates.Pause)
+		{
+			m_DialogState = DialogStates.Play;
+			SoundEventsManager.PostEvent("ResumeDialog", null);
 		}
 	}
 
@@ -422,19 +443,15 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 		SoundEvents.SetStoppingAllState(active: false);
 	}
 
-	public void StopDialog()
+	public void StartDialog()
 	{
-		SoundEventsManager.PostEvent("StopDialog", null);
+		m_DialogState = DialogStates.Play;
 	}
 
-	private void UpdateDialogPaused()
+	public void StopDialog()
 	{
-		bool flag = m_State != SoundStateType.Dialog && m_State != SoundStateType.CutScene;
-		if (m_DialogPaused != flag)
-		{
-			SoundEventsManager.PostEvent(flag ? "PauseDialog" : "ResumeDialog", null);
-			m_DialogPaused = flag;
-		}
+		m_DialogState = DialogStates.Stop;
+		SoundEventsManager.PostEvent("StopDialog", null);
 	}
 
 	public void HandlePartyCombatStateChanged(bool inCombat)

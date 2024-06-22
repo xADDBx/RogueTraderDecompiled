@@ -44,6 +44,8 @@ public struct LightDescriptor
 
 	public float ShadowNormalBias;
 
+	public LightShadowmapResolution ShadowmapResolution;
+
 	public ShadowmapUpdateMode ShadowmapUpdateMode;
 
 	public bool ShadowmapAlwaysDrawDynamicShadowCasters;

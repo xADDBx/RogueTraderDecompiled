@@ -26,19 +26,21 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 
 	public readonly bool IsCapital;
 
-	protected readonly List<UnitReference> m_LastUnits = new List<UnitReference>();
+	protected readonly List<UnitReference> LastUnits = new List<UnitReference>();
 
-	protected readonly List<BlueprintUnit> m_RequiredUnits = new List<BlueprintUnit>();
+	protected readonly List<BlueprintUnit> RequiredUnits = new List<BlueprintUnit>();
 
 	protected readonly ReactiveCollection<GroupChangerCharacterVM> m_PartyCharacter = new ReactiveCollection<GroupChangerCharacterVM>();
 
 	protected readonly ReactiveCollection<GroupChangerCharacterVM> m_RemoteCharacter = new ReactiveCollection<GroupChangerCharacterVM>();
 
-	protected ReactiveProperty<bool> m_CloseEnabled = new ReactiveProperty<bool>(initialValue: true);
+	protected readonly ReactiveProperty<bool> m_CloseEnabled = new ReactiveProperty<bool>(initialValue: true);
 
 	private List<UnitReference> m_OverridePartyCharacters;
 
 	private List<UnitReference> m_OverrideRemoteCharacters;
+
+	public readonly BoolReactiveProperty CloseActionsIsSame = new BoolReactiveProperty();
 
 	public IReadOnlyReactiveCollection<GroupChangerCharacterVM> PartyCharacter => m_PartyCharacter;
 
@@ -50,18 +52,36 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 
 	public IEnumerable<UnitReference> RemoteCharacterRef => m_RemoteCharacter.Select((GroupChangerCharacterVM p) => p.UnitRef);
 
-	public IEnumerable<BlueprintUnitReference> RequiredCharactersRef => m_RequiredUnits.Select((BlueprintUnit p) => p.ToReference<BlueprintUnitReference>());
+	public IEnumerable<BlueprintUnitReference> RequiredCharactersRef => RequiredUnits.Select((BlueprintUnit p) => p.ToReference<BlueprintUnitReference>());
 
 	public IReadOnlyReactiveProperty<bool> CloseEnabled => m_CloseEnabled;
 
-	protected GroupChangerVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false)
+	protected GroupChangerVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false, bool sameFinishActions = false, bool closeEnabled = true)
 	{
 		m_ActionGo = go;
 		m_ActionClose = close;
-		m_LastUnits.AddRange(lastUnits);
-		m_RequiredUnits.AddRange(requiredUnits);
+		CloseActionsIsSame.Value = sameFinishActions;
+		LastUnits.AddRange(lastUnits);
+		RequiredUnits.AddRange(requiredUnits);
 		IsCapital = isCapital;
+		m_CloseEnabled.Value = closeEnabled;
 		AddDisposable(EventBus.Subscribe(this));
+	}
+
+	protected override void DisposeImplementation()
+	{
+		LastUnits.Clear();
+		RequiredUnits.Clear();
+		m_PartyCharacter.ForEach(delegate(GroupChangerCharacterVM c)
+		{
+			c.Dispose();
+		});
+		m_PartyCharacter.Clear();
+		m_RemoteCharacter.ForEach(delegate(GroupChangerCharacterVM c)
+		{
+			c.Dispose();
+		});
+		m_RemoteCharacter.Clear();
 	}
 
 	public void AddActionGo(Action go)
@@ -110,22 +130,6 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 	public virtual bool CloseCondition()
 	{
 		return false;
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_LastUnits.Clear();
-		m_RequiredUnits.Clear();
-		m_PartyCharacter.ForEach(delegate(GroupChangerCharacterVM c)
-		{
-			c.Dispose();
-		});
-		m_PartyCharacter.Clear();
-		m_RemoteCharacter.ForEach(delegate(GroupChangerCharacterVM c)
-		{
-			c.Dispose();
-		});
-		m_RemoteCharacter.Clear();
 	}
 
 	public void OnSelectedClick()

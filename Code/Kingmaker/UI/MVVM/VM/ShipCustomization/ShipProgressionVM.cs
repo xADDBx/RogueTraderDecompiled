@@ -1,6 +1,6 @@
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
-using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores.Experience;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -9,19 +9,16 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerP
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Progression.Paths;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.ShipCustomization;
 
-public class ShipProgressionVM : BaseUnitProgressionVM
+public sealed class ShipProgressionVM : BaseUnitProgressionVM
 {
 	public readonly ShipInfoExperienceVM ShipInfoExperienceVM;
 
 	public CareerPathVM CareerPathVM;
-
-	public override CharInfoExperienceVM CharInfoExperienceVM => null;
-
-	public override UnitBackgroundBlockVM UnitBackgroundBlockVM => null;
 
 	public ShipProgressionVM(IReadOnlyReactiveProperty<BaseUnitEntity> unit, IReactiveProperty<LevelUpManager> levelUpManager)
 		: base(unit, levelUpManager)
@@ -30,10 +27,9 @@ public class ShipProgressionVM : BaseUnitProgressionVM
 		BlueprintCareerPath shipPath = ProgressionRoot.Instance.ShipPath;
 		AddDisposable(CareerPathVM = new CareerPathVM(Unit.Value, shipPath, this));
 		SetCareerPath(CareerPathVM, force: true);
-		CareerPathVM?.UpdateCareerPath();
 	}
 
-	protected sealed override void RefreshData()
+	protected override void RefreshData()
 	{
 		if (Unit.Value != null)
 		{
@@ -45,16 +41,7 @@ public class ShipProgressionVM : BaseUnitProgressionVM
 	public override void Commit()
 	{
 		Game.Instance.Player.PlayerShip.StarshipProgression.AddStarshipLevel(m_LevelUpManager.Value);
-		CareerPathVM.OnCommit?.Execute();
 		DestroyLevelUpManager();
-	}
-
-	public override void SetPreviousState(bool saveSelections = false)
-	{
-	}
-
-	public override void SelectCareerPath()
-	{
 	}
 
 	private void TrySaveState()
@@ -71,7 +58,7 @@ public class ShipProgressionVM : BaseUnitProgressionVM
 		CurrentRankEntryItem.Value = rankEntryItem;
 	}
 
-	public sealed override void SetCareerPath(CareerPathVM careerPathVM, bool force = false)
+	public override void SetCareerPath(CareerPathVM careerPathVM, bool force = false)
 	{
 		careerPathVM?.InitializeRankEntries();
 		if (Unit.Value.Progression.CanUpgradePath(careerPathVM?.CareerPath))
@@ -86,9 +73,34 @@ public class ShipProgressionVM : BaseUnitProgressionVM
 				FirstAvailableEntryItem.Value = careerPathVM.FirstSelectable;
 			}));
 		}
-		careerPathVM?.SetFirstSelectableRankEntry();
 		CurrentCareer.Value = careerPathVM;
 		careerPathVM?.UpdateState(updateRanks: true);
+		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(SetFirstAvailableRankEntry);
+	}
+
+	public void SetFirstAvailableRankEntry()
+	{
+		if (CurrentCareer.Value == null)
+		{
+			return;
+		}
+		RankEntrySelectionVM rankEntrySelectionVM = CurrentCareer.Value.AllSelections?.LastOrDefault((RankEntrySelectionVM s) => s.SelectionMade);
+		if (CurrentCareer.Value.IsInLevelupProcess)
+		{
+			SetRankEntry(rankEntrySelectionVM);
+			if (CurrentCareer.Value.LastEntryToUpgrade == rankEntrySelectionVM)
+			{
+				CurrentCareer.Value.SetRankEntry(rankEntrySelectionVM);
+			}
+			else
+			{
+				CurrentCareer.Value.SelectNextItem(skipSelected: false);
+			}
+		}
+		else
+		{
+			CurrentCareer.Value.SetRankEntry(null);
+		}
 	}
 
 	private void DestroyLevelUpManager()

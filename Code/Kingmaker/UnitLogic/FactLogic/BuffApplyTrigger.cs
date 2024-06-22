@@ -65,6 +65,8 @@ public class BuffApplyTrigger : UnitFactComponentDelegate, IUnitBuffHandler, ISu
 
 	public bool OnlyPsychicPowerBuffs;
 
+	public bool OnlyIfBuffFromCaster;
+
 	public BlueprintBuff ApplyChildBuff => m_ApplyChildBuff?.Get();
 
 	public BlueprintBuff Buff => m_Buff?.Get();
@@ -97,7 +99,7 @@ public class BuffApplyTrigger : UnitFactComponentDelegate, IUnitBuffHandler, ISu
 			}
 		}
 		bool num = buff.Owner == base.Owner || AnyTarget;
-		bool flag = !OnlyIfOwnerIsCaster || buff.Context.MaybeCaster == base.Owner;
+		bool flag = (!OnlyIfOwnerIsCaster || buff.Context.MaybeCaster == base.Owner) && (!OnlyIfBuffFromCaster || buff.Context.MaybeCaster == base.Fact.MaybeContext?.MaybeCaster);
 		if (!(num && flag) || buff.Blueprint == ApplyChildBuff || !CheckBuff(buff))
 		{
 			return;

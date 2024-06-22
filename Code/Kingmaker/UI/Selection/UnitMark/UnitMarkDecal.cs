@@ -23,4 +23,9 @@ public class UnitMarkDecal
 	{
 		DecalMeshRenderer.material = (isBig ? MaterailSizeBig : MaterialSizeStandard);
 	}
+
+	public void SetMaterial(Material material)
+	{
+		DecalMeshRenderer.material = material;
+	}
 }

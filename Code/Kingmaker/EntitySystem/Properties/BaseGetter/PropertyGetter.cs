@@ -27,73 +27,154 @@ public abstract class PropertyGetter : Element
 
 	public virtual bool AddBracketsAroundInnerCaption => true;
 
+	public virtual bool IsSimple => true;
+
 	protected abstract int GetBaseValue();
 
-	protected abstract string GetInnerCaption();
+	protected abstract string GetInnerCaption(bool useLineBreaks);
 
 	public sealed override string GetCaption()
 	{
+		return MakeCaption(useLineBreaks: false);
+	}
+
+	public sealed override string GetCaption(bool useLineBreaks)
+	{
+		return MakeCaption(useLineBreaks);
+	}
+
+	public int GetValue(PropertyCalculator calculator)
+	{
+		using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(calculator, this);
+		try
+		{
+			if (!IsCurrentEntityHasRequiredType)
+			{
+				elementsDebugger?.SetResult(0);
+				return 0;
+			}
+			int baseValue = GetBaseValue();
+			int result = Settings?.Apply(baseValue) ?? baseValue;
+			elementsDebugger?.SetResult(result);
+			return result;
+		}
+		catch (Exception exception)
+		{
+			Element.LogException(exception);
+			elementsDebugger?.SetException(exception);
+			throw;
+		}
+	}
+
+	private string MakeCaption(bool useLineBreaks)
+	{
 		using PooledStringBuilder pooledStringBuilder = ContextData<PooledStringBuilder>.Request();
 		StringBuilder builder = pooledStringBuilder.Builder;
+		string text = "";
+		int? num = null;
+		int? num2 = null;
 		if (Settings.Limit == PropertyGetterSettings.LimitType.Min)
 		{
-			builder.Append("Max(");
-			builder.Append(Settings.Min);
-			builder.Append(", ");
+			text = "Min";
+			num = Settings.Min;
 		}
-		if (Settings.Limit == PropertyGetterSettings.LimitType.Max)
+		else if (Settings.Limit == PropertyGetterSettings.LimitType.Max)
 		{
-			builder.Append("Min(");
-			builder.Append(Settings.Max);
-			builder.Append(", ");
+			text = "Max";
+			num2 = Settings.Max;
 		}
-		if (Settings.Limit == PropertyGetterSettings.LimitType.MinMax)
+		else if (Settings.Limit == PropertyGetterSettings.LimitType.MinMax)
 		{
-			builder.Append("Clamp(");
-			builder.Append(Settings.Min);
-			builder.Append(", ");
-			builder.Append(Settings.Max);
-			builder.Append(", ");
+			text = "Clamp";
+			num = Settings.Min;
+			num2 = Settings.Max;
 		}
+		bool flag = true;
+		if (text != "")
+		{
+			string text2 = (flag ? "cyan" : "#888888");
+			text = "<color='" + text2 + "'>" + text + "</color>";
+		}
+		string value = "";
 		if (Settings.Negate)
 		{
-			builder.Append('-');
+			value = "-";
 		}
+		string text3 = "";
 		if (Settings.Progression != 0)
 		{
-			builder.Append(Settings.Progression);
+			text3 = Settings.ProgressionToString();
+		}
+		if (text3 != "")
+		{
+			string text4 = (flag ? "lightblue" : "#6677EE");
+			text3 = "<color='" + text4 + "'>" + text3 + "</color>";
+		}
+		bool flag2 = (text != "" || text3 != "") && !IsSimple && useLineBreaks;
+		if (flag2)
+		{
+			builder.Append('\n');
+			builder.Append(FormulaScope.Indent);
+		}
+		builder.Append(text);
+		if (text != "")
+		{
+			builder.Append('(');
+		}
+		if (num.HasValue)
+		{
+			builder.Append(num);
+			builder.Append(", ");
+		}
+		if (num2.HasValue)
+		{
+			builder.Append(num2);
+			builder.Append(", ");
+		}
+		builder.Append(value);
+		builder.Append(text3);
+		if (AddBracketsAroundInnerCaption)
+		{
+			if (IsSimple)
+			{
+				builder.Append('[');
+			}
+			else
+			{
+				builder.AppendIndentedFormula('[');
+			}
+		}
+		using (FormulaScope.Enter((AddBracketsAroundInnerCaption || flag2) && useLineBreaks))
+		{
+			builder.Append(GetInnerCaption(useLineBreaks));
 		}
 		if (AddBracketsAroundInnerCaption)
 		{
-			builder.Append('[');
-		}
-		builder.Append(GetInnerCaption());
-		if (AddBracketsAroundInnerCaption)
-		{
-			builder.Append(']');
+			if (IsSimple)
+			{
+				builder.Append(']');
+			}
+			else
+			{
+				builder.AppendIndentedFormula(']');
+			}
 		}
 		if (Settings.Limit != 0)
 		{
-			builder.Append(')');
+			if (IsSimple)
+			{
+				builder.Append(')');
+			}
+			else
+			{
+				builder.AppendIndentedFormula(')');
+				if (useLineBreaks)
+				{
+					builder.Append('\n');
+				}
+			}
 		}
 		return builder.ToString();
-	}
-
-	public int GetValue()
-	{
-		if (!IsCurrentEntityHasRequiredType)
-		{
-			return 0;
-		}
-		try
-		{
-			int baseValue = GetBaseValue();
-			return Settings?.Apply(baseValue) ?? baseValue;
-		}
-		catch (Exception innerException)
-		{
-			throw new PropertyGetterException(this, innerException);
-		}
 	}
 }
 [TypeId("36fbb8639be34e619c481ac1adc134e2")]

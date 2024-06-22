@@ -83,7 +83,14 @@ public static class UnitCommandsRunner
 	{
 		UISounds.Instance.Sounds.Combat.CombatGridSetWaypointClick.Play();
 		s_VirtualMoveCommand = new VirtualMoveCommand(cmdParams, unit);
-		SubscribeEscManager();
+		if (!unit.ToBaseUnitEntity().IsDirectlyControllable())
+		{
+			TryUnsubscribeEscManager();
+		}
+		else
+		{
+			SubscribeEscManager();
+		}
 	}
 
 	public static void DirectInteract(BaseUnitEntity unit, InteractionPart interaction)
@@ -107,37 +114,51 @@ public static class UnitCommandsRunner
 				}
 				else
 				{
-					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, interaction.Owner.Position, interaction.ApproachRadius)
+					if (!unit.IsMovementLockedByGameModeOrCombat())
 					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
-					};
-					if (unit.IsInPlayerParty && !unit.IsInCombat)
-					{
-						if ((interaction.Owner.Position - unit.Position).magnitude > (float)BlueprintRoot.Instance.MinSprintDistance)
+						UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, interaction.Owner.Position, 0f)
 						{
-							unitMoveToParams.MovementType = WalkSpeedType.Sprint;
+							IsSynchronized = true,
+							CanBeAccelerated = true
+						};
+						if (unit.IsInPlayerParty && !unit.IsInCombat)
+						{
+							if ((interaction.Owner.Position - unit.Position).magnitude > (float)BlueprintRoot.Instance.MinSprintDistance)
+							{
+								unitMoveToParams.MovementType = WalkSpeedType.Sprint;
+							}
+							else if ((interaction.Owner.Position - unit.Position).magnitude < (float)BlueprintRoot.Instance.MaxWalkDistance)
+							{
+								unitMoveToParams.MovementType = WalkSpeedType.Walk;
+							}
+							else
+							{
+								unitMoveToParams.MovementType = WalkSpeedType.Run;
+							}
 						}
-						else if ((interaction.Owner.Position - unit.Position).magnitude < (float)BlueprintRoot.Instance.MaxWalkDistance)
+						if (Game.Instance.CurrentMode == GameModeType.StarSystem)
 						{
-							unitMoveToParams.MovementType = WalkSpeedType.Walk;
+							float num = (unit.Blueprint as BlueprintStarship)?.SpeedOnStarSystemMap ?? 1f;
+							unitMoveToParams.OverrideSpeed = num / StarSystemTimeController.TimeMultiplier;
 						}
-						else
+						unit.Commands.Run(unitMoveToParams);
+						unit.Commands.AddToQueueFirst(new UnitInteractWithObjectParams(interaction)
 						{
-							unitMoveToParams.MovementType = WalkSpeedType.Run;
+							IsSynchronized = true,
+							CanBeAccelerated = true
+						});
+						{
+							foreach (BaseUnitEntity selectedUnit in Game.Instance.SelectionCharacter.SelectedUnits)
+							{
+								if (unit != selectedUnit)
+								{
+									selectedUnit.Commands.InterruptMove(byPlayer: true);
+								}
+							}
+							return;
 						}
 					}
-					if (Game.Instance.CurrentMode == GameModeType.StarSystem)
-					{
-						float num = (unit.Blueprint as BlueprintStarship)?.SpeedOnStarSystemMap ?? 1f;
-						unitMoveToParams.OverrideSpeed = num / StarSystemTimeController.TimeMultiplier;
-					}
-					unit.Commands.Run(unitMoveToParams);
-					unit.Commands.AddToQueueFirst(new UnitInteractWithObjectParams(interaction)
-					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
-					});
+					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 				}
 			});
 		}
@@ -158,20 +179,30 @@ public static class UnitCommandsRunner
 
 	public static void TryUnitUseAbility(AbilityData abilityData, TargetWrapper target, bool shouldApproach = false)
 	{
+		MechanicEntity caster2 = abilityData.Caster;
+		BaseUnitEntity caster = caster2 as BaseUnitEntity;
+		if (caster == null)
+		{
+			return;
+		}
 		TryRunVirtualMoveCommand();
 		UnitCommandParams cmd = CreateUseAbilityCommandParams(abilityData, target);
 		if (cmd != null)
 		{
-			PartUnitCommands commands = abilityData.Caster.GetCommandsOptional();
+			PartUnitCommands commands = caster.GetCommandsOptional();
 			if (commands != null)
 			{
 				if (shouldApproach)
 				{
-					PathfindingService.Instance.FindPathRT(((BaseUnitEntity)abilityData.Caster).MovementAgent, target.Entity.Position, abilityData.RangeCells, delegate(ForcedPath path)
+					PathfindingService.Instance.FindPathRT(caster.MovementAgent, target.Entity.Position, abilityData.RangeCells, delegate(ForcedPath path)
 					{
 						if (path.error)
 						{
 							PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+						}
+						else if (caster.IsMovementLockedByGameModeOrCombat())
+						{
+							PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 						}
 						else
 						{
@@ -555,6 +586,10 @@ public static class UnitCommandsRunner
 			{
 				PFLog.Pathfinding.Error("An error path was returned. Ignoring");
 			}
+			else if (unit.IsMovementLockedByGameModeOrCombat())
+			{
+				PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
+			}
 			else
 			{
 				UnitCommandParams unitCommandParams = UnitHelper.CreateMoveCommandParamsRT(unit, settings, path);
@@ -592,5 +627,14 @@ public static class UnitCommandsRunner
 	private static void TryUnsubscribeEscManager()
 	{
 		s_EscManagerHandle?.Dispose();
+	}
+
+	public static void HandleRoleSet(string entityId)
+	{
+		VirtualMoveCommand virtualMoveCommand = s_VirtualMoveCommand;
+		if (virtualMoveCommand == null || virtualMoveCommand.Unit.Id.Equals(entityId, StringComparison.Ordinal))
+		{
+			CancelMoveCommand();
+		}
 	}
 }

@@ -15,7 +15,7 @@ public class WarhammerContextActionStarshipPerformAttack : ContextAction
 		return "Perform an attack with a starship weapon that gave this ability";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Context.MaybeCaster is StarshipEntity starshipEntity) || !(base.Target.Entity is StarshipEntity target))
 		{

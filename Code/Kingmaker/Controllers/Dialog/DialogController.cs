@@ -595,7 +595,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		}
 		DialogDebug.Init(Dialog);
 		AddHistoryEntry(CurrentCue, CurrentSpeakerName);
-		AddHistoryEntry(answer, CurrentCue.Listener?.CharacterName);
+		AddHistoryEntry(answer, (!(CurrentCue.Listener?.name != "Player Character")) ? null : CurrentCue.Listener?.CharacterName);
 		Game.Instance.Player.Dialog.SelectedAnswers.Add(answer);
 		LocalSelectedAnswers.Add(answer);
 		Dictionary<BlueprintDialog, List<BlueprintScriptableObject>> bookEventLog = Game.Instance.Player.Dialog.BookEventLog;
@@ -678,7 +678,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 			if (type == DialogType.Common || type == DialogType.StarSystemEvent)
 			{
 				BaseUnitEntity playerCharacter = GameHelper.GetPlayerCharacter();
-				string characterName = listenerName ?? playerCharacter.CharacterName;
+				string characterName = playerCharacter.CharacterName;
 				answerShowData = new AnswerShowData(answer, Dialog.Type, characterName, playerCharacter.Blueprint);
 			}
 			else
@@ -822,6 +822,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		}
 		m_SkillChecks.Clear();
 		SoulMarkShifts.Clear();
+		SoundState.Instance.StartDialog();
 		if (!PlayingBookPage)
 		{
 			AddAnswers(cue.Answers.Dereference(), blueprintCueBase);

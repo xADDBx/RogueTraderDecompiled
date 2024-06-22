@@ -34,7 +34,7 @@ public class GainExp : GameAction
 		return $"Gain XP (CR={CR}, {Encounter})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		GameHelper.GainExperience(ExperienceHelper.GetXp(Encounter, CR, Modifier, Count));
 	}

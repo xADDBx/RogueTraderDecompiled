@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Globalmap.Exploration;
 using Kingmaker.Globalmap.SystemMap;
@@ -20,9 +19,9 @@ public class AnomalyShipRun : GameAction
 		return "Interacting anomaly run to the edge of system";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		if (ContextData<StarSystemContextData>.Current?.StarSystemObject is AnomalyEntityData anomalyEntityData)
+		if (Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject is AnomalyEntityData anomalyEntityData)
 		{
 			float num = FindLastOrbitRadius();
 			Vector3 vector = Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity obj) => obj.Blueprint is BlueprintStar)?.Position ?? Vector3.zero;

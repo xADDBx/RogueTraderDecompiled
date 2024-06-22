@@ -30,7 +30,7 @@ public class TooltipPCView : TooltipBaseView
 			SetHeight();
 			if (!base.ViewModel.IsComparative)
 			{
-				UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.OwnerTransform, base.ViewModel.PriorityPivots);
+				UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.OwnerTransform, Vector2.zero, base.ViewModel.PriorityPivots);
 				m_ShowTween = base.CanvasGroup.DOFade(1f, 0.2f).OnComplete(delegate
 				{
 					UISounds.Instance.Sounds.Tooltip.TooltipShow.Play();

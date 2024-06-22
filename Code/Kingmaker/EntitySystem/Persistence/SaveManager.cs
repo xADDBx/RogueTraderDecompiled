@@ -14,10 +14,12 @@ using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Quests;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.EntitySystem.Persistence.SavesStorage;
 using Kingmaker.EntitySystem.Persistence.Versioning;
@@ -25,12 +27,17 @@ using Kingmaker.GameCommands;
 using Kingmaker.GameInfo;
 using Kingmaker.GameModes;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings;
+using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.UI.Models.Log.ContextFlag;
+using Kingmaker.UI.MVVM.VM.CharGen;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -100,6 +107,8 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	private int m_QuickSaveCount;
 
+	private SaveInfo m_downgradedIronManSave;
+
 	private static readonly Regex ExtractNumber = new Regex("(Quick|Auto|Manual|ForImport|IronMan|Coop)_(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 	private SaveInfo m_IronmanSave;
@@ -133,6 +142,8 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	public bool SaveListUpdateInProgress => !m_UpdateTask.IsCompleted;
 
 	public bool CommitInProgress => m_CommitInProgress;
+
+	public bool HasDowngradedIronManSave => m_downgradedIronManSave != null;
 
 	public void UpdateSaveListAsync()
 	{
@@ -354,6 +365,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			PlayerCharacterRank = (Game.Instance.Player.MainCharacterEntity?.Progression.CharacterLevel ?? 0),
 			GameSaveTime = Game.Instance.TimeController.GameTime,
 			GameSaveTimeText = "",
+			GameId = Game.Instance.Player.GameId,
 			GameTotalTime = Game.Instance.TimeController.RealTime,
 			Type = SaveInfo.SaveType.Manual
 		};
@@ -363,6 +375,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		}
 		try
 		{
+			saveInfo.GameStartSystemTime = Game.Instance.Player.StartDate;
 			saveInfo.SystemSaveTime = DateTime.Now;
 		}
 		catch (Exception ex)
@@ -385,6 +398,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		lock (m_Lock)
 		{
 			string gameId = Game.Instance.Player.GameId;
+			if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
+			{
+				return GetIronmanSave();
+			}
 			foreach (SaveInfo item in m_SavedGames.Where((SaveInfo s) => s.Type == SaveInfo.SaveType.Quick && s.GameId == Game.Instance.Player.GameId).TakeLast(num2))
 			{
 				if (item.Type == SaveInfo.SaveType.Quick && item.GameId.Equals(gameId))
@@ -481,7 +498,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		{
 			foreach (SaveInfo savedGame in m_SavedGames)
 			{
-				if (savedGame.Type == SaveInfo.SaveType.ForImport && savedGame.DLCCampaign?.Get() == SimpleBlueprintExtendAsObject.Or(Game.Instance.Player.StartPreset, null)?.CampaignDlc?.Campaign && savedGame.GameId == Game.Instance.Player.GameId)
+				if (savedGame.Type == SaveInfo.SaveType.ForImport && savedGame.Campaign == Game.Instance.Player.Campaign && savedGame.GameId == Game.Instance.Player.GameId)
 				{
 					return savedGame;
 				}
@@ -494,7 +511,11 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public SaveInfo GetNewestQuickslot()
 	{
-		return GetLatestSave((SaveInfo s) => (!SettingsRoot.Difficulty.OnlyOneSave) ? (s.Type == SaveInfo.SaveType.Quick && s.GameId == Game.Instance.Player.GameId) : (s.Type == SaveInfo.SaveType.IronMan));
+		if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
+		{
+			return GetLatestIronManSave((SaveInfo s) => s.GameId == Game.Instance.Player.GameId);
+		}
+		return GetLatestSave((SaveInfo s) => s.Type == SaveInfo.SaveType.Quick && s.GameId == Game.Instance.Player.GameId);
 	}
 
 	public SaveInfo GetLatestSave([CanBeNull] Func<SaveInfo, bool> predicate = null)
@@ -508,7 +529,27 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		{
 			foreach (SaveInfo savedGame in m_SavedGames)
 			{
-				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
+				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && savedGame.Type != SaveInfo.SaveType.IronMan && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
+				{
+					saveInfo = savedGame;
+				}
+			}
+			return saveInfo;
+		}
+	}
+
+	public SaveInfo GetLatestIronManSave([CanBeNull] Func<SaveInfo, bool> predicate = null)
+	{
+		if (!AreSavesUpToDate)
+		{
+			Logger.Error("Saves are not up to date");
+		}
+		SaveInfo saveInfo = null;
+		lock (m_Lock)
+		{
+			foreach (SaveInfo savedGame in m_SavedGames)
+			{
+				if (savedGame.IsActuallySaved && savedGame.Type == SaveInfo.SaveType.IronMan && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
 				{
 					saveInfo = savedGame;
 				}
@@ -535,21 +576,32 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public bool IsIronmanSave(SaveInfo save)
 	{
-		if (m_IronmanSave != null)
+		if (save.Type == SaveInfo.SaveType.IronMan)
 		{
-			return save.FolderName == m_IronmanSave.FolderName;
+			return save.GameId == Game.Instance.Player.GameId;
 		}
-		return true;
+		return false;
 	}
 
 	public SaveInfo GetIronmanSave()
 	{
-		if (m_IronmanSave == null)
+		if (m_IronmanSave == null || m_IronmanSave.GameId != Game.Instance.Player.GameId)
 		{
-			m_IronmanSave = CreateNewSave(UIStrings.Instance.SaveLoadTexts.SavePrefixIronman);
+			m_IronmanSave = GetIronManSave(Game.Instance.Player.GameId);
 			m_IronmanSave.Type = SaveInfo.SaveType.IronMan;
 		}
 		return m_IronmanSave;
+	}
+
+	private SaveInfo GetIronManSave(string gameId)
+	{
+		SaveInfo saveInfo = GetLatestIronManSave((SaveInfo s) => s.GameId == gameId);
+		if (saveInfo == null)
+		{
+			saveInfo = CreateNewSave(string.Concat(UIStrings.Instance.SaveLoadTexts.SavePrefixIronman, "_", gameId));
+			saveInfo.Type = SaveInfo.SaveType.IronMan;
+		}
+		return saveInfo;
 	}
 
 	public SaveInfo GetDialogSaveSlot()
@@ -614,11 +666,42 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		}
 	}
 
+	public void DowngradeSaveFromIronMan(SaveInfo saveInfo)
+	{
+		if (saveInfo.Type != SaveInfo.SaveType.IronMan)
+		{
+			return;
+		}
+		saveInfo.Type = SaveInfo.SaveType.Manual;
+		m_downgradedIronManSave = saveInfo;
+		using (saveInfo.GetWriteScope())
+		{
+			saveInfo.Saver.SaveJson("header", SaveSystemJsonSerializer.Serializer.SerializeObject(saveInfo));
+			saveInfo.Saver.Save();
+		}
+	}
+
+	public void DeleteDowngradedIronManSave()
+	{
+		if (m_downgradedIronManSave != null)
+		{
+			DeleteSave(m_downgradedIronManSave);
+		}
+	}
+
+	public void LoadDowngradedIronManSave()
+	{
+		if (m_downgradedIronManSave != null)
+		{
+			Game.Instance.LoadGame(m_downgradedIronManSave);
+		}
+	}
+
 	public void LoadScreenshot(SaveInfo save, bool highRes, Action callback)
 	{
 		if (save.Type == SaveInfo.SaveType.ForImport)
 		{
-			save.Screenshot = save.DLCCampaign?.Get()?.DlcReward?.ScreenshotForImportSave;
+			save.Screenshot = save.Campaign?.DlcReward?.ScreenshotForImportSave;
 			callback();
 		}
 		else if ((highRes && (bool)save.ScreenshotHighRes) || (!highRes && (bool)save.Screenshot))
@@ -720,9 +803,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		save.AreaPart = Game.Instance.Player.SavedInAreaPart ?? Game.Instance.Player.NextEnterPoint.AreaPart;
 		save.GameSaveTime = Game.Instance.TimeController.GameTime;
 		save.GameSaveTimeText = "";
+		save.GameStartSystemTime = Game.Instance.Player.StartDate;
 		save.GameId = Game.Instance.Player.GameId;
 		save.SaveId = ((!string.IsNullOrEmpty(save.SaveId)) ? save.SaveId : Guid.NewGuid().ToString("N"));
-		save.DLCCampaign = Game.Instance.Player.StartPreset?.CampaignDlc?.Campaign?.ToReference<BlueprintCampaignReference>();
+		save.Campaign = Game.Instance.Player.Campaign;
 		try
 		{
 			save.SystemSaveTime = DateTime.Now;
@@ -997,7 +1081,9 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 						}
 					}
 				}
+				Logger.Log("await Task.WhenAll");
 				await Task.WhenAll(SavePlayer(saveInfo, playerTask2, checksumStringBuilder), SaveArea(saveInfo, areaTask2, checksumStringBuilder), SaveParty(saveInfo, partyTask2, checksumStringBuilder), SaveStatistics(saveInfo, statTask2), SaveSettings(saveInfo, settingsTask2), SaveCoop(saveInfo, coopTask2));
+				Logger.Log("Task.WhenAll Done");
 				if (ReportingCheats.IsDebugSaveFileChecksumEnabled)
 				{
 					byte[] bytes = Encoding.Default.GetBytes(checksumStringBuilder.ToString());
@@ -1006,10 +1092,12 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				AreaDataStash.GameHistoryFile.DisableWrite = false;
 				m_CommitInProgress = true;
 				saveInfo.OperationState = SaveInfo.StateType.Saving;
+				Logger.Log("Commit save");
 				using (CodeTimer.New("Commit save"))
 				{
 					saveInfo.Saver.Save();
 				}
+				Logger.Log("Commit done");
 				AreaDataStash.ClearJsonForArea("player", "");
 				AreaDataStash.ClearJsonForArea("party", "");
 				originalSave.Saver.Clear();
@@ -1044,67 +1132,108 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		Logger.Log("SerializeAndSaveThread: finished");
 		static async Task SaveArea(SaveInfo saveInfo, Task areaTask, StringBuilder checksum)
 		{
+			Logger.Log("SaveArea.await playerTask");
 			await areaTask;
+			Logger.Log("SaveArea.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
-				if (saveInfo.Type != SaveInfo.SaveType.ForImport && Game.Instance.State.LoadedAreaState != null)
+				if (saveInfo.Type == SaveInfo.SaveType.ForImport || Game.Instance.State.LoadedAreaState == null)
 				{
+					Logger.Log("SaveArea early out");
+				}
+				else
+				{
+					Logger.Log("SaveArea SaveStashedArea");
 					AreaPersistentState loadedAreaState2 = Game.Instance.State.LoadedAreaState;
 					SaveStashedArea(saveInfo, loadedAreaState2, checksum);
+					Logger.Log("SaveArea StartNew Done");
 				}
 			});
+			Logger.Log("SaveArea Done");
 		}
 		static async Task SaveCoop(SaveInfo saveInfo, Task<string> coopTask)
 		{
+			Logger.Log("SaveCoop.await coopTask");
 			string coopSave = await coopTask;
-			if (!string.IsNullOrEmpty(coopSave))
+			if (string.IsNullOrEmpty(coopSave))
 			{
+				Logger.Log("SaveCoop early out");
+			}
+			else
+			{
+				Logger.Log("SaveCoop.await StartNew");
 				await ExclusiveScheduler.StartNew(delegate
 				{
+					Logger.Log("SaveCoop SaveJson");
 					saveInfo.Saver.SaveJson("coop", coopSave);
+					Logger.Log("SaveCoop StartNew Done");
 				});
+				Logger.Log("SaveCoop Done");
 			}
 		}
 		static async Task SaveParty(SaveInfo saveInfo, Task partyTask, StringBuilder checksum)
 		{
+			Logger.Log("SaveParty.await partyTask");
 			await partyTask;
+			Logger.Log("SaveParty.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
+				Logger.Log("SaveParty CopyFromStash");
 				if (!saveInfo.Saver.CopyFromStash(AreaDataStash.FileName("party", "")))
 				{
 					throw new Exception("Cant save party.json");
 				}
+				Logger.Log("SaveParty AppendSaveFilesMd5");
 				AppendSaveFilesMd5(checksum, "party.json");
+				Logger.Log("SaveParty StartNew Done");
 			});
+			Logger.Log("SaveParty Done");
 		}
 		static async Task SavePlayer(SaveInfo saveInfo, Task playerTask, StringBuilder checksum)
 		{
+			Logger.Log("SavePlayer.await playerTask");
 			await playerTask;
+			Logger.Log("SavePlayer.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
+				Logger.Log("SavePlayer CopyFromStash");
 				if (!saveInfo.Saver.CopyFromStash(AreaDataStash.FileName("player", "")))
 				{
 					throw new Exception("Cant save player.json");
 				}
+				Logger.Log("SavePlayer AppendSaveFilesMd5");
 				AppendSaveFilesMd5(checksum, "player.json");
+				Logger.Log("SavePlayer StartNew Done");
 			});
+			Logger.Log("SavePlayer Done");
 		}
 		static async Task SaveSettings(SaveInfo saveInfo, Task<string> settingsTask)
 		{
+			Logger.Log("SaveSettings.await settingsTask");
 			string settingsSave = await settingsTask;
+			Logger.Log("SaveSettings.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
+				Logger.Log("SaveSettings SaveJson");
 				saveInfo.Saver.SaveJson("settings", settingsSave);
+				Logger.Log("SaveSettings StartNew Done");
 			});
+			Logger.Log("SaveSettings Done");
 		}
 		static async Task SaveStatistics(SaveInfo saveInfo, Task<string> statTask)
 		{
+			Logger.Log("SaveStatistics.await statTask");
 			string statisticSave = await statTask;
+			Logger.Log("SaveStatistics.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
+				Logger.Log("SaveStatistics SaveJson");
 				saveInfo.Saver.SaveJson("statistic", statisticSave);
+				Logger.Log("SaveStatistics CopyFromStash");
 				saveInfo.Saver.CopyFromStash("history");
+				Logger.Log("SaveStatistics StartNew Done");
 			});
+			Logger.Log("SaveStatistics Done");
 		}
 	}
 
@@ -1288,6 +1417,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			}
 		}
 		PFStatefulRandom.SetStates(saveInfo.StatefulRandomStates);
+		if (NetworkingManager.IsMultiplayer && !NetworkingManager.IsGameOwner && Application.isConsolePlatform)
+		{
+			ReplaceUserGeneratedContent();
+		}
 		foreach (AreaPersistentState savedAreaState in Game.Instance.State.SavedAreaStates)
 		{
 			savedAreaState.RestoreAreaBlueprint();
@@ -1309,15 +1442,12 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			Game.Instance.Player.ApplyUpgrades();
 		}
 		Game.Instance.CoopData.PostLoad();
+		PhotonManager.Save.PostLoad();
 		using (ProfileScope.New("StrictReferenceResolver.Instance.ClearContexts"))
 		{
 			StrictReferenceResolver.Instance.ClearContexts();
 		}
-		if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
-		{
-			m_IronmanSave = saveInfo;
-			m_IronmanSave.Type = SaveInfo.SaveType.IronMan;
-		}
+		SettingsRoot.Difficulty.OnlyOneSave.SetTempValue(saveInfo.Type == SaveInfo.SaveType.IronMan);
 		_ = Game.Instance.DefaultUnit;
 		saveInfo.Saver.Dispose();
 		CurrentState = State.None;
@@ -1376,6 +1506,50 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	public bool PrecheckSaveCorruption(SaveInfo saveInfo)
 	{
 		return true;
+	}
+
+	private void ReplaceUserGeneratedContent()
+	{
+		SceneEntitiesState crossSceneState = Game.Instance.State.PlayerState.CrossSceneState;
+		if (crossSceneState == null)
+		{
+			return;
+		}
+		foreach (Entity allEntityDatum in crossSceneState.AllEntityData)
+		{
+			if (!(allEntityDatum is BaseUnitEntity baseUnitEntity))
+			{
+				continue;
+			}
+			if (baseUnitEntity.Parts.GetAll<UnitPartMainCharacter>().Any())
+			{
+				if (!GetDescription(allEntityDatum, out var description2))
+				{
+					continue;
+				}
+				string name = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplaceCharacterNameIfCustom(Race.Human, description2.CustomGender.GetValueOrDefault(), CharGenConfig.CharGenMode.NewGame, description2.CustomName);
+				description2.SetName(name);
+			}
+			if (baseUnitEntity.IsCustomCompanion() || baseUnitEntity.IsPregenCustomCompanion())
+			{
+				if (!GetDescription(allEntityDatum, out var description3))
+				{
+					continue;
+				}
+				string name2 = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplaceCharacterNameIfCustom(Race.Human, description3.CustomGender.GetValueOrDefault(), CharGenConfig.CharGenMode.NewCompanion, description3.CustomName);
+				description3.SetName(name2);
+			}
+			if (baseUnitEntity.Parts.GetAll<PartStarship>().Any() && GetDescription(allEntityDatum, out var description4))
+			{
+				string name3 = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplaceShipNameIfCustom(description4.CustomName);
+				description4.SetName(name3);
+			}
+		}
+		static bool GetDescription(Entity character, out PartUnitDescription description)
+		{
+			description = character.Parts.GetAll<PartUnitDescription>().FirstOrDefault();
+			return description != null;
+		}
 	}
 
 	public bool TryFind(SaveInfoKey saveInfoKey, out SaveInfo saveInfo)

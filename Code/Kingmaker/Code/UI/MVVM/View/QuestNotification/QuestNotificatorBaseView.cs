@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
+using Kingmaker.Enums;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -154,9 +155,13 @@ public class QuestNotificatorBaseView : ViewBase<QuestNotificatorVM>
 
 	private void AddObjectiveShowEvent(QuestNotificationEntityVM objective)
 	{
-		if (!string.IsNullOrWhiteSpace((!objective.IsAddendum) ? objective.Title : objective.Description) && !objective.IsErrandObjective)
+		if (!string.IsNullOrWhiteSpace((!objective.IsAddendum) ? objective.Title : objective.Description) && !objective.IsErrandObjective && objective.Quest.Blueprint.Group != QuestGroupId.Rumours)
 		{
-			MainThreadDispatcher.StartCoroutine(WaitForNotificationClose(objective));
+			QuestType type = objective.Quest.Blueprint.Type;
+			if (type != QuestType.Rumour && type != QuestType.RumourAboutUs)
+			{
+				MainThreadDispatcher.StartCoroutine(WaitForNotificationClose(objective));
+			}
 		}
 	}
 

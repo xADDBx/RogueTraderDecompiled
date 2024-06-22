@@ -68,6 +68,10 @@ public class GroupChangerCharacterVM : VMBase
 		PortraitPartVm.SetUnitData(baseUnitEntity);
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void OnClick()
 	{
 		Click.Execute(this);
@@ -81,9 +85,5 @@ public class GroupChangerCharacterVM : VMBase
 	public void SetFocused(bool isFocused)
 	{
 		m_IsFocused = isFocused;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

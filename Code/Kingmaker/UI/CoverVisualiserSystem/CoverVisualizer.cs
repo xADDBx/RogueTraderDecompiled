@@ -198,7 +198,7 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 		UpdatePlayerTurn();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdatePlayerTurn();
 	}

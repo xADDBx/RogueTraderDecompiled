@@ -32,7 +32,7 @@ public class PlayAnimationOneShot : GameAction
 
 	public bool IsClipWrapperSet => m_ClipWrapperLink?.Exists() ?? false;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Unit.GetValue();
 		if (value.View.AnimationManager != null)

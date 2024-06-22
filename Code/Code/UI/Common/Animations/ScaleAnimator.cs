@@ -19,66 +19,81 @@ public class ScaleAnimator : MonoBehaviour, IUIAnimator
 	[SerializeField]
 	private int m_LoopsCount = -1;
 
-	private Tweener m_Tweener;
+	private Tweener m_AppearTweener;
+
+	private Tweener m_DisappearTweener;
 
 	private RectTransform m_RectTransform;
 
-	private bool m_isInit;
+	private bool m_IsInit;
 
-	private RectTransform RectTransform
-	{
-		get
-		{
-			RectTransform obj = m_RectTransform ?? GetComponent<RectTransform>();
-			RectTransform result = obj;
-			m_RectTransform = obj;
-			return result;
-		}
-	}
+	private RectTransform RectTransform => m_RectTransform = (m_RectTransform ? m_RectTransform : GetComponent<RectTransform>());
 
 	public void Initialize()
 	{
-		if (!m_isInit && !(RectTransform == null))
+		if (!m_IsInit && !(RectTransform == null))
 		{
 			RectTransform.localScale = m_BaseScale;
-			m_isInit = true;
+			m_IsInit = true;
 		}
+	}
+
+	public void PlayOnce()
+	{
+		AppearAnimation(delegate
+		{
+			DisappearAnimation();
+		});
 	}
 
 	public void AppearAnimation(UnityAction action = null)
 	{
 		Initialize();
-		if (m_Tweener == null)
+		if (m_AppearTweener == null)
 		{
-			CreateTweener();
+			CreateAppearTweener();
 		}
-		m_Tweener.OnComplete(delegate
+		m_AppearTweener.OnComplete(delegate
 		{
 			action?.Invoke();
 		});
-		m_Tweener.Restart();
+		m_AppearTweener.Restart();
 	}
 
 	public void DisappearAnimation(UnityAction action = null)
 	{
 		Initialize();
-		m_Tweener.Pause();
+		m_AppearTweener.Pause();
+		if (m_DisappearTweener == null)
+		{
+			CreateDisappearTweener();
+		}
+		m_DisappearTweener.Restart();
 		action?.Invoke();
 	}
 
-	private void CreateTweener()
+	private void CreateAppearTweener()
 	{
-		m_Tweener = RectTransform.DOScale(m_Scale, m_ScaleTime).SetEase(Ease.InOutSine).SetUpdate(isIndependentUpdate: true)
+		m_AppearTweener = RectTransform.DOScale(m_Scale, m_ScaleTime).SetEase(Ease.InOutSine).SetUpdate(isIndependentUpdate: true)
 			.SetAutoKill(autoKillOnCompletion: false)
 			.Pause()
 			.SetLoops(m_LoopsCount, LoopType.Yoyo);
 	}
 
+	private void CreateDisappearTweener()
+	{
+		m_DisappearTweener = RectTransform.DOScale(m_BaseScale, m_ScaleTime).SetEase(Ease.InOutSine).SetUpdate(isIndependentUpdate: true)
+			.SetAutoKill(autoKillOnCompletion: false)
+			.Pause();
+	}
+
 	public void DestroyViewImplementation()
 	{
-		m_Tweener.Kill();
-		m_Tweener = null;
-		m_isInit = false;
+		m_AppearTweener.Kill();
+		m_AppearTweener = null;
+		m_DisappearTweener.Kill();
+		m_DisappearTweener = null;
+		m_IsInit = false;
 	}
 
 	public void OnDestroy()

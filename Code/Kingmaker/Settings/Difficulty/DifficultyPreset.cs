@@ -33,6 +33,9 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 	public GameDifficultyOption GameDifficulty;
 
 	[JsonProperty]
+	public bool OnlyOneSave;
+
+	[JsonProperty]
 	public bool RespecAllowed;
 
 	[JsonProperty]
@@ -108,6 +111,7 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 		return new DifficultyPreset
 		{
 			GameDifficulty = GameDifficulty,
+			OnlyOneSave = OnlyOneSave,
 			AutoLevelUp = AutoLevelUp,
 			RespecAllowed = RespecAllowed,
 			CombatEncountersCapacity = CombatEncountersCapacity,
@@ -151,88 +155,93 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 				return num;
 			}
 		}
-		int num2 = CombatEncountersCapacity.CompareTo(other.CombatEncountersCapacity);
+		int num2 = -OnlyOneSave.CompareTo(other.OnlyOneSave);
 		if (num2 < 0)
 		{
 			return -1;
 		}
-		int num3 = -RespecAllowed.CompareTo(other.RespecAllowed);
+		int num3 = CombatEncountersCapacity.CompareTo(other.CombatEncountersCapacity);
 		if (num3 < 0)
 		{
 			return -1;
 		}
-		int num4 = -AutoLevelUp.CompareTo(other.AutoLevelUp);
+		int num4 = -RespecAllowed.CompareTo(other.RespecAllowed);
 		if (num4 < 0)
 		{
 			return -1;
 		}
-		int num5 = EnemyDodgePercentModifier.CompareTo(other.EnemyDodgePercentModifier);
+		int num5 = -AutoLevelUp.CompareTo(other.AutoLevelUp);
 		if (num5 < 0)
 		{
 			return -1;
 		}
-		int num6 = CoverHitBonusHalfModifier.CompareTo(other.CoverHitBonusHalfModifier);
+		int num6 = EnemyDodgePercentModifier.CompareTo(other.EnemyDodgePercentModifier);
 		if (num6 < 0)
 		{
 			return -1;
 		}
-		int num7 = CoverHitBonusFullModifier.CompareTo(other.CoverHitBonusFullModifier);
+		int num7 = CoverHitBonusHalfModifier.CompareTo(other.CoverHitBonusHalfModifier);
 		if (num7 < 0)
 		{
 			return -1;
 		}
-		int num8 = -MinPartyDamage.CompareTo(other.MinPartyDamage);
+		int num8 = CoverHitBonusFullModifier.CompareTo(other.CoverHitBonusFullModifier);
 		if (num8 < 0)
 		{
 			return -1;
 		}
-		int num9 = -MinPartyDamageFraction.CompareTo(other.MinPartyDamageFraction);
+		int num9 = -MinPartyDamage.CompareTo(other.MinPartyDamage);
 		if (num9 < 0)
 		{
 			return -1;
 		}
-		int num10 = -MinPartyStarshipDamage.CompareTo(other.MinPartyStarshipDamage);
+		int num10 = -MinPartyDamageFraction.CompareTo(other.MinPartyDamageFraction);
 		if (num10 < 0)
 		{
 			return -1;
 		}
-		int num11 = -MinPartyStarshipDamageFraction.CompareTo(other.MinPartyStarshipDamageFraction);
+		int num11 = -MinPartyStarshipDamage.CompareTo(other.MinPartyStarshipDamage);
 		if (num11 < 0)
 		{
 			return -1;
 		}
-		int num12 = PartyMomentumPercentModifier.CompareTo(other.PartyMomentumPercentModifier);
+		int num12 = -MinPartyStarshipDamageFraction.CompareTo(other.MinPartyStarshipDamageFraction);
 		if (num12 < 0)
 		{
 			return -1;
 		}
-		int num13 = NPCAttributesBaseValuePercentModifier.CompareTo(other.NPCAttributesBaseValuePercentModifier);
+		int num13 = PartyMomentumPercentModifier.CompareTo(other.PartyMomentumPercentModifier);
 		if (num13 < 0)
 		{
 			return -1;
 		}
-		int num14 = HardCrowdControlOnPartyMaxDurationRounds.CompareTo(other.HardCrowdControlOnPartyMaxDurationRounds);
+		int num14 = NPCAttributesBaseValuePercentModifier.CompareTo(other.NPCAttributesBaseValuePercentModifier);
 		if (num14 < 0)
 		{
 			return -1;
 		}
-		int num15 = SkillCheckModifier.CompareTo(other.SkillCheckModifier);
+		int num15 = HardCrowdControlOnPartyMaxDurationRounds.CompareTo(other.HardCrowdControlOnPartyMaxDurationRounds);
 		if (num15 < 0)
 		{
 			return -1;
 		}
-		int num16 = -EnemyHitPointsPercentModifier.CompareTo(other.EnemyHitPointsPercentModifier);
+		int num16 = SkillCheckModifier.CompareTo(other.SkillCheckModifier);
 		if (num16 < 0)
 		{
 			return -1;
 		}
-		int num17 = AllyResolveModifier.CompareTo(other.AllyResolveModifier);
+		int num17 = -EnemyHitPointsPercentModifier.CompareTo(other.EnemyHitPointsPercentModifier);
 		if (num17 < 0)
 		{
 			return -1;
 		}
-		int num18 = -PartyDamageDealtAfterArmorReductionPercentModifier.CompareTo(other.PartyDamageDealtAfterArmorReductionPercentModifier);
+		int num18 = AllyResolveModifier.CompareTo(other.AllyResolveModifier);
 		if (num18 < 0)
+		{
+			return -1;
+		}
+		int num19 = -PartyDamageDealtAfterArmorReductionPercentModifier.CompareTo(other.PartyDamageDealtAfterArmorReductionPercentModifier);
+		if (num19 < 0)
 		{
 			return -1;
 		}
@@ -248,12 +257,12 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 		{
 			return -1;
 		}
-		int num19 = SpaceCombatDifficulty.CompareTo(other.SpaceCombatDifficulty);
-		if (num19 < 0)
+		int num20 = SpaceCombatDifficulty.CompareTo(other.SpaceCombatDifficulty);
+		if (num20 < 0)
 		{
 			return -1;
 		}
-		if (num2 <= 0 && num3 <= 0 && num4 <= 0 && num5 <= 0 && num6 <= 0 && num7 <= 0 && num8 <= 0 && num9 <= 0 && num10 <= 0 && num11 <= 0 && num12 <= 0 && num13 <= 0 && num14 <= 0 && num15 <= 0 && num16 <= 0 && num17 <= 0 && num18 <= 0 && num19 <= 0)
+		if (num2 <= 0 && num3 <= 0 && num4 <= 0 && num5 <= 0 && num6 <= 0 && num7 <= 0 && num8 <= 0 && num9 <= 0 && num10 <= 0 && num11 <= 0 && num12 <= 0 && num13 <= 0 && num14 <= 0 && num15 <= 0 && num16 <= 0 && num17 <= 0 && num18 <= 0 && num19 <= 0 && num20 <= 0)
 		{
 			return 0;
 		}
@@ -306,8 +315,8 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(23, in value.GameDifficulty, in value.RespecAllowed, in value.AutoLevelUp, in value.AdditionalAIBehaviors, in value.CombatEncountersCapacity, in value.EnemyDodgePercentModifier, in value.CoverHitBonusHalfModifier, in value.CoverHitBonusFullModifier, in value.MinPartyDamage, in value.MinPartyDamageFraction, in value.MinPartyStarshipDamage, in value.MinPartyStarshipDamageFraction, in value.PartyMomentumPercentModifier, in value.NPCAttributesBaseValuePercentModifier, in value.HardCrowdControlOnPartyMaxDurationRounds);
-		writer.WriteUnmanaged(in value.SkillCheckModifier, in value.EnemyHitPointsPercentModifier, in value.AllyResolveModifier, in value.PartyDamageDealtAfterArmorReductionPercentModifier, in value.WoundDamagePerTurnThresholdHPFraction, in value.OldWoundDelayRounds, in value.WoundStacksForTrauma, in value.SpaceCombatDifficulty);
+		writer.WriteUnmanagedWithObjectHeader(24, in value.GameDifficulty, in value.OnlyOneSave, in value.RespecAllowed, in value.AutoLevelUp, in value.AdditionalAIBehaviors, in value.CombatEncountersCapacity, in value.EnemyDodgePercentModifier, in value.CoverHitBonusHalfModifier, in value.CoverHitBonusFullModifier, in value.MinPartyDamage, in value.MinPartyDamageFraction, in value.MinPartyStarshipDamage, in value.MinPartyStarshipDamageFraction, in value.PartyMomentumPercentModifier, in value.NPCAttributesBaseValuePercentModifier);
+		writer.WriteUnmanaged(in value.HardCrowdControlOnPartyMaxDurationRounds, in value.SkillCheckModifier, in value.EnemyHitPointsPercentModifier, in value.AllyResolveModifier, in value.PartyDamageDealtAfterArmorReductionPercentModifier, in value.WoundDamagePerTurnThresholdHPFraction, in value.OldWoundDelayRounds, in value.WoundStacksForTrauma, in value.SpaceCombatDifficulty);
 	}
 
 	[Preserve]
@@ -320,10 +329,10 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 		}
 		GameDifficultyOption value2;
 		bool value3;
-		AutoLevelUpOption value4;
-		bool value5;
-		CombatEncountersCapacity value6;
-		int value7;
+		bool value4;
+		AutoLevelUpOption value5;
+		bool value6;
+		CombatEncountersCapacity value7;
 		int value8;
 		int value9;
 		int value10;
@@ -332,48 +341,50 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 		int value13;
 		int value14;
 		int value15;
-		HardCrowdControlDurationLimit value16;
-		int value17;
+		int value16;
+		HardCrowdControlDurationLimit value17;
 		int value18;
 		int value19;
 		int value20;
 		int value21;
 		int value22;
 		int value23;
-		SpaceCombatDifficulty value24;
-		if (memberCount == 23)
+		int value24;
+		SpaceCombatDifficulty value25;
+		if (memberCount == 24)
 		{
 			if (value != null)
 			{
 				value2 = value.GameDifficulty;
-				value3 = value.RespecAllowed;
-				value4 = value.AutoLevelUp;
-				value5 = value.AdditionalAIBehaviors;
-				value6 = value.CombatEncountersCapacity;
-				value7 = value.EnemyDodgePercentModifier;
-				value8 = value.CoverHitBonusHalfModifier;
-				value9 = value.CoverHitBonusFullModifier;
-				value10 = value.MinPartyDamage;
-				value11 = value.MinPartyDamageFraction;
-				value12 = value.MinPartyStarshipDamage;
-				value13 = value.MinPartyStarshipDamageFraction;
-				value14 = value.PartyMomentumPercentModifier;
-				value15 = value.NPCAttributesBaseValuePercentModifier;
-				value16 = value.HardCrowdControlOnPartyMaxDurationRounds;
-				value17 = value.SkillCheckModifier;
-				value18 = value.EnemyHitPointsPercentModifier;
-				value19 = value.AllyResolveModifier;
-				value20 = value.PartyDamageDealtAfterArmorReductionPercentModifier;
-				value21 = value.WoundDamagePerTurnThresholdHPFraction;
-				value22 = value.OldWoundDelayRounds;
-				value23 = value.WoundStacksForTrauma;
-				value24 = value.SpaceCombatDifficulty;
+				value3 = value.OnlyOneSave;
+				value4 = value.RespecAllowed;
+				value5 = value.AutoLevelUp;
+				value6 = value.AdditionalAIBehaviors;
+				value7 = value.CombatEncountersCapacity;
+				value8 = value.EnemyDodgePercentModifier;
+				value9 = value.CoverHitBonusHalfModifier;
+				value10 = value.CoverHitBonusFullModifier;
+				value11 = value.MinPartyDamage;
+				value12 = value.MinPartyDamageFraction;
+				value13 = value.MinPartyStarshipDamage;
+				value14 = value.MinPartyStarshipDamageFraction;
+				value15 = value.PartyMomentumPercentModifier;
+				value16 = value.NPCAttributesBaseValuePercentModifier;
+				value17 = value.HardCrowdControlOnPartyMaxDurationRounds;
+				value18 = value.SkillCheckModifier;
+				value19 = value.EnemyHitPointsPercentModifier;
+				value20 = value.AllyResolveModifier;
+				value21 = value.PartyDamageDealtAfterArmorReductionPercentModifier;
+				value22 = value.WoundDamagePerTurnThresholdHPFraction;
+				value23 = value.OldWoundDelayRounds;
+				value24 = value.WoundStacksForTrauma;
+				value25 = value.SpaceCombatDifficulty;
 				reader.ReadUnmanaged<GameDifficultyOption>(out value2);
 				reader.ReadUnmanaged<bool>(out value3);
-				reader.ReadUnmanaged<AutoLevelUpOption>(out value4);
-				reader.ReadUnmanaged<bool>(out value5);
-				reader.ReadUnmanaged<CombatEncountersCapacity>(out value6);
-				reader.ReadUnmanaged<int>(out value7);
+				reader.ReadUnmanaged<bool>(out value4);
+				reader.ReadUnmanaged<AutoLevelUpOption>(out value5);
+				reader.ReadUnmanaged<bool>(out value6);
+				reader.ReadUnmanaged<CombatEncountersCapacity>(out value7);
 				reader.ReadUnmanaged<int>(out value8);
 				reader.ReadUnmanaged<int>(out value9);
 				reader.ReadUnmanaged<int>(out value10);
@@ -382,35 +393,36 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 				reader.ReadUnmanaged<int>(out value13);
 				reader.ReadUnmanaged<int>(out value14);
 				reader.ReadUnmanaged<int>(out value15);
-				reader.ReadUnmanaged<HardCrowdControlDurationLimit>(out value16);
-				reader.ReadUnmanaged<int>(out value17);
+				reader.ReadUnmanaged<int>(out value16);
+				reader.ReadUnmanaged<HardCrowdControlDurationLimit>(out value17);
 				reader.ReadUnmanaged<int>(out value18);
 				reader.ReadUnmanaged<int>(out value19);
 				reader.ReadUnmanaged<int>(out value20);
 				reader.ReadUnmanaged<int>(out value21);
 				reader.ReadUnmanaged<int>(out value22);
 				reader.ReadUnmanaged<int>(out value23);
-				reader.ReadUnmanaged<SpaceCombatDifficulty>(out value24);
-				goto IL_0468;
+				reader.ReadUnmanaged<int>(out value24);
+				reader.ReadUnmanaged<SpaceCombatDifficulty>(out value25);
+				goto IL_0497;
 			}
-			reader.ReadUnmanaged<GameDifficultyOption, bool, AutoLevelUpOption, bool, CombatEncountersCapacity, int, int, int, int, int, int, int, int, int, HardCrowdControlDurationLimit>(out value2, out value3, out value4, out value5, out value6, out value7, out value8, out value9, out value10, out value11, out value12, out value13, out value14, out value15, out value16);
-			reader.ReadUnmanaged<int, int, int, int, int, int, int, SpaceCombatDifficulty>(out value17, out value18, out value19, out value20, out value21, out value22, out value23, out value24);
+			reader.ReadUnmanaged<GameDifficultyOption, bool, bool, AutoLevelUpOption, bool, CombatEncountersCapacity, int, int, int, int, int, int, int, int, int>(out value2, out value3, out value4, out value5, out value6, out value7, out value8, out value9, out value10, out value11, out value12, out value13, out value14, out value15, out value16);
+			reader.ReadUnmanaged<HardCrowdControlDurationLimit, int, int, int, int, int, int, int, SpaceCombatDifficulty>(out value17, out value18, out value19, out value20, out value21, out value22, out value23, out value24, out value25);
 		}
 		else
 		{
-			if (memberCount > 23)
+			if (memberCount > 24)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(DifficultyPreset), 23, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(DifficultyPreset), 24, memberCount);
 				return;
 			}
 			if (value == null)
 			{
 				value2 = GameDifficultyOption.Story;
 				value3 = false;
-				value4 = AutoLevelUpOption.Off;
-				value5 = false;
-				value6 = CombatEncountersCapacity.Standard;
-				value7 = 0;
+				value4 = false;
+				value5 = AutoLevelUpOption.Off;
+				value6 = false;
+				value7 = CombatEncountersCapacity.Standard;
 				value8 = 0;
 				value9 = 0;
 				value10 = 0;
@@ -419,41 +431,43 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 				value13 = 0;
 				value14 = 0;
 				value15 = 0;
-				value16 = (HardCrowdControlDurationLimit)0;
-				value17 = 0;
+				value16 = 0;
+				value17 = (HardCrowdControlDurationLimit)0;
 				value18 = 0;
 				value19 = 0;
 				value20 = 0;
 				value21 = 0;
 				value22 = 0;
 				value23 = 0;
-				value24 = SpaceCombatDifficulty.Easy;
+				value24 = 0;
+				value25 = SpaceCombatDifficulty.Easy;
 			}
 			else
 			{
 				value2 = value.GameDifficulty;
-				value3 = value.RespecAllowed;
-				value4 = value.AutoLevelUp;
-				value5 = value.AdditionalAIBehaviors;
-				value6 = value.CombatEncountersCapacity;
-				value7 = value.EnemyDodgePercentModifier;
-				value8 = value.CoverHitBonusHalfModifier;
-				value9 = value.CoverHitBonusFullModifier;
-				value10 = value.MinPartyDamage;
-				value11 = value.MinPartyDamageFraction;
-				value12 = value.MinPartyStarshipDamage;
-				value13 = value.MinPartyStarshipDamageFraction;
-				value14 = value.PartyMomentumPercentModifier;
-				value15 = value.NPCAttributesBaseValuePercentModifier;
-				value16 = value.HardCrowdControlOnPartyMaxDurationRounds;
-				value17 = value.SkillCheckModifier;
-				value18 = value.EnemyHitPointsPercentModifier;
-				value19 = value.AllyResolveModifier;
-				value20 = value.PartyDamageDealtAfterArmorReductionPercentModifier;
-				value21 = value.WoundDamagePerTurnThresholdHPFraction;
-				value22 = value.OldWoundDelayRounds;
-				value23 = value.WoundStacksForTrauma;
-				value24 = value.SpaceCombatDifficulty;
+				value3 = value.OnlyOneSave;
+				value4 = value.RespecAllowed;
+				value5 = value.AutoLevelUp;
+				value6 = value.AdditionalAIBehaviors;
+				value7 = value.CombatEncountersCapacity;
+				value8 = value.EnemyDodgePercentModifier;
+				value9 = value.CoverHitBonusHalfModifier;
+				value10 = value.CoverHitBonusFullModifier;
+				value11 = value.MinPartyDamage;
+				value12 = value.MinPartyDamageFraction;
+				value13 = value.MinPartyStarshipDamage;
+				value14 = value.MinPartyStarshipDamageFraction;
+				value15 = value.PartyMomentumPercentModifier;
+				value16 = value.NPCAttributesBaseValuePercentModifier;
+				value17 = value.HardCrowdControlOnPartyMaxDurationRounds;
+				value18 = value.SkillCheckModifier;
+				value19 = value.EnemyHitPointsPercentModifier;
+				value20 = value.AllyResolveModifier;
+				value21 = value.PartyDamageDealtAfterArmorReductionPercentModifier;
+				value22 = value.WoundDamagePerTurnThresholdHPFraction;
+				value23 = value.OldWoundDelayRounds;
+				value24 = value.WoundStacksForTrauma;
+				value25 = value.SpaceCombatDifficulty;
 			}
 			if (memberCount != 0)
 			{
@@ -463,16 +477,16 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 					reader.ReadUnmanaged<bool>(out value3);
 					if (memberCount != 2)
 					{
-						reader.ReadUnmanaged<AutoLevelUpOption>(out value4);
+						reader.ReadUnmanaged<bool>(out value4);
 						if (memberCount != 3)
 						{
-							reader.ReadUnmanaged<bool>(out value5);
+							reader.ReadUnmanaged<AutoLevelUpOption>(out value5);
 							if (memberCount != 4)
 							{
-								reader.ReadUnmanaged<CombatEncountersCapacity>(out value6);
+								reader.ReadUnmanaged<bool>(out value6);
 								if (memberCount != 5)
 								{
-									reader.ReadUnmanaged<int>(out value7);
+									reader.ReadUnmanaged<CombatEncountersCapacity>(out value7);
 									if (memberCount != 6)
 									{
 										reader.ReadUnmanaged<int>(out value8);
@@ -499,10 +513,10 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 																	reader.ReadUnmanaged<int>(out value15);
 																	if (memberCount != 14)
 																	{
-																		reader.ReadUnmanaged<HardCrowdControlDurationLimit>(out value16);
+																		reader.ReadUnmanaged<int>(out value16);
 																		if (memberCount != 15)
 																		{
-																			reader.ReadUnmanaged<int>(out value17);
+																			reader.ReadUnmanaged<HardCrowdControlDurationLimit>(out value17);
 																			if (memberCount != 16)
 																			{
 																				reader.ReadUnmanaged<int>(out value18);
@@ -523,8 +537,12 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 																									reader.ReadUnmanaged<int>(out value23);
 																									if (memberCount != 22)
 																									{
-																										reader.ReadUnmanaged<SpaceCombatDifficulty>(out value24);
-																										_ = 23;
+																										reader.ReadUnmanaged<int>(out value24);
+																										if (memberCount != 23)
+																										{
+																											reader.ReadUnmanaged<SpaceCombatDifficulty>(out value25);
+																											_ = 24;
+																										}
 																									}
 																								}
 																							}
@@ -550,66 +568,69 @@ public class DifficultyPreset : IComparable<DifficultyPreset>, IMemoryPackable<D
 			}
 			if (value != null)
 			{
-				goto IL_0468;
+				goto IL_0497;
 			}
 		}
 		value = new DifficultyPreset
 		{
 			GameDifficulty = value2,
-			RespecAllowed = value3,
-			AutoLevelUp = value4,
-			AdditionalAIBehaviors = value5,
-			CombatEncountersCapacity = value6,
-			EnemyDodgePercentModifier = value7,
-			CoverHitBonusHalfModifier = value8,
-			CoverHitBonusFullModifier = value9,
-			MinPartyDamage = value10,
-			MinPartyDamageFraction = value11,
-			MinPartyStarshipDamage = value12,
-			MinPartyStarshipDamageFraction = value13,
-			PartyMomentumPercentModifier = value14,
-			NPCAttributesBaseValuePercentModifier = value15,
-			HardCrowdControlOnPartyMaxDurationRounds = value16,
-			SkillCheckModifier = value17,
-			EnemyHitPointsPercentModifier = value18,
-			AllyResolveModifier = value19,
-			PartyDamageDealtAfterArmorReductionPercentModifier = value20,
-			WoundDamagePerTurnThresholdHPFraction = value21,
-			OldWoundDelayRounds = value22,
-			WoundStacksForTrauma = value23,
-			SpaceCombatDifficulty = value24
+			OnlyOneSave = value3,
+			RespecAllowed = value4,
+			AutoLevelUp = value5,
+			AdditionalAIBehaviors = value6,
+			CombatEncountersCapacity = value7,
+			EnemyDodgePercentModifier = value8,
+			CoverHitBonusHalfModifier = value9,
+			CoverHitBonusFullModifier = value10,
+			MinPartyDamage = value11,
+			MinPartyDamageFraction = value12,
+			MinPartyStarshipDamage = value13,
+			MinPartyStarshipDamageFraction = value14,
+			PartyMomentumPercentModifier = value15,
+			NPCAttributesBaseValuePercentModifier = value16,
+			HardCrowdControlOnPartyMaxDurationRounds = value17,
+			SkillCheckModifier = value18,
+			EnemyHitPointsPercentModifier = value19,
+			AllyResolveModifier = value20,
+			PartyDamageDealtAfterArmorReductionPercentModifier = value21,
+			WoundDamagePerTurnThresholdHPFraction = value22,
+			OldWoundDelayRounds = value23,
+			WoundStacksForTrauma = value24,
+			SpaceCombatDifficulty = value25
 		};
 		return;
-		IL_0468:
+		IL_0497:
 		value.GameDifficulty = value2;
-		value.RespecAllowed = value3;
-		value.AutoLevelUp = value4;
-		value.AdditionalAIBehaviors = value5;
-		value.CombatEncountersCapacity = value6;
-		value.EnemyDodgePercentModifier = value7;
-		value.CoverHitBonusHalfModifier = value8;
-		value.CoverHitBonusFullModifier = value9;
-		value.MinPartyDamage = value10;
-		value.MinPartyDamageFraction = value11;
-		value.MinPartyStarshipDamage = value12;
-		value.MinPartyStarshipDamageFraction = value13;
-		value.PartyMomentumPercentModifier = value14;
-		value.NPCAttributesBaseValuePercentModifier = value15;
-		value.HardCrowdControlOnPartyMaxDurationRounds = value16;
-		value.SkillCheckModifier = value17;
-		value.EnemyHitPointsPercentModifier = value18;
-		value.AllyResolveModifier = value19;
-		value.PartyDamageDealtAfterArmorReductionPercentModifier = value20;
-		value.WoundDamagePerTurnThresholdHPFraction = value21;
-		value.OldWoundDelayRounds = value22;
-		value.WoundStacksForTrauma = value23;
-		value.SpaceCombatDifficulty = value24;
+		value.OnlyOneSave = value3;
+		value.RespecAllowed = value4;
+		value.AutoLevelUp = value5;
+		value.AdditionalAIBehaviors = value6;
+		value.CombatEncountersCapacity = value7;
+		value.EnemyDodgePercentModifier = value8;
+		value.CoverHitBonusHalfModifier = value9;
+		value.CoverHitBonusFullModifier = value10;
+		value.MinPartyDamage = value11;
+		value.MinPartyDamageFraction = value12;
+		value.MinPartyStarshipDamage = value13;
+		value.MinPartyStarshipDamageFraction = value14;
+		value.PartyMomentumPercentModifier = value15;
+		value.NPCAttributesBaseValuePercentModifier = value16;
+		value.HardCrowdControlOnPartyMaxDurationRounds = value17;
+		value.SkillCheckModifier = value18;
+		value.EnemyHitPointsPercentModifier = value19;
+		value.AllyResolveModifier = value20;
+		value.PartyDamageDealtAfterArmorReductionPercentModifier = value21;
+		value.WoundDamagePerTurnThresholdHPFraction = value22;
+		value.OldWoundDelayRounds = value23;
+		value.WoundStacksForTrauma = value24;
+		value.SpaceCombatDifficulty = value25;
 	}
 
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
 		result.Append(ref GameDifficulty);
+		result.Append(ref OnlyOneSave);
 		result.Append(ref RespecAllowed);
 		result.Append(ref AutoLevelUp);
 		result.Append(ref AdditionalAIBehaviors);

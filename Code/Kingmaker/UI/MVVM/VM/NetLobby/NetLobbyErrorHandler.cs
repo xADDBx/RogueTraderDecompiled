@@ -1,12 +1,10 @@
 using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
-using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
-using Photon.Realtime;
 
 namespace Kingmaker.UI.MVVM.VM.NetLobby;
 
@@ -19,20 +17,19 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		GetAuthDataError,
 		ChangeRegionError,
 		LobbyNotFoundError,
+		LobbyFullError,
 		JoinLobbyError,
 		CreatingLobbyError,
-		PhotonDisconnectedError,
 		PhotonCustomAuthenticationFailedError,
 		SaveSourceDisconnectedError,
 		SaveReceiveError,
 		SaveNotFoundError,
 		SendMessageFailError,
+		NoPlaystationPlusError,
 		UnknownException
 	}
 
 	private static UINetLobbyErrorsTexts ErrorsTexts => UIStrings.Instance.NetLobbyErrorsTexts;
-
-	private static string ReconnectLabel => UIStrings.Instance.NetLobbyTexts.Reconnect;
 
 	public NetLobbyErrorHandler()
 	{
@@ -46,17 +43,17 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 
 	public void HandleStoreNotInitializedError()
 	{
-		ShowReconnectable(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.StoreNotInitializedError));
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.StoreNotInitializedError));
 	}
 
 	public void HandleGetAuthDataTimeout()
 	{
-		ShowReconnectable(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataTimeout));
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataTimeout));
 	}
 
 	public void HandleGetAuthDataError(string errorMessage)
 	{
-		ShowReconnectable(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataError) + " " + errorMessage);
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataError) + " " + errorMessage);
 	}
 
 	public void HandleChangeRegionError()
@@ -64,12 +61,22 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		Show(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.ChangeRegionError));
 	}
 
+	public void HandleNoPlayStationPlusError()
+	{
+		Show(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.NoPlaystationPlusError));
+	}
+
 	public void HandleLobbyNotFoundError()
 	{
 		Show(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.LobbyNotFoundError));
 	}
 
-	public void HandleJoinLobbyError(short returnCode)
+	public void HandleLobbyFullError()
+	{
+		Show(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.LobbyFullError));
+	}
+
+	public void HandleJoinLobbyError(int returnCode)
 	{
 		Show($"{ErrorsTexts.GetErrorMessage(NetLobbyErrorType.JoinLobbyError)} [{returnCode}]");
 	}
@@ -79,27 +86,14 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		Show($"{ErrorsTexts.GetErrorMessage(NetLobbyErrorType.CreatingLobbyError)} [{returnCode}]");
 	}
 
-	public void HandlePhotonDisconnectedError(DisconnectCause cause, bool allowReconnect)
-	{
-		string text = ErrorsTexts.GetErrorMessage(NetLobbyErrorType.PhotonDisconnectedError) + " " + ReasonStrings.Instance.GetDisconnectCause(cause);
-		if (allowReconnect)
-		{
-			ShowReconnectable(text);
-		}
-		else
-		{
-			Show(text, CloseLobby);
-		}
-	}
-
 	public void HandlePhotonCustomAuthenticationFailedError()
 	{
-		ShowReconnectable(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.PhotonCustomAuthenticationFailedError));
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.PhotonCustomAuthenticationFailedError));
 	}
 
 	public void HandleUnknownException()
 	{
-		ShowReconnectable(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.UnknownException));
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.UnknownException));
 	}
 
 	public void HandleStartGameFailed()
@@ -113,28 +107,5 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		{
 			onCloseAction?.Invoke();
 		}, null, yesLabel);
-	}
-
-	private static void ShowReconnectable(string text)
-	{
-		UIUtility.ShowMessageBox(text, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton btn)
-		{
-			if (btn == DialogMessageBoxBase.BoxButton.Yes)
-			{
-				PhotonManager.NetGame.StartNetGameIfNeeded();
-			}
-			else
-			{
-				CloseLobby();
-			}
-		}, null, ReconnectLabel, UIStrings.Instance.CommonTexts.Cancel);
-	}
-
-	private static void CloseLobby()
-	{
-		EventBus.RaiseEvent(delegate(INetLobbyRequest h)
-		{
-			h.HandleNetLobbyClose();
-		});
 	}
 }

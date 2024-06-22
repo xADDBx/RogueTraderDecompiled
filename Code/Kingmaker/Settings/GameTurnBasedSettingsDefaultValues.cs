@@ -23,6 +23,8 @@ public class GameTurnBasedSettingsDefaultValues
 
 	public bool FastPartyCast = true;
 
+	public bool DisableActionCamera;
+
 	public float TimeScaleInPlayerTurn = 5f;
 
 	public float TimeScaleInNonPlayerTurn = 5f;

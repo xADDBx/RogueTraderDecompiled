@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace Kingmaker.GameCommands;
 
 [MemoryPackable(GenerateType.Object)]
-public sealed class SelectColonyGameCommand : GameCommand, IMemoryPackable<SelectColonyGameCommand>, IMemoryPackFormatterRegister
+public sealed class SelectColonyGameCommand : GameCommandWithSynchronized, IMemoryPackable<SelectColonyGameCommand>, IMemoryPackFormatterRegister
 {
 	[Preserve]
 	private sealed class SelectColonyGameCommandFormatter : MemoryPackFormatter<SelectColonyGameCommand>
@@ -31,17 +31,16 @@ public sealed class SelectColonyGameCommand : GameCommand, IMemoryPackable<Selec
 	[MemoryPackInclude]
 	private readonly ColonyRef m_ColonyRef;
 
-	public override bool IsSynchronized => true;
-
 	[MemoryPackConstructor]
 	private SelectColonyGameCommand(ColonyRef m_colonyRef)
 	{
 		m_ColonyRef = m_colonyRef;
 	}
 
-	public SelectColonyGameCommand(Colony colony)
+	public SelectColonyGameCommand(Colony colony, bool isSynchronized)
 		: this((ColonyRef)colony)
 	{
+		m_IsSynchronized = isSynchronized;
 	}
 
 	protected override void ExecuteInternal()
@@ -55,6 +54,7 @@ public sealed class SelectColonyGameCommand : GameCommand, IMemoryPackable<Selec
 		{
 			x.HandleColonyManagementPage(colony);
 		});
+		ColonyChronicleExtensions.TryStartChronicle(colony);
 	}
 
 	static SelectColonyGameCommand()

@@ -12,6 +12,7 @@ using Kingmaker.Designers.WarhammerSurfaceCombatPrototype.PsychicPowers;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
@@ -31,6 +32,7 @@ using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Parts;
@@ -325,7 +327,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			BaseUnitEntity[] array2 = array;
 			foreach (BaseUnitEntity other in array2)
 			{
-				if (item.DistanceToInCells(other) <= 1)
+				if (!item.IsDeadOrUnconscious && item.DistanceToInCells(other) <= 1)
 				{
 					return false;
 				}
@@ -388,6 +390,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	{
 		foreach (MechanicEntity joinedThisTickEntity in m_JoinedThisTickEntities)
 		{
+			PrepareUnitForNewTurn(joinedThisTickEntity, isTurnBased: true);
 			EventBus.RaiseEvent((IMechanicEntity)joinedThisTickEntity, (Action<IEntityJoinTBCombat>)delegate(IEntityJoinTBCombat h)
 			{
 				h.HandleEntityJoinTBCombat();
@@ -496,7 +499,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			if (CurrentUnit.IsMyNetRole())
 			{
 				UISounds.Instance.Sounds.Combat.EndTurn.Play();
-				Game.Instance.GameCommandQueue.EndTurnManually();
+				Game.Instance.GameCommandQueue.EndTurnManually(CurrentUnit);
 			}
 		}
 		else
@@ -505,7 +508,19 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 	}
 
-	public void TryEndPlayerTurn()
+	public void TryEndPlayerTurn(EntityRef<MechanicEntity> mechanicEntity)
+	{
+		if (IsPlayerTurn && mechanicEntity != CurrentUnit)
+		{
+			Logger.Warning("Attempt to end the turn of another unit! Current=" + CurrentUnit?.UniqueId + ", expected=" + mechanicEntity.Id);
+		}
+		else
+		{
+			TryEndPlayerTurn();
+		}
+	}
+
+	private void TryEndPlayerTurn()
 	{
 		if (IsPlayerTurn && CanEndTurn)
 		{
@@ -586,29 +601,29 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			if (!(allUnit2 is UnitEntity { IsExtra: not false }))
 			{
-				StartUnitTurn(allUnit2, isTurnBased: false, isStartingInterrupt: false);
+				StartUnitTurn(allUnit2, isTurnBased: false);
 			}
 		}
 	}
 
-	private void StartUnitTurn([NotNull] MechanicEntity entity, bool isTurnBased, bool isStartingInterrupt)
+	private void StartUnitTurn([NotNull] MechanicEntity entity, bool isTurnBased, InterruptionData interruptionData = null)
 	{
 		if (entity is UnitSquad unitSquad)
 		{
 			unitSquad.Units.ForEach(delegate(UnitReference u)
 			{
-				StartUnitTurnInternal(u.ToBaseUnitEntity(), isTurnBased, isStartingInterrupt);
+				StartUnitTurnInternal(u.ToBaseUnitEntity(), isTurnBased);
 			});
 		}
 		else if (!entity.IsInSquad)
 		{
-			StartUnitTurnInternal(entity, isTurnBased, isStartingInterrupt);
+			StartUnitTurnInternal(entity, isTurnBased);
 		}
 		if (entity.Initiative.InterruptingOrder > 0)
 		{
 			EventBus.RaiseEvent((IMechanicEntity)entity, (Action<IInterruptTurnStartHandler>)delegate(IInterruptTurnStartHandler h)
 			{
-				h.HandleUnitStartInterruptTurn();
+				h.HandleUnitStartInterruptTurn(interruptionData);
 			}, isCheckRuntime: true);
 		}
 		else
@@ -621,7 +636,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		IsCurrentUnitHunter = (entity?.GetProgressionOptional()?.AllCareerPaths?.Any(((BlueprintCareerPath Blueprint, int Rank) c) => c.Blueprint.IsHunter)).GetValueOrDefault();
 	}
 
-	private void StartUnitTurnInternal(MechanicEntity entity, bool isTurnBased, bool isStartingInterrupt)
+	private void StartUnitTurnInternal(MechanicEntity entity, bool isTurnBased)
 	{
 		if (isTurnBased && entity is UnitEntity unit)
 		{
@@ -636,28 +651,30 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			PrepareUnitForNewTurn(entity, isTurnBased);
 			entity.GetAbilityCooldownsOptional()?.RemoveHandAbilityGroupsCooldown();
 		}
-		else if (isStartingInterrupt)
+		else if (entity.Initiative.InterruptingOrder > 0)
 		{
-			entity.GetAbilityCooldownsOptional()?.RemoveHandAbilityGroupsCooldown();
+			entity.GetAbilityCooldownsOptional()?.SaveCooldownData();
+			entity.GetAbilityCooldownsOptional()?.ResetCooldowns();
 		}
 	}
 
 	private void EndUnitTurn([CanBeNull] MechanicEntity unit, bool isTurnBased, bool isEndOfTurnRequested = false)
 	{
 		m_UnableToActUnitForceTurnEndTime = null;
-		if (isTurnBased && unit is UnitEntity unit2)
-		{
-			unit2.SnapToGrid();
-		}
 		if (isTurnBased)
 		{
+			if (unit is UnitEntity unit2)
+			{
+				unit2.SnapToGrid();
+			}
 			if (unit is UnitSquad { IsInCombat: not false } unitSquad)
 			{
-				unitSquad.Units.ForEach(delegate(UnitReference u)
+				unitSquad.Units.ForEach(delegate(UnitReference i)
 				{
-					if (u.Entity.ToBaseUnitEntity()?.MaybeAnimationManager != null && !u.Entity.ToBaseUnitEntity().MaybeAnimationManager.InCover)
+					BaseUnitEntity baseUnitEntity = i.Entity.ToBaseUnitEntity();
+					if (baseUnitEntity != null && !baseUnitEntity.AnimationManager.InCover)
 					{
-						u.Entity.ToBaseUnitEntity().MaybeAnimationManager.CreateMainHandAttackHandlerForPrepare();
+						baseUnitEntity.AnimationManager.CreateMainHandAttackHandlerForPrepare();
 					}
 				});
 			}
@@ -665,9 +682,6 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			{
 				unit.MaybeAnimationManager?.CurrentMainHandAttackForPrepare?.Release();
 			}
-		}
-		if (isTurnBased)
-		{
 			foreach (MechanicEntity item in UnitsInCombat)
 			{
 				if (!HandleEntityCommands(item, isEndOfTurnRequested))
@@ -675,13 +689,18 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 					return;
 				}
 			}
+			PartReplaceUnitTransition partReplaceUnitTransition = unit?.GetReplaceUnitTransitionOptional();
+			if (partReplaceUnitTransition != null && partReplaceUnitTransition.IsFromOwner && partReplaceUnitTransition.ToUnit != null && !partReplaceUnitTransition.IsFinished)
+			{
+				return;
+			}
 		}
 		Data.EndTurnRequested = false;
 		if (unit != null)
 		{
 			if (unit.Initiative.InterruptingOrder > 0)
 			{
-				TickAbilityCooldowns(unit, interrupt: true);
+				unit.GetAbilityCooldownsOptional()?.RestoreCooldownData();
 				unit.Initiative.InterruptingOrder = 0;
 				EventBus.RaiseEvent((IMechanicEntity)unit, (Action<IInterruptTurnEndHandler>)delegate(IInterruptTurnEndHandler h)
 				{
@@ -741,7 +760,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 		if (CurrentUnit != null)
 		{
-			StartUnitTurn(entity, isTurnBased: true, isStartingInterrupt: false);
+			StartUnitTurn(entity, isTurnBased: true);
 		}
 	}
 
@@ -872,7 +891,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 	}
 
-	public void InterruptCurrentTurn(MechanicEntity unit, MechanicEntity source)
+	public void InterruptCurrentTurn(MechanicEntity unit, MechanicEntity source, InterruptionData interruptionData)
 	{
 		if (!IsInTurnBasedCombat())
 		{
@@ -886,7 +905,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			}, isCheckRuntime: true);
 		}
 		TurnOrder.InterruptCurrentUnit(unit);
-		StartUnitTurn(unit, isTurnBased: true, isStartingInterrupt: true);
+		StartUnitTurn(unit, isTurnBased: true, interruptionData);
 		unit.Initiative.PreparationInterrupted = true;
 		Data.EndTurnRequested = false;
 	}
@@ -1035,17 +1054,27 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	{
 		try
 		{
-			if (IsSpaceCombat)
+			if (!IsSpaceCombat)
+			{
+				foreach (BaseUnitEntity unit in Game.Instance.State.AllBaseUnits.All)
+				{
+					if (unit.IsInCombat && unit.Suppressed && Game.Instance.Player.Group.Memory.Contains(unit))
+					{
+						BaseUnitEntity baseUnitEntity = Game.Instance.Player.Party.OrderBy((BaseUnitEntity i) => i.DistanceToInCells(unit)).FirstOrDefault();
+						unit.Position = baseUnitEntity?.Position ?? Game.Instance.Player.MainCharacter.Entity.Position;
+						unit.SnapToGrid();
+					}
+				}
+			}
+			if (!IsInTurnBasedCombat() || IsSpaceCombat)
 			{
 				return;
 			}
-			foreach (BaseUnitEntity unit in Game.Instance.State.AllBaseUnits.All)
+			foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 			{
-				if (unit.IsInCombat && unit.Suppressed && Game.Instance.Player.Group.Memory.Contains(unit))
+				if (allBaseAwakeUnit.IsInCombat && !allBaseAwakeUnit.IsDead)
 				{
-					BaseUnitEntity baseUnitEntity = Game.Instance.Player.Party.OrderBy((BaseUnitEntity i) => i.DistanceToInCells(unit)).FirstOrDefault();
-					unit.Position = baseUnitEntity?.Position ?? Game.Instance.Player.MainCharacter.Entity.Position;
-					unit.SnapToGrid();
+					allBaseAwakeUnit.SnapToGrid();
 				}
 			}
 		}

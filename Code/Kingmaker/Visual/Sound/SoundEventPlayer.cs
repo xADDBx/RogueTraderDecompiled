@@ -173,7 +173,7 @@ public static class SoundEventPlayer
 			{
 				GameObject gameObject = new GameObject("SoundTarget_" + target.Point.ToString());
 				gameObject.transform.SetPositionAndRotation(target.Point, Quaternion.identity);
-				gameObject.AddComponent<AutoDestroy>().Lifetime = 5f;
+				gameObject.AddComponent<AutoDestroy>().Lifetime = 10f;
 				return gameObject;
 			}
 			object obj = target?.Entity?.View.Or(null)?.gameObject.Or(null);

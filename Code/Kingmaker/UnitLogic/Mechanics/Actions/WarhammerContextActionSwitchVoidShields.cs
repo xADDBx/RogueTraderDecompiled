@@ -21,7 +21,7 @@ public class WarhammerContextActionSwitchVoidShields : ContextAction
 		return $"{SwitchAction} shields";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity starshipEntity = (StarshipEntity)base.Target.Entity;
 		if (starshipEntity != null)

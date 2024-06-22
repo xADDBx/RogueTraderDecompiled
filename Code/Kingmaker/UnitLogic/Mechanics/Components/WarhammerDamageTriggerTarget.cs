@@ -2,7 +2,10 @@ using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UnitLogic.FactLogic;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -21,6 +24,10 @@ public class WarhammerDamageTriggerTarget : WarhammerDamageTrigger, ITargetRuleb
 
 	public ActionList ActionsOnAttacker;
 
+	public ContextPropertyName ContextPropertyName;
+
+	public WarhammerKillTrigger.PropertyParameter PropertyToSave;
+
 	public void OnEventAboutToTrigger(RuleDealDamage rule)
 	{
 	}
@@ -32,6 +39,26 @@ public class WarhammerDamageTriggerTarget : WarhammerDamageTrigger, ITargetRuleb
 
 	protected override void OnTrigger(RuleDealDamage rule)
 	{
+		if (PropertyToSave != 0)
+		{
+			if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.EnemyDifficulty)
+			{
+				base.Context[ContextPropertyName] = ((int?)(rule.Target as UnitEntity)?.Blueprint.DifficultyType).GetValueOrDefault();
+			}
+			if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.Damage)
+			{
+				base.Context[ContextPropertyName] = rule.Result;
+			}
+			if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.DamageOverflow)
+			{
+				int hPBeforeDamage = rule.HPBeforeDamage;
+				base.Context[ContextPropertyName] = Math.Max(rule.Result - hPBeforeDamage, 0);
+			}
+			if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.Penetration)
+			{
+				base.Context[ContextPropertyName] = Math.Max(rule.Damage.Penetration.Value, 0);
+			}
+		}
 		if (base.Fact.MaybeContext != null)
 		{
 			ActionList actions = Actions;

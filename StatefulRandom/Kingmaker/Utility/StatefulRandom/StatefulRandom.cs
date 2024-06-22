@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using Kingmaker.Utility.StateContext;
 using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Internal;
@@ -36,9 +35,6 @@ public class StatefulRandom : IMemoryPackable<StatefulRandom>, IMemoryPackFormat
 
 	[JsonProperty(IsReference = false)]
 	public readonly Rand Rand = new Rand();
-
-	[MemoryPackIgnore]
-	public bool NeedToCheckReadOnlyState;
 
 	[MemoryPackIgnore]
 	public RandState State
@@ -106,7 +102,6 @@ public class StatefulRandom : IMemoryPackable<StatefulRandom>, IMemoryPackFormat
 	private void DebugCollect()
 	{
 		CheckInit();
-		CheckReadOnlyState();
 	}
 
 	private void CheckInit()
@@ -114,14 +109,6 @@ public class StatefulRandom : IMemoryPackable<StatefulRandom>, IMemoryPackFormat
 		if (!State.IsReady)
 		{
 			throw new Exception("Trying to use RND '" + Name + "' that has not been initialized!");
-		}
-	}
-
-	private void CheckReadOnlyState()
-	{
-		if (NeedToCheckReadOnlyState)
-		{
-			Kingmaker.Utility.StateContext.StateContext.CheckCanEdit();
 		}
 	}
 

@@ -24,12 +24,15 @@ using Kingmaker.UI.MVVM.VM.CharGen.Phases.SoulMark;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Stats;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Summary;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Kingmaker.UI.MVVM.View.CharGen.Common;
 
@@ -99,6 +102,16 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 	[SerializeField]
 	private float m_AnimationDuration = 0.55f;
 
+	[Header("Scroll")]
+	[SerializeField]
+	private OwlcatButton m_LeftScrollButton;
+
+	[SerializeField]
+	private OwlcatButton m_RightScrollButton;
+
+	[SerializeField]
+	private float m_ScrollDelta;
+
 	private IDisposable m_DelayedSelectorMoveDisposable;
 
 	private ICharGenPhaseRoadmapView m_SelectedView;
@@ -138,10 +151,25 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 			DelayedMoveSelector(base.ViewModel.SelectedEntity.Value);
 		}));
 		AddDisposable(base.ViewModel.SelectedEntity.Subscribe(DelayedMoveSelector));
-		DelayedInvoker.InvokeInFrames(delegate
+		AddDisposable(ObservableExtensions.Subscribe(MainThreadDispatcher.UpdateAsObservable(), delegate
 		{
-			UpdateBackgroundFrameSize();
-		}, 2);
+			UpdateScrollButtonsInteractable();
+		}));
+		AddDisposable(UniRxExtensionMethods.Subscribe(m_LeftScrollButton.OnLeftClickAsObservable(), delegate
+		{
+			SmoothScrollBy(m_ScrollDelta);
+		}));
+		AddDisposable(UniRxExtensionMethods.Subscribe(m_RightScrollButton.OnLeftClickAsObservable(), delegate
+		{
+			SmoothScrollBy(0f - m_ScrollDelta);
+		}));
+		DelayedInvoker.InvokeInFrames(UpdateBackgroundFrameSize, 2);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		KillSelectorTween();
+		ShutUpSelector();
 	}
 
 	private void DelayedMoveSelector(CharGenPhaseBaseVM selectedEntity)
@@ -164,14 +192,8 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 					m_SelectorSoundPlaying = true;
 					m_PrevEntity = selectedEntity;
 				}
-			}).OnComplete(delegate
-			{
-				ShutUpSelector();
-			})
-				.OnKill(delegate
-				{
-					ShutUpSelector();
-				})
+			}).OnComplete(ShutUpSelector)
+				.OnKill(ShutUpSelector)
 				.SetUpdate(isIndependentUpdate: true);
 		}, 2);
 	}
@@ -204,12 +226,6 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 	{
 		m_Selector.DOKill();
 		DOTween.Kill(m_Selector);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		KillSelectorTween();
-		ShutUpSelector();
 	}
 
 	private void CreateRoadmapPhaseView(CollectionAddEvent<CharGenPhaseBaseVM> addEvent)
@@ -386,6 +402,24 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 			return m_AppearancePhaseRoadmapView;
 		}
 		return m_PregenPhaseRoadmapView;
+	}
+
+	private void UpdateScrollButtonsInteractable()
+	{
+		bool flag = m_ScrollRectExtended.content.rect.width - m_ScrollRectExtended.viewport.rect.width > 0.1f;
+		bool flag2 = m_ScrollRectExtended.horizontalNormalizedPosition > 0.001f;
+		bool flag3 = m_ScrollRectExtended.horizontalNormalizedPosition < 0.999f;
+		m_LeftScrollButton.Interactable = flag && flag2;
+		m_RightScrollButton.Interactable = flag && flag3;
+	}
+
+	private void SmoothScrollBy(float delta)
+	{
+		PointerEventData data = new PointerEventData(EventSystem.current)
+		{
+			scrollDelta = new Vector2(delta, 0f)
+		};
+		m_ScrollRectExtended.OnSmoothlyScroll(data);
 	}
 
 	public void SelectPrevPhase()

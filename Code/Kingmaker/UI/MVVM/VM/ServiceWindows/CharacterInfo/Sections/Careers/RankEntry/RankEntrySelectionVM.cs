@@ -63,20 +63,6 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	private readonly ReactiveProperty<SelectionStateFeature> m_SelectionStateFeature = new ReactiveProperty<SelectionStateFeature>();
 
-	private readonly List<FeatureGroup> m_GroupsWithFilter = new List<FeatureGroup>
-	{
-		FeatureGroup.ActiveAbility,
-		FeatureGroup.FirstCareerAbility,
-		FeatureGroup.SecondCareerAbility,
-		FeatureGroup.FirstOrSecondCareerAbility,
-		FeatureGroup.Talent,
-		FeatureGroup.CommonTalent,
-		FeatureGroup.AscensionTalent,
-		FeatureGroup.FirstCareerTalent,
-		FeatureGroup.SecondCareerTalent,
-		FeatureGroup.FirstOrSecondCareerTalent
-	};
-
 	private readonly List<FeatureGroup> m_AscensionGroups = new List<FeatureGroup>
 	{
 		FeatureGroup.FirstCareerAbility,
@@ -138,7 +124,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		}
 	}
 
-	public bool HasFeatures => m_ShowGroupList.SelectMany((RankEntryFeatureGroupVM g) => g.FeatureList).Any();
+	public bool HasFeatures => m_ShowGroupList?.SelectMany((RankEntryFeatureGroupVM g) => g.FeatureList).Any() ?? false;
 
 	public bool CanChangeSelection
 	{
@@ -153,6 +139,11 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	public CareerPathVM CareerPathVM => m_CareerPathVM;
 
+	public int EntryRank => Rank;
+
+	public BoolReactiveProperty HasUnavailableFeatures { get; } = new BoolReactiveProperty();
+
+
 	public RankEntrySelectionVM(int rank, CareerPathVM careerPathVM, BlueprintSelectionFeature selectionFeature, Action<IRankEntrySelectItem> selectAction)
 	{
 		Rank = rank;
@@ -164,13 +155,17 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		{
 			AddDisposable(UltimateFeature = new CharInfoFeatureVM(new UIFeature(careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault()), careerPathVM.Unit));
 		}
-		if (m_GroupsWithFilter.Contains(FeatureGroup))
+		if (RankEntryUtils.HasFilter(FeatureGroup))
 		{
 			FeaturesFilterVM = new FeaturesFilterVM();
 			FeaturesFilterVM.CurrentFilter.Subscribe(delegate(FeaturesFilter.FeatureFilterType value)
 			{
 				HandleFilterChange(value);
 			});
+		}
+		else
+		{
+			UpdateFeatures();
 		}
 		GlossaryEntryKey = $"{FeatureGroup}_CareerPath_Selection";
 		AddDisposable(UnitProgressionVM.CurrentRankEntryItem.Subscribe(delegate(IRankEntrySelectItem item)
@@ -191,7 +186,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			List<BaseRankEntryFeatureVM> list2 = SortSelectionFeatures(item2);
 			list2.ForEach(delegate(BaseRankEntryFeatureVM e)
 			{
-				e.SetHasFavorites(m_GroupsWithFilter.Contains(FeatureGroup));
+				e.SetHasFavorites(RankEntryUtils.HasFilter(FeatureGroup));
 			});
 			list.Add(new RankEntryFeatureGroupVM(list2, owner));
 		}
@@ -208,7 +203,11 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	private List<(BlueprintScriptableObject, List<RankEntrySelectionFeatureVM>)> CreateSelectionItems(CareerPathVM careerPathVM)
 	{
-		BaseUnitEntity baseUnitEntity = UnitProgressionVM.LevelUpManager?.PreviewUnit ?? careerPathVM.Unit;
+		BaseUnitEntity baseUnitEntity = careerPathVM.Unit;
+		if (careerPathVM.IsInLevelupProcess)
+		{
+			baseUnitEntity = UnitProgressionVM.LevelUpManager?.PreviewUnit ?? careerPathVM.Unit;
+		}
 		List<FeatureSelectionItem> list = m_SelectionFeature.GetSelectionItems(baseUnitEntity, careerPathVM.CareerPath).ToList();
 		int entryId = m_CareerPathVM.RankEntriesScan.IndexOf(this);
 		m_CareerPathVM.AddedOnLevelUpFeatures?.ExcludeUnavailableFeatures(FeatureGroup, entryId, list);
@@ -338,8 +337,12 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	public void HandleClick()
 	{
-		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
+		if (m_ShowGroupList == null)
+		{
+			m_ShowGroupList = CreateGroups();
+		}
 		m_SelectAction?.Invoke(this);
+		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
 	}
 
 	public void ClearSelectedFeature()
@@ -423,12 +426,30 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		{
 			m_ShowGroupList = CreateGroups();
 		}
+		if (filter == FeaturesFilter.FeatureFilterType.FavoritesFilter)
+		{
+			m_ShowGroupList = CreateGroups();
+		}
 		bool flag = false;
+		bool flag2 = false;
 		FilteredGroupList.Clear();
 		foreach (RankEntryFeatureGroupVM showGroup in m_ShowGroupList)
 		{
 			List<VirtualListElementVMBase> filtered = showGroup.GetFiltered(filter);
-			if (filtered.Any() && flag)
+			flag2 |= filtered.Any(delegate(VirtualListElementVMBase f)
+			{
+				BaseRankEntryFeatureVM obj2 = f as BaseRankEntryFeatureVM;
+				return obj2 != null && obj2.FeatureState.Value == RankFeatureState.NotSelectable;
+			});
+			if (!Game.Instance.Player.UISettings.ShowUnavailableFeatures)
+			{
+				filtered.RemoveAll(delegate(VirtualListElementVMBase f)
+				{
+					BaseRankEntryFeatureVM obj = f as BaseRankEntryFeatureVM;
+					return obj != null && obj.FeatureState.Value == RankFeatureState.NotSelectable;
+				});
+			}
+			if (flag && RankEntryUtils.HasFilter(FeatureGroup) && filtered.Any())
 			{
 				FilteredGroupList.Add(AddDisposableAndReturn(new SeparatorElementVM()));
 			}
@@ -436,6 +457,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			flag = filtered.Any();
 		}
 		OnFilterChange?.Execute();
+		HasUnavailableFeatures.Value = flag2;
 	}
 
 	public string GetHintText()
@@ -469,11 +491,36 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		SetSelectedFeature(SelectedFeature.Value?.Feature);
 	}
 
+	public void UpdateReadOnlyState()
+	{
+		m_ShowGroupList.ForEach(delegate(RankEntryFeatureGroupVM g)
+		{
+			g.UpdateReadOnlyState();
+		});
+	}
+
 	public void SetFocusOn(BaseRankEntryFeatureVM featureVM)
 	{
 		m_ShowGroupList?.SelectMany((RankEntryFeatureGroupVM g) => g.FeatureList).ForEach(delegate(BaseRankEntryFeatureVM rankEntry)
 		{
 			rankEntry.SetFocusOn(featureVM);
 		});
+	}
+
+	public void ToggleShowUnavailableFeatures()
+	{
+		PlayerUISettings uISettings = Game.Instance.Player.UISettings;
+		uISettings.ShowUnavailableFeatures = !uISettings.ShowUnavailableFeatures;
+		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
+	}
+
+	public bool ContainsFeature(string key)
+	{
+		List<RankEntryFeatureGroupVM> showGroupList = m_ShowGroupList;
+		if (showGroupList == null)
+		{
+			return false;
+		}
+		return showGroupList.SelectMany((RankEntryFeatureGroupVM l) => l.FeatureList).FindIndex((BaseRankEntryFeatureVM f) => f.Feature.AssetGuid == key) >= 0;
 	}
 }

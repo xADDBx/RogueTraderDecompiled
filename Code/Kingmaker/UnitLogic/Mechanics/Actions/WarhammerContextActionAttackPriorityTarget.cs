@@ -33,7 +33,7 @@ public class WarhammerContextActionAttackPriorityTarget : ContextAction
 
 	public BlueprintBuff TargetBuff => m_TargetBuff?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null || !(mechanicsContext.MainTarget.Entity is BaseUnitEntity baseUnitEntity))

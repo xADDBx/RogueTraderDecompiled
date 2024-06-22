@@ -26,8 +26,23 @@ public class VendorReputationLevelVM : VirtualListElementVMBase
 	{
 		ReputationLevel = level;
 		Locked = locked;
-		ReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, level);
-		NextLevelReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, level + 1);
+		if (!Locked)
+		{
+			Delta = 1;
+			Difference = 1;
+			return;
+		}
+		int currentReputationLevel = ReputationHelper.GetCurrentReputationLevel(Game.Instance.Vendor.VendorFaction.FactionType);
+		if ((ReputationHelper.GetNextLvl(Game.Instance.Vendor.VendorFaction.FactionType) ?? level) == level)
+		{
+			ReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, currentReputationLevel);
+			NextLevelReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, level);
+		}
+		else
+		{
+			ReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, level);
+			NextLevelReputationPoints = ReputationHelper.GetReputationPointsByLevel(Game.Instance.Vendor.VendorFaction.FactionType, level + 1);
+		}
 		CurrentReputationPoints = ReputationHelper.GetCurrentReputationPoints(Game.Instance.Vendor.VendorFaction.FactionType);
 		Delta = NextLevelReputationPoints - ReputationPoints;
 		Difference = CurrentReputationPoints - ReputationPoints;

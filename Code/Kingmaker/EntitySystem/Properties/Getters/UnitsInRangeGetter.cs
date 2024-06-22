@@ -67,17 +67,17 @@ public class UnitsInRangeGetter : PropertyGetter, PropertyContextAccessor.ICurre
 		return true;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (m_CombatGroup.HasFlag(UnitCombatGroup.Ally) && m_CombatGroup.HasFlag(UnitCombatGroup.Enemy))
 		{
-			return $"Amount of units in range of {m_RangeInCells} cells";
+			return $"Amount of units in range of {m_RangeInCells} cells around {FormulaTargetScope.Current}";
 		}
-		return string.Format("Amount of {0} units in range of {1} cells", m_CombatGroup switch
+		return string.Format("Amount of {0} units in range of {1} cells around {2}", m_CombatGroup switch
 		{
 			UnitCombatGroup.Ally => "Ally", 
 			UnitCombatGroup.Enemy => "Enemy", 
 			_ => "NONE SELECTED", 
-		}, m_RangeInCells);
+		}, m_RangeInCells, FormulaTargetScope.Current);
 	}
 }

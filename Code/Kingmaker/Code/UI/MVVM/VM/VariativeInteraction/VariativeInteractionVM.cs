@@ -46,21 +46,31 @@ public class VariativeInteractionVM : BaseDisposable, IViewModel, IBaseDisposabl
 	{
 		MapObjectView = mapObjectView;
 		m_CloseCallback = closeCallback;
-		foreach (IInteractionVariantActor item2 in GetIHasInteractionVariants(MapObjectView)?.GetInteractionVariantActors())
+		foreach (IInteractionVariantActor item3 in GetIHasInteractionVariants(MapObjectView)?.GetInteractionVariantActors())
 		{
-			if (item2 is UnlockRestrictionPart)
+			if (item3 is UnlockRestrictionPart || !item3.CanUse)
 			{
 				continue;
 			}
-			BlueprintItem item = item2.RequiredItem;
+			BlueprintItem item = item3.RequiredItem;
 			int? resourceCount = null;
 			int? requiredResourceCount = null;
+			int? num = null;
 			if (item != null)
 			{
 				resourceCount = Game.Instance.Player.Inventory.Items.Where((ItemEntity i) => i.Blueprint == item).Sum((ItemEntity i) => i.Count);
-				requiredResourceCount = item2.RequiredItemsCount;
+				requiredResourceCount = item3.RequiredItemsCount;
 			}
-			Variants.Add(new InteractionVariantVM(mapObjectView, item2, item?.Name, resourceCount, requiredResourceCount, Close));
+			num = InteractionHelper.GetUnitsToInteractCount(MapObjectView.Data.Parts.GetAll<InteractionPart>().FirstOrDefault());
+			InteractionVariantVM item2 = new InteractionVariantVM(mapObjectView, item3, item?.Name, resourceCount, requiredResourceCount, num, Close);
+			if (requiredResourceCount.HasValue && requiredResourceCount.GetValueOrDefault() > 0)
+			{
+				Variants.Add(item2);
+			}
+			else
+			{
+				Variants.Insert(0, item2);
+			}
 		}
 	}
 

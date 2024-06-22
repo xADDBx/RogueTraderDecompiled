@@ -27,9 +27,12 @@ using UnityEngine.UI;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 
-public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashConsoleView, ShipComponentSlotConsoleView, ShipUpgradeStructureSlotConsoleView, ShipUpgradeProwRamSlotConsoleView, ShipSelectorWindowConsoleView>
+public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashConsoleView, ShipComponentSlotConsoleView, ShipUpgradeStructureSlotConsoleView, ShipUpgradeProwRamSlotConsoleView, ShipSelectorWindowConsoleView>, IShipCustomizationPage
 {
 	[Header("Console")]
+	[SerializeField]
+	private TooltipPlaces m_StashTooltipPlaces;
+
 	[SerializeField]
 	private FloatConsoleNavigationBehaviour.NavigationParameters m_Parameters;
 
@@ -69,6 +72,16 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 	private IEnumerator m_Back;
 
 	private Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView> m_SlotsMap = new Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView>();
+
+	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
+
+	private TooltipConfig m_CompareTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
 
 	public GridConsoleNavigationBehaviour NavigationBehaviour => m_NavigationBehaviour;
 
@@ -153,8 +166,10 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 			m_NavigationBehaviour.Clear();
 		}
 		FloatConsoleNavigationBehaviour floatConsoleNavigationBehaviour = new FloatConsoleNavigationBehaviour(m_Parameters);
-		floatConsoleNavigationBehaviour.AddEntity(new SimpleConsoleNavigationEntity(m_ExperienceButton, m_ExperienceTooltip));
-		floatConsoleNavigationBehaviour.AddEntities(new List<ShipComponentSlotConsoleView> { m_PlasmaDrives, m_VoidShieldGenerator, m_AugerArray, m_ArmorPlating });
+		floatConsoleNavigationBehaviour.AddEntity(new SimpleConsoleNavigationEntity(m_ExperienceButton, ExperienceTooltip));
+		List<ShipComponentSlotConsoleView> list = new List<ShipComponentSlotConsoleView> { m_PlasmaDrives, m_VoidShieldGenerator, m_AugerArray, m_ArmorPlating };
+		list.AddRange(m_ArsenalSlots);
+		floatConsoleNavigationBehaviour.AddEntities(list);
 		floatConsoleNavigationBehaviour.AddEntities(m_WeaponSlots);
 		floatConsoleNavigationBehaviour.AddEntities(additionalEntities);
 		floatConsoleNavigationBehaviour.AddEntities(new List<IFloatConsoleNavigationEntity> { m_UpgradeStructureSlot, m_UpgradeProwRamSlot });
@@ -180,10 +195,15 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 		m_SlotsMap.Add(base.ViewModel.AugerArray, m_AugerArray);
 		m_ArmorPlating.Bind(base.ViewModel.ArmorPlating);
 		m_SlotsMap.Add(base.ViewModel.ArmorPlating, m_ArmorPlating);
-		for (int i = 0; i < m_WeaponSlots.Length; i++)
+		for (int i = 0; i < m_ArsenalSlots.Length; i++)
 		{
-			m_WeaponSlots[i].Bind(base.ViewModel.Weapons[i]);
-			m_SlotsMap.Add(base.ViewModel.Weapons[i], m_WeaponSlots[i]);
+			m_ArsenalSlots[i].Bind(base.ViewModel.Arsenals[i]);
+			m_SlotsMap.Add(base.ViewModel.Arsenals[i], m_ArsenalSlots[i]);
+		}
+		for (int j = 0; j < m_WeaponSlots.Length; j++)
+		{
+			m_WeaponSlots[j].Bind(base.ViewModel.Weapons[j]);
+			m_SlotsMap.Add(base.ViewModel.Weapons[j], m_WeaponSlots[j]);
 		}
 		m_UpgradeStructureSlot.Bind(base.ViewModel.InternalStructure);
 		m_UpgradeProwRamSlot.Bind(base.ViewModel.ProwRam);
@@ -221,7 +241,7 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 	private void HandleTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
-		if (entity == null)
+		if (entity == null || m_SelectorWindowView.IsBinded)
 		{
 			m_HasTooltip.Value = false;
 			return;
@@ -230,8 +250,9 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 		if (monoBehaviour == null)
 		{
 			m_HasTooltip.Value = false;
+			return;
 		}
-		else if (entity is ShipUpgradeProwRamSlotConsoleView shipUpgradeProwRamSlotConsoleView)
+		if (entity is ShipUpgradeProwRamSlotConsoleView shipUpgradeProwRamSlotConsoleView)
 		{
 			m_HasTooltip.Value = shipUpgradeProwRamSlotConsoleView.TooltipTemplate() != null;
 			TooltipConfig tooltipConfig = default(TooltipConfig);
@@ -244,8 +265,9 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 			{
 				monoBehaviour.ShowConsoleTooltip(shipUpgradeProwRamSlotConsoleView.TooltipTemplate(), m_NavigationBehaviour, config);
 			}
+			return;
 		}
-		else if (entity is ShipUpgradeStructureSlotConsoleView shipUpgradeStructureSlotConsoleView)
+		if (entity is ShipUpgradeStructureSlotConsoleView shipUpgradeStructureSlotConsoleView)
 		{
 			m_HasTooltip.Value = shipUpgradeStructureSlotConsoleView.TooltipTemplate() != null;
 			TooltipConfig tooltipConfig = default(TooltipConfig);
@@ -258,8 +280,9 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 			{
 				monoBehaviour.ShowConsoleTooltip(shipUpgradeStructureSlotConsoleView.TooltipTemplate(), m_NavigationBehaviour, config2);
 			}
+			return;
 		}
-		else if (entity is SimpleConsoleNavigationEntity simpleConsoleNavigationEntity)
+		if (entity is SimpleConsoleNavigationEntity simpleConsoleNavigationEntity)
 		{
 			m_HasTooltip.Value = simpleConsoleNavigationEntity.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
@@ -274,13 +297,15 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 					monoBehaviour.ShowConsoleTooltip(simpleConsoleNavigationEntity.TooltipTemplate(), m_NavigationBehaviour);
 				}
 			}
+			return;
 		}
-		else if (entity is IHasTooltipTemplate hasTooltipTemplate)
+		UpdateTooltipConfigs();
+		if (entity is IHasTooltipTemplate hasTooltipTemplate)
 		{
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
@@ -291,17 +316,34 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 			{
 				if (list.Count > 1)
 				{
-					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates());
+					m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
+					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
 				}
 				else
 				{
-					monoBehaviour.ShowConsoleTooltip(list.ElementAt(0), m_NavigationBehaviour);
+					monoBehaviour.ShowConsoleTooltip(list.LastOrDefault(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 				}
 			}
 		}
 		else
 		{
 			m_HasTooltip.Value = false;
+		}
+	}
+
+	private void UpdateTooltipConfigs()
+	{
+		if ((bool)m_StashTooltipPlaces)
+		{
+			m_MainTooltipConfig = m_StashTooltipPlaces.GetMainTooltipConfig(m_MainTooltipConfig);
+			m_CompareTooltipConfig = m_StashTooltipPlaces.GetCompareTooltipConfig(m_CompareTooltipConfig);
+		}
+		else
+		{
+			m_MainTooltipConfig.PriorityPivots = new List<Vector2>
+			{
+				new Vector2(0.5f, 0.5f)
+			};
 		}
 	}
 
@@ -414,7 +456,7 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 				shipComponentSlotVM2.SetPossibleTargetState(state: false);
 			}
 		}
-		GamePad.Instance.PushLayer(m_ChooseSlotInputLayer);
+		AddDisposable(GamePad.Instance.PushLayer(m_ChooseSlotInputLayer));
 		m_SlotsNavigation.FocusOnFirstValidEntity();
 	}
 
@@ -430,5 +472,20 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 		base.ViewModel.ItemToSlotView.ReleaseSlot();
 		Refocus();
 		OnFocusEntity(m_NavigationBehaviour.DeepestNestedFocus);
+	}
+
+	public bool CanOverrideClose()
+	{
+		if (!base.IsBinded)
+		{
+			return false;
+		}
+		if (!m_HasTooltip.Value || !m_ShowTooltip.Value)
+		{
+			return false;
+		}
+		TooltipHelper.HideTooltip();
+		m_ShowTooltip.Value = false;
+		return true;
 	}
 }

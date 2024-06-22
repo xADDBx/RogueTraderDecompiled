@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -101,6 +102,8 @@ public class PartyPCView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber, IFu
 		}
 		UpdateLayout();
 		CheckVisible();
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevCharacter.name, base.ViewModel.SelectPrevCharacter));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextCharacter.name, base.ViewModel.SelectNextCharacter));
 	}
 
 	protected override void DestroyViewImplementation()

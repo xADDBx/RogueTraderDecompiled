@@ -144,6 +144,14 @@ public class BlueprintUISound : BlueprintScriptableObject
 	}
 
 	[Serializable]
+	public class UISoundGroupChanger
+	{
+		public UISound GroupChangerOpen;
+
+		public UISound GroupChangerClose;
+	}
+
+	[Serializable]
 	public class UISoundEncyclopedia
 	{
 		public UISound EncyclopediaOpen;
@@ -391,6 +399,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound MobPing;
 
 		public UISound DialogVotePing;
+
+		public UISound ActionBarAbilityPing;
 	}
 
 	[Serializable]
@@ -423,6 +433,10 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound KoronusRouteButtonHover;
 
 		public UISound KoronusRouteButtonUnHover;
+
+		public UISound CircleArcsShow;
+
+		public UISound CircleArcsHide;
 	}
 
 	[Serializable]
@@ -467,6 +481,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound ButtonsFirstLaunchFxAnimation;
 
 		public UISound ButtonsFxAnimation;
+
+		public UISound MessageOfTheDayShow;
 	}
 
 	[Serializable]
@@ -507,6 +523,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public class UISoundVendor
 	{
 		public UISound Deal;
+
+		public UISound SellCargo;
 	}
 
 	[Serializable]
@@ -551,6 +569,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundSystems Systems;
 
 	public UISoundFormation Formation;
+
+	public UISoundGroupChanger GroupChanger;
 
 	public UISoundEncyclopedia Encyclopedia;
 

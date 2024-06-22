@@ -26,8 +26,8 @@ public class MechanicFeatureGetter : PropertyGetter, PropertyContextAccessor.ITa
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"Has unit {m_FeatureType} feature";
+		return $"{m_Target.Colorized()} has {m_FeatureType} feature";
 	}
 }

@@ -10,14 +10,17 @@ public class FullscreenDebugPass : ScriptableRenderPass<FullscreenDebugPassData>
 {
 	private WaaaghDebugData m_DebugData;
 
+	private readonly RenderGraphDebugResources m_Resources;
+
 	private Material m_Material;
 
 	public override string Name => "FullscreenDebugPass";
 
-	public FullscreenDebugPass(RenderPassEvent evt, WaaaghDebugData debugData, Material debugMaterial)
+	public FullscreenDebugPass(RenderPassEvent evt, WaaaghDebugData debugData, RenderGraphDebugResources resources, Material debugMaterial)
 		: base(evt)
 	{
 		m_DebugData = debugData;
+		m_Resources = resources;
 		m_Material = debugMaterial;
 	}
 
@@ -39,6 +42,7 @@ public class FullscreenDebugPass : ScriptableRenderPass<FullscreenDebugPassData>
 				TextureDesc desc = textureDesc;
 				data.TempTarget = builder.CreateTransientTexture(in desc);
 			}
+			data.FullScreenDebugBuffer = ((m_DebugData.RenderingDebug.OverdrawMode == DebugOverdrawMode.QuadOverdraw) ? builder.ReadComputeBuffer(in m_Resources.FullScreenDebugBuffer) : default(ComputeBufferHandle));
 			data.DebugData = m_DebugData;
 			data.Material = m_Material;
 			builder.AllowPassCulling(value: true);
@@ -47,48 +51,55 @@ public class FullscreenDebugPass : ScriptableRenderPass<FullscreenDebugPassData>
 
 	protected override void Render(FullscreenDebugPassData data, RenderGraphContext context)
 	{
-		if (!(data.DebugData == null) && !(data.Material == null))
+		if (data.DebugData == null || data.Material == null)
 		{
-			switch (data.DebugData.LightingDebug.DebugClustersMode)
-			{
-			case DebugClustersMode.Heatmap:
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("TILES HEATMAP"), MeshTopology.Triangles, 3);
-				break;
-			case DebugClustersMode.HeatmapShadowedLights:
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("CLUSTERS HEATMAP SHADOWS"), MeshTopology.Triangles, 3);
-				break;
-			case DebugClustersMode.DeferredLightingComplexity:
-				context.cmd.SetGlobalTexture(ShaderPropertyId._BlitTexture, data.CameraDepthRT);
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEFERRED LIGHTING COMPLEXITY"), MeshTopology.Triangles, 3);
-				break;
-			}
-			switch (data.DebugData.StencilDebug.StencilDebugType)
-			{
-			case StencilDebugType.Flags:
-				context.cmd.SetRenderTarget(data.TempTarget, data.CameraDepthRT);
-				context.cmd.ClearRenderTarget(clearDepth: false, clearColor: true, default(Color));
-				context.cmd.SetGlobalVector(ShaderPropertyId._BlitScaleBias, new Vector4(1f, 1f, 0f, 0f));
-				context.cmd.SetGlobalFloat("_Debug_StecilRef", (float)m_DebugData.StencilDebug.Flags);
-				context.cmd.SetGlobalFloat("_Debug_StecilReadMask", (float)m_DebugData.StencilDebug.Flags);
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("STENCIL DEBUG"), MeshTopology.Triangles, 3);
-				context.cmd.SetRenderTarget(data.CameraFinalTarget);
-				context.cmd.SetGlobalTexture("_Debug_BlitInput", data.TempTarget);
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEBUG BLIT"), MeshTopology.Triangles, 3);
-				break;
-			case StencilDebugType.Ref:
-				context.cmd.SetRenderTarget(data.TempTarget, data.CameraDepthRT);
-				context.cmd.ClearRenderTarget(clearDepth: false, clearColor: true, default(Color));
-				context.cmd.SetGlobalVector(ShaderPropertyId._BlitScaleBias, new Vector4(1f, 1f, 0f, 0f));
-				context.cmd.SetGlobalFloat("_Debug_StecilRef", m_DebugData.StencilDebug.Ref);
-				context.cmd.SetGlobalFloat("_Debug_StecilReadMask", 255f);
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("STENCIL DEBUG"), MeshTopology.Triangles, 3);
-				context.cmd.SetRenderTarget(data.CameraFinalTarget);
-				context.cmd.SetGlobalTexture("_Debug_BlitInput", data.TempTarget);
-				context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEBUG BLIT"), MeshTopology.Triangles, 3);
-				break;
-			case StencilDebugType.None:
-				break;
-			}
+			return;
+		}
+		if (data.DebugData.RenderingDebug.OverdrawMode == DebugOverdrawMode.QuadOverdraw && data.FullScreenDebugBuffer.IsValid())
+		{
+			context.cmd.SetRandomWriteTarget(1, data.FullScreenDebugBuffer);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("QUAD_OVERDRAW"), MeshTopology.Triangles, 3);
+			return;
+		}
+		switch (data.DebugData.LightingDebug.DebugClustersMode)
+		{
+		case DebugClustersMode.Heatmap:
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("TILES HEATMAP"), MeshTopology.Triangles, 3);
+			break;
+		case DebugClustersMode.HeatmapShadowedLights:
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("CLUSTERS HEATMAP SHADOWS"), MeshTopology.Triangles, 3);
+			break;
+		case DebugClustersMode.DeferredLightingComplexity:
+			context.cmd.SetGlobalTexture(ShaderPropertyId._BlitTexture, data.CameraDepthRT);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEFERRED LIGHTING COMPLEXITY"), MeshTopology.Triangles, 3);
+			break;
+		}
+		switch (data.DebugData.StencilDebug.StencilDebugType)
+		{
+		case StencilDebugType.Flags:
+			context.cmd.SetRenderTarget(data.TempTarget, data.CameraDepthRT);
+			context.cmd.ClearRenderTarget(clearDepth: false, clearColor: true, default(Color));
+			context.cmd.SetGlobalVector(ShaderPropertyId._BlitScaleBias, new Vector4(1f, 1f, 0f, 0f));
+			context.cmd.SetGlobalFloat("_Debug_StecilRef", (float)m_DebugData.StencilDebug.Flags);
+			context.cmd.SetGlobalFloat("_Debug_StecilReadMask", (float)m_DebugData.StencilDebug.Flags);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("STENCIL DEBUG"), MeshTopology.Triangles, 3);
+			context.cmd.SetRenderTarget(data.CameraFinalTarget);
+			context.cmd.SetGlobalTexture("_Debug_BlitInput", data.TempTarget);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEBUG BLIT"), MeshTopology.Triangles, 3);
+			break;
+		case StencilDebugType.Ref:
+			context.cmd.SetRenderTarget(data.TempTarget, data.CameraDepthRT);
+			context.cmd.ClearRenderTarget(clearDepth: false, clearColor: true, default(Color));
+			context.cmd.SetGlobalVector(ShaderPropertyId._BlitScaleBias, new Vector4(1f, 1f, 0f, 0f));
+			context.cmd.SetGlobalFloat("_Debug_StecilRef", m_DebugData.StencilDebug.Ref);
+			context.cmd.SetGlobalFloat("_Debug_StecilReadMask", 255f);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("STENCIL DEBUG"), MeshTopology.Triangles, 3);
+			context.cmd.SetRenderTarget(data.CameraFinalTarget);
+			context.cmd.SetGlobalTexture("_Debug_BlitInput", data.TempTarget);
+			context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, data.Material.FindPass("DEBUG BLIT"), MeshTopology.Triangles, 3);
+			break;
+		case StencilDebugType.None:
+			break;
 		}
 	}
 }

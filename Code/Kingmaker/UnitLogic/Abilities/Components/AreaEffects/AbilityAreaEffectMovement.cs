@@ -1,9 +1,9 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
-using Owlcat.Runtime.Visual.FogOfWar;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.AreaEffects;

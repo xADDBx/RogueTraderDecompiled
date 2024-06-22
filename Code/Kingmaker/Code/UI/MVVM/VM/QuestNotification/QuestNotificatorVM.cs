@@ -184,7 +184,7 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 	{
 	}
 
-	public void HandleOpenShipCustomization()
+	public void HandleOpenShipCustomization(bool force = false)
 	{
 	}
 

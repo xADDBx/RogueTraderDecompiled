@@ -15,11 +15,14 @@ public class UIFeature : FeatureUIData
 
 	public FeatureGroup Type;
 
+	public TalentIconInfo TalentIconsInfo;
+
 	public BlueprintFeatureSelection_Obsolete Source;
 
 	public UIFeature(BlueprintFeature feature, FeatureParam param = null, BlueprintFeatureSelection_Obsolete source = null)
 		: base(feature, param)
 	{
+		TalentIconsInfo = feature.TalentIconInfo;
 		if (source != feature)
 		{
 			Source = source;

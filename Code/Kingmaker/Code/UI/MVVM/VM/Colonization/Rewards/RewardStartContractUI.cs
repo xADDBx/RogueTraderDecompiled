@@ -38,7 +38,7 @@ public class RewardStartContractUI : RewardUI<RewardStartContract>
 	{
 		if (base.Reward.Objective == null)
 		{
-			PFLog.System.Error("RewardStartContract.GetUIText - Objective is null!");
+			PFLog.UI.Error("RewardStartContract.GetUIText - Objective is null!");
 			return null;
 		}
 		return string.Format(UIStrings.Instance.ColonyProjectsRewards.RewardStartContract, base.Reward.Objective.Title.Text);

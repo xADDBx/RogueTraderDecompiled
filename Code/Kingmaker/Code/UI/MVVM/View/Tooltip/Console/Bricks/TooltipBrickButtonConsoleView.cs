@@ -47,10 +47,12 @@ public class TooltipBrickButtonConsoleView : TooltipBrickButtonView, IConsoleToo
 
 	public void AddInputTo(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, GridConsoleNavigationBehaviour ownerBehaviour)
 	{
-		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnClick();
-		}, 8, m_IsFocused), UIStrings.Instance.CommonTexts.Accept));
+		}, 8, m_IsFocused);
+		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Accept));
+		AddDisposable(inputBindStruct);
 	}
 
 	public void UpdateTooltipBrick()

@@ -22,7 +22,7 @@ public class AddVendorDiscount : GameAction
 		return $"Add {m_Discount} to all deals for {m_Faction}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		VendorLogic.AddDiscount(m_Faction, m_Discount);
 	}

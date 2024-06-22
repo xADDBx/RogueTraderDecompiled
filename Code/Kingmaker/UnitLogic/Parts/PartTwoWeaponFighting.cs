@@ -75,7 +75,7 @@ public class PartTwoWeaponFighting : UnitPart, ITurnStartHandler<EntitySubscribe
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		ResetAttacks();
 	}

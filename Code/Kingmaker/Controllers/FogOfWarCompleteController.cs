@@ -1,5 +1,5 @@
+using Kingmaker.Controllers.FogOfWar.Culling;
 using Kingmaker.Controllers.Interfaces;
-using Owlcat.Runtime.Visual.FogOfWar.Culling;
 using UnityEngine;
 
 namespace Kingmaker.Controllers;

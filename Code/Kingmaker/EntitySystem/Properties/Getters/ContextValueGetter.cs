@@ -11,7 +11,7 @@ public class ContextValueGetter : MechanicEntityPropertyGetter, PropertyContextA
 {
 	public ContextValue Value;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return Value.ToString();
 	}

@@ -13,8 +13,8 @@ public class AttackInRoundCountGetter : UnitPropertyGetter
 		return base.CurrentEntity.CombatState.AttackInRoundCount;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "AttackInRoundCount";
+		return "Count of attacks made by " + FormulaTargetScope.Current + " this round";
 	}
 }

@@ -40,7 +40,7 @@ public class CheckIsRighteousFuryGetter : PropertyGetter, PropertyContextAccesso
 		throw new ElementLogicException(this);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Is Righteous Fury";
 	}

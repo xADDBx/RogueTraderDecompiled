@@ -23,14 +23,9 @@ public static class PropertyCalculatorComponentHelper
 			if (componentsArray[i] is PropertyCalculatorComponent propertyCalculatorComponent && propertyCalculatorComponent.Name == propertyName)
 			{
 				PropertyContext context2 = ((ContextData<PropertyContextData>.Current == null) ? new PropertyContext(currentEntity, null, null, context) : ContextData<PropertyContextData>.Current.Context.WithCurrentEntity(currentEntity).WithContext(context));
-				(bool, int) valueSafe = propertyCalculatorComponent.GetValueSafe(context2);
-				if (!valueSafe.Item1)
-				{
-					calculated = false;
-					return 0;
-				}
+				int value = propertyCalculatorComponent.GetValue(context2);
 				calculated = true;
-				return valueSafe.Item2;
+				return value;
 			}
 		}
 		calculated = false;

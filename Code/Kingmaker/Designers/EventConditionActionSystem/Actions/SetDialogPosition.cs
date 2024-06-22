@@ -17,7 +17,7 @@ public class SetDialogPosition : GameAction
 		return $"Set Dialog Position ({Position})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.DialogController.DialogPosition = Position.GetValue();
 	}

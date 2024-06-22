@@ -16,7 +16,7 @@ public class PlayCustomMusic : GameAction
 	[AkEventReference]
 	public string MusicEventStop;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 	}
 

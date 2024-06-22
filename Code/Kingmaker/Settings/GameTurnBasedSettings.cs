@@ -19,6 +19,8 @@ public class GameTurnBasedSettings
 
 	public readonly SettingsEntityBool FastPartyCast;
 
+	public readonly SettingsEntityBool DisableActionCamera;
+
 	public readonly SettingsEntityFloat TimeScaleInPlayerTurn;
 
 	public readonly SettingsEntityFloat TimeScaleInNonPlayerTurn;
@@ -32,6 +34,7 @@ public class GameTurnBasedSettings
 		SpeedUpMode = new SettingsEntityEnum<SpeedUpMode>(settingsController, "speed-up-mode-2", defaultValues.SpeedUpMode);
 		FastMovement = new SettingsEntityBool(settingsController, "fast-movement-2", defaultValues.FastMovement);
 		FastPartyCast = new SettingsEntityBool(settingsController, "fast-party-cast-2", defaultValues.FastPartyCast);
+		DisableActionCamera = new SettingsEntityBool(settingsController, "disable-action-camera", defaultValues.DisableActionCamera);
 		TimeScaleInPlayerTurn = new SettingsEntityFloat(settingsController, "time-scale-player-2", defaultValues.TimeScaleInPlayerTurn);
 		TimeScaleInNonPlayerTurn = new SettingsEntityFloat(settingsController, "time-scale-non-player-2", defaultValues.TimeScaleInNonPlayerTurn);
 		AutoSelectWeaponAbility = new SettingsEntityBool(settingsController, "auto-select-weapon-ability", defaultValues.AutoSelectWeaponAbility);
@@ -45,6 +48,7 @@ public class GameTurnBasedSettings
 			SpeedUpMode = SpeedUpMode,
 			FastMovement = FastMovement,
 			FastPartyCast = FastPartyCast,
+			DisableActionCamera = DisableActionCamera,
 			TimeScaleInPlayerTurn = TimeScaleInPlayerTurn,
 			TimeScaleInNonPlayerTurn = TimeScaleInNonPlayerTurn
 		};
@@ -55,6 +59,7 @@ public class GameTurnBasedSettings
 		SpeedUpMode.SetValueAndConfirm(values.SpeedUpMode);
 		FastMovement.SetValueAndConfirm(values.FastMovement);
 		FastPartyCast.SetValueAndConfirm(values.FastPartyCast);
+		DisableActionCamera.SetValueAndConfirm(values.DisableActionCamera);
 		TimeScaleInPlayerTurn.SetValueAndConfirm(values.TimeScaleInPlayerTurn);
 		TimeScaleInNonPlayerTurn.SetValueAndConfirm(values.TimeScaleInNonPlayerTurn);
 	}

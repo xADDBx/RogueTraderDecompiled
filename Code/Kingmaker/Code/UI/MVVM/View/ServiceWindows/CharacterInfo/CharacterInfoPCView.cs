@@ -100,6 +100,11 @@ public class CharacterInfoPCView : ViewBase<CharacterInfoVM>
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		HideWindow();
+	}
+
 	protected virtual void OnProgressionWindowStateChange(UnitProgressionWindowState state)
 	{
 	}
@@ -143,10 +148,5 @@ public class CharacterInfoPCView : ViewBase<CharacterInfoVM>
 			h.HandleFullScreenUiChangedWorkaround(state: false, FullScreenUIType.CharacterScreen);
 		});
 		Game.Instance.RequestPauseUi(isPaused: false);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		HideWindow();
 	}
 }

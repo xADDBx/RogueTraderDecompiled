@@ -13,33 +13,61 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 	[SerializeField]
 	private uint m_SteamId;
 
+	[SerializeField]
+	private string m_ShopLink = "https://store.steampowered.com/app/2186680/Warhammer_40000_Rogue_Trader/";
+
 	public uint SteamId => m_SteamId;
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.Steam;
 
+	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {SteamId}).";
+
 	public override IDLCStatus GetStatus()
 	{
-		bool flag = false;
+		IDLCStatus result = null;
 		try
 		{
-			if (!flag && SteamManager.Initialized && SteamApps.BIsDlcInstalled(new AppId_t(SteamId)))
+			if (SteamManager.Initialized && SteamApps.BIsDlcInstalled(new AppId_t(SteamId)))
 			{
+				result = DLCStatus.Available;
 				PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Steam (ID {SteamId}).");
-				flag = true;
 			}
-			if (!flag)
+			else
 			{
 				PFLog.System.Log($"DLC {base.OwnerBlueprint} is not available through Steam (ID {SteamId}).");
 			}
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex, $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {SteamId}).");
+			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
-		if (!flag)
+		return result;
+	}
+
+	public override bool OpenShop()
+	{
+		if (!IsSuitable)
 		{
-			return null;
+			return false;
 		}
-		return DLCStatus.Available;
+		bool flag = false;
+		try
+		{
+			if (SteamManager.Initialized && SteamUtils.IsOverlayEnabled())
+			{
+				SteamFriends.ActivateGameOverlayToStore(new AppId_t(SteamId), EOverlayToStoreFlag.k_EOverlayToStoreFlag_None);
+				flag = true;
+			}
+			if (!flag)
+			{
+				Application.OpenURL(m_ShopLink);
+				flag = true;
+			}
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Exception(ex, ExceptionMessage);
+		}
+		return flag;
 	}
 }

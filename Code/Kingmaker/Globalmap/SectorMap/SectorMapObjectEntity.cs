@@ -10,6 +10,7 @@ using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Globalmap.Blueprints.SectorMap;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
@@ -41,15 +42,17 @@ public class SectorMapObjectEntity : MechanicEntity<BlueprintSectorMapPoint>, IS
 
 	public BlueprintStarSystemMap StarSystemArea => (base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit.Get() as BlueprintStarSystemMap;
 
-	public List<BlueprintPlanet> Planets => ((base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit?.Get() as BlueprintStarSystemMap)?.Planets.Dereference().ToList();
+	public List<BlueprintPlanet> Planets => StarSystemArea?.Planets.Dereference().ToList();
 
-	public List<BlueprintStar> Stars => ((base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit?.Get() as BlueprintStarSystemMap)?.Stars.Select((BlueprintStarSystemMap.StarAndName star) => star.Star.Get()).ToList();
+	public List<BlueprintStar> Stars => StarSystemArea?.Stars.Select((BlueprintStarSystemMap.StarAndName star) => star.Star.Get()).ToList();
 
-	public List<BlueprintArtificialObject> OtherObjects => ((base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit?.Get() as BlueprintStarSystemMap)?.OtherObjects.Dereference().ToList();
+	public List<BlueprintArtificialObject> OtherObjects => StarSystemArea?.OtherObjects.Dereference().ToList();
 
-	public Sprite StarSystemSprite => ((base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit?.Get() as BlueprintStarSystemMap)?.GetSystemScreenshot();
+	public Sprite StarSystemSprite => StarSystemArea?.GetSystemScreenshot();
 
-	public List<BlueprintAnomaly> Anomalies => ((base.Blueprint as BlueprintSectorMapPointStarSystem)?.StarSystemToTransit?.Get() as BlueprintStarSystemMap)?.AnomaliesResearchProgress.Select((AnomalyToCondition a) => a.Anomaly.Get()).ToList();
+	public List<BlueprintAnomaly> Anomalies => StarSystemArea?.AnomaliesResearchProgress?.Select((AnomalyToCondition a) => a.Anomaly.Get()).ToList();
+
+	public List<BlueprintAnomaly> AnomaliesForGlobalMap => StarSystemArea?.Anomalies?.Dereference()?.Where((BlueprintAnomaly anomaly) => anomaly.ShowOnGlobalMap).EmptyIfNull().ToList();
 
 	protected SectorMapObjectEntity(JsonConstructorMark _)
 		: base(_)

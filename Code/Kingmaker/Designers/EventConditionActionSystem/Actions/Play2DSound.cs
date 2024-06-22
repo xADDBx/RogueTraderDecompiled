@@ -21,11 +21,11 @@ public class Play2DSound : GameAction
 	[Tooltip("Sets Ak switch on player's Race")]
 	public bool SetRace;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (SoundName == "")
 		{
-			PFLog.Default.Error("Sound name is Empty. Can't play sound.", this);
+			Element.LogError(this, "Sound name is Empty. Can't play sound.");
 			return;
 		}
 		GameObject gameObject = SoundState.Get2DSoundObject();

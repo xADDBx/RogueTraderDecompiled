@@ -26,7 +26,7 @@ public class UnhideStarSystem : GameAction
 		return "Unhide " + SectorMapPoint.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		List<SectorMapObjectEntity> all = Game.Instance.State.SectorMapObjects.All;
 		SectorMapObjectEntity sectorMapObjectEntity = all.FirstOrDefault((SectorMapObjectEntity obj) => obj.Blueprint == SectorMapPoint);

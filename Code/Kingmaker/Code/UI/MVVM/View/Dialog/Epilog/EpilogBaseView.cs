@@ -92,6 +92,11 @@ public class EpilogBaseView : ViewBase<EpilogVM>, IInitializable
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	protected virtual void OnAnswersChanged()
 	{
 	}
@@ -159,11 +164,6 @@ public class EpilogBaseView : ViewBase<EpilogVM>, IInitializable
 			base.gameObject.SetActive(value: false);
 		});
 		UISounds.Instance.Sounds.Dialogue.BookClose.Play();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 
 	protected virtual void Confirm()

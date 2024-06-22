@@ -50,7 +50,7 @@ public class CountableFlag : IMemoryPackable<CountableFlag>, IMemoryPackFormatte
 
 	public void Release()
 	{
-		if (m_Count < 1)
+		if (Application.isEditor && m_Count < 1)
 		{
 			PFLog.Default.Error("Can't release countable flag: no one retain it");
 		}

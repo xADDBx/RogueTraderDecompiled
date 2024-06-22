@@ -44,6 +44,8 @@ internal class DebugDisplaySettingsRendering : IDebugDisplaySettingsData
 			name = "Debug Stencil Ref",
 			tooltip = "Stencil Ref"
 		};
+
+		public static string QuadOverdrawHelpMessage = "\r\nHighlights gpu quads running multiple fragment shaders\r\n\r\nThis is mainly caused by small or thin triangles.\r\nAnother reason is suboptimal object sorting.\r\nUse LODs to reduce the amount of overdraw when objects are far away.\r\n\r\nThis tool is useful for checking isolated objects and finding areas of the mesh that have too high triangle density.\r\n\r\nMax Quad Cost - Number of fragment shader executions\r\n\r\nObject Filter - Type of objects to draw\r\n\r\nDepth Test\r\n    - Disabled (recommended)\r\n      Xray-like behaviour. \r\n      Useful for inspecting isolated objects\r\n      Not represents actual behaviour in runtime\r\n    - Enabled\r\n      Useful for reducing noise while inspecting scene\r\n      Closest to actual runtime behaviour. \r\n      Cost depends on current camera view and object sorting settings. \r\n    - Pre Pass\r\n      Useful for reducing noise while inspecting surfaces\r\n      Not represents actual behaviour in runtime\r\n";
 	}
 
 	public static class WidgetFactory
@@ -68,18 +70,98 @@ internal class DebugDisplaySettingsRendering : IDebugDisplaySettingsData
 
 		internal static DebugUI.Widget CreateOverdrawMode(DebugDisplaySettingsRendering data)
 		{
-			return new DebugUI.EnumField
+			return new DebugUI.VBox
 			{
-				nameAndTooltip = Strings.OverdrawMode,
-				autoEnum = typeof(DebugOverdrawMode),
-				getter = () => (int)data.OverdrawMode,
-				setter = delegate
+				children = 
 				{
-				},
-				getIndex = () => (int)data.OverdrawMode,
-				setIndex = delegate(int value)
-				{
-					data.OverdrawMode = (DebugOverdrawMode)value;
+					(DebugUI.Widget)new DebugUI.EnumField
+					{
+						nameAndTooltip = Strings.OverdrawMode,
+						autoEnum = typeof(DebugOverdrawMode),
+						getter = () => (int)data.OverdrawMode,
+						setter = delegate
+						{
+						},
+						getIndex = () => (int)data.OverdrawMode,
+						setIndex = delegate(int value)
+						{
+							data.OverdrawMode = (DebugOverdrawMode)value;
+						}
+					},
+					(DebugUI.Widget)new DebugUI.Container
+					{
+						isHiddenCallback = () => data.OverdrawMode != DebugOverdrawMode.QuadOverdraw,
+						children = 
+						{
+							(DebugUI.Widget)new DebugUI.IntField
+							{
+								displayName = "Max Quad Cost",
+								tooltip = null,
+								getter = () => data.QuadOverdrawSettings.MaxQuadCost,
+								setter = delegate(int value)
+								{
+									data.QuadOverdrawSettings.MaxQuadCost = value;
+								},
+								min = () => 0,
+								max = () => 100
+							},
+							(DebugUI.Widget)new DebugUI.EnumField
+							{
+								displayName = "Depth Test",
+								autoEnum = typeof(QuadOverdrawDepthTestMode),
+								getter = () => (int)data.QuadOverdrawSettings.DepthTestMode,
+								setter = delegate
+								{
+								},
+								getIndex = () => (int)data.QuadOverdrawSettings.DepthTestMode,
+								setIndex = delegate(int value)
+								{
+									data.QuadOverdrawSettings.DepthTestMode = (QuadOverdrawDepthTestMode)value;
+								}
+							},
+							(DebugUI.Widget)new DebugUI.BoolField
+							{
+								displayName = "Depth Helper Plane Enabled",
+								tooltip = null,
+								isHiddenCallback = () => data.QuadOverdrawSettings.DepthTestMode != QuadOverdrawDepthTestMode.Enabled,
+								getter = () => data.QuadOverdrawSettings.DepthHelperPlaneEneabled,
+								setter = delegate(bool value)
+								{
+									data.QuadOverdrawSettings.DepthHelperPlaneEneabled = value;
+								}
+							},
+							(DebugUI.Widget)new DebugUI.FloatField
+							{
+								displayName = "Depth Helper Plane Level",
+								tooltip = null,
+								isHiddenCallback = () => data.QuadOverdrawSettings.DepthTestMode != QuadOverdrawDepthTestMode.Enabled,
+								getter = () => data.QuadOverdrawSettings.DepthHelperPlaneLevel,
+								setter = delegate(float value)
+								{
+									data.QuadOverdrawSettings.DepthHelperPlaneLevel = value;
+								}
+							},
+							(DebugUI.Widget)new DebugUI.EnumField
+							{
+								displayName = "Object Filter",
+								autoEnum = typeof(QuadOverdrawObjectFilter),
+								getter = () => (int)data.QuadOverdrawSettings.ObjectFilter,
+								setter = delegate
+								{
+								},
+								getIndex = () => (int)data.QuadOverdrawSettings.ObjectFilter,
+								setIndex = delegate(int value)
+								{
+									data.QuadOverdrawSettings.ObjectFilter = (QuadOverdrawObjectFilter)value;
+								}
+							},
+							(DebugUI.Widget)new DebugUI.MessageBox
+							{
+								displayName = Strings.QuadOverdrawHelpMessage,
+								style = DebugUI.MessageBox.Style.Info
+							}
+						}
+					}
 				}
 			};
 		}
@@ -201,6 +283,18 @@ internal class DebugDisplaySettingsRendering : IDebugDisplaySettingsData
 		internal set
 		{
 			m_DebugData.RenderingDebug.OverdrawMode = value;
+		}
+	}
+
+	public QuadOverdrawSettings QuadOverdrawSettings
+	{
+		get
+		{
+			return m_DebugData.RenderingDebug.QuadOverdrawSettings;
+		}
+		internal set
+		{
+			m_DebugData.RenderingDebug.QuadOverdrawSettings = value;
 		}
 	}
 

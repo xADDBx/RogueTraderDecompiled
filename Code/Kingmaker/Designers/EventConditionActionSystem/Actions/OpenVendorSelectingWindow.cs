@@ -36,7 +36,7 @@ public class OpenVendorSelectingWindow : GameAction
 		return "Open vendor selecting window";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		List<MechanicEntity> vendors = null;
 		if (Vendors != null)

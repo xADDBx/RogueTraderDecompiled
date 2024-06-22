@@ -19,7 +19,7 @@ public class NamedParameterBlueprint : BlueprintEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find blueprint " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find blueprint {0} in context parameters", Parameter);
 		}
 		if (value is string)
 		{

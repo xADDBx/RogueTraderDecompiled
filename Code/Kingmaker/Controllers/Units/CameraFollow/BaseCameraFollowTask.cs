@@ -6,6 +6,8 @@ namespace Kingmaker.Controllers.Units.CameraFollow;
 
 public abstract class BaseCameraFollowTask : ICameraFollowTask
 {
+	public CameraTaskType Type;
+
 	public CameraFollowTaskParamsEntry TaskParams { get; }
 
 	public TargetWrapper Owner { get; protected set; }

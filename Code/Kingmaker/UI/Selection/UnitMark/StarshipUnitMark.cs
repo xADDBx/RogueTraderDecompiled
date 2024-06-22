@@ -23,7 +23,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Selection.UnitMark;
 
-public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitCommandActHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitDirectHoverUIHandler, IAbilityTargetSelectionUIHandler, INetPingEntity
+public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitCommandActHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitDirectHoverUIHandler, INetPingEntity
 {
 	[SerializeField]
 	private Transform m_Container;
@@ -114,7 +114,7 @@ public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubsc
 		}
 	}
 
-	public void HandleAbilityTargetSelectionStart(AbilityData ability)
+	public override void HandleAbilityTargetSelectionStart(AbilityData ability)
 	{
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
 		if (m_StarshipEntity != playerShip)
@@ -126,7 +126,7 @@ public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubsc
 		}
 	}
 
-	public void HandleAbilityTargetSelectionEnd(AbilityData ability)
+	public override void HandleAbilityTargetSelectionEnd(AbilityData ability)
 	{
 		CurrentShipDecalData.ClearHighlightShieldsHit();
 	}
@@ -239,18 +239,38 @@ public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubsc
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		if (entity == base.Unit)
+		if (entity != base.Unit)
 		{
-			m_PingTween?.Kill();
-			ShipDecalData decal = GetShipDecalData(m_StarshipEntity.GetOccupiedNodes().Count(), pingDecals: true);
-			decal.Or(null)?.gameObject.SetActive(value: true);
-			m_PingTween = DOTween.To(() => 1f, delegate
+			return;
+		}
+		m_PingTween?.Kill();
+		ShipDecalData decal = GetShipDecalData(m_StarshipEntity.GetOccupiedNodes().Count(), pingDecals: true);
+		int coopColorPingMaterial = player.Index - 1;
+		decal.Or(null)?.SetCoopColorPingMaterial(coopColorPingMaterial);
+		decal.Or(null)?.gameObject.SetActive(value: true);
+		EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+		{
+			h.HandleAddPingEntityMarker(entity);
+		});
+		m_PingTween = DOTween.To(() => 1f, delegate
+		{
+		}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+		{
+			decal.Or(null)?.gameObject.SetActive(value: false);
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
 			{
-			}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+				h.HandleRemovePingEntityMarker(entity);
+			});
+			m_PingTween = null;
+		})
+			.OnKill(delegate
 			{
 				decal.Or(null)?.gameObject.SetActive(value: false);
+				EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+				{
+					h.HandleRemovePingEntityMarker(entity);
+				});
 				m_PingTween = null;
 			});
-		}
 	}
 }

@@ -16,7 +16,9 @@ public class UnitMovementAgentContinuous : UnitMovementAgentBase
 {
 	public const float Epsilon = 0.0001f;
 
-	public const float AccelerationThreshold = 0.7f;
+	public const float AccelerationToRunThreshold = 0.7f;
+
+	public const float AccelerationToSprintThreshold = 0.95f;
 
 	private bool m_EnableSlidingAssist;
 
@@ -27,6 +29,14 @@ public class UnitMovementAgentContinuous : UnitMovementAgentBase
 	private const float SlidingAngleLimit = 90f;
 
 	private CustomGridNodeBase m_CurrentNode;
+
+	public bool EnableSlidingAssist => m_EnableSlidingAssist;
+
+	public float CurrentSlidingAngle => m_CurrentSlidingAngle;
+
+	public int SlidingAssistDirection => m_SlidingAssistDirection;
+
+	public CustomGridNodeBase CurrentNode => m_CurrentNode;
 
 	public override bool WantsToMove => DirectionFromControllerMagnitude > 0.0001f;
 
@@ -86,7 +96,7 @@ public class UnitMovementAgentContinuous : UnitMovementAgentBase
 					{
 						bool firstTick = m_FirstTick;
 						m_FirstTick = false;
-						float num = base.MaxSpeedOverride ?? GetSpeedByControllerStickDeflection(DirectionFromControllerMagnitude);
+						float num = base.MaxSpeedOverride ?? GetSpeedByControllerStickDeflection(DirectionFromControllerMagnitude, base.MaxSpeed);
 						if (firstTick)
 						{
 							m_Speed = num;
@@ -104,7 +114,7 @@ public class UnitMovementAgentContinuous : UnitMovementAgentBase
 						}
 						if (abstractUnitEntity != null && m_EnableSlidingAssist)
 						{
-							UpdateSliding(Position, vector2, deltaTime);
+							UpdateSliding(Position, vector2, deltaTime, ref m_SlidingAssistDirection, ref m_CurrentSlidingAngle);
 							vector2 = vector2.RotateAroundPoint(Vector2.zero, m_CurrentSlidingAngle);
 						}
 						vector2 = Vector2.Lerp(directionFromController, vector2, 0.5f);
@@ -140,27 +150,32 @@ public class UnitMovementAgentContinuous : UnitMovementAgentBase
 		Stop();
 	}
 
-	private float GetSpeedByControllerStickDeflection(float stickDeflection)
+	public static float GetSpeedByControllerStickDeflection(float stickDeflection, float maxSpeed)
 	{
-		if (stickDeflection > 0.7f)
+		if (stickDeflection > 0.95f)
 		{
-			float a = base.MaxSpeed - 15f * (1f - DirectionFromControllerMagnitude);
-			return Mathf.Max(a, 5f);
+			return Math.Abs(maxSpeed - 1.5f);
 		}
-		return base.MaxSpeed * (1f + 2f * DirectionFromControllerMagnitude);
+		if (stickDeflection < 0.7f)
+		{
+			return Math.Abs(maxSpeed * (1f + 2f * stickDeflection));
+		}
+		maxSpeed -= 15f * (0.85f - stickDeflection);
+		maxSpeed = Mathf.Max(maxSpeed, 5f);
+		return maxSpeed;
 	}
 
-	private void UpdateSliding(Vector3 position, Vector2 desiredDir, float deltaTime)
+	public static void UpdateSliding(Vector3 position, Vector2 desiredDir, float deltaTime, ref int slidingAssistDirection, ref float currentSlidingAngle)
 	{
-		if (m_SlidingAssistDirection == 0)
+		if (slidingAssistDirection == 0)
 		{
 			GraphNode node = ObstacleAnalyzer.GetNearestNode(position).node;
 			Vector3 end = position + desiredDir.RotateAroundPoint(Vector2.zero, -90f).To3D().normalized;
 			Vector3 end2 = position + desiredDir.RotateAroundPoint(Vector2.zero, 90f).To3D().normalized;
 			Linecast.LinecastGrid(node.Graph, position, end, node, out var hit, ObstacleAnalyzer.DefaultXZConstraint, ref Linecast.HasConnectionTransition.Instance);
 			Linecast.LinecastGrid(node.Graph, position, end2, node, out var hit2, ObstacleAnalyzer.DefaultXZConstraint, ref Linecast.HasConnectionTransition.Instance);
-			m_SlidingAssistDirection = ((!(hit.distance > hit2.distance)) ? 1 : (-1));
+			slidingAssistDirection = ((!(hit.distance > hit2.distance)) ? 1 : (-1));
 		}
-		m_CurrentSlidingAngle = Mathf.Clamp(m_CurrentSlidingAngle + deltaTime * (float)m_SlidingAssistDirection * 45f, -90f, 90f);
+		currentSlidingAngle = Mathf.Clamp(currentSlidingAngle + deltaTime * (float)slidingAssistDirection * 45f, -90f, 90f);
 	}
 }

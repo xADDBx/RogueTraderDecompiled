@@ -42,11 +42,6 @@ public class CareerPathSelectionsSummaryConsoleView : BaseCareerPathSelectionTab
 		base.ViewModel.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
-	{
-		base.ViewModel.SetFirstSelectableRankEntry();
-	}
-
 	public GridConsoleNavigationBehaviour GetNavigationBehaviour()
 	{
 		return m_InfoView.GetNavigationBehaviour();

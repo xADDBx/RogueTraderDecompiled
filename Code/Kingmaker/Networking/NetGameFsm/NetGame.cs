@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Networking.NetGameFsm.States;
+using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Tools;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -72,6 +73,10 @@ public class NetGame : INetGame
 	public bool NetRolesShowed { get; set; } = true;
 
 
+	public JoinableUserTypes CurrentJoinableUserType { get; set; }
+
+	public InvitableUserTypes CurrentInvitableUserType { get; set; }
+
 	public NetGame()
 	{
 		m_StateMachine = InitStateMachine(this);
@@ -113,11 +118,13 @@ public class NetGame : INetGame
 			.Permit(Trigger.ToStopPlaying, State.StopPlaying)
 			.SetStateFactory((object _) => new InLobbyState(PhotonManager.Instance));
 		stateMachine.Configure(State.UploadSaveAndStartLoading, "style=filled fillcolor=skyblue1").Permit(Trigger.ToStartPlaying, State.Playing, "color=\"green3\" style=\"bold\"").Permit(Trigger.ToStopPlaying, State.StopPlaying)
+			.Permit(Trigger.ToDownloadSaveAndLoading, State.DownloadSaveAndLoading)
 			.Ignore(Trigger.ToPlatformInitializing)
 			.SetStateFactory((object payload) => new UploadAndStartLoadingState(payload as UploadAndStartLoadingState.Args, netGame));
 		stateMachine.Configure(State.DownloadSaveAndLoading, "style=filled fillcolor=skyblue1").Permit(Trigger.ToStartPlaying, State.Playing, "color=\"green3\" style=\"bold\"").Permit(Trigger.ToStopPlaying, State.StopPlaying)
+			.Permit(Trigger.ToDownloadSaveAndLoading, State.DownloadSaveAndLoading)
 			.Ignore(Trigger.ToPlatformInitializing)
-			.SetStateFactory((object saveFromPlayer) => new SaveReceivingState((PhotonActorNumber)saveFromPlayer, netGame));
+			.SetStateFactory((object args) => new DownloadSaveAndLoadingState((DownloadSaveAndLoadingState.Args)args, netGame));
 		stateMachine.Configure(State.Playing, "shape=box style=filled fillcolor=yellow").Permit(Trigger.ToDownloadSaveAndLoading, State.DownloadSaveAndLoading).Permit(Trigger.UploadSaveAndStart, State.UploadSaveAndStartLoading)
 			.Permit(Trigger.ToStopPlaying, State.StopPlaying)
 			.SetStateFactory((object _) => new PlayingState(PhotonManager.Instance));
@@ -176,7 +183,7 @@ public class NetGame : INetGame
 
 	public void OnLobbyCreationFailed()
 	{
-		StopPlaying(shouldLeaveLobby: true);
+		StopPlaying(shouldLeaveLobby: true, "OnLobbyCreationFailed");
 	}
 
 	public void Join(string roomName)
@@ -191,12 +198,40 @@ public class NetGame : INetGame
 
 	public void OnLobbyJoinFailed()
 	{
-		StopPlaying(shouldLeaveLobby: true);
+		StopPlaying(shouldLeaveLobby: true, "OnLobbyJoinFailed");
 	}
 
 	public void OnSaveReceived(PhotonActorNumber saveFromPlayer)
 	{
-		m_StateMachine.Fire(Trigger.ToDownloadSaveAndLoading, saveFromPlayer);
+		PFLog.Net.Log($"[NetGame.OnSaveReceived] from {saveFromPlayer}, state={CurrentState}");
+		bool flag = true;
+		bool flag2 = false;
+		if (CurrentState == State.UploadSaveAndStartLoading)
+		{
+			flag = PhotonManager.Instance.LocalClientId > saveFromPlayer.ActorNumber;
+			flag2 = true;
+			PFLog.Net.Log($"[NetGame.OnSaveReceived] upload will be stopped, because get save from {saveFromPlayer}");
+		}
+		else if (CurrentState == State.DownloadSaveAndLoading)
+		{
+			flag = PhotonManager.Save.SaveFromPlayer.ActorNumber > saveFromPlayer.ActorNumber;
+			flag2 = true;
+			PFLog.Net.Log($"[NetGame.OnSaveReceived] download will be stopped, because get save from {saveFromPlayer}");
+		}
+		if (flag)
+		{
+			FakeLoadingProcessCoroutine transitionLoadingProcess = null;
+			if (flag2)
+			{
+				LoadingProcess.Instance.StopAll();
+				transitionLoadingProcess = new FakeLoadingProcessCoroutine();
+			}
+			m_StateMachine.Fire(Trigger.ToDownloadSaveAndLoading, new DownloadSaveAndLoadingState.Args(saveFromPlayer, transitionLoadingProcess));
+		}
+		else
+		{
+			PFLog.Net.Log($"[NetGame.OnSaveReceived] ignore save from {saveFromPlayer}");
+		}
 	}
 
 	public bool StartGame(SaveInfoKey saveInfoKey, [CanBeNull] Action callback = null)
@@ -224,8 +259,9 @@ public class NetGame : INetGame
 		m_StateMachine.Fire(Trigger.ToStartPlaying);
 	}
 
-	public void StopPlaying(bool shouldLeaveLobby)
+	public void StopPlaying(bool shouldLeaveLobby, string reason)
 	{
+		PFLog.Net.Log($"[NetGame.StopPlaying] shouldLeave={shouldLeaveLobby}, reason={reason}");
 		m_StateMachine.Fire(Trigger.ToStopPlaying, shouldLeaveLobby);
 	}
 

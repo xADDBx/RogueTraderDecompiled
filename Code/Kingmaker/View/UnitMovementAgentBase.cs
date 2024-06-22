@@ -36,12 +36,16 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 	[SerializeField]
 	protected bool m_UseAcceleration;
 
+	public const float DefaultAcceleration = 20f;
+
 	[SerializeField]
 	[ShowIf("m_UseAcceleration")]
-	protected float m_Acceleration = 20f;
+	public float m_Acceleration = 20f;
 
 	[SerializeField]
 	protected float m_MinSpeed = 0.2f;
+
+	public const float DefaultAngularSpeed = 360f;
 
 	[SerializeField]
 	public float m_AngularSpeed = 360f;
@@ -134,6 +138,8 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 
 	private TimeSpan m_ChargeAvoidanceFinishTime;
 
+	public const float DefaultCorpulenceInPlayerParty = 2f;
+
 	private int m_FirstTickCounter;
 
 	public bool IsPositionChanged;
@@ -204,7 +210,11 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 
 	public bool ConnectedToObstacles { get; set; }
 
+	public bool FirstTick => m_FirstTick;
+
 	public Vector2 MoveDirection { get; protected set; }
+
+	public virtual Vector3 FinalDirection { get; protected set; }
 
 	public bool IsStopping { get; protected set; }
 
@@ -431,7 +441,9 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 	{
 		if (Unit != null)
 		{
-			Corpulence = (Unit.Data.IsInPlayerParty ? 2f : ((float)(Unit.Data.SizeRect.Width + Unit.Data.SizeRect.Height))) / 4f * GraphParamsMechanicsCache.GridCellSize * 0.55f;
+			float num = (Unit.Data.IsPlayerFaction ? 2f : ((float)(Unit.Data.SizeRect.Width + Unit.Data.SizeRect.Height)));
+			num = num / 4f * GraphParamsMechanicsCache.GridCellSize * 0.55f;
+			Corpulence = num;
 		}
 		else
 		{
@@ -1043,6 +1055,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		}
 		if (path.vectorPath.Count == 1)
 		{
+			FinalDirection = Unit.Data.Forward;
 			CompleteMovement(interrupted: false);
 			return;
 		}
@@ -1054,6 +1067,10 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 			Unit.OnMovementStarted(pathDestination);
 		}
 		ObstaclesHelper.RemoveFromGroup(this);
+		List<Vector3> vectorPath8 = path.vectorPath;
+		Vector3 vector3 = vectorPath8[vectorPath8.Count - 1];
+		List<Vector3> vectorPath9 = path.vectorPath;
+		FinalDirection = (vector3 - vectorPath9[vectorPath9.Count - 2]).normalized;
 	}
 
 	protected void SetWaypoint(int index)

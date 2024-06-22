@@ -32,6 +32,9 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 	private ConsoleHintsWidget m_ConsoleHintsWidget;
 
 	[SerializeField]
+	private ConsoleHintsWidget m_AnswersConsoleHintsWidget;
+
+	[SerializeField]
 	private ConsoleHint m_CuesScroll;
 
 	[SerializeField]
@@ -68,6 +71,8 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 	private readonly BoolReactiveProperty m_GlossaryMode = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_CanScroll = new BoolReactiveProperty();
+
+	private readonly BoolReactiveProperty m_ShowAnswerTooltip = new BoolReactiveProperty(initialValue: true);
 
 	private IDisposable m_GlossaryDisposable;
 
@@ -108,7 +113,6 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 		};
 		m_AnswersTooltipConfig = new TooltipConfig
 		{
-			InfoCallConsoleMethod = InfoCallConsoleMethod.ShortRightStickButton,
 			TooltipPlace = m_AnswersTooltipPlace,
 			PriorityPivots = new List<Vector2>
 			{
@@ -139,6 +143,15 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 	{
 		base.OnFocusChanged(focus);
 		m_CurrentAnswer.Value = focus as DialogAnswerConsoleView;
+		UpdateCanShowTooltip();
+	}
+
+	private void UpdateCanShowTooltip()
+	{
+		if (m_CurrentAnswer.Value != null)
+		{
+			m_CurrentAnswer.Value.UpdateCanShowTooltip(m_ShowAnswerTooltip.Value);
+		}
 	}
 
 	protected override void CreateInput()
@@ -150,17 +163,75 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 			ContextName = "DialogGlossary"
 		});
 		AddDisposable(m_GlossaryNavigationBehavior.DeepestFocusAsObservable.Subscribe(OnGlossaryFocusChanged));
-		AddDisposable(m_ConsoleHintsWidget.BindHint(InputLayer.AddButton(ShowGlossary, 11, m_HasGlossaryPoints), UIStrings.Instance.Dialog.OpenGlossary));
-		AddDisposable(m_ConsoleHintsWidget.BindHint(m_GlossaryInputLayer.AddButton(CloseGlossary, 9, m_GlossaryMode), UIStrings.Instance.Dialog.CloseGlossary));
-		AddDisposable(m_ConsoleHintsWidget.BindHint(InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = InputLayer.AddButton(ShowGlossary, 11, m_HasGlossaryPoints);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct);
+		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CurrentAnswer.Select((DialogAnswerConsoleView value) => value != null && value.HasTooltip).ToReactiveProperty();
+		InputBindStruct inputBindStruct2 = InputLayer.AddButton(ToggleTooltip, 10, readOnlyReactiveProperty);
+		IConsoleHint toggleTooltipHint = m_AnswersConsoleHintsWidget.BindHint(inputBindStruct2);
+		AddDisposable(toggleTooltipHint);
+		AddDisposable(inputBindStruct2);
+		AddDisposable(m_ShowAnswerTooltip.Subscribe(delegate(bool value)
+		{
+			string label = (value ? UIStrings.Instance.Tooltips.HideTooltipHint.Text : UIStrings.Instance.Tooltips.ShowTooltipHint.Text);
+			toggleTooltipHint.SetLabel(label);
+		}));
+		InputBindStruct inputBindStruct3 = m_GlossaryInputLayer.AddButton(CloseGlossary, 9, m_GlossaryMode);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.CommonTexts.Back));
+		AddDisposable(inputBindStruct3);
+		InputBindStruct inputBindStruct4 = InputLayer.AddButton(delegate
 		{
 			m_SpeakerScrollRect.ScrollToBottom();
-		}, 19, m_CanScroll, InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.Dialog.ScrollToNew));
-		AddDisposable(m_ShowVotesHint.Bind(InputLayer.AddButton(delegate
+		}, 19, m_CanScroll, InputActionEventType.ButtonJustLongPressed);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.Dialog.ScrollToNew));
+		AddDisposable(inputBindStruct4);
+		InputBindStruct inputBindStruct5 = InputLayer.AddButton(delegate
 		{
 			ShowVotes();
-		}, 19, VotesIsActive, InputActionEventType.ButtonJustReleased)));
+		}, 19, VotesIsActive, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_ShowVotesHint.Bind(inputBindStruct5));
+		AddDisposable(inputBindStruct5);
 		m_ShowVotesHint.SetLabel(UIStrings.Instance.Dialog.ShowVotes);
+		if (m_ShowSpeakerPortraitHint != null)
+		{
+			InputBindStruct inputBindStruct6 = InputLayer.AddButton(delegate
+			{
+			}, 12, base.ViewModel.SpeakerHasPortrait);
+			AddDisposable(m_ShowSpeakerPortraitHint.Bind(inputBindStruct6));
+			AddDisposable(inputBindStruct6);
+		}
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotSpeaker(state: true);
+		}, 12, base.ViewModel.SpeakerHasPortrait));
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotSpeaker(state: false);
+		}, 12, base.ViewModel.IsSpeakerFullPortraitShowed, InputActionEventType.ButtonJustReleased));
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotSpeaker(state: false);
+		}, 12, base.ViewModel.IsSpeakerFullPortraitShowed, InputActionEventType.ButtonLongPressJustReleased));
+		if (m_ShowAnswererPortraitHint != null)
+		{
+			InputBindStruct inputBindStruct7 = InputLayer.AddButton(delegate
+			{
+			}, 13, base.ViewModel.AnswererHasPortrait);
+			AddDisposable(m_ShowAnswererPortraitHint.Bind(inputBindStruct7));
+			AddDisposable(inputBindStruct7);
+		}
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotAnswerer(state: true);
+		}, 13, base.ViewModel.AnswererHasPortrait));
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotAnswerer(state: false);
+		}, 13, base.ViewModel.IsAnswererFullPortraitShowed, InputActionEventType.ButtonJustReleased));
+		AddDisposable(InputLayer.AddButton(delegate
+		{
+			base.ViewModel.ShowHideBigScreenshotAnswerer(state: false);
+		}, 13, base.ViewModel.IsAnswererFullPortraitShowed, InputActionEventType.ButtonLongPressJustReleased));
 		AddDisposable(InputLayer.AddButton(delegate
 		{
 			OnShowEscMenu();
@@ -185,10 +256,12 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 		{
 			ContextName = "DialogVotes"
 		});
-		AddDisposable(m_CloseVotesHint.Bind(m_VotesInputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = m_VotesInputLayer.AddButton(delegate
 		{
 			CloseVotes();
-		}, 19, m_VotesMode, InputActionEventType.ButtonJustReleased)));
+		}, 19, m_VotesMode, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_CloseVotesHint.Bind(inputBindStruct));
+		AddDisposable(inputBindStruct);
 		m_CloseVotesHint.SetLabel(UIStrings.Instance.Dialog.HideVotes);
 		AddDisposable(m_VotesInputLayer.AddButton(delegate
 		{
@@ -287,6 +360,12 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 		m_GlossaryMode.Value = false;
 	}
 
+	private void ToggleTooltip(InputActionEventData _)
+	{
+		m_ShowAnswerTooltip.Value = !m_ShowAnswerTooltip.Value;
+		UpdateCanShowTooltip();
+	}
+
 	private IFloatConsoleNavigationEntity CalculateGlossary()
 	{
 		m_GlossaryNavigationBehavior.Clear();
@@ -359,6 +438,10 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 	protected override void OnPartsUpdating()
 	{
 		TooltipHelper.HideTooltip();
+		if (m_VotesMode.Value)
+		{
+			CloseVotes();
+		}
 	}
 
 	private void OnShowEscMenu()
@@ -381,5 +464,9 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 		CloseGlossary(default(InputActionEventData));
 		m_GlossaryDisposable?.Dispose();
 		m_GlossaryDisposable = null;
+		if (m_VotesMode.Value)
+		{
+			CloseVotes();
+		}
 	}
 }

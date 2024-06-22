@@ -16,7 +16,7 @@ public class BarkWrapper
 		{
 			if (!IsPlaying)
 			{
-				return Game.Instance.TimeController.RealTime.TotalSeconds < (double)(LastPlayTime + Bark.Cooldown);
+				return Game.Instance.TimeController.RealTime.TotalSeconds < (double)(LastPlayTime + Bark.GetCooldown());
 			}
 			return true;
 		}

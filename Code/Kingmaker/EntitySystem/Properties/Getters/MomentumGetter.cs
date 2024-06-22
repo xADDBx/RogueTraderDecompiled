@@ -15,7 +15,7 @@ public class MomentumGetter : PropertyGetter
 		return (Game.Instance.TurnController.MomentumController.Groups.FindOrDefault((MomentumGroup p) => p.Units.Contains(GameHelper.GetPlayerCharacter())) ?? throw new Exception("MomentumGetter: couldn't find Player's momentumGroup. Check if Player is in combat")).Momentum;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Player party's Momentum";
 	}

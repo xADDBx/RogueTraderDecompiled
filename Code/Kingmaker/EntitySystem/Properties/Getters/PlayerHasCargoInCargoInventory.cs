@@ -42,7 +42,7 @@ public class PlayerHasCargoInCargoInventory : PropertyGetter
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		string text = ((Cargo == null) ? "NULL" : (Cargo.name ?? ""));
 		return "Player has " + text + " in his Cargo Inventory";

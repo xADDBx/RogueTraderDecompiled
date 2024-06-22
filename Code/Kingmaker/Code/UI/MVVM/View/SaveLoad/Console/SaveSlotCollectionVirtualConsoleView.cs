@@ -37,12 +37,12 @@ public class SaveSlotCollectionVirtualConsoleView : SaveSlotCollectionVirtualBas
 		}));
 	}
 
-	public void AddInput(InputLayer inputLayer, ConsoleHintsWidget commonHintsWidget, BoolReactiveProperty saveListUpdating)
+	public void AddInput(InputLayer inputLayer, ConsoleHintsWidget commonHintsWidget, BoolReactiveProperty saveListUpdating, BoolReactiveProperty isCurrentIronManSave)
 	{
 		UISaveLoadTexts saveLoadTexts = LocalizedTexts.Instance.UserInterfacesText.SaveLoadTexts;
 		AddDisposable(commonHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
-		}, 8, m_ShowLoadButton.And(saveListUpdating.Not()).ToReactiveProperty()), saveLoadTexts.LoadLabel));
+		}, 8, m_ShowLoadButton.And(saveListUpdating.Not()).And(isCurrentIronManSave.Not()).ToReactiveProperty()), saveLoadTexts.LoadLabel));
 		AddDisposable(commonHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 		}, 8, m_ShowSaveButton.And(saveListUpdating.Not()).ToReactiveProperty()), saveLoadTexts.SaveLabel));

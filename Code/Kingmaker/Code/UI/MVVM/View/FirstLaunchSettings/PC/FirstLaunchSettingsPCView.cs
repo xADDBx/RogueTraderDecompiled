@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.FirstLaunchSettings.Base;
 using Kingmaker.Code.UI.MVVM.View.Settings.PC.Menu;
 using Kingmaker.Localization;
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -70,6 +71,8 @@ public class FirstLaunchSettingsPCView : FirstLaunchSettingsBaseView
 		AddDisposable(m_BackButton.OnConfirmClickAsObservable().Subscribe(base.DeclineAction));
 		AddDisposable(m_ContinueButton.OnConfirmClickAsObservable().Subscribe(base.ConfirmAction));
 		AddDisposable(m_ResetToDefaultButton.OnConfirmClickAsObservable().Subscribe(base.ViewModel.RevertSettings));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, base.DeclineAction));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, base.ConfirmAction));
 	}
 
 	protected override void BuildNavigationImpl(GridConsoleNavigationBehaviour navigationBehaviour)

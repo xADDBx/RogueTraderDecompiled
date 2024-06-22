@@ -31,7 +31,7 @@ public class TimeSkip : GameAction
 
 	public SkipType Type => m_Type;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		switch (m_Type)
 		{

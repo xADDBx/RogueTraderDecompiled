@@ -66,6 +66,11 @@ public class StarSystemMapMoveController : IControllerTick, IController
 	{
 		StarSystemShip starSystemShip = Game.Instance.StarSystemMapController.StarSystemShip;
 		starSystemShip.CheckLanding();
+		if (starSystemShip.StarSystemObjectLandOn is AnomalyView anomalyView && anomalyView == StarSystemMapClickObjectHandler.DestinationSso)
+		{
+			anomalyView.InteractWithAnomaly();
+			return true;
+		}
 		StarSystemObjectView currentPlanet = starSystemShip.StarSystemObjectLandOn;
 		StarSystemObjectView destinationSso = StarSystemMapClickObjectHandler.DestinationSso;
 		if (currentPlanet == destinationSso && currentPlanet != null)
@@ -99,6 +104,7 @@ public class StarSystemMapMoveController : IControllerTick, IController
 			starSystemShip.ApplyRotation();
 			RemainingPath = starSystemShip.Agent.GetRemainingPath();
 			starSystemShip.DrawPath(RemainingPath);
+			Game.Instance.Player.LastPositionOnPreviousVisitedArea = starSystemShip.Position;
 		}
 	}
 

@@ -2,7 +2,7 @@ using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 
@@ -15,7 +15,7 @@ public class InteractedEntity : MechanicEntityEvaluator
 		return "Interacted Entity";
 	}
 
-	protected override MechanicEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		return MechanicEntityData.CurrentEntity;
 	}

@@ -50,6 +50,11 @@ public class LogChannel
 		m_MinLevel = severity;
 	}
 
+	public void SetMinStackTraceLevel(LogSeverity severity)
+	{
+		m_MinStackTraceLevel = severity;
+	}
+
 	internal LogChannel(string name, int sinkBitmap, LogSeverity minLevel, LogSeverity minStackTraceLevel)
 	{
 		m_Name = name;

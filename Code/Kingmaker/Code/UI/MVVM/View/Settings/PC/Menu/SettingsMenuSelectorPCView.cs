@@ -38,4 +38,14 @@ public class SettingsMenuSelectorPCView : ViewBase<SelectionGroupRadioVM<Setting
 	protected override void DestroyViewImplementation()
 	{
 	}
+
+	public void OnNext()
+	{
+		base.ViewModel.SelectNextValidEntity();
+	}
+
+	public void OnPrev()
+	{
+		base.ViewModel.SelectPrevValidEntity();
+	}
 }

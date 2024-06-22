@@ -43,7 +43,7 @@ public static class NodeLinksExtensions
 		for (int i = 0; i < customGridNodeBase.connections.Length; i++)
 		{
 			CustomConnection customConnection = customGridNodeBase.connections[i];
-			if (to == customConnection.Node.Vector3Position.To2D())
+			if ((double)(to - customConnection.Node.Vector3Position.To2D()).sqrMagnitude < 1E-06)
 			{
 				currentLink = customConnection.Link;
 				toNode = customConnection.Node;

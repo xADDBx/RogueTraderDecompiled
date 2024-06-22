@@ -9,17 +9,17 @@ public abstract class BaseOvertipMapObjectVM : OvertipEntityVM
 {
 	public readonly MapObjectEntity MapObjectEntity;
 
-	public ReactiveProperty<bool> IsEnabled = new ReactiveProperty<bool>();
+	public readonly ReactiveProperty<bool> IsEnabled = new ReactiveProperty<bool>();
 
 	public readonly ReactiveProperty<bool> MapObjectIsHighlited = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<bool> IsMouseOverUI = new ReactiveProperty<bool>(initialValue: false);
 
-	public ReactiveCommand VisibilityChanged = new ReactiveCommand();
+	public readonly ReactiveCommand VisibilityChanged = new ReactiveCommand();
 
-	public BoolReactiveProperty HasSurrounding = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HasSurrounding = new BoolReactiveProperty();
 
-	public BoolReactiveProperty IsChosen = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsChosen = new BoolReactiveProperty();
 
 	public bool HideFromScreen
 	{
@@ -38,7 +38,7 @@ public abstract class BaseOvertipMapObjectVM : OvertipEntityVM
 	protected BaseOvertipMapObjectVM(MapObjectEntity mapObjectEntity)
 	{
 		MapObjectEntity = mapObjectEntity;
-		AddDisposable(IsEnabled.CombineLatest(MapObjectIsHighlited, IsMouseOverUI, (bool isEnabled, bool hover, bool mouseOver) => new { isEnabled, hover, mouseOver }).ObserveLastValueOnLateUpdate().Subscribe(value =>
+		AddDisposable(IsEnabled.CombineLatest(MapObjectIsHighlited, IsMouseOverUI, (bool isEnabled, bool hover, bool mouseOver) => new { isEnabled, hover, mouseOver }).ObserveLastValueOnLateUpdate().Subscribe(_ =>
 		{
 			VisibilityChanged.Execute();
 		}));

@@ -10,6 +10,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.View;
 using Owlcat.Runtime.UI.ConsoleTools;
+using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -62,6 +63,8 @@ public class ShipWeaponsPanelConsoleView : ViewBase<ShipWeaponsPanelVM>
 	private InputLayer m_InputLayer;
 
 	private bool m_ShowTooltip;
+
+	private readonly BoolReactiveProperty m_CanFunc02 = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_HasTooltip = new BoolReactiveProperty();
 
@@ -134,11 +137,15 @@ public class ShipWeaponsPanelConsoleView : ViewBase<ShipWeaponsPanelVM>
 
 	public void AddInput(InputLayer inputLayer)
 	{
-		AddDisposable(m_HintsWidget.BindHint(inputLayer.AddButton(OnFunc01, 10, m_IsPlayerTurn), UIStrings.Instance.HUDTexts.WeaponsBar, ConsoleHintsWidget.HintPosition.Left));
-		AddDisposable(m_InspectHint.Bind(inputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = inputLayer.AddButton(OnFunc01, 10, m_IsPlayerTurn);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.HUDTexts.WeaponsBar, ConsoleHintsWidget.HintPosition.Left));
+		AddDisposable(inputBindStruct);
+		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 		{
 			OnInspectUnit();
-		}, 19, m_IsInspectVisible, InputActionEventType.ButtonJustLongPressed)));
+		}, 19, m_IsInspectVisible, InputActionEventType.ButtonJustLongPressed);
+		AddDisposable(m_InspectHint.Bind(inputBindStruct2));
+		AddDisposable(inputBindStruct2);
 		m_InspectHint.SetLabel(UIStrings.Instance.MainMenu.Inspect);
 	}
 
@@ -170,9 +177,18 @@ public class ShipWeaponsPanelConsoleView : ViewBase<ShipWeaponsPanelVM>
 		{
 			ContextName = "ShipWeaponsPanelConsoleView"
 		});
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(OnDecline, 9, base.ViewModel.IsActive), UIStrings.Instance.CommonTexts.Cancel, ConsoleHintsWidget.HintPosition.Left));
+		InputBindStruct inputBindStruct = m_InputLayer.AddButton(OnDecline, 9, base.ViewModel.IsActive);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Cancel, ConsoleHintsWidget.HintPosition.Left));
+		AddDisposable(inputBindStruct);
 		AddDisposable(m_InputLayer.AddButton(OnDecline, 10, base.ViewModel.IsActive));
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information, ConsoleHintsWidget.HintPosition.Left));
+		InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information, ConsoleHintsWidget.HintPosition.Left));
+		AddDisposable(inputBindStruct2);
+		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
+		{
+		}, 11, m_CanFunc02, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.CommonTexts.Expand, ConsoleHintsWidget.HintPosition.Left));
+		AddDisposable(inputBindStruct3);
 		AddDisposable(m_NavigationBehaviour.Focus.Subscribe(OnFocusEntity));
 	}
 
@@ -207,6 +223,7 @@ public class ShipWeaponsPanelConsoleView : ViewBase<ShipWeaponsPanelVM>
 	private void OnFocusEntity(IConsoleEntity entity)
 	{
 		TooltipBaseTemplate tooltipBaseTemplate = (entity as IHasTooltipTemplate)?.TooltipTemplate();
+		m_CanFunc02.Value = (entity as IFunc02ClickHandler)?.CanFunc02Click() ?? false;
 		m_HasTooltip.Value = tooltipBaseTemplate != null;
 		if (m_ShowTooltip)
 		{

@@ -29,6 +29,9 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	private bool m_ShowHelm = true;
 
 	[JsonProperty]
+	private bool m_ShowHelmAboveAll;
+
+	[JsonProperty]
 	private bool m_ShowBackpack = true;
 
 	[JsonProperty]
@@ -62,6 +65,22 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 			{
 				m_ShowHelm = value;
 				this.OnChangedHelmetVisibility?.Invoke();
+			}
+		}
+	}
+
+	public bool ShowHelmAboveAll
+	{
+		get
+		{
+			return m_ShowHelmAboveAll;
+		}
+		set
+		{
+			if (m_ShowHelmAboveAll != value)
+			{
+				m_ShowHelmAboveAll = value;
+				this.OnChangedHelmetVisibilityAboveAll?.Invoke();
 			}
 		}
 	}
@@ -138,6 +157,8 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	private event Action OnChangedHelmetVisibility;
 
+	private event Action OnChangedHelmetVisibilityAboveAll;
+
 	public void SetPortrait(BlueprintPortrait portrait)
 	{
 		if (portrait == BlueprintRoot.Instance.CharGenRoot.CustomPortrait || portrait.Data.IsCustom)
@@ -156,14 +177,17 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		}, isCheckRuntime: true);
 	}
 
-	public void SetPortrait(PortraitData portraitData)
+	public void SetPortrait(PortraitData portraitData, bool raiseEvent = true)
 	{
 		m_CustomPortrait = portraitData;
 		m_Portrait = null;
-		EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitPortraitChangedHandler>)delegate(IUnitPortraitChangedHandler h)
+		if (raiseEvent)
 		{
-			h.HandlePortraitChanged();
-		}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitPortraitChangedHandler>)delegate(IUnitPortraitChangedHandler h)
+			{
+				h.HandlePortraitChanged();
+			}, isCheckRuntime: true);
+		}
 	}
 
 	public void SetPortraitUnsafe([CanBeNull] BlueprintPortrait portrait, [CanBeNull] PortraitData portraitData)
@@ -380,6 +404,11 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		OnChangedHelmetVisibility += subscriber;
 	}
 
+	public void SubscribeOnHelmetVisibilityAboveAllChange(Action subscriber)
+	{
+		OnChangedHelmetVisibilityAboveAll += subscriber;
+	}
+
 	public void UnsubscribeFromBackpackVisibilityChange(Action subscriber)
 	{
 		OnChangedBackpackVisibility -= subscriber;
@@ -388,6 +417,11 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	public void UnsubscribeFromHelmetVisibilityChange(Action subscriber)
 	{
 		OnChangedHelmetVisibility -= subscriber;
+	}
+
+	public void UnsubscribeFromHelmetVisibilityAboveAllChange(Action subscriber)
+	{
+		OnChangedHelmetVisibilityAboveAll -= subscriber;
 	}
 
 	private static int CompareFactsPriority(BlueprintUnitFact f1, BlueprintUnitFact f2)
@@ -408,6 +442,7 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
 		result.Append(ref m_ShowHelm);
+		result.Append(ref m_ShowHelmAboveAll);
 		result.Append(ref m_ShowBackpack);
 		result.Append(ref m_SlotRowIndexConsole);
 		Hash128 val2 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(m_Portrait);

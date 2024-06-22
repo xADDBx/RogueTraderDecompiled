@@ -100,29 +100,29 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		}
 	}
 
-	private void UpdateWeaponAbilities()
+	public void UpdateWeaponAbilities()
 	{
 		if (!Unit.IsStarship())
 		{
 			return;
 		}
-		Dictionary<WeaponSlotType, List<Ability>> dictionary = new Dictionary<WeaponSlotType, List<Ability>>();
+		Dictionary<WeaponSlotType, List<WeaponSlot>> dictionary = new Dictionary<WeaponSlotType, List<WeaponSlot>>();
 		foreach (WeaponSlot weaponSlot in Unit.GetHull().WeaponSlots)
 		{
-			Ability activeAbility = weaponSlot.ActiveAbility;
-			if (activeAbility != null && !activeAbility.Hidden && !activeAbility.Blueprint.IsCantrip)
+			Ability ability = weaponSlot?.ActiveAbility;
+			if (ability != null && !ability.Hidden && !ability.Blueprint.IsCantrip)
 			{
 				if (!dictionary.ContainsKey(weaponSlot.Type))
 				{
-					dictionary[weaponSlot.Type] = new List<Ability>();
+					dictionary[weaponSlot.Type] = new List<WeaponSlot>();
 				}
-				dictionary[weaponSlot.Type].Add(activeAbility);
+				dictionary[weaponSlot.Type].Add(weaponSlot);
 			}
 		}
-		foreach (var (key, abilitiesGroupVM2) in WeaponAbilitiesGroups)
+		foreach (var (weaponSlotType2, abilitiesGroupVM2) in WeaponAbilitiesGroups)
 		{
-			dictionary.TryGetValue(key, out var value);
-			abilitiesGroupVM2.SetAbilities(value, Unit);
+			dictionary.TryGetValue(weaponSlotType2, out var value);
+			abilitiesGroupVM2.SetWeaponSlotAbilities(value, Unit, weaponSlotType2);
 		}
 	}
 
@@ -153,23 +153,23 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
 		{
 			m_SlotsUpdateQueued = false;
-			Action<IList<ActionBarSlotVM>> action = delegate(IList<ActionBarSlotVM> slots)
-			{
-				foreach (ActionBarSlotVM slot in slots)
-				{
-					slot.UpdateResources();
-					if (onTurnStart)
-					{
-						slot.CloseConvertsOnTurnStart();
-					}
-				}
-			};
 			foreach (KeyValuePair<WeaponSlotType, AbilitiesGroupVM> weaponAbilitiesGroup in WeaponAbilitiesGroups)
 			{
-				action(weaponAbilitiesGroup.Value.Slots);
+				UpdateFunc(weaponAbilitiesGroup.Value.Slots);
 			}
-			action(AbilitiesGroup.Slots);
+			UpdateFunc(AbilitiesGroup.Slots);
 		});
+		void UpdateFunc(IList<ActionBarSlotVM> slots)
+		{
+			foreach (ActionBarSlotVM slot in slots)
+			{
+				slot.UpdateResources();
+				if (onTurnStart)
+				{
+					slot.CloseConvertsOnTurnStart();
+				}
+			}
+		}
 	}
 
 	private void ClearWeaponAbilities()
@@ -221,7 +221,7 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		UpdateSlots();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateSlots();
 	}

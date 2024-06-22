@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs;
@@ -49,12 +50,12 @@ public class ContextActionRemoveBuff : ContextAction
 		return "Remove Buff: " + Buff.NameSafe();
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)
 		{
-			PFLog.Default.Error(this, "Unable to remove buff: no context found");
+			Element.LogError(this, "Unable to remove buff: no context found");
 			return;
 		}
 		MechanicEntity mechanicEntity = (ToCaster ? mechanicsContext.MaybeCaster : base.Target.Entity);

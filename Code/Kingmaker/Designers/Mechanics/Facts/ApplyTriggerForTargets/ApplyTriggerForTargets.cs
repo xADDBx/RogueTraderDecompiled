@@ -61,32 +61,27 @@ public class ApplyTriggerForTargets : UnitFactComponentDelegate, ITurnStartHandl
 			{
 				continue;
 			}
-			(bool, int) valueSafe = TargetProperty.GetValueSafe(context);
-			if (!valueSafe.Item1)
-			{
-				continue;
-			}
-			int item = valueSafe.Item2;
+			int value = TargetProperty.GetValue(context);
 			if (baseUnitEntity == null)
 			{
 				baseUnitEntity = baseUnitEntity2;
-				num = item;
+				num = value;
 				continue;
 			}
 			switch (Selector)
 			{
 			case Selectors.Min:
-				if (item < num)
+				if (value < num)
 				{
 					baseUnitEntity = baseUnitEntity2;
-					num = item;
+					num = value;
 				}
 				break;
 			case Selectors.Max:
-				if (item > num)
+				if (value > num)
 				{
 					baseUnitEntity = baseUnitEntity2;
-					num = item;
+					num = value;
 				}
 				break;
 			}

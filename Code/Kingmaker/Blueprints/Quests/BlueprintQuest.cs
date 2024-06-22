@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Quests.Logic.CrusadeQuests;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
+using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.Utility.Attributes;
@@ -18,7 +19,7 @@ namespace Kingmaker.Blueprints.Quests;
 
 [TypeId("eddc7c1e81adf5144acd394ebc24ca92")]
 [MemoryPackable(GenerateType.NoGenerate)]
-public class BlueprintQuest : BlueprintFact
+public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 {
 	[NotNull]
 	public LocalizedString Description;
@@ -61,7 +62,13 @@ public class BlueprintQuest : BlueprintFact
 	[SerializeField]
 	private QuestNotificationState m_SilentQuestNotification;
 
+	[HideInInspector]
+	[SerializeField]
+	private EditorCommentHolder m_EditorComment;
+
 	private bool m_IsRumour => m_Group == QuestGroupId.Rumours;
+
+	public EditorCommentHolder EditorComment { get; set; }
 
 	public IEnumerable<BlueprintQuestObjective> AllObjectives => m_Objectives.Select((BlueprintQuestObjectiveReference o) => o.Get());
 

@@ -15,7 +15,7 @@ public class UnlockableFlagStateGetter : PropertyGetter
 
 	public BlueprintUnlockableFlag Flag => m_Flag;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"State of {Flag}";
 	}

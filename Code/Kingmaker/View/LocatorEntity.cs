@@ -1,11 +1,12 @@
-using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.View;
 
-public class LocatorEntity : SimpleEntity, IHashable
+public class LocatorEntity : Entity, IHashable
 {
 	protected LocatorEntity(JsonConstructorMark _)
 		: base(_)
@@ -15,6 +16,11 @@ public class LocatorEntity : SimpleEntity, IHashable
 	public LocatorEntity(LocatorView view)
 		: base(view.UniqueId, view.IsInGameBySettings)
 	{
+	}
+
+	protected override IEntityViewBase CreateViewForData()
+	{
+		return null;
 	}
 
 	public override Hash128 GetHash128()

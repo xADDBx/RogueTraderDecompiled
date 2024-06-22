@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
+using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Levelup;
 using UniRx;
 using UnityEngine;
@@ -25,6 +26,8 @@ public class CareerPathDescriptionPCView : BaseCareerPathSelectionTabPCView<Care
 		SetHeader(null);
 		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
 		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
+		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
+		SetButtonSound(UISounds.ButtonSoundsEnum.DoctrineNextSound);
 		base.ViewModel.OnUpdateData.Subscribe(delegate
 		{
 			if (base.ViewModel != null)
@@ -41,9 +44,9 @@ public class CareerPathDescriptionPCView : BaseCareerPathSelectionTabPCView<Care
 
 	public override void UpdateState()
 	{
-		SetNextButtonLabel((base.ViewModel.CurrentRank.Value > 0) ? UIStrings.Instance.CharGen.Next : UIStrings.Instance.CharacterSheet.SelectCareerPath);
+		SetBackButtonInteractable(value: false);
+		SetNextButtonInteractable(value: true);
 		HintText.Value = GetHintText();
-		SetFirstSelectableInteractable(base.ViewModel.HasDifferentFirstSelectable);
 	}
 
 	protected override void HandleClickNext()
@@ -59,9 +62,9 @@ public class CareerPathDescriptionPCView : BaseCareerPathSelectionTabPCView<Care
 		base.ViewModel.SelectPreviousItem();
 	}
 
-	protected override void HandleFirstSelectableClick()
+	protected override void HandleClickFinish()
 	{
-		base.ViewModel.SetFirstSelectableRankEntry();
+		base.ViewModel.Commit();
 	}
 
 	private string GetHintText()

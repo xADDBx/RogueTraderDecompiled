@@ -48,7 +48,7 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 	{
 		if (characters == null)
 		{
-			characters = Game.Instance.State.AllBaseUnits;
+			characters = Game.Instance.State.AllBaseUnits.Where(UIUtility.IsViewActiveUnit);
 		}
 		IEnumerable<BaseUnitEntity> selectableUnits = GetSelectableUnits(characters);
 		SelectAllImpl(selectableUnits);
@@ -249,7 +249,7 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 		{
 			units = units.Where((BaseUnitEntity u) => u.IsMainCharacter);
 		}
-		return units.Where((BaseUnitEntity u) => u.IsInGame && u.IsDirectlyControllable());
+		return units.Where((BaseUnitEntity u) => u.IsInGame && u.IsDirectlyControllable() && u.IsViewActive);
 	}
 
 	public void OnAreaBeginUnloading()

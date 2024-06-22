@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameCommands;
 using Kingmaker.UnitLogic;
@@ -14,7 +15,7 @@ public class ContextActionRespecCaster : ContextAction
 		return "Force respec";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Context?.MaybeCaster is UnitEntity { Progression: not null } unitEntity && PartUnitProgression.CanRespec(unitEntity))
 		{
@@ -22,7 +23,7 @@ public class ContextActionRespecCaster : ContextAction
 		}
 		else
 		{
-			PFLog.Default.Error(this, $"Can't force respec {base.Context?.MaybeCaster}");
+			Element.LogError(this, $"Can't force respec {base.Context?.MaybeCaster}");
 		}
 	}
 }

@@ -1,7 +1,9 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.View.MapObjects.Traps;
 
 namespace Kingmaker.View.Mechanics;
 
+[KnowledgeDatabaseID("fbd3990a28d24e6188cb835ef85b43d3")]
 public class TrapObjectGroupView : MechanicGroupView<TrapObjectView>
 {
 	protected override void OnActivate()

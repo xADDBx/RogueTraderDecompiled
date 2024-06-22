@@ -57,9 +57,9 @@ public class BuildingCirclePCView : ViewBase<BuildingCircleVM>
 		{
 			m_Icon.sprite = project.Icon;
 		}
-		else
+		else if (Application.isEditor)
 		{
-			PFLog.System.Log("Please assign building icon for building " + project.Name);
+			PFLog.UI.Warning("Please assign building icon for building " + project.Name);
 		}
 		m_CircleButton.OnLeftClickAsObservable().Subscribe(delegate
 		{

@@ -1,11 +1,26 @@
 using System;
-using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 
 namespace Kingmaker.ElementsSystem;
 
 [Serializable]
-[TypeId("56bed891e6d642d2a13ad330538115c9")]
-public abstract class MechanicEntityEvaluator : GenericEvaluator<MechanicEntity>
+public abstract class MechanicEntityEvaluator : EntityEvaluator, IEvaluator<MechanicEntity>
 {
+	public new MechanicEntity GetValue()
+	{
+		return (MechanicEntity)base.GetValue();
+	}
+
+	public bool TryGetValue(out MechanicEntity value)
+	{
+		if (TryGetValue(out Entity value2))
+		{
+			value = value2 as MechanicEntity;
+			return value != null;
+		}
+		value = null;
+		return false;
+	}
 }

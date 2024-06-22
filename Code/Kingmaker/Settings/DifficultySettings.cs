@@ -11,6 +11,8 @@ public class DifficultySettings
 {
 	public readonly SettingsEntityEnum<GameDifficultyOption> GameDifficulty;
 
+	public readonly SettingsEntityBool OnlyOneSave;
+
 	public readonly SettingsEntityEnum<CombatEncountersCapacity> CombatEncountersCapacity;
 
 	public readonly SettingsEntityEnum<AutoLevelUpOption> AutoLevelUp;
@@ -18,8 +20,6 @@ public class DifficultySettings
 	public readonly SettingsEntityBool RespecAllowed;
 
 	public readonly SettingsEntityBool AdditionalAIBehaviors;
-
-	public readonly SettingsEntityBool OnlyOneSave;
 
 	public readonly SettingsEntityBool LimitedAI;
 
@@ -76,11 +76,11 @@ public class DifficultySettings
 			throw new Exception($"DifficultySettings: couldn't find {defaultValues.GameDifficulty} preset in current SettingsDefaultValues");
 		}
 		GameDifficulty = new SettingsEntityEnum<GameDifficultyOption>(settingsController, "game-difficulty", difficultyPreset.GameDifficulty, saveDependent: true);
+		OnlyOneSave = new SettingsEntityBool(settingsController, "only-one-save", defaultValues.OnlyOneSave, saveDependent: true);
 		CombatEncountersCapacity = new SettingsEntityEnum<CombatEncountersCapacity>(settingsController, "combat-encounters-capacity", difficultyPreset.CombatEncountersCapacity, saveDependent: true);
 		AutoLevelUp = new SettingsEntityEnum<AutoLevelUpOption>(settingsController, "auto-level-up", difficultyPreset.AutoLevelUp, saveDependent: true);
 		RespecAllowed = new SettingsEntityBool(settingsController, "respec-allowed", difficultyPreset.RespecAllowed, saveDependent: true);
 		AdditionalAIBehaviors = new SettingsEntityBool(settingsController, "additional-ai-behaviours", difficultyPreset.AdditionalAIBehaviors, saveDependent: true);
-		OnlyOneSave = new SettingsEntityBool(settingsController, "only-one-save", defaultValues.OnlyOneSave, saveDependent: true);
 		LimitedAI = new SettingsEntityBool(settingsController, "limited-ai", defaultValues.LimitedAI, saveDependent: true);
 		EnemyDodgePercentModifier = new SettingsEntityInt(settingsController, "enemy-dodge-percent-modifier", difficultyPreset.EnemyDodgePercentModifier, saveDependent: true);
 		CoverHitBonusHalfModifier = new SettingsEntityInt(settingsController, "cover-hit-bonus-half-modifier", difficultyPreset.CoverHitBonusHalfModifier, saveDependent: true);

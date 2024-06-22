@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Localization;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Interaction;
 
+[KnowledgeDatabaseID("50ac711133aea7343ae4091a29784c2d")]
 public class SpawnerInteractionBark : SpawnerInteraction
 {
 	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]

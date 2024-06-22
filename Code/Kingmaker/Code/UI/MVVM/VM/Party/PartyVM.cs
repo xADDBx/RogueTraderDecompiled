@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -10,6 +11,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.Selection;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -147,6 +149,48 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		}
 	}
 
+	public void SelectPrevCharacter()
+	{
+		SelectShiftedCharacter(-1);
+	}
+
+	public void SelectNextCharacter()
+	{
+		SelectShiftedCharacter(1);
+	}
+
+	private void SelectShiftedCharacter(int shift)
+	{
+		if (SelectionManagerBase.Instance == null || (TurnController.IsInTurnBasedCombat() && !Game.Instance.TurnController.IsPreparationTurn))
+		{
+			return;
+		}
+		ReactiveProperty<BaseUnitEntity> selectedUnit = Game.Instance.SelectionCharacter.SelectedUnit;
+		List<BaseUnitEntity> list = GetSelectableUnits(Game.Instance.SelectionCharacter.ActualGroup).ToList();
+		if (!list.Empty())
+		{
+			int num = (list.IndexOf(selectedUnit.Value) + shift) % list.Count;
+			if (num < 0)
+			{
+				num += list.Count;
+			}
+			SelectionManagerBase.Instance.SelectUnit(list[num].View);
+		}
+	}
+
+	private static IEnumerable<BaseUnitEntity> GetSelectableUnits(IEnumerable<BaseUnitEntity> units)
+	{
+		if (TurnController.IsInTurnBasedCombat() && !Game.Instance.TurnController.IsPreparationTurn)
+		{
+			return Enumerable.Empty<BaseUnitEntity>();
+		}
+		if (Game.Instance.CurrentlyLoadedArea.IsShipArea)
+		{
+			units = units.Where((BaseUnitEntity u) => u.IsMainCharacter);
+		}
+		return units.Where((BaseUnitEntity u) => u.IsInGame && u.IsDirectlyControllable());
+	}
+
 	public void SwitchCharacter(BaseUnitEntity unit1, BaseUnitEntity unit2)
 	{
 		Game.Instance.GameCommandQueue.AddCommand(new SwitchPartyCharactersGameCommand(unit1, unit2));
@@ -174,8 +218,10 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 
 	public void SetMassLink()
 	{
-		SelectionManagerConsole.Instance.SetMassLink(CharactersVM.Select((PartyCharacterVM c) => c.UnitEntityData).ToList());
-		CharactersVM.ForEach(delegate(PartyCharacterVM c)
+		SelectionManagerConsole.Instance.SetMassLink((from c in CharactersVM
+			where c.UnitEntityData.IsDirectlyControllable()
+			select c.UnitEntityData).ToList());
+		CharactersVM.Where((PartyCharacterVM c) => c.UnitEntityData.IsDirectlyControllable()).ForEach(delegate(PartyCharacterVM c)
 		{
 			c.UpdateLink();
 		});

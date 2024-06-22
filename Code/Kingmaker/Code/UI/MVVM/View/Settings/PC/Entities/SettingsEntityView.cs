@@ -34,15 +34,15 @@ public abstract class SettingsEntityView<TSettingsEntityVM> : VirtualListElement
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	protected virtual void UpdateLocalization()
 	{
 		if (m_Title != null)
 		{
 			m_Title.text = base.ViewModel.Title;
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

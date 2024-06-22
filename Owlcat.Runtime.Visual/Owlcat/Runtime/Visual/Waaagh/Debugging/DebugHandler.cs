@@ -71,6 +71,8 @@ public class DebugHandler
 		}
 	}
 
+	public const int kFullScreenDebugBufferBinding = 1;
+
 	private ScriptableRendererData m_Data;
 
 	private WaaaghDebugData m_DebugData;
@@ -87,11 +89,15 @@ public class DebugHandler
 
 	private Material m_ShowLightSortingCurveMaterial;
 
+	private SetupDebugBuffersPass m_SetupDebugBuffersPass;
+
 	private ApplyDebugSettingsPass m_ApplyDebugSettingsPass;
 
 	private DrawObjectsWireframePass m_DrawObjectsWireframePass;
 
 	private DrawObjectsOverdrawPass m_DrawObjectsOverdrawPass;
+
+	private DebugQuadOverdrawPass m_DebugQuadOverdrawPass;
 
 	private FullscreenDebugPass m_FullscreenDebugPass;
 
@@ -99,7 +105,11 @@ public class DebugHandler
 
 	private ShadowsDebugPass m_ShadowsDebugPass;
 
+	private RenderGraphDebugResources m_Resources;
+
 	public bool IsCompletelyOverridesRendering => m_IsCompletelyOverridesRendering;
+
+	public RenderGraphDebugResources Resources => m_Resources;
 
 	public DebugHandler(ScriptableRendererData data, ScriptableRenderer renderer)
 	{
@@ -107,13 +117,16 @@ public class DebugHandler
 		m_DebugData = WaaaghPipeline.Asset.DebugData;
 		m_Renderer = renderer;
 		m_MipMapTexture = new DebugMipMapTexture();
+		m_Resources = new RenderGraphDebugResources();
 		m_FullscreenDebugMaterial = CoreUtils.CreateEngineMaterial(m_DebugData.Shaders.DebugFullscreenPS);
 		m_ShadowsDebugMaterial = CoreUtils.CreateEngineMaterial(m_DebugData.Shaders.ShadowsDebugPS);
 		m_ShowLightSortingCurveMaterial = CoreUtils.CreateEngineMaterial(m_DebugData.Shaders.ShowLightSortingCurvePS);
+		m_SetupDebugBuffersPass = new SetupDebugBuffersPass(m_Resources, m_DebugData);
 		m_ApplyDebugSettingsPass = new ApplyDebugSettingsPass(RenderPassEvent.BeforeRendering, m_MipMapTexture);
 		m_DrawObjectsWireframePass = new DrawObjectsWireframePass(RenderPassEvent.BeforeRenderingTransparents);
 		m_DrawObjectsOverdrawPass = new DrawObjectsOverdrawPass(RenderPassEvent.AfterRenderingTransparents);
-		m_FullscreenDebugPass = new FullscreenDebugPass((RenderPassEvent)1001, m_DebugData, m_FullscreenDebugMaterial);
+		m_DebugQuadOverdrawPass = new DebugQuadOverdrawPass(m_DebugData, m_Resources);
+		m_FullscreenDebugPass = new FullscreenDebugPass((RenderPassEvent)1001, m_DebugData, m_Resources, m_FullscreenDebugMaterial);
 		m_ShadowsDebugPass = new ShadowsDebugPass((RenderPassEvent)1001, m_DebugData, m_ShadowsDebugMaterial);
 		WaaaghRenderer renderer2 = m_Renderer as WaaaghRenderer;
 		m_ShowLightSortingCurvePass = new ShowLightSortingCurvePass((RenderPassEvent)1001, renderer2, m_DebugData, m_ShowLightSortingCurveMaterial);
@@ -127,28 +140,45 @@ public class DebugHandler
 		}
 		bool wireframe = GL.wireframe;
 		bool flag = false;
+		bool num = m_DebugData.RenderingDebug.OverdrawMode == DebugOverdrawMode.QuadOverdraw;
 		if (m_DebugData != null)
 		{
 			flag = m_DebugData.RenderingDebug.OverdrawMode != DebugOverdrawMode.None;
 		}
 		m_IsCompletelyOverridesRendering = wireframe || flag;
+		if (num)
+		{
+			m_Renderer.EnqueuePass(m_SetupDebugBuffersPass);
+		}
 		m_Renderer.EnqueuePass(m_ApplyDebugSettingsPass);
 		if (wireframe)
 		{
 			m_Renderer.EnqueuePass(m_DrawObjectsWireframePass);
-			return;
 		}
-		if (flag)
+		else if (flag)
 		{
-			m_DrawObjectsOverdrawPass.OverdrawMode = m_DebugData.RenderingDebug.OverdrawMode;
-			m_Renderer.EnqueuePass(m_DrawObjectsOverdrawPass);
-			return;
+			switch (m_DebugData.RenderingDebug.OverdrawMode)
+			{
+			case DebugOverdrawMode.All:
+			case DebugOverdrawMode.TransparentOnly:
+			case DebugOverdrawMode.OpaqueOnly:
+				m_DrawObjectsOverdrawPass.OverdrawMode = m_DebugData.RenderingDebug.OverdrawMode;
+				m_Renderer.EnqueuePass(m_DrawObjectsOverdrawPass);
+				break;
+			case DebugOverdrawMode.QuadOverdraw:
+				m_Renderer.EnqueuePass(m_DebugQuadOverdrawPass);
+				m_Renderer.EnqueuePass(m_FullscreenDebugPass);
+				break;
+			}
 		}
-		m_Renderer.EnqueuePass(m_FullscreenDebugPass);
-		m_Renderer.EnqueuePass(m_ShadowsDebugPass);
-		if (m_DebugData.LightingDebug.ShowLightSortingCurve)
+		else
 		{
-			m_Renderer.EnqueuePass(m_ShowLightSortingCurvePass);
+			m_Renderer.EnqueuePass(m_FullscreenDebugPass);
+			m_Renderer.EnqueuePass(m_ShadowsDebugPass);
+			if (m_DebugData.LightingDebug.ShowLightSortingCurve)
+			{
+				m_Renderer.EnqueuePass(m_ShowLightSortingCurvePass);
+			}
 		}
 	}
 

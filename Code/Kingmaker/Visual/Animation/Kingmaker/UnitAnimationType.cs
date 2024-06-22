@@ -34,5 +34,6 @@ public enum UnitAnimationType
 	DollRoomLocoMotion = 34,
 	DollRoomVariantIdle = 35,
 	DollRoomMicroIdle = 36,
-	BuffLoopAction = 37
+	BuffLoopAction = 37,
+	Jump = 38
 }

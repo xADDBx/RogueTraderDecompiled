@@ -197,50 +197,62 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		switch (data.CurrentAnimationState)
 		{
 		case AnimationState.ForceEnteringTheCover:
-			if (!data.ActionStarted)
-			{
-				StartAction(handle);
-			}
-			if (!(handle.GetTime() < data.Time))
+			if (handle.Manager.HitAnimationIsActive)
 			{
 				data.ActionFinished = true;
 				data.ActionStarted = false;
 				ChangeState(handle, AnimationState.Idle);
 				StartAction(handle);
+				handle.Manager.HitAnimationIsActive = false;
+				break;
 			}
+			if (!data.ActionStarted)
+			{
+				StartAction(handle);
+			}
+			if (handle.GetTime() < data.Time)
+			{
+				return;
+			}
+			data.ActionFinished = true;
+			data.ActionStarted = false;
+			ChangeState(handle, AnimationState.Idle);
+			StartAction(handle);
 			break;
 		case AnimationState.StepOutCover:
 			if (!data.ActionStarted)
 			{
 				StartAction(handle);
 			}
-			if (!(handle.GetTime() < data.Time))
+			if (handle.GetTime() < data.Time)
 			{
-				data.ActionFinished = true;
-				data.ActionStarted = false;
-				handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
-				handle.Manager.AbilityIsSpell = false;
-				handle.Release();
+				return;
 			}
+			data.ActionFinished = true;
+			data.ActionStarted = false;
+			handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
+			handle.Manager.AbilityIsSpell = false;
+			handle.Release();
 			break;
 		case AnimationState.Idle:
 			if (!data.ActionStarted)
 			{
 				StartAction(handle);
 			}
-			if (!(handle.GetTime() < data.Time))
+			if (handle.GetTime() < data.Time)
 			{
-				ChangeState(handle, AnimationState.Idle);
-				handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
-				handle.Manager.AbilityIsSpell = false;
-				StartAction(handle);
+				return;
 			}
+			ChangeState(handle, AnimationState.Idle);
+			handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
+			handle.Manager.AbilityIsSpell = false;
+			StartAction(handle);
 			break;
 		case AnimationState.StepInCover:
 			handle.Manager.BlockAttackAnimation = true;
 			if (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.NeedStepOut && data.CurrentAnimationState == AnimationState.StepInCover && Math.Abs(handle.Manager.Orientation - handle.Manager.UseAbilityDirection) > 10f)
 			{
-				break;
+				return;
 			}
 			if (handle.Manager.SequencedActions.Count > 0)
 			{
@@ -255,16 +267,18 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			{
 				StartAction(handle);
 			}
-			if (!(handle.GetTime() < data.Time))
+			if (handle.GetTime() < data.Time)
 			{
-				handle.Manager.BlockAttackAnimation = false;
-				if (!handle.Manager.NeedStepOut)
-				{
-					data.ActionFinished = true;
-					ChangeState(handle, AnimationState.StepOutCover);
-					StartAction(handle);
-				}
+				return;
 			}
+			handle.Manager.BlockAttackAnimation = false;
+			if (handle.Manager.NeedStepOut)
+			{
+				return;
+			}
+			data.ActionFinished = true;
+			ChangeState(handle, AnimationState.StepOutCover);
+			StartAction(handle);
 			break;
 		case AnimationState.ForceExitingTheCover:
 			handle.Manager.BlockAttackAnimation = true;
@@ -272,18 +286,20 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			{
 				StartAction(handle);
 			}
-			if (!(handle.GetTime() < data.Time))
+			if (handle.GetTime() < data.Time)
 			{
-				data.WaitForceExit = true;
-				data.ActionFinished = true;
-				data.ActionStarted = false;
-				handle.Manager.BlockAttackAnimation = false;
-				handle.Release();
+				return;
 			}
+			data.WaitForceExit = true;
+			data.ActionFinished = true;
+			data.ActionStarted = false;
+			handle.Manager.BlockAttackAnimation = false;
+			handle.Release();
 			break;
 		default:
 			throw new ArgumentOutOfRangeException();
 		}
+		handle.Manager.HitAnimationIsActive = false;
 	}
 
 	public override void OnUpdate(UnitAnimationActionHandle handle, float deltaTime)
@@ -491,8 +507,6 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			LosCalculations.CoverType.Full => animState switch
 			{
 				AnimationState.ForceEnteringTheCover => FullCoverEntering, 
-				AnimationState.Idle => FullCoverIdle, 
-				AnimationState.ForceExitingTheCover => FullCoverExiting, 
 				AnimationState.StepOutCover => handle.Manager.StepOutDirectionAnimationType switch
 				{
 					StepOutDirectionAnimationType.Left => LeftStepFullCoverEntering, 
@@ -500,6 +514,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					StepOutDirectionAnimationType.None => FullCoverEntering, 
 					_ => null, 
 				}, 
+				AnimationState.Idle => FullCoverIdle, 
 				AnimationState.StepInCover => handle.Manager.StepOutDirectionAnimationType switch
 				{
 					StepOutDirectionAnimationType.Left => LeftStepFullCoverExiting, 
@@ -507,6 +522,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					StepOutDirectionAnimationType.None => FullCoverExiting, 
 					_ => null, 
 				}, 
+				AnimationState.ForceExitingTheCover => FullCoverExiting, 
 				_ => null, 
 			}, 
 			LosCalculations.CoverType.Half => animState switch

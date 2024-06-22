@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -117,7 +118,9 @@ public class ProgressionRoot
 
 	public static ProgressionRoot Instance => BlueprintRoot.Instance.Progression;
 
-	public IEnumerable<BlueprintCareerPath> CareerPaths => m_CareerPaths.EmptyIfNull().Dereference();
+	public IEnumerable<BlueprintCareerPath> CareerPaths => from cp in m_CareerPaths.EmptyIfNull().Dereference()
+		where cp.IsAvailable
+		select cp;
 
 	public BlueprintProgression FeatsProgression => m_FeatsProgression?.Get();
 

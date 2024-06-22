@@ -19,7 +19,7 @@ public class CheckAbilityWeaponIsOneHanded : PropertyGetter, PropertyContextAcce
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Ability Weapon is One-Handed";
 	}

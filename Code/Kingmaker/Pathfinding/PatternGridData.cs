@@ -156,6 +156,16 @@ public readonly struct PatternGridData : IDisposable, IReadOnlyCollection<Vector
 		return new PatternGridData(bitArray, bounds, pattern.Count, disposable);
 	}
 
+	public static PatternGridData Create(BitPattern2D pattern, bool disposable)
+	{
+		if (pattern.Count == 0)
+		{
+			return Empty;
+		}
+		BitArray result = Pool.Get();
+		return new PatternGridData(pattern.GetCulledArray(in result), pattern.Bounds, pattern.Count, disposable);
+	}
+
 	public static PatternGridData Create(Linecast.Ray2NodeOffsets pattern, int length, bool disposable)
 	{
 		if (length == 0)

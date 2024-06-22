@@ -125,7 +125,7 @@ public class BaseJournalItemPCView : BaseJournalItemBaseView
 		{
 			m_HintPlace.SetHint(GetHintText().ToUpper());
 		}
-		int num = ((!base.ViewModel.IsNew || base.ViewModel.QuestIsViewed) ? (base.ViewModel.IsUpdated ? 1 : (base.ViewModel.IsCompleted ? 2 : (-1))) : 0);
+		int num = ((!base.ViewModel.IsNew || base.ViewModel.QuestIsViewed) ? (base.ViewModel.IsUpdated ? 1 : (base.ViewModel.IsCompleted ? 2 : (base.ViewModel.IsFailed ? 3 : (-1)))) : 0);
 		m_StatusLabel.color = GetStatusColor();
 		if (num == -1)
 		{

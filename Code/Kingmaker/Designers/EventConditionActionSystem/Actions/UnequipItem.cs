@@ -45,7 +45,7 @@ public class UnequipItem : GameAction
 		return $"Unequip {Item} from {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

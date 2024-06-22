@@ -5,6 +5,8 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.QA;
+using Kingmaker.Utility.Attributes;
+using Kingmaker.View.MapObjects;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -15,11 +17,17 @@ public class BlueprintCheck : BlueprintCueBase
 {
 	public StatType Type;
 
-	public int DC;
-
 	public bool Hidden;
 
-	public DCModifier[] DCModifiers = new DCModifier[0];
+	public SkillCheckDifficulty Difficulty;
+
+	[SerializeField]
+	[ShowIf("DifficultyIsCustom")]
+	private int DC;
+
+	[SerializeField]
+	[ShowIf("DifficultyIsCustom")]
+	private DCModifier[] DCModifiers = new DCModifier[0];
 
 	[SerializeField]
 	[FormerlySerializedAs("Success")]
@@ -41,21 +49,38 @@ public class BlueprintCheck : BlueprintCueBase
 
 	public BlueprintCueBase Fail => m_Fail?.Get();
 
+	private bool DifficultyIsCustom => Difficulty == SkillCheckDifficulty.Custom;
+
 	public int GetDC()
 	{
-		int num = DC;
-		if (DCModifiers != null)
+		if (Difficulty != 0)
 		{
-			DCModifier[] dCModifiers = DCModifiers;
-			foreach (DCModifier dCModifier in dCModifiers)
+			return Difficulty.GetDC();
+		}
+		if (DCModifiers == null)
+		{
+			return DC;
+		}
+		int num = DC;
+		DCModifier[] dCModifiers = DCModifiers;
+		foreach (DCModifier dCModifier in dCModifiers)
+		{
+			ConditionsChecker conditions = dCModifier.Conditions;
+			if (conditions != null && conditions.Check())
 			{
-				if (dCModifier != null && dCModifier.Conditions != null && dCModifier.Conditions.Check())
-				{
-					num += dCModifier.Mod;
-				}
+				num += dCModifier.Mod;
 			}
 		}
 		return num;
+	}
+
+	public string GetDCString()
+	{
+		if (Difficulty != 0)
+		{
+			return Difficulty.ToString();
+		}
+		return $"Custom[{DC}]";
 	}
 
 	public BaseUnitEntity GetTargetUnit()

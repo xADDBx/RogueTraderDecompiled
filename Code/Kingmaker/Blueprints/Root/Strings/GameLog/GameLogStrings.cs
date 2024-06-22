@@ -41,6 +41,8 @@ public class GameLogStrings : StringsContainer
 	[Header("Warhammer Prototype")]
 	public GameLogMessage WarhammerDealDamage;
 
+	public GameLogMessage WarhammerSourceDealDamage;
+
 	public GameLogMessage WarhammerHitNoDamage;
 
 	public GameLogMessage WarhammerRFHit;

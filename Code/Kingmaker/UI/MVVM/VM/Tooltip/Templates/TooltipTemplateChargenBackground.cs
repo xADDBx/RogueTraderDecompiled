@@ -8,6 +8,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.Utility;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UnitLogic.FactLogic;
@@ -25,17 +26,37 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 
 	private readonly bool m_IsInfoWindow;
 
-	private int ColumnCount
+	private static readonly TooltipBricksGroupLayoutParams AttributesTooltipLayout = new TooltipBricksGroupLayoutParams
 	{
-		get
-		{
-			if (!m_IsInfoWindow)
-			{
-				return 1;
-			}
-			return 2;
-		}
-	}
+		LayoutType = TooltipBricksGroupLayoutType.Vertical,
+		Padding = new RectOffset(21, 21, 0, 0)
+	};
+
+	private static readonly TooltipBricksGroupLayoutParams AttributesInfoLayout = new TooltipBricksGroupLayoutParams
+	{
+		LayoutType = TooltipBricksGroupLayoutType.Grid,
+		ColumnCount = 1,
+		Padding = new RectOffset(0, 0, 0, 0),
+		Spacing = new Vector2(10f, 0f),
+		CellSize = new Vector2(550f, 34f * SettingsRoot.Accessiability.FontSizeMultiplier)
+	};
+
+	private static readonly TooltipBricksGroupLayoutParams FeaturesTooltipLayout = new TooltipBricksGroupLayoutParams
+	{
+		LayoutType = TooltipBricksGroupLayoutType.Grid,
+		ColumnCount = 1,
+		Padding = new RectOffset(11, 11, 0, 0),
+		PreferredElementHeight = 62f
+	};
+
+	private static readonly TooltipBricksGroupLayoutParams FeaturesInfoLayout = new TooltipBricksGroupLayoutParams
+	{
+		LayoutType = TooltipBricksGroupLayoutType.Grid,
+		ColumnCount = 2,
+		Padding = new RectOffset(10, 10, 0, 0),
+		PreferredElementHeight = 72f,
+		CellSize = new Vector2(300f, 72f)
+	};
 
 	public TooltipTemplateChargenBackground(BlueprintFeature feature, bool isInfoWindow = true)
 	{
@@ -82,20 +103,9 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 		if (source.Any())
 		{
 			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharGen.BackgroundFeatures, TooltipTitleType.H3));
-			TooltipBricksGroupLayoutParams tooltipBricksGroupLayoutParams = new TooltipBricksGroupLayoutParams
-			{
-				LayoutType = TooltipBricksGroupLayoutType.Grid,
-				ColumnCount = ColumnCount,
-				Padding = new RectOffset(11, 11, 0, 0),
-				PreferredElementHeight = 62f
-			};
-			if (m_IsInfoWindow)
-			{
-				tooltipBricksGroupLayoutParams.PreferredElementHeight = 72f;
-				tooltipBricksGroupLayoutParams.CellSize = new Vector2(300f, 72f);
-			}
-			bricks.Add(new TooltipBricksGroupStart(hasBackground: false, tooltipBricksGroupLayoutParams));
-			bricks.AddRange(source.Select((BlueprintUnitFact fact) => new TooltipBrickFeature(fact, isHeader: false, FeatureTypes.Expanded)));
+			TooltipBricksGroupLayoutParams layoutParams = (m_IsInfoWindow ? FeaturesInfoLayout : FeaturesTooltipLayout);
+			bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
+			bricks.AddRange(source.Select((BlueprintUnitFact fact) => new TooltipBrickFeature(fact)));
 			bricks.Add(new TooltipBricksGroupEnd());
 		}
 	}
@@ -110,19 +120,8 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 			return;
 		}
 		bricks.Add(new TooltipBrickTitle(title, TooltipTitleType.H3));
-		TooltipBricksGroupLayoutParams tooltipBricksGroupLayoutParams = new TooltipBricksGroupLayoutParams
-		{
-			LayoutType = TooltipBricksGroupLayoutType.Grid,
-			ColumnCount = ColumnCount,
-			Padding = new RectOffset(21, 21, 0, 0)
-		};
-		if (m_IsInfoWindow)
-		{
-			tooltipBricksGroupLayoutParams.Padding = new RectOffset(0, 0, 0, 0);
-			tooltipBricksGroupLayoutParams.Spacing = new Vector2(10f, 4f);
-			tooltipBricksGroupLayoutParams.CellSize = new Vector2(300f, 30f);
-		}
-		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, tooltipBricksGroupLayoutParams));
+		TooltipBricksGroupLayoutParams layoutParams = (m_IsInfoWindow ? AttributesInfoLayout : AttributesTooltipLayout);
+		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
 		foreach (AddContextStatBonus item in enumerable)
 		{
 			string statShortLabel = GetStatShortLabel(item.Stat);
@@ -148,19 +147,8 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 			return;
 		}
 		bricks.Add(new TooltipBrickTitle(title, TooltipTitleType.H3));
-		TooltipBricksGroupLayoutParams tooltipBricksGroupLayoutParams = new TooltipBricksGroupLayoutParams
-		{
-			LayoutType = TooltipBricksGroupLayoutType.Grid,
-			ColumnCount = ColumnCount,
-			Padding = new RectOffset(21, 21, 0, 0)
-		};
-		if (m_IsInfoWindow)
-		{
-			tooltipBricksGroupLayoutParams.Padding = new RectOffset(0, 0, 0, 0);
-			tooltipBricksGroupLayoutParams.Spacing = new Vector2(10f, 4f);
-			tooltipBricksGroupLayoutParams.CellSize = new Vector2(300f, 30f);
-		}
-		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, tooltipBricksGroupLayoutParams));
+		TooltipBricksGroupLayoutParams layoutParams = (m_IsInfoWindow ? AttributesInfoLayout : AttributesTooltipLayout);
+		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
 		foreach (BlueprintFeature item in levelUpFeatures.SelectMany((AddFeaturesToLevelUp i) => i.Features))
 		{
 			if (item is BlueprintStatAdvancement blueprintStatAdvancement)
@@ -182,24 +170,13 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 			return;
 		}
 		bricks.Add(new TooltipBrickTitle(title, TooltipTitleType.H3));
-		TooltipBricksGroupLayoutParams tooltipBricksGroupLayoutParams = new TooltipBricksGroupLayoutParams
-		{
-			LayoutType = TooltipBricksGroupLayoutType.Grid,
-			ColumnCount = ColumnCount,
-			Padding = new RectOffset(10, 10, 0, 0),
-			PreferredElementHeight = 62f
-		};
-		if (m_IsInfoWindow)
-		{
-			tooltipBricksGroupLayoutParams.PreferredElementHeight = 72f;
-			tooltipBricksGroupLayoutParams.CellSize = new Vector2(300f, 72f);
-		}
-		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, tooltipBricksGroupLayoutParams));
+		TooltipBricksGroupLayoutParams layoutParams = (m_IsInfoWindow ? FeaturesInfoLayout : FeaturesTooltipLayout);
+		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
 		foreach (AddFeaturesToLevelUp levelUpFeature in levelUpFeatures)
 		{
 			foreach (BlueprintFeature feature in levelUpFeature.Features)
 			{
-				bricks.Add(new TooltipBrickFeature(feature, isHeader: false, available: true, showIcon: true, FeatureTypes.Expanded));
+				bricks.Add(new TooltipBrickFeature(feature));
 			}
 		}
 		bricks.Add(new TooltipBricksGroupEnd());

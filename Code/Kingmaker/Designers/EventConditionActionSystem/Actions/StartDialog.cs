@@ -38,7 +38,7 @@ public class StartDialog : GameAction, IDialogReference
 
 	public BlueprintDialog Dialogue => m_Dialogue?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BlueprintDialog blueprintDialog = (Dialogue ? Dialogue : (DialogEvaluator ? ((BlueprintDialog)DialogEvaluator.GetValue()) : null));
 		if (DialogueOwner != null)

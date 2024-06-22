@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip;
+using Kingmaker.UI.Common;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
+using Rewired;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +16,6 @@ namespace Kingmaker.Code.UI.MVVM.View.Tooltip;
 
 public abstract class TooltipBaseView : InfoBaseView<TooltipVM>, IWidgetView
 {
-	[Header("Body")]
 	[SerializeField]
 	private List<Image> m_Backgrounds;
 
@@ -25,6 +26,9 @@ public abstract class TooltipBaseView : InfoBaseView<TooltipVM>, IWidgetView
 
 	[SerializeField]
 	protected LayoutElement m_BodyLayoutElement;
+
+	[SerializeField]
+	protected ScrollRectExtended m_BodyScroll;
 
 	[SerializeField]
 	private GameObject m_Separator;
@@ -61,6 +65,12 @@ public abstract class TooltipBaseView : InfoBaseView<TooltipVM>, IWidgetView
 			if (m_ContentVerticalLayoutGroup != null)
 			{
 				m_ContentVerticalLayoutGroup.spacing = base.ViewModel.ContentSpacing;
+			}
+			if (m_BodyScroll != null)
+			{
+				bool active = base.ViewModel.HasScroll && m_BodyContainer.gameObject.activeSelf;
+				m_BodyScroll.enabled = active;
+				m_BodyScroll.verticalScrollbar.gameObject.SetActive(active);
 			}
 			Show();
 		}
@@ -160,6 +170,14 @@ public abstract class TooltipBaseView : InfoBaseView<TooltipVM>, IWidgetView
 		base.gameObject.SetActive(value: false);
 		m_ShowTween?.Kill();
 		m_ShowTween = null;
+	}
+
+	public void Scroll(InputActionEventData obj, float value)
+	{
+		if (!(m_BodyScroll == null))
+		{
+			m_BodyScroll.Scroll(value * m_BodyScroll.scrollSensitivity, smooth: true);
+		}
 	}
 
 	public void BindWidgetVM(IViewModel vm)

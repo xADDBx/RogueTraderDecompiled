@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using TMPro;
 using UniRx;
@@ -22,7 +23,8 @@ public class TooltipBrickCargoCapacityView : TooltipBaseBrickView<TooltipBrickCa
 	{
 		AddDisposable(base.ViewModel.TotalFillValue.Subscribe(delegate(int value)
 		{
-			m_TotalFillValue.text = $"{value}%";
+			string text = UIConfig.Instance.PercentHelper.AddPercentTo(value);
+			m_TotalFillValue.text = text;
 		}));
 		AddDisposable(base.ViewModel.TotalFillValue.CombineLatest(base.ViewModel.UnusableFillValue, (int total, int unusable) => new { total, unusable }).Subscribe(value =>
 		{

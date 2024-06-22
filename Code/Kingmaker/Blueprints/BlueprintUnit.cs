@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Code.GameCore.Blueprints;
+using Code.GameCore.Editor.Blueprints.BlueprintUnitEditorChecker;
 using JetBrains.Annotations;
 using Kingmaker.AI.Blueprints;
 using Kingmaker.Blueprints.Base;
@@ -14,11 +15,13 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
+using Kingmaker.Items;
 using Kingmaker.Localization;
 using Kingmaker.Localization.Shared;
 using Kingmaker.ResourceLinks;
@@ -33,7 +36,9 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GuidUtility;
+using Kingmaker.Utility.Random;
 using Kingmaker.Visual.HitSystem;
+using Newtonsoft.Json;
 using Owlcat.QA.Validation;
 using UnityEngine;
 using Warhammer.SpaceCombat.Blueprints;
@@ -42,7 +47,7 @@ namespace Kingmaker.Blueprints;
 
 [Serializable]
 [TypeId("fa4fa7e4548127a47a2846c91b051065")]
-public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<BaseUnitEntity>
+public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<BaseUnitEntity>, IBlueprintUnitExportCharacter
 {
 	[Serializable]
 	public new class Reference : BlueprintReference<BlueprintUnit>
@@ -93,7 +98,7 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 	}
 
 	[Serializable]
-	public class UnitBody
+	public class UnitBody : IUnitBodyExtension
 	{
 		public bool DisableHands;
 
@@ -103,22 +108,7 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 
 		[SerializeField]
 		[HideIf("DisableHands")]
-		private BlueprintItemEquipmentHandReference m_PrimaryHand;
-
-		[SerializeField]
-		[HideIf("DisableHands")]
-		private BlueprintItemEquipmentHandReference m_SecondaryHand;
-
-		[SerializeField]
-		[HideIf("DisableHands")]
-		private BlueprintItemEquipmentHandReference m_PrimaryHandAlternative1;
-
-		[SerializeField]
-		[HideIf("DisableHands")]
-		private BlueprintItemEquipmentHandReference m_SecondaryHandAlternative1;
-
-		[HideIf("DisableHands")]
-		public int ActiveHandSet;
+		public UnitItemEquipmentHandSettings ItemEquipmentHandSettings = new UnitItemEquipmentHandSettings();
 
 		[SerializeField]
 		private BlueprintItemWeaponReference[] m_AdditionalLimbs = new BlueprintItemWeaponReference[0];
@@ -163,10 +153,13 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		private BlueprintItemEquipmentShouldersReference m_Shoulders;
 
 		[SerializeField]
-		private BlueprintItemEquipmentUsableReference[] m_QuickSlots = new BlueprintItemEquipmentUsableReference[2];
+		private BlueprintItemEquipmentUsableReference[] m_QuickSlots = new BlueprintItemEquipmentUsableReference[4];
 
 		[SerializeField]
 		private BlueprintItemMechadendrite.BlueprintItemMechadendriteReference[] m_Mechadendrites = Array.Empty<BlueprintItemMechadendrite.BlueprintItemMechadendriteReference>();
+
+		[JsonProperty]
+		public UnitItemEquipmentHandSettings OverridenUnitItemEquipmentHandSettings { get; set; }
 
 		public BlueprintItemWeapon EmptyHandWeapon
 		{
@@ -179,34 +172,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 				m_EmptyHandWeapon = value.ToReference<BlueprintItemWeaponReference>();
 			}
 		}
-
-		public BlueprintItemEquipmentHand PrimaryHand
-		{
-			get
-			{
-				return m_PrimaryHand?.Get();
-			}
-			set
-			{
-				m_PrimaryHand = value.ToReference<BlueprintItemEquipmentHandReference>();
-			}
-		}
-
-		public BlueprintItemEquipmentHand SecondaryHand
-		{
-			get
-			{
-				return m_SecondaryHand?.Get();
-			}
-			set
-			{
-				m_SecondaryHand = value.ToReference<BlueprintItemEquipmentHandReference>();
-			}
-		}
-
-		public BlueprintItemEquipmentHand PrimaryHandAlternative1 => m_PrimaryHandAlternative1?.Get();
-
-		public BlueprintItemEquipmentHand SecondaryHandAlternative1 => m_SecondaryHandAlternative1?.Get();
 
 		public ReferenceArrayProxy<BlueprintItemWeapon> AdditionalLimbs
 		{
@@ -269,26 +234,24 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		}
 
 		[CanBeNull]
-		public BlueprintItemEquipmentHand GetHandEquipment(int i, bool main)
+		public BlueprintItemEquipmentHand GetHandEquipment(int i, bool main, UnitItemEquipmentHandSettings settings)
 		{
-			switch (i)
+			return i switch
 			{
-			case 0:
-				if (!main)
-				{
-					return SecondaryHand;
-				}
-				return PrimaryHand;
-			case 1:
-				if (!main)
-				{
-					return SecondaryHandAlternative1;
-				}
-				return PrimaryHandAlternative1;
-			default:
-				return null;
-			}
+				0 => main ? settings.PrimaryHand : settings.SecondaryHand, 
+				1 => main ? settings.PrimaryHandAlternative1 : settings.SecondaryHandAlternative1, 
+				_ => null, 
+			};
 		}
+
+		void IUnitBodyExtension.SetBody(PartUnitBody body, BlueprintUnit blueprintUnit)
+		{
+		}
+	}
+
+	private interface IUnitBodyExtension
+	{
+		void SetBody(PartUnitBody body, BlueprintUnit blueprintUnit);
 	}
 
 	[SerializeField]
@@ -652,7 +615,7 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		{
 			return result;
 		}
-		return GetDifficultyBaseStat(statType, DifficultyType, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0);
+		return GetDifficultyBaseStat(statType, DifficultyType, ContextData<BlueprintUnitCheckerInEditorContextData>.Current?.AreaCR ?? Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0);
 	}
 
 	public int GetDifficultyBaseStat(StatType statType, UnitDifficultyType difficultyType, int challengeRating = -1)
@@ -671,10 +634,10 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		ArmyStat attributeSettings = GetAttributeSettings(statType);
 		BlueprintArmyDescription.ArmyStat attributeSettings2 = Army.GetAttributeSettings(statType);
 		bool isProfessional = (attributeSettings.NotModified ? attributeSettings2.isProfessional : attributeSettings.isProfesional);
-		BlueprintItemWeapon primaryHand = Body.PrimaryHand as BlueprintItemWeapon;
-		BlueprintItemWeapon secondaryHand = Body.SecondaryHand as BlueprintItemWeapon;
-		BlueprintItemWeapon primaryHandAlternative = Body.PrimaryHandAlternative1 as BlueprintItemWeapon;
-		BlueprintItemWeapon secondaryHandAlternative = Body.SecondaryHandAlternative1 as BlueprintItemWeapon;
+		BlueprintItemWeapon primaryHand = Body.ItemEquipmentHandSettings.PrimaryHand as BlueprintItemWeapon;
+		BlueprintItemWeapon secondaryHand = Body.ItemEquipmentHandSettings.SecondaryHand as BlueprintItemWeapon;
+		BlueprintItemWeapon primaryHandAlternative = Body.ItemEquipmentHandSettings.PrimaryHandAlternative1 as BlueprintItemWeapon;
+		BlueprintItemWeapon secondaryHandAlternative = Body.ItemEquipmentHandSettings.SecondaryHandAlternative1 as BlueprintItemWeapon;
 		bool isBoss = difficultyType >= UnitDifficultyType.MiniBoss;
 		MobTypeForStatCalculations? newType = base.ComponentsArray.OfType<ReplaceMobTypeForStatCalculations>().FirstOrDefault()?.NewType;
 		bool isMelee = MobStatHelper.IsMobTypeMelee(primaryHand, secondaryHand, primaryHandAlternative, secondaryHandAlternative, newType);
@@ -833,5 +796,40 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 			StatType.WarhammerFellowship => WarhammerFellowshipSetting, 
 			_ => throw new InvalidEnumArgumentException("statType", (int)statType, typeof(StatType)), 
 		};
+	}
+
+	public void TrySetupOverridenUnitBodyHandsSettings()
+	{
+		OverrideUnitBodyWithRandomHandsSettings component = this.GetComponent<OverrideUnitBodyWithRandomHandsSettings>();
+		if (component == null)
+		{
+			return;
+		}
+		float num = PFStatefulRandom.Blueprints.Range(0f, component.TotalWeightPercent);
+		int num2 = 0;
+		UnitItemEquipmentHandSettings unitItemEquipmentHandSettings = null;
+		UnitItemEquipmentHandSettingsWithWeights[] array = component.SettingsWithWeights.EmptyIfNull();
+		foreach (UnitItemEquipmentHandSettingsWithWeights unitItemEquipmentHandSettingsWithWeights in array)
+		{
+			num2 += unitItemEquipmentHandSettingsWithWeights.Weight;
+			if (!((float)num2 <= num))
+			{
+				unitItemEquipmentHandSettings = unitItemEquipmentHandSettingsWithWeights.UnitHandsSettings;
+				break;
+			}
+		}
+		if (unitItemEquipmentHandSettings != null)
+		{
+			Body.OverridenUnitItemEquipmentHandSettings = unitItemEquipmentHandSettings;
+		}
+	}
+
+	void IBlueprintUnitExportCharacter.SyncFacts(BlueprintUnitFact[] facts)
+	{
+	}
+
+	void IBlueprintUnitExportCharacter.SyncBody(PartUnitBody body)
+	{
+		((IUnitBodyExtension)Body)?.SetBody(body, this);
 	}
 }

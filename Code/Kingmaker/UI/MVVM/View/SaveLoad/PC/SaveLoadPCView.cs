@@ -1,4 +1,5 @@
 using Kingmaker.UI.InputSystems;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.MVVM.View.SaveLoad.Base;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -22,5 +23,7 @@ public class SaveLoadPCView : SaveLoadBaseView
 			base.ViewModel.OnClose();
 		}));
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.OnClose));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, base.SelectPrev));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, base.SelectNext));
 	}
 }

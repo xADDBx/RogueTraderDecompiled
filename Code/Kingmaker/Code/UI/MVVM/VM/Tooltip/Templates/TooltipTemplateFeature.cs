@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
@@ -14,6 +15,7 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Progression.Features;
 using Owlcat.Runtime.UI.Tooltips;
+using TMPro;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
@@ -74,7 +76,17 @@ public class TooltipTemplateFeature : TooltipBaseTemplate
 	{
 		if (!m_WithVariants)
 		{
-			yield return new TooltipBrickFeature(BlueprintFeatureBase, isHeader: true);
+			string acronym = ((BlueprintFeatureBase.Icon != null) ? "" : UIUtility.GetAbilityAcronym(BlueprintFeatureBase.Name));
+			Sprite icon = ((BlueprintFeatureBase.Icon != null) ? BlueprintFeatureBase.Icon : UIUtility.GetIconByText(BlueprintFeatureBase.NameForAcronym));
+			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
+			{
+				Text = BlueprintFeatureBase.Name,
+				TextParams = new TextFieldParams
+				{
+					FontStyles = FontStyles.Bold
+				}
+			};
+			yield return new TooltipBrickIconPattern(icon, null, titleValues, null, null, null, IconPatternMode.SkillMode, acronym);
 		}
 	}
 

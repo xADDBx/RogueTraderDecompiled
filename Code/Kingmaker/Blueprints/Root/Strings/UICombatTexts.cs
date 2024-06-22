@@ -44,6 +44,8 @@ public class UICombatTexts
 
 	public LocalizedString HPDead;
 
+	public LocalizedString CultAmbush;
+
 	public string GetAvoidText(AttackResult result)
 	{
 		return result switch

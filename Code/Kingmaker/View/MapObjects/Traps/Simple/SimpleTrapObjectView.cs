@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -16,6 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.Traps.Simple;
 
+[KnowledgeDatabaseID("3f97579788494ffdb20292bb50f3b2e7")]
 public class SimpleTrapObjectView : TrapObjectView
 {
 	[SerializeField]
@@ -117,7 +119,8 @@ public class SimpleTrapObjectView : TrapObjectView
 	private static void AttachPerceptionComponent(GameObject gameObject, SimpleTrapObjectData data)
 	{
 		AwarenessCheckComponent awarenessCheckComponent = gameObject.EnsureComponent<AwarenessCheckComponent>();
-		awarenessCheckComponent.DC = data.PerceptionDC;
+		awarenessCheckComponent.SetCustomDC(data.PerceptionDC);
+		awarenessCheckComponent.Difficulty = SkillCheckDifficulty.Custom;
 		awarenessCheckComponent.Radius = data.PerceptionRadius;
 	}
 }

@@ -23,16 +23,15 @@ public class ItemsFilterSearchConsoleView : ItemsFilterSearchBaseView
 
 	public bool IsActive => m_IsActive.Value;
 
-	public override void Initialize()
-	{
-		base.Initialize();
-	}
-
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
 		m_ConsoleInputField.SetPlaceholderText(UIStrings.Instance.CharGen.EnterSearchTextHere);
 		m_ConsoleInputField.Bind(null, base.OnSearchStringEdit);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
 	}
 
 	public void AddInput(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enabledHints = null)
@@ -51,15 +50,11 @@ public class ItemsFilterSearchConsoleView : ItemsFilterSearchBaseView
 		}, 16, enabledHints));
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-	}
-
 	public override void SetActive(bool value)
 	{
 		m_IsActive.Value = value;
 		base.gameObject.SetActive(value);
-		m_ConsoleInputField.Text = "";
+		m_ConsoleInputField.Text = string.Empty;
 		ContextMenuHelper.HideContextMenu();
 		if (value)
 		{

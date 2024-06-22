@@ -21,7 +21,7 @@ public class ExplorePointOfInterest : GameAction
 		return "Set unique point of interest status to explored";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		EntityPool<StarSystemObjectEntity> starSystemObjects = Game.Instance.State.StarSystemObjects;
 		BasePointOfInterest basePointOfInterest = null;

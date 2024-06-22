@@ -38,7 +38,7 @@ public class IncrementFlagValue : GameAction, IUnlockableFlagReference
 		return $"Increment unlocked flag value ({Flag})({Value})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (UnlockIfNot && !Flag.IsUnlocked)
 		{

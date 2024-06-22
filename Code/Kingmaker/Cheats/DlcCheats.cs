@@ -1,5 +1,4 @@
 using Core.Cheats;
-using Kingmaker.Blueprints;
 using Kingmaker.DLC;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
@@ -36,6 +35,33 @@ internal static class DlcCheats
 		return dlcStatus;
 	}
 
+	[Cheat(Name = "check_all_dlc_statuses", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void CheckAllDlcStatuses()
+	{
+		foreach (IBlueprintDlc dlc in Game.Instance.BlueprintRoot.DlcSettings.Dlcs)
+		{
+			CheckDlcStatus(dlc as BlueprintDlc);
+		}
+	}
+
+	[Cheat(Name = "set_all_dlc_enabled", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetAllDlcEnabled()
+	{
+		foreach (IBlueprintDlc dlc in Game.Instance.BlueprintRoot.DlcSettings.Dlcs)
+		{
+			SetDlcEnabled(dlc as BlueprintDlc);
+		}
+	}
+
+	[Cheat(Name = "set_all_dlc_disabled", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetAllDlcDisabled()
+	{
+		foreach (IBlueprintDlc dlc in Game.Instance.BlueprintRoot.DlcSettings.Dlcs)
+		{
+			SetDlcDisabled(dlc as BlueprintDlc);
+		}
+	}
+
 	private static string GetDlcStatus(BlueprintDlc dlc)
 	{
 		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(dlc);
@@ -43,24 +69,12 @@ internal static class DlcCheats
 		{
 			return $"Dlc {dlc} status is null";
 		}
-		return $"Dlc {dlc} status is Purchased={iDLCStatus.Purchased}, DownloadState={iDLCStatus.DownloadState}, IsMounted={iDLCStatus.IsMounted}, IsEnabled={iDLCStatus.IsEnabled}";
+		return $"Dlc {dlc} status is Purchased={iDLCStatus.Purchased}, DownloadState={iDLCStatus.DownloadState}, IsMounted={iDLCStatus.IsMounted}, IsEnabled={dlc.IsEnabled}";
 	}
 
 	private static void SetDlcStatus(BlueprintDlc dlc, bool isEnabled)
 	{
-		DlcStoreCheat component = dlc.GetComponent<DlcStoreCheat>();
-		if (component == null)
-		{
-			PFLog.Default.Error(string.Format("Can not change {0} status cause no {1} component", dlc, "DlcStoreCheat"));
-			return;
-		}
-		IDLCStatus status = component.GetStatus();
-		if (status == null)
-		{
-			PFLog.Default.Error(string.Format("Can not change {0} status cause {1} status is null", dlc, "DlcStoreCheat"));
-			return;
-		}
-		if (status.IsEnabled == isEnabled)
+		if (dlc.IsEnabled == isEnabled)
 		{
 			PFLog.Default.Error($"Can not set {dlc} status cause it is already IsEnabled={isEnabled}");
 			return;

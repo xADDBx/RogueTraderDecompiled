@@ -5,7 +5,7 @@ namespace Kingmaker.EntitySystem.Persistence.Versioning;
 
 public abstract class PlayerUpgraderOnlyAction : GameAction
 {
-	public sealed override void RunAction()
+	protected sealed override void RunAction()
 	{
 		if (!(base.Owner is BlueprintPlayerUpgrader))
 		{

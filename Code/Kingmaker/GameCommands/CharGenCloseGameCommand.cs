@@ -30,20 +30,25 @@ public sealed class CharGenCloseGameCommand : GameCommand, IMemoryPackable<CharG
 	[MemoryPackInclude]
 	private readonly bool m_WithComplete;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	private readonly bool m_SyncPortrait;
+
 	public override bool IsSynchronized => true;
 
 	[JsonConstructor]
 	[MemoryPackConstructor]
-	public CharGenCloseGameCommand(bool m_withComplete)
+	public CharGenCloseGameCommand(bool m_withComplete, bool m_syncPortrait)
 	{
 		m_WithComplete = m_withComplete;
+		m_SyncPortrait = m_syncPortrait;
 	}
 
 	protected override void ExecuteInternal()
 	{
 		EventBus.RaiseEvent(delegate(ICharGenCloseHandler h)
 		{
-			h.HandleClose(m_WithComplete);
+			h.HandleClose(m_WithComplete, m_SyncPortrait);
 		});
 	}
 
@@ -74,7 +79,7 @@ public sealed class CharGenCloseGameCommand : GameCommand, IMemoryPackable<CharG
 		}
 		else
 		{
-			writer.WriteUnmanagedWithObjectHeader(1, in value.m_WithComplete);
+			writer.WriteUnmanagedWithObjectHeader(2, in value.m_WithComplete, in value.m_SyncPortrait);
 		}
 	}
 
@@ -87,33 +92,49 @@ public sealed class CharGenCloseGameCommand : GameCommand, IMemoryPackable<CharG
 			return;
 		}
 		bool value2;
-		if (memberCount == 1)
+		bool value3;
+		if (memberCount == 2)
 		{
 			if (value == null)
 			{
-				reader.ReadUnmanaged<bool>(out value2);
+				reader.ReadUnmanaged<bool, bool>(out value2, out value3);
 			}
 			else
 			{
 				value2 = value.m_WithComplete;
+				value3 = value.m_SyncPortrait;
 				reader.ReadUnmanaged<bool>(out value2);
+				reader.ReadUnmanaged<bool>(out value3);
 			}
 		}
 		else
 		{
-			if (memberCount > 1)
+			if (memberCount > 2)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(CharGenCloseGameCommand), 1, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(CharGenCloseGameCommand), 2, memberCount);
 				return;
 			}
-			value2 = value != null && value.m_WithComplete;
+			if (value == null)
+			{
+				value2 = false;
+				value3 = false;
+			}
+			else
+			{
+				value2 = value.m_WithComplete;
+				value3 = value.m_SyncPortrait;
+			}
 			if (memberCount != 0)
 			{
 				reader.ReadUnmanaged<bool>(out value2);
-				_ = 1;
+				if (memberCount != 1)
+				{
+					reader.ReadUnmanaged<bool>(out value3);
+					_ = 2;
+				}
 			}
 			_ = value;
 		}
-		value = new CharGenCloseGameCommand(value2);
+		value = new CharGenCloseGameCommand(value2, value3);
 	}
 }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Pathfinding;
@@ -88,44 +90,34 @@ public static class CombatEngagementHelper
 		}
 	}
 
-	private static List<EntityRef<BaseUnitEntity>> CollectEngage(BaseUnitEntity unit)
+	public static List<EntityRef<BaseUnitEntity>> CollectUnitsAround(BaseUnitEntity unit, [CanBeNull] Func<BaseUnitEntity, bool> predicate = null)
 	{
 		List<EntityRef<BaseUnitEntity>> list = ClaimList();
 		CustomGridNode currentUnwalkableNode = unit.CurrentUnwalkableNode;
 		if (currentUnwalkableNode == null)
 		{
 			PFLog.Default.Warning($"Cannot collect engage list! Null origin node for unit {unit}");
-			return Engage[unit] = list;
+			return list;
 		}
 		foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(currentUnwalkableNode, unit.SizeRect, 1))
 		{
 			BaseUnitEntity unit2 = item.GetUnit();
-			if (unit2 != null && unit.IsThreat(unit2))
+			if (unit2 != null && (predicate == null || predicate(unit2)))
 			{
 				list.Add(unit2);
 			}
 		}
-		return Engage[unit] = list;
+		return list;
+	}
+
+	private static List<EntityRef<BaseUnitEntity>> CollectEngage(BaseUnitEntity unit)
+	{
+		return Engage[unit] = CollectUnitsAround(unit, (BaseUnitEntity entity) => unit.IsThreat(entity));
 	}
 
 	private static List<EntityRef<BaseUnitEntity>> CollectEngagedBy(BaseUnitEntity unit)
 	{
-		List<EntityRef<BaseUnitEntity>> list = ClaimList();
-		CustomGridNode currentUnwalkableNode = unit.CurrentUnwalkableNode;
-		if (currentUnwalkableNode == null)
-		{
-			PFLog.Default.Warning($"Cannot collect engage list! Null origin node for unit {unit}");
-			return EngagedBy[unit] = list;
-		}
-		foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(currentUnwalkableNode, unit.SizeRect, 1))
-		{
-			BaseUnitEntity unit2 = item.GetUnit();
-			if (unit2 != null && unit2.IsThreat(unit))
-			{
-				list.Add(unit2);
-			}
-		}
-		return EngagedBy[unit] = list;
+		return EngagedBy[unit] = CollectUnitsAround(unit, (BaseUnitEntity entity) => entity.IsThreat(unit));
 	}
 
 	public static bool IsEngagedInPosition(this BaseUnitEntity unit, Vector3 desiredPosition)

@@ -39,6 +39,8 @@ public class RulePerformDodge : RulebookTargetEvent<UnitEntity, MechanicEntity>
 
 	public bool IsMelee => Ability.Weapon?.Blueprint.IsMelee ?? false;
 
+	public bool IsRanged => Ability.Weapon?.Blueprint.IsRanged ?? false;
+
 	public bool IsJumpAside { get; private set; }
 
 	public MechanicEntity Attacker => base.Target;

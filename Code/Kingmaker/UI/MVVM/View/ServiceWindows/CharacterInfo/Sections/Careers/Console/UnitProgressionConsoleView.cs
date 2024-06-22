@@ -115,7 +115,10 @@ public class UnitProgressionConsoleView : UnitProgressionCommonView, ICharInfoCo
 		{
 			yield return null;
 		}
-		CareerPathProgressionConsoleView.AddInput(ref m_InputLayer, ref m_HintsWidget);
+		if (CareerPathProgressionConsoleView.IsBinded)
+		{
+			CareerPathProgressionConsoleView.AddInput(ref m_InputLayer, ref m_HintsWidget);
+		}
 	}
 
 	private void CreateNavigation()

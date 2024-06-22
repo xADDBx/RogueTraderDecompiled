@@ -38,7 +38,7 @@ public class WarhammerBuffDurationActions : ContextAction
 		return $"Perform actions according to buff [{Buff}] duration";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Buff buff = base.Target?.Entity.Buffs.GetBuff(Buff);
 		if (buff == null)

@@ -60,9 +60,42 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 
 		public List<ClipSettings> MeleeCornerAttack = new List<ClipSettings>();
 
-		public IEnumerable<AnimationClipWrapper> ClipWrappers => Unpack((ClipSettings i) => i.ClipWrapper, Ready, Unready, LowRecoil, MediumRecoil, HighRecoil, PlasmaRecoil, LaserRecoil, LinearFlamerRecoil, CornerFlamerRecoil, MeleeCornerAttack).Distinct();
+		[Space(4f)]
+		public List<AlternativeAttackVariantSettings> AlternativeAnimations = new List<AlternativeAttackVariantSettings>();
 
-		public IEnumerable<AnimationClipWrapper> AttackClipWrappers => Unpack((ClipSettings i) => i.ClipWrapper, LowRecoil, MediumRecoil, HighRecoil, PlasmaRecoil, LinearFlamerRecoil, LaserRecoil, CornerFlamerRecoil, MeleeCornerAttack).Distinct();
+		public IEnumerable<AnimationClipWrapper> ClipWrappers
+		{
+			get
+			{
+				IEnumerable<AnimationClipWrapper> enumerable = Unpack((ClipSettings i) => i.ClipWrapper, Ready, Unready, LowRecoil, MediumRecoil, HighRecoil, PlasmaRecoil, LaserRecoil, LinearFlamerRecoil, CornerFlamerRecoil, MeleeCornerAttack).Distinct();
+				if (AlternativeAnimations.Empty())
+				{
+					return enumerable;
+				}
+				foreach (AlternativeAttackVariantSettings alternativeAnimation in AlternativeAnimations)
+				{
+					enumerable.Concat(alternativeAnimation.Settings.ClipWrappers);
+				}
+				return enumerable.Distinct();
+			}
+		}
+
+		public IEnumerable<AnimationClipWrapper> AttackClipWrappers
+		{
+			get
+			{
+				IEnumerable<AnimationClipWrapper> enumerable = Unpack((ClipSettings i) => i.ClipWrapper, LowRecoil, MediumRecoil, HighRecoil, PlasmaRecoil, LinearFlamerRecoil, LaserRecoil, CornerFlamerRecoil, MeleeCornerAttack).Distinct();
+				if (AlternativeAnimations.Empty())
+				{
+					return enumerable;
+				}
+				foreach (AlternativeAttackVariantSettings alternativeAnimation in AlternativeAnimations)
+				{
+					enumerable.Concat(alternativeAnimation.Settings.AttackClipWrappers);
+				}
+				return enumerable.Distinct();
+			}
+		}
 
 		private IEnumerable<T> Unpack<T>(Func<ClipSettings, T> unpack, params List<ClipSettings>[] settingsLists)
 		{
@@ -77,6 +110,14 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 
 		public ReadonlyList<ClipSettings> GetAttackVariantsList(UnitAnimationActionHandle handle)
 		{
+			if (handle.AlternativeStyle != 0)
+			{
+				if (!AlternativeAnimations.Empty())
+				{
+					return AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetAttackVariantsList(handle) ?? GetAttackVariantsList(handle.Recoil);
+				}
+				return GetAttackVariantsList(handle.Recoil);
+			}
 			return GetAttackVariantsList(handle.Recoil);
 		}
 
@@ -98,6 +139,14 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		[CanBeNull]
 		public ClipSettings GetAttackVariantRandom(UnitAnimationActionHandle handle)
 		{
+			if (handle.AlternativeStyle != 0 && !AlternativeAnimations.Empty() && AlternativeAnimations.Any((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle))
+			{
+				ClipSettings attackVariantRandom = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle).Settings.GetAttackVariantRandom(handle);
+				if (attackVariantRandom != null)
+				{
+					return attackVariantRandom;
+				}
+			}
 			RecoilStrength recoil = handle.Recoil;
 			ClipSettings clipSettings = GetAttackVariantsList(recoil).Random(PFStatefulRandom.Visuals.Animation1);
 			if (clipSettings == null)
@@ -129,14 +178,57 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		[CanBeNull]
 		public ClipSettings GetReadyVariantRandom(UnitAnimationActionHandle handle)
 		{
-			return Ready.Random(PFStatefulRandom.Visuals.Animation1);
+			object obj;
+			if (handle.AlternativeStyle != 0)
+			{
+				if (AlternativeAnimations.Empty())
+				{
+					return Ready.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+				obj = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetReadyVariantRandom(handle);
+				if (obj == null)
+				{
+					return Ready.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+			}
+			else
+			{
+				obj = Ready.Random(PFStatefulRandom.Visuals.Animation1);
+			}
+			return (ClipSettings)obj;
 		}
 
 		[CanBeNull]
 		public ClipSettings GetUnreadyVariantRandom(UnitAnimationActionHandle handle)
 		{
-			return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+			object obj;
+			if (handle.AlternativeStyle != 0)
+			{
+				if (AlternativeAnimations.Empty())
+				{
+					return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+				obj = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetUnreadyVariantRandom(handle);
+				if (obj == null)
+				{
+					return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+			}
+			else
+			{
+				obj = Unready.Random(PFStatefulRandom.Visuals.Animation1);
+			}
+			return (ClipSettings)obj;
 		}
+	}
+
+	[Serializable]
+	public class AlternativeAttackVariantSettings
+	{
+		public AnimationAlternativeStyle Style;
+
+		[Space(4f)]
+		public AttackVariantSettings Settings;
 	}
 
 	[Serializable]
@@ -354,7 +446,8 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		bool flag = false;
 		if (handle.Manager.TryGetComponent<MechadendriteSettings>(out var component))
 		{
-			flag = (component.GetComponentInParent<UnitEntityView>()?.AnimationManager?.BlockAttackAnimation).GetValueOrDefault();
+			UnitEntityView componentInParent = component.GetComponentInParent<UnitEntityView>();
+			flag = (componentInParent?.AnimationManager?.BlockAttackAnimation).GetValueOrDefault() || !(componentInParent.AnimationManager.CurrentAction.Action is WarhammerUnitAnimationActionHandAttack);
 		}
 		if (handle.Manager.BlockAttackAnimation || flag)
 		{

@@ -19,7 +19,7 @@ public class CheckIsDOTGetter : PropertyGetter, PropertyContextAccessor.IOptiona
 	[ShowIf("CheckType")]
 	public DOT Type;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!CheckType)
 		{

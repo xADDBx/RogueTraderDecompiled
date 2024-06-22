@@ -68,7 +68,7 @@ public class ColonyProjectsVM : ColonyUIComponentVM, IColonizationProjectsUIHand
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsVM.StartProject - no colony!");
+			PFLog.UI.Error("ColonyProjectsVM.StartProject - no colony!");
 			return;
 		}
 		UISounds.Instance.Sounds.SpaceColonization.StartProject.Play();
@@ -116,7 +116,7 @@ public class ColonyProjectsVM : ColonyUIComponentVM, IColonizationProjectsUIHand
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsVM.UpdateStartAvailability - no colony!");
+			PFLog.UI.Error("ColonyProjectsVM.UpdateStartAvailability - no colony!");
 			return;
 		}
 		StartAvailable.Value = m_Colony.ProjectCanStart(blueprintColonyProject) && m_Colony.Projects.All((ColonyProject p) => p.Blueprint != blueprintColonyProject);
@@ -124,17 +124,17 @@ public class ColonyProjectsVM : ColonyUIComponentVM, IColonizationProjectsUIHand
 
 	public void HandleColonyProjectStarted(Colony colony, ColonyProject project)
 	{
-		if (ShouldShow.Value && ColonyProjectPageVM.BlueprintColonyProject == project.Blueprint)
+		if (ShouldShow.Value && ColonyProjectPageVM.BlueprintColonyProject != null && m_Colony == colony)
 		{
-			UpdateStartAvailability(project.Blueprint);
+			UpdateStartAvailability(ColonyProjectPageVM.BlueprintColonyProject);
 		}
 	}
 
 	public void HandleColonyProjectFinished(Colony colony, ColonyProject project)
 	{
-		if (ShouldShow.Value && ColonyProjectPageVM.BlueprintColonyProject == project.Blueprint)
+		if (ShouldShow.Value && ColonyProjectPageVM.BlueprintColonyProject != null && m_Colony == colony)
 		{
-			UpdateStartAvailability(project.Blueprint);
+			UpdateStartAvailability(ColonyProjectPageVM.BlueprintColonyProject);
 		}
 	}
 }

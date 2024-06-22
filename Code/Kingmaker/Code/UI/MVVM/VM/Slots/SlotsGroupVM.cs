@@ -48,6 +48,9 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 	public ReactiveProperty<ItemsSorterType> SorterType { get; } = new ReactiveProperty<ItemsSorterType>();
 
 
+	public ReactiveProperty<bool> ShowUnavailable { get; } = new ReactiveProperty<bool>();
+
+
 	public ReactiveProperty<string> SearchString { get; } = new ReactiveProperty<string>();
 
 
@@ -60,7 +63,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	public ItemSlotsGroupType Type { get; }
 
-	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0)
+	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0)
 	{
 		MechanicCollection = collection;
 		m_ItemEntities = items;
@@ -73,7 +76,16 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		m_NeedMaximumLimit = needMaximumLimit;
 		SorterType.Value = sorter;
 		FilterType.Value = filter;
-		AddDisposable(FilterType.CombineLatest(SorterType, (ItemsFilterType _, ItemsSorterType _) => true).Skip(1).Subscribe(delegate
+		ShowUnavailable.Value = showUnavailableItems;
+		AddDisposable(FilterType.Skip(1).Subscribe(delegate
+		{
+			UpdateVisibleCollection();
+		}));
+		AddDisposable(SorterType.Skip(1).Subscribe(delegate
+		{
+			UpdateVisibleCollection();
+		}));
+		AddDisposable(ShowUnavailable.Skip(1).Subscribe(delegate
 		{
 			UpdateVisibleCollection();
 		}));
@@ -99,6 +111,10 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 	private void InternalUpdate()
 	{
 		List<ItemEntity> list = ItemsFilter.ItemSorter(Items.Where(ShouldShowItem).ToList(), SorterType.Value, FilterType.Value);
+		if (!ShowUnavailable.Value)
+		{
+			list.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i));
+		}
 		if (SorterType.Value != 0)
 		{
 			for (int j = 0; j < list.Count; j++)
@@ -164,9 +180,9 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		{
 			return false;
 		}
-		if (!m_ShowSlotHoldItems && Type != ItemSlotsGroupType.Cargo && item.HoldingSlot != null)
+		if (!m_ShowSlotHoldItems && Type != ItemSlotsGroupType.Cargo)
 		{
-			return false;
+			return item.HoldingSlot == null;
 		}
 		return true;
 	}
@@ -185,9 +201,9 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		{
 			return true;
 		}
-		if (m_ShowPredicate != null && !m_ShowPredicate(item))
+		if (m_ShowPredicate != null)
 		{
-			return true;
+			return !m_ShowPredicate(item);
 		}
 		return false;
 	}
@@ -198,19 +214,11 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		{
 			return true;
 		}
-		if (FilterType.Value != 0)
-		{
-			return true;
-		}
 		if (!string.IsNullOrEmpty(SearchString.Value))
 		{
 			return true;
 		}
-		if (m_ShowPredicate != null)
-		{
-			return true;
-		}
-		return false;
+		return m_ShowPredicate != null;
 	}
 
 	private void SetNewVisibleCollection(List<EntityIndexPair> newCollection)

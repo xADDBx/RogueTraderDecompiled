@@ -1,8 +1,8 @@
 using System.Collections.Generic;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.View.Covers;
 using Owlcat.Runtime.Core.Utility;
-using Owlcat.Runtime.Visual.FogOfWar;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic;

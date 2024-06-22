@@ -21,7 +21,7 @@ public class SetAnomalyToNonInteractable : GameAction
 		return "Set " + Anomaly.Name + " to non interactable";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity data) => data is AnomalyEntityData anomalyEntityData2 && anomalyEntityData2.Blueprint == Anomaly) is AnomalyEntityData anomalyEntityData)
 		{

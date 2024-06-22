@@ -5,6 +5,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.Versioning;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -38,11 +39,11 @@ public class PartyUnits : GameAction
 		};
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		foreach (BaseUnitEntity characters in Game.Instance.Player.GetCharactersList(m_UnitsList))
+		foreach (BaseUnitEntity item in Game.Instance.Player.GetCharactersList(m_UnitsList).ToTempList())
 		{
-			using (ContextData<PartyUnitData>.Request().Setup(characters))
+			using (ContextData<PartyUnitData>.Request().Setup(item))
 			{
 				Actions.Run();
 			}

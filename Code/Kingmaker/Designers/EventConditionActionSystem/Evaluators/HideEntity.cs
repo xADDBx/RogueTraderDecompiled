@@ -28,7 +28,7 @@ public class HideEntity : GameAction
 		return (Unhide ? "Show " : "Hide ") + Target?.GetCaption();
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Target.GetValue().IsInGame = Unhide;
 	}

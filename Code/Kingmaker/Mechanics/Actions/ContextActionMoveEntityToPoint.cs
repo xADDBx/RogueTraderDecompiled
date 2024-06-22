@@ -10,7 +10,7 @@ public class ContextActionMoveEntityToPoint : ContextActionMove
 		return $"Move entity to {m_TargetPoint}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.TargetEntity.Position = m_TargetPoint.GetValue();
 	}

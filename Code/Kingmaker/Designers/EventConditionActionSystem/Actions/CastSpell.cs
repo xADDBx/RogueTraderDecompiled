@@ -56,7 +56,7 @@ public class CastSpell : GameAction
 		return string.Format("Simple Caster cast {0} on {1}", Ability, TargetEntity?.ToString() ?? TargetPoint?.ToString() ?? "themself");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity mechanicEntity = Caster?.GetValue() ?? SimpleCaster.GetFree();
 		if (mechanicEntity is SimpleCaster && CasterPosition != null)

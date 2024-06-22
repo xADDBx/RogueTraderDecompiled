@@ -28,6 +28,7 @@ public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilit
 		{
 			SetContextMenuEntities();
 		}));
+		AddDisposable(base.ViewModel.IsSelectionBusy.Subscribe(SetSelectionActiveState));
 	}
 
 	private void SetContextMenuEntities()
@@ -69,6 +70,7 @@ public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilit
 		}
 		else if (base.ViewModel.IsInCharScreen)
 		{
+			SetSelectionActiveState(isActive: true);
 			base.ViewModel.ChooseAbility();
 		}
 		else
@@ -85,5 +87,17 @@ public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilit
 	public TooltipBaseTemplate TooltipTemplate()
 	{
 		return m_SlotConsoleView.TooltipTemplate();
+	}
+
+	public void SetSelectionActiveState(bool isActive)
+	{
+		if (isActive)
+		{
+			MainButton.SetActiveLayer(3);
+		}
+		else
+		{
+			SetLayer();
+		}
 	}
 }

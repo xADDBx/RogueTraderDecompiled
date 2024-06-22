@@ -22,7 +22,7 @@ public class ContextActionMoveCrewToCrewQuarters : ContextAction
 		return $"Move {m_PercentToMove} % from module {m_ModuleType} to crew quarters and distribute";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target?.Entity is StarshipEntity starshipEntity)
 		{

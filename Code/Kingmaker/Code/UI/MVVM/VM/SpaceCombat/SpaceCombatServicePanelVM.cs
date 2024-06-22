@@ -110,7 +110,7 @@ public class SpaceCombatServicePanelVM : BaseDisposable, IViewModel, IBaseDispos
 		ShipHealthRatio.Value = (float)playerShip.Health.HitPointsLeft / (float)playerShip.Health.MaxHitPoints;
 		ShipHealthText.Value = $"<color=#73BE53>{playerShip.Health.HitPointsLeft}</color>/{playerShip.Health.MaxHitPoints}";
 		TimeSurvival component = Game.Instance.CurrentlyLoadedArea.GetComponent<TimeSurvival>();
-		IsInTimeSurvival.Value = component != null;
+		IsInTimeSurvival.Value = component != null && !component.UnlimitedTime;
 		if (IsInTimeSurvival.Value)
 		{
 			RoundsLeft.Value = component?.RoundsLeft.ToString();

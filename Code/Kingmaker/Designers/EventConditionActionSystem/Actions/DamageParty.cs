@@ -26,7 +26,7 @@ public class DamageParty : GameAction
 
 	public bool DisableBattleLog;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity abstractUnitEntity = (NoSource ? null : DamageSource.GetValue());
 		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)

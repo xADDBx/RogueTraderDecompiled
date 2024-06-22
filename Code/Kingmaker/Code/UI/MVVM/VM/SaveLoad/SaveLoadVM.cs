@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
 using Kingmaker.Stores;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
@@ -36,6 +39,8 @@ public class SaveLoadVM : BaseDisposable, ISavesUpdatedHandler, ISubscriber, IVi
 	private readonly IUILoadService m_LoadService;
 
 	public readonly BoolReactiveProperty SaveListUpdating = new BoolReactiveProperty(initialValue: false);
+
+	public readonly BoolReactiveProperty IsCurrentIronManSave = new BoolReactiveProperty();
 
 	private bool m_JustOpened;
 
@@ -76,6 +81,16 @@ public class SaveLoadVM : BaseDisposable, ISavesUpdatedHandler, ISubscriber, IVi
 		}));
 		UpdateSavesCollection();
 		StoreManager.OnRefreshDLC += OnRefreshDLC;
+	}
+
+	protected override void DisposeImplementation()
+	{
+		StoreManager.OnRefreshDLC -= OnRefreshDLC;
+		if (!Game.Instance.RootUiContext.IsMainMenu)
+		{
+			SaveScreenshotManager.Instance.Cleanup();
+		}
+		HideScreenshot();
 	}
 
 	private void OnRefreshDLC()
@@ -196,8 +211,54 @@ public class SaveLoadVM : BaseDisposable, ISavesUpdatedHandler, ISubscriber, IVi
 
 	private void RequestLoad(SaveInfo saveInfo = null)
 	{
-		SaveInfo saveInfo2 = saveInfo ?? SelectedSaveSlot.Value?.Reference;
-		m_LoadService.Load(saveInfo2);
+		SaveInfo si = saveInfo ?? SelectedSaveSlot.Value?.Reference;
+		SaveInfo saveInfo2 = si;
+		bool flag = saveInfo2 != null && saveInfo2.Type == SaveInfo.SaveType.IronMan;
+		bool flag2 = RootUIContext.Instance.IsMainMenu || !SettingsRoot.Difficulty.OnlyOneSave;
+		if (PhotonManager.Lobby.IsActive && flag)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.SaveLoadTexts.CannotLoadIronManSaveInCoop, addToLog: false, WarningNotificationFormat.Attention);
+			});
+			return;
+		}
+		IsCurrentIronManSave.Value = flag && !RootUIContext.Instance.IsMainMenu && si.GameId == Game.Instance.Player.GameId;
+		if (IsCurrentIronManSave.Value)
+		{
+			UIUtility.ShowMessageBox(UIStrings.Instance.SaveLoadTexts.CannotLoadCurrentIronManSave, DialogMessageBoxBase.BoxType.Message, delegate
+			{
+			});
+			return;
+		}
+		string text = ((flag && flag2) ? ((string)UIStrings.Instance.SaveLoadTexts.YouLoadIronManSave) : ((!flag && !flag2) ? ((string)UIStrings.Instance.SaveLoadTexts.YouLoadNotIronManSave) : string.Empty));
+		if (!string.IsNullOrWhiteSpace(text))
+		{
+			UIUtility.ShowMessageBox(text, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton button)
+			{
+				if (button == DialogMessageBoxBase.BoxButton.Yes)
+				{
+					if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
+					{
+						MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
+						{
+							LoadingProcess.Instance.StartLoadingProcess(Game.Instance.SaveManager.SaveRoutine(Game.Instance.SaveManager.GetNextAutoslot(), forceAuto: true), delegate
+							{
+								m_LoadService.Load(si);
+							}, LoadingProcessTag.Save);
+						}));
+					}
+					else
+					{
+						m_LoadService.Load(si);
+					}
+				}
+			});
+		}
+		else
+		{
+			m_LoadService.Load(si);
+		}
 	}
 
 	private void DeleteSaveWithoutBox(SaveInfo saveInfo = null)
@@ -265,18 +326,9 @@ public class SaveLoadVM : BaseDisposable, ISavesUpdatedHandler, ISubscriber, IVi
 	public void OnClose()
 	{
 		SaveListUpdating.Value = false;
+		IsCurrentIronManSave.Value = false;
 		m_JustOpened = false;
 		m_OnClose?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		StoreManager.OnRefreshDLC -= OnRefreshDLC;
-		if (!Game.Instance.RootUiContext.IsMainMenu)
-		{
-			SaveScreenshotManager.Instance.Cleanup();
-		}
-		HideScreenshot();
 	}
 
 	public void OnSaveListUpdated()

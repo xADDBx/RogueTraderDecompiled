@@ -37,6 +37,16 @@ public class TransitionVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		EntryVms.ForEach(delegate(TransitionEntryVM vm)
+		{
+			vm.Dispose();
+		});
+		EntryVms.Clear();
+		ObjectsList.Clear();
+	}
+
 	public void AddObjectsInfo(List<Action> hoverAction, List<Action> unHoverAction)
 	{
 		ObjectsList.Clear();
@@ -50,16 +60,6 @@ public class TransitionVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 	public void EnterLocation()
 	{
 		ObjectsList.FirstOrDefault((TransitionLegendButtonVM o) => o.IsHover.Value)?.OnClick();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		EntryVms.ForEach(delegate(TransitionEntryVM vm)
-		{
-			vm.Dispose();
-		});
-		EntryVms.Clear();
-		ObjectsList.Clear();
 	}
 
 	public void Close()

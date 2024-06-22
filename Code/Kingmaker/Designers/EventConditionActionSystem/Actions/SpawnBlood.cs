@@ -18,7 +18,7 @@ public class SpawnBlood : GameAction
 	[SerializeReference]
 	public AbstractUnitEvaluator Target;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)Target)
 		{

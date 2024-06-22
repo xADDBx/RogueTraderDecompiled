@@ -42,7 +42,7 @@ public class RewardColonyTraitUI : RewardUI<RewardColonyTrait>
 		BlueprintColonyTrait trait = base.Reward.Trait;
 		if (trait == null)
 		{
-			PFLog.System.Error("RewardColonyTraitUI.GetTooltip - Trait is null!");
+			PFLog.UI.Error("RewardColonyTraitUI.GetTooltip - Trait is null!");
 			return null;
 		}
 		return new TooltipTemplateColonyTrait(ApplyToAllColonies ? (trait.Name + " (" + UIStrings.Instance.ColonyProjectsRewards.ForAllColonies.Text + ")") : trait.Name, trait.MechanicString, trait.Description, trait.EfficiencyModifier, trait.ContentmentModifier, trait.SecurityModifier);

@@ -1,7 +1,6 @@
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
@@ -25,8 +24,8 @@ public class ApplyTraitToColony : GameAction
 		return "Apply trait " + Trait.Get().Name + " to current colony in context";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		((Colony == null) ? ContextData<ColonyContextData>.Current?.Colony : Game.Instance.Player.ColoniesState.Colonies.FirstOrDefault((ColoniesState.ColonyData data) => data.Colony.Blueprint == Colony)?.Colony)?.AddTrait(Trait.Get());
+		((Colony == null) ? Game.Instance.Player.ColoniesState.ColonyContextData.Colony : Game.Instance.Player.ColoniesState.Colonies.FirstOrDefault((ColoniesState.ColonyData data) => data.Colony.Blueprint == Colony)?.Colony)?.AddTrait(Trait.Get());
 	}
 }

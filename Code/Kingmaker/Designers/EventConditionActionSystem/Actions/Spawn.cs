@@ -21,7 +21,7 @@ public class Spawn : GameAction
 
 	public ActionList ActionsOnSpawn;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		EntityReference[] spawners = Spawners;
 		for (int i = 0; i < spawners.Length; i++)

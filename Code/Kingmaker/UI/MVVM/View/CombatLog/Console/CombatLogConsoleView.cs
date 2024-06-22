@@ -10,7 +10,6 @@ using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
-using Owlcat.Runtime.UI.Controls.Toggles;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.VirtualListSystem;
 using Owlcat.Runtime.UniRx;
@@ -56,6 +55,9 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 
 	[SerializeField]
 	private ConsoleHint m_ConsoleHintOpenCombat;
+
+	[SerializeField]
+	private ConsoleHint m_ConsoleHintOpenExploration;
 
 	[SerializeField]
 	private ConsoleHint m_MoveCameraToHint;
@@ -118,10 +120,7 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 	{
 		base.BindViewImplementation();
 		SetSizeDelta(Game.Instance.Player.UISettings.LogSizeConsole);
-		AddDisposable(base.ViewModel.IsActive.Subscribe(delegate(bool value)
-		{
-			OnVisible(value);
-		}));
+		AddDisposable(base.ViewModel.IsActive.Subscribe(OnVisible));
 		AddDisposable(base.ViewModel.IsControlActive.Subscribe(delegate(bool value)
 		{
 			if (value)
@@ -133,6 +132,10 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 				DeactivateControl();
 			}
 		}));
+		foreach (CombatLogToggleWithCustomHint toggle in m_Toggles)
+		{
+			toggle.SetCustomHint(base.ViewModel.GetChannelName(m_Toggles.IndexOf(toggle)));
+		}
 		AddDisposable(base.ViewModel.CurrentSizeIndex.Skip(1).Subscribe(OnSizeIndexChanged));
 		base.ViewModel.IsActive.Value = HoldCombatLog;
 		SetupNavigationBehaviour();
@@ -205,7 +208,7 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 		base.SwitchPinnedState(pinned);
 		if (pinned)
 		{
-			MoveContainer(m_PinnedContainer, m_PinnedContainerShowSettings, animated: true);
+			SetContainerState(state: true);
 		}
 	}
 
@@ -242,10 +245,10 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 
 	private void OnChangeChannel(bool isPrev)
 	{
-		OwlcatToggle owlcatToggle = m_ToggleGroup.ActiveToggles().FirstOrDefault();
-		if (!(owlcatToggle == null))
+		CombatLogToggleWithCustomHint combatLogToggleWithCustomHint = m_ToggleGroup.ActiveToggles().FirstOrDefault() as CombatLogToggleWithCustomHint;
+		if (!(combatLogToggleWithCustomHint == null))
 		{
-			int num = m_Toggles.IndexOf(owlcatToggle) + (isPrev ? 1 : (-1));
+			int num = m_Toggles.IndexOf(combatLogToggleWithCustomHint) + (isPrev ? 1 : (-1));
 			if (num < 0)
 			{
 				num = m_Toggles.Count - 1;
@@ -268,10 +271,10 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 
 	private void OnToggleClick()
 	{
-		OwlcatToggle owlcatToggle = m_ToggleGroup.ActiveToggles().FirstOrDefault();
-		if (!(owlcatToggle == null))
+		CombatLogToggleWithCustomHint combatLogToggleWithCustomHint = m_ToggleGroup.ActiveToggles().FirstOrDefault() as CombatLogToggleWithCustomHint;
+		if (!(combatLogToggleWithCustomHint == null))
 		{
-			CurrentSelectedIndex = m_Toggles.IndexOf(owlcatToggle);
+			CurrentSelectedIndex = m_Toggles.IndexOf(combatLogToggleWithCustomHint);
 			base.ViewModel.SetCurrentChannelById(CurrentSelectedIndex);
 		}
 	}
@@ -395,6 +398,14 @@ public class CombatLogConsoleView : CombatLogBaseView, ICullFocusHandler, ISubsc
 	public void AddInputToCombat(InputLayer inputLayer)
 	{
 		AddDisposable(m_ConsoleHintOpenCombat.Bind(inputLayer.AddButton(delegate
+		{
+			base.ViewModel.CombatLogChangeState();
+		}, 15, InputActionEventType.ButtonJustLongPressed)));
+	}
+
+	public void AddInputToExploration(InputLayer inputLayer)
+	{
+		AddDisposable(m_ConsoleHintOpenExploration.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.CombatLogChangeState();
 		}, 15, InputActionEventType.ButtonJustLongPressed)));

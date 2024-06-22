@@ -28,12 +28,18 @@ public class DialogSpeaker
 
 	public bool NoSpeaker;
 
+	public bool DoNotReplaceSpeakerWithErrorSpeaker;
+
 	[CanBeNull]
 	[SerializeField]
 	[FormerlySerializedAs("SpeakerPortrait")]
 	private BlueprintUnitReference m_SpeakerPortrait;
 
 	public BlueprintUnit Blueprint => m_Blueprint?.Get();
+
+	public bool ReplacedSpeakerWithErrorSpeaker { get; set; }
+
+	public BaseUnitEntity ErrorSpeaker => Game.Instance.DefaultUnit;
 
 	public BlueprintUnit SpeakerPortrait => m_SpeakerPortrait?.Get();
 
@@ -68,11 +74,20 @@ public class DialogSpeaker
 			select u).Concat(second).Select(SelectMatchingUnit).NotNull()
 			.Distinct()
 			.Nearest(dialogPosition);
-		if (baseUnitEntity == null)
+		if (baseUnitEntity != null)
 		{
-			DialogDebug.Add(cue, "speaker doesnt exist", Color.red);
+			return baseUnitEntity;
+		}
+		string message = "speaker[" + Blueprint.name + "] doesnt exist. Skipping Cue";
+		if (SpeakerPortrait != null || Blueprint.IsCompanion || DoNotReplaceSpeakerWithErrorSpeaker)
+		{
+			DialogDebug.Add(cue, message);
 			return null;
 		}
+		baseUnitEntity = ErrorSpeaker;
+		ReplacedSpeakerWithErrorSpeaker = true;
+		message = "speaker[" + Blueprint.name + "] doesnt exist, replaced with defaultUnit";
+		DialogDebug.Add(cue, message, Color.red);
 		return baseUnitEntity;
 	}
 

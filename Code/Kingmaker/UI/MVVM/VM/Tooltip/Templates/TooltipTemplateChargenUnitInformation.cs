@@ -93,7 +93,7 @@ public class TooltipTemplateChargenUnitInformation : TooltipBaseTemplate
 		(BlueprintFeature, int)? selectedFeature = m_Unit.Progression.GetSelectedFeature(path, 0, blueprintSelectionFeature);
 		if (selectedFeature.HasValue)
 		{
-			return new TooltipBrickBackgroundFeature(selectedFeature.Value.Item1, FeatureTypes.Expanded, m_Unit);
+			return new TooltipBrickBackgroundFeature(selectedFeature.Value.Item1, m_Unit);
 		}
 		return null;
 	}
@@ -105,7 +105,7 @@ public class TooltipTemplateChargenUnitInformation : TooltipBaseTemplate
 		list.AddRange(UIUtilityUnit.CollectActivatableAbilities(m_Unit));
 		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharacterSheet.Abilities, TooltipTitleType.H3));
 		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, GetLayoutParams()));
-		bricks.AddRange(list.Select((IUIDataProvider ability) => new TooltipBrickFeature(ability, isHeader: false, FeatureTypes.Expanded)));
+		bricks.AddRange(list.Select((IUIDataProvider ability) => new TooltipBrickFeature(ability)));
 		bricks.Add(new TooltipBricksGroupEnd());
 	}
 

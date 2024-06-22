@@ -26,7 +26,6 @@ public class CharGenPhaseRoadmapView<TViewModel> : SelectionGroupEntityView<TVie
 	public void Initialize(CharGenPhaseType type)
 	{
 		m_Type = type;
-		m_Label.text = UIStrings.Instance.CharGen.GetPhaseName(m_Type);
 		AddDisposable(m_AccessibilityTextHelper = new AccessibilityTextHelper(m_Label));
 		ClearState();
 	}
@@ -35,6 +34,10 @@ public class CharGenPhaseRoadmapView<TViewModel> : SelectionGroupEntityView<TVie
 	{
 		base.BindViewImplementation();
 		Show();
+		AddDisposable(base.ViewModel.PhaseName.Subscribe(delegate(string value)
+		{
+			m_Label.text = value;
+		}));
 		AddDisposable(base.ViewModel.IsAvailable.Subscribe(delegate
 		{
 			UpdateSelectableState();

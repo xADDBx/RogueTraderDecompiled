@@ -18,8 +18,8 @@ public class IsBaseUnitEntityGetter : MechanicEntityPropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "CurrentEntity is base unit entity";
+		return FormulaTargetScope.Current + " is base unit entity";
 	}
 }

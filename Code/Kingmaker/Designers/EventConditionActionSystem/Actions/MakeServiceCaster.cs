@@ -21,7 +21,7 @@ public class MakeServiceCaster : GameAction
 		return $"Делает юнита {Unit} кастером для чтения свитков в хабе";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity unit))
 		{

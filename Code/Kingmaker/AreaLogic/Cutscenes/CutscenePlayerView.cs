@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -10,6 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.AreaLogic.Cutscenes;
 
+[KnowledgeDatabaseID("a31f060d9d48c194eafe99981b1b4c73")]
 public class CutscenePlayerView : EntityViewBase, ICutscenePlayerView, IEntityViewBase
 {
 	public Cutscene Cutscene { get; set; }

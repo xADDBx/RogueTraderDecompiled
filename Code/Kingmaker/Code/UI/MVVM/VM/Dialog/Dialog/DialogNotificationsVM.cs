@@ -125,12 +125,15 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public void HandlePartyGainExperience(int gained, bool isExperienceForDeath)
 	{
-		XpGains.Add(gained);
+		if (SettingsRoot.Game.Dialogs.ShowXPGainedNotification.GetValue())
+		{
+			XpGains.Add(gained);
+		}
 	}
 
 	public void HandleItemsAdded(ItemsCollection collection, ItemEntity item, int count)
 	{
-		if (collection == GameHelper.GetPlayerCharacter().Inventory.Collection && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
+		if (SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection == GameHelper.GetPlayerCharacter().Inventory.Collection && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
 		{
 			OnItemsReceived(LinkGenerate(item.Name, "i:" + item.UniqueId), count);
 		}
@@ -138,7 +141,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public void HandleItemsRemoved(ItemsCollection collection, ItemEntity item, int count)
 	{
-		if (collection.IsPlayerInventory && item.IsLootable && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
+		if (SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection.IsPlayerInventory && item.IsLootable && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
 		{
 			OnItemsReceived(LinkGenerate(item.Name, "ib:" + item.Blueprint.name), -count);
 		}

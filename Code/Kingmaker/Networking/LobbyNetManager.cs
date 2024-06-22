@@ -20,6 +20,8 @@ public class LobbyNetManager
 
 	private bool m_FirstLoadCompleted;
 
+	public bool PingPressed;
+
 	public bool IsHost
 	{
 		get

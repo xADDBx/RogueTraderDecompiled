@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
@@ -11,6 +12,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawner))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("f82d1f8ab69b4d3280fceff72436b2a4")]
 public class SpawnerMimicSettings : EntityPartComponent<SpawnerMimicSettings.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

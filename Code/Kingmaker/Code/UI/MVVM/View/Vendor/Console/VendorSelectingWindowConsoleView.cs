@@ -1,5 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -12,7 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.Vendor.Console;
 
-public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView
+public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView, ICullFocusHandler, ISubscriber
 {
 	[SerializeField]
 	private ConsoleHintsWidget m_HintsWidget;
@@ -28,6 +30,8 @@ public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView
 	private readonly BoolReactiveProperty m_HasTooltip = new BoolReactiveProperty();
 
 	private VendorInfoFactionReputationItemConsoleView m_CurrentSelectedFaction;
+
+	private IConsoleEntity m_CulledFocus;
 
 	protected override void BindViewImplementation()
 	{
@@ -54,7 +58,7 @@ public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView
 		});
 		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
-			OnCloseClick();
+			OnDeclineClick();
 		}, 9), UIStrings.Instance.CommonTexts.CloseWindow));
 		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
@@ -114,6 +118,19 @@ public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView
 		CreateInput();
 	}
 
+	private void OnDeclineClick()
+	{
+		TooltipHelper.HideTooltip();
+		if (m_HasTooltip.Value && m_ShowTooltip.Value)
+		{
+			m_ShowTooltip.Value = false;
+		}
+		else
+		{
+			OnCloseClick();
+		}
+	}
+
 	protected override void Close()
 	{
 		base.Close();
@@ -126,5 +143,21 @@ public class VendorSelectingWindowConsoleView : VendorSelectingWindowBaseView
 	{
 		m_CurrentSelectedFaction = currentFocus as VendorInfoFactionReputationItemConsoleView;
 		m_CanConfirm.Value = m_CurrentSelectedFaction != null && m_CurrentSelectedFaction.HasVendors;
+	}
+
+	public void HandleRemoveFocus()
+	{
+		m_CulledFocus = m_NavigationBehaviour.DeepestNestedFocus;
+		m_NavigationBehaviour.UnFocusCurrentEntity();
+	}
+
+	public void HandleRestoreFocus()
+	{
+		if (m_CulledFocus != null)
+		{
+			m_NavigationBehaviour.FocusOnEntityManual(m_CulledFocus);
+			m_NavigationBehaviour.UpdateDeepestFocusObserve();
+		}
+		m_CulledFocus = null;
 	}
 }

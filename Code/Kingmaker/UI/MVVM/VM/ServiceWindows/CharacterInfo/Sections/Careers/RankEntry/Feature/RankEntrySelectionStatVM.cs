@@ -91,11 +91,6 @@ public class RankEntrySelectionStatVM : RankEntrySelectionFeatureVM
 		base.Tooltip.Value = new TooltipTemplateRankEntryStat(statData, SelectionItem, SelectionState, showCompanionStats: true);
 	}
 
-	public override RankFeatureState StateForReadOnly()
-	{
-		return RankFeatureState.NotActive;
-	}
-
 	private string FormatStat(BlueprintStatAdvancement statAdvancement)
 	{
 		return "+" + statAdvancement.ValuePerRank;

@@ -28,7 +28,7 @@ public class ChangeAccessibleStarshipInventory : GameAction
 		return "Change Starship Inventory Accessibility";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		bool canAccessStarshipInventory = Value == StarshipInventoryAvailability.Available;
 		Game.Instance.Player.CanAccessStarshipInventory = canAccessStarshipInventory;

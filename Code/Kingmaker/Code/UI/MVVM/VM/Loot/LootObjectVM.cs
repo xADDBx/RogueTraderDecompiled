@@ -46,15 +46,15 @@ public class LootObjectVM : VirtualListElementVMBase
 		DisplayIcon = icon;
 		if (mode == LootContextVM.LootWindowMode.PlayerChest)
 		{
-			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, 6, 48, ItemsFilterType.NoFilter, ItemsSorterType.NameUp, showSlotHoldItemsInSlots: false, ItemSlotsGroupType.Loot));
+			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, 6, 48, ItemsFilterType.NoFilter, ItemsSorterType.NameUp, showUnavailableItems: true, showSlotHoldItemsInSlots: false, ItemSlotsGroupType.Loot));
 		}
 		else if (Game.Instance.IsControllerMouse)
 		{
-			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
+			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
 		}
 		else
 		{
-			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
+			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
 		}
 		switch (type)
 		{

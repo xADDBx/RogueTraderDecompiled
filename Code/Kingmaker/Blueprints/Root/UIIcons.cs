@@ -22,6 +22,9 @@ public class UIIcons
 	[Header("Tooltips")]
 	public TooltipInspectIcons TooltipInspectIcons;
 
+	[Header("CombatMessage")]
+	public Sprite CultAmbush;
+
 	[Header("Cargo")]
 	public CargoIcons CargoIcons;
 
@@ -36,6 +39,8 @@ public class UIIcons
 	public Sprite Damage;
 
 	public Sprite Crit;
+
+	public Sprite RateOfFireMelee;
 
 	public Sprite Attack;
 
@@ -89,6 +94,8 @@ public class UIIcons
 	public Sprite TimeIcon;
 
 	[Header("Ability Placeholder Icon")]
+	public Sprite EmptyAbilityIcon;
+
 	public Sprite[] AbilityPlaceholderIcon;
 
 	public Sprite DiceD100;

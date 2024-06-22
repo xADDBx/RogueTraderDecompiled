@@ -41,7 +41,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	{
 	}
 
-	public static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("Cutscene");
+	public static readonly LogChannel Logger = PFLog.Cutscene;
 
 	private static CutscenePlayerData s_LastQueuedCutscene;
 
@@ -97,6 +97,8 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	public readonly HashSet<CommandBase> FailedCommands = new HashSet<CommandBase>();
 
 	public readonly HashSet<Track> FinishedTracks = new HashSet<Track>();
+
+	public SimpleBlueprint OriginBlueprint;
 
 	[JsonProperty]
 	private StatefulRandom m_Random;
@@ -286,7 +288,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		}
 		using (Parameters.RequestContextData())
 		{
-			if (TryInterruptCommandByType<CommandBark>())
+			if (TryInterruptCommandByType<CommandBarkUnit>() || TryInterruptCommandByType<CommandBarkEntity>())
 			{
 				TryInterruptCommandByType<CommandUnitPlayCutsceneAnimation>();
 			}
@@ -1192,7 +1194,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			Logger.Exception(Cutscene, e, messageFormat);
 			return;
 		}
-		if (e is FailedToRunCutsceneCommandException && e.InnerException is FailToEvaluateException)
+		if (e is FailedToRunCutsceneCommandException && e.InnerException is FailToEvaluateException ex)
 		{
 			using (ContextData<EvaluationFailedHandlingFlag>.Request())
 			{
@@ -1200,17 +1202,20 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 				switch (EvaluationErrorHandlingPolicyHelper.GetEvaluationErrorHandlingPolicy(this, track, command, out cutsceneElement))
 				{
 				case EvaluationErrorHandlingPolicy.Ignore:
+					ElementsDebugger.ClearException(ex.Element, e);
 					return;
 				case EvaluationErrorHandlingPolicy.SkipTrack:
 					if (track == null)
 					{
 						break;
 					}
+					ElementsDebugger.ClearException(ex.Element, e);
 					track.ForceStop();
 					return;
 				case EvaluationErrorHandlingPolicy.SkipGate:
 					if (cutsceneElement == CutsceneElement.Cutscene)
 					{
+						ElementsDebugger.ClearException(ex.Element, e);
 						Stop();
 						return;
 					}
@@ -1220,10 +1225,12 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					}
 					if (track.StartGate.Gate == Cutscene)
 					{
+						ElementsDebugger.ClearException(ex.Element, e);
 						Stop();
 					}
 					else
 					{
+						ElementsDebugger.ClearException(ex.Element, e);
 						track.ForceGoToEndGate();
 					}
 					return;

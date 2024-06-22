@@ -36,6 +36,10 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public int? ResourceCount;
 
+	public int? UnitCount;
+
+	public bool OnlyOnceCheck;
+
 	public string ResourceName;
 
 	private readonly Action m_OnInteract;
@@ -44,7 +48,9 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	private IDisposable m_SelectedUnitsSubscription;
 
-	public InteractionVariantVM(EntityViewBase view, IInteractionVariantActor interactionActor, string resourceName, int? resourceCount, int? requiredResourceCount, Action onInteract)
+	public bool LimitedUnitsCheck => UnitCount.HasValue;
+
+	public InteractionVariantVM(EntityViewBase view, IInteractionVariantActor interactionActor, string resourceName, int? resourceCount, int? requiredResourceCount, int? unitCount, Action onInteract)
 	{
 		InteractionVariantVM interactionVariantVM = this;
 		m_View = view;
@@ -59,8 +65,10 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 		InteractionName.Value = UIUtility.GetInteractionVariantActorText(interactionActor, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), out var needChance);
 		RequiredResourceCount = requiredResourceCount;
 		ResourceCount = resourceCount;
+		UnitCount = unitCount;
+		OnlyOnceCheck = interactionActor.CheckOnlyOnce;
 		ResourceName = resourceName;
-		Disabled = (interactionSkillCheckPart != null && interactionSkillCheckPart.IsFailed && interactionSkillCheckPart.Settings.InteractOnlyWithToolAfterFail && !RequiredResourceCount.HasValue) || resourceCount < requiredResourceCount;
+		Disabled = (interactionSkillCheckPart != null && interactionSkillCheckPart.IsFailed && interactionSkillCheckPart.Settings.InteractOnlyWithToolAfterFail && !RequiredResourceCount.HasValue) || resourceCount < requiredResourceCount || !interactionActor.CanUse || (LimitedUnitsCheck && UnitCount <= 0);
 		if (needChance)
 		{
 			m_SelectedUnitsSubscription = UniRxExtensionMethods.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate

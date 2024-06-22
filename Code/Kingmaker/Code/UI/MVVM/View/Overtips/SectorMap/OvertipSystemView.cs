@@ -65,14 +65,11 @@ public abstract class OvertipSystemView : BaseOvertipView<OvertipEntitySystemVM>
 		AddDisposable(base.ViewModel.IsScanning.CombineLatest(base.ViewModel.IsTraveling, base.ViewModel.IsDialogActive, (bool isScanning, bool isTraveling, bool isDialogActive) => isScanning || isTraveling || isDialogActive).Subscribe(LockButtons));
 		base.name = base.ViewModel.SectorMapObject.View.name + "_Overtip";
 		AddDisposable(base.ViewModel.SectorResourceBlockVM.Subscribe(m_ResourceBlockView.Bind));
-		AddDisposable(base.ViewModel.CurrentValueOfResources.Subscribe(delegate(int v)
-		{
-			if (v > 0)
-			{
-				HandleCostChanged();
-			}
-		}));
 		CheckIconsState();
+		AddDisposable(base.ViewModel.HideSpaceSystemPopup.Subscribe(delegate
+		{
+			ClosePopup(withCircle: true, force: true);
+		}));
 	}
 
 	protected void ShowHideCircleBackground(bool state)
@@ -145,9 +142,9 @@ public abstract class OvertipSystemView : BaseOvertipView<OvertipEntitySystemVM>
 	{
 	}
 
-	public void ClosePopup(bool withCircle = true)
+	public void ClosePopup(bool withCircle = true, bool force = false)
 	{
-		if (Game.Instance?.SectorMapController?.CurrentStarSystem != null && base.ViewModel?.SectorMapObject != Game.Instance?.SectorMapController?.CurrentStarSystem)
+		if ((Game.Instance?.SectorMapController?.CurrentStarSystem != null && base.ViewModel?.SectorMapObject != Game.Instance?.SectorMapController?.CurrentStarSystem) || force)
 		{
 			base.ViewModel?.CloseSpaceSystemPopup();
 			if (withCircle)

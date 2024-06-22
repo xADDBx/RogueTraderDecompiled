@@ -15,6 +15,8 @@ public class UnitAnimationActionHit : UnitAnimationAction
 	{
 		public WeaponAnimationStyle WeaponAnimationStyle;
 
+		public bool IsOffhand;
+
 		private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
 
 		public AnimationClipWrapper ClipWrapper;
@@ -86,11 +88,17 @@ public class UnitAnimationActionHit : UnitAnimationAction
 			return;
 		}
 		AnimationClipWrapper clipWrapper = ClipWrapper;
-		WeaponStyleOverride weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
+		bool isOffHand = handle.Manager.ActiveMainHandWeaponStyle == WeaponAnimationStyle.None;
+		WeaponStyleOverride weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle && x.IsOffhand == isOffHand);
+		if (weaponStyleOverride == null)
+		{
+			weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
+		}
 		if (weaponStyleOverride != null && weaponStyleOverride.ClipWrapper != null)
 		{
 			if (handle.Manager.InCover)
 			{
+				handle.Manager.HitAnimationIsActive = true;
 				if (handle.Manager.CoverType == LosCalculations.CoverType.Full && weaponStyleOverride.HitInFullCover.Length != 0)
 				{
 					handle.StartClip(weaponStyleOverride.HitInFullCover[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, weaponStyleOverride.HitInFullCover.Length - 1))] ?? weaponStyleOverride.ClipWrapper, ClipDurationType.Oneshot);

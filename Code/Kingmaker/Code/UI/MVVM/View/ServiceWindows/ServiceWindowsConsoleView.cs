@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
@@ -65,6 +66,12 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 
 	private bool m_IsInit;
 
+	private List<ServiceWindowsType> m_WindowsWithoutBgr = new List<ServiceWindowsType>
+	{
+		ServiceWindowsType.ShipCustomization,
+		ServiceWindowsType.Inventory
+	};
+
 	public void Initialize()
 	{
 		if (!m_IsInit)
@@ -107,13 +114,24 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 		AddDisposable(base.ViewModel.CargoManagementVM.Subscribe(m_CargoManagementConsoleView.Bind));
 		AddDisposable(base.ViewModel.ServiceWindowsMenuVM.Subscribe(delegate(ServiceWindowsMenuVM vm)
 		{
-			if (vm != null)
+			if (vm != null && !base.ViewModel.ForceHideBackground.Value)
 			{
-				OnShow();
+				m_Background.Or(null)?.AppearAnimation();
 			}
 			else
 			{
-				OnHide();
+				m_Background.Or(null)?.DisappearAnimation();
+			}
+		}));
+		AddDisposable(base.ViewModel.OnOpen.Subscribe(delegate(ServiceWindowsType vm)
+		{
+			if (!m_WindowsWithoutBgr.Contains(vm))
+			{
+				m_Background.Or(null)?.AppearAnimation();
+			}
+			else
+			{
+				m_Background.Or(null)?.DisappearAnimation();
 			}
 		}));
 	}

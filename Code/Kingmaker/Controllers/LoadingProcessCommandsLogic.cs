@@ -13,7 +13,7 @@ public static class LoadingProcessCommandsLogic
 	{
 		NetworkingManager.ReceivePackets();
 		Game.Instance.RealTimeController.Tick();
-		if (Game.Instance.RealTimeController.IsSystemTick)
+		if (Game.Instance.RealTimeController.IsSimulationTick)
 		{
 			Game.Instance.GameCommandQueue.Tick();
 			Game.Instance.UnitCommandBuffer.Tick();
@@ -25,7 +25,7 @@ public static class LoadingProcessCommandsLogic
 
 	private static int Test(int ticksRemaining)
 	{
-		if (!Game.Instance.RealTimeController.IsSystemTick)
+		if (!Game.Instance.RealTimeController.IsSimulationTick)
 		{
 			return ticksRemaining;
 		}

@@ -29,7 +29,7 @@ public class ContextActionRunAnimationClip : ContextAction
 		return "Run animation clip on target";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity != null && entity.MaybeAnimationManager != null)

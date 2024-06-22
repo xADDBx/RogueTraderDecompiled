@@ -44,10 +44,7 @@ public class CharInfoPagesMenuEntityPCView : SelectionGroupEntityView<CharInfoPa
 		m_Lens = lens;
 		m_LensDistanceThreshold = lensDistanceThreshold;
 		m_LensAnimationDuration = lensAnimationDuration;
-		DelayedInvoker.InvokeInFrames(delegate
-		{
-			InitializeLensPosition();
-		}, 1);
+		DelayedInvoker.InvokeInFrames(InitializeLensPosition, 1);
 	}
 
 	public void BindWidgetVM(IViewModel vm)
@@ -66,7 +63,7 @@ public class CharInfoPagesMenuEntityPCView : SelectionGroupEntityView<CharInfoPa
 
 	private void InitializeLensPosition()
 	{
-		if (base.ViewModel.IsSelected.Value && !(m_Lens == null))
+		if (base.ViewModel != null && base.ViewModel.IsSelected.Value && !(m_Lens == null))
 		{
 			DOTween.Kill(m_Lens.transform);
 			m_Lens.transform.localPosition = base.gameObject.transform.localPosition;

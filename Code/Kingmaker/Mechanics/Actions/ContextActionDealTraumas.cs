@@ -19,7 +19,7 @@ public class ContextActionDealTraumas : ContextAction
 		return $"Deal {(Count.IsZero ? ((ContextValue)1) : Count)} trauma(s)";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.TargetEntity.GetHealthOptional()?.DealTraumas(Math.Max(1, Count.Calculate(base.Context)));
 	}

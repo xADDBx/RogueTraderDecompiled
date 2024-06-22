@@ -2,7 +2,7 @@ namespace Kingmaker.Visual.Sound;
 
 public static class UnitAsksPriorityHelper
 {
-	private static BarkWrapper[] BarkWrapperPrioritizationGroups = new BarkWrapper[11];
+	private static BarkWrapper[] m_BarkWrapperPrioritizationGroups = new BarkWrapper[11];
 
 	public static void RegisterBark(BarkWrapper wrapper)
 	{
@@ -10,29 +10,29 @@ public static class UnitAsksPriorityHelper
 		{
 			int prioritizationGroup = wrapper.Bark.PrioritizationGroup;
 			UnitAsksComponent.Bark bark = wrapper.Bark;
-			if (BarkWrapperPrioritizationGroups[prioritizationGroup] != null && !BarkWrapperPrioritizationGroups[prioritizationGroup].IsPlaying)
+			if (m_BarkWrapperPrioritizationGroups[prioritizationGroup] != null && !m_BarkWrapperPrioritizationGroups[prioritizationGroup].IsPlaying)
 			{
 				RemoveCurrentHighestPriorityBark(prioritizationGroup);
 			}
-			if (BarkWrapperPrioritizationGroups[prioritizationGroup] == null)
+			if (m_BarkWrapperPrioritizationGroups[prioritizationGroup] == null)
 			{
-				BarkWrapperPrioritizationGroups[prioritizationGroup] = wrapper;
+				m_BarkWrapperPrioritizationGroups[prioritizationGroup] = wrapper;
 			}
-			else if (wrapper != BarkWrapperPrioritizationGroups[prioritizationGroup] && bark.Priority < BarkWrapperPrioritizationGroups[prioritizationGroup].Bark.Priority)
+			else if (wrapper != m_BarkWrapperPrioritizationGroups[prioritizationGroup] && bark.Priority < m_BarkWrapperPrioritizationGroups[prioritizationGroup].Bark.Priority)
 			{
-				BarkWrapperPrioritizationGroups[prioritizationGroup].UnitBarksManager.DiscardCurrentActiveBark();
-				BarkWrapperPrioritizationGroups[prioritizationGroup] = wrapper;
+				m_BarkWrapperPrioritizationGroups[prioritizationGroup].UnitBarksManager.DiscardCurrentActiveBark();
+				m_BarkWrapperPrioritizationGroups[prioritizationGroup] = wrapper;
 			}
 		}
 	}
 
 	private static void RemoveCurrentHighestPriorityBark(int prioritizationGroup)
 	{
-		BarkWrapperPrioritizationGroups[prioritizationGroup] = null;
+		m_BarkWrapperPrioritizationGroups[prioritizationGroup] = null;
 	}
 
 	public static BarkWrapper GetCurrentHighestPriorityBark(int prioritizationGroup)
 	{
-		return BarkWrapperPrioritizationGroups[prioritizationGroup];
+		return m_BarkWrapperPrioritizationGroups[prioritizationGroup];
 	}
 }

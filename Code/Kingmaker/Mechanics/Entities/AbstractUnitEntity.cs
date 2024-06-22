@@ -18,7 +18,6 @@ using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.FlagCountable;
 using Kingmaker.Utility.Random;
-using Kingmaker.Utility.StateContext;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.View;
 using Kingmaker.View.Mechanics.Entities;
@@ -197,13 +196,17 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 		}
 		set
 		{
-			StateContext.CheckCanEdit();
 			if ((m_Position - value).sqrMagnitude > 1E-05f)
 			{
 				m_Position = value;
 				Wake();
 				OnPositionChanged();
+				GraphNode node = base.CurrentNode.node;
 				base.CurrentNode = default(NNInfo);
+				if (node == null || node != base.CurrentNode.node)
+				{
+					OnNodeChanged(node);
+				}
 				base.CurrentUnwalkableNode = null;
 			}
 		}
@@ -264,6 +267,10 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 	public virtual float GetWarhammerMovementApPerCellThreateningArea()
 	{
 		return base.Blueprint.WarhammerMovementApPerCellThreateningArea;
+	}
+
+	protected virtual void OnNodeChanged(GraphNode oldNode)
+	{
 	}
 
 	private void NotifyIsSleepingChanged(bool value)

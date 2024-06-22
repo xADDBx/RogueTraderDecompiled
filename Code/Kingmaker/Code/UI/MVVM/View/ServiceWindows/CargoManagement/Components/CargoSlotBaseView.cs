@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -48,7 +49,7 @@ public class CargoSlotBaseView : VirtualListElementViewBase<CargoSlotVM>, IHasTo
 	protected void CargoFilling(int value)
 	{
 		m_FilledCargoMark.SetActive(value >= 100);
-		m_FillValue.text = $"{value}%";
+		m_FillValue.text = UIConfig.Instance.PercentHelper.AddPercentTo(value);
 	}
 
 	protected override void DestroyViewImplementation()

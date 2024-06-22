@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -11,6 +12,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UnitLogic.Buffs.Components;
 
+[AllowMultipleComponents]
 [TypeId("f2dd09e9b92aa574097a32a41b7e140e")]
 public class StarshipDamageModifier : UnitBuffComponentDelegate, IInitiatorRulebookHandler<RuleStarshipPerformAttack>, IRulebookHandler<RuleStarshipPerformAttack>, ISubscriber, IInitiatorRulebookSubscriber, ITargetRulebookHandler<RuleStarshipPerformAttack>, ITargetRulebookSubscriber, IHashable
 {

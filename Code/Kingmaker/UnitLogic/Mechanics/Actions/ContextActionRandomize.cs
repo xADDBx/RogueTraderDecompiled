@@ -29,7 +29,7 @@ public class ContextActionRandomize : ContextAction
 		return $"Randomize ({m_Actions.Length} variants)";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_Actions.Length < 1)
 		{

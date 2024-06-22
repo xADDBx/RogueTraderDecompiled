@@ -263,6 +263,16 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 		base.ViewModel.SelectQuest(currentQuest);
 	}
 
+	public void OnPrevActiveTab()
+	{
+		base.ViewModel.OnPrevActiveTab();
+	}
+
+	public void OnNextActiveTab()
+	{
+		base.ViewModel.OnNextActiveTab();
+	}
+
 	void ISetCurrentQuestHandler.HandleSetCurrentQuest(Quest quest)
 	{
 		m_CurrentQuest.SetActive(quest != null);

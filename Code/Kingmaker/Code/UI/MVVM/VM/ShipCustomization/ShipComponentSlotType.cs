@@ -3,7 +3,6 @@ namespace Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 public enum ShipComponentSlotType
 {
 	PlasmaDrives,
-	WarpDrives,
 	VoidShieldGenerator,
 	AugerArray,
 	ArmorPlating,
@@ -11,5 +10,6 @@ public enum ShipComponentSlotType
 	Prow1,
 	Prow2,
 	Port,
-	Starboard
+	Starboard,
+	Arsenal
 }

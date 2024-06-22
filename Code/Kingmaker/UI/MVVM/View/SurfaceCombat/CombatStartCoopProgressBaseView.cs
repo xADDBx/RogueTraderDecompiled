@@ -18,10 +18,7 @@ public class CombatStartCoopProgressBaseView : ViewBase<CombatStartCoopProgressV
 
 	protected override void BindViewImplementation()
 	{
-		AddDisposable(base.ViewModel.IsActive.Subscribe(delegate(bool value)
-		{
-			base.gameObject.SetActive(value);
-		}));
+		AddDisposable(base.ViewModel.IsActive.Subscribe(base.gameObject.SetActive));
 		AddDisposable(base.ViewModel.TotalProgress.Subscribe(delegate(int value)
 		{
 			for (int j = 0; j < m_Items.Count; j++)

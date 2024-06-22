@@ -33,7 +33,7 @@ public class StashItemFromUnitInventorySlot : GameAction
 		return $"Снимает у юнита {TargetUnit?.name} предмет из слота {TargetSlot} и помещает в стеш {TargetStash?.name}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(TargetUnit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

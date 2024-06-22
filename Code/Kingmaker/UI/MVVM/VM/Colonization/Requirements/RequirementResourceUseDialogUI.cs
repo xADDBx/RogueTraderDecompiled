@@ -1,3 +1,5 @@
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Globalmap.Colonization.Requirements;
 using UnityEngine;
 
@@ -24,6 +26,14 @@ public class RequirementResourceUseDialogUI : RequirementUI<RequirementResourceU
 	public override string NameForAcronym => null;
 
 	public override string CountText => base.Requirement.Count.ToString();
+
+	public bool BaseResourceCheck => base.Requirement.BaseResourceCheck();
+
+	public string ProfitFactorName => UIStrings.Instance.ProfitFactorTexts.Title;
+
+	public string ProfitFactorDescription => UIStrings.Instance.ColonyProjectsRequirements.RequirementProfitFactorCost;
+
+	public Sprite ProfitFactorIcon => BlueprintRoot.Instance.UIConfig.UIIcons.ProfitFactor;
 
 	public RequirementResourceUseDialogUI(RequirementResourceUseDialog requirement)
 		: base(requirement)

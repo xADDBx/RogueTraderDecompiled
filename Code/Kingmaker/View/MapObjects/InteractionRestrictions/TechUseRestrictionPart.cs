@@ -6,9 +6,11 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.InteractionRestrictions;
 
-public class TechUseRestrictionPart : SkillUseWithoutItemRestrictionPart<TechUseRestrictionSettings>, IHashable
+public class TechUseRestrictionPart : SkillUseWithoutItemRestrictionPart<TechUseRestrictionSettings>, ISkillUseRestrictionWithoutItem, IHashable
 {
 	public override InteractionActorType Type => InteractionActorType.TechUse;
+
+	public int DCOverrideValue => DCOverride;
 
 	public override StatType Skill => base.Settings.GetSkill();
 

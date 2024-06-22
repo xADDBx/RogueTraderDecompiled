@@ -33,7 +33,7 @@ public class RequirementNotBuiltProjectInColonyUI : RequirementUI<RequirementNot
 	{
 		if (base.Requirement.NotBuiltProject == null)
 		{
-			PFLog.System.Error("RequirementNotBuiltProjectInColony.GetUIText - NotBuiltProject is null!");
+			PFLog.UI.Error("RequirementNotBuiltProjectInColony.GetUIText - NotBuiltProject is null!");
 			return string.Empty;
 		}
 		return string.Format(UIStrings.Instance.ColonyProjectsRequirements.RequirementNotBuiltProjectInColony, base.Requirement.NotBuiltProject.Name);

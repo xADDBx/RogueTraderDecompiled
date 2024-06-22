@@ -22,6 +22,12 @@ public class WaaaghDebugData : ScriptableObject, IDebugData
 
 		[Reload("Runtime/Waaagh/Debugging/ShowLightSortingCurve.shader", ReloadAttribute.Package.Root)]
 		public Shader ShowLightSortingCurvePS;
+
+		[Reload("Runtime/Waaagh/Debugging/ClearDebugBuffers.compute", ReloadAttribute.Package.Root)]
+		public ComputeShader ClearDebugBuffersCS;
+
+		[Reload("Runtime/Waaagh/Debugging/DebugOverdraw.shader", ReloadAttribute.Package.Root)]
+		public Shader DebugOverdrawPS;
 	}
 
 	public ShaderResources Shaders;

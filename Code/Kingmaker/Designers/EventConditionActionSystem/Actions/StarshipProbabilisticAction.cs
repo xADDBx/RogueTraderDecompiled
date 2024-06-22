@@ -50,7 +50,7 @@ public class StarshipProbabilisticAction : ContextAction
 		return text;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		float num = probability;
 		if (modifyWithOwnerHPPercent)
@@ -58,7 +58,7 @@ public class StarshipProbabilisticAction : ContextAction
 			PartHealth healthOptional = base.Target.Entity.GetHealthOptional();
 			if (healthOptional == null)
 			{
-				PFLog.Default.Error(this, "Invalid target for effect '{0}'", GetType().Name);
+				Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 				return;
 			}
 			float num2 = 1f - (float)healthOptional.Damage / (float)healthOptional.MaxHitPoints;

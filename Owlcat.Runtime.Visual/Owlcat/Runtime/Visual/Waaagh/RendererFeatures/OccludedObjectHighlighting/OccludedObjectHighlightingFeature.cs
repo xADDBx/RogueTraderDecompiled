@@ -266,7 +266,7 @@ public class OccludedObjectHighlightingFeature : ScriptableRendererFeature
 		CullingJob jobData = default(CullingJob);
 		jobData.Bounds = m_Bounds;
 		jobData.CameraPlanes = m_CameraPlanes;
-		m_JobHandle = jobData.Schedule(RendererInfos.Count, 32);
+		m_JobHandle = IJobParallelForExtensions.Schedule(jobData, RendererInfos.Count, 32);
 		CountJob jobData2 = default(CountJob);
 		jobData2.Bounds = m_Bounds.Slice(0, RendererInfos.Count);
 		jobData2.Count = m_Count;

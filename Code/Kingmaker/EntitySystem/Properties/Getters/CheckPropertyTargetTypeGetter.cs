@@ -10,9 +10,9 @@ public class CheckPropertyTargetTypeGetter : MechanicEntityPropertyGetter, Prope
 {
 	public PropertyTargetType Target;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"Check target [{Target}] equals CurrentEntity";
+		return "Check target [" + Target.Colorized() + "] equals " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

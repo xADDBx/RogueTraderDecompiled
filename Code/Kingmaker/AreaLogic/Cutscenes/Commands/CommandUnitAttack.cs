@@ -25,6 +25,7 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
+using Kingmaker.View.Animation;
 using Pathfinding;
 using UnityEngine;
 
@@ -105,6 +106,8 @@ public class CommandUnitAttack : CommandBase
 
 	public BlueprintItemWeapon CustomWeapon => m_CustomWeapon;
 
+	public BlueprintAbilityFXSettings.Reference SpellWeaponFXSettings => BlueprintWarhammerRoot.Instance.CutsceneRoot.SpellWeaponFXSettings;
+
 	public override bool IsContinuous => Continuous;
 
 	public override IAbstractUnitEntity GetControlledUnit()
@@ -141,47 +144,23 @@ public class CommandUnitAttack : CommandBase
 		{
 			throw new Exception("Can't find suitable weapon");
 		}
-		BlueprintAbility blueprint = attackType switch
-		{
-			AttackType.SingleShot => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
-			AttackType.BurstFire => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackBurst, 
-			AttackType.Melee => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
-			AttackType.Custom => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
-			_ => throw new ArgumentOutOfRangeException(), 
-		};
+		BlueprintAbility abilityBlueprint = GetAbilityBlueprint(attackType, blueprintItemWeapon, Type);
 		bool cutsceneWeaponSet = false;
-		ItemEntityWeapon itemEntityWeapon = null;
-		PartUnitBody bodyOptional = unit.GetBodyOptional();
-		if (bodyOptional != null)
+		ItemEntityWeapon weapon = GetWeapon(unit, blueprintItemWeapon, ref cutsceneWeaponSet, ref abilityBlueprint);
+		AbilityData ability = new AbilityData(abilityBlueprint, unit)
 		{
-			foreach (HandSlot item in bodyOptional.HandsEquipmentSets.SelectMany((HandsEquipmentSet set) => set.Hands))
-			{
-				if (item.MaybeWeapon?.Blueprint == blueprintItemWeapon)
-				{
-					itemEntityWeapon = item.Weapon;
-					break;
-				}
-			}
-			if (itemEntityWeapon == null)
-			{
-				itemEntityWeapon = blueprintItemWeapon.CreateEntity<ItemEntityWeapon>();
-				bodyOptional.SetCutsceneHandsEquipment(itemEntityWeapon);
-				cutsceneWeaponSet = true;
-			}
-		}
-		AbilityData ability = new AbilityData(blueprint, unit)
-		{
-			OverrideWeapon = itemEntityWeapon,
-			FXSettingsOverride = FindSuitableFXSettings(itemEntityWeapon, attackType)
+			OverrideWeapon = weapon,
+			FXSettingsOverride = (CanOverrideBecauseOfStaffWeapon(weapon.Blueprint, Type) ? SpellWeaponFXSettings.Get() : FindSuitableFXSettings(weapon, attackType))
 		};
 		MechanicEntity target = Target.GetValue();
-		bool num = (float)unit.DistanceToInCells(target) > (float)itemEntityWeapon.AttackRange;
+		float distanceToTarget = unit.DistanceToInCells(target);
+		bool num = CalculateNeedForApproach(distanceToTarget, weapon, abilityBlueprint);
 		IAbilityCustomAnimation abilityCustomAnimation = blueprintItemWeapon.WeaponAbilities.FirstOrDefault()?.Ability?.GetComponent<IAbilityCustomAnimation>();
 		Data data = player.GetCommandData<Data>(this);
 		data.Unit = unit;
 		data.Target = target;
 		data.Ability = ability;
-		data.Weapon = itemEntityWeapon;
+		data.Weapon = weapon;
 		data.CutsceneWeaponSet = cutsceneWeaponSet;
 		data.CustomAnimation = abilityCustomAnimation;
 		if (Continuous && unit.View is UnitEntityView unitEntityView)
@@ -195,7 +174,7 @@ public class CommandUnitAttack : CommandBase
 		}
 		if (num)
 		{
-			float distance = itemEntityWeapon.AttackRange;
+			float distance = weapon.AttackRange;
 			data.Path = PathfindingService.Instance.FindPathRT_Delayed(unit.MovementAgent, target.Position, distance, 1, delegate(ForcedPath path)
 			{
 				data.Path = null;
@@ -219,6 +198,65 @@ public class CommandUnitAttack : CommandBase
 			UnitUseAbilityParams cmdParams = CreateAttackCommandParams(ability, target, abilityCustomAnimation);
 			data.AttackCmdHandle = unit.Commands.Run(cmdParams);
 		}
+	}
+
+	private bool CalculateNeedForApproach(float distanceToTarget, ItemEntityWeapon weapon, BlueprintAbility abilityBlueprint)
+	{
+		if (CanOverrideBecauseOfStaffWeapon(weapon.Blueprint, Type) && abilityBlueprint.Range == AbilityRange.Custom)
+		{
+			return distanceToTarget > (float)abilityBlueprint.CustomRange;
+		}
+		return distanceToTarget > (float)weapon.AttackRange;
+	}
+
+	private static bool CanOverrideBecauseOfStaffWeapon(BlueprintItemWeapon weapon, AttackType type)
+	{
+		if (type != AttackType.Custom)
+		{
+			return weapon.VisualParameters.AnimStyle == WeaponAnimationStyle.Staff;
+		}
+		return false;
+	}
+
+	private static BlueprintAbility GetAbilityBlueprint(AttackType actualType, BlueprintItemWeapon weaponBlueprint, AttackType type)
+	{
+		if (CanOverrideBecauseOfStaffWeapon(weaponBlueprint, type))
+		{
+			return BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSpell;
+		}
+		return actualType switch
+		{
+			AttackType.SingleShot => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
+			AttackType.BurstFire => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackBurst, 
+			AttackType.Melee => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
+			AttackType.Custom => BlueprintWarhammerRoot.Instance.CutsceneRoot.AttackSingle, 
+			_ => throw new ArgumentOutOfRangeException(), 
+		};
+	}
+
+	private ItemEntityWeapon GetWeapon(AbstractUnitEntity unit, BlueprintItemWeapon weaponBlueprint, ref bool cutsceneWeaponSet, ref BlueprintAbility abilityBlueprint)
+	{
+		ItemEntityWeapon itemEntityWeapon = null;
+		PartUnitBody bodyOptional = unit.GetBodyOptional();
+		if (bodyOptional == null)
+		{
+			return null;
+		}
+		foreach (HandSlot item in bodyOptional.HandsEquipmentSets.SelectMany((HandsEquipmentSet set) => set.Hands))
+		{
+			if (item.MaybeWeapon?.Blueprint == weaponBlueprint)
+			{
+				itemEntityWeapon = item.Weapon;
+				break;
+			}
+		}
+		if (itemEntityWeapon == null)
+		{
+			itemEntityWeapon = weaponBlueprint.CreateEntity<ItemEntityWeapon>();
+			bodyOptional.SetCutsceneHandsEquipment(itemEntityWeapon);
+			cutsceneWeaponSet = true;
+		}
+		return itemEntityWeapon;
 	}
 
 	protected override void OnStop(CutscenePlayerData player)
@@ -269,7 +307,7 @@ public class CommandUnitAttack : CommandBase
 		{
 			return true;
 		}
-		if (!unitUseAbility.IsUnitEnoughClose)
+		if (commandData.Unit.IsDeadOrUnconscious)
 		{
 			return true;
 		}

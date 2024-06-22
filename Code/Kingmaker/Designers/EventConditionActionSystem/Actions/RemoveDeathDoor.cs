@@ -21,7 +21,7 @@ public class RemoveDeathDoor : GameAction
 		return $"Remove DeathDoor condition from {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Unit.GetValue().Remove<UnitPartDeathDoor>();
 	}

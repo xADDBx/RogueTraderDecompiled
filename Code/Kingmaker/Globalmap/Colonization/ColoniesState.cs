@@ -103,6 +103,9 @@ public class ColoniesState : IHashable
 	[JsonProperty]
 	public readonly Dictionary<BlueprintResource, int> GlobalResourceShortage = new Dictionary<BlueprintResource, int>();
 
+	[JsonProperty]
+	public ColonyContextData ColonyContextData = new ColonyContextData();
+
 	public void Initialize()
 	{
 		foreach (ColonyData colony in Colonies)
@@ -254,6 +257,8 @@ public class ColoniesState : IHashable
 			}
 			result.Append(ref val13);
 		}
+		Hash128 val16 = ClassHasher<ColonyContextData>.GetHash128(ColonyContextData);
+		result.Append(ref val16);
 		return result;
 	}
 }

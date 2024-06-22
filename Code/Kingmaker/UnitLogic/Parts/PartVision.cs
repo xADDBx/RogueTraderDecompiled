@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -11,7 +12,6 @@ using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.SriptZones;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
-using Owlcat.Runtime.Visual.FogOfWar;
 using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;

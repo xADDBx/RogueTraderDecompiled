@@ -36,7 +36,7 @@ public interface IItemsCollection : IEnumerable<ItemEntity>, IEnumerable
 	[CanBeNull]
 	ItemEntity Add([NotNull] ItemEntity newItem, bool noAutoMerge = false);
 
-	void Add([NotNull] BlueprintItem newBpItem, int count, [CanBeNull] Action<ItemEntity> callback = null);
+	void Add([NotNull] BlueprintItem newBpItem, int count, [CanBeNull] Action<ItemEntity> callback = null, bool noAutoMerge = false);
 
 	ItemEntity Add([NotNull] BlueprintItem newBpItem);
 

@@ -1,6 +1,3 @@
-using System.Text;
-using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.VariativeInteraction;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
@@ -51,6 +48,9 @@ public class InteractionVariantView : ViewBase<InteractionVariantVM>, IWidgetVie
 	[SerializeField]
 	private TextMeshProUGUI m_ResourceCount;
 
+	[SerializeField]
+	private Image m_UnitIcon;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
@@ -62,30 +62,29 @@ public class InteractionVariantView : ViewBase<InteractionVariantVM>, IWidgetVie
 		if (base.ViewModel.RequiredResourceCount.HasValue)
 		{
 			m_ResourceCount.text = ((base.ViewModel.ResourceCount > 0) ? $"{base.ViewModel.ResourceCount}" : string.Empty);
+			m_UnitIcon.gameObject.SetActive(value: false);
+		}
+		else if (base.ViewModel.OnlyOnceCheck && !base.ViewModel.Disabled)
+		{
+			m_ResourceCount.text = "1";
+			m_UnitIcon.gameObject.SetActive(value: true);
+		}
+		else if (base.ViewModel.LimitedUnitsCheck)
+		{
+			m_ResourceCount.text = $"{base.ViewModel.UnitCount}";
+			m_UnitIcon.gameObject.SetActive(value: true);
 		}
 		else
 		{
 			m_ResourceCount.text = string.Empty;
-		}
-		int? requiredResourceCount = base.ViewModel.RequiredResourceCount;
-		if (requiredResourceCount.HasValue && requiredResourceCount.GetValueOrDefault() > 0)
-		{
-			AddDisposable(this.SetHint(GetHint()));
+			m_UnitIcon.gameObject.SetActive(value: false);
 		}
 		AddDisposable(base.ViewModel.InteractionName.Subscribe(delegate(string text)
 		{
 			m_ActionName.text = text;
 		}));
 		m_Button.Interactable = !base.ViewModel.Disabled;
-	}
-
-	protected string GetHint()
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append(base.ViewModel.ResourceName + "\n");
-		stringBuilder.Append($"{UIStrings.Instance.Overtips.HasResourceCount.Text}: {base.ViewModel.ResourceCount}\n");
-		stringBuilder.Append($"{UIStrings.Instance.Overtips.RequiredResourceCount.Text}: {base.ViewModel.RequiredResourceCount}\n");
-		return stringBuilder.ToString();
+		base.gameObject.name = "InteractionVariantView " + base.ViewModel.InteractionName.Value + " " + base.ViewModel.ResourceName;
 	}
 
 	protected override void DestroyViewImplementation()

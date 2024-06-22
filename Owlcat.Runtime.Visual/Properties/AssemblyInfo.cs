@@ -7,5 +7,5 @@ using Owlcat.Runtime.Visual.DxtCompressor;
 using Unity.Burst;
 
 [assembly: InternalsVisibleTo("Owlcat.Editor.Visual")]
-[assembly: BurstCompiler.StaticTypeReinit(typeof(DxtCompressorService.Request.Compress_00000DE5_0024BurstDirectCall))]
+[assembly: BurstCompiler.StaticTypeReinit(typeof(DxtCompressorService.Request.Compress_00000E07_0024BurstDirectCall))]
 [assembly: AssemblyVersion("0.0.0.0")]

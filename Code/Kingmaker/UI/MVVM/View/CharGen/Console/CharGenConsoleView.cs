@@ -6,7 +6,6 @@ using Kingmaker.UI.MVVM.View.CharGen.Common;
 using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
-using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -132,20 +131,12 @@ public class CharGenConsoleView : CharGenView
 		}
 		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 		{
-			if (base.CurrentPhaseIsLast)
-			{
-				UISounds.Instance.Play(UISounds.Instance.Sounds.Buttons.FinishChargenButtonClick, isButton: false, playAnyway: true);
-			}
 			NextPressed();
 		}, 15, m_NextEnabled.And(m_CanGoNextInMenu).And(isMainCharacter).ToReactiveProperty(), eventType);
 		AddDisposable(m_NextPhaseHint.Bind(inputBindStruct));
 		AddDisposable(inputBindStruct);
 		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 		{
-			if (base.CurrentPhaseIsLast)
-			{
-				UISounds.Instance.Play(UISounds.Instance.Sounds.Buttons.FinishChargenButtonClick, isButton: false, playAnyway: true);
-			}
 			ConfirmPressed();
 		}, 8, m_CanGoNextOnConfirm.And(isMainCharacter).ToReactiveProperty(), eventType);
 		AddDisposable(m_ConfirmHint.Bind(inputBindStruct2));

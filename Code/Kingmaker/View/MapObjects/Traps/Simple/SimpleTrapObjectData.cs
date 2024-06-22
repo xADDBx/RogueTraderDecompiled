@@ -37,8 +37,6 @@ public class SimpleTrapObjectData : TrapObjectData, IHashable
 	[JsonProperty]
 	private int m_DisableDC;
 
-	public SimpleTrapObjectInfo Info => View.Info;
-
 	public new SimpleTrapObjectView View => (SimpleTrapObjectView)base.View;
 
 	public override int DisableDC
@@ -52,6 +50,8 @@ public class SimpleTrapObjectData : TrapObjectData, IHashable
 			m_DisableDC = value;
 		}
 	}
+
+	public SimpleTrapObjectInfo Info => View.Info;
 
 	public override bool IsHiddenWhenInactive => !Info.DoNotHideWhenInactive;
 

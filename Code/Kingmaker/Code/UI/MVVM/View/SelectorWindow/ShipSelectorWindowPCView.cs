@@ -7,6 +7,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.View.ShipCustomization;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using TMPro;
@@ -50,14 +51,11 @@ public class ShipSelectorWindowPCView : SelectorWindowBaseView<ShipComponentItem
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		m_Header.text = UIStrings.Instance.InventoryScreen.ChooseItem;
 		AddDisposable(EventBus.Subscribe(this));
 		AddDisposable(m_Button.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			OnClose();
-		}));
-		AddDisposable(m_InfoButton.OnLeftClickAsObservable().Subscribe(delegate
-		{
-			ShowCurrentInstoledInfo();
 		}));
 		AddDisposable(m_ConfirmButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -72,9 +70,9 @@ public class ShipSelectorWindowPCView : SelectorWindowBaseView<ShipComponentItem
 			OnClose();
 		}));
 		Focus(base.ViewModel.EntitiesCollection.FirstOrDefault((ShipComponentItemSlotVM x) => x != null));
-		m_InfoButtonText.text = UIStrings.Instance.ContextMenu.Information;
 		m_UnequipButtonText.text = UIStrings.Instance.ContextMenu.TakeOff;
 		m_ConfirmButtonText.text = UIStrings.Instance.ContextMenu.Equip;
+		m_InfoButton.Or(null)?.gameObject.SetActive(value: false);
 		m_Background.SetActive(value: true);
 	}
 
@@ -101,10 +99,10 @@ public class ShipSelectorWindowPCView : SelectorWindowBaseView<ShipComponentItem
 			entity.SetSelected(state: true);
 			base.ViewModel.InfoSectionVM.SetTemplate(entity.Tooltip.Value);
 			m_CurrentEntity = entity;
-			m_SelectedEquipped.Value = CanUnequip(entity);
-			m_InfoButton.gameObject.SetActive(m_CurrentEntity.Item != ShipItemSelectorWindowVM.EquippedSlot.Item.Value && ShipItemSelectorWindowVM.EquippedSlot.Item.Value != null);
-			m_ConfirmButton.gameObject.SetActive(!m_SelectedEquipped.Value);
-			m_UnequipButton.gameObject.SetActive(!m_ConfirmButton.gameObject.activeSelf);
+			bool flag = CanUnequip(entity);
+			m_SelectedEquipped.Value = flag;
+			m_ConfirmButton.gameObject.SetActive(!flag);
+			m_UnequipButton.gameObject.SetActive(flag);
 		}
 	}
 

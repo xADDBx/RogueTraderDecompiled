@@ -10,6 +10,7 @@ using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Utility;
 using Rewired;
+using TMPro;
 using UniRx;
 using UnityEngine;
 
@@ -47,6 +48,10 @@ public class FormationConsoleView : FormationBaseView
 	[SerializeField]
 	private ConsoleHint m_MoveCharacterFree;
 
+	[SerializeField]
+	[UsedImplicitly]
+	private TextMeshProUGUI m_FormationHintConsole;
+
 	private bool m_MoveFreely;
 
 	private readonly BoolReactiveProperty m_IsCustomAndCharacter = new BoolReactiveProperty();
@@ -60,7 +65,24 @@ public class FormationConsoleView : FormationBaseView
 		m_MoveFreely = false;
 		m_IsCustomAndCharacter.Value = base.ViewModel.IsCustomFormation;
 		CreateInput();
+		m_FormationHintConsole.text = UIStrings.Instance.FormationTexts.OptimizedFormation;
+		AddDisposable(m_IsCustomAndCharacter.Subscribe(delegate(bool value)
+		{
+			m_FormationHintConsole.gameObject.SetActive(!value);
+		}));
 		base.BindViewImplementation();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_ConsoleHintsTopWidget.Dispose();
+		m_ConsoleHintsBottomWidget.Dispose();
+		m_MoveFreely = false;
+		base.DestroyViewImplementation();
+		m_Characters.ForEach(WidgetFactory.DisposeWidget);
+		m_Characters.Clear();
+		TooltipHelper.HideTooltip();
+		GamePad.Instance.BaseLayer?.Bind();
 	}
 
 	private void CreateInput()
@@ -140,12 +162,6 @@ public class FormationConsoleView : FormationBaseView
 		m_IsCustomAndCharacter.Value = base.ViewModel.IsCustomFormation;
 	}
 
-	private void OnSelectFormation()
-	{
-		base.ViewModel.FormationSelector.SelectNextValidEntity();
-		base.ViewModel.FormationSelector.SelectedEntity.Value.SetSelectedFromView(state: true);
-	}
-
 	private void MoveCharacter(InputActionEventData data, Vector2 vec)
 	{
 		FormationCharacterConsoleView formationCharacterConsoleView = NavigationBehaviour.Focus.Value as FormationCharacterConsoleView;
@@ -161,17 +177,5 @@ public class FormationConsoleView : FormationBaseView
 	{
 		base.OnFormationPresetIndexChanged(formationPresetIndex);
 		UpdateNavigation();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_ConsoleHintsTopWidget.Dispose();
-		m_ConsoleHintsBottomWidget.Dispose();
-		m_MoveFreely = false;
-		base.DestroyViewImplementation();
-		m_Characters.ForEach(WidgetFactory.DisposeWidget);
-		m_Characters.Clear();
-		TooltipHelper.HideTooltip();
-		GamePad.Instance.BaseLayer?.Bind();
 	}
 }

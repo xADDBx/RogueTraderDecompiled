@@ -27,12 +27,12 @@ public class DestroyUnit : GameAction
 		return $"Уничтожает юнита {Target}\n" + $"Плавно исчезнуть юнитом: {FadeOut}\n" + "ВНИМАНИЕ! ОПАСНЫЙ ACTION! УДАЛЯЙТЕ ЮНИТА ТОЛЬКО ЕСЛИ УВЕРЕНЫ, ЧТО ПОТОМ НЕ НУЖНО БУДЕТ ДЕЛАТЬ КОНВЕРТЫ С УЧАСТИЕМ ЭТОГО ЮНИТА.Не используйте на компаньонах и петах.";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
 		if (value is BaseUnitEntity baseUnitEntity && value.IsPlayerFaction)
 		{
-			PFLog.Default.Error($"{name}: trying to destroy {value} who is a companion. Do not do that!");
+			Element.LogError("{0}: trying to destroy {1} who is a companion. Do not do that!", new object[2] { name, value });
 			baseUnitEntity.GetOptional<UnitPartCompanion>()?.SetState(CompanionState.ExCompanion);
 			UIAccess.SelectionManager.UpdateSelectedUnits();
 			baseUnitEntity.IsInGame = false;

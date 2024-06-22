@@ -19,7 +19,7 @@ public class WarhammerContextActionCoverActions : ContextAction
 		return "Do actions depending on cover";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Vector3 origin;
 		IntRect originSize;

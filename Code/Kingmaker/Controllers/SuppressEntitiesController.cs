@@ -36,7 +36,7 @@ public class SuppressEntitiesController : IControllerEnable, IController, IContr
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

@@ -167,7 +167,7 @@ public static class StoreManager
 		bool flag = false;
 		foreach (IDlcStore dlcStore in dlc.GetDlcStores())
 		{
-			if (dlcStore.IsSuitable && dlcStore.AllowsPurchase)
+			if (dlcStore.IsSuitable)
 			{
 				flag = true;
 				dlcStore.OpenShop();
@@ -275,7 +275,7 @@ public static class StoreManager
 				IDLCStatus status = dlcStore.GetStatus();
 				if (status != null)
 				{
-					PFLog.Default.Log($"[StoreManager] DlcStatus for {dlc}: purchased = {status.Purchased}, download = {status.DownloadState}, mounted = {status.IsMounted}, enabled={status.IsEnabled}");
+					PFLog.Default.Log($"[StoreManager] DlcStatus for {dlc}: purchased = {status.Purchased}, download = {status.DownloadState}, mounted = {status.IsMounted}");
 					DLCCache.OnDLCUpdate(dlc, status);
 					flag = true;
 					break;

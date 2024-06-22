@@ -27,6 +27,8 @@ public class PartLifeState : AbstractUnitPart, IHashable
 	[JsonProperty]
 	private bool m_IsDeathRevealed;
 
+	private bool m_isRessurecting;
+
 	[JsonProperty]
 	public bool IsHiddenBecauseDead { get; private set; }
 
@@ -132,27 +134,32 @@ public class PartLifeState : AbstractUnitPart, IHashable
 
 	private void Resurrect(int resultHealth, bool restoreHealth, bool fullRestore)
 	{
-		IsHiddenBecauseDead = false;
-		UnitLifeController.ForceUnitConscious(base.Owner);
-		if (fullRestore)
+		if (!m_isRessurecting)
 		{
-			Health.HealDamageAll();
+			IsHiddenBecauseDead = false;
+			m_isRessurecting = true;
+			UnitLifeController.ForceUnitConscious(base.Owner);
+			if (fullRestore)
+			{
+				Health.HealDamageAll();
+			}
+			else if (restoreHealth)
+			{
+				Health.SetHitPointsLeft(resultHealth);
+			}
+			PartStatsAttributes optional = base.Owner.GetOptional<PartStatsAttributes>();
+			if (optional != null)
+			{
+				UpdateAttributesDamageAndDrainOnResurrect(optional, fullRestore);
+			}
+			UpdateUnitViewOnResurrect(base.Owner.View);
+			base.Owner.Buffs.RemoveBuffsOnResurrect();
+			m_isRessurecting = false;
+			EventBus.RaiseEvent((IAbstractUnitEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitResurrectedHandler>)delegate(IUnitResurrectedHandler h)
+			{
+				h.HandleUnitResurrected();
+			}, isCheckRuntime: true);
 		}
-		else if (restoreHealth)
-		{
-			Health.SetHitPointsLeft(resultHealth);
-		}
-		PartStatsAttributes optional = base.Owner.GetOptional<PartStatsAttributes>();
-		if (optional != null)
-		{
-			UpdateAttributesDamageAndDrainOnResurrect(optional, fullRestore);
-		}
-		UpdateUnitViewOnResurrect(base.Owner.View);
-		base.Owner.Buffs.RemoveBuffsOnResurrect();
-		EventBus.RaiseEvent((IAbstractUnitEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitResurrectedHandler>)delegate(IUnitResurrectedHandler h)
-		{
-			h.HandleUnitResurrected();
-		}, isCheckRuntime: true);
 	}
 
 	private static void UpdateAttributesDamageAndDrainOnResurrect([NotNull] PartStatsAttributes attributes, bool fullRestore)

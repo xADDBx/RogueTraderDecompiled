@@ -131,11 +131,14 @@ public class ScatterShotTargetSelector : AbilityTargetSelector
 	{
 		BaseUnitEntity unit = context.Unit;
 		bool flag = !unit.IsPlayerEnemy;
-		OrientedPatternData orientedPattern;
 		using (ProfileScope.New("GetOrientedPattern"))
 		{
-			orientedPattern = AbilityInfo.patternProvider.GetOrientedPattern(AbilityInfo, casterNode, targetNode, coveredTargetsOnly: true);
+			if (AbilityInfo.patternProvider == null)
+			{
+				return false;
+			}
 		}
+		OrientedPatternData orientedPattern = AbilityInfo.patternProvider.GetOrientedPattern(AbilityInfo, casterNode, targetNode, coveredTargetsOnly: true);
 		using (ProfileScope.New("GatherAffectedTargetsData"))
 		{
 			GatherAffectedTargetsData(orientedPattern, unit.Brain.IsCarefulShooter);

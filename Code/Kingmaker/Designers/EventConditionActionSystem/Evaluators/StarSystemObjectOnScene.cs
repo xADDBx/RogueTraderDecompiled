@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Globalmap.SystemMap;
 using Owlcat.QA.Validation;
@@ -24,7 +25,7 @@ public class StarSystemObjectOnScene : MechanicEntityEvaluator, IEvaluator<StarS
 		return "StarSystem object that is on scene";
 	}
 
-	protected override MechanicEntity GetValueInternal()
+	protected override Entity GetValueInternal()
 	{
 		StarSystemObjectView starSystemObjectView = StarSystemObject.FindView() as StarSystemObjectView;
 		if (!(starSystemObjectView != null))

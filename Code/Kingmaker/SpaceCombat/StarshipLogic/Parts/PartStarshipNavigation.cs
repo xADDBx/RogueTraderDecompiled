@@ -483,6 +483,11 @@ public class PartStarshipNavigation : StarshipPart, ITurnEndHandler<EntitySubscr
 		return (node2, node3);
 	}
 
+	public void ClearLastPathParameters()
+	{
+		m_LastPathParameters = default(StarshipPathParameters);
+	}
+
 	public void OnAreaBeginUnloading()
 	{
 		m_LastPathParameters = default(StarshipPathParameters);

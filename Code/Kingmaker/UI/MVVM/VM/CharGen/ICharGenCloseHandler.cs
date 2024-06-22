@@ -4,5 +4,5 @@ namespace Kingmaker.UI.MVVM.VM.CharGen;
 
 public interface ICharGenCloseHandler : ISubscriber
 {
-	void HandleClose(bool withComplete);
+	void HandleClose(bool withComplete, bool syncPortrait);
 }

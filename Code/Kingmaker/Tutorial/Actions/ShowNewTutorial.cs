@@ -26,7 +26,7 @@ public class ShowNewTutorial : GameAction
 		return $"Show tutorial {Tutorial}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		using TutorialContext tutorialContext = ContextData<TutorialContext>.Request();
 		TutorialContextDataEvaluator[] evaluators = Evaluators;

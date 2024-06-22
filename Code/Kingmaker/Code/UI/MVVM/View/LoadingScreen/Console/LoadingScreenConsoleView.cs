@@ -28,6 +28,22 @@ public class LoadingScreenConsoleView : LoadingScreenBaseView
 			{
 				ContextName = "LoadingScreen"
 			};
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 6));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 7));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 5));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 4));
 			AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 		}
 		base.ShowUserInputWaiting(state);

@@ -23,7 +23,8 @@ public class StarshipAIAbilityRestrictionLogic : BlueprintComponent, IAbilityCas
 		RestartShields,
 		StareToAbyss,
 		PlasmaDrivesKamikaze,
-		DisableDoubleReinforce
+		DisableDoubleReinforce,
+		PlayerStarshipOnly
 	}
 
 	public LogicMode logicMode;
@@ -68,11 +69,12 @@ public class StarshipAIAbilityRestrictionLogic : BlueprintComponent, IAbilityCas
 		{
 			return false;
 		}
-		if (logicMode == LogicMode.StareToAbyss)
+		return logicMode switch
 		{
-			return StareToAbyssLogic(starship, casterPosition, target);
-		}
-		return true;
+			LogicMode.StareToAbyss => StareToAbyssLogic(starship, casterPosition, target), 
+			LogicMode.PlayerStarshipOnly => target.Entity == Game.Instance.Player.PlayerShip, 
+			_ => true, 
+		};
 	}
 
 	private bool PlasmaDrivesKamikazeLogic(StarshipEntity starship)

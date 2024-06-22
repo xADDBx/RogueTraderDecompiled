@@ -92,14 +92,16 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		}
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
+		string text = "";
+		text = ((!AgainstTarget) ? (" of " + FormulaTargetScope.Current + " against abstract target") : (" of " + Attacker.Colorized() + " against " + Defender.Colorized()));
 		return PenetrationParameterType switch
 		{
-			PenetrationParameterType.ArmorPenetration => "Armor Penetration", 
-			PenetrationParameterType.DodgePenetration => "Dodge Penetration", 
-			PenetrationParameterType.ArmorPenetrationOverArmor => "Armor Penetration minus Armor", 
-			PenetrationParameterType.DodgePenetrationOverDodge => "Dodge Penetration minus Dodge", 
+			PenetrationParameterType.ArmorPenetration => "Armor Penetration" + text, 
+			PenetrationParameterType.DodgePenetration => "Dodge Penetration" + text, 
+			PenetrationParameterType.ArmorPenetrationOverArmor => "Armor Penetration minus Armor" + text, 
+			PenetrationParameterType.DodgePenetrationOverDodge => "Dodge Penetration minus Dodge" + text, 
 			_ => "", 
 		};
 	}

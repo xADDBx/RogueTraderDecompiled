@@ -103,10 +103,6 @@ public class AoEPattern
 		}
 	}
 
-	private AoEPattern()
-	{
-	}
-
 	public PatternGridData GetGridData(Vector2 direction, Size entitySizeRect = Size.Medium)
 	{
 		float sqrMagnitude = direction.sqrMagnitude;

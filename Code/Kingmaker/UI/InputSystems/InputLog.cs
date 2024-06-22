@@ -15,7 +15,7 @@ public static class InputLog
 	{
 		if (InputLogEnabled)
 		{
-			PFLog.Default.Log(message);
+			PFLog.UI.Log(message);
 		}
 	}
 
@@ -49,15 +49,15 @@ public static class InputLog
 	{
 		if (Game.Instance.UISettingsManager.IsNewKeyBindingSelectionHappening)
 		{
-			PFLog.Default.Log("New Key Binding Selection is Happening");
+			PFLog.UI.Log("New Key Binding Selection is Happening");
 		}
 		if (KeyboardAccess.IsInputFieldSelected())
 		{
-			PFLog.Default.Log("InputField Is Selected");
+			PFLog.UI.Log("InputField Is Selected");
 		}
 		if ((bool)Game.Instance.Keyboard.Disabled)
 		{
-			PFLog.Default.Log($"Keyboard is Disabled. GuardCount = {Game.Instance.Keyboard.Disabled.GuardCount}");
+			PFLog.UI.Log($"Keyboard is Disabled. GuardCount = {Game.Instance.Keyboard.Disabled.GuardCount}");
 		}
 		Array values = Enum.GetValues(typeof(KeyCode));
 		StringBuilder stringBuilder = new StringBuilder("Currently pressed keys:");
@@ -69,7 +69,7 @@ public static class InputLog
 				stringBuilder.Append(", ");
 			}
 		}
-		PFLog.Default.Log(stringBuilder.ToString());
+		PFLog.UI.Log(stringBuilder.ToString());
 	}
 
 	public static void SetLogInput(bool state)

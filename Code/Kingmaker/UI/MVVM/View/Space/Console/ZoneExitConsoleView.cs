@@ -33,7 +33,7 @@ public class ZoneExitConsoleView : ZoneExitBaseView
 		AddDisposable(base.ViewModel.IsExitAvailable.CombineLatest(base.ViewModel.ShipIsMoving, (bool exitAvailable, bool shipIsMoving) => new { exitAvailable, shipIsMoving }).Subscribe(value =>
 		{
 			m_ExitToShipAvailable.Value = value.exitAvailable && !value.shipIsMoving;
-			m_StopShipAvailable.Value = value.shipIsMoving;
+			m_StopShipAvailable.Value = value.exitAvailable && value.shipIsMoving;
 		}));
 	}
 

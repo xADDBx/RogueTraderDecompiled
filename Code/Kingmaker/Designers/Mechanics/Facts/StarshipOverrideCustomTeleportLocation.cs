@@ -138,7 +138,7 @@ public class StarshipOverrideCustomTeleportLocation : BlueprintComponent, IAbili
 				currentNode = currentNode.GetNeighbourAlongDirection(direction);
 				diagonalCount += ((direction > 3) ? 1 : 0);
 				rayLength += ((diagonalCount % 2 != 0 || direction <= 3) ? 1 : 2);
-				if ((float)rayLength <= blueAP + (float)ramData.BonusDistanceOnAttackAttempt)
+				if ((float)rayLength <= blueAP + (float)ramData.BonusDistanceOnAttackAttempt(starship))
 				{
 					if (distanceLimit >= 0)
 					{

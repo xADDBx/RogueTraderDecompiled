@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -100,9 +101,9 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 		Features = base.Owner.Facts.EnsureFactProcessor<FeatureCollection>();
 		if (!base.Owner.IsStarship())
 		{
-			if (Game.Instance.BlueprintRoot.Progression.FeatsProgression != null)
+			if (BlueprintRoot.Instance.Progression.FeatsProgression != null)
 			{
-				Features.Add(Game.Instance.BlueprintRoot.Progression.FeatsProgression);
+				Features.Add(BlueprintRoot.Instance.Progression.FeatsProgression);
 			}
 			SpawningData current = ContextData<SpawningData>.Current;
 			if (current != null)

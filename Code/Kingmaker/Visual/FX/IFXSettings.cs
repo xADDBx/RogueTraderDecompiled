@@ -11,5 +11,7 @@ public interface IFXSettings
 
 	FXTarget Target { get; }
 
+	bool OverrideTargetOrientationSource { get; }
+
 	FXSettings Settings { get; }
 }

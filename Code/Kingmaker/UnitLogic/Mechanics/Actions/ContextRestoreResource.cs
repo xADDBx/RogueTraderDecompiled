@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
@@ -37,12 +38,12 @@ public class ContextRestoreResource : ContextAction
 		return string.Format("Restore {0} of {1}", Value, m_Resource?.Get()?.name ?? "<null>");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity mechanicEntity = ((!RestoreToSummonerUnit) ? base.Context.MainTarget?.Entity : base.Context.MainTarget?.Entity?.GetOptional<UnitPartSummonedMonster>()?.Summoner);
 		if (mechanicEntity == null)
 		{
-			PFLog.Default.Error("Target is missing");
+			Element.LogError(this, "Target is missing");
 			return;
 		}
 		PartAbilityResourceCollection abilityResourcesOptional = mechanicEntity.GetAbilityResourcesOptional();

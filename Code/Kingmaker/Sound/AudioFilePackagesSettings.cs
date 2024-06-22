@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -7,12 +8,28 @@ namespace Kingmaker.Sound;
 [CreateAssetMenu(menuName = "AudioFilePackagesSettings")]
 public class AudioFilePackagesSettings : ScriptableObject
 {
+	public enum AudioChunk
+	{
+		MainGame,
+		DLC1
+	}
+
+	[Serializable]
+	public class Mapping
+	{
+		[SerializeField]
+		public List<string> Values;
+	}
+
 	private const string PathPrefix = "Packages";
 
 	private static AudioFilePackagesSettings s_Instance;
 
 	[SerializeField]
-	private List<string> m_PackageNames = new List<string>();
+	private List<Mapping> m_PackageMapping;
+
+	[SerializeField]
+	private List<Mapping> m_BankMapping;
 
 	public static AudioFilePackagesSettings Instance
 	{
@@ -31,20 +48,48 @@ public class AudioFilePackagesSettings : ScriptableObject
 		}
 	}
 
-	public void LoadPackages()
+	public void LoadPackagesChunk(AudioChunk chunk)
 	{
 		EnsureInitialized();
-		foreach (string packageName in m_PackageNames)
+		if (m_PackageMapping == null || m_PackageMapping.Count <= (int)chunk || chunk < AudioChunk.MainGame)
 		{
-			SoundPackagesManager.LoadPackage(packageName);
+			return;
+		}
+		foreach (string value in m_PackageMapping[(int)chunk].Values)
+		{
+			SoundPackagesManager.LoadPackage(value);
 		}
 	}
 
-	public void UnloadPackages()
+	public void UnloadPackagesChunk(AudioChunk chunk)
 	{
-		foreach (string packageName in m_PackageNames)
+		if (m_PackageMapping == null || m_PackageMapping.Count <= (int)chunk || chunk < AudioChunk.MainGame)
 		{
-			SoundPackagesManager.UnloadPackage(packageName);
+			return;
+		}
+		foreach (string value in m_PackageMapping[(int)chunk].Values)
+		{
+			SoundPackagesManager.UnloadPackage(value);
+		}
+	}
+
+	public void LoadBanksChunk(AudioChunk chunk)
+	{
+		if (m_BankMapping == null || m_BankMapping.Count <= (int)chunk || chunk < AudioChunk.MainGame)
+		{
+			return;
+		}
+		foreach (string value in m_BankMapping[(int)chunk].Values)
+		{
+			SoundBanksManager.LoadBankSync(value);
+		}
+	}
+
+	public void UnloadBanksChunk(AudioChunk chunk)
+	{
+		if (m_BankMapping != null && m_BankMapping.Count > (int)chunk && chunk >= AudioChunk.MainGame)
+		{
+			SoundBanksManager.MarkBanksToUnload(m_BankMapping[(int)chunk].Values);
 		}
 	}
 

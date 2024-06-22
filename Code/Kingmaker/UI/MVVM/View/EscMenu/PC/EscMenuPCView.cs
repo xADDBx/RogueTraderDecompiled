@@ -14,8 +14,9 @@ public class EscMenuPCView : EscMenuBaseView
 
 	protected override void BindViewImplementation()
 	{
+		base.BindViewImplementation();
 		UISounds.Instance.SetClickAndHoverSound(m_CloseButton, UISounds.ButtonSoundsEnum.PlastickSound);
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.ViewModel.OnClose));
-		base.BindViewImplementation();
+		AddDisposable(base.ViewModel.UpdateButtonsFocus.Subscribe(NavigationBehaviour.UnFocusCurrentEntity));
 	}
 }

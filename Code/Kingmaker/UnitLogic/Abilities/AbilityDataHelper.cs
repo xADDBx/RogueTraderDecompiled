@@ -25,6 +25,7 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Abilities.Components.ProjectileAttack;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.UnitLogic.Mechanics.Damage;
@@ -132,6 +133,11 @@ public static class AbilityDataHelper
 			}
 		}
 		return hashSet.SelectMany((MechanicEntity u) => u.GetOccupiedNodes()).ToTempHashSet();
+	}
+
+	public static PartAbilityPredictionForAreaEffect TryGetPatternDataFromAreaEffect(this AbilityData abilityData)
+	{
+		return abilityData.Caster.GetPartAbilityPredictionForAreaEffectOptional();
 	}
 
 	private static BaseUnitEntity SelectNextTarget(AbilityData abilityData, AbilityDeliverChain chainComponent, TargetWrapper originalTarget, HashSet<MechanicEntity> usedTargets)
@@ -420,12 +426,15 @@ public static class AbilityDataHelper
 				{
 					context = ability.CreateExecutionContext(target, casterPosition);
 				}
-				bool flag = false;
-				using (context.GetDataScope(target))
+				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
 				{
-					flag = conditional.ConditionsChecker.Check();
+					bool flag = false;
+					using (context.GetDataScope(target))
+					{
+						flag = conditional.ConditionsChecker.Check();
+					}
+					damagePredictionData2 = (flag ? GetActionsDamage(ability, conditional.IfTrue, context, casterPosition, target) : GetActionsDamage(ability, conditional.IfFalse, context, casterPosition, target));
 				}
-				damagePredictionData2 = (flag ? GetActionsDamage(ability, conditional.IfTrue, context, casterPosition, target) : GetActionsDamage(ability, conditional.IfFalse, context, casterPosition, target));
 			}
 			else if (gameAction is ContextActionDealDamage contextActionDealDamage)
 			{
@@ -433,7 +442,10 @@ public static class AbilityDataHelper
 				{
 					context = ability.CreateExecutionContext(target, casterPosition);
 				}
-				damagePredictionData2 = contextActionDealDamage.GetDamagePrediction(context, target.Entity);
+				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
+				{
+					damagePredictionData2 = contextActionDealDamage.GetDamagePrediction(context, target.Entity);
+				}
 			}
 			else if (gameAction is ContextActionSavingThrow contextActionSavingThrow)
 			{
@@ -441,17 +453,20 @@ public static class AbilityDataHelper
 				{
 					context = ability.CreateExecutionContext(target, casterPosition);
 				}
-				DamagePredictionData actionsDamage;
-				using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 0)))
+				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
 				{
-					actionsDamage = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
+					DamagePredictionData actionsDamage;
+					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 0)))
+					{
+						actionsDamage = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
+					}
+					DamagePredictionData actionsDamage2;
+					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 100)))
+					{
+						actionsDamage2 = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
+					}
+					damagePredictionData2 = DamagePredictionData.Merge(actionsDamage, actionsDamage2);
 				}
-				DamagePredictionData actionsDamage2;
-				using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 100)))
-				{
-					actionsDamage2 = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
-				}
-				damagePredictionData2 = DamagePredictionData.Merge(actionsDamage, actionsDamage2);
 			}
 			else if (gameAction is ContextActionConditionalSaved contextActionConditionalSaved)
 			{
@@ -459,9 +474,12 @@ public static class AbilityDataHelper
 				{
 					context = ability.CreateExecutionContext(target, casterPosition);
 				}
-				DamagePredictionData actionsDamage3 = GetActionsDamage(ability, contextActionConditionalSaved.Failed, context, casterPosition, target);
-				DamagePredictionData actionsDamage4 = GetActionsDamage(ability, contextActionConditionalSaved.Succeed, context, casterPosition, target);
-				damagePredictionData2 = DamagePredictionData.Merge(actionsDamage3, actionsDamage4);
+				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
+				{
+					DamagePredictionData actionsDamage3 = GetActionsDamage(ability, contextActionConditionalSaved.Failed, context, casterPosition, target);
+					DamagePredictionData actionsDamage4 = GetActionsDamage(ability, contextActionConditionalSaved.Succeed, context, casterPosition, target);
+					damagePredictionData2 = DamagePredictionData.Merge(actionsDamage3, actionsDamage4);
+				}
 			}
 			else if (gameAction is ContextActionAttackWithFirstWeaponAbility contextActionAttackWithFirstWeaponAbility)
 			{
@@ -469,7 +487,10 @@ public static class AbilityDataHelper
 				{
 					context = ability.CreateExecutionContext(target, casterPosition);
 				}
-				damagePredictionData2 = contextActionAttackWithFirstWeaponAbility.GetDamagePrediction(context, target.Entity, casterPosition);
+				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
+				{
+					damagePredictionData2 = contextActionAttackWithFirstWeaponAbility.GetDamagePrediction(context, target.Entity, casterPosition);
+				}
 			}
 			if (damagePredictionData2 != null)
 			{

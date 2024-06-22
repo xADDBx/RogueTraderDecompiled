@@ -100,7 +100,7 @@ public class LoadingScreenVM : VMBase, IStartAwaitingUserInput, ISubscriber, ICo
 	public void OnStartAwaitingUserInput()
 	{
 		LoadingProcess.Instance.IsAwaitingUserInput.Retain();
-		if (((AreaProperty.Value == null || AreaProperty.Value.NotPause || AreaProperty.Value == m_LastArea) && !PhotonManager.Lobby.IsActive) || !SettingsRoot.Game.Autopause.PauseOnLoadingScreen)
+		if (AreaProperty.Value == null || AreaProperty.Value.NotPause || AreaProperty.Value == m_LastArea || !SettingsRoot.Game.Autopause.PauseOnLoadingScreen)
 		{
 			LoadingProcess.Instance.IsAwaitingUserInput.Release();
 		}

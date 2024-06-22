@@ -13,8 +13,9 @@ public class ContextActionRestrictStrategistAbility : ContextAction
 		return (m_Not ? "Allow another" : "Restrict") + " Strategist ability this turn";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.StrategistManager.IsCastRestricted = !m_Not;
+		Game.Instance.Player.StrategistManager.AllowFirstRoundRule = m_Not;
 	}
 }

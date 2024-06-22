@@ -42,6 +42,7 @@ public abstract class SkillUseWithoutItemRestrictionPart<T> : SkillUseRestrictio
 	public override void OnFailedInteract(BaseUnitEntity user)
 	{
 		base.OnFailedInteract(user);
+		InteractionHelper.MarkUnitAsInteracted(user, base.InteractionPart);
 		if (ContextData<InteractionVariantData>.Current?.VariantActor == this)
 		{
 			InteractedUnits.Add(user.FromBaseUnitEntity());

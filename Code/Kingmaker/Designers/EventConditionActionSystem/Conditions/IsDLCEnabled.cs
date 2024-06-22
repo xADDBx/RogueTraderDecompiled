@@ -23,6 +23,6 @@ public class IsDLCEnabled : Condition
 
 	protected override bool CheckCondition()
 	{
-		return BlueprintDlcReward?.IsAvailable ?? false;
+		return BlueprintDlcReward?.IsActive ?? false;
 	}
 }

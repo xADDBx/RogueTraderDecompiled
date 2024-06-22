@@ -25,7 +25,7 @@ public class ReturnFromGroundOperation : GameAction
 		return "Return from area to last Sector/System map";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BlueprintArea previousVisitedArea = Game.Instance.Player.PreviousVisitedArea;
 		BlueprintAreaEnterPoint enterPoint = ((previousVisitedArea != null) ? previousVisitedArea.DefaultPreset.EnterPoint : m_AreaEnterPoint?.Get());

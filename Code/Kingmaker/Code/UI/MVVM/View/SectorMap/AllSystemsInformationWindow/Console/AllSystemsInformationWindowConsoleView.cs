@@ -12,6 +12,7 @@ using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
@@ -122,14 +123,24 @@ public class AllSystemsInformationWindowConsoleView : AllSystemsInformationWindo
 
 	private void ShowFocusBorder(SectorMapObjectEntity sectorMapObjectEntity)
 	{
-		if (m_SystemsWidgetList.Entries != null)
+		if (m_SystemsWidgetList.Entries == null)
 		{
-			SystemInfoAllSystemsInformationWindowConsoleView systemInfoAllSystemsInformationWindowConsoleView = m_SystemsWidgetList.Entries.FirstOrDefault((IWidgetView e) => e is SystemInfoAllSystemsInformationWindowConsoleView systemInfoAllSystemsInformationWindowConsoleView2 && systemInfoAllSystemsInformationWindowConsoleView2.GetCurrentObjectEntity() == sectorMapObjectEntity) as SystemInfoAllSystemsInformationWindowConsoleView;
-			if (systemInfoAllSystemsInformationWindowConsoleView != null)
-			{
-				systemInfoAllSystemsInformationWindowConsoleView.ShowFocusBorder(state: true);
-			}
+			return;
 		}
+		SystemInfoAllSystemsInformationWindowConsoleView system = m_SystemsWidgetList.Entries.FirstOrDefault((IWidgetView e) => e is SystemInfoAllSystemsInformationWindowConsoleView systemInfoAllSystemsInformationWindowConsoleView && systemInfoAllSystemsInformationWindowConsoleView.GetCurrentObjectEntity() == sectorMapObjectEntity) as SystemInfoAllSystemsInformationWindowConsoleView;
+		if (system == null)
+		{
+			return;
+		}
+		system.ShowFocusBorder(state: true);
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			RectTransform rectTransform = system.transform as RectTransform;
+			if (!m_ScrollRectExtended.IsInViewport(rectTransform))
+			{
+				m_ScrollRectExtended.ScrollToRectCenter(rectTransform, rectTransform);
+			}
+		}, 3);
 	}
 
 	public void SelectSystem()

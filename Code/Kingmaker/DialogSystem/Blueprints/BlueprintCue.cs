@@ -3,7 +3,6 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.Colonization.Rewards;
 using Kingmaker.Localization;
@@ -80,7 +79,7 @@ public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider
 
 	public void ReceiveRewards()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		foreach (Reward reward in GetRewards())
 		{
 			reward.ReceiveReward(colony);

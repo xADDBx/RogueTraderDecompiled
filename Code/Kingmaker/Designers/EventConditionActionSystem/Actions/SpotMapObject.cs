@@ -29,7 +29,7 @@ public class SpotMapObject : GameAction
 		return $"{Spotter} spot map object {Target}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		IAbstractUnitEntity spotter = Game.Instance.Player.MainCharacter.Entity;
 		if (Spotter != null)

@@ -42,13 +42,13 @@ public class Unrecruit : GameAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BaseUnitEntity mainCharacter = Game.Instance.Player.MainCharacterEntity;
 		BaseUnitEntity baseUnitEntity = Game.Instance.Player.AllCharacters.Where((BaseUnitEntity u) => u != mainCharacter).FirstOrDefault((BaseUnitEntity unit) => IsCompanion(unit.Blueprint));
 		if (baseUnitEntity == null)
 		{
-			PFLog.Default.Error("No companion unit found when unrecruiting " + CompanionBlueprint);
+			Element.LogError("No companion unit found when unrecruiting {0}", CompanionBlueprint);
 			return;
 		}
 		DoUnrecruit(baseUnitEntity);
@@ -63,7 +63,7 @@ public class Unrecruit : GameAction
 		UnitPartCompanion optional = companion.GetOptional<UnitPartCompanion>();
 		if (optional != null && optional.State == CompanionState.ExCompanion)
 		{
-			PFLog.Default.Error($"Companion {companion} already lost, cannot unrecruit again.");
+			Element.LogError("Companion {0} already lost, cannot unrecruit again.", companion);
 		}
 		if ((bool)companion.View)
 		{

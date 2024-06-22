@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Kingmaker.Networking.Platforms;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Utility.Fsm;
@@ -22,11 +23,22 @@ public class JoiningLobbyState : IStateAsync
 		m_NetGame = netGame;
 	}
 
-	public Task OnEnter()
+	public async Task OnEnter()
 	{
 		LobbyNetManager.SetState(LobbyNetManager.State.Connecting);
-		m_Callback = PhotonManager.Instance.CreateMatchmakingCallbacks().SetOnJoinedRoomCallback(OnJoined).SetOnJoinRandomFailedCallback(OnFailed)
+		var (flag, returnCode) = await PlatformServices.Platform.Session.IsEligibleToPlay();
+		if (!flag)
+		{
+			OnFailed(returnCode, "Player is not eligible to play Coop");
+			return;
+		}
+		m_Callback = PhotonManager.Instance.CreateMatchmakingCallbacks().SetOnJoinedRoomCallback(OnJoinedRoom).SetOnJoinRandomFailedCallback(OnFailed)
 			.SetOnJoinRoomFailedCallback(OnFailed);
+		JoinRoom();
+	}
+
+	private void JoinRoom()
+	{
 		string text = m_RoomName;
 		if (!string.IsNullOrEmpty(text))
 		{
@@ -38,7 +50,31 @@ public class JoiningLobbyState : IStateAsync
 			PFLog.Net.Error("[JoiningLobbyState.OnEnter] can't send JoinRoom message");
 			m_NetGame.OnLobbyJoinFailed();
 		}
-		return Task.CompletedTask;
+	}
+
+	private async void OnJoinedRoom()
+	{
+		if (!PlatformServices.Platform.Session.IsPlatformSessionRequired())
+		{
+			OnJoined();
+			return;
+		}
+		if (!PhotonManager.Instance.GetRoomProperty<string>("ps", out var obj))
+		{
+			PFLog.Net.Error("[JoiningLobbyState] Failed to join platform session: session ID not found ");
+			m_NetGame.OnLobbyJoinFailed();
+			return;
+		}
+		PFLog.Net.Log("[JoiningLobbyState] Joining platform session: '" + obj + "'...");
+		if (!(await PlatformServices.Platform.Session.JoinSession(obj)))
+		{
+			PFLog.Net.Error("[JoiningLobbyState] failed to join platform session");
+			OnFailed(-1, "Failed to join platform session");
+		}
+		else
+		{
+			OnJoined();
+		}
 	}
 
 	private void OnJoined()
@@ -56,25 +92,38 @@ public class JoiningLobbyState : IStateAsync
 	{
 		PFLog.Net.Error($"[JoiningRoomState.OnFailed] code={returnCode}, msg={message}");
 		m_NetGame.OnLobbyJoinFailed();
-		if (returnCode == 32758)
+		switch (returnCode)
 		{
+		case 3000:
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleNoPlayStationPlusError();
+			});
+			break;
+		case 32758:
 			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 			{
 				h.HandleLobbyNotFoundError();
 			});
-		}
-		else
-		{
+			break;
+		case 32765:
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleLobbyFullError();
+			});
+			break;
+		default:
 			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 			{
 				h.HandleJoinLobbyError(returnCode);
 			});
+			break;
 		}
 	}
 
 	public Task OnExit()
 	{
-		m_Callback.Dispose();
+		m_Callback?.Dispose();
 		return Task.CompletedTask;
 	}
 }

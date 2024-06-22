@@ -165,4 +165,8 @@ public abstract class BaseCharGenAppearancePageComponentVM : VirtualListElementV
 	public void HandleSetEquipmentColor(int primaryIndex, int secondaryIndex)
 	{
 	}
+
+	void ICharGenDollStateHandler.HandleShowCloth(bool showCloth)
+	{
+	}
 }

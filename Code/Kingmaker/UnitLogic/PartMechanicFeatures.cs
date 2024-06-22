@@ -101,6 +101,16 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag ShapeFlames;
 
+	public FeatureCountableFlag AutoDodgeFriendlyFire;
+
+	public FeatureCountableFlag HealInsteadOfDamageForDOTs;
+
+	public FeatureCountableFlag RangedParry;
+
+	public FeatureCountableFlag CanUseBothDesperateMeasureAndHeroicAct;
+
+	public FeatureCountableFlag HalfSuperiorityCriticalChance;
+
 	public FeatureCountableFlag CantAct;
 
 	public FeatureCountableFlag CantMove;
@@ -171,6 +181,11 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		RemoveFromInitiative = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.RemoveFromInitiative);
 		BlockOverpenetration = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.BlockOverpenetration);
 		ShapeFlames = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ShapeFlames);
+		AutoDodgeFriendlyFire = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AutoDodgeFriendlyFire);
+		HealInsteadOfDamageForDOTs = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HealInsteadOfDamageForDOTs);
+		RangedParry = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.RangedParry);
+		CanUseBothDesperateMeasureAndHeroicAct = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanUseBothDesperateMeasureAndHeroicAct);
+		HalfSuperiorityCriticalChance = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HalfSuperiorityCriticalChance);
 	}
 
 	protected override void OnAttach()

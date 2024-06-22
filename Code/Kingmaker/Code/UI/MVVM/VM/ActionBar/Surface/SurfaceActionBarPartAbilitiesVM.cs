@@ -1,8 +1,11 @@
 using System;
+using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -16,13 +19,15 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber
+public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber, ITurnBasedModeHandler
 {
 	public readonly bool IsInCharScreen;
 
 	public readonly AutoDisposingList<ActionBarSlotVM> Slots = new AutoDisposingList<ActionBarSlotVM>();
 
 	public readonly ReactiveCommand SlotCountChanged = new ReactiveCommand();
+
+	public readonly ReactiveProperty<ActionBarSlotVM> ChooseAbilitySlot = new ReactiveProperty<ActionBarSlotVM>();
 
 	public readonly BoolReactiveProperty IsActive = new BoolReactiveProperty();
 
@@ -36,7 +41,20 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 	{
 		get
 		{
-			return Unit.Entity?.UISettings.SlotRowIndexConsole ?? 0;
+			BaseUnitEntity entity = Unit.Entity;
+			if (entity != null)
+			{
+				_ = entity.UISettings.SlotRowIndexConsole;
+				if (0 == 0)
+				{
+					BaseUnitEntity entity2 = Unit.Entity;
+					if (!(((entity2 != null) ? new int?(entity2.UISettings.SlotRowIndexConsole * 10) : null) >= Slots.Count))
+					{
+						return Unit.Entity.UISettings.SlotRowIndexConsole;
+					}
+				}
+			}
+			return 0;
 		}
 		set
 		{
@@ -113,7 +131,7 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 
 	private void FillSlots(int count)
 	{
-		Unit.Entity.UISettings.GetSlot(count - 1, Unit.Entity);
+		Unit.Entity?.UISettings.GetSlot(count - 1, Unit.Entity);
 	}
 
 	private void AddOrRemoveEmptyRowIfNeeded()
@@ -184,18 +202,32 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 
 	public void ChooseAbilityToSlot(int targetIndex)
 	{
-		if (RootUIContext.Instance.CurrentServiceWindow == ServiceWindowsType.CharacterInfo)
+		if (RootUIContext.Instance.CurrentServiceWindow != ServiceWindowsType.CharacterInfo)
 		{
-			return;
+			IsActive.Value = false;
+			ChooseAbilitySlot.Value = Slots.ElementAt(targetIndex);
+			Slots.ElementAt(targetIndex).IsSelectionBusy.Value = true;
+			AbilitySelectorWindowVM.Value?.Dispose();
+			AbilitySelectorWindowVM.Value = new AbilitySelectorWindowVM(OnConfirm, OnClose, Unit, OnFocus);
 		}
-		AbilitySelectorWindowVM.Value?.Dispose();
-		AbilitySelectorWindowVM.Value = new AbilitySelectorWindowVM(delegate(CharInfoFeatureVM vm)
+		void OnClose()
+		{
+			IsActive.Value = true;
+			Slots.ElementAt(targetIndex).IsSelectionBusy.Value = false;
+			ChooseAbilitySlot.Value = null;
+			HideSelectionWindow();
+		}
+		void OnConfirm(CharInfoFeatureVM vm)
 		{
 			EventBus.RaiseEvent(delegate(IActionBarPartAbilitiesHandler h)
 			{
 				h.MoveSlot(vm.Ability, targetIndex);
 			});
-		}, HideSelectionWindow, Unit);
+		}
+		void OnFocus(CharInfoFeatureVM vm)
+		{
+			ChooseAbilitySlot.Value.OverrideIcon(vm.Icon);
+		}
 	}
 
 	private void HideSelectionWindow()
@@ -207,6 +239,13 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 	public void SetMoveAbilityMode(bool on)
 	{
 		MoveAbilityMode.Value = on;
+		if (!on)
+		{
+			Slots.ForEach(delegate(ActionBarSlotVM s)
+			{
+				s.IsSelectionBusy.Value = false;
+			});
+		}
 	}
 
 	public void HandleClickMechanicActionBarSlot(MechanicActionBarSlot ability)
@@ -239,5 +278,13 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 				UpdateSlots();
 			}
 		}, 1);
+	}
+
+	public void HandleTurnBasedModeSwitched(bool isTurnBased)
+	{
+		if (!isTurnBased)
+		{
+			IsActive.Value = false;
+		}
 	}
 }

@@ -15,7 +15,7 @@ public class WarhammerContextActionStarshipPBAEAttack : ContextAction
 		return "Perform PBAE attack with a starship weapon";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Context.MaybeCaster is StarshipEntity starshipEntity))
 		{

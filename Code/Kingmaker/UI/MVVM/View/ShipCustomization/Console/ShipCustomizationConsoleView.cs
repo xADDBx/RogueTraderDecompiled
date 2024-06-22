@@ -31,7 +31,7 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 
 	private InputLayer m_PostsInputLayer;
 
-	private BoolReactiveProperty m_CanSwitchView = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_CanSwitchView = new BoolReactiveProperty();
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
@@ -45,13 +45,15 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 
 	private readonly BoolReactiveProperty m_Func01Enabled = new BoolReactiveProperty();
 
+	private IShipCustomizationPage m_CurrentPage;
+
 	private IConsoleEntity m_CulledFocus;
 
 	public override void Initialize()
 	{
 		base.Initialize();
 		m_FadeAnimator.Initialize();
-		m_ShipUpgradePCView.Initialize();
+		m_ShipUpgradeView.Initialize();
 		m_ShipSkillsPCView.Initialize();
 		m_ShipPostsView.Initialize();
 	}
@@ -64,11 +66,6 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
-	protected override void BindShip()
-	{
-		m_ShipHealthAndRepairView.Bind(base.ViewModel.ShipHealthAndRepairVM);
-	}
-
 	protected override void DestroyViewImplementation()
 	{
 		base.DestroyViewImplementation();
@@ -76,6 +73,11 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		m_UpgradeInputLayer = null;
 		m_SkillsInputLayer = null;
 		m_PostsInputLayer = null;
+	}
+
+	protected override void BindShip()
+	{
+		m_ShipHealthAndRepairView.Bind(base.ViewModel.ShipHealthAndRepairVM);
 	}
 
 	private void UpdateUpgradeNavigation()
@@ -98,7 +100,7 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		}, 15, m_CanSwitchView);
 		AddDisposable(m_NextConsoleHint.Bind(inputBindStruct2));
 		AddDisposable(inputBindStruct2);
-		m_ShipUpgradePCView.AddInput(ref m_UpgradeInputLayer, ref m_HintsWidget);
+		m_ShipUpgradeView.AddInput(ref m_UpgradeInputLayer, ref m_HintsWidget);
 		m_ShipHealthAndRepairView.AddInput(m_UpgradeInputLayer);
 		InputBindStruct inputBindStruct3 = m_UpgradeInputLayer.AddButton(delegate
 		{
@@ -110,10 +112,10 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		ShipStatsConsoleView shipStatsConsoleView = m_ShipStatsPCView as ShipStatsConsoleView;
 		if ((bool)shipStatsConsoleView && (bool)shipConsoleView)
 		{
-			ConsoleNavigationBehaviour navigation = m_ShipUpgradePCView.GetNavigation(shipStatsConsoleView.GetNavigation(shipConsoleView.GetNavigation()));
+			ConsoleNavigationBehaviour navigation = m_ShipUpgradeView.GetNavigation(shipStatsConsoleView.GetNavigation(shipConsoleView.GetNavigation()));
 			m_NavigationBehaviour.AddEntityGrid(navigation);
 		}
-		m_NavigationBehaviour.FocusOnEntityManual(m_ShipUpgradePCView.NavigationBehaviour);
+		m_NavigationBehaviour.FocusOnEntityManual(m_ShipUpgradeView.NavigationBehaviour);
 		m_InputLayerDisposable.Clear();
 		m_InputLayerDisposable.Add(GamePad.Instance.PushLayer(m_UpgradeInputLayer));
 	}
@@ -193,9 +195,9 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 	private void OnEntityFocused(IConsoleEntity entity)
 	{
 		UpdateHints();
-		if (m_ShipUpgradePCView.IsBinded)
+		if (m_ShipUpgradeView.IsBinded)
 		{
-			m_CanSwitchView.Value = !m_ShipUpgradePCView.IsRightWindow.Value;
+			m_CanSwitchView.Value = !m_ShipUpgradeView.IsRightWindow.Value;
 		}
 		else
 		{
@@ -217,44 +219,35 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		switch (tab)
 		{
 		case ShipCustomizationTab.Upgrade:
-			m_ShipUpgradePCView.Bind(base.ViewModel.ShipUpgradeVm);
+			m_ShipUpgradeView.Bind(base.ViewModel.ShipUpgradeVm);
 			m_ShipSkillsPCView.Unbind();
 			m_ShipPostsView.Unbind();
 			m_SkillsAndPostsFadeAnimator.DisappearAnimation();
 			m_ShipInfo.SetActive(value: true);
 			UpdateUpgradeNavigation();
+			m_CurrentPage = m_ShipUpgradeView;
 			break;
 		case ShipCustomizationTab.Skills:
-			m_ShipUpgradePCView.Unbind();
+			m_ShipUpgradeView.Unbind();
 			m_ShipSkillsPCView.Bind(base.ViewModel.ShipSkillsVM);
 			m_ShipPostsView.Unbind();
 			m_SkillsAndPostsFadeAnimator.AppearAnimation();
 			m_ShipInfo.SetActive(value: false);
 			UpdateSkillsNavigation();
 			m_CanSwitchView.Value = true;
+			m_CurrentPage = m_ShipSkillsPCView;
 			break;
 		case ShipCustomizationTab.Posts:
-			m_ShipUpgradePCView.Unbind();
+			m_ShipUpgradeView.Unbind();
 			m_ShipSkillsPCView.Unbind();
 			m_ShipPostsView.Bind(base.ViewModel.ShipPostsVM);
 			m_SkillsAndPostsFadeAnimator.AppearAnimation();
 			m_ShipInfo.SetActive(value: false);
 			UpdatePostsNavigation();
 			m_CanSwitchView.Value = true;
+			m_CurrentPage = m_ShipHealthAndRepairView;
 			break;
 		}
-	}
-
-	private void SetNextTab()
-	{
-		m_SelectorView.SetNextTab();
-		m_ShipTabsNavigationPCView.SetNextTab();
-	}
-
-	private void SetPrevTab()
-	{
-		m_SelectorView.SetPrevTab();
-		m_ShipTabsNavigationPCView.SetPrevTab();
 	}
 
 	public void HandleRemoveFocus()
@@ -271,5 +264,13 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 			m_NavigationBehaviour.UpdateDeepestFocusObserve();
 		}
 		m_CulledFocus = null;
+	}
+
+	protected override void Close()
+	{
+		if (!m_CurrentPage.CanOverrideClose())
+		{
+			base.Close();
+		}
 	}
 }

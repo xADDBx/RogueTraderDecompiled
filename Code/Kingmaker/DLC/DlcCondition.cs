@@ -19,8 +19,8 @@ public class DlcCondition : BlueprintComponent
 
 	public bool HideInstead => m_HideInstead;
 
-	public bool IsFullfilled()
+	public bool IsFullFilled()
 	{
-		return m_HideInstead ^ DlcReward.IsAvailable;
+		return m_HideInstead ^ DlcReward.IsActive;
 	}
 }

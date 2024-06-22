@@ -353,7 +353,7 @@ public class CanvasScalerWorkaround : UIBehaviour
 				_ = rectTransform.anchoredPosition;
 				continue;
 			}
-			PFLog.Default.Warning("Can not cast {0} to RectTransform", base.transform.name);
+			PFLog.UI.Warning("Can not cast {0} to RectTransform", base.transform.name);
 		}
 	}
 }

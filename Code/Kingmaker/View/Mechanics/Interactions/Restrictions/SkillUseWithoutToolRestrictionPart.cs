@@ -31,6 +31,10 @@ internal class SkillUseWithoutToolRestrictionPart : InteractionRestrictionPart<S
 
 	public StatType Skill => InteractionPart.GetSkill();
 
+	public bool CheckOnlyOnce => InteractionPart.Settings.OnlyCheckOnce;
+
+	public bool CanUse => true;
+
 	public InteractionActorType Type => base.Settings.Type;
 
 	InteractionPart IInteractionVariantActor.InteractionPart => InteractionPart;

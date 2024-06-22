@@ -1,7 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.GameCommands;
 using Kingmaker.Globalmap.Blueprints.Colonization;
@@ -22,14 +21,14 @@ public class StartProjectInColony : GameAction
 		return "Add project " + Project.Get().Name + " to current colony in context";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		if (colony != null)
 		{
 			if (!colony.ProjectCanStart(Project))
 			{
-				PFLog.Default.Warning("Cannot add project to colony");
+				Element.LogError("Cannot add project to colony");
 			}
 			else
 			{

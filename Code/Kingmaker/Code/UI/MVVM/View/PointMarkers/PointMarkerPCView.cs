@@ -73,6 +73,7 @@ public class PointMarkerPCView : ViewBase<PointMarkerVM>
 		{
 			m_LOSView.Initialize();
 		}
+		base.gameObject.SetActive(value: false);
 	}
 
 	protected override void BindViewImplementation()
@@ -81,7 +82,17 @@ public class PointMarkerPCView : ViewBase<PointMarkerVM>
 		AddDisposable(base.ViewModel.IsVisible.Subscribe(SetVisibility));
 		AddDisposable(base.ViewModel.Relation.Subscribe(delegate(UnitRelation r)
 		{
-			ApplyRelationParams(GetRelationParams(r));
+			if (base.ViewModel.Unit != null)
+			{
+				ApplyRelationParams(GetRelationParams(r));
+			}
+		}));
+		AddDisposable(base.ViewModel.AnotherPointMarkObjectType.Subscribe(delegate(EntityPointMarkObjectType r)
+		{
+			if (base.ViewModel.Unit == null)
+			{
+				ApplyRelationParams(GetAnotherEntityTypeParams(r));
+			}
 		}));
 		AddDisposable(m_MainButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -106,12 +117,24 @@ public class PointMarkerPCView : ViewBase<PointMarkerVM>
 		return m_ParamsArray.First((PointMarkerRelationParams item) => item.Relation == relation);
 	}
 
+	private PointMarkerRelationParams GetAnotherEntityTypeParams(EntityPointMarkObjectType type)
+	{
+		return m_ParamsArray.First((PointMarkerRelationParams item) => item.IsAnotherEntity && item.EntityPointMarkObjectType == type);
+	}
+
 	protected virtual void ApplyRelationParams(PointMarkerRelationParams relationParams)
 	{
-		m_Frame.color = relationParams.FrameColor;
-		m_Arrow.color = relationParams.FrameColor;
-		m_SubtypeIcon.color = relationParams.IconColor;
-		m_ScaledGroup.localScale = new Vector3(relationParams.Scale, relationParams.Scale, 0f);
+		if (relationParams != null)
+		{
+			SetPortrait(relationParams.IsAnotherEntity ? relationParams.Icon : base.ViewModel.Portrait.Value);
+			m_Frame.color = relationParams.FrameColor;
+			if (!relationParams.IsAnotherEntity)
+			{
+				m_Arrow.color = relationParams.FrameColor;
+			}
+			m_SubtypeIcon.color = relationParams.IconColor;
+			m_ScaledGroup.localScale = new Vector3(relationParams.Scale, relationParams.Scale, 0f);
+		}
 	}
 
 	protected virtual void HandleClick()
@@ -165,13 +188,13 @@ public class PointMarkerPCView : ViewBase<PointMarkerVM>
 		m_UnitLine.PointA.x = (float)Screen.width / 2f;
 		m_UnitLine.PointA.y = (float)Screen.height / 2f;
 		m_UnitLine.PointA.z = 0f;
-		m_UnitLine.PointB = instance.Camera.WorldToScreenPoint(base.ViewModel.UnitPosition);
+		m_UnitLine.PointB = instance.Camera.WorldToScreenPoint(base.ViewModel.Position);
 		m_RigTargetPosition = instance.GetTargetPointPosition();
 		Vector3 vector = instance.Camera.transform.position - m_RigTargetPosition;
 		if (m_UnitLine.PointB.z <= 0f)
 		{
 			Vector3 vector2 = instance.Camera.WorldToScreenPoint(m_RigTargetPosition);
-			m_UnitLine.PointB = instance.Camera.WorldToScreenPoint(base.ViewModel.UnitPosition + (m_UnitLine.PointB.z - 1f) * vector / vector2.z);
+			m_UnitLine.PointB = instance.Camera.WorldToScreenPoint(base.ViewModel.Position + (m_UnitLine.PointB.z - 1f) * vector / vector2.z);
 		}
 		float num = float.MaxValue;
 		float num2 = 0f;
@@ -184,7 +207,7 @@ public class PointMarkerPCView : ViewBase<PointMarkerVM>
 				Vector2 intersection = GetIntersection(m_UnitLine, border);
 				Vector2 vector4 = new Vector2(intersection.x / m_ParentView.ScreenScale - m_ParentView.RectTransform.rect.width / 2f, intersection.y / m_ParentView.ScreenScale - m_ParentView.RectTransform.rect.height / 2f);
 				float num3 = Mathf.Pow(Mathf.Pow(vector4.x, 2f) + Mathf.Pow(vector4.y, 2f), 0.5f);
-				if (num3 < num)
+				if (!(num3 >= num))
 				{
 					vector3 = vector4;
 					num2 = Mathf.Atan2(vector3.x, vector3.y) * 57.29578f;

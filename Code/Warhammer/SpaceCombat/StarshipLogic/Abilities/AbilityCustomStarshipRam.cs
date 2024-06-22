@@ -5,6 +5,7 @@ using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Controllers.Combat;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -68,6 +69,10 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 	private float visualCellPenetration;
 
 	[SerializeField]
+	[Range(0f, 1f)]
+	private float onHitActionsCellPenetration = 1f;
+
+	[SerializeField]
 	private float fallBackTime;
 
 	[SerializeField]
@@ -87,11 +92,19 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 	private bool AllowAutotarget;
 
 	[SerializeField]
+	private ActionList ActionsOnHitCaster;
+
+	[SerializeField]
 	private ActionList RepeatedBySizeActionsOnTarget;
 
 	public int MinDistance => minDistance;
 
-	public int BonusDistanceOnAttackAttempt => bonusDistanceOnAttackAttempt;
+	public int BonusDistanceOnAttackAttempt(StarshipEntity owner)
+	{
+		int num = (from b in owner.Facts.GetComponents<StarshipRamModifiers>()
+			select b.RamDistanceBonus).DefaultIfEmpty().Sum();
+		return bonusDistanceOnAttackAttempt + num;
+	}
 
 	public override void Cleanup(AbilityExecutionContext context)
 	{
@@ -99,7 +112,13 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper target)
 	{
-		if (!(context.Caster is StarshipEntity { CombatState: { } combatState } starship))
+		StarshipEntity starship = context.Caster as StarshipEntity;
+		if (starship == null)
+		{
+			yield break;
+		}
+		PartUnitCombatState combatState = starship.CombatState;
+		if (combatState == null)
 		{
 			yield break;
 		}
@@ -137,15 +156,22 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 		UnitMoveToProperParams cmd = new UnitMoveToProperParams(path, straightMoveLength, diagonalsCount, pathLen);
 		UnitCommandHandle moveCmdHandle = starship.Commands.AddToQueueFirst(cmd);
 		Vector3 startPosition = Vector3.zero;
+		bool onHitLaunched = false;
 		while (!moveCmdHandle.IsFinished)
 		{
-			if ((targetNode.Vector3Position - starship.Position).magnitude <= visualCellPenetration * GraphParamsMechanicsCache.GridCellSize)
+			float magnitude = (targetNode.Vector3Position - starship.Position).magnitude;
+			if (magnitude <= (1f - onHitActionsCellPenetration) * GraphParamsMechanicsCache.GridCellSize)
+			{
+				MaybeRunActionsOnHit();
+			}
+			if (magnitude <= (1f - visualCellPenetration) * GraphParamsMechanicsCache.GridCellSize)
 			{
 				startPosition = starship.Position;
 				starship.View.StopMoving();
 			}
 			yield return null;
 		}
+		MaybeRunActionsOnHit();
 		RamDamage(starship, targetUnit as StarshipEntity, pathLen - minDistance, 1f);
 		StartFires(starship, context, targetUnit as StarshipEntity);
 		starship.Navigation.SpeedMode = PartStarshipNavigation.SpeedModeType.LowSpeed;
@@ -178,6 +204,17 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 		starship.View.AgentASP.Blocker.BlockAtCurrentPosition();
 		BaseUnitEntity baseUnitEntity = targetUnit;
 		yield return new AbilityDeliveryTarget((baseUnitEntity != null) ? ((TargetWrapper)baseUnitEntity) : target);
+		void MaybeRunActionsOnHit()
+		{
+			if (!onHitLaunched)
+			{
+				using (context.GetDataScope(starship.ToITargetWrapper()))
+				{
+					ActionsOnHitCaster?.Run();
+				}
+				onHitLaunched = true;
+			}
+		}
 	}
 
 	public (Dictionary<GraphNode, CustomPathNode> grapNodes, Dictionary<StarshipEntity, int> targetUnits) GetPathData(StarshipEntity starship, Vector3 casterPosition, Vector3 casterDirection)
@@ -199,7 +236,7 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 				num3 += ((num2 > 3) ? 1 : 0);
 				int num5 = ((num3 % 2 != 0 || num2 <= 3) ? 1 : 2);
 				num4 += num5;
-				if ((float)num4 > valueOrDefault - bluePointsCost + (float)bonusDistanceOnAttackAttempt)
+				if ((float)num4 > valueOrDefault - bluePointsCost + (float)BonusDistanceOnAttackAttempt(starship))
 				{
 					break;
 				}
@@ -311,25 +348,30 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 	{
 		int num = RamBaseDmgBySize(starship);
 		num += num * extraRunup * runupBonusPercent / 100 + starship.Hull.ProwRam.BonusDamage;
-		ProcessRamDamage(starship, target, num, damageMod, rp?.targetDamage, rp?.targetShields);
+		bool valueOrDefault = (starship.Shields?.VoidShieldGenerator?.offOnRam).GetValueOrDefault();
+		ProcessRamDamage(starship, target, num, damageMod, valueOrDefault, rp?.targetDamage, rp?.targetShields);
 		int dmg2 = Math.Max(0, RamBaseDmgBySize(target) * 4 / 5 - starship.Hull.ProwRam.SelfDamageDeduction);
 		float dmgMod2 = 1f + (from rm in starship.Facts.GetComponents<StarshipRamModifiers>()
 			select rm.DamageReturningMod).DefaultIfEmpty(0f).Sum();
-		ProcessRamDamage(target, starship, dmg2, dmgMod2, rp?.selfDamage, rp?.selfShields);
-		static void ProcessRamDamage(StarshipEntity source, StarshipEntity target, int dmg, float dmgMod, DamagePredictionData dp, ShieldDamageData sp)
+		ProcessRamDamage(target, starship, dmg2, dmgMod2, valueOrDefault, rp?.selfDamage, rp?.selfShields);
+		static void ProcessRamDamage(StarshipEntity source, StarshipEntity target, int dmg, float dmgMod, bool ignoreShields, DamagePredictionData dp, ShieldDamageData sp)
 		{
 			dmg = Mathf.RoundToInt((float)dmg * dmgMod);
 			bool flag = sp != null;
 			StarshipHitLocation resultHitLocation = Rulebook.Trigger(new RuleStarshipCalculateHitLocation(source, target)).ResultHitLocation;
 			int maxDamage = 0;
-			RuleStarshipRollShieldAbsorption ruleStarshipRollShieldAbsorption = new RuleStarshipRollShieldAbsorption(source, target, dmg, DamageType.Ram, resultHitLocation);
-			ruleStarshipRollShieldAbsorption.Trigger(flag);
-			if (ruleStarshipRollShieldAbsorption.ResultAbsorbedDamage > 0)
+			RuleStarshipRollShieldAbsorption ruleStarshipRollShieldAbsorption = null;
+			if (!ignoreShields)
 			{
-				(int absorbedDamage, int shieldStrengthLoss) tuple = target.Shields.Absorb(ruleStarshipRollShieldAbsorption.ResultHitLocation, ruleStarshipRollShieldAbsorption.ResultAbsorbedDamage, DamageType.Ram, flag);
-				int item = tuple.absorbedDamage;
-				maxDamage = tuple.shieldStrengthLoss;
-				dmg -= item;
+				ruleStarshipRollShieldAbsorption = new RuleStarshipRollShieldAbsorption(source, target, dmg, DamageType.Ram, resultHitLocation);
+				ruleStarshipRollShieldAbsorption.Trigger(flag);
+				if (ruleStarshipRollShieldAbsorption.ResultAbsorbedDamage > 0)
+				{
+					(int absorbedDamage, int shieldStrengthLoss) tuple = target.Shields.Absorb(ruleStarshipRollShieldAbsorption.ResultHitLocation, ruleStarshipRollShieldAbsorption.ResultAbsorbedDamage, DamageType.Ram, flag);
+					int item = tuple.absorbedDamage;
+					maxDamage = tuple.shieldStrengthLoss;
+					dmg -= item;
+				}
 			}
 			RuleStarshipCalculateDamageForTarget ruleStarshipCalculateDamageForTarget = Rulebook.Trigger(new RuleStarshipCalculateDamageForTarget(source, target, dmg, dmg, DamageType.Ram, isAEAttack: false, resultHitLocation));
 			if (flag)
@@ -337,8 +379,8 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 				dp.MinDamage = ruleStarshipCalculateDamageForTarget.ResultDamage.MinValue;
 				dp.MaxDamage = ruleStarshipCalculateDamageForTarget.ResultDamage.MaxValue;
 				sp.MinDamage = (sp.MaxDamage = maxDamage);
-				sp.CurrentShield = ruleStarshipRollShieldAbsorption.ResultShields;
-				sp.MaxShield = ruleStarshipRollShieldAbsorption.ResultMaxShields;
+				sp.CurrentShield = ruleStarshipRollShieldAbsorption?.ResultShields ?? target.Shields.ShieldsSum;
+				sp.MaxShield = ruleStarshipRollShieldAbsorption?.ResultMaxShields ?? target.Shields.ShieldsMaxSum;
 			}
 			else
 			{

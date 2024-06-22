@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("571bda39fcd97c741ae37d36c4688bad")]
 public class SizeGetter : MechanicEntityPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Unit size";
+		return FormulaTargetScope.Current + " size";
 	}
 
 	protected override int GetBaseValue()

@@ -134,7 +134,7 @@ public class TimeController : IControllerEnable, IController, IControllerDisable
 	{
 		get
 		{
-			if (Game.Instance.RealTimeController.IsSystemTick)
+			if (Game.Instance.RealTimeController.IsSimulationTick)
 			{
 				return m_LastSimulationTick == Game.Instance.RealTimeController.CurrentSystemStepIndex;
 			}
@@ -161,9 +161,7 @@ public class TimeController : IControllerEnable, IController, IControllerDisable
 			TickType.Any => true, 
 			TickType.BeginOfFrame => Game.Instance.RealTimeController.IsBeginFrameTick, 
 			TickType.EndOfFrame => Game.Instance.RealTimeController.IsEndFrameTick, 
-			TickType.Simulation => Game.Instance.RealTimeController.IsSystemTick, 
-			TickType.Network => Game.Instance.RealTimeController.IsNetworkTick, 
-			TickType.System => Game.Instance.RealTimeController.IsSystemTick, 
+			TickType.Simulation => Game.Instance.RealTimeController.IsSimulationTick, 
 			TickType.None => false, 
 			_ => throw new ArgumentOutOfRangeException($"controller.GetTickType() = {controller.GetTickType()}"), 
 		};
@@ -177,7 +175,7 @@ public class TimeController : IControllerEnable, IController, IControllerDisable
 	public void Tick()
 	{
 		float timeScale = TimeScale;
-		if (!Game.Instance.RealTimeController.IsSystemTick)
+		if (!Game.Instance.RealTimeController.IsSimulationTick)
 		{
 			m_DeltaTime = TimeSpan.Zero;
 			m_GameDeltaTime = TimeSpan.Zero;

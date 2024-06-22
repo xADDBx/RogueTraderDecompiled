@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Controllers.Combat;
@@ -10,12 +11,15 @@ using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Alignments;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Groups;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
+using Owlcat.Runtime.Core.Utility;
+using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -153,6 +157,96 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 	public override ItemEntityWeapon GetSecondWeapon()
 	{
 		return Body.SecondaryHand.MaybeWeapon;
+	}
+
+	protected override void OnNodeChanged(GraphNode oldNode)
+	{
+		base.OnNodeChanged(oldNode);
+		EventBus.RaiseEvent((IBaseUnitEntity)this, (Action<IUnitNodeChangedHandler>)delegate(IUnitNodeChangedHandler h)
+		{
+			h.HandleUnitNodeChanged(oldNode);
+		}, isCheckRuntime: true);
+	}
+
+	protected override void OnApplyPostLoadFixes()
+	{
+		try
+		{
+			List<Feature> list = Facts.GetAll<Feature>().ToTempList();
+			List<Ability> list2 = Facts.GetAll<Ability>().ToTempList();
+			if (list.Count > 0 || list2.Count > 0)
+			{
+				HashSet<string> hashSet = new HashSet<string>();
+				foreach (ItemSlot allSlot in Body.AllSlots)
+				{
+					if (allSlot.MaybeItem != null && allSlot.Active)
+					{
+						hashSet.Add(allSlot.MaybeItem.UniqueId);
+					}
+				}
+				while (list.Count > 0 || list2.Count > 0)
+				{
+					try
+					{
+						if (list.Count > 0)
+						{
+							Feature feature = list[0];
+							IItemEntity sourceItem = feature.SourceItem;
+							if (sourceItem != null && !hashSet.Contains(sourceItem.UniqueId))
+							{
+								Facts.Remove(feature);
+							}
+							list.RemoveAt(0);
+						}
+					}
+					catch (Exception ex)
+					{
+						PFLog.Entity.Exception(ex);
+					}
+					try
+					{
+						if (list2.Count <= 0)
+						{
+							continue;
+						}
+						Ability ability = list2[list2.Count - 1];
+						IItemEntity sourceItem2 = ability.SourceItem;
+						EntityFactSource firstSource = ability.FirstSource;
+						bool flag = sourceItem2 == null && firstSource == null;
+						if ((sourceItem2 != null && !hashSet.Contains(sourceItem2.UniqueId)) || flag)
+						{
+							Facts.Remove(ability);
+						}
+						else
+						{
+							for (int num = list2.Count - 2; num >= 0; num--)
+							{
+								Ability ability2 = list2[num];
+								IItemEntity sourceItem3 = ability2.SourceItem;
+								EntityFactSource firstSource2 = ability2.FirstSource;
+								bool flag2 = sourceItem3 == null && firstSource2 == null;
+								bool flag3 = sourceItem3 != null && !hashSet.Contains(sourceItem3.UniqueId);
+								if ((ability.Blueprint == ability2.Blueprint && sourceItem2 != null && sourceItem3 != null && sourceItem2.UniqueId.Equals(sourceItem3.UniqueId)) || flag3 || flag2)
+								{
+									Facts.Remove(ability2);
+									list2.Remove(ability2);
+								}
+							}
+						}
+						list2.Remove(ability);
+					}
+					catch (Exception ex2)
+					{
+						PFLog.Entity.Exception(ex2);
+					}
+				}
+			}
+		}
+		catch (Exception ex3)
+		{
+			PFLog.Entity.Exception(ex3);
+		}
+		base.OnApplyPostLoadFixes();
 	}
 
 	public override Hash128 GetHash128()

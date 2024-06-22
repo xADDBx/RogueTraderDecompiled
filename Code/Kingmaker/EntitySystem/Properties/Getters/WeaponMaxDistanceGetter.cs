@@ -13,13 +13,13 @@ public class WeaponMaxDistanceGetter : UnitPropertyGetter
 	[SerializeField]
 	private bool SecondWeapon;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!SecondWeapon)
 		{
-			return "First Weapon Max Distance";
+			return "First Weapon of " + FormulaTargetScope.Current + " Max Distance";
 		}
-		return "Second Weapon Max Distance";
+		return "Second Weapon of " + FormulaTargetScope.Current + " Max Distance";
 	}
 
 	protected override int GetBaseValue()

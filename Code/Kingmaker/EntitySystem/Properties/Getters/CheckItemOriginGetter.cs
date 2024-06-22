@@ -14,7 +14,7 @@ public class CheckItemOriginGetter : PropertyGetter, PropertyContextAccessor.IOp
 {
 	public ItemsItemOrigin Origin;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Check origin of item is {Origin}";
 	}

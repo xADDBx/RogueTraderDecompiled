@@ -18,7 +18,7 @@ public class SplitUnitGroup : GameAction
 	[SerializeReference]
 	public AbstractUnitEvaluator Target;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Target.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

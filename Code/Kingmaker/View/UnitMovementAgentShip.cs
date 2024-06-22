@@ -81,6 +81,29 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 		}
 	}
 
+	private Vector3 UnitPosition
+	{
+		get
+		{
+			if (base.Unit != null)
+			{
+				return base.Unit.Data.Position;
+			}
+			return base.transform.position;
+		}
+		set
+		{
+			if (base.Unit != null)
+			{
+				base.Unit.Data.Position = value;
+			}
+			else
+			{
+				base.transform.position = value;
+			}
+		}
+	}
+
 	private bool OnLastSegment
 	{
 		get
@@ -197,10 +220,10 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 				InitAcceleration();
 			}
 			bool flag = Game.Instance.Player.UISettings.FastMovement && !CameraRig.Instance.IsScrollingByRoutineSynced && Game.Instance.Player.IsInCombat && Mathf.Abs(Game.Instance.TimeController.SlowMoTimeScale - 1f) < 0.01f;
-			Vector2 vector = Position.To2D();
+			Vector2 vector = UnitPosition.To2D();
 			if (firstTick && m_HasTail)
 			{
-				m_TailPosition = Position + 2f * -base.Unit.Data.Forward;
+				m_TailPosition = UnitPosition + 2f * -base.Unit.Data.Forward;
 			}
 			bool isPositionChanged = (vector - m_PreviousPosition).sqrMagnitude > 1E-08f;
 			m_PreviousPosition = vector;
@@ -227,19 +250,18 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 			if (flag)
 			{
 				base.Unit.Data.Translocate(m_NextWaypoint.To3D(), null);
-				Position = base.Unit.Data.Position;
 			}
 			else
 			{
-				Position = MoveInternal(Position, m_NextVelocity * deltaTime, base.Corpulence);
+				UnitPosition = MoveInternal(UnitPosition, m_NextVelocity * deltaTime, base.Corpulence);
 			}
 			if (m_HasTail)
 			{
 				m_TailPosition = MoveTail(deltaTime, flag);
 			}
-			Vector2 vector4 = Position.To2D();
+			Vector2 vector4 = UnitPosition.To2D();
 			m_DistanceFromStart += Vector2.Distance(m_PreviousPosition, vector4);
-			base.MoveDirection = (m_HasTail ? (Position - m_TailPosition).To2D().normalized : vector2.normalized);
+			base.MoveDirection = (m_HasTail ? (UnitPosition - m_TailPosition).To2D().normalized : vector2.normalized);
 			Vector2 nextWaypoint2D = GetNextWaypoint2D(m_NextPointIndex - 1);
 			Vector2 lhs = m_NextWaypoint - nextWaypoint2D;
 			Vector2 rhs = m_NextWaypoint - vector;
@@ -334,13 +356,9 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 	{
 		float num = m_CombatAngularSpeed;
 		float num2 = distance / Mathf.Max(maxSpeed, 0.01f);
-		if (OnLastSegment)
+		if (OnLastSegment && Vector3.Angle(fwd, desiredDir) / num * 2f > num2 && angle / num2 > num)
 		{
-			float num3 = Vector3.Angle(fwd, desiredDir) / num;
-			if (num3 * 2f > num2)
-			{
-				num *= 2f * (num3 / num2);
-			}
+			num = angle / num2;
 		}
 		return (Quaternion.AngleAxis(Mathf.Min(num * deltaTime, angle), Vector3.down * Math.Sign(signedAngle)) * fwd.To3D()).To2D();
 	}
@@ -379,7 +397,7 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 			}
 			else
 			{
-				Position = m_NextWaypoint.To3D();
+				UnitPosition = m_NextWaypoint.To3D();
 			}
 			if (OnLastSegment)
 			{
@@ -415,7 +433,7 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 		int num2 = (moveUsingTranslocate ? 100 : 5);
 		int num3 = 0;
 		Vector3 vector2 = m_TailPosition;
-		while ((Position - vector2).sqrMagnitude > num && Vector3.Dot(nextWaypoint3D - vector2, normalized) >= 0f && num3 < num2)
+		while ((UnitPosition - vector2).sqrMagnitude > num && Vector3.Dot(nextWaypoint3D - vector2, normalized) >= 0f && num3 < num2)
 		{
 			vector2 = MoveInternal(vector2, shift, base.Corpulence);
 			num3++;
@@ -479,8 +497,7 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 			PFLog.Default.Error("Trying to access waypoint out of range");
 			return Vector3.zero;
 		}
-		Vector3 direction = ((index != 0) ? (m_ShipWaypoints[index] - m_ShipWaypoints[index - 1]).normalized : (m_ShipWaypoints[1] - m_ShipWaypoints[0]).normalized);
-		return m_ShipWaypoints[index] + SizePathfindingHelper.GetSizePositionOffset(base.Unit.Data.SizeRect, direction);
+		return m_ShipWaypoints[index];
 	}
 
 	protected override void StartMovingWithPath(ForcedPath p, bool forcedPath, bool requestedNewPath)

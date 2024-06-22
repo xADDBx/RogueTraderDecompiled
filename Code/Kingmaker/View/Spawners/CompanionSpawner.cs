@@ -1,6 +1,7 @@
 using Code.GameCore.Blueprints;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -18,6 +19,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("dfea570039374dd99e2e6cf487f9add8")]
 public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IAddInspectorGUI, ICompanionChangeHandler, IEtudesUpdateHandler
 {
 	private new class MyData : UnitSpawnerBase.MyData

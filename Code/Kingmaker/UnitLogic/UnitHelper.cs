@@ -395,6 +395,11 @@ public static class UnitHelper
 		return _this.OriginalBlueprint == BlueprintRoot.Instance.CustomCompanion;
 	}
 
+	public static bool IsPregenCustomCompanion(this BaseUnitEntity unitEntity)
+	{
+		return BlueprintRoot.Instance.CharGenRoot.IsBlueprintCompanionPregen(unitEntity.OriginalBlueprint);
+	}
+
 	public static bool IsInCompanionRoster(this MechanicEntity _this)
 	{
 		CompanionState companionState = _this.GetOptional<UnitPartCompanion>()?.State ?? CompanionState.None;
@@ -687,7 +692,6 @@ public static class UnitHelper
 		UnitMovementAgentBase maybeMovementAgent = unit.MaybeMovementAgent;
 		if (maybeMovementAgent == null)
 		{
-			PFLog.Default.Error("Can't snap unit without MovementAgent to grid");
 			return;
 		}
 		try
@@ -1107,6 +1111,6 @@ public static class UnitHelper
 	{
 		RespecCompanion respecCompanion = new RespecCompanion();
 		respecCompanion.ForFree = true;
-		respecCompanion.RunAction();
+		respecCompanion.Run();
 	}
 }

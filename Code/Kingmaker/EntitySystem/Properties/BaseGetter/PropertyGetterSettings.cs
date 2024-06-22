@@ -74,6 +74,8 @@ public class PropertyGetterSettings
 	[ShowIf("UseMax")]
 	public int Max;
 
+	public int StepLevel => m_StepLevel;
+
 	private bool IsCustomProgression => Progression == ProgressionType.Custom;
 
 	public bool IsDivisionProgression
@@ -190,6 +192,42 @@ public class PropertyGetterSettings
 			return Math.Sign(value);
 		case ProgressionType.RandomUpTo:
 			return PFStatefulRandom.BaseGetter.Range(Math.Max(0, Min), Math.Min(value, Max));
+		default:
+			throw new ArgumentOutOfRangeException("Progression", Progression, null);
+		}
+	}
+
+	public string ProgressionToString()
+	{
+		switch (Progression)
+		{
+		case ProgressionType.AsIs:
+		case ProgressionType.Div2:
+		case ProgressionType.OnePlusDiv2:
+		case ProgressionType.HalfMore:
+		case ProgressionType.Sign:
+		case ProgressionType.RandomUpTo:
+			return Progression.ToString();
+		case ProgressionType.StartPlusDivStep:
+			return $"StartPlusDivStep(Start={m_StartLevel}, Div={m_StepLevel})";
+		case ProgressionType.DivStep:
+			return $"DivStep(Div={m_StepLevel})";
+		case ProgressionType.OnePlusDivStep:
+			return $"OnePlusDivStep(Div={m_StepLevel})";
+		case ProgressionType.MultiplyByModifier:
+			return $"MultiplyByModifier(Mul={m_StepLevel})";
+		case ProgressionType.BonusValue:
+			return $"BonusValue(Bonus={m_StepLevel})";
+		case ProgressionType.DelayedStartPlusDivStep:
+			return $"DelayedStartPlusDivStep(Start={m_StartLevel}, Div={m_StepLevel})";
+		case ProgressionType.StartPlusDoubleDivStep:
+			return $"StartPlusDoubleDivStep(Start={m_StartLevel}, Div={m_StepLevel})";
+		case ProgressionType.Div2PlusStep:
+			return $"Div2PlusStep(Bonus={m_StepLevel})";
+		case ProgressionType.Custom:
+			return $"CustomProgression(Bonus={m_StepLevel})";
+		case ProgressionType.DoublePlusBonusValue:
+			return $"DoublePlusBonusValue(Bonus={m_StepLevel})";
 		default:
 			throw new ArgumentOutOfRangeException("Progression", Progression, null);
 		}

@@ -3,7 +3,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Globalmap.Colonization;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
@@ -58,19 +57,19 @@ public class ChangeColonyStats : GameAction
 		return "Change colony stats";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ColonyStatModifierType modifierType = ColonyStatModifierType.Other;
 		BlueprintScriptableObject blueprintScriptableObject = null;
 		ColoniesState coloniesState = Game.Instance.Player.ColoniesState;
-		if (ContextData<ColonyContextData>.Current?.Event != null)
+		if (Game.Instance.Player.ColoniesState.ColonyContextData.Event != null)
 		{
 			modifierType = ColonyStatModifierType.Event;
-			blueprintScriptableObject = ContextData<ColonyContextData>.Current.Event;
+			blueprintScriptableObject = Game.Instance.Player.ColoniesState.ColonyContextData.Event;
 		}
 		if (m_ApplyToCurrentColony)
 		{
-			Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+			Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 			if (colony != null)
 			{
 				ApplyModifiers(colony, modifierType, blueprintScriptableObject);

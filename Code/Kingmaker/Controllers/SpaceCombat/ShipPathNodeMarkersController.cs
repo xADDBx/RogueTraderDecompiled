@@ -25,7 +25,7 @@ public class ShipPathNodeMarkersController : IControllerTick, IController, ICont
 
 	public TickType GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

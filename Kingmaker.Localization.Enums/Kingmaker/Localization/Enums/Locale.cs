@@ -10,5 +10,6 @@ public enum Locale
 	esES,
 	jaJP,
 	trTR,
-	Sound
+	Sound,
+	dev
 }

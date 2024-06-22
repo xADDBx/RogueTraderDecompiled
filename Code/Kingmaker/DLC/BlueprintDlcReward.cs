@@ -26,18 +26,21 @@ public class BlueprintDlcReward : BlueprintScriptableObject, IBlueprintDlcReward
 
 		public bool Check(string path)
 		{
-			Regex = Regex ?? new Regex("^" + Path.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)")
-				.Replace("[", "\\[")
-				.Replace("]", "\\]")
-				.Replace("{", "\\{")
-				.Replace("}", "\\}")
-				.Replace("|", "\\|")
-				.Replace("+", "\\+")
-				.Replace("^", "\\^")
-				.Replace("$", "\\$")
-				.Replace(".", "\\.")
-				.Replace("*", ".+")
-				.Replace("?", ".") + "$");
+			if (Regex == null)
+			{
+				Regex = new Regex("^" + Path.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)")
+					.Replace("[", "\\[")
+					.Replace("]", "\\]")
+					.Replace("{", "\\{")
+					.Replace("}", "\\}")
+					.Replace("|", "\\|")
+					.Replace("+", "\\+")
+					.Replace("^", "\\^")
+					.Replace("$", "\\$")
+					.Replace(".", "\\.")
+					.Replace("*", ".+")
+					.Replace("?", ".") + "$", RegexOptions.Compiled);
+			}
 			return Regex.IsMatch(path);
 		}
 	}
@@ -61,12 +64,9 @@ public class BlueprintDlcReward : BlueprintScriptableObject, IBlueprintDlcReward
 
 	public List<IBlueprintDlc> Dlcs => m_Dlcs ?? (m_Dlcs = InterfaceServiceLocator.GetService<IDlcRootService>().Dlcs?.Where((IBlueprintDlc _dlc) => _dlc.Rewards.Contains(this)).ToList());
 
-	public bool IsAvailable => GetIsAvailable();
+	public bool IsAvailable => Dlcs.Any((IBlueprintDlc dlc) => dlc.IsAvailable);
 
-	private bool GetIsAvailable()
-	{
-		return Dlcs.Any((IBlueprintDlc _dlc) => _dlc.IsAvailable);
-	}
+	public bool IsActive => Dlcs.Any((IBlueprintDlc dlc) => dlc.IsActive);
 
 	public virtual void RecheckAvailability()
 	{

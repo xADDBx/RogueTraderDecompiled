@@ -126,7 +126,7 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 		TickBuffs(isTurnBased, Initiative.Event.TurnStart);
 	}
 
-	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn()
+	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleBuffsWhichShouldBeDisabledOutOfCasterTurn();
 	}

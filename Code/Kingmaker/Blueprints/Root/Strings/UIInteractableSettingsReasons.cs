@@ -11,6 +11,8 @@ public class UIInteractableSettingsReasons
 
 	public LocalizedString CannotChangeOnlyOneSaveBecause;
 
+	public LocalizedString CannotSwitchOnOnlyOneSave;
+
 	public LocalizedString CannotChangeFrameRateLimitEnabledBecause;
 
 	public LocalizedString CannotChangeFrameRateLimitBecause;
@@ -25,6 +27,7 @@ public class UIInteractableSettingsReasons
 		{
 			SettingsNotInteractableReasonType.Language => CannotChangeLanguageBecause, 
 			SettingsNotInteractableReasonType.OnlyOneSave => CannotChangeOnlyOneSaveBecause, 
+			SettingsNotInteractableReasonType.OnlyOneSaveSwitchOn => CannotSwitchOnOnlyOneSave, 
 			SettingsNotInteractableReasonType.FrameRateLimitEnabled => CannotChangeFrameRateLimitEnabledBecause, 
 			SettingsNotInteractableReasonType.FrameRateLimit => CannotChangeFrameRateLimitBecause, 
 			SettingsNotInteractableReasonType.FsrSharpness => CannotChangeFsrSharpnessBecause, 

@@ -25,6 +25,16 @@ public class AllSystemsInformationWindowPCView : AllSystemsInformationWindowBase
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.CloseInformationWindow));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		if (m_EscIsSubscribed)
+		{
+			EscHotkeyManager.Instance.Unsubscribe(base.CloseInformationWindow);
+			m_EscIsSubscribed = false;
+		}
+		base.DestroyViewImplementation();
+	}
+
 	protected override void ShowHideWindow(bool state)
 	{
 		if (!state)
@@ -48,15 +58,5 @@ public class AllSystemsInformationWindowPCView : AllSystemsInformationWindowBase
 		{
 			m_SystemsWidgetList.DrawEntries(array, m_SystemInfoAllSystemsInformationWindowPCViewPrefab);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		if (m_EscIsSubscribed)
-		{
-			EscHotkeyManager.Instance.Unsubscribe(base.CloseInformationWindow);
-			m_EscIsSubscribed = false;
-		}
-		base.DestroyViewImplementation();
 	}
 }

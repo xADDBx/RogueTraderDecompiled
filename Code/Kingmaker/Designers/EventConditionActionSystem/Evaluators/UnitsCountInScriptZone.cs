@@ -1,7 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.QA;
 using Kingmaker.View.MapObjects.SriptZones;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Evaluators;
@@ -22,7 +21,7 @@ public class UnitsCountInScriptZone : IntEvaluator
 		ScriptZone scriptZone = (ScriptZone)ScriptZone.FindView();
 		if (scriptZone == null)
 		{
-			PFLog.Default.ErrorWithReport(this, $"ScriptZone {ScriptZone} is missing");
+			Element.LogError(this, "ScriptZone {0} is missing", ScriptZone);
 			return 0;
 		}
 		return scriptZone.Count;

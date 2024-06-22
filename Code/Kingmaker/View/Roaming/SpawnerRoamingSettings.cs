@@ -1,5 +1,6 @@
 using Code.Visual.Animation;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Parts;
@@ -13,6 +14,7 @@ namespace Kingmaker.View.Roaming;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("35323d72d20e37f4ab636e75ceeadda3")]
 public class SpawnerRoamingSettings : EntityPartComponent<SpawnerRoamingSettings.Part>
 {
 	public enum ModeType

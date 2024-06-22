@@ -27,28 +27,13 @@ public class DlcStorePS5 : DlcStore, IDLCStorePS5
 		{
 			Purchased = purchased,
 			DownloadState = (flag ? DownloadState.Loaded : DownloadState.NotLoaded),
-			IsMounted = flag,
-			IsEnabled = true
+			IsMounted = flag
 		};
 	}
 
 	public override bool OpenShop()
 	{
-		bool result = false;
-		if (!IsSuitable)
-		{
-			return false;
-		}
-		return result;
-	}
-
-	public override bool Mount()
-	{
-		bool result = false;
-		if (!IsSuitable)
-		{
-			return false;
-		}
-		return result;
+		_ = IsSuitable;
+		return false;
 	}
 }

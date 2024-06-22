@@ -1,4 +1,3 @@
-using Kingmaker.Stores;
 using Steamworks;
 
 namespace Kingmaker.Utility;
@@ -9,7 +8,7 @@ public static class ApplicationHelper
 	{
 		get
 		{
-			if (StoreManager.Store == StoreType.Steam && SteamManager.Initialized)
+			if (SteamManager.Initialized)
 			{
 				return SteamUtils.IsSteamRunningOnSteamDeck();
 			}

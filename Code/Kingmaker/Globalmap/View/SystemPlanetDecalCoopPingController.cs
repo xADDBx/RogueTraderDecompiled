@@ -7,8 +7,15 @@ public class SystemPlanetDecalCoopPingController : MonoBehaviour
 	[SerializeField]
 	private GameObject m_SystemPlanetDecalCoopPing;
 
-	public void PingEntity(bool state)
+	[SerializeField]
+	private MeshRenderer DecalMeshRenderer;
+
+	public void PingEntity(bool state, Material material = null)
 	{
+		if (DecalMeshRenderer != null && state && material != null)
+		{
+			DecalMeshRenderer.material = material;
+		}
 		m_SystemPlanetDecalCoopPing.SetActive(state);
 	}
 }

@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Kingmaker.EntitySystem.Stats.Base;
 using UnityEngine;
@@ -11,9 +12,9 @@ public class StatGetter : PropertyGetter
 	[SerializeField]
 	private StatType m_Type;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"{m_Type}";
+		return $"{m_Type} of {FormulaTargetScope.Current}";
 	}
 
 	protected override int GetBaseValue()

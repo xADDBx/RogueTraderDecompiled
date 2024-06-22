@@ -33,19 +33,13 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public ShipComponentSlotVM VoidShieldGenerator;
 
-	public ShipComponentSlotVM WarpDrives;
-
-	public ShipComponentSlotVM GellerFieldDevice;
-
-	public ShipComponentSlotVM LifeSustainer;
-
-	public ShipComponentSlotVM Bridge;
-
 	public ShipComponentSlotVM AugerArray;
 
 	public ShipComponentSlotVM ArmorPlating;
 
-	public List<ShipComponentSlotVM> Weapons = new List<ShipComponentSlotVM>();
+	public readonly List<ShipComponentSlotVM> Arsenals = new List<ShipComponentSlotVM>();
+
+	public readonly List<ShipComponentSlotVM> Weapons = new List<ShipComponentSlotVM>();
 
 	public ShipUpgradeSlotVM InternalStructure;
 
@@ -78,12 +72,18 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	protected override void DisposeImplementation()
 	{
-		foreach (ShipComponentSlotVM weapon in Weapons)
-		{
-			weapon.Dispose();
-		}
-		Weapons.Clear();
+		DisposeSlotsList(Arsenals);
+		DisposeSlotsList(Weapons);
 		ShipSelectorWindowVM.Value?.Dispose();
+	}
+
+	private void DisposeSlotsList(List<ShipComponentSlotVM> slots)
+	{
+		foreach (ShipComponentSlotVM slot in slots)
+		{
+			slot.Dispose();
+		}
+		slots.Clear();
 	}
 
 	public void HandleChangeItem(ShipComponentSlotVM slot)
@@ -155,25 +155,31 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		AllSlots.Add(AugerArray);
 		AddDisposable(ArmorPlating = new ShipComponentSlotVM(ShipComponentSlotType.ArmorPlating, hullSlots.ArmorPlating, -1, WeaponSlotType.None, IsLocked.Value));
 		AllSlots.Add(ArmorPlating);
-		for (int i = 0; i < hullSlots.WeaponSlots.Count; i++)
+		for (int i = 0; i < hullSlots.Arsenals.Count; i++)
 		{
-			switch (hullSlots.WeaponSlots[i].Type)
+			ShipComponentSlotVM item = new ShipComponentSlotVM(ShipComponentSlotType.Arsenal, hullSlots.Arsenals[i], i, WeaponSlotType.None, IsLocked.Value);
+			Arsenals.Add(item);
+			AllSlots.Add(item);
+		}
+		for (int j = 0; j < hullSlots.WeaponSlots.Count; j++)
+		{
+			switch (hullSlots.WeaponSlots[j].Type)
 			{
 			case WeaponSlotType.Prow:
-				Weapons.Add(Weapons.Any((ShipComponentSlotVM x) => x.WeaponSlotType == WeaponSlotType.Prow) ? new ShipComponentSlotVM(ShipComponentSlotType.Prow1, hullSlots.WeaponSlots[i], i, WeaponSlotType.Prow, IsLocked.Value) : new ShipComponentSlotVM(ShipComponentSlotType.Prow2, hullSlots.WeaponSlots[i], i, WeaponSlotType.Prow, IsLocked.Value));
-				AllSlots.Add(Weapons[i]);
+				Weapons.Add(Weapons.Any((ShipComponentSlotVM x) => x.WeaponSlotType == WeaponSlotType.Prow) ? new ShipComponentSlotVM(ShipComponentSlotType.Prow1, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, IsLocked.Value) : new ShipComponentSlotVM(ShipComponentSlotType.Prow2, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, IsLocked.Value));
+				AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Port:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Port, hullSlots.WeaponSlots[i], i, WeaponSlotType.Port, IsLocked.Value));
-				AllSlots.Add(Weapons[i]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Port, hullSlots.WeaponSlots[j], j, WeaponSlotType.Port, IsLocked.Value));
+				AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Starboard:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Starboard, hullSlots.WeaponSlots[i], i, WeaponSlotType.Starboard, IsLocked.Value));
-				AllSlots.Add(Weapons[i]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Starboard, hullSlots.WeaponSlots[j], j, WeaponSlotType.Starboard, IsLocked.Value));
+				AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Dorsal:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Dorsal, hullSlots.WeaponSlots[i], i, WeaponSlotType.Dorsal, IsLocked.Value));
-				AllSlots.Add(Weapons[i]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Dorsal, hullSlots.WeaponSlots[j], j, WeaponSlotType.Dorsal, IsLocked.Value));
+				AllSlots.Add(Weapons[j]);
 				break;
 			}
 		}
@@ -249,6 +255,7 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 			ShipComponentSlotType.Prow2 => ItemsFilterType.Prow, 
 			ShipComponentSlotType.Port => ItemsFilterType.Port, 
 			ShipComponentSlotType.Starboard => ItemsFilterType.Starboard, 
+			ShipComponentSlotType.Arsenal => ItemsFilterType.Arsenal, 
 			_ => throw new ArgumentOutOfRangeException("shipComponentSlotType", shipComponentSlotType, null), 
 		};
 	}

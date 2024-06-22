@@ -47,12 +47,12 @@ public class ContextActionSpawnMonster : ContextAction
 		return $"Summon {Blueprint.name} x {CountValue} for {DurationValue}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster == null)
 		{
-			PFLog.Default.Error(this, "Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		Rounds duration = DurationValue.Calculate(base.Context);

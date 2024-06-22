@@ -25,6 +25,10 @@ public class UnlockRestrictionPart : InteractionRestrictionPart<UnlockRestrictio
 
 	public InteractionPart InteractionPart => base.ConcreteOwner.GetAll<InteractionPart>().FirstOrDefault();
 
+	public bool CheckOnlyOnce => false;
+
+	public bool CanUse => true;
+
 	public override int GetUserPriority(BaseUnitEntity user)
 	{
 		if (!base.Settings.Flag.IsUnlocked)

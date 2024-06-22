@@ -53,17 +53,17 @@ public class NewGameMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<NewGam
 		ResetLensPosition();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
+		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
+	}
+
 	private void ResetLensPosition()
 	{
 		DelayedInvoker.InvokeInFrames(delegate
 		{
 			UIUtility.MoveLensPosition(m_Selector.transform, m_GameModeButton.transform.localPosition, m_LensSwitchAnimationDuration);
 		}, 1);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
-		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
 	}
 }

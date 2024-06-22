@@ -63,7 +63,6 @@ public class ShipRankEntryItemPCView : ViewBase<CareerPathRankEntryVM>
 		{
 			RankEntrySelectionItemCommonView widget = WidgetFactory.GetWidget(m_SelectionItemCommonView);
 			widget.transform.SetParent(m_Container, worldPositionStays: false);
-			widget.Initialize();
 			widget.Bind(selection);
 			m_Selections.Add(widget);
 		}

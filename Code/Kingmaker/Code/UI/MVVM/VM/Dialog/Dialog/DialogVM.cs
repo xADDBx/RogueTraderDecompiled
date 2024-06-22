@@ -76,6 +76,10 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	{
 		AddDisposable(DialogNotifications = new DialogNotificationsVM());
 		AddDisposable(DialogVotesBlockVM = new DialogVotesBlockVM());
+		AddDisposable(OnCueUpdate.Subscribe(delegate
+		{
+			UpdatePortrait();
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -142,12 +146,12 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		IsAnswererNeedEqualizer.Value = flag2 && AnswerPortrait.Value == null;
 		BaseUnitEntity mainCharacterEntity = Game.Instance.Player.MainCharacterEntity;
 		Sprite value2 = mainCharacterEntity.Portrait.HalfLengthPortrait;
-		if (cue.Listener != null)
+		if (cue.Listener != null && cue.Listener.name != "Player Character")
 		{
 			value2 = (cue.Listener.PortraitSafe.InitiativePortrait ? null : cue.Listener.PortraitSafe.HalfLengthPortrait);
 		}
 		AnswerPortrait.Value = value2;
-		AnswerName.Value = ((cue.Listener != null) ? cue.Listener.CharacterName : mainCharacterEntity.CharacterName);
+		AnswerName.Value = ((cue.Listener != null && cue.Listener.name != "Player Character") ? cue.Listener.CharacterName : mainCharacterEntity.CharacterName);
 		BlueprintAnswer blueprintAnswer = dialogController.Answers.FirstOrDefault();
 		if (blueprintAnswer != null && blueprintAnswer.IsSystem())
 		{
@@ -220,6 +224,86 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	public void HandleDialogAnswerVote(NetPlayer player, string answer)
 	{
 		CheckVotesActive.Execute();
+	}
+
+	public void ShowHideBigScreenshotSpeaker(bool state)
+	{
+		IsSpeakerFullPortraitShowed.Value = state && m_SpeakerPortraitData != null && m_SpeakerPortraitData.FullLengthPortrait != null;
+		IsAnswererFullPortraitShowed.Value = false;
+		if (!state || m_SpeakerPortraitData == null || m_SpeakerPortraitData.FullLengthPortrait == null)
+		{
+			ClearPortrait();
+		}
+		else
+		{
+			FullPortraitVM.Value = new CharGenPortraitVM(m_SpeakerPortraitData);
+		}
+	}
+
+	public void ShowHideBigScreenshotAnswerer(bool state)
+	{
+		IsAnswererFullPortraitShowed.Value = state && m_AnswererPortraitData != null && m_AnswererPortraitData.FullLengthPortrait != null;
+		IsSpeakerFullPortraitShowed.Value = false;
+		if (!state || m_AnswererPortraitData == null || m_AnswererPortraitData.FullLengthPortrait == null)
+		{
+			ClearPortrait();
+		}
+		else
+		{
+			FullPortraitVM.Value = new CharGenPortraitVM(m_AnswererPortraitData);
+		}
+	}
+
+	private void UpdatePortrait()
+	{
+		CheckSpeakerPortrait();
+		CheckAnswererPortrait();
+		if (IsSpeakerFullPortraitShowed.Value || IsAnswererFullPortraitShowed.Value)
+		{
+			if (IsSpeakerFullPortraitShowed.Value)
+			{
+				ShowHideBigScreenshotSpeaker(state: true);
+			}
+			else if (IsAnswererFullPortraitShowed.Value)
+			{
+				ShowHideBigScreenshotAnswerer(state: true);
+			}
+		}
+	}
+
+	private void CheckSpeakerPortrait()
+	{
+		BaseUnitEntity currentSpeaker = Game.Instance.DialogController.CurrentSpeaker;
+		BlueprintUnit speakerPortrait = Cue.Value.BlueprintCue.Speaker.SpeakerPortrait;
+		m_SpeakerPortraitData = null;
+		if (speakerPortrait != null)
+		{
+			m_SpeakerPortraitData = (speakerPortrait.PortraitSafe.InitiativePortrait ? null : speakerPortrait.PortraitSafe.Data);
+		}
+		else if (currentSpeaker != null)
+		{
+			m_SpeakerPortraitData = (currentSpeaker.Portrait.InitiativePortrait ? null : currentSpeaker.Portrait);
+		}
+		SpeakerHasPortrait.Value = m_SpeakerPortraitData != null && m_SpeakerPortraitData.FullLengthPortrait != null;
+		if (m_SpeakerPortraitData == null || m_SpeakerPortraitData.FullLengthPortrait == null)
+		{
+			ClearPortrait();
+		}
+	}
+
+	private void CheckAnswererPortrait()
+	{
+		BaseUnitEntity mainCharacterEntity = Game.Instance.Player.MainCharacterEntity;
+		m_AnswererPortraitData = mainCharacterEntity.Portrait;
+		if (Cue.Value.BlueprintCue.Listener != null && Cue.Value.BlueprintCue.Listener.name != "Player Character")
+		{
+			m_AnswererPortraitData = (Cue.Value.BlueprintCue.Listener.PortraitSafe.InitiativePortrait ? null : Cue.Value.BlueprintCue.Listener.PortraitSafe.Data);
+		}
+		AnswererHasPortrait.Value = m_AnswererPortraitData != null && m_AnswererPortraitData.FullLengthPortrait != null;
+		if (m_AnswererPortraitData == null || m_AnswererPortraitData.FullLengthPortrait == null)
+		{
+			ClearPortrait();
+		}
 	}
 
 	private void ClearPortrait()

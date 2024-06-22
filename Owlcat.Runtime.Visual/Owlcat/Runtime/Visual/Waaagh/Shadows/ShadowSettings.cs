@@ -28,11 +28,25 @@ public class ShadowSettings
 
 	public ShadowResolution DirectionalLightCascadeResolution = ShadowResolution._1024;
 
-	public ShadowResolution PointLightResolution = ShadowResolution._512;
-
-	public ShadowResolution SpotLightResolution = ShadowResolution._512;
-
 	public Cascades DirectionalLightCascades = new Cascades();
+
+	public ShadowResolutionSettings PointLightResolution = new ShadowResolutionSettings
+	{
+		DefaultTier = ShadowResolutionTier.High,
+		Low = ShadowResolution._128,
+		Medium = ShadowResolution._256,
+		High = ShadowResolution._512,
+		Ultra = ShadowResolution._1024
+	};
+
+	public ShadowResolutionSettings SpotLightResolution = new ShadowResolutionSettings
+	{
+		DefaultTier = ShadowResolutionTier.High,
+		Low = ShadowResolution._128,
+		Medium = ShadowResolution._256,
+		High = ShadowResolution._512,
+		Ultra = ShadowResolution._1024
+	};
 
 	[Range(0f, 10f)]
 	public float DepthBias = 2.6f;

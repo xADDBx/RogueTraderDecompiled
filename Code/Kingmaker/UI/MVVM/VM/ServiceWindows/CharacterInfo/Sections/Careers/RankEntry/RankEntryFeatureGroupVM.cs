@@ -29,6 +29,14 @@ public class RankEntryFeatureGroupVM : BaseFeatureGroupVM<BaseRankEntryFeatureVM
 		});
 	}
 
+	public void UpdateReadOnlyState()
+	{
+		FeatureList.ForEach(delegate(BaseRankEntryFeatureVM vm)
+		{
+			(vm as RankEntrySelectionFeatureVM)?.UpdateStateForReadOnly();
+		});
+	}
+
 	public virtual List<VirtualListElementVMBase> GetAll()
 	{
 		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
@@ -36,7 +44,8 @@ public class RankEntryFeatureGroupVM : BaseFeatureGroupVM<BaseRankEntryFeatureVM
 		{
 			return list;
 		}
-		list.AddRange(FeatureList);
+		List<BaseRankEntryFeatureVM> collection = FeatureList.ToList();
+		list.AddRange(collection);
 		return list;
 	}
 

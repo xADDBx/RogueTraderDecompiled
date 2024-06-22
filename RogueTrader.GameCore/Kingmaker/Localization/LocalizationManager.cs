@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Core.Async;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Base;
@@ -195,10 +194,10 @@ public class LocalizationManager : ILocalizationProvider
 			Logger.Log("Initialize in progress.");
 			DetectAndSaveLocale(localizationSettings, settingsController, canDetect);
 			RegisterLocaleStorageProvider(new SettingsLocaleStorageProvider(localizationSettings));
-			Logger.Log("Loading localization packs...");
-			LoadAndSetSoundPack();
 			if (BundlesUsageProvider.UseBundles)
 			{
+				Logger.Log("Loading localization packs...");
+				LoadAndSetSoundPack();
 				LoadAndSetCurrentPack(CurrentLocale);
 			}
 		}
@@ -220,7 +219,10 @@ public class LocalizationManager : ILocalizationProvider
 		async void LoadAndSetSoundPack()
 		{
 			Logger.Log("Loading Sound Pack Async...");
-			SoundPack = await Task.Run(() => LoadPack(Locale.Sound));
+			await Awaiters.ThreadPool;
+			LocalizationPack pack = LoadPack(Locale.Sound);
+			await Awaiters.UnityThread;
+			SoundPack = pack;
 		}
 	}
 

@@ -12,7 +12,7 @@ namespace Kingmaker.DialogSystem.Blueprints;
 
 [NonOverridable]
 [TypeId("87378395f04018e47a470f3f5486a545")]
-public abstract class BlueprintCueBase : BlueprintScriptableObject, IConditionDebugContext
+public abstract class BlueprintCueBase : BlueprintScriptableObject, IConditionDebugContext, IEditorCommentHolder
 {
 	public bool ShowOnce;
 
@@ -20,6 +20,22 @@ public abstract class BlueprintCueBase : BlueprintScriptableObject, IConditionDe
 	public bool ShowOnceCurrentDialog;
 
 	public ConditionsChecker Conditions;
+
+	[HideInInspector]
+	[SerializeField]
+	private EditorCommentHolder m_EditorComment;
+
+	public EditorCommentHolder EditorComment
+	{
+		get
+		{
+			return m_EditorComment;
+		}
+		set
+		{
+			m_EditorComment = value;
+		}
+	}
 
 	public virtual bool CanShow()
 	{
@@ -53,8 +69,8 @@ public abstract class BlueprintCueBase : BlueprintScriptableObject, IConditionDe
 		return true;
 	}
 
-	public void AddConditionDebugMessage(string message, Color color)
+	public void AddConditionDebugMessage(object element, bool result, string messageFormat, object[] @params)
 	{
-		DialogDebug.Add(this, message, color);
+		DialogDebug.AddCondition(this, result, messageFormat, @params);
 	}
 }

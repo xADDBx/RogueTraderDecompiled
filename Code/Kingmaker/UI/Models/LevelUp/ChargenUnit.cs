@@ -3,7 +3,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
-using Kingmaker.Utility.StateContext;
 
 namespace Kingmaker.UI.Models.LevelUp;
 
@@ -23,18 +22,15 @@ public class ChargenUnit
 
 	public void RecreateUnit()
 	{
-		using (ContextData<EditStateContext>.Request())
+		if (Unit != null && !Unit.IsDisposed)
 		{
-			if (Unit != null && !Unit.IsDisposed)
-			{
-				Unit.Dispose();
-			}
-			using (ContextData<UnitHelper.ChargenUnit>.Request())
-			{
-				Unit = Blueprint.CreateEntity();
-			}
-			Unit.AttachToViewOnLoad(null);
-			Used = false;
+			Unit.Dispose();
 		}
+		using (ContextData<UnitHelper.ChargenUnit>.Request())
+		{
+			Unit = Blueprint.CreateEntity();
+		}
+		Unit.AttachToViewOnLoad(null);
+		Used = false;
 	}
 }

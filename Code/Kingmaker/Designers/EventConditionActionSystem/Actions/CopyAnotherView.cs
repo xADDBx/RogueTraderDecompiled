@@ -1,10 +1,8 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.QA;
 using Kingmaker.View;
 using Owlcat.QA.Validation;
-using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -24,29 +22,21 @@ public class CopyAnotherView : GameAction
 
 	public bool CopyEquipmentView;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!UnitCopyTo.TryGetValue(out var value) || !UnitCopyFrom.TryGetValue(out var value2))
 		{
-			PFLog.Default.Error("Can't copy view from " + UnitCopyFrom?.name + " to " + UnitCopyTo?.name + " since one of them is missing");
+			Element.LogError("Can't copy view from {0} to {1} since one of them is missing", UnitCopyFrom, UnitCopyTo);
 			return;
 		}
 		if (!(value is BaseUnitEntity baseUnitEntity))
 		{
-			string message = $"[IS NOT BASE UNIT ENTITY] Game action {this}, {UnitCopyTo} is not BaseUnitEntity";
-			if (!QAModeExceptionReporter.MaybeShowError(message))
-			{
-				UberDebug.LogError(message);
-			}
+			Element.LogError("[IS NOT BASE UNIT ENTITY] Game action {0}, {1} is not BaseUnitEntity", this, UnitCopyTo);
 			return;
 		}
 		if (!(value2 is BaseUnitEntity baseUnitEntity2))
 		{
-			string message2 = $"[IS NOT BASE UNIT ENTITY] Game action {this}, {UnitCopyFrom} is not BaseUnitEntity";
-			if (!QAModeExceptionReporter.MaybeShowError(message2))
-			{
-				UberDebug.LogError(message2);
-			}
+			Element.LogError("[IS NOT BASE UNIT ENTITY] Game action {0}, {1} is not BaseUnitEntity", this, UnitCopyFrom);
 			return;
 		}
 		UnitEntityView unitEntityView = baseUnitEntity2.CreateView();

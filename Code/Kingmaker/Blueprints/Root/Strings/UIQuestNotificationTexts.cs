@@ -62,6 +62,7 @@ public class UIQuestNotificationTexts
 			0 => string.Concat(New, " ", text), 
 			1 => text + " " + Updated, 
 			2 => text + " " + Completed, 
+			3 => text + " " + Failed, 
 			_ => string.Empty, 
 		};
 	}

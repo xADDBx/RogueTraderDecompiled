@@ -231,6 +231,10 @@ public class SpaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, IS
 
 	public bool CheckActionCamera(AbstractUnitCommand command)
 	{
+		if ((bool)SettingsRoot.Game.TurnBased.DisableActionCamera)
+		{
+			return false;
+		}
 		if (!(command is UnitUseAbility unitUseAbility))
 		{
 			return false;

@@ -55,6 +55,9 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 	[SerializeField]
 	private TextMeshProUGUI m_RumourName;
 
+	[SerializeField]
+	private TextMeshProUGUI m_GlobalMapRumourInRange;
+
 	[Header("VisitedStatus")]
 	[SerializeField]
 	private TextMeshProUGUI m_VisitedStatus;
@@ -95,6 +98,13 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 	[FormerlySerializedAs("m_OtherObjectsInfoSpaceSystemInformationWindowPCViewPrefab")]
 	[SerializeField]
 	private OtherObjectsInfoSpaceSystemInformationWindowView OtherObjectsInfoSpaceSystemInformationWindowViewPrefab;
+
+	[Header("AdditionalAnomalies")]
+	[SerializeField]
+	protected WidgetListMVVM m_WidgetListAdditionalAnomalies;
+
+	[SerializeField]
+	private AdditionalAnomaliesInfoSpaceSystemInformationWindowView AdditionalAnomaliesInfoSpaceSystemInformationWindowViewPrefab;
 
 	[Header("Scrollbar")]
 	[SerializeField]
@@ -148,7 +158,9 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 		m_VisitedStatus.transform.parent.gameObject.SetActive(!value);
 		DrawPlanets();
 		DrawOtherObjects();
+		DrawAdditionalAnomalies();
 		AddColonizationStatus();
+		AddSectorMapRumoursInRangeInfo();
 		AddQuestsInfo();
 		AddRumoursInfo();
 		AddSpaceCombatInfo();
@@ -188,6 +200,14 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 		m_OtherObjectsLabel.gameObject.transform.parent.gameObject.SetActive(array.Length != 0 && base.ViewModel.IsVisitedSystem.Value);
 		m_WidgetListOtherObjects.gameObject.SetActive(base.ViewModel.IsVisitedSystem.Value);
 		m_WidgetListOtherObjects.DrawEntries(array, OtherObjectsInfoSpaceSystemInformationWindowViewPrefab);
+	}
+
+	private void DrawAdditionalAnomalies()
+	{
+		m_WidgetListAdditionalAnomalies.Clear();
+		AdditionalAnomaliesInfoSpaceSystemInformationWindowVM[] vmCollection = base.ViewModel.AdditionalAnomalies.ToArray();
+		m_WidgetListAdditionalAnomalies.gameObject.SetActive(base.ViewModel.IsVisitedSystem.Value);
+		m_WidgetListAdditionalAnomalies.DrawEntries(vmCollection, AdditionalAnomaliesInfoSpaceSystemInformationWindowViewPrefab);
 	}
 
 	private void SetScrollbarSettings()
@@ -236,6 +256,21 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 			{
 				string text = string.Join(Environment.NewLine, list);
 				m_RumourName.text = text;
+			}
+		}
+	}
+
+	private void AddSectorMapRumoursInRangeInfo()
+	{
+		List<QuestObjective> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(base.ViewModel.SectorMapObjectEntity.Value.View);
+		m_GlobalMapRumourInRange.gameObject.transform.parent.gameObject.SetActive(!rumoursForSectorMap.Empty() && rumoursForSectorMap != null);
+		if (rumoursForSectorMap != null && rumoursForSectorMap.Any())
+		{
+			List<string> list = rumoursForSectorMap.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestObjective rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
+			if (list.Any())
+			{
+				string text = string.Join(", ", list);
+				m_GlobalMapRumourInRange.text = UIStrings.Instance.GlobalMap.WithinRumourRange.Text + ": " + text;
 			}
 		}
 	}

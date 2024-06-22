@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Globalmap.SystemMap;
@@ -12,7 +11,10 @@ public class PlanetOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityPlan
 {
 	protected override IEnumerable<Entity> Entities => Game.Instance.State.StarSystemObjects.All;
 
-	protected override Func<OvertipEntityPlanetVM, Entity, bool> OvertipGetter => (OvertipEntityPlanetVM vm, Entity entity) => vm.PlanetObject == entity as StarSystemObjectEntity;
+	protected override bool OvertipGetter(OvertipEntityPlanetVM vm, Entity entity)
+	{
+		return vm.PlanetObject == entity as StarSystemObjectEntity;
+	}
 
 	public PlanetOvertipsCollectionVM()
 	{

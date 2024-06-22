@@ -29,7 +29,7 @@ public class ShipComponentItemSlotVM : SelectionGroupEntityVM
 		Icon = item?.Icon;
 		DisplayName = item?.Name;
 		AddDisposable(RefreshView.Subscribe(UnSelect));
-		Tooltip.Value = new TooltipTemplateItem(item);
+		Tooltip.Value = new TooltipTemplateItem(item, null, forceUpdateCache: false, replenishing: false, null, isScreenTooltip: true);
 	}
 
 	protected override void DoSelectMe()

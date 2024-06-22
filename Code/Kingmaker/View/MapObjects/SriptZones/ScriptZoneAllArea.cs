@@ -1,9 +1,11 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Pathfinding;
 using Pathfinding;
 using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.SriptZones;
 
+[KnowledgeDatabaseID("6f15d6aee87b62048a62947fe8581029")]
 public class ScriptZoneAllArea : MonoBehaviour, IScriptZoneShape
 {
 	public bool ApplicationNodeExists => false;

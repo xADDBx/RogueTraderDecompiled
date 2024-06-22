@@ -15,7 +15,7 @@ public class SwitchChapter : GameAction
 		return $"Switch Chapter ({Chapter})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.ChangeChapter(Chapter);
 	}

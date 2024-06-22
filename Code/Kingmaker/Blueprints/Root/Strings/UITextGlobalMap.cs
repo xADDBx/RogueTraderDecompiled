@@ -36,6 +36,8 @@ public class UITextGlobalMap
 
 	public LocalizedString KnownStarSystems;
 
+	public LocalizedString WithinRumourRange;
+
 	public LocalizedString CreateWay;
 
 	public LocalizedString NoResource;

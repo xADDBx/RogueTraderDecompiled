@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -15,7 +14,10 @@ public class BaseMapObjectOvertipsCollectionVM<TOvertipVM> : OvertipsCollectionV
 {
 	protected override IEnumerable<Entity> Entities => Game.Instance.State.MapObjects.All;
 
-	protected override Func<TOvertipVM, Entity, bool> OvertipGetter => (TOvertipVM vm, Entity entity) => vm.MapObjectEntity == entity as MapObjectEntity;
+	protected override bool OvertipGetter(TOvertipVM vm, Entity entity)
+	{
+		return vm.MapObjectEntity == entity as MapObjectEntity;
+	}
 
 	public BaseMapObjectOvertipsCollectionVM()
 	{

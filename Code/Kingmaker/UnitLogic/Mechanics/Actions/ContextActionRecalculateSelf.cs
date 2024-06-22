@@ -8,7 +8,7 @@ namespace Kingmaker.UnitLogic.Mechanics.Actions;
 [TypeId("20eef6901e3c38a48b2e988dc13635a7")]
 public class ContextActionRecalculateSelf : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		((EntityFact)((((object)ContextData<Feature.Data>.Current?.Feature) ?? ((object)ContextData<Buff.Data>.Current?.Buff)) ?? ContextData<Buff.Data>.Current?.Buff))?.Recalculate();
 	}

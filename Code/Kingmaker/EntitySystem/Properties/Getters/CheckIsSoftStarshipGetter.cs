@@ -18,8 +18,8 @@ public class CheckIsSoftStarshipGetter : MechanicEntityPropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "CurrentEntity is SOFT starship";
+		return FormulaTargetScope.Current + " is SOFT starship";
 	}
 }

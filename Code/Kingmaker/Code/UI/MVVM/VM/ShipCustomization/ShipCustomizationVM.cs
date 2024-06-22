@@ -61,6 +61,14 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		InitStats();
 	}
 
+	protected override void DisposeImplementation()
+	{
+		m_AllSlots.Clear();
+		ShipUpgradeVm?.Dispose();
+		ShipSkillsVM?.Dispose();
+		ShipPostsVM?.Dispose();
+	}
+
 	private void SelectWindow(ShipCustomizationTab tab)
 	{
 		switch (tab)
@@ -87,14 +95,6 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		{
 			Navigation.SetActiveTab(pageType);
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_AllSlots.Clear();
-		ShipUpgradeVm?.Dispose();
-		ShipSkillsVM?.Dispose();
-		ShipPostsVM?.Dispose();
 	}
 
 	private void InitStats()

@@ -1,8 +1,12 @@
+using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using JetBrains.Annotations;
+using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.GlobalMap;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Globalmap.Blueprints.SectorMap;
@@ -11,6 +15,7 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.View.Mechanics;
 using Owlcat.QA.Validation;
 using Owlcat.Runtime.Core.Registry;
@@ -19,6 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Globalmap.SectorMap;
 
+[KnowledgeDatabaseID("ecbda9837e2a4213bbe8a3932d142343")]
 public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 {
 	[SerializeField]
@@ -94,6 +100,18 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 
 	private SectorMapController SectorMapController => Game.Instance.SectorMapController;
 
+	public bool IsExploredOrHasQuests
+	{
+		get
+		{
+			if (!Data.IsExplored)
+			{
+				return CheckQuests();
+			}
+			return true;
+		}
+	}
+
 	protected override void OnDidAttachToData()
 	{
 		base.OnDidAttachToData();
@@ -124,14 +142,14 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 		m_VisitedVisual.SetActive(value: false);
 		m_AllActivitiesFinishedVisual.SetActive(value: false);
 		SetNameVisibility();
-		SetVisible(Data.IsExplored);
+		SetVisible(IsExploredOrHasQuests);
 		SetDecalVisibility(state: false);
 		SetPlanetVisualState();
 	}
 
 	public void InstanceSystemPlanetDecalConsoleFocus()
 	{
-		if (SystemPlanetDecalConsoleFocusPrefab != null && Game.Instance.IsControllerGamepad)
+		if (!(SystemPlanetDecalConsoleFocusPrefab == null) && Game.Instance.IsControllerGamepad)
 		{
 			m_SystemPlanetDecalConsoleFocusInstance = Object.Instantiate(SystemPlanetDecalConsoleFocusPrefab, base.transform);
 			m_SystemPlanetDecalConsoleFocusInstance.SetFocusState(state: false);
@@ -150,7 +168,7 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 	{
 		Vector3 position = Game.Instance.SectorMapController.VisualParameters.PlayerShip.gameObject.transform.position;
 		Vector3 position2 = base.gameObject.transform.position;
-		if (Data.IsExplored && Mathf.Approximately(position.x, position2.x) && Mathf.Approximately(position.z, position2.z))
+		if (IsExploredOrHasQuests && Mathf.Approximately(position.x, position2.x) && Mathf.Approximately(position.z, position2.z))
 		{
 			m_ShipMarkerVisual.SetActive(value: true);
 			m_UnvisitedAndNoPathVisual.SetActive(value: false);
@@ -160,7 +178,7 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 			return;
 		}
 		bool flag = SectorMapController.AllPassagesForSystem(Data).Any((SectorMapPassageEntity p) => p.IsExplored) || SectorMapController.GetCurrentStarSystem() == this;
-		if (Data.IsExplored && !flag)
+		if (IsExploredOrHasQuests && !flag)
 		{
 			m_ShipMarkerVisual.SetActive(value: false);
 			m_UnvisitedAndNoPathVisual.SetActive(value: true);
@@ -168,7 +186,7 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 			m_VisitedVisual.SetActive(value: false);
 			m_AllActivitiesFinishedVisual.SetActive(value: false);
 		}
-		else if (Data.IsExplored && !Data.IsVisited)
+		else if (IsExploredOrHasQuests && !Data.IsVisited)
 		{
 			m_ShipMarkerVisual.SetActive(value: false);
 			m_UnvisitedAndNoPathVisual.SetActive(value: false);
@@ -218,12 +236,12 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 
 	private void SetNameVisibility()
 	{
-		ObjectExtensions.Or(m_SystemNameInstance, null)?.SetVisibility(m_LayerNameVisibility && Data.IsExplored);
+		ObjectExtensions.Or(m_SystemNameInstance, null)?.SetVisibility(IsExploredOrHasQuests);
 	}
 
 	public void SetDecalVisibility(bool state)
 	{
-		ObjectExtensions.Or(m_SystemPlanetDecalCanTravelInstance, null)?.SetVisibility(state);
+		ObjectExtensions.Or(m_SystemPlanetDecalCanTravelInstance, null)?.SetVisibility(state && IsExploredOrHasQuests);
 	}
 
 	public void SetDecalColor(SectorMapPassageEntity.PassageDifficulty dif)
@@ -258,6 +276,7 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 		if (!Data.IsVisited)
 		{
 			SetVisible(visible: true);
+			SetPlanetVisualState();
 			SetNameVisibility();
 		}
 	}
@@ -265,27 +284,54 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 	public void SetVisited()
 	{
 		SetVisible(visible: true);
+		SetPlanetVisualState();
 		SetNameVisibility();
+	}
+
+	public bool CheckQuests()
+	{
+		List<QuestObjective> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(this);
+		List<QuestObjective> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(Data.StarSystemArea);
+		if (questsForSystem == null || !questsForSystem.Any())
+		{
+			return questsForSpaceSystem?.Any() ?? false;
+		}
+		return true;
 	}
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
 		m_PingTween?.Kill();
-		if (entity == Data)
+		if (entity != Data)
 		{
-			m_SystemPlanetDecalCoopPingInstance.PingEntity(state: true);
-			m_PingTween = DOTween.To(() => 1f, delegate
+			return;
+		}
+		int index = player.Index - 1;
+		Material material = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsMaterials[index];
+		m_SystemPlanetDecalCoopPingInstance.PingEntity(state: true, material);
+		EventBus.RaiseEvent(delegate(INetAddPingMarker h)
+		{
+			h.HandleAddPingEntityMarker(entity);
+		});
+		m_PingTween = DOTween.To(() => 1f, delegate
+		{
+		}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+		{
+			m_SystemPlanetDecalCoopPingInstance.PingEntity(state: false);
+			EventBus.RaiseEvent(delegate(INetAddPingMarker h)
 			{
-			}, 0f, 7.5f).SetUpdate(isIndependentUpdate: true).OnComplete(delegate
+				h.HandleRemovePingEntityMarker(entity);
+			});
+			m_PingTween = null;
+		})
+			.OnKill(delegate
 			{
 				m_SystemPlanetDecalCoopPingInstance.PingEntity(state: false);
-				m_PingTween = null;
-			})
-				.OnKill(delegate
+				EventBus.RaiseEvent(delegate(INetAddPingMarker h)
 				{
-					m_SystemPlanetDecalCoopPingInstance.PingEntity(state: false);
-					m_PingTween = null;
+					h.HandleRemovePingEntityMarker(entity);
 				});
-		}
+				m_PingTween = null;
+			});
 	}
 }

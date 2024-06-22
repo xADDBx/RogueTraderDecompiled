@@ -67,7 +67,7 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		SetNewUnit();
 	}

@@ -140,9 +140,9 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 
 	public bool IsInVendor => ParentCollection.IsVendorTable;
 
-	public bool IsLockedByRep => Game.Instance.Vendor.VendorInventory.IsLockedByReputation(ItemEntity?.Blueprint);
+	public bool IsLockedByRep => Game.Instance.Vendor.VendorInventory.IsLockedByReputation(ItemEntity);
 
-	public bool IsLockedByCost => Game.Instance.Vendor.GetItemBuyPrice(ItemEntity?.Blueprint) > Game.Instance.Player.ProfitFactor.Total;
+	public bool IsLockedByCost => Game.Instance.Vendor.GetItemBuyPrice(ItemEntity) > Game.Instance.Player.ProfitFactor.Total;
 
 	public bool HasDiscount
 	{
@@ -235,10 +235,10 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 	protected virtual void ItemChangedHandler(ItemEntity item)
 	{
 		Icon.Value = GetIcon();
-		CurrentCostPF.Value = ((item != null) ? Game.Instance.Vendor.GetItemBuyPrice(item.Blueprint) : 0f);
+		CurrentCostPF.Value = ((item != null) ? Game.Instance.Vendor.GetItemBuyPrice(item) : 0f);
 		if (HasDiscount)
 		{
-			PriceWithoutDiscountPF.Value = ((item != null) ? Game.Instance.Vendor.GetItemBaseBuyPrice(ItemEntity?.Blueprint) : 0f);
+			PriceWithoutDiscountPF.Value = ((item != null) ? Game.Instance.Vendor.GetItemBaseBuyPrice(ItemEntity) : 0f);
 		}
 		IsNotable.Value = item?.Blueprint.IsNotable ?? false;
 		Count.Value = item?.Count ?? 0;
@@ -292,10 +292,31 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 			{
 				list2 = list2.Where((ItemSlot i) => i.Active).ToList();
 			}
-			IEnumerable<TooltipTemplateItem> enumerable = list2?.Select((ItemSlot i) => new TooltipTemplateItem(i?.Item, ItemEntity, force));
-			if (enumerable != null)
+			List<TooltipTemplateItem> list3 = new List<TooltipTemplateItem>();
+			if (list2 != null && list2.Count >= 4)
 			{
-				list.AddRange(enumerable);
+				for (int j = 0; j < list2.Count - 1; j += 2)
+				{
+					List<ItemEntity> fewItems = new List<ItemEntity>
+					{
+						list2[j]?.Item,
+						list2[j + 1]?.Item
+					};
+					list3.Add(new TooltipTemplateItem(null, ItemEntity, force, replenishing: false, fewItems));
+				}
+				if (list2.Count % 2 != 0)
+				{
+					ItemEntity item = list2.Last()?.Item;
+					list3.Add(new TooltipTemplateItem(item, ItemEntity, force));
+				}
+			}
+			else
+			{
+				list3 = list2?.Select((ItemSlot i) => new TooltipTemplateItem(i?.Item, ItemEntity, force)).ToList();
+			}
+			if (list3 != null)
+			{
+				list.AddRange(list3);
 			}
 		}
 		list.Add(new TooltipTemplateItem(ItemEntity, null, force));
@@ -387,11 +408,7 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 	{
 		if (CargoHelper.IsItemInCargo(item))
 		{
-			if (CargoHelper.CanTransferFromCargo(item))
-			{
-				return true;
-			}
-			return false;
+			return CargoHelper.CanTransferFromCargo(item);
 		}
 		if (item != null)
 		{
@@ -603,10 +620,10 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 	private bool CanHighLight(ItemEntity item, WeaponSlotType weaponSlotType = WeaponSlotType.None)
 	{
 		BlueprintStarshipWeapon blueprintStarshipWeapon = item.Blueprint as BlueprintStarshipWeapon;
-		if ((bool)blueprintStarshipWeapon && (blueprintStarshipWeapon == null || !blueprintStarshipWeapon.AllowedSlots.Contains(weaponSlotType)))
+		if (!blueprintStarshipWeapon)
 		{
-			return false;
+			return true;
 		}
-		return true;
+		return blueprintStarshipWeapon?.AllowedSlots.Contains(weaponSlotType) ?? false;
 	}
 }

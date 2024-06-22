@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Localization;
+using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.UnitLogic.Progression.Prerequisites;
 using Kingmaker.Utility.DotNetExtensions;
 
@@ -17,6 +18,19 @@ public class CalculatedPrerequisiteFact : CalculatedPrerequisite
 	public int MinRank { get; }
 
 	private static CalculatedPrerequisiteStrings Strings => LocalizedTexts.Instance.CalculatedPrerequisites;
+
+	public bool IsDlcRestrictedContent
+	{
+		get
+		{
+			BlueprintCareerPath obj = Fact as BlueprintCareerPath;
+			if (obj == null)
+			{
+				return false;
+			}
+			return !obj.IsAvailable;
+		}
+	}
 
 	public CalculatedPrerequisiteFact(bool value, [NotNull] PrerequisiteFact source)
 		: base(value, source)

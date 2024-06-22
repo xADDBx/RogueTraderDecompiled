@@ -55,7 +55,7 @@ public abstract class CharInfoProfitFactorItemBaseView : ViewBase<ProfitFactorVM
 		m_EmptyListDesc.text = UIStrings.Instance.ProfitFactorTexts.NoSourcesDesc;
 		Tooltip = new TooltipTemplateProfitFactor(base.ViewModel);
 		AssembleBricks();
-		AddDisposable(base.ViewModel.CurrentValue.Subscribe(delegate(float value)
+		AddDisposable(base.ViewModel.TotalValue.Subscribe(delegate(float value)
 		{
 			m_ProfitFactorValue.text = value.ToString();
 		}));

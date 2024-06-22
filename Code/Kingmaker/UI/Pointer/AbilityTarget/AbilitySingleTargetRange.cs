@@ -11,6 +11,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
@@ -52,52 +53,62 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		{
 			_cachedCasterPosition = gridAdjustedPosition;
 			_cachedTargetPosition = actualCastPosition;
-			int effectiveRange = ((Ability.Weapon != null) ? (MaxRangeCells / 2 + 1) : 0);
-			bool flag = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
+			int effectiveRange = ((Ability.Weapon != null) ? Mathf.FloorToInt((float)MaxRangeCells / 2f) : 0);
+			bool hasFiringArc = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
 			Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
-			OrientedPatternData orientedPatternData;
-			if (flag)
-			{
-				HashSet<CustomGridNodeBase> restrictedFiringArcNodes = Ability.GetRestrictedFiringArcNodes(gridAdjustedPosition.GetNearestNodeXZUnwalkable(), CustomGraphHelper.GuessDirection(currentUnitDirection));
-				orientedPatternData = new OrientedPatternData(restrictedFiringArcNodes, restrictedFiringArcNodes.FirstOrDefault());
-			}
-			else if (Ability.IsSingleShot)
-			{
-				List<CustomGridNodeBase> singleShotAffectedNodes = Ability.GetSingleShotAffectedNodes(target);
-				orientedPatternData = new OrientedPatternData(singleShotAffectedNodes, singleShotAffectedNodes.FirstOrDefault());
-			}
-			else if (Ability.IsChainLighting())
-			{
-				HashSet<CustomGridNodeBase> chainLightingTargets = Ability.GetChainLightingTargets(target);
-				orientedPatternData = new OrientedPatternData(chainLightingTargets, chainLightingTargets.FirstOrDefault());
-			}
-			else
-			{
-				orientedPatternData = OrientedPatternData.Empty;
-			}
+			bool ignoreRangesByDefault;
+			OrientedPatternData patternData = GetPatternData(hasFiringArc, gridAdjustedPosition, currentUnitDirection, target, out ignoreRangesByDefault);
 			NodeList nodes = Ability.Caster.GetOccupiedNodes(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
 			if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))
 			{
 				CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHudInfo = default(CombatHUDRenderer.AbilityAreaHudInfo);
-				abilityAreaHudInfo.pattern = orientedPatternData;
+				abilityAreaHudInfo.pattern = patternData;
 				abilityAreaHudInfo.casterRect = result;
 				abilityAreaHudInfo.minRange = MinRangeCells;
 				abilityAreaHudInfo.maxRange = MaxRangeCells;
 				abilityAreaHudInfo.effectiveRange = effectiveRange;
-				abilityAreaHudInfo.ignoreRangesByDefault = flag;
+				abilityAreaHudInfo.ignoreRangesByDefault = ignoreRangesByDefault;
 				abilityAreaHudInfo.ignorePatternPrimaryAreaByDefault = Ability.IsStarshipAttack;
 				abilityAreaHudInfo.combatHudCommandsOverride = Ability.Blueprint.CombatHudCommandsOverride;
 				CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHUD = abilityAreaHudInfo;
 				CombatHUDRenderer.Instance.SetAbilityAreaHUD(abilityAreaHUD);
 			}
-			UnitPredictionManager.Instance.Or(null)?.SetAbilityArea(gridAdjustedPosition, actualCastPosition, orientedPatternData);
+			UnitPredictionManager.Instance.Or(null)?.SetAbilityArea(gridAdjustedPosition, actualCastPosition, patternData);
 			m_AbilityTargets.Clear();
-			Ability.GatherAffectedTargetsData(orientedPatternData, castPosition, in m_AbilityTargets);
+			Ability.GatherAffectedTargetsData(patternData, castPosition, in m_AbilityTargets);
 			EventBus.RaiseEvent(delegate(ICellAbilityHandler h)
 			{
 				h.HandleCellAbility(m_AbilityTargets);
 			});
 		}
+	}
+
+	private OrientedPatternData GetPatternData(bool hasFiringArc, Vector3 casterPosition, Vector3 casterDirection, TargetWrapper target, out bool ignoreRangesByDefault)
+	{
+		ignoreRangesByDefault = false;
+		if (hasFiringArc)
+		{
+			HashSet<CustomGridNodeBase> restrictedFiringArcNodes = Ability.GetRestrictedFiringArcNodes(casterPosition.GetNearestNodeXZUnwalkable(), CustomGraphHelper.GuessDirection(casterDirection));
+			ignoreRangesByDefault = true;
+			return new OrientedPatternData(restrictedFiringArcNodes, restrictedFiringArcNodes.FirstOrDefault());
+		}
+		if (Ability.IsSingleShot)
+		{
+			List<CustomGridNodeBase> singleShotAffectedNodes = Ability.GetSingleShotAffectedNodes(target);
+			return new OrientedPatternData(singleShotAffectedNodes, singleShotAffectedNodes.FirstOrDefault());
+		}
+		if (Ability.IsChainLighting())
+		{
+			HashSet<CustomGridNodeBase> chainLightingTargets = Ability.GetChainLightingTargets(target);
+			return new OrientedPatternData(chainLightingTargets, chainLightingTargets.FirstOrDefault());
+		}
+		PartAbilityPredictionForAreaEffect partAbilityPredictionForAreaEffect = Ability.TryGetPatternDataFromAreaEffect();
+		if (partAbilityPredictionForAreaEffect != null)
+		{
+			ignoreRangesByDefault = true;
+			return partAbilityPredictionForAreaEffect.GetAreaEffectPatternNotFromPatternCenter(Ability, target ?? ((TargetWrapper)_cachedTargetPosition)) ?? OrientedPatternData.Empty;
+		}
+		return OrientedPatternData.Empty;
 	}
 
 	public void HandleAoEMove(Vector3 pos, AbilityData ability)

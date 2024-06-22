@@ -38,6 +38,8 @@ public class UICommonTexts
 
 	public LocalizedString Pause;
 
+	public LocalizedString Unpause;
+
 	public LocalizedString Back;
 
 	public LocalizedString Information;

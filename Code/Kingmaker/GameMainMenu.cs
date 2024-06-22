@@ -52,9 +52,12 @@ public class GameMainMenu : MonoBehaviour
 			string dialogMessage = exception.ToString();
 			EventBus.RaiseEvent(delegate(IDialogMessageBoxUIHandler w)
 			{
-				w.HandleOpen(dialogMessage, DialogMessageBoxBase.BoxType.Message, delegate
+				w.HandleOpen(dialogMessage, DialogMessageBoxBase.BoxType.Message, delegate(DialogMessageBoxBase.BoxButton b)
 				{
-					OnUnhandledException(exception);
+					if (b == DialogMessageBoxBase.BoxButton.Yes)
+					{
+						OnUnhandledException(exception);
+					}
 				}, null, UIStrings.Instance.CommonTexts.ReportButton);
 			});
 		}

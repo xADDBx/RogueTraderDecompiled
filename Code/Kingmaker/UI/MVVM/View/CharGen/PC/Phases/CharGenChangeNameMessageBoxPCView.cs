@@ -30,6 +30,8 @@ public class CharGenChangeNameMessageBoxPCView : MessageBoxPCView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		m_RandomNameButton.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
+		m_RandomNameLabel.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
 		AddDisposable(m_RandomNameButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			ChangeNameViewModel.SetRandomName();

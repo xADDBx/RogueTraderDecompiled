@@ -32,6 +32,7 @@ public static class LocaleExtensions
 			Locale.Sound => "([а-яА-Я]+[\\s]*)+", 
 			Locale.jaJP => "([а-яА-Я]+[\\s]*)+", 
 			Locale.trTR => "([а-яА-Я]+[\\s]*)+", 
+			Locale.dev => "([а-яА-Я]+[\\s]*)+", 
 			_ => "", 
 		};
 	}
@@ -49,6 +50,7 @@ public static class LocaleExtensions
 			Locale.jaJP => new CultureInfo("ja-JP"), 
 			Locale.trTR => new CultureInfo("tr-TR"), 
 			Locale.Sound => new CultureInfo("en-GB"), 
+			Locale.dev => new CultureInfo("en-GB"), 
 			_ => new CultureInfo("en-GB"), 
 		};
 	}

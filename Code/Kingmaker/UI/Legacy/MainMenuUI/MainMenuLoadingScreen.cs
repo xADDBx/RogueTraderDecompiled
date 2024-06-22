@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using DG.Tweening;
 using JetBrains.Annotations;
+using Kingmaker.Localization;
 using Kingmaker.UI.Common.Animations;
-using Kingmaker.Visual.Sound;
 using TMPro;
 using UnityEngine;
 
@@ -41,6 +41,9 @@ public class MainMenuLoadingScreen : MonoBehaviour
 	[SerializeField]
 	private LoadingScreenGlitchAnimator m_GlitchFx;
 
+	[SerializeField]
+	private LocalizedString PercentTemplate;
+
 	private Action m_StartLoadingCallback;
 
 	private Action m_LoadingFinishedCallback;
@@ -54,7 +57,7 @@ public class MainMenuLoadingScreen : MonoBehaviour
 
 	public void OnStart()
 	{
-		PFLog.Default.Log("Logo Show Requested");
+		PFLog.UI.Log("Logo Show Requested");
 		if (GameStarter.IsArbiterMode())
 		{
 			base.gameObject.SetActive(value: false);
@@ -94,7 +97,6 @@ public class MainMenuLoadingScreen : MonoBehaviour
 			yield return null;
 		}
 		PFLog.System.Log("Start Show Logo Animation");
-		SoundState.Instance.ResetState(SoundStateType.MainMenu);
 		Show(state: true);
 	}
 
@@ -111,17 +113,11 @@ public class MainMenuLoadingScreen : MonoBehaviour
 		{
 			m_BackgroundAnimator.AppearAnimation();
 			m_ProgressBarAnimator.AppearAnimation();
-			m_LogoAnimator.AppearAnimation(delegate
-			{
-				m_StartLoadingCallback();
-			});
+			m_LogoAnimator.AppearAnimation(m_StartLoadingCallback.Invoke);
 		}
 		else
 		{
-			m_BackgroundAnimator.DisappearAnimation(delegate
-			{
-				m_LoadingFinishedCallback();
-			});
+			m_BackgroundAnimator.DisappearAnimation(m_LoadingFinishedCallback.Invoke);
 			m_ProgressBarAnimator.DisappearAnimation();
 			m_LogoAnimator.DisappearAnimation();
 		}
@@ -150,7 +146,7 @@ public class MainMenuLoadingScreen : MonoBehaviour
 		m_ProgressTweener = DOTween.To(delegate(float x)
 		{
 			m_ProgressTransform.sizeDelta = new Vector2(x * progressWidth, m_ProgressTransform.rect.height);
-			m_PercentText.text = Mathf.CeilToInt(x * 100f) + "%";
+			m_PercentText.text = string.Format(PercentTemplate, Mathf.CeilToInt(x * 100f).ToString());
 		}, startValue, virtualProgress, 0.5f).SetEase(Ease.Linear);
 	}
 }

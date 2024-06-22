@@ -112,6 +112,7 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 			UpdateNavigationDelayed();
 		}));
 		AddDisposable(m_CargoView.CargoZoneView.ScrolledEntity.Subscribe(RefocusOnCargo));
+		AddDisposable(m_CargoView.OnNeedRefocus.Subscribe(Refocus));
 	}
 
 	private void CreateInput()
@@ -147,6 +148,16 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 		CargoSlotVM slotVM = base.ViewModel.InventoryCargoVM.CargoSlots.FindOrDefault((CargoSlotVM x) => x.CargoEntity == slot.CargoEntity);
 		IConsoleEntity entity = m_CargoView.GetCurrentStateNavigation().Entities.FirstOrDefault((IConsoleEntity e) => (e as VirtualListElement)?.Data == slotVM);
 		m_NavigationBehaviour.FocusOnEntityManual(entity);
+	}
+
+	private void Refocus()
+	{
+		if (m_CargoView.GetCurrentStateNavigation().Entities.FirstOrDefault((IConsoleEntity x) => x != null) is CargoDetailedConsoleView cargoDetailedConsoleView)
+		{
+			cargoDetailedConsoleView.NavigationBehaviour.FocusOnFirstValidEntity();
+			m_NavigationBehaviour.FocusOnEntityManual(cargoDetailedConsoleView);
+		}
+		m_NavigationBehaviour.FocusOnFirstValidEntity();
 	}
 
 	private void ShowContextMenu(InputActionEventData obj)
@@ -199,10 +210,10 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 	private void SetTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
-		TooltipConfig config = default(TooltipConfig);
+		TooltipConfig tooltipConfig = default(TooltipConfig);
 		if (entity is IItemSlotView itemSlotView)
 		{
-			config = new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, itemSlotView.GetParentContainer(), 0, 0, 0, new List<Vector2>
+			tooltipConfig = new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, itemSlotView.GetParentContainer(), 0, 0, 0, new List<Vector2>
 			{
 				new Vector2(0f, 0.5f),
 				new Vector2(1f, 0.5f)
@@ -218,7 +229,7 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, config);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, tooltipConfig);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
@@ -227,7 +238,7 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 			m_HasTooltip.Value = !list.Empty();
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowComparativeTooltip(list, config);
+				monoBehaviour.ShowComparativeTooltip(list, tooltipConfig, tooltipConfig, showScrollbar: false);
 			}
 		}
 		else

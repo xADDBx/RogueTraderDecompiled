@@ -59,6 +59,10 @@ public class TutorialBigWindowConsoleView : TutorialWindowConsoleView<TutorialMo
 	[SerializeField]
 	private FloatConsoleNavigationBehaviour.NavigationParameters m_NavigationParameters;
 
+	public static readonly string InputLayerContextName = "BigTutorialWindow";
+
+	public static readonly string GlossaryContextName = "BigTutorGlossary";
+
 	protected override bool IsShowDefaultSprite => true;
 
 	protected override void BindViewImplementation()
@@ -87,44 +91,59 @@ public class TutorialBigWindowConsoleView : TutorialWindowConsoleView<TutorialMo
 		AddDisposable(NavigationBehaviour = new FloatConsoleNavigationBehaviour(m_NavigationParameters));
 		InputLayer = new InputLayer
 		{
-			ContextName = "BigTutorialWindow"
+			ContextName = InputLayerContextName
 		};
 		GlossaryInputLayer = NavigationBehaviour.GetInputLayer(new InputLayer
 		{
-			ContextName = "BigTutorGlossary"
+			ContextName = GlossaryContextName
 		});
 		m_PageNavigation.AddInput(InputLayer, IsGlossaryMode.Not().ToReactiveProperty(), addDpad: true, showHints: false);
-		AddDisposable(m_ToggleHint.Bind(InputLayer.AddButton(base.SelectDeselectToggle, 10, IsGlossaryMode.Not().ToReactiveProperty())));
-		AddDisposable(m_PreviousHint.Bind(InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = InputLayer.AddButton(base.SelectDeselectToggle, 10, IsGlossaryMode.Not().ToReactiveProperty());
+		AddDisposable(m_ToggleHint.Bind(inputBindStruct));
+		AddDisposable(inputBindStruct);
+		InputBindStruct inputBindStruct2 = InputLayer.AddButton(delegate
 		{
 			OnPrev();
-		}, 9, m_PageNavigation.HasPrevious, InputActionEventType.ButtonJustReleased)));
+		}, 9, m_PageNavigation.HasPrevious, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_PreviousHint.Bind(inputBindStruct2));
+		AddDisposable(inputBindStruct2);
 		m_PreviousHint.SetLabel(UIStrings.Instance.Tutorial.Previous.Text);
-		AddDisposable(m_ConfirmHint.Bind(InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct3 = InputLayer.AddButton(delegate
 		{
 			OnNext();
-		}, 8, IsGlossaryMode.Not().ToReactiveProperty())));
-		AddDisposable(m_CloseWindowHint.Bind(InputLayer.AddButton(delegate
+		}, 8, IsGlossaryMode.Not().ToReactiveProperty());
+		AddDisposable(m_ConfirmHint.Bind(inputBindStruct3));
+		AddDisposable(inputBindStruct3);
+		InputBindStruct inputBindStruct4 = InputLayer.AddButton(delegate
 		{
 			base.ViewModel.Hide();
-		}, 9, IsGlossaryMode.Not().ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed)));
+		}, 9, IsGlossaryMode.Not().ToReactiveProperty(), InputActionEventType.ButtonJustLongPressed);
+		AddDisposable(m_CloseWindowHint.Bind(inputBindStruct4));
+		AddDisposable(inputBindStruct4);
 		m_CloseWindowHint.SetLabel(UIStrings.Instance.CommonTexts.CloseWindow.Text);
-		AddDisposable(m_GlossaryHint.Bind(InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct5 = InputLayer.AddButton(delegate
 		{
 			ShowGlossary();
-		}, 11, IsGlossaryMode.Not().And(HasGlossaryPoints).ToReactiveProperty())));
+		}, 11, IsGlossaryMode.Not().And(HasGlossaryPoints).ToReactiveProperty());
+		AddDisposable(m_GlossaryHint.Bind(inputBindStruct5));
+		AddDisposable(inputBindStruct5);
 		m_GlossaryHint.SetLabel(UIStrings.Instance.Dialog.OpenGlossary.Text);
-		AddDisposable(m_CloseGlossaryHint.Bind(GlossaryInputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct6 = GlossaryInputLayer.AddButton(delegate
 		{
 			CloseGlossary();
-		}, 9, IsGlossaryMode, InputActionEventType.ButtonJustReleased)));
+		}, 9, IsGlossaryMode, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_CloseGlossaryHint.Bind(inputBindStruct6));
+		AddDisposable(inputBindStruct6);
 		m_CloseGlossaryHint.SetLabel(UIStrings.Instance.Dialog.CloseGlossary.Text);
-		AddDisposable(m_EncyclopediaHint.Bind(GlossaryInputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct7 = GlossaryInputLayer.AddButton(delegate
 		{
 			GoToEncyclopedia();
-		}, 10)));
+		}, 10);
+		AddDisposable(m_EncyclopediaHint.Bind(inputBindStruct7));
+		AddDisposable(inputBindStruct7);
 		m_EncyclopediaHint.SetLabel(UIStrings.Instance.EncyclopediaTexts.EncyclopediaGlossaryButton.Text);
-		AddDisposable(InputLayer.AddAxis(Scroll, 3, IsGlossaryMode.Not().ToReactiveProperty()));
+		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = IsGlossaryMode.Not().ToReactiveProperty();
+		AddDisposable(InputLayer.AddAxis(Scroll, 3, readOnlyReactiveProperty));
 		AddDisposable(GamePad.Instance.PushLayer(InputLayer));
 		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
 	}

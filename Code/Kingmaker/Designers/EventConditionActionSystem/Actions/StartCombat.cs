@@ -24,7 +24,7 @@ public class StartCombat : GameAction
 
 	public bool AmbushPlayer;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BaseUnitEntity baseUnitEntity = Unit1.GetValue() as BaseUnitEntity;
 		if (baseUnitEntity == null)
@@ -48,7 +48,7 @@ public class StartCombat : GameAction
 		}
 		if (baseUnitEntity.IsDirectlyControllable && baseUnitEntity2.IsDirectlyControllable)
 		{
-			PFLog.Default.Error("Can't start combat between directly controllable units");
+			Element.LogError("Can't start combat between directly controllable units");
 			return;
 		}
 		if (baseUnitEntity.IsDirectlyControllable)

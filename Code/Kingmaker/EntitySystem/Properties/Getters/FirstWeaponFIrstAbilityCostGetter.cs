@@ -10,9 +10,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("8a8404a274de4de43bad5ac46eaa8259")]
 public class FirstWeaponFIrstAbilityCostGetter : UnitPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "First ability AP cost";
+		return "First ability of " + FormulaTargetScope.Current + " AP cost";
 	}
 
 	protected override int GetBaseValue()

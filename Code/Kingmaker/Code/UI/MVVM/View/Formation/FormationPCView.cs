@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Formation.Base;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
 using Kingmaker.UI.InputSystems;
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.Utility;
@@ -50,7 +51,7 @@ public class FormationPCView : FormationBaseView
 		{
 			base.ViewModel.ResetCurrentFormation();
 		}));
-		m_FormationHintPc.text = UIStrings.Instance.FormationTexts.FormationPcHint;
+		m_FormationHintPc.text = SetFormationHintText();
 		m_ResetLabel.text = UIStrings.Instance.FormationTexts.RestoreToDefault;
 		foreach (FormationCharacterVM character in base.ViewModel.Characters)
 		{
@@ -59,12 +60,11 @@ public class FormationPCView : FormationBaseView
 			widget.Bind(character);
 			m_Characters.Add(widget);
 		}
-	}
-
-	public override void OnFormationPresetIndexChanged(int formationPresetIndex)
-	{
-		base.OnFormationPresetIndexChanged(formationPresetIndex);
-		m_ResetButton.Interactable = base.ViewModel.IsCustomFormation;
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, delegate
+		{
+			base.ViewModel.FormationSelector.SelectPrevValidEntity();
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, base.OnSelectFormation));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -72,5 +72,17 @@ public class FormationPCView : FormationBaseView
 		base.DestroyViewImplementation();
 		m_Characters.ForEach(WidgetFactory.DisposeWidget);
 		m_Characters.Clear();
+	}
+
+	private string SetFormationHintText()
+	{
+		return base.ViewModel.IsCustomFormation ? UIStrings.Instance.FormationTexts.FormationPcHint : UIStrings.Instance.FormationTexts.OptimizedFormation;
+	}
+
+	public override void OnFormationPresetIndexChanged(int formationPresetIndex)
+	{
+		base.OnFormationPresetIndexChanged(formationPresetIndex);
+		m_ResetButton.Interactable = base.ViewModel.IsCustomFormation;
+		m_FormationHintPc.text = SetFormationHintText();
 	}
 }

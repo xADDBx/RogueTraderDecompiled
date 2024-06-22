@@ -20,6 +20,7 @@ using Kingmaker.Controllers;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.MapObjects;
+using Kingmaker.Controllers.MovePrediction;
 using Kingmaker.Controllers.Net;
 using Kingmaker.Controllers.StarSystem;
 using Kingmaker.Controllers.TurnBased;
@@ -37,6 +38,7 @@ using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Localization.Enums;
 using Kingmaker.Networking;
 using Kingmaker.QA;
+using Kingmaker.QA.Analytics;
 using Kingmaker.QA.Arbiter;
 using Kingmaker.Replay;
 using Kingmaker.Settings;
@@ -537,6 +539,27 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, int, RestrictionsHolder>(CheatsCombat.AddBonusAbilityUsage), "void AddBonusAbilityUsage(int count = 1, int costBonus = -5, RestrictionsHolder restrictions = null)", "add_bonus_ability_usage", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "costBonus",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "restrictions",
+				Type = "Kingmaker.Blueprints.RestrictionsHolder",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<MechanicEntity>(CheatsCommon.ExecuteAction), "void ExecuteAction(MechanicEntity target)", "action", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -584,8 +607,10 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(CheatsCommon.ShowDebugBubble), "void ShowDebugBubble()", "emperor_open_my_eyes", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.StatCoercion), "void StatCoercion()", "stat_coercion", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.CleanSpace), "void CleanSpace()", "clean_space", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsContextData.RandomEncounterStatusSwitch), "void RandomEncounterStatusSwitch()", "break_context_data", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<Cutscene>(CheatsCutscenes.StopCutscenes), "void StopCutscenes(Cutscene cutscene)", "stop_cutscene", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -601,6 +626,7 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.MemStats), "void MemStats()", "memstats", "Show allocated memory amounts", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.Quit), "void Quit()", "quit", "Call SystemUtil.ApplicationQuit()", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.QuitForce), "void QuitForce()", "quit_force", "Call Application.Quit(1)", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.WwiseProfilerCapture), "void WwiseProfilerCapture()", "wwise_profile", "Launch Wwise profiler session", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ReloadUI), "void ReloadUI()", "reload_ui", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ResetWidgetStash), "void ResetWidgetStash()", "reset_widget_stash", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUINextPlatform), "void ChangeUINextPlatform()", "change_ui_next_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
@@ -655,6 +681,15 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.DebugStopSpam), "void DebugStopSpam()", "debug_stop_spam", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.DisableLogging), "void DisableLogging()", "disable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.EnableLogging), "void EnableLogging()", "enable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsExportCharacter.ExportCharacter), "void ExportCharacter(string preset)", "export_character", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "preset",
+				Type = "System.String",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsFinalArenaPlague.FinalArenaPlagueOff), "void FinalArenaPlagueOff()", "off_finalarenaplagueoff", "Disable final arena plague", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsGlobalMap.RevealGlobalMap), "void RevealGlobalMap()", "reveal_map", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string>(CheatsGlobalMap.MoveToSystemOnGlobalMap), "void MoveToSystemOnGlobalMap(string systemPointBlueprintName)", "move_to_system", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
@@ -936,6 +971,15 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsUnlock.CheckFlag), "void CheckFlag(string flag = null)", "check_flag", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "flag",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<BlueprintQuestObjective>(CheatsUnlock.CompleteObjective), "void CompleteObjective(BlueprintQuestObjective targetObjective)", "objective_complete", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1006,6 +1050,9 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "string"),
+		new CheatMethodInfoInternal(new Action(DlcCheats.CheckAllDlcStatuses), "void CheckAllDlcStatuses()", "check_all_dlc_statuses", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(DlcCheats.SetAllDlcEnabled), "void SetAllDlcEnabled()", "set_all_dlc_enabled", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(DlcCheats.SetAllDlcDisabled), "void SetAllDlcDisabled()", "set_all_dlc_disabled", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Func<string, object>(StateExplorer.GetObject), "object GetObject(string path)", "game_data", "", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1025,6 +1072,15 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action(InteractionHighlightController.SwitchHighlightCovers), "void SwitchHighlightCovers()", "switch_highlight_covers", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<bool>(MovePredictionController.SetActive), "void SetActive(bool value)", "net_move", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "value",
+				Type = "System.Boolean",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(StateSerializationController.Collect_State), "void Collect_State()", "collect_state", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(StateSerializationController.Save_State), "void Save_State()", "save_state", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(StateSerializationController.Apply_State), "void Apply_State()", "apply_state", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
@@ -1054,6 +1110,24 @@ public static class AllCheats
 			{
 				Name = "speedMode",
 				Type = "System.Int32",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<bool>(TimeSpeedController.AutoSpeed.AutoSpeedCheat), "void AutoSpeedCheat(bool auto = false)", "net_auto_speed", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "auto",
+				Type = "System.Boolean",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<float>(TimeSpeedController.AutoSpeed.SlowCheat), "void SlowCheat(float value = 0.99)", "net_speed_slow", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "value",
+				Type = "System.Single",
 				HasDefaultValue = true
 			}
 		}, "void"),
@@ -1205,6 +1279,15 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<int>(CheatNetManager.CheatSetStreamsCount), "void CheatSetStreamsCount(int cnt)", "net_streams", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "cnt",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<bool>(CheatNetManager.CheatSlow), "void CheatSlow(bool activate = true)", "net_slow", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1214,6 +1297,8 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(CheatNetManager.CheatPortraitManagerClearGuidMapping), "void CheatPortraitManagerClearGuidMapping()", "net_clear_portraits", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatNetManager.CheatPauseDataSending), "void CheatPauseDataSending()", "net_pause_send", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<bool, bool>(CheatNetManager.CheatNetSimulationSetIncomingLag), "void CheatNetSimulationSetIncomingLag(bool enabled, bool reset = false)", "net_sim", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
 		{
 			new CheatParameter
@@ -1340,6 +1425,16 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<int>(PhotonManager.MaxPlayersCheat), "void MaxPlayersCheat(int value = 6)", "net_max_players", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "value",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action(SyncNetManager.ForceDefaultDesyncDetectionStrategy), "void ForceDefaultDesyncDetectionStrategy()", "net_desync_default", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string>(Kingmaker.OwlcatAnalyticsExtensions.SendFatalError), "void SendFatalError(string message)", "send_fatal_error", "", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1349,6 +1444,21 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Func<int, int, Task>(OwlcatAnalyticsDebug.DebugCreateEvents), "Task DebugCreateEvents(int count, int interval)", "debug_analytics_create_events", "Создать кучу эвентов в аналитику", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "interval",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "Task"),
 		new CheatMethodInfoInternal(new Func<InclemencyType, InclemencyType>(ArbiterClientIntegration.SetWeather), "InclemencyType SetWeather(InclemencyType type = Clear)", "weather_set", "Сменить погоду", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter

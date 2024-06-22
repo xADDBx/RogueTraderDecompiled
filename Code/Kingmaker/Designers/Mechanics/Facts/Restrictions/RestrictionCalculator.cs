@@ -6,11 +6,13 @@ using Kingmaker.RuleSystem;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using StateHasher.Core;
+using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts.Restrictions;
 
 [Serializable]
-public class RestrictionCalculator
+public class RestrictionCalculator : IHashable
 {
 	public PropertyCalculator Property;
 
@@ -58,5 +60,10 @@ public class RestrictionCalculator
 			return Property.GetBoolValue(context);
 		}
 		return true;
+	}
+
+	public virtual Hash128 GetHash128()
+	{
+		return default(Hash128);
 	}
 }

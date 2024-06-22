@@ -138,10 +138,9 @@ public static class SoulMarkTooltipExtensions
 		{
 			return list;
 		}
-		list.Add(new TooltipBrickSpace());
 		Color32 color = (highlight ? new Color32(130, 174, 115, byte.MaxValue) : new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue));
 		list.Add(new TooltipBricksGroupStart(hasBackground: true, null, color));
-		list.Add(new TooltipBrickIconValueStat(UIUtility.GetSoulMarkRankText(tier), (rankChangedTrigger.RankValue.Value - 1).ToString(), null, TooltipIconValueStatType.ValueTextBold, isWhite: false, needChangeSize: false, 18, 18, needChangeColor: true, Color.black, Color.black));
+		list.Add(new TooltipBrickIconValueStat(UIUtility.GetSoulMarkRankText(tier), (rankChangedTrigger.RankValue.Value - 1).ToString(), null, TooltipIconValueStatType.Normal, isWhite: false, needChangeSize: false, 18, 18, needChangeColor: true, Color.black, Color.black));
 		list.Add(new TooltipBricksGroupEnd());
 		list.Add(new TooltipBrickText(GetSoulMarkWithTier(baseBlueprint, tier)?.Description));
 		BlueprintFeature soulMarkFeature = GetSoulMarkFeature(baseBlueprint, tier);

@@ -51,6 +51,8 @@ public class ControlsKeybindingsGeneralSettings
 
 	public readonly SettingsEntityKeyBindingPair CameraRotateRight;
 
+	public readonly SettingsEntityKeyBindingPair CameraRotateToPointNorth;
+
 	public readonly SettingsEntityKeyBindingPair FollowUnit;
 
 	public readonly SettingsEntityKeyBindingPair SkipBark;
@@ -62,6 +64,22 @@ public class ControlsKeybindingsGeneralSettings
 	public readonly SettingsEntityKeyBindingPair SpeedUpEnemiesTurn;
 
 	public readonly SettingsEntityKeyBindingPair SwitchUIVisibility;
+
+	public readonly SettingsEntityKeyBindingPair ShowHideCombatLog;
+
+	public readonly SettingsEntityKeyBindingPair EndTurn;
+
+	public readonly SettingsEntityKeyBindingPair OpenSearchInventory;
+
+	public readonly SettingsEntityKeyBindingPair CollectAllLoot;
+
+	public readonly SettingsEntityKeyBindingPair PrevTab;
+
+	public readonly SettingsEntityKeyBindingPair NextTab;
+
+	public readonly SettingsEntityKeyBindingPair PrevCharacter;
+
+	public readonly SettingsEntityKeyBindingPair NextCharacter;
 
 	public ControlsKeybindingsGeneralSettings(ISettingsController settingsController, ControlsKeybindingsGeneralSettingsDefaultValues defaultValues)
 	{
@@ -88,11 +106,20 @@ public class ControlsKeybindingsGeneralSettings
 		CameraRight = new SettingsEntityKeyBindingPair(settingsController, "camera-right", defaultValues.CameraRight);
 		CameraRotateLeft = new SettingsEntityKeyBindingPair(settingsController, "camera-rotate-left", defaultValues.CameraRotateLeft);
 		CameraRotateRight = new SettingsEntityKeyBindingPair(settingsController, "camera-rotate-right", defaultValues.CameraRotateRight);
+		CameraRotateToPointNorth = new SettingsEntityKeyBindingPair(settingsController, "camera-rotate-to-point-north", defaultValues.CameraRotateToPointNorth);
 		FollowUnit = new SettingsEntityKeyBindingPair(settingsController, "follow-unit", defaultValues.FollowUnit);
 		SkipBark = new SettingsEntityKeyBindingPair(settingsController, "skip-bark", defaultValues.SkipBark);
 		SkipCutscene = new SettingsEntityKeyBindingPair(settingsController, "skip-cutscene", defaultValues.SkipCutscene);
 		OpenModificationWindow = new SettingsEntityKeyBindingPair(settingsController, "open-modification-window", defaultValues.OpenModificationWindow);
 		SpeedUpEnemiesTurn = new SettingsEntityKeyBindingPair(settingsController, "speed-up-enemies-turn", defaultValues.SpeedUpEnemiesTurn);
 		SwitchUIVisibility = new SettingsEntityKeyBindingPair(settingsController, "switch-ui-visibility", defaultValues.SwitchUIVisibility);
+		ShowHideCombatLog = new SettingsEntityKeyBindingPair(settingsController, "show-hide-combat-log", defaultValues.ShowHideCombatLog);
+		EndTurn = new SettingsEntityKeyBindingPair(settingsController, "end-turn", defaultValues.EndTurn);
+		OpenSearchInventory = new SettingsEntityKeyBindingPair(settingsController, "open-search-inventory", defaultValues.OpenSearchInventory);
+		CollectAllLoot = new SettingsEntityKeyBindingPair(settingsController, "collect-all-loot", defaultValues.CollectAllLoot);
+		PrevTab = new SettingsEntityKeyBindingPair(settingsController, "prev-tab", defaultValues.PrevTab);
+		NextTab = new SettingsEntityKeyBindingPair(settingsController, "next-tab", defaultValues.NextTab);
+		PrevCharacter = new SettingsEntityKeyBindingPair(settingsController, "prev-character", defaultValues.PrevCharacter);
+		NextCharacter = new SettingsEntityKeyBindingPair(settingsController, "next-character", defaultValues.NextCharacter);
 	}
 }

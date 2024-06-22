@@ -14,6 +14,8 @@ using Kingmaker.GameModes;
 using Kingmaker.Interaction;
 using Kingmaker.Items;
 using Kingmaker.Localization;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
@@ -48,7 +50,7 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 
 	public bool NotAvailable;
 
-	private float m_ProximityRadius;
+	private readonly float m_ProximityRadius;
 
 	public readonly ReactiveProperty<bool> ForceHotKeyPressed = new ReactiveProperty<bool>();
 
@@ -62,17 +64,21 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 
 	private bool m_IsNotInCombat;
 
-	public ReactiveProperty<int?> HasResourceCount = new ReactiveProperty<int?>();
+	public readonly ReactiveProperty<int?> HasResourceCount = new ReactiveProperty<int?>();
 
-	public ReactiveProperty<bool> CanInteract = new ReactiveProperty<bool>(initialValue: true);
+	public readonly ReactiveProperty<bool> CanInteract = new ReactiveProperty<bool>(initialValue: true);
 
 	public int? RequiredResourceCount;
 
 	public string ResourceName;
 
-	public ReactiveCommand InventoryChanged = new ReactiveCommand();
+	public readonly ReactiveCommand InventoryChanged = new ReactiveCommand();
 
 	private IDisposable m_SelectedUnitsSubscription;
+
+	private List<BaseUnitEntity> m_TryApproachingUnits = new List<BaseUnitEntity>();
+
+	private Dictionary<BaseUnitEntity, ForcedPath> m_CurrentlyApproachingUnits = new Dictionary<BaseUnitEntity, ForcedPath>();
 
 	protected override bool UpdateEnabled => MapObjectEntity.IsVisibleForPlayer;
 
@@ -92,11 +98,11 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 	{
 		get
 		{
-			if (IsBarkActive.Value)
+			if (!IsBarkActive.Value)
 			{
-				return true;
+				return ActiveCharacterIsNear;
 			}
-			return ActiveCharacterIsNear;
+			return true;
 		}
 	}
 
@@ -172,29 +178,110 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 			{
 				h.HandleInteractionRequest(MapObjectEntity.View);
 			});
-			return;
-		}
-		BaseUnitEntity baseUnitEntity = FirstInteractionPart.SelectUnit(Game.Instance.SelectionCharacter.SelectedUnits.ToList());
-		ClickMapObjectHandler.ShowWarningIfNeeded(baseUnitEntity, FirstInteractionPart);
-		if (Game.Instance.TurnController.IsPreparationTurn)
-		{
-			return;
-		}
-		if (FirstInteractionPart.Type == InteractionType.Approach)
-		{
-			UnitCommandsRunner.TryApproachAndInteract(baseUnitEntity, FirstInteractionPart);
-		}
-		else if (FirstInteractionPart.Type == InteractionType.Direct)
-		{
-			if (baseUnitEntity != null && FirstInteractionPart.CanInteract())
-			{
-				UnitCommandsRunner.DirectInteract(baseUnitEntity, FirstInteractionPart);
-			}
 		}
 		else
 		{
-			PFLog.Default.Error("Proximity interactions doesn't supported");
+			if (Game.Instance.TurnController.IsPreparationTurn)
+			{
+				return;
+			}
+			if (FirstInteractionPart.Type == InteractionType.Approach)
+			{
+				List<BaseUnitEntity> units = FirstInteractionPart.SelectAllUnits(Game.Instance.SelectionCharacter.SelectedUnits.ToList()).EmptyIfNull().ToList();
+				TryApproachAndInteract(units);
+			}
+			else if (FirstInteractionPart.Type == InteractionType.Direct)
+			{
+				BaseUnitEntity baseUnitEntity = FirstInteractionPart.SelectUnit(Game.Instance.SelectionCharacter.SelectedUnits.ToList());
+				ClickMapObjectHandler.ShowWarningIfNeeded(baseUnitEntity, FirstInteractionPart);
+				if (baseUnitEntity != null && FirstInteractionPart.CanInteract())
+				{
+					UnitCommandsRunner.DirectInteract(baseUnitEntity, FirstInteractionPart);
+				}
+			}
+			else
+			{
+				PFLog.UI.Error("Proximity interactions doesn't supported");
+			}
 		}
+	}
+
+	private void TryApproachAndInteract(List<BaseUnitEntity> units)
+	{
+		m_CurrentlyApproachingUnits.Clear();
+		m_TryApproachingUnits.Clear();
+		if (Game.Instance.TurnController.TurnBasedModeActive)
+		{
+			BaseUnitEntity baseUnitEntity = units.FirstItem();
+			if (baseUnitEntity != null)
+			{
+				FirstInteractionPart.SelectUnit(new List<BaseUnitEntity> { baseUnitEntity });
+				if (!FirstInteractionPart.IsEnoughCloseForInteractionFromDesiredPosition(baseUnitEntity))
+				{
+					ClickMapObjectHandler.ShowWarningIfNeeded(baseUnitEntity, FirstInteractionPart);
+				}
+				else
+				{
+					UnitCommandsRunner.TryApproachAndInteract(baseUnitEntity, FirstInteractionPart);
+				}
+			}
+			return;
+		}
+		foreach (BaseUnitEntity approachingUser in units)
+		{
+			if (approachingUser == null)
+			{
+				break;
+			}
+			m_TryApproachingUnits.Add(approachingUser);
+			PathfindingService.Instance.FindPathRT(approachingUser.MovementAgent, FirstInteractionPart.Owner.Position, FirstInteractionPart.ApproachRadius, delegate(ForcedPath path)
+			{
+				if (path.error)
+				{
+					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+					m_TryApproachingUnits.Remove(approachingUser);
+				}
+				else if (approachingUser.IsMovementLockedByGameModeOrCombat())
+				{
+					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
+					m_TryApproachingUnits.Remove(approachingUser);
+				}
+				else
+				{
+					m_CurrentlyApproachingUnits.Add(approachingUser, path);
+					TryApproachAndInteract(approachingUser);
+				}
+			});
+		}
+	}
+
+	private void TryApproachAndInteract(BaseUnitEntity u)
+	{
+		foreach (BaseUnitEntity tryApproachingUnit in m_TryApproachingUnits)
+		{
+			if (!m_CurrentlyApproachingUnits.TryGetValue(tryApproachingUnit, out var _))
+			{
+				return;
+			}
+		}
+		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
+		foreach (KeyValuePair<BaseUnitEntity, ForcedPath> currentlyApproachingUnit in m_CurrentlyApproachingUnits)
+		{
+			currentlyApproachingUnit.Deconstruct(out var key, out var value2);
+			BaseUnitEntity item = key;
+			ForcedPath forcedPath = value2;
+			InteractionPart firstInteractionPart = FirstInteractionPart;
+			List<Vector3> vectorPath = forcedPath.vectorPath;
+			if (firstInteractionPart.IsEnoughCloseForInteraction(vectorPath[vectorPath.Count - 1]))
+			{
+				list.Add(item);
+			}
+		}
+		BaseUnitEntity unit = ((!list.Empty()) ? FirstInteractionPart.SelectUnit(list) : FirstInteractionPart.SelectUnit(Game.Instance.SelectionCharacter.SelectedUnits.ToList()));
+		m_CurrentlyApproachingUnits.Clear();
+		m_TryApproachingUnits.Clear();
+		ClickMapObjectHandler.ShowWarningIfNeeded(unit, FirstInteractionPart);
+		UnitCommandsRunner.TryApproachAndInteract(unit, FirstInteractionPart);
 	}
 
 	public void UpdateObjectData()
@@ -243,7 +330,7 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 					{
 						UpdateResourceCount(item);
 					}));
-					ResourceName = ((item == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MultikeyItem) ? item.Name : UIStrings.Instance.Overtips.NeedUnknownKey.Text);
+					ResourceName = GetItemName(item);
 				}
 			}
 		}
@@ -315,14 +402,27 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		}
 	}
 
+	private static string GetItemName(BlueprintItem item)
+	{
+		if (item == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MultikeyItem)
+		{
+			return item.Name;
+		}
+		if (item == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MeltaChargeItem)
+		{
+			return item.Name;
+		}
+		if (item == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.RitualSetItem)
+		{
+			return item.Name;
+		}
+		return UIStrings.Instance.Overtips.NeedUnknownKey.Text;
+	}
+
 	private void UpdateCanInteract()
 	{
 		NotAvailable = HasInteractionsWithOvertip && !FirstInteractionPart.CanInteract();
-		CanInteract.Value = ClickMapObjectHandler.HasAvailableInteractions(MapObjectEntity.View.GO);
-		if (RequiredResourceCount.HasValue)
-		{
-			CanInteract.Value &= HasResourceCount.Value >= RequiredResourceCount;
-		}
+		CanInteract.Value = ClickMapObjectHandler.HasAvailableInteractions(MapObjectEntity.View.GO) && (!RequiredResourceCount.HasValue || HasResourceCount.Value >= RequiredResourceCount);
 	}
 
 	public void UpdateInteraction(bool active)
@@ -358,11 +458,11 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		{
 			return def;
 		}
-		if (StringUtility.IsNullOrInvisible(stringAsset.String))
+		if (!StringUtility.IsNullOrInvisible(stringAsset.String))
 		{
-			return def;
+			return stringAsset.String;
 		}
-		return stringAsset.String;
+		return def;
 	}
 
 	protected override Vector3 GetEntityPosition()
@@ -373,14 +473,7 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		}
 		else if (MapObjectEntity?.View != null && m_IsInSpace)
 		{
-			if (m_Bone != null)
-			{
-				m_EntityPosition = m_Bone.transform.position;
-			}
-			else
-			{
-				m_EntityPosition = MapObjectEntity.Position;
-			}
+			m_EntityPosition = ((m_Bone != null) ? m_Bone.transform.position : MapObjectEntity.Position);
 		}
 		else
 		{
@@ -414,10 +507,6 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		{
 			return false;
 		}
-		if (mapObject is DestructibleEntity)
-		{
-			return false;
-		}
-		return true;
+		return !(mapObject is DestructibleEntity);
 	}
 }

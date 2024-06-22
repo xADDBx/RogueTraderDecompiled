@@ -42,7 +42,7 @@ public class AddItemsToCollection : GameAction
 		return $"Add items to collection ({ItemsCollection})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		using (ContextData<GameLogDisabled>.RequestIf(Silent))
 		{

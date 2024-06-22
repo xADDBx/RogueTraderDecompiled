@@ -105,6 +105,8 @@ public class UITooltips
 
 	public LocalizedString Recoil;
 
+	public LocalizedString MaximumRange;
+
 	public LocalizedString CostAP;
 
 	public LocalizedString AP;
@@ -213,6 +215,15 @@ public class UITooltips
 
 	public LocalizedString CommonFeatureDesc;
 
+	[Header("Hints")]
+	public LocalizedString ShowTooltipHint;
+
+	public LocalizedString HideTooltipHint;
+
+	public LocalizedString ShowComparativeHint;
+
+	public LocalizedString HideComparativeHint;
+
 	[Header("SoulMarks")]
 	public LocalizedString SoulMarkRankHeader;
 
@@ -234,6 +245,10 @@ public class UITooltips
 	public LocalizedString PrerequisiteRank;
 
 	public LocalizedString PrerequisiteLevel;
+
+	public LocalizedString PrerequisitesFooter;
+
+	public LocalizedString ToCurrentPrerequisiteFeature;
 
 	[Header("CharGen")]
 	public LocalizedString DoctrinesHeader;

@@ -79,8 +79,8 @@ public class CueVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 			}
 			else
 			{
-				Color color = dialogController.CurrentSpeakerBlueprint.Color * dialogColors.NameColorMultiplyer;
-				text = string.Format(DialogFormats.SpeakerFormatWithColorName, UIUtility.SkillCheckText(SkillChecks, dialogColors), ColorUtility.ToHtmlStringRGB(color), dialogController.CurrentSpeakerName, dialogController.CurrentCue.DisplayText, ColorUtility.ToHtmlStringRGB(dialogColors.Narrator));
+				Color color = (BlueprintCue.Speaker.ReplacedSpeakerWithErrorSpeaker ? Color.red : (dialogController.CurrentSpeakerBlueprint.Color * dialogColors.NameColorMultiplyer));
+				text = string.Format(DialogFormats.SpeakerFormatWithColorName, UIUtility.SkillCheckText(SkillChecks, dialogColors), ColorUtility.ToHtmlStringRGB(color), BlueprintCue.Speaker.ReplacedSpeakerWithErrorSpeaker ? "Error Speaker" : dialogController.CurrentSpeakerName, dialogController.CurrentCue.DisplayText, ColorUtility.ToHtmlStringRGB(dialogColors.Narrator));
 			}
 			if (BuildModeUtility.IsShowDevComment && !string.IsNullOrEmpty(dialogController.CurrentCue.Comment))
 			{

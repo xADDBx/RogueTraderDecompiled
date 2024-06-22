@@ -31,7 +31,7 @@ public class CapitalExit : GameAction, IAreaEnterPointReference
 		return point == Destination;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Game.Instance.Player.CapitalPartyMode)
 		{

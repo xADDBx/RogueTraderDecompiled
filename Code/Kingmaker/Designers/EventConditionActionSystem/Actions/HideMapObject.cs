@@ -24,7 +24,7 @@ public class HideMapObject : GameAction
 		return string.Format("{0} мапобжект {1}", Unhide ? "Показывает " : "Прячет", MapObject);
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MapObject.GetValue().IsInGame = Unhide;
 	}

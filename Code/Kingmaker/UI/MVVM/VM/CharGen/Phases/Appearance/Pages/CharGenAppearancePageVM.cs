@@ -46,10 +46,7 @@ public class CharGenAppearancePageVM : SelectionGroupEntityVM
 
 	public void BeginPageView()
 	{
-		if (!Components.Any())
-		{
-			CreateComponents();
-		}
+		CreateComponentsIfNeeded();
 		foreach (BaseCharGenAppearancePageComponentVM component in Components)
 		{
 			component.OnBeginView();
@@ -62,6 +59,14 @@ public class CharGenAppearancePageVM : SelectionGroupEntityVM
 		Components.Clear();
 		m_ComponentSubscriptions?.Clear();
 		m_ComponentSubscriptions = null;
+	}
+
+	public void CreateComponentsIfNeeded()
+	{
+		if (!Components.Any())
+		{
+			CreateComponents();
+		}
 	}
 
 	private void CreateComponents()

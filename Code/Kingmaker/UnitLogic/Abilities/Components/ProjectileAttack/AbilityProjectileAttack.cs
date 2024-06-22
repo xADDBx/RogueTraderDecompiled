@@ -158,6 +158,33 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 		return (Nodes: list, From: customGridNodeBase2, To: customGridNodeBase);
 	}
 
+	public static (List<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, MechanicEntity target, int range)
+	{
+		CustomGridNodeBase customGridNodeBase = target.GetOccupiedNodes().FirstOrDefault((CustomGridNodeBase node) => LosCalculations.GetDirectLos(fromNode.Vector3Position, node.Vector3Position)) ?? target.Position.GetNearestNodeXZUnwalkable();
+		if (customGridNodeBase == fromNode)
+		{
+			return (Nodes: TempList.Get<CustomGridNodeBase>(), From: fromNode, To: customGridNodeBase);
+		}
+		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(fromNode.CoordinatesInGrid, (customGridNodeBase.Vector3Position - fromNode.Vector3Position).To2D());
+		Linecast.Ray2Nodes ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)fromNode.Graph, in offsets);
+		NodeList occupiedNodes = target.GetOccupiedNodes();
+		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
+		using Linecast.Ray2Nodes.Enumerator enumerator = ray2Nodes.GetEnumerator();
+		while (enumerator.MoveNext())
+		{
+			CustomGridNodeBase current = enumerator.Current;
+			if (current == null || (list.Count == 0 && CustomGraphHelper.GetWarhammerLength(current.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range))
+			{
+				return (Nodes: TempList.Get<CustomGridNodeBase>(), From: fromNode, To: customGridNodeBase);
+			}
+			if (occupiedNodes.Contains(current) || list.Count > 0)
+			{
+				list.Add(enumerator.Current);
+			}
+		}
+		return (Nodes: list, From: fromNode, To: customGridNodeBase);
+	}
+
 	private static (CustomGridNodeBase From, CustomGridNodeBase To, List<CustomGridNodeBase>[] Lines) CalculateLines(MechanicEntity caster, TargetWrapper target, Cells range, AbilityData abilityData)
 	{
 		CustomGridNodeBase casterNode = abilityData.GetBestShootingPositionForDesiredPosition(target);

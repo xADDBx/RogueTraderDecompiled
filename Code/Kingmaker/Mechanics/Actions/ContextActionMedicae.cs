@@ -16,7 +16,7 @@ public class ContextActionMedicae : ContextAction
 		return "Perform medicae";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Rulebook.Trigger(new RulePerformMedicaeHeal(base.Caster, base.TargetEntity, BaseHeal.Calculate(base.Context)));
 	}

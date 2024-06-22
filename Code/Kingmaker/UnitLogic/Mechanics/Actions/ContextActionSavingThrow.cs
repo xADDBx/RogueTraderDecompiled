@@ -41,11 +41,11 @@ public class ContextActionSavingThrow : ContextAction
 		return "Saving throw " + Type;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error(this, "Can't use ContextActionSavingThrow because target is not an unit");
+			Element.LogError(this, "Can't use ContextActionSavingThrow because target is not an unit");
 		}
 		else
 		{

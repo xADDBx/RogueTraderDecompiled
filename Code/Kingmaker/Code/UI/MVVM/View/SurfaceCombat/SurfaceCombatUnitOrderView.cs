@@ -1,12 +1,15 @@
 using System;
-using System.Linq;
 using DG.Tweening;
+using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Controllers.MapObjects;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
 using Kingmaker.View.Mechanics.Entities;
@@ -155,8 +158,8 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 			AddDisposable(m_IsTargetSelected.ObserveLastValueOnLateUpdate().Subscribe(Button.SetFocus));
 			AddDisposable(Button.OnPointerEnterAsObservable().Subscribe(delegate
 			{
-				base.ViewModel.UnitAsBaseUnitEntity?.View.HandleHoverChange(isHover: true);
 				SetSelected(value: true);
+				base.ViewModel.UnitAsBaseUnitEntity?.View.HandleHoverChange(isHover: true);
 			}));
 			AddDisposable(Button.OnPointerExitAsObservable().Subscribe(delegate
 			{
@@ -207,7 +210,7 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 
 	private void SetupOwnSize()
 	{
-		((RectTransform)base.transform).sizeDelta = ((!base.ViewModel.HasUnit) ? SizeRound : (base.ViewModel.IsSquad ? SizeWithSquad : SizeWithPortrait));
+		((RectTransform)base.transform).sizeDelta = ((!base.ViewModel.HasUnit) ? SizeRound : ((base.ViewModel.Squad != null) ? SizeWithSquad : SizeWithPortrait));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -241,7 +244,7 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 		{
 			if (base.ViewModel.UnitAsBaseUnitEntity.View.MouseHighlighted != value)
 			{
-				base.ViewModel.UnitAsBaseUnitEntity.View.MouseHighlighted = value;
+				base.ViewModel.SetMouseHighlighted(value);
 			}
 			if (!value)
 			{
@@ -319,7 +322,14 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 
 	public void HandleHighlightChange(AbstractUnitEntityView unit)
 	{
-		if (!(unit != base.ViewModel?.Unit?.View))
+		if (unit != base.ViewModel?.Unit?.View)
+		{
+			DelayedInvoker.InvokeInTime(delegate
+			{
+				TryHandleHighlightChangeForSquadUnit(unit);
+			}, 0.1f);
+		}
+		else
 		{
 			UpdateHighlightedState();
 		}
@@ -354,6 +364,35 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 		isNameZoneVisible.Value = (byte)value != 0;
 	}
 
+	public void TryHandleHighlightChangeForSquadUnit(AbstractUnitEntityView unit)
+	{
+		if (base.ViewModel == null || !base.ViewModel.IsSquadLeader.Value || base.ViewModel.NeedToShow.Value)
+		{
+			return;
+		}
+		UnitSquad unitSquad = base.ViewModel?.Squad;
+		if (unitSquad == null)
+		{
+			return;
+		}
+		foreach (UnitReference unit2 in unitSquad.Units)
+		{
+			BaseUnitEntity baseUnitEntity = unit2.ToBaseUnitEntity();
+			if (!(baseUnitEntity.View != unit))
+			{
+				UpdateHighlightedStateForSquadUnit(baseUnitEntity);
+				break;
+			}
+		}
+	}
+
+	private void UpdateHighlightedStateForSquadUnit(BaseUnitEntity unit)
+	{
+		UnitState orCreateUnitState = UnitStatesHolderVM.Instance.GetOrCreateUnitState(unit);
+		m_IsTargetSelected.Value = orCreateUnitState.IsAoETarget.Value || (base.ViewModel.IsTargetSelection.Value && orCreateUnitState.IsMouseOverUnit.Value);
+		m_IsNameZoneVisible.Value = unit.View.IsHighlighted || orCreateUnitState.IsAoETarget.Value || orCreateUnitState.IsMouseOverUnit.Value || orCreateUnitState.IsPingUnit.Value;
+	}
+
 	public void SetNameVisible(bool state)
 	{
 		if (base.IsBinded && m_IsInitialized)
@@ -369,10 +408,5 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 				m_HPLabelAnimator.Or(null)?.DisappearAnimation();
 			}
 		}
-	}
-
-	public void UpdateSquads()
-	{
-		m_WidgetList.DrawEntries(base.ViewModel.Squad.ToArray(), m_SurfaceCombatInitiativeOrderSquadUnitViewPrefab);
 	}
 }

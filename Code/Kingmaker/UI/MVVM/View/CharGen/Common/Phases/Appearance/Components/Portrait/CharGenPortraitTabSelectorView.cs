@@ -34,13 +34,13 @@ public class CharGenPortraitTabSelectorView : ViewBase<SelectionGroupRadioVM<Cha
 		DrawEntities();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void DrawEntities()
 	{
 		AddDisposable(m_WidgetListMvvm.DrawEntries(base.ViewModel.EntitiesCollection, m_Prefab));
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public GridConsoleNavigationBehaviour GetNavigation(IConsoleNavigationOwner owner = null)

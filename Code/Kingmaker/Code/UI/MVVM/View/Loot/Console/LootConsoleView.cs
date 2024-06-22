@@ -35,6 +35,15 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 {
 	[Header("Console")]
 	[SerializeField]
+	private TooltipPlaces m_StashTooltipPlaces;
+
+	[SerializeField]
+	private TooltipPlaces m_CargoTooltipPlaces;
+
+	[SerializeField]
+	private TooltipPlaces m_CenterTooltipPlaces;
+
+	[SerializeField]
 	private CanvasSortingComponent m_SortingComponent;
 
 	[SerializeField]
@@ -95,6 +104,16 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 	private Vector3 m_LeftCanvasInitPosition;
 
 	private Vector3 m_RightCanvasInitPosition;
+
+	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
+
+	private TooltipConfig m_CompareTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
 
 	private IDisposable m_UpdateNavigationDelay;
 
@@ -173,6 +192,15 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 
 	private void AddNavigation()
 	{
+		IConsoleEntity consoleEntity = null;
+		if (m_LootFocus.Value)
+		{
+			consoleEntity = m_Collector.GetCurrentFocus();
+		}
+		else if (m_InventoryFocus.Value)
+		{
+			consoleEntity = m_Inventory.GetCurrentFocus();
+		}
 		m_NavigationBehaviour.Clear();
 		ConsoleNavigationBehaviour consoleNavigationBehaviour = null;
 		ConsoleNavigationBehaviour consoleNavigationBehaviour2 = null;
@@ -200,27 +228,35 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 			consoleNavigationBehaviour2 = m_Inventory.GetNavigation();
 			m_NavigationBehaviour.AddEntityHorizontal(consoleNavigationBehaviour2);
 		}
-		IConsoleEntity entity = null;
-		IConsoleEntity consoleEntity = consoleNavigationBehaviour?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid());
+		IConsoleEntity consoleEntity2 = null;
+		IConsoleEntity consoleEntity3 = consoleNavigationBehaviour?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid());
 		switch (m_LastFocusGroup)
 		{
 		case ItemSlotsGroupType.Inventory:
-			entity = ((consoleNavigationBehaviour2 != null) ? consoleNavigationBehaviour2.Entities.FirstOrDefault((IConsoleEntity e) => e.IsValid()) : consoleEntity);
+			consoleEntity2 = ((consoleNavigationBehaviour2 != null) ? consoleNavigationBehaviour2.Entities.FirstOrDefault((IConsoleEntity e) => e.IsValid()) : consoleEntity3);
 			break;
 		case ItemSlotsGroupType.Loot:
-			entity = ((!base.ViewModel.IsOneSlot) ? consoleNavigationBehaviour?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid()) : consoleNavigationBehaviour2?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid()));
+			if (base.ViewModel.IsOneSlot)
+			{
+				consoleEntity2 = consoleNavigationBehaviour2?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid());
+			}
+			else
+			{
+				m_NavigationBehaviour.SetCurrentEntity(consoleNavigationBehaviour);
+				consoleEntity2 = consoleEntity3;
+			}
 			break;
 		case ItemSlotsGroupType.Cargo:
-			entity = ((m_CargoNavigation != null) ? m_CargoNavigation.Entities.FirstOrDefault((IConsoleEntity e) => e != null) : consoleEntity);
+			consoleEntity2 = ((m_CargoNavigation != null) ? m_CargoNavigation.Entities.FirstOrDefault((IConsoleEntity e) => e != null) : consoleEntity3);
 			break;
 		case ItemSlotsGroupType.Unknown:
 			if (base.ViewModel.IsOneSlot)
 			{
-				entity = consoleNavigationBehaviour2?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid());
+				consoleEntity2 = consoleNavigationBehaviour2?.Entities.FirstOrDefault((IConsoleEntity e) => !(e is SimpleConsoleNavigationEntity) && e.IsValid());
 			}
 			break;
 		}
-		m_NavigationBehaviour.FocusOnEntityManual(entity);
+		m_NavigationBehaviour.FocusOnEntityManual(consoleEntity ?? consoleEntity2);
 	}
 
 	private void CreateInput()
@@ -231,32 +267,51 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 		});
 		AddDisposable(m_InputLayer.AddButton(delegate
 		{
-			base.ViewModel.Close();
+			Close();
 		}, 9));
-		AddDisposable(m_MiddleHintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_LootFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information));
+		InputBindStruct inputBindStruct = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_LootFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_MiddleHintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct);
 		if (!base.ViewModel.IsOneSlot)
 		{
-			AddDisposable(m_MiddleHintsWidget.BindHint(m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_LootFocus).ToReactiveProperty()), UIStrings.Instance.ContextMenu.ContextMenu));
+			InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_LootFocus).ToReactiveProperty());
+			AddDisposable(m_MiddleHintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.ContextMenu.ContextMenu));
+			AddDisposable(inputBindStruct2);
 		}
-		AddDisposable(m_MiddleConfirmHint = m_MiddleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CanTransfer.Select((bool value) => value || base.ViewModel.IsPlayerStash).And(m_LootFocus).ToReactiveProperty();
+		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanTransfer.And(m_LootFocus).ToReactiveProperty()), UIStrings.Instance.ActionTexts.MoveItem));
-		AddDisposable(m_LeftHintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_CargoFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information));
+		}, 8, readOnlyReactiveProperty);
+		AddDisposable(m_MiddleConfirmHint = m_MiddleHintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.ActionTexts.MoveItem));
+		AddDisposable(inputBindStruct3);
+		InputBindStruct inputBindStruct4 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_CargoFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_LeftHintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct4);
 		if (!base.ViewModel.IsOneSlot)
 		{
-			AddDisposable(m_LeftHintsWidget.BindHint(m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_CargoFocus).ToReactiveProperty()), UIStrings.Instance.ContextMenu.ContextMenu));
+			InputBindStruct inputBindStruct5 = m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_CargoFocus).ToReactiveProperty());
+			AddDisposable(m_LeftHintsWidget.BindHint(inputBindStruct5, UIStrings.Instance.ContextMenu.ContextMenu));
+			AddDisposable(inputBindStruct5);
 		}
-		AddDisposable(m_LeftConfirmHint = m_LeftHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct6 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanTransfer.And(m_CargoFocus).ToReactiveProperty()), UIStrings.Instance.ActionTexts.MoveItem));
-		AddDisposable(m_RightHintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_InventoryFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information));
+		}, 8, m_CanTransfer.And(m_CargoFocus).ToReactiveProperty());
+		AddDisposable(m_LeftConfirmHint = m_LeftHintsWidget.BindHint(inputBindStruct6, UIStrings.Instance.ActionTexts.MoveItem));
+		AddDisposable(inputBindStruct6);
+		InputBindStruct inputBindStruct7 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip.And(m_InventoryFocus).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_RightHintsWidget.BindHint(inputBindStruct7, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct7);
 		if (!base.ViewModel.IsOneSlot)
 		{
-			AddDisposable(m_RightHintsWidget.BindHint(m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_InventoryFocus).ToReactiveProperty()), UIStrings.Instance.ContextMenu.ContextMenu));
+			InputBindStruct inputBindStruct8 = m_InputLayer.AddButton(ShowContextMenu, 11, m_HasItem.And(m_InventoryFocus).ToReactiveProperty());
+			AddDisposable(m_RightHintsWidget.BindHint(inputBindStruct8, UIStrings.Instance.ContextMenu.ContextMenu));
+			AddDisposable(inputBindStruct8);
 		}
-		AddDisposable(m_RightConfirmHint = m_RightHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct9 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanTransfer.And(m_InventoryFocus).ToReactiveProperty()), UIStrings.Instance.ActionTexts.MoveItem));
+		}, 8, m_CanTransfer.And(m_InventoryFocus).ToReactiveProperty());
+		AddDisposable(m_RightConfirmHint = m_RightHintsWidget.BindHint(inputBindStruct9, UIStrings.Instance.ActionTexts.MoveItem));
+		AddDisposable(inputBindStruct9);
 		m_Cargo.AddInput(m_InputLayer, m_CargoFocus);
 		m_Inventory.ItemsFilter.AddInput(m_InputLayer, m_InventoryFocus);
 		if (!base.ViewModel.IsOneSlot && !base.ViewModel.IsPlayerStash)
@@ -273,6 +328,19 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 		if (reactiveProperty != null)
 		{
 			((m_CurrentEntity as MonoBehaviour) ?? (m_CurrentEntity as IMonoBehaviour)?.MonoBehaviour).ShowContextMenu(reactiveProperty.Value);
+		}
+	}
+
+	private void Close()
+	{
+		TooltipHelper.HideTooltip();
+		if (m_HasTooltip.Value && m_ShowTooltip.Value)
+		{
+			m_ShowTooltip.Value = false;
+		}
+		else
+		{
+			base.ViewModel.Close();
 		}
 	}
 
@@ -328,12 +396,15 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 
 	private void RefocusOnCargo(CargoSlotVM slot)
 	{
-		CargoSlotVM slotVM = base.ViewModel.CargoInventory.CargoSlots.FindOrDefault((CargoSlotVM x) => x.CargoEntity == slot.CargoEntity);
-		IConsoleEntity a = m_Cargo.GetCurrentStateNavigation().Entities.FirstOrDefault((IConsoleEntity e) => (e as VirtualListElement)?.Data == slotVM);
-		DelayedInvoker.InvokeInFrames(delegate
+		if (m_CargoFocus.Value)
 		{
-			m_NavigationBehaviour.FocusOnEntityManual(a);
-		}, 3);
+			CargoSlotVM slotVM = base.ViewModel.CargoInventory.CargoSlots.FindOrDefault((CargoSlotVM x) => x.CargoEntity == slot.CargoEntity);
+			IConsoleEntity a = m_Cargo.GetCurrentStateNavigation().Entities.FirstOrDefault((IConsoleEntity e) => (e as VirtualListElement)?.Data == slotVM);
+			DelayedInvoker.InvokeInFrames(delegate
+			{
+				m_NavigationBehaviour.FocusOnEntityManual(a);
+			}, 3);
+		}
 	}
 
 	private void OnCargoViewChange()
@@ -442,6 +513,20 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 				label = UIStrings.Instance.ContextMenu.Use.Text;
 			}
 		}
+		else if (base.ViewModel.IsPlayerStash)
+		{
+			if (!(entity is InventorySlotConsoleView))
+			{
+				if (entity is LootSlotConsoleView)
+				{
+					label = (m_CanTransfer.Value ? UIStrings.Instance.LootWindow.SendToInventory.Text : UIStrings.Instance.LootWindow.SendToCargo.Text);
+				}
+			}
+			else
+			{
+				label = UIStrings.Instance.LootWindow.SendToPlayerChest.Text;
+			}
+		}
 		else if (!(entity is InventorySlotConsoleView inventorySlotConsoleView))
 		{
 			if (entity is LootSlotConsoleView lootSlotConsoleView)
@@ -461,11 +546,7 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 	private void SetTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
-		TooltipConfig config = ((!(entity is IItemSlotView itemSlotView)) ? new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None) : new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None, isGlossary: false, isEncyclopedia: false, itemSlotView.GetParentContainer(), 0, 0, 0, new List<Vector2>
-		{
-			new Vector2(0f, 0.5f),
-			new Vector2(1f, 0.5f)
-		}));
+		UpdateTooltipConfigs(entity);
 		MonoBehaviour monoBehaviour = (entity as MonoBehaviour) ?? (entity as IMonoBehaviour)?.MonoBehaviour;
 		if (monoBehaviour == null)
 		{
@@ -476,21 +557,50 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, config);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
 		{
 			List<TooltipBaseTemplate> list = hasTooltipTemplates.TooltipTemplates();
 			m_HasTooltip.Value = !list.Empty();
+			m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowComparativeTooltip(list, config);
+				monoBehaviour.ShowComparativeTooltip(list, m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
 			}
 		}
 		else
 		{
 			m_HasTooltip.Value = false;
+		}
+	}
+
+	private void UpdateTooltipConfigs(IConsoleEntity currentEntity)
+	{
+		if (currentEntity is IItemSlotView)
+		{
+			TooltipPlaces tooltipPlaces;
+			if (!m_CargoFocus.Value)
+			{
+				tooltipPlaces = ((!m_InventoryFocus.Value) ? m_CenterTooltipPlaces : m_StashTooltipPlaces);
+			}
+			else
+			{
+				tooltipPlaces = m_CargoTooltipPlaces;
+				if (currentEntity is IHasTooltipTemplates hasTooltipTemplates && hasTooltipTemplates.TooltipTemplates().Count <= 1)
+				{
+					m_MainTooltipConfig = tooltipPlaces.GetCompareTooltipConfig(m_MainTooltipConfig);
+					m_CompareTooltipConfig = tooltipPlaces.GetCompareTooltipConfig(m_CompareTooltipConfig);
+					return;
+				}
+			}
+			m_MainTooltipConfig = tooltipPlaces.GetMainTooltipConfig(m_MainTooltipConfig);
+			m_CompareTooltipConfig = tooltipPlaces.GetCompareTooltipConfig(m_CompareTooltipConfig);
+		}
+		else
+		{
+			m_MainTooltipConfig = new TooltipConfig(InfoCallPCMethod.None, InfoCallConsoleMethod.None);
 		}
 	}
 

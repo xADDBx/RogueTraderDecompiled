@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Fx;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
@@ -22,7 +23,6 @@ using Kingmaker.Visual.Particles;
 using Kingmaker.Visual.Particles.Blueprints;
 using Kingmaker.Visual.Trails;
 using Owlcat.Runtime.Core.Utility;
-using Owlcat.Runtime.Visual.FogOfWar;
 using UnityEngine;
 
 namespace Kingmaker.Controllers.Projectiles;
@@ -297,6 +297,7 @@ public class Projectile : IInterpolatable
 		GoingToHitVoidShield = true;
 		DeterministicDistance = this.Distance(Launcher.Point, Target.Point);
 		Speed = Blueprint.Speed + PFStatefulRandom.Controllers.Projectiles.Range(0f - Blueprint.SpeedDelta, Blueprint.SpeedDelta);
+		Speed *= Game.CombatAnimSpeedUp;
 		m_Duration = DeterministicDistance / Speed;
 		if (Blueprint.HasMinTime && m_Duration < Blueprint.MinTime)
 		{

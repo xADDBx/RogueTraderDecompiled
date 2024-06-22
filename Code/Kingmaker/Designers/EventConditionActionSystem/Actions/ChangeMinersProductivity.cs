@@ -16,7 +16,7 @@ public class ChangeMinersProductivity : GameAction
 		return "Change miner productivity";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.ColonizationController.ChangeMinerProductivity(m_ProductivityPercents, null, ColonyStatModifierType.Other);
 	}

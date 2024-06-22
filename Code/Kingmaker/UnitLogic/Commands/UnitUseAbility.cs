@@ -282,6 +282,11 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			base.Executor.View.HideOffWeapon(hide: true);
 		}
+		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
+		if (component != null && !component.UseOnSourceWeapon)
+		{
+			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon()) : base.Executor.GetFirstWeapon());
+		}
 		if (base.Target != null)
 		{
 			Vector3 vector = base.Target.Point - base.Executor.Position;
@@ -368,6 +373,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 					return;
 				}
 				base.Animation.AttackWeaponStyle = WeaponStyle;
+				base.Animation.AlternativeStyle = Ability.Blueprint.GetComponent<WarhammerAttackAlternativeAnimationStyle>()?.WeaponAnimationStyle ?? AnimationAlternativeStyle.None;
 				base.Animation.IsBurst = Ability.IsBurstAttack;
 				base.Animation.BurstCount = Ability.BurstAttacksCount;
 				base.Animation.BurstAnimationDelay = Ability.Weapon?.Blueprint.VisualParameters.BurstAnimationDelay ?? 0f;
@@ -398,6 +404,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			SetHandlesParameters(h);
 			h.CastStyle = m_CastAnimStyle;
 			h.CastInOffhand = Ability.Blueprint.CastInOffHand;
+			if (Ability.Blueprint.IsSpell && Ability.Blueprint.Animation == UnitAnimationActionCastSpell.CastAnimationStyle.Reload && !IsMainHandAttack(Ability))
+			{
+				h.CastInOffhand = true;
+			}
 			h.IsCornerAttack = isCornerAttack;
 			h.BurstAnimationDelay = Ability.Weapon?.Blueprint.VisualParameters.BurstAnimationDelay ?? 0f;
 		}
@@ -409,6 +419,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		h.Spell = Ability.Blueprint;
 		h.SpecialCastBehaviour = m_Special;
 		h.AttackWeaponStyle = WeaponStyle;
+		h.AlternativeStyle = Ability.Blueprint.GetComponent<WarhammerAttackAlternativeAnimationStyle>()?.WeaponAnimationStyle ?? AnimationAlternativeStyle.None;
 		h.AttackTargetDistance = (base.Target.Point - base.Executor.Position).magnitude;
 		h.IsBurst = Ability.IsBurstAttack;
 		h.BurstCount = Ability.BurstAttacksCount;

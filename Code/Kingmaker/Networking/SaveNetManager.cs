@@ -1,5 +1,4 @@
 using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,11 +6,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using ExitGames.Client.Photon;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.Enums;
+using Kingmaker.Networking.Player;
 using Kingmaker.Networking.Save;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
@@ -23,13 +27,13 @@ public class SaveNetManager
 {
 	public class SaveReceiveData
 	{
-		public readonly SaveInfoKey SaveInfoKey;
+		public readonly string SaveFilePath;
 
 		public readonly uint RandomNoise;
 
-		public SaveReceiveData(SaveInfoKey saveInfoKey, uint randomNoise)
+		public SaveReceiveData(string saveFilePath, uint randomNoise)
 		{
-			SaveInfoKey = saveInfoKey;
+			SaveFilePath = saveFilePath;
 			RandomNoise = randomNoise;
 		}
 	}
@@ -50,27 +54,46 @@ public class SaveNetManager
 		}
 	}
 
+	private class SaveTransferProgress : IProgress<DataTransferProgressInfo>
+	{
+		public int SaveBytesCount;
+
+		public int PortraitsBytesCount;
+
+		public int TotalCurrentOffset { get; private set; }
+
+		public int TotalBytesCount => SaveBytesCount + PortraitsBytesCount;
+
+		public void Reset()
+		{
+			SaveBytesCount = 0;
+			PortraitsBytesCount = 0;
+			TotalCurrentOffset = 0;
+		}
+
+		public void Report(DataTransferProgressInfo info)
+		{
+			TotalCurrentOffset += info.ProgressChange;
+		}
+	}
+
 	private bool m_InProcess;
 
-	private NetPlayerGroup m_Players = NetPlayerGroup.Empty;
+	private StreamsController m_StreamsController;
 
 	private Texture2D m_DownloadedSaveTexture;
 
 	private UploadTextureData m_UploadTextureData;
 
-	private int m_CurrentOffset;
+	private readonly SaveTransferProgress m_Progress = new SaveTransferProgress();
 
-	private int m_SaveBytesCount;
-
-	private TaskCompletionSource<bool> m_DownloadSaveTcs;
-
-	private PhotonActorNumber m_SaveFromPlayer;
-
-	private readonly List<byte> m_DownloadSaveBytes = new List<byte>();
+	private TaskCompletionSource<byte[]> m_DownloadSaveTcs;
 
 	private SaveMetaData m_DownloadSaveMetaData;
 
-	private TaskCompletionSource<bool> m_UploadSaveAllPlayersReadyTcs;
+	private readonly Dictionary<string, Guid> m_OriginIdGuidPortraitsData = new Dictionary<string, Guid>();
+
+	private readonly Dictionary<Guid, List<PhotonActorNumber>> m_CustomPortraitsReceivers = new Dictionary<Guid, List<PhotonActorNumber>>();
 
 	private Texture2D DownloadedSaveTexture
 	{
@@ -107,23 +130,27 @@ public class SaveNetManager
 		}
 	}
 
+	public PhotonActorNumber SaveFromPlayer { get; private set; }
+
 	private static string GetSaveFilePath(string saveName)
 	{
-		return ApplicationPaths.persistentDataPath + "/Saved Games/" + saveName + ".zks";
+		return ApplicationPaths.temporaryCachePath + "/" + saveName + ".zks";
 	}
 
 	public void ClearState()
 	{
 		PFLog.Net.Log("[SaveNetManager.ClearState]");
 		InProcess = false;
-		m_Players = NetPlayerGroup.Empty;
-		m_CurrentOffset = 0;
-		m_SaveBytesCount = 0;
-		m_SaveFromPlayer = PhotonActorNumber.Invalid;
-		m_DownloadSaveBytes.Clear();
+		m_StreamsController?.Clear();
+		m_StreamsController = null;
+		m_Progress.Reset();
+		SaveFromPlayer = PhotonActorNumber.Invalid;
 		m_DownloadSaveMetaData = null;
 		DownloadedSaveTexture = null;
 		m_UploadTextureData = default(UploadTextureData);
+		m_CustomPortraitsReceivers.Clear();
+		m_OriginIdGuidPortraitsData.Clear();
+		PhotonManager.Instance.DataTransporter.CustomPortraitProgress -= m_Progress.Report;
 	}
 
 	public void OnPlayerEnteredRoom(PhotonActorNumber player)
@@ -136,19 +163,19 @@ public class SaveNetManager
 
 	public void OnPlayerLeftRoom(PhotonActorNumber player)
 	{
-		if (m_SaveFromPlayer == player)
+		if (SaveFromPlayer == player)
 		{
 			m_DownloadSaveTcs.TrySetException(new SaveSourceDisconnectedException());
 		}
-		CheckAllPlayersReady();
+		m_StreamsController?.OnPlayerLeftRoom(player);
 	}
 
 	public bool GetSentProgress(out int progress, out int target)
 	{
 		if (InProcess)
 		{
-			progress = Mathf.Max(m_CurrentOffset, m_DownloadSaveBytes.Count);
-			target = m_SaveBytesCount;
+			progress = m_Progress.TotalCurrentOffset;
+			target = m_Progress.TotalBytesCount;
 			return 0 < target;
 		}
 		progress = 0;
@@ -160,8 +187,9 @@ public class SaveNetManager
 	{
 		if (saveInfo != null)
 		{
-			SaveInfoShort data = (SaveInfoShort)saveInfo;
-			PhotonManager.Instance.SetRoomProperty("si", data);
+			SaveInfoShort saveInfoShort = (SaveInfoShort)saveInfo;
+			saveInfoShort = SavePacker.RepackSaveInfoShortToSend(saveInfoShort);
+			PhotonManager.Instance.SetRoomProperty("si", saveInfoShort);
 			m_UploadTextureData = new UploadTextureData(saveInfo, saveInfo.SaveId);
 			PhotonManager.Instance.DataTransporter.SendSaveScreenshot(m_UploadTextureData.SaveId, m_UploadTextureData.TextureData);
 		}
@@ -181,6 +209,7 @@ public class SaveNetManager
 		PFLog.Net.Log("Applying selected SaveInfo...");
 		if (PhotonManager.Instance.GetRoomProperty<SaveInfoShort>("si", out var obj) && !obj.IsEmpty)
 		{
+			obj = SavePacker.RepackReceivedSaveInfoShort(obj);
 			SaveInfo saveInfo = (SaveInfo)obj;
 			if (DownloadedSaveTexture != null)
 			{
@@ -215,136 +244,169 @@ public class SaveNetManager
 		{
 			throw new AlreadyInProgressException();
 		}
-		InProcess = true;
-		if (!IsSuitableSaveType(saveInfo))
+		try
 		{
-			throw new SaveNotFoundException("Not supported save type");
-		}
-		m_CurrentOffset = 0;
-		SaveInfoKey saveInfoKey = (SaveInfoKey)saveInfo;
-		while (!PhotonManager.DLC.IsDLCsInLobbyReady)
-		{
-			await Task.Delay(16, cancellationToken);
-		}
-		PhotonActorNumber[] actorNumbersAtStart = PhotonManager.Instance.GetActorNumbersAtStart();
-		string[] dlcs = PhotonManager.DLC.CreateDlcInGameList();
-		PhotonManager.Instance.CloseRoom(actorNumbersAtStart, dlcs);
-		PFLog.Net.Log("Send LoadSave to all players...");
-		ArraySegment<byte> bytes;
-		using (InitAllPlayersReadyTcs(cancellationToken))
-		{
-			if (!PhotonManager.Instance.SendMessageToOthers(1))
+			InProcess = true;
+			if (!IsSuitableSaveType(saveInfo))
 			{
-				throw new SendMessageFailException("Failed to send LoadSave");
+				throw new SaveNotFoundException("Not supported save type");
 			}
-			string folderName = saveInfo.FolderName;
-			PFLog.Net.Log("UploadSave started... Save: " + saveInfoKey.ToString() + " Path: '" + folderName + "'");
-			bytes = await Task.Run(() => SavePacker.RepackSaveToSend(saveInfo), cancellationToken);
-			m_SaveBytesCount = bytes.Count;
-			await m_UploadSaveAllPlayersReadyTcs.Task;
-		}
-		DateTime startTime = DateTime.Now;
-		PFLog.Net.Log("Collecting settings...");
-		BaseSettingNetData[] settings = PhotonManager.Settings.CollectState();
-		PFLog.Net.Log("Creating and sending save meta data...");
-		ByteArraySlice byteArraySlice = NetMessageSerializer.SerializeToSlice(new SaveMetaData
-		{
-			length = bytes.Count,
-			saveName = saveInfoKey.Name,
-			saveId = saveInfoKey.Id,
-			randomNoise = randomNoise,
-			actorNumbersAtStart = actorNumbersAtStart,
-			dlcs = dlcs,
-			settings = settings
-		});
-		using (InitAllPlayersReadyTcs(cancellationToken))
-		{
-			if (!PhotonManager.Instance.SendMessageToOthers(3, byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count))
+			m_Progress.Reset();
+			SaveInfoKey saveInfoKey = (SaveInfoKey)saveInfo;
+			while (!PhotonManager.DLC.IsDLCsInLobbyReady)
 			{
-				throw new SendMessageFailException("Failed to send SaveMeta package");
+				await Task.Delay(16, cancellationToken);
 			}
-			byteArraySlice.Release();
-			PFLog.Net.Log("SaveMeta message was send");
-			await m_UploadSaveAllPlayersReadyTcs.Task;
-		}
-		int offset = 0;
-		int index = 0;
-		while (offset < bytes.Count)
-		{
-			int num = Mathf.Min(bytes.Count - offset, SaveMetaData.MaxPacketSize);
-			ArraySegment<byte> arraySegment = bytes.Slice(offset, num);
-			using (InitAllPlayersReadyTcs(cancellationToken))
+			PhotonActorNumber[] actorNumbersAtStart = PhotonManager.Instance.GetActorNumbersAtStart();
+			string[] dlcs = PhotonManager.DLC.CreateDlcInGameList();
+			PhotonManager.Instance.CloseRoom(actorNumbersAtStart, dlcs);
+			m_StreamsController = new StreamsController(GetTargetActors(), 1);
+			PFLog.Net.Log("Send LoadSave to all players...");
+			ArraySegment<byte> bytes;
+			using (m_StreamsController.InitAllPlayersReadyTcs(cancellationToken))
 			{
-				if (!PhotonManager.Instance.SendMessageToOthers(4, arraySegment.Array, arraySegment.Offset, arraySegment.Count))
+				if (!PhotonManager.Instance.SendMessageToOthers(1))
 				{
-					throw new SendMessageFailException($"Failed to send Save (package #{index + 1})");
+					throw new SendMessageFailException("Failed to send LoadSave");
 				}
-				offset += num;
-				PFLog.Net.Log($"PacketType.Save message was send. Bytes: {offset}/{bytes.Count}");
-				m_CurrentOffset = offset;
-				await m_UploadSaveAllPlayersReadyTcs.Task;
+				string folderName = saveInfo.FolderName;
+				PFLog.Net.Log("UploadSave started... Save: " + saveInfoKey.ToString() + " Path: '" + folderName + "'");
+				bytes = await Task.Run(() => SavePacker.RepackSaveToSend(saveInfo), cancellationToken);
+				m_Progress.SaveBytesCount = bytes.Count;
+				await m_StreamsController.WaitAllStreams();
 			}
-			int num2 = index + 1;
-			index = num2;
-		}
-		PFLog.Net.Log($"[{Time.frameCount}] Uploading process complete! size={(double)m_SaveBytesCount / 1024.0:0.00}KB time={(DateTime.Now - startTime).TotalSeconds:0.00}s chunk={(double)SaveMetaData.MaxPacketSize / 1024.0:0.00}KB speed={(double)m_SaveBytesCount / (DateTime.Now - startTime).TotalSeconds / 1024.0 / 1024.0:0.00}MB/s");
-		InProcess = false;
-		m_CurrentOffset = 0;
-		m_SaveBytesCount = 0;
-		IDisposable InitAllPlayersReadyTcs(CancellationToken token)
-		{
-			token.ThrowIfCancellationRequested();
-			m_UploadSaveAllPlayersReadyTcs = new TaskCompletionSource<bool>();
-			m_Players = new NetPlayerGroup(PhotonManager.Instance.LocalNetPlayer);
-			CheckAllPlayersReady();
-			return token.CanBeCanceled ? token.Register(delegate
+			PortraitData[] customPortraits = (from p in saveInfo.PartyPortraits
+				where p.Data.IsCustom && CustomPortraitsManager.Instance.HasPortraits(p.Data.CustomId)
+				select p.Data).ToArray();
+			PortraitSaveMetaData[] portraitSaveMetaData = CreatePortraitSaveMetaData(customPortraits);
+			DateTime startTime = DateTime.Now;
+			PFLog.Net.Log("Collecting settings...");
+			BaseSettingNetData[] settings = PhotonManager.Settings.CollectState();
+			await SendSaveMeta(randomNoise, cancellationToken);
+			await SendPortraits(customPortraits, m_CustomPortraitsReceivers, portraitSaveMetaData, m_Progress, cancellationToken);
+			await PhotonManager.Instance.DataTransporter.SendSave(GetTargetActors(), bytes, cancellationToken, m_Progress);
+			PFLog.Net.Log($"[{Time.frameCount}] Uploading process complete! size={(double)m_Progress.SaveBytesCount / 1024.0:0.00}KB time={(DateTime.Now - startTime).TotalSeconds:0.00}s chunk={(double)SaveMetaData.MaxPacketSize / 1024.0:0.00}KB streams={StreamsController.DefaultStreamsCount} speed={(double)m_Progress.SaveBytesCount / (DateTime.Now - startTime).TotalSeconds / 1024.0 / 1024.0:0.00}MB/s");
+			async Task SendSaveMeta(uint noise, CancellationToken token)
 			{
-				m_UploadSaveAllPlayersReadyTcs.TrySetCanceled();
-			}) : default(CancellationTokenRegistration);
+				PFLog.Net.Log("Creating and sending save meta data...");
+				ByteArraySlice byteArraySlice = NetMessageSerializer.SerializeToSlice(new SaveMetaData
+				{
+					length = bytes.Count,
+					saveName = saveInfoKey.Name,
+					saveId = saveInfoKey.Id,
+					randomNoise = noise,
+					actorNumbersAtStart = actorNumbersAtStart,
+					dlcs = dlcs,
+					settings = settings,
+					portraitsSaveMeta = portraitSaveMetaData
+				});
+				using (m_StreamsController.InitAllPlayersReadyTcs(token))
+				{
+					if (!PhotonManager.Instance.SendMessageToOthers(3, byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count))
+					{
+						throw new SendMessageFailException("Failed to send SaveMeta package");
+					}
+					byteArraySlice.Release();
+					PFLog.Net.Log("SaveMeta message was send");
+					await m_StreamsController.WaitAllStreams();
+				}
+			}
+		}
+		finally
+		{
+			InProcess = false;
+			m_Progress.Reset();
+		}
+		static PortraitSaveMetaData[] CreatePortraitSaveMetaData(PortraitData[] portraits)
+		{
+			if (portraits.Empty())
+			{
+				return Array.Empty<PortraitSaveMetaData>();
+			}
+			return portraits.Select((PortraitData portrait) => new PortraitSaveMetaData
+			{
+				guid = CustomPortraitsManager.Instance.GetOrCreatePortraitGuid(portrait.CustomId),
+				originId = portrait.CustomId,
+				imagesFileLength = new int[3]
+				{
+					(int)new FileInfo(CustomPortraitsManager.Instance.GetPortraitPath(portrait.CustomId, PortraitType.SmallPortrait)).Length,
+					(int)new FileInfo(CustomPortraitsManager.Instance.GetPortraitPath(portrait.CustomId, PortraitType.HalfLengthPortrait)).Length,
+					(int)new FileInfo(CustomPortraitsManager.Instance.GetPortraitPath(portrait.CustomId, PortraitType.FullLengthPortrait)).Length
+				}
+			}).ToArray();
+		}
+		static List<PhotonActorNumber> GetTargetActors()
+		{
+			List<PhotonActorNumber> list = new List<PhotonActorNumber>();
+			PhotonActorNumber photonActorNumber = new PhotonActorNumber(PhotonManager.Instance.LocalClientId);
+			foreach (PlayerInfo activePlayer in PhotonManager.Instance.ActivePlayers)
+			{
+				if (activePlayer.Player != photonActorNumber)
+				{
+					list.Add(activePlayer.Player);
+				}
+			}
+			return list;
+		}
+		static async Task SendPortraits(PortraitData[] customPortraits, Dictionary<Guid, List<PhotonActorNumber>> receivers, PortraitSaveMetaData[] portraitsMetaData, SaveTransferProgress progress, CancellationToken cancellationToken)
+		{
+			if (customPortraits.Empty())
+			{
+				PFLog.Net.Log("[SaveNetManager.UploadSave] portraits list empty");
+			}
+			else
+			{
+				foreach (PortraitData portraitData in customPortraits)
+				{
+					Guid guid = CustomPortraitsManager.Instance.GetOrCreatePortraitGuid(portraitData.CustomId);
+					if (receivers.TryGetValue(guid, out var value))
+					{
+						int[] array = (from g in portraitsMetaData
+							where g.guid == guid
+							select g.imagesFileLength).First();
+						foreach (int num in array)
+						{
+							progress.PortraitsBytesCount += num;
+						}
+						await PhotonManager.Instance.DataTransporter.SendCustomPortrait(portraitData, value, progress, default(CancellationToken), cancellationToken);
+					}
+				}
+			}
 		}
 	}
 
-	public void OnRequestSave(NetPlayer player)
+	public void OnRequestSave(PhotonActorNumber player)
 	{
-		if (m_Players.Contains(player))
-		{
-			PFLog.Net.Error("OnRequestSave: message duplicated! Player #" + player);
-			return;
-		}
-		m_Players = m_Players.Add(player);
-		PFLog.Net.Log("OnRequestSave: Player #" + player);
-		CheckAllPlayersReady();
+		m_StreamsController.OnAck(player, 0);
 	}
 
-	public void OnSaveAcknowledge(NetPlayer player, ReadOnlySpan<byte> bytes)
+	public void OnSaveMetaAcknowledge(NetPlayer player, PhotonActorNumber photonActorNumber, ReadOnlySpan<byte> bytes)
 	{
-		if (bytes.Length != 4)
+		SaveMetaAcknowledgeData saveMetaAcknowledgeData;
+		try
 		{
-			PFLog.Net.Error($"OnSaveAcknowledge: unexpected packet size! {bytes.Length}/{4}");
+			saveMetaAcknowledgeData = NetMessageSerializer.DeserializeFromSpan<SaveMetaAcknowledgeData>(bytes);
+		}
+		catch (Exception innerException)
+		{
+			SaveReceiveException exception = new SaveReceiveException("Can't parse SaveMetaAcknowledgeData", innerException);
+			m_StreamsController.Failed(exception);
 			return;
 		}
-		int num = BinaryPrimitives.ReadInt32BigEndian(bytes);
-		if (m_CurrentOffset != num)
+		PFLog.Net.Log($"[SaveNetManager.OnSaveMetaAcknowledge] {player}, portraitsCount={saveMetaAcknowledgeData.PortraitsGuid.Length}");
+		SaveMetaAcknowledgeData.GuidData[] portraitsGuid = saveMetaAcknowledgeData.PortraitsGuid;
+		for (int i = 0; i < portraitsGuid.Length; i++)
 		{
-			PFLog.Net.Error($"OnSaveAcknowledge: unexpected offset! Player #{player.ToString()} offset={num}/{m_CurrentOffset}");
-			return;
+			SaveMetaAcknowledgeData.GuidData guidData = portraitsGuid[i];
+			if (m_CustomPortraitsReceivers.TryGetValue(guidData.Guid, out var value))
+			{
+				value.Add(photonActorNumber);
+				continue;
+			}
+			m_CustomPortraitsReceivers[guidData.Guid] = new List<PhotonActorNumber> { photonActorNumber };
 		}
-		if (m_Players.Contains(player))
-		{
-			PFLog.Net.Error("OnSaveAcknowledge: message duplicated! Player #" + player);
-			return;
-		}
-		m_Players = m_Players.Add(player);
-		PFLog.Net.Log("OnSaveAcknowledge: Player #" + player);
-		CheckAllPlayersReady();
-	}
-
-	private void CheckAllPlayersReady()
-	{
-		if (m_Players.Contains(PhotonManager.Instance.PlayersReadyMask))
-		{
-			m_UploadSaveAllPlayersReadyTcs.TrySetResult(result: true);
-		}
+		PFLog.Net.Log("OnSaveMetaAcknowledge: Player #" + player);
+		m_StreamsController.OnAck(photonActorNumber, 0);
 	}
 
 	public async Task<SaveReceiveData> DownloadSave(PhotonActorNumber saveFromPlayer, CancellationToken cancellationToken)
@@ -353,43 +415,57 @@ public class SaveNetManager
 		{
 			throw new AlreadyInProgressException();
 		}
+		DataTransporter transporter = PhotonManager.Instance.DataTransporter;
 		try
 		{
 			InProcess = true;
-			m_DownloadSaveTcs = new TaskCompletionSource<bool>();
-			using (cancellationToken.Register(delegate
+			m_DownloadSaveTcs = new TaskCompletionSource<byte[]>();
+			SaveReceiveData result;
+			await using (cancellationToken.Register(delegate
 			{
 				m_DownloadSaveTcs.TrySetCanceled();
 			}))
 			{
-				m_SaveFromPlayer = saveFromPlayer;
+				SaveFromPlayer = saveFromPlayer;
+				transporter.ReceiversFactory.Register(24, (DataTransporterReceiversFactory.Args args) => new SaveReceiver(args.SourcePlayer, args.Sender, delegate(byte[] data)
+				{
+					m_DownloadSaveTcs.TrySetResult(data);
+				}, m_Progress, cancellationToken));
+				PFLog.Net.Log("FillAllPortraitsGuid");
+				CustomPortraitsManager.Instance.FillAllPortraitsGuid();
 				PFLog.Net.Log("DownloadSave started...");
 				if (!PhotonManager.Instance.SendMessageTo(saveFromPlayer, 2))
 				{
 					throw new SendMessageFailException("Failed to send RequestSave");
 				}
-				await m_DownloadSaveTcs.Task;
+				byte[] saveBytes = await m_DownloadSaveTcs.Task;
 				PFLog.Net.Log("Downloading process completed!");
 				SaveInfo saveInfo = Game.Instance.SaveManager.FirstOrDefault(SaveManager.IsCoopSave);
 				if (saveInfo != null)
 				{
 					Game.Instance.SaveManager.DeleteSave(saveInfo);
 				}
+				string saveFilePath = GetSaveFilePath("net_save_4b31b8ad92353a02");
 				await Task.Run(delegate
 				{
-					RepackAndSaveToFile(m_DownloadSaveBytes, GetSaveFilePath("net_save_4b31b8ad92353a02"));
+					RepackAndSaveToFile(saveBytes, saveFilePath);
 				}, cancellationToken);
-				SaveInfoKey saveInfoKey = new SaveInfoKey(m_DownloadSaveMetaData.saveId, "net_save_4b31b8ad92353a02", saveFromPlayer.ToNetPlayer(NetPlayer.Empty));
-				PFLog.Net.Log($"SaveInfo {saveInfoKey}");
-				return new SaveReceiveData(saveInfoKey, m_DownloadSaveMetaData.randomNoise);
+				PFLog.Net.Log("Save Id " + m_DownloadSaveMetaData.saveId);
+				result = new SaveReceiveData(saveFilePath, m_DownloadSaveMetaData.randomNoise);
 			}
+			return result;
 		}
 		finally
 		{
 			InProcess = false;
-			m_SaveFromPlayer = PhotonActorNumber.Invalid;
+			PortraitSaveMetaData[] portraitsSaveMeta = m_DownloadSaveMetaData.portraitsSaveMeta;
+			foreach (PortraitSaveMetaData portraitSaveMetaData in portraitsSaveMeta)
+			{
+				m_OriginIdGuidPortraitsData[portraitSaveMetaData.originId] = portraitSaveMetaData.guid;
+			}
+			SaveFromPlayer = PhotonActorNumber.Invalid;
 			m_DownloadSaveMetaData = null;
-			m_DownloadSaveBytes.Clear();
+			transporter.ReceiversFactory.Unregister(24);
 		}
 	}
 
@@ -405,9 +481,7 @@ public class SaveNetManager
 			m_DownloadSaveTcs.SetException(new SaveReceiveException("Can't parse SavePart", innerException));
 			return;
 		}
-		m_DownloadSaveBytes.Clear();
-		m_DownloadSaveBytes.IncreaseCapacity(m_DownloadSaveMetaData.length);
-		m_SaveBytesCount = m_DownloadSaveMetaData.length;
+		m_Progress.SaveBytesCount = m_DownloadSaveMetaData.length;
 		PhotonManager.Instance.CloseRoom(m_DownloadSaveMetaData.actorNumbersAtStart, m_DownloadSaveMetaData.dlcs);
 		PFLog.Net.Log("Applying settings...");
 		BaseSettingNetData[] settings = m_DownloadSaveMetaData.settings;
@@ -416,29 +490,56 @@ public class SaveNetManager
 			settings[i].ForceSet();
 		}
 		PFLog.Net.Log("All settings was applied!");
-		if (!SendSaveAcknowledge(player, m_DownloadSaveBytes.Count))
+		var (array, portraitsBytesCount) = PreparePortraitsGuidForDownload(m_DownloadSaveMetaData.portraitsSaveMeta, CustomPortraitsManager.Instance);
+		m_Progress.PortraitsBytesCount = portraitsBytesCount;
+		if (array.Length != 0)
 		{
-			m_DownloadSaveTcs.SetException(new SendMessageFailException("Failed to send SaveAcknowledge"));
+			PhotonManager.Instance.DataTransporter.CustomPortraitProgress += m_Progress.Report;
 		}
-	}
-
-	public void OnSaveReceived(PhotonActorNumber player, ReadOnlySpan<byte> bytes)
-	{
-		ReadOnlySpan<byte> readOnlySpan = bytes;
-		for (int i = 0; i < readOnlySpan.Length; i++)
+		if (!SendMetaAck(player, array))
 		{
-			byte item = readOnlySpan[i];
-			m_DownloadSaveBytes.Add(item);
+			m_DownloadSaveTcs.SetException(new SendMessageFailException("Failed to send SaveMetaAcknowledge"));
 		}
-		PFLog.Net.Log($"Save bytes {m_DownloadSaveBytes.Count}/{m_DownloadSaveMetaData.length} received");
-		int count = m_DownloadSaveBytes.Count;
-		if (m_DownloadSaveBytes.Count == m_DownloadSaveMetaData.length)
+		static (Guid[] guids, int length) PreparePortraitsGuidForDownload(PortraitSaveMetaData[] masterPortraits, CustomPortraitsManager portraitsManager)
 		{
-			m_DownloadSaveTcs.SetResult(result: true);
+			List<Guid> list = null;
+			int num = 0;
+			portraitsManager.FillAllPortraitsGuid();
+			foreach (PortraitSaveMetaData portraitSaveMetaData in masterPortraits)
+			{
+				if (!portraitsManager.TryGetPortraitId(portraitSaveMetaData.guid, out var _))
+				{
+					if (list == null)
+					{
+						list = new List<Guid>();
+					}
+					list.Add(portraitSaveMetaData.guid);
+					int[] imagesFileLength = portraitSaveMetaData.imagesFileLength;
+					foreach (int num2 in imagesFileLength)
+					{
+						num += num2;
+					}
+				}
+			}
+			if (list == null)
+			{
+				return (guids: Array.Empty<Guid>(), length: num);
+			}
+			return (guids: list.ToArray(), length: num);
 		}
-		if (!SendSaveAcknowledge(player, count))
+		static bool SendMetaAck(PhotonActorNumber player, Guid[] guidsForDownload)
 		{
-			m_DownloadSaveTcs.SetException(new SendMessageFailException("Failed to send SaveAcknowledge"));
+			ByteArraySlice byteArraySlice = NetMessageSerializer.SerializeToSlice(new SaveMetaAcknowledgeData
+			{
+				PortraitsGuid = guidsForDownload.Select(delegate(Guid g)
+				{
+					SaveMetaAcknowledgeData.GuidData result = default(SaveMetaAcknowledgeData.GuidData);
+					result.Guid = g;
+					result.AlreadyHave = false;
+					return result;
+				}).ToArray()
+			});
+			return PhotonManager.Instance.SendMessageTo(player, 4, byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count);
 		}
 	}
 
@@ -459,24 +560,36 @@ public class SaveNetManager
 		return false;
 	}
 
-	private static bool SendSaveAcknowledge(PhotonActorNumber player, int currentLength)
-	{
-		byte[] array = MessageNetManager.SendBytes.GetArray();
-		BinaryPrimitives.WriteInt32BigEndian(array.AsSpan(0, 4), currentLength);
-		return PhotonManager.Instance.SendMessageTo(player, 5, array, 0, 4);
-	}
-
-	private static void RepackAndSaveToFile(List<byte> data, string filePath)
+	private static void RepackAndSaveToFile(byte[] data, string filePath)
 	{
 		PFLog.Net.Log("Repacking data...");
-		byte[] saveBytes = data.ToArray();
-		saveBytes = SavePacker.RepackReceivedSave(saveBytes);
+		byte[] bytes = SavePacker.RepackReceivedSave(data);
 		PFLog.Net.Log("Saving to file... " + filePath);
 		string directoryName = Path.GetDirectoryName(filePath);
 		if (!Directory.Exists(directoryName))
 		{
 			Directory.CreateDirectory(directoryName);
 		}
-		File.WriteAllBytes(filePath, saveBytes);
+		File.WriteAllBytes(filePath, bytes);
+	}
+
+	public void PostLoad()
+	{
+		if (m_OriginIdGuidPortraitsData.Count == 0)
+		{
+			return;
+		}
+		foreach (Entity allEntityDatum in Game.Instance.Player.CrossSceneState.AllEntityData)
+		{
+			PartUnitUISettings optional = allEntityDatum.GetOptional<PartUnitUISettings>();
+			PortraitData portraitData = optional?.CustomPortraitRaw;
+			if (portraitData != null && portraitData.IsCustom && m_OriginIdGuidPortraitsData.TryGetValue(optional.CustomPortraitRaw.CustomId, out var value))
+			{
+				CustomPortraitsManager.Instance.TryGetPortraitId(value, out var id);
+				PFLog.Net.Log("[SaveNetManager.PostLoad] replace portrait " + optional.CustomPortraitRaw.CustomId + " -> " + id);
+				optional.SetPortrait(new PortraitData(id), raiseEvent: false);
+			}
+		}
+		m_OriginIdGuidPortraitsData.Clear();
 	}
 }

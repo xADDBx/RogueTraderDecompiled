@@ -8,41 +8,27 @@ namespace Owlcat.Runtime.Visual.OcclusionGeometryClip.BIH;
 [BurstCompile]
 public struct Node
 {
-	public struct InnerNodeData
-	{
-		public float leftPlane;
-
-		public float rightPlane;
-	}
-
-	public struct LeafNodeData
-	{
-		public uint offset;
-
-		public uint size;
-	}
-
-	private const uint kTypeMask = 805306368u;
+	private const uint kTypeMask = 3221225472u;
 
 	private const uint kChildIndexMask = 1073741823u;
 
-	private const uint kLeafValue = 805306368u;
+	private const uint kLeafValue = 3221225472u;
 
 	private const int kAxisShift = 30;
 
 	[FieldOffset(0)]
 	private uint index;
 
-	[FieldOffset(32)]
+	[FieldOffset(4)]
 	private float innerLeftPlane;
 
-	[FieldOffset(64)]
+	[FieldOffset(8)]
 	private float innerRightPlane;
 
-	[FieldOffset(32)]
+	[FieldOffset(4)]
 	private uint leafOffset;
 
-	[FieldOffset(64)]
+	[FieldOffset(8)]
 	private uint leafSize;
 
 	public int InnerChildIndex
@@ -95,7 +81,7 @@ public struct Node
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			return (index & 0x30000000) == 805306368;
+			return (index & 0xC0000000u) == 3221225472u;
 		}
 	}
 
@@ -104,7 +90,7 @@ public struct Node
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			return (index & 0x30000000) != 805306368;
+			return (index & 0xC0000000u) != 3221225472u;
 		}
 	}
 
@@ -121,7 +107,7 @@ public struct Node
 	private Node(uint leafOffset, uint leafSize)
 	{
 		this = default(Node);
-		index = 805306368u;
+		index = 3221225472u;
 		this.leafOffset = leafOffset;
 		this.leafSize = leafSize;
 	}
@@ -162,7 +148,7 @@ public struct Node
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void MakeLeaf(ref Node node, uint boundsOffset, uint boundsSize)
 	{
-		node.index = 805306368u;
+		node.index = 3221225472u;
 		node.leafOffset = boundsOffset;
 		node.leafSize = boundsSize;
 	}

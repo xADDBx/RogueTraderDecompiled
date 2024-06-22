@@ -6,6 +6,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Networking;
 using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
+using Kingmaker.UI.Models.UnitSettings;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -97,7 +98,7 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 		{
 			AddDisposable(ObservableExtensions.Subscribe(m_ConvertButton.OnLeftClickAsObservable(), delegate
 			{
-				base.ViewModel.OnShowConvertRequest();
+				ShowConvertRequest();
 			}));
 		}
 	}
@@ -114,7 +115,7 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 			{
 				if (!string.IsNullOrWhiteSpace(base.ViewModel.MechanicActionBarSlot.KeyName))
 				{
-					PhotonManager.Ping.PingActionBarAbility(base.ViewModel.MechanicActionBarSlot.KeyName, base.ViewModel.MechanicActionBarSlot.Unit, base.ViewModel.Index);
+					PhotonManager.Ping.PingActionBarAbility(base.ViewModel.MechanicActionBarSlot.KeyName, base.ViewModel.MechanicActionBarSlot.Unit, base.ViewModel.Index, base.ViewModel.WeaponSlotType);
 				}
 			});
 		}
@@ -216,5 +217,17 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 	protected override void DestroyViewImplementation()
 	{
 		TryDestroyBinding();
+	}
+
+	private void ShowConvertRequest()
+	{
+		if (m_ActionBarSlotType == ActionBarSlotType.WeaponAbility && base.ViewModel.MechanicActionBarSlot is MechanicActionBarShipWeaponSlot variantsShipWeaponSlot)
+		{
+			base.ViewModel.OnShowVariantsConvertRequest(variantsShipWeaponSlot);
+		}
+		else
+		{
+			base.ViewModel.OnShowConvertRequest();
+		}
 	}
 }

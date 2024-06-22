@@ -2,13 +2,18 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
+using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Player;
 using Kingmaker.Networking.Settings;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Photon.Realtime;
 using UnityEngine;
 
 namespace Kingmaker.UI.Common;
@@ -32,6 +37,23 @@ public static class UINetUtility
 	public static bool IsControlMainCharacter()
 	{
 		return Game.Instance.Player.MainCharacterEntity.IsMyNetRole();
+	}
+
+	public static bool CanEditCareer([CanBeNull] this MechanicEntity entry)
+	{
+		if (entry == null)
+		{
+			return false;
+		}
+		if (RootUIContext.Instance.IsCharInfoLevelProgression)
+		{
+			return entry.CanBeControlled();
+		}
+		if (RootUIContext.Instance.IsChargenShown || RootUIContext.Instance.IsShipInventoryShown)
+		{
+			return IsControlMainCharacter();
+		}
+		return false;
 	}
 
 	public static bool IsControlMainCharacterWithWarning(bool needSignalHowToPing = false)
@@ -173,6 +195,53 @@ public static class UINetUtility
 			return entity.Name;
 		}
 		return "[" + nickName + "] " + entity.Name;
+	}
+
+	public static void ShowBlockedPlayerWarning(string playerName)
+	{
+		UIUtility.SendWarning(string.Format(UIStrings.Instance.NetLobbyTexts.BlockedPlayerInLobby, playerName));
+	}
+
+	public static void ShowCantJoinByPrivacySettingsWarning()
+	{
+		UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.CantJoinLobbyDuePrivacySettings, DialogMessageBoxBase.BoxType.Message, null);
+	}
+
+	public static void HandlePhotonDisconnectedError(DisconnectCause cause, bool allowReconnect)
+	{
+		string text = UIStrings.Instance.NetLobbyErrorsTexts.PhotonDisconnectedErrorMessage.Text + " " + ReasonStrings.Instance.GetDisconnectCause(cause);
+		if (allowReconnect)
+		{
+			ShowReconnectDialog(text);
+			return;
+		}
+		UIUtility.ShowMessageBox(text, DialogMessageBoxBase.BoxType.Message, delegate
+		{
+			CloseLobby();
+		});
+	}
+
+	public static void ShowReconnectDialog(string message)
+	{
+		UIUtility.ShowMessageBox(message, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton btn)
+		{
+			if (btn == DialogMessageBoxBase.BoxButton.Yes)
+			{
+				PhotonManager.NetGame.StartNetGameIfNeeded();
+			}
+			else
+			{
+				CloseLobby();
+			}
+		}, null, UIStrings.Instance.NetLobbyTexts.Reconnect, UIStrings.Instance.CommonTexts.Cancel);
+	}
+
+	private static void CloseLobby()
+	{
+		EventBus.RaiseEvent(delegate(INetLobbyRequest h)
+		{
+			h.HandleNetLobbyClose();
+		});
 	}
 
 	private static bool LocalTest([CanBeNull] this Entity unit, out bool isMine)

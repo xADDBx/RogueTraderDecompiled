@@ -68,7 +68,7 @@ public class ItemsCollection : IItemsCollection, IEnumerable<ItemEntity>, IEnume
 
 	public bool IsSharedStash => this == Game.Instance.Player.SharedStash;
 
-	public bool HasLoot => m_Items.HasItem((ItemEntity i) => i.IsLootable && i.IsAvailable());
+	public bool HasLoot => m_Items.HasItem((ItemEntity i) => i.IsLootable && i.IsAvailable() && (i.HoldingSlot?.CanRemoveItem() ?? true));
 
 	[JsonConstructor]
 	private ItemsCollection()
@@ -207,13 +207,13 @@ public class ItemsCollection : IItemsCollection, IEnumerable<ItemEntity>, IEnume
 		return newItem;
 	}
 
-	public void Add(BlueprintItem newBpItem, int count, [CanBeNull] Action<ItemEntity> callback = null)
+	public void Add(BlueprintItem newBpItem, int count, [CanBeNull] Action<ItemEntity> callback = null, bool noAutoMerge = false)
 	{
 		if (newBpItem.IsActuallyStackable || ForceStackable)
 		{
 			ItemEntity itemEntity = newBpItem.CreateEntity();
 			itemEntity.IncrementCount(count - 1, ForceStackable);
-			itemEntity = Add(itemEntity);
+			itemEntity = Add(itemEntity, noAutoMerge);
 			try
 			{
 				callback?.Invoke(itemEntity);
@@ -227,7 +227,7 @@ public class ItemsCollection : IItemsCollection, IEnumerable<ItemEntity>, IEnume
 		}
 		while (count-- > 0)
 		{
-			ItemEntity obj = Add(newBpItem.CreateEntity());
+			ItemEntity obj = Add(newBpItem.CreateEntity(), noAutoMerge);
 			try
 			{
 				callback?.Invoke(obj);

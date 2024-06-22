@@ -20,25 +20,49 @@ public class ContextActionMoveDirectToPoint : ContextActionMove
 	private bool m_UseForceMove;
 
 	[SerializeField]
+	private bool m_UseJump;
+
+	[SerializeField]
 	private bool m_EndInTargetPoint;
 
 	[SerializeField]
 	private bool m_ProvokeAttackOfOpportunity;
+
+	[SerializeField]
+	private bool m_FromPoint;
+
+	[SerializeField]
+	private bool m_IgnoreThreateningArea;
 
 	public override string GetCaption()
 	{
 		return $"Move direct to {m_TargetPoint}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		CustomGridNodeBase startPoint = base.TargetEntity.Position.GetNearestNodeXZ();
+		CustomGridNodeBase startPoint = base.Caster.Position.GetNearestNodeXZ();
 		CustomGridNodeBase nearestNodeXZ = m_TargetPoint.GetValue().GetNearestNodeXZ();
 		int num = m_Cells.Calculate(base.Context);
-		CustomGridNodeBase endPoint = (base.TargetEntity.Position + (m_TargetPoint.GetValue() - base.TargetEntity.Position).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ();
+		CustomGridNodeBase endPoint = (m_FromPoint ? (m_TargetPoint.GetValue() + (base.Caster.Position - m_TargetPoint.GetValue()).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (base.Caster.Position + (m_TargetPoint.GetValue() - base.Caster.Position).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ());
+		if (!m_UseJump)
+		{
+			startPoint = base.TargetEntity.Position.GetNearestNodeXZ();
+			nearestNodeXZ = m_TargetPoint.GetValue().GetNearestNodeXZ();
+			num = m_Cells.Calculate(base.Context);
+			endPoint = (m_FromPoint ? (m_TargetPoint.GetValue() + (base.TargetEntity.Position - m_TargetPoint.GetValue()).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (base.TargetEntity.Position + (m_TargetPoint.GetValue() - base.TargetEntity.Position).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ());
+		}
 		if (m_EndInTargetPoint && startPoint.CellDistanceTo(nearestNodeXZ) < num)
 		{
 			endPoint = nearestNodeXZ;
+		}
+		if (m_UseJump)
+		{
+			EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
+			{
+				h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), m_TargetPoint.GetValue(), base.Caster, base.Caster, useAttack: false);
+			});
+			return;
 		}
 		if (m_UseForceMove)
 		{
@@ -58,7 +82,7 @@ public class ContextActionMoveDirectToPoint : ContextActionMove
 			abstractUnitEntity.LookAt(targetNode.Vector3Position);
 		}
 		targetEntity.Features.CanPassThroughUnits.Retain();
-		WarhammerPathPlayer warhammerPathPlayer = PathfindingService.Instance.FindPathTB_Blocking(targetEntity.View.MovementAgent, targetNode.Vector3Position, limitRangeByActionPoints: false);
+		WarhammerPathPlayer warhammerPathPlayer = PathfindingService.Instance.FindPathTB_Blocking(targetEntity.View.MovementAgent, targetNode.Vector3Position, limitRangeByActionPoints: false, m_IgnoreThreateningArea);
 		targetEntity.Features.CanPassThroughUnits.Release();
 		warhammerPathPlayer.OverrideBlockMode(targetEntity.View.MovementAgent.Unit ? targetEntity.View.MovementAgent.Unit.BlockMode : warhammerPathPlayer.PathBlockMode);
 		int i;
@@ -72,7 +96,7 @@ public class ContextActionMoveDirectToPoint : ContextActionMove
 			{
 				unitMoveToProperParams.DisableAttackOfOpportunity.Release();
 			}
-			base.AbilityContext.TemporarilyBlockLastPathNode(unitMoveToProperParams.ForcedPath, targetEntity);
+			base.AbilityContext?.TemporarilyBlockLastPathNode(unitMoveToProperParams.ForcedPath, targetEntity);
 			targetEntity?.Commands.Run(unitMoveToProperParams);
 			EventBus.RaiseEvent(delegate(IUnitAbilityNonPushForceMoveHandler h)
 			{

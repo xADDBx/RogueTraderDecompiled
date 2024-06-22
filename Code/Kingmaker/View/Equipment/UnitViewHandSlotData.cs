@@ -220,7 +220,7 @@ public class UnitViewHandSlotData
 					}
 				}
 			}
-			return num * Game.Instance.BlueprintRoot.WeaponModelSizing.GetCoeff(Owner.OriginalSize);
+			return num;
 		}
 	}
 
@@ -377,7 +377,7 @@ public class UnitViewHandSlotData
 			{
 				ReattachSheath();
 			}
-			VisualModel.transform.SetParent(transform, worldPositionStays: true);
+			VisualModel.transform.SetParent(transform, worldPositionStays: false);
 			VisualModel.transform.localPosition = Vector3.zero;
 			VisualModel.transform.localRotation = Quaternion.identity;
 			VisualModel.GetComponentsInChildren(m_VisualModelRenderers);

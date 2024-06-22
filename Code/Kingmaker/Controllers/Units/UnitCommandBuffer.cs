@@ -87,7 +87,7 @@ public class UnitCommandBuffer : IControllerTick, IController, IControllerStart,
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

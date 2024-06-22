@@ -56,6 +56,7 @@ public abstract class BaseUseAbilityLogThread : LogThreadBase
 				CombatLogMessage message2 = ((GameLogContext.TargetEntity.Value != null) ? LogThreadBase.Strings.UseAbilityOnTarget : LogThreadBase.Strings.UseAbility).CreateCombatLogMessage();
 				AddMessage(new CombatLogMessage(message2, new TooltipTemplateAbility(ability), hasTooltip: true, mechanicEntity));
 			}
+			LogThreadBase.IsPreviousMessageUseSomething = true;
 		}
 	}
 }

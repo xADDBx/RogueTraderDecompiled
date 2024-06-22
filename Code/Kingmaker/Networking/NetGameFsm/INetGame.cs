@@ -1,11 +1,16 @@
 using System;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.Networking.Platforms.Session;
 
 namespace Kingmaker.Networking.NetGameFsm;
 
 public interface INetGame
 {
+	JoinableUserTypes CurrentJoinableUserType { get; }
+
+	InvitableUserTypes CurrentInvitableUserType { get; }
+
 	void InitPlatform();
 
 	void OnPlatformInitialized();
@@ -44,7 +49,7 @@ public interface INetGame
 
 	void StartPlaying();
 
-	void StopPlaying(bool shouldLeaveLobby);
+	void StopPlaying(bool shouldLeaveLobby, string reason);
 
 	void OnPlayingStopped();
 }

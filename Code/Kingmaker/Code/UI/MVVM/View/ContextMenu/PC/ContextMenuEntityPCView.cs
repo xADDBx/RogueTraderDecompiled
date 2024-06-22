@@ -11,10 +11,7 @@ public class ContextMenuEntityPCView : ContextMenuEntityView
 		base.BindViewImplementation();
 		if (m_ButtonFx != null)
 		{
-			AddDisposable(m_Button.OnHoverAsObservable().Subscribe(delegate(bool value)
-			{
-				m_ButtonFx.DoHovered(value);
-			}));
+			AddDisposable(m_Button.OnHoverAsObservable().Subscribe(m_ButtonFx.DoHovered));
 		}
 	}
 }

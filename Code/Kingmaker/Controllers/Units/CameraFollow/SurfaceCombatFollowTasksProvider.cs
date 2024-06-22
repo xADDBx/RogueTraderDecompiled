@@ -62,7 +62,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 		HandleUnitStartTurnInternal();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleUnitStartTurnInternal();
 	}
@@ -216,10 +216,18 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	private void AddUnitsObserveTask(CameraFollowTaskContext context, Vector3 startPos, Vector3 endPos)
 	{
-		if ((!((context.IsMelee && context.Params.HasMeleeParams) ? context.Params.MeleeParams : context.Params.DefaultParams).SkipIfOnScreen || !IsPointOnScreen(endPos)) && !(startPos == default(Vector3)) && !(endPos == default(Vector3)))
+		if (!context.IsMelee || !context.Params.HasMeleeParams)
+		{
+			_ = context.Params.DefaultParams;
+		}
+		else
+		{
+			_ = context.Params.MeleeParams;
+		}
+		if (!(startPos == default(Vector3)) && !(endPos == default(Vector3)))
 		{
 			context.Position = endPos;
-			AddTask(CameraFollowTaskFactory.GetScrollToTask(context), checkOnScreen: false);
+			AddTask(CameraFollowTaskFactory.GetScrollToTask(context), checkOnScreen: true);
 		}
 	}
 

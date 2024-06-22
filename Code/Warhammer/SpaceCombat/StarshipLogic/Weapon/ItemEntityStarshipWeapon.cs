@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.Items;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Starships;
 using Kingmaker.UnitLogic.Abilities;
@@ -106,19 +107,32 @@ public class ItemEntityStarshipWeapon : StarshipItemEntity<BlueprintStarshipWeap
 	protected override void OnReapplyFactsForWielder()
 	{
 		base.OnReapplyFactsForWielder();
+		UpdateAbilities(base.Wielder, this);
+	}
+
+	public void UpdateAbilities(MechanicEntity wielderUnit, ItemEntity sourceItem)
+	{
 		base.Abilities.ForEach(delegate(Ability v)
 		{
-			base.Wielder.Facts.Remove(v);
+			wielderUnit.Facts.Remove(v);
 		});
+		PrepareAbilities(wielderUnit, sourceItem);
+		base.Abilities.ForEach(delegate(Ability v)
+		{
+			wielderUnit.Facts.Add(v);
+		});
+	}
+
+	public void PrepareAbilities(MechanicEntity wielderUnit, ItemEntity sourceItem)
+	{
 		base.Abilities.Clear();
-		MechanicEntity wielderUnit = base.Wielder;
 		if (base.Blueprint == null || wielderUnit == null)
 		{
 			return;
 		}
 		base.Abilities.AddRange(base.Blueprint.WeaponAbilities.AllWithIndex.Where(((int Index, WeaponAbility Slot) i) => i.Slot.Ability != null).Select(delegate((int Index, WeaponAbility Slot) i)
 		{
-			Ability ability = base.Wielder.Facts.Add(new Ability(i.Slot.Ability, wielderUnit));
+			Ability ability = new Ability(i.Slot.Ability, wielderUnit);
 			if (ability != null)
 			{
 				ability.Data.ItemSlotIndex = i.Index;
@@ -127,7 +141,7 @@ public class ItemEntityStarshipWeapon : StarshipItemEntity<BlueprintStarshipWeap
 		}).NotNull());
 		base.Abilities.ForEach(delegate(Ability v)
 		{
-			v.AddSource(this);
+			v.AddSource(sourceItem);
 		});
 	}
 

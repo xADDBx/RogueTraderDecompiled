@@ -64,9 +64,9 @@ public class InventoryCargoView : ViewBase<InventoryCargoVM>
 	[SerializeField]
 	protected TextMeshProUGUI LockedCargoText;
 
-	public ReactiveCommand OnCargoViewChange = new ReactiveCommand();
+	public readonly ReactiveCommand OnCargoViewChange = new ReactiveCommand();
 
-	public ReactiveCommand OnDetailedCargoShown = new ReactiveCommand();
+	public readonly ReactiveCommand OnDetailedCargoShown = new ReactiveCommand();
 
 	private IDisposable m_ScrollToDisposable;
 

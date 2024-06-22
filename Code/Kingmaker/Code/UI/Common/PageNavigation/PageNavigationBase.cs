@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Networking;
 using Kingmaker.UI.Common.PageNavigation;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Utility;
@@ -117,7 +118,7 @@ public abstract class PageNavigationBase : MonoBehaviour, IDisposable
 
 	public void OnPreviousClick()
 	{
-		if (HasPrevious)
+		if (HasPrevious && !PhotonManager.Lobby.PingPressed)
 		{
 			SetCurrentIndex(m_CurrentIndex.Value - 1);
 			m_PrevCallback?.Invoke();
@@ -126,7 +127,7 @@ public abstract class PageNavigationBase : MonoBehaviour, IDisposable
 
 	public void OnNextClick()
 	{
-		if (HasNext)
+		if (HasNext && !PhotonManager.Lobby.PingPressed)
 		{
 			SetCurrentIndex(m_CurrentIndex.Value + 1);
 			m_NextCallback?.Invoke();

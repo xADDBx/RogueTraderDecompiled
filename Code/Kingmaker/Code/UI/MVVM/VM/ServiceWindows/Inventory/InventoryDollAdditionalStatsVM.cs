@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
@@ -74,16 +75,16 @@ public class InventoryDollAdditionalStatsVM : CharInfoComponentWithLevelUpVM, IU
 			int resultDeflection = Rulebook.Trigger(new RuleCalculateStatsArmor(unitEntity)).ResultDeflection;
 			ArmorDeflection.Value = resultDeflection.ToString();
 			int resultAbsorption = Rulebook.Trigger(new RuleCalculateStatsArmor(unitEntity)).ResultAbsorption;
-			ArmorAbsorption.Value = resultAbsorption + "%";
+			ArmorAbsorption.Value = UIConfig.Instance.PercentHelper.AddPercentTo(resultAbsorption);
 			RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(unitEntity));
-			Dodge.Value = ruleCalculateDodgeChance.UncappedResult + "%";
+			Dodge.Value = UIConfig.Instance.PercentHelper.AddPercentTo(ruleCalculateDodgeChance.UncappedResult);
 			DodgeTooltip.Value = new TooltipTemplateDodge(ruleCalculateDodgeChance);
 			RuleCalculateDodgePenetration ruleCalculateDodgePenetration = Rulebook.Trigger(new RuleCalculateDodgePenetration(unitEntity));
 			DodgeReduction.Value = ruleCalculateDodgePenetration.ResultDodgePenetration.ToString();
 			ModifiableValue statOptional = Unit.Value.GetStatOptional(StatType.Resolve);
 			Resolve.Value = ((statOptional != null) ? $"{statOptional.ModifiedValue}" : "—");
 			RuleCalculateParryChance ruleCalculateParryChance = Rulebook.Trigger(new RuleCalculateParryChance(unitEntity));
-			Parry.Value = ((ruleCalculateParryChance != null) ? (ruleCalculateParryChance.Result + "%") : "—");
+			Parry.Value = ((ruleCalculateParryChance != null) ? UIConfig.Instance.PercentHelper.AddPercentTo(ruleCalculateParryChance.Result) : "—");
 		}
 	}
 

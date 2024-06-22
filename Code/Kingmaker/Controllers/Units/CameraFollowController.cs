@@ -100,7 +100,17 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 	{
 		if (!m_IsTurnBased || m_IsCutscene)
 		{
-			return;
+			if (m_Tasks.Count <= 0)
+			{
+				return;
+			}
+			{
+				foreach (ICameraFollowTask task in m_Tasks)
+				{
+					StopTask(task);
+				}
+				return;
+			}
 		}
 		ICameraFollowTask currentTask = m_CurrentTask;
 		if (currentTask == null || !currentTask.IsActive)
@@ -162,9 +172,21 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 		}
 	}
 
+	private bool IsContainsTaskOfType(CameraTaskType type)
+	{
+		foreach (ICameraFollowTask task in m_Tasks)
+		{
+			if (task.TaskParams.TaskType == type)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void TryAddTask(ICameraFollowTask task)
 	{
-		if (m_IsTurnBased)
+		if (m_IsTurnBased && (task.TaskParams.TaskType != CameraTaskType.Death || !IsContainsTaskOfType(CameraTaskType.Death)))
 		{
 			ICameraFollowTask result;
 			if (m_CurrentTask != null && m_CurrentTask.Priority < task.Priority)
@@ -189,7 +211,7 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 
 	private static void SetTimescale(float scale, bool force = false)
 	{
-		if (force || !Mathf.Approximately(scale, Game.Instance.TimeController.CameraFollowTimeScale))
+		if ((!(scale < 1f) || !(Game.Instance.TimeController.CameraFollowTimeScale < 1f)) && (force || !Mathf.Approximately(scale, Game.Instance.TimeController.CameraFollowTimeScale)))
 		{
 			Game.Instance.GameCommandQueue.CameraFollowTimeScale(scale, force);
 		}

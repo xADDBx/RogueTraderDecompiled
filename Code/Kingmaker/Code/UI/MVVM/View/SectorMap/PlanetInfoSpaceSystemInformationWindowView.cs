@@ -99,6 +99,25 @@ public class PlanetInfoSpaceSystemInformationWindowView : ViewBase<PlanetInfoSpa
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_ImageResourceViewCollection.ForEach(delegate(PlanetResourceImageView v)
+		{
+			v.Hide();
+		});
+		m_TraitsViewCollection.ForEach(delegate(PlanetTraitsView v)
+		{
+			v.Hide();
+		});
+		m_PointsOfInterestViewCollection.ForEach(delegate(PlanetPointsOfInterestView v)
+		{
+			v.Hide();
+		});
+		m_ImageResourceViewCollection.Clear();
+		m_TraitsViewCollection.Clear();
+		m_PointsOfInterestViewCollection.Clear();
+	}
+
 	private void SetResources()
 	{
 		ResourceData[] resources = base.ViewModel.BlueprintPlanet.Resources;
@@ -134,12 +153,12 @@ public class PlanetInfoSpaceSystemInformationWindowView : ViewBase<PlanetInfoSpa
 			return;
 		}
 		m_TraitsPanel.SetActive(value: true);
-		foreach (BlueprintColonyTrait key in colony.ColonyTraits.Keys)
+		foreach (BlueprintColonyEvent startedEvent in colony.StartedEvents)
 		{
 			PlanetTraitsView widget = WidgetFactory.GetWidget(m_TraitsView, activate: true, strictMatching: true);
-			widget.Initialize(key.Name, key.Description);
+			widget.Initialize(startedEvent.Name, startedEvent.Description);
 			widget.transform.SetParent(m_TraitsPanel.transform, worldPositionStays: false);
-			widget.name = $"Trait {widget.transform.GetSiblingIndex()}";
+			widget.name = $"Event {widget.transform.GetSiblingIndex()}";
 			m_TraitsViewCollection.Add(widget);
 		}
 	}
@@ -165,25 +184,6 @@ public class PlanetInfoSpaceSystemInformationWindowView : ViewBase<PlanetInfoSpa
 				m_PointsOfInterestViewCollection.Add(widget);
 			}
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_ImageResourceViewCollection.ForEach(delegate(PlanetResourceImageView v)
-		{
-			v.Hide();
-		});
-		m_TraitsViewCollection.ForEach(delegate(PlanetTraitsView v)
-		{
-			v.Hide();
-		});
-		m_PointsOfInterestViewCollection.ForEach(delegate(PlanetPointsOfInterestView v)
-		{
-			v.Hide();
-		});
-		m_ImageResourceViewCollection.Clear();
-		m_TraitsViewCollection.Clear();
-		m_PointsOfInterestViewCollection.Clear();
 	}
 
 	public void SetParentNavigation(ConsoleNavigationBehaviour parentNavigationBehaviour)

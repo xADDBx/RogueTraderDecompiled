@@ -18,7 +18,7 @@ public class SetCurrentStarSystem : GameAction
 		return "Set " + StarSystem?.Name + " as current star system";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.CurrentStarSystem = StarSystem;
 		Game.Instance.Player.PreviousVisitedArea = StarSystem;

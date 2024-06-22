@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.DLC;
+using Kingmaker.Utility.Attributes;
 using UnityEngine;
 
 namespace Kingmaker.Blueprints.Loot;
@@ -13,12 +15,31 @@ public class LootItemsPackFixed : BlueprintLootComponent
 	[SerializeField]
 	private int m_Count = 1;
 
+	[SerializeField]
+	private bool m_DlcCondition;
+
+	[ShowIf("m_DlcCondition")]
+	[SerializeField]
+	private BlueprintDlcRewardReference m_DlcReward;
+
 	public LootItem Item => m_Item;
 
 	public int Count => m_Count;
 
+	public bool DlcCondition => m_DlcCondition;
+
+	public BlueprintDlcRewardReference DlcReward => m_DlcReward;
+
 	public override void AddItemsTo(List<LootEntry> targetList)
 	{
+		if (m_DlcCondition)
+		{
+			BlueprintDlcReward blueprintDlcReward = m_DlcReward?.Get();
+			if (blueprintDlcReward != null && !blueprintDlcReward.IsActive)
+			{
+				return;
+			}
+		}
 		m_Item.AddItemTo(targetList, m_Count, base.ReputationPointsToUnlock);
 	}
 
@@ -30,5 +51,11 @@ public class LootItemsPackFixed : BlueprintLootComponent
 	public override IReadOnlyCollection<LootItem> GetPossibleLoot()
 	{
 		return new List<LootItem> { m_Item };
+	}
+
+	public void OverrideReputationPointsFromImport(int rep)
+	{
+		m_OverrideReputationPointsToUnlock = true;
+		m_ReputationPointsToUnlock = rep;
 	}
 }

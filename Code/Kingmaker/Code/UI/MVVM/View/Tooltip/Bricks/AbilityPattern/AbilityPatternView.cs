@@ -82,6 +82,7 @@ public class AbilityPatternView : MonoBehaviour
 		Vector2Int vector2Int = new Vector2Int(intRect.xmin - num3, intRect.ymin - num4);
 		PatternGridData patternGridData = m_PatternData.PatternCells.Move(-vector2Int);
 		Vector2Int? vector2Int2 = m_PatternData.OwnerCell - vector2Int;
+		Vector2 vector = new Vector2(-0.5f * (float)(num - width) % 2f, 0.5f * (float)(num - height) % 2f);
 		Vector2 zero = Vector2.zero;
 		List<Transform> list = new List<Transform>();
 		for (int i = 0; i < num; i++)
@@ -96,7 +97,7 @@ public class AbilityPatternView : MonoBehaviour
 					widget.Initialize(cellType);
 					RectTransform rectTransform = (RectTransform)widget.transform;
 					rectTransform.SetParent(m_PatternContainer, worldPositionStays: false);
-					rectTransform.anchoredPosition = new Vector2(vector2Int3.x, vector2Int3.y) * num2 + zero;
+					rectTransform.anchoredPosition = (new Vector2(vector2Int3.x, vector2Int3.y) + vector) * num2 + zero;
 					rectTransform.sizeDelta = new Vector2(num2, num2);
 					if (cellType != 0)
 					{

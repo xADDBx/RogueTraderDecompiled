@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -180,6 +181,20 @@ public class AddFacts : UnitFactComponentDelegate, IDifficultyChangedClassHandle
 	private void Clear()
 	{
 		RemoveAllFactsOriginatedFromThisComponent(base.Owner);
+	}
+
+	public void RemoveAllFacts()
+	{
+		m_Facts = Array.Empty<BlueprintUnitFactReference>();
+	}
+
+	public void AddFact(BlueprintUnitFact blueprintFact)
+	{
+		if (blueprintFact != null)
+		{
+			Array.Resize(ref m_Facts, m_Facts.Length + 1);
+			m_Facts[^1] = blueprintFact.ToReference<BlueprintUnitFactReference>();
+		}
 	}
 
 	public override Hash128 GetHash128()

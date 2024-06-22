@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Kingmaker.AI.DebugUtilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
@@ -15,6 +16,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
@@ -98,7 +100,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		UntargetableForAbilityGroup,
 		TargetRestrictionNotPassed,
 		CannotMove,
-		FriendlyFire
+		FriendlyFire,
+		NullTarget,
+		RestrictedByInterruption,
+		TargetEntityDisposed
 	}
 
 	public class IgnoreCooldown : ContextFlag<IgnoreCooldown>
@@ -162,7 +167,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	public ItemEntityWeapon OverrideWeapon { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public int OverrideRateOfFire { get; }
+	public int OverrideRateOfFire { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int ItemSlotIndex { get; set; }
@@ -344,15 +349,55 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			{
 				return true;
 			}
-			return Blueprint.GetComponent<WarhammerAbilityAttackDelivery>()?.IsPattern ?? false;
+			AbilityMeleeBurst component2 = Blueprint.GetComponent<AbilityMeleeBurst>();
+			if (component2 != null && component2.IsAoe)
+			{
+				return true;
+			}
+			WarhammerAbilityAttackDelivery component3 = Blueprint.GetComponent<WarhammerAbilityAttackDelivery>();
+			if (component3 == null || !component3.IsPattern)
+			{
+				return Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType p) => p.CountAsAoE);
+			}
+			return true;
 		}
 	}
 
-	public bool IsScatter => Blueprint.AttackType == AttackAbilityType.Scatter;
+	public bool IsScatter
+	{
+		get
+		{
+			if (Blueprint.AttackType != AttackAbilityType.Scatter && !Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType p) => p.CountAsScatter))
+			{
+				return Blueprint.GetComponents<AbilityMeleeBurst>().Any();
+			}
+			return true;
+		}
+	}
 
-	public bool IsSingleShot => Blueprint.AttackType == AttackAbilityType.SingleShot;
+	public bool IsSingleShot
+	{
+		get
+		{
+			if (Blueprint.AttackType != AttackAbilityType.SingleShot)
+			{
+				return Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType p) => p.CountAsSingleShot);
+			}
+			return true;
+		}
+	}
 
-	public bool IsMelee => Blueprint.AttackType == AttackAbilityType.Melee;
+	public bool IsMelee
+	{
+		get
+		{
+			if (Blueprint.AttackType != AttackAbilityType.Melee && !Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType p) => p.CountAsMelee))
+			{
+				return Blueprint.GetComponents<AbilityMeleeBurst>().Any();
+			}
+			return true;
+		}
+	}
 
 	public bool IsCharge
 	{
@@ -455,7 +500,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	public int SpellLevel => 0;
 
 	[CanBeNull]
-	public AbilityResourceLogic ResourceLogic => Blueprint.GetComponent<AbilityResourceLogic>();
+	public IAbilityResourceLogic ResourceLogic => Blueprint.GetComponent<IAbilityResourceLogic>();
 
 	public AbilityParameter ParameterRequirements => Blueprint.GetComponent<IAbilityRequiredParameters>()?.RequiredParameters ?? AbilityParameter.None;
 
@@ -634,6 +679,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			{
 				return true;
 			}
+			if (Fact != null && ((!(Caster.GetAbilitySettingsOptional()?.InterruptionAbilityRestrictions?.IsPassed(new PropertyContext(Fact, null, null, this)))) ?? false))
+			{
+				return true;
+			}
 			IAbilityCasterRestriction[] casterRestrictions = Blueprint.CasterRestrictions;
 			for (int i = 0; i < casterRestrictions.Length; i++)
 			{
@@ -712,7 +761,13 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 					{
 						return true;
 					}
-					if (Caster.Facts.GetComponents<WarhammerAbilityRestriction>().Any((WarhammerAbilityRestriction restriction) => restriction.AbilityIsRestricted(this)))
+					IEnumerable<WarhammerAbilityRestriction> components = Caster.Facts.GetComponents<WarhammerAbilityRestriction>();
+					PartAbilitySettings abilitySettingsOptional = Caster.GetAbilitySettingsOptional();
+					if (Fact != null && abilitySettingsOptional != null && abilitySettingsOptional.InterruptionAbilityRestrictions != null && !abilitySettingsOptional.InterruptionAbilityRestrictions.IsPassed(new PropertyContext(Fact, null, null, this)))
+					{
+						return false;
+					}
+					if (components.Any((WarhammerAbilityRestriction restriction) => restriction.AbilityIsRestricted(this)))
 					{
 						return true;
 					}
@@ -738,23 +793,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	public VoiceIntensityType VoiceIntensity => VoiceIntensityType.None;
 
 	[CanBeNull]
-	public BlueprintScriptableObject RequiredResource
-	{
-		get
-		{
-			object obj = SimpleBlueprintExtendAsObject.Or(OverrideRequiredResource, null);
-			if (obj == null)
-			{
-				AbilityResourceLogic resourceLogic = ResourceLogic;
-				if (resourceLogic == null)
-				{
-					return null;
-				}
-				obj = resourceLogic.RequiredResource;
-			}
-			return (BlueprintScriptableObject)obj;
-		}
-	}
+	public BlueprintScriptableObject RequiredResource => SimpleBlueprintExtendAsObject.Or(OverrideRequiredResource, null);
 
 	public bool ShouldDelegateToMount => false;
 
@@ -839,18 +878,28 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		{
 			OverrideWeapon = (ItemEntityWeapon)blueprintItemWeapon.CreateEntity();
 		}
-		WarhammerOverrideRateOfFire component = Blueprint.GetComponent<WarhammerOverrideRateOfFire>();
+		AbilityCustomBladeDance component = Blueprint.GetComponent<AbilityCustomBladeDance>();
 		if (component != null)
 		{
-			OverrideRateOfFire = component.RateOfFire;
+			OverrideRateOfFire = component.RateOfAttack.Calculate(CreateExecutionContext(caster));
+		}
+		AbilityMeleeBurst component2 = Blueprint.GetComponent<AbilityMeleeBurst>();
+		if (component2 != null)
+		{
+			OverrideRateOfFire = component2.GetRateOfFire(CreateExecutionContext(caster));
+		}
+		WarhammerOverrideRateOfFire component3 = Blueprint.GetComponent<WarhammerOverrideRateOfFire>();
+		if (component3 != null)
+		{
+			OverrideRateOfFire = component3.RateOfFire;
 		}
 		if (caster is StarshipEntity starshipEntity)
 		{
-			WarhammerOverrideAbilityStarshipWeapon component2 = Blueprint.GetComponent<WarhammerOverrideAbilityStarshipWeapon>();
-			if (component2 != null)
+			WarhammerOverrideAbilityStarshipWeapon component4 = Blueprint.GetComponent<WarhammerOverrideAbilityStarshipWeapon>();
+			if (component4 != null)
 			{
-				FakeStarshipWeapon = (ItemEntityStarshipWeapon)(component2.StarshipWeapon(starshipEntity)?.CreateEntity());
-				FakeStarshipWeapon.FakeAmmo = (ItemEntityStarshipAmmo)(component2.StarshipWeaponAmmo(starshipEntity)?.CreateEntity());
+				FakeStarshipWeapon = (ItemEntityStarshipWeapon)(component4.StarshipWeapon(starshipEntity)?.CreateEntity());
+				FakeStarshipWeapon.FakeAmmo = (ItemEntityStarshipAmmo)(component4.StarshipWeaponAmmo(starshipEntity)?.CreateEntity());
 			}
 		}
 		InitAbilityGroups();
@@ -1062,6 +1111,31 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public bool IsValid(TargetWrapper target, Vector3 casterPosition, out UnavailabilityReasonType unavailabilityReason)
 	{
+		AbilityTargetingCache instance = AbilityTargetingCache.Instance;
+		if (!instance.IsActive)
+		{
+			return CalculateIsValid(target, casterPosition, out unavailabilityReason);
+		}
+		if (instance.TryGetReason(Blueprint, target, casterPosition, out unavailabilityReason))
+		{
+			return unavailabilityReason == UnavailabilityReasonType.None;
+		}
+		bool flag = CalculateIsValid(target, casterPosition, out unavailabilityReason);
+		if (!flag && unavailabilityReason == UnavailabilityReasonType.None)
+		{
+			AILogger.Instance.Error(new AILogMessage($"invalid ability targeting didn't get any reasoning\n ability {Blueprint} by {Caster} from {casterPosition} to {target}"));
+		}
+		instance.AddEntry(Blueprint, target, casterPosition, unavailabilityReason);
+		return flag;
+	}
+
+	public bool CalculateIsValid(TargetWrapper target, Vector3 casterPosition, out UnavailabilityReasonType unavailabilityReason)
+	{
+		if (Fact != null && ((!(Caster.GetAbilitySettingsOptional()?.InterruptionAbilityRestrictions?.IsPassed(new PropertyContext(Fact, null, null, this)))) ?? false))
+		{
+			unavailabilityReason = UnavailabilityReasonType.RestrictedByInterruption;
+			return false;
+		}
 		IAbilityTargetRestriction[] targetRestrictions = Blueprint.TargetRestrictions;
 		for (int i = 0; i < targetRestrictions.Length; i++)
 		{
@@ -1071,9 +1145,23 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 				return false;
 			}
 		}
+		BlueprintComponent[] componentsArray = Blueprint.ComponentsArray;
+		for (int i = 0; i < componentsArray.Length; i++)
+		{
+			if (componentsArray[i] is AbilityEffectRunAction abilityEffectRunAction && !abilityEffectRunAction.IsValidToCast(target, Caster, casterPosition))
+			{
+				unavailabilityReason = UnavailabilityReasonType.TargetRestrictionNotPassed;
+				return false;
+			}
+		}
 		if (!IsCasterValid(casterPosition, out var unavailabilityReason2))
 		{
 			unavailabilityReason = unavailabilityReason2;
+			return false;
+		}
+		if (target.HasEntity && target.Entity == null)
+		{
+			unavailabilityReason = UnavailabilityReasonType.TargetEntityDisposed;
 			return false;
 		}
 		if (target.Entity != null && TargetAnchor != AbilityTargetAnchor.Point)
@@ -1124,24 +1212,28 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		switch (TargetAnchor)
 		{
 		case AbilityTargetAnchor.Owner:
-			if (target.HasEntity)
+			if (target.HasEntity && target.Entity == Caster)
 			{
-				return target.Entity == Caster;
+				return true;
 			}
+			unavailabilityReason = UnavailabilityReasonType.NullTarget;
 			return false;
 		case AbilityTargetAnchor.Unit:
 			if (target.Entity == null)
 			{
+				unavailabilityReason = UnavailabilityReasonType.NullTarget;
 				return false;
 			}
-			if (!Blueprint.CanTargetFriends && !target.Entity.IsPlayerFaction)
+			if (Blueprint.CanTargetFriends || target.Entity.IsPlayerFaction || Caster.CanAttack(target.Entity))
 			{
-				return Caster.CanAttack(target.Entity);
+				return true;
 			}
-			return true;
+			unavailabilityReason = UnavailabilityReasonType.CannotTargetAlly;
+			return false;
 		case AbilityTargetAnchor.Point:
 			return true;
 		default:
+			unavailabilityReason = UnavailabilityReasonType.Unknown;
 			throw new ArgumentOutOfRangeException();
 		}
 	}
@@ -1333,15 +1425,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			num3 = Fact.ConcreteOwner.GetAbilityResourcesOptional()?.GetResourceAmount(Fact.UsagesPerDayResource) ?? 0;
 			num2 = 1;
 		}
-		BlueprintScriptableObject blueprintScriptableObject = ((ResourceLogic != null && ResourceLogic.IsSpendResource) ? (SimpleBlueprintExtendAsObject.Or(OverrideRequiredResource, null) ?? ResourceLogic.RequiredResource) : OverrideRequiredResource);
-		if (blueprintScriptableObject != null)
+		if ((bool)OverrideRequiredResource || ResourceLogic != null)
 		{
-			PartAbilityResourceCollection abilityResourcesOptional = Caster.GetAbilityResourcesOptional();
-			if (abilityResourcesOptional != null)
-			{
-				num3 = abilityResourcesOptional.GetResourceAmount(blueprintScriptableObject);
-				num2 = ResourceLogic?.CalculateCost(this) ?? 1;
-			}
+			num3 = GetResourceAmount();
+			num2 = ResourceLogic?.CalculateCost(this) ?? 1;
 		}
 		if (num2 > 0)
 		{
@@ -1355,8 +1442,8 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	public int GetResourceCost()
 	{
 		int result = -1;
-		AbilityResourceLogic resourceLogic = ResourceLogic;
-		if (resourceLogic != null && resourceLogic.IsSpendResource)
+		IAbilityResourceLogic resourceLogic = ResourceLogic;
+		if (resourceLogic != null && resourceLogic.IsSpendResource())
 		{
 			result = ResourceLogic?.CalculateCost(this) ?? 1;
 		}
@@ -1365,18 +1452,15 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public int GetResourceAmount()
 	{
-		int result = -1;
-		AbilityResourceLogic resourceLogic = ResourceLogic;
-		BlueprintScriptableObject blueprintScriptableObject = ((resourceLogic != null && resourceLogic.IsSpendResource) ? (SimpleBlueprintExtendAsObject.Or(OverrideRequiredResource, null) ?? ResourceLogic.RequiredResource) : OverrideRequiredResource);
-		if (blueprintScriptableObject != null)
+		if ((bool)OverrideRequiredResource && RequiredResource != null)
 		{
 			PartAbilityResourceCollection abilityResourcesOptional = Caster.GetAbilityResourcesOptional();
 			if (abilityResourcesOptional != null)
 			{
-				result = abilityResourcesOptional.GetResourceAmount(blueprintScriptableObject);
+				return abilityResourcesOptional.GetResourceAmount(RequiredResource);
 			}
 		}
-		return result;
+		return ResourceLogic?.CalculateResourceAmount(this) ?? (-1);
 	}
 
 	public List<UnavailabilityReasonType> GetUnavailabilityReasons()

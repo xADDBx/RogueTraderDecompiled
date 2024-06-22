@@ -14,13 +14,13 @@ public class FirstWeaponAmmoGetter : UnitPropertyGetter
 	[SerializeField]
 	private bool percent;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!percent)
 		{
-			return "Ammo";
+			return "Ammo (of " + FormulaTargetScope.Current + ")";
 		}
-		return "Ammo percent";
+		return "Ammo percent (of " + FormulaTargetScope.Current + ")";
 	}
 
 	protected override int GetBaseValue()

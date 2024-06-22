@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Kingmaker;
 using Kingmaker.Blueprints;
@@ -97,12 +98,23 @@ public abstract class BlueprintPatchOperation
 		{
 			return false;
 		}
-		Type elementType = type.GetElementType();
-		if (elementType == null)
+		Type listElementType = GetListElementType(type);
+		PFLog.Mods.Log($"Got IList element type {listElementType} for {concreteBlueprintType} : {field.Name}");
+		if (listElementType == null)
 		{
-			throw new Exception($"Failed to get ElementType for {concreteBlueprintType} {field.Name}");
+			throw new Exception($"Failed to get ElementType for {concreteBlueprintType} : {field.Name}");
 		}
-		return typeof(BlueprintReferenceBase).IsAssignableFrom(elementType);
+		return typeof(BlueprintReferenceBase).IsAssignableFrom(listElementType);
+	}
+
+	protected static Type GetListElementType(Type type)
+	{
+		Type type2 = type.GetInterfaces().FirstOrDefault((Type t) => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<object>).GetGenericTypeDefinition());
+		if ((object)type2 == null)
+		{
+			return null;
+		}
+		return type2.GetGenericArguments()[0];
 	}
 
 	public override string ToString()

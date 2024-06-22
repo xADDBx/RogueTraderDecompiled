@@ -16,7 +16,7 @@ public class WarhammerContextActionSetStarshipSpeedMode : ContextAction
 		return $"Set speed mode to {SpeedMode}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity is StarshipEntity starshipEntity)
 		{

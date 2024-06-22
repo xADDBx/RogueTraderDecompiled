@@ -71,17 +71,7 @@ public class PlayerNetManager
 			value = null;
 			return false;
 		}
-		return GetIconLarge(player2.UserId, out value);
-	}
-
-	public bool GetIconLarge(string userId, out Texture2D value)
-	{
-		bool num = m_IconLarge.TryGetValue(userId, out value);
-		if (!num)
-		{
-			PFLog.Net.Warning("[GetIconLarge] UserId='" + userId + "' not found");
-		}
-		return num;
+		return m_IconLarge.TryGetValue(player2.UserId, out value);
 	}
 
 	public void ClearCache([CanBeNull] string excludeUserId)
@@ -109,8 +99,20 @@ public class PlayerNetManager
 	{
 		int width = playerAvatar.Width;
 		int height = playerAvatar.Data.Length / width / 4;
-		Texture2D texture2D = new Texture2D(width, height, TextureFormat.RGBA32, mipChain: false, linear: true);
-		texture2D.LoadRawTextureData(playerAvatar.Data);
+		Texture2D texture2D;
+		if (playerAvatar.IsCompressed)
+		{
+			texture2D = new Texture2D(width, height, TextureFormat.RGBA32, mipChain: false, linear: false, createUninitialized: true);
+			if (!texture2D.LoadImage(playerAvatar.Data))
+			{
+				PFLog.Net.Error("[CreateTexture] LoadImage failed. Check that Data is in correct compressed format.");
+			}
+		}
+		else
+		{
+			texture2D = new Texture2D(width, height, TextureFormat.RGBA32, mipChain: false, linear: true);
+			texture2D.LoadRawTextureData(playerAvatar.Data);
+		}
 		texture2D.Apply(updateMipmaps: false, makeNoLongerReadable: true);
 		return texture2D;
 	}

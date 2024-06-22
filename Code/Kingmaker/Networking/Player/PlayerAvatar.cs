@@ -35,6 +35,10 @@ public readonly struct PlayerAvatar : IMemoryPackable<PlayerAvatar>, IMemoryPack
 	[MemoryPackInclude]
 	public readonly byte[] Data;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	public readonly bool IsCompressed;
+
 	[MemoryPackIgnore]
 	public bool IsValid
 	{
@@ -50,14 +54,15 @@ public readonly struct PlayerAvatar : IMemoryPackable<PlayerAvatar>, IMemoryPack
 
 	[JsonConstructor]
 	[MemoryPackConstructor]
-	private PlayerAvatar(ushort width, byte[] data)
+	private PlayerAvatar(ushort width, byte[] data, bool isCompressed)
 	{
 		Width = width;
 		Data = data;
+		IsCompressed = isCompressed;
 	}
 
-	public PlayerAvatar(int width, byte[] data)
-		: this((ushort)width, data)
+	public PlayerAvatar(int width, byte[] data, bool isCompressed = false)
+		: this((ushort)width, data, isCompressed)
 	{
 		if (65535 < width)
 		{
@@ -90,8 +95,9 @@ public readonly struct PlayerAvatar : IMemoryPackable<PlayerAvatar>, IMemoryPack
 	[Preserve]
 	public static void Serialize(ref MemoryPackWriter writer, ref PlayerAvatar value)
 	{
-		writer.WriteUnmanagedWithObjectHeader(2, in value.Width);
+		writer.WriteUnmanagedWithObjectHeader(3, in value.Width);
 		writer.WriteUnmanagedArray(value.Data);
+		writer.WriteUnmanaged(in value.IsCompressed);
 	}
 
 	[Preserve]
@@ -104,30 +110,37 @@ public readonly struct PlayerAvatar : IMemoryPackable<PlayerAvatar>, IMemoryPack
 		}
 		ushort value2;
 		byte[] value3;
-		if (memberCount == 2)
+		bool value4;
+		if (memberCount == 3)
 		{
 			reader.ReadUnmanaged<ushort>(out value2);
 			value3 = reader.ReadUnmanagedArray<byte>();
+			reader.ReadUnmanaged<bool>(out value4);
 		}
 		else
 		{
-			if (memberCount > 2)
+			if (memberCount > 3)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PlayerAvatar), 2, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PlayerAvatar), 3, memberCount);
 				return;
 			}
 			value2 = 0;
 			value3 = null;
+			value4 = false;
 			if (memberCount != 0)
 			{
 				reader.ReadUnmanaged<ushort>(out value2);
 				if (memberCount != 1)
 				{
 					reader.ReadUnmanagedArray(ref value3);
-					_ = 2;
+					if (memberCount != 2)
+					{
+						reader.ReadUnmanaged<bool>(out value4);
+						_ = 3;
+					}
 				}
 			}
 		}
-		value = new PlayerAvatar(value2, value3);
+		value = new PlayerAvatar(value2, value3, value4);
 	}
 }

@@ -46,7 +46,7 @@ public class Summon : GameAction
 		return $"Summon ({Unit})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		SceneEntitiesState mainState = Game.Instance.State.LoadedAreaState.MainState;
 		BaseUnitEntity baseUnitEntity = ((!SummonPool) ? Game.Instance.EntitySpawner.SpawnUnit(Unit, Transform.GetValue().position + Offset, Transform.GetValue().rotation, mainState) : Game.Instance.SummonPools.Summon(SummonPool, Unit, Transform.GetValue(), Offset));

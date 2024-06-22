@@ -29,7 +29,7 @@ public class ContextActionRemoveAllBonusAbilityUsageFromFact : ContextAction
 		return "Remove all bonus ability usage given by a fact from target";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext != null)

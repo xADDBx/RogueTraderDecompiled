@@ -25,7 +25,7 @@ public class CheckAbilityWeaponCategoryGetter : PropertyGetter, PropertyContextA
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Ability Weapon Category";
 	}

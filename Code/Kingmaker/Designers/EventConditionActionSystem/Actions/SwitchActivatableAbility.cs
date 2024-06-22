@@ -28,7 +28,7 @@ public class SwitchActivatableAbility : GameAction
 		return $"Turn on activatable ability {Ability} for unit {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Unit.GetValue().Facts.Get<ActivatableAbility>(Ability).IsOn = IsOn;
 	}

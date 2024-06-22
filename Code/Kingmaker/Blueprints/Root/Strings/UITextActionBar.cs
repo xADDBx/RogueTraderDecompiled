@@ -27,4 +27,8 @@ public class UITextActionBar
 	public LocalizedString MomentumHeader;
 
 	public LocalizedString MomentumDescription;
+
+	public LocalizedString AnotherPlayerTurn;
+
+	public LocalizedString AnotherPlayerTurnWithNickname;
 }

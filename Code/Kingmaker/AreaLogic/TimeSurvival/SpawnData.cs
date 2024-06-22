@@ -25,6 +25,10 @@ public class SpawnData
 	[Tooltip("Units will be spawned from this list until this round met")]
 	public int RoundTo;
 
+	[ValidatePositiveNumber]
+	[Tooltip("Amount of spawn cycles from this data")]
+	public int SpawnAttempts = 1;
+
 	public List<BlueprintUnit> UnitsList => m_UnitsList.Get().GetBlueprintUnits();
 
 	public BlueprintSpawnersList SpawnersList => m_CachedSpawnersList ?? (m_CachedSpawnersList = m_SpawnersList.Get());

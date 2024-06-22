@@ -64,6 +64,10 @@ public class GamepadConnectDisconnectVM : VMBase
 		}
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	private void OnGamepadConnected(ControllerStatusChangedEventArgs obj)
 	{
 		GamepadConnected.Execute();
@@ -106,10 +110,6 @@ public class GamepadConnectDisconnectVM : VMBase
 				});
 			}, 5);
 		}) : null);
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	public void DeclineController()

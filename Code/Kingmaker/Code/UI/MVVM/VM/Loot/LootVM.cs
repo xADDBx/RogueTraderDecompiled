@@ -42,6 +42,8 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public readonly InventoryCargoVM CargoInventory;
 
+	public readonly ReactiveProperty<ExitLocationWindowVM> ExitLocationWindowVM = new ReactiveProperty<ExitLocationWindowVM>();
+
 	private readonly Action m_AreaTransitionCallback;
 
 	private Action m_CloseCallback;
@@ -75,9 +77,29 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	private IEnumerable<ItemEntity> AllItems => m_ItemsCollections.SelectMany((ItemsCollection collection) => collection.Items);
 
+	private IEnumerable<ItemEntity> LootableItems => AllItems.Where((ItemEntity item) => IsLootable(item));
+
 	public bool IsOneSlot => InteractionSlot != null;
 
 	public bool IsPlayerStash => PlayerStash != null;
+
+	private static bool IsLootable(ItemEntity item)
+	{
+		if (!item.IsAvailable())
+		{
+			return false;
+		}
+		if (!item.IsLootable)
+		{
+			return false;
+		}
+		ItemSlot holdingSlot = item.HoldingSlot;
+		if (holdingSlot != null && !holdingSlot.CanRemoveItem())
+		{
+			return false;
+		}
+		return true;
+	}
 
 	public bool ToInventory(ItemEntity item)
 	{
@@ -109,16 +131,9 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 				new List<ItemEntity>()
 			}
 		};
-		foreach (ItemEntity allItem in AllItems)
+		foreach (ItemEntity lootableItem in LootableItems)
 		{
-			if (allItem.IsAvailable() && allItem.IsLootable)
-			{
-				ItemSlot holdingSlot = allItem.HoldingSlot;
-				if (holdingSlot == null || holdingSlot.CanRemoveItem())
-				{
-					m_LootItemsByObjectType[GetLootObjectType(allItem)].Add(allItem);
-				}
-			}
+			m_LootItemsByObjectType[GetLootObjectType(lootableItem)].Add(lootableItem);
 		}
 		if (Mode != LootContextVM.LootWindowMode.OneSlot)
 		{
@@ -258,7 +273,7 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		for (int i = 0; i < objects.Length; i++)
 		{
 			ItemsCollection items = objects[i].Items;
-			if (items != null && !items.All((ItemEntity l) => !(l?.IsLootable ?? false)))
+			if (items != null && !items.All((ItemEntity item) => !IsLootable(item)))
 			{
 				yield return items;
 			}
@@ -270,7 +285,7 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		foreach (LootWrapper item in zoneLoot)
 		{
 			ItemsCollection itemsCollection = item.Unit?.Inventory.Collection ?? item.InteractionLoot?.Loot;
-			if (itemsCollection != null && !itemsCollection.All((ItemEntity l) => !(l?.IsLootable ?? false)))
+			if (itemsCollection != null && !itemsCollection.All((ItemEntity item) => !IsLootable(item)))
 			{
 				yield return itemsCollection;
 			}
@@ -293,15 +308,15 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	private void UpdateContextLoot()
 	{
-		foreach (ItemEntity allItem in AllItems)
+		foreach (ItemEntity lootableItem in LootableItems)
 		{
-			if (!ToInventory(allItem) && !ToCargo(allItem))
+			if (!ToInventory(lootableItem) && !ToCargo(lootableItem))
 			{
-				m_LootItemsByObjectType[GetLootObjectType(allItem)].Add(allItem);
+				m_LootItemsByObjectType[GetLootObjectType(lootableItem)].Add(lootableItem);
 			}
 		}
-		m_LootItemsByObjectType[LootObjectType.Normal].RemoveAll((ItemEntity i) => !AllItems.Contains(i));
-		m_LootItemsByObjectType[LootObjectType.Trash].RemoveAll((ItemEntity i) => !AllItems.Contains(i));
+		m_LootItemsByObjectType[LootObjectType.Normal].RemoveAll((ItemEntity i) => !LootableItems.Contains(i));
+		m_LootItemsByObjectType[LootObjectType.Trash].RemoveAll((ItemEntity i) => !LootableItems.Contains(i));
 		foreach (LootObjectVM item in ContextLoot)
 		{
 			item.SetNewItems(m_LootItemsByObjectType[item.Type]);
@@ -390,6 +405,8 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 				if (item.HasLootableItems)
 				{
 					Game.Instance.GameCommandQueue.CollectLoot(item.LootableItems.Select((ItemEntity x) => new EntityRef<ItemEntity>(x)).ToList());
+					m_AllCollected = true;
+					MarkContextLootAsDirty();
 				}
 				break;
 			case LootObjectType.Trash:
@@ -444,6 +461,18 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 			}
 		}
 		MarkContextLootAsDirty();
+	}
+
+	public void HandleOpenExitWindow(Action tryCollect)
+	{
+		ExitLocationWindowVM disposable = (ExitLocationWindowVM.Value = new ExitLocationWindowVM(tryCollect, CloseExitWindow));
+		AddDisposable(disposable);
+	}
+
+	public void CloseExitWindow()
+	{
+		ExitLocationWindowVM.Value?.Dispose();
+		ExitLocationWindowVM.Value = null;
 	}
 
 	public void LeaveZone()
@@ -536,13 +565,15 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		{
 			m_LootItemsByObjectType[LootObjectType.Trash].Add(from.ItemEntity);
 		}
+		else if (ContextLoot[0].ContainsSlot(to))
+		{
+			m_LootItemsByObjectType[LootObjectType.Normal].Add(from.ItemEntity);
+		}
 		InventoryHelper.TryMoveSlot(from, to, InteractionSlot);
 	}
 
 	void ICollectLootHandler.HandleCollectAll(ItemsCollection from, ItemsCollection to)
 	{
-		m_AllCollected = true;
-		MarkContextLootAsDirty();
 	}
 
 	void IMoveItemHandler.HandleMoveItem(bool isEquip)

@@ -24,28 +24,28 @@ public class AreaCheckerTask : ArbiterTask
 	{
 		Arbiter.Instance.Reporter.ReportInstructionStarted(Arbiter.Instruction.name);
 		PFLog.Arbiter.Log($"Processing {Arbiter.Instruction} ({m_AreaCheckerComponent.Area.Get().AreaDisplayName})");
-		ArbiterMeasurements.StartProfilerRecorders();
+		ArbiterClientMeasurements.StartProfilerRecorders();
 		yield return new SetScreenResolutionTask(m_Arguments, this);
 		yield return new ResetToMainMenuTask(this);
 		if (m_Arguments.ArbiterTakeMemorySnapshots && m_Arguments.ArbiterRestart)
 		{
 			TakeMemorySnapshot();
 		}
-		Dictionary<string, string> beforeLoadPreset = ArbiterMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.BeforeLoadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
+		Dictionary<string, string> beforeLoadPreset = ArbiterClientMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.BeforeLoadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
 		yield return new LoadPresetTask(this, m_AreaCheckerComponent.Preset);
-		Dictionary<string, string> afterLoadPreset = ArbiterMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.AfterLoadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
+		Dictionary<string, string> afterLoadPreset = ArbiterClientMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.AfterLoadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
 		yield return new SetTimeOfDayTask(this, m_AreaCheckerComponent);
 		GeneralProbeData probeData = new GeneralProbeData(Arbiter.Instruction.name, "AreaTest");
 		yield return new AreaScreenshotsTask(this, m_AreaCheckerComponent, probeData);
-		Dictionary<string, string> areaLoadMeasurements = ArbiterMeasurements.GetAreaLoadMeasurements();
+		Dictionary<string, string> areaLoadMeasurements = ArbiterClientMeasurements.GetAreaLoadMeasurements();
 		yield return new AreaMeasurementsTask(this, m_AreaCheckerComponent, probeData);
 		yield return new ResetToMainMenuTask(this);
 		if (m_Arguments.ArbiterTakeMemorySnapshots && m_Arguments.ArbiterRestart)
 		{
 			TakeMemorySnapshot();
 		}
-		Dictionary<string, string> measurements = ArbiterMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.AfterUnloadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
-		ArbiterMeasurements.StopProfilerRecorders();
+		Dictionary<string, string> measurements = ArbiterClientMeasurements.GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.AfterUnloadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
+		ArbiterClientMeasurements.StopProfilerRecorders();
 		foreach (ISpecificProbeData probeData2 in probeData.ProbeDataList)
 		{
 			AreaProbeData obj = probeData2 as AreaProbeData;

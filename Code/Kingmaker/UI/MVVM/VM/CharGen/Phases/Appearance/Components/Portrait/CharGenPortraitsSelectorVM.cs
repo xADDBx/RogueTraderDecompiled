@@ -127,7 +127,10 @@ public class CharGenPortraitsSelectorVM : BaseCharGenAppearancePageComponentVM, 
 	{
 		using (ProfileScope.New("Collect custom portraits"))
 		{
-			CustomPortraitGroup.Add(AddDisposableAndReturn(new CharGenPortraitSelectorItemVM(OnCustomPortraitCreate)));
+			CustomPortraitGroup.Add(AddDisposableAndReturn(new CharGenPortraitSelectorItemVM(delegate
+			{
+				OnCustomPortraitCreate();
+			})));
 			foreach (PortraitData item in CustomPortraitsManager.Instance.LoadAllPortraits(40))
 			{
 				CharGenPortraitSelectorItemVM charGenPortraitSelectorItemVM = AddDisposableAndReturn(new CharGenPortraitSelectorItemVM(item, OnCustomPortraitChange));
@@ -171,9 +174,10 @@ public class CharGenPortraitsSelectorVM : BaseCharGenAppearancePageComponentVM, 
 		}
 	}
 
-	private void OnCustomPortraitCreate()
+	private void OnCustomPortraitCreate(BlueprintPortrait blueprintPortrait = null)
 	{
-		CharGenPortraitSelectorItemVM charGenPortraitSelectorItemVM = new CharGenPortraitSelectorItemVM(CustomPortraitsManager.Instance.CreateNew(), OnCustomPortraitChange);
+		CustomPortraitGroup.RemoveNonexistentItems();
+		CharGenPortraitSelectorItemVM charGenPortraitSelectorItemVM = new CharGenPortraitSelectorItemVM(blueprintPortrait?.Data ?? CustomPortraitsManager.Instance.CreateNew(), OnCustomPortraitChange);
 		m_AllPortraitsCollection.Add(charGenPortraitSelectorItemVM);
 		CustomPortraitGroup.Add(charGenPortraitSelectorItemVM);
 		m_SelectedPortrait.Value = charGenPortraitSelectorItemVM;
@@ -193,7 +197,7 @@ public class CharGenPortraitsSelectorVM : BaseCharGenAppearancePageComponentVM, 
 
 	public void OpenCustomPortraitCreator()
 	{
-		if (CustomPortraitCreatorVM.Value == null && PortraitVM.Value.PortraitData.IsCustom && CustomPortraitsManager.Instance.EnsureCustomPortraits(PortraitVM.Value.PortraitData.CustomId))
+		if (CustomPortraitCreatorVM.Value == null && PortraitVM.Value.PortraitData.IsCustom && CustomPortraitsManager.Instance.EnsureCustomPortraits(PortraitVM.Value.PortraitData.CustomId) && UINetUtility.IsControlMainCharacter())
 		{
 			CustomPortraitCreatorVM.Value = new CharGenCustomPortraitCreatorVM(PortraitVM, OnOpenFolderClick, OnRefreshPortraitsClick, OnCustomPortraitCreatorClose);
 		}
@@ -220,6 +224,7 @@ public class CharGenPortraitsSelectorVM : BaseCharGenAppearancePageComponentVM, 
 		string customId = m_SelectedPortrait.Value.PortraitData.CustomId;
 		m_AllPortraitsCollection.RemoveAll((CharGenPortraitSelectorItemVM item) => item.PortraitData?.IsCustom ?? true);
 		CustomPortraitGroup.RemoveCustomItems();
+		CustomPortraitsManager.Instance.UpdateGuid(customId);
 		CustomPortraitsManager.Instance.Cleanup();
 		foreach (PortraitData item in CustomPortraitsManager.Instance.LoadAllPortraits(40))
 		{
@@ -249,8 +254,15 @@ public class CharGenPortraitsSelectorVM : BaseCharGenAppearancePageComponentVM, 
 		m_CharGenContext.Doll.SetPortrait(portrait);
 		if (!UINetUtility.IsControlMainCharacter())
 		{
-			CharGenPortraitSelectorItemVM viewModel = m_AllPortraitsCollection.FirstOrDefault((CharGenPortraitSelectorItemVM p) => p.PortraitData == portrait.Data);
-			m_SelectorGroupVM.TrySelectEntity(viewModel);
+			CharGenPortraitSelectorItemVM charGenPortraitSelectorItemVM = m_AllPortraitsCollection.FirstOrDefault(portrait.Data.IsCustom ? ((Func<CharGenPortraitSelectorItemVM, bool>)((CharGenPortraitSelectorItemVM p) => portrait.Data.CustomId.Equals(p.PortraitData?.CustomId, StringComparison.Ordinal))) : ((Func<CharGenPortraitSelectorItemVM, bool>)((CharGenPortraitSelectorItemVM p) => portrait.Data == p.PortraitData)));
+			if (charGenPortraitSelectorItemVM != null)
+			{
+				m_SelectorGroupVM.TrySelectEntity(charGenPortraitSelectorItemVM);
+			}
+			else
+			{
+				OnCustomPortraitCreate(portrait);
+			}
 		}
 		Changed();
 	}

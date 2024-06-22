@@ -10,7 +10,7 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("3a972b2e74412bf46afa82ed77b52284")]
 public class TailSoundGetter : PropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Current zone tail sound";
 	}

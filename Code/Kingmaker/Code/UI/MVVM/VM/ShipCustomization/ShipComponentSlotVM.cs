@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
@@ -10,9 +11,11 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Abilities;
 using UniRx;
 using Warhammer.SpaceCombat.Blueprints;
 using Warhammer.SpaceCombat.Blueprints.Slots;
+using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 
@@ -22,7 +25,7 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 
 	public readonly WeaponSlotType WeaponSlotType;
 
-	public readonly ReactiveProperty<string> SlotDescription = new ReactiveProperty<string>(string.Empty);
+	private readonly ReactiveProperty<string> m_SlotDescription = new ReactiveProperty<string>(string.Empty);
 
 	public readonly ReactiveProperty<bool> NeedRepair = new ReactiveProperty<bool>(initialValue: false);
 
@@ -30,35 +33,36 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 
 	public readonly ReactiveProperty<bool> ShowPossibleTarget = new ReactiveProperty<bool>(initialValue: true);
 
-	public PlayerShipType ShipType;
+	public readonly PlayerShipType ShipType;
 
-	public BoolReactiveProperty IsLocked = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsLocked = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty HasArsenalAdvancement = new BoolReactiveProperty();
 
 	private bool m_IsPossibleHighlighted;
 
 	private bool m_IsPossibleHovered;
 
-	private readonly ItemSlot m_ItemSlot;
-
 	public int SetIndex { get; }
 
-	public ItemSlot ItemSlot => m_ItemSlot;
+	public ItemSlot ItemSlot { get; }
 
 	public ShipComponentSlotVM(ShipComponentSlotType slotType, ItemSlot itemSlot, int index = -1, WeaponSlotType weaponSlotType = WeaponSlotType.None, bool isLocked = false)
 		: base(itemSlot.MaybeItem, index)
 	{
 		SlotType = slotType;
 		WeaponSlotType = weaponSlotType;
-		m_ItemSlot = itemSlot;
+		ItemSlot = itemSlot;
 		SetIndex = index;
 		IsLocked.Value = isLocked;
 		ShipType = Game.Instance.Player.PlayerShip.Blueprint.ShipType;
-		SlotDescription.Value = GetSlotDescription();
+		m_SlotDescription.Value = GetSlotDescription();
+		UpdateArsenalAdvancement();
 	}
 
 	public bool IsPossibleTarget(ItemEntity item)
 	{
-		if (m_ItemSlot.CanInsertItem(item) && (!m_ItemSlot.HasItem || m_ItemSlot.CanRemoveItem()))
+		if (ItemSlot.CanInsertItem(item) && (!ItemSlot.HasItem || ItemSlot.CanRemoveItem()))
 		{
 			return CanHighLight(item);
 		}
@@ -72,18 +76,18 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 			return true;
 		}
 		BlueprintStarshipWeapon blueprintStarshipWeapon = item.Blueprint as BlueprintStarshipWeapon;
-		if ((bool)blueprintStarshipWeapon && (blueprintStarshipWeapon == null || !blueprintStarshipWeapon.AllowedSlots.Contains(WeaponSlotType)))
+		if (!blueprintStarshipWeapon)
 		{
-			return false;
+			return true;
 		}
-		return true;
+		return blueprintStarshipWeapon?.AllowedSlots.Contains(WeaponSlotType) ?? false;
 	}
 
 	public void InsertItem(ItemEntity item)
 	{
-		if (!IsLocked.Value && m_ItemSlot != null && m_ItemSlot.CanInsertItem(item))
+		if (!IsLocked.Value && ItemSlot != null && ItemSlot.CanInsertItem(item))
 		{
-			Game.Instance.GameCommandQueue.EquipItem(item, m_ItemSlot.Owner, this.ToSlotRef());
+			Game.Instance.GameCommandQueue.EquipItem(item, ItemSlot.Owner, this.ToSlotRef());
 		}
 	}
 
@@ -100,6 +104,7 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 			ShipComponentSlotType.Prow1 => shipCustomization.ShipWeapon, 
 			ShipComponentSlotType.Prow2 => shipCustomization.ShipWeapon, 
 			ShipComponentSlotType.Starboard => shipCustomization.ShipWeapon, 
+			ShipComponentSlotType.Arsenal => shipCustomization.Arsenal, 
 			_ => string.Empty, 
 		};
 	}
@@ -129,7 +134,8 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 
 	private void RefreshItem()
 	{
-		Item.Value = m_ItemSlot.MaybeItem;
+		Item.Value = ItemSlot.MaybeItem;
+		UpdateArsenalAdvancement();
 	}
 
 	public void HandleHighlightStart(ItemEntity item)
@@ -164,5 +170,19 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 	public void SetPossibleTargetState(bool state)
 	{
 		ShowPossibleTarget.Value = state;
+	}
+
+	private void UpdateArsenalAdvancement()
+	{
+		if (ItemSlot.MaybeItem != null && ItemSlot is Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot weaponSlot)
+		{
+			BoolReactiveProperty hasArsenalAdvancement = HasArsenalAdvancement;
+			IEnumerable<Ability> abilityVariants = weaponSlot.AbilityVariants;
+			hasArsenalAdvancement.Value = abilityVariants != null && abilityVariants.Count() > 1;
+		}
+		else
+		{
+			HasArsenalAdvancement.Value = false;
+		}
 	}
 }

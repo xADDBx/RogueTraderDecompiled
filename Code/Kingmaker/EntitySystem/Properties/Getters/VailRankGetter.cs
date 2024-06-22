@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("718e0c48c4a64be8a64a127f85f40511")]
 public class VailRankGetter : PropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Vail value (number)";
+		return "Veil value (number)";
 	}
 
 	protected override int GetBaseValue()

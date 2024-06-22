@@ -28,8 +28,8 @@ public class AbilityTargetInAreaEffectGetter : MechanicEntityPropertyGetter, Pro
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Check if target is in Area Effect";
+		return "Check if " + Target.Colorized() + " is in Area Effect";
 	}
 }

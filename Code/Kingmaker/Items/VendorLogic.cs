@@ -4,7 +4,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
-using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Cargo;
 using Kingmaker.Code.Globalmap.Colonization;
@@ -297,41 +296,36 @@ public class VendorLogic : IController, IChangeChapterHandler, ISubscriber
 		});
 	}
 
-	public float GetItemBuyPrice(ItemEntity item)
-	{
-		return GetItemBuyPrice(item.Blueprint);
-	}
-
-	public float GetItemBuyPrice(BlueprintItem blueprintItem)
+	public float GetItemBuyPrice(ItemEntity itemEntity)
 	{
 		if (IsTrading)
 		{
 			if ((bool)m_VendorPrices)
 			{
-				return m_VendorPrices.GetProfitFactorCost(blueprintItem);
+				return m_VendorPrices.GetProfitFactorCost(itemEntity.Blueprint);
 			}
 			if ((bool)VendorInventory)
 			{
-				return VendorInventory.GetProfitFactorCost(blueprintItem);
+				return VendorInventory.GetProfitFactorCost(itemEntity);
 			}
 		}
-		return blueprintItem.ProfitFactorCost;
+		return itemEntity.ProfitFactorCost;
 	}
 
-	public float GetItemBaseBuyPrice(BlueprintItem blueprintItem)
+	public float GetItemBaseBuyPrice(ItemEntity itemEntity)
 	{
 		if (IsTrading)
 		{
 			if ((bool)m_VendorPrices)
 			{
-				return m_VendorPrices.GetProfitFactorCost(blueprintItem);
+				return m_VendorPrices.GetProfitFactorCost(itemEntity.Blueprint);
 			}
 			if ((bool)VendorInventory)
 			{
-				return VendorInventory.GetBaseProfitFactorCost(blueprintItem);
+				return VendorInventory.GetBaseProfitFactorCost(itemEntity);
 			}
 		}
-		return blueprintItem.ProfitFactorCost;
+		return itemEntity.ProfitFactorCost;
 	}
 
 	public ItemEntity AddForBuy(ItemEntity item, int count)
@@ -341,9 +335,9 @@ public class VendorLogic : IController, IChangeChapterHandler, ISubscriber
 			PFLog.Default.Error("Item is not in 'store' collection");
 			return null;
 		}
-		if (VendorInventory.IsLockedByReputation(item.Blueprint))
+		if (VendorInventory.IsLockedByReputation(item))
 		{
-			PFLog.Default.Log($"Item {item.Name} locked by reputation {VendorInventory.GetCurrentFactionReputationPoints()}/{VendorInventory.GetReputationToUnlock(item.Blueprint)}");
+			PFLog.Default.Log($"Item {item.Name} locked by reputation {VendorInventory.GetCurrentFactionReputationPoints()}/{VendorInventory.GetVendorLootItem(item)}");
 			return null;
 		}
 		count = ((count < 0) ? item.Count : count);

@@ -1,10 +1,6 @@
-using System;
 using System.Collections.Generic;
-using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
-using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
-using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
@@ -34,14 +30,13 @@ public class ShipSkillsBaseView<TShipCareerPathTabs> : ViewBase<ShipSkillsVM>
 
 	private readonly List<RankEntryItemCommonView> m_RankEntries = new List<RankEntryItemCommonView>();
 
-	protected Action<bool> m_ReturnAction;
-
 	[SerializeField]
 	protected GameObject m_LockBackground;
 
 	public virtual void Initialize()
 	{
 		m_FadeAnimator.Initialize();
+		m_CareerPathRoundProgression.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -82,25 +77,5 @@ public class ShipSkillsBaseView<TShipCareerPathTabs> : ViewBase<ShipSkillsVM>
 	{
 		m_RankEntries.ForEach(WidgetFactory.DisposeWidget);
 		m_RankEntries.Clear();
-	}
-
-	protected void HandleReturnButton()
-	{
-		m_ReturnAction?.Invoke(obj: false);
-	}
-
-	protected void HandeConfirm()
-	{
-	}
-
-	protected void HandleResetButton()
-	{
-		UIUtility.ShowMessageBox(UIStrings.Instance.CharacterSheet.DialogResetSelections, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton button)
-		{
-			if (button == DialogMessageBoxBase.BoxButton.Yes)
-			{
-				base.ViewModel.ShipProgressionVM.CareerPathVM.ResetNewSelections();
-			}
-		});
 	}
 }

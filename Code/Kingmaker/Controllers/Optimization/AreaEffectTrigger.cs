@@ -1,6 +1,10 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Parts;
 using UnityEngine;
 
 namespace Kingmaker.Controllers.Optimization;
@@ -23,7 +27,7 @@ public class AreaEffectTrigger : MonoBehaviour
 
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		if (EntityDataLink.GetEntity(other) is BaseUnitEntity { IsExtra: false } baseUnitEntity)
+		if (EntityDataLink.GetEntity(other) is BaseUnitEntity { IsExtra: false } baseUnitEntity && !WasAlreadyInAreaEffectCluster(baseUnitEntity))
 		{
 			if (!Inside.Add(baseUnitEntity.FromBaseUnitEntity()))
 			{
@@ -38,7 +42,7 @@ public class AreaEffectTrigger : MonoBehaviour
 
 	private void OnTriggerExit2D(Collider2D other)
 	{
-		if (EntityDataLink.GetEntity(other) is BaseUnitEntity { IsExtra: false } baseUnitEntity)
+		if (EntityDataLink.GetEntity(other) is BaseUnitEntity { IsExtra: false } baseUnitEntity && !WillRemainInAreaEffectCluster(baseUnitEntity))
 		{
 			if (!Inside.Remove(baseUnitEntity.FromBaseUnitEntity()))
 			{
@@ -49,5 +53,58 @@ public class AreaEffectTrigger : MonoBehaviour
 				Exited.Add(baseUnitEntity.FromBaseUnitEntity());
 			}
 		}
+	}
+
+	private bool WasAlreadyInAreaEffectCluster(BaseUnitEntity unitInRange)
+	{
+		AreaEffectClusterComponent component = Unit.Blueprint.GetComponent<AreaEffectClusterComponent>();
+		if (component == null)
+		{
+			return false;
+		}
+		PartUnitInAreaEffectCluster partUnitInAreaEffectClusterOptional = unitInRange.GetPartUnitInAreaEffectClusterOptional();
+		if (partUnitInAreaEffectClusterOptional == null)
+		{
+			partUnitInAreaEffectClusterOptional = unitInRange.GetOrCreate<PartUnitInAreaEffectCluster>();
+			partUnitInAreaEffectClusterOptional.AddClusterKey(component.ClusterLogicBlueprint);
+			partUnitInAreaEffectClusterOptional.AddEnteringAreaEffectToList(component.ClusterLogicBlueprint, Unit);
+			return false;
+		}
+		partUnitInAreaEffectClusterOptional.AddEnteringAreaEffectToList(component.ClusterLogicBlueprint, Unit);
+		if (unitInRange.HasCurrentClusterKey(component.ClusterLogicBlueprint))
+		{
+			return true;
+		}
+		partUnitInAreaEffectClusterOptional.AddClusterKey(component.ClusterLogicBlueprint);
+		return false;
+	}
+
+	private bool WillRemainInAreaEffectCluster(BaseUnitEntity unitInRange)
+	{
+		AreaEffectClusterComponent component = Unit.Blueprint.GetComponent<AreaEffectClusterComponent>();
+		if (component == null)
+		{
+			return false;
+		}
+		if (IsInAnotherAreaEffect(unitInRange, component.ClusterLogicBlueprint))
+		{
+			unitInRange.GetPartUnitInAreaEffectClusterOptional()?.RemoveExitingAreaEffectFromList(component.ClusterLogicBlueprint, Unit);
+			return true;
+		}
+		unitInRange.GetPartUnitInAreaEffectClusterOptional()?.RemoveClusterKey(component.ClusterLogicBlueprint);
+		return false;
+	}
+
+	private static bool IsInAnotherAreaEffect(BaseUnitEntity unitInRange, BlueprintAbilityAreaEffectClusterLogic clusterKey)
+	{
+		if (!unitInRange.HasCurrentClusterKey(clusterKey))
+		{
+			return false;
+		}
+		if (unitInRange.IsCurrentlyInAnotherClusterArea(clusterKey))
+		{
+			return true;
+		}
+		return false;
 	}
 }

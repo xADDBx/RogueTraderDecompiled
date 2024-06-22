@@ -17,7 +17,7 @@ public class ConditionalRestrictionPart : InteractionRestrictionPart<Conditional
 	public override bool CheckRestriction(BaseUnitEntity user)
 	{
 		ConditionsReference condition = base.Settings.Condition;
-		if ((bool)condition?.Get() && condition.Get().Conditions.HasConditions)
+		if (condition != null && condition.Get()?.Conditions.HasConditions == true)
 		{
 			using (ContextData<MechanicEntityData>.Request().Setup((MapObjectEntity)base.Owner))
 			{

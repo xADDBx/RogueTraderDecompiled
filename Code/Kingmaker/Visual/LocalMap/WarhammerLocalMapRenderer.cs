@@ -115,22 +115,27 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 
 	private void OnGraphsUpdated(AstarPath script)
 	{
-		m_IsGraphDirty = true;
+		CheckGraph();
 	}
 
 	private void Update()
+	{
+		CheckGraph();
+		BlueprintAreaPart currentlyLoadedAreaPart = Game.Instance.CurrentlyLoadedAreaPart;
+		if (m_CachedArea != currentlyLoadedAreaPart)
+		{
+			m_CachedArea = currentlyLoadedAreaPart;
+			m_IsMapTextureDirty = true;
+		}
+	}
+
+	private void CheckGraph()
 	{
 		CustomGridGraph graph = GetGraph(AstarPath.active);
 		if (graph != m_CachedGraph)
 		{
 			m_CachedGraph = graph;
 			m_IsGraphDirty = true;
-		}
-		BlueprintAreaPart currentlyLoadedAreaPart = Game.Instance.CurrentlyLoadedAreaPart;
-		if (m_CachedArea != currentlyLoadedAreaPart)
-		{
-			m_CachedArea = currentlyLoadedAreaPart;
-			m_IsMapTextureDirty = true;
 		}
 	}
 
@@ -225,6 +230,17 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 		Owlcat.Runtime.Core.Utility.ListPool<float>.Release(list);
 	}
 
+	private void OnDrawGizmosSelected()
+	{
+		if (m_CachedArea != null)
+		{
+			Color color = Gizmos.color;
+			Gizmos.color = Color.magenta;
+			Gizmos.DrawWireCube(m_CachedArea.Bounds.LocalMapBounds.center, m_CachedArea.Bounds.LocalMapBounds.size);
+			Gizmos.color = color;
+		}
+	}
+
 	private void UpdateMapTexture()
 	{
 		if (m_ColorRT != null)
@@ -247,10 +263,13 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 		float2 xz = (float2 / float4).xz;
 		float2 float5 = (@float.xz - float3.xz) / float4.xz;
 		LocalMapBakerMaterial.SetVector(ShaderProps._ScaleOffset, new Vector4(xz.x, xz.y, float5.x, float5.y));
+		int num = Mathf.Max(1, (int)DownsampleFactor);
+		Vector4 value = new Vector4(num, num, m_ColorRT.width - num - 1, m_ColorRT.height - num - 1);
+		LocalMapBakerMaterial.SetVector(ShaderProps._LocalMapBorderParams, value);
 		RenderTexture temporary = RenderTexture.GetTemporary(new RenderTextureDescriptor(m_ColorRT.width, m_ColorRT.height, RenderTextureFormat.R8, 0));
 		Graphics.Blit(m_LocalMapTexture, temporary, LocalMapBakerMaterial, 0);
-		int num = Mathf.Max(1, (int)DownsampleFactor);
-		RenderTextureDescriptor desc = new RenderTextureDescriptor(m_ColorRT.width / num, m_ColorRT.height / num, RenderTextureFormat.R8, 0);
+		int num2 = Mathf.Max(1, (int)DownsampleFactor);
+		RenderTextureDescriptor desc = new RenderTextureDescriptor(m_ColorRT.width / num2, m_ColorRT.height / num2, RenderTextureFormat.R8, 0);
 		RenderTexture temporary2 = RenderTexture.GetTemporary(desc);
 		RenderTexture temporary3 = RenderTexture.GetTemporary(desc);
 		CoreUtils.SetKeyword(LocalMapBakerMaterial, STRAIGHT_DIRECTIONS, BlurDirectionMode == BlurDirections.Straight);
@@ -259,8 +278,8 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 		bool flag = true;
 		for (int i = 0; i < BlurIterations; i++)
 		{
-			float value = BlurMinSpread + BlurSpread * (float)i;
-			Shader.SetGlobalFloat(_HighlightingBlurOffset, value);
+			float value2 = BlurMinSpread + BlurSpread * (float)i;
+			Shader.SetGlobalFloat(_HighlightingBlurOffset, value2);
 			if (flag)
 			{
 				Graphics.Blit(temporary2, temporary3, LocalMapBakerMaterial, 1);

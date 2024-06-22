@@ -18,7 +18,7 @@ public class GameOver : GameAction
 		return "Game over: " + Reason;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.GameOver(Reason);
 	}

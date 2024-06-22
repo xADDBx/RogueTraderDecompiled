@@ -8,6 +8,7 @@ using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.Units;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -63,6 +64,10 @@ public class TaskUseAreaTransition : ClockworkRunnerTask
 			if (forcedPath.error)
 			{
 				PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+			}
+			else if (unit.IsMovementLockedByGameModeOrCombat())
+			{
+				PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 			}
 			else
 			{

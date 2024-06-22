@@ -24,6 +24,8 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public readonly PercentsModifiersManager DodgePercentModifiers = new PercentsModifiersManager();
 
+	public readonly PercentsMultipliersManager DodgePercentMultiplierModifier = new PercentsMultipliersManager();
+
 	public readonly FlagModifiersManager AutoDodgeFlagModifiers = new FlagModifiersManager();
 
 	public readonly ValueModifiersManager MinimumDodgeValueModifier = new ValueModifiersManager();
@@ -31,6 +33,8 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 	public List<StatType> AgilityReplacementStats = new List<StatType>();
 
 	public const int MaxValueCap = 95;
+
+	public CompositeModifiersManager WeaponDodgePenetrationModifiers;
 
 	[CanBeNull]
 	public AbilityData Ability { get; }
@@ -142,9 +146,12 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 		{
 			DodgeValueModifiers.Add(-num2, this, ModifierDescriptor.BurstFirePenalty);
 		}
-		int num3 = Ability?.GetWeaponStats().ResultDodgePenetration ?? 0;
+		CompositeModifiersManager compositeModifiersManager = Ability?.GetWeaponStats().DodgePenetrationModifiers;
+		int num3 = compositeModifiersManager?.Value ?? 0;
 		if (num3 != 0)
 		{
+			WeaponDodgePenetrationModifiers = new CompositeModifiersManager();
+			WeaponDodgePenetrationModifiers.CopyFrom(compositeModifiersManager);
 			DodgeValueModifiers.Add(-num3, this, ModifierDescriptor.Weapon);
 		}
 		int num4 = TryAddAgilityBasedDodgePenetration();
@@ -159,24 +166,31 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 		}
 		int num6 = BaseValue + DodgeValueModifiers.Value;
 		float value = DodgePercentModifiers.Value;
-		int num8 = (UncappedResult = (int)((float)num6 * value));
-		UncappedNegativesCount = ((num6 > 0) ? num8 : num6);
-		RawResult = num8;
-		if (num8 < MinimumDodgeValueModifier.Value)
+		int num7 = (int)((float)num6 * value);
+		if (!DodgePercentMultiplierModifier.Empty)
 		{
-			num8 = MinimumDodgeValueModifier.Value;
+			num7 = (int)((float)num7 * DodgePercentMultiplierModifier.Value);
 		}
-		Result = Math.Clamp(num8, 0, 95);
+		UncappedResult = num7;
+		UncappedNegativesCount = ((num6 > 0) ? num7 : num6);
+		RawResult = num7;
+		if (num7 < MinimumDodgeValueModifier.Value)
+		{
+			num7 = MinimumDodgeValueModifier.Value;
+		}
+		Result = Math.Clamp(num7, 0, 95);
 		SpecialOverrideWithFeatures();
 	}
 
 	public static int CalculateDodgeArmorPercentPenalty(UnitEntity defender, BlueprintItemArmor armor = null)
 	{
-		return (armor?.Category ?? defender.Body.Armor.MaybeArmor?.Blueprint.Category ?? WarhammerArmorCategory.None) switch
+		WarhammerArmorCategory warhammerArmorCategory = armor?.Category ?? defender.Body.Armor.MaybeArmor?.Blueprint.Category ?? WarhammerArmorCategory.None;
+		BlueprintArmorType blueprintArmorType = armor?.Type ?? defender.Body.Armor.MaybeArmor?.Blueprint.Type;
+		return warhammerArmorCategory switch
 		{
-			WarhammerArmorCategory.Power => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnorePowerArmourDodgePenalty).Value) ? 25 : 0, 
-			WarhammerArmorCategory.Heavy => 50, 
-			WarhammerArmorCategory.Medium => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnoreMediumArmourDodgePenalty).Value) ? 25 : 0, 
+			WarhammerArmorCategory.Power => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnorePowerArmourDodgePenalty).Value) ? (blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
+			WarhammerArmorCategory.Heavy => blueprintArmorType?.DodgeArmorPercentPenalty ?? 50, 
+			WarhammerArmorCategory.Medium => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnoreMediumArmourDodgePenalty).Value) ? (blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
 			_ => 0, 
 		};
 	}
@@ -199,7 +213,7 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	private void SpecialOverrideWithFeatures()
 	{
-		if ((bool)Defender.Features.AutoDodge || AutoDodgeFlagModifiers.Value)
+		if ((bool)Defender.Features.AutoDodge || AutoDodgeFlagModifiers.Value || ((bool)Defender.Features.AutoDodgeFriendlyFire && Defender.IsAlly(MaybeAttacker)))
 		{
 			IsAutoDodge = true;
 			Result = 100;

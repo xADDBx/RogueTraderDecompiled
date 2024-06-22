@@ -25,7 +25,7 @@ public class CheckAbilityPsychicPowerTypeGetter : PropertyGetter, PropertyContex
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		string text = ((m_PowerType == PsychicPower.Minor) ? "Minor" : "Major");
 		return "Psychic Power is " + text;

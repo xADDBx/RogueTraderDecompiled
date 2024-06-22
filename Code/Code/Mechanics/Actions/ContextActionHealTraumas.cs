@@ -16,7 +16,7 @@ public class ContextActionHealTraumas : ContextAction
 		return "Heal Traumas " + ((Stacks > 0) ? $"({Stacks} stacks)" : "(all stacks)");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		base.Target.Entity?.GetHealthOptional()?.HealTrauma((Stacks > 0) ? Stacks : int.MaxValue);
 	}

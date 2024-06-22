@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.View.MapObjects.SriptZones;
 using Owlcat.QA.Validation;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.Traps.Detailed;
 
+[KnowledgeDatabaseID("034860803e00457b97fd02735c1a54af")]
 public class DetailedTrapObjectView : TrapObjectView, IBlueprintedMapObjectView
 {
 	[SerializeField]
@@ -59,7 +61,8 @@ public class DetailedTrapObjectView : TrapObjectView, IBlueprintedMapObjectView
 		base.ApplyBlueprint(blueprint);
 		m_Blueprint = blueprint.ToReference<BlueprintTrapReference>();
 		AwarenessCheckComponent awarenessCheckComponent = base.gameObject.EnsureComponent<AwarenessCheckComponent>();
-		awarenessCheckComponent.DC = Blueprint.AwarenessDC;
+		awarenessCheckComponent.SetCustomDC(Blueprint.AwarenessDC);
+		awarenessCheckComponent.Difficulty = Blueprint.AwarenessDifficulty;
 		awarenessCheckComponent.Radius = Blueprint.AwarenessRadius;
 	}
 

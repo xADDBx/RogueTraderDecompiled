@@ -223,13 +223,11 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 		looseBricks.AddRange(looseBricks2);
 		if (gainBricks.Any())
 		{
-			list.Add(new TooltipBrickSpace());
 			list.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.YouWillGainTitle.Text, TooltipTitleType.H1, TextAlignmentOptions.Left));
 			list.AddRange(gainBricks);
 		}
 		if (looseBricks.Any())
 		{
-			list.Add(new TooltipBrickSpace());
 			list.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.YouWillLoseTitle.Text, TooltipTitleType.H1, TextAlignmentOptions.Left));
 			list.AddRange(looseBricks);
 		}

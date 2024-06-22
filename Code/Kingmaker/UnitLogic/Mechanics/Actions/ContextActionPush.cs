@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -26,16 +27,16 @@ public class ContextActionPush : ContextAction
 		return "Push" + (ProvokeAttackOfOpportunity ? " (provoke AoO)" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error("Target unit is missing");
+			Element.LogError(this, "Target unit is missing");
 			return;
 		}
 		if (base.Context.MaybeCaster == null || (m_UseFactOwnerAsCaster && base.Context.MaybeOwner == null))
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		MechanicEntity caster = (m_UseFactOwnerAsCaster ? base.Context.MaybeOwner : base.Context.MaybeCaster);

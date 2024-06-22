@@ -27,27 +27,35 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Abilities.Components;
 
 [TypeId("8de79e536f4d4955ada731479ecfa196")]
-public class AbilityLandCombatTeleport : AbilityCustomLogic
+public class AbilityLandCombatTeleport : AbilityCustomLogic, IAbilityTargetRestriction
 {
 	protected static readonly TimeSpan MaxTeleportationDuration = 2.5f.Seconds();
 
+	public TeleportationType TeleportationType;
+
+	[ConditionalShow("IsMoveSelf")]
 	[Tooltip("Радиус в котором мы ищем позицию для побега или врага для телепортации к нему.")]
 	public int Range;
 
+	[ConditionalShow("IsMoveSelf")]
 	[Tooltip("Если галочка стоит, то телепортироваться будет только к видимым врагам или к видимым клеткам.")]
 	public bool UseLos;
 
+	[ConditionalShow("IsMoveSelf")]
 	[Tooltip("Если галочка стоит, то пытаемся телепортироваться как можно дальше от всех врагов. В противном случае вымираем кого-то из врагов и телепортируемся рядом с ним.")]
 	public bool Escape;
 
+	[ConditionalShow("IsMoveSelf")]
 	[HideIf("Escape")]
 	[Tooltip("Выбираем наиболее удаленного от кастера врага, но с учетом приоритета и дальности. В противном случае - ближайшего.")]
 	public bool SearchFurthestEnemy;
 
+	[ConditionalShow("IsMoveSelf")]
 	[HideIf("Escape")]
 	[Tooltip("Выбрав цель пытаемся телепортироваться рядом с ней, но как можно дальше от стартовой точки. В противном случае - как можно ближе.")]
 	public bool TryJumpOverEnemy;
 
+	[ConditionalShow("IsMoveSelf")]
 	[HideIf("Escape")]
 	[Tooltip("По возможности пытаемся телепортироваться к врагам, подпадающим под эти условия")]
 	public PropertyCalculator[] EnemyPriorityConditions;
@@ -83,6 +91,13 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic
 
 	public ActionList ActionsOnCasterAfter;
 
+	[ConditionalShow("IsMoveTarget")]
+	public ActionList ActionsOnTargetAfter;
+
+	private bool IsMoveSelf => TeleportationType == TeleportationType.MoveSelf;
+
+	private bool IsMoveTarget => TeleportationType == TeleportationType.MoveTarget;
+
 	public BlueprintProjectile CasterDisappearProjectile => m_CasterDisappearProjectile?.Get();
 
 	public BlueprintProjectile CasterAppearProjectile => m_CasterAppearProjectile?.Get();
@@ -98,8 +113,18 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic
 		BaseUnitEntity caster = context.Caster as BaseUnitEntity;
 		if (caster == null)
 		{
-			PFLog.Default.Error("caster unit is missing");
+			PFLog.Default.Error("teleportation caster unit is missing");
 			yield break;
+		}
+		BaseUnitEntity entityToMove = caster;
+		if (IsMoveTarget)
+		{
+			if (target.Entity == null || target.Entity == caster)
+			{
+				PFLog.Default.Error("teleportation missing target unit");
+				yield break;
+			}
+			entityToMove = target.Entity as BaseUnitEntity;
 		}
 		TeleportSettings teleportSettings = default(TeleportSettings);
 		teleportSettings.PortalFromPrefab = PortalFromPrefab;
@@ -113,68 +138,81 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic
 		teleportSettings.CasterAppearProjectile = CasterAppearProjectile;
 		teleportSettings.SideDisappearProjectile = SideDisappearProjectile;
 		teleportSettings.SideAppearProjectile = SideAppearProjectile;
-		teleportSettings.Targets = new List<BaseUnitEntity> { caster };
-		teleportSettings.LookAtPoint = GetLookAtPoint(caster, target.Point);
+		teleportSettings.Targets = new List<BaseUnitEntity> { entityToMove };
+		teleportSettings.LookAtPoint = GetLookAtPoint(entityToMove, IsMoveSelf ? caster.Position : target.Point);
 		teleportSettings.RelaxPoints = true;
 		TeleportSettings settings = teleportSettings;
-		IEnumerable<BaseUnitEntity> enemies = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity unit) => caster.IsEnemy(unit) && unit.IsConscious);
-		if (UseLos)
+		if (IsMoveSelf)
 		{
-			enemies = enemies.Where(delegate(BaseUnitEntity enemy)
+			IEnumerable<BaseUnitEntity> enemies = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity unit) => caster.IsEnemy(unit) && unit.IsConscious);
+			if (UseLos)
 			{
-				LosCalculations.CoverType coverType2 = LosCalculations.GetWarhammerLos(caster, enemy).CoverType;
-				return coverType2 == LosCalculations.CoverType.Half || coverType2 == LosCalculations.CoverType.None;
-			});
-		}
-		ILookup<bool, BaseUnitEntity> lookup = enemies.ToLookup((BaseUnitEntity enemy) => EnemyPriorityConditions.Any((PropertyCalculator condition) => condition.GetBoolValue(new PropertyContext(context.Ability, enemy))));
-		IEnumerable<BaseUnitEntity> enumerable = lookup[true];
-		IEnumerable<BaseUnitEntity> source = lookup[false];
-		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)caster.CurrentNode.node;
-		target = null;
-		if (!Escape)
-		{
-			if (TryFindEnemyToLandAround(caster, enumerable.Where((BaseUnitEntity enemy) => caster.DistanceToInCells(enemy) <= Range), out var validEnemy, out var landingNode))
-			{
-				target = new TargetWrapper(((CustomGridGraph)customGridNodeBase.Graph).GetNode(landingNode.x, landingNode.y).Vector3Position);
-			}
-			else if (TryFindEnemyToLandAround(caster, source.Where((BaseUnitEntity enemy) => caster.DistanceToInCells(enemy) <= Range), out validEnemy, out landingNode))
-			{
-				target = new TargetWrapper(((CustomGridGraph)customGridNodeBase.Graph).GetNode(landingNode.x, landingNode.y).Vector3Position);
-			}
-		}
-		if (target == null)
-		{
-			HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
-			if (!enumerable.Empty())
-			{
-				enemies = enumerable;
-			}
-			GridPatterns.AddCircleNodes(hashSet, Range, caster.Size);
-			HashSet<GraphNode> hashSet2 = TempHashSet.Get<GraphNode>();
-			foreach (Vector2Int item in hashSet)
-			{
-				if (!CanMoveByVector(caster, item))
+				enemies = enemies.Where(delegate(BaseUnitEntity enemy)
 				{
-					continue;
+					LosCalculations.CoverType coverType2 = LosCalculations.GetWarhammerLos(caster, enemy).CoverType;
+					return coverType2 == LosCalculations.CoverType.Half || coverType2 == LosCalculations.CoverType.None;
+				});
+			}
+			ILookup<bool, BaseUnitEntity> lookup = enemies.ToLookup((BaseUnitEntity enemy) => EnemyPriorityConditions.Any((PropertyCalculator condition) => condition.GetBoolValue(new PropertyContext(context.Ability, enemy))));
+			IEnumerable<BaseUnitEntity> enumerable = lookup[true];
+			IEnumerable<BaseUnitEntity> source = lookup[false];
+			CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)caster.CurrentNode.node;
+			target = null;
+			if (!Escape)
+			{
+				if (TryFindEnemyToLandAround(caster, enumerable.Where((BaseUnitEntity enemy) => caster.DistanceToInCells(enemy) <= Range), out var validEnemy, out var landingNode))
+				{
+					target = new TargetWrapper(((CustomGridGraph)customGridNodeBase.Graph).GetNode(landingNode.x, landingNode.y).Vector3Position);
 				}
-				int xCoordinateInGrid = customGridNodeBase.XCoordinateInGrid;
-				int zCoordinateInGrid = customGridNodeBase.ZCoordinateInGrid;
-				CustomGridNodeBase node2 = ((CustomGridGraph)customGridNodeBase.Graph).GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
-				if (UseLos)
+				else if (TryFindEnemyToLandAround(caster, source.Where((BaseUnitEntity enemy) => caster.DistanceToInCells(enemy) <= Range), out validEnemy, out landingNode))
 				{
-					LosCalculations.CoverType coverType = LosCalculations.GetWarhammerLos(caster, node2, caster.SizeRect).CoverType;
-					if (coverType == LosCalculations.CoverType.Full || coverType == LosCalculations.CoverType.Invisible)
+					target = new TargetWrapper(((CustomGridGraph)customGridNodeBase.Graph).GetNode(landingNode.x, landingNode.y).Vector3Position);
+				}
+			}
+			if (target == null)
+			{
+				HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
+				if (!enumerable.Empty())
+				{
+					enemies = enumerable;
+				}
+				GridPatterns.AddCircleNodes(hashSet, Range, caster.Size);
+				HashSet<GraphNode> hashSet2 = TempHashSet.Get<GraphNode>();
+				foreach (Vector2Int item in hashSet)
+				{
+					if (!CanMoveByVector(caster, item))
 					{
 						continue;
 					}
+					int xCoordinateInGrid = customGridNodeBase.XCoordinateInGrid;
+					int zCoordinateInGrid = customGridNodeBase.ZCoordinateInGrid;
+					CustomGridNodeBase node2 = ((CustomGridGraph)customGridNodeBase.Graph).GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
+					if (UseLos)
+					{
+						LosCalculations.CoverType coverType = LosCalculations.GetWarhammerLos(caster, node2, caster.SizeRect).CoverType;
+						if (coverType == LosCalculations.CoverType.Full || coverType == LosCalculations.CoverType.Invisible)
+						{
+							continue;
+						}
+					}
+					hashSet2.Add(((CustomGridGraph)customGridNodeBase.Graph).GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y));
 				}
-				hashSet2.Add(((CustomGridGraph)customGridNodeBase.Graph).GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y));
+				GraphNode graphNode = (Escape ? hashSet2.MaxBy((GraphNode node) => DistanceToClosestEnemyInCells((CustomGridNodeBase)node, caster.SizeRect, enemies)) : hashSet2.MinBy((GraphNode node) => DistanceToClosestEnemyInCells((CustomGridNodeBase)node, caster.SizeRect, enemies)));
+				target = new TargetWrapper(graphNode.Vector3Position);
 			}
-			GraphNode graphNode = (Escape ? hashSet2.MaxBy((GraphNode node) => DistanceToClosestEnemyInCells((CustomGridNodeBase)node, caster.SizeRect, enemies)) : hashSet2.MinBy((GraphNode node) => DistanceToClosestEnemyInCells((CustomGridNodeBase)node, caster.SizeRect, enemies)));
-			target = new TargetWrapper(graphNode.Vector3Position);
+		}
+		if (IsMoveTarget)
+		{
+			if (!TryFindLandingNodeAroundUnit(entityToMove, caster, out var landingNode2))
+			{
+				PFLog.Default.Error("teleportation of target with no space for it");
+				yield break;
+			}
+			CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)caster.CurrentNode.node;
+			target = new TargetWrapper(((CustomGridGraph)customGridNodeBase2.Graph).GetNode(landingNode2.x, landingNode2.y).Vector3Position);
 		}
 		caster.Features.CantAct.Retain();
-		IEnumerator<AbilityDeliveryTarget> deliver = Deliver(context, settings, caster, target);
+		IEnumerator<AbilityDeliveryTarget> deliver = Deliver(context, settings, entityToMove, target);
 		while (deliver.MoveNext())
 		{
 			yield return deliver.Current;
@@ -182,6 +220,13 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic
 		using (context.GetDataScope(caster.ToITargetWrapper()))
 		{
 			ActionsOnCasterAfter.Run();
+		}
+		if (TeleportationType == TeleportationType.MoveTarget && entityToMove != null)
+		{
+			using (context.GetDataScope(entityToMove))
+			{
+				ActionsOnTargetAfter.Run();
+			}
 		}
 		caster.Features.CantAct.Release();
 	}
@@ -410,5 +455,44 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic
 		validEnemy = null;
 		landingNode = new Vector2Int(caster.CurrentNode.node.position.x, caster.CurrentNode.node.position.z);
 		return false;
+	}
+
+	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
+	{
+		string unavailabilityReason;
+		return IsValid(ability, target, out unavailabilityReason);
+	}
+
+	public string GetAbilityTargetRestrictionUIText(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
+	{
+		IsValid(ability, target, out var unavailabilityReason);
+		return unavailabilityReason;
+	}
+
+	private bool IsValid(AbilityData ability, TargetWrapper target, out string unavailabilityReason)
+	{
+		unavailabilityReason = null;
+		switch (TeleportationType)
+		{
+		case TeleportationType.MoveSelf:
+			return true;
+		case TeleportationType.MoveTarget:
+		{
+			if (!target.HasEntity)
+			{
+				unavailabilityReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsInvalid;
+				return false;
+			}
+			if (!TryFindLandingNodeAroundUnit(target.Entity as BaseUnitEntity, ability.Caster as BaseUnitEntity, out var _))
+			{
+				unavailabilityReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.NotEnoughSpace;
+				return false;
+			}
+			return true;
+		}
+		default:
+			PFLog.Default.Error("unknown teleportation type");
+			return true;
+		}
 	}
 }

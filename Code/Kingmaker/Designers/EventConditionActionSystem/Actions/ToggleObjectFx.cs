@@ -17,7 +17,7 @@ public class ToggleObjectFx : GameAction
 
 	public bool ToggleOn;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if ((bool)Target)
 		{

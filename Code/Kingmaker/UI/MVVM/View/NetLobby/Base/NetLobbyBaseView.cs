@@ -1,5 +1,8 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Models;
 using Kingmaker.UI.MVVM.VM.NetLobby;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
@@ -45,6 +48,10 @@ public class NetLobbyBaseView : ViewBase<NetLobbyVM>, IInitializable
 		{
 			UISounds.Instance.Sounds.LocalMap.MapClose.Play();
 		}
+		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
+		{
+			h.HandleFullScreenUiChanged(state, FullScreenUIType.NewGame);
+		});
 		base.gameObject.SetActive(state);
 		Game.Instance.RequestPauseUi(state);
 	}

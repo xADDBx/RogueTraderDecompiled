@@ -34,7 +34,7 @@ public class ContextActionMoveToTargetOnShortestPath : ContextAction
 		return $"Move unit to the {m_TargetPoint} on the shortest path";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		UnitEntity targetEntity = base.Target?.Entity as UnitEntity;
 		if (targetEntity == null)

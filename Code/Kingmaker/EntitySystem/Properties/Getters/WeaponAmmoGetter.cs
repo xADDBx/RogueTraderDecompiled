@@ -13,13 +13,13 @@ public class WeaponAmmoGetter : UnitPropertyGetter
 	[SerializeField]
 	private bool SecondWeapon;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!SecondWeapon)
 		{
-			return "First Weapon current ammo";
+			return "First Weapon of " + FormulaTargetScope.Current + " current ammo";
 		}
-		return "Second Weapon current ammo";
+		return "Second Weapon of " + FormulaTargetScope.Current + " current ammo";
 	}
 
 	protected override int GetBaseValue()

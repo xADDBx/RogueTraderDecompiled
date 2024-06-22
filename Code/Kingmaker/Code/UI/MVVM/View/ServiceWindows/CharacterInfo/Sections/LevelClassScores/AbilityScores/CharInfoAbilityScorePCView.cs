@@ -129,11 +129,11 @@ public class CharInfoAbilityScorePCView : ViewBase<CharInfoStatVM>, IConsoleNavi
 			{
 				m_Selectable.SetActiveLayer("Preview");
 			}
-			else if (base.ViewModel.HasBonuses.Value)
+			else if (base.ViewModel.HasBonuses.Value && base.ViewModel.Bonus.Value > 0)
 			{
 				m_Selectable.SetActiveLayer("Bonus");
 			}
-			else if (base.ViewModel.HasPenalties.Value)
+			else if (base.ViewModel.HasPenalties.Value && base.ViewModel.Bonus.Value < 0)
 			{
 				m_Selectable.SetActiveLayer("Penalty");
 			}

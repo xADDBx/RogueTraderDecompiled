@@ -6,6 +6,8 @@ using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules.Modifiers;
+using Kingmaker.UnitLogic.Buffs;
+using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
@@ -14,6 +16,14 @@ public class RuleCalculateStatsArmor : RulebookEvent
 	public readonly CompositeModifiersManager AbsorptionCompositeModifiers = new CompositeModifiersManager();
 
 	public readonly CompositeModifiersManager DeflectionCompositeModifiers = new CompositeModifiersManager();
+
+	public int? PctMinAbsorption;
+
+	public int? PctMinDeflection;
+
+	public int? MinAbsorptionValue;
+
+	public int? MinDeflectionValue;
 
 	[CanBeNull]
 	public ItemEntityArmor Armor { get; }
@@ -39,10 +49,7 @@ public class RuleCalculateStatsArmor : RulebookEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		if (Armor != null && base.Initiator != Armor.Wielder)
-		{
-			ApplyEnchantmentsManually();
-		}
+		TryApplyEnchantmentsManually();
 		ResultBaseAbsorption = base.ConcreteInitiator.GetStatOptional(StatType.DamageAbsorption);
 		ResultBaseDeflection = base.ConcreteInitiator.GetStatOptional(StatType.DamageDeflection);
 		if (Armor != null)
@@ -50,19 +57,54 @@ public class RuleCalculateStatsArmor : RulebookEvent
 			ResultBaseAbsorption += Armor.Blueprint.DamageAbsorption;
 			ResultBaseDeflection += Armor.Blueprint.DamageDeflection;
 		}
-		ResultAbsorption = Math.Max(0, ResultBaseAbsorption + AbsorptionCompositeModifiers.Value);
-		ResultDeflection = Math.Max(0, ResultBaseDeflection + DeflectionCompositeModifiers.Value);
+		int val = 0;
+		if (MinAbsorptionValue.HasValue)
+		{
+			val = Math.Max(val, MinAbsorptionValue.Value);
+		}
+		if (PctMinAbsorption.HasValue)
+		{
+			val = Math.Max(val, Mathf.RoundToInt((float)(ResultBaseAbsorption * PctMinAbsorption.Value) / 100f));
+		}
+		int val2 = 0;
+		if (MinDeflectionValue.HasValue)
+		{
+			val2 = Math.Max(val2, MinDeflectionValue.Value);
+		}
+		if (PctMinDeflection.HasValue)
+		{
+			val2 = Math.Max(val2, Mathf.RoundToInt((float)(ResultBaseAbsorption * PctMinDeflection.Value) / 100f));
+		}
+		ResultAbsorption = Math.Max(val, ResultBaseAbsorption + AbsorptionCompositeModifiers.Value);
+		ResultDeflection = Math.Max(val2, ResultBaseDeflection + DeflectionCompositeModifiers.Value);
 	}
 
-	private void ApplyEnchantmentsManually()
+	private void TryApplyEnchantmentsManually()
 	{
-		if (Armor == null)
+		if (Armor != null && base.Initiator != Armor.Wielder)
+		{
+			foreach (ItemEnchantment enchantment in Armor.Enchantments)
+			{
+				enchantment.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsArmor> c)
+				{
+					try
+					{
+						c.OnEventAboutToTrigger(this);
+					}
+					catch (Exception ex2)
+					{
+						PFLog.Default.Exception(ex2);
+					}
+				});
+			}
+		}
+		if (base.ConcreteInitiator.Buffs.IsSubscribedOnEventBus)
 		{
 			return;
 		}
-		foreach (ItemEnchantment enchantment in Armor.Enchantments)
+		foreach (Buff rawFact in base.ConcreteInitiator.Buffs.RawFacts)
 		{
-			enchantment.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsArmor> c)
+			rawFact.CallComponents(delegate(IInitiatorRulebookHandler<RuleCalculateStatsArmor> c)
 			{
 				try
 				{

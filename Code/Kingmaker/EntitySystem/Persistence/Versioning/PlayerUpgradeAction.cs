@@ -119,7 +119,7 @@ public class PlayerUpgradeAction : IHashable
 		Unrecruit unrecruit = new Unrecruit();
 		unrecruit.CompanionBlueprint = blueprintUnit;
 		unrecruit.OnUnrecruit = new ActionList();
-		unrecruit.RunAction();
+		unrecruit.Run();
 		BaseUnitEntity character = GetCharacter(blueprintUnit);
 		if (character != null)
 		{

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -7,6 +8,7 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common.DebugInformation;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -15,7 +17,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Dialog.Dialog;
 
-public class DialogCuePCView : ViewBase<CueVM>, ISettingsFontSizeUIHandler, ISubscriber
+public class DialogCuePCView : ViewBase<CueVM>, ISettingsFontSizeUIHandler, ISubscriber, IHasBlueprintInfo
 {
 	[SerializeField]
 	internal CanvasGroup m_CueGroup;
@@ -54,6 +56,8 @@ public class DialogCuePCView : ViewBase<CueVM>, ISettingsFontSizeUIHandler, ISub
 
 	public List<SkillCheckResult> SkillChecks => base.ViewModel.SkillChecks;
 
+	public BlueprintScriptableObject Blueprint => base.ViewModel?.BlueprintCue;
+
 	public void Initialize(Action destroyAction, DialogColors dialogColors, RectTransform tooltipPlace = null)
 	{
 		m_DestroyAction = destroyAction;
@@ -76,6 +80,12 @@ public class DialogCuePCView : ViewBase<CueVM>, ISettingsFontSizeUIHandler, ISub
 		})));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		m_DestroyAction?.Invoke();
+	}
+
 	private void SetTextFontSize(float multiplier)
 	{
 		float fontSize = (base.ViewModel.IsSpecial ? ((float)m_SpecialFontSize) : (Game.Instance.IsControllerMouse ? m_DefaultFontSize : m_DefaultConsoleFontSize)) * multiplier;
@@ -85,12 +95,6 @@ public class DialogCuePCView : ViewBase<CueVM>, ISettingsFontSizeUIHandler, ISub
 	public void Highlight()
 	{
 		m_Text.fontStyle = m_HighlightFontStyle;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		m_DestroyAction?.Invoke();
 	}
 
 	public void HandleChangeFontSizeSettings(float size)

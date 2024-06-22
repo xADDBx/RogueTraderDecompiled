@@ -15,7 +15,7 @@ public class ContextActionOnContextCaster : ContextAction
 		return "Run actions on Caster of context";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster != null)

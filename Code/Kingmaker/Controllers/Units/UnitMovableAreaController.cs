@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, IDirectMovementHandler
+public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IDirectMovementHandler
 {
 	private BaseUnitEntity m_CurrentUnit;
 
@@ -33,6 +33,10 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 	private IDisposable m_CurrentUnitSubscription;
 
 	private Dictionary<string, Vector3> m_InitialPositions = new Dictionary<string, Vector3>();
+
+	public BaseUnitEntity CurrentUnit => m_CurrentUnit;
+
+	public bool DeploymentPhase => m_DeploymentPhase;
 
 	public List<GraphNode> CurrentUnitMovableArea { get; private set; }
 
@@ -114,7 +118,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}
@@ -124,6 +128,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		if (Game.Instance.TurnController.TurnBasedModeActive)
 		{
 			Clear();
+			UpdateMovableAreaForParty();
 			MechanicEntity mechanicEntity = (Game.Instance.TurnController.IsPreparationTurn ? (entity ?? Game.Instance.TurnController.CurrentUnit) : (Game.Instance.TurnController.CurrentUnit ?? entity));
 			if (mechanicEntity is BaseUnitEntity currentUnit && mechanicEntity.IsDirectlyControllable)
 			{
@@ -138,6 +143,19 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		if (!isTurnBased)
 		{
 			Clear();
+			ClearInitialPositions();
+		}
+	}
+
+	private void UpdateMovableAreaForParty()
+	{
+		foreach (UnitReference partyCharacter in Game.Instance.Player.PartyCharacters)
+		{
+			IAbstractUnitEntity entity = partyCharacter.Entity;
+			if (entity != null && !m_InitialPositions.ContainsKey(entity.UniqueId))
+			{
+				m_InitialPositions.Add(entity.UniqueId, entity.Position);
+			}
 		}
 	}
 
@@ -236,8 +254,13 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 	public void HandleEndPreparationTurn()
 	{
 		m_CurrentUnitSubscription?.Dispose();
-		m_InitialPositions.Clear();
 		m_DeploymentPhase = false;
+		ClearInitialPositions();
+	}
+
+	public void ClearInitialPositions()
+	{
+		m_InitialPositions.Clear();
 	}
 
 	public void Clear()
@@ -246,5 +269,29 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		UnitPathManager.Instance.RemoveAllPaths();
 		UnitCommandsRunner.CancelMoveCommand();
 		m_CurrentUnit = null;
+	}
+
+	public bool TryGetInitialPosition(BaseUnitEntity unit, out Vector3 initialPosition)
+	{
+		initialPosition = Vector3.zero;
+		if (m_InitialPositions == null || unit == null)
+		{
+			return false;
+		}
+		return m_InitialPositions.TryGetValue(unit.UniqueId, out initialPosition);
+	}
+
+	public void ApplyInitialPosition(BaseUnitEntity unit, Vector3 initialPosition)
+	{
+		if (m_InitialPositions != null && unit != null)
+		{
+			m_InitialPositions.TryAdd(unit.UniqueId, initialPosition);
+			UpdateMovableAreaIfNeeded(unit);
+		}
+	}
+
+	void INetRoleSetHandler.HandleRoleSet(string entityId)
+	{
+		UnitCommandsRunner.HandleRoleSet(entityId);
 	}
 }

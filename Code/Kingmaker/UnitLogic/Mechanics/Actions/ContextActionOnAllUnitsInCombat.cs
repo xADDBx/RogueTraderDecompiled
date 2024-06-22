@@ -39,6 +39,10 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 
 	public bool OnlyVisible;
 
+	public bool OnlyNotVisible;
+
+	public bool IncludeDead;
+
 	public ReferenceArrayProxy<BlueprintUnitFact> FilterNoFacts
 	{
 		get
@@ -62,14 +66,14 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 		return "Run a context action on all units in combat";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity caster = base.Context.MaybeCaster;
 		if (caster == null || caster is BaseUnitEntity { IsPreviewUnit: not false })
 		{
 			return;
 		}
-		List<BaseUnitEntity> list = ((!OnlyParty) ? Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat).ToList() : Game.Instance.State.PlayerState.Party.ToList());
+		List<BaseUnitEntity> list = ((!OnlyParty) ? Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && (IncludeDead || !p.LifeState.IsDead) && p.IsInCombat).ToList() : Game.Instance.State.PlayerState.Party.ToList());
 		if (OnlyEnemies)
 		{
 			list.RemoveAll((BaseUnitEntity p) => !p.CombatGroup.IsEnemy(base.Context.MaybeCaster));
@@ -81,6 +85,10 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 		if (OnlyVisible)
 		{
 			list.RemoveAll((BaseUnitEntity p) => LosCalculations.GetWarhammerLos(caster, p).CoverType == LosCalculations.CoverType.Invisible);
+		}
+		if (OnlyNotVisible)
+		{
+			list.RemoveAll((BaseUnitEntity p) => LosCalculations.GetWarhammerLos(caster, p).CoverType != LosCalculations.CoverType.Invisible);
 		}
 		if (NotCaster)
 		{

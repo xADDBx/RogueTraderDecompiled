@@ -163,7 +163,10 @@ public abstract class TrapObjectData : MapObjectEntity, IHashable
 			if (rulePerformSkillCheck.ResultIsSuccess)
 			{
 				RunDisableActions(user);
-				View.PostSoundEvent(Settings.DisabledSound);
+				if (Settings?.DisabledSound != "")
+				{
+					View.PostSoundEvent(Settings.DisabledSound);
+				}
 				Deactivate();
 				EventBus.RaiseEvent((IBaseUnitEntity)user, (Action<IDisarmTrapHandler>)delegate(IDisarmTrapHandler h)
 				{

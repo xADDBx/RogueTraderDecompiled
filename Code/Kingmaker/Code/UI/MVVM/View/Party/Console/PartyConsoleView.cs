@@ -139,6 +139,10 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 		{
 			HideAnimation(hide: true);
 		}
+		else if (RootUIContext.Instance.IsSpace)
+		{
+			HideAnimation(!m_WindowsWithParty.Contains(m_FullScreenUIType));
+		}
 		else if (m_LocalMapEnabled || m_PartySelectorEnabled)
 		{
 			HideAnimation(hide: true);

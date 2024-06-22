@@ -34,9 +34,11 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public readonly ReactiveProperty<bool> IsEnemy = new ReactiveProperty<bool>(initialValue: false);
 
+	public readonly ReactiveProperty<bool> IsNeutral = new ReactiveProperty<bool>(initialValue: false);
+
 	public readonly ReactiveProperty<bool> IsPlayer = new ReactiveProperty<bool>(initialValue: false);
 
-	public ReactiveProperty<bool> IsCurrent = new ReactiveProperty<bool>();
+	public readonly ReactiveProperty<bool> IsCurrent = new ReactiveProperty<bool>();
 
 	public readonly ReactiveProperty<bool> IsUnableToAct = new ReactiveProperty<bool>(initialValue: false);
 
@@ -46,43 +48,41 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public readonly ReactiveProperty<bool> IsTargetSelection = new ReactiveProperty<bool>(initialValue: false);
 
-	public UnitBuffPartVM UnitBuffs;
+	public readonly UnitBuffPartVM UnitBuffs;
 
-	public ReactiveProperty<int> Intiative = new ReactiveProperty<int>(0);
+	public readonly ReactiveProperty<int> Intiative = new ReactiveProperty<int>(0);
 
-	public ReactiveProperty<UnitHealthPartVM> UnitHealthPartVM = new ReactiveProperty<UnitHealthPartVM>();
+	public readonly ReactiveProperty<UnitHealthPartVM> UnitHealthPartVM = new ReactiveProperty<UnitHealthPartVM>();
 
-	public ReactiveProperty<ActionPointsVM> ActionPointVM = new ReactiveProperty<ActionPointsVM>();
+	public readonly ReactiveProperty<ActionPointsVM> ActionPointVM = new ReactiveProperty<ActionPointsVM>();
 
-	public ReactiveProperty<bool> CanBeShowed = new ReactiveProperty<bool>();
+	public readonly ReactiveProperty<bool> CanBeShowed = new ReactiveProperty<bool>();
 
-	public ReactiveProperty<int> SquadCount = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> SquadCount = new ReactiveProperty<int>();
 
-	public ReactiveProperty<bool> ShowDifficulty = new ReactiveProperty<bool>();
+	public readonly ReactiveProperty<bool> ShowDifficulty = new ReactiveProperty<bool>();
 
 	public readonly OvertipHitChanceBlockVM OvertipHitChanceBlockVM;
 
-	public ReactiveCollection<SurfaceCombatUnitVM> Squad = new ReactiveCollection<SurfaceCombatUnitVM>();
+	private readonly PartSquad m_SquadOptional;
 
-	private PartSquad m_SquadOptional;
+	public readonly BoolReactiveProperty IsInSquad = new BoolReactiveProperty();
 
-	public BoolReactiveProperty IsInSquad = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsSquadLeader = new BoolReactiveProperty();
 
-	public BoolReactiveProperty IsSquadLeader = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HasAliveUnitsInSquad = new BoolReactiveProperty();
 
-	public BoolReactiveProperty HasAliveUnitsInSquad = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty NeedToShow = new BoolReactiveProperty();
 
-	public BoolReactiveProperty NeedToShow = new BoolReactiveProperty();
+	public readonly IntReactiveProperty SquadGroupIndex = new IntReactiveProperty(-1);
 
-	public IntReactiveProperty SquadGroupIndex = new IntReactiveProperty(-1);
-
-	public bool UsedSubtypeIcon;
+	public readonly bool UsedSubtypeIcon;
 
 	public MechanicEntity Unit => UnitUIWrapper.MechanicEntity;
 
 	public BaseUnitEntity UnitAsBaseUnitEntity => Unit as BaseUnitEntity;
 
-	public bool IsSquad => Squad.Any();
+	public UnitSquad Squad { get; }
 
 	public bool IsNewUnit { get; private set; }
 
@@ -106,6 +106,7 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		if (entity is UnitSquad unitSquad)
 		{
 			mechanicEntity = unitSquad.Leader ?? unitSquad.Units.FirstItem().ToBaseUnitEntity();
+			Squad = unitSquad;
 		}
 		if (mechanicEntity is InitiativePlaceholderEntity initiativePlaceholderEntity)
 		{
@@ -116,6 +117,10 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		m_SquadOptional = UnitUIWrapper.MechanicEntity?.GetSquadOptional();
 		IsInSquad.Value = UnitUIWrapper.IsInSquad;
 		IsSquadLeader.Value = UnitUIWrapper.IsSquadLeader || (m_SquadOptional?.Squad != null && mechanicEntity is BaseUnitEntity baseUnitEntity && m_SquadOptional.Squad.Units.FirstItem() == baseUnitEntity);
+		if (Squad == null)
+		{
+			Squad = m_SquadOptional?.Squad;
+		}
 		if (UnitUIWrapper.IsInSquad && m_SquadOptional != null)
 		{
 			SquadGroupIndex.Value = Game.Instance.TurnController.UnitSquads.IndexOf(m_SquadOptional.Squad);
@@ -154,6 +159,11 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UILog.VMCreated("InitiativeTrackerUnitVM");
 	}
 
+	protected override void DisposeImplementation()
+	{
+		UILog.VMDisposed("InitiativeTrackerUnitVM");
+	}
+
 	private void UpdateHandler()
 	{
 		if (Game.Instance.CurrentlyLoadedArea != null)
@@ -163,11 +173,6 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 			MechanicEntityUIWrapper unitUIWrapper = UnitUIWrapper;
 			showDifficulty.Value = !unitUIWrapper.IsPlayerFaction && unitUIWrapper.Difficulty > 0 && Game.Instance.TurnController.IsCurrentUnitHunter;
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
-		UILog.VMDisposed("InitiativeTrackerUnitVM");
 	}
 
 	public void HandleUnitClick(bool isDoubleClick = false)
@@ -194,7 +199,7 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UpdateIsCurrentUnit();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateIsCurrentUnit();
 	}
@@ -249,6 +254,7 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 			return;
 		}
 		IsEnemy.Value = UnitUIWrapper.IsPlayerEnemy;
+		IsNeutral.Value = UnitUIWrapper.IsNeutral;
 		IsPlayer.Value = UnitUIWrapper.IsPlayerFaction;
 		Intiative.Value = (int)UnitUIWrapper.Initiative.Roll;
 		if ((bool)m_SquadOptional && m_SquadOptional.Squad != null)
@@ -261,6 +267,24 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UpdateCanActStates();
 		UpdateIsCurrentUnit();
 		IsNewUnit = false;
+	}
+
+	public void SetMouseHighlighted(bool value)
+	{
+		if (NeedToShow.Value)
+		{
+			UnitAsBaseUnitEntity.View.MouseHighlighted = value;
+			return;
+		}
+		if (Squad == null)
+		{
+			UnitAsBaseUnitEntity.View.MouseHighlighted = value;
+			return;
+		}
+		foreach (UnitReference unit in Squad.Units)
+		{
+			unit.ToBaseUnitEntity().View.MouseHighlighted = value;
+		}
 	}
 
 	private void UpdateCanActStates()

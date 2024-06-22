@@ -1,3 +1,4 @@
+using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 
 namespace Kingmaker.Code.UI.MVVM.View.Loot.Console;
@@ -18,5 +19,10 @@ public class InteractionSlotPartConsoleView : InteractionSlotPartView
 		}
 		NavigationBehaviour.AddEntityGrid(m_SlotView as LootSlotConsoleView);
 		return NavigationBehaviour;
+	}
+
+	public IConsoleEntity GetCurrentFocus()
+	{
+		return NavigationBehaviour.DeepestNestedFocus;
 	}
 }

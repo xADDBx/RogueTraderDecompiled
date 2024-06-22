@@ -50,9 +50,10 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 	{
 		get
 		{
+			int result = ((m_AbilityData.SettingsFromItem != null && m_AbilityData.SettingsFromItem.Ability == Blueprint) ? m_AbilityData.SettingsFromItem.AP : Blueprint.ActionPointCost);
 			if (DefaultCostOverride <= 0)
 			{
-				return m_AbilityData.SettingsFromItem?.AP ?? Blueprint.ActionPointCost;
+				return result;
 			}
 			return DefaultCostOverride;
 		}

@@ -24,6 +24,10 @@ public class UIColonyProjectsTexts
 
 	public LocalizedString ProjectIsFinished;
 
+	public LocalizedString ProjectRequirementsNotMet;
+
+	public LocalizedString OtherProjectIsBuilding;
+
 	public LocalizedString ProjectName;
 
 	public LocalizedString EventWaitingToStart;

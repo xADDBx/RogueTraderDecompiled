@@ -33,6 +33,9 @@ public class MapObjectEntity : MechanicEntity<BlueprintMechanicEntityFact>, IMap
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int? AwarenessCheckDC { get; set; }
 
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public SkillCheckDifficulty? AwarenessCheckDifficulty { get; set; }
+
 	[JsonProperty]
 	public bool WasHighlightedOnReveal { get; set; }
 
@@ -98,13 +101,15 @@ public class MapObjectEntity : MechanicEntity<BlueprintMechanicEntityFact>, IMap
 		{
 			IsAwarenessCheckPassed = true;
 		}
-		if (!AwarenessCheckDC.HasValue)
+		if (!AwarenessCheckDC.HasValue || !AwarenessCheckDifficulty.HasValue)
 		{
-			AwarenessCheckDC = View.AwarenessCheckComponent.Or(null)?.DC;
+			AwarenessCheckDC = View.AwarenessCheckComponent.Or(null)?.GetCustomDC();
+			AwarenessCheckDifficulty = View.AwarenessCheckComponent.Or(null)?.Difficulty;
 		}
 		else if (View.AwarenessCheckComponent != null)
 		{
-			View.AwarenessCheckComponent.DC = AwarenessCheckDC.Value;
+			View.AwarenessCheckComponent.SetCustomDC(AwarenessCheckDC.Value);
+			View.AwarenessCheckComponent.Difficulty = AwarenessCheckDifficulty.Value;
 		}
 		WasHighlightedOnReveal = View.InteractionComponent == null;
 		FactHolder.Fact fact = Facts.GetAll<FactHolder.Fact>().FirstItem();
@@ -167,27 +172,32 @@ public class MapObjectEntity : MechanicEntity<BlueprintMechanicEntityFact>, IMap
 			int val3 = AwarenessCheckDC.Value;
 			result.Append(ref val3);
 		}
+		if (AwarenessCheckDifficulty.HasValue)
+		{
+			SkillCheckDifficulty val4 = AwarenessCheckDifficulty.Value;
+			result.Append(ref val4);
+		}
 		Dictionary<UnitReference, int> lastAwarenessRollRank = LastAwarenessRollRank;
 		if (lastAwarenessRollRank != null)
 		{
-			int val4 = 0;
+			int val5 = 0;
 			foreach (KeyValuePair<UnitReference, int> item in lastAwarenessRollRank)
 			{
 				Hash128 hash = default(Hash128);
 				UnitReference obj = item.Key;
-				Hash128 val5 = UnitReferenceHasher.GetHash128(ref obj);
-				hash.Append(ref val5);
-				int obj2 = item.Value;
-				Hash128 val6 = UnmanagedHasher<int>.GetHash128(ref obj2);
+				Hash128 val6 = UnitReferenceHasher.GetHash128(ref obj);
 				hash.Append(ref val6);
-				val4 ^= hash.GetHashCode();
+				int obj2 = item.Value;
+				Hash128 val7 = UnmanagedHasher<int>.GetHash128(ref obj2);
+				hash.Append(ref val7);
+				val5 ^= hash.GetHashCode();
 			}
-			result.Append(ref val4);
+			result.Append(ref val5);
 		}
-		bool val7 = WasHighlightedOnReveal;
-		result.Append(ref val7);
-		Hash128 val8 = ClassHasher<MapObjectViewSettings>.GetHash128(ViewSettings);
+		bool val8 = WasHighlightedOnReveal;
 		result.Append(ref val8);
+		Hash128 val9 = ClassHasher<MapObjectViewSettings>.GetHash128(ViewSettings);
+		result.Append(ref val9);
 		return result;
 	}
 }

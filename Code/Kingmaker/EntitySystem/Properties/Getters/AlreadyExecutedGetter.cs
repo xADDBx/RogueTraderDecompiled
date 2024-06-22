@@ -17,7 +17,7 @@ public class AlreadyExecutedGetter : PropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Is trigger already executed";
 	}

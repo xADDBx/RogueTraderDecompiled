@@ -43,6 +43,10 @@ public static class TooltipHelper
 		{
 			return null;
 		}
+		if (config.TooltipPlace == null)
+		{
+			config.TooltipPlace = component.transform as RectTransform;
+		}
 		using (ProfileScope.New("TooltipHandler ctor"))
 		{
 			return new TooltipHandler(component, template, config);
@@ -70,6 +74,41 @@ public static class TooltipHelper
 		return new TooltipHandler(component, list, config);
 	}
 
+	public static TooltipHandler SetTooltip(this MonoBehaviour component, List<TooltipBaseTemplate> templates, TooltipConfig mainConfig, TooltipConfig compareConfig)
+	{
+		if (templates.Empty())
+		{
+			return null;
+		}
+		if (mainConfig.TooltipPlace == null)
+		{
+			mainConfig.TooltipPlace = component.transform as RectTransform;
+		}
+		if (compareConfig.TooltipPlace == null)
+		{
+			compareConfig.TooltipPlace = component.transform as RectTransform;
+		}
+		List<TooltipData> list = new List<TooltipData>();
+		for (int i = 0; i < templates.Count - 1; i++)
+		{
+			TooltipBaseTemplate tooltipBaseTemplate = templates[i];
+			if (tooltipBaseTemplate != null)
+			{
+				list.Add(new TooltipData(tooltipBaseTemplate, compareConfig));
+			}
+		}
+		list.Add(new TooltipData(templates.LastOrDefault(), mainConfig));
+		return new TooltipHandler(component, list, mainConfig);
+	}
+
+	public static void EnsureTooltipPlace(MonoBehaviour component, TooltipConfig config)
+	{
+		if (config.TooltipPlace == null)
+		{
+			config.TooltipPlace = component.transform as RectTransform;
+		}
+	}
+
 	public static IDisposable SetTooltip(this MonoBehaviour component, IReadOnlyReactiveProperty<List<TooltipBaseTemplate>> reactiveTemplates, TooltipConfig config = default(TooltipConfig))
 	{
 		IDisposable tooltipSubscription = null;
@@ -79,6 +118,24 @@ public static class TooltipHelper
 			if (component != null)
 			{
 				tooltipSubscription = component.SetTooltip(templates, config);
+			}
+		});
+		return Disposable.Create(delegate
+		{
+			tooltipSubscription?.Dispose();
+			templateSubscription?.Dispose();
+		});
+	}
+
+	public static IDisposable SetTooltip(this MonoBehaviour component, IReadOnlyReactiveProperty<List<TooltipBaseTemplate>> reactiveTemplates, TooltipConfig mainConfig, TooltipConfig compareConfig)
+	{
+		IDisposable tooltipSubscription = null;
+		IDisposable templateSubscription = reactiveTemplates.Subscribe(delegate(List<TooltipBaseTemplate> templates)
+		{
+			tooltipSubscription?.Dispose();
+			if (component != null)
+			{
+				tooltipSubscription = component.SetTooltip(templates, mainConfig, compareConfig);
 			}
 		});
 		return Disposable.Create(delegate
@@ -126,7 +183,7 @@ public static class TooltipHelper
 		});
 	}
 
-	public static void ShowConsoleTooltip(this MonoBehaviour component, TooltipBaseTemplate template, ConsoleNavigationBehaviour navigationBehaviour, TooltipConfig config = default(TooltipConfig), bool shouldNotHideLittleTooltip = false)
+	public static void ShowConsoleTooltip(this MonoBehaviour component, TooltipBaseTemplate template, ConsoleNavigationBehaviour navigationBehaviour, TooltipConfig config = default(TooltipConfig), bool shouldNotHideLittleTooltip = false, bool showScrollbar = false)
 	{
 		if (template == null)
 		{
@@ -140,7 +197,7 @@ public static class TooltipHelper
 		TooltipData tooltipData = new TooltipData(template, config, null, navigationBehaviour);
 		EventBus.RaiseEvent(delegate(ITooltipHandler h)
 		{
-			h.HandleTooltipRequest(tooltipData, shouldNotHideLittleTooltip);
+			h.HandleTooltipRequest(tooltipData, shouldNotHideLittleTooltip, showScrollbar);
 		});
 	}
 
@@ -162,26 +219,28 @@ public static class TooltipHelper
 		});
 	}
 
-	public static void ShowComparativeTooltip(this MonoBehaviour component, List<TooltipBaseTemplate> templates, TooltipConfig config = default(TooltipConfig))
+	public static void ShowComparativeTooltip(this MonoBehaviour component, List<TooltipBaseTemplate> templates, TooltipConfig mainConfig, TooltipConfig comparativeConfig, bool showScrollbar)
 	{
 		if (templates.Empty())
 		{
 			HideTooltip();
 			return;
 		}
-		if (config.TooltipPlace == null)
+		if (mainConfig.TooltipPlace == null)
 		{
-			config.TooltipPlace = component.transform as RectTransform;
+			mainConfig.TooltipPlace = component.transform as RectTransform;
+		}
+		if (comparativeConfig.TooltipPlace == null)
+		{
+			comparativeConfig.TooltipPlace = component.transform as RectTransform;
 		}
 		TooltipBaseTemplate lastTemplate = templates.LastOrDefault();
-		TooltipConfig notLastConfig = config;
-		notLastConfig.InfoCallConsoleMethod = InfoCallConsoleMethod.None;
 		List<TooltipData> tooltipData = (from t in templates
 			where t != null
-			select new TooltipData(t, (t == lastTemplate) ? config : notLastConfig)).ToList();
+			select new TooltipData(t, (t == lastTemplate) ? mainConfig : comparativeConfig)).ToList();
 		EventBus.RaiseEvent(delegate(ITooltipHandler h)
 		{
-			h.HandleComparativeTooltipRequest(tooltipData);
+			h.HandleComparativeTooltipRequest(tooltipData, showScrollbar);
 		});
 	}
 
@@ -453,7 +512,7 @@ public static class TooltipHelper
 	{
 		if (glossaryEntry == null)
 		{
-			PFLog.Default.Log("UI", "InfoWindowVM.AddHistory: glossaryEntry is null");
+			PFLog.UI.Log("UI", "InfoWindowVM.AddHistory: glossaryEntry is null");
 			return;
 		}
 		if (HistoryPointer != null)
@@ -466,6 +525,11 @@ public static class TooltipHelper
 			{
 				History.Remove(HistoryPointer.Next);
 			}
+		}
+		LinkedListNode<BlueprintEncyclopediaGlossaryEntry> linkedListNode = History.Find(glossaryEntry);
+		if (linkedListNode != null)
+		{
+			History.Remove(linkedListNode);
 		}
 		if (History.Count > 20)
 		{

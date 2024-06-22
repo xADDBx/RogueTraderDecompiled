@@ -18,7 +18,7 @@ public class GainColonyResources : GameAction
 		return "Add resources to pool";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ResourceData[] resources = Resources;
 		foreach (ResourceData resourceData in resources)

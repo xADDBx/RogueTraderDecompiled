@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -114,11 +115,11 @@ public class ContextActionDealDamage : ContextAction
 		return text;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error(this, "Invalid target for effect '{0}'", GetType().Name);
+			Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 			return;
 		}
 		DamageInfo damageInfo = GetDamageInfo(base.Context);
@@ -145,13 +146,13 @@ public class ContextActionDealDamage : ContextAction
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster == null)
 		{
-			PFLog.Default.Error(this, "Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return 0;
 		}
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)
 		{
-			PFLog.Default.Error(this, "Target is missing");
+			Element.LogError(this, "Target is missing");
 			return 0;
 		}
 		int min = info.Min;

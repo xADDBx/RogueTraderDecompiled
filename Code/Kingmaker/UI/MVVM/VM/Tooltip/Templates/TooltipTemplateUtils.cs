@@ -19,6 +19,7 @@ public static class TooltipTemplateUtils
 	public static List<string> GetAdditionalDescription(BlueprintFact blueprintFact)
 	{
 		return (from desc in blueprintFact.GetComponents<AdditionalDescriptionComponent>()
+			where !desc.Disabled
 			select desc.AdditionalDescription.Text).ToList();
 	}
 
@@ -30,7 +31,7 @@ public static class TooltipTemplateUtils
 			{
 				return null;
 			}
-			description = "";
+			description = string.Empty;
 		}
 		return additionalDesc.Aggregate(description, (string current, string addDesc) => current + ((current.Length > 0) ? "\n" : "") + addDesc);
 	}

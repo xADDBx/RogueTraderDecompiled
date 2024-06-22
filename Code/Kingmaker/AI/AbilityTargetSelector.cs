@@ -32,6 +32,10 @@ public abstract class AbilityTargetSelector
 		{
 			return false;
 		}
+		if ((bool)entity.Features.IsUntargetable)
+		{
+			return false;
+		}
 		if (AbilityInfo.settings == null)
 		{
 			return true;

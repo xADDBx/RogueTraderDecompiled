@@ -27,7 +27,7 @@ public class RemoveItemsFromCollection : GameAction
 		return $"Remove items from ({Collection})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ItemsCollection collection = Collection.GetValue();
 		Loot.ForEach(delegate(LootEntry i)

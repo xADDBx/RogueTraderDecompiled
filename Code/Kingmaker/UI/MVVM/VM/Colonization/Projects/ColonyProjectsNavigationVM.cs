@@ -108,10 +108,26 @@ public class ColonyProjectsNavigationVM : BaseDisposable, IViewModel, IBaseDispo
 
 	public void HandleColonyProjectStarted(Colony colony, ColonyProject project)
 	{
+		if (m_Colony != colony)
+		{
+			return;
+		}
 		UpdateStartingProjectsState();
-		List<BlueprintColonyProject> projects = colony.Blueprint.Projects.Dereference().ToList();
-		SetProjects(projects);
-		SetSelection(project.Blueprint);
+		BlueprintColonyProject selection = project.Blueprint;
+		List<BlueprintColonyProject> list = colony.Blueprint.Projects.Dereference().ToList();
+		foreach (ColonyProjectVM value in m_ProjectsNavElements.Values)
+		{
+			if (value != null && value.IsSelected.Value)
+			{
+				if (list.Contains(value.BlueprintColonyProject))
+				{
+					selection = value.BlueprintColonyProject;
+				}
+				break;
+			}
+		}
+		SetProjects(list);
+		SetSelection(selection);
 	}
 
 	public void HandleColonyProjectFinished(Colony colony, ColonyProject project)
@@ -123,7 +139,7 @@ public class ColonyProjectsNavigationVM : BaseDisposable, IViewModel, IBaseDispo
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsNavigationVM.SetProjects - colony is null!");
+			PFLog.UI.Error("ColonyProjectsNavigationVM.SetProjects - colony is null!");
 			return;
 		}
 		Clear();
@@ -191,7 +207,7 @@ public class ColonyProjectsNavigationVM : BaseDisposable, IViewModel, IBaseDispo
 	{
 		if (m_Colony == null)
 		{
-			PFLog.System.Error("ColonyProjectsNavigationVM.UpdateStartingProjectsState - colony is null!");
+			PFLog.UI.Error("ColonyProjectsNavigationVM.UpdateStartingProjectsState - colony is null!");
 		}
 		else
 		{

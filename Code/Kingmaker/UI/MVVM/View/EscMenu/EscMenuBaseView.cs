@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.EscMenu;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
@@ -42,6 +45,9 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	protected OwlcatButton m_OptionsButton;
 
 	[SerializeField]
+	protected OwlcatButton m_ModsButton;
+
+	[SerializeField]
 	protected OwlcatButton m_BugReportButton;
 
 	[SerializeField]
@@ -70,6 +76,9 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	private TextMeshProUGUI m_OptionsButtonLabel;
 
 	[SerializeField]
+	private TextMeshProUGUI m_ModsButtonLabel;
+
+	[SerializeField]
 	private TextMeshProUGUI m_BugReportButtonLabel;
 
 	[SerializeField]
@@ -78,7 +87,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	[SerializeField]
 	private TextMeshProUGUI m_QuitButtonLabel;
 
-	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
+	protected GridConsoleNavigationBehaviour NavigationBehaviour;
 
 	protected InputLayer InputLayer;
 
@@ -101,7 +110,6 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		if (BuildModeUtility.IsCoopEnabled)
 		{
 			m_MultiplayerButton.gameObject.SetActive(value: true);
-			m_MultiplayerButton.SetInteractable(base.ViewModel.IsSavingAllowed);
 			m_MultiplayerRolesButton.gameObject.SetActive(PhotonManager.Lobby.IsActive);
 			m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
 			AddDisposable(m_MultiplayerButton.OnLeftClickAsObservable().Subscribe(delegate
@@ -130,12 +138,16 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_QuitButton.gameObject.SetActive(value: true);
 		AddDisposable(m_QuitButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.OnQuit();
+			LeftClickAndHideFocusAction(delegate
+			{
+				base.ViewModel.OnQuit();
+			});
 		}));
 		AddDisposable(m_QuitButton.OnConfirmClickAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.OnQuit();
 		}));
+		m_ModsButton.gameObject.SetActive(value: false);
 		SetButtonsTexts();
 		AddDisposable(m_SaveButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -159,7 +171,10 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		}));
 		AddDisposable(m_MainMenuButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.OnMainMenu();
+			LeftClickAndHideFocusAction(delegate
+			{
+				base.ViewModel.OnMainMenu();
+			});
 		}));
 		AddDisposable(m_SaveButton.OnConfirmClickAsObservable().Subscribe(delegate
 		{
@@ -188,7 +203,15 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_SaveButton.SetInteractable(base.ViewModel.IsSavingAllowed);
 		m_FormationButton.SetInteractable(base.ViewModel.IsFormationAllowed);
 		m_OptionsButton.SetInteractable(base.ViewModel.IsOptionsAllowed);
+		if ((bool)SettingsRoot.Difficulty.OnlyOneSave)
+		{
+			AddDisposable(m_SaveButton.SetHint(UIStrings.Instance.SaveLoadTexts.SaveIsNotPossibleInIronMan));
+		}
 		BuildNavigation();
+		AddDisposable(base.ViewModel.UpdateButtonsInteractable.Subscribe(delegate
+		{
+			UpdateInteractableButtons();
+		}));
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
 		{
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.EscapeMenu);
@@ -210,14 +233,41 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		});
 	}
 
+	private void LeftClickAndHideFocusAction(Action action)
+	{
+		base.ViewModel.UpdateButtonsFocus.Execute();
+		action();
+	}
+
+	private void UpdateInteractableButtons()
+	{
+		if (BuildModeUtility.IsCoopEnabled)
+		{
+			m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
+		}
+		m_SaveButton.SetInteractable(base.ViewModel.IsSavingAllowed);
+		m_FormationButton.SetInteractable(base.ViewModel.IsFormationAllowed);
+		m_OptionsButton.SetInteractable(base.ViewModel.IsOptionsAllowed);
+		UpdateInteractableButtonsImpl();
+	}
+
+	protected virtual void UpdateInteractableButtonsImpl()
+	{
+	}
+
 	private void BuildNavigation()
 	{
-		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
-		List<OwlcatButton> list = new List<OwlcatButton> { m_SaveButton, m_LoadButton, m_FormationButton, m_MultiplayerButton, m_MultiplayerRolesButton, m_OptionsButton, m_BugReportButton, m_MainMenuButton, m_QuitButton };
+		AddDisposable(NavigationBehaviour = new GridConsoleNavigationBehaviour());
+		List<OwlcatButton> list = new List<OwlcatButton> { m_SaveButton, m_LoadButton, m_FormationButton, m_OptionsButton, m_BugReportButton, m_MainMenuButton, m_QuitButton };
+		if (BuildModeUtility.IsCoopEnabled)
+		{
+			list.Add(m_MultiplayerButton);
+			list.Add(m_MultiplayerRolesButton);
+		}
 		list.Sort((OwlcatButton x, OwlcatButton y) => x.transform.GetSiblingIndex().CompareTo(y.transform.GetSiblingIndex()));
-		m_NavigationBehaviour.SetEntitiesVertical(new List<IConsoleEntity>(list));
-		BuildNavigationImpl(m_NavigationBehaviour);
-		InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
+		NavigationBehaviour.SetEntitiesVertical(new List<IConsoleEntity>(list));
+		BuildNavigationImpl(NavigationBehaviour);
+		InputLayer = NavigationBehaviour.GetInputLayer(new InputLayer
 		{
 			ContextName = InputLayerContextName
 		});
@@ -243,6 +293,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_MultiplayerRolesButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuRoles;
 		m_QuitButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuExit;
 		m_OptionsButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuOptions;
+		m_ModsButtonLabel.text = UIStrings.Instance.DlcManager.ModsLabel;
 		m_BugReportButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuBugReport;
 		m_MainMenuButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuMainMenu;
 	}

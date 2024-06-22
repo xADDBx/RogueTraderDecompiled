@@ -17,7 +17,7 @@ public class BlueprintPropertyGetter : PropertyGetter
 
 	public PropertyCalculatorBlueprint Property => m_Property;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"#{Property}";
 	}

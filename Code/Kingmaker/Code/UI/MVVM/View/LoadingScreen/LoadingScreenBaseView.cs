@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
 using Kingmaker.EntitySystem.Entities;
@@ -313,7 +314,7 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 
 	protected override void DestroyViewImplementation()
 	{
-		if (!Game.Instance.IsSpaceCombat && PhotonManager.Lobby.IsActive && !PhotonManager.NetGame.NetRolesShowed)
+		if (!Game.Instance.IsSpaceCombat && PhotonManager.Lobby.IsActive && !PhotonManager.NetGame.NetRolesShowed && Game.Instance.SceneLoader.LoadedUIScene != GameScenes.MainMenu)
 		{
 			EventBus.RaiseEvent(delegate(INetRolesRequest h)
 			{
@@ -460,33 +461,35 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 
 	private void ShowSpaceAreaScreen(BlueprintArea area)
 	{
-		m_LoadingScreenType = ((area.AreaStatGameMode == GameModeType.StarSystem || area.AreaStatGameMode == GameModeType.GlobalMap) ? base.ViewModel.RandomLoadingScreen(4, RandomFourWithPriorityPercents) : base.ViewModel.RandomLoadingScreen(5, RandomFiveWithPriorityPercents));
-		if (m_LoadingScreenType == 1)
+		m_LoadingScreenType = ((area.AreaStatGameMode == GameModeType.GlobalMap) ? base.ViewModel.RandomLoadingScreen(4, RandomFourWithPriorityPercents) : base.ViewModel.RandomLoadingScreen(5, RandomFiveWithPriorityPercents));
+		switch (m_LoadingScreenType)
 		{
+		case 0:
+			ShowClassicAreaScreen(area);
+			return;
+		case 1:
 			ShowCompanionScreen((area.AreaStatGameMode == GameModeType.StarSystem) ? m_StarSystemHints : ((area.AreaStatGameMode == GameModeType.SpaceCombat) ? m_SpaceCombatHints : m_GlobalMapHints));
 			return;
 		}
-		if (area.AreaStatGameMode == GameModeType.StarSystem || area.AreaStatGameMode == GameModeType.GlobalMap)
+		LoadingScreenImage mainSprites = ((area.AreaStatGameMode == GameModeType.StarSystem) ? (m_LoadingScreenType switch
 		{
-			if (m_LoadingScreenType == 0)
-			{
-				ShowClassicAreaScreen(area);
-			}
-			else
-			{
-				LoadingScreenImage mainSprites = ((m_LoadingScreenType == 2) ? m_BridgeScreenshotTuple : ((m_LoadingScreenType == 3) ? m_KeyArtTuple : ((area.AreaStatGameMode == GameModeType.StarSystem) ? m_StarSystemScreenTuple : m_GlobalMapScreenTuple)));
-				SetMainSprites(mainSprites);
-			}
-		}
-		else if (m_LoadingScreenType == 0)
+			2 => m_KeyArtTuple, 
+			3 => m_WarpThemedScreenTuple, 
+			4 => m_StarSystemScreenTuple, 
+			_ => m_SpaceShipScreenTuples.Random(PFStatefulRandom.UI), 
+		}) : ((!(area.AreaStatGameMode == GameModeType.GlobalMap)) ? (m_LoadingScreenType switch
 		{
-			ShowClassicAreaScreen(area);
-		}
-		else
+			2 => m_BridgeScreenshotTuple, 
+			3 => m_KeyArtTuple, 
+			4 => m_WarpThemedScreenTuple, 
+			_ => m_SpaceShipScreenTuples.Random(PFStatefulRandom.UI), 
+		}) : (m_LoadingScreenType switch
 		{
-			LoadingScreenImage mainSprites2 = ((m_LoadingScreenType == 2) ? m_BridgeScreenshotTuple : ((m_LoadingScreenType == 3) ? m_KeyArtTuple : ((m_LoadingScreenType == 4) ? m_WarpThemedScreenTuple : m_SpaceShipScreenTuples.Random(PFStatefulRandom.UI))));
-			SetMainSprites(mainSprites2);
-		}
+			2 => m_KeyArtTuple, 
+			3 => m_BridgeScreenshotTuple, 
+			_ => m_GlobalMapScreenTuple, 
+		})));
+		SetMainSprites(mainSprites);
 		StandartDescriptionOrHint(area, (area.AreaStatGameMode == GameModeType.StarSystem) ? m_StarSystemHints : ((area.AreaStatGameMode == GameModeType.GlobalMap) ? m_GlobalMapHints : m_SpaceCombatHints));
 	}
 
@@ -667,7 +670,7 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 		m_VirtualProgress = ((m_Progress > m_VirtualProgress) ? m_Progress : (m_VirtualProgress + Time.unscaledDeltaTime / 300f));
 		ProgressImage.fillAmount = m_VirtualProgress;
 		float num = Mathf.Clamp(m_VirtualProgress * 100f, 0f, 100f);
-		ProgressPercent.text = $"{num:0}%";
+		ProgressPercent.text = UIConfig.Instance.PercentHelper.AddPercentTo($"{num:0}");
 	}
 
 	protected virtual void ShowUserInputWaiting(bool state)
@@ -678,30 +681,29 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 			return;
 		}
 		UISounds.Instance.Play(UISounds.Instance.Sounds.LoadingScreen.WaitForUserInputShow, isButton: false, playAnyway: true);
-		m_ProgressBarContainer.DOFade(0f, 1f).OnComplete(delegate
-		{
-			StartPressAnyKeyLoopAnimation();
-		}).SetUpdate(isIndependentUpdate: true);
-		m_ProgressPercentContainer.DOFade(0f, 1f).OnComplete(delegate
-		{
-			StartPressAnyKeyLoopAnimation();
-		}).SetUpdate(isIndependentUpdate: true);
+		m_ProgressBarContainer.DOFade(0f, 1f).OnComplete(StartPressAnyKeyLoopAnimation).SetUpdate(isIndependentUpdate: true);
+		m_ProgressPercentContainer.DOFade(0f, 1f).OnComplete(StartPressAnyKeyLoopAnimation).SetUpdate(isIndependentUpdate: true);
 		AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
 		{
 			if (Input.anyKeyDown)
 			{
-				UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
-				UISounds.Instance.Play(UISounds.Instance.Sounds.LoadingScreen.WaitForUserInputHide, isButton: false, playAnyway: true);
-				if (PhotonManager.Lobby.IsLoading)
-				{
-					PhotonManager.Instance.ContinueLoading();
-				}
-				EventBus.RaiseEvent(delegate(IContinueLoadingHandler h)
-				{
-					h.HandleContinueLoading();
-				});
+				CloseWait();
 			}
 		}));
+	}
+
+	protected void CloseWait()
+	{
+		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
+		UISounds.Instance.Play(UISounds.Instance.Sounds.LoadingScreen.WaitForUserInputHide, isButton: false, playAnyway: true);
+		if (PhotonManager.Lobby.IsLoading)
+		{
+			PhotonManager.Instance.ContinueLoading();
+		}
+		EventBus.RaiseEvent(delegate(IContinueLoadingHandler h)
+		{
+			h.HandleContinueLoading();
+		});
 	}
 
 	private void StartPressAnyKeyLoopAnimation()

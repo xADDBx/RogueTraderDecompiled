@@ -50,7 +50,7 @@ public class DisableTrapInteractionPart : InteractionPart<InteractionSettings>, 
 		}
 	}
 
-	public override bool IsEnoughCloseForInteraction(BaseUnitEntity unit)
+	public override bool IsEnoughCloseForInteraction(BaseUnitEntity unit, Vector3? position = null)
 	{
 		if (unit.IsInCombat && Owner.View.Settings.ScriptZoneTrigger != null)
 		{
@@ -66,7 +66,7 @@ public class DisableTrapInteractionPart : InteractionPart<InteractionSettings>, 
 				}
 			}
 		}
-		return base.IsEnoughCloseForInteraction(unit);
+		return base.IsEnoughCloseForInteraction(unit, position);
 	}
 
 	public override Hash128 GetHash128()

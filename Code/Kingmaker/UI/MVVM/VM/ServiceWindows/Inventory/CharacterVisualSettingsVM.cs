@@ -5,6 +5,8 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameCommands;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components;
@@ -20,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 
-public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICharGenVisualHandler, ISubscriber
 {
 	private class TextureIndexPair
 	{
@@ -29,13 +31,15 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		public RampColorPreset.IndexSet TexturesIndexSet;
 	}
 
-	private readonly BaseUnitEntity m_Unit;
+	public readonly BaseUnitEntity Unit;
 
 	private readonly DollState m_DollState;
 
 	public readonly CharacterVisualSettingsEntityVM Cloth;
 
 	public readonly CharacterVisualSettingsEntityVM Helmet;
+
+	public readonly CharacterVisualSettingsEntityVM HelmetAboveAll;
 
 	public readonly CharacterVisualSettingsEntityVM Backpack;
 
@@ -58,28 +62,32 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			UISounds.Instance.Sounds.Inventory.InventoryVisualSettingsShow.Play();
 			OutfitMainColorSelector = new TextureSelectorVM(new SelectionGroupRadioVM<TextureSelectorItemVM>(new ReactiveCollection<TextureSelectorItemVM>()), TextureSelectorType.Paged);
 			CreateOutfitColorSelector();
+			AddDisposable(EventBus.Subscribe(this));
 			AddDisposable(Cloth = new CharacterVisualSettingsEntityVM(m_DollState.ShowCloth, SwitchCloth));
 			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(m_DollState.ShowHelm, SwitchHelmet));
+			AddDisposable(HelmetAboveAll = new CharacterVisualSettingsEntityVM(m_DollState.ShowHelmAboveAll, SwitchHelmetAboveAll));
 			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(m_DollState.ShowBackpack, SwitchBackpack));
 			Helmet.SetValue(m_DollState.ShowHelm && m_DollState.ShowCloth);
+			HelmetAboveAll.SetValue(m_DollState.ShowHelmAboveAll);
 			Backpack.SetValue(m_DollState.ShowBackpack && m_DollState.ShowCloth);
 			Helmet.SetLock(!m_DollState.ShowCloth);
-			Backpack.SetLock(!m_DollState.ShowCloth && m_Unit.HasMechadendrites());
+			Backpack.SetLock(!m_DollState.ShowCloth && Unit.HasMechadendrites());
 		}
 	}
 
 	public CharacterVisualSettingsVM(BaseUnitEntity unit, Action disposeAction)
 		: this(disposeAction)
 	{
-		m_Unit = unit;
+		Unit = unit;
 		if (unit != null)
 		{
 			UISounds.Instance.Sounds.Inventory.InventoryVisualSettingsShow.Play();
 			OutfitMainColorSelector = new TextureSelectorVM(new SelectionGroupRadioVM<TextureSelectorItemVM>(new ReactiveCollection<TextureSelectorItemVM>()), TextureSelectorType.Paged);
 			CreateOutfitColorSelector();
-			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(m_Unit.UISettings.ShowHelm, SwitchHelmet));
-			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(m_Unit.UISettings.ShowBackpack, SwitchBackpack));
-			Backpack.SetLock(m_Unit.HasMechadendrites());
+			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelm, SwitchHelmet));
+			AddDisposable(HelmetAboveAll = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelmAboveAll, SwitchHelmetAboveAll));
+			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowBackpack, SwitchBackpack));
+			Backpack.SetLock(Unit.HasMechadendrites());
 		}
 	}
 
@@ -95,13 +103,18 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 
 	private void SwitchCloth()
 	{
+		bool showCloth = !m_DollState.ShowCloth;
+		Game.Instance.GameCommandQueue.CharGenSwitchCloth(showCloth);
+	}
+
+	void ICharGenVisualHandler.HandleShowCloth(bool showCloth)
+	{
 		if (m_DollState != null)
 		{
-			m_DollState.ShowCloth = !m_DollState.ShowCloth;
 			Helmet.SetValue(m_DollState.ShowCloth);
 			Backpack.SetValue(m_DollState.ShowCloth);
 			Helmet.SetLock(!m_DollState.ShowCloth);
-			Backpack.SetLock(!m_DollState.ShowCloth && m_Unit.HasMechadendrites());
+			Backpack.SetLock(!m_DollState.ShowCloth && Unit.HasMechadendrites());
 			UpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary: false);
 			OutfitMainColorSelector.SetActiveState(m_DollState.ShowCloth);
 		}
@@ -113,9 +126,21 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			m_DollState.ShowHelm = !m_DollState.ShowHelm;
 		}
-		if (m_Unit != null)
+		if (Unit != null)
 		{
-			m_Unit.UISettings.ShowHelm = !m_Unit.UISettings.ShowHelm;
+			Unit.UISettings.ShowHelm = !Unit.UISettings.ShowHelm;
+		}
+	}
+
+	private void SwitchHelmetAboveAll()
+	{
+		if (m_DollState != null)
+		{
+			m_DollState.ShowHelmAboveAll = !m_DollState.ShowHelmAboveAll;
+		}
+		if (Unit != null)
+		{
+			Unit.UISettings.ShowHelmAboveAll = !Unit.UISettings.ShowHelmAboveAll;
 		}
 	}
 
@@ -125,9 +150,9 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			m_DollState.ShowBackpack = !m_DollState.ShowBackpack;
 		}
-		if (m_Unit != null)
+		if (Unit != null)
 		{
-			m_Unit.UISettings.ShowBackpack = !m_Unit.UISettings.ShowBackpack;
+			Unit.UISettings.ShowBackpack = !Unit.UISettings.ShowBackpack;
 		}
 	}
 
@@ -142,13 +167,13 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 	private void UpdateClothesPrimaryPaintColorList(TextureSelectorVM selector, bool secondary)
 	{
 		List<EquipmentEntityLink> list = m_DollState?.Clothes;
-		if (list == null && m_Unit != null)
+		if (list == null && Unit != null)
 		{
-			IEnumerable<KingmakerEquipmentEntity> unitEquipmentEntities = CharGenUtility.GetUnitEquipmentEntities(m_Unit);
+			IEnumerable<KingmakerEquipmentEntity> unitEquipmentEntities = CharGenUtility.GetUnitEquipmentEntities(Unit);
 			if (unitEquipmentEntities.Any())
 			{
-				Race race = m_Unit.Progression.Race?.RaceId ?? Race.Human;
-				list = CharGenUtility.GetClothes(unitEquipmentEntities, m_Unit.Gender, race).ToList();
+				Race race = Unit.Progression.Race?.RaceId ?? Race.Human;
+				list = CharGenUtility.GetClothes(unitEquipmentEntities, Unit.Gender, race).ToList();
 			}
 		}
 		if (list == null)
@@ -198,13 +223,13 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			}
 			return m_DollState.EquipmentRampIndexSecondary;
 		}
-		if (m_Unit?.ViewSettings.Doll != null)
+		if (Unit?.ViewSettings.Doll != null)
 		{
 			if (!secondary)
 			{
-				return m_Unit.ViewSettings.Doll.ClothesPrimaryIndex;
+				return Unit.ViewSettings.Doll.ClothesPrimaryIndex;
 			}
-			return m_Unit.ViewSettings.Doll.ClothesSecondaryIndex;
+			return Unit.ViewSettings.Doll.ClothesSecondaryIndex;
 		}
 		return -1;
 	}
@@ -218,9 +243,9 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 				Game.Instance.GameCommandQueue.CharGenSetEquipmentColor(rampIndex.PrimaryIndex, rampIndex.SecondaryIndex);
 			}
 		}
-		else if (m_Unit != null)
+		else if (Unit != null)
 		{
-			Game.Instance.GameCommandQueue.SetEquipmentColor(m_Unit, rampIndex);
+			Game.Instance.GameCommandQueue.SetEquipmentColor(Unit, rampIndex);
 		}
 	}
 }

@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.View.ActionBar.PC;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.DragNDrop;
-using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
@@ -13,10 +13,11 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 
-public class CharInfoFeaturePCView : CharInfoFeatureBaseView
+public class CharInfoFeaturePCView : CharInfoFeatureSimpleBaseView
 {
+	[Header("Tooltip")]
 	[SerializeField]
-	private CanvasGroup m_OwnCanvasGroup;
+	protected RectTransform m_LeftSideTooltipPlace;
 
 	[Header("Drag'n'Drop")]
 	[SerializeField]
@@ -47,9 +48,8 @@ public class CharInfoFeaturePCView : CharInfoFeatureBaseView
 	{
 		if ((bool)m_DragNDropHandler)
 		{
-			PartFaction factionOptional = base.ViewModel.Ability.ConcreteOwner.GetFactionOptional();
-			bool flag = (object)factionOptional != null && factionOptional.IsDirectlyControllable && base.ViewModel.Ability.ConcreteOwner.CanBeControlled();
-			m_DragNDropHandler.CanDrag = base.ViewModel.Ability != null && (base.ViewModel.Ability.ConcreteOwner.IsMyNetRole() || flag);
+			MechanicEntity mechanicEntity = base.ViewModel.Ability?.ConcreteOwner;
+			m_DragNDropHandler.CanDrag = base.ViewModel.Ability != null && (mechanicEntity.IsMyNetRole() || mechanicEntity.InPartyAndControllable());
 			AddDisposable(m_DragNDropHandler.OnDragEnd.Subscribe(OnDragEnd));
 		}
 	}

@@ -28,6 +28,9 @@ public class TransitionBaseView : ViewBase<TransitionVM>
 	private PantographView m_PantographView;
 
 	[SerializeField]
+	private float m_DefaultPantographMaxY = -100f;
+
+	[SerializeField]
 	private TransitionLegendButtonView m_TransitionLegendButtonViewPrefab;
 
 	protected TransitionMapPart CurrentPart;
@@ -106,6 +109,7 @@ public class TransitionBaseView : ViewBase<TransitionVM>
 		});
 		CurrentPart = m_Parts.First((TransitionMapPart p) => p.Map == base.ViewModel.Map);
 		CurrentPart.MapObject.SetActive(value: true);
+		m_PantographView.SetCustomMaxY(CurrentPart.CustomPantographMaxY ? CurrentPart.CustomPantographMaxYValue : m_DefaultPantographMaxY);
 		if (m_MapName != null)
 		{
 			m_MapName.text = base.ViewModel.Name;
@@ -125,10 +129,7 @@ public class TransitionBaseView : ViewBase<TransitionVM>
 			{
 				MoveBeam(state: true, p);
 			});
-			m_UnHoverActions.Add(delegate
-			{
-				SetBeamOnCurrentLocation();
-			});
+			m_UnHoverActions.Add(SetBeamOnCurrentLocation);
 		}
 		base.ViewModel.AddObjectsInfo(m_HoverActions, m_UnHoverActions);
 		DrawObjects();

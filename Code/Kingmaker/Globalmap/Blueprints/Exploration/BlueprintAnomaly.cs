@@ -45,6 +45,8 @@ public class BlueprintAnomaly : BlueprintAnomalyFact
 
 	public bool ScriptZoneShape;
 
+	public bool ShowOnGlobalMap;
+
 	private bool ShowInteractDistance
 	{
 		get

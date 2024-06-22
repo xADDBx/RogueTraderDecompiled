@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Formations;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.UI.Common;
 using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;
@@ -33,11 +34,11 @@ public class InteractionStairsPart : InteractionPart<InteractionStairsSettings>,
 	private void MoveOnStairs(BaseUnitEntity selectedUnit, Vector3 posToMove)
 	{
 		Vector3 defaultDirection = ClickGroundHandler.GetDefaultDirection(posToMove);
-		UnitReference[] selectedUnits = Game.Instance.SelectionCharacter.SelectedUnits.Select((BaseUnitEntity u) => u.FromBaseUnitEntity()).ToArray();
-		List<BaseUnitEntity> list = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable).ToList();
-		int unitIndex = list.IndexOf(selectedUnit);
-		Vector3 worldPosition = PartyFormationHelper.FindFormationCenterFromOneUnit(FormationAnchor.Front, defaultDirection, unitIndex, posToMove, list, selectedUnits);
-		UnitCommandsRunner.MoveSelectedUnitsToPointRT(selectedUnit, worldPosition, defaultDirection, isControllerGamepad: true);
+		List<BaseUnitEntity> list = Game.Instance.SelectionCharacter.SelectedUnits.Where((BaseUnitEntity u) => u.IsDirectlyControllable() && !u.MovementAgent.IsTraverseInProgress).ToList();
+		List<BaseUnitEntity> list2 = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable()).ToList();
+		int unitIndex = list2.IndexOf(selectedUnit);
+		Vector3 worldPosition = PartyFormationHelper.FindFormationCenterFromOneUnit(FormationAnchor.Front, defaultDirection, unitIndex, posToMove, list2, list.Select((BaseUnitEntity u) => u.FromBaseUnitEntity()).ToArray());
+		UnitCommandsRunner.MoveSelectedUnitsToPointRT(selectedUnit, worldPosition, defaultDirection, isControllerGamepad: true, preview: false, 1f, list, null, list2);
 	}
 
 	public override Hash128 GetHash128()

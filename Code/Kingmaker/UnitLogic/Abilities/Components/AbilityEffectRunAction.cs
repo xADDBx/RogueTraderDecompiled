@@ -1,3 +1,4 @@
+using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
@@ -8,6 +9,7 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.Utility;
+using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components;
 
@@ -47,5 +49,14 @@ public class AbilityEffectRunAction : AbilityApplyEffect
 			Buff = ContextActionSavingThrow.FindApplyBuffAction(Actions)?.Buff,
 			PersistentSpell = persistentSpell
 		};
+	}
+
+	public bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
+	{
+		if (Actions.Actions == null || Actions.Actions.Length == 0)
+		{
+			return true;
+		}
+		return Actions.Actions.All((GameAction a) => !(a is ContextAction contextAction) || contextAction.IsValidToCast(target, caster, casterPosition));
 	}
 }

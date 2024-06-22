@@ -18,7 +18,7 @@ public abstract class OvertipEntityVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public float OvertipVerticalCorrection;
 
-	public readonly ReactiveCommand<Entity> CoopPingEntity = new ReactiveCommand<Entity>();
+	public readonly ReactiveCommand<(NetPlayer player, Entity entity)> CoopPingEntity = new ReactiveCommand<(NetPlayer, Entity)>();
 
 	public bool IsCutscene => Game.Instance.CurrentMode == GameModeType.Cutscene;
 
@@ -36,6 +36,10 @@ public abstract class OvertipEntityVM : BaseDisposable, IViewModel, IBaseDisposa
 		}));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	private void InternalUpdate()
 	{
 		if (UpdateEnabled)
@@ -49,12 +53,8 @@ public abstract class OvertipEntityVM : BaseDisposable, IViewModel, IBaseDisposa
 		Position.Value = GetEntityPosition();
 	}
 
-	protected override void DisposeImplementation()
-	{
-	}
-
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		CoopPingEntity.Execute(entity);
+		CoopPingEntity.Execute((player, entity));
 	}
 }

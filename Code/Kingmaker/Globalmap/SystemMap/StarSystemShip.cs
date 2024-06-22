@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
-using Kingmaker.Globalmap.Blueprints.SystemMap;
-using Kingmaker.Globalmap.Exploration;
 using Kingmaker.View;
 using Kingmaker.View.GlobalMap;
 using Owlcat.Runtime.Core.Utility;
@@ -89,17 +86,13 @@ public class StarSystemShip : MonoBehaviour
 	public void CheckLanding()
 	{
 		Collider[] array = Physics.OverlapSphere(Position, m_ApproachStarSystemObjectRadius + ShipPathHelper.Delta);
-		foreach (Collider collider in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			StarSystemObjectView starSystemObject = collider.gameObject.GetComponent<StarSystemObjectView>();
-			if ((bool)starSystemObject && !(starSystemObject is AnomalyView))
+			StarSystemObjectView component = array[i].gameObject.GetComponent<StarSystemObjectView>();
+			if ((bool)component && component.CheckLanding())
 			{
-				StarSystemObjectEntity starSystemObjectEntity = Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity obj) => obj is AnomalyEntityData anomalyEntityData && anomalyEntityData.View.BlockedObject == starSystemObject);
-				if ((starSystemObjectEntity == null || starSystemObjectEntity.IsFullyExplored) && !(starSystemObject.Blueprint.Get() is BlueprintStar))
-				{
-					StarSystemObjectLandOn = starSystemObject;
-					break;
-				}
+				StarSystemObjectLandOn = component;
+				break;
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.DollRoom;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.CombinedSelector;
@@ -7,6 +8,7 @@ using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Texture
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Voice;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Pages;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Portrait;
+using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.Base;
@@ -24,7 +26,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance;
 
-public class CharGenAppearancePhaseDetailedView : CharGenPhaseDetailedView<CharGenAppearanceComponentAppearancePhaseVM>
+public class CharGenAppearancePhaseDetailedView : CharGenPhaseDetailedView<CharGenAppearanceComponentAppearancePhaseVM>, ICharGenAppearancePageComponentHandler, ISubscriber
 {
 	[SerializeField]
 	protected CharGenAppearancePageSelectorView m_PageSelectorView;
@@ -80,6 +82,7 @@ public class CharGenAppearancePhaseDetailedView : CharGenPhaseDetailedView<CharG
 		m_PageSelectorView.Bind(base.ViewModel.PagesSelectionGroupRadioVM);
 		AddDisposable(m_VirtualList.Subscribe(base.ViewModel.VirtualListCollection));
 		AddDisposable(base.ViewModel.PortraitVM.Subscribe(m_PortraitFullView.Bind));
+		AddDisposable(base.ViewModel.OnPageChanged.Subscribe(HandlePageChanged));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -100,16 +103,56 @@ public class CharGenAppearancePhaseDetailedView : CharGenPhaseDetailedView<CharG
 		return new BoolReactiveProperty(initialValue: true);
 	}
 
+	protected virtual void HandlePageChanged(CharGenAppearancePageType pageType)
+	{
+		switch (pageType)
+		{
+		case CharGenAppearancePageType.Hair:
+			base.ViewModel.DollState.ShowHelmTemp = false;
+			base.ViewModel.DollState.ShowClothTemp = true;
+			m_CharacterController.ZoomMin();
+			break;
+		case CharGenAppearancePageType.Tattoo:
+			base.ViewModel.DollState.ShowClothTemp = false;
+			m_CharacterController.ZoomMax();
+			break;
+		case CharGenAppearancePageType.Implants:
+			base.ViewModel.DollState.ShowClothTemp = false;
+			m_CharacterController.ZoomMin();
+			break;
+		default:
+			base.ViewModel.DollState.ShowHelmTemp = true;
+			base.ViewModel.DollState.ShowClothTemp = true;
+			m_CharacterController.ZoomMax();
+			break;
+		}
+	}
+
 	public void HandleComponentChanged(CharGenAppearancePageComponent pageComponent)
 	{
 		switch (pageComponent)
 		{
 		case CharGenAppearancePageComponent.FaceType:
 		case CharGenAppearancePageComponent.ScarsType:
+			base.ViewModel.DollState.ShowHelmTemp = true;
+			m_CharacterController.ZoomMin();
+			break;
+		case CharGenAppearancePageComponent.HairType:
+		case CharGenAppearancePageComponent.HairColour:
+		case CharGenAppearancePageComponent.EyebrowType:
+		case CharGenAppearancePageComponent.EyebrowColour:
+		case CharGenAppearancePageComponent.PortType1:
+		case CharGenAppearancePageComponent.PortType2:
+			base.ViewModel.DollState.ShowHelmTemp = false;
 			m_CharacterController.ZoomMin();
 			break;
 		case CharGenAppearancePageComponent.BodyType:
+		case CharGenAppearancePageComponent.Tattoo:
+			base.ViewModel.DollState.ShowHelmTemp = true;
 			m_CharacterController.ZoomMax();
+			break;
+		default:
+			base.ViewModel.DollState.ShowHelmTemp = true;
 			break;
 		}
 	}

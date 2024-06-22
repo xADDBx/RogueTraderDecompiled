@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 
 namespace Kingmaker.View.Roaming;
 
+[KnowledgeDatabaseID("5ba5daeb53357b248b9c5891a892667f")]
 public class RoamingWaypointView : EntityViewBase, ICutsceneReference
 {
 	public bool UseOrientation;

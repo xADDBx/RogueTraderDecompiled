@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
-using Kingmaker.Controllers;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
-using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -53,12 +49,13 @@ public class ColonyManagementVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	{
 		if (!HasColony)
 		{
-			PFLog.System.Error("ExplorationVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			PFLog.UI.Error("ExplorationVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			return;
 		}
-		else
+		EventBus.RaiseEvent(delegate(IColonizationProjectsUIHandler h)
 		{
-			Game.Instance.GameCommandQueue.ColonyProjectsUIOpen(CurrentColony.Value.Blueprint.ToReference<BlueprintColonyReference>());
-		}
+			h.HandleColonyProjectsUIOpen(CurrentColony.Value);
+		});
 	}
 
 	public void HandleColonyManagementPage(Colony colony)
@@ -70,10 +67,6 @@ public class ColonyManagementVM : BaseDisposable, IViewModel, IBaseDisposable, I
 			NavigationVM.HandleColonyPage(colony);
 			ColonyManagementPageVM disposable = (ColonyManagementPage.Value = new ColonyManagementPageVM(colony));
 			AddDisposable(disposable);
-			Game.Instance.CoroutinesController.InvokeInTicks(delegate
-			{
-				StartChronicle(colony);
-			}, 1);
 		}
 	}
 
@@ -83,7 +76,7 @@ public class ColonyManagementVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleChronicleFinished(Colony colony, ColonyChronicle chronicle)
 	{
-		StartChronicle(colony);
+		Game.Instance.GameCommandQueue.StartChronicleUI(colony);
 	}
 
 	private void RefreshData()
@@ -93,31 +86,7 @@ public class ColonyManagementVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		{
 			CurrentColony.Value = Colonies.FirstOrDefault()?.Colony;
 			HandleColonyManagementPage(CurrentColony.Value);
-		}
-	}
-
-	private void StartChronicle(Colony colony)
-	{
-		if (colony != null)
-		{
-			if (!colony.StartedChronicles.Any())
-			{
-				TryShowColonyRewards(colony);
-				return;
-			}
-			UISounds.Instance.Sounds.SpaceColonization.ColonyEvent.Play();
-			colony.StartChronicle(colony.StartedChronicles[0]);
-		}
-	}
-
-	private void TryShowColonyRewards(Colony colony)
-	{
-		if (colony != null)
-		{
-			EventBus.RaiseEvent(delegate(IColonyManagementRewardsUIHandler h)
-			{
-				h.HandleColonyRewardsShow();
-			});
+			Game.Instance.GameCommandQueue.StartChronicleUI(CurrentColony.Value);
 		}
 	}
 

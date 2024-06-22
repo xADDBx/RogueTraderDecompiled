@@ -1,10 +1,14 @@
+using System.Linq;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
+using Kingmaker.Globalmap.Exploration;
 using Kingmaker.View.MapObjects;
 using UnityEngine;
 
 namespace Kingmaker.Globalmap.SystemMap;
 
+[KnowledgeDatabaseID("eb26f7411e934901969622ca676afeca")]
 public class StarSystemObjectView : MapObjectView
 {
 	public enum StarSystemObjectSize
@@ -81,5 +85,14 @@ public class StarSystemObjectView : MapObjectView
 	private bool ShouldBeHighlightedInternal()
 	{
 		return Blueprint.Get()?.ShouldBeHighlighted ?? false;
+	}
+
+	public virtual bool CheckLanding()
+	{
+		if (Blueprint.Get() is BlueprintStar)
+		{
+			return false;
+		}
+		return Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity obj) => obj is AnomalyEntityData anomalyEntityData && anomalyEntityData.View.BlockedObject == this)?.IsFullyExplored ?? true;
 	}
 }

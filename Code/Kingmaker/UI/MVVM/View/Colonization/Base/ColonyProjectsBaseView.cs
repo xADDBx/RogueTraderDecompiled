@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
-using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -134,7 +133,10 @@ public class ColonyProjectsBaseView : ViewBase<ColonyProjectsVM>, IColonyProject
 
 	protected void HandleClose()
 	{
-		Game.Instance.GameCommandQueue.ColonyProjectsUIClose();
+		EventBus.RaiseEvent(delegate(IColonizationProjectsUIHandler h)
+		{
+			h.HandleColonyProjectsUIClose();
+		});
 	}
 
 	protected void HandleStartProject()

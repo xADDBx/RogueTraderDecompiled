@@ -79,7 +79,7 @@ public class PartyMembersDetach : GameAction
 		return "Split party (manually)";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Player p = Game.Instance.Player;
 		List<BaseUnitEntity> source = ((!UseRealParty) ? p.Party : p.PartyCharacters.Select((UnitReference u) => u.Entity.ToBaseUnitEntity()).ToTempList());

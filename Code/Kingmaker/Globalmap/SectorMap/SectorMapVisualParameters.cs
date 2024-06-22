@@ -32,5 +32,8 @@ public class SectorMapVisualParameters : RegisteredBehaviour
 	[SerializeField]
 	public float WaitWarpTravelToEndInSeconds;
 
+	[SerializeField]
+	public float WaitBetweenEtudeEventsInSeconds = 0.5f;
+
 	public StarSystemPrefab[] StarSystemPrefabVariants;
 }

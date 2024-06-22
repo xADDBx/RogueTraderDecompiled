@@ -40,6 +40,8 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public CompositeModifiersManager CriticalDamageModifiers => m_DamageModifiersHolder.CriticalDamageModifiers;
 
+	public CompositeModifiersManager PureCriticalDamageModifiers => m_DamageModifiersHolder.PureCriticalDamageModifiers;
+
 	public CompositeModifiersManager Deflection => m_DamageModifiersHolder.Deflection;
 
 	public CompositeModifiersManager Absorption => m_DamageModifiersHolder.Absorption;
@@ -104,7 +106,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		if (RollPerformAttackRule != null && (RollPerformAttackRule.ResultIsRighteousFury || m_ForceCrit))
 		{
 			damageData.CriticalDamageModifiers.Add(ModifierType.PctAdd, 50, RollPerformAttackRule, ModifierDescriptor.RighteousFury);
-			if (RollPerformAttackRule.RighteousFuryAmount >= 2)
+			if (RollPerformAttackRule.RighteousFuryAmount > 1f)
 			{
 				List<Modifier> list = new List<Modifier>();
 				foreach (Modifier percentModifiers in damageData.CriticalDamageModifiers.PercentModifiersList)
@@ -113,7 +115,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 				}
 				foreach (Modifier item in list)
 				{
-					damageData.CriticalDamageModifiers.Add(ModifierType.PctAdd, item.Value * (RollPerformAttackRule.RighteousFuryAmount - 1), item.Fact, item.Descriptor);
+					damageData.CriticalDamageModifiers.Add(ModifierType.PctAdd, (int)((float)item.Value * (RollPerformAttackRule.RighteousFuryAmount - 1f)), item.Fact, item.Descriptor);
 				}
 			}
 			damageData.IsCritical = true;

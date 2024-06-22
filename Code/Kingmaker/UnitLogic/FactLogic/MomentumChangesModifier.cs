@@ -55,7 +55,7 @@ public class MomentumChangesModifier : UnitFactComponentDelegate, IInitiatorRule
 			}
 			return true;
 		}
-		if (flag)
+		if (flag || evt.ChangeReason == MomentumChangeReason.Custom)
 		{
 			if (evt.ChangeReason == MomentumChangeReason.Custom)
 			{

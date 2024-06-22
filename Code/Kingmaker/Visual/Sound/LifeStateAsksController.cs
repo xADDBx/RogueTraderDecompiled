@@ -150,13 +150,8 @@ public class LifeStateAsksController : ITickUnitAsksController, IUnitAsksControl
 	{
 		if (damageData.IsPlayerFaction)
 		{
-			if (!unitCanSpeak || unit.View.Asks == null || !unit.View.Asks.Unconscious.Schedule(is2D: false, delegate
-			{
-				HandlePartyMemberUnconscious(unit);
-			}))
-			{
-				HandlePartyMemberUnconscious(unit);
-			}
+			HandlePartyMemberUnconscious(unit);
+			unit.View.Asks?.Unconscious.Schedule();
 		}
 		else if (unitCanSpeak)
 		{

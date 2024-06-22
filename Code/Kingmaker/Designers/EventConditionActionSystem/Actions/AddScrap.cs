@@ -15,7 +15,7 @@ public class AddScrap : GameAction
 		return "Give scrap to player";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.Scrap.Receive(Scrap);
 	}

@@ -62,8 +62,8 @@ public class VariativeInteractionView<TInteractionVariant> : ViewBase<VariativeI
 		});
 		for (int i = 0; i < buttons.Count(); i++)
 		{
-			RectTransform rectTransform = buttons[i];
-			float x = Mathf.Floor((i + 1) / 2) * (rectTransform.rect.width + 5f) * (float)((i % 2 == 0) ? 1 : (-1));
+			float num = buttons[i].rect.width + 5f;
+			float x = (float)(-i) * num - num / 2f + (float)buttons.Count * num / 2f;
 			ShortcutExtensions46.DOAnchorPos(endValue: new Vector2(x, 0f), target: buttons[i], duration: 0.2f).SetUpdate(isIndependentUpdate: true);
 		}
 	}

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.AI.DebugUtilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.SystemMechanics;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -61,11 +63,30 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 		}
 	}
 
+	[Serializable]
+	public struct CooldownsStateSave : IHashable
+	{
+		public Dictionary<BlueprintAbility, CooldownData> AbilityCooldowns;
+
+		public Dictionary<BlueprintAbilityGroup, CooldownData> GroupCooldowns;
+
+		public Hash128 GetHash128()
+		{
+			return default(Hash128);
+		}
+	}
+
 	[JsonProperty]
 	private Dictionary<BlueprintAbility, CooldownData> m_AbilityCooldowns = new Dictionary<BlueprintAbility, CooldownData>();
 
 	[JsonProperty]
 	private Dictionary<BlueprintAbilityGroup, CooldownData> m_GroupCooldowns = new Dictionary<BlueprintAbilityGroup, CooldownData>();
+
+	[JsonProperty]
+	private List<CooldownsStateSave> m_SavedCooldowns = new List<CooldownsStateSave>();
+
+	[JsonProperty]
+	public RestrictionCalculator InterruptionAbilityRestrictions;
 
 	[JsonConstructor]
 	public PartAbilityCooldowns()
@@ -330,6 +351,24 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 		RemoveGroupCooldown(combatRoot.SecondaryHandAbilityGroup);
 	}
 
+	public void ResetCooldowns(bool ignoreOncePerCombatRestriction = false)
+	{
+		if (ignoreOncePerCombatRestriction)
+		{
+			m_AbilityCooldowns.Clear();
+			m_GroupCooldowns.Clear();
+		}
+		else
+		{
+			m_AbilityCooldowns = GetUntilEndOfCombatCooldowns();
+			m_GroupCooldowns = GetUntilEndOfCombatGroupCooldowns();
+		}
+		EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitAbilityCooldownHandler>)delegate(IUnitAbilityCooldownHandler h)
+		{
+			h.HandleCooldownReset();
+		}, isCheckRuntime: true);
+	}
+
 	public int GroupCooldown(BlueprintAbilityGroup abilityGroup)
 	{
 		if (!base.Owner.IsInCombat)
@@ -389,6 +428,85 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 		m_GroupCooldowns.Clear();
 	}
 
+	public void SaveCooldownData()
+	{
+		CooldownsStateSave cooldownsStateSave = default(CooldownsStateSave);
+		cooldownsStateSave.AbilityCooldowns = m_AbilityCooldowns.ToDictionary((KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Value);
+		cooldownsStateSave.GroupCooldowns = m_GroupCooldowns.ToDictionary((KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Value);
+		CooldownsStateSave item = cooldownsStateSave;
+		m_SavedCooldowns.Add(item);
+	}
+
+	public void RestoreCooldownData(bool ignoreOncePerCombatRestriction = false)
+	{
+		if (m_SavedCooldowns.Count == 0)
+		{
+			AILogger.Instance.Error(new AILogMessage("trying to restore cooldowns for " + base.Owner.Name + " but there are none saved"));
+			return;
+		}
+		Dictionary<BlueprintAbility, CooldownData> abilityCooldowns = m_SavedCooldowns.Last().AbilityCooldowns;
+		Dictionary<BlueprintAbilityGroup, CooldownData> groupCooldowns = m_SavedCooldowns.Last().GroupCooldowns;
+		if (ignoreOncePerCombatRestriction)
+		{
+			if (abilityCooldowns != null)
+			{
+				m_AbilityCooldowns = abilityCooldowns;
+			}
+			else
+			{
+				m_AbilityCooldowns.Clear();
+			}
+			if (groupCooldowns != null)
+			{
+				m_GroupCooldowns = groupCooldowns;
+			}
+			else
+			{
+				m_GroupCooldowns.Clear();
+			}
+		}
+		else
+		{
+			Dictionary<BlueprintAbility, CooldownData> untilEndOfCombatCooldowns = GetUntilEndOfCombatCooldowns();
+			if (abilityCooldowns != null)
+			{
+				m_AbilityCooldowns = abilityCooldowns;
+			}
+			else
+			{
+				m_AbilityCooldowns.Clear();
+			}
+			foreach (KeyValuePair<BlueprintAbility, CooldownData> item in untilEndOfCombatCooldowns.Where((KeyValuePair<BlueprintAbility, CooldownData> cooldown) => !m_AbilityCooldowns.ContainsKey(cooldown.Key)))
+			{
+				m_AbilityCooldowns.Add(item.Key, item.Value);
+			}
+			Dictionary<BlueprintAbilityGroup, CooldownData> untilEndOfCombatGroupCooldowns = GetUntilEndOfCombatGroupCooldowns();
+			if (groupCooldowns != null)
+			{
+				m_GroupCooldowns = groupCooldowns;
+			}
+			else
+			{
+				m_GroupCooldowns.Clear();
+			}
+			foreach (KeyValuePair<BlueprintAbilityGroup, CooldownData> item2 in untilEndOfCombatGroupCooldowns.Where((KeyValuePair<BlueprintAbilityGroup, CooldownData> cooldown) => !m_GroupCooldowns.ContainsKey(cooldown.Key)))
+			{
+				m_GroupCooldowns.Add(item2.Key, item2.Value);
+			}
+		}
+		m_SavedCooldowns.RemoveLast();
+	}
+
+	private Dictionary<BlueprintAbility, CooldownData> GetUntilEndOfCombatCooldowns()
+	{
+		return m_AbilityCooldowns.Where((KeyValuePair<BlueprintAbility, CooldownData> abilityCooldown) => abilityCooldown.Value.UntilEndOfCombat).ToDictionary((KeyValuePair<BlueprintAbility, CooldownData> abilityCooldown) => abilityCooldown.Key, (KeyValuePair<BlueprintAbility, CooldownData> abilityCooldown) => abilityCooldown.Value);
+	}
+
+	private Dictionary<BlueprintAbilityGroup, CooldownData> GetUntilEndOfCombatGroupCooldowns()
+	{
+		return m_GroupCooldowns.Where((KeyValuePair<BlueprintAbilityGroup, CooldownData> groupCooldown) => groupCooldown.Value.UntilEndOfCombat).ToDictionary((KeyValuePair<BlueprintAbilityGroup, CooldownData> groupCooldown) => groupCooldown.Key, (KeyValuePair<BlueprintAbilityGroup, CooldownData> groupCooldown) => groupCooldown.Value);
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -424,6 +542,18 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 			}
 			result.Append(ref val5);
 		}
+		List<CooldownsStateSave> savedCooldowns = m_SavedCooldowns;
+		if (savedCooldowns != null)
+		{
+			for (int i = 0; i < savedCooldowns.Count; i++)
+			{
+				CooldownsStateSave obj = savedCooldowns[i];
+				Hash128 val8 = StructHasher<CooldownsStateSave>.GetHash128(ref obj);
+				result.Append(ref val8);
+			}
+		}
+		Hash128 val9 = ClassHasher<RestrictionCalculator>.GetHash128(InterruptionAbilityRestrictions);
+		result.Append(ref val9);
 		return result;
 	}
 }

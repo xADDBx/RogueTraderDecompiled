@@ -47,7 +47,7 @@ public class TranslocateUnit : GameAction
 		return "Translocate Unit";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity targetUnit = Unit.GetValue();
 		if (translocatePositionEvaluator == null && translocatePosition == null)

@@ -46,6 +46,8 @@ public class StarSystemsState : IHashable
 	[GameStateIgnore]
 	public int TutorialSsoCount;
 
+	public StarSystemContextData StarSystemContextData = new StarSystemContextData();
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

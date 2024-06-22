@@ -76,7 +76,8 @@ public class RuleCalculateMovementCost : RulebookEvent<BaseUnitEntity>
 	private void Calculate(int totalApInt)
 	{
 		HashSet<GraphNode> threateningAreaCells = UnitMovementAgentBase.CacheThreateningAreaCells(base.Initiator);
-		WarhammerPathPlayerMetricCostProvider warhammerPathPlayerMetricCostProvider = new WarhammerPathPlayerMetricCostProvider(base.Initiator, 0, null, null, threateningAreaCells);
+		Dictionary<GraphNode, float> overrideCosts = NodeTraverseCostHelper.GetOverrideCosts(base.Initiator);
+		WarhammerPathPlayerMetricCostProvider warhammerPathPlayerMetricCostProvider = new WarhammerPathPlayerMetricCostProvider(base.Initiator, 0, null, null, threateningAreaCells, overrideCosts);
 		List<float> list = TempList.Get<float>();
 		WarhammerPathPlayerMetric distanceFrom = new WarhammerPathPlayerMetric(base.Initiator.CombatState.LastDiagonalCount, 0f);
 		list.Add(distanceFrom.Length);

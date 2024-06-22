@@ -62,7 +62,7 @@ public class TooltipTemplateSoulMarkHeader : TooltipBaseTemplate
 		string title = string.Format(format, currentTier.ToString(), UIUtility.GetSoulMarkRankText(m_CurrentTier).Text);
 		list.Add(new TooltipBrickTitle(title, TooltipTitleType.H4, TextAlignmentOptions.Left));
 		string glossaryKeyByDirection = SoulMarkTooltipExtensions.GetGlossaryKeyByDirection(m_Direction);
-		list.Add(new TooltipBrickText(UIUtility.GetGlossaryEntry(glossaryKeyByDirection).GetDescription().Text, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left, needChangeSize: true, 20));
+		list.Add(new TooltipBrickText(UIUtility.GetGlossaryEntry(glossaryKeyByDirection).GetDescription().Text, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left, needChangeSize: true));
 		list.AddRange(SoulMarkTooltipExtensions.GetSlider(m_RankThresholds, m_CurrentValue, m_MaxValue));
 		return list;
 	}
@@ -78,7 +78,7 @@ public class TooltipTemplateSoulMarkHeader : TooltipBaseTemplate
 			list.Add(new TooltipBrickTitle(title, TooltipTitleType.H4, TextAlignmentOptions.Left));
 		}
 		string glossaryKeyByDirection = SoulMarkTooltipExtensions.GetGlossaryKeyByDirection(m_Direction);
-		list.Add(new TooltipBrickText(UIUtility.GetGlossaryEntry(glossaryKeyByDirection).GetDescription().Text, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left, needChangeSize: true, 20));
+		list.Add(new TooltipBrickText(UIUtility.GetGlossaryEntry(glossaryKeyByDirection).GetDescription().Text, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
 		for (int i = 0; i < m_BlueprintSoulMark.ComponentsArray.Length; i++)
 		{
 			int num = i + 1;

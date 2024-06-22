@@ -49,7 +49,7 @@ public class OvertipConsoleView : MonoBehaviour, IDisposable
 
 	public void SetPaginator(bool show, bool isChosen, int surroundingsCount = 0, int surroundingIndex = -1)
 	{
-		if (show && !ConsoleCursor.Instance.IsActive)
+		if (show && (!ConsoleCursor.Instance.IsActive || Game.Instance.Player.IsInCombat))
 		{
 			m_PageNavigation.Show(surroundingsCount, null, surroundingIndex);
 			if (isChosen)

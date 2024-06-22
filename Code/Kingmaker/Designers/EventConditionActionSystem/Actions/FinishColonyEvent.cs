@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
 using UnityEngine;
@@ -20,13 +19,13 @@ public class FinishColonyEvent : GameAction
 		return "Apply rewards from event";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		BlueprintColonyEvent blueprintColonyEvent = ContextData<ColonyContextData>.Current?.Event;
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
-		if ((bool)blueprintColonyEvent)
+		BlueprintColonyEvent @event = Game.Instance.Player.ColoniesState.ColonyContextData.Event;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
+		if ((bool)@event)
 		{
-			colony?.FinishEvent(blueprintColonyEvent, EventResult);
+			colony?.FinishEvent(@event, EventResult);
 		}
 	}
 }

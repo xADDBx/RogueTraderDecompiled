@@ -1,5 +1,4 @@
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Photon.Realtime;
 
 namespace Kingmaker.PubSubSystem;
 
@@ -13,13 +12,15 @@ public interface INetLobbyErrorHandler : ISubscriber
 
 	void HandleChangeRegionError();
 
+	void HandleNoPlayStationPlusError();
+
 	void HandleLobbyNotFoundError();
 
-	void HandleJoinLobbyError(short returnCode);
+	void HandleLobbyFullError();
+
+	void HandleJoinLobbyError(int returnCode);
 
 	void HandleCreatingLobbyError(short returnCode);
-
-	void HandlePhotonDisconnectedError(DisconnectCause cause, bool allowReconnect);
 
 	void HandlePhotonCustomAuthenticationFailedError();
 

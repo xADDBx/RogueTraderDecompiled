@@ -26,7 +26,7 @@ public class ChangePlanetVisual : GameAction
 		return "Change planet visual";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Planet != null)
 		{

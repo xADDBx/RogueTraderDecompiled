@@ -41,6 +41,9 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 	protected TShipComponentSlot m_ArmorPlating;
 
 	[SerializeField]
+	protected TShipComponentSlot[] m_ArsenalSlots;
+
+	[SerializeField]
 	protected TShipComponentSlot[] m_WeaponSlots;
 
 	[SerializeField]
@@ -61,11 +64,11 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 	[SerializeField]
 	private RectTransform m_TopPosition;
 
-	protected TooltipTemplateSimple m_ExperienceTooltip;
+	protected TooltipTemplateSimple ExperienceTooltip;
 
-	public TShipInventoryStash ShipStash => m_InventoryStashView;
+	protected TShipInventoryStash ShipStash => m_InventoryStashView;
 
-	protected ShipDollRoom ShipRoom => UIDollRooms.Instance?.ShipDollRoom;
+	private ShipDollRoom ShipRoom => UIDollRooms.Instance?.ShipDollRoom;
 
 	public virtual void Initialize()
 	{
@@ -80,9 +83,9 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 			ShipRoom.Initialize(m_CharacterController);
 			ShipRoom.SetupShip(Game.Instance.Player.PlayerShip);
 		}
-		m_ExperienceTooltip = new TooltipTemplateSimple(UIStrings.Instance.Tooltips.CurrentLevelExperience, UIStrings.Instance.ShipCustomization.ShipExperienceDescription);
-		AddDisposable(m_ExperiencePanel.SetTooltip(m_ExperienceTooltip));
-		SetUpgradePos();
+		ExperienceTooltip = new TooltipTemplateSimple(UIStrings.Instance.Tooltips.CurrentLevelExperience, UIStrings.Instance.ShipCustomization.ShipExperienceDescription);
+		AddDisposable(m_ExperiencePanel.SetTooltip(ExperienceTooltip));
+		SetUpgradePosition();
 		UpdateSlots();
 	}
 
@@ -105,6 +108,7 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 	private void HideWindow()
 	{
 		ShipRoom?.Hide();
+		ContextMenuHelper.HideContextMenu();
 		m_FadeAnimator.DisappearAnimation(OnDisappearEnd);
 	}
 
@@ -115,31 +119,24 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 
 	private void OnDisappearEnd()
 	{
-		ContextMenuHelper.HideContextMenu();
 		base.gameObject.SetActive(value: false);
 	}
 
-	private void SetUpgradePos()
+	private void SetUpgradePosition()
 	{
-		bool flag = false;
-		switch (base.ViewModel.ShipType)
+		if ((bool)m_TopPosition && (bool)m_MiddlePosition)
 		{
-		case PlayerShipType.FalchionClassFrigate:
-			flag = true;
-			break;
-		case PlayerShipType.FirestormClassFrigate:
-			flag = true;
-			break;
-		}
-		if (flag)
-		{
-			Vector3 localPosition = m_TopPosition.localPosition;
-			UpgradeSlotsBlock.localPosition = new Vector3(localPosition.x, localPosition.y, localPosition.z);
-		}
-		else
-		{
-			Vector3 localPosition2 = m_MiddlePosition.localPosition;
-			UpgradeSlotsBlock.localPosition = new Vector3(localPosition2.x, localPosition2.y, localPosition2.z);
+			bool flag = false;
+			switch (base.ViewModel.ShipType)
+			{
+			case PlayerShipType.FalchionClassFrigate:
+				flag = true;
+				break;
+			case PlayerShipType.FirestormClassFrigate:
+				flag = true;
+				break;
+			}
+			UpgradeSlotsBlock.localPosition = (flag ? m_TopPosition.localPosition : m_MiddlePosition.localPosition);
 		}
 	}
 

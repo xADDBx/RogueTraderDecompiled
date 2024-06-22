@@ -294,7 +294,7 @@ public class StateSerializationController : IControllerTick, IController, IContr
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	void IControllerTick.Tick()

@@ -13,8 +13,8 @@ public class BlueprintUnitDodgeModifierGetter : UnitPropertyGetter
 		return base.CurrentEntity.Blueprint.GetComponent<WarhammerDodgeChanceModifier>()?.DodgeChance.Calculate(base.PropertyContext.MechanicContext) ?? 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Get BlueprintUnit's DodgeModifier";
+		return "DodgeModifier from " + FormulaTargetScope.Current + " blueprint";
 	}
 }

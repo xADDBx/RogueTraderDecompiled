@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.AI.DebugUtilities;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Commands;
 using Pathfinding;
 
@@ -15,6 +16,7 @@ public class TaskNodeCastAbility : CoroutineTaskNode
 			AILogger.Instance.Log(AILogAbility.CastFailed(context.Ability, context.AbilityTarget));
 			yield return Status.Failure;
 		}
+		AbilityTargetingCache.Instance.SetInactive();
 		AILogger.Instance.Log(AILogAbility.Cast(context.Ability, context.AbilityTarget));
 		UnitUseAbilityParams cmd = new UnitUseAbilityParams(context.Ability, context.AbilityTarget);
 		while (!context.Unit.Brain.IsActingEnabled)
@@ -22,6 +24,10 @@ public class TaskNodeCastAbility : CoroutineTaskNode
 			yield return Status.Running;
 		}
 		context.Unit.Commands.Run(cmd);
+		while (!context.Unit.Commands.Empty)
+		{
+			yield return Status.Running;
+		}
 		context.Unit.Brain.IsIdling = false;
 		yield return Status.Success;
 	}

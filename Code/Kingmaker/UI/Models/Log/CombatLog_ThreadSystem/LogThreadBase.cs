@@ -24,6 +24,8 @@ public abstract class LogThreadBase : BaseDisposable
 {
 	private ReactiveCollection<CombatLogMessage> m_ThreadMessages = new ReactiveCollection<CombatLogMessage>();
 
+	public static bool IsPreviousMessageUseSomething;
+
 	protected static GameLogStrings Strings => GameLogStrings.Instance;
 
 	protected static LogColors Colors => Game.Instance.BlueprintRoot.UIConfig.LogColors;
@@ -46,6 +48,7 @@ public abstract class LogThreadBase : BaseDisposable
 
 	protected void AddMessage(CombatLogMessage newMessage)
 	{
+		IsPreviousMessageUseSomething = false;
 		if (!ContextData<GameLogDisabled>.Current && newMessage != null)
 		{
 			m_ThreadMessages.Add(newMessage);

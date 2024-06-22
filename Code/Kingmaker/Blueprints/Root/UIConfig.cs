@@ -13,6 +13,7 @@ using Kingmaker.Interaction;
 using Kingmaker.Localization;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.Common.UIConfigComponents;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -300,6 +301,14 @@ public class UIConfig : BlueprintScriptableObject
 
 	public Color PaperSaberColor = Color.red;
 
+	public Sprite KeyArt;
+
+	public Sprite DlcEntityKeyArt;
+
+	public VideoLink KeyVideoMainMenu;
+
+	public BlueprintDebugInformationBubble DebugBubble;
+
 	public LogColors LogColors;
 
 	public DialogColors DialogColors;
@@ -362,6 +371,11 @@ public class UIConfig : BlueprintScriptableObject
 
 	public Sprite DefaultNetAvatar;
 
+	[Header("Coop Colors")]
+	public List<Color> CoopPlayersPingsColors = new List<Color>();
+
+	public List<Material> CoopPlayersPingsMaterials = new List<Material>();
+
 	public CoverHighlightConfig CoverHighlight;
 
 	[Header("Items Description")]
@@ -381,6 +395,13 @@ public class UIConfig : BlueprintScriptableObject
 
 	[Tooltip("{0} - answer id, {1} - sprite name, will be set automatically")]
 	public string UIDialogConditionsLinkFormat;
+
+	[Tooltip("{0} - max range label, {1} range value")]
+	public string UITooltipMaxRangeFormat;
+
+	public PercentHelper PercentHelper;
+
+	public int SubTextPercentSize = 70;
 
 	[Space]
 	[Header("RandomColors")]
@@ -438,6 +459,16 @@ public class UIConfig : BlueprintScriptableObject
 
 	public float DialogCameraYCorrection = -0.15f;
 
+	[Header("Talent Groups")]
+	public Color SingleAcronymColor;
+
+	public Color GroupAcronymColor;
+
+	public TalentGroups TalentGroups = new TalentGroups();
+
+	[SerializeField]
+	private BlueprintDlcRewardReference m_DlcRewardForVoidshipArsenalAvailable;
+
 	public static UIConfig Instance => BlueprintRoot.Instance.UIConfig;
 
 	public BlueprintUISound BlueprintUISound => m_BlueprintUISound?.Get();
@@ -451,4 +482,16 @@ public class UIConfig : BlueprintScriptableObject
 	public BlueprintAbility ReloadAbility => m_ReloadAbility?.Get();
 
 	public InteractionVariantVisualSetsBlueprint InteractionVariantVisualSetsBlueprint => m_InteractionVariantVisualSetsBlueprint?.Get();
+
+	public bool IsVoidshipArsenalAvailable
+	{
+		get
+		{
+			if (!m_DlcRewardForVoidshipArsenalAvailable.IsEmpty())
+			{
+				return m_DlcRewardForVoidshipArsenalAvailable.Get().IsAvailable;
+			}
+			return false;
+		}
+	}
 }

@@ -25,6 +25,7 @@ using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.Controllers.MapObjects;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
@@ -95,6 +96,9 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 
 	[SerializeField]
 	private UIViewLink<CreditsConsoleView, CreditsVM> m_CreditsConsoleView;
+
+	[SerializeField]
+	private PartyConsoleView m_PartyConsoleView;
 
 	[Header("Space Combat")]
 	[SerializeField]
@@ -220,6 +224,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 		m_PartySelectorConsoleView.Initialize();
 		m_GameOverConsoleView.Initialize();
 		m_SpacePointMarkersPCView.Initialize(m_CanvasScalerWorkaround);
+		m_PartyConsoleView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -242,6 +247,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 		m_SystemMapNoisesView.Bind(base.ViewModel.SystemMapNoisesVM);
 		m_SystemMapShipTrajectoryView.Bind(base.ViewModel.SystemMapShipTrajectoryVM);
 		m_ServiceWindowsConsoleView.Bind(base.ViewModel.ServiceWindowsVM);
+		m_PartyConsoleView.Bind(base.ViewModel.PartyVM);
 		m_ExperienceNotificationPCView.Bind(base.ViewModel.ExperienceNotificationVM);
 		m_EncyclopediaNotificationConsoleView.Bind(base.ViewModel.EncyclopediaNotificationVM);
 		m_ColonyNotificationConsoleView.Bind(base.ViewModel.ColonyNotificationVM);
@@ -259,6 +265,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 		{
 			m_NetRolesAttentionMark.gameObject.SetActive(value.netFirstLoadState && !value.haveRoles);
 		}));
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	public void AddBaseInput(InputLayer baseInputLayer)

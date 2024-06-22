@@ -84,7 +84,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	[JsonProperty]
 	[CanBeNull]
-	private List<TemporaryHitPointsData> m_TemporaryHitPoints;
+	private List<TemporaryHitPointsData> m_TemporaryHitPoints = new List<TemporaryHitPointsData>();
 
 	private int m_DamageOld = -1;
 

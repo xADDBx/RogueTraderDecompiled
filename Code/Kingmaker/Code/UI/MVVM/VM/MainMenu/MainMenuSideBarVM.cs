@@ -32,6 +32,8 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 
 	public readonly ContextMenuEntityVM LoadVm;
 
+	public readonly ContextMenuEntityVM DlcManagerVm;
+
 	public readonly ContextMenuEntityVM NetVm;
 
 	public readonly ContextMenuEntityVM LicenseVm;
@@ -72,6 +74,7 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 			});
 		}, () => Game.Instance.SaveManager.AreSavesUpToDate && Game.Instance.SaveManager.HasAnySaves(includingCorrupted: true), UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));
 		m_Entities.Add(NewGameVm = new ContextMenuEntityVM(new ContextMenuCollectionEntity(userInterfacesText.MainMenu.NewGame, mainMenu.ShowNewGameSetup, null, UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));
+		m_Entities.Add(DlcManagerVm = new ContextMenuEntityVM(new ContextMenuCollectionEntity(userInterfacesText.MainMenu.Addons, mainMenu.ShowDlcManager, null, UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));
 		m_Entities.Add(NetVm = new ContextMenuEntityVM(new ContextMenuCollectionEntity(userInterfacesText.NetLobbyTexts.NetHeader, mainMenu.ShowNetLobby, null, UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));
 		m_Entities.Add(OptionsVm = new ContextMenuEntityVM(new ContextMenuCollectionEntity(userInterfacesText.MainMenu.Settings, mainMenu.OpenSettings, null, UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));
 		m_Entities.Add(CreditVm = new ContextMenuEntityVM(new ContextMenuCollectionEntity(userInterfacesText.MainMenu.Credits, mainMenu.ShowCredits, null, UISounds.ButtonSoundsEnum.AnalogSound, UISounds.ButtonSoundsEnum.AnalogSound)));

@@ -20,7 +20,7 @@ public class PartyGreatestPropertyGetter : PropertyGetter
 	[SerializeField]
 	private BlueprintUnitFactReference m_Fact;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"${Property}";
 	}

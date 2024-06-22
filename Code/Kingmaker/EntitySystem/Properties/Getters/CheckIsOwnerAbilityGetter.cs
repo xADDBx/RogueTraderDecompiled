@@ -15,7 +15,7 @@ public class CheckIsOwnerAbilityGetter : MechanicEntityPropertyGetter, PropertyC
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check if ability is from Owner";
 	}

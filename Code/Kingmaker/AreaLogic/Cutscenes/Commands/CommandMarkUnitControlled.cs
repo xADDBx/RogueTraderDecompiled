@@ -11,6 +11,8 @@ public class CommandMarkUnitControlled : CommandBase
 	private class Data
 	{
 		public bool IsFinished;
+
+		public bool SkippedByPlayer;
 	}
 
 	[SerializeReference]
@@ -18,18 +20,12 @@ public class CommandMarkUnitControlled : CommandBase
 
 	public float UnmarkAfter;
 
-	private bool m_SkippedByPlayer;
+	public override bool IsContinuous => UnmarkAfter <= 0f;
 
-	public override bool IsContinuous
+	public override bool TrySkip(CutscenePlayerData player)
 	{
-		get
-		{
-			if (UnmarkAfter <= 0f)
-			{
-				return !m_SkippedByPlayer;
-			}
-			return false;
-		}
+		player.GetCommandData<Data>(this).SkippedByPlayer = true;
+		return true;
 	}
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
@@ -45,13 +41,23 @@ public class CommandMarkUnitControlled : CommandBase
 		return value;
 	}
 
-	public override bool IsFinished(CutscenePlayerData player)
+	public override bool TryPrepareForStop(CutscenePlayerData player)
 	{
-		if (IsContinuous)
+		if ((!player.GetCommandData<Data>(this).SkippedByPlayer && IsContinuous) || !IsFinished(player))
 		{
 			return false;
 		}
-		return player.GetCommandData<Data>(this).IsFinished;
+		return StopPlaySignalIsReady(player);
+	}
+
+	public override bool IsFinished(CutscenePlayerData player)
+	{
+		Data commandData = player.GetCommandData<Data>(this);
+		if (!commandData.SkippedByPlayer && IsContinuous)
+		{
+			return false;
+		}
+		return commandData.IsFinished;
 	}
 
 	protected override void OnSetTime(double time, CutscenePlayerData player)
@@ -62,11 +68,6 @@ public class CommandMarkUnitControlled : CommandBase
 	public override string GetCaption()
 	{
 		return "<b>Mark</b> " + (Unit ? Unit.GetCaption() : "???") + ((UnmarkAfter > 0f) ? (" for " + UnmarkAfter + " secs") : " indefinitely");
-	}
-
-	public override void SkipByPlayer()
-	{
-		m_SkippedByPlayer = true;
 	}
 
 	public override string GetWarning()

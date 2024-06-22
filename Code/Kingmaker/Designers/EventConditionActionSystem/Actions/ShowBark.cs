@@ -56,7 +56,7 @@ public class ShowBark : GameAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (TargetUnit == null || TargetUnit.GetValue().LifeState.IsConscious)
 		{

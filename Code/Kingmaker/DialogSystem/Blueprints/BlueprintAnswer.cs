@@ -6,9 +6,9 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
+using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.DialogSystem.State;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Globalmap.Colonization;
@@ -146,7 +146,12 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 			foreach (BlueprintCueBase item in NextCue.Cues.Dereference())
 			{
 				BlueprintCheck blueprintCheck = item as BlueprintCheck;
-				if ((blueprintCheck == null || blueprintCheck.Conditions.Check()) && (bool)blueprintCheck && !blueprintCheck.Hidden)
+				if (blueprintCheck != null && !blueprintCheck.Conditions.Check())
+				{
+					continue;
+				}
+				baseUnitEntity = blueprintCheck?.GetTargetUnit() ?? CharacterSelection.SelectUnit(this, Game.Instance.Player.MainCharacterEntity);
+				if ((bool)blueprintCheck && blueprintCheck != null && !blueprintCheck.Hidden)
 				{
 					if (baseUnitEntity != null)
 					{
@@ -166,13 +171,13 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 			{
 				if (baseUnitEntity != null)
 				{
-					RulePerformSkillCheck rulePerformSkillCheck2 = new RulePerformSkillCheck(baseUnitEntity, ShowCheck.Type, ShowCheck.DC);
+					RulePerformSkillCheck rulePerformSkillCheck2 = new RulePerformSkillCheck(baseUnitEntity, ShowCheck.Type, ShowCheck.GetDC());
 					rulePerformSkillCheck2.Calculate(doCheck: false);
 					list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck2.StatType, rulePerformSkillCheck2.Difficulty, rulePerformSkillCheck2.StatValue, isBest: true, true));
 				}
 				else
 				{
-					RulePerformPartySkillCheck rulePerformPartySkillCheck2 = new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.DC, CapitalPartyChecksEnabled);
+					RulePerformPartySkillCheck rulePerformPartySkillCheck2 = new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.GetDC(), CapitalPartyChecksEnabled);
 					rulePerformPartySkillCheck2.Calculate(isTrigger: false, doCheck: false);
 					list.Add(new SkillCheckDC(rulePerformPartySkillCheck2.Roller, rulePerformPartySkillCheck2.StatType, rulePerformPartySkillCheck2.ResultDC, rulePerformPartySkillCheck2.StatValue, isBest: true, true));
 				}
@@ -220,7 +225,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 			}
 			else
 			{
-				RulePerformPartySkillCheck rulePerformPartySkillCheck = Rulebook.Trigger(new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.DC, CapitalPartyChecksEnabled));
+				RulePerformPartySkillCheck rulePerformPartySkillCheck = Rulebook.Trigger(new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.GetDC(), CapitalPartyChecksEnabled));
 				dialog.AnswerChecks[this] = ((!rulePerformPartySkillCheck.Success) ? CheckResult.Failed : CheckResult.Passed);
 				if (rulePerformPartySkillCheck.Success)
 				{
@@ -272,7 +277,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 
 	public bool IsRequirementsSatisfied()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		foreach (Requirement requirement in GetRequirements())
 		{
 			if (!requirement.Check(colony))
@@ -285,7 +290,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 
 	public void ApplyRequirements()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		foreach (Requirement requirement in GetRequirements())
 		{
 			requirement.Apply(colony);
@@ -294,7 +299,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 
 	public void ReceiveRewards()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		foreach (Reward reward in GetRewards())
 		{
 			reward.ReceiveReward(colony);
@@ -312,7 +317,22 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 			typeof(GainColonyResources),
 			typeof(RemoveColonyResources)
 		};
-		return OnSelect.Actions.Any((GameAction a) => exchangeActions.Contains(a.GetType()));
+		return ExpandConditionals(OnSelect.Actions.ToList()).Any((GameAction a) => exchangeActions.Contains(a.GetType()));
+	}
+
+	private List<GameAction> ExpandConditionals(List<GameAction> initActions)
+	{
+		List<Conditional> list = initActions.Where((GameAction a) => a is Conditional).Cast<Conditional>().ToList();
+		if (!list.Any())
+		{
+			return initActions;
+		}
+		initActions = initActions.Except(list).ToList();
+		foreach (Conditional item in list)
+		{
+			initActions.AddRange(item.ConditionsChecker.Check() ? item.IfTrue.Actions : item.IfFalse.Actions);
+		}
+		return ExpandConditionals(initActions);
 	}
 
 	private bool HasConditionsOnSelect()
@@ -321,7 +341,8 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 		{
 			typeof(ConditionHaveFullCargo),
 			typeof(ContextConditionHasItem),
-			typeof(ContextConditionHasPF)
+			typeof(ContextConditionHasPF),
+			typeof(ItemsEnough)
 		};
 		if (SelectConditions.HasConditions)
 		{

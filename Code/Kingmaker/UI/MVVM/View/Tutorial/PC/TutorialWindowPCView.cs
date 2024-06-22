@@ -1,4 +1,6 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.MVVM.VM.Tutorial;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -10,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.Tutorial.PC;
 
-public abstract class TutorialWindowPCView<TViewModel> : TutorialWindowBaseView<TViewModel> where TViewModel : TutorialWindowVM
+public abstract class TutorialWindowPCView<TViewModel> : TutorialWindowBaseView<TViewModel>, IHasBlueprintInfo where TViewModel : TutorialWindowVM
 {
 	[SerializeField]
 	private OwlcatMultiButton m_CloseButton;
@@ -34,6 +36,8 @@ public abstract class TutorialWindowPCView<TViewModel> : TutorialWindowBaseView<
 	private float m_ConfirmButtonDefaultSize = 20f;
 
 	private UITutorial m_UITutorial;
+
+	public BlueprintScriptableObject Blueprint => base.ViewModel?.Data?.Blueprint;
 
 	protected override void BindViewImplementation()
 	{

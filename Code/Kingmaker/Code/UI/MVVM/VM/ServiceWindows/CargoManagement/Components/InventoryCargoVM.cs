@@ -33,9 +33,9 @@ public class InventoryCargoVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveCollection<CargoSlotVM> CargoSlots = new ReactiveCollection<CargoSlotVM>();
 
-	public CargoDetailedZoneVM CargoZoneVM;
+	public readonly CargoDetailedZoneVM CargoZoneVM;
 
-	public bool FromPointOfInterest;
+	public readonly bool FromPointOfInterest;
 
 	private readonly Func<CargoEntity, bool> m_CargoFilter = (CargoEntity _) => true;
 
@@ -45,19 +45,19 @@ public class InventoryCargoVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public OwlcatDropdownVM SorterDropdownVM;
 
-	public BoolReactiveProperty HasVisibleCargo = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HasVisibleCargo = new BoolReactiveProperty();
 
-	public BoolReactiveProperty HasAnyCargo = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HasAnyCargo = new BoolReactiveProperty();
 
-	public ReactiveCommand<CargoSlotVM> SlotToScroll = new ReactiveCommand<CargoSlotVM>();
+	public readonly ReactiveCommand<CargoSlotVM> SlotToScroll = new ReactiveCommand<CargoSlotVM>();
 
-	public BoolReactiveProperty HideUnrelevant = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty HideUnrelevant = new BoolReactiveProperty();
 
-	public BoolReactiveProperty IsCargoDetailedZone = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsCargoDetailedZone = new BoolReactiveProperty();
 
-	public bool IsCargoLocked;
+	public readonly bool IsCargoLocked;
 
-	public InventoryCargoVM(InventoryCargoViewType viewType, Func<CargoEntity, bool> cargoFilter = null, Action closeCallback = null, bool fromPointOfInterest = false)
+	public InventoryCargoVM(InventoryCargoViewType viewType, Func<CargoEntity, bool> cargoFilter = null, Action closeCallback = null, bool fromPointOfInterest = false, bool fromVendor = false)
 	{
 		CargoViewType = viewType;
 		if (cargoFilter != null)
@@ -66,7 +66,7 @@ public class InventoryCargoVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 		m_CloseAction = closeCallback;
 		AddDisposable(EventBus.Subscribe(this));
-		SetSorterDropDownVM();
+		SetSorterDropDownVM(fromVendor);
 		CollectSlots();
 		CurrentSorter.Value = (CargoSlots.FirstOrDefault()?.ItemSlotsGroup?.SorterType?.Value).GetValueOrDefault();
 		AddDisposable(CargoZoneVM = new CargoDetailedZoneVM(CargoSlots));
@@ -213,12 +213,15 @@ public class InventoryCargoVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		CollectSlots();
 	}
 
-	private void SetSorterDropDownVM()
+	private void SetSorterDropDownVM(bool fromVendor)
 	{
 		List<DropdownItemVM> list = new List<DropdownItemVM>();
 		foreach (ItemsSorterType value in Enum.GetValues(typeof(ItemsSorterType)))
 		{
-			list.Add(new DropdownItemVM(LocalizedTexts.Instance.ItemsFilter.GetText(value)));
+			if (fromVendor || value != ItemsSorterType.CargoValue)
+			{
+				list.Add(new DropdownItemVM(LocalizedTexts.Instance.ItemsFilter.GetText(value)));
+			}
 		}
 		AddDisposable(SorterDropdownVM = new OwlcatDropdownVM(list));
 	}

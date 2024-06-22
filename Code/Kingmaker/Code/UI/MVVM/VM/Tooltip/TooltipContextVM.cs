@@ -36,6 +36,8 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private IDisposable m_DelayedShowHintHandle;
 
+	private bool m_MussHide;
+
 	public TooltipContextVM()
 	{
 		AddDisposable(TooltipsDataCache = new TooltipsDataCache());
@@ -47,7 +49,7 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		DisposeAll();
 	}
 
-	public void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false)
+	public void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false, bool showScrollbar = false)
 	{
 		DisposeTooltip();
 		if (data != null)
@@ -55,7 +57,7 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			m_DelayedShowTooltipHandle = DelayedInvoker.InvokeInTime(delegate
 			{
 				TooltipContextVM tooltipContextVM = this;
-				TooltipVM disposable = (TooltipVM.Value = new TooltipVM(data, isComparative: false, shouldNotHideLittleTooltip));
+				TooltipVM disposable = (TooltipVM.Value = new TooltipVM(data, isComparative: false, shouldNotHideLittleTooltip, showScrollbar));
 				tooltipContextVM.AddDisposable(disposable);
 			}, SettingsRoot.Game.Tooltips.ShowDelay);
 		}
@@ -110,12 +112,12 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 	}
 
-	public void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data)
+	public void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data, bool showScrollbar = false)
 	{
 		DisposeComparativeTooltip();
 		if (!data.Empty())
 		{
-			ComparativeTooltipVM disposable = (ComparativeTooltipVM.Value = new ComparativeTooltipVM(data));
+			ComparativeTooltipVM disposable = (ComparativeTooltipVM.Value = new ComparativeTooltipVM(data, showScrollbar));
 			AddDisposable(disposable);
 		}
 	}
@@ -124,11 +126,15 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		if (data != null && shouldShow)
 		{
+			m_MussHide = false;
 			m_DelayedShowHintHandle = DelayedInvoker.InvokeInTime(delegate
 			{
-				TooltipContextVM tooltipContextVM = this;
-				HintVM disposable = (HintVM.Value = new HintVM(data));
-				tooltipContextVM.AddDisposable(disposable);
+				if (!m_MussHide)
+				{
+					TooltipContextVM tooltipContextVM = this;
+					HintVM disposable = (HintVM.Value = new HintVM(data));
+					tooltipContextVM.AddDisposable(disposable);
+				}
 			}, SettingsRoot.Game.Tooltips.ShowDelay);
 		}
 		else
@@ -163,6 +169,7 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private void DisposeHint()
 	{
+		m_MussHide = true;
 		m_DelayedShowHintHandle?.Dispose();
 		m_DelayedShowHintHandle = null;
 		HintVM.Value?.Dispose();

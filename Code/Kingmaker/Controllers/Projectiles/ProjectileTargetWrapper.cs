@@ -84,6 +84,35 @@ public class ProjectileTargetWrapper : TargetWrapper, IMemoryPackable<Projectile
 		return new ProjectileTargetWrapper(point, 0f);
 	}
 
+	public override bool Equals(object obj)
+	{
+		return Equals(this, obj as ProjectileTargetWrapper);
+	}
+
+	public override bool Equals(TargetWrapper other)
+	{
+		return Equals(this, other as ProjectileTargetWrapper);
+	}
+
+	public bool Equals(ProjectileTargetWrapper other)
+	{
+		return Equals(this, other);
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(base.GetHashCode(), m_Transform.GetHashCode());
+	}
+
+	private static bool Equals(ProjectileTargetWrapper x, ProjectileTargetWrapper y)
+	{
+		if (!TargetWrapper.Equals(x, y))
+		{
+			return false;
+		}
+		return x.m_Transform.Equals(y.m_Transform);
+	}
+
 	static ProjectileTargetWrapper()
 	{
 		RegisterFormatter();

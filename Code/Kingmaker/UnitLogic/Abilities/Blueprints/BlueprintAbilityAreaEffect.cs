@@ -1,12 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Code.GameCore.Blueprints;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.ResourceLinks;
+using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
@@ -14,6 +19,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.Utility.Attributes;
+using Owlcat.QA.Validation;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -53,6 +59,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public Texture2D PersistentAreaTexture2D;
 
+	public CombatHudMaterialRemapAsset PersistentAreaMaterialRemap;
+
 	public bool IsStrategistAbility;
 
 	[ShowIf("CanChooseStrategistTacticsAbilityType")]
@@ -75,6 +83,12 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	[SerializeField]
 	private BlueprintAbilityFXSettings.Reference m_FXSettings;
 
+	[SerializeField]
+	[ValidateNoNullEntries]
+	private BlueprintAbilityAreaEffectGroupReference[] m_AreaEffectGroups;
+
+	private AreaEffectClusterComponent m_ClusterComponent;
+
 	[NotNull]
 	public AoEPattern Pattern
 	{
@@ -91,6 +105,15 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	[CanBeNull]
 	public BlueprintAbilityFXSettings FXSettings => m_FXSettings;
 
+	public ReferenceArrayProxy<BlueprintAbilityAreaEffectGroup> AreaEffectGroups
+	{
+		get
+		{
+			BlueprintReference<BlueprintAbilityAreaEffectGroup>[] areaEffectGroups = m_AreaEffectGroups;
+			return areaEffectGroups;
+		}
+	}
+
 	public bool CanTargetEnemies => TargetType != TargetType.Ally;
 
 	public bool CanTargetAllies => TargetType != TargetType.Enemy;
@@ -98,6 +121,27 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	private bool CanChooseStrategistTacticsAbilityType => IsStrategistAbility;
 
 	public override bool AllowContextActionsOnly => !m_AllowNonContextActions;
+
+	private bool SearchedForCusterComponent { get; set; }
+
+	public AreaEffectClusterComponent ClusterComponent
+	{
+		get
+		{
+			if (m_ClusterComponent == null)
+			{
+				if (SearchedForCusterComponent)
+				{
+					return null;
+				}
+				IEnumerable<AreaEffectClusterComponent> source = base.ComponentsArray.OfType<AreaEffectClusterComponent>();
+				m_ClusterComponent = source.FirstOrDefault();
+				SearchedForCusterComponent = true;
+				return m_ClusterComponent;
+			}
+			return m_ClusterComponent;
+		}
+	}
 
 	bool IAbilityAoEPatternProvider.IsIgnoreLos => IgnoreLosWhenSpread;
 
@@ -111,10 +155,19 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	TargetType IAbilityAoEPatternProvider.Targets => TargetType;
 
+	private BlueprintComponent[] TryOverrideComponentsArray()
+	{
+		if (ClusterComponent != null)
+		{
+			return ClusterComponent.ClusterLogicBlueprint.ComponentsArray;
+		}
+		return base.ComponentsArray;
+	}
+
 	public void HandleUnitEnter(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -134,8 +187,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleUnitExit(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -150,8 +203,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleUnitMove(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -166,8 +219,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleRound(MechanicsContext context, AreaEffectEntity areaEffect)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -182,8 +235,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleTick(MechanicsContext context, AreaEffectEntity areaEffect)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -198,8 +251,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleSpawn(MechanicsContext context, AreaEffectEntity areaEffect)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{
@@ -214,8 +267,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleEnd(MechanicsContext context, AreaEffectEntity areaEffect)
 	{
-		BlueprintComponent[] componentsArray = base.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
+		BlueprintComponent[] array = TryOverrideComponentsArray();
+		foreach (BlueprintComponent blueprintComponent in array)
 		{
 			try
 			{

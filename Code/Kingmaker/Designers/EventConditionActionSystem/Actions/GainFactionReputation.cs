@@ -19,7 +19,7 @@ public class GainFactionReputation : GameAction
 		return $"Gain {Reputation} points for {Faction.ToString()}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ReputationHelper.GainFactionReputation(Faction, Reputation);
 	}

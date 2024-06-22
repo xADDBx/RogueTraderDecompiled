@@ -1,4 +1,5 @@
 using Kingmaker.Networking.Platforms.Authentication;
+using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Platforms.User;
 using Kingmaker.Stores;
 
@@ -40,5 +41,10 @@ public static class PlatformServices
 			StoreType.GoG => new GoGPlatformUser(), 
 			_ => new DummyPlatformUser(), 
 		};
+	}
+
+	public static IPlatformSession CreatePlatformSession(StoreType store)
+	{
+		return new DummyPlatformSession();
 	}
 }

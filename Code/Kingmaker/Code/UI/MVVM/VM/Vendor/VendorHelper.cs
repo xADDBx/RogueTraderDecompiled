@@ -42,9 +42,9 @@ public static class VendorHelper
 
 	public static void TryMoveSplit(ItemEntity itemEntity, bool split, Action<int> command)
 	{
-		if (Vendor.VendorInventory.IsLockedByReputation(itemEntity.Blueprint))
+		if (Vendor.VendorInventory.IsLockedByReputation(itemEntity))
 		{
-			PFLog.Default.Log($"Item {itemEntity.Name} locked by reputation {Vendor.VendorInventory.GetCurrentFactionReputationPoints()}/{Vendor.VendorInventory.GetReputationToUnlock(itemEntity.Blueprint)}");
+			PFLog.UI.Log($"Item {itemEntity.Name} locked by reputation {Vendor.VendorInventory.GetCurrentFactionReputationPoints()}/{Vendor.VendorInventory.GetVendorLootItem(itemEntity)}");
 		}
 		else if (split && itemEntity.Count > 1)
 		{

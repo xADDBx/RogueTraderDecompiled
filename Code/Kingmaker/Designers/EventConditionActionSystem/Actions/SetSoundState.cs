@@ -14,7 +14,7 @@ public class SetSoundState : GameAction
 	[SerializeField]
 	private AkStateReference m_State;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		m_State.Set();
 	}

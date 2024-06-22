@@ -16,13 +16,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates.TooltipTemplateItemParts;
 
 public class WeaponItemPart : BaseItemPart
 {
-	public WeaponItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(item, itemTooltipData, compareItemTooltipData)
+	public WeaponItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(item, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 
-	public WeaponItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(blueprintItem, itemTooltipData, compareItemTooltipData)
+	public WeaponItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(blueprintItem, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 
@@ -31,17 +31,19 @@ public class WeaponItemPart : BaseItemPart
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		string itemName = GetItemName();
 		string text = ItemTooltipData.GetText(TooltipElement.Subname);
-		string obj = (((BlueprintItemWeapon)BlueprintItem).IsTwoHanded ? UIStrings.Instance.InventoryScreen.TwoHandWeapon.Text : UIStrings.Instance.InventoryScreen.OneHandWeapon.Text);
-		string text2 = (((BlueprintItemWeapon)BlueprintItem).IsRanged ? UIStrings.Instance.InventoryScreen.RangedWeapon.Text : UIStrings.Instance.InventoryScreen.MeleeWeapon.Text);
+		BlueprintItemWeapon blueprintItemWeapon = (BlueprintItemWeapon)BlueprintItem;
+		string text2 = (blueprintItemWeapon.IsTwoHanded ? UIStrings.Instance.InventoryScreen.TwoHandWeapon.Text : UIStrings.Instance.InventoryScreen.OneHandWeapon.Text);
+		string weaponRangeLabel = UIStrings.Instance.WeaponCategories.GetWeaponRangeLabel(blueprintItemWeapon.Range);
+		string weaponHeavinessLabel = UIStrings.Instance.WeaponCategories.GetWeaponHeavinessLabel(blueprintItemWeapon.Heaviness);
 		if (type == TooltipTemplateType.Tooltip)
 		{
 			AddRestrictions(list, type);
 		}
-		string leftLabel = obj + "\n" + text2;
+		string leftLabel = text2 + "\n" + weaponRangeLabel + " | " + weaponHeavinessLabel;
 		string text3 = ItemTooltipData.GetText(TooltipElement.WeaponFamily);
 		ItemEntity item = Item;
 		Sprite image = ((item != null) ? ObjectExtensions.Or(item.Icon, null) : null) ?? SimpleBlueprintExtendAsObject.Or(BlueprintItem, null)?.Icon;
-		bool hasUpgrade = BlueprintItem.PrototypeLink is BlueprintItemWeapon blueprintItemWeapon && blueprintItemWeapon.CanBeUsedInGame;
+		bool hasUpgrade = BlueprintItem.PrototypeLink is BlueprintItemWeapon blueprintItemWeapon2 && blueprintItemWeapon2.CanBeUsedInGame;
 		list.Add(new TooltipBrickEntityHeader(itemName, image, hasUpgrade, text, leftLabel, text3));
 		return list;
 	}
@@ -76,25 +78,43 @@ public class WeaponItemPart : BaseItemPart
 		AddMaxAmmo(list);
 		if (list.Any())
 		{
-			bricks.Add(new TooltipBrickSpace());
 			bricks.AddRange(list);
 		}
 	}
 
 	private void AddDodgePenetration(List<ITooltipBrick> bricks)
 	{
-		TryAddIconStatValue(bricks, TooltipElement.DodgeReduction, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Positive);
+		TryAddIconStatValue(bricks, TooltipElement.DodgeReduction, null, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Positive);
 	}
 
 	private void AddAdditionalHitChance(List<ITooltipBrick> bricks)
 	{
-		TryAddIconStatValue(bricks, TooltipElement.AdditionalHitChance, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Positive);
+		TryAddIconStatValue(bricks, TooltipElement.AdditionalHitChance, null, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Positive);
 	}
 
 	private void AddRateOfFire(List<ITooltipBrick> bricks)
 	{
-		Sprite crit = BlueprintRoot.Instance.UIConfig.UIIcons.Crit;
-		TryAddIconStatValue(bricks, TooltipElement.RateOfFire, crit);
+		int num;
+		Sprite sprite;
+		if (Item is ItemEntityWeapon itemEntityWeapon)
+		{
+			num = ((!itemEntityWeapon.Blueprint.IsRanged) ? 1 : 0);
+			if (num != 0)
+			{
+				sprite = BlueprintRoot.Instance.UIConfig.UIIcons.RateOfFireMelee;
+				goto IL_004d;
+			}
+		}
+		else
+		{
+			num = 0;
+		}
+		sprite = BlueprintRoot.Instance.UIConfig.UIIcons.Crit;
+		goto IL_004d;
+		IL_004d:
+		Sprite icon = sprite;
+		TooltipElement element = ((num != 0) ? TooltipElement.RateOfFireMelee : TooltipElement.RateOfFire);
+		TryAddIconStatValue(bricks, element, icon);
 	}
 
 	private void AddRange(List<ITooltipBrick> bricks)

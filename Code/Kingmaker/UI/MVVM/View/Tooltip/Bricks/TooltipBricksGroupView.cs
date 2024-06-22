@@ -108,6 +108,11 @@ public class TooltipBricksGroupView : TooltipBaseBrickView<TooltipBricksGroupVM>
 		Transform activeTransform = GetActiveTransform();
 		childTransform.SetParent(activeTransform, worldPositionStays: false);
 		LayoutRebuilder.ForceRebuildLayoutImmediate(base.transform as RectTransform);
+		TooltipBricksGroupLayoutParams layoutParams2 = base.ViewModel.LayoutParams;
+		if (layoutParams2 != null && layoutParams2.PreferredElementHeight > 0f)
+		{
+			childTransform.GetComponent<IUpdateContainerElements>()?.UpdateElements(base.ViewModel.LayoutParams.PreferredElementHeight.Value);
+		}
 	}
 
 	public void AddNavChild(IConsoleEntity entity)
@@ -133,11 +138,11 @@ public class TooltipBricksGroupView : TooltipBaseBrickView<TooltipBricksGroupVM>
 
 	private void Update()
 	{
-		if (m_IsDirty)
+		if (m_IsDirty && base.ViewModel != null)
 		{
 			m_IsDirty = false;
 			TooltipBricksGroupLayoutParams layoutParams = base.ViewModel.LayoutParams;
-			if (layoutParams != null && layoutParams.LayoutType == TooltipBricksGroupLayoutType.Grid && m_GridLayoutGroup.transform.childCount != 0)
+			if (layoutParams != null && layoutParams.LayoutType == TooltipBricksGroupLayoutType.Grid && m_GridLayoutGroup.transform.childCount != 0 && !base.ViewModel.LayoutParams.CellSize.HasValue)
 			{
 				float childHeight = GetChildHeight(m_GridLayoutGroup.transform.GetChild(m_GridLayoutGroup.transform.childCount - 1) as RectTransform);
 				m_GridLayoutGroup.cellSize = new Vector2(m_GridLayoutGroup.cellSize.x, childHeight);
@@ -159,13 +164,18 @@ public class TooltipBricksGroupView : TooltipBaseBrickView<TooltipBricksGroupVM>
 		RectTransform component = base.transform.parent.GetComponent<RectTransform>();
 		if (!(component == null))
 		{
-			LayoutElement component2 = component.GetComponent<LayoutElement>();
-			if (!component2 || component2.preferredWidth <= 0f)
+			float num = component.rect.width;
+			LayoutGroup component2 = component.GetComponent<LayoutGroup>();
+			if ((bool)component2)
 			{
-				m_GridLayoutGroup.cellSize = new Vector2(m_InitCellWidth.Value, m_GridLayoutGroup.cellSize.y);
-				return;
+				num -= (float)(component2.padding.left + component2.padding.right);
 			}
-			float x = (component2.preferredWidth - (float)m_GridLayoutGroup.padding.left - (float)m_GridLayoutGroup.padding.right - m_GridLayoutGroup.spacing.x * (float)(m_GridLayoutGroup.constraintCount - 1)) / (float)m_GridLayoutGroup.constraintCount;
+			LayoutGroup component3 = GetComponent<LayoutGroup>();
+			if ((bool)component3)
+			{
+				num -= (float)(component3.padding.left + component3.padding.right);
+			}
+			float x = (num - (float)m_GridLayoutGroup.padding.left - (float)m_GridLayoutGroup.padding.right - m_GridLayoutGroup.spacing.x * (float)(m_GridLayoutGroup.constraintCount - 1)) / (float)m_GridLayoutGroup.constraintCount;
 			m_GridLayoutGroup.cellSize = new Vector2(x, m_GridLayoutGroup.cellSize.y);
 		}
 	}

@@ -13,6 +13,7 @@ using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Designers;
+using Kingmaker.DLC;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -375,7 +376,7 @@ public static class UIUtilityItem
 				BaseDamageText = baseDamageText,
 				Penetration = penetration,
 				AttackType = UIStrings.Instance.AbilityTexts.GetAttackType(abilityData.Blueprint.AttackType),
-				CostAP = $"{UIStrings.Instance.Tooltips.CostAP.Text} <b>{abilityData.CalculateActionPointCost()} {UIStrings.Instance.Tooltips.AP.Text}</b>",
+				CostAP = $"{abilityData.CalculateActionPointCost()} {UIStrings.Instance.Tooltips.AP.Text}",
 				PatternData = GetAbilityPatternData(abilityData, itemEntity),
 				MomentumAbilityType = momentumAbilityType,
 				HitChance = hitChance,
@@ -458,7 +459,7 @@ public static class UIUtilityItem
 				continue;
 			}
 			List<RestrictionItem> list = (from fact in equipmentRestrictionHasFacts.Facts
-				where !(fact is BlueprintFeature blueprintFeature) || !blueprintFeature.HideInUI
+				where !(fact is BlueprintFeature { HideInUI: not false }) && !fact.IsDlcRestricted()
 				select fact into unitFact
 				select new RestrictionItem
 				{
@@ -513,7 +514,7 @@ public static class UIUtilityItem
 			data.Texts[TooltipElement.MaxDistance] = weapon.AttackRange.ToString();
 			data.Texts[TooltipElement.MaxAmmo] = weapon.Blueprint.WarhammerMaxAmmo.ToString();
 			int resultAdditionalHitChance = weapon.GetWeaponStats().ResultAdditionalHitChance;
-			data.Texts[TooltipElement.AdditionalHitChance] = ((resultAdditionalHitChance > 0) ? (resultAdditionalHitChance + "%") : string.Empty);
+			data.Texts[TooltipElement.AdditionalHitChance] = ((resultAdditionalHitChance > 0) ? UIConfig.Instance.PercentHelper.AddPercentTo(resultAdditionalHitChance) : string.Empty);
 			int resultDodgePenetration = weapon.GetWeaponStats().ResultDodgePenetration;
 			data.Texts[TooltipElement.DodgeReduction] = ((resultDodgePenetration > 0) ? resultDodgePenetration.ToString() : string.Empty);
 		}
@@ -579,7 +580,7 @@ public static class UIUtilityItem
 	{
 		if (item == null)
 		{
-			return "";
+			return string.Empty;
 		}
 		return item.Description;
 	}
@@ -588,7 +589,7 @@ public static class UIUtilityItem
 	{
 		if (blueprintItem == null)
 		{
-			return "";
+			return string.Empty;
 		}
 		return blueprintItem.Description;
 	}
@@ -597,11 +598,11 @@ public static class UIUtilityItem
 	{
 		if (item == null)
 		{
-			return "";
+			return string.Empty;
 		}
 		if (!CanReadItem(item))
 		{
-			return "";
+			return string.Empty;
 		}
 		return item.FlavorText;
 	}
@@ -610,11 +611,11 @@ public static class UIUtilityItem
 	{
 		if (blueprintItem == null)
 		{
-			return "";
+			return string.Empty;
 		}
 		if (!CanReadItem(blueprintItem))
 		{
-			return "";
+			return string.Empty;
 		}
 		return blueprintItem.FlavorText;
 	}
@@ -625,7 +626,7 @@ public static class UIUtilityItem
 		{
 			return UIStrings.Instance.Tooltips.OneHanded;
 		}
-		return "";
+		return string.Empty;
 	}
 
 	public static string GetHandUse(BlueprintItem blueprintItem)
@@ -642,15 +643,17 @@ public static class UIUtilityItem
 		if (!weapon.Blueprint.IsMelee)
 		{
 			data.Texts[TooltipElement.Range] = weapon.AttackOptimalRange.ToString();
+			data.AddTexts[TooltipElement.Range] = string.Format(UIConfig.Instance.UITooltipMaxRangeFormat, UIStrings.Instance.Tooltips.MaximumRange.Text, weapon.AttackRange.ToString());
 		}
 	}
 
 	private static void FillRateOfFire(ItemTooltipData data, ItemEntityWeapon weapon, RuleCalculateStatsWeapon weaponStats)
 	{
-		if (weapon.Blueprint.IsRanged)
+		bool flag = !weapon.Blueprint.IsRanged;
+		string value = Math.Max(1, weaponStats.ResultRateOfFire).ToString();
+		data.Texts[flag ? TooltipElement.RateOfFireMelee : TooltipElement.RateOfFire] = value;
+		if (!flag)
 		{
-			string value = Math.Max(1, weaponStats.ResultRateOfFire).ToString();
-			data.Texts[TooltipElement.RateOfFire] = value;
 			int resultRecoil = weaponStats.ResultRecoil;
 			if (resultRecoil > 0)
 			{
@@ -671,7 +674,7 @@ public static class UIUtilityItem
 
 	public static string GetWielderSlot(ItemEntity item)
 	{
-		return "" ?? "";
+		return string.Empty ?? "";
 	}
 
 	public static string GetItemType(ItemEntity item)
@@ -690,7 +693,7 @@ public static class UIUtilityItem
 
 	public static string GetCargoVolume(BlueprintItem item)
 	{
-		return item.CargoVolumePercent + "%";
+		return UIConfig.Instance.PercentHelper.AddPercentTo(item.CargoVolumePercent);
 	}
 
 	public static string GetItemType(BlueprintItem blueprintItem)
@@ -702,7 +705,7 @@ public static class UIUtilityItem
 	{
 		if (!item.IsIdentified)
 		{
-			return "";
+			return string.Empty;
 		}
 		if (!(item is ItemEntityWeapon) && !(item is ItemEntityArmor) && !(item is ItemEntityShield))
 		{
@@ -711,7 +714,7 @@ public static class UIUtilityItem
 		int itemEnhancementBonus = GameHelper.GetItemEnhancementBonus(item);
 		if (itemEnhancementBonus == 0)
 		{
-			return "";
+			return string.Empty;
 		}
 		return UIUtility.AddSign(itemEnhancementBonus);
 	}
@@ -720,7 +723,7 @@ public static class UIUtilityItem
 	{
 		if (!item.IsIdentified)
 		{
-			return "";
+			return string.Empty;
 		}
 		StringBuilder stringBuilder = new StringBuilder();
 		bool flag = item is ItemEntityShield;
@@ -823,7 +826,7 @@ public static class UIUtilityItem
 	{
 		if (!(item is ItemEntityWeapon itemEntityWeapon))
 		{
-			return "";
+			return string.Empty;
 		}
 		WeaponCategory category = itemEntityWeapon.Blueprint.Category;
 		if (category.HasSubCategory(WeaponSubCategory.Exotic))
@@ -838,7 +841,7 @@ public static class UIUtilityItem
 		{
 			return LocalizedTexts.Instance.WeaponSubCategories.GetText(WeaponSubCategory.Simple);
 		}
-		return "";
+		return string.Empty;
 	}
 
 	public static string GetItemGroup(ItemEntity item)
@@ -984,7 +987,6 @@ public static class UIUtilityItem
 			itemTooltipData.Texts[TooltipElement.ItemType] = GetItemGroup(blueprintItem);
 			itemTooltipData.Texts[TooltipElement.ItemCost] = UIUtility.GetProfitFactorFormatted(blueprintItem.ProfitFactorCost);
 			itemTooltipData.Texts[TooltipElement.Subname] = GetItemType(blueprintItem);
-			itemTooltipData.Texts[TooltipElement.Price] = Game.Instance.Vendor.GetItemBuyPrice(blueprintItem).ToString();
 			itemTooltipData.Texts[TooltipElement.Wielder] = string.Empty;
 			itemTooltipData.Texts[TooltipElement.WielderSlot] = string.Empty;
 			itemTooltipData.Texts[TooltipElement.Twohanded] = GetHandUse(blueprintItem);
@@ -1070,7 +1072,7 @@ public static class UIUtilityItem
 			{
 				Value = armorData.DamageDeflection
 			};
-			itemTooltipData.Texts[TooltipElement.ArmorAbsorption] = $"{armorData.DamageAbsorption}%";
+			itemTooltipData.Texts[TooltipElement.ArmorAbsorption] = UIConfig.Instance.PercentHelper.AddPercentTo(armorData.DamageAbsorption);
 			itemTooltipData.CompareData[TooltipElement.ArmorAbsorption] = new CompareData
 			{
 				Value = armorData.DamageAbsorption

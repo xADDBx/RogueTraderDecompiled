@@ -46,7 +46,6 @@ public class TooltipTemplateColonyResource : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(ResourceDescription));
 		SetStarSystemObjects(list);
 		SetContracts(list);
@@ -56,7 +55,6 @@ public class TooltipTemplateColonyResource : TooltipBaseTemplate
 
 	private void AddResourceSourcesGroup(List<ITooltipBrick> bricks, IEnumerable<ITooltipBrick> sources, string header)
 	{
-		bricks.Add(new TooltipBrickSpace());
 		bricks.Add(new TooltipBrickTitle(header, TooltipTitleType.H3));
 		bricks.Add(new TooltipBricksGroupStart());
 		bricks.AddRange(sources);
@@ -119,17 +117,33 @@ public class TooltipTemplateColonyResource : TooltipBaseTemplate
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		foreach (ColoniesState.ColonyData item in colonies)
 		{
+			int num = 0;
 			foreach (KeyValuePair<BlueprintResource, int> item2 in from res in item.Colony.ProducedResourcesByColony()
 				where res.Key == BlueprintResource
 				select res)
 			{
-				list.Add(new TooltipBrickIconStatValue(item.Colony.Blueprint.Name, $"+{item2.Value}", null, null, TooltipBrickIconStatValueType.Positive));
+				num += item2.Value;
 			}
+			foreach (ColonyChronicle chronicle in item.Colony.Chronicles)
+			{
+				num += (from reward in chronicle.Blueprint.GetComponents<RewardResourceNotFromColony>()
+					where reward.Resource == BlueprintResource
+					select reward).Sum((RewardResourceNotFromColony reward) => reward.Count);
+			}
+			if (num > 0)
+			{
+				list.Add(new TooltipBrickIconStatValue(item.Colony.Blueprint.Name, $"+{num}", null, null, TooltipBrickIconStatValueType.Positive));
+			}
+			int num2 = 0;
 			foreach (KeyValuePair<BlueprintResource, int> item3 in from res in item.Colony.RequiredResourcesForColony()
 				where res.Key == BlueprintResource
 				select res)
 			{
-				list.Add(new TooltipBrickIconStatValue(item.Colony.Blueprint.Name, $"-{item3.Value}", null, null, TooltipBrickIconStatValueType.Negative));
+				num2 += item3.Value;
+			}
+			if (num2 > 0)
+			{
+				list.Add(new TooltipBrickIconStatValue(item.Colony.Blueprint.Name, $"-{num2}", null, null, TooltipBrickIconStatValueType.Negative));
 			}
 		}
 		if (!list.Empty())

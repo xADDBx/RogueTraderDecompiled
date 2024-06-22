@@ -48,7 +48,7 @@ public class UnitViewHandsEquipment
 
 	private readonly UnitViewHandSlotData[] m_SlotsByVisualSlot = new UnitViewHandSlotData[UnitEquipmentVisualSlotExtension.BoneNames.Length];
 
-	private readonly GameObject[] m_ConsumableSlots = new GameObject[2];
+	private readonly GameObject[] m_ConsumableSlots = new GameObject[4];
 
 	private readonly List<Light> m_EquipmentLights = new List<Light>(2);
 
@@ -212,7 +212,9 @@ public class UnitViewHandsEquipment
 			character.OnBackEquipmentUpdated += ReattachBackEquipment;
 			Owner.UISettings.SubscribeOnBackpackVisibilityChange(UpdateBackpackVisibility);
 			Owner.UISettings.SubscribeOnHelmetVisibilityChange(UpdateHelmetVisibility);
+			Owner.UISettings.SubscribeOnHelmetVisibilityAboveAllChange(UpdateHelmetVisibilityAboveAll);
 			UpdateHelmetVisibility();
+			UpdateHelmetVisibilityAboveAll();
 			UpdateBackpackVisibility();
 			MatchWithCurrentCombatState();
 			ForceEndChangeEquipment();
@@ -225,6 +227,7 @@ public class UnitViewHandsEquipment
 		{
 			Owner.UISettings.UnsubscribeFromBackpackVisibilityChange(UpdateBackpackVisibility);
 			Owner.UISettings.UnsubscribeFromHelmetVisibilityChange(UpdateHelmetVisibility);
+			Owner.UISettings.UnsubscribeFromHelmetVisibilityAboveAllChange(UpdateHelmetVisibilityAboveAll);
 		}
 	}
 
@@ -236,6 +239,11 @@ public class UnitViewHandsEquipment
 	private void UpdateHelmetVisibility()
 	{
 		Character.UpdateHelmetVisibility(Owner.UISettings.ShowHelm);
+	}
+
+	private void UpdateHelmetVisibilityAboveAll()
+	{
+		Character.UpdateHelmetVisibilityAboveAll(Owner.UISettings.ShowHelmAboveAll);
 	}
 
 	public void RaiseModelSpawned()
@@ -561,7 +569,7 @@ public class UnitViewHandsEquipment
 					orderby (s.Item.Blueprint.Type != UsableItemType.Utility) ? 1 : 0
 					select s)
 				{
-					for (; i < m_ConsumableSlots.Length && m_SlotsByVisualSlot[(int)s_ConsumableVisualSlots[i]] != null; i++)
+					for (; i < s_ConsumableVisualSlots.Length && m_SlotsByVisualSlot[(int)s_ConsumableVisualSlots[i]] != null; i++)
 					{
 						if ((bool)m_ConsumableSlots[i])
 						{
@@ -569,7 +577,7 @@ public class UnitViewHandsEquipment
 							m_ConsumableSlots[i] = null;
 						}
 					}
-					if (i >= m_ConsumableSlots.Length)
+					if (i >= s_ConsumableVisualSlots.Length)
 					{
 						break;
 					}
@@ -631,7 +639,7 @@ public class UnitViewHandsEquipment
 			return true;
 		}
 		Transform parent = gameObject.transform.parent;
-		for (int i = 0; i < m_ConsumableSlots.Length; i++)
+		for (int i = 0; i < s_ConsumableVisualSlots.Length; i++)
 		{
 			if (i < s_ConsumableVisualSlots.Length)
 			{

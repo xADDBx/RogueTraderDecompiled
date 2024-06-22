@@ -24,4 +24,19 @@ public class BlueprintCareerPath : BlueprintPath
 	public Sprite NotAvailableIcon;
 
 	public bool IsHunter;
+
+	[SerializeField]
+	private BlueprintDlcRewardReference m_DlcReward;
+
+	public bool IsAvailable
+	{
+		get
+		{
+			if (m_DlcReward != null && !m_DlcReward.IsEmpty())
+			{
+				return m_DlcReward.Get().IsActive;
+			}
+			return true;
+		}
+	}
 }

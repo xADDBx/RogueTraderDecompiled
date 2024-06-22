@@ -40,11 +40,14 @@ public class TooltipTemplateMomentum : TooltipBaseTemplate
 
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
-		BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnitInUI.Value;
-		int heroicActThreshold = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot.HeroicActThreshold;
-		int desperateMeasureThreshold = value.GetDesperateMeasureThreshold();
-		BlueprintMomentumRoot momentumRoot = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		if (!(Game.Instance.TurnController.CurrentUnit is BaseUnitEntity baseUnitEntity))
+		{
+			return list;
+		}
+		int heroicActThreshold = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot.HeroicActThreshold;
+		int desperateMeasureThreshold = baseUnitEntity.GetDesperateMeasureThreshold();
+		BlueprintMomentumRoot momentumRoot = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
 		list.Add(new TooltipBrickText(UIStrings.Instance.ActionBar.MomentumDescription.Text, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
 		list.Add(new TooltipBrickSlider(m_MaxMomentum, m_MomentumValue, new List<BrickSliderValueVM>
 		{
@@ -52,12 +55,10 @@ public class TooltipTemplateMomentum : TooltipBaseTemplate
 			new BrickSliderValueVM(m_MaxMomentum, heroicActThreshold, null, needColor: true, UIConfig.Instance.TooltipColors.ProgressbarNeutral)
 		}, showValue: false, 50, UIConfig.Instance.TooltipColors.ProgressbarBonus));
 		list.Add(new TooltipBrickIconValueStat(UIStrings.Instance.Tooltips.DesperateMeasureAbility.Text, $"<={desperateMeasureThreshold}", null, TooltipIconValueStatType.Normal, isWhite: false, needChangeSize: true));
-		AddFeaturesBricks(value, list, needMomentum: false);
+		AddFeaturesBricks(baseUnitEntity, list, needMomentum: false);
 		list.Add(new TooltipBrickIconValueStat(UIStrings.Instance.Tooltips.HeroicActAbility.Text, $">={heroicActThreshold}", null, TooltipIconValueStatType.Normal, isWhite: false, needChangeSize: true));
-		AddFeaturesBricks(value, list, needMomentum: true);
-		list.Add(new TooltipBrickSpace());
+		AddFeaturesBricks(baseUnitEntity, list, needMomentum: true);
 		list.Add(new TooltipBrickSeparator(TooltipBrickElementType.Medium));
-		list.Add(new TooltipBrickSpace());
 		switch (type)
 		{
 		case TooltipTemplateType.Tooltip:

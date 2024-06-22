@@ -43,17 +43,14 @@ public class AbilityCustomStarshipFocusedEfforts : AbilityCustomLogic, IAbilityC
 		{
 			starshipEntity.GetAbilityCooldownsOptional()?.RemoveGroupCooldown(AffectedGroup);
 		}
-		else
+		foreach (Ability affectedAbility in GetAffectedAbilities(starshipEntity))
 		{
-			foreach (Ability affectedAbility in GetAffectedAbilities(starshipEntity))
+			int? autonomousCooldown = abilityCooldownsOptional.GetAutonomousCooldown(affectedAbility.Blueprint);
+			if (autonomousCooldown.HasValue)
 			{
-				int? autonomousCooldown = abilityCooldownsOptional.GetAutonomousCooldown(affectedAbility.Blueprint);
-				if (autonomousCooldown.HasValue)
-				{
-					int valueOrDefault = autonomousCooldown.GetValueOrDefault();
-					abilityCooldownsOptional.RemoveAbilityCooldown(affectedAbility.Blueprint);
-					abilityCooldownsOptional.StartAutonomousCooldown(affectedAbility.Blueprint, valueOrDefault - 1);
-				}
+				int valueOrDefault = autonomousCooldown.GetValueOrDefault();
+				abilityCooldownsOptional.RemoveAbilityCooldown(affectedAbility.Blueprint);
+				abilityCooldownsOptional.StartAutonomousCooldown(affectedAbility.Blueprint, valueOrDefault - 1);
 			}
 		}
 		using (context.GetDataScope(target))

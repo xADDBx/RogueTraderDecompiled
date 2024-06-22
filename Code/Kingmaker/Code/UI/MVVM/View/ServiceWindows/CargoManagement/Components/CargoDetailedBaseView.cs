@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.View.Slots;
@@ -132,7 +133,7 @@ public class CargoDetailedBaseView : VirtualListElementViewBase<CargoSlotVM>
 	protected void CargoFilling(int value)
 	{
 		m_FilledCargoMark.SetActive(value >= 100);
-		m_TotalFillValue.text = $"{value}%";
+		m_TotalFillValue.text = UIConfig.Instance.PercentHelper.AddPercentTo(value);
 	}
 
 	public void Blink(CanvasGroup canvasGroup)

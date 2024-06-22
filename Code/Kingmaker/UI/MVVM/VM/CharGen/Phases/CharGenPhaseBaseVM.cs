@@ -24,7 +24,7 @@ public abstract class CharGenPhaseBaseVM : SelectionGroupEntityVM
 
 	protected readonly CharGenContext CharGenContext;
 
-	private readonly StringReactiveProperty m_PhaseName = new StringReactiveProperty(string.Empty);
+	public readonly StringReactiveProperty PhaseName = new StringReactiveProperty(string.Empty);
 
 	private readonly BoolReactiveProperty m_IsInDetailedView = new BoolReactiveProperty(initialValue: false);
 
@@ -75,7 +75,7 @@ public abstract class CharGenPhaseBaseVM : SelectionGroupEntityVM
 		PhaseType = type;
 		CharGenContext = charGenContext;
 		OrderPriority = (int)type * 1000;
-		m_PhaseName.Value = UIStrings.Instance.CharGen.GetPhaseName(type);
+		PhaseName.Value = UIStrings.Instance.CharGen.GetPhaseName(type);
 		IsCompletedAndAvailable = base.IsAvailable.And(IsCompleted).ToReadOnlyReactiveProperty();
 		AddDisposable(IsCompletedAndAvailable.Subscribe(delegate(bool completed)
 		{

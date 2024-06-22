@@ -7,7 +7,6 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEnt
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
-using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization.Console;
@@ -29,8 +28,6 @@ public class ShipCareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCom
 
 	private ConsoleHintsWidget m_HintsWidget;
 
-	public ReactiveCommand OnUpdate = new ReactiveCommand();
-
 	public override void Initialize()
 	{
 		Tabs = new List<ICareerPathSelectionTabView> { m_CareerPathSelectionsSummaryConsoleView, m_RankEntryFeatureDescriptionConsoleView, m_RankEntryFeatureSelectionConsoleView };
@@ -50,7 +47,7 @@ public class ShipCareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCom
 	{
 		switch (newTab)
 		{
-		case SelectionTab.Summary:
+		case SelectionTab.CareerPathDescription:
 			m_CareerPathSelectionsSummaryConsoleView.Bind(base.ViewModel);
 			break;
 		case SelectionTab.FeatureDescription:
@@ -61,19 +58,6 @@ public class ShipCareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCom
 			break;
 		}
 		UpdateNavigation();
-	}
-
-	protected override SelectionTab GetActiveTab(IRankEntrySelectItem currentItem)
-	{
-		if (!(currentItem is RankEntryFeatureItemVM))
-		{
-			if (currentItem is RankEntrySelectionVM)
-			{
-				return SelectionTab.FeatureSelection;
-			}
-			return SelectionTab.Summary;
-		}
-		return SelectionTab.FeatureDescription;
 	}
 
 	private void CreateNavigation()
@@ -90,9 +74,6 @@ public class ShipCareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCom
 			GridConsoleNavigationBehaviour gridConsoleNavigationBehaviour = null;
 			switch (SavedTab)
 			{
-			case SelectionTab.Summary:
-				gridConsoleNavigationBehaviour = m_CareerPathSelectionsSummaryConsoleView.GetNavigationBehaviour();
-				break;
 			case SelectionTab.FeatureSelection:
 				gridConsoleNavigationBehaviour = m_RankEntryFeatureSelectionConsoleView.GetNavigationBehaviour();
 				break;
@@ -124,6 +105,5 @@ public class ShipCareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCom
 		{
 			item.AddInput(inputLayer, hintsWidget);
 		}
-		OnUpdate?.Execute();
 	}
 }

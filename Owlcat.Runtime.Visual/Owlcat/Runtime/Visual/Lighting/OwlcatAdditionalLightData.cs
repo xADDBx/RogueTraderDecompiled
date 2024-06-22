@@ -50,6 +50,9 @@ public class OwlcatAdditionalLightData : MonoBehaviour, IAdditionalData
 	private Vector2 m_LightCookieOffset = Vector2.zero;
 
 	[SerializeField]
+	private LightShadowmapResolution m_ShadowmapResolution;
+
+	[SerializeField]
 	private ShadowmapUpdateMode m_ShadowmapUpdateMode;
 
 	[SerializeField]
@@ -179,6 +182,18 @@ public class OwlcatAdditionalLightData : MonoBehaviour, IAdditionalData
 		set
 		{
 			m_LightCookieOffset = value;
+		}
+	}
+
+	public LightShadowmapResolution ShadowmapResolution
+	{
+		get
+		{
+			return m_ShadowmapResolution;
+		}
+		set
+		{
+			m_ShadowmapResolution = value;
 		}
 	}
 

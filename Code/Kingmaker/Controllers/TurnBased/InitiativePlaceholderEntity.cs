@@ -4,6 +4,8 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
@@ -16,7 +18,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.TurnBased;
 
-public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, ISubscriber, IHashable
+public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, ISubscriber, IUnitDeathHandler, ITurnEndHandler, ISubscriber<IMechanicEntity>, IHashable
 {
 	private static readonly List<InitiativePlaceholderEntity> AllList = new List<InitiativePlaceholderEntity>();
 
@@ -24,7 +26,13 @@ public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, 
 	public readonly MechanicEntity Delegate;
 
 	[JsonProperty]
+	public MechanicEntity CorrespondingEnemy;
+
+	[JsonProperty]
 	public readonly int Index;
+
+	[JsonProperty]
+	public bool MarkedForDisposeOnTurnEnd;
 
 	public override bool NeedsView => false;
 
@@ -86,6 +94,22 @@ public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, 
 		}
 	}
 
+	public void HandleUnitDeath(AbstractUnitEntity unitEntity)
+	{
+		if (unitEntity == CorrespondingEnemy)
+		{
+			MarkedForDisposeOnTurnEnd = true;
+		}
+	}
+
+	public void HandleUnitEndTurn(bool isTurnBased)
+	{
+		if (MarkedForDisposeOnTurnEnd)
+		{
+			Dispose();
+		}
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -93,8 +117,11 @@ public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, 
 		result.Append(ref val);
 		Hash128 val2 = ClassHasher<MechanicEntity>.GetHash128(Delegate);
 		result.Append(ref val2);
-		int val3 = Index;
+		Hash128 val3 = ClassHasher<MechanicEntity>.GetHash128(CorrespondingEnemy);
 		result.Append(ref val3);
+		int val4 = Index;
+		result.Append(ref val4);
+		result.Append(ref MarkedForDisposeOnTurnEnd);
 		return result;
 	}
 }

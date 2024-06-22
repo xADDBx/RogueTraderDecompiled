@@ -1,58 +1,74 @@
 using System;
+using System.Collections.Generic;
+using Code.GameCore.ElementsSystem;
 using Kingmaker.AreaLogic.Cutscenes;
-using Kingmaker.QA;
+using Kingmaker.Utility.CodeTimer;
 using Owlcat.QA.Validation;
+using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.ElementsSystem;
 
 [Serializable]
-public class ActionList
+public class ActionList : ElementsList, IHashable
 {
 	[ValidateNotNull]
 	[SerializeReference]
 	public GameAction[] Actions = new GameAction[0];
 
+	public override IEnumerable<Element> Elements => Actions;
+
 	public bool HasActions
 	{
 		get
 		{
-			if (Actions != null)
+			GameAction[] actions = Actions;
+			if (actions != null)
 			{
-				return Actions.Length != 0;
+				return actions.Length > 0;
 			}
 			return false;
 		}
 	}
 
-	public void Run()
+	public void Run(bool @unsafe = false)
 	{
-		GameAction[] actions = Actions;
-		foreach (GameAction gameAction in actions)
+		using (ProfileScope.New("ActionList"))
 		{
-			if (gameAction == null)
+			using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(this);
+			Exception ex = null;
+			GameAction[] actions = Actions;
+			foreach (GameAction gameAction in actions)
 			{
-				continue;
-			}
-			try
-			{
-				using (ElementsDebugScope.Open(gameAction))
+				try
 				{
-					gameAction.RunAction();
+					gameAction?.Run(this);
+				}
+				catch (Exception ex2)
+				{
+					if (ex == null)
+					{
+						ex = ex2;
+						elementsDebugger?.SetException(ex);
+					}
+					if (@unsafe || CutscenePlayerDataScope.Current != null)
+					{
+						throw;
+					}
 				}
 			}
-			catch (Exception ex)
+			if (ex == null)
 			{
-				if (CutscenePlayerDataScope.Current != null)
-				{
-					throw;
-				}
-				ElementLogicException exception = (ex as ElementLogicException) ?? new ElementLogicException(gameAction, ex);
-				PFLog.Actions.ExceptionWithReport(exception, null);
-			}
-			finally
-			{
+				elementsDebugger?.SetResult(1);
 			}
 		}
+	}
+
+	public override Hash128 GetHash128()
+	{
+		Hash128 result = default(Hash128);
+		Hash128 val = base.GetHash128();
+		result.Append(ref val);
+		return result;
 	}
 }

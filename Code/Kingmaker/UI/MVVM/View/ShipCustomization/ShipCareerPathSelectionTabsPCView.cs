@@ -36,17 +36,11 @@ public class ShipCareerPathSelectionTabsPCView : CareerPathSelectionTabsCommonVi
 		});
 	}
 
-	protected override void BindViewImplementation()
-	{
-		base.ViewModel.SetRankEntry(null);
-		base.BindViewImplementation();
-	}
-
 	protected override void SetNewTab(SelectionTab newTab, IRankEntrySelectItem currentItem)
 	{
 		switch (newTab)
 		{
-		case SelectionTab.Summary:
+		case SelectionTab.CareerPathDescription:
 			m_CareerPathSelectionsSummaryPCView.Bind(base.ViewModel);
 			break;
 		case SelectionTab.FeatureDescription:
@@ -56,18 +50,5 @@ public class ShipCareerPathSelectionTabsPCView : CareerPathSelectionTabsCommonVi
 			m_RankEntryFeatureSelectionPCView.Bind(currentItem as RankEntrySelectionVM);
 			break;
 		}
-	}
-
-	protected override SelectionTab GetActiveTab(IRankEntrySelectItem currentItem)
-	{
-		if (!(currentItem is RankEntryFeatureItemVM))
-		{
-			if (currentItem is RankEntrySelectionVM)
-			{
-				return SelectionTab.FeatureSelection;
-			}
-			return SelectionTab.Summary;
-		}
-		return SelectionTab.FeatureDescription;
 	}
 }

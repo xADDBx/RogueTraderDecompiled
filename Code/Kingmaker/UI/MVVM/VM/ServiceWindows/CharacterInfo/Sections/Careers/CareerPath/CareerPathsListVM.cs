@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root;
-using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathList;
@@ -17,11 +16,11 @@ public class CareerPathsListVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 {
 	public readonly CareerPathTier Tier;
 
-	public readonly string TierLabel;
-
 	public readonly ReactiveProperty<bool> IsActive = new ReactiveProperty<bool>();
 
 	public readonly List<CareerPathVM> CareerPathVMs;
+
+	public readonly List<CareerPathVM> UnlockingCareersVMs = new List<CareerPathVM>();
 
 	public readonly ReactiveProperty<CareerPathVM> PreviewCareer = new ReactiveProperty<CareerPathVM>();
 
@@ -33,22 +32,14 @@ public class CareerPathsListVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 
 	private CareerPathVM m_HoveredCareer;
 
-	private static UITextCharSheet Strings => UIStrings.Instance.CharacterSheet;
-
 	public CareerPathsListVM(CareerPathTier tier, List<CareerPathVM> careers, IReadOnlyReactiveProperty<CareerPathVM> preselectedCareer, List<BlueprintCareerPath> choosedCareers)
 	{
 		CareerPathsListVM careerPathsListVM = this;
 		Tier = tier;
 		m_PreselectedCareer = preselectedCareer;
-		TierLabel = tier switch
-		{
-			CareerPathTier.One => Strings.CareersTier1.Text, 
-			CareerPathTier.Two => Strings.CareersTier2.Text, 
-			CareerPathTier.Three => Strings.CareersTier3.Text, 
-			_ => string.Empty, 
-		};
 		CareerPathVMs = careers;
 		BuildCareersPrerequisites();
+		BuildUnlockingCareers();
 		List<CareerPathVM> list = CareerPathVMs.Where((CareerPathVM vm) => vm.IsInProgress || vm.IsFinished || vm.PrerequisiteCareerPaths.FindIndex(choosedCareers.Contains) >= 0).ToList();
 		if (list.Any())
 		{
@@ -70,6 +61,11 @@ public class CareerPathsListVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 			GetPrerequisitesCareers(prerequisite, list);
 			careerPathVM.PrerequisiteCareerPaths = list;
 		}
+	}
+
+	private void BuildUnlockingCareers()
+	{
+		UnlockingCareersVMs.Add(CareerPathVMs.ElementAt(0));
 	}
 
 	private void GetPrerequisitesCareers(CalculatedPrerequisite prerequisite, List<BlueprintCareerPath> result)
@@ -121,7 +117,7 @@ public class CareerPathsListVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 				SelectedCareer.Value = careerPathVM;
 			}
 		}
-		IsUnlocked.Value = CareerPathVMs.Any((CareerPathVM path) => path.IsUnlocked);
+		IsUnlocked.Value = CareerPathVMs.Any((CareerPathVM path) => path.IsUnlocked || path.CanShowToAnotherCoopPlayer());
 	}
 
 	public void HandleHoverStart(BlueprintCareerPath careerPath)

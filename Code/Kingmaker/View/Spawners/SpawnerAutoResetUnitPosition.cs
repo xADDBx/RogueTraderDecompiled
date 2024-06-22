@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.View.MapObjects;
@@ -8,6 +9,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("6aba4e2e265a46e08d7e14e273cb7c62")]
 public class SpawnerAutoResetUnitPosition : EntityPartComponent<SpawnerAutoResetUnitPosition.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

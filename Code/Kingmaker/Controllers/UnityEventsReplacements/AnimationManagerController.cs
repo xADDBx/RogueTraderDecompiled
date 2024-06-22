@@ -22,7 +22,7 @@ public class AnimationManagerController : IControllerTick, IController
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	void IControllerTick.Tick()

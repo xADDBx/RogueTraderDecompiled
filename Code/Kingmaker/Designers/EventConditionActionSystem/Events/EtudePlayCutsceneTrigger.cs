@@ -68,7 +68,7 @@ public class EtudePlayCutsceneTrigger : EtudeBracketTrigger, IEtudesUpdateHandle
 			PlayCutscene[] cutsceneActions = CutsceneActions;
 			for (int i = 0; i < cutsceneActions.Length; i++)
 			{
-				cutsceneActions[i].RunAction();
+				cutsceneActions[i].Run();
 			}
 			savableData.AlreadyTriggered = true;
 		}

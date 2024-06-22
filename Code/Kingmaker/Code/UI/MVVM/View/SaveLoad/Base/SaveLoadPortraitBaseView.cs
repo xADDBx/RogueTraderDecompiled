@@ -39,20 +39,20 @@ public class SaveLoadPortraitBaseView : ViewBase<SaveLoadPortraitVM>, IWidgetVie
 		SetRank();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		if (this != null && base.gameObject != null)
+		{
+			base.gameObject.Or(null)?.SetActive(value: false);
+		}
+	}
+
 	private void SetRank()
 	{
 		if (!(m_RankGameObject == null) && !(m_RankLabel == null))
 		{
 			m_RankGameObject.Or(null)?.SetActive(!string.IsNullOrEmpty(base.ViewModel.Rank));
 			m_RankLabel.text = base.ViewModel.Rank;
-		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		if (base.gameObject != null)
-		{
-			base.gameObject.Or(null)?.SetActive(value: false);
 		}
 	}
 

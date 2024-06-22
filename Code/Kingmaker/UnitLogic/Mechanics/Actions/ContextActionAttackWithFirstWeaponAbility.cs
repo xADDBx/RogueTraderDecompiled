@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Combat;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.UnitLogic.Abilities;
@@ -31,17 +32,17 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 
 	public BlueprintBuff PriorityTargetBuff => m_PriorityTargetBuff?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Caster is BaseUnitEntity baseUnitEntity))
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return;
 		}
 		BaseUnitEntity baseUnitEntity2 = (OwnerIsAttacker ? ((BaseUnitEntity)base.Context.MaybeOwner) : baseUnitEntity);
 		if (baseUnitEntity2 == null)
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 		}
 		else
 		{
@@ -65,19 +66,19 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 			}
 			if (mechanicEntity == null)
 			{
-				PFLog.Default.Error(this, "Invalid target for effect '{0}'", GetType().Name);
+				Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 				return;
 			}
 			ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondWeapon());
 			if (itemEntityWeapon == null)
 			{
-				PFLog.Default.Error(this, "No weapon in hand", GetType().Name);
+				Element.LogError(this, "No weapon in hand");
 				return;
 			}
 			Ability ability = itemEntityWeapon.Abilities[0];
 			if (ability == null)
 			{
-				PFLog.Default.Error(this, "No ability in weapon", GetType().Name);
+				Element.LogError(this, "No ability in weapon");
 				return;
 			}
 			if (SaveMPAfterUsingWeaponAbility)
@@ -111,13 +112,13 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 		}
 		if (!(context.Caster is BaseUnitEntity baseUnitEntity))
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return null;
 		}
 		BaseUnitEntity baseUnitEntity2 = (OwnerIsAttacker ? ((BaseUnitEntity)base.Context.MaybeOwner) : baseUnitEntity);
 		if (baseUnitEntity2 == null)
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return null;
 		}
 		if ((bool)baseUnitEntity2.Features.CantAct)
@@ -127,13 +128,13 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondWeapon());
 		if (itemEntityWeapon == null)
 		{
-			PFLog.Default.Error(this, "No weapon in hand", GetType().Name);
+			Element.LogError(this, "No weapon in hand");
 			return null;
 		}
 		Ability ability = itemEntityWeapon.Abilities[0];
 		if (ability == null)
 		{
-			PFLog.Default.Error(this, "No ability in weapon", GetType().Name);
+			Element.LogError(this, "No ability in weapon");
 			return null;
 		}
 		return ability.Data.GetDamagePrediction(targetEntity, casterPosition);

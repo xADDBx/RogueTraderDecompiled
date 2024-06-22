@@ -23,4 +23,6 @@ public class UIColonyProjectsRequirements
 	public LocalizedString RequireStatEfficiency;
 
 	public LocalizedString RequireStatSecurity;
+
+	public LocalizedString ProfitFactorInsteadResource;
 }

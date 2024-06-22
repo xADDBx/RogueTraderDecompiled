@@ -6,8 +6,11 @@ public class TooltipBrickMinimalAdmissibleDamageVM : TooltipBaseBrickVM
 {
 	public readonly int MinimalAdmissibleDamage;
 
-	public TooltipBrickMinimalAdmissibleDamageVM(int minimalAdmissibleDamage)
+	public readonly string ReasonValue;
+
+	public TooltipBrickMinimalAdmissibleDamageVM(int minimalAdmissibleDamage, string reasonValue)
 	{
 		MinimalAdmissibleDamage = minimalAdmissibleDamage;
+		ReasonValue = reasonValue;
 	}
 }

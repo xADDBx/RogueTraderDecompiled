@@ -9,6 +9,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
@@ -34,7 +35,9 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 
 	public Ability Ability;
 
-	private ReactiveProperty<TooltipBaseTemplate> m_Tooltip;
+	public TalentIconInfo TalentIconsInfo;
+
+	protected ReactiveProperty<TooltipBaseTemplate> m_Tooltip;
 
 	private readonly object m_TooltipSource;
 
@@ -100,6 +103,7 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		Acronym = UIUtility.GetAbilityAcronym(feature.Blueprint);
 		FillDescription();
 		m_TooltipSource = feature;
+		TalentIconsInfo = feature.Blueprint.TalentIconInfo;
 	}
 
 	public CharInfoFeatureVM(Ability ability, MechanicEntity unit)
@@ -138,6 +142,7 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		Acronym = UIUtility.GetAbilityAcronym(uiFeature.Feature);
 		FillDescription();
 		m_TooltipSource = uiFeature;
+		TalentIconsInfo = uiFeature.TalentIconsInfo;
 	}
 
 	private void FillTimeLeft(Buff buff)

@@ -29,7 +29,7 @@ public class RemoveFact : GameAction
 		return $"Remove Fact ({Fact} from {Unit})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Unit.GetValue().Facts.Remove(Fact);
 	}

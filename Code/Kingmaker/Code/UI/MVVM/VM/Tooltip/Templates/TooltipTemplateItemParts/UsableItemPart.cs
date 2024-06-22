@@ -8,13 +8,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates.TooltipTemplateItemParts;
 
 public class UsableItemPart : BaseItemPart
 {
-	public UsableItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(item, itemTooltipData, compareItemTooltipData)
+	public UsableItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(item, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 
-	public UsableItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(blueprintItem, itemTooltipData, compareItemTooltipData)
+	public UsableItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(blueprintItem, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 

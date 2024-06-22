@@ -9,12 +9,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Async;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Reporting.Base;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Owlcat.Core.Overlays;
 using Owlcat.Runtime.Core.Logging;
+using UnityEngine;
 
 namespace Kingmaker.Utility;
 
@@ -22,13 +24,9 @@ public class ReportSender : IDisposable
 {
 	public const string SentReportsFileName = "SentReports.txt";
 
-	public const string AddressInternal = "http://siren.owlcat.local:5050";
+	public const string InternalApiAddress = "http://siren.owlcat.local";
 
-	public const string AddressExternal = "http://213.149.169.10:5050";
-
-	public const string AddressSecured = "http://89.17.52.236:5050";
-
-	private const string ResponseSuccessful = "\"success\": true";
+	public const string RecieverAddress = "https://report.owlcat.games";
 
 	private static readonly LogChannel Logger;
 
@@ -45,8 +43,6 @@ public class ReportSender : IDisposable
 	private CancellationTokenSource m_WorkerToken;
 
 	private readonly ConcurrentDictionary<string, ReportSendEntry> m_PendingReports = new ConcurrentDictionary<string, ReportSendEntry>();
-
-	private Task m_SetModeTask;
 
 	private ReportSendParameters m_ReportSendParameters;
 
@@ -78,7 +74,7 @@ public class ReportSender : IDisposable
 		OverlayService.Instance?.RegisterOverlay(o);
 	}
 
-	public void SetMode(ReportSendingMode mode)
+	public async void SetMode(ReportSendingMode mode)
 	{
 		Logger.Log("Set mode to {0}", mode);
 		m_WorkerToken?.Cancel();
@@ -90,7 +86,7 @@ public class ReportSender : IDisposable
 			m_WorkerToken.Cancel();
 		});
 		m_Mode = mode;
-		m_SetModeTask = SetModeAsync(mode);
+		await SetModeAsync(mode);
 	}
 
 	private async Task SetModeAsync(ReportSendingMode mode)
@@ -192,8 +188,8 @@ public class ReportSender : IDisposable
 		ReportSendEntry retry = m_PendingReports.GetOrAdd(reportSendParameters.Guid, (string guid) => new ReportSendEntry(guid, m_ReportSendParameters));
 		retry.SendRetryCount++;
 		retry.LastRetry = DateTime.Now;
-		Logger.Log("Trying to resend bug report with guid {0}. Retry count: {1}", reportSendParameters.Guid, retry.SendRetryCount);
-		Console.Log("Trying to resend bug report with guid {0}. Retry count: {1}", reportSendParameters.Guid, retry.SendRetryCount);
+		Logger.Log("Sending bug report with guid {0}. Retry count: {1}", reportSendParameters.Guid, retry.SendRetryCount);
+		Console.Log("Sending bug report with guid {0}. Retry count: {1}", reportSendParameters.Guid, retry.SendRetryCount);
 		try
 		{
 			bool devReport = ReportingUtils.IsEmailOwlcatDomain(reportSendParameters.Email) && ReportingCheats.IsDebugOpenReportLastIssueInBrowser;
@@ -212,15 +208,15 @@ public class ReportSender : IDisposable
 			{
 				retry.ReportId = reportUploadStatus.ReportId;
 				Logger.Log("Bug report with guid {0} gets ReportId: {1}", reportSendParameters.Guid, retry.ReportId);
+				if (m_CheckReportQueue.All((ReportSendEntry x) => x.Guid != retry.Guid))
+				{
+					m_CheckReportQueue.Enqueue(retry);
+				}
 			}
 			try
 			{
 				File.Delete(reportFileName);
 				m_PendingReports.TryRemove(retry.Guid, out var _);
-				if (m_CheckReportQueue.All((ReportSendEntry x) => x.Guid != retry.Guid))
-				{
-					m_CheckReportQueue.Enqueue(retry);
-				}
 				return;
 			}
 			catch (Exception ex)
@@ -311,14 +307,14 @@ public class ReportSender : IDisposable
 		return m_PendingReports.Values;
 	}
 
-	private async Task GetReportResult(ReportSendEntry sendEntry, CancellationToken token)
+	private static async Task GetReportResult(ReportSendEntry sendEntry, CancellationToken token)
 	{
 		if (string.IsNullOrEmpty(sendEntry.ReportId))
 		{
 			return;
 		}
 		Logger.Log("Check result for report ( " + sendEntry.Guid + " ) with reportId ( " + sendEntry.ReportId + " )");
-		string requestUri = await SirenAddressFinder.GetReportServerAddressAsync(token) + "/api/report/issues?filename=" + sendEntry.ReportId;
+		string requestUri = "http://siren.owlcat.local/api/report/issues?filename=" + sendEntry.ReportId;
 		try
 		{
 			using HttpClient client = new HttpClient();
@@ -327,10 +323,8 @@ public class ReportSender : IDisposable
 			{
 				sendEntry.ReportIssueId = (string?)jObject.SelectToken("reportId");
 				Logger.Log("Get reportId for report (" + sendEntry.Guid + ") success. Report Issue Id: " + sendEntry.ReportIssueId + " ");
-				EventBus.RaiseEvent(delegate(IReportSender rs)
-				{
-					rs.HandleReportResultReceived(sendEntry);
-				});
+				Debug.Log("Get reportId for report (" + sendEntry.Guid + ") success. Report Issue Id: " + sendEntry.ReportIssueId + " ");
+				HandleReportResult(sendEntry);
 			}
 			else
 			{
@@ -340,6 +334,14 @@ public class ReportSender : IDisposable
 		catch (Exception ex)
 		{
 			Logger.Exception(ex, "Failed to get report issue Id for report ( {0} ) with reportId ( {1} )", sendEntry.Guid, sendEntry.ReportIssueId);
+		}
+		static async void HandleReportResult(ReportSendEntry entry)
+		{
+			await Awaiters.UnityThread;
+			EventBus.RaiseEvent(delegate(IReportSender rs)
+			{
+				rs.HandleReportResultReceived(entry);
+			});
 		}
 	}
 
@@ -364,14 +366,17 @@ public class ReportSender : IDisposable
 				reportParameters = JsonConvert.DeserializeObject<ReportParameters>(streamReader.ReadToEnd());
 			}
 		}
-		catch (Exception ex)
+		catch (InvalidDataException ex)
 		{
-			Logger.Log(ex);
-			if (ex.Message == "Central Directory corrupt.")
-			{
-				Logger.Log("Delete corrupted archive: '" + zipFilePath + "'");
-				File.Delete(zipFilePath);
-			}
+			Logger.Exception(ex);
+			Logger.Log("Delete corrupted archive: '" + zipFilePath + "'");
+			File.Delete(zipFilePath);
+			return null;
+		}
+		catch (Exception ex2)
+		{
+			Logger.Log(ex2);
+			return null;
 		}
 		if (reportParameters == null || reportParameters.Guid == null)
 		{
@@ -387,17 +392,21 @@ public class ReportSender : IDisposable
 			Guid = reportParameters?.Guid,
 			Priority = (reportParameters?.IssueType ?? string.Empty)
 		};
-		ReportSendEntry result = new ReportSendEntry(zipFilePath, reportSendParameters);
-		result = m_PendingReports.GetOrAdd(reportParameters?.Guid, (string s) => result);
+		ReportSendEntry value = new ReportSendEntry(zipFilePath, reportSendParameters);
+		value = m_PendingReports.GetOrAdd(reportParameters?.Guid, value);
 		Logger.Log("Add '" + zipFilePath + "' to send queue");
-		return result;
+		return value;
 	}
 
 	private async Task WorkerReportResultChecker(CancellationToken token)
 	{
+		if (!BuildModeUtility.IsDevelopment)
+		{
+			return;
+		}
 		while (!token.IsCancellationRequested)
 		{
-			await Task.Delay(TimeSpan.FromMilliseconds(1000.0), token);
+			await Task.Delay(TimeSpan.FromMilliseconds(10000.0), token);
 			if (m_CheckReportQueue.TryDequeue(out var sendEntry))
 			{
 				sendEntry.ReportIssueCheckRetryCount++;

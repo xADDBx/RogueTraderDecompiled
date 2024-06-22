@@ -38,6 +38,7 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 		[JsonProperty]
 		public RestrictionsHolder.Reference Restrictions { get; }
 
+		[JsonConstructor]
 		public BonusAbilityData(int count, EntityFactSource source, int costBonus, RestrictionsHolder.Reference restrictions)
 		{
 			Count = count;
@@ -153,6 +154,10 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 
 	public void OnEventDidTrigger(RulePerformAbility evt)
 	{
+		if (evt.ForceFreeAction)
+		{
+			return;
+		}
 		BonusAbilityData bestBonusAbilityUsage = GetBestBonusAbilityUsage(evt.Spell);
 		if (bestBonusAbilityUsage != null)
 		{

@@ -28,7 +28,7 @@ public class GiveObjective : GameAction, IQuestObjectiveReference
 		return $"Выдает игроку обжектив или аддендум {Objective}.\n" + "Выдаются только обжективы и аддендумы в статусе None. Им выставляется статуст Started";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		GameHelper.Quests.GiveObjective(Objective);
 	}

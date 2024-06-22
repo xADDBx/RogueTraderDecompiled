@@ -43,11 +43,11 @@ public class ContextActionSkillCheck : ContextAction
 	[ShowIf("CalculateDCDifference")]
 	public ActionList FailureDiffMoreOrEqual10;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error("Target unit is missing");
+			Element.LogError(this, "Target unit is missing");
 			return;
 		}
 		int num = 0;

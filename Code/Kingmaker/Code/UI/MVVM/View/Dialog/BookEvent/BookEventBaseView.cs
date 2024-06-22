@@ -62,6 +62,9 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 	[SerializeField]
 	private BookEventAnswerView m_AnswerView;
 
+	[SerializeField]
+	protected ScrollRectExtended m_AnswersScrollRect;
+
 	private bool m_ContentRefreshing;
 
 	[Header("Picture page")]
@@ -220,6 +223,11 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	private void Show()
 	{
 		VotesIsActive.Value = false;
@@ -252,7 +260,7 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 		{
 			ContextName = "BookEvent"
 		});
-		CreateInputImpl(Layer);
+		CreateInputImpl(Layer, m_NavigationBehaviour);
 	}
 
 	private void SetCues()
@@ -285,6 +293,7 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 		{
 			return;
 		}
+		m_AnswersScrollRect.ScrollToTop();
 		AnswersEntities.Clear();
 		foreach (AnswerVM item in base.ViewModel.Answers.Value)
 		{
@@ -397,37 +406,30 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 		{
 			ShowHistory();
 		}
-		DelayedInvoker.InvokeInFrames(delegate
-		{
-			UpdateFocusLinks();
-		}, 1);
+		DelayedInvoker.InvokeInFrames(UpdateFocusLinks, 1);
 	}
 
 	private void OnContentChanged()
 	{
-		if (m_ContentRefreshing)
+		if (!m_ContentRefreshing)
 		{
-			return;
-		}
-		if (IsShowHistory.Value)
-		{
-			SwitchHistory();
-		}
-		m_ContentRefreshing = true;
-		TooltipHelper.HideTooltip();
-		m_ContentAnimator.DisappearAnimation(delegate
-		{
-			UISounds.Instance.Sounds.Dialogue.BookPageTurn.Play();
-			m_ContentAnimator.AppearAnimation();
-			SetCues();
-			SetAnswers();
-			FillHistory();
-			DelayedInvoker.InvokeInFrames(delegate
+			if (IsShowHistory.Value)
 			{
-				UpdateFocusLinks();
-			}, 1);
-			m_ContentRefreshing = false;
-		});
+				SwitchHistory();
+			}
+			m_ContentRefreshing = true;
+			TooltipHelper.HideTooltip();
+			m_ContentAnimator.DisappearAnimation(delegate
+			{
+				UISounds.Instance.Sounds.Dialogue.BookPageTurn.Play();
+				m_ContentAnimator.AppearAnimation();
+				SetCues();
+				SetAnswers();
+				FillHistory();
+				DelayedInvoker.InvokeInFrames(UpdateFocusLinks, 1);
+				m_ContentRefreshing = false;
+			});
+		}
 	}
 
 	private void SetupPicture()
@@ -448,12 +450,7 @@ public class BookEventBaseView : ViewBase<BookEventVM>, IEncyclopediaGlossaryMod
 		m_PictureAnimator.AppearAnimation();
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
-	}
-
-	protected virtual void CreateInputImpl(InputLayer inputLayer)
+	protected virtual void CreateInputImpl(InputLayer inputLayer, GridConsoleNavigationBehaviour behaviour)
 	{
 		AddDisposable(inputLayer.AddButton(OnConfirmClick, 8));
 		AddDisposable(inputLayer.AddAxis(Scroll, 3));

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.InfoWindow;
 using Kingmaker.Code.UI.MVVM.View.Settings.PC.Entities;
@@ -12,11 +13,13 @@ using Kingmaker.Code.UI.MVVM.VM.Settings.Entities;
 using Kingmaker.Code.UI.MVVM.VM.Settings.Entities.Decorative;
 using Kingmaker.Code.UI.MVVM.VM.Settings.Entities.Difficulty;
 using Kingmaker.Code.UI.MVVM.VM.Settings.KeyBindSetupDialog;
+using Kingmaker.Code.UI.MVVM.VM.Settings.Menu;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -67,9 +70,12 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 		[SerializeField]
 		private SettingsEntitySliderFontSizePCView m_SettingEntityFontSizeViewPrefab;
 
+		[SerializeField]
+		private SettingsEntityBoolOnlyOneSavePCView m_SettingsEntityBoolOnlyOneSaveViewPrefab;
+
 		public void InitializeVirtualList(VirtualListComponent virtualListComponent)
 		{
-			virtualListComponent.Initialize(new VirtualListElementTemplate<SettingsEntityHeaderVM>(m_SettingsEntityHeaderViewPrefab), new VirtualListElementTemplate<SettingsEntityBoolVM>(m_SettingsEntityBoolViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownVM>(m_SettingsEntityDropdownViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderViewPrefab, 0), new VirtualListElementTemplate<SettingEntityKeyBindingVM>(m_SettingEntityKeyBindingViewPrefab), new VirtualListElementTemplate<SettingsEntityDisplayImagesVM>(m_SettingEntityDisplayImagesViewPrefab), new VirtualListElementTemplate<SettingsEntityAccessibilityImageVM>(m_SettingEntityAccessibilityImageViewPrefab), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingEntityFontSizeViewPrefab, 2), new VirtualListElementTemplate<SettingsEntityDropdownGameDifficultyVM>(m_SettingsEntityDropdownGameDifficultyViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderGammaCorrectionViewPrefab, 1), new VirtualListElementTemplate<SettingsEntityStatisticsOptOutVM>(m_SettingsEntityStatisticsOptOutViewPrefab));
+			virtualListComponent.Initialize(new VirtualListElementTemplate<SettingsEntityHeaderVM>(m_SettingsEntityHeaderViewPrefab), new VirtualListElementTemplate<SettingsEntityBoolVM>(m_SettingsEntityBoolViewPrefab), new VirtualListElementTemplate<SettingsEntityDropdownVM>(m_SettingsEntityDropdownViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderViewPrefab, 0), new VirtualListElementTemplate<SettingEntityKeyBindingVM>(m_SettingEntityKeyBindingViewPrefab), new VirtualListElementTemplate<SettingsEntityDisplayImagesVM>(m_SettingEntityDisplayImagesViewPrefab), new VirtualListElementTemplate<SettingsEntityAccessibilityImageVM>(m_SettingEntityAccessibilityImageViewPrefab), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingEntityFontSizeViewPrefab, 2), new VirtualListElementTemplate<SettingsEntityDropdownGameDifficultyVM>(m_SettingsEntityDropdownGameDifficultyViewPrefab, 0), new VirtualListElementTemplate<SettingsEntitySliderVM>(m_SettingsEntitySliderGammaCorrectionViewPrefab, 1), new VirtualListElementTemplate<SettingsEntityStatisticsOptOutVM>(m_SettingsEntityStatisticsOptOutViewPrefab), new VirtualListElementTemplate<SettingsEntityBoolOnlyOneSaveVM>(m_SettingsEntityBoolOnlyOneSaveViewPrefab));
 		}
 	}
 
@@ -158,7 +164,24 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 			UpdateLocalization();
 		}));
 		SetBottomButtonsTexts();
+		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.OnSwitchSettings, delegate
+		{
+			OnSelectedMenuEntity(base.ViewModel.SelectedMenuEntity.Value);
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, delegate
+		{
+			m_MenuSelector.OnPrev();
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, delegate
+		{
+			m_MenuSelector.OnNext();
+		}));
 		Show();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
 	}
 
 	private void SetButtonsSounds()
@@ -175,11 +198,6 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 		{
 			m_KeyBindingSetupDialogView.Bind(dialogVM);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 
 	private void Show()
@@ -225,5 +243,11 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 	private void UpdateLocalization()
 	{
 		SetBottomButtonsTexts();
+	}
+
+	public void OnSelectedMenuEntity(SettingsMenuEntityVM entity)
+	{
+		int index = base.ViewModel.MenuEntitiesList.IndexOf(base.ViewModel.MenuEntitiesList.FirstOrDefault((SettingsMenuEntityVM e) => e == base.ViewModel.SelectedMenuEntity.Value));
+		m_SelectorView.ChangeTab(index);
 	}
 }

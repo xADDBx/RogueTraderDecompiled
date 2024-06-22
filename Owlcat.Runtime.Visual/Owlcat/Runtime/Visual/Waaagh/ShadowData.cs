@@ -21,9 +21,9 @@ public struct ShadowData
 
 	public Owlcat.Runtime.Visual.Waaagh.Shadows.ShadowResolution DirectionalLightCascadeResolution;
 
-	public Owlcat.Runtime.Visual.Waaagh.Shadows.ShadowResolution PointLightResolution;
+	public ShadowResolutionSettings PointLightResolution;
 
-	public Owlcat.Runtime.Visual.Waaagh.Shadows.ShadowResolution SpotLightResolution;
+	public ShadowResolutionSettings SpotLightResolution;
 
 	public Cascades DirectionalLightCascades;
 

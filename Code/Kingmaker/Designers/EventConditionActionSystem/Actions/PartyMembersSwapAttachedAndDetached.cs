@@ -11,7 +11,7 @@ public class PartyMembersSwapAttachedAndDetached : GameAction
 		return "Switch attached and detached party members";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.SwapAttachedAndDetachedPartyMembers();
 	}

@@ -59,7 +59,7 @@ public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUI
 		Clear();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		Clear();
 	}

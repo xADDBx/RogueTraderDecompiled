@@ -72,6 +72,25 @@ public class TooltipBrickPlanetInfoView : TooltipBaseBrickView<TooltipBrickPlane
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_ImageResourceViewCollection.ForEach(delegate(TooltipBrickPlanetResourceImageView v)
+		{
+			v.Hide();
+		});
+		m_TraitsViewCollection.ForEach(delegate(TooltipBrickPlanetTraitsView v)
+		{
+			v.Hide();
+		});
+		m_PointsOfInterestViewCollection.ForEach(delegate(TooltipBrickPlanetPointsOfInterestView v)
+		{
+			v.Hide();
+		});
+		m_ImageResourceViewCollection.Clear();
+		m_TraitsViewCollection.Clear();
+		m_PointsOfInterestViewCollection.Clear();
+	}
+
 	private void SetResources()
 	{
 		ResourceData[] resources = base.ViewModel.BlueprintPlanet.Resources;
@@ -107,12 +126,12 @@ public class TooltipBrickPlanetInfoView : TooltipBaseBrickView<TooltipBrickPlane
 			return;
 		}
 		m_TraitsPanel.SetActive(value: true);
-		foreach (BlueprintColonyTrait key in colony.ColonyTraits.Keys)
+		foreach (BlueprintColonyEvent startedEvent in colony.StartedEvents)
 		{
 			TooltipBrickPlanetTraitsView widget = WidgetFactory.GetWidget(m_TraitsView, activate: true, strictMatching: true);
-			widget.Initialize(key.Name, key.Description);
+			widget.Initialize(startedEvent.Name, startedEvent.Description);
 			widget.transform.SetParent(m_TraitsPanel.transform, worldPositionStays: false);
-			widget.name = $"Trait {widget.transform.GetSiblingIndex()}";
+			widget.name = $"Event {widget.transform.GetSiblingIndex()}";
 			m_TraitsViewCollection.Add(widget);
 		}
 	}
@@ -138,24 +157,5 @@ public class TooltipBrickPlanetInfoView : TooltipBaseBrickView<TooltipBrickPlane
 				m_PointsOfInterestViewCollection.Add(widget);
 			}
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_ImageResourceViewCollection.ForEach(delegate(TooltipBrickPlanetResourceImageView v)
-		{
-			v.Hide();
-		});
-		m_TraitsViewCollection.ForEach(delegate(TooltipBrickPlanetTraitsView v)
-		{
-			v.Hide();
-		});
-		m_PointsOfInterestViewCollection.ForEach(delegate(TooltipBrickPlanetPointsOfInterestView v)
-		{
-			v.Hide();
-		});
-		m_ImageResourceViewCollection.Clear();
-		m_TraitsViewCollection.Clear();
-		m_PointsOfInterestViewCollection.Clear();
 	}
 }

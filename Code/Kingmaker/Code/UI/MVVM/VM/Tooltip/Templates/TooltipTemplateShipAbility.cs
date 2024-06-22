@@ -172,7 +172,8 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			textFieldValues.TextParams.FontColor = UIConfig.Instance.TooltipColors.DesperateMeasureAbility;
 			break;
 		default:
-			textFieldValues.Text = ((!IsSpaceCombatAbility) ? m_UIAbilityData.CostAP : string.Empty);
+			textFieldValues.Text = ((!IsSpaceCombatAbility) ? UIStrings.Instance.Tooltips.CostAP.Text : string.Empty);
+			textFieldValues.Value = ((!IsSpaceCombatAbility) ? m_UIAbilityData.CostAP : string.Empty);
 			textFieldValues.TextParams.FontColor = Color.black;
 			break;
 		}
@@ -217,7 +218,7 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 
 	private void AddTarget(List<ITooltipBrick> bricks)
 	{
-		if (!m_IsReload && !string.IsNullOrEmpty(m_Target))
+		if (!m_IsReload && !string.IsNullOrEmpty(m_Target) && !(m_TargetIcon == null))
 		{
 			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
 			{
@@ -227,7 +228,7 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			{
 				Text = m_Target
 			};
-			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues));
+			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -243,7 +244,7 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			{
 				Text = UIUtilityTexts.WrapWithWeight(m_Duration, TextFontWeight.SemiBold)
 			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -259,7 +260,7 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			{
 				Text = UIUtilityTexts.WrapWithWeight(string.Concat(UIStrings.Instance.TurnBasedTexts.Rounds, ": ", m_Cooldown), TextFontWeight.SemiBold)
 			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Cooldown, null, titleValues, secondaryValues, null, new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, 0)));
+			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Cooldown, null, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -310,7 +311,7 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			TextParams = textFieldParams,
 			ValueParams = textFieldParams
 		};
-		bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.HitChances, null, titleValues, secondaryValues, tertiaryValues));
+		bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.HitChances, null, titleValues, secondaryValues, tertiaryValues, null, IconPatternMode.IconMode));
 	}
 
 	private void AddScatterHitChances(List<ITooltipBrick> bricks)

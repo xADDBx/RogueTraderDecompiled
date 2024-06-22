@@ -33,7 +33,7 @@ public class HealUnit : GameAction
 		return $"Лечит цель {Target}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
 		int maxHitPoints = value.Health.MaxHitPoints;

@@ -47,6 +47,6 @@ public class EquipSelectorSlotVM : SelectionGroupEntityVM
 
 	public void RefreshTooltip(bool forceUpdate = false)
 	{
-		Tooltip.Value = new TooltipTemplateItem(Item, null, forceUpdate);
+		Tooltip.Value = new TooltipTemplateItem(Item, null, forceUpdate, replenishing: false, null, isScreenTooltip: true);
 	}
 }

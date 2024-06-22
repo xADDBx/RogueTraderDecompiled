@@ -31,5 +31,5 @@ public interface INewServiceWindowUIHandler : ISubscriber
 
 	void HandleOpenCargoManagement();
 
-	void HandleOpenShipCustomization();
+	void HandleOpenShipCustomization(bool force = false);
 }

@@ -80,8 +80,11 @@ public class RespecVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 				if (button == DialogMessageBoxBase.BoxButton.Yes)
 				{
 					m_SuccessAction(unit);
-					OnClose();
-					DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(OnAfterSuccess);
+					DelayedInvoker.InvokeInFrames(delegate
+					{
+						OnClose();
+						OnAfterSuccess();
+					}, 1);
 				}
 			});
 		});

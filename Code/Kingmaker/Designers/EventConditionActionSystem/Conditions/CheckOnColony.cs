@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Utility.Attributes;
@@ -31,7 +30,7 @@ public class CheckOnColony : Condition
 		{
 			return Game.Instance.ColonizationController.CheckOnColony(Colony);
 		}
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		if (colony != null)
 		{
 			return Game.Instance.ColonizationController.CheckOnColony(colony.Blueprint);

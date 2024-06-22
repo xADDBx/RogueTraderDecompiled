@@ -14,6 +14,7 @@ using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.View.Mechanics.Entities;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.MVVM;
@@ -44,6 +45,9 @@ public class SurfaceActionBarPartQuickAccessConsoleView : ViewBase<SurfaceAction
 
 	[SerializeField]
 	private SurfaceActionBarPartAbilitiesConsoleView m_AbilitiesConsoleView;
+
+	[SerializeField]
+	private RectTransform m_EmptyMoveSlot;
 
 	[Header("Hints")]
 	[SerializeField]
@@ -110,6 +114,10 @@ public class SurfaceActionBarPartQuickAccessConsoleView : ViewBase<SurfaceAction
 		AddDisposable(base.ViewModel.QuickAccessSlot.Subscribe(OnQuickAccessSlotChanged));
 		CreateInput();
 		AddDisposable(m_IsActive.Subscribe(Activate));
+		AddDisposable(m_IsActive.CombineLatest(m_HasSlot, (bool isActive, bool hasSlot) => new { isActive, hasSlot }).Subscribe(value =>
+		{
+			m_EmptyMoveSlot.Or(null)?.gameObject.SetActive(!value.isActive && !value.hasSlot);
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -275,7 +283,7 @@ public class SurfaceActionBarPartQuickAccessConsoleView : ViewBase<SurfaceAction
 			ActionBarSlotVM value = base.ViewModel.QuickAccessSlot.Value;
 			if (!string.IsNullOrWhiteSpace(value.MechanicActionBarSlot.KeyName))
 			{
-				PhotonManager.Ping.PingActionBarAbility(value.MechanicActionBarSlot.KeyName, value.MechanicActionBarSlot.Unit, value.Index);
+				PhotonManager.Ping.PingActionBarAbility(value.MechanicActionBarSlot.KeyName, value.MechanicActionBarSlot.Unit, value.Index, value.WeaponSlotType);
 			}
 		});
 	}

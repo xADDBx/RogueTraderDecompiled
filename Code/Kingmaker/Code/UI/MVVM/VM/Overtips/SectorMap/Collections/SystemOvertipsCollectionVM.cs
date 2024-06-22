@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -14,7 +13,10 @@ public class SystemOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntitySyst
 	protected override IEnumerable<Entity> Entities => from obj in Game.Instance.SectorMapController.GetAllStarSystems()
 		select obj.Data;
 
-	protected override Func<OvertipEntitySystemVM, Entity, bool> OvertipGetter => (OvertipEntitySystemVM vm, Entity entity) => vm.SectorMapObject == entity as SectorMapObjectEntity;
+	protected override bool OvertipGetter(OvertipEntitySystemVM vm, Entity entity)
+	{
+		return vm.SectorMapObject == entity as SectorMapObjectEntity;
+	}
 
 	public SystemOvertipsCollectionVM()
 	{

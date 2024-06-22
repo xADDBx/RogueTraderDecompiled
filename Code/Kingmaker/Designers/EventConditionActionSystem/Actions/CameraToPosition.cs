@@ -21,7 +21,7 @@ public class CameraToPosition : GameAction
 		return $"Моментально перемещает камеру в указанную позицию {Position}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		CameraRig.Instance.ScrollTo(Position.GetValue());
 	}

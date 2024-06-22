@@ -3,9 +3,12 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
@@ -35,6 +38,9 @@ public class AttachBuff : GameAction
 	[ShowIf("UseEndCondition")]
 	public BuffEndCondition EndCondition;
 
+	[Tooltip("If action runs in AbilityExecutionContext - add ability fact as source")]
+	public bool AddFactSource;
+
 	public BlueprintBuff Buff => m_Buff?.Get();
 
 	public override string GetDescription()
@@ -43,7 +49,7 @@ public class AttachBuff : GameAction
 		return $"Навешивает на цель {Target} бафф {Buff} на время в раундах: {arg}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Target == null)
 		{
@@ -52,7 +58,39 @@ public class AttachBuff : GameAction
 		BuffEndCondition endCondition = (UseEndCondition ? EndCondition : BuffEndCondition.RemainAfterCombat);
 		Rounds? rounds = (Duration ? new Rounds?(Duration.GetValue().Rounds()) : null);
 		BuffDuration duration = new BuffDuration(rounds, endCondition);
-		Target.GetValue().Buffs.Add(Buff, duration)?.TryAddSource(this);
+		Buff buff = Target.GetValue().Buffs.Add(Buff, duration);
+		AddSource(buff);
+	}
+
+	private void AddSource(Buff buff)
+	{
+		if (buff != null && !TryAddAbilitySource(buff))
+		{
+			buff?.TryAddSource(this);
+		}
+	}
+
+	private bool TryAddAbilitySource(Buff buff)
+	{
+		if (!AddFactSource)
+		{
+			return false;
+		}
+		if (buff == null)
+		{
+			return false;
+		}
+		if (!(ContextData<MechanicsContext.Data>.Current?.Context is AbilityExecutionContext abilityExecutionContext))
+		{
+			return false;
+		}
+		Ability fact = abilityExecutionContext.Ability.Fact;
+		if (fact == null)
+		{
+			return false;
+		}
+		buff.AddSource(fact);
+		return true;
 	}
 
 	public override string GetCaption()

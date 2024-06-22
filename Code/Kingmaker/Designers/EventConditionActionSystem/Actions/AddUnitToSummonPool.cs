@@ -35,7 +35,7 @@ public class AddUnitToSummonPool : GameAction
 		return $"Add {Unit} to summon pool {SummonPool}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.SummonPools.Register(SummonPool, Unit.GetValue());
 	}

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.VariativeInteraction.Console;
 
@@ -18,7 +20,7 @@ public class VariativeInteractionConsoleView : VariativeInteractionView<Interact
 
 	private void CreateInput()
 	{
-		m_NavigationBehaviour = new GridConsoleNavigationBehaviour();
+		m_NavigationBehaviour = new GridConsoleNavigationBehaviour(null, null, Vector2Int.right);
 		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 		{
 			ContextName = "InteractionVariative"
@@ -34,29 +36,15 @@ public class VariativeInteractionConsoleView : VariativeInteractionView<Interact
 	private void CreateNavigation()
 	{
 		List<InteractionVariantConsoleView> list = new List<InteractionVariantConsoleView>();
-		foreach (InteractionVariantConsoleView entry in WidgetList.Entries)
+		for (int num = WidgetList.Entries.Count - 1; num >= 0; num--)
 		{
-			list.Add(entry);
-			entry.SetInputLayer(m_InputLayer);
-		}
-		if (list.Count > 1)
-		{
-			int num = ((list.Count % 2 == 0) ? 1 : 2);
-			for (int i = 0; i < list.Count / 2 + ((list.Count % 2 != 0) ? 1 : 0); i++)
-			{
-				if (i % 2 == 0)
-				{
-					InteractionVariantConsoleView value = list[i];
-					int index = i;
-					int num2 = num;
-					list[index] = list[list.Count - num2];
-					num2 = num;
-					list[list.Count - num2] = value;
-				}
-			}
+			InteractionVariantConsoleView interactionVariantConsoleView = (InteractionVariantConsoleView)WidgetList.Entries[num];
+			list.Add(interactionVariantConsoleView);
+			interactionVariantConsoleView.SetInputLayer(m_InputLayer);
 		}
 		m_NavigationBehaviour.AddRow(list);
-		m_NavigationBehaviour.FocusOnFirstValidEntity();
+		m_NavigationBehaviour.SetCurrentEntity(list.LastOrDefault());
+		m_NavigationBehaviour.FocusOnCurrentEntity();
 	}
 
 	protected override void DestroyViewImplementation()

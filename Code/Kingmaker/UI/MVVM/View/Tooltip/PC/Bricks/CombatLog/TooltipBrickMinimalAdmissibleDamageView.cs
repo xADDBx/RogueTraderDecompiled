@@ -37,9 +37,7 @@ public class TooltipBrickMinimalAdmissibleDamageView : TooltipBaseBrickView<Tool
 		int minimalAdmissibleDamage = base.ViewModel.MinimalAdmissibleDamage;
 		resultValueText.text = "=" + minimalAdmissibleDamage;
 		m_MinimalAdmissibleDamageText.text = GameLogStrings.Instance.TooltipBrickStrings.MinimalAdmissibleDamage.Text;
-		TextMeshProUGUI minimalAdmissibleDamageValueText = m_MinimalAdmissibleDamageValueText;
-		minimalAdmissibleDamage = base.ViewModel.MinimalAdmissibleDamage;
-		minimalAdmissibleDamageValueText.text = minimalAdmissibleDamage.ToString();
+		m_MinimalAdmissibleDamageValueText.text = base.ViewModel.ReasonValue;
 		m_ReasonsText.text = GameLogStrings.Instance.TooltipBrickStrings.MinimalAdmissibleDamageReason.Text;
 		GameDifficultyOption currentGameDifficulty = SettingsRoot.Difficulty.GameDifficulty.GetValue();
 		DifficultyPresetAsset difficultyPresetAsset = BlueprintRoot.Instance.DifficultyList.Difficulties.First((DifficultyPresetAsset asset) => asset.Preset.GameDifficulty == currentGameDifficulty);

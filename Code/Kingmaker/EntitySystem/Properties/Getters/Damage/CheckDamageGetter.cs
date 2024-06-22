@@ -19,7 +19,7 @@ public abstract class CheckDamageGetter : PropertyGetter
 	[EnumFlagsAsButtons(ColumnCount = 4)]
 	public DamageCategoryMask Categories;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check Damage Properties";
 	}

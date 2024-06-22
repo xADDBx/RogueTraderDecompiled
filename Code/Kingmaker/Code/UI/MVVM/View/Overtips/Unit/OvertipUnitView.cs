@@ -97,7 +97,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 
 	private Tweener m_PositionAnimator;
 
-	private readonly ReactiveProperty<UnitOvertipVisibility> m_Visibility = new ReactiveProperty<UnitOvertipVisibility>();
+	public readonly ReactiveProperty<UnitOvertipVisibility> Visibility = new ReactiveProperty<UnitOvertipVisibility>();
 
 	private List<Graphic> m_AdditionalRaycastBlockers = new List<Graphic>();
 
@@ -165,7 +165,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		base.BindViewImplementation();
 		m_InnerCanvasGroup.alpha = 0f;
 		base.gameObject.name = base.ViewModel.UnitUIWrapper.Name + "_UnitOvertip";
-		m_HealthBlockView.Initialize(m_Visibility);
+		m_HealthBlockView.Initialize(Visibility);
 		m_HealthBlockView.Bind(base.ViewModel.HealthBlockVM);
 		m_NameBlockPCView.Bind(base.ViewModel.HitChanceBlockVM);
 		m_OvertipTargetNameView.Bind(base.ViewModel.NameBlockVM);
@@ -198,11 +198,11 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 			DoDeath();
 		}));
 		m_CoverBlockPCView.Or(null)?.Bind(base.ViewModel.CoverBlockVM);
-		m_HitChanceBlockPCView.Or(null)?.Initialize(m_Visibility);
+		m_HitChanceBlockPCView.Or(null)?.Initialize(Visibility);
 		m_HitChanceBlockPCView.Or(null)?.Bind(base.ViewModel.HitChanceBlockVM);
 		m_OvertipTargetDefensesPCView.Bind(base.ViewModel.HitChanceBlockVM);
-		AddDisposable(m_Visibility.Subscribe(DoVisibility));
-		AddDisposable(base.ViewModel.UnitState.ForceHotKeyPressed.CombineLatest(m_Visibility, (bool tab, UnitOvertipVisibility vis) => new { tab, vis }).Subscribe(value =>
+		AddDisposable(Visibility.Subscribe(DoVisibility));
+		AddDisposable(base.ViewModel.UnitState.ForceHotKeyPressed.CombineLatest(Visibility, (bool tab, UnitOvertipVisibility vis) => new { tab, vis }).Subscribe(value =>
 		{
 			m_UnitBuffsCanvasGroup.blocksRaycasts = value.tab || value.vis == UnitOvertipVisibility.Maximized;
 		}));
@@ -262,7 +262,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 	{
 		if (!CheckVisibility || base.ViewModel.IsCutscene || base.ViewModel.IsInDialog)
 		{
-			m_Visibility.Value = UnitOvertipVisibility.Invisible;
+			Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;
 		}
 		bool flag = base.ViewModel.CameraDistance.Value.sqrMagnitude < m_FarDistance;
@@ -270,24 +270,24 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		{
 			if (CheckVisibleTrigger)
 			{
-				m_Visibility.Value = ((flag || base.ViewModel.UnitState.IsMouseOverUnit.Value || base.ViewModel.UnitState.HoverSelfTargetAbility.Value) ? UnitOvertipVisibility.Full : UnitOvertipVisibility.Near);
+				Visibility.Value = ((flag || base.ViewModel.UnitState.IsMouseOverUnit.Value || base.ViewModel.UnitState.HoverSelfTargetAbility.Value) ? UnitOvertipVisibility.Full : UnitOvertipVisibility.Near);
 			}
 			else if (base.ViewModel.UnitState.IsAoETarget.Value || (base.ViewModel.UnitState.IsCurrentUnitTurn.Value && !base.ViewModel.UnitState.IsActing.Value))
 			{
-				m_Visibility.Value = UnitOvertipVisibility.NotFull;
+				Visibility.Value = UnitOvertipVisibility.NotFull;
 			}
 			else
 			{
-				m_Visibility.Value = ((!flag) ? UnitOvertipVisibility.Far : UnitOvertipVisibility.Near);
+				Visibility.Value = ((!flag) ? UnitOvertipVisibility.Far : UnitOvertipVisibility.Near);
 			}
 		}
 		else if (CheckVisibleTrigger)
 		{
-			m_Visibility.Value = (flag ? UnitOvertipVisibility.Full : UnitOvertipVisibility.Near);
+			Visibility.Value = (flag ? UnitOvertipVisibility.Full : UnitOvertipVisibility.Near);
 		}
 		else
 		{
-			m_Visibility.Value = ((!flag) ? UnitOvertipVisibility.Far : UnitOvertipVisibility.Near);
+			Visibility.Value = ((!flag) ? UnitOvertipVisibility.Far : UnitOvertipVisibility.Near);
 		}
 		m_CombatTextBlockPCView.UpdateVisualForCommon();
 	}
@@ -313,7 +313,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 			m_HoverDelay?.Dispose();
 			m_HoverDelay = DelayedInvoker.InvokeInTime(delegate
 			{
-				m_Visibility.Value = UnitOvertipVisibility.Maximized;
+				Visibility.Value = UnitOvertipVisibility.Maximized;
 			}, 0.2f);
 		}
 	}

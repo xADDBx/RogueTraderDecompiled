@@ -45,7 +45,7 @@ public class WarhammerContextActionAttackNearestTarget : ContextAction
 
 	public List<BlueprintAbilityGroupReference> ViableGroups = new List<BlueprintAbilityGroupReference>();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (ContextData<MechanicsContext.Data>.Current?.Context == null)
 		{

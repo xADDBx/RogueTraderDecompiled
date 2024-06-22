@@ -729,21 +729,24 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 
 	private void InitializeShadowData(out ShadowData shadowData)
 	{
-		shadowData = default(ShadowData);
-		shadowData.StaticShadowsCacheEnabled = Asset.ShadowSettings.StaticShadowsCacheEnabled;
-		shadowData.ShadowManager = m_ShadowManager;
-		shadowData.AtlasSize = Asset.ShadowSettings.AtlasSize;
-		shadowData.CacheAtlasSize = Asset.ShadowSettings.CacheAtlasSize;
-		shadowData.SpotLightResolution = Asset.ShadowSettings.SpotLightResolution;
-		shadowData.DirectionalLightCascades = Asset.ShadowSettings.DirectionalLightCascades;
-		shadowData.DirectionalLightCascadeResolution = Asset.ShadowSettings.DirectionalLightCascadeResolution;
-		shadowData.PointLightResolution = Asset.ShadowSettings.PointLightResolution;
-		shadowData.ShadowNearPlane = Asset.ShadowSettings.ShadowNearPlane;
-		shadowData.ShadowQuality = Asset.ShadowSettings.ShadowQuality;
-		shadowData.DepthBias = Asset.ShadowSettings.DepthBias;
-		shadowData.NormalBias = Asset.ShadowSettings.NormalBias;
-		shadowData.ReceiverNormalBias = Asset.ShadowSettings.ReceiverNormalBias;
-		shadowData.ShadowUpdateDistances = Asset.ShadowSettings.ShadowUpdateDistances;
+		ShadowSettings shadowSettings = Asset.ShadowSettings;
+		shadowData = new ShadowData
+		{
+			StaticShadowsCacheEnabled = shadowSettings.StaticShadowsCacheEnabled,
+			ShadowManager = m_ShadowManager,
+			AtlasSize = shadowSettings.AtlasSize,
+			CacheAtlasSize = shadowSettings.CacheAtlasSize,
+			SpotLightResolution = shadowSettings.SpotLightResolution,
+			DirectionalLightCascades = shadowSettings.DirectionalLightCascades,
+			DirectionalLightCascadeResolution = shadowSettings.DirectionalLightCascadeResolution,
+			PointLightResolution = shadowSettings.PointLightResolution,
+			ShadowNearPlane = shadowSettings.ShadowNearPlane,
+			ShadowQuality = shadowSettings.ShadowQuality,
+			DepthBias = shadowSettings.DepthBias,
+			NormalBias = shadowSettings.NormalBias,
+			ReceiverNormalBias = shadowSettings.ReceiverNormalBias,
+			ShadowUpdateDistances = shadowSettings.ShadowUpdateDistances
+		};
 	}
 
 	private void InitializeTimeData(out TimeData timeData)

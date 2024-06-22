@@ -13,7 +13,10 @@ public abstract class OvertipsCollectionVM<TOvertipVM> : BaseDisposable, IViewMo
 
 	protected virtual IEnumerable<Entity> Entities => new List<Entity>();
 
-	protected virtual Func<TOvertipVM, Entity, bool> OvertipGetter => (TOvertipVM vm, Entity entity) => true;
+	protected virtual bool OvertipGetter(TOvertipVM vm, Entity entity)
+	{
+		return true;
+	}
 
 	protected override void DisposeImplementation()
 	{

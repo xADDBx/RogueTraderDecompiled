@@ -48,7 +48,7 @@ public class SurfaceCombatCurrentUnitView : SurfaceCombatUnitView<SurfaceCombatU
 	[SerializeField]
 	private GameObject m_Aquila;
 
-	private CompositeDisposable m_Disposable = new CompositeDisposable();
+	private readonly CompositeDisposable m_Disposable = new CompositeDisposable();
 
 	protected override void DoInitialize()
 	{
@@ -102,6 +102,16 @@ public class SurfaceCombatCurrentUnitView : SurfaceCombatUnitView<SurfaceCombatU
 		SetupFrame(base.ViewModel.IsEnemy.Value);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_Disposable.Clear();
+		m_MoveAnimator.DisappearAnimation(delegate
+		{
+			base.gameObject.SetActive(value: false);
+		});
+	}
+
 	private void SetupFrame(bool isEnemy)
 	{
 		m_Frame.sprite = (isEnemy ? m_EnemyFrame : m_FriendFrame);
@@ -137,15 +147,5 @@ public class SurfaceCombatCurrentUnitView : SurfaceCombatUnitView<SurfaceCombatU
 		m_YellowCostLabel.EnsureComponent<CanvasGroup>().alpha = (flag ? 1f : 0f);
 		m_YellowLabel.EnsureComponent<CanvasGroup>().alpha = (flag ? 0f : 1f);
 		m_YellowCostLabel.SetText("-" + num);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		m_Disposable.Clear();
-		m_MoveAnimator.DisappearAnimation(delegate
-		{
-			base.gameObject.SetActive(value: false);
-		});
 	}
 }

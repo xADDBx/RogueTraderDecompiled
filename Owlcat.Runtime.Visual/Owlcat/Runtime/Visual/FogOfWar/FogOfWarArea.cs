@@ -10,9 +10,13 @@ namespace Owlcat.Runtime.Visual.FogOfWar;
 
 public class FogOfWarArea : MonoBehaviour
 {
+	public delegate void ActivateEventHandler(FogOfWarArea area);
+
 	private static FogOfWarArea s_Active;
 
 	private static HashSet<FogOfWarArea> s_All = new HashSet<FogOfWarArea>();
+
+	public static ActivateEventHandler AreaActivated;
 
 	private RTHandle m_FogOfWarMapRT;
 
@@ -56,7 +60,7 @@ public class FogOfWarArea : MonoBehaviour
 			s_Active = value;
 			if ((bool)s_Active)
 			{
-				LineOfSightGeometry.Instance.Init(s_Active.GetWorldBounds());
+				NotifyAreaActivated(s_Active);
 			}
 		}
 	}
@@ -191,6 +195,11 @@ public class FogOfWarArea : MonoBehaviour
 			}
 		});
 		return task.Task;
+	}
+
+	private static void NotifyAreaActivated(FogOfWarArea area)
+	{
+		AreaActivated?.Invoke(area);
 	}
 
 	public Matrix4x4 CalculateProjMatrix(bool convertToGpu = true)

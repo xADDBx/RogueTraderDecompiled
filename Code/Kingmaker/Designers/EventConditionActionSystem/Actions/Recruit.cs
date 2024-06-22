@@ -59,7 +59,7 @@ public class Recruit : GameAction
 
 	public ActionList OnRecruitImmediate;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		RecruitData[] recruited = Recruited;
 		foreach (RecruitData data in recruited)
@@ -97,7 +97,7 @@ public class Recruit : GameAction
 		List<RecruitData> required = Recruited.Where((RecruitData recruitData) => recruitData.MustBeInParty).ToList();
 		if (required.Count > 5)
 		{
-			PFLog.Default.Error(this, $"Cannot recruit {required.Count} characters in {this}: too many!!");
+			Element.LogError(this, "Cannot recruit {0} characters in {1}: too many!!", required.Count, this);
 			return;
 		}
 		while (Game.Instance.Player.Party.Count > 6 - required.Count)
@@ -182,7 +182,7 @@ public class Recruit : GameAction
 		{
 			if (!flag2)
 			{
-				PFLog.Default.Error(this, "Attempted to double-recruit " + data.CompanionBlueprint?.ToString() + " in " + this);
+				Element.LogError(this, "Attempted to double-recruit {0} in {1}", data.CompanionBlueprint, this);
 				return;
 			}
 			if (baseUnitEntity2 != null && !baseUnitEntity2.Faction.IsPlayer)

@@ -5,6 +5,7 @@ using System.Linq;
 using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Code._TmpTechArt;
@@ -63,6 +64,7 @@ using Warhammer.SpaceCombat.StarshipLogic;
 namespace Kingmaker.View.Mechanics.Entities;
 
 [Serializable]
+[KnowledgeDatabaseID("140695237c9c40d0b269732622d8f9fc")]
 public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler, ISubscriber, IResource, IDetectHover, IGameModeHandler, IEntitySubscriber
 {
 	public class LateUpdateDriver : RegisteredObjectBase, ILateUpdatable
@@ -143,6 +145,8 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 
 	[CanBeNull]
 	public RigidbodyCreatureController RigidbodyController;
+
+	public bool HasOverriddenRotatablePart => OverrideRotatablePart != null;
 
 	[CanBeNull]
 	public Character CharacterAvatar { get; set; }

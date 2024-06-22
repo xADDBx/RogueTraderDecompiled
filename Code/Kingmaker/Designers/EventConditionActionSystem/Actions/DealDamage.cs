@@ -37,7 +37,7 @@ public class DealDamage : GameAction
 		return $"Deal damage to {Target} with source {(NoSource ? Target : Source)}\n" + (DisableBattleLog ? "Log disabled" : "Log enabled") + "\n";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		using (ContextData<GameLogDisabled>.RequestIf(DisableBattleLog))
 		{

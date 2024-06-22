@@ -37,21 +37,15 @@ public class UpdateController<T> : IControllerTick, IController, IControllerRese
 
 	void IControllerTick.Tick()
 	{
-		float delta;
+		float deltaTime;
 		switch (m_TickType)
 		{
 		case TickType.BeginOfFrame:
 		case TickType.EndOfFrame:
-			delta = Time.deltaTime;
+			deltaTime = Time.deltaTime;
 			break;
 		case TickType.Simulation:
-			delta = Game.Instance.TimeController.DeltaTime;
-			break;
-		case TickType.Network:
-			delta = Game.Instance.RealTimeController.NetworkDeltaTime;
-			break;
-		case TickType.System:
-			delta = Game.Instance.RealTimeController.SystemDeltaTime;
+			deltaTime = Game.Instance.TimeController.DeltaTime;
 			break;
 		default:
 			throw new ArgumentOutOfRangeException();
@@ -62,7 +56,7 @@ public class UpdateController<T> : IControllerTick, IController, IControllerRese
 		{
 			try
 			{
-				value.Tick(delta);
+				value.Tick(deltaTime);
 			}
 			catch (Exception ex)
 			{

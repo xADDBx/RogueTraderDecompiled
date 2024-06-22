@@ -42,7 +42,7 @@ public class WarhammerContextActionPerformAttack : ContextAction
 	[ShowIf("PerformActionsOnHit")]
 	public ActionList ActionsOnHit;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		MechanicEntity entity = base.Target.Entity;

@@ -33,7 +33,19 @@ public sealed class EpicGamesStorePlatformInvite : IPlatformInvite, IDisposable
 
 	private async void InitJoinCallback()
 	{
-		await EpicGamesManager.Instance.WaitForSignIn();
+		if ((object)EpicGamesManager.Instance == null)
+		{
+			throw new NullReferenceException("EpicGamesManager.Instance is null");
+		}
+		if (!(await EpicGamesManager.Instance.WaitForSignIn()))
+		{
+			PFLog.Net.Error("[EpicGamesStorePlatformInvite.InitJoinCallback] signin failed");
+			return;
+		}
+		if ((object)EpicGamesManager.EOSPresenceInterface == null)
+		{
+			throw new NullReferenceException("EOSPresenceInterface is null");
+		}
 		AddNotifyJoinGameAcceptedOptions options = default(AddNotifyJoinGameAcceptedOptions);
 		m_JoinGameAcceptedHandle = EpicGamesManager.EOSPresenceInterface.AddNotifyJoinGameAccepted(ref options, null, delegate(ref JoinGameAcceptedCallbackInfo data)
 		{
@@ -63,6 +75,11 @@ public sealed class EpicGamesStorePlatformInvite : IPlatformInvite, IDisposable
 		}
 		roomServer = (roomName = null);
 		return false;
+	}
+
+	public bool IsSupportInviteWindow()
+	{
+		return true;
 	}
 
 	public void ShowInviteWindow()

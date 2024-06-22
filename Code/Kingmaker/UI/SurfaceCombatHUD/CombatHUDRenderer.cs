@@ -54,6 +54,8 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 			public CombatHubCollectionAreaSource Source;
 
 			public Texture2D Icon;
+
+			public CombatHudMaterialRemapAsset MaterialRemapAsset;
 		}
 
 		private readonly ObjectPool<CombatHubCollectionAreaSource> m_SourcesPool;
@@ -72,8 +74,9 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 			{
 				results.Add(new AreaSourceData
 				{
-					source = value.Source,
-					icon = value.Icon
+					Source = value.Source,
+					IconTexture = value.Icon,
+					MaterialRemapAsset = value.MaterialRemapAsset
 				});
 			}
 		}
@@ -97,7 +100,8 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 			m_Map[areaEffectEntity] = new Item
 			{
 				Source = combatHubCollectionAreaSource,
-				Icon = areaEffectEntity.Blueprint?.PersistentAreaTexture2D
+				Icon = areaEffectEntity.Blueprint?.PersistentAreaTexture2D,
+				MaterialRemapAsset = areaEffectEntity.Blueprint?.PersistentAreaMaterialRemap
 			};
 		}
 
@@ -526,7 +530,8 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 
 	private void PopulateActiveUnitArea()
 	{
-		if (m_ActiveUnit != null && m_ActiveUnit.IsMyNetRole())
+		BaseUnitEntity activeUnit = m_ActiveUnit;
+		if (activeUnit != null && !activeUnit.IsDisposed && m_ActiveUnit.IsMyNetRole())
 		{
 			m_ActiveUnitAreaValid = true;
 			m_ActiveUnitArea.AddRange(m_ActiveUnit.GetOccupiedNodes());
@@ -572,6 +577,10 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 			return;
 		}
 		m_MovementAreaValid = true;
+		if (movementNodes == null && Game.Instance.UnitMovableAreaController.DeploymentPhase && Game.Instance.UnitMovableAreaController.CurrentUnit == m_ActiveUnit)
+		{
+			movementNodes = Game.Instance.UnitMovableAreaController.CurrentUnitMovableArea;
+		}
 		if (movementNodes == null)
 		{
 			int num = (int)m_ActiveUnit.CombatState.ActionPointsBlue;

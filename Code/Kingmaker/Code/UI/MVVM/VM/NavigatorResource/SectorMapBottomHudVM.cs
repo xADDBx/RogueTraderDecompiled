@@ -37,6 +37,8 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly ReactiveProperty<int> WillChangeNavigatorResourceCount = new ReactiveProperty<int>();
 
+	public int CurrentValueOfResourcesChangeCount;
+
 	public static SectorMapBottomHudVM Instance;
 
 	public SectorMapBottomHudVM()
@@ -44,13 +46,17 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 		AddDisposable(EventBus.Subscribe(this));
 		Instance = this;
 		SetCurrentValue();
-		CheckScanAvailable();
-		IsExitAvailable.Value = UINetUtility.IsControlMainCharacter();
+		CheckPlayerRole();
 		HasAccessStarshipInventory.Value = Game.Instance.Player.CanAccessStarshipInventory;
 		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().Subscribe(delegate
 		{
 			OnUpdateHandler();
 		}));
+	}
+
+	protected override void DisposeImplementation()
+	{
+		Instance = null;
 	}
 
 	private void OnUpdateHandler()
@@ -61,11 +67,12 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 		isDialogActive.Value = blueprintDialog != null && (bool)blueprintDialog;
 	}
 
-	private void CheckScanAvailable()
+	private void CheckPlayerRole()
 	{
 		SectorMapObjectEntity currentStarSystem = Game.Instance.SectorMapController.CurrentStarSystem;
 		bool flag = UINetUtility.IsControlMainCharacter();
 		IsScanAvailable.Value = !currentStarSystem.IsScannedFrom && flag;
+		IsExitAvailable.Value = flag;
 	}
 
 	public void SetCurrentValue()
@@ -102,11 +109,6 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 		Game.Instance.GameCommandQueue.ScanOnSectorMap();
 	}
 
-	protected override void DisposeImplementation()
-	{
-		Instance = null;
-	}
-
 	public void HandleWarpTravelBeforeStart()
 	{
 	}
@@ -120,7 +122,7 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 	public void HandleWarpTravelStopped()
 	{
 		IsTraveling.Value = false;
-		CheckScanAvailable();
+		CheckPlayerRole();
 	}
 
 	public void HandleWarpTravelPaused()
@@ -152,13 +154,14 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public void OnAreaDidLoad()
 	{
-		CheckScanAvailable();
+		CheckPlayerRole();
 		SetCurrentValue();
 		HasAccessStarshipInventory.Value = Game.Instance.Player.CanAccessStarshipInventory;
 	}
 
 	public void HandleChaneNavigatorResourceCount(int count)
 	{
+		CurrentValueOfResourcesChangeCount = count;
 		SetCurrentValue();
 	}
 
@@ -168,7 +171,7 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public void OnAdditiveAreaDidActivated()
 	{
-		CheckScanAvailable();
+		CheckPlayerRole();
 		HasAccessStarshipInventory.Value = Game.Instance.Player.CanAccessStarshipInventory;
 	}
 
@@ -178,8 +181,8 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 		IsWillChangeNavigatorResource.Value = state;
 	}
 
-	public void HandleRoleSet(string entityId)
+	void INetRoleSetHandler.HandleRoleSet(string entityId)
 	{
-		IsExitAvailable.Value = UINetUtility.IsControlMainCharacter();
+		CheckPlayerRole();
 	}
 }

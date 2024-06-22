@@ -64,14 +64,19 @@ public class SectorMapController : IControllerEnable, IController, IControllerTi
 
 	public void OnEnable()
 	{
-		if (Game.Instance.CurrentMode != GameModeType.GlobalMap)
+		if (!(Game.Instance.CurrentMode != GameModeType.GlobalMap))
 		{
-			return;
+			if (!Game.Instance.Player.WarpTravelState.IsInitialized)
+			{
+				Game.Instance.Player.WarpTravelState.Init();
+			}
+			RecalculatePassages();
 		}
-		if (!Game.Instance.Player.WarpTravelState.IsInitialized)
-		{
-			Game.Instance.Player.WarpTravelState.Init();
-		}
+	}
+
+	public void RecalculatePassages()
+	{
+		m_Passages.Clear();
 		foreach (SectorMapPassageEntity item in Game.Instance.State.Entities.OfType<SectorMapPassageEntity>().ToList())
 		{
 			if (item.View?.StarSystem1Entity != null && item.View?.StarSystem2Entity != null)

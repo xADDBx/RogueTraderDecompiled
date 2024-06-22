@@ -31,7 +31,7 @@ public class WarhammerContextActionRestoreActionPoints : ContextAction
 	[HideIf("ActionPointsToMax")]
 	public bool IgnoreActionPointsMaximum;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity mechanicEntity = base.Target?.Entity;
 		if (mechanicEntity == null)

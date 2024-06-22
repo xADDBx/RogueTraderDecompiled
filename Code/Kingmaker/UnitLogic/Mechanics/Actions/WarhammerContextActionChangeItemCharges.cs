@@ -3,6 +3,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.Utility.Attributes;
@@ -58,18 +59,18 @@ public class WarhammerContextActionChangeItemCharges : ContextAction
 		return result;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity mechanicEntity = base.Context.MainTarget?.Entity;
 		if (mechanicEntity == null)
 		{
-			PFLog.Default.Error(this, "Target is missing");
+			Element.LogError(this, "Target is missing");
 			return;
 		}
 		ItemEntity item = GetItem(mechanicEntity, (BlueprintItemEquipment)m_Item, starshipWeaponType);
 		if (item == null)
 		{
-			PFLog.Default.Error(this, "Target has no specified item");
+			Element.LogError(this, "Target has no specified item");
 			return;
 		}
 		switch (m_Type)

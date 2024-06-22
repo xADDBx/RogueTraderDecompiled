@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -15,6 +16,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(BoxCollider))]
+[KnowledgeDatabaseID("b88723ff06f484141a79ce5ca2b23424")]
 public class FogOfWarRevealerTrigger : EntityViewBase, IUpdatable
 {
 	[HashNoGenerate]

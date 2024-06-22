@@ -11,7 +11,7 @@ public class UpdateEtudes : GameAction
 		return $"Обновляет стейт этюдов. Перепроверяет кондишены и подобное";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.EtudesSystem.UpdateEtudes();
 	}

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
@@ -9,6 +8,7 @@ using Kingmaker.Code.UI.MVVM.View.Vendor.Console;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -23,6 +23,14 @@ namespace Kingmaker.Code.UI.MVVM.View.Vendor;
 
 public class VendorConsoleView : VendorView<InventoryStashConsoleView, InventoryCargoConsoleView, ItemsFilterConsoleView, VendorLevelItemsConsoleView, VendorTransitionWindowConsoleView, VendorReputationForItemWindowConsoleView>
 {
+	[Header("TooltipPlaces")]
+	[SerializeField]
+	private TooltipPlaces m_StashTooltipPlaces;
+
+	[SerializeField]
+	private TooltipPlaces m_CenterTooltipPlaces;
+
+	[Header("Console")]
 	[SerializeField]
 	private ConsoleHintsWidget m_HintsWidget;
 
@@ -31,8 +39,6 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 
 	[SerializeField]
 	private ConsoleHint m_PrevWindowHint;
-
-	private IConsoleEntity m_CurrentSelectedEntity;
 
 	private InputLayer m_InputLayer;
 
@@ -65,6 +71,16 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 	private List<IDisposable> m_DisposableVendorBinds = new List<IDisposable>();
 
 	private List<IDisposable> m_Disposables = new List<IDisposable>();
+
+	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
+
+	private TooltipConfig m_CompareTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.None
+	};
 
 	private IDisposable m_UpdateBindsDelay;
 
@@ -105,6 +121,10 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		{
 			UpdateBindsDelayed();
 		}));
+		if (m_VendorReputationPartPCView is VendorReputationPartConsoleView vendorReputationPartConsoleView2)
+		{
+			AddDisposable(vendorReputationPartConsoleView2.OnNeedRefocus.Subscribe(NeededRefocus));
+		}
 	}
 
 	private void CreateNavigation()
@@ -264,6 +284,14 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
 	}
 
+	private void NeededRefocus()
+	{
+		if (m_VendorReputationPartPCView is VendorReputationPartConsoleView vendorReputationPartConsoleView)
+		{
+			m_NavigationBehaviour.FocusOnEntityManual(vendorReputationPartConsoleView.NavigationBehaviour);
+		}
+	}
+
 	private void ToggleTooltip(InputActionEventData data)
 	{
 		m_ShowTooltip.Value = !m_ShowTooltip.Value;
@@ -273,6 +301,7 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 	private void HandleTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
+		UpdateTooltipConfigs();
 		if (entity == null)
 		{
 			m_HasTooltip.Value = false;
@@ -291,11 +320,11 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 				MonoBehaviour tooltipPlace = simpleConsoleNavigationEntity.GetTooltipPlace();
 				if ((bool)tooltipPlace)
 				{
-					tooltipPlace.ShowConsoleTooltip(simpleConsoleNavigationEntity.TooltipTemplate(), m_NavigationBehaviour);
+					tooltipPlace.ShowConsoleTooltip(simpleConsoleNavigationEntity.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 				}
 				else
 				{
-					monoBehaviour.ShowConsoleTooltip(simpleConsoleNavigationEntity.TooltipTemplate(), m_NavigationBehaviour);
+					monoBehaviour.ShowConsoleTooltip(simpleConsoleNavigationEntity.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 				}
 			}
 		}
@@ -304,7 +333,7 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
@@ -315,11 +344,12 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 			{
 				if (list.Count > 1)
 				{
-					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates());
+					m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
+					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
 				}
 				else
 				{
-					monoBehaviour.ShowConsoleTooltip(list.ElementAt(0), m_NavigationBehaviour);
+					monoBehaviour.ShowConsoleTooltip(list.LastOrDefault(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: false, showScrollbar: true);
 				}
 			}
 		}
@@ -329,12 +359,19 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		}
 	}
 
+	private void UpdateTooltipConfigs()
+	{
+		TooltipPlaces tooltipPlaces = (IsPlayerStashSelected.Value ? m_StashTooltipPlaces : m_CenterTooltipPlaces);
+		m_MainTooltipConfig = tooltipPlaces.GetMainTooltipConfig(m_MainTooltipConfig);
+		m_CompareTooltipConfig = tooltipPlaces.GetCompareTooltipConfig(m_CompareTooltipConfig);
+	}
+
 	private void CreateInput()
 	{
 		DisposeVendorBind();
 		InputBindStruct inputBindStruct = m_InputLayer.AddButton(delegate
 		{
-			base.ViewModel.Close();
+			OnDeclineClick();
 		}, 9);
 		m_DisposableVendorBinds.Add(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.CloseWindow));
 		m_DisposableVendorBinds.Add(inputBindStruct);
@@ -392,7 +429,6 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 
 	private void SetupNewFilterSelected(IConsoleEntity currentFocus)
 	{
-		m_CurrentSelectedEntity = currentFocus;
 		InventorySlotConsoleView inventorySlotConsoleView = currentFocus as InventorySlotConsoleView;
 		if ((bool)inventorySlotConsoleView && inventorySlotConsoleView.SlotVM.SlotsGroupType == ItemSlotsGroupType.Inventory && m_VendorTabNavigation.CurrentTab.Value == VendorWindowsTab.Trade)
 		{
@@ -445,5 +481,18 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		DisposeReputationBind();
 		TooltipHelper.HideTooltip();
 		base.DestroyViewImplementation();
+	}
+
+	private void OnDeclineClick()
+	{
+		TooltipHelper.HideTooltip();
+		if (m_HasTooltip.Value && m_ShowTooltip.Value)
+		{
+			m_ShowTooltip.Value = false;
+		}
+		else
+		{
+			base.ViewModel.Close();
+		}
 	}
 }

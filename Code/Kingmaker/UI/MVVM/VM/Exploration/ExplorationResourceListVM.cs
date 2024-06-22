@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Common.PlanetState;
 using Kingmaker.Globalmap.Blueprints.Colonization;
+using Kingmaker.Globalmap.Interaction;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -10,7 +11,7 @@ using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.Exploration;
 
-public class ExplorationResourceListVM : ExplorationComponentBaseVM, IMiningUIHandler, ISubscriber
+public class ExplorationResourceListVM : ExplorationComponentBaseVM, IMiningUIHandler, ISubscriber, IExplorationHandler
 {
 	public readonly AutoDisposingList<ExplorationResourceVM> CurrentResourcesVMs = new AutoDisposingList<ExplorationResourceVM>();
 
@@ -74,6 +75,11 @@ public class ExplorationResourceListVM : ExplorationComponentBaseVM, IMiningUIHa
 	}
 
 	void IMiningUIHandler.HandleStopMining(StarSystemObjectEntity starSystemObjectEntity, BlueprintResource blueprintResource)
+	{
+		UpdateCurrentResourcesVMs();
+	}
+
+	public void HandlePointOfInterestInteracted(BasePointOfInterest pointOfInterest)
 	{
 		UpdateCurrentResourcesVMs();
 	}

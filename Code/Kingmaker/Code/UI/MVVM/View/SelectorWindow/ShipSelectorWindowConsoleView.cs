@@ -8,6 +8,7 @@ using Kingmaker.Localization;
 using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 using Owlcat.Runtime.UI.ConsoleTools;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using UniRx;
 using UnityEngine;
 
@@ -39,14 +40,12 @@ public class ShipSelectorWindowConsoleView : SelectorWindowConsoleView<ShipCompo
 		{
 			CanEquip.Value = !value;
 		}));
-		AddDisposable(m_ConsoleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = m_InputLayer.AddButton(delegate
 		{
 			Unequip();
-		}, 11, m_SelectedEquipped), UIStrings.Instance.ContextMenu.TakeOff));
-		AddDisposable(m_ConsoleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
-		{
-			ShowCurrentInstoledInfo();
-		}, 19, m_NeedShowInfo), UIStrings.Instance.ContextMenu.Information));
+		}, 11, m_SelectedEquipped);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct, UIStrings.Instance.ContextMenu.TakeOff));
+		AddDisposable(inputBindStruct);
 	}
 
 	protected override void DestroyViewImplementation()

@@ -12,9 +12,9 @@ public class TooltipBrickTextVM : TooltipBaseBrickVM
 
 	public readonly TooltipTextAlignment Alignment;
 
-	public bool NeedChangeSize;
+	public readonly bool NeedChangeSize;
 
-	public int TextSize;
+	public readonly int TextSize;
 
 	public TooltipBrickTextVM(string text, TooltipTextType type, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool isHeader = false, bool needChangeSize = false, int textSize = 18)
 	{

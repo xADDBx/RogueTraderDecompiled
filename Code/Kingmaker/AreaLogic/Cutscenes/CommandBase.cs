@@ -70,8 +70,6 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 
 	public virtual bool IsContinuous => false;
 
-	public virtual bool CanBeSkipped => !IsContinuous;
-
 	protected abstract void OnRun(CutscenePlayerData player, bool skipping);
 
 	protected abstract void OnSetTime(double time, CutscenePlayerData player);
@@ -93,8 +91,9 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 		return null;
 	}
 
-	public virtual void SkipByPlayer()
+	public virtual bool TrySkip(CutscenePlayerData player)
 	{
+		return !IsContinuous;
 	}
 
 	protected virtual void OnStop(CutscenePlayerData player)
@@ -161,7 +160,7 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 	{
 	}
 
-	public bool TryPrepareForStop(CutscenePlayerData player)
+	public virtual bool TryPrepareForStop(CutscenePlayerData player)
 	{
 		if (IsContinuous || !IsFinished(player))
 		{

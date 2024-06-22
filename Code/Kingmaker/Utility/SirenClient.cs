@@ -31,7 +31,7 @@ public class SirenClient
 				reportSendParameters.ToString()
 			} };
 			client.QueryString = queryString;
-			string address = await SirenAddressFinder.GetReportServerAddressAsync(token) + "/report";
+			string address = "https://report.owlcat.games/report";
 			byte[] bytes = await client.UploadFileTaskAsync(address, "POST", reportFileName);
 			string @string = Encoding.UTF8.GetString(bytes);
 			try
@@ -58,9 +58,8 @@ public class SirenClient
 			client.Headers[HttpRequestHeader.ContentType] = "application/json";
 			ServicePointManager.ServerCertificateValidationCallback = (object _, X509Certificate _, X509Chain _, SslPolicyErrors _) => true;
 			string data = JsonConvert.SerializeObject(request);
-			string sirenAddress = SirenAddressFinder.GetSirenAddress();
-			sirenAddress += "/api/tickets";
-			return JsonConvert.DeserializeObject<FindTicketsResponse>(await client.UploadStringTaskAsync(sirenAddress, data));
+			string address = "http://siren.owlcat.local/api/tickets";
+			return JsonConvert.DeserializeObject<FindTicketsResponse>(await client.UploadStringTaskAsync(address, data));
 		}
 	}
 

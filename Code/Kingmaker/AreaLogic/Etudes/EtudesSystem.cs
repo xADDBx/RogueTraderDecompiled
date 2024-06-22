@@ -138,7 +138,7 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 		return value == EtudeState.PreCompleted;
 	}
 
-	private EtudeState GetSavedState(BlueprintEtude bp)
+	public EtudeState GetSavedState(BlueprintEtude bp)
 	{
 		m_EtudesData.TryGetValue(bp, out var value);
 		return value;
@@ -181,6 +181,7 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 	protected override void OnDidPostLoad()
 	{
 		Etudes.FixupEtudesTree(this);
+		Etudes.CheckEtudeHierarchyForErrors();
 	}
 
 	public void OnAreaBeginUnloading()

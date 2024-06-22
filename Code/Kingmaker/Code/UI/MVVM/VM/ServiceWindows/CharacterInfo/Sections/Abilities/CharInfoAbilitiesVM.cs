@@ -26,7 +26,7 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 
 	public SurfaceActionBarPartAbilitiesVM ActionBarPartAbilitiesVM;
 
-	public BoolReactiveProperty ChooseAbilityMode = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty ChooseAbilityMode = new BoolReactiveProperty();
 
 	public int TargetSlotIndex = -1;
 
@@ -74,7 +74,7 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		return new ValueTuple<List<Ability>, string>(item2: string.Format(arg0: Unit.Value.Facts.List.FirstOrDefault((EntityFact f) => f.Blueprint is BlueprintCareerPath blueprintCareerPath && blueprintCareerPath.Tier == tier)?.Name, format: Strings.CareerAbilities), item1: source.ToList());
 		bool HasTier(Ability ability)
 		{
-			BlueprintCareerPath obj = ability.FirstSource?.Fact?.FirstSource?.PathFeatureSource as BlueprintCareerPath;
+			BlueprintCareerPath obj = ability.FirstSource?.Fact?.FirstSource?.Path as BlueprintCareerPath;
 			if (obj == null)
 			{
 				return false;
@@ -85,12 +85,12 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 
 	private CharInfoFeatureGroupVM ToFeatureGroup(List<Ability> abilities, string name)
 	{
-		return new CharInfoFeatureGroupVM(abilities.Select((Ability a) => new CharInfoFeatureVM(a, Unit.Value)).ToList(), name, name);
+		return new CharInfoFeatureGroupVM(abilities.Select((Ability a) => new CharInfoFeatureVM(a, Unit.Value)).ToList(), name, CharInfoFeatureGroupVM.FeatureGroupType.Abilities, name);
 	}
 
 	private CharInfoFeatureGroupVM ToFeatureGroup(List<Feature> features, string name)
 	{
-		return new CharInfoFeatureGroupVM(features.Select((Feature f) => new CharInfoFeatureVM(f, Unit.Value)).ToList(), name, name);
+		return new CharInfoFeatureGroupVM(features.Select((Feature f) => new CharInfoFeatureVM(f, Unit.Value)).ToList(), name, CharInfoFeatureGroupVM.FeatureGroupType.Talents, name);
 	}
 
 	private List<Ability> GetItemsAndSoulMarksAbilities()
@@ -147,7 +147,7 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		return new ValueTuple<List<Feature>, string>(item2: string.Format(arg0: Unit.Value.Facts.List.FirstOrDefault((EntityFact f) => f.Blueprint is BlueprintCareerPath blueprintCareerPath && blueprintCareerPath.Tier == tier)?.Name, format: Strings.CareerAbilities), item1: source.ToList());
 		bool HasTier(Feature feature)
 		{
-			BlueprintCareerPath obj = (feature.Blueprint as BlueprintCareerPath) ?? (feature.FirstSource?.PathFeatureSource as BlueprintCareerPath);
+			BlueprintCareerPath obj = (feature.Blueprint as BlueprintCareerPath) ?? (feature.FirstSource?.Path as BlueprintCareerPath);
 			if (obj == null)
 			{
 				return false;

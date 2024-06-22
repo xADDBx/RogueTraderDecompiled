@@ -19,7 +19,7 @@ public class ForcePlaceUnitAboveGround : GameAction
 		return $"Force place above ground {Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (Unit.TryGetValue(out var value))
 		{

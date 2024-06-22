@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -26,18 +27,18 @@ public class WarhammerContextActionApplyBuffToPriorityTarget : ContextAction
 
 	public BlueprintBuff TargetBuff => m_TargetBuff?.Get();
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)
 		{
-			PFLog.Default.Error(this, "Unable to apply buff: no context found");
+			Element.LogError(this, "Unable to apply buff: no context found");
 			return;
 		}
 		BaseUnitEntity baseUnitEntity = mechanicsContext.MaybeCaster?.GetOptional<UnitPartPriorityTarget>()?.GetPriorityTarget(TargetBuff);
 		if (baseUnitEntity == null)
 		{
-			PFLog.Default.Error(this, "Can't apply buff: target is null");
+			Element.LogError(this, "Can't apply buff: target is null");
 			return;
 		}
 		Rounds? rounds = (Permanent ? null : new Rounds?(DurationValue.Calculate(mechanicsContext)));

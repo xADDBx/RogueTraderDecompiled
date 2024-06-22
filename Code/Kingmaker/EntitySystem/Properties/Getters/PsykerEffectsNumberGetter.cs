@@ -32,8 +32,9 @@ public class PsykerEffectsNumberGetter : PropertyGetter, PropertyContextAccessor
 		return source.Count();
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Count number of buffs from Psyker powers";
+		string text = (OnlyFromCaster ? (" from " + Caster.Colorized()) : "");
+		return "Count number of buffs from Psyker powers on " + FormulaTargetScope.Current + text;
 	}
 }

@@ -26,6 +26,10 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool Failed;
 
+	public abstract StatType Skill { get; }
+
+	public abstract InteractionActorType Type { get; }
+
 	public virtual bool ShowInteractFx => false;
 
 	public int? RequiredItemsCount
@@ -42,19 +46,28 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public BlueprintItem RequiredItem => base.Settings?.GetItem();
 
-	public abstract StatType Skill { get; }
-
 	public bool InteractOnlyByNotInteractedUnit => Game.Instance.BlueprintRoot.Interaction.GlobalSkillCheckRestrictionSettings.CheckInteractOnlyByNotInteractedUnit(base.Settings.GetSkill());
 
 	public new MapObjectView View => (MapObjectView)base.View;
 
 	public new MapObjectEntity Owner => (MapObjectEntity)base.Owner;
 
-	public int? InteractionDC => base.Settings?.DC;
-
-	public abstract InteractionActorType Type { get; }
+	public int? InteractionDC => base.Settings?.GetDC();
 
 	public InteractionPart InteractionPart => Owner.GetAll<InteractionPart>().FirstOrDefault();
+
+	public bool CheckOnlyOnce => false;
+
+	public bool CanUse => true;
+
+	protected virtual bool ShouldRestrictAfterFail(BaseUnitEntity user)
+	{
+		if (base.Settings.InteractOnlyWithToolIfFailed)
+		{
+			return base.Settings.GetItem() == null;
+		}
+		return false;
+	}
 
 	protected override string GetDefaultBark(BaseUnitEntity user, bool restricted)
 	{
@@ -71,29 +84,16 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 		{
 			return -1;
 		}
-		if (user.Stats.GetStat(base.Settings.GetSkill()).ModifiedValue <= 0 && !Game.Instance.Player.CapitalPartyMode)
+		if ((user.Stats.GetStat(base.Settings.GetSkill())?.ModifiedValue ?? 0) <= 0 && !Game.Instance.Player.CapitalPartyMode)
 		{
 			return -1;
 		}
 		return user.Stats.GetStat(base.Settings.GetSkill());
 	}
 
-	protected virtual bool ShouldRestrictAfterFail(BaseUnitEntity user)
-	{
-		if (base.Settings.InteractOnlyWithToolIfFailed)
-		{
-			return base.Settings.GetItem() == null;
-		}
-		return false;
-	}
-
 	public override bool CheckRestriction(BaseUnitEntity user)
 	{
-		if (IsDisabled)
-		{
-			return true;
-		}
-		if (Unlocked)
+		if (IsDisabled || Unlocked)
 		{
 			return true;
 		}
@@ -143,7 +143,7 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	private bool CheckRestrictionInternal(BaseUnitEntity user)
 	{
-		int difficulty = ((DCOverride == 0) ? base.Settings.DC : DCOverride);
+		int difficulty = ((DCOverride == 0) ? base.Settings.GetDC() : DCOverride);
 		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(user, base.Settings.GetSkill(), difficulty)
 		{
 			Voice = RulePerformSkillCheck.VoicingType.All
@@ -170,7 +170,7 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 		if (isNewSettings)
 		{
 			Unlocked = base.Settings.StartUnlocked;
-			DCOverride = ((base.Settings.DC != 0 && !base.Settings.Exact) ? (base.Settings.DC + InteractionSkillCheckPart.RandomDCMod(Owner.UniqueId)) : 0);
+			DCOverride = base.Settings.GetDC();
 		}
 	}
 

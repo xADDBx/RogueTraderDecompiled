@@ -12,6 +12,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -21,7 +22,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization;
 
-public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipComponentSlotVM>, IShipCustomizationUIHandler, ISubscriber, IHasTooltipTemplates, INewSlotsHandler, IVoidShipRotationHandler, IItemSlotView where TItemSlotView : ItemSlotBaseView
+public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipComponentSlotVM>, IShipCustomizationUIHandler, ISubscriber, IHasTooltipTemplates, INewSlotsHandler, IVoidShipRotationHandler where TItemSlotView : ItemSlotBaseView
 {
 	[Header("Common")]
 	[SerializeField]
@@ -51,6 +52,9 @@ public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipCompone
 	[SerializeField]
 	private GameObject[] m_ShipLines;
 
+	[SerializeField]
+	private GameObject m_ArsenalAdvancement;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -60,9 +64,10 @@ public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipCompone
 			m_EmptyPlaceholder.SetActive(value == null);
 		}));
 		AddDisposable(m_EmptyPlaceholderButton.SetHint(SetupHint(base.ViewModel.SlotType)));
-		AddDisposable(base.ViewModel.IsLocked.Subscribe(delegate(bool val)
+		AddDisposable(base.ViewModel.IsLocked.Subscribe(m_LockState.SetActive));
+		AddDisposable(base.ViewModel.HasArsenalAdvancement.Subscribe(delegate(bool value)
 		{
-			m_LockState.SetActive(val);
+			m_ArsenalAdvancement.Or(null)?.SetActive(value);
 		}));
 		if (m_PossibleTargetHighlight != null)
 		{
@@ -184,6 +189,9 @@ public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipCompone
 		case ShipComponentSlotType.Starboard:
 			m_ShortDescription.text = UIStrings.Instance.ShipCustomization.Starboard.Text;
 			return UIStrings.Instance.ShipCustomization.Starboard;
+		case ShipComponentSlotType.Arsenal:
+			m_ShortDescription.text = UIStrings.Instance.ShipCustomization.Arsenal.Text;
+			return UIStrings.Instance.ShipCustomization.Arsenal;
 		default:
 			return string.Empty;
 		}
@@ -248,7 +256,7 @@ public class ShipComponentSlotBaseView<TItemSlotView> : ItemSlotView<ShipCompone
 		};
 	}
 
-	protected bool TryUnequip()
+	private bool TryUnequip()
 	{
 		return InventoryHelper.TryUnequip(base.ViewModel);
 	}

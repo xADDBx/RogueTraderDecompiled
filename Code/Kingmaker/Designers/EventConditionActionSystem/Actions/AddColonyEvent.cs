@@ -27,7 +27,7 @@ public class AddColonyEvent : GameAction
 		return $"Add colony event {Event} to {Planet}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ColoniesGenerator.AddEventToColony(Event, Planet);
 	}

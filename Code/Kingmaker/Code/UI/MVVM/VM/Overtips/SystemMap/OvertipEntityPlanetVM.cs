@@ -124,7 +124,10 @@ public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISu
 		}
 		Dictionary<BlueprintResource, int> resources = data.ResourcesOnObject;
 		List<ColoniesState.MinerData> miners = Game.Instance.Player.ColoniesState.Miners;
-		List<ColoniesState.MinerData> minersResourcesPlanet = miners.Where((ColoniesState.MinerData m) => m.Sso == planetView.Data.Blueprint && resources.ContainsKey(m.Resource)).ToList();
+		List<ColoniesState.MinerData> minersResourcesPlanet = (from m in miners
+			where m.Sso == planetView.Data.Blueprint && resources.ContainsKey(m.Resource)
+			group m by m.Resource into @group
+			select @group.FirstOrDefault()).ToList();
 		Dictionary<BlueprintResource, int> dictionary = resources.Where((KeyValuePair<BlueprintResource, int> pair) => minersResourcesPlanet.All((ColoniesState.MinerData miner) => miner.Resource != pair.Key)).ToDictionary((KeyValuePair<BlueprintResource, int> pair) => pair.Key, (KeyValuePair<BlueprintResource, int> pair) => pair.Value);
 		AddResourceInfo(dictionary);
 		AddExtractorResourceInfo(minersResourcesPlanet);

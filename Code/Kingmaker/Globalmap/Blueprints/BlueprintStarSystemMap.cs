@@ -8,6 +8,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.GameModes;
+using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Localization;
 using Newtonsoft.Json;
@@ -50,6 +51,9 @@ public class BlueprintStarSystemMap : BlueprintArea
 
 	[SerializeField]
 	public List<BlueprintArtificialObject.Reference> OtherObjects;
+
+	[SerializeField]
+	public List<BlueprintAnomaly.Reference> Anomalies;
 
 	[SerializeField]
 	private List<ConditionToImage> m_SystemScreenshots;

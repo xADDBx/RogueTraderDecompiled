@@ -177,7 +177,7 @@ public class ClickMapObjectHandler : IClickEventHandler
 		{
 			warning = reasons.NotEnoughActionPoints.Text;
 		}
-		if (unit != null && !interaction.IsEnoughCloseForInteraction(unit))
+		if (unit != null && !interaction.IsEnoughCloseForInteractionFromDesiredPosition(unit))
 		{
 			warning = reasons.InteractionIsTooFar.Text;
 		}

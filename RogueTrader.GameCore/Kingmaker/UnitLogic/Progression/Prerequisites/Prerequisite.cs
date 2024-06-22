@@ -1,4 +1,5 @@
 using System;
+using Code.GameCore.ElementsSystem;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
@@ -18,12 +19,25 @@ public abstract class Prerequisite : Element, IFeaturePrerequisite
 
 	public bool Meet([NotNull] IBaseUnitEntity unit)
 	{
-		bool flag = MeetsInternal(unit);
-		if (!Not)
+		return Meet(null, unit);
+	}
+
+	public bool Meet([CanBeNull] ElementsList list, [NotNull] IBaseUnitEntity unit)
+	{
+		using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(list, this);
+		try
 		{
-			return flag;
+			bool flag = MeetsInternal(unit);
+			bool flag2 = (Not ? (!flag) : flag);
+			elementsDebugger?.SetResult(flag2 ? 1 : 0);
+			return flag2;
 		}
-		return !flag;
+		catch (Exception exception)
+		{
+			Element.LogException(exception);
+			elementsDebugger?.SetException(exception);
+			throw;
+		}
 	}
 
 	public override string GetCaption()

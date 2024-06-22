@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Settings.Entities;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DisposableExtension;
@@ -40,13 +41,8 @@ public class SettingsEntitySliderPCView : SettingsEntityWithValueView<SettingsEn
 		{
 			LabelSliderValue.gameObject.SetActive(value: true);
 			int num3 = ((!base.ViewModel.IsInt) ? base.ViewModel.DecimalPlaces : 0);
-			float num4 = 0f - base.ViewModel.GetTempValue();
-			int num5 = (base.ViewModel.ChangeDirection ? 1 : (-1));
-			LabelSliderValue.text = (num4 * (float)num5).ToString($"F{num3}").Replace(",", ".");
-			if (base.ViewModel.IsPercentage)
-			{
-				LabelSliderValue.text += "%";
-			}
+			string labelSliderValue = ((0f - base.ViewModel.GetTempValue()) * (float)(base.ViewModel.ChangeDirection ? 1 : (-1))).ToString($"F{num3}").Replace(",", ".");
+			SetLabelSliderValue(labelSliderValue);
 		}
 		else
 		{
@@ -84,19 +80,23 @@ public class SettingsEntitySliderPCView : SettingsEntityWithValueView<SettingsEn
 		if (base.ViewModel.ShowValueText)
 		{
 			int num = ((!base.ViewModel.IsInt) ? base.ViewModel.DecimalPlaces : 0);
-			float num2 = 0f - settingValue;
-			int num3 = (base.ViewModel.ChangeDirection ? 1 : (-1));
-			LabelSliderValue.text = (num2 * (float)num3).ToString($"F{num}").Replace(",", ".");
-			if (base.ViewModel.IsPercentage)
-			{
-				LabelSliderValue.text += "%";
-			}
+			string labelSliderValue = ((0f - settingValue) * (float)(base.ViewModel.ChangeDirection ? 1 : (-1))).ToString($"F{num}").Replace(",", ".");
+			SetLabelSliderValue(labelSliderValue);
 		}
 		if (!m_ChangingFromUI)
 		{
 			float sliderValueFromSetting = GetSliderValueFromSetting(settingValue);
 			Slider.value = sliderValueFromSetting;
 		}
+	}
+
+	private void SetLabelSliderValue(string value)
+	{
+		if (base.ViewModel.IsPercentage)
+		{
+			value = UIConfig.Instance.PercentHelper.AddPercentTo(value);
+		}
+		LabelSliderValue.text = value;
 	}
 
 	public override void OnModificationChanged(string reason, bool allowed = true)

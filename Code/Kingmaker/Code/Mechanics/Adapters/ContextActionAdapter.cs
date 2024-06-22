@@ -36,7 +36,7 @@ public class ContextActionAdapter : GameAction
 		return $"Setup context: Caster [{Caster}]; Target [{TargetEntity}, {TargetPosition}]";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Owner is BlueprintScriptableObject blueprint))
 		{

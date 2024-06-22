@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.VM.Colonization.Projects;
@@ -18,6 +19,12 @@ public class ColonyProjectBaseView : ViewBase<ColonyProjectVM>, IWidgetView
 	private TextMeshProUGUI m_Label;
 
 	[SerializeField]
+	private TextMeshProUGUI m_OtherProjectIsBuildingLabel;
+
+	[SerializeField]
+	private TextMeshProUGUI m_RequirementsNotMetLabel;
+
+	[SerializeField]
 	private Image m_Icon;
 
 	[SerializeField]
@@ -33,6 +40,8 @@ public class ColonyProjectBaseView : ViewBase<ColonyProjectVM>, IWidgetView
 
 	protected override void BindViewImplementation()
 	{
+		m_OtherProjectIsBuildingLabel.text = UIStrings.Instance.ColonyProjectsTexts.OtherProjectIsBuilding.Text;
+		m_RequirementsNotMetLabel.text = UIStrings.Instance.ColonyProjectsTexts.ProjectRequirementsNotMet.Text;
 		AddDisposable(base.ViewModel.Title.Subscribe(delegate(string val)
 		{
 			m_Label.text = val;
@@ -43,6 +52,8 @@ public class ColonyProjectBaseView : ViewBase<ColonyProjectVM>, IWidgetView
 		}));
 		AddDisposable(base.ViewModel.IsExcluded.CombineLatest(base.ViewModel.OtherProjectIsBuilding, base.ViewModel.IsNotMeetRequirements, base.ViewModel.IsFinished, base.ViewModel.IsBuilding, (bool isExcluded, bool otherProjectIsBuilding, bool isNotMeetRequirements, bool isFinished, bool isBuilding) => new { isExcluded, otherProjectIsBuilding, isNotMeetRequirements, isFinished, isBuilding }).Subscribe(value =>
 		{
+			m_OtherProjectIsBuildingLabel.gameObject.SetActive(!value.isExcluded && !value.isBuilding && value.otherProjectIsBuilding);
+			m_RequirementsNotMetLabel.gameObject.SetActive(!value.isExcluded && !value.otherProjectIsBuilding && value.isNotMeetRequirements);
 			SetVisualState(value.isExcluded, value.otherProjectIsBuilding, value.isNotMeetRequirements, value.isFinished, value.isBuilding);
 		}));
 		AddDisposable(base.ViewModel.SegmentsToBuild.Subscribe(delegate(int val)

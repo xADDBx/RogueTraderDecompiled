@@ -18,7 +18,7 @@ public class ScriptZoneDeactivate : GameAction
 	[ValidateNotEmpty]
 	public EntityReference ScriptZone;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ScriptZone scriptZone = ScriptZone.FindView() as ScriptZone;
 		if ((bool)scriptZone)

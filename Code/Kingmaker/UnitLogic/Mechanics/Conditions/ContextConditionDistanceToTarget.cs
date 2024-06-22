@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 
@@ -19,12 +20,12 @@ public class ContextConditionDistanceToTarget : ContextCondition
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		if (maybeCaster == null)
 		{
-			PFLog.Default.Error("Caster is missing");
+			Element.LogError(this, "Caster is missing");
 			return false;
 		}
 		if (base.Target.Entity == null)
 		{
-			PFLog.Default.Error("Target unit is missing");
+			Element.LogError(this, "Target unit is missing");
 			return false;
 		}
 		if (base.Target.Entity == maybeCaster)

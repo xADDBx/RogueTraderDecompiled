@@ -16,8 +16,6 @@ namespace Kingmaker.Code.UI.MVVM.View.SurfaceCombat;
 
 public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUnitVM> where TCombatUnitVM : SurfaceCombatUnitVM
 {
-	private bool m_IsInit;
-
 	[SerializeField]
 	protected OwlcatMultiButton Button;
 
@@ -70,6 +68,8 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 
 	private UIUtilityUnit.UnitFractionViewMode m_FractionViewMode;
 
+	private bool m_IsInit;
+
 	[HideInInspector]
 	public bool WillBeReused { get; set; }
 
@@ -79,7 +79,7 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 		{
 			if ((bool)m_NameNormal)
 			{
-				m_NameNormal.text = "";
+				m_NameNormal.text = string.Empty;
 			}
 			m_CharacetrPortraitZone.Hide();
 			m_NoPortraitZone.Hide();
@@ -124,19 +124,11 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 				SetupUnableToAct();
 			}));
 		}
-		if (base.ViewModel.IsSquad)
+		AddDisposable(base.ViewModel.UnitHealthPartVM.Subscribe(delegate(UnitHealthPartVM h)
 		{
-			UnitHealthPartTextPCView.Bind(null);
-			UnitHealthPartProgressPCView.Bind(null);
-		}
-		else
-		{
-			AddDisposable(base.ViewModel.UnitHealthPartVM.Subscribe(delegate(UnitHealthPartVM h)
-			{
-				UnitHealthPartTextPCView.Bind(h);
-				UnitHealthPartProgressPCView.Bind(h);
-			}));
-		}
+			UnitHealthPartTextPCView.Bind(h);
+			UnitHealthPartProgressPCView.Bind(h);
+		}));
 		if (Button != null)
 		{
 			AddDisposable(Button.OnLeftDoubleClickAsObservable().Subscribe(delegate
@@ -148,6 +140,20 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 				base.ViewModel.HandleUnitClick();
 			}));
 		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		if (m_NameNormal != null)
+		{
+			m_NameNormal.text = string.Empty;
+		}
+		if (!WillBeReused)
+		{
+			m_NoPortraitZone.Hide();
+			m_CharacetrPortraitZone.Hide();
+		}
+		UILog.ViewUnbinded("InitiativeTrackerUnitNPCView");
 	}
 
 	private void SetupUnableToAct()
@@ -193,25 +199,11 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 		}
 	}
 
-	protected void SetupName()
+	private void SetupName()
 	{
 		if (m_NameNormal != null)
 		{
 			m_NameNormal.text = base.ViewModel.DisplayName;
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		if (m_NameNormal != null)
-		{
-			m_NameNormal.text = "";
-		}
-		if (!WillBeReused)
-		{
-			m_NoPortraitZone.Hide();
-			m_CharacetrPortraitZone.Hide();
-		}
-		UILog.ViewUnbinded("InitiativeTrackerUnitNPCView");
 	}
 }

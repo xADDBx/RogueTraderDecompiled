@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
@@ -8,15 +7,21 @@ using Kingmaker.DLC;
 using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Platforms;
+using Kingmaker.Networking.Player;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
+using Photon.Realtime;
 using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.NetLobby;
 
-public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetDLCsHandler, ISubscriber, INetLobbyPlayersHandler
 {
 	public readonly BoolReactiveProperty IsMe = new BoolReactiveProperty(initialValue: false);
 
@@ -32,24 +37,34 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveProperty<string> Name = new ReactiveProperty<string>();
 
-	private PhotonActorNumber m_UserNumber;
+	public readonly ReactiveProperty<string> UserId = new ReactiveProperty<string>();
+
+	private readonly ReactiveProperty<PhotonActorNumber> m_UserNumber = new ReactiveProperty<PhotonActorNumber>();
 
 	private readonly ReactiveProperty<NetLobbyInvitePlayerDifferentPlatformsVM> m_DifferentPlatformInviteVM;
 
 	public readonly BoolReactiveProperty EpicGamesAuthorized;
 
-	public readonly StringReactiveProperty PlayerDLcList = new StringReactiveProperty();
+	public readonly StringReactiveProperty PlayerDLcStringList = new StringReactiveProperty();
+
+	public readonly GamerTagAndNameVM GamerTagAndNameVM;
+
+	public readonly StringReactiveProperty PlayersDifferentDlcs = new StringReactiveProperty();
 
 	public NetLobbyPlayerVM(ReactiveProperty<NetLobbyInvitePlayerDifferentPlatformsVM> differentPlatformInviteVM, BoolReactiveProperty epicGamesAuthorized)
 	{
 		m_DifferentPlatformInviteVM = differentPlatformInviteVM;
 		EpicGamesAuthorized = epicGamesAuthorized;
+		AddDisposable(GamerTagAndNameVM = new GamerTagAndNameVM(UserId, m_UserNumber, Name));
 		ClearPlayer();
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected NetLobbyPlayerVM()
 	{
+		AddDisposable(GamerTagAndNameVM = new GamerTagAndNameVM(UserId, m_UserNumber, Name));
 		ClearPlayer();
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DisposeImplementation()
@@ -59,14 +74,16 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public void ClearPlayer()
 	{
 		IsEmpty.Value = true;
-		PlayerDLcList.Value = string.Empty;
+		PlayerDLcStringList.SetValueAndForceNotify(string.Empty);
 		IsMe.Value = false;
 		IsMeHost.Value = PhotonManager.Instance != null && PhotonManager.Instance.IsRoomOwner;
 		IsPlaying.Value = PhotonManager.Instance != null && PhotonManager.NetGame.CurrentState == NetGame.State.Playing;
 		IsActive.Value = true;
-		m_UserNumber = PhotonActorNumber.Invalid;
+		UserId.Value = null;
+		m_UserNumber.Value = PhotonActorNumber.Invalid;
 		Name.Value = string.Empty;
 		Portrait.Value = null;
+		PlayerDLcStringList.SetValueAndForceNotify(null);
 	}
 
 	public virtual void SetPlayer(PhotonActorNumber player, string userId, bool isActive)
@@ -75,45 +92,88 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		IsMe.Value = userId.Equals(PhotonManager.Instance.LocalPlayerUserId, StringComparison.Ordinal);
 		IsMeHost.Value = PhotonManager.Instance.IsRoomOwner;
 		IsPlaying.Value = PhotonManager.NetGame.CurrentState == NetGame.State.Playing;
-		MainThreadDispatcher.StartCoroutine(WaitForDlcsUpdated(delegate
-		{
-			CheckPlayerDlcList(userId);
-		}));
-		m_UserNumber = player;
+		UserId.Value = userId;
+		m_UserNumber.Value = player;
 		Name.Value = ((PhotonManager.Player.GetNickName(player, out var nickName) && !string.IsNullOrWhiteSpace(nickName)) ? nickName : userId);
 		Portrait.Value = player.GetPlayerIcon();
 		IsActive.Value = isActive;
 	}
 
-	public IEnumerator WaitForDlcsUpdated(Action finishAction)
+	private string GetDLCsStringList(string userID)
 	{
-		while (!PhotonManager.DLC.IsDLCsInLobbyReady)
+		if (string.IsNullOrEmpty(userID))
 		{
-			PFLog.UI.Log("[WaitForDlcsUpdated] waiting for dlcs...");
-			yield return null;
+			return null;
 		}
-		finishAction();
+		List<IBlueprintDlc> playerDlcs = GetPlayerDlcs(userID);
+		if (playerDlcs == null || !playerDlcs.Any())
+		{
+			return null;
+		}
+		if (0 >= playerDlcs.Count)
+		{
+			return UIStrings.Instance.NetLobbyTexts.PlayerHasNoDlcs;
+		}
+		IEnumerable<string> values = playerDlcs.Select(delegate(IBlueprintDlc playerDLC)
+		{
+			if (!(playerDLC is BlueprintDlc blueprintDlc))
+			{
+				return (string)null;
+			}
+			return string.IsNullOrEmpty(blueprintDlc.DefaultTitle) ? blueprintDlc.name : ((string)blueprintDlc.DefaultTitle);
+		});
+		return string.Join(Environment.NewLine, values);
 	}
 
-	private void CheckPlayerDlcList(string userId)
+	private string CompareHostAndPlayerDlcs()
 	{
-		if (string.IsNullOrWhiteSpace(userId))
+		PlayerInfo playerInfo = PhotonManager.Instance.AllPlayers.FirstOrDefault((PlayerInfo p) => p.Player.ActorNumber == PhotonManager.Instance.MasterClientId);
+		if (playerInfo.UserId == UserId.Value)
 		{
-			return;
+			return null;
 		}
-		List<IBlueprintDlc> playerDLCs = new List<IBlueprintDlc>();
-		PhotonManager.DLC.TryGetPlayerDLC(userId, out playerDLCs);
-		if (playerDLCs == null || !playerDLCs.Any())
+		if (string.IsNullOrWhiteSpace(UserId.Value) || playerInfo.UserId == null)
 		{
-			PlayerDLcList.Value = string.Empty;
-			return;
+			return null;
 		}
-		List<string> list = playerDLCs.Select(delegate(IBlueprintDlc playerDLC)
+		List<BlueprintDlc> second = GetPlayerDlcs(UserId.Value).OfType<BlueprintDlc>().Where(delegate(BlueprintDlc dlc)
 		{
-			BlueprintDlc blueprintDlc = playerDLC as BlueprintDlc;
-			return string.IsNullOrWhiteSpace(blueprintDlc?.DefaultTitle) ? blueprintDlc?.name : ((string)blueprintDlc?.DefaultTitle);
+			DlcTypeEnum dlcType2 = dlc.DlcType;
+			return dlcType2 != DlcTypeEnum.CosmeticDlc && dlcType2 != DlcTypeEnum.PromotionalDlc;
 		}).ToList();
-		PlayerDLcList.Value = (list.Any() ? string.Join(Environment.NewLine, list) : string.Empty);
+		List<BlueprintDlc> list = GetPlayerDlcs(playerInfo.UserId).OfType<BlueprintDlc>().Where(delegate(BlueprintDlc dlc)
+		{
+			DlcTypeEnum dlcType = dlc.DlcType;
+			return dlcType != DlcTypeEnum.CosmeticDlc && dlcType != DlcTypeEnum.PromotionalDlc;
+		}).ToList();
+		if (!list.Any())
+		{
+			return null;
+		}
+		List<BlueprintDlc> source = list.Except(second).ToList();
+		if (!source.Any())
+		{
+			return null;
+		}
+		IEnumerable<string> values = source.Select(delegate(BlueprintDlc missingDLC)
+		{
+			if (missingDLC == null)
+			{
+				return (string)null;
+			}
+			return string.IsNullOrEmpty(missingDLC.DefaultTitle) ? missingDLC.name : ((string)missingDLC.DefaultTitle);
+		});
+		return string.Join(Environment.NewLine, values);
+	}
+
+	private List<IBlueprintDlc> GetPlayerDlcs(string userID)
+	{
+		if (PhotonManager.DLC.TryGetPlayerDLC(userID, out var playerDLCs))
+		{
+			return playerDLCs;
+		}
+		PFLog.UI.Log("[NetLobbyPlayerVM.RefreshDLCsList] DLCs for user='" + userID + "' not found!");
+		return new List<IBlueprintDlc>();
 	}
 
 	public void Kick()
@@ -122,7 +182,7 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			if (button == DialogMessageBoxBase.BoxButton.Yes)
 			{
-				PhotonManager.Instance.KickPlayer(m_UserNumber);
+				PhotonManager.Instance.KickPlayer(m_UserNumber.Value);
 			}
 		});
 	}
@@ -141,13 +201,25 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void InviteFromPrimaryStore()
 	{
-		PlatformServices.Platform.Invite.ShowInviteWindow();
 		HideNetLobbyDifferentPlatformsInvite();
+		if (!PlatformServices.Platform.Invite.IsSupportInviteWindow())
+		{
+			UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.StoreOverlayIsNotAvailable, DialogMessageBoxBase.BoxType.Message, null);
+		}
+		else
+		{
+			PlatformServices.Platform.Invite.ShowInviteWindow();
+		}
 	}
 
 	public async void InviteFromSecondaryStore()
 	{
 		HideNetLobbyDifferentPlatformsInvite();
+		if (!PlatformServices.Platform.Invite.IsSupportInviteWindow())
+		{
+			UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.StoreOverlayIsNotAvailable, DialogMessageBoxBase.BoxType.Message, null);
+			return;
+		}
 		Platform secondaryPlatform = PlatformServices.Platform.SecondaryPlatform;
 		if (!secondaryPlatform.IsInitialized())
 		{
@@ -161,23 +233,43 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		if (m_DifferentPlatformInviteVM == null)
 		{
 			InviteFromPrimaryStore();
-			return;
 		}
-		m_DifferentPlatformInviteVM.Value = new NetLobbyInvitePlayerDifferentPlatformsVM(delegate
+		else
 		{
-			HideNetLobbyDifferentPlatformsInvite();
-		}, delegate
-		{
-			InviteFromPrimaryStore();
-		}, delegate
-		{
-			InviteFromSecondaryStore();
-		});
+			m_DifferentPlatformInviteVM.Value = new NetLobbyInvitePlayerDifferentPlatformsVM(HideNetLobbyDifferentPlatformsInvite, InviteFromPrimaryStore, InviteFromSecondaryStore);
+		}
 	}
 
 	private void HideNetLobbyDifferentPlatformsInvite()
 	{
 		m_DifferentPlatformInviteVM.Value?.Dispose();
 		m_DifferentPlatformInviteVM.Value = null;
+	}
+
+	void INetDLCsHandler.HandleDLCsListChanged()
+	{
+		PlayerDLcStringList.SetValueAndForceNotify(GetDLCsStringList(UserId.Value));
+		PlayersDifferentDlcs.SetValueAndForceNotify(CompareHostAndPlayerDlcs());
+	}
+
+	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
+	{
+	}
+
+	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
+	{
+	}
+
+	public void HandlePlayerChanged()
+	{
+	}
+
+	public void HandleLastPlayerLeftLobby()
+	{
+	}
+
+	public void HandleRoomOwnerChanged()
+	{
+		PlayersDifferentDlcs.SetValueAndForceNotify(CompareHostAndPlayerDlcs());
 	}
 }

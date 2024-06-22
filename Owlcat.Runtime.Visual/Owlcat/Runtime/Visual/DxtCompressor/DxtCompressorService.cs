@@ -28,9 +28,9 @@ public class DxtCompressorService : IService
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public unsafe delegate void CompressDelegate(int width, int height, byte* inData, byte* outData, bool hasAlpha);
 
-		public unsafe delegate void Compress_00000DE5_0024PostfixBurstDelegate(int width, int height, byte* inData, byte* outData, bool hasAlpha);
+		public unsafe delegate void Compress_00000E07_0024PostfixBurstDelegate(int width, int height, byte* inData, byte* outData, bool hasAlpha);
 
-		internal static class Compress_00000DE5_0024BurstDirectCall
+		internal static class Compress_00000E07_0024BurstDirectCall
 		{
 			private static IntPtr Pointer;
 
@@ -41,7 +41,7 @@ public class DxtCompressorService : IService
 			{
 				if (Pointer == (IntPtr)0)
 				{
-					Pointer = (nint)BurstCompiler.GetILPPMethodFunctionPointer2(DeferredCompilation, (RuntimeMethodHandle)/*OpCode not supported: LdMemberToken*/, typeof(Compress_00000DE5_0024PostfixBurstDelegate).TypeHandle);
+					Pointer = (nint)BurstCompiler.GetILPPMethodFunctionPointer2(DeferredCompilation, (RuntimeMethodHandle)/*OpCode not supported: LdMemberToken*/, typeof(Compress_00000E07_0024PostfixBurstDelegate).TypeHandle);
 				}
 				P_0 = Pointer;
 			}
@@ -62,7 +62,7 @@ public class DxtCompressorService : IService
 			{
 			}
 
-			static Compress_00000DE5_0024BurstDirectCall()
+			static Compress_00000E07_0024BurstDirectCall()
 			{
 				Constructor();
 			}
@@ -120,7 +120,7 @@ public class DxtCompressorService : IService
 		[MonoPInvokeCallback(typeof(CompressDelegate))]
 		public unsafe static void Compress(int width, int height, byte* inData, byte* outData, bool hasAlpha)
 		{
-			Compress_00000DE5_0024BurstDirectCall.Invoke(width, height, inData, outData, hasAlpha);
+			Compress_00000E07_0024BurstDirectCall.Invoke(width, height, inData, outData, hasAlpha);
 		}
 
 		public unsafe Request(Texture textureIn, Texture2D textureOut, Compression compression, int skipMips)

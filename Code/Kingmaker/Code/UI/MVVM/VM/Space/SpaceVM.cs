@@ -1,7 +1,6 @@
 using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
-using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints;
@@ -101,10 +100,7 @@ public class SpaceVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 
 	public void HandleStarShipLanded(StarSystemObjectView sso)
 	{
-		Game.Instance.CoroutinesController.InvokeInTicks(delegate
-		{
-			TryHandleDestinationArrival(sso);
-		}, 1);
+		TryHandleDestinationArrival(sso);
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)

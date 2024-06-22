@@ -18,7 +18,7 @@ public class MakeAutoSave : GameAction
 		return "Make autosave" + (SaveForImport ? " for later import" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (SaveForImport)
 		{

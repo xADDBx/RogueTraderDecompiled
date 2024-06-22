@@ -30,7 +30,6 @@ using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;
-using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
@@ -428,9 +427,9 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		ForceMovedDistanceInCells = 0;
 		if (isTurnBased && base.Owner is StarshipEntity starshipEntity)
 		{
-			starshipEntity.Hull.Weapons.ForEach(delegate(ItemEntityStarshipWeapon weapon)
+			starshipEntity.Hull.WeaponSlots.ForEach(delegate(WeaponSlot s)
 			{
-				weapon.Reload();
+				s.Reload();
 			});
 		}
 	}

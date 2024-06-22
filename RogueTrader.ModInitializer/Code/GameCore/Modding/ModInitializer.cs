@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Code.Utility.ExtendedModInfo;
 using Kingmaker;
 using Kingmaker.Blueprints.JsonSystem.EditorDatabase.ResourceReplacementProvider;
 using Kingmaker.GameInfo;
@@ -17,6 +20,8 @@ public static class ModInitializer
 
 	private static readonly string ActiveModFilePath = Path.Combine(Application.persistentDataPath, "ActiveUMMItemsInfo.txt");
 
+	private static List<ExtendedModInfo> s_AllModsCache = new List<ExtendedModInfo>();
+
 	public static UserModsData UserModsData => UserModsData.Instance;
 
 	public static IResourceReplacementProvider ResourceReplacementProvider
@@ -28,6 +33,98 @@ public static class ModInitializer
 				return null;
 			}
 			return OwlcatModificationsManager.Instance;
+		}
+	}
+
+	public static void CheckForModUpdates()
+	{
+		UnityModManagerAdapter.Instance.CheckForUpdates();
+		OwlcatModificationsManager.Instance.CheckForUpdates();
+	}
+
+	public static void OpenModInfoWindow(string modId, bool forceUpdate = false)
+	{
+		GetAllModsInfo(forceUpdate: true);
+		ExtendedModInfo extendedModInfo = FindMod(modId);
+		if (extendedModInfo != null)
+		{
+			if (extendedModInfo.IsUmmMod)
+			{
+				UnityModManagerAdapter.Instance.OpenModInfoWindow(modId);
+			}
+			else
+			{
+				OwlcatModificationsManager.Instance.OpenModInfoWindow(modId);
+			}
+		}
+	}
+
+	public static ExtendedModInfo GetModInfo(string modId, bool forceUpdate = false)
+	{
+		GetAllModsInfo(forceUpdate);
+		ExtendedModInfo extendedModInfo = FindMod(modId);
+		if (extendedModInfo == null)
+		{
+			return null;
+		}
+		if (extendedModInfo.IsUmmMod)
+		{
+			return UnityModManagerAdapter.Instance.GetModInfo(modId);
+		}
+		return OwlcatModificationsManager.Instance.GetModInfo(modId);
+	}
+
+	public static List<ExtendedModInfo> GetAllModsInfo(bool forceUpdate = false)
+	{
+		if (!forceUpdate && s_AllModsCache.Count != 0)
+		{
+			return s_AllModsCache;
+		}
+		List<ExtendedModInfo> list = new List<ExtendedModInfo>();
+		List<ExtendedModInfo> allModsInfo = OwlcatModificationsManager.Instance.GetAllModsInfo();
+		List<ExtendedModInfo> allModsInfo2 = UnityModManagerAdapter.Instance.GetAllModsInfo();
+		if (allModsInfo != null)
+		{
+			PFLog.Mods.Log($"OwlcatModificationsManager has {allModsInfo.Count} mods installed.");
+			list.AddRange(allModsInfo);
+		}
+		else
+		{
+			PFLog.Mods.Log("OwlcatModificationsManager returned null instead of all mods.");
+		}
+		if (allModsInfo2 != null)
+		{
+			PFLog.Mods.Log($"UnityModificationsManager has {allModsInfo2.Count} mods installed.");
+			list.AddRange(allModsInfo2);
+		}
+		else
+		{
+			PFLog.Mods.Log("UnityModificationsManager returned null instead of all mods.");
+		}
+		PFLog.Mods.Log("Mods information cache updated.");
+		s_AllModsCache = list;
+		return list;
+	}
+
+	public static void EnableMod(ExtendedModInfo mod, bool state)
+	{
+		EnableMod(mod.Id, state);
+	}
+
+	public static void EnableMod(string modId, bool state, bool forceUpdate = false)
+	{
+		GetAllModsInfo(forceUpdate);
+		ExtendedModInfo extendedModInfo = FindMod(modId);
+		if (extendedModInfo != null)
+		{
+			if (extendedModInfo.IsUmmMod)
+			{
+				UnityModManagerAdapter.Instance.EnableMod(modId, state);
+			}
+			else
+			{
+				OwlcatModificationsManager.Instance.EnableMod(modId, state);
+			}
 		}
 	}
 
@@ -46,6 +143,15 @@ public static class ModInitializer
 		InitializeUnityModManager();
 		InitializeOwlcatModManager();
 		GetUsedModsInfo();
+		Test();
+	}
+
+	private static void Test()
+	{
+		foreach (ExtendedModInfo item in GetAllModsInfo())
+		{
+			PFLog.Mods.Error(item.ToString());
+		}
 	}
 
 	public static void ApplyOwlcatModificationsContent()
@@ -89,6 +195,27 @@ public static class ModInitializer
 			PFLog.Mods.Exception(ex);
 		}
 		PFLog.Mods.Log($"Mods info: used mods count -{UserModsData.Instance.UsedMods.Count}, external umm - {UserModsData.Instance.ExternalUmmUsed}, playing with mods - {UserModsData.Instance.PlayingWithMods}");
+	}
+
+	private static ExtendedModInfo FindMod(string modId)
+	{
+		if (s_AllModsCache.Count == 0)
+		{
+			PFLog.Mods.Log("Trying to call OpenModInfoWindow while there are no mods detected");
+			return null;
+		}
+		List<ExtendedModInfo> list = s_AllModsCache.Where((ExtendedModInfo x) => x.Id == modId).ToList();
+		if (list.Count == 0)
+		{
+			PFLog.Mods.Error("Found no mod with id " + modId);
+			return null;
+		}
+		if (list.Count > 1)
+		{
+			PFLog.Mods.Error("Found more than one mod with id " + modId);
+			return null;
+		}
+		return list[0];
 	}
 
 	private static bool CheckSteam()

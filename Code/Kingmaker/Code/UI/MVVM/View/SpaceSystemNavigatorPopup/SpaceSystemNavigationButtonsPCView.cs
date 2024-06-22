@@ -64,10 +64,7 @@ public class SpaceSystemNavigationButtonsPCView : SpaceSystemNavigationButtonsBa
 		{
 			AddDisposable(b.OnLeftClickAsObservable().Subscribe(delegate
 			{
-				UpgradeWay(delegate
-				{
-					HandleLowerSectorMapPassageDifficulty();
-				}, (SectorMapPassageEntity.PassageDifficulty)m_UpgradeButtons.IndexOf(b));
+				UpgradeWay(base.HandleLowerSectorMapPassageDifficulty, (SectorMapPassageEntity.PassageDifficulty)m_UpgradeButtons.IndexOf(b));
 			}));
 		});
 		AddDisposable(m_CreateWayButton.OnHoverAsObservable().Subscribe(base.ShowCreateWayButtonHoverPanel));

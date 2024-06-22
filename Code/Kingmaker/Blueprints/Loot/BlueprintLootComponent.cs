@@ -10,11 +10,11 @@ namespace Kingmaker.Blueprints.Loot;
 public abstract class BlueprintLootComponent : BlueprintComponent
 {
 	[SerializeField]
-	private bool m_OverrideReputationPointsToUnlock;
+	protected bool m_OverrideReputationPointsToUnlock;
 
 	[SerializeField]
 	[ShowIf("OverrideReputationPointsToUnlock")]
-	private int m_ReputationPointsToUnlock;
+	protected int m_ReputationPointsToUnlock;
 
 	public int ReputationPointsToUnlock
 	{

@@ -25,19 +25,35 @@ public class GroupChangerCommonVM : GroupChangerVM
 
 	private bool AreAllRequiredWithUs => !base.RemoteCharacter.Any((GroupChangerCharacterVM v) => v.IsLock.Value);
 
-	public GroupChangerCommonVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false)
-		: base(go, close, lastUnits, requiredUnits, isCapital)
+	public GroupChangerCommonVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false, bool sameFinishActions = false, bool canCancel = true)
+		: base(go, close, lastUnits, requiredUnits, isCapital, sameFinishActions, canCancel)
 	{
-		IEnumerable<GroupChangerCharacterVM> enumerable = from v in m_LastUnits.Concat(Game.Instance.Player.PartyCharacters).Concat(from v in Game.Instance.Player.RemoteCompanions.Where(ShouldShowRemote)
-				select UnitReference.FromIAbstractUnitEntity(v)).Distinct()
-			orderby MustBeInParty((BaseUnitEntity)v.ToIBaseUnitEntity()) descending
-			select v into u
-			select new GroupChangerCharacterVM(u, MustBeInParty((BaseUnitEntity)u.ToIBaseUnitEntity()));
+		List<GroupChangerCharacterVM> list = (from u in LastUnits.Concat(Game.Instance.Player.PartyCharacters).Concat(Game.Instance.Player.RemoteCompanions.Where(ShouldShowRemote).Select(UnitReference.FromIAbstractUnitEntity)).Distinct()
+			select new GroupChangerCharacterVM(u, MustBeInParty((BaseUnitEntity)u.ToIBaseUnitEntity()))).ToList();
+		List<GroupChangerCharacterVM> list2 = list.Where((GroupChangerCharacterVM u) => MustBeInParty((BaseUnitEntity)u.UnitRef.ToIBaseUnitEntity())).ToList();
+		List<GroupChangerCharacterVM> list3 = list.Except(list2).ToList();
 		int num = 0;
-		foreach (GroupChangerCharacterVM item in enumerable)
+		foreach (GroupChangerCharacterVM characterVm in list2)
 		{
-			item.SetIsInParty(num < 6);
-			if (num < 6)
+			GroupChangerCharacterVM groupChangerCharacterVM = list.FirstOrDefault((GroupChangerCharacterVM c) => c == characterVm);
+			if (groupChangerCharacterVM != null)
+			{
+				groupChangerCharacterVM.SetIsInParty(num < 6);
+				num++;
+			}
+		}
+		foreach (GroupChangerCharacterVM characterVm in list3)
+		{
+			GroupChangerCharacterVM groupChangerCharacterVM2 = list.FirstOrDefault((GroupChangerCharacterVM c) => c == characterVm);
+			if (groupChangerCharacterVM2 != null)
+			{
+				groupChangerCharacterVM2.SetIsInParty(num < 6);
+				num++;
+			}
+		}
+		foreach (GroupChangerCharacterVM item in list)
+		{
+			if (item.IsInParty.Value)
 			{
 				m_PartyCharacter.Add(item);
 			}
@@ -49,13 +65,12 @@ public class GroupChangerCommonVM : GroupChangerVM
 			{
 				MoveCharacter(value.UnitRef);
 			}));
-			num++;
 		}
 	}
 
 	private bool MustBeInParty(BaseUnitEntity character)
 	{
-		if (character != Game.Instance.Player.MainCharacterEntity && character.Blueprint.GetComponent<LockedCompanionComponent>() == null && !m_RequiredUnits.Contains(character.Blueprint))
+		if (character != Game.Instance.Player.MainCharacterEntity && character.Blueprint.GetComponent<LockedCompanionComponent>() == null && !RequiredUnits.Contains(character.Blueprint))
 		{
 			return PartPartyLock.IsLocked(character);
 		}
@@ -64,11 +79,16 @@ public class GroupChangerCommonVM : GroupChangerVM
 
 	private bool ShouldShowRemote(BaseUnitEntity c)
 	{
-		if (c.IsInGame || RemoteCompanionsAvailable)
+		if (c.IsInGame || RemoteCompanionsAvailable || UnitIsRequired(c))
 		{
 			return !c.IsPet;
 		}
 		return false;
+	}
+
+	private bool UnitIsRequired(BaseUnitEntity c)
+	{
+		return RequiredUnits.Contains(c.Blueprint);
 	}
 
 	public override bool CloseCondition()

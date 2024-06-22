@@ -5,6 +5,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
+using Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Rewired;
@@ -13,7 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.Space.Console;
 
-public class ShipHealthAndRepairConsoleView : ShipHealthAndRepairBaseView, IStarSystemShipMovementHandler, ISubscriber
+public class ShipHealthAndRepairConsoleView : ShipHealthAndRepairBaseView, IStarSystemShipMovementHandler, ISubscriber, IShipCustomizationPage
 {
 	[Header("Console Part")]
 	[SerializeField]
@@ -72,5 +73,10 @@ public class ShipHealthAndRepairConsoleView : ShipHealthAndRepairBaseView, IStar
 	public void HandleStarSystemShipMovementEnded()
 	{
 		m_ShipIsMoving.Value = false;
+	}
+
+	public bool CanOverrideClose()
+	{
+		return false;
 	}
 }

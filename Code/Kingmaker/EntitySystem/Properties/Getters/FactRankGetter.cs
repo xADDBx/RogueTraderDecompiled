@@ -35,9 +35,10 @@ public class FactRankGetter : PropertyGetter, PropertyContextAccessor.IOptionalT
 
 	public BlueprintUnitFact Fact => m_Fact?.Get();
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Ranks of " + (Fact?.ToString() ?? "<null>");
+		string text = (BuffWithCasterFromTargetType ? (" cast by " + Target.Colorized()) : "");
+		return "Ranks of " + (Fact?.ToString() ?? "<null>") + " on " + FormulaTargetScope.Current + text;
 	}
 
 	protected override int GetBaseValue()

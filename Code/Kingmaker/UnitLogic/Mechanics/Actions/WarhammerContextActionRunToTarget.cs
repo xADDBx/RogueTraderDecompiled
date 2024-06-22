@@ -30,7 +30,7 @@ public class WarhammerContextActionRunToTarget : ContextAction
 		return ((!runToStoredPosition) ? "Caster run to position close to target" : "Caster run to saved position") + " by straight line" + (storeStartingPosition ? " and starting position is stored" : "");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity caster = base.Context.MaybeOwner;
 		MechanicEntity entity = base.Target.Entity;
@@ -44,7 +44,7 @@ public class WarhammerContextActionRunToTarget : ContextAction
 			WarhammerUnitPartStorePosition warhammerUnitPartStorePosition = caster?.GetOptional<WarhammerUnitPartStorePosition>();
 			if (warhammerUnitPartStorePosition == null)
 			{
-				PFLog.Default.Error("WarhammerContextActionRunToTarget: no stored position");
+				Element.LogError(this, "WarhammerContextActionRunToTarget: no stored position");
 				return;
 			}
 			list.Add(warhammerUnitPartStorePosition.storedPosition);

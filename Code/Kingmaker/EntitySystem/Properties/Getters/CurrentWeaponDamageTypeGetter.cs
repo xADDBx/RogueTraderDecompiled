@@ -11,7 +11,7 @@ public class CurrentWeaponDamageTypeGetter : MechanicEntityPropertyGetter
 {
 	public DamageType Type;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Current weapon damage == {Type}";
 	}

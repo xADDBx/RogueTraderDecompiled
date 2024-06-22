@@ -16,7 +16,7 @@ public class NetSendController : IControllerTick, IController, IControllerStart,
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	void IControllerTick.Tick()

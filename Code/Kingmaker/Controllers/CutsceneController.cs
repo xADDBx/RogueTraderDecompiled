@@ -20,7 +20,7 @@ namespace Kingmaker.Controllers;
 
 public class CutsceneController : IControllerEnable, IController, IControllerDisable, IControllerTick, IGameModeHandler, ISubscriber
 {
-	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("Cutscene");
+	private static readonly LogChannel Logger = PFLog.Cutscene;
 
 	private readonly bool m_TickBackground;
 

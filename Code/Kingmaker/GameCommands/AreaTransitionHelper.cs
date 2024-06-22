@@ -9,6 +9,7 @@ using Kingmaker.Controllers.Units;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.GameModes;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
@@ -55,6 +56,10 @@ public static class AreaTransitionHelper
 			if (path.error)
 			{
 				PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+			}
+			else if (unit.IsMovementLockedByGameModeOrCombat())
+			{
+				PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 			}
 			else
 			{

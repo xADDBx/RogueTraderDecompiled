@@ -2,11 +2,11 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Platforms;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using UnityEngine;
 
 namespace Kingmaker.Networking;
 
@@ -23,10 +23,22 @@ public class InviteNetManager : IDisposable
 		if (m_PlatformInvite == null)
 		{
 			m_PlatformInvite = PlatformInviteFactory.Create();
-			if (m_PlatformInvite.TryGetInviteRoom(out var roomServer, out var roomName))
+			if (FirstLaunchSettingsVM.HasShown)
 			{
-				AcceptInvite(roomServer, roomName);
+				CheckAvailableInvite();
 			}
+		}
+	}
+
+	public void CheckAvailableInvite()
+	{
+		if (m_PlatformInvite.TryGetInviteRoom(out var roomServer, out var roomName))
+		{
+			EventBus.RaiseEvent(delegate(INetLobbyRequest h)
+			{
+				h.HandleNetLobbyRequest(isMainMenu: true);
+			});
+			AcceptInvite(roomServer, roomName);
 		}
 	}
 
@@ -80,7 +92,6 @@ public class InviteNetManager : IDisposable
 		await PrepareFsmToLobby(token);
 		PhotonManager.NetGame.CreateNewLobby();
 		await PhotonManager.NetGame.WaitNextState(NetGame.State.InLobby, token);
-		GUIUtility.systemCopyBuffer = PhotonManager.Instance.RoomName;
 	}
 
 	private static async Task PrepareFsmToLobby(CancellationToken token)
@@ -95,11 +106,14 @@ public class InviteNetManager : IDisposable
 		case NetGame.State.PlatformInitialized:
 			await PhotonManager.NetGame.StartNetGameIfNeededAsync(token);
 			break;
+		case NetGame.State.NetInitializing:
+			await game.WaitNextState(NetGame.State.NetInitialized, token);
+			break;
 		case NetGame.State.InLobby:
 		case NetGame.State.Playing:
 			if (game.CurrentState == NetGame.State.InLobby || game.CurrentState == NetGame.State.Playing)
 			{
-				game.StopPlaying(shouldLeaveLobby: true);
+				game.StopPlaying(shouldLeaveLobby: true, "InviteNetManager");
 			}
 			if (game.CurrentState == NetGame.State.InLobby || game.CurrentState == NetGame.State.Playing)
 			{
@@ -138,9 +152,17 @@ public class InviteNetManager : IDisposable
 			if (!(await task))
 			{
 				PFLog.Net.Log("[Invite] Invite declined.");
+				EventBus.RaiseEvent(delegate(INetInviteHandler h)
+				{
+					h.HandleInviteAccepted(accepted: false);
+				});
 				return false;
 			}
 			PFLog.Net.Log("[Invite] Invite accepted.");
+			EventBus.RaiseEvent(delegate(INetInviteHandler h)
+			{
+				h.HandleInviteAccepted(accepted: true);
+			});
 		}
 		return true;
 	}

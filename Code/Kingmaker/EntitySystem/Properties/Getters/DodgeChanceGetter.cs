@@ -57,8 +57,12 @@ public class DodgeChanceGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Dodge";
+		if (NoTarget)
+		{
+			return "Dodge of " + FormulaTargetScope.Current + " against abstract attack";
+		}
+		return "Dodge of " + FormulaTargetScope.Current + " against " + Attacker.Colorized();
 	}
 }

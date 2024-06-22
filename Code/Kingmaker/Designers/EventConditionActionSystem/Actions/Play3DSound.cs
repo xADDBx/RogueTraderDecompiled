@@ -30,11 +30,11 @@ public class Play3DSound : GameAction
 	[Tooltip("Sets SoundSourceObject as current dialog speaker")]
 	public bool SetCurrentSpeaker;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (SoundName == "")
 		{
-			PFLog.Default.Error("Sound name is Empty. Can't play sound.", this);
+			Element.LogError(this, "Sound name is Empty. Can't play sound.");
 			return;
 		}
 		GameObject gameObject = null;
@@ -46,7 +46,7 @@ public class Play3DSound : GameAction
 			}
 			if (!gameObject)
 			{
-				PFLog.Default.Error("CurrentSpeaker is NULL", this);
+				Element.LogError(this, "CurrentSpeaker is NULL");
 				return;
 			}
 		}
@@ -55,7 +55,7 @@ public class Play3DSound : GameAction
 			EntityViewBase entityViewBase = (EntityViewBase)SoundSourceObject.FindView();
 			if (!entityViewBase)
 			{
-				PFLog.Default.Error("Target object for sound play is NULL", this);
+				Element.LogError(this, "Target object for sound play is NULL");
 				return;
 			}
 			UnitSpawnerBase unitSpawnerBase = entityViewBase as UnitSpawnerBase;

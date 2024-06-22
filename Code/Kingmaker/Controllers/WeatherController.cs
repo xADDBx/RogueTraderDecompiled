@@ -25,6 +25,8 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 
 	private bool m_IsSoundEventStarted;
 
+	private bool m_IsWeatherWarp;
+
 	public static WeatherController Instance { get; private set; }
 
 	public InclemencyType ActualInclemency => m_WeatherInclemencyController?.ActualInclemency ?? InclemencyType.Clear;
@@ -82,6 +84,19 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 	{
 		m_WeatherInclemencyController?.Tick();
 		m_WindInclemencyController?.Tick();
+		if (m_IsWeatherWarp)
+		{
+			UpdateWarpWeatherAudio();
+		}
+		if (m_IsWeatherWarp && m_LastWeatherIntencity != VFXWeatherSystem.Instance.CurrentWeatherIntensity)
+		{
+			m_LastWeatherIntencity = VFXWeatherSystem.Instance.CurrentWeatherIntensity;
+			AkSoundEngine.SetRTPCValue("WeatherIntensity", m_LastWeatherIntencity);
+		}
+	}
+
+	private void UpdateWarpWeatherAudio()
+	{
 		if (VFXWeatherSystem.Instance.CurrentWeatherIntensity > BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherThreshold)
 		{
 			if (!m_IsSoundEventStarted)
@@ -94,11 +109,6 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 		{
 			m_IsSoundEventStarted = false;
 			SoundEventsManager.PostEvent(BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherSoundEventStop, VFXWeatherSystem.Instance.gameObject);
-		}
-		if (m_LastWeatherIntencity != VFXWeatherSystem.Instance.CurrentWeatherIntensity)
-		{
-			m_LastWeatherIntencity = VFXWeatherSystem.Instance.CurrentWeatherIntensity;
-			AkSoundEngine.SetRTPCValue("WeatherIntensity", m_LastWeatherIntencity);
 		}
 	}
 
@@ -169,6 +179,7 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 			}
 			weatherProfile = BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherProfile;
 		}
+		m_IsWeatherWarp = weatherProfile == BlueprintWarhammerRoot.Instance.WarpWeatherRoot?.WeatherProfile;
 		m_WeatherInclemencyController = new InclemencyController(systemForWeatherController, Game.Instance.Player.Weather, weatherProfile.SeasonalData, OnActualInclemencyChanged);
 		m_WindInclemencyController = new InclemencyController(systemForWindController, Game.Instance.Player.Wind, weatherProfile.WindProfile.SeasonalData, OnActualWindChanged);
 		InclemencyType inclemency = Game.Instance.Player.Weather.CurrentWeather;

@@ -10,6 +10,7 @@ using Kingmaker.Controllers.Combat;
 using Kingmaker.Controllers.GlobalMap;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.MapObjects;
+using Kingmaker.Controllers.MovePrediction;
 using Kingmaker.Controllers.Net;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.Controllers.Projectiles;
@@ -100,6 +101,8 @@ public class GamesModeFactoryFacade
 		Register(new UnitFollowUnitController(), Default);
 		Register(new UnitMoveController(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
 		Register(new UnitMoveControllerLate(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
+		Register(Game.Instance.MovePredictionController, Default);
+		Register(new ModePredictionInterpolationController(), Default);
 		Register(new PhysicsSimulationController(), All);
 		Register(new CameraFollowController(), Default, SpaceCombat);
 		Register(Game.Instance.EntityBoundsController, Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene);
@@ -143,6 +146,7 @@ public class GamesModeFactoryFacade
 		Register(new FootprintsController(), Default, Dialog, Cutscene);
 		Register(new ItemsEnchantmentController(), Default);
 		Register(new UnitForceMoveController(), Default);
+		Register(new UnitJumpMoveController(), Default);
 		Register(new UpdatePreviousPositionController(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
 		Register(new WeatherController(), Default, Dialog, Pause, Cutscene);
 		Register(new CameraController(), Default, SpaceCombat, Pause);
@@ -218,6 +222,7 @@ public class GamesModeFactoryFacade
 		Register(Game.Instance.FogOfWarComplete, Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene, GlobalMap, CutsceneGlobalMap);
 		Register(Game.Instance.ForcedCoversController, All);
 		Register(new LevelUpFxController(), Default);
+		Register(Game.Instance.SceneControllables, All);
 	}
 
 	private static void Register(IController controller, IEnumerable<GameModeType> gameModes)

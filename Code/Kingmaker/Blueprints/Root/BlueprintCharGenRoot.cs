@@ -240,6 +240,15 @@ public class BlueprintCharGenRoot : BlueprintScriptableObject
 		}
 	}
 
+	public bool IsBlueprintCompanionPregen(BlueprintUnit unitBlueprint)
+	{
+		if (unitBlueprint != null)
+		{
+			return CompanionPregens.Any((PregenEntry p) => p.UnitBlueprint.Is(unitBlueprint));
+		}
+		return false;
+	}
+
 	public List<ChargenUnit> GetPregensForChargen()
 	{
 		return m_PregensForChargen ?? new List<ChargenUnit>();

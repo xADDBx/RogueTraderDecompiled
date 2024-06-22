@@ -24,7 +24,7 @@ using Kingmaker.Visual.Particles;
 
 namespace Kingmaker.Controllers.Units;
 
-public class MomentumController : IControllerEnable, IController, IControllerDisable, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, ITurnStartHandler, ISubscriber<IMechanicEntity>, IUnitWoundHandler, IUnitTraumaHandler, IRoundStartHandler
+public class MomentumController : IControllerEnable, IController, IControllerDisable, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IInterruptTurnStartHandler, ISubscriber<IMechanicEntity>, ITurnStartHandler, IUnitWoundHandler, IUnitTraumaHandler, IRoundStartHandler
 {
 	private HashSet<MechanicEntity> m_GainedMomentumThisTurn = new HashSet<MechanicEntity>();
 
@@ -150,6 +150,14 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 				FxHelper.SpawnFxOnEntity(momentumRoot.DesperateMeasuresReachedFX.Load(), mechanicEntity.View);
 			}
 			m_GainedMomentumThisTurn.Add(mechanicEntity);
+		}
+	}
+
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		if (interruptionData.AsExtraTurn)
+		{
+			HandleUnitStartTurn(isTurnBased: true);
 		}
 	}
 

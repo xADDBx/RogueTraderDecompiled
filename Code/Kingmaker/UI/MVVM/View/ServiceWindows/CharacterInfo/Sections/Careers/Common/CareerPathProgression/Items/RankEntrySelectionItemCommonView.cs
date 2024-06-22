@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Code.UI.Pointer;
+using Code.UI.Common.Animations;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -10,6 +10,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.Utility.Attributes;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -24,7 +25,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
 
-public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankEntrySelectionVM>, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IHasNeighbours, ICareerPathItem
+public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankEntrySelectionVM>, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IHasNeighbours, IRankEntryElement
 {
 	[SerializeField]
 	private CharInfoFeatureSimpleBaseView m_CharInfoRankEntryView;
@@ -39,9 +40,6 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 	private RankEntrySelectionStateSprites[] m_StateSprites;
 
 	[SerializeField]
-	private UIHighlighter m_UIHighlighter;
-
-	[SerializeField]
 	private bool m_IsListEntry = true;
 
 	[SerializeField]
@@ -52,41 +50,26 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 	[ConditionalHide("m_IsListEntry")]
 	private GameObject m_SelectedMark;
 
+	[SerializeField]
+	[ConditionalHide("m_IsListEntry")]
+	private RectTransform m_NextItemArrow;
+
+	[SerializeField]
+	private RankEntryAnimator m_Highlighter;
+
 	private readonly ReactiveProperty<string> m_HintText = new ReactiveProperty<string>();
 
 	private IDisposable m_TooltipHandle;
-
-	private bool m_IsInit;
 
 	private List<IFloatConsoleNavigationEntity> m_Neighbours;
 
 	private RectTransform m_TooltipPlace;
 
-	private Action<RectTransform> m_EnsureVisibleAction;
+	public MonoBehaviour MonoBehaviour => this;
 
-	bool ICareerPathItem.IsSelectedForUI()
-	{
-		return base.ViewModel.IsCurrentRankEntryItem.Value;
-	}
-
-	public void Initialize()
-	{
-		if (m_IsInit)
-		{
-			return;
-		}
-		if (m_UIHighlighter != null)
-		{
-			m_UIHighlighter.Initialize(() => !base.ViewModel.IsValidSelection || base.ViewModel.NeedToSelect);
-			m_UIHighlighter.SetKey(RankEntrySelectionVM.SelectableHighlighterKey);
-		}
-		m_IsInit = true;
-	}
-
-	public void SetViewParameters(RectTransform tooltipPlace, Action<RectTransform> ensureVisibleAction)
+	public void SetViewParameters(RectTransform tooltipPlace)
 	{
 		m_TooltipPlace = tooltipPlace;
-		m_EnsureVisibleAction = ensureVisibleAction;
 	}
 
 	protected override void BindViewImplementation()
@@ -134,19 +117,11 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 			AddDisposable(base.ViewModel.IsCurrentRankEntryItem.Subscribe(OnSelectedChanged));
 		}
 		AddDisposable(base.ViewModel.EntryState.Subscribe(UpdateState));
-		if (m_UIHighlighter != null)
-		{
-			AddDisposable(m_UIHighlighter.Subscribe());
-		}
 	}
 
 	public void OnSelectedChanged(bool value)
 	{
 		m_SelectedMark.SetActive(value);
-		if (value)
-		{
-			m_EnsureVisibleAction?.Invoke(base.transform as RectTransform);
-		}
 	}
 
 	protected override void DestroyViewImplementation()
@@ -221,5 +196,31 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 			return base.ViewModel.SelectionMade ? UIStrings.Instance.CharGen.Next : UIStrings.Instance.CommonTexts.Select;
 		}
 		return (base.ViewModel.IsCurrentRankEntryItem.Value == (bool)this) ? UIStrings.Instance.CommonTexts.Expand : UIStrings.Instance.CommonTexts.Select;
+	}
+
+	public void SetRotation(float angleDeg, bool hasArrow)
+	{
+		base.transform.localRotation = Quaternion.Euler(0f, 0f, 0f - angleDeg);
+		if ((bool)m_NextItemArrow)
+		{
+			m_NextItemArrow.gameObject.SetActive(hasArrow);
+			float num = GetComponent<RectTransform>().sizeDelta.x * 0.5f;
+			float num2 = (90f + angleDeg) * (MathF.PI / 180f);
+			m_NextItemArrow.anchoredPosition = new Vector2(Mathf.Cos(num2), Mathf.Sin(num2)) * num;
+			m_NextItemArrow.localRotation = Quaternion.Euler(0f, 0f, num2 * 57.29578f);
+		}
+	}
+
+	public void StartHighlight(string key)
+	{
+		if (base.ViewModel.ContainsFeature(key))
+		{
+			m_Highlighter.Or(null)?.StartAnimation();
+		}
+	}
+
+	public void StopHighlight()
+	{
+		m_Highlighter.Or(null)?.StopAnimation();
 	}
 }

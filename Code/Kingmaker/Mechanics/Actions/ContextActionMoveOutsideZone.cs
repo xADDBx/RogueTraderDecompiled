@@ -35,7 +35,7 @@ public class ContextActionMoveOutsideZone : ContextAction
 		return $"Move unit out of {m_Zone} in {m_TargetPoint}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		CustomGridNodeBase startPoint = base.TargetEntity.Position.GetNearestNodeXZ();
 		CustomGridNodeBase nearestNodeXZ = m_TargetPoint.GetValue().GetNearestNodeXZ();
@@ -90,7 +90,7 @@ public class ContextActionMoveOutsideZone : ContextAction
 			{
 				unitMoveToProperParams.DisableAttackOfOpportunity.Release();
 			}
-			base.AbilityContext.TemporarilyBlockLastPathNode(warhammerPathPlayer, targetEntity);
+			base.AbilityContext?.TemporarilyBlockLastPathNode(warhammerPathPlayer, targetEntity);
 			targetEntity?.Commands.Run(unitMoveToProperParams);
 			EventBus.RaiseEvent(delegate(IUnitAbilityNonPushForceMoveHandler h)
 			{

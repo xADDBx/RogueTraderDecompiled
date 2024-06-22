@@ -21,8 +21,6 @@ public class SolarSystemStellarBodyVisual : MonoBehaviour
 
 	private float m_RotationSpeed = 3f;
 
-	private LODGroup m_RotateTarget;
-
 	public bool NoVisualOrbit;
 
 	public int OrbitLevel = -1;
@@ -71,10 +69,6 @@ public class SolarSystemStellarBodyVisual : MonoBehaviour
 
 	private void Start()
 	{
-		if (!m_RotateTarget)
-		{
-			m_RotateTarget = GetComponentInChildren<LODGroup>();
-		}
 		if (Application.isPlaying)
 		{
 			if (OrbitLineRenderer != null)
@@ -94,10 +88,6 @@ public class SolarSystemStellarBodyVisual : MonoBehaviour
 
 	private void Awake()
 	{
-		if (!m_RotateTarget)
-		{
-			m_RotateTarget = GetComponentInChildren<LODGroup>();
-		}
 		EditorInit();
 	}
 
@@ -112,10 +102,10 @@ public class SolarSystemStellarBodyVisual : MonoBehaviour
 
 	private void Update()
 	{
-		if (Application.isPlaying && (bool)m_RotateTarget)
+		if (Application.isPlaying && (bool)Visual)
 		{
-			m_RotateTarget.gameObject.transform.RotateAround(m_RotateTarget.transform.position, Vector3.up, m_RotationSpeed * Time.deltaTime);
-			m_RotateTarget.transform.localPosition = Vector3.zero;
+			Visual.transform.RotateAround(Visual.transform.position, Vector3.up, m_RotationSpeed * Time.deltaTime);
+			Visual.transform.localPosition = Vector3.zero;
 		}
 	}
 }

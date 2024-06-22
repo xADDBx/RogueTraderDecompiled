@@ -63,6 +63,10 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 	[SerializeField]
 	private bool m_CasterMustStandNearTarget;
 
+	public bool IgnoreObstacles;
+
+	public bool AllowNotStraightMovement;
+
 	[ShowIf("DisableOnlyIfHasFact")]
 	[SerializeField]
 	[FormerlySerializedAs("CheckedFact")]
@@ -105,7 +109,7 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 		{
 			caster.Features.CanPassThroughUnits.Retain();
 		}
-		using PathDisposable<WarhammerPathPlayer> pd = PathfindingService.Instance.FindPathTB_Delayed(caster.View.MovementAgent, target, limitRangeByActionPoints: false, 1, this);
+		using PathDisposable<WarhammerPathPlayer> pd = PathfindingService.Instance.FindPathTB_Delayed(caster.MaybeMovementAgent, target, limitRangeByActionPoints: false, 1, this);
 		WarhammerPathPlayer path = pd.Path;
 		while (!path.IsDoneAndPostProcessed())
 		{
@@ -194,12 +198,12 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsTooClose;
 			return false;
 		}
-		if ((ObstacleAnalyzer.TraceAlongNavmesh(casterPosition, targetWrapper.Point) - targetWrapper.Point).sqrMagnitude >= 1E-08f)
+		if (!AllowNotStraightMovement && (ObstacleAnalyzer.TraceAlongNavmesh(casterPosition, targetWrapper.Point) - targetWrapper.Point).sqrMagnitude >= 1E-08f && !IgnoreObstacles)
 		{
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.ObstacleBetweenCasterAndTarget;
 			return false;
 		}
-		if (m_CasterMustStandInTarget || m_CasterMustStandNearTarget)
+		if (AllowNotStraightMovement || m_CasterMustStandInTarget || m_CasterMustStandNearTarget)
 		{
 			if (!TryGetExplicitTargetNode(caster, targetWrapper, out var result))
 			{
@@ -254,6 +258,6 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 
 	private List<CustomGridNodeBase> GetPathToTarget(MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
 	{
-		return PathfindingService.Instance.FindPathChargeTB_Blocking(caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, m_PassThroughAllUnits, null).path.Cast<CustomGridNodeBase>().ToTempList();
+		return PathfindingService.Instance.FindPathTB_Blocking(caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, limitRangeByActionPoints: false, ignoreThreateningAreaCost: false, m_PassThroughAllUnits).path.Cast<CustomGridNodeBase>().ToTempList();
 	}
 }

@@ -10,7 +10,6 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Designers;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
@@ -18,7 +17,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
-using Kingmaker.Utility.StateContext;
+using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.Visual.FogOfWar;
 using UnityEngine;
 
@@ -56,6 +55,21 @@ public class CheatsUnlock
 			SmartConsole.RegisterCommand("etude_complete", CompleteEtude);
 			SmartConsole.RegisterCommand("etude_check", CheckEtude);
 			SmartConsole.RegisterCommand("etude_update", UpdateEtudes);
+			SmartConsole.RegisterCommand("etude_uncomplete", UncompleteEtude);
+		}
+	}
+
+	private static void UncompleteEtude(string parameters)
+	{
+		string paramString = Utilities.GetParamString(parameters, 1, "Can't parse etude name from given parameters");
+		BlueprintEtude blueprint = Utilities.GetBlueprint<BlueprintEtude>(paramString);
+		if (blueprint == null)
+		{
+			PFLog.SmartConsole.Log("Can't find Etude with name: " + paramString);
+		}
+		else
+		{
+			Game.Instance.Player.EtudesSystem.UnstartEtude(blueprint);
 		}
 	}
 
@@ -122,7 +136,7 @@ public class CheatsUnlock
 		{
 			UnlockCompanionStory unlockCompanionStory = new UnlockCompanionStory();
 			unlockCompanionStory.Story = scriptableObject;
-			unlockCompanionStory.RunAction();
+			unlockCompanionStory.Run();
 		}
 	}
 
@@ -243,6 +257,24 @@ public class CheatsUnlock
 		}
 	}
 
+	[Cheat(Name = "check_flag")]
+	public static void CheckFlag(string flag = null)
+	{
+		if (flag.IsNullOrEmpty())
+		{
+			PFLog.SmartConsole.Log("Flag name is not specified");
+			return;
+		}
+		BlueprintUnlockableFlag blueprint = Utilities.GetBlueprint<BlueprintUnlockableFlag>(flag);
+		if (blueprint == null)
+		{
+			PFLog.SmartConsole.Log("Can't find Flag with name: " + flag);
+			return;
+		}
+		string text = (blueprint.IsLocked ? "Locked" : "Unlocked");
+		PFLog.SmartConsole.Log("Flag " + flag + " status: " + text + ", value: " + blueprint.Value + ".");
+	}
+
 	private static void LockFlag(string parameters)
 	{
 		string paramString = Utilities.GetParamString(parameters, 1, "Can't parse flag name from given parameters");
@@ -323,10 +355,7 @@ public class CheatsUnlock
 	[Cheat(Name = "create_item", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void CreateItem(BlueprintItem blueprint, int quantity = 1)
 	{
-		using (ContextData<EditStateContext>.Request())
-		{
-			GameHelper.GetPlayerCharacter().Inventory.Add(blueprint, quantity);
-		}
+		GameHelper.GetPlayerCharacter().Inventory.Add(blueprint, quantity);
 	}
 
 	private static void CheatAddFeature(string parameters)

@@ -49,7 +49,7 @@ public class ShipInventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable,
 		AddDisposable(EncumbranceVM = new EncumbranceVM(EncumbranceHelper.GetPartyCarryingCapacity()));
 		if (canInsertItem == null)
 		{
-			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, ItemsFilterType.ShipNoFilter, Game.Instance.Player.UISettings.InventorySorter, showSlotHoldItemsInSlots: false, ItemSlotsGroupType.Inventory));
+			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, ItemsFilterType.ShipNoFilter, Game.Instance.Player.UISettings.InventorySorter, showUnavailableItems: true, showSlotHoldItemsInSlots: false, ItemSlotsGroupType.Inventory));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(ItemSlotsGroup));
 			AddDisposable(ItemSlotsGroup.CollectionChangedCommand.Subscribe(delegate
 			{

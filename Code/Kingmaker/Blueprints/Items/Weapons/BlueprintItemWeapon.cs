@@ -43,6 +43,8 @@ public class BlueprintItemWeapon : BlueprintItemEquipmentHand
 
 	public WeaponFamily Family;
 
+	public WeaponClassification Classification;
+
 	[Space]
 	[SerializeField]
 	private WeaponHoldingType m_HoldingType;

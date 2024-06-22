@@ -29,7 +29,8 @@ public class MessageBoxPCView : MessageBoxBaseView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		m_DeclineButton.gameObject.SetActive(base.ViewModel.ShowDecline);
+		m_AcceptButton.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
+		m_DeclineButton.gameObject.SetActive(base.ViewModel.ShowDecline.Value);
 		AddDisposable(m_DeclineButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.OnDeclinePressed();
@@ -75,5 +76,9 @@ public class MessageBoxPCView : MessageBoxBaseView
 	protected override void DestroyTextField()
 	{
 		m_InputField.onValueChanged.RemoveListener(OnTextInputChanged);
+	}
+
+	protected override void BindProgressBar()
+	{
 	}
 }

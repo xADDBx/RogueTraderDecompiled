@@ -20,7 +20,7 @@ public class NamedLocatorTransform : TransformEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find locator " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find locator {0} in context parameters", Parameter);
 		}
 		if (!(value is LocatorEntity locatorEntity))
 		{

@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 using Kingmaker.Enums;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.SettingsUI;
 using UniRx;
 using UnityEngine;
 
@@ -44,6 +45,16 @@ public class JournalPCView : JournalBaseView
 		AddDisposable(base.ViewModel.UpdateView.Subscribe(OnSelectedQuestChange));
 		OnSelectedQuestChange(base.ViewModel.SelectedQuest.Value);
 		UpdateNavigation();
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, delegate
+		{
+			m_NavigationView.OnPrevActiveTab();
+			m_SelectorView.ChangeTab((int)m_NavigationView.GetActiveTab());
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, delegate
+		{
+			m_NavigationView.OnNextActiveTab();
+			m_SelectorView.ChangeTab((int)m_NavigationView.GetActiveTab());
+		}));
 	}
 
 	private void UpdateNavigation()

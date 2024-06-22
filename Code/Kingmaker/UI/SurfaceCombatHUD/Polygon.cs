@@ -62,7 +62,7 @@ public class Polygon
 			}
 			if (j == num2)
 			{
-				PFLog.Default.Warning($"Next vertex not found for {list[j]}");
+				PFLog.UI.Warning($"Next vertex not found for {list[j]}");
 				break;
 			}
 			Vector2Int value2 = list[j + 1];

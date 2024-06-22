@@ -29,7 +29,9 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public NullifyInformation NullifyInformation { get; private set; }
 
-	public int MinimumDamageValue { get; private set; }
+	public int UIMinimumDamageValue { get; private set; }
+
+	public int UIMinimumDamagePercent { get; private set; }
 
 	public bool ArmorIgnore { get; set; }
 
@@ -60,10 +62,11 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		ResultValueWithoutReduction = Result.ValueWithoutReduction;
 		ResultValueBeforeDifficulty = ResultValue;
 		int num2 = 0;
-		MinimumDamageValue = ResultValue;
+		UIMinimumDamageValue = ResultValue;
+		UIMinimumDamagePercent = 0;
 		if (Result.Source.Type != DamageType.Direct)
 		{
-			(num2, MinimumDamageValue) = ApplyDifficultyModifiers(ResultValue - num, Result.ValueWithoutReduction);
+			(num2, UIMinimumDamageValue, UIMinimumDamagePercent) = ApplyDifficultyModifiers(ResultValue - num, Result.ValueWithoutReduction);
 		}
 		ResultValue = num2 + num;
 		TryNullifyDamage();
@@ -86,18 +89,19 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		return damage.InitialRolledValue + damage.CriticalRolledValue;
 	}
 
-	private (int damage, int minDamage) ApplyDifficultyModifiers(int damage, int damageBeforeReductions)
+	private (int damage, int minDamageValue, int minDamagePercent) ApplyDifficultyModifiers(int damage, int damageBeforeReductions)
 	{
 		int num = ((damage > 0) ? Math.Max(1, damage) : 0);
 		int num2 = num;
-		if (base.Initiator.IsPlayerFaction)
+		int num3 = 0;
+		if (base.Initiator.IsPlayerFaction && !Target.IsPlayerFaction)
 		{
 			num2 = ((!(base.Initiator is StarshipEntity)) ? ((int)SettingsRoot.Difficulty.MinPartyDamage) : ((Target as StarshipEntity).IsSoftUnit ? 1 : ((int)SettingsRoot.Difficulty.MinPartyStarshipDamage)));
-			int num3 = ((!(base.Initiator is StarshipEntity)) ? ((int)SettingsRoot.Difficulty.MinPartyDamageFraction) : ((Target as StarshipEntity).IsSoftUnit ? 1 : ((int)SettingsRoot.Difficulty.MinPartyStarshipDamageFraction)));
+			num3 = ((!(base.Initiator is StarshipEntity)) ? ((int)SettingsRoot.Difficulty.MinPartyDamageFraction) : ((Target as StarshipEntity).IsSoftUnit ? 1 : ((int)SettingsRoot.Difficulty.MinPartyStarshipDamageFraction)));
 			num = Math.Max(num2, num);
 			num = Math.Max(Mathf.CeilToInt((float)(damageBeforeReductions * num3) / 100f), num);
 		}
-		return (damage: num, minDamage: num2);
+		return (damage: num, minDamageValue: num2, minDamagePercent: num3);
 	}
 
 	[CanBeNull]

@@ -29,6 +29,8 @@ public class CreditsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 
 	private readonly Action m_CloseAction;
 
+	public readonly BoolReactiveProperty InputFieldHasAnySymbol = new BoolReactiveProperty();
+
 	private PageGenerator m_Generator = new PageGenerator();
 
 	public int SelectedMenuIndex => m_MenuEntitiesList.IndexOf(m_SelectedMenuEntity.Value);
@@ -81,5 +83,10 @@ public class CreditsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public void CloseCredits()
 	{
 		m_CloseAction?.Invoke();
+	}
+
+	public void CheckInputFieldAnySymbols(string str)
+	{
+		InputFieldHasAnySymbol.Value = !string.IsNullOrWhiteSpace(str);
 	}
 }

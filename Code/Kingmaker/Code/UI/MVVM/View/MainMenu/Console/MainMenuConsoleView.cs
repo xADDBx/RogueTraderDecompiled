@@ -78,12 +78,12 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 		}, m_DelayBeforeShow);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void PlayFirstLaunchFX()
 	{
 		m_FirstLaunchFX.PlayEffect();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

@@ -62,6 +62,11 @@ public abstract class InventoryStashView : ViewBase<InventoryStashVM>, IVendorBu
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	private void Show()
 	{
 		base.gameObject.SetActive(value: true);
@@ -97,11 +102,6 @@ public abstract class InventoryStashView : ViewBase<InventoryStashVM>, IVendorBu
 				visibleCollectionElement.Blink();
 			}, 1);
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 
 	public void CollectionChanged()

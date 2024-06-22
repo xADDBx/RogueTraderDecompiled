@@ -3,6 +3,8 @@ using System.Linq;
 using Code.GameCore.Mics;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Networking.Player;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.Utility.DotNetExtensions;
 using Photon.Realtime;
@@ -134,6 +136,10 @@ public sealed class DlcNetManager
 				PFLog.Net.Log($"[DLC]   {i}) {obj[i]}");
 			}
 			LogDLCsThatEveryoneHas();
+			EventBus.RaiseEvent(delegate(INetDLCsHandler h)
+			{
+				h.HandleDLCsListChanged();
+			});
 		}
 	}
 
@@ -142,6 +148,10 @@ public sealed class DlcNetManager
 		PFLog.Net.Log("[DLC] OnPlayerLeftRoom " + photonPlayer.UserId);
 		m_UserIdToDLC.Remove(photonPlayer.UserId);
 		LogDLCsThatEveryoneHas();
+		EventBus.RaiseEvent(delegate(INetDLCsHandler h)
+		{
+			h.HandleDLCsListChanged();
+		});
 	}
 
 	public string[] CreateDlcInGameList()

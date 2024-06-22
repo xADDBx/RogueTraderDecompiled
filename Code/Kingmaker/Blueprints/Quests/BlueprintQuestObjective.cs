@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
+using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.Enums;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Localization;
@@ -16,7 +17,7 @@ using UnityEngine;
 namespace Kingmaker.Blueprints.Quests;
 
 [TypeId("9d27cf036b8dcef408e34b42d5234400")]
-public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObjectiveReference
+public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObjectiveReference, IEditorCommentHolder
 {
 	public enum Type
 	{
@@ -71,6 +72,10 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 	[SerializeField]
 	private QuestNotificationState m_SilentQuestNotification;
 
+	[HideInInspector]
+	[SerializeField]
+	private EditorCommentHolder m_EditorComment;
+
 	private ReferenceListProxy<BlueprintQuestObjective, BlueprintQuestObjectiveReference> m_NextObjectivesProxy;
 
 	private ReferenceListProxy<BlueprintQuestObjective, BlueprintQuestObjectiveReference> m_AddendumsProxy;
@@ -89,6 +94,18 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 	private LocalizedString m_RejectionDescription;
 
 	private ReferenceListProxy<BlueprintArea, BlueprintAreaReference> m_AreasProxy;
+
+	public EditorCommentHolder EditorComment
+	{
+		get
+		{
+			return m_EditorComment;
+		}
+		set
+		{
+			m_EditorComment = value;
+		}
+	}
 
 	public BlueprintQuest Quest => m_Quest?.Get();
 

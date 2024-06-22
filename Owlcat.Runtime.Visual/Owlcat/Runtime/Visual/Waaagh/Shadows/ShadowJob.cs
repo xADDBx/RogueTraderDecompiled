@@ -57,19 +57,19 @@ internal struct ShadowJob : IJob
 		ExecutePhaseOne();
 		ExecutePhaseTwo();
 		UpdateShadowDataCache();
-		StatisticsWriter.SetCachedCounter(ShadowDataCacheMap.Count());
+		StatisticsWriter.SetCachedCounter(ShadowDataCacheMap.Count);
 	}
 
 	private unsafe void PruneShadowDataCache()
 	{
-		int num = ShadowDataCacheMap.Count();
-		int* bufferPtr = stackalloc int[num];
-		UnsafeListBuffer<int> unsafeListBuffer = new UnsafeListBuffer<int>(bufferPtr, num);
-		foreach (KeyValue<int, ShadowData> item2 in ShadowDataCacheMap)
+		int count = ShadowDataCacheMap.Count;
+		int* bufferPtr = stackalloc int[count];
+		UnsafeListBuffer<int> unsafeListBuffer = new UnsafeListBuffer<int>(bufferPtr, count);
+		foreach (KVPair<int, ShadowData> item2 in ShadowDataCacheMap)
 		{
 			ref ShadowData value = ref item2.Value;
-			int num2 = CurrentFrameId - value.LastVisibleFrameId;
-			if (num2 < 0 || num2 > 50)
+			int num = CurrentFrameId - value.LastVisibleFrameId;
+			if (num < 0 || num > 50)
 			{
 				DynamicAtlasAllocator.Deallocate(ref value.DynamicAtlasData);
 				if (StaticShadowCacheEnabled && value.StaticCacheAtlasData.HasAllocation())

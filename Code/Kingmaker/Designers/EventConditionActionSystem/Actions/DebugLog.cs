@@ -17,11 +17,11 @@ public class DebugLog : GameAction
 
 	public override string GetCaption()
 	{
-		return Log;
+		return "Log: " + Log;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		PFLog.Default.Log(Log);
+		Element.LogInfo(Log);
 	}
 }

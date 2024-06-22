@@ -17,6 +17,8 @@ public class UIQuesJournalTexts
 
 	public LocalizedString RumourPlaceMarker;
 
+	public LocalizedString YouAreWithinRange;
+
 	public LocalizedString AllRumoursTitle;
 
 	public LocalizedString RumoursAboutUsTitle;

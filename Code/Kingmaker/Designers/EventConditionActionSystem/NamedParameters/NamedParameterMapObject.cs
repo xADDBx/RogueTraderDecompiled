@@ -19,7 +19,7 @@ public class NamedParameterMapObject : MapObjectEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find mapobj " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find mapobj {0} in context parameters", Parameter);
 		}
 		return value as MapObjectEntity;
 	}

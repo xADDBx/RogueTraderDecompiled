@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Utility;
@@ -7,6 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.AreaLogic.Cutscenes.Commands.Camera;
 
+[KnowledgeDatabaseID("891de2d8dd1a6f043a664f0c2adc2586")]
 public class CutsceneArtController : EntityViewBase, IUpdatable
 {
 	[SerializeField]

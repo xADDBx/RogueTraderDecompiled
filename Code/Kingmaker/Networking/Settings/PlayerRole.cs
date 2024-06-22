@@ -124,4 +124,19 @@ public sealed class PlayerRole
 		NetPlayerGroup other = (dict[key] = (enable ? value.Add(player) : value.Del(player)).Add(NetPlayer.Offline));
 		return !value.Equals(other);
 	}
+
+	public void OnPlayerLeftRoom(NetPlayer player)
+	{
+		foreach (KeyValuePair<string, NetPlayerGroup> entityRole in m_EntityRoles)
+		{
+			var (entityId, netPlayerGroup2) = (KeyValuePair<string, NetPlayerGroup>)(ref entityRole);
+			if (netPlayerGroup2.Contains(player))
+			{
+				EventBus.RaiseEvent(delegate(INetRoleSetHandler h)
+				{
+					h.HandleRoleSet(entityId);
+				});
+			}
+		}
+	}
 }

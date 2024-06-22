@@ -312,7 +312,7 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 			MinMaxZJob jobData2 = default(MinMaxZJob);
 			jobData2.WorldToViewMatrix = matrix4x;
 			jobData2.LocalFogDescs = m_LocalFogDescriptors;
-			m_SetupJobHandle = jobData2.Schedule(num, 32);
+			m_SetupJobHandle = IJobParallelForExtensions.Schedule(jobData2, num, 32);
 			m_SetupJobHandle = m_LocalFogDescriptors.SortJob(m_LocalFogComparer).Schedule(m_SetupJobHandle);
 			int num2 = m_VisibleCounter[0];
 			ZBinningJob zBinningJob = default(ZBinningJob);
@@ -329,7 +329,7 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 			extractLocalFogDataJob.LocalFogEngineData = m_VisibleVolumeDataList;
 			extractLocalFogDataJob.Obbs = m_VisibleVolumeBoundsList;
 			ExtractLocalFogDataJob jobData4 = extractLocalFogDataJob;
-			m_SetupJobHandle = jobData4.Schedule(num2, 32, m_SetupJobHandle);
+			m_SetupJobHandle = IJobParallelForExtensions.Schedule(jobData4, num2, 32, m_SetupJobHandle);
 		}
 	}
 

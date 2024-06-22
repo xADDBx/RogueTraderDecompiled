@@ -27,7 +27,7 @@ public class CompleteEtude : GameAction, IEtudeReference
 		return string.Format("Завершить этюд {0}", (!Evaluate) ? sb.NameSafe() : (EtudeEvaluator ? EtudeEvaluator.GetCaption() : "??"));
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BlueprintEtude bp = ((!Evaluate) ? Etude.Get() : (EtudeEvaluator ? ((BlueprintEtude)EtudeEvaluator.GetValue()) : null));
 		Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(bp);

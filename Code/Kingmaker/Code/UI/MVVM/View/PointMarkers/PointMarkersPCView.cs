@@ -26,10 +26,6 @@ public class PointMarkersPCView : CommonStaticComponentView<PointMarkersVM>
 
 	private CanvasScalerWorkaround m_CanvasScaler;
 
-	private readonly List<LineSegment2> m_Borders = new List<LineSegment2>();
-
-	private RectTransform m_RectTransform;
-
 	private float m_XMin;
 
 	private float m_XMax;
@@ -38,11 +34,12 @@ public class PointMarkersPCView : CommonStaticComponentView<PointMarkersVM>
 
 	private float m_YMax;
 
-	private List<LineSegment2> m_ParsedBorders = new List<LineSegment2>();
+	private readonly List<LineSegment2> m_ParsedBorders = new List<LineSegment2>();
 
-	public List<LineSegment2> Borders => m_Borders;
+	public List<LineSegment2> Borders { get; } = new List<LineSegment2>();
 
-	public RectTransform RectTransform => m_RectTransform;
+
+	public RectTransform RectTransform { get; private set; }
 
 	private Camera UICamera => Kingmaker.UI.UICamera.Instance;
 
@@ -61,7 +58,7 @@ public class PointMarkersPCView : CommonStaticComponentView<PointMarkersVM>
 	public void Initialize(CanvasScalerWorkaround canvasScaler)
 	{
 		m_CanvasScaler = canvasScaler;
-		m_RectTransform = GetComponent<RectTransform>();
+		RectTransform = GetComponent<RectTransform>();
 	}
 
 	protected override void BindViewImplementation()
@@ -123,21 +120,21 @@ public class PointMarkersPCView : CommonStaticComponentView<PointMarkersVM>
 
 	private void UpdateBorders()
 	{
-		m_Borders.Clear();
+		Borders.Clear();
 		RectTransform[] influencingContainers = m_InfluencingContainers;
 		foreach (RectTransform rectTransform in influencingContainers)
 		{
 			if (rectTransform != null && rectTransform.gameObject.activeInHierarchy)
 			{
-				m_Borders.AddRange(ParseBorders(rectTransform));
+				Borders.AddRange(ParseBorders(rectTransform));
 			}
 		}
 	}
 
 	private List<LineSegment2> ParseBorders(RectTransform container)
 	{
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(m_RectTransform, UICamera.WorldToScreenPoint(container.position), UICamera, out var localPoint);
-		Vector2 vector = new Vector2((localPoint.x + m_RectTransform.rect.width * m_RectTransform.pivot.x) * ScreenScale, (localPoint.y + m_RectTransform.rect.height * m_RectTransform.pivot.y) * ScreenScale);
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(RectTransform, UICamera.WorldToScreenPoint(container.position), UICamera, out var localPoint);
+		Vector2 vector = new Vector2((localPoint.x + RectTransform.rect.width * RectTransform.pivot.x) * ScreenScale, (localPoint.y + RectTransform.rect.height * RectTransform.pivot.y) * ScreenScale);
 		m_XMin = vector.x - container.rect.width * container.localScale.x * ScreenScale * container.pivot.x;
 		m_XMax = vector.x - container.rect.width * container.localScale.x * ScreenScale * (container.pivot.x - 1f);
 		m_YMin = vector.y - container.rect.height * container.localScale.y * ScreenScale * container.pivot.y;

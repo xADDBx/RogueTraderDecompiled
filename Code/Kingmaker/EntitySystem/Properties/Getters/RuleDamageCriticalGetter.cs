@@ -30,7 +30,7 @@ public class RuleDamageCriticalGetter : MechanicEntityPropertyGetter, PropertyCo
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return CriticalParameterType switch
 		{

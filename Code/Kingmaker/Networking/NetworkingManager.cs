@@ -4,6 +4,7 @@ using Kingmaker.Controllers.Net;
 using Kingmaker.GameCommands;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Player;
+using Kingmaker.QA.Overlays;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine.Pool;
@@ -29,6 +30,8 @@ public static class NetworkingManager
 			return PhotonManager.Instance.PlayerCount;
 		}
 	}
+
+	public static bool IsMultiplayer => 1 < PlayersCount;
 
 	public static NetPlayerGroup PlayersReadyMask
 	{
@@ -110,6 +113,7 @@ public static class NetworkingManager
 					Game.Instance.GameCommandQueue.PrepareForSend(sendTickIndex, value);
 					Game.Instance.UnitCommandBuffer.PrepareForSend(sendTickIndex, value2);
 					Game.Instance.SynchronizedDataController.PrepareForSend(sendTickIndex, value3);
+					NetworkingOverlay.AddCommands(value.Count, value2.Count);
 					if (PhotonManager.NetGame.CanSendGameMessages())
 					{
 						PhotonManager.Command.SendAllCommands(sendTickIndex, value, value2, value3);

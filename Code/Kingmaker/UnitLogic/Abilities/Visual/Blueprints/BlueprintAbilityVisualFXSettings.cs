@@ -48,6 +48,8 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 			}
 		}
 
+		public bool OverrideTargetOrientationSource => false;
+
 		public FXSettings Settings => m_Settings;
 	}
 
@@ -61,6 +63,10 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 		private FXTarget m_Target;
 
 		[SerializeField]
+		[Tooltip("Use OverrideRotatablePart as orientation source instead of root. Used for turrets.")]
+		private bool m_OverrideTargetOrientationSource;
+
+		[SerializeField]
 		private FXSettings m_Settings;
 
 		MappedAnimationEventType? IFXSettings.AnimationEvent => null;
@@ -68,6 +74,8 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 		public AbilityEventType? AbilityEvent => m_Event;
 
 		public FXTarget Target => m_Target;
+
+		public bool OverrideTargetOrientationSource => m_OverrideTargetOrientationSource;
 
 		public FXSettings Settings => m_Settings;
 	}

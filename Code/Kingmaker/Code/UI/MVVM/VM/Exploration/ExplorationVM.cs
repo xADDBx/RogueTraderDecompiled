@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Common.PlanetState;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.DialogSystem.Blueprints;
@@ -13,8 +12,6 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.MVVM.VM.Exploration;
-using Kingmaker.UI.Sound;
-using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -86,7 +83,7 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 	public ExplorationVM()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		AddDisposable(ResourceMinersVM = new ResourceMinersVM());
+		AddDisposable(ResourceMinersVM = new ResourceMinersVM(HasColony));
 		AddDisposable(ExplorationVisualElementsWrapperVM = new ExplorationVisualElementsWrapperVM());
 		AddDisposable(ExplorationScanResultsWrapperVM = new ExplorationScanResultsWrapperVM());
 		AddDisposable(ExplorationPointOfInterestListWrapperVM = new ExplorationPointOfInterestListWrapperVM());
@@ -142,31 +139,6 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		UpdateComponentsVisibility();
 	}
 
-	private void TryStartChronicle()
-	{
-		if (HasColony.Value)
-		{
-			if (!CurrentColony.Value.StartedChronicles.Any())
-			{
-				TryShowColonyRewards();
-				return;
-			}
-			UISounds.Instance.Sounds.SpaceColonization.ColonyEvent.Play();
-			CurrentColony.Value.StartChronicle(CurrentColony.Value.StartedChronicles[0]);
-		}
-	}
-
-	private void TryShowColonyRewards()
-	{
-		if (HasColony.Value)
-		{
-			EventBus.RaiseEvent(delegate(IColonyRewardsUIHandler h)
-			{
-				h.HandleColonyRewardsShow();
-			});
-		}
-	}
-
 	private void UpdateComponentsVisibility()
 	{
 		if (!IsExplored.Value)
@@ -199,8 +171,7 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 	{
 		if (!(m_StarSystemObjectView == null))
 		{
-			m_StarSystemObjectView.Data.Scan();
-			m_StarSystemObjectView.Data.PlayBarkBanter();
+			Game.Instance.GameCommandQueue.ScanStarSystemObject(m_StarSystemObjectView.Data, finishScan: true);
 		}
 	}
 
@@ -208,20 +179,25 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 	{
 		IsExploring.Value = true;
 		UpdateComponentsVisibility();
-		TryStartChronicle();
+		Game.Instance.GameCommandQueue.StartChronicleUI(CurrentColony?.Value);
 		UIVisibilityState.ShowAllUI();
+		EventBus.RaiseEvent(delegate(ICombatLogForceDeactivateControlsHandler h)
+		{
+			h.HandleCombatLogForceDeactivateControls();
+		});
 	}
 
 	public void OpenColonyProjects()
 	{
 		if (!HasColony.Value)
 		{
-			PFLog.System.Error("ExplorationVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			PFLog.UI.Error("ExplorationVM.OpenColonyProjects - can't open colony projects, colony is null!");
+			return;
 		}
-		else
+		EventBus.RaiseEvent(delegate(IColonizationProjectsUIHandler h)
 		{
-			Game.Instance.GameCommandQueue.ColonyProjectsUIOpen(CurrentColony.Value.Blueprint.ToReference<BlueprintColonyReference>());
-		}
+			h.HandleColonyProjectsUIOpen(CurrentColony.Value);
+		});
 	}
 
 	private void InitializePlanet(PlanetView planetView)
@@ -249,7 +225,7 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void HandleChronicleFinished(Colony colony, ColonyChronicle chronicle)
 	{
-		TryStartChronicle();
+		Game.Instance.GameCommandQueue.StartChronicleUI(colony);
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)

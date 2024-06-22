@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Kingmaker.Networking.Platforms;
+using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -35,9 +37,15 @@ public class CreatingLobbyState : IStateAsync
 		return Task.CompletedTask;
 	}
 
-	private void RunCreateRoom()
+	private async void RunCreateRoom()
 	{
 		LobbyNetManager.SetState(LobbyNetManager.State.Connecting);
+		var (flag, returnCode) = await PlatformServices.Platform.Session.IsEligibleToPlay();
+		if (!flag)
+		{
+			Fail(returnCode, "Player is not eligible to play Coop");
+			return;
+		}
 		EnterRoomParams enterRoomParams = CreateRoomParams();
 		PFLog.Net.Log("Creating room " + enterRoomParams.RoomName);
 		if (!m_PhotonManager.CreateRoom(enterRoomParams))
@@ -51,14 +59,43 @@ public class CreatingLobbyState : IStateAsync
 				RoomName = NetRoomNameHelper.GenerateRoomName(),
 				RoomOptions = new RoomOptions
 				{
-					MaxPlayers = 6,
+					MaxPlayers = PhotonManager.MaxPlayers,
 					PublishUserId = true
 				}
 			};
 		}
 	}
 
-	private void OnCreateRoom()
+	private async void OnCreateRoom()
+	{
+		if (!PlatformServices.Platform.Session.IsPlatformSessionRequired())
+		{
+			EnterLobby();
+			return;
+		}
+		PFLog.Net.Log("[CreatingLobbyState] Creating platform session");
+		if (!NetRoomNameHelper.TryFormatString(PhotonManager.Instance.Region, PhotonManager.Instance.RoomName, out var output))
+		{
+			PFLog.Net.Error("[CreatingLobbyState] Failed to create platform session. No room details provided");
+			return;
+		}
+		SessionCreationParams sessionCreationParams = default(SessionCreationParams);
+		sessionCreationParams.CoopRoomDetails = output;
+		sessionCreationParams.InviteRights = m_NetGame.CurrentInvitableUserType;
+		sessionCreationParams.JoinRights = m_NetGame.CurrentJoinableUserType;
+		SessionCreationParams sessionParams = sessionCreationParams;
+		if (!(await PlatformServices.Platform.Session.CreateSession(sessionParams)))
+		{
+			PFLog.Net.Log("[CreatingLobbyState] Creating platform session");
+			Fail(-1, "Can't create platform session");
+		}
+		else
+		{
+			EnterLobby();
+		}
+	}
+
+	private void EnterLobby()
 	{
 		LobbyNetManager.SetState(LobbyNetManager.State.InLobby);
 		PFLog.Net.Log("Lobby created " + PhotonManager.Instance.RoomName);
@@ -87,9 +124,19 @@ public class CreatingLobbyState : IStateAsync
 	{
 		PFLog.Net.Error($"[CreatingLobbyState.Fail] code={returnCode}, msg={message}");
 		m_NetGame.OnLobbyCreationFailed();
-		EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+		if (returnCode == 3000)
 		{
-			h.HandleCreatingLobbyError(returnCode);
-		});
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleNoPlayStationPlusError();
+			});
+		}
+		else
+		{
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleCreatingLobbyError(returnCode);
+			});
+		}
 	}
 }

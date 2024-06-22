@@ -7,10 +7,8 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Localization;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
-using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Toggles;
 using Owlcat.Runtime.UI.MVVM;
-using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -61,19 +59,27 @@ public class FeaturesFilterBaseView : ViewBase<FeaturesFilterVM>
 	[SerializeField]
 	private FilterView m_WarpFilter;
 
-	[SerializeField]
-	private TextMeshProUGUI m_FilterHint;
-
 	private Dictionary<FeaturesFilter.FeatureFilterType, FilterView> m_FiltersMap = new Dictionary<FeaturesFilter.FeatureFilterType, FilterView>();
 
 	private Dictionary<FeaturesFilter.FeatureFilterType, LocalizedString> m_FiltersNames = new Dictionary<FeaturesFilter.FeatureFilterType, LocalizedString>();
 
-	private AccessibilityTextHelper m_TextHelper;
+	private readonly List<FeaturesFilter.FeatureFilterType> m_FiltersOrder = new List<FeaturesFilter.FeatureFilterType>
+	{
+		FeaturesFilter.FeatureFilterType.None,
+		FeaturesFilter.FeatureFilterType.RecommendedFilter,
+		FeaturesFilter.FeatureFilterType.FavoritesFilter,
+		FeaturesFilter.FeatureFilterType.OffenseFilter,
+		FeaturesFilter.FeatureFilterType.DefenseFilter,
+		FeaturesFilter.FeatureFilterType.SupportFilter,
+		FeaturesFilter.FeatureFilterType.UniversalFilter,
+		FeaturesFilter.FeatureFilterType.ArchetypeFilter,
+		FeaturesFilter.FeatureFilterType.OriginFilter,
+		FeaturesFilter.FeatureFilterType.WarpFilter
+	};
 
 	public virtual void Initialize()
 	{
 		Hide();
-		m_TextHelper = new AccessibilityTextHelper(m_FilterHint);
 		m_FiltersMap = new Dictionary<FeaturesFilter.FeatureFilterType, FilterView>
 		{
 			{
@@ -183,18 +189,11 @@ public class FeaturesFilterBaseView : ViewBase<FeaturesFilterVM>
 		{
 			keyValuePair.Value.Toggle.Set(value: true);
 		}
-		m_TextHelper.UpdateTextSize();
 	}
 
 	protected override void DestroyViewImplementation()
 	{
 		Hide();
-		m_TextHelper.Dispose();
-	}
-
-	public GridConsoleNavigationBehaviour GetNavigation()
-	{
-		return m_FiltersToggleGroup.GetNavigationBehaviour();
 	}
 
 	private void Show()
@@ -216,11 +215,10 @@ public class FeaturesFilterBaseView : ViewBase<FeaturesFilterVM>
 		foreach (KeyValuePair<FeaturesFilter.FeatureFilterType, FilterView> item in m_FiltersMap)
 		{
 			item.Deconstruct(out var key, out var value);
-			FeaturesFilter.FeatureFilterType featureFilterType = key;
+			FeaturesFilter.FeatureFilterType currentFilter = key;
 			if (!(value.Toggle != activeToggle))
 			{
-				base.ViewModel.SetCurrentFilter(featureFilterType);
-				m_FilterHint.text = m_FiltersNames[featureFilterType];
+				base.ViewModel.SetCurrentFilter(currentFilter);
 				break;
 			}
 		}
@@ -234,6 +232,30 @@ public class FeaturesFilterBaseView : ViewBase<FeaturesFilterVM>
 			{
 				AddDisposable(value.Toggle.SetHint(localizedString2));
 			}
+		}
+	}
+
+	public void SetPrevFilter()
+	{
+		ShiftActiveToggle(-1);
+	}
+
+	public void SetNextFilter()
+	{
+		ShiftActiveToggle(1);
+	}
+
+	private void ShiftActiveToggle(int shiftAmount)
+	{
+		OwlcatToggle currentToggle = m_FiltersToggleGroup.ActiveToggle.Value;
+		FeaturesFilter.FeatureFilterType key = m_FiltersMap.FirstOrDefault((KeyValuePair<FeaturesFilter.FeatureFilterType, FilterView> pair) => pair.Value.Toggle == currentToggle).Key;
+		int num = m_FiltersOrder.IndexOf(key);
+		if (num >= 0)
+		{
+			int count = m_FiltersOrder.Count;
+			int index = (num + shiftAmount % count + count) % count;
+			m_FiltersMap.TryGetValue(m_FiltersOrder.ElementAt(index), out var value);
+			value.Toggle.Set(value: true);
 		}
 	}
 }

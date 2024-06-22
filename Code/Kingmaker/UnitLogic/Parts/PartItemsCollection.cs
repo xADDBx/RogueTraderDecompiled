@@ -157,7 +157,7 @@ public abstract class PartItemsCollection : EntityPart, IItemsCollection, IEnume
 		return m_Collection.Add(newItem, noAutoMerge);
 	}
 
-	public void Add(BlueprintItem newBpItem, int count, Action<ItemEntity> callback = null)
+	public void Add(BlueprintItem newBpItem, int count, Action<ItemEntity> callback = null, bool noAutoMerge = false)
 	{
 		m_Collection.Add(newBpItem, count, callback);
 	}

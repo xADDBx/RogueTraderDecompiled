@@ -1,8 +1,6 @@
 using Kingmaker.Code.UI.MVVM;
-using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.MVVM.VM.NetRoles;
 using Kingmaker.UI.Sound;
@@ -10,7 +8,7 @@ using Owlcat.Runtime.UI.MVVM;
 
 namespace Kingmaker.UI.MVVM.View.NetRoles.Base;
 
-public class NetRolesBaseView : ViewBase<NetRolesVM>, IGameModeHandler, ISubscriber, IInitializable
+public class NetRolesBaseView : ViewBase<NetRolesVM>, IInitializable
 {
 	public virtual void Initialize()
 	{
@@ -44,17 +42,5 @@ public class NetRolesBaseView : ViewBase<NetRolesVM>, IGameModeHandler, ISubscri
 		});
 		base.gameObject.SetActive(state);
 		Game.Instance.RequestPauseUi(state);
-	}
-
-	public void OnGameModeStart(GameModeType gameMode)
-	{
-		if (gameMode == GameModeType.Cutscene || gameMode == GameModeType.Dialog)
-		{
-			base.ViewModel.OnClose();
-		}
-	}
-
-	public void OnGameModeStop(GameModeType gameMode)
-	{
 	}
 }

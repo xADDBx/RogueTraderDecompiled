@@ -15,13 +15,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates.TooltipTemplateItemParts;
 
 public class ArmorItemPart : BaseItemPart
 {
-	public ArmorItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(item, itemTooltipData, compareItemTooltipData)
+	public ArmorItemPart(ItemEntity item, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(item, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 
-	public ArmorItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null)
-		: base(blueprintItem, itemTooltipData, compareItemTooltipData)
+	public ArmorItemPart(BlueprintItem blueprintItem, ItemTooltipData itemTooltipData, ItemTooltipData compareItemTooltipData = null, bool isScreenWindowTooltip = false)
+		: base(blueprintItem, itemTooltipData, compareItemTooltipData, isScreenWindowTooltip)
 	{
 	}
 
@@ -95,7 +95,6 @@ public class ArmorItemPart : BaseItemPart
 		AddArmorDamageReduceDescription(list);
 		if (list.Any())
 		{
-			bricks.Add(new TooltipBrickSpace());
 			bricks.AddRange(list);
 		}
 	}
@@ -109,7 +108,7 @@ public class ArmorItemPart : BaseItemPart
 	private void AddDodgePenalty(List<ITooltipBrick> bricks)
 	{
 		Sprite dodgePenalty = BlueprintRoot.Instance.UIConfig.UIIcons.TooltipIcons.DodgePenalty;
-		TryAddIconStatValue(bricks, TooltipElement.ArmorDodgePenalty, dodgePenalty, TooltipBrickIconStatValueType.Negative);
+		TryAddIconStatValue(bricks, TooltipElement.ArmorDodgePenalty, dodgePenalty, TooltipBrickIconStatValueType.Negative, TooltipBrickIconStatValueType.Negative);
 	}
 
 	private void AddDeflection(List<ITooltipBrick> bricks)

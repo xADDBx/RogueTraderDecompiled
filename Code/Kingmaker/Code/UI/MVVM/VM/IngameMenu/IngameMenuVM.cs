@@ -4,7 +4,6 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
@@ -30,9 +29,9 @@ public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler
 
 	public bool IsInSpace()
 	{
-		if (!(Game.Instance.CurrentMode == GameModeType.SpaceCombat) && !(Game.Instance.CurrentMode == GameModeType.StarSystem))
+		if (!Game.Instance.IsModeActive(GameModeType.SpaceCombat) && !Game.Instance.IsModeActive(GameModeType.StarSystem))
 		{
-			return Game.Instance.CurrentMode == GameModeType.GlobalMap;
+			return Game.Instance.IsModeActive(GameModeType.GlobalMap);
 		}
 		return true;
 	}
@@ -79,7 +78,10 @@ public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler
 
 	public void OpenColonyManagement()
 	{
-		Game.Instance.GameCommandQueue.ColonyManagementUIOpen();
+		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
+		{
+			h.HandleOpenColonyManagement();
+		});
 	}
 
 	public void OpenCargoManagement()

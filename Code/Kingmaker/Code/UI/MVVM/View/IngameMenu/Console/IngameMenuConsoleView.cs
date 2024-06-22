@@ -7,6 +7,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.MVVM.View.Tutorial.Console;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -218,8 +219,14 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 
 	private void OnCurrentInputLayerChanged()
 	{
-		if (GamePad.Instance.CurrentInputLayer != m_InputLayer && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName))
+		InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
+		if (currentInputLayer != m_InputLayer && !(currentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(currentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName))
 		{
+			if (currentInputLayer.ContextName == TutorialBigWindowConsoleView.InputLayerContextName || currentInputLayer.ContextName == TutorialBigWindowConsoleView.GlossaryContextName)
+			{
+				base.ViewModel.DestroyView();
+				return;
+			}
 			GamePad.Instance.PopLayer(m_InputLayer);
 			GamePad.Instance.PushLayer(m_InputLayer);
 		}

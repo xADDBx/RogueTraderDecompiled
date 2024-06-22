@@ -5,7 +5,6 @@ using Kingmaker.Settings;
 using Kingmaker.Settings.LINQ;
 using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.Core.Logging;
-using Unity.Services.Analytics;
 using Unity.Services.Core;
 using UnityEngine;
 
@@ -13,9 +12,26 @@ namespace Kingmaker.QA.Analytics;
 
 public class OwlcatAnalytics
 {
+	public interface IAnalyticsTarget
+	{
+		string PrivacyUrl { get; }
+
+		void StartDataCollection();
+
+		void StopDataCollection();
+
+		void RequestDataDeletion();
+
+		void CustomData(string eventName, IDictionary<string, object> eventParams);
+	}
+
 	private static OwlcatAnalytics s_Instance;
 
-	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("OwlcatAnalytics");
+	private bool m_IsInitialized;
+
+	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("UnityAnalyticsTarget");
+
+	private IAnalyticsTarget Target { get; set; }
 
 	public static OwlcatAnalytics Instance => s_Instance ?? Initialize();
 
@@ -33,47 +49,52 @@ public class OwlcatAnalytics
 
 	public bool IsOptInConsentShown => (WasTouchedSetting<bool>)SettingsRoot.Game.Main.AskedSendGameStatistic;
 
-	private async Task StartDataCollectionAsync()
+	private async Task LoadConfiguration()
 	{
+		if (m_IsInitialized)
+		{
+			return;
+		}
+		Logger.Log("Analytics config started...");
 		try
 		{
-			Logger.Log("Start data collection");
-			if (IsOptIn)
+			if (UnityServices.State == ServicesInitializationState.Uninitialized)
 			{
-				if (UnityServices.State == ServicesInitializationState.Uninitialized)
-				{
-					await UnityServices.InitializeAsync();
-				}
-				AnalyticsService.Instance.StartDataCollection();
+				Logger.Log("Initialize UnityServices...");
+				await UnityServices.InitializeAsync();
 			}
+			Target = new UnityAnalyticsTarget();
+			m_IsInitialized = true;
+			Logger.Log("Analytics config complete");
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			Logger.Exception(ex, "Start data collection failed.");
+			Logger.Log("Analytics config failed");
 		}
 	}
 
-	public void StartDataCollection()
+	public async void StartDataCollection()
 	{
-		if (IsOptIn)
+		await LoadConfiguration();
+		if (IsOptIn && m_IsInitialized)
 		{
-			StartDataCollectionAsync();
+			Target.StartDataCollection();
 		}
 	}
 
 	public void StopDataCollection()
 	{
-		if (IsOptIn)
+		if (IsOptIn && m_IsInitialized)
 		{
-			AnalyticsService.Instance.StopDataCollection();
+			Target.StopDataCollection();
 		}
 	}
 
 	public void RequestDataDeletion()
 	{
-		if (IsOptIn)
+		if (IsOptIn && m_IsInitialized)
 		{
-			AnalyticsService.Instance.RequestDataDeletion();
+			Target.RequestDataDeletion();
 		}
 	}
 
@@ -84,17 +105,17 @@ public class OwlcatAnalytics
 
 	public void OpenInBrowser()
 	{
-		if (IsOptIn)
+		if (IsOptIn && m_IsInitialized)
 		{
-			Application.OpenURL(AnalyticsService.Instance.PrivacyUrl);
+			Application.OpenURL(Target.PrivacyUrl);
 		}
 	}
 
 	public void CustomEvent(string Name, IDictionary<string, object> eventParams)
 	{
-		if (IsOptIn)
+		if (IsOptIn && m_IsInitialized)
 		{
-			AnalyticsService.Instance.CustomData(Name, eventParams);
+			Target.CustomData(Name, eventParams);
 		}
 	}
 }

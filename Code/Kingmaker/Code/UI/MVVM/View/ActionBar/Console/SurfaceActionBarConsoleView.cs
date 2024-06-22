@@ -16,6 +16,7 @@ using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using Rewired;
+using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -63,6 +64,10 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 	[SerializeField]
 	private GameObject[] m_ContainersForMarkers;
 
+	[Header("Other")]
+	[SerializeField]
+	private TextMeshProUGUI m_AnotherPlayerTurnLabel;
+
 	private IReadOnlyReactiveProperty<bool> m_IsVisible;
 
 	private BoolReactiveProperty m_VisibleTrigger;
@@ -99,6 +104,11 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 		}));
 		AddDisposable(base.ViewModel.IsAttackAbilityGroupCooldownAlertActive.Subscribe(m_AttackAbilityGroupCooldownAlertGroup.gameObject.SetActive));
 		AddDisposable(base.ViewModel.HighlightedUnit.Subscribe(OnHighlightedUnit));
+		AddDisposable(base.ViewModel.IsNotControllableCharacter.CombineLatest(base.ViewModel.ControllablePlayerNickname, (bool notControllable, string playerNickName) => new { notControllable, playerNickName }).Subscribe(value =>
+		{
+			m_AnotherPlayerTurnLabel.transform.parent.parent.gameObject.SetActive(value.notControllable);
+			m_AnotherPlayerTurnLabel.text = ((!string.IsNullOrWhiteSpace(value.playerNickName)) ? string.Format(UIStrings.Instance.ActionBar.AnotherPlayerTurnWithNickname, value.playerNickName) : ((string)UIStrings.Instance.ActionBar.AnotherPlayerTurn));
+		}));
 	}
 
 	protected override void DestroyViewImplementation()

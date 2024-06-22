@@ -10,6 +10,8 @@ public interface IUIMainMenu
 
 	void ShowNetLobby();
 
+	void ShowDlcManager();
+
 	void Exit();
 
 	void ShowLicense();

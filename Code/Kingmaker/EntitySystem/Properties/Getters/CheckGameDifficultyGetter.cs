@@ -15,7 +15,7 @@ public class CheckGameDifficultyGetter : PropertyGetter
 
 	public GameDifficultyOption MinDifficulty => m_minDifficulty;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Check current difficulty is [{MinDifficulty}]";
 	}

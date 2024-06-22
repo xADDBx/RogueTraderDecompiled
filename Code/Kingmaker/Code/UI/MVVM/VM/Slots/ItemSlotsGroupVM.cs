@@ -7,13 +7,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.Slots;
 
 public class ItemSlotsGroupVM : SlotsGroupVM<ItemSlotVM>
 {
-	public ItemSlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, bool needMaximumLimit = false, int maxSlots = 0)
-		: base(collection, slotsInRow, minSlots, (IEnumerable<ItemEntity>)null, filter, sorter, showSlotHoldItemsInSlots, type, (Func<ItemEntity, bool>)null, needMaximumLimit, maxSlots)
+	public ItemSlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, bool needMaximumLimit = false, int maxSlots = 0)
+		: base(collection, slotsInRow, minSlots, (IEnumerable<ItemEntity>)null, filter, sorter, showUnavailableItems, showSlotHoldItemsInSlots, type, (Func<ItemEntity, bool>)null, needMaximumLimit, maxSlots)
 	{
 	}
 
-	public ItemSlotsGroupVM(ItemsCollection collection, IEnumerable<ItemEntity> items, int slotsInRow, int minSlots, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown)
-		: base(collection, slotsInRow, minSlots, items, filter, sorter, showSlotHoldItemsInSlots, type, (Func<ItemEntity, bool>)null, needMaximumLimit: false, 0)
+	public ItemSlotsGroupVM(ItemsCollection collection, IEnumerable<ItemEntity> items, int slotsInRow, int minSlots, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown)
+		: base(collection, slotsInRow, minSlots, items, filter, sorter, showUnavailableItems, showSlotHoldItemsInSlots, type, (Func<ItemEntity, bool>)null, needMaximumLimit: false, 0)
 	{
 	}
 

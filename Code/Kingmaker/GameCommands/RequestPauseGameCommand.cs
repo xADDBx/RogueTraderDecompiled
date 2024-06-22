@@ -28,7 +28,7 @@ public sealed class RequestPauseGameCommand : GameCommand, IMemoryPackable<Reque
 
 	[JsonProperty]
 	[MemoryPackInclude]
-	private readonly bool m_ToPause;
+	public readonly bool ToPause;
 
 	public override bool IsSynchronized => true;
 
@@ -40,15 +40,15 @@ public sealed class RequestPauseGameCommand : GameCommand, IMemoryPackable<Reque
 	}
 
 	[MemoryPackConstructor]
-	public RequestPauseGameCommand(bool m_toPause)
+	public RequestPauseGameCommand(bool toPause)
 	{
-		m_ToPause = m_toPause;
+		ToPause = toPause;
 	}
 
 	protected override void ExecuteInternal()
 	{
 		NetPlayer playerOrEmpty = GameCommandPlayer.GetPlayerOrEmpty();
-		Game.Instance.PauseController.SetPlayer(playerOrEmpty, m_ToPause);
+		Game.Instance.PauseController.SetPlayer(playerOrEmpty, ToPause);
 	}
 
 	static RequestPauseGameCommand()
@@ -78,7 +78,7 @@ public sealed class RequestPauseGameCommand : GameCommand, IMemoryPackable<Reque
 		}
 		else
 		{
-			writer.WriteUnmanagedWithObjectHeader(1, in value.m_ToPause);
+			writer.WriteUnmanagedWithObjectHeader(1, in value.ToPause);
 		}
 	}
 
@@ -99,7 +99,7 @@ public sealed class RequestPauseGameCommand : GameCommand, IMemoryPackable<Reque
 			}
 			else
 			{
-				value2 = value.m_ToPause;
+				value2 = value.ToPause;
 				reader.ReadUnmanaged<bool>(out value2);
 			}
 		}
@@ -110,7 +110,7 @@ public sealed class RequestPauseGameCommand : GameCommand, IMemoryPackable<Reque
 				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(RequestPauseGameCommand), 1, memberCount);
 				return;
 			}
-			value2 = value != null && value.m_ToPause;
+			value2 = value != null && value.ToPause;
 			if (memberCount != 0)
 			{
 				reader.ReadUnmanaged<bool>(out value2);

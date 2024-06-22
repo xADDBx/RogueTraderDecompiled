@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -13,7 +12,10 @@ public class AnomalyOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityAno
 {
 	protected override IEnumerable<Entity> Entities => Game.Instance.State.StarSystemObjects.All;
 
-	protected override Func<OvertipEntityAnomalyVM, Entity, bool> OvertipGetter => (OvertipEntityAnomalyVM vm, Entity entity) => vm.SystemMapObject == entity as MapObjectEntity;
+	protected override bool OvertipGetter(OvertipEntityAnomalyVM vm, Entity entity)
+	{
+		return vm.SystemMapObject == entity as MapObjectEntity;
+	}
 
 	public AnomalyOvertipsCollectionVM()
 	{

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Kingmaker.QA.Overlays;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;
 
@@ -234,6 +235,7 @@ public class CommandQueue<T> : CommandQueue
 						num += ((!LocalNetPlayer.Equals(playerCommands.Player)) ? playerCommands.Count : 0);
 					}
 				}
+				NetworkingOverlay.AddReceivedCommands(typeof(T), num);
 			}
 			commandsForStep.Reset();
 		}

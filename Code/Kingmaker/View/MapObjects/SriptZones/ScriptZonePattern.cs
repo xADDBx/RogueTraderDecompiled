@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.Utility.CodeTimer;
@@ -10,6 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.SriptZones;
 
+[KnowledgeDatabaseID("1186500031e84dd4ab2e3f90455c05e3")]
 public class ScriptZonePattern : MonoBehaviour, IScriptZoneShape
 {
 	private NodeList m_GridData = NodeList.Empty;

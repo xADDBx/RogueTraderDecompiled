@@ -70,7 +70,7 @@ public class SectorMapVM : CommonStaticComponentVM, ISectorMapWarpTravelHandler,
 		List<SectorMapPassageEntity> list = Game.Instance.SectorMapController.AllPassagesForSystem(Game.Instance.SectorMapController.CurrentStarSystem);
 		foreach (SectorMapPassageEntity item in Game.Instance.State.Entities.OfType<SectorMapPassageEntity>())
 		{
-			item.View.ChangeAlpha(list.Contains(item) ? 1f : 0.2f);
+			item.View.ChangeAlpha(list.Contains(item) ? 1f : 0.28f);
 		}
 	}
 
@@ -80,7 +80,7 @@ public class SectorMapVM : CommonStaticComponentVM, ISectorMapWarpTravelHandler,
 		IEnumerable<SectorMapObjectEntity> source = Game.Instance.State.SectorMapObjects.Where((SectorMapObjectEntity entity) => entity.View.IsSystem);
 		SectorMapObjectEntity currentStarSystem = sectorMapController.CurrentStarSystem;
 		(from s in source
-			where s.IsExplored
+			where s.View.IsExploredOrHasQuests
 			select s into data
 			select data.View).ToList().ForEach(delegate(SectorMapObject es)
 		{

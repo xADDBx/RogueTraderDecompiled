@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.SectorMap;
 
-public class OvertipEntitySystemVM : OvertipEntityVM, ISectorMapWarpTravelHandler, ISubscriber<ISectorMapObjectEntity>, ISubscriber, INavigatorResourceCountChangedHandler
+public class OvertipEntitySystemVM : OvertipEntityVM, ISectorMapWarpTravelHandler, ISubscriber<ISectorMapObjectEntity>, ISubscriber, INavigatorResourceCountChangedHandler, INetRoleSetHandler
 {
 	public readonly SectorMapObjectEntity SectorMapObject;
 
@@ -61,13 +61,15 @@ public class OvertipEntitySystemVM : OvertipEntityVM, ISectorMapWarpTravelHandle
 
 	public readonly ReactiveProperty<bool> IsCurrentSystem = new ReactiveProperty<bool>();
 
+	public readonly ReactiveCommand HideSpaceSystemPopup = new ReactiveCommand();
+
 	public readonly ReactiveProperty<SpaceSystemNavigationButtonsVM> SpaceSystemNavigationButtonsVM = new ReactiveProperty<SpaceSystemNavigationButtonsVM>();
 
 	protected override bool UpdateEnabled
 	{
 		get
 		{
-			if (SectorMapObject.IsExplored && SectorMapObject.View.IsVisible)
+			if (SectorMapObject.View.IsExploredOrHasQuests && SectorMapObject.View.IsVisible)
 			{
 				return SectorMapObject.IsAvailable;
 			}
@@ -106,7 +108,7 @@ public class OvertipEntitySystemVM : OvertipEntityVM, ISectorMapWarpTravelHandle
 	{
 		base.OnUpdateHandler();
 		IsScanning.Value = SectorMapController.IsScanning;
-		IsExplored.Value = SectorMapObject.IsExplored;
+		IsExplored.Value = SectorMapObject.View.IsExploredOrHasQuests;
 		ReactiveProperty<bool> isDialogActive = IsDialogActive;
 		BlueprintDialog blueprintDialog = Game.Instance.DialogController?.Dialog;
 		isDialogActive.Value = blueprintDialog != null && (bool)blueprintDialog;
@@ -319,5 +321,13 @@ public class OvertipEntitySystemVM : OvertipEntityVM, ISectorMapWarpTravelHandle
 		{
 			h.HandleChangeCurrentSystemInfoConsole(SectorMapObject);
 		});
+	}
+
+	void INetRoleSetHandler.HandleRoleSet(string entityId)
+	{
+		if (!UINetUtility.IsControlMainCharacter())
+		{
+			HideSpaceSystemPopup.Execute();
+		}
 	}
 }

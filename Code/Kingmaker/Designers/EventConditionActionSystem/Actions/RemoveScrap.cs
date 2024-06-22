@@ -15,7 +15,7 @@ public class RemoveScrap : GameAction
 		return "Take scrap from player";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.Scrap.Spend(Scrap);
 	}

@@ -35,7 +35,7 @@ public class FlagInRange : Condition, IUnlockableFlagReference
 	{
 		if (Flag == null)
 		{
-			PFLog.Default.Error(this, "Flag in " + name + " is NULL");
+			Element.LogError(this, "Flag in {0} is NULL", name);
 			return false;
 		}
 		if (!Flag.IsUnlocked)

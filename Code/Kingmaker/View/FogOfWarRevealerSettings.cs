@@ -1,13 +1,19 @@
+using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
-using Owlcat.Runtime.Core.Updatables;
+using Kingmaker.EntitySystem.Entities;
 using Owlcat.Runtime.Visual.FogOfWar;
 using UnityEngine;
 
 namespace Kingmaker.View;
 
-public class FogOfWarRevealerSettings : UpdateableBehaviour
+[KnowledgeDatabaseID("f2c3a550a6cdcc24aa46cc6f188beac8")]
+public class FogOfWarRevealerSettings : MonoBehaviour, IUpdatable
 {
 	private FogOfWarRevealer m_Revealer = new FogOfWarRevealer();
+
+	[CanBeNull]
+	private EntityViewBase m_EntityView;
 
 	public Texture2D MaskTexture;
 
@@ -26,6 +32,32 @@ public class FogOfWarRevealerSettings : UpdateableBehaviour
 	public Vector3 CachedPosition { get; private set; }
 
 	public float CachedRadius { get; private set; }
+
+	public Vector3 Position
+	{
+		get
+		{
+			if (!(m_EntityView != null) || m_EntityView.Data == null)
+			{
+				return base.transform.position;
+			}
+			return m_EntityView.Data.Position;
+		}
+	}
+
+	public float Orientation
+	{
+		get
+		{
+			if (!(m_EntityView != null) || !(m_EntityView.Data is MechanicEntity mechanicEntity))
+			{
+				return base.transform.rotation.eulerAngles.y;
+			}
+			return mechanicEntity.Orientation;
+		}
+	}
+
+	public Vector3 Scale => base.transform.lossyScale;
 
 	public FogOfWarRevealer Revealer => m_Revealer;
 
@@ -47,20 +79,27 @@ public class FogOfWarRevealerSettings : UpdateableBehaviour
 		}
 	}
 
-	protected override void OnEnabled()
+	private void OnEnable()
 	{
-		base.OnEnabled();
+		Game.Instance?.CustomUpdateController.Add(this);
+		m_EntityView = GetComponentInChildren<EntityViewBase>();
 		UpdateRevealer();
 	}
 
-	protected override void OnDisabled()
+	private void OnDisable()
 	{
-		base.OnDisabled();
-		if (!RevealAlways)
+		try
 		{
-			FogOfWarControllerData.RemoveRevealer(base.transform);
+			if (!RevealAlways)
+			{
+				FogOfWarControllerData.RemoveRevealer(base.transform);
+			}
+			m_Revealer?.OnDisabled();
 		}
-		m_Revealer?.OnDisabled();
+		finally
+		{
+			Game.Instance?.CustomUpdateController.Remove(this);
+		}
 	}
 
 	private void OnDestroy()
@@ -75,20 +114,9 @@ public class FogOfWarRevealerSettings : UpdateableBehaviour
 		}
 	}
 
-	public override void DoUpdate()
+	void IUpdatable.Tick(float delta)
 	{
 		UpdateRevealer();
-	}
-
-	public static Vector2 CalculateHeightMinMax(float y)
-	{
-		FogOfWarSettings instance = FogOfWarSettings.Instance;
-		if (instance == null)
-		{
-			return Vector2.zero;
-		}
-		float num = y + instance.ShadowCullingHeightOffset;
-		return new Vector2(num, num + instance.ShadowCullingHeight);
 	}
 
 	private void UpdateRevealer()
@@ -96,13 +124,13 @@ public class FogOfWarRevealerSettings : UpdateableBehaviour
 		FogOfWarSettings instance = FogOfWarSettings.Instance;
 		if (instance != null)
 		{
-			Vector3 position = base.transform.position;
+			Vector3 position = Position;
 			m_Revealer.MaskTexture = MaskTexture;
 			m_Revealer.Position = position;
-			m_Revealer.Rotation = base.transform.rotation.eulerAngles.y;
-			Vector3 lossyScale = base.transform.lossyScale;
-			m_Revealer.Scale = new Vector2(lossyScale.x * 0.5f, lossyScale.z * 0.5f);
-			m_Revealer.HeightMinMax = CalculateHeightMinMax(position.y);
+			m_Revealer.Rotation = Orientation;
+			Vector3 scale = Scale;
+			m_Revealer.Scale = new Vector2(scale.x * 0.5f, scale.z * 0.5f);
+			m_Revealer.HeightMinMax = instance.CalculateHeightMinMax(position.y);
 			m_Revealer.MaskTexture = MaskTexture;
 			m_Revealer.Radius = instance.RevealerInnerRadius;
 			if (DefaultRadius)

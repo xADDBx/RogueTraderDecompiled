@@ -108,7 +108,7 @@ public class TrapCastSpell : GameAction
 		return $"Trap cast spell {Spell}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		TrapObjectData trapObjectData = (TrapObjectData)TrapObject.GetValue();
 		Ability ability;

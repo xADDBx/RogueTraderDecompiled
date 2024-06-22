@@ -43,8 +43,8 @@ public class CoverGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"Cover to {Target}";
+		return "Cover type of " + Target.Colorized() + " from " + FormulaTargetScope.Current;
 	}
 }

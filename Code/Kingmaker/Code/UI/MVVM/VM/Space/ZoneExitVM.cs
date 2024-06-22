@@ -8,6 +8,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Space;
 
@@ -23,6 +24,10 @@ public class ZoneExitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	private IDisposable m_UpdateDispatcher;
 
+	private readonly string I_PUSHED_WARP_JUMP_BUTTON_BEFORE = "I_PUSHED_WARP_JUMP_BUTTON_BEFORE";
+
+	public bool PushedWarpJumpBefore => PlayerPrefs.GetInt(I_PUSHED_WARP_JUMP_BUTTON_BEFORE, 0) == 1;
+
 	public ZoneExitVM()
 	{
 		IsExitAvailable.Value = UINetUtility.IsControlMainCharacter();
@@ -31,14 +36,14 @@ public class ZoneExitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		HandleGameModeChanged();
 	}
 
-	private void OnUpdateHandler()
-	{
-		IsWarpJumpAvailable.Value = Game.Instance.SectorMapController.CanJumpToWarp && IsExitAvailable.Value;
-	}
-
 	protected override void DisposeImplementation()
 	{
 		m_UpdateDispatcher?.Dispose();
+	}
+
+	private void OnUpdateHandler()
+	{
+		IsWarpJumpAvailable.Value = Game.Instance.SectorMapController.CanJumpToWarp && IsExitAvailable.Value;
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)
@@ -66,9 +71,14 @@ public class ZoneExitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void ExitToWarp()
 	{
-		if (Game.Instance.CurrentMode == GameModeType.StarSystem)
+		if (!(Game.Instance.CurrentMode != GameModeType.StarSystem))
 		{
 			Game.Instance.SectorMapController.JumpToSectorMap();
+			if (!PushedWarpJumpBefore)
+			{
+				PlayerPrefs.SetInt(I_PUSHED_WARP_JUMP_BUTTON_BEFORE, 1);
+				PlayerPrefs.Save();
+			}
 		}
 	}
 

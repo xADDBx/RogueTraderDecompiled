@@ -3,11 +3,11 @@ using System;
 namespace Kingmaker.Blueprints.JsonSystem.Helpers;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class TypeIdAttribute : Attribute
+public class TypeIdAttribute : Attribute, IIdAttribute
 {
-	public readonly string GuidString;
+	public string GuidString { get; private set; }
 
-	public readonly Guid Guid;
+	public Guid Guid { get; private set; }
 
 	public TypeIdAttribute(string s)
 	{

@@ -38,7 +38,8 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 		NeedsNoVisual = 0x80,
 		DynamicDamage = 0x100,
 		ShowInDialogue = 0x200,
-		PriorityInUI = 0x400
+		PriorityInUI = 0x400,
+		IsStarshipBuff = 0x800
 	}
 
 	public enum InitiativeType
@@ -143,6 +144,8 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	public bool DynamicDamage => HasFlag(Flags.DynamicDamage);
 
 	public bool ShowInDialogue => HasFlag(Flags.ShowInDialogue);
+
+	public bool IsStarshipBuff => HasFlag(Flags.IsStarshipBuff);
 
 	public bool PriorityInUI => HasFlag(Flags.PriorityInUI);
 

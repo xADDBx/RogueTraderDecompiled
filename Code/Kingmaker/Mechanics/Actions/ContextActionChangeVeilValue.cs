@@ -11,13 +11,18 @@ public class ContextActionChangeVeilValue : ContextAction
 {
 	public ContextValue Value;
 
+	public bool OverrideMinValue;
+
 	public override string GetCaption()
 	{
 		return $"Changes Veil by {Value}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		Game.Instance.TurnController.VeilThicknessCounter.Value = Rulebook.Trigger(new RuleCalculateVeilCount(Game.Instance.Player.MainCharacterEntity, Value.Calculate(base.Context))).Result;
+		Game.Instance.TurnController.VeilThicknessCounter.Value = Rulebook.Trigger(new RuleCalculateVeilCount(Game.Instance.Player.MainCharacterEntity, Value.Calculate(base.Context))
+		{
+			OverrideMinVeil = OverrideMinValue
+		}).Result;
 	}
 }

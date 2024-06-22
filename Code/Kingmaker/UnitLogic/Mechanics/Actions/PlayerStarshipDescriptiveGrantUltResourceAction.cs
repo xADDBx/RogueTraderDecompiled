@@ -26,7 +26,7 @@ public class PlayerStarshipDescriptiveGrantUltResourceAction : GameAction
 	[SerializeField]
 	private bool LoseInstead;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		int num = m_AmountValue switch
 		{

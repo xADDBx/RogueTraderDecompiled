@@ -47,10 +47,6 @@ public class BasePointOfInterest : IStarSystemInteraction, IHashable
 	public void ChangeStatusToInteracted()
 	{
 		SetInteracted();
-		EventBus.RaiseEvent(delegate(IExplorationHandler h)
-		{
-			h.HandlePointOfInterestInteracted(this);
-		});
 	}
 
 	public void SetInteracted()
@@ -69,6 +65,10 @@ public class BasePointOfInterest : IStarSystemInteraction, IHashable
 				interactedPoints.Add(key, new List<BlueprintPointOfInterest> { Blueprint });
 			}
 			Blueprint.OnInteractedActions?.Run();
+			EventBus.RaiseEvent(delegate(IExplorationHandler h)
+			{
+				h.HandlePointOfInterestInteracted(this);
+			});
 		}
 	}
 

@@ -36,7 +36,7 @@ public class AddFact : GameAction
 		return $"Add Fact ({Fact} to {Unit})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Unit.GetValue().AddFact(Fact)?.TryAddSource(this);
 	}

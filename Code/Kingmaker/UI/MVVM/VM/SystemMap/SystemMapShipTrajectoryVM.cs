@@ -16,7 +16,7 @@ public class SystemMapShipTrajectoryVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public readonly ReactiveProperty<bool> ShipIsMoving = new ReactiveProperty<bool>();
 
-	public readonly ReactiveProperty<Vector3> ShowPingPosition = new ReactiveProperty<Vector3>();
+	public readonly ReactiveCommand<(NetPlayer player, Vector3 position)> ShowPingPosition = new ReactiveCommand<(NetPlayer, Vector3)>();
 
 	public SystemMapShipTrajectoryVM()
 	{
@@ -50,6 +50,10 @@ public class SystemMapShipTrajectoryVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public void HandlePingPosition(NetPlayer player, Vector3 position)
 	{
-		ShowPingPosition.Value = position;
+		ShowPingPosition.Execute((player, position));
+	}
+
+	public void HandlePingPositionSound(GameObject gameObject)
+	{
 	}
 }

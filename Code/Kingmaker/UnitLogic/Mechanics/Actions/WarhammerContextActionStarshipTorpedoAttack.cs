@@ -17,7 +17,7 @@ public class WarhammerContextActionStarshipTorpedoAttack : ContextAction
 		return "Perform an attack with a starship torpedo weapon that gave this ability";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarshipEntity caster = base.Context.MaybeCaster as StarshipEntity;
 		if (caster == null)

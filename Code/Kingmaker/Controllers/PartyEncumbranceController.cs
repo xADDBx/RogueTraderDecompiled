@@ -23,7 +23,7 @@ public class PartyEncumbranceController : IControllerEnable, IController, IContr
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.System;
+		return TickType.Simulation;
 	}
 
 	public void Tick()

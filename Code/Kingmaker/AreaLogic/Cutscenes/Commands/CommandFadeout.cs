@@ -28,9 +28,12 @@ public class CommandFadeout : CommandBase
 
 	private bool m_Finished;
 
-	public override bool CanBeSkipped => true;
-
 	public override bool IsContinuous => m_Continuous;
+
+	public override bool TrySkip(CutscenePlayerData player)
+	{
+		return true;
+	}
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{

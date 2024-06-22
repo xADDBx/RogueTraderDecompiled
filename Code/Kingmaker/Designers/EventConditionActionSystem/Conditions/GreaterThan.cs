@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 
-[ComponentName("Condition/GreaterThan")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("3b8a817c2d1aed24ca0779940550d2bc")]

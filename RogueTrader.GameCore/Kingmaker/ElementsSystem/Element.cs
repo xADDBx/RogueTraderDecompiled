@@ -1,7 +1,9 @@
 using System;
 using System.Runtime.Serialization;
+using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.Utility.GuidUtility;
 using Owlcat.Runtime.Core.Logging;
@@ -14,6 +16,8 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 {
 	[HideInInspector]
 	public string name;
+
+	public static LogChannel LogChannel = LogChannelFactory.GetOrCreate("Elements");
 
 	public SimpleBlueprint Owner { get; set; }
 
@@ -47,7 +51,10 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 
 	string IHaveDescription.Description => GetDescription();
 
-	string IHaveCaption.Caption => GetCaption();
+	string IHaveCaption.Caption => GetCaption(useLineBreaks: false);
+
+	[CanBeNull]
+	private static ElementsDebugger Debugger => ContextData<ElementsDebugger>.Current;
 
 	public void InitName()
 	{
@@ -76,7 +83,7 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 	{
 		try
 		{
-			return GetCaption();
+			return GetCaption(useLineBreaks: false);
 		}
 		catch (Exception ex)
 		{
@@ -85,11 +92,16 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 		}
 	}
 
+	public virtual string GetCaption(bool useLineBreaks)
+	{
+		return GetCaption();
+	}
+
 	public abstract string GetCaption();
 
 	public virtual string GetDescription()
 	{
-		return GetType().Name + ": нет описания";
+		return $"{GetType().Name}: {GetCaption()}";
 	}
 
 	public virtual Color GetCaptionColor()
@@ -97,9 +109,59 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 		return Color.white;
 	}
 
-	protected void LogError(string error)
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	private static void Log(LogSeverity severity, object context, string messageFormat, params object[] @params)
 	{
-		string text = Owner.name + " " + Owner.AssetGuid;
-		PFLog.Default.Error(error + ". " + name + " in " + text);
+		Owlcat.Runtime.Core.Logging.Logger.Instance.Log(LogChannel, context, severity, null, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogInfo(object context, string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Message, context, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogInfo(string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Message, Debugger?.Element, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogWarning(object context, string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Warning, context, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogWarning(string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Warning, Debugger?.Element, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogError(object context, string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Error, context, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	[StringFormatMethod("messageFormat")]
+	public static void LogError(string messageFormat, params object[] @params)
+	{
+		Log(LogSeverity.Error, Debugger?.Element, messageFormat, @params);
+	}
+
+	[StackTraceIgnore]
+	public static void LogException(Exception exception)
+	{
+		Element source = Debugger?.Element ?? (exception as ElementLogicException)?.Element;
+		Owlcat.Runtime.Core.Logging.Logger.Instance.Log(LogChannel, source, LogSeverity.Error, exception, null, null);
 	}
 }

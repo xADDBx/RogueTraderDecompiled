@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
@@ -48,6 +49,9 @@ public class HullSlots : IHashable
 	public readonly StarshipEquipmentSlot<BlueprintItemArmorPlating> ArmorPlating;
 
 	[JsonProperty]
+	public readonly List<ArsenalSlot> Arsenals = new List<ArsenalSlot>();
+
+	[JsonProperty]
 	public readonly List<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot> WeaponSlots = new List<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot>();
 
 	public readonly List<ItemSlot> EquipmentSlots = new List<ItemSlot>();
@@ -83,6 +87,7 @@ public class HullSlots : IHashable
 		TryInsertItem(hullSlots.Bridge, Bridge);
 		TryInsertItem(hullSlots.AugerArray, AugerArray);
 		TryInsertItem(hullSlots.ArmorPlating, ArmorPlating);
+		CreateArsenals(hullSlots.Arsenals);
 		List<WeaponSlotData> weapons = hullSlots.Weapons;
 		if (weapons != null)
 		{
@@ -104,6 +109,7 @@ public class HullSlots : IHashable
 		EquipmentSlots.Add(Bridge);
 		EquipmentSlots.Add(AugerArray);
 		EquipmentSlots.Add(ArmorPlating);
+		EquipmentSlots.AddRange(Arsenals);
 		EquipmentSlots.AddRange(WeaponSlots);
 	}
 
@@ -126,6 +132,17 @@ public class HullSlots : IHashable
 		}
 	}
 
+	public void CreateArsenals(ReferenceArrayProxy<BlueprintItemArsenal> arsenals)
+	{
+		foreach (BlueprintItemArsenal item in arsenals)
+		{
+			ArsenalSlot arsenalSlot = new ArsenalSlot(Starship);
+			Arsenals.Add(arsenalSlot);
+			arsenalSlot.Initialize(RefreshWeaponSlots);
+			TryInsertItem(item, arsenalSlot);
+		}
+	}
+
 	private void AddWeapon(WeaponSlotData slotData)
 	{
 		Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot weaponSlot = new Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot(Starship, slotData);
@@ -133,7 +150,6 @@ public class HullSlots : IHashable
 		Starship.Inventory.Add(itemEntityStarshipWeapon);
 		weaponSlot.InsertItem(itemEntityStarshipWeapon);
 		WeaponSlots.Add(weaponSlot);
-		weaponSlot.SetupAmmo();
 	}
 
 	public void Subscribe()
@@ -197,6 +213,14 @@ public class HullSlots : IHashable
 		}
 	}
 
+	private void RefreshWeaponSlots()
+	{
+		foreach (Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot weaponSlot in WeaponSlots)
+		{
+			weaponSlot.RefreshArsenals();
+		}
+	}
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -216,13 +240,22 @@ public class HullSlots : IHashable
 		result.Append(ref val7);
 		Hash128 val8 = ClassHasher<StarshipEquipmentSlot<BlueprintItemArmorPlating>>.GetHash128(ArmorPlating);
 		result.Append(ref val8);
+		List<ArsenalSlot> arsenals = Arsenals;
+		if (arsenals != null)
+		{
+			for (int i = 0; i < arsenals.Count; i++)
+			{
+				Hash128 val9 = ClassHasher<ArsenalSlot>.GetHash128(arsenals[i]);
+				result.Append(ref val9);
+			}
+		}
 		List<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot> weaponSlots = WeaponSlots;
 		if (weaponSlots != null)
 		{
-			for (int i = 0; i < weaponSlots.Count; i++)
+			for (int j = 0; j < weaponSlots.Count; j++)
 			{
-				Hash128 val9 = ClassHasher<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot>.GetHash128(weaponSlots[i]);
-				result.Append(ref val9);
+				Hash128 val10 = ClassHasher<Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot>.GetHash128(weaponSlots[j]);
+				result.Append(ref val10);
 			}
 		}
 		return result;

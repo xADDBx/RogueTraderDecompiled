@@ -13,7 +13,6 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.CommandLineArgs;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
-using Newtonsoft.Json.Linq;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
 
@@ -54,6 +53,12 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 
 	private static bool s_ServerConnectionError;
 
+	private static bool s_InstructionsFileNotFoundError;
+
+	private static bool s_NoInstructionsProvidedError;
+
+	private static bool s_InstructionsParseError;
+
 	private static bool s_IsBadCacheStateError;
 
 	private Exception m_Exception;
@@ -70,8 +75,6 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 
 
 	public static string SendProbeUrl => s_ServerAddress + "/Create";
-
-	public static string AvailableScenariosUrl => s_ServerAddress + "/Instructions";
 
 	public static string JobFinishedUrl => s_ServerAddress + "/OnJobFinished";
 
@@ -139,6 +142,18 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 		{
 			return "not started";
 		}
+		if (s_NoInstructionsProvidedError)
+		{
+			return "no instruction provided";
+		}
+		if (s_InstructionsParseError)
+		{
+			return "instructions parse error";
+		}
+		if (s_InstructionsFileNotFoundError)
+		{
+			return "instruction file not found error";
+		}
 		if (s_ServerConnectionError)
 		{
 			return "server connection error";
@@ -199,32 +214,28 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 			}
 		}
 		Reporter = new ArbiterReporter(Arguments);
-		InstructionSettings instructionSettings = new InstructionSettings(Arguments);
-		if (instructionSettings.IsSingleInstruction)
+		InstructionService instructionService = new InstructionService(Arguments);
+		try
 		{
-			Reporter.DeleteCache();
-			Reporter.InitReportData(new string[1] { instructionSettings.Data });
-		}
-		else if (instructionSettings.IsInstructionList)
-		{
-			if (Arguments.ArbiterRestart)
+			string[] instructions = instructionService.GetInstructions();
+			if (instructions.Length == 0)
+			{
+				s_NoInstructionsProvidedError = true;
+				throw new InvalidOperationException("No instructions provided");
+			}
+			if (instructions.Length == 1 || (instructions.Length > 1 && Arguments.ArbiterRestart))
 			{
 				Reporter.DeleteCache();
 			}
-			if (File.Exists(instructionSettings.Data))
-			{
-				PFLog.Arbiter.Log("Read data from file '" + instructionSettings.Data + "'");
-				Reporter.InitReportData(File.ReadLines(instructionSettings.Data));
-			}
-			else
-			{
-				PFLog.Arbiter.Log("File '" + instructionSettings.Data + "' not found. Trying get instructions from server.");
-				Reporter.InitReportData(GetAvailableScenariosFromServer());
-			}
+			Reporter.InitReportData(instructions);
+			m_InstructionsToRun = new Queue<string>(Reporter.GetPendingInstructions());
+			PFLog.Arbiter.Log($"Pending instructions: {m_InstructionsToRun.Count}");
+			JobGuid = Reporter.CachedJobGuid;
 		}
-		m_InstructionsToRun = new Queue<string>(Reporter.GetPendingInstructions());
-		PFLog.Arbiter.Log($"Pending instructions: {m_InstructionsToRun.Count}");
-		JobGuid = Reporter.CachedJobGuid;
+		catch (Exception ex2)
+		{
+			PFLog.Arbiter.Exception(ex2);
+		}
 		Instance = this;
 		EventBus.Subscribe(Instance);
 		UnityEngine.Object.DontDestroyOnLoad(Instance);
@@ -253,7 +264,7 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 	private static void InitPlatformDataPath()
 	{
 		PlatformDataPath = ApplicationPaths.DevelopmentDataPath;
-		ArbiterMeasurements.s_IsMemoryToolAvailable = true;
+		ArbiterClientMeasurements.s_IsMemoryToolAvailable = true;
 	}
 
 	public void RunInstruction(string instructionName)
@@ -386,31 +397,6 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 		}
 		m_IsFatalError = false;
 		return false;
-	}
-
-	private List<string> GetAvailableScenariosFromServer()
-	{
-		List<string> list = new List<string>();
-		try
-		{
-			ServicePointManager.ServerCertificateValidationCallback = (object a, X509Certificate b, X509Chain c, SslPolicyErrors d) => true;
-			WebClient webClient = new WebClient();
-			webClient.QueryString.Add("project", Root.Project);
-			if (Arguments.ArbiterInstructionsPart != null)
-			{
-				webClient.QueryString.Add("part", Arguments.ArbiterInstructionsPart);
-			}
-			list = (from x in JObject.Parse(webClient.DownloadString(AvailableScenariosUrl)).SelectToken("Instructions")
-				select (string?)x).ToList();
-			PFLog.Arbiter.Log($"Received {list.Count} scenarios from server");
-			s_ServerConnectionError = false;
-		}
-		catch (Exception ex)
-		{
-			PFLog.Arbiter.Exception(ex);
-			s_ServerConnectionError = true;
-		}
-		return list;
 	}
 
 	private void OnJobFinished()

@@ -9,7 +9,7 @@ public class ScreenshotReceiver : DataReceiver
 
 	private ImageMetaData m_MetaData;
 
-	protected override int MainPartLenght => m_MetaData.SaveLength;
+	protected override int MainPartLength => m_MetaData.SaveLength;
 
 	protected override int SenderUniqueNumber => m_MetaData.SenderUniqueNumber;
 

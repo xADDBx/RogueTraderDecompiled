@@ -17,7 +17,7 @@ public class UnitPartAscensionParameters : BaseUnitPart, ITurnStartHandler, ISub
 		StartTurnPosition = base.Owner.Position;
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		StartTurnPosition = base.Owner.Position;
 	}

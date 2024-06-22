@@ -3,7 +3,6 @@ using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
-using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -92,7 +91,6 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 					}
 				}
 				m_NavigationBehaviour.FocusOnFirstValidEntity();
-				TooltipHelper.HideTooltip();
 			}
 			else
 			{

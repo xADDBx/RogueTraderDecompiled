@@ -42,6 +42,8 @@ public class InventoryCargoConsoleView : InventoryCargoView
 
 	private bool IsSortBinded;
 
+	public readonly ReactiveCommand OnNeedRefocus = new ReactiveCommand();
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -54,6 +56,13 @@ public class InventoryCargoConsoleView : InventoryCargoView
 			AddDisposable(base.ViewModel.SelectedCargo.Subscribe(delegate
 			{
 				ChangeCargoView();
+			}));
+		}
+		if (m_CargoZoneView is CargoDetailedZoneConsoleView cargoDetailedZoneConsoleView)
+		{
+			AddDisposable(ObservableExtensions.Subscribe(cargoDetailedZoneConsoleView.OnHideSlot, delegate
+			{
+				HandleRemoveCargo();
 			}));
 		}
 		base.ViewModel.IsCargoDetailedZone.Value = false;
@@ -157,6 +166,15 @@ public class InventoryCargoConsoleView : InventoryCargoView
 	public ConsoleNavigationBehaviour GetCargoNavigation()
 	{
 		return m_VirtualList.GetNavigationBehaviour();
+	}
+
+	public void HandleRemoveCargo()
+	{
+		m_CargoZoneView.ScrollToTop();
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			OnNeedRefocus?.Execute();
+		}, 3);
 	}
 
 	public void CreateNavigation()

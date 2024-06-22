@@ -1,5 +1,8 @@
+using System;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.Base;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -25,6 +28,8 @@ public class SaveSlotPCView : SaveSlotBaseView
 	[SerializeField]
 	private OwlcatButton m_DeleteButton;
 
+	private IDisposable m_SaveLoadButtonHintDisposable;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -45,7 +50,11 @@ public class SaveSlotPCView : SaveSlotBaseView
 			}
 			SetSaveLoadButton(base.ViewModel.Mode.Value);
 		}
-		m_SaveLoadButton.Or(null)?.SetInteractable(!base.ViewModel.ShowDlcRequiredLabel.Value || base.ViewModel.Mode.Value == SaveLoadMode.Save);
+		AddDisposable(base.ViewModel.IsCurrentIronManSave.Subscribe(delegate
+		{
+			SetInteractableSaveLoadButton();
+		}));
+		SetInteractableSaveLoadButton();
 		m_DeleteButton.Or(null)?.SetInteractable(state: true);
 		if (!m_IsDetailedView && !(this is NewSaveSlotPCView))
 		{
@@ -69,6 +78,8 @@ public class SaveSlotPCView : SaveSlotBaseView
 
 	protected override void DestroyViewImplementation()
 	{
+		m_SaveLoadButtonHintDisposable?.Dispose();
+		m_SaveLoadButtonHintDisposable = null;
 		m_SaveLoadButton.Or(null)?.SetInteractable(state: false);
 		m_DeleteButton.Or(null)?.SetInteractable(state: false);
 		if (m_SaveLoadLabel != null)
@@ -94,6 +105,16 @@ public class SaveSlotPCView : SaveSlotBaseView
 	protected override void UpdateDLCState(bool b)
 	{
 		base.UpdateDLCState(b);
-		m_SaveLoadButton.Or(null)?.SetInteractable(!base.ViewModel.ShowDlcRequiredLabel.Value || base.ViewModel.Mode.Value == SaveLoadMode.Save);
+		SetInteractableSaveLoadButton();
+	}
+
+	private void SetInteractableSaveLoadButton()
+	{
+		m_SaveLoadButton.Or(null)?.SetInteractable((!base.ViewModel.ShowDlcRequiredLabel.Value || base.ViewModel.Mode.Value == SaveLoadMode.Save) && !base.ViewModel.IsCurrentIronManSave.Value);
+		m_SaveLoadButtonHintDisposable?.Dispose();
+		if (base.ViewModel.IsCurrentIronManSave.Value)
+		{
+			m_SaveLoadButtonHintDisposable = m_SaveLoadButton.SetHint(UIStrings.Instance.SaveLoadTexts.CannotLoadCurrentIronManSave);
+		}
 	}
 }

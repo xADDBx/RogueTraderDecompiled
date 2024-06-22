@@ -1,8 +1,4 @@
-using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.Base;
-using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
-using Kingmaker.PubSubSystem;
-using Kingmaker.PubSubSystem.Core;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 
@@ -55,16 +51,13 @@ public class SaveSlotConsoleView : SaveSlotBaseView, IFunc01ClickHandler, IConso
 
 	public new void OnConfirmClick()
 	{
-		if (base.ViewModel.ShowDlcRequiredLabel.Value)
-		{
-			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-			{
-				h.HandleWarning(BlueprintRoot.Instance.LocalizedTexts.UserInterfacesText.SaveLoadTexts.DlcRequired, addToLog: false, WarningNotificationFormat.Attention);
-			});
-		}
-		else
-		{
-			base.ViewModel.SaveOrLoad();
-		}
+		base.ViewModel.SaveOrLoad();
+	}
+
+	public override void SetFocus(bool value)
+	{
+		base.SetFocus(value);
+		base.ViewModel.SetSelectedFromView(value);
+		m_Button.CanConfirm = true;
 	}
 }

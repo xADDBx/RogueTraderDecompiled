@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("9496b0e052b844e4a7587da8d55f17db")]
 public class SpawnerOptimizedUnit : EntityPartComponent<SpawnerOptimizedUnit.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

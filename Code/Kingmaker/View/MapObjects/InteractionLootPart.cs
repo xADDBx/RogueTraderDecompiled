@@ -144,7 +144,19 @@ public class InteractionLootPart : InteractionPart<InteractionLootSettings>, IIt
 	protected override void OnAttach()
 	{
 		base.OnAttach();
-		m_Loot = m_Loot ?? new ItemsCollection(base.Owner);
+		if (m_Loot == null)
+		{
+			m_Loot = new ItemsCollection(base.Owner);
+		}
+	}
+
+	protected override void OnSettingsDidSet(bool isNewSettings)
+	{
+		base.OnSettingsDidSet(isNewSettings);
+		if (DisableWhenEmpty && base.Enabled && !m_Loot.HasLoot)
+		{
+			base.Enabled = false;
+		}
 	}
 
 	protected override UIInteractionType GetDefaultUIType()
@@ -248,7 +260,7 @@ public class InteractionLootPart : InteractionPart<InteractionLootSettings>, IIt
 	public void HandleItemsAddedImplementation(ItemEntity item)
 	{
 		TryToTrigger(base.Settings.PutItemTrigger, item, ref m_TriggeredPut);
-		base.Enabled = true;
+		base.Enabled = Loot.HasLoot;
 		UpdateMarkerName();
 	}
 

@@ -36,7 +36,7 @@ public class TooltipBrickTextConsoleView : TooltipBrickTextView, IConsoleTooltip
 
 	private List<IFloatConsoleNavigationEntity> m_LinkEntities = new List<IFloatConsoleNavigationEntity>();
 
-	private List<(TextMeshProUGUI, OwlcatMultiButton)> m_TextsCache = new List<(TextMeshProUGUI, OwlcatMultiButton)>();
+	private readonly List<(TextMeshProUGUI, OwlcatMultiButton)> m_TextsCache = new List<(TextMeshProUGUI, OwlcatMultiButton)>();
 
 	private IConsoleEntity m_CurrentNavigation;
 

@@ -1,6 +1,9 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.View.MapObjects;
 using Owlcat.QA.Validation;
 using UnityEngine;
@@ -26,8 +29,11 @@ public class OpenLootContainer : GameAction
 		return "Open Loot Container " + MapObject;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		MapObject.GetValue().GetOptional<InteractionLootPart>()?.Interact(Game.Instance.Player.MainCharacterEntity);
+		InteractionLootPart optional = MapObject.GetValue().GetOptional<InteractionLootPart>();
+		BaseUnitEntity baseUnitEntity = ContextData<InteractingUnitData>.Current?.Unit;
+		baseUnitEntity = baseUnitEntity ?? Game.Instance.Player.MainCharacterEntity;
+		optional?.Interact(baseUnitEntity);
 	}
 }

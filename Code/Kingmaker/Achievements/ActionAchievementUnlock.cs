@@ -22,7 +22,7 @@ public class ActionAchievementUnlock : GameAction
 		return "Unlock achievement " + Achievement.name;
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Game.Instance.Player.Achievements.Unlock(Achievement);
 	}

@@ -19,7 +19,7 @@ public class AddTraitToAllColonies : GameAction
 		return "Add " + Trait.Get().Name + " to all existing colonies";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (ColoniesState.ColonyData colony in Game.Instance.Player.ColoniesState.Colonies)
 		{

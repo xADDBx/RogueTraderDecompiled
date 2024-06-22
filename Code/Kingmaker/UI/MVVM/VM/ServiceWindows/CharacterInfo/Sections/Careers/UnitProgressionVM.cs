@@ -13,7 +13,6 @@ using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
-using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
@@ -21,6 +20,7 @@ using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
@@ -43,9 +43,9 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 
 	private readonly UnitProgressionMode m_ProgressionMode;
 
-	public override CharInfoExperienceVM CharInfoExperienceVM { get; }
+	public readonly CharInfoExperienceVM CharInfoExperienceVM;
 
-	public override UnitBackgroundBlockVM UnitBackgroundBlockVM { get; }
+	public readonly UnitBackgroundBlockVM UnitBackgroundBlockVM;
 
 	public IEnumerable<CareerPathVM> AllCareerPaths => m_AllCareerPaths;
 
@@ -55,9 +55,9 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 		: base(unit, levelUpManager)
 	{
 		m_ProgressionMode = mode;
+		AddDisposable(new SelectionGroupRadioVM<CareerPathVM>(m_AllCareerPaths, PreselectedCareer));
 		AddDisposable(CharInfoExperienceVM = new CharInfoExperienceVM(unit));
 		AddDisposable(UnitBackgroundBlockVM = new UnitBackgroundBlockVM(unit));
-		AddDisposable(new SelectionGroupRadioVM<CareerPathVM>(m_AllCareerPaths, PreselectedCareer));
 		TryRestoreSavedState();
 	}
 
@@ -86,13 +86,13 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 			}
 			try
 			{
-				CareerPathVM item = new CareerPathVM(Unit.Value, careerPath, this, m_ProgressionMode == UnitProgressionMode.CharGen);
+				CareerPathVM item = new CareerPathVM(Unit.Value, careerPath, this);
 				dictionary[careerPath.Tier].Add(item);
 				m_AllCareerPaths.Add(item);
 			}
 			catch (Exception ex)
 			{
-				PFLog.Default.Exception(ex);
+				PFLog.UI.Exception(ex);
 			}
 		}
 		List<BlueprintCareerPath> list = Unit.Value.Facts.List.Select((EntityFact f) => f.Blueprint as BlueprintCareerPath).ToList();
@@ -111,9 +111,13 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 		TryGetActiveLevelupCareer()?.UpdateCareerPath();
 	}
 
+	public override void HandleUICommitChanges()
+	{
+	}
+
 	public override void SetRankEntry(IRankEntrySelectItem rankEntryItem)
 	{
-		if (rankEntryItem == CurrentRankEntryItem.Value)
+		if (rankEntryItem != null && rankEntryItem == CurrentRankEntryItem.Value)
 		{
 			OnRepeatedCurrentRankEntryItem.Execute(rankEntryItem);
 		}
@@ -126,17 +130,39 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 		CareerPathVM oldCareer = (force ? null : CurrentCareer.Value);
 		TrySelectCareerPath(oldCareer, careerPathVM);
 		UpdateState();
+		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(SetFirstAvailableRankEntry);
 	}
 
-	public override void SelectCareerPath()
+	public void SetFirstAvailableRankEntry()
 	{
-		TrySelectCareerPath(null, CurrentCareer.Value);
+		if (CurrentCareer.Value == null)
+		{
+			return;
+		}
+		RankEntrySelectionVM rankEntrySelectionVM = CurrentCareer.Value.AllSelections?.LastOrDefault((RankEntrySelectionVM s) => s.SelectionMade);
+		if (CurrentCareer.Value.IsInLevelupProcess)
+		{
+			SetRankEntry(rankEntrySelectionVM);
+			if (CurrentCareer.Value.LastEntryToUpgrade == rankEntrySelectionVM)
+			{
+				CurrentCareer.Value.SetRankEntry(rankEntrySelectionVM);
+			}
+			else
+			{
+				CurrentCareer.Value.SelectNextItem(skipSelected: false);
+			}
+		}
+		else
+		{
+			CurrentCareer.Value.SetRankEntry(null);
+		}
 	}
 
 	public override void Commit()
 	{
 		Game.Instance.GameCommandQueue.CommitLvlUp(base.LevelUpManager);
 		DestroyLevelUpManager();
+		RefreshData();
 	}
 
 	public void UpdateSelectionsFromUnit(BaseUnitEntity unit)
@@ -149,15 +175,9 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 		if (m_ProgressionMode == UnitProgressionMode.CharGen || (base.LevelUpManager != null && base.LevelUpManager.TargetUnit != Unit.Value))
 		{
 			CurrentCareer.Value = newCareer;
+			ReactiveProperty<IRankEntrySelectItem> firstAvailableEntryItem = FirstAvailableEntryItem;
 			CareerPathVM careerPathVM = newCareer;
-			if (careerPathVM != null && careerPathVM.CareerPath.Tier == CareerPathTier.One)
-			{
-				FirstAvailableEntryItem.Value = CurrentCareer.Value?.RankEntries.FirstOrDefault()?.GetFirstItem();
-			}
-			else
-			{
-				FirstAvailableEntryItem.Value = null;
-			}
+			firstAvailableEntryItem.Value = ((careerPathVM == null || careerPathVM.CareerPath.Tier != 0) ? null : CurrentCareer.Value?.RankEntries.FirstOrDefault()?.GetFirstItem());
 			return;
 		}
 		if (oldCareer != null)
@@ -252,7 +272,7 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 
 	public void ClearLevelupManagerIfNeeded(BaseUnitEntity newUnitEntity)
 	{
-		if (base.LevelUpManager != null && base.LevelUpManager.TargetUnit != newUnitEntity)
+		if (base.LevelUpManager != null && base.LevelUpManager.TargetUnit != newUnitEntity && newUnitEntity != null)
 		{
 			DestroyLevelUpManager();
 		}
@@ -293,10 +313,17 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 
 	private void TrySaveState()
 	{
+		PlayerUISettings uISettings = Game.Instance.Player.UISettings;
 		if (m_ProgressionMode != 0)
 		{
-			Game.Instance.Player.UISettings.SavedUnitProgressionWindowData.CareerPath = CurrentCareer.Value?.CareerPath.ToReference<BlueprintCareerPath.Reference>();
+			CareerPathVM value = CurrentCareer.Value;
+			if (value != null && value.IsUnlocked)
+			{
+				uISettings.SavedUnitProgressionWindowData.CareerPath = CurrentCareer.Value?.CareerPath.ToReference<BlueprintCareerPath.Reference>();
+				return;
+			}
 		}
+		uISettings.SavedUnitProgressionWindowData.CareerPath = null;
 	}
 
 	private void SetState(UnitProgressionWindowState newState, bool saveSelections = false)
@@ -307,11 +334,10 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 			SetCareerPath(null);
 			break;
 		}
-		CurrentRankEntryItem.Value = null;
 		UpdateState();
 	}
 
-	public override void SetPreviousState(bool saveSelections = false)
+	public void SetPreviousState(bool saveSelections = false)
 	{
 		int num = Breadcrumbs.Count - 1;
 		int index = Math.Max(0, num - 1);
@@ -351,13 +377,6 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 			}
 		}
 		m_EscHandle?.Dispose();
-		if (Breadcrumbs.Count - 1 > 0)
-		{
-			m_EscHandle = EscHotkeyManager.Instance.Subscribe(delegate
-			{
-				SetPreviousState();
-			});
-		}
 	}
 
 	private void Clear()

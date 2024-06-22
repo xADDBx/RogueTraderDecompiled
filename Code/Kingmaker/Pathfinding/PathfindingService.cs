@@ -48,7 +48,7 @@ public class PathfindingService : IService
 		public EntityRef TargetEntity;
 	}
 
-	private List<(Path path, Action<Path> callback, long delayToStep)> m_DelayedPaths = new List<(Path, Action<Path>, long)>();
+	private readonly List<(Path path, Action<Path> callback, int delayToStep)> m_DelayedPaths = new List<(Path, Action<Path>, int)>();
 
 	private static ServiceProxy<PathfindingService> s_InstanceProxy;
 
@@ -69,25 +69,37 @@ public class PathfindingService : IService
 		}
 	}
 
-	public void Reset()
+	public void ForceCompleteAll()
 	{
-		PFLog.Pathfinding.Log($"Reset. x{m_DelayedPaths.Count} delayed path will be marked as errored.");
-		foreach (var delayedPath in m_DelayedPaths)
+		PFLog.Pathfinding.Log($"Force complete all paths... x{m_DelayedPaths.Count}");
+		int num = Game.Instance.RealTimeController.CurrentSystemStepIndex;
+		while (0 < m_DelayedPaths.Count)
 		{
-			delayedPath.path.Error();
+			List<(Path path, Action<Path> callback, int delayToStep)> delayedPaths = m_DelayedPaths;
+			int num2 = delayedPaths[delayedPaths.Count - 1].delayToStep + 1;
+			for (int i = num; i < num2; i++)
+			{
+				TickInternal(i);
+			}
+			num = num2;
 		}
 	}
 
 	public void Tick()
 	{
+		int currentSystemStepIndex = Game.Instance.RealTimeController.CurrentSystemStepIndex;
+		TickInternal(currentSystemStepIndex);
+	}
+
+	private void TickInternal(int currentSytemStep)
+	{
 		using (ProfileScope.New("PathindingService.Tick"))
 		{
-			int currentSystemStepIndex = Game.Instance.RealTimeController.CurrentSystemStepIndex;
 			int num = 0;
 			for (int i = 0; i < m_DelayedPaths.Count; i++)
 			{
-				(Path, Action<Path>, long) tuple = m_DelayedPaths[i];
-				if (tuple.Item3 > currentSystemStepIndex)
+				(Path, Action<Path>, int) tuple = m_DelayedPaths[i];
+				if (tuple.Item3 > currentSytemStep)
 				{
 					break;
 				}
@@ -277,7 +289,14 @@ public class PathfindingService : IService
 		}
 		if (callback != null)
 		{
-			callback(path as TPath);
+			try
+			{
+				callback(path as TPath);
+			}
+			catch (Exception ex)
+			{
+				PFLog.Pathfinding.Exception(ex);
+			}
 			path.Release(this);
 		}
 	}
@@ -291,7 +310,14 @@ public class PathfindingService : IService
 		if (callback != null)
 		{
 			ForcedPath obj = (path.error ? ForcedPath.ErrorPath : ForcedPath.Construct(path));
-			callback(obj);
+			try
+			{
+				callback(obj);
+			}
+			catch (Exception ex)
+			{
+				PFLog.Pathfinding.Exception(ex);
+			}
 			path.Release(this);
 		}
 	}
@@ -324,9 +350,7 @@ public class PathfindingService : IService
 
 	public ABPath FindPathRT(UnitMovementAgentBase agent, Vector3 destination, float approachRadius, [NotNull] Action<ForcedPath> callback)
 	{
-		ABPath aBPath = ConstructPath(agent, destination, approachRadius);
-		FindPath(aBPath, new PostProcessData(approachRadius), agent.RealTimeOptions, callback);
-		return aBPath;
+		return FindPathRT_Delayed(agent, destination, approachRadius, 1, callback);
 	}
 
 	public ABPath FindPathRT_Delayed(UnitMovementAgentBase agent, Vector3 destination, float approachRadius, int delaySteps, [NotNull] Action<ForcedPath> callback)
@@ -337,7 +361,14 @@ public class PathfindingService : IService
 		AddDelayedPath((path: aBPath, callback: delegate(Path p)
 		{
 			ForcedPath obj = ForcedPath.Construct(p);
-			callback(obj);
+			try
+			{
+				callback(obj);
+			}
+			catch (Exception ex)
+			{
+				PFLog.Pathfinding.Exception(ex);
+			}
 		}, delayToStep: Game.Instance.RealTimeController.CurrentSystemStepIndex + delaySteps));
 		return aBPath;
 	}
@@ -381,7 +412,7 @@ public class PathfindingService : IService
 		return result;
 	}
 
-	private WarhammerPathPlayer ConstructWhPlayerPath(UnitMovementAgentBase agent, Vector3 start, int maxTiles, Vector3? destination, MechanicEntity targetEntity, bool ignoreThreateningAreaCost)
+	private WarhammerPathPlayer ConstructWhPlayerPath(UnitMovementAgentBase agent, Vector3 start, int maxTiles, Vector3? destination, MechanicEntity targetEntity, bool ignoreThreateningAreaCost, bool ignoreBlockers = false)
 	{
 		CustomGridNode targetNode = ((targetEntity != null) ? null : (destination.HasValue ? ObstacleAnalyzer.GetNearestNodeXZUnwalkable(destination.Value) : null));
 		ICollection<GraphNode> collection2;
@@ -396,9 +427,10 @@ public class PathfindingService : IService
 			collection2 = collection;
 		}
 		ICollection<GraphNode> threateningAreaCells = collection2;
-		WarhammerPathPlayerMetricCostProvider traversalCostProvider = new WarhammerPathPlayerMetricCostProvider(agent.Unit.Data, maxTiles, targetNode, targetEntity, threateningAreaCells);
+		Dictionary<GraphNode, float> overrideCosts = NodeTraverseCostHelper.GetOverrideCosts(agent.Unit.Data);
+		WarhammerPathPlayerMetricCostProvider traversalCostProvider = new WarhammerPathPlayerMetricCostProvider(agent.Unit.Data, maxTiles, targetNode, targetEntity, threateningAreaCells, overrideCosts);
 		WarhammerPathPlayerMetric initialLength = new WarhammerPathPlayerMetric(agent.Unit.Data.GetCombatStateOptional()?.LastDiagonalCount ?? 0, 0f);
-		WarhammerPathPlayer warhammerPathPlayer = WarhammerPathPlayer.Construct(start, agent.Unit.BlockMode, initialLength, traversalCostProvider);
+		WarhammerPathPlayer warhammerPathPlayer = WarhammerPathPlayer.Construct(start, ignoreBlockers ? BlockMode.Ignore : agent.Unit.BlockMode, initialLength, traversalCostProvider);
 		warhammerPathPlayer.nnConstraint = new ConstraintWithRespectToTraversalProvider(agent.Blocker);
 		warhammerPathPlayer.traversalProvider = agent.TraversalProvider;
 		warhammerPathPlayer.LinkTraversalProvider = agent.NodeLinkTraverser;
@@ -427,9 +459,9 @@ public class PathfindingService : IService
 		return warhammerPathAi;
 	}
 
-	public WarhammerPathPlayer FindPathTB_Blocking(UnitMovementAgentBase agent, Vector3 destination, bool limitRangeByActionPoints = true)
+	public WarhammerPathPlayer FindPathTB_Blocking(UnitMovementAgentBase agent, Vector3 destination, bool limitRangeByActionPoints = true, bool ignoreThreateningAreaCost = false)
 	{
-		WarhammerPathPlayer warhammerPathPlayer = ConstructWhPlayerPath(agent, agent.Unit.Data.Position, limitRangeByActionPoints ? ((int)(agent.Unit.Data.GetCombatStateOptional()?.ActionPointsBlue ?? (-1f))) : (-1), destination, null, ignoreThreateningAreaCost: false);
+		WarhammerPathPlayer warhammerPathPlayer = ConstructWhPlayerPath(agent, agent.Unit.Data.Position, limitRangeByActionPoints ? ((int)(agent.Unit.Data.GetCombatStateOptional()?.ActionPointsBlue ?? (-1f))) : (-1), destination, null, ignoreThreateningAreaCost);
 		using (ProfileScope.New("FindPathTB"))
 		{
 			FindPath_Blocking(warhammerPathPlayer, agent.TurnBasedOptions);
@@ -447,6 +479,16 @@ public class PathfindingService : IService
 		}
 	}
 
+	public WarhammerPathPlayer FindPathTB_Blocking(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool limitRangeByActionPoints = true, bool ignoreThreateningAreaCost = false, bool ignoreBlockers = false)
+	{
+		WarhammerPathPlayer warhammerPathPlayer = ConstructWhPlayerPath(agent, origin, limitRangeByActionPoints ? ((int)(agent.Unit.Data.GetCombatStateOptional()?.ActionPointsBlue ?? (-1f))) : (-1), destination, null, ignoreThreateningAreaCost, ignoreBlockers);
+		using (ProfileScope.New("FindPathTB"))
+		{
+			FindPath_Blocking(warhammerPathPlayer, agent.TurnBasedOptions);
+			return warhammerPathPlayer;
+		}
+	}
+
 	public WarhammerPathCharge FindPathChargeTB_Blocking(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool ignoreBlockers, [CanBeNull] MechanicEntity targetEntity)
 	{
 		WarhammerPathCharge warhammerPathCharge = ConstructWhChargePath(agent, origin, destination, ignoreBlockers, targetEntity);
@@ -455,7 +497,7 @@ public class PathfindingService : IService
 			if (item.Entity.Id == agent.Unit?.UniqueId && item.Origin == origin && item.Destination == destination && item.IgnoreBlockers == ignoreBlockers)
 			{
 				EntityRef targetEntity2 = item.TargetEntity;
-				if ((targetEntity2.IsEmpty && targetEntity == null) || item.TargetEntity.Id == targetEntity.UniqueId)
+				if ((targetEntity2.IsEmpty && targetEntity == null) || item.TargetEntity.Id == targetEntity?.UniqueId)
 				{
 					return item.Path;
 				}
@@ -539,7 +581,7 @@ public class PathfindingService : IService
 		return tcs.Task;
 	}
 
-	private void AddDelayedPath((Path path, Action<Path> callback, long delayToStep) value)
+	private void AddDelayedPath((Path path, Action<Path> callback, int delayToStep) value)
 	{
 		int index = 0;
 		int num = m_DelayedPaths.Count - 1;

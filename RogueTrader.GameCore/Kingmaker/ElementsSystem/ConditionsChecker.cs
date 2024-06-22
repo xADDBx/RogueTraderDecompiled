@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
+using Code.GameCore.ElementsSystem;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.ElementsSystem.Interfaces;
-using Kingmaker.QA;
+using Kingmaker.Utility.CodeTimer;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -10,79 +12,88 @@ namespace Kingmaker.ElementsSystem;
 
 [Serializable]
 [HashRoot]
-public class ConditionsChecker : IHashable
+public class ConditionsChecker : ElementsList, IHashable
 {
 	public Operation Operation;
 
 	[SerializeReference]
 	public Condition[] Conditions;
 
+	public override IEnumerable<Element> Elements => Conditions;
+
 	public bool HasConditions
 	{
 		get
 		{
-			if (Conditions != null)
+			Condition[] conditions = Conditions;
+			if (conditions != null)
 			{
-				return Conditions.Length != 0;
+				return conditions.Length > 0;
 			}
 			return false;
 		}
 	}
 
-	public bool Check()
+	public bool Check([CanBeNull] IConditionDebugContext debugContext = null, bool @unsafe = false)
 	{
-		return Check(null);
+		using (ProfileScope.New("ConditionChecker"))
+		{
+			using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(this);
+			if (!HasConditions)
+			{
+				elementsDebugger?.SetResult(1);
+				return true;
+			}
+			Exception ex = null;
+			bool flag = Operation == Operation.And;
+			Condition[] conditions = Conditions;
+			foreach (Condition condition in conditions)
+			{
+				if (condition == null)
+				{
+					continue;
+				}
+				bool flag2 = false;
+				try
+				{
+					flag2 = condition.Check(this, debugContext);
+				}
+				catch (Exception ex2)
+				{
+					if (ex == null)
+					{
+						ex = ex2;
+						elementsDebugger?.SetException(ex);
+					}
+					if (@unsafe || CutscenePlayerDataScope.Current != null)
+					{
+						throw;
+					}
+				}
+				if (Operation == Operation.And && !flag2)
+				{
+					flag = false;
+					break;
+				}
+				if (Operation == Operation.Or && flag2)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (ex == null)
+			{
+				elementsDebugger?.SetResult(flag ? 1 : 0);
+			}
+			return flag;
+		}
 	}
 
-	public bool Check([CanBeNull] IConditionDebugContext debugContext)
+	public override Hash128 GetHash128()
 	{
-		if (!HasConditions)
-		{
-			return true;
-		}
-		Condition[] conditions = Conditions;
-		foreach (Condition condition in conditions)
-		{
-			if (condition == null)
-			{
-				continue;
-			}
-			try
-			{
-				using ElementsDebugScope elementsDebugScope = ElementsDebugScope.Open(condition);
-				bool flag = condition.Check(debugContext);
-				elementsDebugScope?.SetState(flag);
-				if (Operation == Operation.And && !flag)
-				{
-					return false;
-				}
-				if (Operation == Operation.Or && flag)
-				{
-					return true;
-				}
-			}
-			catch (Exception ex)
-			{
-				if (CutscenePlayerDataScope.Current != null)
-				{
-					throw;
-				}
-				if (!(ex is ElementLogicException))
-				{
-					ex = new ElementLogicException(condition, ex);
-				}
-				PFLog.Actions.ExceptionWithReport(ex, null);
-				return false;
-			}
-			finally
-			{
-			}
-		}
-		return Operation == Operation.And;
-	}
-
-	public virtual Hash128 GetHash128()
-	{
-		return default(Hash128);
+		Hash128 result = default(Hash128);
+		Hash128 val = base.GetHash128();
+		result.Append(ref val);
+		return result;
 	}
 }

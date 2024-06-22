@@ -207,6 +207,14 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 		}
 	}
 
+	public void PlayOnce()
+	{
+		AppearAnimation(delegate
+		{
+			DisappearAnimation();
+		});
+	}
+
 	public void BlockRaycastPermanent(bool state)
 	{
 		m_PermanentBlockRaycast = state;

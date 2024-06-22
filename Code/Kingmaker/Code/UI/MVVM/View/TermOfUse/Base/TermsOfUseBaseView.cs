@@ -70,7 +70,7 @@ public class TermsOfUseBaseView : ViewBase<TermsOfUseVM>
 			{
 				h.HandleFullScreenUiChanged(state: true, FullScreenUIType.Settings);
 			});
-			UISounds.Instance.Sounds.Settings.SettingsOpen.Play();
+			UISounds.Instance.Sounds.LocalMap.MapOpen.Play();
 		}
 	}
 
@@ -88,7 +88,7 @@ public class TermsOfUseBaseView : ViewBase<TermsOfUseVM>
 			{
 				h.HandleFullScreenUiChanged(state: false, FullScreenUIType.Settings);
 			});
-			UISounds.Instance.Sounds.Settings.SettingsClose.Play();
+			UISounds.Instance.Sounds.LocalMap.MapClose.Play();
 		}
 	}
 }

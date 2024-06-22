@@ -40,9 +40,14 @@ public class DestructibleObjectOvertipsCollectionVM : BaseMapObjectOvertipsColle
 
 	public void HandleDestructionStageChanged(DestructionStage stage)
 	{
-		if (stage == DestructionStage.Destroyed)
+		switch (stage)
 		{
+		case DestructionStage.Destroyed:
 			RemoveEntity(EventInvokerExtensions.GetEntity<DestructibleEntity>());
+			break;
+		case DestructionStage.Whole:
+			AddEntity(EventInvokerExtensions.GetEntity<DestructibleEntity>());
+			break;
 		}
 	}
 }

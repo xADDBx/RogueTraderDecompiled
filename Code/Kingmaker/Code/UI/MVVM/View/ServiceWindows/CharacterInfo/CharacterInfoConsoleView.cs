@@ -27,7 +27,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 
-public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler, ISubscriber, ICullFocusHandler
+public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler, ISubscriber, ICullFocusHandler, ISetCharInfoUnitPanelState
 {
 	[Header("Console")]
 	[SerializeField]
@@ -62,9 +62,11 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 
 	private readonly BoolReactiveProperty m_CanDecline = new BoolReactiveProperty();
 
+	private readonly BoolReactiveProperty m_InUnitProgression = new BoolReactiveProperty();
+
 	private readonly Dictionary<CharInfoComponentType, ICharInfoComponentConsoleView> m_ComponentConsoleViews = new Dictionary<CharInfoComponentType, ICharInfoComponentConsoleView>();
 
-	private List<GridConsoleNavigationBehaviour> m_IgnoreRightPanels = new List<GridConsoleNavigationBehaviour>();
+	private readonly List<GridConsoleNavigationBehaviour> m_IgnoreRightPanels = new List<GridConsoleNavigationBehaviour>();
 
 	private IDisposable m_CanHookDeclineSubscription;
 
@@ -161,7 +163,8 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 		{
 			Close();
 		}, 9, m_CanDecline), UIStrings.Instance.CommonTexts.CloseWindow));
-		(m_CharInfoPagesMenu as CharInfoPagesMenuConsoleView)?.AddHints(m_InputLayer, m_RightPanelSelected);
+		IReadOnlyReactiveProperty<bool> enabledHints = m_RightPanelSelected.And(m_InUnitProgression.Not()).ToReactiveProperty();
+		(m_CharInfoPagesMenu as CharInfoPagesMenuConsoleView)?.AddHints(m_InputLayer, enabledHints);
 		if (m_NameAndPortraitView is CharInfoNameAndPortraitConsoleView charInfoNameAndPortraitConsoleView)
 		{
 			charInfoNameAndPortraitConsoleView.AddInput(m_InputLayer, m_ConsoleHintsWidget, m_LeftPanelSelected);
@@ -178,12 +181,12 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 		m_ConfirmHint = m_ConsoleHintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Select);
 		AddDisposable(inputBindStruct2);
 		AddDisposable(m_ConfirmHint);
-		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.AddInput(m_InputLayer, m_ConsoleHintsWidget);
+		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.AddInput(m_InputLayer, m_ConsoleHintsWidget, m_InUnitProgression.Not().ToReactiveProperty());
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 		AddDisposable(m_CanvasSortingComponent.PushView());
 	}
 
-	private void RefreshInput()
+	private void RefreshInput(bool addLeftPanel = true)
 	{
 		m_NavigationPanelLeft.Clear();
 		m_NavigationBehaviour.Clear();
@@ -197,8 +200,17 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 			{
 				continue;
 			}
-			GridConsoleNavigationBehaviour navigationBehaviour = (m_LeftPanelViews.Contains(item) ? m_NavigationPanelLeft : m_NavigationPanelRight);
-			charInfoComponentConsoleView2.AddInput(ref m_InputLayer, ref navigationBehaviour, m_ConsoleHintsWidget);
+			if (m_LeftPanelViews.Contains(item))
+			{
+				if (addLeftPanel)
+				{
+					charInfoComponentConsoleView2.AddInput(ref m_InputLayer, ref m_NavigationPanelLeft, m_ConsoleHintsWidget);
+				}
+			}
+			else
+			{
+				charInfoComponentConsoleView2.AddInput(ref m_InputLayer, ref m_NavigationPanelRight, m_ConsoleHintsWidget);
+			}
 			if (charInfoComponentConsoleView2 is ICharInfoIgnoreNavigationConsoleView charInfoIgnoreNavigationConsoleView)
 			{
 				m_IgnoreRightPanels.AddRange(charInfoIgnoreNavigationConsoleView.GetIgnoreNavigation());
@@ -219,10 +231,22 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 		m_NavigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationPanelLeft);
 		m_NavigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationPanelRight);
 		m_NavigationBehaviour.FocusOnEntityManual(m_NavigationPanelRight);
+		RefreshUnitProgressionState();
+	}
+
+	public void SetUnitPanelNavigationState(bool state)
+	{
+		RefreshInput(state);
+	}
+
+	private void RefreshUnitProgressionState()
+	{
+		m_InUnitProgression.Value = m_ProgressionView.IsBinded && m_ProgressionView.CurrentState == UnitProgressionWindowState.CareerPathProgression;
 	}
 
 	protected override void OnProgressionWindowStateChange(UnitProgressionWindowState state)
 	{
+		RefreshUnitProgressionState();
 		m_ShowTooltip.Value = m_ShowTooltip.Value && state != UnitProgressionWindowState.CareerPathProgression;
 	}
 
@@ -235,14 +259,15 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 
 	private void OnFocusEntity(IConsoleEntity entity)
 	{
+		TooltipHelper.HideTooltip();
 		m_CanConfirm.Value = (entity as IConfirmClickHandler)?.CanConfirmClick() ?? false;
-		if (m_ProgressionView.IsBinded && m_ProgressionView.CurrentState == UnitProgressionWindowState.CareerPathProgression && m_ProgressionView is ICharInfoCanHookConfirm charInfoCanHookConfirm)
+		if (m_InUnitProgression.Value && m_ProgressionView is ICharInfoCanHookConfirm charInfoCanHookConfirm)
 		{
 			m_CanConfirm.Value = charInfoCanHookConfirm.GetCanHookConfirmProperty().Value;
 		}
 		string text = entity?.GetConfirmClickHint();
 		m_ConfirmHint.SetLabel((!string.IsNullOrEmpty(text)) ? text : ((string)UIStrings.Instance.CommonTexts.Select));
-		TooltipConfig config = (m_RightPanelSelected.Value ? m_RightPanelConfig : m_LeftPanelConfig);
+		TooltipConfig config = ((m_RightPanelSelected.Value || m_IgnoreRightPanels.All((GridConsoleNavigationBehaviour p) => p.IsFocused)) ? m_RightPanelConfig : m_LeftPanelConfig);
 		if (!(entity is IHasTooltipTemplate hasTooltipTemplate))
 		{
 			m_HasTooltip.Value = false;
@@ -253,7 +278,7 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 		{
 			config.IsGlossary = true;
 		}
-		m_HasTooltip.Value = tooltipBaseTemplate != null && (m_LeftPanelSelected.Value || !m_ProgressionView.IsBinded || m_ProgressionView.CurrentState == UnitProgressionWindowState.CareerPathList);
+		m_HasTooltip.Value = tooltipBaseTemplate != null && (m_LeftPanelSelected.Value || !m_InUnitProgression.Value);
 		if (m_ShowTooltip.Value)
 		{
 			((entity as MonoBehaviour) ?? (entity as IMonoBehaviour)?.MonoBehaviour).ShowConsoleTooltip(tooltipBaseTemplate, m_NavigationBehaviour, config);
@@ -285,11 +310,16 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 
 	private void Close()
 	{
+		TooltipHelper.HideTooltip();
+		if (m_HasTooltip.Value && m_ShowTooltip.Value)
+		{
+			m_ShowTooltip.Value = false;
+			return;
+		}
 		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 		{
 			h.HandleCloseAll();
 		});
-		TooltipHelper.HideTooltip();
 	}
 
 	public void HandleFocus()

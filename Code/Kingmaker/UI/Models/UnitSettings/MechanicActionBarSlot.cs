@@ -64,6 +64,22 @@ public abstract class MechanicActionBarSlot : IHashable
 		}
 	}
 
+	public bool IsPossibleActiveWithoutNetRole
+	{
+		get
+		{
+			if (!IsDisabled(GetResource()) && !IsNotAvailable)
+			{
+				if (TurnController.IsInTurnBasedCombat())
+				{
+					return CanUseIfTurnBased();
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
 	public virtual bool IsAutoUse => false;
 
 	public virtual bool IsDisabled(int resourceCount)

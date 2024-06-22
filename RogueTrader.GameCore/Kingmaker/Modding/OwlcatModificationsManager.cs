@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Code.GameCore.Blueprints.BlueprintPatcher;
+using Code.Utility.ExtendedModInfo;
 using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.EditorDatabase.ResourceReplacementProvider;
 using Kingmaker.BundlesLoading;
+using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Localization.Enums;
 using Kingmaker.Localization.Shared;
 using Kingmaker.Utility.DotNetExtensions;
@@ -27,7 +30,15 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 
 		[JsonProperty]
 		public readonly string[] EnabledModifications = new string[0];
+
+		[JsonProperty]
+		public List<string> ActiveModifications = new List<string>();
+
+		[JsonProperty]
+		public List<string> DisabledModifications = new List<string>();
 	}
+
+	public delegate void ShowModSettingsCalled(string modId);
 
 	public const string SettingsFileName = "OwlcatModificationManagerSettings.json";
 
@@ -37,6 +48,8 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 	{
 		Formatting = Formatting.Indented
 	});
+
+	public ShowModSettingsCalled OnShowModSettingsCalled;
 
 	[CanBeNull]
 	private readonly SettingsData m_Settings;
@@ -59,6 +72,10 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 	public OwlcatModification[] AppliedModifications { get; private set; } = new OwlcatModification[0];
 
 
+	[NotNull]
+	public OwlcatModification[] InstalledModifications { get; private set; } = new OwlcatModification[0];
+
+
 	private OwlcatModificationsManager()
 	{
 		try
@@ -66,6 +83,23 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 			if (File.Exists(SettingsFilePath))
 			{
 				m_Settings = NewtonsoftJsonHelper.DeserializeFromFile<SettingsData>(SettingsFilePath);
+				if (m_Settings != null)
+				{
+					PFLog.Mods.Log("Disabled Modifications ");
+					foreach (string disabledModification in m_Settings.DisabledModifications)
+					{
+						PFLog.Mods.Log("Disabled : " + disabledModification);
+					}
+					PFLog.Mods.Log("Active modifications ");
+					{
+						foreach (string disabledModification2 in m_Settings.DisabledModifications)
+						{
+							PFLog.Mods.Log("Active : " + disabledModification2);
+						}
+						return;
+					}
+				}
+				PFLog.Mods.Error("Settings file for OwlcatModificationManager failed to load.");
 			}
 			else
 			{
@@ -76,6 +110,92 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 		{
 			PFLog.Mods.Exception(ex);
 		}
+	}
+
+	public ExtendedModInfo GetModInfo(string modId)
+	{
+		List<OwlcatModification> list = InstalledModifications.Where((OwlcatModification x) => x.UniqueName == modId).ToList();
+		if (list == null || list.Count == 1)
+		{
+			PFLog.Mods.Error("Mod with id " + modId + " not found in OWM");
+			return null;
+		}
+		return list[0].ToExtendedModInfo();
+	}
+
+	public List<ExtendedModInfo> GetAllModsInfo()
+	{
+		List<ExtendedModInfo> list = new List<ExtendedModInfo>();
+		OwlcatModification[] installedModifications = InstalledModifications;
+		foreach (OwlcatModification mod in installedModifications)
+		{
+			list.Add(mod.ToExtendedModInfo());
+		}
+		return list;
+	}
+
+	public void CheckForUpdates()
+	{
+	}
+
+	public void OpenModInfoWindow(string modId)
+	{
+		if (OnShowModSettingsCalled == null)
+		{
+			PFLog.Mods.Error("OwlcatModificationWindow has no subscription to OnShowModSettingsCalled event. ");
+		}
+		else
+		{
+			OnShowModSettingsCalled(modId);
+		}
+	}
+
+	public void EnableMod(string modId, bool state)
+	{
+		List<OwlcatModification> list = InstalledModifications.Where((OwlcatModification x) => x.UniqueName == modId).ToList();
+		if (list == null || list.Count != 1)
+		{
+			PFLog.Mods.Error("Mod with id " + modId + " not found in OWM");
+			return;
+		}
+		OwlcatModification owlcatModification = list[0];
+		if (owlcatModification.Enabled == state)
+		{
+			return;
+		}
+		owlcatModification.Enabled = state;
+		if (m_Settings == null)
+		{
+			PFLog.Mods.Error("OwlcatModificationManager Settings are not initialized!");
+			return;
+		}
+		if (owlcatModification.Enabled)
+		{
+			PFLog.Mods.Log("Enabling mod : " + owlcatModification.UniqueName);
+			m_Settings.ActiveModifications.Add(owlcatModification.UniqueName);
+			m_Settings.DisabledModifications.Remove(owlcatModification.UniqueName);
+		}
+		else
+		{
+			PFLog.Mods.Log("Disabling mod " + owlcatModification.UniqueName);
+			m_Settings.ActiveModifications.Remove(owlcatModification.UniqueName);
+			m_Settings.DisabledModifications.Add(owlcatModification.UniqueName);
+		}
+		owlcatModification.OnSetEnabled?.Invoke(state);
+		SaveSettings();
+	}
+
+	public void SaveSettings()
+	{
+		PFLog.Mods.Log("Saving OwlcatModManager Settings changes.");
+		if (File.Exists(SettingsFilePath))
+		{
+			File.Delete(SettingsFilePath);
+		}
+		using FileStream stream = File.Open(SettingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+		using StreamWriter streamWriter = new StreamWriter(stream);
+		SaveSystemJsonSerializer.Serializer.Serialize(streamWriter, m_Settings);
+		streamWriter.Flush();
 	}
 
 	public void Start(ILocalizationProvider localizationProvider)
@@ -201,7 +321,33 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 				list.Add(owlcatModification);
 			}
 		}
+		List<string> list2 = new List<string>();
+		foreach (OwlcatModification item in list)
+		{
+			string modId = item.UniqueName;
+			if (m_Settings.DisabledModifications.Contains((string mod) => mod == modId))
+			{
+				PFLog.Mods.Error("Disabled contains " + modId);
+				item.Enabled = false;
+				list2.Add(item.UniqueName);
+			}
+			else if (m_Settings.ActiveModifications.Contains((string mod) => mod == modId))
+			{
+				item.Enabled = true;
+			}
+			else
+			{
+				item.Enabled = true;
+				m_Settings.ActiveModifications.Add(item.UniqueName);
+			}
+		}
+		InstalledModifications = list.ToArray();
+		foreach (string modId in list2)
+		{
+			AppliedModifications.Remove((OwlcatModification x) => x.UniqueName == modId);
+		}
 		AppliedModifications = list.ToArray();
+		SaveSettings();
 	}
 
 	public void ApplyModificationsContent()

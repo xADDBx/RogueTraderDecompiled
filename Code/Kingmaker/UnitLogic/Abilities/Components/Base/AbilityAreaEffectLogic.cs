@@ -12,6 +12,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Abilities.Components.Base;
 
 [AllowedOn(typeof(BlueprintAbilityAreaEffect))]
+[AllowedOn(typeof(BlueprintAbilityAreaEffectClusterLogic))]
 [TypeId("2ca53113ae97252469a3609d4d73f686")]
 public abstract class AbilityAreaEffectLogic : BlueprintComponent
 {

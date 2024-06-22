@@ -29,12 +29,12 @@ public class AddPremiumReward : GameAction
 		Player player = Game.Instance.Player;
 		if (player.ClaimedDlcRewards.HasItem(DlcReward))
 		{
-			PFLog.Default.Log($"Premium reward already received: {DlcReward}");
+			Element.LogInfo("Premium reward already received: {0}", DlcReward);
 			return false;
 		}
 		if (!DlcReward.IsAvailable)
 		{
-			PFLog.Default.Log($"Premium reward is not enabled: {DlcReward}");
+			Element.LogInfo("Premium reward is not enabled: {0}", DlcReward);
 			return false;
 		}
 		BaseUnitEntity playerCharacter = GameHelper.GetPlayerCharacter();
@@ -56,7 +56,7 @@ public class AddPremiumReward : GameAction
 				playerCharacter.AddFact(playerFeature.Get())?.TryAddSource(this);
 			}
 		}
-		PFLog.Default.Log($"Receive premium reward: {DlcReward}");
+		Element.LogInfo("Receive premium reward: {0}", DlcReward);
 		player.ClaimedDlcRewards.Add(DlcReward);
 		return true;
 	}
@@ -71,7 +71,7 @@ public class AddPremiumReward : GameAction
 		return $"Add reward: {DlcReward}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		ItemsCollection sharedStash = Game.Instance.Player.SharedStash;
 		if (MaybeAdd(sharedStash))

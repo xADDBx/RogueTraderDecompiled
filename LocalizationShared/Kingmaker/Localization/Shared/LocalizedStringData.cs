@@ -21,6 +21,7 @@ public class LocalizedStringData
 	[JsonProperty(PropertyName = "key")]
 	public string Key = "";
 
+	[Obsolete]
 	[NotNull]
 	[JsonProperty(PropertyName = "comment", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
 	[DefaultValue("")]
@@ -147,6 +148,26 @@ public class LocalizedStringData
 			if (updateDate)
 			{
 				localeData.ModificationDate = DateTimeOffset.UtcNow;
+			}
+			result = true;
+		}
+		return result;
+	}
+
+	public bool UpdateTranslationComment(LocaleData localeData, string text, bool updateDate = true)
+	{
+		if (localeData == null)
+		{
+			return false;
+		}
+		text = ApplyFixups(localeData.Locale, text);
+		bool result = false;
+		if (localeData.TranslationComment != text)
+		{
+			localeData.TranslationComment = text;
+			if (updateDate)
+			{
+				localeData.ModificationDate = DateTime.UtcNow;
 			}
 			result = true;
 		}
@@ -315,13 +336,23 @@ public class LocalizedStringData
 		}
 	}
 
-	public bool UpdateComment(string comment)
+	public LocaleData GetOrCreateLocaleData(Locale locale)
 	{
-		if (Comment == comment)
+		LocaleData localeData = Languages.Find((LocaleData x) => x.Locale == locale);
+		if (localeData == null)
 		{
-			return false;
+			localeData = new LocaleData(locale);
+			Languages.Add(localeData);
+			if (Languages.Count == 0)
+			{
+				Source = locale;
+			}
+			if (locale == Locale.dev && !string.IsNullOrEmpty(Comment))
+			{
+				Languages.Last().TranslationComment = Comment;
+				Comment = string.Empty;
+			}
 		}
-		Comment = comment;
-		return true;
+		return localeData;
 	}
 }

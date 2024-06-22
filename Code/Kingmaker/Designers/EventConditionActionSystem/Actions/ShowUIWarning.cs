@@ -23,7 +23,7 @@ public class ShowUIWarning : GameAction
 		return "Show notification (" + (HasType ? Type.ToString() : String.ToString()) + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (HasType)
 		{

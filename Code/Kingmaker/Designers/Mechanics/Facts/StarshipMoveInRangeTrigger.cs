@@ -23,10 +23,15 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("4ffdad852e91e7b44b39a84c90cd9978")]
 public class StarshipMoveInRangeTrigger : UnitFactComponentDelegate, IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IHashable
 {
+	public bool TriggerOnSelf;
+
+	[HideIf("TriggerOnSelf")]
 	public int minDistance;
 
+	[HideIf("TriggerOnSelf")]
 	public int maxDistance;
 
+	[HideIf("TriggerOnSelf")]
 	public bool CheckFaction;
 
 	[SerializeField]
@@ -41,14 +46,25 @@ public class StarshipMoveInRangeTrigger : UnitFactComponentDelegate, IUnitMoveHa
 
 	public void HandleUnitMovement(AbstractUnitEntity unit)
 	{
-		if (!CheckFaction || unit.GetFactionOptional()?.Blueprint == Faction)
+		if (TriggerOnSelf)
+		{
+			if (unit == base.Owner)
+			{
+				RunActions();
+			}
+		}
+		else if (unit != base.Owner && (!CheckFaction || unit.GetFactionOptional()?.Blueprint == Faction))
 		{
 			int num = base.Owner.DistanceToInCells(unit);
 			if (num >= minDistance && num <= maxDistance)
 			{
-				base.Fact.RunActionInContext(ActionOnSelf, base.Owner.ToITargetWrapper());
-				base.Fact.RunActionInContext(ActionsOnUnit, unit.ToITargetWrapper());
+				RunActions();
 			}
+		}
+		void RunActions()
+		{
+			base.Fact.RunActionInContext(ActionOnSelf, base.Owner.ToITargetWrapper());
+			base.Fact.RunActionInContext(ActionsOnUnit, unit.ToITargetWrapper());
 		}
 	}
 

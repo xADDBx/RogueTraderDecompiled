@@ -47,16 +47,14 @@ public class SaveLoadConsoleView : SaveLoadBaseView
 		}, 9, base.ViewModel.SaveListUpdating.Not().ToReactiveProperty()), UIStrings.Instance.CommonTexts.CloseWindow));
 		AddDisposable(m_PrevHint.Bind(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.SaveLoadMenuVM.SelectionGroup.SelectPrevValidEntity();
-			m_SlotCollectionView.ScrollToTop();
+			SelectPrev();
 		}, 14, base.ViewModel.SaveLoadMenuVM.HasFewEntities)));
 		AddDisposable(m_NextHint.Bind(inputLayer.AddButton(delegate
 		{
-			base.ViewModel.SaveLoadMenuVM.SelectionGroup.SelectNextValidEntity();
-			m_SlotCollectionView.ScrollToTop();
+			SelectNext();
 		}, 15, base.ViewModel.SaveLoadMenuVM.HasFewEntities)));
 		AddDisposable(inputLayer.AddAxis(Scroll, 3, repeat: true));
-		SlotCollectionView.AddInput(inputLayer, m_CommonHintsWidget, base.ViewModel.SaveListUpdating);
+		SlotCollectionView.AddInput(inputLayer, m_CommonHintsWidget, base.ViewModel.SaveListUpdating, base.ViewModel.IsCurrentIronManSave);
 	}
 
 	private void Scroll(InputActionEventData obj, float value)

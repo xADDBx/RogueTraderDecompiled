@@ -1,13 +1,16 @@
 using System;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Markers;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.Networking;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.Visual.LocalMap;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap.Common.Markers;
 
@@ -53,7 +56,10 @@ public class LocalMapMarkerPCView : ViewBase<LocalMapMarkerVM>
 			}
 			m_TargetPingEntity.DisappearAnimation();
 		}
-		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(PingEntity));
+		AddDisposable(base.ViewModel.CoopPingEntity.Subscribe(delegate((NetPlayer player, Entity entity) value)
+		{
+			PingEntity(value.player, value.entity);
+		}));
 		AddDisposable(this.SetHint(base.ViewModel.Description.Value));
 	}
 
@@ -98,11 +104,17 @@ public class LocalMapMarkerPCView : ViewBase<LocalMapMarkerVM>
 		return base.ViewModel.GetEntity();
 	}
 
-	private void PingEntity(Entity entity)
+	private void PingEntity(NetPlayer player, Entity entity)
 	{
 		if (!(m_TargetPingEntity == null) && entity == base.ViewModel.GetEntity())
 		{
 			m_PingDelay?.Dispose();
+			int index = player.Index - 1;
+			Image component = m_TargetPingEntity.GetComponent<Image>();
+			if (component != null)
+			{
+				component.color = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+			}
 			m_TargetPingEntity.AppearAnimation();
 			m_PingDelay = DelayedInvoker.InvokeInTime(delegate
 			{

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root;
@@ -74,6 +75,26 @@ public static class ColoniesGenerator
 		else
 		{
 			colonyData.Colony.AddEvent(colonyEvent);
+		}
+	}
+
+	public static void MoveEventFromStartedToScheduled(BlueprintColonyEvent colonyEvent)
+	{
+		foreach (ColoniesState.ColonyData colony in Game.Instance.Player.ColoniesState.Colonies)
+		{
+			switch (colony.Colony.GetEventState(colonyEvent))
+			{
+			case ColonyEventState.Started:
+				colony.Colony.RemoveEvent(colonyEvent);
+				colony.Colony.AddEvent(colonyEvent);
+				break;
+			default:
+				throw new ArgumentOutOfRangeException();
+			case ColonyEventState.None:
+			case ColonyEventState.Scheduled:
+			case ColonyEventState.Finished:
+				break;
+			}
 		}
 	}
 

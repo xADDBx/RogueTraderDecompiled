@@ -1,47 +1,68 @@
 using System.Collections.Generic;
 using Kingmaker.UI.Models.Log.Events;
+using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.AddPatterns;
+using Kingmaker.UI.Models.Log.GameLogEventInsertPatterns.PostAddPatterns;
 
 namespace Kingmaker.UI.Models.Log.GameLogEventInsertPatterns;
 
 public class PatternCollection : IPatternCollection
 {
-	private List<IPattern> m_Patterns;
+	private readonly List<PatternAddEvent> m_AddPatterns = new List<PatternAddEvent>();
+
+	private readonly List<PatternPostAddEvent> m_PostAddPatterns = new List<PatternPostAddEvent>();
 
 	private static IPatternCollection s_Instance;
 
 	public static IPatternCollection Instance => s_Instance ?? (s_Instance = new PatternCollection());
 
-	IPatternCollection IPatternCollection.AddPattern(IPattern pattern)
+	IPatternCollection IPatternCollection.AddPattern(PatternAddEvent pattern)
 	{
-		if (m_Patterns == null)
+		if (!m_AddPatterns.Contains(pattern))
 		{
-			m_Patterns = new List<IPattern>(10);
-		}
-		if (!m_Patterns.Contains(pattern))
-		{
-			m_Patterns.Add(pattern);
+			m_AddPatterns.Add(pattern);
 		}
 		return this;
 	}
 
-	bool IPatternCollection.ApplyPatterns(List<GameLogEvent> eventsQueue, GameLogEvent @event)
+	IPatternCollection IPatternCollection.AddPattern(PatternPostAddEvent pattern)
 	{
-		if (m_Patterns == null)
+		if (!m_PostAddPatterns.Contains(pattern))
 		{
-			return false;
+			m_PostAddPatterns.Add(pattern);
 		}
-		foreach (IPattern pattern in m_Patterns)
+		return this;
+	}
+
+	void IPatternCollection.ApplyPatterns(List<GameLogEvent> eventsQueue, GameLogEvent @event)
+	{
+		if (@event == null)
 		{
-			if (pattern.Apply(eventsQueue, @event))
+			return;
+		}
+		bool flag = false;
+		GameLogEvent @out = null;
+		for (int i = 0; i < m_AddPatterns.Count; i++)
+		{
+			if (m_AddPatterns[i].TryApply(eventsQueue, @event, out @out))
 			{
-				return true;
+				flag = true;
+				break;
 			}
 		}
-		return false;
+		if (!flag)
+		{
+			eventsQueue.Add(@event);
+		}
+		GameLogEvent event2 = @out ?? @event;
+		for (int j = 0; j < m_PostAddPatterns.Count; j++)
+		{
+			m_PostAddPatterns[j].Apply(eventsQueue, event2);
+		}
 	}
 
 	void IPatternCollection.Cleanup()
 	{
-		m_Patterns?.Clear();
+		m_AddPatterns?.Clear();
+		m_PostAddPatterns?.Clear();
 	}
 }

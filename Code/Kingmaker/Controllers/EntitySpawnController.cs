@@ -132,6 +132,11 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 
 	public BaseUnitEntity SpawnUnit(BlueprintUnit unit, Vector3 position, Quaternion rotation, [CanBeNull] SceneEntitiesState state)
 	{
+		return SpawnUnit(unit, position, rotation, state, null);
+	}
+
+	public BaseUnitEntity SpawnUnit(BlueprintUnit unit, Vector3 position, Quaternion rotation, [CanBeNull] SceneEntitiesState state, [CanBeNull] UnitCustomizationVariation variation)
+	{
 		if (unit == null)
 		{
 			PFLog.Default.Error("Trying to spawn null unit");
@@ -144,20 +149,23 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 		}
 		if (unit.CustomizationPreset != null)
 		{
-			UnitCustomizationVariation unitCustomizationVariation = unit.CustomizationPreset.SelectVariation(unit, null);
-			if (unitCustomizationVariation != null)
+			if (variation == null || string.IsNullOrEmpty(variation.Prefab.AssetId))
 			{
-				if (unitCustomizationVariation.Prefab.AssetId.IsNullOrEmpty())
+				variation = unit.CustomizationPreset.SelectVariation(unit, null);
+			}
+			if (variation != null)
+			{
+				if (variation.Prefab.AssetId.IsNullOrEmpty())
 				{
 					PFLog.Default.Error("This unit {0} not contain a variation prefab (preset = {1}, need put variation prefab)", unit, unit.CustomizationPreset);
 					using BundledResourceHandle<UnitEntityView> bundledResourceHandle = BundledResourceHandle<UnitEntityView>.Request(unit.Prefab.AssetId);
 					return SpawnUnit(unit, bundledResourceHandle.Object, position, rotation, state);
 				}
-				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(unitCustomizationVariation.Gender);
+				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(variation.Gender);
 				bool leftHanded = unit.CustomizationPreset.SelectLeftHanded();
-				using (unitCustomizationVariation.CreateSpawningData(voice, leftHanded))
+				using (variation.CreateSpawningData(voice, leftHanded))
 				{
-					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(unitCustomizationVariation.Prefab.AssetId);
+					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(variation.Prefab.AssetId);
 					return SpawnUnit(unit, bundledResourceHandle2.Object, position, rotation, state);
 				}
 			}
@@ -198,7 +206,7 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 		}
 	}
 
-	public AbstractUnitEntity SpawnLightweightUnit(BlueprintUnit unit, Vector3 position, Quaternion rotation, [CanBeNull] SceneEntitiesState state)
+	public AbstractUnitEntity SpawnLightweightUnit(BlueprintUnit unit, Vector3 position, Quaternion rotation, [CanBeNull] SceneEntitiesState state, [CanBeNull] UnitCustomizationVariation variation)
 	{
 		if (unit == null)
 		{
@@ -212,20 +220,23 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 		}
 		if (unit.CustomizationPreset != null)
 		{
-			UnitCustomizationVariation unitCustomizationVariation = unit.CustomizationPreset.SelectVariation(unit, null);
-			if (unitCustomizationVariation != null)
+			if (variation == null || string.IsNullOrEmpty(variation.Prefab.AssetId))
 			{
-				if (unitCustomizationVariation.Prefab.AssetId.IsNullOrEmpty())
+				variation = unit.CustomizationPreset.SelectVariation(unit, null);
+			}
+			if (variation != null)
+			{
+				if (variation.Prefab.AssetId.IsNullOrEmpty())
 				{
 					PFLog.Default.Error("This unit {0} not contain a variation prefab (preset = {1}, need put variation prefab)", unit, unit.CustomizationPreset);
 					using BundledResourceHandle<UnitEntityView> bundledResourceHandle = BundledResourceHandle<UnitEntityView>.Request(unit.Prefab.AssetId);
 					return SpawnLightweightUnit(unit, bundledResourceHandle.Object, position, rotation, state);
 				}
-				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(unitCustomizationVariation.Gender);
+				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(variation.Gender);
 				bool leftHanded = unit.CustomizationPreset.SelectLeftHanded();
-				using (unitCustomizationVariation.CreateSpawningData(voice, leftHanded))
+				using (variation.CreateSpawningData(voice, leftHanded))
 				{
-					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(unitCustomizationVariation.Prefab.AssetId);
+					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(variation.Prefab.AssetId);
 					return SpawnLightweightUnit(unit, bundledResourceHandle2.Object, position, rotation, state);
 				}
 			}

@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Globalmap.Colonization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
@@ -17,7 +16,7 @@ public class ColonyEfficiencyHigher : Condition
 
 	protected override bool CheckCondition()
 	{
-		Colony colony = ContextData<ColonyContextData>.Current?.Colony;
+		Colony colony = Game.Instance.Player.ColoniesState.ColonyContextData.Colony;
 		if (colony == null)
 		{
 			return false;

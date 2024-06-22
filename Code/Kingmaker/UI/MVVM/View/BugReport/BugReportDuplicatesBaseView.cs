@@ -27,14 +27,14 @@ public abstract class BugReportDuplicatesBaseView : ViewBase<BugReportDuplicates
 
 	[Header("Widget")]
 	[SerializeField]
-	private WidgetListMVVM m_WidgetList;
+	protected WidgetListMVVM m_WidgetList;
 
 	[SerializeField]
 	private BugDuplicateItemView m_WidgetEntityView;
 
 	protected InputLayer InputLayer;
 
-	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
+	protected GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
 	private Coroutine m_DuplicatesListCoroutine;
 
@@ -126,7 +126,7 @@ public abstract class BugReportDuplicatesBaseView : ViewBase<BugReportDuplicates
 		});
 	}
 
-	private void UpdateNavigation()
+	protected virtual void UpdateNavigation()
 	{
 		InputLayer.Unbind();
 		List<IConsoleNavigationEntity> navigationEntities = m_WidgetList.GetNavigationEntities();

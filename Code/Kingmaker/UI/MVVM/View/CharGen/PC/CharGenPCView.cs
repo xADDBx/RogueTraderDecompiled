@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.InputSystems;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.MVVM.View.CharGen.Common;
 using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.PC;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases;
@@ -79,7 +80,6 @@ public class CharGenPCView : CharGenView
 		}));
 		AddDisposable(base.ViewModel.CurrentPhaseVM.Subscribe(delegate(CharGenPhaseBaseVM phase)
 		{
-			UISounds.Instance.SetClickAndHoverSound(m_NextButton, base.CurrentPhaseIsLast ? UISounds.ButtonSoundsEnum.FinishChargenSound : UISounds.ButtonSoundsEnum.PlastickSound);
 			m_NextButtonLabel.text = (base.CurrentPhaseIsLast ? UIStrings.Instance.CharGen.Complete : UIStrings.Instance.CharGen.Next);
 			m_CurrentPhaseDisposable.Clear();
 			m_CurrentPhaseDisposable.Add(phase.PhaseNextHint.Subscribe(delegate(string value)
@@ -94,6 +94,8 @@ public class CharGenPCView : CharGenView
 		m_BackButtonLabel.text = UIStrings.Instance.CharGen.Back;
 		CheckCoopButtons(base.ViewModel.IsMainCharacter.Value);
 		AddDisposable(base.ViewModel.CheckCoopControls.Subscribe(CheckCoopButtons));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, BackPressed));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, NextPressed));
 	}
 
 	protected override void DestroyViewImplementation()

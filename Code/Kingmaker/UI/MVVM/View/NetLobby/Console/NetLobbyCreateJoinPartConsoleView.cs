@@ -34,6 +34,12 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 	private ConsoleHint m_EnterLobbyIdHint;
 
 	[SerializeField]
+	private ConsoleHint m_JoinableUserTypesHint;
+
+	[SerializeField]
+	private ConsoleHint m_InvitableUserTypesHint;
+
+	[SerializeField]
 	private OwlcatMultiButton m_CreateBlockFocusButton;
 
 	[SerializeField]
@@ -101,6 +107,16 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 		}, 10, m_InputFieldIsFocused.Not().And(IsInCreateJoinPart).And(m_CreateBlockIsFocused.Not())
 			.ToReactiveProperty())));
 		m_EnterLobbyIdHint.SetLabel(UIStrings.Instance.NetLobbyTexts.JoinLobbyCodePlaceholder);
+		AddDisposable(m_JoinableUserTypesHint.Bind(inputLayer.AddButton(delegate
+		{
+			m_JoinableUserTypesDropdown.SetState(value: true);
+		}, 10, m_InputFieldIsFocused.Not().And(IsInCreateJoinPart).And(m_CreateBlockIsFocused)
+			.ToReactiveProperty())));
+		AddDisposable(m_InvitableUserTypesHint.Bind(inputLayer.AddButton(delegate
+		{
+			m_InvitableUserTypesDropdown.SetState(value: true);
+		}, 11, m_InputFieldIsFocused.Not().And(IsInCreateJoinPart).And(m_CreateBlockIsFocused)
+			.ToReactiveProperty())));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.CreateLobby();
@@ -114,12 +130,6 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 			}
 			base.ViewModel.JoinLobby();
 		}, 8, ReadyToJoin.And(IsInCreateJoinPart).And(m_CreateBlockIsFocused.Not()).ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.JoinLobby));
-		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
-		{
-			ActivateDeactivateInputField(state: true);
-		}, 8, ReadyToJoin.Not().And(IsInCreateJoinPart).And(m_InputFieldIsFocused.Not())
-			.And(m_CreateBlockIsFocused.Not())
-			.ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.JoinLobbyCodePlaceholder));
 	}
 
 	public void BuildNavigationImpl(GridConsoleNavigationBehaviour navigationBehaviour)

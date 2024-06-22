@@ -1,10 +1,7 @@
 using System;
-using System.Text;
 using DG.Tweening;
-using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Overtips.CommonOvertipParts;
 using Kingmaker.Code.UI.MVVM.View.Overtips.MapObject.OvertipParts;
-using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.View.MapObjects;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -90,7 +87,10 @@ public abstract class OvertipMapObjectInteractionView : BaseOvertipMapObjectView
 	[SerializeField]
 	private float m_FarObjectVisibility = 0.3f;
 
-	private Tweener m_Animator;
+	[SerializeField]
+	private Vector3 m_FarScaleVisibility = new Vector3(0.5f, 0.5f, 0.5f);
+
+	private Sequence m_Animator;
 
 	private bool m_IsActiveFlag;
 
@@ -153,20 +153,6 @@ public abstract class OvertipMapObjectInteractionView : BaseOvertipMapObjectView
 		{
 			m_ResourceCount.text = string.Empty;
 		}
-		int? requiredResourceCount = base.ViewModel.RequiredResourceCount;
-		if (requiredResourceCount.HasValue && requiredResourceCount.GetValueOrDefault() > 0)
-		{
-			AddDisposable(this.SetHint(GetHint()));
-		}
-	}
-
-	private string GetHint()
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append(base.ViewModel.ResourceName + "\n");
-		stringBuilder.Append($"{UIStrings.Instance.Overtips.HasResourceCount.Text}: {base.ViewModel.HasResourceCount}\n");
-		stringBuilder.Append($"{UIStrings.Instance.Overtips.RequiredResourceCount.Text}: {base.ViewModel.RequiredResourceCount}\n");
-		return stringBuilder.ToString();
 	}
 
 	protected override void SetActiveInternal(bool isActive)
@@ -178,9 +164,23 @@ public abstract class OvertipMapObjectInteractionView : BaseOvertipMapObjectView
 	private void UpdateVisibility()
 	{
 		bool flag = base.ViewModel.CameraDistance.Value.sqrMagnitude < m_FarDistance;
-		float endValue = ((!CheckVisibleTrigger) ? ((!flag) ? m_FarObjectVisibility : (base.ViewModel.ActiveCharacterIsNear ? m_OnHoverVisibility : m_NotHoverVisibility)) : (flag ? m_OnHoverVisibility : m_NotHoverVisibility));
+		Vector3 one = Vector3.one;
+		float endValue;
+		if (CheckVisibleTrigger)
+		{
+			endValue = (flag ? m_OnHoverVisibility : m_NotHoverVisibility);
+			one = ((flag || base.ViewModel.IsMouseOverUI.Value || base.ViewModel.MapObjectIsHighlited.Value || base.ViewModel.ActiveCharacterIsNear || base.ViewModel.IsBarkActive.Value) ? Vector3.one : m_FarScaleVisibility);
+		}
+		else
+		{
+			endValue = ((!flag) ? m_FarObjectVisibility : (base.ViewModel.ActiveCharacterIsNear ? m_OnHoverVisibility : m_NotHoverVisibility));
+			one = Vector3.one;
+		}
 		m_Animator?.Kill();
-		m_Animator = m_InnerCanvasGroup.DOFade(endValue, 0.2f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
+		m_Animator = DOTween.Sequence().SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
+		m_Animator = m_Animator.Join(m_InnerCanvasGroup.DOFade(endValue, 0.2f));
+		m_Animator = m_Animator.Join((base.transform as RectTransform).DOScale(one, 0.2f));
+		m_Animator.Play();
 	}
 
 	protected override void DestroyViewImplementation()

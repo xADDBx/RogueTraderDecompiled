@@ -55,7 +55,6 @@ public class UnitAnimationDecoratorManager
 	public void ShowDecorator(UnitAnimationDecoratorObject decorator, AbstractUnitEntityView unitEntity = null)
 	{
 		AnimationClip animationClip = m_AnimationManager.CurrentAction?.ActiveAnimation?.GetPlayableClip();
-		PFLog.Default.Log("Clip in list " + animationClip);
 		if (animationClip == null)
 		{
 			return;

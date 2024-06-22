@@ -19,7 +19,7 @@ public class LootCollectorVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public LootVM Loot => m_Loot;
 
-	public LootContextVM.LootWindowMode Mode => m_Loot.Mode;
+	private LootContextVM.LootWindowMode Mode => m_Loot.Mode;
 
 	public ReactiveCollection<LootObjectVM> ContextLoot => m_Loot?.ContextLoot;
 
@@ -50,6 +50,18 @@ public class LootCollectorVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	}
 
 	public void CollectAll()
+	{
+		if (Loot.Mode == LootContextVM.LootWindowMode.ZoneExit)
+		{
+			m_Loot.HandleOpenExitWindow(TryCollect);
+		}
+		else
+		{
+			TryCollect();
+		}
+	}
+
+	private void TryCollect()
 	{
 		m_Loot.TryCollectLoot();
 		Close();

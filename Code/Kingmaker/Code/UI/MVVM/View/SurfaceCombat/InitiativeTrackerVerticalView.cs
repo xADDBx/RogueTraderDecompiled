@@ -66,14 +66,23 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 			return;
 		}
 		InitiativeTrackerUnitVM value = base.ViewModel.CurrentUnit.Value;
-		if (value != null && value.Unit.IsPlayerFaction && base.ViewModel.HoveredUnit.Value != null)
+		if (value == null || !value.Unit.IsPlayerFaction || base.ViewModel.HoveredUnit.Value == null)
 		{
-			m_ScrollBackTask?.Dispose();
-			m_ScrollBackTask = null;
-			ITurnVirtualItemData turnVirtualItemData = VirtualEntries.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == base.ViewModel.HoveredUnit.Value);
-			if (turnVirtualItemData != null && !VirtualList.IsVisible(turnVirtualItemData))
+			return;
+		}
+		m_ScrollBackTask?.Dispose();
+		m_ScrollBackTask = null;
+		ITurnVirtualItemData turnVirtualItemData = VirtualEntries.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == base.ViewModel.HoveredUnit.Value);
+		if (turnVirtualItemData != null && !VirtualList.IsVisible(turnVirtualItemData))
+		{
+			VirtualList.ScrollTo(turnVirtualItemData);
+		}
+		else if (base.ViewModel.SquadLeaderUnit.Value != null)
+		{
+			ITurnVirtualItemData turnVirtualItemData2 = VirtualEntries.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == base.ViewModel.SquadLeaderUnit.Value);
+			if (turnVirtualItemData2 != null && !VirtualList.IsVisible(turnVirtualItemData2))
 			{
-				VirtualList.ScrollTo(turnVirtualItemData);
+				VirtualList.ScrollTo(turnVirtualItemData2);
 			}
 		}
 	}
@@ -108,7 +117,7 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 			{
 				m_CurrentUnit.Bind(units[num]);
 			}
-			else if (units[num].IsEnemy.Value)
+			else if (units[num].IsEnemy.Value || units[num].IsNeutral.Value)
 			{
 				if (units[num].IsInSquad.Value)
 				{

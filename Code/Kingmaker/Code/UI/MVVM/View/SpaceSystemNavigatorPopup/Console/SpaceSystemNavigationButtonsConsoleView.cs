@@ -207,6 +207,7 @@ public class SpaceSystemNavigationButtonsConsoleView : SpaceSystemNavigationButt
 		{
 			HandleLowerSectorMapPassageDifficulty();
 			SetUpgradeWayNavigation();
+			CheckButtons();
 		}, (SectorMapPassageEntity.PassageDifficulty)m_UpgradeButtons.IndexOf(value));
 		m_UpgradeButtonsEntities.ForEach(delegate(OwlcatButton b)
 		{

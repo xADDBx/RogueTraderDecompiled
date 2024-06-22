@@ -18,8 +18,8 @@ public class IsDestructibleEntityGetter : MechanicEntityPropertyGetter
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "CurrentEntity is destructible entity";
+		return FormulaTargetScope.Current + " is destructible entity";
 	}
 }

@@ -23,7 +23,7 @@ public class ContextActionChangeInitiative : ContextAction
 		return "Moves the unit up initiative ladder two steps";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
 		if (entity == null)

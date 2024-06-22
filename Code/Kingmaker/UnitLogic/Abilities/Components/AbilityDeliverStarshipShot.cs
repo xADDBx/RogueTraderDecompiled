@@ -5,14 +5,18 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Projectiles;
 using Kingmaker.Designers.Mechanics.Facts;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Starships;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.Utility;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using UnityEngine;
@@ -26,6 +30,8 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 {
 	private class BurstTracker
 	{
+		public StarshipEntity target;
+
 		public RuleStarshipPerformAttack firstAttack;
 
 		public RuleStarshipPerformAttack lastAttack;
@@ -35,7 +41,23 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 		public RuleStarshipCalculateHitLocation hitLocationRule;
 
 		public int hitsCount;
+
+		public List<StarshipEntity> targets;
 	}
+
+	[SerializeField]
+	private bool isAE_Mode;
+
+	[SerializeField]
+	[Tooltip("AoE pattern used to create target list.\nOriginal target is ignored")]
+	[ShowIf("isAE_Mode")]
+	private AoEPattern m_Pattern;
+
+	[SerializeField]
+	private ActionList ActionsOnProjectileDeliver;
+
+	[SerializeField]
+	private ActionList ActionsOnStart;
 
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper target)
 	{
@@ -60,28 +82,51 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 			where PFStatefulRandom.SpaceCombat.Range(0, 100) < bonus.Chances
 			select bonus;
 		num += source.Count();
+		HashSet<StarshipEntity> hashSet = new HashSet<StarshipEntity>();
+		if (!isAE_Mode)
+		{
+			if (!(target.Entity is StarshipEntity item))
+			{
+				yield break;
+			}
+			hashSet.Add(item);
+		}
+		else
+		{
+			CustomGridNodeBase applicationNode = (CustomGridNodeBase)AstarPath.active.GetNearest(target.Point).node;
+			Vector3 direction = target.Point - starshipEntity.Position;
+			foreach (CustomGridNodeBase node in m_Pattern.GetOriented(applicationNode, direction).Nodes)
+			{
+				if (node.TryGetUnit(out var unit) && unit is StarshipEntity starshipEntity2 && context.Ability.CanTarget(starshipEntity2))
+				{
+					hashSet.Add(starshipEntity2);
+				}
+			}
+		}
+		ActionsOnStart?.Run();
 		BurstTracker burstTracker = new BurstTracker
 		{
+			targets = hashSet.ToList(),
 			hitsCount = num
 		};
 		List<IEnumerator<AbilityDeliveryTarget>> deliveryProcesses;
 		if (list2.Count > 0)
 		{
 			List<GameObject> list3 = new List<GameObject>();
-			foreach (StarshipFxLocator item in list2)
+			foreach (StarshipFxLocator item2 in list2)
 			{
-				if (!list3.Contains(item.particleMap.gameObject))
+				if (!list3.Contains(item2.particleMap.gameObject))
 				{
-					list3.Add(item.particleMap.gameObject);
+					list3.Add(item2.particleMap.gameObject);
 				}
 			}
 			list3.Shuffle(PFStatefulRandom.UnitLogic.Abilities);
 			int num2 = 0;
 			while (num2 < num)
 			{
-				foreach (GameObject item2 in list3)
+				foreach (GameObject item3 in list3)
 				{
-					List<StarshipFxLocator> list4 = item2.GetComponentsInChildren<StarshipFxLocator>().ToList();
+					List<StarshipFxLocator> list4 = item3.GetComponentsInChildren<StarshipFxLocator>().ToList();
 					list4.Shuffle(PFStatefulRandom.UnitLogic.Abilities);
 					finalShuffledLocators.Add(list4[0].gameObject);
 					num2++;
@@ -126,12 +171,6 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 			PFLog.Default.Error(this, "Caster is missing");
 			yield break;
 		}
-		maybeCaster = targetWrapper.Entity;
-		if (!(maybeCaster is StarshipEntity target))
-		{
-			PFLog.Default.Error(this, "Target is missing");
-			yield break;
-		}
 		ItemEntityStarshipWeapon weapon = context.Ability.StarshipWeapon;
 		if (weapon == null)
 		{
@@ -141,45 +180,57 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 		int num = index / weapon.Blueprint.ShotsInSeries;
 		int num2 = index % weapon.Blueprint.ShotsInSeries;
 		float delay = (float)num * weapon.Blueprint.DelayBetweenProjectiles + (float)num2 * weapon.Blueprint.DelayInSeries;
+		delay /= Game.CombatAnimSpeedUp;
 		while (Game.Instance.TimeController.GameTime - startTime < delay.Seconds())
 		{
 			yield return null;
 		}
-		MechanicEntity caster2 = context.Caster;
-		RuleStarshipCalculateHitLocation ruleStarshipCalculateHitLocation = Rulebook.Trigger(new RuleStarshipCalculateHitLocation(caster, target));
-		RuleStarshipPerformAttack starshipAttackRule = new RuleStarshipPerformAttack(caster, target, context.Ability, weapon, ruleStarshipCalculateHitLocation)
+		Dictionary<StarshipEntity, RuleStarshipPerformAttack> atkRules = new Dictionary<StarshipEntity, RuleStarshipPerformAttack>();
+		foreach (StarshipEntity target in burstTracker.targets)
 		{
-			Reason = context
-		};
-		if (burstTracker.firstAttack == null)
-		{
-			burstTracker.firstAttack = starshipAttackRule;
+			RuleStarshipCalculateHitLocation hitLocationRule = Rulebook.Trigger(new RuleStarshipCalculateHitLocation(caster, target));
+			RuleStarshipPerformAttack ruleStarshipPerformAttack = new RuleStarshipPerformAttack(caster, target, context.Ability, weapon, hitLocationRule)
+			{
+				Reason = context
+			};
+			if (burstTracker.firstAttack == null)
+			{
+				burstTracker.firstAttack = ruleStarshipPerformAttack;
+			}
+			ruleStarshipPerformAttack.FirstAttackInBurst = burstTracker.firstAttack;
+			ruleStarshipPerformAttack.NextAttackInBurst = ((index == burstTracker.hitsCount - 1) ? null : ruleStarshipPerformAttack);
+			if (burstTracker.lastAttack != null)
+			{
+				burstTracker.lastAttack.NextAttackInBurst = ruleStarshipPerformAttack;
+			}
+			burstTracker.lastAttack = ruleStarshipPerformAttack;
+			atkRules[target] = ruleStarshipPerformAttack;
 		}
-		starshipAttackRule.FirstAttackInBurst = burstTracker.firstAttack;
-		starshipAttackRule.NextAttackInBurst = ((index == burstTracker.hitsCount - 1) ? null : starshipAttackRule);
-		if (burstTracker.lastAttack != null)
-		{
-			burstTracker.lastAttack.NextAttackInBurst = starshipAttackRule;
-		}
-		burstTracker.lastAttack = starshipAttackRule;
-		Projectile projectile = new ProjectileLauncher(projectileBlueprint, caster2, targetWrapper).Ability(context.Ability).LaunchPosition(useLaunchPosition ? new Vector3?(customLaunchPosition) : null).AttackResult(AttackResult.Hit)
+		ProjectileLauncher projectileLauncher = new ProjectileLauncher(projectileBlueprint, caster, targetWrapper).Ability(context.Ability).LaunchPosition(useLaunchPosition ? new Vector3?(customLaunchPosition) : null).AttackResult(AttackResult.Hit)
 			.MaxRangeCells(context.Ability.RangeCells)
-			.Index(index)
-			.StarshipHitLocation(ruleStarshipCalculateHitLocation.ResultHitLocation)
-			.Launch();
+			.Index(index);
+		if (!isAE_Mode)
+		{
+			projectileLauncher.StarshipHitLocation(atkRules.First().Value.HitLocationRule.ResultHitLocation);
+		}
+		Projectile projectile = projectileLauncher.Launch();
 		RulebookEventContext savedContext = Rulebook.CurrentContext.Clone();
-		float distance = projectile.Distance(caster2.Position, targetWrapper.Point);
+		float distance = projectile.Distance(caster.Position, targetWrapper.Point);
 		while (!projectile.IsEnoughTimePassedToTraverseDistance(distance))
 		{
 			yield return null;
 		}
-		if (savedContext != null)
+		ActionsOnProjectileDeliver?.Run();
+		foreach (KeyValuePair<StarshipEntity, RuleStarshipPerformAttack> item in atkRules)
 		{
-			savedContext.Trigger(starshipAttackRule);
-		}
-		else
-		{
-			Rulebook.Trigger(starshipAttackRule);
+			if (savedContext != null)
+			{
+				savedContext.Trigger(item.Value);
+			}
+			else
+			{
+				Rulebook.Trigger(item.Value);
+			}
 		}
 		yield return new AbilityDeliveryTarget(projectile.Target)
 		{
@@ -216,11 +267,17 @@ public class AbilityDeliverStarshipShot : AbilityDeliverEffect
 				.StarshipHitLocation(burstTracker.hitLocationRule.ResultHitLocation)
 				.Launch();
 		}
+		float distance = burstTracker.projectile.Distance(caster.Position, targetWrapper.Point);
+		while (!burstTracker.projectile.IsEnoughTimePassedToTraverseDistance(distance))
+		{
+			yield return null;
+		}
 		TimeSpan startTime = Game.Instance.TimeController.GameTime;
 		while (Game.Instance.TimeController.GameTime - startTime < (weapon.Blueprint.DelayBetweenProjectiles * (float)index).Seconds())
 		{
 			yield return null;
 		}
+		ActionsOnProjectileDeliver?.Run();
 		RuleStarshipPerformAttack ruleStarshipPerformAttack = new RuleStarshipPerformAttack(caster, target, context.Ability, weapon, burstTracker.hitLocationRule)
 		{
 			Reason = context

@@ -1,4 +1,5 @@
 using Kingmaker.AI.DebugUtilities;
+using Kingmaker.UnitLogic.Abilities;
 
 namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
@@ -11,6 +12,7 @@ public class TaskNodeTryFinishTurn : TaskNode
 			AILogger.Instance.Log(new AILogReason(AILogReasonType.NothingToDo));
 			blackboard.IsFinishedTurn = true;
 		}
+		AbilityTargetingCache.Instance.SetInactive();
 		return Status.Success;
 	}
 }

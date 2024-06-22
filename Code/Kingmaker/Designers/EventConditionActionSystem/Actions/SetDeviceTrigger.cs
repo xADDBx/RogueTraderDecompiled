@@ -25,7 +25,7 @@ public class SetDeviceTrigger : GameAction
 		return $"Set device trigger ({Device}:{Trigger})";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Device.GetValue().GetOptional<InteractionDevicePart>()?.SetTrigger(Trigger);
 	}

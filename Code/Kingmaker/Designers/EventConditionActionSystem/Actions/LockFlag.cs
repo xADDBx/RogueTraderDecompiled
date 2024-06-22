@@ -27,7 +27,7 @@ public class LockFlag : GameAction, IUnlockableFlagReference
 		return $"Лочит флаг {Flag}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Flag.Lock();
 	}

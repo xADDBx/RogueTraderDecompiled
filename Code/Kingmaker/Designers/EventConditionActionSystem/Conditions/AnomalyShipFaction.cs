@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Enums;
 using Kingmaker.Globalmap.Exploration;
 using Kingmaker.Globalmap.SystemMap;
@@ -22,12 +21,12 @@ public class AnomalyShipFaction : Condition
 
 	protected override bool CheckCondition()
 	{
-		StarSystemObjectEntity starSystemObjectEntity = ContextData<StarSystemContextData>.Current?.StarSystemObject;
-		AnomalyStarShip anomalyStarShip = starSystemObjectEntity?.Blueprint.GetComponent<AnomalyStarShip>();
+		StarSystemObjectEntity starSystemObject = Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject;
+		AnomalyStarShip anomalyStarShip = starSystemObject?.Blueprint.GetComponent<AnomalyStarShip>();
 		if (anomalyStarShip == null || !anomalyStarShip.HasFaction)
 		{
 			return false;
 		}
-		return starSystemObjectEntity?.Blueprint.GetComponent<AnomalyStarShip>()?.Faction == Faction;
+		return starSystemObject?.Blueprint.GetComponent<AnomalyStarShip>()?.Faction == Faction;
 	}
 }

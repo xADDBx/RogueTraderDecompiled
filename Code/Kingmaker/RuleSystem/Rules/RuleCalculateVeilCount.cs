@@ -24,6 +24,8 @@ public class RuleCalculateVeilCount : RulebookEvent
 
 	public int Result { get; private set; }
 
+	public bool OverrideMinVeil { get; set; }
+
 	private RuleCalculateVeilCount([NotNull] MechanicEntity initiator)
 		: base(initiator)
 	{
@@ -58,7 +60,9 @@ public class RuleCalculateVeilCount : RulebookEvent
 			int minimalVailForCurrentArea = (Result = StartVeilModifiers.Value);
 			areaVailPart.MinimalVailForCurrentArea = minimalVailForCurrentArea;
 		}
-		if (IsNewRoundStart && !IsTurnBaseSwitched && Result > Game.Instance.LoadedAreaState.AreaVailPart.MinimalVailForCurrentArea)
+		int minimalVailForCurrentArea2 = Game.Instance.LoadedAreaState.AreaVailPart.MinimalVailForCurrentArea;
+		int maximumVeilOnAllLocation = BlueprintRoot.Instance.WarhammerRoot.PsychicPhenomenaRoot.MaximumVeilOnAllLocation;
+		if (IsNewRoundStart && !IsTurnBaseSwitched && Result > minimalVailForCurrentArea2)
 		{
 			Result--;
 		}
@@ -70,6 +74,6 @@ public class RuleCalculateVeilCount : RulebookEvent
 		{
 			Result += AdditionValue;
 		}
-		Result = Math.Clamp(Result, Game.Instance.LoadedAreaState.AreaVailPart.MinimalVailForCurrentArea, BlueprintRoot.Instance.WarhammerRoot.PsychicPhenomenaRoot.MaximumVeilOnAllLocation);
+		Result = Math.Clamp(Result, (!OverrideMinVeil) ? minimalVailForCurrentArea2 : 0, maximumVeilOnAllLocation);
 	}
 }

@@ -16,7 +16,7 @@ public class WarhammerContextActionReloadWeapon : ContextAction
 
 	public bool ReloadBothWeapons;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		PartUnitBody partUnitBody = base.Target.Entity?.GetBodyOptional();
 		if (ReloadBothWeapons)

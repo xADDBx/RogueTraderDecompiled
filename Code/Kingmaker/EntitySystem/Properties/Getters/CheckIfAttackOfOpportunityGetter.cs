@@ -17,7 +17,7 @@ public class CheckIfAttackOfOpportunityGetter : PropertyGetter, PropertyContextA
 		return 0;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check if Attack of Opportunity";
 	}

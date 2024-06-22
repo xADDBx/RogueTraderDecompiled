@@ -38,7 +38,7 @@ public class ChangeUnitName : GameAction
 		return $"Change {Unit} unit name to {NewName}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

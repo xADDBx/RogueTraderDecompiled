@@ -23,7 +23,7 @@ public class InterruptAllActions : GameAction
 		return $"Interrupt all actions for {m_Unit}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		m_Unit.GetValue().Commands.InterruptAllInterruptible();
 	}

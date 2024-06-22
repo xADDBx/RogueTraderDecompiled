@@ -6,7 +6,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.Settings.Entities;
 
 public class SettingsEntityBoolVM : SettingsEntityWithValueVM
 {
-	private UISettingsEntityBool m_UISettingsEntity;
+	private readonly UISettingsEntityBool m_UISettingsEntity;
 
 	public readonly ReadOnlyReactiveProperty<bool> TempValue;
 

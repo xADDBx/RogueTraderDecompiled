@@ -11,6 +11,7 @@ using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
+using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 
@@ -34,7 +35,7 @@ public class TooltipTemplateCareerProgression : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
-		if (type == TooltipTemplateType.Info)
+		if (type == TooltipTemplateType.Info && !m_CareerPath.IsUnlocked)
 		{
 			AddPrerequisites(list);
 		}
@@ -71,9 +72,18 @@ public class TooltipTemplateCareerProgression : TooltipBaseTemplate
 		if (featureVMs.Any() || selectionVMs.Any())
 		{
 			bricks.Add(new TooltipBrickTitle(header, TooltipTitleType.H5));
-			bricks.Add(new TooltipBricksGroupStart());
+			float value = (Game.Instance.IsControllerGamepad ? 92f : 72f);
+			TooltipBricksGroupLayoutParams layoutParams = new TooltipBricksGroupLayoutParams
+			{
+				LayoutType = TooltipBricksGroupLayoutType.Grid,
+				Padding = new RectOffset(6, 6, -6, 0),
+				Spacing = new Vector2(0f, -4f),
+				ColumnCount = 1,
+				PreferredElementHeight = value
+			};
+			bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
 			bricks.AddRange(from featureVM in featureVMs.NotNull()
-				select new TooltipBrickFeature(featureVM));
+				select new TooltipBrickFeature(featureVM.Feature));
 			bricks.AddRange(from selectionVM in selectionVMs.NotNull()
 				select new TooltipBrickRankEntrySelection(selectionVM));
 			bricks.Add(new TooltipBricksGroupEnd());

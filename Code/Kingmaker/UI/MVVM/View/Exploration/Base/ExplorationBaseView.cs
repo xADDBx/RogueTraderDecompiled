@@ -106,6 +106,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	public void Initialize()
 	{
+		m_ResourceMinersView.Initialize();
 		m_TabletAnimator.gameObject.SetActive(value: false);
 		InitializeImpl();
 	}
@@ -176,7 +177,10 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 		if (UINetUtility.IsControlMainCharacterWithWarning())
 		{
-			Game.Instance.GameCommandQueue.ColonyProjectsUIClose();
+			EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
+			{
+				h.HandleCloseAll();
+			});
 			Game.Instance.GameCommandQueue.CloseExplorationScreen();
 		}
 	}
@@ -430,7 +434,10 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	public void HandleStartScanningStarSystemObject()
 	{
-		ScanPlanet();
+		if (EventInvokerExtensions.Entity is StarSystemObjectEntity starSystemObjectEntity && base.ViewModel.StarSystemObjectView.Data == starSystemObjectEntity)
+		{
+			ScanPlanet();
+		}
 	}
 
 	void IScanStarSystemObjectHandler.HandleScanStarSystemObject()

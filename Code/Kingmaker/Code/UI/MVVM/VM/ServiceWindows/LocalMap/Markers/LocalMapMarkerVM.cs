@@ -29,7 +29,7 @@ public abstract class LocalMapMarkerVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public LocalMapMarkType MarkerType = LocalMapMarkType.Invalid;
 
-	public readonly ReactiveCommand<Entity> CoopPingEntity = new ReactiveCommand<Entity>();
+	public readonly ReactiveCommand<(NetPlayer player, Entity entity)> CoopPingEntity = new ReactiveCommand<(NetPlayer, Entity)>();
 
 	protected LocalMapMarkerVM()
 	{
@@ -50,6 +50,6 @@ public abstract class LocalMapMarkerVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public void HandlePingEntity(NetPlayer player, Entity entity)
 	{
-		CoopPingEntity.Execute(entity);
+		CoopPingEntity.Execute((player, entity));
 	}
 }

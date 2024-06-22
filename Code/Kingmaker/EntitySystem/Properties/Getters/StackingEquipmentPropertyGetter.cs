@@ -26,9 +26,9 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 
 	public BlueprintStackingUnitProperty Property => m_Property?.Get();
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Stacked value of all selected properties of equipment";
+		return "Stacked value of " + m_Property.NameSafe() + " on equipment of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

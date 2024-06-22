@@ -1,7 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.Globalmap.SystemMap;
 
 namespace Kingmaker.Globalmap.Exploration;
 
@@ -12,7 +10,7 @@ public class AnomalyActivation : AnomalyInteraction
 
 	public override void Interact()
 	{
-		AnomalyEntityData obj = ContextData<StarSystemContextData>.Current?.StarSystemObject as AnomalyEntityData;
+		AnomalyEntityData obj = Game.Instance.Player.StarSystemsState.StarSystemContextData.StarSystemObject as AnomalyEntityData;
 		obj?.MainFact.RunActionInContext(Actions);
 		obj?.OnInteractionEnded();
 	}

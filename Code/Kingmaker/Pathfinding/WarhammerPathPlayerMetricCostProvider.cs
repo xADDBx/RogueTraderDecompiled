@@ -23,6 +23,8 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 
 	private readonly ICollection<GraphNode> m_ThreateningAreaCells;
 
+	private readonly Dictionary<GraphNode, float> m_OverrideCosts;
+
 	private readonly int m_MaxLength;
 
 	[CanBeNull]
@@ -31,13 +33,14 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 	[CanBeNull]
 	private readonly MechanicEntity m_TargetEntity;
 
-	public WarhammerPathPlayerMetricCostProvider(AbstractUnitEntity unit, int maxLength, [CanBeNull] CustomGridNodeBase targetNode, [CanBeNull] MechanicEntity targetEntity, ICollection<GraphNode> threateningAreaCells)
+	public WarhammerPathPlayerMetricCostProvider(AbstractUnitEntity unit, int maxLength, [CanBeNull] CustomGridNodeBase targetNode, [CanBeNull] MechanicEntity targetEntity, ICollection<GraphNode> threateningAreaCells, Dictionary<GraphNode, float> overrideCosts)
 	{
 		m_Unit = unit;
 		m_ThreateningAreaCells = threateningAreaCells;
 		m_MaxLength = maxLength;
 		m_TargetNode = targetNode ?? targetEntity?.CurrentUnwalkableNode;
 		m_TargetEntity = targetEntity;
+		m_OverrideCosts = overrideCosts;
 	}
 
 	public WarhammerPathPlayerMetric Calc(in WarhammerPathPlayerMetric distanceFrom, in GraphNode from, in GraphNode to)
@@ -47,17 +50,20 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 		float num2 = Calc(from, to);
 		num *= num2;
 		float length = distanceFrom.Length + num;
-		return new WarhammerPathPlayerMetric(distanceFrom.DiagonalsCount + (flag ? 1 : 0), length);
+		return new WarhammerPathPlayerMetric(distanceFrom.DiagonalsCount + ((flag && num > float.Epsilon) ? 1 : 0), length);
 	}
 
 	private float Calc(GraphNode from, GraphNode to)
 	{
-		float cellCost = GetCellCost(GetCellType(from));
+		if (!m_OverrideCosts.TryGetValue(to, out var value))
+		{
+			value = GetCellCost(GetCellType(from));
+		}
 		if (NodeLinksExtensions.AreConnected(from, to, out var currentLink))
 		{
-			return cellCost * currentLink.CostFactor;
+			return value * currentLink.CostFactor;
 		}
-		return cellCost;
+		return value;
 	}
 
 	private CellType GetCellType(GraphNode cell)

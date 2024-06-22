@@ -9,7 +9,7 @@ public abstract class UnitUpgraderOnlyAction : GameAction
 {
 	protected BaseUnitEntity Target => ContextData<UpgradeTargetUnit>.Current?.Unit;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Owner is BlueprintUnitUpgrader))
 		{

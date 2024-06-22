@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.View.Slots;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using UniRx;
@@ -10,6 +11,17 @@ namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement.Components;
 public class CargoDetailedZoneConsoleView : CargoDetailedZoneBaseView
 {
 	private bool m_InputAdded;
+
+	public readonly ReactiveCommand OnHideSlot = new ReactiveCommand();
+
+	protected override void BindViewImplementation()
+	{
+		base.BindViewImplementation();
+		foreach (CargoSlotVM cargoSlot in base.ViewModel.CargoSlots)
+		{
+			AddDisposable(cargoSlot.IsAvailable.Skip(1).Subscribe(HandleSlotChange));
+		}
+	}
 
 	protected override void DestroyViewImplementation()
 	{
@@ -35,6 +47,14 @@ public class CargoDetailedZoneConsoleView : CargoDetailedZoneBaseView
 			m_InputAdded = true;
 		}
 		return list;
+	}
+
+	public void HandleSlotChange(bool value)
+	{
+		if (!value)
+		{
+			OnHideSlot?.Execute();
+		}
 	}
 
 	public GridConsoleNavigationBehaviour GetNavigation()

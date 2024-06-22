@@ -51,10 +51,11 @@ public class HasBuffsFromGroupGetter : PropertyGetter, PropertyContextAccessor.I
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Has buffs from " + string.Join("|", from i in Groups
+		string text = (OnlyFromEntity ? (" by " + Target.Colorized() + " ") : " ");
+		return FormulaTargetScope.Current + " Has buffs" + text + "from [" + string.Join("|", from i in Groups
 			where i != null
-			select i.ToString());
+			select i.ToString()) + "]";
 	}
 }

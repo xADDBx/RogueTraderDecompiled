@@ -19,7 +19,10 @@ public class CareerButtonsBlock : MonoBehaviour
 	public TextMeshProUGUI BackButtonLabel;
 
 	[SerializeField]
-	public OwlcatButton FirstSelectableButton;
+	public OwlcatButton FinishButton;
+
+	[SerializeField]
+	public TextMeshProUGUI FinishButtonLabel;
 
 	public void SetActive(bool state)
 	{

@@ -60,7 +60,7 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
 		if (Game.Instance.TurnController.IsAiTurn || AutoCombat)

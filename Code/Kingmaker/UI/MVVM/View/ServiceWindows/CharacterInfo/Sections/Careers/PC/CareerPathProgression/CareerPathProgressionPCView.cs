@@ -22,8 +22,14 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 	[SerializeField]
 	private TextMeshProUGUI m_ReturnLabel;
 
+	[Header("ExpandButtons")]
+	[ConditionalShow("m_CanMove")]
 	[SerializeField]
-	private OwlcatMultiButton m_DetailedDescriptionButton;
+	private OwlcatMultiButton m_StatsButton;
+
+	[ConditionalShow("m_CanMove")]
+	[SerializeField]
+	private OwlcatMultiButton m_TooltipButton;
 
 	[Header("OutsideButtons")]
 	[SerializeField]
@@ -50,18 +56,17 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 		{
 			HandleReturn();
 		}));
-		AddDisposable(m_DetailedDescriptionButton.OnLeftClickAsObservable().Subscribe(delegate
-		{
-			HandleUpdateDescriptionView();
-		}));
-		AddDisposable(base.ViewModel.IsDescriptionShowed.Subscribe(delegate(bool value)
-		{
-			string text = (value ? UIStrings.Instance.CommonTexts.Collapse : UIStrings.Instance.CommonTexts.Expand);
-			AddDisposable(m_DetailedDescriptionButton.SetHint(text));
-		}));
 		AddDisposable(base.ViewModel.OnCommit.Subscribe(delegate
 		{
 			UpdateButtonsState();
+		}));
+		AddDisposable(m_StatsButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			SwitchDescriptionShowed(false);
+		}));
+		AddDisposable(m_TooltipButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			SwitchDescriptionShowed(true);
 		}));
 		m_ReturnLabel.text = UIStrings.Instance.CharacterSheet.BackToCareersList;
 		m_AttentionSign.SetHint(UIStrings.Instance.CharacterSheet.AlreadyInLevelUp);

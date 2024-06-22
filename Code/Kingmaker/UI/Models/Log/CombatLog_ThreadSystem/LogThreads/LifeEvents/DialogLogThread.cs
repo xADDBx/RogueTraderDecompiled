@@ -20,7 +20,7 @@ public class DialogLogThread : LogThreadBase, IGameLogEventHandler<GameLogEventD
 			combatLogMessage = ((evt.Event == GameLogEventDialog.EventType.Start) ? LogThreadBase.Strings.DialogStarted.CreateCombatLogMessage() : LogThreadBase.Strings.DialogEnded.CreateCombatLogMessage());
 			break;
 		default:
-			PFLog.Default.Error("Trying to finish dialogue of invalid type {0}", evt.DialogType);
+			PFLog.UI.Error("Trying to finish dialogue of invalid type {0}", evt.DialogType);
 			break;
 		case DialogType.Epilog:
 			break;

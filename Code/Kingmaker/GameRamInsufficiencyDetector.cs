@@ -20,7 +20,7 @@ public class GameRamInsufficiencyDetector : IAreaLoadingStagesHandler, ISubscrib
 
 	private long m_MemoryRedLimit = 7516192768L;
 
-	private long m_MemoryYellowLimit = 6442450944L;
+	private long m_MemoryYellowLimit = 7516192768L;
 
 	private readonly TimeSpan m_Delay = TimeSpan.FromSeconds(1.0);
 

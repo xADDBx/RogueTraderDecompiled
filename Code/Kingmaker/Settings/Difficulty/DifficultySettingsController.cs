@@ -1,3 +1,5 @@
+using Code.GameCore.Editor.Blueprints.BlueprintUnitEditorChecker;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -58,6 +60,10 @@ public class DifficultySettingsController
 		{
 			h.HandleDifficultyChanged();
 		});
+		if (ContextData<BlueprintUnitCheckerInEditorContextData>.Current != null)
+		{
+			return;
+		}
 		foreach (AbstractUnitEntity allUnit in Game.Instance.State.AllUnits)
 		{
 			allUnit.DifficultyChanged();

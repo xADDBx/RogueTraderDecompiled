@@ -41,6 +41,7 @@ public class NewGamePCView : NewGameBaseView
 		base.gameObject.SetActive(value: false);
 		m_NewGamePhaseDifficultyPCView.Initialize();
 		m_Selector.Initialize();
+		m_NewGamePhaseStoryPCView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -48,6 +49,7 @@ public class NewGamePCView : NewGameBaseView
 		base.BindViewImplementation();
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.OnBack));
 		SetButtonsSounds();
+		AddDisposable(base.ViewModel.StoryVM.IsNextButtonAvailable.Subscribe(m_NextButton.SetInteractable));
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.OnBack();

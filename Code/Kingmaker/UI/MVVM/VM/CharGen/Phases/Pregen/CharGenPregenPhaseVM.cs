@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.LevelUp;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
@@ -37,6 +39,8 @@ public class CharGenPregenPhaseVM : CharGenPhaseBaseVM, ICharGenPregenHandler, I
 	public SelectionGroupRadioVM<CharGenPregenSelectorItemVM> PregenSelectionGroup { get; }
 
 	public IReadOnlyReactiveProperty<bool> IsCustomCharacter => CharGenContext.IsCustomCharacter;
+
+	private bool IsPregen => SelectedPregenEntity.Value?.ChargenUnit != null;
 
 	public CharGenPregenPhaseVM(CharGenContext charGenContext)
 		: base(charGenContext, CharGenPhaseType.Pregen)
@@ -113,8 +117,12 @@ public class CharGenPregenPhaseVM : CharGenPhaseBaseVM, ICharGenPregenHandler, I
 
 	void ICharGenPregenHandler.HandleSetPregen(BaseUnitEntity unit)
 	{
-		SelectedPregenEntity.Value = m_PregenEntitiesList.FirstOrDefault((CharGenPregenSelectorItemVM item) => unit == item.ChargenUnit?.Unit);
+		if (!UINetUtility.IsControlMainCharacter())
+		{
+			SelectedPregenEntity.Value = m_PregenEntitiesList.FirstOrDefault((CharGenPregenSelectorItemVM item) => unit == item.ChargenUnit?.Unit);
+		}
 		SetUnit(unit);
+		UpdatePhaseName();
 	}
 
 	private void SetUnit([CanBeNull] BaseUnitEntity unit)
@@ -131,18 +139,23 @@ public class CharGenPregenPhaseVM : CharGenPhaseBaseVM, ICharGenPregenHandler, I
 
 	private TooltipBaseTemplate TooltipTemplate()
 	{
-		ChargenUnit chargenUnit = SelectedPregenEntity.Value?.ChargenUnit;
-		if (chargenUnit == null)
+		if (!IsPregen)
 		{
-			return new TooltipTemplateChargenCustomCharacter();
+			CharGenConfig charGenConfig = CharGenContext.CharGenConfig;
+			return new TooltipTemplateChargenCustomCharacter(charGenConfig.Mode, charGenConfig.CompanionType);
 		}
-		BaseUnitEntity unit = chargenUnit.Unit;
+		BaseUnitEntity unit = SelectedPregenEntity.Value.ChargenUnit.Unit;
 		m_PregenCareers.Clear();
 		m_PregenCareers.AddRange(from BlueprintCareerPath careerBp in from f in unit.Progression.Features.Visible
 				where f.Blueprint is BlueprintCareerPath
 				select f.Blueprint
-			select new CareerPathVM(unit, careerBp, null, isCharGen: true));
-		return new TooltipTemplateChargenUnitInformation(chargenUnit.Unit, CharGenContext.LevelUpManager.Value, m_PregenCareers, expandedView: true);
+			select new CareerPathVM(unit, careerBp, null));
+		return new TooltipTemplateChargenUnitInformation(unit, CharGenContext.LevelUpManager.Value, m_PregenCareers, expandedView: true);
+	}
+
+	public void UpdatePhaseName()
+	{
+		PhaseName.Value = (IsPregen ? UIStrings.Instance.CharGen.Pregen : UIStrings.Instance.CharGen.CustomCharacterPregen);
 	}
 
 	public bool GoNextPage()

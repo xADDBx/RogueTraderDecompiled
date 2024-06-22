@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Utility.DotNetExtensions;
@@ -10,6 +11,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawner))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("f831c87e967044318d77221783a731b1")]
 public class SpawnerSummonPoolSettings : EntityPartComponent<SpawnerSummonPoolSettings.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IHashable

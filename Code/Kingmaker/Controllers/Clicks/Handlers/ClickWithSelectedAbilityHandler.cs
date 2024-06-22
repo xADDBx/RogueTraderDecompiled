@@ -236,6 +236,11 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		unavailabilityReason = null;
 		if (target == null)
 		{
+			if (!Ability.Blueprint.CanTargetPoint)
+			{
+				unavailabilityReason = AbilityData.UnavailabilityReasonType.NullTarget;
+				return true;
+			}
 			return true;
 		}
 		bool flag = Ability.CanTargetFromDesiredPosition(target, out unavailabilityReason);

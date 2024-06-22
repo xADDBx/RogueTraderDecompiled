@@ -49,8 +49,12 @@ public class ParryChanceGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Parry";
+		if (NoTarget)
+		{
+			return "Parry of " + FormulaTargetScope.Current + " against abstract attack";
+		}
+		return "Parry of " + FormulaTargetScope.Current + " against " + Attacker.Colorized();
 	}
 }

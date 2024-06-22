@@ -14,6 +14,8 @@ public class RuleRollParry : RulebookTargetEvent<UnitEntity, MechanicEntity>
 
 	public RuleRollChance RollChanceRule { get; private set; }
 
+	public bool DeflectResult { get; private set; }
+
 	public bool Result { get; private set; }
 
 	public MechanicEntity Attacker => base.Target;
@@ -36,11 +38,11 @@ public class RuleRollParry : RulebookTargetEvent<UnitEntity, MechanicEntity>
 		}
 	}
 
-	public RuleRollParry([NotNull] UnitEntity defender, [NotNull] MechanicEntity attacker, [NotNull] AbilityData ability, int resultSuperiorityNumber)
+	public RuleRollParry([NotNull] UnitEntity defender, [NotNull] MechanicEntity attacker, [NotNull] AbilityData ability, int resultSuperiorityNumber, bool rangedParry = false, int hitChance = 0)
 		: base(defender, attacker)
 	{
 		Ability = ability;
-		ChancesRule = new RuleCalculateParryChance(defender, attacker, Ability, resultSuperiorityNumber);
+		ChancesRule = new RuleCalculateParryChance(defender, attacker, Ability, resultSuperiorityNumber, rangedParry, hitChance);
 	}
 
 	public RuleRollParry([NotNull] UnitEntity defender, [NotNull] IMechanicEntity attacker, [NotNull] AbilityData ability, int resultSuperiorityNumber)
@@ -52,6 +54,8 @@ public class RuleRollParry : RulebookTargetEvent<UnitEntity, MechanicEntity>
 	{
 		Rulebook.Trigger(ChancesRule);
 		RollChanceRule = Rulebook.Trigger(new RuleRollChance(Defender, ChancesRule.Result, RollType.Parry, RollChanceType.Untyped, null, Attacker));
+		RuleRollChance ruleRollChance = Rulebook.Trigger(new RuleRollChance(Defender, ChancesRule.DeflectionResult, RollType.Parry, RollChanceType.Untyped, null, Attacker));
+		DeflectResult = ruleRollChance.Success;
 		Result = RollChanceRule.Success;
 	}
 }

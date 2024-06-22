@@ -47,15 +47,15 @@ public class SystemMapConsoleView : SystemMapView, IExplorationUIHandler, ISubsc
 	[SerializeField]
 	private ConsoleHint m_ToggleTooltipHint;
 
-	protected FloatConsoleNavigationBehaviour m_NavigationBehaviour;
+	private FloatConsoleNavigationBehaviour m_NavigationBehaviour;
 
 	private IInteractableSystemMapOvertip m_CurrentOvertip;
-
-	private bool m_CursorEnabled;
 
 	private bool m_ShowTooltip;
 
 	private readonly ReactiveProperty<bool> m_CanShowTooltip = new ReactiveProperty<bool>();
+
+	private readonly ReactiveProperty<bool> m_NavigationEnabled = new ReactiveProperty<bool>();
 
 	protected override void BindViewImplementation()
 	{
@@ -84,13 +84,13 @@ public class SystemMapConsoleView : SystemMapView, IExplorationUIHandler, ISubsc
 		if (cursorEnabled)
 		{
 			m_NavigationBehaviour.UnFocusCurrentEntity();
-			m_NavigationBehaviour.Clear();
+			OnClearOvertips();
 		}
 		else
 		{
 			OnDisableCursor();
 		}
-		m_CursorEnabled = cursorEnabled;
+		m_NavigationEnabled.Value = !cursorEnabled;
 	}
 
 	private void OnDisableCursor()
@@ -117,17 +117,22 @@ public class SystemMapConsoleView : SystemMapView, IExplorationUIHandler, ISubsc
 			OnRemoveOvertip(value.Value);
 		}));
 		AddDisposable(m_SystemMapOvertipsConsoleView.SystemMapObjectsCollection.ObserveReset().Subscribe(OnClearOvertips));
+		m_NavigationEnabled.Value = true;
 	}
 
 	private void CreateInput(InputLayer inputLayer)
 	{
-		m_NavigationBehaviour.GetInputLayer(inputLayer);
+		m_NavigationBehaviour.GetInputLayer(inputLayer, m_NavigationEnabled);
 		m_CombatLogConsoleView.AddInput(inputLayer);
 		AddDisposable(m_InteractHint.Bind(inputLayer.AddButton(delegate
 		{
 			InteractOvertip();
-		}, 8)));
+		}, 8, base.ViewModel.IsControllable)));
 		m_InteractHint.SetLabel(UIStrings.Instance.ActionTexts.Move);
+		AddDisposable(inputLayer.AddButton(delegate
+		{
+			InteractOvertip();
+		}, 8, base.ViewModel.IsControllable.Not().ToReactiveProperty()));
 		AddDisposable(m_ToggleTooltipHint.Bind(inputLayer.AddButton(ToggleTooltip, 19, m_CanShowTooltip, InputActionEventType.ButtonJustReleased)));
 		m_ToggleTooltipHint.SetLabel(UIStrings.Instance.CommonTexts.Information);
 	}
@@ -186,7 +191,7 @@ public class SystemMapConsoleView : SystemMapView, IExplorationUIHandler, ISubsc
 
 	private void InteractOvertip()
 	{
-		if (!m_CursorEnabled)
+		if (m_NavigationEnabled.Value)
 		{
 			m_CurrentOvertip?.Interact();
 		}

@@ -118,13 +118,12 @@ public class GameStarter : MonoBehaviour
 				PFLog.System.Log("Low Memory Optimizations Enabled");
 			}
 			PathPool.EnablePoolingDebugging = BuildModeUtility.IsDevelopment;
+			PFLog.System.Log($"Graphics API: {SystemInfo.graphicsDeviceType}");
 			PFLog.System.Log("GameStarter initProcess");
 			SystemUtil.WaitForPreviousProcessToFinish();
 			PFLog.System.Log("SystemUtil.WaitForPreviousProcessToFinish();");
 			AkAudioService.EnsureAudioInitialized();
 			PFLog.System.Log("AkAudioService.EnsureAudioInitialized();");
-			Runner.EnsureBasicAudioBanks();
-			PFLog.System.Log("Runner.EnsureBasicAudioBanks();");
 			SettingsRoot.Initialize(m_SettingValues);
 			if (OwlcatAnalytics.Instance.IsOptInConsentShown && OwlcatAnalytics.Instance.IsOptIn)
 			{
@@ -235,6 +234,9 @@ public class GameStarter : MonoBehaviour
 		ResourcesLibrary.InitializeLibrary(m_ResourceReplacementProvider);
 		progressBase += 0.3f;
 		PFLog.System.Log("GameStarter.StartGame: Loading Library Finished");
+		RootUIContext.InitializeUIKitDependencies();
+		StoreManager.InitializeStore();
+		SoundState.Instance.ResetState(SoundStateType.MainMenu);
 		FixSaveFolderOnOSX();
 		FixTMPAssets();
 		PFLog.System.Log("GameStarter.StartGame: Total bundles loaded: {0:0.0} MB", (float)BundlesLoadService.Instance.GetTotalBundleMemory() / 1024f / 1024f);
@@ -254,7 +256,6 @@ public class GameStarter : MonoBehaviour
 		IngameConsoleInitializer.Init();
 		GameHeapSnapshot.StartSnapshot();
 		LoadPresetFromParameters();
-		RootUIContext.InitializeUIKitDependencies();
 		Game.NewGamePreset = MainPreset;
 		PFLog.System.Log($"GameStarter.StartGame: Initialized new game preset {MainPreset}");
 		if (Application.isConsolePlatform && !Application.isEditor)
@@ -315,7 +316,6 @@ public class GameStarter : MonoBehaviour
 		Game.Instance.RootUiContext.InitializeCommonScene("UI_Common_Scene");
 		PFLog.System.Log("GameStarter.StartGame: finished loading LoadingScreen");
 		Game.Instance.RootUiContext.InitializeLoadingScreenScene("LoadingScreen");
-		StoreManager.InitializeStore();
 		CommandLineArguments commandLineArguments = CommandLineArguments.Parse();
 		if (commandLineArguments.Contains("copy-saves"))
 		{

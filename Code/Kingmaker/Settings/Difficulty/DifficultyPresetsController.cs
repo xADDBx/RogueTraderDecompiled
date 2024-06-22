@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using Code.GameCore.Editor.Blueprints.BlueprintUnitEditorChecker;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Utility.DisposableExtension;
 using Kingmaker.Utility.DotNetExtensions;
 
@@ -178,7 +180,7 @@ public class DifficultyPresetsController
 
 	private void OnTempSettingChanged()
 	{
-		if ((bool)m_ApplyingPreset || m_LastSetValues == null)
+		if (ContextData<BlueprintUnitCheckerInEditorContextData>.Current != null || (bool)m_ApplyingPreset || m_LastSetValues == null)
 		{
 			return;
 		}

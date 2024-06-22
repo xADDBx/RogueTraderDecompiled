@@ -8,7 +8,6 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using UniRx;
-using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.ColonyManagement;
 
@@ -58,14 +57,22 @@ public class ColonyManagementNavigationVM : BaseDisposable, IViewModel, IBaseDis
 
 	public void SelectNextColony()
 	{
-		int index = Mathf.Clamp(GetActiveColonyIndex() + 1, 0, NavigationElements.Count - 1);
-		NavigationElements[index].SelectPage();
+		int num = GetActiveColonyIndex() + 1;
+		if (num >= NavigationElements.Count)
+		{
+			num = 0;
+		}
+		NavigationElements[num].SelectPage();
 	}
 
 	public void SelectPrevColony()
 	{
-		int index = Mathf.Clamp(GetActiveColonyIndex() - 1, 0, NavigationElements.Count - 1);
-		NavigationElements[index].SelectPage();
+		int num = GetActiveColonyIndex() - 1;
+		if (num < 0)
+		{
+			num = NavigationElements.Count - 1;
+		}
+		NavigationElements[num].SelectPage();
 	}
 
 	private void UpdateNavigationElements()

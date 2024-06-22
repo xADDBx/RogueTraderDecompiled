@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -23,6 +24,7 @@ namespace Kingmaker.View;
 [ExecuteInEditMode]
 [DisallowMultipleComponent]
 [SelectionBase]
+[KnowledgeDatabaseID("b94ee1445bc82104988a20f7ab018d36")]
 public abstract class EntityViewBase : MonoBehaviour, IEntityViewBase, IFadeOutAndDestroyHandler<EntitySubscriber>, IFadeOutAndDestroyHandler, ISubscriber<IEntity>, ISubscriber, IEventTag<IFadeOutAndDestroyHandler, EntitySubscriber>
 {
 	[SerializeField]

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
@@ -145,14 +146,7 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 		unitMovementAgentContinuous.MaxSpeedOverride = targetData.MaxSpeedOverride;
 		unitMovementAgentContinuous.DirectionFromController = targetData.Direction ?? (Destination - base.Executor.Position).normalized.To2D();
 		unitMovementAgentContinuous.DirectionFromControllerMagnitude = targetData.Multiplier ?? 1f;
-		if (targetData.IsAccelerated)
-		{
-			Accelerate();
-		}
-		else
-		{
-			Decelerate();
-		}
+		base.Params.MovementType = targetData.MovementType ?? WalkSpeedType.Walk;
 	}
 
 	private bool ShouldRepath(TargetEntityMovementData targetData)
@@ -180,11 +174,33 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 			{
 				PFLog.Pathfinding.Error("An error path was returned. Ignoring");
 			}
+			else if (path.path == null || path.path.Count == 0)
+			{
+				PFLog.Pathfinding.Error(((path.path == null) ? "Path is null" : "Path is empty") + ". Ignoring");
+			}
 			else
 			{
-				executor.View.MoveTo(path, Destination, 0.2f);
+				Vector3 destination = ((ObstacleAnalyzer.GetArea(Destination) == path.path[0].Area) ? Destination : TrimPathToCurrentArea(path));
+				executor.View.MoveTo(path, destination, 0.2f);
 			}
 		});
+	}
+
+	private static Vector3 TrimPathToCurrentArea(ForcedPath path)
+	{
+		uint area = path.path[0].Area;
+		int num = path.vectorPath.Count;
+		while (num > 0 && ObstacleAnalyzer.GetArea(path.vectorPath[num - 1]) != area)
+		{
+			num--;
+		}
+		path.vectorPath.RemoveRange(num, path.vectorPath.Count - num);
+		if (path.vectorPath == null || path.vectorPath.Count == 0)
+		{
+			return path.path[0].Vector3Position;
+		}
+		List<Vector3> vectorPath = path.vectorPath;
+		return vectorPath[vectorPath.Count - 1];
 	}
 
 	private UnitMovementAgentContinuous SetMoveAgentContinuous()

@@ -51,7 +51,7 @@ public class OptimizedSpatialHashingBroadphase : BroadphaseBase
 			jobData.SpatialHashFrameId = m_SpatialHashmapSoA.FrameId;
 			jobData.BodyColliderPairs = base.BodyCollidersPairsSoA.Array;
 			jobData.BodyForceVolumePairs = base.BodyForceVolumePairsSoA.Array;
-			lastJobHandle = jobData.Schedule(m_SpatialHashmapSoA.Length, 1, lastJobHandle);
+			lastJobHandle = IJobParallelForExtensions.Schedule(jobData, m_SpatialHashmapSoA.Length, 1, lastJobHandle);
 			m_NeedClear = false;
 		}
 		SpatialHashmapBuildJob jobData2 = default(SpatialHashmapBuildJob);
@@ -81,7 +81,7 @@ public class OptimizedSpatialHashingBroadphase : BroadphaseBase
 		jobData3.AabbMax = base.AabbSoA.AabbMax;
 		jobData3.BodyColliderPairs = base.BodyCollidersPairsSoA.Array;
 		jobData3.BodyForceVolumePairs = base.BodyForceVolumePairsSoA.Array;
-		lastJobHandle = jobData3.Schedule(m_BodiesCount, 1, lastJobHandle);
+		lastJobHandle = IJobParallelForExtensions.Schedule(jobData3, m_BodiesCount, 1, lastJobHandle);
 		SpatialHasmapLoadFactorJob jobData4 = default(SpatialHasmapLoadFactorJob);
 		jobData4.FrameId = (uint)Time.frameCount;
 		jobData4.HashtableCapacity = (uint)m_SpatialHashmapSoA.Length;

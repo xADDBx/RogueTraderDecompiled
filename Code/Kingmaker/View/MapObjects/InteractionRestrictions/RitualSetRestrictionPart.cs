@@ -8,6 +8,19 @@ public class RitualSetRestrictionPart : NeedItemRestrictionPart<RitualSetRestric
 {
 	public override bool ShouldCheckSourceComponent => false;
 
+	public override bool CanUse
+	{
+		get
+		{
+			InteractionSkillCheckSettings obj = base.InteractionPart.Settings as InteractionSkillCheckSettings;
+			if (obj == null)
+			{
+				return true;
+			}
+			return !obj.OnlyCheckOnce;
+		}
+	}
+
 	protected override string GetDefaultBark(BaseUnitEntity user, bool restricted)
 	{
 		if (restricted && base.Settings.GetItem() != null && !user.Inventory.Contains(base.Settings.GetItem()))

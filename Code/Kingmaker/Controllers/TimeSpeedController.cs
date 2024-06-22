@@ -2,6 +2,7 @@ using System;
 using Core.Cheats;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.Net;
+using Kingmaker.Networking;
 using Kingmaker.Utility.CircularBuffer;
 using UnityEngine;
 
@@ -9,6 +10,67 @@ namespace Kingmaker.Controllers;
 
 public class TimeSpeedController : IControllerTick, IController
 {
+	public struct AutoSpeed
+	{
+		private static bool s_Enabled = true;
+
+		private static float s_SlowValue = 0.99f;
+
+		private const int AutoSpeedTargetDelay = 0;
+
+		private int m_AutoSpeedCurrentDelay;
+
+		[Cheat(Name = "net_auto_speed", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+		public static void AutoSpeedCheat(bool auto = false)
+		{
+			s_Enabled = auto;
+		}
+
+		[Cheat(Name = "net_speed_slow", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+		public static void SlowCheat(float value = 0.99f)
+		{
+			s_SlowValue = value;
+		}
+
+		public void Tick(TimeSpeedController timeSpeedController)
+		{
+			if (!s_Enabled)
+			{
+				return;
+			}
+			if (0 < m_AutoSpeedCurrentDelay)
+			{
+				m_AutoSpeedCurrentDelay--;
+				return;
+			}
+			PlayerCommandsCollection<SynchronizedData> synchronizedData = Game.Instance.SynchronizedDataController.SynchronizedData;
+			int num = int.MaxValue;
+			int num2 = 0;
+			int num3 = 0;
+			foreach (PlayerCommands<SynchronizedData> player in synchronizedData.Players)
+			{
+				foreach (SynchronizedData command in player.Commands)
+				{
+					num = Mathf.Min(num, command.maxLag);
+					num2 = Mathf.Max(num2, command.maxLag);
+					if (player.Player.IsLocal)
+					{
+						num3 = command.maxLag;
+					}
+				}
+			}
+			if (num2 == num3 && num2 != num)
+			{
+				m_AutoSpeedCurrentDelay = 0;
+				Game.Instance.RealTimeController.TimeScale = s_SlowValue;
+			}
+			else
+			{
+				Game.Instance.RealTimeController.TimeScale = 1f;
+			}
+		}
+	}
+
 	public const int MaxDelay = 8;
 
 	private const int Seconds = 2;
@@ -20,6 +82,8 @@ public class TimeSpeedController : IControllerTick, IController
 	private int m_LastTick = -1;
 
 	private int m_CurrentSpeedMode;
+
+	private AutoSpeed m_AutoSpeed;
 
 	private static int m_ForceSpeedMode = -1;
 
@@ -56,7 +120,7 @@ public class TimeSpeedController : IControllerTick, IController
 
 	TickType IControllerTick.GetTickType()
 	{
-		return TickType.Network;
+		return TickType.Simulation;
 	}
 
 	void IControllerTick.Tick()
@@ -77,6 +141,7 @@ public class TimeSpeedController : IControllerTick, IController
 		{
 			m_CurrentSpeedMode = m_ForceSpeedMode;
 		}
+		m_AutoSpeed.Tick(this);
 	}
 
 	public int GetTickIndex(int tick)

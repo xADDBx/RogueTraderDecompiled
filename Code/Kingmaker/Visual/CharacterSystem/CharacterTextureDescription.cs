@@ -79,7 +79,10 @@ public class CharacterTextureDescription
 	{
 		if (null == ActiveTexture)
 		{
-			PFLog.TechArt.Warning("Missing texture in one of the EE");
+			if (Application.isEditor)
+			{
+				PFLog.TechArt.Warning("Missing texture in one of the EE");
+			}
 		}
 		else
 		{

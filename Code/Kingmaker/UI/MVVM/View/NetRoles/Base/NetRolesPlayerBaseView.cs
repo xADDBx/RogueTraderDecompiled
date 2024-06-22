@@ -1,9 +1,9 @@
 using System;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.UI.MVVM.View.NetLobby.Base;
 using Kingmaker.UI.MVVM.VM.NetRoles;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
-using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,9 +19,11 @@ public class NetRolesPlayerBaseView : ViewBase<NetRolesPlayerVM>
 	private GameObject m_MeLayer;
 
 	[SerializeField]
-	private TextMeshProUGUI m_PlayerName;
+	protected GamerTagAndNameBaseView m_GamerTagAndName;
 
 	private IDisposable m_Disposable;
+
+	public GamerTagAndNameBaseView GamerTagAndName => m_GamerTagAndName;
 
 	public virtual void Initialize()
 	{
@@ -31,6 +33,7 @@ public class NetRolesPlayerBaseView : ViewBase<NetRolesPlayerVM>
 	protected override void BindViewImplementation()
 	{
 		base.gameObject.SetActive(value: true);
+		m_GamerTagAndName.Bind(base.ViewModel.GamerTagAndNameVM);
 		AddDisposable(base.ViewModel.IsMe.Subscribe(delegate(bool value)
 		{
 			m_MeLayer.Or(null)?.SetActive(value);
@@ -43,7 +46,6 @@ public class NetRolesPlayerBaseView : ViewBase<NetRolesPlayerVM>
 		{
 			m_Disposable?.Dispose();
 			m_Disposable = null;
-			m_PlayerName.text = value;
 			m_Disposable = m_PlayerAvatar.SetHint(value);
 		}));
 	}
@@ -53,5 +55,10 @@ public class NetRolesPlayerBaseView : ViewBase<NetRolesPlayerVM>
 		m_Disposable?.Dispose();
 		m_Disposable = null;
 		base.gameObject.SetActive(value: false);
+	}
+
+	public string GetUserId()
+	{
+		return base.ViewModel.UserId.Value;
 	}
 }

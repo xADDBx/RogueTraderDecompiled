@@ -101,6 +101,7 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 	public void Bind(PantographConfig config)
 	{
 		m_BoundTransform = config.Transform;
+		m_HeadY = m_MaxY;
 		bool flag = config.View != null;
 		m_SimpleItemContainer.SetActive(!flag && !config.UseLargeView);
 		m_ExtendedItemContainer.SetActive(flag && !config.UseLargeView);
@@ -167,6 +168,11 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 		SetFocus(focused: false);
 	}
 
+	public void SetCustomMaxY(float value)
+	{
+		m_MaxY = value;
+	}
+
 	public void SetFocus(bool focused)
 	{
 		m_FocusObject.Or(null)?.SetActive(focused);
@@ -211,13 +217,13 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 			Unbind();
 		}
 		float num = CalculateHeadY(m_BoundTransform.Or(null)?.position.y ?? m_MaxY);
-		float num2 = Mathf.Abs(num - m_HeadY);
-		if (num2 < 0.1f)
+		if (Mathf.Abs(num - m_HeadY) < 0.1f)
 		{
 			return;
 		}
 		m_HeadY = num;
-		if (m_Head.localPosition.y == m_HeadY)
+		float num2 = Math.Abs(m_Head.position.y - m_HeadY);
+		if (num2 < 0.1f)
 		{
 			return;
 		}

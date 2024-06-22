@@ -19,8 +19,8 @@ public class DistanceGetter : MechanicEntityPropertyGetter, PropertyContextAcces
 		return base.CurrentEntity.DistanceToInCells(targetPositionByType, targetRectByType);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return $"Distance to {Target}";
+		return "Distance from " + FormulaTargetScope.Current + " to " + Target.Colorized();
 	}
 }

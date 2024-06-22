@@ -60,7 +60,7 @@ public class BugReportConsoleView : BugReportBaseView
 		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
 			OnShowDrawing();
-		}, 11), UIStrings.Instance.UIBugReport.EditScreenShotTitleText));
+		}, 11, InputActionEventType.ButtonJustReleased), UIStrings.Instance.UIBugReport.EditScreenShotTitleText));
 		AddDisposable(m_PrivacyToggle.IsOn.Subscribe(OnPrivacyToggle));
 		AddDisposable(m_InputLayer.LayerBinded.Subscribe(OnLayerBinded));
 	}

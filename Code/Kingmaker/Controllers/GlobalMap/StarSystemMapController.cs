@@ -51,7 +51,7 @@ public class StarSystemMapController : IController, IAreaHandler, ISubscriber, I
 	private void UnloadArea()
 	{
 		m_PreviousMap = Game.Instance.CurrentlyLoadedArea as BlueprintStarSystemMap;
-		Game.Instance.Player.PreviousVisitedArea = Game.Instance.Player.CurrentStarSystem;
+		Game.Instance.Player.PreviousVisitedArea = m_PreviousMap;
 		Game.Instance.Player.LastPositionOnPreviousVisitedArea = StarSystemShip.Position;
 		StarSystemMapMoveController.StopPlayerShip();
 		StarSystemShip.UndrawPath();
@@ -118,6 +118,9 @@ public class StarSystemMapController : IController, IAreaHandler, ISubscriber, I
 				anomalySetToNonInteractable.Remove(anomalyEntityData.Blueprint);
 			}
 		}
+		m_PreviousMap = Game.Instance.CurrentlyLoadedArea as BlueprintStarSystemMap;
+		Game.Instance.Player.PreviousVisitedArea = m_PreviousMap;
+		Game.Instance.Player.LastPositionOnPreviousVisitedArea = StarSystemShip.Position;
 	}
 
 	public void LandOnAnomaly(AnomalyEntityData anomaly)

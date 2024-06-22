@@ -163,6 +163,10 @@ public sealed class ClickUnitHandler : IClickEventHandler
 				{
 					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
 				}
+				else if (selectedUnit.IsMovementLockedByGameModeOrCombat())
+				{
+					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
+				}
 				else
 				{
 					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, targetPoint, targetUnit.MovementAgent.ApproachRadius)
@@ -206,6 +210,10 @@ public sealed class ClickUnitHandler : IClickEventHandler
 				if (path.error)
 				{
 					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
+				}
+				else if (selectedUnit.IsMovementLockedByGameModeOrCombat())
+				{
+					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
 				}
 				else
 				{

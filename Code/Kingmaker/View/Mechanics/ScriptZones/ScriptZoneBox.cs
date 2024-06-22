@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.View.Mechanics;
 using Kingmaker.Pathfinding;
 using Kingmaker.Utility.CodeTimer;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Mechanics.ScriptZones;
 
+[KnowledgeDatabaseID("84a8060c827087c4dbb941d7ba2f1e9a")]
 public class ScriptZoneBox : ScriptZoneShape
 {
 	private Bounds m_PrevBounds;

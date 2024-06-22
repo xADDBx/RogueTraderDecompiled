@@ -24,7 +24,7 @@ public class OverrideUnitReturnPosition : GameAction
 		return $"Override {Unit} position to {Position}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(Unit.GetValue() is BaseUnitEntity baseUnitEntity))
 		{

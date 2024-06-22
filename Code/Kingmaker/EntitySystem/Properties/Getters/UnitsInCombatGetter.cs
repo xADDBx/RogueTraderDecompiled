@@ -31,8 +31,8 @@ public class UnitsInCombatGetter : PropertyGetter, PropertyContextAccessor.IMech
 		return list2.Count;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Unmodified Rate of Fire (from blueprint)";
+		return "Count of live targetable units in combat";
 	}
 }

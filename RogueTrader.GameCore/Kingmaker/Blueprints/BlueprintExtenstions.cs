@@ -48,6 +48,24 @@ public static class BlueprintExtenstions
 		return default(T);
 	}
 
+	public static bool TryGetComponent<T>([CanBeNull] this BlueprintScriptableObject blueprint, out T component)
+	{
+		component = default(T);
+		if (blueprint == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < blueprint.ComponentsArray.Length; i++)
+		{
+			if (blueprint.ComponentsArray[i] is T val)
+			{
+				component = val;
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static IEnumerable<T> GetComponents<T>([CanBeNull] this BlueprintScriptableObject blueprint)
 	{
 		if (blueprint == null)

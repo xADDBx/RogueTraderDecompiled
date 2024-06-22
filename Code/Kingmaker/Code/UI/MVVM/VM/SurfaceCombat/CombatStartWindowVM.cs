@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
@@ -11,13 +12,15 @@ namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
 public class CombatStartWindowVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEntityPositionChangedHandler, ISubscriber<IEntity>, ISubscriber
 {
-	private Action m_StartBattle;
+	private readonly Action m_StartBattle;
 
 	public readonly bool CanDeploy;
 
-	public BoolReactiveProperty CanStartCombat = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty CanStartCombat = new BoolReactiveProperty();
 
 	public readonly CombatStartCoopProgressVM CoopProgressVM;
+
+	public readonly StringReactiveProperty CannotStartCombatReason = new StringReactiveProperty();
 
 	public CombatStartWindowVM(Action startBattle, bool canDeploy)
 	{
@@ -44,12 +47,15 @@ public class CombatStartWindowVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	private void UpdateCanStartCombat()
 	{
-		bool value = Game.Instance.TurnController.CanFinishDeploymentPhase();
-		if (Game.Instance.TurnController.GetStartBattleProgress(out var _, out var _, out var playerGroup) && playerGroup.Contains(NetworkingManager.LocalNetPlayer))
+		bool flag = Game.Instance.TurnController.CanFinishDeploymentPhase();
+		string value = ((!flag) ? UIStrings.Instance.TurnBasedTexts.CannotStartbattle.Text : string.Empty);
+		if (Game.Instance.TurnController.GetStartBattleProgress(out var current, out var target, out var playerGroup) && playerGroup.Contains(NetworkingManager.LocalNetPlayer))
 		{
-			value = false;
+			flag = false;
+			value = string.Format(UIStrings.Instance.CommonTexts.WaitingOtherPlayer, current, target);
 		}
-		CanStartCombat.Value = value;
+		CannotStartCombatReason.Value = value;
+		CanStartCombat.Value = flag;
 	}
 
 	public void HandleEntityPositionChanged()

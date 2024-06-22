@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Code.UI.Common.Animations;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -26,7 +27,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
 
-public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRankEntryFeatureVM>, IWidgetView, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IFuncAdditionalClickHandler, IHasNeighbours, ICareerPathItem
+public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRankEntryFeatureVM>, IWidgetView, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IFuncAdditionalClickHandler, IHasNeighbours, IRankEntryElement
 {
 	[SerializeField]
 	private CharInfoFeatureSimpleBaseView m_CharInfoRankEntryView;
@@ -60,25 +61,24 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 	[ConditionalShow("m_IsListEntry")]
 	private OwlcatMultiSelectable m_UnitHasFeature;
 
+	[SerializeField]
+	[ConditionalHide("m_IsListEntry")]
+	private RectTransform m_NextItemArrow;
+
+	[SerializeField]
+	private RankEntryAnimator m_Highlighter;
+
 	private List<IFloatConsoleNavigationEntity> m_Neighbours;
 
 	private RectTransform m_TooltipPlace;
-
-	private Action<RectTransform> m_EnsureVisibleAction;
 
 	private readonly ReactiveProperty<string> m_HintText = new ReactiveProperty<string>();
 
 	public MonoBehaviour MonoBehaviour => this;
 
-	bool ICareerPathItem.IsSelectedForUI()
-	{
-		return base.ViewModel.IsCurrentRankEntryItem.Value;
-	}
-
-	public void SetViewParameters(RectTransform tooltipPlace, Action<RectTransform> ensureVisibleAction)
+	public void SetViewParameters(RectTransform tooltipPlace)
 	{
 		m_TooltipPlace = tooltipPlace;
-		m_EnsureVisibleAction = ensureVisibleAction;
 	}
 
 	protected override void BindViewImplementation()
@@ -88,17 +88,10 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 			m_HintText.Value = base.ViewModel.HintText;
 		}));
 		m_CharInfoRankEntryView.Bind(base.ViewModel);
-		if (m_IsListEntry && base.ViewModel is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM)
+		if (m_IsListEntry && base.ViewModel is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM && (bool)m_UnitHasFeature)
 		{
-			if ((bool)m_UnitHasFeature)
-			{
-				string activeLayer = (rankEntrySelectionFeatureVM.UnitHasFeature ? "HasFeature" : "Restricted");
-				m_UnitHasFeature.SetActiveLayer(activeLayer);
-			}
-			if (m_CharInfoRankEntryView is LevelupFeaturePCView levelupFeaturePCView)
-			{
-				levelupFeaturePCView.SetCommonState(rankEntrySelectionFeatureVM.IsCommonFeature);
-			}
+			string activeLayer = (rankEntrySelectionFeatureVM.UnitHasFeature ? "HasFeature" : "Restricted");
+			m_UnitHasFeature.SetActiveLayer(activeLayer);
 		}
 		if ((bool)m_RecommendMark)
 		{
@@ -139,7 +132,7 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 		}));
 		AddDisposable(base.ViewModel.FocusedState.Subscribe(delegate(bool value)
 		{
-			if (base.ViewModel.FeatureState.Value != RankFeatureState.Committed)
+			if (base.ViewModel.FeatureState.Value != RankFeatureState.Selected)
 			{
 				m_FocusedMark.Or(null)?.SetActive(value);
 			}
@@ -148,6 +141,7 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 		{
 			m_MainButton.SetActiveLayer(value.ToString());
 		}));
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -158,10 +152,6 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 	public void OnSelectedChanged(bool value)
 	{
 		m_SelectedMark.SetActive(value);
-		if (value)
-		{
-			m_EnsureVisibleAction?.Invoke(base.transform as RectTransform);
-		}
 	}
 
 	private void DoClick()
@@ -204,10 +194,6 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 	public void SetFocus(bool value)
 	{
 		m_MainButton.SetFocus(value);
-		if (value)
-		{
-			m_EnsureVisibleAction?.Invoke(base.transform as RectTransform);
-		}
 	}
 
 	public bool IsValid()
@@ -288,5 +274,46 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 	public string GetFuncAdditionalClickHint()
 	{
 		return UIStrings.Instance.CharacterSheet.ToggleFavorites;
+	}
+
+	public void SetRotation(float angleDeg, bool hasArrow)
+	{
+		base.transform.localRotation = Quaternion.Euler(0f, 0f, 0f - angleDeg);
+		if ((bool)m_NextItemArrow)
+		{
+			m_NextItemArrow.gameObject.SetActive(hasArrow);
+			float num = GetComponent<RectTransform>().sizeDelta.x * 0.5f;
+			float num2 = (90f + angleDeg) * (MathF.PI / 180f);
+			m_NextItemArrow.anchoredPosition = new Vector2(Mathf.Cos(num2), Mathf.Sin(num2)) * num;
+			m_NextItemArrow.localRotation = Quaternion.Euler(0f, 0f, num2 * 57.29578f);
+		}
+	}
+
+	public void StartHighlight(string key)
+	{
+		if (base.ViewModel.Feature.AssetGuid != key)
+		{
+			return;
+		}
+		if (m_IsListEntry)
+		{
+			m_Highlighter.PlayOnce();
+			EventBus.RaiseEvent(delegate(IRankEntryFocusHandler h)
+			{
+				h.SetFocusOn(base.ViewModel);
+			});
+		}
+		else
+		{
+			m_Highlighter.StartAnimation();
+		}
+	}
+
+	public void StopHighlight()
+	{
+		if (!m_IsListEntry)
+		{
+			m_Highlighter.StopAnimation();
+		}
 	}
 }

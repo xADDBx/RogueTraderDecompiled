@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Code.UI.MVVM.VM.Settings.Entities;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
@@ -36,6 +37,8 @@ public abstract class SettingsEntityWithValueView<TSettingsEntityVM> : SettingsE
 
 	private string m_ModificationNotAllowedReason;
 
+	private IDisposable m_Disposable;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -44,7 +47,15 @@ public abstract class SettingsEntityWithValueView<TSettingsEntityVM> : SettingsE
 			OnModificationChanged(base.ViewModel.ModificationAllowedReason.Value, value);
 		}));
 		AddDisposable(base.ViewModel.IsChanged.Subscribe(UpdatePoints));
+		OnModificationChanged(base.ViewModel.ModificationAllowedReason.Value, base.ViewModel.ModificationAllowed.Value);
 		SetupColor(isHighlighted: false);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_Disposable?.Dispose();
+		m_Disposable = null;
+		base.DestroyViewImplementation();
 	}
 
 	private void UpdatePoints(bool isChanged)
@@ -84,7 +95,7 @@ public abstract class SettingsEntityWithValueView<TSettingsEntityVM> : SettingsE
 
 	private void CallNotAllowedNotification(string reason, WarningNotificationFormat format)
 	{
-		if (!base.ViewModel.ModificationAllowed.Value)
+		if (!base.ViewModel.ModificationAllowed.Value && !string.IsNullOrWhiteSpace(reason))
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{
@@ -105,11 +116,13 @@ public abstract class SettingsEntityWithValueView<TSettingsEntityVM> : SettingsE
 
 	protected void SetNotAllowedModificationHint(MonoBehaviour selectable)
 	{
+		m_Disposable?.Dispose();
+		m_Disposable = null;
 		string modificationNotAllowedReason = m_ModificationNotAllowedReason;
 		bool value = base.ViewModel.ModificationAllowed.Value;
 		string text = modificationNotAllowedReason ?? string.Empty;
 		bool shouldShow = !value && !string.IsNullOrWhiteSpace(modificationNotAllowedReason);
-		AddDisposable(selectable.SetHint(text, null, default(Color), shouldShow));
+		m_Disposable = selectable.SetHint(text, null, default(Color), shouldShow);
 	}
 
 	public virtual void SetFocus(bool value)

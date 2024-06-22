@@ -54,7 +54,7 @@ public class WarhammerContextActionAddMomentum : ContextAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity caster = base.Context.MaybeCaster;
 		MechanicEntity mechanicEntity = (ToPlayer ? Game.Instance.Player.MainCharacterEntity : (ToCaster ? caster : base.Target.Entity));

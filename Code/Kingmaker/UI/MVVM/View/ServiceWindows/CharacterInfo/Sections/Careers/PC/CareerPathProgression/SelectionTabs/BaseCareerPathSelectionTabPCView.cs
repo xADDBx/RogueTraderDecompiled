@@ -1,8 +1,10 @@
+using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.SelectionTabs;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -16,15 +18,27 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 	[SerializeField]
 	private bool m_ButtonsSetFromParent = true;
 
+	[Header("Title")]
+	[SerializeField]
+	private CanvasGroup m_TitleHighlightGroup;
+
+	[SerializeField]
+	private CanvasGroup m_CompleteHighlightGroup;
+
+	[SerializeField]
+	protected OwlcatMultiButton m_HighlightButton;
+
 	[SerializeField]
 	[ConditionalHide("m_ButtonsSetFromParent")]
 	private CareerButtonsBlock m_ButtonsBlock;
 
-	protected ReactiveProperty<string> HintText = new ReactiveProperty<string>();
+	protected readonly ReactiveProperty<string> HintText = new ReactiveProperty<string>();
 
-	private readonly ReactiveProperty<bool> m_IsButtonInteractable = new ReactiveProperty<bool>(initialValue: true);
+	private readonly ReactiveProperty<bool> m_NextButtonInteractable = new ReactiveProperty<bool>(initialValue: true);
 
-	private readonly ReactiveProperty<bool> m_HasFirstSelectable = new ReactiveProperty<bool>(initialValue: true);
+	private readonly ReactiveProperty<bool> m_BackButtonInteractable = new ReactiveProperty<bool>(initialValue: true);
+
+	public bool CanCommit { get; protected set; }
 
 	public void SetButtonsBlock(CareerButtonsBlock buttonsBlock)
 	{
@@ -41,30 +55,49 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 				HandleClickNext();
 			}));
 			AddDisposable(m_ButtonsBlock.NextButton.SetHint(HintText));
-			AddDisposable(m_ButtonsBlock.FirstSelectableButton.OnLeftClickAsObservable().Subscribe(delegate
+			AddDisposable(m_ButtonsBlock.FinishButton.OnLeftClickAsObservable().Subscribe(delegate
 			{
-				HandleFirstSelectableClick();
+				HandleClickFinish();
+			}));
+			AddDisposable(m_NextButtonInteractable.Subscribe(m_ButtonsBlock.NextButton.SetInteractable));
+			AddDisposable(m_BackButtonInteractable.Subscribe(m_ButtonsBlock.BackButton.SetInteractable));
+			AddDisposable(m_ButtonsBlock.BackButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				HandleClickBack();
 			}));
 			AddDisposable(NextButtonLabel.Subscribe(delegate(string value)
 			{
 				m_ButtonsBlock.NextButtonLabel.text = value;
 			}));
-			AddDisposable(m_IsButtonInteractable.Subscribe(m_ButtonsBlock.NextButton.SetInteractable));
-			AddDisposable(m_HasFirstSelectable.Subscribe(m_ButtonsBlock.FirstSelectableButton.gameObject.SetActive));
-			AddDisposable(m_ButtonsBlock.BackButton.OnLeftClickAsObservable().Subscribe(delegate
-			{
-				HandleClickBack();
-			}));
 			AddDisposable(BackButtonLabel.Subscribe(delegate(string value)
 			{
 				m_ButtonsBlock.BackButtonLabel.text = value;
 			}));
+			AddDisposable(FinishButtonLabel.Subscribe(delegate(string value)
+			{
+				m_ButtonsBlock.FinishButtonLabel.text = value;
+			}));
+			m_HighlightButton.Or(null)?.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				OnHighlightButtonClick();
+			});
 		}
 	}
 
-	protected void SetButtonInteractable(bool value)
+	protected override void DestroyViewImplementation()
 	{
-		m_IsButtonInteractable.Value = value;
+		base.DestroyViewImplementation();
+		m_HighlightButton.Or(null)?.gameObject.SetActive(value: false);
+	}
+
+	protected void SetNextButtonInteractable(bool value)
+	{
+		m_NextButtonInteractable.Value = value;
+	}
+
+	protected void SetBackButtonInteractable(bool value)
+	{
+		m_BackButtonInteractable.Value = value;
 	}
 
 	protected void SetButtonVisibility(bool value)
@@ -72,17 +105,12 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 		m_ButtonsBlock.Or(null)?.gameObject.SetActive(value);
 	}
 
-	protected void SetFirstSelectableInteractable(bool value)
+	protected void SetFinishInteractable(bool value)
 	{
 		if ((bool)m_ButtonsBlock)
 		{
-			m_ButtonsBlock.FirstSelectableButton.Interactable = value;
+			m_ButtonsBlock.FinishButton.Interactable = value;
 		}
-	}
-
-	protected void SetFirstSelectableVisibility(bool value)
-	{
-		m_HasFirstSelectable.Value = value;
 	}
 
 	protected void SetButtonSound(UISounds.ButtonSoundsEnum soundType)
@@ -90,6 +118,21 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 		if ((bool)m_ButtonsBlock)
 		{
 			UISounds.Instance.SetClickSound(m_ButtonsBlock.NextButton, soundType);
+		}
+	}
+
+	private void OnHighlightButtonClick()
+	{
+		if ((bool)m_TitleHighlightGroup)
+		{
+			m_TitleHighlightGroup.DOKill();
+			m_CompleteHighlightGroup.DOKill();
+			CanvasGroup highlightGroup = (CanCommit ? m_CompleteHighlightGroup : m_TitleHighlightGroup);
+			highlightGroup.DOFade(1f, 0.1f).SetLoops(4, LoopType.Yoyo).SetUpdate(isIndependentUpdate: true)
+				.OnComplete(delegate
+				{
+					highlightGroup.alpha = 0f;
+				});
 		}
 	}
 

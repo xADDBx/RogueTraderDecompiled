@@ -11,8 +11,8 @@ public class MovedCellsThisTurnGetter : UnitPropertyGetter
 		return (int)base.CurrentEntity.CombatState.MovedCellsThisTurn;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Moved cells this turn";
+		return FormulaTargetScope.Current + " Moved cells this turn";
 	}
 }

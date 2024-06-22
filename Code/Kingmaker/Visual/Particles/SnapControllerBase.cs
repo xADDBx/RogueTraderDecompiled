@@ -189,56 +189,55 @@ public abstract class SnapControllerBase : MonoBehaviour
 		StopInternal();
 		if (!m_Enabled)
 		{
-			UnityEngine.Debug.LogWarning("Unable to play. Snap controller is disabled.", this);
+			PFLog.TechArt.Warning(this, "Unable to play. Snap controller is disabled. GO: " + base.name);
+			return;
 		}
-		else
+		if (m_ParticleSystem == null)
 		{
-			if (m_ParticleSystem == null)
-			{
-				return;
-			}
-			if (m_ParticleSystemRenderer == null)
-			{
-				UnityEngine.Debug.LogWarning("Unable to play. Missing particle system renderer.", this);
-				return;
-			}
-			SnapMapBase snapMapBase = ResolveSnapMap(snapMapOverride);
-			if (snapMapBase == null)
-			{
-				UnityEngine.Debug.LogWarning("Unable to play. Missing snap map.", this);
-				return;
-			}
-			if (!IsSnapMapEnabled(snapMapBase) && !PersistWhenDisabled)
-			{
-				UnityEngine.Debug.LogWarning("Unable to play. Snap map is disabled, but 'PersistWhenDisabled' option is not set.", this);
-				return;
-			}
-			HashSet<FxBone> value;
-			BoneCollector.Result bones;
-			using (CollectionPool<HashSet<FxBone>, FxBone>.Get(out value))
-			{
-				try
-				{
-					bones = GetBones(snapMapBase, value);
-				}
-				finally
-				{
-				}
-				if (value.Count > 0)
-				{
-					PlayInternal(bones, value, snapMapBase);
-				}
-				else
-				{
-					UnityEngine.Debug.LogWarning("Unable to play. Missing fxBones.", this);
-				}
-			}
-			if (SnapType == ParticleSnapType.Transforms && bones.hasRotatableBones && !m_IsRotatableCopy)
-			{
-				CreateRuntimeRotatableCopyIfNotExists();
-			}
-			PlayRotatableCopy(snapMapOverride);
+			PFLog.TechArt.Warning(this, "Unable to play. Missing particle system. GO: " + base.name);
+			return;
 		}
+		if (m_ParticleSystemRenderer == null)
+		{
+			PFLog.TechArt.Warning(this, "Unable to play. Missing particle system renderer. GO: " + base.name);
+			return;
+		}
+		SnapMapBase snapMapBase = ResolveSnapMap(snapMapOverride);
+		if (snapMapBase == null)
+		{
+			PFLog.TechArt.Warning(this, "Unable to play. Missing snap map. GO: " + base.name);
+			return;
+		}
+		if (!IsSnapMapEnabled(snapMapBase) && !PersistWhenDisabled)
+		{
+			PFLog.TechArt.Warning(this, "Unable to play. Snap map is disabled, but 'PersistWhenDisabled' option is not set. GO: " + base.name);
+			return;
+		}
+		HashSet<FxBone> value;
+		BoneCollector.Result bones;
+		using (CollectionPool<HashSet<FxBone>, FxBone>.Get(out value))
+		{
+			try
+			{
+				bones = GetBones(snapMapBase, value);
+			}
+			finally
+			{
+			}
+			if (value.Count > 0)
+			{
+				PlayInternal(bones, value, snapMapBase);
+			}
+			else
+			{
+				PFLog.TechArt.Warning(this, "Unable to play. Missing fxBones.");
+			}
+		}
+		if (SnapType == ParticleSnapType.Transforms && bones.hasRotatableBones && !m_IsRotatableCopy)
+		{
+			CreateRuntimeRotatableCopyIfNotExists();
+		}
+		PlayRotatableCopy(snapMapOverride);
 	}
 
 	internal virtual BoneCollector.Result GetBones(SnapMapBase snapMap, HashSet<FxBone> fxBones)

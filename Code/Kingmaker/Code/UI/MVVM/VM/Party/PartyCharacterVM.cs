@@ -20,12 +20,13 @@ using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.View;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
+using Photon.Realtime;
 using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Party;
 
-public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IUnitGainExperienceHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ILevelUpCompleteUIHandler, IPartyCombatHandler, ILevelUpManagerUIHandler, IPartyEncumbranceHandler, IUnitEncumbranceHandler, INetRoleSetHandler, INetStopPlayingHandler
+public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IUnitGainExperienceHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ILevelUpCompleteUIHandler, IPartyCombatHandler, ILevelUpManagerUIHandler, IPartyEncumbranceHandler, IUnitEncumbranceHandler, INetRoleSetHandler, INetStopPlayingHandler, INetLobbyPlayersHandler
 {
 	public readonly ReactiveProperty<bool> IsEnable = new ReactiveProperty<bool>(initialValue: false);
 
@@ -40,6 +41,8 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public readonly ReactiveProperty<bool> IsLevelUpCurrent = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<bool> IsLevelUpInProgress = new ReactiveProperty<bool>(initialValue: false);
+
+	public readonly ReactiveProperty<bool> IsInCombat = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<Sprite> NetAvatar = new ReactiveProperty<Sprite>(null);
 
@@ -183,8 +186,8 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			return;
 		}
-		IsLevelUp.Value = UnitEntityData.Progression.CanLevelUp;
-		if (levelUpSound && UnitEntityData.Progression.CanLevelUp)
+		IsLevelUp.Value = !IsInCombat.Value && UnitEntityData.Progression.CanLevelUp;
+		if (levelUpSound && IsLevelUp.Value)
 		{
 			m_IsNewLevel.Execute();
 		}
@@ -237,6 +240,7 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void HandlePartyCombatStateChanged(bool inCombat)
 	{
+		IsInCombat.Value = inCombat;
 		UpdateLevelUpField(UnitEntityData);
 	}
 
@@ -261,6 +265,10 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			h.HandlePortraitHover(value);
 		}, isCheckRuntime: true);
+		EventBus.RaiseEvent(delegate(IPartyCharacterHoverHandler h)
+		{
+			h.HandlePartyCharacterHover(UnitEntityData, value);
+		});
 	}
 
 	public void ShowBark(string text)
@@ -315,5 +323,26 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	void INetStopPlayingHandler.HandleStopPlaying()
 	{
 		NetAvatar.Value = null;
+	}
+
+	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
+	{
+	}
+
+	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
+	{
+		SetNetAvatar();
+	}
+
+	public void HandlePlayerChanged()
+	{
+	}
+
+	public void HandleLastPlayerLeftLobby()
+	{
+	}
+
+	public void HandleRoomOwnerChanged()
+	{
 	}
 }

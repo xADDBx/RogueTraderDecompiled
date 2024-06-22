@@ -1,4 +1,8 @@
+using System.Collections.Generic;
 using Kingmaker.Networking.Settings;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
 using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Internal;
@@ -27,7 +31,7 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 
 	[JsonProperty]
 	[MemoryPackInclude]
-	private BaseSettingNetData m_Setting;
+	private readonly List<BaseSettingNetData> m_Settings;
 
 	public override bool IsSynchronized => true;
 
@@ -37,15 +41,25 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 	}
 
 	[MemoryPackConstructor]
-	public SettingGameCommand(BaseSettingNetData m_setting)
+	public SettingGameCommand(List<BaseSettingNetData> m_settings)
 	{
-		m_Setting = m_setting;
+		m_Settings = m_settings;
 	}
 
 	protected override void ExecuteInternal()
 	{
-		m_Setting.ForceSet();
-		Game.Instance.GameCommandQueue.SaveSettings();
+		SettingsController.Instance.RevertAllTempValues();
+		foreach (BaseSettingNetData setting in m_Settings)
+		{
+			setting.ForceSet();
+		}
+		Game.Instance.UISettingsManager.OnSettingsApplied();
+		EventBus.RaiseEvent(delegate(ISaveSettingsHandler h)
+		{
+			h.HandleSaveSettings();
+		});
+		SettingsController.Instance.ConfirmAllTempValues();
+		SettingsController.Instance.SaveAll();
 	}
 
 	static SettingGameCommand()
@@ -64,6 +78,10 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 		{
 			MemoryPackFormatterProvider.Register(new ArrayFormatter<SettingGameCommand>());
 		}
+		if (!MemoryPackFormatterProvider.IsRegistered<List<BaseSettingNetData>>())
+		{
+			MemoryPackFormatterProvider.Register(new ListFormatter<BaseSettingNetData>());
+		}
 	}
 
 	[Preserve]
@@ -75,7 +93,7 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 			return;
 		}
 		writer.WriteObjectHeader(1);
-		writer.WriteValue(in value.m_Setting);
+		writer.WriteValue(in value.m_Settings);
 	}
 
 	[Preserve]
@@ -86,16 +104,16 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 			value = null;
 			return;
 		}
-		BaseSettingNetData value2;
+		List<BaseSettingNetData> value2;
 		if (memberCount == 1)
 		{
 			if (value == null)
 			{
-				value2 = reader.ReadValue<BaseSettingNetData>();
+				value2 = reader.ReadValue<List<BaseSettingNetData>>();
 			}
 			else
 			{
-				value2 = value.m_Setting;
+				value2 = value.m_Settings;
 				reader.ReadValue(ref value2);
 			}
 		}
@@ -106,7 +124,7 @@ public sealed class SettingGameCommand : GameCommand, IMemoryPackable<SettingGam
 				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SettingGameCommand), 1, memberCount);
 				return;
 			}
-			value2 = ((value != null) ? value.m_Setting : null);
+			value2 = ((value != null) ? value.m_Settings : null);
 			if (memberCount != 0)
 			{
 				reader.ReadValue(ref value2);

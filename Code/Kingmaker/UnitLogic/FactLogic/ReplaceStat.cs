@@ -23,7 +23,8 @@ public abstract class ReplaceStat : MechanicEntityFactComponentDelegate, IHashab
 		WarhammerIntelligence,
 		WarhammerPerception,
 		WarhammerWillpower,
-		WarhammerFellowship
+		WarhammerFellowship,
+		WarhammerMedicae
 	}
 
 	[SerializeField]
@@ -56,6 +57,7 @@ public abstract class ReplaceStat : MechanicEntityFactComponentDelegate, IHashab
 			Attributes.WarhammerPerception => StatType.WarhammerPerception, 
 			Attributes.WarhammerWillpower => StatType.WarhammerWillpower, 
 			Attributes.WarhammerFellowship => StatType.WarhammerFellowship, 
+			Attributes.WarhammerMedicae => StatType.SkillMedicae, 
 			Attributes.Unknown => StatType.Unknown, 
 			_ => throw new ArgumentOutOfRangeException("attribute", attribute, null), 
 		};

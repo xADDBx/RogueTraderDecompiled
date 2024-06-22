@@ -110,22 +110,30 @@ public class CharInfoSkillsAndWeaponsConsoleView : CharInfoSkillsAndWeaponsBaseV
 		}
 	}
 
-	public void AddInput(ref InputLayer inputLayer, ref GridConsoleNavigationBehaviour navigationBehaviour, ConsoleHintsWidget hintsWidget)
+	void ICharInfoComponentConsoleView.AddInput(ref InputLayer inputLayer, ref GridConsoleNavigationBehaviour navigationBehaviour, ConsoleHintsWidget hintsWidget)
 	{
 		navigationBehaviour.FocusOnFirstValidEntity();
 		navigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationBehaviour);
 	}
 
-	public void AddInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, IReadOnlyReactiveProperty<bool> enabledHints = null)
+	public CompositeDisposable AddInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, IReadOnlyReactiveProperty<bool> enabledHints = null)
 	{
-		InputBindStruct inputBindStruct = inputLayer.AddButton(OnNext, 11, enabledHints, InputActionEventType.ButtonJustReleased);
-		AddDisposable(inputBindStruct);
-		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.InventoryScreen.ToggleStats));
+		CompositeDisposable compositeDisposable = new CompositeDisposable();
+		InputBindStruct inputBindStruct = inputLayer.AddButton(OnNext, 11, enabledHints);
+		compositeDisposable.Add(inputBindStruct);
+		compositeDisposable.Add(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.InventoryScreen.ToggleStats));
+		AddDisposable(compositeDisposable);
+		return compositeDisposable;
 	}
 
 	public void SetFocusChangeAction(Action<IConsoleEntity> onFocusChange)
 	{
 		m_OnFocusChangeAction = onFocusChange;
+	}
+
+	public GridConsoleNavigationBehaviour GetNavigation()
+	{
+		return m_NavigationBehaviour;
 	}
 
 	bool ICharInfoComponentView.get_IsBinded()

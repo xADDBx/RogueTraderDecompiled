@@ -134,6 +134,10 @@ public class CheatsCommon
 			{
 				CheatsHelper.Run("switch_highlight_covers");
 			});
+			keyboard.Bind("ShowDebugBubble", delegate
+			{
+				CheatsHelper.Run("emperor_open_my_eyes");
+			});
 			SmartConsole.RegisterCommand("produce_exception", CheatsDebug.ProduceException);
 			SmartConsole.RegisterCommand("gain_xp", GainExperience);
 			SmartConsole.RegisterCommand("remove_untyped_ac", RemoveUntypedAC);
@@ -366,6 +370,26 @@ public class CheatsCommon
 				h.HandleOpenSettings(isMainMenu);
 			});
 		});
+	}
+
+	[Cheat(Name = "emperor_open_my_eyes", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void ShowDebugBubble()
+	{
+		Game.Instance.RootUiContext.IsDebugBlueprintsInformationShow = !Game.Instance.RootUiContext.IsDebugBlueprintsInformationShow;
+		if (Game.Instance.RootUiContext.IsDebugBlueprintsInformationShow)
+		{
+			EventBus.RaiseEvent(delegate(IDebugInformationUIHandler h)
+			{
+				h.HandleShowDebugBubble();
+			});
+		}
+		else
+		{
+			EventBus.RaiseEvent(delegate(IDebugInformationUIHandler h)
+			{
+				h.HandleHideDebugBubble();
+			});
+		}
 	}
 
 	private static void ShuffleParty(string parameters)

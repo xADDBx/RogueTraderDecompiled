@@ -26,7 +26,7 @@ public class TooltipConsoleView : TooltipBaseView
 			SetHeight();
 			if (!base.ViewModel.IsComparative)
 			{
-				UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.OwnerTransform, base.ViewModel.PriorityPivots);
+				UIUtility.SetPopupWindowPosition((RectTransform)base.transform, base.ViewModel.OwnerTransform, (base.ViewModel.PriorityPivots == null) ? new Vector2(0f, 25f) : Vector2.zero, base.ViewModel.PriorityPivots);
 				m_ShowTween = base.CanvasGroup.DOFade(1f, 0.2f).OnComplete(delegate
 				{
 					UISounds.Instance.Sounds.Tooltip.TooltipShow.Play();
@@ -49,6 +49,10 @@ public class TooltipConsoleView : TooltipBaseView
 			return;
 		}
 		InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
+		if (base.ViewModel.HasScroll)
+		{
+			AddDisposable(currentInputLayer.AddAxis(base.Scroll, 3));
+		}
 		switch (base.ViewModel.InfoCallConsoleMethod)
 		{
 		case InfoCallConsoleMethod.LongShortRightStickButton:

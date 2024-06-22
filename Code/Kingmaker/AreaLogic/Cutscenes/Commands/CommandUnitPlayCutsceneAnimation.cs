@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
@@ -29,6 +30,8 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		internal bool Finished;
 
 		internal float FiniteLoopDuration;
+
+		internal bool SkippedByPlayer;
 
 		internal UnitAnimationAction Action;
 
@@ -98,7 +101,15 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 	[Tooltip("Timeout in case something breaks, forces this command to stop after this many seconds")]
 	private float m_Timeout = 20f;
 
-	private bool m_SkippedByPlayer;
+	[SerializeField]
+	private bool m_UseAvatarMask;
+
+	[SerializeField]
+	[ConditionalShow("m_UseAvatarMask")]
+	private AvatarMask m_AvatarMask;
+
+	[SerializeField]
+	private bool m_RerunBeforeReleaseAnimation;
 
 	private bool? m_CutsceneClipIsLooping;
 
@@ -106,7 +117,7 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 	{
 		get
 		{
-			if (!m_SkippedByPlayer && ClipIsLooping)
+			if (ClipIsLooping)
 			{
 				return !m_FiniteLoop;
 			}
@@ -146,6 +157,12 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		m_CutsceneClipWrapperLink.Load();
 	}
 
+	public override bool TrySkip(CutscenePlayerData player)
+	{
+		player.GetCommandData<Data>(this).SkippedByPlayer = true;
+		return true;
+	}
+
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
 		Data commandData = player.GetCommandData<Data>(this);
@@ -153,7 +170,7 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		commandData.Started = false;
 		commandData.Unit = m_Unit.GetValue();
 		commandData.FiniteLoopDuration = (m_FiniteLoopRandomDuration ? player.Random.Range(m_FiniteLoopDuration, m_FiniteLoorDurationMax) : m_FiniteLoopDuration);
-		if (!IsContinuous && skipping)
+		if (skipping)
 		{
 			commandData.Finished = true;
 			commandData.Handle?.Release();
@@ -197,6 +214,11 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		if (!data.Started && !data.Finished && (!m_OnlyIfIdle || animationManager.CanRunIdleAction()))
 		{
 			data.Action = UnitAnimationActionClip.Create(data.CutsceneClipWrapper, "PlayAnimation");
+			if (m_UseAvatarMask)
+			{
+				data.Action.UseEmptyAvatarMask = false;
+				data.Action.AvatarMasks = new List<AvatarMask> { m_AvatarMask };
+			}
 			data.Action.TransitionIn = m_CrossfadeIn;
 			data.Action.TransitionOut = m_CrossfadeOut;
 			data.Action.ExecutionMode = (m_WaitForCurrentAnimation ? ExecutionMode.Sequenced : ExecutionMode.Interrupted);
@@ -212,7 +234,7 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 			{
 				data.Finished = true;
 			}
-			else if (!IsContinuous && !m_FiniteLoop && m_ExitBeforeDone && data.Handle.GetTime() >= data.CutsceneClipWrapper.Length - m_CrossfadeOut - RealTimeController.SystemStepDurationSeconds * 3f)
+			else if ((!IsContinuous || data.SkippedByPlayer) && m_ExitBeforeDone && data.Handle.GetTime() >= data.CutsceneClipWrapper.Length - m_CrossfadeOut - RealTimeController.SystemStepDurationSeconds * 3f)
 			{
 				data.Finished = true;
 			}
@@ -262,24 +284,33 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 			}
 		}
 		PlayAnimation(commandData, player);
-		if (!IsContinuous && time > (double)m_Timeout)
+		if ((commandData.SkippedByPlayer || !IsContinuous) && time > (double)m_Timeout)
 		{
 			commandData.Finished = true;
+		}
+		if (!commandData.SkippedByPlayer && IsContinuous && m_RerunBeforeReleaseAnimation && commandData.Handle.IsReleased)
+		{
+			OnRun(player, skipping: false);
 		}
 	}
 
 	public override void Interrupt(CutscenePlayerData player)
 	{
 		base.Interrupt(player);
-		if (!IsContinuous && !player.GetCommandData<Data>(this).Finished)
+		Data commandData = player.GetCommandData<Data>(this);
+		if ((commandData.SkippedByPlayer || !IsContinuous) && !commandData.Finished)
 		{
 			Stop(player);
 		}
 	}
 
-	public override void SkipByPlayer()
+	public override bool TryPrepareForStop(CutscenePlayerData player)
 	{
-		m_SkippedByPlayer = true;
+		if ((!player.GetCommandData<Data>(this).SkippedByPlayer && IsContinuous) || !IsFinished(player))
+		{
+			return false;
+		}
+		return StopPlaySignalIsReady(player);
 	}
 
 	public override IAbstractUnitEntity GetControlledUnit()

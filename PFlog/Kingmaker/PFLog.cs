@@ -115,8 +115,6 @@ public class PFLog : LogChannelFactory
 
 	public static readonly LogChannel TBM = LogChannelFactory.GetOrCreate("TBM");
 
-	public static readonly LogChannel ActionReport = LogChannelFactory.GetOrCreate("ActionReport", 2, LogSeverity.Message, LogSeverity.Disabled);
-
 	public static readonly LogChannel Replay = LogChannelFactory.GetOrCreate("Replay");
 
 	public static readonly LogChannel Net = LogChannelFactory.GetOrCreate("Net");
@@ -132,6 +130,10 @@ public class PFLog : LogChannelFactory
 	public static readonly LogChannel DesignerDebug = LogChannelFactory.GetOrCreate("DesignerDebug");
 
 	public static readonly LogChannel EventSystemDebug = LogChannelFactory.GetOrCreate("EventSystemDebug");
+
+	public static readonly LogChannel WWiseRTPC = LogChannelFactory.GetOrCreate("WWiseRTPC");
+
+	public static readonly LogChannel Cutscene = LogChannelFactory.GetOrCreate("Cutscene");
 
 	public static LogChannel Unity => LogChannel.Unity;
 

@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers;
@@ -10,6 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.Tutorial.Triggers;
 
+[AllowMultipleComponents]
 [TypeId("0baee9b0e78f4cb388882ff6e59934a5")]
 public class TutorialTriggerPlayerGainItem : TutorialTrigger, IItemsCollectionHandler, ISubscriber, IHashable
 {

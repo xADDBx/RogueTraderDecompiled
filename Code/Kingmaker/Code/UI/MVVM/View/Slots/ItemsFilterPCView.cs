@@ -1,16 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Toggles;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.VirtualListSystem;
+using Rewired;
+using TMPro;
 using UniRx;
 using UnityEngine;
 
@@ -77,6 +82,20 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		ItemsFilterType.ShipNoFilter
 	};
 
+	[Header("AvailableItems")]
+	[SerializeField]
+	protected bool m_ShowToggle;
+
+	[SerializeField]
+	private GameObject m_ToggleParent;
+
+	[SerializeField]
+	protected OwlcatToggle m_Toggle;
+
+	[SerializeField]
+	private TextMeshProUGUI m_ToggleLabel;
+
+	[Header("Values")]
 	[SerializeField]
 	private float m_LensStartPosition = -185f;
 
@@ -88,12 +107,18 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 
 	private const float LensThreshold = 0.0001f;
 
-	protected Dictionary<ItemsFilterType, OwlcatToggle> FiltersMap = new Dictionary<ItemsFilterType, OwlcatToggle>();
+	private Dictionary<ItemsFilterType, OwlcatToggle> m_FiltersMap = new Dictionary<ItemsFilterType, OwlcatToggle>();
+
+	private ItemsFilterType m_FirstFilter;
+
+	private ItemsFilterType m_LastFilter;
+
+	private AccessibilityTextHelper m_TextHelper;
 
 	public virtual void Initialize()
 	{
 		Hide();
-		FiltersMap = new Dictionary<ItemsFilterType, OwlcatToggle>
+		m_FiltersMap = new Dictionary<ItemsFilterType, OwlcatToggle>
 		{
 			{
 				ItemsFilterType.NoFilter,
@@ -129,6 +154,9 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 			}
 		};
 		m_SearchView.Or(null)?.Initialize();
+		m_FirstFilter = m_SortedFiltersList.FirstOrDefault();
+		m_LastFilter = m_SortedFiltersList.LastOrDefault();
+		m_TextHelper = new AccessibilityTextHelper(m_ToggleLabel);
 	}
 
 	protected override void BindViewImplementation()
@@ -151,13 +179,31 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		}
 		SetHints();
 		m_SearchView.Or(null)?.Bind(base.ViewModel.ItemsFilterSearchVM);
-		if (base.ViewModel.CurrentFilter == null || !FiltersMap.TryGetValue(base.ViewModel.CurrentFilter.Value, out var value))
+		if (base.ViewModel.CurrentFilter == null || !m_FiltersMap.TryGetValue(base.ViewModel.CurrentFilter.Value, out var value))
 		{
 			value = m_None;
 		}
 		value.Set(value: true);
 		AddDisposable(base.ViewModel.CurrentFilter.Subscribe(OnCurrentFilterChanged));
 		AddDisposable(base.ViewModel.CurrentSorter.Subscribe(OnCurrentSorterChanged));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevTab.name, delegate
+		{
+			OnPrevious(default(InputActionEventData));
+		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextTab.name, delegate
+		{
+			OnNext(default(InputActionEventData));
+		}));
+		SetupToggleGroup();
+		m_TextHelper.UpdateTextSize();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
+		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
+		Hide();
+		m_TextHelper.Dispose();
 	}
 
 	private void SetHints()
@@ -170,6 +216,23 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		AddDisposable(m_Notable.SetHint(UIStrings.Instance.InventoryScreen.FilterTextNotable));
 		AddDisposable(m_ShipItems.SetHint(UIStrings.Instance.InventoryScreen.FilterTextShipItem));
 		AddDisposable(m_Other.SetHint(UIStrings.Instance.InventoryScreen.FilterTextOther));
+	}
+
+	private void SetupToggleGroup()
+	{
+		m_ToggleParent.Or(null)?.SetActive(m_ShowToggle);
+		if ((bool)m_ToggleLabel)
+		{
+			m_ToggleLabel.text = UIStrings.Instance.InventoryScreen.ShowUnavailableItems;
+		}
+		if ((bool)m_Toggle)
+		{
+			m_Toggle.Set(base.ViewModel.ShowUnavailable.Value);
+			AddDisposable(m_Toggle.IsOn.Skip(1).Subscribe(delegate(bool value)
+			{
+				base.ViewModel.ShowUnavailable.Value = value;
+			}));
+		}
 	}
 
 	private void Show()
@@ -186,7 +249,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		{
 			return;
 		}
-		foreach (var (itemsFilterType2, owlcatToggle2) in FiltersMap)
+		foreach (var (itemsFilterType2, owlcatToggle2) in m_FiltersMap)
 		{
 			if (!(owlcatToggle2 != activeToggle))
 			{
@@ -224,7 +287,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 
 	private void OnCurrentFilterChanged(ItemsFilterType filterType)
 	{
-		OwlcatToggle owlcatToggle = FiltersMap[filterType];
+		OwlcatToggle owlcatToggle = m_FiltersMap[filterType];
 		if (!owlcatToggle.IsOn.Value)
 		{
 			owlcatToggle.Set(value: true);
@@ -251,10 +314,27 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		m_VirtualList.Or(null)?.ScrollController?.ForceScrollToTop();
 	}
 
-	protected override void DestroyViewImplementation()
+	public void OnPrevious(InputActionEventData data)
 	{
-		UISounds.Instance.Sounds.Selector.SelectorStop.Play();
-		UISounds.Instance.Sounds.Selector.SelectorLoopStop.Play();
-		Hide();
+		if (BuildModeUtility.Data.CloudSwitchSettings && base.ViewModel.CurrentFilter.Value == m_FirstFilter)
+		{
+			base.ViewModel.SetCurrentFilter(m_LastFilter);
+			return;
+		}
+		int value = m_SortedFiltersList.IndexOf(base.ViewModel.CurrentFilter.Value) - 1;
+		value = Mathf.Clamp(value, 0, m_SortedFiltersList.Count - 1);
+		base.ViewModel.SetCurrentFilter(m_SortedFiltersList.ElementAt(value));
+	}
+
+	public void OnNext(InputActionEventData data)
+	{
+		if (BuildModeUtility.Data.CloudSwitchSettings && base.ViewModel.CurrentFilter.Value == m_LastFilter)
+		{
+			base.ViewModel.SetCurrentFilter(m_FirstFilter);
+			return;
+		}
+		int value = m_SortedFiltersList.IndexOf(base.ViewModel.CurrentFilter.Value) + 1;
+		value = Mathf.Clamp(value, 0, m_SortedFiltersList.Count - 1);
+		base.ViewModel.SetCurrentFilter(m_SortedFiltersList.ElementAt(value));
 	}
 }

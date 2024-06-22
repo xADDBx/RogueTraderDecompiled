@@ -30,7 +30,7 @@ public class SpawnBySummonPool : GameAction
 		}
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (UnitSpawnerBase.MyData temp in EntityService.Instance.GetTempList<UnitSpawnerBase.MyData>())
 		{

@@ -1,6 +1,8 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Globalmap.Colonization;
+using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.MVVM.VM.CharGen;
@@ -33,12 +35,12 @@ public class CreateCustomCompanion : GameAction
 		return "Create custom companion";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		Player player = Game.Instance.Player;
 		if (!ForFree && (float)player.GetCustomCompanionCost() > player.ProfitFactor.Total)
 		{
-			PFLog.Default.Error("Has no enough profit factor for create custom companion");
+			Element.LogError("Has no enough profit factor for create custom companion");
 			return;
 		}
 		Game.Instance.Player.CreateCustomCompanion(delegate(BaseUnitEntity newCompanion)
@@ -58,10 +60,14 @@ public class CreateCustomCompanion : GameAction
 				}
 				SceneEntitiesState crossSceneState = Game.Instance.State.PlayerState.CrossSceneState;
 				Game.Instance.EntitySpawner.SpawnEntityImmediately(newCompanion, crossSceneState);
-				Game.Instance.Player.AddCompanion(newCompanion, remote: true);
-				newCompanion.IsInGame = true;
+				bool flag = Game.Instance.Player.Party.Count >= 6;
+				Game.Instance.Player.AddCompanion(newCompanion, flag);
+				newCompanion.IsInGame = !flag;
 			}
-			OnCreate.Run();
+			using (ContextData<SpawnedUnitData>.Request().Setup(newCompanion))
+			{
+				OnCreate.Run();
+			}
 		}, MatchPlayerXpExactly ? new int?(GameHelper.GetPlayerCharacter().Progression.Experience) : null, CompanionType);
 	}
 }

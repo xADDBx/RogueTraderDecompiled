@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Cheats;
 using Kingmaker.Code.UI.Legacy.BugReportDrawing;
 using Kingmaker.EntitySystem.Persistence;
@@ -20,13 +21,13 @@ public class QAModeExceptionReporter : MonoBehaviour
 
 	private static readonly HashSet<string> SeenMessages = new HashSet<string>();
 
-	private static readonly List<string> CurrentMessages = new List<string>();
+	private static readonly List<(string message, bool addToReport)> CurrentMessages = new List<(string, bool)>();
 
 	private static Exception LastException;
 
 	private static bool s_PrevCursorState;
 
-	public static bool MaybeShowError(string message, Exception ex = null, UnityEngine.Object ctx = null)
+	public static bool MaybeShowError(string message, Exception ex = null, UnityEngine.Object ctx = null, bool addMessageToReport = true)
 	{
 		int num;
 		if (BuildModeUtility.IsDevelopment)
@@ -36,7 +37,7 @@ public class QAModeExceptionReporter : MonoBehaviour
 				num = ((ex is SpamDetectingException) ? 1 : 0);
 				if (num == 0)
 				{
-					goto IL_006d;
+					goto IL_006e;
 				}
 			}
 			else
@@ -51,25 +52,25 @@ public class QAModeExceptionReporter : MonoBehaviour
 			if (!SeenMessages.Contains(message))
 			{
 				SeenMessages.Add(message);
-				ShowError(message);
+				ShowError(message, addMessageToReport);
 			}
 		}
 		else
 		{
 			num = 0;
 		}
-		goto IL_006d;
-		IL_006d:
+		goto IL_006e;
+		IL_006e:
 		return (byte)num != 0;
 	}
 
-	private static void ShowError(string message)
+	private static void ShowError(string message, bool addMessageToReport)
 	{
 		if (BuildModeUtility.IsDevelopment)
 		{
 			s_PrevCursorState = Cursor.visible;
 			Cursor.visible = true;
-			CurrentMessages.Add(message);
+			CurrentMessages.Add((message, addMessageToReport));
 			if (LoadingProcess.Instance.CurrentProcessTag != LoadingProcessTag.ExceptionReporter)
 			{
 				LoadingProcess.Instance.StartLoadingProcess(PauseForError(), null, LoadingProcessTag.ExceptionReporter);
@@ -110,7 +111,9 @@ public class QAModeExceptionReporter : MonoBehaviour
 		if (GUI.Button(new Rect(10 + num / 2, 0f, num / 2 - 20, 20f), "Report"))
 		{
 			Cursor.visible = s_PrevCursorState;
-			string[] messages = CurrentMessages.ToArray();
+			string[] messages = (from x in CurrentMessages
+				where x.addToReport
+				select x.message).ToArray();
 			Exception lastException = LastException;
 			CurrentMessages.Clear();
 			LastException = null;
@@ -126,9 +129,9 @@ public class QAModeExceptionReporter : MonoBehaviour
 		}
 		GUILayout.BeginVertical();
 		GUILayout.Space(20f);
-		foreach (string currentMessage in CurrentMessages)
+		foreach (var currentMessage in CurrentMessages)
 		{
-			GUILayout.Label(currentMessage);
+			GUILayout.Label(currentMessage.message);
 		}
 		GUILayout.EndVertical();
 		GUILayout.EndArea();

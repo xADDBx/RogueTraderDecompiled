@@ -1,6 +1,8 @@
+using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Base;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.ResourceLinks;
@@ -13,7 +15,9 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.View.Spawners;
 
+[Obsolete("This customization doesn't match to in game logic. Use spawner's field: SelectedCustomizationVariation. Don't remove since some scenes may still contain this component")]
 [RequireComponent(typeof(UnitSpawner))]
+[KnowledgeDatabaseID("677166680e3e4bf3b2d222cb5d566200")]
 public class SpawnerCustomization : MonoBehaviour, ICustomizationRequirements
 {
 	[CanBeNull]

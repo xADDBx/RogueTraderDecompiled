@@ -28,7 +28,7 @@ public class StarShipRapidReloadAction : ContextAction
 		return "Spaceship RapidReload action";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!(base.Context?.MaybeCaster is StarshipEntity starshipEntity))
 		{

@@ -13,7 +13,6 @@ using Kingmaker.BundlesLoading;
 using Kingmaker.Localization.Enums;
 using Kingmaker.Localization.Shared;
 using Kingmaker.Utility.DotNetExtensions;
-using Kingmaker.Utility.UnityExtensions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility;
@@ -81,6 +80,10 @@ public class OwlcatModification
 
 	public Assembly[] LoadedAssemblies { get; private set; } = new Assembly[0];
 
+
+	public string UniqueName => Manifest?.UniqueName;
+
+	public bool Enabled { get; set; }
 
 	[UsedImplicitly]
 	[CanBeNull]
@@ -384,13 +387,25 @@ public class OwlcatModification
 
 	private static void PatchMaterialShaders(IEnumerable<Material> materials)
 	{
-		Shader[] source = AssetBundle.LoadFromFile(PathUtils.BundlePath("shaders"))?.LoadAllAssets<Shader>() ?? new Shader[0];
 		foreach (Material material in materials)
 		{
-			Shader s = material.shader;
-			if (s != null)
+			Shader shader = material.shader;
+			if (shader != null)
 			{
-				material.shader = source.FirstItem((Shader i) => i.name == s.name) ?? s;
+				Shader shader2 = Shader.Find(shader.name);
+				if (shader2 == null)
+				{
+					PFLog.Mods.Error("Unable to find shader by name " + shader.name + " for material " + material.name);
+					material.shader = shader;
+				}
+				else
+				{
+					material.shader = shader2;
+				}
+			}
+			else
+			{
+				PFLog.Mods.Error("Unable to get shader name for material " + material.name);
 			}
 		}
 	}
@@ -503,6 +518,7 @@ public class OwlcatModification
 		{
 			PFLog.Mods.Log("Patching blueprint: " + simpleBlueprint.name + " (" + guid + ")");
 			string text2 = GetBlueprintPatchPath(text) + ".jbp_patch";
+			PFLog.Mods.Log("Patch path is: " + text2);
 			if (!File.Exists(text2))
 			{
 				PFLog.Mods.Error("Patch file not found at path :" + text2);

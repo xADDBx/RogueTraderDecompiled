@@ -119,14 +119,6 @@ public class TooltipBrickIconValueStatView : TooltipBaseBrickView<TooltipBrickIc
 			{
 				m_Label.fontStyle = FontStyles.Bold;
 			}
-			if (base.ViewModel.Type.HasFlag(TooltipIconValueStatType.ValueTextNormal))
-			{
-				m_Value.fontStyle = FontStyles.Normal;
-			}
-			if (base.ViewModel.Type.HasFlag(TooltipIconValueStatType.ValueTextBold))
-			{
-				m_Value.fontStyle = FontStyles.Bold;
-			}
 			m_LayoutElement.minHeight = num;
 			m_IconContainer.preferredWidth = num;
 			m_Label.alignment = alignment;

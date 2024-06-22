@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
@@ -14,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("944f703c9407ac94aa1cc87bf43a3312")]
 public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber
 {
 	private string m_GroupId;
@@ -100,7 +102,7 @@ public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISu
 			base.HasSpawned = true;
 			return null;
 		}
-		AbstractUnitEntity abstractUnitEntity = (IsLightweight ? Game.Instance.EntitySpawner.SpawnLightweightUnit(base.Blueprint, position, rotation, base.Data.HoldingState) : Game.Instance.EntitySpawner.SpawnUnit(base.Blueprint, position, rotation, base.Data.HoldingState));
+		AbstractUnitEntity abstractUnitEntity = (IsLightweight ? Game.Instance.EntitySpawner.SpawnLightweightUnit(base.Blueprint, position, rotation, base.Data.HoldingState, base.SelectedCustomizationVariation) : Game.Instance.EntitySpawner.SpawnUnit(base.Blueprint, position, rotation, base.Data.HoldingState, base.SelectedCustomizationVariation));
 		if (!(abstractUnitEntity is BaseUnitEntity baseUnitEntity))
 		{
 			return abstractUnitEntity;

@@ -87,11 +87,15 @@ public class RulePerformAttack : RulebookTargetEvent
 		m_OverrideDamageRoll = overrideDamageRoll;
 	}
 
-	public RulePerformAttack([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] AbilityData ability, int burstIndex, bool disableWeaponAttackDamage = false, bool disableDodgeForAlly = false, Vector3? effectiveCasterPosition = null, Vector3? abilityTargetPosition = null)
+	public RulePerformAttack([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] AbilityData ability, int burstIndex, bool disableWeaponAttackDamage = false, bool disableDodgeForAlly = false, Vector3? effectiveCasterPosition = null, Vector3? abilityTargetPosition = null, bool useSpecificAttackHitPolicy = false, AttackHitPolicyType attackHitPolicy = AttackHitPolicyType.Default)
 		: base(initiator, target)
 	{
 		Ability = ability;
-		RollPerformAttackRule = new RulePerformAttackRoll(initiator, target, ability, burstIndex, disableDodgeForAlly, effectiveCasterPosition, abilityTargetPosition);
+		RollPerformAttackRule = new RulePerformAttackRoll(initiator, target, ability, burstIndex, disableDodgeForAlly, effectiveCasterPosition, abilityTargetPosition)
+		{
+			OverrideAttackHitPolicy = useSpecificAttackHitPolicy,
+			AttackHitPolicyType = attackHitPolicy
+		};
 		m_DisableWeaponAttackDamage = disableWeaponAttackDamage;
 	}
 

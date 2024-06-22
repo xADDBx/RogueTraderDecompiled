@@ -33,6 +33,8 @@ public class UITextInventory
 
 	public LocalizedString MeleeWeapon;
 
+	public LocalizedString ShowUnavailableItems;
+
 	[Header("Console")]
 	public LocalizedString ChooseItem;
 

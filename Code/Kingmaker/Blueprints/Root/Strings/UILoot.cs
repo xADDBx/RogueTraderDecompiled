@@ -12,6 +12,8 @@ public class UILoot
 
 	public LocalizedString LootPlayerChest;
 
+	public LocalizedString SendToPlayerChest;
+
 	public LocalizedString LootOnArea;
 
 	public LocalizedString CollectAll;
@@ -48,9 +50,13 @@ public class UILoot
 
 	public LocalizedString SkillCheckSkillValue;
 
+	public LocalizedString DropZoneUnsupportedItem;
+
 	public LocalizedString CargoCollectedFromLoot;
 
 	public LocalizedString LootLockedState;
+
+	public LocalizedString ExitDescription;
 
 	public (string, string) GetLootObjectStrings(LootObjectType objectType)
 	{

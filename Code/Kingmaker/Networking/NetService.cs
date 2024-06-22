@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Controllers.Net;
 using Kingmaker.GameCommands;
+using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility.Locator;
@@ -76,8 +77,10 @@ public class NetService : IService, IDisposable
 
 	public void CancelCurrentCommands()
 	{
+		PathfindingService.Instance.ForceCompleteAll();
 		PFLog.GameCommands.Log($"Canceling current commands... tick#{Game.Instance.RealTimeController.CurrentNetworkTick}");
 		Game.Instance.UnitCommandBuffer.CancelCurrentCommands();
+		Game.Instance.AbilityExecutor.DetachAll();
 	}
 
 	void IDisposable.Dispose()

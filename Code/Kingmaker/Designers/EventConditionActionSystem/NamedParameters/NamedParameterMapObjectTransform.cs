@@ -25,7 +25,7 @@ public class NamedParameterMapObjectTransform : TransformEvaluator
 		}
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
-			PFLog.Default.Error("Cannot find mapobj " + Parameter + " in context parameters", this);
+			Element.LogError(this, "Cannot find mapobj {0} in context parameters", Parameter);
 		}
 		if (!(value is MapObjectEntity mapObjectEntity))
 		{

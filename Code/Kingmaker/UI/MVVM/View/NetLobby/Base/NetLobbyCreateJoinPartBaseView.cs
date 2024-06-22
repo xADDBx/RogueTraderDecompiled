@@ -44,6 +44,18 @@ public class NetLobbyCreateJoinPartBaseView : ViewBase<NetLobbyVM>
 	[SerializeField]
 	private TextMeshProUGUI m_NeedSameRegionAndCoopVerDescription;
 
+	[SerializeField]
+	protected OwlcatDropdown m_JoinableUserTypesDropdown;
+
+	[SerializeField]
+	private TextMeshProUGUI m_JoinableUserTypesLabel;
+
+	[SerializeField]
+	protected OwlcatDropdown m_InvitableUserTypesDropdown;
+
+	[SerializeField]
+	private TextMeshProUGUI m_InvitableUserTypesLabel;
+
 	protected readonly BoolReactiveProperty ShowLobbyCode = new BoolReactiveProperty();
 
 	protected readonly BoolReactiveProperty IsInCreateJoinPart = new BoolReactiveProperty();
@@ -93,9 +105,32 @@ public class NetLobbyCreateJoinPartBaseView : ViewBase<NetLobbyVM>
 			m_VersionText.text = value;
 		}));
 		AddDisposable(m_VersionText.SetHint(UIStrings.Instance.NetLobbyTexts.CoopVerTooltip));
+		SetUserTypesDropdowns();
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	private void SetUserTypesDropdowns()
+	{
+		bool flag = base.ViewModel.JoinableUserTypesDropdownVM != null;
+		m_JoinableUserTypesDropdown.gameObject.SetActive(flag);
+		if (flag)
+		{
+			m_JoinableUserTypesLabel.text = UIStrings.Instance.NetLobbyTexts.JoinableUserTypesLabel;
+			m_JoinableUserTypesDropdown.Bind(base.ViewModel.JoinableUserTypesDropdownVM);
+			m_JoinableUserTypesDropdown.SetIndex((int)base.ViewModel.CurrentJoinableUserType.Value);
+			AddDisposable(m_JoinableUserTypesDropdown.Index.Subscribe(base.ViewModel.SetJoinableUserType));
+		}
+		bool flag2 = base.ViewModel.InvitableUserTypesDropdownVM != null;
+		m_InvitableUserTypesDropdown.gameObject.SetActive(flag2);
+		if (flag2)
+		{
+			m_InvitableUserTypesLabel.text = UIStrings.Instance.NetLobbyTexts.InvitableUserTypesLabel;
+			m_InvitableUserTypesDropdown.Bind(base.ViewModel.InvitableUserTypesDropdownVM);
+			m_InvitableUserTypesDropdown.SetIndex((int)base.ViewModel.CurrentInvitableUserType.Value);
+			AddDisposable(m_InvitableUserTypesDropdown.Index.Subscribe(base.ViewModel.SetInvitableUserType));
+		}
 	}
 }

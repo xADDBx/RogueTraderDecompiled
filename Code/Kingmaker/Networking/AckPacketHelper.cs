@@ -16,22 +16,24 @@ public static class AckPacketHelper
 		return (SendBytesBuffer: SendBytesBuffer, Length: 8);
 	}
 
-	public static bool CheckAck(PhotonActorNumber player, int uniqueNumber, int currentOffset, ReadOnlySpan<byte> bytes)
+	public static bool TryGetOffset(PhotonActorNumber player, int uniqueNumber, ReadOnlySpan<byte> bytes, out int currentOffset)
 	{
+		currentOffset = -1;
 		if (bytes.Length != 8)
 		{
-			PFLog.Net.Error($"[CheckAck] unexpected packet size! {bytes.Length}/{8}, {player}, N={uniqueNumber}");
+			PFLog.Net.Error($"[TryGetOffset] unexpected packet size! {bytes.Length}/{8}, {player}, N={uniqueNumber}");
 			return false;
 		}
-		if (BinaryPrimitives.ReadInt32BigEndian(bytes) != uniqueNumber)
+		int num = BinaryPrimitives.ReadInt32BigEndian(bytes);
+		if (num != uniqueNumber)
 		{
-			PFLog.Net.Error($"[CheckAck] unexpected unique number! {bytes.Length}/{8}, N={uniqueNumber}");
+			PFLog.Net.Error($"[TryGetOffset] unexpected unique number! received={num}, N={uniqueNumber}");
 			return false;
 		}
-		int num = BinaryPrimitives.ReadInt32BigEndian(bytes.Slice(4));
-		if (currentOffset != num)
+		currentOffset = BinaryPrimitives.ReadInt32BigEndian(bytes.Slice(4));
+		if (currentOffset < 0)
 		{
-			PFLog.Net.Error($"[CheckAck] unexpected offset! Player #{player} offset={num}/{currentOffset}, N={uniqueNumber}");
+			PFLog.Net.Error($"[TryGetOffset] unexpected offset! Player #{player} offset={currentOffset}, N={uniqueNumber}");
 			return false;
 		}
 		return true;

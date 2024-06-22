@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.AreaLogic.Etudes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.DLC;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
@@ -65,9 +65,9 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 
 	public ActionList StartGameActions;
 
-	[SerializeField]
 	[Header("State")]
-	private BlueprintDlcRewardCampaignReference m_CampaignDlc;
+	[SerializeField]
+	private BlueprintCampaignReference m_Campaign;
 
 	[SerializeField]
 	private BlueprintUnitReference m_PlayerShip;
@@ -102,6 +102,10 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 
 	[DependenciesFilter]
 	[ValidateNoNullEntries]
+	public List<BlueprintDialogReference> DialogsSeen = new List<BlueprintDialogReference>();
+
+	[DependenciesFilter]
+	[ValidateNoNullEntries]
 	public List<BlueprintAnswerReference> AnswersSelected = new List<BlueprintAnswerReference>();
 
 	public bool RevealGlobalmap;
@@ -115,7 +119,7 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 	[NonSerialized]
 	public object DependenciesInfo;
 
-	public BlueprintDlcRewardCampaign CampaignDlc => m_CampaignDlc;
+	public BlueprintCampaign Campaign => m_Campaign?.Get() ?? BlueprintRoot.Instance.NewGameSettings.MainCampaign;
 
 	public BlueprintArea Area
 	{
@@ -161,11 +165,7 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 
 	public virtual void SetupState()
 	{
-		Game.Instance.Player.StartPreset = this;
-		if (CampaignDlc != null)
-		{
-			Game.Instance.Player.StartPreset = CampaignDlc.Campaign.StartGamePreset;
-		}
+		Game.Instance.Player.StartPreset = Campaign?.StartGamePreset ?? this;
 		if (m_OverrideGameDifficulty?.Preset != null)
 		{
 			SettingsController.Instance.DifficultyPresetsController.SetDifficultyPreset(m_OverrideGameDifficulty?.Preset, confirm: true);
@@ -216,17 +216,21 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 		{
 			Game.Instance.Player.Dialog.ShownCues.Add(item8.Get());
 		}
-		foreach (BlueprintAnswerReference item9 in AnswersSelected.EmptyIfNull().NotNull())
+		foreach (BlueprintDialogReference item9 in DialogsSeen.EmptyIfNull().NotNull())
 		{
-			Game.Instance.Player.Dialog.SelectedAnswers.Add(item9.Get());
+			Game.Instance.Player.Dialog.ShownDialogs.Add(item9.Get());
+		}
+		foreach (BlueprintAnswerReference item10 in AnswersSelected.EmptyIfNull().NotNull())
+		{
+			Game.Instance.Player.Dialog.SelectedAnswers.Add(item10.Get());
 		}
 		foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
 		{
 			allCharacter.Progression.AdvanceExperienceTo(PartyXp, log: false);
 		}
-		foreach (ItemEntity item10 in Game.Instance.Player.Inventory)
+		foreach (ItemEntity item11 in Game.Instance.Player.Inventory)
 		{
-			item10.Identify();
+			item11.Identify();
 		}
 		if (OverrideStartingStarSystemArea != null)
 		{

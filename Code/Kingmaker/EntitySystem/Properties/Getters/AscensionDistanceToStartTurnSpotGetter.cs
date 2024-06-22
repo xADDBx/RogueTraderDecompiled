@@ -19,8 +19,8 @@ public class AscensionDistanceToStartTurnSpotGetter : MechanicEntityPropertyGett
 		return base.CurrentEntity.DistanceToInCells(optional.StartTurnPosition);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Distance to the start turn";
+		return "Distance from " + FormulaTargetScope.Current + " to starting position this turn";
 	}
 }

@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.AI.Blueprints;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic;
@@ -10,6 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.Spawners;
 
+[KnowledgeDatabaseID("e44ca9c3dcc2419e9b1c73e49e829db1")]
 public class SpawnerSelectBrain : EntityPartComponent<SpawnerSelectBrain.Part>
 {
 	[Serializable]

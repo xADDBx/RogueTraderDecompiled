@@ -4,7 +4,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.QA;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints;
 using Kingmaker.Utility.Attributes;
@@ -73,14 +72,14 @@ public class PlayerTopClassIs : Condition
 		{
 			if (CharacterClassGroup == null)
 			{
-				PFLog.Default.ErrorWithReport(this, "Character class group is not set.");
+				Element.LogError(this, "Character class group is not set.");
 				return false;
 			}
 			return list.Any((BlueprintCharacterClass _characterClass1) => CharacterClassGroup.CharacterClasses.Any((BlueprintCharacterClass _characterClass2) => _characterClass1 == _characterClass2));
 		}
 		if (CharacterClass == null)
 		{
-			PFLog.Default.ErrorWithReport(this, "Character class is not set.");
+			Element.LogError(this, "Character class is not set.");
 			return false;
 		}
 		return list.Any((BlueprintCharacterClass _characterClass) => _characterClass == CharacterClass);

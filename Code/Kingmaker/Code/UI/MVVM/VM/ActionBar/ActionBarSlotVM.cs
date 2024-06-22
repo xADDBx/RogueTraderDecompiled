@@ -19,9 +19,11 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
+using Owlcat.Runtime.UniRx;
 using Photon.Realtime;
 using UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar;
 
@@ -46,6 +48,8 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	public readonly ReactiveProperty<bool> IsCasting = new ReactiveProperty<bool>();
 
 	public readonly ReactiveProperty<bool> IsPossibleActive = new ReactiveProperty<bool>();
+
+	public readonly ReactiveProperty<bool> IsPossibleWithoutNetRole = new ReactiveProperty<bool>();
 
 	public readonly ReactiveProperty<bool> IsFake = new ReactiveProperty<bool>();
 
@@ -87,11 +91,19 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	private bool m_TargetSelectionStarted;
 
-	public readonly ReactiveCommand<bool> CoopPingActionBarSlot = new ReactiveCommand<bool>();
+	public readonly ReactiveCommand<(NetPlayer player, bool show)> CoopPingActionBarSlot = new ReactiveCommand<(NetPlayer, bool)>();
+
+	public readonly ReactiveProperty<bool> IsSelectionBusy = new ReactiveProperty<bool>();
 
 	public readonly bool IsInCharScreen;
 
 	public readonly BoolReactiveProperty MoveAbilityMode;
+
+	public readonly WeaponSlotType WeaponSlotType = WeaponSlotType.None;
+
+	public readonly ReactiveCommand UpdateDragAndDropState = new ReactiveCommand();
+
+	private Sprite m_OriginIcon;
 
 	public MechanicActionBarSlot MechanicActionBarSlot { get; private set; }
 
@@ -127,11 +139,12 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		}
 	}
 
-	public ActionBarSlotVM(MechanicActionBarSlot abs, int index = -1, bool isInCharScreen = false, BoolReactiveProperty moveMode = null)
+	public ActionBarSlotVM(MechanicActionBarSlot abs, int index = -1, bool isInCharScreen = false, BoolReactiveProperty moveMode = null, WeaponSlotType weaponSlotType = WeaponSlotType.None)
 	{
 		Index = index;
 		IsInCharScreen = isInCharScreen;
 		MoveAbilityMode = moveMode;
+		WeaponSlotType = weaponSlotType;
 		AddDisposable(EventBus.Subscribe(this));
 		SetMechanicSlot(abs);
 	}
@@ -185,6 +198,7 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			Weapon = mechanicActionBarSlotAbility?.Ability?.SourceItem as ItemEntityWeapon;
 			MaxWeaponAbilityAmmo = (IsReload.Value ? UIUtilityItem.GetMaxAbilityAmmo(Weapon) : 0);
 			UpdateResources();
+			DelayedInvoker.InvokeInTime(UpdateResources, 0.5f);
 		}
 	}
 
@@ -202,6 +216,7 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			AmmoCost.Value = MechanicActionBarSlot.AmmoCost();
 			IsCasting.Value = MechanicActionBarSlot.IsCasting();
 			IsPossibleActive.Value = MechanicActionBarSlot.IsPossibleActive;
+			IsPossibleWithoutNetRole.Value = MechanicActionBarSlot.IsPossibleActiveWithoutNetRole;
 			ActionPointCost.Value = MechanicActionBarSlot.ActionPointCost();
 			HasAvailableConvert.Value = m_Conversion.Any((AbilityData abilityData) => abilityData.IsAvailable);
 			if (AbilityData != null)
@@ -219,7 +234,7 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		{
 			if (!string.IsNullOrWhiteSpace(MechanicActionBarSlot.KeyName))
 			{
-				PhotonManager.Ping.PingActionBarAbility(MechanicActionBarSlot.KeyName, MechanicActionBarSlot.Unit, Index);
+				PhotonManager.Ping.PingActionBarAbility(MechanicActionBarSlot.KeyName, MechanicActionBarSlot.Unit, Index, WeaponSlotType);
 			}
 		}))
 		{
@@ -295,15 +310,37 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public void OnShowConvertRequest()
 	{
+		HandleConvertRequest(CreateConvertSlot);
+		MechanicActionBarSlotSpontaneusConvertedSpell CreateConvertSlot(AbilityData data)
+		{
+			return new MechanicActionBarSlotSpontaneusConvertedSpell
+			{
+				Spell = data,
+				Unit = MechanicActionBarSlot.Unit
+			};
+		}
+	}
+
+	public void OnShowVariantsConvertRequest(MechanicActionBarShipWeaponSlot variantsShipWeaponSlot)
+	{
+		HandleConvertRequest(CreateArsenalSlot);
+		MechanicActionBarArsenalSlot CreateArsenalSlot(AbilityData data)
+		{
+			return new MechanicActionBarArsenalSlot(this, variantsShipWeaponSlot.WeaponSlot, CloseConvert)
+			{
+				Spell = data,
+				Unit = variantsShipWeaponSlot.Unit
+			};
+		}
+	}
+
+	private void HandleConvertRequest(Func<AbilityData, MechanicActionBarSlotSpontaneusConvertedSpell> createSlot)
+	{
 		if (ConvertedVm.Value == null || ConvertedVm.Value.IsDisposed)
 		{
 			if (m_Conversion.Count != 0)
 			{
-				ConvertedVm.Value = new ActionBarConvertedVM(m_Conversion.Select((AbilityData abilityData) => new MechanicActionBarSlotSpontaneusConvertedSpell
-				{
-					Spell = abilityData,
-					Unit = MechanicActionBarSlot.Unit
-				}).ToList(), CloseConvert);
+				ConvertedVm.Value = new ActionBarConvertedVM(m_Conversion.Select(createSlot).ToList(), CloseConvert);
 				Tooltip.Value = null;
 			}
 		}
@@ -430,22 +467,24 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		});
 	}
 
-	public void HandlePingActionBarAbility(NetPlayer player, string keyName, Entity characterEntityRef, int slotIndex)
+	public void HandlePingActionBarAbility(NetPlayer player, string keyName, Entity characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
 	{
-		if (!string.IsNullOrWhiteSpace(keyName) && characterEntityRef == MechanicActionBarSlot.Unit && slotIndex == Index)
+		if (!string.IsNullOrWhiteSpace(keyName) && characterEntityRef == MechanicActionBarSlot.Unit && slotIndex == Index && WeaponSlotType == weaponSlotType)
 		{
-			CoopPingActionBarSlot.Execute(keyName == MechanicActionBarSlot.KeyName);
+			CoopPingActionBarSlot.Execute((player, keyName == MechanicActionBarSlot.KeyName));
 		}
 	}
 
 	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
 	{
 		IsPossibleActive.Value = MechanicActionBarSlot.IsPossibleActive;
+		IsPossibleWithoutNetRole.Value = MechanicActionBarSlot.IsPossibleActiveWithoutNetRole;
 	}
 
 	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
 	{
 		IsPossibleActive.Value = MechanicActionBarSlot.IsPossibleActive;
+		IsPossibleWithoutNetRole.Value = MechanicActionBarSlot.IsPossibleActiveWithoutNetRole;
 	}
 
 	public void HandlePlayerChanged()
@@ -463,5 +502,22 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	public void HandleRoleSet(string entityId)
 	{
 		IsPossibleActive.Value = MechanicActionBarSlot.IsPossibleActive;
+		IsPossibleWithoutNetRole.Value = MechanicActionBarSlot.IsPossibleActiveWithoutNetRole;
+		UpdateDragAndDropState.Execute();
+	}
+
+	public void OverrideIcon(Sprite icon)
+	{
+		if (icon == null)
+		{
+			Icon.Value = m_OriginIcon;
+			m_OriginIcon = null;
+			return;
+		}
+		if ((object)m_OriginIcon == null)
+		{
+			m_OriginIcon = Icon.Value;
+		}
+		Icon.Value = icon;
 	}
 }

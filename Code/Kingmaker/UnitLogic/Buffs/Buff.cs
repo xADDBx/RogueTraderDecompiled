@@ -555,6 +555,11 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		m_DurationInRounds = duration.Rounds?.Value ?? 0;
 	}
 
+	public void SetDuration(int durationInRounds)
+	{
+		m_DurationInRounds = durationInRounds;
+	}
+
 	public void Prolong(Rounds? rounds)
 	{
 		if (IsPermanent)

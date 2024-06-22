@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.VM.Space;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
@@ -24,16 +25,10 @@ public class ShipStatsPCView : ViewBase<ShipStatsVM>
 	private TextMeshProUGUI m_Speed;
 
 	[SerializeField]
-	private TextMeshProUGUI m_SpeedText;
-
-	[SerializeField]
 	protected OwlcatMultiButton m_InertiaBlock;
 
 	[SerializeField]
 	private TextMeshProUGUI m_Inertia;
-
-	[SerializeField]
-	private TextMeshProUGUI m_InertiaText;
 
 	[SerializeField]
 	protected MonoBehaviour TooltipPlace;
@@ -46,10 +41,24 @@ public class ShipStatsPCView : ViewBase<ShipStatsVM>
 
 	protected TooltipTemplateGlossary m_InertiaTooltip;
 
+	[Header("Parts Labels")]
+	public bool HasPartsLabels;
+
+	[ConditionalShow("HasPartsLabels")]
+	[SerializeField]
+	private TextMeshProUGUI m_SpeedText;
+
+	[ConditionalShow("HasPartsLabels")]
+	[SerializeField]
+	private TextMeshProUGUI m_InertiaText;
+
 	protected override void BindViewImplementation()
 	{
-		m_SpeedText.text = UIStrings.Instance.CharacterSheet.Speed;
-		m_InertiaText.text = UIStrings.Instance.ShipCustomization.Inertia;
+		if (HasPartsLabels)
+		{
+			m_SpeedText.text = UIStrings.Instance.CharacterSheet.Speed;
+			m_InertiaText.text = UIStrings.Instance.ShipCustomization.Inertia;
+		}
 		AddDisposable(base.ViewModel.Speed.Subscribe(delegate(string shipSpeed)
 		{
 			m_Speed.text = shipSpeed;

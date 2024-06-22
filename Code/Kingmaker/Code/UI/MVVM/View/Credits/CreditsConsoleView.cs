@@ -119,11 +119,12 @@ public class CreditsConsoleView : CreditsBaseView
 		{
 			OnFind();
 			ActivateDeactivateInputField(state: false);
-		}, 8), UIStrings.Instance.CommonTexts.Search));
+		}, 8, base.ViewModel.InputFieldHasAnySymbol), UIStrings.Instance.CommonTexts.Search));
+		string label = UIStrings.Instance.Credits.EnterSearchNameHere.Text.TrimEnd('.');
 		AddDisposable(m_ConsoleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
 			ActivateDeactivateInputField(!m_InputFieldIsFocused.Value);
-		}, 10, m_InputFieldIsFocused.Not().ToReactiveProperty(), InputActionEventType.ButtonJustReleased), UIStrings.Instance.Credits.EnterSearchNameHere));
+		}, 10, InputActionEventType.ButtonJustReleased), label));
 		DelayedInvoker.InvokeInFrames(delegate
 		{
 			m_PlayRolesHint.transform.SetAsFirstSibling();
@@ -142,19 +143,6 @@ public class CreditsConsoleView : CreditsBaseView
 			m_ConsoleInputField.Abort();
 		}
 		m_InputFieldIsFocused.Value = state;
-	}
-
-	private void ChangeTab(bool direction)
-	{
-		if (direction)
-		{
-			m_MenuSelector.OnNext();
-		}
-		else
-		{
-			m_MenuSelector.OnPrev();
-		}
-		m_SelectorView.ChangeTab(base.ViewModel.SelectedMenuIndex);
 	}
 
 	private void RefreshPlayRolesLabel(bool state)

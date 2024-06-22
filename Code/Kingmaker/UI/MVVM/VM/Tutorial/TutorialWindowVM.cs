@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Encyclopedia;
+using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Settings;
 using Kingmaker.Tutorial;
 using Kingmaker.UI.Common;
@@ -11,7 +13,7 @@ using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.Tutorial;
 
-public abstract class TutorialWindowVM : VMBase
+public abstract class TutorialWindowVM : VMBase, IGameModeHandler, ISubscriber
 {
 	public readonly TutorialData Data;
 
@@ -46,10 +48,12 @@ public abstract class TutorialWindowVM : VMBase
 		Data = data;
 		m_CallbackHide = callbackHide;
 		EncyclopediaLinkExist.Value = data.Blueprint.EncyclopediaReference.Get() != null;
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DisposeImplementation()
 	{
+		Hide();
 	}
 
 	public void BanTutor()
@@ -83,5 +87,17 @@ public abstract class TutorialWindowVM : VMBase
 	{
 		TemporarilyHide();
 		UIUtility.EntityLinkActions.ShowEncyclopediaPage(EncyclopediaReference);
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+		if (!(gameMode != GameModeType.GameOver))
+		{
+			Hide();
+		}
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
 	}
 }

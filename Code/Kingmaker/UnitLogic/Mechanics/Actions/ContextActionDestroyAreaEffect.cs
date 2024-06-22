@@ -22,7 +22,7 @@ public class ContextActionDestroyAreaEffect : ContextAction
 		return "Destroy " + text + " ";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (AreaEffectEntity areaEffect in Game.Instance.State.AreaEffects)
 		{

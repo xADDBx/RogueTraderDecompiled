@@ -14,7 +14,6 @@ public abstract class CareerPathSelectionTabsCommonView : ViewBase<CareerPathVM>
 	public enum SelectionTab
 	{
 		CareerPathDescription,
-		Summary,
 		FeatureDescription,
 		FeatureSelection
 	}
@@ -77,7 +76,7 @@ public abstract class CareerPathSelectionTabsCommonView : ViewBase<CareerPathVM>
 		});
 	}
 
-	protected virtual SelectionTab GetActiveTab(IRankEntrySelectItem currentItem)
+	private SelectionTab GetActiveTab(IRankEntrySelectItem currentItem)
 	{
 		if (!(currentItem is RankEntryFeatureItemVM))
 		{
@@ -85,7 +84,7 @@ public abstract class CareerPathSelectionTabsCommonView : ViewBase<CareerPathVM>
 			{
 				return SelectionTab.FeatureSelection;
 			}
-			return base.ViewModel.CanCommit.Value ? SelectionTab.Summary : SelectionTab.CareerPathDescription;
+			return SelectionTab.CareerPathDescription;
 		}
 		return SelectionTab.FeatureDescription;
 	}

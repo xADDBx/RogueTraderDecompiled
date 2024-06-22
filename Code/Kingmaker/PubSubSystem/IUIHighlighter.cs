@@ -7,7 +7,7 @@ public interface IUIHighlighter : ISubscriber
 {
 	RectTransform RectTransform { get; }
 
-	void StartHighlight(string key, ref IUIHighlighter highlighter);
+	void StartHighlight(string key);
 
 	void StopHighlight(string key);
 

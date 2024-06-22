@@ -24,7 +24,7 @@ public class AddResourcesToPlanet : GameAction
 		return "Add resources to planet";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		StarSystemObjectEntity starSystemObjectEntity = Game.Instance.State.StarSystemObjects.FirstOrDefault((StarSystemObjectEntity sso) => sso.Blueprint == StarSystemObject.Get());
 		if (starSystemObjectEntity != null)

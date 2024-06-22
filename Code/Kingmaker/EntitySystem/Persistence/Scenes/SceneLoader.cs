@@ -11,6 +11,7 @@ using Kingmaker.Blueprints.Area;
 using Kingmaker.Code.UI.Legacy.BugReportDrawing;
 using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Controllers;
+using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -1857,7 +1858,7 @@ public class SceneLoader
 		PFLog.System.Log("Returning to main menu");
 		if (PhotonManager.Instance != null)
 		{
-			PhotonManager.Instance.StopPlaying();
+			PhotonManager.Instance.StopPlaying("LoadMainMenuCoroutine");
 		}
 		RootUIContext rootUiContext = Game.Instance.RootUiContext;
 		if (rootUiContext != null)

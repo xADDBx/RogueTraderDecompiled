@@ -22,7 +22,7 @@ public class IsOverpenetrationGetter : MechanicEntityPropertyGetter, PropertyCon
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Check attack is overpenetration";
 	}

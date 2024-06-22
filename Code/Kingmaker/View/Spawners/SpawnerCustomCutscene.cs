@@ -1,5 +1,6 @@
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
 using Kingmaker.ElementsSystem.ContextData;
@@ -16,6 +17,7 @@ namespace Kingmaker.View.Spawners;
 
 [RequireComponent(typeof(UnitSpawnerBase))]
 [DisallowMultipleComponent]
+[KnowledgeDatabaseID("d6f2645cc07c4b578a5163423b9ffee3")]
 public class SpawnerCustomCutscene : EntityPartComponent<SpawnerCustomCutscene.Part>
 {
 	public class Part : ViewBasedPart, IUnitInitializer, IAreaActivationHandler, ISubscriber, IHashable

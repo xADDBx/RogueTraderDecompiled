@@ -25,12 +25,12 @@ public class QAModeExceptionReporterHelper
 		{
 			s_Instance = new QAModeExceptionReporterHelper();
 			QAModeExceptionEvents instance = QAModeExceptionEvents.Instance;
-			instance.ShowErrorEvent = (Action<string, Exception, UnityEngine.Object>)Delegate.Combine(instance.ShowErrorEvent, new Action<string, Exception, UnityEngine.Object>(s_Instance.ShowErrorEvent));
+			instance.ShowErrorEvent = (Action<string, Exception, UnityEngine.Object, bool>)Delegate.Combine(instance.ShowErrorEvent, new Action<string, Exception, UnityEngine.Object, bool>(s_Instance.ShowErrorEvent));
 		}
 	}
 
-	private void ShowErrorEvent(string message, Exception ex, UnityEngine.Object ctx)
+	private void ShowErrorEvent(string message, Exception ex, UnityEngine.Object ctx, bool addMessageToReport)
 	{
-		QAModeExceptionReporter.MaybeShowError(message, ex, ctx);
+		QAModeExceptionReporter.MaybeShowError(message, ex, ctx, addMessageToReport);
 	}
 }

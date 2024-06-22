@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
+using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.UI.Selection.UnitMark.Parts;
@@ -10,6 +12,10 @@ public class ShipDecalData : MonoBehaviour
 	public ShipDecalMeshData[] ShipDecals;
 
 	public ShipDecalSize Size;
+
+	public List<MeshRenderer> PingChangeColorRenderers;
+
+	public List<Material> PingChangeColorMaterials;
 
 	private bool m_ShieldsInitialized;
 
@@ -96,6 +102,17 @@ public class ShipDecalData : MonoBehaviour
 		for (int i = 0; i < shipDecals.Length; i++)
 		{
 			shipDecals[i].SetSelected(isSelected);
+		}
+	}
+
+	public void SetCoopColorPingMaterial(int index)
+	{
+		if (PingChangeColorRenderers != null && PingChangeColorRenderers.Any() && PingChangeColorMaterials != null && PingChangeColorMaterials.Any())
+		{
+			PingChangeColorRenderers.ForEach(delegate(MeshRenderer p)
+			{
+				p.material = PingChangeColorMaterials[index];
+			});
 		}
 	}
 }

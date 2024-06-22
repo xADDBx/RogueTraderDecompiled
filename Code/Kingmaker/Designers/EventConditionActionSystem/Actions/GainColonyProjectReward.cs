@@ -24,7 +24,7 @@ public class GainColonyProjectReward : GameAction
 		return "Gain project " + Project.Name + " reward despite its status";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (ColoniesState.ColonyData colony2 in Game.Instance.Player.ColoniesState.Colonies)
 		{

@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using JetBrains.Annotations;
 using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.ResourceLinks;
 using Kingmaker.ResourceManagement;
@@ -19,9 +21,15 @@ using UnityEngine;
 
 public class CustomPortraitsManager
 {
+	private const string PortraitIdFileName = "id";
+
+	public static readonly string InvalidPortraitId = 0.ToString("D4");
+
 	private static CustomPortraitsManager s_Instance;
 
 	private static string s_CurrentPortraitFolderPath;
+
+	private readonly Dictionary<string, Guid> m_IdGuidMapping = new Dictionary<string, Guid>();
 
 	public static CustomPortraitsManager Instance => s_Instance ?? (s_Instance = new CustomPortraitsManager());
 
@@ -41,6 +49,17 @@ public class CustomPortraitsManager
 		return s_CurrentPortraitFolderPath;
 	}
 
+	public string GetPortraitPath(string id, PortraitType type)
+	{
+		return type switch
+		{
+			PortraitType.SmallPortrait => GetSmallPortraitPath(id), 
+			PortraitType.HalfLengthPortrait => GetMediumPortraitPath(id), 
+			PortraitType.FullLengthPortrait => GetBigPortraitPath(id), 
+			_ => throw new ArgumentOutOfRangeException("type", type, null), 
+		};
+	}
+
 	public string GetSmallPortraitPath(string id)
 	{
 		return Path.Combine(GetPortraitFolderPath(id), BlueprintRoot.Instance.CharGenRoot.PortraitSmallName + BlueprintRoot.Instance.CharGenRoot.PortraitsFormat);
@@ -54,6 +73,15 @@ public class CustomPortraitsManager
 	public string GetBigPortraitPath(string id)
 	{
 		return Path.Combine(GetPortraitFolderPath(id), BlueprintRoot.Instance.CharGenRoot.PortraitBigName + BlueprintRoot.Instance.CharGenRoot.PortraitsFormat);
+	}
+
+	public bool HasPortraits([NotNull] string id)
+	{
+		if (Directory.Exists(GetPortraitFolderPath(id)) && File.Exists(GetSmallPortraitPath(id)) && File.Exists(GetMediumPortraitPath(id)))
+		{
+			return File.Exists(GetBigPortraitPath(id));
+		}
+		return false;
 	}
 
 	public bool EnsureCustomPortraits(string id)
@@ -179,16 +207,7 @@ public class CustomPortraitsManager
 			select new DirectoryInfo(p).Name).ToArray();
 	}
 
-	public void DeletePortraitFolder(string id)
-	{
-		string path = Path.Combine(PortraitsRootFolderPath, id);
-		if (Directory.Exists(path))
-		{
-			Directory.Delete(path, recursive: true);
-		}
-	}
-
-	public PortraitData CreateNew()
+	public PortraitData CreateNew(bool fillDefaultPortraits = true)
 	{
 		string[] existingCustomPortraitIds = GetExistingCustomPortraitIds();
 		int num = 1;
@@ -198,8 +217,11 @@ public class CustomPortraitsManager
 		}
 		PortraitData portraitData = new PortraitData(num.ToString("D4"));
 		EnsureDirectory(portraitData.CustomId, createNewIfNotExists: true);
-		EnsureCustomPortraits(portraitData.CustomId);
-		portraitData.EnsureImages();
+		if (fillDefaultPortraits)
+		{
+			EnsureCustomPortraits(portraitData.CustomId);
+			portraitData.EnsureImages();
+		}
 		return portraitData;
 	}
 
@@ -258,6 +280,67 @@ public class CustomPortraitsManager
 				Storage.Unload(item);
 			}
 		}
+	}
+
+	public void UpdateGuid(string portraitId)
+	{
+		SetGuid(portraitId, Guid.NewGuid());
+	}
+
+	public void SetGuid(string portraitId, Guid newGuid)
+	{
+		m_IdGuidMapping[portraitId] = newGuid;
+		File.WriteAllText(Path.Combine(GetPortraitFolderPath(portraitId), "id"), newGuid.ToString());
+	}
+
+	public Guid GetOrCreatePortraitGuid(string portraitId)
+	{
+		if (m_IdGuidMapping.TryGetValue(portraitId, out var value))
+		{
+			return value;
+		}
+		string path = Path.Combine(GetPortraitFolderPath(portraitId), "id");
+		if (File.Exists(path) && Guid.TryParse(File.ReadAllText(path), out var result))
+		{
+			m_IdGuidMapping[portraitId] = result;
+			return result;
+		}
+		value = Guid.NewGuid();
+		SetGuid(portraitId, value);
+		return value;
+	}
+
+	public bool TryGetPortraitId(Guid guid, out string id)
+	{
+		foreach (KeyValuePair<string, Guid> item in m_IdGuidMapping)
+		{
+			if (item.Value == guid)
+			{
+				id = item.Key;
+				return true;
+			}
+		}
+		id = InvalidPortraitId;
+		return false;
+	}
+
+	public void FillAllPortraitsGuid()
+	{
+		if (Directory.Exists(PortraitsRootFolderPath))
+		{
+			string[] directories = Directory.GetDirectories(PortraitsRootFolderPath);
+			for (int i = 0; i < directories.Length; i++)
+			{
+				string name = new DirectoryInfo(directories[i]).Name;
+				Guid orCreatePortraitGuid = GetOrCreatePortraitGuid(name);
+				m_IdGuidMapping[name] = orCreatePortraitGuid;
+			}
+		}
+	}
+
+	public void CheatClearGuidMapping()
+	{
+		m_IdGuidMapping.Clear();
 	}
 
 	private IEnumerator LoadPortraitCoroutine(Action<PortraitData> callback)

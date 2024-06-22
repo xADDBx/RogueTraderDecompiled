@@ -12,7 +12,7 @@ public class FactionReputationLevelGetter : UnitPropertyGetter
 {
 	public FactionType Faction;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Get Reputation level with chosen Faction";
 	}

@@ -33,7 +33,7 @@ public class CheckInterruptGetter : MechanicEntityPropertyGetter, PropertyContex
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!CheckSourceOfInterrupt)
 		{

@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Pointer;
 
-public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelectionUIHandler, IInteractionHighlightUIHandler
+public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelectionUIHandler, IInteractionHighlightUIHandler, IPartyCharacterHoverHandler
 {
 	private MapObjectView m_MapObjectView;
 
@@ -33,6 +33,10 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 	private bool m_Locked;
 
 	private bool m_OnGui;
+
+	private bool m_PortraitHover;
+
+	private BaseUnitEntity m_PortraitHoveredUnit;
 
 	private CompositeDisposable m_Disposable;
 
@@ -395,15 +399,23 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		InteractionHighlightController instance = InteractionHighlightController.Instance;
 		if (instance == null || !instance.IsHighlighting)
 		{
-			PointerController clickEventsController = Game.Instance.ClickEventsController;
-			TargetWrapper targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(clickEventsController.PointerOn, clickEventsController.WorldPosition);
+			TargetWrapper targetForDesiredPosition;
+			if (!m_PortraitHover)
+			{
+				PointerController clickEventsController = Game.Instance.ClickEventsController;
+				targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(clickEventsController.PointerOn, clickEventsController.WorldPosition);
+			}
+			else
+			{
+				targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(m_PortraitHoveredUnit.View.gameObject, m_PortraitHoveredUnit.View.transform.position);
+			}
 			if (CheckTarget(SelectedAbility, targetForDesiredPosition))
 			{
 				SetAbilityCursor();
 			}
 			else
 			{
-				SetCursor(CursorType.CastRestricted);
+				SetCursor(CursorType.CastRestricted, force: true);
 			}
 		}
 	}
@@ -433,17 +445,40 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 
 	private void OnGuiChanged(bool newValue)
 	{
+		bool flag;
 		if (newValue)
+		{
+			CursorType? cursorType = CurrentCursor.Or(null)?.CurrentType;
+			if (cursorType.HasValue)
+			{
+				CursorType valueOrDefault = cursorType.GetValueOrDefault();
+				if ((uint)(valueOrDefault - 14) <= 1u)
+				{
+					flag = true;
+					goto IL_0047;
+				}
+			}
+			flag = false;
+			goto IL_0047;
+		}
+		m_OnGui = false;
+		ClearCursor();
+		goto IL_006f;
+		IL_0047:
+		if (flag)
 		{
 			SetCursor(CursorType.Default);
 			ClearComponents();
-			m_OnGui = true;
 		}
-		else
-		{
-			m_OnGui = false;
-			ClearCursor();
-		}
+		m_OnGui = true;
+		goto IL_006f;
+		IL_006f:
 		CurrentCursor.Or(null)?.OnGuiChanged(m_OnGui);
+	}
+
+	public void HandlePartyCharacterHover(BaseUnitEntity unit, bool hover)
+	{
+		m_PortraitHover = hover;
+		m_PortraitHoveredUnit = unit;
 	}
 }

@@ -30,7 +30,7 @@ public class SwitchInteraction : GameAction
 		return $"{arg} interactions in {MapObject}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (InteractionPart interaction in MapObject.GetValue().Interactions)
 		{

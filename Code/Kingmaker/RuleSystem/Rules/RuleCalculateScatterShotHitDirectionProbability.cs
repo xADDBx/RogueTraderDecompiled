@@ -29,6 +29,8 @@ public class RuleCalculateScatterShotHitDirectionProbability : RulebookEvent
 
 	public int ResultScatterFar { get; private set; }
 
+	public int ResultMainLineNear => ResultMainLine + ResultScatterNear;
+
 	private int EffectiveBS { get; set; }
 
 	public RuleCalculateScatterShotHitDirectionProbability([NotNull] MechanicEntity initiator, AbilityData ability, int shotIndex)

@@ -31,9 +31,9 @@ public static class GameCommandQueueCherGenExtensions
 		gameCommandQueue.CharGenCommand(new CharGenChangePhaseGameCommand(phaseType));
 	}
 
-	public static void CharGenClose([NotNull] this GameCommandQueue gameCommandQueue, bool withComplete)
+	public static void CharGenClose([NotNull] this GameCommandQueue gameCommandQueue, bool withComplete, bool syncPortrait)
 	{
-		gameCommandQueue.CharGenCommand(new CharGenCloseGameCommand(withComplete));
+		gameCommandQueue.CharGenCommand(new CharGenCloseGameCommand(withComplete, syncPortrait));
 	}
 
 	public static void CharGenSelectItem([NotNull] this GameCommandQueue gameCommandQueue, FeatureGroup featureGroup, BlueprintFeature feature)
@@ -74,6 +74,11 @@ public static class GameCommandQueueCherGenExtensions
 	public static void CharGenSetEquipmentColor([NotNull] this GameCommandQueue gameCommandQueue, int primaryIndex, int secondaryIndex)
 	{
 		gameCommandQueue.CharGenCommand(new CharGenSetEquipmentColorGameCommand(primaryIndex, secondaryIndex));
+	}
+
+	public static void CharGenSwitchCloth([NotNull] this GameCommandQueue gameCommandQueue, bool showCloth)
+	{
+		gameCommandQueue.CharGenCommand(new CharGenShowClothGameCommand(showCloth));
 	}
 
 	public static void CharGenChangeAppearancePage([NotNull] this GameCommandQueue gameCommandQueue, CharGenAppearancePageType pageType)
@@ -179,7 +184,7 @@ public static class GameCommandQueueCherGenExtensions
 			}, 1);
 			return;
 		}
-		if ((bool)ContextData<GameCommandContext>.Current || (bool)ContextData<GameCommandContext>.Current)
+		if ((bool)ContextData<GameCommandContext>.Current || (bool)ContextData<UnitCommandContext>.Current)
 		{
 			if (GameCommandPlayer.IsCommandExecution(gameCommand.GetType()))
 			{

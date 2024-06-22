@@ -1,8 +1,10 @@
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.NameAndPortrait.HitPoints;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
 using Kingmaker.UI.TMPExtention.ScrambledTextMeshPro;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using UniRx;
@@ -40,7 +42,7 @@ public class CharInfoNameAndPortraitPCView : CharInfoComponentWithLevelUpView<Ch
 	public override void Initialize()
 	{
 		base.Initialize();
-		m_HitPointsView?.Initialize();
+		m_HitPointsView.Or(null)?.Initialize();
 		m_Portrait.gameObject.SetActive(value: false);
 	}
 
@@ -66,6 +68,8 @@ public class CharInfoNameAndPortraitPCView : CharInfoComponentWithLevelUpView<Ch
 			m_NextButton.SetInteractable(count > 1);
 			m_PrevButton.SetInteractable(count > 1);
 		}));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.PrevCharacter.name, base.ViewModel.SelectPrevCharacter));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.NextCharacter.name, base.ViewModel.SelectNextCharacter));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -109,7 +113,7 @@ public class CharInfoNameAndPortraitPCView : CharInfoComponentWithLevelUpView<Ch
 
 	private void SetHP()
 	{
-		m_HitPointsView?.Bind(base.ViewModel.HitPoints);
+		m_HitPointsView.Or(null)?.Bind(base.ViewModel.HitPoints);
 	}
 
 	protected override void OnShow()

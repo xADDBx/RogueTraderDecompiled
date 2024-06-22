@@ -156,7 +156,11 @@ public class StarshipView : MonoBehaviour, IEntitySubscriber, IUnitEquipmentHand
 								{
 									if (!(blueprint is BlueprintItemWarpDrives blueprintItemWarpDrives))
 									{
-										if (blueprint is BlueprintStarshipWeapon weaponBP)
+										if (!(blueprint is BlueprintStarshipWeapon weaponBP))
+										{
+											_ = blueprint is BlueprintItemArsenal;
+										}
+										else
 										{
 											EquipWeapon(weaponBP, isEquip);
 										}

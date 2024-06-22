@@ -12,7 +12,7 @@ public class ContextActionSetApToZero : ContextAction
 		return "Set all action points to zero";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		(base.Target.Entity?.GetCombatStateOptional())?.SpendActionPointsAll(yellow: true, blue: true);
 	}

@@ -11,10 +11,12 @@ using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameModes;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic.Abilities;
@@ -27,11 +29,12 @@ using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
+using Photon.Realtime;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler
+public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler
 {
 	public readonly SurfaceActionBarPartConsumablesVM Consumables;
 
@@ -60,6 +63,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	private bool m_TargetSelectionStarted;
 
 	public readonly ReactiveProperty<ActionBarSlotVM> QuickAccessSlot = new ReactiveProperty<ActionBarSlotVM>();
+
+	public readonly BoolReactiveProperty IsNotControllableCharacter = new BoolReactiveProperty();
+
+	public readonly StringReactiveProperty ControllablePlayerNickname = new StringReactiveProperty();
 
 	private bool m_SlotsUpdateQueued;
 
@@ -102,6 +109,7 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 				Consumables.SetUnit(CurrentUnit);
 				Weapons.SetUnit(CurrentUnit);
 				Abilities.SetUnit(CurrentUnit);
+				CheckAnotherPlayerTurn();
 			}
 		}
 	}
@@ -130,7 +138,6 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		m_SlotsUpdateQueued = true;
 		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
 		{
-			m_SlotsUpdateQueued = false;
 			Action<IList<ActionBarSlotVM>> action = delegate(IList<ActionBarSlotVM> slots)
 			{
 				foreach (ActionBarSlotVM slot in slots)
@@ -150,7 +157,23 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 			action(Abilities.Slots);
 			action(SurfaceMomentumVM.DesperateMeasureSlots);
 			action(SurfaceMomentumVM.HeroicActSlots);
+			CheckAnotherPlayerTurn();
+			m_SlotsUpdateQueued = false;
 		});
+	}
+
+	private void CheckAnotherPlayerTurn()
+	{
+		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+		if (!UINetUtility.InLobbyAndPlaying || currentUnit == null)
+		{
+			IsNotControllableCharacter.Value = false;
+			return;
+		}
+		bool isPlayerFaction = currentUnit.IsPlayerFaction;
+		bool flag = ((Game.Instance.CurrentMode == GameModeType.SpaceCombat) ? (!UINetUtility.IsControlMainCharacter()) : (!currentUnit.IsMyNetRole()));
+		ControllablePlayerNickname.Value = (PhotonManager.Player.GetNickName(currentUnit.GetPlayer(), out var nickName) ? nickName : string.Empty);
+		IsNotControllableCharacter.Value = isPlayerFaction && flag;
 	}
 
 	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
@@ -320,6 +343,11 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		UpdateSlots();
 	}
 
+	public void HandleCooldownReset()
+	{
+		UpdateSlots();
+	}
+
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
 	{
 		HighlightedUnit.Value = (isHover ? unitEntityView : null);
@@ -360,22 +388,51 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	public void HandleEndPreparationTurn()
 	{
 		OnUnitChanged();
+		UpdateSlots();
 	}
 
 	public void HandleRoleSet(string entityId)
 	{
+		CheckAnotherPlayerTurn();
 		if (!(CurrentUnit?.UniqueId != entityId))
 		{
 			UpdateSlots();
 		}
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		UpdateSlots();
 	}
 
 	public void HandleUnitEndInterruptTurn()
+	{
+		UpdateSlots();
+	}
+
+	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
+	{
+		CheckAnotherPlayerTurn();
+	}
+
+	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
+	{
+		CheckAnotherPlayerTurn();
+	}
+
+	public void HandlePlayerChanged()
+	{
+	}
+
+	public void HandleLastPlayerLeftLobby()
+	{
+	}
+
+	public void HandleRoomOwnerChanged()
+	{
+	}
+
+	public void HandleUnitStartTurn(bool isTurnBased)
 	{
 		UpdateSlots();
 	}

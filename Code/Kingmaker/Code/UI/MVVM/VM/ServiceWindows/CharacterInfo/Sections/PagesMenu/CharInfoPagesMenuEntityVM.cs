@@ -21,11 +21,11 @@ public class CharInfoPagesMenuEntityVM : SelectionGroupEntityVM
 		AddDisposable(unit?.Subscribe(UpdateState));
 	}
 
-	protected override void DoSelectMe()
+	protected override void DisposeImplementation()
 	{
 	}
 
-	protected override void DisposeImplementation()
+	protected override void DoSelectMe()
 	{
 	}
 

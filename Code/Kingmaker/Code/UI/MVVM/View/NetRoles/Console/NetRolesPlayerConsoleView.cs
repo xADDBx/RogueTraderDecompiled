@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Kingmaker.UI.MVVM.View.NetRoles.Base;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
+using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.NetRoles.Console;
@@ -27,5 +30,10 @@ public class NetRolesPlayerConsoleView : NetRolesPlayerBaseView
 		{
 			m_Characters[i].Bind((base.ViewModel.Players.Count > i) ? base.ViewModel.Players[i] : null);
 		}
+	}
+
+	public void AddGamerTagInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, Action hideGamersTagModeAction)
+	{
+		m_GamerTagAndName.AddGamerTagInput(inputLayer, hintsWidget, hideGamersTagModeAction);
 	}
 }

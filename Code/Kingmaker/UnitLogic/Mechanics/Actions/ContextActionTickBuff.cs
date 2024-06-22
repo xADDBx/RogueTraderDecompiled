@@ -27,7 +27,7 @@ public class ContextActionTickBuff : ContextAction
 		return "Perform all actions each round from AddFactContextActions and TurnBasedModeEventsTrigger";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		foreach (Buff item in base.Target.Entity?.Buffs.Enumerable.Where((Buff p) => p.Blueprint == TargetBuff))
 		{

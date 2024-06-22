@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -421,11 +422,12 @@ public static class RenderingUtils
 		return false;
 	}
 
-	public static bool IsBakedShadowMaskLight(Light light)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsBakedShadowMaskLight(in LightBakingOutput bakingOutput)
 	{
-		if (light.bakingOutput.lightmapBakeType == LightmapBakeType.Mixed && light.bakingOutput.mixedLightingMode == MixedLightingMode.Shadowmask)
+		if (bakingOutput.lightmapBakeType == LightmapBakeType.Mixed && bakingOutput.mixedLightingMode == MixedLightingMode.Shadowmask)
 		{
-			return light.bakingOutput.occlusionMaskChannel != -1;
+			return bakingOutput.occlusionMaskChannel != -1;
 		}
 		return false;
 	}

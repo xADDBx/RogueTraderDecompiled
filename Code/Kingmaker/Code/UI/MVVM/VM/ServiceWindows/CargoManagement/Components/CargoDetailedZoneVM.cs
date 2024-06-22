@@ -10,13 +10,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
 
 public class CargoDetailedZoneVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICargoSelectHandler, ISubscriber
 {
-	public ReactiveCollection<CargoSlotVM> CargoSlots;
+	public readonly ReactiveCollection<CargoSlotVM> CargoSlots;
 
-	public ItemsFilterSearchVM ItemsFilterSearchVM;
+	public readonly ItemsFilterSearchVM ItemsFilterSearchVM;
 
-	public ReactiveCommand<CargoSlotVM> SlotToScroll = new ReactiveCommand<CargoSlotVM>();
+	public readonly ReactiveCommand<CargoSlotVM> SlotToScroll = new ReactiveCommand<CargoSlotVM>();
 
-	public ReactiveProperty<string> SearchString { get; } = new ReactiveProperty<string>();
+	private ReactiveProperty<string> SearchString { get; } = new ReactiveProperty<string>();
 
 
 	public CargoDetailedZoneVM(ReactiveCollection<CargoSlotVM> cargoSlots)
@@ -31,7 +31,7 @@ public class CargoDetailedZoneVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	{
 	}
 
-	public void SetSearch(string text)
+	private void SetSearch(string text)
 	{
 		ItemsFilterSearchVM.SetSearchString(text);
 		foreach (CargoSlotVM cargoSlot in CargoSlots)
@@ -40,7 +40,7 @@ public class CargoDetailedZoneVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		}
 	}
 
-	public void HandleScrollToElement(CargoSlotVM slot)
+	private void HandleScrollToElement(CargoSlotVM slot)
 	{
 		SlotToScroll?.Execute(slot);
 	}

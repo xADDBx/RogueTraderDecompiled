@@ -6,7 +6,9 @@ using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.InputSystems;
+using Owlcat.Runtime.UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.Networking;
 
@@ -83,16 +85,16 @@ public sealed class PingNetManager
 		});
 	}
 
-	public void PingActionBarAbility(string keyName, Entity characterEntityRef, int slotIndex)
+	public void PingActionBarAbility(string keyName, Entity characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
 	{
-		Game.Instance.GameCommandQueue.PingActionBarAbility(keyName, characterEntityRef, slotIndex);
+		Game.Instance.GameCommandQueue.PingActionBarAbility(keyName, characterEntityRef, slotIndex, weaponSlotType);
 	}
 
-	public void PingActionBarAbilityLocally(NetPlayer player, string keyName, EntityRef characterEntityRef, int slotIndex)
+	public void PingActionBarAbilityLocally(NetPlayer player, string keyName, EntityRef characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
 	{
 		EventBus.RaiseEvent(delegate(INetPingActionBarAbility h)
 		{
-			h.HandlePingActionBarAbility(player, keyName, characterEntityRef, slotIndex);
+			h.HandlePingActionBarAbility(player, keyName, characterEntityRef, slotIndex, weaponSlotType);
 		});
 	}
 
@@ -101,8 +103,14 @@ public sealed class PingNetManager
 		if (PhotonManager.NetGame.CurrentState == NetGame.State.Playing && ((Game.Instance.IsControllerMouse && KeyboardAccess.IsAltHold()) || (Game.Instance.IsControllerGamepad && Input.GetKey(KeyCode.JoystickButton4))))
 		{
 			pingAction();
+			PhotonManager.Lobby.PingPressed = true;
+			DelayedInvoker.InvokeInTime(delegate
+			{
+				PhotonManager.Lobby.PingPressed = false;
+			}, 0.5f);
 			return true;
 		}
+		PhotonManager.Lobby.PingPressed = false;
 		return false;
 	}
 }

@@ -22,6 +22,11 @@ public class PlayerStashConsoleView : PlayerStashView
 		return m_LootView.SlotsGroup.GetNavigation();
 	}
 
+	public IConsoleEntity GetCurrentFocus()
+	{
+		return GetNavigation().DeepestNestedFocus;
+	}
+
 	private void ForceScrollToObj(IConsoleEntity entity)
 	{
 		if (entity != null)

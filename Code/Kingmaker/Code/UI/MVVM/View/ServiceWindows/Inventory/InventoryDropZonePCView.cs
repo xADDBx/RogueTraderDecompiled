@@ -1,7 +1,9 @@
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.MVVM;
+using TMPro;
 using UniRx;
 using UnityEngine;
 
@@ -14,6 +16,9 @@ public class InventoryDropZonePCView : ViewBase<InventoryDropZoneVM>
 
 	[SerializeField]
 	private FadeAnimator m_FadeAnimator;
+
+	[SerializeField]
+	private TextMeshProUGUI m_UnsupportedItemText;
 
 	protected override void BindViewImplementation()
 	{
@@ -29,6 +34,7 @@ public class InventoryDropZonePCView : ViewBase<InventoryDropZoneVM>
 				m_DropZone.SetActiveLayer((!value) ? 1 : 0);
 			}));
 		}
+		m_UnsupportedItemText.text = UIStrings.Instance.LootWindow.DropZoneUnsupportedItem;
 	}
 
 	protected override void DestroyViewImplementation()

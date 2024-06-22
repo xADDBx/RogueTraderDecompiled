@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Space.Base;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -6,6 +7,7 @@ using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Space.PC;
 
@@ -24,6 +26,16 @@ public class ZoneExitPCView : ZoneExitBaseView
 
 	[SerializeField]
 	private OwlcatButton m_ShipCustomizationButton;
+
+	[Header("Button Effects")]
+	[SerializeField]
+	private OwlcatMultiButton m_ExitToWarpBackgroundEffects;
+
+	[SerializeField]
+	private RectTransform m_HoverCircle;
+
+	[SerializeField]
+	private Image m_HoverLights;
 
 	protected override void BindViewImplementation()
 	{
@@ -58,9 +70,24 @@ public class ZoneExitPCView : ZoneExitBaseView
 			m_ShipCustomizationButton.SetInteractable(value && base.ViewModel.HasAccessStarshipInventory.Value);
 			m_ExitToWarpButton.SetInteractable(value);
 		}));
+		m_ExitToWarpBackgroundEffects.SetActiveLayer(base.ViewModel.PushedWarpJumpBefore ? "Default" : "ActiveExit");
+		if (!base.ViewModel.PushedWarpJumpBefore)
+		{
+			AddDisposable(m_ExitToWarpButton.OnHoverAsObservable().Subscribe(NeedScanHoverEffect));
+		}
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	private void NeedScanHoverEffect(bool state)
+	{
+		if (!base.ViewModel.PushedWarpJumpBefore)
+		{
+			float num = (state ? 1f : 0.7f);
+			m_HoverCircle.DOScale(new Vector2(num, num), 0.3f);
+			m_HoverLights.DOFade(state ? 1f : 0f, 0.3f);
+		}
 	}
 }

@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.View.Mechadendrites;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
 
@@ -21,7 +22,7 @@ public class AbilityCasterMainWeaponHasAmmo : BlueprintComponent, IAbilityCaster
 	public bool IsCasterRestrictionPassed(MechanicEntity caster)
 	{
 		ItemEntityWeapon itemEntityWeapon = ((!SecondWeapon) ? caster.GetFirstWeapon() : caster.GetSecondWeapon());
-		if (itemEntityWeapon == null)
+		if (itemEntityWeapon == null || (SecondWeapon && caster.GetSecondWeapon().Blueprint.IsTwoHanded && caster.Parts.GetOptional<UnitPartMechadendrites>() == null))
 		{
 			return false;
 		}

@@ -10,6 +10,7 @@ using Kingmaker.Sound.Base;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.Utility.GameConst;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
@@ -181,9 +182,8 @@ public class SplashScreenController : MonoBehaviour
 		BaseCanvas.alpha = 0f;
 		if (FirstLaunchSettingsVM.HasShown)
 		{
-			SoundBanksManager.UnloadBank("SplashScreen");
+			SoundBanksManager.UnloadBank(UIConsts.SplashScreens);
 		}
-		SoundState.Instance.ResetState(SoundStateType.MainMenu);
 		MainMenuLoadingScreen.Instance.StartLoading(delegate
 		{
 			GameStarter.Instance.StartGame();

@@ -42,8 +42,13 @@ public class FactListGetter : PropertyGetter, PropertyContextAccessor.ITargetByT
 		});
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Count all facts from the list";
+		string text = string.Join(',', m_Facts.Select((BlueprintUnitFactReference f) => f.NameSafe()));
+		if (text.Length > 80)
+		{
+			text = text.Substring(0, 80) + "...";
+		}
+		return "Count all facts from the list [" + text + "]";
 	}
 }

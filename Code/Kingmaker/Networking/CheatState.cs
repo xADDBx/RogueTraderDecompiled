@@ -33,4 +33,6 @@ public class CheatState
 			PFLog.Net.Log("[CheatState.AllowRunWithOnePlayer] " + ((!value) ? "not" : "") + " allowed");
 		}
 	}
+
+	public bool PauseDataSending { get; set; }
 }

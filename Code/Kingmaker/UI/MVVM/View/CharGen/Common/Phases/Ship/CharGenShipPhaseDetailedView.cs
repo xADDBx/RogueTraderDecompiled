@@ -70,7 +70,7 @@ public class CharGenShipPhaseDetailedView : CharGenPhaseDetailedView<CharGenShip
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.UI.Exception(ex);
 		}
 	}
 }

@@ -133,7 +133,7 @@ public class LightCookieManager : IDisposable
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
-				return m_AllocationCache.Count();
+				return m_AllocationCache.Count;
 			}
 		}
 
@@ -414,7 +414,7 @@ public class LightCookieManager : IDisposable
 
 		private unsafe void PopulateLightCookieData()
 		{
-			Statistics* unsafePtr = (Statistics*)statisticsReference.GetUnsafePtr();
+			Statistics* unsafePtr = statisticsReference.GetUnsafePtr();
 			unsafePtr->LightsCount = lightDescriptorArray.Length;
 			lightCookieDataList.ResizeUninitialized(lightDescriptorArray.Length);
 			int num = 0;
@@ -436,8 +436,8 @@ public class LightCookieManager : IDisposable
 
 		private unsafe void LayoutAtlas()
 		{
-			Statistics* unsafePtr = (Statistics*)statisticsReference.GetUnsafePtr();
-			int* unsafePtr2 = (int*)lastSizeDivisorReference.GetUnsafePtr();
+			Statistics* unsafePtr = statisticsReference.GetUnsafePtr();
+			int* unsafePtr2 = lastSizeDivisorReference.GetUnsafePtr();
 			if (atlas.AllocationCount > 0 && AllocateCookieTextures(*unsafePtr2, checkCache: true))
 			{
 				return;
@@ -468,7 +468,7 @@ public class LightCookieManager : IDisposable
 
 		public unsafe void TransferLightCookieIndices()
 		{
-			LightCookieData* ptr = (LightCookieData*)lightCookieDataList.GetUnsafeReadOnlyPtr();
+			LightCookieData* ptr = lightCookieDataList.GetUnsafeReadOnlyPtr();
 			LightDescriptor* unsafePtr = (LightDescriptor*)lightDescriptorArray.GetUnsafePtr();
 			int num = 0;
 			int length = lightCookieDataList.Length;
@@ -483,8 +483,7 @@ public class LightCookieManager : IDisposable
 		private unsafe void PopulateConstantBufferLightCookieMatrices()
 		{
 			int length = lightCookieDataList.Length;
-			LightCookieConstantBuffer* unsafePtr = (LightCookieConstantBuffer*)cookieConstantBufferReference.GetUnsafePtr();
-			float4x4* ptr = (float4x4*)unsafePtr->_LightCookieMatrices;
+			float4x4* ptr = (float4x4*)cookieConstantBufferReference.GetUnsafePtr()->_LightCookieMatrices;
 			int num = 0;
 			while (num < length)
 			{
@@ -509,8 +508,7 @@ public class LightCookieManager : IDisposable
 
 		private unsafe void PopulateConstantBufferLightCookieUvRects()
 		{
-			LightCookieConstantBuffer* unsafePtr = (LightCookieConstantBuffer*)cookieConstantBufferReference.GetUnsafePtr();
-			UnsafeUtility.MemCpy(unsafePtr->_LightCookieUVRects, lightCookieScaleOffsetList.GetUnsafeReadOnlyPtr(), lightCookieScaleOffsetList.Length * sizeof(float4));
+			UnsafeUtility.MemCpy(cookieConstantBufferReference.GetUnsafePtr()->_LightCookieUVRects, lightCookieScaleOffsetList.GetUnsafeReadOnlyPtr(), lightCookieScaleOffsetList.Length * sizeof(float4));
 		}
 
 		private float4x4 GetLightUvTransformationMatrix(in LightDescriptor lightDescriptor)
@@ -715,7 +713,7 @@ public class LightCookieManager : IDisposable
 	private unsafe void PopulateCookieTextureList(ref NativeArray<LightDescriptor> lightDescriptors)
 	{
 		m_CookieTextures.Clear();
-		BlitCommandData* ptr = (BlitCommandData*)m_BlitCommandDataList.GetUnsafePtr();
+		BlitCommandData* ptr = m_BlitCommandDataList.GetUnsafePtr();
 		int num = 0;
 		int length = m_BlitCommandDataList.Length;
 		while (num < length)

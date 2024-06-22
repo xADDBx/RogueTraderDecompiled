@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("763882f4485a41b8a232778836d8dbc4")]
 public class FirstWeaponSoundSizeGetter : MechanicEntityPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Current weapon sound size";
+		return "Current weapon of " + FormulaTargetScope.Current + " sound size";
 	}
 
 	protected override int GetBaseValue()

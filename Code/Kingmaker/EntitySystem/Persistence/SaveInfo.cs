@@ -7,6 +7,7 @@ using System.Threading;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Quests;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.DLC;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Localization;
@@ -118,6 +119,9 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	private readonly ReaderWriterLockSlim m_FileAccessLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 	[JsonProperty]
+	private BlueprintCampaignReference m_CampaignReference;
+
+	[JsonProperty]
 	private List<BlueprintDlcRewardReference> m_DlcRewards;
 
 	[JsonProperty]
@@ -146,9 +150,6 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 
 	[JsonProperty]
 	public string GameId { get; set; }
-
-	[JsonProperty]
-	public BlueprintCampaignReference DLCCampaign { get; set; }
 
 	public IEnumerable<BlueprintDlcReward> DlcRewards
 	{
@@ -187,6 +188,9 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	public List<PortraitForSave> PartyPortraits { get; set; }
 
 	[JsonProperty]
+	public DateTime? GameStartSystemTime { get; set; }
+
+	[JsonProperty]
 	public DateTime SystemSaveTime { get; set; }
 
 	[JsonProperty]
@@ -205,6 +209,23 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	[JsonProperty]
 	public int CompatibilityVersion { get; set; } = 1;
 
+
+	[MemoryPackIgnore]
+	public BlueprintCampaign Campaign
+	{
+		get
+		{
+			if (m_CampaignReference != null && !m_CampaignReference.IsEmpty())
+			{
+				return m_CampaignReference.Get();
+			}
+			return null;
+		}
+		set
+		{
+			m_CampaignReference = value?.ToReference<BlueprintCampaignReference>();
+		}
+	}
 
 	[MemoryPackIgnore]
 	public string FolderName { get; set; }
@@ -279,7 +300,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				List<IBlueprintDlc> list2 = new List<IBlueprintDlc>();
 				foreach (IBlueprintDlc dlc in dlcReward.Dlcs)
 				{
-					if (!dlc.IsAvailable && !list.Any((List<IBlueprintDlc> r) => r.Contains(dlc)))
+					if (!dlc.IsActive && !list.Any((List<IBlueprintDlc> r) => r.Contains(dlc)))
 					{
 						list2.Add(dlc);
 					}
@@ -350,6 +371,10 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		{
 			MemoryPackFormatterProvider.Register(new ListFormatter<PortraitForSave>());
 		}
+		if (!MemoryPackFormatterProvider.IsRegistered<DateTime?>())
+		{
+			MemoryPackFormatterProvider.Register(new NullableFormatter<DateTime>());
+		}
 		if (!MemoryPackFormatterProvider.IsRegistered<List<int>>())
 		{
 			MemoryPackFormatterProvider.Register(new ListFormatter<int>());
@@ -378,25 +403,24 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		int value3 = value.PlayerCharacterRank;
 		writer.WriteUnmanaged(in value3);
 		writer.WriteString(value.GameId);
-		BlueprintCampaignReference value4 = value.DLCCampaign;
-		writer.WritePackable(in value4);
-		IEnumerable<BlueprintDlcReward> value5 = value.DlcRewards;
-		writer.WriteValue(in value5);
-		SaveType value6 = value.Type;
-		bool value7 = value.IsAutoLevelupSave;
+		IEnumerable<BlueprintDlcReward> value4 = value.DlcRewards;
+		writer.WriteValue(in value4);
+		SaveType value5 = value.Type;
+		bool value6 = value.IsAutoLevelupSave;
 		value3 = value.QuickSaveNumber;
-		int value8 = value.LoadedTimes;
-		writer.WriteUnmanaged(in value6, in value7, in value3, in value8);
-		BlueprintArea value9 = value.Area;
+		int value7 = value.LoadedTimes;
+		writer.WriteUnmanaged(in value5, in value6, in value3, in value7);
+		BlueprintArea value8 = value.Area;
+		writer.WriteValue(in value8);
+		BlueprintAreaPart value9 = value.AreaPart;
 		writer.WriteValue(in value9);
-		BlueprintAreaPart value10 = value.AreaPart;
-		writer.WriteValue(in value10);
 		writer.WriteString(value.AreaNameOverride);
 		List<PortraitForSave> source = value.PartyPortraits;
 		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in source));
+		DateTime? value10 = value.GameStartSystemTime;
 		DateTime value11 = value.SystemSaveTime;
 		TimeSpan value12 = value.GameSaveTime;
-		writer.WriteUnmanaged(in value11, in value12);
+		writer.DangerousWriteUnmanaged(in value10, in value11, in value12);
 		writer.WriteString(value.GameSaveTimeText);
 		value12 = value.GameTotalTime;
 		writer.WriteUnmanaged(in value12);
@@ -417,15 +441,15 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		}
 		BlueprintQuest value2;
 		int value3;
-		BlueprintCampaignReference value4;
-		IEnumerable<BlueprintDlcReward> value5;
-		SaveType value6;
-		bool value7;
+		IEnumerable<BlueprintDlcReward> value4;
+		SaveType value5;
+		bool value6;
+		int value7;
 		int value8;
-		int value9;
-		BlueprintArea value10;
-		BlueprintAreaPart value11;
-		List<PortraitForSave> value12;
+		BlueprintArea value9;
+		BlueprintAreaPart value10;
+		List<PortraitForSave> value11;
+		DateTime? value12;
 		DateTime value13;
 		TimeSpan value14;
 		TimeSpan value15;
@@ -450,16 +474,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				playerCharacterName = value.PlayerCharacterName;
 				value3 = value.PlayerCharacterRank;
 				gameId = value.GameId;
-				value4 = value.DLCCampaign;
-				value5 = value.DlcRewards;
-				value6 = value.Type;
-				value7 = value.IsAutoLevelupSave;
-				value8 = value.QuickSaveNumber;
-				value9 = value.LoadedTimes;
-				value10 = value.Area;
-				value11 = value.AreaPart;
+				value4 = value.DlcRewards;
+				value5 = value.Type;
+				value6 = value.IsAutoLevelupSave;
+				value7 = value.QuickSaveNumber;
+				value8 = value.LoadedTimes;
+				value9 = value.Area;
+				value10 = value.AreaPart;
 				areaNameOverride = value.AreaNameOverride;
-				value12 = value.PartyPortraits;
+				value11 = value.PartyPortraits;
+				value12 = value.GameStartSystemTime;
 				value13 = value.SystemSaveTime;
 				value14 = value.GameSaveTime;
 				gameSaveTimeText = value.GameSaveTimeText;
@@ -474,16 +498,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				playerCharacterName = reader.ReadString();
 				reader.ReadUnmanaged<int>(out value3);
 				gameId = reader.ReadString();
-				reader.ReadPackable(ref value4);
-				reader.ReadValue(ref value5);
-				reader.ReadUnmanaged<SaveType>(out value6);
-				reader.ReadUnmanaged<bool>(out value7);
+				reader.ReadValue(ref value4);
+				reader.ReadUnmanaged<SaveType>(out value5);
+				reader.ReadUnmanaged<bool>(out value6);
+				reader.ReadUnmanaged<int>(out value7);
 				reader.ReadUnmanaged<int>(out value8);
-				reader.ReadUnmanaged<int>(out value9);
+				reader.ReadValue(ref value9);
 				reader.ReadValue(ref value10);
-				reader.ReadValue(ref value11);
 				areaNameOverride = reader.ReadString();
-				ListFormatter.DeserializePackable(ref reader, ref value12);
+				ListFormatter.DeserializePackable(ref reader, ref value11);
+				reader.DangerousReadUnmanaged<DateTime?>(out value12);
 				reader.ReadUnmanaged<DateTime>(out value13);
 				reader.ReadUnmanaged<TimeSpan>(out value14);
 				gameSaveTimeText = reader.ReadString();
@@ -491,7 +515,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				reader.ReadValue(ref value16);
 				reader.ReadUnmanaged<int>(out value17);
 				ListFormatter.DeserializePackable(ref reader, ref value18);
-				goto IL_050c;
+				goto IL_050b;
 			}
 			name = reader.ReadString();
 			description = reader.ReadString();
@@ -500,14 +524,13 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			playerCharacterName = reader.ReadString();
 			reader.ReadUnmanaged<int>(out value3);
 			gameId = reader.ReadString();
-			value4 = reader.ReadPackable<BlueprintCampaignReference>();
-			value5 = reader.ReadValue<IEnumerable<BlueprintDlcReward>>();
-			reader.ReadUnmanaged<SaveType, bool, int, int>(out value6, out value7, out value8, out value9);
-			value10 = reader.ReadValue<BlueprintArea>();
-			value11 = reader.ReadValue<BlueprintAreaPart>();
+			value4 = reader.ReadValue<IEnumerable<BlueprintDlcReward>>();
+			reader.ReadUnmanaged<SaveType, bool, int, int>(out value5, out value6, out value7, out value8);
+			value9 = reader.ReadValue<BlueprintArea>();
+			value10 = reader.ReadValue<BlueprintAreaPart>();
 			areaNameOverride = reader.ReadString();
-			value12 = ListFormatter.DeserializePackable<PortraitForSave>(ref reader);
-			reader.ReadUnmanaged<DateTime, TimeSpan>(out value13, out value14);
+			value11 = ListFormatter.DeserializePackable<PortraitForSave>(ref reader);
+			reader.DangerousReadUnmanaged<DateTime?, DateTime, TimeSpan>(out value12, out value13, out value14);
 			gameSaveTimeText = reader.ReadString();
 			reader.ReadUnmanaged<TimeSpan>(out value15);
 			value16 = reader.ReadValue<List<int>>();
@@ -531,14 +554,14 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				value3 = 0;
 				gameId = null;
 				value4 = null;
-				value5 = null;
-				value6 = SaveType.Manual;
-				value7 = false;
+				value5 = SaveType.Manual;
+				value6 = false;
+				value7 = 0;
 				value8 = 0;
-				value9 = 0;
+				value9 = null;
 				value10 = null;
-				value11 = null;
 				areaNameOverride = null;
+				value11 = null;
 				value12 = null;
 				value13 = default(DateTime);
 				value14 = default(TimeSpan);
@@ -557,16 +580,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				playerCharacterName = value.PlayerCharacterName;
 				value3 = value.PlayerCharacterRank;
 				gameId = value.GameId;
-				value4 = value.DLCCampaign;
-				value5 = value.DlcRewards;
-				value6 = value.Type;
-				value7 = value.IsAutoLevelupSave;
-				value8 = value.QuickSaveNumber;
-				value9 = value.LoadedTimes;
-				value10 = value.Area;
-				value11 = value.AreaPart;
+				value4 = value.DlcRewards;
+				value5 = value.Type;
+				value6 = value.IsAutoLevelupSave;
+				value7 = value.QuickSaveNumber;
+				value8 = value.LoadedTimes;
+				value9 = value.Area;
+				value10 = value.AreaPart;
 				areaNameOverride = value.AreaNameOverride;
-				value12 = value.PartyPortraits;
+				value11 = value.PartyPortraits;
+				value12 = value.GameStartSystemTime;
 				value13 = value.SystemSaveTime;
 				value14 = value.GameSaveTime;
 				gameSaveTimeText = value.GameSaveTimeText;
@@ -598,34 +621,34 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 										gameId = reader.ReadString();
 										if (memberCount != 7)
 										{
-											reader.ReadPackable(ref value4);
+											reader.ReadValue(ref value4);
 											if (memberCount != 8)
 											{
-												reader.ReadValue(ref value5);
+												reader.ReadUnmanaged<SaveType>(out value5);
 												if (memberCount != 9)
 												{
-													reader.ReadUnmanaged<SaveType>(out value6);
+													reader.ReadUnmanaged<bool>(out value6);
 													if (memberCount != 10)
 													{
-														reader.ReadUnmanaged<bool>(out value7);
+														reader.ReadUnmanaged<int>(out value7);
 														if (memberCount != 11)
 														{
 															reader.ReadUnmanaged<int>(out value8);
 															if (memberCount != 12)
 															{
-																reader.ReadUnmanaged<int>(out value9);
+																reader.ReadValue(ref value9);
 																if (memberCount != 13)
 																{
 																	reader.ReadValue(ref value10);
 																	if (memberCount != 14)
 																	{
-																		reader.ReadValue(ref value11);
+																		areaNameOverride = reader.ReadString();
 																		if (memberCount != 15)
 																		{
-																			areaNameOverride = reader.ReadString();
+																			ListFormatter.DeserializePackable(ref reader, ref value11);
 																			if (memberCount != 16)
 																			{
-																				ListFormatter.DeserializePackable(ref reader, ref value12);
+																				reader.DangerousReadUnmanaged<DateTime?>(out value12);
 																				if (memberCount != 17)
 																				{
 																					reader.ReadUnmanaged<DateTime>(out value13);
@@ -674,7 +697,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			}
 			if (value != null)
 			{
-				goto IL_050c;
+				goto IL_050b;
 			}
 		}
 		value = new SaveInfo
@@ -686,16 +709,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			PlayerCharacterName = playerCharacterName,
 			PlayerCharacterRank = value3,
 			GameId = gameId,
-			DLCCampaign = value4,
-			DlcRewards = value5,
-			Type = value6,
-			IsAutoLevelupSave = value7,
-			QuickSaveNumber = value8,
-			LoadedTimes = value9,
-			Area = value10,
-			AreaPart = value11,
+			DlcRewards = value4,
+			Type = value5,
+			IsAutoLevelupSave = value6,
+			QuickSaveNumber = value7,
+			LoadedTimes = value8,
+			Area = value9,
+			AreaPart = value10,
 			AreaNameOverride = areaNameOverride,
-			PartyPortraits = value12,
+			PartyPortraits = value11,
+			GameStartSystemTime = value12,
 			SystemSaveTime = value13,
 			GameSaveTime = value14,
 			GameSaveTimeText = gameSaveTimeText,
@@ -705,7 +728,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			StatefulRandomStates = value18
 		};
 		return;
-		IL_050c:
+		IL_050b:
 		value.Name = name;
 		value.Description = description;
 		value.SaveId = saveId;
@@ -713,16 +736,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		value.PlayerCharacterName = playerCharacterName;
 		value.PlayerCharacterRank = value3;
 		value.GameId = gameId;
-		value.DLCCampaign = value4;
-		value.DlcRewards = value5;
-		value.Type = value6;
-		value.IsAutoLevelupSave = value7;
-		value.QuickSaveNumber = value8;
-		value.LoadedTimes = value9;
-		value.Area = value10;
-		value.AreaPart = value11;
+		value.DlcRewards = value4;
+		value.Type = value5;
+		value.IsAutoLevelupSave = value6;
+		value.QuickSaveNumber = value7;
+		value.LoadedTimes = value8;
+		value.Area = value9;
+		value.AreaPart = value10;
 		value.AreaNameOverride = areaNameOverride;
-		value.PartyPortraits = value12;
+		value.PartyPortraits = value11;
+		value.GameStartSystemTime = value12;
 		value.SystemSaveTime = value13;
 		value.GameSaveTime = value14;
 		value.GameSaveTimeText = gameSaveTimeText;

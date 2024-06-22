@@ -43,7 +43,6 @@ public class TooltipTemplateLevelExp : TooltipBaseTemplate
 			list.Add(new TooltipBrickIconStatValue(tooltips.TillNextLevelExperience, $"{num}"));
 		}
 		list.Add(new TooltipBricksGroupEnd());
-		list.Add(new TooltipBrickSpace());
 		list.Add(new TooltipBrickText(m_LevelGlossaryEntry?.GetDescription()));
 		return list;
 	}

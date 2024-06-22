@@ -11,6 +11,7 @@ using Kingmaker.GameCommands;
 using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.MemoryPack.Formatters;
 using Kingmaker.Networking.Settings;
+using Kingmaker.QA.Overlays;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Levelup.Selections;
@@ -51,7 +52,8 @@ public class CommandNetManager
 	public void SendAllCommands(int tickIndex, List<GameCommand> gameCommands, List<UnitCommandParams> unitCommands, List<SynchronizedData> synchronizedData)
 	{
 		ByteArraySlice byteArraySlice = NetMessageSerializer.SerializeToSlice(new UnitCommandMessage(tickIndex, gameCommands, unitCommands, synchronizedData));
-		if (!PhotonManager.Instance.SendMessageToOthers(6, byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count))
+		NetworkingOverlay.AddSentBytes(byteArraySlice.Count);
+		if (!PhotonManager.Instance.SendMessageToOthers(7, byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count))
 		{
 			PFLog.Net.Error("Error when trying to send commands!");
 		}
@@ -60,6 +62,7 @@ public class CommandNetManager
 
 	public void OnCommandsReceived(NetPlayer player, ReadOnlySpan<byte> packet)
 	{
+		NetworkingOverlay.AddReceivedBytes(packet.Length);
 		UnitCommandMessage unitCommandMessage;
 		try
 		{

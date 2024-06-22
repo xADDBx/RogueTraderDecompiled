@@ -15,8 +15,8 @@ public class NotMainTargetGetter : MechanicEntityPropertyGetter, PropertyContext
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "1 if target is not main target";
+		return "1 if " + FormulaTargetScope.Current + " is not main target";
 	}
 }

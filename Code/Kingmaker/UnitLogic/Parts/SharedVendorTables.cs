@@ -1,15 +1,16 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Loot;
+using Kingmaker.DLC;
 using Kingmaker.Items;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace Kingmaker.UnitLogic.Parts;
 
 public class SharedVendorTables : IHashable
 {
-	internal class TableData : IHashable
+	public class TableData : IHashable
 	{
 		[JsonProperty]
 		public BlueprintSharedVendorTable Table;
@@ -33,10 +34,16 @@ public class SharedVendorTables : IHashable
 		public Dictionary<BlueprintItem, int> KnownItems;
 
 		[JsonProperty]
+		public HashSet<VendorLootItem> KnownLootItems = new HashSet<VendorLootItem>(new VendorLootItemEqualityComparer());
+
+		[JsonProperty]
+		public Dictionary<ItemEntity, VendorLootItem> ItemEntityToVendorLootItem = new Dictionary<ItemEntity, VendorLootItem>();
+
+		[JsonProperty]
 		public Dictionary<BlueprintItem, int> ReputationToUnlock = new Dictionary<BlueprintItem, int>();
 
 		[JsonProperty]
-		public Dictionary<BlueprintItem, long> OverrideProfitFactorCosts = new Dictionary<BlueprintItem, long>();
+		public Dictionary<BlueprintItem, int> OverrideProfitFactorCosts = new Dictionary<BlueprintItem, int>();
 
 		public virtual Hash128 GetHash128()
 		{
@@ -77,37 +84,62 @@ public class SharedVendorTables : IHashable
 				}
 				result.Append(ref val4);
 			}
-			Dictionary<BlueprintItem, int> reputationToUnlock = ReputationToUnlock;
-			if (reputationToUnlock != null)
+			HashSet<VendorLootItem> knownLootItems = KnownLootItems;
+			if (knownLootItems != null)
+			{
+				int num = 0;
+				foreach (VendorLootItem item2 in knownLootItems)
+				{
+					num ^= ClassHasher<VendorLootItem>.GetHash128(item2).GetHashCode();
+				}
+				result.Append(num);
+			}
+			Dictionary<ItemEntity, VendorLootItem> itemEntityToVendorLootItem = ItemEntityToVendorLootItem;
+			if (itemEntityToVendorLootItem != null)
 			{
 				int val7 = 0;
-				foreach (KeyValuePair<BlueprintItem, int> item2 in reputationToUnlock)
+				foreach (KeyValuePair<ItemEntity, VendorLootItem> item3 in itemEntityToVendorLootItem)
 				{
 					Hash128 hash2 = default(Hash128);
-					Hash128 val8 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item2.Key);
+					Hash128 val8 = ClassHasher<ItemEntity>.GetHash128(item3.Key);
 					hash2.Append(ref val8);
-					int obj2 = item2.Value;
-					Hash128 val9 = UnmanagedHasher<int>.GetHash128(ref obj2);
+					Hash128 val9 = ClassHasher<VendorLootItem>.GetHash128(item3.Value);
 					hash2.Append(ref val9);
 					val7 ^= hash2.GetHashCode();
 				}
 				result.Append(ref val7);
 			}
-			Dictionary<BlueprintItem, long> overrideProfitFactorCosts = OverrideProfitFactorCosts;
-			if (overrideProfitFactorCosts != null)
+			Dictionary<BlueprintItem, int> reputationToUnlock = ReputationToUnlock;
+			if (reputationToUnlock != null)
 			{
 				int val10 = 0;
-				foreach (KeyValuePair<BlueprintItem, long> item3 in overrideProfitFactorCosts)
+				foreach (KeyValuePair<BlueprintItem, int> item4 in reputationToUnlock)
 				{
 					Hash128 hash3 = default(Hash128);
-					Hash128 val11 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item3.Key);
+					Hash128 val11 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item4.Key);
 					hash3.Append(ref val11);
-					long obj3 = item3.Value;
-					Hash128 val12 = UnmanagedHasher<long>.GetHash128(ref obj3);
+					int obj2 = item4.Value;
+					Hash128 val12 = UnmanagedHasher<int>.GetHash128(ref obj2);
 					hash3.Append(ref val12);
 					val10 ^= hash3.GetHashCode();
 				}
 				result.Append(ref val10);
+			}
+			Dictionary<BlueprintItem, int> overrideProfitFactorCosts = OverrideProfitFactorCosts;
+			if (overrideProfitFactorCosts != null)
+			{
+				int val13 = 0;
+				foreach (KeyValuePair<BlueprintItem, int> item5 in overrideProfitFactorCosts)
+				{
+					Hash128 hash4 = default(Hash128);
+					Hash128 val14 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item5.Key);
+					hash4.Append(ref val14);
+					int obj3 = item5.Value;
+					Hash128 val15 = UnmanagedHasher<int>.GetHash128(ref obj3);
+					hash4.Append(ref val15);
+					val13 ^= hash4.GetHashCode();
+				}
+				result.Append(ref val13);
 			}
 			return result;
 		}
@@ -122,7 +154,7 @@ public class SharedVendorTables : IHashable
 	{
 		foreach (TableData persistentTable in m_PersistentTables)
 		{
-			CalculateCosts(persistentTable.Loot, ref persistentTable.ReputationToUnlock, ref persistentTable.OverrideProfitFactorCosts);
+			TryConvertToVendorLootItem(persistentTable.KnownLootItems, persistentTable.KnownItems, persistentTable.ReputationToUnlock, persistentTable.OverrideProfitFactorCosts);
 		}
 	}
 
@@ -164,7 +196,8 @@ public class SharedVendorTables : IHashable
 	public void AddLoot(BlueprintSharedVendorTable blueprint, BlueprintUnitLoot loot)
 	{
 		ItemsCollection collection = GetCollection(blueprint);
-		foreach (LootEntry item in loot.GenerateItems())
+		List<LootEntry> list = loot.GenerateItems();
+		foreach (LootEntry item in list)
 		{
 			collection.Add(item.Item, item.Count);
 		}
@@ -172,12 +205,13 @@ public class SharedVendorTables : IHashable
 		if (tableData != null)
 		{
 			tableData.Loot.Add(loot);
-			tableData.KnownItems = GetFixedItems(tableData.Loot);
-			CalculateCosts(tableData.Loot, ref tableData.ReputationToUnlock, ref tableData.OverrideProfitFactorCosts);
+			tableData.KnownLootItems = GetFixedItems(tableData.Loot);
+			tableData.Entries.AddRange(list);
+			MakeItemEntityToVendorLootItemPairs(collection.Items, tableData.KnownLootItems, tableData.ItemEntityToVendorLootItem);
 		}
 	}
 
-	private TableData GetTable(BlueprintSharedVendorTable blueprint)
+	public TableData GetTable(BlueprintSharedVendorTable blueprint)
 	{
 		return m_PersistentTables.SingleOrDefault((TableData t) => t.Table == blueprint);
 	}
@@ -205,118 +239,186 @@ public class SharedVendorTables : IHashable
 				};
 				tableData.Loot.Add(blueprint);
 				tableData.Entries.AddRange(blueprint.GenerateItems());
-				tableData.KnownItems = GetFixedItems(tableData.Loot);
+				tableData.KnownLootItems = GetFixedItems(tableData.Loot);
 				m_PersistentTables.Add(tableData);
 			}
-			Dictionary<BlueprintItem, int> fixedItems = GetFixedItems(tableData.Loot);
+			HashSet<VendorLootItem> fixedItems = GetFixedItems(tableData.Loot);
+			if (ShouldFixEntries(tableData.KnownLootItems))
+			{
+				tableData.Entries.Clear();
+				tableData.Entries.AddRange(blueprint.GenerateItems());
+			}
 			List<LootEntry> entries = tableData.Entries;
-			foreach (KeyValuePair<BlueprintItem, int> item in GetLootDifference(tableData.KnownItems, fixedItems))
+			foreach (KeyValuePair<VendorLootItem, int> item in GetLootDifference(tableData.KnownLootItems, fixedItems, entries))
 			{
 				UpdateLootItems(entries, item.Key, item.Value);
 			}
-			tableData.KnownItems = fixedItems;
-			CalculateCosts(tableData.Loot, ref tableData.ReputationToUnlock, ref tableData.OverrideProfitFactorCosts);
-			foreach (LootEntry item2 in entries)
+			TryCleanItemsRemovedFromBp(fixedItems, entries);
+			tableData.KnownLootItems = fixedItems;
+			foreach (LootEntry entry in entries)
 			{
-				if (item2.Item == null)
+				if (entry.Item == null)
 				{
 					LogChannel.Default.Error($"UnitPartVendor.GetTable: entry.Item is null ({blueprint})");
+					continue;
 				}
-				else if (item2.Count > 0)
+				VendorLootItem vendorLootItem = fixedItems.FindOrDefault((VendorLootItem i) => i.Item == entry.Item && i.Count < entry.Count);
+				if (vendorLootItem != null)
 				{
-					value.Add(item2.Item, item2.Count);
+					entry.Count = vendorLootItem.Count;
+				}
+				if (entry.Count > 0)
+				{
+					value.Add(entry.Item, entry.Count, null, noAutoMerge: true);
 				}
 			}
+			MakeItemEntityToVendorLootItemPairs(value.Items, tableData.KnownLootItems, tableData.ItemEntityToVendorLootItem);
 			m_Dictionary[blueprint] = value;
 		}
 		return value;
 	}
 
-	public IReadOnlyDictionary<BlueprintItem, int> GetReputationToUnlock(BlueprintSharedVendorTable blueprint)
+	private static bool ShouldFixEntries(HashSet<VendorLootItem> savedKnownLootItems)
 	{
-		return GetTable(blueprint).ReputationToUnlock;
+		return !savedKnownLootItems.HasItem((VendorLootItem i) => i.Item != null);
 	}
 
-	public IReadOnlyDictionary<BlueprintItem, long> GetOverridePrices(BlueprintSharedVendorTable blueprint)
+	private static void MakeItemEntityToVendorLootItemPairs(ReadonlyList<ItemEntity> items, HashSet<VendorLootItem> vendorLootItems, Dictionary<ItemEntity, VendorLootItem> itemEntityToVendorLootItem)
 	{
-		return GetTable(blueprint).OverrideProfitFactorCosts;
-	}
-
-	public static void CalculateCosts(IReadOnlyCollection<BlueprintUnitLoot> loot, ref Dictionary<BlueprintItem, int> reputationToUnlock, ref Dictionary<BlueprintItem, long> overrideProfitFactorCosts)
-	{
-		reputationToUnlock.Clear();
-		overrideProfitFactorCosts.Clear();
-		if (loot == null)
+		itemEntityToVendorLootItem.Clear();
+		List<VendorLootItem> list = TempList.Get<VendorLootItem>();
+		foreach (ItemEntity item in items)
 		{
-			return;
-		}
-		foreach (BlueprintUnitLoot item2 in loot)
-		{
-			foreach (BlueprintLootComponent component in item2.GetComponents<BlueprintLootComponent>())
+			foreach (VendorLootItem vendorLootItem in vendorLootItems)
 			{
-				foreach (LootItem item3 in component.GetPossibleLoot())
+				if (!list.Contains(vendorLootItem) && vendorLootItem.Item == item.Blueprint && vendorLootItem.Count == item.Count)
 				{
-					BlueprintItem item = item3.Item;
-					if (item != null)
+					itemEntityToVendorLootItem.Add(item, vendorLootItem);
+					list.Add(vendorLootItem);
+					break;
+				}
+			}
+		}
+	}
+
+	public IReadOnlyDictionary<ItemEntity, VendorLootItem> GetItemEntityToVendorLootItemPairs(BlueprintSharedVendorTable blueprint)
+	{
+		return GetTable(blueprint).ItemEntityToVendorLootItem;
+	}
+
+	[NotNull]
+	public static HashSet<VendorLootItem> GetFixedItems(List<BlueprintUnitLoot> loot)
+	{
+		HashSet<VendorLootItem> hashSet = new HashSet<VendorLootItem>();
+		foreach (BlueprintUnitLoot item in loot)
+		{
+			foreach (LootItemsPackFixed component in item.GetComponents<LootItemsPackFixed>())
+			{
+				if (component.DlcCondition)
+				{
+					BlueprintDlcReward blueprintDlcReward = component.DlcReward?.Get();
+					if (blueprintDlcReward != null && !blueprintDlcReward.IsActive)
 					{
-						reputationToUnlock[item] = Math.Max(item2.ReputationPointsToUnlock, component.ReputationPointsToUnlock);
-						if (item3.ProfitFactorCostOverride.HasValue)
-						{
-							overrideProfitFactorCosts[item] = item3.ProfitFactorCostOverride.Value;
-						}
+						continue;
+					}
+				}
+				BlueprintItem blueprint = component.Item.Item;
+				int cost = component.Item.ProfitFactorCostOverride.GetValueOrDefault();
+				if (blueprint != null)
+				{
+					IEnumerable<VendorLootItem> source = hashSet.Where((VendorLootItem i) => i.Item == blueprint && i.ProfitFactorCosts == cost);
+					if (source.Empty())
+					{
+						hashSet.Add(new VendorLootItem(blueprint, component.Count, component.ReputationPointsToUnlock, cost));
+					}
+					else
+					{
+						source.First().UpdateCount(component.Count);
 					}
 				}
 			}
 		}
+		return hashSet;
 	}
 
-	[NotNull]
-	public static Dictionary<BlueprintItem, int> GetFixedItems(List<BlueprintUnitLoot> loot)
+	public static bool TryConvertToVendorLootItem(HashSet<VendorLootItem> vendorItems, Dictionary<BlueprintItem, int> oldKnownItems, Dictionary<BlueprintItem, int> oldReputationToUnlock, Dictionary<BlueprintItem, int> overrideProfitFactorCosts)
 	{
-		Dictionary<BlueprintItem, int> dictionary = new Dictionary<BlueprintItem, int>();
-		foreach (BlueprintUnitLoot item2 in loot)
+		if (oldKnownItems == null || oldKnownItems.Empty())
 		{
-			foreach (LootItemsPackFixed component in item2.GetComponents<LootItemsPackFixed>())
+			return false;
+		}
+		foreach (KeyValuePair<BlueprintItem, int> item in oldKnownItems)
+		{
+			if (!vendorItems.HasItem((VendorLootItem i) => i.Item == item.Key && i.Count == item.Value))
 			{
-				BlueprintItem item = component.Item.Item;
-				if (item != null)
+				oldReputationToUnlock.TryGetValue(item.Key, out var value);
+				overrideProfitFactorCosts.TryGetValue(item.Key, out var value2);
+				VendorLootItem item2 = new VendorLootItem(item.Key, item.Value, value, value2);
+				vendorItems.Add(item2);
+			}
+		}
+		return true;
+	}
+
+	public static Dictionary<VendorLootItem, int> GetLootDifference(HashSet<VendorLootItem> oldKnownItems, HashSet<VendorLootItem> newKnownItems, List<LootEntry> entry)
+	{
+		Dictionary<VendorLootItem, int> dictionary = new Dictionary<VendorLootItem, int>();
+		HashSet<VendorLootItem> hashSet = new HashSet<VendorLootItem>();
+		hashSet.AddRange(newKnownItems);
+		IEnumerable<VendorLootItem> enumerable = oldKnownItems.Where((VendorLootItem i) => i.Item != null);
+		if (enumerable.Empty())
+		{
+			return dictionary;
+		}
+		foreach (VendorLootItem oldItem in enumerable)
+		{
+			if (!hashSet.HasItem((VendorLootItem i) => i.Equals(oldItem)))
+			{
+				hashSet.Add(oldItem);
+			}
+		}
+		foreach (VendorLootItem item in hashSet)
+		{
+			VendorLootItem oldItem = oldKnownItems.FirstOrDefault((VendorLootItem i) => i.Item == item.Item && i.ProfitFactorCosts == item.ProfitFactorCosts && i.ReputationToUnlock == item.ReputationToUnlock);
+			VendorLootItem vendorLootItem = newKnownItems.FirstOrDefault((VendorLootItem i) => i.Item == item.Item && i.ProfitFactorCosts == item.ProfitFactorCosts && i.ReputationToUnlock == item.ReputationToUnlock);
+			if (oldItem == null && vendorLootItem != null)
+			{
+				LootEntry item2 = new LootEntry
 				{
-					int num = dictionary.Get(item, 0);
-					dictionary[item] = num + component.Count;
-				}
+					Item = item.Item,
+					Count = item.Count
+				};
+				entry.Add(item2);
+			}
+			if (oldItem != null && vendorLootItem == null)
+			{
+				entry.Remove((LootEntry i) => i.Item == oldItem.Item);
+			}
+			if (oldItem != null && vendorLootItem != null && vendorLootItem.Count != oldItem.Count)
+			{
+				dictionary[vendorLootItem] = vendorLootItem.Count - oldItem.Count;
 			}
 		}
 		return dictionary;
 	}
 
-	public static Dictionary<BlueprintItem, int> GetLootDifference(Dictionary<BlueprintItem, int> oldKnownItems, Dictionary<BlueprintItem, int> newKnownItems)
+	private static void TryCleanItemsRemovedFromBp(HashSet<VendorLootItem> newKnownItems, List<LootEntry> entry)
 	{
-		HashSet<BlueprintItem> hashSet = new HashSet<BlueprintItem>();
-		if (oldKnownItems != null)
+		List<LootEntry> list = TempList.Get<LootEntry>();
+		foreach (LootEntry lootEntry in entry)
 		{
-			hashSet.AddRange(oldKnownItems.Keys);
-		}
-		if (newKnownItems != null)
-		{
-			hashSet.AddRange(newKnownItems.Keys);
-		}
-		Dictionary<BlueprintItem, int> dictionary = new Dictionary<BlueprintItem, int>();
-		if (oldKnownItems != null && newKnownItems != null)
-		{
-			foreach (BlueprintItem item in hashSet)
+			if (!newKnownItems.HasItem((VendorLootItem i) => i.Item == lootEntry.Item))
 			{
-				int num = oldKnownItems.Get(item, 0);
-				int num2 = newKnownItems.Get(item, 0);
-				if (num != num2)
-				{
-					dictionary[item] = num2 - num;
-				}
+				list.Add(lootEntry);
 			}
 		}
-		return dictionary;
+		foreach (LootEntry item in list)
+		{
+			entry.Remove(item);
+		}
 	}
 
-	public static void UpdateLootItems(List<LootEntry> entries, BlueprintItem item, int difference)
+	public static void UpdateLootItems(List<LootEntry> entries, VendorLootItem item, int difference)
 	{
 		foreach (LootEntry entry in entries)
 		{
@@ -324,7 +426,7 @@ public class SharedVendorTables : IHashable
 			{
 				return;
 			}
-			if (entry.Item == item)
+			if (entry.Item == item.Item)
 			{
 				if (entry.Count + difference >= 0)
 				{
@@ -342,7 +444,7 @@ public class SharedVendorTables : IHashable
 		{
 			LootEntry item2 = new LootEntry
 			{
-				Item = item,
+				Item = item.Item,
 				Count = difference
 			};
 			entries.Add(item2);

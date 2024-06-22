@@ -26,7 +26,7 @@ public class CharInfoAvailableRanksCommonView : ViewBase<CharInfoAvailableRanksV
 	{
 		if (m_TextHelper == null)
 		{
-			m_TextHelper = new AccessibilityTextHelper(m_RanksDesc);
+			m_TextHelper = new AccessibilityTextHelper(m_RanksCount, m_RanksDesc);
 		}
 		AddDisposable(base.ViewModel.NewRanksCount.Subscribe(delegate(int ranks)
 		{

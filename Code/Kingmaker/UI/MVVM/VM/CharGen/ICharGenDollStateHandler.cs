@@ -37,4 +37,6 @@ public interface ICharGenDollStateHandler : ISubscriber
 	void HandleSetPort([NotNull] EquipmentEntityLink equipmentEntityLink, int index, int portNumber);
 
 	void HandleSetEquipmentColor(int primaryIndex, int secondaryIndex);
+
+	void HandleShowCloth(bool showCloth);
 }

@@ -116,6 +116,8 @@ public static class ShaderProps
 
 	public static int _ScaleOffset = Shader.PropertyToID("_ScaleOffset");
 
+	public static int _LocalMapBorderParams = Shader.PropertyToID("_LocalMapBorderParams");
+
 	public static int _BaseMap_ST = Shader.PropertyToID("_BaseMap_ST");
 
 	public static int VIEW_PROJ = Shader.PropertyToID("VIEW_PROJ");

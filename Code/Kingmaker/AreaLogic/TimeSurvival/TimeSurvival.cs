@@ -19,6 +19,8 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Groups;
+using Kingmaker.Utility;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using Kingmaker.View;
@@ -63,6 +65,9 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 	[SerializeField]
 	public List<SpawnData> spawnData;
 
+	public bool UnlimitedTime;
+
+	[HideIf("UnlimitedTime")]
 	public int RoundsToSurvive = 5;
 
 	public int RoundsPerSpawn = 2;
@@ -71,6 +76,8 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 
 	[SerializeField]
 	private BlueprintBuffReference m_StartingBuff;
+
+	public int m_BuffDuration = 1;
 
 	private bool m_FirstUnitTurnInterrupted;
 
@@ -97,7 +104,7 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		if (!savableData.IsEnded)
 		{
 			savableData.RoundsSurvived++;
-			RoundsLeft = RoundsToSurvive - savableData.RoundsSurvived;
+			RoundsLeft = (UnlimitedTime ? 999 : (RoundsToSurvive - savableData.RoundsSurvived));
 			CurrentRound = savableData.RoundsSurvived + 1;
 			PFLog.Default.Log($"TimeSurvival: {CurrentRound} - {savableData.RoundsSurvived} of {RoundsToSurvive}");
 			if (RoundsLeft <= 0)
@@ -127,7 +134,7 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		{
 			if (savableData.RoundsSurvived != 0 && savableData.RoundsSurvived % RoundsPerSpawn == 0)
 			{
-				Vector3 spawnShift = (PlayerPosition - savableData.PreviousPlayerPosition) * 0.75f;
+				Vector3 spawnShift = (SpawnersShouldFollow ? ((PlayerPosition - savableData.PreviousPlayerPosition) * 0.75f) : Vector3.zero);
 				SpawnUnits(spawnShift);
 				InterruptTurnWithNewEnemy();
 			}
@@ -193,16 +200,19 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 			{
 				break;
 			}
-			int index = PFStatefulRandom.SpaceCombat.Range(0, notInterferingSpawners.Count);
-			int index2 = PFStatefulRandom.SpaceCombat.Range(0, unitsList.Count);
-			BlueprintUnit unit = unitsList[index2];
-			Transform viewTransform = notInterferingSpawners[index].ViewTransform;
-			BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(unit, viewTransform.position + spawnShift, viewTransform.rotation, Game.Instance.State.LoadedAreaState.MainState);
-			m_UnitsSpawnedThisRound.Add(baseUnitEntity);
-			if (StartingBuff != null)
+			for (int i = 0; i < item.SpawnAttempts; i++)
 			{
-				BuffDuration duration = new BuffDuration(null, BuffEndCondition.TurnEndOrCombatEnd);
-				baseUnitEntity.Buffs.Add(StartingBuff, duration);
+				int index = PFStatefulRandom.SpaceCombat.Range(0, notInterferingSpawners.Count);
+				int index2 = PFStatefulRandom.SpaceCombat.Range(0, unitsList.Count);
+				BlueprintUnit unit = unitsList[index2];
+				Transform viewTransform = notInterferingSpawners[index].ViewTransform;
+				BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(unit, viewTransform.position + spawnShift, viewTransform.rotation, Game.Instance.State.LoadedAreaState.MainState);
+				m_UnitsSpawnedThisRound.Add(baseUnitEntity);
+				if (StartingBuff != null)
+				{
+					BuffDuration duration = ((m_BuffDuration == 1) ? new BuffDuration(null, BuffEndCondition.TurnEndOrCombatEnd) : new BuffDuration(new Rounds(m_BuffDuration), BuffEndCondition.CombatEnd));
+					baseUnitEntity.Buffs.Add(StartingBuff, duration);
+				}
 			}
 		}
 	}
@@ -211,11 +221,13 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 	{
 		List<EntityViewBase> list = new List<EntityViewBase>();
 		HashSet<GraphNode> hashSet = new HashSet<GraphNode>();
-		using (PathDisposable<ShipPath> pathDisposable = Game.Instance.Player.PlayerShip?.Navigation.FindReachableTiles_Blocking(true))
+		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
+		using (PathDisposable<ShipPath> pathDisposable = playerShip?.Navigation.FindReachableTiles_Blocking(true))
 		{
 			ShipPath path = pathDisposable.Path;
 			hashSet.AddRange(path.Result.Keys);
 		}
+		playerShip?.Navigation.ClearLastPathParameters();
 		NavGraph graph = hashSet.First().Graph;
 		foreach (EntityReference spawner in spawners)
 		{
@@ -281,7 +293,10 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		{
 			combatStateOptional.JoinCombat();
 		}
-		Game.Instance.TurnController.InterruptCurrentTurn(baseUnitEntity, null);
+		Game.Instance.TurnController.InterruptCurrentTurn(baseUnitEntity, null, new InterruptionData
+		{
+			AsExtraTurn = true
+		});
 		EventBus.RaiseEvent((IBaseUnitEntity)baseUnitEntity, (Action<ITimeSurvivalSpawnHandler>)delegate(ITimeSurvivalSpawnHandler h)
 		{
 			h.HandleStarshipSpawnStarted();

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Owlcat.Runtime.Visual.Lighting;
@@ -120,7 +121,7 @@ public class WaaaghLights
 		minMaxZJob.WorldToViewMatrix = m_ViewMatrix;
 		minMaxZJob.LightDescriptors = m_LightDescs;
 		MinMaxZJob jobData = minMaxZJob;
-		m_SetupJobsHandle = jobData.ScheduleParallel(length, 32, default(JobHandle));
+		m_SetupJobsHandle = IJobForExtensions.ScheduleParallel(jobData, length, 32, default(JobHandle));
 		m_SetupJobsHandle = m_LightDescs.SortJob(default(LightDescSorter)).Schedule(m_SetupJobsHandle);
 		m_SetupJobsHandle = renderingData.ShadowData.ShadowManager.ScheduleSetupJobs(ref m_LightDescs, ref renderingData, m_SetupJobsHandle);
 		m_SetupJobsHandle = renderingData.lightCookieManager.ScheduleSetupJobs(ref m_LightDescs, m_SetupJobsHandle);
@@ -132,7 +133,7 @@ public class WaaaghLights
 		zBinningJob.Lights = m_LightDescs;
 		zBinningJob.ZBins = m_ZBins;
 		ZBinningJob jobData2 = zBinningJob;
-		m_SetupJobsHandle = jobData2.ScheduleParallel(64, 1, m_SetupJobsHandle);
+		m_SetupJobsHandle = IJobForExtensions.ScheduleParallel(jobData2, 64, 1, m_SetupJobsHandle);
 	}
 
 	private void InitLightTilesBuffer(ref RenderingData renderingData, TileSize tileSize)
@@ -177,28 +178,34 @@ public class WaaaghLights
 		extractLightDataJob.LightData = m_LightDataRaw;
 		extractLightDataJob.LightVolumeData = m_LightVolumeDataRaw;
 		ExtractLightDataJob jobData = extractLightDataJob;
-		m_SetupJobsHandle = jobData.ScheduleParallel(m_LightCountClamped, 32, default(JobHandle));
+		m_SetupJobsHandle = IJobForExtensions.ScheduleParallel(jobData, m_LightCountClamped, 32, default(JobHandle));
 		m_SetupJobsHandle = m_LightDescs.Dispose(m_SetupJobsHandle);
 		m_SetupJobsHandle.Complete();
 	}
 
 	private bool InitializeLightDescriptors(ref RenderingData renderingData)
 	{
-		ref NativeArray<VisibleLight> visibleLights = ref renderingData.LightData.VisibleLights;
-		int length = visibleLights.Length;
+		Span<VisibleLight> span = renderingData.LightData.VisibleLights.AsSpan();
+		int length = span.Length;
 		bool flag = false;
-		for (int i = 0; i < length; i++)
+		LightDescriptor value;
+		for (int i = 0; i < length; m_LightDescs[i] = value, i++)
 		{
-			LightDescriptor value = default(LightDescriptor);
-			VisibleLight visibleLight = (value.VisibleLight = visibleLights[i]);
+			ref VisibleLight reference = ref span[i];
+			VisibleLight visibleLight = reference;
+			Light light = visibleLight.light;
+			value = default(LightDescriptor);
+			value.VisibleLight = reference;
 			value.LightUnsortedIndex = i;
 			value.ShadowsCanBeCached = false;
 			value.LightLayerMask = 255u;
-			if (visibleLight.light != null)
+			LightBakingOutput bakingOutput;
+			OwlcatAdditionalLightData component;
+			if (light != null)
 			{
-				value.LightID = visibleLight.light.GetInstanceID();
-				visibleLight.light.TryGetComponent<OwlcatAdditionalLightData>(out var component);
-				if (component != null)
+				value.LightID = light.GetInstanceID();
+				bakingOutput = light.bakingOutput;
+				if (light.TryGetComponent<OwlcatAdditionalLightData>(out component))
 				{
 					value.SnapSpecularToInnerRadius = component.SnapSperularToInnerRadius;
 					value.LightFalloffType = component.FalloffType;
@@ -207,14 +214,22 @@ public class WaaaghLights
 					value.VolumetricLighting = component.VolumetricLighting;
 					value.VolumetricShadows = component.VolumetricShadows;
 					value.VolumetricIntensity = component.VolumetricIntensity;
+					value.ShadowmapResolution = component.ShadowmapResolution;
 					value.ShadowmapUpdateMode = component.ShadowmapUpdateMode;
 					value.ShadowmapAlwaysDrawDynamicShadowCasters = component.ShadowmapAlwaysDrawDynamicShadowCasters;
 					value.ShadowmapUpdateOnLightMovement = component.ShadowmapUpdateOnLightMovement;
-					bool isBaked = visibleLight.light.bakingOutput.isBaked;
-					LightmapBakeType lightmapBakeType = visibleLight.light.bakingOutput.lightmapBakeType;
-					if (renderingData.ShadowData.StaticShadowsCacheEnabled && (visibleLight.light.type == LightType.Point || visibleLight.light.type == LightType.Spot))
+					if (renderingData.ShadowData.StaticShadowsCacheEnabled)
 					{
-						value.ShadowsCanBeCached = lightmapBakeType == LightmapBakeType.Realtime || !isBaked;
+						visibleLight = reference;
+						if (visibleLight.lightType != LightType.Point)
+						{
+							visibleLight = reference;
+							if (visibleLight.lightType != 0)
+							{
+								goto IL_01b3;
+							}
+						}
+						value.ShadowsCanBeCached = bakingOutput.lightmapBakeType == LightmapBakeType.Realtime || !bakingOutput.isBaked;
 						value.ShadowsCanBeCached = value.ShadowsCanBeCached && component.ShadowmapUpdateMode == ShadowmapUpdateMode.Cached;
 					}
 				}
@@ -222,75 +237,82 @@ public class WaaaghLights
 				{
 					value.VolumetricLighting = false;
 				}
-				value.Shadows = visibleLight.light.shadows;
-				if (value.Shadows != 0)
-				{
-					if (!renderingData.CullingResults.GetShadowCasterBounds(i, out var _))
-					{
-						value.Shadows = LightShadows.None;
-					}
-					if (visibleLight.lightType == LightType.Spot || visibleLight.lightType == LightType.Point)
-					{
-						visibleLight.light.useViewFrustumForShadowCasterCull = false;
-					}
-				}
-				value.ShadowNearPlane = visibleLight.light.shadowNearPlane;
-				if (component != null && !component.UsePipelineSettings)
-				{
-					value.ShadowDepthBias = visibleLight.light.shadowBias;
-					value.ShadowNormalBias = visibleLight.light.shadowNormalBias;
-				}
-				else
-				{
-					value.ShadowDepthBias = renderingData.ShadowData.DepthBias;
-					value.ShadowNormalBias = renderingData.ShadowData.NormalBias;
-				}
-				value.InnerSpotAngle = visibleLight.light.innerSpotAngle;
-				value.IsBaked = visibleLight.light.bakingOutput.lightmapBakeType == LightmapBakeType.Baked;
-				bool flag2 = RenderingUtils.IsBakedShadowMaskLight(visibleLight.light);
-				if (flag2)
-				{
-					value.ShadowmaskChannel = visibleLight.light.bakingOutput.occlusionMaskChannel;
-				}
-				else
-				{
-					value.ShadowmaskChannel = -1;
-				}
-				flag = flag || flag2;
-				value.ShadowStrength = visibleLight.light.shadowStrength;
-				value.ShadowDataIndex = -1;
-				value.LightCookieIndex = -1;
-				Texture cookie = visibleLight.light.cookie;
-				if (cookie == null || component == null)
-				{
-					value.lightCookieDescriptor = default(LightCookieDescriptor);
-				}
-				else
-				{
-					value.lightCookieDescriptor.textureId = cookie.GetInstanceID();
-					value.lightCookieDescriptor.textureSize = new int2(cookie.width, cookie.height);
-					value.lightCookieDescriptor.textureVersion = cookie.updateCount;
-					value.lightCookieDescriptor.textureDimension = cookie.dimension;
-					value.lightCookieDescriptor.uvSize = component.LightCookieSize;
-					value.lightCookieDescriptor.uvOffset = component.LightCookieOffset;
-				}
+				goto IL_01b3;
+			}
+			value.ShadowStrength = 1f;
+			value.InnerSpotAngle = -1f;
+			value.ShadowDataIndex = -1;
+			value.ShadowDataIndex = -1;
+			value.Shadows = LightShadows.None;
+			value.ShadowmapResolution = LightShadowmapResolution.Default;
+			value.ShadowmapUpdateMode = ShadowmapUpdateMode.EveryFrame;
+			value.ShadowmapAlwaysDrawDynamicShadowCasters = true;
+			value.ShadowmapUpdateOnLightMovement = true;
+			value.ShadowDepthBias = renderingData.ShadowData.DepthBias;
+			value.ShadowNormalBias = renderingData.ShadowData.NormalBias;
+			value.LightCookieIndex = -1;
+			value.lightCookieDescriptor = default(LightCookieDescriptor);
+			continue;
+			IL_020f:
+			value.ShadowNearPlane = light.shadowNearPlane;
+			if (component != null && !component.UsePipelineSettings)
+			{
+				value.ShadowDepthBias = light.shadowBias;
+				value.ShadowNormalBias = light.shadowNormalBias;
 			}
 			else
 			{
-				value.ShadowStrength = 1f;
-				value.InnerSpotAngle = -1f;
-				value.ShadowDataIndex = -1;
-				value.ShadowDataIndex = -1;
-				value.Shadows = LightShadows.None;
-				value.ShadowmapUpdateMode = ShadowmapUpdateMode.EveryFrame;
-				value.ShadowmapAlwaysDrawDynamicShadowCasters = true;
-				value.ShadowmapUpdateOnLightMovement = true;
 				value.ShadowDepthBias = renderingData.ShadowData.DepthBias;
 				value.ShadowNormalBias = renderingData.ShadowData.NormalBias;
-				value.LightCookieIndex = -1;
-				value.lightCookieDescriptor = default(LightCookieDescriptor);
 			}
-			m_LightDescs[i] = value;
+			value.InnerSpotAngle = light.innerSpotAngle;
+			value.IsBaked = bakingOutput.lightmapBakeType == LightmapBakeType.Baked;
+			bool flag2 = RenderingUtils.IsBakedShadowMaskLight(in bakingOutput);
+			if (flag2)
+			{
+				value.ShadowmaskChannel = bakingOutput.occlusionMaskChannel;
+			}
+			else
+			{
+				value.ShadowmaskChannel = -1;
+			}
+			flag = flag || flag2;
+			value.ShadowStrength = light.shadowStrength;
+			value.ShadowDataIndex = -1;
+			value.LightCookieIndex = -1;
+			Texture cookie = light.cookie;
+			if (cookie == null || component == null)
+			{
+				value.lightCookieDescriptor = default(LightCookieDescriptor);
+				continue;
+			}
+			value.lightCookieDescriptor.textureId = cookie.GetInstanceID();
+			value.lightCookieDescriptor.textureSize = new int2(cookie.width, cookie.height);
+			value.lightCookieDescriptor.textureVersion = cookie.updateCount;
+			value.lightCookieDescriptor.textureDimension = cookie.dimension;
+			value.lightCookieDescriptor.uvSize = component.LightCookieSize;
+			value.lightCookieDescriptor.uvOffset = component.LightCookieOffset;
+			continue;
+			IL_01b3:
+			value.Shadows = light.shadows;
+			if (value.Shadows != 0)
+			{
+				if (!renderingData.CullingResults.GetShadowCasterBounds(i, out var _))
+				{
+					value.Shadows = LightShadows.None;
+				}
+				visibleLight = reference;
+				if (visibleLight.lightType != 0)
+				{
+					visibleLight = reference;
+					if (visibleLight.lightType != LightType.Point)
+					{
+						goto IL_020f;
+					}
+				}
+				light.useViewFrustumForShadowCasterCull = false;
+			}
+			goto IL_020f;
 		}
 		return flag;
 	}

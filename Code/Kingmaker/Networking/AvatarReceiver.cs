@@ -10,7 +10,7 @@ public class AvatarReceiver : DataReceiver
 
 	private AvatarMetaData m_MetaData;
 
-	protected override int MainPartLenght => m_MetaData.SaveLength;
+	protected override int MainPartLength => m_MetaData.SaveLength;
 
 	protected override int SenderUniqueNumber => m_MetaData.SenderUniqueNumber;
 

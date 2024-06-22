@@ -238,22 +238,27 @@ public class CommandControlCamera : CommandBase
 			case TimingModeType.FixSpeed:
 				if (MoveSpeed > 0f)
 				{
-					data.ScrollCoroutine = CameraRig.Instance.ScrollToTimed(position, out var targetTime2, 0f, float.MaxValue, MoveSpeed, MoveCurve);
-					TimeSpan timeSpan2 = Game.Instance.TimeController.GameTime + targetTime2.Seconds();
-					data.TargetTime = ((timeSpan2 > data.TargetTime) ? timeSpan2 : data.TargetTime);
+					data.ScrollCoroutine = CameraRig.Instance.ScrollToTimed(position, out var targetTime, 0f, float.MaxValue, MoveSpeed, MoveCurve);
+					TimeSpan timeSpan = Game.Instance.TimeController.GameTime + targetTime.Seconds();
+					data.TargetTime = ((timeSpan > data.TargetTime) ? timeSpan : data.TargetTime);
 					break;
 				}
 				goto default;
 			case TimingModeType.FixTime:
 				if (FixedTime > 0f)
 				{
-					data.ScrollCoroutine = CameraRig.Instance.ScrollToTimed(position, out var targetTime, FixedTime, float.MaxValue, 0f, MoveCurve);
-					TimeSpan timeSpan = Game.Instance.TimeController.GameTime + targetTime.Seconds();
-					data.TargetTime = ((timeSpan > data.TargetTime) ? timeSpan : data.TargetTime);
+					data.ScrollCoroutine = CameraRig.Instance.ScrollToTimed(position, out var targetTime2, FixedTime, float.MaxValue, 0f, MoveCurve);
+					TimeSpan timeSpan2 = Game.Instance.TimeController.GameTime + targetTime2.Seconds();
+					data.TargetTime = ((timeSpan2 > data.TargetTime) ? timeSpan2 : data.TargetTime);
 					break;
 				}
 				goto default;
 			case TimingModeType.Snap:
+				if (data.ScrollCoroutine != null)
+				{
+					CameraRig.Instance.StopCoroutine(data.ScrollCoroutine);
+					data.ScrollCoroutine = null;
+				}
 				CameraRig.Instance.ScrollToImmediately(position);
 				break;
 			default:

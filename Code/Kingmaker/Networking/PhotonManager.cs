@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Core.Cheats;
 using ExitGames.Client.Photon;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root.Strings;
@@ -33,7 +34,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 		public const string SaveInfo = "si";
 
-		public const string TimeOffset = "to";
+		public const string PlatformSession = "ps";
 	}
 
 	public static class UserProperties
@@ -43,6 +44,106 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		public const string DLC = "d";
 
 		public const string Mods = "m";
+
+		public const string TimeOffset = "to";
+
+		public const string PlatformPicture = "pp";
+	}
+
+	private struct ProcessDeltaTimeLogic
+	{
+		private readonly PhotonManager m_PhotonManager;
+
+		private long m_TimeOffsetLastValue;
+
+		public ProcessDeltaTimeLogic(PhotonManager photonManager)
+		{
+			m_PhotonManager = photonManager;
+			m_TimeOffsetLastValue = 0L;
+		}
+
+		public TimeSpan ProcessDeltaTime(TimeSpan lastTickTime, TimeSpan deltaTime)
+		{
+			return deltaTime;
+		}
+
+		private bool GetTimeOffset(out long timeOffset)
+		{
+			timeOffset = long.MinValue;
+			foreach (PlayerInfo activePlayer in m_PhotonManager.ActivePlayers)
+			{
+				if (m_PhotonManager.ActorNumberToPhotonPlayer(activePlayer.Player, out var player) && m_PhotonManager.GetPlayerProperty<long>(player, "to", out var obj))
+				{
+					timeOffset = Math.Max(timeOffset, obj);
+				}
+			}
+			return timeOffset != long.MinValue;
+		}
+
+		public void Reset()
+		{
+			m_TimeOffsetLastValue = 0L;
+			m_PhotonManager.ClearPlayerProperty("to");
+		}
+	}
+
+	private class PlayerLeavingController
+	{
+		private readonly struct Data
+		{
+			public readonly PhotonActorNumber ActorNumber;
+
+			public readonly TaskCompletionSource<bool> TaskCompletionSource;
+
+			public Data(PhotonActorNumber actorNumber)
+			{
+				ActorNumber = actorNumber;
+				TaskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			}
+		}
+
+		private readonly PhotonManager m_PhotonManager;
+
+		private readonly List<Data> m_Data;
+
+		public PlayerLeavingController(PhotonManager photonManager)
+		{
+			m_PhotonManager = photonManager;
+			m_Data = new List<Data>();
+		}
+
+		public Task WaitPlayerLeft(PhotonActorNumber actorNumber)
+		{
+			bool flag = false;
+			foreach (PlayerInfo activePlayer in m_PhotonManager.ActivePlayers)
+			{
+				if (activePlayer.Player == actorNumber)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				return Task.CompletedTask;
+			}
+			Data item = new Data(actorNumber);
+			m_Data.Add(item);
+			return item.TaskCompletionSource.Task;
+		}
+
+		public void OnPlayerLeftRoom(PhotonActorNumber photonActorNumber)
+		{
+			for (int i = 0; i < m_Data.Count; i++)
+			{
+				if (m_Data[i].ActorNumber == photonActorNumber)
+				{
+					m_Data[i].TaskCompletionSource.TrySetResult(result: true);
+					m_Data.RemoveAt(i);
+					i--;
+				}
+			}
+		}
 	}
 
 	public static readonly MessageNetManager Message = new MessageNetManager();
@@ -71,13 +172,13 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	public static readonly ModsNetManager Mods = new ModsNetManager();
 
+	public static readonly BugReportNetManager BugReport = new BugReportNetManager();
+
 	public static readonly NetGame NetGame = new NetGame();
 
 	public static readonly IdleConnectionChecker IdleConnection = new IdleConnectionChecker(NetGame);
 
 	public static PhotonAppIdRealtime AppIdRealtime = default(PhotonAppIdRealtime);
-
-	public const int MaxPlayers = 6;
 
 	private static PhotonManager s_Instance;
 
@@ -116,7 +217,14 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	private PhotonStatsLogger m_StatsLogger;
 
+	private ProcessDeltaTimeLogic m_ProcessDeltaTimeLogic;
+
+	private PlayerLeavingController m_PlayerLeavingController;
+
 	public static readonly string Version = GetVersion();
+
+	public static int MaxPlayers { get; private set; } = 6;
+
 
 	public static PhotonManager Instance => s_Instance;
 
@@ -182,6 +290,8 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 	}
 
 	public int MasterClientId => m_LoadBalancingClient.CurrentRoom?.MasterClientId ?? 0;
+
+	public int LocalClientId => m_LoadBalancingClient.LocalPlayer.ActorNumber;
 
 	public NetPlayer LocalNetPlayer
 	{
@@ -263,6 +373,8 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	public DataTransporter DataTransporter { get; private set; }
 
+	public CharGenPortraitSyncer PortraitSyncer { get; private set; }
+
 	public ReadonlyList<PlayerInfo> ActivePlayers => m_ActivePlayers;
 
 	public ReadonlyList<PhotonActorNumber> PhotonActorNumbersAtStart => m_PhotonActorNumbersAtStart;
@@ -317,6 +429,17 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		}
 	}
 
+	[Cheat(Name = "net_max_players", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void MaxPlayersCheat(int value = 6)
+	{
+		MaxPlayers = Mathf.Clamp(value, 1, 6);
+	}
+
+	public PhotonManager()
+	{
+		m_ProcessDeltaTimeLogic = new ProcessDeltaTimeLogic(this);
+	}
+
 	public static void CreateInstance()
 	{
 		if (BuildModeUtility.IsCoopEnabled)
@@ -348,7 +471,9 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		m_StatsLogger = new PhotonStatsLogger(m_LoadBalancingClient);
 		m_ConnectionCallbacksAsync = new ConnectionCallbacksAsync(m_LoadBalancingClient);
 		m_MatchmakingCallbacksAsync = new MatchmakingCallbacksAsync(m_LoadBalancingClient);
-		DataTransporter = new DataTransporter(this);
+		DataTransporter = new DataTransporter(this, CustomPortraitsManager.Instance);
+		PortraitSyncer = new CharGenPortraitSyncer(this, CustomPortraitsManager.Instance);
+		m_PlayerLeavingController = new PlayerLeavingController(this);
 	}
 
 	public Task ConnectAsync(AuthenticationValues authenticationValues)
@@ -448,6 +573,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 	public void OnJoinedLobby()
 	{
 		PhotonTrafficStats.Reset();
+		PlatformServices.Platform.Session.OnJoinedLobby();
 		m_LoadBalancingClient.NickName = PlatformServices.Platform.User.NickName;
 		m_LoadBalancingClient.LocalPlayer.SetProperty("s", StoreManager.Store);
 		DataTransporter.OnJoinedLobby(m_LoadBalancingClient.CurrentRoom.Players);
@@ -474,12 +600,9 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		{
 			NetGame.State currentState = NetGame.CurrentState;
 			bool allowReconnect = currentState != NetGame.State.Playing && currentState != NetGame.State.UploadSaveAndStartLoading && currentState != NetGame.State.DownloadSaveAndLoading;
-			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
-			{
-				h.HandlePhotonDisconnectedError(cause, allowReconnect);
-			});
+			UINetUtility.HandlePhotonDisconnectedError(cause, allowReconnect);
 		}
-		StopPlaying();
+		StopPlaying("OnDisconnected");
 	}
 
 	void IConnectionCallbacks.OnRegionListReceived(RegionHandler regionHandler)
@@ -517,10 +640,11 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 				break;
 			}
 		}
+		m_PlayerLeavingController.OnPlayerLeftRoom(photonActorNumber);
 		Save.OnPlayerLeftRoom(photonActorNumber);
 		DLC.OnPlayerLeftRoom(otherPlayer);
 		Mods.OnPlayerLeftRoom(otherPlayer);
-		Game.Instance.PauseController.OnPlayerLeftRoom();
+		PortraitSyncer.OnPlayerLeftRoom(photonActorNumber);
 		DataTransporter.OnPlayerLeftRoom(photonActorNumber);
 		StopPlayingIfLastPlayer();
 		CheckRoomOwnerChanged(otherPlayer);
@@ -528,6 +652,11 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		{
 			h.HandlePlayerLeftRoom(otherPlayer);
 		});
+		if (Lobby.IsPlaying)
+		{
+			Game.Instance.PauseController.OnPlayerLeftRoom();
+			Game.Instance.CoopData.PlayerRole.OnPlayerLeftRoom(netPlayer);
+		}
 	}
 
 	public bool StopPlayingIfLastPlayer()
@@ -536,7 +665,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		bool flag = m_LoadBalancingClient.CurrentRoom.PlayerCount == 1;
 		if (firstLoadCompleted && flag)
 		{
-			StopPlaying();
+			StopPlaying("StopPlayingIfLastPlayer");
 			EventBus.RaiseEvent(delegate(INetLobbyPlayersHandler h)
 			{
 				h.HandleLastPlayerLeftLobby();
@@ -573,7 +702,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 			default:
 				PFLog.Net.Error("[OnRoomPropertiesUpdate] Unexpected property '" + text + "'");
 				break;
-			case "to":
+			case "ps":
 				break;
 			}
 		}
@@ -608,6 +737,9 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 					continue;
 				case "m":
 					Mods.OnPlayerUpdate(targetPlayer);
+					continue;
+				case "to":
+				case "pp":
 					continue;
 				}
 			}
@@ -669,6 +801,11 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 	public bool SendMessageToOthers(byte code)
 	{
 		return SendMessageToOthers(code, null, 0, 0);
+	}
+
+	public bool SendMessageToOthers(byte code, ByteArraySlice bytes)
+	{
+		return SendMessageToOthers(code, bytes.Buffer, bytes.Offset, bytes.Count);
 	}
 
 	public bool SendMessageToOthers(byte code, byte[] bytes, int offset, int length)
@@ -764,14 +901,14 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		return num;
 	}
 
-	public void StopPlaying()
+	public void StopPlaying(string reason)
 	{
-		NetGame.StopPlaying(shouldLeaveLobby: true);
+		NetGame.StopPlaying(shouldLeaveLobby: true, reason);
 	}
 
 	public void Kick()
 	{
-		StopPlaying();
+		StopPlaying("Kick");
 		UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyTexts.KickMessage, DialogMessageBoxBase.BoxType.Message, delegate
 		{
 		});
@@ -789,6 +926,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		{
 			DataTransporter.OnLeave();
 			Invite.StopAnnounceGame();
+			PlatformServices.Platform.Session.LeaveSession();
 		}
 		OtherReceivers.TargetActors = Array.Empty<int>();
 		m_ActivePlayers.Clear();
@@ -927,6 +1065,15 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		}
 	}
 
+	public void ClearPlayerProperty(string propertyName)
+	{
+		if (m_LoadBalancingClient.InRoom)
+		{
+			ExitGames.Client.Photon.Hashtable propertiesToSet = new ExitGames.Client.Photon.Hashtable { [propertyName] = null };
+			m_LoadBalancingClient.LocalPlayer.SetCustomProperties(propertiesToSet);
+		}
+	}
+
 	public T GetRoomPropertyOrDefault<T>(string propertyName, T defaultValue)
 	{
 		if (!GetRoomProperty<T>(propertyName, out var obj))
@@ -1008,6 +1155,11 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		ReadonlyList<PlayerInfo> allPlayers2 = AllPlayers;
 		GetActivePlayers(activePlayers2, in allPlayers2);
 		DLC.CloseRoom(dlcs);
+		IPlatformInvite invite = PlatformServices.Platform.Invite;
+		foreach (PlayerInfo activePlayer in m_ActivePlayers)
+		{
+			invite.SetPlayedWith(activePlayer.UserId);
+		}
 		static void GetActivePlayers(List<PlayerInfo> activePlayers, in ReadonlyList<PlayerInfo> allPlayers)
 		{
 			activePlayers.Clear();
@@ -1038,30 +1190,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	public TimeSpan ProcessDeltaTime(TimeSpan lastTickTime, TimeSpan deltaTime)
 	{
-		TimeSpan timeSpan = lastTickTime + deltaTime;
-		TimeSpan timeSpan2 = TimeSpan.FromMilliseconds((uint)m_LoadBalancingClient.LoadBalancingPeer.ServerTimeInMilliSeconds);
-		TimeSpan timeSpan3 = timeSpan2 - timeSpan;
-		TimeSpan timeSpan4 = TimeSpan.MinValue;
-		if (GetRoomProperty<long>("to", out var obj))
-		{
-			timeSpan4 = TimeSpan.FromMilliseconds(obj);
-		}
-		TimeSpan timeSpan5 = TimeSpan.FromMilliseconds(2.0);
-		if (timeSpan3 + timeSpan5 < timeSpan4)
-		{
-			TimeSpan timeSpan6 = deltaTime - (timeSpan4 - timeSpan3);
-			if (timeSpan6 < TimeSpan.Zero)
-			{
-				PFLog.Net.Log($"[ProcessDeltaTime] newDeltaTime<Zero {timeSpan6.TotalMilliseconds}={deltaTime.TotalMilliseconds}-({timeSpan4.TotalMilliseconds}-({timeSpan2.TotalMilliseconds}-{timeSpan.TotalMilliseconds})) s={m_LoadBalancingClient.LoadBalancingPeer.ServerTimeInMilliSeconds}=?+{m_LoadBalancingClient.LoadBalancingPeer.ConnectionTime}");
-				timeSpan6 = TimeSpan.Zero;
-			}
-			deltaTime = timeSpan6;
-		}
-		else if (timeSpan4 + timeSpan5 < timeSpan3)
-		{
-			SetRoomProperty("to", timeSpan3.TotalMillisecondsLong());
-		}
-		return deltaTime;
+		return m_ProcessDeltaTimeLogic.ProcessDeltaTime(lastTickTime, deltaTime);
 	}
 
 	public PhotonActorNumber PlayerToActorNumber(NetPlayer player)
@@ -1083,6 +1212,11 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		return new MatchmakingCallbacks(m_LoadBalancingClient);
 	}
 
+	public Task WaitPlayerLeftRoom(PhotonActorNumber actorNumber)
+	{
+		return m_PlayerLeavingController.WaitPlayerLeft(actorNumber);
+	}
+
 	public bool CreateRoom(EnterRoomParams roomParams)
 	{
 		return m_LoadBalancingClient.OpCreateRoom(roomParams);
@@ -1090,6 +1224,6 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	public void Reset()
 	{
-		ClearRoomProperty("to");
+		m_ProcessDeltaTimeLogic.Reset();
 	}
 }

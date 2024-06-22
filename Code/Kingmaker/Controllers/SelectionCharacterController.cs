@@ -19,7 +19,7 @@ using UniRx;
 
 namespace Kingmaker.Controllers;
 
-public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>
+public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>
 {
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnit = new ReactiveProperty<BaseUnitEntity>();
 
@@ -29,7 +29,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	public readonly ReactiveProperty<BaseUnitEntity> SingleSelectedUnit = new ReactiveProperty<BaseUnitEntity>();
 
-	public ReactiveCommand ActualGroupUpdated = new ReactiveCommand();
+	public readonly ReactiveCommand ActualGroupUpdated = new ReactiveCommand();
 
 	private FullScreenUIType m_FullScreenType;
 
@@ -107,7 +107,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	public void OnStart()
 	{
 		m_NeedUpdate = true;
-		UIAccess.SelectionManager.Or(null)?.SelectAll(Game.Instance.Player.PartyCharacters.Select((UnitReference r) => r.Entity.ToBaseUnitEntity()));
+		UIAccess.SelectionManager.Or(null)?.SelectAll(Game.Instance.Player.PartyCharacters.Select((UnitReference r) => r.Entity.ToBaseUnitEntity()).Where(UIUtility.IsViewActiveUnit));
 		if (SelectedUnits.Count == 0)
 		{
 			UIAccess.SelectionManager.Or(null)?.SelectAll();
@@ -247,8 +247,14 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	private void UpdateSelectedUnits()
 	{
-		bool withRemote = WithRemote;
-		UIUtility.GetGroup(m_ActualGroup, withRemote, withRemote);
+		UIUtility.GetGroup(m_ActualGroup, WithRemote, WithRemote);
+		if (RootUIContext.Instance.IsSurface)
+		{
+			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
+			{
+				UIAccess.SelectionManager.Or(null)?.UnselectUnit(item);
+			}
+		}
 		IsSingleSelected.Value = Game.Instance.IsControllerGamepad || SelectedUnits.Count == 1;
 		if (IsSingleSelected.Value)
 		{
@@ -278,6 +284,11 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	}
 
 	public void HandleCapitalModeChanged()
+	{
+		m_NeedUpdate = true;
+	}
+
+	public void OnEntityBecameVisible()
 	{
 		m_NeedUpdate = true;
 	}

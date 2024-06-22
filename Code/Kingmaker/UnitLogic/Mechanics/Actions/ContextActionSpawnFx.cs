@@ -16,7 +16,7 @@ public class ContextActionSpawnFx : ContextAction
 		return "Spawn FX: " + ((gameObject != null) ? gameObject.name : "unspecified");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!base.Context.DisableFx)
 		{

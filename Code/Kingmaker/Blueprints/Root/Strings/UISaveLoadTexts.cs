@@ -49,4 +49,16 @@ public class UISaveLoadTexts
 	public LocalizedString AreYouSureDeleteCharacter;
 
 	public LocalizedString ConfirmQuickLoad;
+
+	public LocalizedString SaveIsNotPossibleInIronMan;
+
+	public LocalizedString SaveHasIronManMode;
+
+	public LocalizedString YouLoadIronManSave;
+
+	public LocalizedString YouLoadNotIronManSave;
+
+	public LocalizedString CannotLoadCurrentIronManSave;
+
+	public LocalizedString CannotLoadIronManSaveInCoop;
 }

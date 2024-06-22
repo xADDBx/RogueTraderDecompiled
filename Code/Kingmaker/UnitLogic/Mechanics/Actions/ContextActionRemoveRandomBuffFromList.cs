@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -42,12 +43,12 @@ public class ContextActionRemoveRandomBuffFromList : ContextAction
 		return string.Concat("Remove random Buff from list");
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)
 		{
-			PFLog.Default.Error(this, "Unable to remove buff: no context found");
+			Element.LogError(this, "Unable to remove buff: no context found");
 			return;
 		}
 		MechanicEntity target = (ToCaster ? mechanicsContext.MaybeCaster : base.Target.Entity);

@@ -85,7 +85,7 @@ public class LockNetManager
 		{
 			byte[] array = MessageNetManager.SendBytes.GetArray();
 			array[0] = lockPointId;
-			if (!PhotonManager.Instance.SendMessageToOthers(7, array, 0, 1))
+			if (!PhotonManager.Instance.SendMessageToOthers(8, array, 0, 1))
 			{
 				PFLog.Net.Error("Error when trying to send lock!");
 			}

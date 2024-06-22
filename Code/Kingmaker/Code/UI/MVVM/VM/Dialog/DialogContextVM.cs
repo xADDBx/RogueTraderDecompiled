@@ -4,16 +4,19 @@ using Kingmaker.Code.UI.MVVM.VM.Dialog.BookEvent;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Epilog;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Interchapter;
+using Kingmaker.Code.UI.MVVM.VM.Dialog.RewardWindows;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem.Blueprints;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Alignments;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Dialog;
 
-public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IDialogInteractionHandler, ISubscriber, IInterchapterHandler, IAreaHandler
+public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IDialogInteractionHandler, ISubscriber, IInterchapterHandler, IAreaHandler, ISoulMarkShiftRewardHandler
 {
 	public readonly ReactiveProperty<BookEventVM> BookEventVM = new ReactiveProperty<BookEventVM>();
 
@@ -22,6 +25,8 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	public readonly ReactiveProperty<DialogVM> DialogVM = new ReactiveProperty<DialogVM>();
 
 	public readonly ReactiveProperty<InterchapterVM> InterchapterVM = new ReactiveProperty<InterchapterVM>();
+
+	public readonly ReactiveProperty<SoulMarkRewardVM> SoulMarkRewardVM = new ReactiveProperty<SoulMarkRewardVM>();
 
 	private bool m_IsAnyColonyScreenOpened;
 
@@ -38,6 +43,7 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		DisposeBookEvent();
 		DisposeEpilog();
 		DisposeInterchapter();
+		DisposeSoulMarkReward();
 	}
 
 	public void StartDialogInteraction(BlueprintDialog dialog)
@@ -113,6 +119,12 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		DialogVM.Value = null;
 	}
 
+	private void DisposeSoulMarkReward()
+	{
+		SoulMarkRewardVM.Value?.Dispose();
+		SoulMarkRewardVM.Value = null;
+	}
+
 	public void OnAreaBeginUnloading()
 	{
 		DisposeImplementation();
@@ -120,5 +132,18 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public void OnAreaDidLoad()
 	{
+	}
+
+	public void HandleSoulMarkShift(SoulMarkShift shift)
+	{
+		SoulMarkDirection direction = shift.Direction;
+		int rank = SoulMarkShiftExtension.GetSoulMark(direction).Rank;
+		int fillValue = rank - shift.Value;
+		int soulMarkRankIndex = SoulMarkShiftExtension.GetSoulMarkRankIndex(direction, rank);
+		int soulMarkRankIndex2 = SoulMarkShiftExtension.GetSoulMarkRankIndex(direction, fillValue);
+		if (soulMarkRankIndex > soulMarkRankIndex2)
+		{
+			SoulMarkRewardVM.Value = new SoulMarkRewardVM(direction, soulMarkRankIndex, DisposeSoulMarkReward);
+		}
 	}
 }

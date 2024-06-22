@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
@@ -12,12 +13,12 @@ public class ContextActionKill : ContextAction
 {
 	public UnitDismemberType Dismember;
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		PartLifeState partLifeState = base.Target.Entity?.GetLifeStateOptional();
 		if (partLifeState == null)
 		{
-			PFLog.Default.Error(this, "Invalid target for effect '{0}'", GetType().Name);
+			Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 		}
 		else if (base.Context.MaybeCaster == null || !base.Context.MaybeCaster.IsAttackingGreenNPC(base.Target.Entity))
 		{

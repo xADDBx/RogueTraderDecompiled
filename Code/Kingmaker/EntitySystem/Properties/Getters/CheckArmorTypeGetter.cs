@@ -32,8 +32,8 @@ public class CheckArmorTypeGetter : PropertyGetter, PropertyContextAccessor.ITar
 		return 1;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Check if ArmorType is " + m_ArmorType;
+		return "Check if ArmorType of " + Target.Colorized() + " is " + m_ArmorType;
 	}
 }

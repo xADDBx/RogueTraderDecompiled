@@ -26,6 +26,7 @@ using Kingmaker.Visual.Particles.GameObjectsPooling;
 using Kingmaker.Visual.Trails;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Core.Utility.Locator;
+using Owlcat.Runtime.UniRx;
 using Owlcat.Runtime.Visual.DxtCompressor;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -102,7 +103,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		{
 			return;
 		}
-		PFLog.Default.Log("SetupInfo");
+		PFLog.UI.Log("SetupInfo");
 		Cleanup();
 		m_Unit = player;
 		EventBus.Unsubscribe(this);
@@ -497,7 +498,10 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 	{
 		if (m_Unit.View.Or(null)?.CharacterAvatar != null)
 		{
-			m_Avatar.CopyRampIndicesFrom(m_Unit.View.CharacterAvatar);
+			DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+			{
+				m_Avatar.CopyRampIndicesFrom(m_Unit.View.CharacterAvatar);
+			});
 		}
 	}
 }

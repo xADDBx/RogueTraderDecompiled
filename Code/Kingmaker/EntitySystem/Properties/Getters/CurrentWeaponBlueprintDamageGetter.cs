@@ -16,7 +16,7 @@ public class CurrentWeaponBlueprintDamageGetter : MechanicEntityPropertyGetter, 
 
 	public WeaponDamage Type;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return $"Current {Type} weapon damage";
 	}

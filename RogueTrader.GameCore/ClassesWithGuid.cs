@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Code.GameCore.Blueprints;
+using Code.GameCore.ElementsSystem.Actions;
+using Code.GameCore.ElementsSystem.Debug;
 using Kingmaker.AreaLogic.Etudes;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Camera;
@@ -16,6 +19,7 @@ public static class ClassesWithGuid
 	public static readonly List<(Type Type, string Guid)> Classes = new List<(Type, string)>
 	{
 		(typeof(BlueprintEtudeConflictingGroup), "8e8785a8c11046ed9bce13c7c61e51ed"),
+		(typeof(BlueprintAbilityAreaEffectGroup), "780ace165a134668b092b98a8a9d98c0"),
 		(typeof(BlueprintAbilityGroup), "84a976c8e48e6274e8367073fad4a237"),
 		(typeof(BlueprintBroken), "50180856b8ea4cf6965e53bb91472358"),
 		(typeof(BlueprintComponent), "0956112276c2f8340b645b372472e09a"),
@@ -41,6 +45,8 @@ public static class ClassesWithGuid
 		(typeof(ActionsHolder), "63bb90208198450095c55997ebc6ae0a"),
 		(typeof(BlueprintActionList), "a80970ca06938034d8c58815e415690e"),
 		(typeof(ConditionsHolder), "b9ea3359b1204b798a61750d6cb4e723"),
+		(typeof(ThrowExceptionAction), "f225557a3df442c0b7f3f8ca4d6fb3b6"),
+		(typeof(ThrowExceptionCondition), "702fcb2beb1849bcb8b878f2dd02e476"),
 		(typeof(Conditional), "52d8973f2e470e14c97b74209680491a"),
 		(typeof(OrAndLogic), "1d392c8d9feed78408fbcb18f9468fb9"),
 		(typeof(RandomAction), "fe04f935f78d4ba4c805faf9a4be38a3"),

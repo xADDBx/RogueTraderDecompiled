@@ -3,10 +3,12 @@ using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Globalmap.Colonization.Requirements;
 using Kingmaker.UI.MVVM.VM.Colonization.Requirements;
+using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -63,7 +65,14 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 			{
 				if (!(condition is ContextConditionHasItem condition3))
 				{
-					if (condition is ContextConditionHasPF condition4)
+					if (!(condition is ContextConditionHasPF condition4))
+					{
+						if (condition is ItemsEnough condition5)
+						{
+							AddItemsEnough(result, condition5);
+						}
+					}
+					else
 					{
 						AddRequiredProfitFactor(result, condition4);
 					}
@@ -89,17 +98,38 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 		{
 			return;
 		}
-		result.Add(new TooltipBrickText(UIStrings.Instance.Dialog.OperationAndConditionDesc));
+		result.Add(new TooltipBrickText(UIStrings.Instance.Dialog.OperationAndConditionDesc, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
 		foreach (Requirement item in requirements)
 		{
 			RequirementUI requirement = RequirementUIFactory.GetRequirement(item);
-			TooltipBrickIconStatValueType type = (item.Check() ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
-			List<ITooltipBrick> obj = result;
-			string name = requirement.Name;
-			string countText = requirement.CountText;
-			Sprite icon = requirement.Icon;
-			Color? iconColor = requirement.IconColor;
-			obj.Add(new TooltipBrickIconStatValue(name, countText, null, icon, type, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, null, null, null, iconColor));
+			if (requirement is RequirementResourceUseDialogUI requirementResourceUseDialogUI)
+			{
+				TooltipBrickIconStatValueType type = (requirementResourceUseDialogUI.BaseResourceCheck ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+				bool num = !requirementResourceUseDialogUI.BaseResourceCheck && item.Check();
+				List<ITooltipBrick> obj = result;
+				string name = requirement.Name;
+				string countText = requirement.CountText;
+				Sprite icon = requirement.Icon;
+				Color? iconColor = requirement.IconColor;
+				obj.Add(new TooltipBrickIconStatValue(name, countText, null, icon, type, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, null, null, null, iconColor));
+				if (num)
+				{
+					result.Add(new TooltipBricksGroupStart());
+					result.Add(new TooltipBrickText(UIStrings.Instance.ColonyProjectsRequirements.ProfitFactorInsteadResource, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
+					result.Add(new TooltipBrickIconStatValue(requirementResourceUseDialogUI.ProfitFactorName, requirementResourceUseDialogUI.CountText, null, requirementResourceUseDialogUI.ProfitFactorIcon, TooltipBrickIconStatValueType.Positive, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, null, null, null, requirementResourceUseDialogUI.IconColor));
+					result.Add(new TooltipBricksGroupEnd());
+				}
+			}
+			else
+			{
+				TooltipBrickIconStatValueType type2 = (item.Check() ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+				List<ITooltipBrick> obj2 = result;
+				string name2 = requirement.Name;
+				string countText2 = requirement.CountText;
+				Sprite icon2 = requirement.Icon;
+				Color? iconColor = requirement.IconColor;
+				obj2.Add(new TooltipBrickIconStatValue(name2, countText2, null, icon2, type2, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, null, null, null, iconColor));
+			}
 		}
 	}
 
@@ -127,5 +157,17 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 	{
 		TooltipBrickIconStatValueType backgroundType = (condition.Check() ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
 		result.Add(new TooltipBrickIconStatValue(UIStrings.Instance.ProfitFactorTexts.Title, condition.Value.ToString(">=0;<#"), null, BlueprintRoot.Instance.UIConfig.UIIcons.ProfitFactor, TooltipBrickIconStatValueType.Normal, backgroundType));
+	}
+
+	private static void AddItemsEnough(List<ITooltipBrick> result, ItemsEnough condition)
+	{
+		if (condition.ItemToCheck != null)
+		{
+			TooltipBrickIconStatValueType backgroundType = (condition.Check() ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+			string name = condition.ItemToCheck.Name;
+			Sprite icon = condition.ItemToCheck.Icon;
+			Color? iconColor = Color.white;
+			result.Add(new TooltipBrickIconStatValue(name, null, null, icon, TooltipBrickIconStatValueType.Normal, backgroundType, TooltipBrickIconStatValueStyle.Normal, null, null, null, null, iconColor, null, null, hasValue: false));
+		}
 	}
 }

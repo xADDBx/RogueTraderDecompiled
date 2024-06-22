@@ -8,7 +8,7 @@ namespace Kingmaker.Mechanics.Actions;
 [TypeId("4017ffe5c10f497892af948b794a68b6")]
 public class ContextActionClearPropheticIntervention : ContextAction
 {
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		((base.Context.MaybeCaster as UnitEntity)?.Parts.GetOptional<UnitPartPropheticIntervention>())?.Entries.Clear();
 	}

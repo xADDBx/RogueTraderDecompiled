@@ -12,9 +12,12 @@ public class VendorLevelItemsVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public readonly List<ItemSlotVM> VendorSlots = new List<ItemSlotVM>();
 
-	public VendorLevelItemsVM(int level, bool locked)
+	public readonly bool IsLastList;
+
+	public VendorLevelItemsVM(int level, bool locked, bool isLastList)
 	{
 		AddDisposable(ReputationLevelVM = new VendorReputationLevelVM(level, locked));
+		IsLastList = isLastList;
 	}
 
 	public void AddItem(ItemEntity item, int index)

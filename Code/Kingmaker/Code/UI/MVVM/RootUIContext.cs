@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Code.Package.Runtime.Extensions.Dependencies;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
@@ -71,6 +72,10 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 	public LoadingScreenRootVM LoadingScreenRootVM { get; private set; }
 
 	public BaseUnitEntity PreviousLoadingScreenCompanion { get; set; }
+
+	public bool ServiceWindowNowIsOpening { get; set; }
+
+	public bool IsDebugBlueprintsInformationShow { get; set; }
 
 	public bool IsMainMenu => MainMenuVM != null;
 
@@ -174,7 +179,17 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 		}
 	}
 
-	public bool IsChargenShown => MainMenuVM?.CharGenContextVM?.CharGenVM.Value != null;
+	public bool IsChargenShown
+	{
+		get
+		{
+			if (MainMenuVM?.CharGenContextVM?.CharGenVM.Value == null)
+			{
+				return SurfaceVM?.StaticPartVM?.CharGenContextVM?.CharGenVM.Value != null;
+			}
+			return true;
+		}
+	}
 
 	public bool IsCharInfoAbilitiesChooseMode
 	{
@@ -184,6 +199,24 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 			if (surfaceVM == null || !surfaceVM.StaticPartVM.ServiceWindowsVM.CharInfoAbilitiesChooseMode)
 			{
 				return SpaceVM?.StaticPartVM.ServiceWindowsVM.CharInfoAbilitiesChooseMode ?? false;
+			}
+			return true;
+		}
+	}
+
+	public bool IsCharInfoLevelProgression
+	{
+		get
+		{
+			SurfaceVM surfaceVM = SurfaceVM;
+			if (surfaceVM == null || surfaceVM.StaticPartVM?.ServiceWindowsVM?.CharInfoPageType != CharInfoPageType.LevelProgression)
+			{
+				SpaceVM spaceVM = SpaceVM;
+				if (spaceVM == null)
+				{
+					return false;
+				}
+				return spaceVM.StaticPartVM?.ServiceWindowsVM?.CharInfoPageType == CharInfoPageType.LevelProgression;
 			}
 			return true;
 		}
@@ -490,10 +523,10 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 
 	public bool IsBlockedFullScreenUIType()
 	{
-		if (!(Game.Instance.CurrentMode == GameModeType.Cutscene) && !(Game.Instance.CurrentMode == GameModeType.Dialog))
+		if (!(Game.Instance.CurrentMode == GameModeType.Cutscene) && !(Game.Instance.CurrentMode == GameModeType.Dialog) && !LoadingProcess.Instance.IsLoadingScreenActive && (!Game.Instance.SectorMapTravelController.IsTravelling || !(Game.Instance.CurrentMode == GameModeType.GlobalMap)))
 		{
 			FullScreenUIType fullScreenUIType = m_FullScreenUIType;
-			return fullScreenUIType == FullScreenUIType.EscapeMenu || fullScreenUIType == FullScreenUIType.TransitionMap || fullScreenUIType == FullScreenUIType.Vendor || fullScreenUIType == FullScreenUIType.Credits || fullScreenUIType == FullScreenUIType.Chargen;
+			return fullScreenUIType == FullScreenUIType.EscapeMenu || fullScreenUIType == FullScreenUIType.TransitionMap || fullScreenUIType == FullScreenUIType.Vendor || fullScreenUIType == FullScreenUIType.Credits || fullScreenUIType == FullScreenUIType.Chargen || fullScreenUIType == FullScreenUIType.NewGame;
 		}
 		return true;
 	}

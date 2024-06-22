@@ -148,6 +148,7 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 			WarhammerNodeLinkTraverser nodeLinkTraverser = handle.Unit.MovementAgent.NodeLinkTraverser;
 			float verticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.VerticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet.VerticalSpeed : clipSetByHeight.DownAnimationsSet.VerticalSpeed));
 			nodeLinkTraverser.VerticalSpeed = verticalSpeed;
+			handle.HasCrossfadePriority = true;
 		}
 	}
 

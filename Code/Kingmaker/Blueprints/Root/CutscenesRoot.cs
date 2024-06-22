@@ -28,6 +28,14 @@ public class CutscenesRoot : BlueprintScriptableObject
 	[ValidateNotNull]
 	private BlueprintAbilityReference m_AttackBurst;
 
+	[SerializeField]
+	[ValidateNotNull]
+	private BlueprintAbilityReference m_AttackSpell;
+
+	[SerializeField]
+	[ValidateNotNull]
+	private BlueprintAbilityFXSettings.Reference m_SpellWeaponFXSettings;
+
 	public bool FadeScreenOnSkip => m_FadeScreenOnSkip;
 
 	public float TimeScaleOnSkip => m_TimeScaleOnSkip;
@@ -35,4 +43,8 @@ public class CutscenesRoot : BlueprintScriptableObject
 	public BlueprintAbility AttackSingle => m_AttackSingle;
 
 	public BlueprintAbility AttackBurst => m_AttackBurst;
+
+	public BlueprintAbility AttackSpell => m_AttackSpell;
+
+	public BlueprintAbilityFXSettings.Reference SpellWeaponFXSettings => m_SpellWeaponFXSettings;
 }

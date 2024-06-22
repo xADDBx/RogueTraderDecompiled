@@ -39,13 +39,13 @@ public class RemoveCargo : GameAction
 		return $"Remove cargo {Cargo}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (m_ByBlueprint)
 		{
 			if (Cargo == null)
 			{
-				PFLog.Default.Error("Cargo is not set");
+				Element.LogError(this, "Cargo is not set");
 			}
 			else
 			{
@@ -56,7 +56,7 @@ public class RemoveCargo : GameAction
 		CargoEntity cargoEntity = Game.Instance.Player.CargoState.Get(m_OriginType, (CargoEntity entity) => entity.IsFull).FirstOrDefault();
 		if (cargoEntity == null)
 		{
-			PFLog.Default.Error($"No full cargo with type {m_OriginType} to remove");
+			Element.LogError("No full cargo with type {0} to remove", m_OriginType);
 		}
 		else
 		{

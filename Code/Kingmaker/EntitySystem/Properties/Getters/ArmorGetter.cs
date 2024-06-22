@@ -130,12 +130,12 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 		return num;
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		if (!Deflection)
-		{
-			return "Absorption";
-		}
-		return "Deflection";
+		string obj = (Deflection ? "Deflection" : "Absorption");
+		string text = (AgainstTarget ? Attacker.Colorized() : FormulaTargetScope.Current);
+		string text2 = (AgainstTarget ? Defender.Colorized() : FormulaTargetScope.Current);
+		string text3 = ((text == text2) ? ("of " + text) : ("of " + text + " against " + text2));
+		return obj + " " + text3;
 	}
 }

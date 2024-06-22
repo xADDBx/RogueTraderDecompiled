@@ -10,9 +10,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("4c8cb68a4355e444e87f858307f151c0")]
 public class FirstWeaponMaxDamageGetter : UnitPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "First weapon Max Damage";
+		return "First weapon of " + FormulaTargetScope.Current + " Max Damage";
 	}
 
 	protected override int GetBaseValue()

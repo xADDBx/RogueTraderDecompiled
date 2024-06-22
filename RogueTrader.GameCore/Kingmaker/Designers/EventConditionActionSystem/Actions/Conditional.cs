@@ -24,16 +24,9 @@ public class Conditional : GameAction
 		return "Позволяет добавить условия в последовательность действий";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
-		if (ConditionsChecker.Check())
-		{
-			IfTrue.Run();
-		}
-		else
-		{
-			IfFalse.Run();
-		}
+		(ConditionsChecker.Check(null, @unsafe: true) ? IfTrue : IfFalse).Run(@unsafe: true);
 	}
 
 	public override string GetCaption()

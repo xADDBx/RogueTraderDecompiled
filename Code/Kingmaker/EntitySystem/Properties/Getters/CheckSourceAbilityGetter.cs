@@ -27,7 +27,7 @@ public class CheckSourceAbilityGetter : PropertyGetter, PropertyContextAccessor.
 		}
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Source ability is " + string.Join("|", from i in Abilities
 			where i != null

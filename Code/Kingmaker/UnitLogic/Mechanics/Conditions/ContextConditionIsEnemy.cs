@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Entities;
 
 namespace Kingmaker.UnitLogic.Mechanics.Conditions;
 
@@ -17,6 +18,12 @@ public class ContextConditionIsEnemy : ContextCondition
 			PFLog.Default.Error(this, "Caster is missing");
 			return false;
 		}
-		return base.Target.Entity.IsEnemy(base.Context.MaybeCaster);
+		MechanicEntity entity = base.Target.Entity;
+		if (entity == null)
+		{
+			PFLog.Default.Error("Target unit is missing");
+			return false;
+		}
+		return entity.IsEnemy(base.Context.MaybeCaster);
 	}
 }

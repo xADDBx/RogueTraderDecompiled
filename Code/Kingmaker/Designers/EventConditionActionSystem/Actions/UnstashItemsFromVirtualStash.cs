@@ -23,7 +23,7 @@ public class UnstashItemsFromVirtualStash : GameAction
 		return "Перемещает все предметы из " + SourceStash?.NameSafe() + " в " + TargetContainer?.NameSafe();
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (TargetContainer == null || !Game.Instance.Player.VirtualStashes.TryGetValue(SourceStash, out var value))
 		{

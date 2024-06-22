@@ -1,3 +1,5 @@
+using System;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.View.NetLobby.Base;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -18,6 +20,10 @@ public class NetLobbyPlayerPCView : NetLobbyPlayerBaseView
 	[SerializeField]
 	private Image m_InfoPlayerDlcList;
 
+	private IDisposable m_CurrentPlayerDlcsDisposable;
+
+	private IDisposable m_ProblemsWithPlayerAndHostDlcsDisposable;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -25,15 +31,41 @@ public class NetLobbyPlayerPCView : NetLobbyPlayerBaseView
 		AddDisposable(KickButtonInteractable.Subscribe(m_KickButton.gameObject.SetActive));
 		AddDisposable(m_MainButton.OnLeftClickAsObservable().Subscribe(base.ViewModel.Invite));
 		AddDisposable(m_KickButton.OnLeftClickAsObservable().Subscribe(base.ViewModel.Kick));
-		AddDisposable(base.ViewModel.PlayerDLcList.Subscribe(CheckDlcList));
+		AddDisposable(base.ViewModel.PlayerDLcStringList.Subscribe(CheckCurrentPlayerDlcsNamesList));
 	}
 
-	private void CheckDlcList(string dlcList)
+	protected override void DestroyViewImplementation()
+	{
+		m_CurrentPlayerDlcsDisposable?.Dispose();
+		m_CurrentPlayerDlcsDisposable = null;
+		m_ProblemsWithPlayerAndHostDlcsDisposable?.Dispose();
+		m_ProblemsWithPlayerAndHostDlcsDisposable = null;
+		base.DestroyViewImplementation();
+	}
+
+	private void CheckCurrentPlayerDlcsNamesList(string dlcList)
 	{
 		if (!(m_InfoPlayerDlcList == null))
 		{
-			m_InfoPlayerDlcList.gameObject.SetActive(!string.IsNullOrWhiteSpace(dlcList));
-			m_InfoPlayerDlcList.SetHint(dlcList);
+			bool flag = !string.IsNullOrWhiteSpace(dlcList);
+			m_InfoPlayerDlcList.gameObject.SetActive(flag);
+			m_CurrentPlayerDlcsDisposable?.Dispose();
+			m_CurrentPlayerDlcsDisposable = null;
+			if (flag)
+			{
+				m_CurrentPlayerDlcsDisposable = m_InfoPlayerDlcList.SetHint(dlcList);
+			}
+		}
+	}
+
+	protected override void CheckProblemsWithPlayerAndHostDlcsImpl(string dlcList)
+	{
+		base.CheckProblemsWithPlayerAndHostDlcsImpl(dlcList);
+		m_ProblemsWithPlayerAndHostDlcsDisposable?.Dispose();
+		m_ProblemsWithPlayerAndHostDlcsDisposable = null;
+		if (!string.IsNullOrWhiteSpace(dlcList))
+		{
+			m_ProblemsWithPlayerAndHostDlcsDisposable = m_ProblemsWithPlayerAndHostDlcsMarker.SetHint(UIStrings.Instance.NetLobbyTexts.PlayerHasNoDlcs.Text + ":" + Environment.NewLine + Environment.NewLine + dlcList);
 		}
 	}
 }

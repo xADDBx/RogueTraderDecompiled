@@ -33,5 +33,6 @@ public enum FeatureGroup
 	ChargenPsyker = 31,
 	ChargenForgeWorld = 32,
 	ShipActiveAbility = 33,
-	ShipUltimateAbility = 34
+	ShipUltimateAbility = 34,
+	ShipTotalAbility = 35
 }

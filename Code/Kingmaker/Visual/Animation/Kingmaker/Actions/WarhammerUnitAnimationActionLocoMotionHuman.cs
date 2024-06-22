@@ -7,6 +7,7 @@ using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
+using Kingmaker.View;
 using Kingmaker.View.Animation;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
@@ -86,6 +87,10 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		public AnimationClipWrapper Clip;
 
 		public float Speed;
+
+		public float OutSpeed;
+
+		public float InSpeed;
 
 		public List<AnimationClipWrapper> GetAllWrappers()
 		{
@@ -223,6 +228,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			return;
 		}
 		bool flag = false;
+		bool flag2 = handle.Unit?.MovementAgent is UnitMovementAgentContinuous;
 		WeaponAnimationStyle activeMainHandWeaponStyle = handle.Manager.ActiveMainHandWeaponStyle;
 		MovementStyleLayer movementStyleLayer = NonCombatWalk;
 		foreach (WeaponStyleLayer item in CombatWalk)
@@ -239,10 +245,24 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			switch (actionData.State)
 			{
 			case MovementState.In:
-				handle.Manager.NewSpeed = currentWalkingStyleLayer.InCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
+				if (currentWalkingStyleLayer.OutSpeed != 0f && currentWalkingStyleLayer.OutDistance > 0f)
+				{
+					handle.Manager.NewSpeed = currentWalkingStyleLayer.InSpeed;
+				}
+				else
+				{
+					handle.Manager.NewSpeed = currentWalkingStyleLayer.InCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
+				}
 				break;
 			case MovementState.Out:
-				handle.Manager.NewSpeed = currentWalkingStyleLayer.OutCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
+				if (currentWalkingStyleLayer.OutSpeed != 0f && currentWalkingStyleLayer.OutDistance > 0f)
+				{
+					handle.Manager.NewSpeed = currentWalkingStyleLayer.OutSpeed;
+				}
+				else
+				{
+					handle.Manager.NewSpeed = currentWalkingStyleLayer.OutCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
+				}
 				break;
 			}
 		}
@@ -256,7 +276,12 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			actionData.State = MovementState.Idle;
 			flag = true;
 		}
-		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Run && handle.Unit != null)
+		if (actionData.State == MovementState.Out && flag2)
+		{
+			actionData.State = MovementState.Idle;
+			flag = true;
+		}
+		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Run && handle.Unit != null && !flag2)
 		{
 			ForcedPath path = handle.Unit.AgentASP.Path;
 			if (path != null && path.vectorPath?.Count > 0 && (handle.Unit.AgentASP.Path.vectorPath.Last() - handle.Unit.gameObject.transform.position).magnitude < currentWalkingStyleLayer.OutDistance)
@@ -265,7 +290,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 				flag = true;
 			}
 		}
-		if (actionData.State == MovementState.Run && handle.Unit != null && handle.Unit.AgentASP.IsInNodeLinkQueue)
+		if (actionData.State == MovementState.Run && handle.Unit != null && handle.Unit.AgentASP.IsInNodeLinkQueue && !flag2)
 		{
 			actionData.State = MovementState.Out;
 			flag = true;
@@ -279,24 +304,33 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 				flag = true;
 			}
 		}
-		if (currentWalkingStyleLayer != null && actionData.State != MovementState.Idle && handle.Unit != null && !UnitAnimationManager.HasMovingCommand(handle.Unit.Data) && handle.GetTime() > actionData.EndAnimationTime && (currentWalkingStyleLayer.In == null || currentWalkingStyleLayer.Out == null) && !handle.Unit.MovementAgent.IsReallyMoving)
+		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Out && handle.Unit != null && !flag2)
+		{
+			ForcedPath path2 = handle.Unit.AgentASP.Path;
+			if (path2 != null && path2.vectorPath?.Count > 0 && (handle.Unit.AgentASP.Path.vectorPath.Last() - handle.Unit.gameObject.transform.position).magnitude > currentWalkingStyleLayer.OutDistance + 0.5f)
+			{
+				actionData.State = MovementState.Run;
+				flag = true;
+			}
+		}
+		if (currentWalkingStyleLayer != null && actionData.State != MovementState.Idle && handle.Unit != null && !UnitAnimationManager.HasMovingCommand(handle.Unit.Data) && !handle.Unit.MovementAgent.IsReallyMoving)
 		{
 			actionData.State = MovementState.Idle;
 			flag = true;
 		}
-		bool flag2 = flag || actionData.WalkSpeedType != handle.Manager.WalkSpeedType;
+		bool flag3 = flag || actionData.WalkSpeedType != handle.Manager.WalkSpeedType;
 		AnimationBase animationBase = manager.CurrentEquipHandle?.ActiveAnimation;
 		if (animationBase == null || animationBase.GetWeight() > 0.99f)
 		{
-			flag2 = flag2 || actionData.InCombat != manager.IsInCombat || (manager.IsInCombat && (actionData.MainHandWeaponStyle != manager.ActiveMainHandWeaponStyle || actionData.OffHandWeaponStyle != manager.ActiveOffHandWeaponStyle));
+			flag3 = flag3 || actionData.InCombat != manager.IsInCombat || (manager.IsInCombat && (actionData.MainHandWeaponStyle != manager.ActiveMainHandWeaponStyle || actionData.OffHandWeaponStyle != manager.ActiveOffHandWeaponStyle));
 		}
-		if (flag2 && handle.Manager.Animator.enabled)
+		if (flag3 && handle.Manager.Animator.enabled)
 		{
 			handle.ActiveAnimation?.StartTransitionOut();
 			handle.ActiveAnimation?.StopEvents();
 			UpdateCurrentClips(handle);
 		}
-		else if (flag2 && handle.Manager.IsDead)
+		else if (flag3 && handle.Manager.IsDead)
 		{
 			handle.ActiveAnimation?.StartTransitionOut();
 			handle.ActiveAnimation?.StopEvents();
@@ -304,6 +338,10 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		else if (actionData.State != MovementState.Idle)
 		{
 			handle.ActiveAnimation?.SetSpeed(1f);
+		}
+		if (actionData.State == MovementState.Out && currentWalkingStyleLayer != null && currentWalkingStyleLayer.Out != null && currentWalkingStyleLayer.OutSpeed > 0f && currentWalkingStyleLayer.OutDistance > 0f)
+		{
+			handle.ActiveAnimation?.SetSpeed(currentWalkingStyleLayer.Out.Length / (currentWalkingStyleLayer.OutDistance / currentWalkingStyleLayer.OutSpeed));
 		}
 	}
 
@@ -333,7 +371,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 				if (currentWalkingStyleLayer.Out != null)
 				{
 					actionData.StartAnimationTime = handle.GetTime();
-					actionData.EndAnimationTime = handle.GetTime() + currentWalkingStyleLayer.Out.Length;
+					actionData.EndAnimationTime = handle.GetTime() + currentWalkingStyleLayer.Out.Length * (currentWalkingStyleLayer.Out.Length / (currentWalkingStyleLayer.OutDistance / currentWalkingStyleLayer.OutSpeed));
 					return currentWalkingStyleLayer.Out;
 				}
 				handle.Manager.NewSpeed = 0f;

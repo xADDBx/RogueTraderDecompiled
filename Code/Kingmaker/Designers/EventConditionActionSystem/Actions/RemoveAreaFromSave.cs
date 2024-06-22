@@ -30,7 +30,7 @@ public class RemoveAreaFromSave : GameAction
 		return "Mark area finished: " + Area.NameSafe() + " " + SpecificMechanic.Get().NameSafe();
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		AreaPersistentState areaPersistentState = Game.Instance.State.SavedAreaStates.FirstOrDefault((AreaPersistentState a) => a.Blueprint == Area);
 		if (areaPersistentState == null)

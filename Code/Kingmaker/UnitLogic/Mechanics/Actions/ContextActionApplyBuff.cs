@@ -5,6 +5,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.AreaEffects;
@@ -45,6 +46,9 @@ public class ContextActionApplyBuff : ContextAction
 
 	public ActionList ActionsOnImmune;
 
+	[Tooltip("If action runs in AbilityExecutionContext - add ability fact as source")]
+	public bool AddFactSource;
+
 	private bool IsCustomDuration
 	{
 		get
@@ -70,18 +74,18 @@ public class ContextActionApplyBuff : ContextAction
 		return text + " (for " + text2 + ")";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicsContext mechanicsContext = ContextData<MechanicsContext.Data>.Current?.Context;
 		if (mechanicsContext == null)
 		{
-			PFLog.Default.Error(this, "Unable to apply buff: no context found");
+			Element.LogError(this, "Unable to apply buff: no context found");
 			return;
 		}
 		MechanicEntity buffTarget = GetBuffTarget(mechanicsContext);
 		if (buffTarget == null)
 		{
-			PFLog.Default.Error(this, "Can't apply buff: target is null");
+			Element.LogError(this, "Can't apply buff: target is null");
 			return;
 		}
 		int count = CalculateRank(mechanicsContext);
@@ -96,7 +100,7 @@ public class ContextActionApplyBuff : ContextAction
 			}
 		}
 		buff.AddRank(count);
-		if (buff.FirstSource == null)
+		if (buff.FirstSource == null && !TryAddAbilitySource(buff))
 		{
 			AreaEffectEntity areaEffectEntity = ContextData<AreaEffectContextData>.Current?.Entity;
 			if (areaEffectEntity != null)
@@ -123,7 +127,7 @@ public class ContextActionApplyBuff : ContextAction
 				}
 				else
 				{
-					PFLog.Default.Error(mechanicsContext.AssociatedBlueprint, "Parent and child buff must have one owner (" + mechanicsContext.AssociatedBlueprint.name + ")");
+					Element.LogError(this, "Parent and child buff must have one owner ({0})", mechanicsContext.AssociatedBlueprint.name);
 				}
 			}
 		}
@@ -136,6 +140,29 @@ public class ContextActionApplyBuff : ContextAction
 		{
 			ActionsOnApply?.Run();
 		}
+	}
+
+	private bool TryAddAbilitySource(Buff buff)
+	{
+		if (!AddFactSource)
+		{
+			return false;
+		}
+		if (buff == null)
+		{
+			return false;
+		}
+		if (!(ContextData<MechanicsContext.Data>.Current?.Context is AbilityExecutionContext abilityExecutionContext))
+		{
+			return false;
+		}
+		Ability fact = abilityExecutionContext.Ability.Fact;
+		if (fact == null)
+		{
+			return false;
+		}
+		buff.AddSource(fact);
+		return true;
 	}
 
 	private int CalculateRank(MechanicsContext context)

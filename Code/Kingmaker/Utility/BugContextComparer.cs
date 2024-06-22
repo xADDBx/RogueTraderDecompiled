@@ -8,6 +8,14 @@ public class BugContextComparer : IComparer<BugContext>
 	private static Dictionary<BugContext.ContextType, int> typePriority = new Dictionary<BugContext.ContextType, int>
 	{
 		{
+			BugContext.ContextType.Desync,
+			0
+		},
+		{
+			BugContext.ContextType.Coop,
+			5
+		},
+		{
 			BugContext.ContextType.Unit,
 			10
 		},

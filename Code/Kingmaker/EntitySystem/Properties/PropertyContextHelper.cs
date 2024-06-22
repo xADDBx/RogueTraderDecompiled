@@ -66,4 +66,17 @@ public static class PropertyContextHelper
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}
+
+	public static string Colorized(this PropertyTargetType type)
+	{
+		if (type == PropertyTargetType.CurrentEntity)
+		{
+			type = FormulaTargetScope.CurrentTarget;
+		}
+		if (FormulaTargetScope.NeedColorization)
+		{
+			return $"<color='green'>{type}</color>";
+		}
+		return type.ToString();
+	}
 }

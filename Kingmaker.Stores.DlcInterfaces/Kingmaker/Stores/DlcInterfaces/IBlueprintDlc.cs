@@ -14,5 +14,11 @@ public interface IBlueprintDlc
 
 	bool IsAvailable { get; }
 
+	bool IsPurchased { get; }
+
+	bool IsActive { get; }
+
+	DlcTypeEnum DlcType { get; }
+
 	IEnumerable<IDlcStore> GetDlcStores();
 }

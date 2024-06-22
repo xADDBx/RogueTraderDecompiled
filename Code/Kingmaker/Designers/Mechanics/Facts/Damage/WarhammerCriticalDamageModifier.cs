@@ -25,6 +25,8 @@ public abstract class WarhammerCriticalDamageModifier : UnitFactComponentDelegat
 
 	public ContextValueModifier BonusCriticalDamageMultipliers = new ContextValueModifier();
 
+	public ContextValueModifier purePercentCriticalDamageModifier = new ContextValueModifier();
+
 	public ModifierDescriptor ModifierDescriptor;
 
 	protected void TryApply(RuleCalculateDamage rule)
@@ -42,6 +44,10 @@ public abstract class WarhammerCriticalDamageModifier : UnitFactComponentDelegat
 			if (BonusCriticalDamageMultipliers.Enabled)
 			{
 				rule.CriticalDamageModifiers.Add(ModifierType.PctMul, BonusCriticalDamageMultipliers.Calculate(base.Context), base.Fact, ModifierDescriptor);
+			}
+			if (purePercentCriticalDamageModifier.Enabled)
+			{
+				rule.PureCriticalDamageModifiers.Add(ModifierType.PctAdd, purePercentCriticalDamageModifier.Calculate(base.Context), base.Fact, ModifierDescriptor);
 			}
 		}
 	}

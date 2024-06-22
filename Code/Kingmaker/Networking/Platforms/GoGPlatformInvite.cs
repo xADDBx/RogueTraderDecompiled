@@ -67,6 +67,11 @@ public class GoGPlatformInvite : IPlatformInvite, IDisposable
 		return ParseString(commandLineArguments.Get("--JoinLobby"), out roomServer, out roomName, hasPrefix: false);
 	}
 
+	public bool IsSupportInviteWindow()
+	{
+		return true;
+	}
+
 	public void ShowInviteWindow()
 	{
 		if (!FormatString(Region, RoomName, out var output))

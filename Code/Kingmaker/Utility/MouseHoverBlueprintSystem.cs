@@ -28,7 +28,7 @@ public class MouseHoverBlueprintSystem : IService, ITooltipHandler, ISubscriber,
 		EventBus.Subscribe(this);
 	}
 
-	public void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false)
+	public void HandleTooltipRequest(TooltipData data, bool shouldNotHideLittleTooltip = false, bool showScrollbar = false)
 	{
 		if (data != null)
 		{
@@ -40,9 +40,9 @@ public class MouseHoverBlueprintSystem : IService, ITooltipHandler, ISubscriber,
 		}
 	}
 
-	public void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data)
+	public void HandleComparativeTooltipRequest(IEnumerable<TooltipData> data, bool showScrollbar = false)
 	{
-		HandleTooltipRequest(data?.LastOrDefault());
+		HandleTooltipRequest(data?.LastOrDefault(), shouldNotHideLittleTooltip: false, showScrollbar);
 	}
 
 	public void HandleInfoRequest(TooltipBaseTemplate template, ConsoleNavigationBehaviour ownerNavigationBehaviour = null, bool shouldNotHideLittleTooltip = false)

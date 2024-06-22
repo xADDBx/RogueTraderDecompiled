@@ -22,14 +22,14 @@ public class WeaponRangeTypeGetter : UnitPropertyGetter
 	[SerializeField]
 	private WeaponRangeType m_RangeType;
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		string text = ((m_RangeType == WeaponRangeType.Melee) ? "Melee" : "Ranged");
 		if (!SecondWeapon)
 		{
-			return "First Weapon Range is " + text;
+			return "First Weapon of " + FormulaTargetScope.Current + " Range is " + text;
 		}
-		return "Second Weapon Range is " + text;
+		return "Second Weapon of " + FormulaTargetScope.Current + " Range is " + text;
 	}
 
 	protected override int GetBaseValue()

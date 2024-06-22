@@ -18,7 +18,7 @@ public class ContextActionOnContextOwner : ContextAction
 		return "Run actions on Owner of context";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		MechanicEntity maybeOwner = base.Context.MaybeOwner;
 		if (maybeOwner != null)

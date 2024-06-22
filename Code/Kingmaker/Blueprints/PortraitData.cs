@@ -78,6 +78,9 @@ public sealed class PortraitData : IMemoryPackable<PortraitData>, IMemoryPackFor
 	[MemoryPackIgnore]
 	public bool InitiativePortrait;
 
+	[MemoryPackIgnore]
+	public bool FlipFullLengthPortraitInDialog;
+
 	private static int[] s_DefaultPortraitsHashes;
 
 	private string CustomPortraitSmallPath => CustomPortraitsManager.Instance.GetSmallPortraitPath(m_CustomPortraitId);
@@ -131,7 +134,7 @@ public sealed class PortraitData : IMemoryPackable<PortraitData>, IMemoryPackFor
 				}
 				return SmallPortraitHandle.Sprite;
 			}
-			return m_PortraitImage.Load(ignorePreloadWarning: true);
+			return m_PortraitImage?.Load(ignorePreloadWarning: true);
 		}
 	}
 

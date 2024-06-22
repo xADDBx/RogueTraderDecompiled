@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.VM.Exploration;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -19,9 +20,17 @@ public class ResourceMinersView : ViewBase<ResourceMinersVM>, IWidgetView, IFloa
 	protected OwlcatMultiButton m_MainButton;
 
 	[SerializeField]
+	private TextMeshProUGUI m_NameLabel;
+
+	[SerializeField]
 	private TextMeshProUGUI m_Count;
 
 	public MonoBehaviour MonoBehaviour => this;
+
+	public void Initialize()
+	{
+		m_NameLabel.text = UIStrings.Instance.ExplorationTexts.ResourceMiner.Text;
+	}
 
 	protected override void BindViewImplementation()
 	{
@@ -53,7 +62,16 @@ public class ResourceMinersView : ViewBase<ResourceMinersVM>, IWidgetView, IFloa
 
 	public bool IsValid()
 	{
-		return base.isActiveAndEnabled;
+		if (base.isActiveAndEnabled)
+		{
+			ResourceMinersVM viewModel = base.ViewModel;
+			if (viewModel == null)
+			{
+				return false;
+			}
+			return !viewModel.HasColony.Value;
+		}
+		return false;
 	}
 
 	public Vector2 GetPosition()

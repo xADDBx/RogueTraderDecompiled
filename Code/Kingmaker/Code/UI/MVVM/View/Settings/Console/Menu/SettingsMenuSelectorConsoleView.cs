@@ -35,6 +35,10 @@ public class SettingsMenuSelectorConsoleView : ViewBase<SelectionGroupRadioVM<Se
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	public void OnNext()
 	{
 		base.ViewModel.SelectNextValidEntity();
@@ -43,9 +47,5 @@ public class SettingsMenuSelectorConsoleView : ViewBase<SelectionGroupRadioVM<Se
 	public void OnPrev()
 	{
 		base.ViewModel.SelectPrevValidEntity();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

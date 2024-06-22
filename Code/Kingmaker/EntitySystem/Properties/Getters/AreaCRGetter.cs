@@ -8,7 +8,7 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("3896c7c92dfd48cab40ad6ae5dff83d5")]
 public class AreaCRGetter : PropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		return "Area CR";
 	}

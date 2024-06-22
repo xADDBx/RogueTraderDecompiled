@@ -61,7 +61,7 @@ public class CheatNetManager
 	[Cheat(Name = "net_stop", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void CheatStopNet()
 	{
-		PhotonManager.Instance.StopPlaying();
+		PhotonManager.Instance.StopPlaying("CheatNetManager");
 	}
 
 	[Cheat(Name = "net_players", ExecutionPolicy = ExecutionPolicy.PlayMode)]
@@ -243,6 +243,13 @@ public class CheatNetManager
 		SaveMetaData.MaxPacketSize = packetSizeKb * 1024;
 	}
 
+	[Cheat(Name = "net_streams", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void CheatSetStreamsCount(int cnt)
+	{
+		StreamsController.DefaultStreamsCount = cnt;
+		PFLog.Net.Error($"CheatSetStreamsCount {StreamsController.DefaultStreamsCount}");
+	}
+
 	[Cheat(Name = "net_slow", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void CheatSlow(bool activate = true)
 	{
@@ -254,6 +261,18 @@ public class CheatNetManager
 		{
 			TimeSpeedController.ForceSpeedMode();
 		}
+	}
+
+	[Cheat(Name = "net_clear_portraits", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void CheatPortraitManagerClearGuidMapping()
+	{
+		CustomPortraitsManager.Instance.CheatClearGuidMapping();
+	}
+
+	[Cheat(Name = "net_pause_send", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void CheatPauseDataSending()
+	{
+		PhotonManager.Cheat.PauseDataSending = !PhotonManager.Cheat.PauseDataSending;
 	}
 
 	[Cheat(Name = "net_sim", ExecutionPolicy = ExecutionPolicy.PlayMode)]

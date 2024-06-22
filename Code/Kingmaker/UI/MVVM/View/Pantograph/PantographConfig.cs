@@ -7,17 +7,17 @@ namespace Kingmaker.UI.MVVM.View.Pantograph;
 
 public class PantographConfig
 {
-	public Transform Transform;
+	public readonly Transform Transform;
 
-	public string Text;
+	public readonly string Text;
 
-	public List<Sprite> Icons;
+	public readonly List<Sprite> Icons;
 
-	public bool UseLargeView;
+	public readonly bool UseLargeView;
 
-	public IWidgetView View;
+	public readonly IWidgetView View;
 
-	public IViewModel ViewModel;
+	public readonly IViewModel ViewModel;
 
 	public PantographConfig(Transform transform, string text, List<Sprite> icons = null, bool useLargeView = false)
 	{

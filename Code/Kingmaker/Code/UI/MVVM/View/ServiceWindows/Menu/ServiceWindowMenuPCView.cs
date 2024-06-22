@@ -43,10 +43,7 @@ public class ServiceWindowMenuPCView : ViewBase<ServiceWindowsMenuVM>
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.Close));
 		if (m_AdditionalBackground != null)
 		{
-			AddDisposable(base.ViewModel.IsAdditionalBackgroundNeeded.Subscribe(delegate(bool value)
-			{
-				m_AdditionalBackground.SetActive(value);
-			}));
+			AddDisposable(base.ViewModel.IsAdditionalBackgroundNeeded.Subscribe(m_AdditionalBackground.SetActive));
 		}
 		m_CloseButton.gameObject.SetActive(Game.Instance.IsControllerMouse);
 	}

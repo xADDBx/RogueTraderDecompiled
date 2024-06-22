@@ -25,8 +25,23 @@ public class DlcStoreXboxSeries : DlcStore, IDLCStoreXboxSeries
 		{
 			Purchased = purchased,
 			DownloadState = (flag ? DownloadState.Loaded : DownloadState.NotLoaded),
-			IsMounted = flag,
-			IsEnabled = true
+			IsMounted = flag
 		};
+	}
+
+	public override bool OpenShop()
+	{
+		_ = IsSuitable;
+		return false;
+	}
+
+	public override bool Mount()
+	{
+		bool result = false;
+		if (!IsSuitable)
+		{
+			return false;
+		}
+		return result;
 	}
 }

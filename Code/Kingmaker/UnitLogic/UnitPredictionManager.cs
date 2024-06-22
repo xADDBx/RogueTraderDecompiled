@@ -347,7 +347,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		RealHologramPosition = position;
 		hologram.gameObject.transform.position = position.Value + SizePathfindingHelper.GetSizePositionOffset(hologram.Parent.SizeRect, direction ?? Vector3.forward);
 		hologram.CoverType = LosCalculations.GetCoverType(position.Value);
-		if (!direction.HasValue)
+		if (!direction.HasValue || direction == Vector3.zero)
 		{
 			BaseUnitEntity baseUnitEntity = (from u in Game.Instance.State.AllBaseUnits
 				where u.Faction.IsPlayerEnemy && u.IsInCombat
@@ -447,7 +447,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		HandleUnitStartTurnInternal();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleUnitStartTurnInternal();
 	}

@@ -47,6 +47,12 @@ public class OrbitCamera : MonoBehaviour, IPointerEnterHandler, IEventSystemHand
 
 	private Vector3 position;
 
+	private Quaternion origTargetRotation;
+
+	private Vector3 origTargetPosition;
+
+	private float origDistance;
+
 	public GraphicRaycaster m_Raycaster;
 
 	public PointerEventData m_PointerEventData;
@@ -76,16 +82,25 @@ public class OrbitCamera : MonoBehaviour, IPointerEnterHandler, IEventSystemHand
 		distance = Vector3.Distance(base.transform.position, target.position);
 		currentDistance = distance;
 		desiredDistance = distance;
+		origDistance = distance;
 		position = base.transform.position;
 		rotation = base.transform.rotation;
 		currentRotation = base.transform.rotation;
 		desiredRotation = base.transform.rotation;
+		origTargetPosition = target.position;
+		origTargetRotation = target.rotation;
 		xDeg = Vector3.Angle(Vector3.right, base.transform.right);
 		yDeg = Vector3.Angle(Vector3.up, base.transform.up);
 	}
 
 	private void LateUpdate()
 	{
+		if (Input.GetKeyDown(KeyCode.F))
+		{
+			target.rotation = origTargetRotation;
+			target.position = origTargetPosition;
+			desiredDistance = origDistance;
+		}
 		if (!Input.GetMouseButton(0))
 		{
 			if (Input.GetMouseButton(1))

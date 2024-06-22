@@ -22,7 +22,6 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
 using Kingmaker.Interaction;
@@ -401,12 +400,16 @@ public static class UIUtility
 	public static void GetGroup(List<BaseUnitEntity> characters, bool withRemote = false, bool withPet = false)
 	{
 		characters.Clear();
-		characters.AddRange(Game.Instance.Player.Party);
 		if (withRemote)
 		{
+			characters.AddRange(Game.Instance.Player.Party);
 			List<BaseUnitEntity> list = Game.Instance.Player.RemoteCompanions.ToList();
 			list.Reverse();
 			characters.AddRange(list);
+		}
+		else
+		{
+			characters.AddRange(Game.Instance.Player.Party.Where(IsViewActiveUnit));
 		}
 		if (!withPet)
 		{
@@ -425,6 +428,15 @@ public static class UIUtility
 				characters.Insert(num + 1, item);
 			}
 		}
+	}
+
+	public static bool IsViewActiveUnit(BaseUnitEntity unit)
+	{
+		if (!unit.IsViewActive)
+		{
+			return !RootUIContext.Instance.IsSurface;
+		}
+		return true;
 	}
 
 	public static bool IsGlobalMap()
@@ -447,7 +459,7 @@ public static class UIUtility
 		return (float)text.Split(' ').Length * 0.6f;
 	}
 
-	public static void SetPopupWindowPosition(RectTransform windowTransform, RectTransform sourceTransform, List<Vector2> priorityPivots = null)
+	public static void SetPopupWindowPosition(RectTransform windowTransform, RectTransform sourceTransform, Vector2 shiftPosition, List<Vector2> priorityPivots = null)
 	{
 		if (sourceTransform == null)
 		{
@@ -460,7 +472,7 @@ public static class UIUtility
 		vector = new Vector2(vector.x - sourceTransform.rect.width * (sourceTransform.pivot.x - 0.5f) / component.rect.width, vector.y - sourceTransform.rect.height * (sourceTransform.pivot.y - 0.5f) / component.rect.height);
 		Vector2 anchorMax = (windowTransform.anchorMin = vector);
 		windowTransform.anchorMax = anchorMax;
-		Vector2 vector3 = new Vector2(sourceTransform.rect.width / 2f, sourceTransform.rect.height / 2f);
+		Vector2 vector3 = new Vector2(sourceTransform.rect.width / 2f + shiftPosition.x, sourceTransform.rect.height / 2f + shiftPosition.y);
 		Vector2 vector4 = new Vector2(vector3.x / component.rect.width, vector3.y / component.rect.height);
 		foreach (Vector2 item in list)
 		{
@@ -684,7 +696,7 @@ public static class UIUtility
 					}
 					else
 					{
-						list.Add(new PrerequisiteEntryVM(UIStrings.Instance.Tooltips.PrerequisiteRank, calculatedPrerequisiteMaxRankNotReached.Value, calculatedPrerequisiteMaxRankNotReached.Not, calculatedPrerequisiteMaxRankNotReached.MaxRank.ToString()));
+						list.Add(new PrerequisiteEntryVM(UIStrings.Instance.Tooltips.PrerequisiteRank, calculatedPrerequisiteMaxRankNotReached.Value, calculatedPrerequisiteMaxRankNotReached.Not));
 					}
 				}
 				else
@@ -698,15 +710,19 @@ public static class UIUtility
 			}
 			else
 			{
-				foreach (CalculatedPrerequisite prerequisite2 in calculatedPrerequisiteComposite.Prerequisites)
+				foreach (CalculatedPrerequisite item in calculatedPrerequisiteComposite.Prerequisites.Where((CalculatedPrerequisite i) => !(i is CalculatedPrerequisiteComposite)))
 				{
-					list.AddRange(GetPrerequisiteEntries(prerequisite2));
+					list.AddRange(GetPrerequisiteEntries(item));
+				}
+				foreach (CalculatedPrerequisite item2 in calculatedPrerequisiteComposite.Prerequisites.Where((CalculatedPrerequisite i) => i is CalculatedPrerequisiteComposite))
+				{
+					list.Add(new PrerequisiteEntryVM(GetPrerequisiteEntries(item2), calculatedPrerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or));
 				}
 			}
 		}
-		else
+		else if (!calculatedPrerequisiteFact.IsDlcRestrictedContent)
 		{
-			string text2 = GetPrerequisiteFactName(calculatedPrerequisiteFact) + " <b>" + calculatedPrerequisiteFact.Fact.Name + "</b>";
+			string text2 = GetPrerequisiteFactName(calculatedPrerequisiteFact) + " " + GetFactName(calculatedPrerequisiteFact) + ".";
 			list.Add(new PrerequisiteEntryVM(text2, calculatedPrerequisiteFact.Value, calculatedPrerequisiteFact.Not));
 		}
 		return list;
@@ -719,20 +735,34 @@ public static class UIUtility
 
 	private static PrerequisiteEntryVM UnpackPrerequisiteComposite(CalculatedPrerequisiteComposite prerequisiteComposite)
 	{
-		StringBuilder stringBuilder = new StringBuilder(GetPrerequisiteFactName(prerequisiteComposite.Prerequisites.First() as CalculatedPrerequisiteFact) + " ");
+		StringBuilder stringBuilder = new StringBuilder(GetPrerequisiteFactName(prerequisiteComposite.Prerequisites.First() as CalculatedPrerequisiteFact) + ".");
 		string separator = ((prerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or) ? (" " + UIStrings.Instance.Tooltips.or.Text + " ") : (" " + UIStrings.Instance.Tooltips.and.Text + " "));
 		List<string> list = new List<string>();
 		foreach (CalculatedPrerequisite prerequisite in prerequisiteComposite.Prerequisites)
 		{
 			if (prerequisite is CalculatedPrerequisiteFact calculatedPrerequisiteFact)
 			{
-				list.Add("<b>" + calculatedPrerequisiteFact.Fact.Name + "</b>");
+				if (!calculatedPrerequisiteFact.IsDlcRestrictedContent)
+				{
+					list.Add(GetFactName(calculatedPrerequisiteFact));
+				}
 				continue;
 			}
 			throw new ArgumentOutOfRangeException();
 		}
 		stringBuilder.Append(string.Join(separator, list));
+		stringBuilder.Append(".");
 		return new PrerequisiteEntryVM(stringBuilder.ToString(), prerequisiteComposite.Value, prerequisiteComposite.Not);
+	}
+
+	private static string GetFactName(CalculatedPrerequisiteFact prerequisiteFact)
+	{
+		string text = "<b>" + prerequisiteFact.Fact.Name + "</b>";
+		if (prerequisiteFact.Fact is BlueprintFeature blueprintFeature)
+		{
+			text = "<link=\"Highlight:" + blueprintFeature.AssetGuid + "\">" + text + "</link>";
+		}
+		return text;
 	}
 
 	private static string GetPrerequisiteFactName(CalculatedPrerequisiteFact prerequisiteFact)
@@ -936,22 +966,27 @@ public static class UIUtility
 		{
 			return string.Empty;
 		}
-		int? num = interactionActor.InteractionDC;
+		int? interactionDC = interactionActor.InteractionDC;
 		string interactionName = interactionActor.GetInteractionName();
-		if (!num.HasValue)
+		if (!interactionDC.HasValue)
 		{
 			return "[" + interactionName + "]";
 		}
 		StatType skill = interactionActor.Skill;
 		needChanceText = true;
 		BaseUnitEntity baseUnitEntity = interactionActor.InteractionPart?.SelectUnit(units, muteEvents: false, skill);
+		interactionDC = InteractionHelper.GetInteractionSkillCheckChance(baseUnitEntity, skill, interactionDC.Value);
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append(interactionName + ": ");
 		if (baseUnitEntity != null)
 		{
-			ModifiableValue stat = baseUnitEntity.Stats.GetStat(skill);
-			num += stat.ModifiedValue;
+			stringBuilder.Append($"{interactionDC}% [{baseUnitEntity.Name}]");
 		}
-		num = Mathf.Clamp((num + (int)SettingsRoot.Difficulty.SkillCheckModifier).Value, 0, 100);
-		return $"[{interactionName}: {num}%]";
+		else
+		{
+			stringBuilder.Append("Locked%");
+		}
+		return stringBuilder.ToString();
 	}
 
 	public static string GetOvertipSkillCheckText(InteractionSkillCheckPart skillCheck, List<BaseUnitEntity> units, out bool needChanceText)
@@ -967,7 +1002,7 @@ public static class UIUtility
 			return string.Empty;
 		}
 		string text = BlueprintRoot.Instance.LocalizedTexts.Stats.GetText(statType);
-		if (skillCheck.Settings.HideDC || statType == StatType.SkillLogic || statType == StatType.SkillLoreXenos)
+		if (skillCheck.Settings.HideDC)
 		{
 			return "[" + text + "]";
 		}
@@ -976,15 +1011,8 @@ public static class UIUtility
 		{
 			num = skillCheck.Settings.GetDC();
 		}
-		num += (int)SettingsRoot.Difficulty.SkillCheckModifier;
 		needChanceText = true;
-		BaseUnitEntity baseUnitEntity = skillCheck.SelectUnit(units);
-		if (baseUnitEntity != null)
-		{
-			ModifiableValue stat = baseUnitEntity.Stats.GetStat(statType);
-			num += stat.ModifiedValue;
-		}
-		num = Mathf.Clamp(num, 0, 100);
+		num = InteractionHelper.GetInteractionSkillCheckChance(skillCheck.SelectUnit(units), statType, num);
 		return $"[{text}: {num}%]";
 	}
 
@@ -994,7 +1022,7 @@ public static class UIUtility
 		{
 			h.HandleWarning(message);
 		});
-		PFLog.Default.Log("Send UI Warning: " + message);
+		PFLog.UI.Log("Send UI Warning: " + message);
 	}
 
 	public static string GetHpText(MechanicEntityUIWrapper unit, bool isDead, int hpLeftSize = 80)

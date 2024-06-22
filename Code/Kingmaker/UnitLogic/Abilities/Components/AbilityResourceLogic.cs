@@ -15,7 +15,7 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("2945aafe5b353dc49b283c982269ade6")]
-public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
+public class AbilityResourceLogic : BlueprintComponent, IAbilityResourceLogic, IAbilityRestriction
 {
 	[HideIf("HideBaseResourceVariables")]
 	[SerializeField]
@@ -61,7 +61,7 @@ public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
 	{
 		get
 		{
-			if (!HideBaseResourceVariables && IsSpendResource)
+			if (!HideBaseResourceVariables && IsSpendResource())
 			{
 				return !CostIsCustom;
 			}
@@ -74,7 +74,7 @@ public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
 	{
 		get
 		{
-			if (!HideBaseResourceVariables && IsSpendResource)
+			if (!HideBaseResourceVariables && IsSpendResource())
 			{
 				return !CostIsCustom;
 			}
@@ -84,11 +84,14 @@ public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
 
 	protected virtual bool HideBaseResourceVariables => false;
 
-	public bool IsSpendResource => m_IsSpendResource;
+	public bool IsSpendResource()
+	{
+		return m_IsSpendResource;
+	}
 
 	public virtual bool IsAbilityRestrictionPassed(AbilityData ability)
 	{
-		int amount = (IsSpendResource ? CalculateCost(ability) : 0);
+		int amount = (IsSpendResource() ? CalculateCost(ability) : 0);
 		return ability.Caster.GetAbilityResourcesOptional()?.HasEnoughResource(RequiredResource, amount) ?? true;
 	}
 
@@ -110,7 +113,7 @@ public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
 			{
 				PFLog.Default.Error("Ability {0} is not available for caster {1}", ability.Blueprint, caster);
 			}
-			else if (IsSpendResource)
+			else if (IsSpendResource())
 			{
 				ability.Caster.GetAbilityResourcesOptional()?.Spend(SimpleBlueprintExtendAsObject.Or(ability.OverrideRequiredResource, null) ?? RequiredResource, CalculateCost(ability));
 			}
@@ -147,5 +150,18 @@ public class AbilityResourceLogic : BlueprintComponent, IAbilityRestriction
 			}
 		}
 		return num;
+	}
+
+	public int CalculateResourceAmount(AbilityData ability)
+	{
+		if (IsSpendResource())
+		{
+			PartAbilityResourceCollection abilityResourcesOptional = ability.Caster.GetAbilityResourcesOptional();
+			if (abilityResourcesOptional != null)
+			{
+				return abilityResourcesOptional.GetResourceAmount(RequiredResource);
+			}
+		}
+		return -1;
 	}
 }

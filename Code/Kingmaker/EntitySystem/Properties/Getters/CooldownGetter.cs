@@ -52,12 +52,12 @@ public class CooldownGetter : PropertyGetter
 		return abilityCooldownsOptional.GetCooldown(Ability);
 	}
 
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		if (!IsAbilityType)
 		{
-			return $"{AbilityGroup} CD";
+			return $"{AbilityGroup} cooldown";
 		}
-		return $"{Ability} CD";
+		return $"{Ability} cooldown";
 	}
 }

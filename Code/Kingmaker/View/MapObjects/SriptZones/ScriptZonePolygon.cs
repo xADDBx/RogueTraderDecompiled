@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Pathfinding;
 using Kingmaker.Utility.CodeTimer;
 using Owlcat.Runtime.Core.Utility;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects.SriptZones;
 
+[KnowledgeDatabaseID("05d2d66406b0cbe4fb2b26db672f8898")]
 public class ScriptZonePolygon : PolygonComponent, IScriptZoneShape
 {
 	[Serializable]

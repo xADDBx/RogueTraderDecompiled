@@ -42,6 +42,12 @@ public class NewGameConsoleView : NewGameBaseView
 	[SerializeField]
 	private ConsoleHint m_NextHint;
 
+	[SerializeField]
+	private ConsoleHint m_SwitchOnOffDlcHint;
+
+	[SerializeField]
+	private ConsoleHint m_PurchaseHint;
+
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
 	private InputLayer m_InputLayer;
@@ -61,6 +67,7 @@ public class NewGameConsoleView : NewGameBaseView
 		base.gameObject.SetActive(value: false);
 		m_NewGamePhaseDifficultyConsoleView.Initialize();
 		m_Selector.Initialize();
+		m_NewGamePhaseStoryConsoleView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -90,6 +97,8 @@ public class NewGameConsoleView : NewGameBaseView
 		m_NavigationBehaviour.Clear();
 		if (base.ViewModel.SelectedMenuEntity.Value.NewGamePhaseVM == base.ViewModel.StoryVM)
 		{
+			m_NavigationBehaviour.SetEntitiesVertical(m_NewGamePhaseStoryConsoleView.GetNavigationEntities());
+			m_NavigationBehaviour.FocusOnFirstValidEntity();
 			m_NewGamePhaseStoryConsoleView.ScrollToTop();
 			m_HasGlossary.Value = false;
 		}
@@ -127,7 +136,7 @@ public class NewGameConsoleView : NewGameBaseView
 		AddDisposable(m_ConfirmHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnButtonNext();
-		}, 8)));
+		}, 8, base.ViewModel.StoryVM.IsNextButtonAvailable)));
 		m_ConfirmHint.SetLabel(UIStrings.Instance.CharGen.Next);
 		AddDisposable(m_DeclineHint.Bind(inputLayer.AddButton(delegate
 		{
@@ -141,7 +150,7 @@ public class NewGameConsoleView : NewGameBaseView
 		AddDisposable(m_NextHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnButtonNext();
-		}, 15)));
+		}, 15, base.ViewModel.StoryVM.IsNextButtonAvailable)));
 		AddDisposable(m_CommonHintsWidget.BindHint(inputLayer.AddButton(ShowGlossary, 11, m_HasGlossary, InputActionEventType.ButtonJustReleased), UIStrings.Instance.Dialog.OpenGlossary));
 		AddDisposable(m_GlossaryInputLayer.AddAxis(ScrollDescription, 3, repeat: true));
 		AddDisposable(m_CommonHintsWidget.BindHint(m_GlossaryInputLayer.AddButton(delegate
@@ -152,7 +161,7 @@ public class NewGameConsoleView : NewGameBaseView
 		{
 			CloseGlossary();
 		}, 11, m_GlossaryMode, InputActionEventType.ButtonJustReleased));
-		m_NewGamePhaseStoryConsoleView.CreateInputImpl(inputLayer);
+		m_NewGamePhaseStoryConsoleView.CreateInputImpl(inputLayer, m_CommonHintsWidget, m_SwitchOnOffDlcHint, m_PurchaseHint);
 		m_NewGamePhaseDifficultyConsoleView.CreateInputImpl(inputLayer, m_CommonHintsWidget);
 	}
 

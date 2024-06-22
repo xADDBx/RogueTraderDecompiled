@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem.Rules.Damage;
 
@@ -16,11 +17,11 @@ public class ContextActionDealCrewDamage : ContextAction
 		return "Deal crew damage";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		if (!((ToCaster ? base.Context.MaybeCaster : base.Target.Entity) is StarshipEntity target))
 		{
-			PFLog.Default.Error("Target unit is missing");
+			Element.LogError(this, "Target unit is missing");
 		}
 		else
 		{

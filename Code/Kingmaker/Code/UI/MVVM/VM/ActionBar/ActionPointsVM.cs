@@ -10,6 +10,7 @@ using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.PathRenderer;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -53,13 +54,13 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	private InteractionPart m_Interaction;
 
-	private BoolReactiveProperty m_AbilitySelected = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_AbilitySelected = new BoolReactiveProperty();
 
-	private string m_APColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.ActionPoints) + ">";
+	private readonly string m_APColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.ActionPoints) + ">";
 
-	private string m_MPColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.MovePoints) + ">";
+	private readonly string m_MPColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.MovePoints) + ">";
 
-	private string m_NotEnoughColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.NotEnoughPoints) + ">";
+	private readonly string m_NotEnoughColor = "<color=#" + ColorUtility.ToHtmlStringRGB(UIConfig.Instance.TooltipColors.NotEnoughPoints) + ">";
 
 	private string m_ColorEnd = "</color>";
 
@@ -88,17 +89,22 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		}));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	private void SetCursorTexts(int mp, int ap, bool noMove, bool setForce)
 	{
 		string upperText = null;
 		string lowerText = null;
+		bool flag = Game.Instance.SelectionCharacter.SelectedUnit.Value.IsMyNetRole();
 		UITooltips tooltips = UIStrings.Instance.Tooltips;
-		if (mp > 0)
+		if (mp > 0 && flag)
 		{
 			string text = ((BlueAP.Value >= (float)mp) ? m_MPColor : m_NotEnoughColor);
 			upperText = $"{text}<size=150%>{mp}</size>{m_ColorEnd} {tooltips.MP.Text}";
 		}
-		if (ap > 0)
+		if (ap > 0 && flag)
 		{
 			lowerText = $"{m_APColor}<size=150%>{ap}</size>{m_ColorEnd} {tooltips.AP.Text}";
 		}
@@ -142,8 +148,13 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	private void SetBlueAPCost(float cost)
 	{
-		if (m_UnitUIWrapper.MechanicEntity != null && !(m_SelectedAbility != null) && !(m_HoveredAbility != null) && m_Interaction == null)
+		if (m_UnitUIWrapper.MechanicEntity != null && !(m_SelectedAbility != null) && !(m_HoveredAbility != null))
 		{
+			if (m_Interaction != null)
+			{
+				ClearBlueAPCost();
+				return;
+			}
 			CostBlueAP.Value = cost;
 			PredictedBlueAP.Value = Mathf.Max(BlueAP.Value - CostBlueAP.Value, 0f);
 		}
@@ -221,10 +232,6 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		CalculateYellowAPCost();
 	}
 
-	protected override void DisposeImplementation()
-	{
-	}
-
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand command)
 	{
 		if (ShouldHandle(command))
@@ -280,7 +287,7 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		HandleUnitStartTurnInternal();
 	}
 
-	public void HandleUnitStartInterruptTurn()
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		HandleUnitStartTurnInternal();
 	}

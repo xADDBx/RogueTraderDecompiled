@@ -8,6 +8,7 @@ using Kingmaker.Globalmap.SectorMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Utility.Attributes;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using UnityEngine;
@@ -15,7 +16,7 @@ using UnityEngine;
 namespace Kingmaker.AreaLogic.Etudes;
 
 [TypeId("d7c3d80beb354d44ab46ace48fc5bf75")]
-public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWarpTravelHandler, ISubscriber<ISectorMapObjectEntity>, ISubscriber, IHashable
+public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWarpTravelHandler, ISubscriber<ISectorMapObjectEntity>, ISubscriber, ISectorMapWarpTravelEventHandler, IHashable
 {
 	public class SavableData : IEntityFactComponentSavableData, IHashable
 	{
@@ -46,22 +47,32 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 		AfterTravelFinished
 	}
 
+	public enum EventType
+	{
+		OncePerTravel,
+		MechanicEvent,
+		SimpleEvent
+	}
+
 	[Tooltip("How much warp travels should pass for ActionList to be invoked")]
 	public int WarpTravelTriggerCount;
 
 	[Tooltip("Actions to invoke after required amount of warp travel has passed")]
 	public ActionList ActionList;
 
+	[SerializeField]
+	public EventType TriggerType;
+
 	[Tooltip("When to invoke actions relatively to last warp travel")]
+	[ShowIf("IsOncePerTravel")]
 	public TimeToStartAction TimeToStart = TimeToStartAction.AfterTravelFinished;
 
 	[SerializeField]
+	[ShowIf("IsOncePerTravel")]
 	[Tooltip("The greater number - the higher priority. Priority of deadly encounters is 20")]
 	public int Priority = 1;
 
-	[SerializeField]
-	[Tooltip("Will be playing despite re and other etudes")]
-	public bool DontUseEtudesQueue;
+	private bool IsOncePerTravel => TriggerType == EventType.OncePerTravel;
 
 	public void HandleWarpTravelBeforeStart()
 	{
@@ -74,17 +85,22 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 		else if (!savableData.IsReadyToTrigger && IsReadyToTrigger())
 		{
 			savableData.IsReadyToTrigger = true;
-			if (!DontUseEtudesQueue && !etudesInWarpQueue.Contains(this))
+			if (IsOncePerTravel && !etudesInWarpQueue.Contains(this))
 			{
 				etudesInWarpQueue.Add(this);
 			}
+		}
+		List<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>> triggeredEtudeInMiddleOfJump = Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump;
+		if (savableData.IsReadyToTrigger && TriggerType == EventType.SimpleEvent && !triggeredEtudeInMiddleOfJump.Contains(this))
+		{
+			triggeredEtudeInMiddleOfJump.Add(this);
 		}
 	}
 
 	public void HandleWarpTravelStarted(SectorMapPassageEntity passage)
 	{
 		SavableData savableData = RequestSavableData<SavableData>();
-		if (TimeToStart == TimeToStartAction.AfterTravelStart && (Game.Instance.Player.WarpTravelState.TriggeredEtude == this || (DontUseEtudesQueue && savableData.IsReadyToTrigger)))
+		if ((TimeToStart == TimeToStartAction.AfterTravelStart && Game.Instance.Player.WarpTravelState.TriggeredEtude == this) || (TriggerType == EventType.MechanicEvent && savableData.IsReadyToTrigger))
 		{
 			Game.Instance.SectorMapTravelController.PauseTravel();
 			ActionList.Run();
@@ -95,8 +111,8 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 
 	public void HandleWarpTravelStopped()
 	{
-		SavableData savableData = RequestSavableData<SavableData>();
-		if (TimeToStart == TimeToStartAction.AfterTravelFinished && (Game.Instance.Player.WarpTravelState.TriggeredEtude == this || (DontUseEtudesQueue && savableData.IsReadyToTrigger)))
+		RequestSavableData<SavableData>();
+		if (TimeToStart == TimeToStartAction.AfterTravelFinished && Game.Instance.Player.WarpTravelState.TriggeredEtude == this)
 		{
 			ActionList.Run();
 			Complete();
@@ -142,10 +158,21 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 	private void Complete()
 	{
 		RequestSavableData<SavableData>().IsCompleted = true;
-		if (!DontUseEtudesQueue)
+		if (TriggerType == EventType.OncePerTravel)
 		{
 			Game.Instance.Player.WarpTravelState.EtudesInWarpQueue.Remove(this);
 			Game.Instance.Player.WarpTravelState.TriggeredEtude = null;
+		}
+	}
+
+	public void HandleStartEventInTheMiddleOfJump(BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> etudeTrigger)
+	{
+		if (etudeTrigger == this)
+		{
+			Game.Instance.SectorMapTravelController.PauseTravel();
+			ActionList.Run();
+			Game.Instance.SectorMapTravelController.UnpauseManual();
+			Complete();
 		}
 	}
 

@@ -87,11 +87,13 @@ public class SpaceSystemNavigationButtonsBaseView : ViewBase<SpaceSystemNavigati
 			m_CreateWayCostText.text = cost.ToString();
 		}));
 		AddDisposable(base.ViewModel.IsTravelNewSectorAvailable.Subscribe(WayIsOpen));
-		AddDisposable(base.ViewModel.CurrentValueOfResources.Subscribe(delegate
-		{
-			HandleCostChanged();
-		}));
 		AddDisposable(base.ViewModel.IsScanning.CombineLatest(base.ViewModel.IsTraveling, base.ViewModel.IsDialogActive, base.ViewModel.IsWayUpgrading, base.ViewModel.IsWayCreating, (bool isScanning, bool isTraveling, bool isDialogActive, bool isWayUpgrading, bool isWayCreating) => isScanning || isTraveling || isDialogActive || isWayUpgrading || isWayCreating).Subscribe(LockButtons));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		ShowCreateWayButtonHoverPanel(state: false);
+		m_NavigationWindowFadeAnimator.DisappearAnimation();
 	}
 
 	protected void ShowCreateWayButtonHoverPanel(bool state)
@@ -292,10 +294,5 @@ public class SpaceSystemNavigationButtonsBaseView : ViewBase<SpaceSystemNavigati
 
 	protected virtual void LockButtons(bool isLocked)
 	{
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_NavigationWindowFadeAnimator.DisappearAnimation();
 	}
 }

@@ -31,7 +31,7 @@ public class SwitchDoor : GameAction
 		return $"Пытается открыть или закрыть дверь. При попытке может разблокировать дверь. С дверью ничего не произойдет, если не стоит ни одной галки.\nДверь: {Door}\nРазблокировать ли дверь: {UnlockIfLocked}\nЗакрывать ли открытую дверь: {CloseIfAlreadyOpen}\nОткрывать ли закрытую дверь: {OpenIfAlreadyClosed}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		InteractionDoorPart optional = Door.GetValue().GetOptional<InteractionDoorPart>();
 		if (!optional)

@@ -88,4 +88,9 @@ public abstract class LootCollectorView : ViewBase<LootCollectorVM>
 	{
 		base.ViewModel.AddAllToInventoryPart();
 	}
+
+	public void CollectAll()
+	{
+		base.ViewModel.CollectAll();
+	}
 }

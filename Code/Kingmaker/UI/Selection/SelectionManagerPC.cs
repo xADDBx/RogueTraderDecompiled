@@ -101,8 +101,8 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 
 	public override void UpdateSelectedUnits()
 	{
-		IEnumerable<UnitEntityView> views = from u in SelectionManagerBase.GetSelectableUnits(base.SelectedUnits)
-			select u.View;
+		List<UnitEntityView> views = new List<UnitEntityView>(from u in SelectionManagerBase.GetSelectableUnits(base.SelectedUnits)
+			select u.View);
 		MultiSelect(views);
 	}
 

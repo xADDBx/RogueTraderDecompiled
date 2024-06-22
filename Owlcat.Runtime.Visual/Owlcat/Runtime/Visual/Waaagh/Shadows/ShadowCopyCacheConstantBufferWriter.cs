@@ -13,7 +13,7 @@ internal struct ShadowCopyCacheConstantBufferWriter
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public unsafe ShadowCopyCacheConstantBufferWriter(in NativeReference<ShadowCopyCacheConstantBuffer> bufferReference)
 	{
-		m_BufferPtr = (ShadowCopyCacheConstantBuffer*)bufferReference.GetUnsafePtr();
+		m_BufferPtr = bufferReference.GetUnsafePtr();
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

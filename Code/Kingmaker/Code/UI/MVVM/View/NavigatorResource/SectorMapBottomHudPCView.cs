@@ -83,7 +83,7 @@ public class SectorMapBottomHudPCView : SectorMapBottomHudBaseView
 
 	private void HandleScanSystem()
 	{
-		if (base.ViewModel.IsScanAvailable.Value)
+		if (base.ViewModel.IsScanAvailable.Value && !base.ViewModel.IsTraveling.Value && !base.ViewModel.IsDialogActive.Value && !base.ViewModel.IsScanning.Value)
 		{
 			m_ScanButton.SetInteractable(state: false);
 			base.ViewModel.ScanSystem();

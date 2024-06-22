@@ -43,7 +43,7 @@ public class ProvokeAttackOfOpportunity : ContextAction
 		return $"Provoke attack of opportunity {m_Type}";
 	}
 
-	public override void RunAction()
+	protected override void RunAction()
 	{
 		BaseUnitEntity casterUnit = base.Caster as BaseUnitEntity;
 		BaseUnitEntity targetUnit = base.Target.Entity as BaseUnitEntity;

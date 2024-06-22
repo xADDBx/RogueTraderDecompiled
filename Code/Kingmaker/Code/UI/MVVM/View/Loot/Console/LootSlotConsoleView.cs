@@ -62,19 +62,15 @@ public class LootSlotConsoleView : LootSlotView, IConsoleNavigationEntity, ICons
 
 	private bool CanTransfer(ItemEntity item)
 	{
-		if (CargoHelper.IsItemInCargo(item))
+		if (!CargoHelper.IsItemInCargo(item))
 		{
-			if (CargoHelper.CanTransferFromCargo(item))
+			if (item != null)
 			{
-				return true;
+				return !CargoHelper.IsTrashItem(item);
 			}
 			return false;
 		}
-		if (item != null)
-		{
-			return !CargoHelper.IsTrashItem(item);
-		}
-		return false;
+		return CargoHelper.CanTransferFromCargo(item);
 	}
 
 	public bool IsValid()

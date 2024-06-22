@@ -75,9 +75,13 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 				{
 					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
 				}
+				else if (unit.IsMovementLockedByGameModeOrCombat())
+				{
+					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
+				}
 				else
 				{
-					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, interaction.Owner.Position, interaction.ApproachRadius)
+					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, interaction.Owner.Position, 0f)
 					{
 						IsSynchronized = true,
 						CanBeAccelerated = true

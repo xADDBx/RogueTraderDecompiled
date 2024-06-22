@@ -1,6 +1,8 @@
 using System;
 using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Enums;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Parts;
 using StateHasher.Core;
@@ -10,6 +12,8 @@ namespace Kingmaker.EntitySystem.Stats;
 
 public class ModifiableValueHitPoints : ModifiableValueDependent, IHashable
 {
+	private Modifier m_BaseStatBonus;
+
 	public override int BaseStatBonus
 	{
 		get
@@ -25,16 +29,37 @@ public class ModifiableValueHitPoints : ModifiableValueDependent, IHashable
 			UnitEntity obj = base.Owner as UnitEntity;
 			UnitDifficultyType? unitDifficultyType = ((obj != null) ? new UnitDifficultyType?(obj.Blueprint.DifficultyType + 1) : null);
 			int num5 = ((num2 || !unitDifficultyType.HasValue) ? 2 : Math.Min((int)unitDifficultyType.Value, 3)) * 5;
-			int num6 = 100 + num4 * num5;
+			int num6 = num4 * num5;
 			if (!num2)
 			{
-				return base.BaseValue * (num6 - 100) / 100;
+				return base.BaseValue * num6 / 100;
 			}
 			return num3 * num6 / 100;
 		}
 	}
 
 	protected override int MinValue => 1;
+
+	protected override void UpdateInternalModifiers()
+	{
+		base.UpdateInternalModifiers();
+		if (base.Owner is StarshipEntity)
+		{
+			return;
+		}
+		PartFaction optional = base.Owner.GetOptional<PartFaction>();
+		if ((object)optional != null && optional.IsPlayer)
+		{
+			int num = base.Container.Owner.GetOptional<PartUnitProgression>()?.CharacterLevel ?? 0;
+			int num2 = ((num >= 35) ? (50 + 2 * (num - 35)) : (15 + num));
+			Modifier baseStatBonus = m_BaseStatBonus;
+			if (baseStatBonus == null || baseStatBonus.ModValue != num2)
+			{
+				m_BaseStatBonus?.Remove();
+				m_BaseStatBonus = AddInternalModifier(num2, StatType.HitPoints, ModifierDescriptor.BaseValue);
+			}
+		}
+	}
 
 	public override Hash128 GetHash128()
 	{

@@ -8,9 +8,9 @@ namespace Kingmaker.EntitySystem.Properties.Getters;
 [TypeId("b9dd49398cf14b469d7fc78f01eb5e85")]
 public class CoverStatusGetter : MechanicEntityPropertyGetter
 {
-	protected override string GetInnerCaption()
+	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "CoverStatus";
+		return "Cover type of " + FormulaTargetScope.Current;
 	}
 
 	protected override int GetBaseValue()

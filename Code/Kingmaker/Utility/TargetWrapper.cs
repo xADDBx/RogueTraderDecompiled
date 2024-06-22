@@ -40,11 +40,11 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 
 	[JsonProperty]
 	[MemoryPackInclude]
-	protected Vector3? m_Point;
+	protected readonly Vector3? m_Point;
 
 	[JsonProperty]
 	[MemoryPackInclude]
-	protected float? m_Orientation;
+	protected readonly float? m_Orientation;
 
 	[CanBeNull]
 	[MemoryPackIgnore]
@@ -118,7 +118,17 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 		EntityRef = unit ?? throw new ArgumentException("TargetWrapper: 'unit' is null");
 	}
 
-	public TargetWrapper(Vector3 point, float? orientation = null, MechanicEntity entity = null)
+	public TargetWrapper(Vector3 point)
+		: this(point, null, null)
+	{
+	}
+
+	public TargetWrapper(Vector3 point, float? orientation)
+		: this(point, orientation, null)
+	{
+	}
+
+	public TargetWrapper(Vector3 point, float? orientation, MechanicEntity entity)
 	{
 		m_Point = point;
 		m_Orientation = orientation;
@@ -138,7 +148,7 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 	}
 
 	[MemoryPackConstructor]
-	public TargetWrapper(EntityRef<MechanicEntity> entityRef, Vector3? m_point, float? m_orientation)
+	protected TargetWrapper(EntityRef<MechanicEntity> entityRef, Vector3? m_point, float? m_orientation)
 	{
 		EntityRef = entityRef;
 		m_Point = m_point;
@@ -174,57 +184,57 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 		{
 			return $"[Target: point '{Point}']";
 		}
-		return $"[Target: unit '{Entity}']";
+		return $"[Target: unit '{Entity}' {Point}]";
 	}
 
 	public override bool Equals(object obj)
 	{
-		TargetWrapper targetWrapper = obj as TargetWrapper;
-		if (targetWrapper != null)
-		{
-			return Equals(targetWrapper);
-		}
-		return false;
+		return Equals(this, obj as TargetWrapper);
 	}
 
-	protected bool Equals(TargetWrapper other)
+	public virtual bool Equals(TargetWrapper other)
 	{
-		if (!object.Equals(Entity, other.Entity))
-		{
-			if (Point.Equals(other.Point))
-			{
-				return Orientation.Equals(other.Orientation);
-			}
-			return false;
-		}
-		return true;
+		return Equals(this, other);
 	}
 
 	public static bool operator ==(TargetWrapper t1, TargetWrapper t2)
 	{
-		if ((object)t1 != t2)
-		{
-			if ((object)t1 != null && (object)t2 != null)
-			{
-				return object.Equals(t1, t2);
-			}
-			return false;
-		}
-		return true;
+		return Equals(t1, t2);
 	}
 
 	public static bool operator !=(TargetWrapper t1, TargetWrapper t2)
 	{
-		return !(t1 == t2);
+		return !Equals(t1, t2);
 	}
 
 	public override int GetHashCode()
 	{
-		if (EntityRef != null)
+		return HashCode.Combine(EntityRef, m_Point, m_Orientation);
+	}
+
+	protected static bool Equals(TargetWrapper x, TargetWrapper y)
+	{
+		if ((object)x == y)
 		{
-			return EntityRef.GetHashCode();
+			return true;
 		}
-		return (m_Point.GetHashCode() * 397) ^ m_Orientation.GetHashCode();
+		if ((object)x == null)
+		{
+			return false;
+		}
+		if ((object)y == null)
+		{
+			return false;
+		}
+		if (x.GetType() != y.GetType())
+		{
+			return false;
+		}
+		if (x.EntityRef.Equals(y.EntityRef) && Nullable.Equals(x.m_Point, y.m_Point))
+		{
+			return Nullable.Equals(x.m_Orientation, y.m_Orientation);
+		}
+		return false;
 	}
 
 	static TargetWrapper()

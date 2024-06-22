@@ -23,5 +23,5 @@ public class ItemDlcRestriction : BlueprintComponent
 
 	public BlueprintItem ChangeTo => m_ChangeTo?.Get();
 
-	public bool IsRestricted => !(DlcReward?.IsAvailable ?? true);
+	public bool IsRestricted => !(DlcReward?.IsActive ?? true);
 }

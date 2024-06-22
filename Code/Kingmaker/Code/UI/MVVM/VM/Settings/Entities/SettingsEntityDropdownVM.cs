@@ -15,7 +15,7 @@ public class SettingsEntityDropdownVM : SettingsEntityWithValueVM, IVirtualListE
 		DisplayMode
 	}
 
-	private DropdownType m_DropdownType;
+	private readonly DropdownType m_DropdownType;
 
 	public const int DefaultDropdownIndex = 0;
 

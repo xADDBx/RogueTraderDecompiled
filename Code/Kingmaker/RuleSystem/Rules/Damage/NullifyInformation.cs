@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Kingmaker.EntitySystem;
+using Kingmaker.Items;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -19,6 +21,16 @@ public class NullifyInformation
 			return new BuffInformation(data);
 		}
 
+		public static BuffInformation Create(EntityFact fact)
+		{
+			return new BuffInformation(fact);
+		}
+
+		public static BuffInformation Create(ItemEntity item)
+		{
+			return new BuffInformation(item);
+		}
+
 		private BuffInformation()
 		{
 		}
@@ -27,6 +39,18 @@ public class NullifyInformation
 		{
 			Icon = data.Icon;
 			Name = data.Name;
+		}
+
+		private BuffInformation(EntityFact fact)
+		{
+			Icon = fact.Icon;
+			Name = fact.Name;
+		}
+
+		private BuffInformation(ItemEntity item)
+		{
+			Icon = item.Icon;
+			Name = item.Name;
 		}
 	}
 

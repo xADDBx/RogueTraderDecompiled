@@ -298,7 +298,7 @@ public class CompositeLineRenderer : ProceduralMesh
 			m_Job.MeshIndicesIsDirty = m_MeshIndicesIsDirty;
 			m_Job.Space = m_Space;
 			m_Job.InvWorld = base.transform.worldToLocalMatrix;
-			result = m_Job.Schedule(m_LinesCountActive, 8, dependsOn);
+			result = IJobParallelForExtensions.Schedule(m_Job, m_LinesCountActive, 8, dependsOn);
 		}
 		return result;
 	}
@@ -329,7 +329,7 @@ public class CompositeLineRenderer : ProceduralMesh
 			m_Job.MeshIndicesIsDirty = m_MeshIndicesIsDirty;
 			m_Job.Space = m_Space;
 			m_Job.InvWorld = base.transform.worldToLocalMatrix;
-			result = m_Job.Schedule(m_LinesCountActive, 8, dependsOn);
+			result = IJobParallelForExtensions.Schedule(m_Job, m_LinesCountActive, 8, dependsOn);
 		}
 		return result;
 	}
@@ -457,7 +457,7 @@ public class CompositeLineRenderer : ProceduralMesh
 		UpdateNativeData();
 		job.Points = m_Points;
 		job.Lines = m_LineDescriptors;
-		return job.Schedule(m_LinesCountActive, innerLoopBatchCount);
+		return IJobParallelForExtensions.Schedule(job, m_LinesCountActive, innerLoopBatchCount);
 	}
 
 	public override string GetStats()

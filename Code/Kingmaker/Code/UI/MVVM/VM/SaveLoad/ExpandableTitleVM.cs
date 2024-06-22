@@ -6,11 +6,11 @@ namespace Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 
 public class ExpandableTitleVM : VirtualListElementVMBase
 {
-	public string Title;
+	public readonly string Title;
 
 	private readonly Action<bool> m_Switch;
 
-	public BoolReactiveProperty IsExpanded = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty IsExpanded = new BoolReactiveProperty();
 
 	public bool IsSwitchable => m_Switch != null;
 
@@ -26,6 +26,10 @@ public class ExpandableTitleVM : VirtualListElementVMBase
 		{
 			Collapse();
 		}
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void Expand()
@@ -44,9 +48,5 @@ public class ExpandableTitleVM : VirtualListElementVMBase
 	{
 		IsExpanded.Value = !IsExpanded.Value;
 		m_Switch?.Invoke(IsExpanded.Value);
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }
