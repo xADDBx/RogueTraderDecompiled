@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Loot;
 using Kingmaker.StateHasher.Hashers;
 using Newtonsoft.Json;
 using StateHasher.Core;
@@ -14,6 +15,9 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 	public BlueprintItem Item { get; }
 
 	[JsonProperty]
+	public int Diversity { get; }
+
+	[JsonProperty]
 	public int Count { get; private set; }
 
 	[JsonProperty]
@@ -22,9 +26,20 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 	[JsonProperty]
 	public int ProfitFactorCosts { get; }
 
-	public VendorLootItem(BlueprintItem item, int count, int reputationToUnlock, int profitFactorCosts)
+	[JsonConstructor]
+	private VendorLootItem()
+	{
+	}
+
+	public VendorLootItem(LootItemsPackFixed pack)
+		: this(pack.Item.Item, pack.Item.Diversity, pack.Count, pack.ReputationPointsToUnlock, pack.Item.ProfitFactorCostOverride.GetValueOrDefault())
+	{
+	}
+
+	public VendorLootItem(BlueprintItem item, int diversity, int count, int reputationToUnlock, int profitFactorCosts)
 	{
 		Item = item;
+		Diversity = diversity;
 		Count = count;
 		ReputationToUnlock = reputationToUnlock;
 		ProfitFactorCosts = profitFactorCosts;
@@ -45,9 +60,9 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 		{
 			return true;
 		}
-		if (object.Equals(Item, other.Item) && Count == other.Count && ReputationToUnlock == other.ReputationToUnlock)
+		if (object.Equals(Item, other.Item) && Count == other.Count && ReputationToUnlock == other.ReputationToUnlock && ProfitFactorCosts == other.ProfitFactorCosts)
 		{
-			return ProfitFactorCosts == other.ProfitFactorCosts;
+			return Diversity == other.Diversity;
 		}
 		return false;
 	}
@@ -71,7 +86,7 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 
 	public override int GetHashCode()
 	{
-		return HashCode.Combine(Item, ReputationToUnlock, ProfitFactorCosts);
+		return HashCode.Combine(Item, ReputationToUnlock, ProfitFactorCosts, Diversity);
 	}
 
 	public int CompareTo(VendorLootItem other)
@@ -94,6 +109,11 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 		{
 			return num2;
 		}
+		int num3 = Diversity.CompareTo(other.Diversity);
+		if (num3 != 0)
+		{
+			return num3;
+		}
 		return ProfitFactorCosts.CompareTo(other.ProfitFactorCosts);
 	}
 
@@ -102,12 +122,14 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 		Hash128 result = default(Hash128);
 		Hash128 val = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(Item);
 		result.Append(ref val);
-		int val2 = Count;
+		int val2 = Diversity;
 		result.Append(ref val2);
-		int val3 = ReputationToUnlock;
+		int val3 = Count;
 		result.Append(ref val3);
-		int val4 = ProfitFactorCosts;
+		int val4 = ReputationToUnlock;
 		result.Append(ref val4);
+		int val5 = ProfitFactorCosts;
+		result.Append(ref val5);
 		return result;
 	}
 }

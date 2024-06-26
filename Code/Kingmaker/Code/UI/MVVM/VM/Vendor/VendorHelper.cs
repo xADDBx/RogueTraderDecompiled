@@ -44,7 +44,7 @@ public static class VendorHelper
 	{
 		if (Vendor.VendorInventory.IsLockedByReputation(itemEntity))
 		{
-			PFLog.UI.Log($"Item {itemEntity.Name} locked by reputation {Vendor.VendorInventory.GetCurrentFactionReputationPoints()}/{Vendor.VendorInventory.GetVendorLootItem(itemEntity)}");
+			PFLog.UI.Log("Item {0} locked by reputation {1}/{2}", itemEntity.Name, Vendor.VendorInventory.GetCurrentFactionReputationPoints(), Vendor.VendorInventory.GetReputationToUnlock(itemEntity));
 		}
 		else if (split && itemEntity.Count > 1)
 		{

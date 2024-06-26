@@ -16,6 +16,10 @@ public class LootEntry : IHashable
 	private BlueprintItemReference m_Item;
 
 	[SerializeField]
+	[JsonProperty]
+	public int Diversity;
+
+	[SerializeField]
 	[HideInInspector]
 	[JsonProperty]
 	public int Count = 1;
@@ -86,6 +90,7 @@ public class LootEntry : IHashable
 		Hash128 result = default(Hash128);
 		Hash128 val = Kingmaker.StateHasher.Hashers.BlueprintReferenceHasher.GetHash128(m_Item);
 		result.Append(ref val);
+		result.Append(ref Diversity);
 		result.Append(ref Count);
 		return result;
 	}

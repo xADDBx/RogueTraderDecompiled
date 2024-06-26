@@ -337,7 +337,7 @@ public class VendorLogic : IController, IChangeChapterHandler, ISubscriber
 		}
 		if (VendorInventory.IsLockedByReputation(item))
 		{
-			PFLog.Default.Log($"Item {item.Name} locked by reputation {VendorInventory.GetCurrentFactionReputationPoints()}/{VendorInventory.GetVendorLootItem(item)}");
+			PFLog.Default.Log("Item {0} locked by reputation {1}/{2}", item.Name, VendorInventory.GetCurrentFactionReputationPoints(), VendorInventory.GetReputationToUnlock(item));
 			return null;
 		}
 		count = ((count < 0) ? item.Count : count);

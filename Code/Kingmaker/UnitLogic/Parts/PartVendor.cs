@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
@@ -66,16 +65,23 @@ public class PartVendor : PartItemsCollection, IHashable
 
 	public bool IsLockedByReputation(ItemEntity item)
 	{
-		return GetVendorLootItem(item).ReputationToUnlock > ReputationHelper.GetCurrentReputationPoints(FactionType);
+		return GetReputationToUnlock(item) > ReputationHelper.GetCurrentReputationPoints(FactionType);
 	}
 
+	[CanBeNull]
 	public VendorLootItem GetVendorLootItem(ItemEntity item)
 	{
 		if (GetItemEntityToVendorLootItemPairs().TryGetValue(item, out var value))
 		{
 			return value;
 		}
-		throw new Exception("PartVendor: cannot find ItemEntity " + item.Name + " in VendorLootItems");
+		PFLog.Default.Error("PartVendor: cannot find ItemEntity " + item.Name + " in VendorLootItems");
+		return null;
+	}
+
+	public int GetReputationToUnlock(ItemEntity item)
+	{
+		return GetVendorLootItem(item)?.ReputationToUnlock ?? 0;
 	}
 
 	public float GetProfitFactorCost(ItemEntity item)

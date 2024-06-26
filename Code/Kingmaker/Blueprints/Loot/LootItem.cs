@@ -28,6 +28,9 @@ public class LootItem : ISerializationCallbackReceiver
 	[ShowIf("CanOverridePFCost")]
 	private int m_ProfitFactorCost;
 
+	[SerializeField]
+	private int m_Diversity;
+
 	public BlueprintItem Item => m_Item.Get();
 
 	public int? ProfitFactorCostOverride
@@ -56,6 +59,8 @@ public class LootItem : ISerializationCallbackReceiver
 		}
 	}
 
+	public int Diversity => m_Diversity;
+
 	public void OverrideProfitFactorCostFromImport(int pf)
 	{
 		m_OverrideProfitFactorCost = true;
@@ -72,6 +77,7 @@ public class LootItem : ISerializationCallbackReceiver
 				targetList.Add(new LootEntry
 				{
 					Item = Item,
+					Diversity = Diversity,
 					Count = count,
 					ReputationPointsToUnlock = reputationPointsToUnlock,
 					ProfitFactorCostOverride = ProfitFactorCostOverride

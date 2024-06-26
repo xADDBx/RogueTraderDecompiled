@@ -23,15 +23,15 @@ internal class VendorLootItemEqualityComparer : IEqualityComparer<VendorLootItem
 		{
 			return false;
 		}
-		if (object.Equals(x.Item, y.Item) && x.Count == y.Count && x.ReputationToUnlock == y.ReputationToUnlock)
+		if (object.Equals(x.Item, y.Item) && x.Count == y.Count && x.ReputationToUnlock == y.ReputationToUnlock && x.ProfitFactorCosts == y.ProfitFactorCosts)
 		{
-			return x.ProfitFactorCosts == y.ProfitFactorCosts;
+			return x.Diversity == y.Diversity;
 		}
 		return false;
 	}
 
 	public int GetHashCode(VendorLootItem obj)
 	{
-		return HashCode.Combine(obj.Item, obj.ReputationToUnlock, obj.ProfitFactorCosts);
+		return HashCode.Combine(obj.Item, obj.ReputationToUnlock, obj.ProfitFactorCosts, obj.Diversity);
 	}
 }

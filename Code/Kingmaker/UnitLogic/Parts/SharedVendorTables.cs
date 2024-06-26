@@ -322,14 +322,12 @@ public class SharedVendorTables : IHashable
 						continue;
 					}
 				}
-				BlueprintItem blueprint = component.Item.Item;
-				int cost = component.Item.ProfitFactorCostOverride.GetValueOrDefault();
-				if (blueprint != null)
+				if (component.Item.Item != null)
 				{
-					IEnumerable<VendorLootItem> source = hashSet.Where((VendorLootItem i) => i.Item == blueprint && i.ProfitFactorCosts == cost);
+					IEnumerable<VendorLootItem> source = hashSet.Where(component.Same);
 					if (source.Empty())
 					{
-						hashSet.Add(new VendorLootItem(blueprint, component.Count, component.ReputationPointsToUnlock, cost));
+						hashSet.Add(new VendorLootItem(component));
 					}
 					else
 					{
@@ -353,7 +351,7 @@ public class SharedVendorTables : IHashable
 			{
 				oldReputationToUnlock.TryGetValue(item.Key, out var value);
 				overrideProfitFactorCosts.TryGetValue(item.Key, out var value2);
-				VendorLootItem item2 = new VendorLootItem(item.Key, item.Value, value, value2);
+				VendorLootItem item2 = new VendorLootItem(item.Key, 0, item.Value, value, value2);
 				vendorItems.Add(item2);
 			}
 		}

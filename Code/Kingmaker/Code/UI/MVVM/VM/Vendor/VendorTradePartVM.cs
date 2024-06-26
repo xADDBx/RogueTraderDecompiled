@@ -145,7 +145,7 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 		});
 		EnableSlots.Clear();
 		int currentReputationLevel = ReputationHelper.GetCurrentReputationLevel(Game.Instance.Vendor.VendorFactionType);
-		List<ItemEntity> list = Vendor.StoreItems.OrderBy((ItemEntity item) => Game.Instance.Vendor.VendorInventory.GetVendorLootItem(item).ReputationToUnlock).ToList();
+		List<ItemEntity> list = Vendor.StoreItems.OrderBy((ItemEntity item) => Game.Instance.Vendor.VendorInventory.GetReputationToUnlock(item)).ToList();
 		int num = -2;
 		int num2 = 0;
 		VendorLevelItemsVM vendorLevelItemsVM = null;
@@ -154,7 +154,7 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 		{
 			if (item != null)
 			{
-				int reputationToUnlock = Game.Instance.Vendor.VendorInventory.GetVendorLootItem(item).ReputationToUnlock;
+				int reputationToUnlock = Game.Instance.Vendor.VendorInventory.GetReputationToUnlock(item);
 				int reputationLevelByPoints = ReputationHelper.GetReputationLevelByPoints(Game.Instance.Vendor.VendorFactionType, reputationToUnlock);
 				if (reputationLevelByPoints > num)
 				{

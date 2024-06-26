@@ -88,7 +88,7 @@ public class RemoveItemFromPlayer : GameAction
 	{
 		using (ContextData<GameLogDisabled>.RequestIf(m_Silent))
 		{
-			Element.LogError("{0}: Want remove {1} {2} from the player.", new object[3]
+			Element.LogInfo("{0}: Want remove {1} {2} from the player.", new object[3]
 			{
 				"RemoveItemFromPlayer",
 				GetAmount(),

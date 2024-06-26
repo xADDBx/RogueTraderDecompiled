@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.DLC;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using UnityEngine;
 
@@ -57,5 +58,14 @@ public class LootItemsPackFixed : BlueprintLootComponent
 	{
 		m_OverrideReputationPointsToUnlock = true;
 		m_ReputationPointsToUnlock = rep;
+	}
+
+	public bool Same(VendorLootItem item)
+	{
+		if (item.Item == Item.Item)
+		{
+			return item.Diversity == Item.Diversity;
+		}
+		return false;
 	}
 }
