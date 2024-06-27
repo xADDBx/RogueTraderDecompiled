@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Jobs;
 
 [Unity.Jobs.DOTSCompilerGenerated]
-internal class __JobReflectionRegistrationOutput__4012981165
+internal class __JobReflectionRegistrationOutput__786431174
 {
 	public static void CreateJobReflectionData()
 	{

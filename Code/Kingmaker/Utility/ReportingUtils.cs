@@ -213,11 +213,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		m_ReportPrivacyManager = new ReportPrivacyManager();
 		m_GameVersion = GameVersion.GetVersion();
 		CrashReportHandler.SetUserMetadata("Store", StoreManager.Store.ToString());
-		Task.Delay(10000).ContinueWith(delegate
-		{
-			Assignees = (BuildModeUtility.IsDevelopment ? Task.Run(() => AssigneeContainer.LoadAssigneesAsync("WH", m_Cts.Token)) : Task.FromCanceled<AssigneeModelRoot>(CancellationToken.None));
-			ReportSender = new ReportSender("WH", m_GameVersion, m_Cts.Token);
-		});
+		Assignees = (BuildModeUtility.IsDevelopment ? Task.Run(() => AssigneeContainer.LoadAssigneesAsync("WH", m_Cts.Token)) : Task.FromResult(new AssigneeModelRoot()));
+		ReportSender = new ReportSender("WH", m_GameVersion, m_Cts.Token);
 	}
 
 	public void Dispose()
