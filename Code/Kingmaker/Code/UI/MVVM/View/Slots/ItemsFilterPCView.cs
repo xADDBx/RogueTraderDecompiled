@@ -227,10 +227,10 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		}
 		if ((bool)m_Toggle)
 		{
-			m_Toggle.Set(base.ViewModel.ShowUnavailable.Value);
+			m_Toggle.Set(!base.ViewModel.ShowUnavailable.Value);
 			AddDisposable(m_Toggle.IsOn.Skip(1).Subscribe(delegate(bool value)
 			{
-				base.ViewModel.ShowUnavailable.Value = value;
+				base.ViewModel.ShowUnavailable.Value = !value;
 			}));
 		}
 	}

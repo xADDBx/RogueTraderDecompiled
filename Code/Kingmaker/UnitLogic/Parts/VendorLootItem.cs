@@ -1,6 +1,8 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Loot;
+using Kingmaker.Networking.Serialization;
 using Kingmaker.StateHasher.Hashers;
 using Newtonsoft.Json;
 using StateHasher.Core;
@@ -12,7 +14,8 @@ namespace Kingmaker.UnitLogic.Parts;
 public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLootItem>, IHashable
 {
 	[JsonProperty]
-	public BlueprintItem Item { get; }
+	[GameStateInclude]
+	private BlueprintItemReference m_Item;
 
 	[JsonProperty]
 	public int Diversity { get; }
@@ -25,6 +28,18 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 
 	[JsonProperty]
 	public int ProfitFactorCosts { get; }
+
+	public BlueprintItem Item
+	{
+		get
+		{
+			return m_Item?.Get();
+		}
+		set
+		{
+			m_Item = value.ToReference<BlueprintItemReference>();
+		}
+	}
 
 	[JsonConstructor]
 	private VendorLootItem()
@@ -120,7 +135,7 @@ public class VendorLootItem : IEquatable<VendorLootItem>, IComparable<VendorLoot
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
-		Hash128 val = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(Item);
+		Hash128 val = Kingmaker.StateHasher.Hashers.BlueprintReferenceHasher.GetHash128(m_Item);
 		result.Append(ref val);
 		int val2 = Diversity;
 		result.Append(ref val2);

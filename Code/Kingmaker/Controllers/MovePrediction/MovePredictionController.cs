@@ -457,7 +457,7 @@ public class MovePredictionController : IControllerTick, IController, IControlle
 				WalkSpeedType.Run => nonCombatWalk.Run, 
 				_ => nonCombatWalk.Walking, 
 			};
-			float b = ((!(0f < time)) ? 0f : ((time < currentWalkingStyleLayer.In.Length) ? currentWalkingStyleLayer.InSpeed : currentWalkingStyleLayer.Speed));
+			float b = ((!(0f < time)) ? 0f : ((currentWalkingStyleLayer.In != null && time < currentWalkingStyleLayer.In.Length) ? currentWalkingStyleLayer.InSpeed : currentWalkingStyleLayer.Speed));
 			return Mathf.Max(0.01f, b);
 		}
 		static WalkSpeedType GetMovementType(float multiplier)

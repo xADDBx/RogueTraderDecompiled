@@ -16,9 +16,9 @@ public class UnitAnimationActionCover : UnitAnimationAction
 	private enum AnimationState
 	{
 		ForceEnteringTheCover,
-		StepOutCover,
+		SideStepOut,
 		Idle,
-		StepInCover,
+		SideStepIn,
 		ForceExitingTheCover
 	}
 
@@ -105,8 +105,6 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		}
 	}
 
-	private bool m_IsAdditive;
-
 	public AnimationClipWrapper HalfCoverEntering;
 
 	public AnimationClipWrapper HalfCoverIdle;
@@ -143,8 +141,6 @@ public class UnitAnimationActionCover : UnitAnimationAction
 	public AnimationClipWrapper RightStepFullCoverExitingForCast;
 
 	private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
-
-	public override bool IsAdditive => m_IsAdditive;
 
 	public override UnitAnimationType Type => UnitAnimationType.Cover;
 
@@ -185,6 +181,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
+		handle.HasCrossfadePriority = true;
 	}
 
 	private void UpdateAnimations(UnitAnimationActionHandle handle)
@@ -219,7 +216,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			ChangeState(handle, AnimationState.Idle);
 			StartAction(handle);
 			break;
-		case AnimationState.StepOutCover:
+		case AnimationState.SideStepOut:
 			if (!data.ActionStarted)
 			{
 				StartAction(handle);
@@ -248,9 +245,9 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			handle.Manager.AbilityIsSpell = false;
 			StartAction(handle);
 			break;
-		case AnimationState.StepInCover:
+		case AnimationState.SideStepIn:
 			handle.Manager.BlockAttackAnimation = true;
-			if (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.NeedStepOut && data.CurrentAnimationState == AnimationState.StepInCover && Math.Abs(handle.Manager.Orientation - handle.Manager.UseAbilityDirection) > 10f)
+			if (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.NeedStepOut && data.CurrentAnimationState == AnimationState.SideStepIn && Math.Abs(handle.Manager.Orientation - handle.Manager.UseAbilityDirection) > 10f)
 			{
 				return;
 			}
@@ -277,7 +274,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 				return;
 			}
 			data.ActionFinished = true;
-			ChangeState(handle, AnimationState.StepOutCover);
+			ChangeState(handle, AnimationState.SideStepOut);
 			StartAction(handle);
 			break;
 		case AnimationState.ForceExitingTheCover:
@@ -308,7 +305,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		if (data != null)
 		{
 			data.CoverType = handle.Manager.CoverType;
-			if (((data.CoverType == LosCalculations.CoverType.Half && handle.Manager.InCover && data.CurrentAnimationState != AnimationState.Idle) || (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.InCover && data.CurrentAnimationState == AnimationState.StepInCover)) && data.ActionFinished)
+			if (((data.CoverType == LosCalculations.CoverType.Half && handle.Manager.InCover && data.CurrentAnimationState != AnimationState.Idle) || (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.InCover && data.CurrentAnimationState == AnimationState.SideStepIn)) && data.ActionFinished)
 			{
 				ChangeState(handle, AnimationState.ForceEnteringTheCover);
 			}
@@ -316,7 +313,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			{
 				ChangeState(handle, AnimationState.ForceExitingTheCover);
 			}
-			if (data.CoverType == LosCalculations.CoverType.Full && !handle.Manager.InCover && !handle.Manager.NeedStepOut)
+			if (data.CoverType == LosCalculations.CoverType.Full && !handle.Manager.InCover && !handle.Manager.NeedStepOut && data.CurrentAnimationState == AnimationState.Idle)
 			{
 				handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
 				handle.Manager.AbilityIsSpell = false;
@@ -348,11 +345,6 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		return ((Data)handle.ActionData)?.WaitForceExit ?? false;
 	}
 
-	public void ChangeAdditive(bool isAdditive)
-	{
-		m_IsAdditive = isAdditive;
-	}
-
 	private void ChangeState(UnitAnimationActionHandle handle, AnimationState state)
 	{
 		Data data = (Data)handle.ActionData;
@@ -378,7 +370,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			handle.Release();
 			return;
 		}
-		handle.StartClip(animationClip, (data.CurrentAnimationState == AnimationState.StepOutCover) ? ClipDurationType.Oneshot : ClipDurationType.Endless);
+		handle.StartClip(animationClip, (data.CurrentAnimationState == AnimationState.SideStepOut) ? ClipDurationType.Oneshot : ClipDurationType.Endless);
 		if (data.CurrentAnimationState == AnimationState.Idle && handle.ActiveAnimation != null)
 		{
 			handle.ActiveAnimation.TransitionIn = 0f;
@@ -394,11 +386,11 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		handle.ActionData = data;
 	}
 
-	public void PrepareStepOutData(UnitAnimationActionHandle handle)
+	public void PrepareSideStepData(UnitAnimationActionHandle handle)
 	{
 		handle.ActionData = new Data
 		{
-			CurrentAnimationState = AnimationState.StepInCover,
+			CurrentAnimationState = AnimationState.SideStepIn,
 			CoverType = handle.Manager.CoverType
 		};
 	}
@@ -437,7 +429,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			AnimationClipWrapper animationClipWrapper = null;
 			switch (animState)
 			{
-			case AnimationState.StepOutCover:
+			case AnimationState.SideStepOut:
 				switch (handle.Manager.StepOutDirectionAnimationType)
 				{
 				case StepOutDirectionAnimationType.Left:
@@ -448,7 +440,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					break;
 				}
 				break;
-			case AnimationState.StepInCover:
+			case AnimationState.SideStepIn:
 				switch (handle.Manager.StepOutDirectionAnimationType)
 				{
 				case StepOutDirectionAnimationType.Left:
@@ -474,14 +466,14 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					AnimationState.ForceEnteringTheCover => (data == null || !data.IsForce) ? (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering) : ((FullCoverInside != null) ? FullCoverInside : (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering)), 
 					AnimationState.Idle => (weaponStyleSettings.FullCoverIdle != null) ? weaponStyleSettings.FullCoverIdle : FullCoverIdle, 
 					AnimationState.ForceExitingTheCover => (data == null || !data.IsForce) ? (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting) : ((FullCoverOutside != null) ? FullCoverOutside : (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting)), 
-					AnimationState.StepOutCover => handle.Manager.StepOutDirectionAnimationType switch
+					AnimationState.SideStepOut => handle.Manager.StepOutDirectionAnimationType switch
 					{
 						StepOutDirectionAnimationType.Left => (weaponStyleSettings.LeftStepFullCoverEntering != null) ? weaponStyleSettings.LeftStepFullCoverEntering : LeftStepFullCoverEntering, 
 						StepOutDirectionAnimationType.Right => (weaponStyleSettings.RightStepFullCoverEntering != null) ? weaponStyleSettings.RightStepFullCoverEntering : RightStepFullCoverEntering, 
 						StepOutDirectionAnimationType.None => (weaponStyleSettings.FullCoverEntering != null) ? weaponStyleSettings.FullCoverEntering : FullCoverEntering, 
 						_ => null, 
 					}, 
-					AnimationState.StepInCover => handle.Manager.StepOutDirectionAnimationType switch
+					AnimationState.SideStepIn => handle.Manager.StepOutDirectionAnimationType switch
 					{
 						StepOutDirectionAnimationType.Left => (weaponStyleSettings.LeftStepFullCoverExiting != null) ? weaponStyleSettings.LeftStepFullCoverExiting : LeftStepFullCoverExiting, 
 						StepOutDirectionAnimationType.Right => (weaponStyleSettings.RightStepFullCoverExiting != null) ? weaponStyleSettings.RightStepFullCoverExiting : RightStepFullCoverExiting, 
@@ -492,10 +484,10 @@ public class UnitAnimationActionCover : UnitAnimationAction
 				}, 
 				LosCalculations.CoverType.Half => animState switch
 				{
-					AnimationState.StepOutCover => (weaponStyleSettings.HalfCoverEntering != null) ? weaponStyleSettings.HalfCoverEntering : HalfCoverEntering, 
+					AnimationState.SideStepOut => (weaponStyleSettings.HalfCoverEntering != null) ? weaponStyleSettings.HalfCoverEntering : HalfCoverEntering, 
 					AnimationState.ForceEnteringTheCover => (weaponStyleSettings.HalfCoverEntering != null) ? weaponStyleSettings.HalfCoverEntering : HalfCoverEntering, 
 					AnimationState.Idle => (weaponStyleSettings.HalfCoverIdle != null) ? weaponStyleSettings.HalfCoverIdle : HalfCoverIdle, 
-					AnimationState.StepInCover => (weaponStyleSettings.HalfCoverExiting != null) ? weaponStyleSettings.HalfCoverExiting : HalfCoverExiting, 
+					AnimationState.SideStepIn => (weaponStyleSettings.HalfCoverExiting != null) ? weaponStyleSettings.HalfCoverExiting : HalfCoverExiting, 
 					AnimationState.ForceExitingTheCover => (weaponStyleSettings.HalfCoverExiting != null) ? weaponStyleSettings.HalfCoverExiting : HalfCoverExiting, 
 					_ => null, 
 				}, 
@@ -507,7 +499,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			LosCalculations.CoverType.Full => animState switch
 			{
 				AnimationState.ForceEnteringTheCover => FullCoverEntering, 
-				AnimationState.StepOutCover => handle.Manager.StepOutDirectionAnimationType switch
+				AnimationState.SideStepOut => handle.Manager.StepOutDirectionAnimationType switch
 				{
 					StepOutDirectionAnimationType.Left => LeftStepFullCoverEntering, 
 					StepOutDirectionAnimationType.Right => RightStepFullCoverEntering, 
@@ -515,7 +507,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					_ => null, 
 				}, 
 				AnimationState.Idle => FullCoverIdle, 
-				AnimationState.StepInCover => handle.Manager.StepOutDirectionAnimationType switch
+				AnimationState.SideStepIn => handle.Manager.StepOutDirectionAnimationType switch
 				{
 					StepOutDirectionAnimationType.Left => LeftStepFullCoverExiting, 
 					StepOutDirectionAnimationType.Right => RightStepFullCoverExiting, 
@@ -527,10 +519,10 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			}, 
 			LosCalculations.CoverType.Half => animState switch
 			{
-				AnimationState.StepOutCover => HalfCoverEntering, 
+				AnimationState.SideStepOut => HalfCoverEntering, 
 				AnimationState.ForceEnteringTheCover => HalfCoverEntering, 
 				AnimationState.Idle => HalfCoverIdle, 
-				AnimationState.StepInCover => HalfCoverExiting, 
+				AnimationState.SideStepIn => HalfCoverExiting, 
 				AnimationState.ForceExitingTheCover => HalfCoverExiting, 
 				_ => null, 
 			}, 

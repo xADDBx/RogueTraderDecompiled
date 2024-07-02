@@ -15,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.Blueprints.Items;
 
+[Serializable]
 [TypeId("bdd0ca0d56a2ac5479e67a3f2bda917f")]
 public class BlueprintItem : BlueprintMechanicEntityFact
 {

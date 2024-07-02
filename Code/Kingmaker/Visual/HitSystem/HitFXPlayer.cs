@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Controllers.Projectiles;
@@ -80,7 +81,7 @@ public static class HitFXPlayer
 		}
 		MechanicEntityView mechanicEntityView = target.Entity?.View;
 		BaseUnitEntity targetUnitForHitSnapFx = projectile.TargetUnitForHitSnapFx;
-		MechanicEntityView snapFxTarget = ((targetUnitForHitSnapFx != null) ? targetUnitForHitSnapFx.View.Or(null) : null) ?? mechanicEntityView;
+		MechanicEntityView snapFxTarget = ((targetUnitForHitSnapFx != null) ? ObjectExtensions.Or(targetUnitForHitSnapFx.View, null) : null) ?? mechanicEntityView;
 		Vector3 hitFxSpawnPosition = GetHitFxSpawnPosition(projectile, mechanicEntityView, null, adjustHeight: false);
 		Quaternion hitFxSpawnRotation = GetHitFxSpawnRotation(projectile, mechanicEntityView, null);
 		PlayHits(projectile, mechanicEntityView, snapFxTarget, projectileHit.FollowTarget, in hitFxSpawnPosition, in hitFxSpawnRotation);
@@ -166,16 +167,21 @@ public static class HitFXPlayer
 		Vector3 hitFxSpawnPosition = GetHitFxSpawnPosition(projectile, view, view2, adjustHeight: false);
 		Quaternion hitFxSpawnRotation = GetHitFxSpawnRotation(projectile, view, view2);
 		PlayHits(projectile, view, view, damageHitSettings.FollowTarget, in hitFxSpawnPosition, in hitFxSpawnRotation);
-		if (unitEntityView != null && zero != Vector3.zero)
+		if (!(unitEntityView != null) || !(zero != Vector3.zero))
 		{
-			DamageType type = damage.Source.Type;
-			float addMagnitude = projectile?.Blueprint.AddRagdollImpulse ?? 0f;
-			if (projectile == null && spell.FXSettings != null && (bool)spell.FXSettings.VisualFXSettings?.Projectiles[0])
+			return;
+		}
+		DamageType type = damage.Source.Type;
+		float addMagnitude = projectile?.Blueprint.AddRagdollImpulse ?? 0f;
+		if (projectile == null)
+		{
+			BlueprintProjectile blueprintProjectile = spell?.FXSettings?.VisualFXSettings?.Projectiles[0];
+			if (blueprintProjectile != null && (bool)blueprintProjectile)
 			{
 				addMagnitude = spell.FXSettings.VisualFXSettings.Projectiles[0].AddRagdollImpulse;
 			}
-			unitEntityView.AddRagdollImpulse(zero, addMagnitude, type);
 		}
+		unitEntityView.AddRagdollImpulse(zero, addMagnitude, type);
 	}
 
 	private static HitLevel CalcHitLevel(DamageValue damage, HitLevel hitLevel, bool crit)
@@ -233,7 +239,7 @@ public static class HitFXPlayer
 
 	private static void PlayHits([CanBeNull] Projectile projectile, [CanBeNull] MechanicEntityView target, [CanBeNull] MechanicEntityView snapFxTarget, bool attach, in Vector3 hitFxSpawnPosition, in Quaternion hitFxSpawnRotation)
 	{
-		if ((target.Or(null)?.EntityData?.IsInFogOfWar).GetValueOrDefault())
+		if ((ObjectExtensions.Or(target, null)?.EntityData?.IsInFogOfWar).GetValueOrDefault())
 		{
 			return;
 		}
@@ -344,8 +350,8 @@ public static class HitFXPlayer
 		}
 		else
 		{
-			Transform transform = particlesSnapMap2.Or(null)?.GetLocators(FxRoot.Instance.LocatorGroupHitter).Random(PFStatefulRandom.Visuals.HitSystem)?.Transform;
-			Transform transform2 = particlesSnapMap.Or(null)?.GetLocators(FxRoot.Instance.LocatorGroupTorso).Random(PFStatefulRandom.Visuals.HitSystem)?.Transform;
+			Transform transform = ObjectExtensions.Or(particlesSnapMap2, null)?.GetLocators(FxRoot.Instance.LocatorGroupHitter).Random(PFStatefulRandom.Visuals.HitSystem)?.Transform;
+			Transform transform2 = ObjectExtensions.Or(particlesSnapMap, null)?.GetLocators(FxRoot.Instance.LocatorGroupTorso).Random(PFStatefulRandom.Visuals.HitSystem)?.Transform;
 			if (transform == null || transform2 == null)
 			{
 				return null;

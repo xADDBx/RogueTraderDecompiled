@@ -245,8 +245,7 @@ public class SharedVendorTables : IHashable
 			HashSet<VendorLootItem> fixedItems = GetFixedItems(tableData.Loot);
 			if (ShouldFixEntries(tableData.KnownLootItems))
 			{
-				tableData.Entries.Clear();
-				tableData.Entries.AddRange(blueprint.GenerateItems());
+				tableData.KnownLootItems = GetFixedItems(tableData.Loot);
 			}
 			List<LootEntry> entries = tableData.Entries;
 			foreach (KeyValuePair<VendorLootItem, int> item in GetLootDifference(tableData.KnownLootItems, fixedItems, entries))
@@ -280,7 +279,11 @@ public class SharedVendorTables : IHashable
 
 	private static bool ShouldFixEntries(HashSet<VendorLootItem> savedKnownLootItems)
 	{
-		return !savedKnownLootItems.HasItem((VendorLootItem i) => i.Item != null);
+		if (savedKnownLootItems.HasItem((VendorLootItem i) => i.Item != null))
+		{
+			return savedKnownLootItems.Empty();
+		}
+		return true;
 	}
 
 	private static void MakeItemEntityToVendorLootItemPairs(ReadonlyList<ItemEntity> items, HashSet<VendorLootItem> vendorLootItems, Dictionary<ItemEntity, VendorLootItem> itemEntityToVendorLootItem)
@@ -341,6 +344,10 @@ public class SharedVendorTables : IHashable
 
 	public static bool TryConvertToVendorLootItem(HashSet<VendorLootItem> vendorItems, Dictionary<BlueprintItem, int> oldKnownItems, Dictionary<BlueprintItem, int> oldReputationToUnlock, Dictionary<BlueprintItem, int> overrideProfitFactorCosts)
 	{
+		if (ShouldFixEntries(vendorItems))
+		{
+			vendorItems.Clear();
+		}
 		if (oldKnownItems == null || oldKnownItems.Empty())
 		{
 			return false;
@@ -355,6 +362,9 @@ public class SharedVendorTables : IHashable
 				vendorItems.Add(item2);
 			}
 		}
+		oldKnownItems.Clear();
+		oldReputationToUnlock.Clear();
+		overrideProfitFactorCosts.Clear();
 		return true;
 	}
 

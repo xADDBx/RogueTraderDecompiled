@@ -43,7 +43,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		ExitingStun,
 		Cover,
 		StandUpInCover,
-		CoverStepOut,
+		CoverSideStep,
 		TraverseNodeLink,
 		ForceMove,
 		JumpAsideDodge
@@ -324,7 +324,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		ExclusiveStateType.None => false, 
 		ExclusiveStateType.Stun => false, 
 		ExclusiveStateType.StandUpInCover => false, 
-		ExclusiveStateType.CoverStepOut => false, 
+		ExclusiveStateType.CoverSideStep => false, 
 		ExclusiveStateType.TraverseNodeLink => false, 
 		ExclusiveStateType.JumpAsideDodge => false, 
 		ExclusiveStateType.ForceMove => false, 
@@ -349,7 +349,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		ExclusiveStateType.None => false, 
 		ExclusiveStateType.Cover => false, 
 		ExclusiveStateType.StandUpInCover => false, 
-		ExclusiveStateType.CoverStepOut => false, 
+		ExclusiveStateType.CoverSideStep => false, 
 		ExclusiveStateType.TraverseNodeLink => false, 
 		ExclusiveStateType.JumpAsideDodge => false, 
 		ExclusiveStateType.ForceMove => false, 
@@ -513,7 +513,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		}
 		if ((m_ExclusiveHandle == null || m_ExclusiveHandle.IsReleased) && NeedStepOut && !HasMovingCommand(View.Data) && StepOutDirectionAnimationType != 0)
 		{
-			SetExclusiveAnimation(ExclusiveStateType.CoverStepOut);
+			SetExclusiveAnimation(ExclusiveStateType.CoverSideStep);
 			return;
 		}
 		if (m_ExclusiveState == ExclusiveStateType.Cover && HasMovingCommand(View.Data))
@@ -521,7 +521,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 			SetExclusiveAnimation(ExclusiveStateType.StandUpInCover);
 			return;
 		}
-		if (InCover && View is UnitEntityView unitEntityView && (unitEntityView.HandsEquipment == null || !unitEntityView.HandsEquipment.AreHandsBusyWithAnimation) && (m_ExclusiveState != ExclusiveStateType.CoverStepOut || m_ExclusiveHandle.IsReleased) && !HasMovingCommand(View.Data) && !View.MovementAgent.IsReallyMoving)
+		if (InCover && View is UnitEntityView unitEntityView && (unitEntityView.HandsEquipment == null || !unitEntityView.HandsEquipment.AreHandsBusyWithAnimation) && (m_ExclusiveState != ExclusiveStateType.CoverSideStep || m_ExclusiveHandle.IsReleased) && !HasMovingCommand(View.Data) && !View.MovementAgent.IsReallyMoving)
 		{
 			SetExclusiveAnimation(ExclusiveStateType.Cover);
 			return;
@@ -644,7 +644,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 			state = ExclusiveStateType.None;
 			break;
 		}
-		case ExclusiveStateType.CoverStepOut:
+		case ExclusiveStateType.CoverSideStep:
 		{
 			UnitAnimationActionCover unitAnimationActionCover2 = (UnitAnimationActionCover)GetAction(UnitAnimationType.Cover);
 			if (unitAnimationActionCover2 == null)
@@ -656,7 +656,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 			unitAnimationActionCover2 = m_ExclusiveHandle?.Action as UnitAnimationActionCover;
 			if (unitAnimationActionCover2 != null)
 			{
-				unitAnimationActionCover2.PrepareStepOutData(m_ExclusiveHandle);
+				unitAnimationActionCover2.PrepareSideStepData(m_ExclusiveHandle);
 			}
 			Execute(m_ExclusiveHandle);
 			break;
