@@ -154,6 +154,11 @@ public readonly struct ReferenceArrayProxy<T> : IEnumerable<T>, IEnumerable wher
 		return -1;
 	}
 
+	public bool Contains(T bp)
+	{
+		return IndexOf(bp) != -1;
+	}
+
 	public static implicit operator BlueprintReference<T>[](ReferenceArrayProxy<T> proxy)
 	{
 		return proxy.m_Array;

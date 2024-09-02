@@ -330,46 +330,12 @@ internal class CheatsCombat
 	{
 		foreach (BaseUnitEntity allCharactersAndStarship in Game.Instance.Player.AllCharactersAndStarships)
 		{
-			RestUnit(allCharactersAndStarship);
+			PartHealth.RestUnit(allCharactersAndStarship);
 		}
 		foreach (ItemEntity item in Game.Instance.Player.Inventory)
 		{
 			item.RestoreCharges();
 		}
-	}
-
-	public static void RestUnit(BaseUnitEntity unit)
-	{
-		if (unit.LifeState.IsDead)
-		{
-			unit.LifeState.Resurrect();
-			unit.Position = Game.Instance.Player.MainCharacter.Entity.Position;
-		}
-		Rulebook.Trigger(new RuleHealDamage(unit, unit, default(DiceFormula), unit.Health.HitPoints.ModifiedValue));
-		unit.CombatState.LastStraightMoveLength = 0;
-		unit.CombatState.LastDiagonalCount = 0;
-		unit.CombatState.ResetActionPointsAll();
-		unit.CombatState.AttackInRoundCount = 0;
-		unit.CombatState.AttackedInRoundCount = 0;
-		unit.CombatState.HitInRoundCount = 0;
-		unit.CombatState.GotHitInRoundCount = 0;
-		unit.GetAbilityCooldownsOptional()?.Clear();
-		unit.GetTwoWeaponFightingOptional()?.ResetAttacks();
-		TryResetDebuffs(unit);
-		foreach (ModifiableValueAttributeStat attribute in unit.Attributes)
-		{
-			attribute.Damage = 0;
-			attribute.Drain = 0;
-		}
-		unit.Health.HealAll();
-	}
-
-	private static void TryResetDebuffs(BaseUnitEntity unit)
-	{
-		DebuffSkillCheckRoot debuffSkillCheckRoot = BlueprintWarhammerRoot.Instance.SkillCheckRoot.DebuffSkillCheckRoot;
-		unit.Buffs.Remove(debuffSkillCheckRoot.Fatigued);
-		unit.Buffs.Remove(debuffSkillCheckRoot.Disturbed);
-		unit.Buffs.Remove(debuffSkillCheckRoot.Perplexed);
 	}
 
 	[Cheat(ExecutionPolicy = ExecutionPolicy.PlayMode)]
@@ -561,6 +527,26 @@ internal class CheatsCombat
 		else
 		{
 			combatStateOptional.SetActionPoints(yellow);
+		}
+	}
+
+	[Cheat(Name = "set_action_points_blue", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetActionPointsBlue(float blue)
+	{
+		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+		if (currentUnit == null)
+		{
+			PFLog.Default.Log("No current unit in turn base");
+			return;
+		}
+		PartUnitCombatState combatStateOptional = currentUnit.GetCombatStateOptional();
+		if (combatStateOptional == null)
+		{
+			PFLog.Default.Log($"No combat state for unit {currentUnit}");
+		}
+		else
+		{
+			combatStateOptional.SetActionPoints(0, blue);
 		}
 	}
 

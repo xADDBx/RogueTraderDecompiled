@@ -27,7 +27,6 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.QA;
-using Kingmaker.Sound;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic;
@@ -112,6 +111,12 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	[JsonProperty]
 	public TimeSpan? LastRestTime { get; set; }
 
+	[JsonProperty]
+	public string MusicBossFightTypeGroup { get; set; }
+
+	[JsonProperty]
+	public string MusicBossFightTypeValue { get; set; }
+
 	public override bool IsExtra => m_IsExtra;
 
 	[JsonProperty]
@@ -128,8 +133,6 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	public ActivatableAbilityCollection ActivatableAbilities { get; private set; }
 
 	public override bool LootViewed => m_LootViewed;
-
-	public AkStateReference MusicBossFightType { get; set; }
 
 	public new MainUnitFact MainFact => (MainUnitFact)base.MainFact;
 
@@ -498,7 +501,6 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 		GetOrCreate<PartStatsContainer>();
 		GetOrCreate<PartAbilityCooldowns>();
 		GetOrCreate<EntityBoundsPart>();
-		GetOrCreate<PartProvidesFullCover>();
 		GetOrCreate<PartAbilitySettings>();
 		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{
@@ -541,13 +543,6 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			foreach (BlueprintUnitFact item in base.OriginalBlueprint.AddFacts.EmptyIfNull().NotNull())
 			{
 				AddFact(item).AddSource(base.OriginalBlueprint);
-			}
-		}
-		using (ProfileScope.New("Apply Templates"))
-		{
-			foreach (BlueprintUnitTemplate item2 in base.OriginalBlueprint.AdditionalTemplates.EmptyIfNull().NotNull())
-			{
-				item2.ApplyTemplate(this);
 			}
 		}
 		if (!ContextData<UnitHelper.ChargenUnit>.Current)
@@ -831,6 +826,8 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 				result.Append(ref val6);
 			}
 		}
+		result.Append(MusicBossFightTypeGroup);
+		result.Append(MusicBossFightTypeValue);
 		return result;
 	}
 }

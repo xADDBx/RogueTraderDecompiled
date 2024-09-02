@@ -2,6 +2,7 @@ using System;
 using Kingmaker.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.Utility;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using UnityEngine;
 using UnityEngine.Serialization;
 

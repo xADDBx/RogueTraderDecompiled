@@ -69,10 +69,9 @@ public class AbilityCriticalHit : UnitFactComponentDelegate, IInitiatorRulebookH
 		int bonusCriticalChance = Rulebook.Trigger(new RuleCalculateRighteousFuryChance(base.Owner, evt.TargetUnit, abilityData)).BonusCriticalChance;
 		if (Rulebook.Trigger(new RuleRollD100(base.Owner)).Result <= bonusCriticalChance)
 		{
-			int value = Rulebook.Trigger(new RuleCalculateDamage(base.Owner, evt.TargetUnit, abilityData)
-			{
-				FakeRule = true
-			}).CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
+			CalculateDamageParams calculateDamageParams = new CalculateDamageParams(base.Owner, evt.TargetUnit, abilityData);
+			calculateDamageParams.FakeRule = true;
+			int value = calculateDamageParams.Trigger().CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
 			evt.Damage.Modifiers.Add(ModifierType.PctAdd, value, base.Fact, ModifierDescriptor);
 			EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IFakeCriticalHandler>)delegate(IFakeCriticalHandler h)
 			{

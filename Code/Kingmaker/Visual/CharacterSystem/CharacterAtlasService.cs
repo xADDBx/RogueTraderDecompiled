@@ -55,6 +55,7 @@ public class CharacterAtlasService : IService
 		atlasRebuildRequest.OnTextureNotCompressed = onTextureNotCompressed;
 		atlasRebuildRequest.ContextString = contextString;
 		AtlasRebuildRequest item = atlasRebuildRequest;
+		m_Requests.RemoveAll((AtlasRebuildRequest r) => r.Material == null);
 		m_Requests.Add(item);
 		Update();
 	}

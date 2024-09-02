@@ -11,6 +11,7 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
@@ -43,7 +44,7 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(ItemSlotsGroup));
-			AddDisposable(ItemSlotsGroup.CollectionChangedCommand.Subscribe(delegate
+			AddDisposable(ObservableExtensions.Subscribe(ItemSlotsGroup.CollectionChangedCommand, delegate
 			{
 				UpdateValues();
 			}));
@@ -52,7 +53,7 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			AddDisposable(InsertableSlotsGroup = new InsertableLootSlotsGroupVM(ItemsCollection, canInsertItem, 9, 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(InsertableSlotsGroup));
-			AddDisposable(InsertableSlotsGroup.CollectionChangedCommand.Subscribe(delegate
+			AddDisposable(ObservableExtensions.Subscribe(InsertableSlotsGroup.CollectionChangedCommand, delegate
 			{
 				UpdateValues();
 			}));
@@ -124,9 +125,12 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void OnWeaponSetChanged()
 	{
-		ItemSlotsGroup.VisibleCollection.ForEach(delegate(ItemSlotVM s)
+		DelayedInvoker.InvokeInFrames(delegate
 		{
-			s.UpdateTooltips(force: true);
-		});
+			ItemSlotsGroup.VisibleCollection.ForEach(delegate(ItemSlotVM s)
+			{
+				s.UpdateTooltips(force: true);
+			});
+		}, 2);
 	}
 }

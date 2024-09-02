@@ -61,12 +61,13 @@ public class JournalPCView : JournalBaseView
 	{
 		if (!JournalHelper.HasCurrentQuest)
 		{
-			JournalHelper.ChangeCurrentQuest(m_NavigationView.GetCurrentQuest(null));
+			JournalHelper.ChangeCurrentQuest(m_NavigationView.GetCurrentQuest());
 		}
 	}
 
 	private void OnSelectedQuestChange(Quest selectedQuest)
 	{
+		m_SelectorView.ChangeTab((int)m_NavigationView.GetActiveTab());
 		if (selectedQuest != null && selectedQuest.Blueprint.Group == QuestGroupId.Rumours)
 		{
 			TryBindQuestView(base.ViewModel.Navigation.Rumors);

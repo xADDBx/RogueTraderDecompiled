@@ -5,10 +5,12 @@ using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Networking;
+using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Settings;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UI.Sound;
@@ -278,12 +280,16 @@ public class SurfaceActionBarPartQuickAccessConsoleView : ViewBase<SurfaceAction
 		{
 			return;
 		}
-		PhotonManager.Ping.CheckPingCoop(delegate
+		ActionBarSlotVM slot = base.ViewModel.QuickAccessSlot.Value;
+		if (PhotonManager.NetGame.CurrentState != NetGame.State.Playing || slot.MechanicActionBarSlot.Unit.IsMyNetRole())
 		{
-			ActionBarSlotVM value = base.ViewModel.QuickAccessSlot.Value;
-			if (!string.IsNullOrWhiteSpace(value.MechanicActionBarSlot.KeyName))
+			return;
+		}
+		PhotonManager.Ping.PressPing(delegate
+		{
+			if (!string.IsNullOrWhiteSpace(slot.MechanicActionBarSlot.KeyName))
 			{
-				PhotonManager.Ping.PingActionBarAbility(value.MechanicActionBarSlot.KeyName, value.MechanicActionBarSlot.Unit, value.Index, value.WeaponSlotType);
+				PhotonManager.Ping.PingActionBarAbility(slot.MechanicActionBarSlot.KeyName, slot.MechanicActionBarSlot.Unit, slot.Index, slot.WeaponSlotType);
 			}
 		});
 	}

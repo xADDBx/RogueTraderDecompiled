@@ -30,6 +30,9 @@ public class ContextActionStartAdditionalTurn : ContextAction
 	[SerializeField]
 	private RestrictionCalculator AbilityRestrictionForInterrupt;
 
+	[SerializeField]
+	private bool LetCurrentUnitFinishAction;
+
 	public override string GetCaption()
 	{
 		if (!AsInterruption)
@@ -64,7 +67,8 @@ public class ContextActionStartAdditionalTurn : ContextAction
 		Game.Instance.TurnController.InterruptCurrentTurn(entity, base.Caster, new InterruptionData
 		{
 			AsExtraTurn = !AsInterruption,
-			RestrictionsOnInterrupt = AbilityRestrictionForInterrupt
+			RestrictionsOnInterrupt = AbilityRestrictionForInterrupt,
+			WaitForCommandsToFinish = LetCurrentUnitFinishAction
 		});
 		using (base.Context.GetDataScope(entity.ToITargetWrapper()))
 		{

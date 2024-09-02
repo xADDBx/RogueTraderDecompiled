@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -7,11 +8,14 @@ using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[AllowedOn(typeof(BlueprintAbilityAreaEffect))]
+[AllowMultipleComponents]
 [TypeId("6fd810e1ab8b4953bba5e760e4e7087e")]
 public class OverrideAreaNodesTraverseCost : EntityFactComponentDelegate<AreaEffectEntity>, IAreaHandler, ISubscriber, IHashable
 {
@@ -32,22 +36,27 @@ public class OverrideAreaNodesTraverseCost : EntityFactComponentDelegate<AreaEff
 		RemoveOverride();
 	}
 
-	public void OnAreaBeginUnloading()
+	protected override void OnDispose()
 	{
 		RemoveOverride();
 	}
 
-	public void OnAreaDidLoad()
+	void IAreaHandler.OnAreaDidLoad()
 	{
 		AddOverride();
+	}
+
+	void IAreaHandler.OnAreaBeginUnloading()
+	{
+		RemoveOverride();
 	}
 
 	private void AddOverride()
 	{
 		EntityFactSource source = GetSource();
 		PropertyContext valueCalculationContext = GetValueCalculationContext();
-		int overrideCost = m_CostProc?.GetValue(valueCalculationContext) ?? 0;
-		NodeTraverseCostHelper.AddOverrideCost(source, overrideCost, m_UnitRestriction);
+		int overridePercentCost = m_CostProc?.GetValue(valueCalculationContext) ?? 0;
+		NodeTraverseCostHelper.AddOverrideCost(source, overridePercentCost, m_UnitRestriction);
 	}
 
 	private void RemoveOverride()

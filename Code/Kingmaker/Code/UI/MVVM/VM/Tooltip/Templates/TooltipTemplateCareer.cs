@@ -145,7 +145,7 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 			return new TooltipBricksGroupLayoutParams
 			{
 				LayoutType = TooltipBricksGroupLayoutType.Grid,
-				Padding = new RectOffset(0, 0, -6, 0),
+				Padding = new RectOffset(6, 6, -6, 0),
 				Spacing = new Vector2(0f, -4f),
 				ColumnCount = 1,
 				PreferredElementHeight = value

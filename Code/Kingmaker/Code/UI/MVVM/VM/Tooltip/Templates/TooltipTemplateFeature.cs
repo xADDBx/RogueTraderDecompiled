@@ -13,6 +13,7 @@ using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Progression.Features;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -86,7 +87,8 @@ public class TooltipTemplateFeature : TooltipBaseTemplate
 					FontStyles = FontStyles.Bold
 				}
 			};
-			yield return new TooltipBrickIconPattern(icon, null, titleValues, null, null, null, IconPatternMode.SkillMode, acronym);
+			TalentIconInfo iconsInfo = (BlueprintFeatureBase as BlueprintFeature)?.TalentIconInfo;
+			yield return new TooltipBrickIconPattern(icon, null, titleValues, null, null, null, IconPatternMode.SkillMode, acronym, iconsInfo);
 		}
 	}
 

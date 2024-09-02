@@ -73,6 +73,7 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 	protected void OnDoubleClick()
 	{
 		EquipItem();
+		DelayedInvoker.InvokeInFrames(OnHoverStart, 1);
 	}
 
 	protected void OnHoverStart()

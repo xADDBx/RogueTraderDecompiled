@@ -11,7 +11,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 
 public class JournalNavigationVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public readonly ReactiveProperty<JournalTab> ActiveTab = new ReactiveProperty<JournalTab>(JournalTab.Quests);
+	public readonly ReactiveProperty<JournalTab> ActiveTab = new ReactiveProperty<JournalTab>();
 
 	public readonly List<JournalNavigationGroupVM> NavigationGroups;
 
@@ -30,12 +30,12 @@ public class JournalNavigationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		Dictionary<QuestGroupId, List<Quest>> dictionary = new Dictionary<QuestGroupId, List<Quest>>();
 		foreach (Quest quest in quests)
 		{
-			if (!dictionary.TryGetValue(quest.Blueprint.Group, out var value))
+			if (!dictionary.TryGetValue(quest.Blueprint.Group, out var value2))
 			{
-				value = new List<Quest>();
-				dictionary.Add(quest.Blueprint.Group, value);
+				value2 = new List<Quest>();
+				dictionary.Add(quest.Blueprint.Group, value2);
 			}
-			value.Add(quest);
+			value2.Add(quest);
 		}
 		NavigationGroups = new List<JournalNavigationGroupVM>();
 		foreach (QuestGroup group in Game.Instance.BlueprintRoot.Quests.Groups.OrderBy((QuestGroup g) => g.Order).ToList())
@@ -64,6 +64,19 @@ public class JournalNavigationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 				NavigationGroups.Add(new JournalNavigationGroupVM(keyValuePair.Key, keyValuePair.Value, selectedQuest, selectQuest));
 			}
 		}
+		AddDisposable(selectedQuest.Subscribe(delegate(Quest value)
+		{
+			JournalTab journalTab = value?.Blueprint.Group switch
+			{
+				QuestGroupId.Rumours => JournalTab.Rumors, 
+				QuestGroupId.Orders => JournalTab.Orders, 
+				_ => JournalTab.Quests, 
+			};
+			if (selectedQuest != null && journalNavigationVM.ActiveTab.Value != journalTab)
+			{
+				journalNavigationVM.SetActiveTab(journalTab);
+			}
+		}));
 	}
 
 	protected override void DisposeImplementation()

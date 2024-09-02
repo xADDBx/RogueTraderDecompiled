@@ -13,17 +13,41 @@ internal static class DlcCheats
 		StoreManager.RefreshAllDLCStatuses();
 	}
 
+	[Cheat(Name = "set_dlc_available", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetDlcAvailable(BlueprintDlc dlc)
+	{
+		StoreManager.RefreshAllDLCStatuses();
+		if (dlc.IsAvailable)
+		{
+			PFLog.Default.Error($"Can not set {dlc} status cause it is already IsAvailable=true");
+			return;
+		}
+		DlcStoreCheat.AvailableDlc(dlc);
+		StoreManager.RefreshAllDLCStatuses();
+	}
+
+	[Cheat(Name = "set_dlc_unavailable", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetDlcUnAvailable(BlueprintDlc dlc)
+	{
+		StoreManager.RefreshAllDLCStatuses();
+		if (!dlc.IsAvailable)
+		{
+			PFLog.Default.Error($"Can not set {dlc} status cause it is already IsAvailable=false");
+			return;
+		}
+		DlcStoreCheat.UnAvailableDlc(dlc);
+		StoreManager.RefreshAllDLCStatuses();
+	}
+
 	[Cheat(Name = "set_dlc_enabled", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SetDlcEnabled(BlueprintDlc dlc)
 	{
-		StoreManager.UpdateDLCStatus(dlc);
 		SetDlcStatus(dlc, isEnabled: true);
 	}
 
 	[Cheat(Name = "set_dlc_disabled", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SetDlcDisabled(BlueprintDlc dlc)
 	{
-		StoreManager.UpdateDLCStatus(dlc);
 		SetDlcStatus(dlc, isEnabled: false);
 	}
 
@@ -74,6 +98,7 @@ internal static class DlcCheats
 
 	private static void SetDlcStatus(BlueprintDlc dlc, bool isEnabled)
 	{
+		StoreManager.RefreshAllDLCStatuses();
 		if (dlc.IsEnabled == isEnabled)
 		{
 			PFLog.Default.Error($"Can not set {dlc} status cause it is already IsEnabled={isEnabled}");
@@ -87,6 +112,6 @@ internal static class DlcCheats
 		{
 			DlcStoreCheat.DisableDlc(dlc);
 		}
-		StoreManager.UpdateDLCStatus(dlc);
+		StoreManager.RefreshAllDLCStatuses();
 	}
 }

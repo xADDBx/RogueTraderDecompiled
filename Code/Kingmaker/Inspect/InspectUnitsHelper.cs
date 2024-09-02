@@ -17,7 +17,7 @@ public static class InspectUnitsHelper
 		{
 			return false;
 		}
-		if (!unit.IsPlayerFaction && !unit.IsPlayerEnemy && !unit.IsNeutral)
+		if (!unit.IsPlayerFaction && !unit.IsHelpingPlayerFaction && !unit.IsPlayerEnemy && !unit.IsNeutral)
 		{
 			return unit.GetOptional<UnitPartSummonedMonster>();
 		}

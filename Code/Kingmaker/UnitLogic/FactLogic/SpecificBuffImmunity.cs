@@ -2,6 +2,8 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
@@ -22,6 +24,9 @@ public class SpecificBuffImmunity : UnitFactComponentDelegate, IInitiatorRuleboo
 	private BlueprintBuffReference m_Buff;
 
 	[SerializeField]
+	private ActionList m_ActionsOnImmunity;
+
+	[SerializeField]
 	private bool m_DisableGameLog;
 
 	public BlueprintBuff Buff => m_Buff?.Get();
@@ -32,6 +37,7 @@ public class SpecificBuffImmunity : UnitFactComponentDelegate, IInitiatorRuleboo
 		{
 			evt.Immunity = true;
 			evt.DisableGameLog = m_DisableGameLog;
+			base.Fact.RunActionInContext(m_ActionsOnImmunity, base.Owner.ToITargetWrapper());
 		}
 	}
 

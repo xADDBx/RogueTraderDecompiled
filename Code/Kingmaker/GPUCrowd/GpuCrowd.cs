@@ -15,6 +15,12 @@ public class GpuCrowd : MonoBehaviour
 		Target
 	}
 
+	public const string ObjectsCountFieldName = "ObjectsCount";
+
+	public const string NumberOfSystemsFieldName = "NumberOfSystems";
+
+	public const string ShadowsEnableFieldName = "Shadows Enable";
+
 	public VisualEffect CrowdVfx;
 
 	public List<GpuCrowdLocator> CrowdLocators = new List<GpuCrowdLocator>();
@@ -39,6 +45,7 @@ public class GpuCrowd : MonoBehaviour
 				m_OriginalCount = CrowdVfx.GetInt("ObjectsCount");
 			}
 			HandleCrowdQualityChanged(SettingsRoot.Graphics.CrowdQuality.GetValue());
+			Game.Instance?.GpuCrowdController?.RegisterCrowd(this);
 		}
 	}
 
@@ -46,6 +53,7 @@ public class GpuCrowd : MonoBehaviour
 	{
 		if (Application.isPlaying)
 		{
+			Game.Instance?.GpuCrowdController?.RegisterCrowd(this);
 			SettingsRoot.Graphics.CrowdQuality.OnValueChanged += HandleCrowdQualityChanged;
 		}
 	}
@@ -54,7 +62,16 @@ public class GpuCrowd : MonoBehaviour
 	{
 		if (Application.isPlaying)
 		{
+			Game.Instance?.GpuCrowdController?.UnregisterCrowd(this);
 			SettingsRoot.Graphics.CrowdQuality.OnValueChanged -= HandleCrowdQualityChanged;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		if (Application.isPlaying)
+		{
+			Game.Instance?.GpuCrowdController?.UnregisterCrowd(this);
 		}
 	}
 

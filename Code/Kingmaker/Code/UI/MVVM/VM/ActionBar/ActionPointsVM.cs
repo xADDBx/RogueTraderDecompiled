@@ -16,7 +16,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Owlcat.Runtime.UI.MVVM;
 using Pathfinding;
 using UniRx;
@@ -73,14 +73,14 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			if (!(Game.Instance.CurrentMode == GameModeType.SpaceCombat))
 			{
-				int mp2 = Mathf.RoundToInt(value.mp);
+				float mp2 = value.mp;
 				int ap2 = Mathf.RoundToInt(value.ap);
 				bool noMove = false;
 				bool setForce = false;
 				AbilityData abilityData = m_SelectedAbility ?? m_HoveredAbility;
 				if (abilityData != null)
 				{
-					mp2 = Mathf.RoundToInt(UnitPathManager.Instance.MemorizedPathCost);
+					mp2 = UnitPathManager.Instance.MemorizedPathCost;
 					noMove = abilityData.ClearMPAfterUse;
 					setForce = abilityData.TargetAnchor == AbilityTargetAnchor.Owner || m_SelectedAbility != null;
 				}
@@ -93,15 +93,15 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 	{
 	}
 
-	private void SetCursorTexts(int mp, int ap, bool noMove, bool setForce)
+	private void SetCursorTexts(float mp, int ap, bool noMove, bool setForce)
 	{
 		string upperText = null;
 		string lowerText = null;
 		bool flag = Game.Instance.SelectionCharacter.SelectedUnit.Value.IsMyNetRole();
 		UITooltips tooltips = UIStrings.Instance.Tooltips;
-		if (mp > 0 && flag)
+		if (mp > 0f && flag)
 		{
-			string text = ((BlueAP.Value >= (float)mp) ? m_MPColor : m_NotEnoughColor);
+			string text = ((BlueAP.Value >= mp) ? m_MPColor : m_NotEnoughColor);
 			upperText = $"{text}<size=150%>{mp}</size>{m_ColorEnd} {tooltips.MP.Text}";
 		}
 		if (ap > 0 && flag)

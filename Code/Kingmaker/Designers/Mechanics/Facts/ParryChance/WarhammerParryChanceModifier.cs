@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
@@ -26,7 +27,8 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 	{
 		ParryChance = 1,
 		AttackerWeaponSkillBonus = 2,
-		DefenderWeaponSkillBonus = 4
+		DefenderWeaponSkillBonus = 4,
+		ParryChanceMultiplier = 8
 	}
 
 	public RestrictionCalculator Restrictions = new RestrictionCalculator();
@@ -43,11 +45,16 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 	[ShowIf("ModifyDefenderWeaponSkillBonus")]
 	public ContextValue DefenderWeaponSkillBonus;
 
+	[ShowIf("ParryChanceMultiplier")]
+	public ContextValue ParryChanceMultiplierValue = 1;
+
 	private bool ModifyParryChance => (Properties & PropertyType.ParryChance) != 0;
 
 	private bool ModifyAttackerWeaponSkillBonus => (Properties & PropertyType.AttackerWeaponSkillBonus) != 0;
 
 	private bool ModifyDefenderWeaponSkillBonus => (Properties & PropertyType.DefenderWeaponSkillBonus) != 0;
+
+	private bool ParryChanceMultiplier => (Properties & PropertyType.ParryChanceMultiplier) != 0;
 
 	protected void TryApply(RuleCalculateParryChance rule)
 	{
@@ -64,6 +71,10 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 			if (ModifyDefenderWeaponSkillBonus)
 			{
 				rule.DefenderCurrentAttackSkillValueModifiers.Add(DefenderWeaponSkillBonus.Calculate(base.Context), base.Fact);
+			}
+			if (ParryChanceMultiplier)
+			{
+				rule.ParryValueMultipliers.Add(ModifierType.PctMul_Extra, ParryChanceMultiplierValue.Calculate(base.Context), base.Fact);
 			}
 		}
 	}

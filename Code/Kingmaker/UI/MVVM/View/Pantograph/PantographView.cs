@@ -10,6 +10,7 @@ using Kingmaker.UI.TMPExtention.ScrambledTextMeshPro;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
+using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,9 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 
 	[SerializeField]
 	private List<Image> m_Images;
+
+	[SerializeField]
+	private TextMeshProUGUI m_TextIcon;
 
 	[Header("Extended Item")]
 	[SerializeField]
@@ -123,6 +127,15 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 	private void BindSimple(PantographConfig config)
 	{
 		m_Label.SetText(string.Empty, config.Text);
+		if (m_TextIcon != null)
+		{
+			bool flag = !string.IsNullOrWhiteSpace(config.TextIcon);
+			m_TextIcon.gameObject.SetActive(flag);
+			if (flag)
+			{
+				m_TextIcon.text = config.TextIcon;
+			}
+		}
 		if (!m_Images.Any())
 		{
 			return;
@@ -181,6 +194,10 @@ public class PantographView : MonoBehaviour, IPantographHandler, ISubscriber, ID
 	private void UnbindSimple()
 	{
 		m_Label.SetText(string.Empty, string.Empty);
+		if (m_TextIcon != null)
+		{
+			m_TextIcon.text = string.Empty;
+		}
 		if (!m_Images.Any())
 		{
 			return;

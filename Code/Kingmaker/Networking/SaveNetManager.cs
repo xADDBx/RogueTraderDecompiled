@@ -458,10 +458,13 @@ public class SaveNetManager
 		finally
 		{
 			InProcess = false;
-			PortraitSaveMetaData[] portraitsSaveMeta = m_DownloadSaveMetaData.portraitsSaveMeta;
-			foreach (PortraitSaveMetaData portraitSaveMetaData in portraitsSaveMeta)
+			if (m_DownloadSaveMetaData != null && m_DownloadSaveMetaData.portraitsSaveMeta != null)
 			{
-				m_OriginIdGuidPortraitsData[portraitSaveMetaData.originId] = portraitSaveMetaData.guid;
+				PortraitSaveMetaData[] portraitsSaveMeta = m_DownloadSaveMetaData.portraitsSaveMeta;
+				foreach (PortraitSaveMetaData portraitSaveMetaData in portraitsSaveMeta)
+				{
+					m_OriginIdGuidPortraitsData[portraitSaveMetaData.originId] = portraitSaveMetaData.guid;
+				}
 			}
 			SaveFromPlayer = PhotonActorNumber.Invalid;
 			m_DownloadSaveMetaData = null;

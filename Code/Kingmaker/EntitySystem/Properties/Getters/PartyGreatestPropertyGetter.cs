@@ -27,20 +27,21 @@ public class PartyGreatestPropertyGetter : PropertyGetter
 
 	protected override int GetBaseValue()
 	{
+		List<UnitReference> partyCharacters = Game.Instance.Player.PartyCharacters;
+		if (partyCharacters == null || partyCharacters.Count == 0)
+		{
+			return 0;
+		}
 		int num = int.MinValue;
-		List<UnitReference> list = Game.Instance.Player.PartyCharacters;
-		if (m_Fact != null)
+		foreach (UnitReference item in partyCharacters)
 		{
-			list = list.FindAll((UnitReference p) => p.Entity.ToBaseUnitEntity().Facts.Contains((BlueprintUnitFact)m_Fact));
-		}
-		if (list != null)
-		{
-			foreach (UnitReference item in list)
+			BaseUnitEntity baseUnitEntity = item.ToBaseUnitEntity();
+			if (m_Fact == null || baseUnitEntity.Facts.Contains((BlueprintUnitFact)m_Fact))
 			{
-				num = ((num < Property.GetValue(item.ToBaseUnitEntity())) ? Property.GetValue(item.ToBaseUnitEntity()) : num);
+				int value = Property.GetValue(baseUnitEntity);
+				num = Mathf.Max(num, value);
 			}
-			return num;
 		}
-		return 0;
+		return num;
 	}
 }

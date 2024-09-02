@@ -14,7 +14,7 @@ public class PlayerCharacter : AbstractUnitEvaluator
 {
 	protected override AbstractUnitEntity GetAbstractUnitEntityInternal()
 	{
-		return GameHelper.GetPlayerCharacter();
+		return GameHelper.GetPlayerCharacterOriginal();
 	}
 
 	public override string GetCaption()

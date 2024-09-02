@@ -33,7 +33,7 @@ public class SetObjectiveStatus : GameAction, IQuestObjectiveReference
 	{
 		if (StartObjectiveIfNone && GameHelper.Quests.GetObjectiveState(Objective) == QuestObjectiveState.None)
 		{
-			GameHelper.Quests.GiveObjective(Objective);
+			GameHelper.Quests.GiveObjective(Objective, StartObjectiveIfNone);
 		}
 		if (GameHelper.Quests.GetObjectiveState(Objective) != 0)
 		{

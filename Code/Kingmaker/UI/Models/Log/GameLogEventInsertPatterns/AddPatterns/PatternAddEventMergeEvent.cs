@@ -65,22 +65,32 @@ public class PatternAddEventMergeEvent<T> : PatternAddEvent where T : GameLogEve
 		T evn = @in as T;
 		if (evn != null)
 		{
-			int num = queue.FindLastIndex((GameLogEvent o) => o is MergeGameLogEvent<T> mergeGameLogEvent3 && m_Comparer.Compare(mergeGameLogEvent3.GetEvents()[0], evn));
-			if (num != -1 && queue[num] is MergeGameLogEvent<T> mergeGameLogEvent)
+			int num = -1;
+			int num2 = queue.Count - 1;
+			while (0 <= num2)
 			{
-				mergeGameLogEvent.AddEvent(evn);
-				@out = mergeGameLogEvent;
+				if (queue[num2] is MergeGameLogEvent<T> mergeGameLogEvent && m_Comparer.Compare(mergeGameLogEvent.GetEvents()[0], evn))
+				{
+					num = num2;
+					break;
+				}
+				num2--;
+			}
+			if (num != -1 && queue[num] is MergeGameLogEvent<T> mergeGameLogEvent2)
+			{
+				mergeGameLogEvent2.AddEvent(evn);
+				@out = mergeGameLogEvent2;
 				return true;
 			}
 			num = queue.FindLastIndex((GameLogEvent o) => o is T evn2 && m_Comparer.Compare(evn2, evn));
 			if (num != -1)
 			{
-				MergeGameLogEvent<T> mergeGameLogEvent2 = new MergeGameLogEvent<T>();
-				mergeGameLogEvent2.AddEvent((T)queue[num]);
-				mergeGameLogEvent2.AddEvent(evn);
-				@out = mergeGameLogEvent2;
+				MergeGameLogEvent<T> mergeGameLogEvent3 = new MergeGameLogEvent<T>();
+				mergeGameLogEvent3.AddEvent((T)queue[num]);
+				mergeGameLogEvent3.AddEvent(evn);
+				@out = mergeGameLogEvent3;
 				queue.RemoveAt(num);
-				queue.Insert(num, mergeGameLogEvent2);
+				queue.Insert(num, mergeGameLogEvent3);
 				return true;
 			}
 		}

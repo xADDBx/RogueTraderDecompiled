@@ -145,9 +145,7 @@ public class RulePerformAttack : RulebookTargetEvent
 		RuleRollDamage rollDamage = overrideDamageRoll;
 		if (overrideDamageRoll == null)
 		{
-			RuleCalculateDamage ruleCalculateDamage = new RuleCalculateDamage(base.ConcreteInitiator, base.ConcreteTarget, Ability, RollPerformAttackRule);
-			Rulebook.Trigger(ruleCalculateDamage);
-			DamageData damageData = ruleCalculateDamage.ResultDamage;
+			DamageData damageData = new CalculateDamageParams(base.ConcreteInitiator, base.ConcreteTarget, Ability, RollPerformAttackRule).Trigger().ResultDamage;
 			if (AdditionalDamageInstancesCount > 0)
 			{
 				damageData = damageData.Copy();

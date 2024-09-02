@@ -61,8 +61,8 @@ public class UnitCustomizationPreset : BlueprintScriptableObject
 		{
 			if (unitVariation.Units.Contains(unit))
 			{
-				List<UnitCustomizationVariation> list = unitVariation.Variations.Where((UnitCustomizationVariation v) => requirements == null || requirements.FitsRequirements(v)).ToList();
-				string id = $"{AssetGuid}_{unitVariation.Units.First().AssetGuid}_{list.Count}";
+				List<UnitCustomizationVariation> list = unitVariation.Variations.Where((UnitCustomizationVariation v) => v != null && (requirements == null || requirements.FitsRequirements(v))).ToList();
+				string id = $"{AssetGuid}_{unitVariation.Units.First((BlueprintUnit u) => u != null)?.AssetGuid}_{list.Count}";
 				return PrimeRotation.SelectNext(list, id, PFStatefulRandom.UnitLogic.Customization);
 			}
 		}
@@ -74,10 +74,5 @@ public class UnitCustomizationPreset : BlueprintScriptableObject
 		List<BlueprintUnitAsksListReference> list = ((gender == Gender.Male) ? MaleVoices : FemaleVoices);
 		string id = $"{AssetGuid}_{gender}_Voice";
 		return PrimeRotation.SelectNext(list, id, PFStatefulRandom.UnitLogic.Customization)?.Get();
-	}
-
-	public bool SelectLeftHanded()
-	{
-		return PFStatefulRandom.UnitLogic.Customization.Range(0f, 1f) <= Distribution.LeftHandedChance;
 	}
 }

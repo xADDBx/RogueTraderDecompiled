@@ -7,6 +7,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.Localization;
 using Kingmaker.Localization.Shared;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -55,9 +56,10 @@ public class InteractionLootSettings : InteractionSettings
 	[CanBeNull]
 	public SharedStringAsset Description;
 
+	[FormerlySerializedAs("ItemRestriction")]
 	[CanBeNull]
 	[InfoBox("Evaluators: ItemFromContextEvaluator, InteractedMapObject")]
-	public ConditionsReference ItemRestriction;
+	public ConditionsReference LootConditions;
 
 	[FormerlySerializedAs("ItemTakenTrigger")]
 	public TriggerData TakeItemTrigger;
@@ -69,6 +71,14 @@ public class InteractionLootSettings : InteractionSettings
 
 	[SerializeField]
 	private BlueprintSharedVendorTableReference m_AttachedVendorTable;
+
+	public override bool ShouldShowUseAnimationState => false;
+
+	public override bool ShouldShowDialog => false;
+
+	public override bool ShouldShowUnlimitedInteractionsPerRound => false;
+
+	public override bool ShouldShowOverrideActionPointsCost => false;
 
 	public BlueprintSharedVendorTable AttachedVendorTable => m_AttachedVendorTable?.Get();
 

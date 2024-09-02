@@ -1,9 +1,8 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
-using Kingmaker.Sound.Base;
+using Kingmaker.Controllers.FX;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.Utility.Attributes;
-using Owlcat.Runtime.Visual.Effects.WeatherSystem;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -36,6 +35,8 @@ public class VisualEffectState : UnitFactComponentDelegate, IHashable
 	private PostProcessingEffectsLibrary.SoundEventReferences m_SoundEventReferences;
 
 	private Buff m_OwnerBuff;
+
+	private SFXWrapper m_SfxWrapper;
 
 	protected override void OnActivateOrPostLoad()
 	{
@@ -94,19 +95,14 @@ public class VisualEffectState : UnitFactComponentDelegate, IHashable
 	private void StartSoundEvent()
 	{
 		m_RunWeatherEffect.PreparingCompleteEvent -= StartSoundEvent;
-		AkSoundEngine.SetState(m_SoundEventReferences.State.Group, m_SoundEventReferences.State.Value);
-		VFXWeatherSystem instance = VFXWeatherSystem.Instance;
-		GameObject gameObject = ((instance != null) ? instance.gameObject : null);
-		SoundEventsManager.PostEvent(m_SoundEventReferences.StartEventName, gameObject);
+		m_SfxWrapper = new SFXWrapperVisualEffect(m_SoundEventReferences);
+		Game.Instance.CameraFXSoundController.TryStartEvent(m_SfxWrapper);
 	}
 
 	private void StopSoundEvent()
 	{
 		m_RunWeatherEffect.PreparingCompleteEvent -= StopSoundEvent;
-		AkSoundEngine.SetState(m_SoundEventReferences.State.Group, "None");
-		VFXWeatherSystem instance = VFXWeatherSystem.Instance;
-		GameObject gameObject = ((instance != null) ? instance.gameObject : null);
-		SoundEventsManager.PostEvent(m_SoundEventReferences.StopEventName, gameObject);
+		Game.Instance.CameraFXSoundController.TryStopEvent(m_SfxWrapper);
 	}
 
 	private void OnActivationComplete()

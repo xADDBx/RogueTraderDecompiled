@@ -4,6 +4,8 @@ namespace Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.Console;
 
 public class DlcManagerDlcEntityConsoleView : DlcManagerDlcEntityBaseView
 {
+	public bool IsDlcCanBeDeleted => base.ViewModel.IsDlcCanBeDeleted.Value;
+
 	protected override void OnChangeSelectedStateImpl(bool value)
 	{
 		base.OnChangeSelectedStateImpl(value);

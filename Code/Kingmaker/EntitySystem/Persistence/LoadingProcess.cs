@@ -380,24 +380,38 @@ public class LoadingProcess : MonoBehaviour
 	private void StartLoadingScreen(ILoadingScreen loadingScreen)
 	{
 		m_HideTimeout.Cancel();
-		if (loadingScreen != null && (m_LoadingScreen == null || !m_LoadingScreen.Equals(loadingScreen)))
+		if (loadingScreen == null)
 		{
-			if (m_LoadingScreen == null || m_LoadingScreen.Equals(EmptyLoadingScreen.Instance))
-			{
-				m_LoadingScreen = loadingScreen;
-			}
-			else if (IsFadeActive && loadingScreen.Equals(Game.Instance.RootUiContext.LoadingScreenRootVM))
-			{
-				m_LoadingScreen.HideLoadingScreen();
-				m_LoadingScreen = loadingScreen;
-			}
+			return;
+		}
+		if (m_LoadingScreen != null && m_LoadingScreen.Equals(loadingScreen))
+		{
 			LoadingScreenState loadingScreenState = m_LoadingScreen.GetLoadingScreenState();
-			if (loadingScreenState == LoadingScreenState.Hidden || loadingScreenState == LoadingScreenState.HideAnimation)
+			if (loadingScreenState != 0 && loadingScreenState != LoadingScreenState.HideAnimation)
 			{
-				PFLog.System.Log("Show loading screen: {0}", loadingScreen);
-				m_LoadingScreen.ShowLoadingScreen();
-				SoundState.Instance.OnLoadingScreenShown();
+				return;
 			}
+			m_LoadingScreen = null;
+		}
+		if (m_LoadingScreen == null || m_LoadingScreen.Equals(EmptyLoadingScreen.Instance))
+		{
+			m_LoadingScreen = loadingScreen;
+		}
+		else if (IsFadeActive && loadingScreen.Equals(Game.Instance.RootUiContext.LoadingScreenRootVM))
+		{
+			m_LoadingScreen.HideLoadingScreen();
+			m_LoadingScreen = loadingScreen;
+		}
+		LoadingScreenState loadingScreenState2 = m_LoadingScreen.GetLoadingScreenState();
+		if (loadingScreenState2 == LoadingScreenState.Hidden || loadingScreenState2 == LoadingScreenState.HideAnimation)
+		{
+			PFLog.System.Log("Show loading screen: {0}", loadingScreen);
+			m_LoadingScreen.ShowLoadingScreen();
+			EventBus.RaiseEvent(delegate(IOpenLoadingScreenHandler h)
+			{
+				h.HandleOpenLoadingScreen();
+			});
+			SoundState.Instance.OnLoadingScreenShown();
 		}
 	}
 

@@ -61,6 +61,11 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 		name = "$" + GetType().Name + "$" + Uuid.Instance.CreateString();
 	}
 
+	public static string GenerateName(string typeName)
+	{
+		return "$" + typeName + "$" + Guid.NewGuid().ToString("N");
+	}
+
 	public static implicit operator bool(Element o)
 	{
 		return o != null;

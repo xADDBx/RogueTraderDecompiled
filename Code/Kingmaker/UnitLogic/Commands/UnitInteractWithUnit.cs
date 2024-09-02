@@ -17,6 +17,8 @@ public sealed class UnitInteractWithUnit : UnitCommand<UnitInteractWithUnitParam
 
 	public override bool IsMoveUnit => false;
 
+	public override bool IsBlockingCommand => true;
+
 	public UnitInteractWithUnit([NotNull] UnitInteractWithUnitParams @params)
 		: base(@params)
 	{

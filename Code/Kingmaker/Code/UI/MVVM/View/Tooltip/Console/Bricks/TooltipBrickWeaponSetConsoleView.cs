@@ -21,7 +21,7 @@ public class TooltipBrickWeaponSetConsoleView : TooltipBrickWeaponSetView, ICons
 	private void CreateNavigation()
 	{
 		m_NavigationBehaviour.Clear();
-		SimpleConsoleNavigationEntity entity = new SimpleConsoleNavigationEntity(m_HandSlotView.Slot, m_HandSlotView.TooltipTemplates().LastOrDefault());
+		SimpleConsoleNavigationEntity entity = new SimpleConsoleNavigationEntity(m_WeaponSlotView.Slot, m_WeaponSlotView.TooltipTemplate());
 		m_NavigationBehaviour.AddEntityVertical(entity);
 		if (m_WidgetList.Entries != null)
 		{

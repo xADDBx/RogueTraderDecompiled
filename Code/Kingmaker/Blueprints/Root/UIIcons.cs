@@ -58,8 +58,6 @@ public class UIIcons
 
 	public Color32 BabColor;
 
-	public Sprite SpellResistance;
-
 	public Sprite Penetration;
 
 	public Sprite StatBackground;

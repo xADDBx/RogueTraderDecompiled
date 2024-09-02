@@ -65,6 +65,9 @@ public class WarhammerOverrideAbilityApCost : MechanicEntityFactComponentDelegat
 	[SerializeField]
 	private BlueprintAbilityGroupReference m_AffectedGroup;
 
+	[SerializeField]
+	private BlueprintAbilityGroupReference[] m_AbilityGroupList;
+
 	public bool NotSelectedGroup;
 
 	public bool AffectOnlyMelee;
@@ -80,6 +83,15 @@ public class WarhammerOverrideAbilityApCost : MechanicEntityFactComponentDelegat
 	public BlueprintAbility Ability => m_Ability?.Get();
 
 	public BlueprintAbilityGroup AffectedGroup => m_AffectedGroup?.Get();
+
+	public ReferenceArrayProxy<BlueprintAbilityGroup> AbilityGroupList
+	{
+		get
+		{
+			BlueprintReference<BlueprintAbilityGroup>[] abilityGroupList = m_AbilityGroupList;
+			return abilityGroupList;
+		}
+	}
 
 	public bool StaticConst => m_overrideMode == WeaponAPParameter.StaticConstant;
 
@@ -108,7 +120,7 @@ public class WarhammerOverrideAbilityApCost : MechanicEntityFactComponentDelegat
 				return;
 			}
 		}
-		if ((AffectedGroup == null && Ability == null && evt.Blueprint != base.OwnerBlueprint) || (AffectedGroup != null && ((NotSelectedGroup && evt.Blueprint.AbilityGroups.Contains(AffectedGroup)) || (!NotSelectedGroup && !evt.Blueprint.AbilityGroups.Contains(AffectedGroup)))) || (Ability != null && evt.Blueprint != Ability))
+		if ((AffectedGroup == null && Ability == null && AbilityGroupList.Length == 0 && evt.Blueprint != base.OwnerBlueprint) || (AffectedGroup != null && ((NotSelectedGroup && evt.Blueprint.AbilityGroups.Contains(AffectedGroup)) || (!NotSelectedGroup && !evt.Blueprint.AbilityGroups.Contains(AffectedGroup)))) || (AbilityGroupList.Length != 0 && !evt.Blueprint.AbilityGroups.Intersect(AbilityGroupList).Any()) || (Ability != null && evt.Blueprint != Ability))
 		{
 			return;
 		}

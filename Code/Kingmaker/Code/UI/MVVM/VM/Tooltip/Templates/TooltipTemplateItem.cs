@@ -100,12 +100,18 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 		{
 			m_ItemTooltipData = ((m_Item != null) ? TooltipsDataCache.Instance.GetItemTooltipData(m_Item, m_ForceUpdateCache, m_Replenishing) : TooltipsDataCache.Instance.GetItemTooltipData(m_BlueprintItem, m_ForceUpdateCache));
 			m_ItemPart = ((m_Item != null) ? ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(), m_Item, m_ItemTooltipData, itemTooltipData, m_IsScreenTooltip)) : ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(), m_BlueprintItem, m_ItemTooltipData, itemTooltipData, m_IsScreenTooltip)));
-			return;
 		}
-		for (int i = 0; i < m_FewItems.Count; i++)
+		else
 		{
-			m_FewItemsTooltipDatas.Add((m_FewItems[i] != null) ? TooltipsDataCache.Instance.GetItemTooltipData(m_FewItems[i], m_ForceUpdateCache, m_Replenishing) : TooltipsDataCache.Instance.GetItemTooltipData(m_FewBlueprintsItems[i], m_ForceUpdateCache));
-			m_FewItemsParts.Add((m_FewItems[i] != null) ? ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(m_FewBlueprintsItems[i]), m_FewItems[i], m_FewItemsTooltipDatas[i], itemTooltipData, m_IsScreenTooltip)) : ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(m_FewBlueprintsItems[i]), m_FewBlueprintsItems[i], m_FewItemsTooltipDatas[i], itemTooltipData, m_IsScreenTooltip)));
+			for (int i = 0; i < m_FewItems.Count; i++)
+			{
+				m_FewItemsTooltipDatas.Add((m_FewItems[i] != null) ? TooltipsDataCache.Instance.GetItemTooltipData(m_FewItems[i], m_ForceUpdateCache, m_Replenishing) : TooltipsDataCache.Instance.GetItemTooltipData(m_FewBlueprintsItems[i], m_ForceUpdateCache));
+				m_FewItemsParts.Add((m_FewItems[i] != null) ? ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(m_FewBlueprintsItems[i]), m_FewItems[i], m_FewItemsTooltipDatas[i], itemTooltipData, m_IsScreenTooltip)) : ((BaseItemPart)Activator.CreateInstance(GetItemPartTemplateType(m_FewBlueprintsItems[i]), m_FewBlueprintsItems[i], m_FewItemsTooltipDatas[i], itemTooltipData, m_IsScreenTooltip)));
+			}
+		}
+		if (m_Item != null && type == TooltipTemplateType.Info)
+		{
+			m_Item.OnOpenDescription();
 		}
 	}
 

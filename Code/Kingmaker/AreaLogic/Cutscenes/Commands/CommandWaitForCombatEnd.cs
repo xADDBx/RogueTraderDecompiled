@@ -16,6 +16,10 @@ public class CommandWaitForCombatEnd : CommandBase
 	[Tooltip("The command will end even in combat if it takes longer than this")]
 	private float m_TimeOut = 60f;
 
+	[SerializeField]
+	[Tooltip("Timeout for triggering animations after the end of a battle, if the battle was ended forcibly, without a timeout.")]
+	private float m_IsIgnoreLeaveTimerTimeOut = 2.5f;
+
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
 		player.ClearCommandData(this);
@@ -29,10 +33,15 @@ public class CommandWaitForCombatEnd : CommandBase
 	public override bool IsFinished(CutscenePlayerData player)
 	{
 		Game.Instance.Player.UpdateIsInCombat();
-		if (player.GetCommandData<Data>(this).CurrentTime > (double)m_TimeOut)
+		Data commandData = player.GetCommandData<Data>(this);
+		if (commandData.CurrentTime > (double)m_TimeOut)
 		{
 			PFLog.Default.ErrorWithReport("Command " + name + " in " + player.Cutscene.name + " is taking too long, skipping");
 			return true;
+		}
+		if (!Game.Instance.Player.IsInCombat && Game.Instance.Player.LastCombatLeaveIgnoreLeaveTimer && commandData.CurrentTime < (double)m_IsIgnoreLeaveTimerTimeOut)
+		{
+			return false;
 		}
 		return !Game.Instance.Player.IsInCombat;
 	}

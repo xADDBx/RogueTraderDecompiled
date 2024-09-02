@@ -32,6 +32,8 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	private bool m_CalculatedOverpenetration;
 
+	private bool m_DoNotUseCrModifier;
+
 	public CompositeModifiersManager ValueModifiers => m_DamageModifiersHolder.Modifiers;
 
 	public ValueModifiersManager MinValueModifiers => m_DamageModifiersHolder.MinValueModifiers;
@@ -67,7 +69,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public DamageType DamageType => InitiatorWeaponStatsRule.BaseDamage.Type;
 
-	public RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false)
+	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false)
 		: base(initiator, target)
 	{
 		InitiatorWeaponStatsRule = ((baseDamageOverride == null && !basePenetrationOverride.HasValue) ? WeaponStatsHelper.GetWeaponStats(ability, ability?.Weapon, (MechanicEntity)base.Initiator, MaybeTarget) : new RuleCalculateStatsWeapon(initiator, target, ability, baseDamageOverride, basePenetrationOverride));
@@ -76,8 +78,16 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		m_ForceCrit = forceCrit;
 		m_CalculatedOverpenetrationDamageData = (calculatedOverpenetration ? baseDamageOverride : null);
 		m_CalculatedOverpenetration = calculatedOverpenetration;
+		m_DoNotUseCrModifier = doNotUseCrModifier;
 		m_DamageModifiersHolder = new DamageData(DamageType.Direct, 0);
 		DistanceToTarget = distance.GetValueOrDefault();
+	}
+
+	private RuleCalculateDamage(CalculateDamageParams @params)
+		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier)
+	{
+		base.FakeRule = @params.FakeRule;
+		base.Reason = @params.Reason.GetValueOrDefault();
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
@@ -94,7 +104,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 			damageData = damageData.Copy(OverrideDamageType.Value);
 		}
 		MechanicEntity maybeTarget = MaybeTarget;
-		if (maybeTarget != null && maybeTarget.IsInPlayerParty)
+		if (maybeTarget != null && maybeTarget.IsInPlayerParty && !m_DoNotUseCrModifier)
 		{
 			float num = SettingsHelper.CalculateCRModifier(SettingsRoot.Difficulty.PartyDamageDealtAfterArmorReductionPercentModifier);
 			int num2 = (int)((float)(int)SettingsRoot.Difficulty.PartyDamageDealtAfterArmorReductionPercentModifier * num);
@@ -144,5 +154,16 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		}
 		damageData.MarkCalculated();
 		ResultDamage = damageData;
+	}
+
+	public static RuleCalculateDamage Trigger(CalculateDamageParams @params)
+	{
+		RuleCalculateDamage ruleCalculateDamage = CalculateDamageCache.Get(@params);
+		if (ruleCalculateDamage == null)
+		{
+			ruleCalculateDamage = Rulebook.Trigger(new RuleCalculateDamage(@params));
+			CalculateDamageCache.Set(@params, ruleCalculateDamage);
+		}
+		return ruleCalculateDamage;
 	}
 }

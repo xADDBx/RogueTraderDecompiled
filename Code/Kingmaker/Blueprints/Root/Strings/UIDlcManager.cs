@@ -12,11 +12,19 @@ public class UIDlcManager
 
 	public LocalizedString ModsLabel;
 
+	public LocalizedString AvailableForPurchase;
+
 	public LocalizedString Purchase;
 
 	public LocalizedString Purchased;
 
 	public LocalizedString ComingSoon;
+
+	public LocalizedString DlcDownloading;
+
+	public LocalizedString DlcBoughtAndNotInstalled;
+
+	public LocalizedString Install;
 
 	public LocalizedString YouDontHaveThisDlc;
 
@@ -60,6 +68,34 @@ public class UIDlcManager
 
 	public LocalizedString ModSettings;
 
+	public LocalizedString NeedRestartAfterPurchase;
+
+	public LocalizedString NeedWaitAllDlcsDownload;
+
+	public LocalizedString DeleteDlc;
+
+	public LocalizedString AreYouSureDeleteDlc;
+
+	public LocalizedString PlayVideo;
+
+	public LocalizedString PauseVideo;
+
+	public LocalizedString StopVideo;
+
+	public LocalizedString CannotChangeDlcSwitchState;
+
+	public LocalizedString CannotChangeDlcSwitchStateRightNowBecauseSaveNotAllowed;
+
+	public LocalizedString YouSwitchDlcOnAndCantDoItBack;
+
+	public LocalizedString ResetAllDlcsToPreviousState;
+
+	public LocalizedString InstalledDlcs;
+
+	public LocalizedString YouDontHaveAnyInstalledDlcs;
+
+	public LocalizedString ThisSettingWillAffectCurrentSave;
+
 	public string GetDlcTypeLabel(DlcTypeEnum type)
 	{
 		return type switch
@@ -77,7 +113,7 @@ public class UIDlcManager
 		return state switch
 		{
 			BlueprintDlc.DlcPurchaseState.Purchased => Purchased, 
-			BlueprintDlc.DlcPurchaseState.AvailableToPurchase => UIStrings.Instance.ProfitFactorTexts.AvailableToUseValue, 
+			BlueprintDlc.DlcPurchaseState.AvailableToPurchase => AvailableForPurchase, 
 			BlueprintDlc.DlcPurchaseState.ComingSoon => ComingSoon, 
 			_ => string.Empty, 
 		};

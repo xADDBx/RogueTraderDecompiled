@@ -45,6 +45,10 @@ public class TooltipBricksView : MonoBehaviour
 
 	public TooltipBrickBuffView BrickBuffView;
 
+	public TooltipBrickBuffDOTView BrickBuffDOTView;
+
+	public TooltipBrickWeaponDOTInitialDamageView BrickWeaponDOTInitialDamageView;
+
 	public TooltipBrickItemFooterView BrickItemFooterView;
 
 	public TooltipBrickAbilityScoresView BrickAbilityScoresView;

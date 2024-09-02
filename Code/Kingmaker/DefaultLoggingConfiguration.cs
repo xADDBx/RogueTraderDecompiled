@@ -16,6 +16,7 @@ public class DefaultLoggingConfiguration : ILoggingConfiguration
 			string logsDir = ApplicationPaths.LogsDir;
 			Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateFull(logsDir, "GameLogFull.txt", backup: true));
 			Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.CreateShort(logsDir, "GameLog.txt", backup: true));
+			Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(LogSinkFactory.AddSpamDetector());
 		}
 	}
 }

@@ -50,6 +50,15 @@ public class AoEPattern
 		}
 	}
 
+	public bool CanBeDirectional
+	{
+		get
+		{
+			PatternType type = m_Type;
+			return type == PatternType.Ray || type == PatternType.Cone || type == PatternType.Sector;
+		}
+	}
+
 	private bool IsCustom => m_Type == PatternType.Custom;
 
 	private bool IsCone
@@ -150,7 +159,7 @@ public class AoEPattern
 					float num7;
 					if (isDirectional)
 					{
-						int num5 = (flag ? Mathf.Abs(checkLosFromNode.XCoordinateInGrid - item.XCoordinateInGrid) : Mathf.Abs(checkLosFromNode.ZCoordinateInGrid - item.ZCoordinateInGrid));
+						int num5 = (flag ? Mathf.Abs(applicationNode.XCoordinateInGrid - item.XCoordinateInGrid) : Mathf.Abs(applicationNode.ZCoordinateInGrid - item.ZCoordinateInGrid));
 						float num6 = applicationNode.Vector3Position.y + (float)num5 * num + num4;
 						num7 = Mathf.Abs(item.Vector3Position.y - num6);
 					}

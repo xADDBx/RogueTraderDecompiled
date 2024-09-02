@@ -40,6 +40,25 @@ public class TaskNodeFindPositionForRetreat : TaskNode
 					}
 				}
 			}
+			if (graphNode == null)
+			{
+				num = GetAvgDistanceForNode(unit, unit.CurrentNode.node, list);
+				if (!decisionContext.UnitMoveVariants.IsZero)
+				{
+					foreach (GraphNode key2 in decisionContext.UnitMoveVariants.cells.Keys)
+					{
+						if (key2 != unit.CurrentNode.node)
+						{
+							float avgDistanceForNode2 = GetAvgDistanceForNode(unit, key2, list);
+							if (num < avgDistanceForNode2)
+							{
+								graphNode = key2;
+								num = avgDistanceForNode2;
+							}
+						}
+					}
+				}
+			}
 		}
 		if (graphNode != null)
 		{
@@ -61,6 +80,11 @@ public class TaskNodeFindPositionForRetreat : TaskNode
 		{
 			return -1f;
 		}
+		return GetAvgDistanceForNode(unit, node, engagingEnemies);
+	}
+
+	private float GetAvgDistanceForNode(BaseUnitEntity unit, GraphNode node, List<MechanicEntity> engagingEnemies)
+	{
 		float distanceSum = 0f;
 		engagingEnemies.ForEach(delegate(MechanicEntity enemy)
 		{

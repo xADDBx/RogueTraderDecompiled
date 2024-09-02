@@ -29,6 +29,8 @@ public class NetLobbyConsoleView : NetLobbyBaseView
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
+	public static readonly string InputLayerName = "NetLobby";
+
 	private NetLobbySaveSlotCollectionConsoleView SlotCollectionView => m_SlotCollectionView as NetLobbySaveSlotCollectionConsoleView;
 
 	public override void Initialize()
@@ -65,7 +67,7 @@ public class NetLobbyConsoleView : NetLobbyBaseView
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
 		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 		{
-			ContextName = "NetLobby"
+			ContextName = InputLayerName
 		});
 		BuildNavigationImpl(m_NavigationBehaviour);
 		CreateInputImpl(m_InputLayer);

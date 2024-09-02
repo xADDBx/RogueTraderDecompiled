@@ -44,8 +44,6 @@ public class SpawnerCustomization : MonoBehaviour, ICustomizationRequirements
 	[FormerlySerializedAs("SelectedVoice")]
 	private BlueprintUnitAsksListReference m_SelectedVoice;
 
-	public bool LeftHanded;
-
 	[CanBeNull]
 	[SerializeField]
 	[FormerlySerializedAs("RaceRequirement")]
@@ -130,7 +128,7 @@ public class SpawnerCustomization : MonoBehaviour, ICustomizationRequirements
 
 	public SpawningData RequestSpawningData()
 	{
-		return ContextData<SpawningData>.Request().Setup(SelectedPrefab.AssetId, SelectedRace, SelectedGender, SelectedVoice, LeftHanded);
+		return ContextData<SpawningData>.Request().Setup(SelectedPrefab.AssetId, SelectedRace, SelectedGender, SelectedVoice);
 	}
 
 	public void OnSpawn(BaseUnitEntity unit)

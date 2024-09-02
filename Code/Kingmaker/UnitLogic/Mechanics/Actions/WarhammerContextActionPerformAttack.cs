@@ -1,14 +1,18 @@
 using System;
 using System.Linq;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
@@ -42,6 +46,13 @@ public class WarhammerContextActionPerformAttack : ContextAction
 	[ShowIf("PerformActionsOnHit")]
 	public ActionList ActionsOnHit;
 
+	public bool PerformWeaponSpecificOnHitActions;
+
+	public bool UseSpecificWeaponClassification;
+
+	[ShowIf("UseSpecificWeaponClassification")]
+	public WeaponClassification Classification;
+
 	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
@@ -53,7 +64,7 @@ public class WarhammerContextActionPerformAttack : ContextAction
 		AbilityData abilityData = base.Context.SourceAbilityContext?.Ability;
 		ItemEntityWeapon itemEntityWeapon = (UseCurrentWeapon ? maybeCaster.GetFirstWeapon() : abilityData?.Weapon);
 		ItemEntityWeapon itemEntityWeapon2 = (UseCurrentWeapon ? maybeCaster.GetSecondWeapon() : abilityData?.Weapon);
-		ItemEntityWeapon itemEntityWeapon3 = ((itemEntityWeapon != null && (!OnlyMeleeWeapon || itemEntityWeapon.Blueprint.IsMelee)) ? itemEntityWeapon : itemEntityWeapon2);
+		ItemEntityWeapon itemEntityWeapon3 = ((itemEntityWeapon != null && (!OnlyMeleeWeapon || itemEntityWeapon.Blueprint.IsMelee) && (!UseSpecificWeaponClassification || itemEntityWeapon.Blueprint.Classification == Classification)) ? itemEntityWeapon : itemEntityWeapon2);
 		if (UseCurrentWeapon)
 		{
 			BlueprintAbility blueprintAbility = itemEntityWeapon3?.Blueprint.WeaponAbilities.FirstOrDefault()?.Ability;
@@ -77,11 +88,36 @@ public class WarhammerContextActionPerformAttack : ContextAction
 			rulePerformAttack.RollPerformAttackRule.DangerArea.UnionWith(base.AbilityContext.Pattern.Nodes);
 		}
 		Rulebook.Trigger(rulePerformAttack);
-		if (PerformActionsOnHit && rulePerformAttack.ResultIsHit)
+		if (rulePerformAttack.ResultIsHit)
 		{
-			using (base.Context.GetDataScope((TargetWrapper)entity))
+			if (PerformActionsOnHit)
 			{
-				ActionsOnHit.Run();
+				using (base.Context.GetDataScope((TargetWrapper)entity))
+				{
+					ActionsOnHit.Run();
+				}
+			}
+			if (PerformWeaponSpecificOnHitActions)
+			{
+				WeaponAbility weaponAbility = ((!UseCurrentWeapon) ? itemEntityWeapon?.Blueprint.WeaponAbilities.FirstOrDefault() : itemEntityWeapon3?.Blueprint.WeaponAbilities.FirstOrDefault());
+				if (weaponAbility != null)
+				{
+					if (weaponAbility.OnHitActions != null)
+					{
+						using (base.Context.GetDataScope(entity))
+						{
+							weaponAbility.OnHitActions?.OnHitActions.Run();
+						}
+					}
+					AbilityEffectRunAction component = weaponAbility.Ability.GetComponent<AbilityEffectRunAction>();
+					if (component != null)
+					{
+						using (base.Context.GetDataScope(entity))
+						{
+							component.Actions.Run();
+						}
+					}
+				}
 			}
 		}
 		RuleDealDamage resultDamageRule = rulePerformAttack.ResultDamageRule;

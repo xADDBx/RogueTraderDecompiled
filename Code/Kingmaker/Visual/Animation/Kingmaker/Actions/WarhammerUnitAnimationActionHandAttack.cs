@@ -60,6 +60,8 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 
 		public List<ClipSettings> MeleeCornerAttack = new List<ClipSettings>();
 
+		public bool UseStrictAnimationOrderInsteadOfRandom;
+
 		[Space(4f)]
 		public List<AlternativeAttackVariantSettings> AlternativeAnimations = new List<AlternativeAttackVariantSettings>();
 
@@ -137,18 +139,18 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 
 		[CanBeNull]
-		public ClipSettings GetAttackVariantRandom(UnitAnimationActionHandle handle)
+		public ClipSettings GetAttackVariantRandom(UnitAnimationActionHandle handle, int count = 0)
 		{
 			if (handle.AlternativeStyle != 0 && !AlternativeAnimations.Empty() && AlternativeAnimations.Any((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle))
 			{
-				ClipSettings attackVariantRandom = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle).Settings.GetAttackVariantRandom(handle);
+				ClipSettings attackVariantRandom = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle).Settings.GetAttackVariantRandom(handle, count);
 				if (attackVariantRandom != null)
 				{
 					return attackVariantRandom;
 				}
 			}
 			RecoilStrength recoil = handle.Recoil;
-			ClipSettings clipSettings = GetAttackVariantsList(recoil).Random(PFStatefulRandom.Visuals.Animation1);
+			ClipSettings clipSettings = (UseStrictAnimationOrderInsteadOfRandom ? GetAttackVariantsList(recoil)[count % GetAttackVariantsList(recoil).Count] : GetAttackVariantsList(recoil).Random(PFStatefulRandom.Visuals.Animation1));
 			if (clipSettings == null)
 			{
 				clipSettings = recoil switch
@@ -165,7 +167,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 			}
 			if (handle.IsCornerAttack && MeleeCornerAttack.Count > 0)
 			{
-				clipSettings = MeleeCornerAttack.Random(PFStatefulRandom.Visuals.Animation1);
+				clipSettings = (UseStrictAnimationOrderInsteadOfRandom ? MeleeCornerAttack[count % MeleeCornerAttack.Count] : MeleeCornerAttack.Random(PFStatefulRandom.Visuals.Animation1));
 			}
 			return clipSettings;
 			[CanBeNull]
@@ -199,24 +201,36 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 
 		[CanBeNull]
-		public ClipSettings GetUnreadyVariantRandom(UnitAnimationActionHandle handle)
+		public ClipSettings GetUnreadyVariantRandom(UnitAnimationActionHandle handle, int count = 0)
 		{
 			object obj;
 			if (handle.AlternativeStyle != 0)
 			{
 				if (AlternativeAnimations.Empty())
 				{
-					return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+					if (!UseStrictAnimationOrderInsteadOfRandom)
+					{
+						return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+					}
+					return Unready[count % Unready.Count];
 				}
-				obj = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetUnreadyVariantRandom(handle);
+				obj = AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetUnreadyVariantRandom(handle, count);
 				if (obj == null)
 				{
-					return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+					if (!UseStrictAnimationOrderInsteadOfRandom)
+					{
+						return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+					}
+					return Unready[count % Unready.Count];
 				}
 			}
 			else
 			{
-				obj = Unready.Random(PFStatefulRandom.Visuals.Animation1);
+				if (!UseStrictAnimationOrderInsteadOfRandom)
+				{
+					return Unready.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+				obj = Unready[count % Unready.Count];
 			}
 			return (ClipSettings)obj;
 		}
@@ -263,9 +277,9 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 
 		[CanBeNull]
-		public ClipSettings GetAttackVariant(UnitAnimationActionHandle handle)
+		public ClipSettings GetAttackVariant(UnitAnimationActionHandle handle, int count)
 		{
-			return GetAnimationVariant(handle, required: true, (UnitAnimationActionHandle h, AttackVariantSettings s) => s.GetAttackVariantRandom(h), "Attack");
+			return GetAnimationVariant(handle, required: true, (UnitAnimationActionHandle h, AttackVariantSettings s) => s.GetAttackVariantRandom(h, count), "Attack");
 		}
 
 		[CanBeNull]
@@ -275,9 +289,9 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 
 		[CanBeNull]
-		public ClipSettings GetUnreadyVariant(UnitAnimationActionHandle handle)
+		public ClipSettings GetUnreadyVariant(UnitAnimationActionHandle handle, int count)
 		{
-			return GetAnimationVariant(handle, handle.IsBurst || handle.NeedPreparingForShooting, (UnitAnimationActionHandle h, AttackVariantSettings s) => s.GetUnreadyVariantRandom(h), "Unready");
+			return GetAnimationVariant(handle, handle.IsBurst || handle.NeedPreparingForShooting, (UnitAnimationActionHandle h, AttackVariantSettings s) => s.GetUnreadyVariantRandom(h, count), "Unready");
 		}
 	}
 
@@ -320,14 +334,14 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		return (Data)handle.ActionData;
 	}
 
-	private ClipSettings GetAttackVariant(UnitAnimationActionHandle handle)
+	private ClipSettings GetAttackVariant(UnitAnimationActionHandle handle, int count = 0)
 	{
 		WeaponStyleSettings weaponStyleSettings = m_Settings.FirstOrDefault((WeaponStyleSettings i) => i.Style == handle.AttackWeaponStyle);
 		if (weaponStyleSettings == null)
 		{
 			PFLog.Default.Error(this, $"No animation for weapon style '{handle.AttackWeaponStyle}' in action '{base.name}'");
 		}
-		return weaponStyleSettings?.GetAttackVariant(handle);
+		return weaponStyleSettings?.GetAttackVariant(handle, count);
 	}
 
 	private ClipSettings GetReadyVariant(UnitAnimationActionHandle handle)
@@ -340,14 +354,14 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		return weaponStyleSettings?.GetReadyVariant(handle);
 	}
 
-	private ClipSettings GetUnreadyVariant(UnitAnimationActionHandle handle)
+	private ClipSettings GetUnreadyVariant(UnitAnimationActionHandle handle, int count = 0)
 	{
 		WeaponStyleSettings weaponStyleSettings = m_Settings.FirstOrDefault((WeaponStyleSettings i) => i.Style == handle.AttackWeaponStyle);
 		if (weaponStyleSettings == null)
 		{
 			PFLog.Default.Error(this, $"No animation for weapon style '{handle.AttackWeaponStyle}' in action '{base.name}'");
 		}
-		return weaponStyleSettings?.GetUnreadyVariant(handle);
+		return weaponStyleSettings?.GetUnreadyVariant(handle, count);
 	}
 
 	public int GetVariantsCount(UnitAnimationActionHandle handle)
@@ -367,6 +381,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
+		handle.SkipFirstTick = false;
 		Data data2 = (Data)(handle.ActionData = new Data());
 		handle.SpeedScale = Game.CombatAnimSpeedUp;
 		if ((handle.IsBurst && (!handle.Manager.NeedStepOut || handle.Manager.StepOutDirectionAnimationType == UnitAnimationActionCover.StepOutDirectionAnimationType.None)) || (handle.NeedPreparingForShooting && handle.IsPreparingForShooting))
@@ -384,20 +399,35 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 		if (!handle.IsPreparingForShooting)
 		{
+			WeaponAnimationStyle attackWeaponStyle = handle.AttackWeaponStyle;
 			int num = ((!handle.IsBurst) ? 1 : handle.BurstCount);
 			for (int i = 0; i < num; i++)
 			{
-				ClipSettings attackVariant = GetAttackVariant(handle);
-				if (attackVariant?.ClipWrapper?.AnimationClip == null)
+				ClipSettings clipSettings = GetAttackVariant(handle, i);
+				if (handle.IsBladeDance)
+				{
+					if (i % 2 == 0)
+					{
+						handle.AttackWeaponStyle = handle.Manager.ActiveMainHandWeaponStyle;
+						clipSettings = GetAttackVariant(handle, i);
+					}
+					else
+					{
+						handle.AttackWeaponStyle = handle.Manager.ActiveOffHandWeaponStyle;
+						clipSettings = ((WarhammerUnitAnimationActionHandAttack)handle.Manager.GetAction(UnitAnimationType.OffHandAttack))?.GetAttackVariant(handle, i) ?? GetAttackVariant(handle, i);
+					}
+				}
+				if (clipSettings?.ClipWrapper?.AnimationClip == null)
 				{
 					data2.Invalid = true;
 					return;
 				}
-				data2.Sequence.Add(attackVariant);
+				data2.Sequence.Add(clipSettings);
 			}
+			handle.AttackWeaponStyle = attackWeaponStyle;
 			if ((handle.IsBurst && (!handle.Manager.NeedStepOut || handle.Manager.StepOutDirectionAnimationType == UnitAnimationActionCover.StepOutDirectionAnimationType.None)) || (handle.NeedPreparingForShooting && handle.IsPreparingForShooting))
 			{
-				ClipSettings unreadyVariant = GetUnreadyVariant(handle);
+				ClipSettings unreadyVariant = GetUnreadyVariant(handle, num - 1);
 				if (unreadyVariant != null)
 				{
 					if (!unreadyVariant.IsValid)
@@ -472,8 +502,18 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 			return false;
 		}
 		data.Index++;
-		handle.Action.TransitionIn = 0f;
 		StartClip(handle, clipSettings);
+		if (handle.ActiveAnimation != null)
+		{
+			if (data.Index > 0)
+			{
+				handle.ActiveAnimation.TransitionIn = 0f;
+			}
+			if (data.Index < data.Sequence.Count - 1)
+			{
+				handle.ActiveAnimation.ChangeTransitionTime(0f);
+			}
+		}
 		return true;
 	}
 

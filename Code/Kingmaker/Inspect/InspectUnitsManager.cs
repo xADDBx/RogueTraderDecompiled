@@ -156,7 +156,7 @@ public class InspectUnitsManager : IHashable
 			return result;
 		}
 		int dC = info.DC;
-		StatType statType = (info.Blueprint.Type ? info.Blueprint.Type.KnowledgeStat : StatType.SkillLoreXenos);
+		StatType statType = StatType.SkillLoreXenos;
 		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
 		{
 			if (!item.LifeState.IsConscious)
@@ -203,7 +203,7 @@ public class InspectUnitsManager : IHashable
 			m_UnitInfos.Add(info);
 		}
 		int dC = info.DC;
-		StatType statType = (info.Blueprint.Type ? info.Blueprint.Type.KnowledgeStat : StatType.SkillLoreXenos);
+		StatType statType = StatType.SkillLoreXenos;
 		if (!inspector.LifeState.IsConscious)
 		{
 			return result;

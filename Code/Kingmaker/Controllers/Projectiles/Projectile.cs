@@ -110,8 +110,6 @@ public class Projectile : IInterpolatable
 
 	public float Speed { get; private set; }
 
-	public TimeSpan LaunchTime { get; private set; }
-
 	public float DeterministicDistance { get; private set; }
 
 	[CanBeNull]
@@ -145,6 +143,8 @@ public class Projectile : IInterpolatable
 	public bool DoNotPlayHitEffect { get; set; }
 
 	public bool DoNotDeliverHit { get; set; }
+
+	public float TimeSinceLaunch => PassedTime + TimeAfterHit;
 
 	public RaycastHit[] Hits => m_Hits;
 
@@ -190,6 +190,18 @@ public class Projectile : IInterpolatable
 			if (IsHit)
 			{
 				return TimeAfterHit >= Blueprint.LifetimeParticlesAfterHit;
+			}
+			return false;
+		}
+	}
+
+	public bool IsAlive
+	{
+		get
+		{
+			if (!Destroyed)
+			{
+				return !Cleared;
 			}
 			return false;
 		}
@@ -286,7 +298,6 @@ public class Projectile : IInterpolatable
 	public void BeforeLaunch()
 	{
 		m_LaunchFrame = Game.Instance.RealTimeController.CurrentSystemStepIndex;
-		LaunchTime = Game.Instance.TimeController.GameTime;
 		if (Blueprint.FollowTerrain && Physics.Raycast(LaunchPosition + UpShift, Vector3.down, out var hitInfo, 10f, 2359553))
 		{
 			LaunchHeight = hitInfo.distance - 5f;

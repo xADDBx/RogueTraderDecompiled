@@ -113,22 +113,11 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 					return buff;
 				case StackingType.Ignore:
 					return buff;
-				case StackingType.Poison:
-					if (duration.IsPermanent)
-					{
-						buff.MakePermanent();
-					}
-					else
-					{
-						Rounds value = duration.Rounds.Value / 2;
-						buff.IncreaseDuration(value);
-					}
-					return buff;
 				case StackingType.Summ:
 					buff.IncreaseDuration(duration.Rounds);
 					return buff;
 				case StackingType.Rank:
-					OnBuffRankAdd(buff);
+					OnBuffRankAdd(buff, duration.Rounds);
 					return buff;
 				case StackingType.HighestByProperty:
 					if (context[blueprint.PriorityProperty] >= buff.Context[blueprint.PriorityProperty])
@@ -174,15 +163,24 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 	{
 		base.OnFactWillDetach(fact);
 		fact.OnRemove();
+	}
+
+	protected override void OnFactDidDetached(Buff fact)
+	{
+		base.OnFactDidDetached(fact);
 		EventBus.RaiseEvent((IBaseUnitEntity)fact.Owner, (Action<IUnitBuffHandler>)delegate(IUnitBuffHandler h)
 		{
 			h.HandleBuffDidRemoved(fact);
 		}, isCheckRuntime: true);
 	}
 
-	private void OnBuffRankAdd(Buff fact)
+	private void OnBuffRankAdd(Buff fact, Rounds? duration)
 	{
 		fact.AddRank();
+		if (fact.Blueprint.ProlongWhenRankAdded)
+		{
+			fact.Prolong(duration);
+		}
 	}
 
 	public Buff GetBuff(BlueprintBuff blueprint)
@@ -211,22 +209,6 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 		foreach (Buff rawFact in base.RawFacts)
 		{
 			rawFact.SpawnParticleEffect();
-		}
-	}
-
-	public void RemoveBuffsOnResurrect()
-	{
-		List<Buff> list = TempList.Get<Buff>();
-		foreach (Buff rawFact in base.RawFacts)
-		{
-			if (rawFact.Blueprint.RemoveOnResurrect)
-			{
-				list.Add(rawFact);
-			}
-		}
-		foreach (Buff item in list)
-		{
-			Remove(item);
 		}
 	}
 

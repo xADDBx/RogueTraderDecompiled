@@ -52,6 +52,8 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 
 	private readonly BoolReactiveProperty m_CreateBlockIsFocused = new BoolReactiveProperty();
 
+	private InputLayer m_InputLayer;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -59,6 +61,7 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 		{
 		});
 		m_CreateLobbyLabel.text = UIStrings.Instance.NetLobbyTexts.CreateLobby;
+		AddDisposable(GamePad.Instance.OnLayerPoped.Subscribe(OnCurrentInputLayerPopped));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -70,6 +73,7 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 
 	public void CreateInputImpl(InputLayer inputLayer, ConsoleHintsWidget hintsWidget)
 	{
+		m_InputLayer = inputLayer;
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.OnClose();
@@ -169,5 +173,13 @@ public class NetLobbyCreateJoinPartConsoleView : NetLobbyCreateJoinPartBaseView
 			m_ConsoleInputField.Abort();
 		}
 		m_InputFieldIsFocused.Value = state;
+	}
+
+	private void OnCurrentInputLayerPopped()
+	{
+		if (GamePad.Instance.CurrentInputLayer == m_InputLayer)
+		{
+			ActivateDeactivateInputField(state: false);
+		}
 	}
 }

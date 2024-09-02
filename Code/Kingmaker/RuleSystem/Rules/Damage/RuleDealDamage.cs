@@ -27,6 +27,8 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public bool IsDot { get; private set; }
 
+	public bool IsIgnorePeacefulZone { get; set; }
+
 	public int HPBeforeDamage { get; private set; }
 
 	public int Result => RollDamageRule.ResultValue;
@@ -91,7 +93,7 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 		{
 			h.HandleDamageDealt(this);
 		});
-		if (AbstractUnitCommand.CommandTargetUntargetable((MechanicEntity)base.Initiator, (MechanicEntity)Target, this) || (bool)Game.Instance.LoadedAreaState.Settings.Peaceful || (!IsFake && ((MechanicEntity)base.Initiator).IsAttackingGreenNPC((MechanicEntity)Target)))
+		if (AbstractUnitCommand.CommandTargetUntargetable((MechanicEntity)base.Initiator, (MechanicEntity)Target, this) || (!IsIgnorePeacefulZone && (bool)Game.Instance.LoadedAreaState.Settings.Peaceful) || (!IsFake && ((MechanicEntity)base.Initiator).IsAttackingGreenNPC((MechanicEntity)Target)))
 		{
 			return;
 		}

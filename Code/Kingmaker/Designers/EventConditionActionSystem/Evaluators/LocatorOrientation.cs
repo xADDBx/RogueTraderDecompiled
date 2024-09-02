@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.View;
 using UnityEngine;
 
@@ -22,7 +23,17 @@ public class LocatorOrientation : FloatEvaluator
 
 	protected override float GetValueInternal()
 	{
-		return ((!LocatorEval) ? Locator.FindView() : LocatorEval.GetValue()?.View)?.ViewTransform.rotation.eulerAngles.y ?? 0f;
+		IEntityViewBase entityViewBase;
+		if (!LocatorEval)
+		{
+			entityViewBase = Locator.FindView();
+		}
+		else
+		{
+			IEntityViewBase entityViewBase2 = LocatorEval.GetValue()?.View;
+			entityViewBase = entityViewBase2;
+		}
+		return entityViewBase?.ViewTransform.rotation.eulerAngles.y ?? 0f;
 	}
 
 	public override string GetCaption()

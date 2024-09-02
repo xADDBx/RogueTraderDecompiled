@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -168,23 +169,27 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	private bool ShouldShowItem(ItemEntity item)
 	{
-		if (item == null)
+		if (item != null)
 		{
-			return false;
+			MechanicEntity owner = item.Owner;
+			if (owner == null || !owner.IsDisposed)
+			{
+				if (item.InventorySlotIndex < 0)
+				{
+					return false;
+				}
+				if (Type != ItemSlotsGroupType.Cargo && !item.IsLootable)
+				{
+					return false;
+				}
+				if (!m_ShowSlotHoldItems && Type != ItemSlotsGroupType.Cargo)
+				{
+					return item.HoldingSlot == null;
+				}
+				return true;
+			}
 		}
-		if (item.InventorySlotIndex < 0)
-		{
-			return false;
-		}
-		if (Type != ItemSlotsGroupType.Cargo && !item.IsLootable)
-		{
-			return false;
-		}
-		if (!m_ShowSlotHoldItems && Type != ItemSlotsGroupType.Cargo)
-		{
-			return item.HoldingSlot == null;
-		}
-		return true;
+		return false;
 	}
 
 	private bool NeedRemoveSlot(ItemEntity item, bool removeEmpty)

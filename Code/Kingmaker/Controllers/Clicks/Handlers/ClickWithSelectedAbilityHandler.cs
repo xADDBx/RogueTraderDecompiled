@@ -129,6 +129,7 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		return GetTarget(gameObject, worldPosition, Ability, Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
 	}
 
+	[CanBeNull]
 	public TargetWrapper GetTarget(GameObject gameObject, Vector3 worldPosition, AbilityData ability, Vector3 casterPosition)
 	{
 		if (ability == null)

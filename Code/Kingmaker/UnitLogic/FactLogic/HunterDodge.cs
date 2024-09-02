@@ -46,6 +46,12 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 	private TriggerOnlyOn m_TriggerOnlyOn;
 
 	[SerializeField]
+	private bool m_CanTriggerMoreThanOncePerRound;
+
+	[SerializeField]
+	private bool m_AllowDodgeOnAoe;
+
+	[SerializeField]
 	private bool m_ChooseSpaceRandomly;
 
 	[SerializeField]
@@ -53,20 +59,20 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 
 	public void OnEventAboutToTrigger(RulePerformDodge evt)
 	{
-		if (base.Owner == Game.Instance.TurnController.CurrentUnit || (m_TriggerOnlyOn == TriggerOnlyOn.Melee && !evt.IsMelee) || (m_TriggerOnlyOn == TriggerOnlyOn.Ranged && !evt.IsRanged) || evt.Ability.IsAOE)
+		if (base.Owner == Game.Instance.TurnController.CurrentUnit || (m_TriggerOnlyOn == TriggerOnlyOn.Melee && !evt.IsMelee) || (m_TriggerOnlyOn == TriggerOnlyOn.Ranged && !evt.IsRanged) || (evt.Ability.IsAOE && !m_AllowDodgeOnAoe))
 		{
 			return;
 		}
 		int gameRound = Game.Instance.TurnController.GameRound;
 		Data data = RequestSavableData<Data>();
-		if (data.UsedInRound != gameRound)
+		if (m_CanTriggerMoreThanOncePerRound || data.UsedInRound != gameRound)
 		{
 			evt.ChancesRule.AutoDodgeFlagModifiers.Add(base.Fact);
 			data.UsedInRound = gameRound;
-			UnitMoveToProperParams unitMoveToProperParams = CreateMoveParams(evt);
-			if (unitMoveToProperParams != null)
+			UnitJumpAsideDodgeParams unitJumpAsideDodgeParams = CreateMoveParams(evt);
+			if (unitJumpAsideDodgeParams != null)
 			{
-				base.Owner.Commands.Run(unitMoveToProperParams);
+				base.Owner.Commands.Run(unitJumpAsideDodgeParams);
 			}
 		}
 	}
@@ -80,10 +86,10 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 		}
 	}
 
-	private UnitMoveToProperParams CreateMoveParams(RulePerformDodge evt)
+	private UnitJumpAsideDodgeParams CreateMoveParams(RulePerformDodge evt)
 	{
 		BaseUnitEntity unit;
-		IEnumerable<KeyValuePair<GraphNode, WarhammerPathPlayerCell>> enumerable = from n in PathfindingService.Instance.FindAllReachableTiles_Blocking(base.Owner.MovementAgent, base.Owner.Position, 1, ignoreThreateningAreaCost: true)
+		IEnumerable<KeyValuePair<GraphNode, WarhammerPathPlayerCell>> enumerable = from n in PathfindingService.Instance.FindAllReachableTiles_Blocking(base.Owner.MovementAgent, base.Owner.Position, 1f, ignoreThreateningAreaCost: true)
 			where !((CustomGridNodeBase)n.Key).TryGetUnit(out unit)
 			select n;
 		KeyValuePair<GraphNode, WarhammerPathPlayerCell> keyValuePair = (m_ChooseSpaceRandomly ? enumerable.Random(PFStatefulRandom.UnitLogic.Abilities) : enumerable.MaxBy((KeyValuePair<GraphNode, WarhammerPathPlayerCell> i) => (evt.Attacker.Position - i.Key.Vector3Position).sqrMagnitude));
@@ -91,13 +97,11 @@ public class HunterDodge : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 		{
 			return null;
 		}
-		UnitMoveToProperParams unitMoveToProperParams = new UnitMoveToProperParams(ForcedPath.Construct(new List<Vector3>
+		return new UnitJumpAsideDodgeParams(ForcedPath.Construct(new List<Vector3>
 		{
 			base.Owner.Position,
 			keyValuePair.Key.Vector3Position
-		}), 0f);
-		unitMoveToProperParams.DisableAttackOfOpportunity.Retain();
-		return unitMoveToProperParams;
+		}));
 	}
 
 	public override Hash128 GetHash128()

@@ -41,7 +41,7 @@ public class ProbeAnchorOverrider : MonoBehaviour
 		if (m_UpdateOnStart)
 		{
 			GatherLists();
-			UpdateAnchors();
+			UpdateOnThisObject();
 		}
 	}
 
@@ -50,7 +50,7 @@ public class ProbeAnchorOverrider : MonoBehaviour
 		if (m_UpdateOnEnable)
 		{
 			GatherLists();
-			UpdateAnchors();
+			UpdateOnThisObject();
 		}
 	}
 
@@ -58,7 +58,7 @@ public class ProbeAnchorOverrider : MonoBehaviour
 	{
 		if (m_OverrideParticleRenderers)
 		{
-			GetComponentsInChildren(m_ParticleRenderers);
+			GetComponentsInChildren<ParticleSystemRenderer>();
 		}
 		if (m_OverrideTrailRenderers)
 		{
@@ -75,14 +75,40 @@ public class ProbeAnchorOverrider : MonoBehaviour
 	}
 
 	[CanBeNull]
-	private Transform LocateAnchor()
+	private static Transform LocateAnchor(GameObject root)
 	{
-		return GetComponentInChildren<ProbeAnchorLocator>().transform;
+		if (root == null)
+		{
+			return null;
+		}
+		ProbeAnchorLocator componentInChildren = root.GetComponentInChildren<ProbeAnchorLocator>(includeInactive: true);
+		if (componentInChildren == null)
+		{
+			return null;
+		}
+		return componentInChildren.transform;
 	}
 
-	private void UpdateAnchors()
+	private static void UpdateAnchors(Transform anchor, List<Renderer> renderers)
 	{
-		Transform transform = LocateAnchor();
+		if (anchor == null)
+		{
+			return;
+		}
+		foreach (Renderer renderer in renderers)
+		{
+			renderer.probeAnchor = anchor;
+		}
+	}
+
+	public static void UpdateProbeAnchorsOnObject(GameObject root, List<Renderer> renderers)
+	{
+		UpdateAnchors(LocateAnchor(root), renderers);
+	}
+
+	private void UpdateOnThisObject()
+	{
+		Transform transform = LocateAnchor(base.gameObject);
 		if (transform == null)
 		{
 			return;

@@ -52,8 +52,8 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 	{
 		if (!Damage.IsCalculated)
 		{
-			RuleCalculateDamage evt = new RuleCalculateDamage((MechanicEntity)base.Initiator, (MechanicEntity)Target, base.Reason.Ability, (base.Reason.Rule as RulePerformAttack)?.RollPerformAttackRule, Damage);
-			Damage = Rulebook.Trigger(evt).ResultDamage;
+			RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams((MechanicEntity)base.Initiator, (MechanicEntity)Target, base.Reason.Ability, (base.Reason.Rule as RulePerformAttack)?.RollPerformAttackRule, Damage).Trigger();
+			Damage = ruleCalculateDamage.ResultDamage;
 		}
 		Result = RollDamage(Damage, ArmorIgnore);
 		ResultOverpenetration = CalculateOverpenetration(Result.RolledValue);

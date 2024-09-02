@@ -10,6 +10,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
+using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components;
 
@@ -23,12 +24,15 @@ public class WarhammerAreaEffectSimultaneousWithAttack : BlueprintComponent
 
 	public ContextDurationValue DurationValue;
 
+	[SerializeField]
+	private bool m_GetOrientationFromCaster;
+
 	private BlueprintAbilityAreaEffect BlueprintAbilityAreaEffect => AreaEffect.Get();
 
 	public void SpawnAreaEffect(AbilityExecutionContext context, TargetWrapper target)
 	{
 		TimeSpan seconds = DurationValue.Calculate(context).Seconds;
-		AreaEffectEntity areaEffectEntity = AreaEffectsController.Spawn(overridenPattern: new OverrideAreaEffectPatternData(context.Pattern, OverridePatternWithAttackPattern), parentContext: context, blueprint: BlueprintAbilityAreaEffect, target: target, duration: seconds);
+		AreaEffectEntity areaEffectEntity = AreaEffectsController.Spawn(overridenPattern: new OverrideAreaEffectPatternData(context.Pattern, OverridePatternWithAttackPattern), parentContext: context, blueprint: BlueprintAbilityAreaEffect, target: target, duration: seconds, getOrientationFromCaster: m_GetOrientationFromCaster);
 		if (areaEffectEntity == null)
 		{
 			return;

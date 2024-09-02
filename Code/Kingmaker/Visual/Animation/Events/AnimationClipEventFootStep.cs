@@ -4,6 +4,10 @@ namespace Kingmaker.Visual.Animation.Events;
 
 public class AnimationClipEventFootStep : AnimationClipEventSound
 {
+	public AnimationClipEventFootStep()
+	{
+	}
+
 	public AnimationClipEventFootStep(float time)
 		: this(time, null)
 	{

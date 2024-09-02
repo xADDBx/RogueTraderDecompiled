@@ -58,6 +58,8 @@ public class WarhammerUnitAnimationActionParry : UnitAnimationAction
 
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.SelectMany((WeaponStyleSettings setting) => setting.ClipWrappers);
 
+	public override bool BlocksCover => true;
+
 	private static Data GetData(UnitAnimationActionHandle handle)
 	{
 		return (Data)handle.ActionData;

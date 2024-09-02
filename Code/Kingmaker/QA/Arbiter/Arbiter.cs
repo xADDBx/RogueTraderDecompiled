@@ -28,6 +28,8 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 
 	public static Guid JobGuid;
 
+	public static string ExternalRunId;
+
 	public static Guid Run = default(Guid);
 
 	public ArbiterReporter Reporter;
@@ -185,6 +187,7 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 		{
 			m_Version = m_Version + "." + DateTime.Now.ToString("yyMMddhhmm");
 		}
+		PFLog.Arbiter.Log("Arbiter started on version {" + m_Version + "}");
 		Arguments = CommandLineArgumentsToArbiterStartupParametersConverter.Convert(CommandLineArguments.Parse());
 		if (Arguments.Arbiter == null && !Application.isEditor)
 		{
@@ -231,6 +234,7 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 			m_InstructionsToRun = new Queue<string>(Reporter.GetPendingInstructions());
 			PFLog.Arbiter.Log($"Pending instructions: {m_InstructionsToRun.Count}");
 			JobGuid = Reporter.CachedJobGuid;
+			ExternalRunId = Arguments.ArbiterExternalTestRunId;
 		}
 		catch (Exception ex2)
 		{

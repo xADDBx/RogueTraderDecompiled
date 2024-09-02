@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
@@ -22,6 +23,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.Traps.Simple;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
@@ -75,10 +77,6 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 	public readonly ReactiveCommand InventoryChanged = new ReactiveCommand();
 
 	private IDisposable m_SelectedUnitsSubscription;
-
-	private List<BaseUnitEntity> m_TryApproachingUnits = new List<BaseUnitEntity>();
-
-	private Dictionary<BaseUnitEntity, ForcedPath> m_CurrentlyApproachingUnits = new Dictionary<BaseUnitEntity, ForcedPath>();
 
 	protected override bool UpdateEnabled => MapObjectEntity.IsVisibleForPlayer;
 
@@ -187,7 +185,7 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 			}
 			if (FirstInteractionPart.Type == InteractionType.Approach)
 			{
-				List<BaseUnitEntity> units = FirstInteractionPart.SelectAllUnits(Game.Instance.SelectionCharacter.SelectedUnits.ToList()).EmptyIfNull().ToList();
+				BaseUnitEntity[] units = FirstInteractionPart.SelectAllUnits(Game.Instance.SelectionCharacter.SelectedUnits.ToList()).ToArray();
 				TryApproachAndInteract(units);
 			}
 			else if (FirstInteractionPart.Type == InteractionType.Direct)
@@ -206,82 +204,51 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		}
 	}
 
-	private void TryApproachAndInteract(List<BaseUnitEntity> units)
+	private void TryApproachAndInteract(BaseUnitEntity[] units)
 	{
-		m_CurrentlyApproachingUnits.Clear();
-		m_TryApproachingUnits.Clear();
+		InteractionPart firstInteractionPart = FirstInteractionPart;
 		if (Game.Instance.TurnController.TurnBasedModeActive)
 		{
-			BaseUnitEntity baseUnitEntity = units.FirstItem();
-			if (baseUnitEntity != null)
-			{
-				FirstInteractionPart.SelectUnit(new List<BaseUnitEntity> { baseUnitEntity });
-				if (!FirstInteractionPart.IsEnoughCloseForInteractionFromDesiredPosition(baseUnitEntity))
-				{
-					ClickMapObjectHandler.ShowWarningIfNeeded(baseUnitEntity, FirstInteractionPart);
-				}
-				else
-				{
-					UnitCommandsRunner.TryApproachAndInteract(baseUnitEntity, FirstInteractionPart);
-				}
-			}
-			return;
+			TryApproachAndInteractTB(units, firstInteractionPart);
 		}
-		foreach (BaseUnitEntity approachingUser in units)
+		else
 		{
-			if (approachingUser == null)
-			{
-				break;
-			}
-			m_TryApproachingUnits.Add(approachingUser);
-			PathfindingService.Instance.FindPathRT(approachingUser.MovementAgent, FirstInteractionPart.Owner.Position, FirstInteractionPart.ApproachRadius, delegate(ForcedPath path)
-			{
-				if (path.error)
-				{
-					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
-					m_TryApproachingUnits.Remove(approachingUser);
-				}
-				else if (approachingUser.IsMovementLockedByGameModeOrCombat())
-				{
-					PFLog.Pathfinding.Log("Movement is locked due to GameMode or Combat. Ignoring");
-					m_TryApproachingUnits.Remove(approachingUser);
-				}
-				else
-				{
-					m_CurrentlyApproachingUnits.Add(approachingUser, path);
-					TryApproachAndInteract(approachingUser);
-				}
-			});
+			TryApproachAndInteractRT(units, firstInteractionPart);
 		}
 	}
 
-	private void TryApproachAndInteract(BaseUnitEntity u)
+	private static void TryApproachAndInteractTB(BaseUnitEntity[] units, InteractionPart interactionPart)
 	{
-		foreach (BaseUnitEntity tryApproachingUnit in m_TryApproachingUnits)
+		BaseUnitEntity baseUnitEntity = units.FirstItem();
+		if (baseUnitEntity != null)
 		{
-			if (!m_CurrentlyApproachingUnits.TryGetValue(tryApproachingUnit, out var _))
+			ClickMapObjectHandler.ShowWarningIfNeeded(baseUnitEntity, interactionPart);
+			UnitCommandsRunner.TryApproachAndInteract(baseUnitEntity, interactionPart);
+		}
+	}
+
+	private static async void TryApproachAndInteractRT(BaseUnitEntity[] units, InteractionPart interactionPart)
+	{
+		Task<ForcedPath>[] findPathTasks = units.Select((BaseUnitEntity i) => PathfindingService.Instance.FindPathRTAsync(i.MovementAgent, interactionPart.Owner.Position, interactionPart.ApproachRadius)).ToArray();
+		await Task.WhenAll(findPathTasks);
+		using PooledList<BaseUnitEntity> pooledList = PooledList<BaseUnitEntity>.Get();
+		for (int j = 0; j < units.Length; j++)
+		{
+			BaseUnitEntity baseUnitEntity = units[j];
+			ForcedPath result = findPathTasks[j].Result;
+			if (!result.error && !baseUnitEntity.IsMovementLockedByGameModeOrCombat())
 			{
-				return;
+				InteractionPart interactionPart2 = interactionPart;
+				List<Vector3> vectorPath = result.vectorPath;
+				if (interactionPart2.IsEnoughCloseForInteraction(vectorPath[vectorPath.Count - 1]))
+				{
+					pooledList.Add(baseUnitEntity);
+				}
 			}
 		}
-		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
-		foreach (KeyValuePair<BaseUnitEntity, ForcedPath> currentlyApproachingUnit in m_CurrentlyApproachingUnits)
-		{
-			currentlyApproachingUnit.Deconstruct(out var key, out var value2);
-			BaseUnitEntity item = key;
-			ForcedPath forcedPath = value2;
-			InteractionPart firstInteractionPart = FirstInteractionPart;
-			List<Vector3> vectorPath = forcedPath.vectorPath;
-			if (firstInteractionPart.IsEnoughCloseForInteraction(vectorPath[vectorPath.Count - 1]))
-			{
-				list.Add(item);
-			}
-		}
-		BaseUnitEntity unit = ((!list.Empty()) ? FirstInteractionPart.SelectUnit(list) : FirstInteractionPart.SelectUnit(Game.Instance.SelectionCharacter.SelectedUnits.ToList()));
-		m_CurrentlyApproachingUnits.Clear();
-		m_TryApproachingUnits.Clear();
-		ClickMapObjectHandler.ShowWarningIfNeeded(unit, FirstInteractionPart);
-		UnitCommandsRunner.TryApproachAndInteract(unit, FirstInteractionPart);
+		BaseUnitEntity unit = ((!pooledList.Empty()) ? interactionPart.SelectUnit(pooledList) : interactionPart.SelectUnit(units));
+		ClickMapObjectHandler.ShowWarningIfNeeded(unit, interactionPart);
+		UnitCommandsRunner.TryApproachAndInteract(unit, interactionPart);
 	}
 
 	public void UpdateObjectData()

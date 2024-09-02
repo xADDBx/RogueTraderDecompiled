@@ -100,7 +100,8 @@ public class LogThreadService : IService, IDisposable
 				new SpaceCombatExperienceGainedPerAreaLogThread(),
 				new StarshipExpToNextLevelLogThread(),
 				new StarshipLevelUpLogThread(),
-				new HealWoundOrTraumaLogThread()
+				new HealWoundOrTraumaLogThread(),
+				new TemporaryHitPointsLogThread()
 			}
 		},
 		{

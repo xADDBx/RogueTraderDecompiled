@@ -76,9 +76,9 @@ public static class ItemsFilter
 		case ItemsFilterType.ShipWeapon:
 			return blueprintItem is BlueprintStarshipWeapon;
 		case ItemsFilterType.ShipOther:
-			if (!(blueprintItem is BlueprintItemVoidShieldGenerator) && !(blueprintItem is BlueprintItemLifeSustainer) && !(blueprintItem is BlueprintItemBridge) && !(blueprintItem is BlueprintItemArmorPlating) && !(blueprintItem is BlueprintItemAugerArray) && !(blueprintItem is BlueprintItemWarpDrives) && !(blueprintItem is BlueprintItemPlasmaDrives))
+			if (!(blueprintItem is BlueprintItemVoidShieldGenerator) && !(blueprintItem is BlueprintItemLifeSustainer) && !(blueprintItem is BlueprintItemBridge) && !(blueprintItem is BlueprintItemArmorPlating) && !(blueprintItem is BlueprintItemAugerArray) && !(blueprintItem is BlueprintItemWarpDrives) && !(blueprintItem is BlueprintItemPlasmaDrives) && !(blueprintItem is BlueprintItemGellerFieldDevice))
 			{
-				return blueprintItem is BlueprintItemGellerFieldDevice;
+				return blueprintItem is BlueprintItemArsenal;
 			}
 			return true;
 		case ItemsFilterType.PlasmaDrives:

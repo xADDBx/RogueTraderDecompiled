@@ -27,7 +27,7 @@ public class RecalculateOnFactsChange : UnitFactComponentDelegate, IEntityGainFa
 	{
 		if (m_CheckedFacts == null || m_CheckedFacts.Length == 0 || m_CheckedFacts.HasReference(fact.Blueprint as BlueprintUnitFact))
 		{
-			base.Fact.Recalculate();
+			base.Fact.Reapply();
 		}
 	}
 
@@ -35,7 +35,7 @@ public class RecalculateOnFactsChange : UnitFactComponentDelegate, IEntityGainFa
 	{
 		if (m_CheckedFacts == null || m_CheckedFacts.Length == 0 || m_CheckedFacts.HasReference(fact.Blueprint as BlueprintUnitFact))
 		{
-			base.Fact.Recalculate();
+			base.Fact.Reapply();
 		}
 	}
 

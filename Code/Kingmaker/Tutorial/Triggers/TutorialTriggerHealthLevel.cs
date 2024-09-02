@@ -15,7 +15,7 @@ public class TutorialTriggerHealthLevel : TutorialTrigger, IDamageHandler, ISubs
 
 	public void HandleDamageDealt(RuleDealDamage dealDamage)
 	{
-		if (dealDamage.Target.IsPlayerFaction && (float?)dealDamage.TargetHealth?.HitPointsLeft < (float?)dealDamage.TargetHealth?.MaxHitPoints * m_Value)
+		if (dealDamage.Target.IsPlayerFaction && (float?)dealDamage.TargetHealth?.HitPointsLeft < (float?)dealDamage.TargetHealth?.MaxHitPoints * m_Value && !Game.Instance.IsSpaceCombat)
 		{
 			TryToTrigger(dealDamage);
 		}

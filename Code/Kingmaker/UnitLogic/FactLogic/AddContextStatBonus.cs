@@ -1,8 +1,10 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -29,12 +31,19 @@ public class AddContextStatBonus : UnitFactComponentDelegate, IHashable
 
 	public ContextValue Value;
 
+	[SerializeField]
+	private ActionList m_ActionsOnAdd = new ActionList();
+
 	protected override void OnActivateOrPostLoad()
 	{
 		if (Restrictions.IsPassed(base.Fact, base.Context, null, base.Context.SourceAbilityContext?.Ability))
 		{
 			int value = CalculateValue(base.Context);
 			base.Owner.Stats.GetStat(Stat, canBeNull: true)?.AddModifier(value, base.Runtime, Descriptor);
+			if (m_ActionsOnAdd.HasActions)
+			{
+				base.Fact.RunActionInContext(m_ActionsOnAdd, base.Owner.ToITargetWrapper());
+			}
 		}
 	}
 

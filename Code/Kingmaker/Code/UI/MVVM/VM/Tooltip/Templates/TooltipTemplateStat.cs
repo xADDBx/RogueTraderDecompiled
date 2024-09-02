@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.Utility;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
@@ -74,30 +75,51 @@ public class TooltipTemplateStat : TooltipBaseTemplate
 
 	private void AddStatBonusesGroup(List<ITooltipBrick> bricks)
 	{
+		bool hasBonuses = StatData.Breakdown.HasBonuses;
+		bool flag = false;
+		List<StatBonusEntry> sortedBonuses = StatData.Breakdown.SortedBonuses;
 		if (StatData.Group != StatGroup.Skill && StatData.BaseValue != 0)
 		{
-			bricks.Add(new TooltipBrickTextValue(UIStrings.Instance.Tooltips.BaseValue, StatData.BaseValue.ToString(), 1));
+			int num = StatData.BaseValue;
+			if (hasBonuses)
+			{
+				int num2 = 0;
+				foreach (StatBonusEntry item in sortedBonuses)
+				{
+					if (item.Descriptor == ModifierDescriptor.Difficulty)
+					{
+						num2 = item.Bonus;
+						flag = sortedBonuses.Count == 1;
+						break;
+					}
+				}
+				num += num2;
+			}
+			bricks.Add(new TooltipBrickTextValue(UIStrings.Instance.Tooltips.BaseValue, num.ToString(), 1));
 		}
-		if (!StatData.Breakdown.HasBonuses)
+		if (!hasBonuses || flag)
 		{
 			return;
 		}
-		foreach (StatBonusEntry sortedBonuse in StatData.Breakdown.SortedBonuses)
+		foreach (StatBonusEntry item2 in sortedBonuses)
 		{
-			string valueWithSign = UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus);
-			string empty = string.Empty;
-			string text = string.Empty;
-			string text2 = string.Empty;
-			if (sortedBonuse.Descriptor != 0)
+			if (item2.Descriptor != ModifierDescriptor.Difficulty)
 			{
-				text = Game.Instance.BlueprintRoot.LocalizedTexts.Descriptors.GetText(sortedBonuse.Descriptor);
+				string valueWithSign = UIConstsExtensions.GetValueWithSign(item2.Bonus);
+				string empty = string.Empty;
+				string text = string.Empty;
+				string text2 = string.Empty;
+				if (item2.Descriptor != 0)
+				{
+					text = Game.Instance.BlueprintRoot.LocalizedTexts.Descriptors.GetText(item2.Descriptor);
+				}
+				if (!string.IsNullOrWhiteSpace(item2.Source))
+				{
+					text2 = item2.Source;
+				}
+				empty = ((!string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(text2)) ? (text + " [" + text2 + "]") : (string.IsNullOrWhiteSpace(text) ? text2 : text));
+				bricks.Add(new TooltipBrickTextValue(empty, valueWithSign, 1));
 			}
-			if (!string.IsNullOrWhiteSpace(sortedBonuse.Source))
-			{
-				text2 = sortedBonuse.Source;
-			}
-			empty = ((!string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(text2)) ? (text + " [" + text2 + "]") : (string.IsNullOrWhiteSpace(text) ? text2 : text));
-			bricks.Add(new TooltipBrickTextValue(empty, valueWithSign, 1));
 		}
 	}
 

@@ -41,18 +41,18 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 				return;
 			}
 			SynchronizedDataController.DecompressStickData(leftStickData, out var moveDirection, out var stickDeflection);
-			UnitMovementAgentBase unitMovementAgentBase = unit.View.Or(null)?.MovementAgent.Or(null);
+			UnitMovementAgentBase unityObject = unit.View.Or(null)?.MovementAgent;
+			UnitMovementAgentBase unitMovementAgentBase = unityObject.Or(null);
 			if ((object)unitMovementAgentBase != null && unitMovementAgentBase.IsTraverseInProgress)
 			{
 				return;
 			}
-			bool flag = unitMovementAgentBase?.IsReallyMoving ?? false;
+			bool flag = unityObject.Or(null)?.IsReallyMoving ?? false;
 			flag &= unit.View.Or(null)?.AgentOverride as UnitMovementAgentContinuous != null;
 			if (flag || moveDirection.sqrMagnitude > Mathf.Epsilon)
 			{
 				UnitMoveContinuouslyParams unitMoveContinuouslyParams = new UnitMoveContinuouslyParams(moveDirection, stickDeflection)
 				{
-					CanBeAccelerated = true,
 					MovementType = WalkSpeedType.Walk
 				};
 				if (unit.Commands.CurrentMoveContinuously != null)
@@ -141,6 +141,7 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 	{
 		if (!CanProcessInput)
 		{
+			ForceStopUnits();
 			return;
 		}
 		using (ContextData<UnitCommandContext>.Request())
@@ -159,5 +160,37 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 	void IControllerReset.OnReset()
 	{
 		Array.Fill(m_PlayerData, default(PlayerData));
+	}
+
+	private static void ForceStopUnits()
+	{
+		foreach (UnitReference partyCharacter in Game.Instance.Player.PartyCharacters)
+		{
+			if (!(partyCharacter.Entity is BaseUnitEntity baseUnitEntity))
+			{
+				continue;
+			}
+			UnitMovementAgentContinuous unitMovementAgentContinuous = baseUnitEntity.View.Or(null)?.MovementAgent as UnitMovementAgentContinuous;
+			if (unitMovementAgentContinuous == null || !unitMovementAgentContinuous.IsReallyMoving)
+			{
+				continue;
+			}
+			UnitMoveContinuously currentMoveContinuously = baseUnitEntity.Commands.CurrentMoveContinuously;
+			if (currentMoveContinuously == null || !currentMoveContinuously.Params.IsZero)
+			{
+				UnitMoveContinuouslyParams unitMoveContinuouslyParams = new UnitMoveContinuouslyParams(Vector2.zero, 0f)
+				{
+					MovementType = WalkSpeedType.Walk
+				};
+				if (currentMoveContinuously != null)
+				{
+					unitMoveContinuouslyParams.TryMergeInto(baseUnitEntity.Commands.CurrentMoveContinuously);
+				}
+				else
+				{
+					baseUnitEntity.Commands.RunImmediate(unitMoveContinuouslyParams);
+				}
+			}
+		}
 	}
 }

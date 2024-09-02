@@ -13,7 +13,7 @@ using Kingmaker.QA.Arbiter.Profiling;
 using Kingmaker.Settings;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Performance;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.Traps;
 using Newtonsoft.Json.Linq;
 using Owlcat.Runtime.Core.ProfilingCounters;
@@ -500,19 +500,16 @@ public class ArbiterClientMeasurements
 		Kingmaker.QA.Arbiter.Profiling.Counters.All.ForEach(delegate(Counter x)
 		{
 			results.Add("Counter." + x.Name, x.GetMedian().ToString("0.00", CultureInfo.InvariantCulture));
-			Dictionary<string, string> dictionary2 = results;
-			string key2 = "Counter." + x.Name + ".Budget";
+			Dictionary<string, string> dictionary = results;
+			string key = "Counter." + x.Name + ".Budget";
 			double warningLevel = x.WarningLevel;
-			dictionary2.Add(key2, warningLevel.ToString("0.00", CultureInfo.InvariantCulture));
+			dictionary.Add(key, warningLevel.ToString("0.00", CultureInfo.InvariantCulture));
 		});
 		ObjectLimits.Entries.AsEnumerable().ForEach(delegate(ObjectLimits.Entry x)
 		{
 			string text = x.Name.Replace(" ", "");
 			results.Add("Limits." + text, x.Getter().ToString());
-			Dictionary<string, string> dictionary = results;
-			string key = "Limits." + text + ".Threshold";
-			int threshold = x.Threshold;
-			dictionary.Add(key, threshold.ToString());
+			results.Add("Limits." + text + ".Threshold", x.Threshold.ToString());
 		});
 		AddDataFromMemoryTool(ref results);
 		AddArbiterMeasurementTimers(ref results);

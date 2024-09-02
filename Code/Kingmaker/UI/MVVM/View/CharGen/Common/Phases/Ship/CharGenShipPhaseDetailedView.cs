@@ -55,7 +55,7 @@ public class CharGenShipPhaseDetailedView : CharGenPhaseDetailedView<CharGenShip
 
 	protected void GenerateRandomName()
 	{
-		base.ViewModel.SetName(base.ViewModel.GetRandomName());
+		base.ViewModel.SetName(base.ViewModel.GetRandomName(), isManual: true);
 	}
 
 	private void HandleSelectedShip(CharGenShipItemVM shipItemVM)

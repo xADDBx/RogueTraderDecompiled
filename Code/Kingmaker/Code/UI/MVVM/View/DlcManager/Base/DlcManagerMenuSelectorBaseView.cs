@@ -1,6 +1,7 @@
 using Kingmaker.Code.UI.MVVM.VM.DlcManager;
 using Kingmaker.Code.UI.MVVM.VM.DlcManager.Dlcs;
 using Kingmaker.Code.UI.MVVM.VM.DlcManager.Mods;
+using Kingmaker.Code.UI.MVVM.VM.DlcManager.SwitchOnDlcs;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
@@ -18,6 +19,9 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 	private DlcManagerMenuEntityBaseView m_DlcsButton;
 
 	[SerializeField]
+	private DlcManagerMenuEntityBaseView m_SwithcOnDlcsButton;
+
+	[SerializeField]
 	private DlcManagerMenuEntityBaseView m_ModsButton;
 
 	[SerializeField]
@@ -31,22 +35,27 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 
 	private bool m_IsInit;
 
-	private bool m_OnlyMods;
+	private bool m_InGame;
 
 	private bool m_IsConsole;
 
-	public void Initialize(bool onlyMods, bool isConsole)
+	public void Initialize(bool inGame, bool isConsole)
 	{
 		if (!m_IsInit)
 		{
-			m_OnlyMods = onlyMods;
+			m_InGame = inGame;
 			m_IsConsole = isConsole;
-			m_DlcsButton.gameObject.SetActive(!onlyMods);
-			m_DlcsButtonSpinArrow.gameObject.SetActive(!onlyMods && !isConsole);
+			m_DlcsButton.gameObject.SetActive(!inGame);
+			m_SwithcOnDlcsButton.gameObject.SetActive(inGame);
+			m_DlcsButtonSpinArrow.gameObject.SetActive(!isConsole);
 			m_ModsButton.gameObject.SetActive(!isConsole);
-			if (!onlyMods)
+			if (!inGame)
 			{
 				m_DlcsButton.Initialize();
+			}
+			else
+			{
+				m_SwithcOnDlcsButton.Initialize();
 			}
 			if (!isConsole)
 			{
@@ -58,9 +67,13 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 
 	protected override void BindViewImplementation()
 	{
-		if (!m_OnlyMods)
+		if (!m_InGame)
 		{
 			m_DlcsButton.Bind(base.ViewModel.EntitiesCollection.FindOrDefault((DlcManagerMenuEntityVM e) => e.DlcManagerTabVM is DlcManagerTabDlcsVM));
+		}
+		else
+		{
+			m_SwithcOnDlcsButton.Bind(base.ViewModel.EntitiesCollection.FindOrDefault((DlcManagerMenuEntityVM e) => e.DlcManagerTabVM is DlcManagerTabSwitchOnDlcsVM));
 		}
 		if (!m_IsConsole)
 		{
@@ -68,7 +81,7 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 		}
 		AddDisposable(base.ViewModel.SelectedEntity.Skip(1).Subscribe(delegate(DlcManagerMenuEntityVM selectedEntity)
 		{
-			DlcManagerMenuEntityBaseView dlcManagerMenuEntityBaseView = ((selectedEntity.DlcManagerTabVM is DlcManagerTabDlcsVM && !m_OnlyMods) ? m_DlcsButton : ((!m_IsConsole) ? m_ModsButton : null));
+			DlcManagerMenuEntityBaseView dlcManagerMenuEntityBaseView = ((selectedEntity.DlcManagerTabVM is DlcManagerTabDlcsVM && !m_InGame) ? m_DlcsButton : ((selectedEntity.DlcManagerTabVM is DlcManagerTabSwitchOnDlcsVM && m_InGame) ? m_SwithcOnDlcsButton : ((!m_IsConsole) ? m_ModsButton : null)));
 			if (!(dlcManagerMenuEntityBaseView == null) && m_Selector.transform.localPosition.x != dlcManagerMenuEntityBaseView.transform.localPosition.x)
 			{
 				UIUtility.MoveXLensPosition(m_Selector.transform, dlcManagerMenuEntityBaseView.transform.localPosition.x, m_LensSwitchAnimationDuration);
@@ -87,7 +100,7 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 	{
 		DelayedInvoker.InvokeInFrames(delegate
 		{
-			UIUtility.MoveLensPosition(m_Selector.transform, (!m_OnlyMods) ? m_DlcsButton.transform.localPosition : m_ModsButton.transform.localPosition, m_LensSwitchAnimationDuration);
+			UIUtility.MoveLensPosition(m_Selector.transform, (!m_InGame) ? m_DlcsButton.transform.localPosition : m_SwithcOnDlcsButton.transform.localPosition, m_LensSwitchAnimationDuration);
 		}, 1);
 	}
 

@@ -17,14 +17,6 @@ public class ItemsEnchantmentController : IControllerTick, IController
 		TickInventory(Game.Instance.Player.Inventory);
 		foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 		{
-			TickItem(allBaseAwakeUnit.Body.EmptyHandWeapon);
-			if (allBaseAwakeUnit.Body.EmptyHandWeaponsStack != null)
-			{
-				foreach (ItemEntityWeapon item in allBaseAwakeUnit.Body.EmptyHandWeaponsStack)
-				{
-					TickItem(item);
-				}
-			}
 			if (!allBaseAwakeUnit.Inventory.IsPlayerInventory)
 			{
 				TickInventory(allBaseAwakeUnit.Inventory.Collection);

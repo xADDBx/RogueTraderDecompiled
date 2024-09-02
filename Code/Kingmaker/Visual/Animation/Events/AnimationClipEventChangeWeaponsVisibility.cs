@@ -6,6 +6,10 @@ public class AnimationClipEventChangeWeaponsVisibility : AnimationClipEvent
 {
 	public bool IsActive;
 
+	public AnimationClipEventChangeWeaponsVisibility()
+	{
+	}
+
 	public AnimationClipEventChangeWeaponsVisibility(float time)
 		: base(time)
 	{

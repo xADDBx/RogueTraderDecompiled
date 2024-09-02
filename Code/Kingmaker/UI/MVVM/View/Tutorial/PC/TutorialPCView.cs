@@ -9,10 +9,10 @@ namespace Kingmaker.UI.MVVM.View.Tutorial.PC;
 public class TutorialPCView : ViewBase<TutorialVM>
 {
 	[SerializeField]
-	private UIViewLink<TutorialModalWindowPCView, TutorialModalWindowVM> m_BigWindowView;
+	private UIDestroyViewLink<TutorialModalWindowPCView, TutorialModalWindowVM> m_BigWindowView;
 
 	[SerializeField]
-	private UIViewLink<TutorialHintWindowPCView, TutorialHintWindowVM> m_SmallWindowView;
+	private UIDestroyViewLink<TutorialHintWindowPCView, TutorialHintWindowVM> m_SmallWindowView;
 
 	public void Initialize()
 	{

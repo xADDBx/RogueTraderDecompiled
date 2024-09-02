@@ -18,7 +18,7 @@ public class DlcManagerBaseView : ViewBase<DlcManagerVM>
 	{
 		base.gameObject.SetActive(value: false);
 		InitializeImpl();
-		m_Selector.Initialize(base.ViewModel.OnlyMods, base.ViewModel.IsConsole);
+		m_Selector.Initialize(base.ViewModel.InGame, base.ViewModel.IsConsole);
 	}
 
 	protected virtual void InitializeImpl()

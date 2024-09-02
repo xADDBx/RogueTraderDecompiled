@@ -15,16 +15,19 @@ public class PantographConfig
 
 	public readonly bool UseLargeView;
 
+	public readonly string TextIcon;
+
 	public readonly IWidgetView View;
 
 	public readonly IViewModel ViewModel;
 
-	public PantographConfig(Transform transform, string text, List<Sprite> icons = null, bool useLargeView = false)
+	public PantographConfig(Transform transform, string text, List<Sprite> icons = null, bool useLargeView = false, string textIcon = null)
 	{
 		Transform = transform;
 		Text = text;
 		Icons = icons;
 		UseLargeView = useLargeView;
+		TextIcon = textIcon;
 	}
 
 	public PantographConfig(Transform transform, IWidgetView itemView, IViewModel itemVM, bool useLargeView = false)

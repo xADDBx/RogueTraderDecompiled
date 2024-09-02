@@ -143,15 +143,6 @@ public static class ModInitializer
 		InitializeUnityModManager();
 		InitializeOwlcatModManager();
 		GetUsedModsInfo();
-		Test();
-	}
-
-	private static void Test()
-	{
-		foreach (ExtendedModInfo item in GetAllModsInfo())
-		{
-			PFLog.Mods.Error(item.ToString());
-		}
 	}
 
 	public static void ApplyOwlcatModificationsContent()

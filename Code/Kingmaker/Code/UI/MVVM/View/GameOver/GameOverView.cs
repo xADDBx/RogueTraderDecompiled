@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.GameOver;
 
-public abstract class GameOverView : CommonStaticComponentView<GameOverVM>
+public abstract class GameOverView : CommonStaticComponentView<GameOverVM>, IInitializable
 {
 	[Header("Common Labels")]
 	[SerializeField]

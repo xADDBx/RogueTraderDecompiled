@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
-using Kingmaker.Blueprints.Root;
-using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.ElementsSystem.ContextData;
@@ -278,14 +276,18 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	protected override void TriggerAnimation()
 	{
-		if (Ability.Weapon == null)
+		if (Ability.Weapon == null && Ability.Blueprint.GetComponent<AbilityCustomBladeDance>() == null)
 		{
 			base.Executor.View.HideOffWeapon(hide: true);
 		}
 		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
 		if (component != null && !component.UseOnSourceWeapon)
 		{
-			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon()) : base.Executor.GetFirstWeapon());
+			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon()) : ((base.Executor.GetFirstWeapon() != null && base.Executor.GetFirstWeapon().Blueprint.IsMelee) ? base.Executor.GetFirstWeapon() : (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon())));
+		}
+		if (Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>() != null && Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>()?.GetWeapon(base.Executor) != null)
+		{
+			Ability.OverrideWeapon = Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>()?.GetWeapon(base.Executor);
 		}
 		if (base.Target != null)
 		{
@@ -309,7 +311,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 				}
 			}
 		}
-		if (Ability.NeedLoS)
+		if (Ability.NeedLoS && base.Executor.GetOptional<UnitPartJump>()?.Active == null)
 		{
 			CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)(GraphNode)base.Executor.CurrentNode;
 			CustomGridNodeBase bestShootingPosition = Ability.GetBestShootingPosition(customGridNodeBase, base.Target);
@@ -359,6 +361,11 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		else
 		{
 			UnitAnimationActionLink unitAnimationActionLink = Ability.FXSettings?.GetAnimation(IsMainHandAttack(Ability), isCornerAttack);
+			UnitPartFXSettingOverride optional = base.Executor.GetOptional<UnitPartFXSettingOverride>();
+			if (optional != null && unitAnimationActionLink != null && optional.ActionsOverride.TryGetValue(unitAnimationActionLink, out var value2))
+			{
+				unitAnimationActionLink = value2;
+			}
 			if ((object)unitAnimationActionLink != null && unitAnimationActionLink.Exists())
 			{
 				StartPatternAnimation(unitAnimationActionLink.Load());
@@ -410,6 +417,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			}
 			h.IsCornerAttack = isCornerAttack;
 			h.BurstAnimationDelay = Ability.Weapon?.Blueprint.VisualParameters.BurstAnimationDelay ?? 0f;
+			h.IsBladeDance = HasTwoMeleeForBladeDance();
 		}
 	}
 
@@ -424,6 +432,30 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		h.IsBurst = Ability.IsBurstAttack;
 		h.BurstCount = Ability.BurstAttacksCount;
 		h.Recoil = (Ability.FXSettings?.VisualFXSettings?.Recoil).GetValueOrDefault();
+	}
+
+	private bool HasTwoMeleeForBladeDance()
+	{
+		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
+		if (component == null)
+		{
+			return false;
+		}
+		ItemEntityWeapon maybeWeapon = base.Executor.Body.PrimaryHand.MaybeWeapon;
+		ItemEntityWeapon maybeWeapon2 = base.Executor.Body.SecondaryHand.MaybeWeapon;
+		if (!component.UseSpecificWeaponClassification)
+		{
+			if (!component.UseSpecificWeapon && maybeWeapon != null)
+			{
+				return maybeWeapon2 != null;
+			}
+			return false;
+		}
+		if (!component.UseSpecificWeapon && maybeWeapon?.Blueprint?.Classification == component.Classification)
+		{
+			return maybeWeapon2?.Blueprint?.Classification == component.Classification;
+		}
+		return false;
 	}
 
 	protected override void StartAnimation(UnitAnimationActionHandle handle)
@@ -466,7 +498,15 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 				}
 			}
 		}
-		base.StartAnimation(handle);
+		if (base.Params.OverrideAnimationHandle is UnitAnimationActionHandle animation)
+		{
+			base.Animation = animation;
+			base.HasAnimation = true;
+		}
+		else
+		{
+			base.StartAnimation(handle);
+		}
 	}
 
 	private bool IsMainHandAttack(AbilityData ability)
@@ -474,6 +514,14 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		PartUnitBody bodyOptional = ability.Caster.GetBodyOptional();
 		if (bodyOptional == null)
 		{
+			return true;
+		}
+		if (ability.OverrideWeapon != null)
+		{
+			if (ability.Weapon == bodyOptional.SecondaryHand?.MaybeWeapon)
+			{
+				return false;
+			}
 			return true;
 		}
 		if (ability.Caster?.GetOptional<UnitPartMechadendrites>() == null)
@@ -515,12 +563,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			h.VisualWeaponStateChangeHandle(VFXSpeedUpdater.WeaponVisualState.InAttack, (!(base.Executor?.View != null)) ? null : base.Executor?.View.HandsEquipment?.GetWeaponModel(offHand: false));
 		});
-	}
-
-	[NotNull]
-	private List<GameObject> SureHandFxList()
-	{
-		return m_HandFxObjects ?? (m_HandFxObjects = new List<GameObject>());
 	}
 
 	[NotNull]
@@ -567,62 +609,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 				SoundEventsManager.PostEvent(spellSource.ToString() + "_" + text2 + "_" + voiceIntensity.ToString() + "_" + text, base.Executor.View.gameObject);
 			}
 		}
-		FxRoot fxRoot = BlueprintRoot.Instance.FxRoot;
-		CastSource castSource = base.Executor.GetOptional<UnitPartVisualChanges>()?.CastSource ?? CastSource.SingleHand;
-		GameObject gameObject = FxHelper.SpawnFxOnEntity(fxRoot.GetPreCast(spellSource, castSource), base.Executor.View);
-		if ((bool)gameObject)
-		{
-			SureHandFxList().Add(gameObject);
-		}
-		GameObject gameObject2 = FxHelper.SpawnFxOnEntity(fxRoot.GetPreCastGround(spellSource, castSource), base.Executor.View);
-		if ((bool)gameObject2)
-		{
-			SureGroundFxList().Add(gameObject2);
-		}
-	}
-
-	private void SpawnCastFx()
-	{
-		SpellSource spellSource = Ability.SpellSource;
-		if (spellSource == SpellSource.None)
-		{
-			BlueprintItemEquipmentUsable sourceItemUsableBlueprint = Ability.SourceItemUsableBlueprint;
-			if (sourceItemUsableBlueprint == null || sourceItemUsableBlueprint.Type != UsableItemType.Wand)
-			{
-				return;
-			}
-			spellSource = SpellSource.Arcane;
-		}
-		if (spellSource == SpellSource.Unknown)
-		{
-			spellSource = SpellSource.Arcane;
-		}
-		FxRoot fxRoot = BlueprintRoot.Instance.FxRoot;
-		CastSource castSource = base.Executor.GetOptional<UnitPartVisualChanges>()?.CastSource ?? CastSource.SingleHand;
-		FxHelper.SpawnFxOnEntity(fxRoot.GetCast(spellSource, castSource), base.Executor.View);
-		FxHelper.SpawnFxOnEntity(fxRoot.GetCastGround(spellSource, castSource), base.Executor.View);
-	}
-
-	private void SpawnInterruptFx()
-	{
-		SpellSource spellSource = Ability.SpellSource;
-		if (spellSource == SpellSource.None)
-		{
-			BlueprintItemEquipmentUsable sourceItemUsableBlueprint = Ability.SourceItemUsableBlueprint;
-			if (sourceItemUsableBlueprint == null || sourceItemUsableBlueprint.Type != UsableItemType.Wand)
-			{
-				return;
-			}
-			spellSource = SpellSource.Arcane;
-		}
-		if (spellSource == SpellSource.Unknown)
-		{
-			spellSource = SpellSource.Arcane;
-		}
-		FxRoot fxRoot = BlueprintRoot.Instance.FxRoot;
-		CastSource castSource = base.Executor.GetOptional<UnitPartVisualChanges>()?.CastSource ?? CastSource.SingleHand;
-		FxHelper.SpawnFxOnEntity(fxRoot.GetCastFail(spellSource, castSource), base.Executor.View);
-		FxHelper.SpawnFxOnEntity(fxRoot.GetCastFailGround(spellSource, castSource), base.Executor.View);
 	}
 
 	protected override void OnTick()
@@ -644,7 +630,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 		if (!base.IsActed && !Ability.CanTarget(base.Target) && !base.FromCutscene)
 		{
-			SpawnInterruptFx();
 			Interrupt();
 		}
 	}
@@ -655,7 +640,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			if (CurrentActionIndex >= ActionsCount)
 			{
-				PFLog.Default.Error("CurrentActionIndex >= ActionsCount");
+				PFLog.Default.Error($"CurrentActionIndex {CurrentActionIndex} >= ActionsCount {ActionsCount}");
 				return ResultType.Fail;
 			}
 			if (ExecutionProcess == null)
@@ -664,6 +649,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 				return ResultType.Fail;
 			}
 			ExecutionProcess.Context.NextAction();
+			ExecutionProcess.Tick();
 			if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 			{
 				return ResultType.Success;
@@ -676,14 +662,12 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			{
 				if (!ForceCastOnBadTarget && !Ability.IsAvailable)
 				{
-					SpawnInterruptFx();
 					return ResultType.Fail;
 				}
 			}
 		}
 		if (IsTargetingDeadUnit)
 		{
-			SpawnInterruptFx();
 			return ResultType.Fail;
 		}
 		if (!ForceCastOnBadTarget)
@@ -691,13 +675,11 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			MechanicEntity entity = base.Target.Entity;
 			if (entity != null && !entity.IsInGame)
 			{
-				SpawnInterruptFx();
 				return ResultType.Fail;
 			}
 		}
 		if (!base.FromCutscene && !Ability.CanTarget(base.Target))
 		{
-			SpawnInterruptFx();
 			return ResultType.Fail;
 		}
 		if (!base.FromCutscene)
@@ -705,7 +687,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			ItemEntity sourceItem = Ability.SourceItem;
 			if (sourceItem != null && sourceItem.IsSpendCharges && sourceItem.Charges <= 0)
 			{
-				SpawnInterruptFx();
 				return ResultType.Fail;
 			}
 		}
@@ -726,7 +707,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		ExecutionProcess = rulePerformAbility2.Result;
 		if (ExecutionProcess == null)
 		{
-			SpawnInterruptFx();
 			return ResultType.Fail;
 		}
 		if (IsInstantDeliver)
@@ -744,10 +724,8 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 		if (!rulePerformAbility2.Success)
 		{
-			SpawnInterruptFx();
 			return ResultType.Fail;
 		}
-		SpawnCastFx();
 		if (m_HandFxObjects != null)
 		{
 			foreach (GameObject handFxObject in m_HandFxObjects)
@@ -796,10 +774,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			base.Executor.View.HideOffWeapon(hide: false);
 		}
-		if (!Game.Instance.IsPaused && base.IsStarted && base.Result != ResultType.Success)
-		{
-			SpawnInterruptFx();
-		}
 		if ((m_Special != UnitAnimationActionCastSpell.SpecialBehaviourType.NoCast || base.Result != ResultType.Success) && m_HandFxObjects != null)
 		{
 			foreach (GameObject handFxObject in m_HandFxObjects)
@@ -808,15 +782,18 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			}
 			m_HandFxObjects = null;
 		}
-		if (m_GroundFxObjects == null)
+		if (m_GroundFxObjects != null)
 		{
-			return;
+			foreach (GameObject groundFxObject in m_GroundFxObjects)
+			{
+				FxHelper.Destroy(groundFxObject);
+			}
+			m_GroundFxObjects = null;
 		}
-		foreach (GameObject groundFxObject in m_GroundFxObjects)
+		if (base.Result == ResultType.Interrupt)
 		{
-			FxHelper.Destroy(groundFxObject);
+			ExecutionProcess?.Dispose();
 		}
-		m_GroundFxObjects = null;
 	}
 
 	protected override string GetInnerDataDescription()

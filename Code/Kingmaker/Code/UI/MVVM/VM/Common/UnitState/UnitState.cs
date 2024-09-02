@@ -28,7 +28,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 
-public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, ICellAbilityHandler, IAbilityTargetSelectionUIHandler, IAbilityTargetHoverUIHandler, IPartyCombatHandler, IInteractionHighlightUIHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IEntitySubscriber, IGameModeHandler, IUnitFactionHandler, ISubscriber<IBaseUnitEntity>, IUnitChangeAttackFactionsHandler, IUnitCommandStartHandler<EntitySubscriber>, IUnitCommandStartHandler, IEventTag<IUnitCommandStartHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, IEventTag<IUnitCommandActHandler, EntitySubscriber>, INetRoleSetHandler, INetStopPlayingHandler, INetPingEntity, ILootDroppedAsAttachedHandler<EntitySubscriber>, ILootDroppedAsAttachedHandler, IEventTag<ILootDroppedAsAttachedHandler, EntitySubscriber>, IDestructibleEntityHandler
+public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ICellAbilityHandler, IAbilityTargetSelectionUIHandler, IAbilityTargetHoverUIHandler, IPartyCombatHandler, IInteractionHighlightUIHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IEntitySubscriber, IGameModeHandler, IUnitFactionHandler, IUnitChangeAttackFactionsHandler, IUnitCommandStartHandler<EntitySubscriber>, IUnitCommandStartHandler, IEventTag<IUnitCommandStartHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, IEventTag<IUnitCommandActHandler, EntitySubscriber>, INetRoleSetHandler, INetStopPlayingHandler, INetPingEntity, ILootDroppedAsAttachedHandler<EntitySubscriber>, ILootDroppedAsAttachedHandler, IEventTag<ILootDroppedAsAttachedHandler, EntitySubscriber>, IDestructibleEntityHandler
 {
 	public readonly MechanicEntityUIWrapper Unit;
 
@@ -168,6 +168,16 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateTBMUnit();
+	}
+
+	public void HandleUnitJoinCombat()
+	{
+		UpdateTBMUnit();
+	}
+
+	public void HandleUnitLeaveCombat()
 	{
 		UpdateTBMUnit();
 	}

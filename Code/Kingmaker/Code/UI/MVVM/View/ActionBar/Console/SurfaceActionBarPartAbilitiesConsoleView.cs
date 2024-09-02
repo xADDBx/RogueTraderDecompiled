@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.Common.PageNavigation;
 using Kingmaker.Code.UI.MVVM.View.SelectorWindow;
@@ -9,7 +11,9 @@ using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.GameModes;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -27,11 +31,22 @@ using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
+using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.Code.UI.MVVM.View.ActionBar.Console;
 
-public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbilitiesBaseView, ICullFocusHandler, ISubscriber, ICharInfoAbilitiesChooseModeHandler
+public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbilitiesBaseView, ICullFocusHandler, ISubscriber, ICharInfoAbilitiesChooseModeHandler, INetPingActionBarAbility
 {
+	private class PingData
+	{
+		public IDisposable PingDelay { get; set; }
+
+		public GameObject PingObject { get; set; }
+
+		public bool PingInProgress { get; set; }
+	}
+
 	[SerializeField]
 	private SurfaceActionBarAbilitiesRowView m_Row;
 
@@ -62,6 +77,25 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	[SerializeField]
 	private AbilitySelectorWindowConsoleView m_AbilitySelectorWindowConsoleView;
 
+	[Header("Outside Ping")]
+	[SerializeField]
+	private Image m_LeftOutsidePing;
+
+	[SerializeField]
+	private RectTransform m_LeftOutsidePingRectTransform;
+
+	[SerializeField]
+	private Image m_LeftOutsidePingFrame;
+
+	[SerializeField]
+	private Image m_RightOutsidePing;
+
+	[SerializeField]
+	private RectTransform m_RightOutsidePingRectTransform;
+
+	[SerializeField]
+	private Image m_RightOutsidePingFrame;
+
 	private readonly IntReactiveProperty m_CurrentRowIndex = new IntReactiveProperty();
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
@@ -85,6 +119,8 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	private int m_CurrentIndex;
 
 	private IConsoleEntity m_CulledFocus;
+
+	private readonly Dictionary<string, PingData> m_AbilityPingData = new Dictionary<string, PingData>();
 
 	public GridConsoleNavigationBehaviour NavigationBehaviour => m_NavigationBehaviour;
 
@@ -118,10 +154,19 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		}));
 		AddDisposable(EventBus.Subscribe(this));
 		OnUnitChanged();
+		if (m_LeftOutsidePingRectTransform != null)
+		{
+			m_LeftOutsidePingRectTransform.gameObject.SetActive(value: false);
+		}
+		if (m_RightOutsidePingRectTransform != null)
+		{
+			m_RightOutsidePingRectTransform.gameObject.SetActive(value: false);
+		}
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+		HideAllPings();
 		m_PageNavigation.Dispose();
 		OnMoveMode(on: false);
 		OnActive(active: false);
@@ -136,6 +181,7 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		if (base.ViewModel.Slots.Count != 0)
 		{
 			base.ViewModel.RowIndex = newIndex;
+			CheckPingInRow();
 			DrawSlots();
 		}
 	}
@@ -144,7 +190,8 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	{
 		if (base.ViewModel.Slots.Count != 0)
 		{
-			DrawPaginator();
+			HideAllPings();
+			DelayedInvoker.InvokeInFrames(DrawPaginator, 1);
 		}
 	}
 
@@ -166,7 +213,23 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		m_NavigationBehaviour.Clear();
 		if ((bool)m_MomentumConsoleView)
 		{
-			m_NavigationBehaviour.AddRow(m_MomentumConsoleView.GetSlots());
+			List<IConsoleNavigationEntity> desperateMeasureSlots = m_MomentumConsoleView.GetDesperateMeasureSlots();
+			List<IConsoleNavigationEntity> heroicActSlots = m_MomentumConsoleView.GetHeroicActSlots();
+			List<IConsoleNavigationEntity> list2 = new List<IConsoleNavigationEntity>();
+			List<IConsoleNavigationEntity> list3 = new List<IConsoleNavigationEntity>();
+			for (int j = 0; j < desperateMeasureSlots.Count; j++)
+			{
+				((j <= 1) ? list2 : list3).Add(desperateMeasureSlots[j]);
+			}
+			for (int k = 0; k < heroicActSlots.Count; k++)
+			{
+				((k <= 1) ? list2 : list3).Add(heroicActSlots[k]);
+			}
+			if (!list3.Empty())
+			{
+				m_NavigationBehaviour.AddRow(list3);
+			}
+			m_NavigationBehaviour.AddRow(list2);
 			m_NavigationBehaviour.AddRow(new IConsoleNavigationEntity[2] { m_VeilThicknessConsoleView, m_MomentumConsoleView });
 		}
 		m_NavigationBehaviour.AddRow(m_Row.GetConsoleEntities());
@@ -387,6 +450,100 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 			{
 				slot.SetSelectionActiveState(isActive: false);
 			});
+		}
+	}
+
+	public void HandlePingActionBarAbility(NetPlayer player, string keyName, Entity characterEntityRef, int slotIndex, WeaponSlotType weaponSlotType)
+	{
+		if (string.IsNullOrWhiteSpace(keyName) || characterEntityRef != base.ViewModel.Unit.Entity)
+		{
+			return;
+		}
+		int num = base.ViewModel.RowIndex * base.SlotsInRow;
+		int num2 = (base.ViewModel.RowIndex + 1) * base.SlotsInRow;
+		ActionBarSlotVM actionBarSlotVM = base.ViewModel.Slots.FirstOrDefault((ActionBarSlotVM s) => s.MechanicActionBarSlot.KeyName == keyName);
+		int index = player.Index - 1;
+		if (actionBarSlotVM == null)
+		{
+			return;
+		}
+		int num3 = base.ViewModel.Slots.IndexOf(actionBarSlotVM);
+		if (num3 >= num && num3 < num2)
+		{
+			return;
+		}
+		if (m_AbilityPingData.ContainsKey(keyName))
+		{
+			PingData pingData = m_AbilityPingData[keyName];
+			pingData.PingInProgress = false;
+			pingData.PingDelay?.Dispose();
+		}
+		else
+		{
+			m_AbilityPingData[keyName] = new PingData();
+		}
+		PingData newPingData = m_AbilityPingData[keyName];
+		if (num3 < num && m_LeftOutsidePing != null && m_LeftOutsidePingRectTransform != null)
+		{
+			m_LeftOutsidePing.sprite = actionBarSlotVM.Icon.Value;
+			if (m_LeftOutsidePingFrame != null)
+			{
+				m_LeftOutsidePingFrame.color = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+			}
+			newPingData.PingObject = m_LeftOutsidePingRectTransform.gameObject;
+		}
+		else if (num3 >= num2 && m_RightOutsidePing != null && m_RightOutsidePingRectTransform != null)
+		{
+			m_RightOutsidePing.sprite = actionBarSlotVM.Icon.Value;
+			if (m_RightOutsidePingFrame != null)
+			{
+				m_RightOutsidePingFrame.color = BlueprintRoot.Instance.UIConfig.CoopPlayersPingsColors[index];
+			}
+			newPingData.PingObject = m_RightOutsidePingRectTransform.gameObject;
+		}
+		newPingData.PingObject.Or(null)?.SetActive(value: true);
+		newPingData.PingInProgress = true;
+		newPingData.PingDelay = DelayedInvoker.InvokeInTime(delegate
+		{
+			if (m_AbilityPingData.Any((KeyValuePair<string, PingData> apd) => apd.Value != newPingData && apd.Value.PingObject == newPingData.PingObject && apd.Value.PingInProgress))
+			{
+				newPingData.PingInProgress = false;
+			}
+			else
+			{
+				newPingData.PingObject.SetActive(value: false);
+				newPingData.PingInProgress = false;
+			}
+		}, 7.5f);
+	}
+
+	private void HideAllPings()
+	{
+		foreach (KeyValuePair<string, PingData> abilityPingDatum in m_AbilityPingData)
+		{
+			abilityPingDatum.Value.PingObject.SetActive(value: false);
+			abilityPingDatum.Value.PingInProgress = false;
+			abilityPingDatum.Value.PingDelay?.Dispose();
+		}
+	}
+
+	private void CheckPingInRow()
+	{
+		int num = base.ViewModel.RowIndex * base.SlotsInRow;
+		int num2 = (base.ViewModel.RowIndex + 1) * base.SlotsInRow;
+		foreach (KeyValuePair<string, PingData> apd in m_AbilityPingData)
+		{
+			ActionBarSlotVM actionBarSlotVM = base.ViewModel.Slots.FirstOrDefault((ActionBarSlotVM s) => s.MechanicActionBarSlot.KeyName == apd.Key);
+			if (actionBarSlotVM != null)
+			{
+				int num3 = base.ViewModel.Slots.IndexOf(actionBarSlotVM);
+				if (num3 >= num && num3 < num2)
+				{
+					apd.Value.PingObject.SetActive(value: false);
+					apd.Value.PingInProgress = false;
+					apd.Value.PingDelay?.Dispose();
+				}
+			}
 		}
 	}
 }

@@ -87,7 +87,7 @@ public class UnitCombatLeaveController : IControllerTick, IController
 				BaseUnitEntity baseUnitEntity = group[i];
 				if (baseUnitEntity != null && baseUnitEntity.IsInCombat)
 				{
-					baseUnitEntity.CombatState.LeaveCombat();
+					baseUnitEntity.CombatState.LeaveCombat(ignoreLeaveTimer);
 				}
 			}
 			if (group.IsPlayerParty)

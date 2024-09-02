@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
 

@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IDirectMovementHandler
+public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IDirectMovementHandler, IUnitGetAbilityJump, ISubscriber<IBaseUnitEntity>, IUnitMoveToProperHandler
 {
 	private BaseUnitEntity m_CurrentUnit;
 
@@ -60,6 +60,14 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		if (!(command is UnitUseAbility))
 		{
 			UpdateMovableAreaIfNeeded(command.Executor);
+		}
+	}
+
+	void IUnitMoveToProperHandler.HandleUnitMoveToProper(UnitMoveToProper cmd)
+	{
+		if (cmd != null && !cmd.FromCutscene && Game.Instance.TurnController.TurnBasedModeActive && cmd.Executor != m_CurrentUnit && m_CurrentUnit != null)
+		{
+			UpdateMovableArea();
 		}
 	}
 
@@ -188,12 +196,12 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	private List<GraphNode> GetMovableArea(BaseUnitEntity unit, Vector3 position)
 	{
-		int num = (int)unit.CombatState.ActionPointsBlue;
-		if (num <= 0)
+		float actionPointsBlue = unit.CombatState.ActionPointsBlue;
+		if (!(actionPointsBlue > 0f))
 		{
 			return null;
 		}
-		return PathfindingService.Instance.FindAllReachableTiles_Blocking(unit.View.MovementAgent, position, num).Keys.ToList();
+		return PathfindingService.Instance.FindAllReachableTiles_Blocking(unit.View.MovementAgent, position, actionPointsBlue).Keys.ToList();
 	}
 
 	private static IEnumerable<GraphNode> GetDeploymentForbiddenArea()
@@ -293,5 +301,17 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 	void INetRoleSetHandler.HandleRoleSet(string entityId)
 	{
 		UnitCommandsRunner.HandleRoleSet(entityId);
+	}
+
+	public void HandleUnitAbilityJumpDidActed(int distanceInCells)
+	{
+		if (ShouldHandle(EventInvokerExtensions.BaseUnitEntity))
+		{
+			UpdateMovableArea();
+		}
+	}
+
+	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, MechanicEntity target, MechanicEntity caster, bool useAttack)
+	{
 	}
 }

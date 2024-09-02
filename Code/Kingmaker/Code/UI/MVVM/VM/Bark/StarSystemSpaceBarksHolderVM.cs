@@ -8,6 +8,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using UniRx;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Bark;
 
@@ -36,6 +37,10 @@ public class StarSystemSpaceBarksHolderVM : BaseDisposable, IViewModel, IBaseDis
 		{
 			AddBarkVM(baseUnitEntity, text, null);
 		}
+	}
+
+	public void HandleOnShowBarkWithName(string text, string name, Color nameColor)
+	{
 	}
 
 	public void HandleOnShowLinkedBark(string text, string encyclopediaLink)

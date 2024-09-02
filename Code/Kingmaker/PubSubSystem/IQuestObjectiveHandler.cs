@@ -5,9 +5,9 @@ namespace Kingmaker.PubSubSystem;
 
 public interface IQuestObjectiveHandler : ISubscriber
 {
-	void HandleQuestObjectiveStarted(QuestObjective objective);
+	void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false);
 
-	void HandleQuestObjectiveBecameVisible(QuestObjective objective);
+	void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false);
 
 	void HandleQuestObjectiveCompleted(QuestObjective objective);
 

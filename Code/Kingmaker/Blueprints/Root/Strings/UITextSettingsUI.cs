@@ -106,6 +106,10 @@ public class UITextSettingsUI
 
 	public LocalizedString ConsoleControlPingCoopHint;
 
+	public LocalizedString ConsoleControlPingCoopHintNormal;
+
+	public LocalizedString ConsoleControlPingCoopHintConfirm;
+
 	public LocalizedString SettingsToggleOn;
 
 	public LocalizedString SettingsToggleOff;

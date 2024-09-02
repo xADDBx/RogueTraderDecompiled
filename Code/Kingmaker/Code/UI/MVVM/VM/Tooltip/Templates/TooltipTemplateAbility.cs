@@ -21,6 +21,7 @@ using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
@@ -63,15 +64,11 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private Sprite m_TargetIcon;
 
-	private string m_Duration = string.Empty;
-
 	private string m_Cooldown = string.Empty;
 
 	private string m_EndTurn = string.Empty;
 
 	private string m_AttackAbilityGroupCooldown = string.Empty;
-
-	private string m_SavingThrow = string.Empty;
 
 	private string m_ShortDescriptionText = string.Empty;
 
@@ -105,6 +102,8 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	}
 
 	private bool IsSpaceCombatAbility => Game.Instance.CurrentMode == GameModeType.SpaceCombat;
+
+	protected virtual MechanicEntity PreviewEntity => Caster;
 
 	public override void Prepare(TooltipTemplateType type)
 	{
@@ -147,12 +146,10 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			m_Type = GetAbilityType(blueprintAbility);
 			m_Target = UIUtilityTexts.GetAbilityTarget(blueprintAbility, blueprintItem);
 			m_TargetIcon = UIUtilityTexts.GetTargetImage(blueprintAbility);
-			m_Duration = blueprintAbility.LocalizedDuration;
 			m_Cooldown = blueprintAbility.CooldownRounds.ToString();
 			m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(blueprintAbility);
 			m_EndTurn = GetEndTurn(blueprintAbility);
 			m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(blueprintAbility);
-			m_SavingThrow = blueprintAbility.LocalizedSavingThrow;
 			m_ShortDescriptionText = blueprintAbility.GetShortenedDescription();
 			m_LongDescriptionText = blueprintAbility.Description;
 			m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
@@ -182,10 +179,8 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 				m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(abilityData.Blueprint);
 				m_Target = UIUtilityTexts.GetAbilityTarget(abilityData);
 				m_TargetIcon = UIUtilityTexts.GetTargetImage(abilityData.Blueprint);
-				m_Duration = abilityData.Blueprint.LocalizedDuration;
 				m_Cooldown = abilityData.Blueprint.CooldownRounds.ToString();
 				m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(abilityData.Blueprint);
-				m_SavingThrow = abilityData.Blueprint.LocalizedSavingThrow;
 				m_ShortDescriptionText = abilityData.ShortenedDescription;
 				m_LongDescriptionText = abilityData.Description;
 				m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(abilityData.Blueprint);
@@ -215,7 +210,6 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		AddDamageInfo(list);
 		AddTarget(list);
-		AddDuration(list);
 		AddCooldown(list);
 		AddHitChances(list);
 		AddDescription(list, type);
@@ -249,9 +243,13 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		TooltipBrickIconPattern.TextFieldValues tertiaryValues = null;
 		if (m_UIAbilityData.BurstAttacksCount > 1)
 		{
+			BlueprintItemWeapon obj = SourceItem as BlueprintItemWeapon;
+			string text = ((obj != null && obj.IsMelee) ? UIStrings.Instance.Tooltips.MeleeStrikesCount : UIStrings.Instance.Tooltips.ShotsCount);
+			text = text.Replace("{0}", "");
 			tertiaryValues = new TooltipBrickIconPattern.TextFieldValues
 			{
-				Text = string.Format(UIStrings.Instance.Tooltips.ShotsCount, m_UIAbilityData.BurstAttacksCount.ToString())
+				Text = text,
+				Value = m_UIAbilityData.BurstAttacksCount.ToString()
 			};
 		}
 		if (m_IsReload)
@@ -371,22 +369,6 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 				Text = m_Target
 			};
 			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
-		}
-	}
-
-	private void AddDuration(List<ITooltipBrick> bricks)
-	{
-		if (!string.IsNullOrEmpty(m_Duration))
-		{
-			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
-			{
-				Text = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Duration)
-			};
-			TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
-			{
-				Text = UIUtilityTexts.WrapWithWeight(m_Duration, TextFontWeight.SemiBold)
-			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 
@@ -513,24 +495,33 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		}
 	}
 
-	private void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)
+	protected virtual void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)
 	{
-		string description = string.Empty;
-		switch (type)
+		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-		case TooltipTemplateType.Tooltip:
-			description = m_ShortDescriptionText;
-			break;
-		case TooltipTemplateType.Info:
-			description = m_LongDescriptionText;
-			break;
-		}
-		description = TooltipTemplateUtils.AggregateDescription(description, TooltipTemplateUtils.GetAdditionalDescription(BlueprintAbility));
-		if (!string.IsNullOrEmpty(description))
-		{
-			description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, Caster);
-			description = UpdateDescriptionWithUICommonProperties(description);
-			bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
+			using (ContextData<UnitHelper.PreviewUnit>.Request())
+			{
+				using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+				{
+					string description = string.Empty;
+					switch (type)
+					{
+					case TooltipTemplateType.Tooltip:
+						description = m_ShortDescriptionText;
+						break;
+					case TooltipTemplateType.Info:
+						description = m_LongDescriptionText;
+						break;
+					}
+					description = TooltipTemplateUtils.AggregateDescription(description, TooltipTemplateUtils.GetAdditionalDescription(BlueprintAbility));
+					if (!string.IsNullOrEmpty(description))
+					{
+						description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, PreviewEntity);
+						description = UpdateDescriptionWithUICommonProperties(description);
+						bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
+					}
+				}
+			}
 		}
 	}
 

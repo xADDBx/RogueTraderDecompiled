@@ -35,6 +35,7 @@ public abstract class GPUSoABase
 		foreach (ComputeBufferWrapper computeBufferWrapper in buffers)
 		{
 			cmd.SetGlobalBuffer(computeBufferWrapper.NameId, computeBufferWrapper);
+			cmd.SetGlobalInt(computeBufferWrapper.SizeNameId, computeBufferWrapper.Count);
 		}
 		cmd.SetGlobalInt(m_NameSizeId, m_Size);
 	}
@@ -45,6 +46,7 @@ public abstract class GPUSoABase
 		foreach (ComputeBufferWrapper computeBufferWrapper in buffers)
 		{
 			cmd.SetComputeBufferParam(shader, kernel, computeBufferWrapper.NameId, computeBufferWrapper);
+			cmd.SetComputeIntParam(shader, computeBufferWrapper.SizeNameId, computeBufferWrapper.Count);
 		}
 		cmd.SetComputeIntParam(shader, m_NameSizeId, m_Size);
 	}

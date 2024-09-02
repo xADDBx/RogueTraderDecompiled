@@ -44,16 +44,16 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 	private LocalMapPCView m_LocalMapPCView;
 
 	[SerializeField]
-	private UIViewLink<EncyclopediaPCView, EncyclopediaVM> m_EncyclopediaView;
+	private UIDestroyViewLink<EncyclopediaPCView, EncyclopediaVM> m_EncyclopediaView;
 
 	[SerializeField]
-	private UIViewLink<ColonyManagementPCView, ColonyManagementVM> m_ColonyManagementPCView;
+	private UIDestroyViewLink<ColonyManagementPCView, ColonyManagementVM> m_ColonyManagementPCView;
 
 	[SerializeField]
-	private UIViewLink<ShipCustomizationPCView, ShipCustomizationVM> m_ShipCustomizationPCView;
+	private UIDestroyViewLink<ShipCustomizationPCView, ShipCustomizationVM> m_ShipCustomizationPCView;
 
 	[SerializeField]
-	private UIViewLink<CargoManagementPCView, CargoManagementVM> m_CargoManagementPCView;
+	private UIDestroyViewLink<CargoManagementPCView, CargoManagementVM> m_CargoManagementPCView;
 
 	[SerializeField]
 	private ShipNameAndPortraitPCView m_ShipNameAndPortraitPCView;

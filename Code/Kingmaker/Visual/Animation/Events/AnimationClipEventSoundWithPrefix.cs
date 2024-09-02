@@ -5,6 +5,10 @@ namespace Kingmaker.Visual.Animation.Events;
 [Serializable]
 public class AnimationClipEventSoundWithPrefix : AnimationClipEventSound
 {
+	public AnimationClipEventSoundWithPrefix()
+	{
+	}
+
 	public AnimationClipEventSoundWithPrefix(float time)
 		: this(time, isLooped: false, null, 1f)
 	{

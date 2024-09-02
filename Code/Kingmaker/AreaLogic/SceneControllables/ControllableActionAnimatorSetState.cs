@@ -10,20 +10,19 @@ public class ControllableActionAnimatorSetState : GameAction
 {
 	public int State;
 
-	public ControllableReference IdOfObject;
+	public ControllableAnimatorSetStateReference IdOfObject;
 
 	public override string GetCaption()
 	{
-		return $"Set {IdOfObject.EntityNameInEditor} Animator State to {State}";
+		return $"Set {IdOfObject?.EntityNameInEditor} Animator State to {State}";
 	}
 
 	protected override void RunAction()
 	{
-		if (IdOfObject.TryGetValue(out var controllable))
+		ControllableState state = new ControllableState
 		{
-			ControllableState state = Game.Instance.SceneControllables.GetState(controllable.UniqueId);
-			state.State = State;
-			Game.Instance.SceneControllables.SetState(controllable.UniqueId, state);
-		}
+			State = State
+		};
+		Game.Instance.SceneControllables.SetState(IdOfObject?.UniqueId, state);
 	}
 }

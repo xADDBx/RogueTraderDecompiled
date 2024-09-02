@@ -3,7 +3,7 @@ using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Interaction;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.Visual.Particles;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;

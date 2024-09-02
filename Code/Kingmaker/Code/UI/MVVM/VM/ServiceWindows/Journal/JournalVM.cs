@@ -27,11 +27,15 @@ public class JournalVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	public JournalVM()
 	{
 		AddDisposable(Navigation = new JournalNavigationVM(GameHelper.Quests.GetList(), SelectedQuest, SelectQuest));
-		AddDisposable(Selector = new LensSelectorVM());
+		AddDisposable(Selector = new LensSelectorVM(needToResetPosition: false));
 		AddDisposable(SystemMapSpaceResourcesVM = new SystemMapSpaceResourcesVM());
 		AddDisposable(EventBus.Subscribe(this));
 		SelectedQuest.Value = JournalHelper.CurrentQuest ?? SelectedQuest.Value;
 		UpdateView.Execute(SelectedQuest.Value);
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	private void SelectQuest(Quest quest)
@@ -42,10 +46,6 @@ public class JournalVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 			UpdateView.Execute(SelectedQuest.Value);
 			JournalHelper.ChangeCurrentQuest(quest);
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	void ISetCurrentQuestHandler.HandleSetCurrentQuest(Quest quest)

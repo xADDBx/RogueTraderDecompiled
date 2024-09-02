@@ -61,7 +61,7 @@ public class SpaceStaticPartPCView : ViewBase<SpaceStaticPartVM>
 	private GroupChangerContextPCView m_GroupChangerContextPCView;
 
 	[SerializeField]
-	private UIViewLink<TransitionPCView, TransitionVM> m_TransitionPCViewLink;
+	private UIDestroyViewLink<TransitionPCView, TransitionVM> m_TransitionPCViewLink;
 
 	[SerializeField]
 	private InspectPCView m_InspectPCView;
@@ -76,7 +76,7 @@ public class SpaceStaticPartPCView : ViewBase<SpaceStaticPartVM>
 	private PartyPCView m_PartyPCView;
 
 	[SerializeField]
-	private UIViewLink<VendorPCView, VendorVM> m_VendorPCViewLink;
+	private UIDestroyViewLink<VendorPCView, VendorVM> m_VendorPCViewLink;
 
 	[SerializeField]
 	private ShipCustomizationPCView m_ShipCustomizationPCView;
@@ -88,7 +88,7 @@ public class SpaceStaticPartPCView : ViewBase<SpaceStaticPartVM>
 	private SubtitleView m_SubtitleView;
 
 	[SerializeField]
-	private UIViewLink<CreditsPCView, CreditsVM> m_CreditsPCView;
+	private UIDestroyViewLink<CreditsPCView, CreditsVM> m_CreditsPCView;
 
 	[Header("Space Combat")]
 	[SerializeField]
@@ -167,7 +167,7 @@ public class SpaceStaticPartPCView : ViewBase<SpaceStaticPartVM>
 	private ColonyEventIngameMenuNotificatorPCView m_ColonyEventIngameMenuNotificatorPCView;
 
 	[SerializeField]
-	private UIViewLink<VendorSelectingWindowPCView, VendorSelectingWindowVM> m_VendorSelectingWindowContextPCView;
+	private UIDestroyViewLink<VendorSelectingWindowPCView, VendorSelectingWindowVM> m_VendorSelectingWindowContextPCView;
 
 	private readonly Dictionary<SpaceStaticComponentType, ICommonStaticComponentView> m_ComponentViews = new Dictionary<SpaceStaticComponentType, ICommonStaticComponentView>();
 

@@ -14,6 +14,7 @@ using Kingmaker.ResourceLinks;
 using Kingmaker.Settings;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.HitSystem;
 using Kingmaker.Visual.Particles;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
@@ -280,8 +281,8 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 			return null;
 		}
 		unitFeet.PreviousFootPosition = new Vector3(unitFeet.ActingFoot.Transform.position.x, unitFeet.ActingFoot.Transform.position.y, unitFeet.ActingFoot.Transform.position.z);
-		string groundType = SurfaceTypeObject.GetSurfaceSoundSwitch(unitFeet.ActingFoot.Transform.position);
-		if (groundType == null)
+		SurfaceType? groundType = SurfaceTypeObject.GetSurfaceSoundTypeSwitch(unitFeet.ActingFoot.Transform.position);
+		if (!groundType.HasValue)
 		{
 			if (unitFeet.InParty)
 			{
@@ -289,7 +290,7 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 			}
 			return null;
 		}
-		if (!fxRoot.FootprintsSettings.TryFind((FxRoot.FootprintSurfaceSettings x) => x.GroundType.ToString() == groundType, out var result))
+		if (!fxRoot.FootprintsSettings.TryFind((FxRoot.FootprintSurfaceSettings x) => x.GroundType == groundType, out var result))
 		{
 			return null;
 		}
@@ -362,7 +363,7 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 			footprint.Transform.rotation = unitFeet.ActingFoot.Transform.rotation;
 		}
 		footprint.TimeLeft = fxRoot.DefaultLifetimeSeconds;
-		footprint.GameObject.name = "footprint_" + unit.View.name + "_" + groundType;
+		footprint.GameObject.name = "footprint_" + unit.View.name + "_" + groundType.ToString();
 		footprint.GameObject.SetActive(value: true);
 		return footprint;
 	}

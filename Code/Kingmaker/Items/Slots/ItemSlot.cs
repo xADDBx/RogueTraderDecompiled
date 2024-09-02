@@ -7,6 +7,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
@@ -157,7 +158,15 @@ public class ItemSlot : IHashable
 
 	public bool CanInsertItem(ItemEntity item)
 	{
-		if (item != null && IsPossibleInsertItems() && IsItemSupported(item))
+		if (item == null || !IsPossibleInsertItems())
+		{
+			return false;
+		}
+		if ((bool)ContextData<GameCommandHelper.PreviewItem>.Current)
+		{
+			return true;
+		}
+		if (IsItemSupported(item))
 		{
 			if (!IsBodyInitializing)
 			{
@@ -259,7 +268,7 @@ public class ItemSlot : IHashable
 				h.HandleEquipmentSlotUpdated(slot, pi);
 			}, isCheckRuntime: true);
 		}
-		else if (Active)
+		else if (Active || (bool)ContextData<GameCommandHelper.PreviewItem>.Current)
 		{
 			item.OnDidEquipped(Owner);
 		}

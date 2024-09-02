@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.AreaLogic.Cutscenes.Commands.Camera;
 using Kingmaker.AreaLogic.Cutscenes.Commands.Timeline;
+using Kingmaker.AreaLogic.SceneControllables;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
+using Kingmaker.EntitySystem;
 using Kingmaker.UI.Selection.UnitMark;
 using Kingmaker.View;
 using Kingmaker.View.Equipment;
@@ -22,6 +24,8 @@ public static class Updateables
 	public static readonly List<Type> IUpdateables = new List<Type>
 	{
 		typeof(DirectorAdapter),
+		typeof(ControllableAnimator),
+		typeof(PlatformObjectEntity),
 		typeof(SubtitleBarkHandle),
 		typeof(BarkHandle),
 		typeof(CutsceneArtController),

@@ -214,7 +214,7 @@ public class ExplorationConsoleView : ExplorationBaseView
 		m_ExplorationScanHintWrapperConsoleView.CreateInput(inputLayer, base.ViewModel.IsExplored.Not().ToReactiveProperty());
 		AddDisposable(m_ConsoleHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
-			OnCloseClick();
+			OnCloseClickDelegate();
 		}, 9, m_IsScanning.Not().ToReactiveProperty()), UIStrings.Instance.CommonTexts.CloseWindow, ConsoleHintsWidget.HintPosition.Right));
 		AddDisposable(m_ConsoleHintsWidget.BindHint(inputLayer.AddButton(delegate
 		{

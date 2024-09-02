@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement.Components;
 
-public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationCreatedHandler, ISubscriber
+public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationCreatedHandler, ISubscriber, IInitializable
 {
 	[SerializeField]
 	private TextMeshProUGUI m_HeaderLabel;

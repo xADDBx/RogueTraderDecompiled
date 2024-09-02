@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Items;
@@ -33,7 +34,11 @@ public class SurfaceActionBarPartConsumablesVM : SurfaceActionBarBasePartVM, IUn
 		}
 		for (int i = 0; i < 4; i++)
 		{
-			UsableSlot quickSlot = Unit.Entity.Body.QuickSlots[i];
+			UsableSlot quickSlot = Unit.Entity.Body.QuickSlots.ElementAtOrDefault(i);
+			if (quickSlot == null)
+			{
+				continue;
+			}
 			if (!quickSlot.HasItem)
 			{
 				Slots.Add(new ActionBarSlotVM(new MechanicActionBarSlotEmpty

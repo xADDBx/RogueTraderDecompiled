@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.SaveLoad.Base;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
+using Rewired;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.SaveLoad.Console;
@@ -30,7 +31,7 @@ public class SaveFullScreenshotConsoleView : SaveFullScreenshotBaseView
 		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
 			base.ViewModel.HideScreenshot();
-		}, 9), UIStrings.Instance.CommonTexts.CloseWindow, ConsoleHintsWidget.HintPosition.Right));
+		}, 9, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.CloseWindow, ConsoleHintsWidget.HintPosition.Right));
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 }

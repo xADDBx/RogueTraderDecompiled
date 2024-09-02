@@ -1,4 +1,3 @@
-using System.Linq;
 using Code.GameCore.Blueprints;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;

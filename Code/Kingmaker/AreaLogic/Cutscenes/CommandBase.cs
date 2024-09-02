@@ -111,6 +111,12 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 		return null;
 	}
 
+	[CanBeNull]
+	public virtual IAbstractUnitEntity GetAnchorUnit()
+	{
+		return GetControlledUnit();
+	}
+
 	public void Run(CutscenePlayerData player, bool skipping = false)
 	{
 		using (player.GetDataScope())
@@ -121,6 +127,7 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 			}
 			catch (Exception e)
 			{
+				OnRunException();
 				throw new FailedToRunCutsceneCommandException(player, this, e);
 			}
 		}
@@ -167,5 +174,9 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 			return false;
 		}
 		return StopPlaySignalIsReady(player);
+	}
+
+	protected virtual void OnRunException()
+	{
 	}
 }

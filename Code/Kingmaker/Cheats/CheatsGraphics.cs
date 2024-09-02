@@ -1,5 +1,6 @@
 using System.Reflection;
 using Core.Cheats;
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics;
 using Owlcat.Runtime.Visual.Overrides;
 using Owlcat.Runtime.Visual.Waaagh;
 using Owlcat.Runtime.Visual.Waaagh.Data;
@@ -103,5 +104,51 @@ internal class CheatsGraphics
 		}
 		field.SetValue(WaaaghPipeline.Asset, !WaaaghPipeline.Asset.UseSRPBatcher);
 		return "SRP batching is now turned " + (WaaaghPipeline.Asset.UseSRPBatcher ? "on" : "off");
+	}
+
+	[Cheat(Name = "gl_PBDResetMemory")]
+	public static string ResetPBD()
+	{
+		FieldInfo field = typeof(PBD).GetField("s_Simulation", BindingFlags.Static | BindingFlags.NonPublic);
+		if (field == null)
+		{
+			return "Failed to find s_Simulation field";
+		}
+		Simulation simulation = (Simulation)field.GetValue(null);
+		if (simulation == null)
+		{
+			return "Failed to get s_Simulation value";
+		}
+		MethodInfo method = typeof(Simulation).GetMethod("MemoryReset", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod);
+		if (method == null)
+		{
+			return "Failed to find MemoryReset method";
+		}
+		method.Invoke(simulation, null);
+		return "PBD memory reseted";
+	}
+
+	[Cheat(Name = "gl_TogglePBDEnabled")]
+	public static string TogglePBDEnabled()
+	{
+		PositionBasedDynamicsConfig instance = PositionBasedDynamicsConfig.Instance;
+		if (instance == null)
+		{
+			return "Failed to find PBD Config";
+		}
+		instance.Enabled = !instance.Enabled;
+		return $"PBD Enabled: {instance.Enabled}";
+	}
+
+	[Cheat(Name = "gl_TogglePBDCameraCullingEnabled")]
+	public static string TogglePBDCameraCullingEnabled()
+	{
+		PositionBasedDynamicsConfig instance = PositionBasedDynamicsConfig.Instance;
+		if (instance == null)
+		{
+			return "Failed to find PBD Config";
+		}
+		instance.CameraCullingEnabled = !instance.CameraCullingEnabled;
+		return $"PBD CameraCulling Enabled: {instance.CameraCullingEnabled}";
 	}
 }

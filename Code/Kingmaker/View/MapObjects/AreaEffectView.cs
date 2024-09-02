@@ -58,7 +58,7 @@ public class AreaEffectView : MechanicEntityView
 
 	public new AreaEffectEntity Data => (AreaEffectEntity)base.Data;
 
-	public void InitAtRuntime([NotNull] MechanicsContext context, [NotNull] BlueprintAbilityAreaEffect blueprint, [NotNull] TargetWrapper target, TimeSpan creationTime, TimeSpan? duration, OverrideAreaEffectPatternData? overridenPatternData = null)
+	public void InitAtRuntime([NotNull] MechanicsContext context, [NotNull] BlueprintAbilityAreaEffect blueprint, [NotNull] TargetWrapper target, TimeSpan creationTime, TimeSpan? duration, OverrideAreaEffectPatternData? overridenPatternData = null, bool getOrientationFromCaster = false)
 	{
 		m_Blueprint = blueprint.ToReference<BlueprintAbilityAreaEffectReference>();
 		m_Context = context;
@@ -68,6 +68,10 @@ public class AreaEffectView : MechanicEntityView
 		m_OverridePatternData = overridenPatternData;
 		base.name = $"Area effect ({blueprint})";
 		base.ViewTransform.position = (OnUnit ? target.Point : target.NearestNode.Vector3Position);
+		if (context.MaybeCaster != null && getOrientationFromCaster)
+		{
+			base.ViewTransform.rotation = Quaternion.Euler(0f, context.MaybeCaster.Orientation, 0f);
+		}
 		IScriptZoneShape shape;
 		if (!blueprint.IsAllArea)
 		{
@@ -81,13 +85,13 @@ public class AreaEffectView : MechanicEntityView
 		}
 		Shape = shape;
 		new GameObject("Locator_GroundFX").transform.SetParent(base.ViewTransform, worldPositionStays: false);
-		SpawnFxs();
 	}
 
 	protected override void OnDidAttachToData()
 	{
 		base.OnDidAttachToData();
 		UpdatePatternIfNecessary(Data.Blueprint);
+		SpawnFxs();
 	}
 
 	public void UpdatePatternIfNecessary(BlueprintAbilityAreaEffect blueprint)
@@ -117,7 +121,8 @@ public class AreaEffectView : MechanicEntityView
 		goto IL_00ae;
 		IL_00ae:
 		CustomGridNodeBase actualCastNode;
-		OrientedPatternData pattern = AoEPatternHelper.GetOrientedPattern(null, caster, blueprint.Pattern, blueprint, nearestNodeXZUnwalkable, m_TargetNode, castOnSameLevel: false, directional: false, coveredTargetsOnly: false, out actualCastNode);
+		OrientedPatternData pattern = AoEPatternHelper.GetOrientedPattern(null, caster, blueprint.Pattern, blueprint, nearestNodeXZUnwalkable, m_TargetNode, castOnSameLevel: false, blueprint.Pattern.CanBeDirectional, coveredTargetsOnly: false, out actualCastNode);
+		actualCastNode = pattern.ApplicationNode ?? actualCastNode;
 		if (m_OverridePatternData.HasValue)
 		{
 			actualCastNode = m_OverridePatternData.Value.Pattern.ApplicationNode ?? actualCastNode;
@@ -136,6 +141,12 @@ public class AreaEffectView : MechanicEntityView
 			pattern = SetupAreaEffectPatternNotFromPatternCenter(blueprint, base.EntityData, nearestNodeXZUnwalkable, actualCastNode, m_TargetNode);
 		}
 		scriptZonePattern.SetPattern(actualCastNode, actualCastNode.Vector3Position.y, in pattern);
+		AdjustPositionFromPattern(actualCastNode);
+	}
+
+	private void AdjustPositionFromPattern(CustomGridNodeBase applicationNode)
+	{
+		base.ViewTransform.position = applicationNode.Vector3Position;
 	}
 
 	private static OrientedPatternData SetupAreaEffectPatternNotFromPatternCenter(BlueprintAbilityAreaEffect blueprint, MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase applicationNode, [NotNull] CustomGridNodeBase targetNode)
@@ -151,17 +162,17 @@ public class AreaEffectView : MechanicEntityView
 
 	public bool Contains(BaseUnitEntity unit)
 	{
-		return Shape.Contains(unit.Position, unit.SizeRect);
+		return Shape.Contains(unit.Position, unit.SizeRect, unit.Forward);
 	}
 
 	public bool Contains(Vector3 point, IntRect size = default(IntRect))
 	{
-		return Shape.Contains(point, size);
+		return Shape.Contains(point, size, Vector3.forward);
 	}
 
 	public bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect))
 	{
-		return Shape.Contains(node, size);
+		return Shape.Contains(node, size, Vector3.forward);
 	}
 
 	protected override void OnDisable()

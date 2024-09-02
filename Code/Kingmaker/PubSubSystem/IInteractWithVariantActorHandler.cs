@@ -1,6 +1,6 @@
 using Kingmaker.Interaction;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 
 namespace Kingmaker.PubSubSystem;
 

@@ -12,6 +12,10 @@ public class AnimationClipEventMapped : AnimationClipEvent
 {
 	public MappedAnimationEventType Type;
 
+	public AnimationClipEventMapped()
+	{
+	}
+
 	public AnimationClipEventMapped(float time)
 		: base(time)
 	{

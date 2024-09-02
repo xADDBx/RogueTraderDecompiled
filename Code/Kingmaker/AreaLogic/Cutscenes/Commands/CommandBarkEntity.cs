@@ -55,6 +55,17 @@ public class CommandBarkEntity : CommandBase
 	[ShowIf("OverrideBarkDuration")]
 	public float BarkDuration;
 
+	[Tooltip("Allow override speaker name in combat log")]
+	public bool OverrideNameInLog;
+
+	[SerializeField]
+	[ShowIf("OverrideNameInLog")]
+	private LocalizedString m_NameInLog;
+
+	[SerializeField]
+	[ShowIf("OverrideNameInLog")]
+	private Color m_NameColorInLog = new Color(0.15f, 0.15f, 0.15f, 1f);
+
 	protected override bool StopPlaySignalIsReady(CutscenePlayerData player)
 	{
 		Data commandData = player.GetCommandData<Data>(this);
@@ -86,7 +97,14 @@ public class CommandBarkEntity : CommandBase
 		else
 		{
 			Entity entity = Entity?.GetValue();
-			commandData.BarkHandle = (SharedText ? BarkPlayer.Bark(entity, SharedText.String, duration, BarkDurationByText) : BarkPlayer.Bark(entity, Text, duration));
+			if ((bool)SharedText)
+			{
+				commandData.BarkHandle = (OverrideNameInLog ? BarkPlayer.Bark(entity, SharedText.String, duration, BarkDurationByText, null, synced: true, m_NameInLog, m_NameColorInLog) : BarkPlayer.Bark(entity, SharedText.String, duration, BarkDurationByText));
+			}
+			else
+			{
+				commandData.BarkHandle = (OverrideNameInLog ? BarkPlayer.Bark(entity, Text, duration, null, null, synced: true, m_NameInLog, m_NameColorInLog) : BarkPlayer.Bark(entity, Text, duration));
+			}
 		}
 		commandData.StopPlaySignal = SignalService.Instance.RegisterNext();
 	}

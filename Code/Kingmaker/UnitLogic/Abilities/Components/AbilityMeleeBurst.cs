@@ -97,7 +97,7 @@ public class AbilityMeleeBurst : AbilityCustomLogic, IAbilityAoEPatternProviderH
 		{
 			weapon = (UseSecondWeapon ? (maybeWeapon2 ?? maybeWeapon) : (maybeWeapon ?? maybeWeapon2));
 		}
-		int maxCount = GetRateOfFire(context);
+		int maxCount = context.Ability.RateOfFire;
 		m_FirstAttackHit = false;
 		m_FirstAttackCalculated = false;
 		while (burstCounter < maxCount)

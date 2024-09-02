@@ -40,6 +40,8 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 
 	private SelectionStateCharacterName m_SelectionStateCharacterName;
 
+	private bool m_CharacterNameWasEdited;
+
 	private bool m_Subscribed;
 
 	public CharGenSummaryPhaseVM(CharGenContext charGenContext)
@@ -58,7 +60,12 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 
 	protected override bool CheckIsCompleted()
 	{
-		return CharGenContext.LevelUpManager.Value?.IsAllSelectionsMadeAndValid ?? false;
+		LevelUpManager value = CharGenContext.LevelUpManager.Value;
+		if (value != null && value.IsAllSelectionsMadeAndValid)
+		{
+			return m_CharacterNameWasEdited;
+		}
+		return false;
 	}
 
 	protected override void OnBeginDetailedView()
@@ -69,7 +76,10 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 			SetDefaultNameIfNeeded();
 			return;
 		}
-		AddDisposable(CharGenNameVM = new CharGenNameVM(CharGenContext.CurrentUnit, CharGenContext.LevelUpManager, GetRandomName, SetName));
+		AddDisposable(CharGenNameVM = new CharGenNameVM(CharGenContext.CurrentUnit, CharGenContext.LevelUpManager, GetRandomName, delegate(string characterName)
+		{
+			SetName(characterName, isManual: true);
+		}));
 		AddDisposable(LevelClassScoresVM = new CharInfoLevelClassScoresVM(CharGenNameVM.PreviewUnit));
 		AddDisposable(CharInfoSkillsBlockVM = new CharInfoSkillsBlockVM(CharGenNameVM.PreviewUnit, null));
 		AddDisposable(CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
@@ -78,7 +88,7 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 			PregenUnitComponent component = unit.Blueprint.GetComponent<PregenUnitComponent>();
 			if (component != null)
 			{
-				SetName(component.PregenName, force: true);
+				SetName(component.PregenName, isManual: false, force: true);
 			}
 			else
 			{
@@ -94,6 +104,7 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 	{
 		if (manager != null)
 		{
+			m_CharacterNameWasEdited = false;
 			BlueprintCharacterNameSelection selectionByType = CharGenUtility.GetSelectionByType<BlueprintCharacterNameSelection>(manager.Path);
 			if (selectionByType != null)
 			{
@@ -103,14 +114,18 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 		}
 	}
 
-	private void SetName(string characterName)
+	private void SetName(string characterName, bool isManual)
 	{
-		SetName(characterName, force: false);
+		SetName(characterName, isManual, force: false);
 	}
 
-	private void SetName(string characterName, bool force)
+	private void SetName(string characterName, bool isManual, bool force)
 	{
 		Game.Instance.GameCommandQueue.CharGenSetName(characterName, force);
+		if (isManual)
+		{
+			m_CharacterNameWasEdited = true;
+		}
 	}
 
 	void ICharGenSummaryPhaseHandler.HandleSetName(string characterName)
@@ -146,7 +161,7 @@ public class CharGenSummaryPhaseVM : CharGenPhaseBaseVM, ICharGenSummaryPhaseHan
 		if (CharGenContext.IsCustomCharacter.Value && CharGenContext.LevelUpManager.Value.PreviewUnit.GetDescriptionOptional()?.CustomName == null && CharGenContext.Doll?.Race != null)
 		{
 			string defaultName = BlueprintCharGenRoot.Instance.PregenCharacterNames.GetDefaultName(CharGenContext.Doll.Race.RaceId, CharGenContext.Doll.Gender, CharGenContext.CharGenConfig.Mode, CharGenNameVM.UnitName.Value);
-			SetName(defaultName);
+			SetName(defaultName, isManual: false);
 		}
 	}
 

@@ -15,6 +15,7 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.Settings;
 using Kingmaker.UnitLogic.Buffs;
@@ -86,27 +87,16 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 	[CanBeNull]
 	private List<TemporaryHitPointsData> m_TemporaryHitPoints = new List<TemporaryHitPointsData>();
 
-	private int m_DamageOld = -1;
-
 	[JsonProperty]
 	private float m_MissingHpFraction;
+
+	[JsonIgnore]
+	public bool DiscardTrauma;
 
 	[CanBeNull]
 	private List<(EntityFact Fact, BlueprintComponent Component, int Value)> m_HealthGuards;
 
 	private int m_MinHitPoints;
-
-	[JsonIgnore]
-	public bool DiscardTrauma;
-
-	[JsonProperty(PropertyName = "Damage")]
-	private int DamageOld
-	{
-		set
-		{
-			m_DamageOld = value;
-		}
-	}
 
 	public int Damage
 	{
@@ -166,15 +156,6 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 	void IInGameHandler.HandleObjectInGameChanged()
 	{
 		LastHandledDamage = null;
-	}
-
-	protected override void OnApplyPostLoadFixes()
-	{
-		base.OnApplyPostLoadFixes();
-		if (m_DamageOld >= 0)
-		{
-			m_MissingHpFraction = (float)m_DamageOld / (float)MaxHitPoints;
-		}
 	}
 
 	private void Initialize()
@@ -433,7 +414,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	private int ApplyTemporaryHitPoints(int damage)
 	{
-		if (m_TemporaryHitPoints.Empty())
+		if (m_TemporaryHitPoints == null || m_TemporaryHitPoints.Empty())
 		{
 			return damage;
 		}
@@ -449,6 +430,10 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 				}
 				Handle(temporaryHitPointsData, ref damage);
 			}
+		}
+		if (m_TemporaryHitPoints == null)
+		{
+			return damage;
 		}
 		foreach (TemporaryHitPointsData item in m_TemporaryHitPoints.ToTempList())
 		{
@@ -480,7 +465,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public void AddTemporaryHitPoints(int amount, Buff sourceBuff)
 	{
-		if (!m_TemporaryHitPoints.HasItem((TemporaryHitPointsData i) => i.Source == sourceBuff))
+		if (!m_TemporaryHitPoints.HasItem((TemporaryHitPointsData i) => i.Source == sourceBuff) && amount > 0)
 		{
 			TemporaryHitPointsData item = new TemporaryHitPointsData(sourceBuff)
 			{
@@ -492,11 +477,22 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 				m_TemporaryHitPoints = new List<TemporaryHitPointsData>();
 			}
 			m_TemporaryHitPoints.Add(item);
+			EventBus.RaiseEvent((IEntity)base.Owner, (Action<ITemporaryHitPoints>)delegate(ITemporaryHitPoints h)
+			{
+				h.HandleOnAddTemporaryHitPoints(amount, sourceBuff);
+			}, isCheckRuntime: true);
 		}
 	}
 
 	public void RemoveTemporaryHitPoints(Buff sourceBuff)
 	{
+		if (!m_TemporaryHitPoints.Empty() && sourceBuff != null)
+		{
+			EventBus.RaiseEvent((IEntity)base.Owner, (Action<ITemporaryHitPoints>)delegate(ITemporaryHitPoints h)
+			{
+				h.HandleOnRemoveTemporaryHitPoints(GetTemporaryHitPointFromBuff(sourceBuff.Blueprint), sourceBuff);
+			}, isCheckRuntime: true);
+		}
 		m_TemporaryHitPoints?.Remove((TemporaryHitPointsData i) => i.Source == sourceBuff);
 		if (m_TemporaryHitPoints.Empty())
 		{
@@ -511,6 +507,40 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 			return m_TemporaryHitPoints.Where((TemporaryHitPointsData p1) => p1.Source.Fact?.Blueprint == sourceBuff).Sum((TemporaryHitPointsData p2) => p2.Value);
 		}
 		return 0;
+	}
+
+	public static void RestUnit(BaseUnitEntity unit)
+	{
+		if (unit.LifeState.IsDead)
+		{
+			unit.LifeState.Resurrect();
+			unit.Position = Game.Instance.Player.MainCharacter.Entity.Position;
+		}
+		Rulebook.Trigger(new RuleHealDamage(unit, unit, default(DiceFormula), unit.Health.HitPoints.ModifiedValue));
+		unit.CombatState.LastStraightMoveLength = 0;
+		unit.CombatState.LastDiagonalCount = 0;
+		unit.CombatState.ResetActionPointsAll();
+		unit.CombatState.AttackInRoundCount = 0;
+		unit.CombatState.AttackedInRoundCount = 0;
+		unit.CombatState.HitInRoundCount = 0;
+		unit.CombatState.GotHitInRoundCount = 0;
+		unit.GetAbilityCooldownsOptional()?.Clear();
+		unit.GetTwoWeaponFightingOptional()?.ResetAttacks();
+		TryResetDebuffs(unit);
+		foreach (ModifiableValueAttributeStat attribute in unit.Attributes)
+		{
+			attribute.Damage = 0;
+			attribute.Drain = 0;
+		}
+		unit.Health.HealAll();
+	}
+
+	private static void TryResetDebuffs(BaseUnitEntity unit)
+	{
+		DebuffSkillCheckRoot debuffSkillCheckRoot = BlueprintWarhammerRoot.Instance.SkillCheckRoot.DebuffSkillCheckRoot;
+		unit.Buffs.Remove(debuffSkillCheckRoot.Fatigued);
+		unit.Buffs.Remove(debuffSkillCheckRoot.Disturbed);
+		unit.Buffs.Remove(debuffSkillCheckRoot.Perplexed);
 	}
 
 	public override Hash128 GetHash128()

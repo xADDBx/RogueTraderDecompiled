@@ -11,7 +11,7 @@ namespace Kingmaker.UI.MVVM.View.CharGen.Console;
 public class CharGenContextConsoleView : ViewBase<CharGenContextVM>
 {
 	[SerializeField]
-	private UIViewLink<CharGenConsoleView, CharGenVM> m_CharGenConsoleView;
+	private UIDestroyViewLink<CharGenConsoleView, CharGenVM> m_CharGenConsoleView;
 
 	[SerializeField]
 	private CanvasScalerWorkaround m_CanvasScaler;

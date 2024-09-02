@@ -45,6 +45,8 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 
 	public readonly bool IsHidden;
 
+	public readonly bool HasTalentsGroups;
+
 	public bool HasFeature => Feature != null;
 
 	public bool HasAbility => Ability != null;
@@ -56,13 +58,11 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		IsHeader = isHeader;
 		IsHidden = isHidden;
 		string name = feature.Name;
-		if (feature != null)
+		TalentIconsInfo = feature.TalentIconInfo;
+		HasTalentsGroups = feature.TalentIconInfo.HasGroups && feature.Icon == null;
+		if (forceSetName && !string.IsNullOrWhiteSpace(feature.ForceSetNameForItemTooltip))
 		{
-			TalentIconsInfo = feature.TalentIconInfo;
-			if (forceSetName && !string.IsNullOrWhiteSpace(feature.ForceSetNameForItemTooltip))
-			{
-				name = feature.ForceSetNameForItemTooltip;
-			}
+			name = feature.ForceSetNameForItemTooltip;
 		}
 		Name = name;
 		if (showIcon)

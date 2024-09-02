@@ -47,6 +47,8 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 	public float AiAbilitySpeedMod { get; private set; } = 1f;
 
 
+	public bool IsBusy => Game.Instance.AbilityExecutor.Abilities.Count > 0;
+
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
 		if (isTurnBased)

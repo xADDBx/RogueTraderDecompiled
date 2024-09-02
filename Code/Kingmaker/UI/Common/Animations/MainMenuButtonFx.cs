@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.View.ContextMenu.Common;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.DLC;
 using Kingmaker.Stores;
+using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -129,28 +130,32 @@ public class MainMenuButtonFx : ContextButtonFx
 
 	public void PlayFXSequence(EffectSettings effectSettings)
 	{
-		if (!(m_BlinkBackground == null) && !(m_GlitchFX == null) && !(m_Label == null) && !(m_Button == null))
+		if (m_BlinkBackground == null || m_GlitchFX == null || m_Label == null || m_Button == null)
 		{
-			Sequence s = DOTween.Sequence();
-			SetDefaultValues();
-			m_Label.alpha = 0f;
-			s.AppendInterval(effectSettings.FirstDelay);
-			s.AppendCallback(delegate
+			return;
+		}
+		Sequence s = DOTween.Sequence();
+		SetDefaultValues();
+		m_Label.alpha = 0f;
+		s.AppendInterval(effectSettings.FirstDelay);
+		s.AppendCallback(delegate
+		{
+			if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Settings)
 			{
 				UISounds.Instance.Sounds.MainMenu.ButtonsFirstLaunchFxAnimation.Play();
-			});
-			s.Append(m_BlinkBackground.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
-			s.Join(m_Label.DOFade(1f, effectSettings.FadeInTime)).SetEase(Ease.Linear);
-			s.AppendInterval(effectSettings.FirstStay);
-			s.Append(m_BlinkBackground.DOFade(0f, effectSettings.FadeOutTime).SetEase(Ease.Linear));
-			s.Join(m_Label.DOFade(0f, effectSettings.FadeOutTime).SetEase(Ease.Linear));
-			s.AppendInterval(effectSettings.SecondDelay);
-			s.Append(m_BlinkBackground.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
-			s.Join(m_Label.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
-			s.Join(m_GlitchFX.DOFade(1f, 0.1f));
-			s.Append(m_GlitchFX.DOFade(0f, 0.1f));
-			s.Append(m_BlinkBackground.DOFade(0f, 0.1f).SetEase(Ease.Linear));
-		}
+			}
+		});
+		s.Append(m_BlinkBackground.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
+		s.Join(m_Label.DOFade(1f, effectSettings.FadeInTime)).SetEase(Ease.Linear);
+		s.AppendInterval(effectSettings.FirstStay);
+		s.Append(m_BlinkBackground.DOFade(0f, effectSettings.FadeOutTime).SetEase(Ease.Linear));
+		s.Join(m_Label.DOFade(0f, effectSettings.FadeOutTime).SetEase(Ease.Linear));
+		s.AppendInterval(effectSettings.SecondDelay);
+		s.Append(m_BlinkBackground.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
+		s.Join(m_Label.DOFade(1f, effectSettings.FadeInTime).SetEase(Ease.Linear));
+		s.Join(m_GlitchFX.DOFade(1f, 0.1f));
+		s.Append(m_GlitchFX.DOFade(0f, 0.1f));
+		s.Append(m_BlinkBackground.DOFade(0f, 0.1f).SetEase(Ease.Linear));
 	}
 
 	public override void DoHovered(bool state)
@@ -180,7 +185,7 @@ public class MainMenuButtonFx : ContextButtonFx
 		s.AppendInterval(m_ShowDelay);
 		s.AppendCallback(delegate
 		{
-			if (FirstLaunchSettingsVM.HasShown)
+			if (FirstLaunchSettingsVM.HasShown && Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Settings)
 			{
 				UISounds.Instance.Sounds.MainMenu.ButtonsFxAnimation.Play();
 			}
@@ -235,6 +240,8 @@ public class MainMenuButtonFx : ContextButtonFx
 
 	private bool CheckSomeDlcNichtGesehen()
 	{
-		return StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Any((BlueprintDlc dlc) => PlayerPrefs.GetInt("DLCMANAGER_I_SAW_" + dlc.name, 0) == 0);
+		return (from dlc in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>()
+			where !dlc.HideDlc
+			select dlc).Any((BlueprintDlc dlc) => PlayerPrefs.GetInt("DLCMANAGER_I_SAW_" + dlc.name, 0) == 0);
 	}
 }

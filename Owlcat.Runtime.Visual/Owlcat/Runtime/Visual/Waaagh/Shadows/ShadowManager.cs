@@ -226,33 +226,6 @@ internal sealed class ShadowManager
 
 	private void ReportStatistics(in RenderingData renderingData)
 	{
-		if (renderingData.CameraData.CameraType != CameraType.Game)
-		{
-			return;
-		}
-		ShadowStatistics value = m_StatsisticsReference.Value;
-		if (value.DynamicAtlasOverflowDetected || value.ConstantBufferOverflowDetected)
-		{
-			m_MessageBuilder.Clear();
-			m_MessageBuilder.Append("Shadow rendering issues detected. Camera: ").Append(renderingData.CameraData.Camera.name).AppendLine();
-			if (value.DynamicAtlasOverflowDetected)
-			{
-				m_MessageBuilder.Append("DYNAMIC_ATLAS_OVERFLOW: All shadow map textures doesn't fit to atlas").AppendLine();
-			}
-			if (value.CachedAtlasOverflowDetected)
-			{
-				m_MessageBuilder.Append("CACHED_ATLAS_OVERFLOW: All shadow map textures doesn't fit to cached atlas").AppendLine();
-			}
-			if (value.ConstantBufferOverflowDetected)
-			{
-				m_MessageBuilder.Append("CONSTANT_BUFFER_OVERFLOW: Too many lights with shadow enabled in view. Expected: less or equal to ").Append(128).Append(". Actual: ")
-					.Append(value.UseCandidateCount)
-					.AppendLine();
-			}
-			value.Append(m_MessageBuilder);
-			m_MessageBuilder.AppendLine();
-			Debug.LogWarning(m_MessageBuilder.ToString());
-		}
 	}
 
 	private static Vector3 CalculateLineEquationCoeffs(Vector2 p1, Vector2 p2)

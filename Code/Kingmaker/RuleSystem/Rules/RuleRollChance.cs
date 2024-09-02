@@ -46,6 +46,8 @@ public class RuleRollChance : RuleRollD100
 		}
 	}
 
+	public int? AnyRerollChance => m_RerollSuccessChance ?? m_RerollFailChance;
+
 	public string RerollSourceFactName => m_RerollSourceFactName;
 
 	public RuleRollChance([NotNull] IMechanicEntity initiator, int chance, RollType? rollType = null, RollChanceType type = RollChanceType.Untyped, int? resultOverride = null, IMechanicEntity attackInitiator = null)
@@ -76,7 +78,7 @@ public class RuleRollChance : RuleRollD100
 			int num = 0;
 			while (success == Success && m_RerollCount > num)
 			{
-				Reroll((base.Initiator as MechanicEntity)?.MainFact, takeBest: true);
+				Reroll((base.Initiator as MechanicEntity)?.MainFact, !success);
 				Success = base.Result <= rerollChance.Value;
 				num++;
 			}

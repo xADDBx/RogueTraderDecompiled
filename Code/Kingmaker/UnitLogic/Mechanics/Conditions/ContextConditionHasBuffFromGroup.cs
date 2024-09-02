@@ -34,7 +34,7 @@ public class ContextConditionHasBuffFromGroup : ContextCondition
 	protected override bool CheckCondition()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
-		MechanicEntity mechanicEntity = (CheckOnCaster ? base.Context.MaybeCaster : base.Target.Entity);
+		MechanicEntity mechanicEntity = (CheckOnCaster ? base.Context.MaybeCaster : (base.Target.Entity ?? base.Context.MainTarget.Entity));
 		if (mechanicEntity == null)
 		{
 			return false;

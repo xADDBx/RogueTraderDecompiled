@@ -13,6 +13,14 @@ public class InterpolationController<T> : IControllerTick, IController where T :
 		m_InterpolatableList.Add(updatable);
 	}
 
+	public void AddUnique(T updatable)
+	{
+		if (!m_InterpolatableList.Contains(updatable))
+		{
+			m_InterpolatableList.Add(updatable);
+		}
+	}
+
 	public void Remove(T updatable)
 	{
 		m_InterpolatableList.Remove(updatable);
@@ -26,13 +34,18 @@ public class InterpolationController<T> : IControllerTick, IController where T :
 	void IControllerTick.Tick()
 	{
 		float interpolationProgress = Game.Instance.RealTimeController.InterpolationProgress;
+		Tick(interpolationProgress);
+	}
+
+	public void Tick(float progress)
+	{
 		m_InterpolatableList.Prepare();
 		T value;
 		while (m_InterpolatableList.Next(out value))
 		{
 			try
 			{
-				value.Tick(interpolationProgress);
+				value.Tick(progress);
 			}
 			catch (Exception ex)
 			{

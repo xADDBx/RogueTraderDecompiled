@@ -40,7 +40,7 @@ public class WeaponSlot : ItemSlot, IHashable
 		{
 			if (base.MaybeItem == null || !base.Active)
 			{
-				return base.Owner.GetBodyOptional()?.EmptyHandWeapon;
+				return null;
 			}
 			return base.MaybeItem as ItemEntityWeapon;
 		}

@@ -31,12 +31,14 @@ public class SurfaceMomentumConsoleView : SurfaceMomentumView, IConsoleNavigatio
 		return base.ViewModel.MomentumEntityVM?.Value?.Tooltip?.Value;
 	}
 
-	public List<IConsoleNavigationEntity> GetSlots()
+	public List<IConsoleNavigationEntity> GetDesperateMeasureSlots()
 	{
-		List<IConsoleNavigationEntity> list = new List<IConsoleNavigationEntity>();
-		list.AddRange(m_DesperateMeasureWidgetList.GetNavigationEntities());
-		list.AddRange(m_HeroicActWidgetList.GetNavigationEntities());
-		return list;
+		return m_DesperateMeasureWidgetList.GetNavigationEntities();
+	}
+
+	public List<IConsoleNavigationEntity> GetHeroicActSlots()
+	{
+		return m_HeroicActWidgetList.GetNavigationEntities();
 	}
 
 	public void OnFocusEntity(IConsoleEntity entity)

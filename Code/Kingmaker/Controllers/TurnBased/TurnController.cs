@@ -102,6 +102,8 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 	}
 
+	public bool InCombat => Data.InCombat;
+
 	public bool IsPlayerTurn
 	{
 		get
@@ -426,7 +428,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		HandleCurrentUnitUnableToAct();
 		if (CurrentUnit == null || Data.EndTurnRequested)
 		{
-			EndUnitTurn(CurrentUnit, isTurnBased: true);
+			EndUnitTurn(CurrentUnit, isTurnBased: true, Data.EndTurnRequested);
 		}
 		HandleJoinedThisTickEntities();
 		if (!m_StartBattleSignal.IsEmpty && SignalService.Instance.CheckReady(ref m_StartBattleSignal))
@@ -710,7 +712,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			else
 			{
 				TickAbilityCooldowns(unit, interrupt: false);
-				if (!unit.Features.DoesNotCountTurns)
+				if (!unit.Features.DoesNotCountTurns && TurnOrder?.CurrentRoundUnitsOrder.FirstOrDefault() == unit)
 				{
 					unit.Initiative.LastTurn = GameRound;
 				}
@@ -892,6 +894,24 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	}
 
 	public void InterruptCurrentTurn(MechanicEntity unit, MechanicEntity source, InterruptionData interruptionData)
+	{
+		if (!IsInTurnBasedCombat())
+		{
+			return;
+		}
+		if (interruptionData.WaitForCommandsToFinish)
+		{
+			PartUnitCommands commandsOptional = CurrentUnit.GetCommandsOptional();
+			if (commandsOptional != null)
+			{
+				commandsOptional.AddToQueue(new UnitInterruptTurnParams(unit, source, interruptionData));
+				return;
+			}
+		}
+		InterruptCurrentTurnByCommand(unit, source, interruptionData);
+	}
+
+	public void InterruptCurrentTurnByCommand(MechanicEntity unit, MechanicEntity source, InterruptionData interruptionData)
 	{
 		if (!IsInTurnBasedCombat())
 		{

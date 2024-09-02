@@ -4,5 +4,6 @@ public enum JoinableUserTypes
 {
 	Anyone,
 	Friends,
-	NoOne
+	NoOne,
+	FriendsOfFriends
 }

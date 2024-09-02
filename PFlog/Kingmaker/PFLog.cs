@@ -135,6 +135,8 @@ public class PFLog : LogChannelFactory
 
 	public static readonly LogChannel Cutscene = LogChannelFactory.GetOrCreate("Cutscene");
 
+	public static readonly LogChannel Animations = LogChannelFactory.GetOrCreate("Animations");
+
 	public static LogChannel Unity => LogChannel.Unity;
 
 	public static LogChannel Audio => LogChannel.Audio;

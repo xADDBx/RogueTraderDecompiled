@@ -93,8 +93,8 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 				Reason = context
 			};
 			Rulebook.Trigger(ruleRollScatterShotHitDirection);
-			List<CustomGridNodeBase> nodes = tuple.Item3.Get((int)ruleRollScatterShotHitDirection.Result);
-			abilityProjectileAttack.SetupLine(i, tuple.Item1, tuple.Item2, nodes);
+			List<CustomGridNodeBase> list = tuple.Item3.Get((int)ruleRollScatterShotHitDirection.Result);
+			abilityProjectileAttack.SetupLine(i, tuple.Item1, tuple.Item2, list);
 		}
 		return abilityProjectileAttack;
 	}
@@ -111,7 +111,7 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 			PFLog.Default.ErrorWithReport("PriorityTarget is missing");
 			return null;
 		}
-		(List<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) singleShotAffectedNodes = GetSingleShotAffectedNodes(context.Ability, priorityTarget);
+		(ReadonlyList<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) singleShotAffectedNodes = GetSingleShotAffectedNodes(context.Ability, priorityTarget);
 		AbilityProjectileAttack abilityProjectileAttack = new AbilityProjectileAttack(context, priorityTarget, shotsCount);
 		for (int i = 0; i < abilityProjectileAttack.Count; i++)
 		{
@@ -120,7 +120,7 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 		return abilityProjectileAttack;
 	}
 
-	public static (List<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) GetSingleShotAffectedNodes(AbilityData ability, MechanicEntity target)
+	public static (ReadonlyList<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) GetSingleShotAffectedNodes(AbilityData ability, MechanicEntity target)
 	{
 		int num = ability.RangeCells.Cells().Value;
 		CustomGridNodeBase casterNode = ability.GetBestShootingPositionForDesiredPosition(target);
@@ -138,51 +138,41 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 				num = warhammerLength;
 			}
 		}
-		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(customGridNodeBase2.CoordinatesInGrid, (customGridNodeBase.Vector3Position - customGridNodeBase2.Vector3Position).To2D());
-		Linecast.Ray2Nodes ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)customGridNodeBase2.Graph, in offsets);
-		NodeList occupiedNodes = target.GetOccupiedNodes();
-		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
-		using Linecast.Ray2Nodes.Enumerator enumerator = ray2Nodes.GetEnumerator();
-		while (enumerator.MoveNext())
-		{
-			CustomGridNodeBase current = enumerator.Current;
-			if (current == null || (list.Count == 0 && CustomGraphHelper.GetWarhammerLength(current.CoordinatesInGrid - customGridNodeBase2.CoordinatesInGrid) > num))
-			{
-				return (Nodes: TempList.Get<CustomGridNodeBase>(), From: customGridNodeBase2, To: customGridNodeBase);
-			}
-			if (occupiedNodes.Contains(current) || list.Count > 0)
-			{
-				list.Add(enumerator.Current);
-			}
-		}
-		return (Nodes: list, From: customGridNodeBase2, To: customGridNodeBase);
+		return CollectNodes(customGridNodeBase2, customGridNodeBase, target, num);
 	}
 
-	public static (List<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, MechanicEntity target, int range)
+	private static (ReadonlyList<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, CustomGridNodeBase toNode, MechanicEntity target, int range)
+	{
+		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(fromNode.CoordinatesInGrid, (toNode.Vector3Position - fromNode.Vector3Position).To2D());
+		Linecast.Ray2Nodes ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)fromNode.Graph, in offsets);
+		NodeList occupiedNodes = target.GetOccupiedNodes();
+		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
+		foreach (CustomGridNodeBase item in ray2Nodes)
+		{
+			if (item == null || CustomGraphHelper.GetWarhammerLength(item.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range)
+			{
+				if (list.Count == 0)
+				{
+					return (Nodes: ReadonlyList<CustomGridNodeBase>.Empty, From: fromNode, To: toNode);
+				}
+				break;
+			}
+			if (occupiedNodes.Contains(item) || list.Count > 0)
+			{
+				list.Add(item);
+			}
+		}
+		return (Nodes: list, From: fromNode, To: toNode);
+	}
+
+	public static (ReadonlyList<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, MechanicEntity target, int range)
 	{
 		CustomGridNodeBase customGridNodeBase = target.GetOccupiedNodes().FirstOrDefault((CustomGridNodeBase node) => LosCalculations.GetDirectLos(fromNode.Vector3Position, node.Vector3Position)) ?? target.Position.GetNearestNodeXZUnwalkable();
 		if (customGridNodeBase == fromNode)
 		{
 			return (Nodes: TempList.Get<CustomGridNodeBase>(), From: fromNode, To: customGridNodeBase);
 		}
-		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(fromNode.CoordinatesInGrid, (customGridNodeBase.Vector3Position - fromNode.Vector3Position).To2D());
-		Linecast.Ray2Nodes ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)fromNode.Graph, in offsets);
-		NodeList occupiedNodes = target.GetOccupiedNodes();
-		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
-		using Linecast.Ray2Nodes.Enumerator enumerator = ray2Nodes.GetEnumerator();
-		while (enumerator.MoveNext())
-		{
-			CustomGridNodeBase current = enumerator.Current;
-			if (current == null || (list.Count == 0 && CustomGraphHelper.GetWarhammerLength(current.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range))
-			{
-				return (Nodes: TempList.Get<CustomGridNodeBase>(), From: fromNode, To: customGridNodeBase);
-			}
-			if (occupiedNodes.Contains(current) || list.Count > 0)
-			{
-				list.Add(enumerator.Current);
-			}
-		}
-		return (Nodes: list, From: fromNode, To: customGridNodeBase);
+		return CollectNodes(fromNode, customGridNodeBase, target, range);
 	}
 
 	private static (CustomGridNodeBase From, CustomGridNodeBase To, List<CustomGridNodeBase>[] Lines) CalculateLines(MechanicEntity caster, TargetWrapper target, Cells range, AbilityData abilityData)
@@ -219,7 +209,7 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 		AttackHitPolicy = AttackHitPolicyType.AutoHit;
 	}
 
-	public void SetupLine(int index, CustomGridNodeBase fromNode, CustomGridNodeBase toNode, List<CustomGridNodeBase> nodes)
+	public void SetupLine(int index, CustomGridNodeBase fromNode, CustomGridNodeBase toNode, ReadonlyList<CustomGridNodeBase> nodes)
 	{
 		if (nodes.Empty())
 		{
@@ -252,11 +242,15 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 			IsFinished = m_Attacks.All((AbilityProjectileAttackLine i) => i == null || i.IsFinished);
 			if (IsFinished)
 			{
+				ApplyDodge();
+				break;
+			}
+			if (Context.MaybeCaster?.IsDeadOrUnconscious ?? false)
+			{
 				break;
 			}
 			yield return null;
 		}
-		ApplyDodge();
 	}
 
 	private void ApplyDodge()

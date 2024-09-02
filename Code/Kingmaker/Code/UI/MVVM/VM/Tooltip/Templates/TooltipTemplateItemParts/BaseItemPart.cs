@@ -339,7 +339,8 @@ public class BaseItemPart : TooltipBaseTemplate
 
 	private void AddNotRemovable(List<ITooltipBrick> bricks, TooltipTemplateType type)
 	{
-		if (Item.IsNonRemovable)
+		ItemEntity item = Item;
+		if (item != null && item.IsNonRemovable)
 		{
 			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.IsNotRemovable, TooltipTitleType.H5));
 		}

@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 
 namespace Kingmaker.View.MapObjects;
 

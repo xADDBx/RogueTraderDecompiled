@@ -6,6 +6,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
+using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
@@ -254,41 +255,67 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 	private void AddBuffsAndStatusEffects(List<ITooltipBrick> bricks)
 	{
 		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Inspect.StatusEffectsTitle.Text));
-		if (m_InspectReactiveData != null)
+		ReactiveCollection<ITooltipBrick> source = ((m_InspectReactiveData != null) ? m_InspectReactiveData.TooltipBrickBuffs : InspectExtensions.GetBuffsTooltipBricks(m_Unit));
+		ReactiveCollection<ITooltipBrick> buffs = source.Where((ITooltipBrick b) => ((TooltipBrickBuff)b).Group == BuffUIGroup.DOT).ToReactiveCollection();
+		ReactiveCollection<ITooltipBrick> buffs2 = source.Where((ITooltipBrick b) => ((TooltipBrickBuff)b).Group == BuffUIGroup.Ally).ToReactiveCollection();
+		ReactiveCollection<ITooltipBrick> buffs3 = source.Where((ITooltipBrick b) => ((TooltipBrickBuff)b).Group == BuffUIGroup.Enemy).ToReactiveCollection();
+		AddBuffsAndStatusEffectsGroup(bricks, UIStrings.Instance.Inspect.EffectsDOT.Text, buffs);
+		UpdateUnitWrapper();
+		if (m_UnitUIWrapper.IsPlayerFaction)
 		{
-			ReactiveCollection<ITooltipBrick> tooltipBrickBuffs = m_InspectReactiveData.TooltipBrickBuffs;
-			bricks.Add(new TooltipBrickWidget(tooltipBrickBuffs, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
+			AddBuffsAndStatusEffectsGroup(bricks, UIStrings.Instance.Inspect.EffectsEnemy.Text, buffs3);
+			AddBuffsAndStatusEffectsGroup(bricks, UIStrings.Instance.Inspect.EffectsAlly.Text, buffs2);
 		}
 		else
 		{
-			ReactiveCollection<ITooltipBrick> buffsTooltipBricks = InspectExtensions.GetBuffsTooltipBricks(m_Unit);
-			bricks.Add(new TooltipBrickWidget(buffsTooltipBricks, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
+			AddBuffsAndStatusEffectsGroup(bricks, UIStrings.Instance.Inspect.EffectsAlly.Text, buffs2);
+			AddBuffsAndStatusEffectsGroup(bricks, UIStrings.Instance.Inspect.EffectsEnemy.Text, buffs3);
 		}
+	}
+
+	private void AddBuffsAndStatusEffectsGroup(List<ITooltipBrick> bricks, string title, ReactiveCollection<ITooltipBrick> buffs)
+	{
+		bricks.Add(new TooltipBrickTitle(title, TooltipTitleType.H2));
+		bricks.Add(new TooltipBrickWidget(buffs, new TooltipBrickText(UIStrings.Instance.Inspect.NoStatusEffects.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16)));
 	}
 
 	protected void AddWeapon(List<ITooltipBrick> bricks)
 	{
 		IList<HandsEquipmentSet> handsEquipmentSets = m_Unit.Body.HandsEquipmentSets;
-		if (handsEquipmentSets.Empty())
-		{
-			return;
-		}
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
-		foreach (HandsEquipmentSet item in handsEquipmentSets)
+		if (!handsEquipmentSets.Empty())
 		{
-			HandSlot primaryHand = item.PrimaryHand;
-			if (primaryHand != null && primaryHand.HasWeapon)
+			foreach (HandsEquipmentSet item in handsEquipmentSets)
 			{
-				list.Add(new TooltipBrickWeaponSet(item.PrimaryHand, isPrimary: true));
-			}
-			primaryHand = item.SecondaryHand;
-			if (primaryHand != null && primaryHand.HasWeapon)
-			{
-				if (list.Count > 0)
+				HandSlot primaryHand = item.PrimaryHand;
+				if (primaryHand != null && primaryHand.HasWeapon)
 				{
-					list.Add(new TooltipBrickSpace(2f));
+					list.Add(new TooltipBrickWeaponSet(item.PrimaryHand, isPrimary: true));
 				}
-				list.Add(new TooltipBrickWeaponSet(item.SecondaryHand, isPrimary: false));
+				primaryHand = item.SecondaryHand;
+				if (primaryHand != null && primaryHand.HasWeapon)
+				{
+					if (list.Count > 0)
+					{
+						list.Add(new TooltipBrickSpace(2f));
+					}
+					list.Add(new TooltipBrickWeaponSet(item.SecondaryHand, isPrimary: false));
+				}
+			}
+		}
+		List<WeaponSlot> additionalLimbs = m_Unit.Body.AdditionalLimbs;
+		if (additionalLimbs != null)
+		{
+			foreach (WeaponSlot item2 in additionalLimbs)
+			{
+				if (item2 != null && item2.HasWeapon)
+				{
+					if (list.Count > 0)
+					{
+						list.Add(new TooltipBrickSpace(2f));
+					}
+					list.Add(new TooltipBrickWeaponSet(item2));
+				}
 			}
 		}
 		if (list.Count > 0)
@@ -335,10 +362,8 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			BlueprintAbility[] array = abilities;
 			foreach (BlueprintAbility blueprintAbility in array)
 			{
-				if (blueprintAbility.CultAmbushVisibility(m_Unit) != 0)
-				{
-					bricks.Add(new TooltipBrickFeature(blueprintAbility, isHeader: false, m_Unit));
-				}
+				bool isHidden = blueprintAbility.CultAmbushVisibility(m_Unit) == UnitPartCultAmbush.VisibilityStatuses.NotVisible;
+				bricks.Add(new TooltipBrickFeature(blueprintAbility, isHeader: false, m_Unit, isHidden));
 			}
 			break;
 		}
@@ -383,9 +408,10 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			for (int i = 0; i < array.Length; i++)
 			{
 				BlueprintFeature feature = array[i].Feature;
-				if (!string.IsNullOrEmpty(feature.Name) && !feature.HideInUI && feature.CultAmbushVisibility(m_Unit) != 0)
+				if (!string.IsNullOrEmpty(feature.Name) && !feature.HideInUI)
 				{
-					bricks.Add(new TooltipBrickFeature(feature, isHeader: false, available: true, showIcon: true, m_Unit));
+					bool isHidden = feature.CultAmbushVisibility(m_Unit) == UnitPartCultAmbush.VisibilityStatuses.NotVisible;
+					bricks.Add(new TooltipBrickFeature(feature, isHeader: false, available: true, showIcon: true, m_Unit, forceSetName: false, isHidden));
 				}
 			}
 			break;

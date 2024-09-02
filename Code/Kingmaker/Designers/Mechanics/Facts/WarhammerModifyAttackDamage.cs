@@ -27,7 +27,7 @@ public class WarhammerModifyAttackDamage : MechanicEntityFactComponentDelegate, 
 
 	public void OnEventAboutToTrigger(RuleCalculateDamage evt)
 	{
-		if (evt.Ability.Blueprint == base.OwnerBlueprint)
+		if (evt.Ability?.Blueprint == base.OwnerBlueprint)
 		{
 			Buff buff = evt.MaybeTarget?.Buffs.GetBuff(CheckedBuff);
 			if (buff != null)

@@ -34,20 +34,20 @@ public static class NodeTraverseCostHelper
 			}
 			foreach (CustomGridNodeBase node in overrideCost.Nodes)
 			{
-				dictionary[node] = overrideCost.OverrideCost;
+				dictionary[node] = (float)overrideCost.OverridePercentCost / 100f;
 			}
 		}
 		return dictionary;
 	}
 
-	public static void AddOverrideCost(EntityFactSource source, int overrideCost, RestrictionsHolder.Reference restrictions)
+	public static void AddOverrideCost(EntityFactSource source, int overridePercentCost, RestrictionsHolder.Reference restrictions)
 	{
-		if (OverrideCosts.Any((OverrideCostData x) => x.Source == source))
+		if (OverrideCosts.Any((OverrideCostData x) => x.Source == source && x.OverridePercentCost == overridePercentCost))
 		{
 			Logger.Log($"Cost already overriden by {source}");
 			return;
 		}
-		OverrideCostData overrideCostData = new OverrideCostData(source, overrideCost, restrictions);
+		OverrideCostData overrideCostData = new OverrideCostData(source, overridePercentCost, restrictions);
 		OverrideCosts.Add(overrideCostData);
 		Logger.Log($"Add override cost {overrideCostData}");
 	}

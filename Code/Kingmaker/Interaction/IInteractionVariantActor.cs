@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 
 namespace Kingmaker.Interaction;
 

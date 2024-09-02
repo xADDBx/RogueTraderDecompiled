@@ -43,6 +43,9 @@ public class EtudePlayTrigger : EtudeBracketTrigger, IEtudesUpdateHandler, ISubs
 	[SerializeField]
 	private bool m_Once;
 
+	[SerializeField]
+	private bool m_IgnoreAlreadyProcessedActivation;
+
 	public ConditionsChecker Conditions = new ConditionsChecker();
 
 	public ActionList Actions;
@@ -55,7 +58,7 @@ public class EtudePlayTrigger : EtudeBracketTrigger, IEtudesUpdateHandler, ISubs
 	private void MaybeTrigger()
 	{
 		SavableData savableData = RequestSavableData<SavableData>();
-		if (!savableData.AlreadyProcessedActivation && !Game.Instance.Player.EtudesSystem.GetActiveAdditionalMechanics(Game.Instance.CurrentlyLoadedArea).Any((BlueprintAreaMechanics mechanics) => !mechanics.IsSceneLoadedNow()))
+		if ((m_IgnoreAlreadyProcessedActivation || !savableData.AlreadyProcessedActivation) && !Game.Instance.Player.EtudesSystem.GetActiveAdditionalMechanics(Game.Instance.CurrentlyLoadedArea).Any((BlueprintAreaMechanics mechanics) => !mechanics.IsSceneLoadedNow()))
 		{
 			savableData.AlreadyProcessedActivation = true;
 			if ((!m_Once || !savableData.AlreadyTriggered) && Conditions.Check())

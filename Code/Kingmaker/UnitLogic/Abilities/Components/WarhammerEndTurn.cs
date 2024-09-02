@@ -33,6 +33,10 @@ public class WarhammerEndTurn : BlueprintComponent, IAbilityOnCastLogic
 				return;
 			}
 		}
+		if (context.Ability.IsAttackOfOpportunity)
+		{
+			return;
+		}
 		context.Caster.Buffs.Add(BuffToCaster, context);
 		if (clearMPInsteadOfEndingTurn)
 		{

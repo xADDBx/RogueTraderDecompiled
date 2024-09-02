@@ -30,9 +30,9 @@ public class DamageData
 
 	public DamageType Type { get; }
 
-	public int MinValueBase { get; }
+	public int MinValueBase { get; set; }
 
-	public int MaxValueBase { get; }
+	public int MaxValueBase { get; set; }
 
 	public bool IsCalculated { get; private set; }
 

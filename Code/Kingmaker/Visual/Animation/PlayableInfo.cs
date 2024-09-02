@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Controllers;
 using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Events;
 using Owlcat.Runtime.Core.Utility;
@@ -46,6 +47,10 @@ public class PlayableInfo : AnimationBase
 
 	public bool IsStopped => m_IsStopped;
 
+	public int NextEventIndex => m_NextEventIndex;
+
+	public IReadOnlyList<AnimationClipEvent> Events => m_Events;
+
 	internal PlayableInfo(AnimationActionHandle handle, Playable playable, IEnumerable<AnimationClipEvent> events, MixerInfo mixer, int inputIndex)
 		: base(handle)
 	{
@@ -57,6 +62,7 @@ public class PlayableInfo : AnimationBase
 		{
 			m_Clip = ((AnimationClipPlayable)Playable).GetAnimationClip();
 		}
+		m_LastSetSpeed = (float)playable.GetSpeed();
 		Reset(handle);
 	}
 
@@ -67,6 +73,7 @@ public class PlayableInfo : AnimationBase
 		base.CreationTime = ((handle.Manager.PlayableGraph.GetTimeUpdateMode() == DirectorUpdateMode.UnscaledGameTime) ? Game.Instance.TimeController.RealTime : Game.Instance.TimeController.GameTime);
 		Playable.SetTime(0.0);
 		Playable.SetDone(value: false);
+		Playable.Play();
 		base.State = AnimationState.TransitioningIn;
 		m_NextEventIndex = 0;
 		m_LastTime = 0f;
@@ -77,6 +84,26 @@ public class PlayableInfo : AnimationBase
 		m_IsFirstUpdate = true;
 		m_IsSuspended = false;
 		m_IsStopped = false;
+	}
+
+	public bool CanBeUsedFromCache(AnimationClip clip, IReadOnlyList<AnimationClipEvent> eventsSorted)
+	{
+		if (GetPlayableClip() != clip)
+		{
+			return false;
+		}
+		if (m_Events.Length != eventsSorted.Count)
+		{
+			return false;
+		}
+		for (int i = 0; i < m_Events.Length; i++)
+		{
+			if (m_Events[i] != eventsSorted[i])
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public override void StopEvents(IEnumerable<AnimationClipEvent> events)
@@ -191,7 +218,7 @@ public class PlayableInfo : AnimationBase
 		AnimationClip playableClip = GetPlayableClip();
 		if (playableClip == null)
 		{
-			PFLog.Default.Warning("PlayableInfo has no AnimatorController and no playable clip.");
+			PFLog.Animations.Warning("PlayableInfo has no AnimatorController and no playable clip.");
 			return;
 		}
 		float num = base.Time;
@@ -231,26 +258,25 @@ public class PlayableInfo : AnimationBase
 		{
 			return;
 		}
-		if (GetAdjustedWeight() < 0.01f)
+		if (GetAdjustedWeight() < 0.01f && !m_IsFirstUpdate)
 		{
-			if (!m_IsFirstUpdate)
+			AnimationClip playableClip = GetPlayableClip();
+			if (playableClip == null || playableClip.isLooping)
 			{
-				AnimationClip playableClip = GetPlayableClip();
-				if (playableClip == null || playableClip.isLooping)
-				{
-					SkipEvents(time);
-				}
-				SuspendEvents();
-				return;
+				SkipEvents(time);
 			}
-			m_IsFirstUpdate = false;
+			SuspendEvents();
+			return;
 		}
 		float num = 0.5f;
 		if (Mathf.Approximately(time, m_LastTime))
 		{
-			return;
+			if (!m_IsFirstUpdate)
+			{
+				return;
+			}
 		}
-		if (time > m_LastTime)
+		else if (time > m_LastTime)
 		{
 			if (time - m_LastTime > num)
 			{
@@ -275,14 +301,14 @@ public class PlayableInfo : AnimationBase
 				}
 				catch (Exception ex)
 				{
-					PFLog.Default.Exception(ex);
+					PFLog.Animations.Exception(ex);
 				}
 			}
 			m_NextEventIndex = 0;
 			m_LastTime = 0f;
 			m_LoopCount++;
 		}
-		float num2 = time - m_LastTime;
+		float num2 = (m_IsFirstUpdate ? (RealTimeController.SystemStepDurationSeconds * GetSpeed()) : (time - m_LastTime));
 		float num3 = time + num2 / 2f;
 		m_LastTime = time;
 		while (m_NextEventIndex < m_Events.Length && m_Events[m_NextEventIndex].Time < num3)
@@ -293,9 +319,10 @@ public class PlayableInfo : AnimationBase
 			}
 			catch (Exception ex2)
 			{
-				PFLog.Default.Exception(ex2);
+				PFLog.Animations.Exception(ex2);
 			}
 		}
+		m_IsFirstUpdate = false;
 	}
 
 	private void StartEvent(AnimationClipEvent @event)
@@ -369,6 +396,11 @@ public class PlayableInfo : AnimationBase
 		SetWeight(weight2);
 	}
 
+	public override float GetWeightMultiplier()
+	{
+		return m_WeightMultiplier;
+	}
+
 	public override float GetWeight()
 	{
 		return m_Weight;
@@ -419,6 +451,10 @@ public class PlayableInfo : AnimationBase
 	public override void RemoveFromManager()
 	{
 		MixerInfo.RemovePlayable(this);
+		if (Playable.IsValid())
+		{
+			Playable.Pause();
+		}
 	}
 
 	public override AnimationBase Find(AvatarMask mask, bool isAdditive)

@@ -12,35 +12,29 @@ public static class PlatformServices
 
 	public static Platform CreatePlatform(StoreType store, bool primaryPlatform)
 	{
-		return store switch
+		if (store == StoreType.Steam)
 		{
-			StoreType.Steam => new SteamPlatform(), 
-			StoreType.EpicGames => new EpicGamesPlatform(primaryPlatform), 
-			StoreType.GoG => new GoGPlatform(), 
-			_ => new DummyPlatform(), 
-		};
+			return new SteamPlatform();
+		}
+		return new DummyPlatform();
 	}
 
 	public static IAuthenticationService CreateAuthService(StoreType store)
 	{
-		return store switch
+		if (store == StoreType.Steam)
 		{
-			StoreType.Steam => new SteamAuthenticationService(), 
-			StoreType.EpicGames => new EpicStoreAuthenticationService(), 
-			StoreType.GoG => new GogAuthenticationService(), 
-			_ => new NotImplementedAuthenticationService(store), 
-		};
+			return new SteamAuthenticationService();
+		}
+		return new NotImplementedAuthenticationService(store);
 	}
 
 	public static IPlatformUser CreatePlatformUser(StoreType store)
 	{
-		return store switch
+		if (store == StoreType.Steam)
 		{
-			StoreType.Steam => new SteamPlatformUser(), 
-			StoreType.EpicGames => new EpicGamesPlatformUser(), 
-			StoreType.GoG => new GoGPlatformUser(), 
-			_ => new DummyPlatformUser(), 
-		};
+			return new SteamPlatformUser();
+		}
+		return new DummyPlatformUser();
 	}
 
 	public static IPlatformSession CreatePlatformSession(StoreType store)

@@ -1,8 +1,10 @@
 using System;
-using System.Linq;
-using System.Text;
+using Core.Async;
 using Core.Cheats;
-using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CommandLineArgs;
 using Kingmaker.Utility.DotNetExtensions;
@@ -13,11 +15,29 @@ namespace Kingmaker.QA;
 
 public static class StackTraceSpamDetector
 {
-	private class StackTraceSpamDetectorDisposableLogSink : IDisposableLogSink, ILogSink, IDisposable
+	private class StackTraceSpamDetectorDisposableLogSink : IDisposableLogSink, ILogSink, IDisposable, IOpenLoadingScreenHandler, ISubscriber, ICloseLoadingScreenHandler, IGameModeHandler
 	{
+		private bool m_IsLoadingWindowOpened;
+
+		private GameModeType m_GameMode = GameModeType.None;
+
+		public StackTraceSpamDetectorDisposableLogSink()
+		{
+			EventBus.Subscribe(this);
+		}
+
 		public void Log(LogInfo logInfo)
 		{
-			LogCallback(logInfo);
+			try
+			{
+				if (!m_IsLoadingWindowOpened && !(m_GameMode == GameModeType.None))
+				{
+					LogCallback(logInfo);
+				}
+			}
+			catch (Exception)
+			{
+			}
 		}
 
 		public void Destroy()
@@ -26,26 +46,54 @@ public static class StackTraceSpamDetector
 
 		public void Dispose()
 		{
+			EventBus.Unsubscribe(this);
+		}
+
+		public void HandleCloseLoadingScreen()
+		{
+			m_IsLoadingWindowOpened = false;
+			DateTime dateTime = DateTime.Now + TimeSpan.FromSeconds(5.0);
+			s_CooldownTimer = ((dateTime > s_CooldownTimer) ? dateTime : s_CooldownTimer);
+		}
+
+		public void HandleOpenLoadingScreen()
+		{
+			m_IsLoadingWindowOpened = true;
+		}
+
+		public void OnGameModeStart(GameModeType gameMode)
+		{
+			m_GameMode = gameMode;
+		}
+
+		public void OnGameModeStop(GameModeType gameMode)
+		{
 		}
 	}
-
-	private const string ReportMessagePrompt = "Put a bug on this, because there will be lags on consolas!";
-
-	private static TimeSpan s_FrameSize = TimeSpan.FromSeconds(1.0);
-
-	private static int s_MaxAllowedExceptionsPerFrame = 5;
-
-	private static DateTime[] s_Buffer = new DateTime[s_MaxAllowedExceptionsPerFrame];
-
-	private static string[] s_Messages = new string[s_MaxAllowedExceptionsPerFrame];
-
-	private static int s_BufferPointer = 0;
 
 	private static TimeSpan s_CooldownTime = TimeSpan.FromSeconds(30.0);
 
 	private static DateTime s_CooldownTimer = DateTime.MinValue;
 
 	private static bool s_SuppressStackTraceDetection;
+
+	private static RegistrationService<LogItem> s_RegistrerService = new RegistrationService<LogItem>(300);
+
+	private static readonly CountInTimeDetectionStrategy ExtremelyFastSpam = new CountInTimeDetectionStrategy("Extremely fast spam!", "critical", "current", 10, TimeSpan.FromMilliseconds(100.0));
+
+	private static readonly LongTermSpamDetectionStrategy LongTermFastSpam = new LongTermSpamDetectionStrategy("Fast long term spam!", "critical", "current", 40, TimeSpan.FromSeconds(1.0), 2);
+
+	private static readonly LongTermSpamDetectionStrategy LongTermNormalSpam = new LongTermSpamDetectionStrategy("Long term spam! Put a bug on this, because there will be lags on consolas!", "normal", "current", 10, TimeSpan.FromSeconds(1.0), 3);
+
+	private static readonly ShiftedCountInTimeDetectionStrategy NormalSpam = new ShiftedCountInTimeDetectionStrategy("Put a bug on this, because there will be lags on consolas!", "normal", "afterrelease", 10, TimeSpan.FromSeconds(1.0), 1, TimeSpan.FromSeconds(1.0));
+
+	private static Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[] s_DetectionStrategies = new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[4]
+	{
+		new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>(ExtremelyFastSpam, MaybeShowError),
+		new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>(LongTermFastSpam, MaybeShowError),
+		new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>(LongTermNormalSpam, MaybeShowError),
+		new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>(NormalSpam, MaybeShowError)
+	};
 
 	public static IDisposableLogSink LogSink { get; } = new StackTraceSpamDetectorDisposableLogSink();
 
@@ -54,9 +102,9 @@ public static class StackTraceSpamDetector
 	{
 		get
 		{
-			if ((!Application.isEditor || BuildModeUtility.ForceSpamDetectionInEditor) && Application.isPlaying && !BuildModeUtility.StackTraceSpamDetectionDisabled && BuildModeUtility.IsDevelopment)
+			if (!s_SuppressStackTraceDetection && UnitySyncContextHolder.IsInUnity && (!Application.isEditor || BuildModeUtility.ForceSpamDetectionInEditor) && Application.isPlaying && !BuildModeUtility.StackTraceSpamDetectionDisabled)
 			{
-				return s_FrameSize > TimeSpan.Zero;
+				return BuildModeUtility.IsDevelopment;
 			}
 			return false;
 		}
@@ -83,10 +131,6 @@ public static class StackTraceSpamDetector
 		{
 			throw new ArgumentOutOfRangeException("cooldown", "Should be greater than 0");
 		}
-		s_FrameSize = TimeSpan.FromMilliseconds(frameSize);
-		s_MaxAllowedExceptionsPerFrame = count;
-		s_Buffer = new DateTime[s_MaxAllowedExceptionsPerFrame];
-		s_Messages = new string[s_MaxAllowedExceptionsPerFrame];
 		if (s_CooldownTimer > DateTime.MinValue)
 		{
 			s_CooldownTimer = s_CooldownTimer - s_CooldownTime + TimeSpan.FromMilliseconds(cooldown);
@@ -94,52 +138,122 @@ public static class StackTraceSpamDetector
 		s_CooldownTime = TimeSpan.FromMilliseconds(cooldown);
 	}
 
+	[Cheat(Name = "debug_spam_cooldown")]
+	public static void StackTraceSpamDetectionEnable(int cooldownMs = 30000)
+	{
+		if (cooldownMs <= 0)
+		{
+			s_CooldownTimer = DateTime.MaxValue;
+			return;
+		}
+		s_CooldownTime = TimeSpan.FromMilliseconds(cooldownMs);
+		s_CooldownTimer = s_CooldownTimer - s_CooldownTime + TimeSpan.FromMilliseconds(cooldownMs);
+	}
+
+	[Cheat(Name = "debug_spam_detection_fast")]
+	public static void SpamDetectionConfigFast(int count, int intervalMs)
+	{
+		if (count <= 0)
+		{
+			throw new ArgumentOutOfRangeException("count", "Should be greater than 0");
+		}
+		if (intervalMs <= 0)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		ExtremelyFastSpam.Set(count, intervalMs);
+	}
+
+	[Cheat(Name = "debug_spam_detection_longterm_fast")]
+	public static void SpamDetectionConfigLongTermFast(int count, int intervalMs, int times)
+	{
+		if (count <= 0)
+		{
+			throw new ArgumentOutOfRangeException("count", "Should be greater than 0");
+		}
+		if (intervalMs <= 0)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		if (times < 1)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		LongTermFastSpam.Set(count, intervalMs, times);
+	}
+
+	[Cheat(Name = "debug_spam_detection_longterm_normal")]
+	public static void SpamDetectionConfigLongTermNormal(int count, int intervalMs, int times)
+	{
+		if (count <= 0)
+		{
+			throw new ArgumentOutOfRangeException("count", "Should be greater than 0");
+		}
+		if (intervalMs <= 0)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		if (times < 1)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		LongTermNormalSpam.Set(count, intervalMs, times);
+	}
+
+	[Cheat(Name = "debug_spam_detection_normal")]
+	public static void SpamDetectionConfigLongTermNormal(int count, int intervalMs)
+	{
+		if (count <= 0)
+		{
+			throw new ArgumentOutOfRangeException("count", "Should be greater than 0");
+		}
+		if (intervalMs <= 0)
+		{
+			throw new ArgumentOutOfRangeException("intervalMs", "Should be greater than 0");
+		}
+		NormalSpam.Set(count, intervalMs);
+	}
+
 	private static void LogCallback(LogInfo logInfo)
 	{
 		LogSeverity severity = logInfo.Severity;
-		if ((severity != LogSeverity.Error && severity != LogSeverity.Warning) || !IsDetectionAllowed() || logInfo.Callstack == null || logInfo.Callstack.Empty())
+		if ((severity != LogSeverity.Error && severity != LogSeverity.Warning) || !IsDetectionEnabled || logInfo.Callstack == null || logInfo.Callstack.Empty())
 		{
 			return;
 		}
 		DateTime now = DateTime.Now;
-		int num = s_BufferPointer++;
-		if (s_BufferPointer >= s_MaxAllowedExceptionsPerFrame)
-		{
-			s_BufferPointer = 0;
-		}
-		DateTime dateTime = s_Buffer[num];
-		s_Messages[num] = $"[{logInfo.GetTimeStampAsString()} - {logInfo.Channel?.Name}][{logInfo.Severity:G}]: {logInfo.Message}";
-		s_Buffer[num] = now;
-		if (now - dateTime > s_FrameSize || !(now > s_CooldownTimer))
+		if (now < s_CooldownTimer)
 		{
 			return;
 		}
-		StringBuilder stringBuilder = new StringBuilder("Logging calls that triggered a Spam exception\n");
-		foreach (int item in Enumerable.Range(s_BufferPointer, s_MaxAllowedExceptionsPerFrame - s_BufferPointer).Concat(Enumerable.Range(0, s_BufferPointer)))
+		LogItem logItem = new LogItem();
+		logItem.Callstack = logInfo.Callstack[0].GetFormattedMethodName();
+		logItem.Message = $"[{logInfo.GetTimeStampAsString()} - {logInfo.Channel?.Name}][{logInfo.Severity:G}]: {logInfo.Message}";
+		logItem.Time = logInfo.TimeStamp;
+		LogItem item = logItem;
+		s_RegistrerService.Register(item);
+		Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[] array = s_DetectionStrategies;
+		for (int i = 0; i < array.Length; i++)
 		{
-			stringBuilder.AppendLine(s_Messages[item]);
-		}
-		QAModeExceptionEvents.Instance.MaybeShowError(string.Format("{0}\nGameModeType:{1}", "Put a bug on this, because there will be lags on consolas!", Game.Instance.CurrentMode), new SpamDetectingException(stringBuilder.ToString(), Game.Instance.CurrentMode));
-		s_CooldownTimer = now + s_CooldownTime;
-	}
-
-	private static bool IsDetectionAllowed()
-	{
-		if (!IsDetectionEnabled)
-		{
-			return false;
-		}
-		try
-		{
-			if (LoadingProcess.Instance.IsLoadingInProcess)
+			var (spamDetectionStrategy2, action2) = array[i];
+			var (flag, spamDetectionResult) = spamDetectionStrategy2.Check(s_RegistrerService);
+			if (spamDetectionResult != null)
 			{
-				return false;
+				action2(spamDetectionResult);
+				s_RegistrerService.Clear();
+				s_CooldownTimer = now + s_CooldownTime;
+				break;
+			}
+			if (flag)
+			{
+				break;
 			}
 		}
-		catch (Exception)
-		{
-			return false;
-		}
-		return true;
+	}
+
+	private static void MaybeShowError(SpamDetectionResult result)
+	{
+		string message = result.Message;
+		QAModeExceptionEvents.Instance.MaybeShowError($"{message}\nGameModeType:{Game.Instance.CurrentMode}\non [{DateTime.Now}]", new SpamDetectionException(Game.Instance.CurrentMode, result.Items));
 	}
 }

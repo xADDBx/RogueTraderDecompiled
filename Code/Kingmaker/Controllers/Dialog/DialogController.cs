@@ -17,7 +17,6 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
-using Kingmaker.Enums;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Localization;
@@ -95,8 +94,6 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 	[NotNull]
 	public readonly List<SoulMarkShift> SoulMarkShifts = new List<SoulMarkShift>();
 
-	private Alignment m_OldPlayerAlignment;
-
 	private float m_FirstSpeakerReturnOrientation;
 
 	private UnitAnimationActionHandle m_CurrentSpeakerAnimation;
@@ -126,7 +123,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 				{
 					TurnOffSpeakerHighlight();
 				}
-				if (m_CurrentCue.Speaker.MoveCamera && Game.Instance.CurrentlyLoadedArea.IsPartyArea)
+				if (m_CurrentCue.Speaker.MoveCamera && Game.Instance.CurrentlyLoadedArea.IsPartyArea && value != null && !TryMoveCameraToCurrentSpeaker())
 				{
 					CameraRig.ScrollTo(DialogPosition);
 				}
@@ -397,7 +394,6 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 				TurnUnit(FirstSpeaker, null);
 			}
 		}
-		m_OldPlayerAlignment = Game.Instance.Player.Alignment;
 		TryMoveCameraToDialogPosition();
 		if (Game.Instance.CurrentMode != GameModeType.Dialog)
 		{
@@ -412,14 +408,20 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		Game.Instance.Player.Dialog.ShownDialogs.Add(Dialog);
 	}
 
-	public void TryMoveCameraToCurrentSpeaker()
+	public bool TryMoveCameraToCurrentSpeaker()
 	{
-		if (!(CameraRig == null) && m_CurrentCue != null && m_CurrentCue?.Speaker != null && CurrentSpeaker != null && Game.Instance?.CurrentlyLoadedArea != null && (bool)CameraRig && m_CurrentCue != null && m_CurrentCue.Speaker.MoveCamera && CurrentSpeaker != null && Game.Instance.CurrentlyLoadedArea.IsPartyArea)
+		if (CameraRig == null || m_CurrentCue?.Speaker == null || CurrentSpeaker == null || Game.Instance?.CurrentlyLoadedArea == null)
 		{
-			float valueOrDefault = (BlueprintRoot.Instance?.Dialog?.GetCameraOffsetBySize(CurrentSpeaker.Size)).GetValueOrDefault();
-			Vector3 position = CurrentSpeaker.Position + Vector3.up * valueOrDefault;
-			CameraRig.ScrollTo(position);
+			return false;
 		}
+		if (!CameraRig || m_CurrentCue == null || !m_CurrentCue.Speaker.MoveCamera || CurrentSpeaker == null || !Game.Instance.CurrentlyLoadedArea.IsPartyArea)
+		{
+			return false;
+		}
+		float valueOrDefault = (BlueprintRoot.Instance?.Dialog?.GetCameraOffsetBySize(CurrentSpeaker.Size)).GetValueOrDefault();
+		Vector3 position = CurrentSpeaker.Position + Vector3.up * valueOrDefault;
+		CameraRig.ScrollTo(position);
+		return true;
 	}
 
 	private void TryMoveCameraToDialogPosition()
@@ -536,6 +538,11 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		if (instance != null)
 		{
 			instance.SetViewportOffset(Vector2.zero);
+			IAbstractUnitEntity entity = Game.Instance.Player.MainCharacter.Entity;
+			if (entity.IsInGame)
+			{
+				instance.ScrollTo(entity.Position);
+			}
 		}
 		if (!Game.Instance.GameCommandQueue.ContainsCommand((StartScheduledDialogCommand _) => true))
 		{
@@ -814,12 +821,6 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		cue.ApplyShiftDialog();
 		BlueprintCueBase blueprintCueBase = cue.Continue.Select();
 		CueShowData cueShowData = new CueShowData(cue, m_SkillChecks, SoulMarkShifts);
-		Alignment alignment = Game.Instance.Player.Alignment;
-		if (m_OldPlayerAlignment != alignment)
-		{
-			cueShowData.NewAlignment = alignment;
-			m_OldPlayerAlignment = alignment;
-		}
 		m_SkillChecks.Clear();
 		SoulMarkShifts.Clear();
 		SoundState.Instance.StartDialog();

@@ -6,7 +6,6 @@ public enum StackingType
 	Prolong,
 	Ignore,
 	Stack,
-	Poison,
 	Summ,
 	Rank,
 	HighestByProperty

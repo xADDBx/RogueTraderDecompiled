@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.DlcManager.Dlcs;
 using Kingmaker.UI.Common;
-using Kingmaker.Utility;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -19,7 +18,7 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 {
 	[Header("Texts")]
 	[SerializeField]
-	private TextMeshProUGUI m_DlcDescription;
+	protected TextMeshProUGUI m_DlcDescription;
 
 	[SerializeField]
 	private List<Image> m_DlcDescriptionBackgroundGradients;
@@ -30,9 +29,6 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 	[Header("Art")]
 	[SerializeField]
 	private Image m_DlcArt;
-
-	[SerializeField]
-	private VideoPlayerHelper m_DlcVideo;
 
 	[Header("Bottom Block")]
 	[SerializeField]
@@ -50,19 +46,26 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 	[SerializeField]
 	private TextMeshProUGUI m_ComingSoonLabel;
 
+	[SerializeField]
+	private TextMeshProUGUI m_DownloadingInProgressText;
+
+	[SerializeField]
+	protected OwlcatButton m_InstallButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_InstallButtonLabel;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DlcIsBoughtAndNotInstalledText;
+
 	[Header("Dlcs Block")]
 	[SerializeField]
 	private ScrollRectExtended m_ScrollRectDlcs;
 
-	private bool m_IsInit;
+	protected bool IsInit;
 
 	public virtual void Initialize()
 	{
-		if (!m_IsInit)
-		{
-			m_DlcVideo.Initialize();
-			m_IsInit = true;
-		}
 	}
 
 	protected override void BindViewImplementation()
@@ -71,6 +74,7 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 		AddDisposable(base.ViewModel.IsEnabled.Subscribe(delegate(bool value)
 		{
 			base.gameObject.SetActive(value);
+			base.ViewModel.ResetVideo();
 			if (value)
 			{
 				ScrollToTop();
@@ -79,18 +83,15 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 		}));
 		AddDisposable(base.ViewModel.ChangeStory.Subscribe(delegate
 		{
-			VideoClip videoClip = base.ViewModel.Video?.Value;
-			m_DlcArt.gameObject.SetActive(base.ViewModel.Art.Value != null);
-			m_DlcVideo.gameObject.SetActive(videoClip != null);
+			bool active = base.ViewModel.Art.Value != null && base.ViewModel.Video?.Value == null;
+			m_DlcArt.gameObject.SetActive(active);
 			if (base.ViewModel.Art.Value != null)
 			{
 				m_DlcArt.sprite = base.ViewModel.Art.Value;
 			}
-			if (m_DlcVideo.VideoClip != videoClip)
-			{
-				m_DlcVideo.Stop();
-				m_DlcVideo.SetClip(videoClip);
-			}
+			VideoClip videoClip = base.ViewModel.Video?.Value;
+			ShowHideVideo(videoClip != null);
+			base.ViewModel.CustomUIVideoPlayerVM.SetVideo(videoClip, base.ViewModel.Art.Value, base.ViewModel.SoundStart.Value, base.ViewModel.SoundStop.Value);
 			m_DlcDescription.text = base.ViewModel.Description.Value;
 			m_ScrollRect.Or(null)?.ScrollToTop();
 			CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
@@ -105,14 +106,33 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 				dlcDescriptionBackgroundGradient.color = color;
 			}
 		}));
-		m_YouDontHaveThisDlc.text = UIStrings.Instance.ProfitFactorTexts.AvailableToUseValue;
+		AddDisposable(base.ViewModel.DownloadingInProgress.CombineLatest(base.ViewModel.DlcIsBoughtAndNotInstalled, (bool downloadInProgress, bool boughtAndNotInstalled) => new { downloadInProgress, boughtAndNotInstalled }).Subscribe(value =>
+		{
+			CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
+			CheckInstallState(value.downloadInProgress, value.boughtAndNotInstalled);
+		}));
+		CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
+		CheckInstallState(base.ViewModel.DownloadingInProgress.Value, base.ViewModel.DlcIsBoughtAndNotInstalled.Value);
+		m_YouDontHaveThisDlc.text = UIStrings.Instance.DlcManager.AvailableForPurchase;
 		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.Purchase;
 		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.Purchased;
 		m_ComingSoonLabel.text = UIStrings.Instance.DlcManager.ComingSoon;
-		CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
+		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
+		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;
+		m_InstallButtonLabel.text = UIStrings.Instance.DlcManager.Install;
+		SetTextFontSize(base.ViewModel.FontMultiplier);
 	}
 
 	protected override void DestroyViewImplementation()
+	{
+	}
+
+	private void ShowHideVideo(bool state)
+	{
+		ShowHideVideoImpl(state);
+	}
+
+	protected virtual void ShowHideVideoImpl(bool state)
 	{
 	}
 
@@ -127,15 +147,32 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 
 	private void CheckAvailableState(bool canPurchase, bool available)
 	{
-		m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive(!available && canPurchase);
-		m_PurchaseButton.gameObject.SetActive(!available && canPurchase);
-		m_PurchasedLabel.transform.parent.gameObject.SetActive(available && canPurchase);
-		m_ComingSoonLabel.transform.parent.gameObject.SetActive(!available && !canPurchase);
-		CheckAvailableStateImpl(canPurchase, available);
+		if (base.ViewModel.DownloadingInProgress.Value || base.ViewModel.DlcIsBoughtAndNotInstalled.Value)
+		{
+			m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive(value: false);
+			m_PurchaseButton.gameObject.SetActive(value: false);
+			m_PurchasedLabel.transform.parent.gameObject.SetActive(value: false);
+			m_ComingSoonLabel.transform.parent.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive(!available && canPurchase);
+			m_PurchaseButton.gameObject.SetActive(!available && canPurchase);
+			m_PurchasedLabel.transform.parent.gameObject.SetActive(available && canPurchase);
+			m_ComingSoonLabel.transform.parent.gameObject.SetActive(!available && !canPurchase);
+			CheckAvailableStateImpl(canPurchase, available);
+		}
 	}
 
 	protected virtual void CheckAvailableStateImpl(bool canPurchase, bool available)
 	{
+	}
+
+	private void CheckInstallState(bool downloadingInProgress, bool boughtAndNotInstalled)
+	{
+		m_DownloadingInProgressText.transform.parent.gameObject.SetActive(downloadingInProgress && !boughtAndNotInstalled);
+		m_DlcIsBoughtAndNotInstalledText.transform.parent.gameObject.SetActive(!downloadingInProgress && boughtAndNotInstalled);
+		m_InstallButton.gameObject.SetActive(!downloadingInProgress && boughtAndNotInstalled);
 	}
 
 	public void ScrollToTop()
@@ -150,5 +187,9 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 		{
 			m_ScrollRectDlcs.Or(null)?.EnsureVisibleVertical(monoBehaviour.transform as RectTransform, 50f, smoothly: false, needPinch: false);
 		}
+	}
+
+	protected virtual void SetTextFontSize(float multiplier)
+	{
 	}
 }

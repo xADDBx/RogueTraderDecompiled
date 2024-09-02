@@ -70,9 +70,9 @@ public class OvertipUnitHealthBlockView : ViewBase<OvertipHealthBlockVM>
 
 	private Tweener m_SizeAnimator;
 
-	private StringReactiveProperty m_HPLeftHint = new StringReactiveProperty();
+	private readonly StringReactiveProperty m_HPLeftHint = new StringReactiveProperty();
 
-	private StringReactiveProperty m_HPMaxHint = new StringReactiveProperty();
+	private readonly StringReactiveProperty m_HPMaxHint = new StringReactiveProperty();
 
 	private bool m_IsBinding;
 
@@ -149,7 +149,7 @@ public class OvertipUnitHealthBlockView : ViewBase<OvertipHealthBlockVM>
 		}));
 		AddDisposable(base.ViewModel.HitPointTotalLeft.Subscribe(delegate(int value)
 		{
-			m_HealthLabel.text = value.ToString();
+			m_HealthLabel.text = (base.ViewModel.HideRealHealthInUI ? "???" : value.ToString());
 		}));
 		AddDisposable(base.ViewModel.CanDie.Subscribe(delegate(bool value)
 		{
@@ -169,6 +169,14 @@ public class OvertipUnitHealthBlockView : ViewBase<OvertipHealthBlockVM>
 		AddDisposable(m_HPMaxSlider.SetHint(m_HPMaxHint, null, m_HealthLabelCanvasRenderer.GetColor()));
 		AddDisposable(m_DeathMark.GetComponent<Image>().SetHint(UIStrings.Instance.Tooltips.PossibleToKill.Text));
 		m_IsBinding = false;
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_FadeAnimator?.Kill();
+		m_SizeAnimator?.Kill();
+		m_CanvasGroup.blocksRaycasts = false;
+		m_CanvasGroup.alpha = 0f;
 	}
 
 	private void DoVisibility()
@@ -192,6 +200,10 @@ public class OvertipUnitHealthBlockView : ViewBase<OvertipHealthBlockVM>
 
 	private string GetHPLeftHint()
 	{
+		if (base.ViewModel.HideRealHealthInUI)
+		{
+			return "???";
+		}
 		if (base.ViewModel.HitPointTemporary.Value == 0)
 		{
 			return $"{base.ViewModel.HitPointTotalLeft.Value} {UIStrings.Instance.Tooltips.HPLeft.Text}";
@@ -201,18 +213,14 @@ public class OvertipUnitHealthBlockView : ViewBase<OvertipHealthBlockVM>
 
 	private string GetHPMaxHint()
 	{
+		if (base.ViewModel.HideRealHealthInUI)
+		{
+			return "???";
+		}
 		if (base.ViewModel.HitPointTemporary.Value == 0)
 		{
 			return $"{base.ViewModel.HitPointTotalMax.Value} {UIStrings.Instance.Tooltips.HPMax.Text}";
 		}
 		return $"{base.ViewModel.HitPointTotalLeft.Value} {UIStrings.Instance.Tooltips.HPTotalMax.Text}\r\n<separator>\r\n{base.ViewModel.HitPointLeft.Value} {UIStrings.Instance.Tooltips.HPMax.Text}\r\n{base.ViewModel.HitPointTemporary.Value} {UIStrings.Instance.Tooltips.HPTemporary.Text}";
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_FadeAnimator?.Kill();
-		m_SizeAnimator?.Kill();
-		m_CanvasGroup.blocksRaycasts = false;
-		m_CanvasGroup.alpha = 0f;
 	}
 }

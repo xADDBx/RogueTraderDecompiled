@@ -1,9 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.VM.CustomVideoPlayer;
+using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.DLC;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
+using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.SelectionGroup;
 using UniRx;
 using UnityEngine;
@@ -25,6 +29,12 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public readonly BoolReactiveProperty DlcIsAvailableToPurchase = new BoolReactiveProperty();
 
+	public readonly BoolReactiveProperty DownloadingInProgress = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty DlcIsBoughtAndNotInstalled = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty IsRealConsole = new BoolReactiveProperty();
+
 	public ReactiveProperty<Sprite> Art { get; } = new ReactiveProperty<Sprite>();
 
 
@@ -39,6 +49,8 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public ReactiveProperty<string> Description { get; } = new ReactiveProperty<string>();
 
+
+	public CustomUIVideoPlayerVM CustomUIVideoPlayerVM { get; }
 
 	public DlcManagerTabDlcsVM()
 	{
@@ -60,10 +72,24 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		SelectionGroup = new SelectionGroupRadioVM<DlcManagerDlcEntityVM>(list2, SelectedEntity);
 		AddDisposable(SelectionGroup);
 		SelectedEntity.Value = list2.FirstOrDefault();
+		AddDisposable(CustomUIVideoPlayerVM = new CustomUIVideoPlayerVM());
+		IsRealConsole.Value = false;
+		AddDisposable(EventBus.Subscribe(this));
+		StoreManager.OnRefreshDLC += HandleOnRefreshDLC;
 	}
 
 	protected override void DisposeImplementation()
 	{
+		StoreManager.OnRefreshDLC -= HandleOnRefreshDLC;
+	}
+
+	private void HandleOnRefreshDLC()
+	{
+		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(m_CurrentDlc);
+		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && IsRealConsole.Value;
+		DlcIsBought.Value = iDLCStatus.Purchased;
+		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && IsRealConsole.Value;
+		SetDlc(m_CurrentDlc);
 	}
 
 	private void SetDlc(BlueprintDlc blueprintDlc)
@@ -74,10 +100,12 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 			Video.Value = blueprintDlc.DefaultVideo;
 			SoundStart.Value = blueprintDlc.SoundStartEvent;
 			SoundStop.Value = blueprintDlc.SoundStopEvent;
-			Art.Value = ((Video.Value != null) ? null : ((blueprintDlc.DefaultKeyArt != null) ? blueprintDlc.DefaultKeyArt : UIConfig.Instance.KeyArt));
-			Description.Value = blueprintDlc.DlcDescription;
+			Art.Value = blueprintDlc.GetKeyArt();
+			Description.Value = blueprintDlc.GetDescription();
 			DlcIsBought.Value = blueprintDlc.IsPurchased;
 			DlcIsAvailableToPurchase.Value = blueprintDlc.GetPurchaseState() != BlueprintDlc.DlcPurchaseState.ComingSoon;
+			DownloadingInProgress.Value = blueprintDlc.GetDownloadState() == DownloadState.Loading && IsRealConsole.Value;
+			DlcIsBoughtAndNotInstalled.Value = blueprintDlc.IsPurchased && blueprintDlc.GetDownloadState() == DownloadState.NotLoaded && IsRealConsole.Value;
 			ChangeStory.Execute();
 		}
 	}
@@ -88,6 +116,47 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		{
 			PFLog.UI.Log($"Open {m_CurrentDlc} store");
 			StoreManager.OpenShopFor(m_CurrentDlc);
+			UIUtility.ShowMessageBox(UIStrings.Instance.DlcManager.NeedRestartAfterPurchase, DialogMessageBoxBase.BoxType.Message, null);
 		}
+	}
+
+	public void InstallDlc()
+	{
+		if (m_CurrentDlc != null)
+		{
+			DownloadingInProgress.Value = true;
+			DlcIsBoughtAndNotInstalled.Value = false;
+			if (SelectedEntity?.Value != null)
+			{
+				SelectedEntity.Value.DownloadingInProgress.Value = true;
+				SelectedEntity.Value.DlcIsBoughtAndNotInstalled.Value = false;
+			}
+			StoreManager.InstallDlc(m_CurrentDlc);
+		}
+	}
+
+	public void DeleteDlc()
+	{
+		if (m_CurrentDlc == null)
+		{
+			return;
+		}
+		UIUtility.ShowMessageBox(UIStrings.Instance.DlcManager.AreYouSureDeleteDlc, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton button)
+		{
+			if (button == DialogMessageBoxBase.BoxButton.Yes)
+			{
+				DownloadingInProgress.Value = true;
+				if (SelectedEntity?.Value != null)
+				{
+					SelectedEntity.Value.DownloadingInProgress.Value = true;
+				}
+				StoreManager.DeleteDlc(m_CurrentDlc);
+			}
+		});
+	}
+
+	public void ResetVideo()
+	{
+		CustomUIVideoPlayerVM.ResetVideo();
 	}
 }

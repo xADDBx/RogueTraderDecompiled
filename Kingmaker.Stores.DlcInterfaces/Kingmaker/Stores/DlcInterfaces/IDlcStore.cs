@@ -6,6 +6,10 @@ public interface IDlcStore
 
 	bool AllowsPurchase { get; }
 
+	bool AllowsInstalling { get; }
+
+	bool AllowsDeleting { get; }
+
 	bool ComingSoon { get; }
 
 	IDLCStatus GetStatus();
@@ -13,4 +17,8 @@ public interface IDlcStore
 	bool OpenShop();
 
 	bool Mount();
+
+	bool Install();
+
+	bool Delete();
 }

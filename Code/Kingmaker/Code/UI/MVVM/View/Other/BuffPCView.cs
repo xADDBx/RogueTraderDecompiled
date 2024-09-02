@@ -23,6 +23,9 @@ public class BuffPCView : ViewBase<BuffVM>, IPointerEnterHandler, IEventSystemHa
 	private TextMeshProUGUI m_Rank;
 
 	[SerializeField]
+	private TextMeshProUGUI m_Damage;
+
+	[SerializeField]
 	private GameObject m_NonStackNotification;
 
 	[SerializeField]
@@ -45,10 +48,12 @@ public class BuffPCView : ViewBase<BuffVM>, IPointerEnterHandler, IEventSystemHa
 		{
 			m_NonStackNotification.SetActive(value);
 		}));
-		AddDisposable(base.ViewModel.Rank.Subscribe(delegate(int value)
+		AddDisposable(base.ViewModel.Rank.CombineLatest(base.ViewModel.IsDamage, (int rank, bool isDamage) => new { rank, isDamage }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{
-			m_Rank.gameObject.SetActive(value > 1);
-			m_Rank.text = value.ToString();
+			m_Rank.gameObject.SetActive(value.rank > 1 && !value.isDamage);
+			m_Rank.text = value.rank.ToString();
+			m_Damage.gameObject.SetActive(value.isDamage);
+			m_Damage.text = value.rank.ToString();
 		}));
 		if (IsHovered != null)
 		{

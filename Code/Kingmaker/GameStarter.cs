@@ -229,7 +229,7 @@ public class GameStarter : MonoBehaviour
 		yield return null;
 		StartGameLoader.LoadAllJson("Blueprints");
 		yield return null;
-		StartGameLoader.LoadAllJson(BundlesLoadService.BundlesPath("Blueprints"));
+		StartGameLoader.LoadAllJson(BundlesLoadService.BundlesBlueprintPath("Blueprints"));
 		yield return null;
 		ResourcesLibrary.InitializeLibrary(m_ResourceReplacementProvider);
 		progressBase += 0.3f;

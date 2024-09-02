@@ -5,7 +5,9 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility.StatefulRandom;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -48,13 +50,25 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	private MechanicEntityUIWrapper UnitUIWrapper => UnitState.Unit;
 
+	public bool HideRealHealthInUI
+	{
+		get
+		{
+			if (Unit != null)
+			{
+				return Unit.HasMechanicFeature(MechanicsFeatureType.HideRealHealthInUI);
+			}
+			return false;
+		}
+	}
+
 	public bool IsPLayerEnemy => UnitUIWrapper.IsPlayerEnemy;
 
 	public OvertipHealthBlockVM(UnitState unitState)
 	{
 		UnitState = unitState;
 		AddDisposable(EventBus.Subscribe(this));
-		UpdateProperties();
+		UpdateProperties(initial: true);
 		AddDisposable(MainThreadDispatcher.InfrequentUpdateAsObservable().Subscribe(delegate
 		{
 			UpdateProperties();
@@ -62,15 +76,20 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 		AddDisposable(m_HasAbility.CombineLatest(UnitState.IsMouseOverUnit, UnitState.IsAoETarget, (bool hasAbility, bool isHover, bool isAoE) => hasAbility && (isHover || (isAoE && !UnitState.IsStarshipAttack.Value))).Subscribe(CollectAbilityProperty));
 	}
 
-	private void UpdateProperties()
+	protected override void DisposeImplementation()
 	{
-		if (Unit != null)
+	}
+
+	private void UpdateProperties(bool initial = false)
+	{
+		if (Unit != null && (!Unit.HasMechanicFeature(MechanicsFeatureType.HideRealHealthInUI) || initial))
 		{
-			HitPointMax.Value = UnitUIWrapper.Health.MaxHitPoints;
-			HitPointTotalMax.Value = UnitUIWrapper.Health.MaxHitPoints + UnitUIWrapper.Health.TemporaryHitPoints;
-			HitPointLeft.Value = UnitUIWrapper.Health.HitPointsLeft;
-			HitPointTemporary.Value = UnitUIWrapper.Health.TemporaryHitPoints;
-			HitPointTotalLeft.Value = UnitUIWrapper.Health.HitPointsLeft + UnitUIWrapper.Health.TemporaryHitPoints;
+			int maxHitPoints = UnitUIWrapper.Health.MaxHitPoints;
+			HitPointMax.Value = maxHitPoints;
+			HitPointTotalMax.Value = (HideRealHealthInUI ? maxHitPoints : (maxHitPoints + UnitUIWrapper.Health.TemporaryHitPoints));
+			HitPointLeft.Value = (HideRealHealthInUI ? maxHitPoints : UnitUIWrapper.Health.HitPointsLeft);
+			HitPointTemporary.Value = (HideRealHealthInUI ? maxHitPoints : UnitUIWrapper.Health.TemporaryHitPoints);
+			HitPointTotalLeft.Value = (HideRealHealthInUI ? maxHitPoints : (UnitUIWrapper.Health.HitPointsLeft + UnitUIWrapper.Health.TemporaryHitPoints));
 		}
 	}
 
@@ -88,7 +107,7 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	private void CollectAbilityProperty(bool show)
 	{
-		if (!show)
+		if (!show || Unit.HasMechanicFeature(MechanicsFeatureType.HideRealHealthInUI))
 		{
 			MinDamage.Value = 0;
 			MaxDamage.Value = 0;
@@ -107,7 +126,7 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 			if (num == 0)
 			{
 				obj = null;
-				goto IL_00b4;
+				goto IL_00c4;
 			}
 		}
 		else
@@ -115,8 +134,8 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 			num = 1;
 		}
 		obj = m_Ability.GetDamagePrediction(Unit, Game.Instance.VirtualPositionController.GetDesiredPosition(m_Ability.Caster));
-		goto IL_00b4;
-		IL_00b4:
+		goto IL_00c4;
+		IL_00c4:
 		DamagePredictionData damagePredictionData = (DamagePredictionData)obj;
 		HealPredictionData healPredictionData = ((num != 0) ? m_Ability.GetHealPrediction(Unit) : null);
 		if (damagePredictionData != null)
@@ -160,9 +179,5 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 				ShieldMinDamage.Value = item.MinDamage;
 			}
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

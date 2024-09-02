@@ -341,6 +341,15 @@ public class NetGame : INetGame
 		}
 	}
 
+	public bool IsStateReadyToAcceptInvite()
+	{
+		if (CurrentState != 0)
+		{
+			return CurrentState != State.PlatformInitializing;
+		}
+		return false;
+	}
+
 	public void CheatFireTrigger(Trigger trigger)
 	{
 		m_StateMachine.Fire(trigger);

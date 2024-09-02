@@ -80,13 +80,13 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	{
 		private SaveInfo m_SaveInfo;
 
-		public WriteLockScope(SaveInfo saveInfo)
+		public WriteLockScope(SaveInfo saveInfo, bool writeOnlyMode)
 		{
 			if (!saveInfo.m_FileAccessLock.TryEnterWriteLock(20.Seconds()))
 			{
 				throw new Exception("Cannot get access to file: possible deadlock");
 			}
-			saveInfo.UpdateSaverMode();
+			saveInfo.UpdateSaverMode(writeOnlyMode);
 			m_SaveInfo = saveInfo;
 		}
 
@@ -295,10 +295,10 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		using (ContextData<DlcExtension.LoadSaveDlcCheck>.Request())
 		{
 			List<List<IBlueprintDlc>> list = new List<List<IBlueprintDlc>>();
-			foreach (BlueprintDlcReward dlcReward in DlcRewards)
+			foreach (BlueprintDlcReward item in DlcRewards.Where((BlueprintDlcReward reward) => !reward.IsAvailable))
 			{
 				List<IBlueprintDlc> list2 = new List<IBlueprintDlc>();
-				foreach (IBlueprintDlc dlc in dlcReward.Dlcs)
+				foreach (IBlueprintDlc dlc in item.Dlcs)
 				{
 					if (!dlc.IsActive && !list.Any((List<IBlueprintDlc> r) => r.Contains(dlc)))
 					{
@@ -327,14 +327,14 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		return new ReadLockScope(this, upgradeable);
 	}
 
-	public IDisposable GetWriteScope()
+	public IDisposable GetWriteScope(bool writeOnly = false)
 	{
-		return new WriteLockScope(this);
+		return new WriteLockScope(this, writeOnly);
 	}
 
-	private void UpdateSaverMode()
+	private void UpdateSaverMode(bool writeOnlyMode = false)
 	{
-		ISaver.Mode mode = (m_FileAccessLock.IsWriteLockHeld ? ISaver.Mode.Write : ((m_FileAccessLock.IsReadLockHeld || m_FileAccessLock.IsUpgradeableReadLockHeld) ? ISaver.Mode.Read : ISaver.Mode.None));
+		ISaver.Mode mode = ((!m_FileAccessLock.IsWriteLockHeld) ? ((m_FileAccessLock.IsReadLockHeld || m_FileAccessLock.IsUpgradeableReadLockHeld) ? ISaver.Mode.Read : ISaver.Mode.None) : (writeOnlyMode ? ISaver.Mode.WriteOnly : ISaver.Mode.Write));
 		Saver?.SetMode(mode);
 	}
 

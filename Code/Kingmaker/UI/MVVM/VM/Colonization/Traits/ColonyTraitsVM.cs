@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Colonization;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Colonization;

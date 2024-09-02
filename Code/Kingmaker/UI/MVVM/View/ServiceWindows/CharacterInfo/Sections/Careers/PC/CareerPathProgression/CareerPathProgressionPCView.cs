@@ -39,6 +39,14 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 	[ConditionalShow("m_HasButtons")]
 	private CareerButtonsBlock m_ButtonsBlock;
 
+	[ConditionalShow("m_CanMove")]
+	[SerializeField]
+	private OwlcatMultiButton m_ToTooltipsButton;
+
+	[ConditionalShow("m_CanMove")]
+	[SerializeField]
+	private OwlcatMultiButton m_ToStatsButton;
+
 	public override void Initialize(Action<bool> returnAction)
 	{
 		if (m_HasButtons)
@@ -60,14 +68,35 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 		{
 			UpdateButtonsState();
 		}));
-		AddDisposable(m_StatsButton.OnLeftClickAsObservable().Subscribe(delegate
+		if (m_CanMove)
 		{
-			SwitchDescriptionShowed(false);
-		}));
-		AddDisposable(m_TooltipButton.OnLeftClickAsObservable().Subscribe(delegate
+			AddDisposable(m_StatsButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				SwitchDescriptionShowed(false);
+			}));
+			AddDisposable(m_TooltipButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				SwitchDescriptionShowed(true);
+			}));
+			AddDisposable(m_ToStatsButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				SwitchDescriptionShowed(false);
+			}));
+			AddDisposable(m_ToTooltipsButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				SwitchDescriptionShowed(true);
+			}));
+			AddDisposable(base.ViewModel.IsDescriptionShowed.Subscribe(delegate(bool value)
+			{
+				m_ToTooltipsButton.gameObject.SetActive(!value);
+				m_ToStatsButton.gameObject.SetActive(value);
+			}));
+		}
+		else
 		{
-			SwitchDescriptionShowed(true);
-		}));
+			m_ToTooltipsButton.Or(null)?.gameObject.SetActive(value: false);
+			m_ToStatsButton.Or(null)?.gameObject.SetActive(value: false);
+		}
 		m_ReturnLabel.text = UIStrings.Instance.CharacterSheet.BackToCareersList;
 		m_AttentionSign.SetHint(UIStrings.Instance.CharacterSheet.AlreadyInLevelUp);
 		UpdateButtonsState();

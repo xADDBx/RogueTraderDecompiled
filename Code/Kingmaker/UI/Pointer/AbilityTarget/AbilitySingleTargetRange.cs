@@ -8,8 +8,8 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
@@ -31,9 +31,11 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 
 	private int MaxRangeCells => Ability.RangeCells;
 
+	private IAbilityAoEPatternProvider PatternProvider => Ability.GetPatternSettings();
+
 	protected override bool CanEnable()
 	{
-		if (base.CanEnable() && Ability.Blueprint.Range != Kingmaker.UnitLogic.Abilities.Blueprints.AbilityRange.Unlimited)
+		if (base.CanEnable())
 		{
 			return Ability.GetPatternSettings() == null;
 		}
@@ -44,9 +46,10 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 	{
 		PointerController clickEventsController = Game.Instance.ClickEventsController;
 		TargetWrapper target = Game.Instance.SelectedAbilityHandler.GetTarget(clickEventsController.PointerOn, clickEventsController.WorldPosition, Ability, castPosition);
-		Vector3 target2 = ((target != null) ? target.Point : Game.Instance.ClickEventsController.WorldPosition);
+		Vector3 vector = ((target != null) ? target.Point : Game.Instance.ClickEventsController.WorldPosition);
+		CustomGridNodeBase bestShootingPositionForDesiredPosition = Ability.GetBestShootingPositionForDesiredPosition(vector);
 		Vector3 gridAdjustedPosition = AoEPatternHelper.GetGridAdjustedPosition(castPosition);
-		Vector3 actualCastPosition = AoEPatternHelper.GetActualCastPosition(Ability.Caster, gridAdjustedPosition, target2, MinRangeCells, MaxRangeCells);
+		Vector3 actualCastPosition = AoEPatternHelper.GetActualCastPosition(Ability.Caster, gridAdjustedPosition, vector, MinRangeCells, MaxRangeCells);
 		float sqrMagnitude = (_cachedCasterPosition - gridAdjustedPosition).sqrMagnitude;
 		float sqrMagnitude2 = (_cachedTargetPosition - actualCastPosition).sqrMagnitude;
 		if ((double)sqrMagnitude > 1E-05 || (double)sqrMagnitude2 > 1E-05)
@@ -57,7 +60,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			bool hasFiringArc = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
 			Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
 			bool ignoreRangesByDefault;
-			OrientedPatternData patternData = GetPatternData(hasFiringArc, gridAdjustedPosition, currentUnitDirection, target, out ignoreRangesByDefault);
+			OrientedPatternData patternData = GetPatternData(hasFiringArc, gridAdjustedPosition, currentUnitDirection, target, out ignoreRangesByDefault, bestShootingPositionForDesiredPosition);
 			NodeList nodes = Ability.Caster.GetOccupiedNodes(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
 			if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))
 			{
@@ -75,7 +78,10 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			}
 			UnitPredictionManager.Instance.Or(null)?.SetAbilityArea(gridAdjustedPosition, actualCastPosition, patternData);
 			m_AbilityTargets.Clear();
-			Ability.GatherAffectedTargetsData(patternData, castPosition, in m_AbilityTargets);
+			if (target != null)
+			{
+				Ability.GatherAffectedTargetsData(patternData, castPosition, target, in m_AbilityTargets);
+			}
 			EventBus.RaiseEvent(delegate(ICellAbilityHandler h)
 			{
 				h.HandleCellAbility(m_AbilityTargets);
@@ -83,7 +89,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		}
 	}
 
-	private OrientedPatternData GetPatternData(bool hasFiringArc, Vector3 casterPosition, Vector3 casterDirection, TargetWrapper target, out bool ignoreRangesByDefault)
+	private OrientedPatternData GetPatternData(bool hasFiringArc, Vector3 casterPosition, Vector3 casterDirection, TargetWrapper target, out bool ignoreRangesByDefault, CustomGridNodeBase overrideCasterNode = null)
 	{
 		ignoreRangesByDefault = false;
 		if (hasFiringArc)
@@ -94,7 +100,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		}
 		if (Ability.IsSingleShot)
 		{
-			List<CustomGridNodeBase> singleShotAffectedNodes = Ability.GetSingleShotAffectedNodes(target);
+			ReadonlyList<CustomGridNodeBase> singleShotAffectedNodes = Ability.GetSingleShotAffectedNodes(target);
 			return new OrientedPatternData(singleShotAffectedNodes, singleShotAffectedNodes.FirstOrDefault());
 		}
 		if (Ability.IsChainLighting())
@@ -106,7 +112,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		if (partAbilityPredictionForAreaEffect != null)
 		{
 			ignoreRangesByDefault = true;
-			return partAbilityPredictionForAreaEffect.GetAreaEffectPatternNotFromPatternCenter(Ability, target ?? ((TargetWrapper)_cachedTargetPosition)) ?? OrientedPatternData.Empty;
+			return partAbilityPredictionForAreaEffect.GetAreaEffectPatternNotFromPatternCenter(Ability, target ?? ((TargetWrapper)_cachedTargetPosition), overrideCasterNode) ?? OrientedPatternData.Empty;
 		}
 		return OrientedPatternData.Empty;
 	}

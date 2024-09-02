@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Kingmaker.AreaLogic.Etudes;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Attributes;
@@ -54,13 +55,15 @@ public class CapitalCompanionLogic : EtudeBracketTrigger, IHashable
 		{
 			return;
 		}
-		foreach (BaseUnitEntity allCrossSceneUnit in Game.Instance.Player.AllCrossSceneUnits)
+		foreach (BaseUnitEntity item in Game.Instance.Player.AllCrossSceneUnits.Where((BaseUnitEntity u) => !(u is StarshipEntity)))
 		{
-			UnitPartCompanion companionOptional = allCrossSceneUnit.GetCompanionOptional();
-			if (companionOptional != null && companionOptional.State == CompanionState.Remote)
+			BaseUnitEntity baseUnitEntity = item;
+			baseUnitEntity.IsInGame = item.GetCompanionOptional()?.State switch
 			{
-				allCrossSceneUnit.IsInGame = false;
-			}
+				CompanionState.InParty => true, 
+				CompanionState.Remote => false, 
+				_ => item.IsInGame, 
+			};
 		}
 	}
 

@@ -36,7 +36,6 @@ public class SystemMapSpaceResourcesPCView : ViewBase<SystemMapSpaceResourcesVM>
 		{
 			DrawEntities();
 		}));
-		DrawEntities();
 	}
 
 	protected override void DestroyViewImplementation()
@@ -46,7 +45,13 @@ public class SystemMapSpaceResourcesPCView : ViewBase<SystemMapSpaceResourcesVM>
 
 	private void DrawEntities()
 	{
-		m_WidgetListResources.DrawEntries(base.ViewModel.ResourcesVMs, m_SystemMapSpaceResourceViewPrefab);
-		m_SystemMapSpaceProfitFactorViewPrefab.Bind(base.ViewModel.JournalOrderProfitFactorVM);
+		if (base.ViewModel != null)
+		{
+			if (base.ViewModel.ResourcesVMs != null && m_SystemMapSpaceResourceViewPrefab != null)
+			{
+				m_WidgetListResources.DrawEntries(base.ViewModel.ResourcesVMs, m_SystemMapSpaceResourceViewPrefab);
+			}
+			m_SystemMapSpaceProfitFactorViewPrefab.Bind(base.ViewModel.JournalOrderProfitFactorVM);
+		}
 	}
 }

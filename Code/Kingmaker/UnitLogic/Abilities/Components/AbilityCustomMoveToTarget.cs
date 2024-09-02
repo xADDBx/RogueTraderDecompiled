@@ -258,6 +258,6 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 
 	private List<CustomGridNodeBase> GetPathToTarget(MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
 	{
-		return PathfindingService.Instance.FindPathTB_Blocking(caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, limitRangeByActionPoints: false, ignoreThreateningAreaCost: false, m_PassThroughAllUnits).path.Cast<CustomGridNodeBase>().ToTempList();
+		return PathfindingService.Instance.FindPathTB_Blocking_Cached(caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, Mathf.Max(-1, ((BlueprintAbility)base.OwnerBlueprint).GetRange() * 2), ignoreThreateningAreaCost: false, m_PassThroughAllUnits).path.Cast<CustomGridNodeBase>().ToTempList();
 	}
 }

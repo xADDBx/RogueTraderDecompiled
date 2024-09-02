@@ -16,6 +16,21 @@ public class AnimationBlend : AnimationBase, IAddableAnimation
 
 	private float m_Weight;
 
+	public IEnumerable<PlayableInfo> PlayableInfos
+	{
+		get
+		{
+			if (m_PlayableInfo1 != null)
+			{
+				yield return m_PlayableInfo1;
+			}
+			if (m_PlayableInfo2 != null)
+			{
+				yield return m_PlayableInfo2;
+			}
+		}
+	}
+
 	public float Blend
 	{
 		get
@@ -39,6 +54,7 @@ public class AnimationBlend : AnimationBase, IAddableAnimation
 		if (m_PlayableInfo1 == null)
 		{
 			m_PlayableInfo1 = playableInfo;
+			m_LastSetSpeed = playableInfo.GetSpeed();
 			return;
 		}
 		if (m_PlayableInfo2 == null)
@@ -90,6 +106,11 @@ public class AnimationBlend : AnimationBase, IAddableAnimation
 	{
 		m_PlayableInfo1?.SetWeightMultiplier(weight);
 		m_PlayableInfo2?.SetWeightMultiplier(weight);
+	}
+
+	public override float GetWeightMultiplier()
+	{
+		return m_PlayableInfo1?.GetWeightMultiplier() ?? m_PlayableInfo2?.GetWeightMultiplier() ?? 0f;
 	}
 
 	public override float GetWeight()

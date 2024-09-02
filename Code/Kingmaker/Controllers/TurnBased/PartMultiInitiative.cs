@@ -74,6 +74,7 @@ public class PartMultiInitiative : MechanicEntityPart, IUnitDeathHandler, ISubsc
 			Placeholders.Remove(initiativePlaceholderEntity);
 			initiativePlaceholderEntity.Dispose();
 		}
+		base.Owner.Initiative.LastTurn = CorrespondingEnemy.Initiative.LastTurn;
 	}
 
 	public override Hash128 GetHash128()

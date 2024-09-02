@@ -46,7 +46,9 @@ public class BugContext : IComparable<BugContext>
 		Encounter,
 		Debug,
 		Coop,
-		Desync
+		Desync,
+		TransitionMap,
+		GroupChanger
 	}
 
 	public enum AspectType

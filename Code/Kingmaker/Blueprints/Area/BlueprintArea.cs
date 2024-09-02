@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.TimeOfDay;
@@ -10,9 +9,9 @@ using Kingmaker.Code.UI.MVVM.View.LoadingScreen;
 using Kingmaker.GameModes;
 using Kingmaker.Localization;
 using Kingmaker.Settings;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
-using Kingmaker.View.Mechanics;
 using MemoryPack;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -23,40 +22,6 @@ namespace Kingmaker.Blueprints.Area;
 [MemoryPackable(GenerateType.NoGenerate)]
 public class BlueprintArea : BlueprintAreaPart
 {
-	public enum Designers
-	{
-		[Description("ivanov")]
-		EugeneIvanov = 1,
-		[Description("saenko")]
-		AndreySaenko = 2,
-		[Description("bgatzev")]
-		VadimBgatzev = 3,
-		[Description("polezhaev")]
-		AlexeyPolezhaev = 5,
-		[Description("zolotovsky")]
-		VyacheslavZolotovsky = 6,
-		[Description("zuev")]
-		VladimirZuev = 7,
-		[Description("silaev")]
-		AlexeySilaev = 8,
-		[Description("urchenko")]
-		KseniyaUrchenko = 9,
-		[Description("schellenberg")]
-		ArtemSchellenberg = 10,
-		[Description("sinelnikova")]
-		AlisaSinelnikova = 11,
-		[Description("e.ivanov")]
-		EvgeniyIvanovGD = 12,
-		[Description("a.kharybin")]
-		AntonKharybin = 13,
-		[Description("doronin")]
-		GeorgiiDoronin = 14,
-		[Description("shanhiev")]
-		EvgeniyShanhiev = 15,
-		[Description("al.gusev")]
-		Unknown = -1
-	}
-
 	public enum SettingType
 	{
 		Unspecified,
@@ -79,8 +44,6 @@ public class BlueprintArea : BlueprintAreaPart
 	public CampingSettings CampingSettings;
 
 	public RandomEncounterSettings RandomEncounterSettings;
-
-	public Designers Designer;
 
 	public SettingType ArtSetting;
 
@@ -281,7 +244,9 @@ public class BlueprintArea : BlueprintAreaPart
 
 	public int GetCR()
 	{
-		if (!BlueprintAreaHelper.OverridenCR.TryGetValue(AssetGuid, out var value))
+		int value = 0;
+		AreaCROverrideManager optional = Game.Instance.Player.GetOptional<AreaCROverrideManager>();
+		if (optional == null || !optional.TryGetValue(AssetGuid, out value))
 		{
 			return m_CR;
 		}

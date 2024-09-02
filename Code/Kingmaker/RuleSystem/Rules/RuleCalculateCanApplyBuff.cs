@@ -47,19 +47,16 @@ public class RuleCalculateCanApplyBuff : RulebookEvent
 		if (Context.MaybeCaster != null && Context.MaybeCaster != base.Initiator && Context.MaybeCaster.IsAttackingGreenNPC((MechanicEntity)base.Initiator) && Context.SpellDescriptor.IsNegativeEffect())
 		{
 			CanApply = false;
-			return;
 		}
-		if (this.SkipBecauseOfShadow())
+		else if (this.SkipBecauseOfShadow())
 		{
 			CanApply = false;
-			return;
 		}
-		if (Immunity && !IgnoreImmunity)
+		else if (Immunity && !IgnoreImmunity)
 		{
 			CanApply = false;
-			return;
 		}
-		if (base.Initiator.IsPlayerFaction && Blueprint.IsHardCrowdControl)
+		else if (base.Initiator.IsPlayerFaction && Blueprint.IsHardCrowdControl)
 		{
 			HardCrowdControlDurationLimit value = SettingsRoot.Difficulty.HardCrowdControlOnPartyMaxDurationRounds.GetValue();
 			if (value != HardCrowdControlDurationLimit.Unlimited)
@@ -68,6 +65,5 @@ public class RuleCalculateCanApplyBuff : RulebookEvent
 				Duration = (Duration.Rounds.HasValue ? new Rounds(Math.Min(Duration.Rounds.Value.Value, rounds.Value)) : rounds);
 			}
 		}
-		CanApply &= !Blueprint.RemoveOnResurrect || !base.ConcreteInitiator.Features.Immortality;
 	}
 }

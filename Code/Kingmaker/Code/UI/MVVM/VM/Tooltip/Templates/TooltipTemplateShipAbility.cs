@@ -39,8 +39,6 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 
 	private readonly Sprite m_TargetIcon;
 
-	private readonly string m_Duration = string.Empty;
-
 	private readonly string m_Cooldown = string.Empty;
 
 	private readonly string m_EndTurn = string.Empty;
@@ -72,7 +70,6 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 			BlueprintItemWeapon blueprintItem = sourceItem as BlueprintItemWeapon;
 			m_Target = UIUtilityTexts.GetAbilityTarget(blueprintAbility, blueprintItem);
 			m_TargetIcon = UIUtilityTexts.GetTargetImage(blueprintAbility);
-			m_Duration = blueprintAbility.LocalizedDuration;
 			m_Cooldown = blueprintAbility.CooldownRounds.ToString();
 			m_EndTurn = GetEndTurn(blueprintAbility);
 			m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(blueprintAbility);
@@ -97,7 +94,6 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		AddDamageInfo(list);
 		AddTarget(list);
-		AddDuration(list);
 		AddCooldown(list);
 		AddHitChances(list);
 		AddUIProperties(list);
@@ -229,22 +225,6 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 				Text = m_Target
 			};
 			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
-		}
-	}
-
-	private void AddDuration(List<ITooltipBrick> bricks)
-	{
-		if (!string.IsNullOrEmpty(m_Duration))
-		{
-			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
-			{
-				Text = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Duration)
-			};
-			TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
-			{
-				Text = UIUtilityTexts.WrapWithWeight(m_Duration, TextFontWeight.SemiBold)
-			};
-			bricks.Add(new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Duration, null, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
 		}
 	}
 

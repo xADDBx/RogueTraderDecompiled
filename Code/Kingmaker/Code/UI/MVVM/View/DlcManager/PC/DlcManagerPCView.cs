@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Base;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.PC;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Mods.PC;
+using Kingmaker.Code.UI.MVVM.View.DlcManager.SwitchOnDlcs.PC;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
@@ -21,6 +22,9 @@ public class DlcManagerPCView : DlcManagerBaseView
 
 	[SerializeField]
 	private DlcManagerTabModsPCView m_DlcManagerTabModsPCView;
+
+	[SerializeField]
+	private DlcManagerTabSwitchOnDlcsPCView m_DlcManagerTabSwitchOnDlcsPCView;
 
 	[SerializeField]
 	private RectTransform m_BottomButtonsContainer;
@@ -43,9 +47,13 @@ public class DlcManagerPCView : DlcManagerBaseView
 
 	protected override void InitializeImpl()
 	{
-		if (!base.ViewModel.OnlyMods)
+		if (!base.ViewModel.InGame)
 		{
 			m_DlcManagerTabDlcsPCView.Initialize();
+		}
+		else
+		{
+			m_DlcManagerTabSwitchOnDlcsPCView.Initialize();
 		}
 		if (!base.ViewModel.IsConsole)
 		{
@@ -63,14 +71,18 @@ public class DlcManagerPCView : DlcManagerBaseView
 		{
 			base.ViewModel.OnClose();
 		}));
-		if (!base.ViewModel.IsConsole)
+		AddDisposable(base.ViewModel.IsModsWindow.CombineLatest(base.ViewModel.IsSwitchOnDlcsWindow, (bool isModsWindow, bool isSwitchOnDlcsWindow) => new { isModsWindow, isSwitchOnDlcsWindow }).Subscribe(value =>
 		{
-			AddDisposable(base.ViewModel.IsModsWindow.Subscribe(m_BottomButtonsContainer.gameObject.SetActive));
-		}
+			m_BottomButtonsContainer.gameObject.SetActive(value.isModsWindow || value.isSwitchOnDlcsWindow);
+		}));
 		SetButtonsSounds();
-		if (!base.ViewModel.OnlyMods)
+		if (!base.ViewModel.InGame)
 		{
 			m_DlcManagerTabDlcsPCView.Bind(base.ViewModel.DlcsVM);
+		}
+		else
+		{
+			m_DlcManagerTabSwitchOnDlcsPCView.Bind(base.ViewModel.SwitchOnDlcsVM);
 		}
 		if (!base.ViewModel.IsConsole)
 		{
@@ -84,9 +96,17 @@ public class DlcManagerPCView : DlcManagerBaseView
 		}));
 		AddDisposable(m_DefaultBottomButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.RestoreAllModsToPreviousState();
+			base.ViewModel.RestoreAllToPreviousState();
 		}));
-		if (!base.ViewModel.IsConsole)
+		if (base.ViewModel.InGame)
+		{
+			AddDisposable(base.ViewModel.ModsVM.NeedReload.CombineLatest(base.ViewModel.SwitchOnDlcsVM.NeedResave, (bool needReload, bool needResave) => new { needReload, needResave }).Subscribe(value =>
+			{
+				m_ApplyBottomButton.SetInteractable(value.needReload || value.needResave);
+				m_DefaultBottomButton.SetInteractable(value.needReload || value.needResave);
+			}));
+		}
+		else
 		{
 			AddDisposable(base.ViewModel.ModsVM.NeedReload.Subscribe(delegate(bool value)
 			{

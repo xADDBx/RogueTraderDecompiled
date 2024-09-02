@@ -254,7 +254,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		PositionCorrectionFromView = ((flag && m_UnitBuffPartPCView.HasBuffs) ? new Vector2(0f, 0f - m_StandardOvertipPositionYCorrection) : new Vector2(0f, 0f - m_BuffsOvertipPositionYCorrection));
 		if (unitOvertipVisibility != UnitOvertipVisibility.Maximized)
 		{
-			m_UnitBuffPartPCView.HideAdditionalBuffs();
+			m_UnitBuffPartPCView.SetAdditionalBuffsVisible(visible: false);
 		}
 	}
 

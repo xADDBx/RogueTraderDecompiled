@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers;
 using Kingmaker.QA.Arbiter.Profiling;
@@ -13,6 +15,7 @@ using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Events;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -25,7 +28,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 	[NonSerialized]
 	public bool IsInDollRoom;
 
-	private string m_GameObjectName;
+	private string m_Name;
 
 	private bool m_IsInitialized;
 
@@ -103,6 +106,8 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		}
 	}
 
+	public float LastDeltaTime { get; private set; }
+
 	public bool Disabled
 	{
 		get
@@ -169,7 +174,23 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 
 	private void Awake()
 	{
-		m_GameObjectName = base.gameObject.name;
+		m_Name = ConstructName(base.gameObject);
+	}
+
+	private static string ConstructName(GameObject go)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		while (go != null)
+		{
+			stringBuilder.Insert(0, "/" + go.name);
+			go = ObjectExtensions.Or(go.transform.parent, null)?.gameObject;
+		}
+		return stringBuilder.ToString();
+	}
+
+	public override string ToString()
+	{
+		return m_Name;
 	}
 
 	protected virtual void OnEnable()
@@ -214,6 +235,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		{
 			if (!Disabled)
 			{
+				LastDeltaTime = dt;
 				using (ProfileScope.New("AnimationManager.UpdateAnimations"))
 				{
 					UpdateAnimations(dt);
@@ -222,6 +244,11 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 				{
 					UpdateActions(dt);
 				}
+				using (ProfileScope.New("AnimationManager.UpdateAnimations(NewOnly)"))
+				{
+					UpdateAnimations(dt, newOnly: true);
+				}
+				InterpolateAnimations(0f, force: true);
 				m_Animator.fireEvents = m_FireEvents && m_CurrentAction?.ActiveAnimation?.AnimatorController != null;
 				m_LastUpdateTick = CurrentUpdateTick;
 			}
@@ -230,7 +257,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 
 	void IInterpolatable.Tick(float progress)
 	{
-		if (m_LastUpdateTick != CurrentUpdateTick || Disabled)
+		if ((m_LastUpdateTick != CurrentUpdateTick && (m_LastUpdateTick + 1 != CurrentUpdateTick || !Mathf.Approximately(progress, 1f))) || Disabled)
 		{
 			return;
 		}
@@ -245,29 +272,29 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		}
 	}
 
-	protected virtual void UpdateAnimations(float dt)
+	protected virtual void UpdateAnimations(float dt, bool newOnly = false)
 	{
-		if (m_Graph.GetTimeUpdateMode() == DirectorUpdateMode.Manual)
+		if (!newOnly && m_Graph.GetTimeUpdateMode() == DirectorUpdateMode.Manual)
 		{
 			m_Graph.Evaluate(dt);
 		}
 		AnimationBase animationBase = m_CurrentAction?.ActiveAnimation;
-		if (animationBase != null)
+		if (animationBase != null && (!newOnly || !animationBase.UpdatedOnce))
 		{
 			float deltaTime = dt * animationBase.GetSpeed();
-			animationBase.UpdateInternal(deltaTime);
+			animationBase.Update(deltaTime);
 		}
 		for (int i = 0; i < m_ActiveAnimations.Count; i++)
 		{
 			AnimationBase animationBase2 = m_ActiveAnimations[i];
-			if (animationBase2 != animationBase)
+			if (animationBase2 != animationBase && (!newOnly || !animationBase2.UpdatedOnce))
 			{
 				float deltaTime2;
 				using (ProfileScope.New("GetSpeed"))
 				{
 					deltaTime2 = dt * animationBase2.GetSpeed();
 				}
-				animationBase2.UpdateInternal(deltaTime2);
+				animationBase2.Update(deltaTime2);
 			}
 			if (animationBase2 == null || animationBase2.State != AnimationState.Finished)
 			{
@@ -284,7 +311,6 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 				i--;
 			}
 		}
-		InterpolateAnimations(0f, force: true);
 	}
 
 	private void InterpolateAnimations(float progress, bool force = false)
@@ -293,7 +319,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		AnimationBase animationBase = m_CurrentAction?.ActiveAnimation;
 		if (animationBase != null)
 		{
-			animationBase.InterpolateInternal(progress, 1f, force);
+			animationBase.Interpolate(progress, 1f, force);
 			if (animationBase.State != AnimationState.Finished && !animationBase.DoNotZeroOtherAnimations)
 			{
 				using (ProfileScope.New("GetWeight"))
@@ -316,7 +342,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 			if (activeAnimation2 != animationBase)
 			{
 				float weightFromManager = ((activeAnimation2.Handle == m_CurrentAction || activeAnimation2.Handle.IsAdditive || (flag && activeAnimation2.Handle.HasCrossfadePriority)) ? 1f : ((flag && !activeAnimation2.Handle.HasCrossfadePriority) ? 0f : num));
-				activeAnimation2.InterpolateInternal(progress, weightFromManager, force);
+				activeAnimation2.Interpolate(progress, weightFromManager, force);
 			}
 		}
 		foreach (MixerInfo mixer in m_Mixers)
@@ -528,22 +554,22 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 	{
 		if (handle == null)
 		{
-			PFLog.Default.Error("AnimationActionHandle is null");
+			PFLog.Animations.Error("AnimationActionHandle is null");
 			return;
 		}
 		using (ProfileScope.New("Animator.Execute " + handle.Action.name))
 		{
 			if (handle.Manager != this)
 			{
-				UnityEngine.Debug.LogError("Can't execute handle which created by another manager.");
+				PFLog.Animations.Error("Can't execute handle which created by another manager.");
 			}
 			else if (handle.IsStarted)
 			{
-				UnityEngine.Debug.LogError("Started animation action handle can't be executed multiple times.");
+				PFLog.Animations.Error("Started animation action handle can't be executed multiple times: " + handle.Action.NameSafe());
 			}
 			else if (m_ActiveActions.Contains(handle))
 			{
-				UnityEngine.Debug.LogError("Action handle already added to manager");
+				PFLog.Animations.Error("Action handle already added to manager: " + handle.Action.NameSafe());
 			}
 			else if (handle.IsAdditive)
 			{
@@ -579,6 +605,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 				AddActionHandle(handle);
 				if (m_CurrentAction != null && !m_CurrentAction.DontReleaseOnInterrupt && (!(m_CurrentAction.Action is WarhammerUnitAnimationActionHandAttack) || !(handle.Action is UnitAnimationActionCover)))
 				{
+					m_CurrentAction.MarkInterrupted();
 					m_CurrentAction.Release();
 				}
 				m_CurrentAction = handle;
@@ -587,11 +614,11 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 				{
 					if (sequencedAction.Action != null)
 					{
-						PFLog.Default.Log("Cleared sequnced action: {0}", sequencedAction.Action.name);
+						PFLog.Animations.Log("Cleared sequenced action: {0}", sequencedAction.Action.NameSafe());
 					}
 					else
 					{
-						PFLog.Default.Log("Cleared sequnced action: (destroyed)");
+						PFLog.Animations.Log("Cleared sequenced action: (destroyed)");
 					}
 					sequencedAction.MarkInterrupted();
 				}
@@ -605,7 +632,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 			}
 			else if (m_SequencedActions.Count > 10)
 			{
-				PFLog.Default.Warning($"Animation manager {this} has too many SequencedActions! This might be a leak.");
+				PFLog.Animations.Warning($"Animation manager {this} has too many SequencedActions! This might be a leak.");
 			}
 			else
 			{
@@ -636,7 +663,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		bool isAdditive2 = handle.IsAdditive;
 		if (handle != m_CurrentAction && !handle.DontReleaseOnInterrupt && !isAdditive2)
 		{
-			PFLog.Default.Error($"Can't start animation on interrupted action {handle.Action}");
+			PFLog.Animations.Error("Can't start animation on interrupted action: " + handle.Action.NameSafe());
 			return;
 		}
 		int num = avatarMasks?.Count((AvatarMask am) => am) ?? 0;
@@ -685,7 +712,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 			num2 = handle.ActiveAnimation.GetDuration();
 			break;
 		}
-		handle.ActiveAnimation.TransitionOutStartTime = ((num2 > 0f) ? (num2 - handle.ActiveAnimation.TransitionOut) : 0f);
+		handle.ActiveAnimation.TransitionOutStartTime = ((num2 > 0f) ? Math.Max(num2 - handle.ActiveAnimation.TransitionOut, 0.01f) : 0f);
 		m_ActiveAnimations.Add(handle.ActiveAnimation);
 	}
 
@@ -697,7 +724,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		}
 		else
 		{
-			PFLog.Default.Error("Cannot add clip to handle: not a composition. Action: " + handle.Action);
+			PFLog.Animations.Error("Cannot add clip to handle: not a composition. Action: " + handle.Action.NameSafe());
 		}
 	}
 
@@ -705,21 +732,21 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 	{
 		if (clipWrapper == null)
 		{
-			throw new Exception("Animation clip wrapper is null.");
+			throw new Exception("Animation clip wrapper is null. Handle: " + handle.Action.NameSafe());
 		}
 		if (clipWrapper.AnimationClip == null)
 		{
-			throw new Exception("Animation clip wrapper has a null animation clip.");
+			throw new Exception("Animation clip wrapper has a null animation clip. Handle: " + handle.Action.NameSafe() + ", ClipWrapper: " + clipWrapper.NameSafe());
 		}
 		MixerInfo mixer = GetMixer(avatarMask, isAdditive);
-		PlayableInfo playableInfo = mixer.AddPlayableFromCache(handle, (PlayableInfo p) => p.GetPlayableClip() == clipWrapper.AnimationClip);
+		PlayableInfo playableInfo = mixer.AddPlayableFromCache(handle, (PlayableInfo p) => p.CanBeUsedFromCache(clipWrapper.AnimationClip, clipWrapper.EventsSorted));
 		if (playableInfo == null)
 		{
 			AnimationClipPlayable animationClipPlayable = AnimationClipPlayable.Create(PlayableGraph, clipWrapper.AnimationClip);
 			IEnumerable<AnimationClipEvent> eventsSorted = clipWrapper.EventsSorted;
 			playableInfo = mixer.AddPlayable(handle, animationClipPlayable, eventsSorted);
 		}
-		playableInfo.Playable.SetSpeed(handle.SpeedScale);
+		playableInfo.SetSpeed(handle.SpeedScale);
 		return playableInfo;
 	}
 
@@ -732,7 +759,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 	{
 		if (handle != m_CurrentAction && !handle.DontReleaseOnInterrupt)
 		{
-			PFLog.Default.Error($"Can't start animation on interrupted action {handle.Action}");
+			PFLog.Animations.Error("Can't start animation on interrupted action: " + handle.Action.NameSafe());
 			return;
 		}
 		int num = avatarMasks?.Count((AvatarMask am) => am) ?? 0;
@@ -791,14 +818,14 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		{
 			if (Animator.runtimeAnimatorController != null)
 			{
-				PFLog.Default.Error("Animator.runtimeAnimatorController is already set for " + base.name + ".");
+				PFLog.Animations.Error("Animator.runtimeAnimatorController is already set for " + base.name + ".");
 			}
 			else
 			{
 				Animator.runtimeAnimatorController = runtimeAnimatorController;
 			}
 		}
-		playableInfo.Playable.SetSpeed(handle.SpeedScale);
+		playableInfo.SetSpeed(handle.SpeedScale);
 		return playableInfo;
 	}
 

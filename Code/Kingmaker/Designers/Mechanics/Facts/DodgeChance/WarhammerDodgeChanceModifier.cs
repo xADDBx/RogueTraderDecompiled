@@ -8,6 +8,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
@@ -49,7 +50,7 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 
 	protected void TryApply(RuleCalculateDodgeChance rule)
 	{
-		if (!Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+		if (base.Fact.ConcreteOwner.GetOptional<PartPreviewUnit>() != null || !Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
 			return;
 		}

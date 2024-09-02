@@ -7,5 +7,7 @@ public enum VisualStateEffectType
 	Drunk,
 	MindControl,
 	CassiaInfluence,
-	Hallucinations
+	Hallucinations,
+	Darkness,
+	HallucinationsNoSound
 }

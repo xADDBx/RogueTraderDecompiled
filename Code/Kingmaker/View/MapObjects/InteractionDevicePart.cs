@@ -1,4 +1,5 @@
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;

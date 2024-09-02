@@ -57,6 +57,8 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 
 	public Texture2D AtlasTexNormal;
 
+	public Texture2D[] testArray;
+
 	public Rect[] Rects;
 
 	public Material AtlasMaterial;

@@ -127,7 +127,7 @@ public class UnitAnimationActionHandAttack : UnitAnimationAction, IUnitAnimation
 		}
 	}
 
-	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.SelectMany((WeaponStyleSettings i) => i.ClipWrappers);
+	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.EmptyIfNull().SelectMany((WeaponStyleSettings i) => i.ClipWrappers.EmptyIfNull());
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{

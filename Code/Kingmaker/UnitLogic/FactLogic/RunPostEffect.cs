@@ -42,6 +42,8 @@ public class RunPostEffect : RunEffectBase
 	[NonSerialized]
 	private float m_VolumeInitialWeight;
 
+	public VisualStateEffectType EffectType => m_EffectType;
+
 	public override void Activate(Action completeCallback)
 	{
 		base.Activate(completeCallback);
@@ -50,7 +52,15 @@ public class RunPostEffect : RunEffectBase
 		if (TryGetPostProcessingEffectVolume(out var volume))
 		{
 			m_Volume = volume;
-			m_VolumeInitialWeight = m_Volume.weight;
+			if (Game.Instance.CameraFXController.TryGetRunningEffectStartValue(m_EffectType, out var startValue))
+			{
+				m_VolumeInitialWeight = startValue;
+			}
+			else
+			{
+				m_VolumeInitialWeight = m_Volume.weight;
+				Game.Instance.CameraFXController.RegisterRunningEffect(this, m_VolumeInitialWeight);
+			}
 			m_AnimationCoroutine = Game.Instance.CoroutinesController.Start(TwinWeightToTargetValue(m_Volume, m_VolumeInitialWeight, m_TargetWeight, m_FadeInCurve, m_FadeInTime));
 		}
 		else
@@ -68,9 +78,16 @@ public class RunPostEffect : RunEffectBase
 		if (m_Volume != null)
 		{
 			m_AnimationCoroutine = Game.Instance.CoroutinesController.Start(TwinWeightToTargetValue(m_Volume, m_TargetWeight, m_VolumeInitialWeight, m_FadeOutCurve, m_FadeOutTime));
+			m_CallbackCoroutine = Game.Instance.CoroutinesController.InvokeInTime(OnDeactivate, m_FadeInTime.Seconds());
 		}
 		m_Volume = null;
 		m_VolumeInitialWeight = 0f;
+	}
+
+	protected override void OnDeactivate()
+	{
+		base.OnDeactivate();
+		Game.Instance.CameraFXController.UnregisterRunningEffect(this);
 	}
 
 	private bool TryGetPostProcessingEffectVolume(out Volume volume)

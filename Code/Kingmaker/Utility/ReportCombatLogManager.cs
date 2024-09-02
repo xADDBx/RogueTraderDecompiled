@@ -255,12 +255,12 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 				string tooltipHeader;
 				if (combatLogMessage.Tooltip is TooltipTemplateSimple tooltipTemplateSimple)
 				{
-					tooltipHeader = tooltipTemplateSimple.Header;
+					tooltipHeader = tooltipTemplateSimple.Header ?? "";
 					text = tooltipTemplateSimple.Description;
 				}
 				else
 				{
-					tooltipHeader = combatLogMessage.Message;
+					tooltipHeader = combatLogMessage.Message ?? "";
 					text = string.Empty;
 				}
 				tooltipHeader = ManageTooltipHeader(tooltipHeader, source, target);

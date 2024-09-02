@@ -30,6 +30,8 @@ public class OvertipCombatTextBlockVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public readonly ReactiveProperty<Vector3> Position;
 
+	public MechanicEntity MechanicEntity => m_MechanicEntity;
+
 	public bool IsCutscene => Game.Instance.CurrentMode == GameModeType.Cutscene;
 
 	public IEntity GetSubscribingEntity()

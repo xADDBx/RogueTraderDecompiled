@@ -5,7 +5,6 @@ using System.Text;
 using JetBrains.Annotations;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
@@ -25,8 +24,6 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 
 	private readonly List<SelectionState> m_Selections = new List<SelectionState>();
 
-	private readonly int m_TargetCharacterLevel;
-
 	[NotNull]
 	public BaseUnitEntity TargetUnit { get; }
 
@@ -43,23 +40,16 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 
 	public bool IsAllSelectionsMadeAndValid => m_Selections.AllItems((SelectionState i) => (i.IsMade || !i.CanSelectAny) && i.IsValid);
 
-	public LevelUpManager([NotNull] BaseUnitEntity targetUnit, bool autoCommit)
+	public LevelUpManager([NotNull] BaseUnitEntity targetUnit, [NotNull] BlueprintPath careerPath, bool autoCommit, int targetCharacterLevel = 0)
 	{
 		TargetUnit = targetUnit;
 		IsCommitted = (AutoCommit = autoCommit);
-		RecalculatePreview(applySelections: false);
-	}
-
-	public LevelUpManager([NotNull] BaseUnitEntity targetUnit, [NotNull] BlueprintPath careerPath, bool autoCommit, int targetCharacterLevel = 0)
-		: this(targetUnit, autoCommit)
-	{
+		if (targetCharacterLevel == 0)
+		{
+			targetCharacterLevel = TargetUnit.Progression.ExperienceLevel;
+		}
+		PreviewUnit = (AutoCommit ? TargetUnit : CreatePreviewUnit());
 		SelectCareerPath(careerPath, targetCharacterLevel);
-	}
-
-	public LevelUpManager([NotNull] IBaseUnitEntity targetUnit, [NotNull] BlueprintPath careerPath, bool autoCommit)
-		: this((BaseUnitEntity)targetUnit, autoCommit)
-	{
-		SelectCareerPath(careerPath);
 	}
 
 	[CanBeNull]
@@ -68,7 +58,7 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 		return m_Selections.FirstItem((SelectionState i) => i.Path == path && i.Blueprint == selection && i.PathRank == pathRank);
 	}
 
-	public void SelectCareerPath(BlueprintPath path, int targetCharacterLevel = 0)
+	private void SelectCareerPath(BlueprintPath path, int targetCharacterLevel)
 	{
 		if (AutoCommit && Path != null)
 		{
@@ -79,16 +69,8 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 			throw new Exception($"Invalid path {path} settings (Ranks != RankEntries.Length)");
 		}
 		Path = path;
-		bool num = m_Selections.RemoveAll((SelectionState i) => i.Path is BlueprintCareerPath) > 0;
-		if (targetCharacterLevel == 0)
-		{
-			targetCharacterLevel = TargetUnit.Progression.ExperienceLevel;
-		}
+		m_Selections.RemoveAll((SelectionState i) => i.Path is BlueprintCareerPath);
 		m_Selections.AddRange(CreatePathSelections(targetCharacterLevel));
-		if (num)
-		{
-			RecalculatePreview(applySelections: false);
-		}
 		AdvancePathRankTo(PreviewUnit, path, GetTargetPathRankOfSelectPath(targetCharacterLevel));
 	}
 
@@ -111,15 +93,6 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 		}
 		PartUnitProgression progression = TargetUnit.Progression;
 		return progression.GetPathRank(Path) + progression.ExperienceLevel - progression.CharacterLevel;
-	}
-
-	public void InvalidateSelections()
-	{
-		if (AutoCommit)
-		{
-			throw new InvalidOperationException("Can't invalidate selections: AutoCommit == true");
-		}
-		RecalculatePreview(applySelections: true);
 	}
 
 	public void Commit()
@@ -192,25 +165,17 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 		return (From: 0, To: 0);
 	}
 
-	private void RecalculatePreview(bool applySelections)
+	private BaseUnitEntity CreatePreviewUnit()
 	{
-		if (AutoCommit)
-		{
-			PreviewUnit = TargetUnit;
-			return;
-		}
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
 			using (ContextData<UnitHelper.DoNotCreateItems>.Request())
 			{
 				using (ContextData<UnitHelper.PreviewUnit>.Request())
 				{
-					PreviewUnit?.Dispose();
-					PreviewUnit = TargetUnit.CreatePreview(createView: false);
-					if (applySelections)
-					{
-						ApplySelections(PreviewUnit, invalidate: true);
-					}
+					BaseUnitEntity baseUnitEntity = TargetUnit.CreatePreview(createView: false);
+					baseUnitEntity.Progression.AdvanceToNextLevel();
+					return baseUnitEntity;
 				}
 			}
 		}
@@ -221,10 +186,19 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 		if (AutoCommit || !(selection is SelectionStateFeature))
 		{
 			ApplySelection(PreviewUnit, selection, invalidateNext: true);
+			return;
 		}
-		else
+		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-			RecalculatePreview(applySelections: true);
+			using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+			{
+				using (ContextData<UnitHelper.PreviewUnit>.Request())
+				{
+					PreviewUnit?.Dispose();
+					PreviewUnit = CreatePreviewUnit();
+					ApplySelections(PreviewUnit, invalidate: true);
+				}
+			}
 		}
 	}
 

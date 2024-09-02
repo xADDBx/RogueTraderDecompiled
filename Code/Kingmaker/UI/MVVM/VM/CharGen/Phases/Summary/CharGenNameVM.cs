@@ -33,7 +33,7 @@ public class CharGenNameVM : CharInfoComponentWithLevelUpVM
 			text = text.Trim();
 			if (!string.IsNullOrEmpty(text))
 			{
-				SetName(text);
+				SetNameAndNotify(text);
 			}
 			onComplete?.Invoke();
 		}, UnitName.Value, GetRandomName, DisposeMessageBox);
@@ -52,6 +52,11 @@ public class CharGenNameVM : CharInfoComponentWithLevelUpVM
 	public void SetName(string characterName)
 	{
 		UnitName.Value = characterName;
+	}
+
+	public void SetNameAndNotify(string characterName)
+	{
+		SetName(characterName);
 		m_OnSetName?.Invoke(characterName);
 	}
 }

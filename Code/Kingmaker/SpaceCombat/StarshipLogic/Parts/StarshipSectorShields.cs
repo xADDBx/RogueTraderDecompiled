@@ -106,7 +106,7 @@ public class StarshipSectorShields : IHashable
 			select ench;
 		int num2 = source.Select((StarshipShieldEnhancement ench) => ench.bonusFlat).DefaultIfEmpty(0).Sum();
 		int num3 = source.Select((StarshipShieldEnhancement ench) => ench.bonusPct).DefaultIfEmpty(0).Sum();
-		return num * (100 + num3) / 100 + num2;
+		return (num + num2) * (100 + num3) / 100;
 	}
 
 	public StarshipSectorShields(PartStarshipShields owner, StarshipSectorShieldsType sector)

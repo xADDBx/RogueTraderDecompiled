@@ -51,7 +51,7 @@ public class WarhammerHealCriticalHit : UnitFactComponentDelegate, IInitiatorRul
 				evt.CalculateHealRule.UICriticalBonusRoll = ruleRollD;
 				evt.CalculateHealRule.UICriticalBonusChance = bonusCriticalChance;
 			}
-			int num = Rulebook.Trigger(new RuleCalculateDamage(base.Owner, null, abilityData)).CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
+			int num = new CalculateDamageParams(base.Owner, null, abilityData).Trigger().CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
 			evt.CalculateHealRule.UIPercentCriticalBonuses.Add(new Tuple<int, string>(num, base.Fact.Name));
 			evt.CalculateHealRule.UIPercentCriticalBonus += num;
 			evt.CalculateHealRule.PercentBonus += num;

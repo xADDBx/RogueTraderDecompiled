@@ -218,15 +218,17 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 		}
 	}
 
-	public void StartEtude(BlueprintEtude bp)
+	public void StartEtude(BlueprintEtude bp, string source = "")
 	{
-		switch (GetSavedState(bp))
+		EtudeState savedState = GetSavedState(bp);
+		string text = ((!string.IsNullOrEmpty(source)) ? (". From: " + source) : "");
+		switch (savedState)
 		{
 		case EtudeState.Started:
-			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: already started");
+			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: already started" + text);
 			return;
 		case EtudeState.Completed:
-			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: already completed");
+			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: already completed" + text);
 			return;
 		}
 		if (!bp.Parent.IsEmpty())
@@ -237,7 +239,7 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 			case EtudeState.PreStarted:
 				if (bp.StartsParent)
 				{
-					StartEtude(bp.Parent);
+					StartEtude(bp.Parent, "child etude " + bp.name + text);
 					if (GetSavedState(bp) == EtudeState.Started)
 					{
 						return;
@@ -247,48 +249,49 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 				{
 					m_EtudesData[bp] = EtudeState.PreStarted;
 					GameHistoryLog.Instance.EtudeEvent(null, "Etude[" + bp.NameSafe() + "]:PreStarted");
-					PFLog.Etudes.Log(bp, $"Starting etude {bp}: parent not started, marking prestart");
+					PFLog.Etudes.Log(bp, $"Starting etude {bp}: parent not started, marking prestart" + text);
 					return;
 				}
 				break;
 			case EtudeState.Completed:
 			case EtudeState.PreCompleted:
-				PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: parent already completed");
+				PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: parent already completed" + text);
 				return;
 			}
 		}
-		StartEtudeInternal(bp);
+		StartEtudeInternal(bp, source);
 	}
 
-	public void StartEtudeImmediately(BlueprintEtude bp)
+	public void StartEtudeImmediately(BlueprintEtude bp, string source = "")
 	{
-		StartEtude(bp);
+		StartEtude(bp, source);
 		UpdateEtudes();
 	}
 
-	private void StartEtudeInternal(BlueprintEtude bp)
+	private void StartEtudeInternal(BlueprintEtude bp, string source = "")
 	{
+		string text = ((!string.IsNullOrEmpty(source)) ? (". From: " + source) : "");
 		EtudeState savedState = GetSavedState(bp);
 		if (savedState == EtudeState.Completed)
 		{
 			return;
 		}
-		PFLog.Etudes.Log("Starting etude: " + bp.name);
+		PFLog.Etudes.Log("Starting etude: " + bp.name + text);
 		if (Etudes.Get(bp) != null)
 		{
-			PFLog.Etudes.Error(bp, $"Cannot start etude {bp}: already started");
+			PFLog.Etudes.Error(bp, $"Cannot start etude {bp}: already started" + text);
 			return;
 		}
 		Etude etude = (bp.Parent.IsEmpty() ? null : Etudes.Get(bp.Parent.Get()));
 		if (etude != null && etude.CompletionInProgress)
 		{
-			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: parent is CompletionInProgress");
+			PFLog.Etudes.Log(bp, $"Cannot start etude {bp}: parent is CompletionInProgress" + text);
 			return;
 		}
 		Facts.Add(new Etude(bp, etude));
 		if (savedState == EtudeState.PreCompleted)
 		{
-			MarkEtudeCompleted(bp);
+			MarkEtudeCompleted(bp, "EtudesSystem, because etude was PreCompleted");
 			return;
 		}
 		m_EtudesData[bp] = EtudeState.Started;
@@ -296,24 +299,24 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 		{
 			if (!item.IsEmpty())
 			{
-				StartEtudeInternal(item.Get());
+				StartEtudeInternal(item.Get(), "startsWith in " + bp.name + " " + bp.AssetGuid);
 			}
 		}
 		foreach (KeyValuePair<BlueprintEtude, EtudeState> item2 in m_EtudesData.Where((KeyValuePair<BlueprintEtude, EtudeState> p) => p.Key.Parent.Is(bp) && p.Value == EtudeState.PreStarted).ToTempList())
 		{
-			StartEtudeInternal(item2.Key);
+			StartEtudeInternal(item2.Key, "parent " + bp.name + " " + bp.AssetGuid + ", as prestarted child");
 		}
 		MarkConditionsDirty();
 	}
 
-	public void MarkEtudeCompleted(BlueprintEtude bp)
+	public void MarkEtudeCompleted(BlueprintEtude bp, string source = "")
 	{
-		PFLog.Etudes.Log("Completing etude: " + bp.name);
+		PFLog.Etudes.Log("Completing etude: " + bp.name + " " + ((!string.IsNullOrEmpty(source)) ? ("From: " + source) : string.Empty));
 		Etude etude = Etudes.Get(bp);
 		m_EtudesData[bp] = ((etude == null) ? EtudeState.PreCompleted : EtudeState.Completed);
 		if (bp.CompletesParent && !bp.Parent.IsEmpty())
 		{
-			MarkEtudeCompleted(bp.Parent.Get());
+			MarkEtudeCompleted(bp.Parent.Get(), "child etude " + bp.name + " completes parent");
 			return;
 		}
 		if (etude != null)
@@ -498,12 +501,12 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 	{
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective)
+	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
 	{
 		MarkConditionsDirty();
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective)
+	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
 	{
 		MarkConditionsDirty();
 	}

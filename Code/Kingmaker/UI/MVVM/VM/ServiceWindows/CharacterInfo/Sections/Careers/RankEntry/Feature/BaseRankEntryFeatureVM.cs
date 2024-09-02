@@ -39,18 +39,7 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 
 	public BaseUnitProgressionVM UnitProgressionVM => CareerPathVM.UnitProgressionVM;
 
-	public bool IsRecommended
-	{
-		get
-		{
-			CareerPathUIMetaData careerPathUIMetaData = CareerPathVM.CareerPathUIMetaData;
-			if (careerPathUIMetaData == null)
-			{
-				return false;
-			}
-			return careerPathUIMetaData.RecommendedFeatures.Contains(UIFeature.Feature);
-		}
-	}
+	public bool IsRecommended => CareerPathVM.CareerPathUIMetaData?.RecommendedFeatures.Contains(UIFeature.Feature) ?? false;
 
 	public bool IsFavorite
 	{
@@ -88,31 +77,9 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 
 	public TooltipBaseTemplate HintTooltip => m_HintTooltip ?? (m_HintTooltip = CreateHintTooltip());
 
-	private bool IsKeystoneFeature
-	{
-		get
-		{
-			CareerPathUIMetaData careerPathUIMetaData = CareerPathVM.CareerPathUIMetaData;
-			if (careerPathUIMetaData == null)
-			{
-				return false;
-			}
-			return careerPathUIMetaData.KeystoneFeatures.Contains(UIFeature.Feature);
-		}
-	}
+	private bool IsKeystoneFeature => CareerPathVM.CareerPathUIMetaData?.KeystoneFeatures.Contains(UIFeature.Feature) ?? false;
 
-	private bool IsUltimateFeature
-	{
-		get
-		{
-			CareerPathUIMetaData careerPathUIMetaData = CareerPathVM.CareerPathUIMetaData;
-			if (careerPathUIMetaData == null)
-			{
-				return false;
-			}
-			return careerPathUIMetaData.UltimateFeatures.Contains(UIFeature.Feature);
-		}
-	}
+	private bool IsUltimateFeature => CareerPathVM.CareerPathUIMetaData?.UltimateFeatures.Contains(UIFeature.Feature) ?? false;
 
 	private bool IsKeystoneAbility
 	{

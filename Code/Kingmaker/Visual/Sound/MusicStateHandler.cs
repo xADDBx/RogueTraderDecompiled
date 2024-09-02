@@ -4,6 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
 using Kingmaker.Stores;
@@ -41,6 +42,8 @@ public class MusicStateHandler
 
 	private UnitVisualSettings.MusicCombatState m_CombatState;
 
+	private MusicSettingState m_CurrentMusicSettingState;
+
 	private List<string> m_OverridedStates = new List<string>();
 
 	private bool m_StoryModeActive;
@@ -75,9 +78,9 @@ public class MusicStateHandler
 		m_ActiveHardUnit.ReleaseAll();
 		if (setDefaultMusicState)
 		{
+			SetMusicSettingState(MusicSettingState.Exploration);
 			SetMusicState(MusicState.MainMenu);
 		}
-		SetMusicSettingState(MusicSettingState.Exploration);
 	}
 
 	public void HandleUpdateArea()
@@ -102,8 +105,15 @@ public class MusicStateHandler
 			{
 				AkSoundEngine.SetState("MusicSettingType", currentlyLoadedArea.MusicSetting.Value);
 			}
-			AkSoundEngine.SetState("MusicState", (m_ActiveBossFight ? MusicState.BossFight : MusicState.Setting).ToString());
 			AkSoundEngine.SetState("MusicSettingState", ((!Game.Instance.Player.IsInCombat) ? MusicSettingState.Exploration : MusicSettingState.Combat).ToString());
+			if (Game.Instance.Player.IsInCombat)
+			{
+				foreach (BaseUnitEntity item in Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity unit) => unit.IsInCombat))
+				{
+					OnEnemyJoinCombat(item);
+				}
+			}
+			AkSoundEngine.SetState("MusicState", (m_ActiveBossFight ? MusicState.BossFight : MusicState.Setting).ToString());
 			AkSoundEngine.SetState("MusicStoryType", "None");
 			m_StoryModeActive = false;
 			m_ProlongTillNextCombat = false;
@@ -137,13 +147,13 @@ public class MusicStateHandler
 				m_ActiveHardUnit.Retain();
 			}
 		}
-		if (unit is UnitEntity { MusicBossFightType: not null, MusicBossFightType: not null } unitEntity)
+		if (unit is UnitEntity { MusicBossFightTypeGroup: not null, MusicBossFightTypeGroup: not null } unitEntity)
 		{
 			m_ActiveBossFight.Retain();
-			if (IsOverrideAvailable(unitEntity.MusicBossFightType.Group, isMainMenuState: false))
+			if (IsOverrideAvailable(unitEntity.MusicBossFightTypeGroup, isMainMenuState: false))
 			{
 				SetMusicState(MusicState.BossFight);
-				AkSoundEngine.SetState(unitEntity.MusicBossFightType.Group, unitEntity.MusicBossFightType.Value);
+				AkSoundEngine.SetState(unitEntity.MusicBossFightTypeGroup, unitEntity.MusicBossFightTypeValue);
 			}
 		}
 	}
@@ -159,7 +169,7 @@ public class MusicStateHandler
 		{
 			SetMusicCombatState(UnitVisualSettings.MusicCombatState.Normal);
 		}
-		if (unit is UnitEntity { MusicBossFightType: not null, MusicBossFightType: not null, IsDead: not false })
+		if (unit is UnitEntity { MusicBossFightTypeGroup: not null, MusicBossFightTypeGroup: not null, IsDead: not false })
 		{
 			m_ActiveBossFight.Release();
 		}
@@ -182,6 +192,7 @@ public class MusicStateHandler
 			m_ActiveBossFight.ReleaseAll();
 			m_ActiveHardUnit.ReleaseAll();
 			AkSoundEngine.SetState("MusicState", MusicState.Setting.ToString());
+			AkSoundEngine.SetState("MusicCombatState", UnitVisualSettings.MusicCombatState.Normal.ToString());
 		}
 	}
 
@@ -200,6 +211,14 @@ public class MusicStateHandler
 		if (IsOverrideAvailable("MusicSettingState", isMainMenuState: false))
 		{
 			AkSoundEngine.SetState("MusicSettingState", state.ToString());
+			if (state != m_CurrentMusicSettingState && m_CurrentMusicSettingState == MusicSettingState.Combat && state == MusicSettingState.Exploration)
+			{
+				m_ActiveBossFight.ReleaseAll();
+				m_ActiveHardUnit.ReleaseAll();
+				AkSoundEngine.SetState("MusicState", MusicState.Setting.ToString());
+				AkSoundEngine.SetState("MusicCombatState", UnitVisualSettings.MusicCombatState.Normal.ToString());
+			}
+			m_CurrentMusicSettingState = state;
 		}
 	}
 
@@ -213,7 +232,7 @@ public class MusicStateHandler
 		if (state == MusicState.MainMenu)
 		{
 			BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().LastOrDefault();
-			text = ((!string.IsNullOrWhiteSpace(blueprintDlc?.MusicSetting?.Value)) ? blueprintDlc.MusicSetting.Value : string.Empty);
+			text = ((SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original || string.IsNullOrWhiteSpace(blueprintDlc?.MusicSetting?.Value)) ? string.Empty : blueprintDlc.MusicSetting.Value);
 		}
 		if (IsOverrideAvailable("MusicState", state == MusicState.MainMenu || state == MusicState.Credits))
 		{
@@ -262,7 +281,7 @@ public class MusicStateHandler
 		if (!m_ProlongTillNextCombat && m_OverridedStates != null)
 		{
 			m_OverridedStates.Clear();
-			SetMusicState(MusicState.Setting);
+			SetMusicState(m_ActiveBossFight ? MusicState.BossFight : MusicState.Setting);
 			HandleUpdateArea();
 		}
 	}

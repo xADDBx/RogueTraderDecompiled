@@ -18,8 +18,10 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
+using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Items;
+using Kingmaker.Items.Slots;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Enum;
@@ -27,6 +29,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
@@ -164,6 +167,8 @@ public static class UIUtilityItem
 
 		public bool MeetPrerequisite;
 	}
+
+	private static CalculatorUnitPair m_CalculatorUnitPair;
 
 	private static readonly UIPatternData SingleShotPatternData = new UIPatternData
 	{
@@ -582,7 +587,64 @@ public static class UIUtilityItem
 		{
 			return string.Empty;
 		}
-		return item.Description;
+		bool flag = item.Blueprint.GetComponents<AddFactToEquipmentWielder>()?.Any((AddFactToEquipmentWielder c) => c?.Fact.GetComponent<UIPropertiesComponent>() != null) ?? false;
+		if (item.Owner != null || !flag)
+		{
+			return UIUtilityTexts.UpdateDescriptionWithUIProperties(item.Description, item.Owner);
+		}
+		return UpdateDescriptionWithOwner(item, item.Description);
+	}
+
+	private static string UpdateDescriptionWithOwner(ItemEntity item, string description)
+	{
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+			{
+				using (ContextData<UnitHelper.PreviewUnit>.Request())
+				{
+					if (m_CalculatorUnitPair == null)
+					{
+						m_CalculatorUnitPair = new CalculatorUnitPair(Game.Instance.SelectionCharacter.SelectedUnitInUI);
+					}
+					if (m_CalculatorUnitPair.CurrentSelectedUnit == null)
+					{
+						m_CalculatorUnitPair.Dispose();
+						m_CalculatorUnitPair = new CalculatorUnitPair(Game.Instance.SelectionCharacter.SelectedUnitInUI);
+					}
+					if (m_CalculatorUnitPair.CalculatorUnit == null)
+					{
+						return description;
+					}
+					ItemEntity itemEntity = item.Blueprint.CreateEntity();
+					if (itemEntity == null)
+					{
+						return description;
+					}
+					using (ContextData<ItemSlot.IgnoreLock>.Request())
+					{
+						using (ContextData<GameCommandHelper.PreviewItem>.Request())
+						{
+							GameCommandHelper.EquipItemAutomatically(itemEntity, m_CalculatorUnitPair.CalculatorUnit);
+							description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, m_CalculatorUnitPair.CalculatorUnit);
+						}
+					}
+					return description;
+				}
+			}
+		}
+	}
+
+	private static string UpdateAbilityShortenedDescription(ItemEntityUsable usable, BlueprintAbility ability)
+	{
+		string description = usable.Abilities.FirstOrDefault()?.Data.ShortenedDescription ?? ability?.ShortenedDescription;
+		return UpdateDescriptionWithOwner(usable, description);
+	}
+
+	private static string UpdateAbilityDescription(ItemEntityUsable usable, BlueprintAbility ability)
+	{
+		string description = usable.Abilities.FirstOrDefault()?.Data.ShortenedDescription ?? ability?.ShortenedDescription;
+		return UpdateDescriptionWithOwner(usable, description);
 	}
 
 	private static string GetMechanicDescription(BlueprintItem blueprintItem)
@@ -944,13 +1006,11 @@ public static class UIUtilityItem
 				if (blueprintAbility != null)
 				{
 					string text = Game.Instance.BlueprintRoot.LocalizedTexts.AbilityTargets.Personal;
-					itemTooltipData.Texts[TooltipElement.Duration] = blueprintAbility.LocalizedDuration;
 					itemTooltipData.Texts[TooltipElement.Cooldown] = blueprintAbility.CooldownRounds.ToString();
 					itemTooltipData.Texts[TooltipElement.Target] = ((usable.Blueprint.Type == UsableItemType.Potion) ? text : blueprintAbility.GetTarget(-1, item.Owner));
 					itemTooltipData.BlueprintAbility = blueprintAbility;
-					itemTooltipData.Texts[TooltipElement.SavingThrow] = blueprintAbility.LocalizedSavingThrow;
-					itemTooltipData.Texts[TooltipElement.ShortDescription] = usable.Abilities.FirstOrDefault()?.Data.ShortenedDescription ?? blueprintAbility?.ShortenedDescription;
-					itemTooltipData.Texts[TooltipElement.LongDescription] = usable.Abilities.FirstOrDefault()?.Data.Description ?? blueprintAbility?.Description;
+					itemTooltipData.Texts[TooltipElement.ShortDescription] = UpdateAbilityShortenedDescription(usable, blueprintAbility);
+					itemTooltipData.Texts[TooltipElement.LongDescription] = UpdateAbilityDescription(usable, blueprintAbility);
 					itemTooltipData.Texts[TooltipElement.SpellDescriptor] = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
 					itemTooltipData.Texts[TooltipElement.CastingTime] = UIUtilityTexts.GetAbilityActionText(blueprintAbility, usable.Blueprint);
 					FillEquipmentAbilities(itemTooltipData, usable.Blueprint);
@@ -1027,11 +1087,9 @@ public static class UIUtilityItem
 				if (blueprintAbility != null)
 				{
 					string text = Game.Instance.BlueprintRoot.LocalizedTexts.AbilityTargets.Personal;
-					itemTooltipData.Texts[TooltipElement.Duration] = blueprintAbility.LocalizedDuration;
 					itemTooltipData.Texts[TooltipElement.Cooldown] = blueprintAbility.CooldownRounds.ToString();
 					itemTooltipData.Texts[TooltipElement.Target] = ((blueprintUsable.Type == UsableItemType.Potion) ? text : blueprintAbility.GetTarget());
 					itemTooltipData.BlueprintAbility = blueprintAbility;
-					itemTooltipData.Texts[TooltipElement.SavingThrow] = blueprintAbility.LocalizedSavingThrow;
 					itemTooltipData.Texts[TooltipElement.ShortDescription] = SimpleBlueprintExtendAsObject.Or(blueprintAbility, null)?.ShortenedDescription;
 					itemTooltipData.Texts[TooltipElement.LongDescription] = SimpleBlueprintExtendAsObject.Or(blueprintAbility, null)?.Description;
 					itemTooltipData.Texts[TooltipElement.SpellDescriptor] = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);

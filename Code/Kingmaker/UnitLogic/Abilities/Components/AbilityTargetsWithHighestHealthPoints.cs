@@ -72,7 +72,7 @@ public class AbilityTargetsWithHighestHealthPoints : AbilitySelectTarget
 		}
 		if (enumerable.Empty())
 		{
-			Enumerable.Empty<TargetWrapper>();
+			return Enumerable.Empty<TargetWrapper>();
 		}
 		List<BaseUnitEntity> currentEquals;
 		BaseUnitEntity highestHealthPoints = GetHighestHealthPoints(enumerable, out currentEquals);

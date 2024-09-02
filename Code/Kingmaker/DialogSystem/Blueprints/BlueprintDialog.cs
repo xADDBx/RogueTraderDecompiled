@@ -40,6 +40,8 @@ public class BlueprintDialog : BlueprintScriptableObject, IConditionDebugContext
 	[Tooltip("Отключает вращение камеры игроком на время диалога")]
 	public bool IsLockCameraRotationButtons;
 
+	public bool IsNarratorText;
+
 	public DialogType Type;
 
 	public LocalizedString Description;

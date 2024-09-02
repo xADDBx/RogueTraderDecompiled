@@ -260,7 +260,7 @@ public class CharGenView : ViewBase<CharGenVM>, IFullScreenUIHandler, ISubscribe
 	private void CreateInputLayer()
 	{
 		InputLayer = GetInputLayer();
-		AddDisposable(GamePad.Instance.PushLayer(InputLayer));
+		GamePad.Instance.PushLayer(InputLayer);
 	}
 
 	private void DestroyInputLayer()

@@ -12,7 +12,8 @@ public interface ISaver : IDisposable
 	{
 		None,
 		Read,
-		Write
+		Write,
+		WriteOnly
 	}
 
 	string ReadHeader();

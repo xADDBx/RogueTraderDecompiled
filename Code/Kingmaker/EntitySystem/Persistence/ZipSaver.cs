@@ -17,6 +17,60 @@ public class ZipSaver : ISaver, IDisposable
 
 	public string FileName => m_FileName;
 
+	private FileMode FileMode
+	{
+		get
+		{
+			switch (m_Mode)
+			{
+			case ISaver.Mode.Read:
+				return FileMode.Open;
+			case ISaver.Mode.Write:
+			case ISaver.Mode.WriteOnly:
+				return FileMode.OpenOrCreate;
+			default:
+				throw new ArgumentOutOfRangeException();
+			}
+		}
+	}
+
+	private FileAccess FileAccess
+	{
+		get
+		{
+			switch (m_Mode)
+			{
+			case ISaver.Mode.Read:
+				return FileAccess.Read;
+			case ISaver.Mode.Write:
+			case ISaver.Mode.WriteOnly:
+				return FileAccess.ReadWrite;
+			default:
+				throw new ArgumentOutOfRangeException();
+			}
+		}
+	}
+
+	private FileShare FileShare
+	{
+		get
+		{
+			if (m_Mode == ISaver.Mode.Read)
+			{
+				return FileShare.Read;
+			}
+			return FileShare.None;
+		}
+	}
+
+	private ZipArchiveMode ZipMode => m_Mode switch
+	{
+		ISaver.Mode.Read => ZipArchiveMode.Read, 
+		ISaver.Mode.Write => ZipArchiveMode.Update, 
+		ISaver.Mode.WriteOnly => ZipArchiveMode.Create, 
+		_ => throw new ArgumentOutOfRangeException(), 
+	};
+
 	private ZipArchive ZipFile
 	{
 		get
@@ -29,10 +83,10 @@ public class ZipSaver : ISaver, IDisposable
 			{
 				return null;
 			}
-			FileStream fileStream = File.Open(m_FileName, (m_Mode == ISaver.Mode.Read) ? FileMode.Open : FileMode.OpenOrCreate, (m_Mode == ISaver.Mode.Read) ? FileAccess.Read : FileAccess.ReadWrite, (m_Mode == ISaver.Mode.Read) ? FileShare.Read : FileShare.None);
+			FileStream fileStream = File.Open(m_FileName, FileMode, FileAccess, FileShare);
 			try
 			{
-				m_ZipFile = new ZipArchive(fileStream, (m_Mode != ISaver.Mode.Read) ? ZipArchiveMode.Update : ZipArchiveMode.Read);
+				m_ZipFile = new ZipArchive(fileStream, ZipMode);
 			}
 			catch (Exception)
 			{
@@ -108,7 +162,10 @@ public class ZipSaver : ISaver, IDisposable
 		using Stream stream = zipArchiveEntry.Open();
 		using StreamWriter streamWriter = new StreamWriter(stream);
 		streamWriter.Write(json);
-		stream.SetLength(stream.Position);
+		if (m_Mode != ISaver.Mode.WriteOnly)
+		{
+			stream.SetLength(stream.Position);
+		}
 	}
 
 	public void SaveBytes(string name, byte[] bytes)
@@ -120,7 +177,10 @@ public class ZipSaver : ISaver, IDisposable
 		}
 		using Stream stream = zipArchiveEntry.Open();
 		stream.Write(bytes);
-		stream.SetLength(stream.Position);
+		if (m_Mode != ISaver.Mode.WriteOnly)
+		{
+			stream.SetLength(stream.Position);
+		}
 	}
 
 	public bool CopyFromStash(string fileName)
@@ -210,6 +270,10 @@ public class ZipSaver : ISaver, IDisposable
 
 	private ZipArchiveEntry FindEntry(string fullName)
 	{
+		if (m_Mode == ISaver.Mode.WriteOnly)
+		{
+			return null;
+		}
 		return ZipFile.Entries.SingleOrDefault((ZipArchiveEntry v) => v.FullName == fullName);
 	}
 }

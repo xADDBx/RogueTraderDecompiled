@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
@@ -18,7 +19,10 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.DollRoom;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
+using Kingmaker.UI.MVVM.View.ShipCustomization.Console;
+using Kingmaker.UI.Workarounds;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
@@ -35,8 +39,11 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
 
-public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView, InventoryDollConsoleView, InventoryEquipSlotConsoleView>, IInventoryHandler, ISubscriber, IEquipItemAutomaticallyHandler, ICullFocusHandler, IContextMenuHandler, ISplitItemHandler, ICounterWindowUIHandler, IInsertItemHandler
+public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView, InventoryDollConsoleView, InventoryEquipSlotConsoleView>, IInventoryHandler, ISubscriber, IEquipItemAutomaticallyHandler, ICullFocusHandler, IContextMenuHandler, ISplitItemHandler, ICounterWindowUIHandler, IInsertItemHandler, IHasDollRoom, IAddSortingComponent
 {
+	[SerializeField]
+	private DollRoomTargetController m_DollRoomScaler;
+
 	[Header("Console")]
 	[SerializeField]
 	private TooltipPlaces m_StashTooltipPlaces;
@@ -99,6 +106,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 
 	private IConsoleHint m_TooltipHint;
 
+	private Action m_OnHide;
+
 	private readonly BoolReactiveProperty m_ShowTooltip = new BoolReactiveProperty();
 
 	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
@@ -111,9 +120,16 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		InfoCallConsoleMethod = InfoCallConsoleMethod.None
 	};
 
-	private bool m_IsCurrentTooltipComparative;
+	private TooltipConfig m_StatsTooltipConfig = new TooltipConfig
+	{
+		InfoCallConsoleMethod = InfoCallConsoleMethod.LongRightStickButton
+	};
 
 	private IConsoleEntity m_CulledFocus;
+
+	private (Canvas, int) m_SortingToInitOrder;
+
+	public DollRoomTargetController Controller => m_DollRoomScaler;
 
 	protected override void BindViewImplementation()
 	{
@@ -141,6 +157,7 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	protected override void DestroyViewImplementation()
 	{
 		base.DestroyViewImplementation();
+		m_OnHide?.Invoke();
 		DOTween.Kill(m_LeftCanvas);
 		DOTween.Kill(m_RightCanvas);
 		m_LeftCanvas.anchoredPosition = m_LeftCanvasInitPosition;
@@ -168,8 +185,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		}
 		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.SetFocusChangeAction(OnFocusEntity);
 		m_NavigationPanelLeft.AddColumn<GridConsoleNavigationBehaviour>(navigationBehaviour);
-		navigationBehaviour.FocusOnFirstValidEntity();
-		m_NavigationPanelLeft.FocusOnEntityManual(navigationBehaviour);
+		navigationBehaviour.SetCurrentEntity(navigationBehaviour.Entities.FirstOrDefault());
+		m_NavigationPanelLeft.SetCurrentEntity(navigationBehaviour);
 		AddDisposable(m_NavigationPanelCenter = m_DollView.GetNavigation());
 		AddDisposable(m_NavigationPanelRight = new GridConsoleNavigationBehaviour());
 		m_NavigationPanelRight = navigation;
@@ -220,7 +237,7 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		m_TooltipHint.SetLabel(UIStrings.Instance.CommonTexts.Information);
 		m_StashView.ItemsFilter.AddInput(m_InputLayer, m_FocusOnRightPanel, m_ConsoleHintsWidget);
 		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.AddInput(m_InputLayer, m_ConsoleHintsWidget);
-		m_DollView.AddInput(m_InputLayer, m_ConsoleHintsWidget);
+		m_DollView.AddInput(m_InputLayer, m_ConsoleHintsWidget, null, m_ShowTooltip);
 		if (m_NameAndPortraitPCView is CharInfoNameAndPortraitConsoleView charInfoNameAndPortraitConsoleView)
 		{
 			charInfoNameAndPortraitConsoleView.AddInput(m_InputLayer, m_ConsoleHintsWidget, m_FocusOnRightPanel.Not().ToReactiveProperty());
@@ -316,7 +333,6 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private void UpdateTooltip(IConsoleEntity entity)
 	{
 		TooltipHelper.HideTooltip();
-		m_IsCurrentTooltipComparative = false;
 		UpdateTooltipConfigs();
 		if (entity == null)
 		{
@@ -331,9 +347,10 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		else if (entity is IHasTooltipTemplate hasTooltipTemplate)
 		{
 			m_HasTooltip.Value = hasTooltipTemplate.TooltipTemplate() != null;
+			TooltipConfig config = (m_NavigationPanelLeft.IsFocused ? m_StatsTooltipConfig : m_MainTooltipConfig);
 			if (m_ShowTooltip.Value)
 			{
-				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: true);
+				monoBehaviour.ShowConsoleTooltip(hasTooltipTemplate.TooltipTemplate(), m_NavigationBehaviour, config, shouldNotHideLittleTooltip: true);
 			}
 		}
 		else if (entity is IHasTooltipTemplates hasTooltipTemplates)
@@ -342,16 +359,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			m_HasTooltip.Value = list.Count > 0;
 			if (m_HasTooltip.Value && m_ShowTooltip.Value)
 			{
-				m_IsCurrentTooltipComparative = list.Count > 1;
-				if (list.Count > 1)
-				{
-					m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
-					monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
-				}
-				else
-				{
-					monoBehaviour.ShowConsoleTooltip(list.LastOrDefault(), m_NavigationBehaviour, m_MainTooltipConfig, shouldNotHideLittleTooltip: true);
-				}
+				m_CompareTooltipConfig.MaxHeight = ((list.Count > 2) ? 450 : 0);
+				monoBehaviour.ShowComparativeTooltip(hasTooltipTemplates.TooltipTemplates(), m_MainTooltipConfig, m_CompareTooltipConfig, showScrollbar: true);
 			}
 		}
 		else
@@ -464,6 +473,7 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			m_NavigationBehaviour.UpdateDeepestFocusObserve();
 		}
 		m_CulledFocus = null;
+		UpdateSortingCanvas();
 	}
 
 	private void SetBusyTooltipMode(bool isBusy)
@@ -517,5 +527,39 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private void OnFuncAdditionalClick()
 	{
 		(m_NavigationBehaviour.DeepestNestedFocus as IFuncAdditionalClickHandler)?.OnFuncAdditionalClick();
+	}
+
+	public void SetCanvasScaler(CanvasScalerWorkaround canvasScaler)
+	{
+		Controller.CanvasScaler = canvasScaler;
+	}
+
+	public void AddSortingComponent(CanvasSortingComponent sortingComponent)
+	{
+		if (!(sortingComponent == null))
+		{
+			Canvas component = sortingComponent.GetComponent<Canvas>();
+			m_SortingToInitOrder.Item1 = component;
+			m_SortingToInitOrder.Item2 = component.sortingOrder;
+			component.sortingOrder = 250;
+			UpdateSortingCanvas();
+		}
+	}
+
+	private void UpdateSortingCanvas()
+	{
+		if (m_SortingToInitOrder.Item1 == null)
+		{
+			return;
+		}
+		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+		{
+			int sortingOrder = m_CanvasSortingComponent.GetComponent<Canvas>().sortingOrder;
+			m_SortingToInitOrder.Item1.sortingOrder = m_SortingToInitOrder.Item2 + sortingOrder;
+			m_OnHide = delegate
+			{
+				m_SortingToInitOrder.Item1.sortingOrder = m_SortingToInitOrder.Item2;
+			};
+		});
 	}
 }

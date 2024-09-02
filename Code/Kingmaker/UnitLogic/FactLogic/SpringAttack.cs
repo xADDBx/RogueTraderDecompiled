@@ -17,10 +17,14 @@ public class SpringAttack : UnitFactComponentDelegate, IHashable
 
 	public BlueprintAbilityReference DeathWaltzUltimate;
 
-	protected override void OnActivate()
+	public BlueprintAbilityAreaEffectReference AreaMark;
+
+	protected override void OnActivateOrPostLoad()
 	{
 		base.Owner.GetOrCreate<UnitPartSpringAttack>().DeathWaltzBlueprint = DeathWaltz;
 		base.Owner.GetOrCreate<UnitPartSpringAttack>().DeathWaltzUltimateBlueprint = DeathWaltzUltimate;
+		base.Owner.GetOrCreate<UnitPartSpringAttack>().AreaMark = AreaMark;
+		base.Owner.GetOrCreate<UnitPartSpringAttack>().SpringAttackFeature = base.Fact;
 	}
 
 	public override Hash128 GetHash128()

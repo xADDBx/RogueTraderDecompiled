@@ -75,6 +75,8 @@ public class BlueprintCombatRoot : BlueprintScriptableObject
 
 	public BlueprintAbilityGroupReference SecondaryHandAbilityGroup;
 
+	public BlueprintAbilityGroupReference AdditionalLimbsAbilityGroup;
+
 	[Header("Combat Log")]
 	public BlueprintFeatureReference MedicineFeature;
 

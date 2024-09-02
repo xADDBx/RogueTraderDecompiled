@@ -38,19 +38,14 @@ public class JournalNavigationGroupVM : BaseDisposable, IViewModel, IBaseDisposa
 		m_Group = Game.Instance.BlueprintRoot.Quests.GetGroup(groupId);
 		Title = m_Group.Name;
 		AddDisposable(selectedQuest.Subscribe(OnSelectedQuestChange));
+		if (quests.Any((Quest q) => q == selectedQuest.Value))
+		{
+			IsCollapse = false;
+		}
 		Quests = new List<JournalQuestVM>();
 		foreach (Quest quest in quests)
 		{
 			Quests.Add(new JournalQuestVM(quest, selectedQuest, selectQuest));
-		}
-	}
-
-	private void OnSelectedQuestChange(Quest quest)
-	{
-		if (quest != null)
-		{
-			bool value = Quests.Any((JournalQuestVM questVM) => questVM.Quest == quest);
-			IsSelected.Value = value;
 		}
 	}
 
@@ -61,5 +56,18 @@ public class JournalNavigationGroupVM : BaseDisposable, IViewModel, IBaseDisposa
 			quest.Dispose();
 		});
 		Quests.Clear();
+	}
+
+	private void OnSelectedQuestChange(Quest quest)
+	{
+		if (quest != null)
+		{
+			bool flag = Quests.Any((JournalQuestVM questVM) => questVM.Quest == quest);
+			if (flag && IsCollapse)
+			{
+				IsCollapse = false;
+			}
+			IsSelected.Value = flag;
+		}
 	}
 }

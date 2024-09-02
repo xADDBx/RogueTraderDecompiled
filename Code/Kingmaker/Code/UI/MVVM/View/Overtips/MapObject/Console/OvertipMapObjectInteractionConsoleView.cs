@@ -1,7 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Overtips.Console;
 using Kingmaker.Utility.Attributes;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;

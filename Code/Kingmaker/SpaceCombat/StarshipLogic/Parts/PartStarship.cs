@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Mechanics;
@@ -15,7 +16,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.SpaceCombat.StarshipLogic.Parts;
 
-public class PartStarship : BaseUnitPart, IAreaHandler, ISubscriber, IHashable
+public class PartStarship : BaseUnitPart, IAreaHandler, ISubscriber, IDifficultyChangedClassHandler, IHashable
 {
 	public interface IOwner : IEntityPartOwner<PartStarship>, IEntityPartOwner
 	{
@@ -91,6 +92,11 @@ public class PartStarship : BaseUnitPart, IAreaHandler, ISubscriber, IHashable
 	public void OnAreaDidLoad()
 	{
 		ChooseVisual();
+	}
+
+	void IDifficultyChangedClassHandler.HandleDifficultyChanged()
+	{
+		base.Owner.Health.HitPoints.UpdateValue();
 	}
 
 	public override Hash128 GetHash128()

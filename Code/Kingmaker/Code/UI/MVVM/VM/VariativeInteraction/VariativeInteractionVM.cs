@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Interaction;
 using Kingmaker.Items;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;

@@ -4,6 +4,8 @@ using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
@@ -64,21 +66,30 @@ public class CharInfoHitPointsVM : CharInfoComponentVM
 		}
 		PartHealth health = UnitUIWrapper.Health;
 		PartLifeState lifeState = UnitUIWrapper.LifeState;
-		if (health != null && lifeState != null)
+		if (health == null || lifeState == null)
 		{
-			int temporaryHitPoints = health.TemporaryHitPoints;
-			int num = health.MaxHitPoints + temporaryHitPoints;
-			int hitPointsLeft = health.HitPointsLeft;
-			float num2 = (float)hitPointsLeft / (float)health.MaxHitPoints;
-			float num3 = (float)(hitPointsLeft + temporaryHitPoints) / (float)num;
-			float num4 = (float)health.MaxHitPoints / (float)num;
-			if (force || num2 != CurrentHpRatio.Value || num3 != TempHpRatio.Value || num4 != TempHpRatio.Value)
-			{
-				CurrentHpRatio.Value = num2;
-				TempHpRatio.Value = num3;
-				MaxHpRatio.Value = num4;
-				HpText.Value = UIUtility.GetHpText(UnitUIWrapper, lifeState.IsDead);
-			}
+			return;
+		}
+		if (Unit.Value.HasMechanicFeature(MechanicsFeatureType.HideRealHealthInUI))
+		{
+			CurrentHpRatio.Value = 1f;
+			TempHpRatio.Value = 1f;
+			MaxHpRatio.Value = 1f;
+			HpText.Value = "???";
+			return;
+		}
+		int temporaryHitPoints = health.TemporaryHitPoints;
+		int num = health.MaxHitPoints + temporaryHitPoints;
+		int hitPointsLeft = health.HitPointsLeft;
+		float num2 = (float)hitPointsLeft / (float)health.MaxHitPoints;
+		float num3 = (float)(hitPointsLeft + temporaryHitPoints) / (float)num;
+		float num4 = (float)health.MaxHitPoints / (float)num;
+		if (force || num2 != CurrentHpRatio.Value || num3 != TempHpRatio.Value || num4 != TempHpRatio.Value)
+		{
+			CurrentHpRatio.Value = num2;
+			TempHpRatio.Value = num3;
+			MaxHpRatio.Value = num4;
+			HpText.Value = UIUtility.GetHpText(UnitUIWrapper, lifeState.IsDead);
 		}
 	}
 }

@@ -136,7 +136,7 @@ public static class AbilityProjectileAttackLineHelper
 			if (!list.Empty())
 			{
 				MechanicEntity target = list.MinBy((MechanicEntity p) => deflector.DistanceToInCells(p));
-				(List<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple = AbilityProjectileAttack.CollectNodes((CustomGridNodeBase)deflector.CurrentNode.node, target, context.Ability.RangeCells);
+				(ReadonlyList<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple = AbilityProjectileAttack.CollectNodes((CustomGridNodeBase)deflector.CurrentNode.node, target, context.Ability.RangeCells);
 				attackLine = new AbilityProjectileAttackLine(attackLine.ProjectileAttack, attackLine.Index, tuple.Item2, tuple.Item3, tuple.Item1, attackLine.WeaponAttackDamageDisabled, disableDodgeForAlly: true);
 				targetWrapper = new TargetWrapper(deflector.Center, null, null);
 				hits = null;
@@ -336,80 +336,100 @@ public static class AbilityProjectileAttackLineHelper
 		CustomGridNodeBase bestShootingPosition = ability.GetBestShootingPosition(casterNode, new TargetWrapper(targetNode.Vector3Position));
 		List<CustomGridNodeBase>[] array = GridPatterns.CalcScatterShot(bestShootingPosition, targetNode, ability.RangeCells);
 		float stepHeightBetweenCells = GetStepHeightBetweenCells(bestShootingPosition, targetNode);
-		Dictionary<CustomGridNodeBase, PatternCellDataAccumulator> dictionary = new Dictionary<CustomGridNodeBase, PatternCellDataAccumulator>();
-		List<RuleCalculateScatterShotHitDirectionProbability> scatterShotHitDirectionProbabilities = ability.ScatterShotHitDirectionProbabilities;
-		HashSet<BaseUnitEntity> hashSet = TempHashSet.Get<BaseUnitEntity>();
-		List<float> list = TempList.Get<float>();
-		list.Capacity = scatterShotHitDirectionProbabilities.Count;
-		for (int i = 0; i < array.Length; i++)
+		int num = 0;
+		List<CustomGridNodeBase>[] array2 = array;
+		foreach (List<CustomGridNodeBase> list in array2)
 		{
-			List<CustomGridNodeBase> list2 = array[i];
-			int num = Mathf.Abs(i - 2);
-			list.Clear();
+			num += list.Count;
+		}
+		Dictionary<CustomGridNodeBase, PatternCellDataAccumulator> dictionary = new Dictionary<CustomGridNodeBase, PatternCellDataAccumulator>(num);
+		ReadonlyList<RuleCalculateScatterShotHitDirectionProbability> scatterShotHitDirectionProbabilities = ability.ScatterShotHitDirectionProbabilities;
+		List<float> list2 = TempList.Get<float>();
+		list2.IncreaseCapacity(scatterShotHitDirectionProbabilities.Count);
+		for (int j = 0; j < array.Length; j++)
+		{
+			List<CustomGridNodeBase> list3 = array[j];
+			int num2 = Mathf.Abs(j - 2);
+			list2.Clear();
 			foreach (RuleCalculateScatterShotHitDirectionProbability item in scatterShotHitDirectionProbabilities)
 			{
-				List<float> list3 = list;
-				list3.Add(num switch
+				List<float> list4 = list2;
+				list4.Add(num2 switch
 				{
 					0 => item.ResultMainLine, 
 					1 => (float)item.ResultScatterNear / 2f, 
 					_ => (float)item.ResultScatterFar / 2f, 
 				} / 100f);
 			}
-			float[] array2 = list.ToArray();
-			hashSet.Clear();
-			foreach (CustomGridNodeBase item2 in list2)
+			float[] array3 = list2.ToArray();
+			foreach (CustomGridNodeBase item2 in list3)
 			{
 				BaseUnitEntity unit = item2.GetUnit();
-				if (coveredTargetsOnly && unit == null)
+				if ((coveredTargetsOnly && unit == null) || !GetCellData(dictionary, item2, ability, bestShootingPosition, stepHeightBetweenCells, out var dodgeChance, out var hitCoverProbability, out var evasionProbability))
 				{
 					continue;
 				}
-				float num2 = 1f;
-				float coverProbability = 0f;
-				float evasionProbability = 0f;
-				if (unit == null)
-				{
-					num2 = 0f;
-					goto IL_019d;
-				}
-				using (ProfileScope.New("IsNodeAffected"))
-				{
-					if (!IsNodeAffected(ability, bestShootingPosition, item2, stepHeightBetweenCells) || ability.Caster.IsUnitPositionContainsNode(bestShootingPosition.Vector3Position, item2))
-					{
-						continue;
-					}
-					goto IL_019d;
-				}
-				IL_019d:
-				if (unit != null)
-				{
-					hashSet.Add(unit);
-					int direction = CustomGraphHelper.GuessDirection((bestShootingPosition.Vector3Position - item2.Vector3Position).normalized);
-					LosDescription cellCoverStatus = LosCalculations.GetCellCoverStatus(item2, direction);
-					coverProbability = cellCoverStatus.CoverType switch
-					{
-						LosCalculations.CoverType.None => 0f, 
-						LosCalculations.CoverType.Invisible => 1f, 
-						_ => (float)Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, unit, ability.Data, cellCoverStatus, null)).ResultChance / 100f, 
-					};
-					num2 = (unit.IsDead ? 1f : ability.CalculateDodgeChanceCached((UnitEntity)unit, cellCoverStatus));
-				}
-				if (unit is StarshipEntity target)
-				{
-					evasionProbability = Rulebook.Trigger(new RuleStarshipCalculateHitChances((StarshipEntity)ability.Caster, target, ability.StarshipWeapon)).ResultHitChance;
-				}
-				Accumulate(dictionary, item2, array2, num2, coverProbability, evasionProbability, num == 0);
-				for (int j = 0; j < array2.Length; j++)
+				Accumulate(dictionary, item2, array3, dodgeChance, hitCoverProbability, evasionProbability, num2 == 0);
+				for (int k = 0; k < array3.Length; k++)
 				{
 					if (unit != null)
 					{
-						array2[j] *= num2;
+						array3[k] *= dodgeChance;
 					}
 				}
 			}
 		}
 		return new OrientedPatternData(dictionary, bestShootingPosition);
+	}
+
+	private static bool GetCellData(Dictionary<CustomGridNodeBase, PatternCellDataAccumulator> cache, CustomGridNodeBase cell, IAbilityDataProviderForPattern ability, CustomGridNodeBase effectiveShootingNode, float stepHeight, out float dodgeChance, out float hitCoverProbability, out float evasionProbability)
+	{
+		if (cache.TryGetValue(cell, out var value))
+		{
+			dodgeChance = value.DodgeProbability;
+			hitCoverProbability = value.CoverProbability;
+			evasionProbability = value.EvasionProbability;
+			return true;
+		}
+		BaseUnitEntity unit = cell.GetUnit();
+		dodgeChance = 1f;
+		hitCoverProbability = 0f;
+		evasionProbability = 0f;
+		if (unit == null)
+		{
+			dodgeChance = 0f;
+		}
+		else
+		{
+			using (ProfileScope.New("IsNodeAffected"))
+			{
+				if (!IsNodeAffected(ability, effectiveShootingNode, cell, stepHeight) || ability.Caster.IsUnitPositionContainsNode(effectiveShootingNode.Vector3Position, cell))
+				{
+					dodgeChance = 0f;
+					hitCoverProbability = 0f;
+					evasionProbability = 0f;
+					return false;
+				}
+			}
+		}
+		if (unit != null)
+		{
+			int direction = CustomGraphHelper.GuessDirection((effectiveShootingNode.Vector3Position - cell.Vector3Position).normalized);
+			LosDescription cellCoverStatus = LosCalculations.GetCellCoverStatus(cell, direction);
+			hitCoverProbability = cellCoverStatus.CoverType switch
+			{
+				LosCalculations.CoverType.None => 0f, 
+				LosCalculations.CoverType.Invisible => 1f, 
+				_ => (float)Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, unit, ability.Data, cellCoverStatus, null)).ResultChance / 100f, 
+			};
+			dodgeChance = (unit.IsDead ? 1f : ability.CalculateDodgeChanceCached((UnitEntity)unit, cellCoverStatus));
+		}
+		if (unit is StarshipEntity target)
+		{
+			RuleStarshipCalculateHitChances ruleStarshipCalculateHitChances = Rulebook.Trigger(new RuleStarshipCalculateHitChances((StarshipEntity)ability.Caster, target, ability.StarshipWeapon));
+			evasionProbability = ruleStarshipCalculateHitChances.ResultHitChance;
+		}
+		return true;
 	}
 
 	private static void Accumulate(Dictionary<CustomGridNodeBase, PatternCellDataAccumulator> nodesData, CustomGridNodeBase node, float[] initialProbability, float dodgeProbability, float coverProbability, float evasionProbability, bool mainCell)

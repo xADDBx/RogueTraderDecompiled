@@ -220,7 +220,7 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 	private void OnCurrentInputLayerChanged()
 	{
 		InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
-		if (currentInputLayer != m_InputLayer && !(currentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(currentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName))
+		if (currentInputLayer != m_InputLayer && !(currentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(currentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !RootUIContext.Instance.IsBugReportShow)
 		{
 			if (currentInputLayer.ContextName == TutorialBigWindowConsoleView.InputLayerContextName || currentInputLayer.ContextName == TutorialBigWindowConsoleView.GlossaryContextName)
 			{

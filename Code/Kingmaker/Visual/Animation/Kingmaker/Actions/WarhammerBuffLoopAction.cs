@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Utility.Attributes;
-using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
 using Owlcat.QA.Validation;
@@ -81,8 +80,12 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 		}
 	}
 
+	public override bool BlocksCover => true;
+
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
+		handle.SkipFirstTick = false;
+		handle.HasCrossfadePriority = true;
 		AnimationEntry animation = GetAnimation(handle);
 		if ((bool)animation?.EnterWrapper)
 		{
@@ -99,17 +102,28 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
 	{
-		if (!(handle.ActionData is HandleData { State: var state } handleData))
+		if (!(handle.ActionData is HandleData handleData) || handle.IsReleased)
 		{
 			handle.Release();
 			return;
 		}
+		State state = handleData.State;
 		if (state == State.Start || state == State.Loop)
 		{
 			AnimationEntry animation = GetAnimation(handle);
 			if ((bool)animation?.LoopWrapper)
 			{
-				handle.StartClip(animation.LoopWrapper, ClipDurationType.Oneshot);
+				AnimationEntry animation2 = GetAnimation(handle, isOffHand: true);
+				if (animation2 != null)
+				{
+					handle.Manager.AddAnimationClip(handle, animation.LoopWrapper, null, useEmptyAvatarMask: true, isAdditive: false, ClipDurationType.Oneshot, new AnimationComposition(handle));
+					handle.Manager.AddClipToComposition(handle, animation2.LoopWrapper, OffHandMask, isAdditive: false);
+				}
+				else
+				{
+					handle.StartClip(animation.LoopWrapper, ClipDurationType.Oneshot);
+				}
+				handleData.State = State.Loop;
 			}
 			else
 			{
@@ -124,13 +138,11 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 
 	public void SwitchToExit(UnitAnimationActionHandle handle)
 	{
-		if (handle.ActionData == null)
+		if (!(handle.ActionData is HandleData handleData))
 		{
 			handle.Release();
-			return;
 		}
-		HandleData handleData = handle.ActionData as HandleData;
-		if (handleData.State != State.End)
+		else if (handleData.State != State.End)
 		{
 			handleData.State = State.End;
 			AnimationEntry animation = GetAnimation(handle);
@@ -146,38 +158,20 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 	}
 
 	[CanBeNull]
-	private AnimationEntry GetAnimation(UnitAnimationActionHandle handle)
+	private AnimationEntry GetAnimation(UnitAnimationActionHandle handle, bool isOffHand = false)
 	{
+		if (!(handle.Unit is UnitEntityView unitEntityView))
+		{
+			return null;
+		}
+		WeaponAnimationStyle valueOrDefault = ((!isOffHand) ? unitEntityView.HandsEquipment?.ActiveMainHandWeaponStyle : unitEntityView.HandsEquipment?.ActiveOffHandWeaponStyle).GetValueOrDefault();
 		AnimationEntry animationEntry = null;
-		WeaponAnimationStyle weaponAnimationStyle = ((handle.Unit is UnitEntityView unitEntityView) ? (unitEntityView.HandsEquipment?.ActiveMainHandWeaponStyle ?? WeaponAnimationStyle.None) : WeaponAnimationStyle.None);
 		foreach (AnimationEntry animation in m_Animations)
 		{
-			if (animation.IsValid() && ((animationEntry == null && animation.Style == WeaponAnimationStyle.None) || (animation.Style == weaponAnimationStyle && !animation.IsOffHand)))
+			if (animation.IsValid() && animation.IsOffHand == isOffHand && (animation.Style == valueOrDefault || (animationEntry == null && animation.Style == WeaponAnimationStyle.None)))
 			{
 				animationEntry = animation;
 			}
-		}
-		if (animationEntry == null)
-		{
-			animationEntry = m_Animations.FirstOrDefault();
-		}
-		return animationEntry;
-	}
-
-	private AnimationEntry GetAnimationOffHand(UnitAnimationActionHandle handle)
-	{
-		AnimationEntry animationEntry = null;
-		WeaponAnimationStyle weaponAnimationStyle = ((handle.Unit is UnitEntityView unitEntityView) ? (unitEntityView.HandsEquipment?.ActiveOffHandWeaponStyle ?? WeaponAnimationStyle.None) : WeaponAnimationStyle.None);
-		foreach (AnimationEntry animation in m_Animations)
-		{
-			if (animation.IsValid() && ((animationEntry == null && animation.Style == WeaponAnimationStyle.None) || (animation.Style == weaponAnimationStyle && animation.IsOffHand)))
-			{
-				animationEntry = animation;
-			}
-		}
-		if (animationEntry == null)
-		{
-			animationEntry = m_Animations.FirstOrDefault();
 		}
 		return animationEntry;
 	}

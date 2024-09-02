@@ -4,7 +4,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Base;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Localization;
-using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
 
@@ -46,17 +45,28 @@ public static class BlueprintPatchObjectComparator
 		return null;
 	}
 
-	public static bool IsSimple(Type type)
+	public static bool IsSimple(object value)
 	{
-		if (!type.IsPrimitive && !type.Equals(typeof(string)))
+		Type type = value.GetType();
+		if (type.IsPrimitive || type.IsEnum)
 		{
-			return type.IsEnum;
+			return true;
 		}
-		return true;
+		if (type.Equals(typeof(string)))
+		{
+			if (((string)value).StartsWith("!bp_"))
+			{
+				return false;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	public static bool ObjectsAreEqual(object protoItem, object targetItem, string fieldPath)
 	{
+		Logger.Log($"Proto : {protoItem}");
+		Logger.Log($"Target : {targetItem}");
 		if (protoItem != null && targetItem != null && protoItem.GetType() != targetItem.GetType())
 		{
 			Logger.Error($"Possible bug: proto type {protoItem.GetType()} mismatch target type {targetItem.GetType()} at field {fieldPath}. If comparing element on RemoveItem operation, just check that types have the same base class.");
@@ -65,50 +75,55 @@ public static class BlueprintPatchObjectComparator
 		{
 			return true;
 		}
-		if ((protoItem != null && IsSimple(protoItem.GetType())) || (targetItem != null && IsSimple(targetItem.GetType())))
+		if ((protoItem != null && IsSimple(protoItem)) || (targetItem != null && IsSimple(targetItem)))
 		{
-			Logger.Log($"proto {protoItem.GetType()} target {targetItem.GetType()}");
 			Logger.Log("Blueprint patch inspection: parsing simple type field " + fieldPath);
+			Logger.Log($"proto {protoItem.GetType()} target {targetItem.GetType()}");
 			return targetItem == protoItem;
 		}
 		if (protoItem is BlueprintReferenceBase || targetItem is BlueprintReferenceBase)
 		{
 			Logger.Log("Blueprint patch inspection: parsing BlueprintReferenceBase derived type field " + fieldPath);
 			BlueprintReferenceBase blueprintReferenceBase = protoItem as BlueprintReferenceBase;
-			BlueprintReferenceBase blueprintReferenceBase2 = targetItem as BlueprintReferenceBase;
-			string @this = blueprintReferenceBase?.Guid;
-			string this2 = blueprintReferenceBase2?.Guid;
-			if (blueprintReferenceBase == null || @this.IsNullOrEmpty())
+			object obj = Activator.CreateInstance(blueprintReferenceBase.GetType());
+			string text = (string)targetItem;
+			if (text != null && text.StartsWith("!bp_"))
 			{
-				Logger.Error("Item inside " + fieldPath + " is null. If the field is Array or List, then you should consider checking out the bp and probably remove the value.");
+				text = text.Substring(4);
+				if (obj is IReferenceBase referenceBase)
+				{
+					referenceBase.ReadGuidFromJson(text);
+				}
 			}
-			if (blueprintReferenceBase2 == null || this2.IsNullOrEmpty())
+			if (obj == null)
 			{
-				Logger.Error("Item inside " + fieldPath + " is null. If the field is Array or List, then you should consider checking out the bp and probably remove the value.");
+				Logger.Error("Failed to cast to BlueprintReferenceBase");
+				return false;
 			}
-			return blueprintReferenceBase?.Equals(blueprintReferenceBase2) ?? blueprintReferenceBase2?.Equals(blueprintReferenceBase) ?? true;
+			BlueprintReferenceBase blueprintReferenceBase2 = (BlueprintReferenceBase)obj;
+			return blueprintReferenceBase.Guid == blueprintReferenceBase2.Guid;
 		}
 		if (protoItem is SimpleBlueprint || targetItem is SimpleBlueprint)
 		{
 			Logger.Log("Blueprint patch inspection: parsing SimpleBlueprint derived type field " + fieldPath);
-			string obj = ((SimpleBlueprint)protoItem)?.AssetGuid;
-			string text = ((SimpleBlueprint)targetItem)?.AssetGuid;
-			return obj == text;
+			string obj2 = ((SimpleBlueprint)protoItem)?.AssetGuid;
+			string text2 = ((SimpleBlueprint)targetItem)?.AssetGuid;
+			return obj2 == text2;
 		}
 		if (protoItem is Element || targetItem is Element)
 		{
 			Logger.Log("Blueprint patch inspection: parsing Element derived type field " + fieldPath);
-			string obj2 = ((Element)protoItem)?.name;
-			string text2 = ((Element)targetItem)?.name;
-			return obj2 == text2;
+			string obj3 = ((Element)protoItem)?.name;
+			string text3 = ((Element)targetItem)?.name;
+			return obj3 == text3;
 		}
 		if (protoItem is LocalizedString || targetItem is LocalizedString)
 		{
 			Logger.Log("Blueprint patch inspection: parsing LocalizedString derived type field " + fieldPath);
-			LocalizedString obj3 = (LocalizedString)targetItem;
+			LocalizedString obj4 = (LocalizedString)targetItem;
 			LocalizedString localizedString = (LocalizedString)protoItem;
-			string text3 = obj3?.Key;
-			return localizedString?.Key == text3;
+			string text4 = obj4?.Key;
+			return localizedString?.Key == text4;
 		}
 		if (protoItem is UnityEngine.Object || targetItem is UnityEngine.Object)
 		{

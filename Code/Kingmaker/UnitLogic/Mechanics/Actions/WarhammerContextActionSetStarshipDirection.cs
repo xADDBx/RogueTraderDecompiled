@@ -6,6 +6,7 @@ using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Random;
@@ -62,19 +63,23 @@ public class WarhammerContextActionSetStarshipDirection : ContextAction
 
 	protected override void RunAction()
 	{
-		if (!(base.Target.Entity is StarshipEntity starshipEntity) || !(base.Caster is StarshipEntity caster))
+		if (!(base.Target.Entity is StarshipEntity starshipEntity) || !(base.Caster is StarshipEntity starshipEntity2))
 		{
 			return;
 		}
 		int resultOrientation = GetResultOrientation(starshipEntity, out var angle);
 		resultOrientation = GetAlignedOrientation(resultOrientation);
+		if (!AbilityTargetCanTurn.CheckPositionAfterRotation(starshipEntity, resultOrientation))
+		{
+			PFLog.Default.Error($"Cannot turn {starshipEntity} with WarhammerContextActionSetStarshipDirection by {starshipEntity2}");
+		}
 		starshipEntity.SetOrientation(resultOrientation);
 		starshipEntity.SnapToGrid();
 		if (damageBaseMin > 0 && !starshipEntity.Blueprint.IsSoftUnit)
 		{
 			for (int i = 40; i <= Math.Abs(angle); i += 45)
 			{
-				DoDamage(caster, starshipEntity);
+				DoDamage(starshipEntity2, starshipEntity);
 			}
 		}
 		if (angle > 0)

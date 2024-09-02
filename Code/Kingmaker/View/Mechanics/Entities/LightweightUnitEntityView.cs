@@ -38,9 +38,9 @@ public sealed class LightweightUnitEntityView : AbstractUnitEntityView
 			{
 				orCreate.RegisterMechadendrite(settings);
 			}
-			if (!TryGetComponent<OcclusionGeometryClipEntityProxy>(out var _))
+			if (!TryGetComponent<OcclusionGeometryClipLinkEntityProxy>(out var _))
 			{
-				base.gameObject.AddComponent<OcclusionGeometryClipEntityProxy>();
+				base.gameObject.AddComponent<OcclusionGeometryClipLinkEntityProxy>();
 			}
 		}
 	}

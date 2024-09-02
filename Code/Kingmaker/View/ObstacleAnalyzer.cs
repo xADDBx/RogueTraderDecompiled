@@ -497,7 +497,7 @@ public struct ObstacleAnalyzer
 				}
 				float magnitude = vector.magnitude;
 				Vector3 vector2 = vector / magnitude;
-				Vector3 rhs = (nearestNode.position - customGridNode.Vector3Position).To2D().To3D();
+				Vector3 rhs = (pos - customGridNode.Vector3Position).To2D().To3D();
 				float num = Vector3.Dot(vector2, rhs);
 				if (num > magnitude / 2f - corpulence)
 				{

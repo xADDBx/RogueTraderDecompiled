@@ -21,7 +21,7 @@ public class PerformScatterAttackLogThread : LogThreadBase, IGameLogEventHandler
 {
 	public void HandleEvent(GameLogEventAbility evt)
 	{
-		if (!evt.IsScatter)
+		if (!evt.IsScatter || evt.Context.DisableLog)
 		{
 			return;
 		}

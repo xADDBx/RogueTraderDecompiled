@@ -43,6 +43,8 @@ public class GameLogStrings : StringsContainer
 
 	public GameLogMessage WarhammerSourceDealDamage;
 
+	public GameLogMessage WarhammerSourceDealCriticalDamage;
+
 	public GameLogMessage WarhammerHitNoDamage;
 
 	public GameLogMessage WarhammerRFHit;
@@ -199,6 +201,10 @@ public class GameLogStrings : StringsContainer
 	public GameLogMessage GroupStatusEffect;
 
 	public GameLogMessage PerilsOfTheWarp;
+
+	public GameLogMessage TemporaryHitPointsAdd;
+
+	public GameLogMessage TemporaryHitPointsRemove;
 
 	[Header("Checks")]
 	public GameLogMessage SkillCheckSuccess;

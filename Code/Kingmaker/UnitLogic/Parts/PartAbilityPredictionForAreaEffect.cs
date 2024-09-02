@@ -20,7 +20,7 @@ public class PartAbilityPredictionForAreaEffect : UnitPart, IHashable
 {
 	private readonly List<(EntityFactComponent Runtime, SpawnAreaEffectOnAbilityCast Component)> m_PatternEntries = new List<(EntityFactComponent, SpawnAreaEffectOnAbilityCast)>();
 
-	public OrientedPatternData? GetAreaEffectPatternNotFromPatternCenter(AbilityData ability, TargetWrapper target)
+	public OrientedPatternData? GetAreaEffectPatternNotFromPatternCenter(AbilityData ability, TargetWrapper target, CustomGridNodeBase overrideCasterNode = null)
 	{
 		if (target == null)
 		{
@@ -33,18 +33,20 @@ public class PartAbilityPredictionForAreaEffect : UnitPart, IHashable
 			return null;
 		}
 		CustomGridNodeBase nearestNode = target.NearestNode;
-		CustomGridNodeBase nearestNodeXZ = caster.GetNearestNodeXZ();
-		CustomGridNodeBase innerNodeNearestToTarget = caster.GetInnerNodeNearestToTarget(nearestNodeXZ, nearestNode.Vector3Position);
-		CustomGridNodeBase outerNodeNearestToTarget = caster.GetOuterNodeNearestToTarget(nearestNodeXZ, nearestNode.Vector3Position);
+		CustomGridNodeBase customGridNodeBase = overrideCasterNode ?? caster.GetNearestNodeXZ();
+		CustomGridNodeBase innerNodeNearestToTarget = caster.GetInnerNodeNearestToTarget(customGridNodeBase, nearestNode.Vector3Position);
+		CustomGridNodeBase outerNodeNearestToTarget = caster.GetOuterNodeNearestToTarget(customGridNodeBase, nearestNode.Vector3Position);
 		IAbilityAoEPatternProvider abilityAoEPatternProvider = null;
+		bool flag = false;
 		foreach (var patternEntry in partAbilityPredictionForAreaEffectOptional.m_PatternEntries)
 		{
 			using (patternEntry.Runtime.RequestEventContext())
 			{
-				BlueprintAbilityAreaEffect blueprintAbilityAreaEffect = patternEntry.Component.GetBlueprintAbilityAreaEffect(ability);
+				BlueprintAbilityAreaEffect blueprintAbilityAreaEffect = patternEntry.Component.GetBlueprintAbilityAreaEffect(ability, customGridNodeBase);
 				if (blueprintAbilityAreaEffect != null)
 				{
 					abilityAoEPatternProvider = blueprintAbilityAreaEffect;
+					flag = patternEntry.Component.GetOrientationFromCaster;
 					break;
 				}
 			}
@@ -53,10 +55,15 @@ public class PartAbilityPredictionForAreaEffect : UnitPart, IHashable
 		{
 			return null;
 		}
-		Vector3 castDirection = AoEPattern.GetCastDirection(abilityAoEPatternProvider.Pattern.Type, innerNodeNearestToTarget, nearestNode, nearestNode);
+		Vector3 vector = AoEPattern.GetCastDirection(abilityAoEPatternProvider.Pattern.Type, innerNodeNearestToTarget, nearestNode, nearestNode);
+		bool flag2 = flag && vector.sqrMagnitude < 1f;
+		if (flag2)
+		{
+			vector = caster.Forward;
+		}
 		using (ProfileScope.New("GetOriented from PartPredictionForAreaEffect"))
 		{
-			return abilityAoEPatternProvider.Pattern.GetOriented(innerNodeNearestToTarget, outerNodeNearestToTarget, castDirection, abilityAoEPatternProvider.IsIgnoreLos, abilityAoEPatternProvider.IsIgnoreLevelDifference, isDirectional: true, coveredTargetsOnly: false, abilityAoEPatternProvider.UseMeleeLos);
+			return abilityAoEPatternProvider.Pattern.GetOriented(innerNodeNearestToTarget, flag2 ? (outerNodeNearestToTarget.Vector3Position + vector * 1.Cells().Meters).GetNearestNodeXZUnwalkable() : outerNodeNearestToTarget, vector, abilityAoEPatternProvider.IsIgnoreLos, abilityAoEPatternProvider.IsIgnoreLevelDifference, isDirectional: true, coveredTargetsOnly: false, abilityAoEPatternProvider.UseMeleeLos);
 		}
 	}
 

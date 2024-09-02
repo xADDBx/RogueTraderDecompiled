@@ -5,10 +5,12 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameModes;
 using Kingmaker.Localization;
+using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Sound;
 using Kingmaker.UI.Sound.Base;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Bark;
 
@@ -20,9 +22,9 @@ public static class BarkPlayer
 		return BarkExploration(entity, text.Text, encyclopediaLink, duration, voiceOver);
 	}
 
-	public static IBarkHandle Bark(Entity entity, LocalizedString text, float duration = -1f, bool playVoiceOver = false, BaseUnitEntity interactUser = null, bool synced = true)
+	public static IBarkHandle Bark(Entity entity, LocalizedString text, float duration = -1f, bool playVoiceOver = false, BaseUnitEntity interactUser = null, bool synced = true, string overrideName = null, Color overrideNameColor = default(Color))
 	{
-		if (string.IsNullOrEmpty(text.Text))
+		if (string.IsNullOrEmpty(text.Text) && !NetworkingManager.IsMultiplayer)
 		{
 			return null;
 		}
@@ -31,14 +33,18 @@ public static class BarkPlayer
 		{
 			return BarkExploration(entity, text.Text, duration, voiceOver);
 		}
-		return Bark(entity, text.Text, duration, voiceOver, interactUser, synced);
+		return Bark(entity, text.Text, duration, voiceOver, interactUser, synced, overrideName, overrideNameColor);
 	}
 
-	public static IBarkHandle Bark(Entity entity, string text, float duration = -1f, string voiceOver = null, BaseUnitEntity interactUser = null, bool synced = true)
+	public static IBarkHandle Bark(Entity entity, string text, float duration = -1f, string voiceOver = null, BaseUnitEntity interactUser = null, bool synced = true, string overrideName = null, Color overrideNameColor = default(Color))
 	{
 		if (entity == null)
 		{
-			return new BarkHandle(entity, text, duration);
+			if (string.IsNullOrEmpty(overrideName))
+			{
+				return new BarkHandle(entity, text, duration);
+			}
+			return new BarkHandle(entity, text, overrideName, overrideNameColor, duration);
 		}
 		if (entity != null && !entity.IsInGame)
 		{
@@ -56,7 +62,11 @@ public static class BarkPlayer
 		{
 			return null;
 		}
-		return new BarkHandle(entity, text, duration, voiceOverStatus, synced);
+		if (string.IsNullOrEmpty(overrideName))
+		{
+			return new BarkHandle(entity, text, duration, voiceOverStatus, synced);
+		}
+		return new BarkHandle(entity, text, overrideName, overrideNameColor, duration, voiceOverStatus, synced);
 	}
 
 	public static IBarkHandle BarkSubtitle(MechanicEntity entity, string text, float duration = -1f, LocalizedString speakerName = null)

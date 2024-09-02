@@ -7,7 +7,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -58,8 +57,7 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 
 	protected void TryApply(RuleCalculateDamage rule)
 	{
-		using EntityFactComponentLoopGuard entityFactComponentLoopGuard = base.Runtime.RequestLoopGuard();
-		if (entityFactComponentLoopGuard.Blocked || !Restrictions.IsPassed(base.Fact, rule, rule.Ability) || (rule.DamageType == DamageType.Direct && !ModifyEvenDirectDamage))
+		if (!Restrictions.IsPassed(base.Fact, rule, rule.Ability) || (rule.DamageType == DamageType.Direct && !ModifyEvenDirectDamage))
 		{
 			return;
 		}

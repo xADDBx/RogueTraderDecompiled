@@ -23,6 +23,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
@@ -354,7 +355,7 @@ public class InteractionLootPart : InteractionPart<InteractionLootSettings>, IIt
 
 	public bool CanInsertItem(ItemEntity item)
 	{
-		if (base.Settings.ItemRestriction == null)
+		if (base.Settings.LootConditions == null)
 		{
 			return true;
 		}
@@ -362,7 +363,7 @@ public class InteractionLootPart : InteractionPart<InteractionLootSettings>, IIt
 		{
 			using (ContextData<MechanicEntityData>.Request().Setup(base.Owner))
 			{
-				return base.Settings.ItemRestriction.Get().Check();
+				return base.Settings.LootConditions.Get().Check();
 			}
 		}
 	}

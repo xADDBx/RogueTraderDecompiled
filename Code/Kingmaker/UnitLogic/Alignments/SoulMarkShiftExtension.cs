@@ -92,7 +92,7 @@ public static class SoulMarkShiftExtension
 
 	public static SoulMark GetSoulMark(SoulMarkDirection direction)
 	{
-		return GetSoulMarkFor(Game.Instance.Player.MainCharacterEntity, direction);
+		return GetSoulMarkFor(Game.Instance.Player.MainCharacterOriginalEntity, direction);
 	}
 
 	public static SoulMark GetSoulMarkFor(BaseUnitEntity unit, SoulMarkDirection direction)

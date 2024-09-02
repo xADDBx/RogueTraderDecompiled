@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -69,6 +70,8 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 
 	public CursorType CurrentType => m_CurrentType;
 
+	public bool PrevActiveCursorState { get; private set; }
+
 	public IDisposable Bind()
 	{
 		m_CursorTransform.gameObject.SetActive(value: false);
@@ -99,11 +102,16 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 
 	public void SetActive(bool active)
 	{
+		if (HideCursorAnyWay())
+		{
+			return;
+		}
 		Cursor.visible = Game.Instance.IsControllerMouse && !active;
 		if (IsActive != active)
 		{
 			m_CursorTransform.gameObject.SetActive(active);
 			IsActive = active;
+			PrevActiveCursorState = active;
 			if (!active)
 			{
 				ClearComponents();
@@ -114,6 +122,20 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 
 	protected virtual void OnSetActive(bool active)
 	{
+	}
+
+	public bool HideCursorAnyWay()
+	{
+		if (UIVisibilityState.VisibilityPreset.Value.HasFlag(UIVisibilityFlags.Pointer))
+		{
+			return false;
+		}
+		Cursor.visible = false;
+		m_CursorTransform.gameObject.SetActive(value: false);
+		IsActive = false;
+		ClearComponents();
+		OnSetActive(active: false);
+		return true;
 	}
 
 	public void SetCursor(CursorType type)

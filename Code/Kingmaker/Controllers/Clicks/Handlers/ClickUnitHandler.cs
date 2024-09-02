@@ -169,11 +169,10 @@ public sealed class ClickUnitHandler : IClickEventHandler
 				}
 				else
 				{
-					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, targetPoint, targetUnit.MovementAgent.ApproachRadius)
-					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
-					};
+					MoveCommandSettings moveCommandSettings2 = default(MoveCommandSettings);
+					moveCommandSettings2.Destination = targetPoint;
+					MoveCommandSettings settings2 = moveCommandSettings2;
+					UnitMoveToParams unitMoveToParams = UnitHelper.CreateMoveCommandParamsRT(selectedUnit, settings2, path);
 					if (Game.Instance.CurrentMode == GameModeType.StarSystem)
 					{
 						float num3 = (selectedUnit.Blueprint as BlueprintStarship)?.SpeedOnStarSystemMap ?? 1f;
@@ -182,17 +181,16 @@ public sealed class ClickUnitHandler : IClickEventHandler
 					selectedUnit.Commands.Run(unitMoveToParams);
 					selectedUnit.Commands.AddToQueue(new UnitLootUnitParams(targetUnit.EntityData, targetPoint)
 					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
+						IsSynchronized = true
 					});
 				}
 			});
 			return true;
 		}
-		IUnitInteraction interaction = targetUnit.EntityData.SelectClickInteraction(selectedUnit);
-		if (!targetUnit.EntityData.IsInCombat && !selectedUnit.IsInCombat && interaction != null)
+		IUnitInteraction unitInteraction = targetUnit.EntityData.SelectClickInteraction(selectedUnit);
+		if (!targetUnit.EntityData.IsInCombat && !selectedUnit.IsInCombat && unitInteraction != null)
 		{
-			if (interaction.MainPlayerPreferred)
+			if (unitInteraction.MainPlayerPreferred)
 			{
 				BaseUnitEntity mainCharacterEntity = Game.Instance.Player.MainCharacterEntity;
 				if (UIAccess.SelectionManager.IsSelected(mainCharacterEntity) && mainCharacterEntity.IsDirectlyControllable && !mainCharacterEntity.Stealth.Active)
@@ -205,7 +203,7 @@ public sealed class ClickUnitHandler : IClickEventHandler
 					}
 				}
 			}
-			PathfindingService.Instance.FindPathRT(selectedUnit.MovementAgent, targetUnit.ViewTransform.position, interaction.Distance, delegate(ForcedPath path)
+			PathfindingService.Instance.FindPathRT(selectedUnit.MovementAgent, targetUnit.ViewTransform.position, unitInteraction.Distance, delegate(ForcedPath path)
 			{
 				if (path.error)
 				{
@@ -217,16 +215,14 @@ public sealed class ClickUnitHandler : IClickEventHandler
 				}
 				else
 				{
-					UnitMoveToParams cmdParams = new UnitMoveToParams(path, targetUnit.ViewTransform.position, interaction.Distance)
-					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
-					};
+					MoveCommandSettings moveCommandSettings = default(MoveCommandSettings);
+					moveCommandSettings.Destination = targetUnit.ViewTransform.position;
+					MoveCommandSettings settings = moveCommandSettings;
+					UnitMoveToParams cmdParams = UnitHelper.CreateMoveCommandParamsRT(selectedUnit, settings, path);
 					selectedUnit.Commands.Run(cmdParams);
 					selectedUnit.Commands.AddToQueue(new UnitInteractWithUnitParams(targetUnit.EntityData)
 					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
+						IsSynchronized = true
 					});
 				}
 			});

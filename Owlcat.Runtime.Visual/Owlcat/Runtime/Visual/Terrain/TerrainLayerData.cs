@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace Owlcat.Runtime.Visual.Terrain;
 
 [Serializable]
-[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@0.1.216\\Runtime\\Terrain\\TerrainLayerData.cs")]
+[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.225\\Runtime\\Terrain\\TerrainLayerData.cs")]
 public struct TerrainLayerData
 {
 	public Vector4 masksScale;

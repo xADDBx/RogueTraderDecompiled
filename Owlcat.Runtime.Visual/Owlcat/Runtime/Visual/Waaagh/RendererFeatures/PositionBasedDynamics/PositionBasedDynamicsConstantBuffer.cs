@@ -96,6 +96,8 @@ public static class PositionBasedDynamicsConstantBuffer
 
 	public static int _DebugAabbOffset = Shader.PropertyToID("_DebugAabbOffset");
 
+	public static int _CameraCullingEnabled = Shader.PropertyToID("_CameraCullingEnabled");
+
 	public static int _BroadphaseGridResolution = Shader.PropertyToID("_BroadphaseGridResolution");
 
 	public static int _BroadphaseType = Shader.PropertyToID("_BroadphaseType");

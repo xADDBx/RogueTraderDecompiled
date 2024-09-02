@@ -330,11 +330,11 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 			MechanicEntity maybeCaster = areaEffectEntity.Context.MaybeCaster;
 			if (maybeCaster == null || maybeCaster.IsPlayerFaction)
 			{
-				m_PendingRefresh = m_AllyStratagemAreas.CleanupArea(areaEffectEntity);
+				m_PendingRefresh |= m_AllyStratagemAreas.CleanupArea(areaEffectEntity);
 			}
 			else
 			{
-				m_PendingRefresh = m_HostileStratagemAreas.CleanupArea(areaEffectEntity);
+				m_PendingRefresh |= m_HostileStratagemAreas.CleanupArea(areaEffectEntity);
 			}
 		}
 	}

@@ -71,12 +71,12 @@ public class SectorMapRumourEntity : Entity, IQuestObjectiveHandler, ISubscriber
 		}
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective)
+	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
 	{
 		UpdateState(objective.Blueprint);
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective)
+	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
 	{
 		UpdateState(objective.Blueprint);
 	}

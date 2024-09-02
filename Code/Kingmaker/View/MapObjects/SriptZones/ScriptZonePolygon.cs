@@ -44,7 +44,7 @@ public class ScriptZonePolygon : PolygonComponent, IScriptZoneShape
 
 	public override bool NeedsMeshCreation => true;
 
-	public bool Contains(Vector3 point, IntRect size)
+	public bool Contains(Vector3 point, IntRect size, Vector3 forward = default(Vector3))
 	{
 		using (ProfileScope.New("ScriptZonePolygon.Contains"))
 		{
@@ -63,7 +63,7 @@ public class ScriptZonePolygon : PolygonComponent, IScriptZoneShape
 		}
 	}
 
-	public bool Contains(CustomGridNodeBase node, IntRect size)
+	public bool Contains(CustomGridNodeBase node, IntRect size, Vector3 forward = default(Vector3))
 	{
 		return Contains(node.Vector3Position, size);
 	}

@@ -8,7 +8,6 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
-using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
@@ -39,18 +38,18 @@ public class RuleCalculateMovementCost : RulebookEvent<BaseUnitEntity>
 			ResultAPCostPerPoint = Array.Empty<float>();
 			return;
 		}
-		int totalApInt = Mathf.RoundToInt(base.Initiator.GetCombatStateOptional()?.ActionPointsBlue ?? 0f);
+		float totalAP = base.Initiator.GetCombatStateOptional()?.ActionPointsBlue ?? 0f;
 		if (m_PathFound is WarhammerPathPlayer)
 		{
-			CalculateDirectly(totalApInt);
+			CalculateDirectly(totalAP);
 		}
 		else
 		{
-			Calculate(totalApInt);
+			Calculate(totalAP);
 		}
 	}
 
-	private void CalculateDirectly(int totalApInt)
+	private void CalculateDirectly(float totalAP)
 	{
 		WarhammerPathPlayer warhammerPathPlayer = (WarhammerPathPlayer)m_PathFound;
 		List<float> list = TempList.Get<float>();
@@ -60,7 +59,7 @@ public class RuleCalculateMovementCost : RulebookEvent<BaseUnitEntity>
 		for (i = 1; i < m_PathFound.path.Count; i++)
 		{
 			ref WarhammerPathPlayerCell reference2 = ref warhammerPathPlayer.CalculatedPath[i];
-			if (reference2.Length > (float)totalApInt && !m_CalcFullPathAPCost)
+			if (reference2.Length > totalAP && !m_CalcFullPathAPCost)
 			{
 				break;
 			}
@@ -73,11 +72,11 @@ public class RuleCalculateMovementCost : RulebookEvent<BaseUnitEntity>
 		ResultAPCostPerPoint = list.ToArray();
 	}
 
-	private void Calculate(int totalApInt)
+	private void Calculate(float totalAP)
 	{
 		HashSet<GraphNode> threateningAreaCells = UnitMovementAgentBase.CacheThreateningAreaCells(base.Initiator);
 		Dictionary<GraphNode, float> overrideCosts = NodeTraverseCostHelper.GetOverrideCosts(base.Initiator);
-		WarhammerPathPlayerMetricCostProvider warhammerPathPlayerMetricCostProvider = new WarhammerPathPlayerMetricCostProvider(base.Initiator, 0, null, null, threateningAreaCells, overrideCosts);
+		WarhammerPathPlayerMetricCostProvider warhammerPathPlayerMetricCostProvider = new WarhammerPathPlayerMetricCostProvider(base.Initiator, 0f, null, null, threateningAreaCells, overrideCosts);
 		List<float> list = TempList.Get<float>();
 		WarhammerPathPlayerMetric distanceFrom = new WarhammerPathPlayerMetric(base.Initiator.CombatState.LastDiagonalCount, 0f);
 		list.Add(distanceFrom.Length);
@@ -87,7 +86,7 @@ public class RuleCalculateMovementCost : RulebookEvent<BaseUnitEntity>
 			GraphNode from = m_PathFound.path[i - 1];
 			GraphNode to = m_PathFound.path[i];
 			WarhammerPathPlayerMetric warhammerPathPlayerMetric = warhammerPathPlayerMetricCostProvider.Calc(in distanceFrom, in from, in to);
-			if (warhammerPathPlayerMetric.Length > (float)totalApInt && !m_CalcFullPathAPCost)
+			if (warhammerPathPlayerMetric.Length > totalAP && !m_CalcFullPathAPCost)
 			{
 				break;
 			}

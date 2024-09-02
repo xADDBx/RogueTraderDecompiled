@@ -16,7 +16,7 @@ public abstract class BaseUseAbilityLogThread : LogThreadBase
 {
 	protected void HandleUseAbility(AbilityData ability, [CanBeNull] RulePerformAbility rule)
 	{
-		if (ability.Blueprint.DisableLog)
+		if (ability.Blueprint.DisableLog || (rule != null && rule.Context.DisableLog))
 		{
 			return;
 		}

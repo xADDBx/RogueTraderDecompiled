@@ -23,4 +23,8 @@ public abstract class RunEffectBase
 		m_CompleteCallback?.Invoke();
 		m_CompleteCallback = null;
 	}
+
+	protected virtual void OnDeactivate()
+	{
+	}
 }

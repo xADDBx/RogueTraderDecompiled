@@ -3,7 +3,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Enums;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
@@ -37,11 +36,6 @@ public class OnSpawnBuff : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 	[SerializeField]
 	private BlueprintFeatureReference m_IfSummonHaveFact;
 
-	public bool CheckSummonedUnitAlignment;
-
-	[ShowIf("CheckSummonedUnitAlignment")]
-	public AlignmentComponent SummonedAlignment;
-
 	[SerializeField]
 	[FormerlySerializedAs("buff")]
 	private BlueprintBuffReference m_buff;
@@ -70,7 +64,7 @@ public class OnSpawnBuff : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 	{
 		MechanicEntity mechanicEntity = (MechanicEntity)evt.Initiator;
 		Rounds? rounds = (IsInfinity ? null : new Rounds?(duration));
-		if ((mechanicEntity.Facts.Contains(IfHaveFact) || IfHaveFact == null) && (!CheckDescriptor || (evt.Reason.Context.SpellDescriptor & SpellDescriptor) != Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells.SpellDescriptor.None) && (!CheckSummonedUnitFact || (evt.SummonedUnit.Facts.Contains(IfSummonHaveFact) && (!CheckSummonedUnitAlignment || evt.SummonedUnit.Alignment.Value.HasComponent(SummonedAlignment)))))
+		if ((mechanicEntity.Facts.Contains(IfHaveFact) || IfHaveFact == null) && (!CheckDescriptor || (evt.Reason.Context.SpellDescriptor & SpellDescriptor) != Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells.SpellDescriptor.None) && (!CheckSummonedUnitFact || evt.SummonedUnit.Facts.Contains(IfSummonHaveFact)))
 		{
 			evt.SummonedUnit.Buffs.Add(buff, mechanicEntity, rounds);
 		}

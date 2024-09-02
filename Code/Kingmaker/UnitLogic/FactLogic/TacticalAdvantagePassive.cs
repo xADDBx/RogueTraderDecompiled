@@ -95,7 +95,8 @@ public class TacticalAdvantagePassive : UnitFactComponentDelegate, IGlobalRulebo
 				buff?.AddRank(num2 - 1);
 			}
 		}
-		if (base.Owner.Facts.Contains(ComfortInConformityFact))
+		PartHealth healthOptional = mechanicEntity.GetHealthOptional();
+		if (base.Owner.Facts.Contains(ComfortInConformityFact) && healthOptional != null && healthOptional.HitPointsLeft > 0)
 		{
 			RuleHealDamage rule = new RuleHealDamage(base.Owner, mechanicEntity, new DiceFormula(0, DiceType.Zero), num2 * ComfortInConformityHeal);
 			base.Context.TriggerRule(rule);

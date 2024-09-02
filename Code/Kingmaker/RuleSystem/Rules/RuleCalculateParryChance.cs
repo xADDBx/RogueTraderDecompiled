@@ -23,6 +23,8 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public readonly ValueModifiersManager DefenderAttackRedirectionChanceModifiers = new ValueModifiersManager();
 
+	public readonly ValueModifiersManager ParryValueMultipliers = new ValueModifiersManager();
+
 	public const int BaseMultiplier = 1;
 
 	public const int SuperiorityMultiplier = 10;
@@ -130,7 +132,15 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 		{
 			m_ResultSuperiorityNumber--;
 		}
+		if (Defender.HasMechanicFeature(MechanicsFeatureType.IgnoreMeleeOutnumbering) && m_ResultSuperiorityNumber > 0)
+		{
+			m_ResultSuperiorityNumber = 0;
+		}
 		RawResult = 20 + num - (num2 + m_ResultSuperiorityNumber * 10) + ParryValueModifiers.Value;
+		if (!ParryValueMultipliers.Empty)
+		{
+			RawResult *= ParryValueMultipliers.Value;
+		}
 		DeflectionResult = (IsRangedParry ? (Math.Clamp(RawResult / 2, 0, 100) + DefenderAttackRedirectionChanceModifiers.Value) : 0);
 		Result = Math.Clamp(RawResult, 0, 95);
 		SpecialOverrideWithFeatures();

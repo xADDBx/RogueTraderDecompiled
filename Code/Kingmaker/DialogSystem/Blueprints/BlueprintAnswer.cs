@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
+using Kingmaker.DialogSystem.Interfaces;
 using Kingmaker.DialogSystem.State;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -26,7 +27,7 @@ using UnityEngine.Serialization;
 namespace Kingmaker.DialogSystem.Blueprints;
 
 [TypeId("df78945bb9f434e40b897758499cb714")]
-public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
+public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILocalizedStringHolder
 {
 	public LocalizedString Text;
 
@@ -74,6 +75,8 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 	public string DisplayText => Text;
 
 	public bool HasShowCheck => ShowCheck.Type != StatType.Unknown;
+
+	public LocalizedString LocalizedStringText => Text;
 
 	public bool CapitalPartyChecksEnabled
 	{
@@ -143,6 +146,26 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 		{
 			List<SkillCheckDC> list = new List<SkillCheckDC>();
 			BaseUnitEntity baseUnitEntity = CharacterSelection.SelectUnit(this, Game.Instance.Player.MainCharacterEntity);
+			if (FakeChecks.Length != 0)
+			{
+				CheckData[] fakeChecks = FakeChecks;
+				foreach (CheckData checkData in fakeChecks)
+				{
+					if (baseUnitEntity != null)
+					{
+						RulePerformSkillCheck rulePerformSkillCheck = new RulePerformSkillCheck(baseUnitEntity, checkData.Type, checkData.DC);
+						rulePerformSkillCheck.Calculate(doCheck: false);
+						list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck.StatType, rulePerformSkillCheck.Difficulty, rulePerformSkillCheck.StatValue, isBest: false, null));
+					}
+					else
+					{
+						RulePerformPartySkillCheck rulePerformPartySkillCheck = new RulePerformPartySkillCheck(checkData.Type, checkData.DC, CapitalPartyChecksEnabled);
+						rulePerformPartySkillCheck.Calculate(isTrigger: false, doCheck: false);
+						list.Add(new SkillCheckDC(rulePerformPartySkillCheck.Roller, rulePerformPartySkillCheck.StatType, rulePerformPartySkillCheck.Difficulty, rulePerformPartySkillCheck.StatValue, isBest: true, null));
+					}
+				}
+				return list;
+			}
 			foreach (BlueprintCueBase item in NextCue.Cues.Dereference())
 			{
 				BlueprintCheck blueprintCheck = item as BlueprintCheck;
@@ -155,15 +178,15 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 				{
 					if (baseUnitEntity != null)
 					{
-						RulePerformSkillCheck rulePerformSkillCheck = new RulePerformSkillCheck(baseUnitEntity, blueprintCheck.Type, blueprintCheck.GetDC());
-						rulePerformSkillCheck.Calculate(doCheck: false);
-						list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck.StatType, rulePerformSkillCheck.Difficulty, rulePerformSkillCheck.StatValue, isBest: false, null));
+						RulePerformSkillCheck rulePerformSkillCheck2 = new RulePerformSkillCheck(baseUnitEntity, blueprintCheck.Type, blueprintCheck.GetDC());
+						rulePerformSkillCheck2.Calculate(doCheck: false);
+						list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck2.StatType, rulePerformSkillCheck2.Difficulty, rulePerformSkillCheck2.StatValue, isBest: false, null));
 					}
 					else
 					{
-						RulePerformPartySkillCheck rulePerformPartySkillCheck = new RulePerformPartySkillCheck(blueprintCheck.Type, blueprintCheck.GetDC(), CapitalPartyChecksEnabled);
-						rulePerformPartySkillCheck.Calculate(isTrigger: false, doCheck: false);
-						list.Add(new SkillCheckDC(rulePerformPartySkillCheck.Roller, rulePerformPartySkillCheck.StatType, rulePerformPartySkillCheck.Difficulty, rulePerformPartySkillCheck.StatValue, isBest: true, null));
+						RulePerformPartySkillCheck rulePerformPartySkillCheck2 = new RulePerformPartySkillCheck(blueprintCheck.Type, blueprintCheck.GetDC(), CapitalPartyChecksEnabled);
+						rulePerformPartySkillCheck2.Calculate(isTrigger: false, doCheck: false);
+						list.Add(new SkillCheckDC(rulePerformPartySkillCheck2.Roller, rulePerformPartySkillCheck2.StatType, rulePerformPartySkillCheck2.Difficulty, rulePerformPartySkillCheck2.StatValue, isBest: true, null));
 					}
 				}
 			}
@@ -171,15 +194,15 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider
 			{
 				if (baseUnitEntity != null)
 				{
-					RulePerformSkillCheck rulePerformSkillCheck2 = new RulePerformSkillCheck(baseUnitEntity, ShowCheck.Type, ShowCheck.GetDC());
-					rulePerformSkillCheck2.Calculate(doCheck: false);
-					list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck2.StatType, rulePerformSkillCheck2.Difficulty, rulePerformSkillCheck2.StatValue, isBest: true, true));
+					RulePerformSkillCheck rulePerformSkillCheck3 = new RulePerformSkillCheck(baseUnitEntity, ShowCheck.Type, ShowCheck.GetDC());
+					rulePerformSkillCheck3.Calculate(doCheck: false);
+					list.Add(new SkillCheckDC(baseUnitEntity, rulePerformSkillCheck3.StatType, rulePerformSkillCheck3.Difficulty, rulePerformSkillCheck3.StatValue, isBest: true, true));
 				}
 				else
 				{
-					RulePerformPartySkillCheck rulePerformPartySkillCheck2 = new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.GetDC(), CapitalPartyChecksEnabled);
-					rulePerformPartySkillCheck2.Calculate(isTrigger: false, doCheck: false);
-					list.Add(new SkillCheckDC(rulePerformPartySkillCheck2.Roller, rulePerformPartySkillCheck2.StatType, rulePerformPartySkillCheck2.ResultDC, rulePerformPartySkillCheck2.StatValue, isBest: true, true));
+					RulePerformPartySkillCheck rulePerformPartySkillCheck3 = new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.GetDC(), CapitalPartyChecksEnabled);
+					rulePerformPartySkillCheck3.Calculate(isTrigger: false, doCheck: false);
+					list.Add(new SkillCheckDC(rulePerformPartySkillCheck3.Roller, rulePerformPartySkillCheck3.StatType, rulePerformPartySkillCheck3.ResultDC, rulePerformPartySkillCheck3.StatValue, isBest: true, true));
 				}
 			}
 			return list;

@@ -139,6 +139,8 @@ public class UINetLobbyTexts
 
 	public LocalizedString UserTypeDropdownFriends;
 
+	public LocalizedString UserTypeDropdownFriendsOfFriends;
+
 	public LocalizedString UserTypeDropdownLeader;
 
 	public string GetJoinableUserTypeLabel(JoinableUserTypes type)
@@ -148,6 +150,7 @@ public class UINetLobbyTexts
 			JoinableUserTypes.NoOne => UserTypeDropdownNoOne, 
 			JoinableUserTypes.Anyone => UserTypeDropdownAnyone, 
 			JoinableUserTypes.Friends => UserTypeDropdownFriends, 
+			JoinableUserTypes.FriendsOfFriends => UserTypeDropdownFriendsOfFriends, 
 			_ => string.Empty, 
 		};
 	}

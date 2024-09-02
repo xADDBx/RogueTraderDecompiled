@@ -598,7 +598,7 @@ public static class UIUtility
 		}
 		UIDialog dialog = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Dialog;
 		string text2 = (skillCheck.Passed ? dialog.Succeeded : dialog.Failed);
-		string text3 = skillCheck.StatType.ToString();
+		string text3 = EntityLink.Type.UnitStat.GetTag() + ":" + skillCheck.StatType.ToString() + ":" + skillCheck.ActingUnit.UniqueId;
 		string format = (skillCheck.Passed ? dialog.SucccedeedCheckFormat : dialog.FailedCheckFormat);
 		string arg2 = "<link=\"" + EntityLink.Type.SkillcheckResult.ToString() + "\">" + text2 + "</link>";
 		string arg3 = "<link=\"" + text3 + "\">" + LocalizedTexts.Instance.Stats.GetText(skillCheck.StatType) + "</link>";
@@ -696,7 +696,7 @@ public static class UIUtility
 					}
 					else
 					{
-						list.Add(new PrerequisiteEntryVM(UIStrings.Instance.Tooltips.PrerequisiteRank, calculatedPrerequisiteMaxRankNotReached.Value, calculatedPrerequisiteMaxRankNotReached.Not));
+						list.Add(new PrerequisiteEntryVM(UIStrings.Instance.Tooltips.PrerequisiteRank, calculatedPrerequisiteMaxRankNotReached.Value, calculatedPrerequisiteMaxRankNotReached.Not, null, isTitle: true));
 					}
 				}
 				else
@@ -716,7 +716,7 @@ public static class UIUtility
 				}
 				foreach (CalculatedPrerequisite item2 in calculatedPrerequisiteComposite.Prerequisites.Where((CalculatedPrerequisite i) => i is CalculatedPrerequisiteComposite))
 				{
-					list.Add(new PrerequisiteEntryVM(GetPrerequisiteEntries(item2), calculatedPrerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or));
+					list.Add(new PrerequisiteEntryVM(GetPrerequisiteEntries(item2), calculatedPrerequisiteComposite.Value, calculatedPrerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or));
 				}
 			}
 		}
@@ -1004,7 +1004,11 @@ public static class UIUtility
 		string text = BlueprintRoot.Instance.LocalizedTexts.Stats.GetText(statType);
 		if (skillCheck.Settings.HideDC)
 		{
-			return "[" + text + "]";
+			if (skillCheck.GetSkill() != StatType.SkillAwareness)
+			{
+				return "[" + text + "]";
+			}
+			return "";
 		}
 		int num = skillCheck.DCOverride;
 		if (num == 0)

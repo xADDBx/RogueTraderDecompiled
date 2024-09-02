@@ -17,7 +17,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [AllowedOn(typeof(BlueprintUnitFact))]
 [AllowMultipleComponents]
 [TypeId("99d65f0e88e14fd0b81ad24d47629fc8")]
-public class RecalculateOnEquipmentChange : MechanicEntityFactComponentDelegate, IEntitySubscriber, IEntityGainFactHandler<EntitySubscriber>, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IEntityGainFactHandler, EntitySubscriber>, IEntityLostFactHandler<EntitySubscriber>, IEntityLostFactHandler, IEventTag<IEntityLostFactHandler, EntitySubscriber>, IEquipItemHandler<EntitySubscriber>, IEquipItemHandler, ISubscriber<IItemEntity>, IEventTag<IEquipItemHandler, EntitySubscriber>, IUnitEquipmentHandler, IHashable
+public class RecalculateOnEquipmentChange : MechanicEntityFactComponentDelegate, IEntitySubscriber, IEntityGainFactHandler<EntitySubscriber>, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IEntityGainFactHandler, EntitySubscriber>, IEntityLostFactHandler<EntitySubscriber>, IEntityLostFactHandler, IEventTag<IEntityLostFactHandler, EntitySubscriber>, IEquipItemHandler<EntitySubscriber>, IEquipItemHandler, ISubscriber<IItemEntity>, IEventTag<IEquipItemHandler, EntitySubscriber>, IUnitEquipmentHandler<EntitySubscriber>, IUnitEquipmentHandler, IEventTag<IUnitEquipmentHandler, EntitySubscriber>, IHashable
 {
 	IEntity IEntitySubscriber.GetSubscribingEntity()
 	{
@@ -26,27 +26,27 @@ public class RecalculateOnEquipmentChange : MechanicEntityFactComponentDelegate,
 
 	public void HandleEntityGainFact(EntityFact fact)
 	{
-		base.Fact.Recalculate();
+		base.Fact.Reapply();
 	}
 
 	public void HandleEntityLostFact(EntityFact fact)
 	{
-		base.Fact.Recalculate();
+		base.Fact.Reapply();
 	}
 
 	public void OnDidEquipped()
 	{
-		base.Fact.Recalculate();
+		base.Fact.Reapply();
 	}
 
 	public void OnWillUnequip()
 	{
-		base.Fact.Recalculate();
+		base.Fact.Reapply();
 	}
 
 	public void HandleEquipmentSlotUpdated(ItemSlot slot, ItemEntity previousItem)
 	{
-		base.Fact.Recalculate();
+		base.Fact.Reapply();
 	}
 
 	public override Hash128 GetHash128()

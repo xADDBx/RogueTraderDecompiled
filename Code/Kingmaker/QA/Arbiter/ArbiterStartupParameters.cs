@@ -49,4 +49,6 @@ public class ArbiterStartupParameters
 	public bool ArbiterRestart { get; set; }
 
 	public string ArbiterInstructionsPart { get; set; }
+
+	public string ArbiterExternalTestRunId { get; set; }
 }

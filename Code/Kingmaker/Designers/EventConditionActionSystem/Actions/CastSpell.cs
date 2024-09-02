@@ -43,6 +43,8 @@ public class CastSpell : GameAction
 
 	public AttackHitPolicyType HitPolicy = AttackHitPolicyType.AutoHit;
 
+	public bool DisableLog;
+
 	public BlueprintAbility Ability => m_Ability;
 
 	private bool CasterIsNull => Caster == null;
@@ -79,6 +81,8 @@ public class CastSpell : GameAction
 		rulePerformAbility.IgnoreCooldown = true;
 		rulePerformAbility.ForceFreeAction = true;
 		rulePerformAbility.Context.IsForced = true;
+		rulePerformAbility.DisableGameLog = DisableLog;
+		rulePerformAbility.Context.DisableLog = DisableLog;
 		Rulebook.Trigger(rulePerformAbility);
 		rulePerformAbility.Context.HitPolicy = HitPolicy;
 		rulePerformAbility.Context.RewindActionIndex();

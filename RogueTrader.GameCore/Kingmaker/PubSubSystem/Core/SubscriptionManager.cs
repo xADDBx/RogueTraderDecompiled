@@ -138,31 +138,40 @@ public class SubscriptionManager<TSubscriber> : IAstarPooledObject where TSubscr
 
 	private static void ExecuteAction<T>(Action<T> action, object subscriber)
 	{
-		if (subscriber is ISubscriptionProxy subscriptionProxy && subscriptionProxy.GetSubscriber() is T)
+		if (subscriber is ISubscriptionProxy subscriptionProxy)
 		{
 			using (subscriptionProxy.RequestEventContext())
 			{
-				ExecuteActionInternal(action, (T)subscriptionProxy.GetSubscriber());
-				return;
+				ExecuteActionInternal(action, subscriptionProxy.GetSubscriber(), subscriber);
 			}
 		}
-		if (subscriber is T typedSubscriber)
-		{
-			ExecuteActionInternal(action, typedSubscriber);
-		}
+		ExecuteActionInternal(action, subscriber);
 	}
 
-	private static void ExecuteActionInternal<T>(Action<T> action, T typedSubscriber)
+	private static void ExecuteActionInternal<T>(Action<T> action, object eventTarget, object eventSubscriber = null)
 	{
-		if (typedSubscriber is IContextDataProvider contextDataProvider)
+		if (!(eventTarget is T obj))
+		{
+			return;
+		}
+		if (eventSubscriber == null)
+		{
+			eventSubscriber = eventTarget;
+		}
+		using EventBusLoopGuard<T> eventBusLoopGuard = EventBusLoopGuard<T>.Request(eventSubscriber);
+		if (eventBusLoopGuard.Blocked)
+		{
+			return;
+		}
+		if (eventTarget is IContextDataProvider contextDataProvider)
 		{
 			using (contextDataProvider.RequestContextData())
 			{
-				action(typedSubscriber);
+				action(obj);
 				return;
 			}
 		}
-		action(typedSubscriber);
+		action(obj);
 	}
 
 	public void Unsubscribe<TTag>(TSubscriber subscriber, [CanBeNull] ISubscriptionProxy proxy)

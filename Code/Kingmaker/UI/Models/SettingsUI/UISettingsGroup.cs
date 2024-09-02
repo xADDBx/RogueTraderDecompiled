@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Localization;
 using Kingmaker.UI.Models.SettingsUI.SettingAssets;
-using Kingmaker.Utility.BuildModeUtils;
 using UnityEngine;
 
 namespace Kingmaker.UI.Models.SettingsUI;
@@ -26,13 +25,14 @@ public class UISettingsGroup : ScriptableObject
 		{
 			return false;
 		}
-		if (platform != (UISettingsEntityBase.UISettingsPlatform)((!BuildModeUtility.Data.CloudSwitchSettings) ? 1 : 2) && (platform != UISettingsEntityBase.UISettingsPlatform.PCMouseOnly || !Game.Instance.IsControllerMouse))
+		bool flag = false;
+		if (platform != 0 && !(platform == UISettingsEntityBase.UISettingsPlatform.Console && flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PC || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.GamepadAndPC || !Game.Instance.IsControllerGamepad || flag))
 		{
-			if (platform != 0)
+			if (platform == UISettingsEntityBase.UISettingsPlatform.PCMouseOnly && Game.Instance.IsControllerMouse)
 			{
-				return platform == UISettingsEntityBase.UISettingsPlatform.GamepadAndPC;
+				return !flag;
 			}
-			return true;
+			return false;
 		}
 		return true;
 	}

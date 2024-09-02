@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Enums;
 using Kingmaker.UI.Models.Tooltip.Base;
@@ -12,36 +11,12 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Selection;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.Utility;
-using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnitDescription;
-using UnityEngine;
 
 namespace Kingmaker.Inspect;
 
 public class UnitInspectInfoByPart
 {
-	public class AxiomaticPartData
-	{
-		public BlueprintUnitType UnitType;
-
-		public string TypeDescription;
-
-		public Sprite TypeImage;
-
-		public string TypeName;
-
-		public string TypeKnowledgeStat;
-
-		public AxiomaticPartData(UnitDescription description)
-		{
-			UnitType = description.TypeBlueprint;
-			TypeDescription = description.TypeDescription;
-			TypeImage = description.TypeImage;
-			TypeName = description.TypeName;
-			TypeKnowledgeStat = description.TypeKnowledgeStat;
-		}
-	}
-
 	public class BasePartData
 	{
 		public BlueprintRace Race;
@@ -51,8 +26,6 @@ public class UnitInspectInfoByPart
 		public UnitDescription.ClassData[] Classes;
 
 		public Size Size;
-
-		public Alignment Alignment;
 
 		public int Level;
 
@@ -72,7 +45,6 @@ public class UnitInspectInfoByPart
 			Type = description.Type;
 			Classes = description.Classes;
 			Size = description.Size;
-			Alignment = description.Alignment;
 			Level = description.HD;
 			Initiative = description.Initiative;
 			Speed = description.Speed;
@@ -92,8 +64,6 @@ public class UnitInspectInfoByPart
 
 		public UnitDescription.SavesData Saves;
 
-		public List<UnitDescription.SpellResistanceData> SpellResistance;
-
 		public UnitDescription.DamageReduction[] DamageReduction;
 
 		public UnitDescription.ImmunitiesData Immunities;
@@ -112,24 +82,6 @@ public class UnitInspectInfoByPart
 			Immunities = description.Immunities;
 			RegenerationData = description.Regeneration;
 			FastHealing = description.FastHealing;
-			if (description.SR == null)
-			{
-				return;
-			}
-			SpellResistance = new List<UnitDescription.SpellResistanceData>();
-			UnitDescription.SpellResistanceData[] sR = description.SR;
-			foreach (UnitDescription.SpellResistanceData sr in sR)
-			{
-				UnitDescription.SpellResistanceData spellResistanceData = SpellResistance.FirstOrDefault((UnitDescription.SpellResistanceData s) => s.OnlyAgainstSpellDescriptor == sr.OnlyAgainstSpellDescriptor);
-				if (spellResistanceData == null)
-				{
-					SpellResistance.Add(sr);
-				}
-				else
-				{
-					spellResistanceData.Value = Mathf.Max(spellResistanceData.Value, sr.Value);
-				}
-			}
 		}
 	}
 
@@ -185,9 +137,6 @@ public class UnitInspectInfoByPart
 	{
 		public List<Buff> ActiveBuffs = new List<Buff>();
 	}
-
-	[CanBeNull]
-	public AxiomaticPartData AxiomaticPart;
 
 	[CanBeNull]
 	public BasePartData BasePart;
@@ -265,7 +214,6 @@ public class UnitInspectInfoByPart
 		if (unitInfo != null)
 		{
 			UnitDescription description = UnitDescriptionHelper.GetDescription(unitInfo.Blueprint);
-			AxiomaticPart = new AxiomaticPartData(description);
 			if (unitInfo.IsUnlocked(UnitInfoPart.Base) || force)
 			{
 				BasePart = new BasePartData(description);

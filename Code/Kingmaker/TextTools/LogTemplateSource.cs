@@ -9,8 +9,12 @@ public class LogTemplateSource : TextTemplate
 	public override string Generate(bool capitalized, List<string> parameters)
 	{
 		object obj;
-		if (GameLogContext.SourceEntity.Value == null)
+		if (string.IsNullOrEmpty(GameLogContext.OverrideName.Value))
 		{
+			if (GameLogContext.SourceEntity.Value != null)
+			{
+				return LogHelper.GetEntityName(GameLogContext.SourceEntity.Value);
+			}
 			obj = GameLogContext.SourceFact.Value?.Name;
 			if (obj == null)
 			{
@@ -19,7 +23,7 @@ public class LogTemplateSource : TextTemplate
 		}
 		else
 		{
-			obj = LogHelper.GetEntityName(GameLogContext.SourceEntity.Value);
+			obj = LogHelper.GetOverrideName(GameLogContext.OverrideName.Value, GameLogContext.OverrideNameColor.Value);
 		}
 		return (string)obj;
 	}

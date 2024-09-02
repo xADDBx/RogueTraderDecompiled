@@ -30,6 +30,12 @@ public class AbilityPatternView : MonoBehaviour
 
 	private readonly List<AbilityPatternCell> m_AbilityPatternCells = new List<AbilityPatternCell>();
 
+	[SerializeField]
+	private int m_ScaleMaxSize = 12;
+
+	[SerializeField]
+	private int m_ScaleThreshold = 20;
+
 	public void Initialize(UIUtilityItem.UIPatternData patternData)
 	{
 		m_PatternData = patternData;
@@ -63,6 +69,21 @@ public class AbilityPatternView : MonoBehaviour
 		m_AbilityPatternCells.Clear();
 	}
 
+	[UnityEngine.ContextMenu("TestMe")]
+	public void TestMe()
+	{
+		ClearCells();
+		UIUtilityItem.UIPatternData patternData = m_PatternData;
+		if (patternData != null)
+		{
+			PatternGridData patternCells = patternData.PatternCells;
+			if (patternCells.Count > 1)
+			{
+				DrawCells();
+			}
+		}
+	}
+
 	private void DrawCells()
 	{
 		ClearCells();
@@ -73,21 +94,31 @@ public class AbilityPatternView : MonoBehaviour
 			Vector2Int valueOrDefault = ownerCell.GetValueOrDefault();
 			intRect = intRect.ExpandToContain(valueOrDefault.x, valueOrDefault.y);
 		}
+		int num = Math.Max(intRect.Width, intRect.Height);
+		if (num > m_ScaleThreshold)
+		{
+			int num2 = Math.Max(m_MinSizeInCells, num);
+			float num3 = Math.Min(1f * (float)m_ScaleMaxSize / (float)num2, 1f);
+			intRect.xmin = (int)Math.Floor((float)intRect.xmin * num3);
+			intRect.xmax = (int)Math.Floor((float)intRect.xmax * num3);
+			intRect.ymin = (int)Math.Floor((float)intRect.ymin * num3);
+			intRect.ymax = (int)Math.Floor((float)intRect.ymax * num3);
+		}
 		int width = intRect.Width;
 		int height = intRect.Height;
-		int num = Math.Max(m_MinSizeInCells, Math.Max(width, height));
-		float num2 = (m_PatternContainerSize - m_Spacing * (float)(num - 1)) / (float)num;
-		int num3 = num / 2 - width / 2;
-		int num4 = num / 2 - height / 2;
-		Vector2Int vector2Int = new Vector2Int(intRect.xmin - num3, intRect.ymin - num4);
+		int num4 = Math.Max(m_MinSizeInCells, Math.Max(intRect.Width, intRect.Height));
+		float num5 = (m_PatternContainerSize - m_Spacing * (float)(num4 - 1)) / (float)num4;
+		int num6 = num4 / 2 - width / 2;
+		int num7 = num4 / 2 - height / 2;
+		Vector2Int vector2Int = new Vector2Int(intRect.xmin - num6, intRect.ymin - num7);
 		PatternGridData patternGridData = m_PatternData.PatternCells.Move(-vector2Int);
 		Vector2Int? vector2Int2 = m_PatternData.OwnerCell - vector2Int;
-		Vector2 vector = new Vector2(-0.5f * (float)(num - width) % 2f, 0.5f * (float)(num - height) % 2f);
+		Vector2 vector = new Vector2(-0.5f * (float)((num4 - width) % 2), 0.5f * (float)((num4 - height) % 2));
 		Vector2 zero = Vector2.zero;
 		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < num; i++)
+		for (int i = 0; i < num4; i++)
 		{
-			for (int j = 0; j < num; j++)
+			for (int j = 0; j < num4; j++)
 			{
 				Vector2Int vector2Int3 = new Vector2Int(i, j);
 				if (patternGridData.Contains(vector2Int3) || vector2Int3 == vector2Int2)
@@ -97,11 +128,16 @@ public class AbilityPatternView : MonoBehaviour
 					widget.Initialize(cellType);
 					RectTransform rectTransform = (RectTransform)widget.transform;
 					rectTransform.SetParent(m_PatternContainer, worldPositionStays: false);
-					rectTransform.anchoredPosition = (new Vector2(vector2Int3.x, vector2Int3.y) + vector) * num2 + zero;
-					rectTransform.sizeDelta = new Vector2(num2, num2);
-					if (cellType != 0)
+					rectTransform.anchoredPosition = (new Vector2(vector2Int3.x, vector2Int3.y) + vector) * num5 + zero;
+					rectTransform.sizeDelta = new Vector2(num5, num5);
+					switch (cellType)
 					{
+					case AbilityPatternCellType.Start:
+						list.Insert(0, rectTransform);
+						break;
+					case AbilityPatternCellType.Caster:
 						list.Add(rectTransform);
+						break;
 					}
 					m_AbilityPatternCells.Add(widget);
 				}

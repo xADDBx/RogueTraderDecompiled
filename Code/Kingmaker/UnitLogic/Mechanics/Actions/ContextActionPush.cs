@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
@@ -40,6 +41,7 @@ public class ContextActionPush : ContextAction
 			return;
 		}
 		MechanicEntity caster = (m_UseFactOwnerAsCaster ? base.Context.MaybeOwner : base.Context.MaybeCaster);
+		Game.Instance.AbilityExecutor.Abilities.FirstItem((AbilityExecutionProcess process) => process.Context.MaybeCaster == base.TargetEntity)?.Detach();
 		Vector3 fromPoint = GetFromPoint();
 		int distance = Math.Min(Cells.Calculate(base.Context), 5);
 		EventBus.RaiseEvent(delegate(IUnitGetAbilityPush h)

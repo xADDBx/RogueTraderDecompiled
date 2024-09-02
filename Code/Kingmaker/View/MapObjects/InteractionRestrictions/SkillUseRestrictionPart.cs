@@ -9,6 +9,7 @@ using Kingmaker.Interaction;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using UnityEngine;

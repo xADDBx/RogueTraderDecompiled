@@ -172,6 +172,10 @@ public class RulePerformMomentumChange : RulebookOptionalTargetEvent
 			}
 			ResultPrevValue = group.Momentum;
 			ResultDeltaValue = Modifiers.Apply(ResultDeltaValueBase) + FlatBonus;
+			if (ResultPrevValue < 0 && ResultDeltaValue > 0)
+			{
+				ResultDeltaValue = 0;
+			}
 			group.AddMomentum(ResultDeltaValue);
 			ResultCurrentValue = group.Momentum;
 			ResultGroup = group;

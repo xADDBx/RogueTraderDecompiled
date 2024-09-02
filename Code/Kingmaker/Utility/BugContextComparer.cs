@@ -32,6 +32,14 @@ public class BugContextComparer : IComparer<BugContext>
 			10
 		},
 		{
+			BugContext.ContextType.GroupChanger,
+			10
+		},
+		{
+			BugContext.ContextType.TransitionMap,
+			10
+		},
+		{
 			BugContext.ContextType.Dialog,
 			20
 		},

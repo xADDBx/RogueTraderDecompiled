@@ -286,6 +286,10 @@ public class WeaponVisualParameters
 			}
 			return Prototype.InventoryEquipSound;
 		}
+		set
+		{
+			m_InventoryEquipSound = value;
+		}
 	}
 
 	public string InventoryPutSound
@@ -297,6 +301,10 @@ public class WeaponVisualParameters
 				return m_InventoryPutSound;
 			}
 			return Prototype.InventoryPutSound;
+		}
+		set
+		{
+			m_InventoryPutSound = value;
 		}
 	}
 
@@ -310,6 +318,10 @@ public class WeaponVisualParameters
 			}
 			return Prototype.InventoryTakeSound;
 		}
+		set
+		{
+			m_InventoryTakeSound = value;
+		}
 	}
 
 	public bool IsBow => false;
@@ -318,30 +330,7 @@ public class WeaponVisualParameters
 
 	public bool HasQuiver => false;
 
-	public bool IsTwoHanded
-	{
-		get
-		{
-			switch (AnimStyle)
-			{
-			case WeaponAnimationStyle.AxeTwoHanded:
-			case WeaponAnimationStyle.Assault:
-			case WeaponAnimationStyle.BrutalTwoHanded:
-			case WeaponAnimationStyle.HeavyOnHip:
-			case WeaponAnimationStyle.HeavyOnShoulder:
-			case WeaponAnimationStyle.Rifle:
-			case WeaponAnimationStyle.Staff:
-			case WeaponAnimationStyle.EldarRifle:
-			case WeaponAnimationStyle.EldarAssault:
-			case WeaponAnimationStyle.EldarHeavyOnHip:
-			case WeaponAnimationStyle.EldarHeavyOnShoulder:
-			case WeaponAnimationStyle.TwoHandedHammer:
-				return true;
-			default:
-				return false;
-			}
-		}
-	}
+	public bool IsTwoHanded => AnimStyle.IsTwoHanded();
 
 	public UnitEquipmentVisualSlotType[] AttachSlots
 	{

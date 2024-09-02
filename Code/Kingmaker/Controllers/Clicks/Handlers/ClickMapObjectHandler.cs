@@ -12,6 +12,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;

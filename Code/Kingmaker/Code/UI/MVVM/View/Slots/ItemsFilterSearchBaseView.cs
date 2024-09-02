@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UnityEngine;
 
@@ -18,7 +20,12 @@ public abstract class ItemsFilterSearchBaseView : ViewBase<ItemsFilterSearchVM>
 	[SerializeField]
 	protected TextMeshProUGUI m_Placeholder;
 
+	[SerializeField]
+	private float m_UpdateTextDelay = 0.25f;
+
 	protected List<string> DropdownValues;
+
+	private IDisposable m_FinishUpdateTextInvoker;
 
 	public virtual void Initialize()
 	{
@@ -40,10 +47,24 @@ public abstract class ItemsFilterSearchBaseView : ViewBase<ItemsFilterSearchVM>
 		m_Placeholder.text = UIStrings.Instance.CharGen.EnterSearchTextHere;
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_FinishUpdateTextInvoker?.Dispose();
+	}
+
 	public abstract void SetActive(bool value);
 
 	protected void OnSearchStringEdit(string value)
 	{
-		base.ViewModel.SetSearchString(value);
+		m_FinishUpdateTextInvoker?.Dispose();
+		if (value == string.Empty)
+		{
+			base.ViewModel.SetSearchString(value);
+			return;
+		}
+		m_FinishUpdateTextInvoker = DelayedInvoker.InvokeInTime(delegate
+		{
+			base.ViewModel.SetSearchString(value);
+		}, m_UpdateTextDelay);
 	}
 }

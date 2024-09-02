@@ -32,9 +32,9 @@ public class ModifiableValue : IHashable
 	[JsonObject]
 	public class Modifier : IEquatable<Modifier>
 	{
-		private sealed class ModValueRelationalComparer : IComparer<Modifier>
+		private static class ModValueRelationalComparer
 		{
-			public int Compare(Modifier x, Modifier y)
+			public static int Compare(Modifier x, Modifier y)
 			{
 				if (x == y)
 				{
@@ -68,7 +68,7 @@ public class ModifiableValue : IHashable
 		public StatType SourceStat;
 
 		[NotNull]
-		public static IComparer<Modifier> ValueComparer { get; } = new ModValueRelationalComparer();
+		public static Comparison<Modifier> ValueComparer { get; } = ModValueRelationalComparer.Compare;
 
 
 		public bool Stacks
@@ -645,7 +645,7 @@ public class ModifiableValue : IHashable
 			{
 				try
 				{
-					item.Recalculate();
+					item.Reapply();
 				}
 				catch (Exception ex)
 				{

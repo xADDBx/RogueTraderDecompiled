@@ -39,13 +39,13 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 
 	public override PartUnitBody Body => GetRequired<PartUnitBody>();
 
+	public override PartUnitAlignment Alignment => GetRequired<PartUnitAlignment>();
+
 	public override PartAbilityResourceCollection AbilityResources => GetRequired<PartAbilityResourceCollection>();
 
 	public override PartUnitProgression Progression => GetRequired<PartUnitProgression>();
 
 	public override PartUnitState State => GetRequired<PartUnitState>();
-
-	public override PartUnitAlignment Alignment => GetRequired<PartUnitAlignment>();
 
 	public override PartUnitBrain Brain => GetRequired<PartUnitBrain>();
 
@@ -92,7 +92,6 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 	{
 		base.OnCreateParts();
 		GetOrCreate<PartUnitViewSettings>();
-		GetOrCreate<PartUnitAlignment>();
 		GetOrCreate<PartUnitCommands>();
 		GetOrCreate<PartUnitCombatState>();
 		GetOrCreate<PartFaction>();
@@ -117,6 +116,7 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 		GetOrCreate<PartUnitDescription>();
 		GetOrCreate<PartTwoWeaponFighting>();
 		GetOrCreate<UnitPronePart>();
+		GetOrCreate<PartProvidesFullCover>();
 		if (Faction.IsPlayer)
 		{
 			GetOrCreate<UnitPartPartyWeatherBuff>();

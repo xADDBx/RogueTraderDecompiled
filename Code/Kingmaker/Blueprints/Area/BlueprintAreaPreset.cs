@@ -5,7 +5,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Enums;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Items;
 using Kingmaker.Localization;
@@ -50,8 +49,6 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 
 	public bool CharGen;
 
-	public Alignment Alignment = Alignment.TrueNeutral;
-
 	public int PartyXp;
 
 	[ValidateNoNullEntries]
@@ -64,6 +61,13 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 	public List<BlueprintUnitReference> ExCompanions = new List<BlueprintUnitReference>();
 
 	public ActionList StartGameActions;
+
+	[Header("DLC Editor Settings")]
+	[SerializeField]
+	private List<BlueprintDlcRewardReference> m_EnabledDLCList = new List<BlueprintDlcRewardReference>();
+
+	[SerializeField]
+	private List<BlueprintDlcRewardReference> m_DisabledDLCList = new List<BlueprintDlcRewardReference>();
 
 	[Header("State")]
 	[SerializeField]
@@ -194,22 +198,22 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 		{
 			if (!item5.IsEmpty())
 			{
-				Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(item5.Get());
-				StartParentEtudeRecursively(item5.Get());
+				Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(item5.Get(), "preset " + name);
+				StartParentEtudeRecursively(item5.Get(), name);
 			}
 		}
 		foreach (BlueprintEtudeReference item6 in StartEtudesNonRecursively.EmptyIfNull().NotNull())
 		{
 			if (!item6.IsEmpty())
 			{
-				Game.Instance.Player.EtudesSystem.StartEtude(item6.Get());
+				Game.Instance.Player.EtudesSystem.StartEtude(item6.Get(), "preset " + name + ", from StartEtudesNonRecursively");
 			}
 		}
 		foreach (BlueprintEtudeReference item7 in StartEtudes.EmptyIfNull().NotNull())
 		{
 			if (!item7.IsEmpty())
 			{
-				StartParentEtudeRecursively(item7.Get());
+				StartParentEtudeRecursively(item7.Get(), "preset " + name + ", " + item7.NameSafe() + " in StartEtudes ");
 			}
 		}
 		foreach (BlueprintCueBaseReference item8 in CuesSeen.EmptyIfNull().NotNull())
@@ -242,13 +246,13 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 		}
 	}
 
-	private void StartParentEtudeRecursively(BlueprintEtude etude)
+	private void StartParentEtudeRecursively(BlueprintEtude etude, string origin = "")
 	{
 		if (!etude.Parent.IsEmpty())
 		{
-			StartParentEtudeRecursively(etude.Parent.Get());
+			StartParentEtudeRecursively(etude.Parent.Get(), origin);
 		}
-		Game.Instance.Player.EtudesSystem.StartEtude(etude);
+		Game.Instance.Player.EtudesSystem.StartEtude(etude, "parent recursive start, origin: " + origin);
 	}
 
 	public void FillPlayerCharacter()

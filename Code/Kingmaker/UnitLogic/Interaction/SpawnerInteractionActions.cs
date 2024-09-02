@@ -25,7 +25,7 @@ public class SpawnerInteractionActions : SpawnerInteraction
 	{
 		get
 		{
-			if (Actions == null)
+			if (Actions?.Get() == null)
 			{
 				return false;
 			}

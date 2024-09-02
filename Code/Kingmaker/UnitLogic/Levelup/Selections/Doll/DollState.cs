@@ -152,6 +152,8 @@ public class DollState : ICanConvertPropertiesToReactive
 
 	public bool LeftHanded { get; private set; }
 
+	public bool TrackPortrait => m_TrackPortrait;
+
 	public ReactiveCommand UpdateCommand
 	{
 		get

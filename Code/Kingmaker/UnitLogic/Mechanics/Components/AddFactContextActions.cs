@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Parts;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -13,6 +14,10 @@ namespace Kingmaker.UnitLogic.Mechanics.Components;
 [TypeId("25d172d2be8f52f468b2050d14d59806")]
 public class AddFactContextActions : EntityFactComponentDelegate, ITickEachRound, ITurnEndHandler<EntitySubscriber>, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEntitySubscriber, IEventTag<ITurnEndHandler, EntitySubscriber>, IHashable
 {
+	public bool DisableForLevelUpPreviewUnit;
+
+	public bool DisableWhenReapplying;
+
 	public ActionList Activated;
 
 	public ActionList Deactivated;
@@ -34,24 +39,60 @@ public class AddFactContextActions : EntityFactComponentDelegate, ITickEachRound
 		}
 	}
 
+	private bool DisabledBecauseOfLevelUp
+	{
+		get
+		{
+			if (DisableForLevelUpPreviewUnit)
+			{
+				return base.Owner.GetOptional<PartPreviewUnit>() != null;
+			}
+			return false;
+		}
+	}
+
+	private bool DisabledBecauseOfReapply
+	{
+		get
+		{
+			if (DisableWhenReapplying)
+			{
+				return base.IsReapplying;
+			}
+			return false;
+		}
+	}
+
 	protected override void OnActivate()
 	{
-		base.Fact.RunActionInContext(Activated);
+		if (!DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
+		{
+			base.Fact.RunActionInContext(Activated);
+		}
 	}
 
 	protected override void OnDeactivate()
 	{
-		base.Fact.RunActionInContext(Deactivated);
+		if (!DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
+		{
+			base.Fact.RunActionInContext(Deactivated);
+		}
 	}
 
 	void ITickEachRound.OnNewRound()
 	{
-		base.Fact.RunActionInContext(NewRound);
+		if (!DisabledBecauseOfLevelUp)
+		{
+			base.Fact.RunActionInContext(NewRound);
+		}
 	}
 
 	void ITurnEndHandler.HandleUnitEndTurn(bool isTurnBased)
 	{
-		base.Fact.RunActionInContext(RoundEnd);
+		if (!DisabledBecauseOfLevelUp)
+		{
+			base.Fact.RunActionInContext(RoundEnd);
+		}
 	}
 
 	public override Hash128 GetHash128()

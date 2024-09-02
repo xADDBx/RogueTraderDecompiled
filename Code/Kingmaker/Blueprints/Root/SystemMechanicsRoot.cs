@@ -50,10 +50,6 @@ public class SystemMechanicsRoot
 
 	[SerializeField]
 	[ValidateNotNull]
-	private BlueprintBuffReference m_DismemberedUnitBuff;
-
-	[SerializeField]
-	[ValidateNotNull]
 	private BlueprintBuffReference m_REAvoidanceCriticalFailureBuff;
 
 	[SerializeField]
@@ -218,8 +214,6 @@ public class SystemMechanicsRoot
 	public BlueprintBuff SummonedTorpedoesBuff => m_SummonedTorpedoesBuff?.Get();
 
 	public BlueprintBuff SummonedStarfigthersBuff => m_SummonedStarfigthersBuff?.Get();
-
-	public BlueprintBuff DismemberedUnitBuff => m_DismemberedUnitBuff?.Get();
 
 	public BlueprintBuff REAvoidanceCriticalFailureBuff => m_REAvoidanceCriticalFailureBuff?.Get();
 

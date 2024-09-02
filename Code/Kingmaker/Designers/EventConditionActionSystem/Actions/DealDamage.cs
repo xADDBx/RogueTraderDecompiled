@@ -32,6 +32,8 @@ public class DealDamage : GameAction
 
 	public bool DisableFxAndSound;
 
+	public bool IgnorePeacefulZone;
+
 	public override string GetDescription()
 	{
 		return $"Deal damage to {Target} with source {(NoSource ? Target : Source)}\n" + (DisableBattleLog ? "Log disabled" : "Log enabled") + "\n";
@@ -44,7 +46,8 @@ public class DealDamage : GameAction
 			Rulebook.Trigger(new RuleDealDamage((NoSource || !Source) ? Target.GetValue() : Source.GetValue(), Target.GetValue(), Damage.CreateDamage())
 			{
 				DisableGameLog = DisableBattleLog,
-				DisableFxAndSound = DisableFxAndSound
+				DisableFxAndSound = DisableFxAndSound,
+				IsIgnorePeacefulZone = IgnorePeacefulZone
 			});
 		}
 	}

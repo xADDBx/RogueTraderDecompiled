@@ -159,7 +159,11 @@ public class ConsoleCursor : BaseCursor, IRewiredCursorController, ITurnBasedMod
 	{
 		if (!m_LockState)
 		{
-			base.Position += moveVector * m_MoveSpeed;
+			Vector2 position = base.Position;
+			position += moveVector * m_MoveSpeed;
+			position.x = Mathf.Clamp(position.x, 0f, (float)Screen.width - m_CursorTransform.rect.width);
+			position.y = Mathf.Clamp(position.y, m_CursorTransform.rect.height, Screen.height);
+			base.Position = position;
 		}
 	}
 

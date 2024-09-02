@@ -62,20 +62,10 @@ public class AreaEffectTrigger : MonoBehaviour
 		{
 			return false;
 		}
-		PartUnitInAreaEffectCluster partUnitInAreaEffectClusterOptional = unitInRange.GetPartUnitInAreaEffectClusterOptional();
-		if (partUnitInAreaEffectClusterOptional == null)
-		{
-			partUnitInAreaEffectClusterOptional = unitInRange.GetOrCreate<PartUnitInAreaEffectCluster>();
-			partUnitInAreaEffectClusterOptional.AddClusterKey(component.ClusterLogicBlueprint);
-			partUnitInAreaEffectClusterOptional.AddEnteringAreaEffectToList(component.ClusterLogicBlueprint, Unit);
-			return false;
-		}
-		partUnitInAreaEffectClusterOptional.AddEnteringAreaEffectToList(component.ClusterLogicBlueprint, Unit);
-		if (unitInRange.HasCurrentClusterKey(component.ClusterLogicBlueprint))
+		if (IsInAnotherAreaEffect(unitInRange, component.ClusterLogicBlueprint, Unit))
 		{
 			return true;
 		}
-		partUnitInAreaEffectClusterOptional.AddClusterKey(component.ClusterLogicBlueprint);
 		return false;
 	}
 
@@ -86,7 +76,7 @@ public class AreaEffectTrigger : MonoBehaviour
 		{
 			return false;
 		}
-		if (IsInAnotherAreaEffect(unitInRange, component.ClusterLogicBlueprint))
+		if (IsInAnotherAreaEffect(unitInRange, component.ClusterLogicBlueprint, Unit))
 		{
 			unitInRange.GetPartUnitInAreaEffectClusterOptional()?.RemoveExitingAreaEffectFromList(component.ClusterLogicBlueprint, Unit);
 			return true;
@@ -95,13 +85,13 @@ public class AreaEffectTrigger : MonoBehaviour
 		return false;
 	}
 
-	private static bool IsInAnotherAreaEffect(BaseUnitEntity unitInRange, BlueprintAbilityAreaEffectClusterLogic clusterKey)
+	private static bool IsInAnotherAreaEffect(BaseUnitEntity unitInRange, BlueprintAbilityAreaEffectClusterLogic clusterKey, AreaEffectEntity areaEffectEntity)
 	{
 		if (!unitInRange.HasCurrentClusterKey(clusterKey))
 		{
 			return false;
 		}
-		if (unitInRange.IsCurrentlyInAnotherClusterArea(clusterKey))
+		if (unitInRange.IsCurrentlyInAnotherClusterArea(clusterKey, areaEffectEntity))
 		{
 			return true;
 		}

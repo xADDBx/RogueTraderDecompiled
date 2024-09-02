@@ -79,7 +79,7 @@ public class CommitLevelUpGameCommand : GameCommand, IMemoryPackable<CommitLevel
 
 	protected override void ExecuteInternal()
 	{
-		LevelUpManager levelUpManager = new LevelUpManager(m_UnitRef.Entity.ToIBaseUnitEntity(), m_CareerPath, autoCommit: false);
+		LevelUpManager levelUpManager = new LevelUpManager(m_UnitRef.Entity.ToBaseUnitEntity(), m_CareerPath, autoCommit: false);
 		foreach (SelectionState selection2 in levelUpManager.Selections)
 		{
 			if (!(selection2 is SelectionStateFeature selectionStateFeature))

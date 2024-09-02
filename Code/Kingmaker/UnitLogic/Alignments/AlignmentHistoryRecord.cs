@@ -1,13 +1,11 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
-using Kingmaker.StateHasher.Hashers;
 using Newtonsoft.Json;
-using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Alignments;
 
-public class AlignmentHistoryRecord : IHashable
+public class AlignmentHistoryRecord
 {
 	[JsonProperty(IsReference = false)]
 	public readonly Vector2 Position;
@@ -64,17 +62,5 @@ public class AlignmentHistoryRecord : IHashable
 	[UsedImplicitly]
 	public AlignmentHistoryRecord()
 	{
-	}
-
-	public virtual Hash128 GetHash128()
-	{
-		Hash128 result = default(Hash128);
-		Vector2 val = Position;
-		result.Append(ref val);
-		AlignmentShiftDirection val2 = Direction;
-		result.Append(ref val2);
-		Hash128 val3 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(Provider);
-		result.Append(ref val3);
-		return result;
 	}
 }

@@ -23,6 +23,8 @@ public class PartFaction : BaseUnitPart, IEquatable<PartFaction>, IHashable
 
 	private bool? m_CachedIsPlayerFaction;
 
+	private bool? m_CachedIsHelpingPlayerFaction;
+
 	[JsonProperty]
 	public BlueprintFaction Blueprint { get; private set; }
 
@@ -40,6 +42,20 @@ public class PartFaction : BaseUnitPart, IEquatable<PartFaction>, IHashable
 				m_CachedIsPlayerFaction = valueOrDefault;
 			}
 			return m_CachedIsPlayerFaction.Value;
+		}
+	}
+
+	public bool IsHelpingPlayer
+	{
+		get
+		{
+			bool valueOrDefault = m_CachedIsHelpingPlayerFaction.GetValueOrDefault();
+			if (!m_CachedIsHelpingPlayerFaction.HasValue)
+			{
+				valueOrDefault = Blueprint == BlueprintRoot.Instance.HelpingPlayerFaction;
+				m_CachedIsHelpingPlayerFaction = valueOrDefault;
+			}
+			return m_CachedIsHelpingPlayerFaction.Value;
 		}
 	}
 

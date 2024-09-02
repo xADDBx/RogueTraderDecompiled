@@ -24,6 +24,8 @@ public class GridNavmeshModifier : NavmeshClipper
 
 	protected virtual bool ShouldFixLayer => true;
 
+	public Rect LastBounds { get; private set; }
+
 	public Rect Bounds
 	{
 		get
@@ -64,6 +66,7 @@ public class GridNavmeshModifier : NavmeshClipper
 	{
 		m_LastPosition = m_Transform.position;
 		m_LastRotation = m_Transform.rotation;
+		LastBounds = Bounds;
 	}
 
 	public override Rect GetBounds(GraphTransform t)

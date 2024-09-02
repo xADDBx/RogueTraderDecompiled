@@ -90,7 +90,7 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		m_AbilityTargets.Clear();
 		using (ProfileScope.New("GatherAffectedTargetsData"))
 		{
-			Ability.GatherAffectedTargetsData(orientedPattern, bestShootingPositionForDesiredPosition.Vector3Position, in m_AbilityTargets);
+			Ability.GatherAffectedTargetsData(orientedPattern, bestShootingPositionForDesiredPosition.Vector3Position, target, in m_AbilityTargets);
 		}
 		int effectiveRange = ((Ability.Weapon != null) ? (MaxRangeCells / 2 + 1) : 0);
 		Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster);

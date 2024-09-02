@@ -138,8 +138,16 @@ public class HullSlots : IHashable
 		{
 			ArsenalSlot arsenalSlot = new ArsenalSlot(Starship);
 			Arsenals.Add(arsenalSlot);
-			arsenalSlot.Initialize(RefreshWeaponSlots);
 			TryInsertItem(item, arsenalSlot);
+		}
+		InitializeArsenals();
+	}
+
+	private void InitializeArsenals()
+	{
+		foreach (ArsenalSlot arsenal in Arsenals)
+		{
+			arsenal.Initialize(RefreshWeaponSlots);
 		}
 	}
 
@@ -184,6 +192,8 @@ public class HullSlots : IHashable
 		{
 			s.PrePostLoad(Starship);
 		});
+		TryFixArsenalSlots();
+		InitializeArsenals();
 	}
 
 	public void PostLoad()
@@ -200,6 +210,10 @@ public class HullSlots : IHashable
 		{
 			s.Item.Dispose();
 		});
+		WeaponSlots.ForEach(delegate(Warhammer.SpaceCombat.StarshipLogic.Weapon.WeaponSlot s)
+		{
+			s.DisposeArsenals();
+		});
 	}
 
 	private IEnumerable<ItemEntity> GetAllItemsInternal()
@@ -210,6 +224,15 @@ public class HullSlots : IHashable
 			{
 				yield return equipmentSlot.MaybeItem;
 			}
+		}
+	}
+
+	private void TryFixArsenalSlots()
+	{
+		if (Arsenals.Count != 2)
+		{
+			CreateArsenals(((BlueprintStarship)Starship.Blueprint).HullSlots.Arsenals);
+			EquipmentSlots.AddRange(Arsenals);
 		}
 	}
 

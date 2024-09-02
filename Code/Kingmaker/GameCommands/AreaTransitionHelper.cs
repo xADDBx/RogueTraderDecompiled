@@ -44,14 +44,15 @@ public static class AreaTransitionHelper
 			Guid groupGuid = Guid.NewGuid();
 			UnitCommandsRunner.MoveSelectedUnitsToPointRT(ObstacleAnalyzer.GetDeepNavmeshPoint(position), ClickGroundHandler.GetDirection(position, list), Game.Instance.IsControllerGamepad, preview: false, BlueprintRoot.Instance.Formations.MinSpaceFactor, list, delegate(BaseUnitEntity unit, MoveCommandSettings s)
 			{
-				RunUnitTransitionCommand(groupGuid, unitRefs, unit, areaTransition, s.Destination, s.SpeedLimit);
+				RunUnitTransitionCommand(groupGuid, unitRefs, unit, areaTransition, s.Destination);
 			});
 		}
 	}
 
-	private static void RunUnitTransitionCommand(Guid groupGuid, List<EntityRef<BaseUnitEntity>> units, BaseUnitEntity unit, AreaTransitionPart transition, Vector3 position, float? speedLimit)
+	private static void RunUnitTransitionCommand(Guid groupGuid, List<EntityRef<BaseUnitEntity>> units, BaseUnitEntity unit, AreaTransitionPart transition, Vector3 position)
 	{
-		PathfindingService.Instance.FindPathRT_Delayed(unit.MovementAgent, position, 1.5f, 1, delegate(ForcedPath path)
+		float approachRadius = Math.Max(0f, 1.5f - (transition.Owner.Position - position).magnitude);
+		PathfindingService.Instance.FindPathRT_Delayed(unit.MovementAgent, position, approachRadius, 1, delegate(ForcedPath path)
 		{
 			if (path.error)
 			{
@@ -65,16 +66,13 @@ public static class AreaTransitionHelper
 			{
 				UnitAreaTransitionParams cmdParams = new UnitAreaTransitionParams(groupGuid, units, position, transition)
 				{
-					SpeedLimit = speedLimit,
-					IsSynchronized = true,
-					CanBeAccelerated = true
+					IsSynchronized = true
 				};
 				if (path.vectorPath.Count > 0)
 				{
-					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, position, 1.5f)
+					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, position, 0f)
 					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
+						IsSynchronized = true
 					};
 					if (unit.Blueprint is BlueprintStarship { SpeedOnStarSystemMap: var speedOnStarSystemMap })
 					{

@@ -15,6 +15,7 @@ using Kingmaker.Code.UI.MVVM.View.Vendor.Console;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
 using Kingmaker.Code.UI.MVVM.VM.EtudeCounter;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
+using Kingmaker.Code.UI.MVVM.VM.GameOver;
 using Kingmaker.Code.UI.MVVM.VM.Surface;
 using Kingmaker.Code.UI.MVVM.VM.Transition;
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
@@ -48,25 +49,25 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	private GroupChangerContextConsoleView m_GroupChangerContextConsoleView;
 
 	[SerializeField]
-	private UIViewLink<VendorConsoleView, VendorVM> m_VendorConsoleViewLink;
+	private UIDestroyViewLink<VendorConsoleView, VendorVM> m_VendorConsoleViewLink;
 
 	[SerializeField]
-	private UIViewLink<VendorSelectingWindowConsoleView, VendorSelectingWindowVM> m_VendorSelectingWindowContextConsoleView;
+	private UIDestroyViewLink<VendorSelectingWindowConsoleView, VendorSelectingWindowVM> m_VendorSelectingWindowContextConsoleView;
 
 	[SerializeField]
 	private SurfaceHUDConsoleView m_SurfaceHUDConsoleView;
 
 	[SerializeField]
-	private UIViewLink<FormationConsoleView, FormationVM> m_FormationConsoleView;
+	private UIDestroyViewLink<FormationConsoleView, FormationVM> m_FormationConsoleView;
 
 	[SerializeField]
-	private UIViewLink<CreditsConsoleView, CreditsVM> m_CreditsConsoleView;
+	private UIDestroyViewLink<CreditsConsoleView, CreditsVM> m_CreditsConsoleView;
 
 	[SerializeField]
-	private UIViewLink<TransitionConsoleView, TransitionVM> m_TransitionConsoleViewLink;
+	private UIDestroyViewLink<TransitionConsoleView, TransitionVM> m_TransitionConsoleViewLink;
 
 	[SerializeField]
-	private UIViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
+	private UIDestroyViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
 
 	[SerializeField]
 	private CharGenContextConsoleView m_CharGenContextConsoleView;
@@ -75,7 +76,7 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	private RespecContextCommonView m_RespecContextCommonView;
 
 	[SerializeField]
-	private GameOverConsoleView m_GameOverConsoleView;
+	private UIDestroyViewLink<GameOverConsoleView, GameOverVM> m_GameOverConsoleView;
 
 	[SerializeField]
 	private SubtitleView m_SubtitleView;
@@ -87,12 +88,10 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	{
 		m_UIVisibilityView.Initialize();
 		m_ServiceWindowsConsoleView.Initialize();
-		m_LootContextConsoleView.Initialize();
 		m_GroupChangerContextConsoleView.Initialize();
 		m_SurfaceHUDConsoleView.Initialize();
 		m_CharGenContextConsoleView.Initialize();
 		m_RespecContextCommonView.Initialize();
-		m_GameOverConsoleView.Initialize();
 		m_FormationConsoleView.CustomInitialize = InitFormation;
 	}
 

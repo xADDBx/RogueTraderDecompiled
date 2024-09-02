@@ -4,7 +4,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
@@ -75,11 +74,6 @@ public class BuffApplyTrigger : UnitFactComponentDelegate, IUnitBuffHandler, ISu
 
 	public void HandleBuffDidAdded(Buff buff)
 	{
-		using EntityFactComponentLoopGuard entityFactComponentLoopGuard = base.Runtime.RequestLoopGuard();
-		if (entityFactComponentLoopGuard.Blocked)
-		{
-			return;
-		}
 		if (buff.Owner == null)
 		{
 			PFLog.Default.Error("AbilityTrigger: Both initiator and target are null!");

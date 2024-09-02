@@ -31,6 +31,9 @@ public class ContextActionAddBonusAbilityUsage : ContextAction
 	[SerializeField]
 	private bool m_ToTarget;
 
+	[SerializeField]
+	private bool m_IgnoreMinimalCost = true;
+
 	private static LogChannel Logger => BonusAbilityExtension.Logger;
 
 	public override string GetCaption()
@@ -65,7 +68,7 @@ public class ContextActionAddBonusAbilityUsage : ContextAction
 		EntityFactSource source = GetSource(baseUnitEntity);
 		int value = m_Count.GetValue(valueCalculationContext);
 		int value2 = m_CostBonus.GetValue(valueCalculationContext);
-		baseUnitEntity.GetOrCreate<UnitPartBonusAbility>().AddBonusAbility(source, value, value2, m_Restriction);
+		baseUnitEntity.GetOrCreate<UnitPartBonusAbility>().AddBonusAbility(source, value, value2, m_Restriction, m_IgnoreMinimalCost);
 	}
 
 	private PropertyContext GetValueCalculationContext(BaseUnitEntity unit)

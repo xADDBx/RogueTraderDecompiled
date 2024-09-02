@@ -50,7 +50,7 @@ public class SurfaceActionBarAbilitiesRowView : MonoBehaviour, IDisposable
 
 	public List<IConsoleNavigationEntity> GetConsoleEntities()
 	{
-		return m_WidgetList.Entries.Cast<IConsoleNavigationEntity>().ToList();
+		return m_WidgetList.Entries?.Cast<IConsoleNavigationEntity>().ToList();
 	}
 
 	public IConsoleNavigationEntity GetFirstValidEntity()

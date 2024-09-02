@@ -43,7 +43,7 @@ public class CheckAbilityAttackTypeGetter : PropertyGetter, PropertyContextAcces
 			return 1;
 		case AttackAbilityType.Pattern:
 		{
-			bool flag = ability.Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType fake) => fake.CountAsAoE && fake.CountAsScatter);
+			bool flag = ability.Blueprint.GetComponents<FakeAttackType>().Any((FakeAttackType fake) => fake.CountAsAoE && fake.CountAsScatter) || (bool)ability.Caster.Features.AllAttacksCountAsAoe;
 			if (!((ability.IsAOE && !ability.IsScatter) || flag))
 			{
 				return 0;

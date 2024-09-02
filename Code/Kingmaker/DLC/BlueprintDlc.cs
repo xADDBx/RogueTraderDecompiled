@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Localization;
 using Kingmaker.Networking;
@@ -35,11 +37,17 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	private LocalizedString m_Description;
 
 	[SerializeField]
+	private LocalizedString m_ConsoleDescription;
+
+	[SerializeField]
 	private BlueprintDlcRewardReference[] m_RewardReferences;
 
 	[Header("Default Store Data")]
 	[SerializeField]
 	private SpriteLink m_DefaultKeyArtLink;
+
+	[SerializeField]
+	private SpriteLink m_DefaultConsoleKeyArtLink;
 
 	[SerializeField]
 	private SpriteLink m_DlcItemArtLink;
@@ -86,7 +94,9 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public string DlcDisplayName => m_DisplayName.Text;
 
-	public string DlcDescription => m_Description.Text;
+	public string DlcDescription => m_Description?.Text;
+
+	public string DlcConsoleDescription => m_ConsoleDescription?.Text;
 
 	public string Id => base.AssetGuidThreadSafe;
 
@@ -100,6 +110,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	}
 
 	public Sprite DefaultKeyArt => m_DefaultKeyArtLink?.Load();
+
+	public Sprite DefaultConsoleKeyArt => m_DefaultConsoleKeyArtLink?.Load();
 
 	public Sprite DlcItemArtLink => m_DlcItemArtLink?.Load();
 
@@ -179,9 +191,33 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public AkStateReference MusicSetting => m_MusicSetting;
 
+	public string ToLateReason { get; private set; }
+
+	public string GetDescription()
+	{
+		if (0 == 0 || string.IsNullOrWhiteSpace(DlcConsoleDescription))
+		{
+			return DlcDescription;
+		}
+		return DlcConsoleDescription;
+	}
+
 	public IEnumerable<IDlcStore> GetDlcStores()
 	{
 		return this.GetComponents<DlcStore>();
+	}
+
+	public Sprite GetKeyArt()
+	{
+		if (0 == 0 || !(DefaultConsoleKeyArt != null))
+		{
+			if (!(DefaultKeyArt != null))
+			{
+				return UIConfig.Instance.KeyArt;
+			}
+			return DefaultKeyArt;
+		}
+		return DefaultConsoleKeyArt;
 	}
 
 	public string GetDlcName()
@@ -211,6 +247,16 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 		return DlcPurchaseState.Purchased;
 	}
 
+	public DownloadState GetDownloadState()
+	{
+		IDlcStore dlcStore = GetDlcStores().FirstOrDefault((IDlcStore store) => store.IsSuitable);
+		if (dlcStore == null || dlcStore.ComingSoon)
+		{
+			return DownloadState.NotLoaded;
+		}
+		return dlcStore.GetStatus().DownloadState;
+	}
+
 	public void SwitchDlcValue(bool value)
 	{
 		Game.Instance.Player.UpdateAdditionalContentDlcStatus(this, value);
@@ -223,5 +269,23 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	public bool GetDlcSwitchOnOffState()
 	{
 		return IsEnabled;
+	}
+
+	public bool CheckIsLateToSwitch()
+	{
+		IEnumerable<CantSwitchOnDlcReason> components = this.GetComponents<CantSwitchOnDlcReason>();
+		if (components == null || !components.Any())
+		{
+			return false;
+		}
+		foreach (CantSwitchOnDlcReason item in components)
+		{
+			if (item != null && item.Conditions.HasConditions && item.Conditions.Check())
+			{
+				ToLateReason = ((!string.IsNullOrWhiteSpace(item.Reason)) ? item.Reason : UIStrings.Instance.DlcManager.CannotChangeDlcSwitchStateRightNowBecauseSaveNotAllowed);
+				return true;
+			}
+		}
+		return false;
 	}
 }

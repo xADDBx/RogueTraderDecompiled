@@ -119,10 +119,10 @@ public static class HitFXPlayer
 			damageHitSettings = hitSystemRoot.DefaultDamage;
 			zero = (target.Position - initiator.Position).normalized;
 		}
-		MechanicEntityView view = target.View;
-		UnitEntityView unitEntityView = view as UnitEntityView;
-		MechanicEntityView view2 = initiator.View;
-		if (!view || !view2)
+		MechanicEntityView mechanicEntityView = target?.View;
+		UnitEntityView unitEntityView = mechanicEntityView as UnitEntityView;
+		MechanicEntityView mechanicEntityView2 = initiator?.View;
+		if (!mechanicEntityView || !mechanicEntityView2)
 		{
 			return;
 		}
@@ -164,9 +164,9 @@ public static class HitFXPlayer
 				AddHit(hitSystemRoot.GetDirectionalBlood(surfaceType, level), flag2);
 			}
 		}
-		Vector3 hitFxSpawnPosition = GetHitFxSpawnPosition(projectile, view, view2, adjustHeight: false);
-		Quaternion hitFxSpawnRotation = GetHitFxSpawnRotation(projectile, view, view2);
-		PlayHits(projectile, view, view, damageHitSettings.FollowTarget, in hitFxSpawnPosition, in hitFxSpawnRotation);
+		Vector3 hitFxSpawnPosition = GetHitFxSpawnPosition(projectile, mechanicEntityView, mechanicEntityView2, adjustHeight: false);
+		Quaternion hitFxSpawnRotation = GetHitFxSpawnRotation(projectile, mechanicEntityView, mechanicEntityView2);
+		PlayHits(projectile, mechanicEntityView, mechanicEntityView, damageHitSettings.FollowTarget, in hitFxSpawnPosition, in hitFxSpawnRotation);
 		if (!(unitEntityView != null) || !(zero != Vector3.zero))
 		{
 			return;
@@ -175,8 +175,8 @@ public static class HitFXPlayer
 		float addMagnitude = projectile?.Blueprint.AddRagdollImpulse ?? 0f;
 		if (projectile == null)
 		{
-			BlueprintProjectile blueprintProjectile = spell?.FXSettings?.VisualFXSettings?.Projectiles[0];
-			if (blueprintProjectile != null && (bool)blueprintProjectile)
+			ReferenceArrayProxy<BlueprintProjectile>? referenceArrayProxy = spell?.FXSettings?.VisualFXSettings?.Projectiles;
+			if (referenceArrayProxy.HasValue && referenceArrayProxy.GetValueOrDefault().Length > 0 && (bool)referenceArrayProxy.Value[0])
 			{
 				addMagnitude = spell.FXSettings.VisualFXSettings.Projectiles[0].AddRagdollImpulse;
 			}

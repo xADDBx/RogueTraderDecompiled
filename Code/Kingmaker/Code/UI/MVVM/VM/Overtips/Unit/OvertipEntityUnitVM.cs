@@ -41,6 +41,8 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	private bool m_UnitScanned;
 
+	private bool m_HasBoneSet;
+
 	private Transform m_Bone;
 
 	private Bounds m_Bounds;
@@ -97,10 +99,15 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	protected override Vector3 GetEntityPosition()
 	{
+		if (m_HasBoneSet && m_Bone == null)
+		{
+			m_UnitScanned = false;
+		}
 		if (!m_UnitScanned && Unit?.View != null)
 		{
 			m_Bone = Unit.View.ViewTransform.FindChildRecursive("UI_Overtip_Bone");
 			m_UnitScanned = true;
+			m_HasBoneSet = m_Bone != null;
 		}
 		if (m_Bone != null && !UnitState.Unit.IsDeadOrUnconscious)
 		{

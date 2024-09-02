@@ -12,6 +12,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.Visual.Particles;
 using Kingmaker.Visual.Trails;
 using Owlcat.Runtime.Core.Utility;

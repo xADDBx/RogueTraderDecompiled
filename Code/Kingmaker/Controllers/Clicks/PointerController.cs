@@ -80,6 +80,8 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 
 	private RaycastHit[] m_Hits = new RaycastHit[16];
 
+	private const Layers m_PointerMask = (Layers)69469441;
+
 	public static bool SimulatingClick { get; set; }
 
 	public static bool DebugThisFrame { get; set; }
@@ -395,7 +397,7 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 		{
 			return;
 		}
-		int num = Physics.RaycastNonAlloc(MainCamera.ScreenPointToRay(mousePosition), m_Hits, MainCamera.farClipPlane, 70014209);
+		int num = Physics.RaycastNonAlloc(MainCamera.ScreenPointToRay(mousePosition), m_Hits, MainCamera.farClipPlane, 69469441);
 		if (num == m_Hits.Length)
 		{
 			PFLog.Default.Warning($"Reached limit for hits count, increasing to {m_Hits.Length * 2}");
@@ -617,45 +619,6 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 	public T GetHandler<T>() where T : IClickEventHandler
 	{
 		return m_ClickHandlers.OfType<T>().SingleOrDefault();
-	}
-
-	public void SimulateClick(GameObject onObject, bool muteEvents)
-	{
-		try
-		{
-			SimulatingClick = true;
-			m_SimulateClickHandler?.OnClick(onObject, m_WorldPositionForSimulation, 0, simulate: true, muteEvents);
-		}
-		finally
-		{
-			SimulatingClick = false;
-		}
-	}
-
-	public void UpdateSelectedClickHandler()
-	{
-		float num = 0f;
-		for (int i = 0; i < m_ClickHandlers.Length; i++)
-		{
-			IClickEventHandler clickEventHandler = m_ClickHandlers[i];
-			if (clickEventHandler.GetMode() == Mode)
-			{
-				try
-				{
-					num = clickEventHandler.GetPriority(PointerOn, WorldPosition).Priority;
-				}
-				catch (Exception ex)
-				{
-					PFLog.Default.Exception(ex);
-				}
-				if (num > 0f)
-				{
-					m_MouseDownHandler = clickEventHandler;
-					m_SimulateClickHandler = clickEventHandler;
-					break;
-				}
-			}
-		}
 	}
 
 	private void TickPointerDebug()

@@ -29,7 +29,7 @@ namespace Kingmaker.Controllers.Units.CameraFollow;
 
 public class SpaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITimeSurvivalSpawnHandler, ISubscriber<IBaseUnitEntity>, IStarshipAttackHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitDeathHandler
 {
-	private readonly Action<ICameraFollowTask> m_AddTask;
+	private readonly Action<ICameraFollowTask, bool, float> m_AddTask;
 
 	private bool m_IsCommandInAction;
 
@@ -45,7 +45,7 @@ public class SpaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, IS
 
 	private Rect SafeRect => CameraFollowTasksSceneHelper.Instance.SafeRect;
 
-	public SpaceCombatFollowTasksProvider(Action<ICameraFollowTask> addTaskAction)
+	public SpaceCombatFollowTasksProvider(Action<ICameraFollowTask, bool, float> addTaskAction)
 	{
 		m_AddTask = addTaskAction;
 		EventBus.Subscribe(this);
@@ -226,7 +226,7 @@ public class SpaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, IS
 			}
 			task = CameraFollowTaskFactory.GetDoNothingWaitTask(task);
 		}
-		m_AddTask?.Invoke(task);
+		m_AddTask?.Invoke(task, arg2: false, 0f);
 	}
 
 	public bool CheckActionCamera(AbstractUnitCommand command)

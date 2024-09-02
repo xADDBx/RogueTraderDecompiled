@@ -23,6 +23,7 @@ using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.GameConst;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -107,11 +108,20 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 			{
 				UpdateRightStickMovement();
 			}
+			CenterCameraOnMainCharacterIfNeeded();
 			using (ProfileScope.New("Console UpdateInteractions"))
 			{
 				UpdateInteractions();
 			}
 			m_LeftStickVector = (m_RightStickVector = Vector2.zero);
+		}
+	}
+
+	private void CenterCameraOnMainCharacterIfNeeded()
+	{
+		if (Game.Instance.CurrentMode == GameModeType.Default && !Game.Instance.Player.IsInCombat && Game.Instance.Player.IsCameraRotateMode && Game.Instance.SelectionCharacter.SelectedUnit.Value == null && Game.Instance.SelectionCharacter.SelectedUnits.Count == 0)
+		{
+			Game.Instance.CameraController?.Follower?.ScrollTo(Game.Instance.Player.MainCharacterEntity);
 		}
 	}
 

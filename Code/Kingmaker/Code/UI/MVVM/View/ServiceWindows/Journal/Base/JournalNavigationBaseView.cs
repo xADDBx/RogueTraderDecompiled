@@ -5,6 +5,7 @@ using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Console;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
+using Kingmaker.Enums;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -99,15 +100,15 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 	{
 		AddDisposable(ObservableExtensions.Subscribe(m_QuestsButton.OnLeftClickAsObservable(), delegate
 		{
-			base.ViewModel.SetActiveTab(JournalTab.Quests);
+			SetActiveTab(JournalTab.Quests);
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_RumorsButton.OnLeftClickAsObservable(), delegate
 		{
-			base.ViewModel.SetActiveTab(JournalTab.Rumors);
+			SetActiveTab(JournalTab.Rumors);
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_OrdersButton.OnLeftClickAsObservable(), delegate
 		{
-			base.ViewModel.SetActiveTab(JournalTab.Orders);
+			SetActiveTab(JournalTab.Orders);
 		}));
 		AddDisposable(base.ViewModel.ActiveTab.AsObservable().Subscribe(UpdateActiveTab));
 		m_OrdersButton.SetInteractable(!base.ViewModel.CannotAccessContracts);
@@ -117,6 +118,7 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 
 	protected override void DestroyViewImplementation()
 	{
+		m_WidgetList.Clear();
 	}
 
 	public void OnShowCompletedToggleChanged(bool value)
@@ -129,7 +131,7 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 		case QuestState.Completed:
 		case QuestState.Failed:
 		{
-			Quest currentQuest = GetCurrentQuest(null);
+			Quest currentQuest = GetCurrentQuest();
 			if (!JournalHelper.ChangeCurrentQuest(currentQuest))
 			{
 				base.ViewModel.SelectQuest(currentQuest);
@@ -161,14 +163,14 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 
 	protected void ScrollToRect()
 	{
-		RectTransform rectTransform = (Game.Instance.IsControllerMouse ? (GetCurrentEntityPC(null)?.transform as RectTransform) : (GetCurrentEntityConsole(null)?.transform as RectTransform));
+		RectTransform rectTransform = (Game.Instance.IsControllerMouse ? (GetCurrentEntityPC()?.transform as RectTransform) : (GetCurrentEntityConsole()?.transform as RectTransform));
 		if (rectTransform != null && !m_ScrollRect.IsInViewport(rectTransform))
 		{
 			m_ScrollRect.ScrollToRectCenter(rectTransform, rectTransform);
 		}
 	}
 
-	private JournalNavigationGroupElementPCView GetCurrentEntityPC(Quest currentQuest)
+	private JournalNavigationGroupElementPCView GetCurrentEntityPC()
 	{
 		List<JournalNavigationGroupElementPCView> list = new List<JournalNavigationGroupElementPCView>();
 		if (m_WidgetList.Entries != null)
@@ -177,15 +179,11 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 			{
 				if (entry is JournalNavigationGroupPCView journalNavigationGroupPCView)
 				{
-					list.AddRange(from JournalNavigationGroupElementPCView i in journalNavigationGroupPCView.WidgetList.Entries
-						where i.IsActive
-						select i);
+					list.AddRange(journalNavigationGroupPCView.WidgetList.Entries.Cast<JournalNavigationGroupElementPCView>());
 				}
 				else
 				{
-					list.AddRange(from JournalNavigationGroupElementPCView i in m_WidgetList.Entries
-						where i.IsActive
-						select i);
+					list.AddRange(m_WidgetList.Entries.Cast<JournalNavigationGroupElementPCView>());
 				}
 				if (!list.Any())
 				{
@@ -193,18 +191,29 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 				}
 			}
 		}
-		if (currentQuest == null)
+		if (JournalHelper.HasCurrentQuest)
 		{
-			JournalNavigationGroupElementPCView journalNavigationGroupElementPCView = list.FirstOrDefault();
-			if (journalNavigationGroupElementPCView != null)
+			QuestState state = JournalHelper.CurrentQuest.State;
+			if ((state != QuestState.Completed && state != QuestState.Failed) || Game.Instance.Player.UISettings.JournalShowCompletedQuest)
 			{
-				return journalNavigationGroupElementPCView;
+				QuestType type = JournalHelper.CurrentQuest.Blueprint.Type;
+				JournalTab value = base.ViewModel.ActiveTab.Value;
+				if (((type == QuestType.Rumour || type == QuestType.RumourAboutUs) && value == JournalTab.Rumors) || (type == QuestType.Order && value == JournalTab.Orders) || ((type == QuestType.Quest || type == QuestType.Normal || type == QuestType.Errand) && value == JournalTab.Quests))
+				{
+					return list.FirstOrDefault((JournalNavigationGroupElementPCView elementView) => elementView.Quest == JournalHelper.CurrentQuest);
+				}
 			}
 		}
-		return list.FirstOrDefault((JournalNavigationGroupElementPCView elementView) => elementView.Quest == currentQuest);
+		IEnumerable<JournalNavigationGroupElementPCView> source = list.Where((JournalNavigationGroupElementPCView i) => i.IsActive);
+		JournalNavigationGroupElementPCView journalNavigationGroupElementPCView = source.FirstOrDefault();
+		if (!(journalNavigationGroupElementPCView != null))
+		{
+			return source.FirstOrDefault((JournalNavigationGroupElementPCView elementView) => elementView.Quest == JournalHelper.CurrentQuest);
+		}
+		return journalNavigationGroupElementPCView;
 	}
 
-	private JournalNavigationGroupElementConsoleView GetCurrentEntityConsole(Quest currentQuest)
+	private JournalNavigationGroupElementConsoleView GetCurrentEntityConsole()
 	{
 		List<JournalNavigationGroupElementConsoleView> list = new List<JournalNavigationGroupElementConsoleView>();
 		if (m_WidgetList.Entries != null)
@@ -213,15 +222,11 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 			{
 				if (entry is JournalNavigationGroupConsoleView journalNavigationGroupConsoleView)
 				{
-					list.AddRange(from JournalNavigationGroupElementConsoleView i in journalNavigationGroupConsoleView.WidgetList.Entries
-						where i.IsActive
-						select i);
+					list.AddRange(journalNavigationGroupConsoleView.WidgetList.Entries.Cast<JournalNavigationGroupElementConsoleView>());
 				}
 				else
 				{
-					list.AddRange(from JournalNavigationGroupElementConsoleView i in m_WidgetList.Entries
-						where i.IsActive
-						select i);
+					list.AddRange(m_WidgetList.Entries.Cast<JournalNavigationGroupElementConsoleView>());
 				}
 				if (!list.Any())
 				{
@@ -229,24 +234,35 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 				}
 			}
 		}
-		if (currentQuest == null)
+		if (JournalHelper.HasCurrentQuest)
 		{
-			JournalNavigationGroupElementConsoleView journalNavigationGroupElementConsoleView = list.FirstOrDefault();
-			if (journalNavigationGroupElementConsoleView != null)
+			QuestState state = JournalHelper.CurrentQuest.State;
+			if ((state != QuestState.Completed && state != QuestState.Failed) || Game.Instance.Player.UISettings.JournalShowCompletedQuest)
 			{
-				return journalNavigationGroupElementConsoleView;
+				QuestType type = JournalHelper.CurrentQuest.Blueprint.Type;
+				JournalTab value = base.ViewModel.ActiveTab.Value;
+				if (((type == QuestType.Rumour || type == QuestType.RumourAboutUs) && value == JournalTab.Rumors) || (type == QuestType.Order && value == JournalTab.Orders) || ((type == QuestType.Quest || type == QuestType.Normal || type == QuestType.Errand) && value == JournalTab.Quests))
+				{
+					return list.FirstOrDefault((JournalNavigationGroupElementConsoleView elementView) => elementView.Quest == JournalHelper.CurrentQuest);
+				}
 			}
 		}
-		return list.FirstOrDefault((JournalNavigationGroupElementConsoleView elementView) => elementView.Quest == currentQuest);
+		IEnumerable<JournalNavigationGroupElementConsoleView> source = list.Where((JournalNavigationGroupElementConsoleView i) => i.IsActive);
+		JournalNavigationGroupElementConsoleView journalNavigationGroupElementConsoleView = source.FirstOrDefault();
+		if (!(journalNavigationGroupElementConsoleView != null))
+		{
+			return source.FirstOrDefault((JournalNavigationGroupElementConsoleView elementView) => elementView.Quest == JournalHelper.CurrentQuest);
+		}
+		return journalNavigationGroupElementConsoleView;
 	}
 
-	public Quest GetCurrentQuest(Quest currentQuest)
+	public Quest GetCurrentQuest()
 	{
 		if (!Game.Instance.IsControllerMouse)
 		{
-			return GetCurrentEntityConsole(currentQuest)?.Quest;
+			return GetCurrentEntityConsole()?.Quest;
 		}
-		return GetCurrentEntityPC(currentQuest)?.Quest;
+		return GetCurrentEntityPC()?.Quest;
 	}
 
 	private void UpdateActiveTab(JournalTab activeTab)
@@ -258,7 +274,7 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 		m_ReadyToCompleteOrderImage.Or(null)?.gameObject.SetActive(base.ViewModel.CheckReadyToCompleteOrders() && !Game.Instance.Player.CannotAccessContracts.Value);
 		DrawEntities();
 		ScrollToTop();
-		Quest currentQuest = GetCurrentQuest(null);
+		Quest currentQuest = GetCurrentQuest();
 		m_CurrentQuest.SetActive(currentQuest != null);
 		base.ViewModel.SelectQuest(currentQuest);
 	}
@@ -287,7 +303,7 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 	{
 		if (Game.Instance.IsControllerMouse)
 		{
-			JournalNavigationGroupElementPCView entity = GetCurrentEntityPC(null);
+			JournalNavigationGroupElementPCView entity = GetCurrentEntityPC();
 			if ((bool)entity && entity.gameObject.activeInHierarchy)
 			{
 				EventBus.RaiseEvent(delegate(IPantographHandler h)
@@ -309,7 +325,7 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 			{
 				return;
 			}
-			JournalNavigationGroupElementConsoleView entity = GetCurrentEntityConsole(null);
+			JournalNavigationGroupElementConsoleView entity = GetCurrentEntityConsole();
 			if ((bool)entity && entity.gameObject.activeInHierarchy)
 			{
 				EventBus.RaiseEvent(delegate(IPantographHandler h)
@@ -330,6 +346,11 @@ public class JournalNavigationBaseView : ViewBase<JournalNavigationVM>, ISetCurr
 	public JournalTab GetActiveTab()
 	{
 		return base.ViewModel.ActiveTab.Value;
+	}
+
+	public void SetActiveTab(JournalTab tab)
+	{
+		base.ViewModel.SetActiveTab(tab);
 	}
 
 	public void HandleUpdateCanCompleteOrderNotificationInJournal()

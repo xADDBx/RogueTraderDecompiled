@@ -13,7 +13,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Sound.Base;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.View.Covers;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Kingmaker.View.MapObjects.Traps;
 using Kingmaker.Visual.Animation.Kingmaker;
@@ -39,6 +39,8 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 	public override bool ShouldBeInterrupted => !Interaction.CanInteract();
 
 	public override bool IsMoveUnit => false;
+
+	public override bool IsBlockingCommand => true;
 
 	public override bool IsUnitEnoughClose
 	{
@@ -81,11 +83,11 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 				}
 				else
 				{
-					UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, interaction.Owner.Position, 0f)
-					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
-					};
+					MoveCommandSettings moveCommandSettings = default(MoveCommandSettings);
+					moveCommandSettings.Destination = interaction.Owner.Position;
+					moveCommandSettings.DisableApproachRadius = true;
+					MoveCommandSettings settings = moveCommandSettings;
+					UnitMoveToParams unitMoveToParams = UnitHelper.CreateMoveCommandParamsRT(unit, settings, path);
 					if (Game.Instance.CurrentMode == GameModeType.StarSystem)
 					{
 						float num = (unit.Blueprint as BlueprintStarship)?.SpeedOnStarSystemMap ?? 1f;
@@ -94,8 +96,7 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 					unit.Commands.Run(unitMoveToParams);
 					unit.Commands.AddToQueueFirst(new UnitInteractWithObjectParams(interaction, variantActor)
 					{
-						IsSynchronized = true,
-						CanBeAccelerated = true
+						IsSynchronized = true
 					});
 				}
 			});
@@ -104,8 +105,7 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 		{
 			unit.Commands.AddToQueueFirst(new UnitInteractWithObjectParams(interaction, variantActor)
 			{
-				IsSynchronized = true,
-				CanBeAccelerated = true
+				IsSynchronized = true
 			});
 		}
 	}

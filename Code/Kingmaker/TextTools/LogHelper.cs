@@ -51,6 +51,12 @@ internal static class LogHelper
 		return "<b><color=#" + text2 + ">" + text + "</color></b>";
 	}
 
+	internal static string GetOverrideName(string name, Color color)
+	{
+		string text = ColorUtility.ToHtmlStringRGB(color * UIConfig.Instance.DialogColors.NameColorMultiplyer);
+		return "<b><color=#" + text + ">" + name + "</color></b>";
+	}
+
 	internal static string GetRollDescription(IRuleRollDice ruleRollDice)
 	{
 		if (ruleRollDice == null)

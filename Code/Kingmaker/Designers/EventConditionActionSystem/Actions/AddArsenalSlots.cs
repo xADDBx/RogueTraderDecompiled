@@ -2,7 +2,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.Versioning;
-using UnityEngine;
 using Warhammer.SpaceCombat.StarshipLogic.Equipment;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -18,7 +17,6 @@ public class AddArsenalSlots : GameAction
 
 	protected override void RunAction()
 	{
-		Debug.Log("Add arsenal slots");
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
 		HullSlots hullSlots = playerShip.Hull.HullSlots;
 		if (hullSlots.Arsenals.Count != 2)

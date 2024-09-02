@@ -15,6 +15,7 @@ using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -108,7 +109,7 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	public bool IsSelected => base.ViewModel.IsSelected.Value;
 
-	public Quest Quest => base.ViewModel.Quest;
+	public Quest Quest => base.ViewModel?.Quest;
 
 	public void Initialize()
 	{
@@ -127,8 +128,14 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		m_Label.text = base.ViewModel.Title;
-		AddDisposable(base.ViewModel.IsSelected.Subscribe(OnSelected));
-		AddDisposable(m_MultiButton.OnLeftClickAsObservable().Subscribe(delegate
+		AddDisposable(base.ViewModel.IsSelected.Subscribe(delegate(bool value)
+		{
+			DelayedInvoker.InvokeInFrames(delegate
+			{
+				OnSelected(value);
+			}, 3);
+		}));
+		AddDisposable(ObservableExtensions.Subscribe(m_MultiButton.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.SelectQuest();
 		}));
@@ -140,6 +147,10 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 		}));
 		SetupStatusMark();
 		SetupPantographConfig();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
 	}
 
 	private void SetupStatusMark()
@@ -330,10 +341,6 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 			list.Add(m_ReadyToCompletePantographMark);
 		}
 		PantographConfig = new PantographConfig(base.transform, m_Label.text, list);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public bool CheckType(IViewModel viewModel)

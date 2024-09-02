@@ -9,6 +9,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -180,7 +181,7 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 
 	public UnitAnimationManager AnimationManager => View.AnimationManager;
 
-	public override UnitAnimationManager MaybeAnimationManager => AnimationManager;
+	public override UnitAnimationManager MaybeAnimationManager => ObjectExtensions.Or(View, null)?.AnimationManager;
 
 	public UnitMovementAgentBase MovementAgent => ObjectExtensions.Or(MaybeMovementAgent, null) ?? throw new Exception("MovementAgent is missing");
 
@@ -339,6 +340,10 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 		{
 			PFLog.History.System.Log("HighFactotum disposed\n" + StackTraceUtility.ExtractStackTrace());
 			PFLog.System.ErrorWithReport("HighFactotum disposed. It's OK if it is Rogue Trader's hallucinations, otherwise report to programmers IMMEDIATELY");
+		}
+		if (Application.isPlaying && LoadingProcess.Instance.CurrentProcessTag == LoadingProcessTag.ReloadMechanics)
+		{
+			CutsceneControlledUnit.GetControllingPlayer(this)?.Stop();
 		}
 		base.OnDispose();
 	}

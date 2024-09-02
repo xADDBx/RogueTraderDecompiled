@@ -150,9 +150,29 @@ public class BlueprintItem : BlueprintMechanicEntityFact
 		}
 	}
 
-	public virtual string InventoryPutSound => m_InventoryPutSound;
+	public virtual string InventoryPutSound
+	{
+		get
+		{
+			return m_InventoryPutSound;
+		}
+		set
+		{
+			m_InventoryPutSound = value;
+		}
+	}
 
-	public virtual string InventoryTakeSound => m_InventoryTakeSound;
+	public virtual string InventoryTakeSound
+	{
+		get
+		{
+			return m_InventoryTakeSound;
+		}
+		set
+		{
+			m_InventoryTakeSound = value;
+		}
+	}
 
 	public override void OnEnable()
 	{

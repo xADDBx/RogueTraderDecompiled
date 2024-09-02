@@ -14,8 +14,6 @@ public class RaceGenderDistribution : BlueprintScriptableObject
 	[NotNull]
 	public RaceEntry[] Races = new RaceEntry[0];
 
-	public float LeftHandedChance;
-
 	public float MaleBaseWeight = 1f;
 
 	public float FemaleBaseWeight = 1f;

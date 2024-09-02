@@ -116,19 +116,25 @@ public class AddFactsToParty : MechanicEntityFactComponentDelegate, IAreaHandler
 
 	private void UpdateFacts()
 	{
-		bool flag;
+		bool flag = Game.Instance.Player.MainCharacter != Game.Instance.Player.MainCharacterOriginal;
+		bool flag2;
 		switch (base.Owner.GetCompanionOptional()?.State)
 		{
 		case CompanionState.InParty:
 		case CompanionState.InPartyDetached:
-			flag = true;
+			flag2 = true;
 			break;
 		default:
-			flag = false;
+			flag2 = false;
 			break;
 		}
-		bool flag2 = flag;
-		if (!AddIfOwnerNotInParty && !flag2)
+		bool flag3 = flag2;
+		if (flag)
+		{
+			CompanionState? companionState = base.Owner.GetCompanionOptional()?.State;
+			flag3 = companionState.HasValue && companionState.GetValueOrDefault() == CompanionState.InParty;
+		}
+		if (!AddIfOwnerNotInParty && !flag3)
 		{
 			RemoveFacts();
 			return;

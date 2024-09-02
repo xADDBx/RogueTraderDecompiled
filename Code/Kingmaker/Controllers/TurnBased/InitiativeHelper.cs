@@ -198,14 +198,23 @@ public static class InitiativeHelper
 			int num = firstOrder.IndexOf(entity);
 			if (num != -1)
 			{
-				entity.Initiative.Roll = 15762925 - num * 10;
+				entity.Initiative.Roll = 15762825 - num * 100;
 				continue;
 			}
 			num = lastOrder.IndexOf(entity);
 			if (num != -1)
 			{
-				entity.Initiative.Roll = -(num * 10);
+				entity.Initiative.Roll = 1 + num;
 			}
+		}
+		int num2 = lastOrder.Count();
+		if (num2 == 0)
+		{
+			return;
+		}
+		foreach (MechanicEntity item in Game.Instance.TurnController.AllUnits.Where((MechanicEntity u) => !entities.Contains(u) && u.IsInCombat))
+		{
+			item.Initiative.Value += num2;
 		}
 	}
 
@@ -266,38 +275,42 @@ public static class InitiativeHelper
 				num4 = Mathf.FloorToInt(num2 * (float)num3);
 				if (num4 >= array2.Count() - 1)
 				{
-					OverrideInitiative(item, array2.Last() / 2f);
 					if (multiInitiative.ByEnemiesCount)
 					{
 						item.CorrespondingEnemy = array.Last();
+						item.Initiative.LastTurn = item.CorrespondingEnemy.Initiative.LastTurn;
 					}
+					OverrideInitiative(item, array2.Last() / 2f);
 				}
 				else
 				{
-					OverrideInitiative(item, (array2[num4] + array2[num4 + 1]) / 2f);
 					if (multiInitiative.ByEnemiesCount)
 					{
 						item.CorrespondingEnemy = array[num4];
+						item.Initiative.LastTurn = item.CorrespondingEnemy.Initiative.LastTurn;
 					}
+					OverrideInitiative(item, (array2[num4] + array2[num4 + 1]) / 2f);
 				}
 				num3++;
 			}
 			num4 = Mathf.FloorToInt(num2 * (float)num3);
 			if (num4 >= array2.Count() - 1)
 			{
-				OverrideInitiative(entity, array2.Last() / 2f);
 				if (multiInitiative.ByEnemiesCount)
 				{
 					multiInitiative.CorrespondingEnemy = array.Last();
+					entity.Initiative.LastTurn = multiInitiative.CorrespondingEnemy.Initiative.LastTurn;
 				}
+				OverrideInitiative(entity, array2.Last() / 2f);
 			}
 			else
 			{
-				OverrideInitiative(entity, (array2[num4] + array2[num4 + 1]) / 2f);
 				if (multiInitiative.ByEnemiesCount)
 				{
 					multiInitiative.CorrespondingEnemy = array[num4];
+					entity.Initiative.LastTurn = multiInitiative.CorrespondingEnemy.Initiative.LastTurn;
 				}
+				OverrideInitiative(entity, (array2[num4] + array2[num4 + 1]) / 2f);
 			}
 			void OverrideInitiative(MechanicEntity e, float value)
 			{

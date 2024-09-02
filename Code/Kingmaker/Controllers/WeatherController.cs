@@ -2,13 +2,13 @@ using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Controllers.FX;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Designers;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
-using Kingmaker.Sound.Base;
 using Kingmaker.UnitLogic.FactLogic;
 using Owlcat.Runtime.Visual.Effects.WeatherSystem;
 using UnityEngine;
@@ -27,6 +27,8 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 
 	private bool m_IsWeatherWarp;
 
+	private SFXWrapperWeather m_SfxWrapper;
+
 	public static WeatherController Instance { get; private set; }
 
 	public InclemencyType ActualInclemency => m_WeatherInclemencyController?.ActualInclemency ?? InclemencyType.Clear;
@@ -38,6 +40,7 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 			return;
 		}
 		Instance = this;
+		m_SfxWrapper = new SFXWrapperWeather(BlueprintWarhammerRoot.Instance.WarpWeatherRoot);
 		if (!(VFXWeatherSystem.Instance == null))
 		{
 			if ((Game.Instance.CurrentlyLoadedAreaPart ?? Game.Instance.CurrentlyLoadedArea) == null)
@@ -67,7 +70,7 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 				m_WeatherInclemencyController.SetNewInclemency(InclemencyType.Clear, instantly: true, onStop: true);
 				m_WindInclemencyController.SetNewInclemency(InclemencyType.Clear, instantly: true, onStop: true);
 				m_IsSoundEventStarted = false;
-				SoundEventsManager.PostEvent(BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherSoundEventStop, VFXWeatherSystem.Instance.gameObject);
+				Game.Instance.CameraFXSoundController.TryStopEvent(m_SfxWrapper);
 				AkSoundEngine.SetRTPCValue("WeatherIntensity", 0f);
 				m_WeatherInclemencyController = null;
 				m_WindInclemencyController = null;
@@ -84,14 +87,14 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 	{
 		m_WeatherInclemencyController?.Tick();
 		m_WindInclemencyController?.Tick();
-		if (m_IsWeatherWarp)
-		{
-			UpdateWarpWeatherAudio();
-		}
-		if (m_IsWeatherWarp && m_LastWeatherIntencity != VFXWeatherSystem.Instance.CurrentWeatherIntensity)
+		if (m_IsWeatherWarp && m_LastWeatherIntencity != VFXWeatherSystem.Instance.CurrentWeatherIntensity && Game.Instance.CameraFXSoundController.CurrentWrapper == m_SfxWrapper)
 		{
 			m_LastWeatherIntencity = VFXWeatherSystem.Instance.CurrentWeatherIntensity;
 			AkSoundEngine.SetRTPCValue("WeatherIntensity", m_LastWeatherIntencity);
+		}
+		if (m_IsWeatherWarp)
+		{
+			UpdateWarpWeatherAudio();
 		}
 	}
 
@@ -102,13 +105,13 @@ public class WeatherController : IControllerTick, IController, IControllerStart,
 			if (!m_IsSoundEventStarted)
 			{
 				m_IsSoundEventStarted = true;
-				SoundEventsManager.PostEvent(BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherSoundEventStart, VFXWeatherSystem.Instance.gameObject);
+				Game.Instance.CameraFXSoundController.TryStartEvent(m_SfxWrapper);
 			}
 		}
 		else if (m_IsSoundEventStarted)
 		{
 			m_IsSoundEventStarted = false;
-			SoundEventsManager.PostEvent(BlueprintWarhammerRoot.Instance.WarpWeatherRoot.WeatherSoundEventStop, VFXWeatherSystem.Instance.gameObject);
+			Game.Instance.CameraFXSoundController.TryStopEvent(m_SfxWrapper);
 		}
 	}
 

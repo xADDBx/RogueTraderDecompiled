@@ -11,7 +11,7 @@ namespace Kingmaker.Modding;
 
 public class UnityModManagerBridge : IModManagerBridge
 {
-	private const int UnityModManagerVersion = 12;
+	private const int UnityModManagerVersion = 13;
 
 	private const string UmmKey = "UmmVersion";
 
@@ -177,7 +177,7 @@ public class UnityModManagerBridge : IModManagerBridge
 		}
 		try
 		{
-			OwlcatUnityModManagerType.GetMethod("GetModInfo", BindingFlags.Static | BindingFlags.Public)?.Invoke(null, null);
+			OwlcatUnityModManagerType.GetMethod("CheckForUpdates", BindingFlags.Static | BindingFlags.Public)?.Invoke(null, null);
 		}
 		catch (Exception ex)
 		{
@@ -270,12 +270,12 @@ public class UnityModManagerBridge : IModManagerBridge
 
 	private bool UnityModManagerIntegrationIsUpToDate()
 	{
-		return PlayerPrefs.GetInt("UmmVersion", 0) == 12;
+		return PlayerPrefs.GetInt("UmmVersion", 0) == 13;
 	}
 
 	private void SaveActualUmmVersion()
 	{
-		PlayerPrefs.SetInt("UmmVersion", 12);
+		PlayerPrefs.SetInt("UmmVersion", 13);
 		PlayerPrefs.Save();
 	}
 
@@ -303,7 +303,7 @@ public class UnityModManagerBridge : IModManagerBridge
 				return false;
 			}
 		}
-		PFLog.UnityModManager.Log($"Going to update UMM to version {12}");
+		PFLog.UnityModManager.Log($"Going to update UMM to version {13}");
 		string text = Path.Combine(Application.streamingAssetsPath, "OwlcatUnityModManager.zip");
 		if (!File.Exists(text))
 		{
@@ -325,17 +325,27 @@ public class UnityModManagerBridge : IModManagerBridge
 			{
 				text3 = persistentDataPath;
 			}
-			ZipFile.Open(text, ZipArchiveMode.Read).ExtractToDirectory(text3);
+			ZipArchive source = ZipFile.Open(text, ZipArchiveMode.Read);
+			string text4 = Path.Combine(text3, "UnityModManager");
+			if (Directory.Exists(text4))
+			{
+				Directory.Delete(text4, recursive: true);
+			}
+			source.ExtractToDirectory(text3);
 			if (flag)
 			{
 				PFLog.UnityModManager.Log("Removing old UnityModManager libraries.");
-				string text4 = Path.Combine(text3, "UnityModManager");
 				foreach (string item in Directory.EnumerateFiles(text4))
 				{
 					string text5 = item.Substring(text4.Length + 1);
-					PFLog.Mods.Error("filename : " + text5);
-					PFLog.Mods.Error("source : " + item);
-					PFLog.Mods.Error("dest : " + Path.Combine(text2, text5));
+					PFLog.Mods.Log("filename : " + text5);
+					PFLog.Mods.Log("source : " + item);
+					PFLog.Mods.Log("dest : " + Path.Combine(text2, text5));
+					string path = Path.Combine(text2, text5);
+					if (File.Exists(path))
+					{
+						File.Delete(path);
+					}
 					File.Move(item, Path.Combine(text2, text5));
 				}
 				Directory.Delete(Path.Combine(text3, "UnityModManager"));
@@ -347,7 +357,7 @@ public class UnityModManagerBridge : IModManagerBridge
 		catch (Exception ex2)
 		{
 			PFLog.UnityModManager.Error("UnityModManager update failed.");
-			PFLog.UnityModManager.Exception(ex2, "while trying to extract owlcat UnityModManager.dll");
+			PFLog.UnityModManager.Exception(ex2, "Exception while trying to extract owlcat UnityModManager.dll");
 			return false;
 		}
 	}

@@ -311,7 +311,7 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 	{
 		for (int i = 0; i < item.Count; i++)
 		{
-			TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((item.Count > 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+			TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((item.Count >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
 			string name = item.Name;
 			Sprite icon = item.Icon;
 			TooltipBaseTemplate tooltip = item.GetTooltip();
@@ -322,7 +322,7 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 
 	private void AddRewardFeature(List<ITooltipBrick> result, RewardAddFeatureUI feature)
 	{
-		TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((feature.Count > 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+		TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((feature.Count >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
 		string name = feature.Name;
 		Sprite icon = feature.Icon;
 		TooltipBaseTemplate tooltip = feature.GetTooltip();
@@ -332,6 +332,6 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 
 	private void AddRewardChangeStat(List<ITooltipBrick> result, RewardUI rewardChangeStatUI)
 	{
-		result.Add(new TooltipBrickIconStatValue(rewardChangeStatUI.Description, rewardChangeStatUI.CountText, null, rewardChangeStatUI.Icon, iconColor: rewardChangeStatUI.IconColor, tooltip: rewardChangeStatUI.GetTooltip(), type: (rewardChangeStatUI.Count > 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative));
+		result.Add(new TooltipBrickIconStatValue(rewardChangeStatUI.Description, rewardChangeStatUI.CountText, null, rewardChangeStatUI.Icon, iconColor: rewardChangeStatUI.IconColor, tooltip: rewardChangeStatUI.GetTooltip(), type: (rewardChangeStatUI.Count >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative));
 	}
 }

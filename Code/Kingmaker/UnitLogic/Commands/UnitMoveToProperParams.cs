@@ -54,6 +54,9 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public readonly int DiagonalsCount;
 
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public bool DisableApproachRadius { get; set; }
+
 	public override int DefaultApproachRadius => 10000;
 
 	protected override WalkSpeedType DefaultMovementType => WalkSpeedType.Run;
@@ -65,7 +68,7 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 	}
 
 	[MemoryPackConstructor]
-	public UnitMoveToProperParams(CountableFlag disableAttackOfOpportunity, float actionPointsPerCell, int actionPointsToSpend, float[] apCostPerEveryCell, int straightMoveLength, int diagonalsCount)
+	public UnitMoveToProperParams(CountableFlag disableAttackOfOpportunity, float actionPointsPerCell, int actionPointsToSpend, float[] apCostPerEveryCell, int straightMoveLength, int diagonalsCount, bool disableApproachRadius)
 	{
 		DisableAttackOfOpportunity = disableAttackOfOpportunity;
 		ActionPointsPerCell = actionPointsPerCell;
@@ -73,6 +76,7 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 		ApCostPerEveryCell = apCostPerEveryCell;
 		StraightMoveLength = straightMoveLength;
 		DiagonalsCount = diagonalsCount;
+		DisableApproachRadius = disableApproachRadius;
 	}
 
 	public UnitMoveToProperParams([NotNull] ForcedPath path, float actionPointsPerCell)
@@ -156,26 +160,24 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(25, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(21, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
-		writer.WriteUnmanaged(in value.m_Handle);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
 		bool value3 = value.FromCutscene;
-		bool value4 = value.CanBeAccelerated;
-		bool value5 = value.InterruptAsSoonAsPossible;
-		float? value6 = value.OverrideSpeed;
-		float? value7 = value.SpeedLimit;
-		bool value8 = value.ApplySpeedLimitInCombat;
-		bool value9 = value.AiCanInterruptMark;
-		bool value10 = value.DoNotInterruptAfterFight;
-		writer.DangerousWriteUnmanaged(in value3, in value4, in value5, in value6, in value7, in value8, in value9, in value10, in value.m_FreeAction, in value.m_NeedLoS, in value.m_ApproachRadius);
+		bool value4 = value.InterruptAsSoonAsPossible;
+		float? value5 = value.OverrideSpeed;
+		bool value6 = value.DoNotInterruptAfterFight;
+		writer.DangerousWriteUnmanaged(in value3, in value4, in value5, in value6, in value.m_FreeAction, in value.m_NeedLoS, in value.m_ApproachRadius);
 		writer.WritePackable(in value.m_ForcedPath);
 		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired);
 		writer.WritePackable(in value.DisableAttackOfOpportunity);
 		writer.WriteUnmanaged(in value.ActionPointsPerCell, in value.ActionPointsToSpend);
 		writer.WriteUnmanagedArray(value.ApCostPerEveryCell);
-		writer.WriteUnmanaged(in value.StraightMoveLength, in value.DiagonalsCount);
+		ref readonly int straightMoveLength = ref value.StraightMoveLength;
+		ref readonly int diagonalsCount = ref value.DiagonalsCount;
+		value3 = value.DisableApproachRadius;
+		writer.WriteUnmanaged(in straightMoveLength, in diagonalsCount, in value3);
 	}
 
 	[Preserve]
@@ -188,161 +190,140 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 		}
 		CommandType value2;
 		EntityRef<BaseUnitEntity> value3;
-		int value4;
-		TargetWrapper value5;
+		TargetWrapper value4;
+		bool value5;
 		bool value6;
-		bool value7;
+		float? value7;
 		bool value8;
-		float? value9;
-		float? value10;
-		bool value11;
-		bool value12;
-		bool value13;
+		bool? value9;
+		bool? value10;
+		int? value11;
+		ForcedPath value12;
+		WalkSpeedType? value13;
 		bool? value14;
 		bool? value15;
-		int? value16;
-		ForcedPath value17;
-		WalkSpeedType? value18;
-		bool? value19;
-		bool? value20;
-		CountableFlag value21;
-		float value22;
-		int value23;
-		float[] value24;
-		int value25;
-		int value26;
-		if (memberCount == 25)
+		CountableFlag value16;
+		float value17;
+		int value18;
+		float[] value19;
+		int value20;
+		int value21;
+		bool value22;
+		if (memberCount == 21)
 		{
 			if (value == null)
 			{
 				reader.ReadUnmanaged<CommandType>(out value2);
 				value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
-				reader.ReadUnmanaged<int>(out value4);
-				value5 = reader.ReadPackable<TargetWrapper>();
-				reader.DangerousReadUnmanaged<bool, bool, bool, float?, float?, bool, bool, bool, bool?, bool?, int?>(out value6, out value7, out value8, out value9, out value10, out value11, out value12, out value13, out value14, out value15, out value16);
-				value17 = reader.ReadPackable<ForcedPath>();
-				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?>(out value18, out value19, out value20);
-				value21 = reader.ReadPackable<CountableFlag>();
-				reader.ReadUnmanaged<float, int>(out value22, out value23);
-				value24 = reader.ReadUnmanagedArray<float>();
-				reader.ReadUnmanaged<int, int>(out value25, out value26);
+				value4 = reader.ReadPackable<TargetWrapper>();
+				reader.DangerousReadUnmanaged<bool, bool, float?, bool, bool?, bool?, int?>(out value5, out value6, out value7, out value8, out value9, out value10, out value11);
+				value12 = reader.ReadPackable<ForcedPath>();
+				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?>(out value13, out value14, out value15);
+				value16 = reader.ReadPackable<CountableFlag>();
+				reader.ReadUnmanaged<float, int>(out value17, out value18);
+				value19 = reader.ReadUnmanagedArray<float>();
+				reader.ReadUnmanaged<int, int, bool>(out value20, out value21, out value22);
 			}
 			else
 			{
 				value2 = value.Type;
 				value3 = value.OwnerRef;
-				value4 = value.m_Handle;
-				value5 = value.Target;
-				value6 = value.FromCutscene;
-				value7 = value.CanBeAccelerated;
-				value8 = value.InterruptAsSoonAsPossible;
-				value9 = value.OverrideSpeed;
-				value10 = value.SpeedLimit;
-				value11 = value.ApplySpeedLimitInCombat;
-				value12 = value.AiCanInterruptMark;
-				value13 = value.DoNotInterruptAfterFight;
-				value14 = value.m_FreeAction;
-				value15 = value.m_NeedLoS;
-				value16 = value.m_ApproachRadius;
-				value17 = value.m_ForcedPath;
-				value18 = value.m_MovementType;
-				value19 = value.m_IsOneFrameCommand;
-				value20 = value.m_SlowMotionRequired;
-				value21 = value.DisableAttackOfOpportunity;
-				value22 = value.ActionPointsPerCell;
-				value23 = value.ActionPointsToSpend;
-				value24 = value.ApCostPerEveryCell;
-				value25 = value.StraightMoveLength;
-				value26 = value.DiagonalsCount;
+				value4 = value.Target;
+				value5 = value.FromCutscene;
+				value6 = value.InterruptAsSoonAsPossible;
+				value7 = value.OverrideSpeed;
+				value8 = value.DoNotInterruptAfterFight;
+				value9 = value.m_FreeAction;
+				value10 = value.m_NeedLoS;
+				value11 = value.m_ApproachRadius;
+				value12 = value.m_ForcedPath;
+				value13 = value.m_MovementType;
+				value14 = value.m_IsOneFrameCommand;
+				value15 = value.m_SlowMotionRequired;
+				value16 = value.DisableAttackOfOpportunity;
+				value17 = value.ActionPointsPerCell;
+				value18 = value.ActionPointsToSpend;
+				value19 = value.ApCostPerEveryCell;
+				value20 = value.StraightMoveLength;
+				value21 = value.DiagonalsCount;
+				value22 = value.DisableApproachRadius;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
-				reader.ReadUnmanaged<int>(out value4);
-				reader.ReadPackable(ref value5);
+				reader.ReadPackable(ref value4);
+				reader.ReadUnmanaged<bool>(out value5);
 				reader.ReadUnmanaged<bool>(out value6);
-				reader.ReadUnmanaged<bool>(out value7);
+				reader.DangerousReadUnmanaged<float?>(out value7);
 				reader.ReadUnmanaged<bool>(out value8);
-				reader.DangerousReadUnmanaged<float?>(out value9);
-				reader.DangerousReadUnmanaged<float?>(out value10);
-				reader.ReadUnmanaged<bool>(out value11);
-				reader.ReadUnmanaged<bool>(out value12);
-				reader.ReadUnmanaged<bool>(out value13);
+				reader.DangerousReadUnmanaged<bool?>(out value9);
+				reader.DangerousReadUnmanaged<bool?>(out value10);
+				reader.DangerousReadUnmanaged<int?>(out value11);
+				reader.ReadPackable(ref value12);
+				reader.DangerousReadUnmanaged<WalkSpeedType?>(out value13);
 				reader.DangerousReadUnmanaged<bool?>(out value14);
 				reader.DangerousReadUnmanaged<bool?>(out value15);
-				reader.DangerousReadUnmanaged<int?>(out value16);
-				reader.ReadPackable(ref value17);
-				reader.DangerousReadUnmanaged<WalkSpeedType?>(out value18);
-				reader.DangerousReadUnmanaged<bool?>(out value19);
-				reader.DangerousReadUnmanaged<bool?>(out value20);
-				reader.ReadPackable(ref value21);
-				reader.ReadUnmanaged<float>(out value22);
-				reader.ReadUnmanaged<int>(out value23);
-				reader.ReadUnmanagedArray(ref value24);
-				reader.ReadUnmanaged<int>(out value25);
-				reader.ReadUnmanaged<int>(out value26);
+				reader.ReadPackable(ref value16);
+				reader.ReadUnmanaged<float>(out value17);
+				reader.ReadUnmanaged<int>(out value18);
+				reader.ReadUnmanagedArray(ref value19);
+				reader.ReadUnmanaged<int>(out value20);
+				reader.ReadUnmanaged<int>(out value21);
+				reader.ReadUnmanaged<bool>(out value22);
 			}
 		}
 		else
 		{
-			if (memberCount > 25)
+			if (memberCount > 21)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitMoveToProperParams), 25, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitMoveToProperParams), 21, memberCount);
 				return;
 			}
 			if (value == null)
 			{
 				value2 = CommandType.None;
 				value3 = default(EntityRef<BaseUnitEntity>);
-				value4 = 0;
-				value5 = null;
+				value4 = null;
+				value5 = false;
 				value6 = false;
-				value7 = false;
+				value7 = null;
 				value8 = false;
 				value9 = null;
 				value10 = null;
-				value11 = false;
-				value12 = false;
-				value13 = false;
+				value11 = null;
+				value12 = null;
+				value13 = null;
 				value14 = null;
 				value15 = null;
 				value16 = null;
-				value17 = null;
-				value18 = null;
+				value17 = 0f;
+				value18 = 0;
 				value19 = null;
-				value20 = null;
-				value21 = null;
-				value22 = 0f;
-				value23 = 0;
-				value24 = null;
-				value25 = 0;
-				value26 = 0;
+				value20 = 0;
+				value21 = 0;
+				value22 = false;
 			}
 			else
 			{
 				value2 = value.Type;
 				value3 = value.OwnerRef;
-				value4 = value.m_Handle;
-				value5 = value.Target;
-				value6 = value.FromCutscene;
-				value7 = value.CanBeAccelerated;
-				value8 = value.InterruptAsSoonAsPossible;
-				value9 = value.OverrideSpeed;
-				value10 = value.SpeedLimit;
-				value11 = value.ApplySpeedLimitInCombat;
-				value12 = value.AiCanInterruptMark;
-				value13 = value.DoNotInterruptAfterFight;
-				value14 = value.m_FreeAction;
-				value15 = value.m_NeedLoS;
-				value16 = value.m_ApproachRadius;
-				value17 = value.m_ForcedPath;
-				value18 = value.m_MovementType;
-				value19 = value.m_IsOneFrameCommand;
-				value20 = value.m_SlowMotionRequired;
-				value21 = value.DisableAttackOfOpportunity;
-				value22 = value.ActionPointsPerCell;
-				value23 = value.ActionPointsToSpend;
-				value24 = value.ApCostPerEveryCell;
-				value25 = value.StraightMoveLength;
-				value26 = value.DiagonalsCount;
+				value4 = value.Target;
+				value5 = value.FromCutscene;
+				value6 = value.InterruptAsSoonAsPossible;
+				value7 = value.OverrideSpeed;
+				value8 = value.DoNotInterruptAfterFight;
+				value9 = value.m_FreeAction;
+				value10 = value.m_NeedLoS;
+				value11 = value.m_ApproachRadius;
+				value12 = value.m_ForcedPath;
+				value13 = value.m_MovementType;
+				value14 = value.m_IsOneFrameCommand;
+				value15 = value.m_SlowMotionRequired;
+				value16 = value.DisableAttackOfOpportunity;
+				value17 = value.ActionPointsPerCell;
+				value18 = value.ActionPointsToSpend;
+				value19 = value.ApCostPerEveryCell;
+				value20 = value.StraightMoveLength;
+				value21 = value.DiagonalsCount;
+				value22 = value.DisableApproachRadius;
 			}
 			if (memberCount != 0)
 			{
@@ -352,34 +333,34 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 					reader.ReadPackable(ref value3);
 					if (memberCount != 2)
 					{
-						reader.ReadUnmanaged<int>(out value4);
+						reader.ReadPackable(ref value4);
 						if (memberCount != 3)
 						{
-							reader.ReadPackable(ref value5);
+							reader.ReadUnmanaged<bool>(out value5);
 							if (memberCount != 4)
 							{
 								reader.ReadUnmanaged<bool>(out value6);
 								if (memberCount != 5)
 								{
-									reader.ReadUnmanaged<bool>(out value7);
+									reader.DangerousReadUnmanaged<float?>(out value7);
 									if (memberCount != 6)
 									{
 										reader.ReadUnmanaged<bool>(out value8);
 										if (memberCount != 7)
 										{
-											reader.DangerousReadUnmanaged<float?>(out value9);
+											reader.DangerousReadUnmanaged<bool?>(out value9);
 											if (memberCount != 8)
 											{
-												reader.DangerousReadUnmanaged<float?>(out value10);
+												reader.DangerousReadUnmanaged<bool?>(out value10);
 												if (memberCount != 9)
 												{
-													reader.ReadUnmanaged<bool>(out value11);
+													reader.DangerousReadUnmanaged<int?>(out value11);
 													if (memberCount != 10)
 													{
-														reader.ReadUnmanaged<bool>(out value12);
+														reader.ReadPackable(ref value12);
 														if (memberCount != 11)
 														{
-															reader.ReadUnmanaged<bool>(out value13);
+															reader.DangerousReadUnmanaged<WalkSpeedType?>(out value13);
 															if (memberCount != 12)
 															{
 																reader.DangerousReadUnmanaged<bool?>(out value14);
@@ -388,42 +369,26 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 																	reader.DangerousReadUnmanaged<bool?>(out value15);
 																	if (memberCount != 14)
 																	{
-																		reader.DangerousReadUnmanaged<int?>(out value16);
+																		reader.ReadPackable(ref value16);
 																		if (memberCount != 15)
 																		{
-																			reader.ReadPackable(ref value17);
+																			reader.ReadUnmanaged<float>(out value17);
 																			if (memberCount != 16)
 																			{
-																				reader.DangerousReadUnmanaged<WalkSpeedType?>(out value18);
+																				reader.ReadUnmanaged<int>(out value18);
 																				if (memberCount != 17)
 																				{
-																					reader.DangerousReadUnmanaged<bool?>(out value19);
+																					reader.ReadUnmanagedArray(ref value19);
 																					if (memberCount != 18)
 																					{
-																						reader.DangerousReadUnmanaged<bool?>(out value20);
+																						reader.ReadUnmanaged<int>(out value20);
 																						if (memberCount != 19)
 																						{
-																							reader.ReadPackable(ref value21);
+																							reader.ReadUnmanaged<int>(out value21);
 																							if (memberCount != 20)
 																							{
-																								reader.ReadUnmanaged<float>(out value22);
-																								if (memberCount != 21)
-																								{
-																									reader.ReadUnmanaged<int>(out value23);
-																									if (memberCount != 22)
-																									{
-																										reader.ReadUnmanagedArray(ref value24);
-																										if (memberCount != 23)
-																										{
-																											reader.ReadUnmanaged<int>(out value25);
-																											if (memberCount != 24)
-																											{
-																												reader.ReadUnmanaged<int>(out value26);
-																												_ = 25;
-																											}
-																										}
-																									}
-																								}
+																								reader.ReadUnmanaged<bool>(out value22);
+																								_ = 21;
 																							}
 																						}
 																					}
@@ -447,27 +412,22 @@ public sealed class UnitMoveToProperParams : UnitCommandParams<UnitMoveToProper>
 			}
 			_ = value;
 		}
-		value = new UnitMoveToProperParams(value21, value22, value23, value24, value25, value26)
+		value = new UnitMoveToProperParams(value16, value17, value18, value19, value20, value21, value22)
 		{
 			Type = value2,
 			OwnerRef = value3,
-			m_Handle = value4,
-			Target = value5,
-			FromCutscene = value6,
-			CanBeAccelerated = value7,
-			InterruptAsSoonAsPossible = value8,
-			OverrideSpeed = value9,
-			SpeedLimit = value10,
-			ApplySpeedLimitInCombat = value11,
-			AiCanInterruptMark = value12,
-			DoNotInterruptAfterFight = value13,
-			m_FreeAction = value14,
-			m_NeedLoS = value15,
-			m_ApproachRadius = value16,
-			m_ForcedPath = value17,
-			m_MovementType = value18,
-			m_IsOneFrameCommand = value19,
-			m_SlowMotionRequired = value20
+			Target = value4,
+			FromCutscene = value5,
+			InterruptAsSoonAsPossible = value6,
+			OverrideSpeed = value7,
+			DoNotInterruptAfterFight = value8,
+			m_FreeAction = value9,
+			m_NeedLoS = value10,
+			m_ApproachRadius = value11,
+			m_ForcedPath = value12,
+			m_MovementType = value13,
+			m_IsOneFrameCommand = value14,
+			m_SlowMotionRequired = value15
 		};
 	}
 }

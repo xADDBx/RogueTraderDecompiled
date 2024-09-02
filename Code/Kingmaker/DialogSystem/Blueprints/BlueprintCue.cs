@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.DialogSystem.Interfaces;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.Colonization.Rewards;
@@ -13,7 +14,7 @@ using UnityEngine.Serialization;
 namespace Kingmaker.DialogSystem.Blueprints;
 
 [TypeId("8eee9d45ddcfa614d99610c1892993e3")]
-public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider
+public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider, ILocalizedStringHolder
 {
 	public LocalizedString Text;
 
@@ -22,6 +23,8 @@ public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider
 	public DialogSpeaker Speaker;
 
 	public bool TurnSpeaker = true;
+
+	public bool IsNarratorText;
 
 	public DialogAnimation Animation;
 
@@ -47,6 +50,8 @@ public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider
 	public string DisplayText => Text;
 
 	public BlueprintUnit Listener => m_Listener?.Get();
+
+	public LocalizedString LocalizedStringText => Text;
 
 	SoulMarkShift ISoulMarkShiftProvider.SoulMarkShift => SoulMarkShift;
 

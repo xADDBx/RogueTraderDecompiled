@@ -61,6 +61,8 @@ public static class PBD
 
 	private static Simulation s_Simulation;
 
+	private static bool s_PrevEnabled;
+
 	private static PositionBasedDynamicsConfig s_Config;
 
 	private static PBDSceneController s_SceneController;
@@ -151,6 +153,7 @@ public static class PBD
 			s_Simulation = new Simulation(s_Config.GPU, s_Config.SimulationIterations, s_Config.ConstraintIterations, s_Config.Decay);
 			s_TimeService = new TimeService();
 			s_SceneController = new PBDSceneController();
+			s_PrevEnabled = s_Config.Enabled;
 		}
 	}
 
@@ -185,6 +188,14 @@ public static class PBD
 		{
 			s_Simulation.Dispose();
 			s_Simulation = null;
+		}
+	}
+
+	public static void MemoryReset()
+	{
+		if (s_Simulation != null)
+		{
+			s_Simulation.MemoryReset();
 		}
 	}
 
@@ -392,6 +403,14 @@ public static class PBD
 		if (!Application.isPlaying || s_Simulation == null || s_Simulation.IsSceneInitialization)
 		{
 			return;
+		}
+		if (s_PrevEnabled != s_Config.Enabled)
+		{
+			if (s_Config.Enabled)
+			{
+				MemoryReset();
+			}
+			s_PrevEnabled = s_Config.Enabled;
 		}
 		using (Counters.PBD?.Measure())
 		{

@@ -93,19 +93,6 @@ public class AchievementsManager : IReadOnlyCollection<AchievementEntity>, IEnum
 			{
 				m_AchievementHandlers.Add(steamAchievementsManager);
 			}
-			GogAchievementsManager gogAchievementsManager = GogAchievementsManager.Instance;
-			if (!gogAchievementsManager)
-			{
-				gogAchievementsManager = new GameObject().AddComponent<GogAchievementsManager>();
-				UnityEngine.Object.DontDestroyOnLoad(gogAchievementsManager);
-			}
-			gogAchievementsManager.Achievements = this;
-			EGSAchievementsManager eGSAchievementsManager = new EGSAchievementsManager(this);
-			eGSAchievementsManager.SyncAchievements();
-			if (!m_AchievementHandlers.Contains(eGSAchievementsManager))
-			{
-				m_AchievementHandlers.Add(eGSAchievementsManager);
-			}
 		}
 	}
 
@@ -236,6 +223,15 @@ public class AchievementsManager : IReadOnlyCollection<AchievementEntity>, IEnum
 			return false;
 		}
 		return m_Logics.HasItem((AchievementLogic l) => l.IsDifficultyDisableAchievement(newDifficulty));
+	}
+
+	public bool IsAchievementUnlocked(AchievementData achData)
+	{
+		if (achData != null)
+		{
+			return m_Achievements.FirstItem((AchievementEntity a) => a.Data == achData)?.IsUnlocked ?? false;
+		}
+		return false;
 	}
 
 	public virtual Hash128 GetHash128()

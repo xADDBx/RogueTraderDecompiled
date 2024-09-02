@@ -426,15 +426,15 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 					List<CustomGridNodeBase> list2 = pathNodes;
 					if (caster.CanStandHere(list2[list2.Count - 1]))
 					{
-						goto IL_00d9;
+						goto IL_00e3;
 					}
 				}
 			}
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsInvalid;
 			return false;
 		}
-		goto IL_00d9;
-		IL_00d9:
+		goto IL_00e3;
+		IL_00e3:
 		if (!StepThroughTarget && !IsPathToTargetReachDestination(ability.Caster, nearestNode, pathNodes))
 		{
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsTooFar;
@@ -489,48 +489,48 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 
 	private List<CustomGridNodeBase> GetStepThroughTargetPath(MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
 	{
-		List<CustomGridNodeBase> list = TempList.Get<CustomGridNodeBase>();
+		List<CustomGridNodeBase> result = TempList.Get<CustomGridNodeBase>();
 		BaseUnitEntity unit = targetNode.GetUnit();
 		if (unit == null)
 		{
-			return list;
+			return result;
 		}
 		CustomGridNodeBase innerNodeNearestToTarget = caster.GetInnerNodeNearestToTarget(casterNode, targetNode.Vector3Position);
 		Vector2 normalized = (unit.GetInnerNodeNearestToTarget(innerNodeNearestToTarget.Vector3Position).Vector3Position - innerNodeNearestToTarget.Vector3Position).To2D().normalized;
 		if (normalized.sqrMagnitude < 1E-06f)
 		{
-			return list;
+			return result;
 		}
 		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(casterNode.CoordinatesInGrid, normalized);
-		foreach (CustomGridNodeBase item2 in new Linecast.Ray2Nodes((CustomGridGraph)casterNode.Graph, in offsets))
+		foreach (CustomGridNodeBase item in new Linecast.Ray2Nodes((CustomGridGraph)casterNode.Graph, in offsets))
 		{
-			if (list.Any())
+			if (result.Any())
 			{
-				if (!CustomGraphHelper.HasConnectionBetweenNodes(list[list.Count - 1], item2))
+				List<CustomGridNodeBase> list = result;
+				if (!CustomGraphHelper.HasConnectionBetweenNodes(list[list.Count - 1], item))
 				{
-					CustomGridNodeBase item;
-					if (list.Count < 2)
+					ComeBack(2, out var comeBackNode2);
+					if (comeBackNode2 != casterNode)
 					{
-						item = casterNode;
+						BaseUnitEntity unit2 = comeBackNode2.GetUnit();
+						if (unit2 != null && unit2 != caster && !unit2.IsDeadOrUnconscious && caster.IsEnemy(unit2))
+						{
+							ComeBack(4, out var _);
+						}
 					}
-					else
-					{
-						item = list[list.Count - 2];
-					}
-					list.Add(item);
-					return list;
+					return result;
 				}
 			}
-			list.Add(item2);
+			result.Add(item);
 			bool flag = false;
 			bool flag2 = false;
-			foreach (CustomGridNodeBase occupiedNode in caster.GetOccupiedNodes(item2.Vector3Position))
+			foreach (CustomGridNodeBase occupiedNode in caster.GetOccupiedNodes(item.Vector3Position))
 			{
-				BaseUnitEntity unit2 = occupiedNode.GetUnit();
-				flag2 = flag2 || unit2 != null;
-				if (unit2 != null && unit2 != caster && unit2 != unit)
+				BaseUnitEntity unit3 = occupiedNode.GetUnit();
+				flag2 = flag2 || unit3 != null;
+				if (unit3 != null && unit3 != caster && unit3 != unit)
 				{
-					list.Clear();
+					result.Clear();
 					flag = true;
 					break;
 				}
@@ -540,6 +540,21 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 				break;
 			}
 		}
-		return list;
+		return result;
+		void ComeBack(int previousNodeIndex, out CustomGridNodeBase comeBackNode)
+		{
+			CustomGridNodeBase customGridNodeBase;
+			if (result.Count < previousNodeIndex)
+			{
+				customGridNodeBase = casterNode;
+			}
+			else
+			{
+				List<CustomGridNodeBase> list2 = result;
+				customGridNodeBase = list2[list2.Count - previousNodeIndex];
+			}
+			comeBackNode = customGridNodeBase;
+			result.Add(comeBackNode);
+		}
 	}
 }

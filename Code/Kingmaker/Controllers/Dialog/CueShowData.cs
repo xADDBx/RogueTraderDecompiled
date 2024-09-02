@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.DialogSystem.Blueprints;
-using Kingmaker.Enums;
 using Kingmaker.UnitLogic.Alignments;
 using UnityEngine;
 
@@ -21,9 +19,6 @@ public class CueShowData : IDialogShowData
 	public readonly string SpeakerName;
 
 	public readonly BlueprintUnit SpeakerBlueprint;
-
-	[CanBeNull]
-	public Alignment? NewAlignment;
 
 	public CueShowData(BlueprintCue cue, IEnumerable<SkillCheckResult> skillChecks, IEnumerable<SoulMarkShift> soulMarkShifts)
 	{
@@ -46,6 +41,7 @@ public class CueShowData : IDialogShowData
 			string text = ColorUtility.ToHtmlStringRGB((SpeakerBlueprint?.Color ?? ((Color)colors.Narrator)) * colors.NameColorMultiplyer);
 			return string.Format(DialogFormats.SpeakerFormatWithColorName, "", text, SpeakerName, Cue.DisplayText, ColorUtility.ToHtmlStringRGB(colors.Narrator));
 		}
-		return string.Format(DialogFormats.NarratorsTextFormat, Cue.DisplayText);
+		string arg = ColorUtility.ToHtmlStringRGB(colors.Narrator);
+		return string.Format(DialogFormats.NarratorsTextFormat, arg, Cue.DisplayText);
 	}
 }

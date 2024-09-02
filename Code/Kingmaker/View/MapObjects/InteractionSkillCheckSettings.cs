@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Localization;
 using Kingmaker.Localization.Shared;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -29,15 +30,6 @@ public class InteractionSkillCheckSettings : InteractionSettings
 		Debuff
 	}
 
-	[Space(20f)]
-	public bool FadeOnSuccess;
-
-	public bool FadeOnFail;
-
-	public PenaltyType PenaltyForFailedSkillCheck;
-
-	public bool ApplyPenaltyAfterFade = true;
-
 	[Space(10f)]
 	public StatType Skill;
 
@@ -55,18 +47,14 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	public FakeType FakeResult;
 
 	[Space(10f)]
+	public bool HideDC;
+
+	[Space(10f)]
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
 	public SharedStringAsset DisplayName;
 
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
 	public SharedStringAsset ShortDescription;
-
-	[Space(10f)]
-	[CanBeNull]
-	public ConditionsReference Condition;
-
-	[Space(10f)]
-	public bool HideDC;
 
 	public bool DisableAfterUse;
 
@@ -89,6 +77,15 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	public SharedStringAsset ShortDescriptionFailed;
 
 	public bool IsPartyCheck;
+
+	[Space(20f)]
+	public bool FadeOnSuccess;
+
+	public bool FadeOnFail;
+
+	public PenaltyType PenaltyForFailedSkillCheck;
+
+	public bool ApplyPenaltyAfterFade = true;
 
 	[Space(10f)]
 	[CanBeNull]
@@ -113,6 +110,10 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	[CanBeNull]
 	public ActionsReference CheckFailedActions;
+
+	[Space(10f)]
+	[CanBeNull]
+	public ConditionsReference Condition;
 
 	[Tooltip("Show bark on MapObject user. By default bark is shown on MapObject.")]
 	public bool ShowOnUser;

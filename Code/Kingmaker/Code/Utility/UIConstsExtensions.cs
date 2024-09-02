@@ -32,7 +32,7 @@ public static class UIConstsExtensions
 		string text = string.Empty;
 		if ((bool)dialogs.ShowSkillcheckDC)
 		{
-			text = answer.SkillChecks.Aggregate("", (string current, CheckData skillCheck) => current + string.Format(checkFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, skillCheck.Type), LocalizedTexts.Instance.Stats.GetText(skillCheck.Type), skillCheck.DC));
+			text = answer.SkillChecks.Aggregate("", (string current, CheckData skillCheck) => current + string.Format(checkFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, skillCheck.Type), LocalizedTexts.Instance.Stats.GetText(skillCheck.Type), skillCheck.DC + (int)SettingsRoot.Difficulty.SkillCheckModifier));
 		}
 		string text2 = string.Empty;
 		if (answer.HasExchangeData)
@@ -42,8 +42,7 @@ public static class UIConstsExtensions
 		if ((bool)dialogs.ShowAlignmentRequirements && !answer.SoulMarkRequirement.Empty)
 		{
 			string arg = UIUtility.GetSoulMarkDirectionText(answer.SoulMarkRequirement.Direction).Text ?? "";
-			string arg2 = UIUtility.GetSoulMarkRankText(SoulMarkShiftExtension.GetSoulMarkRankIndex(answer.SoulMarkRequirement.Direction, answer.SoulMarkRequirement.Value) + 1).Text ?? "";
-			text = string.Format(UIDialog.Instance.AlignmentRequirementLabel, arg, arg2) + text;
+			text = string.Format(arg1: (!answer.SoulMarkRequirement.CheckByRank) ? (UIUtility.GetSoulMarkRankText(SoulMarkShiftExtension.GetSoulMarkRankIndex(answer.SoulMarkRequirement.Direction, answer.SoulMarkRequirement.Value) + 1).Text ?? "") : UIUtility.GetSoulMarkRankText(answer.SoulMarkRequirement.Rank).Text, format: UIDialog.Instance.AlignmentRequirementLabel, arg0: arg) + text;
 		}
 		if ((bool)dialogs.ShowSkillcheckResult && answer.HasShowCheck)
 		{

@@ -260,6 +260,10 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 			{
 				return false;
 			}
+			if (Input.GetKeyDown(KeyCode.Escape))
+			{
+				current.SetSelectedGameObject(null);
+			}
 			return true;
 		}
 	}
@@ -474,7 +478,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		RegisterBinding("RapidLightingBugNoSave", KeyCode.H, gameModesArray, ctrl: true, alt: true, shift: true, TriggerType.KeyDown, ModificationSide.Right);
 		RegisterBinding("RapidKingdomBugNoSave", KeyCode.K, gameModesArray, ctrl: true, alt: true, shift: true, TriggerType.KeyDown, ModificationSide.Right);
 		RegisterBinding("RapidBugReportWindowOpen", KeyCode.B, gameModesArray, ctrl: false, alt: true, shift: false);
-		RegisterBinding("BrowserOpenLastReport", KeyCode.F11, gameModesArray, ctrl: true, alt: true, shift: false);
+		RegisterBinding("BrowserOpenLastReport", KeyCode.F12, gameModesArray, ctrl: true, alt: true, shift: false);
 	}
 
 	public static GameModeType[] GetGameModesArray(GameModesGroup gameModesGroup)

@@ -9,6 +9,7 @@ using Kingmaker.Blueprints.JsonSystem.EditorDatabase.ResourceReplacementProvider
 using Kingmaker.Modding;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.UnityExtensions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility.Locator;
 using UnityEngine;
@@ -25,6 +26,13 @@ public class BundlesLoadService : IService
 		public int RequestCount;
 	}
 
+	private class AdditionalBundlesSourceData
+	{
+		public string Path;
+
+		public HashSet<string> RequestedBundles = new HashSet<string>();
+	}
+
 	private static ServiceProxy<BundlesLoadService> s_Proxy;
 
 	private DependencyData m_DependencyData;
@@ -34,6 +42,8 @@ public class BundlesLoadService : IService
 	private readonly Dictionary<string, BundleData> m_Bundles = new Dictionary<string, BundleData>();
 
 	private LocationList m_LocationList;
+
+	private readonly Dictionary<string, AdditionalBundlesSourceData> m_AdditionalBundlesSources = new Dictionary<string, AdditionalBundlesSourceData>();
 
 	public ServiceLifetimeType Lifetime => ServiceLifetimeType.Game;
 
@@ -299,9 +309,31 @@ public class BundlesLoadService : IService
 		}
 	}
 
+	public static string BundlesBlueprintPath(string folderName)
+	{
+		return Path.Combine(Application.dataPath, "..", AssetBundleNames.GetBundlesFolder(), folderName);
+	}
+
 	public static string BundlesPath(string fileName)
 	{
-		return Path.Combine(Application.dataPath, "..", AssetBundleNames.GetBundlesFolder(), fileName);
+		string text = Path.Combine(Application.dataPath, "..", AssetBundleNames.GetBundlesFolder(), fileName);
+		if (File.Exists(text))
+		{
+			return text;
+		}
+		PFLog.Bundles.Log("Bundle " + fileName + " not found at path: " + text);
+		foreach (AdditionalBundlesSourceData value in Instance.m_AdditionalBundlesSources.Values)
+		{
+			text = Path.Combine(value.Path, AssetBundleNames.GetBundlesFolder(), fileName);
+			if (File.Exists(text))
+			{
+				value.RequestedBundles.Add(fileName);
+				return text;
+			}
+			PFLog.Bundles.Log("Bundle " + fileName + " not found at path: " + text);
+		}
+		PFLog.Bundles.Error("Bundle not found: " + fileName);
+		return string.Empty;
 	}
 
 	public bool HasLocation(string assetId)
@@ -338,5 +370,35 @@ public class BundlesLoadService : IService
 			return value.Bundle != null;
 		}
 		return false;
+	}
+
+	public void RegisterAdditionalBundlesSource(string bundlesSourceUniqueId, string bundlePath)
+	{
+		if (!bundlePath.IsNullOrEmpty())
+		{
+			m_AdditionalBundlesSources.Add(bundlesSourceUniqueId, new AdditionalBundlesSourceData
+			{
+				Path = bundlePath
+			});
+		}
+	}
+
+	public void UnregisterAdditionalBundlesSource(string bundlesSourceUniqueId)
+	{
+		if (bundlesSourceUniqueId.IsNullOrEmpty() || !m_AdditionalBundlesSources.TryGetValue(bundlesSourceUniqueId, out var value))
+		{
+			return;
+		}
+		foreach (string requestedBundle in value.RequestedBundles)
+		{
+			if (m_Bundles.TryGetValue(requestedBundle, out var value2))
+			{
+				PFLog.Bundles.Log("Force unload bundle: {0}", requestedBundle);
+				value2.Bundle.Unload(unloadAllLoadedObjects: true);
+				value2.Bundle = null;
+				UnloadDependencies(requestedBundle);
+			}
+		}
+		m_AdditionalBundlesSources.Remove(bundlesSourceUniqueId);
 	}
 }

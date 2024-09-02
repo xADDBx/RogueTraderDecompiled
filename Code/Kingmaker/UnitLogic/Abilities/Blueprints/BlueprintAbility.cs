@@ -15,7 +15,6 @@ using Kingmaker.Designers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
-using Kingmaker.Localization;
 using Kingmaker.ResourceLinks.BaseInterfaces;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
@@ -105,13 +104,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	public int CooldownRounds;
 
-	[Tooltip("Включать имя данного спела в имя его варианта")]
-	public bool ShowNameForVariant;
-
-	[ShowIf("ShowNameForVariant")]
-	[Tooltip("Применять опцию выше только, если кастер - IsPlayerFaction")]
-	public bool OnlyForAllyCaster;
-
 	public bool CanTargetPoint;
 
 	public bool CanTargetEnemies;
@@ -120,10 +112,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	public bool CanTargetFriends;
 
 	public bool CanTargetSelf = true;
-
-	public bool SpellResistance;
-
-	public bool ActionBarAutoFillIgnored;
 
 	public bool Hidden;
 
@@ -161,9 +149,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	public bool ShouldTurnToTarget = true;
 
 	[SerializeField]
-	private bool m_TolerantForInvisible;
-
-	[SerializeField]
 	private bool m_IsStratagem;
 
 	public UsingInThreateningAreaType UsingInThreateningArea;
@@ -175,10 +160,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	[SerializeField]
 	[ValidateNoNullEntries]
 	private BlueprintAbilityGroupReference[] m_AbilityGroups;
-
-	public LocalizedString LocalizedDuration;
-
-	public LocalizedString LocalizedSavingThrow;
 
 	public MaterialComponentData MaterialComponent = new MaterialComponentData
 	{
@@ -352,13 +333,15 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		{
 			if (this.GetComponent<AbilityTargetsInPattern>() == null)
 			{
-				return this.GetComponent<WarhammerAbilityAttackDelivery>()?.IsPattern ?? false;
+				WarhammerAbilityAttackDelivery component = this.GetComponent<WarhammerAbilityAttackDelivery>();
+				if (component == null || !component.IsPattern)
+				{
+					return this.GetComponent<AbilityMeleeBurst>()?.IsAoe ?? false;
+				}
 			}
 			return true;
 		}
 	}
-
-	public bool TolerantForInvisible => m_TolerantForInvisible;
 
 	public AttackAbilityType? AttackType => GetAttackType();
 

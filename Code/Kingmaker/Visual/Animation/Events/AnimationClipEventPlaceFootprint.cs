@@ -35,6 +35,10 @@ public class AnimationClipEventPlaceFootprint : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventPlaceFootprint()
+	{
+	}
+
 	public AnimationClipEventPlaceFootprint(float time)
 		: this(time, null, 0)
 	{

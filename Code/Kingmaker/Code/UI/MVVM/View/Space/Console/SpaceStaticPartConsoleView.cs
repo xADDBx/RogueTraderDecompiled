@@ -71,7 +71,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 	private GroupChangerContextConsoleView m_GroupChangerContextConsoleView;
 
 	[SerializeField]
-	private UIViewLink<TransitionConsoleView, TransitionVM> m_TransitionConsoleViewLink;
+	private UIDestroyViewLink<TransitionConsoleView, TransitionVM> m_TransitionConsoleViewLink;
 
 	[SerializeField]
 	private DialogContextConsoleView m_DialogContextConsoleView;
@@ -89,13 +89,13 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 	private PartySelectorConsoleView m_PartySelectorConsoleView;
 
 	[SerializeField]
-	private UIViewLink<VendorConsoleView, VendorVM> m_VendorConsoleViewLink;
+	private UIDestroyViewLink<VendorConsoleView, VendorVM> m_VendorConsoleViewLink;
 
 	[SerializeField]
 	private GameOverConsoleView m_GameOverConsoleView;
 
 	[SerializeField]
-	private UIViewLink<CreditsConsoleView, CreditsVM> m_CreditsConsoleView;
+	private UIDestroyViewLink<CreditsConsoleView, CreditsVM> m_CreditsConsoleView;
 
 	[SerializeField]
 	private PartyConsoleView m_PartyConsoleView;
@@ -127,7 +127,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 	private PointMarkersPCView m_SpacePointMarkersPCView;
 
 	[SerializeField]
-	private UIViewLink<VendorSelectingWindowConsoleView, VendorSelectingWindowVM> m_VendorSelectingWindowContextConsoleView;
+	private UIDestroyViewLink<VendorSelectingWindowConsoleView, VendorSelectingWindowVM> m_VendorSelectingWindowContextConsoleView;
 
 	[FormerlySerializedAs("m_SystemTitlePCView")]
 	[SerializeField]
@@ -208,7 +208,6 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 	public void Initialize()
 	{
 		m_UIVisibilityView.Initialize();
-		m_LootContextConsoleView.Initialize();
 		m_GroupChangerContextConsoleView.Initialize();
 		m_ExplorationConsoleView.Initialize();
 		m_AnomalyConsoleView.Initialize();

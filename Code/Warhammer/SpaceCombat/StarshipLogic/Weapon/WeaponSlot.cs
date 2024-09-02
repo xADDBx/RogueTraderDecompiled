@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
@@ -160,7 +161,7 @@ public class WeaponSlot : ItemSlot, IHashable
 	{
 		get
 		{
-			if (ActiveWeaponIndex == 0)
+			if (ActiveWeaponIndex == 0 || ArsenalWeapons.Count < ActiveWeaponIndex)
 			{
 				return base.MaybeItem as ItemEntityStarshipWeapon;
 			}
@@ -186,9 +187,17 @@ public class WeaponSlot : ItemSlot, IHashable
 		}
 		set
 		{
-			m_ActiveWeaponIndex = Math.Clamp(value, 0, ArsenalWeapons.Count);
-			Weapon.UpdateAbilities(base.Owner, base.Item);
-			SetupAmmo();
+			int num = Math.Clamp(value, 0, ArsenalWeapons.Count);
+			if (m_ActiveWeaponIndex != num)
+			{
+				m_ActiveWeaponIndex = num;
+				Weapon.UpdateAbilities(base.Owner, base.Item);
+				SetupAmmo();
+				EventBus.RaiseEvent(delegate(IWeaponSlotHandler h)
+				{
+					h.HandleActiveWeaponIndexChanged(this);
+				});
+			}
 		}
 	}
 
@@ -206,7 +215,7 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public IEnumerable<Ability> AbilityVariants => WeaponVariants.Select((ItemEntityStarshipWeapon item) => item.Abilities.FirstOrDefault());
 
-	public Ability ActiveAbility => Weapon?.Abilities.FirstOrDefault();
+	public Ability ActiveAbility => Weapon?.Abilities.FirstOrDefault((Ability a) => a != null);
 
 	public WeaponSlot(BaseUnitEntity owner, WeaponSlotData slotData)
 		: base(owner)
@@ -255,9 +264,9 @@ public class WeaponSlot : ItemSlot, IHashable
 		return AmmoSlot.CanInsertItem(ammo);
 	}
 
-	public void EquipAmmo(ItemEntityStarshipAmmo ammo, bool reloadInstantly = false)
+	public void EquipAmmo(ItemEntityStarshipAmmo ammo, bool reloadInstantly = false, bool force = false)
 	{
-		AmmoSlot.InsertItem(ammo);
+		AmmoSlot.InsertItem(ammo, force);
 		Weapon.Charges = (reloadInstantly ? Weapon.Blueprint.Charges : 0);
 	}
 
@@ -274,7 +283,7 @@ public class WeaponSlot : ItemSlot, IHashable
 		{
 			ItemEntityStarshipAmmo itemEntityStarshipAmmo = Entity.Initialize(new ItemEntityStarshipAmmo(blueprintStarshipAmmo));
 			(base.Owner as StarshipEntity)?.Inventory.Add(itemEntityStarshipAmmo);
-			EquipAmmo(itemEntityStarshipAmmo, reloadInstantly: true);
+			EquipAmmo(itemEntityStarshipAmmo, reloadInstantly: true, force: true);
 		}
 	}
 
@@ -286,9 +295,14 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public void RefreshArsenals()
 	{
+		if (!(base.Owner is StarshipEntity starshipEntity))
+		{
+			return;
+		}
+		DisposeArsenals();
 		ArsenalWeapons.Clear();
 		ArsenalAmmo.Clear();
-		if (!(base.Owner is StarshipEntity starshipEntity) || base.MaybeItem == null)
+		if (base.MaybeItem == null)
 		{
 			return;
 		}
@@ -313,7 +327,28 @@ public class WeaponSlot : ItemSlot, IHashable
 			itemEntityStarshipWeapon.PrepareAbilities(base.Owner, base.MaybeItem);
 			ArsenalWeapons.Add(itemEntityStarshipWeapon);
 			ArsenalAmmo.Add(item.VariantAmmo ?? itemEntityStarshipWeapon.Blueprint.DefaultAmmo ?? wbp.DefaultAmmo);
-			starshipEntity.Inventory.Add(itemEntityStarshipWeapon);
+		}
+	}
+
+	public override bool RemoveItem(bool autoMerge = true, bool force = false)
+	{
+		DisposeArsenals();
+		return base.RemoveItem(autoMerge);
+	}
+
+	public void DisposeArsenals()
+	{
+		if (!(base.Owner is StarshipEntity starshipEntity))
+		{
+			return;
+		}
+		using (ContextData<ItemsCollection.DoNotRemoveFromSlot>.Request())
+		{
+			foreach (ItemEntityStarshipWeapon arsenalWeapon in ArsenalWeapons)
+			{
+				starshipEntity.Inventory.Remove(arsenalWeapon);
+				arsenalWeapon.HoldingSlot = null;
+			}
 		}
 	}
 

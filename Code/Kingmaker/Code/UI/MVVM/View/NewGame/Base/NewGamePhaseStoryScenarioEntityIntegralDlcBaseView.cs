@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.NewGame.Story;
 using Kingmaker.DLC;
 using Kingmaker.PubSubSystem;
@@ -30,6 +31,12 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 	[SerializeField]
 	private Sprite m_DlcNotAvailableSprite;
 
+	[SerializeField]
+	private TextMeshProUGUI m_OnText;
+
+	[SerializeField]
+	private TextMeshProUGUI m_OffText;
+
 	private bool m_IsSelected;
 
 	private bool m_DlcIsOn;
@@ -42,8 +49,10 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 	{
 		base.BindViewImplementation();
 		m_Title.text = base.ViewModel.Title;
+		m_OnText.text = UIStrings.Instance.SettingsUI.SettingsToggleOn;
+		m_OffText.text = UIStrings.Instance.SettingsUI.SettingsToggleOff;
 		m_DlcIsOn = base.ViewModel.BlueprintDlc.GetDlcSwitchOnOffState();
-		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (m_DlcIsOn ? "Available" : "Off"));
+		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (m_DlcIsOn ? "On" : "Off"));
 		SetupPantographConfig();
 		AddDisposable(EventBus.Subscribe(this));
 	}
@@ -73,12 +82,13 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 
 	private void SetupPantographConfig()
 	{
-		List<Sprite> icons = new List<Sprite>
+		List<Sprite> list = new List<Sprite> { m_LittleCircleSprite };
+		if (!base.ViewModel.BlueprintDlc.IsPurchased)
 		{
-			m_LittleCircleSprite,
-			(!base.ViewModel.BlueprintDlc.IsPurchased) ? m_DlcNotAvailableSprite : (m_DlcIsOn ? m_DlcAvailableSprite : m_TransparentSprite)
-		};
-		PantographConfig = new PantographConfig(base.transform, base.ViewModel.Title, icons);
+			list.Add(m_DlcNotAvailableSprite);
+		}
+		string textIcon = (base.ViewModel.BlueprintDlc.IsPurchased ? ((string)(m_DlcIsOn ? UIStrings.Instance.SettingsUI.SettingsToggleOn : UIStrings.Instance.SettingsUI.SettingsToggleOff)) : string.Empty);
+		PantographConfig = new PantographConfig(base.transform, base.ViewModel.Title, list, useLargeView: false, textIcon);
 	}
 
 	public void BindWidgetVM(IViewModel vm)
@@ -98,7 +108,7 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 			return;
 		}
 		m_DlcIsOn = value;
-		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (value ? "Available" : "Off"));
+		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (value ? "On" : "Off"));
 		if (m_IsSelected)
 		{
 			SetupPantographConfig();

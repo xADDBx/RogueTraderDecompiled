@@ -88,9 +88,7 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 		m_FeatureIcon.enabled = true;
 		if (base.ViewModel.Icon == null)
 		{
-			m_AcronymText.gameObject.SetActive(value: true);
-			m_AcronymText.text = base.ViewModel.Acronym;
-			m_AcronymText.color = (((bool)m_GroupsView && base.ViewModel.TalentIconsInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
+			SetupAcronym();
 			if (m_GroupsView != null && base.ViewModel.TalentIconsInfo.HasGroups)
 			{
 				m_GroupsView.SetupView(base.ViewModel.TalentIconsInfo);
@@ -107,6 +105,13 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 			m_FeatureIcon.color = Color.white;
 			m_FeatureIcon.sprite = base.ViewModel.Icon;
 		}
+	}
+
+	private void SetupAcronym()
+	{
+		m_AcronymText.gameObject.SetActive(value: true);
+		m_AcronymText.text = base.ViewModel.Acronym;
+		m_AcronymText.color = (((bool)m_GroupsView && base.ViewModel.TalentIconsInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
 	}
 
 	public void SetupName()

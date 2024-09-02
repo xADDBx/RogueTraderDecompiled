@@ -8,6 +8,20 @@ namespace Kingmaker.View;
 
 public class LocatorEntity : Entity, IHashable
 {
+	public new LocatorView View => (LocatorView)base.View;
+
+	public override bool IsVisibleForPlayer
+	{
+		get
+		{
+			if (!base.IsInFogOfWar && View != null)
+			{
+				return base.IsInGame;
+			}
+			return false;
+		}
+	}
+
 	protected LocatorEntity(JsonConstructorMark _)
 		: base(_)
 	{

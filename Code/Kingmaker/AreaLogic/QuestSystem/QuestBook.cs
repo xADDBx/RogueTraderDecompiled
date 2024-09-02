@@ -20,7 +20,7 @@ public class QuestBook : Entity, IHashable
 		where q.State != QuestState.None
 		select q;
 
-	public void GiveObjective(BlueprintQuestObjective bpObjective)
+	public void GiveObjective(BlueprintQuestObjective bpObjective, bool silentStart = false)
 	{
 		QuestObjective questObjective = EnsureObjective(bpObjective);
 		if (questObjective.State != QuestObjectiveState.Started)
@@ -31,7 +31,7 @@ public class QuestBook : Entity, IHashable
 			}
 			else
 			{
-				questObjective.Start();
+				questObjective.Start(silentStart);
 			}
 		}
 	}

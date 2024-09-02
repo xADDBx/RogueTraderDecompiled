@@ -524,7 +524,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				ModManagerMods = text4,
 				Store = StoreManager.Store.ToString(),
 				ControllerModeType = Convert.ToString(Game.Instance.ControllerMode),
-				Platform = Application.platform.ToString(),
+				Platform = ApplicationHelper.RunningPlatform,
 				ConsoleHardwareType = getConsoleHardwareType(),
 				Exception = JsonConvert.SerializeObject(m_Exception),
 				CoopPlayersCount = coopPlayersCount
@@ -792,7 +792,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			}
 			if (m_Exception != null)
 			{
-				if (m_Exception is SpamDetectingException)
+				if (m_Exception is SpamDetectionException)
 				{
 					m_ContextVariants.Add(new BugContext(BugContext.ContextType.ExceptionSpam));
 				}
@@ -891,6 +891,14 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 					}
 				}
 			}
+			if (m_ActiveFullScreenUIType == FullScreenUIType.GroupChanger)
+			{
+				m_ContextVariants.Add(new BugContext(BugContext.ContextType.GroupChanger));
+			}
+			if (m_ActiveFullScreenUIType == FullScreenUIType.TransitionMap)
+			{
+				m_ContextVariants.Add(new BugContext(BugContext.ContextType.TransitionMap));
+			}
 			if (m_IsGlobalMapOpened && !m_ContextVariants.Any((BugContext x) => x.ContextObject != null))
 			{
 				BlueprintScriptableObject underMouseBlueprint2 = ReportingRaycaster.Instance.GetUnderMouseBlueprint();
@@ -931,18 +939,18 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 												if (tooltipTemplateItem.Item != null)
 												{
 													bugContext2.ContextObject = tooltipTemplateItem.Item.Blueprint;
-													goto IL_05f5;
+													goto IL_062d;
 												}
 												ItemEntity itemEntity = (ItemEntity)typeof(TooltipTemplateItem).GetField("m_Item", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(tooltipTemplateItem);
 												if (itemEntity != null)
 												{
 													bugContext2.ContextObject = itemEntity.Blueprint;
-													goto IL_05f5;
+													goto IL_062d;
 												}
-												goto end_IL_0595;
-												IL_05f5:
+												goto end_IL_05cd;
+												IL_062d:
 												m_ContextVariants.Add(bugContext2);
-												end_IL_0595:;
+												end_IL_05cd:;
 											}
 											catch (Exception ex)
 											{
@@ -1169,7 +1177,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	public void SendReport(string message, string email, string uniqueIdentifier, string issueType, string additionalContacts = "", bool isSendMarketing = false, string id = null)
 	{
-		if (id == null && NetworkingManager.IsMultiplayer)
+		if (id == null && NetworkingManager.IsMultiplayer && ReportingCheats.IsNetReport)
 		{
 			id = Guid.NewGuid().ToString("N");
 			message = "[" + id + "] " + message;
@@ -1318,6 +1326,11 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		{
 			m_SelectedFixVersion = FixVersions[versionIdx];
 		}
+	}
+
+	public int GetCurrentFixVersionIndex()
+	{
+		return FixVersions.IndexOf(m_SelectedFixVersion);
 	}
 
 	public bool CheckCrashDumpFound()

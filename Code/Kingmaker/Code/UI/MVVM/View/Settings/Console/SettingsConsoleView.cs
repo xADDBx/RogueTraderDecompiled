@@ -28,6 +28,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.SettingsUI;
+using Kingmaker.UI.MVVM.View.NetLobby.Console;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -379,7 +380,8 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 			settingsControlConsole.ConsoleCoopPingHint.gameObject.SetActive(isActive);
 			if (isActive)
 			{
-				settingsControlConsole.ConsoleCoopPingHint.text = UIStrings.Instance.SettingsUI.ConsoleControlPingCoopHint;
+				settingsControlConsole.ConsoleCoopPingHint.text = UIStrings.Instance.SettingsUI.ConsoleControlPingCoopHintNormal;
+				settingsControlConsole.ConsoleCoopPingHintConfirm.text = UIStrings.Instance.SettingsUI.ConsoleControlPingCoopHintConfirm;
 			}
 		}
 	}
@@ -556,7 +558,7 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 	private void OnCurrentInputLayerChanged()
 	{
 		GamePad instance = GamePad.Instance;
-		if (instance.CurrentInputLayer != m_SettingsInputLayer && instance.CurrentInputLayer != m_GlossaryInputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == InfoWindowConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.LabelsDisposableString) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName))
+		if (instance.CurrentInputLayer != m_SettingsInputLayer && instance.CurrentInputLayer != m_GlossaryInputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == InfoWindowConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.LabelsDisposableString) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == NetLobbyConsoleView.InputLayerName))
 		{
 			instance.PopLayer(m_SettingsInputLayer);
 			instance.PushLayer(m_SettingsInputLayer);

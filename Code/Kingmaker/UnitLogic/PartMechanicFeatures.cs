@@ -111,6 +111,10 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag HalfSuperiorityCriticalChance;
 
+	public FeatureCountableFlag HideRealHealthInUI;
+
+	public FeatureCountableFlag DisableSnapToGrid;
+
 	public FeatureCountableFlag CantAct;
 
 	public FeatureCountableFlag CantMove;
@@ -124,6 +128,8 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 	public FeatureCountableFlag SuppressedDismember;
 
 	public FeatureCountableFlag SuppressedDecomposition;
+
+	public FeatureCountableFlag AllAttacksCountAsAoe;
 
 	public void Initialize()
 	{
@@ -186,6 +192,9 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		RangedParry = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.RangedParry);
 		CanUseBothDesperateMeasureAndHeroicAct = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanUseBothDesperateMeasureAndHeroicAct);
 		HalfSuperiorityCriticalChance = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HalfSuperiorityCriticalChance);
+		HideRealHealthInUI = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HideRealHealthInUI);
+		DisableSnapToGrid = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DisableSnapToGrid);
+		AllAttacksCountAsAoe = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AllAttacksCountAsAoe);
 	}
 
 	protected override void OnAttach()

@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
@@ -5,7 +6,11 @@ using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.View.Common.InputField;
 using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.View.NetLobby.Console;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -17,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.EscMenu.Console;
 
-public class EscMenuConsoleView : EscMenuBaseView
+public class EscMenuConsoleView : EscMenuBaseView, INetInviteHandler, ISubscriber
 {
 	[Header("Console Buttons")]
 	[SerializeField]
@@ -40,6 +45,7 @@ public class EscMenuConsoleView : EscMenuBaseView
 		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
 		m_QuickSave.SetInteractable(base.ViewModel.IsSavingAllowed);
 		base.BindViewImplementation();
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void UpdateInteractableButtonsImpl()
@@ -82,7 +88,7 @@ public class EscMenuConsoleView : EscMenuBaseView
 	private void OnCurrentInputLayerChanged()
 	{
 		GamePad instance = GamePad.Instance;
-		if (instance.CurrentInputLayer != InputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName))
+		if (instance.CurrentInputLayer != InputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == NetLobbyConsoleView.InputLayerName))
 		{
 			instance.PopLayer(InputLayer);
 			instance.PushLayer(InputLayer);
@@ -98,5 +104,18 @@ public class EscMenuConsoleView : EscMenuBaseView
 				base.ViewModel.OnQuickLoad();
 			}
 		});
+	}
+
+	public void HandleInvite(Action<bool> callback)
+	{
+	}
+
+	public void HandleInviteAccepted(bool accepted)
+	{
+		PFLog.Net.Log($"ACCEPTED INVITE: {accepted}");
+		if (accepted)
+		{
+			base.ViewModel.OnClose();
+		}
 	}
 }

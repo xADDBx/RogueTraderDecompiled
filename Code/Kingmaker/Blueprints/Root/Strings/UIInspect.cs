@@ -27,6 +27,12 @@ public class UIInspect
 
 	public LocalizedString NoStatusEffects;
 
+	public LocalizedString EffectsAlly;
+
+	public LocalizedString EffectsEnemy;
+
+	public LocalizedString EffectsDOT;
+
 	public LocalizedString WeaponsTitle;
 
 	public LocalizedString AbilitiesTitle;

@@ -25,6 +25,7 @@ using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 
@@ -167,13 +168,16 @@ public class LineOfSightVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 			{
 				CustomGridNodeBase bestShootingPositionForDesiredPosition = abilityData.GetBestShootingPositionForDesiredPosition(EndPos.Value);
 				AbilityTargetUIData abilityTargetUIData;
-				if (abilityData.IsScatter)
+				if (abilityData.IsScatter && !abilityData.IsMelee)
 				{
 					CustomGridNodeBase gridNode2 = AoEPatternHelper.GetGridNode(EndPos.Value);
 					OrientedPatternData orientedPattern = abilityData.GetPatternSettings().GetOrientedPattern(abilityData, bestShootingPositionForDesiredPosition, gridNode2);
-					List<AbilityTargetUIData> listToFill = new List<AbilityTargetUIData>();
-					abilityData.GatherAffectedTargetsData(orientedPattern, bestShootingPositionForDesiredPosition.Vector3Position, in listToFill);
-					abilityTargetUIData = listToFill.FirstOrDefault((AbilityTargetUIData t) => t.Target == Owner);
+					List<AbilityTargetUIData> value2;
+					using (CollectionPool<List<AbilityTargetUIData>, AbilityTargetUIData>.Get(out value2))
+					{
+						abilityData.GatherAffectedTargetsData(orientedPattern, bestShootingPositionForDesiredPosition.Vector3Position, Owner, in value2, Owner);
+						abilityTargetUIData = value2.FirstOrDefault((AbilityTargetUIData t) => t.Target == Owner);
+					}
 				}
 				else
 				{

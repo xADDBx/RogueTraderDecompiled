@@ -74,7 +74,7 @@ public class RulePerformCollision : RulebookTargetEvent<MechanicEntity, Mechanic
 	private RuleDealDamage GetPreparedDealDamageRule()
 	{
 		int value = DamageRank * 2;
-		DamageData resultDamage = Rulebook.Trigger(new RuleCalculateDamage(Pusher, Pushed, null, null, new DamageData(DamageType.Impact, value))).ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(Pusher, Pushed, null, null, new DamageData(DamageType.Impact, value)).Trigger().ResultDamage;
 		resultDamage.Modifiers.CopyFrom(DamageModifiers);
 		return new RuleDealDamage(Pusher, Pushed, resultDamage)
 		{

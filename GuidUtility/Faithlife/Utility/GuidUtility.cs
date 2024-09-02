@@ -7,6 +7,10 @@ namespace Faithlife.Utility;
 
 public static class GuidUtility
 {
+	private static readonly HashAlgorithm MD5Algorithm = MD5.Create();
+
+	private static readonly HashAlgorithm SHA1Algorithm = SHA1.Create();
+
 	public static readonly Guid DnsNamespace = new Guid("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
 	public static readonly Guid UrlNamespace = new Guid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
@@ -65,11 +69,7 @@ public static class GuidUtility
 		byte[] array = namespaceId.ToByteArray();
 		SwapByteOrder(array);
 		byte[] buffer = array.Concat(nameBytes).ToArray();
-		byte[] sourceArray;
-		using (HashAlgorithm hashAlgorithm = ((version == 3) ? ((HashAlgorithm)MD5.Create()) : ((HashAlgorithm)SHA1.Create())))
-		{
-			sourceArray = hashAlgorithm.ComputeHash(buffer);
-		}
+		byte[] sourceArray = ((version == 3) ? MD5Algorithm : SHA1Algorithm).ComputeHash(buffer);
 		byte[] array2 = new byte[16];
 		Array.Copy(sourceArray, 0, array2, 0, 16);
 		array2[6] = (byte)((array2[6] & 0xFu) | (uint)(version << 4));

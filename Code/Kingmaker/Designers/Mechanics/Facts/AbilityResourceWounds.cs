@@ -24,6 +24,8 @@ public class AbilityResourceWounds : BlueprintComponent, IAbilityResourceLogic, 
 
 	public BlueprintUnitFactReference HealInsteadOfDamageFact;
 
+	public ContextValue Heal;
+
 	public bool IsSpendResource()
 	{
 		return true;
@@ -31,7 +33,11 @@ public class AbilityResourceWounds : BlueprintComponent, IAbilityResourceLogic, 
 
 	public bool IsAbilityRestrictionPassed(AbilityData ability)
 	{
-		return CalculateCost(ability) <= CalculateResourceAmount(ability);
+		if (CalculateCost(ability) > CalculateResourceAmount(ability))
+		{
+			return ability.Caster.Facts.Contains((BlueprintUnitFact)HealInsteadOfDamageFact);
+		}
+		return true;
 	}
 
 	public string GetAbilityRestrictionUIText()
@@ -45,14 +51,15 @@ public class AbilityResourceWounds : BlueprintComponent, IAbilityResourceLogic, 
 		MechanicEntity caster = ability.Caster;
 		if (caster.Facts.Contains((BlueprintUnitFact)HealInsteadOfDamageFact))
 		{
-			Rulebook.Trigger(new RuleHealDamage(caster, caster, num, num, 0));
+			int num2 = Heal.Calculate(ability.CreateExecutionContext(ability.Caster));
+			Rulebook.Trigger(new RuleHealDamage(caster, caster, num2, num2, 0));
 			return;
 		}
 		DamageTypeDescription damageTypeDescription = new DamageTypeDescription
 		{
 			Type = DamageType.Direct
 		};
-		DamageData resultDamage = Rulebook.Trigger(new RuleCalculateDamage(caster, caster, ability, null, damageTypeDescription.CreateDamage(num, num), 0, 0)).ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(caster, caster, ability, null, damageTypeDescription.CreateDamage(num, num), 0, 0, forceCrit: false, calculatedOverpenetration: false, doNotUseCrModifier: true).Trigger().ResultDamage;
 		Rulebook.Trigger(new RuleDealDamage(caster, caster, resultDamage)
 		{
 			SourceAbility = ability
@@ -61,7 +68,11 @@ public class AbilityResourceWounds : BlueprintComponent, IAbilityResourceLogic, 
 
 	public int CalculateCost(AbilityData ability)
 	{
-		return Cost.Calculate(ability.CreateExecutionContext(ability.Caster));
+		if (!ability.Caster.Facts.Contains((BlueprintUnitFact)HealInsteadOfDamageFact))
+		{
+			return Cost.Calculate(ability.CreateExecutionContext(ability.Caster));
+		}
+		return 1;
 	}
 
 	public int CalculateResourceAmount(AbilityData ability)

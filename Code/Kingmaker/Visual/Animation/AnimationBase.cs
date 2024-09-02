@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using Kingmaker.Controllers;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Events;
@@ -11,28 +10,15 @@ namespace Kingmaker.Visual.Animation;
 
 public abstract class AnimationBase
 {
-	private float m_PreviousTime;
-
-	private float m_NextTime;
-
-	protected float m_LastSetSpeed;
+	protected float m_LastSetSpeed = 1f;
 
 	protected float m_LastSetTime;
 
 	protected float m_OverridedDuration = -1f;
 
-	protected float Time
-	{
-		get
-		{
-			return m_PreviousTime;
-		}
-		set
-		{
-			m_PreviousTime = value;
-			m_NextTime = value;
-		}
-	}
+	protected float Time { get; set; }
+
+	public bool UpdatedOnce { get; set; }
 
 	public AnimationActionHandle Handle { get; protected set; }
 
@@ -49,6 +35,8 @@ public abstract class AnimationBase
 	public float TransitionOut { get; internal set; }
 
 	public float TransitionOutStartTime { get; internal set; }
+
+	public float WeightFromManager { get; private set; }
 
 	protected bool NeedChangeSpeed(float speed)
 	{
@@ -79,9 +67,7 @@ public abstract class AnimationBase
 
 	public virtual void IncrementTime(float deltaTime)
 	{
-		CheckInterpolationTime();
-		m_PreviousTime = m_NextTime;
-		m_NextTime += deltaTime;
+		Time += deltaTime;
 	}
 
 	public abstract void UpdateEvents();
@@ -102,6 +88,8 @@ public abstract class AnimationBase
 
 	public abstract float GetWeight();
 
+	public abstract float GetWeightMultiplier();
+
 	public abstract void SetSpeed(float speed);
 
 	public abstract float GetSpeed();
@@ -111,19 +99,6 @@ public abstract class AnimationBase
 	public abstract void SetTime(float time);
 
 	public abstract void RemoveFromManager();
-
-	public void OverrideDuration(float duration)
-	{
-		m_OverridedDuration = duration;
-		if (m_OverridedDuration > 0f)
-		{
-			TransitionOutStartTime = m_OverridedDuration - TransitionOut;
-		}
-		else
-		{
-			TransitionOutStartTime = 0f;
-		}
-	}
 
 	public float GetDuration()
 	{
@@ -146,7 +121,7 @@ public abstract class AnimationBase
 	{
 		if (State != AnimationState.TransitioningOut && State != AnimationState.Finished)
 		{
-			TransitionOutStartTime = Time;
+			TransitionOutStartTime = (Handle.CorrectTransitionOutTime ? 0f : Time);
 			State = AnimationState.TransitioningOut;
 			if (this == Handle.ActiveAnimation)
 			{
@@ -159,16 +134,22 @@ public abstract class AnimationBase
 	{
 		if (State != AnimationState.TransitioningOut && State != AnimationState.Finished)
 		{
-			TransitionOutStartTime = TransitionOutStartTime + TransitionOut - time;
+			if (TransitionOutStartTime > 0f)
+			{
+				TransitionOutStartTime = Mathf.Max(TransitionOutStartTime + TransitionOut - time, 0.01f);
+			}
 			TransitionOut = time;
 		}
 	}
 
-	internal void UpdateInternal(float deltaTime, float? weightFromManager = null)
+	internal void Update(float deltaTime, float? weightFromManager = null)
 	{
 		using (ProfileScope.New("Animation.UpdateInternal"))
 		{
-			IncrementTime(deltaTime);
+			if (UpdatedOnce || Handle.SkipFirstTick)
+			{
+				IncrementTime(deltaTime);
+			}
 			using (ProfileScope.New("UpdateEvents"))
 			{
 				UpdateEvents();
@@ -205,15 +186,11 @@ public abstract class AnimationBase
 				{
 					if ((TransitionOutStartTime > 0f && Time >= TransitionOutStartTime) || Handle.IsReleased)
 					{
+						StartTransitionOut();
 						if (TransitionOut <= 0f)
 						{
 							StopEvents();
 							State = AnimationState.Finished;
-							Handle.Release();
-						}
-						else
-						{
-							StartTransitionOut();
 						}
 					}
 				}
@@ -221,6 +198,10 @@ public abstract class AnimationBase
 			case AnimationState.TransitioningOut:
 				using (ProfileScope.New("TransitionOut"))
 				{
+					if (TransitionOutStartTime <= 0f || TransitionOutStartTime > Time)
+					{
+						TransitionOutStartTime = Time;
+					}
 					if (TransitionOut <= 0f || Time >= TransitionOutStartTime + TransitionOut)
 					{
 						StopEvents();
@@ -229,19 +210,16 @@ public abstract class AnimationBase
 				}
 				break;
 			}
-			if (weightFromManager.HasValue)
-			{
-				UpdateWeight(Time, weightFromManager.Value);
-			}
+			UpdatedOnce = true;
 		}
 	}
 
-	internal void InterpolateInternal(float progress, float weightFromManager, bool force = false)
+	internal void Interpolate(float progress, float weightFromManager, bool force = false)
 	{
-		using (ProfileScope.New("InterpolateInternal"))
+		using (ProfileScope.New("Interpolate"))
 		{
 			float num = InterpolateTime(progress);
-			if (Mathf.Abs(num - m_PreviousTime) > 0.0001f || force)
+			if (Mathf.Abs(num - Time) > 0.0001f || force)
 			{
 				UpdateWeight(num, weightFromManager);
 			}
@@ -250,6 +228,7 @@ public abstract class AnimationBase
 
 	internal void UpdateWeight(float time, float weightFromManager)
 	{
+		WeightFromManager = weightFromManager;
 		switch (State)
 		{
 		case AnimationState.TransitioningIn:
@@ -278,15 +257,6 @@ public abstract class AnimationBase
 
 	private float InterpolateTime(float progress)
 	{
-		CheckInterpolationTime();
-		return Mathf.LerpUnclamped(m_PreviousTime, m_NextTime, progress);
-	}
-
-	private void CheckInterpolationTime()
-	{
-		if (Mathf.Approximately(m_PreviousTime, m_NextTime))
-		{
-			m_NextTime = m_PreviousTime + RealTimeController.SystemStepDurationSeconds * GetSpeed();
-		}
+		return Time + Handle.Manager.LastDeltaTime * GetSpeed() * progress;
 	}
 }

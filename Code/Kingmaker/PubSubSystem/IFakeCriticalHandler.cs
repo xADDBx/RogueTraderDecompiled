@@ -9,3 +9,6 @@ public interface IFakeCriticalHandler : ISubscriber<IBaseUnitEntity>, ISubscribe
 {
 	void HandleFakeCritical(RuleDealDamage evt);
 }
+public interface IFakeCriticalHandler<TTag> : IFakeCriticalHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IFakeCriticalHandler, TTag>
+{
+}

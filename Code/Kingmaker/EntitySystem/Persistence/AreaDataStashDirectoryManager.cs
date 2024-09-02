@@ -75,9 +75,11 @@ internal class AreaDataStashDirectoryManager
 		GameHistoryFile.Open();
 	}
 
-	private void DeleteUnusedStashFolders()
+	private static void DeleteUnusedStashFolders()
 	{
-		string[] directories = Directory.GetDirectories(ApplicationPaths.persistentDataPath, "Areas_*");
+		string persistentDataPath = ApplicationPaths.persistentDataPath;
+		PFLog.System.Log("Deleting AreaDataStash folders in: " + persistentDataPath + "Areas_*");
+		string[] directories = Directory.GetDirectories(persistentDataPath, "Areas_*");
 		foreach (string text in directories)
 		{
 			FileInfo fileInfo = new FileInfo(Path.Combine(text, "lock"));
@@ -88,7 +90,7 @@ internal class AreaDataStashDirectoryManager
 		}
 	}
 
-	private string InitStashFolder()
+	private static string InitStashFolder()
 	{
 		int id = Process.GetCurrentProcess().Id;
 		string text = Path.Combine(ApplicationPaths.persistentDataPath, string.Format("{0}{1}", "Areas_", id));

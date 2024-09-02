@@ -17,16 +17,21 @@ public class DlcStorePS5 : DlcStore, IDLCStorePS5
 
 	public override bool AllowsPurchase => true;
 
+	public override bool AllowsInstalling => true;
+
+	public override bool AllowsDeleting => true;
+
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on PS5 (ProductLabel {EntitlementLabel}).";
 
 	public override IDLCStatus GetStatus()
 	{
 		bool purchased = false;
 		bool flag = false;
+		bool flag2 = false;
 		return new DLCStatus
 		{
 			Purchased = purchased,
-			DownloadState = (flag ? DownloadState.Loaded : DownloadState.NotLoaded),
+			DownloadState = (flag ? DownloadState.Loaded : (flag2 ? DownloadState.Loading : DownloadState.NotLoaded)),
 			IsMounted = flag
 		};
 	}
@@ -35,5 +40,15 @@ public class DlcStorePS5 : DlcStore, IDLCStorePS5
 	{
 		_ = IsSuitable;
 		return false;
+	}
+
+	public override bool Install()
+	{
+		return true;
+	}
+
+	public override bool Delete()
+	{
+		return true;
 	}
 }

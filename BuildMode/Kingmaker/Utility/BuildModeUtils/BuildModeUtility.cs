@@ -32,6 +32,8 @@ public class BuildModeUtility
 
 	public static bool CheatsEnabled => Data?.EnableCheats ?? IsDevelopment;
 
+	public static bool CheatStoreEnabled => Data?.EnableCheatStore ?? IsDevelopment;
+
 	public static bool IsShowDevComment => Data?.showDevComment ?? false;
 
 	public static bool StackTraceSpamDetectionDisabled => Data?.stackTraceSpamDetectionDisabled ?? false;
@@ -166,7 +168,8 @@ public class BuildModeUtility
 			s_Data = new StartupJson
 			{
 				development = flag,
-				EnableCheats = flag
+				EnableCheats = flag,
+				EnableCheatStore = flag
 			};
 		}
 		return s_Data;

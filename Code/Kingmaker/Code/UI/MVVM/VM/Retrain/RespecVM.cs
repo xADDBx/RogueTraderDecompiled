@@ -45,7 +45,7 @@ public class RespecVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 		CharacterSelectionGroupRadioVM = AddDisposableAndReturn(new SelectionGroupRadioVM<RespecCharacterVM>(m_Characters, CurrentCharacterVM));
 		CharacterSelectionGroupRadioVM.TrySelectFirstValidEntity();
-		SystemMapSpaceResourcesVM = new SystemMapSpaceResourcesVM();
+		AddDisposable(SystemMapSpaceResourcesVM = new SystemMapSpaceResourcesVM());
 		AddDisposable(CurrentCharacterVM.Subscribe(delegate(RespecCharacterVM ch)
 		{
 			RespecCost.Value = ch.Unit.Progression.GetRespecCost();

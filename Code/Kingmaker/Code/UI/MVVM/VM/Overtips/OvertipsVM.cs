@@ -4,6 +4,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.MVVM;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips;
 
@@ -19,6 +20,8 @@ public abstract class OvertipsVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	}
 
 	public abstract void HandleOnShowBark(string text);
+
+	public abstract void HandleOnShowBarkWithName(string text, string name, Color nameColor);
 
 	public abstract void HandleOnShowLinkedBark(string text, string encyclopediaLink);
 

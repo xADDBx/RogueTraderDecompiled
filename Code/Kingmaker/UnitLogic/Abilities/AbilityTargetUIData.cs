@@ -53,7 +53,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 
 	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition, bool hitAlways, float initialHitChance, float hitWithAvoidanceChance, int minDamage, int maxDamage, int lines, int burstIndex, List<float> burstHitChances, float dodgeChance, float coverChance, float evasionChance)
 	{
-		Ability = ability.Clone();
+		Ability = ability.Clone(isPreview: true);
 		Target = target;
 		CasterPosition = casterPosition;
 		HitAlways = hitAlways;
@@ -75,7 +75,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-			Ability = ability.Clone();
+			Ability = ability.Clone(isPreview: true);
 			Target = target;
 			CasterPosition = casterPosition;
 			Lines = 1;

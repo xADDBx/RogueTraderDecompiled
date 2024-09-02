@@ -426,6 +426,11 @@ public class AbilityLandCombatTeleport : AbilityCustomLogic, IAbilityTargetRestr
 
 	private bool TryFindLandingNodeAroundUnit(BaseUnitEntity caster, BaseUnitEntity targetUnit, out Vector2Int landingNode)
 	{
+		if (caster.DistanceToInCells(targetUnit) <= 1)
+		{
+			landingNode = new Vector2Int(caster.CurrentNode.node.position.x, caster.CurrentNode.node.position.z);
+			return true;
+		}
 		IEnumerable<CustomGridNodeBase> source = from node in GridAreaHelper.GetNodesSpiralAround((CustomGridNodeBase)targetUnit.CurrentNode.node, targetUnit.SizeRect, 1)
 			where node.Walkable
 			select node;

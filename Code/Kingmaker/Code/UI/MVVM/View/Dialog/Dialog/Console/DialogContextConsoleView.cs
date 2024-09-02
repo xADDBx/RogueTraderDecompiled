@@ -16,16 +16,16 @@ namespace Kingmaker.Code.UI.MVVM.View.Dialog.Dialog.Console;
 public class DialogContextConsoleView : ViewBase<DialogContextVM>
 {
 	[SerializeField]
-	private UIViewLink<BookEventConsoleView, BookEventVM> m_BookEventConsoleView;
+	private UIDestroyViewLink<BookEventConsoleView, BookEventVM> m_BookEventConsoleView;
 
 	[SerializeField]
-	private UIViewLink<EpilogBaseView, EpilogVM> m_EpilogConsoleView;
+	private UIDestroyViewLink<EpilogBaseView, EpilogVM> m_EpilogConsoleView;
 
 	[SerializeField]
-	private UIViewLink<SurfaceDialogConsoleView, DialogVM> m_DialogConsoleView;
+	private UIDestroyViewLink<SurfaceDialogConsoleView, DialogVM> m_DialogConsoleView;
 
 	[SerializeField]
-	private UIViewLink<InterchapterBaseView, InterchapterVM> m_InterchapterView;
+	private UIDestroyViewLink<InterchapterBaseView, InterchapterVM> m_InterchapterView;
 
 	protected override void BindViewImplementation()
 	{

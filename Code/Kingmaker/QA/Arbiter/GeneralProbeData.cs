@@ -34,6 +34,9 @@ public class GeneralProbeData
 	public string Run;
 
 	[JsonProperty]
+	public string ExternalId;
+
+	[JsonProperty]
 	public string Guid;
 
 	[JsonProperty]
@@ -81,6 +84,7 @@ public class GeneralProbeData
 		Branch = GetBranch();
 		Guid = Arbiter.JobGuid.ToString();
 		Run = Arbiter.Run.ToString();
+		ExternalId = Arbiter.ExternalRunId;
 		Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds();
 		Instruction = instructionName;
 		ProbeType = probeType;

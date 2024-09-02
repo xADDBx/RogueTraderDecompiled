@@ -30,6 +30,8 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 
 	private SelectionStateVoice m_SelectionStateVoice;
 
+	private bool m_IsSelectedManually;
+
 	private Gender DollGender => m_CharGenContext.Doll.Gender;
 
 	public CharGenVoiceSelectorVM(CharGenContext ctx)
@@ -42,8 +44,13 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 			UpdateFromMechanic();
 		}));
 		AddDisposable(m_CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
-		AddDisposable(SelectedVoiceVM.Subscribe(OnChooseVoice));
+		AddDisposable(SelectedVoiceVM.Subscribe(delegate(CharGenVoiceItemVM value)
+		{
+			OnChooseVoice(value);
+			m_IsSelectedManually = true;
+		}));
 		SoundBanksManager.LoadBank(UIConsts.PCDemoVoicesENGBank);
+		m_IsSelectedManually = false;
 	}
 
 	protected override void DisposeImplementation()
@@ -75,6 +82,10 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 	public override void OnBeginView()
 	{
 		UpdateSelector();
+		if (m_CharGenContext.Doll.TrackPortrait && !m_IsSelectedManually)
+		{
+			UpdateFromMechanic();
+		}
 		if (SelectedVoiceVM.Value != null)
 		{
 			OnChooseVoice(SelectedVoiceVM.Value);
@@ -98,6 +109,7 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 		int value2 = ((DollGender == Gender.Male) ? charGenRoot.MaleVoiceDefaultId : charGenRoot.FemaleVoiceDefaultId);
 		value2 = Math.Clamp(value2, 0, VoiceSelector.EntitiesCollection.Count - 1);
 		SelectedVoiceVM.Value = VoiceSelector.EntitiesCollection.ElementAt(value2);
+		m_IsSelectedManually = false;
 	}
 
 	private void OnChooseVoice(CharGenVoiceItemVM voice)

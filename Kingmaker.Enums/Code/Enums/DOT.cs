@@ -7,5 +7,6 @@ public enum DOT
 	Toxic,
 	PsykerBurning,
 	NavigatorBurning,
-	PsykerToxin
+	PsykerToxin,
+	AssassinHaemorrhage
 }

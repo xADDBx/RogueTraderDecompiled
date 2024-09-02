@@ -54,11 +54,15 @@ public class InGameInspectVM : InspectVM
 
 	private void UpdateInspect(BaseUnitEntity unit)
 	{
-		if (m_UnitUIWrapper.MechanicEntity != unit)
+		bool num = m_UnitUIWrapper.MechanicEntity != unit;
+		if (num)
 		{
 			m_UnitUIWrapper = new MechanicEntityUIWrapper(unit);
 		}
-		m_InspectInfo = InspectUnitsHelper.GetInfo(unit.BlueprintForInspection, force: true);
+		if (num || m_InspectInfo?.DefencePart == null)
+		{
+			m_InspectInfo = InspectUnitsHelper.GetInfo(unit.BlueprintForInspection, force: true);
+		}
 		UpdateWounds();
 		UpdateDeflection(unit);
 		UpdateArmor(unit);

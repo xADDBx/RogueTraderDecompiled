@@ -12,6 +12,10 @@ public class UITermsOfUseTexts
 
 	public LocalizedString LicenceConsole;
 
+	public LocalizedString LicenceConsoleSIEA;
+
+	public LocalizedString LicenceConsoleSIEE;
+
 	public LocalizedString SubLicence;
 
 	public LocalizedString AcceptBtn;

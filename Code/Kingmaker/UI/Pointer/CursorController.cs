@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.MapObjects;
 using Kingmaker.Controllers.TurnBased;
@@ -15,6 +16,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.Utility;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Kingmaker.View.MapObjects.Traps;
 using Owlcat.Runtime.Core.Utility;
@@ -68,6 +70,10 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		UpdateCursorMode();
 		m_Disposable = new CompositeDisposable();
 		m_Disposable.Add(MainThreadDispatcher.UpdateAsObservable().Subscribe(OnUpdate));
+		m_Disposable.Add(UIVisibilityState.VisibilityPreset.Subscribe(delegate
+		{
+			CurrentCursor.Or(null)?.SetActive(CurrentCursor.PrevActiveCursorState);
+		}));
 	}
 
 	public void Deactivate()
@@ -288,7 +294,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 			{
 				if (interactionSkillCheckPart.InteractThroughVariants)
 				{
-					goto IL_009f;
+					goto IL_00a2;
 				}
 			}
 			else if (interactionPart2 is InteractionDevicePart && !interactionPart.Settings.ShowOvertip)
@@ -320,8 +326,8 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 			}
 			return;
 		}
-		goto IL_009f;
-		IL_009f:
+		goto IL_00a2;
+		IL_00a2:
 		if ((bool)mapObjectView.Data.GetOptional<TechUseRestrictionPart>() || (bool)mapObjectView.Data.GetOptional<LoreXenosRestrictionPart>())
 		{
 			if (interactionPart.AlreadyUnlocked || interactionPart is InteractionDoorPart { IsOpen: not false })
@@ -336,6 +342,10 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		else if (interactionPart is InteractionDoorPart)
 		{
 			SetCursor(CursorType.Interact);
+		}
+		else if (interactionPart is InteractionSkillCheckPart)
+		{
+			SetCursor(CursorType.Bark);
 		}
 		else
 		{

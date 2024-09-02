@@ -58,9 +58,6 @@ public class StateSerializationController : IControllerTick, IController, IContr
 		[JsonProperty]
 		public WalkSpeedType? movementType;
 
-		[JsonProperty]
-		public bool? isAccelerated;
-
 		public static List<UnitMovementAgentData> GetUnitMovementAgentData()
 		{
 			List<UnitMovementAgentBase> allAgents = UnitMovementAgentBase.AllAgents;
@@ -81,8 +78,7 @@ public class StateSerializationController : IControllerTick, IController, IContr
 						currentSpeedMps = unit2.EntityData?.Movable.CurrentSpeedMps,
 						modifiedSpeedMps = unit2.EntityData?.Movable.ModifiedSpeedMps,
 						commandOverrideSpeed = GetCommandOverrideSpeed(unit2),
-						movementType = GetMovementType(unit2),
-						isAccelerated = IsAccelerated(unit2)
+						movementType = GetMovementType(unit2)
 					});
 				}
 			}
@@ -103,14 +99,6 @@ public class StateSerializationController : IControllerTick, IController, IContr
 					return null;
 				}
 				return (unit.EntityData.Movable.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current)?.MovementType;
-			}
-			static bool? IsAccelerated(AbstractUnitEntityView unit)
-			{
-				if (unit == null || unit.EntityData == null)
-				{
-					return null;
-				}
-				return (unit.EntityData.Movable.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current)?.IsAccelerated;
 			}
 		}
 	}

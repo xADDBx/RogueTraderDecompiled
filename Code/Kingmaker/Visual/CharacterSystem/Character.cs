@@ -16,6 +16,7 @@ using Kingmaker.Visual.Animation;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.MaterialEffects;
 using Kingmaker.Visual.Particles;
+using Kingmaker.Visual.Utility;
 using Owlcat.QA.Validation;
 using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Scene;
 using Owlcat.Runtime.Core.Registry;
@@ -134,6 +135,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 	private bool m_Mirror;
 
 	private bool m_SkeletonChanged = true;
+
+	public AnimationSet OverrideAnimationSet;
 
 	[FormerlySerializedAs("AnimationSet")]
 	public AnimationSet m_AnimationSet;
@@ -388,6 +391,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 			{
 				AnimationSet = Skeleton.AnimationSetOverride;
 			}
+			if (OverrideAnimationSet != null)
+			{
+				AnimationSet = OverrideAnimationSet;
+			}
 			AnimationManager.AnimationSet = AnimationSet;
 		}
 		m_BonesList = Animator.EnsureComponent<CharacterBonesList>();
@@ -540,14 +547,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 				}
 			}
 		}
-		if (!flag)
+		if (flag)
 		{
-			return;
+			foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
+			{
+				equipmentEntity2.ResetDirty();
+			}
 		}
-		foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
-		{
-			equipmentEntity2.ResetDirty();
-		}
+		ProbeAnchorOverrider.UpdateProbeAnchorsOnObject(base.gameObject, Renderers.Cast<Renderer>().ToList());
 	}
 
 	private void OnRenderObject()
@@ -1015,7 +1022,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		EquipmentEntity equipmentEntity = ScriptableObject.CreateInstance<EquipmentEntity>();
 		equipmentEntity.CantBeHiddenByDollRoom = ee.CantBeHiddenByDollRoom;
 		equipmentEntity.ShowAboveAllIgnoreLayer = ee.ShowAboveAllIgnoreLayer;
-		equipmentEntity.Layer = 999999;
+		equipmentEntity.Layer = 999;
 		equipmentEntity.HideBodyParts = ee.HideBodyParts;
 		equipmentEntity.ShowLowerMaterials = ee.ShowLowerMaterials;
 		equipmentEntity.SkeletonModifiers = ee.SkeletonModifiers;

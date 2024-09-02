@@ -19,7 +19,7 @@ using UniRx;
 
 namespace Kingmaker.Controllers;
 
-public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>
+public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>, AbstractUnitEntity.IUnitAsleepHandler
 {
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnit = new ReactiveProperty<BaseUnitEntity>();
 
@@ -326,6 +326,14 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		else
 		{
 			SingleSelectedUnit.Value = null;
+		}
+	}
+
+	public void OnIsSleepingChanged(bool sleeping)
+	{
+		if (EventInvokerExtensions.BaseUnitEntity != null && Game.Instance.Player.Party.Contains(EventInvokerExtensions.BaseUnitEntity))
+		{
+			m_NeedUpdate = true;
 		}
 	}
 }

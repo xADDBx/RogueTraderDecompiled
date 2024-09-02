@@ -286,7 +286,7 @@ public class Utilities
 			PFLog.Default.Log("Cannot get area designer for null area.");
 			return "";
 		}
-		string enumDescription = GetEnumDescription(area.Designer);
+		string enumDescription = GetEnumDescription(area.Author);
 		if (enumDescription == null)
 		{
 			PFLog.Default.Log("Cannot get area designer for area [{0}]", area.Name);
@@ -306,7 +306,7 @@ public class Utilities
 		if (name != null)
 		{
 			FieldInfo field = type.GetField(name);
-			if (field != null && Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute descriptionAttribute)
+			if (field != null && Attribute.GetCustomAttributes(field, typeof(DescriptionAttribute)).FirstOrDefault((Attribute a) => a is DescriptionAttribute) is DescriptionAttribute descriptionAttribute)
 			{
 				return descriptionAttribute.Description;
 			}

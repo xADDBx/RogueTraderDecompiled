@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Sound.Base;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Owlcat.Runtime.Core.Utility;
@@ -65,7 +66,7 @@ public abstract class TrapObjectView : MapObjectView, IReloadMechanicsHandler, I
 
 	private static void FillDisableTrapSettings(GameObject go, UnitAnimationInteractionType disarmAnimation)
 	{
-		go.EnsureComponent<DisableTrapInteractionComponent>().Settings = new InteractionSettings
+		go.EnsureComponent<DisableTrapInteractionComponent>().Settings = new InteractionDisableTrapSettings
 		{
 			ProximityRadius = 1,
 			Type = InteractionType.Approach,

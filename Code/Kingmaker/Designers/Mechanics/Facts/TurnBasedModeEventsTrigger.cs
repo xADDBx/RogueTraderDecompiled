@@ -6,6 +6,7 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
@@ -23,6 +24,13 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("0cdbc172cfe945e3818c0d49fbd7d65f")]
 public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedModeHandler, ISubscriber, IRoundStartHandler, IRoundEndHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, ITurnEndHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, IHashable
 {
+	private class ComponentData : IEntityFactComponentTransientData
+	{
+		public bool WasParticipantInLastFight;
+	}
+
+	public bool TriggerIfNotInCombat;
+
 	[SerializeField]
 	protected RestrictionCalculator Restrictions = new RestrictionCalculator();
 
@@ -56,8 +64,24 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 	[Space(4f)]
 	public bool DoNotApplyOnInterrupts;
 
+	private bool IsInCorrectCombatState
+	{
+		get
+		{
+			if (!TriggerIfNotInCombat)
+			{
+				return base.Owner.IsInCombat;
+			}
+			return false;
+		}
+	}
+
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
+		if (!base.Owner.IsInGame)
+		{
+			return;
+		}
 		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
 		{
 			if (!Restrictions.IsPassed(base.Fact, base.Owner))
@@ -65,23 +89,32 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
+		ComponentData componentData = RequestTransientData<ComponentData>();
 		if (isTurnBased)
+		{
+			if (IsInCorrectCombatState)
+			{
+				componentData.WasParticipantInLastFight = true;
+				using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
+				{
+					base.Fact.RunActionInContext(CombatStartActions, base.OwnerTargetWrapper);
+					return;
+				}
+			}
+			componentData.WasParticipantInLastFight = false;
+		}
+		else if (componentData.WasParticipantInLastFight)
 		{
 			using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
 			{
-				base.Fact.RunActionInContext(CombatStartActions, base.OwnerTargetWrapper);
-				return;
+				base.Fact.RunActionInContext(CombatEndActions, base.OwnerTargetWrapper);
 			}
-		}
-		using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
-		{
-			base.Fact.RunActionInContext(CombatEndActions, base.OwnerTargetWrapper);
 		}
 	}
 
 	protected override void OnFactAttached()
 	{
-		if (!Game.Instance.TurnController.TurnBasedModeActive)
+		if (!Game.Instance.TurnController.TurnBasedModeActive || base.Owner.IsPreviewUnit)
 		{
 			return;
 		}
@@ -100,7 +133,7 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
-		if (isTurnBased)
+		if (isTurnBased && IsInCorrectCombatState)
 		{
 			using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
 			{
@@ -118,7 +151,7 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
-		if (isTurnBased)
+		if (isTurnBased && IsInCorrectCombatState)
 		{
 			using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
 			{
@@ -137,7 +170,7 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 			}
 		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (!isTurnBased || (mechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(mechanicEntity) && OnlyEnemyTurns))
+		if (!isTurnBased || (mechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(mechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
 		{
 			return;
 		}
@@ -168,7 +201,7 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 			}
 		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (!isTurnBased || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns))
+		if (!isTurnBased || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
 		{
 			return;
 		}

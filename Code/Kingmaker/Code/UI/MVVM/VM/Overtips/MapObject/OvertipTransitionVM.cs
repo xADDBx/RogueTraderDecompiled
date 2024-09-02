@@ -159,8 +159,7 @@ public class OvertipTransitionVM : BaseOvertipMapObjectVM
 			{
 				UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, position, 2f)
 				{
-					IsSynchronized = true,
-					CanBeAccelerated = true
+					IsSynchronized = true
 				};
 				if (unit.Blueprint is BlueprintStarship { SpeedOnStarSystemMap: var speedOnStarSystemMap })
 				{

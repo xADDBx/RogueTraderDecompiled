@@ -15,7 +15,7 @@ using Kingmaker.View;
 
 namespace Kingmaker.UI.Selection;
 
-public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, ISubscriber<IBaseUnitEntity>, ISubscriber
+public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IAreaLoadingStagesHandler
 {
 	public void HandleAddCompanion()
 	{
@@ -155,5 +155,14 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 		{
 			SelectAll();
 		}
+	}
+
+	public void OnAreaScenesLoaded()
+	{
+	}
+
+	public void OnAreaLoadingComplete()
+	{
+		SelectAll();
 	}
 }

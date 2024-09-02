@@ -539,6 +539,15 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<float>(CheatsCombat.SetActionPointsBlue), "void SetActionPointsBlue(float blue)", "set_action_points_blue", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "blue",
+				Type = "System.Single",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<int, int, RestrictionsHolder>(CheatsCombat.AddBonusAbilityUsage), "void AddBonusAbilityUsage(int count = 1, int costBonus = -5, RestrictionsHolder restrictions = null)", "add_bonus_ability_usage", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
 			new CheatParameter
@@ -633,9 +642,54 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUIPrevPlatform), "void ChangeUIPrevPlatform()", "change_ui_prev_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ReturnToMainMenu), "void ReturnToMainMenu()", "return_to_main_menu", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.LogDisposables), "void LogDisposables()", "log_disposables", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(CheatsDebug.TakeSnapshot), "void TakeSnapshot()", "snapshot", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(CheatsDebug.TakeSnapshotFull), "void TakeSnapshotFull()", "snapshot_full", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(CheatsDebug.TakeSnapshotNativeOnly), "void TakeSnapshotNativeOnly()", "snapshot_objects", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.TakeSnapshot), "void TakeSnapshot(string name = null)", "snapshot", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "name",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.TakeSnapshotFull), "void TakeSnapshotFull(string name = null)", "snapshot_full", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "name",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.TakeSnapshotNativeOnly), "void TakeSnapshotNativeOnly(string name = null)", "snapshot_objects", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "name",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<string, int, int>(CheatsDebug.DebugSpamStart), "void DebugSpamStart(string spamType = \\\"exceptions\\\", int intervalMs = 10, int depth = 10)", "debug_spam_start", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "spamType",
+				Type = "System.String",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "intervalMs",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "depth",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<int, int, int>(CheatsDebug.DebugExceptionSpam), "void DebugExceptionSpam(int count = 5, int depth = 10, int interval = 10)", "debug_spam_exceptions", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
 			new CheatParameter
@@ -657,6 +711,7 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.DebugOffThread), "void DebugOffThread()", "debug_spam_start_in_outer_thread", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string, int, int>(CheatsDebug.DebugStartSpam), "void DebugStartSpam(string spamType = \\\"exceptions\\\", int intervalMs = 10, int depth = 10)", "debug_start_spam", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
 			new CheatParameter
@@ -769,6 +824,9 @@ public static class AllCheats
 			}
 		}, "string"),
 		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.ToggleSRPBatching), "string ToggleSRPBatching()", "gl_togglesrpbatching", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
+		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.ResetPBD), "string ResetPBD()", "gl_pbdresetmemory", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
+		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.TogglePBDEnabled), "string TogglePBDEnabled()", "gl_togglepbdenabled", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
+		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.TogglePBDCameraCullingEnabled), "string TogglePBDCameraCullingEnabled()", "gl_togglepbdcameracullingenabled", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
 		new CheatMethodInfoInternal(new Action(CheatsItems.AoeLoot), "void AoeLoot()", "aoe_loot", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string, string, string>(CheatsRE.StartRE), "void StartRE(string areaBlueprintName, string areaEnterPointBlueprintName = null, string enemyGroupBlueprintName = null)", "start_re", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
@@ -1004,6 +1062,15 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<BlueprintUnit>(CheatsUnlock.RecruitMainCharacter), "void RecruitMainCharacter(BlueprintUnit unit)", "recruit_main_character", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "unit",
+				Type = "Kingmaker.Blueprints.BlueprintUnit",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<BlueprintUnit>(CheatsUnlock.RemoveCompanionFromRoster), "void RemoveCompanionFromRoster(BlueprintUnit unit)", "remove_companion_from_roster", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1023,6 +1090,24 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action(DlcCheats.RefreshAllDLCStatuses), "void RefreshAllDLCStatuses()", "refresh_all_dlc_statuses", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<BlueprintDlc>(DlcCheats.SetDlcAvailable), "void SetDlcAvailable(BlueprintDlc dlc)", "set_dlc_available", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "dlc",
+				Type = "Kingmaker.DLC.BlueprintDlc",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<BlueprintDlc>(DlcCheats.SetDlcUnAvailable), "void SetDlcUnAvailable(BlueprintDlc dlc)", "set_dlc_unavailable", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "dlc",
+				Type = "Kingmaker.DLC.BlueprintDlc",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<BlueprintDlc>(DlcCheats.SetDlcEnabled), "void SetDlcEnabled(BlueprintDlc dlc)", "set_dlc_enabled", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1551,6 +1636,87 @@ public static class AllCheats
 				Name = "cooldown",
 				Type = "System.Int32",
 				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int>(StackTraceSpamDetector.StackTraceSpamDetectionEnable), "void StackTraceSpamDetectionEnable(int cooldownMs = 30000)", "debug_spam_cooldown", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "cooldownMs",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, int>(StackTraceSpamDetector.SpamDetectionConfigFast), "void SpamDetectionConfigFast(int count, int intervalMs)", "debug_spam_detection_fast", "", "", ExecutionPolicy.All, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "intervalMs",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, int, int>(StackTraceSpamDetector.SpamDetectionConfigLongTermFast), "void SpamDetectionConfigLongTermFast(int count, int intervalMs, int times)", "debug_spam_detection_longterm_fast", "", "", ExecutionPolicy.All, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "intervalMs",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "times",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, int, int>(StackTraceSpamDetector.SpamDetectionConfigLongTermNormal), "void SpamDetectionConfigLongTermNormal(int count, int intervalMs, int times)", "debug_spam_detection_longterm_normal", "", "", ExecutionPolicy.All, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "intervalMs",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "times",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, int>(StackTraceSpamDetector.SpamDetectionConfigLongTermNormal), "void SpamDetectionConfigLongTermNormal(int count, int intervalMs)", "debug_spam_detection_normal", "", "", ExecutionPolicy.All, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "count",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "intervalMs",
+				Type = "System.Int32",
+				HasDefaultValue = false
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action<int>(Replay.SetStateSkipFrames), "void SetStateSkipFrames(int n)", "replay_skip", "", "", ExecutionPolicy.All, new CheatParameter[1]

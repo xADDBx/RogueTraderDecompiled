@@ -241,7 +241,7 @@ public abstract class Entity : IEntity, IDisposable, IHashable
 
 	public virtual bool IsViewActive => m_IsInGame;
 
-	public bool IsVisibleForPlayer
+	public virtual bool IsVisibleForPlayer
 	{
 		get
 		{

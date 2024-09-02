@@ -22,7 +22,7 @@ public class OvertipNameView : ViewBase<OvertipNameBlockVM>
 
 	protected override void BindViewImplementation()
 	{
-		AddDisposable(base.ViewModel.Name.Subscribe(delegate(string value)
+		AddDisposable(base.ViewModel.UnitState.Name.Subscribe(delegate(string value)
 		{
 			m_CharacterName.text = value;
 		}));

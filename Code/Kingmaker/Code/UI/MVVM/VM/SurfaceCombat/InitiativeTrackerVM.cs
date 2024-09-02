@@ -16,7 +16,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IInGameHandler, ISubscriber<IEntity>, IUnitDirectHoverUIHandler, IUnitMountHandler, IUnitInvisibleHandler, IUnitBecameVisibleHandler, IUnitBecameInvisibleHandler, IInitiativeChangeHandler, IInitiativeTrackerShowGroup
+public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IInGameHandler, ISubscriber<IEntity>, IUnitDirectHoverUIHandler, IUnitMountHandler, IUnitBecameVisibleHandler, IUnitBecameInvisibleHandler, IInitiativeChangeHandler, IInitiativeTrackerShowGroup
 {
 	public List<InitiativeTrackerUnitVM> Units = new List<InitiativeTrackerUnitVM>();
 
@@ -303,16 +303,6 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	}
 
 	public void HandleInitiativeChanged()
-	{
-		m_NeedUpdate = true;
-	}
-
-	public void HandleUnitUpdateInvisible()
-	{
-		m_NeedUpdate = true;
-	}
-
-	public void RemoveUnitInvisible()
 	{
 		m_NeedUpdate = true;
 	}

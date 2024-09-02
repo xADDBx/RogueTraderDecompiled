@@ -50,6 +50,37 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		}
 	}
 
+	private struct TransitionCheckerExceptUnit : Linecast.ICanTransitionBetweenCells
+	{
+		private readonly MechanicEntity m_Unit;
+
+		public BaseUnitEntity StoppedOnUnit;
+
+		public TransitionCheckerExceptUnit(MechanicEntity unit)
+		{
+			this = default(TransitionCheckerExceptUnit);
+			m_Unit = unit;
+		}
+
+		public bool CanTransitionBetweenCells(CustomGridNodeBase nodeFrom, CustomGridNodeBase nodeTo, Vector3 transitionPosition, float distanceFactor)
+		{
+			if (!nodeTo.Walkable || !nodeFrom.ContainsConnection(nodeTo))
+			{
+				return false;
+			}
+			if (!WarhammerBlockManager.Instance.CanUnitStandOnNode(m_Unit.SizeRect, nodeTo, m_Unit.MaybeMovementAgent?.Blocker))
+			{
+				return false;
+			}
+			StoppedOnUnit = nodeTo.GetUnit();
+			if (StoppedOnUnit != null)
+			{
+				return StoppedOnUnit == m_Unit;
+			}
+			return true;
+		}
+	}
+
 	private struct NodeCounter : Linecast.ICanTransitionBetweenCells
 	{
 		public int CellsRemaining { get; private set; }
@@ -151,7 +182,7 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		}
 		Vector3 vector = unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize);
 		CustomGridNodeBase nearestNodeXZ2 = vector.GetNearestNodeXZ();
-		TransitionChecker condition = new TransitionChecker(unit);
+		TransitionCheckerExceptUnit condition = new TransitionCheckerExceptUnit(unit);
 		Linecast.LinecastGrid2(nearestNodeXZ.Graph, unit.Position, vector, nearestNodeXZ, out var hit, NNConstraint.None, ref condition);
 		GraphNode node = hit.node;
 		if (node != nearestNodeXZ && node != null)

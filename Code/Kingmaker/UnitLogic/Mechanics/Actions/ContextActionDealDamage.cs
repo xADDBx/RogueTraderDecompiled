@@ -72,6 +72,8 @@ public class ContextActionDealDamage : ContextAction
 	[ShowIf("WriteResultToSharedValue")]
 	public AbilitySharedValue ResultSharedValue;
 
+	public bool DoNotUseCrModifier;
+
 	private bool? m_IsAOE;
 
 	public BlueprintItemWeapon Weapon => m_Weapon?.Get();
@@ -164,7 +166,7 @@ public class ContextActionDealDamage : ContextAction
 		{
 			value2 = entity.DistanceToInCells(customGridNodeBase.Vector3Position);
 		}
-		DamageData resultDamage = Rulebook.Trigger(new RuleCalculateDamage(maybeCaster, entity, base.AbilityContext?.Ability, null, DamageType.CreateDamage(min, max), value, value2)).ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, base.AbilityContext?.Ability, null, DamageType.CreateDamage(min, max), value, value2, DoNotUseCrModifier).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = info.PreRolledValue;
 		RuleDealDamage ruleDealDamage = new RuleDealDamage(maybeCaster, entity, resultDamage)
 		{
@@ -196,7 +198,7 @@ public class ContextActionDealDamage : ContextAction
 			int max = damageInfo.Max;
 			DamageData baseDamageOverride = DamageType.CreateDamage(min, max);
 			int num = Penetration?.Calculate(context) ?? 0;
-			baseDamageOverride = Rulebook.Trigger(new RuleCalculateDamage(ability.Caster, target, ability, null, baseDamageOverride, num)).ResultDamage;
+			baseDamageOverride = new CalculateDamageParams(ability.Caster, target, ability, null, baseDamageOverride, num).Trigger().ResultDamage;
 			return new DamagePredictionData
 			{
 				MinDamage = baseDamageOverride.MinValue,

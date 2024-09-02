@@ -70,7 +70,7 @@ public class SpawnerAdditionalActions : EntityPartComponent<SpawnerAdditionalAct
 			{
 				return false;
 			}
-			return SpawnActions.Get().HasActions;
+			return SpawnActions.Get()?.HasActions ?? false;
 		}
 	}
 }

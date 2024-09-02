@@ -18,7 +18,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Code.UI.MVVM.View.Loot;
 
-public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPlayerStash, TInventoryStash> : ViewBase<LootVM> where TCargoView : InventoryCargoView where TLootCollector : LootCollectorView where TInteractionSlot : InteractionSlotPartView where TPlayerStash : PlayerStashView where TInventoryStash : InventoryStashView
+public abstract class LootView<TCargoView, TLootCollector, TInteractionSlot, TPlayerStash, TInventoryStash> : ViewBase<LootVM>, IInitializable where TCargoView : InventoryCargoView where TLootCollector : LootCollectorView where TInteractionSlot : InteractionSlotPartView where TPlayerStash : PlayerStashView where TInventoryStash : InventoryStashView
 {
 	[SerializeField]
 	private FadeAnimator m_Animator;

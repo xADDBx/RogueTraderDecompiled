@@ -357,6 +357,7 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 	protected override void OnDidAttachToData()
 	{
 		base.OnDidAttachToData();
+		InterpolationHelper.ForceUpdatePosition(Data.Position, Data.Orientation);
 		Blueprint = EntityData.Blueprint;
 		if ((bool)AgentASP)
 		{
@@ -376,6 +377,11 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 			}
 		}
 		UpdateAsks();
+		Character componentInChildren = GetComponentInChildren<Character>();
+		if (componentInChildren != null)
+		{
+			componentInChildren.OverrideAnimationSet = EntityData?.GetOptional<UnitPartVisualChange>()?.AnimationSetOverride;
+		}
 		CharacterAvatar = SetupCharacterAvatar(GetComponentInChildren<Character>());
 		if (CharacterAvatar == null || !CharacterAvatar.ParticlesSnapMap)
 		{

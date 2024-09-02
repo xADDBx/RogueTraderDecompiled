@@ -30,11 +30,11 @@ public class ScriptZoneBox : ScriptZoneShape
 		{
 			int xmax = (int)(Bounds.size.x / GraphParamsMechanicsCache.GridCellSize);
 			int ymax = (int)(Bounds.size.z / GraphParamsMechanicsCache.GridCellSize);
-			return GridAreaHelper.GetNodes(Bounds.min, new IntRect(0, 0, xmax, ymax));
+			return GridAreaHelper.GetNodes(base.transform.TransformPoint(Bounds.min), new IntRect(0, 0, xmax, ymax));
 		}
 	}
 
-	public override bool Contains(Vector3 point, IntRect size = default(IntRect))
+	public override bool Contains(Vector3 point, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
 		using (ProfileScope.New("ScriptZoneBox.Contains"))
 		{
@@ -43,7 +43,7 @@ public class ScriptZoneBox : ScriptZoneShape
 		}
 	}
 
-	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect))
+	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
 		return Contains(node.Vector3Position, size);
 	}

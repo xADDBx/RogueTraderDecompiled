@@ -30,7 +30,10 @@ public class RemoveDuplicateRoutes : GameAction
 				{
 					continue;
 				}
-				List<SectorMapPassageEntity> list2 = source.Where((SectorMapPassageEntity r) => (r.View.StarSystem1Entity == system1 && r.View.StarSystem2Entity == system2) || (r.View.StarSystem1Entity == system2 && r.View.StarSystem2Entity == system1)).EmptyIfNull().ToList();
+				List<SectorMapPassageEntity> list2 = (from r in source
+					where (r.View.StarSystem1Entity == system1 && r.View.StarSystem2Entity == system2) || (r.View.StarSystem1Entity == system2 && r.View.StarSystem2Entity == system1)
+					where r.IsExplored
+					select r).EmptyIfNull().ToList();
 				if (list2.Count <= 1)
 				{
 					continue;

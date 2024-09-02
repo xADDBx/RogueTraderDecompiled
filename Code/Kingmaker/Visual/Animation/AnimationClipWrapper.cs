@@ -23,7 +23,6 @@ public class AnimationClipWrapper : ScriptableObject
 		PostOffWeaponUnequipEvent = 7,
 		PostArmorFoleyEvent = 8,
 		PostEventWithSurface = 9,
-		AnimateWeaponTrail = 10,
 		PostCommandActEvent = 11,
 		PostEventWithPrefix = 12,
 		PostDecoratorObject = 13,
@@ -41,7 +40,7 @@ public class AnimationClipWrapper : ScriptableObject
 	private List<AnimationClipEventTrack> m_EventTracks = new List<AnimationClipEventTrack>();
 
 	[NonSerialized]
-	private AnimationClipEvent[] _EventsSorted;
+	private AnimationClipEvent[] m_EventsSorted;
 
 	public AnimationClip AnimationClip
 	{
@@ -95,28 +94,14 @@ public class AnimationClipWrapper : ScriptableObject
 		{
 			if (_eventTrack == null)
 			{
-				PFLog.Default.Error("Event track is null!");
+				PFLog.Animations.Error("Event track is null!");
 			}
 			return (_eventTrack?.Events).EmptyIfNull();
 		})
 		where _eventTrack != null
 		select _eventTrack;
 
-	public AnimationClipEvent[] EventsSorted
-	{
-		get
-		{
-			if (_EventsSorted == null)
-			{
-				_EventsSorted = Events.ToArray();
-				if (_EventsSorted.Any())
-				{
-					Array.Sort(_EventsSorted, (AnimationClipEvent _event1, AnimationClipEvent _event2) => (int)((_event1.Time - _event2.Time) * 1000f));
-				}
-			}
-			return _EventsSorted;
-		}
-	}
+	public AnimationClipEvent[] EventsSorted => m_EventsSorted ?? (m_EventsSorted = Events.OrderBy((AnimationClipEvent evt) => evt.Time).ToArray());
 
 	public AnimationClipWrapper(AnimationClip animationClip, IEnumerable<AnimationClipEventTrack> animationSoundTracks = null)
 	{
@@ -152,7 +137,6 @@ public class AnimationClipWrapper : ScriptableObject
 			RecognizedEventNames.PostEventWithSurface => new AnimationClipEventSoundSurface(animationEvent.time, animationEvent.stringParameter), 
 			RecognizedEventNames.PlayBodyfall => new AnimationClipEventBodyFall(animationEvent.time, animationEvent.stringParameter), 
 			RecognizedEventNames.PlayFootstep => new AnimationClipEventFootStep(animationEvent.time, animationEvent.stringParameter), 
-			RecognizedEventNames.AnimateWeaponTrail => new AnimationClipEventAnimateWeaponTrail(animationEvent.time, animationEvent.floatParameter), 
 			RecognizedEventNames.FxAnimatorToggleAction => new AnimationClipEventToggleFxAnimator(animationEvent.time, animationEvent.stringParameter), 
 			RecognizedEventNames.PostCommandActEvent => new AnimationClipEventAct(animationEvent.time), 
 			RecognizedEventNames.PostDecoratorObject => new AnimationClipEventDecoratorObject(animationEvent.time, animationEvent.objectReferenceParameter as UnitAnimationDecoratorObject), 

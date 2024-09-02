@@ -13,13 +13,11 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem;
-using Kingmaker.Settings;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.View;
 using Kingmaker.View.Covers;
 using Kingmaker.View.Mechanics.Entities;
-using Kingmaker.Visual.Animation;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
@@ -40,20 +38,12 @@ public abstract class AbstractUnitCommand
 	[NotNull]
 	private readonly UnitCommandParams m_Params;
 
-	private bool m_StoredDoNotZeroOtherAnimations;
-
-	private bool m_Accelerated;
-
 	private int m_ActEventsCounter;
-
-	private bool m_SlowMotionRequired;
 
 	[CanBeNull]
 	private AbstractUnitEntity m_Executor;
 
 	private bool m_IsAnimationActHandled;
-
-	private float m_StoredWeightMultiplier;
 
 	public TimeSpan StartTime;
 
@@ -100,13 +90,9 @@ public abstract class AbstractUnitCommand
 
 	public float? OverrideSpeed => Params.OverrideSpeed;
 
-	public float? SpeedLimit => Params.SpeedLimit;
-
 	public bool IsOneFrameCommand => Params.IsOneFrameCommand;
 
 	public bool SlowMotionRequired => Params.SlowMotionRequired;
-
-	public bool AiCanInterruptMark => Params.AiCanInterruptMark;
 
 	public bool DoNotInterruptAfterFight => Params.DoNotInterruptAfterFight;
 
@@ -154,6 +140,8 @@ public abstract class AbstractUnitCommand
 
 	public virtual bool ShouldBeInterrupted => false;
 
+	public virtual bool IsBlockingCommand => false;
+
 	public virtual bool IsUnitEnoughClose
 	{
 		get
@@ -191,8 +179,6 @@ public abstract class AbstractUnitCommand
 	public virtual bool CanStart => true;
 
 	public virtual bool DontWaitForHands => false;
-
-	public bool IsAccelerated => m_Accelerated;
 
 	public ForcedPath ForcedPath => Params.ForcedPath;
 
@@ -285,28 +271,6 @@ public abstract class AbstractUnitCommand
 	{
 		Animation = null;
 		m_IsAnimationActHandled = false;
-	}
-
-	public void SuppressAnimation()
-	{
-		AnimationBase animationBase = Animation?.ActiveAnimation;
-		m_StoredWeightMultiplier = animationBase?.GetWeight() ?? 1f;
-		m_StoredDoNotZeroOtherAnimations = animationBase?.DoNotZeroOtherAnimations ?? false;
-		if (animationBase != null)
-		{
-			animationBase.SetWeightMultiplier(0f);
-			animationBase.DoNotZeroOtherAnimations = true;
-		}
-	}
-
-	public void RestoreAnimation()
-	{
-		AnimationBase animationBase = Animation?.ActiveAnimation;
-		if (animationBase != null)
-		{
-			animationBase.SetWeightMultiplier(m_StoredWeightMultiplier);
-			animationBase.DoNotZeroOtherAnimations = m_StoredDoNotZeroOtherAnimations;
-		}
 	}
 
 	public void Start()
@@ -420,13 +384,17 @@ public abstract class AbstractUnitCommand
 				}
 			}
 		}
-		if (Result == ResultType.None || (Animation != null && !Animation.IsFinished))
+		if (Result != 0 && (Animation == null || Animation.IsFinished))
 		{
-			return;
+			using (ProfileScope.New("OnEnded"))
+			{
+				OnEnded();
+			}
 		}
-		using (ProfileScope.New("OnEnded"))
+		if (Result == ResultType.Fail)
 		{
-			OnEnded();
+			PFLog.Default.ErrorWithReport("Forcing finish of UnitCommand cause of ResultType.Fail");
+			ForceFinish(Result);
 		}
 	}
 
@@ -528,50 +496,6 @@ public abstract class AbstractUnitCommand
 		}
 	}
 
-	public void AccelerateIfPathIsLong(ForcedPath path)
-	{
-		if (CanAccelerate())
-		{
-			path.GetTotalLength();
-			_ = Game.Instance.BlueprintRoot.SystemMechanics.MinMetersToRun;
-		}
-	}
-
-	public void Accelerate()
-	{
-		if (CanAccelerate())
-		{
-			Params.MovementType = WalkSpeedType.Run;
-			if (SpeedLimit.HasValue)
-			{
-				Params.SpeedLimit *= 1.8f;
-			}
-			m_Accelerated = true;
-		}
-	}
-
-	public void Decelerate()
-	{
-		if (m_Accelerated)
-		{
-			Params.MovementType = WalkSpeedType.Walk;
-			if (SpeedLimit.HasValue)
-			{
-				Params.SpeedLimit /= 1.8f;
-			}
-			m_Accelerated = false;
-		}
-	}
-
-	private bool CanAccelerate()
-	{
-		if (!m_Accelerated && (bool)SettingsRoot.Game.Main.AcceleratedMove && MovementType == WalkSpeedType.Walk)
-		{
-			return !Executor.IsInCombat;
-		}
-		return false;
-	}
-
 	public virtual void TurnToTarget()
 	{
 		Executor.LookAt(ApproachPoint);
@@ -594,11 +518,6 @@ public abstract class AbstractUnitCommand
 			return false;
 		}
 		return targetEntity.Features.IsUntargetable;
-	}
-
-	public bool RequireSlowMotion()
-	{
-		return m_SlowMotionRequired = true;
 	}
 
 	public void PostLoad(AbstractUnitEntity executor)

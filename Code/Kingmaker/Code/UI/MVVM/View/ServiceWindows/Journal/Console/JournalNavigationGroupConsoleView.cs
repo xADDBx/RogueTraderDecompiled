@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
@@ -24,11 +25,14 @@ public class JournalNavigationGroupConsoleView : JournalNavigationGroupBaseView
 	{
 		base.BindViewImplementation();
 		DrawEntities();
-		m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
-		AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+		DelayedInvoker.InvokeInFrames(delegate
 		{
-			base.ViewModel.IsCollapse = !value;
-		}));
+			m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
+			AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+			{
+				base.ViewModel.IsCollapse = !value;
+			}));
+		}, 3);
 	}
 
 	private void DrawEntities()
@@ -39,8 +43,7 @@ public class JournalNavigationGroupConsoleView : JournalNavigationGroupBaseView
 
 	public List<IConsoleEntity> GetSelectableEntities()
 	{
-		List<IConsoleEntity> list = new List<IConsoleEntity>();
-		list.Add(m_MultiButton);
+		List<IConsoleEntity> list = new List<IConsoleEntity> { m_MultiButton };
 		foreach (IWidgetView entry in m_WidgetList.Entries)
 		{
 			if (entry is IConsoleEntity item)

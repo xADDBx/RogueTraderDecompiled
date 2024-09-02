@@ -153,7 +153,7 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 		m_SelectedUnits = null;
 	}
 
-	public float GetMinScrollTimeBySpeed(Vector3 targetPos, float cameraSpeed)
+	public float GetMinScrollTimeBySpeed(Vector3 targetPos, float cameraSpeed, float maxTime = 0f, float maxSpeed = 0f)
 	{
 		float num = 60f;
 		foreach (PlayerCommands<SynchronizedData> player in SynchronizedData.Players)
@@ -162,14 +162,18 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 			{
 				if (!command.IsEmpty)
 				{
-					num = Mathf.Min(CameraRig.Instance.CalculateScrollTime(command.camera.parentPosition, targetPos, 0f, 0f, cameraSpeed), num);
+					num = Mathf.Min(CameraRig.Instance.CalculateScrollTime(command.camera.parentPosition, targetPos, maxTime, maxSpeed, cameraSpeed), num);
 				}
 			}
 		}
-		return num;
+		if (!(maxTime > 0f))
+		{
+			return num;
+		}
+		return Mathf.Min(num, maxTime);
 	}
 
-	public float GetMinRotateTimeBySpeed(float targetAngle, float cameraSpeed)
+	public float GetMinRotateTimeBySpeed(float targetAngle, float cameraSpeed, float maxTime = 0f)
 	{
 		float num = 60f;
 		foreach (PlayerCommands<SynchronizedData> player in SynchronizedData.Players)
@@ -179,11 +183,15 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 				if (!command.IsEmpty)
 				{
 					float sourceAngle = Mathf.Repeat(command.camera.rotation.eulerAngles.y + 180f, 360f);
-					num = Mathf.Min(CameraRig.Instance.CalculateRotateTime(sourceAngle, targetAngle, 0f, cameraSpeed), num);
+					num = Mathf.Min(CameraRig.Instance.CalculateRotateTime(sourceAngle, targetAngle, maxTime, cameraSpeed), num);
 				}
 			}
 		}
-		return num;
+		if (!(maxTime > 0f))
+		{
+			return num;
+		}
+		return Mathf.Min(num, maxTime);
 	}
 
 	private void FillData()
@@ -294,6 +302,11 @@ public class SynchronizedDataController : IControllerTick, IController, IControl
 	{
 		if (m_HasLeftStickMovementData || m_LeftStickMovementDataFrame == Time.frameCount)
 		{
+			if (!GamepadInputController.CanProcessInput)
+			{
+				m_MoveDirection = Vector2.zero;
+				m_StickDeflection = 0f;
+			}
 			CompressStickData(m_MoveDirection, m_StickDeflection, out var x, out var y);
 			byte version = (byte)(Game.Instance.RealTimeController.CurrentNetworkTick % 255);
 			data.leftStick = new LeftStickData

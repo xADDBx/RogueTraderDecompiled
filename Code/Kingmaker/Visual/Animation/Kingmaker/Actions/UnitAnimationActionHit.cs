@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Controllers;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
 using Kingmaker.View.Covers;
+using Kingmaker.Visual.Animation.Actions;
 using UnityEngine;
 
 namespace Kingmaker.Visual.Animation.Kingmaker.Actions;
@@ -77,57 +79,69 @@ public class UnitAnimationActionHit : UnitAnimationAction
 		}
 	}
 
+	public static float CrossfadeToCoverTime => RealTimeController.SystemStepDurationSeconds * 2f;
+
 	public override UnitAnimationType Type => UnitAnimationType.Hit;
 
 	public override bool IsAdditive => false;
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
-		if (handle.Manager.IsDead)
+		if (!handle.Manager.IsDead)
 		{
-			return;
+			handle.SkipFirstTick = false;
+			handle.CorrectTransitionOutTime = true;
+			handle.StartClip(GetAnimationClip(handle), ClipDurationType.Oneshot);
+			if (handle.Manager.InCover && handle.ActiveAnimation != null)
+			{
+				handle.ActiveAnimation.ChangeTransitionTime(CrossfadeToCoverTime + RealTimeController.SystemStepDurationSeconds);
+			}
 		}
-		AnimationClipWrapper clipWrapper = ClipWrapper;
+	}
+
+	private AnimationClipWrapper GetAnimationClip(UnitAnimationActionHandle handle)
+	{
 		bool isOffHand = handle.Manager.ActiveMainHandWeaponStyle == WeaponAnimationStyle.None;
-		WeaponStyleOverride weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle && x.IsOffhand == isOffHand);
-		if (weaponStyleOverride == null)
-		{
-			weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
-		}
+		WeaponStyleOverride weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle && x.IsOffhand == isOffHand) ?? WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
 		if (weaponStyleOverride != null && weaponStyleOverride.ClipWrapper != null)
+		{
+			return SelectClipFromCover(weaponStyleOverride.HitInFullCover, weaponStyleOverride.HitInHalfCover, weaponStyleOverride.RandomClips, weaponStyleOverride.ClipWrapper);
+		}
+		return SelectClipFromCover(HitInFullCover, HitInHalfCover, RandomClips, ClipWrapper);
+		AnimationClipWrapper GetRandomClip(AnimationClipWrapper[] randomClips, AnimationClipWrapper defaultClip)
+		{
+			if (randomClips.Length == 0)
+			{
+				return defaultClip;
+			}
+			return randomClips[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, randomClips.Length - 1))] ?? defaultClip;
+		}
+		AnimationClipWrapper SelectClipFromCover(AnimationClipWrapper[] fullCoverClips, AnimationClipWrapper[] halfCoverClips, AnimationClipWrapper[] randomClips, AnimationClipWrapper defaultClip)
 		{
 			if (handle.Manager.InCover)
 			{
+				handle.HasCrossfadePriority = true;
 				handle.Manager.HitAnimationIsActive = true;
-				if (handle.Manager.CoverType == LosCalculations.CoverType.Full && weaponStyleOverride.HitInFullCover.Length != 0)
+				if (handle.Manager.CoverType == LosCalculations.CoverType.Full && fullCoverClips.Length != 0)
 				{
-					handle.StartClip(weaponStyleOverride.HitInFullCover[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, weaponStyleOverride.HitInFullCover.Length - 1))] ?? weaponStyleOverride.ClipWrapper, ClipDurationType.Oneshot);
-					return;
+					return GetRandomClip(fullCoverClips, defaultClip);
 				}
-				if (handle.Manager.CoverType == LosCalculations.CoverType.Half && weaponStyleOverride.HitInHalfCover.Length != 0)
+				if (handle.Manager.CoverType == LosCalculations.CoverType.Half && halfCoverClips.Length != 0)
 				{
-					handle.StartClip(weaponStyleOverride.HitInHalfCover[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, weaponStyleOverride.HitInHalfCover.Length - 1))] ?? weaponStyleOverride.ClipWrapper, ClipDurationType.Oneshot);
-					return;
+					return GetRandomClip(halfCoverClips, defaultClip);
 				}
 			}
-			clipWrapper = ((weaponStyleOverride.RandomClips.Length != 0) ? (weaponStyleOverride.RandomClips[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, weaponStyleOverride.RandomClips.Length - 1))] ?? weaponStyleOverride.ClipWrapper) : weaponStyleOverride.ClipWrapper);
-			handle.StartClip(clipWrapper, ClipDurationType.Oneshot);
-			return;
+			return GetRandomClip(randomClips, defaultClip);
 		}
-		if (handle.Manager.InCover)
+	}
+
+	public bool BlocksReturnToCover(AnimationActionHandle handle)
+	{
+		AnimationBase activeAnimation = handle.ActiveAnimation;
+		if (activeAnimation == null)
 		{
-			if (handle.Manager.CoverType == LosCalculations.CoverType.Full && HitInFullCover.Length != 0)
-			{
-				handle.StartClip(HitInFullCover[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, HitInFullCover.Length - 1))] ?? ClipWrapper, ClipDurationType.Oneshot);
-				return;
-			}
-			if (handle.Manager.CoverType == LosCalculations.CoverType.Half && HitInHalfCover.Length != 0)
-			{
-				handle.StartClip(HitInHalfCover[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, HitInHalfCover.Length - 1))] ?? ClipWrapper, ClipDurationType.Oneshot);
-				return;
-			}
+			return false;
 		}
-		clipWrapper = ((RandomClips.Length != 0) ? (RandomClips[Mathf.RoundToInt(handle.Manager.StatefulRandom.Range(0, RandomClips.Length - 1))] ?? ClipWrapper) : ClipWrapper);
-		handle.StartClip(clipWrapper, ClipDurationType.Oneshot);
+		return activeAnimation.GetTime() < activeAnimation.TransitionOutStartTime - RealTimeController.SystemStepDurationSeconds;
 	}
 }

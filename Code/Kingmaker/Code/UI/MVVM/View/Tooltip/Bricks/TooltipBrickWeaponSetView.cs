@@ -13,7 +13,7 @@ namespace Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
 public class TooltipBrickWeaponSetView : TooltipBaseBrickView<TooltipBrickWeaponSetVM>
 {
 	[SerializeField]
-	protected HandSlotView m_HandSlotView;
+	protected WeaponSlotView m_WeaponSlotView;
 
 	[SerializeField]
 	private GameObject m_BulletsBlock;
@@ -58,7 +58,7 @@ public class TooltipBrickWeaponSetView : TooltipBaseBrickView<TooltipBrickWeapon
 		{
 			m_TextHelper = new AccessibilityTextHelper(m_Title);
 		}
-		m_HandSlotView.Bind(base.ViewModel.EquipSlot);
+		m_WeaponSlotView.Bind(base.ViewModel.WeaponSlotVM);
 		BlueprintItemWeapon blueprint = base.ViewModel.Weapon.Blueprint;
 		m_Title.text = base.ViewModel.Weapon.Name;
 		string format = UIConfig.Instance.WeaponSetTextFormat.Replace("{color}", ColorUtility.ToHtmlStringRGBA(m_templateTextColor));

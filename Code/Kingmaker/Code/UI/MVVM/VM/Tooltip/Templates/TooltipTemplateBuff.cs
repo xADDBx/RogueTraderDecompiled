@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.EntitySystem.Entities;
@@ -10,10 +12,14 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
+using Kingmaker.UI.MVVM.VM.Tooltip.Bricks.CombatLog;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Buffs.Components;
+using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -125,6 +131,7 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		AddDOT(list);
 		AddSource(list);
 		AddDuration(list);
 		AddStacking(list);
@@ -216,6 +223,24 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 		if (tooltipBrick != null)
 		{
 			bricks.Add(tooltipBrick);
+		}
+	}
+
+	private void AddDOT(List<ITooltipBrick> bricks)
+	{
+		if (Buff?.Blueprint?.GetComponent<DOTLogicVisual>() == null)
+		{
+			return;
+		}
+		TooltipBrickStrings tooltipBrickStrings = GameLogStrings.Instance.TooltipBrickStrings;
+		DamageData damageData = DOTLogicUIExtensions.CalculateDOTDamage(Buff);
+		bricks.Add(new TooltipBrickDamageRange(tooltipBrickStrings.Damage.Text, damageData.AverageValue, damageData.MinValue, damageData.MaxValue, 1, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: false, isBeigeBackground: false, isRedBackground: true));
+		string value = damageData.MinValueBase + " — " + damageData.MaxValueBase;
+		TooltipBrickTextValue item = new TooltipBrickTextValue(tooltipBrickStrings.BaseModifier.Text, value, 2, isResultValue: true);
+		bricks.Add(item);
+		foreach (ITooltipBrick damageModifier in LogThreadBase.GetDamageModifiers(damageData, 2, minMax: true, common: true))
+		{
+			bricks.Add(damageModifier);
 		}
 	}
 }

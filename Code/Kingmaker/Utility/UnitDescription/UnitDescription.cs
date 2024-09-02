@@ -6,9 +6,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Weapons;
-using Kingmaker.Blueprints.Root;
 using Kingmaker.Enums;
-using Kingmaker.Localization;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
@@ -20,7 +18,6 @@ using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Progression.Features;
 using Newtonsoft.Json;
-using UnityEngine;
 
 namespace Kingmaker.Utility.UnitDescription;
 
@@ -227,18 +224,6 @@ public class UnitDescription
 	}
 
 	[JsonObject]
-	public class SpellResistanceData
-	{
-		[JsonProperty]
-		public int Value;
-
-		[JsonProperty]
-		public SpellDescriptor? OnlyAgainstSpellDescriptor;
-
-		public bool HasCondition => OnlyAgainstSpellDescriptor.HasValue;
-	}
-
-	[JsonObject]
 	public class StatsData : IEnumerable<string>, IEnumerable
 	{
 		[JsonProperty]
@@ -357,9 +342,6 @@ public class UnitDescription
 	public Size Size;
 
 	[JsonProperty]
-	public Alignment Alignment;
-
-	[JsonProperty]
 	public int CR;
 
 	[JsonProperty]
@@ -391,9 +373,6 @@ public class UnitDescription
 
 	[JsonProperty]
 	public SavesData Saves = new SavesData();
-
-	[JsonProperty]
-	public SpellResistanceData[] SR = new SpellResistanceData[0];
 
 	[JsonProperty]
 	public DamageReduction[] DR = new DamageReduction[0];
@@ -451,48 +430,6 @@ public class UnitDescription
 
 	[JsonProperty]
 	public BlueprintAbility[] Spells = new BlueprintAbility[0];
-
-	public BlueprintUnitType TypeBlueprint => Blueprint.Type;
-
-	public string TypeDescription
-	{
-		get
-		{
-			LocalizedString localizedString = SimpleBlueprintExtendAsObject.Or(TypeBlueprint, null)?.Description;
-			if (localizedString == null)
-			{
-				return "";
-			}
-			return localizedString;
-		}
-	}
-
-	public string TypeName
-	{
-		get
-		{
-			LocalizedString localizedString = SimpleBlueprintExtendAsObject.Or(TypeBlueprint, null)?.Name;
-			if (localizedString == null)
-			{
-				return "";
-			}
-			return localizedString;
-		}
-	}
-
-	public Sprite TypeImage => SimpleBlueprintExtendAsObject.Or(TypeBlueprint, null)?.Image;
-
-	public string TypeKnowledgeStat
-	{
-		get
-		{
-			if (!TypeBlueprint)
-			{
-				return "";
-			}
-			return LocalizedTexts.Instance.Stats.GetText(TypeBlueprint.KnowledgeStat);
-		}
-	}
 
 	public string Name => Blueprint.CharacterName ?? "";
 }

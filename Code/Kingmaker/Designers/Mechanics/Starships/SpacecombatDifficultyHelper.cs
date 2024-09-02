@@ -22,6 +22,20 @@ public static class SpacecombatDifficultyHelper
 		};
 	}
 
+	public static float HullIntegrityMod(StarshipEntity initiator)
+	{
+		if (!initiator.IsPlayerEnemy || initiator.IsSoftUnit)
+		{
+			return 1f;
+		}
+		return SpaceCombatDifficulty switch
+		{
+			SpaceCombatDifficulty.Easy => 0.6f, 
+			SpaceCombatDifficulty.Hard => 1.2f, 
+			_ => 1f, 
+		};
+	}
+
 	public static float RepairCostMod()
 	{
 		return SpaceCombatDifficulty switch

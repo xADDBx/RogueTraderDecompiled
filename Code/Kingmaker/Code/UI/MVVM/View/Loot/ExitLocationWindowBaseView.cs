@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UnityEngine;
@@ -46,10 +47,12 @@ public class ExitLocationWindowBaseView : ViewBase<ExitLocationWindowVM>
 	private void Show()
 	{
 		base.gameObject.SetActive(value: true);
+		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 	}
 
 	private void Hide()
 	{
+		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 		base.gameObject.SetActive(value: false);
 	}
 }

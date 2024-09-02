@@ -55,7 +55,7 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	[JsonProperty]
 	public readonly TargetWrapper ClickedTarget;
 
-	private bool m_PatterConfigured;
+	private bool m_PatternConfigured;
 
 	[CanBeNull]
 	private OrientedPatternData m_Pattern;
@@ -189,10 +189,10 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 
 	private void TryConfigurePattern()
 	{
-		if (!m_PatterConfigured)
+		if (!m_PatternConfigured)
 		{
-			m_PatterConfigured = true;
 			m_Pattern = Ability.GetPattern(ClickedTarget, m_CastPosition);
+			m_PatternConfigured = true;
 		}
 	}
 

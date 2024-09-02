@@ -88,11 +88,7 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 	{
 		FloatConsoleNavigationBehaviour disposable = (NavigationBehaviour = new FloatConsoleNavigationBehaviour(m_Parameters));
 		AddDisposable(disposable);
-		List<ContextMenuEntityConsoleView> list = new List<ContextMenuEntityConsoleView> { m_ContinueView, m_NewGameView, m_LoadView, m_OptionsView, m_CreditView };
-		if (BuildModeUtility.IsDevelopment)
-		{
-			list.Add(m_AddonsView);
-		}
+		List<ContextMenuEntityConsoleView> list = new List<ContextMenuEntityConsoleView> { m_ContinueView, m_NewGameView, m_LoadView, m_OptionsView, m_CreditView, m_AddonsView };
 		if (BuildModeUtility.IsCoopEnabled)
 		{
 			list.Add(m_NetView);

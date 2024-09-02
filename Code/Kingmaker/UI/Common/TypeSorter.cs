@@ -17,7 +17,9 @@ public static class TypeSorter
 		WeaponFamily.Chain,
 		WeaponFamily.Exotic,
 		WeaponFamily.Power,
-		WeaponFamily.Primitive
+		WeaponFamily.Primitive,
+		WeaponFamily.Blade,
+		WeaponFamily.ChainSaw
 	};
 
 	public static readonly List<WeaponFamily> RangeWeaponSortingOrder = new List<WeaponFamily>

@@ -11,5 +11,6 @@ public enum WeaponClassification
 	FullAuto,
 	SniperRifle,
 	PsykerStaff,
-	NavigatorStaff
+	NavigatorStaff,
+	Chainsaw
 }

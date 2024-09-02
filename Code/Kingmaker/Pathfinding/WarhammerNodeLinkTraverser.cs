@@ -60,6 +60,8 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	public float OutDownVerticalClipDuration { get; set; }
 
+	public float OnlyHorizontalTraverseTime { get; set; }
+
 	public float InDownVerticalDistance { get; set; }
 
 	public float VerticalSpeed { get; set; }
@@ -128,7 +130,11 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	public bool IsUpTraverse => m_GraphNodeFrom.Vector3Position.y < m_GraphNodeTo.Vector3Position.y;
 
+	public bool IsOnlyHorizontalTraverse => Mathf.Abs(m_GraphNodeFrom.Vector3Position.y - m_GraphNodeTo.Vector3Position.y) < 0.1f;
+
 	public float TraverseHeight => Math.Abs(m_GraphNodeFrom.Vector3Position.y - m_GraphNodeTo.Vector3Position.y);
+
+	public float TraverseDistance => (m_GraphNodeFrom.Vector3Position - m_GraphNodeTo.Vector3Position).magnitude;
 
 	public bool ForceNextState { get; set; }
 
@@ -238,7 +244,14 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 				View.AnimationManager.IsTraverseLink = true;
 			}
 			m_LastTraversedPathLink.StartTransition(this);
-			LastState = (IsUpTraverse ? State.TraverseIn : State.TraverseDownHorizontalIn);
+			if (IsOnlyHorizontalTraverse)
+			{
+				LastState = State.Traverse;
+			}
+			else
+			{
+				LastState = (IsUpTraverse ? State.TraverseIn : State.TraverseDownHorizontalIn);
+			}
 		}
 	}
 
@@ -269,6 +282,11 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 		ProcessTraverse(deltaTime);
 		if (!(StateProgress < 1f) || ForceNextState)
 		{
+			if (IsOnlyHorizontalTraverse)
+			{
+				CompleteTraverse();
+				return;
+			}
 			ForceNextState = false;
 			m_TraverseTimer = 0f;
 			LastState = State.TraverseOut;
@@ -343,11 +361,15 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 			}
 			return InDownHorizontalClipDuration;
 		case State.Traverse:
-			if (IsUpTraverse)
+			if (!IsOnlyHorizontalTraverse)
 			{
-				return (m_LastTraversedPathLink.GetHeight() - InDownVerticalDistance) / GetTraverseSpeedMps();
+				if (IsUpTraverse)
+				{
+					return (m_LastTraversedPathLink.GetHeight() - InDownVerticalDistance) / GetTraverseSpeedMps();
+				}
+				return (m_LastTraversedPathLink.GetHeight() - OutUpVerticalDistance) / GetTraverseSpeedMps();
 			}
-			return (m_LastTraversedPathLink.GetHeight() - OutUpVerticalDistance) / GetTraverseSpeedMps();
+			return OnlyHorizontalTraverseTime;
 		case State.TraverseOut:
 			if (!IsUpTraverse)
 			{
@@ -378,11 +400,15 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 			}
 			return Mathf.Lerp(m_GraphNodeFrom.Vector3Position.y, m_GraphNodeFrom.Vector3Position.y - InDownVerticalDistance, StateProgress);
 		case State.Traverse:
-			if (!IsUpTraverse)
+			if (!IsOnlyHorizontalTraverse)
 			{
-				return Mathf.Lerp(m_GraphNodeFrom.Vector3Position.y - InDownVerticalDistance, m_GraphNodeTo.Vector3Position.y, StateProgress);
+				if (!IsUpTraverse)
+				{
+					return Mathf.Lerp(m_GraphNodeFrom.Vector3Position.y - InDownVerticalDistance, m_GraphNodeTo.Vector3Position.y, StateProgress);
+				}
+				return Mathf.Lerp(m_GraphNodeFrom.Vector3Position.y, m_GraphNodeTo.Vector3Position.y - OutUpVerticalDistance, StateProgress);
 			}
-			return Mathf.Lerp(m_GraphNodeFrom.Vector3Position.y, m_GraphNodeTo.Vector3Position.y - OutUpVerticalDistance, StateProgress);
+			return m_GraphNodeTo.Vector3Position.y;
 		case State.TraverseOut:
 			if (!IsUpTraverse)
 			{
@@ -400,6 +426,10 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 	{
 		Vector2 vector = m_LastTraversedPathLink.GetConnectionPosition(this).To2D();
 		Vector2 vector2 = m_LastTraversedPathLink.EndToStartDirection.To2D() * (m_LastTraversedPathLink.Bounds.extents.z + 0.35f);
+		if (IsOnlyHorizontalTraverse && LastState == State.Traverse)
+		{
+			return Vector2.Lerp(m_GraphNodeFrom.Vector3Position.To2D(), m_GraphNodeTo.Vector3Position.To2D(), StateProgress);
+		}
 		if (IsUpTraverse)
 		{
 			if (LastState == State.TraverseUpHorizontalOut)

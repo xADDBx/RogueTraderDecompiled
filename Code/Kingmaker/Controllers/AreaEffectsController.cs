@@ -71,23 +71,25 @@ public class AreaEffectsController : IControllerTick, IController, ITeleportHand
 		TickAreaEffects(isTurnBased, Initiative.Event.RoundEnd);
 	}
 
-	public static AreaEffectEntity Spawn(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, TargetWrapper target, TimeSpan? duration, OverrideAreaEffectPatternData? overridenPattern = null)
+	public static AreaEffectEntity Spawn(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, TargetWrapper target, TimeSpan? duration, OverrideAreaEffectPatternData? overridenPattern = null, bool getOrientationFromCaster = false)
 	{
-		return Spawn(parentContext, blueprint, target, duration, onUnit: false, overridenPattern);
+		return Spawn(parentContext, blueprint, target, duration, onUnit: false, overridenPattern, getOrientationFromCaster);
 	}
 
-	public static AreaEffectEntity SpawnAttachedToTarget(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, BaseUnitEntity target, TimeSpan? duration)
+	public static AreaEffectEntity SpawnAttachedToTarget(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, BaseUnitEntity target, TimeSpan? duration, bool getOrientationFromCaster = false)
 	{
-		return Spawn(parentContext, blueprint, target, duration, onUnit: true);
+		TargetWrapper target2 = target;
+		bool getOrientationFromCaster2 = getOrientationFromCaster;
+		return Spawn(parentContext, blueprint, target2, duration, onUnit: true, null, getOrientationFromCaster2);
 	}
 
-	private static AreaEffectEntity Spawn(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, TargetWrapper target, TimeSpan? duration, bool onUnit, OverrideAreaEffectPatternData? overridenPattern = null)
+	private static AreaEffectEntity Spawn(MechanicsContext parentContext, BlueprintAbilityAreaEffect blueprint, TargetWrapper target, TimeSpan? duration, bool onUnit, OverrideAreaEffectPatternData? overridenPattern = null, bool getOrientationFromCaster = false)
 	{
 		SceneEntitiesState state = ((!onUnit) ? Game.Instance.LoadedAreaState.MainState : (target.Entity?.HoldingState ?? ContextData<EntitySpawnController.EntitySpawnData>.Current?.TargetState));
 		AreaEffectView areaEffectView = new GameObject($"AreaEffect [{blueprint}]").AddComponent<AreaEffectView>();
 		areaEffectView.UniqueId = Uuid.Instance.CreateString();
 		areaEffectView.OnUnit = onUnit;
-		areaEffectView.InitAtRuntime(parentContext.CloneFor(blueprint, null, null, target), blueprint, target, Game.Instance.TimeController.GameTime, duration, overridenPattern);
+		areaEffectView.InitAtRuntime(parentContext.CloneFor(blueprint, null, null, target), blueprint, target, Game.Instance.TimeController.GameTime, duration, overridenPattern, getOrientationFromCaster);
 		AreaEffectEntity obj = (AreaEffectEntity)Game.Instance.EntitySpawner.SpawnEntityWithView(areaEffectView, state);
 		EventBus.RaiseEvent((IAreaEffectEntity)obj, (Action<IAreaEffectHandler>)delegate(IAreaEffectHandler h)
 		{
@@ -143,7 +145,9 @@ public class AreaEffectsController : IControllerTick, IController, ITeleportHand
 			if (areaEffect.Blueprint.OnlyInCombat)
 			{
 				areaEffect.ForceEnd();
+				areaEffect.Tick();
 			}
 		}
+		Game.Instance.EntityDestroyer.Tick();
 	}
 }

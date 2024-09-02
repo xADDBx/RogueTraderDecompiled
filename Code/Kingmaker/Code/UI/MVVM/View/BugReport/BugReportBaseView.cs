@@ -333,15 +333,37 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	{
 		PlayerPrefs.SetString("BugReportEmail", m_EmailInputField.Text);
 		PlayerPrefs.SetString("BugReportDiscord", m_DiscordInputField.Text);
+		int currentFixVersionIndex = ReportingUtils.Instance.GetCurrentFixVersionIndex();
+		PlayerPrefs.SetInt("BugReportFixVersion", currentFixVersionIndex);
 	}
 
-	private void RestoreUserData()
+	private void RestoreUserData(bool restoreDevFields)
 	{
 		m_EmailInputField.Text = PlayerPrefs.GetString("BugReportEmail", string.Empty);
 		m_DiscordInputField.Text = PlayerPrefs.GetString("BugReportDiscord", string.Empty);
+		if (restoreDevFields)
+		{
+			RestoreDevFields();
+		}
 		(bool, bool) tuple = ReportingUtils.Instance.PrivacyStuffGetEmailAgreements(m_EmailInputField.Text);
 		m_PrivacyToggle.Set(tuple.Item2);
 		m_EmailUpdatesToggle.Set(tuple.Item1 && IsEmailMatchRegexp());
+		void RestoreDevFields()
+		{
+			if (m_FixVersionDropdown == null)
+			{
+				ReportingUtils.Logger.Error("Can't show FixVersionDropDown because m_FixVersionDropdown is null");
+			}
+			else if (m_FixVersionDropdown.Index == null)
+			{
+				ReportingUtils.Logger.Error("Can't show FixVersionDropDown because m_FixVersionDropdown.Index is null");
+			}
+			else
+			{
+				int @int = PlayerPrefs.GetInt("BugReportFixVersion", 0);
+				m_FixVersionDropdown.SetIndex(@int);
+			}
+		}
 	}
 
 	public void OnSend()
@@ -397,13 +419,13 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private void OnShow()
 	{
-		RestoreUserData();
 		m_NormalToggle.Set(value: true);
 		m_IsLabelsShow = false;
 		HideLabelsButton();
 		m_ContextDropdown.Bind(base.ViewModel.ContextDropdownVM);
 		m_AspectDropdown.Bind(base.ViewModel.AspectDropdownVM);
-		if (BuildModeUtility.IsDevelopment && ReportingUtils.Instance.Assignees.IsCompletedSuccessfully)
+		bool flag = BuildModeUtility.IsDevelopment && ReportingUtils.Instance.Assignees.IsCompletedSuccessfully;
+		if (flag)
 		{
 			try
 			{
@@ -433,6 +455,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		}
 		ToggleAdditionalContactsVisibility(IsEmailMatchRegexp());
 		ExpandDescriptionOverMarket();
+		RestoreUserData(flag);
 	}
 
 	public void OnLabelsShow()

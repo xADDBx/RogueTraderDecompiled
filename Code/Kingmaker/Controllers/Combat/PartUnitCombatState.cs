@@ -49,6 +49,9 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	private bool m_InCombat;
 
 	[JsonProperty]
+	private bool m_LastCombatLeaveIgnoreLeaveTimer;
+
+	[JsonProperty]
 	private float? m_OverrideInitiative;
 
 	[JsonProperty]
@@ -194,6 +197,8 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 
 	public bool IsInCombat => m_InCombat;
 
+	public bool LastCombatLeaveIgnoreLeaveTimer => m_LastCombatLeaveIgnoreLeaveTimer;
+
 	public bool IsEngaged
 	{
 		get
@@ -274,6 +279,7 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		Clear();
 		base.Owner.CombatGroup.IsInCombat.Retain();
 		m_InCombat = true;
+		m_LastCombatLeaveIgnoreLeaveTimer = false;
 		ResetActionPointsAll();
 		AbstractUnitCommand current = base.Owner.Commands.Current;
 		if (current != null && !SettingsRoot.Game.TurnBased.EnableTurnBasedMode && current.IsActed && !current.IsFinished)
@@ -318,20 +324,21 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 			}
 		}
 		base.Owner.Wake();
-		PFLog.Default.Log(base.Owner.View, "Unit join combat: {0}", this);
+		PFLog.Default.Log(base.Owner.View, "Unit join combat: {0}", base.Owner);
 		EventBus.RaiseEvent(delegate(IAnyUnitCombatHandler h)
 		{
 			h.HandleUnitJoinCombat(base.Owner);
 		});
 	}
 
-	public void LeaveCombat()
+	public void LeaveCombat(bool ignoreLeaveTimer = false)
 	{
 		if (!m_InCombat)
 		{
 			return;
 		}
 		m_InCombat = false;
+		m_LastCombatLeaveIgnoreLeaveTimer = ignoreLeaveTimer;
 		base.Owner.CombatGroup.IsInCombat.Release();
 		ReturnToStartingPositionIfNeeded();
 		Clear();
@@ -386,7 +393,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 				UnitMoveToParams cmdParams = new UnitMoveToParams(path, ReturnPosition.Value)
 				{
 					Orientation = ReturnOrientation,
-					AiCanInterruptMark = true,
 					DoNotInterruptAfterFight = true
 				};
 				base.Owner.Commands.Run(cmdParams);
@@ -676,6 +682,7 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
 		result.Append(ref m_InCombat);
+		result.Append(ref m_LastCombatLeaveIgnoreLeaveTimer);
 		if (ReturnPosition.HasValue)
 		{
 			Vector3 val2 = ReturnPosition.Value;

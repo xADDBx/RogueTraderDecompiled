@@ -26,21 +26,27 @@ public class RandomAction : GameAction
 		ActionAndWeight[] array = (from a in Actions.EmptyIfNull()
 			where a.Conditions.Check()
 			select a).ToArray();
-		int maxExclusive = array.Aggregate(0, (int w, ActionAndWeight a) => w + a.Weight);
-		int num = PFStatefulRandom.Action.Range(0, maxExclusive);
-		int num2 = 0;
-		ActionAndWeight[] array2 = array;
-		for (int i = 0; i < array2.Length; i++)
+		int num = array.Aggregate(0, (int w, ActionAndWeight a) => w + a.Weight);
+		if (num == 0)
 		{
-			ActionAndWeight actionAndWeight = array2[i];
+			PFLog.Actions.Error("Total sum of RandomActions " + base.AssetGuid + " is zero!");
+			int num2 = PFStatefulRandom.Action.Range(0, array.Length);
+			array[num2].Action.Run();
+			return;
+		}
+		int num3 = PFStatefulRandom.Action.Range(0, num);
+		int num4 = 0;
+		ActionAndWeight[] array2 = array;
+		foreach (ActionAndWeight actionAndWeight in array2)
+		{
 			ActionList action = actionAndWeight.Action;
-			int num3 = num2 + actionAndWeight.Weight;
-			if (num2 <= num && num < num3)
+			int num5 = num4 + actionAndWeight.Weight;
+			if (num4 <= num3 && num3 < num5)
 			{
 				action.Run();
 				break;
 			}
-			num2 = num3;
+			num4 = num5;
 		}
 	}
 }

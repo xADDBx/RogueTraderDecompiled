@@ -10,6 +10,7 @@ using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.VM.Tutorial;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Toggles;
@@ -177,7 +178,7 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 			m_VideoPlayerHelper.gameObject.SetActive(valueOrDefault);
 			if (valueOrDefault)
 			{
-				m_VideoPlayerHelper.SetClip(page.Video.Load());
+				m_VideoPlayerHelper.SetClip(page.Video.Load(), SoundStateType.Video, prepareVideo: false, null, null);
 			}
 		}
 		m_TriggerText.text = page?.TriggerText;

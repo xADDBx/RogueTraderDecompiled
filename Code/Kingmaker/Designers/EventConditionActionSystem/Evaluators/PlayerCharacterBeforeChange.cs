@@ -14,6 +14,6 @@ public class PlayerCharacterBeforeChange : AbstractUnitEvaluator
 
 	protected override AbstractUnitEntity GetAbstractUnitEntityInternal()
 	{
-		return Game.Instance.Player.MainCharacterBeforeChange.Entity.ToBaseUnitEntity();
+		return Game.Instance.Player.MainCharacterOriginal.Entity.ToBaseUnitEntity();
 	}
 }

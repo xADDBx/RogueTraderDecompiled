@@ -11,6 +11,13 @@ public class DLCStatus : IDLCStatus
 		IsMounted = true
 	};
 
+	public static readonly DLCStatus UnAvailable = new DLCStatus
+	{
+		Purchased = false,
+		DownloadState = DownloadState.NotLoaded,
+		IsMounted = false
+	};
+
 	public bool Purchased { get; set; }
 
 	public bool IsMounted { get; set; }

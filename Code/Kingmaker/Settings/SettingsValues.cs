@@ -13,6 +13,8 @@ public class SettingsValues : ScriptableObject
 
 	public GraphicsPresetsList GraphicsPresetsList;
 
+	public TexturesQualityController.Settings TexturesQualityControllerSettings;
+
 	private void OnValidate()
 	{
 		SettingsDefaultValues.OnValidate();

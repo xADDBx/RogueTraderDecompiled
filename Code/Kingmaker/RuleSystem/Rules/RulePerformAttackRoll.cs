@@ -52,6 +52,8 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 	[CanBeNull]
 	public RuleRollParry ResultParryRule { get; private set; }
 
+	public MechanicEntity ActualParryUnit { get; private set; }
+
 	public RuleRollChance ResultChanceRule { get; private set; }
 
 	[CanBeNull]
@@ -90,6 +92,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		Ability = ability;
 		BurstIndex = burstIndex;
 		m_DisableDodgeForAlly = disableDodgeForAlly;
+		ActualParryUnit = target;
 		HitChanceRule = new RuleCalculateHitChances(initiator, target, ability, burstIndex, effectiveCasterPosition ?? initiator.Position, abilityTargetPosition ?? target.Position, overpenetrationModifier);
 	}
 
@@ -192,6 +195,10 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			}
 			else
 			{
+				if (Ability.IsAOE)
+				{
+					return;
+				}
 				hitChance = HitChanceRule.ResultHitChance;
 			}
 			RuleRollParry evt2 = new RuleRollParry(targetUnit, base.ConcreteInitiator, Ability, HitChanceRule.ResultSuperiorityNumber, rangedParry: true, hitChance);
@@ -236,29 +243,36 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 					ResultParryRule = ruleRollParry;
 					Result = AttackResult.Parried;
 					ResultIsHit = false;
+					ActualParryUnit = baseUnitEntity;
 					break;
 				}
 			}
-			if (!IsMelee && warhammerAllyParry.ParryRanged && CanParryRanged(baseUnitEntity))
+			if (IsMelee || !warhammerAllyParry.ParryRanged || !CanParryRanged(baseUnitEntity))
 			{
-				int hitChance2;
-				if (Ability.IsScatter)
+				continue;
+			}
+			int hitChance2;
+			if (Ability.IsScatter)
+			{
+				RuleCalculateScatterShotHitDirectionProbability ruleCalculateScatterShotHitDirectionProbability2 = Rulebook.Trigger(new RuleCalculateScatterShotHitDirectionProbability(base.ConcreteInitiator, Ability, 1));
+				hitChance2 = (base.ConcreteInitiator.InRangeInCells(baseUnitEntity, Ability.Weapon?.Blueprint.AttackOptimalRange ?? 1) ? ruleCalculateScatterShotHitDirectionProbability2.ResultMainLineNear : ruleCalculateScatterShotHitDirectionProbability2.ResultMainLine);
+			}
+			else
+			{
+				if (Ability.IsAOE)
 				{
-					RuleCalculateScatterShotHitDirectionProbability ruleCalculateScatterShotHitDirectionProbability2 = Rulebook.Trigger(new RuleCalculateScatterShotHitDirectionProbability(base.ConcreteInitiator, Ability, 1));
-					hitChance2 = (base.ConcreteInitiator.InRangeInCells(baseUnitEntity, Ability.Weapon?.Blueprint.AttackOptimalRange ?? 1) ? ruleCalculateScatterShotHitDirectionProbability2.ResultMainLineNear : ruleCalculateScatterShotHitDirectionProbability2.ResultMainLine);
+					continue;
 				}
-				else
-				{
-					hitChance2 = HitChanceRule.ResultHitChance;
-				}
-				RuleRollParry ruleRollParry2 = Rulebook.Trigger(new RuleRollParry(baseUnitEntity as UnitEntity, base.ConcreteInitiator, Ability, HitChanceRule.ResultSuperiorityNumber, rangedParry: true, hitChance2));
-				if (ruleRollParry2 != null && ruleRollParry2.Result)
-				{
-					ResultParryRule = ruleRollParry2;
-					Result = AttackResult.Parried;
-					ResultIsHit = false;
-					break;
-				}
+				hitChance2 = HitChanceRule.ResultHitChance;
+			}
+			RuleRollParry ruleRollParry2 = Rulebook.Trigger(new RuleRollParry(baseUnitEntity as UnitEntity, base.ConcreteInitiator, Ability, HitChanceRule.ResultSuperiorityNumber, rangedParry: true, hitChance2));
+			if (ruleRollParry2 != null && ruleRollParry2.Result)
+			{
+				ResultParryRule = ruleRollParry2;
+				Result = AttackResult.Parried;
+				ResultIsHit = false;
+				ActualParryUnit = baseUnitEntity;
+				break;
 			}
 		}
 	}

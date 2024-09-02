@@ -52,6 +52,9 @@ public class BlueprintRoot : BlueprintScriptableObject
 	private BlueprintFactionReference m_PlayerFaction;
 
 	[SerializeField]
+	private BlueprintFactionReference m_HelpingPlayerFaction;
+
+	[SerializeField]
 	private bool m_UseLightweightUnit;
 
 	public bool CompanionsAI;
@@ -109,6 +112,8 @@ public class BlueprintRoot : BlueprintScriptableObject
 
 	public NewGameRoot NewGameSettings;
 
+	public UtilityRoot UtilityRoot;
+
 	[SerializeField]
 	private CameraRoot.Reference m_CameraRoot;
 
@@ -155,8 +160,6 @@ public class BlueprintRoot : BlueprintScriptableObject
 	[FormerlySerializedAs("Formations")]
 	private FormationsRootReference m_Formations;
 
-	public AnimationRoot Animation;
-
 	[SerializeField]
 	[FormerlySerializedAs("FxRoot")]
 	private FxRootReference m_FxRoot;
@@ -196,10 +199,6 @@ public class BlueprintRoot : BlueprintScriptableObject
 
 	[SerializeField]
 	private BlueprintAchievementsRoot.Reference m_Achievements;
-
-	[SerializeField]
-	[FormerlySerializedAs("UnitTypes")]
-	private BlueprintUnitTypeReference[] m_UnitTypes = new BlueprintUnitTypeReference[0];
 
 	public TestUIStylesRoot TestUIStyles;
 
@@ -275,6 +274,8 @@ public class BlueprintRoot : BlueprintScriptableObject
 
 	public BlueprintFaction PlayerFaction => m_PlayerFaction?.Get();
 
+	public BlueprintFaction HelpingPlayerFaction => m_HelpingPlayerFaction?.Get();
+
 	public bool UseLightweightUnit => m_UseLightweightUnit;
 
 	public BlueprintUnlockableFlag KingFlag => m_KingFlag?.Get();
@@ -326,15 +327,6 @@ public class BlueprintRoot : BlueprintScriptableObject
 	public BlueprintFeature NavigatorOccupation => m_NavigatorOccupation?.Get();
 
 	public BlueprintAchievementsRoot Achievements => m_Achievements;
-
-	public ReferenceArrayProxy<BlueprintUnitType> UnitTypes
-	{
-		get
-		{
-			BlueprintReference<BlueprintUnitType>[] unitTypes = m_UnitTypes;
-			return unitTypes;
-		}
-	}
 
 	public ConsoleRoot ConsoleRoot => m_ConsoleRoot.Get();
 

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.DlcManager.Mods.Console;
 
-public class DlcManagerModEntityConsoleView : DlcManagerModEntityBaseView, IConsoleNavigationEntity, IConsoleEntity, INavigationHorizontalDirectionsHandler, INavigationLeftDirectionHandler, INavigationRightDirectionHandler
+public class DlcManagerModEntityConsoleView : DlcManagerModEntityBaseView, INavigationHorizontalDirectionsHandler, INavigationLeftDirectionHandler, IConsoleEntity, INavigationRightDirectionHandler
 {
 	[SerializeField]
 	private ConsoleHint m_ModSettingsHint;

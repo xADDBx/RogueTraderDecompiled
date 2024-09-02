@@ -121,6 +121,8 @@ public class WarhammerUnitAnimationActionLocoMotion : UnitAnimationAction
 
 	public AvatarMask OffHandMask;
 
+	public bool SkipIdleDesync;
+
 	private static Func<WeaponStyleWalkingLayer, bool> CheckWeaponAnimationStyle = (WeaponStyleWalkingLayer layer) => WeaponAnimationStyleChecker.Check(layer);
 
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers
@@ -195,7 +197,7 @@ public class WarhammerUnitAnimationActionLocoMotion : UnitAnimationAction
 		{
 			UberDebug.LogError(animationClipWrapper, "Main locomotion animation clip is not set, object {0}", animationClipWrapper.name);
 		}
-		if (actionData.State == MovementState.Idle)
+		if (actionData.State == MovementState.Idle && !SkipIdleDesync)
 		{
 			handle.ActiveAnimation?.SetTime(PFStatefulRandom.Visuals.AnimationIdle.value * animationClipWrapper.Length);
 		}

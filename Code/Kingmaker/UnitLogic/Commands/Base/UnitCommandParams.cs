@@ -40,10 +40,6 @@ public abstract class UnitCommandParams
 	[JsonProperty(PropertyName = "or", DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public EntityRef<BaseUnitEntity> OwnerRef;
 
-	[JsonProperty(PropertyName = "hn", DefaultValueHandling = DefaultValueHandling.Ignore)]
-	[MemoryPackInclude]
-	protected int m_Handle;
-
 	[JsonProperty(PropertyName = "fa", DefaultValueHandling = DefaultValueHandling.Ignore)]
 	[MemoryPackInclude]
 	protected bool? m_FreeAction;
@@ -85,24 +81,11 @@ public abstract class UnitCommandParams
 	[MemoryPackIgnore]
 	public bool IsSynchronized { get; set; }
 
-	[JsonProperty(PropertyName = "ca", DefaultValueHandling = DefaultValueHandling.Ignore)]
-	[MemoryPackInclude]
-	public bool CanBeAccelerated { get; set; }
-
 	[JsonProperty(PropertyName = "is", DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool InterruptAsSoonAsPossible { get; set; }
 
 	[JsonProperty(PropertyName = "ov", DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public float? OverrideSpeed { get; set; }
-
-	[JsonProperty(PropertyName = "sl", DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public float? SpeedLimit { get; set; }
-
-	[JsonProperty(PropertyName = "lc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public bool ApplySpeedLimitInCombat { get; set; }
-
-	[JsonProperty(PropertyName = "ai", DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public bool AiCanInterruptMark { get; set; }
 
 	[JsonProperty(PropertyName = "ni", DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool DoNotInterruptAfterFight { get; set; }

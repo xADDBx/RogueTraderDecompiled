@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Kingmaker.Utility.DotNetExtensions;
@@ -42,5 +43,21 @@ public class UpdatableQueue<T>
 	{
 		m_CurrentList.Clear();
 		m_NextList.Clear();
+	}
+
+	public bool TryFind(Predicate<T> predicate, out T result)
+	{
+		result = default(T);
+		result = m_CurrentList.Find(predicate);
+		if (result != null)
+		{
+			return true;
+		}
+		result = m_NextList.Find(predicate);
+		if (result != null)
+		{
+			return true;
+		}
+		return false;
 	}
 }

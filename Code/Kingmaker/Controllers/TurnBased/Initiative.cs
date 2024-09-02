@@ -37,6 +37,7 @@ public class Initiative : IHashable
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int WasPreparedForRound { get; set; }
 
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool PreparationInterrupted { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
@@ -169,8 +170,10 @@ public class Initiative : IHashable
 		result.Append(ref val4);
 		int val5 = WasPreparedForRound;
 		result.Append(ref val5);
-		int val6 = LastTurn;
+		bool val6 = PreparationInterrupted;
 		result.Append(ref val6);
+		int val7 = LastTurn;
+		result.Append(ref val7);
 		return result;
 	}
 }

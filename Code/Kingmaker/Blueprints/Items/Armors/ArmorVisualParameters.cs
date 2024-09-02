@@ -55,6 +55,10 @@ public class ArmorVisualParameters
 			}
 			return Prototype.InventoryEquipSound;
 		}
+		set
+		{
+			m_InventoryEquipSound = value;
+		}
 	}
 
 	public string InventoryPutSound
@@ -67,6 +71,10 @@ public class ArmorVisualParameters
 			}
 			return Prototype.InventoryPutSound;
 		}
+		set
+		{
+			m_InventoryPutSound = value;
+		}
 	}
 
 	public string InventoryTakeSound
@@ -78,6 +86,10 @@ public class ArmorVisualParameters
 				return m_InventoryTakeSound;
 			}
 			return Prototype.InventoryTakeSound;
+		}
+		set
+		{
+			m_InventoryTakeSound = value;
 		}
 	}
 

@@ -73,7 +73,11 @@ public class CueVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		if (type == DialogType.Common || type == DialogType.StarSystemEvent)
 		{
 			string text;
-			if (dialogController.CurrentSpeakerBlueprint == null)
+			if (dialogController.Dialog.IsNarratorText || dialogController.CurrentCue.IsNarratorText)
+			{
+				text = string.Format(DialogFormats.NarratorsTextFormat, ColorUtility.ToHtmlStringRGB(dialogColors.Narrator), dialogController.CurrentCue.DisplayText, UIUtility.SkillCheckText(SkillChecks, dialogColors));
+			}
+			else if (dialogController.CurrentSpeakerBlueprint == null)
 			{
 				text = string.Format(DialogFormats.SpeakerFormatWithoutName, dialogController.CurrentCue.DisplayText, UIUtility.SkillCheckText(SkillChecks, dialogColors));
 			}

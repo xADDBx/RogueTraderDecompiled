@@ -48,7 +48,7 @@ public class AddFamiliar : UnitFactComponentDelegate, IAreaHandler, ISubscriber,
 
 	private void TrySpawnFamiliar()
 	{
-		if (!ContextData<UnitHelper.PreviewUnit>.Current && base.Owner.IsInGame)
+		if (!ContextData<UnitHelper.PreviewUnit>.Current && !base.Owner.IsPreviewUnit && base.Owner.IsInGame)
 		{
 			UnitPartFamiliarLeader orCreate = base.Owner.GetOrCreate<UnitPartFamiliarLeader>();
 			AbstractUnitEntity abstractUnitEntity = orCreate.GetEquippedFamiliar(m_Blueprint, new EntityFactSource(base.Fact, this))?.Unit;

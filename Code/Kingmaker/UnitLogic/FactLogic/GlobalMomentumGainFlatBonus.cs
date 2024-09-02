@@ -16,7 +16,10 @@ public class GlobalMomentumGainFlatBonus : UnitFactComponentDelegate, IGlobalRul
 
 	public void OnEventAboutToTrigger(RulePerformMomentumChange evt)
 	{
-		evt.FlatBonus += Bonus;
+		if ((!base.Owner.IsPlayerFaction || base.Owner.IsInPlayerParty) && base.Owner.IsInCombat)
+		{
+			evt.FlatBonus += Bonus;
+		}
 	}
 
 	public void OnEventDidTrigger(RulePerformMomentumChange evt)

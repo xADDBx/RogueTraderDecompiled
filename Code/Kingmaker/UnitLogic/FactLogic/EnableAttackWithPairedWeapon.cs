@@ -56,6 +56,12 @@ public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActi
 				{
 					rawFact.Data.AbilityGroups.Remove(combatRoot.PrimaryHandAbilityGroup);
 				}
+				if (sourceWeapon.HoldingSlot != handsEquipmentSet?.PrimaryHand && sourceWeapon.HoldingSlot != handsEquipmentSet?.SecondaryHand)
+				{
+					rawFact.Data.AbilityGroups.Remove(combatRoot.PrimaryHandAbilityGroup);
+					rawFact.Data.AbilityGroups.Remove(combatRoot.SecondaryHandAbilityGroup);
+					rawFact.Data.AbilityGroups.Add(combatRoot.AdditionalLimbsAbilityGroup);
+				}
 			}
 			if (rawFact.Blueprint.IsWeaponAbility && rawFact.Blueprint.Type == AbilityType.Spell && !rawFact.Blueprint.IsFreeAction)
 			{
@@ -80,6 +86,12 @@ public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActi
 				if (sourceWeapon.HoldingSlot == handsEquipmentSet?.SecondaryHand)
 				{
 					rawFact.Data.AbilityGroups.Add(combatRoot.PrimaryHandAbilityGroup);
+				}
+				if (sourceWeapon.HoldingSlot != handsEquipmentSet?.PrimaryHand && sourceWeapon.HoldingSlot != handsEquipmentSet?.SecondaryHand)
+				{
+					rawFact.Data.AbilityGroups.Add(combatRoot.PrimaryHandAbilityGroup);
+					rawFact.Data.AbilityGroups.Add(combatRoot.SecondaryHandAbilityGroup);
+					rawFact.Data.AbilityGroups.Remove(combatRoot.AdditionalLimbsAbilityGroup);
 				}
 			}
 			if (rawFact.Blueprint.IsWeaponAbility && rawFact.Blueprint.Type == AbilityType.Spell && !rawFact.Blueprint.IsFreeAction)

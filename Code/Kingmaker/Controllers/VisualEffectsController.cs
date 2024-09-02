@@ -299,12 +299,12 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 			{
 				AkSoundEngine.SetSwitch("HitMainType", dealDamage.ResultIsCritical ? "Crit" : "Normal", dealDamage.ConcreteTarget.View.gameObject);
 				AkSwitchReference akSwitchReference = ((flag && shieldHitEntry.OverrideTargetTypeSwitch) ? shieldHitEntry.TargetTypeSwitch : BlueprintRoot.Instance.HitSystemRoot.HitEffects.FirstOrDefault((HitEntry x) => x.Type == unitEntity.Blueprint.VisualSettings.SurfaceType)?.Switch);
-				if (akSwitchReference != null)
+				if (akSwitchReference.IsValid())
 				{
 					AkSoundEngine.SetSwitch(akSwitchReference.Group, akSwitchReference.Value, unitEntity.View.gameObject);
 				}
 				AkSwitchReference akSwitchReference2 = ((flag && shieldHitEntry.OverrideTargetTypeSwitch) ? shieldHitEntry.MuffledTypeSwitch : null);
-				if (akSwitchReference2 != null)
+				if (akSwitchReference2.IsValid())
 				{
 					AkSoundEngine.SetSwitch(akSwitchReference2.Group, akSwitchReference2.Value, unitEntity.View.gameObject);
 				}
@@ -312,12 +312,12 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 				{
 					buff2.PlayedFirstHitSound = true;
 					AkSwitchReference soundTypeSwitch = buff2.Blueprint.SoundTypeSwitch;
-					if (soundTypeSwitch != null && soundTypeSwitch.Value != "")
+					if (soundTypeSwitch.IsValid())
 					{
 						AkSoundEngine.SetSwitch(soundTypeSwitch.Group, soundTypeSwitch.Value, unitEntity.View.gameObject);
 					}
 					AkSwitchReference muffledTypeSwitch = buff2.Blueprint.MuffledTypeSwitch;
-					if (muffledTypeSwitch != null && muffledTypeSwitch.Value != "")
+					if (muffledTypeSwitch.IsValid())
 					{
 						AkSoundEngine.SetSwitch(muffledTypeSwitch.Group, muffledTypeSwitch.Value, unitEntity.View.gameObject);
 					}
@@ -327,12 +327,12 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 					try
 					{
 						AkSwitchReference akSwitchReference3 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
-						if (akSwitchReference3 != null)
+						if (akSwitchReference3.IsValid())
 						{
 							AkSoundEngine.SetSwitch(akSwitchReference3.Group, akSwitchReference3.Value, unitEntity.View.gameObject);
 						}
 						AkSwitchReference akSwitchReference4 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.MuffledTypeSwitch;
-						if (akSwitchReference4 != null)
+						if (akSwitchReference4.IsValid())
 						{
 							AkSoundEngine.SetSwitch(akSwitchReference4.Group, akSwitchReference4.Value, unitEntity.View.gameObject);
 						}
@@ -358,7 +358,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 				try
 				{
 					AkSwitchReference akSwitchReference5 = dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters.SoundTypeSwitch;
-					if (akSwitchReference5 != null)
+					if (akSwitchReference5.IsValid())
 					{
 						AkSoundEngine.SetSwitch(akSwitchReference5.Group, akSwitchReference5.Value, destructibleEntity.View.gameObject);
 					}
@@ -387,7 +387,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		try
 		{
 			AkSwitchReference akSwitchReference6 = dealDamage.Reason.Ability?.StarshipWeapon?.Blueprint.SoundTypeSwitch;
-			if (akSwitchReference6 != null)
+			if (akSwitchReference6.IsValid())
 			{
 				AkSoundEngine.SetSwitch(akSwitchReference6.Group, akSwitchReference6.Value, starshipEntity.View.gameObject);
 			}

@@ -19,10 +19,10 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View;
 using Kingmaker.View.MapObjects;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
@@ -32,7 +32,7 @@ using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Entities;
 
-public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAreaHandler, ISubscriber, IAreaEffectEntity, IMechanicEntity, IEntity, IDisposable, IEntityPositionChangedHandler, ISubscriber<IEntity>, IHashable
+public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAreaHandler, ISubscriber, IAreaEffectEntity, IMechanicEntity, IEntity, IDisposable, IEntityPositionChangedHandler, ISubscriber<IEntity>, ICameraFocusTarget, IHashable
 {
 	public interface IUnitWithinBoundsHandler
 	{
@@ -134,6 +134,9 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	[CanBeNull]
 	public readonly Rounds? Duration;
 
+	[JsonProperty]
+	public bool RetainCameraOnEnd;
+
 	private bool m_ForceUpdate;
 
 	private readonly Predicate<UnitReference> m_IsMovedFromOutsideToTheVoidDelegate;
@@ -202,6 +205,10 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		}
 	}
 
+	public MechanicEntity CameraHolder => m_Context.MaybeCaster;
+
+	public float TimeToFocus => 1f;
+
 	public NodeList GetPatternCoveredNodes()
 	{
 		if (!base.Blueprint.SavePersistentArea)
@@ -209,6 +216,11 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 			return NodeList.Empty;
 		}
 		return View.Shape.CoveredNodes;
+	}
+
+	public bool IsUnitOutside(BaseUnitEntity unit)
+	{
+		return m_UnitsNotInside.Contains(UnitReference.FromIAbstractUnitEntity(unit));
 	}
 
 	public AreaEffectEntity([NotNull] AreaEffectView view, [CanBeNull] MechanicsContext context, [NotNull] BlueprintAbilityAreaEffect blueprint, [NotNull] TargetWrapper target, TimeSpan creationTime, TimeSpan? duration, bool onUnit)
@@ -407,6 +419,10 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 			UnitReference reference = item.Reference;
 			blueprint.HandleUnitExit(context, this, reference.Entity.ToIBaseUnitEntity());
 		}
+		if (RetainCameraOnEnd)
+		{
+			((ICameraFocusTarget)this).RetainCamera();
+		}
 		m_UnitsInside.Clear();
 		m_UnitsNotInside.Clear();
 		Game.Instance.EntityDestroyer.Destroy(this);
@@ -462,6 +478,10 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 
 	private bool IsMovedFromInsideToTheVoid(UnitInfo unit)
 	{
+		if (unit.Reference.Entity == null || unit.Reference.Entity.IsDisposed)
+		{
+			return false;
+		}
 		if (!UnitHandler.Exited.Contains(unit.Reference))
 		{
 			return false;
@@ -480,7 +500,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			return true;
 		}
-		if (!IsEnded && (IsUnitInAnotherAreaOfCluster(entity.ToBaseUnitEntity()) || ShouldUnitBeInside(entity.ToIBaseUnitEntity())))
+		if (!IsEnded && ShouldUnitBeInside(entity.ToIBaseUnitEntity()))
 		{
 			return false;
 		}
@@ -511,7 +531,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			return true;
 		}
-		if (IsUnitInAnotherAreaOfCluster(unit.Entity.ToBaseUnitEntity()) || !ShouldUnitBeInside(unit.Entity.ToIBaseUnitEntity()))
+		if (!ShouldUnitBeInside(unit.Entity.ToIBaseUnitEntity()))
 		{
 			return false;
 		}
@@ -571,17 +591,8 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	{
 		using (ProfileScope.NewScope("ShouldUnitBeInside"))
 		{
-			return unit.IsInGame && (!unit.IsInFogOfWar || unit.IsInCombat || unit.AwakeTimer > 0f) && (!base.Blueprint.IgnoreSleepingUnits || !unit.IsSleeping) && (unit.LifeState.IsConscious || base.Blueprint.AffectDead) && IsSuitableTargetType(unit) && (base.Blueprint.IsAllArea || (Contains(unit) && !LineOfSightGeometry.Instance.HasObstacle(View.ViewTransform.position, unit.Position))) && !AbstractUnitCommand.CommandTargetUntargetable(this, unit) && (!unit.Features.Flying || !Context.SpellDescriptor.HasAnyFlag(SpellDescriptor.Ground));
+			return unit.IsInGame && (!unit.IsInFogOfWar || unit.IsInCombat || unit.AwakeTimer > 0f) && (unit.LifeState.IsConscious || base.Blueprint.AffectDead) && IsSuitableTargetType(unit) && (base.Blueprint.IsAllArea || (Contains(unit) && !LineOfSightGeometry.Instance.HasObstacle(View.ViewTransform.position, unit.Position))) && !AbstractUnitCommand.CommandTargetUntargetable(this, unit) && (!unit.Features.Flying || !Context.SpellDescriptor.HasAnyFlag(SpellDescriptor.Ground));
 		}
-	}
-
-	private bool IsUnitInAnotherAreaOfCluster(BaseUnitEntity unit)
-	{
-		if (base.Blueprint.ClusterComponent != null)
-		{
-			return unit.IsCurrentlyInAnotherClusterArea(base.Blueprint.ClusterComponent.ClusterLogicBlueprint);
-		}
-		return false;
 	}
 
 	public bool IsSuitableTargetType(BaseUnitEntity unit)
@@ -739,6 +750,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		EntityFactRef obj2 = SourceFact;
 		Hash128 val9 = StructHasher<EntityFactRef>.GetHash128(ref obj2);
 		result.Append(ref val9);
+		result.Append(ref RetainCameraOnEnd);
 		return result;
 	}
 }

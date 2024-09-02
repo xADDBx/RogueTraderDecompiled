@@ -27,4 +27,20 @@ public class CameraOverlayConnector : MonoBehaviour
 			CameraStackManager.Instance.RemoveCamera(m_Camera, CameraStackManager.CameraStackType.Main);
 		}
 	}
+
+	public void ForceUpdateState()
+	{
+		if (m_Camera == null)
+		{
+			Awake();
+		}
+		if (base.gameObject.activeInHierarchy)
+		{
+			OnEnable();
+		}
+		else
+		{
+			OnDisable();
+		}
+	}
 }

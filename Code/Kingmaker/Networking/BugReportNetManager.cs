@@ -5,6 +5,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Settings;
 using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
+using Kingmaker.Utility.Reporting.Base;
 using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine.Device;
@@ -53,6 +54,11 @@ public class BugReportNetManager
 		if (!SettingsRoot.Game.Main.SendGameStatistic)
 		{
 			PFLog.Net.Log("[BugReportNetManager] SendGameStatistic is false. Ignoring message...");
+			return;
+		}
+		if (!ReportingCheats.IsNetReport)
+		{
+			PFLog.Net.Warning("[BugReportNetManager] IsNetReport is false. Ignoring message...");
 			return;
 		}
 		RequestBugReportMessage message;

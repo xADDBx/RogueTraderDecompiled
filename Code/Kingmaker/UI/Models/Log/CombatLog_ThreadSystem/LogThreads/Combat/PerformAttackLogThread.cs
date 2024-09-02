@@ -94,7 +94,11 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		GameLogContext.Text = null;
 		GameLogContext.Tooltip = null;
 		GameLogContext.Description = (evt.IsOverpenetrationTrigger ? LogThreadBase.Strings.TooltipBrickStrings.TriggersOverpenetration.Text : null);
-		CombatLogMessage combatLogMessage = GetMessage(evt, overrideDealDamage).CreateCombatLogMessage(null, null, isPerformAttackMessage: true, rule.ConcreteTarget);
+		if ((rule.RollPerformAttackRule?.ResultParryRule?.Result).GetValueOrDefault())
+		{
+			GameLogContext.TargetEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)rule.RollPerformAttackRule.ActualParryUnit;
+		}
+		CombatLogMessage combatLogMessage = GetMessage(evt, overrideDealDamage).CreateCombatLogMessage(null, null, isPerformAttackMessage: true, (rule.RollPerformAttackRule?.ResultParryRule?.Result).GetValueOrDefault() ? rule.RollPerformAttackRule.ActualParryUnit : rule.ConcreteTarget);
 		if (combatLogMessage?.Tooltip is TooltipTemplateCombatLogMessage tooltipTemplateCombatLogMessage)
 		{
 			tooltipTemplateCombatLogMessage.ExtraTooltipBricks = CollectExtraBricks(evt, overrideDealDamage).ToArray();
@@ -388,7 +392,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				{
 					criticalNestedLevel = (int)((float)criticalNestedLevel * damage.AbsorptionFactorWithPenetration);
 					yield return new TooltipBrickIconTextValue(s.EffectiveArmour.Text, "<b>×" + damage.AbsorptionFactorWithPenetration.ToString(CultureInfo.InvariantCulture) + " (" + damage.AbsorptionFactorWithPenetration * 100f + "%)</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-					if (isInfotip && (rule.Ability.Weapon != null || isGrenade))
+					if (isInfotip && (((rule.Ability.Weapon != null) ? rule.Ability.Weapon : evt.AbilityWeaponInfo) != null || isGrenade))
 					{
 						yield return new TooltipBrickIconTextValue("<b>" + s.BaseModifier.Text + "</b>", "<b>100%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 						yield return new TooltipBrickIconTextValue("<b>" + s.Armor.Text + "</b>", "<b>-" + GameLogContext.Absorption.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
@@ -488,7 +492,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				}
 				if (rule.ResultTargetSuperiorityPenalty != 0)
 				{
-					yield return new TooltipBrickIconTextValue("<b>" + LogThreadBase.Strings.TooltipBrickStrings.Superiority.Text + "</b>", "<b>" + UIUtility.AddSign(rule.ResultTargetSuperiorityPenalty).ToString(CultureInfo.InvariantCulture) + "%</b>", nestedLevel, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+					yield return new TooltipBrickIconTextValue("<b>" + LogThreadBase.Strings.TooltipBrickStrings.Superiority.Text + "</b>", "<b>" + UIUtility.AddSign(rule.ResultRighteousFurySuperiorityBonus).ToString(CultureInfo.InvariantCulture) + "%</b>", nestedLevel, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 				}
 			}
 			else

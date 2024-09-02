@@ -16,6 +16,8 @@ public class AnimationActionHandle
 
 	private float m_SpeedScale = 1f;
 
+	private int m_StartedAtTick;
+
 	private bool m_IsAdditive;
 
 	private int m_ActEventsCounter;
@@ -53,6 +55,14 @@ public class AnimationActionHandle
 	public bool PreventsRotation { get; set; }
 
 	public bool HasCrossfadePriority { get; set; }
+
+	public bool SkipFirstTick { get; set; } = true;
+
+
+	public bool SkipFirstTickOnHandle { get; set; } = true;
+
+
+	public bool CorrectTransitionOutTime { get; set; }
 
 	public bool DontReleaseOnInterrupt => Action.DontReleaseOnInterrupt;
 
@@ -103,9 +113,11 @@ public class AnimationActionHandle
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.Animations.Exception(ex);
+			IsFinished = true;
 		}
 		IsStarted = true;
+		m_StartedAtTick = Game.Instance.RealTimeController.CurrentSystemStepIndex;
 		m_Time = 0f;
 		m_NextTime = m_Time + RealTimeController.SystemStepDurationSeconds * SpeedScale;
 	}
@@ -119,21 +131,25 @@ public class AnimationActionHandle
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.Animations.Exception(ex);
 		}
 	}
 
 	internal void UpdateInternal(float deltaTime)
 	{
-		m_Time = m_NextTime;
-		m_NextTime += deltaTime * SpeedScale;
+		if (SkipFirstTickOnHandle || Game.Instance.RealTimeController.CurrentSystemStepIndex != m_StartedAtTick)
+		{
+			m_Time = m_NextTime;
+			m_NextTime += deltaTime * SpeedScale;
+		}
 		try
 		{
 			Action.OnUpdate(this, deltaTime);
 		}
 		catch (Exception ex)
 		{
-			PFLog.Default.Exception(ex);
+			PFLog.Animations.Exception(ex);
+			IsFinished = true;
 		}
 	}
 
@@ -186,6 +202,11 @@ public class AnimationActionHandle
 
 	internal void MarkInterrupted()
 	{
+		if (IsStarted)
+		{
+			IsInterrupted = true;
+			return;
+		}
 		bool flag2 = (IsFinished = true);
 		bool isInterrupted = (IsReleased = flag2);
 		IsInterrupted = isInterrupted;

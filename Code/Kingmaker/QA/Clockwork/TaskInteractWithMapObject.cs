@@ -7,6 +7,7 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using UnityEngine;
 
 namespace Kingmaker.QA.Clockwork;

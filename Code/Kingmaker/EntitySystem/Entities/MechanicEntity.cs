@@ -104,6 +104,8 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	public bool IsPlayerFaction => this.GetFactionOptional()?.IsPlayer ?? false;
 
+	public bool IsHelpingPlayerFaction => this.GetFactionOptional()?.IsHelpingPlayer ?? false;
+
 	public bool IsPlayerEnemy => this.GetFactionOptional()?.IsPlayerEnemy ?? false;
 
 	public bool IsNeutral => this.GetFactionOptional()?.Neutral ?? true;

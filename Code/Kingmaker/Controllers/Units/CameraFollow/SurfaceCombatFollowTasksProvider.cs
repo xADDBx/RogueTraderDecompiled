@@ -16,6 +16,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility;
 using Kingmaker.View;
@@ -24,9 +25,9 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units.CameraFollow;
 
-public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, IWarhammerAttackHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitDeathHandler, IUnitCommandActHandler
+public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, IWarhammerAttackHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitDeathHandler, IUnitCommandActHandler, ICameraFocusTargetHandler
 {
-	private readonly Action<ICameraFollowTask> m_AddTask;
+	private readonly Action<ICameraFollowTask, bool, float> m_AddTask;
 
 	private bool m_IsCommandInAction;
 
@@ -44,7 +45,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	private Rect SafeRect => CameraFollowTasksSceneHelper.Instance.SafeRect;
 
-	public SurfaceCombatFollowTasksProvider(Action<ICameraFollowTask> addTaskAction)
+	public SurfaceCombatFollowTasksProvider(Action<ICameraFollowTask, bool, float> addTaskAction)
 	{
 		m_AddTask = addTaskAction;
 		EventBus.Subscribe(this);
@@ -77,12 +78,12 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
 		CameraFollowTaskContext cameraFollowTaskContext = default(CameraFollowTaskContext);
 		cameraFollowTaskContext.Owner = mechanicEntity;
-		CameraFollowTaskContext context = cameraFollowTaskContext;
+		CameraFollowTaskContext cameraFollowTaskContext2 = cameraFollowTaskContext;
 		if (CameraScrollToCurrentUnit && mechanicEntity.IsInPlayerParty && mechanicEntity is BaseUnitEntity baseUnitEntity && !mechanicEntity.IsDead && baseUnitEntity.LifeState.IsConscious)
 		{
 			UIAccess.SelectionManager.SelectUnit(baseUnitEntity.View);
-			context.Params = CameraFollowSettings.NewTurn;
-			AddTask(CameraFollowTaskFactory.GetScrollToTask(context), checkOnScreen: false);
+			cameraFollowTaskContext2.Params = CameraFollowSettings.NewTurn;
+			AddTask(CameraFollowTaskFactory.GetScrollToTask(cameraFollowTaskContext2), checkOnScreen: false);
 		}
 		else if (CameraFollowUnit && mechanicEntity is UnitSquad squad)
 		{
@@ -91,16 +92,41 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 			{
 				cameraFollowTaskContext = default(CameraFollowTaskContext);
 				cameraFollowTaskContext.Owner = baseUnitEntity2;
-				context = cameraFollowTaskContext;
-				context.Params = CameraFollowSettings.NewTurn;
-				AddTask(CameraFollowTaskFactory.GetFollowTask(context), checkOnScreen: true);
+				cameraFollowTaskContext2 = cameraFollowTaskContext;
+				cameraFollowTaskContext2.Params = CameraFollowSettings.NewTurn;
+				AddTask(CameraFollowTaskFactory.GetFollowTask(cameraFollowTaskContext2), checkOnScreen: true);
 			}
 		}
-		else if (CameraFollowUnit && !mechanicEntity.IsInPlayerParty && !mechanicEntity.IsInSquad && mechanicEntity.IsRevealed && !mechanicEntity.IsInvisible())
+		else
 		{
-			context.Params = CameraFollowSettings.NewTurn;
-			AddTask(CameraFollowTaskFactory.GetFollowTask(context), checkOnScreen: true);
+			AddTask(HandleStartNonPartyMemberTurn(mechanicEntity, cameraFollowTaskContext2), checkOnScreen: true);
 		}
+	}
+
+	private ICameraFollowTask HandleStartNonPartyMemberTurn(MechanicEntity entity, CameraFollowTaskContext ctx)
+	{
+		if (entity.GetOptional<PartFocusCameraOnEntity>()?.Entity != null)
+		{
+			return null;
+		}
+		if (CameraFollowUnit && entity is UnitSquad squad)
+		{
+			BaseUnitEntity baseUnitEntity = squad.SelectLeader();
+			if (baseUnitEntity != null && baseUnitEntity.IsRevealed && !baseUnitEntity.IsInvisible())
+			{
+				CameraFollowTaskContext cameraFollowTaskContext = default(CameraFollowTaskContext);
+				cameraFollowTaskContext.Owner = baseUnitEntity;
+				ctx = cameraFollowTaskContext;
+				ctx.Params = CameraFollowSettings.NewTurn;
+				return CameraFollowTaskFactory.GetFollowTask(ctx);
+			}
+		}
+		else if (CameraFollowUnit && !entity.IsInPlayerParty && !entity.IsInSquad && entity.IsRevealed && !entity.IsInvisible())
+		{
+			ctx.Params = CameraFollowSettings.NewTurn;
+			return CameraFollowTaskFactory.GetFollowTask(ctx);
+		}
+		return null;
 	}
 
 	public void HandleAttack(RulePerformAttack attackRule)
@@ -152,7 +178,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	public void HandleUnitCommandDidAct(AbstractUnitCommand command)
 	{
-		if (!command.Params.FromCutscene && command is UnitUseAbility unitUseAbility && !(unitUseAbility.Target == null))
+		if (!command.Params.FromCutscene && command is UnitUseAbility unitUseAbility && !(unitUseAbility.Target == null) && CameraScrollToCurrentUnit)
 		{
 			bool isMelee = unitUseAbility.Ability.Weapon?.Blueprint.IsMelee ?? false;
 			CameraFollowTaskContext cameraFollowTaskContext = default(CameraFollowTaskContext);
@@ -166,7 +192,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	private void HandleUnitUseAbility(UnitUseAbility unitUseAbility)
 	{
-		if (!unitUseAbility.Params.DisableCameraFollow)
+		if (!unitUseAbility.Params.DisableCameraFollow && CameraScrollToCurrentUnit)
 		{
 			bool isMelee = unitUseAbility.Ability.Weapon?.Blueprint.IsMelee ?? false;
 			CameraFollowTaskParams readyToAttack = CameraFollowSettings.ReadyToAttack;
@@ -292,6 +318,10 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	private void AddTask(ICameraFollowTask task, bool checkOnScreen)
 	{
+		if (task == null)
+		{
+			return;
+		}
 		bool num = task.TaskParams?.SkipIfOnScreen ?? false;
 		bool flag = task.TaskParams?.ForceTimescale ?? false;
 		if (num && checkOnScreen && IsPointOnScreen(task.Position))
@@ -302,6 +332,35 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 			}
 			task = CameraFollowTaskFactory.GetDoNothingWaitTask(task);
 		}
-		m_AddTask?.Invoke(task);
+		m_AddTask?.Invoke(task, arg2: false, 0f);
+	}
+
+	public void HandleCameraRetain(MechanicEntity cameraFrom)
+	{
+		if (!IsTurnBased)
+		{
+			return;
+		}
+		Game.Instance.CameraController?.Follower?.Release();
+		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
+		ICameraFocusTarget cameraFocusTarget = mechanicEntity as ICameraFocusTarget;
+		CameraFollowTaskContext cameraFollowTaskContext = default(CameraFollowTaskContext);
+		cameraFollowTaskContext.Owner = mechanicEntity;
+		CameraFollowTaskContext cameraFollowTaskContext2 = cameraFollowTaskContext;
+		if (mechanicEntity != null)
+		{
+			if (cameraFrom is AbstractUnitEntity abstractUnitEntity)
+			{
+				cameraFollowTaskContext = default(CameraFollowTaskContext);
+				cameraFollowTaskContext.Owner = abstractUnitEntity;
+				CameraFollowTaskContext ctx = cameraFollowTaskContext;
+				ctx.Params = CameraFollowSettings.CommandDidEnd;
+				m_AddTask(HandleStartNonPartyMemberTurn(abstractUnitEntity, ctx), arg2: true, cameraFocusTarget?.TimeToFocus ?? 0f);
+				abstractUnitEntity.GetOrCreate<PartFocusCameraOnEntity>().Entity = mechanicEntity;
+			}
+			cameraFollowTaskContext2.Params = CameraFollowSettings.NewTurn;
+			CameraScrollToTask task = new CameraScrollToTask(CameraFollowHelper.GetTaskParamsEntry(cameraFollowTaskContext2.Params, cameraFollowTaskContext2.IsMelee), mechanicEntity, mechanicEntity.Position, 100);
+			AddTask(task, checkOnScreen: false);
+		}
 	}
 }

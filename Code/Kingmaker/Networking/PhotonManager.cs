@@ -642,7 +642,6 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		}
 		m_PlayerLeavingController.OnPlayerLeftRoom(photonActorNumber);
 		Save.OnPlayerLeftRoom(photonActorNumber);
-		DLC.OnPlayerLeftRoom(otherPlayer);
 		Mods.OnPlayerLeftRoom(otherPlayer);
 		PortraitSyncer.OnPlayerLeftRoom(photonActorNumber);
 		DataTransporter.OnPlayerLeftRoom(photonActorNumber);
@@ -652,6 +651,7 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 		{
 			h.HandlePlayerLeftRoom(otherPlayer);
 		});
+		DLC.OnPlayerLeftRoom(otherPlayer);
 		if (Lobby.IsPlaying)
 		{
 			Game.Instance.PauseController.OnPlayerLeftRoom();

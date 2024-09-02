@@ -17,6 +17,10 @@ public abstract class DlcStore : BlueprintComponent, IDlcStore
 
 	public virtual bool AllowsPurchase => false;
 
+	public virtual bool AllowsInstalling => false;
+
+	public virtual bool AllowsDeleting => false;
+
 	public bool ComingSoon => m_ComingSoon;
 
 	public virtual IDLCStatus GetStatus()
@@ -30,6 +34,16 @@ public abstract class DlcStore : BlueprintComponent, IDlcStore
 	}
 
 	public virtual bool Mount()
+	{
+		return false;
+	}
+
+	public virtual bool Install()
+	{
+		return false;
+	}
+
+	public virtual bool Delete()
 	{
 		return false;
 	}

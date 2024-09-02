@@ -26,7 +26,15 @@ public static class AllCheats
 			{
 				ReportingCheats.IsDebugOpenReportLastIssueInBrowser = value;
 			}
-		}, "is_debug_open_report_last_issue_in_browser_enabled", "", "", ExecutionPolicy.All, "bool")
+		}, "is_debug_open_report_last_issue_in_browser_enabled", "", "", ExecutionPolicy.All, "bool"),
+		new CheatPropertyInfoInternal(new CheatPropertyMethods
+		{
+			Getter = (Func<bool>)(() => ReportingCheats.IsNetReport),
+			Setter = (Action<bool>)delegate(bool value)
+			{
+				ReportingCheats.IsNetReport = value;
+			}
+		}, "net_report", "", "", ExecutionPolicy.PlayMode, "bool")
 	};
 
 	public static readonly List<(ArgumentConverter.ConvertDelegate, int)> ArgConverters = new List<(ArgumentConverter.ConvertDelegate, int)>();

@@ -12,10 +12,27 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 
 	private ControllableState m_CurrentState;
 
+	private ControllableState m_StateAtStartUp;
+
 	[ExecuteAlways]
 	protected virtual void Awake()
 	{
 		Initialize();
+	}
+
+	public void GatherStateAtStartUp()
+	{
+		if (m_StateAtStartUp == null)
+		{
+			m_StateAtStartUp = new ControllableState
+			{
+				Active = base.gameObject.activeSelf
+			};
+		}
+	}
+
+	protected virtual void OnDestroy()
+	{
 	}
 
 	public void Reset()
@@ -34,13 +51,13 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 	}
 
 	[ExecuteAlways]
-	private void OnEnable()
+	protected virtual void OnEnable()
 	{
 		ControllableComponentCache.All.Add(this);
 	}
 
 	[ExecuteAlways]
-	private void OnDisable()
+	protected virtual void OnDisable()
 	{
 		ControllableComponentCache.All.Remove(this);
 	}
@@ -62,7 +79,8 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 		}
 	}
 
-	public virtual void SetDefaultState()
+	public virtual ControllableState GetDefaultState()
 	{
+		return m_StateAtStartUp;
 	}
 }

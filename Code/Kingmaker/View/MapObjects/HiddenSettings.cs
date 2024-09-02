@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 
 namespace Kingmaker.View.MapObjects;
 

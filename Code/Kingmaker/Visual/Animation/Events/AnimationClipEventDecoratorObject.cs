@@ -21,6 +21,10 @@ public class AnimationClipEventDecoratorObject : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventDecoratorObject()
+	{
+	}
+
 	public AnimationClipEventDecoratorObject(float time)
 		: this(time, null)
 	{

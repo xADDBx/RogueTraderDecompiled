@@ -178,7 +178,7 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 		{
 			BoolReactiveProperty hasArsenalAdvancement = HasArsenalAdvancement;
 			IEnumerable<Ability> abilityVariants = weaponSlot.AbilityVariants;
-			hasArsenalAdvancement.Value = abilityVariants != null && abilityVariants.Count() > 1;
+			hasArsenalAdvancement.Value = abilityVariants != null && abilityVariants.Where((Ability a) => a != null).Count() > 1;
 		}
 		else
 		{

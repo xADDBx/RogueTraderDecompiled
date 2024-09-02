@@ -5,7 +5,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Base;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
 using Kingmaker.ResourceLinks;
@@ -16,7 +15,6 @@ using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.Utility.Attributes;
-using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -28,18 +26,14 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	[Flags]
 	private enum Flags
 	{
-		IsFromSpell = 1,
-		HiddenInUi = 2,
-		ShowInLogOnlyOnYourself = 4,
-		StayOnDeath = 8,
-		RemoveOnRest = 0x10,
-		RemoveOnResurrect = 0x20,
-		Harmful = 0x40,
-		NeedsNoVisual = 0x80,
-		DynamicDamage = 0x100,
-		ShowInDialogue = 0x200,
-		PriorityInUI = 0x400,
-		IsStarshipBuff = 0x800
+		HiddenInUi = 1,
+		ShowInLogOnlyOnYourself = 2,
+		StayOnDeath = 4,
+		NeedsNoVisual = 8,
+		DynamicDamage = 0x10,
+		ShowInDialogue = 0x20,
+		PriorityInUI = 0x40,
+		IsStarshipBuff = 0x80
 	}
 
 	public enum InitiativeType
@@ -47,8 +41,6 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 		ByCaster,
 		ByOwner
 	}
-
-	public bool IsClassFeature;
 
 	[SerializeField]
 	[EnumFlagsAsButtons]
@@ -62,6 +54,9 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 
 	public StackingType Stacking;
 
+	[ShowIf("IsStackingRank")]
+	public bool ProlongWhenRankAdded;
+
 	[ShowIf("IsHighestByPriority")]
 	public ContextPropertyName PriorityProperty;
 
@@ -70,11 +65,6 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	[SerializeField]
 	[ShowIf("HasRanks")]
 	public int Ranks;
-
-	public bool TickEachSecond;
-
-	[HideIf("TickEachSecond")]
-	public DurationRate Frequency;
 
 	[Tooltip("Use VisualFXSettings with Start event instead.")]
 	[Obsolete("Use VisualFXSettings with Start instead.")]
@@ -125,19 +115,11 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	[CanBeNull]
 	public BlueprintAbilityFXSettings FXSettings => m_FXSettings;
 
-	public bool IsFromSpell => HasFlag(Flags.IsFromSpell);
-
 	public bool IsHiddenInUI => HasFlag(Flags.HiddenInUi);
 
 	public bool NeedsNoVisual => HasFlag(Flags.NeedsNoVisual);
 
 	public bool StayOnDeath => HasFlag(Flags.StayOnDeath);
-
-	public bool RemoveOnRest => HasFlag(Flags.RemoveOnRest);
-
-	public bool RemoveOnResurrect => HasFlag(Flags.RemoveOnResurrect);
-
-	public bool Harmful => HasFlag(Flags.Harmful);
 
 	public bool ShowInLogOnlyOnYourself => HasFlag(Flags.ShowInLogOnlyOnYourself);
 
@@ -149,25 +131,15 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 
 	public bool PriorityInUI => HasFlag(Flags.PriorityInUI);
 
-	public TimeSpan TickTime
-	{
-		get
-		{
-			if (this.GetComponent<ITickEachRound>() == null)
-			{
-				return TimeSpan.MaxValue;
-			}
-			if (!TickEachSecond)
-			{
-				return Frequency.ToRounds().Seconds;
-			}
-			return 1.Seconds();
-		}
-	}
-
 	public bool IsHardCrowdControl => this.GetComponent<HardCrowdControlBuff>() != null;
 
 	private bool IsHighestByPriority => Stacking == StackingType.HighestByProperty;
+
+	private bool IsStackingRank => Stacking == StackingType.Rank;
+
+	public bool IsDOTVisual => this.GetComponent<DOTLogicVisual>() != null;
+
+	public bool HasBuffOverrideUIOrder => this.GetComponent<BuffOverrideUIOrder>() != null;
 
 	public ReferenceArrayProxy<BlueprintAbilityGroup> AbilityGroups
 	{

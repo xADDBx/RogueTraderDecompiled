@@ -1,6 +1,8 @@
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.Utility;
@@ -19,7 +21,7 @@ public class AbilityTargetIsReachable : BlueprintComponent, IAbilityTargetRestri
 		{
 			if (CheckNodeOnUnitOccupation)
 			{
-				return target.NearestNode.GetUnit() == null;
+				return !Game.Instance.State.AllBaseAwakeUnits.Any((BaseUnitEntity checkedUnit) => !checkedUnit.LifeState.IsDead && checkedUnit.GetOccupiedNodes().Any((CustomGridNodeBase occupiedNode) => occupiedNode == target.NearestNode));
 			}
 			return true;
 		}

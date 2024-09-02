@@ -66,6 +66,7 @@ public static class ThreadedGameLoader
 			Game.Instance.State.CoopData = coopData;
 			if (crossSceneState != null)
 			{
+				crossSceneState.SceneName = "[cross-area objects]";
 				player.CrossSceneState = crossSceneState;
 			}
 			Game.Instance.State.PlayerState = player;

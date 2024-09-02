@@ -91,6 +91,8 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 
 	public ServiceLifetimeType Lifetime => ServiceLifetimeType.Game;
 
+	public SoundStateType State => m_State;
+
 	public MusicStateHandler MusicStateHandler { get; } = new MusicStateHandler();
 
 

@@ -85,6 +85,19 @@ public class LootEntry : IHashable
 		}
 	}
 
+	public bool IsDuplicate(LootEntry other)
+	{
+		if (other == null)
+		{
+			return false;
+		}
+		if (object.Equals(Item, other.Item) && Count == other.Count && ReputationPointsToUnlock == other.ReputationPointsToUnlock && ProfitFactorCostOverride == other?.ProfitFactorCostOverride && Diversity == other.Diversity && Mathf.Abs(CargoVolumePercent - other.CargoVolumePercent) < 1.06f)
+		{
+			return this != other;
+		}
+		return false;
+	}
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

@@ -73,8 +73,7 @@ public class TaskUseAreaTransition : ClockworkRunnerTask
 			{
 				UnitMoveToParams cmdParams = new UnitMoveToParams(forcedPath, (MechanicEntity)m_Transition.Owner, 2f)
 				{
-					IsSynchronized = true,
-					CanBeAccelerated = true
+					IsSynchronized = true
 				};
 				unit.Commands.Run(cmdParams);
 				List<EntityRef<BaseUnitEntity>> units = ((IEnumerable<BaseUnitEntity>)Game.Instance.SelectionCharacter.SelectedUnits).Select((Func<BaseUnitEntity, EntityRef<BaseUnitEntity>>)((BaseUnitEntity elem) => elem)).ToList();

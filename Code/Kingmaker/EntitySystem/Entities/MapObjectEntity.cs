@@ -13,6 +13,7 @@ using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;

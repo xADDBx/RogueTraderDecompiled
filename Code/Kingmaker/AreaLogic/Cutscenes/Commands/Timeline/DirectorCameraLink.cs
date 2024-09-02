@@ -1,7 +1,9 @@
 using Kingmaker.Sound;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
+using Kingmaker.Visual;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using UnityEngine;
 
@@ -19,11 +21,11 @@ public class DirectorCameraLink : MonoBehaviour
 
 	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("Timeline");
 
-	private GameObject m_Camera;
-
 	private Vector3 m_ListenerInitialPosition;
 
 	private Quaternion m_ListenerInitialRotation;
+
+	private UnityEngine.Camera m_DirectorCamera;
 
 	[InfoBox("None - DON'T USE IT, IF YOU SELECTED NONE, THEN THE GAME WILL USE FixedToCamera\nFixedToCamera - reparent current AudioListenerPositionController to this gameObject\nTimelineAnimated - reparent current AudioListenerPositionController to specified AudioListenerRoot\nFixedToCameraOnZeroPos - reparent current AudioListenerPositionController to this gameObject and set zero in local position")]
 	public ListenerControlType ControlAudioListenerType;
@@ -43,11 +45,11 @@ public class DirectorCameraLink : MonoBehaviour
 		{
 			ControlAudioListenerType = ListenerControlType.FixedToCamera;
 		}
-		UnityEngine.Camera componentInChildren = GetComponentInChildren<UnityEngine.Camera>(includeInactive: true);
-		if ((bool)componentInChildren)
+		m_DirectorCamera = GetComponentInChildren<UnityEngine.Camera>(includeInactive: true);
+		if ((bool)m_DirectorCamera)
 		{
-			m_Camera = componentInChildren.gameObject;
-			m_Camera.SetActive(value: false);
+			m_DirectorCamera.EnsureComponent<CameraOverlayConnector>().enabled = true;
+			m_DirectorCamera.gameObject.SetActive(value: false);
 		}
 	}
 
@@ -58,17 +60,19 @@ public class DirectorCameraLink : MonoBehaviour
 		{
 			instance.gameObject.SetActive(value: false);
 		}
-		if ((bool)m_Camera)
+		if (m_DirectorCamera != null)
 		{
-			m_Camera.gameObject.SetActive(value: true);
+			m_DirectorCamera.gameObject.SetActive(value: true);
 		}
 		else if ((bool)instance)
 		{
-			m_Camera = Object.Instantiate(instance.Camera, base.transform).gameObject;
-			m_Camera.hideFlags = HideFlags.DontSave;
-			m_Camera.transform.localPosition = Vector3.zero;
-			m_Camera.transform.localRotation = Quaternion.identity;
-			m_Camera.GetComponent<UnityEngine.Camera>().fieldOfView = instance.CameraZoom.FovMax;
+			GameObject gameObject = Object.Instantiate(instance.Camera, base.transform).gameObject;
+			gameObject.hideFlags = HideFlags.DontSave;
+			gameObject.transform.localPosition = Vector3.zero;
+			gameObject.transform.localRotation = Quaternion.identity;
+			m_DirectorCamera = gameObject.GetComponent<UnityEngine.Camera>();
+			m_DirectorCamera.EnsureComponent<CameraOverlayConnector>().ForceUpdateState();
+			m_DirectorCamera.fieldOfView = instance.CameraZoom.FovMax;
 		}
 		else
 		{
@@ -81,10 +85,10 @@ public class DirectorCameraLink : MonoBehaviour
 		switch (ControlAudioListenerType)
 		{
 		case ListenerControlType.FixedToCamera:
-			instance.ChangeListenerParent(m_Camera.transform);
+			instance.ChangeListenerParent(m_DirectorCamera.transform);
 			break;
 		case ListenerControlType.FixedToCameraOnZeroPos:
-			instance.ChangeListenerParent(m_Camera.transform);
+			instance.ChangeListenerParent(m_DirectorCamera.transform);
 			m_ListenerInitialPosition = instance.ListenerUpdater.localPosition;
 			instance.ListenerUpdater.localPosition = Vector3.zero;
 			instance.ListenerUpdater.GetComponent<ListenerZoom>().enabled = false;
@@ -94,7 +98,7 @@ public class DirectorCameraLink : MonoBehaviour
 			}
 			break;
 		case ListenerControlType.TimelineAnimated:
-			instance.ChangeListenerParent(AudioListenerRoot ? AudioListenerRoot : m_Camera.transform);
+			instance.ChangeListenerParent(AudioListenerRoot ? AudioListenerRoot : m_DirectorCamera.transform);
 			m_ListenerInitialPosition = instance.ListenerUpdater.localPosition;
 			m_ListenerInitialRotation = instance.ListenerUpdater.localRotation;
 			instance.ListenerUpdater.localPosition = Vector3.zero;
@@ -109,12 +113,12 @@ public class DirectorCameraLink : MonoBehaviour
 
 	public void UnLink()
 	{
-		if ((bool)m_Camera)
+		if (m_DirectorCamera != null)
 		{
-			m_Camera.SetActive(value: false);
+			m_DirectorCamera.gameObject.SetActive(value: false);
 		}
 		CameraRig instance = CameraRig.Instance;
-		if ((bool)instance)
+		if (instance != null)
 		{
 			instance.gameObject.SetActive(value: true);
 		}

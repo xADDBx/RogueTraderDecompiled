@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
 
-public class JournalBaseView : ViewBase<JournalVM>
+public class JournalBaseView : ViewBase<JournalVM>, IInitializable
 {
 	[SerializeField]
 	private PantographView m_PantographView;

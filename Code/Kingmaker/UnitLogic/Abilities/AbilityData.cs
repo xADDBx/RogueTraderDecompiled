@@ -138,6 +138,14 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	[CanBeNull]
 	private IAbilityVisibilityProvider[] m_CachedVisibilityProviders;
 
+	private readonly bool m_IsPreview;
+
+	private List<RuleCalculateScatterShotHitDirectionProbability> m_ScatterShotHitDirectionProbabilities;
+
+	private Dictionary<(string, byte), float> m_DodgeChanceCache;
+
+	private Dictionary<(CustomGridNodeBase, CustomGridNodeBase), bool> m_LosCache;
+
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	[CanBeNull]
 	public Ability Fact { get; private set; }
@@ -431,6 +439,23 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		}
 	}
 
+	public int CounterAttackRange
+	{
+		get
+		{
+			AbilityEffectRunAction component = Blueprint.GetComponent<AbilityEffectRunAction>();
+			if (component != null && component.Actions.Actions.TryFind((GameAction x) => x is ContextActionApplyBuff, out var result))
+			{
+				CounterAttack counterAttack = (result as ContextActionApplyBuff)?.Buff?.GetComponent<CounterAttack>();
+				if (counterAttack != null)
+				{
+					return counterAttack.GuardAlliesRange.Value;
+				}
+			}
+			return -1;
+		}
+	}
+
 	public MechanicEntity Caster
 	{
 		get
@@ -547,11 +572,6 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		get
 		{
 			if (ConvertedFrom == null)
-			{
-				return Blueprint.Name;
-			}
-			BlueprintAbility blueprint = ConvertedFrom.Blueprint;
-			if (!blueprint.ShowNameForVariant || (blueprint.OnlyForAllyCaster && !Caster.IsPlayerFaction))
 			{
 				return Blueprint.Name;
 			}
@@ -854,14 +874,22 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public AbilityData Data => this;
 
-	public List<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities
+	public ReadonlyList<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities
 	{
 		get
 		{
+			if (m_IsPreview && m_ScatterShotHitDirectionProbabilities != null)
+			{
+				return m_ScatterShotHitDirectionProbabilities;
+			}
 			List<RuleCalculateScatterShotHitDirectionProbability> list = new List<RuleCalculateScatterShotHitDirectionProbability>();
 			for (int i = 0; i < BurstAttacksCount; i++)
 			{
 				list.Add(Rulebook.Trigger(new RuleCalculateScatterShotHitDirectionProbability(Caster, this, i)));
+			}
+			if (m_IsPreview)
+			{
+				m_ScatterShotHitDirectionProbabilities = list;
 			}
 			return list;
 		}
@@ -873,6 +901,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		m_CasterRef = caster ?? throw new ArgumentNullException("caster");
 		Fact = fact;
 		UniqueId = guid ?? Uuid.Instance.CreateString();
+		m_IsPreview = ContextData<UnitHelper.PreviewUnit>.Current;
 		BlueprintItemWeapon blueprintItemWeapon = Blueprint.GetComponent<WarhammerOverrideAbilityWeapon>()?.Weapon;
 		if (blueprintItemWeapon != null)
 		{
@@ -882,6 +911,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		if (component != null)
 		{
 			OverrideRateOfFire = component.RateOfAttack.Calculate(CreateExecutionContext(caster));
+			if (Blueprint.FXSettings != null)
+			{
+				FXSettingsOverride = Blueprint.FXSettings;
+			}
 		}
 		AbilityMeleeBurst component2 = Blueprint.GetComponent<AbilityMeleeBurst>();
 		if (component2 != null)
@@ -926,15 +959,18 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	{
 	}
 
-	public AbilityData Clone()
+	public AbilityData Clone(bool isPreview)
 	{
-		using (ContextData<DisableStatefulRandomContext>.Request())
+		using (ContextData<DisableStatefulRandomContext>.RequestIf(isPreview))
 		{
-			return new AbilityData(Blueprint, Caster)
+			using (ContextData<UnitHelper.PreviewUnit>.RequestIf(isPreview))
 			{
-				OverrideWeapon = Weapon,
-				FakeStarshipWeapon = (FakeStarshipWeapon ?? StarshipWeapon)
-			};
+				return new AbilityData(Blueprint, Caster)
+				{
+					OverrideWeapon = Weapon,
+					FakeStarshipWeapon = (FakeStarshipWeapon ?? StarshipWeapon)
+				};
+			}
 		}
 	}
 
@@ -1802,10 +1838,42 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public float CalculateDodgeChanceCached(UnitEntity unit, LosCalculations.CoverType coverType)
 	{
+		if (m_DodgeChanceCache == null)
+		{
+			m_DodgeChanceCache = new Dictionary<(string, byte), float>();
+		}
+		(string, byte) key = (unit.UniqueId, (byte)coverType);
+		if (m_DodgeChanceCache.TryGetValue(key, out var value))
+		{
+			return value;
+		}
+		float num = CalculateDodgeChance(unit, coverType);
+		m_DodgeChanceCache.Add(key, num);
+		return num;
+	}
+
+	public float CalculateDodgeChance(UnitEntity unit, LosCalculations.CoverType coverType)
+	{
 		return (float)Rulebook.Trigger(new RuleCalculateDodgeChance(unit, Caster, this, coverType)).Result / 100f;
 	}
 
 	public bool HasLosCached(CustomGridNodeBase fromNode, CustomGridNodeBase toNode)
+	{
+		if (m_LosCache == null)
+		{
+			m_LosCache = new Dictionary<(CustomGridNodeBase, CustomGridNodeBase), bool>();
+		}
+		(CustomGridNodeBase, CustomGridNodeBase) key = (fromNode, toNode);
+		if (m_LosCache.TryGetValue(key, out var value))
+		{
+			return value;
+		}
+		bool flag = HasLos(fromNode, toNode);
+		m_LosCache.Add(key, flag);
+		return flag;
+	}
+
+	public bool HasLos(CustomGridNodeBase fromNode, CustomGridNodeBase toNode)
 	{
 		return LosCalculations.HasLos(fromNode, default(IntRect), toNode, default(IntRect));
 	}

@@ -6,6 +6,10 @@ public class AnimationClipEventChangeMainWeaponAttachPoint : AnimationClipEvent
 {
 	public bool InMainHand;
 
+	public AnimationClipEventChangeMainWeaponAttachPoint()
+	{
+	}
+
 	public AnimationClipEventChangeMainWeaponAttachPoint(float time)
 		: base(time)
 	{

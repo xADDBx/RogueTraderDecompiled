@@ -81,8 +81,8 @@ public class ExplorationPCView : ExplorationBaseView
 		m_ExplorationColonyProjectsBuiltListWrapperPCView.Bind(base.ViewModel.ExplorationColonyProjectsBuiltListWrapperVM);
 		m_ExplorationPointOfInterestListView.Bind(base.ViewModel.ExplorationPointOfInterestListVM);
 		m_ExplorationSpaceBarksHolderPCView.Bind(base.ViewModel.ExplorationSpaceBarksHolderVM);
-		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.OnCloseClick));
-		AddDisposable(m_CloseButton.OnConfirmClickAsObservable().Subscribe(base.OnCloseClick));
+		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.OnCloseClickDelegate));
+		AddDisposable(m_CloseButton.OnConfirmClickAsObservable().Subscribe(base.OnCloseClickDelegate));
 	}
 
 	protected override void BuildNavigationImpl()

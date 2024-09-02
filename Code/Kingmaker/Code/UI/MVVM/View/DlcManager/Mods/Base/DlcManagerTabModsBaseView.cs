@@ -17,7 +17,7 @@ public class DlcManagerTabModsBaseView : ViewBase<DlcManagerTabModsVM>
 {
 	[Header("Common")]
 	[SerializeField]
-	private InfoSectionView m_InfoView;
+	protected InfoSectionView m_InfoView;
 
 	[SerializeField]
 	protected ScrollRectExtended m_ScrollRect;
@@ -27,13 +27,13 @@ public class DlcManagerTabModsBaseView : ViewBase<DlcManagerTabModsVM>
 
 	[Header("Texts")]
 	[SerializeField]
-	private TextMeshProUGUI m_InstalledModsHeaderLabel;
+	protected TextMeshProUGUI m_InstalledModsHeaderLabel;
 
 	[SerializeField]
-	private TextMeshProUGUI m_DiscoverModsLabel;
+	protected TextMeshProUGUI m_DiscoverModsLabel;
 
 	[SerializeField]
-	private TextMeshProUGUI m_YouDontHaveAnyModsLabel;
+	protected TextMeshProUGUI m_YouDontHaveAnyModsLabel;
 
 	[SerializeField]
 	protected OwlcatButton m_NexusModsButton;
@@ -66,6 +66,7 @@ public class DlcManagerTabModsBaseView : ViewBase<DlcManagerTabModsVM>
 			if (value)
 			{
 				ScrollToTop();
+				base.ViewModel.SelectedEntity.Value?.ShowDescription(state: true);
 			}
 		}));
 		m_InstalledModsHeaderLabel.text = UIStrings.Instance.DlcManager.InstalledMods;
@@ -74,9 +75,9 @@ public class DlcManagerTabModsBaseView : ViewBase<DlcManagerTabModsVM>
 		if (base.ViewModel.SelectionGroup.EntitiesCollection.Any())
 		{
 			m_InfoView.Bind(base.ViewModel.InfoVM);
-			base.ViewModel.SelectedEntity.Value?.ShowDescription(state: true);
 		}
 		SetBottomButtons();
+		SetTextFontSize(base.ViewModel.FontMultiplier);
 	}
 
 	protected override void DestroyViewImplementation()
@@ -121,5 +122,9 @@ public class DlcManagerTabModsBaseView : ViewBase<DlcManagerTabModsVM>
 	protected void OpenSteamWorkshop()
 	{
 		base.ViewModel.OpenSteamWorkshop();
+	}
+
+	protected virtual void SetTextFontSize(float multiplier)
+	{
 	}
 }

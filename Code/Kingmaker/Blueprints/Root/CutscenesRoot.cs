@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Owlcat.QA.Validation;
@@ -36,6 +37,12 @@ public class CutscenesRoot : BlueprintScriptableObject
 	[ValidateNotNull]
 	private BlueprintAbilityFXSettings.Reference m_SpellWeaponFXSettings;
 
+	[SerializeField]
+	private BlueprintItemWeaponReference m_DefaultMeleeWeapon;
+
+	[SerializeField]
+	private BlueprintItemWeaponReference m_DefaultRangeWeapon;
+
 	public bool FadeScreenOnSkip => m_FadeScreenOnSkip;
 
 	public float TimeScaleOnSkip => m_TimeScaleOnSkip;
@@ -47,4 +54,8 @@ public class CutscenesRoot : BlueprintScriptableObject
 	public BlueprintAbility AttackSpell => m_AttackSpell;
 
 	public BlueprintAbilityFXSettings.Reference SpellWeaponFXSettings => m_SpellWeaponFXSettings;
+
+	public BlueprintItemWeapon DefaultWeaponMelee => m_DefaultMeleeWeapon;
+
+	public BlueprintItemWeapon DefaultWeaponRanged => m_DefaultRangeWeapon;
 }

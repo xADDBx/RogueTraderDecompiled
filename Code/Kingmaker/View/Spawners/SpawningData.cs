@@ -15,15 +15,12 @@ public class SpawningData : ContextData<SpawningData>
 
 	public BlueprintUnitAsksList Voice { get; private set; }
 
-	public bool LeftHanded { get; private set; }
-
-	public SpawningData Setup(string prefabGuid, BlueprintRace race, Gender gender, BlueprintUnitAsksList voice, bool leftHanded)
+	public SpawningData Setup(string prefabGuid, BlueprintRace race, Gender gender, BlueprintUnitAsksList voice)
 	{
 		PrefabGuid = prefabGuid;
 		Race = race;
 		Gender = gender;
 		Voice = voice;
-		LeftHanded = leftHanded;
 		return this;
 	}
 
@@ -33,6 +30,5 @@ public class SpawningData : ContextData<SpawningData>
 		Race = null;
 		Gender = Gender.Male;
 		Voice = null;
-		LeftHanded = false;
 	}
 }

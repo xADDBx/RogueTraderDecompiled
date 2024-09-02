@@ -42,34 +42,47 @@ public class CustomSpringAttackQueue : AbilityCustomLogic
 		Vector3 turnStartPosition = sprintAttackPart.TurnStartPosition;
 		Buff temporaryBuff = caster.Buffs.Add(TemporaryBuff, context);
 		List<SpringAttackEntry> springAttackEntries = sprintAttackPart.Entries;
-		int index;
-		for (index = springAttackEntries.Count; index > 0; index--)
+		int index = springAttackEntries.Count;
+		float errorTimer = 0f;
+		for (; index > 0; index--)
 		{
 			SpringAttackEntry entry = Enumerable.FirstOrDefault(springAttackEntries, (SpringAttackEntry p) => p.Index == index);
-			if (entry != null && entry.NewPosition != entry.OldPosition)
+			if (entry == null || !(entry.NewPosition != entry.OldPosition))
 			{
-				if (caster.Position != entry.NewPosition && entry.NewPosition.GetNearestNodeXZUnwalkable().GetUnit() is UnitEntity { IsDeadOrUnconscious: false })
+				continue;
+			}
+			if (caster.Position != entry.NewPosition)
+			{
+				BaseUnitEntity unit = entry.NewPosition.GetNearestNodeXZUnwalkable().GetUnit();
+				if (!(unit is UnitEntity) || !unit.IsDeadOrUnconscious)
 				{
-					entry.NewPosition.GetNearestNodeXZUnwalkable().GetUnit();
 					UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(CreateAbility(MoveAbility, context), entry.NewPosition)
 					{
 						FreeAction = true
 					};
-					UnitCommandHandle moveHandle = commands.AddToQueue(cmdParams);
-					while (!moveHandle.IsFinished)
+					commands.AddToQueue(cmdParams);
+					while ((caster.Position - entry.NewPosition).magnitude > 0.003f && errorTimer < 5f)
 					{
+						errorTimer += Game.Instance.TimeController.DeltaTime;
 						yield return null;
 					}
+					errorTimer = 0f;
 				}
-				UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(CreateAbility(DeathWaltz, context), entry.OldPosition)
-				{
-					FreeAction = true
-				};
-				UnitCommandHandle jumpHandle = commands.AddToQueue(cmdParams2);
-				while (!jumpHandle.IsFinished)
-				{
-					yield return null;
-				}
+			}
+			UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(CreateAbility(DeathWaltz, context), entry.OldPosition)
+			{
+				FreeAction = true
+			};
+			commands.AddToQueue(cmdParams2);
+			while ((caster.Position - entry.OldPosition).magnitude > 0.003f && errorTimer < 5f)
+			{
+				errorTimer += Game.Instance.TimeController.DeltaTime;
+				yield return null;
+			}
+			errorTimer = 0f;
+			if (entry.AreaMark.Entity != null)
+			{
+				entry.AreaMark.Entity.ForceEnded = true;
 			}
 			springAttackEntries.Remove(entry);
 		}
@@ -81,7 +94,7 @@ public class CustomSpringAttackQueue : AbilityCustomLogic
 			for (int i = 0; i < 8; i++)
 			{
 				CustomGridNodeBase customGridNodeBase = turnStartPosition.GetNearestNodeXZUnwalkable()?.GetNeighbourAlongDirection(i);
-				if (customGridNodeBase.GetUnit()?.IsDeadOrUnconscious ?? true)
+				if (customGridNodeBase != null && (customGridNodeBase.GetUnit()?.IsDeadOrUnconscious ?? true))
 				{
 					list.Add(customGridNodeBase);
 				}

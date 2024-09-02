@@ -108,12 +108,15 @@ public sealed class UnitMoveTo : AbstractUnitCommand<UnitMoveToParams>
 
 	public void DoRunAway()
 	{
-		if (base.Executor.IsPlayerFaction)
+		if (base.Executor != null)
 		{
-			base.Executor.IsInGame = false;
-			return;
+			if (base.Executor.IsPlayerFaction)
+			{
+				base.Executor.IsInGame = false;
+				return;
+			}
+			base.Executor.SetViewHandlingOnDisposePolicy(Entity.ViewHandlingOnDisposePolicyType.FadeOutAndDestroy);
+			Game.Instance.EntityDestroyer.Destroy(base.Executor);
 		}
-		base.Executor.SetViewHandlingOnDisposePolicy(Entity.ViewHandlingOnDisposePolicyType.FadeOutAndDestroy);
-		Game.Instance.EntityDestroyer.Destroy(base.Executor);
 	}
 }

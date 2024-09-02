@@ -126,9 +126,9 @@ public class CommandMoveUnit : CommandBase
 		}
 		if (commandData.TakingTooLong)
 		{
-			commandData.Unit?.View.MovementAgent.Stop();
-			commandData.Unit?.View.MovementAgent.Blocker.BlockAtCurrentPosition();
-			commandData.Unit?.Translocate(Target.GetValue(), null);
+			unit?.View.MovementAgent.Stop();
+			unit?.View.MovementAgent.Blocker.BlockAtCurrentPosition();
+			unit?.Translocate(Target.GetValue(), null);
 			return true;
 		}
 		if (commandData.Path != null)

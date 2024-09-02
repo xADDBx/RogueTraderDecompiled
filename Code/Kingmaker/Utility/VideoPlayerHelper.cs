@@ -1,6 +1,7 @@
 using System;
 using Core.Cheats;
 using Kingmaker.Sound.Base;
+using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,8 +56,6 @@ public class VideoPlayerHelper : MonoBehaviour
 
 	private string m_SoundStopEventName;
 
-	private uint? m_PreviousAkSoundEngineState;
-
 	private uint m_SoundId;
 
 	private double m_AudioDuration;
@@ -64,6 +63,16 @@ public class VideoPlayerHelper : MonoBehaviour
 	private double m_VideoDuration;
 
 	private TimeSpan m_PlayStartTime = TimeSpan.Zero;
+
+	private bool m_Play;
+
+	private bool m_HasAudio;
+
+	private bool m_IsAudioLaunched;
+
+	private SoundStateType m_SoundStateType;
+
+	private SoundStateType? m_PreviousSoundStateType;
 
 	public bool IsPlaying
 	{
@@ -104,6 +113,8 @@ public class VideoPlayerHelper : MonoBehaviour
 
 	public VideoClip VideoClip => m_VideoClip;
 
+	public VideoPlayer VideoPlayer => m_VideoPlayer;
+
 	private void Start()
 	{
 		Initialize();
@@ -136,8 +147,7 @@ public class VideoPlayerHelper : MonoBehaviour
 
 	private void OnEnable()
 	{
-		VideoPlayer videoPlayer = m_VideoPlayer;
-		if ((object)videoPlayer != null && videoPlayer.playOnAwake)
+		if (m_VideoPlayer != null && m_VideoPlayer.playOnAwake)
 		{
 			Play();
 		}
@@ -148,11 +158,19 @@ public class VideoPlayerHelper : MonoBehaviour
 		Stop();
 	}
 
-	public void SetClip(VideoClip clip)
+	public void SetClip(VideoClip clip, SoundStateType soundStateType, bool prepareVideo, string soundStartEventName, string soundStopEventName)
 	{
-		Stop();
+		ResetValues();
 		m_VideoClip = clip;
 		m_VideoPlayer.clip = m_VideoClip;
+		m_SoundStartEventName = (soundStartEventName.IsNullOrEmpty() ? null : soundStartEventName);
+		m_SoundStopEventName = (soundStopEventName.IsNullOrEmpty() ? null : soundStopEventName);
+		m_HasAudio = m_SoundStartEventName != null;
+		m_SoundStateType = soundStateType;
+		if (prepareVideo)
+		{
+			Prepare();
+		}
 		if (m_VideoPlayer.playOnAwake)
 		{
 			Play();
@@ -161,16 +179,15 @@ public class VideoPlayerHelper : MonoBehaviour
 
 	public void Play()
 	{
-		Stop();
+		ResetValues();
 		if (TryCreateRenderTexture())
 		{
-			m_VideoPlayer.Play();
+			m_Play = true;
 		}
 	}
 
 	public void Prepare()
 	{
-		Stop();
 		if (TryCreateRenderTexture())
 		{
 			m_VideoPlayer.Prepare();
@@ -178,6 +195,31 @@ public class VideoPlayerHelper : MonoBehaviour
 	}
 
 	public void Stop()
+	{
+		m_VideoPlayer.Stop();
+		ResetValues();
+	}
+
+	private void ResetValues()
+	{
+		m_Play = false;
+		ReleaseRenderTexture();
+		StopAudio();
+		SetDefaultVideoPlaybackSpeed();
+		m_IsVideoLaunched = false;
+		m_IsAudioLaunched = false;
+		m_IsAudioPrepared = false;
+		m_NeedSynchronise = false;
+		m_IsAudioPlaying = false;
+		m_PreviousSoundStateType = null;
+		m_AudioDuration = 0.0;
+		m_VideoDuration = 0.0;
+		m_SoundId = 0u;
+		m_PlayStartTime = TimeSpan.Zero;
+		s_ForceVideoSeekTime = null;
+	}
+
+	private void ReleaseRenderTexture()
 	{
 		if (m_RawImage != null)
 		{
@@ -192,11 +234,11 @@ public class VideoPlayerHelper : MonoBehaviour
 			m_RenderTexture.Release();
 			m_RenderTexture = null;
 		}
-		StopAudio();
 	}
 
 	private bool TryCreateRenderTexture()
 	{
+		ReleaseRenderTexture();
 		VideoClip clip = m_VideoPlayer.clip;
 		if (clip == null)
 		{
@@ -217,9 +259,58 @@ public class VideoPlayerHelper : MonoBehaviour
 		return true;
 	}
 
-	public void Update()
+	private void PrepareAudio()
 	{
-		if (m_NeedSynchronise && (m_IsVideoLaunched || TryPlayPrepared()) && m_VideoPlayer.isPlaying && m_IsAudioPlaying && TryGetAudioPlaybackTime(out var audioTime))
+		if (!m_Play || !m_HasAudio || m_NeedSynchronise)
+		{
+			return;
+		}
+		SoundUtility.SetGenderFlags(base.gameObject);
+		if (m_SoundStartEventName != null)
+		{
+			m_PreviousSoundStateType = SoundState.Instance.State;
+			SoundState.Instance.ResetState(m_SoundStateType);
+			AkSoundEngine.PrepareEvent(AkPreparationType.Preparation_LoadAndDecode, new string[1] { m_SoundStartEventName }, 1u, delegate
+			{
+				m_IsAudioPrepared = true;
+			}, null);
+			m_NeedSynchronise = true;
+		}
+	}
+
+	private void PlayVideo()
+	{
+		if (m_Play && !m_IsVideoLaunched && (!m_HasAudio || m_IsAudioPrepared))
+		{
+			m_VideoPlayer.Play();
+			SetDefaultVideoPlaybackSpeed();
+			m_PlayStartTime = Game.Instance.Player.RealTime;
+			m_VideoDuration = m_VideoPlayer.clip.length;
+			m_IsVideoLaunched = true;
+		}
+	}
+
+	private void PlayAudio()
+	{
+		if (!m_Play || !m_VideoPlayer.isPrepared || !m_HasAudio || !m_IsAudioPrepared || m_IsAudioLaunched)
+		{
+			return;
+		}
+		m_SoundId = SoundEventsManager.PostEvent(m_SoundStartEventName, base.gameObject, 1048584u, delegate(object _, AkCallbackType type, AkCallbackInfo info)
+		{
+			if (type == AkCallbackType.AK_Duration)
+			{
+				AkDurationCallbackInfo akDurationCallbackInfo = (AkDurationCallbackInfo)info;
+				m_AudioDuration = TimeSpan.FromMilliseconds(akDurationCallbackInfo.fDuration).TotalSeconds;
+				m_IsAudioPlaying = m_AudioDuration > 0.0;
+			}
+		}, null);
+		m_IsAudioLaunched = true;
+	}
+
+	private void SyncAudioVideo()
+	{
+		if (m_VideoPlayer.isPlaying && m_IsAudioPlaying && TryGetAudioPlaybackTime(out var audioTime))
 		{
 			double time = m_VideoPlayer.time;
 			if (s_ForceVideoSeekTime.HasValue)
@@ -230,7 +321,7 @@ public class VideoPlayerHelper : MonoBehaviour
 			double num = Math.Abs(time - audioTime);
 			if (!(num > 0.0))
 			{
-				ResetVideoAudioSpeed();
+				SetDefaultVideoPlaybackSpeed();
 			}
 			else if (time < audioTime)
 			{
@@ -241,6 +332,14 @@ public class VideoPlayerHelper : MonoBehaviour
 				SeekOrSpeedUpAudio(num, time);
 			}
 		}
+	}
+
+	public void Update()
+	{
+		PrepareAudio();
+		PlayVideo();
+		PlayAudio();
+		SyncAudioVideo();
 	}
 
 	private bool TryGetAudioPlaybackTime(out double audioTime)
@@ -254,25 +353,7 @@ public class VideoPlayerHelper : MonoBehaviour
 		return true;
 	}
 
-	public void PrepareAudio(string soundStartEventName, string soundStopEventName)
-	{
-		SoundUtility.SetGenderFlags(base.gameObject);
-		m_SoundStartEventName = soundStartEventName;
-		m_SoundStopEventName = soundStopEventName;
-		if (m_SoundStartEventName != null)
-		{
-			AkSoundEngine.GetState("GameAudioState", out var out_rState);
-			m_PreviousAkSoundEngineState = out_rState;
-			SoundState.Instance.ResetState(SoundStateType.Video);
-			AkSoundEngine.PrepareEvent(AkPreparationType.Preparation_LoadAndDecode, new string[1] { soundStartEventName }, 1u, delegate
-			{
-				m_IsAudioPrepared = true;
-			}, null);
-			m_NeedSynchronise = true;
-		}
-	}
-
-	public void StopAudio()
+	private void StopAudio()
 	{
 		if (m_SoundId != 0)
 		{
@@ -285,46 +366,10 @@ public class VideoPlayerHelper : MonoBehaviour
 				SoundEventsManager.StopPlayingById(m_SoundId);
 			}
 		}
-		if (m_PreviousAkSoundEngineState.HasValue)
+		if (m_PreviousSoundStateType.HasValue)
 		{
-			AkSoundEngine.SetState("GameAudioState", m_PreviousAkSoundEngineState.ToString());
+			SoundState.Instance.ResetState(m_PreviousSoundStateType.Value);
 		}
-		ResetVideoAudioSpeed();
-		m_IsVideoLaunched = false;
-		m_IsAudioPrepared = false;
-		m_NeedSynchronise = false;
-		m_IsAudioPlaying = false;
-		m_SoundStartEventName = null;
-		m_SoundStopEventName = null;
-		m_PreviousAkSoundEngineState = null;
-		m_AudioDuration = 0.0;
-		m_VideoDuration = 0.0;
-		m_SoundId = 0u;
-		m_PlayStartTime = TimeSpan.Zero;
-		s_ForceVideoSeekTime = null;
-	}
-
-	private bool TryPlayPrepared()
-	{
-		if (!m_IsAudioPrepared || !m_VideoPlayer.isPrepared)
-		{
-			return m_IsVideoLaunched;
-		}
-		m_VideoPlayer.Play();
-		m_SoundId = SoundEventsManager.PostEvent(m_SoundStartEventName, base.gameObject, 1048584u, delegate(object _, AkCallbackType type, AkCallbackInfo info)
-		{
-			if (type == AkCallbackType.AK_Duration)
-			{
-				AkDurationCallbackInfo akDurationCallbackInfo = (AkDurationCallbackInfo)info;
-				m_AudioDuration = TimeSpan.FromMilliseconds(akDurationCallbackInfo.fDuration).TotalSeconds;
-				m_IsAudioPlaying = m_AudioDuration > 0.0;
-			}
-		}, null);
-		ResetVideoAudioSpeed();
-		m_PlayStartTime = Game.Instance.Player.RealTime;
-		m_VideoDuration = m_VideoPlayer.clip.length;
-		m_IsVideoLaunched = true;
-		return true;
 	}
 
 	private void SetVideoPlaybackSpeed(float playbackSpeed)
@@ -365,11 +410,6 @@ public class VideoPlayerHelper : MonoBehaviour
 			int in_iPosition = (int)TimeSpan.FromSeconds(videoTime).TotalMilliseconds;
 			AkSoundEngine.SeekOnEvent(m_SoundStartEventName, base.gameObject, in_iPosition, in_bSeekToNearestMarker: false, m_SoundId);
 		}
-	}
-
-	private void ResetVideoAudioSpeed()
-	{
-		SetDefaultVideoPlaybackSpeed();
 	}
 
 	[Cheat(Name = "seek_video", ExecutionPolicy = ExecutionPolicy.PlayMode)]

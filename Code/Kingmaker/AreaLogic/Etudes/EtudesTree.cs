@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers.EventConditionActionSystem.Events;
 using Kingmaker.EntitySystem;
 using Kingmaker.QA;
@@ -52,6 +53,10 @@ public class EtudesTree : EntityFactsProcessor<Etude>
 		(fact.Parent?.Children ?? m_Roots).Remove(fact);
 	}
 
+	protected override void OnFactDidDetached(Etude fact)
+	{
+	}
+
 	public void RestoreTreeStructure()
 	{
 		foreach (Etude rawFact in base.RawFacts)
@@ -83,7 +88,7 @@ public class EtudesTree : EntityFactsProcessor<Etude>
 			}
 			else if (!system.EtudeIsCompleted(blueprint) && !base.RawFacts.HasItem((Etude x) => x.Blueprint == blueprint))
 			{
-				system.StartEtude(blueprint);
+				system.StartEtude(blueprint, "etudes fixup StartWith");
 			}
 		}
 		foreach (Etude item2 in etude.Children.ToTempList())
@@ -95,16 +100,21 @@ public class EtudesTree : EntityFactsProcessor<Etude>
 	public void CheckEtudeHierarchyForErrors()
 	{
 		StringBuilder stringBuilder = new StringBuilder();
+		HashSet<BlueprintEtude> hashSet = BlueprintRoot.Instance.UtilityRoot.SkipCheckingEtudeHierarchy.Select((BlueprintEtudeReference e) => e.Get()).ToHashSet();
 		foreach (Etude rawFact in base.RawFacts)
 		{
+			if (hashSet.Contains(rawFact.Blueprint))
+			{
+				PFLog.Etudes.Log($"Skip checking etude hierarchy {rawFact}");
+				continue;
+			}
 			if (rawFact.Blueprint == null)
 			{
 				PFLog.Etudes.Error($"Can't find Blueprint for etude {rawFact}");
+				continue;
 			}
-			else
-			{
-				stringBuilder.Append(GetEtudeHierarchyError(rawFact));
-			}
+			string etudeHierarchyError = GetEtudeHierarchyError(rawFact);
+			stringBuilder.Append(etudeHierarchyError);
 		}
 		if (stringBuilder.Length > 0)
 		{
@@ -225,7 +235,7 @@ public class EtudesTree : EntityFactsProcessor<Etude>
 		{
 			if (!item2.IsEmpty())
 			{
-				EtudesSystem.StartEtude(item2.Get());
+				EtudesSystem.StartEtude(item2.Get(), "startsOnComplete from " + etude.Name + " " + etude.UniqueId);
 			}
 		}
 	}

@@ -20,6 +20,7 @@ using Kingmaker.UnitLogic.Levelup.Selections.Feature;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
+using Kingmaker.UnitLogic.Progression.Prerequisites;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
@@ -196,9 +197,41 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	private static List<BaseRankEntryFeatureVM> SortSelectionFeatures(List<RankEntrySelectionFeatureVM> features)
 	{
-		return (from f in features
-			orderby (!f.IsRecommended) ? 1 : (-1), f.DisplayName
-			select f).Cast<BaseRankEntryFeatureVM>().ToList();
+		Dictionary<RankEntrySelectionFeatureVM, BlueprintFeature> entryToFirstPrerequisiteFact = new Dictionary<RankEntrySelectionFeatureVM, BlueprintFeature>();
+		foreach (RankEntrySelectionFeatureVM feature in features)
+		{
+			Prerequisite prerequisite = feature.Feature.Prerequisites.List.FirstOrDefault((Prerequisite p) => p is PrerequisiteFact prerequisiteFact && prerequisiteFact.Fact is BlueprintFeature);
+			if (prerequisite != null && !entryToFirstPrerequisiteFact.ContainsKey(feature))
+			{
+				entryToFirstPrerequisiteFact.Add(feature, (prerequisite as PrerequisiteFact)?.Fact as BlueprintFeature);
+			}
+		}
+		Dictionary<RankEntrySelectionFeatureVM, string> overrideNames = entryToFirstPrerequisiteFact.Select(delegate(KeyValuePair<RankEntrySelectionFeatureVM, BlueprintFeature> f)
+		{
+			int num = 0;
+			RankEntrySelectionFeatureVM featureToCheck = entryToFirstPrerequisiteFact.Keys.FirstOrDefault((RankEntrySelectionFeatureVM kvp) => kvp.Feature == f.Value);
+			string arg = featureToCheck?.DisplayName ?? f.Key.DisplayName;
+			while (featureToCheck != null)
+			{
+				num++;
+				featureToCheck = entryToFirstPrerequisiteFact.Keys.FirstOrDefault((RankEntrySelectionFeatureVM kvp) => kvp.Feature == entryToFirstPrerequisiteFact[featureToCheck]);
+				if (featureToCheck != null)
+				{
+					arg = featureToCheck.DisplayName;
+				}
+			}
+			return (Key: f.Key, $"{arg}_{num}");
+		}).ToDictionary(((RankEntrySelectionFeatureVM Key, string) t) => t.Key, ((RankEntrySelectionFeatureVM Key, string) t) => t.Item2);
+		return features.OrderBy((RankEntrySelectionFeatureVM f) => (!f.IsRecommended) ? 1 : (-1)).ThenBy(NameSort).Cast<BaseRankEntryFeatureVM>()
+			.ToList();
+		string NameSort(RankEntrySelectionFeatureVM rankEntry)
+		{
+			if (!overrideNames.TryGetValue(rankEntry, out var value))
+			{
+				return rankEntry.DisplayName;
+			}
+			return value;
+		}
 	}
 
 	private List<(BlueprintScriptableObject, List<RankEntrySelectionFeatureVM>)> CreateSelectionItems(CareerPathVM careerPathVM)

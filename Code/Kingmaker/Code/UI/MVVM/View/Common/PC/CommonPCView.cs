@@ -78,10 +78,10 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 	private ContextMenuPCView m_ContextMenuPCView;
 
 	[SerializeField]
-	private UIViewLink<SaveLoadPCView, SaveLoadVM> m_SaveLoadPCView;
+	private UIDestroyViewLink<SaveLoadPCView, SaveLoadVM> m_SaveLoadPCView;
 
 	[SerializeField]
-	private UIViewLink<SettingsPCView, SettingsVM> m_SettingsPCView;
+	private UIDestroyViewLink<SettingsPCView, SettingsVM> m_SettingsPCView;
 
 	[SerializeField]
 	private GamepadConnectedInKeyboardModeWindowView m_GamepadConnectedInKeyboardModeWindowView;
@@ -110,16 +110,16 @@ public class CommonPCView : ViewBase<CommonVM>, IInitializable
 	private bool m_IsInit;
 
 	[SerializeField]
-	private UIViewLink<NetLobbyPCView, NetLobbyVM> m_NetLobbyPCView;
+	private UIDestroyViewLink<NetLobbyPCView, NetLobbyVM> m_NetLobbyPCView;
 
 	[SerializeField]
-	private UIViewLink<NetRolesPCView, NetRolesVM> m_NetRolesPCView;
+	private UIDestroyViewLink<NetRolesPCView, NetRolesVM> m_NetRolesPCView;
 
 	[SerializeField]
-	private UIViewLink<DlcManagerPCView, DlcManagerVM> m_DlcManagerPCView;
+	private UIDestroyViewLink<DlcManagerPCView, DlcManagerVM> m_DlcManagerPCView;
 
 	[SerializeField]
-	private UIViewLink<TitlesBaseView, TitlesVM> m_TitlesView;
+	private UIDestroyViewLink<TitlesBaseView, TitlesVM> m_TitlesView;
 
 	private Coroutine m_DisappearAnimationCoroutine;
 

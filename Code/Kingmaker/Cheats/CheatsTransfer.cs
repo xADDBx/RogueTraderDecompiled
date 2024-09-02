@@ -245,7 +245,7 @@ internal static class CheatsTransfer
 		{
 			MainMenuUI.Instance.EnterGame(delegate
 			{
-				Game.Instance.LoadNewGame(preset);
+				Game.Instance.LoadNewGameFromCheat(preset);
 			});
 		}
 	}

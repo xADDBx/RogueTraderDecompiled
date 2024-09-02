@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root;
@@ -15,7 +16,6 @@ using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Tooltips;
-using Owlcat.Runtime.UniRx;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,7 +37,15 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 	private Image m_Icon;
 
 	[SerializeField]
-	protected GameObject m_IconBlock;
+	protected RectTransform m_IconBlock;
+
+	[Header("OverrideIconSize")]
+	[SerializeField]
+	private bool m_OverrideIconSize;
+
+	[ShowIf("m_OverrideIconSize")]
+	[SerializeField]
+	protected LayoutElement m_IconBlockLayout;
 
 	[Header("Acronym")]
 	[SerializeField]
@@ -66,13 +74,28 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 
 	private AccessibilityTextHelper m_TextHelper;
 
+	private RectTransform m_RectTransform;
+
+	private Vector2 m_InitBlockWidth;
+
+	private Action m_RestoreIconHeight;
+
 	protected override void BindViewImplementation()
 	{
+		if ((object)m_RectTransform == null)
+		{
+			m_RectTransform = GetComponent<RectTransform>();
+		}
+		if (m_OverrideIconSize)
+		{
+			m_InitBlockWidth = new Vector2(m_IconBlockLayout.minWidth, m_IconBlockLayout.preferredWidth);
+		}
 		m_TextHelper = new AccessibilityTextHelper(m_Label);
 		base.BindViewImplementation();
 		m_Label.text = base.ViewModel.Name;
-		m_IconBlock.SetActive((bool)base.ViewModel.Icon || base.ViewModel.Acronym != null);
-		if ((bool)base.ViewModel.Icon || base.ViewModel.Acronym != null)
+		bool flag = (bool)base.ViewModel.Icon || base.ViewModel.Acronym != null;
+		m_IconBlock.gameObject.SetActive(flag);
+		if (flag)
 		{
 			m_Icon.sprite = base.ViewModel.Icon;
 			m_Icon.color = base.ViewModel.IconColor;
@@ -82,6 +105,7 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 		{
 			m_HorizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
 		}
+		m_TalentGroupView.Or(null)?.SetupView(base.ViewModel.HasTalentsGroups ? base.ViewModel.TalentIconsInfo : null);
 		m_Acronym.text = base.ViewModel.Acronym;
 		TextMeshProUGUI acronym = m_Acronym;
 		TalentIconInfo talentIconsInfo = base.ViewModel.TalentIconsInfo;
@@ -94,7 +118,6 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 		{
 			m_Background.SetActive(base.ViewModel.AvailableBackground);
 		}
-		m_TalentGroupView.Or(null)?.SetupView(base.ViewModel.TalentIconsInfo);
 		m_TextHelper.UpdateTextSize();
 		if (m_HasHiddenPart)
 		{
@@ -108,7 +131,8 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 	{
 		base.DestroyViewImplementation();
 		m_TextHelper.Dispose();
-		UpdateElements(m_DefaultIconSize);
+		m_RestoreIconHeight?.Invoke();
+		m_RestoreIconHeight = null;
 	}
 
 	private void SetTooltip()
@@ -165,12 +189,19 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 
 	public void UpdateElements(float size)
 	{
-		RectTransform labelTransform = m_Label.GetComponent<RectTransform>();
-		labelTransform.anchoredPosition = new Vector2(size, 0f);
-		DelayedInvoker.InvokeInFrames(delegate
+		if (m_OverrideIconSize)
 		{
-			float width = GetComponent<RectTransform>().rect.width;
-			labelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width - size);
-		}, 1);
+			SetIconLayout(size, size);
+		}
+	}
+
+	private void SetIconLayout(float minWidth, float preferredWidth)
+	{
+		m_RestoreIconHeight = delegate
+		{
+			SetIconLayout(m_InitBlockWidth.x, m_InitBlockWidth.y);
+		};
+		m_IconBlockLayout.minWidth = minWidth;
+		m_IconBlockLayout.preferredWidth = preferredWidth;
 	}
 }

@@ -98,7 +98,7 @@ public class CheatsUnlock
 		}
 		else
 		{
-			Game.Instance.Player.EtudesSystem.StartEtude(blueprint);
+			Game.Instance.Player.EtudesSystem.StartEtude(blueprint, "cheats");
 		}
 	}
 
@@ -112,7 +112,7 @@ public class CheatsUnlock
 		}
 		else
 		{
-			Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(blueprint);
+			Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(blueprint, "cheat");
 		}
 	}
 
@@ -407,6 +407,26 @@ public class CheatsUnlock
 		{
 			h.HandleAddCompanion();
 		}, isCheckRuntime: true);
+	}
+
+	[Cheat(Name = "recruit_main_character", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void RecruitMainCharacter(BlueprintUnit unit)
+	{
+		if (unit == null)
+		{
+			PFLog.SmartConsole.Log($"Cant get blueprint with name '{unit}'");
+			return;
+		}
+		BaseUnitEntity baseUnitEntity = Game.Instance.Player.AllCharacters.FirstOrDefault((BaseUnitEntity c) => c.Blueprint == unit);
+		if (baseUnitEntity != null)
+		{
+			Game.Instance.Player.SetMainCharacter(baseUnitEntity);
+			return;
+		}
+		SceneEntitiesState crossSceneState = Game.Instance.State.PlayerState.CrossSceneState;
+		Vector3 position = Game.Instance.Player.MainCharacter.Entity.Position;
+		BaseUnitEntity mainCharacter = Game.Instance.EntitySpawner.SpawnUnit(unit, position, Quaternion.identity, crossSceneState);
+		Game.Instance.Player.SetMainCharacter(mainCharacter);
 	}
 
 	[Cheat(Name = "remove_companion_from_roster", ExecutionPolicy = ExecutionPolicy.PlayMode)]

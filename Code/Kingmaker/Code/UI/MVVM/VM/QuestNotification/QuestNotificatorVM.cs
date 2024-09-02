@@ -49,6 +49,14 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 		Instance = this;
 	}
 
+	protected override void DisposeImplementation()
+	{
+		Instance = null;
+		QuestEntities.Clear();
+		ObjectiveEntities.Clear();
+		EventBus.Unsubscribe(this);
+	}
+
 	public void HandleQuestStarted(Quest quest)
 	{
 		AddQuestNotification(quest, QuestNotificationState.New);
@@ -88,14 +96,14 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 		QuestEntities.Remove(quest);
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective)
+	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
 	{
-		AddObjective(objective, QuestNotificationState.New);
+		AddObjective(objective, QuestNotificationState.New, silentStart);
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective)
+	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
 	{
-		AddObjective(objective, QuestNotificationState.New);
+		AddObjective(objective, QuestNotificationState.New, silentStart);
 	}
 
 	public void HandleQuestObjectiveCompleted(QuestObjective objective)
@@ -108,9 +116,9 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 		AddObjective(objective, QuestNotificationState.Failed);
 	}
 
-	private void AddObjective(QuestObjective objective, QuestNotificationState state)
+	private void AddObjective(QuestObjective objective, QuestNotificationState state, bool silentStart = false)
 	{
-		if (objective.IsVisible && !objective.Blueprint.IsSilentQuestNotification(state))
+		if (!silentStart && objective.IsVisible && !objective.Blueprint.IsSilentQuestNotification(state))
 		{
 			QuestNotificationEntityVM questNotificationEntityVM = new QuestNotificationEntityVM(objective, state);
 			QuestNotificationEntityVM questNotificationEntityVM2 = ObjectiveEntities.FirstOrDefault((QuestNotificationEntityVM o) => !o.IsAddendum && o.Quest == objective.Quest);
@@ -193,13 +201,5 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 		QuestEntities.Clear();
 		ObjectiveEntities.Clear();
 		ClearCommand.Execute();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		Instance = null;
-		QuestEntities.Clear();
-		ObjectiveEntities.Clear();
-		EventBus.Unsubscribe(this);
 	}
 }

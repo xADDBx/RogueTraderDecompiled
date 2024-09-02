@@ -14,6 +14,7 @@ using Kingmaker.Globalmap.Colonization.Rewards;
 using Kingmaker.Globalmap.SectorMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Settings;
 using Kingmaker.UI.MVVM.VM.Colonization.Projects;
 using Owlcat.Runtime.UI.MVVM;
@@ -23,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 
-public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IColonizationResourcesHandler, ISubscriber
 {
 	public readonly ReactiveProperty<bool> IsSelected = new ReactiveProperty<bool>();
 
@@ -180,6 +181,7 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			Objectives?.Add(new JournalQuestObjectiveVM(item4));
 		}
 		UpdateData();
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DisposeImplementation()
@@ -216,6 +218,7 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			GetOrCreateResource(resource.Key).UpdateCount(resource.Value);
 		}
 		JournalOrderProfitFactorVM.UpdateCount(Game.Instance.Player.ProfitFactor.Total);
+		JournalOrderProfitFactorVM.UpdateArrowDirection();
 		if (Quest.State != QuestState.Completed)
 		{
 			ResourcesVMs.ForEach(delegate(ColonyResourceVM v)
@@ -252,11 +255,11 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	private int CheckArrowDirectionProfitFactor()
 	{
-		if (Requirements.OfType<RequirementProfitFactorCost>().Any())
+		if (Requirements.Any((ColonyProjectsRequirementElementVM r) => r.Requirement is RequirementProfitFactorCost))
 		{
 			return -1;
 		}
-		if (!Rewards.OfType<RewardProfitFactor>().Any())
+		if (!Rewards.Any((ColonyProjectsRewardElementVM r) => r.Reward is RewardProfitFactor))
 		{
 			return 0;
 		}
@@ -344,11 +347,20 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 	{
 		Game.Instance.GameCommandQueue.CompleteContract(Quest.Blueprint);
 		UpdateStatus(Quest, forceComplete: true);
-		UpdateData();
 		IsOrderCompleted.Value = true;
 		EventBus.RaiseEvent(delegate(IUpdateCanCompleteOrderNotificationHandler h)
 		{
 			h.HandleUpdateCanCompleteOrderNotificationInJournal();
 		});
+	}
+
+	public void HandleColonyResourcesUpdated(BlueprintResource resource, int count)
+	{
+		UpdateData();
+	}
+
+	public void HandleNotFromColonyResourcesUpdated(BlueprintResource resource, int count)
+	{
+		UpdateData();
 	}
 }

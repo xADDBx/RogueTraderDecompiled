@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Items;
 using Kingmaker.Localization;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -95,7 +96,18 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 
 	public MechanicEntity Attacker => base.Rule.ConcreteInitiator;
 
-	public MechanicEntity Target => base.Rule.ConcreteTarget;
+	public MechanicEntity Target
+	{
+		get
+		{
+			RuleRollParry resultParryRule = RollPerformAttackRule.ResultParryRule;
+			if (resultParryRule == null || !resultParryRule.Result)
+			{
+				return base.Rule.ConcreteTarget;
+			}
+			return RollPerformAttackRule.ActualParryUnit;
+		}
+	}
 
 	public RulePerformAttackRoll RollPerformAttackRule => base.Rule.RollPerformAttackRule;
 
@@ -127,6 +139,9 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 
 	public int? AssassinLethality { get; }
 
+	[CanBeNull]
+	public ItemEntityWeapon AbilityWeaponInfo { get; }
+
 	public GameLogEventAttack(RulePerformAttack rule)
 		: base(rule)
 	{
@@ -144,6 +159,7 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 				AssassinLethality = BlueprintRoot.Instance.AssassinLethalityProperty?.GetValue(new PropertyContext(rule.ConcreteInitiator.MainFact));
 			}
 		}
+		AbilityWeaponInfo = rule.Ability.Weapon;
 		foreach (Tuple<BaseUnitEntity, List<MechanicsFeatureType>> item2 in new List<Tuple<BaseUnitEntity, List<MechanicsFeatureType>>>
 		{
 			new Tuple<BaseUnitEntity, List<MechanicsFeatureType>>(base.Rule.InitiatorUnit, new List<MechanicsFeatureType>

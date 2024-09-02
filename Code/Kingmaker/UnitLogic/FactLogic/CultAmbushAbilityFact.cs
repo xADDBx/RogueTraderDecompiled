@@ -15,7 +15,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.FactLogic;
 
 [TypeId("bee5cf278ed04bff8dad8c8b34ccd050")]
-public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IInitiatorRulebookSubscriber, IUnitNodeChangedHandler, ISubscriber<IBaseUnitEntity>, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, IHashable
+public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IInitiatorRulebookSubscriber, IUnitNodeChangedHandler, ISubscriber<IBaseUnitEntity>, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, ITurnBasedModeHandler, IHashable
 {
 	[SerializeField]
 	private int m_VisibilityDistanceInNode;
@@ -25,7 +25,7 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 	protected override void OnActivate()
 	{
 		base.OnActivate();
-		base.Owner.GetOrCreate<UnitPartCultAmbush>()?.Use((base.Fact as Feature)?.Blueprint);
+		base.Owner.GetOrCreate<UnitPartCultAmbush>()?.ActivateCultAmbushAbilityFact((base.Fact as Feature)?.Blueprint);
 	}
 
 	protected override void OnDeactivate()
@@ -55,7 +55,7 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 		}
 	}
 
-	private void ChangeUnitPosition(BaseUnitEntity unit)
+	private void ChangeUnitPosition(BaseUnitEntity unit, bool isCombatPreparation = false)
 	{
 		if (unit == null || !base.Owner.TryGetUnitPartCultAmbush(out var ambush) || ambush.IsAllVisibility)
 		{
@@ -70,7 +70,7 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 					int num = WarhammerGeometryUtils.DistanceToInCells(partyAndPet.Position, partyAndPet.SizeRect, base.Owner.Position, base.Owner.SizeRect);
 					if (m_VisibilityDistanceInNode >= num)
 					{
-						ambush.MarkAllAsVisibility();
+						ambush.MarkAllAsVisibility(isCombatPreparation);
 						break;
 					}
 				}
@@ -82,7 +82,7 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 			int num2 = WarhammerGeometryUtils.DistanceToInCells(unit.Position, unit.SizeRect, base.Owner.Position, base.Owner.SizeRect);
 			if (m_VisibilityDistanceInNode >= num2)
 			{
-				ambush.MarkAllAsVisibility();
+				ambush.MarkAllAsVisibility(isCombatPreparation);
 			}
 		}
 	}
@@ -99,9 +99,14 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 	{
 		if (m_IsCombatPreparation)
 		{
-			ChangeUnitPosition(base.Owner);
+			ChangeUnitPosition(base.Owner, isCombatPreparation: true);
 			m_IsCombatPreparation = false;
 		}
+	}
+
+	void ITurnBasedModeHandler.HandleTurnBasedModeSwitched(bool isTurnBased)
+	{
+		ChangeUnitPosition(base.Owner, isCombatPreparation: true);
 	}
 
 	public override Hash128 GetHash128()

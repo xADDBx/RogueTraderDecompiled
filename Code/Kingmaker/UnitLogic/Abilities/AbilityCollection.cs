@@ -75,6 +75,13 @@ public class AbilityCollection : MechanicEntityFactsCollection<Ability>
 		if (Owner.Faction.IsPlayer)
 		{
 			Owner.UISettings.RemoveSlot(fact);
+		}
+	}
+
+	protected override void OnFactDidDetached(Ability fact)
+	{
+		if (Owner.Faction.IsPlayer)
+		{
 			EventBus.RaiseEvent(delegate(IPlayerAbilitiesHandler h)
 			{
 				h.HandleAbilityRemoved(fact);

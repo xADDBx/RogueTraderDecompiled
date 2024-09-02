@@ -27,11 +27,10 @@ public class StarshipCompanionsOnPostLogic : UnitFactComponentDelegate, ITurnBas
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
-		if (!isTurnBased)
+		if (!isTurnBased || !(base.Owner is StarshipEntity { IsInGame: not false } starshipEntity))
 		{
 			return;
 		}
-		StarshipEntity starshipEntity = base.Owner as StarshipEntity;
 		foreach (Post post in starshipEntity.Hull.Posts)
 		{
 			if (PostSkillCheckPassed(post))

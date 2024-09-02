@@ -144,7 +144,6 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 		SetNameVisibility();
 		SetVisible(IsExploredOrHasQuests);
 		SetDecalVisibility(state: false);
-		SetPlanetVisualState();
 	}
 
 	public void InstanceSystemPlanetDecalConsoleFocus()
@@ -166,9 +165,8 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 
 	public void SetPlanetVisualState()
 	{
-		Vector3 position = Game.Instance.SectorMapController.VisualParameters.PlayerShip.gameObject.transform.position;
-		Vector3 position2 = base.gameObject.transform.position;
-		if (IsExploredOrHasQuests && Mathf.Approximately(position.x, position2.x) && Mathf.Approximately(position.z, position2.z))
+		SectorMapObjectEntity currentStarSystem = Game.Instance.SectorMapController.CurrentStarSystem;
+		if (IsExploredOrHasQuests && currentStarSystem == Data)
 		{
 			m_ShipMarkerVisual.SetActive(value: true);
 			m_UnvisitedAndNoPathVisual.SetActive(value: false);

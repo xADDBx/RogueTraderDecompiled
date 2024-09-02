@@ -44,6 +44,10 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		public float Time;
 
 		public bool IsForce;
+
+		public bool FirstAnimationStarted;
+
+		public bool SideStepAbilityIsOffHand;
 	}
 
 	[Serializable]
@@ -182,6 +186,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
 		handle.HasCrossfadePriority = true;
+		handle.SkipFirstTick = false;
 	}
 
 	private void UpdateAnimations(UnitAnimationActionHandle handle)
@@ -198,8 +203,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			{
 				data.ActionFinished = true;
 				data.ActionStarted = false;
-				ChangeState(handle, AnimationState.Idle);
-				StartAction(handle);
+				ChangeStateAndStartAction(handle, AnimationState.Idle);
 				handle.Manager.HitAnimationIsActive = false;
 				break;
 			}
@@ -213,8 +217,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			}
 			data.ActionFinished = true;
 			data.ActionStarted = false;
-			ChangeState(handle, AnimationState.Idle);
-			StartAction(handle);
+			ChangeStateAndStartAction(handle, AnimationState.Idle);
 			break;
 		case AnimationState.SideStepOut:
 			if (!data.ActionStarted)
@@ -240,10 +243,8 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			{
 				return;
 			}
-			ChangeState(handle, AnimationState.Idle);
 			handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
 			handle.Manager.AbilityIsSpell = false;
-			StartAction(handle);
 			break;
 		case AnimationState.SideStepIn:
 			handle.Manager.BlockAttackAnimation = true;
@@ -274,8 +275,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 				return;
 			}
 			data.ActionFinished = true;
-			ChangeState(handle, AnimationState.SideStepOut);
-			StartAction(handle);
+			ChangeStateAndStartAction(handle, AnimationState.SideStepOut);
 			break;
 		case AnimationState.ForceExitingTheCover:
 			handle.Manager.BlockAttackAnimation = true;
@@ -302,32 +302,27 @@ public class UnitAnimationActionCover : UnitAnimationAction
 	public override void OnUpdate(UnitAnimationActionHandle handle, float deltaTime)
 	{
 		Data data = (Data)handle.ActionData;
-		if (data != null)
+		if (data != null && !handle.IsReleased)
 		{
 			data.CoverType = handle.Manager.CoverType;
-			if (((data.CoverType == LosCalculations.CoverType.Half && handle.Manager.InCover && data.CurrentAnimationState != AnimationState.Idle) || (data.CoverType == LosCalculations.CoverType.Full && handle.Manager.InCover && data.CurrentAnimationState == AnimationState.SideStepIn)) && data.ActionFinished)
+			if (data.CoverType == LosCalculations.CoverType.Half && handle.Manager.InCover && data.CurrentAnimationState != AnimationState.Idle && data.ActionFinished)
 			{
-				ChangeState(handle, AnimationState.ForceEnteringTheCover);
+				ChangeStateAndStartAction(handle, AnimationState.ForceEnteringTheCover);
 			}
 			if (!handle.Manager.InCover && data.CurrentAnimationState == AnimationState.Idle)
 			{
-				ChangeState(handle, AnimationState.ForceExitingTheCover);
+				ChangeStateAndStartAction(handle, AnimationState.ForceExitingTheCover);
 			}
-			if (data.CoverType == LosCalculations.CoverType.Full && !handle.Manager.InCover && !handle.Manager.NeedStepOut && data.CurrentAnimationState == AnimationState.Idle)
-			{
-				handle.Manager.StepOutDirectionAnimationType = StepOutDirectionAnimationType.None;
-				handle.Manager.AbilityIsSpell = false;
-				handle.Release();
-			}
-			else
-			{
-				UpdateAnimations(handle);
-			}
+			UpdateAnimations(handle);
 		}
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
 	{
+		if ((Data)handle.ActionData != null && handle.IsInterrupted && handle.ActiveAnimation != null)
+		{
+			handle.ActiveAnimation.TransitionOut = TransitionOut;
+		}
 	}
 
 	public void ForceExit(UnitAnimationActionHandle handle)
@@ -337,7 +332,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		{
 			data.IsForce = true;
 		}
-		ChangeState(handle, AnimationState.ForceExitingTheCover);
+		ChangeStateAndStartAction(handle, AnimationState.ForceExitingTheCover);
 	}
 
 	public bool IsCoverForceExitingFinished(UnitAnimationActionHandle handle)
@@ -345,7 +340,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		return ((Data)handle.ActionData)?.WaitForceExit ?? false;
 	}
 
-	private void ChangeState(UnitAnimationActionHandle handle, AnimationState state)
+	private void ChangeStateAndStartAction(UnitAnimationActionHandle handle, AnimationState state)
 	{
 		Data data = (Data)handle.ActionData;
 		if (data != null)
@@ -370,11 +365,23 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			handle.Release();
 			return;
 		}
-		handle.StartClip(animationClip, (data.CurrentAnimationState == AnimationState.SideStepOut) ? ClipDurationType.Oneshot : ClipDurationType.Endless);
-		if (data.CurrentAnimationState == AnimationState.Idle && handle.ActiveAnimation != null)
+		AnimationState currentAnimationState = data.CurrentAnimationState;
+		bool flag = currentAnimationState == AnimationState.ForceExitingTheCover || currentAnimationState == AnimationState.SideStepOut;
+		handle.StartClip(animationClip, flag ? ClipDurationType.Oneshot : ClipDurationType.Endless);
+		if (handle.ActiveAnimation != null)
 		{
-			handle.ActiveAnimation.TransitionIn = 0f;
-			handle.ActiveAnimation.TransitionOut = 0f;
+			if (handle.Manager.HitAnimationIsActive)
+			{
+				handle.ActiveAnimation.TransitionIn = UnitAnimationActionHit.CrossfadeToCoverTime;
+			}
+			else if (data.FirstAnimationStarted)
+			{
+				handle.ActiveAnimation.TransitionIn = 0f;
+			}
+			if (!flag)
+			{
+				handle.ActiveAnimation.ChangeTransitionTime(0f);
+			}
 		}
 		if (Game.CombatAnimSpeedUp > 1f && data.CurrentAnimationState != AnimationState.Idle)
 		{
@@ -383,6 +390,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		data.ActionFinished = false;
 		data.ActionStarted = true;
 		data.Time = handle.GetTime() + animationClip.Length;
+		data.FirstAnimationStarted = true;
 		handle.ActionData = data;
 	}
 
@@ -391,7 +399,8 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		handle.ActionData = new Data
 		{
 			CurrentAnimationState = AnimationState.SideStepIn,
-			CoverType = handle.Manager.CoverType
+			CoverType = handle.Manager.CoverType,
+			SideStepAbilityIsOffHand = (handle.Manager.View.Data?.Commands?.Current is UnitUseAbility unitUseAbility && unitUseAbility.Ability.Caster?.GetOptional<UnitPartMechadendrites>() == null && unitUseAbility.Ability.Weapon != handle.Manager.View.Data.GetBodyOptional()?.PrimaryHand?.MaybeWeapon)
 		};
 	}
 
@@ -413,17 +422,10 @@ public class UnitAnimationActionCover : UnitAnimationAction
 
 	private AnimationClipWrapper GetAnimationClip(UnitAnimationActionHandle handle, AnimationState animState)
 	{
-		bool isOffhand = false;
-		if (handle.Manager.View.Data?.Commands?.Current is UnitUseAbility unitUseAbility && handle.Manager.View.Data.GetBodyOptional() != null)
-		{
-			isOffhand = unitUseAbility.Ability.Caster?.GetOptional<UnitPartMechadendrites>() == null && unitUseAbility.Ability.Weapon != handle.Manager.View.Data.GetBodyOptional()?.PrimaryHand?.MaybeWeapon;
-		}
-		WeaponStyleSettings weaponStyleSettings = ((!isOffhand) ? WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle && x.IsOffHand == isOffhand) : WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveOffHandWeaponStyle && x.IsOffHand == isOffhand));
-		if (weaponStyleSettings == null)
-		{
-			weaponStyleSettings = WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
-		}
 		Data data = (Data)handle.ActionData;
+		bool isOffhand = data?.SideStepAbilityIsOffHand ?? false;
+		WeaponAnimationStyle weaponStyle = (isOffhand ? handle.Manager.ActiveOffHandWeaponStyle : handle.Manager.ActiveMainHandWeaponStyle);
+		WeaponStyleSettings weaponStyleSettings = WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == weaponStyle && x.IsOffHand == isOffhand) ?? WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
 		if (handle.Manager.CoverType == LosCalculations.CoverType.Full && handle.Manager.AbilityIsSpell)
 		{
 			AnimationClipWrapper animationClipWrapper = null;

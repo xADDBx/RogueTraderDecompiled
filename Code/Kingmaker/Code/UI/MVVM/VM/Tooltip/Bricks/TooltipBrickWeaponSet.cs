@@ -5,18 +5,20 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 
 public class TooltipBrickWeaponSet : ITooltipBrick
 {
-	private HandSlot m_HandSlot;
-
-	private bool m_IsPrimary;
+	private readonly WeaponSlot m_WeaponSlot;
 
 	public TooltipBrickWeaponSet(HandSlot handSlot, bool isPrimary)
 	{
-		m_HandSlot = handSlot;
-		m_IsPrimary = isPrimary;
+		m_WeaponSlot = (isPrimary ? handSlot.HandsEquipmentSet.PrimaryHand : handSlot.HandsEquipmentSet.SecondaryHand);
+	}
+
+	public TooltipBrickWeaponSet(WeaponSlot weapon)
+	{
+		m_WeaponSlot = weapon;
 	}
 
 	public TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickWeaponSetVM(m_HandSlot, m_IsPrimary);
+		return new TooltipBrickWeaponSetVM(m_WeaponSlot);
 	}
 }

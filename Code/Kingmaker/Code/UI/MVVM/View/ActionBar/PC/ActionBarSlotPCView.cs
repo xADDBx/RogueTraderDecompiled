@@ -4,8 +4,10 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Networking;
+using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.UnitSettings;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -111,7 +113,11 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 		}
 		if (!Game.Instance.SelectionCharacter.IsSingleSelected.Value)
 		{
-			PhotonManager.Ping.CheckPingCoop(delegate
+			if (PhotonManager.NetGame.CurrentState != NetGame.State.Playing || base.ViewModel.MechanicActionBarSlot.Unit.IsMyNetRole())
+			{
+				return;
+			}
+			PhotonManager.Ping.PressPing(delegate
 			{
 				if (!string.IsNullOrWhiteSpace(base.ViewModel.MechanicActionBarSlot.KeyName))
 				{

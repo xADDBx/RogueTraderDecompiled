@@ -33,6 +33,9 @@ public class BlueprintBrain : BlueprintBrainBase
 	[Tooltip("If true, unit will use scatter shots more carefully")]
 	public bool IsCarefulShooter;
 
+	[Tooltip("If true, will cast abilities even if he would get AoO for it")]
+	public bool IgnoreAoOForCasting;
+
 	[Tooltip("If true, unit will try to escape from AoO threat before other actions")]
 	public bool ResponseToAoOThreat;
 

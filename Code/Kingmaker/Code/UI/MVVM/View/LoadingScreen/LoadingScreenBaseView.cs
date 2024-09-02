@@ -341,6 +341,7 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 
 	private void Show()
 	{
+		m_GlitchAnimator.ClearGlitch();
 		m_ProgressBarContainer.alpha = 1f;
 		m_ProgressPercentContainer.alpha = 1f;
 		KillWaitUserInputAnimation();

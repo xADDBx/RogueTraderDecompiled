@@ -55,6 +55,9 @@ public static class CharGenAppearanceComponentFactory
 	{
 		switch (componentType)
 		{
+		case CharGenAppearancePageComponent.Gender:
+			UpdateGenderSelectorVM(ctx, component as TextureSequentialSelectorVM);
+			break;
 		case CharGenAppearancePageComponent.FaceType:
 			UpdateFaceSelectorVM(ctx, component as SlideSequentialSelectorVM);
 			break;
@@ -85,6 +88,9 @@ public static class CharGenAppearanceComponentFactory
 		case CharGenAppearancePageComponent.FacePaint:
 			UpdateFacePaintSelector(ctx, component as SlideTextureCombinedSelectorVM);
 			break;
+		case CharGenAppearancePageComponent.ScarsType:
+			UpdateScarsSelectorVM(ctx, component as SlideSequentialSelectorVM);
+			break;
 		case CharGenAppearancePageComponent.Tattoo:
 			UpdateTattooSelector(ctx, component as TextureSelectorTabsVM);
 			break;
@@ -100,7 +106,6 @@ public static class CharGenAppearanceComponentFactory
 		case CharGenAppearancePageComponent.NavigatorMutations:
 			UpdateNavigatorMutationsList(ctx, component as TextureSelectorVM);
 			break;
-		case CharGenAppearancePageComponent.ScarsType:
 		case CharGenAppearancePageComponent.VoiceType:
 		case CharGenAppearancePageComponent.ServoSkullType:
 			break;
@@ -122,6 +127,13 @@ public static class CharGenAppearanceComponentFactory
 		textureSequentialSelectorVM.Type = CharGenAppearancePageComponent.Gender;
 		textureSequentialSelectorVM.SetTitle(UIStrings.Instance.CharGen.BodyType);
 		return textureSequentialSelectorVM;
+	}
+
+	private static void UpdateGenderSelectorVM(CharGenContext ctx, TextureSequentialSelectorVM selectorVM)
+	{
+		TextureSequentialEntity current;
+		List<TextureSequentialEntity> genderList = GetGenderList(ctx, out current);
+		selectorVM.SetValues(genderList, current);
 	}
 
 	private static List<TextureSequentialEntity> GetGenderList(CharGenContext ctx, out TextureSequentialEntity current)
@@ -478,6 +490,13 @@ public static class CharGenAppearanceComponentFactory
 		slideSequentialSelectorVM.Type = CharGenAppearancePageComponent.ScarsType;
 		slideSequentialSelectorVM.SetTitle(UIStrings.Instance.CharGen.Scars);
 		return slideSequentialSelectorVM;
+	}
+
+	private static void UpdateScarsSelectorVM(CharGenContext ctx, SlideSequentialSelectorVM selectorVM)
+	{
+		StringSequentialEntity current;
+		List<StringSequentialEntity> scarsList = GetScarsList(ctx, out current);
+		selectorVM.SetValues(scarsList, current);
 	}
 
 	private static List<StringSequentialEntity> GetScarsList(CharGenContext ctx, out StringSequentialEntity current)

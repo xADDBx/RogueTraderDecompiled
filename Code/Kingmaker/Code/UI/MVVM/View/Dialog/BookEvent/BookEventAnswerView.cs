@@ -8,7 +8,9 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Networking;
+using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Player;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Mechanics.Conditions;
@@ -126,17 +128,23 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 
 	public void Confirm()
 	{
-		if (!m_BookEventView.IsShowHistory.Value && !PhotonManager.Ping.CheckPingCoop(delegate
+		if (m_BookEventView.IsShowHistory.Value)
 		{
-			PhotonManager.Ping.PingDialogAnswerVote(base.ViewModel.Answer.Value.AssetGuid);
-		}))
-		{
-			UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
-			DelayedInvoker.InvokeInFrames(delegate
-			{
-				base.ViewModel?.OnChooseAnswer();
-			}, 1);
+			return;
 		}
+		if (PhotonManager.NetGame.CurrentState == NetGame.State.Playing && !UINetUtility.IsControlMainCharacter())
+		{
+			PhotonManager.Ping.PressPing(delegate
+			{
+				PhotonManager.Ping.PingDialogAnswerVote(base.ViewModel.Answer.Value.AssetGuid);
+			});
+			return;
+		}
+		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			base.ViewModel?.OnChooseAnswer();
+		}, 1);
 	}
 
 	public virtual void SetFocus(bool value)

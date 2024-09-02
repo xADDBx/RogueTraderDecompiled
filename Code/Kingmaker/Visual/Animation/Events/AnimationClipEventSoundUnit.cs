@@ -68,6 +68,10 @@ public class AnimationClipEventSoundUnit : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventSoundUnit()
+	{
+	}
+
 	public AnimationClipEventSoundUnit(float time)
 		: this(time, SoundType.None)
 	{

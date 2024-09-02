@@ -15,10 +15,13 @@ using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.View;
 using Owlcat.QA.Validation;
 using UnityEngine;
 
@@ -32,24 +35,14 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public TargetType TargetType;
 
-	public bool SpellResistance;
-
 	public bool AffectEnemies;
 
 	public bool AggroEnemies = true;
 
 	public bool AffectDead;
 
-	public bool IgnoreSleepingUnits;
-
-	[Tooltip("Units in area can only use weapon abilities")]
-	public bool HasConcussionEffect;
-
-	[Tooltip("Units in area can't use weapon abilities")]
-	public bool HasCantAttackEffect;
-
-	[Tooltip("Units in area can't use psychic powers")]
-	public bool HasInertWarpEffect;
+	[SerializeField]
+	private AreaEffectRestrictions m_AreaEffectRestrictions = AreaEffectRestrictions.None;
 
 	public bool IsAllArea;
 
@@ -62,6 +55,12 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	public CombatHudMaterialRemapAsset PersistentAreaMaterialRemap;
 
 	public bool IsStrategistAbility;
+
+	public bool NeedsTooltip;
+
+	[SerializeField]
+	[ShowIf("NeedsTooltip")]
+	private BlueprintBuffReference m_BlueprintBuffForTooltip;
 
 	[ShowIf("CanChooseStrategistTacticsAbilityType")]
 	public StrategistTacticsAreaEffectType TacticsAreaEffectType;
@@ -80,6 +79,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public PrefabLink FxOnEndAreaEffect;
 
+	public bool ScrollCameraToAreaEffectWhenEnded;
+
 	[SerializeField]
 	private BlueprintAbilityFXSettings.Reference m_FXSettings;
 
@@ -88,6 +89,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	private BlueprintAbilityAreaEffectGroupReference[] m_AreaEffectGroups;
 
 	private AreaEffectClusterComponent m_ClusterComponent;
+
+	public BlueprintBuff BlueprintBuffForTooltip => m_BlueprintBuffForTooltip?.Get();
 
 	[NotNull]
 	public AoEPattern Pattern
@@ -122,9 +125,17 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public override bool AllowContextActionsOnly => !m_AllowNonContextActions;
 
+	public AreaEffectRestrictions AreaEffectRestrictions => m_AreaEffectRestrictions;
+
+	public bool HasConcussionEffect => HasFlag(AreaEffectRestrictions.CanOnlyUseWeaponAbilities);
+
+	public bool HasCantAttackEffect => HasFlag(AreaEffectRestrictions.CannotUseWeaponAbilities);
+
+	public bool HasInertWarpEffect => HasFlag(AreaEffectRestrictions.CannotUsePsychicPowers);
+
 	private bool SearchedForCusterComponent { get; set; }
 
-	public AreaEffectClusterComponent ClusterComponent
+	private AreaEffectClusterComponent ClusterComponent
 	{
 		get
 		{
@@ -164,8 +175,31 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 		return base.ComponentsArray;
 	}
 
+	private bool IsUnitInAnotherAreaOfCluster(BaseUnitEntity unit, AreaEffectEntity areaEffect)
+	{
+		if (ClusterComponent != null)
+		{
+			return unit.IsCurrentlyInAnotherClusterArea(ClusterComponent.ClusterLogicBlueprint, areaEffect);
+		}
+		return false;
+	}
+
+	private void MarkUnitEnteredInAreaCluster(BaseUnitEntity unit, AreaEffectEntity areaEffect)
+	{
+		if (ClusterComponent != null)
+		{
+			PartUnitInAreaEffectCluster obj = unit.GetPartUnitInAreaEffectClusterOptional() ?? unit.GetOrCreate<PartUnitInAreaEffectCluster>();
+			obj.AddClusterKey(ClusterComponent.ClusterLogicBlueprint);
+			obj.AddEnteringAreaEffectToList(ClusterComponent.ClusterLogicBlueprint, areaEffect);
+		}
+	}
+
 	public void HandleUnitEnter(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
+		if (IsUnitInAnotherAreaOfCluster(unit, areaEffect))
+		{
+			return;
+		}
 		BlueprintComponent[] array = TryOverrideComponentsArray();
 		foreach (BlueprintComponent blueprintComponent in array)
 		{
@@ -178,6 +212,7 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 				PFLog.Default.ExceptionWithReport(exception, null);
 			}
 		}
+		MarkUnitEnteredInAreaCluster(unit, areaEffect);
 	}
 
 	public void HandleUnitExit(MechanicsContext context, AreaEffectEntity areaEffect, IBaseUnitEntity unit)
@@ -187,6 +222,10 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleUnitExit(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
+		if (IsUnitInAnotherAreaOfCluster(unit, areaEffect))
+		{
+			return;
+		}
 		BlueprintComponent[] array = TryOverrideComponentsArray();
 		foreach (BlueprintComponent blueprintComponent in array)
 		{
@@ -267,6 +306,10 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public void HandleEnd(MechanicsContext context, AreaEffectEntity areaEffect)
 	{
+		if (ScrollCameraToAreaEffectWhenEnded)
+		{
+			((ICameraFocusTarget)areaEffect).RetainCamera();
+		}
 		BlueprintComponent[] array = TryOverrideComponentsArray();
 		foreach (BlueprintComponent blueprintComponent in array)
 		{
@@ -279,6 +322,11 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 				PFLog.Default.ExceptionWithReport(exception, null);
 			}
 		}
+	}
+
+	private bool HasFlag(AreaEffectRestrictions flag)
+	{
+		return (AreaEffectRestrictions & flag) != 0;
 	}
 
 	public OrientedPatternData GetOrientedPattern(CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)

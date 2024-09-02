@@ -1,7 +1,9 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.Enums;
 using Kingmaker.Mechanics.Damage;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -22,11 +24,15 @@ public class AddDamageTypeImmunity : MechanicEntityFactComponentDelegate, ITarge
 	[EnumFlagsAsButtons]
 	public DamageTypeMask Types;
 
+	[SerializeField]
+	private ActionList m_ActionsOnImmunity;
+
 	public void OnEventAboutToTrigger(RuleCalculateDamage evt)
 	{
 		if (Types.Contains(evt.DamageType))
 		{
 			evt.ValueModifiers.Add(ModifierType.PctMul_Extra, 0, base.Fact, ModifierDescriptor.Immunity);
+			base.Fact.RunActionInContext(m_ActionsOnImmunity, base.Owner.ToITargetWrapper());
 		}
 	}
 

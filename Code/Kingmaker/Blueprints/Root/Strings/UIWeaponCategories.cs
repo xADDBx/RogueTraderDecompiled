@@ -39,6 +39,10 @@ public class UIWeaponCategories
 
 	public LocalizedString WeaponFamilyForce;
 
+	public LocalizedString WeaponFamilyBlade;
+
+	public LocalizedString WeaponFamilyChainSaw;
+
 	public LocalizedString WeaponHoldingTypeOneHanded;
 
 	public LocalizedString WeaponHoldingTypeTwoHanded;
@@ -111,6 +115,8 @@ public class UIWeaponCategories
 			WeaponFamily.Power => WeaponFamilyPower, 
 			WeaponFamily.Primitive => WeaponFamilyPrimitive, 
 			WeaponFamily.Force => WeaponFamilyForce, 
+			WeaponFamily.Blade => WeaponFamilyBlade, 
+			WeaponFamily.ChainSaw => WeaponFamilyChainSaw, 
 			_ => string.Empty, 
 		};
 	}

@@ -14,7 +14,7 @@ internal class StartEtudeForced : PlayerUpgraderOnlyAction
 		BlueprintEtude blueprintEtude = Etude.Get();
 		if ((bool)blueprintEtude && Game.Instance.Player.EtudesSystem.EtudeIsNotStarted(blueprintEtude))
 		{
-			Game.Instance.Player.EtudesSystem.StartEtude(blueprintEtude);
+			Game.Instance.Player.EtudesSystem.StartEtude(blueprintEtude, "player upgrader " + base.AssetGuid);
 		}
 	}
 

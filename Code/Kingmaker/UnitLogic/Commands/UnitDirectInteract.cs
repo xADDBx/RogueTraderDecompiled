@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Kingmaker.UnitLogic.Commands.Base;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 
 namespace Kingmaker.UnitLogic.Commands;
 
@@ -33,7 +33,6 @@ public sealed class UnitDirectInteract : UnitCommand<UnitDirectInteractParams>
 		return new UnitDirectInteractParams(interaction)
 		{
 			IsSynchronized = true,
-			CanBeAccelerated = true,
 			NeedLoS = false
 		};
 	}

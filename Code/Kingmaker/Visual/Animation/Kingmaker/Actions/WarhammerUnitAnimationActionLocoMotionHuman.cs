@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Code.Visual.Animation;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
 namespace Kingmaker.Visual.Animation.Kingmaker.Actions;
@@ -92,6 +91,18 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 
 		public float InSpeed;
 
+		public bool UseCurves
+		{
+			get
+			{
+				if (OutSpeed != 0f)
+				{
+					return OutDistance <= 0f;
+				}
+				return true;
+			}
+		}
+
 		public List<AnimationClipWrapper> GetAllWrappers()
 		{
 			return new List<AnimationClipWrapper> { In, Out, Clip };
@@ -108,12 +119,38 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 
 		public float StartAnimationTime;
 
-		public MovementState State;
+		public float OutDistance;
+
+		public MovementState PreviousState;
+
+		private MovementState m_StateCurrent;
 
 		public WeaponAnimationStyle MainHandWeaponStyle { get; set; }
 
 		public WeaponAnimationStyle OffHandWeaponStyle { get; set; }
+
+		public MovementState State
+		{
+			get
+			{
+				return m_StateCurrent;
+			}
+			set
+			{
+				if (m_StateCurrent != value)
+				{
+					PreviousState = m_StateCurrent;
+					m_StateCurrent = value;
+				}
+			}
+		}
 	}
+
+	[SerializeField]
+	private float m_CrossfadeToRun;
+
+	[SerializeField]
+	private float m_CrossfadeToOut;
 
 	[SerializeField]
 	private bool m_ForDollRoom;
@@ -129,6 +166,30 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 	public List<WeaponStyleLayer> CombatWalk;
 
 	public AvatarMask OffHandMask;
+
+	private float CrossfadeToRun
+	{
+		get
+		{
+			if (m_CrossfadeToRun.Approximately(0f))
+			{
+				return TransitionIn;
+			}
+			return m_CrossfadeToRun;
+		}
+	}
+
+	private float CrossfadeToOut
+	{
+		get
+		{
+			if (m_CrossfadeToRun.Approximately(0f))
+			{
+				return TransitionIn;
+			}
+			return m_CrossfadeToOut;
+		}
+	}
 
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers
 	{
@@ -168,6 +229,11 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		}
 	}
 
+	private bool IsGamepadMovement(UnitAnimationActionHandle handle)
+	{
+		return handle.Unit.Or(null)?.MovementAgent is UnitMovementAgentContinuous;
+	}
+
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
 	{
 	}
@@ -175,6 +241,8 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
 		ActionData actionData2 = (ActionData)(handle.ActionData = new ActionData());
+		handle.SkipFirstTick = false;
+		handle.SkipFirstTickOnHandle = false;
 		actionData2.State = MovementState.Idle;
 		UpdateCurrentClips(handle);
 	}
@@ -190,8 +258,11 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		actionData.OffHandWeaponStyle = handle.Manager.ActiveOffHandWeaponStyle;
 		actionData.InCombat = handle.Manager.IsInCombat;
 		actionData.WalkSpeedType = handle.Manager.WalkSpeedType;
-		AnimationClipWrapper animationClipWrapper = SelectClip(handle, forOffhand: true);
-		AnimationClipWrapper animationClipWrapper2 = SelectClip(handle, forOffhand: false);
+		CurrentWalkingStyleLayer walkingStyleLair;
+		AnimationClipWrapper animationClipWrapper = SelectClip(handle, forOffhand: true, out walkingStyleLair);
+		CurrentWalkingStyleLayer walkingStyleLair2;
+		AnimationClipWrapper animationClipWrapper2 = SelectClip(handle, forOffhand: false, out walkingStyleLair2);
+		AnimationBase activeAnimation = handle.ActiveAnimation;
 		if ((bool)animationClipWrapper)
 		{
 			if ((bool)animationClipWrapper.AnimationClip)
@@ -212,11 +283,52 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		{
 			UberDebug.LogError(animationClipWrapper2, "Main locomotion animation clip is not set, object {0}", animationClipWrapper2.name);
 		}
-		if (actionData.State == MovementState.Idle)
-		{
-			handle.ActiveAnimation?.SetTime(PFStatefulRandom.Visuals.AnimationIdle.value * animationClipWrapper2.Length);
-		}
 		handle.ActiveAnimation?.SetSpeed(1f);
+		switch (actionData.State)
+		{
+		case MovementState.In:
+			if (handle.ActiveAnimation != null && walkingStyleLair2 != null && walkingStyleLair2.In != null)
+			{
+				actionData.StartAnimationTime = handle.GetTime();
+				actionData.EndAnimationTime = handle.GetTime() + walkingStyleLair2.In.Length;
+			}
+			break;
+		case MovementState.Run:
+			if (handle.ActiveAnimation != null && activeAnimation != null && actionData.PreviousState == MovementState.In)
+			{
+				activeAnimation.TransitionOut = CrossfadeToRun;
+				handle.ActiveAnimation.TransitionIn = CrossfadeToRun;
+			}
+			break;
+		case MovementState.Out:
+			if (handle.ActiveAnimation == null)
+			{
+				break;
+			}
+			if (walkingStyleLair2 != null && walkingStyleLair2.Out != null)
+			{
+				float num = actionData.OutDistance / walkingStyleLair2.OutSpeed;
+				actionData.StartAnimationTime = handle.GetTime();
+				actionData.EndAnimationTime = handle.GetTime() + num;
+				if (walkingStyleLair2.OutSpeed > 0f && actionData.OutDistance > walkingStyleLair2.OutDistance / 3f)
+				{
+					handle.ActiveAnimation.SetSpeed(walkingStyleLair2.Out.Length / num);
+				}
+			}
+			if (activeAnimation != null)
+			{
+				activeAnimation.TransitionOut = CrossfadeToOut;
+				handle.ActiveAnimation.TransitionIn = CrossfadeToOut * handle.ActiveAnimation.GetSpeed();
+			}
+			handle.ActiveAnimation.ChangeTransitionTime(TransitionOut * handle.ActiveAnimation.GetSpeed());
+			break;
+		case MovementState.Idle:
+			if ((bool)animationClipWrapper2.AnimationClip && activeAnimation == null)
+			{
+				handle.ActiveAnimation?.SetTime(PFStatefulRandom.Visuals.AnimationIdle.value * animationClipWrapper2.Length);
+			}
+			break;
+		}
 	}
 
 	public override void OnUpdate(UnitAnimationActionHandle handle, float deltaTime)
@@ -228,90 +340,64 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			return;
 		}
 		bool flag = false;
-		bool flag2 = handle.Unit?.MovementAgent is UnitMovementAgentContinuous;
 		WeaponAnimationStyle activeMainHandWeaponStyle = handle.Manager.ActiveMainHandWeaponStyle;
 		MovementStyleLayer movementStyleLayer = NonCombatWalk;
-		foreach (WeaponStyleLayer item in CombatWalk)
+		if (actionData.InCombat)
 		{
-			if (item.Style == activeMainHandWeaponStyle)
+			foreach (WeaponStyleLayer item in CombatWalk)
 			{
-				movementStyleLayer = item.MovementStyleLayer;
-				break;
+				if (item.Style == activeMainHandWeaponStyle)
+				{
+					movementStyleLayer = item.MovementStyleLayer;
+					break;
+				}
 			}
 		}
 		CurrentWalkingStyleLayer currentWalkingStyleLayer = SelectWalkingStyleLayer(movementStyleLayer, actionData.WalkSpeedType);
-		if (currentWalkingStyleLayer != null)
-		{
-			switch (actionData.State)
-			{
-			case MovementState.In:
-				if (currentWalkingStyleLayer.OutSpeed != 0f && currentWalkingStyleLayer.OutDistance > 0f)
-				{
-					handle.Manager.NewSpeed = currentWalkingStyleLayer.InSpeed;
-				}
-				else
-				{
-					handle.Manager.NewSpeed = currentWalkingStyleLayer.InCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
-				}
-				break;
-			case MovementState.Out:
-				if (currentWalkingStyleLayer.OutSpeed != 0f && currentWalkingStyleLayer.OutDistance > 0f)
-				{
-					handle.Manager.NewSpeed = currentWalkingStyleLayer.OutSpeed;
-				}
-				else
-				{
-					handle.Manager.NewSpeed = currentWalkingStyleLayer.OutCurve.Evaluate((handle.GetTime() - actionData.StartAnimationTime) / (actionData.EndAnimationTime - actionData.StartAnimationTime)) * currentWalkingStyleLayer.Speed;
-				}
-				break;
-			}
-		}
-		if (actionData.State == MovementState.In && handle.GetTime() > actionData.EndAnimationTime)
+		if (actionData.State == MovementState.In && handle.GetTime() > actionData.EndAnimationTime - CrossfadeToRun - 0.001f)
 		{
 			actionData.State = MovementState.Run;
 			flag = true;
 		}
-		if (actionData.State == MovementState.Out && handle.GetTime() > actionData.EndAnimationTime)
+		if (actionData.State == MovementState.Out && handle.GetTime() > actionData.EndAnimationTime - deltaTime - 0.001f)
 		{
 			actionData.State = MovementState.Idle;
 			flag = true;
 		}
-		if (actionData.State == MovementState.Out && flag2)
-		{
-			actionData.State = MovementState.Idle;
-			flag = true;
-		}
-		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Run && handle.Unit != null && !flag2)
-		{
-			ForcedPath path = handle.Unit.AgentASP.Path;
-			if (path != null && path.vectorPath?.Count > 0 && (handle.Unit.AgentASP.Path.vectorPath.Last() - handle.Unit.gameObject.transform.position).magnitude < currentWalkingStyleLayer.OutDistance)
-			{
-				actionData.State = MovementState.Out;
-				flag = true;
-			}
-		}
+		bool flag2 = IsGamepadMovement(handle);
 		if (actionData.State == MovementState.Run && handle.Unit != null && handle.Unit.AgentASP.IsInNodeLinkQueue && !flag2)
 		{
 			actionData.State = MovementState.Out;
+			actionData.OutDistance = 0f;
 			flag = true;
 		}
-		if (actionData.State == MovementState.Idle && handle.Unit != null && !handle.Unit.AgentASP.IsInNodeLinkQueue)
+		if (actionData.State == MovementState.Idle && !flag && handle.Unit != null && !handle.Unit.AgentASP.IsInNodeLinkQueue)
 		{
 			AbstractUnitEntity data = handle.Unit.Data;
-			if (data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted))
+			if (data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted) && !handle.Manager.IsGoingCover && (actionData.EndAnimationTime.Approximately(0f) || handle.GetTime() > actionData.EndAnimationTime))
 			{
-				actionData.State = MovementState.In;
+				actionData.State = MovementState.Run;
+				if (!flag2 && currentWalkingStyleLayer != null && currentWalkingStyleLayer.In != null)
+				{
+					float num = (currentWalkingStyleLayer.In.Length - CrossfadeToRun) * currentWalkingStyleLayer.InSpeed;
+					if (handle.Unit.AgentASP.RemainingDistance > num + currentWalkingStyleLayer.OutDistance)
+					{
+						actionData.State = MovementState.In;
+					}
+				}
 				flag = true;
 			}
 		}
-		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Out && handle.Unit != null && !flag2)
+		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Out && handle.Unit != null && !flag2 && handle.Unit.AgentASP.RemainingDistance > currentWalkingStyleLayer.OutDistance + 0.5f)
 		{
-			ForcedPath path2 = handle.Unit.AgentASP.Path;
-			if (path2 != null && path2.vectorPath?.Count > 0 && (handle.Unit.AgentASP.Path.vectorPath.Last() - handle.Unit.gameObject.transform.position).magnitude > currentWalkingStyleLayer.OutDistance + 0.5f)
-			{
-				actionData.State = MovementState.Run;
-				flag = true;
-			}
+			actionData.State = MovementState.Run;
+			flag = true;
+		}
+		if (currentWalkingStyleLayer != null && actionData.State == MovementState.Run && handle.Unit != null && !flag2 && handle.Unit.AgentASP.RemainingDistance < currentWalkingStyleLayer.OutDistance && handle.Unit.AgentASP.RemainingDistance > currentWalkingStyleLayer.OutDistance / 3f && handle.Unit.AgentASP.AngleToNextWaypoint < 5f)
+		{
+			actionData.State = MovementState.Out;
+			actionData.OutDistance = handle.Unit.AgentASP.RemainingDistance + currentWalkingStyleLayer.OutSpeed * deltaTime;
+			flag = true;
 		}
 		if (currentWalkingStyleLayer != null && actionData.State != MovementState.Idle && handle.Unit != null && !UnitAnimationManager.HasMovingCommand(handle.Unit.Data) && !handle.Unit.MovementAgent.IsReallyMoving)
 		{
@@ -335,21 +421,50 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			handle.ActiveAnimation?.StartTransitionOut();
 			handle.ActiveAnimation?.StopEvents();
 		}
-		else if (actionData.State != MovementState.Idle)
+		UpdateMovementSpeed(actionData, handle, currentWalkingStyleLayer);
+	}
+
+	private static void UpdateMovementSpeed(ActionData data, UnitAnimationActionHandle handle, CurrentWalkingStyleLayer walkingStyleLayer)
+	{
+		if (walkingStyleLayer != null)
 		{
-			handle.ActiveAnimation?.SetSpeed(1f);
-		}
-		if (actionData.State == MovementState.Out && currentWalkingStyleLayer != null && currentWalkingStyleLayer.Out != null && currentWalkingStyleLayer.OutSpeed > 0f && currentWalkingStyleLayer.OutDistance > 0f)
-		{
-			handle.ActiveAnimation?.SetSpeed(currentWalkingStyleLayer.Out.Length / (currentWalkingStyleLayer.OutDistance / currentWalkingStyleLayer.OutSpeed));
+			handle.Manager.NewSpeed = GetMovementSpeed(data, handle, walkingStyleLayer);
 		}
 	}
 
-	private AnimationClipWrapper SelectClip(UnitAnimationActionHandle handle, bool forOffhand)
+	private static float GetMovementSpeed(ActionData data, UnitAnimationActionHandle handle, CurrentWalkingStyleLayer walkingStyleLayer)
+	{
+		switch (data.State)
+		{
+		case MovementState.In:
+			if (walkingStyleLayer.UseCurves)
+			{
+				return GetSpeedFromCurve(walkingStyleLayer.InCurve);
+			}
+			return walkingStyleLayer.InSpeed;
+		case MovementState.Out:
+			if (walkingStyleLayer.UseCurves)
+			{
+				return GetSpeedFromCurve(walkingStyleLayer.OutCurve);
+			}
+			return walkingStyleLayer.OutSpeed;
+		case MovementState.Run:
+			return walkingStyleLayer.Speed;
+		default:
+			return 0f;
+		}
+		float GetSpeedFromCurve(AnimationCurve curve)
+		{
+			return curve.Evaluate((handle.GetTime() - data.StartAnimationTime) / (data.EndAnimationTime - data.StartAnimationTime)) * walkingStyleLayer.Speed;
+		}
+	}
+
+	private AnimationClipWrapper SelectClip(UnitAnimationActionHandle handle, bool forOffhand, out CurrentWalkingStyleLayer walkingStyleLair)
 	{
 		ActionData actionData = (ActionData)handle.ActionData;
 		if (actionData == null)
 		{
+			walkingStyleLair = null;
 			return NonCombatIdle;
 		}
 		WeaponAnimationStyle style = (forOffhand ? actionData.OffHandWeaponStyle : actionData.MainHandWeaponStyle);
@@ -358,46 +473,39 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			WeaponStyleIdleLayer weaponStyleIdleLayer = CombatIdle.FirstItem((WeaponStyleIdleLayer s) => s.Style == handle.Manager.ActiveMainHandWeaponStyle && !s.IsOffHand);
 			if (weaponStyleIdleLayer != null && weaponStyleIdleLayer.NoOffHand)
 			{
+				walkingStyleLair = null;
 				return null;
 			}
 		}
-		WeaponStyleIdleLayer weaponStyleIdleLayer2 = CombatIdle.FirstItem((WeaponStyleIdleLayer s) => s.Style == style && s.IsOffHand == forOffhand);
-		CurrentWalkingStyleLayer currentWalkingStyleLayer = SelectWalkingStyleLayer((!actionData.InCombat) ? NonCombatWalk : (CombatWalk.FirstItem((WeaponStyleLayer s) => s.Style == style && s.IsOffHand == forOffhand)?.MovementStyleLayer ?? NonCombatWalk), actionData.WalkSpeedType);
-		if (currentWalkingStyleLayer != null)
+		AnimationClipWrapper animationClipWrapper = ((!actionData.InCombat) ? NonCombatIdle : (CombatIdle.FirstItem((WeaponStyleIdleLayer s) => s.Style == style && s.IsOffHand == forOffhand)?.Wrapper ?? NonCombatIdle));
+		walkingStyleLair = SelectWalkingStyleLayer((!actionData.InCombat) ? NonCombatWalk : (CombatWalk.FirstItem((WeaponStyleLayer s) => s.Style == style && s.IsOffHand == forOffhand)?.MovementStyleLayer ?? NonCombatWalk), actionData.WalkSpeedType);
+		if (walkingStyleLair != null)
 		{
 			switch (actionData.State)
 			{
 			case MovementState.Out:
-				if (currentWalkingStyleLayer.Out != null)
+				if (walkingStyleLair.Out != null)
 				{
-					actionData.StartAnimationTime = handle.GetTime();
-					actionData.EndAnimationTime = handle.GetTime() + currentWalkingStyleLayer.Out.Length * (currentWalkingStyleLayer.Out.Length / (currentWalkingStyleLayer.OutDistance / currentWalkingStyleLayer.OutSpeed));
-					return currentWalkingStyleLayer.Out;
+					return walkingStyleLair.Out;
 				}
-				handle.Manager.NewSpeed = 0f;
-				if (!handle.Manager.IsInCombat || weaponStyleIdleLayer2 == null)
+				if (!handle.Manager.IsInCombat || !(animationClipWrapper != null))
 				{
 					return NonCombatIdle;
 				}
-				return weaponStyleIdleLayer2.Wrapper;
+				return animationClipWrapper;
 			case MovementState.Run:
-				handle.Manager.NewSpeed = currentWalkingStyleLayer.Speed;
-				return currentWalkingStyleLayer.Clip;
+				return walkingStyleLair.Clip;
 			case MovementState.In:
-				if (currentWalkingStyleLayer.In != null)
+				if (walkingStyleLair.In != null)
 				{
-					actionData.StartAnimationTime = handle.GetTime();
-					actionData.EndAnimationTime = handle.GetTime() + currentWalkingStyleLayer.In.Length;
-					return currentWalkingStyleLayer.In;
+					return walkingStyleLair.In;
 				}
 				actionData.State = MovementState.Run;
-				handle.Manager.NewSpeed = currentWalkingStyleLayer.Speed;
-				return currentWalkingStyleLayer.Clip;
+				return walkingStyleLair.Clip;
 			case MovementState.Idle:
-				handle.Manager.NewSpeed = 0f;
-				if (weaponStyleIdleLayer2 != null && handle.Manager.IsInCombat)
+				if (animationClipWrapper != null && handle.Manager.IsInCombat)
 				{
-					return weaponStyleIdleLayer2.Wrapper;
+					return animationClipWrapper;
 				}
 				if (!(handle.Manager.IsInDollRoom && forOffhand))
 				{

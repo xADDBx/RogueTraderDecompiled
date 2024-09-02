@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using DG.Tweening;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
@@ -36,10 +39,15 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	[SerializeField]
 	protected ScrollRectExtended m_ScrollRect;
 
+	[Header("ResetAnimation")]
+	[SerializeField]
+	private List<CanvasGroup> m_CanvasesResetAnimation;
+
 	private Tweener m_ProgressTweener;
 
 	public virtual void Initialize()
 	{
+		ResetCanvasesAnimation();
 		base.gameObject.SetActive(value: false);
 	}
 
@@ -89,6 +97,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 		m_ProgressTweener?.Kill();
 		m_ProgressTweener = null;
 		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
+		ResetCanvasesAnimation();
 		base.gameObject.SetActive(value: false);
 	}
 
@@ -96,7 +105,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	{
 		m_ProgressParent.gameObject.SetActive(base.ViewModel.IsProgressBar.Value);
 		m_ProgressTransform.sizeDelta = new Vector2(0f, m_ProgressTransform.rect.height);
-		m_PercentText.text = Mathf.CeilToInt(0f) + "%";
+		m_PercentText.text = UIConfig.Instance.PercentHelper.AddPercentTo(Mathf.CeilToInt(0f));
 		if (!base.ViewModel.IsProgressBar.Value)
 		{
 			return;
@@ -121,7 +130,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 		m_ProgressTweener = DOTween.To(delegate
 		{
 			m_ProgressTransform.sizeDelta = new Vector2(virtualProgress * progressWidth, m_ProgressTransform.rect.height);
-			m_PercentText.text = Mathf.CeilToInt(virtualProgress * 100f) + "%";
+			m_PercentText.text = UIConfig.Instance.PercentHelper.AddPercentTo(Mathf.CeilToInt(virtualProgress * 100f));
 		}, startValue, virtualProgress, 0.5f).SetEase(Ease.Linear);
 	}
 
@@ -133,6 +142,21 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	protected virtual void OnTextInputChanged(string value)
 	{
 		base.ViewModel.InputText.Value = value;
+	}
+
+	private void ResetCanvasesAnimation()
+	{
+		if (!m_CanvasesResetAnimation.Any())
+		{
+			return;
+		}
+		m_CanvasesResetAnimation.ForEach(delegate(CanvasGroup canvasGroup)
+		{
+			if (!(canvasGroup == null))
+			{
+				canvasGroup.alpha = 0f;
+			}
+		});
 	}
 
 	protected abstract void SetAcceptInteractable(bool interactable);

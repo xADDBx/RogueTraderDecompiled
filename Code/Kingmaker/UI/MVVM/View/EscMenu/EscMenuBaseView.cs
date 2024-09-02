@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.EscMenu;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.DLC;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
@@ -87,6 +90,10 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	[SerializeField]
 	private TextMeshProUGUI m_QuitButtonLabel;
 
+	[Header("Another")]
+	[SerializeField]
+	private TextMeshProUGUI m_CanSwitchOnDlcsCount;
+
 	protected GridConsoleNavigationBehaviour NavigationBehaviour;
 
 	protected InputLayer InputLayer;
@@ -147,7 +154,29 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		{
 			base.ViewModel.OnQuit();
 		}));
-		m_ModsButton.gameObject.SetActive(value: false);
+		bool isActive = PhotonManager.Lobby.IsActive;
+		m_ModsButton.gameObject.SetActive(!isActive);
+		IEnumerable<IBlueprintDlc> source = Game.Instance.Player.GetAvailableAdditionalContentDlcForCurrentCampaign().Where(delegate(IBlueprintDlc dlc)
+		{
+			BlueprintDlc blueprintDlc = dlc as BlueprintDlc;
+			return (blueprintDlc == null || !blueprintDlc.CheckIsLateToSwitch()) && !(blueprintDlc?.GetDlcSwitchOnOffState() ?? false);
+		});
+		m_CanSwitchOnDlcsCount.transform.parent.gameObject.SetActive(!isActive && source.Any());
+		if (!isActive && source.Any())
+		{
+			m_CanSwitchOnDlcsCount.text = source.Count().ToString();
+		}
+		if (!isActive)
+		{
+			AddDisposable(m_ModsButton.OnLeftClickAsObservable().Subscribe(delegate
+			{
+				base.ViewModel.OnMods();
+			}));
+			AddDisposable(m_ModsButton.OnConfirmClickAsObservable().Subscribe(delegate
+			{
+				base.ViewModel.OnMods();
+			}));
+		}
 		SetButtonsTexts();
 		AddDisposable(m_SaveButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -259,6 +288,10 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	{
 		AddDisposable(NavigationBehaviour = new GridConsoleNavigationBehaviour());
 		List<OwlcatButton> list = new List<OwlcatButton> { m_SaveButton, m_LoadButton, m_FormationButton, m_OptionsButton, m_BugReportButton, m_MainMenuButton, m_QuitButton };
+		if (!PhotonManager.Lobby.IsActive)
+		{
+			list.Add(m_ModsButton);
+		}
 		if (BuildModeUtility.IsCoopEnabled)
 		{
 			list.Add(m_MultiplayerButton);
@@ -293,8 +326,9 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_MultiplayerRolesButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuRoles;
 		m_QuitButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuExit;
 		m_OptionsButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuOptions;
-		m_ModsButtonLabel.text = UIStrings.Instance.DlcManager.ModsLabel;
 		m_BugReportButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuBugReport;
 		m_MainMenuButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuMainMenu;
+		bool flag = false;
+		m_ModsButtonLabel.text = (flag ? UIStrings.Instance.DlcManager.DlcManagerLabel : UIStrings.Instance.DlcManager.ModsLabel);
 	}
 }

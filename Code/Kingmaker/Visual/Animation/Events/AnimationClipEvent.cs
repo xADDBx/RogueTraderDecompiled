@@ -55,6 +55,10 @@ public class AnimationClipEvent : ICloneable, IComparable
 		}
 	}
 
+	public AnimationClipEvent()
+	{
+	}
+
 	public AnimationClipEvent(float time)
 		: this(time, isLooped: false)
 	{

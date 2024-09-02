@@ -37,6 +37,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Replay;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
+using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.MVVM.VM.Credits;
 using Kingmaker.UI.MVVM.VM.NetLobby;
 using Kingmaker.UI.MVVM.VM.NetRoles;
@@ -118,7 +119,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		AddDisposable(PauseNotificationVM = new PauseNotificationVM());
 		AddDisposable(FadeVM = new FadeVM());
 		AddDisposable(TutorialVM = new TutorialVM());
-		AddDisposable(Game.Instance.Keyboard.Bind("SwitchUIVisibility", UIVisibilityState.SwitchVisibility));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.SwitchUIVisibility.name, UIVisibilityState.SwitchVisibility));
 	}
 
 	protected override void DisposeImplementation()
@@ -131,6 +132,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		DisposeSettings();
 		DisposeNetLobby();
 		DisposeNetRoles();
+		DisposeDlcManager();
 	}
 
 	public void HandleBugReportOpen(bool showBugReportOnly)
@@ -340,11 +342,11 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 	}
 
-	public void HandleOpenDlcManager(bool onlyMods = false)
+	public void HandleOpenDlcManager(bool inGame = false)
 	{
 		if (DlcManagerVM.Value == null)
 		{
-			DlcManagerVM.Value = new DlcManagerVM(DisposeDlcManager, onlyMods);
+			DlcManagerVM.Value = new DlcManagerVM(DisposeDlcManager, inGame);
 		}
 	}
 
@@ -356,6 +358,10 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	{
 		DlcManagerVM.Value?.Dispose();
 		DlcManagerVM.Value = null;
+		EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
+		{
+			h.HandleCloseDlcManager();
+		});
 	}
 
 	public void HandleNetRolesRequest()
@@ -449,7 +455,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	public void HandleFullScreenUiChanged(bool state, FullScreenUIType fullScreenUIType)
 	{
 		Game instance = Game.Instance;
-		if (fullScreenUIType != FullScreenUIType.LocalMap && NetLobbyVM.Value == null && NetRolesVM.Value == null && SaveLoadVM.Value == null && SettingsVM.Value == null && BugReportVM.Value == null && DlcManagerVM.Value == null)
+		if (fullScreenUIType != FullScreenUIType.LocalMap && fullScreenUIType != FullScreenUIType.ColonyManagement && NetLobbyVM.Value == null && NetRolesVM.Value == null && SaveLoadVM.Value == null && SettingsVM.Value == null && BugReportVM.Value == null && DlcManagerVM.Value == null)
 		{
 			instance.RequestPauseUi(state);
 		}

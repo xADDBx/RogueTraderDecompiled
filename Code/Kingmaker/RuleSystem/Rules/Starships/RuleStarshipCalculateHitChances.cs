@@ -42,7 +42,8 @@ public class RuleStarshipCalculateHitChances : RulebookTargetEvent<StarshipEntit
 		ResultCritChance = Mathf.RoundToInt((float)(CalculateInitiatorCritChances() + BonusCritChance) * (1f + CritAdditionalMod));
 		ResultEvasionChance = CalculateTargetEvasion(Weapon) + BonusEvasionChance;
 		ResultEvasionChance = Math.Clamp(ResultEvasionChance, 0, 100);
-		if (!Weapon.IsAEAmmo)
+		ItemEntityStarshipWeapon weapon = Weapon;
+		if (weapon != null && !weapon.IsAEAmmo)
 		{
 			if (IsTorpedoDirectHitAttempt && base.Target.IsSoftUnit)
 			{

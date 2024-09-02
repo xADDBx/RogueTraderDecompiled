@@ -23,6 +23,8 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 
 	public int CostBonus { get; set; }
 
+	public int CostBonusAfterMinimum { get; set; }
+
 	public int CostMinimum
 	{
 		get
@@ -85,13 +87,14 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		int num = ((CostOverride >= 0) ? CostOverride : Math.Max(DefaultCost + CostBonus, Math.Max(CostMinimum, 0)));
+		num += CostBonusAfterMinimum;
 		Result = (HasPenaltyCost() ? (num + 1) : num);
 	}
 
 	private bool HasPenaltyCost()
 	{
 		PartTwoWeaponFighting twoWeaponFightingOptional = m_AbilityData.Caster.GetTwoWeaponFightingOptional();
-		ItemEntityWeapon weapon = m_AbilityData.GetWeaponStats().Weapon;
+		ItemEntityWeapon weapon = m_AbilityData.Weapon;
 		if (twoWeaponFightingOptional != null && twoWeaponFightingOptional.EnableAttackWithPairedWeapon && twoWeaponFightingOptional.IsOtherAbilityGroupOnCooldown(m_AbilityData) && weapon != null && !weapon.HoldInTwoHands && !m_AbilityData.IsFreeAction && !m_AbilityData.Caster.Features.HasNoAPPenaltyCostForTwoWeaponFighting && m_AbilityData.Blueprint.Type == AbilityType.Weapon && !m_AbilityData.IsBonusUsage && !m_AbilityData.IsHeroicAct)
 		{
 			return !m_AbilityData.IsDesperateMeasure;

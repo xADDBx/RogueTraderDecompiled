@@ -14,8 +14,6 @@ public class ViewInterpolationHelper
 
 	private Vector3 m_PreviousInterpolationPosition;
 
-	private bool m_ShouldRecalculateNextInterpolationPosition;
-
 	private float m_PreviousOrientation;
 
 	public ViewInterpolationHelper(AbstractUnitEntityView view)
@@ -26,11 +24,6 @@ public class ViewInterpolationHelper
 	public void Interpolate(float progress)
 	{
 		AbstractUnitEntity entityData = m_View.EntityData;
-		if (m_ShouldRecalculateNextInterpolationPosition)
-		{
-			m_ShouldRecalculateNextInterpolationPosition = false;
-			m_NextInterpolationPosition = GetViewPosition(entityData.Position);
-		}
 		if (entityData.Movable.PreviousSimulationTick.HasMotion || m_ForceUpdatePosition)
 		{
 			Vector3 position = Vector3.LerpUnclamped(m_PreviousInterpolationPosition, m_NextInterpolationPosition, progress);
@@ -52,7 +45,6 @@ public class ViewInterpolationHelper
 
 	public void OnUnitSimulationTickCompleted(bool forceUpdatePositions)
 	{
-		m_ShouldRecalculateNextInterpolationPosition = true;
 		m_ForceUpdatePosition = forceUpdatePositions;
 		m_PreviousInterpolationPosition = m_NextInterpolationPosition;
 		m_NextInterpolationPosition = GetViewPosition(m_View.EntityData.Position);

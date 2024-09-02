@@ -4,6 +4,7 @@ using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Interaction;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using StateHasher.Core;
 using UnityEngine;
 

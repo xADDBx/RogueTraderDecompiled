@@ -137,6 +137,7 @@ public class AOETargetSelector : AbilityTargetSelector
 		CustomGridGraph customGridGraph = (CustomGridGraph)casterNode.Graph;
 		AoEPattern pattern = AbilityInfo.pattern;
 		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
+		NodeList nodes = GridAreaHelper.GetNodes(casterNode, sizeRect);
 		foreach (TargetInfo intendedTarget in GetIntendedTargets(context))
 		{
 			if (!IsValidTarget(intendedTarget.Entity))
@@ -156,7 +157,7 @@ public class AOETargetSelector : AbilityTargetSelector
 				for (int j = AbilityInfo.patternBounds.ymin; j <= AbilityInfo.patternBounds.ymax; j++)
 				{
 					CustomGridNodeBase node = customGridGraph.GetNode(intendedTarget.Node.XCoordinateInGrid - i, intendedTarget.Node.ZCoordinateInGrid - j);
-					if (hashSet.Contains(node) || node == null || node == casterNode || !node.Walkable || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) > AbilityInfo.maxRange || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) < AbilityInfo.minRange)
+					if (hashSet.Contains(node) || node == null || nodes.Contains(node) || !node.Walkable || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) > AbilityInfo.maxRange || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) < AbilityInfo.minRange)
 					{
 						continue;
 					}

@@ -212,7 +212,15 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 		}
 		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_StartPosition).node;
 		CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_EndPosition).node;
-		if (!(Math.Abs(customGridNodeBase2.Vector3Position.y - m_EndPosition.y) > 1f) && !(Math.Abs(customGridNodeBase.Vector3Position.y - m_StartPosition.y) > 1f))
+		if (customGridNodeBase == null)
+		{
+			PFLog.Default.Error("WarhammerNodeLink not found startNode");
+		}
+		else if (customGridNodeBase2 == null)
+		{
+			PFLog.Default.Error("WarhammerNodeLink not found endNode");
+		}
+		else if (!(Math.Abs(customGridNodeBase2.Vector3Position.y - m_EndPosition.y) > 1f) && !(Math.Abs(customGridNodeBase.Vector3Position.y - m_StartPosition.y) > 1f))
 		{
 			m_StartNode = customGridNodeBase;
 			m_EndNode = customGridNodeBase2;

@@ -88,10 +88,10 @@ public class CommonConsoleView : ViewBase<CommonVM>, IInitializable
 	private MessageBoxConsoleView m_MessageBoxConsoleView;
 
 	[SerializeField]
-	private UIViewLink<SaveLoadConsoleView, SaveLoadVM> m_SaveLoadConsoleView;
+	private UIDestroyViewLink<SaveLoadConsoleView, SaveLoadVM> m_SaveLoadConsoleView;
 
 	[SerializeField]
-	private UIViewLink<SettingsConsoleView, SettingsVM> m_SettingsView;
+	private UIDestroyViewLink<SettingsConsoleView, SettingsVM> m_SettingsView;
 
 	[SerializeField]
 	private FadeView m_FadeView;
@@ -100,16 +100,16 @@ public class CommonConsoleView : ViewBase<CommonVM>, IInitializable
 	private BugReportBaseView m_BugReportView;
 
 	[SerializeField]
-	private UIViewLink<NetLobbyConsoleView, NetLobbyVM> m_NetLobbyConsoleView;
+	private UIDestroyViewLink<NetLobbyConsoleView, NetLobbyVM> m_NetLobbyConsoleView;
 
 	[SerializeField]
-	private UIViewLink<NetRolesConsoleView, NetRolesVM> m_NetRolesConsoleView;
+	private UIDestroyViewLink<NetRolesConsoleView, NetRolesVM> m_NetRolesConsoleView;
 
 	[SerializeField]
-	private UIViewLink<DlcManagerConsoleView, DlcManagerVM> m_DlcManagerConsoleView;
+	private UIDestroyViewLink<DlcManagerConsoleView, DlcManagerVM> m_DlcManagerConsoleView;
 
 	[SerializeField]
-	private UIViewLink<TitlesBaseView, TitlesVM> m_TitlesView;
+	private UIDestroyViewLink<TitlesBaseView, TitlesVM> m_TitlesView;
 
 	private Coroutine m_DisappearAnimationCoroutine;
 

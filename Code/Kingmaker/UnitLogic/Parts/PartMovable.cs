@@ -114,6 +114,17 @@ public class PartMovable : EntityPart, IHashable
 		StatsContainer.Register<ModifiableValueSpeed>(StatType.Speed);
 	}
 
+	protected override void OnViewDidAttach()
+	{
+		base.OnViewDidAttach();
+		PreviousPosition = base.Owner.Position;
+		if (base.Owner is AbstractUnitEntity abstractUnitEntity)
+		{
+			PreviousOrientation = abstractUnitEntity.DesiredOrientation;
+		}
+		ForceHasMotion = true;
+	}
+
 	private float CalculateCurrentSpeed()
 	{
 		AbstractUnitCommand abstractUnitCommand = base.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current;
@@ -139,7 +150,7 @@ public class PartMovable : EntityPart, IHashable
 					num *= 0.5f;
 					break;
 				case WalkSpeedType.Run:
-					num = ((!abstractUnitCommand.IsAccelerated) ? (num * 1.2f) : (num * 1.8f));
+					num *= 1.2f;
 					break;
 				case WalkSpeedType.Crouch:
 					num *= 0.5f;

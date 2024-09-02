@@ -37,6 +37,9 @@ public class Recruit : GameAction
 		[FormerlySerializedAs("CompanionBlueprint")]
 		private BlueprintUnitReference m_CompanionBlueprint;
 
+		[SerializeField]
+		private BlueprintPortraitReference m_Portrait;
+
 		[Tooltip("Optional. Which unit should be replaced.")]
 		[SerializeReference]
 		public AbstractUnitEvaluator NPCUnit;
@@ -47,6 +50,8 @@ public class Recruit : GameAction
 		public BaseUnitEntity RecruitedCompanion;
 
 		public BlueprintUnit CompanionBlueprint => m_CompanionBlueprint?.Get();
+
+		public BlueprintPortraitReference Portrait => m_Portrait;
 	}
 
 	public RecruitData[] Recruited;
@@ -59,6 +64,9 @@ public class Recruit : GameAction
 
 	public ActionList OnRecruitImmediate;
 
+	[Tooltip("Will not open party selection if in party > 6 people. Use only if after that will be unrecruit/detach")]
+	public bool DoNotOpenPartySelection;
+
 	protected override void RunAction()
 	{
 		RecruitData[] recruited = Recruited;
@@ -67,7 +75,7 @@ public class Recruit : GameAction
 			SwitchToCompanion(data);
 		}
 		Game.Instance.EntitySpawner.Tick();
-		if (Game.Instance.Player.Party.Count > 6)
+		if (Game.Instance.Player.Party.Count > 6 && !DoNotOpenPartySelection)
 		{
 			recruited = Recruited;
 			foreach (RecruitData recruitData2 in recruited)
@@ -148,7 +156,7 @@ public class Recruit : GameAction
 						OnRecruit.Run();
 					}
 				}
-			}, isCapital: false, sameFinishActions: false, canCancel: false);
+			}, isCapital: false);
 		});
 	}
 
@@ -195,6 +203,10 @@ public class Recruit : GameAction
 			player.AddCompanion(baseUnitEntity);
 		}
 		baseUnitEntity.CombatGroup.Id = "<directly-controllable-unit>";
+		if (data.Portrait?.Get() != null)
+		{
+			baseUnitEntity.UISettings.SetPortrait(data.Portrait);
+		}
 		if (MatchPlayerXpExactly)
 		{
 			int experience = Game.Instance.Player.MainCharacterEntity.ToBaseUnitEntity().Progression.Experience;

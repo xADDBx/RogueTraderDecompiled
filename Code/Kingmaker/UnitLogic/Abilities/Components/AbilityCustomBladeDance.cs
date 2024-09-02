@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
+using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -12,6 +14,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
@@ -64,8 +67,9 @@ public class AbilityCustomBladeDance : AbilityCustomLogic
 			PFLog.Default.Error("Invalid caster's weapon");
 			yield break;
 		}
-		new List<BaseUnitEntity>();
-		List<BaseUnitEntity> possibleNodsWithDirection = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDeadOrUnconscious && p.IsInCombat && p != caster && p.InRangeInCells(caster, 1)).ToList();
+		List<BaseUnitEntity> second = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => CheckEntityTargetable(caster, p)).ToList();
+		List<MechanicEntity> first = Game.Instance.State.MechanicEntities.Where((MechanicEntity p) => CheckEntityTargetable(caster, p)).ToList();
+		IEnumerable<MechanicEntity> possibleTargets = first.Concat(second);
 		int burstCounter = 0;
 		ItemEntityWeapon weapon = context.Ability.Weapon;
 		ItemEntityWeapon primaryHandMaybeWeapon = caster.Body.PrimaryHand.MaybeWeapon;
@@ -79,24 +83,69 @@ public class AbilityCustomBladeDance : AbilityCustomLogic
 			weapon = ((primaryHandMaybeWeapon?.Blueprint.Classification == Classification) ? primaryHandMaybeWeapon : secondaryHandMaybeWeapon);
 		}
 		bool hasTwoMeleeWeapons = ((!UseSpecificWeaponClassification) ? (!UseSpecificWeapon && primaryHandMaybeWeapon != null && secondaryHandMaybeWeapon != null) : (!UseSpecificWeapon && primaryHandMaybeWeapon?.Blueprint?.Classification == Classification && secondaryHandMaybeWeapon?.Blueprint?.Classification == Classification));
-		while (burstCounter < Math.Min(RateOfAttack.Calculate(context), context.Ability.OverrideRateOfFire))
+		while (burstCounter < Math.Min(RateOfAttack.Calculate(context), context.Ability.OverrideRateOfFire) && possibleTargets.Any((MechanicEntity p) => CheckEntityTargetable(caster, p)))
 		{
 			if (burstCounter + 1 != context.ActionIndex)
 			{
 				yield return null;
 				continue;
 			}
-			BaseUnitEntity baseUnitEntity = possibleNodsWithDirection.Where((BaseUnitEntity p) => !p.IsDeadOrUnconscious && !p.Features.IsUntargetable).Random(PFStatefulRandom.Mechanics);
-			caster.ForceLookAt(baseUnitEntity.Position);
+			MechanicEntity mechanicEntity = possibleTargets.Where((MechanicEntity p) => CheckEntityTargetable(caster, p)).Random(PFStatefulRandom.Mechanics);
+			if (mechanicEntity == null)
+			{
+				break;
+			}
+			caster.ForceLookAt(mechanicEntity.Position);
 			if (hasTwoMeleeWeapons)
 			{
 				weapon = ((burstCounter % 2 == 0) ? primaryHandMaybeWeapon : secondaryHandMaybeWeapon);
 			}
 			context.Ability.OverrideWeapon = weapon;
-			yield return TriggerAttackRule(context, baseUnitEntity, burstCounter, weapon);
+			AbilityDeliveryTarget abilityDeliveryTarget = TriggerAttackRule(context, mechanicEntity, burstCounter, weapon);
+			WeaponAbility weaponAbility = weapon?.Blueprint.WeaponAbilities.FirstOrDefault();
+			if ((abilityDeliveryTarget.AttackRule?.ResultIsHit ?? false) && weaponAbility != null)
+			{
+				if (weaponAbility.OnHitActions != null)
+				{
+					using (context.GetDataScope(mechanicEntity))
+					{
+						weaponAbility.OnHitActions?.OnHitActions.Run();
+					}
+				}
+				AbilityEffectRunAction component = weaponAbility.Ability.GetComponent<AbilityEffectRunAction>();
+				if (component != null)
+				{
+					using (context.GetDataScope(mechanicEntity))
+					{
+						component.Actions.Run();
+					}
+				}
+			}
+			yield return abilityDeliveryTarget;
 			burstCounter++;
 		}
-		context.Ability.OverrideWeapon = null;
+	}
+
+	public static bool CheckEntityTargetable(MechanicEntity caster, MechanicEntity entity)
+	{
+		if (entity is BaseUnitEntity baseUnitEntity)
+		{
+			if (!baseUnitEntity.IsDeadOrUnconscious && !baseUnitEntity.Features.IsUntargetable && baseUnitEntity.IsInCombat && baseUnitEntity != caster)
+			{
+				return baseUnitEntity.InRangeInCells(caster, 1);
+			}
+			return false;
+		}
+		if (entity is DestructibleEntity destructibleEntity)
+		{
+			PartHealth healthOptional = destructibleEntity.GetHealthOptional();
+			if (healthOptional != null && healthOptional.HitPointsLeft > 0 && destructibleEntity.InRangeInCells(caster, 1))
+			{
+				return !(destructibleEntity is CoverEntity);
+			}
+			return false;
+		}
+		return false;
 	}
 
 	private AbilityDeliveryTarget TriggerAttackRule(AbilityExecutionContext context, MechanicEntity target, int burstIndex, ItemEntityWeapon weapon)

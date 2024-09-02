@@ -4,6 +4,7 @@ using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.GameModes;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -53,6 +54,10 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 		m_CoverMeshControllers[m_CoverMeshControllers.Length / 2].IsCentral = true;
 		UpdatePlayerTurn();
 		m_IsDeploymentPhase = Game.Instance.TurnController.IsPreparationTurn && Game.Instance.TurnController.IsDeploymentAllowed;
+		if (Game.Instance.CurrentMode == GameModeType.Cutscene)
+		{
+			UpdateAllCoverMeshesActive(active: false);
+		}
 	}
 
 	private void OnEnable()
@@ -71,9 +76,15 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 
 	private void Update()
 	{
+		if (Game.Instance.CurrentMode == GameModeType.Cutscene)
+		{
+			UpdateAllCoverMeshesActive(active: false);
+			return;
+		}
 		PointerController clickEventsController = Game.Instance.ClickEventsController;
 		if (clickEventsController == null)
 		{
+			UpdateAllCoverMeshesActive(active: false);
 			return;
 		}
 		bool flag = false;
@@ -158,23 +169,30 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 	{
 		bool flag = m_MovableAreaNodes?.Contains(node) ?? false;
 		bool flag2 = Game.Instance.CursorController.SelectedAbility != null;
-		if (!m_IsPlayerTurn || (!flag && !m_IsCtrlHold) || flag2)
+		bool num = m_IsPlayerTurn && (flag || m_IsCtrlHold) && !flag2;
+		bool flag3 = Game.Instance.CurrentMode == GameModeType.Cutscene;
+		if (num || m_IsDeploymentPhase)
 		{
-			return m_IsDeploymentPhase;
+			return !flag3;
 		}
-		return true;
+		return false;
 	}
 
 	private void HideCoverMeshes()
 	{
 		if (m_HasVisibleCovers)
 		{
-			CoverCellController[] coverMeshControllers = m_CoverMeshControllers;
-			for (int i = 0; i < coverMeshControllers.Length; i++)
-			{
-				coverMeshControllers[i].gameObject.SetActive(value: false);
-			}
+			UpdateAllCoverMeshesActive(active: false);
 			m_HasVisibleCovers = false;
+		}
+	}
+
+	private void UpdateAllCoverMeshesActive(bool active)
+	{
+		CoverCellController[] coverMeshControllers = m_CoverMeshControllers;
+		for (int i = 0; i < coverMeshControllers.Length; i++)
+		{
+			coverMeshControllers[i].gameObject.SetActive(active);
 		}
 	}
 

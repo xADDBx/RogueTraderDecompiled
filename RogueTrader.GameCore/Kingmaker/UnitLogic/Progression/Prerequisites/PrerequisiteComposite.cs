@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 
@@ -9,6 +11,15 @@ namespace Kingmaker.UnitLogic.Progression.Prerequisites;
 public class PrerequisiteComposite : Prerequisite
 {
 	public PrerequisitesList Prerequisites;
+
+	public override bool IsRelyingOnFeature(BlueprintFact featureToAnalyze)
+	{
+		if (Not)
+		{
+			return false;
+		}
+		return (Prerequisites?.List?.Any((Prerequisite p) => p.IsRelyingOnFeature(featureToAnalyze))).GetValueOrDefault();
+	}
 
 	protected override bool MeetsInternal(IBaseUnitEntity unit)
 	{

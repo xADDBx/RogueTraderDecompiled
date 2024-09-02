@@ -2,8 +2,7 @@ namespace Kingmaker.Visual.Animation.Events;
 
 public enum ClipEventType
 {
-	AnimateWeaponTrail,
-	BodyFall,
+	BodyFall = 1,
 	DecoratorObject,
 	FootStep,
 	Act,

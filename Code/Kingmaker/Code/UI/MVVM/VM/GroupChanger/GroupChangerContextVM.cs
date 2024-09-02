@@ -31,7 +31,7 @@ public class GroupChangerContextVM : BaseDisposable, IViewModel, IBaseDisposable
 		DisposeGroupChanger();
 	}
 
-	public void HandleCall(Action goAction, Action closeAction, bool isCapital, bool sameFinishActions = false, bool canCancel = true)
+	public void HandleCall(Action goAction, Action closeAction, bool isCapital, bool sameFinishActions = false, bool canCancel = true, bool showRemoteCompanion = false)
 	{
 		goAction = (Action)Delegate.Combine(goAction, new Action(DisposeGroupChanger));
 		closeAction = (Action)Delegate.Combine(closeAction, new Action(DisposeGroupChanger));
@@ -42,7 +42,7 @@ public class GroupChangerContextVM : BaseDisposable, IViewModel, IBaseDisposable
 		}
 		else
 		{
-			GroupChangerVM disposable = (GroupChangerVm.Value = new GroupChangerCommonVM(goAction, closeAction, m_LastUnits, m_RequiredUnits, isCapital, sameFinishActions, canCancel));
+			GroupChangerVM disposable = (GroupChangerVm.Value = new GroupChangerCommonVM(goAction, closeAction, m_LastUnits, m_RequiredUnits, isCapital, sameFinishActions, canCancel, showRemoteCompanion));
 			AddDisposable(disposable);
 		}
 		m_LastUnits.Clear();

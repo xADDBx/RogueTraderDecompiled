@@ -51,6 +51,11 @@ public class CombatTextHitPointsView : CombatTextEntityBaseView<CombatMessageBas
 		return 0f;
 	}
 
+	public override string GetText()
+	{
+		return m_Text.text;
+	}
+
 	protected override void DoData(CombatMessageBase combatMessage)
 	{
 		m_Text.text = combatMessage.GetText();
@@ -90,10 +95,17 @@ public class CombatTextHitPointsView : CombatTextEntityBaseView<CombatMessageBas
 		m_AnimatioinSequence.Join(base.Rect.DOScale(1f, Duration));
 	}
 
-	public void SetDirection(Vector2 direction)
+	public void SetDirection(Vector2 direction, bool single, bool even)
 	{
-		Vector2 vector = base.Rect.anchoredPosition + direction.normalized * m_MoveDelta + new Vector2(Random.Range(15f, 30f), Random.Range(15f, 30f));
-		m_MoveTween = base.Rect.DOLocalMove(vector, m_MoveTime).SetEase(m_MoveEase).SetUpdate(isIndependentUpdate: true)
+		Vector2 vector = new Vector2(Random.Range(-15f, 15f), Random.Range(20f, 30f));
+		if (!single)
+		{
+			float x = (even ? Random.Range(-30f, 0f) : Random.Range(0f, 30f));
+			vector = new Vector2(x, Random.Range(20f, 30f));
+			base.Rect.anchoredPosition = new Vector3(x, Random.Range(-15f, 15f), 0f);
+		}
+		Vector2 vector2 = base.Rect.anchoredPosition + direction.normalized * m_MoveDelta + vector;
+		m_MoveTween = base.Rect.DOLocalMove(vector2, m_MoveTime).SetEase(m_MoveEase).SetUpdate(isIndependentUpdate: true)
 			.SetAutoKill(autoKillOnCompletion: true);
 	}
 

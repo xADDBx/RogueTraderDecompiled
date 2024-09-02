@@ -98,9 +98,9 @@ public class SectorMapBottomHudVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public void OpenShipCustomization()
 	{
-		EventBus.RaiseEvent(delegate(IShipCustomizationForceUIHandler h)
+		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 		{
-			h.HandleForceOpenShipCustomization();
+			h.HandleOpenShipCustomization();
 		});
 	}
 

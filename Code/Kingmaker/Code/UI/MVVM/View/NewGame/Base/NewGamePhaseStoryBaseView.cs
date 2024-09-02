@@ -5,7 +5,6 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.Pantograph;
-using Kingmaker.Utility;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -38,9 +37,6 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 	[SerializeField]
 	private Image m_StoryArt;
 
-	[SerializeField]
-	private VideoPlayerHelper m_StoryVideo;
-
 	[Header("Bottom Block")]
 	[SerializeField]
 	private TextMeshProUGUI m_YouDontHaveThisDlc;
@@ -69,17 +65,24 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 	[SerializeField]
 	private TextMeshProUGUI m_OffText;
 
+	[SerializeField]
+	private TextMeshProUGUI m_DownloadingInProgressText;
+
+	[SerializeField]
+	protected OwlcatButton m_InstallButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_InstallButtonLabel;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DlcIsBoughtAndNotInstalledText;
+
 	protected readonly BoolReactiveProperty SwitchOnButtonActive = new BoolReactiveProperty();
 
-	private bool m_IsInit;
+	protected bool IsInit;
 
 	public virtual void Initialize()
 	{
-		if (!m_IsInit)
-		{
-			m_StoryVideo.Initialize();
-			m_IsInit = true;
-		}
 	}
 
 	protected override void BindViewImplementation()
@@ -89,6 +92,7 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 			base.gameObject.SetActive(value);
 			if (value)
 			{
+				base.ViewModel.ResetVideo();
 				ScrollToTop();
 				m_PantographView.Show();
 			}
@@ -100,18 +104,15 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 		AddDisposable(m_PantographView);
 		AddDisposable(base.ViewModel.ChangeStory.Subscribe(delegate
 		{
-			VideoClip videoClip = base.ViewModel.Video?.Value;
-			m_StoryArt.gameObject.SetActive(base.ViewModel.Art.Value != null);
-			m_StoryVideo.gameObject.SetActive(videoClip != null);
+			bool active = base.ViewModel.Art.Value != null && base.ViewModel.Video?.Value == null;
+			m_StoryArt.gameObject.SetActive(active);
 			if (base.ViewModel.Art.Value != null)
 			{
 				m_StoryArt.sprite = base.ViewModel.Art.Value;
 			}
-			if (m_StoryVideo.VideoClip != videoClip)
-			{
-				m_StoryVideo.Stop();
-				m_StoryVideo.SetClip(videoClip);
-			}
+			VideoClip videoClip = base.ViewModel.Video?.Value;
+			ShowHideVideo(videoClip != null);
+			base.ViewModel.CustomUIVideoPlayerVM.SetVideo(videoClip, base.ViewModel.Art.Value, base.ViewModel.SoundStart.Value, base.ViewModel.SoundStop.Value);
 			m_StoryDescription.text = base.ViewModel.Description.Value;
 			ScrollToTop();
 			CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
@@ -125,12 +126,6 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 			base.ViewModel.SwitchDlcOn();
 		}));
 		AddDisposable(m_DlcStatusLabel.SetTooltip(new TooltipTemplateSimple(UIStrings.Instance.DlcManager.DlcSwitchOnOffHint)));
-		m_OnText.text = UIStrings.Instance.SettingsUI.SettingsToggleOn;
-		m_OffText.text = UIStrings.Instance.SettingsUI.SettingsToggleOff;
-		m_DlcStatusLabel.text = UIStrings.Instance.DlcManager.DlcStatus;
-		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.Purchase;
-		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.Purchased;
-		m_ComingSoonLabel.text = UIStrings.Instance.DlcManager.ComingSoon;
 		AddDisposable((from value in m_ScrollRect.verticalScrollbar.OnValueChangedAsObservable()
 			select 1f - value).Subscribe(delegate(float invertedValue)
 		{
@@ -141,28 +136,71 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 				storyDescriptionBackgroundGradient.color = color;
 			}
 		}));
+		AddDisposable(base.ViewModel.DownloadingInProgress.CombineLatest(base.ViewModel.DlcIsBoughtAndNotInstalled, (bool downloadInProgress, bool boughtAndNotInstalled) => new { downloadInProgress, boughtAndNotInstalled }).Subscribe(value =>
+		{
+			CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
+			CheckInstallState(value.downloadInProgress, value.boughtAndNotInstalled);
+		}));
 		CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
+		CheckInstallState(base.ViewModel.DownloadingInProgress.Value, base.ViewModel.DlcIsBoughtAndNotInstalled.Value);
+		m_OnText.text = UIStrings.Instance.SettingsUI.SettingsToggleOn;
+		m_OffText.text = UIStrings.Instance.SettingsUI.SettingsToggleOff;
+		m_DlcStatusLabel.text = UIStrings.Instance.DlcManager.DlcStatus;
+		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.Purchase;
+		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.Purchased;
+		m_ComingSoonLabel.text = UIStrings.Instance.DlcManager.ComingSoon;
+		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
+		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;
+		m_InstallButtonLabel.text = UIStrings.Instance.DlcManager.Install;
 	}
 
 	protected override void DestroyViewImplementation()
 	{
 	}
 
+	private void ShowHideVideo(bool state)
+	{
+		ShowHideVideoImpl(state);
+	}
+
+	protected virtual void ShowHideVideoImpl(bool state)
+	{
+	}
+
 	private void CheckAvailableState(bool canPurchase, bool available)
 	{
-		UIDlcManager dlcManager = UIStrings.Instance.DlcManager;
-		m_YouDontHaveThisDlc.text = ((base.ViewModel.BlueprintDlc == null) ? ((!base.ViewModel.IsNextButtonAvailable.Value) ? ((string)dlcManager.YouDontHaveThisDlc) : string.Empty) : ((!available && canPurchase) ? ((string)dlcManager.YouDontHaveThisDlc) : ((!base.ViewModel.IsNextButtonAvailable.Value) ? string.Format(dlcManager.YouDontHaveThisStory, base.ViewModel.CampaignName.Value) : string.Empty)));
-		m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive((!available && canPurchase) || !base.ViewModel.IsNextButtonAvailable.Value);
-		m_PurchaseButton.gameObject.SetActive(!available && canPurchase);
-		m_PurchasedLabel.transform.parent.gameObject.SetActive(available && canPurchase);
-		m_ComingSoonLabel.transform.parent.gameObject.SetActive(!available && !canPurchase);
-		CheckAvailableStateImpl(available);
-		SwitchOnButtonActive.Value = available && base.ViewModel.BlueprintDlc != null && base.ViewModel.IsNextButtonAvailable.Value;
-		m_SwitchOnDlcButton.transform.parent.gameObject.SetActive(SwitchOnButtonActive.Value);
+		if (base.ViewModel.DownloadingInProgress.Value || base.ViewModel.DlcIsBoughtAndNotInstalled.Value)
+		{
+			m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive(value: false);
+			m_PurchaseButton.gameObject.SetActive(value: false);
+			m_PurchasedLabel.transform.parent.gameObject.SetActive(value: false);
+			m_ComingSoonLabel.transform.parent.gameObject.SetActive(value: false);
+			m_SwitchOnDlcButton.transform.parent.gameObject.SetActive(value: false);
+			SwitchOnButtonActive.Value = false;
+		}
+		else
+		{
+			UIDlcManager dlcManager = UIStrings.Instance.DlcManager;
+			m_YouDontHaveThisDlc.text = ((base.ViewModel.BlueprintDlc == null) ? ((!base.ViewModel.IsNextButtonAvailable.Value) ? ((string)dlcManager.YouDontHaveThisDlc) : string.Empty) : ((!available && canPurchase) ? ((string)dlcManager.YouDontHaveThisDlc) : ((!base.ViewModel.IsNextButtonAvailable.Value) ? string.Format(dlcManager.YouDontHaveThisStory, base.ViewModel.CampaignName.Value) : string.Empty)));
+			m_YouDontHaveThisDlc.transform.parent.gameObject.SetActive((!available && canPurchase) || !base.ViewModel.IsNextButtonAvailable.Value);
+			m_PurchaseButton.gameObject.SetActive(!available && canPurchase);
+			m_PurchasedLabel.transform.parent.gameObject.SetActive(available && canPurchase);
+			m_ComingSoonLabel.transform.parent.gameObject.SetActive(!available && !canPurchase);
+			CheckAvailableStateImpl(available);
+			SwitchOnButtonActive.Value = available && base.ViewModel.BlueprintDlc != null && base.ViewModel.IsNextButtonAvailable.Value;
+			m_SwitchOnDlcButton.transform.parent.gameObject.SetActive(SwitchOnButtonActive.Value);
+		}
 	}
 
 	protected virtual void CheckAvailableStateImpl(bool available)
 	{
+	}
+
+	private void CheckInstallState(bool downloadingInProgress, bool boughtAndNotInstalled)
+	{
+		m_DownloadingInProgressText.transform.parent.gameObject.SetActive(downloadingInProgress && !boughtAndNotInstalled);
+		m_DlcIsBoughtAndNotInstalledText.transform.parent.gameObject.SetActive(!downloadingInProgress && boughtAndNotInstalled);
+		m_InstallButton.gameObject.SetActive(!downloadingInProgress && boughtAndNotInstalled);
 	}
 
 	public void ScrollToTop()

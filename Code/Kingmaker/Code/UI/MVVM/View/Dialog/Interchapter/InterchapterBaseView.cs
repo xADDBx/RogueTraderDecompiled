@@ -2,6 +2,7 @@ using DG.Tweening;
 using Kingmaker.AreaLogic.Cutscenes.Commands;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Interchapter;
 using Kingmaker.Utility;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
@@ -52,9 +53,8 @@ public class InterchapterBaseView : ViewBase<InterchapterVM>, IInitializable
 		m_State.Value = VideoState.Preparing;
 		m_VideoGroup.alpha = 0f;
 		m_VideoGroup.DOFade(1f, 0.2f).SetUpdate(isIndependentUpdate: true);
-		m_Video.SetClip(base.ViewModel.VideoClip);
-		m_Video.Prepare();
-		m_Video.PrepareAudio(base.ViewModel.SoundStartEvent, base.ViewModel.SoundStopEvent);
+		m_Video.Stop();
+		m_Video.SetClip(base.ViewModel.VideoClip, SoundStateType.Video, prepareVideo: true, base.ViewModel.SoundStartEvent, base.ViewModel.SoundStopEvent);
 		AddDisposable(base.ViewModel.Subtitle.Subscribe(delegate(string value)
 		{
 			m_SubtitleGroup.DOFade((value != string.Empty) ? 1 : 0, 0.2f).SetUpdate(isIndependentUpdate: true);

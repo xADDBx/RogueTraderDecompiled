@@ -49,16 +49,16 @@ public class ScriptZonePattern : MonoBehaviour, IScriptZoneShape
 		}
 	}
 
-	public bool Contains(Vector3 point, IntRect size)
+	public bool Contains(Vector3 point, IntRect size, Vector3 forward)
 	{
 		using (ProfileScope.New("ScriptZonePattern.Contains"))
 		{
 			CustomGridNodeBase nearestNodeXZUnwalkable = point.GetNearestNodeXZUnwalkable();
-			return Contains(nearestNodeXZUnwalkable, size);
+			return Contains(nearestNodeXZUnwalkable, size, forward);
 		}
 	}
 
-	public bool Contains(CustomGridNodeBase node, IntRect size)
+	public bool Contains(CustomGridNodeBase node, IntRect size, Vector3 forward)
 	{
 		if (m_PatternApplicationNode == null)
 		{
@@ -70,9 +70,9 @@ public class ScriptZonePattern : MonoBehaviour, IScriptZoneShape
 			{
 				return m_GridData.Contains(node);
 			}
-			foreach (CustomGridNodeBase occupiedNode in GridAreaHelper.GetOccupiedNodes(node, size))
+			foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, size, forward))
 			{
-				if (m_GridData.Contains(occupiedNode))
+				if (m_GridData.Contains(node2))
 				{
 					return true;
 				}

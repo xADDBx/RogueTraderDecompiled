@@ -184,11 +184,9 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			{
 				MechanicEntity mechanicEntity2 = buff.Context.MaybeCaster ?? mechanicEntity;
 				DamageData baseDamageOverride = logic.DamageType.CreateDamage(damage);
-				RuleCalculateDamage ruleCalculateDamage = new RuleCalculateDamage(mechanicEntity2, mechanicEntity, buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity2.DistanceToInCells(mechanicEntity))
-				{
-					Reason = buff
-				};
-				Rulebook.Trigger(ruleCalculateDamage);
+				CalculateDamageParams calculateDamageParams = new CalculateDamageParams(mechanicEntity2, mechanicEntity, buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity2.DistanceToInCells(mechanicEntity));
+				calculateDamageParams.Reason = buff;
+				RuleCalculateDamage ruleCalculateDamage = calculateDamageParams.Trigger();
 				if ((bool)mechanicEntity.Features.HealInsteadOfDamageForDOTs)
 				{
 					Rulebook.Trigger(new RuleHealDamage(mechanicEntity, mechanicEntity, ruleCalculateDamage.ResultDamage.BaseRolledValue));
@@ -239,6 +237,15 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			list.Sort((Entry i1, Entry i2) => i1.Damage.CompareTo(i2.Damage));
 		}
 
+		public DamageData GetDamageDataOfType(DOT type)
+		{
+			if (TryCreateDamageDataOfType(type, out var damageData, out var _))
+			{
+				return damageData;
+			}
+			return null;
+		}
+
 		public int GetCurrentDamageOfType(DOT type)
 		{
 			if (TryCreateDamageDataOfType(type, out var damageData, out var _))
@@ -246,6 +253,24 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 				return damageData.AverageValue;
 			}
 			return 0;
+		}
+
+		public int GetDamageOfTypeInstancesCount(DOT type)
+		{
+			List<Entry> list = m_DOTs.Get(type);
+			if (list.Empty())
+			{
+				return 0;
+			}
+			int num = 0;
+			foreach (Entry item in list)
+			{
+				if (item.Logic != null && item.Buff != null && item.Damage > 0)
+				{
+					num++;
+				}
+			}
+			return num;
 		}
 
 		public int GetBasicDamageOfType(DOT type)
@@ -293,7 +318,7 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			int index = -1;
 			for (int i = 0; i < list.Count; i++)
 			{
-				if (TryCreateDamageDataForEntry(list[i], out var data) && data.AverageValue > (damageData?.AverageValue ?? 0))
+				if (TryCreateDamageDataForEntry(list[i], out var data) && (damageData == null || data.AverageValue > (damageData?.AverageValue ?? 0)))
 				{
 					damageData = data;
 					index = i;
@@ -322,11 +347,9 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			}
 			MechanicEntity mechanicEntity = dotEffect.Buff.Context.MaybeCaster ?? base.Owner;
 			DamageData baseDamageOverride = dotEffect.Logic.DamageType.CreateDamage(damage);
-			RuleCalculateDamage ruleCalculateDamage = new RuleCalculateDamage(mechanicEntity, base.Owner, dotEffect.Buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity.DistanceToInCells(base.Owner))
-			{
-				Reason = dotEffect.Buff
-			};
-			Rulebook.Trigger(ruleCalculateDamage);
+			CalculateDamageParams calculateDamageParams = new CalculateDamageParams(mechanicEntity, base.Owner, dotEffect.Buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity.DistanceToInCells(base.Owner));
+			calculateDamageParams.Reason = dotEffect.Buff;
+			RuleCalculateDamage ruleCalculateDamage = calculateDamageParams.Trigger();
 			data = ruleCalculateDamage.ResultDamage;
 			return true;
 		}
@@ -377,9 +400,19 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 		entity.GetOptional<PartDOTDirector>()?.TryDealDamageByDOTImmediately(type, target);
 	}
 
+	public static DamageData GetDamageDataOfType(MechanicEntity entity, DOT type)
+	{
+		return entity.GetOptional<PartDOTDirector>()?.GetDamageDataOfType(type);
+	}
+
 	public static int GetCurrentDamageOfType(MechanicEntity entity, DOT type)
 	{
 		return entity.GetOptional<PartDOTDirector>()?.GetCurrentDamageOfType(type) ?? 0;
+	}
+
+	public static int GetDamageOfTypeInstancesCount(MechanicEntity entity, DOT type)
+	{
+		return entity.GetOptional<PartDOTDirector>()?.GetDamageOfTypeInstancesCount(type) ?? 0;
 	}
 
 	public static int GetBasicDamageOfType(MechanicEntity entity, DOT type)

@@ -21,6 +21,11 @@ public class PrerequisiteFact : Prerequisite
 
 	public BlueprintUnitFact Fact => m_Fact;
 
+	public override bool IsRelyingOnFeature(BlueprintFact featureToAnalyze)
+	{
+		return Fact == featureToAnalyze;
+	}
+
 	protected override bool MeetsInternal(IBaseUnitEntity unit)
 	{
 		if (unit.ToBaseUnitEntity().Facts.Get(Fact) is Feature feature)

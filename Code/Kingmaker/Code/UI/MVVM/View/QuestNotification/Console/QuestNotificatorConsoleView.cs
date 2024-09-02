@@ -19,6 +19,13 @@ public class QuestNotificatorConsoleView : QuestNotificatorBaseView
 
 	private readonly BoolReactiveProperty m_IsJournalHintActive = new BoolReactiveProperty();
 
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_Disposable?.Dispose();
+		m_Disposable = null;
+	}
+
 	protected override void ShowNextNotification()
 	{
 		base.ShowNextNotification();
@@ -51,12 +58,5 @@ public class QuestNotificatorConsoleView : QuestNotificatorBaseView
 	{
 		base.Hide();
 		m_Disposable?.Clear();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		m_Disposable?.Dispose();
-		m_Disposable = null;
 	}
 }

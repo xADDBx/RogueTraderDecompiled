@@ -3,6 +3,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Pathfinding;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.View.MapObjects.Traps;
 using StateHasher.Core;
@@ -10,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;
 
-public class DisableTrapInteractionPart : InteractionPart<InteractionSettings>, IHashable
+public class DisableTrapInteractionPart : InteractionPart<InteractionDisableTrapSettings>, IHashable
 {
 	public new TrapObjectData Owner => (TrapObjectData)base.Owner;
 

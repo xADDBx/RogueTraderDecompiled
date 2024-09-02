@@ -9,6 +9,8 @@ public class AnimationComposition : AnimationBase, IAddableAnimation
 {
 	private readonly List<PlayableInfo> m_PlayableInfos = new List<PlayableInfo>();
 
+	public IEnumerable<PlayableInfo> PlayableInfos => m_PlayableInfos;
+
 	public AnimationComposition(AnimationActionHandle handle)
 		: base(handle)
 	{
@@ -17,6 +19,10 @@ public class AnimationComposition : AnimationBase, IAddableAnimation
 	public void AddPlayableInfo(PlayableInfo playableInfo)
 	{
 		m_PlayableInfos.Add(playableInfo);
+		if (m_PlayableInfos.Count == 1)
+		{
+			m_LastSetSpeed = playableInfo.GetSpeed();
+		}
 	}
 
 	public override void UpdateEvents()
@@ -93,6 +99,15 @@ public class AnimationComposition : AnimationBase, IAddableAnimation
 			return m_PlayableInfos[0].GetWeight();
 		}
 		return 0f;
+	}
+
+	public override float GetWeightMultiplier()
+	{
+		if (m_PlayableInfos.Count <= 0)
+		{
+			return 0f;
+		}
+		return m_PlayableInfos[0].GetWeightMultiplier();
 	}
 
 	public override void SetSpeed(float speed)

@@ -57,6 +57,8 @@ public class CommandUnitAttack : CommandBase
 
 		public bool Interrupted { get; set; }
 
+		public bool IsTryingToSkip { get; set; }
+
 		public IAbilityCustomAnimation CustomAnimation { get; set; }
 
 		public Path Path { get; set; }
@@ -102,6 +104,8 @@ public class CommandUnitAttack : CommandBase
 
 	public bool EnableLog;
 
+	public bool MuteAttacker;
+
 	private bool IsCustomWeaponVisible => Type == AttackType.Custom;
 
 	public BlueprintItemWeapon CustomWeapon => m_CustomWeapon;
@@ -135,9 +139,16 @@ public class CommandUnitAttack : CommandBase
 		else
 		{
 			blueprintItemWeapon = FindSuitableWeapon(unit, Type, activeSet: true, notActiveSets: true);
-			if (blueprintItemWeapon == null && Type == AttackType.Melee)
+		}
+		if (blueprintItemWeapon == null)
+		{
+			if (Type == AttackType.Melee)
 			{
-				blueprintItemWeapon = unit.GetBodyOptional()?.EmptyHandWeapon?.Blueprint;
+				blueprintItemWeapon = BlueprintWarhammerRoot.Instance.CutsceneRoot.DefaultWeaponMelee;
+			}
+			else if (Type == AttackType.SingleShot || Type == AttackType.BurstFire)
+			{
+				blueprintItemWeapon = BlueprintWarhammerRoot.Instance.CutsceneRoot.DefaultWeaponRanged;
 			}
 		}
 		if (blueprintItemWeapon == null)
@@ -197,6 +208,10 @@ public class CommandUnitAttack : CommandBase
 		{
 			UnitUseAbilityParams cmdParams = CreateAttackCommandParams(ability, target, abilityCustomAnimation);
 			data.AttackCmdHandle = unit.Commands.Run(cmdParams);
+		}
+		if (MuteAttacker)
+		{
+			AkSoundEngine.SetRTPCValue("MuteEntity", 0f, Unit.GetValue().View.gameObject);
 		}
 	}
 
@@ -276,17 +291,21 @@ public class CommandUnitAttack : CommandBase
 			unitEntityView.HandsEquipment.SetCombatVisualState(inCombat: false);
 		}
 		player.ClearCommandData(this);
+		if (MuteAttacker)
+		{
+			AkSoundEngine.SetRTPCValue("MuteEntity", 1f, Unit.GetValue().View.gameObject);
+		}
 		base.OnStop(player);
 	}
 
 	public override bool IsFinished(CutscenePlayerData player)
 	{
-		if (Continuous)
+		bool flag = !player.Cutscene.NonSkippable;
+		Data commandData = player.GetCommandData<Data>(this);
+		if (Continuous && (!flag || !commandData.Interrupted))
 		{
 			return false;
 		}
-		Data commandData = player.GetCommandData<Data>(this);
-		UnitUseAbility unitUseAbility = (UnitUseAbility)(commandData.AttackCmdHandle?.Cmd);
 		if (commandData.TakingTooLong)
 		{
 			return true;
@@ -299,6 +318,7 @@ public class CommandUnitAttack : CommandBase
 		{
 			return false;
 		}
+		UnitUseAbility unitUseAbility = (UnitUseAbility)(commandData.AttackCmdHandle?.Cmd);
 		if (unitUseAbility == null)
 		{
 			return true;
@@ -344,10 +364,49 @@ public class CommandUnitAttack : CommandBase
 		}
 	}
 
+	public override bool TryPrepareForStop(CutscenePlayerData player)
+	{
+		bool flag = !player.Cutscene.NonSkippable;
+		if (!(player.GetCommandData<Data>(this).Interrupted && Continuous && flag))
+		{
+			return base.TryPrepareForStop(player);
+		}
+		return true;
+	}
+
+	public override bool TrySkip(CutscenePlayerData player)
+	{
+		bool flag = !player.Cutscene.NonSkippable;
+		Data commandData = player.GetCommandData<Data>(this);
+		commandData.IsTryingToSkip = !Continuous || (Continuous && flag);
+		return commandData.IsTryingToSkip;
+	}
+
 	public override void Interrupt(CutscenePlayerData player)
 	{
 		base.Interrupt(player);
-		player.GetCommandData<Data>(this).Interrupted = true;
+		Data commandData = player.GetCommandData<Data>(this);
+		commandData.Interrupted = true;
+		if (!commandData.IsTryingToSkip)
+		{
+			return;
+		}
+		commandData.TakingTooLong = true;
+		UnitCommandHandle moveCmdHandle = commandData.MoveCmdHandle;
+		if (moveCmdHandle != null && !moveCmdHandle.IsFinished && moveCmdHandle.Cmd != null)
+		{
+			AbstractUnitEntity unit = commandData.Unit;
+			if (unit != null)
+			{
+				unit.View.MovementAgent.Stop();
+				unit.View.MovementAgent.Blocker.BlockAtCurrentPosition();
+				Vector3 vector = commandData.MoveCmdHandle.Cmd.ForcedPath.vectorPath.Last();
+				Vector3 vector2 = commandData.Target.Position - vector;
+				Vector3 normalized = new Vector3(vector2.x, 0f, vector2.z).normalized;
+				float? orientation = ((normalized.magnitude > 0.5f) ? new float?(Quaternion.FromToRotation(Vector3.forward, normalized).eulerAngles.y) : null);
+				unit.Translocate(vector, orientation);
+			}
+		}
 	}
 
 	private UnitUseAbilityParams CreateAttackCommandParams(AbilityData ability, MechanicEntity target, IAbilityCustomAnimation customAnimationOverride = null)
@@ -462,5 +521,14 @@ public class CommandUnitAttack : CommandBase
 			PFLog.Default.ErrorWithReport("Can't find FXSettings for cutscene attack ability");
 		}
 		return blueprintAbilityFXSettings;
+	}
+
+	protected override void OnRunException()
+	{
+		if (MuteAttacker)
+		{
+			AkSoundEngine.SetRTPCValue("MuteEntity", 1f, Unit.GetValue().View.gameObject);
+		}
+		base.OnRunException();
 	}
 }

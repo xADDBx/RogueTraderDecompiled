@@ -25,6 +25,7 @@ public class CoverCellController : MonoBehaviour
 
 	private void Awake()
 	{
+		base.gameObject.SetActive(value: false);
 		m_CoverSideGenerators = GetComponentsInChildren<CoverSideGenerator>();
 	}
 

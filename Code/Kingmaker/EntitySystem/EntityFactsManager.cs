@@ -86,6 +86,8 @@ public class EntityFactsManager : IDisposable, IHashable
 		void OnFactDidAttach(EntityFact fact);
 
 		void OnFactWillDetach(EntityFact fact);
+
+		void OnFactDidDetached(EntityFact fact);
 	}
 
 	[JsonProperty]
@@ -147,7 +149,14 @@ public class EntityFactsManager : IDisposable, IHashable
 
 	public bool Contains(BlueprintFact blueprint)
 	{
-		return Contains((EntityFact i) => i.Blueprint == blueprint);
+		foreach (EntityFact fact in m_Facts)
+		{
+			if (fact.Blueprint == blueprint)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public bool Contains(Predicate<EntityFact> pred)
@@ -275,6 +284,7 @@ public class EntityFactsManager : IDisposable, IHashable
 					m_Cache.Remove(fact);
 					DelegateOnFactWillDetach(fact);
 					fact.Detach();
+					DelegateOnFactDidDetached(fact);
 					if (dispose)
 					{
 						fact.Dispose();
@@ -467,6 +477,18 @@ public class EntityFactsManager : IDisposable, IHashable
 		try
 		{
 			FirstSuitableDelegate(fact)?.OnFactWillDetach(fact);
+		}
+		catch (Exception ex)
+		{
+			PFLog.EntityFact.Exception(ex);
+		}
+	}
+
+	private void DelegateOnFactDidDetached(EntityFact fact)
+	{
+		try
+		{
+			FirstSuitableDelegate(fact)?.OnFactDidDetached(fact);
 		}
 		catch (Exception ex)
 		{

@@ -121,7 +121,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			}
 			if (IsPermanent)
 			{
-				if (!base.Owner.IsInCombat && !(Game.Instance.CurrentMode == GameModeType.SpaceCombat))
+				if (!Game.Instance.Player.IsInCombat && !(Game.Instance.CurrentMode == GameModeType.SpaceCombat))
 				{
 					return EndCondition != BuffEndCondition.RemainAfterCombat;
 				}
@@ -502,15 +502,23 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		{
 			return;
 		}
-		bool isActive = base.IsActive;
-		if (isActive)
+		try
 		{
-			Deactivate();
+			m_IsReapplying.Retain();
+			bool isActive = base.IsActive;
+			if (isActive)
+			{
+				Deactivate();
+			}
+			Rank = Math.Clamp(Rank + count, 0, base.Blueprint.MaxRank);
+			if (isActive)
+			{
+				Activate();
+			}
 		}
-		Rank = Math.Clamp(Rank + count, 0, base.Blueprint.MaxRank);
-		if (isActive)
+		finally
 		{
-			Activate();
+			m_IsReapplying.Release();
 		}
 		if (base.Owner != null)
 		{
@@ -527,21 +535,30 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		{
 			return;
 		}
-		bool isActive = base.IsActive;
-		if (isActive)
+		try
 		{
-			Deactivate();
+			m_IsReapplying.Retain();
+			bool isActive = base.IsActive;
+			if (isActive)
+			{
+				Deactivate();
+			}
+			Rank = Math.Clamp(Rank - count, 0, base.Blueprint.MaxRank);
+			if (isActive)
+			{
+				Activate();
+			}
+			if (Rank <= 0)
+			{
+				Remove();
+				return;
+			}
 		}
-		Rank = Math.Clamp(Rank - count, 0, base.Blueprint.MaxRank);
-		if (isActive)
+		finally
 		{
-			Activate();
+			m_IsReapplying.Release();
 		}
-		if (Rank <= 0)
-		{
-			Remove();
-		}
-		else if (base.Owner != null)
+		if (base.Owner != null)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitBuffHandler>)delegate(IUnitBuffHandler h)
 			{

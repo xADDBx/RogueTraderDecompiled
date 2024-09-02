@@ -29,10 +29,9 @@ public class ContextConditionBuffRank : ContextCondition
 		EntityFact entityFact = base.Target.Entity.Facts.Get((BlueprintBuff)Buff);
 		if (entityFact == null)
 		{
-			PFLog.Default.Error("No such buff on target");
 			return false;
 		}
-		if (BuffFromCaster && entityFact.MaybeContext.MaybeCaster != base.Context.MaybeCaster)
+		if (BuffFromCaster && entityFact.MaybeContext?.MaybeCaster != base.Context.MaybeCaster)
 		{
 			PFLog.Default.Error("Caster of the buff is not the caster of this ability");
 			return false;

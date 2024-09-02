@@ -29,6 +29,9 @@ public abstract class UISettingsEntityBase : ScriptableObject, IUISettingsEntity
 	private LocalizedString m_TooltipDescription;
 
 	[SerializeField]
+	private LocalizedString m_ConsoleTooltipDescription;
+
+	[SerializeField]
 	private List<BlueprintEncyclopediaPageReference> m_EncyclopediaDescription;
 
 	[Header("View setting")]

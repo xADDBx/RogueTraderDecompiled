@@ -7,13 +7,13 @@ namespace Kingmaker.Code.UI.MVVM.VM.Colonization;
 
 public class ColonyResourceVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public ReactiveProperty<BlueprintResource> BlueprintResource = new ReactiveProperty<BlueprintResource>();
+	public readonly ReactiveProperty<BlueprintResource> BlueprintResource = new ReactiveProperty<BlueprintResource>();
 
-	public ReactiveProperty<int> Count = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> Count = new ReactiveProperty<int>();
 
-	public ReactiveProperty<int> CountAdditional = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> CountAdditional = new ReactiveProperty<int>();
 
-	public ReactiveProperty<int> ArrowDirection = new ReactiveProperty<int>();
+	public readonly ReactiveProperty<int> ArrowDirection = new ReactiveProperty<int>();
 
 	public readonly ReactiveProperty<bool> IsNegative = new ReactiveProperty<bool>();
 
@@ -22,6 +22,10 @@ public class ColonyResourceVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		BlueprintResource.Value = blueprintResource;
 		Count.Value = count;
 		ArrowDirection.Value = arrowDirection;
+	}
+
+	protected override void DisposeImplementation()
+	{
 	}
 
 	public void UpdateCount(int delta)
@@ -37,9 +41,5 @@ public class ColonyResourceVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public void UpdateArrowDirection(int arrowDirection = 0)
 	{
 		ArrowDirection.Value = arrowDirection;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

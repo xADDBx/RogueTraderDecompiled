@@ -14,7 +14,6 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
-using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
@@ -205,6 +204,10 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 			ClaimPath(m_Path);
 		}
 	}
+
+	public float RemainingDistance => m_RemainingPathDistance + Vector2.Distance(m_NextWaypoint, m_PreviousPosition);
+
+	public float AngleToNextWaypoint => Vector2.Angle(MoveDirection, m_NextWaypoint - m_PreviousPosition);
 
 	public virtual Vector2 NextWaypoint => m_NextWaypoint;
 
@@ -990,13 +993,6 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		{
 			m_LastTurnAngle = 0f;
 			m_FirstTick = true;
-			if (Unit != null && Unit.EntityData != null)
-			{
-				foreach (AbstractUnitCommand command in Unit.EntityData.Commands)
-				{
-					command.AccelerateIfPathIsLong(path);
-				}
-			}
 		}
 		if (!m_Destination.HasValue)
 		{

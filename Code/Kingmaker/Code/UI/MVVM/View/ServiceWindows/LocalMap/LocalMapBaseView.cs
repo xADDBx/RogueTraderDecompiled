@@ -32,7 +32,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap;
 
-public class LocalMapBaseView : ViewBase<LocalMapVM>
+public class LocalMapBaseView : ViewBase<LocalMapVM>, IInitializable
 {
 	private class PingData
 	{

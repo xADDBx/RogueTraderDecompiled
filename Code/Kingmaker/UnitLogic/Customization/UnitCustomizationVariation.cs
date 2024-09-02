@@ -23,7 +23,6 @@ public class UnitCustomizationVariation : IEquatable<UnitCustomizationVariation>
 	[FormerlySerializedAs("Race")]
 	private BlueprintRaceReference m_Race;
 
-	[HideInInspector]
 	[SerializeField]
 	public Gender Gender;
 
@@ -55,9 +54,9 @@ public class UnitCustomizationVariation : IEquatable<UnitCustomizationVariation>
 	{
 	}
 
-	public SpawningData CreateSpawningData(BlueprintUnitAsksList voice, bool leftHanded)
+	public SpawningData CreateSpawningData(BlueprintUnitAsksList voice)
 	{
-		return ContextData<SpawningData>.Request().Setup(Prefab.AssetId, Race, Gender, voice, leftHanded);
+		return ContextData<SpawningData>.Request().Setup(Prefab.AssetId, Race, Gender, voice);
 	}
 
 	public bool Equals(UnitCustomizationVariation other)

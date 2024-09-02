@@ -64,7 +64,7 @@ public class PartStarshipHull : StarshipPart, IHashable
 	{
 		base.OnAttach();
 		HullSlots = new HullSlots(base.Owner);
-		if (!ContextData<UnitHelper.PreviewUnit>.Current)
+		if (!ContextData<UnitHelper.PreviewUnit>.Current && !base.Owner.IsPreviewUnit)
 		{
 			HullSlots.Initialize();
 		}

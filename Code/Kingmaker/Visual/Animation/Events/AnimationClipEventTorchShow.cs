@@ -4,6 +4,10 @@ namespace Kingmaker.Visual.Animation.Events;
 
 public class AnimationClipEventTorchShow : AnimationClipEvent
 {
+	public AnimationClipEventTorchShow()
+	{
+	}
+
 	public AnimationClipEventTorchShow(float time)
 		: base(time)
 	{

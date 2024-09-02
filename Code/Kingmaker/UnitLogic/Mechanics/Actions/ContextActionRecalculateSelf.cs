@@ -10,7 +10,7 @@ public class ContextActionRecalculateSelf : ContextAction
 {
 	protected override void RunAction()
 	{
-		((EntityFact)((((object)ContextData<Feature.Data>.Current?.Feature) ?? ((object)ContextData<Buff.Data>.Current?.Buff)) ?? ContextData<Buff.Data>.Current?.Buff))?.Recalculate();
+		((EntityFact)((((object)ContextData<Feature.Data>.Current?.Feature) ?? ((object)ContextData<Buff.Data>.Current?.Buff)) ?? ContextData<Buff.Data>.Current?.Buff))?.Reapply();
 	}
 
 	public override string GetCaption()

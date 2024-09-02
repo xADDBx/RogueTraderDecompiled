@@ -51,8 +51,8 @@ public class CharGenContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	private void CloseWithoutComplete()
 	{
 		m_ShowNewGameAction?.Invoke();
-		m_CloseWithoutCompleteAction?.Invoke();
 		CloseCharGen();
+		m_CloseWithoutCompleteAction?.Invoke();
 	}
 
 	private void CompleteCharGen(BaseUnitEntity resultUnit)

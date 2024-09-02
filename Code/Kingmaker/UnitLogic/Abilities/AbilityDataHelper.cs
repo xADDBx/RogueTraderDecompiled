@@ -87,7 +87,7 @@ public static class AbilityDataHelper
 		return abilityData.Blueprint?.GetComponent<IAbilityPatternRestriction>()?.IsPatternRestrictionPassed(abilityData, abilityData.Caster, target) ?? true;
 	}
 
-	public static List<CustomGridNodeBase> GetSingleShotAffectedNodes(this AbilityData ability, TargetWrapper target)
+	public static ReadonlyList<CustomGridNodeBase> GetSingleShotAffectedNodes(this AbilityData ability, TargetWrapper target)
 	{
 		if (ability.Blueprint.AttackType != AttackAbilityType.SingleShot || target?.Entity == null)
 		{
@@ -241,7 +241,7 @@ public static class AbilityDataHelper
 		return null;
 	}
 
-	public static DamagePredictionData GetDamagePrediction(this AbilityData ability, [CanBeNull] MechanicEntity target, Vector3 casterPosition)
+	public static DamagePredictionData GetDamagePrediction(this AbilityData ability, [CanBeNull] MechanicEntity target, Vector3 casterPosition, AbilityExecutionContext context = null)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -264,7 +264,7 @@ public static class AbilityDataHelper
 				{
 					MechanicEntity caster = ability.Caster;
 					bool forceCrit = flag;
-					DamageData resultDamage = Rulebook.Trigger(new RuleCalculateDamage(caster, target, ability, null, null, null, null, forceCrit)).ResultDamage;
+					DamageData resultDamage = new CalculateDamageParams(caster, target, ability, null, null, null, null, forceCrit).Trigger().ResultDamage;
 					if (resultDamage == null)
 					{
 						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
@@ -279,11 +279,35 @@ public static class AbilityDataHelper
 					damagePredictionData += damagePredictionData2;
 				}
 			}
+			else if (ability.Blueprint.GetComponent<AbilityMeleeBurst>() != null)
+			{
+				bool flag2 = Rulebook.Trigger(new RuleCalculateHitChances(ability.Caster, target, ability, 0)).RighteousFuryChanceRule.ResultChance >= 100;
+				int enemyTargetCountInPattern2 = GetEnemyTargetCountInPattern(ability);
+				using (ContextData<EnemyTargetsInPatternData>.Request().Setup(enemyTargetCountInPattern2))
+				{
+					MechanicEntity caster2 = ability.Caster;
+					bool forceCrit = flag2;
+					DamageData resultDamage2 = new CalculateDamageParams(caster2, target, ability, null, null, null, null, forceCrit).Trigger().ResultDamage;
+					if (resultDamage2 == null)
+					{
+						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
+						return null;
+					}
+					int rateOfFire = ability.Blueprint.GetComponent<AbilityMeleeBurst>().GetRateOfFire(ability.CreateExecutionContext(target));
+					DamagePredictionData damagePredictionData3 = new DamagePredictionData
+					{
+						MinDamage = resultDamage2.MinValue * rateOfFire,
+						MaxDamage = resultDamage2.MaxValue * rateOfFire,
+						Penetration = resultDamage2.Penetration.Value
+					};
+					damagePredictionData += damagePredictionData3;
+				}
+			}
 			foreach (AbilityEffectRunAction component in ability.Blueprint.GetComponents<AbilityEffectRunAction>())
 			{
 				try
 				{
-					DamagePredictionData actionsDamage = GetActionsDamage(ability, component.Actions, null, casterPosition, target ?? Game.Instance.DefaultUnit);
+					DamagePredictionData actionsDamage = GetActionsDamage(ability, component.Actions, context, casterPosition, target ?? Game.Instance.DefaultUnit);
 					damagePredictionData += actionsDamage;
 				}
 				catch (Exception ex)
@@ -504,11 +528,16 @@ public static class AbilityDataHelper
 		return damagePredictionData;
 	}
 
-	public static void GatherAffectedTargetsData(this AbilityData ability, OrientedPatternData pattern, Vector3 casterPosition, in List<AbilityTargetUIData> listToFill)
+	public static void GatherAffectedTargetsData(this AbilityData ability, OrientedPatternData pattern, Vector3 casterPosition, [CanBeNull] TargetWrapper clickedTarget, in List<AbilityTargetUIData> listToFill, [CanBeNull] MechanicEntity targetEntity = null)
 	{
+		if (clickedTarget == null)
+		{
+			return;
+		}
+		AbilityExecutionContext context = ability.CreateExecutionContext(clickedTarget);
 		foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 		{
-			if (!allBaseAwakeUnit.IsExtra && ability.CheckAffectedEntity(pattern, casterPosition, allBaseAwakeUnit, out var uiData))
+			if ((targetEntity == null || targetEntity == allBaseAwakeUnit) && !allBaseAwakeUnit.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, allBaseAwakeUnit, out var uiData))
 			{
 				listToFill.Add(uiData);
 				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData);
@@ -516,7 +545,7 @@ public static class AbilityDataHelper
 		}
 		foreach (DestructibleEntity destructibleEntity in Game.Instance.State.DestructibleEntities)
 		{
-			if (ability.CheckAffectedEntity(pattern, casterPosition, destructibleEntity, out var uiData2))
+			if ((targetEntity == null || targetEntity == destructibleEntity) && CheckAffectedEntity(context, pattern, casterPosition, destructibleEntity, out var uiData2))
 			{
 				listToFill.Add(uiData2);
 				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData2);
@@ -524,33 +553,30 @@ public static class AbilityDataHelper
 		}
 	}
 
-	private static bool IsEntityAffected(MechanicEntity entity, OrientedPatternData pattern)
+	private static bool IsEntityAffected(AbilityExecutionContext context, MechanicEntity entity, OrientedPatternData pattern, Vector3? desiredPosition = null)
 	{
-		foreach (CustomGridNodeBase occupiedNode in entity.GetOccupiedNodes())
+		foreach (CustomGridNodeBase item in desiredPosition.HasValue ? entity.GetOccupiedNodes(desiredPosition.Value) : entity.GetOccupiedNodes())
 		{
-			if (pattern.Contains(occupiedNode))
+			if (pattern.Contains(item))
 			{
 				return true;
 			}
 		}
-		return false;
+		return context.GetAdditionalTargets().Contains(entity);
 	}
 
-	private static bool IsEntityAffected(MechanicEntity entity, OrientedPatternData pattern, Vector3 desiredPosition)
+	private static IEnumerable<MechanicEntity> GetAdditionalTargets(this AbilityExecutionContext context)
 	{
-		foreach (CustomGridNodeBase occupiedNode in entity.GetOccupiedNodes(desiredPosition))
+		using (context.GetDataScope())
 		{
-			if (pattern.Contains(occupiedNode))
-			{
-				return true;
-			}
+			return ((context.Ability.Blueprint.GetComponent<AbilityEffectRunAction>()?.Actions.Actions.OfType<ContextActionOnOathOfVengeanceEnemies>().FirstOrDefault())?.GetTargets()).EmptyIfNull();
 		}
-		return false;
 	}
 
-	private static bool CheckAffectedEntity(this AbilityData ability, OrientedPatternData pattern, Vector3 casterPosition, MechanicEntity entity, out AbilityTargetUIData uiData)
+	private static bool CheckAffectedEntity(AbilityExecutionContext context, OrientedPatternData pattern, Vector3 casterPosition, MechanicEntity entity, out AbilityTargetUIData uiData)
 	{
-		if ((ability.Caster == entity) ? (!IsEntityAffected(entity, pattern, casterPosition)) : (!IsEntityAffected(entity, pattern)))
+		AbilityData ability = context.Ability;
+		if (!IsEntityAffected(context, entity, pattern, (ability.Caster == entity) ? new Vector3?(casterPosition) : null))
 		{
 			uiData = default(AbilityTargetUIData);
 			return false;
@@ -601,7 +627,7 @@ public static class AbilityDataHelper
 				}
 			}
 		}
-		DamagePredictionData damagePrediction = ability.GetDamagePrediction(entity, casterPosition);
+		DamagePredictionData damagePrediction = ability.GetDamagePrediction(entity, casterPosition, context);
 		int num8 = Math.Max(1, occupiedNodes.Count());
 		num = Mathf.Clamp01(num) * 100f;
 		num2 = Mathf.Clamp01(num2) * 100f;

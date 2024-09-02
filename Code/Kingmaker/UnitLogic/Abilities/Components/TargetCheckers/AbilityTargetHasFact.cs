@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -27,6 +28,8 @@ public class AbilityTargetHasFact : BlueprintComponent, IAbilityTargetRestrictio
 
 	public bool Inverted;
 
+	public bool FromThisCaster;
+
 	public ReferenceArrayProxy<BlueprintUnitFact> CheckedFacts
 	{
 		get
@@ -44,9 +47,9 @@ public class AbilityTargetHasFact : BlueprintComponent, IAbilityTargetRestrictio
 			return false;
 		}
 		bool flag = false;
-		foreach (BlueprintUnitFact checkedFact in CheckedFacts)
+		foreach (BlueprintUnitFact fact in CheckedFacts)
 		{
-			flag = entity.Facts.Contains(checkedFact);
+			flag = entity.Facts.List.Any((EntityFact p) => p.Blueprint == fact && (!FromThisCaster || p.MaybeContext?.MaybeCaster == ability.Caster));
 			if (flag)
 			{
 				break;

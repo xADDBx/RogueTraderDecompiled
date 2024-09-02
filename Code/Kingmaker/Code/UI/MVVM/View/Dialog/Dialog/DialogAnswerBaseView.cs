@@ -10,10 +10,12 @@ using Kingmaker.Code.Utility;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.Networking;
+using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Player;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.UI.Sound;
@@ -171,26 +173,20 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 
 	protected virtual void UpdateView()
 	{
-		FocusState focusState = Focus.State;
-		if (base.ViewModel != null && base.ViewModel.WasChoose.Value)
+		FocusState state = Focus.State;
+		bool flag = base.ViewModel?.WasChoose.Value ?? false;
+		UpdateFontColor(state != FocusState.None || flag);
+		if (flag)
 		{
-			focusState = FocusState.Foreground;
-		}
-		UpdateFontColor(focusState != FocusState.None);
-		UpdateButtonLayer(focusState);
-	}
-
-	protected virtual void UpdateButtonLayer(FocusState state)
-	{
-		switch (state)
-		{
-		case FocusState.None:
-		case FocusState.Background:
-			m_OwlcatButton.SetActiveLayer("Normal");
-			break;
-		case FocusState.Foreground:
 			m_OwlcatButton.SetActiveLayer("Focus");
-			break;
+		}
+		else if (state == FocusState.Foreground)
+		{
+			m_OwlcatButton.SetActiveLayer(UINetUtility.IsControlMainCharacter() ? "Focus" : "FocusClient");
+		}
+		else
+		{
+			m_OwlcatButton.SetActiveLayer("Normal");
 		}
 	}
 
@@ -255,16 +251,18 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 
 	public void Confirm()
 	{
-		if (!PhotonManager.Ping.CheckPingCoop(delegate
+		if (PhotonManager.NetGame.CurrentState == NetGame.State.Playing && !UINetUtility.IsControlMainCharacter())
 		{
-			PhotonManager.Ping.PingDialogAnswerVote(base.ViewModel.Answer.Value.AssetGuid);
-		}))
-		{
-			UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
-			DelayedInvoker.InvokeInFrames(delegate
+			PhotonManager.Ping.PressPing(delegate
 			{
-				base.ViewModel?.OnChooseAnswer();
-			}, 1);
+				PhotonManager.Ping.PingDialogAnswerVote(base.ViewModel.Answer.Value.AssetGuid);
+			});
+			return;
 		}
+		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			base.ViewModel?.OnChooseAnswer();
+		}, 1);
 	}
 }

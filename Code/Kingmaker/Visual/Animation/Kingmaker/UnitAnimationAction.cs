@@ -6,6 +6,8 @@ public abstract class UnitAnimationAction : AnimationActionBase
 {
 	public abstract UnitAnimationType Type { get; }
 
+	public virtual bool BlocksCover => false;
+
 	public sealed override void OnStart(AnimationActionHandle handle)
 	{
 		OnStart((UnitAnimationActionHandle)handle);

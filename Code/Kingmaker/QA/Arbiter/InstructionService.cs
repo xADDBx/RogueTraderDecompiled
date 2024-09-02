@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,11 +43,20 @@ internal class InstructionService
 		}
 		string text = m_Parameters.ArbiterInstructionsFile ?? m_Parameters.Arbiter;
 		m_PlayerPrefsDataString = ((text != null && text.Length > 0) ? text : "arbiter.txt");
-		Array.Empty<string>();
-		if (File.Exists(m_PlayerPrefsDataString))
+		string[] array = new string[3]
 		{
-			PFLog.Arbiter.Log("Read data from file '" + m_PlayerPrefsDataString + "'");
-			return ParseScenarios(GetAvailableScenariosFromFile(m_PlayerPrefsDataString));
+			m_PlayerPrefsDataString,
+			Path.Combine(Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/')), m_PlayerPrefsDataString),
+			Path.Combine(Application.persistentDataPath, m_PlayerPrefsDataString)
+		};
+		foreach (string text2 in array)
+		{
+			PFLog.Arbiter.Log("Search file '" + text2 + "'");
+			if (File.Exists(text2))
+			{
+				PFLog.Arbiter.Log("Read data from file '" + text2 + "'");
+				return ParseScenarios(GetAvailableScenariosFromFile(text2));
+			}
 		}
 		PFLog.Arbiter.Log("File '" + m_PlayerPrefsDataString + "' not found. Trying get instructions from server.");
 		return ParseScenarios(GetAvailableScenariosFromSever());

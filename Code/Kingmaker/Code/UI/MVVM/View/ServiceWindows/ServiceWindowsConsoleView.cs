@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
-using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Encyclopedia.Console;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Console;
@@ -11,16 +10,19 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.ColonyManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Encyclopedia;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Menu;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common.Animations;
-using Kingmaker.UI.DollRoom;
 using Kingmaker.UI.MVVM.View.ServiceWindows.ColonyManagement.Console;
 using Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 using Kingmaker.UI.Workarounds;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UI.Utility.CanvasSorting;
 using UniRx;
 using UnityEngine;
 
@@ -32,34 +34,34 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 	private ServiceWindowMenuPCView m_ServiceWindowMenuPcView;
 
 	[SerializeField]
-	private InventoryConsoleView InventoryBaseView;
-
-	[SerializeField]
 	private CharacterInfoConsoleView m_CharacterInfoConsoleView;
 
 	[SerializeField]
-	private JournalConsoleView m_JournalConsoleView;
+	private UIDestroyViewLink<InventoryConsoleView, InventoryVM> InventoryBaseView;
 
 	[SerializeField]
-	private LocalMapConsoleView m_LocalMapConsoleView;
+	private UIDestroyViewLink<JournalConsoleView, JournalVM> m_JournalConsoleView;
 
 	[SerializeField]
-	private UIViewLink<EncyclopediaConsoleView, EncyclopediaVM> m_EncyclopediaView;
+	private UIDestroyViewLink<LocalMapConsoleView, LocalMapVM> m_LocalMapConsoleView;
 
 	[SerializeField]
-	private UIViewLink<ColonyManagementConsoleView, ColonyManagementVM> m_ColonyManagementConsoleView;
+	private UIDestroyViewLink<EncyclopediaConsoleView, EncyclopediaVM> m_EncyclopediaView;
 
 	[SerializeField]
-	private UIViewLink<ShipCustomizationConsoleView, ShipCustomizationVM> m_ShipCustomizationConsoleView;
+	private UIDestroyViewLink<ColonyManagementConsoleView, ColonyManagementVM> m_ColonyManagementConsoleView;
 
 	[SerializeField]
-	private UIViewLink<CargoManagementConsoleView, CargoManagementVM> m_CargoManagementConsoleView;
+	private UIDestroyViewLink<ShipCustomizationConsoleView, ShipCustomizationVM> m_ShipCustomizationConsoleView;
 
 	[SerializeField]
-	private ShipNameAndPortraitPCView m_ShipNameAndPortraitPCView;
+	private UIDestroyViewLink<CargoManagementConsoleView, CargoManagementVM> m_CargoManagementConsoleView;
 
 	[SerializeField]
 	private CanvasScalerWorkaround m_CanvasScaler;
+
+	[SerializeField]
+	private CanvasSortingComponent m_PartySortingComponent;
 
 	[SerializeField]
 	private FadeAnimator m_Background;
@@ -77,28 +79,22 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 		if (!m_IsInit)
 		{
 			m_ServiceWindowMenuPcView.Initialize();
-			InventoryBaseView.Initialize();
 			m_CharacterInfoConsoleView.Initialize();
-			m_JournalConsoleView.Initialize();
-			m_LocalMapConsoleView.Initialize();
-			m_CargoManagementConsoleView.CustomInitialize = InitializeCargoManagement;
-			m_ShipCustomizationConsoleView.CustomInitialize = InitializeShipCustomization;
+			m_ShipCustomizationConsoleView.CustomInitialize = InitializeDollRoomScale;
+			InventoryBaseView.CustomInitialize = InitializeInventory;
 			m_IsInit = true;
 		}
 	}
 
-	private void InitializeCargoManagement(CargoManagementConsoleView view)
+	private void InitializeDollRoomScale(IHasDollRoom dollRoomTarget)
 	{
-		view.ShipNameAndPortraitPCView = m_ShipNameAndPortraitPCView;
+		dollRoomTarget.SetCanvasScaler(m_CanvasScaler);
 	}
 
-	private void InitializeShipCustomization(ShipCustomizationConsoleView view)
+	private void InitializeInventory(InventoryConsoleView view)
 	{
-		DollRoomTargetController[] componentsInChildren = view.gameObject.GetComponentsInChildren<DollRoomTargetController>();
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			componentsInChildren[i].CanvasScaler = m_CanvasScaler;
-		}
+		InitializeDollRoomScale(view);
+		view.AddSortingComponent(m_PartySortingComponent);
 	}
 
 	protected override void BindViewImplementation()
@@ -138,15 +134,5 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 
 	protected override void DestroyViewImplementation()
 	{
-	}
-
-	private void OnShow()
-	{
-		m_Background.Or(null)?.AppearAnimation();
-	}
-
-	private void OnHide()
-	{
-		m_Background.Or(null)?.DisappearAnimation();
 	}
 }

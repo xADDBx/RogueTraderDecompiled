@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
+using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -29,6 +30,9 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 {
 	[SerializeField]
 	private CharInfoFeatureSimpleBaseView m_CharInfoRankEntryView;
+
+	[SerializeField]
+	private TalentGroupView m_TalentGroupView;
 
 	[SerializeField]
 	private OwlcatMultiButton m_MainButton;
@@ -53,6 +57,14 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 	[SerializeField]
 	[ConditionalHide("m_IsListEntry")]
 	private RectTransform m_NextItemArrow;
+
+	[SerializeField]
+	[ConditionalHide("m_IsListEntry")]
+	private GameObject m_AttributeContainer;
+
+	[SerializeField]
+	[ConditionalHide("m_IsListEntry")]
+	private TextMeshProUGUI m_AttributeName;
 
 	[SerializeField]
 	private RankEntryAnimator m_Highlighter;
@@ -92,6 +104,16 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 			m_TooltipHandle?.Dispose();
 			if (featureVM != null)
 			{
+				m_TalentGroupView.SetupView(featureVM.Feature.TalentIconInfo);
+				if (m_AttributeName != null && featureVM.Feature is BlueprintAttributeAdvancement blueprintAttributeAdvancement)
+				{
+					m_AttributeContainer.Or(null)?.SetActive(value: true);
+					m_AttributeName.text = UIUtilityTexts.GetStatShortName(blueprintAttributeAdvancement.Stat);
+				}
+				else
+				{
+					m_AttributeContainer.Or(null)?.SetActive(value: false);
+				}
 				m_TooltipHandle = m_MainButton.SetTooltip(featureVM.Tooltip, new TooltipConfig
 				{
 					TooltipPlace = m_TooltipPlace,
@@ -100,6 +122,11 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 						new Vector2(1f, 0.5f)
 					}
 				});
+			}
+			else
+			{
+				m_TalentGroupView.SetupView(null);
+				m_AttributeContainer.Or(null)?.SetActive(value: false);
 			}
 			AddDisposable(m_MainButton.SetHint(m_HintText));
 			if (m_SelectionLabel != null)

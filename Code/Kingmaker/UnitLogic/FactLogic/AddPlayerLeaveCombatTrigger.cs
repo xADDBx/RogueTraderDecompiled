@@ -32,7 +32,7 @@ public class AddPlayerLeaveCombatTrigger : EntityFactComponentDelegate, IUnitCom
 
 	public void HandleUnitLeaveCombat()
 	{
-		if (RequestTransientData<ComponentData>().InCombat && !Game.Instance.Player.IsInCombat)
+		if (RequestTransientData<ComponentData>().InCombat && !Game.Instance.Player.MainCharacter.Entity.IsInCombat)
 		{
 			if (base.Fact.MaybeContext != null)
 			{

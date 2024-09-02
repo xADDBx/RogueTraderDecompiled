@@ -277,7 +277,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		if (Game.Instance.Player.CanAccessStarshipInventory || force)
 		{
-			m_ShipCustomizationTabType = ShipCustomizationTab.Upgrade;
+			m_ShipCustomizationTabType = (force ? ShipCustomizationTab.Skills : ShipCustomizationTab.Upgrade);
 			HandleOpenWindow(ServiceWindowsType.ShipCustomization);
 		}
 	}
@@ -310,7 +310,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private void HandleOpenWindowDelayed(ServiceWindowsType type)
 	{
-		if (RootUIContext.Instance.IsExplorationWindow)
+		if (RootUIContext.Instance.IsExplorationWindow && type != ServiceWindowsType.Encyclopedia)
 		{
 			ServiceWindowNowIsOpening = false;
 			return;

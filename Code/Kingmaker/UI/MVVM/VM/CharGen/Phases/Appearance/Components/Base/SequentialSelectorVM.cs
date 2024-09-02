@@ -40,13 +40,16 @@ public abstract class SequentialSelectorVM<TEntity> : BaseCharGenAppearancePageC
 	protected SequentialSelectorVM(bool cyclical = true)
 	{
 		m_Cyclical = cyclical;
-		AddDisposable(m_CurrentIndex.Subscribe(delegate
+		AddDisposable(m_CurrentIndex.Subscribe(delegate(int value)
 		{
-			if (m_CurrentIndex.Value >= 0 && ValueList.Count != 0)
+			if (value >= 0 && ValueList.Count != 0)
 			{
-				ValueList[m_CurrentIndex.Value].Setter?.Invoke();
+				if (UINetUtility.IsControlMainCharacter())
+				{
+					ValueList[m_CurrentIndex.Value].Setter?.Invoke();
+					Changed();
+				}
 				SetCurrentEntity();
-				Changed();
 			}
 		}));
 		IsMainCharacter.Value = UINetUtility.IsControlMainCharacter();
@@ -75,7 +78,6 @@ public abstract class SequentialSelectorVM<TEntity> : BaseCharGenAppearancePageC
 
 	public void SetValues(List<TEntity> valueList, TEntity current = null)
 	{
-		m_CurrentIndex.Value = -1;
 		m_IsAvailable.Value = valueList != null && valueList.Count > 1;
 		ValueList.Clear();
 		if (m_IsAvailable.Value)

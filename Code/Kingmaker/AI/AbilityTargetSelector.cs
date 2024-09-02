@@ -32,7 +32,7 @@ public abstract class AbilityTargetSelector
 		{
 			return false;
 		}
-		if ((bool)entity.Features.IsUntargetable)
+		if (AbilityInfo.Caster != entity && (bool)entity.Features.IsUntargetable)
 		{
 			return false;
 		}

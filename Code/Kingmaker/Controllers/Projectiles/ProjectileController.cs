@@ -67,7 +67,7 @@ public class ProjectileController : IControllerTick, IController, IControllerSto
 		{
 			m_Projectiles.RemoveWhere(delegate(Projectile projectile)
 			{
-				if (!projectile.Destroyed && !projectile.Cleared)
+				if (projectile.IsAlive)
 				{
 					return false;
 				}
@@ -259,7 +259,7 @@ public class ProjectileController : IControllerTick, IController, IControllerSto
 		}
 		else
 		{
-			PFLog.Default.ErrorWithReport(launcherView, $"ProjectileController.CreateView: missing ParticleSnapMap for {projectile.Launcher.Entity}");
+			PFLog.Ability.Warning(launcherView, $"ProjectileController.CreateView: missing ParticleSnapMap for {projectile.Launcher.Entity}");
 		}
 		return null;
 	}

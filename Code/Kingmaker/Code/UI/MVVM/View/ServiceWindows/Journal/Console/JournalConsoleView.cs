@@ -130,6 +130,7 @@ public class JournalConsoleView : JournalBaseView
 
 	private void OnSelectedQuestChange(Quest selectedQuest)
 	{
+		m_SelectorView.ChangeTab((int)m_NavigationView.GetActiveTab());
 		if (selectedQuest != null && selectedQuest.Blueprint.Group == QuestGroupId.Rumours)
 		{
 			TryBindQuestView(base.ViewModel.Navigation.Rumors);

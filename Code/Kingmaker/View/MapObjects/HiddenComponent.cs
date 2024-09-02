@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;

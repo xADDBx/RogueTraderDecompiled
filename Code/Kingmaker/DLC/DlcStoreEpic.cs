@@ -1,7 +1,5 @@
 using System;
-using Epic.OnlineServices.Ecom;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.EOSSDK;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
 using UnityEngine;
@@ -25,25 +23,7 @@ public class DlcStoreEpic : DlcStore, IDLCStoreEpic
 
 	public override IDLCStatus GetStatus()
 	{
-		IDLCStatus result = null;
-		try
-		{
-			OwnershipStatus ownershipStatus = EpicGamesManager.DlcHelper.GetOwnershipStatus(m_EpicId);
-			if (ownershipStatus == OwnershipStatus.Owned)
-			{
-				result = DLCStatus.Available;
-				PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Epic (ID {m_EpicId}).");
-			}
-			else
-			{
-				PFLog.System.Log($"DLC {base.OwnerBlueprint} is not available through Epic (ID {m_EpicId}, status {ownershipStatus}).");
-			}
-		}
-		catch (Exception ex)
-		{
-			PFLog.Default.Exception(ex, ExceptionMessage);
-		}
-		return result;
+		return null;
 	}
 
 	public override bool OpenShop()

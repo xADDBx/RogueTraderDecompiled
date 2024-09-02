@@ -10,5 +10,5 @@ public static class DialogFormats
 
 	public static readonly string SpeakerFormatWithoutName = "{1}{0}";
 
-	public static readonly string NarratorsTextFormat = "{0}";
+	public static readonly string NarratorsTextFormat = "<i><color=#{0}>{1}</color><i>";
 }

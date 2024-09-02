@@ -8,7 +8,6 @@ using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -59,10 +58,6 @@ public class SpaceVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 	{
 		if (RootUIContext.Instance.CurrentServiceWindow != 0)
 		{
-			if (UINetUtility.IsControlMainCharacter())
-			{
-				return;
-			}
 			EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 			{
 				h.HandleCloseAll();

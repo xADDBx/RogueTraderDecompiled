@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Kingmaker.Blueprints.Encyclopedia;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.Utility;
 using Kingmaker.Enums;
@@ -11,6 +13,8 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.UI.MVVM.VM.Tooltip.Bricks.CombatLog;
+using Kingmaker.UnitLogic;
 using Owlcat.Runtime.UI.Tooltips;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
@@ -44,9 +48,16 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		list.Add(new TooltipBrickSeparator());
-		list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Tooltips.BaseChance, UIConfig.Instance.PercentHelper.AddPercentTo(m_DodgeRule.BaseValue), null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
-		AddDodgeModifiers(list);
-		list.Add(new TooltipBrickText(UIStrings.Instance.Inspect.UnconditionalModifiers, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
+		if (m_DodgeRule.IsAutoDodge)
+		{
+			AddAutoDodge(list);
+		}
+		else
+		{
+			list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Tooltips.BaseChance, UIConfig.Instance.PercentHelper.AddPercentTo(m_DodgeRule.BaseValue), null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
+			AddDodgeModifiers(list);
+			list.Add(new TooltipBrickText(UIStrings.Instance.Inspect.UnconditionalModifiers, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
+		}
 		list.Add(new TooltipBrickText(m_DodgeGlossaryEntry?.GetDescription()));
 		return list;
 	}
@@ -60,6 +71,12 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 			AddDodgeModifiers(bricks, m_DodgePercentModifiersData, isValueModifiers: false);
 			bricks.Add(new TooltipBricksGroupEnd());
 		}
+	}
+
+	private void AddAutoDodge(List<ITooltipBrick> bricks)
+	{
+		FeatureCountableFlag.BuffList associatedBuffs = m_DodgeRule.Defender.Features.AutoDodge.AssociatedBuffs;
+		bricks.Add(new TooltipBrickTriggeredAuto(GameLogStrings.Instance.TooltipBrickStrings.AutoDodge.Text, associatedBuffs.Buffs.ToList(), isSuccess: true));
 	}
 
 	private void AddDodgeModifiers(List<ITooltipBrick> bricks, StatModifiersBreakdownData breakdownData, bool isValueModifiers)

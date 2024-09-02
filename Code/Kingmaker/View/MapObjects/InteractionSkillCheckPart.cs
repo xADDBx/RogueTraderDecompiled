@@ -23,6 +23,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.Settings;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Kingmaker.View.Mechanics.Interactions.Restrictions;
 using Newtonsoft.Json;
@@ -339,7 +340,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 		{
 			return null;
 		}
-		if (!InteractThroughVariants || (base.Settings.OnlyCheckOnce && AlreadyUsed && CheckPassed))
+		if (!InteractThroughVariants || (base.Settings.OnlyCheckOnce && AlreadyUsed && (CheckPassed || base.Settings.TriggerActionsEveryClick)))
 		{
 			return null;
 		}

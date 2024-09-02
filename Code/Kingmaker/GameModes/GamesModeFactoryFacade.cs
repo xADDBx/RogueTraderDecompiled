@@ -80,6 +80,7 @@ public class GamesModeFactoryFacade
 
 	private void Initialize()
 	{
+		Register(new StabilizeInterpolationController(), All);
 		Register(new SuppressEntitiesController(), Default, Dialog, Pause, Cutscene);
 		Register(Game.Instance.UnitGroupsController, Default, SpaceCombat, StarSystem, Dialog, Cutscene);
 		Register(new SlowMoController(), GameModeType.Default);
@@ -103,6 +104,7 @@ public class GamesModeFactoryFacade
 		Register(new UnitMoveControllerLate(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
 		Register(Game.Instance.MovePredictionController, Default);
 		Register(new ModePredictionInterpolationController(), Default);
+		Register(Game.Instance.CustomUpdateBeforePhysicsController, All);
 		Register(new PhysicsSimulationController(), All);
 		Register(new CameraFollowController(), Default, SpaceCombat);
 		Register(Game.Instance.EntityBoundsController, Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene);
@@ -147,7 +149,6 @@ public class GamesModeFactoryFacade
 		Register(new ItemsEnchantmentController(), Default);
 		Register(new UnitForceMoveController(), Default);
 		Register(new UnitJumpMoveController(), Default);
-		Register(new UpdatePreviousPositionController(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
 		Register(new WeatherController(), Default, Dialog, Pause, Cutscene);
 		Register(new CameraController(), Default, SpaceCombat, Pause);
 		Register(new CameraController(allowScroll: false), Dialog);
@@ -160,6 +161,7 @@ public class GamesModeFactoryFacade
 		Register(new GameOverIronmanController(), GameOver);
 		Register(new TutorialController(), Default, SpaceCombat, Dialog, Pause, Cutscene, StarSystem, GlobalMap);
 		Register(Game.Instance.CustomUpdateController, Default, SpaceCombat, Pause, Cutscene, StarSystem, Dialog);
+		Register(new UpdatePreviousPositionController(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap);
 		Register(Game.Instance.BirdUpdateController, Default, Pause, Cutscene, StarSystem, Dialog);
 		Register(Game.Instance.TurnController, Default, SpaceCombat);
 		Register(new AutoEndTurnController(), Default, SpaceCombat);
@@ -193,7 +195,6 @@ public class GamesModeFactoryFacade
 		Register(new AutoPauseController(), Default);
 		Register(new TimerController(), Default);
 		Register(new BarkBanterController(), Default, StarSystem);
-		Register(new InvisibleUnitController(), Default);
 		Register(new DopplerSoundController(), Default, SpaceCombat);
 		Register(new UnitCombatLeaveController(), Default, Dialog, SpaceCombat, StarSystem, CutsceneGlobalMap);
 		Register(new VisualEffectsController(), All.Except(None, BugReport));
@@ -222,6 +223,7 @@ public class GamesModeFactoryFacade
 		Register(Game.Instance.FogOfWarComplete, Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene, GlobalMap, CutsceneGlobalMap);
 		Register(Game.Instance.ForcedCoversController, All);
 		Register(new LevelUpFxController(), Default);
+		Register(Game.Instance.CameraFXController, All);
 		Register(Game.Instance.SceneControllables, All);
 	}
 

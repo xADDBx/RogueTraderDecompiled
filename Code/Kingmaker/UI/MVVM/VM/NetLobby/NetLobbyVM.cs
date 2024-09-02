@@ -26,6 +26,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.NetLobby.DlcList;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.Fsm;
 using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
@@ -35,7 +36,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.NetLobby;
 
-public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetEvents, ISubscriber, ISavesUpdatedHandler, IAreaHandler, INetLobbyPlayersHandler, INetSaveSelectHandler, INetLobbyEpicGamesEvents, INetCheckUsersModsHandler, INetLobbyRequest
+public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetEvents, ISubscriber, ISavesUpdatedHandler, IAreaHandler, INetLobbyPlayersHandler, INetSaveSelectHandler, INetLobbyEpicGamesEvents, INetCheckUsersModsHandler, INetLobbyRequest, StateMachine<NetGame.State, NetGame.Trigger>.IStateMachineEventsHandler
 {
 	private const string NET_LOBBY_TUTORIAL_PREF_KEY = "first_open_net_lobby_tutorial";
 
@@ -86,6 +87,8 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	public readonly BoolReactiveProperty SaveListAreEmpty = new BoolReactiveProperty(initialValue: false);
 
 	public readonly BoolReactiveProperty CanConfirmLaunch = new BoolReactiveProperty();
+
+	public readonly ReactiveProperty<SaveSlotVM> SaveFullScreenshot = new ReactiveProperty<SaveSlotVM>();
 
 	private readonly List<SaveSlotVM> m_SaveSlotVMs = new List<SaveSlotVM>();
 
@@ -231,6 +234,8 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	protected override void DisposeImplementation()
 	{
+		PFLog.Net.Log("NET LOBBY STATE DISPOSE");
+		HideScreenshot();
 		DisposeSaveSloCollection();
 		CurrentSave.Value?.Dispose();
 		CurrentSave.Value = null;
@@ -353,6 +358,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	{
 		if (SaveSlotCollectionVm.Value != null)
 		{
+			HideScreenshot();
 			DisposeSaveSloCollection();
 		}
 		else if (PhotonManager.NetGame.CurrentState == NetGame.State.InLobby)
@@ -519,13 +525,47 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void HandleNetGameStateChanged(NetGame.State state)
 	{
-		NetGameCurrentState.Value = state;
+		NetGameCurrentState.SetValueAndForceNotify(state);
 		IsPlayingState.Value = state == NetGame.State.Playing;
+		PFLog.Net.Log($"NET LOBBY STATE CHANGE: {state}");
+		if (state == NetGame.State.InLobby)
+		{
+			CanConfirmLaunch.Value = false;
+		}
 	}
 
 	public void HandleNLoadingScreenClosed()
 	{
 		CanConfirmLaunch.Value = false;
+	}
+
+	public void OnFireTrigger(NetGame.Trigger trigger)
+	{
+	}
+
+	public void OnStateChanged(NetGame.State oldState, NetGame.State newState)
+	{
+		PFLog.Net.Log($"NET LOBBY STATE CHANGE: {oldState} -> {newState}");
+		if (newState == NetGame.State.InLobby)
+		{
+			CanConfirmLaunch.Value = false;
+		}
+	}
+
+	public void OnProcessTrigger(NetGame.Trigger trigger, NetGame.State currentState, NetGame.State nextState)
+	{
+	}
+
+	public void OnFireException(Exception exception)
+	{
+	}
+
+	public void OnUnhandledTransition(NetGame.Trigger trigger, NetGame.State currentState)
+	{
+	}
+
+	public void OnIgnoreTrigger(NetGame.Trigger trigger, NetGame.State currentState)
+	{
 	}
 
 	public void OnSaveListUpdated()
@@ -594,7 +634,8 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 							{
 								SetSelectSaveAction(info);
 							}
-						}
+						},
+						ShowScreenshot = RequestShowScreenshot
 					}, allowSwitchOff);
 					AddDisposable(saveSlotVM);
 					SaveSlotCollectionVm.Value.HandleNewSave(saveSlotVM);
@@ -614,6 +655,17 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			}
 			SaveListAreEmpty.Value = m_SaveSlotVMs.Count == 0;
 		}));
+	}
+
+	private void RequestShowScreenshot(SaveSlotVM saveSlotVM)
+	{
+		saveSlotVM?.UpdateHighResScreenshot();
+		SaveFullScreenshot.Value = saveSlotVM;
+	}
+
+	private void HideScreenshot()
+	{
+		SaveFullScreenshot.Value = null;
 	}
 
 	private void SetSelectSaveAction(SaveInfo saveInfo)

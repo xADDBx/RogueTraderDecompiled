@@ -33,18 +33,22 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 		public int CostBonus { get; }
 
 		[JsonProperty]
+		public bool IgnoreMinimalCost { get; }
+
+		[JsonProperty]
 		public EntityFactSource Source { get; }
 
 		[JsonProperty]
 		public RestrictionsHolder.Reference Restrictions { get; }
 
 		[JsonConstructor]
-		public BonusAbilityData(int count, EntityFactSource source, int costBonus, RestrictionsHolder.Reference restrictions)
+		public BonusAbilityData(int count, EntityFactSource source, int costBonus, RestrictionsHolder.Reference restrictions, bool ignoreMinimalCost)
 		{
 			Count = count;
 			Source = source;
 			CostBonus = costBonus;
 			Restrictions = restrictions;
+			IgnoreMinimalCost = ignoreMinimalCost;
 		}
 
 		public bool IsCorrectAbility(AbilityData data)
@@ -64,10 +68,12 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 			result.Append(ref val);
 			int val2 = CostBonus;
 			result.Append(ref val2);
-			Hash128 val3 = ClassHasher<EntityFactSource>.GetHash128(Source);
+			bool val3 = IgnoreMinimalCost;
 			result.Append(ref val3);
-			Hash128 val4 = Kingmaker.StateHasher.Hashers.BlueprintReferenceHasher.GetHash128(Restrictions);
+			Hash128 val4 = ClassHasher<EntityFactSource>.GetHash128(Source);
 			result.Append(ref val4);
+			Hash128 val5 = Kingmaker.StateHasher.Hashers.BlueprintReferenceHasher.GetHash128(Restrictions);
+			result.Append(ref val5);
 			return result;
 		}
 	}
@@ -96,9 +102,9 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 		return bonusAbilityData;
 	}
 
-	public void AddBonusAbility(EntityFactSource source, int count, int costBonus, RestrictionsHolder.Reference restrictions)
+	public void AddBonusAbility(EntityFactSource source, int count, int costBonus, RestrictionsHolder.Reference restrictions, bool ignoreMinimalCost = false)
 	{
-		BonusAbilityData bonusAbilityData = new BonusAbilityData(count, source, costBonus, restrictions);
+		BonusAbilityData bonusAbilityData = new BonusAbilityData(count, source, costBonus, restrictions, ignoreMinimalCost);
 		m_Bonuses.Add(bonusAbilityData);
 		Logger.Log($"Add bonus ability usage. {bonusAbilityData}. Owner={base.Owner}");
 	}
@@ -120,7 +126,14 @@ public class UnitPartBonusAbility : BaseUnitPart, IInitiatorRulebookHandler<Rule
 		BonusAbilityData bestBonusAbilityUsage = GetBestBonusAbilityUsage(evt.AbilityData);
 		if (bestBonusAbilityUsage != null)
 		{
-			evt.CostBonus += bestBonusAbilityUsage.CostBonus;
+			if (bestBonusAbilityUsage.IgnoreMinimalCost)
+			{
+				evt.CostBonusAfterMinimum += bestBonusAbilityUsage.CostBonus;
+			}
+			else
+			{
+				evt.CostBonus += bestBonusAbilityUsage.CostBonus;
+			}
 		}
 	}
 

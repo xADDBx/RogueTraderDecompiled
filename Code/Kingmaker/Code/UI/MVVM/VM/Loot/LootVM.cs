@@ -342,6 +342,7 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		if (IsPlayerStash || IsOneSlot)
 		{
 			InventoryHelper.TryCollectLootSlot(slot);
+			DelayedInvoker.InvokeInFrames(MarkContextLootAsDirty, 1);
 			return;
 		}
 		if (ToInventory(slot.ItemEntity))

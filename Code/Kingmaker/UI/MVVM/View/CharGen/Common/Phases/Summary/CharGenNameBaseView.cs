@@ -36,6 +36,6 @@ public class CharGenNameBaseView : CharInfoComponentWithLevelUpView<CharGenNameV
 
 	protected void GenerateRandomName()
 	{
-		base.ViewModel.SetName(base.ViewModel.GetRandomName());
+		base.ViewModel.SetNameAndNotify(base.ViewModel.GetRandomName());
 	}
 }

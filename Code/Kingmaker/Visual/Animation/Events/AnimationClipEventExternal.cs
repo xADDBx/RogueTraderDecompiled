@@ -52,6 +52,10 @@ public class AnimationClipEventExternal : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventExternal()
+	{
+	}
+
 	public AnimationClipEventExternal(float time)
 		: base(time)
 	{

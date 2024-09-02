@@ -45,8 +45,46 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 	{
 		OwlcatModificationsManager instance = OwlcatModificationsManager.Instance;
 		instance.OnShowModSettingsCalled = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Combine(instance.OnShowModSettingsCalled, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsCalled));
+		OwlcatModificationsManager instance2 = OwlcatModificationsManager.Instance;
+		instance2.OnShowModSettingsFromInGameUI = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Combine(instance2.OnShowModSettingsFromInGameUI, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsFromInGameMenu));
 		m_KeyBindSubscription = Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.OpenModificationsWindow.name, SwitchVisible);
 		return this;
+	}
+
+	private void OnShowModSettingsFromInGameMenu(string modId)
+	{
+		PFLog.Mods.Log("Trying to show Mod settings window for " + modId);
+		if (s_Instance == null)
+		{
+			s_Instance = Resources.FindObjectsOfTypeAll<OwlcatModificationsWindow>().FirstOrDefault();
+		}
+		if (s_Instance == null)
+		{
+			PFLog.Mods.Error("Error while trying to create OwlcatModificationsWindow. Maybe there's no prefab in Resources.");
+			return;
+		}
+		OwlcatModification[] installedModifications = OwlcatModificationsManager.Instance.InstalledModifications;
+		foreach (OwlcatModification owlcatModification in installedModifications)
+		{
+			if (owlcatModification.UniqueName == modId)
+			{
+				s_Instance.m_SelectedModification = owlcatModification;
+				break;
+			}
+		}
+		if (s_Instance.m_SelectedModification == null)
+		{
+			PFLog.Mods.Error("No modification with " + modId + " found in OwlcatModManager");
+		}
+		else if (s_Instance.m_SelectedModification.OnShowGUI == null)
+		{
+			s_Instance.m_SelectedModification = null;
+			PFLog.Mods.Error("Mod " + modId + " has no OnShowGui");
+		}
+		else
+		{
+			Show();
+		}
 	}
 
 	private void OnShowModSettingsCalled(string modId)
@@ -62,6 +100,7 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 			if (owlcatModification.UniqueName == modId)
 			{
 				s_Instance.m_SelectedModification = owlcatModification;
+				break;
 			}
 		}
 		if (s_Instance.m_SelectedModification == null)
@@ -310,7 +349,9 @@ public class OwlcatModificationsWindow : MonoBehaviour, IDisposable
 	public void Dispose()
 	{
 		OwlcatModificationsManager instance = OwlcatModificationsManager.Instance;
-		instance.OnShowModSettingsCalled = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Combine(instance.OnShowModSettingsCalled, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsCalled));
+		instance.OnShowModSettingsFromInGameUI = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Remove(instance.OnShowModSettingsFromInGameUI, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsFromInGameMenu));
+		OwlcatModificationsManager instance2 = OwlcatModificationsManager.Instance;
+		instance2.OnShowModSettingsCalled = (OwlcatModificationsManager.ShowModSettingsCalled)Delegate.Remove(instance2.OnShowModSettingsCalled, new OwlcatModificationsManager.ShowModSettingsCalled(OnShowModSettingsCalled));
 		m_KeyBindSubscription.Dispose();
 		Hide();
 	}

@@ -27,14 +27,17 @@ public static class SoundUtility
 				AkSoundEngine.SetSwitch("CharacterTitle", "King", go);
 			}
 		}
-		switch (Game.Instance.Player.MainCharacter.Entity.Gender)
+		if (Game.Instance.Player != null && !Game.Instance.Player.MainCharacter.IsNull())
 		{
-		case Gender.Male:
-			AkSoundEngine.SetSwitch("CharacterSex", "Male", go);
-			break;
-		case Gender.Female:
-			AkSoundEngine.SetSwitch("CharacterSex", "Female", go);
-			break;
+			switch (Game.Instance.Player.MainCharacter.Entity.Gender)
+			{
+			case Gender.Male:
+				AkSoundEngine.SetSwitch("CharacterSex", "Male", go);
+				break;
+			case Gender.Female:
+				AkSoundEngine.SetSwitch("CharacterSex", "Female", go);
+				break;
+			}
 		}
 	}
 

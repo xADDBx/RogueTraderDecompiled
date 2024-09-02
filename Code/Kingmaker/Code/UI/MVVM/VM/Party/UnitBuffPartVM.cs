@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -107,5 +109,14 @@ public class UnitBuffPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	public void HandleBuffRankDecreased(Buff buff)
 	{
+	}
+
+	public void SortBuffs()
+	{
+		List<BuffVM> list = Buffs.OrderBy((BuffVM b) => b.SortOrder).ToList();
+		for (int i = 0; i < list.Count; i++)
+		{
+			Buffs.Move(Buffs.IndexOf(list[i]), i);
+		}
 	}
 }

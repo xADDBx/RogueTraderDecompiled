@@ -34,7 +34,7 @@ public class QAModeExceptionReporter : MonoBehaviour
 		{
 			if (!CheatsJira.QaMode)
 			{
-				num = ((ex is SpamDetectingException) ? 1 : 0);
+				num = ((ex is SpamDetectionException) ? 1 : 0);
 				if (num == 0)
 				{
 					goto IL_006e;

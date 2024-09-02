@@ -111,7 +111,17 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 	}
 
 	[MemoryPackIgnore]
-	public CustomGridNodeBase NearestNode => Point.GetNearestNodeXZUnwalkable();
+	public CustomGridNodeBase NearestNode
+	{
+		get
+		{
+			if (!(Entity?.Features.DisableSnapToGrid))
+			{
+				return Point.GetNearestNodeXZUnwalkable();
+			}
+			return Point.GetNearestNodeXZ();
+		}
+	}
 
 	public TargetWrapper([NotNull] MechanicEntity unit)
 	{

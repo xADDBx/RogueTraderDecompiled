@@ -50,7 +50,7 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 
 	protected override void RunAction()
 	{
-		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current || base.Context.MaybeCaster == null)
+		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current || base.Context.MaybeCaster.IsPreview() || base.Context.MaybeCaster == null)
 		{
 			return;
 		}

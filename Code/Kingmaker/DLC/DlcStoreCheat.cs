@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
+using Kingmaker.UI.Common;
+using Kingmaker.Utility.BuildModeUtils;
 using UnityEngine;
 
 namespace Kingmaker.DLC;
@@ -22,48 +26,124 @@ public class DlcStoreCheat : DlcStore
 	[Tooltip("Is the DLC available in development build")]
 	private bool m_IsAvailableInDevBuild;
 
+	private bool m_IsPurchased = true;
+
+	private bool m_IsLoading;
+
+	private bool m_IsMounted = true;
+
 	private static Dictionary<string, bool> s_OverrideEnable = new Dictionary<string, bool>();
+
+	private static Dictionary<string, DLCStatus> s_OverrideAvailable = new Dictionary<string, DLCStatus>();
 
 	public bool IsAvailableInEditor => m_IsAvailableInEditor;
 
 	public bool IsAvailableInDevBuild => m_IsAvailableInDevBuild;
 
-	public override bool IsSuitable => GetStatus() != null;
+	public override bool IsSuitable => BuildModeUtility.CheatStoreEnabled;
+
+	public override bool AllowsInstalling => true;
+
+	public override bool AllowsDeleting => true;
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on StoreCheat.";
 
 	public override IDLCStatus GetStatus()
 	{
-		_ = (base.OwnerBlueprint as IBlueprintDlc)?.DlcType ?? DlcTypeEnum.CosmeticDlc;
 		if (0 == 0)
 		{
-			return null;
+			return DLCStatus.UnAvailable;
 		}
-		return DLCStatus.Available;
+		return new DLCStatus
+		{
+			Purchased = m_IsPurchased,
+			DownloadState = (m_IsMounted ? DownloadState.Loaded : (m_IsLoading ? DownloadState.Loading : DownloadState.NotLoaded)),
+			IsMounted = m_IsMounted
+		};
 	}
 
 	public override bool OpenShop()
 	{
-		bool result = false;
+		bool isAvailable = false;
 		if (!IsSuitable)
 		{
 			return false;
 		}
 		try
 		{
-			Application.OpenURL(m_TestShopLink);
-			result = true;
+			UIUtility.ShowMessageBox("Would you like to buy DLC: " + ((base.OwnerBlueprint as BlueprintDlc)?.DlcDisplayName ?? base.OwnerBlueprint.name), DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton button)
+			{
+				if (button == DialogMessageBoxBase.BoxButton.Yes)
+				{
+					isAvailable = true;
+					m_IsPurchased = true;
+					StoreManager.RefreshAllDLCStatuses();
+					StartDownloadAsync();
+				}
+			});
 		}
 		catch (Exception ex)
 		{
 			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
-		return result;
+		return isAvailable;
 	}
 
 	public override bool Mount()
 	{
 		return false;
+	}
+
+	public override bool Delete()
+	{
+		StartDeleteAsync();
+		return true;
+	}
+
+	private async Task StartDeleteAsync()
+	{
+		m_IsMounted = false;
+		await Task.Delay(3000);
+		StoreManager.RefreshAllDLCStatuses();
+	}
+
+	public override bool Install()
+	{
+		StartDownloadAsync();
+		return true;
+	}
+
+	private async Task StartDownloadAsync()
+	{
+		await Task.Delay(1000);
+		m_IsLoading = true;
+		StoreManager.RefreshAllDLCStatuses();
+		await Task.Delay(3000);
+		m_IsLoading = false;
+		m_IsMounted = true;
+		StoreManager.RefreshAllDLCStatuses();
+	}
+
+	public static void AvailableDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null && !string.IsNullOrEmpty(dlc.AssetGuid) && !s_OverrideAvailable.TryAdd(dlc.AssetGuid, DLCStatus.Available))
+		{
+			DLCStatus dLCStatus = s_OverrideAvailable[dlc.AssetGuid];
+			dLCStatus.Purchased = true;
+			dLCStatus.DownloadState = DownloadState.Loaded;
+			dLCStatus.IsMounted = true;
+		}
+	}
+
+	public static void UnAvailableDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null && !string.IsNullOrEmpty(dlc.AssetGuid) && !s_OverrideAvailable.TryAdd(dlc.AssetGuid, DLCStatus.UnAvailable))
+		{
+			DLCStatus dLCStatus = s_OverrideAvailable[dlc.AssetGuid];
+			dLCStatus.Purchased = false;
+			dLCStatus.DownloadState = DownloadState.NotLoaded;
+			dLCStatus.IsMounted = false;
+		}
 	}
 
 	public static void EnableDlc(BlueprintDlc dlc)

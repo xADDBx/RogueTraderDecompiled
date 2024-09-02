@@ -113,6 +113,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	private SaveInfo m_IronmanSave;
 
+	private byte[] m_ScreenshotPNGBytes;
+
+	private byte[] m_ScreenshotHighResPNGBytes;
+
 	private const string DialogAutosaveName = "DialogAutosave";
 
 	private readonly object m_Lock = new object();
@@ -284,8 +288,19 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	{
 		try
 		{
-			using ZipSaver zipSaver = new ZipSaver(file, ISaver.Mode.Read);
-			string text = zipSaver.ReadHeader();
+			ISaver saver2;
+			if (!File.Exists(file))
+			{
+				ISaver saver = new FolderSaver(file);
+				saver2 = saver;
+			}
+			else
+			{
+				ISaver saver = new ZipSaver(file, ISaver.Mode.Read);
+				saver2 = saver;
+			}
+			using ISaver saver3 = saver2;
+			string text = saver3.ReadHeader();
 			if (text == null)
 			{
 				Logger.Warning("Save file {0} looks broken: cannot read header", file);
@@ -297,7 +312,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				return null;
 			}
 			saveInfo.FolderName = file;
-			saveInfo.Saver = zipSaver;
+			saveInfo.Saver = saver3;
 			saveInfo.GameId = saveInfo.GameId ?? saveInfo.PlayerCharacterName;
 			return saveInfo;
 		}
@@ -961,24 +976,15 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				(saveInfo.ScreenshotHighRes, saveInfo.Screenshot) = SaveScreenshotManager.MakeScreenshot();
 			}
 		}
-		string folderName = saveInfo.FolderName;
 		try
 		{
-			using (saveInfo.GetWriteScope())
+			if (saveInfo.Type != SaveInfo.SaveType.ForImport)
 			{
-				saveInfo.Saver.Clear();
-				Logger.Log("Saving to {0}", folderName);
-				saveInfo.Saver.SaveJson("header", SaveSystemJsonSerializer.Serializer.SerializeObject(saveInfo));
-				if (saveInfo.Type != SaveInfo.SaveType.ForImport)
-				{
-					byte[] bytes = saveInfo.ScreenshotHighRes.EncodeToPNG();
-					saveInfo.Saver.SaveBytes("highres.png", bytes);
-					UnityEngine.Object.Destroy(saveInfo.ScreenshotHighRes);
-					saveInfo.ScreenshotHighRes = null;
-					byte[] bytes2 = saveInfo.Screenshot.EncodeToPNG();
-					saveInfo.Saver.SaveBytes("header.png", bytes2);
-					SaveScreenshotManager.CompressScreenshot(saveInfo.Screenshot);
-				}
+				m_ScreenshotHighResPNGBytes = saveInfo.ScreenshotHighRes.EncodeToPNG();
+				UnityEngine.Object.Destroy(saveInfo.ScreenshotHighRes);
+				saveInfo.ScreenshotHighRes = null;
+				m_ScreenshotPNGBytes = saveInfo.Screenshot.EncodeToPNG();
+				SaveScreenshotManager.CompressScreenshot(saveInfo.Screenshot);
 			}
 		}
 		catch (Exception ex)
@@ -1029,6 +1035,8 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			CurrentState = State.None;
 			yield break;
 		}
+		m_ScreenshotPNGBytes = null;
+		m_ScreenshotHighResPNGBytes = null;
 		Logger.Log("Finished wait for threaded save");
 		CurrentState = State.None;
 	}
@@ -1058,31 +1066,33 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		try
 		{
 			saveInfo.OperationState = SaveInfo.StateType.Serializing;
-			using (saveInfo.GetWriteScope())
+			using (saveInfo.GetWriteScope(writeOnly: true))
 			{
-				Task playerTask2 = SerializePlayer(Game.Instance.Player);
-				Task partyTask2 = SerializeParty(Game.Instance.Player.CrossSceneState);
+				saveInfo.Saver.Clear();
+				Logger.Log("Saving to {0}", saveInfo.FolderName);
+				saveInfo.Saver.SaveJson("header", SaveSystemJsonSerializer.Serializer.SerializeObject(saveInfo));
+				if (saveInfo.Type != SaveInfo.SaveType.ForImport)
+				{
+					saveInfo.Saver.SaveBytes("highres.png", m_ScreenshotHighResPNGBytes);
+					saveInfo.Saver.SaveBytes("header.png", m_ScreenshotPNGBytes);
+				}
+				Task playerTask = SerializePlayer(Game.Instance.Player);
+				Task partyTask = SerializeParty(Game.Instance.Player.CrossSceneState);
 				AreaPersistentState loadedAreaState = Game.Instance.State.LoadedAreaState;
-				Task areaTask2 = ((saveInfo.Type != SaveInfo.SaveType.ForImport && loadedAreaState != null) ? SerializeLocalAreaState(loadedAreaState) : Task.CompletedTask);
+				Task areaTask = ((saveInfo.Type != SaveInfo.SaveType.ForImport && loadedAreaState != null) ? SerializeLocalAreaState(loadedAreaState) : Task.CompletedTask);
 				AreaDataStash.GameHistoryFile.DisableWrite = true;
 				GameStatistic.AppStatus appStatus = new GameStatistic.AppStatus();
 				Game.Instance.Statistic.PreSave(appStatus);
-				Task<string> statTask2 = SerializeStatistics(saveInfo, appStatus);
-				Task<string> settingsTask2 = SerializeInGameSettings(Game.Instance.State.InGameSettings);
+				Task<string> statTask = SerializeStatistics(saveInfo, appStatus);
+				Task<string> settingsTask = SerializeInGameSettings(Game.Instance.State.InGameSettings);
 				Game.Instance.CoopData.PreSave();
-				Task<string> coopTask2 = SerializeCoopData(Game.Instance.CoopData);
+				Task<string> coopTask = SerializeCoopData(Game.Instance.CoopData);
 				if (saveInfo.Type != SaveInfo.SaveType.ForImport)
 				{
-					foreach (AreaPersistentState savedAreaState in Game.Instance.State.SavedAreaStates)
-					{
-						if (savedAreaState != Game.Instance.State.LoadedAreaState)
-						{
-							SaveStashedArea(saveInfo, savedAreaState, checksumStringBuilder);
-						}
-					}
+					await SaveStashedAreas(saveInfo, checksumStringBuilder);
 				}
 				Logger.Log("await Task.WhenAll");
-				await Task.WhenAll(SavePlayer(saveInfo, playerTask2, checksumStringBuilder), SaveArea(saveInfo, areaTask2, checksumStringBuilder), SaveParty(saveInfo, partyTask2, checksumStringBuilder), SaveStatistics(saveInfo, statTask2), SaveSettings(saveInfo, settingsTask2), SaveCoop(saveInfo, coopTask2));
+				await Task.WhenAll(SavePlayer(saveInfo, playerTask, checksumStringBuilder), SaveArea(saveInfo, areaTask, checksumStringBuilder), SaveParty(saveInfo, partyTask, checksumStringBuilder), SaveStatistics(saveInfo, statTask), SaveSettings(saveInfo, settingsTask), SaveCoop(saveInfo, coopTask));
 				Logger.Log("Task.WhenAll Done");
 				if (ReportingCheats.IsDebugSaveFileChecksumEnabled)
 				{
@@ -1234,6 +1244,24 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				Logger.Log("SaveStatistics StartNew Done");
 			});
 			Logger.Log("SaveStatistics Done");
+		}
+	}
+
+	private static async Task SaveStashedAreas(SaveInfo saveInfo, StringBuilder checksum)
+	{
+		await EditorSafeThreading.Awaitable;
+		using (CodeTimer.New("Save stashed areas"))
+		{
+			int num = 0;
+			foreach (AreaPersistentState savedAreaState in Game.Instance.State.SavedAreaStates)
+			{
+				if (savedAreaState != Game.Instance.State.LoadedAreaState)
+				{
+					SaveStashedArea(saveInfo, savedAreaState, checksum);
+					num++;
+				}
+			}
+			Logger.Log($"#### Saved {num} areas");
 		}
 	}
 

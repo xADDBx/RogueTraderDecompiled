@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.Items.Equipment;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using StateHasher.Core;
@@ -20,8 +21,7 @@ public class EquipmentSlot<TBlueprintItem> : ItemSlot, IHashable where TBlueprin
 
 	public override bool IsItemSupported(ItemEntity item)
 	{
-		MechanicEntity owner = base.Owner;
-		if (owner != null && owner.IsInCombat)
+		if (base.Owner == null || (base.Owner.IsInCombat && !ContextData<IgnoreLock>.Current))
 		{
 			return false;
 		}
@@ -30,8 +30,7 @@ public class EquipmentSlot<TBlueprintItem> : ItemSlot, IHashable where TBlueprin
 
 	public override bool CanRemoveItem()
 	{
-		MechanicEntity owner = base.Owner;
-		if (owner != null && owner.IsInCombat)
+		if (base.Owner == null || (base.Owner.IsInCombat && !ContextData<IgnoreLock>.Current))
 		{
 			return false;
 		}

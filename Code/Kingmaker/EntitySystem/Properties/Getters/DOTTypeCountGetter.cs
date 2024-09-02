@@ -20,7 +20,7 @@ public class DOTTypeCountGetter : MechanicEntityPropertyGetter
 		int num = 0;
 		foreach (DOT value in Enum.GetValues(typeof(DOT)))
 		{
-			if (DOTLogic.GetCurrentDamageOfType(base.CurrentEntity, value) > 0)
+			if (DOTLogic.GetDamageOfTypeInstancesCount(base.CurrentEntity, value) > 0)
 			{
 				num++;
 			}

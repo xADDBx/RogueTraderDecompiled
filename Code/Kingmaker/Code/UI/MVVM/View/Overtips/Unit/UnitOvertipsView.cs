@@ -63,15 +63,12 @@ public class UnitOvertipsView : ViewBase<UnitOvertipsCollectionVM>
 	{
 		if (m_IsSpace)
 		{
-			if (IsSpaceCombat)
-			{
-				PrewarmOvertips(m_FreePartyOvertips, m_OvertipSpaceShipUnitPCView, 1, m_PartyContainer);
-				PrewarmOvertips(m_FreeEnemyOvertips, m_OvertipSpaceShipUnitPCView, 10, m_EnemyContainer);
-				PrewarmOvertips(m_FreeNPCOvertips, m_OvertipSpaceShipUnitPCView, 5, m_NpcContainer);
-				PrewarmOvertips(m_FreePartyOvertips, m_OvertipTorpedoUnitView, 1, m_PartyContainer);
-				PrewarmOvertips(m_FreeEnemyOvertips, m_OvertipTorpedoUnitView, 5, m_EnemyContainer);
-				PrewarmOvertips(m_FreeNPCOvertips, m_OvertipTorpedoUnitView, 1, m_NpcContainer);
-			}
+			PrewarmOvertips(m_FreePartyOvertips, m_OvertipSpaceShipUnitPCView, 1, m_PartyContainer);
+			PrewarmOvertips(m_FreeEnemyOvertips, m_OvertipSpaceShipUnitPCView, 10, m_EnemyContainer);
+			PrewarmOvertips(m_FreeNPCOvertips, m_OvertipSpaceShipUnitPCView, 5, m_NpcContainer);
+			PrewarmOvertips(m_FreePartyOvertips, m_OvertipTorpedoUnitView, 1, m_PartyContainer);
+			PrewarmOvertips(m_FreeEnemyOvertips, m_OvertipTorpedoUnitView, 5, m_EnemyContainer);
+			PrewarmOvertips(m_FreeNPCOvertips, m_OvertipTorpedoUnitView, 1, m_NpcContainer);
 		}
 		else
 		{
@@ -180,23 +177,47 @@ public class UnitOvertipsView : ViewBase<UnitOvertipsCollectionVM>
 	{
 		if (m_IsSpace)
 		{
-			if (IsSpaceCombat && !(m_OvertipSpaceShipUnitPCView == null))
-			{
-				BaseOvertipView<OvertipEntityUnitVM> prefab = m_OvertipSpaceShipUnitPCView;
-				if (vm.UnitUIWrapper.IsSuicideAttacker)
-				{
-					prefab = m_OvertipTorpedoUnitView;
-				}
-				Transform targetContainer = (vm.UnitUIWrapper.IsPlayerEnemy ? m_EnemyContainer : (vm.UnitUIWrapper.IsPlayer ? m_PartyContainer : m_NpcContainer));
-				BaseOvertipView<OvertipEntityUnitVM> baseOvertipView = (vm.UnitUIWrapper.IsPlayerEnemy ? GetWidget(m_FreeEnemyOvertips, prefab, targetContainer) : (vm.UnitUIWrapper.IsPlayer ? GetWidget(m_FreePartyOvertips, prefab, targetContainer) : GetWidget(m_FreeNPCOvertips, prefab, targetContainer)));
-				baseOvertipView.Bind(vm);
-				m_ActiveOvertips.Add(vm, baseOvertipView);
-			}
+			AddSpaceOvertip(vm);
 		}
-		else if (!(m_OvertipUnitView == null))
+		else
 		{
-			Transform targetContainer2 = (vm.UnitUIWrapper.IsPlayerEnemy ? m_EnemyContainer : (vm.UnitUIWrapper.IsPlayer ? m_PartyContainer : m_NpcContainer));
-			OvertipUnitView overtipUnitView = (vm.UnitUIWrapper.IsPlayerEnemy ? GetWidget(m_FreeEnemyOvertips, m_OvertipUnitView, targetContainer2) : (vm.UnitUIWrapper.IsPlayer ? GetWidget(m_FreePartyOvertips, m_OvertipUnitView, targetContainer2) : GetWidget(m_FreeNPCOvertips, m_OvertipUnitView, targetContainer2)));
+			AddSurfaceOvertip(vm);
+		}
+	}
+
+	private void AddSpaceOvertip(OvertipEntityUnitVM vm)
+	{
+		if (IsSpaceCombat && !(m_OvertipSpaceShipUnitPCView == null))
+		{
+			Transform targetContainer;
+			Queue<MonoBehaviour> queue;
+			if (vm.UnitUIWrapper.IsPlayerEnemy)
+			{
+				targetContainer = m_EnemyContainer;
+				queue = m_FreeEnemyOvertips;
+			}
+			else if (vm.UnitUIWrapper.IsPlayer)
+			{
+				targetContainer = m_PartyContainer;
+				queue = m_FreePartyOvertips;
+			}
+			else
+			{
+				targetContainer = m_NpcContainer;
+				queue = m_FreeNPCOvertips;
+			}
+			BaseOvertipView<OvertipEntityUnitVM> baseOvertipView = ((!vm.UnitUIWrapper.IsSuicideAttacker) ? ((BaseOvertipView<OvertipEntityUnitVM>)GetWidget(queue, m_OvertipSpaceShipUnitPCView, targetContainer)) : ((BaseOvertipView<OvertipEntityUnitVM>)GetWidget(queue, m_OvertipTorpedoUnitView, targetContainer)));
+			baseOvertipView.Bind(vm);
+			m_ActiveOvertips.Add(vm, baseOvertipView);
+		}
+	}
+
+	private void AddSurfaceOvertip(OvertipEntityUnitVM vm)
+	{
+		if (!(m_OvertipUnitView == null))
+		{
+			Transform targetContainer = (vm.UnitUIWrapper.IsPlayerEnemy ? m_EnemyContainer : (vm.UnitUIWrapper.IsPlayer ? m_PartyContainer : m_NpcContainer));
+			OvertipUnitView overtipUnitView = (vm.UnitUIWrapper.IsPlayerEnemy ? GetWidget(m_FreeEnemyOvertips, m_OvertipUnitView, targetContainer) : (vm.UnitUIWrapper.IsPlayer ? GetWidget(m_FreePartyOvertips, m_OvertipUnitView, targetContainer) : GetWidget(m_FreeNPCOvertips, m_OvertipUnitView, targetContainer)));
 			overtipUnitView.Bind(vm);
 			m_ActiveOvertips.Add(vm, overtipUnitView);
 		}

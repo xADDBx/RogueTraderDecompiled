@@ -279,7 +279,7 @@ public class IKController : MonoBehaviour
 		{
 			return;
 		}
-		if (m_AnimationManager.CanRunIdleAction() && !m_AnimationManager.HasActedAnimation && CharacterSystem.IsInDollRoom && (primaryAnimStyle == WeaponAnimationStyle.AxeTwoHanded || primaryAnimStyle == WeaponAnimationStyle.BrutalTwoHanded || primaryAnimStyle == WeaponAnimationStyle.HeavyOnHip || primaryAnimStyle == WeaponAnimationStyle.HeavyOnShoulder || primaryAnimStyle == WeaponAnimationStyle.Assault || primaryAnimStyle == WeaponAnimationStyle.Rifle || primaryAnimStyle == WeaponAnimationStyle.Staff || primaryAnimStyle == WeaponAnimationStyle.EldarHeavyOnHip || primaryAnimStyle == WeaponAnimationStyle.EldarHeavyOnShoulder || primaryAnimStyle == WeaponAnimationStyle.EldarAssault || primaryAnimStyle == WeaponAnimationStyle.EldarRifle || primaryAnimStyle == WeaponAnimationStyle.TwoHandedHammer))
+		if (m_AnimationManager.CanRunIdleAction() && !m_AnimationManager.HasActedAnimation && CharacterSystem.IsInDollRoom && primaryAnimStyle.IsTwoHanded())
 		{
 			SetIkLeftHand();
 		}

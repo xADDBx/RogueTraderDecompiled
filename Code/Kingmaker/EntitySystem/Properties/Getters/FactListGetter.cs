@@ -32,14 +32,15 @@ public class FactListGetter : PropertyGetter, PropertyContextAccessor.ITargetByT
 
 	protected override int GetBaseValue()
 	{
-		return base.CurrentEntity.Facts.List.Sum(delegate(EntityFact p)
+		int num = 0;
+		foreach (EntityFact item in base.CurrentEntity.Facts.List)
 		{
-			if (!Facts.Contains(p.Blueprint) || (OnlyFromCaster && p.MaybeContext?.MaybeCaster != this.GetTargetByType(Caster)))
+			if (item.Blueprint is BlueprintUnitFact bp && Facts.Contains(bp) && (!OnlyFromCaster || item.MaybeContext?.MaybeCaster == this.GetTargetByType(Caster)))
 			{
-				return 0;
+				num += ((!MultiplyByRanks) ? 1 : item.GetRank());
 			}
-			return (!MultiplyByRanks) ? 1 : p.GetRank();
-		});
+		}
+		return num;
 	}
 
 	protected override string GetInnerCaption(bool useLineBreaks)

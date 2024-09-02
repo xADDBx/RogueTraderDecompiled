@@ -23,6 +23,10 @@ public abstract class MechanicEntityFactsCollection<TFact> : EntityFactsProcesso
 
 	protected override void OnFactWillDetach(TFact fact)
 	{
+	}
+
+	protected override void OnFactDidDetached(TFact fact)
+	{
 		EventBus.RaiseEvent((IMechanicEntity)(MechanicEntity)base.Manager.Owner, (Action<IEntityLostFactHandler>)delegate(IEntityLostFactHandler h)
 		{
 			h.HandleEntityLostFact(fact);

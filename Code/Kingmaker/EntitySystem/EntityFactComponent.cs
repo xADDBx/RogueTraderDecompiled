@@ -12,8 +12,12 @@ using UnityEngine;
 
 namespace Kingmaker.EntitySystem;
 
-public class EntityFactComponent : IDisposable, IHashable
+public class EntityFactComponent : IDisposable, IEventBusLoopGuard, IHashable
 {
+	private static int s_NextInstanceID = 1;
+
+	private readonly int m_InstanceID;
+
 	public virtual Type RequiredEntityType => typeof(IEntity);
 
 	public EntityFact Fact { get; private set; }
@@ -50,6 +54,7 @@ public class EntityFactComponent : IDisposable, IHashable
 	[JsonConstructor]
 	public EntityFactComponent()
 	{
+		m_InstanceID = s_NextInstanceID++;
 	}
 
 	public virtual void Setup(BlueprintComponent component)
@@ -289,6 +294,20 @@ public class EntityFactComponent : IDisposable, IHashable
 	public virtual IDisposable RequestEventContext()
 	{
 		return null;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj is EntityFactComponent entityFactComponent)
+		{
+			return m_InstanceID == entityFactComponent.m_InstanceID;
+		}
+		return false;
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(typeof(EntityFactComponent), m_InstanceID);
 	}
 
 	public virtual Hash128 GetHash128()

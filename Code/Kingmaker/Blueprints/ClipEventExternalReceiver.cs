@@ -21,10 +21,6 @@ public class ClipEventExternalReceiver : MonoBehaviour
 	public Dictionary<Type, ClipEventType> s_EventTypeToName = new Dictionary<Type, ClipEventType>
 	{
 		{
-			typeof(AnimationClipEventAnimateWeaponTrail),
-			ClipEventType.AnimateWeaponTrail
-		},
-		{
 			typeof(AnimationClipEventBodyFall),
 			ClipEventType.BodyFall
 		},

@@ -16,8 +16,7 @@ public class DoNothingWait : BaseCameraFollowTask
 	public DoNothingWait(CameraFollowTaskParamsEntry taskParams, TargetWrapper owner, int priority)
 		: base(taskParams, owner, priority)
 	{
-		float value = base.TaskParams.CameraFlyParams.MaxTime + base.TaskParams.CameraObserveTime;
-		m_LifeTime = value.Seconds();
+		m_LifeTime = ((base.TaskParams != null) ? (base.TaskParams.CameraFlyParams.MaxTime + base.TaskParams.CameraObserveTime) : 2f).Seconds();
 	}
 
 	public override void Start()

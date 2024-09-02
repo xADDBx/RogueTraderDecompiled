@@ -25,6 +25,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.FlagCountable;
 using Kingmaker.Utility.GuidUtility;
 using Kingmaker.Utility.UnityExtensions;
 using Newtonsoft.Json;
@@ -171,6 +172,10 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 	[CanBeNull]
 	private (EntityFactComponent Runtime, BlueprintComponent Component)[] m_AllComponentsCache;
 
+	private EntityRef m_CachedOwner;
+
+	protected readonly CountableFlag m_IsReapplying = new CountableFlag();
+
 	private Dictionary<Type, List<BlueprintComponent>> m_ComponentsByType = new Dictionary<Type, List<BlueprintComponent>>();
 
 	public virtual Type RequiredEntityType => EntityInterfacesHelper.EntityInterface;
@@ -214,6 +219,8 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 
 	public bool SuppressActivationOnAttach { get; set; }
 
+	public bool IsReapplying => m_IsReapplying;
+
 	public ReadonlyList<EntityFactSource> Sources => m_Sources;
 
 	public EntityFactSource FirstSource => m_Sources?.Get(0);
@@ -233,7 +240,7 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 
 	public virtual bool IsEnabled => true;
 
-	public IEntity Owner => Manager?.Owner;
+	public IEntity Owner => Manager?.Owner ?? m_CachedOwner.Entity;
 
 	public IEntity IOwner => Owner;
 
@@ -518,16 +525,25 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 		}
 	}
 
-	public virtual void Recalculate()
+	public void Reapply()
 	{
-		if (Owner != null && !Owner.IsDisposingNow)
+		if (Owner == null || Owner.IsDisposingNow)
 		{
+			return;
+		}
+		try
+		{
+			m_IsReapplying.Retain();
 			MaybeContext?.Recalculate();
 			if (IsActive)
 			{
 				Deactivate();
 				Activate();
 			}
+		}
+		finally
+		{
+			m_IsReapplying.Release();
 		}
 	}
 
@@ -785,6 +801,7 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 		{
 			PFLog.EntityFact.Exception(ex2);
 		}
+		m_CachedOwner = Manager.ConcreteOwner.Ref;
 		Manager = null;
 	}
 

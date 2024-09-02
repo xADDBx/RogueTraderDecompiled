@@ -51,6 +51,10 @@ public class ItemEnchantmentCollection : EntityFactsProcessor<ItemEnchantment>
 
 	protected override void OnFactWillDetach(ItemEnchantment fact)
 	{
+	}
+
+	protected override void OnFactDidDetached(ItemEnchantment fact)
+	{
 		RuntimeVersion++;
 	}
 }

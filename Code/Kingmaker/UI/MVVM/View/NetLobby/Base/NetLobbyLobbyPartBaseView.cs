@@ -111,6 +111,9 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 	[SerializeField]
 	private TextMeshProUGUI m_CanBeAProblemsWithModsText;
 
+	[SerializeField]
+	private SaveFullScreenshotBaseView m_FullScreenshotBaseView;
+
 	protected readonly BoolReactiveProperty ShowCode = new BoolReactiveProperty();
 
 	private const string HideLobbyCodeString = "**********";
@@ -243,13 +246,15 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 			m_EmptyListHintBecauseDlcs.transform.parent.gameObject.SetActive(value: false);
 			if (base.ViewModel.ProblemsToShowInSaveList.Any() && value)
 			{
-				IEnumerable<string> values = base.ViewModel.ProblemsToShowInSaveList.Values.SelectMany((List<IBlueprintDlc> dlcs) => dlcs).Select(delegate(IBlueprintDlc playerDLC)
+				IEnumerable<string> values = (from dlc in base.ViewModel.ProblemsToShowInSaveList.Values.SelectMany((List<IBlueprintDlc> dlcs) => dlcs)
+					orderby dlc.DlcType
+					select dlc).Select(delegate(IBlueprintDlc playerDLC)
 				{
 					if (!(playerDLC is BlueprintDlc blueprintDlc))
 					{
 						return (string)null;
 					}
-					return string.IsNullOrEmpty(blueprintDlc.DefaultTitle) ? blueprintDlc.name : ((string)blueprintDlc.DefaultTitle);
+					return string.IsNullOrEmpty(blueprintDlc.GetDlcName()) ? blueprintDlc.name : blueprintDlc.GetDlcName();
 				});
 				string arg = string.Join(", ", values);
 				string arg2 = string.Join(", ", base.ViewModel.ProblemsToShowInSaveList.Keys.ToList());
@@ -295,6 +300,7 @@ public class NetLobbyLobbyPartBaseView : ViewBase<NetLobbyVM>
 				}
 			}
 		}));
+		AddDisposable(base.ViewModel.SaveFullScreenshot.Subscribe(m_FullScreenshotBaseView.Bind));
 	}
 
 	protected override void DestroyViewImplementation()

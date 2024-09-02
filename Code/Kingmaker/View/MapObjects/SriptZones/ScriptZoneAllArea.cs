@@ -17,12 +17,12 @@ public class ScriptZoneAllArea : MonoBehaviour, IScriptZoneShape
 		return Vector3.zero;
 	}
 
-	public bool Contains(Vector3 point, IntRect size)
+	public bool Contains(Vector3 point, IntRect size, Vector3 forward = default(Vector3))
 	{
 		return true;
 	}
 
-	public bool Contains(CustomGridNodeBase node, IntRect size)
+	public bool Contains(CustomGridNodeBase node, IntRect size, Vector3 forward = default(Vector3))
 	{
 		return true;
 	}

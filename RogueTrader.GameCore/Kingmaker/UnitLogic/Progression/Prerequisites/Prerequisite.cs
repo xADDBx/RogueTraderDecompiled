@@ -1,6 +1,7 @@
 using System;
 using Code.GameCore.ElementsSystem;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -16,6 +17,11 @@ public abstract class Prerequisite : Element, IFeaturePrerequisite
 	protected abstract bool MeetsInternal([NotNull] IBaseUnitEntity unit);
 
 	protected abstract string GetCaptionInternal();
+
+	public virtual bool IsRelyingOnFeature(BlueprintFact featureToAnalyze)
+	{
+		return false;
+	}
 
 	public bool Meet([NotNull] IBaseUnitEntity unit)
 	{

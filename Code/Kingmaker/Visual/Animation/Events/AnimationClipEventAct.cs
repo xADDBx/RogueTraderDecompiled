@@ -11,6 +11,10 @@ namespace Kingmaker.Visual.Animation.Events;
 
 public class AnimationClipEventAct : AnimationClipEvent
 {
+	public AnimationClipEventAct()
+	{
+	}
+
 	public AnimationClipEventAct(float time)
 		: base(time)
 	{

@@ -7,6 +7,7 @@ using Kingmaker.Enums;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
@@ -104,6 +105,10 @@ public class QuestNotificatorBaseView : ViewBase<QuestNotificatorVM>
 	{
 		if (Game.Instance.CurrentMode != GameModeType.GameOver)
 		{
+			if (m_CurrentQuest?.Quest != null || m_CurrentObjective?.Quest != null)
+			{
+				JournalHelper.ChangeCurrentQuest(m_CurrentQuest?.Quest ?? m_CurrentObjective?.Quest);
+			}
 			EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 			{
 				h.HandleOpenJournal();

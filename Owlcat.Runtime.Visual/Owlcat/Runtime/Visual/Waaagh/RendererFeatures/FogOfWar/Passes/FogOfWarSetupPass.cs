@@ -33,7 +33,7 @@ public class FogOfWarSetupPass : ScriptableRenderPass<FogOfWarSetupPassData>
 		data.Settings = m_Settings;
 		if (m_Area == null || !m_Area.isActiveAndEnabled)
 		{
-			data.DefaultFogOfWarMask = m_Feature.DefaultFogOfWarMask;
+			data.DefaultFogOfWarMask = FogOfWarFeature.DefaultFogOfWarMask;
 			return;
 		}
 		data.MaskSize.x = data.Area.FogOfWarMapRT.rt.width;

@@ -17,6 +17,8 @@ public static class PartyFormationHelper
 {
 	public const int UnitsInFormationCapacity = 20;
 
+	public static readonly NNConstraint Constraint = NNConstraint.Default;
+
 	public static Vector2 GetOffset(Vector2[] positions, int index)
 	{
 		return ((index >= 0 && index < positions.Length) ? positions[index] : Vector2.zero) * BlueprintRoot.Instance.Formations.FormationsScale;
@@ -41,6 +43,21 @@ public static class PartyFormationHelper
 
 	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<AbstractUnitEntity> units, IList<AbstractUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false)
 	{
+		CustomGridNodeBase nearestNodeXZ = units[0].GetNearestNodeXZ();
+		if (nearestNodeXZ != null)
+		{
+			Constraint.constrainArea = true;
+			Constraint.area = (int)nearestNodeXZ.Area;
+		}
+		else
+		{
+			Constraint.constrainArea = false;
+		}
+		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(pos, null, Constraint).node;
+		if (customGridNodeBase != null && !customGridNodeBase.ContainsPoint(pos))
+		{
+			pos = customGridNodeBase.Vector3Position;
+		}
 		direction.y = 0f;
 		Quaternion quaternion = Quaternion.LookRotation(direction);
 		Vector2 zero = Vector2.zero;

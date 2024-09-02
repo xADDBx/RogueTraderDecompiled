@@ -30,6 +30,7 @@ using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.Controllers.Dialog;
+using Kingmaker.Controllers.FX;
 using Kingmaker.Controllers.GlobalMap;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.MapObjects;
@@ -294,6 +295,8 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public readonly UpdateController<DirectorAdapter> DirectorAdapterController = new UpdateController<DirectorAdapter>(TickType.Simulation);
 
+	public readonly UpdateController<IUpdatable> CustomUpdateBeforePhysicsController = new UpdateController<IUpdatable>(TickType.Simulation);
+
 	public readonly UpdateController<IUpdatable> CustomUpdateController = new UpdateController<IUpdatable>(TickType.Simulation);
 
 	public readonly UpdateController<Bird> BirdUpdateController = new UpdateController<Bird>(TickType.Simulation);
@@ -342,7 +345,13 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public readonly MovePredictionController MovePredictionController = new MovePredictionController();
 
+	public readonly CameraFXController CameraFXController = new CameraFXController();
+
+	public readonly CameraFXSoundController CameraFXSoundController = new CameraFXSoundController();
+
 	public readonly PointerController DefaultPointerController = new PointerController(new ClickWithSelectedAbilityHandler(), new ClickUnitHandler(), new ClickMapObjectHandler(), new SectorMapClickObjectHandler(), new ClickGroundHandler(), new ClickOnDetectClicksObjectHandler(), new ClickSurfaceDeploymentHandler());
+
+	public readonly GpuCrowdController GpuCrowdController = new GpuCrowdController();
 
 	public readonly SaveManager SaveManager = new SaveManager();
 
@@ -746,7 +755,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			LocalizationManager.Instance.Init(SettingsRoot.Game.Main.Localization, SettingsController.Instance, !SettingsRoot.Game.Main.LocalizationWasTouched.GetValue());
 			Keyboard.RegisterBuiltinBindings();
 			Screenshot.Initialize(Keyboard);
-			Keyboard.Bind("QuickSave", MakeQuickSave);
+			Keyboard.Bind("QuickSave", delegate
+			{
+				MakeQuickSave();
+			});
 			Keyboard.Bind("QuickLoad", QuickLoadGame);
 			Keyboard.Bind("Stop", delegate
 			{
@@ -1142,6 +1154,15 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		foreach (BaseUnitEntity partyAndPet in Player.PartyAndPets)
 		{
 			partyAndPet.Commands.InterruptAll((AbstractUnitCommand c) => !c.FromCutscene);
+			UnitPartFollowedByUnits optional = partyAndPet.GetOptional<UnitPartFollowedByUnits>();
+			if (optional == null || optional.Followers.Count <= 0)
+			{
+				continue;
+			}
+			foreach (AbstractUnitEntity follower in optional.Followers)
+			{
+				follower.Commands.InterruptAll((AbstractUnitCommand c) => !c.FromCutscene);
+			}
 		}
 		NetService.Instance.CancelCurrentCommands();
 	}
@@ -1246,14 +1267,11 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void HandleAreaBeginUnloading()
 	{
-		if (Player.IsInCombat)
+		foreach (BaseUnitEntity allCrossSceneUnit in Player.AllCrossSceneUnits)
 		{
-			foreach (BaseUnitEntity allCrossSceneUnit in Player.AllCrossSceneUnits)
+			if (allCrossSceneUnit.IsInCombat)
 			{
-				if (allCrossSceneUnit.IsInCombat)
-				{
-					allCrossSceneUnit.CombatState.LeaveCombat();
-				}
+				allCrossSceneUnit.CombatState.LeaveCombat();
 			}
 		}
 		EventBus.RaiseEvent(delegate(IAreaHandler h)
@@ -1270,14 +1288,11 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void HandleAdditiveAreaBeginDeactivating()
 	{
-		if (Player.IsInCombat)
+		foreach (BaseUnitEntity allCrossSceneUnit in Player.AllCrossSceneUnits)
 		{
-			foreach (BaseUnitEntity allCrossSceneUnit in Player.AllCrossSceneUnits)
+			if (allCrossSceneUnit.IsInCombat)
 			{
-				if (allCrossSceneUnit.IsInCombat)
-				{
-					allCrossSceneUnit.CombatState.LeaveCombat();
-				}
+				allCrossSceneUnit.CombatState.LeaveCombat();
 			}
 		}
 		EventBus.RaiseEvent(delegate(IAdditiveAreaSwitchHandler h)
@@ -1677,13 +1692,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			Instance.m_LoadingProgress = 0.8f;
 		});
-		if (autoSaveMode == AutoSaveMode.AfterEntry)
-		{
-			StartLoadingProcessDetached(() => Instance.SaveManager.SaveRoutine(Instance.SaveManager.GetNextAutoslot()), delegate
-			{
-				Instance.m_LoadingProgress = 0.9f;
-			});
-		}
 		LoadingProcess.Instance.StartLoadingProcess(AwaitTextureCompression(), delegate
 		{
 			Instance.m_LoadingProgress = 0.95f;
@@ -1700,6 +1708,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			Instance.m_LoadingProgress = 1f;
 			Instance.m_LoadingScenesProgress = 1f;
 		});
+		if (autoSaveMode == AutoSaveMode.AfterEntry)
+		{
+			StartLoadingProcessDetached(() => Instance.SaveManager.SaveRoutine(Instance.SaveManager.GetNextAutoslot()));
+		}
 		LoadingProcess.Instance.StartLoadingProcess(AwaitingUserInput());
 		LoadingProcess.Instance.StartLoadingProcess(AwaitingNetwork());
 		LoadingProcess.Instance.StartLoadingProcess(new LoadingAreaMarker(area));
@@ -1791,7 +1803,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	private void OnAreaLoaded()
 	{
 		TryFixPartyPositions();
-		Instance.SceneControllables.Rescan();
 		HandleActiveAreaChanged(wasSwitched: false);
 	}
 
@@ -1998,6 +2009,11 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		LoadNewGame(NewGamePreset, ImportSave);
 	}
 
+	public void LoadNewGameFromCheat(BlueprintAreaPreset preset)
+	{
+		LoadNewGame(preset);
+	}
+
 	public void LoadNewGame(BlueprintAreaPreset preset, SaveInfo importFrom = null)
 	{
 		BaseUnitEntity baseUnitEntity;
@@ -2011,7 +2027,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			BlueprintUnit unit = preset.PlayerCharacter ?? BlueprintRoot.Instance.DefaultPlayerCharacter;
 			baseUnitEntity = AddUnitToPersistentSate(unit);
-			baseUnitEntity.Alignment.Initialize(preset.Alignment);
 		}
 		BaseUnitEntity baseUnitEntity2;
 		if (NewGameShip != null)
@@ -2246,10 +2261,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		State.LoadedAreaState = null;
 	}
 
-	public void MakeQuickSave()
+	public void MakeQuickSave(Action callback = null)
 	{
 		SaveManager.UpdateSaveListIfNeeded();
-		RequestSaveGame(SaveManager.GetNextQuickslot());
+		RequestSaveGame(SaveManager.GetNextQuickslot(), null, callback);
 	}
 
 	public void RequestSaveGame([CanBeNull] SaveInfo saveInfo, [CanBeNull] string saveName = null, Action callback = null)

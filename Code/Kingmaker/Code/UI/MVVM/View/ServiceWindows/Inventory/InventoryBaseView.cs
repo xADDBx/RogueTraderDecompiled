@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory;
 
-public abstract class InventoryBaseView<TInventoryStash, TInventoryDoll, TInventorySlot> : ViewBase<InventoryVM>, ILevelUpInitiateUIHandler, ISubscriber where TInventoryStash : InventoryStashView where TInventoryDoll : InventoryDollView<TInventorySlot> where TInventorySlot : InventoryEquipSlotView
+public abstract class InventoryBaseView<TInventoryStash, TInventoryDoll, TInventorySlot> : ViewBase<InventoryVM>, ILevelUpInitiateUIHandler, ISubscriber, IInitializable where TInventoryStash : InventoryStashView where TInventoryDoll : InventoryDollView<TInventorySlot> where TInventorySlot : InventoryEquipSlotView
 {
 	[Header("Rotation")]
 	[SerializeField]

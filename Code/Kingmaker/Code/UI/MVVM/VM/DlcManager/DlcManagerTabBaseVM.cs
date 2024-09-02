@@ -1,3 +1,4 @@
+using Kingmaker.Settings;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -7,6 +8,8 @@ public class DlcManagerTabBaseVM : VMBase
 {
 	public BoolReactiveProperty IsEnabled { get; } = new BoolReactiveProperty();
 
+
+	public float FontMultiplier => SettingsRoot.Accessiability.FontSizeMultiplier;
 
 	protected DlcManagerTabBaseVM()
 	{

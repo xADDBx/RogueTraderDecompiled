@@ -11,6 +11,7 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
 using Kingmaker.UI.Sound;
@@ -145,13 +146,14 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		bool flag2 = currentSpeaker?.CharacterName == cue.Listener?.CharacterName;
 		IsAnswererNeedEqualizer.Value = flag2 && AnswerPortrait.Value == null;
 		BaseUnitEntity mainCharacterEntity = Game.Instance.Player.MainCharacterEntity;
+		BaseUnitEntity listenerEntity = UIUtilityGetDialogListenerEntity.GetListenerEntity(cue.Listener);
 		Sprite value2 = mainCharacterEntity.Portrait.HalfLengthPortrait;
 		if (cue.Listener != null && cue.Listener.name != "Player Character")
 		{
-			value2 = (cue.Listener.PortraitSafe.InitiativePortrait ? null : cue.Listener.PortraitSafe.HalfLengthPortrait);
+			value2 = ((listenerEntity == null) ? (cue.Listener.PortraitSafe.InitiativePortrait ? null : cue.Listener.PortraitSafe.HalfLengthPortrait) : (listenerEntity.Portrait.InitiativePortrait ? null : listenerEntity?.Portrait?.HalfLengthPortrait));
 		}
 		AnswerPortrait.Value = value2;
-		AnswerName.Value = ((cue.Listener != null && cue.Listener.name != "Player Character") ? cue.Listener.CharacterName : mainCharacterEntity.CharacterName);
+		AnswerName.Value = ((cue.Listener == null || !(cue.Listener.name != "Player Character")) ? mainCharacterEntity.CharacterName : ((listenerEntity == null) ? cue.Listener.CharacterName : listenerEntity?.CharacterName));
 		BlueprintAnswer blueprintAnswer = dialogController.Answers.FirstOrDefault();
 		if (blueprintAnswer != null && blueprintAnswer.IsSystem())
 		{
@@ -295,9 +297,10 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	{
 		BaseUnitEntity mainCharacterEntity = Game.Instance.Player.MainCharacterEntity;
 		m_AnswererPortraitData = mainCharacterEntity.Portrait;
-		if (Cue.Value.BlueprintCue.Listener != null && Cue.Value.BlueprintCue.Listener.name != "Player Character")
+		BaseUnitEntity listenerEntity = UIUtilityGetDialogListenerEntity.GetListenerEntity(Cue?.Value?.BlueprintCue?.Listener);
+		if (Cue?.Value?.BlueprintCue?.Listener != null && Cue.Value.BlueprintCue.Listener.name != "Player Character")
 		{
-			m_AnswererPortraitData = (Cue.Value.BlueprintCue.Listener.PortraitSafe.InitiativePortrait ? null : Cue.Value.BlueprintCue.Listener.PortraitSafe.Data);
+			m_AnswererPortraitData = ((listenerEntity == null) ? (Cue.Value.BlueprintCue.Listener.PortraitSafe.InitiativePortrait ? null : Cue.Value.BlueprintCue.Listener.PortraitSafe.Data) : (listenerEntity.Portrait.InitiativePortrait ? null : listenerEntity.Portrait));
 		}
 		AnswererHasPortrait.Value = m_AnswererPortraitData != null && m_AnswererPortraitData.FullLengthPortrait != null;
 		if (m_AnswererPortraitData == null || m_AnswererPortraitData.FullLengthPortrait == null)

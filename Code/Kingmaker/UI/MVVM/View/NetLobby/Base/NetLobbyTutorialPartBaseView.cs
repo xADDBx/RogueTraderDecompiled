@@ -15,7 +15,7 @@ public class NetLobbyTutorialPartBaseView : ViewBase<NetLobbyTutorialPartVM>
 {
 	[Header("Tutorials")]
 	[SerializeField]
-	private WidgetListMVVM m_WidgetListTutorialBlocks;
+	protected WidgetListMVVM m_WidgetListTutorialBlocks;
 
 	[SerializeField]
 	private NetLobbyTutorialBlockView m_NetLobbyTutorialBlockViewPrefab;
@@ -41,6 +41,10 @@ public class NetLobbyTutorialPartBaseView : ViewBase<NetLobbyTutorialPartVM>
 		m_TutorialPartLabel.text = UIStrings.Instance.NetLobbyTexts.HowToPlay;
 		DrawEntities();
 		ShowBlock();
+		m_WidgetListTutorialBlocks.Entries.ForEach(delegate(IWidgetView b)
+		{
+			(b as NetLobbyTutorialBlockView).Or(null)?.ScrollToTop();
+		});
 	}
 
 	protected override void DestroyViewImplementation()

@@ -28,7 +28,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [Serializable]
 [AllowedOn(typeof(BlueprintBuff))]
 [TypeId("4859177b499340209476ac31d0f16345")]
-public class WarhammerCrossfireVictim : UnitBuffComponentDelegate, ITickEachRound, ITargetRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ISubscriber, ITargetRulebookSubscriber, IHashable
+public class WarhammerCrossfireVictim : UnitBuffComponentDelegate, IRoundStartHandler, ISubscriber, ITargetRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ITargetRulebookSubscriber, IHashable
 {
 	public int ProvokeRange;
 
@@ -36,9 +36,12 @@ public class WarhammerCrossfireVictim : UnitBuffComponentDelegate, ITickEachRoun
 
 	private bool m_OnCooldown;
 
-	void ITickEachRound.OnNewRound()
+	void IRoundStartHandler.HandleRoundStart(bool turnBased)
 	{
-		m_OnCooldown = false;
+		if (turnBased)
+		{
+			m_OnCooldown = false;
+		}
 	}
 
 	public void OnEventAboutToTrigger(RulePerformAttack evt)
@@ -56,7 +59,7 @@ public class WarhammerCrossfireVictim : UnitBuffComponentDelegate, ITickEachRoun
 		{
 			return;
 		}
-		IEnumerable<BaseUnitEntity> enumerable = source.Where((BaseUnitEntity u) => u.Facts.HasComponent<WarhammerCrossfireAgressor>());
+		IEnumerable<BaseUnitEntity> enumerable = source.Where((BaseUnitEntity u) => u.Facts.HasComponent<WarhammerCrossfireAgressor>() && u != evt.InitiatorUnit);
 		if (enumerable.Empty())
 		{
 			return;

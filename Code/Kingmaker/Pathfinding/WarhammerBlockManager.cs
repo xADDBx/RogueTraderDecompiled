@@ -289,9 +289,18 @@ public class WarhammerBlockManager : MonoBehaviour
 				{
 					break;
 				}
-				value.Enemies.Remove(blocker);
-				value.Friends.Remove(blocker);
-				value.Invisible.Remove(blocker);
+				if (!value.Enemies.Remove(blocker))
+				{
+					value.Enemies.RemoveWhere((WarhammerSingleNodeBlocker x) => blocker.OwnerUnit == x.OwnerUnit);
+				}
+				if (!value.Friends.Remove(blocker))
+				{
+					value.Friends.RemoveWhere((WarhammerSingleNodeBlocker x) => blocker.OwnerUnit == x.OwnerUnit);
+				}
+				if (!value.Invisible.Remove(blocker))
+				{
+					value.Invisible.RemoveWhere((WarhammerSingleNodeBlocker x) => blocker.OwnerUnit == x.OwnerUnit);
+				}
 				if (value.Empty)
 				{
 					m_Blocked.Remove(node2);

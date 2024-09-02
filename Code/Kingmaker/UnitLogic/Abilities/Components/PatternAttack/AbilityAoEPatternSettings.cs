@@ -1,5 +1,4 @@
 using System;
-using Kingmaker.Blueprints;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
@@ -56,22 +55,7 @@ public class AbilityAoEPatternSettings : IAbilityAoEPatternProvider
 
 	public int Radius => CurrentPattern.Radius;
 
-	private bool CanBeDirectional
-	{
-		get
-		{
-			AoEPattern currentPattern = CurrentPattern;
-			if (currentPattern != null)
-			{
-				PatternType type = currentPattern.Type;
-				if ((uint)(type - 1) <= 2u)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-	}
+	private bool CanBeDirectional => CurrentPattern.CanBeDirectional;
 
 	public void OverridePattern(AoEPattern pattern)
 	{

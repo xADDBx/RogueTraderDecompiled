@@ -171,6 +171,6 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 	private void OverrideTooltip()
 	{
 		BlueprintAbility abilityFromFeature = RankEntryUtils.GetAbilityFromFeature(UIFeature.Feature);
-		base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit)));
+		base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)));
 	}
 }

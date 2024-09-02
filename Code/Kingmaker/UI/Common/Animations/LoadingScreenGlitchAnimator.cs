@@ -74,6 +74,11 @@ public class LoadingScreenGlitchAnimator : MonoBehaviour
 		}
 	}
 
+	public void ClearGlitch()
+	{
+		Clear();
+	}
+
 	private void Clear()
 	{
 		if (m_GlitchCo != null)

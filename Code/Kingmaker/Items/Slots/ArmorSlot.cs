@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using StateHasher.Core;
@@ -19,8 +20,7 @@ public class ArmorSlot : ItemSlot, IHashable
 
 	public override bool IsItemSupported(ItemEntity item)
 	{
-		MechanicEntity owner = base.Owner;
-		if (owner != null && owner.IsInCombat)
+		if (base.Owner == null || (base.Owner.IsInCombat && !ContextData<IgnoreLock>.Current))
 		{
 			return false;
 		}
@@ -47,7 +47,7 @@ public class ArmorSlot : ItemSlot, IHashable
 
 	public override bool CanRemoveItem()
 	{
-		if (base.Owner == null || base.Owner == null || base.Owner.IsInCombat)
+		if (base.Owner == null || (base.Owner.IsInCombat && !ContextData<IgnoreLock>.Current))
 		{
 			return false;
 		}

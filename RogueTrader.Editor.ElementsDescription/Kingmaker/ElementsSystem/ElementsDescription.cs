@@ -108,9 +108,8 @@ public static class ElementsDescription
 		{
 			return;
 		}
-		for (int i = 0; i < actions2.Length; i++)
+		foreach (ActionAndWeight actionAndWeight in actions2)
 		{
-			ActionAndWeight actionAndWeight = actions2[i];
 			if (actionAndWeight.Action.HasActions)
 			{
 				sb.AppendIndent(indent + 1);

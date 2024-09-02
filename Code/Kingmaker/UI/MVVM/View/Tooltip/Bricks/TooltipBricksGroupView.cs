@@ -162,22 +162,31 @@ public class TooltipBricksGroupView : TooltipBaseBrickView<TooltipBricksGroupVM>
 			return;
 		}
 		RectTransform component = base.transform.parent.GetComponent<RectTransform>();
-		if (!(component == null))
+		if (component == null)
 		{
-			float num = component.rect.width;
-			LayoutGroup component2 = component.GetComponent<LayoutGroup>();
-			if ((bool)component2)
-			{
-				num -= (float)(component2.padding.left + component2.padding.right);
-			}
-			LayoutGroup component3 = GetComponent<LayoutGroup>();
+			return;
+		}
+		float num = component.rect.width;
+		LayoutElement component2 = component.GetComponent<LayoutElement>();
+		if ((bool)component2 && component2.preferredWidth > 0f)
+		{
+			num = component2.preferredWidth;
+		}
+		else
+		{
+			LayoutGroup component3 = component.GetComponent<LayoutGroup>();
 			if ((bool)component3)
 			{
 				num -= (float)(component3.padding.left + component3.padding.right);
 			}
-			float x = (num - (float)m_GridLayoutGroup.padding.left - (float)m_GridLayoutGroup.padding.right - m_GridLayoutGroup.spacing.x * (float)(m_GridLayoutGroup.constraintCount - 1)) / (float)m_GridLayoutGroup.constraintCount;
-			m_GridLayoutGroup.cellSize = new Vector2(x, m_GridLayoutGroup.cellSize.y);
 		}
+		LayoutGroup component4 = GetComponent<LayoutGroup>();
+		if ((bool)component4)
+		{
+			num -= (float)(component4.padding.left + component4.padding.right);
+		}
+		float x = (num - (float)m_GridLayoutGroup.padding.left - (float)m_GridLayoutGroup.padding.right - m_GridLayoutGroup.spacing.x * (float)(m_GridLayoutGroup.constraintCount - 1)) / (float)m_GridLayoutGroup.constraintCount;
+		m_GridLayoutGroup.cellSize = new Vector2(x, m_GridLayoutGroup.cellSize.y);
 	}
 
 	private float GetChildHeight(RectTransform childTransform)

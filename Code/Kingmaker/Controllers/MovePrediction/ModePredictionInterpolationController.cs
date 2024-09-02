@@ -15,7 +15,7 @@ public class ModePredictionInterpolationController : IControllerTick, IControlle
 
 	void IControllerTick.Tick()
 	{
-		if (Game.Instance.MovePredictionController.IsActive && !Game.Instance.Player.IsInCombat && Game.Instance.MovePredictionController.GetData(out var unit, out var oldOutput, out var newOutput) && unit != null && !(unit.Commands.Current is UnitMoveTo) && !(unit.View == null) && !(unit.View.MovementAgent.Or(null)?.NodeLinkTraverser?.IsTraverseNow).GetValueOrDefault())
+		if (Game.Instance.MovePredictionController.IsActive && GamepadInputController.CanProcessInput && Game.Instance.MovePredictionController.GetData(out var unit, out var oldOutput, out var newOutput) && unit != null && !(unit.Commands.Current is UnitMoveTo) && !(unit.View == null) && !(unit.View.MovementAgent.Or(null)?.NodeLinkTraverser?.IsTraverseNow).GetValueOrDefault())
 		{
 			Vector3 viewPosition = unit.View.GetViewPosition(oldOutput.Position);
 			Vector3 viewPosition2 = unit.View.GetViewPosition(newOutput.Position);

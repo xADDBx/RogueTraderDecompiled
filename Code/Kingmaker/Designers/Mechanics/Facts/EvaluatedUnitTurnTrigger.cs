@@ -1,7 +1,9 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -80,27 +82,34 @@ public class EvaluatedUnitTurnTrigger : EntityFactComponentDelegate, ITurnStartH
 
 	private void EventHandler(MechanicEntity entity)
 	{
-		if (!Game.Instance.Player.IsInCombat || Unit == null || !Unit.Is(entity) || ((BaseUnitEntity)entity).LifeState.IsDead || !Conditions.Check())
+		if (!Game.Instance.Player.IsInCombat)
 		{
 			return;
 		}
-		Data data = RequestSavableData<Data>();
-		data.CurrentTurn++;
-		if (Round == 0 && Once)
+		using (ContextData<FactData>.Request().Setup(base.Fact))
 		{
-			if (!data.IsOneActivated)
+			if (Unit == null || !Unit.Is(entity) || ((BaseUnitEntity)entity).LifeState.IsDead || !Conditions.Check())
+			{
+				return;
+			}
+			Data data = RequestSavableData<Data>();
+			data.CurrentTurn++;
+			if (Round == 0 && Once)
+			{
+				if (!data.IsOneActivated)
+				{
+					Actions.Run();
+					data.IsOneActivated = true;
+				}
+			}
+			else if (Round == 0)
 			{
 				Actions.Run();
-				data.IsOneActivated = true;
 			}
-		}
-		else if (Round == 0)
-		{
-			Actions.Run();
-		}
-		else if (data.CurrentTurn == Round)
-		{
-			Actions.Run();
+			else if (data.CurrentTurn == Round)
+			{
+				Actions.Run();
+			}
 		}
 	}
 

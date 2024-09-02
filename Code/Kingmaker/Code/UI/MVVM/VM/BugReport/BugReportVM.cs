@@ -54,11 +54,14 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 	public OwlcatDropdownVM GetAssigneeDropDownVM(int contextIndex)
 	{
 		Dictionary<string, int> dictionary = new Dictionary<string, int>();
-		foreach (var item2 in m_AllContextData[contextIndex].Assignees)
+		if (m_AllContextData[contextIndex].Assignees != null)
 		{
-			int item = (int)(item2.Aspect.HasValue ? item2.Aspect.Value : ((BugContext.AspectType)(-1)));
-			dictionary.TryAdd(item2.Assignee, dictionary.Count);
-			m_ContextAspectToAssigneeMap[(contextIndex, item)] = dictionary[item2.Assignee];
+			foreach (var item2 in m_AllContextData[contextIndex].Assignees)
+			{
+				int item = (int)(item2.Aspect.HasValue ? item2.Aspect.Value : ((BugContext.AspectType)(-1)));
+				dictionary.TryAdd(item2.Assignee, dictionary.Count);
+				m_ContextAspectToAssigneeMap[(contextIndex, item)] = dictionary[item2.Assignee];
+			}
 		}
 		return m_AssigneeDropdownVM = new OwlcatDropdownVM(dictionary.Select((KeyValuePair<string, int> x) => new DropdownItemVM(x.Key)).ToList());
 	}

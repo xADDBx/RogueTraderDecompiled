@@ -85,7 +85,7 @@ public class UnitPartJump : BaseUnitPart, IHashable
 
 	public Chunk Jump(GraphNode targetNode, bool provokeAttackOfOpportunity, int cellsRemaining = 0, MechanicEntity pusher = null, bool useAttack = false)
 	{
-		if ((bool)base.Owner.Features.DisablePush || base.Owner.View.AnimationManager == null)
+		if (base.Owner.View.AnimationManager == null)
 		{
 			return null;
 		}
@@ -116,8 +116,8 @@ public class UnitPartJump : BaseUnitPart, IHashable
 		}
 		if (unitAnimationActionHandle != null)
 		{
-			base.Owner.View.EntityData.MaybeAnimationManager.Execute(unitAnimationActionHandle);
 			unitAnimationActionHandle.NeedAttackAfterJump = useAttack;
+			base.Owner.View.EntityData.MaybeAnimationManager.Execute(unitAnimationActionHandle);
 		}
 		m_Chunks.Enqueue(chunk);
 		return chunk;

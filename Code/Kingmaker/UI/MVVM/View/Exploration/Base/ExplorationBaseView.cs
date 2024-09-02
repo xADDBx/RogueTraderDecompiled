@@ -136,6 +136,23 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 		CreateNavigation();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_NavigationBehaviour.Clear();
+		m_NavigationBehaviour = null;
+		m_PointsNavigationBehaviour.Clear();
+		m_PointsNavigationBehaviour = null;
+		if (GamePad.Instance.CurrentInputLayer == m_InputLayer)
+		{
+			GamePad.Instance.PopLayer(m_InputLayer);
+		}
+		m_InputLayer = null;
+		ClearPlanetResources();
+		ClearColonyTraits();
+		base.gameObject.SetActive(value: false);
+		EscHotkeyManager.Instance.Unsubscribe(OnCloseClickDelegate);
+	}
+
 	private void CreateNavigation()
 	{
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
@@ -173,16 +190,25 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 	}
 
-	protected void OnCloseClick()
+	protected void OnCloseClickDelegate()
 	{
-		if (UINetUtility.IsControlMainCharacterWithWarning())
+		OnCloseClick();
+	}
+
+	protected void OnCloseClick(bool closeAll = true)
+	{
+		if (!UINetUtility.IsControlMainCharacterWithWarning())
+		{
+			return;
+		}
+		if (closeAll)
 		{
 			EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
 			{
 				h.HandleCloseAll();
 			});
-			Game.Instance.GameCommandQueue.CloseExplorationScreen();
 		}
+		Game.Instance.GameCommandQueue.CloseExplorationScreen();
 	}
 
 	private void ShowWindow()
@@ -221,7 +247,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	private void HideWindow()
 	{
-		EscHotkeyManager.Instance.Unsubscribe(OnCloseClick);
+		EscHotkeyManager.Instance.Unsubscribe(OnCloseClickDelegate);
 		UISounds.Instance.Sounds.SpaceColonization.ColonizationWindowClose.Play();
 		m_TabletAnimator.DisappearAnimation(delegate
 		{
@@ -241,7 +267,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	public void ScanPlanet()
 	{
-		EscHotkeyManager.Instance.Unsubscribe(OnCloseClick);
+		EscHotkeyManager.Instance.Unsubscribe(OnCloseClickDelegate);
 		EscHotkeyManager.Instance.Subscribe(CancelScan);
 		ScanPlanetImpl();
 		Game.Instance.CoroutinesController.Start(ScanAnimation(), this);
@@ -319,23 +345,6 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		m_NavigationBehaviour.Clear();
-		m_NavigationBehaviour = null;
-		m_PointsNavigationBehaviour.Clear();
-		m_PointsNavigationBehaviour = null;
-		if (GamePad.Instance.CurrentInputLayer == m_InputLayer)
-		{
-			GamePad.Instance.PopLayer(m_InputLayer);
-		}
-		m_InputLayer = null;
-		ClearPlanetResources();
-		ClearColonyTraits();
-		base.gameObject.SetActive(value: false);
-		EscHotkeyManager.Instance.Unsubscribe(OnCloseClick);
-	}
-
 	private void ClearPlanetResources()
 	{
 		m_PlanetResourcesList.ForEach(WidgetFactory.DisposeWidget);
@@ -352,7 +361,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 		if (value)
 		{
-			EscHotkeyManager.Instance.Unsubscribe(OnCloseClick);
+			EscHotkeyManager.Instance.Unsubscribe(OnCloseClickDelegate);
 		}
 		else
 		{
@@ -409,7 +418,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	public void HideExplorationTablet()
 	{
-		EscHotkeyManager.Instance.Unsubscribe(OnCloseClick);
+		EscHotkeyManager.Instance.Unsubscribe(OnCloseClickDelegate);
 		HidePlanet();
 	}
 
@@ -426,9 +435,9 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	private void SubscribeEscCloseScreen()
 	{
-		if (m_IsExploring && !EscHotkeyManager.Instance.HasCallback(OnCloseClick))
+		if (m_IsExploring && !EscHotkeyManager.Instance.HasCallback(OnCloseClickDelegate))
 		{
-			EscHotkeyManager.Instance.Subscribe(OnCloseClick);
+			EscHotkeyManager.Instance.Subscribe(OnCloseClickDelegate);
 		}
 	}
 
@@ -517,7 +526,7 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 		if (state && m_IsExploring)
 		{
-			OnCloseClick();
+			OnCloseClick(fullScreenUIType != FullScreenUIType.Encyclopedia);
 		}
 	}
 }

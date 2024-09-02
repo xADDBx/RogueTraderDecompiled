@@ -34,7 +34,7 @@ public class CommandMarkUnitControlled : CommandBase
 
 	public override IAbstractUnitEntity GetControlledUnit()
 	{
-		if (!Unit || !Unit.TryGetValue(out var value))
+		if (Unit == null || !Unit.TryGetValue(out var value))
 		{
 			return null;
 		}

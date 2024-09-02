@@ -19,12 +19,18 @@ public sealed class GameLogEventAddSeparator : GameLogEvent<GameLogEventAddSepar
 	{
 		public void HandleExecutionProcessStart(AbilityExecutionContext context)
 		{
-			AddEvent(new GameLogEventAddSeparator(States.Start));
+			if (!context.DisableLog)
+			{
+				AddEvent(new GameLogEventAddSeparator(States.Start));
+			}
 		}
 
 		public void HandleExecutionProcessEnd(AbilityExecutionContext context)
 		{
-			AddEvent(new GameLogEventAddSeparator(States.Finish));
+			if (!context.DisableLog)
+			{
+				AddEvent(new GameLogEventAddSeparator(States.Finish));
+			}
 		}
 	}
 

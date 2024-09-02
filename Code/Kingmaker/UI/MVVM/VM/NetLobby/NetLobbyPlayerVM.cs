@@ -94,7 +94,8 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		IsPlaying.Value = PhotonManager.NetGame.CurrentState == NetGame.State.Playing;
 		UserId.Value = userId;
 		m_UserNumber.Value = player;
-		Name.Value = ((PhotonManager.Player.GetNickName(player, out var nickName) && !string.IsNullOrWhiteSpace(nickName)) ? nickName : userId);
+		Name.Value = ((PhotonManager.Player.GetNickName(player, out var nickName) && !string.IsNullOrWhiteSpace(nickName)) ? nickName : string.Empty);
+		PFLog.Net.Log((!string.IsNullOrWhiteSpace(nickName)) ? ("NetLobbyPlayerVM SET NICKNAME " + nickName) : "NetLobbyPlayerVM SET USER ID EMPTY STRING");
 		Portrait.Value = player.GetPlayerIcon();
 		IsActive.Value = isActive;
 	}
@@ -114,13 +115,13 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			return UIStrings.Instance.NetLobbyTexts.PlayerHasNoDlcs;
 		}
-		IEnumerable<string> values = playerDlcs.Select(delegate(IBlueprintDlc playerDLC)
+		IEnumerable<string> values = playerDlcs.OrderBy((IBlueprintDlc dlc) => dlc.DlcType).ToList().Select(delegate(IBlueprintDlc playerDLC)
 		{
 			if (!(playerDLC is BlueprintDlc blueprintDlc))
 			{
 				return (string)null;
 			}
-			return string.IsNullOrEmpty(blueprintDlc.DefaultTitle) ? blueprintDlc.name : ((string)blueprintDlc.DefaultTitle);
+			return string.IsNullOrEmpty(blueprintDlc.GetDlcName()) ? blueprintDlc.name : blueprintDlc.GetDlcName();
 		});
 		return string.Join(Environment.NewLine, values);
 	}
@@ -155,13 +156,13 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			return null;
 		}
-		IEnumerable<string> values = source.Select(delegate(BlueprintDlc missingDLC)
+		IEnumerable<string> values = source.OrderBy((BlueprintDlc dlc) => dlc.DlcType).ToList().Select(delegate(BlueprintDlc missingDLC)
 		{
 			if (missingDLC == null)
 			{
 				return (string)null;
 			}
-			return string.IsNullOrEmpty(missingDLC.DefaultTitle) ? missingDLC.name : ((string)missingDLC.DefaultTitle);
+			return string.IsNullOrEmpty(missingDLC.GetDlcName()) ? missingDLC.name : missingDLC.GetDlcName();
 		});
 		return string.Join(Environment.NewLine, values);
 	}

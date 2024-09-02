@@ -22,6 +22,7 @@ using Kingmaker.UI.Models.SettingsUI.SettingAssets.Dropdowns;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
@@ -315,18 +316,23 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	private void ApplySettings()
 	{
 		Locale value = SettingsRoot.Game.Main.Localization.GetValue();
+		MainMenuTheme mainMenuTheme = SettingsRoot.Game.Main.MainMenuTheme.GetValue();
 		float fontSizeMultiplier = SettingsRoot.Accessiability.FontSizeMultiplier;
 		int value2 = SettingsRoot.Display.SafeZoneOffset.GetValue();
 		SettingsController.Instance.Sync();
 		SettingsController.Instance.ConfirmAllTempValues();
 		SettingsController.Instance.SaveAll();
-		if (value != SettingsRoot.Game.Main.Localization.GetValue())
+		bool isMainMenu = Game.Instance.SceneLoader.LoadedUIScene == GameScenes.MainMenu;
+		if (value != SettingsRoot.Game.Main.Localization.GetValue() || (mainMenuTheme != SettingsRoot.Game.Main.MainMenuTheme.GetValue() && isMainMenu))
 		{
-			bool isMainMenu = Game.Instance.SceneLoader.LoadedUIScene == GameScenes.MainMenu;
 			Game.ResetUI(delegate
 			{
 				DelayedInvoker.InvokeInFrames(delegate
 				{
+					if (mainMenuTheme != SettingsRoot.Game.Main.MainMenuTheme.GetValue() && isMainMenu)
+					{
+						SoundState.Instance.ResetState(SoundStateType.MainMenu);
+					}
 					EventBus.RaiseEvent(delegate(ISettingsUIHandler h)
 					{
 						h.HandleOpenSettings(isMainMenu);

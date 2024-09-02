@@ -27,6 +27,11 @@ public abstract class CombatTextCreator<TCombatTextView, TCombatMessage> where T
 
 	public TCombatTextView Create(TCombatMessage message)
 	{
+		return DoCreate(message);
+	}
+
+	protected virtual TCombatTextView DoCreate(TCombatMessage message)
+	{
 		TCombatTextView combatTextView = WidgetFactory.GetWidget(m_PrefabView);
 		combatTextView.transform.SetParent(ContainerRect, worldPositionStays: false);
 		combatTextView.SetData(message, delegate
@@ -42,9 +47,19 @@ public abstract class CombatTextCreator<TCombatTextView, TCombatMessage> where T
 		WidgetFactory.DisposeWidget(combatText);
 		ActiveViews.Remove(combatText);
 		m_CollectionUpdated?.Invoke();
+		DoDisposeCombatText(combatText);
+	}
+
+	protected virtual void DoDisposeCombatText(CombatTextEntityBaseView<TCombatMessage> combatText)
+	{
 	}
 
 	public void Clear()
+	{
+		DoClear();
+	}
+
+	protected virtual void DoClear()
 	{
 		ActiveViews.ToList().ForEach(DisposeCombatText);
 		ActiveViews.Clear();

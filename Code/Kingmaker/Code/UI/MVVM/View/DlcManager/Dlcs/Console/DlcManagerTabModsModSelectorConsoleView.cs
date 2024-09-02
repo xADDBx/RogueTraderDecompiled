@@ -12,7 +12,7 @@ namespace Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.Console;
 
 public class DlcManagerTabModsModSelectorConsoleView : DlcManagerTabModsModSelectorBaseView
 {
-	[Header("PC Part")]
+	[Header("Console Part")]
 	[SerializeField]
 	[UsedImplicitly]
 	private DlcManagerModEntityConsoleView m_ItemPrefab;

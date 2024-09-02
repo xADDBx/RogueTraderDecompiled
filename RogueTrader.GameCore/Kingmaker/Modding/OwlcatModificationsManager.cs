@@ -51,6 +51,8 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 
 	public ShowModSettingsCalled OnShowModSettingsCalled;
 
+	public ShowModSettingsCalled OnShowModSettingsFromInGameUI;
+
 	[CanBeNull]
 	private readonly SettingsData m_Settings;
 
@@ -140,13 +142,13 @@ public class OwlcatModificationsManager : IResourceReplacementProvider
 
 	public void OpenModInfoWindow(string modId)
 	{
-		if (OnShowModSettingsCalled == null)
+		if (OnShowModSettingsFromInGameUI == null)
 		{
 			PFLog.Mods.Error("OwlcatModificationWindow has no subscription to OnShowModSettingsCalled event. ");
 		}
 		else
 		{
-			OnShowModSettingsCalled(modId);
+			OnShowModSettingsFromInGameUI(modId);
 		}
 	}
 

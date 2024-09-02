@@ -12,6 +12,7 @@ using Kingmaker.Code.UI.MVVM.View.Settings.Console;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.EscMenu;
+using Kingmaker.UI.MVVM.View.NetLobby.Console;
 using Kingmaker.UI.MVVM.VM.Tutorial;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -250,7 +251,7 @@ public class TutorialBigWindowConsoleView : TutorialWindowConsoleView<TutorialMo
 	private void OnCurrentInputLayerChanged()
 	{
 		GamePad instance = GamePad.Instance;
-		if (instance.CurrentInputLayer != InputLayer && instance.CurrentInputLayer != GlossaryInputLayer && !(instance.CurrentInputLayer.ContextName == InfoWindowConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "SaveLoad") && !(instance.CurrentInputLayer.ContextName == "SaveFullScreenshotConsoleView") && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == ContextMenuConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == EscMenuBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == SettingsConsoleView.SettingsInputLayerName) && !(instance.CurrentInputLayer.ContextName == SettingsConsoleView.GlossarySettingsInputLayerName))
+		if (instance.CurrentInputLayer != InputLayer && instance.CurrentInputLayer != GlossaryInputLayer && !(instance.CurrentInputLayer.ContextName == InfoWindowConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "SaveLoad") && !(instance.CurrentInputLayer.ContextName == "SaveFullScreenshotConsoleView") && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == ContextMenuConsoleView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == EscMenuBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == SettingsConsoleView.SettingsInputLayerName) && !(instance.CurrentInputLayer.ContextName == SettingsConsoleView.GlossarySettingsInputLayerName) && !(instance.CurrentInputLayer.ContextName == NetLobbyConsoleView.InputLayerName))
 		{
 			CloseGlossary();
 			instance.PopLayer(InputLayer);

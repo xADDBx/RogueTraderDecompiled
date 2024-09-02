@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
-using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -39,13 +37,6 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		}
 		context.CastTime = Game.Instance.TimeController.GameTime;
 		m_Abilities.Add(abilityExecutionProcess);
-		if (context.Caster.IsInvisible() && !context.AbilityBlueprint.TolerantForInvisible)
-		{
-			EventBus.RaiseEvent((IMechanicEntity)context.Caster, (Action<IUnitInvisibleHandler>)delegate(IUnitInvisibleHandler e)
-			{
-				e.RemoveUnitInvisible();
-			}, isCheckRuntime: true);
-		}
 		return abilityExecutionProcess;
 	}
 
@@ -55,6 +46,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			throw new Exception("Attempting to access AbilityExecutionController that is disabled");
 		}
+		process.Dispose();
 		m_Abilities.Remove(process);
 	}
 
@@ -63,7 +55,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		foreach (AbilityExecutionProcess ability in m_Abilities)
 		{
 			PFLog.Ability.Log("[AbilityExecutionController] '" + ability.GetType().Name + "' will be detached...");
-			ability.Context.ClearBlockedNodes();
+			ability.Dispose();
 		}
 		m_Abilities.Clear();
 	}
@@ -96,7 +88,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			if (p.IsEnded)
 			{
-				p.Context.ClearBlockedNodes();
+				p.Dispose();
 				return true;
 			}
 			return false;

@@ -10,6 +10,7 @@ using Kingmaker.UnitLogic.Interaction;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.SriptZones;
 using Pathfinding;
 using UnityEngine;

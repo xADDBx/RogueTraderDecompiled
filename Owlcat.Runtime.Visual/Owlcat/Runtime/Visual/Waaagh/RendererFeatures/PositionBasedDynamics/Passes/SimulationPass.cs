@@ -90,6 +90,8 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 
 	private int m_LastFrameId;
 
+	private PositionBasedDynamicsConfig m_Config;
+
 	private Camera[] m_Cameras = new Camera[4];
 
 	private GPUBroadphaseBase m_Broadphase;
@@ -136,6 +138,7 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 		m_KernelCameraCull = cameraCullingShader.FindKernel("CameraCull");
 		m_MatrixPool = ArrayPool<Matrix4x4>.Create();
 		m_Vector4Pool = ArrayPool<Vector4>.Create();
+		m_Config = PositionBasedDynamicsConfig.Instance;
 	}
 
 	internal void Init(GPUBroadphaseBase broadphase, int simulationIterations, int constraintIterations, float decay)
@@ -188,6 +191,7 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 		data.Cameras = m_Cameras;
 		data.MatrixPool = m_MatrixPool;
 		data.Vector4Pool = m_Vector4Pool;
+		data.CameraCullingEnabled = m_Config.CameraCullingEnabled;
 		data.Simulate = false;
 		if (m_LastFrameId != renderingData.TimeData.FrameId)
 		{
@@ -238,6 +242,7 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 		context.cmd.SetComputeIntParam(data.SimulationShader, PositionBasedDynamicsConstantBuffer._GlobalCollidersCount, data.GpuData.GlobalCollidersCount);
 		context.cmd.SetComputeIntParam(data.SimulationShader, PositionBasedDynamicsConstantBuffer._ForceVolumesCount, data.GpuData.ForceVolumes?.Count ?? 0);
 		context.cmd.SetComputeIntParam(data.ForceVolumeShader, PositionBasedDynamicsConstantBuffer._ForceVolumesAabbOffset, data.Broadphase.ForceVolumesAabbOffset);
+		context.cmd.SetComputeIntParam(data.SimulationShader, PositionBasedDynamicsConstantBuffer._CameraCullingEnabled, data.CameraCullingEnabled ? 1 : 0);
 		data.GpuData.BodyDescriptorsSoA.SetGlobalData(context.cmd);
 		data.GpuData.ParticlesSoA.SetGlobalData(context.cmd);
 		data.GpuData.ConstraintsSoA.SetGlobalData(context.cmd);
@@ -461,7 +466,7 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 
 	private void CameraCulling(SimulationPassData data, RenderGraphContext context)
 	{
-		if (data.GpuData.BodiesCountWithoutGrass <= 0)
+		if (!m_Config.CameraCullingEnabled || data.GpuData.BodiesCountWithoutGrass <= 0)
 		{
 			return;
 		}

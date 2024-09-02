@@ -32,6 +32,8 @@ public class UnitAnimationActionClip : UnitAnimationAction
 		}
 	}
 
+	public ClipDurationType DurationType { get; set; }
+
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers
 	{
 		get
@@ -48,7 +50,7 @@ public class UnitAnimationActionClip : UnitAnimationAction
 		}
 		else
 		{
-			handle.StartClip(m_Clip);
+			handle.StartClip(m_Clip, DurationType);
 		}
 	}
 

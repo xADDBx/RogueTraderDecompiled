@@ -133,10 +133,7 @@ public class DialogPCView : ViewBase<DialogVM>
 				m_SpeakerPortrait.sprite = value;
 			}
 		}));
-		AddDisposable(base.ViewModel.EmptySpeaker.Subscribe(delegate(bool value)
-		{
-			m_SpeakerHolder.gameObject.SetActive(value);
-		}));
+		AddDisposable(base.ViewModel.EmptySpeaker.Subscribe(m_SpeakerHolder.gameObject.SetActive));
 		m_DialogNotifications.Bind(base.ViewModel.DialogNotifications);
 		AddDisposable(base.ViewModel.Cue.Subscribe(m_CueView.Bind));
 		AddDisposable(base.ViewModel.History.ObserveAdd().Subscribe(delegate(CollectionAddEvent<IDialogShowData> value)
@@ -170,11 +167,6 @@ public class DialogPCView : ViewBase<DialogVM>
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
-	public void StartUpdateCoroutine()
-	{
-		MainThreadDispatcher.StartUpdateMicroCoroutine(CurrentPartUpdateCoroutine());
-	}
-
 	protected override void DestroyViewImplementation()
 	{
 		SetVisible(state: false, force: false, delegate
@@ -186,6 +178,11 @@ public class DialogPCView : ViewBase<DialogVM>
 			});
 			m_HistoryEntities.Clear();
 		});
+	}
+
+	public void StartUpdateCoroutine()
+	{
+		MainThreadDispatcher.StartUpdateMicroCoroutine(CurrentPartUpdateCoroutine());
 	}
 
 	private void CalculateHeight()

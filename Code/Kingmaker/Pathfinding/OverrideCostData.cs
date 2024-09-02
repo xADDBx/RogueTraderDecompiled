@@ -9,7 +9,7 @@ public class OverrideCostData
 {
 	private readonly RestrictionsHolder.Reference m_Restrictions;
 
-	public float OverrideCost { get; }
+	public int OverridePercentCost { get; }
 
 	public EntityFactSource Source { get; }
 
@@ -17,9 +17,9 @@ public class OverrideCostData
 	{
 		get
 		{
-			if (Source.Entity is AreaEffectEntity unit)
+			if (Source.Entity is AreaEffectEntity areaEffectEntity)
 			{
-				return unit.GetOccupiedNodes();
+				return areaEffectEntity.CoveredNodes;
 			}
 			return default(NodeList);
 		}
@@ -28,7 +28,7 @@ public class OverrideCostData
 	public OverrideCostData(EntityFactSource source, int overrideCostProc, RestrictionsHolder.Reference restrictions)
 	{
 		Source = source;
-		OverrideCost = (float)overrideCostProc / 100f;
+		OverridePercentCost = overrideCostProc;
 		m_Restrictions = restrictions;
 	}
 
@@ -40,6 +40,6 @@ public class OverrideCostData
 
 	public override string ToString()
 	{
-		return $"Source={Source}, costBonus={OverrideCost}, restrictions={m_Restrictions}";
+		return $"Source={Source}, costBonus={(float)OverridePercentCost / 100f}, restrictions={m_Restrictions}";
 	}
 }

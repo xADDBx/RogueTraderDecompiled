@@ -19,8 +19,10 @@ public class TextTemplateEngine : BaseTextTemplateEngine
 	private void AddTemplates()
 	{
 		AddTemplate("mf", new MaleFemaleTemplate());
+		AddTemplate("rt_mf", new RtMaleFemaleTemplate());
 		AddTemplate("race", new RaceTemplate());
 		AddTemplate("name", new NameTemplate());
+		AddTemplate("rt_name", new RtNameTemplate());
 		AddTemplate("date", new DateTemplate());
 		AddTemplate("time", new TimeTempate());
 		AddTemplate("custom_companion_cost", new CustomCompanionCostTemplate());

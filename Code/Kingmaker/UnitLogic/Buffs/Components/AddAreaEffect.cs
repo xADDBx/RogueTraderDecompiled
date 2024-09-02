@@ -5,6 +5,7 @@ using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -16,7 +17,7 @@ namespace Kingmaker.UnitLogic.Buffs.Components;
 
 [Serializable]
 [TypeId("25b073dd90738ed46939db4777aafe17")]
-public class AddAreaEffect : UnitFactComponentDelegate, IAreaHandler, ISubscriber, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IHashable
+public class AddAreaEffect : UnitFactComponentDelegate, IAreaHandler, ISubscriber, IUnitSpawnHandler<EntitySubscriber>, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitSpawnHandler, EntitySubscriber>, IHashable
 {
 	[SerializeField]
 	private BlueprintAbilityAreaEffectReference m_AreaEffect;
@@ -25,10 +26,7 @@ public class AddAreaEffect : UnitFactComponentDelegate, IAreaHandler, ISubscribe
 
 	protected override void OnActivate()
 	{
-		if (!ContextData<UnitHelper.PreviewUnit>.Current && Game.Instance.CurrentlyLoadedArea != null && base.Owner.IsInState)
-		{
-			SpawnAreaEffect();
-		}
+		SpawnAreaEffect();
 	}
 
 	protected override void OnDeactivate()
@@ -47,7 +45,7 @@ public class AddAreaEffect : UnitFactComponentDelegate, IAreaHandler, ISubscribe
 		{
 			PFLog.Default.Error($"Area effect from wrong unit: {AreaEffect.NameSafe()} on {base.Owner}");
 		}
-		else if (base.Owner.GetOptional<UnitPartSpawnedAreaEffects>()?.Get(base.Fact, this) == null)
+		else
 		{
 			SpawnAreaEffect();
 		}
@@ -55,15 +53,12 @@ public class AddAreaEffect : UnitFactComponentDelegate, IAreaHandler, ISubscribe
 
 	void IUnitSpawnHandler.HandleUnitSpawned()
 	{
-		if (base.Owner.GetOptional<UnitPartSpawnedAreaEffects>()?.Get(base.Fact, this) == null)
-		{
-			SpawnAreaEffect();
-		}
+		SpawnAreaEffect();
 	}
 
 	private void SpawnAreaEffect()
 	{
-		if (base.Owner.IsInGame)
+		if (base.Owner.IsInGame && Game.Instance.CurrentlyLoadedArea != null && base.Owner.IsInState && base.Owner.GetOptional<UnitPartSpawnedAreaEffects>()?.Get(base.Fact, this) == null && !ContextData<UnitHelper.PreviewUnit>.Current && !base.Owner.IsPreviewUnit)
 		{
 			AreaEffectEntity areaEffectEntity = AreaEffectsController.SpawnAttachedToTarget(base.Fact.MaybeContext, AreaEffect, base.Owner, null);
 			areaEffectEntity.SourceFact = base.Fact;

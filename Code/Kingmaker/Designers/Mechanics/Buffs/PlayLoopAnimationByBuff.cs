@@ -1,5 +1,13 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using StateHasher.Core;
@@ -8,11 +16,16 @@ using UnityEngine;
 namespace Kingmaker.Designers.Mechanics.Buffs;
 
 [TypeId("ccdeb99837c64fb79ebc26eb36f2f47b")]
-public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IHashable
+public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable
 {
 	public WarhammerBuffLoopAction BuffLoopAction;
 
 	private UnitAnimationManager m_UnitAnimationManager;
+
+	[SerializeField]
+	private BlueprintBuffReference m_SuppressionBuff;
+
+	public BlueprintBuff SuppressionBuff => m_SuppressionBuff?.Get();
 
 	protected override void OnActivateOrPostLoad()
 	{
@@ -67,6 +80,14 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IHashable
 		if (m_UnitAnimationManager == null)
 		{
 			m_UnitAnimationManager = base.Owner?.View?.AnimationManager;
+		}
+	}
+
+	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
+	{
+		if (command.Executor == base.Owner && SuppressionBuff != null)
+		{
+			base.Owner.Buffs.Add(SuppressionBuff, (BuffDuration)null);
 		}
 	}
 

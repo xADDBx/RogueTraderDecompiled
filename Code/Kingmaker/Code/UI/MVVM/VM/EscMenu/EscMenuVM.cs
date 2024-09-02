@@ -18,7 +18,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.EscMenu;
 
-public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorUIHandler, ISubscriber<IMechanicEntity>, ISubscriber, IGameModeHandler
+public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorUIHandler, ISubscriber<IMechanicEntity>, ISubscriber, IGameModeHandler, INetLobbyRequest
 {
 	private readonly Action m_CloseAction;
 
@@ -125,7 +125,7 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 		OnClose();
 		EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
 		{
-			h.HandleOpenDlcManager(onlyMods: true);
+			h.HandleOpenDlcManager(inGame: true);
 		});
 	}
 
@@ -249,6 +249,16 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 	}
 
 	public void OnGameModeStop(GameModeType gameMode)
+	{
+	}
+
+	public void HandleNetLobbyRequest(bool isMainMenu = false)
+	{
+		InternalWindowOpened = true;
+		OnClose();
+	}
+
+	public void HandleNetLobbyClose()
 	{
 	}
 }

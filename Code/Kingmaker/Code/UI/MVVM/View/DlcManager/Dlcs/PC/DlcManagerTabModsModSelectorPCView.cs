@@ -7,7 +7,7 @@ namespace Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.PC;
 
 public class DlcManagerTabModsModSelectorPCView : DlcManagerTabModsModSelectorBaseView
 {
-	[Header("Console Part")]
+	[Header("PC Part")]
 	[SerializeField]
 	[UsedImplicitly]
 	private DlcManagerModEntityPCView m_ItemPrefab;

@@ -388,7 +388,7 @@ public class ClockworkRunner : ITeleportHandler, ISubscriber, IAreaHandler, IGam
 		lootContextVM.LootVM.Value.LootCollector.CollectAll();
 		foreach (ItemEntity item in Player.Inventory)
 		{
-			item.OnOpenDescription();
+			item.OnOpenDescriptionFirstTime();
 		}
 		foreach (ItemEntity item2 in Player.Inventory.ToList())
 		{

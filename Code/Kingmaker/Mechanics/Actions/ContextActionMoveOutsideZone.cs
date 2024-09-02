@@ -44,7 +44,7 @@ public class ContextActionMoveOutsideZone : ContextAction
 		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)AstarPath.active.GetNearest(base.TargetEntity.Position).node;
 		if (base.TargetEntity.MaybeMovementAgent != null && base.TargetEntity is BaseUnitEntity baseUnitEntity)
 		{
-			Dictionary<GraphNode, WarhammerPathPlayerCell> dictionary = PathfindingService.Instance.FindAllReachableTiles_Blocking(base.TargetEntity.MaybeMovementAgent, base.TargetEntity.Position, 10, ignoreThreateningAreaCost: true);
+			Dictionary<GraphNode, WarhammerPathPlayerCell> dictionary = PathfindingService.Instance.FindAllReachableTiles_Blocking(base.TargetEntity.MaybeMovementAgent, base.TargetEntity.Position, 10f, ignoreThreateningAreaCost: true);
 			if (dictionary.Count == 0)
 			{
 				return;

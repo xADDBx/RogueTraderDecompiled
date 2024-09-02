@@ -41,9 +41,9 @@ public static class GameHelper
 {
 	public static class Quests
 	{
-		public static void GiveObjective(BlueprintQuestObjective objecive)
+		public static void GiveObjective(BlueprintQuestObjective objecive, bool silentStart = false)
 		{
-			Game.Instance.Player.QuestBook.GiveObjective(objecive);
+			Game.Instance.Player.QuestBook.GiveObjective(objecive, silentStart);
 		}
 
 		public static void CompleteObjective(BlueprintQuestObjective objecive)
@@ -90,6 +90,11 @@ public static class GameHelper
 	public static BaseUnitEntity GetPlayerCharacter()
 	{
 		return Game.Instance.Player.MainCharacterEntity;
+	}
+
+	public static BaseUnitEntity GetPlayerCharacterOriginal()
+	{
+		return Game.Instance.Player.MainCharacterOriginalEntity;
 	}
 
 	public static BaseUnitEntity RecruitNPC([CanBeNull] BaseUnitEntity npc, BlueprintUnit blueprint)
@@ -276,7 +281,7 @@ public static class GameHelper
 
 	public static bool IsAttackingGreenNPC([NotNull] this MechanicEntity attacker, [NotNull] MechanicEntity target)
 	{
-		if (!ContextData<CommandAction.PlayerData>.Current && !target.IsPlayerFaction && !target.IsNeutral && !GetPlayerCharacter().CombatGroup.IsEnemy(target.GetCombatGroupOptional()?.Group))
+		if (!ContextData<CommandAction.PlayerData>.Current && !target.IsPlayerFaction && (!target.IsNeutral || target is LightweightUnitEntity) && !GetPlayerCharacter().CombatGroup.IsEnemy(target.GetCombatGroupOptional()?.Group))
 		{
 			return !target.IsInCombat;
 		}

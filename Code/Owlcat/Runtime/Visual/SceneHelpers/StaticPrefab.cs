@@ -6,6 +6,8 @@ namespace Owlcat.Runtime.Visual.SceneHelpers;
 
 public class StaticPrefab : MonoBehaviour
 {
+	public GameObject FxRoot;
+
 	public GameObject LightsRoot;
 
 	public GameObject VisualRoot;

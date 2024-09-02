@@ -105,9 +105,9 @@ public class BlueprintCampaign : BlueprintScriptableObject
 				List<BlueprintDlcReference> list = new List<BlueprintDlcReference>();
 				foreach (IBlueprintDlc dlc in BlueprintRoot.Instance.DlcSettings.Dlcs)
 				{
-					if (dlc.Rewards.Any((IBlueprintDlcReward br) => br is BlueprintDlcRewardCampaignAdditionalContent blueprintDlcRewardCampaignAdditionalContent && blueprintDlcRewardCampaignAdditionalContent.Campaign == this) && dlc is BlueprintDlc bp && dlc.GetDlcStores().TryFind((IDlcStore x) => x.AllowsPurchase, out var _))
+					if (dlc is BlueprintDlc blueprintDlc && blueprintDlc.GetDlcStores().Any((IDlcStore x) => x.IsSuitable && x.AllowsPurchase) && blueprintDlc.Rewards.Any((IBlueprintDlcReward reward) => reward is BlueprintDlcRewardCampaignAdditionalContent blueprintDlcRewardCampaignAdditionalContent && blueprintDlcRewardCampaignAdditionalContent.Campaign == this))
 					{
-						list.Add(bp.ToReference<BlueprintDlcReference>());
+						list.Add(blueprintDlc.ToReference<BlueprintDlcReference>());
 					}
 				}
 				m_AdditionalContentDlc = list.ToArray();

@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
@@ -18,18 +19,34 @@ public static class PropertyCalculatorComponentHelper
 	public static int GetPropertyValue(this BlueprintScriptableObject blueprint, ContextPropertyName propertyName, MechanicEntity currentEntity, MechanicsContext context, out bool calculated)
 	{
 		BlueprintComponent[] componentsArray = blueprint.ComponentsArray;
-		for (int i = 0; i < componentsArray.Length; i++)
+		foreach (BlueprintComponent blueprintComponent in componentsArray)
 		{
-			if (componentsArray[i] is PropertyCalculatorComponent propertyCalculatorComponent && propertyCalculatorComponent.Name == propertyName)
+			if (blueprintComponent is AreaEffectClusterComponent areaEffectClusterComponent)
 			{
-				PropertyContext context2 = ((ContextData<PropertyContextData>.Current == null) ? new PropertyContext(currentEntity, null, null, context) : ContextData<PropertyContextData>.Current.Context.WithCurrentEntity(currentEntity).WithContext(context));
-				int value = propertyCalculatorComponent.GetValue(context2);
-				calculated = true;
-				return value;
+				BlueprintComponent[] componentsArray2 = areaEffectClusterComponent.ClusterLogicBlueprint.ComponentsArray;
+				foreach (BlueprintComponent blueprintComponent2 in componentsArray2)
+				{
+					if (blueprintComponent2 is PropertyCalculatorComponent propertyCalculatorComponent && propertyCalculatorComponent.Name == propertyName)
+					{
+						return CalculatePropertyValue(propertyName, currentEntity, context, out calculated, propertyCalculatorComponent, blueprintComponent2);
+					}
+				}
+			}
+			if (blueprintComponent is PropertyCalculatorComponent propertyCalculatorComponent2 && propertyCalculatorComponent2.Name == propertyName)
+			{
+				return CalculatePropertyValue(propertyName, currentEntity, context, out calculated, propertyCalculatorComponent2, blueprintComponent);
 			}
 		}
 		calculated = false;
 		PFLog.Default.ErrorWithReport($"Can't find local property '{propertyName}' in blueprint {blueprint.name}");
 		return 0;
+	}
+
+	private static int CalculatePropertyValue(ContextPropertyName propertyName, MechanicEntity currentEntity, MechanicsContext context, out bool calculated, PropertyCalculatorComponent property, BlueprintComponent component)
+	{
+		PropertyContext context2 = ((ContextData<PropertyContextData>.Current == null) ? new PropertyContext(currentEntity, null, null, context) : ContextData<PropertyContextData>.Current.Context.WithCurrentEntity(currentEntity).WithContext(context));
+		int value = property.GetValue(context2);
+		calculated = true;
+		return value;
 	}
 }

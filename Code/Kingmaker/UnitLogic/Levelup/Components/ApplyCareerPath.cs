@@ -90,6 +90,10 @@ public class ApplyCareerPath : UnitFactComponentDelegate, IHashable
 			return;
 		}
 		base.Owner.Progression.AdvanceExperienceToLevel(num3, log: false);
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		foreach (SelectionState selection in new LevelUpManager(base.Owner, CareerPath, autoCommit: true, num3).Selections)
 		{
 			bool flag;

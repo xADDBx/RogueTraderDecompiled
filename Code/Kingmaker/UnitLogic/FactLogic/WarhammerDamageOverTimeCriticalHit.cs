@@ -41,7 +41,7 @@ public class WarhammerDamageOverTimeCriticalHit : UnitFactComponentDelegate, IIn
 
 	public void OnEventAboutToTrigger(RuleDealDamage evt)
 	{
-		if (!(evt.Reason.Context?.AssociatedBlueprint is BlueprintBuff blueprintBuff) || !blueprintBuff.AbilityGroups.Contains(DamageOverTimeGroup) || evt.TargetUnit == null || !Restrictions.IsPassed(base.Fact, evt, evt.SourceAbility))
+		if (!(evt.Reason.Context?.AssociatedBlueprint is BlueprintBuff { AbilityGroups: var abilityGroups }) || !abilityGroups.Contains(DamageOverTimeGroup) || evt.TargetUnit == null || !Restrictions.IsPassed(base.Fact, evt, evt.SourceAbility))
 		{
 			return;
 		}
@@ -53,8 +53,9 @@ public class WarhammerDamageOverTimeCriticalHit : UnitFactComponentDelegate, IIn
 		int bonusCriticalChance = Rulebook.Trigger(new RuleCalculateRighteousFuryChance(base.Owner, evt.TargetUnit, abilityData)).BonusCriticalChance;
 		if (Rulebook.Trigger(new RuleRollD100(base.Owner)).Result <= bonusCriticalChance)
 		{
-			int value = Rulebook.Trigger(new RuleCalculateDamage(base.Owner, evt.TargetUnit, abilityData)).CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
+			int value = new CalculateDamageParams(base.Owner, evt.TargetUnit, abilityData).Trigger().CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
 			evt.Damage.Modifiers.Add(ModifierType.PctAdd, value, base.Fact, ModifierDescriptor);
+			evt.Damage.IsCritical = true;
 		}
 	}
 

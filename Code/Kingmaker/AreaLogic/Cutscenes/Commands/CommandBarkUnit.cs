@@ -165,4 +165,13 @@ public class CommandBarkUnit : CommandBase
 		}
 		return value;
 	}
+
+	public override IAbstractUnitEntity GetAnchorUnit()
+	{
+		if (!Unit || !Unit.TryGetValue(out var value))
+		{
+			return null;
+		}
+		return value;
+	}
 }

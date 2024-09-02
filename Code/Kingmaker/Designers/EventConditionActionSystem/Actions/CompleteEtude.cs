@@ -30,7 +30,7 @@ public class CompleteEtude : GameAction, IEtudeReference
 	protected override void RunAction()
 	{
 		BlueprintEtude bp = ((!Evaluate) ? Etude.Get() : (EtudeEvaluator ? ((BlueprintEtude)EtudeEvaluator.GetValue()) : null));
-		Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(bp);
+		Game.Instance.Player.EtudesSystem.MarkEtudeCompleted(bp, "CompleteEtude action " + base.AssetGuid + " in " + base.Owner.name);
 	}
 
 	public override string GetCaption()

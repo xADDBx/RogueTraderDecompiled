@@ -1,5 +1,3 @@
-using Kingmaker.Enums;
-
 namespace Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 
 public static class SpellDescriptorOperations
@@ -9,18 +7,6 @@ public static class SpellDescriptorOperations
 	public const SpellDescriptor NegativeEffects = SpellDescriptor.MindAffecting | SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Emotion | SpellDescriptor.Poison | SpellDescriptor.Disease | SpellDescriptor.Charm | SpellDescriptor.Daze | SpellDescriptor.Sickened | SpellDescriptor.Shaken | SpellDescriptor.Fatigue | SpellDescriptor.Staggered | SpellDescriptor.Nauseated | SpellDescriptor.Exhausted | SpellDescriptor.Stun | SpellDescriptor.Paralysis | SpellDescriptor.Confusion | SpellDescriptor.Blindness | SpellDescriptor.Curse | SpellDescriptor.Sleep | SpellDescriptor.StatDebuff | SpellDescriptor.Bleed | SpellDescriptor.VilderavnBleed | SpellDescriptor.Petrified | SpellDescriptor.NegativeEmotion | SpellDescriptor.UndeadControl;
 
 	public const SpellDescriptor DebilitatingEffects = SpellDescriptor.Shaken | SpellDescriptor.Nauseated | SpellDescriptor.Stun | SpellDescriptor.Paralysis | SpellDescriptor.Confusion | SpellDescriptor.Sleep | SpellDescriptor.Petrified | SpellDescriptor.UndeadControl;
-
-	public static SpellDescriptor GetAlignmentDescriptor(this AlignmentComponent aligment)
-	{
-		return aligment switch
-		{
-			AlignmentComponent.Good => SpellDescriptor.Good, 
-			AlignmentComponent.Evil => SpellDescriptor.Evil, 
-			AlignmentComponent.Chaotic => SpellDescriptor.Chaos, 
-			AlignmentComponent.Lawful => SpellDescriptor.Law, 
-			_ => SpellDescriptor.None, 
-		};
-	}
 
 	public static bool HasAnyFlag(this SpellDescriptor descriptor, SpellDescriptor flags)
 	{

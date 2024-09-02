@@ -24,6 +24,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.ResourceLinks;
+using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
 using Kingmaker.UnitLogic.Parts;
@@ -54,6 +55,8 @@ namespace Kingmaker.EntitySystem.Persistence.Scenes;
 public class SceneLoader
 {
 	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("System Loading");
+
+	public const string CrossSceneName = "[cross-area objects]";
 
 	private string m_LoadedUIScene = "";
 
@@ -1932,6 +1935,10 @@ public class SceneLoader
 			}
 			op.Wait();
 		}
+		if (exception != null)
+		{
+			m_LoadedAreaScenes.Clear();
+		}
 		SoundState.Instance.ScheduleNewAreaMusic();
 		Game.Instance.SceneLoader.LoadedUIScene = GameScenes.MainMenu;
 		op = BundledSceneLoader.LoadSceneAsync(GameScenes.MainMenu);
@@ -1960,6 +1967,7 @@ public class SceneLoader
 		}
 		EntityReferenceTracker.DropCached();
 		WeaponStatsHelper.ForceInvalidateCache();
+		CalculateDamageCache.ForceInvalidateCache();
 		Game.Instance.CustomGridNodeController.Clear();
 		EntityDataLink.ClearCache();
 	}

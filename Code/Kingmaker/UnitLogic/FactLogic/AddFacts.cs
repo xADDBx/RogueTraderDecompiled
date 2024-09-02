@@ -77,7 +77,7 @@ public class AddFacts : UnitFactComponentDelegate, IDifficultyChangedClassHandle
 			EntityFact[] array = base.Owner.Facts.FindAllBySource(base.Fact, this).ToArray();
 			for (int i = 0; i < array.Length; i++)
 			{
-				array[i]?.Recalculate();
+				array[i]?.Reapply();
 			}
 		}
 		else
@@ -99,7 +99,7 @@ public class AddFacts : UnitFactComponentDelegate, IDifficultyChangedClassHandle
 		EntityFact[] array = base.Owner.Facts.FindAllBySource(base.Fact, this).ToArray();
 		for (int i = 0; i < array.Length; i++)
 		{
-			array[i]?.Recalculate();
+			array[i]?.Reapply();
 		}
 	}
 

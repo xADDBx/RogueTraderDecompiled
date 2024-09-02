@@ -1,5 +1,6 @@
 using Kingmaker.Stores;
 using Steamworks;
+using UnityEngine;
 
 namespace Kingmaker.Utility;
 
@@ -14,6 +15,18 @@ public static class ApplicationHelper
 				return SteamUtils.IsSteamRunningOnSteamDeck();
 			}
 			return false;
+		}
+	}
+
+	public static string RunningPlatform
+	{
+		get
+		{
+			if (!IsRunOnSteamDeck)
+			{
+				return Application.platform.ToString();
+			}
+			return "SteamDeck";
 		}
 	}
 }

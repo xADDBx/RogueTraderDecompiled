@@ -812,12 +812,17 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 		return (base.Blueprint as BlueprintItemEquipment)?.CanBeEquippedBy(owner) ?? false;
 	}
 
-	public void OnOpenDescription()
+	public void OnOpenDescriptionFirstTime()
 	{
 		EventBus.RaiseEvent((IItemEntity)this, (Action<IPlayerOpenItemDescriptionFirstTimeHandler>)delegate(IPlayerOpenItemDescriptionFirstTimeHandler h)
 		{
 			h.HandlePlayerOpenItemDescriptionFirstTime();
 		}, isCheckRuntime: true);
+	}
+
+	public void OnOpenDescription()
+	{
+		Game.Instance.GameCommandQueue.AddCommand(new OpenItemDescriptionGameCommand(this));
 	}
 
 	public int UpdateSlotIndex(bool force = false)

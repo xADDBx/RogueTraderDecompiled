@@ -5,7 +5,6 @@ using Code.Utility.ExtendedModInfo;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.Stores;
 using Kingmaker.UI.Models.SettingsUI.SettingAssets;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
@@ -40,7 +39,7 @@ public class DlcManagerTabModsVM : DlcManagerTabBaseVM, ISettingsDescriptionUIHa
 	public DlcManagerTabModsVM(bool isMainMenu)
 	{
 		m_IsMainMenu = isMainMenu;
-		IsSteam.Value = StoreManager.Store == StoreType.Steam;
+		IsSteam.Value = false;
 		AddMods();
 		AddDisposable(InfoVM = new InfoSectionVM());
 		AddDisposable(m_ReactiveTooltipTemplate.Subscribe(InfoVM.SetTemplate));

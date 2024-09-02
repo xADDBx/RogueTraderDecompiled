@@ -12,11 +12,11 @@ public class PartUnitInAreaEffectCluster : BaseUnitPart, IHashable
 {
 	private readonly HashSet<BlueprintAbilityAreaEffectClusterLogic> m_ClusterKeys = new HashSet<BlueprintAbilityAreaEffectClusterLogic>();
 
-	private readonly Dictionary<BlueprintAbilityAreaEffectClusterLogic, List<AreaEffectEntity>> m_AreaEffectEntitiesInVisit = new Dictionary<BlueprintAbilityAreaEffectClusterLogic, List<AreaEffectEntity>>();
+	private readonly Dictionary<BlueprintAbilityAreaEffectClusterLogic, HashSet<AreaEffectEntity>> m_AreaEffectEntitiesInVisit = new Dictionary<BlueprintAbilityAreaEffectClusterLogic, HashSet<AreaEffectEntity>>();
 
 	public HashSet<BlueprintAbilityAreaEffectClusterLogic> ClusterKeys => m_ClusterKeys;
 
-	public Dictionary<BlueprintAbilityAreaEffectClusterLogic, List<AreaEffectEntity>> AreaEffectEntitiesInVisit => m_AreaEffectEntitiesInVisit;
+	public Dictionary<BlueprintAbilityAreaEffectClusterLogic, HashSet<AreaEffectEntity>> AreaEffectEntitiesInVisit => m_AreaEffectEntitiesInVisit;
 
 	public void AddClusterKey(BlueprintAbilityAreaEffectClusterLogic blueprint)
 	{
@@ -25,9 +25,12 @@ public class PartUnitInAreaEffectCluster : BaseUnitPart, IHashable
 
 	public void RemoveClusterKey(BlueprintAbilityAreaEffectClusterLogic blueprint)
 	{
-		m_ClusterKeys.Remove(blueprint);
-		m_AreaEffectEntitiesInVisit.Remove(blueprint);
-		RemoveSelfIfEmpty();
+		if (!base.Owner.IsDisposingNow)
+		{
+			m_ClusterKeys.Remove(blueprint);
+			m_AreaEffectEntitiesInVisit.Remove(blueprint);
+			RemoveSelfIfEmpty();
+		}
 	}
 
 	public void AddEnteringAreaEffectToList(BlueprintAbilityAreaEffectClusterLogic blueprint, AreaEffectEntity entity)
@@ -37,12 +40,15 @@ public class PartUnitInAreaEffectCluster : BaseUnitPart, IHashable
 			m_AreaEffectEntitiesInVisit[blueprint].Add(entity);
 			return;
 		}
-		m_AreaEffectEntitiesInVisit[blueprint] = new List<AreaEffectEntity> { entity };
+		m_AreaEffectEntitiesInVisit[blueprint] = new HashSet<AreaEffectEntity> { entity };
 	}
 
 	public void RemoveExitingAreaEffectFromList(BlueprintAbilityAreaEffectClusterLogic blueprint, AreaEffectEntity entity)
 	{
-		m_AreaEffectEntitiesInVisit[blueprint].Remove(entity);
+		if (!entity.IsDisposingNow)
+		{
+			m_AreaEffectEntitiesInVisit[blueprint].Remove(entity);
+		}
 	}
 
 	private void RemoveSelfIfEmpty()
@@ -51,6 +57,13 @@ public class PartUnitInAreaEffectCluster : BaseUnitPart, IHashable
 		{
 			RemoveSelf();
 		}
+	}
+
+	protected override void OnViewWillDetach()
+	{
+		m_ClusterKeys.Clear();
+		m_AreaEffectEntitiesInVisit.Clear();
+		base.OnViewWillDetach();
 	}
 
 	public override Hash128 GetHash128()

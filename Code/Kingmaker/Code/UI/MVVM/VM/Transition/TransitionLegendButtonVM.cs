@@ -1,4 +1,7 @@
 using System;
+using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -7,19 +10,19 @@ namespace Kingmaker.Code.UI.MVVM.VM.Transition;
 
 public class TransitionLegendButtonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public bool IsVisible;
+	public readonly bool IsVisible;
 
-	public string Name;
+	public readonly bool IsInteractable;
+
+	public readonly string Name;
 
 	public readonly ReactiveProperty<bool> Attention = new ReactiveProperty<bool>();
 
-	public Action CloseAction;
+	private readonly Action m_ClickAction;
 
-	public Action ClickAction;
+	public readonly Action HoverAction;
 
-	public Action HoverAction;
-
-	public Action UnHoverAction;
+	public readonly Action UnHoverAction;
 
 	public readonly TransitionEntryVM TransitionEntryVM;
 
@@ -29,10 +32,10 @@ public class TransitionLegendButtonVM : BaseDisposable, IViewModel, IBaseDisposa
 	{
 		Attention.Value = transitionEntryVM.Attention.Value;
 		IsVisible = transitionEntryVM.IsVisible.Value && transitionEntryVM.IsInteractable.Value;
+		IsInteractable = transitionEntryVM.IsInteractable.Value;
 		Name = transitionEntryVM.Name.Value;
 		TransitionEntryVM = transitionEntryVM;
-		CloseAction = transitionEntryVM.CloseAction;
-		ClickAction = transitionEntryVM.ClickAction;
+		m_ClickAction = transitionEntryVM.ClickAction;
 		HoverAction = hoverAction;
 		UnHoverAction = unHoverAction;
 	}
@@ -43,9 +46,20 @@ public class TransitionLegendButtonVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public void OnClick()
 	{
-		if (UINetUtility.IsControlMainCharacterWithWarning())
+		if (!UINetUtility.IsControlMainCharacterWithWarning())
 		{
-			ClickAction?.Invoke();
+			return;
+		}
+		if (!IsInteractable)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.Transition.TransitionIsUnavailable);
+			});
+		}
+		else
+		{
+			m_ClickAction?.Invoke();
 		}
 	}
 }

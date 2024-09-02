@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Utility.StatefulRandom;
@@ -94,13 +95,13 @@ public static class LinqExtensions
 		return false;
 	}
 
-	[NotNull]
+	[JetBrains.Annotations.NotNull]
 	public static TElement[] EmptyIfNull<TElement>([CanBeNull] this TElement[] list)
 	{
 		return list ?? Array.Empty<TElement>();
 	}
 
-	[NotNull]
+	[JetBrains.Annotations.NotNull]
 	public static IEnumerable<T> EmptyIfNull<T>([CanBeNull] this IEnumerable<T> list)
 	{
 		return list ?? Enumerable.Empty<T>();
@@ -324,6 +325,10 @@ public static class LinqExtensions
 		{
 			return defaultValue;
 		}
+		if (key == null)
+		{
+			return defaultValue;
+		}
 		if (!source.TryGetValue(key, out var value))
 		{
 			return defaultValue;
@@ -473,7 +478,7 @@ public static class LinqExtensions
 		return false;
 	}
 
-	public static bool Contains<TValue>([CanBeNull] this HashSet<TValue> source, Func<TValue, bool> pred)
+	public static bool Contains<TValue>([CanBeNull] this IReadOnlyCollection<TValue> source, Func<TValue, bool> pred)
 	{
 		if (source == null)
 		{
@@ -630,7 +635,7 @@ public static class LinqExtensions
 		}
 	}
 
-	public static List<List<T>> Slice<T>([NotNull] this List<T> source, int chunkSize)
+	public static List<List<T>> Slice<T>([JetBrains.Annotations.NotNull] this List<T> source, int chunkSize)
 	{
 		List<List<T>> list = new List<List<T>>();
 		for (int i = 0; i < source.Count; i += chunkSize)
@@ -641,7 +646,7 @@ public static class LinqExtensions
 		return list;
 	}
 
-	public static void IncreaseCapacity<T>([NotNull] this List<T> list, int capacity)
+	public static void IncreaseCapacity<T>([JetBrains.Annotations.NotNull] this List<T> list, int capacity)
 	{
 		if (list.Capacity < capacity)
 		{
@@ -651,7 +656,7 @@ public static class LinqExtensions
 		}
 	}
 
-	public static void EnsureIndex<T>([NotNull] this List<T> list, int index, T value = default(T))
+	public static void EnsureIndex<T>([JetBrains.Annotations.NotNull] this List<T> list, int index, T value = default(T))
 	{
 		if (index < 0)
 		{
@@ -699,7 +704,7 @@ public static class LinqExtensions
 		return false;
 	}
 
-	public static bool AddUnique<T>([NotNull] this List<T> list, T value)
+	public static bool AddUnique<T>([JetBrains.Annotations.NotNull] this List<T> list, T value)
 	{
 		if (list.Contains(value))
 		{
@@ -714,7 +719,7 @@ public static class LinqExtensions
 		return list?.Count ?? 0;
 	}
 
-	public static bool TryGet<T>([CanBeNull] this List<T> list, int index, [CanBeNull] out T element)
+	public static bool TryGet<T>([CanBeNull] this List<T> list, int index, [NotNullWhen(true)] out T element)
 	{
 		if (list != null && 0 <= index && index < list.Count)
 		{
@@ -734,7 +739,7 @@ public static class LinqExtensions
 		return false;
 	}
 
-	public static void AddRange<T>([NotNull] this List<T> list, T[] array, int startIndex, int length)
+	public static void AddRange<T>([JetBrains.Annotations.NotNull] this List<T> list, T[] array, int startIndex, int length)
 	{
 		if (array.Length <= startIndex)
 		{
@@ -867,5 +872,24 @@ public static class LinqExtensions
 			}
 		}
 		list.Insert(num, value);
+	}
+
+	public static float Average(this IList<float> list)
+	{
+		if (list == null)
+		{
+			throw new NullReferenceException("list");
+		}
+		int count = list.Count;
+		if (count < 1)
+		{
+			throw new Exception("The list is empty!");
+		}
+		float num = 0f;
+		foreach (float item in list)
+		{
+			num += item;
+		}
+		return num / (float)count;
 	}
 }

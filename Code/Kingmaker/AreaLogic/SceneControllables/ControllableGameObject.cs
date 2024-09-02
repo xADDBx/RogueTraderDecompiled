@@ -21,14 +21,19 @@ public class ControllableGameObject : ControllableComponent
 	public override void SetState(ControllableState state)
 	{
 		base.SetState(state);
-		base.gameObject.SetActive(state.Active);
+		if (state.Active.HasValue)
+		{
+			base.gameObject.SetActive(state.Active.Value);
+		}
 	}
 
-	public override void SetDefaultState()
+	public override ControllableState GetDefaultState()
 	{
+		ControllableState defaultState = base.GetDefaultState();
 		if (IsActiveByDefault != 0)
 		{
-			base.gameObject.SetActive(IsActiveByDefault == BoolUnsettable.Activate);
+			defaultState.Active = IsActiveByDefault == BoolUnsettable.Activate;
 		}
+		return defaultState;
 	}
 }

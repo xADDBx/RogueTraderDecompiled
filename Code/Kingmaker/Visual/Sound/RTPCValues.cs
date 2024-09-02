@@ -9,4 +9,6 @@ public static class RTPCValues
 	public const string PartyBanterPositioning = "PartyBanterPositioning";
 
 	public const string WeatherIntensity = "WeatherIntensity";
+
+	public const string MuteEntity = "MuteEntity";
 }

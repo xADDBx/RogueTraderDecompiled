@@ -108,6 +108,9 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 	[SerializeField]
 	private ClipSetByHeight[] m_SlipSetsByHeight = new ClipSetByHeight[0];
 
+	[SerializeField]
+	private AnimationClipWrapper m_HorizontalTraverse;
+
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers
 	{
 		get
@@ -145,6 +148,7 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 			handle.Unit.MovementAgent.NodeLinkTraverser.InDownHorizontalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseDownHorizontalIn)?.Length ?? 0f;
 			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
 			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OnlyHorizontalTraverseTime = m_HorizontalTraverse?.Length ?? 0f;
 			WarhammerNodeLinkTraverser nodeLinkTraverser = handle.Unit.MovementAgent.NodeLinkTraverser;
 			float verticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.VerticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet.VerticalSpeed : clipSetByHeight.DownAnimationsSet.VerticalSpeed));
 			nodeLinkTraverser.VerticalSpeed = verticalSpeed;
@@ -184,18 +188,26 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 		{
 			return;
 		}
-		AnimationClipWrapper animationClip = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet : clipSetByHeight.DownAnimationsSet).GetAnimationClip(animationType);
+		ClipSet clipSet = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet : clipSetByHeight.DownAnimationsSet);
+		AnimationClipWrapper animationClipWrapper = (handle.Unit.MovementAgent.NodeLinkTraverser.IsOnlyHorizontalTraverse ? m_HorizontalTraverse : clipSet.GetAnimationClip(animationType));
 		float speedScale = 1f;
 		ClipDurationType duration = ClipDurationType.Endless;
 		switch (animationType)
 		{
 		case WarhammerNodeLinkTraverser.State.Traverse:
-		{
-			duration = ClipDurationType.Endless;
-			float num = handle.Unit.MovementAgent.NodeLinkTraverser.TraverseHeight / handle.Unit.MovementAgent.NodeLinkTraverser.GetTraverseSpeedMps();
-			speedScale = animationClip.Length / num;
+			if (handle.Unit.MovementAgent.NodeLinkTraverser.IsOnlyHorizontalTraverse)
+			{
+				duration = ClipDurationType.Endless;
+				float num = handle.Unit.MovementAgent.NodeLinkTraverser.TraverseDistance / handle.Unit.MovementAgent.NodeLinkTraverser.GetTraverseSpeedMps();
+				speedScale = animationClipWrapper.Length / num;
+			}
+			else
+			{
+				duration = ClipDurationType.Endless;
+				float num2 = handle.Unit.MovementAgent.NodeLinkTraverser.TraverseHeight / handle.Unit.MovementAgent.NodeLinkTraverser.GetTraverseSpeedMps();
+				speedScale = animationClipWrapper.Length / num2;
+			}
 			break;
-		}
 		case WarhammerNodeLinkTraverser.State.TraverseOut:
 			duration = ClipDurationType.Endless;
 			break;
@@ -209,16 +221,16 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 			duration = ClipDurationType.Endless;
 			break;
 		default:
-			if (animationClip.Length > handle.Unit.MovementAgent.NodeLinkTraverser.GetStateDuration())
+			if (animationClipWrapper.Length > handle.Unit.MovementAgent.NodeLinkTraverser.GetStateDuration())
 			{
-				speedScale = animationClip.Length / handle.Unit.MovementAgent.NodeLinkTraverser.GetStateDuration();
+				speedScale = animationClipWrapper.Length / handle.Unit.MovementAgent.NodeLinkTraverser.GetStateDuration();
 			}
 			break;
 		}
 		handle.SpeedScale = speedScale;
-		if (animationClip != null)
+		if (animationClipWrapper != null)
 		{
-			handle.StartClip(animationClip, duration);
+			handle.StartClip(animationClipWrapper, duration);
 		}
 	}
 }

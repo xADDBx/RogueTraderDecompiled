@@ -2,6 +2,7 @@ using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using UnityEngine;

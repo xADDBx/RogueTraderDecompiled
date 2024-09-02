@@ -553,7 +553,11 @@ public class DecisionContext
 			}
 			return unavailabilityReasons.All((AbilityData.UnavailabilityReasonType x) => IsEnabledByMoveReason(x));
 		}
-		return IsSafeToCast(data);
+		if (!Unit.Brain.IgnoreAoOThreatOnCast)
+		{
+			return IsSafeToCast(data);
+		}
+		return true;
 	}
 
 	private bool IsEnabledByMoveReason(AbilityData.UnavailabilityReasonType reason)

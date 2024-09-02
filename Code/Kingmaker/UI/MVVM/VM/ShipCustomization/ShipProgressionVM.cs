@@ -75,6 +75,7 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 		}
 		CurrentCareer.Value = careerPathVM;
 		careerPathVM?.UpdateState(updateRanks: true);
+		careerPathVM?.RefreshTooltipUnit();
 		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(SetFirstAvailableRankEntry);
 	}
 

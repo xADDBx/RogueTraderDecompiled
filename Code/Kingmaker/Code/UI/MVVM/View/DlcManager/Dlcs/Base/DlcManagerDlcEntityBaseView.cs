@@ -79,14 +79,33 @@ public class DlcManagerDlcEntityBaseView : SelectionGroupEntityView<DlcManagerDl
 	[SerializeField]
 	private List<PurchaseStateSettings> m_PurchaseStateSettings;
 
+	[Header("DownloadingStateContent")]
+	[SerializeField]
+	private TextMeshProUGUI m_DownloadingInProgressText;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DlcIsBoughtAndNotInstalledText;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		AddDisposable(base.ViewModel.DownloadingInProgress.CombineLatest(base.ViewModel.DlcIsBoughtAndNotInstalled, (bool downloadInProgress, bool boughtAndNotInstalled) => new { downloadInProgress, boughtAndNotInstalled }).Subscribe(value =>
+		{
+			SetPurchaseStateContent();
+			CheckInstallState(value.downloadInProgress, value.boughtAndNotInstalled);
+		}));
+		AddDisposable(base.ViewModel.DlcIsInstalled.Subscribe(delegate
+		{
+			SetPurchaseStateContent();
+		}));
 		SetMainContent();
 		SetSecondLabelContent();
 		SetPurchaseStateContent();
+		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
+		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;
+		CheckInstallState(base.ViewModel.DownloadingInProgress.Value, base.ViewModel.DlcIsBoughtAndNotInstalled.Value);
 	}
 
 	protected override void DestroyViewImplementation()
@@ -146,9 +165,15 @@ public class DlcManagerDlcEntityBaseView : SelectionGroupEntityView<DlcManagerDl
 
 	private void SetPurchaseStateContent()
 	{
+		if (base.ViewModel.DownloadingInProgress.Value || base.ViewModel.DlcIsBoughtAndNotInstalled.Value)
+		{
+			m_PurchaseStateLabel.transform.parent.gameObject.SetActive(value: false);
+			return;
+		}
 		PurchaseStateSettings purchaseStateSettings = m_PurchaseStateSettings.FirstOrDefault((PurchaseStateSettings ps) => ps.State == base.ViewModel.BlueprintDlc.GetPurchaseState());
 		if (purchaseStateSettings != null)
 		{
+			m_PurchaseStateLabel.transform.parent.gameObject.SetActive(value: true);
 			m_PurchaseStateLabel.text = UIStrings.Instance.DlcManager.GetDlcPurchaseStateLabel(purchaseStateSettings.State);
 			m_PurchaseStateLabel.color = purchaseStateSettings.TextColor;
 			m_AdditionalMarkImage.gameObject.SetActive(purchaseStateSettings.AdditionalMarkSprite != null);
@@ -157,6 +182,12 @@ public class DlcManagerDlcEntityBaseView : SelectionGroupEntityView<DlcManagerDl
 				m_AdditionalMarkImage.sprite = purchaseStateSettings.AdditionalMarkSprite;
 			}
 		}
+	}
+
+	private void CheckInstallState(bool downloadingInProgress, bool boughtAndNotInstalled)
+	{
+		m_DownloadingInProgressText.transform.parent.gameObject.SetActive(downloadingInProgress && !boughtAndNotInstalled);
+		m_DlcIsBoughtAndNotInstalledText.transform.parent.gameObject.SetActive(!downloadingInProgress && boughtAndNotInstalled);
 	}
 
 	public void UpdateGrayScale()

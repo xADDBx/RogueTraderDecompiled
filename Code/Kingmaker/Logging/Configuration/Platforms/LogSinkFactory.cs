@@ -70,7 +70,7 @@ public static class LogSinkFactory
 		return text?.Split(';') ?? Array.Empty<string>();
 	}
 
-	public static IDisposableLogSink CreateSpamDetector()
+	public static IDisposableLogSink AddSpamDetector()
 	{
 		return StackTraceSpamDetector.LogSink;
 	}

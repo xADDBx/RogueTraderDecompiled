@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Transition;
 using Kingmaker.Enums;
@@ -33,6 +35,8 @@ public class TransitionLegendButtonView : ViewBase<TransitionLegendButtonVM>, IW
 	[SerializeField]
 	private Image m_Attention;
 
+	private IDisposable m_TooltipDisposable;
+
 	public PantographConfig PantographConfig { get; private set; }
 
 	public MonoBehaviour MonoBehaviour => this;
@@ -40,12 +44,18 @@ public class TransitionLegendButtonView : ViewBase<TransitionLegendButtonVM>, IW
 	protected override void BindViewImplementation()
 	{
 		base.gameObject.SetActive(base.ViewModel.IsVisible);
+		m_Button.SetInteractable(base.ViewModel.IsInteractable);
+		if (!base.ViewModel.IsInteractable)
+		{
+			AddDisposable(m_Button.SetHint(UIStrings.Instance.Transition.TransitionIsUnavailable));
+		}
 		AddDisposable(base.ViewModel.Attention.Subscribe(delegate(bool value)
 		{
+			m_TooltipDisposable?.Dispose();
 			m_Attention.gameObject.SetActive(value);
 			if (value)
 			{
-				m_Button.SetTooltip(base.ViewModel.TransitionEntryVM.GetTooltipTemplate(), new TooltipConfig(InfoCallPCMethod.None));
+				m_TooltipDisposable = m_Button.SetTooltip(base.ViewModel.TransitionEntryVM.GetTooltipTemplate(), new TooltipConfig(InfoCallPCMethod.None));
 				Sprite firstObjectiveTypeSprite = GetFirstObjectiveTypeSprite();
 				m_Attention.gameObject.SetActive(firstObjectiveTypeSprite != null);
 				if (!(firstObjectiveTypeSprite == null))
@@ -96,6 +106,12 @@ public class TransitionLegendButtonView : ViewBase<TransitionLegendButtonVM>, IW
 		SetupPantographConfig();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_TooltipDisposable?.Dispose();
+		m_TooltipDisposable = null;
+	}
+
 	private Sprite GetFirstObjectiveTypeSprite(bool isPaper = true)
 	{
 		BlueprintQuestObjective blueprintQuestObjective = base.ViewModel.TransitionEntryVM.Entry.GetLinkedObjectives().FirstOrDefault();
@@ -119,10 +135,6 @@ public class TransitionLegendButtonView : ViewBase<TransitionLegendButtonVM>, IW
 			list.Add(GetFirstObjectiveTypeSprite(isPaper: false));
 		}
 		PantographConfig = new PantographConfig(base.transform, m_Title.text, list);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public void BindWidgetVM(IViewModel vm)

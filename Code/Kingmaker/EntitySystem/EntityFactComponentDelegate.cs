@@ -21,7 +21,7 @@ using UnityEngine;
 namespace Kingmaker.EntitySystem;
 
 [TypeId("7fee73fef2544a278ec147707330d9a7")]
-public abstract class EntityFactComponentDelegate<TEntity> : BlueprintComponent, IRuntimeEntityFactComponentProvider, ISubscriber, IOverrideOnActivateMethod, IHashable where TEntity : Entity
+public abstract class EntityFactComponentDelegate<TEntity> : BlueprintComponent, IRuntimeEntityFactComponentProvider, ISubscriber, IOverrideOnActivateMethod, IEventBusLoopGuard, IHashable where TEntity : Entity
 {
 	protected class ComponentEventContext : ContextData<ComponentEventContext>
 	{
@@ -47,7 +47,7 @@ public abstract class EntityFactComponentDelegate<TEntity> : BlueprintComponent,
 
 		public FeatureParam Param => (base.Fact as Feature)?.Param;
 
-		public bool IsReapplying => (base.Fact as Feature)?.IsReapplying ?? false;
+		public bool IsReapplying => base.Fact.IsReapplying;
 
 		public override void Setup(BlueprintComponent component)
 		{

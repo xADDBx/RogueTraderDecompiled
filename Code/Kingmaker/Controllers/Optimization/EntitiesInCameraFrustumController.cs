@@ -68,8 +68,8 @@ public class EntitiesInCameraFrustumController : IControllerDisable, IController
 				Entity entity = EntityDataLink.GetEntity(collider2D);
 				if (entity != null && !entity.IsInCameraFrustum)
 				{
-					Bounds bounds = collider2D.bounds;
-					if (GeometryUtility.TestPlanesAABB(bounds: new Bounds(entity.Position, bounds.size + Vector3.one * bounds.size.x), planes: m_Planes))
+					Bounds bounds = GetBounds(entity.Position, collider2D.bounds);
+					if (GeometryUtility.TestPlanesAABB(m_Planes, bounds))
 					{
 						entity.IsInCameraFrustum = true;
 					}
@@ -78,6 +78,12 @@ public class EntitiesInCameraFrustumController : IControllerDisable, IController
 			Array.Clear(OverlapResults, 0, OverlapResults.Length);
 			break;
 		}
+		}
+		static Bounds GetBounds(Vector3 entityPosition, Bounds collider2dBounds)
+		{
+			Vector3 size = new Vector3(collider2dBounds.size.x, 2f, collider2dBounds.size.y);
+			size *= 1.25f;
+			return new Bounds(entityPosition + Vector3.up * size.y / 2f, size);
 		}
 	}
 }

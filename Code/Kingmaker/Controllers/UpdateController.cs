@@ -25,9 +25,27 @@ public class UpdateController<T> : IControllerTick, IController, IControllerRese
 		m_Updatables.Add(updatable);
 	}
 
+	public void AddUnique(T updatable)
+	{
+		if (!Contains(updatable))
+		{
+			Add(updatable);
+		}
+	}
+
 	public void Remove(T updatable)
 	{
 		m_Updatables.Remove(updatable);
+	}
+
+	public bool Contains(T updatable)
+	{
+		return m_Updatables.Contains(updatable);
+	}
+
+	public bool TryFind(Predicate<T> predicate, out T result)
+	{
+		return m_Updatables.TryFind(predicate, out result);
 	}
 
 	TickType IControllerTick.GetTickType()

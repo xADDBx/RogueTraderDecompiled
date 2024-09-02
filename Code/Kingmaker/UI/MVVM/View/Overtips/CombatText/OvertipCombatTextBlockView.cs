@@ -50,6 +50,8 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 
 	private readonly ReactiveCommand m_UpdateVisual = new ReactiveCommand();
 
+	private List<CombatMessageBase> m_MessagesList = new List<CombatMessageBase>();
+
 	private bool m_IsActive;
 
 	protected override void BindViewImplementation()
@@ -62,6 +64,7 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 		{
 			m_UpdateVisual.Execute();
 		});
+		m_CombatTextCommonCreator.Initialize(base.ViewModel.MechanicEntity);
 		m_PartCanvasGroups = m_PartRects.Select((RectTransform r) => r.GetComponent<CanvasGroup>()).ToList();
 		AddDisposable(base.ViewModel.CombatMessage.Subscribe(OnCombatMessage));
 		m_CombatTextCommonCreator.Clear();
@@ -71,6 +74,7 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 
 	protected override void DestroyViewImplementation()
 	{
+		m_CombatTextCommonCreator.Dispose();
 		m_CombatTextCommonCreator.Clear();
 		m_CombatTextHitPointsCreator.Clear();
 		UpdateIsCombatText();
@@ -80,9 +84,26 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 	{
 		if (!base.ViewModel.IsCutscene)
 		{
-			AddCombatText(message);
-			m_UpdateVisual.Execute();
+			m_MessagesList.Add(message);
+			DelayedInvoker.InvokeInTime(AddCombatMessage, 0.1f);
 		}
+	}
+
+	private void AddCombatMessage()
+	{
+		if (m_MessagesList.Count == 1)
+		{
+			AddCombatText(m_MessagesList.First(), single: true);
+		}
+		else
+		{
+			for (int i = 0; i < m_MessagesList.Count; i++)
+			{
+				AddCombatText(m_MessagesList[i], single: false, i % 2 > 0);
+			}
+		}
+		m_MessagesList.Clear();
+		m_UpdateVisual.Execute();
 	}
 
 	private void UpdateVisualInternal()
@@ -124,7 +145,7 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 		m_CombatTextCommonCreator.ContainerRect.sizeDelta = sizeDelta;
 	}
 
-	private void AddCombatText(CombatMessageBase message)
+	private void AddCombatText(CombatMessageBase message, bool single, bool even = true)
 	{
 		if (!(message is CombatMessageDamage combatMessageDamage))
 		{
@@ -133,7 +154,7 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 				if (message is CombatMessageHealing)
 				{
 					CombatTextHitPointsView combatTextHitPointsView = m_CombatTextHitPointsCreator.Create(message);
-					combatTextHitPointsView.SetDirection(UIUtilityGetRect.GetObjectPositionInCamera(Vector3.zero) - UIUtilityGetRect.GetObjectPositionInCamera(Vector3.zero));
+					combatTextHitPointsView.SetDirection(UIUtilityGetRect.GetObjectPositionInCamera(Vector3.zero) - UIUtilityGetRect.GetObjectPositionInCamera(Vector3.zero), single: false, even: false);
 					combatTextHitPointsView.PlayAnimation();
 				}
 				else
@@ -154,7 +175,7 @@ public class OvertipCombatTextBlockView : ViewBase<OvertipCombatTextBlockVM>
 		else
 		{
 			CombatTextHitPointsView combatTextHitPointsView2 = m_CombatTextHitPointsCreator.Create(message);
-			combatTextHitPointsView2.SetDirection(UIUtilityGetRect.GetObjectPositionInCamera(combatMessageDamage.TargetPosition) - UIUtilityGetRect.GetObjectPositionInCamera(combatMessageDamage.SourcePosition));
+			combatTextHitPointsView2.SetDirection(UIUtilityGetRect.GetObjectPositionInCamera(combatMessageDamage.TargetPosition) - UIUtilityGetRect.GetObjectPositionInCamera(combatMessageDamage.SourcePosition), single, even);
 			combatTextHitPointsView2.PlayAnimation();
 		}
 	}

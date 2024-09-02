@@ -35,12 +35,6 @@ public class SectorMapRumourGroupView : EntityViewBase, IRumourObjectiveStateHan
 		{
 		}
 
-		protected override void OnPostLoad()
-		{
-			base.OnPostLoad();
-			View.TryGetAlreadyActiveQuestObjectives();
-		}
-
 		protected override IEntityViewBase CreateViewForData()
 		{
 			return null;

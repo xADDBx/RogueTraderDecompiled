@@ -93,7 +93,7 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 			ForceFinish(ResultType.Fail);
 			return;
 		}
-		base.Executor.View.MovementAgent.ForcePath(base.ForcedPath);
+		base.Executor.View.MovementAgent.ForcePath(base.ForcedPath, base.Params.DisableApproachRadius);
 		float a = CalculatePathCost();
 		MovePointsSpent = Mathf.Min(a, base.Executor.CombatState.ActionPointsBlue);
 		PartUnitCombatState combatState = base.Executor.CombatState;
@@ -182,6 +182,10 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 		UnitPathManager.Instance.RemovePath(base.Executor);
 		base.Executor.View.MovementAgent.Blocker.BlockAtCurrentPosition();
 		base.Executor.View.MovementAgent.Stop();
+		EventBus.RaiseEvent(delegate(IUnitMoveToProperHandler h)
+		{
+			h.HandleUnitMoveToProper(this);
+		});
 	}
 
 	private bool IsPathValid(Path path)

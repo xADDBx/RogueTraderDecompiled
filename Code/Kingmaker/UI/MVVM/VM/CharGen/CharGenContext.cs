@@ -54,8 +54,6 @@ public class CharGenContext : IDisposable, ICharGenDollStateHandler, ISubscriber
 		BlueprintOriginPath originPath = GetOriginPath(flag);
 		Doll = new DollState();
 		IsCustomCharacter.Value = !flag;
-		LevelUpManager.Value?.Dispose();
-		LevelUpManager.Value = new LevelUpManager(baseUnitEntity, originPath, autoCommit: false);
 		CurrentUnit.Value = baseUnitEntity;
 		if (flag)
 		{
@@ -70,6 +68,8 @@ public class CharGenContext : IDisposable, ICharGenDollStateHandler, ISubscriber
 			Doll.SetTrackPortrait(state: true);
 			Doll.UpdateMechanicsEntities(baseUnitEntity);
 		}
+		LevelUpManager.Value?.Dispose();
+		LevelUpManager.Value = new LevelUpManager(baseUnitEntity, originPath, autoCommit: false);
 	}
 
 	private BlueprintOriginPath GetOriginPath(bool isPregen)

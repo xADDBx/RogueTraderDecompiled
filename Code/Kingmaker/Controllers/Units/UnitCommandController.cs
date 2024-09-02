@@ -65,21 +65,28 @@ public class UnitCommandController : BaseUnitController
 
 	private static void TickCommand([NotNull] AbstractUnitCommand command)
 	{
+		if (command.IsBlockingCommand && !Game.Instance.Player.IsBlockedOn(command))
+		{
+			return;
+		}
 		AbstractUnitEntity targetUnit = command.TargetUnit;
 		if (command.ShouldBeInterrupted)
 		{
-			goto IL_0040;
+			goto IL_005b;
 		}
 		if (targetUnit != null)
 		{
 			TargetWrapper target = command.Target;
 			if ((object)target != null && !target.IsPoint && (!targetUnit.IsInState || AbstractUnitCommand.CommandTargetUntargetable(command.Executor, targetUnit)))
 			{
-				goto IL_0040;
+				goto IL_005b;
 			}
 		}
-		goto IL_0046;
-		IL_0046:
+		goto IL_0061;
+		IL_005b:
+		command.Interrupt();
+		goto IL_0061;
+		IL_0061:
 		if (!command.IsStarted)
 		{
 			if (command.Params.InterruptAsSoonAsPossible)
@@ -119,10 +126,6 @@ public class UnitCommandController : BaseUnitController
 				command.Interrupt();
 			}
 		}
-		return;
-		IL_0040:
-		command.Interrupt();
-		goto IL_0046;
 	}
 
 	private static bool ShouldStartCommand(AbstractUnitCommand command)

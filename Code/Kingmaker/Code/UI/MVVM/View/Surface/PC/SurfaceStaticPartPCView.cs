@@ -46,19 +46,19 @@ public class SurfaceStaticPartPCView : ViewBase<SurfaceStaticPartVM>
 	private GroupChangerContextPCView m_GroupChangerContextPCView;
 
 	[SerializeField]
-	private UIViewLink<TransitionPCView, TransitionVM> m_TransitionPCViewLink;
+	private UIDestroyViewLink<TransitionPCView, TransitionVM> m_TransitionPCViewLink;
 
 	[SerializeField]
-	private UIViewLink<FormationPCView, FormationVM> m_FormationPCView;
+	private UIDestroyViewLink<FormationPCView, FormationVM> m_FormationPCView;
 
 	[SerializeField]
-	private UIViewLink<CreditsPCView, CreditsVM> m_CreditsPCView;
+	private UIDestroyViewLink<CreditsPCView, CreditsVM> m_CreditsPCView;
 
 	[SerializeField]
-	private UIViewLink<VendorPCView, VendorVM> m_VendorPCViewLink;
+	private UIDestroyViewLink<VendorPCView, VendorVM> m_VendorPCViewLink;
 
 	[SerializeField]
-	private UIViewLink<VendorSelectingWindowPCView, VendorSelectingWindowVM> m_VendorSelectingWindowContextPCView;
+	private UIDestroyViewLink<VendorSelectingWindowPCView, VendorSelectingWindowVM> m_VendorSelectingWindowContextPCView;
 
 	[SerializeField]
 	private SurfaceHUDPCView SurfaceHUDView;
@@ -70,7 +70,7 @@ public class SurfaceStaticPartPCView : ViewBase<SurfaceStaticPartVM>
 	private SubtitleView m_SubtitleView;
 
 	[SerializeField]
-	private UIViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
+	private UIDestroyViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
 
 	[SerializeField]
 	private CharGenContextPCView m_CharGenContextPCView;

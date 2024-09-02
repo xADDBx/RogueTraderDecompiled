@@ -189,7 +189,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 	{
 		CommandBuffer commandBuffer = CommandBufferPool.Get();
 		commandBuffer.BeginSample("SetupGlobalGPUState");
-		commandBuffer.SetGlobalTexture(FogOfWarConstantBuffer._FogOfWarMask, Texture2D.blackTexture);
+		commandBuffer.SetGlobalTexture(FogOfWarConstantBuffer._FogOfWarMask, FogOfWarFeature.DefaultFogOfWarMask);
 		commandBuffer.EndSample("SetupGlobalGPUState");
 		context.ExecuteCommandBuffer(commandBuffer);
 		CommandBufferPool.Release(commandBuffer);

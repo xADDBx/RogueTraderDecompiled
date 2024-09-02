@@ -4,7 +4,7 @@ namespace Kingmaker.PubSubSystem;
 
 public interface IDlcManagerUIHandler : ISubscriber
 {
-	void HandleOpenDlcManager(bool onlyMods = false);
+	void HandleOpenDlcManager(bool inGame = false);
 
 	void HandleCloseDlcManager();
 }

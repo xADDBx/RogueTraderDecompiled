@@ -206,6 +206,10 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		}
 	}
 
+	public void HandleOnShowBarkWithName(string text, string name, Color nameColor)
+	{
+	}
+
 	public void HandleOnShowLinkedBark(string text, string encyclopediaLink)
 	{
 	}

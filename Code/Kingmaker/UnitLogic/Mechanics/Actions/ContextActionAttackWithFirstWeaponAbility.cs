@@ -79,23 +79,29 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 			if (ability == null)
 			{
 				Element.LogError(this, "No ability in weapon");
-				return;
 			}
-			if (SaveMPAfterUsingWeaponAbility)
+			else
 			{
-				PartUnitCombatState combatStateOptional = baseUnitEntity2.GetCombatStateOptional();
-				if (combatStateOptional != null)
+				if (!ability.Data.CanTarget(mechanicEntity, out var _))
 				{
-					combatStateOptional.SaveMPAfterUsingNextAbility = true;
+					return;
 				}
+				if (SaveMPAfterUsingWeaponAbility)
+				{
+					PartUnitCombatState combatStateOptional = baseUnitEntity2.GetCombatStateOptional();
+					if (combatStateOptional != null)
+					{
+						combatStateOptional.SaveMPAfterUsingNextAbility = true;
+					}
+				}
+				UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability.Data, mechanicEntity)
+				{
+					IgnoreCooldown = true,
+					FreeAction = true,
+					OriginatedFrom = base.Context.SourceAbility
+				};
+				baseUnitEntity2.Commands.AddToQueue(cmdParams);
 			}
-			UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability.Data, mechanicEntity)
-			{
-				IgnoreCooldown = true,
-				FreeAction = true,
-				OriginatedFrom = base.Context.SourceAbility
-			};
-			baseUnitEntity2.Commands.AddToQueue(cmdParams);
 		}
 	}
 

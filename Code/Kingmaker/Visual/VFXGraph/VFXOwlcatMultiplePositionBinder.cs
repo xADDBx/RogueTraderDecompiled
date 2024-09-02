@@ -42,6 +42,8 @@ public class VFXOwlcatMultiplePositionBinder : VFXBinderBase
 
 	public List<Transform> Targets;
 
+	public int BindingTag;
+
 	private Texture2D m_PositionMapTexture;
 
 	private Texture2D m_OpacityMapTexture;

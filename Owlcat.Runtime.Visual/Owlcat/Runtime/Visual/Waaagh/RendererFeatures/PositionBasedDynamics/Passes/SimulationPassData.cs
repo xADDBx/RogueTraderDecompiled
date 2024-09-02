@@ -87,4 +87,6 @@ public class SimulationPassData : PassDataBase
 	public ArrayPool<Vector4> Vector4Pool;
 
 	public bool Simulate;
+
+	public bool CameraCullingEnabled;
 }

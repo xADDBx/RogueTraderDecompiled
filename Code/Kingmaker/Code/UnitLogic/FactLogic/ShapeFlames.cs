@@ -127,7 +127,7 @@ public class ShapeFlames : UnitFactComponentDelegate, IInitiatorRulebookHandler<
 				num += list.Sum((ContextActionDealDamage p) => p.Value.Calculate(buff.Context));
 				int value = list.Max((ContextActionDealDamage p) => p.Penetration.Calculate(buff.Context));
 				num -= base.Owner.Stats.GetAttribute(StatType.WarhammerStrength).WarhammerBonus;
-				RuleCalculateDamage ruleCalculateDamage = Rulebook.Trigger(new RuleCalculateDamage(base.Owner, mechanicEntity, evt.Ability, null, DamageType.Fire.CreateDamage(num, num), value, 1));
+				RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams(base.Owner, mechanicEntity, evt.Ability, null, DamageType.Fire.CreateDamage(num, num), value, 1).Trigger();
 				Rulebook.Trigger(new RuleDealDamage(base.Owner, mechanicEntity, ruleCalculateDamage.ResultDamage));
 			}
 		}

@@ -17,8 +17,6 @@ namespace Kingmaker.Visual.Sound;
 
 public static class UnitAsksHelper
 {
-	public static BlueprintBuff DismemberedUnitBuff => BlueprintRoot.Instance.SystemMechanics.DismemberedUnitBuff;
-
 	public static BlueprintBuff DisintegrateBuff => BlueprintRoot.Instance.SystemMechanics.DisintegrateBuff;
 
 	public static float LowHealthBarkHPPercent => Game.Instance.BlueprintRoot.Sound.LowHealthBarkHPPercent;
@@ -126,6 +124,6 @@ public static class UnitAsksHelper
 		{
 			return false;
 		}
-		return baseUnitEntity.Buffs.RawFacts.All((Buff x) => x.Blueprint != DismemberedUnitBuff && x.Blueprint != DisintegrateBuff);
+		return baseUnitEntity.Buffs.RawFacts.All((Buff x) => x.Blueprint != DisintegrateBuff);
 	}
 }

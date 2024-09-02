@@ -5,6 +5,7 @@ using Kingmaker.Controllers.Units;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Networking;
 using Kingmaker.Settings;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility.Random;
@@ -73,6 +74,10 @@ public class ClickGroundHandler : IClickEventHandler, IDragClickEventHandler
 			case 1:
 				if (Game.Instance.Player.IsInCombat)
 				{
+					if (!Game.Instance.TurnController.CurrentUnit.IsDirectlyControllable())
+					{
+						return false;
+					}
 					UnitCommandsRunner.CancelMoveCommand();
 				}
 				return false;

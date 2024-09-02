@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using MemoryPack;
 using StateHasher.Core;
+using UnityEngine.Pool;
 
 namespace Kingmaker.Blueprints.Facts;
 
@@ -18,27 +19,30 @@ public abstract class BlueprintFact : BlueprintScriptableObject
 	public void CollectComponents(List<BlueprintComponent> result)
 	{
 		Queue<BlueprintScriptableObject> queue = new Queue<BlueprintScriptableObject>();
-		HashSet<BlueprintScriptableObject> hashSet = new HashSet<BlueprintScriptableObject>();
-		queue.Enqueue(this);
-		hashSet.Add(this);
-		while (queue.Count > 0)
+		HashSet<BlueprintScriptableObject> value;
+		using (CollectionPool<HashSet<BlueprintScriptableObject>, BlueprintScriptableObject>.Get(out value))
 		{
-			BlueprintComponent[] componentsArray = queue.Dequeue().ComponentsArray;
-			foreach (BlueprintComponent blueprintComponent in componentsArray)
+			queue.Enqueue(this);
+			value.Add(this);
+			while (queue.Count > 0)
 			{
-				ComponentsList componentsList = blueprintComponent as ComponentsList;
-				if ((bool)componentsList)
+				BlueprintComponent[] componentsArray = queue.Dequeue().ComponentsArray;
+				foreach (BlueprintComponent blueprintComponent in componentsArray)
 				{
-					BlueprintComponentList list = componentsList.List;
-					if (list != null && !hashSet.Contains(list))
+					ComponentsList componentsList = blueprintComponent as ComponentsList;
+					if ((bool)componentsList)
 					{
-						queue.Enqueue(list);
-						hashSet.Add(list);
+						BlueprintComponentList list = componentsList.List;
+						if (list != null && !value.Contains(list))
+						{
+							queue.Enqueue(list);
+							value.Add(list);
+						}
 					}
-				}
-				else
-				{
-					result.Add(blueprintComponent);
+					else
+					{
+						result.Add(blueprintComponent);
+					}
 				}
 			}
 		}

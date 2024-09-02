@@ -41,17 +41,23 @@ public class DopplerSoundController : IControllerTick, IController, IProjectileL
 		{
 			m_Projectiles.Remove(item);
 		}
+		list.Clear();
 		foreach (KeyValuePair<Projectile, uint> projectile3 in m_Projectiles)
 		{
 			projectile3.Deconstruct(out var key, out var value);
 			Projectile projectile = key;
 			uint in_playingID = value;
 			float in_value = Mathf.Clamp(projectile.PassedDistance / 30f, 0f, 1f);
-			if (projectile.Ability?.FXSettings?.SoundFXSettings != null && projectile.Ability.FXSettings.SoundFXSettings.DopplerRTPC != "")
+			if (projectile.Ability?.FXSettings?.SoundFXSettings != null && projectile.Ability.FXSettings.SoundFXSettings.DopplerRTPC != "" && AkSoundEngine.SetRTPCValueByPlayingID(projectile.Ability.FXSettings.SoundFXSettings.DopplerRTPC, in_value, in_playingID) == AKRESULT.AK_PlayingIDNotFound)
 			{
-				AkSoundEngine.SetRTPCValueByPlayingID(projectile.Ability.FXSettings.SoundFXSettings.DopplerRTPC, in_value, in_playingID);
+				list.Add(projectile);
 			}
 		}
+		foreach (Projectile item2 in list)
+		{
+			m_Projectiles.Remove(item2);
+		}
+		list.Clear();
 	}
 
 	public void HandleProjectileHit(Projectile projectile)

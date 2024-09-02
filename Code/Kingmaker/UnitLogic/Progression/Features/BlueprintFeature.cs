@@ -50,10 +50,6 @@ public class BlueprintFeature : BlueprintFeatureBase, IFeatureSelectionItem, IUI
 
 	public int Ranks = 1;
 
-	public bool ReapplyOnLevelUp;
-
-	public bool IsClassFeature;
-
 	public PrerequisitesList Prerequisites = new PrerequisitesList();
 
 	public List<FeatureType> FeatureTypes = new List<FeatureType>();

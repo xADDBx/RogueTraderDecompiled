@@ -11,6 +11,8 @@ public class SelectionStateGender : SelectionState
 
 	private bool m_Selected;
 
+	public Gender Gender => m_Gender;
+
 	public SelectionStateGender([NotNull] LevelUpManager manager, [NotNull] BlueprintSelection blueprint, [NotNull] BlueprintPath path, int pathRank)
 		: base(manager, blueprint, path, pathRank)
 	{

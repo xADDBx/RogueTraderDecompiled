@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -14,9 +13,11 @@ internal static class ProjectileHelper
 
 	public static bool IsEnoughTimePassedToTraverseDistance(this Projectile projectile, float distance)
 	{
-		float num = ((projectile.Speed > 0f) ? (distance / projectile.Speed) : projectile.Blueprint.MinTime);
-		TimeSpan timeSpan = projectile.LaunchTime + TimeSpan.FromSeconds(num);
-		return Game.Instance.TimeController.GameTime >= timeSpan;
+		if (!projectile.IsAlive)
+		{
+			return true;
+		}
+		return ((0f < projectile.Speed) ? (distance / projectile.Speed) : projectile.Blueprint.MinTime) <= projectile.TimeSinceLaunch;
 	}
 
 	public static float Distance(this Projectile projectile, Vector3 a, Vector3 b)

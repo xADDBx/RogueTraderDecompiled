@@ -2,6 +2,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
@@ -21,11 +22,14 @@ public class JournalNavigationGroupPCView : JournalNavigationGroupBaseView
 	{
 		base.BindViewImplementation();
 		DrawEntities();
-		m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
-		AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+		DelayedInvoker.InvokeInFrames(delegate
 		{
-			base.ViewModel.IsCollapse = !value;
-		}));
+			m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
+			AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+			{
+				base.ViewModel.IsCollapse = !value;
+			}));
+		}, 3);
 	}
 
 	private void DrawEntities()

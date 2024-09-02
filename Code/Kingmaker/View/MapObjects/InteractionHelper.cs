@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Interaction;
 using Kingmaker.Settings;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;

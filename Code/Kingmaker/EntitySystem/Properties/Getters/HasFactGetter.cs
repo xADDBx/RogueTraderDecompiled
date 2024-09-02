@@ -2,7 +2,6 @@ using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Owlcat.QA.Validation;
 using UnityEngine;
@@ -20,7 +19,7 @@ public class HasFactGetter : PropertyGetter, PropertyContextAccessor.ITargetByTy
 
 	protected override int GetBaseValue()
 	{
-		if (!((this.GetTargetByType(Target) as BaseUnitEntity) ?? throw new Exception($"HasFactGetter: can't find suitable target of type {Target}")).Facts.Contains((BlueprintUnitFact)m_Fact))
+		if (!(this.GetTargetByType(Target) ?? throw new Exception($"HasFactGetter: can't find suitable target of type {Target}")).Facts.Contains((BlueprintUnitFact)m_Fact))
 		{
 			return 0;
 		}

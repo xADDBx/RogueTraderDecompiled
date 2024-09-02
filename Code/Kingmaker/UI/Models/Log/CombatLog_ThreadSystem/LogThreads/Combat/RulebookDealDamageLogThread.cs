@@ -156,7 +156,11 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 	{
 		if (GameLogContext.Text.Value != null)
 		{
-			return LogThreadBase.Strings.WarhammerSourceDealDamage;
+			if (!rule.Damage.IsCritical)
+			{
+				return LogThreadBase.Strings.WarhammerSourceDealDamage;
+			}
+			return LogThreadBase.Strings.WarhammerSourceDealCriticalDamage;
 		}
 		return LogThreadBase.Strings.WarhammerDealDamage;
 	}

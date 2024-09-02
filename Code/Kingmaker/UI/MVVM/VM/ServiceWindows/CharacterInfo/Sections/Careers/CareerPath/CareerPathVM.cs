@@ -5,8 +5,11 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores.Experience;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.GameCommands;
+using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -26,6 +29,7 @@ using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.StatefulRandom;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
@@ -37,6 +41,8 @@ namespace Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.Car
 public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, ISubscriber, IUnitGainExperienceHandler, ISubscriber<IBaseUnitEntity>, IRankEntryFocusHandler, ISetTooltipHandler
 {
 	public readonly BaseUnitEntity Unit;
+
+	public readonly ReactiveProperty<BaseUnitEntity> TooltipsPreviewUnit = new ReactiveProperty<BaseUnitEntity>();
 
 	public readonly BlueprintCareerPath CareerPath;
 
@@ -257,6 +263,8 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		SetTooltipsDirty();
 		IsDescriptionShowed.Value = false;
 		m_AddedOnLevelUpFeatures = null;
+		TooltipsPreviewUnit.Value?.Dispose();
+		TooltipsPreviewUnit.Value = null;
 	}
 
 	public void SetupFeaturesFromSelected()
@@ -320,6 +328,7 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		UpdateCareerTooltip();
 		UpdateRankEntriesScan();
 		CreateFeaturesToVisit();
+		RefreshTooltipUnit();
 	}
 
 	private void UpdateRankEntriesScan()
@@ -723,6 +732,10 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public void HandleCreateLevelUpManager(LevelUpManager manager)
 	{
+		if (UnitProgressionVM?.CurrentCareer.Value == this)
+		{
+			RefreshTooltipUnit();
+		}
 	}
 
 	public void HandleDestroyLevelUpManager()
@@ -745,6 +758,28 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		{
 			UpdateState(updateRanks: true);
 			UpdateSelectedItemInfoSection(UnitProgressionVM?.CurrentRankEntryItem.Value);
+			RefreshTooltipUnit();
+		}
+	}
+
+	public void RefreshTooltipUnit()
+	{
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+			{
+				using (ContextData<UnitHelper.PreviewUnit>.Request())
+				{
+					TooltipsPreviewUnit.Value?.Dispose();
+					using (ContextData<ItemSlot.IgnoreLock>.Request())
+					{
+						using (ContextData<GameCommandHelper.PreviewItem>.Request())
+						{
+							TooltipsPreviewUnit.Value = ((LevelUpManager?.PreviewUnit != null) ? LevelUpManager.PreviewUnit.CreatePreview(createView: false) : Unit.CreatePreview(createView: false));
+						}
+					}
+				}
+			}
 		}
 	}
 

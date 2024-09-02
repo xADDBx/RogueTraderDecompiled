@@ -248,7 +248,7 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 			}
 			if (!value)
 			{
-				UnitBuffPartPCView.HideAdditionalBuffs();
+				UnitBuffPartPCView.SetAdditionalBuffsVisible(visible: false);
 			}
 		}
 	}

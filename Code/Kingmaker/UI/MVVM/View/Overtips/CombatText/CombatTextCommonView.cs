@@ -35,6 +35,11 @@ public class CombatTextCommonView : CombatTextEntityBaseView<CombatMessageBase>
 		return (m_IconContainer.transform as RectTransform).rect.width / 2f + m_Spacing;
 	}
 
+	public override string GetText()
+	{
+		return m_Text.text;
+	}
+
 	protected override void DoData(CombatMessageBase combatMessage)
 	{
 		m_Text.text = combatMessage.GetText();

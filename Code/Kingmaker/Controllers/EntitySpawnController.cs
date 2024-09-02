@@ -162,8 +162,7 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 					return SpawnUnit(unit, bundledResourceHandle.Object, position, rotation, state);
 				}
 				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(variation.Gender);
-				bool leftHanded = unit.CustomizationPreset.SelectLeftHanded();
-				using (variation.CreateSpawningData(voice, leftHanded))
+				using (variation.CreateSpawningData(voice))
 				{
 					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(variation.Prefab.AssetId);
 					return SpawnUnit(unit, bundledResourceHandle2.Object, position, rotation, state);
@@ -233,8 +232,7 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 					return SpawnLightweightUnit(unit, bundledResourceHandle.Object, position, rotation, state);
 				}
 				BlueprintUnitAsksList voice = unit.CustomizationPreset.SelectVoice(variation.Gender);
-				bool leftHanded = unit.CustomizationPreset.SelectLeftHanded();
-				using (variation.CreateSpawningData(voice, leftHanded))
+				using (variation.CreateSpawningData(voice))
 				{
 					using BundledResourceHandle<UnitEntityView> bundledResourceHandle2 = BundledResourceHandle<UnitEntityView>.Request(variation.Prefab.AssetId);
 					return SpawnLightweightUnit(unit, bundledResourceHandle2.Object, position, rotation, state);

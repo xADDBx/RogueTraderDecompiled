@@ -1,8 +1,5 @@
-using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Blueprints.Root;
-using Kingmaker.Controllers.TurnBased;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Particles;
@@ -19,16 +16,18 @@ public class SummonedUnitBuff : UnitBuffComponentDelegate, IHashable
 	protected override void OnRemoved()
 	{
 		base.OnRemoved();
-		if (!base.Owner.Destroyed && !base.Owner.Facts.Contains(BlueprintRoot.Instance.SystemMechanics.DismemberedUnitBuff))
+		if (!base.Owner.Destroyed)
 		{
 			GameObject gameObject = base.Owner.Blueprint.VisualSettings.BloodPuddleFx.Load();
 			DismemberUnitFX dismemberUnitFX = ((gameObject != null) ? gameObject.GetComponent<DismemberUnitFX>() : null);
-			TimeSpan timeSpan = (dismemberUnitFX ? dismemberUnitFX.Delay.Seconds() : 5f.Seconds());
-			if (TurnController.IsInTurnBasedCombat())
+			if (!dismemberUnitFX)
 			{
-				timeSpan = TimeSpan.Zero;
+				5f.Seconds();
 			}
-			base.Owner.Buffs.Add(BlueprintRoot.Instance.SystemMechanics.DismemberedUnitBuff, base.Owner, timeSpan);
+			else
+			{
+				dismemberUnitFX.Delay.Seconds();
+			}
 			if ((bool)gameObject && (bool)dismemberUnitFX)
 			{
 				FxHelper.SpawnFxOnEntity(gameObject, base.Owner.View);

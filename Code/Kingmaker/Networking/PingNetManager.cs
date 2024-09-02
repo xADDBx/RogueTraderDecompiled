@@ -102,15 +102,20 @@ public sealed class PingNetManager
 	{
 		if (PhotonManager.NetGame.CurrentState == NetGame.State.Playing && ((Game.Instance.IsControllerMouse && KeyboardAccess.IsAltHold()) || (Game.Instance.IsControllerGamepad && Input.GetKey(KeyCode.JoystickButton4))))
 		{
-			pingAction();
-			PhotonManager.Lobby.PingPressed = true;
-			DelayedInvoker.InvokeInTime(delegate
-			{
-				PhotonManager.Lobby.PingPressed = false;
-			}, 0.5f);
+			PressPing(pingAction);
 			return true;
 		}
 		PhotonManager.Lobby.PingPressed = false;
 		return false;
+	}
+
+	public void PressPing(Action pingAction)
+	{
+		pingAction();
+		PhotonManager.Lobby.PingPressed = true;
+		DelayedInvoker.InvokeInTime(delegate
+		{
+			PhotonManager.Lobby.PingPressed = false;
+		}, 0.5f);
 	}
 }

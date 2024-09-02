@@ -246,10 +246,6 @@ public class UnitViewHandSlotData
 			{
 				component.ParticleSizeScale *= OwnerWeaponScale;
 			}
-			if (Owner.Description.IsLeftHanded)
-			{
-				VisualModel.transform.localScale = new Vector3(0f - VisualModel.transform.localScale.x, VisualModel.transform.localScale.y, VisualModel.transform.localScale.z);
-			}
 		}
 		DestroySheathModelIfExists();
 		if ((bool)VisibleItemBlueprint && (bool)VisibleItemBlueprint.VisualParameters.SheathModel)
@@ -295,33 +291,28 @@ public class UnitViewHandSlotData
 			}
 			transform = m_Equipment.GetVisualSlotBone(VisualSlot);
 		}
-		if (!transform)
+		if ((bool)transform)
 		{
-			return;
-		}
-		if (!SheathVisualModel)
-		{
-			GameObject sheathModel = VisibleItemBlueprint.VisualParameters.SheathModel;
-			SheathVisualModel = UnityEngine.Object.Instantiate(sheathModel);
-			SheathVisualModel.transform.localPosition = Vector3.zero;
-			SheathVisualModel.transform.localRotation = Quaternion.identity;
-			SheathVisualModel.transform.localScale *= OwnerWeaponScale;
-			if (Owner.Description.IsLeftHanded)
+			if (!SheathVisualModel)
 			{
-				SheathVisualModel.transform.localScale = new Vector3(0f - SheathVisualModel.transform.localScale.x, SheathVisualModel.transform.localScale.y, SheathVisualModel.transform.localScale.z);
+				GameObject sheathModel = VisibleItemBlueprint.VisualParameters.SheathModel;
+				SheathVisualModel = UnityEngine.Object.Instantiate(sheathModel);
+				SheathVisualModel.transform.localPosition = Vector3.zero;
+				SheathVisualModel.transform.localRotation = Quaternion.identity;
+				SheathVisualModel.transform.localScale *= OwnerWeaponScale;
 			}
+			SheathVisualModel.transform.parent = transform;
+			EquipmentOffsets component = SheathVisualModel.GetComponent<EquipmentOffsets>();
+			if (!component && (bool)VisibleItemBlueprint.VisualParameters.Model)
+			{
+				component = VisibleItemBlueprint.VisualParameters.Model.GetComponent<EquipmentOffsets>();
+			}
+			if ((bool)component)
+			{
+				component.Apply(VisualSlot, IsOff, Character, SheathVisualModel.transform);
+			}
+			SheathVisualModel.GetComponentsInChildren(m_SheathModelRenderers);
 		}
-		SheathVisualModel.transform.parent = transform;
-		EquipmentOffsets component = SheathVisualModel.GetComponent<EquipmentOffsets>();
-		if (!component && (bool)VisibleItemBlueprint.VisualParameters.Model)
-		{
-			component = VisibleItemBlueprint.VisualParameters.Model.GetComponent<EquipmentOffsets>();
-		}
-		if ((bool)component)
-		{
-			component.Apply(VisualSlot, IsOff, Character, SheathVisualModel.transform);
-		}
-		SheathVisualModel.GetComponentsInChildren(m_SheathModelRenderers);
 	}
 
 	private void DestroySheathModelIfExists()
@@ -548,7 +539,17 @@ public class UnitViewHandSlotData
 		{
 			foreach (Renderer visualModelRenderer in m_VisualModelRenderers)
 			{
-				visualModelRenderer.enabled = isVisible;
+				if (visualModelRenderer != null)
+				{
+					if (!visualModelRenderer.CompareTag("NoValidate"))
+					{
+						visualModelRenderer.enabled = isVisible;
+					}
+					else
+					{
+						visualModelRenderer.enabled = false;
+					}
+				}
 			}
 			if (!m_Equipment.IsUsingHologram)
 			{

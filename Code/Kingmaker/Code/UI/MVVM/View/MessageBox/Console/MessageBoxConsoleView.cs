@@ -31,6 +31,8 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 
 	private ConsoleHintDescription m_DeclineHint;
 
+	protected readonly BoolReactiveProperty CanEditNameByYourself = new BoolReactiveProperty(initialValue: true);
+
 	protected override void BindViewImplementation()
 	{
 		CreateInput();
@@ -132,7 +134,7 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 
 	private void OnCurrentInputLayerChanged()
 	{
-		if (GamePad.Instance.CurrentInputLayer != m_InputLayer && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName))
+		if (GamePad.Instance.CurrentInputLayer != m_InputLayer && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !RootUIContext.Instance.IsBugReportShow)
 		{
 			GamePad.Instance.PopLayer(m_InputLayer);
 			GamePad.Instance.PushLayer(m_InputLayer);

@@ -52,6 +52,9 @@ public class NetLobbySaveSlotCollectionConsoleView : NetLobbySaveSlotCollectionB
 		AddDisposable(m_CommonHintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
 		}, 8, m_ShowWaitingSaveAnim.Not().ToReactiveProperty()), UIStrings.Instance.NetLobbyTexts.ChooseSaveHeader));
+		AddDisposable(m_CommonHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		{
+		}, 11, m_ShowWaitingSaveAnim.Not().ToReactiveProperty()), UIStrings.Instance.SaveLoadTexts.ShowScreenshot));
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 

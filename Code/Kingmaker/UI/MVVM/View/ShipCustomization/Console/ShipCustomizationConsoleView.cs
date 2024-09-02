@@ -3,8 +3,10 @@ using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.DollRoom;
 using Kingmaker.UI.MVVM.View.ShipCustomization.ShipPosts.Console;
 using Kingmaker.UI.MVVM.View.Space.Console;
+using Kingmaker.UI.Workarounds;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -14,8 +16,11 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 
-public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgradeConsoleView, ShipSkillsConsoleView, ShipHealthAndRepairConsoleView>, ICullFocusHandler, ISubscriber
+public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgradeConsoleView, ShipSkillsConsoleView, ShipHealthAndRepairConsoleView>, ICullFocusHandler, ISubscriber, IHasDollRoom
 {
+	[SerializeField]
+	private DollRoomTargetController m_DollRoomScaler;
+
 	[SerializeField]
 	private ConsoleHintsWidget m_HintsWidget;
 
@@ -48,6 +53,8 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 	private IShipCustomizationPage m_CurrentPage;
 
 	private IConsoleEntity m_CulledFocus;
+
+	public DollRoomTargetController Controller => m_DollRoomScaler;
 
 	public override void Initialize()
 	{
@@ -272,5 +279,10 @@ public class ShipCustomizationConsoleView : ShipCustomizationBaseView<ShipUpgrad
 		{
 			base.Close();
 		}
+	}
+
+	public void SetCanvasScaler(CanvasScalerWorkaround canvasScaler)
+	{
+		Controller.CanvasScaler = canvasScaler;
 	}
 }

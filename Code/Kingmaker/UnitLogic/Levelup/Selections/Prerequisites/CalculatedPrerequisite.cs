@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
 using Kingmaker.UnitLogic.Progression;
@@ -134,5 +135,26 @@ public abstract class CalculatedPrerequisite
 			return list[0];
 		}
 		return new CalculatedPrerequisiteComposite(prerequisitesList.Meet(unit), prerequisitesList.Composition, not, list);
+	}
+
+	public static List<BlueprintFeature> CalculateRelyingFeatures(BlueprintCareerPath career, BlueprintFeature featureToAnalyze)
+	{
+		List<BlueprintFeature> list = new List<BlueprintFeature>();
+		IEnumerable<AddFeaturesToLevelUp> components = career.GetComponents<AddFeaturesToLevelUp>();
+		if (components == null || components.Empty())
+		{
+			return list;
+		}
+		foreach (AddFeaturesToLevelUp item in components)
+		{
+			foreach (BlueprintFeature feature in item.Features)
+			{
+				if ((feature.Prerequisites?.List?.Any((Prerequisite p) => p.IsRelyingOnFeature(featureToAnalyze))).GetValueOrDefault())
+				{
+					list.AddUnique(feature);
+				}
+			}
+		}
+		return list;
 	}
 }

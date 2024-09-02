@@ -46,6 +46,9 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 	[JsonProperty]
 	public bool IsActive = true;
 
+	[JsonProperty]
+	public bool WasEntered;
+
 	public readonly List<UnitInfo> InsideUnits = new List<UnitInfo>();
 
 	public new ScriptZone View => (ScriptZone)base.View;
@@ -109,14 +112,14 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 				}
 			}
 		}
-		foreach (UnitInfo insideUnit2 in InsideUnits)
+		foreach (UnitInfo item2 in InsideUnits.ToTempList())
 		{
-			if (!insideUnit2.InsideThisTick)
+			if (!item2.InsideThisTick)
 			{
-				OnUnitRemoved(insideUnit2.Reference.ToBaseUnitEntity());
+				RemoveUnit(item2.Reference.ToBaseUnitEntity());
 			}
 		}
-		InsideUnits.RemoveAll((UnitInfo i) => !i.IsValid || !i.InsideThisTick);
+		InsideUnits.RemoveAll((UnitInfo i) => !i.IsValid);
 	}
 
 	private void TickUnit(BaseUnitEntity unit, IScriptZoneShape shape)
@@ -201,6 +204,14 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 				Reference = unit.FromBaseUnitEntity(),
 				InsideThisTick = true
 			});
+			if (View.DisableSameMultipleTriggers)
+			{
+				if (WasEntered)
+				{
+					return;
+				}
+				WasEntered = true;
+			}
 			OnUnitEnter(unit);
 			View.OnUnitEntered.Invoke(unit, View);
 			EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IScriptZoneHandler>)delegate(IScriptZoneHandler h)
@@ -222,6 +233,14 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 
 	private void OnUnitRemoved(BaseUnitEntity unit)
 	{
+		if (View.DisableSameMultipleTriggers && WasEntered)
+		{
+			if (View.Count > 0)
+			{
+				return;
+			}
+			WasEntered = false;
+		}
 		using (ContextData<ScriptZoneTriggerData>.Request().Setup(unit))
 		{
 			OnUnitExit(unit);
@@ -305,6 +324,7 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
 		result.Append(ref IsActive);
+		result.Append(ref WasEntered);
 		return result;
 	}
 }

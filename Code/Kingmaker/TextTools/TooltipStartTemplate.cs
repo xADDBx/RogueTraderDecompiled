@@ -25,22 +25,32 @@ public class TooltipStartTemplate : TextTemplate
 
 	public override string Generate(bool capitalized, List<string> parameters)
 	{
-		string text = ((parameters.Count > 0) ? parameters[0] : "");
+		string text = ((parameters.Count > 0) ? parameters[0] : string.Empty);
 		bool emptyLink = false;
+		EntityLink.Type type;
 		if (!UIUtility.CheckLinkKeyHasContent(text))
 		{
-			text = EntityLink.Type.Empty.ToString();
+			type = EntityLink.Type.Empty;
+			text = type.ToString();
 			emptyLink = true;
 		}
-		string color = GetColor(emptyLink);
+		else
+		{
+			type = EntityLink.GetEntityType(UIUtility.GetKeysFromLink(text)[0]);
+		}
+		string color = GetColor(emptyLink, type);
 		return "<b><color=" + color + "><link=\"" + text + "\">";
 	}
 
-	private string GetColor(bool emptyLink)
+	private string GetColor(bool emptyLink, EntityLink.Type type = EntityLink.Type.Empty)
 	{
 		if (emptyLink)
 		{
 			return "#" + ColorUtility.ToHtmlStringRGB(Colors.GlossaryEmpty);
+		}
+		if (type == EntityLink.Type.UnitFact)
+		{
+			return "#" + ColorUtility.ToHtmlStringRGB(Colors.GlossaryMechanics);
 		}
 		return m_Type switch
 		{

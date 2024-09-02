@@ -9,10 +9,10 @@ namespace Kingmaker.UI.MVVM.View.Tutorial.Console;
 public class TutorialConsoleView : ViewBase<TutorialVM>
 {
 	[SerializeField]
-	private UIViewLink<TutorialBigWindowConsoleView, TutorialModalWindowVM> m_BigWindowView;
+	private UIDestroyViewLink<TutorialBigWindowConsoleView, TutorialModalWindowVM> m_BigWindowView;
 
 	[SerializeField]
-	private UIViewLink<TutorialSmallWindowConsoleView, TutorialHintWindowVM> m_SmallWindowView;
+	private UIDestroyViewLink<TutorialSmallWindowConsoleView, TutorialHintWindowVM> m_SmallWindowView;
 
 	public void Initialize()
 	{

@@ -1,4 +1,4 @@
-using System.Linq;
+using Kingmaker.Utility.DotNetExtensions;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.Patterns;
 
@@ -8,11 +8,11 @@ public struct PatternCellDataAccumulator
 
 	private float[] InitialProbabilities { get; }
 
-	private float DodgeProbability { get; set; }
+	public float DodgeProbability { get; }
 
-	private float CoverProbability { get; set; }
+	public float CoverProbability { get; }
 
-	private float EvasionProbability { get; set; }
+	public float EvasionProbability { get; }
 
 	private int Lines { get; set; }
 
@@ -47,9 +47,6 @@ public struct PatternCellDataAccumulator
 		float num = initialHitProbability.Average();
 		InitialAverageProbability += num;
 		ProbabilitiesSum += num * (1f - dodgeProbability) * (1f - coverProbability);
-		DodgeProbability = dodgeProbability;
-		CoverProbability = coverProbability;
-		EvasionProbability = evasionProbability;
 		MainCell |= mainCell;
 	}
 }

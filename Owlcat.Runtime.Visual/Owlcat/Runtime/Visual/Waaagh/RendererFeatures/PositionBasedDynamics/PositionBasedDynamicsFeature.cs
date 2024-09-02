@@ -100,7 +100,7 @@ public class PositionBasedDynamicsFeature : ScriptableRendererFeature
 		{
 			m_Config = PositionBasedDynamicsConfig.Instance;
 		}
-		if (!m_Config.GPU || PBD.IsEmpty)
+		if (!m_Config.GPU || !m_Config.Enabled || PBD.IsEmpty)
 		{
 			DisableFeature();
 			return;

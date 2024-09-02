@@ -49,7 +49,6 @@ public class AnimationSet : ScriptableObject
 	private List<AnimationActionBase> m_Actions = new List<AnimationActionBase>();
 
 	[SerializeField]
-	[HideInInspector]
 	private List<Transition> m_Transitions = new List<Transition>();
 
 	[SerializeField]

@@ -17,16 +17,16 @@ namespace Kingmaker.Code.UI.MVVM.View.Dialog;
 public class DialogContextPCView : ViewBase<DialogContextVM>
 {
 	[SerializeField]
-	private UIViewLink<BookEventPCView, BookEventVM> m_BookEventPCView;
+	private UIDestroyViewLink<BookEventPCView, BookEventVM> m_BookEventPCView;
 
 	[SerializeField]
-	private UIViewLink<EpilogPCView, EpilogVM> m_EpilogPCView;
+	private UIDestroyViewLink<EpilogPCView, EpilogVM> m_EpilogPCView;
 
 	[SerializeField]
-	private UIViewLink<SurfaceDialogPCView, DialogVM> m_DialogPCView;
+	private UIDestroyViewLink<SurfaceDialogPCView, DialogVM> m_DialogPCView;
 
 	[SerializeField]
-	private UIViewLink<InterchapterBaseView, InterchapterVM> m_InterchapterView;
+	private UIDestroyViewLink<InterchapterBaseView, InterchapterVM> m_InterchapterView;
 
 	protected override void BindViewImplementation()
 	{

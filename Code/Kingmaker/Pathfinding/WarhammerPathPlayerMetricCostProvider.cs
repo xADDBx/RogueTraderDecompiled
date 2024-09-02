@@ -25,7 +25,7 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 
 	private readonly Dictionary<GraphNode, float> m_OverrideCosts;
 
-	private readonly int m_MaxLength;
+	private readonly float m_MaxLength;
 
 	[CanBeNull]
 	private readonly CustomGridNodeBase m_TargetNode;
@@ -33,7 +33,7 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 	[CanBeNull]
 	private readonly MechanicEntity m_TargetEntity;
 
-	public WarhammerPathPlayerMetricCostProvider(AbstractUnitEntity unit, int maxLength, [CanBeNull] CustomGridNodeBase targetNode, [CanBeNull] MechanicEntity targetEntity, ICollection<GraphNode> threateningAreaCells, Dictionary<GraphNode, float> overrideCosts)
+	public WarhammerPathPlayerMetricCostProvider(AbstractUnitEntity unit, float maxLength, [CanBeNull] CustomGridNodeBase targetNode, [CanBeNull] MechanicEntity targetEntity, ICollection<GraphNode> threateningAreaCells, Dictionary<GraphNode, float> overrideCosts)
 	{
 		m_Unit = unit;
 		m_ThreateningAreaCells = threateningAreaCells;
@@ -112,9 +112,9 @@ public class WarhammerPathPlayerMetricCostProvider : ITraversalCostProvider<Warh
 
 	public bool IsWithinRange(in WarhammerPathPlayerMetric node)
 	{
-		if (m_MaxLength >= 0)
+		if (!(m_MaxLength < 0f))
 		{
-			return node.Length <= (float)m_MaxLength;
+			return node.Length <= m_MaxLength;
 		}
 		return true;
 	}

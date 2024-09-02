@@ -2,7 +2,6 @@ using System;
 using Kingmaker.AreaLogic.TimeOfDay;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ResourceLinks;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Visual.HitSystem;
@@ -43,18 +42,6 @@ public class FxRoot : BlueprintScriptableObject
 	[ValidateNotNull]
 	[Tooltip("Used for EntityView CenterTorso reference")]
 	private BlueprintFxLocatorGroup.Reference m_LocatorGroupTorsoCenterFX;
-
-	[SerializeField]
-	private CastsGroup m_SingleHandCasts;
-
-	[SerializeField]
-	private CastsGroup m_DoubleHandCasts;
-
-	[SerializeField]
-	private CastsGroup m_HeadCasts;
-
-	[SerializeField]
-	private CastsGroup m_TorsoCasts;
 
 	public string[] FallEventStrings = new string[0];
 
@@ -234,47 +221,5 @@ public class FxRoot : BlueprintScriptableObject
 		InitializeDeathFxs();
 		int energyDamageEntryIndex = DeathFxFromEnergyEntry.GetEnergyDamageEntryIndex(type);
 		return m_CachedOverrideDeathPrefabsFromEnergy[energyDamageEntryIndex] ?? new DeathFxFromEnergyEntry();
-	}
-
-	public GameObject GetPreCast(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetPreCast(spellSource);
-	}
-
-	public GameObject GetPreCastGround(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetPreCastGround(spellSource);
-	}
-
-	public GameObject GetCast(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetCast(spellSource);
-	}
-
-	public GameObject GetCastGround(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetCastGround(spellSource);
-	}
-
-	public GameObject GetCastFail(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetCastFail(spellSource);
-	}
-
-	public GameObject GetCastFailGround(SpellSource spellSource, CastSource castSource = CastSource.SingleHand)
-	{
-		return GetCastSourceGroup(castSource)?.GetCastFailGround(spellSource);
-	}
-
-	private CastsGroup GetCastSourceGroup(CastSource castSource)
-	{
-		return castSource switch
-		{
-			CastSource.SingleHand => m_SingleHandCasts, 
-			CastSource.DoubleHand => m_DoubleHandCasts, 
-			CastSource.Head => m_HeadCasts, 
-			CastSource.Torso => m_TorsoCasts, 
-			_ => throw new ArgumentOutOfRangeException("castSource", castSource, null), 
-		};
 	}
 }

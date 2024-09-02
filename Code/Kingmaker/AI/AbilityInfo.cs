@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.AI.TargetSelectors;
+using Kingmaker.AI.TargetSelectors.CustomSelectors;
+using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem.Rules;
@@ -9,7 +11,9 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Abilities.Components.TargetSelectorHelpers;
 using Kingmaker.Utility;
+using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Covers;
 using Pathfinding;
 using Warhammer.SpaceCombat.StarshipLogic.Weapon;
@@ -42,7 +46,7 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 
 	public AbilitySettings settings;
 
-	public List<RuleCalculateScatterShotHitDirectionProbability> scatterShotHitDirectionProbabilities;
+	public ReadonlyList<RuleCalculateScatterShotHitDirectionProbability> scatterShotHitDirectionProbabilities;
 
 	private Dictionary<(CustomGridNodeBase, TargetWrapper), (bool canTarget, int distance, LosCalculations.CoverType los)> m_CachedLOS = new Dictionary<(CustomGridNodeBase, TargetWrapper), (bool, int, LosCalculations.CoverType)>();
 
@@ -60,7 +64,7 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 
 	public ItemEntityStarshipWeapon StarshipWeapon => ability.StarshipWeapon;
 
-	public List<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities => scatterShotHitDirectionProbabilities;
+	public ReadonlyList<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities => scatterShotHitDirectionProbabilities;
 
 	public AbilityData Data => ability;
 
@@ -89,6 +93,10 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 
 	public AbilityTargetSelector GetAbilityTargetSelector()
 	{
+		if (ability.Blueprint.TryGetComponent<AbilityTargetByDistanceSelectorHelper>(out var _))
+		{
+			return new SingleTargetSelectorByDistance(this);
+		}
 		if (ability.IsScatter)
 		{
 			return new ScatterShotTargetSelector(this);

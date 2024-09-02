@@ -1,5 +1,7 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
@@ -27,6 +29,10 @@ public class EnableMultiInitiative : MechanicEntityFactComponentDelegate, IHasha
 			base.Owner.GetOrCreate<PartMultiInitiative>().Setup(AdditionalTurns);
 		}
 		base.Owner.Initiative.Clear();
+		EventBus.RaiseEvent(delegate(IInitiativeChangeHandler h)
+		{
+			h.HandleInitiativeChanged();
+		});
 	}
 
 	protected override void OnDeactivate()

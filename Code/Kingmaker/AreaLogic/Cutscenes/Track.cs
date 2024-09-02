@@ -77,7 +77,8 @@ public class Track : ISerializationCallbackReceiver, IEvaluationErrorHandlingPol
 		{
 			if (!m_Repeat)
 			{
-				if (Commands != null && Commands.Count > 0 && (bool)Commands.Last())
+				List<CommandBase> commands = Commands;
+				if (commands != null && commands.Count > 0)
 				{
 					return Commands.Last().IsContinuous;
 				}

@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Kingmaker.Blueprints.Camera;
 using Kingmaker.Utility;
 using UnityEngine;
@@ -6,6 +7,7 @@ namespace Kingmaker.Controllers.Units.CameraFollow;
 
 public interface ICameraFollowTask
 {
+	[CanBeNull]
 	CameraFollowTaskParamsEntry TaskParams { get; }
 
 	TargetWrapper Owner { get; }

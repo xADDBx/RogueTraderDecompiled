@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.QA;
 using Owlcat.Runtime.Visual;
 using Owlcat.Runtime.Visual.Waaagh;
 using Owlcat.Runtime.Visual.Waaagh.Data;
@@ -35,6 +36,12 @@ public static class CameraStackScreenshoter
 		CameraStackManager.CameraStackState state = CameraStackManager.Instance.State;
 		CameraStackManager.Instance.State = CameraStackManager.CameraStackState.AllExceptUi;
 		Camera firstBase = CameraStackManager.Instance.GetFirstBase();
+		if (firstBase == null)
+		{
+			PFLog.System.ErrorWithReport("Screenshoter: failed to get camera from stack");
+			CameraStackManager.Instance.State = state;
+			return RenderTexture.GetTemporary(Screen.width, Screen.height);
+		}
 		bool enabled = firstBase.enabled;
 		firstBase.enabled = false;
 		RenderTexture targetTexture = firstBase.targetTexture;

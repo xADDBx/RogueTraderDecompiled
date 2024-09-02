@@ -26,7 +26,7 @@ public class ZoneExitBaseView : ViewBase<ZoneExitVM>, IAreaHandler, ISubscriber
 	{
 		if (Game.Instance.Player.IsForceOpenVoidshipUpgrade && base.ViewModel.HasAccessStarshipInventory.Value)
 		{
-			DelayedInvoker.InvokeWhenTrue(base.ViewModel.OpenShipCustomization, () => !LoadingProcess.Instance.IsLoadingScreenActive);
+			DelayedInvoker.InvokeWhenTrue(base.ViewModel.ForceOpenShipCustomization, () => !LoadingProcess.Instance.IsLoadingScreenActive);
 			Game.Instance.Player.IsForceOpenVoidshipUpgrade = false;
 		}
 	}

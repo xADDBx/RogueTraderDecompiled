@@ -133,7 +133,6 @@ public class SaveMetadata : IMemoryPackable<SaveMetadata>, IMemoryPackFormatterR
 			if (baseUnitEntity != null)
 			{
 				Level = baseUnitEntity.Progression.CharacterLevel;
-				Alignment = baseUnitEntity.Alignment.Value.ToString();
 			}
 		}
 	}

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Base;
@@ -14,7 +13,6 @@ using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.Selections.CharacterGender;
 using Kingmaker.UnitLogic.Levelup.Selections.Doll;
-using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UniRx;
@@ -59,6 +57,7 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 			CurrentPageIsFirst.Value = m_Pages.FirstOrDefault() == value;
 			CurrentPageIsLast.Value = m_Pages.LastOrDefault() == value;
 		}));
+		AddDisposable(CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
 	}
 
 	protected override void DisposeImplementation()
@@ -87,14 +86,13 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 	{
 		CurrentPageVM.Value?.BeginPageView();
 		UpdateVisualSettings();
+		ApplyDollState(CharGenContext.Doll);
 		if (!m_Subscribed)
 		{
 			CreatePages();
 			PagesSelectionGroupRadioVM.TrySelectFirstValidEntity();
 			AddDisposable(EventBus.Subscribe(this));
 			AddDisposable(CurrentPageVM.Subscribe(OnCurrentPageChanged));
-			AddDisposable(CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
-			ApplyDollState(CharGenContext.Doll);
 			m_Subscribed = true;
 		}
 	}
@@ -106,15 +104,12 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 			CharGenAppearancePageVM disposable = new CharGenAppearancePageVM(CharGenContext, item, base.IsInDetailedView);
 			m_Pages.Add(AddDisposableAndReturn(disposable));
 		}
-		CoroutineRunner.Start(PrewarmPagesCo());
-	}
-
-	private IEnumerator PrewarmPagesCo()
-	{
 		foreach (CharGenAppearancePageVM page in m_Pages)
 		{
-			yield return null;
-			page.CreateComponentsIfNeeded();
+			if (page.PageType != CharGenAppearancePageType.General)
+			{
+				page.CreateComponentsIfNeeded();
+			}
 		}
 	}
 
@@ -198,12 +193,7 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 				m_SelectionStateGender.SelectGender(gender);
 				UpdateComponents();
 			}));
-			m_UpdateComponentsSubscription.Add(CharGenContext.Doll.GetReactiveProperty((DollState dollState) => dollState.Race).Subscribe(delegate
-			{
-				UpdateComponents();
-			}));
 			PagesSelectionGroupRadioVM.TrySelectFirstValidEntity();
-			UpdateComponents();
 		}
 	}
 

@@ -37,7 +37,7 @@ public class ScriptZoneCylinder : ScriptZoneShape
 
 	private NodeList m_Nodes = NodeList.Empty;
 
-	private CustomGridNodeBase CenterNode => m_CenterNode ?? (m_CenterNode = ScriptZoneCenter.GetNearestNodeXZUnwalkable());
+	private CustomGridNodeBase CenterNode => m_CenterNode ?? (m_CenterNode = base.transform.TransformPoint(ScriptZoneCenter).GetNearestNodeXZUnwalkable());
 
 	public override NodeList CoveredNodes
 	{
@@ -58,7 +58,7 @@ public class ScriptZoneCylinder : ScriptZoneShape
 		}
 	}
 
-	public override bool Contains(Vector3 point, IntRect size = default(IntRect))
+	public override bool Contains(Vector3 point, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
 		using (ProfileScope.New("ScriptZoneCylinder.Contains"))
 		{
@@ -71,7 +71,7 @@ public class ScriptZoneCylinder : ScriptZoneShape
 		}
 	}
 
-	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect))
+	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
 		return Contains(node.Vector3Position, size);
 	}

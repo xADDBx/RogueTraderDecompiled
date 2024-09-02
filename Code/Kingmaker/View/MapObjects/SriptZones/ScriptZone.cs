@@ -36,6 +36,11 @@ public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 	[Tooltip("When set, zone is auto-disbled when first unit enters it.")]
 	private bool m_OnceOnly;
 
+	[FormerlySerializedAs("m_DisableMultipleTriggersOnSameState")]
+	[SerializeField]
+	[Tooltip("When set, trigger for enter only once, until everyone leave that zone, and vice-versa")]
+	private bool m_DisableMultipleTriggers;
+
 	[SerializeField]
 	[Tooltip("When set, zone ony triggers events for player-controllable charactes")]
 	private bool m_PlayersOnly;
@@ -59,6 +64,8 @@ public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 	public new ScriptZoneEntity Data => (ScriptZoneEntity)base.Data;
 
 	public bool OnceOnly => m_OnceOnly;
+
+	public bool DisableSameMultipleTriggers => m_DisableMultipleTriggers;
 
 	public int Count => Data.InsideUnits.Count;
 

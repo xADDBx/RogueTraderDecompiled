@@ -7,6 +7,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Signals;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound.Base;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Bark;
 
@@ -24,6 +25,10 @@ public class BarkHandle : IBarkHandle, IUpdatable
 
 	private BarkHandle(Entity entity, float duration = -1f, VoiceOverStatus voiceOverStatus = null, bool synced = true)
 	{
+		if (Game.Instance.CustomUpdateController.TryFind((IUpdatable x) => x is BarkHandle barkHandle && barkHandle.m_Entity == entity, out var result))
+		{
+			((IBarkHandle)result).InterruptBark();
+		}
 		m_Entity = entity;
 		m_VoiceOverStatus = voiceOverStatus;
 		m_RemainingTime = ((voiceOverStatus != null) ? 0f : ((duration > 0f) ? duration : UIUtility.DefaultBarkTime));
@@ -37,6 +42,15 @@ public class BarkHandle : IBarkHandle, IUpdatable
 		EventBus.RaiseEvent((IEntity)entity, (Action<IBarkHandler>)delegate(IBarkHandler h)
 		{
 			h.HandleOnShowBark(text);
+		}, isCheckRuntime: true);
+	}
+
+	public BarkHandle(Entity entity, string text, string name, Color nameColor, float duration = -1f, VoiceOverStatus voiceOverStatus = null, bool synced = true)
+		: this(entity, duration, voiceOverStatus, synced)
+	{
+		EventBus.RaiseEvent((IEntity)entity, (Action<IBarkHandler>)delegate(IBarkHandler h)
+		{
+			h.HandleOnShowBarkWithName(text, name, nameColor);
 		}, isCheckRuntime: true);
 	}
 

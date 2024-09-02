@@ -25,7 +25,10 @@ public class DlcManagerMenuEntityBaseView : SelectionGroupEntityView<DlcManagerM
 		base.gameObject.SetActive(value: true);
 		m_Label.text = base.ViewModel.Title;
 		base.BindViewImplementation();
-		m_AccessibilityTextHelper.UpdateTextSize();
+		if (Game.Instance.IsControllerMouse)
+		{
+			m_AccessibilityTextHelper.UpdateTextSize();
+		}
 	}
 
 	protected override void DestroyViewImplementation()

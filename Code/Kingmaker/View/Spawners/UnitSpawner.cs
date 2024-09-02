@@ -114,7 +114,8 @@ public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISu
 		SetupSquad(baseUnitEntity);
 		if (m_BossMusicEnable)
 		{
-			baseUnitEntity.MusicBossFightType = m_MusicBossFightType;
+			baseUnitEntity.MusicBossFightTypeValue = m_MusicBossFightType.Value;
+			baseUnitEntity.MusicBossFightTypeGroup = m_MusicBossFightType.Group;
 		}
 		return baseUnitEntity;
 	}

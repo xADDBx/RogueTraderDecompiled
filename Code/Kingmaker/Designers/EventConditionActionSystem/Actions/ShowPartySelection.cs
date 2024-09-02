@@ -24,6 +24,8 @@ public class ShowPartySelection : GameAction
 	[HideIf("ActionsCannotBeCanceled")]
 	public ActionList ActionsIfCanceled;
 
+	public bool ShowRemoteCompanions;
+
 	public override string GetCaption()
 	{
 		return "Show party selection";
@@ -68,7 +70,7 @@ public class ShowPartySelection : GameAction
 				{
 					RunAfterPartyActions();
 				}
-			}, Game.Instance.LoadedAreaState.Settings.CapitalPartyMode, allMatchFinishActions, !ActionsCannotBeCanceled);
+			}, Game.Instance.LoadedAreaState.Settings.CapitalPartyMode, allMatchFinishActions, !ActionsCannotBeCanceled, ShowRemoteCompanions);
 		});
 	}
 

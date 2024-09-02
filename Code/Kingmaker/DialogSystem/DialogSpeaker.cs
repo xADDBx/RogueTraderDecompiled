@@ -8,7 +8,9 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.Units;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -22,11 +24,16 @@ public class DialogSpeaker
 	[FormerlySerializedAs("Blueprint")]
 	private BlueprintUnitReference m_Blueprint;
 
-	public bool MoveCamera = true;
+	[SerializeField]
+	[HideIf("m_NoSpeaker")]
+	[JsonProperty("MoveCamera")]
+	private bool m_MoveCamera = true;
 
 	public bool NotRevealInFoW;
 
-	public bool NoSpeaker;
+	[SerializeField]
+	[JsonProperty("NoSpeaker")]
+	private bool m_NoSpeaker;
 
 	public bool DoNotReplaceSpeakerWithErrorSpeaker;
 
@@ -36,6 +43,20 @@ public class DialogSpeaker
 	private BlueprintUnitReference m_SpeakerPortrait;
 
 	public BlueprintUnit Blueprint => m_Blueprint?.Get();
+
+	public bool MoveCamera
+	{
+		get
+		{
+			if (!m_NoSpeaker)
+			{
+				return m_MoveCamera;
+			}
+			return false;
+		}
+	}
+
+	public bool NoSpeaker => m_NoSpeaker;
 
 	public bool ReplacedSpeakerWithErrorSpeaker { get; set; }
 
@@ -69,6 +90,7 @@ public class DialogSpeaker
 		Vector3 dialogPosition = Game.Instance.DialogController.DialogPosition;
 		IEnumerable<BaseUnitEntity> second = Game.Instance.EntitySpawner.CreationQueue.Select((EntitySpawnController.SpawnEntry ce) => ce.Entity).OfType<BaseUnitEntity>();
 		MakeEssentialCharactersConscious();
+		ReplacedSpeakerWithErrorSpeaker = false;
 		BaseUnitEntity baseUnitEntity = (from u in Game.Instance.State.AllBaseUnits.Concat(Game.Instance.Player.Party)
 			where u.IsInGame && !u.Suppressed
 			select u).Concat(second).Select(SelectMatchingUnit).NotNull()

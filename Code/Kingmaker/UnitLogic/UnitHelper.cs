@@ -46,6 +46,7 @@ using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GuidUtility;
+using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.View;
 using Kingmaker.View.Covers;
 using Kingmaker.Visual.CharacterSystem;
@@ -224,20 +225,22 @@ public static class UnitHelper
 	private static BaseUnitEntity CopyInternal(BaseUnitEntity unit, bool createView, bool preview, bool copyItems)
 	{
 		BaseUnitEntity baseUnitEntity;
-		using (ContextData<PreviewUnit>.RequestIf(preview))
+		using (ContextData<DisableStatefulRandomContext>.RequestIf(preview))
 		{
-			using (ContextData<DoNotCreateItems>.Request())
+			using (ContextData<PreviewUnit>.RequestIf(preview))
 			{
-				using (ContextData<AddClassLevels.DoNotCreatePlan>.RequestIf(preview))
+				using (ContextData<DoNotCreateItems>.Request())
 				{
-					baseUnitEntity = unit.OriginalBlueprint.CreateEntity();
+					using (ContextData<AddClassLevels.DoNotCreatePlan>.RequestIf(preview))
+					{
+						baseUnitEntity = unit.OriginalBlueprint.CreateEntity();
+					}
 				}
 			}
 		}
 		baseUnitEntity.CopyOf = unit;
 		baseUnitEntity.Unsubscribe();
 		baseUnitEntity.Description.SetName(unit.Description.CustomName);
-		baseUnitEntity.Alignment.Initialize(unit.Alignment.Value);
 		baseUnitEntity.UISettings.SetPortrait(unit.Portrait);
 		baseUnitEntity.ViewSettings.SetDoll(unit.ViewSettings.Doll);
 		baseUnitEntity.Inventory.EnsureOwn();
@@ -251,7 +254,6 @@ public static class UnitHelper
 		{
 			CopyItems(unit, baseUnitEntity);
 		}
-		baseUnitEntity.Progression.FixCharacterLevelAfterCopy();
 		if (createView)
 		{
 			UnitEntityView view = baseUnitEntity.CreateView();
@@ -689,6 +691,10 @@ public static class UnitHelper
 
 	public static void SnapToGrid(this BaseUnitEntity unit)
 	{
+		if ((bool)unit.Features.DisableSnapToGrid)
+		{
+			return;
+		}
 		UnitMovementAgentBase maybeMovementAgent = unit.MaybeMovementAgent;
 		if (maybeMovementAgent == null)
 		{
@@ -731,14 +737,15 @@ public static class UnitHelper
 		}
 	}
 
-	public static bool CanStandHere(this MechanicEntity unit, GraphNode node)
+	public static bool CanStandHere(this MechanicEntity unit, GraphNode node, float? orientation = null)
 	{
 		UnitMovementAgentBase maybeMovementAgent = unit.MaybeMovementAgent;
 		if (maybeMovementAgent == null)
 		{
 			return true;
 		}
-		NodeList nodes = GridAreaHelper.GetNodes(node, unit.SizeRect);
+		Vector3 forward = ((!orientation.HasValue) ? unit.Forward : (Quaternion.AngleAxis(orientation.Value, Vector3.up) * Vector3.forward));
+		NodeList nodes = GridAreaHelper.GetNodes(node, unit.SizeRect, forward);
 		bool result = true;
 		foreach (CustomGridNodeBase item in nodes)
 		{
@@ -751,7 +758,7 @@ public static class UnitHelper
 		return result;
 	}
 
-	private static bool IsNodeConnected(CustomGridNodeBase node, IEnumerable<CustomGridNodeBase> nodes)
+	public static bool IsNodeConnected(CustomGridNodeBase node, IEnumerable<CustomGridNodeBase> nodes)
 	{
 		if (!(node.Graph is CustomGridGraph customGridGraph))
 		{
@@ -775,7 +782,7 @@ public static class UnitHelper
 	}
 
 	[CanBeNull]
-	private static CustomGridNodeBase FindPositionForUnit(MechanicEntity unit)
+	public static CustomGridNodeBase FindPositionForUnit(MechanicEntity unit, float? orientation = null)
 	{
 		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)(GraphNode)unit.CurrentNode;
 		if (customGridNodeBase == null)
@@ -785,7 +792,7 @@ public static class UnitHelper
 		}
 		BlueprintAreaPart currentlyLoadedAreaPart = Game.Instance.CurrentlyLoadedAreaPart;
 		Bounds? bounds = ((currentlyLoadedAreaPart == null) ? null : ObjectExtensions.Or(currentlyLoadedAreaPart.Bounds, null)?.MechanicBounds);
-		if (customGridNodeBase.ContainsPoint(unit.Position) && unit.CanStandHere(customGridNodeBase) && (!bounds.HasValue || bounds.Value.ContainsXZ(customGridNodeBase.Vector3Position)))
+		if (customGridNodeBase.ContainsPoint(unit.Position) && unit.CanStandHere(customGridNodeBase, orientation) && (!bounds.HasValue || bounds.Value.ContainsXZ(customGridNodeBase.Vector3Position)))
 		{
 			return customGridNodeBase;
 		}
@@ -794,13 +801,13 @@ public static class UnitHelper
 			while (closeToFarNodesEnumerator.MoveNext())
 			{
 				CustomGridNodeBase current = closeToFarNodesEnumerator.Current;
-				if (current != null && unit.CanStandHere(current) && (!bounds.HasValue || bounds.Value.ContainsXZ(current.Vector3Position)))
+				if (current != null && unit.CanStandHere(current, orientation) && (!bounds.HasValue || bounds.Value.ContainsXZ(current.Vector3Position)))
 				{
 					return current;
 				}
 			}
 		}
-		if (!unit.CanStandHere(customGridNodeBase))
+		if (!unit.CanStandHere(customGridNodeBase, orientation))
 		{
 			PFLog.Default.ErrorWithReport($"UnitHelper.FindPositionForUnit: can't find position for {unit}");
 		}
@@ -934,7 +941,7 @@ public static class UnitHelper
 		UnitMoveToProperParams unitMoveToProperParams = new UnitMoveToProperParams(forcedPath, unit.Blueprint.WarhammerMovementApPerCell, costPerEveryCell)
 		{
 			IsSynchronized = true,
-			CanBeAccelerated = true
+			DisableApproachRadius = settings.DisableApproachRadius
 		};
 		float num = 0.05f;
 		if (BuildModeUtility.IsDevelopment)
@@ -978,7 +985,6 @@ public static class UnitHelper
 				unitMoveToProperParams.MovementType = WalkSpeedType.Run;
 			}
 		}
-		unitMoveToProperParams.SpeedLimit = settings.SpeedLimit;
 		return unitMoveToProperParams;
 	}
 
@@ -1028,8 +1034,7 @@ public static class UnitHelper
 		}
 		UnitMoveToProperParams unitMoveToProperParams = new UnitMoveToProperParams(forcedPath, straightDistance, diagonalsCount, length)
 		{
-			IsSynchronized = true,
-			CanBeAccelerated = true
+			IsSynchronized = true
 		};
 		if (BuildModeUtility.IsDevelopment)
 		{
@@ -1039,16 +1044,14 @@ public static class UnitHelper
 			}
 			unitMoveToProperParams.MovementType = (WalkSpeedType)CheatsAnimation.MoveType;
 		}
-		unitMoveToProperParams.SpeedLimit = settings.SpeedLimit;
 		return unitMoveToProperParams;
 	}
 
 	public static UnitMoveToParams CreateMoveCommandParamsRT(BaseUnitEntity unit, MoveCommandSettings settings, ForcedPath path)
 	{
-		UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, settings.Destination)
+		UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, settings.Destination, settings.DisableApproachRadius ? 0f : 0.3f)
 		{
-			IsSynchronized = true,
-			CanBeAccelerated = true
+			IsSynchronized = true
 		};
 		if (BuildModeUtility.IsDevelopment)
 		{
@@ -1091,7 +1094,6 @@ public static class UnitHelper
 				unitMoveToParams.MovementType = WalkSpeedType.Run;
 			}
 		}
-		unitMoveToParams.SpeedLimit = settings.SpeedLimit;
 		return unitMoveToParams;
 	}
 
@@ -1100,8 +1102,7 @@ public static class UnitHelper
 		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
 		return new UnitFollowParams(settings.FollowedUnit, settings.Destination)
 		{
-			IsSynchronized = isSynchronized,
-			CanBeAccelerated = true
+			IsSynchronized = isSynchronized
 		};
 	}
 

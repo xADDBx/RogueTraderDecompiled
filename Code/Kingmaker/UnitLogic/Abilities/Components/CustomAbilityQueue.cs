@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -27,11 +28,10 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 [TypeId("a2cb91a2b5d142648acab0e10a1bc6f1")]
 public class CustomAbilityQueue : AbilityCustomLogic
 {
-	[Space(8f)]
-	public bool CastOnCasterInsteadOfInitialTarget;
-
 	[FormerlySerializedAs("m_AbilityToCast")]
 	public BlueprintAbilityReference AbilityToCast;
+
+	public bool CastOnCasterInsteadOfInitialTarget;
 
 	[FormerlySerializedAs("m_QueConditions")]
 	[Space(8f)]
@@ -41,13 +41,14 @@ public class CustomAbilityQueue : AbilityCustomLogic
 	[FormerlySerializedAs("m_AbilityToQue")]
 	public BlueprintAbilityReference AbilityToQue;
 
+	[Space(8f)]
 	[HideIf("CastOnCasterInsteadOfInitialTarget")]
-	public bool CastOnRandomTarget;
+	public bool QueOnRandomTarget;
 
-	[ShowIf("CastOnRandomTarget")]
+	[ShowIf("QueOnRandomTarget")]
 	public ContextValue Range;
 
-	[ShowIf("CastOnRandomTarget")]
+	[ShowIf("QueOnRandomTarget")]
 	public ConditionsChecker ConditionsOnTarget;
 
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper target)
@@ -57,30 +58,53 @@ public class CustomAbilityQueue : AbilityCustomLogic
 		{
 			yield break;
 		}
-		AbilityData ability = CreateAbility(AbilityToCast, context);
-		TargetWrapper targetWrapper = (CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target);
-		if (CastOnRandomTarget)
-		{
-			List<MechanicEntity> list = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && IsConditionPassed(ConditionsOnTarget, context, p) && context.Caster.InRangeInCells(p, Range.Calculate(context))).Cast<MechanicEntity>().ToList();
-			targetWrapper = list.Random(PFStatefulRandom.Mechanics);
-		}
-		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability, targetWrapper)
+		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(CreateAbility(AbilityToCast, context), CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target)
 		{
 			FreeAction = true
 		};
 		UnitCommandHandle cmdHandle = commands.AddToQueue(cmdParams);
-		while (!cmdHandle.IsFinished)
+		AbilityExecutionProcess executionProcess = null;
+		while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
 		{
+			executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
 			yield return null;
 		}
-		if (IsConditionPassed(QueConditions, context, context.Caster))
+		if (executionProcess != null)
 		{
-			UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(CreateAbility(AbilityToQue, context), targetWrapper)
+			while (!executionProcess.IsEnded)
 			{
-				FreeAction = true
-			};
-			UnitCommandHandle nextCmdHandle = commands.AddToQueue(cmdParams2);
-			while (!nextCmdHandle.IsFinished)
+				yield return null;
+			}
+		}
+		if (!IsConditionPassed(QueConditions, context, context.Caster))
+		{
+			yield break;
+		}
+		TargetWrapper targetWrapper = target;
+		if (QueOnRandomTarget)
+		{
+			targetWrapper = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && IsConditionPassed(ConditionsOnTarget, context, p) && context.Caster.InRangeInCells(p, Range.Calculate(context))).Cast<MechanicEntity>().ToList()
+				.Random(PFStatefulRandom.Mechanics);
+		}
+		AbilityData abilityData = CreateAbility(AbilityToQue, context);
+		if (!(targetWrapper != null) || !abilityData.IsValid(targetWrapper))
+		{
+			yield break;
+		}
+		UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(abilityData, targetWrapper)
+		{
+			FreeAction = true
+		};
+		UnitCommandHandle nextCmdHandle = commands.AddToQueue(cmdParams2);
+		AbilityExecutionProcess newExecutionProcess = null;
+		while (!nextCmdHandle.IsFinished && (newExecutionProcess == null || !newExecutionProcess.IsStarted))
+		{
+			newExecutionProcess = ((UnitUseAbility)nextCmdHandle.Cmd)?.ExecutionProcess;
+			yield return null;
+		}
+		if (newExecutionProcess != null)
+		{
+			while (!newExecutionProcess.IsEnded)
 			{
 				yield return null;
 			}

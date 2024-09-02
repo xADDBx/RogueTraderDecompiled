@@ -7,6 +7,7 @@ using Kingmaker.Code.Globalmap.Colonization;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers;
 using Kingmaker.DialogSystem.Blueprints;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -18,6 +19,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -87,13 +89,16 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	private void OnItemsReceived(string itemName, int count)
 	{
-		if (ItemsChanged.TryGetValue(itemName, out var _))
+		if (!ContextData<GameLogDisabled>.Current)
 		{
-			ItemsChanged[itemName] += count;
-		}
-		else
-		{
-			ItemsChanged.Add(itemName, count);
+			if (ItemsChanged.TryGetValue(itemName, out var _))
+			{
+				ItemsChanged[itemName] += count;
+			}
+			else
+			{
+				ItemsChanged.Add(itemName, count);
+			}
 		}
 	}
 

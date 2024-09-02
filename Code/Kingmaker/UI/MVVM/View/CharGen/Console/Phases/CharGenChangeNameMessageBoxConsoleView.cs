@@ -23,7 +23,7 @@ public class CharGenChangeNameMessageBoxConsoleView : MessageBoxConsoleView
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			m_InputField.Select();
-		}, 11, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CharGen.EditNameButton));
+		}, 11, CanEditNameByYourself, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CharGen.EditNameButton));
 		ConfirmBindActive.Value = true;
 	}
 
@@ -38,7 +38,7 @@ public class CharGenChangeNameMessageBoxConsoleView : MessageBoxConsoleView
 		{
 			base.OnConfirmClick();
 		}
-		else
+		else if (CanEditNameByYourself.Value)
 		{
 			m_InputField.Select();
 		}
@@ -46,7 +46,7 @@ public class CharGenChangeNameMessageBoxConsoleView : MessageBoxConsoleView
 
 	protected override void OnTextInputChanged(string value)
 	{
-		string text = "";
+		string text = string.Empty;
 		if (value.EndsWith(" "))
 		{
 			text = " ";

@@ -61,5 +61,8 @@ public enum MechanicsFeatureType
 	HealInsteadOfDamageForDOTs,
 	RangedParry,
 	CanUseBothDesperateMeasureAndHeroicAct,
-	HalfSuperiorityCriticalChance
+	HalfSuperiorityCriticalChance,
+	HideRealHealthInUI,
+	DisableSnapToGrid,
+	AllAttacksCountAsAoe
 }

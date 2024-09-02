@@ -45,7 +45,12 @@ public abstract class PartItemsCollection : EntityPart, IItemsCollection, IEnume
 			{
 				if (IsPlayerInventory)
 				{
-					return base.ConcreteOwner.GetOptional<UnitPartMainCharacter>();
+					UnitPartMainCharacter optional = base.ConcreteOwner.GetOptional<UnitPartMainCharacter>();
+					if (optional != null)
+					{
+						return !optional.Temporary;
+					}
+					return false;
 				}
 				return false;
 			}

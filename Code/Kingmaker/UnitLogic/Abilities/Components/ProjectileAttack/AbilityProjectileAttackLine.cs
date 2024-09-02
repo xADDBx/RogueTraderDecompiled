@@ -9,6 +9,7 @@ using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility.DotNetExtensions;
@@ -50,7 +51,7 @@ public class AbilityProjectileAttackLine
 		}
 	}
 
-	private readonly List<CustomGridNodeBase> m_Nodes;
+	private readonly ReadonlyList<CustomGridNodeBase> m_Nodes;
 
 	private readonly IEnumerator<AbilityDeliveryTarget> m_DeliveryProcess;
 
@@ -82,7 +83,7 @@ public class AbilityProjectileAttackLine
 	[CanBeNull]
 	public MechanicEntity PriorityTarget => ProjectileAttack.PriorityTarget;
 
-	public AbilityProjectileAttackLine(AbilityProjectileAttack projectileAttack, int index, CustomGridNodeBase fromNode, CustomGridNodeBase toNode, List<CustomGridNodeBase> nodes, bool disableWeaponAttackDamage = false, bool disableDodgeForAlly = false)
+	public AbilityProjectileAttackLine(AbilityProjectileAttack projectileAttack, int index, CustomGridNodeBase fromNode, CustomGridNodeBase toNode, ReadonlyList<CustomGridNodeBase> nodes, bool disableWeaponAttackDamage = false, bool disableDodgeForAlly = false)
 	{
 		Index = index;
 		FromNode = fromNode;
@@ -108,14 +109,14 @@ public class AbilityProjectileAttackLine
 		List<HitData> list = TempList.Get<HitData>();
 		bool flag = false;
 		DamageData damageData = null;
-		foreach (var item5 in EnumerateTargets())
+		foreach (var item3 in EnumerateTargets())
 		{
-			if (Game.Instance.TurnController.TbActive && !(item5.Entity is BaseUnitEntity) && item5.Entity != PriorityTarget && !item5.Entity.CanBeAttackedDirectly)
+			if (Game.Instance.TurnController.TbActive && !(item3.Entity is BaseUnitEntity) && item3.Entity != PriorityTarget && !item3.Entity.CanBeAttackedDirectly)
 			{
 				continue;
 			}
-			flag |= ProjectileAttack.IsControlledScatter && item5.Entity.IsAlly(Context.Caster);
-			RulePerformAttackRoll rulePerformAttackRoll = new RulePerformAttackRoll(Context.Caster, item5.Entity, Context.Ability, Index, DodgeForAllyDisabled, FromNode.Vector3Position, item5.Node.Vector3Position, damageData?.EffectiveOverpenetrationFactor ?? 1f)
+			flag |= ProjectileAttack.IsControlledScatter && item3.Entity.IsAlly(Context.Caster);
+			RulePerformAttackRoll rulePerformAttackRoll = new RulePerformAttackRoll(Context.Caster, item3.Entity, Context.Ability, Index, DodgeForAllyDisabled, FromNode.Vector3Position, item3.Node.Vector3Position, damageData?.EffectiveOverpenetrationFactor ?? 1f)
 			{
 				IsControlledScatterAutoMiss = flag,
 				IsOverpenetration = (damageData != null)
@@ -127,14 +128,14 @@ public class AbilityProjectileAttackLine
 			bool calculatedOverpenetration;
 			if (rulePerformAttackRoll != null && rulePerformAttackRoll.ResultIsCoverHit)
 			{
-				LosDescription item = item5.Los;
+				LosDescription item = item3.Los;
 				MechanicEntity obstacleEntity = item.ObstacleEntity;
 				if (obstacleEntity == null)
 				{
-					item = item5.Los;
+					item = item3.Los;
 					if (item.ObstacleNode != null)
 					{
-						item = item5.Los;
+						item = item3.Los;
 						list.Add(new HitData(item.ObstacleNode, rulePerformAttackRoll)
 						{
 							IsOverpenetration = (damageData != null)
@@ -147,11 +148,10 @@ public class AbilityProjectileAttackLine
 				RulePerformAttackRoll performAttackRoll = ((damageData == null) ? rulePerformAttackRoll : null);
 				DamageData baseDamageOverride = damageData;
 				calculatedOverpenetration = damageData != null;
-				RuleCalculateDamage ruleCalculateDamage = new RuleCalculateDamage(caster, obstacleEntity, ability, performAttackRoll, baseDamageOverride, null, null, forceCrit: false, calculatedOverpenetration);
-				Rulebook.Trigger(ruleCalculateDamage);
+				RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams(caster, obstacleEntity, ability, performAttackRoll, baseDamageOverride, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
 				RuleRollDamage ruleRollDamage = new RuleRollDamage(Context.Caster, obstacleEntity, ruleCalculateDamage.ResultDamage);
 				Rulebook.Trigger(ruleRollDamage);
-				list.Add(new HitData(item5.Node, rulePerformAttackRoll)
+				list.Add(new HitData(item3.Node, rulePerformAttackRoll)
 				{
 					Entity = obstacleEntity,
 					RollDamageRule = ruleRollDamage,
@@ -169,28 +169,26 @@ public class AbilityProjectileAttackLine
 				resultParryRule = rulePerformAttackRoll.ResultParryRule;
 				if (resultParryRule == null || !resultParryRule.Result)
 				{
-					HitData item2 = new HitData(item5.Node, rulePerformAttackRoll);
-					(item2.Entity, _, _) = item5;
+					HitData item2 = new HitData(item3.Node, rulePerformAttackRoll);
+					(item2.Entity, _, _) = item3;
 					list.Add(item2);
 					continue;
 				}
 			}
-			MechanicEntity item3 = item5.Entity;
+			MechanicEntity actualParryUnit = rulePerformAttackRoll.ActualParryUnit;
 			resultParryRule = rulePerformAttackRoll.ResultParryRule;
-			if (resultParryRule != null && resultParryRule.Result && item5.Entity.HasMechanicFeature(MechanicsFeatureType.RangedParry))
+			if (resultParryRule != null && resultParryRule.Result && actualParryUnit.HasMechanicFeature(MechanicsFeatureType.RangedParry))
 			{
 				MechanicEntity caster2 = Context.Caster;
-				MechanicEntity item4 = item5.Entity;
 				AbilityData ability2 = Context.Ability;
 				RulePerformAttackRoll performAttackRoll2 = ((damageData == null) ? rulePerformAttackRoll : null);
 				DamageData baseDamageOverride2 = damageData;
 				calculatedOverpenetration = damageData != null;
-				RuleCalculateDamage ruleCalculateDamage2 = new RuleCalculateDamage(caster2, item4, ability2, performAttackRoll2, baseDamageOverride2, null, null, forceCrit: false, calculatedOverpenetration);
-				Rulebook.Trigger(ruleCalculateDamage2);
-				Rulebook.Trigger(new RuleRollDamage(Context.Caster, item5.Entity, ruleCalculateDamage2.ResultDamage));
-				list.Add(new HitData(item5.Node, rulePerformAttackRoll)
+				RuleCalculateDamage ruleCalculateDamage2 = new CalculateDamageParams(caster2, actualParryUnit, ability2, performAttackRoll2, baseDamageOverride2, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
+				Rulebook.Trigger(new RuleRollDamage(Context.Caster, actualParryUnit, ruleCalculateDamage2.ResultDamage));
+				list.Add(new HitData(item3.Node, rulePerformAttackRoll)
 				{
-					Entity = item5.Entity,
+					Entity = actualParryUnit,
 					RollDamageRule = null,
 					IsOverpenetration = (damageData != null),
 					IsRedirecting = (rulePerformAttackRoll.ResultParryRule?.DeflectResult ?? false)
@@ -202,13 +200,12 @@ public class AbilityProjectileAttackLine
 			RulePerformAttackRoll performAttackRoll3 = ((damageData == null) ? rulePerformAttackRoll : null);
 			DamageData baseDamageOverride3 = damageData;
 			calculatedOverpenetration = damageData != null;
-			RuleCalculateDamage ruleCalculateDamage3 = new RuleCalculateDamage(caster3, item3, ability3, performAttackRoll3, baseDamageOverride3, null, null, forceCrit: false, calculatedOverpenetration);
-			Rulebook.Trigger(ruleCalculateDamage3);
-			RuleRollDamage ruleRollDamage2 = new RuleRollDamage(Context.Caster, item3, ruleCalculateDamage3.ResultDamage);
+			RuleCalculateDamage ruleCalculateDamage3 = new CalculateDamageParams(caster3, actualParryUnit, ability3, performAttackRoll3, baseDamageOverride3, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
+			RuleRollDamage ruleRollDamage2 = new RuleRollDamage(Context.Caster, actualParryUnit, ruleCalculateDamage3.ResultDamage);
 			Rulebook.Trigger(ruleRollDamage2);
-			list.Add(new HitData((CustomGridNodeBase)item3.CurrentNode.node, rulePerformAttackRoll)
+			list.Add(new HitData((CustomGridNodeBase)actualParryUnit.CurrentNode.node, rulePerformAttackRoll)
 			{
-				Entity = item3,
+				Entity = actualParryUnit,
 				RollDamageRule = ruleRollDamage2,
 				IsOverpenetration = (damageData != null)
 			});
@@ -226,17 +223,27 @@ public class AbilityProjectileAttackLine
 		List<MechanicEntity> targets = TempList.Get<MechanicEntity>();
 		foreach (CustomGridNodeBase node in m_Nodes)
 		{
-			if (AbilityProjectileAttackLineHelper.IsNodeAffected(null, FromNode, node, StepHeight))
+			if (!AbilityProjectileAttackLineHelper.IsNodeAffected(null, FromNode, node, StepHeight))
 			{
-				MechanicEntity targetByNode = GetTargetByNode(node);
-				if (targetByNode != null && targetByNode != Context.Caster && Context.Ability.IsValidTargetForAttack(targetByNode) && !targets.Contains(targetByNode))
+				continue;
+			}
+			MechanicEntity targetByNode = GetTargetByNode(node);
+			if (targetByNode == null || !Context.Ability.IsValidTargetForAttack(targetByNode) || targets.Contains(targetByNode))
+			{
+				continue;
+			}
+			if (targetByNode == Context.Caster && !targetByNode.Facts.HasComponent<WarhammerDeflectionTarget>())
+			{
+				AbilityDeliveryTarget currentTarget = ProjectileAttack.CurrentTarget;
+				if (currentTarget == null || currentTarget.AttackRule?.Result != AttackResult.Parried)
 				{
-					MechanicEntity caster = ProjectileAttack.Context.Caster;
-					LosDescription warhammerLos = LosCalculations.GetWarhammerLos(FromNode, caster.SizeRect, node, targetByNode.SizeRect);
-					targets.Add(targetByNode);
-					yield return (Entity: targetByNode, Los: warhammerLos, Node: node);
+					continue;
 				}
 			}
+			MechanicEntity caster = ProjectileAttack.Context.Caster;
+			LosDescription warhammerLos = LosCalculations.GetWarhammerLos(FromNode, caster.SizeRect, node, targetByNode.SizeRect);
+			targets.Add(targetByNode);
+			yield return (Entity: targetByNode, Los: warhammerLos, Node: node);
 		}
 	}
 

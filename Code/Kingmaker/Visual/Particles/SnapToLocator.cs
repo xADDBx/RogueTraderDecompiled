@@ -9,6 +9,7 @@ using Kingmaker.Visual.Particles.Blueprints;
 using Kingmaker.Visual.Trails;
 using Owlcat.QA.Validation;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.Visual.Particles;
 
@@ -16,20 +17,27 @@ public class SnapToLocator : MonoBehaviour
 {
 	public string BoneName;
 
+	[FormerlySerializedAs("DontAttach")]
+	[Tooltip("Ignore all transform changes of locator after initial positioning")]
+	public bool DontUpdate;
+
 	public AnimationCurve CameraOffsetScale = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 1f));
 
+	[Tooltip("Ignore locator scale")]
 	public bool DontScale;
 
+	[Tooltip("Ignore locator rotation")]
 	public bool DontRotate;
 
-	[Tooltip("If disabled then the effect will apply to itself, rotate and scale locator in each frame. The position will be updated the same way if NoOffsetWhileAttached is off")]
-	public bool DontAttach;
+	[FormerlySerializedAs("NoOffsetWhileAttached")]
+	[Tooltip("Ignore locator position changes")]
+	public bool DontMove;
 
-	[Tooltip("If disabled, the effect will follow the locator in each frame")]
-	public bool NoOffsetWhileAttached;
-
+	[Space]
+	[Tooltip("Move down to the ground only at initial frame of snap")]
 	public bool DropToGround;
 
+	[Space]
 	public List<string> BoneNames = new List<string>();
 
 	[SerializeField]
@@ -171,28 +179,32 @@ public class SnapToLocator : MonoBehaviour
 
 	private void LateUpdate()
 	{
-		if (m_Locator == null || m_Locator.Transform == null || DontAttach)
+		if (m_Locator == null || m_Locator.Transform == null || DontUpdate)
 		{
 			return;
 		}
-		float num = CameraOffsetScale.Evaluate(m_LocalTime += Game.Instance.TimeController.DeltaTime);
-		Vector3 vector = m_Locator.Transform.TransformPoint(m_Locator.LocalOffset);
-		Camera camera = Game.GetCamera();
-		if (!(camera == null))
+		if (!DontMove)
 		{
-			Vector3 vector2 = camera.transform.position - vector;
-			if (!NoOffsetWhileAttached)
+			Vector3 vector = m_Locator.Transform.TransformPoint(m_Locator.LocalOffset);
+			Camera camera = Game.GetCamera();
+			if (camera != null)
 			{
-				base.transform.position = vector + vector2.normalized * m_Locator.CameraOffset * num;
+				float num = CameraOffsetScale.Evaluate(m_LocalTime += Game.Instance.TimeController.DeltaTime);
+				Vector3 vector2 = camera.transform.position - vector;
+				base.transform.position = vector + vector2.normalized * (m_Locator.CameraOffset * num);
 			}
-			if (!DontScale)
+			else
 			{
-				base.transform.localScale = m_Locator.Transform.lossyScale * RaceScale;
+				base.transform.position = vector;
 			}
-			if (!DontRotate)
-			{
-				base.transform.rotation = m_Locator.Transform.rotation;
-			}
+		}
+		if (!DontScale)
+		{
+			base.transform.localScale = m_Locator.Transform.lossyScale * RaceScale;
+		}
+		if (!DontRotate)
+		{
+			base.transform.rotation = m_Locator.Transform.rotation;
 		}
 	}
 

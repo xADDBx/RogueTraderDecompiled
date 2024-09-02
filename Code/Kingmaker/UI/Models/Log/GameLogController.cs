@@ -65,7 +65,8 @@ public class GameLogController : IControllerStart, IController, IControllerEnabl
 	void IControllerStart.OnStart()
 	{
 		PatternCollection.Instance.Cleanup();
-		PatternCollection.Instance.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RulePerformSavingThrow>>.Create(PerformSavingThrowComparer.Create())).AddPattern(PatternAddEventMergeEvent<GameLogEventItemsCollection>.Create(ItemsCollectionComparer.Create())).AddPattern(PatternAddEventMergeEvent<GameLogEventCargoCollection>.Create(CargoCollectionComparer.Create()))
+		PatternCollection.Instance.AddPattern(PatternAddEventWithLogDisabled.Create()).AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RulePerformSavingThrow>>.Create(PerformSavingThrowComparer.Create())).AddPattern(PatternAddEventMergeEvent<GameLogEventItemsCollection>.Create(ItemsCollectionComparer.Create()))
+			.AddPattern(PatternAddEventMergeEvent<GameLogEventCargoCollection>.Create(CargoCollectionComparer.Create()))
 			.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RuleStarshipPerformAttack>>.Create(PerformStarshipAttackComparer.Create()))
 			.AddPattern(PatternAddEventMergeEvent<GameLogRuleEvent<RuleCalculateCanApplyBuff>>.Create(CalculateCanApplyBuffComparer.Create()))
 			.AddPattern(PatternAddEventInsertSeparator.Create())

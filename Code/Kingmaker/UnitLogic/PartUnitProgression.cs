@@ -13,8 +13,6 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.StateHasher.Hashers;
-using Kingmaker.UnitLogic.ActivatableAbilities;
-using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Levelup.Components;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
@@ -121,7 +119,7 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 	{
 		if (path is BlueprintCareerPath)
 		{
-			CharacterLevel++;
+			AdvanceToNextLevel();
 		}
 		Features.Add(path);
 		base.Owner.OnGainPathRank(path);
@@ -206,36 +204,6 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 		}
 	}
 
-	public void ReapplyFeaturesOnLevelUp()
-	{
-		foreach (Feature item in Features.RawFacts.ToTempList())
-		{
-			if (!item.IsDisposed)
-			{
-				if (item.Blueprint.ReapplyOnLevelUp)
-				{
-					item.Reapply();
-				}
-				else
-				{
-					item.Context.Recalculate();
-				}
-			}
-		}
-		foreach (Buff buff in base.Owner.Buffs)
-		{
-			buff.Context.Recalculate();
-		}
-		foreach (ActivatableAbility activatableAbility in base.Owner.ActivatableAbilities)
-		{
-			activatableAbility.ReapplyBuff();
-		}
-		EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitReapplyFeaturesOnLevelUpHandler>)delegate(IUnitReapplyFeaturesOnLevelUpHandler h)
-		{
-			h.HandleUnitReapplyFeaturesOnLevelUp();
-		}, isCheckRuntime: true);
-	}
-
 	public void GainExperience(int exp, bool log = true, bool allowForPet = false)
 	{
 		if (exp < 0)
@@ -300,9 +268,10 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 		}
 	}
 
-	public void FixCharacterLevelAfterCopy()
+	public void AdvanceToNextLevel()
 	{
-		CharacterLevel = Features.RawFacts.Where((Feature i) => i.Blueprint is BlueprintCareerPath).Sum((Feature i) => i.GetRank());
+		int num = Features.RawFacts.Where((Feature i) => i.Blueprint is BlueprintCareerPath).Sum((Feature i) => i.GetRank());
+		CharacterLevel = Math.Clamp(num + 1, 0, ExperienceLevel);
 	}
 
 	public void CopyFrom(PartUnitProgression other)

@@ -57,6 +57,8 @@ public class StartupJson
 
 	public bool EnableCheats;
 
+	public bool EnableCheatStore;
+
 	public bool ForceLogging;
 
 	public LoadingResearchSettings Loading = new LoadingResearchSettings();

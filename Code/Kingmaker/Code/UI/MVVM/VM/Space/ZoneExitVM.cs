@@ -61,11 +61,19 @@ public class ZoneExitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		Game.Instance.SectorMapController.JumpToShipArea();
 	}
 
-	public void OpenShipCustomization()
+	public void ForceOpenShipCustomization()
 	{
 		EventBus.RaiseEvent(delegate(IShipCustomizationForceUIHandler h)
 		{
 			h.HandleForceOpenShipCustomization();
+		});
+	}
+
+	public void OpenShipCustomization()
+	{
+		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
+		{
+			h.HandleOpenShipCustomization();
 		});
 	}
 

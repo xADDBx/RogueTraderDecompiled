@@ -1,8 +1,6 @@
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
-using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Progression.Features;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
@@ -28,24 +26,16 @@ public class TooltipBrickFeature : ITooltipBrick
 		m_FeatureVM = new TooltipBrickFeatureVM(ability, isHeader, null, caster, isHidden);
 	}
 
-	public TooltipBrickFeature(ActivatableAbility activatableAbility, bool isHeader = false)
-	{
-		m_FeatureVM = new TooltipBrickFeatureVM(activatableAbility, isHeader);
-	}
-
-	public TooltipBrickFeature(BlueprintActivatableAbility activatableAbility, bool isHeader = false)
-	{
-		m_FeatureVM = new TooltipBrickFeatureVM(activatableAbility, isHeader);
-	}
-
 	public TooltipBrickFeature(IUIDataProvider dataProvider, bool isHeader = false)
 	{
-		m_FeatureVM = new TooltipBrickFeatureVM(dataProvider, isHeader);
-	}
-
-	public TooltipBrickFeature(UIUtilityItem.UIAbilityData uiAbilityData, bool isHeader = false)
-	{
-		m_FeatureVM = new TooltipBrickFeatureVM(uiAbilityData, isHeader);
+		if (dataProvider is BlueprintFeature feature)
+		{
+			m_FeatureVM = new TooltipBrickFeatureVM(feature, isHeader, available: true);
+		}
+		else
+		{
+			m_FeatureVM = new TooltipBrickFeatureVM(dataProvider, isHeader);
+		}
 	}
 
 	public TooltipBaseBrickVM GetVM()

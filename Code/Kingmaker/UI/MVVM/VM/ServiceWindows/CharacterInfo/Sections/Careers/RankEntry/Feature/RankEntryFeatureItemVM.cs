@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
+using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UniRx;
@@ -28,6 +29,7 @@ public class RankEntryFeatureItemVM : BaseRankEntryFeatureVM, IRankEntrySelectIt
 	{
 		Rank = rank;
 		m_SelectAction = selectAction;
+		OverrideTooltip();
 		AddDisposable(CareerPathVM.FeaturesToVisit.ObserveCountChanged().Subscribe(delegate
 		{
 			DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(UpdateFeatureState);
@@ -44,6 +46,7 @@ public class RankEntryFeatureItemVM : BaseRankEntryFeatureVM, IRankEntrySelectIt
 
 	protected sealed override void UpdateFeatureState()
 	{
+		RefreshTooltip();
 		RankFeatureState value = RankFeatureState.NotActive;
 		(int, int) currentLevelupRange = CareerPathVM.GetCurrentLevelupRange();
 		if ((CareerPathVM.IsInLevelupProcess || (currentLevelupRange.Item1 == 1 && currentLevelupRange.Item2 == 1)) && currentLevelupRange.Item1 != -1 && Rank >= currentLevelupRange.Item1 && Rank <= currentLevelupRange.Item2)
@@ -101,5 +104,15 @@ public class RankEntryFeatureItemVM : BaseRankEntryFeatureVM, IRankEntrySelectIt
 			base.Tooltip.Value,
 			base.HintTooltip
 		};
+	}
+
+	private void OverrideTooltip()
+	{
+		base.Tooltip.Value = new TooltipTemplateRankEntryUltimate(UIFeature, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit);
+	}
+
+	private void RefreshTooltip()
+	{
+		m_InfoVM?.SetTemplate(base.Tooltip.Value);
 	}
 }

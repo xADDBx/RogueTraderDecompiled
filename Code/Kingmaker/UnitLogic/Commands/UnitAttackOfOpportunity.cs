@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -13,6 +12,7 @@ using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
@@ -105,12 +105,6 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 
 	protected override void TriggerAnimation()
 	{
-		IEnumerable<PlayLoopAnimationByBuff> components = base.Executor.OwnerEntity.Facts.GetComponents<PlayLoopAnimationByBuff>();
-		if (!components.Empty())
-		{
-			m_loopingAnimationBuff = components.First();
-			m_loopingAnimationBuff.TryResetAction();
-		}
 		base.Executor.View.HideOffWeapon(hide: true);
 		IAbilityCustomAnimation component = Ability.Blueprint.GetComponent<IAbilityCustomAnimation>();
 		if (component != null)
@@ -152,6 +146,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			h.AttackTargetDistance = (Target.Position - base.Executor.Position).magnitude;
 			h.IsBurst = Ability.IsBurstAttack;
 			h.BurstCount = Ability.BurstAttacksCount;
+			h.AlternativeStyle = Ability.Blueprint.GetComponent<WarhammerAttackAlternativeAnimationStyle>()?.WeaponAnimationStyle ?? AnimationAlternativeStyle.None;
 		}
 	}
 
@@ -258,7 +253,6 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			UnitAnimationActionHandle animation = base.Animation;
 			if (animation == null || animation.IsReleased)
 			{
-				RestoreLoopAnimation();
 				ForceFinish(ResultType.Success);
 			}
 		}
@@ -293,7 +287,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		{
 			if (CurrentActionIndex >= ActionsCount)
 			{
-				PFLog.Default.Error("CurrentActionIndex >= ActionsCount");
+				PFLog.Default.Error($"CurrentActionIndex {CurrentActionIndex} >= ActionsCount {ActionsCount}");
 				RestoreLoopAnimation();
 				return ResultType.Fail;
 			}

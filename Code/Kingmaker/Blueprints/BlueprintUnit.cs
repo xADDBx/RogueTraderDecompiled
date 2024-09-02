@@ -100,14 +100,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 	[Serializable]
 	public class UnitBody : IUnitBodyExtension
 	{
-		public bool DisableHands;
-
-		[SerializeField]
-		[HideIf("DisableHands")]
-		private BlueprintItemWeaponReference m_EmptyHandWeapon;
-
-		[SerializeField]
-		[HideIf("DisableHands")]
 		public UnitItemEquipmentHandSettings ItemEquipmentHandSettings = new UnitItemEquipmentHandSettings();
 
 		[SerializeField]
@@ -160,18 +152,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 
 		[JsonProperty]
 		public UnitItemEquipmentHandSettings OverridenUnitItemEquipmentHandSettings { get; set; }
-
-		public BlueprintItemWeapon EmptyHandWeapon
-		{
-			get
-			{
-				return m_EmptyHandWeapon?.Get();
-			}
-			set
-			{
-				m_EmptyHandWeapon = value.ToReference<BlueprintItemWeaponReference>();
-			}
-		}
 
 		public ReferenceArrayProxy<BlueprintItemWeapon> AdditionalLimbs
 		{
@@ -255,9 +235,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 	}
 
 	[SerializeField]
-	private BlueprintUnitTypeReference m_Type;
-
-	[SerializeField]
 	private BlueprintArmyDescriptionReference m_Army;
 
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.UnitName)]
@@ -267,14 +244,10 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 
 	public Size Size = Size.Medium;
 
-	public bool IsLeftHanded;
-
 	public Color Color = new Color(0.15f, 0.15f, 0.15f, 1f);
 
 	[SerializeField]
 	private BlueprintRaceReference m_Race;
-
-	public Alignment Alignment = Alignment.TrueNeutral;
 
 	[SerializeField]
 	private BlueprintPortraitReference m_Portrait;
@@ -382,17 +355,15 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 
 	public int MaxHP = 6;
 
-	[Header("Templates")]
-	[SerializeField]
-	private BlueprintUnitTemplateReference[] m_AdditionalTemplates;
-
 	[Header("Facts")]
 	[SerializeField]
 	private BlueprintUnitFactReference[] m_AddFacts;
 
 	[Tooltip("Trap actors, mapobject cast targets and other units that are not actually subject ot game mechanics. Cheaters can use any ability, are never ingame but do show FX")]
+	[Obsolete]
 	public bool IsCheater;
 
+	[Obsolete]
 	public bool IsFake;
 
 	public bool VisualsDone;
@@ -417,8 +388,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 			m_Army = value.ToReference<BlueprintArmyDescriptionReference>();
 		}
 	}
-
-	public BlueprintUnitType Type => m_Type?.Get();
 
 	public string CharacterName
 	{
@@ -499,15 +468,6 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 	public int WarhammerPerception => GetAttributeValue(StatType.WarhammerPerception);
 
 	public int WarhammerFellowship => GetAttributeValue(StatType.WarhammerFellowship);
-
-	public ReferenceArrayProxy<BlueprintUnitTemplate> AdditionalTemplates
-	{
-		get
-		{
-			BlueprintReference<BlueprintUnitTemplate>[] additionalTemplates = m_AdditionalTemplates;
-			return additionalTemplates;
-		}
-	}
 
 	public ReferenceArrayProxy<BlueprintUnitFact> AddFacts
 	{

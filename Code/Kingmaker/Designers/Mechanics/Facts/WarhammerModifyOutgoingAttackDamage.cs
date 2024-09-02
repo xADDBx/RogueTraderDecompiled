@@ -170,9 +170,24 @@ public class WarhammerModifyOutgoingAttackDamage : UnitFactComponentDelegate, II
 		{
 			return false;
 		}
-		if (base.OwnerBlueprint is BlueprintAbility && ability.Blueprint != base.OwnerBlueprint)
+		if (ability != null)
 		{
-			return false;
+			if (base.OwnerBlueprint is BlueprintAbility && ability.Blueprint != base.OwnerBlueprint)
+			{
+				return false;
+			}
+			if (SpecificRangeType && ability.Weapon != null && !WeaponRangeType.IsSuitableWeapon(ability.Weapon))
+			{
+				return false;
+			}
+			if (SpecificWeaponFamily && ability.Weapon?.Blueprint?.Family != WeaponFamily)
+			{
+				return false;
+			}
+			if (OnlyChosenWeapon && (ability.Weapon == null || ability.Weapon != base.Owner.GetOptional<WarhammerUnitPartChooseWeapon>()?.ChosenWeapon))
+			{
+				return false;
+			}
 		}
 		ComponentData componentData = RequestTransientData<ComponentData>();
 		if (OnlyFirstAttack && componentData.AttackedThisTurn)
@@ -181,10 +196,6 @@ public class WarhammerModifyOutgoingAttackDamage : UnitFactComponentDelegate, II
 		}
 		MechanicEntity mechanicEntity = base.Context?.MaybeCaster;
 		if (OnlyAgainstCaster && mechanicEntity != evt.GetRuleTarget())
-		{
-			return false;
-		}
-		if (SpecificRangeType && ability.Weapon != null && !WeaponRangeType.IsSuitableWeapon(ability.Weapon))
 		{
 			return false;
 		}
@@ -199,14 +210,6 @@ public class WarhammerModifyOutgoingAttackDamage : UnitFactComponentDelegate, II
 			{
 				return false;
 			}
-		}
-		if (SpecificWeaponFamily && ability.Weapon?.Blueprint?.Family != WeaponFamily)
-		{
-			return false;
-		}
-		if (OnlyChosenWeapon && (ability.Weapon == null || ability.Weapon != base.Owner.GetOptional<WarhammerUnitPartChooseWeapon>()?.ChosenWeapon))
-		{
-			return false;
 		}
 		return true;
 	}

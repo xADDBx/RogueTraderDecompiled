@@ -9,7 +9,7 @@ namespace Kingmaker.UI.MVVM.View.GroupChanger;
 public class GroupChangerContextBaseView : ViewBase<GroupChangerContextVM>
 {
 	[SerializeField]
-	private UIViewLink<GroupChangerBaseView, GroupChangerVM> m_GroupChangerPCView;
+	private UIDestroyViewLink<GroupChangerBaseView, GroupChangerVM> m_GroupChangerPCView;
 
 	private bool m_IsInit;
 

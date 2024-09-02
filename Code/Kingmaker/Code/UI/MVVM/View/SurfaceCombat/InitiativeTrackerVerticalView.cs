@@ -156,7 +156,15 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 			});
 		}
 		base.ViewModel.SkipScroll = false;
-		m_StateValue.text = units.Count((InitiativeTrackerUnitVM unit) => unit.IsEnemy.Value).ToString();
+		List<InitiativeTrackerUnitVM> list = new List<InitiativeTrackerUnitVM>();
+		foreach (InitiativeTrackerUnitVM unit in units)
+		{
+			if (unit.IsEnemy.Value && !list.Contains((InitiativeTrackerUnitVM uniqUnit) => uniqUnit.Unit == unit.Unit))
+			{
+				list.Add(unit);
+			}
+		}
+		m_StateValue.text = list.Count().ToString();
 	}
 
 	private IEnumerator UpdateNormalizedPositionCo()

@@ -182,8 +182,8 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		}
 		int width = target.SizeRect.Width;
 		int height = target.SizeRect.Height;
-		int maxTiles = num + Math.Max(width, height) + Math.Min(width, height) / 2 + 1;
-		List<(GraphNode Node, int Distance)> list = PathfindingService.Instance.FindAllReachableTiles_Blocking(attacker.MovementAgent, customGridNode.Vector3Position, maxTiles).Keys.Select((GraphNode i) => (Node: i, Distance: target.DistanceToInCells(i.Vector3Position))).ToTempList();
+		int num2 = num + Math.Max(width, height) + Math.Min(width, height) / 2 + 1;
+		List<(GraphNode Node, int Distance)> list = PathfindingService.Instance.FindAllReachableTiles_Blocking(attacker.MovementAgent, customGridNode.Vector3Position, num2).Keys.Select((GraphNode i) => (Node: i, Distance: target.DistanceToInCells(i.Vector3Position))).ToTempList();
 		list.Sort(((GraphNode Node, int Distance) n1, (GraphNode Node, int Distance) n2) => n1.Distance.CompareTo(n2.Distance));
 		foreach (var item in list)
 		{

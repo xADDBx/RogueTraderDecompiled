@@ -41,7 +41,7 @@ using UnityEngine.SceneManagement;
 
 namespace Kingmaker.Code.UI.MVVM;
 
-public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
+public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, IModalWindowUIHandler
 {
 	private MonoBehaviour m_CommonView;
 
@@ -50,6 +50,8 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 	private MonoBehaviour m_UILoadingScreenView;
 
 	private FullScreenUIType m_FullScreenUIType;
+
+	private ModalWindowUIType m_ModalWindowUIType;
 
 	private List<FullScreenUIType> m_FullScreenUITypeStack = new List<FullScreenUIType>();
 
@@ -142,6 +144,22 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 			return true;
 		}
 	}
+
+	public bool IsGroupChangerWindowShow
+	{
+		get
+		{
+			if (SurfaceVM?.StaticPartVM.GroupChangerContextVM.GroupChangerVm?.Value == null)
+			{
+				return SpaceVM?.StaticPartVM.GroupChangerContextVM.GroupChangerVm?.Value != null;
+			}
+			return true;
+		}
+	}
+
+	public bool IsMessageWindowShow => CommonVM?.MessageBoxVM?.Value != null;
+
+	public bool IsBugReportShow => CommonVM?.BugReportVM?.Value != null;
 
 	public bool IsInventoryShow
 	{
@@ -526,7 +544,10 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 		if (!(Game.Instance.CurrentMode == GameModeType.Cutscene) && !(Game.Instance.CurrentMode == GameModeType.Dialog) && !LoadingProcess.Instance.IsLoadingScreenActive && (!Game.Instance.SectorMapTravelController.IsTravelling || !(Game.Instance.CurrentMode == GameModeType.GlobalMap)))
 		{
 			FullScreenUIType fullScreenUIType = m_FullScreenUIType;
-			return fullScreenUIType == FullScreenUIType.EscapeMenu || fullScreenUIType == FullScreenUIType.TransitionMap || fullScreenUIType == FullScreenUIType.Vendor || fullScreenUIType == FullScreenUIType.Credits || fullScreenUIType == FullScreenUIType.Chargen || fullScreenUIType == FullScreenUIType.NewGame;
+			if (fullScreenUIType != FullScreenUIType.EscapeMenu && fullScreenUIType != FullScreenUIType.TransitionMap && fullScreenUIType != FullScreenUIType.Vendor && fullScreenUIType != FullScreenUIType.Credits && fullScreenUIType != FullScreenUIType.Chargen && fullScreenUIType != FullScreenUIType.NewGame)
+			{
+				return m_ModalWindowUIType == ModalWindowUIType.GameEndingTitles;
+			}
 		}
 		return true;
 	}
@@ -554,5 +575,10 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber
 	public void HandleFullScreenUiChanged(bool state, FullScreenUIType fullScreenUIType)
 	{
 		m_FullScreenUIType = (state ? fullScreenUIType : FullScreenUIType.Unknown);
+	}
+
+	public void HandleModalWindowUiChanged(bool state, ModalWindowUIType modalWindowUIType)
+	{
+		m_ModalWindowUIType = (state ? modalWindowUIType : ModalWindowUIType.Unknown);
 	}
 }

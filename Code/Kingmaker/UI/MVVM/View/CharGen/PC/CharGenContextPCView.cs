@@ -11,7 +11,7 @@ namespace Kingmaker.UI.MVVM.View.CharGen.PC;
 public class CharGenContextPCView : ViewBase<CharGenContextVM>
 {
 	[SerializeField]
-	private UIViewLink<CharGenPCView, CharGenVM> m_CharGenPCView;
+	private UIDestroyViewLink<CharGenPCView, CharGenVM> m_CharGenPCView;
 
 	[SerializeField]
 	private CanvasScalerWorkaround m_CanvasScaler;

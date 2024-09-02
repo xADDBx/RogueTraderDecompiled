@@ -28,6 +28,8 @@ public class CommandFadeout : CommandBase
 
 	private bool m_Finished;
 
+	private bool m_IsFadedOut;
+
 	public override bool IsContinuous => m_Continuous;
 
 	public override bool TrySkip(CutscenePlayerData player)
@@ -38,12 +40,19 @@ public class CommandFadeout : CommandBase
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
 		m_Finished = skipping && !IsContinuous;
-		FadeCanvas.Fadeout(fade: true);
+		if (!m_Finished)
+		{
+			FadeCanvas.Fadeout(fade: true);
+			m_IsFadedOut = true;
+		}
 	}
 
 	protected override void OnStop(CutscenePlayerData player)
 	{
-		FadeCanvas.Fadeout(fade: false);
+		if (m_IsFadedOut)
+		{
+			FadeCanvas.Fadeout(fade: false);
+		}
 		m_Finished = true;
 	}
 

@@ -5,6 +5,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.ElementsSystem.ContextData;
@@ -16,6 +17,7 @@ using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Groups;
@@ -36,7 +38,7 @@ namespace Kingmaker.AreaLogic.TimeSurvival;
 [Serializable]
 [AllowedOn(typeof(BlueprintArea))]
 [TypeId("22e6394dca698394997be7c45bbda818")]
-public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnEndHandler, IHashable
+public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnEndHandler, ITurnEndHandler, IHashable
 {
 	public class SavableData : IEntityFactComponentSavableData, IHashable
 	{
@@ -79,6 +81,8 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 
 	public int m_BuffDuration = 1;
 
+	private int LastWaveRound;
+
 	private bool m_FirstUnitTurnInterrupted;
 
 	private List<BaseUnitEntity> m_UnitsSpawnedThisRound = new List<BaseUnitEntity>();
@@ -97,6 +101,24 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 
 	public void HandleRoundStart(bool isTurnBased)
 	{
+		StartSurvivalRound();
+	}
+
+	public void HandleUnitEndTurn(bool isTurnBased)
+	{
+		if (isTurnBased && !CheckEnemiesAlive())
+		{
+			StartSurvivalRound();
+		}
+	}
+
+	private bool CheckEnemiesAlive()
+	{
+		return !Game.Instance.State.AllUnits.Where((AbstractUnitEntity u) => !u.IsPlayerFaction && u.LifeState.IsConscious).Empty();
+	}
+
+	private void StartSurvivalRound()
+	{
 		m_FirstUnitTurnInterrupted = false;
 		m_UnitsSpawnedThisRound.Clear();
 		m_LastUnitSpawnedIndex = 0;
@@ -110,6 +132,14 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 			if (RoundsLeft <= 0)
 			{
 				FinishCombat(savableData);
+			}
+			if (UnlimitedTime && !CheckEnemiesAlive() && CurrentRound > LastWaveRound)
+			{
+				FinishCombat(savableData);
+			}
+			if (UnlimitedTime && !CheckEnemiesAlive() && CurrentRound <= LastWaveRound)
+			{
+				StartSurvivalRound();
 			}
 		}
 	}
@@ -195,70 +225,66 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 			{
 				break;
 			}
-			List<EntityViewBase> notInterferingSpawners = GetNotInterferingSpawners(item.SpawnersList.SpawnersPool, spawnShift);
-			if (notInterferingSpawners.Count <= 0)
+			HashSet<GraphNode> hashSet = new HashSet<GraphNode>();
+			using (PathDisposable<ShipPath> pathDisposable = Game.Instance.Player.PlayerShip?.Navigation.FindReachableTiles_Blocking(true))
 			{
-				break;
+				ShipPath path = pathDisposable.Path;
+				hashSet.AddRange(path.Result.Keys);
 			}
-			for (int i = 0; i < item.SpawnAttempts; i++)
+			NavGraph graph = hashSet.First().Graph;
+			List<EntityViewBase> list = new List<EntityViewBase>();
+			foreach (EntityReference item2 in item.SpawnersList.SpawnersPool)
 			{
-				int index = PFStatefulRandom.SpaceCombat.Range(0, notInterferingSpawners.Count);
-				int index2 = PFStatefulRandom.SpaceCombat.Range(0, unitsList.Count);
-				BlueprintUnit unit = unitsList[index2];
-				Transform viewTransform = notInterferingSpawners[index].ViewTransform;
-				BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(unit, viewTransform.position + spawnShift, viewTransform.rotation, Game.Instance.State.LoadedAreaState.MainState);
-				m_UnitsSpawnedThisRound.Add(baseUnitEntity);
-				if (StartingBuff != null)
-				{
-					BuffDuration duration = ((m_BuffDuration == 1) ? new BuffDuration(null, BuffEndCondition.TurnEndOrCombatEnd) : new BuffDuration(new Rounds(m_BuffDuration), BuffEndCondition.CombatEnd));
-					baseUnitEntity.Buffs.Add(StartingBuff, duration);
-				}
-			}
-		}
-	}
-
-	private List<EntityViewBase> GetNotInterferingSpawners(List<EntityReference> spawners, Vector3 spawnShift)
-	{
-		List<EntityViewBase> list = new List<EntityViewBase>();
-		HashSet<GraphNode> hashSet = new HashSet<GraphNode>();
-		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
-		using (PathDisposable<ShipPath> pathDisposable = playerShip?.Navigation.FindReachableTiles_Blocking(true))
-		{
-			ShipPath path = pathDisposable.Path;
-			hashSet.AddRange(path.Result.Keys);
-		}
-		playerShip?.Navigation.ClearLastPathParameters();
-		NavGraph graph = hashSet.First().Graph;
-		foreach (EntityReference spawner in spawners)
-		{
-			IEntityViewBase entityViewBase = spawner.FindView();
-			if (entityViewBase != null)
-			{
-				Vector3 position = entityViewBase.ViewTransform.position + spawnShift;
-				GraphNode node = graph.GetNearest(position).node;
-				if (CanStandAndNoOneAround(node, new IntRect(-2, -2, 2, 2)) && !hashSet.Contains(node))
+				IEntityViewBase entityViewBase = item2.FindView();
+				if (entityViewBase != null)
 				{
 					list.Add((EntityViewBase)entityViewBase);
 				}
 			}
-		}
-		return list;
-	}
-
-	private bool CanStandAndNoOneAround(GraphNode centerNode, IntRect sizeRect)
-	{
-		if (!centerNode.Walkable)
-		{
-			return false;
-		}
-		foreach (CustomGridNodeBase node in GridAreaHelper.GetNodes(centerNode, sizeRect))
-		{
-			if (WarhammerBlockManager.Instance.NodeContainsAny(node))
+			int num = 0;
+			int count = list.Count;
+			for (int i = 0; i < count; i++)
 			{
-				return false;
+				if (num >= item.SpawnAttempts)
+				{
+					break;
+				}
+				int index = PFStatefulRandom.SpaceCombat.Range(0, list.Count);
+				int index2 = PFStatefulRandom.SpaceCombat.Range(0, unitsList.Count);
+				BlueprintUnit blueprintUnit = unitsList[index2];
+				_ = list[index];
+				Transform viewTransform = list[index].ViewTransform;
+				Vector3 position = viewTransform.position + spawnShift;
+				GraphNode node = graph.GetNearest(position).node;
+				list.RemoveAt(index);
+				if (!hashSet.Contains(node) && CanStandHere(node, SizePathfindingHelper.GetRectForSize(blueprintUnit.Size)))
+				{
+					BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(blueprintUnit, viewTransform.position + spawnShift, viewTransform.rotation, Game.Instance.State.LoadedAreaState.MainState);
+					num++;
+					m_UnitsSpawnedThisRound.Add(baseUnitEntity);
+					if (StartingBuff != null)
+					{
+						BuffDuration duration = ((m_BuffDuration == 1) ? new BuffDuration(null, BuffEndCondition.TurnEndOrCombatEnd) : new BuffDuration(new Rounds(m_BuffDuration), BuffEndCondition.CombatEnd));
+						baseUnitEntity.Buffs.Add(StartingBuff, duration);
+					}
+				}
 			}
 		}
-		return true;
+	}
+
+	private bool CanStandHere(GraphNode centerNode, IntRect sizeRect)
+	{
+		NodeList nodes = GridAreaHelper.GetNodes(centerNode, sizeRect);
+		bool result = true;
+		foreach (CustomGridNodeBase item in nodes)
+		{
+			if (item == null || !item.Walkable || WarhammerBlockManager.Instance.NodeContainsAny(item) || !UnitHelper.IsNodeConnected(item, nodes))
+			{
+				result = false;
+				break;
+			}
+		}
+		return result;
 	}
 
 	private void MoveSpawners(Vector3 playerPosition, Vector3 prevPlayerPosition)
@@ -308,6 +334,11 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		SavableData savableData = RequestSavableData<SavableData>();
 		RoundsLeft = RoundsToSurvive - savableData.RoundsSurvived;
 		CurrentRound = savableData.RoundsSurvived + 1;
+		LastWaveRound = -1;
+		foreach (SpawnData spawnDatum in spawnData)
+		{
+			LastWaveRound = Mathf.Max(LastWaveRound, spawnDatum.RoundTo);
+		}
 	}
 
 	public override Hash128 GetHash128()

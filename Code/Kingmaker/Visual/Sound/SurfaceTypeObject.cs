@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
-using Kingmaker.Blueprints.Area;
 using Kingmaker.Visual.HitSystem;
 using Owlcat.Runtime.Core.Registry;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Kingmaker.Visual.Sound;
 
@@ -20,16 +17,23 @@ public class SurfaceTypeObject : RegisteredBehaviour
 	[HideInInspector]
 	private TextAsset m_SoundCacheFile;
 
-	[SerializeField]
-	private List<SceneReference> m_AdditionalAllowedScenes;
-
 	private byte[] m_RuntimeData;
 
 	public Bounds Bounds;
 
 	[SerializeField]
+	[Tooltip("Allows editing of Y extent")]
+	private bool m_UnboundY;
+
+	[SerializeField]
+	[Tooltip("Will return SoundSurface only for objects within bounds")]
+	private bool m_UseOnlyInBounds;
+
+	[SerializeField]
 	[Range(0f, 0.2f)]
 	private float m_RaycastThickness;
+
+	public bool UseOnlyInBounds => m_UseOnlyInBounds;
 
 	public int Width { get; private set; }
 
@@ -51,19 +55,6 @@ public class SurfaceTypeObject : RegisteredBehaviour
 		return null;
 	}
 
-	public static string GetSurfaceSoundSwitch(Vector3 worldPos)
-	{
-		foreach (SurfaceTypeObject item in ObjectRegistry<SurfaceTypeObject>.Instance)
-		{
-			if (item.TryGetSurfaceType(worldPos, out var surfaceType))
-			{
-				SurfaceType surfaceType2 = (SurfaceType)surfaceType;
-				return surfaceType2.ToString();
-			}
-		}
-		return null;
-	}
-
 	public bool TryGetSurfaceType(Vector3 worldPos, out byte surfaceType)
 	{
 		surfaceType = 0;
@@ -71,7 +62,7 @@ public class SurfaceTypeObject : RegisteredBehaviour
 		{
 			return false;
 		}
-		if (!GetCoordinates(worldPos, out var x, out var z))
+		if (!TryGetCoordinates(worldPos, out var x, out var z))
 		{
 			return false;
 		}
@@ -89,10 +80,14 @@ public class SurfaceTypeObject : RegisteredBehaviour
 		return m_RuntimeData[index];
 	}
 
-	public bool GetCoordinates(Vector3 worldPos, out int x, out int z)
+	public bool TryGetCoordinates(Vector3 worldPos, out int x, out int z)
 	{
 		x = (int)((worldPos.x - Bounds.min.x) / 0.2f);
 		z = (int)((worldPos.z - Bounds.min.z) / 0.2f);
+		if (m_UseOnlyInBounds && !Bounds.Contains(worldPos))
+		{
+			return false;
+		}
 		if (x >= 0)
 		{
 			return z >= 0;
@@ -103,21 +98,6 @@ public class SurfaceTypeObject : RegisteredBehaviour
 	public int GetIndex(int x, int z)
 	{
 		return x + Width * z;
-	}
-
-	public bool AllowedScene(Scene scene)
-	{
-		if (m_AdditionalAllowedScenes != null)
-		{
-			foreach (SceneReference additionalAllowedScene in m_AdditionalAllowedScenes)
-			{
-				if (additionalAllowedScene.SceneName.Equals(scene.name))
-				{
-					return true;
-				}
-			}
-		}
-		return base.gameObject.scene == scene;
 	}
 
 	protected override void OnEnabled()
@@ -148,6 +128,9 @@ public class SurfaceTypeObject : RegisteredBehaviour
 
 	private void OnValidate()
 	{
-		Bounds.extents = new Vector3(Bounds.extents.x, Math.Max(Bounds.extents.x, Bounds.extents.z), Bounds.extents.z);
+		if (!m_UnboundY)
+		{
+			Bounds.extents = new Vector3(Bounds.extents.x, Math.Max(Bounds.extents.x, Bounds.extents.z), Bounds.extents.z);
+		}
 	}
 }

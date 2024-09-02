@@ -6,9 +6,11 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Items;
 using Kingmaker.Networking;
+using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -23,11 +25,13 @@ using Owlcat.Runtime.UniRx;
 using Photon.Realtime;
 using UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat;
 using Warhammer.SpaceCombat.Blueprints.Slots;
+using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar;
 
-public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IHoverActionBarSlotHandler, ISubscriber, IAbilityTargetSelectionUIHandler, INetPingActionBarAbility, INetLobbyPlayersHandler, INetRoleSetHandler
+public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IHoverActionBarSlotHandler, ISubscriber, IAbilityTargetSelectionUIHandler, INetPingActionBarAbility, INetLobbyPlayersHandler, INetRoleSetHandler, IWeaponSlotHandler
 {
 	public readonly ReactiveProperty<Sprite> Icon = new ReactiveProperty<Sprite>();
 
@@ -230,14 +234,19 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public void OnMainClick()
 	{
-		if (MechanicActionBarSlot == null || PhotonManager.Ping.CheckPingCoop(delegate
+		if (MechanicActionBarSlot == null)
 		{
-			if (!string.IsNullOrWhiteSpace(MechanicActionBarSlot.KeyName))
+			return;
+		}
+		if (PhotonManager.NetGame.CurrentState == NetGame.State.Playing && !MechanicActionBarSlot.Unit.IsMyNetRole())
+		{
+			PhotonManager.Ping.PressPing(delegate
 			{
-				PhotonManager.Ping.PingActionBarAbility(MechanicActionBarSlot.KeyName, MechanicActionBarSlot.Unit, Index, WeaponSlotType);
-			}
-		}))
-		{
+				if (!string.IsNullOrWhiteSpace(MechanicActionBarSlot.KeyName))
+				{
+					PhotonManager.Ping.PingActionBarAbility(MechanicActionBarSlot.KeyName, MechanicActionBarSlot.Unit, Index, WeaponSlotType);
+				}
+			});
 			return;
 		}
 		MechanicActionBarSlot.PlaySound();
@@ -326,7 +335,7 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		HandleConvertRequest(CreateArsenalSlot);
 		MechanicActionBarArsenalSlot CreateArsenalSlot(AbilityData data)
 		{
-			return new MechanicActionBarArsenalSlot(this, variantsShipWeaponSlot.WeaponSlot, CloseConvert)
+			return new MechanicActionBarArsenalSlot(variantsShipWeaponSlot.WeaponSlot, CloseConvert)
 			{
 				Spell = data,
 				Unit = variantsShipWeaponSlot.Unit
@@ -519,5 +528,18 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			m_OriginIcon = Icon.Value;
 		}
 		Icon.Value = icon;
+	}
+
+	void IWeaponSlotHandler.HandleActiveWeaponIndexChanged(WeaponSlot weaponSlot)
+	{
+		if (MechanicActionBarSlot is MechanicActionBarShipWeaponSlot mechanicActionBarShipWeaponSlot && mechanicActionBarShipWeaponSlot.WeaponSlot == weaponSlot)
+		{
+			BaseUnitEntity unit = MechanicActionBarSlot.Unit;
+			MechanicActionBarShipWeaponSlot mechanicSlot = new MechanicActionBarShipWeaponSlot(weaponSlot, unit)
+			{
+				Ability = weaponSlot.ActiveAbility.Data
+			};
+			SetMechanicSlot(mechanicSlot);
+		}
 	}
 }

@@ -6,6 +6,7 @@ using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Interaction;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using StateHasher.Core;
 using UnityEngine;

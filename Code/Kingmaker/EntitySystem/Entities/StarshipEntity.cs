@@ -54,8 +54,6 @@ public class StarshipEntity : BaseUnitEntity, PartStarship.IOwner, IEntityPartOw
 
 	public override PartUnitState State => GetRequired<PartUnitState>();
 
-	public override PartUnitAlignment Alignment => GetRequired<PartUnitAlignment>();
-
 	public override PartUnitBrain Brain => GetRequired<PartUnitBrain>();
 
 	public override PartUnitAsks Asks => GetRequired<PartUnitAsks>();
@@ -67,6 +65,8 @@ public class StarshipEntity : BaseUnitEntity, PartStarship.IOwner, IEntityPartOw
 	public override PartVision Vision => GetRequired<PartVision>();
 
 	public override PartUnitStealth Stealth => GetRequired<PartUnitStealth>();
+
+	public override PartUnitAlignment Alignment => GetRequired<PartUnitAlignment>();
 
 	public override PartUnitCombatState CombatState => GetRequired<PartUnitCombatState>();
 
@@ -118,7 +118,6 @@ public class StarshipEntity : BaseUnitEntity, PartStarship.IOwner, IEntityPartOw
 	{
 		base.OnCreateParts();
 		GetOrCreate<PartUnitViewSettings>();
-		GetOrCreate<PartUnitAlignment>();
 		GetOrCreate<PartUnitCommands>();
 		GetOrCreate<PartUnitCombatState>();
 		GetOrCreate<PartFaction>();

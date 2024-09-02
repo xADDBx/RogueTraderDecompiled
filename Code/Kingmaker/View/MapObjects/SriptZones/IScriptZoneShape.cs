@@ -8,9 +8,9 @@ public interface IScriptZoneShape
 {
 	NodeList CoveredNodes { get; }
 
-	bool Contains(Vector3 point, IntRect size = default(IntRect));
+	bool Contains(Vector3 point, IntRect size = default(IntRect), Vector3 forward = default(Vector3));
 
-	bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect));
+	bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3));
 
 	Bounds GetBounds();
 

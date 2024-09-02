@@ -53,14 +53,24 @@ public class FogOfWarFeature : ScriptableRendererFeature
 
 	private int m_LastFrameId;
 
-	private Texture2D m_DefaultFogOfWarMask;
+	private static Texture2D s_DefaultFogOfWarMask;
 
 	[SerializeField]
 	private FogOfWarSettings m_Settings;
 
 	public FogOfWarSettings Settings => m_Settings;
 
-	public Texture2D DefaultFogOfWarMask => m_DefaultFogOfWarMask;
+	public static Texture2D DefaultFogOfWarMask
+	{
+		get
+		{
+			if (s_DefaultFogOfWarMask == null)
+			{
+				InitDefaultFowTexture();
+			}
+			return s_DefaultFogOfWarMask;
+		}
+	}
 
 	public Mesh QuadMesh
 	{
@@ -114,10 +124,14 @@ public class FogOfWarFeature : ScriptableRendererFeature
 		m_CleanupPass = new FogOfWarCleanupPass(RenderPassEvent.AfterRendering);
 		m_PostProcessPass = new FogOfWarPostProcessPass(RenderPassEvent.BeforeRenderingTransparents, m_ScreenSpaceMat);
 		m_LastFrameId = -1;
-		m_DefaultFogOfWarMask = new Texture2D(1, 1, TextureFormat.ARGB32, mipChain: false);
-		m_DefaultFogOfWarMask.name = "DefaultFowMask";
-		m_DefaultFogOfWarMask.SetPixel(0, 0, new Color(1f, 1f, 0f, 0f));
-		m_DefaultFogOfWarMask.Apply();
+	}
+
+	private static void InitDefaultFowTexture()
+	{
+		s_DefaultFogOfWarMask = new Texture2D(1, 1, TextureFormat.ARGB32, mipChain: false);
+		s_DefaultFogOfWarMask.name = "DefaultFowMask";
+		s_DefaultFogOfWarMask.SetPixel(0, 0, new Color(1f, 1f, 0f, 0f));
+		s_DefaultFogOfWarMask.Apply();
 	}
 
 	private void CreateQuadMesh()
@@ -156,10 +170,10 @@ public class FogOfWarFeature : ScriptableRendererFeature
 		{
 			UnityEngine.Object.DestroyImmediate(m_QuadMesh);
 		}
-		if (m_DefaultFogOfWarMask != null)
+		if (s_DefaultFogOfWarMask != null)
 		{
-			UnityEngine.Object.DestroyImmediate(m_DefaultFogOfWarMask);
-			m_DefaultFogOfWarMask = null;
+			UnityEngine.Object.DestroyImmediate(s_DefaultFogOfWarMask);
+			s_DefaultFogOfWarMask = null;
 		}
 	}
 }

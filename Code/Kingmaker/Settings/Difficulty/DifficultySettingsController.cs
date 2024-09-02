@@ -15,6 +15,10 @@ public class DifficultySettingsController
 	public DifficultySettingsController()
 	{
 		m_Settings = SettingsRoot.Difficulty;
+		m_Settings.GameDifficulty.OnValueChanged += delegate
+		{
+			OnSettingChanged();
+		};
 		m_Settings.RespecAllowed.OnValueChanged += delegate
 		{
 			OnSettingChanged();
@@ -28,6 +32,22 @@ public class DifficultySettingsController
 			OnSettingChanged();
 		};
 		m_Settings.CombatEncountersCapacity.OnValueChanged += delegate
+		{
+			OnSettingChanged();
+		};
+		m_Settings.SpaceCombatDifficulty.OnValueChanged += delegate
+		{
+			OnSettingChanged();
+		};
+		m_Settings.EnemyHitPointsPercentModifier.OnValueChanged += delegate
+		{
+			OnSettingChanged();
+		};
+		m_Settings.AllyResolveModifier.OnValueChanged += delegate
+		{
+			OnSettingChanged();
+		};
+		m_Settings.NPCAttributesBaseValuePercentModifier.OnValueChanged += delegate
 		{
 			OnSettingChanged();
 		};

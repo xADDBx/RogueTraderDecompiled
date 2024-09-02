@@ -72,6 +72,8 @@ public class UnitAnimationActionHandle : AnimationActionHandle, ICloneable
 
 	public bool CastInOffhand { get; set; }
 
+	public bool IsBladeDance { get; set; }
+
 	public UnitAnimationActionDeath.DeathType DeathType { get; set; }
 
 	public bool IsPrecastFinished { get; set; }

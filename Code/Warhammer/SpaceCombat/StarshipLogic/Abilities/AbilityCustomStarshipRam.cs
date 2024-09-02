@@ -155,7 +155,6 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 		int diagonalsCount = combatState.LastDiagonalCount + path.DiagonalsCount();
 		UnitMoveToProperParams cmd = new UnitMoveToProperParams(path, straightMoveLength, diagonalsCount, pathLen);
 		UnitCommandHandle moveCmdHandle = starship.Commands.AddToQueueFirst(cmd);
-		Vector3 startPosition = Vector3.zero;
 		bool onHitLaunched = false;
 		while (!moveCmdHandle.IsFinished)
 		{
@@ -166,7 +165,6 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 			}
 			if (magnitude <= (1f - visualCellPenetration) * GraphParamsMechanicsCache.GridCellSize)
 			{
-				startPosition = starship.Position;
 				starship.View.StopMoving();
 			}
 			yield return null;
@@ -187,16 +185,18 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 				sourceItem.Charges = 0;
 			}
 		}
+		Vector3 startPosition = starship.Position;
 		Vector3 endPosition = grapNodes[targetNode].Parent.Node.Vector3Position;
+		float fallBackTimeWithSpeedUp = fallBackTime / Game.CombatAnimSpeedUp;
 		double startTime = Game.Instance.TimeController.GameTime.TotalMilliseconds;
 		while (true)
 		{
 			float num = (float)(Game.Instance.TimeController.GameTime.TotalMilliseconds - startTime) / 1000f;
-			if (num >= fallBackTime)
+			if (num >= fallBackTimeWithSpeedUp)
 			{
 				break;
 			}
-			float num2 = num / fallBackTime;
+			float num2 = num / fallBackTimeWithSpeedUp;
 			starship.Position = Vector3.Lerp(startPosition, endPosition, Mathf.Sin(MathF.PI / 180f * num2 * 90f));
 			yield return null;
 		}

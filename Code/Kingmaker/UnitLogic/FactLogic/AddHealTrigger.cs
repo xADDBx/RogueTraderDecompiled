@@ -25,6 +25,8 @@ public class AddHealTrigger : UnitFactComponentDelegate, ITargetRulebookHandler<
 
 	public bool OnHealEnergyDrain;
 
+	public bool EvenOnZeroHeal;
+
 	private void RunAction(RulebookEvent evt)
 	{
 		base.Fact.RunActionInContext(Action);
@@ -43,7 +45,7 @@ public class AddHealTrigger : UnitFactComponentDelegate, ITargetRulebookHandler<
 
 	public void OnEventDidTrigger(RuleHealDamage evt)
 	{
-		if (OnHealDamage && evt.Value > 0)
+		if (OnHealDamage && (evt.Value > 0 || EvenOnZeroHeal))
 		{
 			RunAction(evt);
 		}

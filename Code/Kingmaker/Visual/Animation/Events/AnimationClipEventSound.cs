@@ -41,6 +41,10 @@ public class AnimationClipEventSound : AnimationClipEvent
 
 	public float Volume => m_Volume;
 
+	public AnimationClipEventSound()
+	{
+	}
+
 	public AnimationClipEventSound(float time)
 		: this(time, isLooped: false, null, null, 1f)
 	{

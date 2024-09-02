@@ -3,6 +3,7 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -33,9 +34,23 @@ public class InteractionBarkPart : InteractionPart<InteractionBarkSettings>, IHa
 
 	protected override void OnInteract(BaseUnitEntity user)
 	{
-		if (!(base.Settings.Bark == null))
+		if (base.Settings.Bark == null)
 		{
-			BarkPlayer.Bark(base.Settings.ShowOnUser ? ((MechanicEntity)user) : ((MechanicEntity)base.Owner), base.Settings.Bark.String, -1f, playVoiceOver: false, user);
+			return;
+		}
+		BarkPlayer.Bark(base.Settings.ShowOnUser ? ((MechanicEntity)user) : ((MechanicEntity)base.Owner), base.Settings.Bark.String, -1f, playVoiceOver: false, user);
+		ActionsHolder actionsHolder = base.Settings.BarkActions?.Get();
+		if (actionsHolder == null || !actionsHolder.Actions.HasActions || (base.Settings.RunActionsOnce && base.Settings.ActionsRan))
+		{
+			return;
+		}
+		using (ContextData<MechanicEntityData>.Request().Setup(base.Owner))
+		{
+			using (ContextData<InteractingUnitData>.Request().Setup(user))
+			{
+				actionsHolder.Actions.Run();
+				base.Settings.ActionsRan = true;
+			}
 		}
 	}
 

@@ -1,8 +1,8 @@
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.SkillsAndWeapons.Weapons;
-using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
+using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
 
@@ -10,22 +10,16 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 
 public class TooltipBrickWeaponSetVM : TooltipBaseBrickVM
 {
-	public HandSlot HandSlot;
+	public readonly ItemEntityWeapon Weapon;
 
-	public bool IsPrimary;
-
-	public ItemEntityWeapon Weapon;
-
-	public EquipSlotVM EquipSlot;
+	public readonly WeaponSlotVM WeaponSlotVM;
 
 	public readonly AutoDisposingList<CharInfoWeaponSetAbilityVM> Abilities = new AutoDisposingList<CharInfoWeaponSetAbilityVM>();
 
-	public TooltipBrickWeaponSetVM(HandSlot handSlot, bool isPrimary)
+	public TooltipBrickWeaponSetVM(WeaponSlot weaponSlot)
 	{
-		HandSlot = handSlot;
-		IsPrimary = isPrimary;
-		AddDisposable(EquipSlot = new EquipSlotVM(EquipSlotType.PrimaryHand, handSlot));
-		Weapon = (isPrimary ? HandSlot.HandsEquipmentSet.PrimaryHand.Weapon : HandSlot.HandsEquipmentSet.SecondaryHand.Weapon);
+		Weapon = weaponSlot.Weapon;
+		WeaponSlotVM = new WeaponSlotVM(weaponSlot);
 		foreach (WeaponAbility weaponAbility in Weapon.Blueprint.WeaponAbilities)
 		{
 			CharInfoWeaponSetAbilityVM charInfoWeaponSetAbilityVM = new CharInfoWeaponSetAbilityVM(weaponAbility.Ability, Weapon.Blueprint, Weapon.Owner);

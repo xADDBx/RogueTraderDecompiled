@@ -74,7 +74,7 @@ public class ColonyProjectsConsoleView : ColonyProjectsBaseView
 		AddDisposable(m_ConsoleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
 			ShowPage();
-		}, 8), UIStrings.Instance.CommonTexts.Select));
+		}, 8), UIStrings.Instance.CommonTexts.Information));
 		AddDisposable(m_ConsoleHintsWidget.BindHint(m_PageInputLayer.AddButton(delegate
 		{
 			ClosePage();

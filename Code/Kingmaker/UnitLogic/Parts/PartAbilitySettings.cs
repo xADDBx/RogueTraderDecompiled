@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class PartAbilitySettings : UnitPart, IInterruptTurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnEndHandler, IHashable
+public class PartAbilitySettings : BaseUnitPart, IInterruptTurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnEndHandler, IHashable
 {
 	[JsonProperty]
 	public RestrictionCalculator InterruptionAbilityRestrictions;

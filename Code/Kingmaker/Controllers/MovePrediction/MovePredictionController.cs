@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.MovePrediction;
 
-public class MovePredictionController : IControllerTick, IController, IControllerDisable
+public class MovePredictionController : IControllerTick, IController, IControllerEnable, IControllerDisable
 {
 	public struct Parameters
 	{
@@ -166,7 +166,7 @@ public class MovePredictionController : IControllerTick, IController, IControlle
 		{
 			return;
 		}
-		if (Game.Instance.Player.IsInCombat)
+		if (!GamepadInputController.CanProcessInput)
 		{
 			Reset();
 			return;
@@ -183,6 +183,10 @@ public class MovePredictionController : IControllerTick, IController, IControlle
 				MarkAsSimulated(command);
 			}
 		}
+	}
+
+	void IControllerEnable.OnEnable()
+	{
 	}
 
 	void IControllerDisable.OnDisable()

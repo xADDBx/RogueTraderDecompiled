@@ -94,21 +94,55 @@ public class RulebookSubscribersList<TEvent> : SubscribersList<IRulebookHandler<
 		{
 			using (subscriptionProxy.RequestEventContext())
 			{
-				((IRulebookHandler<TEvent>)subscriptionProxy.GetSubscriber())?.OnEventAboutToTrigger(evt);
+				ExecuteOnEventAboutToTrigger(evt, subscriptionProxy.GetSubscriber(), handler);
 			}
 		}
-		(handler as IRulebookHandler<TEvent>)?.OnEventAboutToTrigger(evt);
+		ExecuteOnEventAboutToTrigger(evt, handler);
 	}
 
 	private static void OnEventDidTrigger(TEvent evt, object handler)
 	{
-		if (handler is ISubscriptionProxy subscriptionProxy && subscriptionProxy.GetSubscriber() is IRulebookHandler<TEvent>)
+		if (handler is ISubscriptionProxy subscriptionProxy)
 		{
 			using (subscriptionProxy.RequestEventContext())
 			{
-				((IRulebookHandler<TEvent>)subscriptionProxy.GetSubscriber())?.OnEventDidTrigger(evt);
+				ExecuteOnEventDidTrigger(evt, subscriptionProxy.GetSubscriber(), handler);
 			}
 		}
-		(handler as IRulebookHandler<TEvent>)?.OnEventDidTrigger(evt);
+		ExecuteOnEventDidTrigger(evt, handler);
+	}
+
+	private static void ExecuteOnEventAboutToTrigger(TEvent evt, object eventTarget, object eventSubscriber = null)
+	{
+		if (!(eventTarget is IRulebookHandler<TEvent> rulebookHandler))
+		{
+			return;
+		}
+		if (eventSubscriber == null)
+		{
+			eventSubscriber = eventTarget;
+		}
+		using EventBusLoopGuard<TEvent> eventBusLoopGuard = EventBusLoopGuard<TEvent>.Request(eventSubscriber);
+		if (!eventBusLoopGuard.Blocked)
+		{
+			rulebookHandler.OnEventAboutToTrigger(evt);
+		}
+	}
+
+	private static void ExecuteOnEventDidTrigger(TEvent evt, object eventTarget, object eventSubscriber = null)
+	{
+		if (!(eventTarget is IRulebookHandler<TEvent> rulebookHandler))
+		{
+			return;
+		}
+		if (eventSubscriber == null)
+		{
+			eventSubscriber = eventTarget;
+		}
+		using EventBusLoopGuard<TEvent> eventBusLoopGuard = EventBusLoopGuard<TEvent>.Request(eventSubscriber);
+		if (!eventBusLoopGuard.Blocked)
+		{
+			rulebookHandler.OnEventDidTrigger(evt);
+		}
 	}
 }

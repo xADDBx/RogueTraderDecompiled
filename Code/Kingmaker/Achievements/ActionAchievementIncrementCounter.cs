@@ -19,11 +19,14 @@ public class ActionAchievementIncrementCounter : GameAction
 
 	public override string GetCaption()
 	{
-		return "Increment achievement counter: " + Achievement.name;
+		return "Increment achievement counter: " + Achievement?.name;
 	}
 
 	protected override void RunAction()
 	{
-		Game.Instance.Player.Achievements.IncrementCounter(Achievement);
+		if (Achievement != null)
+		{
+			Game.Instance.Player.Achievements.IncrementCounter(Achievement);
+		}
 	}
 }

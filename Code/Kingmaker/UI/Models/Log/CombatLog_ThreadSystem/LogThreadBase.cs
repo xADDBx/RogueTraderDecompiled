@@ -108,7 +108,7 @@ public abstract class LogThreadBase : BaseDisposable
 		}
 	}
 
-	protected static IEnumerable<ITooltipBrick> GetDamageModifiers(DamageData damageData, int nestedLevel, bool minMax, bool common)
+	public static IEnumerable<ITooltipBrick> GetDamageModifiers(DamageData damageData, int nestedLevel, bool minMax, bool common)
 	{
 		TooltipBrickStrings s = Strings.TooltipBrickStrings;
 		List<Modifier> copyList;
@@ -300,14 +300,14 @@ public abstract class LogThreadBase : BaseDisposable
 
 	protected static IEnumerable<ITooltipBrick> ShowReroll(RuleRollChance roll, int chance, bool isTargetHitIcon = false, bool isProtectionIcon = false)
 	{
-		if (roll.RerollChance.HasValue)
+		if (roll.AnyRerollChance.HasValue)
 		{
 			int num = roll.RollHistory[0];
 			yield return new TooltipBrickTriggeredAuto(Strings.TooltipBrickStrings.TriggeredReroll.Text, null, num <= chance);
 			yield return new TooltipBrickTextValue(roll.RerollSourceFactName, null, 2);
 			for (int i = roll.RollHistory.Count - 2; i >= 0; i--)
 			{
-				yield return new TooltipBrickChance((i == 0) ? Strings.TooltipBrickStrings.InitialRoll.Text : Strings.TooltipBrickStrings.CheckRoll.Text, (i == 0) ? chance : roll.RerollChance.Value, roll.RollHistory[i], 2, isResultValue: false, null, isProtectionIcon, isTargetHitIcon);
+				yield return new TooltipBrickChance((i == 0) ? Strings.TooltipBrickStrings.InitialRoll.Text : Strings.TooltipBrickStrings.CheckRoll.Text, (i == 0) ? chance : roll.AnyRerollChance.Value, roll.RollHistory[i], 2, isResultValue: false, null, isProtectionIcon, isTargetHitIcon);
 			}
 		}
 	}

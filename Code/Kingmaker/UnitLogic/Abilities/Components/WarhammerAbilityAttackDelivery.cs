@@ -231,7 +231,8 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 		CustomGridNodeBase customGridNodeBase = (UseBestShootingPosition ? LosCalculations.GetBestShootingNode(context.Caster.CurrentUnwalkableNode, context.Caster.SizeRect, nearestNodeXZUnwalkable, target.SizeRect) : context.Caster.CurrentUnwalkableNode);
 		CustomGridNodeBase actualCastNode = AoEPatternHelper.GetActualCastNode(context.Caster, customGridNodeBase.Vector3Position, target.Point);
 		AbilityAoEPatternAttack abilityAoEPatternAttack = new AbilityAoEPatternAttack(context, this, PartAbilityPatternSettings.GetAbilityPatternSettings(context.Ability, m_PatternSettings), customGridNodeBase, actualCastNode);
-		TrySpawnAreaEffect(context, target);
+		Vector3? vector = abilityAoEPatternAttack.Context.Pattern.ApplicationNode?.Vector3Position;
+		TrySpawnAreaEffect(context, vector.HasValue ? ((TargetWrapper)vector.GetValueOrDefault()) : target);
 		if (m_DisableWeaponAttackDamage)
 		{
 			abilityAoEPatternAttack.DisableWeaponAttackDamage();

@@ -1037,15 +1037,15 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 			StopCoroutine(m_ScrollRoutine);
 		}
 		m_ScrollRoutineEndPos = position;
-		Vector3 position2 = base.transform.position;
 		if (maxTime == 0f && speed > 0f)
 		{
 			targetTime = Game.Instance.SynchronizedDataController.GetMinScrollTimeBySpeed(position, speed);
 		}
 		else
 		{
-			targetTime = CalculateScrollTime(position2, position, maxTime, maxSpeed, speed);
+			targetTime = Game.Instance.SynchronizedDataController.GetMinScrollTimeBySpeed(position, speed, maxTime, maxSpeed);
 		}
+		Vector3 position2 = base.transform.position;
 		if (curve == null)
 		{
 			curve = AnimationCurveUtility.LinearAnimationCurve;
@@ -1161,7 +1161,6 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 		base.transform.DOKill();
 		m_RotationByMouse = false;
 		m_RotationByKeyboard = false;
-		float y = base.transform.rotation.eulerAngles.y;
 		if (curve == null)
 		{
 			curve = AnimationCurveUtility.LinearAnimationCurve;
@@ -1172,13 +1171,14 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 		}
 		else
 		{
-			targetTime = CalculateRotateTime(y, toAngle, maxTime, speed);
+			targetTime = Game.Instance.SynchronizedDataController.GetMinRotateTimeBySpeed(toAngle, speed, maxTime);
 		}
 		if (targetTime == 0f)
 		{
 			m_RotateRoutine = null;
 			return m_RotateRoutine;
 		}
+		float y = base.transform.rotation.eulerAngles.y;
 		m_RotateRoutine = StartCoroutine(RotateToRoutine(y, toAngle, targetTime, curve));
 		return m_RotateRoutine;
 	}
@@ -1498,13 +1498,13 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 
 	public void OnGameModeStart(GameModeType gameMode)
 	{
-		Game.Instance.CursorController.ClearCursor();
+		Game.Instance.CursorController.ClearCursor(force: true);
 		m_BaseMousePoint = null;
 	}
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
-		Game.Instance.CursorController.ClearCursor();
+		Game.Instance.CursorController.ClearCursor(force: true);
 		m_BaseMousePoint = null;
 	}
 

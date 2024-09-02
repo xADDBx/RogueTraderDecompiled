@@ -90,10 +90,9 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 			return ruleCalculateDamage;
 		}
 		AbilityData ability = base.PropertyContext.Ability ?? (base.PropertyContext.MechanicContext as AbilityExecutionContext)?.Ability;
-		return Rulebook.Trigger(new RuleCalculateDamage(initiator, target, ability)
-		{
-			FakeRule = true
-		});
+		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability);
+		calculateDamageParams.FakeRule = true;
+		return calculateDamageParams.Trigger();
 	}
 
 	private RuleCalculateStatsArmor GetTriggeredArmorRule(MechanicEntity initiator, MechanicEntity target)
@@ -111,10 +110,9 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 			return null;
 		}
 		AbilityData ability = base.PropertyContext.Ability ?? (base.PropertyContext.MechanicContext as AbilityExecutionContext)?.Ability;
-		return Rulebook.Trigger(new RuleCalculateDamage(initiator, target, ability)
-		{
-			FakeRule = true
-		}).TargetArmorStatsRule;
+		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability);
+		calculateDamageParams.FakeRule = true;
+		return calculateDamageParams.Trigger().TargetArmorStatsRule;
 	}
 
 	private static int GetModifiersValue(IEnumerable<Modifier> modifiers)

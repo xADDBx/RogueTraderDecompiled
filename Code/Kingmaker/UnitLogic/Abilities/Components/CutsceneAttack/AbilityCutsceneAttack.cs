@@ -150,7 +150,7 @@ public class AbilityCutsceneAttack : AbilityCustomLogic
 	private void PlayDamageFX(AbilityExecutionContext context, TargetWrapper target, [CanBeNull] Projectile projectile)
 	{
 		DamageData baseDamageOverride = (UseCustomDamageForFX ? DamageForFX.CreateDamage() : null);
-		DamageData resultDamage = Rulebook.Trigger(new RuleCalculateDamage(context.Caster, target.Entity, context.Ability, null, baseDamageOverride)).ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(context.Caster, target.Entity, context.Ability, null, baseDamageOverride).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = resultDamage.AverageValueWithoutArmorReduction;
 		DamageValue damage = RuleRollDamage.RollDamage(resultDamage);
 		if (context.DamagePolicy == DamagePolicyType.Default && target.Entity != null)

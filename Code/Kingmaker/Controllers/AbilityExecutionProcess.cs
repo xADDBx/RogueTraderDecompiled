@@ -23,13 +23,17 @@ using Kingmaker.Utility.DotNetExtensions;
 
 namespace Kingmaker.Controllers;
 
-public class AbilityExecutionProcess
+public class AbilityExecutionProcess : IDisposable
 {
 	private readonly IEnumerator<object> m_Process;
 
 	private bool m_InstantDeliver;
 
+	private bool m_IsDisposed;
+
 	public AbilityExecutionContext Context { get; }
+
+	public bool IsStarted { get; private set; }
 
 	public bool IsEnded { get; private set; }
 
@@ -75,6 +79,28 @@ public class AbilityExecutionProcess
 		}
 	}
 
+	public void Dispose()
+	{
+		if (m_IsDisposed)
+		{
+			return;
+		}
+		m_IsDisposed = true;
+		Context.ClearBlockedNodes();
+		if (IsStarted && !IsEnded)
+		{
+			EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessHandler>)delegate(IAbilityExecutionProcessHandler h)
+			{
+				h.HandleExecutionProcessEnd(Context);
+			}, isCheckRuntime: true);
+			Context.AbilityBlueprint.CallComponents(delegate(AbilityCustomLogic c)
+			{
+				c.Cleanup(Context);
+			});
+		}
+		IsEnded = true;
+	}
+
 	public static void PrepareCast(AbilityExecutionContext context)
 	{
 		context.Recalculate();
@@ -100,6 +126,7 @@ public class AbilityExecutionProcess
 
 	private IEnumerator<object> ProcessRoutine()
 	{
+		IsStarted = true;
 		EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessHandler>)delegate(IAbilityExecutionProcessHandler h)
 		{
 			h.HandleExecutionProcessStart(Context);

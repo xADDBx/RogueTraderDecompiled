@@ -43,16 +43,16 @@ public class InspectPCView : ViewBase<InspectVM>, IAbilityTargetSelectionUIHandl
 		}));
 	}
 
-	private void Close()
-	{
-		m_InfoWindow.Hide();
-		Game.Instance.Player.UISettings.ShowInspect = false;
-	}
-
 	protected override void DestroyViewImplementation()
 	{
 		m_InfoWindowVM?.Dispose();
 		m_InfoWindowVM = null;
+	}
+
+	private void Close()
+	{
+		m_InfoWindow.Hide();
+		Game.Instance.Player.UISettings.ShowInspect = false;
 	}
 
 	public void HandleAbilityTargetSelectionStart(AbilityData ability)

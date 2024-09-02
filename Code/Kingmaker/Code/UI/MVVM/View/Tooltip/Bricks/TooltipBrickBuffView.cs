@@ -23,6 +23,16 @@ public class TooltipBrickBuffView : TooltipBrickFeatureView, IWidgetView
 	[SerializeField]
 	private TextMeshProUGUI m_StackText;
 
+	[Header("DOTBlock")]
+	[SerializeField]
+	private GameObject m_DOTPanel;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DOTDescription;
+
+	[SerializeField]
+	private TextMeshProUGUI m_DOTDamage;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
@@ -36,17 +46,28 @@ public class TooltipBrickBuffView : TooltipBrickFeatureView, IWidgetView
 				base.gameObject.SetActive(value: false);
 			}
 		}));
-		if (base.ViewModel is TooltipBrickBuffVM tooltipBrickBuffVM)
+		if (!(base.ViewModel is TooltipBrickBuffVM tooltipBrickBuffVM))
 		{
-			m_SourcePanel.Or(null)?.SetActive(!string.IsNullOrWhiteSpace(tooltipBrickBuffVM.SourceName));
-			if (m_SourceName != null)
+			return;
+		}
+		m_SourcePanel.Or(null)?.SetActive(!string.IsNullOrWhiteSpace(tooltipBrickBuffVM.SourceName));
+		if (m_SourceName != null)
+		{
+			m_SourceName.text = tooltipBrickBuffVM.SourceName;
+		}
+		if (m_StackText != null)
+		{
+			m_StackText.text = tooltipBrickBuffVM.Stack;
+		}
+		m_DOTPanel.SetActive(tooltipBrickBuffVM.IsDOT);
+		if (tooltipBrickBuffVM.IsDOT)
+		{
+			m_DOTDescription.text = tooltipBrickBuffVM.DOTDesc;
+			AddDisposable(tooltipBrickBuffVM.DOTDamage.Subscribe(delegate(string value)
 			{
-				m_SourceName.text = tooltipBrickBuffVM.SourceName;
-			}
-			if (m_StackText != null)
-			{
-				m_StackText.text = tooltipBrickBuffVM.Stack;
-			}
+				m_DOTDamage.text = value;
+				base.gameObject.SetActive(!string.IsNullOrEmpty(value));
+			}));
 		}
 	}
 

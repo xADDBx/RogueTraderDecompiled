@@ -16,10 +16,14 @@ public class ControllableState : IntEvaluator
 
 	protected override int GetValueInternal()
 	{
-		if (!IdOfObject.TryGetValue(out var controllable))
+		if (!Game.Instance.SceneControllables.TryGetState(IdOfObject.UniqueId, out var state))
 		{
 			return 0;
 		}
-		return Game.Instance.SceneControllables.GetState(controllable.UniqueId).State;
+		if (!state.State.HasValue)
+		{
+			return 0;
+		}
+		return state.State.Value;
 	}
 }

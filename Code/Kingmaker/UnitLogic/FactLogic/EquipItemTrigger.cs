@@ -2,9 +2,11 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Items;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using StateHasher.Core;
@@ -24,19 +26,25 @@ public class EquipItemTrigger : EntityFactComponentDelegate<ItemEntity>, IEquipI
 
 	public void OnDidEquipped()
 	{
-		ActionList onDidEquipped = m_OnDidEquipped;
-		if (onDidEquipped != null && onDidEquipped.HasActions)
+		if (!ContextData<UnitHelper.PreviewUnit>.Current && !base.Owner.IsPreview())
 		{
-			m_OnDidEquipped.Run();
+			ActionList onDidEquipped = m_OnDidEquipped;
+			if (onDidEquipped != null && onDidEquipped.HasActions)
+			{
+				m_OnDidEquipped.Run();
+			}
 		}
 	}
 
 	public void OnWillUnequip()
 	{
-		ActionList onWillUnequip = m_OnWillUnequip;
-		if (onWillUnequip != null && onWillUnequip.HasActions)
+		if (!ContextData<UnitHelper.PreviewUnit>.Current && !base.Owner.IsPreview())
 		{
-			m_OnWillUnequip.Run();
+			ActionList onWillUnequip = m_OnWillUnequip;
+			if (onWillUnequip != null && onWillUnequip.HasActions)
+			{
+				m_OnWillUnequip.Run();
+			}
 		}
 	}
 

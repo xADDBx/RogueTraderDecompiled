@@ -41,7 +41,7 @@ public class SpawnerCustomCutscene : EntityPartComponent<SpawnerCustomCutscene.P
 						"Spawned",
 						(object)unit.FromAbstractUnitEntity()
 					} }
-				});
+				}, queued: false, base.ConcreteOwner.HoldingState);
 				m_Cutscene = cutscenePlayerView.PlayerData;
 				cutscenePlayerView.PlayerData.TickScene();
 			}

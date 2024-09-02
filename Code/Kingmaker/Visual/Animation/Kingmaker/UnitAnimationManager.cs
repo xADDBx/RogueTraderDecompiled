@@ -31,9 +31,10 @@ using UnityEngine.Playables;
 
 namespace Kingmaker.Visual.Animation.Kingmaker;
 
+[SelectionBase]
 public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>
 {
-	private enum ExclusiveStateType
+	public enum ExclusiveStateType
 	{
 		None,
 		Prone,
@@ -49,7 +50,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		JumpAsideDodge
 	}
 
-	private static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("UnitAnimationManager");
+	private static readonly LogChannel Logger = PFLog.Animations;
 
 	private UnitAnimationActionHandle m_LocoMotionHandle;
 
@@ -82,6 +83,8 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 	private LosCalculations.CoverType m_CoverType;
 
 	private static readonly LogChannel Debug = LogChannelFactory.GetOrCreate("ExclusiveState");
+
+	public ExclusiveStateType ExclusiveState => m_ExclusiveState;
 
 	public UnitAnimationActionHandle BuffLoopAction { get; set; }
 
@@ -200,7 +203,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 					AbstractUnitCommand abstractUnitCommand = unitEntityView.Data?.Commands.Current;
 					if (abstractUnitCommand == null || !abstractUnitCommand.IsOneFrameCommand)
 					{
-						goto IL_00f4;
+						goto IL_00cd;
 					}
 				}
 				if (!unitEntityView.AgentASP.IsCharging)
@@ -208,13 +211,25 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 					UnitViewHandsEquipment handsEquipment = unitEntityView.HandsEquipment;
 					if ((handsEquipment == null || !handsEquipment.AreHandsBusyWithAnimation.Value) && CoverType != 0)
 					{
-						return base.ActiveActions.SingleOrDefault((AnimationActionHandle x) => x.Action as WarhammerUnitAnimationActionParry) == null;
+						return !AnyActionBlocksCover;
 					}
 				}
 			}
-			goto IL_00f4;
-			IL_00f4:
+			goto IL_00cd;
+			IL_00cd:
 			return false;
+		}
+	}
+
+	private bool AnyActionBlocksCover
+	{
+		get
+		{
+			if (!base.ActiveActions.Contains((AnimationActionHandle x) => x.Action is UnitAnimationAction unitAnimationAction2 && unitAnimationAction2.BlocksCover))
+			{
+				return base.SequencedActions.Contains((AnimationActionHandle x) => x.Action is UnitAnimationAction unitAnimationAction && unitAnimationAction.BlocksCover);
+			}
+			return true;
 		}
 	}
 
@@ -418,7 +433,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		if (m_LocoMotionHandle != null)
 		{
 			Execute(m_LocoMotionHandle);
-			m_LocoMotionHandle.ActiveAnimation.UpdateInternal(1f, 1f);
+			m_LocoMotionHandle.ActiveAnimation.Update(1f, 1f);
 		}
 	}
 
@@ -440,7 +455,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 			if (m_LocoMotionHandle != null)
 			{
 				Execute(m_LocoMotionHandle);
-				m_LocoMotionHandle.ActiveAnimation?.UpdateInternal(1f, 1f);
+				m_LocoMotionHandle.ActiveAnimation?.Update(1f, 1f);
 			}
 		}
 	}
@@ -602,7 +617,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 
 	private void SetExclusiveAnimation(ExclusiveStateType state)
 	{
-		if ((state == m_ExclusiveState && (m_ExclusiveState != ExclusiveStateType.Cover || !m_ExclusiveHandle.IsReleased || base.ActiveActions.Contains((AnimationActionHandle x) => x is UnitAnimationActionHandle unitAnimationActionHandle && unitAnimationActionHandle.Action.Type == UnitAnimationType.Hit))) || (m_ExclusiveState == ExclusiveStateType.StandUp && !m_ExclusiveHandle.IsReleased))
+		if ((state == m_ExclusiveState && (m_ExclusiveState != ExclusiveStateType.Cover || !m_ExclusiveHandle.IsReleased || base.ActiveActions.Contains((AnimationActionHandle h) => h.Action is UnitAnimationActionHit unitAnimationActionHit && unitAnimationActionHit.BlocksReturnToCover(h)))) || (m_ExclusiveState == ExclusiveStateType.StandUp && !m_ExclusiveHandle.IsReleased))
 		{
 			return;
 		}
@@ -738,10 +753,13 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		return base.AnimationSet.GetSpecialAttack(type);
 	}
 
-	protected override void UpdateAnimations(float dt)
+	protected override void UpdateAnimations(float dt, bool newOnly = false)
 	{
-		base.UpdateAnimations(dt);
-		m_DecoratorManager?.Update(dt);
+		base.UpdateAnimations(dt, newOnly);
+		if (newOnly)
+		{
+			m_DecoratorManager?.Update(dt);
+		}
 	}
 
 	protected override void OnAnimationSetChanged()
@@ -810,6 +828,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		m_CurrentMainHandAttackForPrepare.AttackWeaponStyle = ActiveMainHandWeaponStyle;
 		m_CurrentMainHandAttackForPrepare.NeedPreparingForShooting = true;
 		m_CurrentMainHandAttackForPrepare.IsPreparingForShooting = true;
+		m_CurrentMainHandAttackForPrepare.Action.ExecutionMode = ExecutionMode.Interrupted;
 		base.Execute(m_CurrentMainHandAttackForPrepare);
 	}
 
@@ -820,7 +839,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		{
 			if (IsSleeping)
 			{
-				PFLog.Default.Warning($"Trying to Execute animation action on a sleeping unit, UnitAnimationManager={this}");
+				Logger.Warning($"Trying to Execute animation action on a sleeping unit, UnitAnimationManager={this}");
 			}
 			if (handle != m_WhileIdleHandle)
 			{

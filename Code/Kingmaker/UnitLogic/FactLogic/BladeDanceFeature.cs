@@ -21,10 +21,10 @@ public class BladeDanceFeature : UnitFactComponentDelegate, IHashable
 
 	protected override void OnRecalculate()
 	{
-		AbilityData data = base.Owner.Abilities.Enumerable.FirstOrDefault((Ability p) => p.Blueprint == BladeDanceAbility.GetBlueprint()).Data;
-		if (data != null)
+		AbilityData abilityData = base.Owner.Abilities.Enumerable.FirstOrDefault((Ability p) => p.Blueprint == BladeDanceAbility.GetBlueprint())?.Data;
+		if (abilityData != null)
 		{
-			data.OverrideRateOfFire = RateOfAttack.Calculate(base.Context);
+			abilityData.OverrideRateOfFire = RateOfAttack.Calculate(base.Context);
 		}
 	}
 
@@ -34,6 +34,11 @@ public class BladeDanceFeature : UnitFactComponentDelegate, IHashable
 		{
 			OnRecalculate();
 		}
+	}
+
+	protected override void OnActivate()
+	{
+		OnRecalculate();
 	}
 
 	public override Hash128 GetHash128()

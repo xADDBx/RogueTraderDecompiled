@@ -8,6 +8,9 @@ public class RulebookCastSpellLogThread : BaseUseAbilityLogThread, IGameLogRuleH
 {
 	public void HandleEvent(RulePerformAbility rule)
 	{
-		HandleUseAbility(rule.Spell, rule);
+		if (rule == null || !rule.Context.DisableLog)
+		{
+			HandleUseAbility(rule.Spell, rule);
+		}
 	}
 }

@@ -34,6 +34,8 @@ public abstract class EntityFactsProcessor : EntityFactsManager.IFactProcessor
 
 	public abstract void OnFactWillDetach(EntityFact fact);
 
+	public abstract void OnFactDidDetached(EntityFact fact);
+
 	protected virtual void OnDispose()
 	{
 	}
@@ -168,6 +170,14 @@ public abstract class EntityFactsProcessor<TFact> : EntityFactsProcessor where T
 		{
 			OnFactWillDetach(fact2);
 		}
+	}
+
+	public sealed override void OnFactDidDetached(EntityFact fact)
+	{
+		if (fact is TFact fact2)
+		{
+			OnFactDidDetached(fact2);
+		}
 		EventBus.RaiseEvent(delegate(IFactCollectionUpdatedHandler h)
 		{
 			h.HandleFactCollectionUpdated(this);
@@ -181,6 +191,8 @@ public abstract class EntityFactsProcessor<TFact> : EntityFactsProcessor where T
 	protected abstract void OnFactDidAttach(TFact fact);
 
 	protected abstract void OnFactWillDetach(TFact fact);
+
+	protected abstract void OnFactDidDetached(TFact fact);
 
 	public IEnumerable<T> SelectComponents<T>() where T : class
 	{

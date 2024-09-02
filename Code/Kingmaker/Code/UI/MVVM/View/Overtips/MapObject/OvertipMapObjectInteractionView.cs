@@ -3,7 +3,7 @@ using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.View.Overtips.CommonOvertipParts;
 using Kingmaker.Code.UI.MVVM.View.Overtips.MapObject.OvertipParts;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UniRx;

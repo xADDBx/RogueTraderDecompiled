@@ -44,13 +44,13 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 				ability = abilityData2;
 			}
 		}
+		CalculateDamageParams calculateDamageParams;
 		switch (PenetrationParameterType)
 		{
 		case PenetrationParameterType.ArmorPenetration:
-			return Rulebook.Trigger(new RuleCalculateDamage(mechanicEntity, mechanicEntity2, ability)
-			{
-				FakeRule = true
-			}).ResultDamage.Penetration.Value;
+			calculateDamageParams = new CalculateDamageParams(mechanicEntity, mechanicEntity2, ability);
+			calculateDamageParams.FakeRule = true;
+			return calculateDamageParams.Trigger().ResultDamage.Penetration.Value;
 		case PenetrationParameterType.DodgePenetration:
 		{
 			UnitEntity unitEntity2 = (mechanicEntity2 as UnitEntity) ?? (mechanicEntity as UnitEntity);
@@ -65,10 +65,9 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		}
 		case PenetrationParameterType.ArmorPenetrationOverArmor:
 		{
-			RuleCalculateDamage ruleCalculateDamage = Rulebook.Trigger(new RuleCalculateDamage(mechanicEntity, mechanicEntity2, abilityData)
-			{
-				FakeRule = true
-			});
+			calculateDamageParams = new CalculateDamageParams(mechanicEntity, mechanicEntity2, abilityData);
+			calculateDamageParams.FakeRule = true;
+			RuleCalculateDamage ruleCalculateDamage = calculateDamageParams.Trigger();
 			int value = ruleCalculateDamage.ResultDamage.Penetration.Value;
 			int value2 = ruleCalculateDamage.ResultDamage.Absorption.Value;
 			int val = value - value2;

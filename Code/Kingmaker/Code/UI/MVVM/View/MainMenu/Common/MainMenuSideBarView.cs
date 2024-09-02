@@ -6,12 +6,15 @@ using Kingmaker.Code.UI.MVVM.View.ContextMenu.Common;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
 using Kingmaker.DLC;
+using Kingmaker.Settings;
 using Kingmaker.Stores;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -136,11 +139,8 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		{
 			m_NetView.gameObject.SetActive(value: false);
 		}
-		m_AddonsView.gameObject.SetActive(BuildModeUtility.IsDevelopment);
-		if (BuildModeUtility.IsDevelopment)
-		{
-			m_AddonsView.Bind(base.ViewModel.DlcManagerVm);
-		}
+		m_AddonsView.gameObject.SetActive(value: true);
+		m_AddonsView.Bind(base.ViewModel.DlcManagerVm);
 		m_DiscordButton.Or(null)?.gameObject.SetActive(value: true);
 		m_WebsiteButton.Or(null)?.gameObject.SetActive(value: true);
 		m_DiscordButton.Or(null)?.gameObject.SetActive(value: true);
@@ -171,7 +171,10 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		DelayedInvoker.InvokeInTime(delegate
 		{
 			m_WelcomeTextBlock.AppearAnimation();
-			UISounds.Instance.Sounds.MainMenu.MessageOfTheDayShow.Play();
+			if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Settings)
+			{
+				UISounds.Instance.Sounds.MainMenu.MessageOfTheDayShow.Play();
+			}
 		}, m_DelayBeforeShow);
 	}
 
@@ -202,6 +205,11 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 	private void SetBackgroundVideo()
 	{
 		VideoClip clip = UIConfig.Instance.KeyVideoMainMenu.Load();
+		if (SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		{
+			m_BackgroundVideo.SetClip(clip, SoundStateType.Video, prepareVideo: false, null, null);
+			return;
+		}
 		foreach (BlueprintDlc item in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Reverse())
 		{
 			if (!(item.MainMenuBackgroundVideo == null))
@@ -210,11 +218,19 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 				break;
 			}
 		}
-		m_BackgroundVideo.SetClip(clip);
+		m_BackgroundVideo.SetClip(clip, SoundStateType.Video, prepareVideo: false, null, null);
 	}
 
 	private void SetMonitorsArts()
 	{
+		if (SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		{
+			m_DefaultTopMonitorArt.gameObject.SetActive(value: true);
+			m_DefaultBottomMonitorArt.gameObject.SetActive(value: true);
+			m_DlcTopMonitorArt.transform.parent.gameObject.SetActive(value: false);
+			m_DlcBottomMonitorArt.transform.parent.gameObject.SetActive(value: false);
+			return;
+		}
 		bool flag = false;
 		bool flag2 = false;
 		foreach (BlueprintDlc item in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Reverse())

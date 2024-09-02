@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
+using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
 using Warhammer.SpaceCombat.Blueprints;
+using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.UI.MVVM.VM.Inspect;
 
@@ -26,6 +30,12 @@ public class InspectExtensions
 			woundsValue = string.Empty;
 			woundsAddValue = string.Empty;
 			return false;
+		}
+		if (unitUIWrapper.MechanicEntity.HasMechanicFeature(MechanicsFeatureType.HideRealHealthInUI))
+		{
+			woundsValue = "???";
+			woundsAddValue = string.Empty;
+			return true;
 		}
 		woundsValue = UIUtility.GetHpText(unitUIWrapper, unitUIWrapper.IsDead);
 		string text = ((health.TemporaryHitPoints > 0) ? "+" : "-") + health.TemporaryHitPoints + " " + UIStrings.Instance.CharacterSheet.TemporaryHP.Text;
@@ -60,19 +70,24 @@ public class InspectExtensions
 		{
 			source = source.Where((Buff b) => !b.Blueprint.IsStarshipBuff).ToList();
 		}
-		return (from b in source
-			where !b.Blueprint.IsHiddenInUI
-			select b into buff
-			select new TooltipBrickBuff(buff)).ToList();
+		return source.Where((Buff b) => !b.Blueprint.IsHiddenInUI).Select(delegate(Buff buff)
+		{
+			BuffUIGroup group = ((!buff.Blueprint.IsDOTVisual) ? (unit.IsEnemy(buff.Context.MaybeCaster) ? BuffUIGroup.Enemy : BuffUIGroup.Ally) : BuffUIGroup.DOT);
+			return new TooltipBrickBuff(buff, group);
+		}).ToList();
 	}
 
 	public static ReactiveCollection<ITooltipBrick> GetBuffsTooltipBricks(BaseUnitEntity unit)
 	{
 		List<Buff> source = unit.Buffs.RawFacts;
-		if (!(unit.Blueprint is BlueprintStarship))
+		if (!unit.IsStarship())
 		{
 			source = source.Where((Buff b) => !b.Blueprint.IsStarshipBuff).ToList();
 		}
-		return source.Where((Buff b) => !b.Blueprint.IsHiddenInUI).Select((Func<Buff, ITooltipBrick>)((Buff buff) => new TooltipBrickBuff(buff))).ToReactiveCollection();
+		return source.Where((Buff b) => !b.Blueprint.IsHiddenInUI).Select((Func<Buff, ITooltipBrick>)delegate(Buff buff)
+		{
+			BuffUIGroup group = ((!buff.Blueprint.IsDOTVisual) ? (unit.IsEnemy(buff.Context.MaybeCaster) ? BuffUIGroup.Enemy : BuffUIGroup.Ally) : BuffUIGroup.DOT);
+			return new TooltipBrickBuff(buff, group);
+		}).ToReactiveCollection();
 	}
 }

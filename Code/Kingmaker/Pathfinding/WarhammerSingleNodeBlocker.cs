@@ -15,7 +15,7 @@ public class WarhammerSingleNodeBlocker
 
 	private Vector3 m_LastDirection;
 
-	private BaseUnitEntity OwnerUnit => m_Owner as BaseUnitEntity;
+	public BaseUnitEntity OwnerUnit => m_Owner as BaseUnitEntity;
 
 	public NodeList BlockedNodes => WarhammerBlockManager.Instance.GetBlockedNodes(m_LastBlocked, m_Owner.SizeRect, m_LastDirection);
 

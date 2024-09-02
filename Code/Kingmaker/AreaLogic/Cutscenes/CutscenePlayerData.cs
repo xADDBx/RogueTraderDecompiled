@@ -328,12 +328,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		foreach (EntityRef anchor in Anchors)
 		{
 			IEntity entity = anchor.Entity;
-			if (entity == null)
-			{
-				continue;
-			}
-			flag = true;
-			if (!entity.IsInGame)
+			if (entity == null || !entity.IsInGame)
 			{
 				continue;
 			}
@@ -353,6 +348,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					return true;
 				}
 			}
+			flag = true;
 		}
 		return !flag;
 	}
@@ -548,6 +544,13 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 
 	public void TickScene(bool skipping = false)
 	{
+		SceneEntitiesState holdingState = HoldingState;
+		if (holdingState != null && !holdingState.IsSceneLoaded)
+		{
+			Game.Instance.EntityDestroyer.Destroy(this);
+			PFLog.Cutscene.Error("[Cutscene] Remove invalid cutscene " + Cutscene.Name + ", owner state " + HoldingState.SceneName + " don`t load!");
+			return;
+		}
 		if (IsFinished)
 		{
 			if (!PreventDestruction)
@@ -928,67 +931,71 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	private void Restore(bool markControlledObjects = true)
 	{
 		m_RestoreCalled = true;
-		if (m_Remove)
+		if (!m_Remove)
 		{
-			m_Remove = false;
-			m_Restart = false;
-			m_IsQueued = false;
-			m_QueuedAfter = null;
-			m_ActivatedGates.Clear();
-			return;
-		}
-		if (m_Restart)
-		{
-			m_Remove = false;
-			m_Restart = false;
-			m_ActivatedGates.Clear();
-			Exclusive = false;
-			m_CutsceneData = new CutscenePlayerGateData
+			SceneEntitiesState holdingState = HoldingState;
+			if (holdingState == null || holdingState.IsSceneLoaded)
 			{
-				Gate = m_Cutscene
-			};
-			m_GateData = new Dictionary<Gate, CutscenePlayerGateData>();
-			FillGateData(m_CutsceneData);
-			ActivateGate(m_CutsceneData);
-			RaiseEvent(this, delegate(ICutsceneHandler h)
-			{
-				h.HandleCutsceneRestarted();
-			});
-			return;
-		}
-		using (Parameters.RequestContextData())
-		{
-			foreach (CutscenePlayerGateData activatedGate in m_ActivatedGates)
-			{
-				foreach (CutscenePlayerTrackData startedTrack in activatedGate.StartedTracks)
+				if (m_Restart)
 				{
-					if (!startedTrack.IsPlaying || startedTrack.IsFinished)
+					m_Remove = false;
+					m_Restart = false;
+					m_ActivatedGates.Clear();
+					Exclusive = false;
+					m_CutsceneData = new CutscenePlayerGateData
 					{
-						continue;
-					}
-					CommandBase command = startedTrack.Command;
-					if (markControlledObjects)
+						Gate = m_Cutscene
+					};
+					m_GateData = new Dictionary<Gate, CutscenePlayerGateData>();
+					FillGateData(m_CutsceneData);
+					ActivateGate(m_CutsceneData);
+					RaiseEvent(this, delegate(ICutsceneHandler h)
 					{
-						IAbstractUnitEntity controlledUnit = command.GetControlledUnit();
-						if (controlledUnit != null && !CutsceneControlledUnit.MarkUnit(controlledUnit, this))
+						h.HandleCutsceneRestarted();
+					});
+					return;
+				}
+				using (Parameters.RequestContextData())
+				{
+					foreach (CutscenePlayerGateData activatedGate in m_ActivatedGates)
+					{
+						foreach (CutscenePlayerTrackData startedTrack in activatedGate.StartedTracks)
 						{
-							LogError($"Cannot restore cutscene {Cutscene} as another cutscene ({controlledUnit.ToAbstractUnitEntity().CutsceneControlledUnit?.GetCurrentlyActive()}) controls an object ({controlledUnit}) ({command})");
+							if (!startedTrack.IsPlaying || startedTrack.IsFinished)
+							{
+								continue;
+							}
+							CommandBase command = startedTrack.Command;
+							if (markControlledObjects)
+							{
+								IAbstractUnitEntity controlledUnit = command.GetControlledUnit();
+								if (controlledUnit != null && !CutsceneControlledUnit.MarkUnit(controlledUnit, this))
+								{
+									LogError($"Cannot restore cutscene {Cutscene} as another cutscene ({controlledUnit.ToAbstractUnitEntity().CutsceneControlledUnit?.GetCurrentlyActive()}) controls an object ({controlledUnit}) ({command})");
+								}
+							}
+							if (!Paused)
+							{
+								try
+								{
+									command.Run(this);
+								}
+								catch (Exception e)
+								{
+									HandleException(e, startedTrack, command);
+								}
+							}
 						}
 					}
-					if (!Paused)
-					{
-						try
-						{
-							command.Run(this);
-						}
-						catch (Exception e)
-						{
-							HandleException(e, startedTrack, command);
-						}
-					}
+					return;
 				}
 			}
 		}
+		m_Remove = false;
+		m_Restart = false;
+		m_IsQueued = false;
+		m_QueuedAfter = null;
+		m_ActivatedGates.Clear();
 	}
 
 	public bool IsGateActive(Gate gate)
@@ -1110,7 +1117,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					AbstractUnitEntity abstractUnitEntity = null;
 					try
 					{
-						abstractUnitEntity = command.GetControlledUnit().ToAbstractUnitEntity();
+						abstractUnitEntity = command.GetAnchorUnit().ToAbstractUnitEntity();
 					}
 					catch (Exception e)
 					{

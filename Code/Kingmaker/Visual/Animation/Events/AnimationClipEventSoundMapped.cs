@@ -22,6 +22,10 @@ public class AnimationClipEventSoundMapped : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventSoundMapped()
+	{
+	}
+
 	public AnimationClipEventSoundMapped(float time)
 		: this(time, MappedAnimationEventType.Idle)
 	{

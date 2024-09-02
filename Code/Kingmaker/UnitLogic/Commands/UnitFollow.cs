@@ -40,8 +40,6 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 
 		public float? Multiplier => m_MoveCommand?.Params.Multiplier;
 
-		public bool IsAccelerated => m_MoveCommand?.IsAccelerated ?? false;
-
 		public TargetEntityMovementData(MechanicEntity entity)
 		{
 			m_MovementAgent = entity.MaybeMovementAgent;

@@ -130,9 +130,9 @@ public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCol
 
 	private bool IsInteractionItem(ItemEntity item)
 	{
-		if (item.Blueprint != Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MultikeyItem && item.Blueprint != Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MeltaChargeItem)
+		if (item.Blueprint != Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MultikeyItem && item.Blueprint != Game.Instance.BlueprintRoot.SystemMechanics.Consumables.MeltaChargeItem && item.Blueprint != Game.Instance.BlueprintRoot.SystemMechanics.Consumables.RitualSetItem)
 		{
-			return item.Blueprint == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.RitualSetItem;
+			return item.Blueprint == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.VoidCryptKeyItem;
 		}
 		return true;
 	}

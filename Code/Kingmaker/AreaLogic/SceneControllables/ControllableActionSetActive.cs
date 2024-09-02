@@ -19,18 +19,10 @@ public class ControllableActionSetActive : GameAction
 
 	protected override void RunAction()
 	{
-		if (!IdOfObject.TryGetValue(out var controllable))
+		ControllableState state = new ControllableState
 		{
-			Game.Instance.SceneControllables.SetState(controllable.UniqueId, new ControllableState
-			{
-				Active = Active
-			});
-		}
-		else
-		{
-			ControllableState state = Game.Instance.SceneControllables.GetState(controllable.UniqueId);
-			state.Active = Active;
-			Game.Instance.SceneControllables.SetState(controllable.UniqueId, state);
-		}
+			Active = Active
+		};
+		Game.Instance.SceneControllables.SetState(IdOfObject.UniqueId, state);
 	}
 }

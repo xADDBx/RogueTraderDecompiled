@@ -26,7 +26,7 @@ public class TooltipBrickFeatureAcronymTestView : TooltipBrickFeatureView
 			base.BindViewImplementation();
 			if (base.ViewModel.Feature != null && string.IsNullOrEmpty(base.ViewModel.Name))
 			{
-				m_IconBlock.SetActive(value: false);
+				m_IconBlock.gameObject.SetActive(value: false);
 				component.color = Color.red;
 				m_Label.text = base.ViewModel.Feature.name;
 				m_Label.color = Color.red;

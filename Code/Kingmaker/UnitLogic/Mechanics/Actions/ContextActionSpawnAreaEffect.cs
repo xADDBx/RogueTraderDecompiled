@@ -7,6 +7,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -30,6 +31,9 @@ public class ContextActionSpawnAreaEffect : ContextAction
 	[Tooltip("Set FactData ContextData as SourceFact")]
 	public bool SetSourceFact;
 
+	[Tooltip("Will focus camera on area effect when it will start")]
+	public bool FocusCameraOnEffect;
+
 	public BlueprintAbilityAreaEffect AreaEffect => m_AreaEffect?.Get();
 
 	public override string GetCaption()
@@ -40,7 +44,7 @@ public class ContextActionSpawnAreaEffect : ContextAction
 
 	protected override void RunAction()
 	{
-		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current)
+		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current || base.Context.MaybeCaster.IsPreview())
 		{
 			return;
 		}

@@ -4,7 +4,7 @@ using Kingmaker.ElementsSystem;
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 [Serializable]
-public struct ActionAndWeight
+public class ActionAndWeight
 {
 	public int Weight;
 

@@ -50,7 +50,17 @@ public class SectorMapController : IControllerEnable, IController, IControllerTi
 
 	public bool CanJumpToWarp => !(Game.Instance.LoadedAreaState?.Settings.CannotJumpToWarp);
 
-	public SectorMapObjectEntity CurrentStarSystem => m_CurrentStarSystem;
+	public SectorMapObjectEntity CurrentStarSystem
+	{
+		get
+		{
+			if (m_CurrentStarSystem == null)
+			{
+				InitCurrentStarSystem();
+			}
+			return m_CurrentStarSystem;
+		}
+	}
 
 	public SectorMapObjectEntity PreviousStarSystem => m_PreviousStarSystem;
 
@@ -339,22 +349,31 @@ public class SectorMapController : IControllerEnable, IController, IControllerTi
 
 	public void UpdateSectorMap()
 	{
-		if (!(Game.Instance.CurrentMode != GameModeType.GlobalMap))
+		if (Game.Instance.CurrentMode != GameModeType.GlobalMap)
 		{
-			InitCurrentStarSystem();
-			VisualParameters = ObjectRegistry<SectorMapVisualParameters>.Instance.Single;
-			Transform playerShip = VisualParameters.PlayerShip;
-			if (!Game.Instance.SectorMapTravelController.IsTravelling)
-			{
-				playerShip.position = new Vector3(m_CurrentStarSystem.Position.x, playerShip.position.y, m_CurrentStarSystem.Position.z);
-				playerShip.gameObject.SetActive(value: true);
-			}
-			Game.Instance.Player.PlayerShip.View.SetVisible(visible: false);
-			Game.Instance.Player.PlayerShip.IsInGame = false;
-			if (Game.Instance.Player.WarpTravelState.AllRoutesNotDeadlyFlag && !Game.Instance.Player.WarpTravelState.AllRoutesNotDeadlyChanged)
-			{
-				ChangeRoutesDifficulty(SectorMapPassageEntity.PassageDifficulty.Deadly, SectorMapPassageEntity.PassageDifficulty.Dangerous);
-			}
+			return;
+		}
+		InitCurrentStarSystem();
+		VisualParameters = ObjectRegistry<SectorMapVisualParameters>.Instance.Single;
+		Transform playerShip = VisualParameters.PlayerShip;
+		if (!Game.Instance.SectorMapTravelController.IsTravelling)
+		{
+			playerShip.position = new Vector3(m_CurrentStarSystem.Position.x, playerShip.position.y, m_CurrentStarSystem.Position.z);
+			playerShip.gameObject.SetActive(value: true);
+		}
+		Game.Instance.Player.PlayerShip.View.SetVisible(visible: false);
+		Game.Instance.Player.PlayerShip.IsInGame = false;
+		if (Game.Instance.Player.WarpTravelState.AllRoutesNotDeadlyFlag && !Game.Instance.Player.WarpTravelState.AllRoutesNotDeadlyChanged)
+		{
+			ChangeRoutesDifficulty(SectorMapPassageEntity.PassageDifficulty.Deadly, SectorMapPassageEntity.PassageDifficulty.Dangerous);
+		}
+		foreach (SectorMapObjectEntity sectorMapObject in Game.Instance.State.SectorMapObjects)
+		{
+			sectorMapObject.View.SetPlanetVisualState();
+		}
+		foreach (SectorMapRumourGroupView.SectorMapRumourGroupEntity item in Game.Instance.State.Entities.OfType<SectorMapRumourGroupView.SectorMapRumourGroupEntity>())
+		{
+			item.View.TryGetAlreadyActiveQuestObjectives();
 		}
 	}
 
@@ -446,7 +465,8 @@ public class SectorMapController : IControllerEnable, IController, IControllerTi
 	private void InitCurrentStarSystem()
 	{
 		m_CurrentStarSystem = GetMapObject(Game.Instance.Player.CurrentStarSystem) ?? GetMapObject(BlueprintRoot.Instance.SectorMapArea.DefaultStarSystem);
-		if (!m_CurrentStarSystem.IsExplored)
+		SectorMapObjectEntity currentStarSystem = m_CurrentStarSystem;
+		if (currentStarSystem != null && !currentStarSystem.IsExplored)
 		{
 			m_CurrentStarSystem.Explore();
 		}

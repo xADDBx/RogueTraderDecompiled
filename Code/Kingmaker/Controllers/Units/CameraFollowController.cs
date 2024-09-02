@@ -1,15 +1,19 @@
+using System;
 using Cinemachine;
 using Kingmaker.Blueprints.Camera;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Controllers.Units.CameraFollow;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
@@ -17,7 +21,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class CameraFollowController : IControllerTick, IController, IControllerStop, IControllerEnable, IControllerDisable, ITurnBasedModeHandler, ISubscriber, IGameModeHandler, IAreaHandler
+public class CameraFollowController : IControllerTick, IController, IControllerStop, IControllerEnable, IControllerDisable, ITurnBasedModeHandler, ISubscriber, IGameModeHandler, IAreaHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>
 {
 	private SurfaceCombatFollowTasksProvider m_TasksProvider;
 
@@ -26,6 +30,12 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 	private readonly TasksQueue<ICameraFollowTask> m_Tasks = new TasksQueue<ICameraFollowTask>();
 
 	private ICameraFollowTask m_CurrentTask;
+
+	private ICameraFollowTask m_DelayedTask;
+
+	private TimeSpan m_DelayStarted;
+
+	private TimeSpan m_DelayTime;
 
 	private Coroutine m_ScrollToCoroutine;
 
@@ -82,6 +92,7 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 	{
 		m_Tasks.Clear();
 		m_CurrentTask = null;
+		RemoveDelayedTask();
 		m_ScrollToCoroutine = null;
 		m_IsTurnBased = false;
 		m_IsCutscene = false;
@@ -111,6 +122,11 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 				}
 				return;
 			}
+		}
+		if (m_DelayedTask != null && Game.Instance.TimeController.RealTime > m_DelayStarted + m_DelayTime)
+		{
+			TryAddTask(m_DelayedTask);
+			RemoveDelayedTask();
 		}
 		ICameraFollowTask currentTask = m_CurrentTask;
 		if (currentTask == null || !currentTask.IsActive)
@@ -176,7 +192,8 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 	{
 		foreach (ICameraFollowTask task in m_Tasks)
 		{
-			if (task.TaskParams.TaskType == type)
+			CameraFollowTaskParamsEntry taskParams = task.TaskParams;
+			if (taskParams != null && taskParams.TaskType == type)
 			{
 				return true;
 			}
@@ -184,9 +201,19 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 		return false;
 	}
 
-	private void TryAddTask(ICameraFollowTask task)
+	private void TryAddTask(ICameraFollowTask task, bool delayed = false, float delaySeconds = 0f)
 	{
-		if (m_IsTurnBased && (task.TaskParams.TaskType != CameraTaskType.Death || !IsContainsTaskOfType(CameraTaskType.Death)))
+		if (!m_IsTurnBased)
+		{
+			return;
+		}
+		if (delayed)
+		{
+			AddDelayedTask(task, delaySeconds);
+			return;
+		}
+		CameraFollowTaskParamsEntry taskParams = task.TaskParams;
+		if (taskParams == null || taskParams.TaskType != CameraTaskType.Death || !IsContainsTaskOfType(CameraTaskType.Death))
 		{
 			ICameraFollowTask result;
 			if (m_CurrentTask != null && m_CurrentTask.Priority < task.Priority)
@@ -196,11 +223,13 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 			}
 			else if (m_CurrentTask != null && CompareTasks(m_CurrentTask, task))
 			{
-				m_CurrentTask.Reset(task.TaskParams.CameraObserveTime);
+				float lifeTime = task.TaskParams?.CameraObserveTime ?? 2f;
+				m_CurrentTask.Reset(lifeTime);
 			}
 			else if (m_Tasks.TryFind((ICameraFollowTask t) => CompareTasks(t, task), out result))
 			{
-				result.Reset(task.TaskParams.CameraObserveTime);
+				float lifeTime2 = task.TaskParams?.CameraObserveTime ?? 2f;
+				result.Reset(lifeTime2);
 			}
 			else
 			{
@@ -238,7 +267,7 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 
 	private void CameraScrollTo()
 	{
-		if (m_CurrentTask.TaskState == CameraFollowTaskState.CameraFly)
+		if (m_CurrentTask.TaskState == CameraFollowTaskState.CameraFly && m_CurrentTask.TaskParams != null)
 		{
 			CameraFlyAnimationParams cameraFlyParams = m_CurrentTask.TaskParams.CameraFlyParams;
 			float maxSpeed = (cameraFlyParams.AutoSpeed ? float.MaxValue : cameraFlyParams.MaxSpeed);
@@ -413,25 +442,39 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 			}
 			if ((bool)m_Brain)
 			{
-				Object.Destroy(m_Brain);
+				UnityEngine.Object.Destroy(m_Brain);
 			}
 			if ((bool)m_TargetGroup)
 			{
-				Object.Destroy(m_TargetGroup.gameObject);
+				UnityEngine.Object.Destroy(m_TargetGroup.gameObject);
 			}
 			if ((bool)m_VcMain)
 			{
-				Object.Destroy(m_VcMain.gameObject);
+				UnityEngine.Object.Destroy(m_VcMain.gameObject);
 			}
 			if ((bool)m_VcAction)
 			{
-				Object.Destroy(m_VcAction.gameObject);
+				UnityEngine.Object.Destroy(m_VcAction.gameObject);
 			}
 			m_Brain = null;
 			m_TargetGroup = null;
 			m_VcMain = null;
 			m_VcAction = null;
 		}
+	}
+
+	private void AddDelayedTask(ICameraFollowTask task, float delay)
+	{
+		m_DelayedTask = task;
+		m_DelayStarted = Game.Instance.TimeController.RealTime;
+		m_DelayTime = delay.Seconds();
+	}
+
+	private void RemoveDelayedTask()
+	{
+		m_DelayedTask = null;
+		m_DelayStarted = default(TimeSpan);
+		m_DelayTime = default(TimeSpan);
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)
@@ -452,6 +495,24 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 		if (Game.Instance.CurrentMode == GameModeType.SpaceCombat)
 		{
 			InitializeCameras();
+		}
+	}
+
+	public void HandleUnitStartTurn(bool isTurnBased)
+	{
+		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
+		if (m_DelayedTask == null || mechanicEntity == m_DelayedTask.Owner.Entity)
+		{
+			return;
+		}
+		RemoveDelayedTask();
+		if (mechanicEntity is IAbstractUnitEntity)
+		{
+			PartFocusCameraOnEntity optional = mechanicEntity.GetOptional<PartFocusCameraOnEntity>();
+			if (optional != null)
+			{
+				optional.Entity = null;
+			}
 		}
 	}
 }

@@ -11,7 +11,7 @@ public class UIViewLink<TView, TViewModel> : WeakResourceLink<TView> where TView
 {
 	public Transform Target;
 
-	private TView m_View;
+	protected TView View;
 
 	[HideInInspector]
 	public Action<TView> CustomInitialize;
@@ -20,33 +20,40 @@ public class UIViewLink<TView, TViewModel> : WeakResourceLink<TView> where TView
 	{
 		if (vm == null)
 		{
-			if (m_View != null)
+			if (View != null)
 			{
 				Unbind();
 			}
-			return;
 		}
-		if (m_View == null)
+		else
 		{
-			TView val = Load();
-			m_View = UnityEngine.Object.Instantiate(val.gameObject, Target).GetComponent<TView>();
-			if (CustomInitialize != null)
-			{
-				CustomInitialize(m_View);
-			}
-			if (m_View is IInitializable)
-			{
-				((IInitializable)m_View).Initialize();
-			}
+			CreateView();
+			View.Bind(vm);
+			vm.OnDispose += Unbind;
 		}
-		m_View.Bind(vm);
-		vm.OnDispose += Unbind;
 	}
 
-	private void Unbind()
+	protected virtual void Unbind()
 	{
-		UnityEngine.Object.Destroy(m_View.gameObject);
-		m_View = null;
 		ForceUnload();
+	}
+
+	public void PrewarmView()
+	{
+		CreateView();
+	}
+
+	private void CreateView()
+	{
+		if (!(View != null))
+		{
+			TView val = Load();
+			View = UnityEngine.Object.Instantiate(val.gameObject, Target).GetComponent<TView>();
+			CustomInitialize?.Invoke(View);
+			if (View is IInitializable initializable)
+			{
+				initializable.Initialize();
+			}
+		}
 	}
 }

@@ -685,29 +685,6 @@ public class LightCookieManager : IDisposable
 
 	private void ReportStatistics(in RenderingData renderingData)
 	{
-		if (renderingData.CameraData.CameraType != CameraType.Game)
-		{
-			return;
-		}
-		Statistics value = m_StatisticsReference.Value;
-		if (value.LightLimitOverflowDetected || value.AtlasOverflowDetected)
-		{
-			m_MessageBuilder.Clear();
-			m_MessageBuilder.Append("Cookie rendering issues detected. Camera: ").Append(renderingData.CameraData.Camera.name).AppendLine();
-			if (value.AtlasOverflowDetected)
-			{
-				m_MessageBuilder.Append("LIGHT_COOKIE_ATLAS_OVERFLOW: All cookie textures doesn't fit into atlas").AppendLine();
-			}
-			if (value.LightLimitOverflowDetected)
-			{
-				m_MessageBuilder.Append("LIGHT_COOKIE_LIMIT_REACHED: Too many lights with cookie enabled in view. Expected: less or equal to ").Append(128).Append(". Actual: ")
-					.Append(value.CookieLightsCount)
-					.AppendLine();
-			}
-			value.Append(m_MessageBuilder);
-			m_MessageBuilder.AppendLine();
-			Debug.LogWarning(m_MessageBuilder.ToString());
-		}
 	}
 
 	private unsafe void PopulateCookieTextureList(ref NativeArray<LightDescriptor> lightDescriptors)

@@ -139,6 +139,10 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 				base.ViewModel.HandleUnitClick(isDoubleClick: true);
 			}
 		}));
+		AddDisposable(m_CharacterButton.OnPointerExitAsObservable().Subscribe(delegate
+		{
+			m_BuffView.SetAdditionalBuffsVisible(visible: false);
+		}));
 		KeyboardAccess keyboard = Game.Instance.Keyboard;
 		int index = base.ViewModel.Index;
 		AddDisposable(keyboard.Bind("SelectCharacter" + index, delegate

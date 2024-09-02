@@ -32,6 +32,11 @@ public class PartFadeOutAndDestroy : EntityPart, IGameTimeChangedHandler, ISubsc
 
 	public void HandleGameTimeChanged(TimeSpan delta)
 	{
+		CheckReadyToDestroy();
+	}
+
+	private void CheckReadyToDestroy()
+	{
 		if (!(Game.Instance.Player.GameTime < DestroyTime))
 		{
 			Game.Instance.EntityDestroyer.Destroy(base.ConcreteOwner);
@@ -40,6 +45,8 @@ public class PartFadeOutAndDestroy : EntityPart, IGameTimeChangedHandler, ISubsc
 
 	public void HandleNonGameTimeChanged()
 	{
+		DestroyTime -= Game.Instance.TimeController.DeltaTimeSpan;
+		CheckReadyToDestroy();
 	}
 
 	public override Hash128 GetHash128()

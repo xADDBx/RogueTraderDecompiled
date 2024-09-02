@@ -19,9 +19,9 @@ public abstract class ScriptZoneShape : MonoBehaviour, IScriptZoneShape
 	{
 	}
 
-	public abstract bool Contains(Vector3 point, IntRect size = default(IntRect));
+	public abstract bool Contains(Vector3 point, IntRect size = default(IntRect), Vector3 forward = default(Vector3));
 
-	public abstract bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect));
+	public abstract bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3));
 
 	public abstract Bounds GetBounds();
 

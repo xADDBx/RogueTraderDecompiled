@@ -7,6 +7,7 @@ using Kingmaker.Controllers;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.GameCommands;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View;
 using Newtonsoft.Json;
@@ -105,7 +106,21 @@ public class FogOfWarRevealerTrigger : EntityViewBase, IUpdatable
 
 	private bool m_SubscribedForUpdates;
 
+	public static readonly Dictionary<string, FogOfWarRevealerTrigger> AllTriggers = new Dictionary<string, FogOfWarRevealerTrigger>();
+
 	private Vector3 LocalScaleControl = Vector3.zero;
+
+	protected override void OnEnable()
+	{
+		AllTriggers[UniqueId] = this;
+		base.OnEnable();
+	}
+
+	protected override void OnDisable()
+	{
+		AllTriggers.Remove(UniqueId);
+		base.OnDisable();
+	}
 
 	private void Start()
 	{
@@ -137,6 +152,14 @@ public class FogOfWarRevealerTrigger : EntityViewBase, IUpdatable
 
 	private void OnTriggerEnter(Collider trespasser)
 	{
+		if (trespasser.gameObject.layer == LayerMask.NameToLayer(AgroLayer) && !(trespasser.transform.parent == null) && !(trespasser.transform.parent.GetComponent<UnitEntityView>() == null) && trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData != null && trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData.GetCompanionOptional() != null && trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData.GetCompanionOptional().State == CompanionState.InParty)
+		{
+			Game.Instance.GameCommandQueue.AddCommand(new FogOfWarRevealerTriggerGameCommand(UniqueId));
+		}
+	}
+
+	public void Reveal()
+	{
 		if (m_RevealStarted || m_RevealComplete)
 		{
 			return;
@@ -163,10 +186,6 @@ public class FogOfWarRevealerTrigger : EntityViewBase, IUpdatable
 				UberDebug.LogError("Empty animation trigger name in " + base.name);
 				return;
 			}
-		}
-		if (trespasser.gameObject.layer != LayerMask.NameToLayer(AgroLayer) || trespasser.transform.parent == null || trespasser.transform.parent.GetComponent<UnitEntityView>() == null || trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData == null || trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData.GetCompanionOptional() == null || trespasser.transform.parent.GetComponent<UnitEntityView>().EntityData.GetCompanionOptional().State != CompanionState.InParty)
-		{
-			return;
 		}
 		if (Animated)
 		{

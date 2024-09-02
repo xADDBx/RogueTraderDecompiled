@@ -451,7 +451,7 @@ public static class UIUtilityTexts
 							property = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings p) => p.LinkKey == link);
 							if (property != null)
 							{
-								link = property.Description;
+								link = FormatIndent(property.Description);
 							}
 						}
 					}
@@ -460,7 +460,7 @@ public static class UIUtilityTexts
 						UIPropertySettings uIPropertySettings = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings property) => property.LinkKey == link);
 						if (uIPropertySettings != null)
 						{
-							link = uIPropertySettings.Description;
+							link = FormatIndent(uIPropertySettings.Description);
 						}
 					}
 					text += link;
@@ -472,6 +472,15 @@ public static class UIUtilityTexts
 			}
 			return text;
 		}
+	}
+
+	private static string FormatIndent(string text)
+	{
+		if (text.StartsWith("<indent=") || text.StartsWith("-<indent="))
+		{
+			text = "\n" + text;
+		}
+		return text;
 	}
 
 	public static (string, ItemHeaderType) GetItemHeaderText(ItemEntity item)

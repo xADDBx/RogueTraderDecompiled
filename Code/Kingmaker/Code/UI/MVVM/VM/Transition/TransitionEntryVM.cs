@@ -1,8 +1,11 @@
 using System;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.GameCommands;
 using Kingmaker.Globalmap.Blueprints;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
@@ -60,14 +63,23 @@ public class TransitionEntryVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 
 	public void Enter()
 	{
-		if (UINetUtility.IsControlMainCharacterWithWarning())
+		if (!UINetUtility.IsControlMainCharacterWithWarning())
 		{
-			if (Entry != null)
-			{
-				Game.Instance.GameCommandQueue.AreaTransition(Entry);
-			}
-			CloseAction?.Invoke();
+			return;
 		}
+		if (!IsInteractable.Value)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.Transition.TransitionIsUnavailable);
+			});
+			return;
+		}
+		if (Entry != null)
+		{
+			Game.Instance.GameCommandQueue.AreaTransition(Entry);
+		}
+		CloseAction?.Invoke();
 	}
 
 	public TooltipBaseTemplate GetTooltipTemplate()

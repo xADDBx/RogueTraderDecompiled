@@ -85,7 +85,7 @@ public readonly struct OrientedPatternData
 		}
 	}
 
-	public OrientedPatternData([NotNull] List<CustomGridNodeBase> nodes, CustomGridNodeBase applicationNode)
+	public OrientedPatternData(ReadonlyList<CustomGridNodeBase> nodes, CustomGridNodeBase applicationNode)
 	{
 		ApplicationNode = applicationNode;
 		m_NodesExtraData = null;

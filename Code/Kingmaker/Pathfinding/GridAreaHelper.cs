@@ -537,6 +537,43 @@ public static class GridAreaHelper
 		return (to - from).normalized;
 	}
 
+	public static int Direction(this Vector2Int from, Vector2Int to)
+	{
+		if (to.x == from.x)
+		{
+			if (to.y == from.y)
+			{
+				return -1;
+			}
+			if (to.y > from.y)
+			{
+				return 2;
+			}
+			return 0;
+		}
+		if (to.x > from.x)
+		{
+			if (to.y == from.y)
+			{
+				return 1;
+			}
+			if (to.y > from.y)
+			{
+				return 5;
+			}
+			return 4;
+		}
+		if (to.y == from.y)
+		{
+			return 3;
+		}
+		if (to.y > from.y)
+		{
+			return 6;
+		}
+		return 7;
+	}
+
 	public static int SimplifiedDirection(this Vector2Int from, Vector2Int to)
 	{
 		if (to.x >= from.x)

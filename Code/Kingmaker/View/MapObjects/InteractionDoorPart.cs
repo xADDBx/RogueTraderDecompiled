@@ -9,6 +9,7 @@ using Kingmaker.Interaction;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Sound.Base;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;

@@ -6,6 +6,7 @@ using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
@@ -138,8 +139,7 @@ public class EpilogBaseView : ViewBase<EpilogVM>, IInitializable
 		if (m_BackgroundVideo.VideoClip != value)
 		{
 			m_BackgroundVideo.Stop();
-			m_BackgroundVideo.PrepareAudio(base.ViewModel.SoundStart.Value, base.ViewModel.SoundStop.Value);
-			m_BackgroundVideo.SetClip(value);
+			m_BackgroundVideo.SetClip(value, SoundStateType.Video, prepareVideo: false, base.ViewModel.SoundStart.Value, base.ViewModel.SoundStop.Value);
 		}
 		Sprite value2 = base.ViewModel.BackgroundSprite.Value;
 		m_BackgroundImage.gameObject.SetActive(value2 != null);

@@ -104,7 +104,7 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 		TrySelectItem();
 		if (!m_ShipNameWasEdited)
 		{
-			SetName(GetDefaultName());
+			SetName(GetDefaultName(), isManual: false);
 		}
 	}
 
@@ -187,16 +187,19 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 		return new TooltipTemplatePlayerStarship(blueprintStarship);
 	}
 
-	public void SetName(string shipName)
+	public void SetName(string shipName, bool isManual)
 	{
 		Game.Instance.GameCommandQueue.CharGenSetShipName(shipName);
+		if (isManual)
+		{
+			m_ShipNameWasEdited = true;
+		}
 	}
 
 	void ICharGenShipPhaseHandler.HandleSetName(string shipName)
 	{
 		ShipName.Value = shipName;
 		m_SelectionStateShip?.Ship?.Description.SetName(shipName);
-		m_ShipNameWasEdited = true;
 		UpdateIsCompleted();
 	}
 
@@ -226,7 +229,7 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 			text = text.Trim();
 			if (!string.IsNullOrEmpty(text))
 			{
-				SetName(text);
+				SetName(text, isManual: true);
 			}
 			onComplete?.Invoke();
 		}, ShipName.Value, GetRandomName, DisposeMessageBox);

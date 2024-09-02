@@ -48,6 +48,8 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 
 	private IConsoleEntity m_PrevFocused;
 
+	private ReactiveProperty<bool> m_BlockInteractions = new ReactiveProperty<bool>();
+
 	private WeaponSetSelectorConsoleView WeaponSetConsoleView => m_WeaponSetSelector as WeaponSetSelectorConsoleView;
 
 	public override void Initialize()
@@ -156,7 +158,7 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 				m_QuickSlots[3]
 			};
 			navigationBehaviour.SetEntities(array);
-			m_NavigationBehaviour.FocusOnEntityManual(m_Neck);
+			m_NavigationBehaviour.SetCurrentEntity(m_Neck);
 			m_ChooseSlotInputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 			{
 				ContextName = "ChooseSlot"
@@ -170,8 +172,12 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 		return m_NavigationBehaviour;
 	}
 
-	public void AddInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, IReadOnlyReactiveProperty<bool> enabledHints = null)
+	public void AddInput(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, IReadOnlyReactiveProperty<bool> enabledHints = null, ReactiveProperty<bool> blockInteractions = null)
 	{
+		if (blockInteractions != null)
+		{
+			m_BlockInteractions = blockInteractions;
+		}
 		AddDisposable(inputLayer.AddAxis(RotateDoll, 2));
 		AddDisposable(inputLayer.AddAxis(ZoomDoll, 3));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
@@ -182,7 +188,7 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 
 	private void RotateDoll(InputActionEventData obj, float x)
 	{
-		if (!(Mathf.Abs(x) < m_ZoomThresholdValue))
+		if (!m_BlockInteractions.Value && !(Mathf.Abs(x) < m_ZoomThresholdValue))
 		{
 			m_CharacterController.Rotate((0f - x) * m_RotateFactor);
 		}
@@ -190,7 +196,7 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 
 	private void ZoomDoll(InputActionEventData obj, float x)
 	{
-		if (!(Mathf.Abs(x) < m_ZoomThresholdValue))
+		if (!m_BlockInteractions.Value && !(Mathf.Abs(x) < m_ZoomThresholdValue))
 		{
 			m_CharacterController.Zoom(x * m_ZoomFactor);
 		}

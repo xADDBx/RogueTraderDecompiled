@@ -7,6 +7,7 @@ using Kingmaker.RuleSystem.Rules.Interfaces;
 using Kingmaker.UI.Models.Log.Enums;
 using Kingmaker.UnitLogic.Mechanics.Facts.Interfaces;
 using Kingmaker.Utility.FlagCountable;
+using UnityEngine;
 
 namespace Kingmaker.UI.Models.Log.GameLogCntxt;
 
@@ -92,6 +93,10 @@ public static class GameLogContext
 	public static Property<string> SecondText;
 
 	public static Property<string> Description;
+
+	public static Property<string> OverrideName;
+
+	public static Property<Color> OverrideNameColor;
 
 	public static Property<int> Count;
 
@@ -230,6 +235,8 @@ public static class GameLogContext
 		TargetEntity = default(Property<IMechanicEntity>);
 		Text = "";
 		Description = "";
+		OverrideName = "";
+		OverrideNameColor = default(Property<Color>);
 		Count = -1;
 		Roll = -1;
 		DC = -1;

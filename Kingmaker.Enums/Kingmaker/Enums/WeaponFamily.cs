@@ -13,5 +13,7 @@ public enum WeaponFamily
 	Chain,
 	Power,
 	Primitive,
-	Force
+	Force,
+	Blade,
+	ChainSaw
 }

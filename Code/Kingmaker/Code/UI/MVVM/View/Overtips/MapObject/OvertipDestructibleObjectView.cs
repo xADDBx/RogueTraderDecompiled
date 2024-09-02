@@ -94,7 +94,7 @@ public abstract class OvertipDestructibleObjectView : BaseOvertipView<OvertipDes
 	{
 		get
 		{
-			if (base.ViewModel.UnitState.IsTBM.Value && base.ViewModel.IsVisibleForPlayer.Value && !base.ViewModel.MapObjectEntity.Suppressed)
+			if (base.ViewModel.UnitState.IsTBM.Value && base.ViewModel.IsVisibleForPlayer.Value && base.ViewModel.UnitState.IsInCombat.Value && !base.ViewModel.MapObjectEntity.Suppressed)
 			{
 				return !base.ViewModel.IsCutscene;
 			}
@@ -144,7 +144,7 @@ public abstract class OvertipDestructibleObjectView : BaseOvertipView<OvertipDes
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		base.gameObject.name = base.ViewModel.MapObjectEntity.View.gameObject.name + "_OvertipDestructibleOvertip";
+		base.gameObject.name = base.ViewModel.MapObjectEntity.View.gameObject.name + "_OvertipDestructibleObject";
 		m_HealthBlockView.Initialize(m_Visibility);
 		m_HealthBlockView.Bind(base.ViewModel.HealthBlockVM);
 		m_NameBlockPCView.Bind(base.ViewModel.HitChanceBlockVM);

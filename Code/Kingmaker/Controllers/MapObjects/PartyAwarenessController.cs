@@ -16,6 +16,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.Traps;
 
 namespace Kingmaker.Controllers.MapObjects;
@@ -43,7 +44,7 @@ public class PartyAwarenessController : IControllerTick, IController, IEntityPos
 			}
 			foreach (MapObjectEntity mapObject in Game.Instance.State.MapObjects)
 			{
-				if (mapObject.IsInFogOfWar)
+				if (mapObject.IsInFogOfWar || mapObject.View == null)
 				{
 					continue;
 				}

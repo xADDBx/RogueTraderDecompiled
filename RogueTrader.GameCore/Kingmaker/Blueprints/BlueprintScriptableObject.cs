@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Base;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.Enums;
 using MemoryPack;
 using Newtonsoft.Json;
 using Owlcat.QA.Validation;
@@ -36,6 +37,8 @@ public class BlueprintScriptableObject : SimpleBlueprint, IHavePrototype
 	[SerializeField]
 	[SerializeReference]
 	private BlueprintComponent[] Components;
+
+	public Authors Author;
 
 	[SerializeField]
 	[TextArea(5, 6)]

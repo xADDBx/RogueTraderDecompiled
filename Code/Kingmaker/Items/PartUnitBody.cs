@@ -35,12 +35,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 	}
 
 	[JsonProperty]
-	private List<ItemEntityWeapon> m_EmptyHandWeaponsStack;
-
-	[JsonProperty]
-	private ItemEntityWeapon m_EmptyHandWeapon;
-
-	[JsonProperty]
 	private int m_CurrentHandsEquipmentSetIndex;
 
 	[JsonProperty]
@@ -114,9 +108,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 	public readonly List<ItemSlot> AllSlots = new List<ItemSlot>();
 
 	[JsonProperty]
-	public bool HandsAreEnabled { get; private set; }
-
-	[JsonProperty]
 	[GameStateIgnore]
 	public bool InCombatVisual { get; set; }
 
@@ -140,12 +131,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			return m_EquipmentWeight;
 		}
 	}
-
-	[CanBeNull]
-	public ItemEntityWeapon EmptyHandWeapon => m_EmptyHandWeapon;
-
-	[CanBeNull]
-	public List<ItemEntityWeapon> EmptyHandWeaponsStack => m_EmptyHandWeaponsStack;
 
 	public int CurrentHandEquipmentSetIndex
 	{
@@ -230,28 +215,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		where s?.HasItem ?? false
 		select s.Item;
 
-	private IEnumerable<ItemEntity> AllEmptyHands
-	{
-		get
-		{
-			if (m_EmptyHandWeapon != null)
-			{
-				yield return m_EmptyHandWeapon;
-			}
-			if (m_EmptyHandWeaponsStack == null)
-			{
-				yield break;
-			}
-			foreach (ItemEntityWeapon item in m_EmptyHandWeaponsStack)
-			{
-				if (item != null)
-				{
-					yield return item;
-				}
-			}
-		}
-	}
-
 	public bool HandsEquipmentAreVisible
 	{
 		get
@@ -266,13 +229,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 
 	protected override void OnAttach()
 	{
-		HandsAreEnabled = !base.Owner.OriginalBlueprint.Body.DisableHands;
 		BlueprintUnit.UnitBody body = base.Owner.OriginalBlueprint.Body;
-		if (HandsAreEnabled && (bool)body.EmptyHandWeapon)
-		{
-			m_EmptyHandWeapon = body.EmptyHandWeapon.CreateEntity<ItemEntityWeapon>();
-			m_EmptyHandWeapon.OnDidEquipped(base.Owner);
-		}
 		m_HandsEquipmentSets = new HandsEquipmentSet[2];
 		for (int i = 0; i < m_HandsEquipmentSets.Length; i++)
 		{
@@ -374,36 +331,13 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			IsInitializing = true;
 			BlueprintUnit.UnitBody body = base.Owner.OriginalBlueprint.Body;
 			base.Owner.OriginalBlueprint.TrySetupOverridenUnitBodyHandsSettings();
-			for (int i = 0; i < body.AdditionalLimbs.Length; i++)
+			for (int i = 0; i < body.QuickSlots.Length; i++)
 			{
-				if (!HandsAreEnabled && m_HandsEquipmentSets[0].PrimaryHand.MaybeItem == null)
-				{
-					TryInsertItem(body.AdditionalLimbs[i], m_HandsEquipmentSets[0].PrimaryHand);
-				}
-				else
-				{
-					TryInsertItem(body.AdditionalLimbs[i], m_AdditionalLimbs[i]);
-				}
+				TryInsertItem(body.QuickSlots[i], QuickSlots[i]);
 			}
-			int num = 0;
-			int num2 = body.AdditionalLimbs.Length;
-			while (num < body.AdditionalSecondaryLimbs.Length)
+			for (int j = 0; j < body.Mechadendrites.Length; j++)
 			{
-				TryInsertItem(body.AdditionalSecondaryLimbs[num], m_AdditionalLimbs[num2]);
-				if (m_AdditionalLimbs[num2]?.MaybeItem is ItemEntityWeapon itemEntityWeapon)
-				{
-					itemEntityWeapon.ForceSecondary = true;
-				}
-				num++;
-				num2++;
-			}
-			for (int j = 0; j < body.QuickSlots.Length; j++)
-			{
-				TryInsertItem(body.QuickSlots[j], QuickSlots[j]);
-			}
-			for (int k = 0; k < body.Mechadendrites.Length; k++)
-			{
-				TryInsertItem(body.Mechadendrites[k], Mechadendrites[k]);
+				TryInsertItem(body.Mechadendrites[j], Mechadendrites[j]);
 			}
 			TryInsertItem(body.Armor, Armor);
 			TryInsertItem(body.Shirt, Shirt);
@@ -429,19 +363,39 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		try
 		{
 			IsInitializing = true;
-			if (HandsAreEnabled)
+			UnitItemEquipmentHandSettings currentUnitItemEquipmentHandSettings = GetCurrentUnitItemEquipmentHandSettings(eq);
+			m_CurrentHandsEquipmentSetIndex = ((currentUnitItemEquipmentHandSettings.ActiveHandSet >= 0 && currentUnitItemEquipmentHandSettings.ActiveHandSet < 2) ? currentUnitItemEquipmentHandSettings.ActiveHandSet : 0);
+			for (int i = 0; i < 2; i++)
 			{
-				UnitItemEquipmentHandSettings currentUnitItemEquipmentHandSettings = GetCurrentUnitItemEquipmentHandSettings(eq);
-				m_CurrentHandsEquipmentSetIndex = ((currentUnitItemEquipmentHandSettings.ActiveHandSet >= 0 && currentUnitItemEquipmentHandSettings.ActiveHandSet < 2) ? currentUnitItemEquipmentHandSettings.ActiveHandSet : 0);
-				for (int i = 0; i < 2; i++)
+				BlueprintItemEquipmentHand handEquipment = eq.GetHandEquipment(i, main: true, currentUnitItemEquipmentHandSettings);
+				BlueprintItemEquipmentHand handEquipment2 = eq.GetHandEquipment(i, main: false, currentUnitItemEquipmentHandSettings);
+				m_HandsEquipmentSets[i].PrimaryHand.UpdateActive();
+				m_HandsEquipmentSets[i].SecondaryHand.UpdateActive();
+				TryInsertItem(handEquipment, m_HandsEquipmentSets[i].PrimaryHand);
+				TryInsertItem(handEquipment2, m_HandsEquipmentSets[i].SecondaryHand);
+			}
+			for (int j = 0; j < eq.AdditionalLimbs.Length; j++)
+			{
+				if (m_HandsEquipmentSets[0].PrimaryHand.MaybeItem == null)
 				{
-					BlueprintItemEquipmentHand handEquipment = eq.GetHandEquipment(i, main: true, currentUnitItemEquipmentHandSettings);
-					BlueprintItemEquipmentHand handEquipment2 = eq.GetHandEquipment(i, main: false, currentUnitItemEquipmentHandSettings);
-					m_HandsEquipmentSets[i].PrimaryHand.UpdateActive();
-					m_HandsEquipmentSets[i].SecondaryHand.UpdateActive();
-					TryInsertItem(handEquipment, m_HandsEquipmentSets[i].PrimaryHand);
-					TryInsertItem(handEquipment2, m_HandsEquipmentSets[i].SecondaryHand);
+					TryInsertItem(eq.AdditionalLimbs[j], m_HandsEquipmentSets[0].PrimaryHand);
 				}
+				else
+				{
+					TryInsertItem(eq.AdditionalLimbs[j], m_AdditionalLimbs[j]);
+				}
+			}
+			int num = 0;
+			int num2 = eq.AdditionalLimbs.Length;
+			while (num < eq.AdditionalSecondaryLimbs.Length)
+			{
+				TryInsertItem(eq.AdditionalSecondaryLimbs[num], m_AdditionalLimbs[num2]);
+				if (m_AdditionalLimbs[num2]?.MaybeItem is ItemEntityWeapon itemEntityWeapon)
+				{
+					itemEntityWeapon.ForceSecondary = true;
+				}
+				num++;
+				num2++;
 			}
 		}
 		finally
@@ -459,7 +413,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 	{
 		using (ContextData<ItemSlot.IgnoreLock>.Request())
 		{
-			HandsAreEnabled = !base.Owner.OriginalBlueprint.Body.DisableHands;
 			m_CurrentHandsEquipmentSetIndex = 0;
 			HandsEquipmentSet[] handsEquipmentSets = m_HandsEquipmentSets;
 			foreach (HandsEquipmentSet handsEquipmentSet in handsEquipmentSets)
@@ -578,43 +531,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		return null;
 	}
 
-	public ItemEntityWeapon SetEmptyHandWeapon(BlueprintItemWeapon weapon)
-	{
-		if (!HandsAreEnabled)
-		{
-			PFLog.Default.Error("Hands are not enabled, can't set empty hand weapon");
-			return null;
-		}
-		m_EmptyHandWeapon?.OnWillUnequip();
-		m_EmptyHandWeaponsStack = m_EmptyHandWeaponsStack ?? new List<ItemEntityWeapon>();
-		m_EmptyHandWeaponsStack.Add(m_EmptyHandWeapon);
-		m_EmptyHandWeapon = weapon.CreateEntity<ItemEntityWeapon>();
-		m_EmptyHandWeapon.OnDidEquipped(base.Owner);
-		return m_EmptyHandWeapon;
-	}
-
-	public void RemoveEmptyHandWeapon(ItemEntityWeapon weapon)
-	{
-		if (!HandsAreEnabled)
-		{
-			PFLog.Default.Error("Hands are not enabled, can't remove empty hand weapon");
-			return;
-		}
-		if (m_EmptyHandWeapon == weapon)
-		{
-			if (m_EmptyHandWeaponsStack.Empty())
-			{
-				PFLog.Default.Error("m_EmptyHandWeaponsStack is empty, can't remove empty hand weapon");
-				return;
-			}
-			m_EmptyHandWeapon.OnWillUnequip();
-			m_EmptyHandWeapon = m_EmptyHandWeaponsStack.LastItem();
-			m_EmptyHandWeapon?.OnDidEquipped(base.Owner);
-			m_EmptyHandWeaponsStack.RemoveAt(m_EmptyHandWeaponsStack.Count - 1);
-		}
-		m_EmptyHandWeaponsStack?.Remove(weapon);
-	}
-
 	public void OnItemInserted(ItemEntity item)
 	{
 		MarkEquipmentWeightDirty();
@@ -662,10 +578,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 				yield return m_PolymorphHandsEquipmentSet.SecondaryHand.MaybeItem;
 			}
 		}
-		foreach (ItemEntity allEmptyHand in AllEmptyHands)
-		{
-			yield return allEmptyHand;
-		}
 	}
 
 	protected override void OnSubscribe()
@@ -690,10 +602,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			s.Item.PreSave();
 		});
-		AllEmptyHands.ForEach(delegate(ItemEntity w)
-		{
-			w?.PreSave();
-		});
 	}
 
 	protected override void OnPrePostLoad()
@@ -703,10 +611,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			s.PrePostLoad(base.Owner);
 		});
-		AllEmptyHands.ForEach(delegate(ItemEntity w)
-		{
-			w?.PrePostLoad();
-		});
 	}
 
 	protected override void OnPostLoad()
@@ -714,10 +618,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		AllSlots.ForEach(delegate(ItemSlot s)
 		{
 			s.PostLoad();
-		});
-		AllEmptyHands.ForEach(delegate(ItemEntity w)
-		{
-			w?.PostLoad();
 		});
 	}
 
@@ -727,15 +627,10 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			s.Item.Dispose();
 		});
-		AllEmptyHands.ForEach(delegate(ItemEntity w)
-		{
-			w?.Dispose();
-		});
 	}
 
 	public void ApplyPolymorphEffect([CanBeNull] BlueprintItemWeapon mainHand, [CanBeNull] BlueprintItemWeapon offHand, BlueprintItemWeapon[] additionalLimbs, BlueprintItemWeapon[] secondaryAdditionalLimbs, bool keepSlots)
 	{
-		HandsAreEnabled = mainHand != null || offHand != null;
 		m_PolymorphKeepSlots = keepSlots;
 		if (!keepSlots)
 		{
@@ -748,7 +643,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			{
 				if ((bool)blueprintItemWeapon)
 				{
-					if (!HandsAreEnabled && m_PolymorphHandsEquipmentSet != null && m_PolymorphHandsEquipmentSet.PrimaryHand.MaybeItem == null)
+					if (m_PolymorphHandsEquipmentSet != null && m_PolymorphHandsEquipmentSet.PrimaryHand.MaybeItem == null)
 					{
 						m_PolymorphHandsEquipmentSet.PrimaryHand.InsertItem(blueprintItemWeapon.CreateEntity());
 						continue;
@@ -835,7 +730,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		m_PolymorphHandsEquipmentSet = null;
 		m_PolymorphAdditionalLimbs = null;
 		m_PolymorphKeepSlots = false;
-		HandsAreEnabled = !base.Owner.OriginalBlueprint.Body.DisableHands;
 	}
 
 	public void MarkEquipmentWeightDirty()
@@ -889,90 +783,77 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		Hash128 result = default(Hash128);
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
-		bool val2 = HandsAreEnabled;
-		result.Append(ref val2);
-		List<ItemEntityWeapon> emptyHandWeaponsStack = m_EmptyHandWeaponsStack;
-		if (emptyHandWeaponsStack != null)
-		{
-			for (int i = 0; i < emptyHandWeaponsStack.Count; i++)
-			{
-				Hash128 val3 = ClassHasher<ItemEntityWeapon>.GetHash128(emptyHandWeaponsStack[i]);
-				result.Append(ref val3);
-			}
-		}
-		Hash128 val4 = ClassHasher<ItemEntityWeapon>.GetHash128(m_EmptyHandWeapon);
-		result.Append(ref val4);
 		result.Append(ref m_CurrentHandsEquipmentSetIndex);
 		HandsEquipmentSet[] handsEquipmentSets = m_HandsEquipmentSets;
 		if (handsEquipmentSets != null)
 		{
-			for (int j = 0; j < handsEquipmentSets.Length; j++)
+			for (int i = 0; i < handsEquipmentSets.Length; i++)
 			{
-				Hash128 val5 = ClassHasher<HandsEquipmentSet>.GetHash128(handsEquipmentSets[j]);
-				result.Append(ref val5);
+				Hash128 val2 = ClassHasher<HandsEquipmentSet>.GetHash128(handsEquipmentSets[i]);
+				result.Append(ref val2);
 			}
 		}
 		List<WeaponSlot> additionalLimbs = m_AdditionalLimbs;
 		if (additionalLimbs != null)
 		{
-			for (int k = 0; k < additionalLimbs.Count; k++)
+			for (int j = 0; j < additionalLimbs.Count; j++)
 			{
-				Hash128 val6 = ClassHasher<WeaponSlot>.GetHash128(additionalLimbs[k]);
-				result.Append(ref val6);
+				Hash128 val3 = ClassHasher<WeaponSlot>.GetHash128(additionalLimbs[j]);
+				result.Append(ref val3);
 			}
 		}
-		Hash128 val7 = ClassHasher<HandsEquipmentSet>.GetHash128(m_PolymorphHandsEquipmentSet);
-		result.Append(ref val7);
+		Hash128 val4 = ClassHasher<HandsEquipmentSet>.GetHash128(m_PolymorphHandsEquipmentSet);
+		result.Append(ref val4);
 		List<WeaponSlot> polymorphAdditionalLimbs = m_PolymorphAdditionalLimbs;
 		if (polymorphAdditionalLimbs != null)
 		{
-			for (int l = 0; l < polymorphAdditionalLimbs.Count; l++)
+			for (int k = 0; k < polymorphAdditionalLimbs.Count; k++)
 			{
-				Hash128 val8 = ClassHasher<WeaponSlot>.GetHash128(polymorphAdditionalLimbs[l]);
-				result.Append(ref val8);
+				Hash128 val5 = ClassHasher<WeaponSlot>.GetHash128(polymorphAdditionalLimbs[k]);
+				result.Append(ref val5);
 			}
 		}
 		result.Append(ref m_PolymorphKeepSlots);
 		UsableSlot[] quickSlots = QuickSlots;
 		if (quickSlots != null)
 		{
-			for (int m = 0; m < quickSlots.Length; m++)
+			for (int l = 0; l < quickSlots.Length; l++)
 			{
-				Hash128 val9 = ClassHasher<UsableSlot>.GetHash128(quickSlots[m]);
-				result.Append(ref val9);
+				Hash128 val6 = ClassHasher<UsableSlot>.GetHash128(quickSlots[l]);
+				result.Append(ref val6);
 			}
 		}
-		Hash128 val10 = ClassHasher<ArmorSlot>.GetHash128(Armor);
+		Hash128 val7 = ClassHasher<ArmorSlot>.GetHash128(Armor);
+		result.Append(ref val7);
+		Hash128 val8 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentShirt>>.GetHash128(Shirt);
+		result.Append(ref val8);
+		Hash128 val9 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentBelt>>.GetHash128(Belt);
+		result.Append(ref val9);
+		Hash128 val10 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentHead>>.GetHash128(Head);
 		result.Append(ref val10);
-		Hash128 val11 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentShirt>>.GetHash128(Shirt);
+		Hash128 val11 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentGlasses>>.GetHash128(Glasses);
 		result.Append(ref val11);
-		Hash128 val12 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentBelt>>.GetHash128(Belt);
+		Hash128 val12 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentFeet>>.GetHash128(Feet);
 		result.Append(ref val12);
-		Hash128 val13 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentHead>>.GetHash128(Head);
+		Hash128 val13 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentGloves>>.GetHash128(Gloves);
 		result.Append(ref val13);
-		Hash128 val14 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentGlasses>>.GetHash128(Glasses);
+		Hash128 val14 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentNeck>>.GetHash128(Neck);
 		result.Append(ref val14);
-		Hash128 val15 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentFeet>>.GetHash128(Feet);
+		Hash128 val15 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentRing>>.GetHash128(Ring1);
 		result.Append(ref val15);
-		Hash128 val16 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentGloves>>.GetHash128(Gloves);
+		Hash128 val16 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentRing>>.GetHash128(Ring2);
 		result.Append(ref val16);
-		Hash128 val17 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentNeck>>.GetHash128(Neck);
+		Hash128 val17 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentWrist>>.GetHash128(Wrist);
 		result.Append(ref val17);
-		Hash128 val18 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentRing>>.GetHash128(Ring1);
+		Hash128 val18 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentShoulders>>.GetHash128(Shoulders);
 		result.Append(ref val18);
-		Hash128 val19 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentRing>>.GetHash128(Ring2);
-		result.Append(ref val19);
-		Hash128 val20 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentWrist>>.GetHash128(Wrist);
-		result.Append(ref val20);
-		Hash128 val21 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentShoulders>>.GetHash128(Shoulders);
-		result.Append(ref val21);
 		List<EquipmentSlot<BlueprintItemMechadendrite>> mechadendrites = Mechadendrites;
 		if (mechadendrites != null)
 		{
-			for (int n = 0; n < mechadendrites.Count; n++)
+			for (int m = 0; m < mechadendrites.Count; m++)
 			{
-				Hash128 val22 = ClassHasher<EquipmentSlot<BlueprintItemMechadendrite>>.GetHash128(mechadendrites[n]);
-				result.Append(ref val22);
+				Hash128 val19 = ClassHasher<EquipmentSlot<BlueprintItemMechadendrite>>.GetHash128(mechadendrites[m]);
+				result.Append(ref val19);
 			}
 		}
 		return result;

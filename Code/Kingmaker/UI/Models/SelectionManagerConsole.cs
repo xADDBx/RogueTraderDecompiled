@@ -153,16 +153,21 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 		}
 		else
 		{
+			BaseUnitEntity baseUnitEntity = Game.Instance.State.AllBaseUnits.FirstOrDefault((BaseUnitEntity u) => u.UniqueId == entityId && u.IsDirectlyControllable());
+			if (baseUnitEntity != null)
+			{
+				baseUnitEntity.IsLink = true;
+			}
 			UpdateLinkedUnits(force: true);
 			if (base.SelectedUnit.Value == null || base.SelectedUnit.Value.UniqueId == entityId)
 			{
 				base.SelectedUnit.Value = base.SelectedUnits.FirstOrDefault();
 			}
 		}
-		BaseUnitEntity baseUnitEntity = m_LinkedUnits.Find((BaseUnitEntity u) => u.UniqueId == entityId);
-		if (baseUnitEntity != null)
+		BaseUnitEntity baseUnitEntity2 = m_LinkedUnits.Find((BaseUnitEntity u) => u.UniqueId == entityId);
+		if (baseUnitEntity2 != null)
 		{
-			Game.Instance.SynchronizedDataController.PushLeftStickMovement(baseUnitEntity, Vector2.zero, 0f);
+			Game.Instance.SynchronizedDataController.PushLeftStickMovement(baseUnitEntity2, Vector2.zero, 0f);
 		}
 	}
 
@@ -213,6 +218,7 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 
 	public void OnAreaLoadingComplete()
 	{
+		SelectAll();
 		UpdateLinkedUnits();
 	}
 

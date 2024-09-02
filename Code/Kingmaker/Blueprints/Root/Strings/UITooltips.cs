@@ -131,6 +131,8 @@ public class UITooltips
 
 	public LocalizedString MajorVeilDegradation;
 
+	public LocalizedString MeleeStrikesCount;
+
 	public LocalizedString ShotsCount;
 
 	public LocalizedString MomentumAvailable;
@@ -193,9 +195,13 @@ public class UITooltips
 
 	public LocalizedString Damage;
 
+	public LocalizedString InitialDamage;
+
 	public LocalizedString BurstCount;
 
 	public LocalizedString PossibleToPush;
+
+	public LocalizedString EveryRound;
 
 	public LocalizedString TotalHitChance;
 

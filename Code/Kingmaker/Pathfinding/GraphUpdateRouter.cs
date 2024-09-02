@@ -12,6 +12,8 @@ public static class GraphUpdateRouter
 {
 	private static readonly List<Bounds> Disabled = new List<Bounds>();
 
+	private static readonly Predicate<Bounds> QueueRectPredicate = QueueRect;
+
 	private static UpdateHook UpdateHook { get; set; }
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -59,16 +61,37 @@ public static class GraphUpdateRouter
 
 	private static bool UpdateCurrentPosImpl(NavmeshClipper clipper)
 	{
-		Rect bounds = clipper.GetBounds(GraphTransform.identityTransform);
-		return QueueRect(new Bounds(bounds.center.To3D(), bounds.size.To3D(1000f)));
+		return QueueRect(BoundsFromRect(clipper.GetBounds(GraphTransform.identityTransform)));
 	}
 
 	private static void UpdatePrevPosImpl(NavmeshClipper clipper)
 	{
-		if (clipper is NavmeshCut { lastBounds: var lastBounds } && !(lastBounds == default(Bounds)) && !QueueRect(lastBounds))
+		Bounds bounds;
+		if (!(clipper is NavmeshCut navmeshCut))
 		{
-			Disabled.Add(lastBounds);
+			if (!(clipper is GridNavmeshModifier { LastBounds: var lastBounds }) || lastBounds == default(Rect))
+			{
+				return;
+			}
+			bounds = BoundsFromRect(lastBounds);
 		}
+		else
+		{
+			bounds = navmeshCut.lastBounds;
+			if (bounds == default(Bounds))
+			{
+				return;
+			}
+		}
+		if (!QueueRect(bounds))
+		{
+			Disabled.Add(bounds);
+		}
+	}
+
+	private static Bounds BoundsFromRect(Rect rect)
+	{
+		return new Bounds(rect.center.To3D(), rect.size.To3D(1000f));
 	}
 
 	private static bool QueueRect(Bounds bounds)
@@ -113,6 +136,6 @@ public static class GraphUpdateRouter
 				Update(navmeshClipper);
 			}
 		}
-		Disabled.RemoveAll(QueueRect);
+		Disabled.RemoveAll(QueueRectPredicate);
 	}
 }

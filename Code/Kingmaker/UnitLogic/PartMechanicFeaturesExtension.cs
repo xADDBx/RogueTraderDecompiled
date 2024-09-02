@@ -76,6 +76,9 @@ public static class PartMechanicFeaturesExtension
 			MechanicsFeatureType.RangedParry => features.RangedParry, 
 			MechanicsFeatureType.CanUseBothDesperateMeasureAndHeroicAct => features.CanUseBothDesperateMeasureAndHeroicAct, 
 			MechanicsFeatureType.HalfSuperiorityCriticalChance => features.HalfSuperiorityCriticalChance, 
+			MechanicsFeatureType.HideRealHealthInUI => features.HideRealHealthInUI, 
+			MechanicsFeatureType.DisableSnapToGrid => features.DisableSnapToGrid, 
+			MechanicsFeatureType.AllAttacksCountAsAoe => features.AllAttacksCountAsAoe, 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}

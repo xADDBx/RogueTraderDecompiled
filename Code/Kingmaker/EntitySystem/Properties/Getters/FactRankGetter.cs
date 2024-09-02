@@ -44,10 +44,11 @@ public class FactRankGetter : PropertyGetter, PropertyContextAccessor.IOptionalT
 	protected override int GetBaseValue()
 	{
 		Entity entity = (BuffWithCasterFromTargetType ? this.GetTargetByType(Target) : null);
+		BlueprintUnitFact fact = Fact;
 		int num = 0;
 		foreach (EntityFact item in base.CurrentEntity.Facts.GetAll<EntityFact>())
 		{
-			if (item.Blueprint == Fact && (!BuffWithCasterFromTargetType || item.MaybeContext?.MaybeCaster == entity))
+			if (item.Blueprint == fact && (!BuffWithCasterFromTargetType || item.MaybeContext?.MaybeCaster == entity))
 			{
 				int rank = item.GetRank();
 				num = Aggregation switch

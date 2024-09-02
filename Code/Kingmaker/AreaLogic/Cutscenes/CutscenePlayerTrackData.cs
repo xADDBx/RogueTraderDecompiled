@@ -64,6 +64,7 @@ public class CutscenePlayerTrackData : IHashable
 		{
 			return;
 		}
+		bool flag = !player.Cutscene.NonSkippable;
 		if (IsPlaying)
 		{
 			PlayTime += Game.Instance.TimeController.DeltaTime;
@@ -71,7 +72,7 @@ public class CutscenePlayerTrackData : IHashable
 			try
 			{
 				commandBase.SetTime(PlayTime, player);
-				if (skipping && commandBase.TrySkip(player))
+				if ((!IsRepeat || (IsRepeat && flag)) && skipping && commandBase.TrySkip(player))
 				{
 					commandBase.Interrupt(player);
 				}
@@ -95,18 +96,10 @@ public class CutscenePlayerTrackData : IHashable
 				}
 			}
 		}
-		if (IsPlaying)
+		if (!IsPlaying)
 		{
-			return;
-		}
-		StartNextCommand(skipping);
-		if (IsFinished)
-		{
-			if (IsRepeat && !m_Terminated)
-			{
-				CommandIndex = -1;
-			}
-			else if (!SignalSent)
+			StartNextCommand(skipping, flag);
+			if (IsFinished && !SignalSent)
 			{
 				SignalSent = true;
 				signalReceiver = EndGate;
@@ -123,12 +116,16 @@ public class CutscenePlayerTrackData : IHashable
 		}
 	}
 
-	private void StartNextCommand(bool skipping)
+	private void StartNextCommand(bool skipping, bool isCutsceneSkippable)
 	{
 		CommandIndex++;
 		if (IsFinished)
 		{
-			return;
+			if (!IsRepeat || m_Terminated || (skipping && isCutsceneSkippable))
+			{
+				return;
+			}
+			CommandIndex = 0;
 		}
 		CommandBase commandBase = Track.Commands[CommandIndex];
 		if (!commandBase.EntryCondition.Check())

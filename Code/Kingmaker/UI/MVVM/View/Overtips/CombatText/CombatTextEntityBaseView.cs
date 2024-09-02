@@ -35,6 +35,8 @@ public abstract class CombatTextEntityBaseView<TCombatMessege> : MonoBehaviour w
 
 	protected abstract float GetXPos();
 
+	public abstract string GetText();
+
 	public virtual void Initialize()
 	{
 		m_CanvasGroup.alpha = 0f;

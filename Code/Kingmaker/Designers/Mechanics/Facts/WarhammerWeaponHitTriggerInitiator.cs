@@ -18,7 +18,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("67bd9d5235e74484bb1d673b885ab430")]
-public class WarhammerWeaponHitTriggerInitiator : WarhammerWeaponHitTriggerBase, IInitiatorRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ISubscriber, IInitiatorRulebookSubscriber, IFakeCriticalHandler, ISubscriber<IBaseUnitEntity>, IHashable
+public class WarhammerWeaponHitTriggerInitiator : WarhammerWeaponHitTriggerBase, IInitiatorRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ISubscriber, IInitiatorRulebookSubscriber, IFakeCriticalHandler<EntitySubscriber>, IFakeCriticalHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IFakeCriticalHandler, EntitySubscriber>, IHashable
 {
 	public bool OnlyRighteousFury;
 

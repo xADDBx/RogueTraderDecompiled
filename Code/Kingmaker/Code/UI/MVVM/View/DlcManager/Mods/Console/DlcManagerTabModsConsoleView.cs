@@ -40,7 +40,7 @@ public class DlcManagerTabModsConsoleView : DlcManagerTabModsBaseView
 	{
 		PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
 		pointerEventData.scrollDelta = new Vector2(0f, x * m_ScrollRect.scrollSensitivity);
-		m_ScrollRect.OnSmoothlyScroll(pointerEventData);
+		m_InfoView.ScrollRectExtended.OnSmoothlyScroll(pointerEventData);
 	}
 
 	public void CreateInputImpl(InputLayer inputLayer, ConsoleHintsWidget hintsWidget, ConsoleHint openModSettingsHint, BoolReactiveProperty modSettingsIsAvailable)

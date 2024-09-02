@@ -120,12 +120,12 @@ public class GameHistoryLog : IQuestHandler, ISubscriber, IQuestObjectiveHandler
 	{
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective)
+	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
 	{
 		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective started");
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective)
+	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
 	{
 		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective became visible");
 	}

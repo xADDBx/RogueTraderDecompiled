@@ -32,11 +32,13 @@ public class UpdatePreviousPositionController : IControllerTick, IController
 		{
 			if (!(unit.View == null))
 			{
-				unit.View.InterpolationHelper.OnUnitSimulationTickCompleted(unit.Features.OnElevator);
+				bool flag = unit.GetOptional<EntityPartStayOnPlatform>()?.IsOnPlatform() ?? false;
+				bool forceUpdatePositions = (bool)unit.Features.OnElevator || flag;
+				unit.View.InterpolationHelper.OnUnitSimulationTickCompleted(forceUpdatePositions);
 				unit.Movable.PreviousSimulationTick = new PartMovable.PreviousSimulationTickInfo
 				{
 					HasMotion = (unit.Movable.HasMotionThisSimulationTick || unit.Movable.ForceHasMotion),
-					HasRotation = !Mathf.Approximately(unit.Orientation, unit.Movable.PreviousOrientation)
+					HasRotation = (!Mathf.Approximately(unit.Orientation, unit.Movable.PreviousOrientation) || unit.Movable.ForceHasMotion)
 				};
 				unit.Movable.ForceHasMotion = false;
 				unit.Movable.PreviousPosition = unit.Position;

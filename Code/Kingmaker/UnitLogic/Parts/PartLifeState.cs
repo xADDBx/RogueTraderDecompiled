@@ -153,7 +153,6 @@ public class PartLifeState : AbstractUnitPart, IHashable
 				UpdateAttributesDamageAndDrainOnResurrect(optional, fullRestore);
 			}
 			UpdateUnitViewOnResurrect(base.Owner.View);
-			base.Owner.Buffs.RemoveBuffsOnResurrect();
 			m_isRessurecting = false;
 			EventBus.RaiseEvent((IAbstractUnitEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitResurrectedHandler>)delegate(IUnitResurrectedHandler h)
 			{

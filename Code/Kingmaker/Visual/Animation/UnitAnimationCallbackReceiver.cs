@@ -110,6 +110,10 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 			return;
 		}
 		BlueprintAbility blueprintAbility = ((UnitAnimationActionHandle)(unitEntityView.AnimationManager?.CurrentAction))?.Spell;
+		if (blueprintAbility == null)
+		{
+			blueprintAbility = unitEntityView.Data?.Abilities?.Enumerable.FirstOrDefault()?.Blueprint;
+		}
 		if (blueprintAbility != null)
 		{
 			BlueprintAbilitySoundFXSettings blueprintAbilitySoundFXSettings = (unitEntityView.Data.Abilities.GetAbility(blueprintAbility)?.Data.FXSettings ?? blueprintAbility.FXSettings)?.SoundFXSettings;

@@ -17,6 +17,7 @@ using Kingmaker.ResourceLinks.BaseInterfaces;
 using Kingmaker.Utility.CountingGuard;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GameConst;
+using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.Mechanics;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Visual.Highlighting;
@@ -24,6 +25,7 @@ using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;
 
+[AddComponentMenu("Map Object View")]
 [KnowledgeDatabaseID("037fe06a751be534fa04d8b0764331d1")]
 public class MapObjectView : MechanicEntityView, IDetectHover, IEntitySubscriber, IAwarenessHandler<EntitySubscriber>, IAwarenessHandler, ISubscriber<IMapObjectEntity>, ISubscriber, IEventTag<IAwarenessHandler, EntitySubscriber>, IAreaHandler, IResource
 {

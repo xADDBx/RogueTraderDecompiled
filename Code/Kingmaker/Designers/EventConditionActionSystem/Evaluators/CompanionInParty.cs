@@ -40,37 +40,58 @@ public class CompanionInParty : AbstractUnitEvaluator
 	[Tooltip("Мертв")]
 	public bool IncludeDead;
 
+	[Tooltip("Индекс юнита, подпадающего под условия")]
+	public int Index;
+
 	public BlueprintUnit Companion => m_Companion;
 
 	protected override AbstractUnitEntity GetAbstractUnitEntityInternal()
 	{
-		BaseUnitEntity baseUnitEntity = Game.Instance.Player.AllCrossSceneUnits.FirstOrDefault((BaseUnitEntity unit) => IsCompanion(unit.Blueprint));
-		if (baseUnitEntity == null)
+		return Game.Instance.Player.AllCrossSceneUnits.Where(IsMatchingFilters).Skip(Index).FirstOrDefault();
+	}
+
+	private bool IsMatchingFilters(BaseUnitEntity unit)
+	{
+		if (!IsCompanion(unit.Blueprint))
 		{
-			return null;
+			return false;
 		}
-		CompanionState companionState = baseUnitEntity.GetOptional<UnitPartCompanion>()?.State ?? CompanionState.None;
-		if (companionState == CompanionState.InParty && !IncludeActive)
+		switch (unit.GetOptional<UnitPartCompanion>()?.State ?? CompanionState.None)
 		{
-			return null;
+		case CompanionState.InParty:
+			if (IncludeActive)
+			{
+				break;
+			}
+			goto IL_0063;
+		case CompanionState.Remote:
+			if (IncludeRemote)
+			{
+				break;
+			}
+			goto IL_0063;
+		case CompanionState.ExCompanion:
+			if (IncludeExCompanions)
+			{
+				break;
+			}
+			goto IL_0063;
+		case CompanionState.InPartyDetached:
+			{
+				if (IncludeDetached)
+				{
+					break;
+				}
+				goto IL_0063;
+			}
+			IL_0063:
+			return false;
 		}
-		if (companionState == CompanionState.Remote && !IncludeRemote)
+		if (unit.LifeState.IsFinallyDead)
 		{
-			return null;
+			return IncludeDead;
 		}
-		if (companionState == CompanionState.ExCompanion && !IncludeExCompanions)
-		{
-			return null;
-		}
-		if (companionState == CompanionState.InPartyDetached && !IncludeDetached)
-		{
-			return null;
-		}
-		if (baseUnitEntity.LifeState.IsFinallyDead && !IncludeDead)
-		{
-			return null;
-		}
-		return baseUnitEntity;
+		return true;
 	}
 
 	private bool IsCompanion(BlueprintUnit unit)
@@ -88,6 +109,6 @@ public class CompanionInParty : AbstractUnitEvaluator
 
 	public override string GetCaption()
 	{
-		return $"Companion ({m_Companion.Get()})";
+		return string.Format("Companion ({0}){1}", m_Companion.Get(), (Index > 0) ? $" #{Index}" : "");
 	}
 }

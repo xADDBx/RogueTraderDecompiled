@@ -336,6 +336,6 @@ public class SaveLoadVM : BaseDisposable, ISavesUpdatedHandler, ISubscriber, IVi
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
 			HandleSaveListUpdate();
-		}));
+		}, waitForDlc: true));
 	}
 }

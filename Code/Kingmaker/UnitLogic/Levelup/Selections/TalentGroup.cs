@@ -25,5 +25,7 @@ public enum TalentGroup
 	HeroicAct = 0x20000,
 	Momentum = 0x40000,
 	AP = 0x80000,
-	MP = 0x100000
+	MP = 0x100000,
+	HealWound = 0x200000,
+	SpaceCombat = 0x400000
 }

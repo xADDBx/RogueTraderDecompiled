@@ -171,7 +171,7 @@ public class QuestObjective : EntityFact<QuestBook>, ITimedEvent, ISubscriber, I
 		NeedToAttention = true;
 	}
 
-	public void Start()
+	public void Start(bool silentStart = false)
 	{
 		if (Quest.State == QuestState.Completed || Quest.State == QuestState.Failed)
 		{
@@ -186,9 +186,9 @@ public class QuestObjective : EntityFact<QuestBook>, ITimedEvent, ISubscriber, I
 		Quest.OnObjectiveStateChange(this);
 		EventBus.RaiseEvent(delegate(IQuestObjectiveHandler l)
 		{
-			l.HandleQuestObjectiveStarted(this);
+			l.HandleQuestObjectiveStarted(this, silentStart);
 		});
-		TryBecameVisible();
+		TryBecameVisible(silentStart);
 		foreach (BlueprintQuestObjective addendum in Blueprint.Addendums)
 		{
 			QuestObjective questObjective = Quest.TryGetObjective(addendum);
@@ -199,7 +199,7 @@ public class QuestObjective : EntityFact<QuestBook>, ITimedEvent, ISubscriber, I
 				{
 					questObjective.Start();
 				}
-				questObjective.TryBecameVisible();
+				questObjective.TryBecameVisible(silentStart);
 			}
 		}
 		m_ObjectiveStartTime = Game.Instance.Player.GameTime;
@@ -304,7 +304,7 @@ public class QuestObjective : EntityFact<QuestBook>, ITimedEvent, ISubscriber, I
 		base.OnPostLoad();
 	}
 
-	private void TryBecameVisible()
+	private void TryBecameVisible(bool silentStart = false)
 	{
 		if (!m_IsVisible && !Blueprint.IsHidden && ReadyToBecameVisible())
 		{
@@ -315,7 +315,7 @@ public class QuestObjective : EntityFact<QuestBook>, ITimedEvent, ISubscriber, I
 			});
 			EventBus.RaiseEvent(delegate(IQuestObjectiveHandler l)
 			{
-				l.HandleQuestObjectiveBecameVisible(this);
+				l.HandleQuestObjectiveBecameVisible(this, silentStart);
 			});
 		}
 	}

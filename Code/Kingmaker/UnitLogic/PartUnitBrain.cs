@@ -71,6 +71,8 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	public bool IsTraitor { get; set; }
 
+	public bool IgnoreAoOThreatOnCast { get; set; }
+
 	public bool EnemyConditionsDirty { get; set; }
 
 	public BaseUnitEntity Unit
@@ -177,6 +179,7 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 	public void Init()
 	{
 		m_BehaviourTree.Init();
+		IgnoreAoOThreatOnCast = Blueprint is BlueprintBrain blueprintBrain && blueprintBrain.IgnoreAoOForCasting;
 		TimeSpan turnEndTime = (TurnStartTime = Game.Instance.TimeController.RealTime);
 		TurnEndTime = turnEndTime;
 	}

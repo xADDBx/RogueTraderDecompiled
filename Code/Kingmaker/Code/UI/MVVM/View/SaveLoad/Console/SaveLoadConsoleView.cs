@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
 using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
+using Kingmaker.UI.MVVM.View.NetLobby.Console;
 using Kingmaker.UI.MVVM.View.SaveLoad.Base;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -66,10 +67,11 @@ public class SaveLoadConsoleView : SaveLoadBaseView
 
 	private void OnCurrentInputLayerChanged()
 	{
-		if (GamePad.Instance.CurrentInputLayer != InputLayer && !(GamePad.Instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(GamePad.Instance.CurrentInputLayer.ContextName == "SaveFullScreenshotConsoleView") && !(GamePad.Instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(GamePad.Instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName))
+		GamePad instance = GamePad.Instance;
+		if (instance.CurrentInputLayer != InputLayer && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == "SaveFullScreenshotConsoleView") && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == NetLobbyConsoleView.InputLayerName) && !RootUIContext.Instance.IsBugReportShow)
 		{
-			GamePad.Instance.PopLayer(InputLayer);
-			GamePad.Instance.PushLayer(InputLayer);
+			instance.PopLayer(InputLayer);
+			instance.PushLayer(InputLayer);
 		}
 	}
 }

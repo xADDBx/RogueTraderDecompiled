@@ -27,9 +27,11 @@ public class GamerTagAndNameBaseView : ViewBase<GamerTagAndNameVM>, IConsoleNavi
 
 	protected override void BindViewImplementation()
 	{
+		m_PLayerName.text = string.Empty;
 		AddDisposable(base.ViewModel.Name.Subscribe(delegate(string value)
 		{
 			m_PLayerName.text = value;
+			PFLog.Net.Log("GamerTagAndNameBaseView SET NAME " + value);
 		}));
 	}
 

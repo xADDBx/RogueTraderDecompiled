@@ -642,7 +642,7 @@ public class ReportingRaycaster : MonoBehaviour
 			{
 				try
 				{
-					return ((UIFeature)(tooltipTemplateUIFeature.GetType().GetField("m_UIFeature", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.GetField)?.GetValue(tooltipTemplateUIFeature)))?.Feature.NameSafe();
+					return ((UIFeature)(tooltipTemplateUIFeature.GetType().GetField("UIFeature")?.GetValue(tooltipTemplateUIFeature)))?.Feature.NameSafe();
 				}
 				catch
 				{

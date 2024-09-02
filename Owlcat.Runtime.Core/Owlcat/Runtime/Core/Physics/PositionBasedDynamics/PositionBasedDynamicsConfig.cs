@@ -13,6 +13,10 @@ public class PositionBasedDynamicsConfig : ScriptableObject
 	[SerializeField]
 	private PositionBaseDynamicsDebugSettings m_DebugSettings = new PositionBaseDynamicsDebugSettings();
 
+	public bool Enabled = true;
+
+	public bool CameraCullingEnabled = true;
+
 	public bool GPU;
 
 	public bool UseExperimentalFeatures;

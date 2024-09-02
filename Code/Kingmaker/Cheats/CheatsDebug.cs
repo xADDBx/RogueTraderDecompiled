@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Core.Cheats;
 using Kingmaker.Blueprints;
 using Kingmaker.Cheats.Logic;
@@ -813,30 +814,40 @@ internal class CheatsDebug
 		BaseDisposable.LogAllUndisposed(new LogChannelLoggerWrapper(PFLog.UI, "Undisposed"));
 	}
 
-	private static void TakeSnapshotInternal(CaptureFlags captureFlags)
+	private static void TakeSnapshotInternal(CaptureFlags captureFlags, string name)
 	{
-		MemoryProfiler.TakeSnapshot(Path.Combine(Application.temporaryCachePath, DateTime.Now.ToString("yyMMdd_HHmmss")) + ".snap", delegate(string path, bool success)
+		if (string.IsNullOrEmpty(name))
+		{
+			name = "snapshot";
+		}
+		MemoryProfiler.TakeSnapshot(Path.Combine(Application.temporaryCachePath, name) + ".snap", delegate(string path, bool success)
 		{
 			PFLog.Default.Log($"TakeSnapshot result: {success}, path: {path}");
 		}, captureFlags);
 	}
 
 	[Cheat(Name = "snapshot")]
-	public static void TakeSnapshot()
+	public static void TakeSnapshot(string name = null)
 	{
-		TakeSnapshotInternal(CaptureFlags.ManagedObjects | CaptureFlags.NativeObjects | CaptureFlags.NativeAllocations);
+		TakeSnapshotInternal(CaptureFlags.ManagedObjects | CaptureFlags.NativeObjects | CaptureFlags.NativeAllocations, name);
 	}
 
 	[Cheat(Name = "snapshot_full")]
-	public static void TakeSnapshotFull()
+	public static void TakeSnapshotFull(string name = null)
 	{
-		TakeSnapshotInternal(CaptureFlags.ManagedObjects | CaptureFlags.NativeObjects | CaptureFlags.NativeAllocations | CaptureFlags.NativeAllocationSites | CaptureFlags.NativeStackTraces);
+		TakeSnapshotInternal(CaptureFlags.ManagedObjects | CaptureFlags.NativeObjects | CaptureFlags.NativeAllocations | CaptureFlags.NativeAllocationSites | CaptureFlags.NativeStackTraces, name);
 	}
 
 	[Cheat(Name = "snapshot_objects")]
-	public static void TakeSnapshotNativeOnly()
+	public static void TakeSnapshotNativeOnly(string name = null)
 	{
-		TakeSnapshotInternal(CaptureFlags.NativeObjects);
+		TakeSnapshotInternal(CaptureFlags.NativeObjects, name);
+	}
+
+	[Cheat(Name = "debug_spam_start", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void DebugSpamStart(string spamType = "exceptions", int intervalMs = 10, int depth = 10)
+	{
+		DebugStartSpam(spamType, intervalMs, depth);
 	}
 
 	[Cheat(Name = "debug_spam_exceptions", ExecutionPolicy = ExecutionPolicy.PlayMode)]
@@ -850,6 +861,17 @@ internal class CheatsDebug
 		gameObject = new GameObject("SpamGenerator");
 		gameObject.AddComponent<LogsSpammer>();
 		gameObject.GetComponent<LogsSpammer>().SetExceptionSpam(count, depth, interval);
+	}
+
+	[Cheat(Name = "debug_spam_start_in_outer_thread", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void DebugOffThread()
+	{
+		new Thread((ParameterizedThreadStart)delegate
+		{
+			PFLog.Default.Error("Debug log in other thread");
+			Thread.Sleep(100);
+			PFLog.Default.Error("Debug log in other thread after 100");
+		}).Start();
 	}
 
 	[Cheat(Name = "debug_start_spam", ExecutionPolicy = ExecutionPolicy.PlayMode)]

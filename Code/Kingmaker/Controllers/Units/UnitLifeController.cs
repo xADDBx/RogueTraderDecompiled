@@ -99,7 +99,6 @@ public class UnitLifeController : BaseUnitController
 				break;
 			case UnitLifeState.Conscious:
 				unit.GetCombatStateOptional()?.ReturnToStartingPositionIfNeeded();
-				unit.Buffs.RemoveBuffsOnResurrect();
 				break;
 			}
 			if (!unit.LifeState.IsConscious)

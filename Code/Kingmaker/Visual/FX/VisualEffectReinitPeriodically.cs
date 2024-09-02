@@ -1,14 +1,26 @@
 using System.Collections;
 using JetBrains.Annotations;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Sound.Base;
+using Kingmaker.Visual.Sound;
 using UnityEngine;
 using UnityEngine.VFX;
 
 namespace Kingmaker.Visual.FX;
 
-internal sealed class VisualEffectReinitPeriodically : MonoBehaviour
+internal sealed class VisualEffectReinitPeriodically : MonoBehaviour, ICloseLoadingScreenHandler, ISubscriber
 {
 	[SerializeField]
 	private float m_TimeIntervalInSeconds = 10f;
+
+	[AkEventReference]
+	[SerializeField]
+	private string m_StartSound;
+
+	[SerializeField]
+	private bool m_WaitForSplashEnd;
 
 	private Coroutine m_ReinitLoopCoroutine;
 
@@ -17,12 +29,28 @@ internal sealed class VisualEffectReinitPeriodically : MonoBehaviour
 	[UsedImplicitly]
 	private void OnEnable()
 	{
+		if (m_WaitForSplashEnd)
+		{
+			EventBus.Subscribe(this);
+		}
+		else
+		{
+			StartReinitLoop();
+		}
+	}
+
+	public void HandleCloseLoadingScreen()
+	{
 		StartReinitLoop();
 	}
 
 	[UsedImplicitly]
 	private void OnDisable()
 	{
+		if (m_WaitForSplashEnd)
+		{
+			EventBus.Unsubscribe(this);
+		}
 		StopReinitLoop();
 	}
 
@@ -58,11 +86,19 @@ internal sealed class VisualEffectReinitPeriodically : MonoBehaviour
 	private IEnumerator ReinitLoop(VisualEffect visualEffect, float timeInterval)
 	{
 		WaitForSeconds delay = new WaitForSeconds(timeInterval);
-		yield return delay;
 		while (visualEffect != null)
 		{
-			visualEffect.Reinit();
+			PostSoundEvent();
 			yield return delay;
+			visualEffect.Reinit();
+		}
+	}
+
+	private void PostSoundEvent()
+	{
+		if (!string.IsNullOrEmpty(m_StartSound))
+		{
+			SoundEventsManager.PostEvent(m_StartSound, base.gameObject);
 		}
 	}
 }

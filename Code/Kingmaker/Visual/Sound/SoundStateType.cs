@@ -16,5 +16,6 @@ public enum SoundStateType
 	LoadingScreen,
 	Narrator,
 	Video,
-	CreditsAfterEpilogues
+	CreditsAfterEpilogues,
+	VideoDLCManager
 }

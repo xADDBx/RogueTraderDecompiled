@@ -184,9 +184,18 @@ public class UnitPartCultAmbush : BaseUnitPart, IHashable
 		return VisibilityStatuses.NotVisible;
 	}
 
+	public void ActivateCultAmbushAbilityFact(BlueprintFeature feature)
+	{
+		if (!m_IsAllVisibility && feature != null && !m_VisibilityDataHash.ContainsKey(feature.AssetGuid))
+		{
+			m_VisibilityData.Add(new VisibilityFeatureData(VisibilityStatuses.FirstShow, feature));
+			m_VisibilityDataHash.Add(feature.AssetGuid, m_VisibilityData.Count - 1);
+		}
+	}
+
 	public void Use(BlueprintAbility ability, bool isWeapon)
 	{
-		if (!(m_IsAllVisibility || isWeapon) && ability != null && !m_VisibilityDataHash.ContainsKey(ability.AssetGuid))
+		if (!(m_IsAllVisibility || isWeapon) && ability != null && !m_VisibilityDataHash.ContainsKey(ability.AssetGuid) && base.Owner.IsInCombat)
 		{
 			m_VisibilityData.Add(new VisibilityAbilityData(VisibilityStatuses.FirstShow, ability));
 			m_VisibilityDataHash.Add(ability.AssetGuid, m_VisibilityData.Count - 1);
@@ -199,7 +208,7 @@ public class UnitPartCultAmbush : BaseUnitPart, IHashable
 
 	public void Use(BlueprintFeature feature)
 	{
-		if (!m_IsAllVisibility && feature != null && !m_VisibilityDataHash.ContainsKey(feature.AssetGuid))
+		if (!m_IsAllVisibility && feature != null && !m_VisibilityDataHash.ContainsKey(feature.AssetGuid) && base.Owner.IsInCombat)
 		{
 			m_VisibilityData.Add(new VisibilityFeatureData(VisibilityStatuses.FirstShow, feature));
 			m_VisibilityDataHash.Add(feature.AssetGuid, m_VisibilityData.Count - 1);
@@ -210,7 +219,19 @@ public class UnitPartCultAmbush : BaseUnitPart, IHashable
 		}
 	}
 
-	public void MarkAllAsVisibility()
+	public void MarkAllAsVisibility(bool isCombatPreparation)
+	{
+		if (isCombatPreparation)
+		{
+			MarkAllAsVisibilityImpl();
+		}
+		else if (base.Owner.IsInCombat)
+		{
+			MarkAllAsVisibilityImpl();
+		}
+	}
+
+	private void MarkAllAsVisibilityImpl()
 	{
 		m_IsAllVisibility = true;
 		m_VisibilityData.Clear();

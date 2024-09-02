@@ -1,3 +1,6 @@
+using System;
+using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Transition;
 using Kingmaker.Globalmap.Blueprints;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -16,6 +19,8 @@ public class TransitionEntryBaseView : ViewBase<TransitionEntryVM>
 	[SerializeField]
 	private OwlcatMultiButton m_MapButton;
 
+	private IDisposable m_HintDisposable;
+
 	public BlueprintMultiEntranceEntry EntranceEntry => m_EntranceEntry;
 
 	public void Initialize()
@@ -27,7 +32,7 @@ public class TransitionEntryBaseView : ViewBase<TransitionEntryVM>
 	{
 		AddDisposable(base.ViewModel.IsVisible.CombineLatest(base.ViewModel.IsInteractable, (bool isVisible, bool isInteractable) => new { isVisible, isInteractable }).Subscribe(value =>
 		{
-			CheckEntriesEnabled();
+			CheckEntriesEnabled(value.isVisible, value.isInteractable);
 		}));
 		AddDisposable(m_MapButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -37,19 +42,26 @@ public class TransitionEntryBaseView : ViewBase<TransitionEntryVM>
 		{
 			base.ViewModel.Enter();
 		}));
-		CheckEntriesEnabled();
+		CheckEntriesEnabled(base.ViewModel.IsVisible.Value, base.ViewModel.IsInteractable.Value);
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+		m_HintDisposable?.Dispose();
+		m_HintDisposable = null;
 	}
 
-	private void CheckEntriesEnabled()
+	private void CheckEntriesEnabled(bool isVisible, bool isInteractable)
 	{
-		m_MapButton.gameObject.SetActive(base.ViewModel.IsVisible.Value);
-		if (base.ViewModel.IsVisible.Value)
+		m_HintDisposable?.Dispose();
+		m_MapButton.gameObject.SetActive(isVisible);
+		if (isVisible)
 		{
-			m_MapButton.SetInteractable(base.ViewModel.IsInteractable.Value);
+			m_MapButton.SetInteractable(isInteractable);
+			if (!isInteractable)
+			{
+				m_HintDisposable = m_MapButton.SetHint(UIStrings.Instance.Transition.TransitionIsUnavailable);
+			}
 		}
 	}
 }

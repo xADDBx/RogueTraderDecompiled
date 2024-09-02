@@ -6,5 +6,7 @@ public class InterruptionData
 {
 	public bool AsExtraTurn;
 
+	public bool WaitForCommandsToFinish;
+
 	public RestrictionCalculator RestrictionsOnInterrupt = new RestrictionCalculator();
 }

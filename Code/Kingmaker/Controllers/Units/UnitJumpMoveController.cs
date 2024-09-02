@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
@@ -12,14 +13,14 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, ISubscriber, IGlobalRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, IGlobalRulebookSubscriber
+public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, ISubscriber<IBaseUnitEntity>, ISubscriber, IGlobalRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, IGlobalRulebookSubscriber
 {
 	private void Notify(BaseUnitEntity unit)
 	{
-		EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
+		EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IUnitGetAbilityJump>)delegate(IUnitGetAbilityJump h)
 		{
 			h.HandleUnitAbilityJumpDidActed(unit.CombatState.ForceMovedDistanceInCells);
-		});
+		}, isCheckRuntime: true);
 	}
 
 	protected override void TickOnUnit(AbstractUnitEntity entity)
@@ -65,10 +66,7 @@ public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, I
 
 	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, MechanicEntity target, MechanicEntity caster, bool useAttack)
 	{
-		if (!target.Features.IgnoreAnyForceMove)
-		{
-			HandleResult(caster, target, targetPoint, -distanceInCells, useAttack);
-		}
+		HandleResult(caster, target, targetPoint, -distanceInCells, useAttack);
 	}
 
 	public void HandleUnitAbilityJumpDidActed(int distanceInCells)

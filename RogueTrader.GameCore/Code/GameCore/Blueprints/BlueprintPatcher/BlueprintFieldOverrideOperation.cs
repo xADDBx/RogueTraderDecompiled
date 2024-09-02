@@ -16,6 +16,8 @@ public class BlueprintFieldOverrideOperation : BlueprintPatchOperation
 	[ModsPatchSerializable]
 	public object FieldValue;
 
+	public Type FieldType => fieldType;
+
 	public override void Apply(SimpleBlueprint bp)
 	{
 		base.Apply(bp);

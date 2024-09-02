@@ -48,6 +48,15 @@ public class NewGameConsoleView : NewGameBaseView
 	[SerializeField]
 	private ConsoleHint m_PurchaseHint;
 
+	[SerializeField]
+	private ConsoleHint m_InstallDlcHint;
+
+	[SerializeField]
+	private ConsoleHint m_DeleteDlcHint;
+
+	[SerializeField]
+	private ConsoleHint m_PlayPauseVideoHint;
+
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
 	private InputLayer m_InputLayer;
@@ -97,6 +106,7 @@ public class NewGameConsoleView : NewGameBaseView
 		m_NavigationBehaviour.Clear();
 		if (base.ViewModel.SelectedMenuEntity.Value.NewGamePhaseVM == base.ViewModel.StoryVM)
 		{
+			base.ViewModel.StoryVM.OnSelected();
 			m_NavigationBehaviour.SetEntitiesVertical(m_NewGamePhaseStoryConsoleView.GetNavigationEntities());
 			m_NavigationBehaviour.FocusOnFirstValidEntity();
 			m_NewGamePhaseStoryConsoleView.ScrollToTop();
@@ -161,7 +171,7 @@ public class NewGameConsoleView : NewGameBaseView
 		{
 			CloseGlossary();
 		}, 11, m_GlossaryMode, InputActionEventType.ButtonJustReleased));
-		m_NewGamePhaseStoryConsoleView.CreateInputImpl(inputLayer, m_CommonHintsWidget, m_SwitchOnOffDlcHint, m_PurchaseHint);
+		m_NewGamePhaseStoryConsoleView.CreateInputImpl(inputLayer, m_CommonHintsWidget, m_SwitchOnOffDlcHint, m_PurchaseHint, m_InstallDlcHint, m_DeleteDlcHint, m_PlayPauseVideoHint);
 		m_NewGamePhaseDifficultyConsoleView.CreateInputImpl(inputLayer, m_CommonHintsWidget);
 	}
 

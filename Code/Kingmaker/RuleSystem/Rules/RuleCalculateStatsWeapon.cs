@@ -46,6 +46,10 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 
 	public List<StatType> RangedAreaDamageStats = new List<StatType> { StatType.WarhammerIntelligence };
 
+	public int? DamageMinOverride { get; set; }
+
+	public int? DamageMaxOverride { get; set; }
+
 	[CanBeNull]
 	public AbilityData Ability { get; }
 
@@ -121,28 +125,36 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		TryApplyEnchantmentsManually();
+		if (DamageMinOverride.HasValue)
+		{
+			BaseDamage.MinValueBase = DamageMinOverride.Value;
+		}
+		if (DamageMaxOverride.HasValue)
+		{
+			BaseDamage.MaxValueBase = DamageMaxOverride.Value;
+		}
 		ItemEntityWeapon weapon = Weapon;
 		if (weapon != null && weapon.Blueprint.AttackType == AttackType.Melee)
 		{
 			AbilityData ability = Ability;
 			if ((object)ability != null && ability.Blueprint.IsWeaponAbility)
 			{
-				goto IL_0091;
+				goto IL_00e5;
 			}
 		}
 		AbilityData ability2 = Ability;
 		if ((object)ability2 != null && ability2.Blueprint?.GetComponent<FakeAttackType>()?.CountAsMelee == true)
 		{
-			goto IL_0091;
+			goto IL_00e5;
 		}
-		goto IL_00b8;
-		IL_0091:
+		goto IL_010c;
+		IL_00e5:
 		if (!(base.Reason.Fact is Buff))
 		{
 			DamageBonusAttribute = MeleeDamageStat;
 		}
-		goto IL_00b8;
-		IL_00b8:
+		goto IL_010c;
+		IL_010c:
 		if (Ability != null)
 		{
 			AbilityData ability3 = Ability;

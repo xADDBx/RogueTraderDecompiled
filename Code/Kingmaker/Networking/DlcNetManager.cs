@@ -5,6 +5,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Networking.Player;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.Utility.DotNetExtensions;
 using Photon.Realtime;
@@ -24,6 +25,8 @@ public sealed class DlcNetManager
 	private readonly List<string> m_DLCsInGameCache = new List<string>();
 
 	private readonly List<string> m_RoomOwnerDLCsCache = new List<string>();
+
+	private static IEnumerable<IBlueprintDlc> DLCBlueprints => InterfaceServiceLocator.TryGetService<IDlcRootService>()?.Dlcs;
 
 	public bool IsDLCsInLobbyReady
 	{
@@ -68,12 +71,31 @@ public sealed class DlcNetManager
 	{
 		get
 		{
-			UpdateCache(m_DLCsInLobbyCache, RoomOwnerDLCs);
+			UpdateCache(m_DLCsInLobbyCache, RoomOwnerDLCs, m_UserIdToDLC);
 			return m_DLCsInLobbyCache;
-			static void UpdateCache(List<string> dlc, IEnumerable<string> roomOwnerDLCs)
+			static void UpdateCache(List<string> dlc, IEnumerable<string> roomOwnerDLCs, Dictionary<string, string[]> userIdToDLC)
 			{
 				dlc.Clear();
 				dlc.AddRange(roomOwnerDLCs);
+				foreach (string dlcToCheckId in roomOwnerDLCs)
+				{
+					IBlueprintDlc blueprintDlc = DLCBlueprints.First((IBlueprintDlc x) => x.Id == dlcToCheckId);
+					if (blueprintDlc.DlcType == DlcTypeEnum.AdditionalContentDlc)
+					{
+						int num = dlc.IndexOf(blueprintDlc.Id);
+						if (num != -1)
+						{
+							foreach (string[] value in userIdToDLC.Values)
+							{
+								if (value.IndexOf(blueprintDlc.Id) == -1)
+								{
+									dlc.RemoveAt(num);
+									break;
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -86,7 +108,7 @@ public sealed class DlcNetManager
 		{
 			using (ContextData<LocalPlayerDlcCheck>.Request())
 			{
-				return (from dlc in InterfaceServiceLocator.TryGetService<IDlcRootService>()?.Dlcs
+				return (from dlc in DLCBlueprints
 					where dlc.IsAvailable
 					select dlc.Id).ToArray();
 			}
@@ -97,7 +119,7 @@ public sealed class DlcNetManager
 	{
 		if (m_UserIdToDLC.TryGetValue(userId, out var dlc))
 		{
-			playerDLCs = InterfaceServiceLocator.TryGetService<IDlcRootService>()?.Dlcs.Where((IBlueprintDlc x) => dlc.Contains(x.Id)).ToList();
+			playerDLCs = DLCBlueprints.Where((IBlueprintDlc x) => dlc.Contains(x.Id)).ToList();
 			return true;
 		}
 		playerDLCs = null;
@@ -156,7 +178,31 @@ public sealed class DlcNetManager
 
 	public string[] CreateDlcInGameList()
 	{
-		return RoomOwnerDLCs.ToArray();
+		ReadonlyList<string> roomOwnerDLCs = RoomOwnerDLCs;
+		List<string> list = new List<string>();
+		IEnumerable<IBlueprintDlc> dLCBlueprints = DLCBlueprints;
+		for (int i = 0; i < roomOwnerDLCs.Count; i++)
+		{
+			string dlcId = roomOwnerDLCs[i];
+			IBlueprintDlc blueprintDlc = dLCBlueprints.First((IBlueprintDlc x) => x.Id == dlcId);
+			if (blueprintDlc.DlcType != DlcTypeEnum.AdditionalContentDlc || AllPlayersHaveDlc(blueprintDlc))
+			{
+				list.Add(dlcId);
+			}
+		}
+		return list.ToArray();
+	}
+
+	private bool AllPlayersHaveDlc(IBlueprintDlc dlc)
+	{
+		foreach (PlayerInfo allPlayer in PhotonManager.Instance.AllPlayers)
+		{
+			if (!m_UserIdToDLC.TryGetValue(allPlayer.UserId, out var value) || !value.Contains(dlc.Id))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public void CloseRoom(string[] dlcs)

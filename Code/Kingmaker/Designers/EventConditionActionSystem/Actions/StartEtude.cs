@@ -34,13 +34,14 @@ public class StartEtude : GameAction, IEtudeReference
 	protected override void RunAction()
 	{
 		BlueprintEtude bp = ((!Evaluate) ? Etude.Get() : (EtudeEvaluator ? ((BlueprintEtude)EtudeEvaluator.GetValue()) : null));
+		string source = "action StartEtude " + base.AssetGuid + " in " + base.Owner.name;
 		if (StartImmediately)
 		{
-			Game.Instance.Player.EtudesSystem.StartEtudeImmediately(bp);
+			Game.Instance.Player.EtudesSystem.StartEtudeImmediately(bp, source);
 		}
 		else
 		{
-			Game.Instance.Player.EtudesSystem.StartEtude(bp);
+			Game.Instance.Player.EtudesSystem.StartEtude(bp, source);
 		}
 	}
 

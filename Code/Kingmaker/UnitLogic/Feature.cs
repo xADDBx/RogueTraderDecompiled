@@ -78,8 +78,6 @@ public class Feature : UnitFact<BlueprintFeature>, IFactWithRanks, IHashable
 	[JsonProperty]
 	public bool DisabledBecauseOfPrerequisites { get; set; }
 
-	public bool IsReapplying { get; private set; }
-
 	public MechanicsContext Context => m_Context;
 
 	public override MechanicsContext MaybeContext => Context;
@@ -200,7 +198,7 @@ public class Feature : UnitFact<BlueprintFeature>, IFactWithRanks, IHashable
 		}
 		try
 		{
-			IsReapplying = true;
+			m_IsReapplying.Retain();
 			bool isActive = base.IsActive;
 			if (isActive)
 			{
@@ -214,7 +212,7 @@ public class Feature : UnitFact<BlueprintFeature>, IFactWithRanks, IHashable
 		}
 		finally
 		{
-			IsReapplying = false;
+			m_IsReapplying.Release();
 		}
 	}
 
@@ -227,7 +225,7 @@ public class Feature : UnitFact<BlueprintFeature>, IFactWithRanks, IHashable
 		}
 		try
 		{
-			IsReapplying = true;
+			m_IsReapplying.Retain();
 			bool isActive = base.IsActive;
 			if (isActive)
 			{
@@ -247,25 +245,7 @@ public class Feature : UnitFact<BlueprintFeature>, IFactWithRanks, IHashable
 		}
 		finally
 		{
-			IsReapplying = false;
-		}
-	}
-
-	public void Reapply()
-	{
-		Context.Recalculate();
-		if (base.IsActive)
-		{
-			try
-			{
-				IsReapplying = true;
-				Deactivate();
-				Activate();
-			}
-			finally
-			{
-				IsReapplying = false;
-			}
+			m_IsReapplying.Release();
 		}
 	}
 

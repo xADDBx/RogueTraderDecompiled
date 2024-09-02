@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.Utility;
+using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Covers;
 using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
@@ -20,7 +20,7 @@ public interface IAbilityDataProviderForPattern
 
 	ItemEntityStarshipWeapon StarshipWeapon { get; }
 
-	List<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities { get; }
+	ReadonlyList<RuleCalculateScatterShotHitDirectionProbability> ScatterShotHitDirectionProbabilities { get; }
 
 	AbilityData Data { get; }
 

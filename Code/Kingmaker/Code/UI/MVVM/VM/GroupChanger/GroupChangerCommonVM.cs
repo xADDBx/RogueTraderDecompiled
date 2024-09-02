@@ -11,13 +11,15 @@ namespace Kingmaker.Code.UI.MVVM.VM.GroupChanger;
 
 public class GroupChangerCommonVM : GroupChangerVM
 {
+	private readonly bool m_ShowRemoteCompanionsAnyway;
+
 	private bool RemoteCompanionsAvailable
 	{
 		get
 		{
-			if (!IsCapital)
+			if (!IsCapital && !Game.Instance.CurrentlyLoadedArea.IsShipArea)
 			{
-				return Game.Instance.CurrentlyLoadedArea.IsShipArea;
+				return m_ShowRemoteCompanionsAnyway;
 			}
 			return true;
 		}
@@ -25,10 +27,12 @@ public class GroupChangerCommonVM : GroupChangerVM
 
 	private bool AreAllRequiredWithUs => !base.RemoteCharacter.Any((GroupChangerCharacterVM v) => v.IsLock.Value);
 
-	public GroupChangerCommonVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false, bool sameFinishActions = false, bool canCancel = true)
+	public GroupChangerCommonVM(Action go, Action close, List<UnitReference> lastUnits, List<BlueprintUnit> requiredUnits, bool isCapital = false, bool sameFinishActions = false, bool canCancel = true, bool showRemoteCompanions = false)
 		: base(go, close, lastUnits, requiredUnits, isCapital, sameFinishActions, canCancel)
 	{
+		m_ShowRemoteCompanionsAnyway = showRemoteCompanions;
 		List<GroupChangerCharacterVM> list = (from u in LastUnits.Concat(Game.Instance.Player.PartyCharacters).Concat(Game.Instance.Player.RemoteCompanions.Where(ShouldShowRemote).Select(UnitReference.FromIAbstractUnitEntity)).Distinct()
+			orderby u == Game.Instance.Player.MainCharacterEntity descending
 			select new GroupChangerCharacterVM(u, MustBeInParty((BaseUnitEntity)u.ToIBaseUnitEntity()))).ToList();
 		List<GroupChangerCharacterVM> list2 = list.Where((GroupChangerCharacterVM u) => MustBeInParty((BaseUnitEntity)u.UnitRef.ToIBaseUnitEntity())).ToList();
 		List<GroupChangerCharacterVM> list3 = list.Except(list2).ToList();

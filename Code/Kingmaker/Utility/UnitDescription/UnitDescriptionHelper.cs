@@ -23,7 +23,6 @@ using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Selection;
 using Kingmaker.UnitLogic.Mechanics.Damage;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.GuidUtility;
 using Kingmaker.Utility.StatefulRandom;
 
@@ -97,7 +96,6 @@ public static class UnitDescriptionHelper
 					Level = d.Level
 				}).ToArray(),
 				Size = unit.OriginalSize,
-				Alignment = unit.Alignment.Value,
 				CR = cR,
 				Experience = experience,
 				HD = unit.Progression.CharacterLevel,
@@ -106,7 +104,6 @@ public static class UnitDescriptionHelper
 				HP = unit.Health.MaxHitPoints,
 				FastHealing = ExtractFastHealing(unit),
 				Saves = ExtractSaves(unit),
-				SR = ExtractSpellResistance(unit),
 				Speed = unit.Movable.Speed.ModifiedValue.Feet(),
 				Reach = 0.Feet(),
 				Attacks = ExtractAttacks(unit, whippingBoy),
@@ -130,15 +127,6 @@ public static class UnitDescriptionHelper
 	private static int ExtractFastHealing(BaseUnitEntity unit)
 	{
 		return 0;
-	}
-
-	private static UnitDescription.SpellResistanceData[] ExtractSpellResistance(BaseUnitEntity unit)
-	{
-		return unit.GetOptional<UnitPartSpellResistance>()?.SRs.Select((UnitPartSpellResistance.SpellResistanceValue i) => new UnitDescription.SpellResistanceData
-		{
-			Value = i.Value,
-			OnlyAgainstSpellDescriptor = i.SpellDescriptor
-		}).ToArray();
 	}
 
 	private static UnitDescription.FeatureData[] ExtractFeatures(BaseUnitEntity unit)

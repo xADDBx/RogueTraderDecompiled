@@ -10,6 +10,8 @@ public abstract class ComputeBufferWrapper
 
 	private int m_NameId;
 
+	private int m_SizeNameId;
+
 	private int m_Size;
 
 	public readonly string Name;
@@ -18,10 +20,15 @@ public abstract class ComputeBufferWrapper
 
 	public int Size => m_Size;
 
+	public int SizeNameId => m_SizeNameId;
+
+	public int Count => m_Buffer?.count ?? 0;
+
 	public ComputeBufferWrapper(string name, int size = 64)
 	{
 		Name = name;
 		m_NameId = Shader.PropertyToID(name);
+		m_SizeNameId = Shader.PropertyToID(Name + "_Size");
 		Resize(size);
 	}
 

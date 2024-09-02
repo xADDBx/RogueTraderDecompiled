@@ -51,7 +51,7 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 			BigWindowVM.Value?.Hide();
 			SmallWindowVM.Value?.Hide();
 		}
-		else if (m_DataToRestore != null && Game.Instance.Player.Tutorial.ShowingData == null)
+		else if (m_DataToRestore != null && Game.Instance.Player.Tutorial.ShowingData == null && (!IsBigWindowTutorial(m_DataToRestore) || CanShowBigWindow(gameMode)) && (IsBigWindowTutorial(m_DataToRestore) || CanShowSmallWindow(gameMode)))
 		{
 			ShowTutorialInternal(m_DataToRestore);
 			m_DataToRestore = null;
@@ -64,18 +64,18 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 
 	private static bool CanShowBigWindow(GameModeType gameMode)
 	{
-		if (gameMode != GameModeType.Cutscene && gameMode != GameModeType.CutsceneGlobalMap)
+		if (!Game.Instance.IsModeActive(GameModeType.Cutscene) && !Game.Instance.IsModeActive(GameModeType.CutsceneGlobalMap))
 		{
-			return gameMode != GameModeType.Dialog;
+			return !Game.Instance.IsModeActive(GameModeType.Dialog);
 		}
 		return false;
 	}
 
 	private static bool CanShowSmallWindow(GameModeType gameMode)
 	{
-		if (gameMode != GameModeType.Cutscene)
+		if (!Game.Instance.IsModeActive(GameModeType.Cutscene))
 		{
-			return gameMode != GameModeType.CutsceneGlobalMap;
+			return !Game.Instance.IsModeActive(GameModeType.CutsceneGlobalMap);
 		}
 		return false;
 	}

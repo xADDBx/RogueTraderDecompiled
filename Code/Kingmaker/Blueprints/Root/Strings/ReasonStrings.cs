@@ -50,6 +50,8 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString MeleeWeaponRequired;
 
+	public LocalizedString TargetsAroundRequired;
+
 	public LocalizedString TwoHandedWeaponRequired;
 
 	public LocalizedString ChosenWeaponRequired;

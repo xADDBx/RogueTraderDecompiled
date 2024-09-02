@@ -4,6 +4,10 @@ namespace Kingmaker.Visual.Animation.Events;
 
 public class AnimationClipEventBodyFall : AnimationClipEventSound
 {
+	public AnimationClipEventBodyFall()
+	{
+	}
+
 	public AnimationClipEventBodyFall(float time)
 		: this(time, null)
 	{

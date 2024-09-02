@@ -448,7 +448,7 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 
 	public void SwitchPartySelector(bool isEnabled)
 	{
-		bool flag = RootUIContext.Instance.IsBlockedFullScreenUIType() || m_IngameMenuConsoleView.IsBinded;
+		bool flag = RootUIContext.Instance.IsBlockedFullScreenUIType() || m_IngameMenuConsoleView.IsBinded || RootUIContext.Instance.IsMessageWindowShow || RootUIContext.Instance.IsGroupChangerWindowShow;
 		FullScreenUIType fullScreenUIType = RootUIContext.Instance.FullScreenUIType;
 		bool flag2 = fullScreenUIType == FullScreenUIType.Encyclopedia || fullScreenUIType == FullScreenUIType.Journal;
 		bool flag3 = isEnabled && !flag && !flag2;
@@ -483,7 +483,7 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 
 	public void SwitchIngameMenu(bool isEnabled)
 	{
-		bool flag = RootUIContext.Instance.IsBlockedFullScreenUIType() || m_PartySelectorConsoleView.IsBinded || RootUIContext.Instance.IsVendorSelectingWindowShow;
+		bool flag = RootUIContext.Instance.IsBlockedFullScreenUIType() || m_PartySelectorConsoleView.IsBinded || RootUIContext.Instance.IsMessageWindowShow || RootUIContext.Instance.IsVendorSelectingWindowShow || RootUIContext.Instance.IsGroupChangerWindowShow;
 		bool flag2 = isEnabled && !flag && !LoadingProcess.Instance.IsLoadingScreenActive;
 		m_IngameMenuConsoleView.Bind(flag2 ? base.ViewModel.IngameMenuVM : null);
 		if (isEnabled && !flag)
@@ -527,10 +527,6 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 	{
 		UISounds.Instance.Play(UISounds.Instance.Sounds.Buttons.ButtonClick);
 		Game.Instance.Player.IsCameraRotateMode = !Game.Instance.Player.IsCameraRotateMode;
-		if (Game.Instance.SelectionCharacter.SelectedUnit.Value == null && Game.Instance.SelectionCharacter.SelectedUnits.Count == 0)
-		{
-			Game.Instance.CameraController?.Follower?.ScrollTo(Game.Instance.Player.MainCharacterEntity);
-		}
 	}
 
 	private void SwitchCursor(InputLayer inputLayer)

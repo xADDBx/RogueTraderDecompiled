@@ -136,14 +136,14 @@ public class UnitFollowUnitController : BaseUnitController
 		{
 			if (path.error)
 			{
-				PFLog.Pathfinding.Error($"An error path was returned. Ignoring. Unit: {unit}");
+				PFLog.Pathfinding.Error($"An error path was returned. Ignoring. Unit {unit} will teleport to target point {targetPoint}");
+				Teleport(unit, targetPoint, orientation);
 			}
 			else
 			{
 				UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, targetPoint, 0.1f)
 				{
-					Orientation = orientation,
-					AiCanInterruptMark = true
+					Orientation = orientation
 				};
 				if (canRun)
 				{

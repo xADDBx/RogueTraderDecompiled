@@ -20,6 +20,10 @@ public class AnimationClipEventToggleFxAnimator : AnimationClipEvent
 		}
 	}
 
+	public AnimationClipEventToggleFxAnimator()
+	{
+	}
+
 	public AnimationClipEventToggleFxAnimator(float time)
 		: this(time, null)
 	{

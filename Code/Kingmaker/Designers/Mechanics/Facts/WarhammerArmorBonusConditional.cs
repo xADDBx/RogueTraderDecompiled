@@ -2,7 +2,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
-using Kingmaker.EntitySystem;
 using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
@@ -49,8 +48,7 @@ public class WarhammerArmorBonusConditional : MechanicEntityFactComponentDelegat
 
 	public void OnEventAboutToTrigger(RuleCalculateDamage evt)
 	{
-		using EntityFactComponentLoopGuard entityFactComponentLoopGuard = base.Runtime.RequestLoopGuard();
-		if (entityFactComponentLoopGuard.Blocked || (OnlyFromAlliedAttacks && (evt.MaybeTarget == null || evt.MaybeTarget.IsEnemy(evt.Initiator))) || !Restrictions.IsPassed(base.Fact, evt, evt.Ability))
+		if ((OnlyFromAlliedAttacks && (evt.MaybeTarget == null || evt.MaybeTarget.IsEnemy(evt.Initiator))) || !Restrictions.IsPassed(base.Fact, evt, evt.Ability))
 		{
 			return;
 		}

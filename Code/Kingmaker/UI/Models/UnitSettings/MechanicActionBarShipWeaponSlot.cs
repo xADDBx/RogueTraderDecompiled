@@ -22,6 +22,10 @@ public class MechanicActionBarShipWeaponSlot : MechanicActionBarSlotAbility, IHa
 		{
 			list = null;
 		}
+		if (weaponSlot.ActiveAbility.Owner == null)
+		{
+			weaponSlot.ActiveWeaponIndex = 0;
+		}
 		base.Ability = weaponSlot.ActiveAbility.Data;
 		m_AbilityVariants = list;
 		base.Unit = owner;

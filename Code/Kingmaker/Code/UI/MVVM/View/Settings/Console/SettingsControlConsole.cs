@@ -56,4 +56,7 @@ public class SettingsControlConsole : MonoBehaviour
 
 	[SerializeField]
 	public TextMeshProUGUI ConsoleCoopPingHint;
+
+	[SerializeField]
+	public TextMeshProUGUI ConsoleCoopPingHintConfirm;
 }

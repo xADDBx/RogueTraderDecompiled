@@ -9,7 +9,7 @@ namespace Kingmaker.Code.UI.MVVM.View.Respec;
 public class RespecContextCommonView : ViewBase<RespecContextVM>
 {
 	[SerializeField]
-	private UIViewLink<RespecWindowCommonView, RespecVM> m_RespecWindowCommonView;
+	private UIDestroyViewLink<RespecWindowCommonView, RespecVM> m_RespecWindowCommonView;
 
 	public void Initialize()
 	{

@@ -96,7 +96,7 @@ public class AnomalyEntityData : StarSystemObjectEntity, IDialogFinishHandler, I
 
 	public void Interact()
 	{
-		if (!IsInteracted)
+		if (!Game.Instance.Player.StarSystemsState.StarSystemContextData.IsInteractingWithAnomaly && !IsInteracted)
 		{
 			AnomalyInteraction anomalyInteraction = (m_CurrentInteraction = Blueprint.GetComponent<AnomalyInteraction>());
 			Game.Instance.Player.StarSystemsState.StarSystemContextData.Setup(this);

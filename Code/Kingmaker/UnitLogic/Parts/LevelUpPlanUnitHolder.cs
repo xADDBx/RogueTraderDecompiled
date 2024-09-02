@@ -4,6 +4,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.Utility.StatefulRandom;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -23,7 +24,16 @@ public class LevelUpPlanUnitHolder : BaseUnitPart, IHashable
 			{
 				using (ContextData<AddClassLevels.DoNotCreatePlan>.Request())
 				{
-					m_PlanUnit = base.Owner.CreatePreview(createView: false);
+					using (ContextData<DisableStatefulRandomContext>.Request())
+					{
+						using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+						{
+							using (ContextData<UnitHelper.PreviewUnit>.Request())
+							{
+								m_PlanUnit = base.Owner.CreatePreview(createView: false);
+							}
+						}
+					}
 				}
 			}
 		}

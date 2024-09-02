@@ -113,6 +113,8 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 
 	private GameObject m_AttachedDroppedLoot;
 
+	private bool m_ParticipateInLockControlCutscene;
+
 	private Vector3? m_OvertipPosition;
 
 	public override bool IsInAoePattern => m_IsInAoePattern;
@@ -338,7 +340,6 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		float y = base.ViewTransform.rotation.eulerAngles.y;
 		baseUnitEntity.SetOrientation(y);
 		baseUnitEntity.Position = SizePathfindingHelper.FromViewToMechanicsPosition(baseUnitEntity, base.ViewTransform.position);
-		base.InterpolationHelper.ForceUpdatePosition(base.transform.position, y);
 		baseUnitEntity.AttachView(this);
 		return baseUnitEntity;
 	}
@@ -577,7 +578,6 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 			m_StealthEffect = null;
 			FxHelper.SpawnFxOnEntity(Game.Instance.BlueprintRoot.ExitStealthEffectPrefab, this);
 		}
-		AkSoundEngine.SetRTPCValue("Stealth", active ? 1 : 0, base.gameObject);
 	}
 
 	private DeathFxFromEnergyEntry LastDamageFxOptions()
@@ -648,25 +648,39 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 	protected override void OnDoLateUpdate()
 	{
 		base.OnDoLateUpdate();
-		if (EntityData != null)
+		if (EntityData == null)
 		{
-			UpdateStealthMarks();
-			UpdateLootLocalMapMark();
-			UpdateBuiltinArmorView();
-			float sizeScale = GetSizeScale();
-			if (!sizeScale.Equals(m_Scale) && !DoNotAdjustScale)
+			return;
+		}
+		UpdateStealthMarks();
+		UpdateLootLocalMapMark();
+		UpdateBuiltinArmorView();
+		float sizeScale = GetSizeScale();
+		if (!sizeScale.Equals(m_Scale) && !DoNotAdjustScale)
+		{
+			float num = sizeScale - m_Scale;
+			float deltaTime = Game.Instance.TimeController.DeltaTime;
+			float num2 = num * deltaTime * 2f;
+			m_Scale = ((num > 0f) ? Math.Min(sizeScale, m_Scale + num2) : Math.Max(sizeScale, m_Scale + num2));
+			base.ViewTransform.localScale = m_OriginalScale * m_Scale;
+		}
+		if ((bool)ParticlesSnapMap)
+		{
+			ParticlesSnapMap.AdditionalScale = base.ViewTransform.localScale.x / m_OriginalScale.x;
+		}
+		bool valueOrDefault = (EntityData.CutsceneControlledUnit?.GetCurrentlyActive()?.LockControl).GetValueOrDefault();
+		if (valueOrDefault == m_ParticipateInLockControlCutscene)
+		{
+			return;
+		}
+		foreach (Renderer renderer in Renderers)
+		{
+			if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
 			{
-				float num = sizeScale - m_Scale;
-				float deltaTime = Game.Instance.TimeController.DeltaTime;
-				float num2 = num * deltaTime * 2f;
-				m_Scale = ((num > 0f) ? Math.Min(sizeScale, m_Scale + num2) : Math.Max(sizeScale, m_Scale + num2));
-				base.ViewTransform.localScale = m_OriginalScale * m_Scale;
-			}
-			if ((bool)ParticlesSnapMap)
-			{
-				ParticlesSnapMap.AdditionalScale = base.ViewTransform.localScale.x / m_OriginalScale.x;
+				skinnedMeshRenderer.updateWhenOffscreen = valueOrDefault;
 			}
 		}
+		m_ParticipateInLockControlCutscene = valueOrDefault;
 	}
 
 	public void HandleAttackCommandRun()
