@@ -12,7 +12,7 @@ public interface IDlcStore
 
 	bool ComingSoon { get; }
 
-	IDLCStatus GetStatus();
+	bool TryGetStatus(out IDLCStatus value);
 
 	bool OpenShop();
 

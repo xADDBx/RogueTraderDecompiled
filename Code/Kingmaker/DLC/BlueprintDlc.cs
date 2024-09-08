@@ -77,7 +77,7 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	private BlueprintDlcReference m_ParentDlc;
 
 	[SerializeField]
-	private bool m_HideDlc;
+	private bool m_HideDlc = true;
 
 	[Header("MainMenu")]
 	[SerializeField]
@@ -250,11 +250,11 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	public DownloadState GetDownloadState()
 	{
 		IDlcStore dlcStore = GetDlcStores().FirstOrDefault((IDlcStore store) => store.IsSuitable);
-		if (dlcStore == null || dlcStore.ComingSoon)
+		if (dlcStore == null || dlcStore.ComingSoon || !dlcStore.TryGetStatus(out var value) || value == null)
 		{
 			return DownloadState.NotLoaded;
 		}
-		return dlcStore.GetStatus().DownloadState;
+		return value.DownloadState;
 	}
 
 	public void SwitchDlcValue(bool value)

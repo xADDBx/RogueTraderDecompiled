@@ -137,8 +137,9 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 		DlcIsBought.Value = blueprintDlc?.IsPurchased ?? flag;
 		DlcIsAvailableToPurchase.Value = blueprintDlc == null || blueprintDlc.GetPurchaseState() != BlueprintDlc.DlcPurchaseState.ComingSoon;
 		DlcIsOn.Value = blueprintDlc?.GetDlcSwitchOnOffState() ?? false;
-		DownloadingInProgress.Value = blueprintDlc != null && blueprintDlc.GetDownloadState() == DownloadState.Loading && IsRealConsole.Value;
-		DlcIsBoughtAndNotInstalled.Value = DlcIsBought.Value && blueprintDlc != null && blueprintDlc.GetDownloadState() == DownloadState.NotLoaded && IsRealConsole.Value;
+		DownloadState? downloadState = blueprintDlc?.GetDownloadState();
+		DownloadingInProgress.Value = downloadState == DownloadState.Loading && IsRealConsole.Value;
+		DlcIsBoughtAndNotInstalled.Value = DlcIsBought.Value && downloadState == DownloadState.NotLoaded && IsRealConsole.Value;
 		SetStoreIconVisibility(BlueprintDlc != null);
 		if (CurrentCampaign == campaign)
 		{

@@ -21,9 +21,10 @@ public class DlcStoreEpic : DlcStore, IDLCStoreEpic
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {m_EpicId}).";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
-		return null;
+		value = DLCStatus.UnAvailable;
+		return true;
 	}
 
 	public override bool OpenShop()

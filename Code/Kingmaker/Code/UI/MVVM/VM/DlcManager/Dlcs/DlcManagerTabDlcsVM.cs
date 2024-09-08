@@ -102,10 +102,12 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 			SoundStop.Value = blueprintDlc.SoundStopEvent;
 			Art.Value = blueprintDlc.GetKeyArt();
 			Description.Value = blueprintDlc.GetDescription();
-			DlcIsBought.Value = blueprintDlc.IsPurchased;
+			bool isPurchased = blueprintDlc.IsPurchased;
+			DlcIsBought.Value = isPurchased;
 			DlcIsAvailableToPurchase.Value = blueprintDlc.GetPurchaseState() != BlueprintDlc.DlcPurchaseState.ComingSoon;
-			DownloadingInProgress.Value = blueprintDlc.GetDownloadState() == DownloadState.Loading && IsRealConsole.Value;
-			DlcIsBoughtAndNotInstalled.Value = blueprintDlc.IsPurchased && blueprintDlc.GetDownloadState() == DownloadState.NotLoaded && IsRealConsole.Value;
+			DownloadState downloadState = blueprintDlc.GetDownloadState();
+			DownloadingInProgress.Value = downloadState == DownloadState.Loading && IsRealConsole.Value;
+			DlcIsBoughtAndNotInstalled.Value = isPurchased && downloadState == DownloadState.NotLoaded && IsRealConsole.Value;
 			ChangeStory.Execute();
 		}
 	}

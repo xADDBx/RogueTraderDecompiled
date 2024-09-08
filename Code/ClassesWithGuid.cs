@@ -1185,7 +1185,6 @@ public static class ClassesWithGuid
 		(typeof(DlcStorePS4), "a0d17b1e44ce4214bb7ca1af5ac5c0bb"),
 		(typeof(DlcStorePS5), "9a44845238e543cf8e31669b35b323bc"),
 		(typeof(DlcStoreSteam), "0b27d8bd19d4426eafd38449d5d9aec7"),
-		(typeof(DlcStoreXboxOne), "7c5c83d1b4e349e298a5c781cd7baad3"),
 		(typeof(DlcStoreXboxSeries), "afa9f9b05919463191ecefd722586a8c"),
 		(typeof(Dialog), "5c84f2b0c2d44251b320ae180dcaecd8"),
 		(typeof(EtudeBlueprint), "1273add9ac97d9b45a4744747bbc65cb"),

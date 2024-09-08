@@ -21,21 +21,28 @@ public class DlcStoreConsoleFree : DlcStore
 
 	public PlatformsType AvailableOn = PlatformsType.Playstation | PlatformsType.XBox;
 
-	public override bool IsSuitable => GetStatus() != null;
+	public override bool IsSuitable
+	{
+		get
+		{
+			IDLCStatus value;
+			return TryGetStatus(out value);
+		}
+	}
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on DlcStoreConsoleFree";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
-		IDLCStatus result = null;
+		value = null;
 		try
 		{
-			result = (AvailableOn.HasFlag(PlatformsType.PC) ? DLCStatus.Available : null);
+			value = (AvailableOn.HasFlag(PlatformsType.PC) ? DLCStatus.Available : null);
 		}
 		catch (Exception ex)
 		{
 			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
-		return result;
+		return value != null;
 	}
 }

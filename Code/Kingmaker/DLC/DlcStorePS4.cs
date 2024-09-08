@@ -20,20 +20,19 @@ public class DlcStorePS4 : DlcStore, IDLCStorePS4
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.PS4;
 
-	public override bool AllowsPurchase => true;
-
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on PS4 (ServiceLabel {ServiceLabel.ToString()}, ProductLabel {EntitlementLabel}).";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
 		bool purchased = false;
 		bool flag = false;
-		return new DLCStatus
+		value = new DLCStatus
 		{
 			Purchased = purchased,
 			DownloadState = (flag ? DownloadState.Loaded : DownloadState.NotLoaded),
 			IsMounted = flag
 		};
+		return true;
 	}
 
 	public override bool OpenShop()

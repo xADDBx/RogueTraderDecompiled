@@ -15,25 +15,24 @@ public class DlcStorePS5 : DlcStore, IDLCStorePS5
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.PS5;
 
-	public override bool AllowsPurchase => true;
-
 	public override bool AllowsInstalling => true;
 
 	public override bool AllowsDeleting => true;
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on PS5 (ProductLabel {EntitlementLabel}).";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
 		bool purchased = false;
 		bool flag = false;
 		bool flag2 = false;
-		return new DLCStatus
+		value = new DLCStatus
 		{
 			Purchased = purchased,
 			DownloadState = (flag ? DownloadState.Loaded : (flag2 ? DownloadState.Loading : DownloadState.NotLoaded)),
 			IsMounted = flag
 		};
+		return true;
 	}
 
 	public override bool OpenShop()

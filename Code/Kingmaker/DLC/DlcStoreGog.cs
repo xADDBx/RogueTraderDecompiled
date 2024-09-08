@@ -21,13 +21,11 @@ public class DlcStoreGog : DlcStore, IDLCStoreGog
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on GOG (ID {GogId}).";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
-		if (0 == 0)
-		{
-			return null;
-		}
-		return DLCStatus.Available;
+		bool flag = false;
+		value = (flag ? DLCStatus.Available : DLCStatus.UnAvailable);
+		return true;
 	}
 
 	public override bool OpenShop()

@@ -48,18 +48,20 @@ public class DlcStoreCheat : DlcStore
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on StoreCheat.";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
 		if (0 == 0)
 		{
-			return DLCStatus.UnAvailable;
+			value = DLCStatus.UnAvailable;
+			return true;
 		}
-		return new DLCStatus
+		value = new DLCStatus
 		{
 			Purchased = m_IsPurchased,
 			DownloadState = (m_IsMounted ? DownloadState.Loaded : (m_IsLoading ? DownloadState.Loading : DownloadState.NotLoaded)),
 			IsMounted = m_IsMounted
 		};
+		return true;
 	}
 
 	public override bool OpenShop()

@@ -22,14 +22,14 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 
 	private string ExceptionMessage => $"Failed to check DLC {base.OwnerBlueprint} availability on Steam (ID {SteamId}).";
 
-	public override IDLCStatus GetStatus()
+	public override bool TryGetStatus(out IDLCStatus value)
 	{
-		IDLCStatus result = null;
+		value = DLCStatus.UnAvailable;
 		try
 		{
 			if (SteamManager.Initialized && SteamApps.BIsDlcInstalled(new AppId_t(SteamId)))
 			{
-				result = DLCStatus.Available;
+				value = DLCStatus.Available;
 				PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Steam (ID {SteamId}).");
 			}
 			else
@@ -41,7 +41,7 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 		{
 			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
-		return result;
+		return true;
 	}
 
 	public override bool OpenShop()

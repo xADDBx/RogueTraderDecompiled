@@ -284,21 +284,17 @@ public static class StoreManager
 		}
 		foreach (IDlcStore dlcStore in dlcStores)
 		{
-			if (dlcStore.IsSuitable)
+			if (dlcStore.IsSuitable && dlcStore.TryGetStatus(out var value))
 			{
-				IDLCStatus status = dlcStore.GetStatus();
-				if (status != null)
-				{
-					Logger.Log($"DlcStatus for {dlc}: purchased = {status.Purchased}, download = {status.DownloadState}, mounted = {status.IsMounted}");
-					DLCCache.OnDLCUpdate(dlc, status);
-					flag = true;
-					break;
-				}
+				Logger.Log($"DlcStatus for {dlc}: purchased = {value.Purchased}, download = {value.DownloadState}, mounted = {value.IsMounted}");
+				DLCCache.OnDLCUpdate(dlc, value);
+				flag = true;
+				break;
 			}
 		}
 		if (!flag)
 		{
-			DLCCache.OnDLCUpdate(dlc, new DLCStatus());
+			DLCCache.OnDLCUpdate(dlc, DLCStatus.UnAvailable);
 		}
 	}
 }

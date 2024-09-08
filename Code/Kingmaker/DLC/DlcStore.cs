@@ -15,7 +15,17 @@ public abstract class DlcStore : BlueprintComponent, IDlcStore
 
 	public abstract bool IsSuitable { get; }
 
-	public virtual bool AllowsPurchase => false;
+	public virtual bool AllowsPurchase
+	{
+		get
+		{
+			if (base.OwnerBlueprint is BlueprintDlc blueprintDlc)
+			{
+				return !blueprintDlc.HideDlc;
+			}
+			return false;
+		}
+	}
 
 	public virtual bool AllowsInstalling => false;
 
@@ -23,9 +33,10 @@ public abstract class DlcStore : BlueprintComponent, IDlcStore
 
 	public bool ComingSoon => m_ComingSoon;
 
-	public virtual IDLCStatus GetStatus()
+	public virtual bool TryGetStatus(out IDLCStatus value)
 	{
-		return null;
+		value = null;
+		return false;
 	}
 
 	public virtual bool OpenShop()
