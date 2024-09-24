@@ -96,7 +96,7 @@ public class WarhammerContextActionAttackNearestTarget : ContextAction
 	{
 		IEnumerable<Ability> all = target.Facts.GetAll(delegate(Ability p)
 		{
-			if (p.Blueprint.GetComponent<WarhammerAbilityAttackDelivery>() == null)
+			if (p.Blueprint.GetComponent<WarhammerAbilityAttackDelivery>() == null && p.Blueprint.GetComponent<AbilityMeleeBurst>() == null)
 			{
 				return false;
 			}

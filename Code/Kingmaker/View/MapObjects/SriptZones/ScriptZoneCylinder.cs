@@ -62,18 +62,30 @@ public class ScriptZoneCylinder : ScriptZoneShape
 	{
 		using (ProfileScope.New("ScriptZoneCylinder.Contains"))
 		{
-			Vector3 b = base.transform.InverseTransformPoint(point);
-			if (Mathf.RoundToInt(Mathf.Abs(b.y - ScriptZoneCenter.y)) > Height)
-			{
-				return false;
-			}
-			return GetWarhammerCellDistanceSimple(ScriptZoneCenter, b) <= (float)Radius;
+			return (size.Width <= 1 && size.Height <= 1) ? ContainsPoint(point) : Contains(point.GetNearestNodeXZUnwalkable(), size, forward);
 		}
 	}
 
 	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
-		return Contains(node.Vector3Position, size);
+		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, size, forward))
+		{
+			if (ContainsPoint(node2.Vector3Position))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private bool ContainsPoint(Vector3 point)
+	{
+		Vector3 b = base.transform.InverseTransformPoint(point);
+		if (Mathf.RoundToInt(Mathf.Abs(b.y - ScriptZoneCenter.y)) > Height)
+		{
+			return false;
+		}
+		return GetWarhammerCellDistanceSimple(ScriptZoneCenter, b) <= (float)Radius;
 	}
 
 	public override Bounds GetBounds()

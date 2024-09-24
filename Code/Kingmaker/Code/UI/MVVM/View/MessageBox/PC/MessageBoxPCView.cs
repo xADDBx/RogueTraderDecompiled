@@ -1,6 +1,8 @@
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -31,13 +33,17 @@ public class MessageBoxPCView : MessageBoxBaseView
 		base.BindViewImplementation();
 		m_AcceptButton.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
 		m_DeclineButton.gameObject.SetActive(base.ViewModel.ShowDecline.Value);
-		AddDisposable(m_DeclineButton.OnLeftClickAsObservable().Subscribe(delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_DeclineButton.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.OnDeclinePressed();
 		}));
-		AddDisposable(m_AcceptButton.OnLeftClickAsObservable().Subscribe(delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_AcceptButton.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.OnAcceptPressed();
+		}));
+		AddDisposable(m_DontShowToggle.OnPointerClickAsObservable().Subscribe(delegate
+		{
+			UISounds.Instance.Sounds.Tutorial.BanTutorialType.Play();
 		}));
 	}
 

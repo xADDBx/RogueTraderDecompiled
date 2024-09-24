@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.GameModes;
 using Kingmaker.Pathfinding;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
@@ -68,7 +69,7 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 				{
 					m_Cache.Add(unitNode, allBaseAwakeUnit);
 				}
-				else if (isInCombat && allBaseAwakeUnit.CombatState.IsInCombat)
+				else if (isInCombat && allBaseAwakeUnit.CombatState.IsInCombat && !(Game.Instance.CurrentMode != GameModeType.Default))
 				{
 					if (!entity.CombatState.IsInCombat)
 					{

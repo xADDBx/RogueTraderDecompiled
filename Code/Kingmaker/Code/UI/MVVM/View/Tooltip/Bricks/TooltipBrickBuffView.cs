@@ -57,7 +57,7 @@ public class TooltipBrickBuffView : TooltipBrickFeatureView, IWidgetView
 		}
 		if (m_StackText != null)
 		{
-			m_StackText.text = tooltipBrickBuffVM.Stack;
+			m_StackText.text = (tooltipBrickBuffVM.IsDOT ? string.Empty : tooltipBrickBuffVM.Stack);
 		}
 		m_DOTPanel.SetActive(tooltipBrickBuffVM.IsDOT);
 		if (tooltipBrickBuffVM.IsDOT)

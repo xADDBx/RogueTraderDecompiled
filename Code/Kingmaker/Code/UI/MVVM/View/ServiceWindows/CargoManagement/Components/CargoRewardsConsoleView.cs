@@ -3,7 +3,6 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -24,12 +23,6 @@ public class CargoRewardsConsoleView : CargoRewardsBaseView, ICullFocusHandler, 
 	private readonly BoolReactiveProperty m_HasTooltip = new BoolReactiveProperty();
 
 	private IConsoleEntity m_CulledFocus;
-
-	protected override void BindViewImplementation()
-	{
-		base.BindViewImplementation();
-		AddDisposable(EventBus.Subscribe(this));
-	}
 
 	protected override void CreateInputImpl()
 	{

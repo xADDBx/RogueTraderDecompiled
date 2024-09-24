@@ -57,10 +57,12 @@ public class TooltipBrickWidgetView : TooltipBaseBrickView<TooltipBrickWidgetVM>
 			if (!(brickView is IWidgetView entryPrefab))
 			{
 				UberDebug.LogError("Error: Brick " + brickView.name + " is not IWidgetView");
+				TooltipEngine.DestroyBrickView(brickView);
 			}
 			else
 			{
 				m_WidgetList.DrawEntries(list, entryPrefab);
+				TooltipEngine.DestroyBrickView(brickView);
 			}
 		}
 	}

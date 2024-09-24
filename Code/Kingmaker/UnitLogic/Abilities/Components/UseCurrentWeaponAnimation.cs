@@ -16,10 +16,10 @@ public class UseCurrentWeaponAnimation : BlueprintComponent
 	public ItemEntityWeapon GetWeapon(MechanicEntity caster)
 	{
 		ItemEntityWeapon firstWeapon = caster.GetFirstWeapon();
-		ItemEntityWeapon secondWeapon = caster.GetSecondWeapon();
+		ItemEntityWeapon secondaryHandWeapon = caster.GetSecondaryHandWeapon();
 		if (firstWeapon == null || (OnlyMeleeWeapon && !firstWeapon.Blueprint.IsMelee))
 		{
-			return secondWeapon;
+			return secondaryHandWeapon;
 		}
 		return firstWeapon;
 	}

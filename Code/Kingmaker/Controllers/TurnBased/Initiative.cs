@@ -38,9 +38,6 @@ public class Initiative : IHashable
 	public int WasPreparedForRound { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public bool PreparationInterrupted { get; set; }
-
-	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int LastTurn { get; set; }
 
 	public double TurnOrderPriority => (double)Value + 0.001 - (double)Order * 0.0001;
@@ -170,10 +167,8 @@ public class Initiative : IHashable
 		result.Append(ref val4);
 		int val5 = WasPreparedForRound;
 		result.Append(ref val5);
-		bool val6 = PreparationInterrupted;
+		int val6 = LastTurn;
 		result.Append(ref val6);
-		int val7 = LastTurn;
-		result.Append(ref val7);
 		return result;
 	}
 }

@@ -4,5 +4,7 @@ namespace Kingmaker.PubSubSystem;
 
 public interface IDialogNavigationCreatedHandler : ISubscriber
 {
-	void HandleDialogNavigationCreated();
+	void HandleDialogNavigationBuildStarted();
+
+	void HandleDialogNavigationBuildFinished();
 }

@@ -33,7 +33,9 @@ public class DialogMessageBoxData
 
 	public ReactiveCommand LoadingProgressCloseTrigger { get; }
 
-	public DialogMessageBoxData(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue, FloatReactiveProperty loadingProgress = null, ReactiveCommand loadingProgressCloseTrigger = null)
+	public Action DontShowAgainAction { get; }
+
+	public DialogMessageBoxData(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue, FloatReactiveProperty loadingProgress = null, ReactiveCommand loadingProgressCloseTrigger = null, Action dontShowAgainAction = null)
 	{
 		MessageText = messageText;
 		BoxType = boxType;
@@ -48,5 +50,6 @@ public class DialogMessageBoxData
 		MaxInputTextLength = maxInputTextLength;
 		LoadingProgress = loadingProgress;
 		LoadingProgressCloseTrigger = loadingProgressCloseTrigger;
+		DontShowAgainAction = dontShowAgainAction;
 	}
 }

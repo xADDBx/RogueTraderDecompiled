@@ -1,4 +1,7 @@
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.SystemMechanics;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
@@ -22,10 +25,17 @@ public class RuleCalculateAttackPenalty : RulebookEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		if (!m_Ability.IsAttackOfOpportunity && IsInitiatorAttackedThisTurn())
+		AbilityData ability = m_Ability;
+		if (((object)ability == null || !ability.IsAttackOfOpportunity) && IsInitiatorAttackedThisTurn())
 		{
-			ResultWeaponSkillPenalty = 20;
-			ResultBallisticSkillPenalty = 20;
+			BlueprintCombatRoot combatRoot = BlueprintWarhammerRoot.Instance.CombatRoot;
+			BlueprintAbilityGroup item = combatRoot.PrimaryHandAbilityGroup.Get();
+			BlueprintAbilityGroup item2 = combatRoot.SecondaryHandAbilityGroup.Get();
+			if (m_Ability.AbilityGroups.Contains(item) || m_Ability.AbilityGroups.Contains(item2))
+			{
+				ResultWeaponSkillPenalty = 20;
+				ResultBallisticSkillPenalty = 20;
+			}
 		}
 	}
 

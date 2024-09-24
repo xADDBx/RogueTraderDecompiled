@@ -30,6 +30,8 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public readonly BoolReactiveProperty IsProgressBar = new BoolReactiveProperty();
 
+	public readonly BoolReactiveProperty IsCheckbox = new BoolReactiveProperty();
+
 	private readonly Action<DialogMessageBoxBase.BoxButton> m_OnClose;
 
 	private readonly Action<string> m_TextClose;
@@ -42,7 +44,9 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public readonly ReactiveCommand LoadingProgressCloseTrigger;
 
-	public MessageBoxVM(string messageText, DialogMessageBoxBase.BoxType boxType, Action<DialogMessageBoxBase.BoxButton> onClose, Action<TMP_LinkInfo> onLinkInvoke, string yesLabel, string noLabel, Action<string> onTextClose, string inputText, string inputPlaceholder, int waitTime, Action disposeAction, FloatReactiveProperty loadingProgress, ReactiveCommand loadingProgressCloseTrigger)
+	private readonly Action m_DontShowAgainAction;
+
+	public MessageBoxVM(string messageText, DialogMessageBoxBase.BoxType boxType, Action<DialogMessageBoxBase.BoxButton> onClose, Action<TMP_LinkInfo> onLinkInvoke, string yesLabel, string noLabel, Action<string> onTextClose, string inputText, string inputPlaceholder, int waitTime, Action disposeAction, FloatReactiveProperty loadingProgress, ReactiveCommand loadingProgressCloseTrigger, Action dontShowAgainAction)
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		BoxType = boxType;
@@ -51,6 +55,7 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		AcceptText = (string.IsNullOrEmpty(yesLabel) ? ((string)commonTexts.Accept) : yesLabel);
 		DeclineText = (string.IsNullOrEmpty(noLabel) ? ((string)commonTexts.Cancel) : noLabel);
 		IsProgressBar.Value = boxType == DialogMessageBoxBase.BoxType.ProgressBar;
+		IsCheckbox.Value = boxType == DialogMessageBoxBase.BoxType.Checkbox && !IsProgressBar.Value;
 		ShowDecline.Value = boxType != 0 && !IsProgressBar.Value;
 		m_OnClose = onClose;
 		m_TextClose = onTextClose;
@@ -65,6 +70,7 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		}, 0, waitTime).SetUpdate(isIndependentUpdate: true);
 		LoadingProgress = loadingProgress;
 		LoadingProgressCloseTrigger = loadingProgressCloseTrigger;
+		m_DontShowAgainAction = dontShowAgainAction;
 	}
 
 	protected override void DisposeImplementation()
@@ -88,6 +94,14 @@ public class MessageBoxVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 	public void OnLinkInvoke(TMP_LinkInfo linkInfo)
 	{
 		m_LinkInvoke?.Invoke(linkInfo);
+	}
+
+	public void DontShowAgainInvoke()
+	{
+		if (IsCheckbox.Value && m_DontShowAgainAction != null)
+		{
+			m_DontShowAgainAction?.Invoke();
+		}
 	}
 
 	public void HandleNetLobbyRequest(bool isMainMenu = false)

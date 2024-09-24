@@ -883,12 +883,25 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		{
 			BaseUnitEntity obj = m_Owner.GetComponent<UnitEntityView>()?.Data;
 			bool flag = obj?.IsInPlayerParty ?? false;
-			IEnumerable<BaseUnitEntity> enumerable = obj?.Vision.CanBeInRange;
-			foreach (BaseUnitEntity item in enumerable ?? EntityBoundsHelper.FindUnitsInRange(Position, num + Corpulence))
+			SortedSet<BaseUnitEntity> sortedSet = obj?.Vision.CanBeInRange;
+			if (sortedSet != null)
 			{
-				if (!flag || !item.IsInPlayerParty)
+				foreach (BaseUnitEntity item in sortedSet)
 				{
-					UpdateUnitAvoidance(ref obstacleAnalyzer, desiredDir, ref intersectsObstacles, item, vector, num, nextWaypoint);
+					if (!flag || !item.IsInPlayerParty)
+					{
+						UpdateUnitAvoidance(ref obstacleAnalyzer, desiredDir, ref intersectsObstacles, item, vector, num, nextWaypoint);
+					}
+				}
+			}
+			else
+			{
+				foreach (BaseUnitEntity item2 in EntityBoundsHelper.FindUnitsInRange(Position, num + Corpulence))
+				{
+					if (!flag || !item2.IsInPlayerParty)
+					{
+						UpdateUnitAvoidance(ref obstacleAnalyzer, desiredDir, ref intersectsObstacles, item2, vector, num, nextWaypoint);
+					}
 				}
 			}
 		}

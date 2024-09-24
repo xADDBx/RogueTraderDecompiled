@@ -37,6 +37,8 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 
 	public bool FakeRule { get; set; }
 
+	public bool HasNoTarget { get; set; }
+
 	public RuleReason? Reason { get; set; }
 
 	public CalculateDamageParams([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false)
@@ -52,6 +54,7 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 		DoNotUseCrModifier = doNotUseCrModifier;
 		CalculatedOverpenetration = calculatedOverpenetration;
 		FakeRule = false;
+		HasNoTarget = false;
 		Reason = null;
 	}
 

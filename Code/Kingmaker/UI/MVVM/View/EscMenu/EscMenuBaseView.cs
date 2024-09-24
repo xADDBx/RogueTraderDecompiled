@@ -114,10 +114,17 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		{
 			m_FormationButton.gameObject.SetActive(!value);
 		}));
+		bool isActive = PhotonManager.Lobby.IsActive;
+		bool flag = SettingsRoot.Difficulty.OnlyOneSave;
 		if (BuildModeUtility.IsCoopEnabled)
 		{
 			m_MultiplayerButton.gameObject.SetActive(value: true);
-			m_MultiplayerRolesButton.gameObject.SetActive(PhotonManager.Lobby.IsActive);
+			m_MultiplayerButton.SetInteractable(!flag);
+			if (flag)
+			{
+				AddDisposable(m_MultiplayerButton.SetHint(UIStrings.Instance.EscapeMenu.CoopIsNotPossibleInIronMan));
+			}
+			m_MultiplayerRolesButton.gameObject.SetActive(isActive);
 			m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
 			AddDisposable(m_MultiplayerButton.OnLeftClickAsObservable().Subscribe(delegate
 			{
@@ -154,7 +161,6 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		{
 			base.ViewModel.OnQuit();
 		}));
-		bool isActive = PhotonManager.Lobby.IsActive;
 		m_ModsButton.gameObject.SetActive(!isActive);
 		IEnumerable<IBlueprintDlc> source = Game.Instance.Player.GetAvailableAdditionalContentDlcForCurrentCampaign().Where(delegate(IBlueprintDlc dlc)
 		{
@@ -292,7 +298,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		{
 			list.Add(m_ModsButton);
 		}
-		if (BuildModeUtility.IsCoopEnabled)
+		if (BuildModeUtility.IsCoopEnabled && !SettingsRoot.Difficulty.OnlyOneSave)
 		{
 			list.Add(m_MultiplayerButton);
 			list.Add(m_MultiplayerRolesButton);
@@ -329,6 +335,6 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_BugReportButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuBugReport;
 		m_MainMenuButtonLabel.text = UIStrings.Instance.EscapeMenu.EscMenuMainMenu;
 		bool flag = false;
-		m_ModsButtonLabel.text = (flag ? UIStrings.Instance.DlcManager.DlcManagerLabel : UIStrings.Instance.DlcManager.ModsLabel);
+		m_ModsButtonLabel.text = (flag ? UIStrings.Instance.DlcManager.DlcManagerLabel : UIStrings.Instance.EscapeMenu.ModsAndDlc);
 	}
 }

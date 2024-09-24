@@ -31,6 +31,8 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 
 	protected AccessibilityTextHelper TextHelper;
 
+	public bool ShouldShowTalentIcons => base.ViewModel.ShouldShowTalentIcons;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()

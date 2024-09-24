@@ -21,8 +21,8 @@ public class AbilityCasterMainWeaponHasAmmo : BlueprintComponent, IAbilityCaster
 
 	public bool IsCasterRestrictionPassed(MechanicEntity caster)
 	{
-		ItemEntityWeapon itemEntityWeapon = ((!SecondWeapon) ? caster.GetFirstWeapon() : caster.GetSecondWeapon());
-		if (itemEntityWeapon == null || (SecondWeapon && caster.GetSecondWeapon().Blueprint.IsTwoHanded && caster.Parts.GetOptional<UnitPartMechadendrites>() == null))
+		ItemEntityWeapon itemEntityWeapon = ((!SecondWeapon) ? caster.GetFirstWeapon() : caster.GetSecondaryHandWeapon());
+		if (itemEntityWeapon == null || (SecondWeapon && caster.GetSecondaryHandWeapon().Blueprint.IsTwoHanded && caster.Parts.GetOptional<UnitPartMechadendrites>() == null))
 		{
 			return false;
 		}
@@ -35,7 +35,7 @@ public class AbilityCasterMainWeaponHasAmmo : BlueprintComponent, IAbilityCaster
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
 	{
-		if (((!SecondWeapon) ? caster.GetFirstWeapon() : caster.GetSecondWeapon()) != null)
+		if (((!SecondWeapon) ? caster.GetFirstWeapon() : caster.GetSecondaryHandWeapon()) != null)
 		{
 			return LocalizedTexts.Instance.Reasons.NotEnoughAmmo;
 		}

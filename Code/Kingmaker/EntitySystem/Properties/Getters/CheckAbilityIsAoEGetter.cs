@@ -1,7 +1,9 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.ProjectileAttack;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
@@ -21,7 +23,7 @@ public class CheckAbilityIsAoEGetter : PropertyGetter, PropertyContextAccessor.I
 		{
 			return 0;
 		}
-		if ((ability.Blueprint.PatternSettings == null || (DoNotIncludeScatter && ability.Blueprint.PatternSettings is ScatterPattern)) && (!IncludeAreaEffects || !ability.IsAOE))
+		if ((ability.Blueprint.PatternSettings == null || (DoNotIncludeScatter && ability.Blueprint.PatternSettings is ScatterPattern)) && (!IncludeAreaEffects || !ability.IsAOE) && (!ability.Caster.Features.AllAttacksCountAsAoe || (ability.Blueprint.GetComponent<WarhammerAbilityAttackDelivery>() == null && ability.Blueprint.GetComponent<AbilityMeleeBurst>() == null)))
 		{
 			return 0;
 		}

@@ -343,15 +343,18 @@ public static class TooltipHelper
 				linkIndex = num2;
 				linkKeys = UIUtility.GetKeysFromLink(text.textInfo.linkInfo[linkIndex.Value].GetLinkID());
 				TooltipBaseTemplate template = GetLinkTooltipTemplate(linkKeys, skillCheckDcs, skillCheckResults, config.IsEncyclopedia);
-				ref RectTransform tooltipPlace = ref config.TooltipPlace;
-				if ((object)tooltipPlace == null)
+				if (template != null)
 				{
-					tooltipPlace = text.transform as RectTransform;
+					ref RectTransform tooltipPlace = ref config.TooltipPlace;
+					if ((object)tooltipPlace == null)
+					{
+						tooltipPlace = text.transform as RectTransform;
+					}
+					EventBus.RaiseEvent(delegate(ITooltipHandler h)
+					{
+						h.HandleTooltipRequest(new TooltipData(template, config));
+					});
 				}
-				EventBus.RaiseEvent(delegate(ITooltipHandler h)
-				{
-					h.HandleTooltipRequest(new TooltipData(template, config));
-				});
 			}
 		});
 		IDisposable click = null;

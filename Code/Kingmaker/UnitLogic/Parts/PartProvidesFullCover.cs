@@ -33,6 +33,12 @@ public class PartProvidesFullCover : UnitPart, IUnitFeaturesHandler<EntitySubscr
 		}
 	}
 
+	protected override void OnDetach()
+	{
+		base.OnDetach();
+		Game.Instance.ForcedCoversController.UnregisterCoverProvider(this);
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

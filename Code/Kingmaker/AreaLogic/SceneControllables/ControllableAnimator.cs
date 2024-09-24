@@ -80,7 +80,6 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 				m_Animator.enabled = false;
 				m_Animator.updateMode = AnimatorUpdateMode.UnscaledTime;
 				m_Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-				m_Animator.Update(0f);
 			}
 			SetupActions();
 			ScheduleUpdate();

@@ -43,6 +43,11 @@ public class SteamAchievementsManager : MonoBehaviour, IPlatformAchievementHandl
 		}
 	}
 
+	private static string ProgressStat(string SteamId)
+	{
+		return SteamId + "_Progress";
+	}
+
 	[UsedImplicitly]
 	private void Awake()
 	{
@@ -99,7 +104,7 @@ public class SteamAchievementsManager : MonoBehaviour, IPlatformAchievementHandl
 			{
 				if (achievement.Data.EventsCountForUnlock > 1)
 				{
-					SteamUserStats.IndicateAchievementProgress(achievement.Data.SteamId, (uint)achievement.Counter, (uint)achievement.Data.EventsCountForUnlock);
+					flag |= SteamUserStats.SetStat(ProgressStat(achievement.Data.SteamId), achievement.Counter);
 				}
 				if (achievement.IsUnlocked)
 				{
@@ -129,6 +134,11 @@ public class SteamAchievementsManager : MonoBehaviour, IPlatformAchievementHandl
 					if (SteamUserStats.GetAchievement(achievement.Data.SteamId, out var pbAchieved))
 					{
 						achievement.OnSynchronized(pbAchieved);
+						if (!achievement.IsUnlocked && achievement.HasCounter && SteamUserStats.GetStat(ProgressStat(achievement.Data.SteamId), out int pData))
+						{
+							Debug.Log($"SteamUserStats.GetStats for {achievement.Data.SteamId}: {pData}");
+							achievement.SynchronizeCounter(pData);
+						}
 					}
 					else
 					{
@@ -170,6 +180,14 @@ public class SteamAchievementsManager : MonoBehaviour, IPlatformAchievementHandl
 		if ((ulong)m_GameId == pCallback.m_nGameID)
 		{
 			Achievements.FirstOrDefault((AchievementEntity a) => a.Data.SteamId == pCallback.m_rgchAchievementName)?.OnCommited();
+		}
+	}
+
+	public void SyncAchievements()
+	{
+		if (StoreManager.Store == StoreType.Steam && SteamManager.Initialized)
+		{
+			m_RequestedStats = SteamUserStats.RequestCurrentStats();
 		}
 	}
 

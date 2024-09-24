@@ -15,6 +15,7 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Cargo;
 using Kingmaker.Cheats;
+using Kingmaker.Code.UI.MVVM.View.LoadingScreen;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.Clicks;
@@ -1818,6 +1819,8 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(LoadingScreenBaseView.ClearCanSwitchDlcAfterPurchasePrefs), "void ClearCanSwitchDlcAfterPurchasePrefs()", "clear_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(LoadingScreenBaseView.SetCanSwitchDlcAfterPurchasePrefs), "void SetCanSwitchDlcAfterPurchasePrefs()", "set_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(FirstLaunchSettingsVM.ClearFirstLaunchPrefs), "void ClearFirstLaunchPrefs()", "clear_first_launch", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(FirstLaunchSettingsVM.SetFirstLaunchPrefs), "void SetFirstLaunchPrefs()", "set_first_launch", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(NetLobbyVM.ClearFirstLaunchPrefs), "void ClearFirstLaunchPrefs()", "clear_net_lobby_tutorial", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),

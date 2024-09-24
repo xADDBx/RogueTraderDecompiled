@@ -6,6 +6,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.View.Covers;
@@ -52,27 +53,20 @@ public class ScatterShotTargetSelector : AbilityTargetSelector
 	{
 		Vector3 vector3Position = casterNode.Vector3Position;
 		ScoreSet bestScore = default(ScoreSet);
-		CustomGridNodeBase customGridNodeBase = null;
+		CustomGridNodeBase bestTarget = null;
 		foreach (TargetInfo hatedTarget in context.HatedTargets)
 		{
 			if (IsValidTarget(hatedTarget.Entity) && AbilityInfo.CanTargetFromNodeCached(casterNode, hatedTarget.Node, hatedTarget.Entity, out var distance, out var los))
 			{
 				ScoreSet checkScore = m_AttackScorer.CalculateAttackScore(context, AbilityInfo, hatedTarget.Entity, distance, los);
-				(bestScore, customGridNodeBase) = GetBestScatterShotTarget(context, casterNode, hatedTarget.Node, checkScore, bestScore, customGridNodeBase);
+				(bestScore, bestTarget) = GetBestScatterShotTarget(context, casterNode, hatedTarget.Node, checkScore, bestScore, bestTarget);
 			}
 		}
 		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
-		if (customGridNodeBase != null)
+		if (bestTarget != null)
 		{
-			if (!customGridNodeBase.TryGetUnit(out var unit))
-			{
-				if (!flag)
-				{
-					return new TargetWrapper(customGridNodeBase.Vector3Position);
-				}
-				return null;
-			}
-			return new TargetWrapper(unit);
+			base.SelectedTarget = (bestTarget.TryGetUnit(out var unit) ? new TargetWrapper(unit) : (flag ? null : new TargetWrapper(bestTarget.Vector3Position)));
+			return base.SelectedTarget;
 		}
 		if (flag)
 		{
@@ -84,33 +78,36 @@ public class ScatterShotTargetSelector : AbilityTargetSelector
 			{
 				continue;
 			}
-			var (customGridNodeBase2, customGridNodeBase3) = LosCalculations.GetOrthoNeighbours(hatedTarget2.Node, hatedTarget2.Node.Vector3Position - vector3Position);
-			if (!AbilityInfo.CanTargetFromNodeCached(casterNode, hatedTarget2.Node, hatedTarget2.Entity, out var distance2, out var los2))
+			var (neighbourNode2, neighbourNode3) = LosCalculations.GetOrthoNeighbours(hatedTarget2.Node, hatedTarget2.Node.Vector3Position - vector3Position);
+			if (AbilityInfo.CanTargetFromNodeCached(casterNode, hatedTarget2.Node, hatedTarget2.Entity, out var distance2, out var los2))
 			{
-				continue;
-			}
-			ScoreSet checkScore2 = m_AttackScorer.CalculateAttackScore(context, AbilityInfo, hatedTarget2.Entity, distance2, los2);
-			if (customGridNodeBase2 != null && AbilityInfo.ability.CanTargetFromNode(casterNode, customGridNodeBase2, new TargetWrapper(customGridNodeBase2.Vector3Position), out var distance3, out var los3))
-			{
-				(bestScore, customGridNodeBase) = GetBestScatterShotTarget(context, casterNode, customGridNodeBase2, checkScore2, bestScore, customGridNodeBase);
-				if (customGridNodeBase != null)
+				ScoreSet score2 = m_AttackScorer.CalculateAttackScore(context, AbilityInfo, hatedTarget2.Entity, distance2, los2);
+				if (TrySelectBestTargetFromNeighbourNode(neighbourNode2, score2) || TrySelectBestTargetFromNeighbourNode(neighbourNode3, score2))
 				{
-					base.SelectedTarget = (customGridNodeBase.TryGetUnit(out var unit2) ? new TargetWrapper(unit2) : new TargetWrapper(customGridNodeBase.Vector3Position));
-					return base.SelectedTarget;
-				}
-			}
-			if (customGridNodeBase3 != null && AbilityInfo.ability.CanTargetFromNode(casterNode, customGridNodeBase3, new TargetWrapper(customGridNodeBase3.Vector3Position), out distance3, out los3))
-			{
-				(bestScore, customGridNodeBase) = GetBestScatterShotTarget(context, casterNode, customGridNodeBase3, checkScore2, bestScore, customGridNodeBase);
-				if (customGridNodeBase != null)
-				{
-					base.SelectedTarget = (customGridNodeBase.TryGetUnit(out var unit3) ? new TargetWrapper(unit3) : new TargetWrapper(customGridNodeBase.Vector3Position));
-					return base.SelectedTarget;
+					break;
 				}
 			}
 		}
-		base.SelectedTarget = ((customGridNodeBase == null) ? null : (customGridNodeBase.TryGetUnit(out var unit4) ? new TargetWrapper(unit4) : new TargetWrapper(customGridNodeBase.Vector3Position)));
+		base.SelectedTarget = ((bestTarget == null) ? null : (bestTarget.TryGetUnit(out var unit2) ? new TargetWrapper(unit2) : new TargetWrapper(bestTarget.Vector3Position)));
 		return base.SelectedTarget;
+		bool TrySelectBestTargetFromNeighbourNode(CustomGridNodeBase neighbourNode, ScoreSet score)
+		{
+			if (neighbourNode == null || !AbilityInfo.ability.CanTargetFromNode(casterNode, neighbourNode, new TargetWrapper(neighbourNode.Vector3Position), out var _, out var _))
+			{
+				return false;
+			}
+			(bestScore, bestTarget) = GetBestScatterShotTarget(context, casterNode, neighbourNode, score, bestScore, bestTarget);
+			if (bestTarget == null)
+			{
+				return false;
+			}
+			if (bestTarget.TryGetUnit(out var unit3) && AbstractUnitCommand.CommandTargetUntargetable(AbilityInfo.Caster, unit3))
+			{
+				bestTarget = null;
+				return false;
+			}
+			return true;
+		}
 	}
 
 	private (ScoreSet bestScore, CustomGridNodeBase target) GetBestScatterShotTarget(DecisionContext context, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, ScoreSet checkScore, ScoreSet bestScore, CustomGridNodeBase bestTarget)

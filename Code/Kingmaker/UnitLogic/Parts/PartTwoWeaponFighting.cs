@@ -42,11 +42,15 @@ public class PartTwoWeaponFighting : UnitPart, ITurnStartHandler<EntitySubscribe
 		{
 			return false;
 		}
+		if (!abilityData.AbilityGroups.Contains(PrimaryHandAbilityGroup) && !abilityData.AbilityGroups.Contains(SecondaryHandAbilityGroup))
+		{
+			return false;
+		}
 		if (GetCroupCooldown(SecondaryHandAbilityGroup) > 0 && abilityData.Caster.GetFirstWeapon() == abilityData.Weapon)
 		{
 			return true;
 		}
-		if (GetCroupCooldown(PrimaryHandAbilityGroup) > 0 && abilityData.Caster.GetSecondWeapon() == abilityData.Weapon)
+		if (GetCroupCooldown(PrimaryHandAbilityGroup) > 0 && abilityData.Caster.GetSecondaryHandWeapon() == abilityData.Weapon)
 		{
 			return true;
 		}

@@ -283,7 +283,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
 		if (component != null && !component.UseOnSourceWeapon)
 		{
-			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon()) : ((base.Executor.GetFirstWeapon() != null && base.Executor.GetFirstWeapon().Blueprint.IsMelee) ? base.Executor.GetFirstWeapon() : (base.Executor.GetSecondWeapon() ?? base.Executor.GetFirstWeapon())));
+			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondaryHandWeapon() ?? base.Executor.GetFirstWeapon()) : ((base.Executor.GetFirstWeapon() != null && component.UseSpecificWeaponClassification && base.Executor.GetFirstWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetFirstWeapon() : ((component.UseSpecificWeaponClassification && base.Executor.GetSecondaryHandWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetSecondaryHandWeapon() : base.Executor.GetFirstWeapon())));
 		}
 		if (Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>() != null && Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>()?.GetWeapon(base.Executor) != null)
 		{

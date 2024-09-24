@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Controllers.MapObjects;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Inspect;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -202,10 +203,13 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 
 	public void InvokeUnitInspect()
 	{
-		EventBus.RaiseEvent(delegate(IUnitClickUIHandler h)
+		if (InspectUnitsHelper.IsInspectAllow(base.ViewModel.UnitAsBaseUnitEntity))
 		{
-			h.HandleUnitRightClick(base.ViewModel.UnitAsBaseUnitEntity);
-		});
+			EventBus.RaiseEvent(delegate(IUnitClickUIHandler h)
+			{
+				h.HandleUnitRightClick(base.ViewModel.UnitAsBaseUnitEntity);
+			});
+		}
 	}
 
 	private void SetupOwnSize()

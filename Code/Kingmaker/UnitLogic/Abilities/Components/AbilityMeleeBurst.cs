@@ -74,12 +74,12 @@ public class AbilityMeleeBurst : AbilityCustomLogic, IAbilityAoEPatternProviderH
 
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper targetWrapper)
 	{
-		if (!(context.Caster is UnitEntity unitEntity))
+		if (!(context.Caster is UnitEntity caster))
 		{
 			PFLog.Default.Error("Caster unit is missing");
 			yield break;
 		}
-		if (unitEntity.GetThreatHandMelee() == null)
+		if (caster.GetThreatHandMelee() == null)
 		{
 			PFLog.Default.Error("Invalid caster's weapon");
 			yield break;
@@ -91,8 +91,8 @@ public class AbilityMeleeBurst : AbilityCustomLogic, IAbilityAoEPatternProviderH
 		}
 		int burstCounter = 0;
 		ItemEntityWeapon weapon = context.Ability.Weapon;
-		ItemEntityWeapon maybeWeapon = unitEntity.Body.PrimaryHand.MaybeWeapon;
-		ItemEntityWeapon maybeWeapon2 = unitEntity.Body.SecondaryHand.MaybeWeapon;
+		ItemEntityWeapon maybeWeapon = caster.Body.PrimaryHand.MaybeWeapon;
+		ItemEntityWeapon maybeWeapon2 = caster.Body.SecondaryHand.MaybeWeapon;
 		if (UseSpecificWeapon && !UseOnSourceWeapon)
 		{
 			weapon = (UseSecondWeapon ? (maybeWeapon2 ?? maybeWeapon) : (maybeWeapon ?? maybeWeapon2));
@@ -100,7 +100,7 @@ public class AbilityMeleeBurst : AbilityCustomLogic, IAbilityAoEPatternProviderH
 		int maxCount = context.Ability.RateOfFire;
 		m_FirstAttackHit = false;
 		m_FirstAttackCalculated = false;
-		while (burstCounter < maxCount)
+		while (burstCounter < maxCount && caster.CanAct)
 		{
 			if (burstCounter + 1 != context.ActionIndex)
 			{

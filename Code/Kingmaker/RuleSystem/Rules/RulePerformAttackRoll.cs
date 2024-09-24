@@ -199,7 +199,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 				{
 					return;
 				}
-				hitChance = HitChanceRule.ResultHitChance;
+				hitChance = HitChanceRule.ResultHitChanceNoUpperLimit;
 			}
 			RuleRollParry evt2 = new RuleRollParry(targetUnit, base.ConcreteInitiator, Ability, HitChanceRule.ResultSuperiorityNumber, rangedParry: true, hitChance);
 			ResultParryRule = Rulebook.Trigger(evt2);
@@ -263,7 +263,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 				{
 					continue;
 				}
-				hitChance2 = HitChanceRule.ResultHitChance;
+				hitChance2 = HitChanceRule.ResultHitChanceNoUpperLimit;
 			}
 			RuleRollParry ruleRollParry2 = Rulebook.Trigger(new RuleRollParry(baseUnitEntity as UnitEntity, base.ConcreteInitiator, Ability, HitChanceRule.ResultSuperiorityNumber, rangedParry: true, hitChance2));
 			if (ruleRollParry2 != null && ruleRollParry2.Result)

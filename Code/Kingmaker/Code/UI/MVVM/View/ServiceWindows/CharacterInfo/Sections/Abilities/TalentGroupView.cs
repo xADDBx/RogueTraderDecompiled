@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.UnitLogic.Levelup.Selections;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,11 +24,24 @@ public class TalentGroupView : MonoBehaviour
 		}
 	}
 
+	public enum TalentGroupsMode
+	{
+		Default,
+		Darkened
+	}
+
 	[SerializeField]
 	public GameObject IconsContainer;
 
 	[SerializeField]
 	public Image BackgroundImage;
+
+	[Header("DarkenedState")]
+	[SerializeField]
+	private Image m_ForegroundImage;
+
+	[SerializeField]
+	private Color m_IconsDarkenedColor;
 
 	[Header("Groups")]
 	[SerializeField]
@@ -112,5 +126,42 @@ public class TalentGroupView : MonoBehaviour
 	public void SetActiveState(bool state)
 	{
 		IconsContainer.Or(null)?.SetActive(state);
+	}
+
+	public void SetTalentsGroupsMode(TalentGroupsMode mode)
+	{
+		switch (mode)
+		{
+		case TalentGroupsMode.Default:
+			m_ForegroundImage.gameObject.Or(null)?.SetActive(value: false);
+			OneIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = Color.white;
+			});
+			TwoIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = Color.white;
+			});
+			ThreeIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = Color.white;
+			});
+			break;
+		case TalentGroupsMode.Darkened:
+			m_ForegroundImage.gameObject.Or(null)?.SetActive(value: true);
+			OneIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = m_IconsDarkenedColor;
+			});
+			TwoIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = m_IconsDarkenedColor;
+			});
+			ThreeIconGroup.Icons.ForEach(delegate(Image i)
+			{
+				i.color = m_IconsDarkenedColor;
+			});
+			break;
+		}
 	}
 }

@@ -59,7 +59,7 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		IsHidden = isHidden;
 		string name = feature.Name;
 		TalentIconsInfo = feature.TalentIconInfo;
-		HasTalentsGroups = feature.TalentIconInfo.HasGroups && feature.Icon == null;
+		HasTalentsGroups = UIUtilityItem.ShouldShowTalentIcons(feature);
 		if (forceSetName && !string.IsNullOrWhiteSpace(feature.ForceSetNameForItemTooltip))
 		{
 			name = feature.ForceSetNameForItemTooltip;

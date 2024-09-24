@@ -36,6 +36,9 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 	[JsonProperty]
 	public Vector3 Destination;
 
+	[JsonProperty]
+	public bool IsGamepadMovement;
+
 	[MemoryPackConstructor]
 	[JsonConstructor]
 	private UnitFollowParams()
@@ -111,7 +114,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(15, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(16, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -121,7 +124,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 		bool value6 = value.DoNotInterruptAfterFight;
 		writer.DangerousWriteUnmanaged(in value3, in value4, in value5, in value6, in value.m_FreeAction, in value.m_NeedLoS, in value.m_ApproachRadius);
 		writer.WritePackable(in value.m_ForcedPath);
-		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired, in value.Destination);
+		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired, in value.Destination, in value.IsGamepadMovement);
 	}
 
 	[Preserve]
@@ -147,7 +150,8 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 		bool? value14;
 		bool? value15;
 		Vector3 value16;
-		if (memberCount == 15)
+		bool value17;
+		if (memberCount == 16)
 		{
 			if (value != null)
 			{
@@ -166,6 +170,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Destination;
+				value17 = value.IsGamepadMovement;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -181,20 +186,21 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 				reader.DangerousReadUnmanaged<bool?>(out value14);
 				reader.DangerousReadUnmanaged<bool?>(out value15);
 				reader.ReadUnmanaged<Vector3>(out value16);
-				goto IL_0331;
+				reader.ReadUnmanaged<bool>(out value17);
+				goto IL_0363;
 			}
 			reader.ReadUnmanaged<CommandType>(out value2);
 			value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
 			value4 = reader.ReadPackable<TargetWrapper>();
 			reader.DangerousReadUnmanaged<bool, bool, float?, bool, bool?, bool?, int?>(out value5, out value6, out value7, out value8, out value9, out value10, out value11);
 			value12 = reader.ReadPackable<ForcedPath>();
-			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, Vector3>(out value13, out value14, out value15, out value16);
+			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, Vector3, bool>(out value13, out value14, out value15, out value16, out value17);
 		}
 		else
 		{
-			if (memberCount > 15)
+			if (memberCount > 16)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitFollowParams), 15, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitFollowParams), 16, memberCount);
 				return;
 			}
 			if (value == null)
@@ -214,6 +220,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 				value14 = null;
 				value15 = null;
 				value16 = default(Vector3);
+				value17 = false;
 			}
 			else
 			{
@@ -232,6 +239,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Destination;
+				value17 = value.IsGamepadMovement;
 			}
 			if (memberCount != 0)
 			{
@@ -278,7 +286,11 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 																	if (memberCount != 14)
 																	{
 																		reader.ReadUnmanaged<Vector3>(out value16);
-																		_ = 15;
+																		if (memberCount != 15)
+																		{
+																			reader.ReadUnmanaged<bool>(out value17);
+																			_ = 16;
+																		}
 																	}
 																}
 															}
@@ -296,7 +308,7 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 			}
 			if (value != null)
 			{
-				goto IL_0331;
+				goto IL_0363;
 			}
 		}
 		value = new UnitFollowParams
@@ -315,10 +327,11 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 			m_MovementType = value13,
 			m_IsOneFrameCommand = value14,
 			m_SlowMotionRequired = value15,
-			Destination = value16
+			Destination = value16,
+			IsGamepadMovement = value17
 		};
 		return;
-		IL_0331:
+		IL_0363:
 		value.Type = value2;
 		value.OwnerRef = value3;
 		value.Target = value4;
@@ -334,5 +347,6 @@ public sealed class UnitFollowParams : UnitCommandParams<UnitFollow>, IMemoryPac
 		value.m_IsOneFrameCommand = value14;
 		value.m_SlowMotionRequired = value15;
 		value.Destination = value16;
+		value.IsGamepadMovement = value17;
 	}
 }

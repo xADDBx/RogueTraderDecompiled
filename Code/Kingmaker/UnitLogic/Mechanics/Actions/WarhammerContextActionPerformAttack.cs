@@ -63,7 +63,7 @@ public class WarhammerContextActionPerformAttack : ContextAction
 		}
 		AbilityData abilityData = base.Context.SourceAbilityContext?.Ability;
 		ItemEntityWeapon itemEntityWeapon = (UseCurrentWeapon ? maybeCaster.GetFirstWeapon() : abilityData?.Weapon);
-		ItemEntityWeapon itemEntityWeapon2 = (UseCurrentWeapon ? maybeCaster.GetSecondWeapon() : abilityData?.Weapon);
+		ItemEntityWeapon itemEntityWeapon2 = (UseCurrentWeapon ? maybeCaster.GetSecondaryHandWeapon() : abilityData?.Weapon);
 		ItemEntityWeapon itemEntityWeapon3 = ((itemEntityWeapon != null && (!OnlyMeleeWeapon || itemEntityWeapon.Blueprint.IsMelee) && (!UseSpecificWeaponClassification || itemEntityWeapon.Blueprint.Classification == Classification)) ? itemEntityWeapon : itemEntityWeapon2);
 		if (UseCurrentWeapon)
 		{

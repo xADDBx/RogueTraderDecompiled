@@ -11,6 +11,8 @@ public abstract class RulebookOptionalTargetEvent : RulebookEvent
 
 	public bool FakeRule { get; set; }
 
+	public bool HasNoTarget { get; set; }
+
 	public override IMechanicEntity GetRuleTarget()
 	{
 		return MaybeTarget;

@@ -110,6 +110,19 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	public bool IsNeutral => this.GetFactionOptional()?.Neutral ?? true;
 
+	public bool IsSummonedMonster
+	{
+		get
+		{
+			UnitPartSummonedMonster summonedMonsterOption = this.GetSummonedMonsterOption();
+			if (summonedMonsterOption == null)
+			{
+				return false;
+			}
+			return summonedMonsterOption;
+		}
+	}
+
 	public virtual bool IsInCombat => this.GetCombatStateOptional()?.IsInCombat ?? false;
 
 	public virtual bool IsDirectlyControllable => this.GetFactionOptional()?.IsDirectlyControllable ?? false;
@@ -463,7 +476,13 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 	}
 
 	[CanBeNull]
-	public virtual ItemEntityWeapon GetSecondWeapon()
+	public virtual ItemEntityWeapon GetPrimaryHandWeapon()
+	{
+		return null;
+	}
+
+	[CanBeNull]
+	public virtual ItemEntityWeapon GetSecondaryHandWeapon()
 	{
 		return null;
 	}

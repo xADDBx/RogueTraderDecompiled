@@ -276,6 +276,19 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		HistoryEntities.ForEach(delegate(DialogHistoryEntity widget)
+		{
+			widget.Dispose();
+			WidgetFactory.DisposeWidget(widget);
+		});
+		HistoryEntities.Clear();
+		SetVisible(state: false, force: true);
+		NavigationBehaviour?.Dispose();
+		NavigationBehaviour = null;
+	}
+
 	private void OnLateUpdate()
 	{
 		List<PlayerInfo> list = new List<PlayerInfo>();
@@ -345,29 +358,23 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 	private void StartUpdateCoroutine()
 	{
 		OnPartsUpdating();
+		PFLog.UI.Log("StartUpdate");
 		MainThreadDispatcher.StartUpdateMicroCoroutine(AnswerPartUpdateCoroutine());
 		MainThreadDispatcher.StartUpdateMicroCoroutine(CuePartUpdateCoroutine());
+		PFLog.UI.Log("FinishUpdate");
 	}
 
 	protected virtual void OnPartsUpdating()
 	{
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		HistoryEntities.ForEach(delegate(DialogHistoryEntity widget)
-		{
-			widget.Dispose();
-			WidgetFactory.DisposeWidget(widget);
-		});
-		HistoryEntities.Clear();
-		SetVisible(state: false, force: true);
-		NavigationBehaviour?.Dispose();
-		NavigationBehaviour = null;
-	}
-
 	private IEnumerator AnswerPartUpdateCoroutine()
 	{
+		PFLog.UI.Log("AnswerPartUpdate");
+		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
+		{
+			h.HandleDialogNavigationBuildFinished();
+		});
 		VotesIsActive.Value = false;
 		if (m_AnswerEntitiesToAdd.Empty())
 		{
@@ -375,23 +382,44 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		}
 		m_AnswerContentCanvasGroup.alpha = 0f;
 		yield return null;
-		ClearAnswers();
-		foreach (AnswerVM item in m_AnswerEntitiesToAdd)
+		try
 		{
-			AddAnswer(item);
+			ClearAnswers();
+			foreach (AnswerVM item in m_AnswerEntitiesToAdd)
+			{
+				AddAnswer(item);
+			}
 		}
+		catch (Exception arg)
+		{
+			PFLog.UI.Log($"AnswerPart adding answers ex {arg}");
+		}
+		PFLog.UI.Log("Answers added");
 		m_AnswerEntitiesToAdd.Clear();
 		yield return null;
 		LayoutRebuilder.ForceRebuildLayoutImmediate(m_AnswerScrollRect.viewport.transform as RectTransform);
 		yield return null;
 		m_AnswerScrollRect.ScrollToTop();
 		yield return null;
-		m_AnswerFadeAnimator.AppearAnimation();
+		try
+		{
+			m_AnswerFadeAnimator.AppearAnimation();
+		}
+		catch (Exception arg2)
+		{
+			PFLog.UI.Log($"AnswerPart appearing ex {arg2}");
+		}
 		CreateNavigation();
+		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
+		{
+			h.HandleDialogNavigationBuildFinished();
+		});
+		PFLog.UI.Log("AnswerPartUpdate finished");
 	}
 
 	private IEnumerator CuePartUpdateCoroutine()
 	{
+		PFLog.UI.Log("CuePartUpdate");
 		m_SpeakerContentCanvasGroup.alpha = 0f;
 		yield return null;
 		foreach (IDialogShowData item in m_HistoryEntitiesToAdd)
@@ -406,9 +434,12 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		yield return null;
 		m_SpeakerScrollRect.EnsureVisibleVertical(m_CueView.transform as RectTransform, 0f, smoothly: false, needPinch: false);
 		yield return null;
+		DOTween.Kill(m_SpeakerContentCanvasGroup);
 		m_SpeakerContentCanvasGroup.DOFade(1f, m_SpeakerContentFadeTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
 		yield return null;
+		DOTween.Kill(m_CueView.m_CueGroup);
 		m_CueView.m_CueGroup.DOFade(1f, m_SpeakerContentFadeTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
+		PFLog.UI.Log("CuePartUpdate finished");
 	}
 
 	private void SetVisible(bool state, bool force = false, Action onCompleteAction = null)
@@ -419,14 +450,14 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		}
 		VotesIsActive.Value = false;
 		m_VisibleState = state;
+		PFLog.UI.Log($"Show dialog ({force}), time {m_SpeakerContentFadeTime}");
 		if (force)
 		{
 			CanvasGroup.alpha = (state ? 1f : 0f);
 			Vector2 anchoredPosition = RectTransform.anchoredPosition;
 			anchoredPosition.y = (state ? m_ShowPosY : m_HidePosY);
 			RectTransform.anchoredPosition = anchoredPosition;
-			onCompleteAction?.Invoke();
-			m_Cleaner.SetActiveState(state);
+			m_Cleaner?.SetActiveState(state);
 			return;
 		}
 		if (state)
@@ -437,19 +468,21 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		{
 			UISounds.Instance.Sounds.Dialogue.DialogueClose.Play();
 		}
+		DOTween.Kill(CanvasGroup);
 		CanvasGroup.DOFade(state ? 1f : 0f, m_SpeakerContentFadeTime).SetUpdate(isIndependentUpdate: true).OnStart(delegate
 		{
 			if (state)
 			{
-				m_Cleaner.SetActiveState(state: true);
+				m_Cleaner?.SetActiveState(state: true);
 			}
 		})
 			.OnComplete(delegate
 			{
+				PFLog.UI.Log("CanvasGroup fading complete");
 				onCompleteAction?.Invoke();
 				if (!state)
 				{
-					m_Cleaner.SetActiveState(state: false);
+					m_Cleaner?.SetActiveState(state: false);
 				}
 			});
 		RectTransform.DOAnchorPosY(state ? m_ShowPosY : m_HidePosY, m_SpeakerContentFadeTime).SetEase(state ? Ease.OutCubic : Ease.InCubic).SetUpdate(isIndependentUpdate: true);
@@ -467,10 +500,6 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 			NavigationBehaviour.Clear();
 		}
 		NavigationBehaviour.SetEntitiesVertical(Answers);
-		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
-		{
-			h.HandleDialogNavigationCreated();
-		});
 	}
 
 	protected virtual void CreateInput()

@@ -12,15 +12,15 @@ internal class SpamDetectionException : Exception
 
 	private readonly IEnumerable<LogItem> m_Items;
 
-	private static string s_CachedMessage;
+	private string m_CachedMessage;
 
 	public override string Message
 	{
 		get
 		{
-			if (s_CachedMessage != null)
+			if (m_CachedMessage != null)
 			{
-				return s_CachedMessage;
+				return m_CachedMessage;
 			}
 			StringBuilder stringBuilder = new StringBuilder("Logging calls that triggered a Spam exception\n");
 			foreach (LogItem item in m_Items)
@@ -28,8 +28,8 @@ internal class SpamDetectionException : Exception
 				stringBuilder.AppendLine(item.Message);
 				stringBuilder.AppendLine(item.Callstack);
 			}
-			s_CachedMessage = stringBuilder.ToString();
-			return s_CachedMessage;
+			m_CachedMessage = stringBuilder.ToString();
+			return m_CachedMessage;
 		}
 	}
 

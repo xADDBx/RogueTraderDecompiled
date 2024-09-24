@@ -128,7 +128,17 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 
 	public List<CutscenePlayerGateData> ActivatedGates => m_ActivatedGates;
 
-	public bool IsAnyAnchorActive => CheckIsAnyAnchorActive();
+	public bool AllAnchorsInactive
+	{
+		get
+		{
+			if (Anchors.Count > 0)
+			{
+				return !CheckIsAnyAnchorActive();
+			}
+			return false;
+		}
+	}
 
 	public Cutscene Cutscene => m_Cutscene;
 
@@ -590,7 +600,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			bool pausedSleeping = m_PausedSleeping;
 			using (ProfileScope.New("Check Should Pause Cutscene"))
 			{
-				m_PausedSleeping = !Cutscene.Sleepless && !Cutscene.LockControl && !IsAnyAnchorActive;
+				m_PausedSleeping = !Cutscene.Sleepless && !Cutscene.LockControl && AllAnchorsInactive;
 			}
 			if (m_PausedSleeping != pausedSleeping)
 			{

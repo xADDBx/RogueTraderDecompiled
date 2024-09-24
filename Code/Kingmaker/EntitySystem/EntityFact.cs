@@ -535,7 +535,7 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 		{
 			m_IsReapplying.Retain();
 			MaybeContext?.Recalculate();
-			if (IsActive)
+			if (IsActive && !Deactivating && !Activating)
 			{
 				Deactivate();
 				Activate();
@@ -554,6 +554,10 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 
 	public virtual void RunActionInContext(ActionList actions, ITargetWrapper target = null)
 	{
+		if (actions == null)
+		{
+			return;
+		}
 		if (MaybeContext == null)
 		{
 			PFLog.Default.ErrorWithReport("There is no Context in " + GetType().Name + ": '" + Name + "' [" + UniqueId + "]. Blueprint: '" + Blueprint?.name + "' [" + Blueprint?.AssetGuid + "]");

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Kingmaker.AI.DebugUtilities;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Commands.Base;
 using Pathfinding;
 
 namespace Kingmaker.AI.BehaviourTrees.Nodes;
@@ -23,13 +24,13 @@ public class TaskNodeCastAbility : CoroutineTaskNode
 		{
 			yield return Status.Running;
 		}
-		context.Unit.Commands.Run(cmd);
+		UnitCommandHandle commandHandle = context.Unit.Commands.Run(cmd);
 		while (!context.Unit.Commands.Empty)
 		{
 			yield return Status.Running;
 		}
 		context.Unit.Brain.IsIdling = false;
-		yield return Status.Success;
+		yield return (commandHandle != null && commandHandle.Result == AbstractUnitCommand.ResultType.Success) ? Status.Success : Status.Failure;
 	}
 
 	private GraphNode GetTargetNode(DecisionContext context)

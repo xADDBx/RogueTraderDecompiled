@@ -78,26 +78,32 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		if (!Game.Instance.TurnController.TurnBasedModeActive)
 		{
 			NeedCover.Value = false;
-			return;
-		}
-		if (Unit == null)
-		{
-			UberDebug.LogError("UnitState: Unit is null");
-			return;
-		}
-		bool isPlayerTurn = Game.Instance.TurnController.IsPlayerTurn;
-		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
-		VirtualPositionController virtualPositionController = Game.Instance.VirtualPositionController;
-		if (isPlayerTurn && currentUnit != null && virtualPositionController != null && Unit.IsPlayerEnemy)
-		{
-			Vector3 bestShootingPosition = LosCalculations.GetBestShootingPosition(virtualPositionController.GetDesiredPosition(currentUnit), currentUnit.SizeRect, Unit.Position, Unit.SizeRect);
-			CoverType.Value = LosCalculations.GetWarhammerLos(bestShootingPosition, currentUnit.SizeRect, Unit);
-			NeedCover.Value = true;
 		}
 		else
 		{
-			CoverChance.Value = 0f;
-			NeedCover.Value = false;
+			if (UnitState.IsDead.Value)
+			{
+				return;
+			}
+			if (Unit == null)
+			{
+				UberDebug.LogError("UnitState: Unit is null");
+				return;
+			}
+			bool isPlayerTurn = Game.Instance.TurnController.IsPlayerTurn;
+			MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+			VirtualPositionController virtualPositionController = Game.Instance.VirtualPositionController;
+			if (isPlayerTurn && currentUnit != null && virtualPositionController != null && Unit.IsPlayerEnemy)
+			{
+				Vector3 bestShootingPosition = LosCalculations.GetBestShootingPosition(virtualPositionController.GetDesiredPosition(currentUnit), currentUnit.SizeRect, Unit.Position, Unit.SizeRect);
+				CoverType.Value = LosCalculations.GetWarhammerLos(bestShootingPosition, currentUnit.SizeRect, Unit);
+				NeedCover.Value = true;
+			}
+			else
+			{
+				CoverChance.Value = 0f;
+				NeedCover.Value = false;
+			}
 		}
 	}
 

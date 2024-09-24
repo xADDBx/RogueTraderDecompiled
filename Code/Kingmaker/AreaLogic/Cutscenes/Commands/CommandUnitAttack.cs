@@ -523,6 +523,11 @@ public class CommandUnitAttack : CommandBase
 		return blueprintAbilityFXSettings;
 	}
 
+	public override string GetCaption()
+	{
+		return Unit?.ToString() + " <b>attacks</b> " + (Target ? Target.GetCaption() : "???");
+	}
+
 	protected override void OnRunException()
 	{
 		if (MuteAttacker)

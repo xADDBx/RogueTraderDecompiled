@@ -27,4 +27,8 @@ public class UIEscapeMenu
 	public LocalizedString EscMenuQuickSave;
 
 	public LocalizedString EscMenuQuickLoad;
+
+	public LocalizedString CoopIsNotPossibleInIronMan;
+
+	public LocalizedString ModsAndDlc;
 }

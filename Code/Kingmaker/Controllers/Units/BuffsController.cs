@@ -245,7 +245,7 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 		{
 			if (buff.Sources.Count > 0)
 			{
-				return buff.Sources.AllItems((EntityFactSource i) => i.IsMissing);
+				return buff.Sources.AllItems((EntityFactSource i) => i.IsMissing || (i.Entity is AreaEffectEntity areaEffectEntity && areaEffectEntity.IsEnded));
 			}
 			return false;
 		}

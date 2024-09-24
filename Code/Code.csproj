@@ -331,6 +331,12 @@
     <Reference Include="Photon3Unity3D">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Photon3Unity3D.dll</HintPath>
     </Reference>
+    <Reference Include="EOSSDK">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\EOSSDK.dll</HintPath>
+    </Reference>
+    <Reference Include="GalaxyCSharp">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GalaxyCSharp.dll</HintPath>
+    </Reference>
     <Reference Include="com.rlabrecque.steamworks.net">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\com.rlabrecque.steamworks.net.dll</HintPath>
     </Reference>
@@ -381,6 +387,9 @@
     </Reference>
     <Reference Include="Utility.ExtendedModInfo">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.ExtendedModInfo.dll</HintPath>
+    </Reference>
+    <Reference Include="GogGalaxy">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\GogGalaxy.dll</HintPath>
     </Reference>
     <Reference Include="PFlog">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\PFlog.dll</HintPath>

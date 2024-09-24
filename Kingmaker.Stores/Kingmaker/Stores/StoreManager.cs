@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using Code.GameCore.Mics;
 using JetBrains.Annotations;
+using Kingmaker.EOSSDK;
 using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;
+using Plugins.GOG;
 using UnityEngine;
 
 namespace Kingmaker.Stores;
@@ -52,7 +54,15 @@ public static class StoreManager
 		{
 			if (Store == StoreType.EpicGames)
 			{
-				Logger.Error("EGS is not supported");
+				if (s_EgsSignInResult.HasValue)
+				{
+					if (s_EgsSignInResult.Value)
+					{
+						return s_EgsDlcStatuses == EgsDlcStatus.None;
+					}
+					return false;
+				}
+				return true;
 			}
 			return false;
 		}
@@ -70,9 +80,17 @@ public static class StoreManager
 		{
 			s_Store = StoreType.Steam;
 		}
+		if (File.Exists(Path.Combine(Application.dataPath, "gog.info")))
+		{
+			s_Store = StoreType.GoG;
+		}
 		if (File.Exists(Path.Combine(Application.dataPath, "discord.info")))
 		{
 			s_Store = StoreType.Discord;
+		}
+		if (File.Exists(Path.Combine(Application.dataPath, "egs.info")))
+		{
+			s_Store = StoreType.EpicGames;
 		}
 		Logger.Log($"Detected store type: {s_Store}");
 	}
@@ -100,6 +118,27 @@ public static class StoreManager
 
 	private static async void RefreshAllDLCStatusesAsync()
 	{
+		try
+		{
+			if (Store == StoreType.EpicGames)
+			{
+				foreach (IBlueprintDlc s_Dlc in s_Dlcs)
+				{
+					IDLCStoreEpic iDLCStoreEpic = s_Dlc.GetDlcStores().OfType<IDLCStoreEpic>().SingleOrDefault();
+					if (iDLCStoreEpic != null && !string.IsNullOrEmpty(iDLCStoreEpic.EpicId))
+					{
+						EpicGamesManager.DlcHelper.AddIDToQueryOwnershipList(iDLCStoreEpic.EpicId);
+					}
+				}
+				await EpicGamesManager.DlcHelper.ExecuteQueryOwnership();
+			}
+		}
+		catch (Exception ex)
+		{
+			s_EgsDlcStatuses = EgsDlcStatus.ReceiveFailed;
+			Logger.Exception(ex, "Refresh EGS dlc statuses failed");
+			throw;
+		}
 		RefreshAllDLCStatuses();
 	}
 
@@ -116,13 +155,33 @@ public static class StoreManager
 			}
 			break;
 		case StoreType.GoG:
-			Logger.Error("GOG is not supported");
+		{
+			Logger.Log("Initializing store: GOG");
+			if (GogGalaxyManager.IsInitialized())
+			{
+				RefreshAllDLCStatuses();
+			}
+			else
+			{
+				GogGalaxyManager.OnInitialize += RaiseOnInitializeGOG;
+				GogGalaxyManager.StartManager();
+			}
+			string text = string.Join(", ", Directory.GetFiles(Path.Combine(Application.dataPath, ".."), "goggame*.info"));
+			Logger.Log("Detected infos: " + text);
 			break;
+		}
 		case StoreType.Discord:
 			DiscordRunner.Initialize();
 			break;
 		case StoreType.EpicGames:
-			Logger.Error("EGS is not supported");
+			Logger.Log("Initializing store: Epic Games");
+			if (EpicGamesManager.IsInitializedAndSignedIn())
+			{
+				RaiseOnSignInEGS(result: true);
+				break;
+			}
+			EpicGamesManager.OnSignIn += RaiseOnSignInEGS;
+			EpicGamesManager.StartManager(Application.isEditor);
 			break;
 		default:
 			Logger.Log($"Initializing store: unknown store type {Store}");

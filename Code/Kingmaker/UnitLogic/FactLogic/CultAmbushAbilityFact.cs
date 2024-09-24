@@ -8,7 +8,6 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
-using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -46,7 +45,7 @@ public class CultAmbushAbilityFact : UnitFactComponentDelegate, IInitiatorRulebo
 		}
 	}
 
-	void IUnitNodeChangedHandler.HandleUnitNodeChanged(GraphNode oldNode)
+	void IUnitNodeChangedHandler.HandleUnitNodeChanged()
 	{
 		if (!m_IsCombatPreparation)
 		{

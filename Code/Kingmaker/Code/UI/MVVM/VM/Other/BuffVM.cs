@@ -130,7 +130,7 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public void HandleBuffRankIncreased(Buff buff)
 	{
-		if (ShouldHandle(buff))
+		if (ShouldHandle(buff.Owner))
 		{
 			UpdateRank();
 		}
@@ -138,7 +138,7 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public void HandleBuffRankDecreased(Buff buff)
 	{
-		if (ShouldHandle(buff))
+		if (ShouldHandle(buff.Owner))
 		{
 			UpdateRank();
 		}
@@ -161,10 +161,5 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 	private bool ShouldHandle(MechanicEntity owner)
 	{
 		return Buff.Owner == owner;
-	}
-
-	private bool ShouldHandle(Buff buff)
-	{
-		return Buff == buff;
 	}
 }

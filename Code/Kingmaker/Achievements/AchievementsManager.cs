@@ -89,9 +89,24 @@ public class AchievementsManager : IReadOnlyCollection<AchievementEntity>, IEnum
 				UnityEngine.Object.DontDestroyOnLoad(steamAchievementsManager);
 			}
 			steamAchievementsManager.Achievements = this;
+			steamAchievementsManager.SyncAchievements();
 			if (!m_AchievementHandlers.Contains(steamAchievementsManager))
 			{
 				m_AchievementHandlers.Add(steamAchievementsManager);
+			}
+			GogAchievementsManager gogAchievementsManager = GogAchievementsManager.Instance;
+			if (!gogAchievementsManager)
+			{
+				gogAchievementsManager = new GameObject().AddComponent<GogAchievementsManager>();
+				UnityEngine.Object.DontDestroyOnLoad(gogAchievementsManager);
+			}
+			gogAchievementsManager.Achievements = this;
+			gogAchievementsManager.SyncAchievements();
+			EGSAchievementsManager eGSAchievementsManager = new EGSAchievementsManager(this);
+			eGSAchievementsManager.SyncAchievements();
+			if (!m_AchievementHandlers.Contains(eGSAchievementsManager))
+			{
+				m_AchievementHandlers.Add(eGSAchievementsManager);
 			}
 		}
 	}

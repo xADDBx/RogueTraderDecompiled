@@ -64,7 +64,7 @@ public class UnitCombatLeaveController : IControllerTick, IController
 			allCharacter.Buffs.OnCombatEnded();
 			allCharacter.Abilities.OnCombatEnd();
 			allCharacter.GetFirstWeapon()?.Reload();
-			allCharacter.GetSecondWeapon()?.Reload();
+			allCharacter.GetSecondaryHandWeapon()?.Reload();
 		}
 		EventBus.RaiseEvent(delegate(IPartyCombatHandler h)
 		{

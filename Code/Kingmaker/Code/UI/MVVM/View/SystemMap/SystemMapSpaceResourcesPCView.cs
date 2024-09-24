@@ -36,6 +36,7 @@ public class SystemMapSpaceResourcesPCView : ViewBase<SystemMapSpaceResourcesVM>
 		{
 			DrawEntities();
 		}));
+		DrawEntities();
 	}
 
 	protected override void DestroyViewImplementation()

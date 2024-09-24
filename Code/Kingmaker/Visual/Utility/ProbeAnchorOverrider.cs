@@ -58,7 +58,7 @@ public class ProbeAnchorOverrider : MonoBehaviour
 	{
 		if (m_OverrideParticleRenderers)
 		{
-			GetComponentsInChildren<ParticleSystemRenderer>();
+			GetComponentsInChildren(m_ParticleRenderers);
 		}
 		if (m_OverrideTrailRenderers)
 		{
@@ -89,19 +89,19 @@ public class ProbeAnchorOverrider : MonoBehaviour
 		return componentInChildren.transform;
 	}
 
-	private static void UpdateAnchors(Transform anchor, List<Renderer> renderers)
+	private static void UpdateAnchors(Transform anchor, List<SkinnedMeshRenderer> renderers)
 	{
 		if (anchor == null)
 		{
 			return;
 		}
-		foreach (Renderer renderer in renderers)
+		foreach (SkinnedMeshRenderer renderer in renderers)
 		{
 			renderer.probeAnchor = anchor;
 		}
 	}
 
-	public static void UpdateProbeAnchorsOnObject(GameObject root, List<Renderer> renderers)
+	public static void UpdateProbeAnchorsOnObject(GameObject root, List<SkinnedMeshRenderer> renderers)
 	{
 		UpdateAnchors(LocateAnchor(root), renderers);
 	}

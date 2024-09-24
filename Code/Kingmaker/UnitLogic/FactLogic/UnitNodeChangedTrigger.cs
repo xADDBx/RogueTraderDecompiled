@@ -30,17 +30,18 @@ public class UnitNodeChangedTrigger : UnitBuffComponentDelegate, IUnitNodeChange
 	[SerializeField]
 	private bool m_AllowNotInCombat;
 
-	public void HandleUnitNodeChanged(GraphNode oldNode)
+	public void HandleUnitNodeChanged()
 	{
 		if (!base.Owner.IsInCombat && !m_AllowNotInCombat)
 		{
 			return;
 		}
+		GraphNode previousNode = base.Owner.PreviousNode;
 		if (base.Fact.Owner.SizeRect.Width == 1)
 		{
-			if (oldNode != null)
+			if (previousNode != null)
 			{
-				Run(oldNode, m_OldNodesActions);
+				Run(previousNode, m_OldNodesActions);
 			}
 			if (base.Fact.Owner.CurrentNode.node != null)
 			{
@@ -48,7 +49,7 @@ public class UnitNodeChangedTrigger : UnitBuffComponentDelegate, IUnitNodeChange
 			}
 			return;
 		}
-		NodeList occupiedNodes = base.Fact.Owner.GetOccupiedNodes(oldNode);
+		NodeList occupiedNodes = base.Fact.Owner.GetOccupiedNodes(previousNode);
 		HashSet<GraphNode> hashSet = new HashSet<GraphNode>(base.Fact.Owner.GetOccupiedNodes());
 		foreach (CustomGridNodeBase item in occupiedNodes)
 		{

@@ -1,4 +1,4 @@
-using Owlcat.Runtime.Core.Logging;
+using System.Collections;
 using UnityEngine;
 
 namespace Kingmaker;
@@ -30,20 +30,39 @@ public class LookAtMousePosition : MonoBehaviour
 
 	private Vector3 m_LookAtTargetPoint;
 
+	private bool IsReady => m_Camera != null;
+
 	private void Awake()
 	{
 		m_Camera = Game.GetCamera();
 		if (m_Camera == null)
 		{
-			UberDebug.LogError("Camera is null");
-			base.enabled = false;
+			StartCoroutine(FindCamera());
 		}
+	}
+
+	private IEnumerator FindCamera()
+	{
+		while (m_Camera == null)
+		{
+			yield return new WaitForSeconds(0.5f);
+			m_Camera = Game.GetCamera();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		m_Camera = null;
+		StopAllCoroutines();
 	}
 
 	private void LateUpdate()
 	{
-		LookAtMouse();
-		LockAxis();
+		if (IsReady)
+		{
+			LookAtMouse();
+			LockAxis();
+		}
 	}
 
 	private void LookAtMouse()

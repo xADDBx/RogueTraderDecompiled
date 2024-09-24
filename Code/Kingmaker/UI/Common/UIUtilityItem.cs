@@ -366,6 +366,10 @@ public static class UIUtilityItem
 						MainLineClose = ruleCalculateScatterShotHitDirectionProbability.ResultMainLine + ruleCalculateScatterShotHitDirectionProbability.ResultScatterNear,
 						ScatterClose = ruleCalculateScatterShotHitDirectionProbability.ResultScatterFar
 					};
+					if (abilityData.IsMelee)
+					{
+						hitChance = Rulebook.Trigger(new RuleCalculateHitChances(caster, Game.Instance.DefaultUnit, abilityData, 0, Vector3.zero, Vector3.zero)).ResultHitChance;
+					}
 				}
 				else
 				{
@@ -520,9 +524,9 @@ public static class UIUtilityItem
 			data.Texts[TooltipElement.MaxAmmo] = weapon.Blueprint.WarhammerMaxAmmo.ToString();
 			int resultAdditionalHitChance = weapon.GetWeaponStats().ResultAdditionalHitChance;
 			data.Texts[TooltipElement.AdditionalHitChance] = ((resultAdditionalHitChance > 0) ? UIConfig.Instance.PercentHelper.AddPercentTo(resultAdditionalHitChance) : string.Empty);
-			int resultDodgePenetration = weapon.GetWeaponStats().ResultDodgePenetration;
-			data.Texts[TooltipElement.DodgeReduction] = ((resultDodgePenetration > 0) ? resultDodgePenetration.ToString() : string.Empty);
 		}
+		int resultDodgePenetration = weapon.GetWeaponStats().ResultDodgePenetration;
+		data.Texts[TooltipElement.DodgeReduction] = ((resultDodgePenetration > 0) ? resultDodgePenetration.ToString() : string.Empty);
 	}
 
 	private static void FillWeaponAbilities(ItemTooltipData data, ItemEntityWeapon weapon)
@@ -1245,5 +1249,14 @@ public static class UIUtilityItem
 	public static int GetMaxAbilityAmmo(ItemEntityWeapon weapon)
 	{
 		return (weapon?.Abilities.Max((Ability a) => a?.Data?.AmmoRequired)).GetValueOrDefault();
+	}
+
+	public static bool ShouldShowTalentIcons(BlueprintFeature feature)
+	{
+		if (feature.TalentIconInfo.HasGroups)
+		{
+			return feature.Icon == null;
+		}
+		return false;
 	}
 }

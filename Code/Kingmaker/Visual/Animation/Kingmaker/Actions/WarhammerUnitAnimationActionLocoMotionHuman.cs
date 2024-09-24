@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Code.Visual.Animation;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
@@ -229,9 +230,17 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		}
 	}
 
-	private bool IsGamepadMovement(UnitAnimationActionHandle handle)
+	private static bool IsGamepadMovement(UnitAnimationActionHandle handle)
 	{
-		return handle.Unit.Or(null)?.MovementAgent is UnitMovementAgentContinuous;
+		if (!(handle.Unit?.Or(null)?.MovementAgent is UnitMovementAgentContinuous))
+		{
+			if (handle.Unit?.EntityData.Commands.Current is UnitFollow { Params: { } @params })
+			{
+				return @params.IsGamepadMovement;
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
@@ -374,7 +383,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		if (actionData.State == MovementState.Idle && !flag && handle.Unit != null && !handle.Unit.AgentASP.IsInNodeLinkQueue)
 		{
 			AbstractUnitEntity data = handle.Unit.Data;
-			if (data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted) && !handle.Manager.IsGoingCover && (actionData.EndAnimationTime.Approximately(0f) || handle.GetTime() > actionData.EndAnimationTime))
+			if (((data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted) && handle.Unit.MovementAgent.IsReallyMoving) || handle.Unit.MovementAgent.IsCharging) && !handle.Manager.IsGoingCover && (actionData.EndAnimationTime.Approximately(0f) || handle.GetTime() > actionData.EndAnimationTime))
 			{
 				actionData.State = MovementState.Run;
 				if (!flag2 && currentWalkingStyleLayer != null && currentWalkingStyleLayer.In != null)
@@ -399,7 +408,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			actionData.OutDistance = handle.Unit.AgentASP.RemainingDistance + currentWalkingStyleLayer.OutSpeed * deltaTime;
 			flag = true;
 		}
-		if (currentWalkingStyleLayer != null && actionData.State != MovementState.Idle && handle.Unit != null && !UnitAnimationManager.HasMovingCommand(handle.Unit.Data) && !handle.Unit.MovementAgent.IsReallyMoving)
+		if (currentWalkingStyleLayer != null && actionData.State != MovementState.Idle && handle.Unit != null && !handle.Unit.MovementAgent.IsCharging && (!UnitAnimationManager.HasMovingCommand(handle.Unit.Data) || !handle.Unit.MovementAgent.IsReallyMoving))
 		{
 			actionData.State = MovementState.Idle;
 			flag = true;

@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
@@ -104,7 +105,8 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 			m_TooltipHandle?.Dispose();
 			if (featureVM != null)
 			{
-				m_TalentGroupView.SetupView(featureVM.Feature.TalentIconInfo);
+				TalentIconInfo iconsInfo = (m_CharInfoRankEntryView.ShouldShowTalentIcons ? featureVM.Feature.TalentIconInfo : null);
+				m_TalentGroupView.Or(null)?.SetupView(iconsInfo);
 				if (m_AttributeName != null && featureVM.Feature is BlueprintAttributeAdvancement blueprintAttributeAdvancement)
 				{
 					m_AttributeContainer.Or(null)?.SetActive(value: true);

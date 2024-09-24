@@ -1,6 +1,7 @@
 using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UniRx;
@@ -20,6 +21,9 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 	[Header("Hints")]
 	[SerializeField]
 	private ConsoleHintsWidget m_HintsWidget;
+
+	[SerializeField]
+	private ConsoleHint m_ToggleHint;
 
 	private InputLayer m_InputLayer;
 
@@ -76,6 +80,12 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 		m_InputField.Abort();
 	}
 
+	private void SelectDeselectToggle(InputActionEventData eventData)
+	{
+		UISounds.Instance.Sounds.Tutorial.BanTutorialType.Play();
+		m_DontShowToggle.Set(!m_DontShowToggle.IsOn.Value);
+	}
+
 	protected override void BindProgressBar()
 	{
 	}
@@ -107,6 +117,7 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 				OnDeclineClick();
 			}
 		}, 9));
+		AddDisposable(m_ToggleHint.Bind(inputLayer.AddButton(SelectDeselectToggle, 10, base.ViewModel.IsCheckbox)));
 		AddDisposable(inputLayer.AddAxis(Scroll, 3, repeat: true));
 	}
 

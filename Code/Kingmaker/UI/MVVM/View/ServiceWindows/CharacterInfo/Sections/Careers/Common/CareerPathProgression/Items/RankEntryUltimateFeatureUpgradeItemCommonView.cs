@@ -63,10 +63,8 @@ public class RankEntryUltimateFeatureUpgradeItemCommonView : VirtualListElementV
 		}));
 		AddDisposable(base.ViewModel.FocusedState.Subscribe(delegate(bool value)
 		{
-			if (base.ViewModel.FeatureState.Value != RankFeatureState.Committed)
-			{
-				m_FocusedMark.Or(null)?.SetActive(value);
-			}
+			bool active = value && base.ViewModel.FeatureState.Value != RankFeatureState.Committed && base.ViewModel.FeatureState.Value != RankFeatureState.Selected;
+			m_FocusedMark.Or(null)?.SetActive(active);
 		}));
 	}
 

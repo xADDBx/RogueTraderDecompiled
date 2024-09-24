@@ -27,12 +27,14 @@ public class CriticalGetter : MechanicEntityPropertyGetter, PropertyContextAcces
 		case CriticalParameterType.BonusCriticalHitChance:
 			return Rulebook.Trigger(new RuleCalculateRighteousFuryChance(base.CurrentEntity, null, abilityData)
 			{
-				FakeRule = true
+				FakeRule = true,
+				HasNoTarget = true
 			}).BonusCriticalChance;
 		case CriticalParameterType.BonusCriticalDamage:
 		{
 			CalculateDamageParams calculateDamageParams = new CalculateDamageParams(base.CurrentEntity, null, abilityData);
 			calculateDamageParams.FakeRule = true;
+			calculateDamageParams.HasNoTarget = true;
 			return calculateDamageParams.Trigger().CriticalDamageModifiers.AllModifiersList.Sum((Modifier p) => p.Value) + 50;
 		}
 		default:

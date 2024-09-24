@@ -760,10 +760,7 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void ShowNetLobbyTutorial()
 	{
-		NetLobbyTutorialPartVM.Value = new NetLobbyTutorialPartVM(delegate
-		{
-			HideNetLobbyTutorial();
-		});
+		NetLobbyTutorialPartVM.Value = new NetLobbyTutorialPartVM(HideNetLobbyTutorial);
 		NetLobbyTutorialOnScreen.Value = true;
 		void HideNetLobbyTutorial()
 		{

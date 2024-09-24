@@ -22,7 +22,7 @@ public class RuleCalculateDodgePenetration : RulebookEvent
 		}
 		int warhammerPerception = base.InitiatorUnit.Blueprint.WarhammerPerception;
 		warhammerPerception += base.InitiatorUnit.GetFirstWeapon()?.GetWeaponStats().ResultDodgePenetration ?? 0;
-		warhammerPerception += base.InitiatorUnit.GetSecondWeapon()?.GetWeaponStats().ResultDodgePenetration ?? 0;
+		warhammerPerception += base.InitiatorUnit.GetSecondaryHandWeapon()?.GetWeaponStats().ResultDodgePenetration ?? 0;
 		ResultDodgePenetration = warhammerPerception;
 	}
 }

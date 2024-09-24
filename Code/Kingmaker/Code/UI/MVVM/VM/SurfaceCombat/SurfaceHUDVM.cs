@@ -153,6 +153,8 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public void HandleBeginPreparationTurn(bool canDeploy)
 	{
+		CombatStartWindowVM.Value?.Dispose();
+		CombatStartWindowVM.Value = null;
 		CombatStartWindowVM.Value = new CombatStartWindowVM(Game.Instance.TurnController.RequestEndPreparationTurn, canDeploy);
 		OnUnitChanged();
 		DeploymentPhase.Value = true;

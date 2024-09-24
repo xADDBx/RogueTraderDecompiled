@@ -14,6 +14,10 @@ namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 [TypeId("cc4b8099545662d4396cbbbe993330b4")]
 public class AbilityTargetIsDeadCompanion : BlueprintComponent, IAbilityTargetRestriction, ICanTargetDeadUnits
 {
+	public bool CanTargetDead => true;
+
+	public bool CanTargetAlive => false;
+
 	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper t, Vector3 casterPosition)
 	{
 		MechanicEntity entity = t.Entity;

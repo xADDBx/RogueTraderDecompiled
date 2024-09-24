@@ -81,7 +81,7 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 
 	public int m_BuffDuration = 1;
 
-	private int LastWaveRound;
+	private int m_FinalWaveRound;
 
 	private bool m_FirstUnitTurnInterrupted;
 
@@ -90,6 +90,8 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 	private int m_LastUnitSpawnedIndex;
 
 	private bool m_SpawningStage;
+
+	private bool m_OutOfCombat;
 
 	public BlueprintBuff StartingBuff => m_StartingBuff?.Get();
 
@@ -101,20 +103,31 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 
 	public void HandleRoundStart(bool isTurnBased)
 	{
-		StartSurvivalRound();
+		if (isTurnBased)
+		{
+			if (m_OutOfCombat)
+			{
+				m_OutOfCombat = false;
+			}
+			else
+			{
+				StartSurvivalRound();
+			}
+		}
 	}
 
 	public void HandleUnitEndTurn(bool isTurnBased)
 	{
 		if (isTurnBased && !CheckEnemiesAlive())
 		{
+			m_OutOfCombat = true;
 			StartSurvivalRound();
 		}
 	}
 
 	private bool CheckEnemiesAlive()
 	{
-		return !Game.Instance.State.AllUnits.Where((AbstractUnitEntity u) => !u.IsPlayerFaction && u.LifeState.IsConscious).Empty();
+		return !Game.Instance.State.AllUnits.Where((AbstractUnitEntity u) => u.IsPlayerEnemy && u.LifeState.IsConscious).Empty();
 	}
 
 	private void StartSurvivalRound()
@@ -125,23 +138,24 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		SavableData savableData = RequestSavableData<SavableData>();
 		if (!savableData.IsEnded)
 		{
-			savableData.RoundsSurvived++;
-			RoundsLeft = (UnlimitedTime ? 999 : (RoundsToSurvive - savableData.RoundsSurvived));
-			CurrentRound = savableData.RoundsSurvived + 1;
-			PFLog.Default.Log($"TimeSurvival: {CurrentRound} - {savableData.RoundsSurvived} of {RoundsToSurvive}");
+			IncrementRound(savableData);
 			if (RoundsLeft <= 0)
 			{
 				FinishCombat(savableData);
 			}
-			if (UnlimitedTime && !CheckEnemiesAlive() && CurrentRound > LastWaveRound)
+			if (!CheckEnemiesAlive() && CurrentRound > m_FinalWaveRound)
 			{
 				FinishCombat(savableData);
 			}
-			if (UnlimitedTime && !CheckEnemiesAlive() && CurrentRound <= LastWaveRound)
-			{
-				StartSurvivalRound();
-			}
 		}
+	}
+
+	private void IncrementRound(SavableData data)
+	{
+		data.RoundsSurvived++;
+		RoundsLeft = (UnlimitedTime ? 999 : (RoundsToSurvive - data.RoundsSurvived));
+		CurrentRound = data.RoundsSurvived + 1;
+		PFLog.Default.Log($"TimeSurvival: {CurrentRound} - {data.RoundsSurvived} of {RoundsToSurvive}");
 	}
 
 	public void HandleUnitEndInterruptTurn()
@@ -159,20 +173,36 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 			return;
 		}
 		m_FirstUnitTurnInterrupted = true;
-		SavableData savableData = RequestSavableData<SavableData>();
-		if (!savableData.IsEnded)
+		SavableData data = RequestSavableData<SavableData>();
+		if (data.IsEnded)
 		{
-			if (savableData.RoundsSurvived != 0 && savableData.RoundsSurvived % RoundsPerSpawn == 0)
+			return;
+		}
+		if (!CheckEnemiesAlive())
+		{
+			while (!CanSpawnThisRound())
 			{
-				Vector3 spawnShift = (SpawnersShouldFollow ? ((PlayerPosition - savableData.PreviousPlayerPosition) * 0.75f) : Vector3.zero);
-				SpawnUnits(spawnShift);
-				InterruptTurnWithNewEnemy();
+				IncrementRound(data);
 			}
-			if (SpawnersShouldFollow && savableData.RoundsSurvived > 0)
+		}
+		if (CanSpawnThisRound())
+		{
+			Vector3 spawnShift = (SpawnersShouldFollow ? ((PlayerPosition - data.PreviousPlayerPosition) * 0.75f) : Vector3.zero);
+			SpawnUnits(spawnShift);
+			InterruptTurnWithNewEnemy();
+		}
+		if (SpawnersShouldFollow && data.RoundsSurvived > 0)
+		{
+			MoveSpawners(PlayerPosition, data.PreviousPlayerPosition);
+		}
+		data.PreviousPlayerPosition = PlayerPosition;
+		bool CanSpawnThisRound()
+		{
+			if (data.RoundsSurvived != 0)
 			{
-				MoveSpawners(PlayerPosition, savableData.PreviousPlayerPosition);
+				return data.RoundsSurvived % RoundsPerSpawn == 0;
 			}
-			savableData.PreviousPlayerPosition = PlayerPosition;
+			return false;
 		}
 	}
 
@@ -252,7 +282,6 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 				int index = PFStatefulRandom.SpaceCombat.Range(0, list.Count);
 				int index2 = PFStatefulRandom.SpaceCombat.Range(0, unitsList.Count);
 				BlueprintUnit blueprintUnit = unitsList[index2];
-				_ = list[index];
 				Transform viewTransform = list[index].ViewTransform;
 				Vector3 position = viewTransform.position + spawnShift;
 				GraphNode node = graph.GetNearest(position).node;
@@ -334,10 +363,10 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		SavableData savableData = RequestSavableData<SavableData>();
 		RoundsLeft = RoundsToSurvive - savableData.RoundsSurvived;
 		CurrentRound = savableData.RoundsSurvived + 1;
-		LastWaveRound = -1;
+		m_FinalWaveRound = -1;
 		foreach (SpawnData spawnDatum in spawnData)
 		{
-			LastWaveRound = Mathf.Max(LastWaveRound, spawnDatum.RoundTo);
+			m_FinalWaveRound = Mathf.Max(m_FinalWaveRound, spawnDatum.RoundTo);
 		}
 	}
 

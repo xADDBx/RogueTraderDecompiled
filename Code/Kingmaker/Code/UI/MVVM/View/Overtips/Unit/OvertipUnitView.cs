@@ -103,6 +103,8 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 
 	private List<Graphic> m_MainRaycastBlockers = new List<Graphic>();
 
+	private TweenCallback m_CombatTextUpdateVisualCallback;
+
 	private IDisposable m_HoverDelay;
 
 	protected override bool CheckVisibility
@@ -206,6 +208,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		{
 			m_UnitBuffsCanvasGroup.blocksRaycasts = value.tab || value.vis == UnitOvertipVisibility.Maximized;
 		}));
+		m_CombatTextUpdateVisualCallback = m_CombatTextBlockPCView.UpdateVisualForCommon;
 		EnableMainRaycasts(enable: true);
 	}
 
@@ -239,11 +242,11 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		m_FadeAnimator = m_InnerCanvasGroup.DOFade(alpha, 0.2f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
 		m_ScaleAnimator?.Kill();
 		m_ScaleAnimator = m_RectTransform.DOScale(scale, 0.2f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true)
-			.OnUpdate(m_CombatTextBlockPCView.UpdateVisualForCommon)
-			.OnComplete(m_CombatTextBlockPCView.UpdateVisualForCommon);
+			.OnUpdate(m_CombatTextUpdateVisualCallback)
+			.OnComplete(m_CombatTextUpdateVisualCallback);
 		m_PositionAnimator?.Kill();
 		m_PositionAnimator = m_RectTransform.DOAnchorPosY(yPosition, 0.2f).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true)
-			.OnUpdate(m_CombatTextBlockPCView.UpdateVisualForCommon);
+			.OnUpdate(m_CombatTextUpdateVisualCallback);
 		if (unitOvertipVisibility == UnitOvertipVisibility.NotFull || unitOvertipVisibility == UnitOvertipVisibility.Full || unitOvertipVisibility == UnitOvertipVisibility.Maximized)
 		{
 			base.transform.SetAsLastSibling();

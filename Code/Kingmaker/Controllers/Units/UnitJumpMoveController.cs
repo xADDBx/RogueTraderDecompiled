@@ -64,30 +64,39 @@ public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, I
 		}
 	}
 
-	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, MechanicEntity target, MechanicEntity caster, bool useAttack)
+	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity target, MechanicEntity caster, bool useAttack)
 	{
-		HandleResult(caster, target, targetPoint, -distanceInCells, useAttack);
+		HandleResult(caster, target, targetPoint, directJump, -distanceInCells, useAttack);
 	}
 
 	public void HandleUnitAbilityJumpDidActed(int distanceInCells)
 	{
 	}
 
-	private static void HandleResult(MechanicEntity caster, MechanicEntity unit, Vector3 fromPoint, int distanceInCells, bool useAttack)
+	private static void HandleResult(MechanicEntity caster, MechanicEntity unit, Vector3 fromPoint, bool directJump, int distanceInCells, bool useAttack)
 	{
 		CustomGridNodeBase nearestNodeXZ = unit.Position.GetNearestNodeXZ();
-		if (nearestNodeXZ != null)
+		if (nearestNodeXZ == null)
+		{
+			return;
+		}
+		CustomGridNodeBase nearestNodeXZ2;
+		if (!directJump)
 		{
 			PartUnitCombatState combatStateOptional = unit.GetCombatStateOptional();
 			if (combatStateOptional != null)
 			{
 				combatStateOptional.ForceMovedDistanceInCells = distanceInCells;
 			}
-			CustomGridNodeBase nearestNodeXZ2 = (unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ();
-			if (nearestNodeXZ2 != nearestNodeXZ && nearestNodeXZ2 != null)
-			{
-				unit.GetOrCreate<UnitPartJump>().Jump(nearestNodeXZ2, provokeAttackOfOpportunity: false, distanceInCells * 2, caster, useAttack);
-			}
+			nearestNodeXZ2 = (unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ();
+		}
+		else
+		{
+			nearestNodeXZ2 = fromPoint.GetNearestNodeXZ();
+		}
+		if (nearestNodeXZ2 != nearestNodeXZ && nearestNodeXZ2 != null)
+		{
+			unit.GetOrCreate<UnitPartJump>().Jump(nearestNodeXZ2, provokeAttackOfOpportunity: false, distanceInCells * 2, caster, useAttack);
 		}
 	}
 

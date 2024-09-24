@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Dialog;
@@ -154,6 +155,7 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		}
 		AnswerPortrait.Value = value2;
 		AnswerName.Value = ((cue.Listener == null || !(cue.Listener.name != "Player Character")) ? mainCharacterEntity.CharacterName : ((listenerEntity == null) ? cue.Listener.CharacterName : listenerEntity?.CharacterName));
+		PFLog.UI.Log("HandleOnCueShow Itermediate");
 		BlueprintAnswer blueprintAnswer = dialogController.Answers.FirstOrDefault();
 		if (blueprintAnswer != null && blueprintAnswer.IsSystem())
 		{
@@ -172,6 +174,7 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		GameObject target = ((currentSpeaker != null && currentSpeaker.View != null) ? currentSpeaker.View.gameObject : null);
 		Cue.Value = new CueVM(cue, data.SkillChecks, data.SoulMarkShifts);
 		VoiceOverPlayer.PlayVoiceOver(cue.Text, target);
+		PFLog.UI.Log("HandleOnCueShow OnCueUpdate");
 		OnCueUpdate.Execute();
 	}
 
@@ -190,13 +193,20 @@ public class DialogVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	{
 		if (fullScreenUIType == FullScreenUIType.EscapeMenu)
 		{
-			IsVisible.Value = !state && Game.Instance.IsModeActive(GameModeType.Dialog);
+			bool num = Game.Instance.CurrentMode == GameModeType.Cutscene || Game.Instance.CurrentMode == GameModeType.CutsceneGlobalMap;
+			CutscenePlayerData cutscenePlayerData = Game.Instance.State?.Cutscenes?.LastOrDefault();
+			bool flag = false;
+			if (num && cutscenePlayerData != null)
+			{
+				flag = !cutscenePlayerData.IsFinished && !cutscenePlayerData.Paused && cutscenePlayerData.Cutscene.LockControl;
+			}
+			IsVisible.Value = !state && Game.Instance.IsModeActive(GameModeType.Dialog) && !flag;
 		}
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)
 	{
-		if (gameMode == GameModeType.Cutscene || Game.Instance.IsPaused)
+		if (gameMode == GameModeType.Cutscene || gameMode == GameModeType.CutsceneGlobalMap || Game.Instance.IsPaused)
 		{
 			IsVisible.Value = false;
 		}

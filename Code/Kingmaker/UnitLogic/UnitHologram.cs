@@ -56,6 +56,7 @@ public class UnitHologram : MonoBehaviour
 		}
 		set
 		{
+			value.y = 0f;
 			base.transform.forward = value;
 			if (AnimationManager != null)
 			{

@@ -1182,11 +1182,16 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			}
 		}
 		BlueprintComponent[] componentsArray = Blueprint.ComponentsArray;
-		for (int i = 0; i < componentsArray.Length; i++)
+		foreach (BlueprintComponent blueprintComponent in componentsArray)
 		{
-			if (componentsArray[i] is AbilityEffectRunAction abilityEffectRunAction && !abilityEffectRunAction.IsValidToCast(target, Caster, casterPosition))
+			if (blueprintComponent is AbilityEffectRunAction abilityEffectRunAction && !abilityEffectRunAction.IsValidToCast(target, Caster, casterPosition))
 			{
 				unavailabilityReason = UnavailabilityReasonType.TargetRestrictionNotPassed;
+				return false;
+			}
+			if (blueprintComponent is CustomAbilityQueue customAbilityQueue && !customAbilityQueue.IsValidToCast(target, Caster, casterPosition, out var reason))
+			{
+				unavailabilityReason = reason;
 				return false;
 			}
 		}
@@ -1222,7 +1227,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetDead;
 				return false;
 			}
-			if (!target.Entity.IsDeadOrUnconscious && Blueprint.CanCastToDeadTarget)
+			if (!target.Entity.IsDeadOrUnconscious && !Blueprint.CanCastToAliveTarget())
 			{
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetAlive;
 				return false;

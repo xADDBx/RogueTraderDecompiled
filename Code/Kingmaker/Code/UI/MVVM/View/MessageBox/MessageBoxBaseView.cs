@@ -4,11 +4,15 @@ using System.Linq;
 using System.Text;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Sound;
 using Kingmaker.UI.TMPExtention;
+using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Toggles;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
@@ -42,6 +46,13 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	[Header("ResetAnimation")]
 	[SerializeField]
 	private List<CanvasGroup> m_CanvasesResetAnimation;
+
+	[Header("Checkbox")]
+	[SerializeField]
+	protected OwlcatToggle m_DontShowToggle;
+
+	[SerializeField]
+	protected TextMeshProUGUI m_DontShowLabel;
 
 	private Tweener m_ProgressTweener;
 
@@ -81,6 +92,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 			base.ViewModel.OnLinkInvoke(value.Item2);
 		}));
 		BindTextField();
+		SetCheckbox();
 		SetProgressBar();
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(delegate
 		{
@@ -94,11 +106,27 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 	protected override void DestroyViewImplementation()
 	{
 		DestroyTextField();
+		if (m_DontShowToggle != null && m_DontShowToggle.IsOn.Value)
+		{
+			base.ViewModel.DontShowAgainInvoke();
+		}
+		m_DontShowToggle.Or(null)?.Set(value: false);
 		m_ProgressTweener?.Kill();
 		m_ProgressTweener = null;
 		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 		ResetCanvasesAnimation();
 		base.gameObject.SetActive(value: false);
+	}
+
+	private void SetCheckbox()
+	{
+		if (!(m_DontShowToggle == null))
+		{
+			m_DontShowToggle.gameObject.SetActive(base.ViewModel.IsCheckbox.Value);
+			m_DontShowToggle.Set(value: false);
+			m_DontShowLabel.text = UIStrings.Instance.Tutorial.DontShowThisTutorial;
+			UISounds.Instance.SetClickAndHoverSound(m_DontShowToggle.ConsoleEntityProxy as OwlcatMultiButton, UISounds.ButtonSoundsEnum.NoSound);
+		}
 	}
 
 	private void SetProgressBar()

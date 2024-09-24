@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
@@ -14,10 +15,12 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
+using Kingmaker.Utility.StatefulRandom;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -28,6 +31,8 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 [TypeId("a2cb91a2b5d142648acab0e10a1bc6f1")]
 public class CustomAbilityQueue : AbilityCustomLogic
 {
+	public bool QueueStart;
+
 	[FormerlySerializedAs("m_AbilityToCast")]
 	public BlueprintAbilityReference AbilityToCast;
 
@@ -58,20 +63,31 @@ public class CustomAbilityQueue : AbilityCustomLogic
 		{
 			yield break;
 		}
-		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(CreateAbility(AbilityToCast, context), CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target)
+		AbilityData abilityData = CreateAbility(AbilityToCast, context);
+		UnitCommandHandle cmdHandle;
+		AbilityExecutionProcess executionProcess;
+		if (abilityData.IsValid(CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target))
 		{
-			FreeAction = true
-		};
-		UnitCommandHandle cmdHandle = commands.AddToQueue(cmdParams);
-		AbilityExecutionProcess executionProcess = null;
-		while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
-		{
-			executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
+			UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target)
+			{
+				FreeAction = true
+			};
+			cmdHandle = commands.AddToQueue(cmdParams);
+			executionProcess = null;
+			while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
+			{
+				executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
+				yield return null;
+			}
+			if (executionProcess != null)
+			{
+				while (!executionProcess.IsEnded)
+				{
+					yield return null;
+				}
+			}
 			yield return null;
-		}
-		if (executionProcess != null)
-		{
-			while (!executionProcess.IsEnded)
+			while (context.Caster.Parts.GetOptional<UnitPartJump>() != null || commands.IsRunning())
 			{
 				yield return null;
 			}
@@ -86,25 +102,25 @@ public class CustomAbilityQueue : AbilityCustomLogic
 			targetWrapper = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && IsConditionPassed(ConditionsOnTarget, context, p) && context.Caster.InRangeInCells(p, Range.Calculate(context))).Cast<MechanicEntity>().ToList()
 				.Random(PFStatefulRandom.Mechanics);
 		}
-		AbilityData abilityData = CreateAbility(AbilityToQue, context);
-		if (!(targetWrapper != null) || !abilityData.IsValid(targetWrapper))
+		AbilityData abilityData2 = CreateAbility(AbilityToQue, context);
+		if (!(targetWrapper != null) || !abilityData2.IsValid(targetWrapper))
 		{
 			yield break;
 		}
-		UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(abilityData, targetWrapper)
+		UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(abilityData2, targetWrapper)
 		{
 			FreeAction = true
 		};
-		UnitCommandHandle nextCmdHandle = commands.AddToQueue(cmdParams2);
-		AbilityExecutionProcess newExecutionProcess = null;
-		while (!nextCmdHandle.IsFinished && (newExecutionProcess == null || !newExecutionProcess.IsStarted))
+		cmdHandle = commands.AddToQueue(cmdParams2);
+		executionProcess = null;
+		while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
 		{
-			newExecutionProcess = ((UnitUseAbility)nextCmdHandle.Cmd)?.ExecutionProcess;
+			executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
 			yield return null;
 		}
-		if (newExecutionProcess != null)
+		if (executionProcess != null)
 		{
-			while (!newExecutionProcess.IsEnded)
+			while (!executionProcess.IsEnded)
 			{
 				yield return null;
 			}
@@ -128,6 +144,19 @@ public class CustomAbilityQueue : AbilityCustomLogic
 		using (context.GetDataScope(entity.ToITargetWrapper()))
 		{
 			return conditions.Check();
+		}
+	}
+
+	public bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition, out AbilityData.UnavailabilityReasonType reason)
+	{
+		if (!QueueStart)
+		{
+			reason = AbilityData.UnavailabilityReasonType.None;
+			return true;
+		}
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			return new AbilityData(AbilityToCast, caster).IsValid(CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)caster) : target, casterPosition, out reason);
 		}
 	}
 }

@@ -60,7 +60,7 @@ public class ContextActionMoveDirectToPoint : ContextActionMove
 		{
 			EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
 			{
-				h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), m_TargetPoint.GetValue(), base.Caster, base.Caster, useAttack: false);
+				h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), m_TargetPoint.GetValue(), directJump: true, base.Caster, base.Caster, useAttack: false);
 			});
 			return;
 		}

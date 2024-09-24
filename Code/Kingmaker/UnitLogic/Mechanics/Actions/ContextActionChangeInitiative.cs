@@ -37,6 +37,7 @@ public class ContextActionChangeInitiative : ContextAction
 		}
 		int num = array.IndexOf(entity);
 		BuffDuration duration = new BuffDuration(1.Rounds(), BuffEndCondition.TurnStartOrCombatEnd);
+		entity.Initiative.WasPreparedForRound = 0;
 		if (num < 2)
 		{
 			entity.Initiative.Value = array.Last().Initiative.Value - 1f;

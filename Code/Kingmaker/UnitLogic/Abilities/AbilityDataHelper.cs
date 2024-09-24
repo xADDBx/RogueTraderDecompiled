@@ -67,7 +67,7 @@ public static class AbilityDataHelper
 		}
 		PartLifeState lifeStateOptional = target.GetLifeStateOptional();
 		bool flag = lifeStateOptional == null || lifeStateOptional.IsConscious;
-		if ((flag && ability.Blueprint.CanCastToDeadTarget) || (!flag && !ability.Blueprint.CanCastToDeadTarget))
+		if ((flag && !ability.Blueprint.CanCastToAliveTarget()) || (!flag && !ability.Blueprint.CanCastToDeadTarget))
 		{
 			return false;
 		}

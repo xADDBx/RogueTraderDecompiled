@@ -27,13 +27,22 @@ public class ActionsOnBuffApply : UnitBuffComponentDelegate, IEntityGainFactHand
 
 	public ActionList Actions;
 
+	public bool UseFactContext;
+
 	public BlueprintUnitFact GainedFact => m_GainedFact?.Get();
 
 	public void HandleEntityGainFact(EntityFact fact)
 	{
 		if (fact.Blueprint == GainedFact)
 		{
-			Actions.Run();
+			if (!UseFactContext)
+			{
+				Actions.Run();
+			}
+			else
+			{
+				base.Fact.RunActionInContext(Actions);
+			}
 		}
 	}
 

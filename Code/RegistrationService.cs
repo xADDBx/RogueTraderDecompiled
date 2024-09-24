@@ -39,9 +39,9 @@ public class RegistrationService<T> where T : RegistrationService<T>.DatedItem
 
 	public IEnumerable<T> GetInInterval(DateTime from, DateTime to)
 	{
-		return from i in _registered.Reverse()
+		return (from i in _registered.Reverse()
 			where i.Time >= @from && i.Time <= to
-			select i;
+			select i).ToList();
 	}
 
 	public T? Get(int index)

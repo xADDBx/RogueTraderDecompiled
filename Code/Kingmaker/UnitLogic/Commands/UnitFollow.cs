@@ -47,9 +47,11 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 		}
 	}
 
-	private const float NearDestinationRadiusSquared = 3f;
+	private const float MatchMovementInnerRadiusSquared = 2f;
 
-	private const float FarDestinationRadiusSquared = 10f;
+	private const float MatchMovementOuterRadiusSquared = 4f;
+
+	private const float SprintDestinationRadiusSquared = 20f;
 
 	private const float StopMovementRadius = 0.2f;
 
@@ -64,10 +66,6 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 	public override bool IsMoveUnit => true;
 
 	private Vector3 Destination => base.Params.Destination;
-
-	private bool IsTooFarFromDestination => (base.Executor.Position - Destination).sqrMagnitude > 10f;
-
-	private bool IsCloseEnoughToDestination => (base.Executor.Position - Destination).sqrMagnitude < 3f;
 
 	private bool HasReachedDestination => (base.Executor.Position - Destination).sqrMagnitude < 0.02f;
 
@@ -90,12 +88,12 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 			ForceFinish(ResultType.Success);
 			return;
 		}
-		base.Params.MovementType = GetMovementType(targetData);
+		base.Params.MovementType = ((!((base.Executor.Position - Destination).sqrMagnitude > 20f)) ? WalkSpeedType.Run : WalkSpeedType.Sprint);
 		if (ShouldMatchTargetMovement(targetData))
 		{
 			if (targetData.IsPositionChanged)
 			{
-				if (HasReachedDestination)
+				if (!base.Params.IsGamepadMovement && HasReachedDestination)
 				{
 					ForceFinish(ResultType.Success);
 					return;
@@ -115,27 +113,15 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 		}
 	}
 
-	private WalkSpeedType GetMovementType(TargetEntityMovementData targetData)
-	{
-		WalkSpeedType? movementType = targetData.MovementType;
-		if (!movementType.HasValue)
-		{
-			if (!IsTooFarFromDestination)
-			{
-				return base.Params.MovementType;
-			}
-			return WalkSpeedType.Run;
-		}
-		return movementType.GetValueOrDefault();
-	}
-
 	private bool ShouldMatchTargetMovement(TargetEntityMovementData targetData)
 	{
-		if (targetData.IsMoving)
+		if (!targetData.IsMoving)
 		{
-			return IsCloseEnoughToDestination;
+			return false;
 		}
-		return false;
+		float sqrMagnitude = (base.Executor.Position - Destination).sqrMagnitude;
+		float num = (IsMovementAgentOverridden() ? 4f : 2f);
+		return sqrMagnitude < num;
 	}
 
 	private void MatchTargetMovement(TargetEntityMovementData targetData)
@@ -144,6 +130,7 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 		unitMovementAgentContinuous.MaxSpeedOverride = targetData.MaxSpeedOverride;
 		unitMovementAgentContinuous.DirectionFromController = targetData.Direction ?? (Destination - base.Executor.Position).normalized.To2D();
 		unitMovementAgentContinuous.DirectionFromControllerMagnitude = targetData.Multiplier ?? 1f;
+		unitMovementAgentContinuous.m_Acceleration = 200f;
 		base.Params.MovementType = targetData.MovementType ?? WalkSpeedType.Walk;
 	}
 
@@ -164,9 +151,8 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 	{
 		m_RepathTimer = 0f;
 		m_RememberedDestination = Destination;
-		base.Executor.View.StopMoving();
 		BaseUnitEntity executor = base.Executor;
-		PathfindingService.Instance.FindPathRT_Delayed(base.Executor.MovementAgent, Destination, 0.2f, 1, delegate(ForcedPath path)
+		PathfindingService.Instance.FindPathRT_Delayed(base.Executor.MovementAgent, Destination, 0f, 1, delegate(ForcedPath path)
 		{
 			if (path.error)
 			{
@@ -224,6 +210,11 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 			base.Executor.View.AgentOverride.Blocker.Unblock();
 			base.Executor.View.AgentOverride = null;
 		}
+	}
+
+	private bool IsMovementAgentOverridden()
+	{
+		return base.Executor?.View.Or(null)?.AgentOverride != null;
 	}
 
 	protected override ResultType OnAction()

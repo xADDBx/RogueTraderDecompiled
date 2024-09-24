@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Controllers;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
@@ -21,6 +24,8 @@ public class CombatStartWindowVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	public readonly CombatStartCoopProgressVM CoopProgressVM;
 
 	public readonly StringReactiveProperty CannotStartCombatReason = new StringReactiveProperty();
+
+	private bool m_AnyUnitSelected;
 
 	public CombatStartWindowVM(Action startBattle, bool canDeploy)
 	{
@@ -56,6 +61,21 @@ public class CombatStartWindowVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		}
 		CannotStartCombatReason.Value = value;
 		CanStartCombat.Value = flag;
+		UpdateSelectedUnit();
+	}
+
+	private void UpdateSelectedUnit()
+	{
+		if (!m_AnyUnitSelected)
+		{
+			SelectionCharacterController selectionCharacter = Game.Instance.SelectionCharacter;
+			if (selectionCharacter.SelectedUnit.Value == null && selectionCharacter.ActualGroup.Count != 0)
+			{
+				BaseUnitEntity unit = selectionCharacter.ActualGroup.FirstOrDefault();
+				selectionCharacter.SetSelected(unit);
+				m_AnyUnitSelected = true;
+			}
+		}
 	}
 
 	public void HandleEntityPositionChanged()

@@ -23,6 +23,11 @@ public class StartRagdollFromTimeline : MonoBehaviour
 
 	private void Awake()
 	{
+		if (isStart)
+		{
+			isStart = false;
+			runRagdoll();
+		}
 	}
 
 	public void runRagdoll()

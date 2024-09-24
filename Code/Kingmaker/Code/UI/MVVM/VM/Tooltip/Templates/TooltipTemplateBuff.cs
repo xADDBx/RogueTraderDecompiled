@@ -117,13 +117,17 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 			}
 		};
 		TooltipBrickIconPattern.TextFieldValues secondaryValues = null;
-		if (Buff != null && Buff.Blueprint.HasRanks && Buff.Rank > 0)
+		if (Buff != null)
 		{
-			secondaryValues = new TooltipBrickIconPattern.TextFieldValues
+			DOTLogicVisual component = Buff.Blueprint.GetComponent<DOTLogicVisual>();
+			if (Buff.Blueprint.HasRanks && Buff.Rank > 0 && component == null)
 			{
-				Text = string.Format(UIStrings.Instance.CommonTexts.BuffStacks, Buff.Rank, Buff.Blueprint.MaxRank),
-				TextParams = new TextFieldParams()
-			};
+				secondaryValues = new TooltipBrickIconPattern.TextFieldValues
+				{
+					Text = string.Format(UIStrings.Instance.CommonTexts.BuffStacks, Buff.Rank, Buff.Blueprint.MaxRank),
+					TextParams = new TextFieldParams()
+				};
+			}
 		}
 		yield return new TooltipBrickIconPattern(m_Icon, null, titleValues, secondaryValues);
 	}

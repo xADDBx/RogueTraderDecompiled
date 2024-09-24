@@ -191,6 +191,8 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 
 	public bool IsWaitingForIncomingAttackOfOpportunity { get; set; }
 
+	private bool IsBusyByLoopAnimation => base.CurrentAction.Action is WarhammerBuffLoopAction;
+
 	public bool InCover
 	{
 		get
@@ -860,9 +862,9 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		UnitAnimationType type = unitAnimationAction.Type;
 		if (type == UnitAnimationType.Dodge || type == UnitAnimationType.JumpAsideDodge || type == UnitAnimationType.Hit)
 		{
-			if (!IsWaitingForIncomingAttackOfOpportunity && !IsProne)
+			if (!IsWaitingForIncomingAttackOfOpportunity && !IsProne && !IsGoingProne)
 			{
-				return !IsGoingProne;
+				return !IsBusyByLoopAnimation;
 			}
 			return false;
 		}

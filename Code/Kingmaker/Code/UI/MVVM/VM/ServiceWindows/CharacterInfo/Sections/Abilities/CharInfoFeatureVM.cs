@@ -37,6 +37,8 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 
 	public TalentIconInfo TalentIconsInfo;
 
+	public bool ShouldShowTalentIcons;
+
 	protected ReactiveProperty<TooltipBaseTemplate> m_Tooltip;
 
 	private readonly object m_TooltipSource;
@@ -104,6 +106,7 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		FillDescription();
 		m_TooltipSource = feature;
 		TalentIconsInfo = feature.Blueprint.TalentIconInfo;
+		ShouldShowTalentIcons = feature.Icon == null;
 	}
 
 	public CharInfoFeatureVM(Ability ability, MechanicEntity unit)
@@ -143,6 +146,7 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		FillDescription();
 		m_TooltipSource = uiFeature;
 		TalentIconsInfo = uiFeature.TalentIconsInfo;
+		ShouldShowTalentIcons = Icon == null;
 	}
 
 	private void FillTimeLeft(Buff buff)

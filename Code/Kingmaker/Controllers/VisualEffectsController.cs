@@ -26,6 +26,7 @@ using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Animation.Kingmaker;
+using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using Kingmaker.Visual.FX;
 using Kingmaker.Visual.HitSystem;
 using Kingmaker.Visual.Particles;
@@ -170,7 +171,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		if ((object)mechanicEntity.View?.EntityData.MaybeAnimationManager != null)
 		{
 			UnitAnimationActionHandle unitAnimationActionHandle = mechanicEntity.View.EntityData.MaybeAnimationManager.CreateHandle(UnitAnimationType.Hit, errorOnEmpty: false);
-			if (unitAnimationActionHandle != null)
+			if (unitAnimationActionHandle != null && !(mechanicEntity.View.EntityData.MaybeAnimationManager.CurrentAction.Action is UnitAnimationActionJump))
 			{
 				mechanicEntity.View.EntityData.MaybeAnimationManager.Execute(unitAnimationActionHandle);
 			}

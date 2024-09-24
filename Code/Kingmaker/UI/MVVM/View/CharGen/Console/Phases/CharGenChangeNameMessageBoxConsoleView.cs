@@ -3,7 +3,9 @@ using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
+using Owlcat.Runtime.UniRx;
 using Rewired;
+using UniRx;
 
 namespace Kingmaker.UI.MVVM.View.CharGen.Console.Phases;
 
@@ -19,7 +21,7 @@ public class CharGenChangeNameMessageBoxConsoleView : MessageBoxConsoleView
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			ChangeNameViewModel.SetRandomName();
-		}, 10), UIStrings.Instance.CharGen.SetRandomNameButton));
+		}, 10, base.ViewModel.IsCheckbox.Not().ToReactiveProperty()), UIStrings.Instance.CharGen.SetRandomNameButton));
 		AddDisposable(hintsWidget.BindHint(inputLayer.AddButton(delegate
 		{
 			m_InputField.Select();

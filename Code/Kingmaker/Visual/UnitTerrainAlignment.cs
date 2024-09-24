@@ -1,4 +1,5 @@
-using Kingmaker.View;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.View.Mechanics.Entities;
 using UnityEngine;
 
 namespace Kingmaker.Visual;
@@ -7,7 +8,7 @@ public class UnitTerrainAlignment : MonoBehaviour
 {
 	public float SampleRadious = 1f;
 
-	private UnitEntityView m_View;
+	private AbstractUnitEntityView m_View;
 
 	private Vector3 p1;
 
@@ -23,29 +24,40 @@ public class UnitTerrainAlignment : MonoBehaviour
 
 	public void Start()
 	{
-		m_View = GetComponentInParent<UnitEntityView>();
+		m_View = GetComponentInParent<AbstractUnitEntityView>();
 	}
 
 	public void Update()
 	{
-		if ((m_View.EntityData != null && m_View.EntityData.IsInGame) || Application.isEditor)
+		if (m_View != null)
 		{
-			Vector3 forward = base.transform.forward;
-			Vector3 right = base.transform.right;
-			p1 = base.transform.position + forward * SampleRadious;
-			p2 = base.transform.position - forward * SampleRadious + right * SampleRadious;
-			p3 = base.transform.position - forward * SampleRadious - right * SampleRadious;
-			plane = new Plane(GetTerrainPoint(p1), GetTerrainPoint(p2), GetTerrainPoint(p3));
-			Vector3 vector = base.transform.parent.position + base.transform.parent.forward - base.transform.position;
-			vector = new Vector3(vector.x, 0f, vector.z);
-			float num = Vector3.Dot(vector, plane.normal);
-			vector -= num * plane.normal;
-			vector.Normalize();
-			if (vector != Vector3.zero)
+			AbstractUnitEntity entityData = m_View.EntityData;
+			if (entityData != null && entityData.IsInGame)
 			{
-				Quaternion to = Quaternion.LookRotation(vector, Vector3.Lerp(plane.normal, Vector3.up, maxTilt));
-				base.transform.rotation = Quaternion.RotateTowards(base.transform.rotation, to, 200f * Time.deltaTime);
+				goto IL_002f;
 			}
+		}
+		if (!Application.isEditor)
+		{
+			return;
+		}
+		goto IL_002f;
+		IL_002f:
+		Vector3 forward = base.transform.forward;
+		Vector3 right = base.transform.right;
+		p1 = base.transform.position + forward * SampleRadious;
+		p2 = base.transform.position - forward * SampleRadious + right * SampleRadious;
+		p3 = base.transform.position - forward * SampleRadious - right * SampleRadious;
+		plane = new Plane(GetTerrainPoint(p1), GetTerrainPoint(p2), GetTerrainPoint(p3));
+		Vector3 vector = base.transform.parent.position + base.transform.parent.forward - base.transform.position;
+		vector = new Vector3(vector.x, 0f, vector.z);
+		float num = Vector3.Dot(vector, plane.normal);
+		vector -= num * plane.normal;
+		vector.Normalize();
+		if (vector != Vector3.zero)
+		{
+			Quaternion to = Quaternion.LookRotation(vector, Vector3.Lerp(plane.normal, Vector3.up, maxTilt));
+			base.transform.rotation = Quaternion.RotateTowards(base.transform.rotation, to, 200f * Time.deltaTime);
 		}
 	}
 

@@ -249,7 +249,7 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public DownloadState GetDownloadState()
 	{
-		IDlcStore dlcStore = GetDlcStores().FirstOrDefault((IDlcStore store) => store.IsSuitable);
+		IDlcStore dlcStore = GetDlcStores()?.FirstOrDefault((IDlcStore store) => store?.IsSuitable ?? false);
 		if (dlcStore == null || dlcStore.ComingSoon || !dlcStore.TryGetStatus(out var value) || value == null)
 		{
 			return DownloadState.NotLoaded;

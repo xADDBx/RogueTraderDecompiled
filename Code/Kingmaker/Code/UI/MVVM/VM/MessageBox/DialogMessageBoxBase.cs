@@ -7,7 +7,8 @@ public abstract class DialogMessageBoxBase
 		Message,
 		Dialog,
 		TextField,
-		ProgressBar
+		ProgressBar,
+		Checkbox
 	}
 
 	public enum BoxButton

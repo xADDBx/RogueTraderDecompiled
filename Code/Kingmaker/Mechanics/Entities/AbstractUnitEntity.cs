@@ -187,6 +187,8 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 
 	public override UnitMovementAgentBase MaybeMovementAgent => ObjectExtensions.Or(View, null)?.MovementAgent;
 
+	public GraphNode PreviousNode { get; private set; }
+
 	public override float Orientation => m_Orientation;
 
 	public override Vector3 Position
@@ -202,11 +204,11 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 				m_Position = value;
 				Wake();
 				OnPositionChanged();
-				GraphNode node = base.CurrentNode.node;
+				PreviousNode = base.CurrentNode.node;
 				base.CurrentNode = default(NNInfo);
-				if (node == null || node != base.CurrentNode.node)
+				if (PreviousNode == null || PreviousNode != base.CurrentNode.node)
 				{
-					OnNodeChanged(node);
+					OnNodeChanged();
 				}
 				base.CurrentUnwalkableNode = null;
 			}
@@ -270,7 +272,7 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 		return base.Blueprint.WarhammerMovementApPerCellThreateningArea;
 	}
 
-	protected virtual void OnNodeChanged(GraphNode oldNode)
+	protected virtual void OnNodeChanged()
 	{
 	}
 

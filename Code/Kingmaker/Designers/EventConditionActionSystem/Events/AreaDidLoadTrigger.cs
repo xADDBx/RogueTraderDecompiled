@@ -1,9 +1,13 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -19,6 +23,10 @@ public class AreaDidLoadTrigger : EntityFactComponentDelegate, IAreaActivationHa
 
 	public void OnAreaActivated()
 	{
+		if ((bool)ContextData<UnitHelper.PreviewUnit>.Current || base.Fact?.Owner is ItemEntity { Owner: BaseUnitEntity { IsPreviewUnit: not false } } || !base.Owner.IsInGame)
+		{
+			return;
+		}
 		using (base.Fact.MaybeContext?.GetDataScope())
 		{
 			if (Conditions.Check())

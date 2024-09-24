@@ -69,7 +69,7 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 				Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 				return;
 			}
-			ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondWeapon());
+			ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondaryHandWeapon());
 			if (itemEntityWeapon == null)
 			{
 				Element.LogError(this, "No weapon in hand");
@@ -131,7 +131,7 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 		{
 			return null;
 		}
-		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondWeapon());
+		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondaryHandWeapon());
 		if (itemEntityWeapon == null)
 		{
 			Element.LogError(this, "No weapon in hand");

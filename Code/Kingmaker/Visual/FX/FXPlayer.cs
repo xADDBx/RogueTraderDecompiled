@@ -113,7 +113,7 @@ public static class FXPlayer
 		}
 		case FXTarget.CasterOffHandWeapon:
 		{
-			WeaponSlot weaponSlot2 = caster.GetSecondWeapon()?.HoldingSlot as WeaponSlot;
+			WeaponSlot weaponSlot2 = caster.GetSecondaryHandWeapon()?.HoldingSlot as WeaponSlot;
 			return new GameObject[1] { FxHelper.SpawnFxOnWeapon(gameObject, caster.View, weaponSlot2?.FxSnapMap) };
 		}
 		case FXTarget.CasterAllWeapon:

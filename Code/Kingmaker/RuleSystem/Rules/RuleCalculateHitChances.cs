@@ -44,6 +44,8 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public int ResultHitChance { get; private set; }
 
+	public int ResultHitChanceNoUpperLimit { get; private set; }
+
 	public int ResultBaseChancesBeforeRecoil { get; private set; }
 
 	public LosCalculations.CoverType ResultLos { get; private set; }
@@ -211,7 +213,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		{
 			ResultSuperiorityNumber++;
 		}
-		if (base.TargetUnit != null && base.InitiatorUnit != null)
+		if (base.TargetUnit != null && base.TargetUnit != Game.Instance.DefaultUnit && base.InitiatorUnit != null)
 		{
 			foreach (BaseUnitEntity engagedByUnit in base.TargetUnit.GetEngagedByUnits())
 			{
@@ -273,6 +275,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		int hitChanceOverkillBorder = BlueprintRoot.Instance.WarhammerRoot.CombatRoot.HitChanceOverkillBorder;
 		RighteousFuryChanceRule.ChanceModifiers.Add(Mathf.Max(0, num - hitChanceOverkillBorder), this, ModifierDescriptor.HitChanceOverkill);
 		RawResult = num;
+		ResultHitChanceNoUpperLimit = Math.Max(0, RawResult);
 		ResultHitChance = Mathf.Clamp(RawResult, 0, hitChanceOverkillBorder);
 		if (!Ability.IsBurstAttack && Target is DestructibleEntity)
 		{

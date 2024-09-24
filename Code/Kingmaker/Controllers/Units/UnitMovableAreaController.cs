@@ -311,7 +311,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		}
 	}
 
-	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, MechanicEntity target, MechanicEntity caster, bool useAttack)
+	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity target, MechanicEntity caster, bool useAttack)
 	{
 	}
 }

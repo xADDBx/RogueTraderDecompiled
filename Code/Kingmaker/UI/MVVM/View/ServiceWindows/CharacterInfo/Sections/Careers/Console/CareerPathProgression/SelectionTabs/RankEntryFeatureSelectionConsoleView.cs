@@ -138,7 +138,7 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 				m_FeaturesFilter.Or(null)?.SetPrevFilter();
 				if (isFocused2)
 				{
-					m_Navigation.FocusOnFirstValidEntity();
+					UpdateFocus();
 				}
 			}, 14);
 			AddDisposable(m_PrevFilterHint.Bind(inputBindStruct));
@@ -154,11 +154,23 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 			m_FeaturesFilter.Or(null)?.SetNextFilter();
 			if (isFocused)
 			{
-				m_Navigation.FocusOnFirstValidEntity();
+				UpdateFocus();
 			}
 		}, 15);
 		AddDisposable(m_NextFilterHint.Bind(inputBindStruct2));
 		AddDisposable(inputBindStruct2);
+		void UpdateFocus()
+		{
+			m_Navigation.FocusOnFirstValidEntity();
+			DelayedInvoker.InvokeInFrames(delegate
+			{
+				m_VirtualList.GetNavigationBehaviour().SetCurrentEntity(m_VirtualList.ActiveElements.FirstOrDefault((VirtualListElement i) => !(i.Data is ExpandableTitleVM)));
+			}, 1);
+			EventBus.RaiseEvent(delegate(IUpdateFocusHandler h)
+			{
+				h.HandleFocus();
+			});
+		}
 	}
 
 	private void UpdateCollection()

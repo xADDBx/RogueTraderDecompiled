@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
@@ -39,7 +40,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
 
-public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView, InventoryDollConsoleView, InventoryEquipSlotConsoleView>, IInventoryHandler, ISubscriber, IEquipItemAutomaticallyHandler, ICullFocusHandler, IContextMenuHandler, ISplitItemHandler, ICounterWindowUIHandler, IInsertItemHandler, IHasDollRoom, IAddSortingComponent
+public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView, InventoryDollConsoleView, InventoryEquipSlotConsoleView>, IInventoryHandler, ISubscriber, IEquipItemAutomaticallyHandler, ICullFocusHandler, IContextMenuHandler, ISplitItemHandler, ICounterWindowUIHandler, IInsertItemHandler, IHasDollRoom
 {
 	[SerializeField]
 	private DollRoomTargetController m_DollRoomScaler;
@@ -67,6 +68,9 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	[Header("CanvasSorting")]
 	[SerializeField]
 	private CanvasSortingComponent m_CanvasSortingComponent;
+
+	[SerializeField]
+	private List<CanvasSortingComponent> m_NestedComponentsWorkaround = new List<CanvasSortingComponent>();
 
 	private InputLayer m_InputLayer;
 
@@ -126,8 +130,6 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	};
 
 	private IConsoleEntity m_CulledFocus;
-
-	private (Canvas, int) m_SortingToInitOrder;
 
 	public DollRoomTargetController Controller => m_DollRoomScaler;
 
@@ -473,7 +475,6 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			m_NavigationBehaviour.UpdateDeepestFocusObserve();
 		}
 		m_CulledFocus = null;
-		UpdateSortingCanvas();
 	}
 
 	private void SetBusyTooltipMode(bool isBusy)
@@ -536,30 +537,20 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 
 	public void AddSortingComponent(CanvasSortingComponent sortingComponent)
 	{
-		if (!(sortingComponent == null))
-		{
-			Canvas component = sortingComponent.GetComponent<Canvas>();
-			m_SortingToInitOrder.Item1 = component;
-			m_SortingToInitOrder.Item2 = component.sortingOrder;
-			component.sortingOrder = 250;
-			UpdateSortingCanvas();
-		}
-	}
-
-	private void UpdateSortingCanvas()
-	{
-		if (m_SortingToInitOrder.Item1 == null)
+		if (sortingComponent == null)
 		{
 			return;
 		}
-		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+		try
 		{
-			int sortingOrder = m_CanvasSortingComponent.GetComponent<Canvas>().sortingOrder;
-			m_SortingToInitOrder.Item1.sortingOrder = m_SortingToInitOrder.Item2 + sortingOrder;
-			m_OnHide = delegate
-			{
-				m_SortingToInitOrder.Item1.sortingOrder = m_SortingToInitOrder.Item2;
-			};
-		});
+			FieldInfo field = m_CanvasSortingComponent.GetType().GetField("m_NestedComponents", BindingFlags.Instance | BindingFlags.NonPublic);
+			List<CanvasSortingComponent> list = m_NestedComponentsWorkaround.ToList();
+			list.Add(sortingComponent);
+			field?.SetValue(m_CanvasSortingComponent, list);
+		}
+		catch (Exception arg)
+		{
+			PFLog.UI.Error($"Something went wrong at reflection usage with ex \n{arg}");
+		}
 	}
 }

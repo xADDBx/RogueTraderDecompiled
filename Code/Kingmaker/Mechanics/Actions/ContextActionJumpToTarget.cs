@@ -40,6 +40,9 @@ public class ContextActionJumpToTarget : ContextActionMove
 	private bool m_FromPoint;
 
 	[SerializeField]
+	private bool m_directJump;
+
+	[SerializeField]
 	private bool CanJumpInPlace;
 
 	[SerializeField]
@@ -69,7 +72,7 @@ public class ContextActionJumpToTarget : ContextActionMove
 		CustomGridNodeBase endPoint = GetEndNode(m_TargetPoint.GetValue(), base.Caster, base.Caster.Position);
 		EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
 		{
-			h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), endPoint?.Vector3Position ?? m_TargetPoint.GetValue(), base.Caster, base.Caster, useAttack: false);
+			h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), endPoint?.Vector3Position ?? m_TargetPoint.GetValue(), m_directJump, base.Caster, base.Caster, useAttack: false);
 		});
 		EventBus.RaiseEvent(delegate(IUnitJumpHandler h)
 		{
@@ -117,7 +120,7 @@ public class ContextActionJumpToTarget : ContextActionMove
 		CustomGridNodeBase startPoint = casterPosition.GetNearestNodeXZ();
 		CustomGridNodeBase nearestNodeXZ = targetPosition.GetNearestNodeXZ();
 		int num = m_Cells.Calculate(base.Context);
-		CustomGridNodeBase customGridNodeBase = (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ());
+		CustomGridNodeBase customGridNodeBase = (m_directJump ? targetPosition.GetNearestNodeXZ() : (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ()));
 		if (m_EndInTargetPoint && startPoint.CellDistanceTo(nearestNodeXZ) < num)
 		{
 			customGridNodeBase = nearestNodeXZ;

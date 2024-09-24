@@ -943,7 +943,6 @@ public static class UnitHelper
 			IsSynchronized = true,
 			DisableApproachRadius = settings.DisableApproachRadius
 		};
-		float num = 0.05f;
 		if (BuildModeUtility.IsDevelopment)
 		{
 			if (CheatsAnimation.SpeedForce > 0f)
@@ -952,18 +951,7 @@ public static class UnitHelper
 			}
 			if (unit.IsInPlayerParty && unit.IsInCombat)
 			{
-				if ((settings.Destination - unit.Position).magnitude >= (float)BlueprintRoot.Instance.MinSprintDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize)
-				{
-					unitMoveToProperParams.MovementType = WalkSpeedType.Sprint;
-				}
-				else if ((settings.Destination - unit.Position).magnitude <= (float)BlueprintRoot.Instance.MaxWalkDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize + num)
-				{
-					unitMoveToProperParams.MovementType = WalkSpeedType.Walk;
-				}
-				else
-				{
-					unitMoveToProperParams.MovementType = WalkSpeedType.Run;
-				}
+				unitMoveToProperParams.MovementType = WalkSpeedTypeByDistanceTB((settings.Destination - unit.Position).magnitude);
 			}
 			else
 			{
@@ -972,18 +960,7 @@ public static class UnitHelper
 		}
 		else if (unit.IsInPlayerParty && unit.IsInCombat)
 		{
-			if ((settings.Destination - unit.Position).magnitude >= (float)BlueprintRoot.Instance.MinSprintDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize)
-			{
-				unitMoveToProperParams.MovementType = WalkSpeedType.Sprint;
-			}
-			else if ((settings.Destination - unit.Position).magnitude <= (float)BlueprintRoot.Instance.MaxWalkDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize)
-			{
-				unitMoveToProperParams.MovementType = WalkSpeedType.Walk;
-			}
-			else
-			{
-				unitMoveToProperParams.MovementType = WalkSpeedType.Run;
-			}
+			unitMoveToProperParams.MovementType = WalkSpeedTypeByDistanceTB((settings.Destination - unit.Position).magnitude);
 		}
 		return unitMoveToProperParams;
 	}
@@ -1061,18 +1038,7 @@ public static class UnitHelper
 			}
 			if (unit.IsInPlayerParty && !unit.IsInCombat)
 			{
-				if ((settings.Destination - unit.Position).magnitude > (float)BlueprintRoot.Instance.MinSprintDistance)
-				{
-					unitMoveToParams.MovementType = WalkSpeedType.Sprint;
-				}
-				else if ((settings.Destination - unit.Position).magnitude < (float)BlueprintRoot.Instance.MaxWalkDistance)
-				{
-					unitMoveToParams.MovementType = WalkSpeedType.Walk;
-				}
-				else
-				{
-					unitMoveToParams.MovementType = WalkSpeedType.Run;
-				}
+				unitMoveToParams.MovementType = WalkSpeedTypeByDistanceRT((settings.Destination - unit.Position).magnitude);
 			}
 			else
 			{
@@ -1081,18 +1047,7 @@ public static class UnitHelper
 		}
 		else if (unit.IsInPlayerParty && !unit.IsInCombat)
 		{
-			if ((settings.Destination - unit.Position).magnitude > (float)BlueprintRoot.Instance.MinSprintDistance)
-			{
-				unitMoveToParams.MovementType = WalkSpeedType.Sprint;
-			}
-			else if ((settings.Destination - unit.Position).magnitude < (float)BlueprintRoot.Instance.MaxWalkDistance)
-			{
-				unitMoveToParams.MovementType = WalkSpeedType.Walk;
-			}
-			else
-			{
-				unitMoveToParams.MovementType = WalkSpeedType.Run;
-			}
+			unitMoveToParams.MovementType = WalkSpeedTypeByDistanceRT((settings.Destination - unit.Position).magnitude);
 		}
 		return unitMoveToParams;
 	}
@@ -1102,8 +1057,35 @@ public static class UnitHelper
 		bool isSynchronized = !ContextData<GameCommandContext>.Current && !ContextData<UnitCommandContext>.Current;
 		return new UnitFollowParams(settings.FollowedUnit, settings.Destination)
 		{
-			IsSynchronized = isSynchronized
+			IsSynchronized = isSynchronized,
+			IsGamepadMovement = settings.IsControllerGamepad
 		};
+	}
+
+	private static WalkSpeedType WalkSpeedTypeByDistanceTB(float distance)
+	{
+		if (distance >= (float)BlueprintRoot.Instance.MinSprintDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize)
+		{
+			return WalkSpeedType.Sprint;
+		}
+		if (!(distance <= (float)BlueprintRoot.Instance.MaxWalkDistanceInCombatCells * GraphParamsMechanicsCache.GridCellSize + 0.05f))
+		{
+			return WalkSpeedType.Run;
+		}
+		return WalkSpeedType.Walk;
+	}
+
+	private static WalkSpeedType WalkSpeedTypeByDistanceRT(float distance)
+	{
+		if (distance > (float)BlueprintRoot.Instance.MinSprintDistance)
+		{
+			return WalkSpeedType.Sprint;
+		}
+		if (!(distance < (float)BlueprintRoot.Instance.MaxWalkDistance))
+		{
+			return WalkSpeedType.Run;
+		}
+		return WalkSpeedType.Walk;
 	}
 
 	[Cheat(Name = "respec", Description = "Respec selected unit", ExecutionPolicy = ExecutionPolicy.PlayMode)]

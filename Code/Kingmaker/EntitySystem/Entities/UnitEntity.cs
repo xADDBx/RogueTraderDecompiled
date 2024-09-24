@@ -19,7 +19,6 @@ using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
-using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -154,17 +153,22 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 		return maybeWeapon;
 	}
 
-	public override ItemEntityWeapon GetSecondWeapon()
+	public override ItemEntityWeapon GetPrimaryHandWeapon()
+	{
+		return Body.PrimaryHand.MaybeWeapon;
+	}
+
+	public override ItemEntityWeapon GetSecondaryHandWeapon()
 	{
 		return Body.SecondaryHand.MaybeWeapon;
 	}
 
-	protected override void OnNodeChanged(GraphNode oldNode)
+	protected override void OnNodeChanged()
 	{
-		base.OnNodeChanged(oldNode);
+		base.OnNodeChanged();
 		EventBus.RaiseEvent((IBaseUnitEntity)this, (Action<IUnitNodeChangedHandler>)delegate(IUnitNodeChangedHandler h)
 		{
-			h.HandleUnitNodeChanged(oldNode);
+			h.HandleUnitNodeChanged();
 		}, isCheckRuntime: true);
 	}
 

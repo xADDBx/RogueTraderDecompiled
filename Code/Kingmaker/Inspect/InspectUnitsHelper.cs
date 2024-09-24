@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.UnitLogic.Parts;
 
 namespace Kingmaker.Inspect;
 
@@ -17,9 +16,9 @@ public static class InspectUnitsHelper
 		{
 			return false;
 		}
-		if (!unit.IsPlayerFaction && !unit.IsHelpingPlayerFaction && !unit.IsPlayerEnemy && !unit.IsNeutral)
+		if (!unit.IsInCombat && !unit.IsPlayerFaction && !unit.IsHelpingPlayerFaction && !unit.IsPlayerEnemy && !unit.IsNeutral)
 		{
-			return unit.GetOptional<UnitPartSummonedMonster>();
+			return unit.IsSummonedMonster;
 		}
 		return true;
 	}

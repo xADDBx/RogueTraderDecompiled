@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.UI.Common;
@@ -40,7 +39,7 @@ public class SettingsEntityBoolOnlyOneSaveVM : SettingsEntityWithValueVM
 	public void ChangeValue()
 	{
 		bool currentValue = GetTempValue();
-		string text = ((!IsMainMenu) ? (currentValue ? ((string)UIStrings.Instance.SettingsUI.AreYouSureSwitchOffGrimDarkness) : string.Empty) : ((!currentValue) ? (UIStrings.Instance.SettingsUI.AreYouSureSwitchOnGrimDarkness.Text + Environment.NewLine + Environment.NewLine + UIStrings.Instance.SettingsUI.GrimDaknessSettingsWarning.Text) : string.Empty));
+		string text = ((!IsMainMenu) ? (currentValue ? ((string)UIStrings.Instance.SettingsUI.AreYouSureSwitchOffGrimDarkness) : string.Empty) : ((!currentValue) ? ((string)UIStrings.Instance.SettingsUI.AreYouSureSwitchOnGrimDarkness) : string.Empty));
 		if (!string.IsNullOrWhiteSpace(text))
 		{
 			UIUtility.ShowMessageBox(text, DialogMessageBoxBase.BoxType.Dialog, delegate(DialogMessageBoxBase.BoxButton button)

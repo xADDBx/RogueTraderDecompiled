@@ -364,11 +364,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 			h.HandleUnitLeaveCombat(base.Owner);
 		});
 		PFLog.Default.Log(base.Owner.View, "Unit leave combat: {0}", base.Owner);
-		if (RecheckEquipmentRestrictionsAfterCombatEnd)
-		{
-			base.Owner.UnequipItemsWithFailedRestrictions();
-			RecheckEquipmentRestrictionsAfterCombatEnd = false;
-		}
 	}
 
 	public void ReturnToStartingPositionIfNeeded()
@@ -420,7 +415,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		LastDiagonalCount = 0;
 		ActionPointsBlueSpentThisTurn = 0f;
 		MovedCellsThisTurn = 0f;
-		base.Owner.Initiative.PreparationInterrupted = false;
 		if (isTurnBased)
 		{
 			int result = Rulebook.Trigger(new RuleCalculateActionPoints(base.Owner, isTurnBased: true)).Result;

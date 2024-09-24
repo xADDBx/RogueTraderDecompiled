@@ -98,7 +98,7 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		IEnumerable<Ability> visible = Unit.Value.Abilities.Visible;
 		List<Ability> list = (from a in visible
 			where !a.Blueprint.IsCantrip && a.SourceItem != null
-			where a.SourceItem != Unit.Value.GetFirstWeapon() && a.SourceItem != Unit.Value.GetSecondWeapon()
+			where a.SourceItem != Unit.Value.GetFirstWeapon() && a.SourceItem != Unit.Value.GetSecondaryHandWeapon()
 			select a).ToList();
 		List<Ability> collection = visible.Where((Ability f) => f.FirstSource?.Blueprint is BlueprintSoulMark).ToList();
 		list.AddRange(collection);

@@ -9,6 +9,7 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.UI.Sound;
+using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -31,6 +32,9 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 {
 	[SerializeField]
 	private CharInfoFeatureSimpleBaseView m_CharInfoRankEntryView;
+
+	[SerializeField]
+	private TalentGroupView m_TalentGroupView;
 
 	[SerializeField]
 	private OwlcatMultiButton m_MainButton;
@@ -88,6 +92,8 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 			m_HintText.Value = base.ViewModel.HintText;
 		}));
 		m_CharInfoRankEntryView.Bind(base.ViewModel);
+		TalentIconInfo iconsInfo = (m_CharInfoRankEntryView.ShouldShowTalentIcons ? base.ViewModel.Feature.TalentIconInfo : null);
+		m_TalentGroupView.Or(null)?.SetupView(iconsInfo);
 		if (m_IsListEntry && base.ViewModel is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM && (bool)m_UnitHasFeature)
 		{
 			string activeLayer = (rankEntrySelectionFeatureVM.UnitHasFeature ? "HasFeature" : "Restricted");
@@ -132,14 +138,14 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 		}));
 		AddDisposable(base.ViewModel.FocusedState.Subscribe(delegate(bool value)
 		{
-			if (base.ViewModel.FeatureState.Value != RankFeatureState.Selected)
-			{
-				m_FocusedMark.Or(null)?.SetActive(value);
-			}
+			bool active = value && base.ViewModel.FeatureState.Value != RankFeatureState.Selected;
+			m_FocusedMark.Or(null)?.SetActive(active);
 		}));
 		AddDisposable(base.ViewModel.FeatureState.Subscribe(delegate(RankFeatureState value)
 		{
 			m_MainButton.SetActiveLayer(value.ToString());
+			TalentGroupView.TalentGroupsMode talentsGroupsMode = ((value == RankFeatureState.NotActive) ? TalentGroupView.TalentGroupsMode.Darkened : TalentGroupView.TalentGroupsMode.Default);
+			m_TalentGroupView.Or(null)?.SetTalentsGroupsMode(talentsGroupsMode);
 		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}

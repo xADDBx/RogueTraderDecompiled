@@ -60,7 +60,7 @@ public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		{
 			EventBus.RaiseEvent(delegate(IDialogMessageBoxUIHandler h)
 			{
-				h.HandleOpen(data.MessageText, data.BoxType, data.OnClose, data.OnLinkInvoke, data.YesLabel, data.NoLabel, data.OnTextResult, data.InputText, data.InputPlaceholder, data.WaitTime, data.MaxInputTextLength, data.LoadingProgress, data.LoadingProgressCloseTrigger);
+				h.HandleOpen(data.MessageText, data.BoxType, data.OnClose, data.OnLinkInvoke, data.YesLabel, data.NoLabel, data.OnTextResult, data.InputText, data.InputPlaceholder, data.WaitTime, data.MaxInputTextLength, data.LoadingProgress, data.LoadingProgressCloseTrigger, data.DontShowAgainAction);
 			});
 		}
 		m_DialogMessageBoxDatas.Clear();
@@ -72,11 +72,11 @@ public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		LoadingScreenVM.Value?.SetLoadingArea(area);
 	}
 
-	public void HandleOpen(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue, FloatReactiveProperty loadingProgress = null, ReactiveCommand loadingProgressCloseTrigger = null)
+	public void HandleOpen(string messageText, DialogMessageBoxBase.BoxType boxType = DialogMessageBoxBase.BoxType.Message, Action<DialogMessageBoxBase.BoxButton> onClose = null, Action<TMP_LinkInfo> onLinkInvoke = null, string yesLabel = null, string noLabel = null, Action<string> onTextResult = null, string inputText = null, string inputPlaceholder = null, int waitTime = 0, uint maxInputTextLength = uint.MaxValue, FloatReactiveProperty loadingProgress = null, ReactiveCommand loadingProgressCloseTrigger = null, Action dontShowAgainAction = null)
 	{
 		if (LoadingScreenVM?.Value != null)
 		{
-			m_DialogMessageBoxDatas.Add(new DialogMessageBoxData(messageText, boxType, onClose, onLinkInvoke, yesLabel, noLabel, onTextResult, inputText, inputPlaceholder, waitTime, maxInputTextLength, loadingProgress, loadingProgressCloseTrigger));
+			m_DialogMessageBoxDatas.Add(new DialogMessageBoxData(messageText, boxType, onClose, onLinkInvoke, yesLabel, noLabel, onTextResult, inputText, inputPlaceholder, waitTime, maxInputTextLength, loadingProgress, loadingProgressCloseTrigger, dontShowAgainAction));
 		}
 	}
 

@@ -75,11 +75,11 @@ public class TransitionEntryVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 			});
 			return;
 		}
+		CloseAction?.Invoke();
 		if (Entry != null)
 		{
 			Game.Instance.GameCommandQueue.AreaTransition(Entry);
 		}
-		CloseAction?.Invoke();
 	}
 
 	public TooltipBaseTemplate GetTooltipTemplate()

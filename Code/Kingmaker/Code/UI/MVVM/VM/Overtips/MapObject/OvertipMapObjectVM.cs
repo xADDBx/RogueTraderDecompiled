@@ -405,9 +405,11 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		{
 			return;
 		}
-		foreach (BaseUnitEntity selectedUnit in Game.Instance.SelectionCharacter.SelectedUnits)
+		ReactiveCollection<BaseUnitEntity> selectedUnits = Game.Instance.SelectionCharacter.SelectedUnits;
+		for (int i = 0; i < selectedUnits.Count; i++)
 		{
-			if ((MapObjectEntity.Position - selectedUnit.Position).sqrMagnitude <= m_ProximityRadius * m_ProximityRadius)
+			BaseUnitEntity baseUnitEntity = selectedUnits[i];
+			if ((MapObjectEntity.Position - baseUnitEntity.Position).sqrMagnitude <= m_ProximityRadius * m_ProximityRadius)
 			{
 				ActiveCharacterIsNear = true;
 				break;

@@ -35,6 +35,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Groups;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.UnitLogic.Squads;
@@ -379,6 +380,17 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			h.HandleTurnBasedModeSwitched(isTurnBased: false);
 		});
+		foreach (UnitGroup unitGroup in Game.Instance.UnitGroups)
+		{
+			for (int i = 0; i < unitGroup.Count; i++)
+			{
+				BaseUnitEntity baseUnitEntity = unitGroup[i];
+				if (baseUnitEntity != null && !baseUnitEntity.IsInCombat)
+				{
+					baseUnitEntity.UnequipItemsWithFailedRestrictions();
+				}
+			}
+		}
 		Data.CombatRound = 0;
 		TurnOrder.Clear();
 		Data.EndTurnRequested = false;
@@ -392,7 +404,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	{
 		foreach (MechanicEntity joinedThisTickEntity in m_JoinedThisTickEntities)
 		{
-			PrepareUnitForNewTurn(joinedThisTickEntity, isTurnBased: true);
+			PrepareUnitForNewTurn(joinedThisTickEntity, isTurnBased: true, setPreparedRound: false);
 			EventBus.RaiseEvent((IMechanicEntity)joinedThisTickEntity, (Action<IEntityJoinTBCombat>)delegate(IEntityJoinTBCombat h)
 			{
 				h.HandleEntityJoinTBCombat();
@@ -426,7 +438,8 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		TryRollInitiative();
 		TrySelectCurrentUnitInUI();
 		HandleCurrentUnitUnableToAct();
-		if (CurrentUnit == null || Data.EndTurnRequested)
+		MechanicEntity currentUnit = CurrentUnit;
+		if (currentUnit == null || !currentUnit.IsInGame || Data.EndTurnRequested)
 		{
 			EndUnitTurn(CurrentUnit, isTurnBased: true, Data.EndTurnRequested);
 		}
@@ -648,7 +661,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			Game.Instance.Player.UISettings.StopSpeedUp();
 		}
-		if (entity.Initiative.InterruptingOrder < 1 && (entity.Initiative.WasPreparedForRound < CombatRound || entity.Initiative.PreparationInterrupted))
+		if (entity.Initiative.InterruptingOrder < 1 && entity.Initiative.WasPreparedForRound < CombatRound)
 		{
 			PrepareUnitForNewTurn(entity, isTurnBased);
 			entity.GetAbilityCooldownsOptional()?.RemoveHandAbilityGroupsCooldown();
@@ -771,9 +784,12 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		unit?.GetAbilityCooldownsOptional()?.TickCooldowns(interrupt);
 	}
 
-	private void PrepareUnitForNewTurn(MechanicEntity entity, bool isTurnBased)
+	private void PrepareUnitForNewTurn(MechanicEntity entity, bool isTurnBased, bool setPreparedRound = true)
 	{
-		entity.Initiative.WasPreparedForRound = CombatRound;
+		if (setPreparedRound)
+		{
+			entity.Initiative.WasPreparedForRound = CombatRound;
+		}
 		entity.GetCombatStateOptional()?.PrepareForNewTurn(isTurnBased);
 		if (isTurnBased)
 		{
@@ -790,7 +806,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 				Logger.Error("Trying to force dead unit {0} to combat", unit);
 				return;
 			}
-			PrepareUnitForNewTurn(unit, TbActive);
+			PrepareUnitForNewTurn(unit, TbActive, setPreparedRound: false);
 			MomentumController.HandleUnitJoinCombat(unit);
 			TickAbilityCooldowns(unit, interrupt: false);
 			ScheduleInitiativeRoll(unit);
@@ -926,7 +942,6 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 		TurnOrder.InterruptCurrentUnit(unit);
 		StartUnitTurn(unit, isTurnBased: true, interruptionData);
-		unit.Initiative.PreparationInterrupted = true;
 		Data.EndTurnRequested = false;
 	}
 

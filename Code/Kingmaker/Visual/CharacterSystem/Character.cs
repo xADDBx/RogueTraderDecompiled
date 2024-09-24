@@ -519,6 +519,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 						m_BackEquipmentIsDirty = false;
 						this.OnBackEquipmentUpdated?.Invoke();
 					}
+					ProbeAnchorOverrider.UpdateProbeAnchorsOnObject(base.gameObject, Renderers);
 				}
 				finally
 				{
@@ -547,14 +548,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 				}
 			}
 		}
-		if (flag)
+		if (!flag)
 		{
-			foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
-			{
-				equipmentEntity2.ResetDirty();
-			}
+			return;
 		}
-		ProbeAnchorOverrider.UpdateProbeAnchorsOnObject(base.gameObject, Renderers.Cast<Renderer>().ToList());
+		foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
+		{
+			equipmentEntity2.ResetDirty();
+		}
 	}
 
 	private void OnRenderObject()

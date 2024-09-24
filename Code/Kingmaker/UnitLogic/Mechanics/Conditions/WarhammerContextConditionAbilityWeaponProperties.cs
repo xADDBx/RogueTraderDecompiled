@@ -33,29 +33,35 @@ public class WarhammerContextConditionAbilityWeaponProperties : ContextCondition
 
 	protected override bool CheckCondition()
 	{
-		ItemEntityWeapon itemEntityWeapon = ((!checkOnOwner) ? base.Target.Entity?.GetFirstWeapon() : base.Context.MaybeOwner?.GetFirstWeapon());
+		ItemEntityWeapon itemEntityWeapon = ((!checkOnOwner) ? base.Target.Entity?.GetPrimaryHandWeapon() : base.Context.MaybeOwner?.GetPrimaryHandWeapon());
 		bool flag = false;
 		if (anyHand || bothHands)
 		{
-			ItemEntityWeapon itemEntityWeapon2 = ((!checkOnOwner) ? base.Target.Entity?.GetSecondWeapon() : base.Context.MaybeOwner?.GetSecondWeapon());
-			if (itemEntityWeapon2 == null)
-			{
-				flag = false;
-			}
-			else if ((!isMelee || itemEntityWeapon2.Blueprint.IsMelee) && (!isCanBurst || itemEntityWeapon2.GetWeaponStats().ResultRateOfFire > 1) && (!checkCategory || Categories.HasItem(itemEntityWeapon2.Blueprint.Category)))
-			{
-				flag = true;
-			}
+			ItemEntityWeapon weapon = ((!checkOnOwner) ? base.Target.Entity?.GetSecondaryHandWeapon() : base.Context.MaybeOwner?.GetSecondaryHandWeapon());
+			flag = HasCorrectWeapon(weapon);
 		}
 		if (itemEntityWeapon == null && !bothHands)
 		{
 			return flag;
 		}
-		bool flag2 = (!isMelee || itemEntityWeapon.Blueprint.IsMelee) && (!isCanBurst || itemEntityWeapon.GetWeaponStats().ResultRateOfFire > 1) && (!checkCategory || Categories.HasItem(itemEntityWeapon.Blueprint.Category));
+		bool flag2 = HasCorrectWeapon(itemEntityWeapon);
 		if (bothHands)
 		{
 			return flag2 && flag;
 		}
 		return flag2;
+	}
+
+	private bool HasCorrectWeapon(ItemEntityWeapon weapon)
+	{
+		if (weapon != null && (!isMelee || weapon.Blueprint.IsMelee) && (!isCanBurst || weapon.GetWeaponStats().ResultRateOfFire > 1))
+		{
+			if (checkCategory)
+			{
+				return Categories.HasItem(weapon.Blueprint.Category);
+			}
+			return true;
+		}
+		return false;
 	}
 }

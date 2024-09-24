@@ -87,6 +87,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier)
 	{
 		base.FakeRule = @params.FakeRule;
+		base.HasNoTarget = @params.HasNoTarget;
 		base.Reason = @params.Reason.GetValueOrDefault();
 	}
 

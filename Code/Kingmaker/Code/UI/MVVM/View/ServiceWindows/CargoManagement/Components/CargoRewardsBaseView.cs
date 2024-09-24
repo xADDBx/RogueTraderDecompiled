@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement.Components;
 
-public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationCreatedHandler, ISubscriber, IInitializable
+public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationCreatedHandler, ISubscriber, IInitializable, IGameModeHandler
 {
 	[SerializeField]
 	private TextMeshProUGUI m_HeaderLabel;
@@ -38,7 +38,7 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 
 	private bool m_IsInputLayerPushed;
 
-	private bool m_IsWaitingForDialogNavigationCreated;
+	private bool m_IsWaitingForDialogNavigationBuild;
 
 	protected bool m_ShowTooltip;
 
@@ -61,11 +61,7 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 		AddDisposable(base.ViewModel.UpdateCargo.Subscribe(DrawCargoes));
 		CreateInput();
 		AddDisposable(m_NavigationBehaviour.DeepestFocusAsObservable.Subscribe(OnPageFocusChanged));
-		if (Game.Instance.CurrentMode == GameModeType.Dialog)
-		{
-			m_IsWaitingForDialogNavigationCreated = true;
-		}
-		else
+		if (!m_IsWaitingForDialogNavigationBuild)
 		{
 			Show();
 		}
@@ -89,7 +85,7 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 		UISounds.Instance.Sounds.Rewards.CargoRewardsShowWindow.Play();
 		GamePad.Instance.PushLayer(m_InputLayer);
 		m_IsInputLayerPushed = true;
-		m_IsWaitingForDialogNavigationCreated = false;
+		m_IsWaitingForDialogNavigationBuild = false;
 		m_ShowTooltip = false;
 	}
 
@@ -140,9 +136,27 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 		CreateNavigation();
 	}
 
-	public void HandleDialogNavigationCreated()
+	public void HandleDialogNavigationBuildStarted()
 	{
-		if (m_IsWaitingForDialogNavigationCreated)
+		m_IsWaitingForDialogNavigationBuild = true;
+	}
+
+	public void HandleDialogNavigationBuildFinished()
+	{
+		if (m_IsWaitingForDialogNavigationBuild)
+		{
+			m_IsWaitingForDialogNavigationBuild = false;
+			Show();
+		}
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
+		if (!(gameMode != GameModeType.Dialog) && m_IsWaitingForDialogNavigationBuild)
 		{
 			Show();
 		}

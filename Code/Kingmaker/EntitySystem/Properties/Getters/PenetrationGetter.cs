@@ -38,7 +38,7 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		AbilityData ability = abilityData;
 		if (mechanicEntity != abilityData.Caster)
 		{
-			AbilityData abilityData2 = (mechanicEntity.GetFirstWeapon() ?? mechanicEntity.GetSecondWeapon())?.Abilities[0].Data;
+			AbilityData abilityData2 = (mechanicEntity.GetFirstWeapon() ?? mechanicEntity.GetSecondaryHandWeapon())?.Abilities[0].Data;
 			if (abilityData2 != null)
 			{
 				ability = abilityData2;

@@ -30,8 +30,8 @@ public class CharGenChangeNameMessageBoxPCView : MessageBoxPCView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		m_RandomNameButton.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
-		m_RandomNameLabel.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value);
+		m_RandomNameButton.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value && !base.ViewModel.IsCheckbox.Value);
+		m_RandomNameLabel.gameObject.SetActive(!base.ViewModel.IsProgressBar.Value && !base.ViewModel.IsCheckbox.Value);
 		AddDisposable(m_RandomNameButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			ChangeNameViewModel.SetRandomName();
@@ -41,7 +41,7 @@ public class CharGenChangeNameMessageBoxPCView : MessageBoxPCView
 
 	protected override void OnTextInputChanged(string value)
 	{
-		string text = "";
+		string text = string.Empty;
 		if (value.EndsWith(" "))
 		{
 			text = " ";

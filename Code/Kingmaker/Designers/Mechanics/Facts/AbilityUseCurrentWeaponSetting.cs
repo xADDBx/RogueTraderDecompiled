@@ -31,7 +31,7 @@ public class AbilityUseCurrentWeaponSetting : MechanicEntityFactComponentDelegat
 
 	void IUnitEquipmentHandler.HandleEquipmentSlotUpdated(ItemSlot slot, ItemEntity previousItem)
 	{
-		if (slot == (useSecondWeapon ? ConcreteOwner.GetSecondWeapon()?.HoldingSlot : ConcreteOwner.GetFirstWeapon()?.HoldingSlot))
+		if (slot == (useSecondWeapon ? ConcreteOwner.GetSecondaryHandWeapon()?.HoldingSlot : ConcreteOwner.GetFirstWeapon()?.HoldingSlot))
 		{
 			ResetSettings();
 		}
@@ -48,7 +48,7 @@ public class AbilityUseCurrentWeaponSetting : MechanicEntityFactComponentDelegat
 		{
 			return;
 		}
-		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? ConcreteOwner.GetFirstWeapon() : ConcreteOwner.GetSecondWeapon());
+		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? ConcreteOwner.GetFirstWeapon() : ConcreteOwner.GetSecondaryHandWeapon());
 		ability.Data.OverrideWeapon = itemEntityWeapon;
 		if (itemEntityWeapon != null)
 		{

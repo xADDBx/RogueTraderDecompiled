@@ -336,7 +336,11 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 				WarhammerAbilityAttackDelivery component = this.GetComponent<WarhammerAbilityAttackDelivery>();
 				if (component == null || !component.IsPattern)
 				{
-					return this.GetComponent<AbilityMeleeBurst>()?.IsAoe ?? false;
+					AbilityMeleeBurst component2 = this.GetComponent<AbilityMeleeBurst>();
+					if (component2 == null || !component2.IsAoe)
+					{
+						return this.GetComponent<FakeAttackType>()?.CountAsAoE ?? false;
+					}
 				}
 			}
 			return true;
@@ -351,22 +355,22 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		{
 			if (warhammerAbilityAttackDelivery.IsBurst)
 			{
-				goto IL_0038;
+				goto IL_004a;
 			}
 		}
 		else if (i is AbilityCutsceneAttack abilityCutsceneAttack)
 		{
 			if (abilityCutsceneAttack.IsBurst)
 			{
-				goto IL_0038;
+				goto IL_004a;
 			}
 		}
-		else if (i is AbilityCustomBladeDance || i is AbilityMeleeBurst)
+		else if (i is AbilityCustomBladeDance || i is AbilityMeleeBurst || i is FakeAttackType { CountAsScatter: not false })
 		{
-			goto IL_0038;
+			goto IL_004a;
 		}
 		return false;
-		IL_0038:
+		IL_004a:
 		return true;
 	});
 
@@ -424,6 +428,11 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 			return CanTargetPointRestrictions.ToList().All((IAbilityCanTargetPointRestriction checker) => checker.IsAbilityCanTargetPointRestrictionPassed(abilityData));
 		}
 		return false;
+	}
+
+	public bool CanCastToAliveTarget()
+	{
+		return this.GetComponent<ICanTargetDeadUnits>()?.CanTargetAlive ?? true;
 	}
 
 	private AttackAbilityType? GetAttackType()
