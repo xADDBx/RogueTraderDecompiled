@@ -544,7 +544,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		{
 			foreach (SaveInfo savedGame in m_SavedGames)
 			{
-				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && savedGame.Type != SaveInfo.SaveType.IronMan && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
+				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && (!PhotonManager.Lobby.IsActive || savedGame.Type == SaveInfo.SaveType.IronMan) && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
 				{
 					saveInfo = savedGame;
 				}

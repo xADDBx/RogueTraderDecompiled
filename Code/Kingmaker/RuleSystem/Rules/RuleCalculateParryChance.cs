@@ -102,6 +102,7 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 		m_ResultSuperiorityNumber = resultSuperiorityNumber;
 		IsRangedParry = isRangedParry;
 		AttackerWeaponSkillOverride = attackerWeaponSkillOverride;
+		base.HasNoTarget = attacker == null;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)

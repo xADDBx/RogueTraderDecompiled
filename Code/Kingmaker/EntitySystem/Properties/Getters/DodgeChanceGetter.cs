@@ -27,7 +27,10 @@ public class DodgeChanceGetter : MechanicEntityPropertyGetter, PropertyContextAc
 			{
 				return 0;
 			}
-			return Rulebook.Trigger(new RuleCalculateDodgeChance(defender)).UncappedResult;
+			return Rulebook.Trigger(new RuleCalculateDodgeChance(defender)
+			{
+				HasNoTarget = NoTarget
+			}).UncappedResult;
 		}
 		if (!(base.CurrentEntity is UnitEntity defender2))
 		{
@@ -37,7 +40,10 @@ public class DodgeChanceGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		{
 			return 0;
 		}
-		RuleCalculateDodgeChance ruleCalculateDodgeChance = new RuleCalculateDodgeChance(defender2, attacker, this.GetAbility());
+		RuleCalculateDodgeChance ruleCalculateDodgeChance = new RuleCalculateDodgeChance(defender2, attacker, this.GetAbility())
+		{
+			HasNoTarget = NoTarget
+		};
 		Rulebook.Trigger(ruleCalculateDodgeChance);
 		int num = 0;
 		if (OnlyNegativeModifiers)

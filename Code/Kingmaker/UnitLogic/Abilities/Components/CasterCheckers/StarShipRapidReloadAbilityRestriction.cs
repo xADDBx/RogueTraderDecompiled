@@ -4,7 +4,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Items;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -50,12 +49,12 @@ public class StarShipRapidReloadAbilityRestriction : BlueprintComponent, IAbilit
 			{
 				if (slot.Weapon.Blueprint.WeaponType == ReloadWeapon)
 				{
-					ItemEntity sourceItem = slot.ActiveAbility.Data.SourceItem;
-					if (sourceItem == null)
+					Ability activeAbility = slot.ActiveAbility;
+					if (activeAbility == null)
 					{
 						return false;
 					}
-					return sourceItem.Charges == 0;
+					return activeAbility.Data.SourceItem?.Charges == 0;
 				}
 				return false;
 			}).Any();

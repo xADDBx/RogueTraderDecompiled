@@ -103,6 +103,7 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 	{
 		Ability = ability;
 		Weapon = weapon ?? ability?.Weapon;
+		base.HasNoTarget = target == null;
 		BaseDamage = baseDamageOverride?.CopyWithoutModifiers() ?? new DamageData(weapon?.Blueprint.DamageType.Type ?? Ability?.Blueprint.ElementsArray.OfType<ContextActionDealDamage>().FirstOrDefault()?.DamageType.Type ?? DamageType.Direct, weapon?.Blueprint.WarhammerDamage ?? 0, weapon?.Blueprint.WarhammerMaxDamage ?? 0);
 		int num = basePenetrationOverride ?? weapon?.Blueprint.WarhammerPenetration ?? 0;
 		BaseDamage.Penetration.Add(ModifierType.ValAdd, num, this, ModifierDescriptor.BaseValue);

@@ -286,7 +286,7 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 				Vector3 position = viewTransform.position + spawnShift;
 				GraphNode node = graph.GetNearest(position).node;
 				list.RemoveAt(index);
-				if (!hashSet.Contains(node) && CanStandHere(node, SizePathfindingHelper.GetRectForSize(blueprintUnit.Size)))
+				if (CanStandHere(node, SizePathfindingHelper.GetRectForSize(blueprintUnit.Size)))
 				{
 					BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(blueprintUnit, viewTransform.position + spawnShift, viewTransform.rotation, Game.Instance.State.LoadedAreaState.MainState);
 					num++;

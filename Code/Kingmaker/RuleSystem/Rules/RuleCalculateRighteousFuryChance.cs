@@ -57,6 +57,7 @@ public class RuleCalculateRighteousFuryChance : RulebookOptionalTargetEvent, IDa
 		: base(initiator, target)
 	{
 		Ability = ability;
+		base.HasNoTarget = target == null;
 		if (!Ability.IsMelee)
 		{
 			ChanceModifiers.Add(BlueprintRoot.Instance.WarhammerRoot.CombatRoot.BaseRighteousFury, this, ModifierDescriptor.None);

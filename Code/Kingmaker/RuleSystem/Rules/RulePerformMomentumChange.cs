@@ -115,6 +115,7 @@ public class RulePerformMomentumChange : RulebookOptionalTargetEvent
 	private RulePerformMomentumChange([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] MomentumGroup group, int value, MomentumChangeReason reason)
 		: base(initiator, target)
 	{
+		base.HasNoTarget = target == null;
 		ChangeReason = reason;
 		m_Group = group;
 		m_Value = value;

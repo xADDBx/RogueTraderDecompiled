@@ -112,6 +112,7 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 		Ability = ability;
 		CoverType = coverType;
 		BurstIndex = burstIndex;
+		base.HasNoTarget = attacker == null;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)

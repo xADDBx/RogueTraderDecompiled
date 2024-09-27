@@ -713,6 +713,10 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		Data.EndTurnRequested = false;
 		if (unit != null)
 		{
+			if (unit.Initiative.WasPreparedForRound != CombatRound && unit.Initiative.InterruptingOrder == 0)
+			{
+				unit.Initiative.WasPreparedForRound = CombatRound;
+			}
 			if (unit.Initiative.InterruptingOrder > 0)
 			{
 				unit.GetAbilityCooldownsOptional()?.RestoreCooldownData();

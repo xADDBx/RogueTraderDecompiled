@@ -13,6 +13,13 @@ public class CheckAbilityDamageGetter : CheckDamageGetter, PropertyContextAccess
 {
 	protected override bool Check(out DamageType type, out DamageData data, out RulebookEvent rule)
 	{
+		if (base.PropertyContext.Ability == null)
+		{
+			type = DamageType.None;
+			data = null;
+			rule = null;
+			return false;
+		}
 		data = this.GetAbility().GetWeaponStats().BaseDamage;
 		type = data?.Type ?? DamageType.None;
 		rule = this.GetRule();

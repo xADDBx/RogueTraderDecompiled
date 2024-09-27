@@ -81,6 +81,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		m_DoNotUseCrModifier = doNotUseCrModifier;
 		m_DamageModifiersHolder = new DamageData(DamageType.Direct, 0);
 		DistanceToTarget = distance.GetValueOrDefault();
+		base.HasNoTarget = target == null;
 	}
 
 	private RuleCalculateDamage(CalculateDamageParams @params)

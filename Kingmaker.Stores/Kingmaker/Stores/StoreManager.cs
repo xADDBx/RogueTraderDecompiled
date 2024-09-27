@@ -345,7 +345,7 @@ public static class StoreManager
 		{
 			if (dlcStore.IsSuitable && dlcStore.TryGetStatus(out var value))
 			{
-				Logger.Log($"DlcStatus for {dlc}: purchased = {value.Purchased}, download = {value.DownloadState}, mounted = {value.IsMounted}");
+				Logger.Log($"[{dlcStore}] DlcStatus for {dlc}: purchased = {value.Purchased}, download = {value.DownloadState}, mounted = {value.IsMounted}");
 				DLCCache.OnDLCUpdate(dlc, value);
 				flag = true;
 				break;

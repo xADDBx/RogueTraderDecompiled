@@ -60,7 +60,8 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 			}
 			return Rulebook.Trigger(new RuleCalculateDodgeChance(unitEntity2, mechanicEntity, abilityData)
 			{
-				FakeRule = true
+				FakeRule = true,
+				HasNoTarget = !AgainstTarget
 			}).AllModifiersList.Sum((Modifier p) => (p.Value < 0) ? p.Value : 0);
 		}
 		case PenetrationParameterType.ArmorPenetrationOverArmor:
@@ -82,7 +83,8 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 			}
 			RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(unitEntity, mechanicEntity, abilityData)
 			{
-				FakeRule = true
+				FakeRule = true,
+				HasNoTarget = !AgainstTarget
 			});
 			return Math.Max(0, -ruleCalculateDodgeChance.UncappedNegativesCount);
 		}

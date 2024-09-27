@@ -35,6 +35,7 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 		Ability = ability;
 		Los = los;
 		Cover = cover;
+		base.HasNoTarget = target == null;
 		BlueprintWarhammerRoot instance = BlueprintWarhammerRoot.Instance;
 		BaseChance = Los switch
 		{

@@ -24,10 +24,13 @@ public class DodgePenetrationGetter : MechanicEntityPropertyGetter, PropertyCont
 		{
 			return 0;
 		}
-		RuleCalculateDodgeChance ruleCalculateDodgeChance = new RuleCalculateDodgeChance(defender, base.CurrentEntity, this.GetAbility());
-		Rulebook.Trigger(ruleCalculateDodgeChance);
+		RuleCalculateDodgeChance obj = new RuleCalculateDodgeChance(defender, base.CurrentEntity, this.GetAbility())
+		{
+			HasNoTarget = NoTarget
+		};
+		Rulebook.Trigger(obj);
 		int num = 0;
-		foreach (Modifier item in ruleCalculateDodgeChance.DodgeValueModifiers.List)
+		foreach (Modifier item in obj.DodgeValueModifiers.List)
 		{
 			if (item.Value <= 0)
 			{

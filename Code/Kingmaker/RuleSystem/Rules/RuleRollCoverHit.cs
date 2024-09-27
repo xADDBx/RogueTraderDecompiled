@@ -29,11 +29,13 @@ public class RuleRollCoverHit : RulebookOptionalTargetEvent
 	public RuleRollCoverHit([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [CanBeNull] AbilityData ability, LosCalculations.CoverType los, [CanBeNull] MechanicEntity cover)
 		: this(new RuleCalculateCoverHitChance(initiator, target, ability, los, cover))
 	{
+		base.HasNoTarget = false;
 	}
 
 	public RuleRollCoverHit([NotNull] RuleCalculateCoverHitChance hitChance, bool isAutoHit = false)
 		: base(hitChance.ConcreteInitiator, hitChance.MaybeTarget)
 	{
+		base.HasNoTarget = hitChance.MaybeTarget == null;
 		m_IsAutoHit = isAutoHit;
 		HitChanceRule = hitChance;
 	}
