@@ -1,6 +1,7 @@
 using Kingmaker.Code.UI.MVVM.VM.NewGame;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
@@ -45,5 +46,11 @@ public class NewGameBaseView : ViewBase<NewGameVM>
 			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.NewGame);
 		});
 		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
+	}
+
+	protected void Close()
+	{
+		SettingsController.Instance.RevertAllTempValues();
+		base.ViewModel.OnBack();
 	}
 }

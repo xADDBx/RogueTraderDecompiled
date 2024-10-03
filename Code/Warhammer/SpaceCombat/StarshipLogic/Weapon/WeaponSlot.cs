@@ -354,7 +354,7 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public void Reload()
 	{
-		(base.Item as ItemEntityStarshipWeapon)?.Reload();
+		(base.MaybeItem as ItemEntityStarshipWeapon)?.Reload();
 	}
 
 	public bool IsTargetInsideRestrictedFiringArc(TargetWrapper target, int range, RestrictedFiringAreaComponent restrictedFiringAreaComponent, CustomGridNodeBase overridePosition = null, int? overrideDirection = null)

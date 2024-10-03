@@ -77,7 +77,7 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandSt
 
 	private void InitUnitAnimationManager()
 	{
-		if (m_UnitAnimationManager == null)
+		if (m_UnitAnimationManager == null || BuffLoopAction != null)
 		{
 			m_UnitAnimationManager = base.Owner?.View?.AnimationManager;
 		}

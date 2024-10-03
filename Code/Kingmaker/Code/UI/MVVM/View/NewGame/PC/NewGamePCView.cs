@@ -47,12 +47,12 @@ public class NewGamePCView : NewGameBaseView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.OnBack));
+		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.Close));
 		SetButtonsSounds();
 		AddDisposable(base.ViewModel.StoryVM.IsNextButtonAvailable.Subscribe(m_NextButton.SetInteractable));
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.OnBack();
+			Close();
 		}));
 		AddDisposable(m_BackButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -64,7 +64,7 @@ public class NewGamePCView : NewGameBaseView
 		}));
 		AddDisposable(m_CloseButton.OnConfirmClickAsObservable().Subscribe(delegate
 		{
-			base.ViewModel.OnBack();
+			Close();
 		}));
 		AddDisposable(m_BackButton.OnConfirmClickAsObservable().Subscribe(delegate
 		{
