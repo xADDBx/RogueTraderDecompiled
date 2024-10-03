@@ -1,2 +1,3 @@
 *.sln
 */UnitySourceGeneratedAssemblyMonoScriptTypes_v1.cs
+*/__JobReflectionRegistrationOutput__*.cs
