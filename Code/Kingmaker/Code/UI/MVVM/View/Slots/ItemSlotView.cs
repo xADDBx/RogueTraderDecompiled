@@ -75,6 +75,11 @@ public class ItemSlotView<TViewModel> : VirtualListElementViewBase<TViewModel>, 
 		SetupDropZoneSize();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		ClearView();
+	}
+
 	public virtual void RefreshItem()
 	{
 		SetupContextMenu();
@@ -173,11 +178,6 @@ public class ItemSlotView<TViewModel> : VirtualListElementViewBase<TViewModel>, 
 			rectTransform = (RectTransform)rectTransform.parent;
 		}
 		return rectTransform;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		ClearView();
 	}
 
 	public void BindWidgetVM(IViewModel vm)

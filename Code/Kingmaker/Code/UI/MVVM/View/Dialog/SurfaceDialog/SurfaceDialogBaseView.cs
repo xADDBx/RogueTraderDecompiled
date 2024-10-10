@@ -174,6 +174,8 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 
 	protected bool IsCargoRewardsOpen;
 
+	protected bool IsDirty;
+
 	private CanvasGroup CanvasGroup => m_CanvasGroup = (m_CanvasGroup ? m_CanvasGroup : this.EnsureComponent<CanvasGroup>());
 
 	private RectTransform RectTransform => m_RectTransform = (m_RectTransform ? m_RectTransform : GetComponent<RectTransform>());
@@ -247,7 +249,12 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		{
 			SetVisible(value);
 		}));
-		AddDisposable(base.ViewModel.OnCueUpdate.ObserveLastValueOnLateUpdate().Subscribe(StartUpdateCoroutine));
+		AddDisposable(UniRxExtensionMethods.Subscribe(base.ViewModel.OnCueUpdate.ObserveLastValueOnLateUpdate(), delegate
+		{
+			PFLog.UI.Log($"[{Time.frameCount}] Execute cues updated if dirty");
+			StartUpdateCoroutine();
+		}));
+		base.ViewModel.UpdateView += SetAsDirty;
 		StartUpdateCoroutine();
 		m_TopDialogVotesBlock.Bind(base.ViewModel.DialogVotesBlockVM);
 		m_BottomDialogVotesBlock.Bind(base.ViewModel.DialogVotesBlockVM);
@@ -287,6 +294,7 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		SetVisible(state: false, force: true);
 		NavigationBehaviour?.Dispose();
 		NavigationBehaviour = null;
+		base.ViewModel.UpdateView -= SetAsDirty;
 	}
 
 	private void OnLateUpdate()
@@ -316,6 +324,11 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		if (list2.Count != bottomBoundAnswersVotes.Count || !list2.All(bottomBoundAnswersVotes.Contains))
 		{
 			m_BottomVotesShowCommand.Execute(m_BottomBoundAnswersVotes);
+		}
+		if (IsDirty)
+		{
+			PFLog.UI.Log($"[{Time.frameCount}] Resolve dirty");
+			StartUpdateCoroutine();
 		}
 	}
 
@@ -357,11 +370,19 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 
 	private void StartUpdateCoroutine()
 	{
-		OnPartsUpdating();
-		PFLog.UI.Log("StartUpdate");
-		MainThreadDispatcher.StartUpdateMicroCoroutine(AnswerPartUpdateCoroutine());
-		MainThreadDispatcher.StartUpdateMicroCoroutine(CuePartUpdateCoroutine());
-		PFLog.UI.Log("FinishUpdate");
+		if (IsDirty)
+		{
+			OnPartsUpdating();
+			MainThreadDispatcher.StartUpdateMicroCoroutine(AnswerPartUpdateCoroutine());
+			MainThreadDispatcher.StartUpdateMicroCoroutine(CuePartUpdateCoroutine());
+			IsDirty = false;
+			PFLog.UI.Log($"[{Time.frameCount}] FinishUpdate");
+		}
+	}
+
+	private void SetAsDirty()
+	{
+		IsDirty = true;
 	}
 
 	protected virtual void OnPartsUpdating()
@@ -370,7 +391,6 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 
 	private IEnumerator AnswerPartUpdateCoroutine()
 	{
-		PFLog.UI.Log("AnswerPartUpdate");
 		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
 		{
 			h.HandleDialogNavigationBuildFinished();
@@ -382,44 +402,28 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		}
 		m_AnswerContentCanvasGroup.alpha = 0f;
 		yield return null;
-		try
+		ClearAnswers();
+		foreach (AnswerVM item in m_AnswerEntitiesToAdd)
 		{
-			ClearAnswers();
-			foreach (AnswerVM item in m_AnswerEntitiesToAdd)
-			{
-				AddAnswer(item);
-			}
+			AddAnswer(item);
 		}
-		catch (Exception arg)
-		{
-			PFLog.UI.Log($"AnswerPart adding answers ex {arg}");
-		}
-		PFLog.UI.Log("Answers added");
 		m_AnswerEntitiesToAdd.Clear();
 		yield return null;
 		LayoutRebuilder.ForceRebuildLayoutImmediate(m_AnswerScrollRect.viewport.transform as RectTransform);
 		yield return null;
 		m_AnswerScrollRect.ScrollToTop();
 		yield return null;
-		try
-		{
-			m_AnswerFadeAnimator.AppearAnimation();
-		}
-		catch (Exception arg2)
-		{
-			PFLog.UI.Log($"AnswerPart appearing ex {arg2}");
-		}
+		m_AnswerFadeAnimator.AppearAnimation();
 		CreateNavigation();
 		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
 		{
 			h.HandleDialogNavigationBuildFinished();
 		});
-		PFLog.UI.Log("AnswerPartUpdate finished");
+		PFLog.UI.Log($"[{Time.frameCount}] AnswerPartUpdate Finished");
 	}
 
 	private IEnumerator CuePartUpdateCoroutine()
 	{
-		PFLog.UI.Log("CuePartUpdate");
 		m_SpeakerContentCanvasGroup.alpha = 0f;
 		yield return null;
 		foreach (IDialogShowData item in m_HistoryEntitiesToAdd)
@@ -439,7 +443,7 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		yield return null;
 		DOTween.Kill(m_CueView.m_CueGroup);
 		m_CueView.m_CueGroup.DOFade(1f, m_SpeakerContentFadeTime).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
-		PFLog.UI.Log("CuePartUpdate finished");
+		PFLog.UI.Log($"[{Time.frameCount}] CuePartUpdate Finished");
 	}
 
 	private void SetVisible(bool state, bool force = false, Action onCompleteAction = null)
@@ -450,13 +454,16 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		}
 		VotesIsActive.Value = false;
 		m_VisibleState = state;
-		PFLog.UI.Log($"Show dialog ({force}), time {m_SpeakerContentFadeTime}");
+		DOTween.Kill(CanvasGroup);
+		DOTween.Kill(RectTransform);
+		PFLog.UI.Log($"[{Time.frameCount}] Set dialog visible state {state}, forcing {force}");
 		if (force)
 		{
 			CanvasGroup.alpha = (state ? 1f : 0f);
 			Vector2 anchoredPosition = RectTransform.anchoredPosition;
 			anchoredPosition.y = (state ? m_ShowPosY : m_HidePosY);
 			RectTransform.anchoredPosition = anchoredPosition;
+			onCompleteAction?.Invoke();
 			m_Cleaner?.SetActiveState(state);
 			return;
 		}
@@ -468,7 +475,6 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		{
 			UISounds.Instance.Sounds.Dialogue.DialogueClose.Play();
 		}
-		DOTween.Kill(CanvasGroup);
 		CanvasGroup.DOFade(state ? 1f : 0f, m_SpeakerContentFadeTime).SetUpdate(isIndependentUpdate: true).OnStart(delegate
 		{
 			if (state)
@@ -478,7 +484,6 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 		})
 			.OnComplete(delegate
 			{
-				PFLog.UI.Log("CanvasGroup fading complete");
 				onCompleteAction?.Invoke();
 				if (!state)
 				{

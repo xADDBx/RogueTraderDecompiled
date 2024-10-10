@@ -60,7 +60,7 @@ public class AbilityMomentumLogic : BlueprintComponent, IAbilityOnCastLogic, IAb
 			return;
 		}
 		BlueprintMomentumRoot root = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
-		int num = ((!HeroicAct) ? ((HasCostReducingFact && maybeCaster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!maybeCaster.Facts.GetComponents<WarhammerFreeUltimateBuff>().Any((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost)) ? (group.Units.Sum((EntityRef<MechanicEntity> p) => (p.Entity?.Facts.Get(root.HeroicActBuffCounter)?.GetRank()).GetValueOrDefault()) * 25 + 75) : 0));
+		int num = ((!HeroicAct) ? ((HasCostReducingFact && maybeCaster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!maybeCaster.Facts.GetComponents((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost).Any()) ? (group.Units.Sum((EntityRef<MechanicEntity> p) => (p.Entity?.Facts.Get(root.HeroicActBuffCounter)?.GetRank()).GetValueOrDefault()) * 25 + 75) : 0));
 		ConditionsChecker conditionsOnAdditionCost = ConditionsOnAdditionCost;
 		if (conditionsOnAdditionCost != null && conditionsOnAdditionCost.HasConditions)
 		{
@@ -87,7 +87,7 @@ public class AbilityMomentumLogic : BlueprintComponent, IAbilityOnCastLogic, IAb
 			{
 				return false;
 			}
-			int num = ((!HeroicAct) ? ((HasCostReducingFact && caster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!caster.Facts.GetComponents<WarhammerFreeUltimateBuff>().Any((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost)) ? (group.Units.Count((EntityRef<MechanicEntity> p) => p.Entity.Facts.Contains(root.HeroicActBuff)) * 25 + 75) : 0));
+			int num = ((!HeroicAct) ? ((HasCostReducingFact && caster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!caster.Facts.GetComponents((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost).Any()) ? (group.Units.Count((EntityRef<MechanicEntity> p) => p.Entity.Facts.Contains(root.HeroicActBuff)) * 25 + 75) : 0));
 			return p.Units.Contains(caster) && p.Momentum >= num;
 		});
 	}

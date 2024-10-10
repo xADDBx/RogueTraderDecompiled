@@ -49,7 +49,8 @@ public class ContextActionStartAdditionalTurn : ContextAction
 		{
 			return;
 		}
-		List<CasterExtraTurnBonus> list = base.Context.MaybeCaster?.Facts.GetComponents<CasterExtraTurnBonus>().ToList() ?? new List<CasterExtraTurnBonus>();
+		MechanicEntity maybeCaster = base.Context.MaybeCaster;
+		List<CasterExtraTurnBonus> list = ((maybeCaster != null) ? maybeCaster.Facts.GetComponents<CasterExtraTurnBonus>().ToList() : null) ?? new List<CasterExtraTurnBonus>();
 		if (entity == base.Context.MaybeCaster)
 		{
 			list.RemoveAll((CasterExtraTurnBonus p) => p.OnlyIfTargetIsNotOwner);

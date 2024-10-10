@@ -67,9 +67,7 @@ public class ItemEntityStarshipWeapon : StarshipItemEntity<BlueprintStarshipWeap
 
 	public void Reload()
 	{
-		if (base.Blueprint != null && (from block in Starship.Facts.GetComponents<StarshipBlockRecharge>()
-			where block.Match(this)
-			select block).Empty())
+		if (base.Blueprint != null && Starship.Facts.GetComponents((StarshipBlockRecharge block) => block.Match(this)).Empty())
 		{
 			int num = (from x in Starship.Facts.GetComponents<StarshipModifyMaxCharges>()
 				where x.WeaponType == base.Blueprint.WeaponType

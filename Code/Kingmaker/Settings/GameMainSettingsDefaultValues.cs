@@ -23,6 +23,4 @@ public class GameMainSettingsDefaultValues
 	public bool DismemberCharacters;
 
 	public bool AcceleratedMove;
-
-	public MainMenuTheme MainMenuTheme;
 }

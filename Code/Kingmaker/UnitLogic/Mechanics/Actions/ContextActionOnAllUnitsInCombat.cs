@@ -69,7 +69,7 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 	protected override void RunAction()
 	{
 		MechanicEntity caster = base.Context.MaybeCaster;
-		if (caster == null || caster is BaseUnitEntity { IsPreviewUnit: not false })
+		if (caster == null || caster.IsPreview)
 		{
 			return;
 		}

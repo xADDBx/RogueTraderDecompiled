@@ -93,45 +93,42 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 			effectiveRolledValue = Mathf.RoundToInt((float)result.RolledValue * damage.EffectiveOverpenetrationFactor);
 			yield return new TooltipBrickIconTextValue(s.OverpenetrationModifier.Text, "<b>×" + damage.EffectiveOverpenetrationFactor.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 		}
-		if (!rule.RollDamageRule.ArmorIgnore)
+		if (!rule.RollDamageRule.IgnoreDeflection && damage.Deflection.Value != 0)
 		{
-			if (damage.Deflection.Value != 0)
+			effectiveRolledValue = Mathf.Max(0, effectiveRolledValue - damage.Deflection.Value);
+			yield return new TooltipBrickIconTextValue(s.DamageDeflection.Text, "<b>-" + damage.Deflection.Value + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+			if (isInfotip)
 			{
-				effectiveRolledValue = Mathf.Max(0, effectiveRolledValue - damage.Deflection.Value);
-				yield return new TooltipBrickIconTextValue(s.DamageDeflection.Text, "<b>-" + damage.Deflection.Value + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-				if (isInfotip)
+				IEnumerable<ITooltipBrick> enumerable = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: false, isFirstWithoutPlus: true);
+				foreach (ITooltipBrick item2 in enumerable)
 				{
-					IEnumerable<ITooltipBrick> enumerable = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: false, isFirstWithoutPlus: true);
-					foreach (ITooltipBrick item2 in enumerable)
-					{
-						yield return item2;
-					}
+					yield return item2;
 				}
 			}
-			if ((int)GameLogContext.Absorption > 0)
+		}
+		if (!rule.RollDamageRule.IgnoreArmourAbsorption && (int)GameLogContext.Absorption > 0)
+		{
+			effectiveRolledValue = (int)((float)effectiveRolledValue * damage.AbsorptionFactorWithPenetration);
+			yield return new TooltipBrickIconTextValue(s.EffectiveArmour.Text, "<b>×" + damage.AbsorptionFactorWithPenetration.ToString(CultureInfo.InvariantCulture) + " (" + damage.AbsorptionFactorWithPenetration * 100f + "%)</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+			if (isInfotip)
 			{
-				effectiveRolledValue = (int)((float)effectiveRolledValue * damage.AbsorptionFactorWithPenetration);
-				yield return new TooltipBrickIconTextValue(s.EffectiveArmour.Text, "<b>×" + damage.AbsorptionFactorWithPenetration.ToString(CultureInfo.InvariantCulture) + " (" + damage.AbsorptionFactorWithPenetration * 100f + "%)</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-				if (isInfotip)
+				yield return new TooltipBrickIconTextValue("<b>" + s.BaseModifier.Text + "</b>", "<b>100%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+				yield return new TooltipBrickIconTextValue("<b>" + s.Armor.Text + "</b>", "<b>-" + GameLogContext.Absorption.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+				IEnumerable<ITooltipBrick> enumerable2 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
+				if (enumerable2.Count() > 1)
 				{
-					yield return new TooltipBrickIconTextValue("<b>" + s.BaseModifier.Text + "</b>", "<b>100%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
-					yield return new TooltipBrickIconTextValue("<b>" + s.Armor.Text + "</b>", "<b>-" + GameLogContext.Absorption.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-					IEnumerable<ITooltipBrick> enumerable2 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
-					if (enumerable2.Count() > 1)
+					foreach (ITooltipBrick item3 in enumerable2)
 					{
-						foreach (ITooltipBrick item3 in enumerable2)
-						{
-							yield return item3;
-						}
+						yield return item3;
 					}
-					yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
-					enumerable2 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
-					if (enumerable2.Count() > 1)
+				}
+				yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+				enumerable2 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
+				if (enumerable2.Count() > 1)
+				{
+					foreach (ITooltipBrick item4 in enumerable2)
 					{
-						foreach (ITooltipBrick item4 in enumerable2)
-						{
-							yield return item4;
-						}
+						yield return item4;
 					}
 				}
 			}

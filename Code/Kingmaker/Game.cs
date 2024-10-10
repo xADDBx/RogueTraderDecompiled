@@ -2009,7 +2009,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		LoadNewGame(NewGamePreset, ImportSave);
 	}
 
-	public void LoadNewGameFromCheat(BlueprintAreaPreset preset)
+	public void LoadNewGameAndApplyDLCFromAreaPreset(BlueprintAreaPreset preset)
 	{
 		LoadNewGame(preset);
 	}
@@ -2123,9 +2123,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 					{
 						foreach (IBlueprintDlcReward reward in item2.Rewards)
 						{
-							if (reward is BlueprintDlcRewardCampaignAdditionalContent blueprintDlcRewardCampaignAdditionalContent && blueprintDlcRewardCampaignAdditionalContent.Campaign == preset.Campaign)
+							BlueprintDlcRewardCampaignAdditionalContent bpAc = reward as BlueprintDlcRewardCampaignAdditionalContent;
+							if (bpAc != null && bpAc.Campaign == preset.Campaign && !Player.UsedDlcRewards.Any((BlueprintDlcReward o) => o.AssetGuid == bpAc.AssetGuid))
 							{
-								Player.UsedDlcRewards.Add(blueprintDlcRewardCampaignAdditionalContent);
+								Player.UsedDlcRewards.Add(bpAc);
 							}
 						}
 					}

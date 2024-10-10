@@ -200,6 +200,9 @@ public class BlueprintRoot : BlueprintScriptableObject
 	[SerializeField]
 	private BlueprintAchievementsRoot.Reference m_Achievements;
 
+	[SerializeField]
+	private BlueprintTwitchRoot.Reference m_TwitchRoot;
+
 	public TestUIStylesRoot TestUIStyles;
 
 	[ValidateNotNull]
@@ -327,6 +330,8 @@ public class BlueprintRoot : BlueprintScriptableObject
 	public BlueprintFeature NavigatorOccupation => m_NavigatorOccupation?.Get();
 
 	public BlueprintAchievementsRoot Achievements => m_Achievements;
+
+	public BlueprintTwitchRoot TwitchRoot => m_TwitchRoot;
 
 	public ConsoleRoot ConsoleRoot => m_ConsoleRoot.Get();
 

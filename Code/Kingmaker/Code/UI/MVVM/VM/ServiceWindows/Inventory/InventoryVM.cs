@@ -60,6 +60,7 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		{
 			h.HandleUIEvent(UIEventType.InventoryOpen);
 		});
+		Refresh();
 	}
 
 	private void OnWeaponSetChanged()

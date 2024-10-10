@@ -29,8 +29,6 @@ public class GameMainSettings
 
 	public readonly SettingsEntityBool AcceleratedMove;
 
-	public readonly SettingsEntityEnum<MainMenuTheme> MainMenuTheme;
-
 	public readonly SettingsEntityString PromoEmails;
 
 	public readonly IReadOnlySettingEntity<bool> LocalizationWasTouched;
@@ -48,7 +46,6 @@ public class GameMainSettings
 		BloodOnCharacters = new SettingsEntityBool(settingsController, "blood-on-characters", defaultValues.BloodOnCharacters);
 		DismemberCharacters = new SettingsEntityBool(settingsController, "dismember", defaultValues.DismemberCharacters);
 		AcceleratedMove = new SettingsEntityBool(settingsController, "accelerated-move", defaultValues.AcceleratedMove);
-		MainMenuTheme = new SettingsEntityEnum<MainMenuTheme>(settingsController, "main-menu-theme", defaultValues.MainMenuTheme, saveDependent: false, requireReboot: true);
 		LocalizationWasTouched = Localization.WasTouched();
 		PromoEmails = new SettingsEntityString(settingsController, "promo-emails", "");
 	}

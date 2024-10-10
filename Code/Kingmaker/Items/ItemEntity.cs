@@ -199,6 +199,8 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 		}
 	}
 
+	public override bool IsPreview => Owner?.IsPreview ?? false;
+
 	public bool HasUniqueOriginArea
 	{
 		get
@@ -1064,8 +1066,8 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 		{
 			return false;
 		}
-		IEnumerable<EquipmentRestriction> components = base.Blueprint.GetComponents<EquipmentRestriction>();
-		if (components != null && components.Any())
+		BlueprintComponentsEnumerator<EquipmentRestriction> components = base.Blueprint.GetComponents<EquipmentRestriction>();
+		if (components.Any())
 		{
 			foreach (EquipmentRestriction item in components)
 			{

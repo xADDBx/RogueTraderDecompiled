@@ -316,20 +316,20 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	private void ApplySettings()
 	{
 		Locale value = SettingsRoot.Game.Main.Localization.GetValue();
-		MainMenuTheme mainMenuTheme = SettingsRoot.Game.Main.MainMenuTheme.GetValue();
+		MainMenuTheme mainMenuTheme = SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue();
 		float fontSizeMultiplier = SettingsRoot.Accessiability.FontSizeMultiplier;
 		int value2 = SettingsRoot.Display.SafeZoneOffset.GetValue();
 		SettingsController.Instance.Sync();
 		SettingsController.Instance.ConfirmAllTempValues();
 		SettingsController.Instance.SaveAll();
 		bool isMainMenu = Game.Instance.SceneLoader.LoadedUIScene == GameScenes.MainMenu;
-		if (value != SettingsRoot.Game.Main.Localization.GetValue() || (mainMenuTheme != SettingsRoot.Game.Main.MainMenuTheme.GetValue() && isMainMenu))
+		if (value != SettingsRoot.Game.Main.Localization.GetValue() || (mainMenuTheme != SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() && isMainMenu))
 		{
 			Game.ResetUI(delegate
 			{
 				DelayedInvoker.InvokeInFrames(delegate
 				{
-					if (mainMenuTheme != SettingsRoot.Game.Main.MainMenuTheme.GetValue() && isMainMenu)
+					if (mainMenuTheme != SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() && isMainMenu)
 					{
 						SoundState.Instance.ResetState(SoundStateType.MainMenu);
 					}

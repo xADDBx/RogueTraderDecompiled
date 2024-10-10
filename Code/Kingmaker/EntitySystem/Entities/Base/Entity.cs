@@ -253,6 +253,8 @@ public abstract class Entity : IEntity, IDisposable, IHashable
 		}
 	}
 
+	public virtual bool IsPreview => false;
+
 	public bool IsInFogOfWar
 	{
 		get

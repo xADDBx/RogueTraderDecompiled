@@ -532,7 +532,18 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 			ClickUnitHandler.HandleClickUnit(value, component2);
 		}
 		MapObjectView component3 = m_ChoosenInteractableObject.GetComponent<MapObjectView>();
-		if (component3 != null)
+		if (!(component3 != null))
+		{
+			return;
+		}
+		if (m_ChoosenInteractableObject.GetComponent<InteractionTwitchDrops>() != null)
+		{
+			EventBus.RaiseEvent((IMapObjectEntity)component3.Data, (Action<ITwitchDropsObjectUIHandler>)delegate(ITwitchDropsObjectUIHandler h)
+			{
+				h.HandleObjectInteractTwitchDrops();
+			}, isCheckRuntime: true);
+		}
+		else
 		{
 			EventBus.RaiseEvent((IMapObjectEntity)component3.Data, (Action<IInteractionObjectUIHandler>)delegate(IInteractionObjectUIHandler h)
 			{

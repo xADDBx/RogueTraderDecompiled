@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.CommonOvertipParts;
 using Kingmaker.Code.UI.MVVM.VM.VariativeInteraction;
+using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Controllers.Units;
@@ -19,6 +20,7 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Twitch;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
@@ -70,6 +72,8 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 
 	public readonly ReactiveProperty<bool> CanInteract = new ReactiveProperty<bool>(initialValue: true);
 
+	public readonly ReactiveProperty<TwitchDropsLinkStatus> TwitchStatus = new ReactiveProperty<TwitchDropsLinkStatus>();
+
 	public int? RequiredResourceCount;
 
 	public string ResourceName;
@@ -79,6 +83,8 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 	private IDisposable m_SelectedUnitsSubscription;
 
 	protected override bool UpdateEnabled => MapObjectEntity.IsVisibleForPlayer;
+
+	public bool IsTwitchDrops { get; private set; }
 
 	public InteractionPart FirstInteractionPart => m_Interactions.FirstOrDefault();
 
@@ -113,6 +119,8 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		HasInteractions = m_Interactions.Any();
 		HasInteractionsWithOvertip = m_Interactions.Any((InteractionPart i) => i.Settings?.ShowOvertip ?? false);
 		m_ProximityRadius = (HasInteractionsWithOvertip ? Mathf.Max(FirstInteractionPart.ApproachRadius, 6.35f) : 6.35f);
+		InteractionTwitchDropsPart interactionTwitchDropsPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionTwitchDropsPart).FirstOrDefault();
+		IsTwitchDrops = interactionTwitchDropsPart != null;
 		AddDisposable(BarkBlockVM = new OvertipBarkBlockVM());
 		AddDisposable(CameraDistance.ObserveLastValueOnLateUpdate().Subscribe(delegate
 		{
@@ -251,6 +259,47 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		UnitCommandsRunner.TryApproachAndInteract(unit, interactionPart);
 	}
 
+	public void InteractTwitchDrops()
+	{
+		if (TwitchStatus.Value == TwitchDropsLinkStatus.ConnectionError)
+		{
+			CheckTwitchLinkedStatus();
+		}
+		else if (TwitchStatus.Value != TwitchDropsLinkStatus.Linked)
+		{
+			TwitchDropsManager.Instance.OpenTwitchLinkPage();
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(LocalizedTexts.Instance.Reasons.RedirectionToWeb, addToLog: false, WarningNotificationFormat.Attention);
+			});
+		}
+		else
+		{
+			EventBus.RaiseEvent(delegate(ITwitchDropsRewardsUIHandler h)
+			{
+				h.HandleItemRewardsShow();
+			});
+		}
+	}
+
+	public async void CheckTwitchLinkedStatus()
+	{
+		ReactiveProperty<TwitchDropsLinkStatus> twitchStatus = TwitchStatus;
+		twitchStatus.Value = await TwitchDropsManager.Instance.GetTwitchLinkedStatus();
+		SetTwitchHint(TwitchStatus.Value);
+	}
+
+	private void SetTwitchHint(TwitchDropsLinkStatus status)
+	{
+		if (status == TwitchDropsLinkStatus.ConnectionError)
+		{
+			Name.Value = LocalizedTexts.Instance.Reasons.NoInternetConnection;
+			return;
+		}
+		UIPopupWindows popUps = UIStrings.Instance.PopUps;
+		Name.Value = ((status == TwitchDropsLinkStatus.Linked) ? popUps.GetRewards : popUps.LinkAccount);
+	}
+
 	public void UpdateObjectData()
 	{
 		m_SelectedUnitsSubscription?.Dispose();
@@ -356,6 +405,14 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 			m_IsNotInCombat = interactionStairsPart.Settings.NotInCombat;
 			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Ladder;
 			value = Game.Instance.IsControllerGamepad;
+		}
+		InteractionTwitchDropsPart interactionTwitchDropsPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionTwitchDropsPart).FirstOrDefault();
+		if (interactionTwitchDropsPart != null && interactionTwitchDropsPart.Enabled)
+		{
+			m_IsNotInCombat = interactionTwitchDropsPart.Settings.NotInCombat;
+			IsTwitchDrops = true;
+			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Trap;
+			value = true;
 		}
 		UpdateCanInteract();
 		IsEnabled.Value = value;

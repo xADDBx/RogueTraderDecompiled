@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.DLC;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Progression;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -38,10 +39,10 @@ public class BlueprintSelectionFeature : BlueprintSelection
 		{
 			return Enumerable.Empty<FeatureSelectionItem>();
 		}
-		IEnumerable<AddFeaturesToLevelUp> first = (from i in path?.GetComponents<AddFeaturesToLevelUp>()
+		IEnumerable<AddFeaturesToLevelUp> first = ((path != null) ? (from i in path.GetComponents<AddFeaturesToLevelUp>()
 			where i.Group == Group
-			select i) ?? Array.Empty<AddFeaturesToLevelUp>();
-		IEnumerable<AddFeaturesToLevelUp> components = unit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group && !(i.OwnerBlueprint is BlueprintPath));
+			select i) : null) ?? Array.Empty<AddFeaturesToLevelUp>();
+		EntityFactManagerComponentsEnumerator<AddFeaturesToLevelUp> components = unit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group && !(i.OwnerBlueprint is BlueprintPath));
 		IEnumerable<AddFeaturesToLevelUp> source = first.Concat(components);
 		if (source.Any((AddFeaturesToLevelUp f) => f == null))
 		{

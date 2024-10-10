@@ -47,10 +47,11 @@ public class WeaponItemPart : BaseItemPart
 		}
 		string leftLabel = text2 + "\n" + weaponRangeLabel + " | " + weaponHeavinessLabel;
 		string text3 = ItemTooltipData.GetText(TooltipElement.WeaponFamily);
+		string weaponClassificationLabel = UIStrings.Instance.WeaponCategories.GetWeaponClassificationLabel(blueprintItemWeapon.Classification);
 		ItemEntity item = Item;
 		Sprite image = ((item != null) ? ObjectExtensions.Or(item.Icon, null) : null) ?? SimpleBlueprintExtendAsObject.Or(BlueprintItem, null)?.Icon;
 		bool hasUpgrade = BlueprintItem.PrototypeLink is BlueprintItemWeapon blueprintItemWeapon2 && blueprintItemWeapon2.CanBeUsedInGame;
-		list.Add(new TooltipBrickEntityHeader(itemName, image, hasUpgrade, text, leftLabel, text3));
+		list.Add(new TooltipBrickEntityHeader(itemName, image, hasUpgrade, text, leftLabel, text3, weaponClassificationLabel));
 		return list;
 	}
 

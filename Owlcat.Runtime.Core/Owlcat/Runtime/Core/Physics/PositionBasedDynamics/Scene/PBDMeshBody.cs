@@ -4,6 +4,7 @@ using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Bodies;
 using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Constraints;
 using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Owlcat.Runtime.Core.Utility;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Scene;
@@ -181,7 +182,7 @@ public class PBDMeshBody : PBDBodyBase<MeshBody>
 		for (int j = 0; j < m_Particles.Count; j++)
 		{
 			Particle item = m_Particles[j];
-			item.Position = base.transform.TransformPoint(item.Position);
+			item.Position = float3.zero;
 			item.BasePosition = item.Position;
 			item.Orientation = base.transform.rotation * item.Orientation;
 			item.PredictedOrientation = item.Orientation;

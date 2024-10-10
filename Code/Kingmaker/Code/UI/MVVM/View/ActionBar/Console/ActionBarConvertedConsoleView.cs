@@ -80,7 +80,7 @@ public class ActionBarConvertedConsoleView : ViewBase<ActionBarConvertedVM>, ICl
 	{
 		m_Slots.ForEach(WidgetFactory.DisposeWidget);
 		m_Slots.Clear();
-		GamePad.Instance.PopLayer(m_InputLayer);
+		m_InputLayer = null;
 		m_NavigationBehaviour.UnFocusCurrentEntity();
 		m_ShowTooltip = false;
 		m_Visibility.SetVisible(visible: false);

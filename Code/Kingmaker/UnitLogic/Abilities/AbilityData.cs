@@ -781,13 +781,12 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 					{
 						return true;
 					}
-					IEnumerable<WarhammerAbilityRestriction> components = Caster.Facts.GetComponents<WarhammerAbilityRestriction>();
 					PartAbilitySettings abilitySettingsOptional = Caster.GetAbilitySettingsOptional();
 					if (Fact != null && abilitySettingsOptional != null && abilitySettingsOptional.InterruptionAbilityRestrictions != null && !abilitySettingsOptional.InterruptionAbilityRestrictions.IsPassed(new PropertyContext(Fact, null, null, this)))
 					{
 						return false;
 					}
-					if (components.Any((WarhammerAbilityRestriction restriction) => restriction.AbilityIsRestricted(this)))
+					if (Caster.Facts.GetComponents((WarhammerAbilityRestriction restriction) => restriction.AbilityIsRestricted(this)).Any())
 					{
 						return true;
 					}

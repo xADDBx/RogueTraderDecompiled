@@ -107,7 +107,7 @@ public class NetLobbyPlayerVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			return null;
 		}
 		List<IBlueprintDlc> playerDlcs = GetPlayerDlcs(userID);
-		if (playerDlcs == null || !playerDlcs.Any())
+		if (playerDlcs == null)
 		{
 			return null;
 		}

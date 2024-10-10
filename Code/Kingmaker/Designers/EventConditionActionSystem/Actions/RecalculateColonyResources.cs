@@ -45,7 +45,8 @@ public class RecalculateColonyResources : GameAction
 		foreach (Contract item2 in enumerable)
 		{
 			item2?.ResourceShortage.Clear();
-			foreach (RewardResourceNotFromColony item3 in (item2?.Blueprint.GetComponents<RewardResourceNotFromColony>())?.EmptyIfNull())
+			BlueprintComponentsEnumerator<RewardResourceNotFromColony>? blueprintComponentsEnumerator = item2?.Blueprint.GetComponents<RewardResourceNotFromColony>();
+			foreach (RewardResourceNotFromColony item3 in blueprintComponentsEnumerator.HasValue ? blueprintComponentsEnumerator.GetValueOrDefault().EmptyIfNull() : null)
 			{
 				BlueprintResource resource2 = item3.Resource;
 				int count = item3.Count;
@@ -54,10 +55,10 @@ public class RecalculateColonyResources : GameAction
 		}
 		foreach (BlueprintCueBase shownCue in Game.Instance.Player.Dialog.ShownCues)
 		{
-			foreach (RewardResourceNotFromColony item4 in shownCue.GetComponents<RewardResourceNotFromColony>()?.EmptyIfNull())
+			foreach (RewardResourceNotFromColony component in shownCue.GetComponents<RewardResourceNotFromColony>())
 			{
-				BlueprintResource resource3 = item4.Resource;
-				int count2 = item4.Count;
+				BlueprintResource resource3 = component.Resource;
+				int count2 = component.Count;
 				AddNotFromColony(resource3, count2);
 			}
 			if (!(shownCue is BlueprintCue blueprintCue) || !blueprintCue.OnStop.HasActions)
@@ -80,10 +81,10 @@ public class RecalculateColonyResources : GameAction
 		}
 		foreach (BlueprintAnswer selectedAnswer in Game.Instance.Player.Dialog.SelectedAnswers)
 		{
-			foreach (RewardResourceNotFromColony item5 in selectedAnswer.GetComponents<RewardResourceNotFromColony>()?.EmptyIfNull())
+			foreach (RewardResourceNotFromColony component2 in selectedAnswer.GetComponents<RewardResourceNotFromColony>())
 			{
-				BlueprintResource resource5 = item5.Resource;
-				int count4 = item5.Count;
+				BlueprintResource resource5 = component2.Resource;
+				int count4 = component2.Count;
 				AddNotFromColony(resource5, count4);
 			}
 			if (!selectedAnswer.OnSelect.HasActions)
@@ -126,35 +127,36 @@ public class RecalculateColonyResources : GameAction
 					continue;
 				}
 				project.ProducedResourcesWithoutModifiers.Clear();
-				foreach (RewardResourceProject item6 in project.Blueprint.GetComponents<RewardResourceProject>()?.EmptyIfNull())
+				foreach (RewardResourceProject component3 in project.Blueprint.GetComponents<RewardResourceProject>())
 				{
-					BlueprintResource resource7 = item6.Resource;
-					project.ProducedResourcesWithoutModifiers.Add(item6.Resource, item6.Count);
-					int producedResourceCountWithEfficiencyModifier = ColoniesStateHelper.GetProducedResourceCountWithEfficiencyModifier(item6.Count, colony2.Efficiency.Value);
+					BlueprintResource resource7 = component3.Resource;
+					project.ProducedResourcesWithoutModifiers.Add(component3.Resource, component3.Count);
+					int producedResourceCountWithEfficiencyModifier = ColoniesStateHelper.GetProducedResourceCountWithEfficiencyModifier(component3.Count, colony2.Efficiency.Value);
 					AddToColony(colony2, resource7, producedResourceCountWithEfficiencyModifier);
 				}
 			}
 		}
 		coloniesState.OrdersUseResources.Clear();
-		foreach (Contract item7 in enumerable)
+		foreach (Contract item4 in enumerable)
 		{
-			foreach (RequirementResourceUseOrder item8 in (item7?.Blueprint.GetComponents<RequirementResourceUseOrder>())?.EmptyIfNull())
+			BlueprintComponentsEnumerator<RequirementResourceUseOrder>? blueprintComponentsEnumerator4 = item4?.Blueprint.GetComponents<RequirementResourceUseOrder>();
+			foreach (RequirementResourceUseOrder item5 in blueprintComponentsEnumerator4.HasValue ? blueprintComponentsEnumerator4.GetValueOrDefault().EmptyIfNull() : null)
 			{
-				Game.Instance.ColonizationController.UseResourceFromPool(item8.ResourceBlueprint, item8.Count, needEvent: false);
+				Game.Instance.ColonizationController.UseResourceFromPool(item5.ResourceBlueprint, item5.Count, needEvent: false);
 			}
 		}
 		foreach (BlueprintCueBase shownCue2 in Game.Instance.Player.Dialog.ShownCues)
 		{
-			foreach (RequirementResourceUseDialog item9 in shownCue2.GetComponents<RequirementResourceUseDialog>()?.EmptyIfNull())
+			foreach (RequirementResourceUseDialog component4 in shownCue2.GetComponents<RequirementResourceUseDialog>())
 			{
-				Game.Instance.ColonizationController.UseResourceFromPool(item9.ResourceBlueprint, item9.Count, needEvent: false);
+				Game.Instance.ColonizationController.UseResourceFromPool(component4.ResourceBlueprint, component4.Count, needEvent: false);
 			}
 		}
 		foreach (BlueprintAnswer selectedAnswer2 in Game.Instance.Player.Dialog.SelectedAnswers)
 		{
-			foreach (RequirementResourceUseDialog item10 in selectedAnswer2.GetComponents<RequirementResourceUseDialog>()?.EmptyIfNull())
+			foreach (RequirementResourceUseDialog component5 in selectedAnswer2.GetComponents<RequirementResourceUseDialog>())
 			{
-				Game.Instance.ColonizationController.UseResourceFromPool(item10.ResourceBlueprint, item10.Count, needEvent: false);
+				Game.Instance.ColonizationController.UseResourceFromPool(component5.ResourceBlueprint, component5.Count, needEvent: false);
 			}
 		}
 		foreach (ColoniesState.ColonyData colony6 in coloniesState.Colonies)
@@ -167,10 +169,10 @@ public class RecalculateColonyResources : GameAction
 			}
 			foreach (ColonyProject project3 in colony3.Projects)
 			{
-				foreach (RequirementResourceUseProject item11 in project3.Blueprint.GetComponents<RequirementResourceUseProject>()?.EmptyIfNull())
+				foreach (RequirementResourceUseProject component6 in project3.Blueprint.GetComponents<RequirementResourceUseProject>())
 				{
-					BlueprintResource resourceBlueprint = item11.ResourceBlueprint;
-					int count6 = item11.Count;
+					BlueprintResource resourceBlueprint = component6.ResourceBlueprint;
+					int count6 = component6.Count;
 					Game.Instance.ColonizationController.UseResourceFromPool(resourceBlueprint, count6, needEvent: false);
 					project3.UsedResourcesFromPool.Add(resourceBlueprint, count6);
 				}

@@ -88,7 +88,7 @@ public class CustomSpringAttackQueue : AbilityCustomLogic
 		}
 		sprintAttackPart.RemoveEntries();
 		AbilityData ability = CreateAbility(MoveAbility, context);
-		if (turnStartPosition.GetNearestNodeXZUnwalkable().GetUnit() is UnitEntity { IsDeadOrUnconscious: false })
+		if (turnStartPosition.GetNearestNodeXZUnwalkable().GetUnit() is UnitEntity unitEntity && unitEntity != caster && !unitEntity.IsDeadOrUnconscious)
 		{
 			List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
 			for (int i = 0; i < 8; i++)

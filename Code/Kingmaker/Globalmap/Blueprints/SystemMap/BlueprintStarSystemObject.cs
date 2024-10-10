@@ -36,7 +36,7 @@ public class BlueprintStarSystemObject : BlueprintMechanicEntityFact
 
 	public void ResaveConnectedAreas()
 	{
-		IEnumerable<PointOfInterestGroundOperationComponent> components = this.GetComponents<PointOfInterestGroundOperationComponent>();
+		BlueprintComponentsEnumerator<PointOfInterestGroundOperationComponent> components = this.GetComponents<PointOfInterestGroundOperationComponent>();
 		if (m_ConnectedAreas == null)
 		{
 			m_ConnectedAreas = new List<BlueprintAreaReference>();

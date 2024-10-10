@@ -4,7 +4,7 @@ using Kingmaker.PubSubSystem.Core;
 
 namespace Kingmaker.RuleSystem;
 
-public abstract class RulebookOptionalTargetEvent : RulebookEvent
+public abstract class RulebookOptionalTargetEvent : RulebookEvent, IRulebookHasNoTarget
 {
 	[CanBeNull]
 	public readonly MechanicEntity MaybeTarget;

@@ -24,7 +24,7 @@ public static class BarkPlayer
 
 	public static IBarkHandle Bark(Entity entity, LocalizedString text, float duration = -1f, bool playVoiceOver = false, BaseUnitEntity interactUser = null, bool synced = true, string overrideName = null, Color overrideNameColor = default(Color))
 	{
-		if (string.IsNullOrEmpty(text.Text) && !NetworkingManager.IsMultiplayer)
+		if (text.IsEmpty() || (string.IsNullOrEmpty(text.Text) && !NetworkingManager.IsMultiplayer))
 		{
 			return null;
 		}

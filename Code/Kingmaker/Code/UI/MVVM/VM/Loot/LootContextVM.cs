@@ -15,6 +15,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.VM.TwitchDrops;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
@@ -25,7 +26,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Loot;
 
-public class LootContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IExplorationCargoHandler, IGameModeHandler, IAddCargoActionHandler
+public class LootContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IExplorationCargoHandler, IGameModeHandler, IAddCargoActionHandler, ITwitchDropsRewardsUIHandler
 {
 	public enum LootWindowMode
 	{
@@ -40,6 +41,8 @@ public class LootContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 	public readonly ReactiveProperty<LootVM> LootVM = new ReactiveProperty<LootVM>();
 
 	public readonly ReactiveProperty<CargoRewardsVM> CargoVM = new ReactiveProperty<CargoRewardsVM>();
+
+	public readonly ReactiveProperty<TwitchDropsRewardsVM> TwitchDropsRewardsVM = new ReactiveProperty<TwitchDropsRewardsVM>();
 
 	private bool m_IsInitializing;
 
@@ -187,5 +190,17 @@ public class LootContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		{
 			h.HandleCargoRewardsShow();
 		});
+	}
+
+	public void HandleItemRewardsShow()
+	{
+		TwitchDropsRewardsVM disposable = (TwitchDropsRewardsVM.Value = new TwitchDropsRewardsVM(DisposeItems));
+		AddDisposable(disposable);
+	}
+
+	private void DisposeItems()
+	{
+		TwitchDropsRewardsVM.Value?.Dispose();
+		TwitchDropsRewardsVM.Value = null;
 	}
 }

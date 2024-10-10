@@ -183,6 +183,18 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public bool HideDlc => m_HideDlc;
 
+	public bool HideWhoNotBuyDlc
+	{
+		get
+		{
+			if (m_HideDlc)
+			{
+				return !IsPurchased;
+			}
+			return false;
+		}
+	}
+
 	public VideoClip MainMenuBackgroundVideo => m_MainMenuBackgroundVideoLink?.Load();
 
 	public Sprite TopMonitorArt => m_TopMonitorArtLink?.Load();
@@ -273,8 +285,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public bool CheckIsLateToSwitch()
 	{
-		IEnumerable<CantSwitchOnDlcReason> components = this.GetComponents<CantSwitchOnDlcReason>();
-		if (components == null || !components.Any())
+		BlueprintComponentsEnumerator<CantSwitchOnDlcReason> components = this.GetComponents<CantSwitchOnDlcReason>();
+		if (!components.Any())
 		{
 			return false;
 		}

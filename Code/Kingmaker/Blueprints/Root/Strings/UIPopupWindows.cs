@@ -9,4 +9,8 @@ public class UIPopupWindows
 	public LocalizedString SoulMarkRewardTitle;
 
 	public LocalizedString SeeOtherRanks;
+
+	public LocalizedString LinkAccount;
+
+	public LocalizedString GetRewards;
 }

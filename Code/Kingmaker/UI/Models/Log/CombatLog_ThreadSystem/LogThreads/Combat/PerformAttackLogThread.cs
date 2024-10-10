@@ -372,7 +372,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				criticalNestedLevel = Mathf.RoundToInt((float)result.RolledValue * damage.EffectiveOverpenetrationFactor);
 				yield return new TooltipBrickIconTextValue(s.Overpenetration.Text, "<b>×" + damage.EffectiveOverpenetrationFactor.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 			}
-			if (!resultDamage.RollDamageRule.ArmorIgnore)
+			if (!resultDamage.RollDamageRule.IgnoreDeflection)
 			{
 				bool flag = damage.Deflection.AllModifiersList.Any((Modifier m) => m.Value != 0);
 				if (damage.Deflection.Value != 0 || flag)

@@ -96,6 +96,8 @@ public class UIDlcManager
 
 	public LocalizedString ThisSettingWillAffectCurrentSave;
 
+	public LocalizedString NewDlcAfterLoadingMessageBoxHint;
+
 	public string GetDlcTypeLabel(DlcTypeEnum type)
 	{
 		return type switch

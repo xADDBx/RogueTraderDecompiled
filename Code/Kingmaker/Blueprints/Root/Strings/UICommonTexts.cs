@@ -79,4 +79,6 @@ public class UICommonTexts
 	public LocalizedString AreYouSure;
 
 	public LocalizedString UIVisibility;
+
+	public LocalizedString DontAskAgain;
 }

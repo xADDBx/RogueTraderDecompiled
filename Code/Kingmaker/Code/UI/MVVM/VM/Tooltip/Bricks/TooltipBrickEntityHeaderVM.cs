@@ -5,15 +5,17 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 
 public class TooltipBrickEntityHeaderVM : TooltipBaseBrickVM
 {
-	public string MainTitle;
+	public readonly string MainTitle;
 
-	public Sprite Image;
+	public readonly Sprite Image;
 
-	public string Title;
+	public readonly string Title;
 
-	public string LeftLabel;
+	public readonly string LeftLabel;
 
-	public string RightLabel;
+	public readonly string RightLabel;
+
+	public readonly string RightLabelClassification;
 
 	public readonly bool HasUpgrade;
 
@@ -21,7 +23,7 @@ public class TooltipBrickEntityHeaderVM : TooltipBaseBrickVM
 	{
 	}
 
-	public TooltipBrickEntityHeaderVM(string mainTitle, Sprite image, bool hasUpgrade, string title, string leftLabel, string rightLabel)
+	public TooltipBrickEntityHeaderVM(string mainTitle, Sprite image, bool hasUpgrade, string title, string leftLabel, string rightLabel, string rightLabelClassification)
 	{
 		MainTitle = mainTitle;
 		Image = image;
@@ -29,5 +31,6 @@ public class TooltipBrickEntityHeaderVM : TooltipBaseBrickVM
 		Title = title;
 		LeftLabel = leftLabel;
 		RightLabel = rightLabel;
+		RightLabelClassification = rightLabelClassification;
 	}
 }

@@ -108,7 +108,7 @@ public class PropertyCalculator : ElementsList
 					MechanicEntity targetEntity = context.GetTargetEntity(TargetType);
 					if (targetEntity == null)
 					{
-						bool flag = context.Rule is RulebookOptionalTargetEvent rulebookOptionalTargetEvent && rulebookOptionalTargetEvent.HasNoTarget;
+						bool flag = context.Rule is IRulebookHasNoTarget rulebookHasNoTarget && rulebookHasNoTarget.HasNoTarget;
 						if (!FailSilentlyIfNoTarget && !flag)
 						{
 							throw new Exception($"Can't switch target to {TargetType}: inaccessible in context (Fact={context.Fact}, Ability={context.Ability})");

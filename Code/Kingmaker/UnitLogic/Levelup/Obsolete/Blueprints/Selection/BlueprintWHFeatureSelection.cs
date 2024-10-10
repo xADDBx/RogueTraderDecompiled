@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -18,10 +19,10 @@ public class BlueprintWHFeatureSelection : BlueprintFeature, IFeatureSelection
 
 	public IEnumerable<IFeatureSelectionItem> GetItems(BaseUnitEntity beforeLevelUpUnit, BaseUnitEntity previewUnit, BlueprintCharacterClass @class)
 	{
-		IEnumerable<AddFeaturesToLevelUp> first = (from i in @class?.GetComponents<AddFeaturesToLevelUp>()
+		IEnumerable<AddFeaturesToLevelUp> first = ((@class != null) ? (from i in @class.GetComponents<AddFeaturesToLevelUp>()
 			where i.Group == Group
-			select i) ?? Array.Empty<AddFeaturesToLevelUp>();
-		IEnumerable<AddFeaturesToLevelUp> components = previewUnit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group);
+			select i) : null) ?? Array.Empty<AddFeaturesToLevelUp>();
+		EntityFactManagerComponentsEnumerator<AddFeaturesToLevelUp> components = previewUnit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group);
 		return first.Concat(components).SelectMany((AddFeaturesToLevelUp i) => i.Features);
 	}
 

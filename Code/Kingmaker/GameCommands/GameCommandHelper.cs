@@ -348,7 +348,7 @@ public static class GameCommandHelper
 		}
 		EquipmentSlot<BlueprintItemEquipmentRing> ring2 = unit.Body.Ring1;
 		EquipmentSlot<BlueprintItemEquipmentRing> ring3 = unit.Body.Ring2;
-		EquipmentSlot<BlueprintItemEquipmentRing> targetSlot = ((!ring2.HasItem) ? ring2 : (ring3.HasItem ? ring2 : ring3));
+		EquipmentSlot<BlueprintItemEquipmentRing> targetSlot = ((!ring2.HasItem) ? ring2 : (ring3.HasItem ? ((!ring2.Item.IsNonRemovable) ? ring2 : ring3) : ring3));
 		return TryInsertItemTo(ring, targetSlot);
 	}
 

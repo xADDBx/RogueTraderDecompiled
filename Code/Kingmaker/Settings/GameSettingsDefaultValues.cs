@@ -18,6 +18,8 @@ public class GameSettingsDefaultValues
 
 	public GameTooltipsSettingsDefaultValues Tooltips;
 
+	public GameMainMenuSettingsDefaultValues MainMenu;
+
 	public GameCombatTextsSettingsDefaultValues CombatTexts;
 
 	public GameDialogsSettingsDefaultValues Dialogs;

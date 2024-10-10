@@ -25,5 +25,6 @@ public enum SurfaceType
 	StoneEnv,
 	ClothEnv,
 	WoodEnv,
-	Demon
+	Demon,
+	Ghost
 }

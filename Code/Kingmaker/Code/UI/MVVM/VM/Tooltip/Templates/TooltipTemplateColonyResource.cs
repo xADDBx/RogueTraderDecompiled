@@ -90,18 +90,18 @@ public class TooltipTemplateColonyResource : TooltipBaseTemplate
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		foreach (BlueprintQuestContract item in enumerable)
 		{
-			foreach (RewardResourceNotFromColony item2 in item.GetComponents<RewardResourceNotFromColony>()?.EmptyIfNull())
+			foreach (RewardResourceNotFromColony component in item.GetComponents<RewardResourceNotFromColony>())
 			{
-				if (item2.Resource == BlueprintResource)
+				if (component.Resource == BlueprintResource)
 				{
-					list.Add(new TooltipBrickIconStatValue(item.Name, $"+{item2.Count}", null, null, TooltipBrickIconStatValueType.Positive));
+					list.Add(new TooltipBrickIconStatValue(item.Name, $"+{component.Count}", null, null, TooltipBrickIconStatValueType.Positive));
 				}
 			}
-			foreach (RequirementResourceUseOrder item3 in item.GetComponents<RequirementResourceUseOrder>()?.EmptyIfNull())
+			foreach (RequirementResourceUseOrder component2 in item.GetComponents<RequirementResourceUseOrder>())
 			{
-				if (item3.ResourceBlueprint == BlueprintResource)
+				if (component2.ResourceBlueprint == BlueprintResource)
 				{
-					list.Add(new TooltipBrickIconStatValue(item.Name, $"-{item3.Count}", null, null, TooltipBrickIconStatValueType.Negative));
+					list.Add(new TooltipBrickIconStatValue(item.Name, $"-{component2.Count}", null, null, TooltipBrickIconStatValueType.Negative));
 				}
 			}
 		}

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;

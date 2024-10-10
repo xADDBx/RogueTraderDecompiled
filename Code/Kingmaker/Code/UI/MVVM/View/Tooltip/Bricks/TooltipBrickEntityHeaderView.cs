@@ -27,6 +27,9 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 	private TextMeshProUGUI m_RightLabel;
 
 	[SerializeField]
+	private TextMeshProUGUI m_RightLabelClassification;
+
+	[SerializeField]
 	private GameObject m_UpgradeItemIndicator;
 
 	private AccessibilityTextHelper m_TextHelper;
@@ -35,7 +38,7 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 	{
 		if (m_TextHelper == null)
 		{
-			m_TextHelper = new AccessibilityTextHelper(m_MainTitle, m_Title, m_LeftLabel, m_RightLabel);
+			m_TextHelper = new AccessibilityTextHelper(m_MainTitle, m_Title, m_LeftLabel, m_RightLabel, m_RightLabelClassification);
 		}
 		base.BindViewImplementation();
 		m_MainTitle.text = base.ViewModel.MainTitle;
@@ -44,6 +47,7 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 		SetText(m_Title, base.ViewModel.Title);
 		SetText(m_LeftLabel, base.ViewModel.LeftLabel);
 		SetText(m_RightLabel, base.ViewModel.RightLabel);
+		SetText(m_RightLabelClassification, base.ViewModel.RightLabelClassification);
 		if ((bool)m_UpgradeItemIndicator)
 		{
 			m_UpgradeItemIndicator.SetActive(base.ViewModel.HasUpgrade);
@@ -59,7 +63,10 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 
 	private void SetText(TextMeshProUGUI textField, string text)
 	{
-		textField.gameObject.SetActive(!string.IsNullOrEmpty(text));
-		textField.text = text;
+		if (!(textField == null))
+		{
+			textField.gameObject.SetActive(!string.IsNullOrEmpty(text));
+			textField.text = text;
+		}
 	}
 }

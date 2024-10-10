@@ -35,6 +35,8 @@ public class UISettingsRoot : ScriptableObject
 
 		public UIGameTutorialSettings UIGameTutorialSettings;
 
+		public UIGameMainMenuSettings UIGameMainMenuSettings;
+
 		public UIGameCombatTextsSettings UIGameCombatTextsSettings;
 
 		public UIGameDialogsSettings UIGameDialogsSettings;
@@ -69,6 +71,7 @@ public class UISettingsRoot : ScriptableObject
 			UIGameSaveSettings.LinkToSettings();
 			UIGameTooltipsSettings.LinkToSettings();
 			UIGameTutorialSettings.LinkToSettings();
+			UIGameMainMenuSettings.LinkToSettings();
 			UIGameTurnBasedSettings.LinkToSettings();
 			UIControlsSettings.LinkToSettings();
 			UIKeybindGeneralSettings.LinkToSettings();

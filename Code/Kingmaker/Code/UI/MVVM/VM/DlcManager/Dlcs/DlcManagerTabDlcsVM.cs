@@ -35,6 +35,8 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public readonly BoolReactiveProperty IsRealConsole = new BoolReactiveProperty();
 
+	public readonly BoolReactiveProperty IsEditionDlc = new BoolReactiveProperty();
+
 	public ReactiveProperty<Sprite> Art { get; } = new ReactiveProperty<Sprite>();
 
 
@@ -58,7 +60,7 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		foreach (IBlueprintDlc purchasableDLC in StoreManager.GetPurchasableDLCs())
 		{
 			BlueprintDlc dlc = purchasableDLC as BlueprintDlc;
-			if (dlc == null || !dlc.HideDlc)
+			if (dlc == null || !dlc.HideWhoNotBuyDlc)
 			{
 				DlcManagerDlcEntityVM dlcManagerDlcEntityVM = new DlcManagerDlcEntityVM(dlc, delegate
 				{
@@ -108,6 +110,9 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 			DownloadState downloadState = blueprintDlc.GetDownloadState();
 			DownloadingInProgress.Value = downloadState == DownloadState.Loading && IsRealConsole.Value;
 			DlcIsBoughtAndNotInstalled.Value = isPurchased && downloadState == DownloadState.NotLoaded && IsRealConsole.Value;
+			BoolReactiveProperty isEditionDlc = IsEditionDlc;
+			DlcTypeEnum dlcType = blueprintDlc.DlcType;
+			isEditionDlc.Value = dlcType == DlcTypeEnum.CosmeticDlc || dlcType == DlcTypeEnum.PromotionalDlc;
 			ChangeStory.Execute();
 		}
 	}

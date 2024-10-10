@@ -124,7 +124,7 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 		{
 			m_DontShowToggle.gameObject.SetActive(base.ViewModel.IsCheckbox.Value);
 			m_DontShowToggle.Set(value: false);
-			m_DontShowLabel.text = UIStrings.Instance.Tutorial.DontShowThisTutorial;
+			m_DontShowLabel.text = UIStrings.Instance.CommonTexts.DontAskAgain;
 			UISounds.Instance.SetClickAndHoverSound(m_DontShowToggle.ConsoleEntityProxy as OwlcatMultiButton, UISounds.ButtonSoundsEnum.NoSound);
 		}
 	}

@@ -13,6 +13,8 @@ public class GameSettings
 
 	public readonly GameTooltipsSettings Tooltips;
 
+	public readonly GameMainMenuSettings MainMenu;
+
 	public readonly GameCombatTextsSettings CombatTexts;
 
 	public readonly GameDialogsSettings Dialogs;
@@ -39,6 +41,10 @@ public class GameSettings
 		using (new SettingsKeyPrefix("tooltips"))
 		{
 			Tooltips = new GameTooltipsSettings(settingsController, defaultValues.Tooltips);
+		}
+		using (new SettingsKeyPrefix("main-menu"))
+		{
+			MainMenu = new GameMainMenuSettings(settingsController, defaultValues.MainMenu);
 		}
 		using (new SettingsKeyPrefix("combat-texts"))
 		{

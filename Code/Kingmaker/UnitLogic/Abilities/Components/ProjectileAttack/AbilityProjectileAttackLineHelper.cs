@@ -127,7 +127,7 @@ public static class AbilityProjectileAttackLineHelper
 			}
 			List<MechanicEntity> list = (from p in Game.Instance.State.AllUnits
 				where !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && p.Health.HitPointsLeft > 0
-				where p.Facts.GetComponents<WarhammerDeflectionTarget>().Any((WarhammerDeflectionTarget c) => c.Caster == deflector)
+				where p.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == deflector).Any()
 				select p).Cast<MechanicEntity>().ToList();
 			list.Remove(hits.Last().Entity);
 			list.RemoveAll((MechanicEntity p) => !p.IsEnemy(deflector));

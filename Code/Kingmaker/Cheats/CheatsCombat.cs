@@ -227,7 +227,7 @@ internal class CheatsCombat
 		{
 			if (allBaseUnit.CombatState.IsInCombat && allBaseUnit.CombatGroup.IsEnemy(GameHelper.GetPlayerCharacter()))
 			{
-				KillUnit(allBaseUnit);
+				Damage(allBaseUnit, tryToKill: true);
 			}
 		}
 		if (Game.Instance.IsPaused)

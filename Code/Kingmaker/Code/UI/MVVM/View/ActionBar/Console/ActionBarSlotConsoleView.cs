@@ -49,11 +49,7 @@ public class ActionBarSlotConsoleView : ViewBase<ActionBarSlotVM>, IConsoleNavig
 		if ((bool)m_ConvertedView)
 		{
 			AddDisposable(base.ViewModel.HasConvert.And(base.ViewModel.IsPossibleActive).Subscribe(m_ConvertedView.gameObject.SetActive));
-			AddDisposable(base.ViewModel.ConvertedVm.Skip(1).Subscribe(delegate(ActionBarConvertedVM vms)
-			{
-				SetFocus(vms == null);
-				m_ConvertedView.Bind(vms);
-			}));
+			AddDisposable(base.ViewModel.ConvertedVm.Skip(1).Subscribe(m_ConvertedView.Bind));
 			AddDisposable(base.ViewModel.HasConvert.Subscribe(delegate(bool value)
 			{
 				m_ConvertButton.Or(null)?.SetActive(value && m_ShowConvertButton);

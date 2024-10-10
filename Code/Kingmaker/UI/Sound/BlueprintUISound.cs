@@ -196,6 +196,14 @@ public class BlueprintUISound : BlueprintScriptableObject
 	}
 
 	[Serializable]
+	public class UISoundTwitchDrops
+	{
+		public UISound ServoSkullTwitchDropsHover;
+
+		public UISound ServoSkullTwitchDropsClick;
+	}
+
+	[Serializable]
 	public class UISoundConsoleHints
 	{
 		public UISound ConsoleHintClick;
@@ -575,6 +583,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundEncyclopedia Encyclopedia;
 
 	public UISoundButtons Buttons;
+
+	public UISoundTwitchDrops TwitchDrops;
 
 	public UISoundConsoleHints ConsoleHints;
 

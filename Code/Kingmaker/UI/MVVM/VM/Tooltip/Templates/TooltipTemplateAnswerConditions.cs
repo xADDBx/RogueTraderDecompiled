@@ -54,7 +54,7 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 			{
 				Operation.Or => UIStrings.Instance.Dialog.OperationOrConditionDesc, 
 				Operation.And => UIStrings.Instance.Dialog.OperationAndConditionDesc, 
-				_ => "", 
+				_ => string.Empty, 
 			};
 			result.Add(new TooltipBrickText(text));
 		}
@@ -94,7 +94,7 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 	{
 		result = new List<ITooltipBrick>();
 		IEnumerable<Requirement> requirements = m_BlueprintAnswer.GetRequirements();
-		if (!requirements.Any())
+		if (requirements == null || !requirements.Any())
 		{
 			return;
 		}
@@ -124,7 +124,7 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 			{
 				TooltipBrickIconStatValueType type2 = (item.Check() ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
 				List<ITooltipBrick> obj2 = result;
-				string name2 = requirement.Name;
+				string name2 = ((!string.IsNullOrWhiteSpace(requirement.Name)) ? requirement.Name : requirement.Description);
 				string countText2 = requirement.CountText;
 				Sprite icon2 = requirement.Icon;
 				Color? iconColor = requirement.IconColor;

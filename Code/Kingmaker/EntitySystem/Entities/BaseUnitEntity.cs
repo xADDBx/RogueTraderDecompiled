@@ -358,7 +358,7 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 
 	public override bool CanBeAttackedDirectly => true;
 
-	public override bool IsPreviewUnit => GetOptional<PartPreviewUnit>() != null;
+	public override bool IsPreview => GetOptional<PartPreviewUnit>() != null;
 
 	public bool HasAssassinCareer
 	{
@@ -761,7 +761,7 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 
 	protected override void DisposeImplementation()
 	{
-		bool isPreviewUnit = IsPreviewUnit;
+		bool isPreviewUnit = base.IsPreviewUnit;
 		using (ContextData<DisableStatefulRandomContext>.RequestIf(isPreviewUnit))
 		{
 			using (ContextData<UnitHelper.DoNotCreateItems>.RequestIf(isPreviewUnit))

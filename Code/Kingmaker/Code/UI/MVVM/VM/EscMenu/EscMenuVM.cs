@@ -38,12 +38,15 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 
 	public bool IsFormationAllowed { get; private set; }
 
+	public bool IsModsAllowed { get; private set; }
+
 	public EscMenuVM(Action closeAction)
 	{
 		IsInSpace.Value = Game.Instance.IsModeActive(GameModeType.SpaceCombat) || Game.Instance.IsModeActive(GameModeType.StarSystem) || Game.Instance.IsModeActive(GameModeType.GlobalMap);
 		IsInCutscene.Value = Game.Instance.IsModeActive(GameModeType.Cutscene);
 		IsOptionsAllowed = !IsInCutscene.Value;
 		IsFormationAllowed = !IsInCutscene.Value && !Game.Instance.IsModeActive(GameModeType.Dialog);
+		IsModsAllowed = !IsInCutscene.Value;
 		m_CloseAction = closeAction;
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{

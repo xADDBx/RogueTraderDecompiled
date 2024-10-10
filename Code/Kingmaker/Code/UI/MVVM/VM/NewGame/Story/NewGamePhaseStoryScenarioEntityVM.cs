@@ -8,6 +8,7 @@ using Kingmaker.DLC;
 using Kingmaker.Localization;
 using Owlcat.Runtime.UI.SelectionGroup;
 using UniRx;
+using UnityEngine.Pool;
 
 namespace Kingmaker.Code.UI.MVVM.VM.NewGame.Story;
 
@@ -53,7 +54,7 @@ public class NewGamePhaseStoryScenarioEntityVM : SelectionGroupEntityVM
 		m_CampaignReference = campaign.ToReference<BlueprintCampaignReference>();
 		m_SetStory = setStory;
 		IntegralDlcVms = new List<NewGamePhaseStoryScenarioEntityIntegralDlcVM>();
-		foreach (BlueprintDlc item in campaign.AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideDlc))
+		foreach (BlueprintDlc item in campaign.AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc))
 		{
 			IntegralDlcVms.Add(new NewGamePhaseStoryScenarioEntityIntegralDlcVM(campaign, item));
 		}
@@ -75,11 +76,42 @@ public class NewGamePhaseStoryScenarioEntityVM : SelectionGroupEntityVM
 
 	public void SelectMe()
 	{
+		UpdateDlcSelectionStatus();
 		DoSelectMe();
 	}
 
 	protected override void DoSelectMe()
 	{
 		m_SetStory?.Invoke();
+	}
+
+	private void UpdateDlcSelectionStatus()
+	{
+		if (m_CampaignReference.IsEmpty())
+		{
+			return;
+		}
+		HashSet<BlueprintDlc> hashSet = CollectionPool<HashSet<BlueprintDlc>, BlueprintDlc>.Get();
+		foreach (BlueprintDlc item in Game.Instance.Player.GetStartNewGameAdditionalContentDlc())
+		{
+			hashSet.Add(item);
+		}
+		foreach (BlueprintDlc item2 in m_CampaignReference.Get().AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc))
+		{
+			if (!hashSet.Contains(item2))
+			{
+				Game.Instance.Player.UpdateAdditionalContentDlcStatus(item2, status: true);
+			}
+			else
+			{
+				hashSet.Remove(item2);
+			}
+		}
+		foreach (BlueprintDlc item3 in hashSet)
+		{
+			Game.Instance.Player.RemoveAdditionalContentDlc(item3);
+		}
+		hashSet.Clear();
+		CollectionPool<HashSet<BlueprintDlc>, BlueprintDlc>.Release(hashSet);
 	}
 }

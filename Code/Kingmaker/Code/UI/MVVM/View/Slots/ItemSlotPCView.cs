@@ -113,6 +113,11 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 		UISounds.Instance.SetHoverSound(m_MainButton, soundType);
 	}
 
+	public void SetMainButtonClickSound(UISounds.ButtonSoundsEnum soundType)
+	{
+		UISounds.Instance.SetClickSound(m_MainButton, soundType);
+	}
+
 	private new void UpdateSlotLayer()
 	{
 		if (m_MainButton.MultiLayerNames != null)

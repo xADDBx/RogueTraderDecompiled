@@ -15,7 +15,7 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Cargo;
 using Kingmaker.Cheats;
-using Kingmaker.Code.UI.MVVM.View.LoadingScreen;
+using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.Clicks;
@@ -46,6 +46,7 @@ using Kingmaker.Settings;
 using Kingmaker.Settings.Graphics;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.Tutorial;
+using Kingmaker.Twitch;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.VM.NetLobby;
 using Kingmaker.UnitLogic;
@@ -1809,6 +1810,18 @@ public static class AllCheats
 			}
 		}, "string"),
 		new CheatMethodInfoInternal(new Action(TutorialSystem.UnBanAll), "void UnBanAll()", "tutorial_unban", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(TwitchDropsTest.TestLinked), "void TestLinked()", "twitch_check_linked", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(TwitchDropsTest.TestGetDrops), "void TestGetDrops()", "twitch_get_drops", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(TwitchDropsTest.TestOpenLinkpage), "void TestOpenLinkpage()", "twitch_open_link_page", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(TwitchDropsTest.SetFakeGameUid), "void SetFakeGameUid(string fakeUid = null)", "twitch_set_fake_uid", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "fakeUid",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Func<bool>(InputLog.LogInput), "bool LogInput()", "log_key_input", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "bool"),
 		new CheatMethodInfoInternal(new Action<float>(InputLog.LogCurrentInput), "void LogCurrentInput(float delay = 5)", "log_current_input_state", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
@@ -1819,8 +1832,8 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action(LoadingScreenBaseView.ClearCanSwitchDlcAfterPurchasePrefs), "void ClearCanSwitchDlcAfterPurchasePrefs()", "clear_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(LoadingScreenBaseView.SetCanSwitchDlcAfterPurchasePrefs), "void SetCanSwitchDlcAfterPurchasePrefs()", "set_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CommonVM.ClearCanSwitchDlcAfterPurchasePrefs), "void ClearCanSwitchDlcAfterPurchasePrefs()", "clear_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CommonVM.SetCanSwitchDlcAfterPurchasePrefs), "void SetCanSwitchDlcAfterPurchasePrefs()", "set_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(FirstLaunchSettingsVM.ClearFirstLaunchPrefs), "void ClearFirstLaunchPrefs()", "clear_first_launch", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(FirstLaunchSettingsVM.SetFirstLaunchPrefs), "void SetFirstLaunchPrefs()", "set_first_launch", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(NetLobbyVM.ClearFirstLaunchPrefs), "void ClearFirstLaunchPrefs()", "clear_net_lobby_tutorial", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),

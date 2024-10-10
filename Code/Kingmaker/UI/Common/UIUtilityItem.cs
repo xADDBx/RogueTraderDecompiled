@@ -591,7 +591,7 @@ public static class UIUtilityItem
 		{
 			return string.Empty;
 		}
-		bool flag = item.Blueprint.GetComponents<AddFactToEquipmentWielder>()?.Any((AddFactToEquipmentWielder c) => c?.Fact.GetComponent<UIPropertiesComponent>() != null) ?? false;
+		bool flag = item.Blueprint.GetComponents<AddFactToEquipmentWielder>().Any((AddFactToEquipmentWielder c) => c?.Fact.GetComponent<UIPropertiesComponent>() != null);
 		if (item.Owner != null || !flag)
 		{
 			return UIUtilityTexts.UpdateDescriptionWithUIProperties(item.Description, item.Owner);

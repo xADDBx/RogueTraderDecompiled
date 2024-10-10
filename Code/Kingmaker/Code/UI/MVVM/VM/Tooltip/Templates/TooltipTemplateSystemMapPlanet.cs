@@ -239,8 +239,8 @@ public class TooltipTemplateSystemMapPlanet : TooltipBaseTemplate
 		bool flag;
 		if (m_BlueprintPlanet != null && m_BlueprintStarSystemMap != null)
 		{
-			IEnumerable<BasePointOfInterestComponent> components = m_BlueprintPlanet.GetComponents<BasePointOfInterestComponent>();
-			if (components == null)
+			BlueprintComponentsEnumerator<BasePointOfInterestComponent> components = m_BlueprintPlanet.GetComponents<BasePointOfInterestComponent>();
+			if (components.Empty())
 			{
 				return;
 			}

@@ -92,7 +92,7 @@ public class AbilityCollection : MechanicEntityFactsCollection<Ability>
 	[CanBeNull]
 	public Ability GetAbilityWithComponent<T>() where T : BlueprintComponent
 	{
-		return base.RawFacts.FirstItem((Ability a) => a.Blueprint.GetComponents<T>() != null);
+		return base.RawFacts.FirstItem((Ability a) => a.Blueprint.GetComponents<T>().Any());
 	}
 
 	public void OnCombatEnd()

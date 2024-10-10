@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
-public class RuleCalculateScatterShotHitDirectionProbability : RulebookEvent
+public class RuleCalculateScatterShotHitDirectionProbability : RulebookEvent, IRulebookHasNoTarget
 {
 	public readonly ValueModifiersManager EffectiveBSModifiers = new ValueModifiersManager();
 
@@ -32,6 +32,17 @@ public class RuleCalculateScatterShotHitDirectionProbability : RulebookEvent
 	public int ResultMainLineNear => ResultMainLine + ResultScatterNear;
 
 	private int EffectiveBS { get; set; }
+
+	public bool HasNoTarget
+	{
+		get
+		{
+			return true;
+		}
+		set
+		{
+		}
+	}
 
 	public RuleCalculateScatterShotHitDirectionProbability([NotNull] MechanicEntity initiator, AbilityData ability, int shotIndex)
 		: base(initiator)

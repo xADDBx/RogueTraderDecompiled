@@ -12,7 +12,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Code.UI.MVVM.View.Overtips.MapObject;
 
-public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapObjectSimpleView, TOvertipMapObjectInteractionView, TOvertipDestructibleObjectView> : ViewBase<MapObjectOvertipsVM> where TOvertipTransitionView : OvertipTransitionView where TOvertipMapObjectSimpleView : OvertipMapObjectSimpleView where TOvertipMapObjectInteractionView : OvertipMapObjectInteractionView where TOvertipDestructibleObjectView : OvertipDestructibleObjectView
+public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapObjectSimpleView, TOvertipMapObjectInteractionView, TOvertipDestructibleObjectView, TOvertipMapObjectTwitchDropsView> : ViewBase<MapObjectOvertipsVM> where TOvertipTransitionView : OvertipTransitionView where TOvertipMapObjectSimpleView : OvertipMapObjectSimpleView where TOvertipMapObjectInteractionView : OvertipMapObjectInteractionView where TOvertipDestructibleObjectView : OvertipDestructibleObjectView where TOvertipMapObjectTwitchDropsView : OvertipMapObjectTwitchDropsView
 {
 	[SerializeField]
 	private RectTransform m_TargetContainer;
@@ -32,6 +32,9 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 	[SerializeField]
 	private TOvertipDestructibleObjectView m_OvertipDestructibleObjectView;
 
+	[SerializeField]
+	private TOvertipMapObjectTwitchDropsView m_OvertipMapObjectTwitchDropsView;
+
 	private Queue<MonoBehaviour> m_FreeTransitionOvertips = new Queue<MonoBehaviour>();
 
 	private Queue<MonoBehaviour> m_FreeMapObjectSimpleOvertips = new Queue<MonoBehaviour>();
@@ -39,6 +42,8 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 	private Queue<MonoBehaviour> m_FreeMapObjectInteractionOvertips = new Queue<MonoBehaviour>();
 
 	private Queue<MonoBehaviour> m_FreeDestructibleObjectOvertips = new Queue<MonoBehaviour>();
+
+	private Queue<MonoBehaviour> m_FreeMapObjectTwitchDropsOvertips = new Queue<MonoBehaviour>();
 
 	private Dictionary<BaseOvertipMapObjectVM, MonoBehaviour> m_ActiveOvertips = new Dictionary<BaseOvertipMapObjectVM, MonoBehaviour>();
 
@@ -232,8 +237,8 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 
 	private void AddMapObject(OvertipMapObjectVM mapObjectVM)
 	{
-		Queue<MonoBehaviour> queue = (mapObjectVM.HasInteractionsWithOvertip ? m_FreeMapObjectInteractionOvertips : m_FreeMapObjectSimpleOvertips);
-		BaseOvertipMapObjectView prefab = (mapObjectVM.HasInteractionsWithOvertip ? ((BaseOvertipMapObjectView)m_OvertipMapObjectInteractionView) : ((BaseOvertipMapObjectView)m_OvertipMapObjectSimpleView));
+		Queue<MonoBehaviour> queue = ((!mapObjectVM.HasInteractionsWithOvertip) ? m_FreeMapObjectSimpleOvertips : (mapObjectVM.IsTwitchDrops ? m_FreeMapObjectTwitchDropsOvertips : m_FreeMapObjectInteractionOvertips));
+		BaseOvertipMapObjectView prefab = ((!mapObjectVM.HasInteractionsWithOvertip) ? m_OvertipMapObjectSimpleView : (mapObjectVM.IsTwitchDrops ? ((BaseOvertipMapObjectView)m_OvertipMapObjectTwitchDropsView) : ((BaseOvertipMapObjectView)m_OvertipMapObjectInteractionView)));
 		BaseOvertipMapObjectView widget = GetWidget(queue, prefab);
 		widget.Bind(mapObjectVM);
 		m_ActiveOvertips.Add(mapObjectVM, widget);
@@ -268,23 +273,42 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 
 	private void FreeOvertip(MonoBehaviour view)
 	{
-		if (view is TOvertipTransitionView val)
+		if (!(view is TOvertipTransitionView val))
+		{
+			if (!(view is TOvertipMapObjectSimpleView val2))
+			{
+				if (!(view is TOvertipMapObjectInteractionView val3))
+				{
+					if (!(view is TOvertipDestructibleObjectView val4))
+					{
+						if (view is TOvertipMapObjectTwitchDropsView val5)
+						{
+							val5.Unbind();
+							m_FreeMapObjectTwitchDropsOvertips.Enqueue(view);
+						}
+					}
+					else
+					{
+						val4.Unbind();
+						m_FreeDestructibleObjectOvertips.Enqueue(view);
+					}
+				}
+				else
+				{
+					val3.Unbind();
+					m_FreeMapObjectInteractionOvertips.Enqueue(view);
+				}
+			}
+			else
+			{
+				val2.Unbind();
+				m_FreeMapObjectSimpleOvertips.Enqueue(view);
+			}
+		}
+		else
 		{
 			val.Unbind();
+			m_FreeTransitionOvertips.Enqueue(view);
 		}
-		else if (view is TOvertipMapObjectSimpleView val2)
-		{
-			val2.Unbind();
-		}
-		else if (view is TOvertipMapObjectInteractionView val3)
-		{
-			val3.Unbind();
-		}
-		else if (view is TOvertipDestructibleObjectView val4)
-		{
-			val4.Unbind();
-		}
-		Queue<MonoBehaviour> queue = ((view is TOvertipTransitionView) ? m_FreeTransitionOvertips : ((view is TOvertipMapObjectSimpleView) ? m_FreeMapObjectSimpleOvertips : ((view is TOvertipMapObjectInteractionView) ? m_FreeMapObjectInteractionOvertips : ((!(view is TOvertipDestructibleObjectView)) ? null : m_FreeDestructibleObjectOvertips))));
-		queue.Enqueue(view);
 	}
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.BugReport;
@@ -23,6 +25,7 @@ using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.Scenes;
@@ -35,6 +38,8 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Replay;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.SettingsUI;
@@ -55,7 +60,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Common;
 
-public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IDialogMessageBoxUIHandler, ICounterWindowUIHandler, IContextMenuHandler, ISaveLoadUIHandler, IUILoadService, ISettingsUIHandler, IAreaHandler, IBugReportUIHandler, IFullScreenUIHandler, INetLobbyRequest, INetRolesRequest, INetInviteHandler, INetLobbyPlayersHandler, IEndGameTitlesUIHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler, IDlcManagerUIHandler
+public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IDialogMessageBoxUIHandler, ICounterWindowUIHandler, IContextMenuHandler, ISaveLoadUIHandler, IUILoadService, ISettingsUIHandler, IAreaHandler, IBugReportUIHandler, IFullScreenUIHandler, INetLobbyRequest, INetRolesRequest, INetInviteHandler, INetLobbyPlayersHandler, IEndGameTitlesUIHandler, IAdditiveAreaSwitchHandler, ITurnBasedModeHandler, ITurnBasedModeStartHandler, ILootInteractionHandler, ISubscriber<IBaseUnitEntity>, IVendorUIHandler, ISubscriber<IMechanicEntity>, IMultiEntranceHandler, IDlcManagerUIHandler, IWarningNotificationUIHandler
 {
 	public readonly UIVisibilityVM UIVisibilityVM;
 
@@ -103,7 +108,11 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	private bool m_EnterGameStarted;
 
+	private const string CAN_SWITCH_DLC_AFTER_PURCHASE_PREF_KEY = "first_open_can_switch_dlc_after_purchase";
+
 	public TooltipsDataCache TooltipsDataCache => TooltipContextVM?.TooltipsDataCache;
+
+	public static bool CanSwitchDlcAfterPurchaseShown => PlayerPrefs.GetInt("first_open_can_switch_dlc_after_purchase", 0) == 1;
 
 	public CommonVM()
 	{
@@ -542,5 +551,60 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	public void HandleMultiEntrance(BlueprintMultiEntrance multiEntrance)
 	{
 		ForceDisposeAllFullscreen();
+	}
+
+	public void HandleWarning(WarningNotificationType warningType, bool addToLog = true, WarningNotificationFormat warningFormat = WarningNotificationFormat.Common, bool withSound = true)
+	{
+		if (warningType == WarningNotificationType.GameLoaded)
+		{
+			ShowCanSwitchDlcAfterPurchase();
+		}
+	}
+
+	public void HandleWarning(string text, bool addToLog = true, WarningNotificationFormat warningFormat = WarningNotificationFormat.Common, bool withSound = true)
+	{
+	}
+
+	private void ShowCanSwitchDlcAfterPurchase()
+	{
+		if (PhotonManager.Lobby.IsActive)
+		{
+			return;
+		}
+		List<BlueprintDlc> list = (from d in Game.Instance?.Player?.GetAvailableAdditionalContentDlcForCurrentCampaign()
+			select d as BlueprintDlc into dlc
+			where dlc != null && dlc.DlcType == DlcTypeEnum.AdditionalContentDlc
+			select dlc).ToList();
+		if (CanSwitchDlcAfterPurchaseShown || list == null || list.Count <= 0 || list.All((BlueprintDlc dlc) => dlc.IsEnabled))
+		{
+			return;
+		}
+		EventBus.RaiseEvent(delegate(IDialogMessageBoxUIHandler w)
+		{
+			w.HandleOpen(UIStrings.Instance.DlcManager.NewDlcAfterLoadingMessageBoxHint, DialogMessageBoxBase.BoxType.Checkbox, delegate(DialogMessageBoxBase.BoxButton btn)
+			{
+				if (btn == DialogMessageBoxBase.BoxButton.Yes)
+				{
+					EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
+					{
+						h.HandleOpenDlcManager(inGame: true);
+					});
+				}
+			}, null, UIStrings.Instance.SettingsUI.DialogOk, UIStrings.Instance.SettingsUI.DialogCancel, null, null, null, 0, uint.MaxValue, null, null, SetCanSwitchDlcAfterPurchasePrefs);
+		});
+	}
+
+	[Cheat(Name = "clear_can_switch_dlc_after_purchase")]
+	public static void ClearCanSwitchDlcAfterPurchasePrefs()
+	{
+		PlayerPrefs.SetInt("first_open_can_switch_dlc_after_purchase", 0);
+		PlayerPrefs.Save();
+	}
+
+	[Cheat(Name = "set_can_switch_dlc_after_purchase")]
+	public static void SetCanSwitchDlcAfterPurchasePrefs()
+	{
+		PlayerPrefs.SetInt("first_open_can_switch_dlc_after_purchase", 1);
+		PlayerPrefs.Save();
 	}
 }

@@ -38,7 +38,7 @@ public class InteractionBarkPart : InteractionPart<InteractionBarkSettings>, IHa
 		{
 			return;
 		}
-		BarkPlayer.Bark(base.Settings.ShowOnUser ? ((MechanicEntity)user) : ((MechanicEntity)base.Owner), base.Settings.Bark.String, -1f, playVoiceOver: false, user);
+		BarkPlayer.Bark(base.Settings.ShowOnUser ? ((MechanicEntity)user) : ((MechanicEntity)base.Owner), base.Settings.Bark.String, -1f, base.Settings.BarkPlayVoiceOver, user);
 		ActionsHolder actionsHolder = base.Settings.BarkActions?.Get();
 		if (actionsHolder == null || !actionsHolder.Actions.HasActions || (base.Settings.RunActionsOnce && base.Settings.ActionsRan))
 		{

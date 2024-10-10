@@ -175,7 +175,7 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 
 	public virtual bool LootViewed => false;
 
-	public virtual bool IsPreviewUnit => false;
+	public bool IsPreviewUnit => IsPreview;
 
 	public virtual bool AreHandsBusyWithAnimation => false;
 

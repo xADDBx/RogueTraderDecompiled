@@ -37,7 +37,7 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	public readonly OvertipTorpedoVM OvertipTorpedoVM;
 
-	public float? DeathDelay;
+	private float? m_DeathDelay;
 
 	private bool m_UnitScanned;
 
@@ -62,6 +62,18 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 	public ReactiveProperty<bool> IsBarkActive => BarkBlockVM?.IsBarkActive;
 
 	public bool ForceOnScreen => IsBarkActive.Value;
+
+	public float? DeathDelay
+	{
+		get
+		{
+			if (!IsBarkActive.Value)
+			{
+				return m_DeathDelay;
+			}
+			return m_DeathDelay * 2f;
+		}
+	}
 
 	public bool HideFromScreen
 	{
@@ -190,7 +202,7 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	public void SetDeathDelay(float val)
 	{
-		DeathDelay = val;
+		m_DeathDelay = val;
 	}
 
 	public void HandleSurroundingObjectsChanged(bool moreThenOne, bool isChosen)

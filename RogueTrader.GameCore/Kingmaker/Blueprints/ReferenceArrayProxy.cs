@@ -130,12 +130,36 @@ public readonly struct ReferenceArrayProxy<T> : IEnumerable<T>, IEnumerable wher
 
 	public bool HasReference(BlueprintScriptableObject bp)
 	{
-		return m_Array.Any((BlueprintReference<T> r) => r.Is(bp));
+		if (m_Array == null)
+		{
+			return false;
+		}
+		BlueprintReference<T>[] array = m_Array;
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (array[i].Is(bp))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public bool HasReference(BlueprintReference<T> r1)
 	{
-		return m_Array.Any((BlueprintReference<T> r) => r.Guid == r1.Guid);
+		if (m_Array == null)
+		{
+			return false;
+		}
+		BlueprintReference<T>[] array = m_Array;
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (array[i].Guid == r1.Guid)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public int IndexOf(T bp)

@@ -205,7 +205,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 	private void SetBackgroundVideo()
 	{
 		VideoClip clip = UIConfig.Instance.KeyVideoMainMenu.Load();
-		if (SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		if (SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original)
 		{
 			m_BackgroundVideo.SetClip(clip, SoundStateType.Video, prepareVideo: false, null, null);
 			return;
@@ -223,7 +223,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 
 	private void SetMonitorsArts()
 	{
-		if (SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		if (SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original)
 		{
 			m_DefaultTopMonitorArt.gameObject.SetActive(value: true);
 			m_DefaultBottomMonitorArt.gameObject.SetActive(value: true);

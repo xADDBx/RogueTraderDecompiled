@@ -16,6 +16,9 @@ public class InteractionBarkSettings : InteractionSettings
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
 	public SharedStringAsset Bark;
 
+	[Tooltip("Play Bark VoiceOver.")]
+	public bool BarkPlayVoiceOver;
+
 	[CanBeNull]
 	public ActionsReference BarkActions;
 

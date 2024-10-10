@@ -573,7 +573,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	private void CastAbilityFx(AbilitySpawnFxTime time)
 	{
-		IEnumerable<AbilitySpawnFx> components = Ability.Blueprint.GetComponents<AbilitySpawnFx>();
+		BlueprintComponentsEnumerator<AbilitySpawnFx> components = Ability.Blueprint.GetComponents<AbilitySpawnFx>();
 		AbilityExecutionContext context = new AbilityExecutionContext(Ability, base.Target, Ability.Caster.Position);
 		foreach (AbilitySpawnFx item in components)
 		{

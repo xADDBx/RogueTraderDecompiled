@@ -468,24 +468,9 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 		return default(BlueprintComponentAndRuntime<TComponent>);
 	}
 
-	public IEnumerable<TComponent> GetComponents<TComponent>([CanBeNull] Func<TComponent, bool> pred) where TComponent : BlueprintComponent
+	public EntityFactComponentsEnumerator<TComponent> GetComponents<TComponent>([CanBeNull] Func<TComponent, bool> pred) where TComponent : BlueprintComponent
 	{
-		foreach (EntityFactComponent component in m_Components)
-		{
-			BlueprintComponent sourceBlueprintComponent = component.SourceBlueprintComponent;
-			if (sourceBlueprintComponent is TComponent val && !sourceBlueprintComponent.Disabled && (pred == null || pred(val)))
-			{
-				yield return val;
-			}
-		}
-		BlueprintComponent[] componentsArray = Blueprint.ComponentsArray;
-		foreach (BlueprintComponent blueprintComponent in componentsArray)
-		{
-			if (!(blueprintComponent is IRuntimeEntityFactComponentProvider) && blueprintComponent is TComponent val2 && !blueprintComponent.Disabled && (pred == null || pred(val2)))
-			{
-				yield return val2;
-			}
-		}
+		return new EntityFactComponentsEnumerator<TComponent>(this, pred);
 	}
 
 	public void CallComponents<TComponent>(Action<TComponent> action) where TComponent : class

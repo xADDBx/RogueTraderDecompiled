@@ -13,7 +13,7 @@ using Kingmaker.Utility.DotNetExtensions;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject.Collections;
 
-public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCollectionVM<OvertipMapObjectVM>, IInteractionHighlightUIHandler, ISubscriber, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IUnitCommandEndHandler, IPartyCombatHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IItemsCollectionHandler, IEntityRevealedHandler, ISubscriber<IEntity>
+public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCollectionVM<OvertipMapObjectVM>, IInteractionHighlightUIHandler, ISubscriber, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, ITwitchDropsObjectUIHandler, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IUnitCommandEndHandler, IPartyCombatHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IItemsCollectionHandler, IEntityRevealedHandler, ISubscriber<IEntity>
 {
 	protected override void AddEntity(Entity entityData)
 	{
@@ -86,6 +86,11 @@ public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCol
 	public void HandleObjectInteract()
 	{
 		GetOvertip(GetRevealedMapObject())?.Interact();
+	}
+
+	public void HandleObjectInteractTwitchDrops()
+	{
+		GetOvertip(GetRevealedMapObject())?.InteractTwitchDrops();
 	}
 
 	public void HandleUnitCommandDidStart(AbstractUnitCommand command)

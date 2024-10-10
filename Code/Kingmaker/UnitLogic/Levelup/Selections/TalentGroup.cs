@@ -27,5 +27,7 @@ public enum TalentGroup
 	AP = 0x80000,
 	MP = 0x100000,
 	HealWound = 0x200000,
-	SpaceCombat = 0x400000
+	SpaceCombat = 0x400000,
+	Homeworld = 0x800000,
+	Occupation = 0x1000000
 }

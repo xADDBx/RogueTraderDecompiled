@@ -138,8 +138,8 @@ public class TooltipBrickPlanetInfoView : TooltipBaseBrickView<TooltipBrickPlane
 
 	private void SetPointsOfInterest()
 	{
-		IEnumerable<BasePointOfInterestComponent> components = base.ViewModel.BlueprintPlanet.GetComponents<BasePointOfInterestComponent>();
-		if (components == null)
+		BlueprintComponentsEnumerator<BasePointOfInterestComponent> components = base.ViewModel.BlueprintPlanet.GetComponents<BasePointOfInterestComponent>();
+		if (components.Empty())
 		{
 			m_PointsOfInterestPanel.SetActive(value: false);
 			return;

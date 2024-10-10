@@ -416,6 +416,9 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public readonly List<BlueprintDlcReward> ClaimedDlcRewards = new List<BlueprintDlcReward>();
 
 	[JsonProperty]
+	public readonly List<string> ClaimedTwitchDrops = new List<string>();
+
+	[JsonProperty]
 	public readonly HashSet<BlueprintCampaign> ImportedCampaigns = new HashSet<BlueprintCampaign>();
 
 	[JsonProperty]
@@ -1525,27 +1528,75 @@ public sealed class Player : Entity, IDisposable, IHashable
 
 	public void UpdateAdditionalContentDlcStatus(BlueprintDlc dlc, bool status)
 	{
-		if (!m_StartNewGameAdditionalContentDlcStatus.TryAdd(dlc, status))
+		if (dlc != null && !m_StartNewGameAdditionalContentDlcStatus.TryAdd(dlc, status))
 		{
 			m_StartNewGameAdditionalContentDlcStatus[dlc] = status;
 		}
-		if (!status)
+	}
+
+	public void SyncAdditionalContentDlcRewards()
+	{
+		foreach (KeyValuePair<BlueprintDlc, bool> item in m_StartNewGameAdditionalContentDlcStatus)
 		{
-			return;
-		}
-		foreach (IBlueprintDlcReward reward in dlc.Rewards)
-		{
-			BlueprintDlcRewardCampaignAdditionalContent bpAc = reward as BlueprintDlcRewardCampaignAdditionalContent;
-			if (bpAc != null && !UsedDlcRewards.Any((BlueprintDlcReward r) => r.AssetGuid == bpAc.AssetGuid))
+			foreach (IBlueprintDlcReward reward in item.Key.Rewards)
 			{
-				UsedDlcRewards.Add(bpAc);
+				BlueprintDlcRewardCampaignAdditionalContent bpAc = reward as BlueprintDlcRewardCampaignAdditionalContent;
+				if (bpAc == null)
+				{
+					continue;
+				}
+				if (item.Value)
+				{
+					if (!UsedDlcRewards.Any((BlueprintDlcReward r) => r.AssetGuid == bpAc.AssetGuid))
+					{
+						UsedDlcRewards.Add(bpAc);
+					}
+				}
+				else
+				{
+					UsedDlcRewards.RemoveAll((BlueprintDlcReward r) => r.AssetGuid == bpAc.AssetGuid);
+				}
 			}
 		}
 	}
 
 	public bool GetAdditionalContentDlcStatus(BlueprintDlc dlc)
 	{
-		return m_StartNewGameAdditionalContentDlcStatus.GetValueOrDefault(dlc, defaultValue: false);
+		if (dlc != null)
+		{
+			return m_StartNewGameAdditionalContentDlcStatus.GetValueOrDefault(dlc, defaultValue: false);
+		}
+		return false;
+	}
+
+	public bool HasAdditionalContentDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null)
+		{
+			return m_StartNewGameAdditionalContentDlcStatus.ContainsKey(dlc);
+		}
+		return false;
+	}
+
+	public void RemoveAdditionalContentDlc(BlueprintDlc dlc)
+	{
+		if (dlc != null)
+		{
+			m_StartNewGameAdditionalContentDlcStatus.Remove(dlc);
+		}
+	}
+
+	public void RemoveAllAdditionalContentDlc()
+	{
+		m_StartNewGameAdditionalContentDlcStatus.Clear();
+	}
+
+	public IEnumerable<BlueprintDlc> GetStartNewGameAdditionalContentDlc()
+	{
+		foreach (KeyValuePair<BlueprintDlc, bool> item in m_StartNewGameAdditionalContentDlcStatus)
+		{
+			yield return item.Key;
+		}
 	}
 
 	public IEnumerable<IBlueprintDlc> GetAvailableAdditionalContentDlcForCurrentCampaign()
@@ -1567,6 +1618,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 			{
 				UpdateAdditionalContentDlcStatus(dlc, status: true);
 			}
+			SyncAdditionalContentDlcRewards();
 			Game.Instance.MakeQuickSave(ApplySwitchOnDlcLoad);
 		}
 		catch (Exception ex)
@@ -1850,50 +1902,59 @@ public sealed class Player : Entity, IDisposable, IHashable
 				result.Append(ref val60);
 			}
 		}
+		List<string> claimedTwitchDrops = ClaimedTwitchDrops;
+		if (claimedTwitchDrops != null)
+		{
+			for (int num6 = 0; num6 < claimedTwitchDrops.Count; num6++)
+			{
+				Hash128 val61 = StringHasher.GetHash128(claimedTwitchDrops[num6]);
+				result.Append(ref val61);
+			}
+		}
 		HashSet<BlueprintCampaign> importedCampaigns = ImportedCampaigns;
 		if (importedCampaigns != null)
 		{
-			int num6 = 0;
+			int num7 = 0;
 			foreach (BlueprintCampaign item8 in importedCampaigns)
 			{
-				num6 ^= Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item8).GetHashCode();
+				num7 ^= Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item8).GetHashCode();
 			}
-			result.Append(num6);
+			result.Append(num7);
 		}
 		Dictionary<BlueprintCampaign, CampaignImportSettings> campaignsToOfferImport = CampaignsToOfferImport;
 		if (campaignsToOfferImport != null)
 		{
-			int val61 = 0;
+			int val62 = 0;
 			foreach (KeyValuePair<BlueprintCampaign, CampaignImportSettings> item9 in campaignsToOfferImport)
 			{
 				Hash128 hash5 = default(Hash128);
-				Hash128 val62 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item9.Key);
-				hash5.Append(ref val62);
-				Hash128 val63 = ClassHasher<CampaignImportSettings>.GetHash128(item9.Value);
+				Hash128 val63 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item9.Key);
 				hash5.Append(ref val63);
-				val61 ^= hash5.GetHashCode();
+				Hash128 val64 = ClassHasher<CampaignImportSettings>.GetHash128(item9.Value);
+				hash5.Append(ref val64);
+				val62 ^= hash5.GetHashCode();
 			}
-			result.Append(ref val61);
+			result.Append(ref val62);
 		}
 		HashSet<string> claimedAchievementRewards = m_ClaimedAchievementRewards;
 		if (claimedAchievementRewards != null)
 		{
-			int num7 = 0;
+			int num8 = 0;
 			foreach (string item10 in claimedAchievementRewards)
 			{
-				num7 ^= StringHasher.GetHash128(item10).GetHashCode();
+				num8 ^= StringHasher.GetHash128(item10).GetHashCode();
 			}
-			result.Append(num7);
+			result.Append(num8);
 		}
-		Hash128 val64 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
-		result.Append(ref val64);
+		Hash128 val65 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
+		result.Append(ref val65);
 		List<string> brokenEntities = BrokenEntities;
 		if (brokenEntities != null)
 		{
-			for (int num8 = 0; num8 < brokenEntities.Count; num8++)
+			for (int num9 = 0; num9 < brokenEntities.Count; num9++)
 			{
-				Hash128 val65 = StringHasher.GetHash128(brokenEntities[num8]);
-				result.Append(ref val65);
+				Hash128 val66 = StringHasher.GetHash128(brokenEntities[num9]);
+				result.Append(ref val66);
 			}
 		}
 		return result;

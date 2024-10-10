@@ -15,18 +15,6 @@ public abstract class DlcStore : BlueprintComponent, IDlcStore
 
 	public abstract bool IsSuitable { get; }
 
-	public virtual bool AllowsPurchase
-	{
-		get
-		{
-			if (base.OwnerBlueprint is BlueprintDlc blueprintDlc)
-			{
-				return !blueprintDlc.HideDlc;
-			}
-			return false;
-		}
-	}
-
 	public virtual bool AllowsInstalling => false;
 
 	public virtual bool AllowsDeleting => false;

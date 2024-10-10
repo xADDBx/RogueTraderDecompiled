@@ -303,6 +303,7 @@
     <Reference Include="Kingmaker.TextTools.Base">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.TextTools.Base.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>

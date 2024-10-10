@@ -202,6 +202,7 @@ public class HullSlots : IHashable
 		{
 			s.PostLoad();
 		});
+		RefreshWeaponSlots();
 	}
 
 	public void Dispose()

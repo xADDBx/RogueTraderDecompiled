@@ -9,7 +9,9 @@ using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Blueprints;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Mechanics;
 using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
@@ -33,11 +35,48 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 
 	protected override int GetBaseValue()
 	{
-		int num = (m_IsWeaponBased ? ((from p in base.PropertyContext.MechanicContext?.SourceAbilityContext?.Ability?.SourceItem?.Blueprint.GetComponents<StackingUnitProperty>()
-			where p.Property == Property
-			select p).Sum((StackingUnitProperty i) => GetValue(i, applyRanks: false))).GetValueOrDefault() : 0);
+		int num;
+		if (!m_IsWeaponBased)
+		{
+			num = 0;
+		}
+		else
+		{
+			MechanicsContext mechanicContext = base.PropertyContext.MechanicContext;
+			int? obj;
+			if (mechanicContext == null)
+			{
+				obj = null;
+			}
+			else
+			{
+				AbilityExecutionContext sourceAbilityContext = mechanicContext.SourceAbilityContext;
+				if (sourceAbilityContext == null)
+				{
+					obj = null;
+				}
+				else
+				{
+					AbilityData ability = sourceAbilityContext.Ability;
+					if ((object)ability == null)
+					{
+						obj = null;
+					}
+					else
+					{
+						ItemEntity sourceItem = ability.SourceItem;
+						obj = ((sourceItem != null) ? new int?((from p in sourceItem.Blueprint.GetComponents<StackingUnitProperty>()
+							where p.Property == Property
+							select p).Sum((StackingUnitProperty i) => GetValue(i, applyRanks: false))) : null);
+					}
+				}
+			}
+			int? num2 = obj;
+			num = num2.GetValueOrDefault();
+		}
+		int num3 = num;
 		EntityFactsManager facts = base.CurrentEntity.Facts;
-		int num2 = 0;
+		int num4 = 0;
 		if (facts != null)
 		{
 			foreach (EntityFact item in facts.List)
@@ -50,14 +89,14 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 				{
 					if (item2.Property == Property)
 					{
-						num2 += item2.GetValue(item.MaybeContext);
+						num4 += item2.GetValue(item.MaybeContext);
 					}
 				}
 				foreach (ContextStackingUnitProperty item3 in item.SelectComponents<ContextStackingUnitProperty>())
 				{
 					if (item3.Property == Property)
 					{
-						num2 += item3.PropertyValue.Calculate(item.MaybeContext);
+						num4 += item3.PropertyValue.Calculate(item.MaybeContext);
 					}
 				}
 			}
@@ -65,7 +104,7 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 		PartUnitBody bodyOptional = base.CurrentEntity.GetBodyOptional();
 		if (bodyOptional == null)
 		{
-			return num2;
+			return num4;
 		}
 		List<ItemSlot> list = ((!m_IsWeaponBased) ? new List<ItemSlot>
 		{
@@ -76,7 +115,7 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 			bodyOptional.Armor, bodyOptional.Belt, bodyOptional.Feet, bodyOptional.Gloves, bodyOptional.Glasses, bodyOptional.Head, bodyOptional.Neck, bodyOptional.Ring1, bodyOptional.Ring2, bodyOptional.Shirt,
 			bodyOptional.Shoulders, bodyOptional.Wrist
 		});
-		int num3 = 0;
+		int num5 = 0;
 		foreach (ItemSlot item4 in list)
 		{
 			BlueprintItem blueprintItem = item4.MaybeItem?.Blueprint;
@@ -88,11 +127,11 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 			{
 				if (component.Property == Property)
 				{
-					num3 += GetValue(component, applyRanks: false);
+					num5 += GetValue(component, applyRanks: false);
 				}
 			}
 		}
-		return num2 + num3 + num;
+		return num4 + num5 + num3;
 	}
 
 	private int GetValue(StackingUnitProperty p, bool applyRanks)

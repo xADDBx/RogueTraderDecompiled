@@ -183,18 +183,26 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 		}
 		BlueprintSelectionDoll selectionByType = CharGenUtility.GetSelectionByType<BlueprintSelectionDoll>(manager.Path);
 		BlueprintGenderSelection selectionByType2 = CharGenUtility.GetSelectionByType<BlueprintGenderSelection>(manager.Path);
-		if (selectionByType != null && selectionByType2 != null)
+		if (selectionByType == null || selectionByType2 == null)
 		{
-			m_SelectionStateDoll = manager.GetSelectionState(manager.Path, selectionByType, 0) as SelectionStateDoll;
-			m_SelectionStateGender = manager.GetSelectionState(manager.Path, selectionByType2, 0) as SelectionStateGender;
-			m_UpdateComponentsSubscription = new CompositeDisposable();
-			m_UpdateComponentsSubscription.Add(CharGenContext.Doll.GetReactiveProperty((DollState dollState) => dollState.Gender).Subscribe(delegate(Gender gender)
-			{
-				m_SelectionStateGender.SelectGender(gender);
-				UpdateComponents();
-			}));
-			PagesSelectionGroupRadioVM.TrySelectFirstValidEntity();
+			return;
 		}
+		m_SelectionStateDoll = manager.GetSelectionState(manager.Path, selectionByType, 0) as SelectionStateDoll;
+		m_SelectionStateGender = manager.GetSelectionState(manager.Path, selectionByType2, 0) as SelectionStateGender;
+		m_UpdateComponentsSubscription = new CompositeDisposable();
+		m_UpdateComponentsSubscription.Add(CharGenContext.Doll.GetReactiveProperty((DollState dollState) => dollState.Gender).Subscribe(delegate(Gender gender)
+		{
+			m_SelectionStateGender.SelectGender(gender);
+			UpdateComponents();
+		}));
+		m_UpdateComponentsSubscription.Add(CharGenContext.Doll.GetReactiveProperty((DollState dollState) => dollState.Portrait).Subscribe(delegate
+		{
+			if (CharGenContext.Doll.TrackPortrait)
+			{
+				UpdateComponents();
+			}
+		}));
+		PagesSelectionGroupRadioVM.TrySelectFirstValidEntity();
 	}
 
 	public void HandleDollStateUpdated(DollState dollState)

@@ -89,10 +89,13 @@ public class AbilityExecutionProcess : IDisposable
 		Context.ClearBlockedNodes();
 		if (IsStarted && !IsEnded)
 		{
-			EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessHandler>)delegate(IAbilityExecutionProcessHandler h)
+			if (Context.MaybeCaster != null)
 			{
-				h.HandleExecutionProcessEnd(Context);
-			}, isCheckRuntime: true);
+				EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessHandler>)delegate(IAbilityExecutionProcessHandler h)
+				{
+					h.HandleExecutionProcessEnd(Context);
+				}, isCheckRuntime: true);
+			}
 			Context.AbilityBlueprint.CallComponents(delegate(AbilityCustomLogic c)
 			{
 				c.Cleanup(Context);
@@ -132,7 +135,7 @@ public class AbilityExecutionProcess : IDisposable
 			h.HandleExecutionProcessStart(Context);
 		}, isCheckRuntime: true);
 		AbilityDeliverEffect component = Context.AbilityBlueprint.GetComponent<AbilityDeliverEffect>();
-		IEnumerable<AbilityApplyEffect> applyEffectComponents = Context.AbilityBlueprint.GetComponents<AbilityApplyEffect>();
+		BlueprintComponentsEnumerator<AbilityApplyEffect> applyEffectComponents = Context.AbilityBlueprint.GetComponents<AbilityApplyEffect>();
 		AbilitySelectTarget selectTargets = Context.AbilityBlueprint.GetComponent<AbilitySelectTarget>();
 		PrepareCast(Context);
 		SpawnFxs(Context, AbilitySpawnFxTime.OnStart);

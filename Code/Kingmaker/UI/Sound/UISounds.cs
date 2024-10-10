@@ -33,7 +33,8 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		LootCollectAllSound,
 		DoctrineNextSound,
 		PaperComponentSound,
-		AnalogSound
+		AnalogSound,
+		ServoSkullTwitchDrops
 	}
 
 	public static UISounds Instance => Services.GetInstance<UISounds>();
@@ -101,6 +102,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		case 7:
 			Play(Instance.Sounds.Buttons.AnalogButtonHover, isButton: true);
 			break;
+		case 8:
+			Play(Instance.Sounds.TwitchDrops.ServoSkullTwitchDropsHover, isButton: true);
+			break;
 		default:
 			LogChannel.Default.Warning("UI sound events in OwlcatButton don't supported in project", new object[0]);
 			break;
@@ -136,6 +140,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 			break;
 		case 7:
 			Play(Instance.Sounds.Buttons.AnalogButtonClick, isButton: true);
+			break;
+		case 8:
+			Play(Instance.Sounds.TwitchDrops.ServoSkullTwitchDropsClick, isButton: true);
 			break;
 		default:
 			LogChannel.Default.Warning("UI sound events in OwlcatButton don't supported in project", new object[0]);

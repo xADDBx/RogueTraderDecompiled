@@ -43,6 +43,20 @@ public class UIWeaponCategories
 
 	public LocalizedString WeaponFamilyChainSaw;
 
+	public LocalizedString WeaponClassificationSword;
+
+	public LocalizedString WeaponClassificationAxe;
+
+	public LocalizedString WeaponClassificationStaff;
+
+	public LocalizedString WeaponClassificationChainsaw;
+
+	public LocalizedString WeaponClassificationKnife;
+
+	public LocalizedString WeaponClassificationMaul;
+
+	public LocalizedString WeaponClassificationHammer;
+
 	public LocalizedString WeaponHoldingTypeOneHanded;
 
 	public LocalizedString WeaponHoldingTypeTwoHanded;
@@ -119,6 +133,31 @@ public class UIWeaponCategories
 			WeaponFamily.ChainSaw => WeaponFamilyChainSaw, 
 			_ => string.Empty, 
 		};
+	}
+
+	public string GetWeaponClassificationLabel(WeaponClassification classification)
+	{
+		switch (classification)
+		{
+		case WeaponClassification.Sword:
+			return WeaponClassificationSword;
+		case WeaponClassification.Axe:
+			return WeaponClassificationAxe;
+		case WeaponClassification.PsykerStaff:
+		case WeaponClassification.NavigatorStaff:
+			return WeaponClassificationStaff;
+		case WeaponClassification.Chainsaw:
+			return WeaponClassificationChainsaw;
+		case WeaponClassification.Knife:
+			return WeaponClassificationKnife;
+		case WeaponClassification.Maul:
+			return WeaponClassificationMaul;
+		case WeaponClassification.MaulOrHammer:
+		case WeaponClassification.Hammer:
+			return WeaponClassificationHammer;
+		default:
+			return string.Empty;
+		}
 	}
 
 	public string GetWeaponHoldingTypeLabel(WeaponHoldingType type)

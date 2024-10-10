@@ -28,8 +28,6 @@ public class UIGameMainSettings : IUISettingsSheet
 
 	public UISettingsEntityBool AcceleratedMove;
 
-	public UISettingsEntityDropdownMainMenuTheme MainMenuTheme;
-
 	public void LinkToSettings()
 	{
 		Localization.LinkSetting(SettingsRoot.Game.Main.Localization);
@@ -41,7 +39,6 @@ public class UIGameMainSettings : IUISettingsSheet
 		BloodOnCharacters.LinkSetting(SettingsRoot.Game.Main.BloodOnCharacters);
 		DismemberCharacters.LinkSetting(SettingsRoot.Game.Main.DismemberCharacters);
 		AcceleratedMove.LinkSetting(SettingsRoot.Game.Main.AcceleratedMove);
-		MainMenuTheme.LinkSetting(SettingsRoot.Game.Main.MainMenuTheme);
 	}
 
 	public void InitializeSettings()

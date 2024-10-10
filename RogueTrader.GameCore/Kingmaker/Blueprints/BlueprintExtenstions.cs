@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -66,23 +65,9 @@ public static class BlueprintExtenstions
 		return false;
 	}
 
-	public static IEnumerable<T> GetComponents<T>([CanBeNull] this BlueprintScriptableObject blueprint)
+	public static BlueprintComponentsEnumerator<T> GetComponents<T>([CanBeNull] this BlueprintScriptableObject blueprint)
 	{
-		if (blueprint == null)
-		{
-			yield break;
-		}
-		int i = 0;
-		while (i < blueprint.ComponentsArray.Length)
-		{
-			BlueprintComponent blueprintComponent = blueprint.ComponentsArray[i];
-			if (blueprintComponent is T)
-			{
-				yield return (T)(object)((blueprintComponent is T) ? blueprintComponent : null);
-			}
-			int num = i + 1;
-			i = num;
-		}
+		return new BlueprintComponentsEnumerator<T>(blueprint);
 	}
 
 	public static string NameSafe(this ScriptableObject obj)

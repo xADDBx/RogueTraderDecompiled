@@ -232,7 +232,7 @@ public class MusicStateHandler
 		if (state == MusicState.MainMenu)
 		{
 			BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().LastOrDefault();
-			text = ((SettingsRoot.Game.Main.MainMenuTheme.GetValue() == MainMenuTheme.Original || string.IsNullOrWhiteSpace(blueprintDlc?.MusicSetting?.Value)) ? string.Empty : blueprintDlc.MusicSetting.Value);
+			text = ((SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original || string.IsNullOrWhiteSpace(blueprintDlc?.MusicSetting?.Value)) ? string.Empty : blueprintDlc.MusicSetting.Value);
 		}
 		if (IsOverrideAvailable("MusicState", state == MusicState.MainMenu || state == MusicState.Credits))
 		{

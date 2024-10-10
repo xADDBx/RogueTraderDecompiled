@@ -41,16 +41,24 @@ public class AbilityStarshipCustomShipPathRange : AbilityRange, IShowAoEAffected
 			Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(starshipEntity);
 			Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
 			Dictionary<GraphNode, CustomPathNode> customPath = CustomPathProvider.GetCustomPath(starshipEntity, desiredPosition, currentUnitDirection);
-			Game.Instance.StarshipPathController.ShowCustomShipPath(customPath, DefaultMarker);
+			if (customPath != null)
+			{
+				Game.Instance.StarshipPathController.ShowCustomShipPath(customPath, DefaultMarker);
+			}
 		}
 	}
 
 	protected override void SetRangeToWorldPosition(Vector3 castPosition)
 	{
-		if (Ability.Caster is StarshipEntity starship)
+		if (!(Ability.Caster is StarshipEntity starship))
 		{
-			Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
-			List<CustomGridNodeBase> list = CustomPathProvider.GetCustomPath(starship, castPosition, currentUnitDirection).Keys.Select((GraphNode x) => x as CustomGridNodeBase).ToTempList();
+			return;
+		}
+		Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
+		Dictionary<GraphNode, CustomPathNode> customPath = CustomPathProvider.GetCustomPath(starship, castPosition, currentUnitDirection);
+		if (customPath != null)
+		{
+			List<CustomGridNodeBase> list = customPath.Keys.Select((GraphNode x) => x as CustomGridNodeBase).ToTempList();
 			OrientedPatternData pattern = new OrientedPatternData(list, list.FirstOrDefault());
 			NodeList nodes = Ability.Caster.GetOccupiedNodes(Ability.Caster.Position);
 			if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))

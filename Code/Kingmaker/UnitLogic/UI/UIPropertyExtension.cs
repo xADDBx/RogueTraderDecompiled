@@ -16,7 +16,7 @@ public static class UIPropertyExtension
 {
 	public static IEnumerable<UIProperty> GetUIProperties(this BlueprintMechanicEntityFact fact, [CanBeNull] MechanicEntity owner, [CanBeNull] MechanicsContext context, [CanBeNull] ItemEntity item)
 	{
-		IEnumerable<UIPropertySettings> enumerable = fact.GetComponents<UIPropertiesComponent>()?.SelectMany((UIPropertiesComponent i) => i.Properties);
+		IEnumerable<UIPropertySettings> enumerable = fact.GetComponents<UIPropertiesComponent>().SelectMany((UIPropertiesComponent i) => i.Properties);
 		if (enumerable == null)
 		{
 			yield break;

@@ -18,7 +18,8 @@ public class ContextConditionIsPreview : ContextCondition
 
 	protected override bool CheckCondition()
 	{
-		if (base.Target.Entity is BaseUnitEntity { IsPreviewUnit: not false })
+		MechanicEntity entity = base.Target.Entity;
+		if (entity != null && entity.IsPreview)
 		{
 			if (m_IsOnlyChargen)
 			{

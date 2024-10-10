@@ -376,8 +376,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	public bool IsLosDefinedByPattern => base.ComponentsArray.HasItem((BlueprintComponent i) => i is WarhammerAbilityAttackDelivery { IsScatterOrRangedPattern: not false } warhammerAbilityAttackDelivery && warhammerAbilityAttackDelivery.IsLosDefinedByPattern);
 
-	public bool HasUnrestrictedRangeForTargetLogic => this.GetComponents<AbilityUnrestrictedRangeForTarget>() != null;
-
 	public bool UseBestShootingPosition
 	{
 		get

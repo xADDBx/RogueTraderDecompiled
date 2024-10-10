@@ -93,6 +93,7 @@ public class DlcManagerTabDlcsConsoleView : DlcManagerTabDlcsBaseView
 			base.ViewModel.DeleteDlc();
 		}, 11, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought).And(base.ViewModel.DlcIsBoughtAndNotInstalled.Not()).And(base.ViewModel.DownloadingInProgress.Not())
 			.And(base.ViewModel.IsRealConsole)
+			.And(base.ViewModel.IsEditionDlc.Not())
 			.ToReactiveProperty())));
 		deleteDlcHint.SetLabel(UIStrings.Instance.DlcManager.DeleteDlc);
 		m_CustomUIVideoPlayerConsoleView.CreateInputImpl(inputLayer, hintsWidget, playPauseVideoHint, base.ViewModel.IsEnabled);

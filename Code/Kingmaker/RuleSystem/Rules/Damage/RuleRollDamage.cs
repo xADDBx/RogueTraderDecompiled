@@ -33,7 +33,9 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public int UIMinimumDamagePercent { get; private set; }
 
-	public bool ArmorIgnore { get; set; }
+	public bool IgnoreDeflection { get; set; }
+
+	public bool IgnoreArmourAbsorption { get; set; }
 
 	public RuleRollDamage([NotNull] IMechanicEntity initiator, [NotNull] IMechanicEntity target, [NotNull] DamageData damage)
 		: this((MechanicEntity)initiator, (MechanicEntity)target, damage)
@@ -44,7 +46,8 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		: base(initiator, target)
 	{
 		Damage = damage;
-		ArmorIgnore = false;
+		IgnoreDeflection = false;
+		IgnoreArmourAbsorption = false;
 		NullifyInformation = NullifyInformation.Create();
 	}
 
@@ -55,7 +58,7 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 			RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams((MechanicEntity)base.Initiator, (MechanicEntity)Target, base.Reason.Ability, (base.Reason.Rule as RulePerformAttack)?.RollPerformAttackRule, Damage).Trigger();
 			Damage = ruleCalculateDamage.ResultDamage;
 		}
-		Result = RollDamage(Damage, ArmorIgnore);
+		Result = RollDamage(Damage, IgnoreDeflection, IgnoreArmourAbsorption);
 		ResultOverpenetration = CalculateOverpenetration(Result.RolledValue);
 		int num = ((Result.Source.Type == DamageType.Direct) ? Result.FinalValue : 0);
 		ResultValue = Result.FinalValue;
@@ -72,15 +75,17 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		TryNullifyDamage();
 	}
 
-	public static DamageValue RollDamage(DamageData damage, bool armorIgnore = false)
+	public static DamageValue RollDamage(DamageData damage, bool ignoreDeflection = false, bool ignoreArmourAbsorption = false)
 	{
 		int num = (damage.CalculatedValue.HasValue ? damage.Modifiers.ApplyPctMulExtra(damage.CalculatedValue.Value) : RollWithoutArmorReduction(damage));
 		int val = ((damage.Overpenetrating && !damage.UnreducedOverpenetration) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
 		int num2 = ((!damage.Immune) ? Math.Max(0, val) : 0);
-		int val2 = (armorIgnore ? num2 : ((int)((float)(num2 - damage.Deflection.Value) * damage.AbsorptionFactorWithPenetration)));
-		int num3 = Math.Max(0, val2);
-		int reduction = Math.Max(0, num2 - num3);
-		return new DamageValue(damage, num3, num, reduction);
+		int num3 = ((!ignoreDeflection) ? damage.Deflection.Value : 0);
+		float num4 = (ignoreArmourAbsorption ? 1f : damage.AbsorptionFactorWithPenetration);
+		int val2 = (int)((float)(num2 - num3) * num4);
+		int num5 = Math.Max(0, val2);
+		int reduction = Math.Max(0, num2 - num5);
+		return new DamageValue(damage, num5, num, reduction);
 	}
 
 	private static int RollWithoutArmorReduction(DamageData damage)

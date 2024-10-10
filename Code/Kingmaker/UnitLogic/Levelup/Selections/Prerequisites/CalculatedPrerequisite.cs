@@ -140,8 +140,8 @@ public abstract class CalculatedPrerequisite
 	public static List<BlueprintFeature> CalculateRelyingFeatures(BlueprintCareerPath career, BlueprintFeature featureToAnalyze)
 	{
 		List<BlueprintFeature> list = new List<BlueprintFeature>();
-		IEnumerable<AddFeaturesToLevelUp> components = career.GetComponents<AddFeaturesToLevelUp>();
-		if (components == null || components.Empty())
+		BlueprintComponentsEnumerator<AddFeaturesToLevelUp> components = career.GetComponents<AddFeaturesToLevelUp>();
+		if (components.Empty())
 		{
 			return list;
 		}

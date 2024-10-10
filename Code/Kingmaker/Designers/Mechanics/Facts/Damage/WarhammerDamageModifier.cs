@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
@@ -7,6 +6,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -76,7 +76,7 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 				int num = PercentDamageModifier.Calculate(base.Context);
 				if (rule.MaybeTarget == base.Owner && base.Context.MaybeCaster != null)
 				{
-					IEnumerable<WarhammerMultiplyIncomingDamageBonus> components = base.Context.MaybeCaster.Facts.GetComponents<WarhammerMultiplyIncomingDamageBonus>();
+					EntityFactManagerComponentsEnumerator<WarhammerMultiplyIncomingDamageBonus> components = base.Context.MaybeCaster.Facts.GetComponents<WarhammerMultiplyIncomingDamageBonus>();
 					float num2 = (components.Any() ? (components.Sum((WarhammerMultiplyIncomingDamageBonus p) => p.PercentIncreaseMultiplier - 1f) + 1f) : 1f);
 					num = (int)((float)num * num2);
 				}

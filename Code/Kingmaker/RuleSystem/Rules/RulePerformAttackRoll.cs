@@ -298,7 +298,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 	{
 		if (unit.CanAct && unit.HasMechanicFeature(MechanicsFeatureType.RangedParry))
 		{
-			return base.ConcreteInitiator.Facts.GetComponents<WarhammerDeflectionTarget>().Any((WarhammerDeflectionTarget c) => c.Caster == unit);
+			return base.ConcreteInitiator.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == unit).Any();
 		}
 		return false;
 	}

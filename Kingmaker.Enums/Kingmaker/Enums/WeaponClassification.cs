@@ -12,5 +12,8 @@ public enum WeaponClassification
 	SniperRifle,
 	PsykerStaff,
 	NavigatorStaff,
-	Chainsaw
+	Chainsaw,
+	Knife,
+	Maul,
+	Hammer
 }

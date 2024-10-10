@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Code.UI.MVVM.View.Slots;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -56,5 +57,10 @@ public class ItemSlotConsoleView : ItemSlotBaseView, IConsoleNavigationEntity, I
 				m_MainButton.SetActiveLayer((base.ViewModel.ItemEntity == null) ? "Empty" : "Busy");
 			}
 		}
+	}
+
+	public void SetMainButtonHoverSound(UISounds.ButtonSoundsEnum soundType)
+	{
+		UISounds.Instance.SetHoverSound(m_MainButton, soundType);
 	}
 }

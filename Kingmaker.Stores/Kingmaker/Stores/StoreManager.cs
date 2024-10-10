@@ -243,57 +243,11 @@ public static class StoreManager
 		}
 	}
 
-	public static void MountDlc(IBlueprintDlc dlc)
-	{
-		Logger.Log($"mounting {dlc}");
-		IEnumerable<IDlcStore> dlcStores = dlc.GetDlcStores();
-		foreach (IDlcStore item in dlcStores)
-		{
-			if (item.IsSuitable && item.AllowsPurchase)
-			{
-				if (item.Mount())
-				{
-					UpdateDLCCache(dlc, dlcStores);
-				}
-				break;
-			}
-		}
-	}
-
-	public static void UpdateDLCStatus(IBlueprintDlc dlc, DLCStatus newStatus)
-	{
-		if (newStatus == null)
-		{
-			return;
-		}
-		IDLCStatus other = DLCCache.Get(dlc);
-		if (newStatus.Equals(other))
-		{
-			return;
-		}
-		DLCCache.OnDLCUpdate(dlc, newStatus);
-		if (!newStatus.Purchased || !newStatus.IsMounted)
-		{
-			return;
-		}
-		try
-		{
-			foreach (IBlueprintDlcReward reward in dlc.Rewards)
-			{
-				reward.RecheckAvailability();
-			}
-		}
-		catch (Exception ex)
-		{
-			Logger.Exception(ex);
-		}
-	}
-
 	public static IEnumerable<IBlueprintDlc> GetPurchasableDLCs()
 	{
 		foreach (IBlueprintDlc s_Dlc in s_Dlcs)
 		{
-			if (s_Dlc.GetDlcStores().TryFind((IDlcStore x) => x.IsSuitable && x.AllowsPurchase, out var _))
+			if (s_Dlc.GetDlcStores().TryFind((IDlcStore x) => x.IsSuitable, out var _))
 			{
 				yield return s_Dlc;
 			}

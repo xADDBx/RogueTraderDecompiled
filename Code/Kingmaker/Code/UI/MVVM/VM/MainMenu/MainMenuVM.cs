@@ -109,6 +109,7 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		UpdateSoundState();
 		void BackStep()
 		{
+			Game.Instance.Player.RemoveAllAdditionalContentDlc();
 			DisposeNewGame();
 			UpdateSoundState();
 		}

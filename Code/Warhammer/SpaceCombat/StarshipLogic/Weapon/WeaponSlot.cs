@@ -346,7 +346,10 @@ public class WeaponSlot : ItemSlot, IHashable
 		{
 			foreach (ItemEntityStarshipWeapon arsenalWeapon in ArsenalWeapons)
 			{
-				starshipEntity.Inventory.Remove(arsenalWeapon);
+				if (starshipEntity.Inventory.Contains(arsenalWeapon))
+				{
+					starshipEntity.Inventory.Remove(arsenalWeapon);
+				}
 				arsenalWeapon.HoldingSlot = null;
 			}
 		}

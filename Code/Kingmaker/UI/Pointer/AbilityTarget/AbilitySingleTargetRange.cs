@@ -78,7 +78,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			}
 			UnitPredictionManager.Instance.Or(null)?.SetAbilityArea(gridAdjustedPosition, actualCastPosition, patternData);
 			m_AbilityTargets.Clear();
-			if (target != null)
+			if (target != null && !Ability.IsVariable)
 			{
 				Ability.GatherAffectedTargetsData(patternData, castPosition, target, in m_AbilityTargets);
 			}
@@ -111,8 +111,9 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		PartAbilityPredictionForAreaEffect partAbilityPredictionForAreaEffect = Ability.TryGetPatternDataFromAreaEffect();
 		if (partAbilityPredictionForAreaEffect != null)
 		{
-			ignoreRangesByDefault = true;
-			return partAbilityPredictionForAreaEffect.GetAreaEffectPatternNotFromPatternCenter(Ability, target ?? ((TargetWrapper)_cachedTargetPosition), overrideCasterNode) ?? OrientedPatternData.Empty;
+			OrientedPatternData? areaEffectPatternNotFromPatternCenter = partAbilityPredictionForAreaEffect.GetAreaEffectPatternNotFromPatternCenter(Ability, target ?? ((TargetWrapper)_cachedTargetPosition), overrideCasterNode);
+			ignoreRangesByDefault = areaEffectPatternNotFromPatternCenter.HasValue;
+			return areaEffectPatternNotFromPatternCenter ?? OrientedPatternData.Empty;
 		}
 		return OrientedPatternData.Empty;
 	}

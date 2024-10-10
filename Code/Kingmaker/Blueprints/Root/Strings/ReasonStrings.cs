@@ -250,6 +250,14 @@ public class ReasonStrings : StringsContainer
 	public LocalizedString TooLowPostSkill;
 
 	[Header("DisconnectCause")]
+	public LocalizedString NoInternetConnection;
+
+	public LocalizedString ReceivedAllRewards;
+
+	public LocalizedString RedirectionToWeb;
+
+	public LocalizedString NoRewardsAvailable;
+
 	public LocalizedString ExceptionOnConnect;
 
 	public LocalizedString DnsExceptionOnConnect;

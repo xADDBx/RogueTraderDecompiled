@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
@@ -8,6 +9,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -26,11 +28,19 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 
 	private ContextMenuCollectionEntity m_ToCargoAuto = new ContextMenuCollectionEntity();
 
+	private UISounds.ButtonSoundsEnum m_ConfirmSoundClick = UISounds.ButtonSoundsEnum.NormalSound;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
 		m_ItemSlotConsoleView.Bind(base.ViewModel);
 		AddDisposable(base.ViewModel.ToCargoAutomaticallyChange.Subscribe(HandleToCargoAutomaticallyChanged));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_ItemSlotConsoleView.SetFocus(value: false);
 	}
 
 	protected override void SetupContextMenu()
@@ -85,7 +95,11 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		{
 			if (base.ViewModel.HasItem)
 			{
-				return base.ViewModel.IsEquipPossible;
+				if (!base.ViewModel.IsEquipPossible)
+				{
+					return m_ConfirmSoundClick == UISounds.ButtonSoundsEnum.ServoSkullTwitchDrops;
+				}
+				return true;
 			}
 			return false;
 		}
@@ -94,6 +108,7 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 
 	public void OnConfirmClick()
 	{
+		UISounds.Instance.PlayButtonClickSound((int)m_ConfirmSoundClick);
 		if (RootUIContext.Instance.IsInventoryShow || RootUIContext.Instance.IsShipInventoryShown)
 		{
 			m_ItemSlotConsoleView.SetWaitingForSlotState(state: true);
@@ -123,17 +138,25 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		m_ItemSlotConsoleView.SetWaitingForSlotState(state: false);
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		m_ItemSlotConsoleView.SetFocus(value: false);
-	}
-
 	protected void HandleToCargoAutomaticallyChanged()
 	{
 		if (base.ViewModel.Item.Value != null)
 		{
 			m_ToCargoAuto.SetNewIcon(base.ViewModel.Item.Value.ToCargoAutomatically ? BlueprintRoot.Instance.UIConfig.UIIcons.Check : BlueprintRoot.Instance.UIConfig.UIIcons.NotCheck);
+		}
+	}
+
+	protected override void CheckChangeSoundsImpl(SetServoSkullItemClickAndHoverSound component)
+	{
+		if (component == null)
+		{
+			m_ConfirmSoundClick = UISounds.ButtonSoundsEnum.NormalSound;
+			m_ItemSlotConsoleView.SetMainButtonHoverSound(UISounds.ButtonSoundsEnum.NormalSound);
+		}
+		else
+		{
+			m_ConfirmSoundClick = (component.SetClickSound ? UISounds.ButtonSoundsEnum.ServoSkullTwitchDrops : UISounds.ButtonSoundsEnum.NormalSound);
+			m_ItemSlotConsoleView.SetMainButtonHoverSound(component.SetHoverSound ? UISounds.ButtonSoundsEnum.ServoSkullTwitchDrops : UISounds.ButtonSoundsEnum.NormalSound);
 		}
 	}
 }

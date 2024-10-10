@@ -1,8 +1,10 @@
 using DG.Tweening;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
@@ -35,12 +37,23 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 		AddDisposable(base.ViewModel.NeedBlink.Subscribe(Blink));
 		AddDisposable(base.ViewModel.UsableCount.Subscribe(delegate(int value)
 		{
-			m_UsableStacksContainer.Or(null)?.SetActive(value > 0);
+			ObjectExtensions.Or(m_UsableStacksContainer, null)?.SetActive(value > 0);
 			if ((bool)m_UsableStacksCount)
 			{
 				m_UsableStacksCount.text = value.ToString();
 			}
 		}));
+		AddDisposable(base.ViewModel.Item.Subscribe(CheckChangeSounds));
+	}
+
+	private void CheckChangeSounds(ItemEntity item)
+	{
+		SetServoSkullItemClickAndHoverSound component = item?.Blueprint?.GetComponent<SetServoSkullItemClickAndHoverSound>();
+		CheckChangeSoundsImpl(component);
+	}
+
+	protected virtual void CheckChangeSoundsImpl(SetServoSkullItemClickAndHoverSound component)
+	{
 	}
 
 	protected virtual void OnClick()

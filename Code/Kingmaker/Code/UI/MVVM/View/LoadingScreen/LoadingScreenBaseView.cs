@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Core.Cheats;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
@@ -11,8 +10,6 @@ using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
-using Kingmaker.Code.UI.MVVM.VM.MessageBox;
-using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
@@ -21,8 +18,6 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.Stores;
-using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Legacy.LoadingScreen;
 using Kingmaker.UI.Sound;
@@ -257,10 +252,6 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 
 	private BaseUnitEntity m_CompanionOnLoadingScreen;
 
-	private const string CAN_SWITCH_DLC_AFTER_PURCHASE_PREF_KEY = "first_open_can_switch_dlc_after_purchase";
-
-	public static bool CanSwitchDlcAfterPurchaseShown => PlayerPrefs.GetInt("first_open_can_switch_dlc_after_purchase", 0) == 1;
-
 	public void Initialize()
 	{
 		if (!m_IsInit)
@@ -331,7 +322,6 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 			});
 			PhotonManager.NetGame.NetRolesShowed = true;
 		}
-		ShowCanSwitchDlcAfterPurchase();
 		EventBus.RaiseEvent(delegate(INetEvents h)
 		{
 			h.HandleNLoadingScreenClosed();
@@ -343,35 +333,6 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 			m_LoaddedTuple?.Glitch.ForceUnload();
 			m_LoaddedTuple = null;
 		}
-	}
-
-	private void ShowCanSwitchDlcAfterPurchase()
-	{
-		if (PhotonManager.Lobby.IsActive)
-		{
-			return;
-		}
-		List<BlueprintDlc> list = (from d in Game.Instance?.Player?.GetAvailableAdditionalContentDlcForCurrentCampaign()
-			select d as BlueprintDlc into dlc
-			where dlc != null && dlc.DlcType == DlcTypeEnum.AdditionalContentDlc
-			select dlc).ToList();
-		if (CanSwitchDlcAfterPurchaseShown || list == null || list.Count <= 0 || !list.Any((BlueprintDlc dlc) => !dlc.IsEnabled))
-		{
-			return;
-		}
-		EventBus.RaiseEvent(delegate(IDialogMessageBoxUIHandler w)
-		{
-			w.HandleOpen(m_Hints.NewPurchasedDLCHint, DialogMessageBoxBase.BoxType.Checkbox, delegate(DialogMessageBoxBase.BoxButton btn)
-			{
-				if (btn == DialogMessageBoxBase.BoxButton.Yes)
-				{
-					EventBus.RaiseEvent(delegate(IDlcManagerUIHandler h)
-					{
-						h.HandleOpenDlcManager(inGame: true);
-					});
-				}
-			}, null, UIStrings.Instance.SettingsUI.DialogOk, UIStrings.Instance.SettingsUI.DialogCancel, null, null, null, 0, uint.MaxValue, null, null, SetCanSwitchDlcAfterPurchasePrefs);
-		});
 	}
 
 	protected virtual void SetTextFontSize(float multiplier)
@@ -769,19 +730,5 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 	{
 		m_CharacterPortrait.sprite = main;
 		m_GlitchAnimator.SetGlitchImage(glitch);
-	}
-
-	[Cheat(Name = "clear_can_switch_dlc_after_purchase")]
-	public static void ClearCanSwitchDlcAfterPurchasePrefs()
-	{
-		PlayerPrefs.SetInt("first_open_can_switch_dlc_after_purchase", 0);
-		PlayerPrefs.Save();
-	}
-
-	[Cheat(Name = "set_can_switch_dlc_after_purchase")]
-	public static void SetCanSwitchDlcAfterPurchasePrefs()
-	{
-		PlayerPrefs.SetInt("first_open_can_switch_dlc_after_purchase", 1);
-		PlayerPrefs.Save();
 	}
 }

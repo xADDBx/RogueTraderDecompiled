@@ -182,6 +182,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 			{
 				base.ViewModel.OnMods();
 			}));
+			m_ModsButton.SetInteractable(base.ViewModel.IsModsAllowed);
 		}
 		SetButtonsTexts();
 		AddDisposable(m_SaveButton.OnLeftClickAsObservable().Subscribe(delegate
@@ -283,6 +284,10 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		m_SaveButton.SetInteractable(base.ViewModel.IsSavingAllowed);
 		m_FormationButton.SetInteractable(base.ViewModel.IsFormationAllowed);
 		m_OptionsButton.SetInteractable(base.ViewModel.IsOptionsAllowed);
+		if (!PhotonManager.Lobby.IsActive)
+		{
+			m_ModsButton.SetInteractable(base.ViewModel.IsModsAllowed);
+		}
 		UpdateInteractableButtonsImpl();
 	}
 

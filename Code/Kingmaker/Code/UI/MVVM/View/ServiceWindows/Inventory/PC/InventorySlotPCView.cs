@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
@@ -25,9 +26,9 @@ public class InventorySlotPCView : InventorySlotView
 
 	protected override void BindViewImplementation()
 	{
+		m_ItemSlotPCView.SetMainButtonHoverSound(UISounds.ButtonSoundsEnum.NoSound);
 		base.BindViewImplementation();
 		m_ItemSlotPCView.Bind(base.ViewModel);
-		m_ItemSlotPCView.SetMainButtonHoverSound(UISounds.ButtonSoundsEnum.NoSound);
 		AddDisposable(m_ItemSlotPCView.OnSingleLeftClickAsObservable.Subscribe(OnClick));
 		AddDisposable(m_ItemSlotPCView.OnDoubleClickAsObservable.Subscribe(base.OnDoubleClick));
 		AddDisposable(m_ItemSlotPCView.OnBeginDragCommand.Subscribe(base.OnBeginDrag));
@@ -77,5 +78,20 @@ public class InventorySlotPCView : InventorySlotView
 		{
 			m_ToCargoAuto.SetNewIcon(base.ViewModel.Item.Value.ToCargoAutomatically ? BlueprintRoot.Instance.UIConfig.UIIcons.Check : BlueprintRoot.Instance.UIConfig.UIIcons.NotCheck);
 		}
+	}
+
+	protected override void CheckChangeSoundsImpl(SetServoSkullItemClickAndHoverSound component)
+	{
+		if (component == null)
+		{
+			m_ItemSlotPCView.SetMainButtonClickSound(UISounds.ButtonSoundsEnum.NormalSound);
+			m_ItemSlotPCView.SetMainButtonHoverSound(UISounds.ButtonSoundsEnum.NoSound);
+			return;
+		}
+		if (component.SetClickSound)
+		{
+			m_ItemSlotPCView.SetMainButtonClickSound(UISounds.ButtonSoundsEnum.ServoSkullTwitchDrops);
+		}
+		m_ItemSlotPCView.SetMainButtonHoverSound(component.SetHoverSound ? UISounds.ButtonSoundsEnum.ServoSkullTwitchDrops : UISounds.ButtonSoundsEnum.NoSound);
 	}
 }

@@ -76,7 +76,7 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 		AddFeatures(list);
 		AddStatBonuses(list, StatTypeHelper.Attributes, UIStrings.Instance.CharGen.BackgroundStatsBonuses);
 		AddStatBonuses(list, StatTypeHelper.Skills, UIStrings.Instance.CharGen.BackgroundSkillsBonuses);
-		IEnumerable<AddFeaturesToLevelUp> components = m_Feature.GetComponents<AddFeaturesToLevelUp>();
+		BlueprintComponentsEnumerator<AddFeaturesToLevelUp> components = m_Feature.GetComponents<AddFeaturesToLevelUp>();
 		if (components.Any())
 		{
 			list.Add(new TooltipBrickText(UIStrings.Instance.CharGen.BackgroundUnlockedFeaturesForLevelUp, TooltipTextType.Centered));
