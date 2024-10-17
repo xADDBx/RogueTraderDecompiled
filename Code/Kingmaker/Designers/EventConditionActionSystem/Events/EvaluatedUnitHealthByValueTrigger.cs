@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
@@ -14,15 +13,15 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Events;
 
-[ComponentName("Events/UnitHealthTrigger")]
+[ComponentName("Events/UnitHealthByValueTrigger")]
 [AllowMultipleComponents]
-[TypeId("5d57d20f5d6e2c64688f23636662ad03")]
-public class EvaluatedUnitHealthTrigger : EntityFactComponentDelegate, IDamageHandler, ISubscriber, IHashable
+[TypeId("6e3e9f799661466f935e8408d09975a0")]
+public class EvaluatedUnitHealthByValueTrigger : EntityFactComponentDelegate, IDamageHandler, ISubscriber, IHashable
 {
 	[SerializeReference]
 	public AbstractUnitEvaluator Unit;
 
-	public int Percentage;
+	public int HpValue;
 
 	public ActionList Actions;
 
@@ -36,16 +35,9 @@ public class EvaluatedUnitHealthTrigger : EntityFactComponentDelegate, IDamageHa
 				UberDebug.LogError(message);
 			}
 		}
-		else if (baseUnitEntity == dealDamage.Target)
+		else if (baseUnitEntity == dealDamage.Target && baseUnitEntity.Health.HitPointsLeft <= HpValue)
 		{
-			int num = Math.Max((int)(0.01 * (double)Percentage * (double)baseUnitEntity.Health.MaxHitPoints), baseUnitEntity.Health.MinHitPoints);
-			int hitPointsLeft = baseUnitEntity.Health.HitPointsLeft;
-			bool flag = hitPointsLeft + dealDamage.Result > num;
-			bool flag2 = hitPointsLeft <= num;
-			if (flag && flag2)
-			{
-				Actions.Run();
-			}
+			Actions.Run();
 		}
 	}
 

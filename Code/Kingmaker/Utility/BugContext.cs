@@ -108,7 +108,7 @@ public class BugContext : IComparable<BugContext>
 	private void FillAssigneeList()
 	{
 		m_AspectAssigneeList.Clear();
-		if (!ReportingUtils.Instance.Assignees.IsCompletedSuccessfully || !ReportingUtils.Instance.Assignees.Result.MainTable.TryGetValue(Type, out var value))
+		if (!ReportingUtils.Instance.Assignees.IsCompletedSuccessfully || !ReportingUtils.Instance.Assignees.Result.MainTable.Assignees.TryGetValue(Type, out var value))
 		{
 			return;
 		}

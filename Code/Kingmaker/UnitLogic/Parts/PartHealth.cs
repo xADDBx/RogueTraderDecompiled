@@ -143,6 +143,8 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public int TemporaryHitPoints => CalculateTemporaryHitPoints();
 
+	public int MinHitPoints => Math.Max(m_MinHitPoints, base.Owner.HasMechanicFeature(MechanicsFeatureType.Undying) ? 1 : 0);
+
 	protected override void OnAttach()
 	{
 		Initialize();

@@ -896,6 +896,7 @@ public static class ClassesWithGuid
 		(typeof(EvaluatedUnitAIScenarioSwitchTrigger), "ec296cfbd1babc049b00457aefeea047"),
 		(typeof(EvaluatedUnitCombatTrigger), "f77f7470b5b4ccf489fa052f95c399a1"),
 		(typeof(EvaluatedUnitDeathTrigger), "576c0defa521db5409ebace3b946bf6a"),
+		(typeof(EvaluatedUnitHealthByValueTrigger), "6e3e9f799661466f935e8408d09975a0"),
 		(typeof(EvaluatedUnitHealthTrigger), "5d57d20f5d6e2c64688f23636662ad03"),
 		(typeof(ExperienceTrigger), "9dfeedc766aac634eb143f32be1dd4da"),
 		(typeof(GenericInteractionTrigger), "40186c9b2cc082a4ab4ac4f0dad177c7"),

@@ -156,7 +156,7 @@ public class Recruit : GameAction
 						OnRecruit.Run();
 					}
 				}
-			}, isCapital: false);
+			}, isCapital: false, sameFinishActions: false, canCancel: false);
 		});
 	}
 

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Code.GameCore.Editor.Blueprints.BlueprintUnitEditorChecker;
 using Code.GameCore.Mics;
@@ -1021,6 +1022,12 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void HandleQuit()
 	{
+		if (!IsInMainMenu && SettingsRoot.Difficulty.OnlyOneSave.GetValue())
+		{
+			SaveManager.WaitCommit();
+			SaveGame(SaveManager.GetNextAutoslot());
+			Thread.Sleep(100);
+		}
 		SmartConsole.ClearRegistrations();
 		CheatsManagerHolder.System.Database.SetExternals(SmartConsole.CommandNames);
 		PlayerPrefs.Save();
@@ -2176,7 +2183,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			}
 			PFLog.Default.Log(stringBuilder.ToString());
 		}
-		else
+		else if (!SettingsRoot.Difficulty.OnlyOneSave.GetValue() || !(newestQuickslot.GameId == Player.GameId))
 		{
 			LoadGame(newestQuickslot);
 		}

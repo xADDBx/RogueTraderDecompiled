@@ -18,6 +18,8 @@ public class CritterMoveAgent : MonoBehaviour
 
 	private PathfindingService.Options m_PathOptions;
 
+	private RabbitLinkTraversalProvider m_NodeLinkTraverser;
+
 	[CanBeNull]
 	private ForcedPath m_Path;
 
@@ -43,6 +45,10 @@ public class CritterMoveAgent : MonoBehaviour
 	public float MaxSpeed;
 
 	private bool m_FirstTick;
+
+	public Vector3 Position { get; private set; }
+
+	public Vector2 Forward { get; private set; }
 
 	public ForcedPath Path
 	{
@@ -106,8 +112,10 @@ public class CritterMoveAgent : MonoBehaviour
 		path?.Release(this);
 	}
 
-	public void Init()
+	public void Init(Vector3 position, Vector2 forward)
 	{
+		Position = position;
+		Forward = forward;
 		if (m_PathOptions == null)
 		{
 			m_PathOptions = new PathfindingService.Options
@@ -126,16 +134,21 @@ public class CritterMoveAgent : MonoBehaviour
 				}
 			};
 		}
+		if (m_NodeLinkTraverser == null)
+		{
+			m_NodeLinkTraverser = new RabbitLinkTraversalProvider();
+		}
 	}
 
-	public void PathTo(Vector3 destination)
+	public void PathTo(Vector3 start, Vector3 destination)
 	{
 		m_RequestedNewPath = m_Destination != destination;
 		if (m_RequestedPath == null || m_RequestedNewPath)
 		{
 			m_Destination = destination;
-			m_RequestedPath = ABPath.Construct(base.transform.position, destination);
-			Path sourcePath = m_RequestedPath;
+			WarhammerABPath sourcePath = WarhammerABPath.Construct(start, destination);
+			sourcePath.LinkTraversalProvider = m_NodeLinkTraverser;
+			m_RequestedPath = sourcePath;
 			PathfindingService.Instance.FindPath(m_RequestedPath, null, m_PathOptions, delegate(ForcedPath p)
 			{
 				OnPathComplete(p, sourcePath);
@@ -209,30 +222,32 @@ public class CritterMoveAgent : MonoBehaviour
 			}
 			bool firstTick = m_FirstTick;
 			m_FirstTick = false;
-			Vector2 vector = base.transform.position.To2D();
-			Vector2 vector2 = base.transform.forward.To2D();
+			Vector2 vector = Position.To2D();
+			Vector2 forward = Forward;
 			float num = Vector2.Distance(m_NextWaypoint, vector);
 			float num2 = num / Mathf.Max(m_Speed, 0.01f);
 			bool flag;
 			if (Mathf.Abs(num2) > 0.01f)
 			{
-				Vector2 vector3 = (m_NextWaypoint - vector) / num;
-				Vector2 vector4 = (((OnLastSegment ? 0f : Vector2.Angle(vector2, m_NextDirection)) / m_AngularSpeed > num2) ? m_NextDirection : vector3);
-				float num3 = MaxSpeed;
+				Vector2 vector2 = (m_NextWaypoint - vector) / num;
+				float num3 = (OnLastSegment ? 0f : Vector2.Angle(forward, m_NextDirection)) / m_AngularSpeed;
+				Vector2 vector3 = ((num3 > num2) ? m_NextDirection : vector2);
+				float num4 = MaxSpeed;
 				if (OnLastSegment && m_Speed > m_Acceleration * deltaTime && num2 < m_Speed / m_Acceleration)
 				{
-					num3 = Mathf.MoveTowards(m_Speed, 0f, m_Acceleration * Time.deltaTime);
+					num4 = Mathf.MoveTowards(m_Speed, 0f, m_Acceleration * deltaTime);
 				}
-				m_Speed = num3;
-				vector2 = ((!(num3 > 0f) || firstTick) ? vector4 : ((Vector2)Vector3.RotateTowards(vector2, vector4, m_AngularSpeed * deltaTime * (MathF.PI / 180f), 1f)));
-				Vector3 vector5 = vector2.To3D() * m_Speed;
-				base.transform.position = UnitMovementAgentBase.Move(base.transform.position, vector5 * deltaTime, 0.3f, out var _);
-				Vector2 a = base.transform.position.To2D();
-				base.transform.LookAt(base.transform.position + vector2.To3D());
-				Vector2 vector6 = Path.vectorPath[m_NextPointIndex - 1].To2D();
-				Vector2 lhs = m_NextWaypoint - vector6;
-				Vector2 rhs = m_NextWaypoint - base.transform.position.To2D();
+				m_Speed = num4;
+				forward = ((!(num4 > 0f) || firstTick) ? vector3 : ((Vector2)Vector3.RotateTowards(forward, vector3, m_AngularSpeed * deltaTime * (MathF.PI / 180f), 1f)));
+				Vector3 vector4 = forward.To3D() * m_Speed;
+				Position = UnitMovementAgentBase.Move(Position, vector4 * deltaTime, 0.3f, out var _);
+				Vector2 a = Position.To2D();
+				Forward = forward;
+				Vector2 vector5 = Path.vectorPath[m_NextPointIndex - 1].To2D();
+				Vector2 lhs = m_NextWaypoint - vector5;
+				Vector2 rhs = m_NextWaypoint - Position.To2D();
 				flag = Vector2.Dot(lhs, rhs) < 0f;
+				flag = flag || num3 > num2;
 				if (OnLastSegment)
 				{
 					flag &= Vector2.Distance(a, m_NextWaypoint) < 0.2f;

@@ -19,7 +19,7 @@ public class AssigneeModelRoot
 
 
 	[JsonProperty(PropertyName = "Main Table")]
-	public Dictionary<BugContext.ContextType, Dictionary<BugContext.AspectType, AssigneeQa>> MainTable { get; } = new Dictionary<BugContext.ContextType, Dictionary<BugContext.AspectType, AssigneeQa>>();
+	public MainTable MainTable { get; } = new MainTable();
 
 
 	[JsonProperty(PropertyName = "UI Designer")]

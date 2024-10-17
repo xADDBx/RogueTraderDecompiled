@@ -1,5 +1,7 @@
 using System.Collections;
+using Kingmaker.Controllers;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Utility.ManualCoroutines;
 using Kingmaker.Utility.Random;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.Utility.UnityExtensions;
@@ -11,7 +13,7 @@ using UnityEngine;
 namespace Kingmaker.Visual.Critters;
 
 [RequireComponent(typeof(CritterMoveAgent))]
-public class Rabbit : MonoBehaviour
+public class Rabbit : MonoBehaviour, IUpdatable, IInterpolatable
 {
 	private CritterMoveAgent m_MoveAgent;
 
@@ -31,6 +33,8 @@ public class Rabbit : MonoBehaviour
 
 	private Vector3 m_StartPos;
 
+	private const int ThinkFrameCount = 3;
+
 	private int m_ThinkFrame;
 
 	private float m_NextIdleTime;
@@ -45,35 +49,68 @@ public class Rabbit : MonoBehaviour
 
 	private bool wasSleeping;
 
-	private Coroutine routine;
+	private CoroutineHandler routine;
 
 	private Transform cameraRig;
 
+	private bool m_Initialized;
+
+	private Vector3 m_PrevPosition;
+
+	private Vector3 m_CurrPosition;
+
+	private Vector2 m_PrevForward;
+
+	private Vector2 m_CurrForward;
+
 	private static StatefulRandom Random => PFStatefulRandom.NonDeterministic;
 
-	public void Start()
+	private static int CurrentTick => Game.Instance.RealTimeController.CurrentNetworkTick;
+
+	private static float CurrentTime => (float)Game.Instance.TimeController.GameTime.TotalSeconds;
+
+	private void OnEnable()
 	{
-		m_StartPos = base.transform.position;
-		m_MoveAgent = GetComponent<CritterMoveAgent>();
-		m_MoveAgent.Init();
-		m_Animator = GetComponentInChildren<Animator>();
-		if (!m_Animator.runtimeAnimatorController)
+		Game.Instance.CustomUpdateController.Add(this);
+		Game.Instance.InterpolationController.Add(this);
+		Init(force: false);
+	}
+
+	private void OnDisable()
+	{
+		Game.Instance.CustomUpdateController.Remove(this);
+		Game.Instance.InterpolationController.Remove(this);
+	}
+
+	public void Init(bool force)
+	{
+		if (!force && !m_Initialized)
 		{
-			PFLog.Default.Error(this, "No controller on " + this);
-			Object.Destroy(base.gameObject);
-			return;
+			m_Initialized = true;
+			m_PrevPosition = (m_CurrPosition = base.transform.position);
+			m_PrevForward = (m_CurrForward = base.transform.forward.To2D().normalized);
+			m_StartPos = m_PrevPosition;
+			m_MoveAgent = GetComponent<CritterMoveAgent>();
+			m_MoveAgent.Init(m_CurrPosition, m_CurrForward);
+			m_Animator = GetComponentInChildren<Animator>();
+			if (!m_Animator.runtimeAnimatorController)
+			{
+				PFLog.Default.Error(this, "No controller on " + this);
+				Object.Destroy(base.gameObject);
+				return;
+			}
+			s_Count++;
+			m_ThinkFrame = s_Count % 3;
+			routine = Game.Instance.CoroutinesController.Start(Think());
+			cameraRig = CameraRig.Instance.transform;
 		}
-		s_Count++;
-		m_ThinkFrame = s_Count % 5;
-		routine = StartCoroutine(Think());
-		cameraRig = CameraRig.Instance.transform;
 	}
 
 	private IEnumerator Think()
 	{
 		while ((bool)this)
 		{
-			if (Time.frameCount % 5 != m_ThinkFrame)
+			if (CurrentTick % 3 != m_ThinkFrame)
 			{
 				yield return null;
 				continue;
@@ -96,10 +133,10 @@ public class Rabbit : MonoBehaviour
 			{
 				m_Animator.CrossFadeInFixedTime("Idle" + Random.Range(1, 3), IdleCrossfade);
 				m_PriorityPath = false;
-				yield return new WaitForSeconds(Random.Range(4f, 10f));
+				yield return YieldInstructions.WaitForSecondsGameTime(Random.Range(4f, 10f));
 			}
 			MaybeRunAway();
-			if (Time.time < m_NextIdleTime || m_MoveAgent.WantsToMove)
+			if (CurrentTime < m_NextIdleTime || m_MoveAgent.WantsToMove)
 			{
 				yield return null;
 			}
@@ -107,17 +144,17 @@ public class Rabbit : MonoBehaviour
 			{
 				Vector2 v = Random.insideUnitCircle.normalized * Random.Range(0f, RoamRadius);
 				Vector3 vector = m_StartPos + v.To3D();
-				vector = base.transform.position + Vector3.ClampMagnitude(vector - base.transform.position, Random.Range(2f, Mathf.Max(3f, RoamRadius)));
+				vector = m_CurrPosition + Vector3.ClampMagnitude(vector - m_CurrPosition, Random.Range(2f, Mathf.Max(3f, RoamRadius)));
 				vector = ObstacleAnalyzer.GetNearestNode(vector).position;
 				if (Vector3.Distance(m_StartPos, vector) > 1f)
 				{
-					m_MoveAgent.PathTo(vector);
+					m_MoveAgent.PathTo(m_CurrPosition, vector);
 				}
 			}
 			else
 			{
 				m_Animator.CrossFadeInFixedTime("Idle" + Random.Range(1, 3), IdleCrossfade);
-				m_NextIdleTime = Time.time + Random.Range(MinIdleTime, MaxIdleTime);
+				m_NextIdleTime = CurrentTime + Random.Range(MinIdleTime, MaxIdleTime);
 			}
 		}
 	}
@@ -129,12 +166,12 @@ public class Rabbit : MonoBehaviour
 			return;
 		}
 		Vector3 zero = Vector3.zero;
-		Vector3 position = base.transform.position;
+		Vector3 currPosition = m_CurrPosition;
 		foreach (AbstractUnitEntity allUnit in Game.Instance.State.AllUnits)
 		{
-			if (allUnit.LifeState.IsConscious && VectorMath.SqrDistanceXZ(allUnit.Position, position) < 16f)
+			if (allUnit.LifeState.IsConscious && VectorMath.SqrDistanceXZ(allUnit.Position, currPosition) < 16f)
 			{
-				zero += position - allUnit.Position;
+				zero += currPosition - allUnit.Position;
 			}
 		}
 		if (zero == Vector3.zero)
@@ -143,10 +180,10 @@ public class Rabbit : MonoBehaviour
 		}
 		zero.Normalize();
 		zero = Quaternion.Euler(0f, Random.Range(-45f, 45f), 0f) * zero;
-		Vector3 position2 = ObstacleAnalyzer.GetNearestNode(position + zero * RoamRadius).position;
-		if (!(VectorMath.SqrDistanceXZ(position2, position) < 1f))
+		Vector3 position = ObstacleAnalyzer.GetNearestNode(currPosition + zero * RoamRadius).position;
+		if (!(VectorMath.SqrDistanceXZ(position, currPosition) < 1f))
 		{
-			m_MoveAgent.PathTo(position2);
+			m_MoveAgent.PathTo(m_CurrPosition, position);
 			if (!m_Frightened)
 			{
 				m_MoveAgent.MaxSpeed *= 2f;
@@ -155,11 +192,11 @@ public class Rabbit : MonoBehaviour
 		}
 	}
 
-	private void Update()
+	void IUpdatable.Tick(float delta)
 	{
-		if (Time.frameCount % 6 == 0)
+		if (CurrentTick % 4 == 0)
 		{
-			if (Vector3.Distance(cameraRig.position, base.transform.position) >= 25f)
+			if (Vector3.Distance(cameraRig.position, m_CurrPosition) >= 25f)
 			{
 				wasSleeping = isSleeping;
 				isSleeping = true;
@@ -171,20 +208,32 @@ public class Rabbit : MonoBehaviour
 			}
 			if (isSleeping && !wasSleeping)
 			{
-				StopCoroutine(routine);
+				Game.Instance.CoroutinesController.Stop(ref routine);
 				wasSleeping = true;
 			}
 			else if (!isSleeping && wasSleeping)
 			{
-				routine = StartCoroutine(Think());
+				routine = Game.Instance.CoroutinesController.Start(Think());
 				wasSleeping = false;
 			}
 		}
 		if (!isSleeping && !(AstarData.active == null))
 		{
-			m_MoveAgent.TickMovement(Time.deltaTime);
+			m_MoveAgent.TickMovement(delta);
 			m_Animator.SetFloat("Speed", m_MoveAgent.Speed);
+			m_PrevPosition = m_CurrPosition;
+			m_CurrPosition = m_MoveAgent.Position;
+			m_PrevForward = m_CurrForward;
+			m_CurrForward = m_MoveAgent.Forward;
 		}
+	}
+
+	void IInterpolatable.Tick(float progress)
+	{
+		Vector3 vector = Vector3.LerpUnclamped(m_PrevPosition, m_CurrPosition, progress);
+		Vector2 v = Vector2.LerpUnclamped(m_PrevForward, m_CurrForward, progress);
+		base.transform.position = vector;
+		base.transform.LookAt(vector + v.To3D());
 	}
 
 	public void OnDrawGizmosSelected()
@@ -199,7 +248,7 @@ public class Rabbit : MonoBehaviour
 			m_Frightened = false;
 			m_MoveAgent.MaxSpeed /= 2f;
 		}
-		m_MoveAgent.PathTo(targetPoint);
+		m_MoveAgent.PathTo(m_CurrPosition, targetPoint);
 		m_PriorityPath = true;
 	}
 }

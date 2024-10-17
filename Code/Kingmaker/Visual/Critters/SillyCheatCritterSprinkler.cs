@@ -54,7 +54,7 @@ public class SillyCheatCritterSprinkler : MonoBehaviour, IFxSpawner
 	{
 		yield return new WaitForSeconds(1.5f);
 		rabbit.enabled = true;
-		rabbit.Start();
+		rabbit.Init(force: true);
 		Object.Destroy(rb);
 		Object.Destroy(rabbit.GetComponent<SphereCollider>());
 		rabbit.transform.rotation = Quaternion.Euler(0f, rabbit.transform.rotation.eulerAngles.y, 0f);

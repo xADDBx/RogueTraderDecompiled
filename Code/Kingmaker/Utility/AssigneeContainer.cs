@@ -22,7 +22,7 @@ public static class AssigneeContainer
 		Converters = new List<JsonConverter>
 		{
 			new DictionaryJsonConverter(),
-			new ContextTypeJsonConverter()
+			new MainTableJsonConverter()
 		}
 	};
 

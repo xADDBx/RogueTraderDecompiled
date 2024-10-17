@@ -39,6 +39,7 @@ public static class Updateables
 		typeof(RigidbodyCreatureController),
 		typeof(Character),
 		typeof(Bird),
+		typeof(Rabbit),
 		typeof(StandardMaterialController),
 		typeof(ForcedCullingService),
 		typeof(FxFadeOut),

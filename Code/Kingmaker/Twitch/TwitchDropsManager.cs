@@ -108,7 +108,7 @@ public class TwitchDropsManager
 	public Task<TwitchDropsLinkStatus> GetTwitchLinkedStatus()
 	{
 		TryInitialize();
-		if (m_DropsLinkStatusTask == null || (m_DropsLinkStatusTask.IsCompleted && m_DropsLinkStatusTask.Result != TwitchDropsLinkStatus.Linked && m_DropsLinkStatusTask.Result != TwitchDropsLinkStatus.NotSupported))
+		if (m_DropsLinkStatusTask == null || (m_DropsLinkStatusTask.IsCompleted && m_DropsLinkStatusTask.Result != TwitchDropsLinkStatus.NotSupported))
 		{
 			m_DropsLinkStatusTask = GetDropsStatusInternalAsync();
 		}
