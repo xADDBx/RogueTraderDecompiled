@@ -78,8 +78,6 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		{
 			ResumeTravel();
 		}
-		m_ShouldProceedRE = false;
-		m_REProceeded = true;
 	}
 
 	public void OnDisable()
@@ -95,47 +93,13 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		return TickType.Simulation;
 	}
 
-	public void Tick()
+	private bool TryRunMiddleOfJumpSimpleEvents()
 	{
-		if (m_WaitingForTravelToStart && (CurrentTime - m_TravelWaitingStartedTime).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitWarpTravelToStartInSeconds)
+		if (m_EtudeTriggerIndex >= Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump.Count)
 		{
-			StartTravelAfterAnimation();
+			m_EtudesTriggerListEnded = true;
 		}
-		else if (m_IsTravelling && m_EtudesTriggerListEnded && (Game.Instance.TimeController.GameTime - m_TravelResumed + m_TravelPaused - m_TravelStartedTime).TotalSegments() > m_TravelDuration)
-		{
-			BlueprintSectorMapPointStarSystem blueprintSectorMapPointStarSystem = m_To.View.Blueprint as BlueprintSectorMapPointStarSystem;
-			BlueprintDialog blueprintDialog = blueprintSectorMapPointStarSystem?.OverrideBookEvent?.Get();
-			if (blueprintDialog != null)
-			{
-				ConditionsChecker bookEventConditions = blueprintSectorMapPointStarSystem.BookEventConditions;
-				if ((bookEventConditions == null || bookEventConditions.Check()) && !m_StartedBookEvent)
-				{
-					DialogData data = DialogController.SetupDialogWithoutTarget(blueprintDialog, null);
-					Game.Instance.DialogController.StartDialog(data);
-					m_StartedBookEvent = true;
-					return;
-				}
-			}
-			if (m_To.View.StarSystemToTransit == null)
-			{
-				m_To = m_From;
-				if (m_To == null)
-				{
-					m_To = Game.Instance.State.SectorMapObjects.FirstOrDefault((SectorMapObjectEntity point) => point.View.Blueprint == BlueprintRoot.Instance.SectorMapArea.DefaultStarSystem.Get());
-				}
-				Game.Instance.Player.WarpTravelState.TravelDestination = m_To.Blueprint;
-				m_StartedBookEvent = false;
-			}
-			else
-			{
-				StopTravel();
-			}
-		}
-		else if (m_IsTravelling && m_ShouldProceedRE && !m_REProceeded && (float)(Game.Instance.TimeController.GameTime - m_TravelResumed + m_TravelPaused - m_TravelStartedTime).TotalSegments() > (float)m_TravelDuration / 2f)
-		{
-			ProceedRandomEncounter();
-		}
-		else if (m_IsTravelling && !m_EtudesTriggerListEnded && ((m_ShouldProceedRE && m_REProceeded) || !m_ShouldProceedRE) && (float)(Game.Instance.TimeController.GameTime - m_TravelResumed + m_TravelPaused - m_TravelStartedTime).TotalSegments() > (float)m_TravelDuration / 2f && (CurrentTime - m_LastEventEnded).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitBetweenEtudeEventsInSeconds)
+		if (!m_EtudesTriggerListEnded && (CurrentTime - m_LastEventEnded).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitBetweenEtudeEventsInSeconds)
 		{
 			BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> trigger = Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump[m_EtudeTriggerIndex];
 			EventBus.RaiseEvent(delegate(ISectorMapWarpTravelEventHandler h)
@@ -144,12 +108,79 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 			});
 			m_EtudeTriggerIndex++;
 			m_LastEventEnded = CurrentTime;
-			if (m_EtudeTriggerIndex >= Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump.Count)
+		}
+		return !m_EtudesTriggerListEnded;
+	}
+
+	private bool TryRunOncePerTravelEvent()
+	{
+		if (Game.Instance.Player.WarpTravelState.TriggeredEtude != null)
+		{
+			EventBus.RaiseEvent(delegate(ISectorMapWarpTravelEventHandler h)
 			{
-				m_EtudesTriggerListEnded = true;
+				h.HandleStartEventInTheMiddleOfJump(Game.Instance.Player.WarpTravelState.TriggeredEtude);
+			});
+			return true;
+		}
+		return false;
+	}
+
+	private bool TryRunRandomEncounter()
+	{
+		if (m_ShouldProceedRE && !m_REProceeded)
+		{
+			ProceedRandomEncounter();
+			return true;
+		}
+		return false;
+	}
+
+	private void ProcessBookEvent()
+	{
+		BlueprintSectorMapPointStarSystem blueprintSectorMapPointStarSystem = m_To.View.Blueprint as BlueprintSectorMapPointStarSystem;
+		BlueprintDialog blueprintDialog = blueprintSectorMapPointStarSystem?.OverrideBookEvent?.Get();
+		if (blueprintDialog != null)
+		{
+			ConditionsChecker bookEventConditions = blueprintSectorMapPointStarSystem.BookEventConditions;
+			if ((bookEventConditions == null || bookEventConditions.Check()) && !m_StartedBookEvent)
+			{
+				DialogData data = DialogController.SetupDialogWithoutTarget(blueprintDialog, null);
+				Game.Instance.DialogController.StartDialog(data);
+				m_StartedBookEvent = true;
+				return;
 			}
 		}
-		else if (m_WaitingForEndAnimationToStop && (CurrentTime - m_TravelStopped).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitWarpTravelToEndInSeconds)
+		if (m_To.View.StarSystemToTransit == null)
+		{
+			m_To = m_From ?? Game.Instance.State.SectorMapObjects.FirstOrDefault((SectorMapObjectEntity point) => point.View.Blueprint == BlueprintRoot.Instance.SectorMapArea.DefaultStarSystem.Get());
+			Game.Instance.Player.WarpTravelState.TravelDestination = m_To?.Blueprint;
+			m_StartedBookEvent = false;
+		}
+		else
+		{
+			StopTravel();
+		}
+	}
+
+	public void Tick()
+	{
+		if (m_WaitingForTravelToStart && (CurrentTime - m_TravelWaitingStartedTime).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitWarpTravelToStartInSeconds)
+		{
+			StartTravelAfterAnimation();
+		}
+		if (m_IsTravelling)
+		{
+			int num = (Game.Instance.TimeController.GameTime - m_TravelResumed + m_TravelPaused - m_TravelStartedTime).TotalSegments();
+			if ((float)num > (float)m_TravelDuration / 2f && (TryRunMiddleOfJumpSimpleEvents() || TryRunOncePerTravelEvent() || TryRunRandomEncounter()))
+			{
+				return;
+			}
+			if (num > m_TravelDuration)
+			{
+				ProcessBookEvent();
+			}
+		}
+		if (m_WaitingForEndAnimationToStop && (CurrentTime - m_TravelStopped).TotalSeconds > (double)Game.Instance.SectorMapController.VisualParameters.WaitWarpTravelToEndInSeconds)
 		{
 			m_WaitingForEndAnimationToStop = false;
 			HandleWarpTravelEffectStopped();

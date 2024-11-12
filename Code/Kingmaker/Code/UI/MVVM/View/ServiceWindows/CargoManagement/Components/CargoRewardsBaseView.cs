@@ -139,6 +139,11 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 	public void HandleDialogNavigationBuildStarted()
 	{
 		m_IsWaitingForDialogNavigationBuild = true;
+		if (m_IsInputLayerPushed)
+		{
+			GamePad.Instance.PopLayer(m_InputLayer);
+			m_IsInputLayerPushed = false;
+		}
 	}
 
 	public void HandleDialogNavigationBuildFinished()

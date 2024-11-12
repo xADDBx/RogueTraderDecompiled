@@ -393,7 +393,7 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 	{
 		EventBus.RaiseEvent(delegate(IDialogNavigationCreatedHandler h)
 		{
-			h.HandleDialogNavigationBuildFinished();
+			h.HandleDialogNavigationBuildStarted();
 		});
 		VotesIsActive.Value = false;
 		if (m_AnswerEntitiesToAdd.Empty())

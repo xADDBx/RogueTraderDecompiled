@@ -100,7 +100,7 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 	public void HandleWarpTravelStarted(SectorMapPassageEntity passage)
 	{
 		SavableData savableData = RequestSavableData<SavableData>();
-		if ((TimeToStart == TimeToStartAction.AfterTravelStart && Game.Instance.Player.WarpTravelState.TriggeredEtude == this) || (TriggerType == EventType.MechanicEvent && savableData.IsReadyToTrigger))
+		if (TriggerType == EventType.MechanicEvent && savableData.IsReadyToTrigger)
 		{
 			Game.Instance.SectorMapTravelController.PauseTravel();
 			ActionList.Run();
