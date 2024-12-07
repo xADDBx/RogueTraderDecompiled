@@ -107,9 +107,15 @@ public class TooltipTemplateProfitFactor : TooltipBaseTemplate
 			return string.Format(UIStrings.Instance.ProfitFactorTexts.GetSource(mod.Type), blueprintColony?.Name);
 		}
 		case ProfitFactorModifierType.Answer:
-			return (mod.Modifier.Modifier as BlueprintAnswer)?.Description;
+		{
+			BlueprintAnswer blueprintAnswer = mod.Modifier.Modifier as BlueprintAnswer;
+			return string.IsNullOrWhiteSpace(blueprintAnswer?.Description) ? UIStrings.Instance.ProfitFactorTexts.GetSource(mod.Type) : blueprintAnswer?.Description;
+		}
 		case ProfitFactorModifierType.Cue:
-			return (mod.Modifier.Modifier as BlueprintCue)?.Description;
+		{
+			BlueprintCue blueprintCue = mod.Modifier.Modifier as BlueprintCue;
+			return string.IsNullOrWhiteSpace(blueprintCue?.Description) ? UIStrings.Instance.ProfitFactorTexts.GetSource(mod.Type) : blueprintCue?.Description;
+		}
 		case ProfitFactorModifierType.Other:
 		case ProfitFactorModifierType.Companion:
 		case ProfitFactorModifierType.Respec:

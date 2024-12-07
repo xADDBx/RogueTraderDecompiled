@@ -39,6 +39,8 @@ public class UINetLobbyErrorsTexts
 
 	public LocalizedString UnknownExceptionMessage;
 
+	public LocalizedString PlaystationNetworkIsNotInitializedMessage;
+
 	public string GetErrorMessage(NetLobbyErrorHandler.NetLobbyErrorType type)
 	{
 		return type switch
@@ -57,6 +59,7 @@ public class UINetLobbyErrorsTexts
 			NetLobbyErrorHandler.NetLobbyErrorType.SaveNotFoundError => SaveNotFoundErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.SendMessageFailError => SendMessageFailErrorMessage, 
 			NetLobbyErrorHandler.NetLobbyErrorType.NoPlaystationPlusError => NoPlaystationPlusErrorMessage, 
+			NetLobbyErrorHandler.NetLobbyErrorType.PlaystationNetworkIsNotInitialized => PlaystationNetworkIsNotInitializedMessage, 
 			_ => UnknownExceptionMessage, 
 		};
 	}

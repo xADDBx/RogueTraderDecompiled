@@ -96,8 +96,6 @@ public class BuildModeUtility
 
 	public static bool ReplaySaveState => Data?.ReplaySaveState ?? false;
 
-	public static bool IsCoopEnabled => true;
-
 	public static StartupJson Data => GetStartUpData();
 
 	private static bool IsLowMemoryPlatform

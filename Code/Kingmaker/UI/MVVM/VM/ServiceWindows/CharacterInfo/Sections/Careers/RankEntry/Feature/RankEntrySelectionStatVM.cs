@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
@@ -60,18 +59,21 @@ public class RankEntrySelectionStatVM : RankEntrySelectionFeatureVM
 	private void SetTooltip()
 	{
 		ModifiableValue unitStat = m_UnitStat;
-		StatTooltipData statTooltipData;
+		StatTooltipData statTooltipData = default(StatTooltipData);
 		if (!(unitStat is ModifiableValueAttributeStat attribute))
 		{
 			if (!(unitStat is ModifiableValueSkill skill))
 			{
 				if (!(unitStat is ModifiableValueSavingThrow savingThrow))
 				{
-					if (unitStat == null)
+					if (unitStat != null)
 					{
-						throw new SwitchExpressionException(unitStat);
+						statTooltipData = new StatTooltipData(m_UnitStat);
 					}
-					statTooltipData = new StatTooltipData(m_UnitStat);
+					else
+					{
+						global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(unitStat);
+					}
 				}
 				else
 				{

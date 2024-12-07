@@ -31,6 +31,7 @@ public class TaskNodeFindBetterPlace : TaskNode
 		decisionContext.IsMoveCommand = true;
 		AiAreaScanner.PathData unitMoveVariants = decisionContext.UnitMoveVariants;
 		GraphNode node = AstarPath.active.GetNearest(decisionContext.Unit.Position).node;
+		decisionContext.FoundBetterPlace = default(DecisionContext.BetterPlace);
 		AILogger.Instance.Log(AILogNode.Start(this));
 		Stopwatch stopwatch = new Stopwatch();
 		stopwatch.Start();

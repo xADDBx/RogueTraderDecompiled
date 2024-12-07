@@ -8,7 +8,6 @@ using Kingmaker.Controllers.Net;
 using Kingmaker.Controllers.Units;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Formations;
 using Kingmaker.GameModes;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
@@ -97,22 +96,18 @@ public class GamepadInputController : IControllerTick, IController, IControllerR
 
 		private static void MakeCompanionsFollow(NetPlayer player, BaseUnitEntity unit, UnitReference[] selectedUnits)
 		{
-			Vector3 forward = unit.Forward;
-			List<BaseUnitEntity> list = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable(player)).ToList();
-			int unitIndex = list.IndexOf(unit);
-			Vector3 worldPosition = PartyFormationHelper.FindFormationCenterFromOneUnit(FormationAnchor.Front, forward, unitIndex, unit.Position, list, selectedUnits);
-			List<BaseUnitEntity> list2 = TempList.Get<BaseUnitEntity>();
-			list2.IncreaseCapacity(selectedUnits.Length);
+			List<BaseUnitEntity> list = TempList.Get<BaseUnitEntity>();
+			list.IncreaseCapacity(selectedUnits.Length);
 			for (int i = 0; i < selectedUnits.Length; i++)
 			{
 				UnitReference r = selectedUnits[i];
 				if ((r.Entity?.ToBaseUnitEntity()?.IsDirectlyControllable(player)).GetValueOrDefault())
 				{
-					list2.Add(r.ToBaseUnitEntity());
+					list.Add(r.ToBaseUnitEntity());
 				}
 			}
-			List<BaseUnitEntity> allUnits = ((list2.Count == 1) ? list2 : Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable(player)).ToList());
-			UnitCommandsRunner.MoveSelectedUnitsToPointRT(unit, worldPosition, unit.Forward, isControllerGamepad: true, preview: false, 1f, list2, null, allUnits);
+			List<BaseUnitEntity> allUnits = ((list.Count == 1) ? list : Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable(player)).ToList());
+			UnitCommandsRunner.MoveSelectedUnitsToPointRT(unit, unit.Position, unit.Forward, isControllerGamepad: true, anchorOnMainUnit: true, preview: false, 1f, list, null, allUnits);
 		}
 	}
 

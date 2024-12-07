@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.Enums;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -19,6 +20,8 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("186465aada0f422b966541bbf050c271")]
 public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateStatsArmor>, IRulebookHandler<RuleCalculateStatsArmor>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
+	public RestrictionCalculator Restrictions = new RestrictionCalculator();
+
 	public ContextValueModifierWithType BonusDeflectionValue;
 
 	public ContextValueModifierWithType BonusAbsorptionValue;
@@ -43,18 +46,21 @@ public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiat
 
 	public void OnEventAboutToTrigger(RuleCalculateStatsArmor evt)
 	{
-		if (ForceDeflectionMinimum)
+		if (Restrictions.IsPassed(base.Fact, evt))
 		{
-			evt.MinDeflectionValue = DeflectionMinimumValue;
-			evt.PctMinDeflection = PctDeflectionMinimum;
+			if (ForceDeflectionMinimum)
+			{
+				evt.MinDeflectionValue = DeflectionMinimumValue;
+				evt.PctMinDeflection = PctDeflectionMinimum;
+			}
+			if (ForceAbsorptionMinimum)
+			{
+				evt.MinAbsorptionValue = AbsorptionMinimumValue;
+				evt.PctMinAbsorption = PctAbsorptionMinimum;
+			}
+			BonusDeflectionValue.TryApply(evt.DeflectionCompositeModifiers, base.Fact, ModifierDescriptor);
+			BonusAbsorptionValue.TryApply(evt.AbsorptionCompositeModifiers, base.Fact, ModifierDescriptor);
 		}
-		if (ForceAbsorptionMinimum)
-		{
-			evt.MinAbsorptionValue = AbsorptionMinimumValue;
-			evt.PctMinAbsorption = PctAbsorptionMinimum;
-		}
-		BonusDeflectionValue.TryApply(evt.DeflectionCompositeModifiers, base.Fact, ModifierDescriptor);
-		BonusAbsorptionValue.TryApply(evt.AbsorptionCompositeModifiers, base.Fact, ModifierDescriptor);
 	}
 
 	public void OnEventDidTrigger(RuleCalculateStatsArmor evt)

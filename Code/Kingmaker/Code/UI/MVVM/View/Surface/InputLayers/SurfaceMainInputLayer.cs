@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.AreaLogic.Cutscenes;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.Clicks.Handlers;
@@ -127,21 +128,21 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 
 	protected virtual void UpdateLeftStickMovement()
 	{
-		ConsoleCursor consoleCursor = ConsoleCursor.Instance.Or(null);
+		ConsoleCursor consoleCursor = ObjectExtensions.Or(ConsoleCursor.Instance, null);
 		if ((object)consoleCursor != null && consoleCursor.IsActive && (Game.Instance.CurrentMode == GameModeType.Default || Game.Instance.CurrentMode == GameModeType.Pause))
 		{
 			Game.Instance.CameraController.Follower.Release();
 			CameraRig.Instance.ScrollBy2D(m_LeftStickVector);
 			if (!CameraRig.Instance.OnLevelBound)
 			{
-				ConsoleCursor consoleCursor2 = ConsoleCursor.Instance.Or(null);
+				ConsoleCursor consoleCursor2 = ObjectExtensions.Or(ConsoleCursor.Instance, null);
 				if ((object)consoleCursor2 == null || consoleCursor2.OnScreenCenter)
 				{
-					ConsoleCursor.Instance.Or(null)?.SetToCenter();
+					ObjectExtensions.Or(ConsoleCursor.Instance, null)?.SetToCenter();
 					return;
 				}
 			}
-			ConsoleCursor.Instance.Or(null)?.MoveCursor(m_LeftStickVector);
+			ObjectExtensions.Or(ConsoleCursor.Instance, null)?.MoveCursor(m_LeftStickVector);
 		}
 		else
 		{
@@ -149,7 +150,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 			{
 				return;
 			}
-			SelectionManagerConsole selectionManagerConsole = SelectionManagerConsole.Instance.Or(null);
+			SelectionManagerConsole selectionManagerConsole = ObjectExtensions.Or(SelectionManagerConsole.Instance, null);
 			if ((object)selectionManagerConsole != null && selectionManagerConsole.StopMoveFlag)
 			{
 				if (m_LeftStickVector == Vector2.zero)
@@ -186,7 +187,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 	public static void MoveRotateCamera(Vector2 vector)
 	{
 		CameraRig instance = CameraRig.Instance;
-		bool flag = ConsoleCursor.Instance.Or(null)?.IsActive ?? false;
+		bool flag = ObjectExtensions.Or(ConsoleCursor.Instance, null)?.IsActive ?? false;
 		if (!Game.Instance.Player.IsCameraRotateMode && !flag)
 		{
 			Game.Instance.CameraController.Follower.Release();
@@ -209,7 +210,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 
 	public static void MoveCursor(Vector2 vector)
 	{
-		ConsoleCursor consoleCursor = ConsoleCursor.Instance.Or(null);
+		ConsoleCursor consoleCursor = ObjectExtensions.Or(ConsoleCursor.Instance, null);
 		if ((object)consoleCursor == null || !consoleCursor.IsActive || (!(Game.Instance.CurrentMode == GameModeType.Default) && !(Game.Instance.CurrentMode == GameModeType.Pause)))
 		{
 			return;
@@ -218,14 +219,14 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 		CameraRig.Instance.ScrollBy2D(vector);
 		if (!CameraRig.Instance.OnLevelBound)
 		{
-			ConsoleCursor consoleCursor2 = ConsoleCursor.Instance.Or(null);
+			ConsoleCursor consoleCursor2 = ObjectExtensions.Or(ConsoleCursor.Instance, null);
 			if ((object)consoleCursor2 == null || consoleCursor2.OnScreenCenter)
 			{
-				ConsoleCursor.Instance.Or(null)?.SetToCenter();
+				ObjectExtensions.Or(ConsoleCursor.Instance, null)?.SetToCenter();
 				return;
 			}
 		}
-		ConsoleCursor.Instance.Or(null)?.MoveCursor(vector);
+		ObjectExtensions.Or(ConsoleCursor.Instance, null)?.MoveCursor(vector);
 	}
 
 	protected void UpdateInteractions()
@@ -562,7 +563,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 		}
 		try
 		{
-			SelectionManagerConsole.Instance.Or(null)?.Stop();
+			ObjectExtensions.Or(SelectionManagerConsole.Instance, null)?.Stop();
 		}
 		catch (Exception value)
 		{
@@ -572,7 +573,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 
 	private void ResetStopMovementFlag()
 	{
-		SelectionManagerConsole selectionManagerConsole = SelectionManagerConsole.Instance.Or(null);
+		SelectionManagerConsole selectionManagerConsole = ObjectExtensions.Or(SelectionManagerConsole.Instance, null);
 		if ((object)selectionManagerConsole != null)
 		{
 			selectionManagerConsole.StopMoveFlag = false;
@@ -583,7 +584,8 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 	{
 		if (LayerBinded.Value)
 		{
-			Game.Instance.CursorController.SetAbilityCursor(ability.Icon);
+			bool canFlipZone = ability.Blueprint.GetComponent<IsFlipZoneAbility>() != null && ability.IsAvailable;
+			Game.Instance.CursorController.SetAbilityCursor(ability.Icon, canFlipZone);
 			if (!base.CursorEnabled)
 			{
 				m_ForceCursorEnabled = true;

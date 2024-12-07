@@ -15,10 +15,10 @@ public abstract class InteractionRestrictionPart : ViewBasedPart, IHashable
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool IsDisabled;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset RestrictedBark;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset AllowedBark;
 
 	public abstract int GetUserPriority(BaseUnitEntity user);

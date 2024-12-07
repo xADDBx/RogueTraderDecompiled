@@ -311,10 +311,10 @@ public static class UnitCommandsRunner
 
 	public static void MoveSelectedUnitsToPointRT(Vector3 worldPosition, Vector3 direction, bool isControllerGamepad, bool preview = false, float formationSpaceFactor = 1f, List<BaseUnitEntity> selectedUnits = null, Action<BaseUnitEntity, MoveCommandSettings> commandRunner = null)
 	{
-		MoveSelectedUnitsToPointRT(Game.Instance.SelectionCharacter.SingleSelectedUnit.Value, worldPosition, direction, isControllerGamepad, preview, formationSpaceFactor, selectedUnits, commandRunner);
+		MoveSelectedUnitsToPointRT(Game.Instance.SelectionCharacter.SingleSelectedUnit.Value, worldPosition, direction, isControllerGamepad, anchorOnMainUnit: false, preview, formationSpaceFactor, selectedUnits, commandRunner);
 	}
 
-	public static void MoveSelectedUnitsToPointRT(BaseUnitEntity mainUnit, Vector3 worldPosition, Vector3 direction, bool isControllerGamepad, bool preview = false, float formationSpaceFactor = 1f, List<BaseUnitEntity> selectedUnits = null, Action<BaseUnitEntity, MoveCommandSettings> commandRunner = null, List<BaseUnitEntity> allUnits = null)
+	public static void MoveSelectedUnitsToPointRT(BaseUnitEntity mainUnit, Vector3 worldPosition, Vector3 direction, bool isControllerGamepad, bool anchorOnMainUnit = false, bool preview = false, float formationSpaceFactor = 1f, List<BaseUnitEntity> selectedUnits = null, Action<BaseUnitEntity, MoveCommandSettings> commandRunner = null, List<BaseUnitEntity> allUnits = null)
 	{
 		if (Game.Instance.TurnController.TurnBasedModeActive)
 		{
@@ -340,26 +340,12 @@ public static class UnitCommandsRunner
 		{
 			allUnits = ((selectedUnits.Count == 1) ? selectedUnits : Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable()).ToList());
 		}
-		float? num = null;
-		if (selectedUnits.Count > 1)
-		{
-			num = selectedUnits.Select((BaseUnitEntity u) => u.Movable.ModifiedSpeedMps).Min();
-			float num2 = 30.Feet().Meters / 2.5f;
-			if (num < num2)
-			{
-				num = num2;
-			}
-		}
 		if (selectedUnits.Count <= 0)
 		{
 			return;
 		}
 		Span<Vector3> resultPositions = stackalloc Vector3[allUnits.Count];
-		PartyFormationHelper.FillFormationPositions(worldPosition, FormationAnchor.Front, direction, allUnits, selectedUnits, currentFormation, resultPositions, formationSpaceFactor);
-		AbstractUnitEntity abstractUnitEntity = currentFormation.Tank ?? selectedUnits.FirstItem();
-		bool flag2 = selectedUnits.Contains(abstractUnitEntity);
-		float num3 = currentFormation.Length + 0.6f;
-		float num4 = ((!num.HasValue) ? abstractUnitEntity.Movable.ModifiedSpeedMps : Math.Min(num.Value, abstractUnitEntity.Movable.ModifiedSpeedMps));
+		PartyFormationHelper.FillFormationPositions(worldPosition, anchorOnMainUnit ? FormationAnchor.SelectedUnit : FormationAnchor.Front, direction, allUnits, selectedUnits, currentFormation, resultPositions, formationSpaceFactor, forceRelax: false, anchorOnMainUnit ? allUnits.IndexOf(mainUnit) : (-1));
 		for (int i = 0; i < allUnits.Count; i++)
 		{
 			if (isControllerGamepad && allUnits[i] == mainUnit && flag)
@@ -369,12 +355,8 @@ public static class UnitCommandsRunner
 					Destination = allUnits[i].Position
 				});
 			}
-			else
+			else if (selectedUnits.HasItem(allUnits[i]))
 			{
-				if (!selectedUnits.HasItem(allUnits[i]))
-				{
-					continue;
-				}
 				BaseUnitEntity baseUnitEntity = allUnits[i];
 				Vector3 mechanicsPosition = resultPositions[i];
 				mechanicsPosition = SizePathfindingHelper.FromViewToMechanicsPosition(baseUnitEntity, mechanicsPosition);
@@ -383,27 +365,23 @@ public static class UnitCommandsRunner
 					ShowDestination(allUnits[i], mechanicsPosition);
 					continue;
 				}
-				if (Game.Instance.Player.FormationManager.GetPreserveFormation() && Game.Instance.Player.IsInCombat && flag2)
-				{
-					_ = (abstractUnitEntity.Position - baseUnitEntity.Position).sqrMagnitude;
-				}
 				(commandRunner ?? new Action<BaseUnitEntity, MoveCommandSettings>(RunMoveCommandRT))(baseUnitEntity, new MoveCommandSettings
 				{
 					Destination = mechanicsPosition,
-					FollowedUnit = mainUnit,
+					FollowedUnit = (isControllerGamepad ? mainUnit : null),
 					IsControllerGamepad = isControllerGamepad
 				});
 			}
 		}
-		float num5 = 0f;
+		float num = 0f;
 		for (int j = 0; j < allUnits.Count; j++)
 		{
 			if (selectedUnits.HasItem(allUnits[j]))
 			{
 				float magnitude = (worldPosition - resultPositions[j]).To2D().magnitude;
-				if (magnitude > num5)
+				if (magnitude > num)
 				{
-					num5 = magnitude;
+					num = magnitude;
 				}
 			}
 		}
@@ -421,7 +399,7 @@ public static class UnitCommandsRunner
 				});
 				continue;
 			}
-			Vector3 vector = ((selectedUnits.Count == 1) ? worldPosition : GeometryUtils.ProjectToGround(worldPosition - direction.normalized * (num5 + 2f)));
+			Vector3 vector = ((selectedUnits.Count == 1) ? worldPosition : GeometryUtils.ProjectToGround(worldPosition - direction.normalized * (num + 2f)));
 			if (preview)
 			{
 				ShowDestination(selectedUnit, vector);
@@ -574,7 +552,7 @@ public static class UnitCommandsRunner
 		{
 			throw new InvalidOperationException("Should not be here in TBM");
 		}
-		if (settings.IsControllerGamepad && unit != settings.FollowedUnit)
+		if (settings.FollowedUnit != null && unit != settings.FollowedUnit)
 		{
 			UnitCommandParams cmdParams = UnitHelper.CreateUnitFollowCommandParamsRT(unit, settings);
 			RunMoveCommand(unit, cmdParams);

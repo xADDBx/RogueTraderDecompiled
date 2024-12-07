@@ -48,7 +48,7 @@ public class AbilityStarshipCustomShipPathRange : AbilityRange, IShowAoEAffected
 		}
 	}
 
-	protected override void SetRangeToWorldPosition(Vector3 castPosition)
+	protected override void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
 	{
 		if (!(Ability.Caster is StarshipEntity starship))
 		{

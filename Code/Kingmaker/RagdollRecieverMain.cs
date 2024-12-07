@@ -3,6 +3,7 @@ using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
 using Kingmaker.View;
 using Kingmaker.Visual.HitSystem;
+using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
 
 namespace Kingmaker;
@@ -15,9 +16,11 @@ public class RagdollRecieverMain : MonoBehaviour
 
 	public float TimerWait = 0.5f;
 
-	public float Impulse01 = 5f;
+	public float TimerWaitStart = 0.05f;
 
-	public float Impulse02 = 10f;
+	public float Impulse01 = 1.5f;
+
+	public float Impulse02 = 5f;
 
 	private float previousImpulse;
 
@@ -51,10 +54,23 @@ public class RagdollRecieverMain : MonoBehaviour
 
 	public void Send(string _name, float _value, SurfaceType? _surface)
 	{
+		LogChannel techArt = PFLog.TechArt;
+		string[] obj = new string[6]
+		{
+			"bone:",
+			_name,
+			", impulse:",
+			_value.ToString(),
+			" surfaceType:",
+			null
+		};
+		SurfaceType? surfaceType = _surface;
+		obj[5] = surfaceType.ToString();
+		techArt.Log(string.Concat(obj));
 		if (firstLaunch)
 		{
 			firstLaunch = false;
-			m_CurrentDelayedStop = StartCoroutine(DelayedStop(TimerWait));
+			m_CurrentDelayedStop = StartCoroutine(DelayedStop(TimerWaitStart));
 		}
 		if (_value > Impulse01 && m_CurrentDelayedStop == null && _UnitEntityView.EntityData.Health.LastHandledDamage != null)
 		{

@@ -95,8 +95,7 @@ public class RemoveItemFromPlayer : GameAction
 				Money ? "Coins" : $"Items ({ItemToRemove}"
 			});
 			BlueprintItem itemToRemove = ItemToRemove;
-			bool flag = Money || (bool)ItemToRemove.GetComponent<MoneyReplacement>();
-			long num = (flag ? Game.Instance.Player.Money : GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == itemToRemove));
+			long num = ((Money || (bool)ItemToRemove.GetComponent<MoneyReplacement>()) ? Game.Instance.Player.Money : GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == itemToRemove));
 			long num2 = (RemoveAll ? num : (Quantity + (long)((decimal)num / 100.0m * (decimal)Percentage + 0.5m)));
 			if (num < 0)
 			{
@@ -116,12 +115,10 @@ public class RemoveItemFromPlayer : GameAction
 			if (num2 == 0L)
 			{
 				Element.LogInfo(this, "{0}: Will remove no {1} from the player.", "RemoveItemFromPlayer", Money ? ((object)"Coins") : ((object)itemToRemove));
-				return;
 			}
-			GameHelper.GetPlayerCharacter().Inventory.Remove(itemToRemove, (int)num2);
-			if (flag)
+			else
 			{
-				Game.Instance.Statistic.HandleMoneyFlow(base.Owner?.name ?? "RemoveItemFromPlayer", "RemoveCoins", GameStatistic.MoneyFlowStatistic.ActionType.Quest, num2);
+				GameHelper.GetPlayerCharacter().Inventory.Remove(itemToRemove, (int)num2);
 			}
 		}
 	}

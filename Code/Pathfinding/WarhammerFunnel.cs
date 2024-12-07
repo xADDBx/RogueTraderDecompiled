@@ -36,24 +36,37 @@ public class WarhammerFunnel
 		{
 			return list;
 		}
-		int i;
-		for (i = 0; i < path2.Count; i++)
+		bool flag = false;
+		int num;
+		for (num = 0; num < path2.Count; num++)
 		{
-			if (path2[i] is TriangleMeshNode || path2[i] is CustomGridNodeBase)
+			if (path2[num] is TriangleMeshNode || path2[num] is CustomGridNodeBase)
 			{
 				PathPart item = default(PathPart);
-				item.startIndex = i;
-				for (uint graphIndex = path2[i].GraphIndex; i < path2.Count && (path2[i].GraphIndex == graphIndex || path2[i] is NodeLink3Node); i++)
+				item.startIndex = num;
+				uint graphIndex = path2[num].GraphIndex;
+				bool flag2 = false;
+				for (num++; num < path2.Count && (path2[num].GraphIndex == graphIndex || path2[num] is NodeLink3Node); num++)
 				{
+					if (path2[num - 1] is CustomGridNodeBase customGridNodeBase && path2[num] is CustomGridNodeBase node && customGridNodeBase.ContainsCustomConnection(node))
+					{
+						flag2 = true;
+						break;
+					}
 				}
-				i = (item.endIndex = i - 1);
+				num = (item.endIndex = num - 1);
 				if (item.startIndex == 0)
 				{
 					item.startPoint = path.vectorPath[0];
 				}
 				else
 				{
-					item.startPoint = (Vector3)path2[item.startIndex - 1].position;
+					int num2 = item.startIndex;
+					if (!flag)
+					{
+						num2--;
+					}
+					item.startPoint = (Vector3)path2[num2].position;
 				}
 				if (item.endIndex == path2.Count - 1)
 				{
@@ -61,33 +74,40 @@ public class WarhammerFunnel
 				}
 				else
 				{
-					item.endPoint = (Vector3)path2[item.endIndex + 1].position;
+					int num3 = item.endIndex;
+					if (!flag2)
+					{
+						num3++;
+					}
+					item.endPoint = (Vector3)path2[num3].position;
 				}
+				flag = flag2;
 				list.Add(item);
 			}
 			else
 			{
-				if (!path2[i].IsNodeLinked())
+				if (!path2[num].IsNodeLinked())
 				{
 					throw new Exception("Unsupported node type or null node");
 				}
 				PathPart item2 = default(PathPart);
-				item2.startIndex = i;
-				uint graphIndex2 = path2[i].GraphIndex;
-				for (i++; i < path2.Count && path2[i].GraphIndex == graphIndex2; i++)
+				item2.startIndex = num;
+				uint graphIndex2 = path2[num].GraphIndex;
+				for (num++; num < path2.Count && path2[num].GraphIndex == graphIndex2; num++)
 				{
 				}
-				i--;
-				if (i - item2.startIndex != 0)
+				num--;
+				if (num - item2.startIndex != 0)
 				{
-					if (i - item2.startIndex != 1)
+					if (num - item2.startIndex != 1)
 					{
-						throw new Exception("NodeLink2 link length greater than two (2) nodes. " + (i - item2.startIndex + 1));
+						throw new Exception("NodeLink2 link length greater than two (2) nodes. " + (num - item2.startIndex + 1));
 					}
-					item2.endIndex = i;
+					item2.endIndex = num;
 					item2.isLink = true;
 					item2.startPoint = (Vector3)path2[item2.startIndex].position;
 					item2.endPoint = (Vector3)path2[item2.endIndex].position;
+					flag = false;
 					list.Add(item2);
 				}
 			}

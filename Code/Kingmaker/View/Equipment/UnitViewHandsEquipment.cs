@@ -66,6 +66,8 @@ public class UnitViewHandsEquipment
 
 	public bool IsUsingHologram { get; set; }
 
+	public bool HiddenByCutscene { get; set; }
+
 	public BaseUnitEntity Owner => View.EntityData;
 
 	public UnitAnimationManager AnimationManager => Character.AnimationManager;
@@ -893,7 +895,7 @@ public class UnitViewHandsEquipment
 
 	public void UpdateVisibility(bool isVisible)
 	{
-		if (!Active)
+		if ((HiddenByCutscene && isVisible) || !Active)
 		{
 			return;
 		}

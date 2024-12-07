@@ -24,9 +24,13 @@ public class HardwareInfo
 	[JsonProperty]
 	public string RamSize;
 
+	[JsonProperty]
+	public string Identifier;
+
 	public HardwareInfo()
 	{
 		CpuName = SystemInfo.processorType;
+		Identifier = SystemInfo.deviceUniqueIdentifier;
 		GpuName = SystemInfo.graphicsDeviceName;
 		GpuVendorid = SystemInfo.graphicsDeviceVendorID.ToString();
 		GpuDeviceid = SystemInfo.graphicsDeviceID.ToString();

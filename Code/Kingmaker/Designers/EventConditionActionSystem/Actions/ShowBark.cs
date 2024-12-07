@@ -6,6 +6,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Localization;
+using Kingmaker.Localization.Shared;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.Attributes;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 [TypeId("e164ef6758f918a4abcc3889472a2a3c")]
 public class ShowBark : GameAction
 {
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public LocalizedString WhatToBark;
 
 	[HideInInspector]

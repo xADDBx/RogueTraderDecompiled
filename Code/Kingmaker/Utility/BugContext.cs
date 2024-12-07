@@ -183,6 +183,10 @@ public class BugContext : IComparable<BugContext>
 		{
 			return "Exploration";
 		}
+		if (Type == ContextType.Coop)
+		{
+			return "Coop";
+		}
 		if (ContextObject != null)
 		{
 			return GetContextObjectDescription();
@@ -391,6 +395,14 @@ public class BugContext : IComparable<BugContext>
 
 	public string GetHeader()
 	{
+		if (Type == ContextType.Debug)
+		{
+			return "[Debug]";
+		}
+		if (Type == ContextType.Coop)
+		{
+			return "[Coop]";
+		}
 		if (Type == ContextType.Encounter && ContextObject != null)
 		{
 			return "[" + ContextObject.NameSafe() + "_Encounter]";
@@ -453,10 +465,6 @@ public class BugContext : IComparable<BugContext>
 		if (Type == ContextType.SurfaceCombat)
 		{
 			return "[SurfaceCombat]";
-		}
-		if (Type == ContextType.Coop)
-		{
-			return "[Coop]";
 		}
 		if (Type == ContextType.Desync)
 		{

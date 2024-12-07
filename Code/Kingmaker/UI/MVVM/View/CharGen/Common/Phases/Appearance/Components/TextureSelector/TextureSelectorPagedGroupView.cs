@@ -1,7 +1,9 @@
+using System.Collections;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.PageNavigation;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.TextureSelector;
 using Kingmaker.Utility.DotNetExtensions;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +24,8 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 	[SerializeField]
 	private float m_RowHeight = 43f;
 
+	private bool m_IsCooldownActive;
+
 	protected override void BindViewImplementation()
 	{
 		m_Paginator.Initialize();
@@ -31,11 +35,18 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 		{
 			UpdatePageIndex();
 		}));
-		AddDisposable(m_Paginator.UpdateViewTrigger.Subscribe(delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_Paginator.UpdateViewTrigger, delegate
 		{
 			UpdatePageIndex();
 		}));
 		base.BindViewImplementation();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_IsCooldownActive = false;
+		StopAllCoroutines();
+		base.DestroyViewImplementation();
 	}
 
 	public void OnValidate()
@@ -52,7 +63,10 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 	protected override void DrawEntities()
 	{
 		base.DrawEntities();
-		m_Paginator.UpdateView();
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			m_Paginator.UpdateView();
+		}, 1);
 	}
 
 	private void UpdatePageIndex()
@@ -84,6 +98,11 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 		{
 			return false;
 		}
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return base.ViewModel.SelectPrevValidEntity();
 	}
 
@@ -93,7 +112,19 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 		{
 			return false;
 		}
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return base.ViewModel.SelectNextValidEntity();
+	}
+
+	private IEnumerator HandleCooldown()
+	{
+		m_IsCooldownActive = true;
+		yield return new WaitForSecondsRealtime(0.5f);
+		m_IsCooldownActive = false;
 	}
 
 	public override void SetFocus(bool value)

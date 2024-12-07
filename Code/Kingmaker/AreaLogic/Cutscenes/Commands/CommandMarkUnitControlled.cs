@@ -67,7 +67,7 @@ public class CommandMarkUnitControlled : CommandBase
 
 	public override string GetCaption()
 	{
-		return "<b>Mark</b> " + (Unit ? Unit.GetCaption() : "???") + ((UnmarkAfter > 0f) ? (" for " + UnmarkAfter + " secs") : " indefinitely");
+		return "<b>Mark</b> " + ((!Unit) ? "???" : Unit?.GetCaptionShort()) + ((UnmarkAfter > 0f) ? (" for " + UnmarkAfter + " secs") : " indefinitely");
 	}
 
 	public override string GetWarning()

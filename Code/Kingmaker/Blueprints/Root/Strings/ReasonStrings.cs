@@ -12,26 +12,13 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString AbilityDisabled;
 
-	public LocalizedString CastingForbidden;
-
 	public LocalizedString AbilitiesForbidden;
-
-	public LocalizedString CasterStaggered;
-
-	public LocalizedString CasterPolymorphed;
 
 	public LocalizedString NoResources;
 
 	public LocalizedString NoResourcesWounds;
 
 	public LocalizedString NoResourcesBuff;
-
-	public LocalizedString OutOfSpellsPerDay;
-
-	public LocalizedString NotInSpellList;
-
-	[InfoBox("Not enough burn left for activating ability")]
-	public LocalizedString KineticNotEnoughBurnLeft;
 
 	[InfoBox("Caster has no required condition: {text}")]
 	public LocalizedString NoRequiredCondition;
@@ -41,45 +28,32 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString MaterialComponentRequired;
 
-	[InfoBox("Caster has no required alignment: {text}")]
-	public LocalizedString SpecificAlignmentRequired;
-
-	public LocalizedString SingleShotBallisticWeaponRequired;
-
-	public LocalizedString BurstFireBallisticWeaponRequired;
-
 	public LocalizedString MeleeWeaponRequired;
 
 	public LocalizedString TargetsAroundRequired;
 
 	public LocalizedString TwoHandedWeaponRequired;
 
-	public LocalizedString ChosenWeaponRequired;
-
 	[InfoBox("Caster's weapon does not meet prerequisites: {text}")]
 	public LocalizedString SpecificWeaponRequired;
 
 	public LocalizedString CombatRequired;
 
-	public LocalizedString SpellbookForbidden;
-
 	public LocalizedString SpellbookForbiddenAlignment;
 
 	public LocalizedString SpellbookForbiddenArmor;
 
-	public LocalizedString DualCompanionIsDead;
-
 	public LocalizedString NotEnoughSpace;
 
+	public LocalizedString NeedSpendMP;
+
+	public LocalizedString NeedSpendAP;
+
+	public LocalizedString NeedNoSpendMP;
+
+	public LocalizedString NeedNoSpendAP;
+
 	[Header("Target restrictions")]
-	[InfoBox("Target must has any of alignment components: {text}")]
-	public LocalizedString TargetAlignment;
-
-	[InfoBox("Target must be dead no longer then 2 rounds")]
-	public LocalizedString TargetBreathOfLife;
-
-	public LocalizedString TargetDivineTroth;
-
 	[InfoBox("Target has no required unit condition: {text}")]
 	public LocalizedString TargetHasCondition;
 
@@ -119,19 +93,11 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString TargetIsDeadCompanion;
 
-	public LocalizedString TargetIsDevoured;
-
-	public LocalizedString TargetIsFavoredEnemy;
-
 	[InfoBox("Target must be a party member")]
 	public LocalizedString TargetIsPartyMember;
 
 	[InfoBox("Target must not be a party member")]
 	public LocalizedString TargetIsNotPartyMember;
-
-	public LocalizedString TargetIsSuitableMount;
-
-	public LocalizedString TargetMaximumHitDice;
 
 	public LocalizedString TargetNotSelf;
 
@@ -140,8 +106,6 @@ public class ReasonStrings : StringsContainer
 
 	[InfoBox("Target's stat {text} must be lower or equal than {description}")]
 	public LocalizedString TargetStatConditionLowerOrEqual;
-
-	public LocalizedString TargetStoneToFlesh;
 
 	[InfoBox("Target must can see caster")]
 	public LocalizedString TargetCanSeeCaster;
@@ -178,10 +142,13 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString AreaEffectsCannotOverlap;
 
+	public LocalizedString CantInteractBase;
+
+	[InfoBox("Can include Multikey, Machine Rite Set and Melta Charge")]
+	public LocalizedString CantInteractItems;
+
 	[Header("Tactical Combat")]
 	public LocalizedString NotAllowedCellToCast;
-
-	public LocalizedString TooManySquads;
 
 	public LocalizedString HasNoPriorityTarget;
 
@@ -216,11 +183,18 @@ public class ReasonStrings : StringsContainer
 
 	public LocalizedString NotEnoughActionPoints;
 
+	public LocalizedString NotEnoughMovementPoints;
+
 	public LocalizedString InteractionIsTooFar;
 
 	public LocalizedString AlreadyInteractedInThisCombatRound;
 
 	public LocalizedString UltimateAbilityIsUsedThisRound;
+
+	public LocalizedString CantMoveWhileImmobilized;
+
+	[Header("Career Specific")]
+	public LocalizedString StrategistZonesCantOverlap;
 
 	[Header("Space Combat")]
 	[InfoBox("No suitable weapons were used during Acceleration phase")]
@@ -228,6 +202,9 @@ public class ReasonStrings : StringsContainer
 
 	[InfoBox("Can only be used during Acceleration phase of movement")]
 	public LocalizedString PastPushPhase;
+
+	[InfoBox("Can't be used in Deceleration phase")]
+	public LocalizedString PastPushAndMiddlePhase;
 
 	[InfoBox("Can only target path's final node")]
 	public LocalizedString CanOnlyTargetFinalNode;

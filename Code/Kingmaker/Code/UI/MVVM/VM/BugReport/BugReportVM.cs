@@ -80,8 +80,8 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 	{
 		List<DropdownItemVM> list = new List<DropdownItemVM>();
 		Dictionary<string, string> fixVersions = ReportingUtils.Instance.Assignees.Result.FixVersions;
-		string[] fixVersions2 = ReportingUtils.FixVersions;
-		foreach (string text in fixVersions2)
+		string[] names = Enum.GetNames(typeof(ReportingUtils.FixVersions));
+		foreach (string text in names)
 		{
 			string value;
 			string text2 = (fixVersions.TryGetValue(text, out value) ? ("[" + text + "] " + value) : text);

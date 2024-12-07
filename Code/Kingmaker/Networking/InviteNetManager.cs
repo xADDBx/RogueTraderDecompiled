@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Platforms;
 using Kingmaker.PubSubSystem;
@@ -23,22 +22,24 @@ public class InviteNetManager : IDisposable
 		if (m_PlatformInvite == null)
 		{
 			m_PlatformInvite = PlatformInviteFactory.Create();
-			if (FirstLaunchSettingsVM.HasShown)
-			{
-				CheckAvailableInvite();
-			}
 		}
 	}
 
-	public void CheckAvailableInvite()
+	public async void CheckAvailableInvite()
 	{
+		await m_PlatformInvite.ProcessPendingInvites();
 		if (m_PlatformInvite.TryGetInviteRoom(out var roomServer, out var roomName))
 		{
+			PFLog.Net.Log("[Invite] CheckAvailableInvite: accepting " + roomServer + "/" + roomName);
 			EventBus.RaiseEvent(delegate(INetLobbyRequest h)
 			{
 				h.HandleNetLobbyRequest(isMainMenu: true);
 			});
 			AcceptInvite(roomServer, roomName);
+		}
+		else
+		{
+			PFLog.Net.Log("[Invite] CheckAvailableInvite: no invite.");
 		}
 	}
 

@@ -31,7 +31,7 @@ public class ReplaceStatAttribute : ReplaceStat, IHashable
 				PFLog.Default.Log($"ReplaceStatAttribute: re-overriding stat {m_OriginalStat} to {statType}");
 			}
 			required.OverridenStats[m_OriginalStat] = statType;
-			base.Owner.GetStatOptional(m_OriginalStat)?.UpdateValue();
+			required.GetStat(m_OriginalStat)?.UpdateValue();
 		}
 	}
 
@@ -40,8 +40,9 @@ public class ReplaceStatAttribute : ReplaceStat, IHashable
 		StatType stat = ReplaceStat.GetStat(m_NewAttribute);
 		if (m_OriginalStat != stat)
 		{
-			base.Owner.GetRequired<PartStatsContainer>().OverridenStats.Remove(m_OriginalStat);
-			base.Owner.GetStatOptional(m_OriginalStat)?.UpdateValue();
+			PartStatsContainer required = base.Owner.GetRequired<PartStatsContainer>();
+			required.OverridenStats.Remove(m_OriginalStat);
+			required.GetStat(m_OriginalStat)?.UpdateValue();
 		}
 	}
 

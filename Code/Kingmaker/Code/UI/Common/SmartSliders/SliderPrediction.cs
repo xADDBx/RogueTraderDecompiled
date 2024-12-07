@@ -39,9 +39,10 @@ public class SliderPrediction : MonoBehaviour, IDisposable
 		AddDisposable(currentValue.CombineLatest(maxValue, predictionValue, (float current, float max, float prediction) => new { current, max, prediction }).Subscribe(value =>
 		{
 			bool flag = predictionValue.Value <= currentValue.Value;
-			float num = ((value.max > 0f) ? (value.current / value.max) : 0f);
-			float num2 = ((value.max > 0f) ? (value.prediction / value.max) : 0f);
-			m_BackSlider.value = num;
+			float num = ((value.current > value.max) ? value.current : value.max);
+			float num2 = ((num > 0f) ? (value.current / num) : 0f);
+			float num3 = ((num > 0f) ? (value.prediction / num) : 0f);
+			m_BackSlider.value = num2;
 			m_PredictionTweener?.Kill();
 			if (flag)
 			{
@@ -51,7 +52,7 @@ public class SliderPrediction : MonoBehaviour, IDisposable
 			{
 				HideBackSlider();
 			}
-			PlayFrontSlider(Mathf.Clamp01(flag ? num2 : num));
+			PlayFrontSlider(Mathf.Clamp01(flag ? num3 : num2));
 		}));
 		return this;
 	}

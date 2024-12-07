@@ -102,9 +102,10 @@ public class GeneralProbeData
 		{
 			PFLog.Arbiter.Log("Sending instruction '" + Instruction + "' to server... ");
 			SaveJsonData();
-			string fileName = ArchivateData();
+			string text = ArchivateData();
+			PFLog.Arbiter.Log("Sending file '{0}' ...", text);
 			ServicePointManager.ServerCertificateValidationCallback = (object a, X509Certificate b, X509Chain c, SslPolicyErrors d) => true;
-			new WebClient().UploadFile(Arbiter.SendProbeUrl, "POST", fileName);
+			new WebClient().UploadFile(Arbiter.SendProbeUrl, "POST", text);
 			PFLog.Arbiter.Log("Sending instruction '" + Instruction + "' success.");
 		}
 		catch (Exception ex)
@@ -116,7 +117,9 @@ public class GeneralProbeData
 
 	public void SaveJsonData()
 	{
-		File.WriteAllText(Path.Combine(DataFolder, "info.json"), ArbiterClientIntegration.SerializeObject(this));
+		string text = Path.Combine(DataFolder, "info.json");
+		PFLog.Arbiter.Log("Save general probe data to file '{0}' ...", text);
+		File.WriteAllText(text, ArbiterClientIntegration.SerializeObject(this));
 	}
 
 	private string ArchivateData()

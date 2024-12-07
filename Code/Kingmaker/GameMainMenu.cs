@@ -135,7 +135,6 @@ public class GameMainMenu : MonoBehaviour
 	private void Update()
 	{
 		SoundState.Instance.UpdateScheduledAreaMusic();
-		Game.Instance.Statistic.Tick(Game.Instance, isMainMenu: true);
 		if (!m_GraphicsSettingsApplied && !CommandLineArguments.Parse().Contains("menu-default-graphics"))
 		{
 			PFLog.System.Log("MainMenu.Update(): Applying Graphics Settings");

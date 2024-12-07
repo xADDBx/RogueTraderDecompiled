@@ -101,6 +101,6 @@ public class CommandIgnoreCombat : CommandBase
 
 	public override string GetCaption()
 	{
-		return $"{Unit} ignore combat";
+		return Unit?.GetCaptionShort() + " ignore combat";
 	}
 }

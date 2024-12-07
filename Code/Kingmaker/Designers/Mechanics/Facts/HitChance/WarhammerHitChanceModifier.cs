@@ -48,6 +48,8 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 
 	public bool AutoCrit;
 
+	public bool NeverCrit;
+
 	private bool ModifyHitChance => (Properties & PropertyType.HitChance) != 0;
 
 	public bool ModifyCoverPenetration => (Properties & PropertyType.CoverPenetration) != 0;
@@ -60,17 +62,14 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 	{
 		if (!ModifyHitChance)
 		{
-			if (AutoCrit && Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+			if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 			{
-				rule.AutoCrits.Add(base.Fact);
+				ResolveCrit(rule);
 			}
 		}
 		else if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
-			if (AutoCrit)
-			{
-				rule.AutoCrits.Add(base.Fact);
-			}
+			ResolveCrit(rule);
 			rule.HitChanceValueModifiers.Add(HitChance.Calculate(base.Context), base.Fact);
 		}
 	}
@@ -106,6 +105,18 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 		{
 			int value = RighteousFuryChance.Calculate(base.Context);
 			rule.ChanceModifiers.Add(value, base.Fact);
+		}
+	}
+
+	private void ResolveCrit(RuleCalculateHitChances rule)
+	{
+		if (NeverCrit)
+		{
+			rule.NeverCrits.Add(base.Fact);
+		}
+		else if (AutoCrit)
+		{
+			rule.AutoCrits.Add(base.Fact);
 		}
 	}
 

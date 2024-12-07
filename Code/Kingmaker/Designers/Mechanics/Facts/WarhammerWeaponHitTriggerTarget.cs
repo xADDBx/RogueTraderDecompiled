@@ -59,7 +59,7 @@ public class WarhammerWeaponHitTriggerTarget : WarhammerWeaponHitTriggerBase, IT
 				return;
 			}
 		}
-		CheckConditionsAndRunActions(evt.ConcreteInitiator, evt.ConcreteTarget, evt.Ability.Weapon, evt.RollPerformAttackRule.ResultIsRighteousFury || evt.RollPerformAttackRule.HitChanceRule.AutoCrits.Value || evt.RollPerformAttackRule.ShouldHaveBeenRighteousFury, evt.ResultIsHit);
+		CheckConditionsAndRunActions(evt.ConcreteInitiator, evt.ConcreteTarget, evt.Ability.Weapon, evt.RollPerformAttackRule.IsCritical() || evt.RollPerformAttackRule.ShouldHaveBeenRighteousFury, evt.ResultIsHit);
 	}
 
 	private void CheckConditionsAndRunActions(MechanicEntity initiator, MechanicEntity target, ItemEntityWeapon weapon, bool isCritical, bool isHit)

@@ -49,7 +49,7 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		return false;
 	}
 
-	protected override void SetRangeToCasterPosition()
+	protected override void SetRangeToCasterPosition(bool ignoreCache = false)
 	{
 		SetRangeToWorldPosition(GetBestCastingPosition(Ability.Caster).Vector3Position);
 	}
@@ -61,7 +61,7 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		return caster.GetInnerNodeNearestToTarget(desiredPosition.GetNearestNodeXZUnwalkable(), clickEventsController.WorldPosition);
 	}
 
-	protected override void SetRangeToWorldPosition(Vector3 castPosition)
+	protected override void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
 	{
 		foreach (GameObject cellMarker in m_CellMarkers)
 		{
@@ -76,7 +76,7 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		{
 			customGridNodeBase = AoEPatternHelper.GetGridNode(AdjustTargetWithAngleRestriction(customGridNodeBase.Vector3Position));
 		}
-		if (m_CachedCasterNode == bestShootingPositionForDesiredPosition && m_CachedTargetNode == customGridNodeBase)
+		if (!(m_CachedCasterNode != bestShootingPositionForDesiredPosition || m_CachedTargetNode != customGridNodeBase || ignoreCache))
 		{
 			return;
 		}

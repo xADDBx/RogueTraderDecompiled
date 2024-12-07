@@ -43,6 +43,6 @@ public class CommandSetRotationForbidden : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Set <b>Rotation Forbidden</b> for " + Unit?.GetCaption();
+		return "Set <b>Rotation Forbidden</b> for " + Unit?.GetCaptionShort();
 	}
 }

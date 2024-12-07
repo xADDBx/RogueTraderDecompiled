@@ -102,6 +102,11 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 		return GetCaption();
 	}
 
+	public virtual string GetCaptionShort()
+	{
+		return GetCaption();
+	}
+
 	public abstract string GetCaption();
 
 	public virtual string GetDescription()

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
@@ -179,16 +178,32 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		}
 		AddDisposable(InventoryStash = new InventoryStashVM(inventory: false, canInsertItem));
 		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().Subscribe(Update));
-		UIEventType eventType = mode switch
+		UIEventType uIEventType = default(UIEventType);
+		switch (mode)
 		{
-			LootContextVM.LootWindowMode.Short => UIEventType.LootShortOpen, 
-			LootContextVM.LootWindowMode.ShortUnit => UIEventType.LootShortUnitOpen, 
-			LootContextVM.LootWindowMode.ZoneExit => UIEventType.LootZoneExitOpen, 
-			LootContextVM.LootWindowMode.PlayerChest => UIEventType.LootPlayerChestOpen, 
-			LootContextVM.LootWindowMode.StandardChest => UIEventType.LootStandardChestOpen, 
-			LootContextVM.LootWindowMode.OneSlot => UIEventType.LootOneSlotOpen, 
-			_ => throw new SwitchExpressionException(mode), 
-		};
+		case LootContextVM.LootWindowMode.Short:
+			uIEventType = UIEventType.LootShortOpen;
+			break;
+		case LootContextVM.LootWindowMode.ShortUnit:
+			uIEventType = UIEventType.LootShortUnitOpen;
+			break;
+		case LootContextVM.LootWindowMode.ZoneExit:
+			uIEventType = UIEventType.LootZoneExitOpen;
+			break;
+		case LootContextVM.LootWindowMode.PlayerChest:
+			uIEventType = UIEventType.LootPlayerChestOpen;
+			break;
+		case LootContextVM.LootWindowMode.StandardChest:
+			uIEventType = UIEventType.LootStandardChestOpen;
+			break;
+		case LootContextVM.LootWindowMode.OneSlot:
+			uIEventType = UIEventType.LootOneSlotOpen;
+			break;
+		default:
+			global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(mode);
+			break;
+		}
+		UIEventType eventType = uIEventType;
 		AddDisposable(Selector = new LensSelectorVM());
 		EventBus.RaiseEvent(delegate(IUIEventHandler h)
 		{
@@ -342,7 +357,7 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		if (IsPlayerStash || IsOneSlot)
 		{
 			InventoryHelper.TryCollectLootSlot(slot);
-			DelayedInvoker.InvokeInFrames(MarkContextLootAsDirty, 1);
+			DelayedInvoker.InvokeInFrames(MarkContextLootAsDirty, 5);
 			return;
 		}
 		if (ToInventory(slot.ItemEntity))
@@ -562,7 +577,7 @@ public class LootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 			}
 			return;
 		}
-		if (ContextLoot[1].ContainsSlot(to))
+		if (ContextLoot.Count > 1 && ContextLoot[1].ContainsSlot(to))
 		{
 			m_LootItemsByObjectType[LootObjectType.Trash].Add(from.ItemEntity);
 		}

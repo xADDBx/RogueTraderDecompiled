@@ -65,43 +65,34 @@ public class SaveScreenshotManager : MonoBehaviour
 		(int Width, int Height) lowResScreenshotSize = GetLowResScreenshotSize();
 		int item = lowResScreenshotSize.Width;
 		int item2 = lowResScreenshotSize.Height;
-		RenderTexture renderTexture2 = CreateTemporaryResizeRT(item, item2);
-		Texture2D result = MakeResizedTexture(renderTexture, item, item2, renderTexture2);
-		RenderTexture.ReleaseTemporary(renderTexture2);
+		Texture2D result = MakeResizedTexture(renderTexture, item, item2);
 		RenderTexture.ReleaseTemporary(renderTexture);
 		return result;
 	}
 
 	public static Texture2D MakeScreenshotHighResOnly()
 	{
-		RenderTexture resizeRT;
-		Texture2D result = MakeScreenshotHighResInternal(out resizeRT);
-		RenderTexture.ReleaseTemporary(resizeRT);
+		RenderTexture fullScreenRT;
+		Texture2D result = MakeScreenshotHighResInternal(out fullScreenRT);
+		RenderTexture.ReleaseTemporary(fullScreenRT);
 		return result;
 	}
 
 	public static (Texture2D HighRes, Texture2D LowRes) MakeScreenshot()
 	{
-		RenderTexture resizeRT;
-		Texture2D texture2D = MakeScreenshotHighResInternal(out resizeRT);
+		RenderTexture fullScreenRT;
+		Texture2D item = MakeScreenshotHighResInternal(out fullScreenRT);
 		(int Width, int Height) lowResScreenshotSize = GetLowResScreenshotSize();
-		int item = lowResScreenshotSize.Width;
-		int item2 = lowResScreenshotSize.Height;
-		Texture2D item3 = MakeResizedTexture(texture2D, item, item2, resizeRT);
-		RenderTexture.ReleaseTemporary(resizeRT);
-		return (HighRes: texture2D, LowRes: item3);
+		Texture2D item4 = MakeResizedTexture(width: lowResScreenshotSize.Width, height: lowResScreenshotSize.Height, srcTexture: fullScreenRT);
+		RenderTexture.ReleaseTemporary(fullScreenRT);
+		return (HighRes: item, LowRes: item4);
 	}
 
-	private static Texture2D MakeScreenshotHighResInternal(out RenderTexture resizeRT)
+	private static Texture2D MakeScreenshotHighResInternal(out RenderTexture fullScreenRT)
 	{
-		RenderTexture renderTexture = CameraStackScreenshoter.TakeScreenshotNoResize();
-		(int Width, int Height) highResScreenshotSize = GetHighResScreenshotSize(renderTexture);
-		int item = highResScreenshotSize.Width;
-		int item2 = highResScreenshotSize.Height;
-		resizeRT = CreateTemporaryResizeRT(item, item2);
-		Texture2D result = MakeResizedTexture(renderTexture, item, item2, resizeRT);
-		RenderTexture.ReleaseTemporary(renderTexture);
-		return result;
+		fullScreenRT = CameraStackScreenshoter.TakeScreenshotNoResize();
+		var (width, height) = GetHighResScreenshotSize(fullScreenRT);
+		return MakeResizedTexture(fullScreenRT, width, height);
 	}
 
 	private static (int Width, int Height) GetHighResScreenshotSize(Texture srcTexture)
@@ -125,18 +116,18 @@ public class SaveScreenshotManager : MonoBehaviour
 		return temporary;
 	}
 
-	private static Texture2D MakeResizedTexture(Texture srcTexture, int width, int height, RenderTexture resizeRT)
+	private static Texture2D MakeResizedTexture(Texture srcTexture, int width, int height)
 	{
 		RenderTexture active = RenderTexture.active;
-		RenderTexture.active = resizeRT;
+		RenderTexture renderTexture2 = (RenderTexture.active = CreateTemporaryResizeRT(width, height));
 		srcTexture.filterMode = FilterMode.Bilinear;
 		Rect screenRect = CalcRectToFit(width, height, srcTexture.width, srcTexture.height);
 		if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal)
 		{
-			screenRect.y = resizeRT.height - height;
+			screenRect.y = renderTexture2.height - height;
 		}
 		GL.PushMatrix();
-		GL.LoadPixelMatrix(0f, resizeRT.width, resizeRT.height, 0f);
+		GL.LoadPixelMatrix(0f, renderTexture2.width, renderTexture2.height, 0f);
 		GL.Clear(clearDepth: true, clearColor: true, new Color(0f, 0f, 0f, 0f));
 		Graphics.DrawTexture(screenRect, srcTexture);
 		GL.PopMatrix();
@@ -145,6 +136,7 @@ public class SaveScreenshotManager : MonoBehaviour
 		texture2D.ReadPixels(new Rect(0f, 0f, width, height), 0, 0, recalculateMipMaps: false);
 		texture2D.Apply(updateMipmaps: false);
 		RenderTexture.active = active;
+		RenderTexture.ReleaseTemporary(renderTexture2);
 		return texture2D;
 	}
 

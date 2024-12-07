@@ -26,11 +26,11 @@ public class CargoRewardsConsoleView : CargoRewardsBaseView, ICullFocusHandler, 
 
 	protected override void CreateInputImpl()
 	{
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		AddDisposable(m_HintsWidget.BindHint(InputLayer.AddButton(delegate
 		{
 			HandleComplete();
 		}, 8), UIStrings.Instance.CommonTexts.Accept));
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(m_HintsWidget.BindHint(InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.Information));
 	}
 
 	protected override void OnPageFocusChangedImpl(IConsoleEntity entity)
@@ -51,9 +51,9 @@ public class CargoRewardsConsoleView : CargoRewardsBaseView, ICullFocusHandler, 
 			}
 		}
 		m_HasTooltip.Value = list != null && list.Count > 0;
-		if (m_ShowTooltip)
+		if (ShowTooltip)
 		{
-			((entity as MonoBehaviour) ?? (entity as IMonoBehaviour)?.MonoBehaviour).ShowConsoleTooltip(list, m_NavigationBehaviour, config);
+			((entity as MonoBehaviour) ?? (entity as IMonoBehaviour)?.MonoBehaviour).ShowConsoleTooltip(list, NavigationBehaviour, config);
 		}
 		else
 		{
@@ -63,23 +63,23 @@ public class CargoRewardsConsoleView : CargoRewardsBaseView, ICullFocusHandler, 
 
 	private void ToggleTooltip(InputActionEventData data)
 	{
-		m_ShowTooltip = !RootUIContext.Instance.TooltipIsShown;
-		OnPageFocusChangedImpl(m_NavigationBehaviour.DeepestNestedFocus);
+		ShowTooltip = !RootUIContext.Instance.TooltipIsShown;
+		OnPageFocusChangedImpl(NavigationBehaviour.DeepestNestedFocus);
 	}
 
 	public void HandleRemoveFocus()
 	{
-		m_CulledFocus = m_NavigationBehaviour.DeepestNestedFocus;
-		m_NavigationBehaviour.UnFocusCurrentEntity();
+		m_CulledFocus = NavigationBehaviour.DeepestNestedFocus;
+		NavigationBehaviour.UnFocusCurrentEntity();
 	}
 
 	public void HandleRestoreFocus()
 	{
 		if (m_CulledFocus != null)
 		{
-			m_NavigationBehaviour.FocusOnEntityManual(m_CulledFocus);
-			m_NavigationBehaviour.UpdateDeepestFocusObserve();
+			NavigationBehaviour.FocusOnEntityManual(m_CulledFocus);
+			NavigationBehaviour.UpdateDeepestFocusObserve();
+			m_CulledFocus = null;
 		}
-		m_CulledFocus = null;
 	}
 }

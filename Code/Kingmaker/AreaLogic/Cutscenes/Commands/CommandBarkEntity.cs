@@ -27,7 +27,7 @@ public class CommandBarkEntity : CommandBase
 
 	public string Text;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	[ValidateNotNull]
 	public SharedStringAsset SharedText;
 

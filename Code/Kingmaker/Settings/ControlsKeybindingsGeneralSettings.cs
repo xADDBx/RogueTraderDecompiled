@@ -81,6 +81,8 @@ public class ControlsKeybindingsGeneralSettings
 
 	public readonly SettingsEntityKeyBindingPair NextCharacter;
 
+	public readonly SettingsEntityKeyBindingPair FlipZoneStrategist;
+
 	public ControlsKeybindingsGeneralSettings(ISettingsController settingsController, ControlsKeybindingsGeneralSettingsDefaultValues defaultValues)
 	{
 		HighlightObjects = new SettingsEntityKeyBindingPair(settingsController, "highlight-objects", defaultValues.HighlightObjects);
@@ -121,5 +123,6 @@ public class ControlsKeybindingsGeneralSettings
 		NextTab = new SettingsEntityKeyBindingPair(settingsController, "next-tab", defaultValues.NextTab);
 		PrevCharacter = new SettingsEntityKeyBindingPair(settingsController, "prev-character", defaultValues.PrevCharacter);
 		NextCharacter = new SettingsEntityKeyBindingPair(settingsController, "next-character", defaultValues.NextCharacter);
+		FlipZoneStrategist = new SettingsEntityKeyBindingPair(settingsController, "flip-zone-strategist", defaultValues.FlipZoneStrategist);
 	}
 }

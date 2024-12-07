@@ -54,9 +54,9 @@ public class RulePerformAbility : RulebookEvent
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		Context.IsForced = IsCutscene || base.ConcreteInitiator.IsCheater;
-		if (!Context.IsForced && !Spell.IsValid(SpellTarget))
+		if (!Context.IsForced && !Spell.IsValid(SpellTarget, out var unavailabilityReason))
 		{
-			PFLog.Default.ErrorWithReport($"Invalid target {SpellTarget} for spell '{Spell.Blueprint}'");
+			PFLog.Default.ErrorWithReport($"Invalid target {SpellTarget} for spell '{Spell.Blueprint}' because {unavailabilityReason}");
 			return;
 		}
 		Context.ShadowFactorPercents = 0;

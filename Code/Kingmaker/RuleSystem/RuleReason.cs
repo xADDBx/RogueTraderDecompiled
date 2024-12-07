@@ -129,9 +129,7 @@ public readonly struct RuleReason : IUIDataProvider, IEquatable<RuleReason>
 		{
 			throw new ArgumentNullException("context");
 		}
-		MechanicEntityFact fact = ContextDataHelper.GetFact();
-		MechanicsContext mechanicsContext = fact?.MaybeContext;
-		if (mechanicsContext != null && mechanicsContext != context)
+		if (!ContextDataHelper.TryGetFactByContext(context, out var fact))
 		{
 			throw new ArgumentException("Fact context differs from current context", "context");
 		}

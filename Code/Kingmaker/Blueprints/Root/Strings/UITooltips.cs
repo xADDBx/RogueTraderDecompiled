@@ -221,6 +221,10 @@ public class UITooltips
 
 	public LocalizedString CommonFeatureDesc;
 
+	public LocalizedString FlipZoneStrategist;
+
+	public LocalizedString FlipZoneStrategistConsole;
+
 	[Header("Hints")]
 	public LocalizedString ShowTooltipHint;
 
@@ -238,6 +242,8 @@ public class UITooltips
 	public LocalizedString SoulMarkIsLocked;
 
 	public LocalizedString SoulMarkMayBeLocked;
+
+	public LocalizedString SoulMarkCompanion;
 
 	[Header("Prerequisites")]
 	public LocalizedString Prerequisites;

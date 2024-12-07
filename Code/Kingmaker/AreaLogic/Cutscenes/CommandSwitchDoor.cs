@@ -110,6 +110,6 @@ public class CommandSwitchDoor : CommandBase
 
 	public override string GetCaption()
 	{
-		return $"<b>Open door</b> {Door}";
+		return "<b>Open door</b> " + Door?.GetCaptionShort();
 	}
 }

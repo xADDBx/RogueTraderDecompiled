@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Stats;
@@ -84,18 +83,21 @@ public class CharGenAttributesItemVM : CharGenBackgroundBaseItemVM, INetLobbyPla
 
 	public void UpdateTooltip(ModifiableValue unitStat)
 	{
-		StatTooltipData statTooltipData;
+		StatTooltipData statTooltipData = default(StatTooltipData);
 		if (!(unitStat is ModifiableValueAttributeStat attribute))
 		{
 			if (!(unitStat is ModifiableValueSkill skill))
 			{
 				if (!(unitStat is ModifiableValueSavingThrow savingThrow))
 				{
-					if (unitStat == null)
+					if (unitStat != null)
 					{
-						throw new SwitchExpressionException(unitStat);
+						statTooltipData = new StatTooltipData(unitStat);
 					}
-					statTooltipData = new StatTooltipData(unitStat);
+					else
+					{
+						global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(unitStat);
+					}
 				}
 				else
 				{

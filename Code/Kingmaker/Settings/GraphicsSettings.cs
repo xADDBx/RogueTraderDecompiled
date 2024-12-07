@@ -20,6 +20,8 @@ public class GraphicsSettings
 
 	public readonly SettingsEntityBool CameraShake;
 
+	public readonly SettingsEntityEnum<PS5ProGraphicsQualityOption> PS5ProGraphicsQuality;
+
 	public readonly SettingsEntityEnum<QualityPresetOption> GraphicsQuality;
 
 	public readonly SettingsEntityEnum<VSyncModeOptions> VSyncMode;
@@ -99,6 +101,7 @@ public class GraphicsSettings
 		Display = new SettingsEntityInt(settingsController, "display-num", 0, saveDependent: false, requireReboot: true);
 		FullScreenMode = new SettingsEntityEnum<FullScreenMode>(settingsController, "full-screen-mode", UnityEngine.FullScreenMode.FullScreenWindow);
 		ScreenResolution = new SettingsEntityInt(settingsController, "resolution", 0);
+		PS5ProGraphicsQuality = new SettingsEntityEnum<PS5ProGraphicsQualityOption>(settingsController, "ps5-trinity-quality", defaultPreset.PS5ProGraphicsQuality);
 		ScreenResolutionWasTouched = ScreenResolution.WasTouched();
 		GraphicsQualityWasTouched = GraphicsQuality.WasTouched();
 	}

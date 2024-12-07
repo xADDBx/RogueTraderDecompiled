@@ -140,7 +140,7 @@ public static class GameHelper
 			unit.Health.LastHandledDamage = new RuleDealDamage(killer, unit, new DamageData(DamageType.Direct, 0));
 			if (unit.View is UnitEntityView unitEntityView)
 			{
-				unitEntityView.AddRagdollImpulse((unit.Position - killer.Position).normalized, impulseMultiplier, DamageType.Direct);
+				unitEntityView.AddRagdollImpulse((unit.Position - killer.Position).normalized, impulseMultiplier, DamageType.Direct, isCutscene: true);
 			}
 		}
 		else

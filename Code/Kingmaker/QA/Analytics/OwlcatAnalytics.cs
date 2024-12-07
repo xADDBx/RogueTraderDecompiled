@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kingmaker.Settings;
-using Kingmaker.Settings.LINQ;
 using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.Core.Logging;
 using Unity.Services.Core;
@@ -47,7 +46,7 @@ public class OwlcatAnalytics
 		}
 	}
 
-	public bool IsOptInConsentShown => (WasTouchedSetting<bool>)SettingsRoot.Game.Main.AskedSendGameStatistic;
+	public bool IsOptInConsentShown => false;
 
 	private async Task LoadConfiguration()
 	{
@@ -75,10 +74,13 @@ public class OwlcatAnalytics
 
 	public async void StartDataCollection()
 	{
-		await LoadConfiguration();
-		if (IsOptIn && m_IsInitialized)
+		if (IsOptIn)
 		{
-			Target.StartDataCollection();
+			await LoadConfiguration();
+			if (m_IsInitialized)
+			{
+				Target.StartDataCollection();
+			}
 		}
 	}
 

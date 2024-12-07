@@ -26,6 +26,11 @@ public class MapObjectFromScene : MapObjectEvaluator
 		return null;
 	}
 
+	public override string GetCaptionShort()
+	{
+		return MapObject?.ToString();
+	}
+
 	public override string GetCaption()
 	{
 		return "Object from scene " + MapObject;

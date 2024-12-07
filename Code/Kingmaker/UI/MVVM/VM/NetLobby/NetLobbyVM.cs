@@ -13,7 +13,6 @@ using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.Networking.Platforms;
-using Kingmaker.Networking.Platforms.Session;
 using Kingmaker.Networking.Player;
 using Kingmaker.Networking.Save;
 using Kingmaker.PubSubSystem;
@@ -128,9 +127,9 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public OwlcatDropdownVM InvitableUserTypesDropdownVM;
 
-	public readonly ReactiveProperty<JoinableUserTypes> CurrentJoinableUserType = new ReactiveProperty<JoinableUserTypes>();
+	public readonly ReactiveProperty<int> JoinableUserTypeIndex = new ReactiveProperty<int>();
 
-	public readonly ReactiveProperty<InvitableUserTypes> CurrentInvitableUserType = new ReactiveProperty<InvitableUserTypes>();
+	public readonly ReactiveProperty<int> InvitableUserTypeIndex = new ReactiveProperty<int>();
 
 	private static bool NetLobbyTutorialHasShown => PlayerPrefs.GetInt("first_open_net_lobby_tutorial", 0) == 1;
 
@@ -260,24 +259,32 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	{
 	}
 
-	private void SetUserTypeDropdown<TEnum>(string playerPrefName, Func<TEnum> getter, Action<TEnum> setter, out OwlcatDropdownVM dropdownVM, IEnumerable<TEnum> options, ReactiveProperty<TEnum> property, Func<TEnum, string> labelGetter, TEnum defaultValue)
+	private void SetUserTypeDropdown<TEnum>(string playerPrefName, Func<TEnum> getter, Action<TEnum> setter, out OwlcatDropdownVM dropdownVM, IList<TEnum> options, ReactiveProperty<int> property, Func<TEnum, string> labelGetter, TEnum defaultValue)
 	{
 		int @int = PlayerPrefs.GetInt(playerPrefName, 0);
 		setter(Enum.IsDefined(typeof(TEnum), @int) ? ((TEnum)(object)@int) : defaultValue);
-		property.Value = getter();
+		int num = options.IndexOf(getter());
+		property.Value = ((num >= 0) ? num : 0);
 		List<DropdownItemVM> vmCollection = options.Select((TEnum type) => new DropdownItemVM(labelGetter(type))).ToList();
 		AddDisposable(dropdownVM = new OwlcatDropdownVM(vmCollection));
-		AddDisposable(property.Subscribe(setter));
+		AddDisposable(property.Subscribe(delegate(int valueIndex)
+		{
+			if (valueIndex < 0 || valueIndex >= options.Count)
+			{
+				valueIndex = 0;
+			}
+			setter(options[valueIndex]);
+		}));
 	}
 
 	public void SetJoinableUserType(int type)
 	{
-		CurrentJoinableUserType.Value = (JoinableUserTypes)type;
+		JoinableUserTypeIndex.Value = type;
 	}
 
 	public void SetInvitableUserType(int type)
 	{
-		CurrentInvitableUserType.Value = (InvitableUserTypes)type;
+		InvitableUserTypeIndex.Value = type;
 	}
 
 	private void ActivateNetHandlers()

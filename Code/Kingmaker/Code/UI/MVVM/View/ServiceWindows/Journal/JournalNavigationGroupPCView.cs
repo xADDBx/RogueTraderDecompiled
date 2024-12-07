@@ -24,17 +24,23 @@ public class JournalNavigationGroupPCView : JournalNavigationGroupBaseView
 		DrawEntities();
 		DelayedInvoker.InvokeInFrames(delegate
 		{
-			m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
-			AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+			if (base.ViewModel != null && !(m_ExpandableCollapseMultiButton == null))
 			{
-				base.ViewModel.IsCollapse = !value;
-			}));
+				m_ExpandableCollapseMultiButton.SetValue(!base.ViewModel.IsCollapse, isImmediately: true);
+				AddDisposable(m_ExpandableCollapseMultiButton.IsOn.Subscribe(delegate(bool value)
+				{
+					base.ViewModel.IsCollapse = !value;
+				}));
+			}
 		}, 3);
 	}
 
 	private void DrawEntities()
 	{
-		JournalQuestVM[] vmCollection = (base.ShowCompletedQuests ? base.ViewModel.Quests.ToArray() : base.ViewModel.Quests.Where((JournalQuestVM q) => q.IsActive).ToArray());
-		base.WidgetList.DrawEntries(vmCollection, NavigationGroupElementViewPrefab);
+		if (base.ViewModel != null)
+		{
+			JournalQuestVM[] vmCollection = (base.ShowCompletedQuests ? base.ViewModel.Quests.ToArray() : base.ViewModel.Quests.Where((JournalQuestVM q) => q.IsActive).ToArray());
+			base.WidgetList.DrawEntries(vmCollection, NavigationGroupElementViewPrefab);
+		}
 	}
 }

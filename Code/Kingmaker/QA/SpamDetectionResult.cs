@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.Utility;
 
 namespace Kingmaker.QA;
 
@@ -8,15 +10,15 @@ public class SpamDetectionResult
 
 	public string Message { get; }
 
-	public string TargetVersion { get; }
+	public ReportingUtils.FixVersions TargetVersion { get; }
 
-	public string Severity { get; }
+	public ReportingUtils.Severity Severity { get; }
 
-	public SpamDetectionResult(string message, string severity, string targetVersion, IEnumerable<LogItem> items)
+	public SpamDetectionResult(string message, ReportingUtils.Severity severity, ReportingUtils.FixVersions targetVersion, IEnumerable<LogItem> items)
 	{
 		Message = message;
 		Severity = severity;
 		TargetVersion = targetVersion;
-		Items = items;
+		Items = items.ToList();
 	}
 }

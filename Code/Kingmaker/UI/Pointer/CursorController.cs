@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Controllers.Clicks;
@@ -62,7 +63,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		}
 	}
 
-	public Vector2 CursorPosition => CurrentCursor.Or(null)?.Position ?? ((Vector2)Input.mousePosition);
+	public Vector2 CursorPosition => ObjectExtensions.Or(CurrentCursor, null)?.Position ?? ((Vector2)Input.mousePosition);
 
 	public void Activate()
 	{
@@ -72,7 +73,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		m_Disposable.Add(MainThreadDispatcher.UpdateAsObservable().Subscribe(OnUpdate));
 		m_Disposable.Add(UIVisibilityState.VisibilityPreset.Subscribe(delegate
 		{
-			CurrentCursor.Or(null)?.SetActive(CurrentCursor.PrevActiveCursorState);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetActive(CurrentCursor.PrevActiveCursorState);
 		}));
 	}
 
@@ -85,14 +86,14 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 
 	public void SetActive(bool active)
 	{
-		CurrentCursor.Or(null)?.SetActive(active);
+		ObjectExtensions.Or(CurrentCursor, null)?.SetActive(active);
 	}
 
 	public void SetCursor(CursorType type, bool force = false)
 	{
 		if ((!m_Locked && !m_OnGui) || force)
 		{
-			CurrentCursor.Or(null)?.SetCursor(type);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetCursor(type);
 		}
 	}
 
@@ -130,11 +131,11 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		SelectedAbility = null;
 	}
 
-	public void SetAbilityCursor(Sprite abilityIcon)
+	public void SetAbilityCursor(Sprite abilityIcon, bool canFlipZone)
 	{
 		if (!m_Locked)
 		{
-			CurrentCursor.Or(null)?.SetAbilityCursor(abilityIcon);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetAbilityCursor(abilityIcon, canFlipZone);
 		}
 	}
 
@@ -142,7 +143,8 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 	{
 		if (!m_Locked)
 		{
-			CurrentCursor.Or(null)?.SetAbilityCursor(SelectedAbility.Icon);
+			bool canFlipZone = SelectedAbility.Blueprint.GetComponent<IsFlipZoneAbility>() != null && SelectedAbility.IsAvailable;
+			ObjectExtensions.Or(CurrentCursor, null)?.SetAbilityCursor(SelectedAbility.Icon, canFlipZone);
 		}
 	}
 
@@ -167,11 +169,11 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 	{
 		if ((m_Locked || m_OnGui) && !force)
 		{
-			CurrentCursor.Or(null)?.SetTexts(null, null);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetTexts(null, null);
 		}
 		else
 		{
-			CurrentCursor.Or(null)?.SetTexts(upperText, lowerText);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetTexts(upperText, lowerText);
 		}
 	}
 
@@ -179,17 +181,17 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 	{
 		if ((m_Locked || m_OnGui) && !force)
 		{
-			CurrentCursor.Or(null)?.SetNoMove(noMove: false);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetNoMove(noMove: false);
 		}
 		else
 		{
-			CurrentCursor.Or(null)?.SetNoMove(noMove);
+			ObjectExtensions.Or(CurrentCursor, null)?.SetNoMove(noMove);
 		}
 	}
 
 	public void ClearComponents()
 	{
-		CurrentCursor.Or(null)?.ClearComponents();
+		ObjectExtensions.Or(CurrentCursor, null)?.ClearComponents();
 	}
 
 	private void UpdateCursorMode(bool forceFocused = false)
@@ -458,7 +460,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		bool flag;
 		if (newValue)
 		{
-			CursorType? cursorType = CurrentCursor.Or(null)?.CurrentType;
+			CursorType? cursorType = ObjectExtensions.Or(CurrentCursor, null)?.CurrentType;
 			if (cursorType.HasValue)
 			{
 				CursorType valueOrDefault = cursorType.GetValueOrDefault();
@@ -483,7 +485,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		m_OnGui = true;
 		goto IL_006f;
 		IL_006f:
-		CurrentCursor.Or(null)?.OnGuiChanged(m_OnGui);
+		ObjectExtensions.Or(CurrentCursor, null)?.OnGuiChanged(m_OnGui);
 	}
 
 	public void HandlePartyCharacterHover(BaseUnitEntity unit, bool hover)

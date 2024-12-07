@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Async;
@@ -78,13 +80,17 @@ public static class AssigneeContainer
 
 	private static async Task<string> LoadAssigneesFromServerAsync(string project, CancellationToken token)
 	{
-		Uri requestUri = new Uri("http://siren.owlcat.local/api/report/assignee?project=" + project);
+		Uri requestUri = new Uri("https://report.owlcat.games/report/assignee?project=" + project);
 		using HttpRequestMessage request = new HttpRequestMessage
 		{
 			Method = HttpMethod.Post,
 			RequestUri = requestUri
 		};
-		using HttpClient client = new HttpClient();
+		using HttpClientHandler handler = new HttpClientHandler
+		{
+			ServerCertificateCustomValidationCallback = (HttpRequestMessage sender, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors) => true
+		};
+		using HttpClient client = new HttpClient(handler);
 		using HttpResponseMessage response = await client.SendAsync(request, token);
 		Logger.Log($"Response: {response.IsSuccessStatusCode}");
 		response.EnsureSuccessStatusCode();

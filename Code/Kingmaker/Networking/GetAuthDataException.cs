@@ -16,9 +16,4 @@ public class GetAuthDataException : Exception
 	{
 		ErrorCode = errorCode;
 	}
-
-	public string FormatErrorMessage()
-	{
-		return $"{Message}[{ErrorCode}]";
-	}
 }

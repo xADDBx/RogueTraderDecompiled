@@ -137,13 +137,16 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_MultiButton.OnLeftClickAsObservable(), delegate
 		{
-			base.ViewModel.SelectQuest();
+			base.ViewModel?.SelectQuest();
 		}));
 		AddDisposable(base.ViewModel.IsOrderCompleted.Subscribe(delegate
 		{
-			SetupStatusMark();
-			SetupPantographConfig();
-			OnSelected(base.ViewModel.IsSelected.Value);
+			if (base.ViewModel != null)
+			{
+				SetupStatusMark();
+				SetupPantographConfig();
+				OnSelected(base.ViewModel.IsSelected.Value);
+			}
 		}));
 		SetupStatusMark();
 		SetupPantographConfig();
@@ -161,6 +164,10 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	private Sprite GetPaperStatusSprite()
 	{
+		if (base.ViewModel == null)
+		{
+			return null;
+		}
 		JournalQuestVM viewModel = base.ViewModel;
 		if (viewModel != null)
 		{
@@ -186,19 +193,19 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 				}
 				if (viewModel.IsUpdated)
 				{
-					goto IL_00a8;
+					goto IL_00b2;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_00b1;
+					goto IL_00bb;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_00ba;
+					goto IL_00c4;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_00c3;
+					goto IL_00cd;
 				}
 				if (viewModel.IsViewed)
 				{
@@ -209,35 +216,39 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 			{
 				if (viewModel.IsUpdated)
 				{
-					goto IL_00a8;
+					goto IL_00b2;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_00b1;
+					goto IL_00bb;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_00ba;
+					goto IL_00c4;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_00c3;
+					goto IL_00cd;
 				}
 			}
 		}
 		return null;
-		IL_00a8:
+		IL_00b2:
 		return m_UpdatedPaperMark;
-		IL_00b1:
-		return m_CompletedPaperMark;
-		IL_00ba:
+		IL_00c4:
 		return m_FailedPaperMark;
-		IL_00c3:
+		IL_00bb:
+		return m_CompletedPaperMark;
+		IL_00cd:
 		return m_PostponedPaperMark;
 	}
 
 	private Sprite GetPantographStatusSprite()
 	{
+		if (base.ViewModel == null)
+		{
+			return null;
+		}
 		JournalQuestVM viewModel = base.ViewModel;
 		if (viewModel != null)
 		{
@@ -284,6 +295,10 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	private void OnSelected(bool value)
 	{
+		if (base.ViewModel == null)
+		{
+			return;
+		}
 		m_MultiButton.SetActiveLayer(value ? "On" : "Off");
 		if (m_SetLabelBold)
 		{
@@ -329,6 +344,10 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	private void SetupPantographConfig()
 	{
+		if (base.ViewModel == null)
+		{
+			return;
+		}
 		bool flag = base.ViewModel.CanCompleteOrder && !base.ViewModel.IsOrderCompleted.Value;
 		if (base.ViewModel.IsNew && base.ViewModel.IsViewed)
 		{
@@ -361,6 +380,9 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	public void HandleUpdateCanCompleteOrderNotificationInJournal()
 	{
-		m_ReadyToCompleteImage.gameObject.SetActive(base.ViewModel.CanCompleteOrder && !base.ViewModel.IsOrderCompleted.Value && base.ViewModel.Quest.State != QuestState.Completed);
+		if (base.ViewModel != null)
+		{
+			m_ReadyToCompleteImage.gameObject.SetActive(base.ViewModel.CanCompleteOrder && !base.ViewModel.IsOrderCompleted.Value && base.ViewModel.Quest.State != QuestState.Completed);
+		}
 	}
 }

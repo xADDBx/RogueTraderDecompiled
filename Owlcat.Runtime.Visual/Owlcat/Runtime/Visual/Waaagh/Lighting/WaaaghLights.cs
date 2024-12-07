@@ -226,18 +226,16 @@ public class WaaaghLights
 							visibleLight = reference;
 							if (visibleLight.lightType != 0)
 							{
-								goto IL_01b3;
+								goto IL_01b2;
 							}
 						}
-						value.ShadowsCanBeCached = bakingOutput.lightmapBakeType == LightmapBakeType.Realtime || !bakingOutput.isBaked;
+						value.ShadowsCanBeCached = bakingOutput.lightmapBakeType == LightmapBakeType.Realtime || !bakingOutput.isBaked || bakingOutput.lightmapBakeType == LightmapBakeType.Mixed;
 						value.ShadowsCanBeCached = value.ShadowsCanBeCached && component.ShadowmapUpdateMode == ShadowmapUpdateMode.Cached;
 					}
+					goto IL_01b2;
 				}
-				else
-				{
-					value.VolumetricLighting = false;
-				}
-				goto IL_01b3;
+				value.VolumetricLighting = false;
+				goto IL_01ca;
 			}
 			value.ShadowStrength = 1f;
 			value.InnerSpotAngle = -1f;
@@ -253,7 +251,10 @@ public class WaaaghLights
 			value.LightCookieIndex = -1;
 			value.lightCookieDescriptor = default(LightCookieDescriptor);
 			continue;
-			IL_020f:
+			IL_01b2:
+			value.ShadowUpdateFrequencyByDistance = component.ShadowUpdateFrequencyByDistance;
+			goto IL_01ca;
+			IL_0226:
 			value.ShadowNearPlane = light.shadowNearPlane;
 			if (component != null && !component.UsePipelineSettings)
 			{
@@ -293,7 +294,7 @@ public class WaaaghLights
 			value.lightCookieDescriptor.uvSize = component.LightCookieSize;
 			value.lightCookieDescriptor.uvOffset = component.LightCookieOffset;
 			continue;
-			IL_01b3:
+			IL_01ca:
 			value.Shadows = light.shadows;
 			if (value.Shadows != 0)
 			{
@@ -307,12 +308,12 @@ public class WaaaghLights
 					visibleLight = reference;
 					if (visibleLight.lightType != LightType.Point)
 					{
-						goto IL_020f;
+						goto IL_0226;
 					}
 				}
 				light.useViewFrustumForShadowCasterCull = false;
 			}
-			goto IL_020f;
+			goto IL_0226;
 		}
 		return flag;
 	}

@@ -227,11 +227,11 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		}
 	}
 
-	public bool IsWeaponAbility => AbilityParamsSource == WarhammerAbilityParamsSource.Weapon;
+	public bool IsWeaponAbility => AbilityParamsSource.HasFlag(WarhammerAbilityParamsSource.Weapon);
 
-	public bool IsPsykerAbility => AbilityParamsSource == WarhammerAbilityParamsSource.PsychicPower;
+	public bool IsPsykerAbility => AbilityParamsSource.HasFlag(WarhammerAbilityParamsSource.PsychicPower);
 
-	public bool IsSkillCheckAbilityParams => AbilityParamsSource == WarhammerAbilityParamsSource.SkillCheck;
+	public bool IsSkillCheckAbilityParams => AbilityParamsSource.HasFlag(WarhammerAbilityParamsSource.SkillCheck);
 
 	public bool IsGrenade => AbilityTag == AbilityTag.ThrowingGrenade;
 

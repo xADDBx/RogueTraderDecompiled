@@ -21,6 +21,11 @@ public class UnitFromSpawner : AbstractUnitEvaluator
 		return (Spawner.FindData() as UnitSpawnerBase.MyData)?.SpawnedUnit.Entity;
 	}
 
+	public override string GetCaptionShort()
+	{
+		return $"({Spawner})";
+	}
+
 	public override string GetCaption()
 	{
 		return $"Unit From Spawner ({Spawner})";

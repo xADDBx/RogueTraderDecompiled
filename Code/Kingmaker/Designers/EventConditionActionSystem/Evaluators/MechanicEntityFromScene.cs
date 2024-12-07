@@ -22,6 +22,11 @@ public class MechanicEntityFromScene : MechanicEntityEvaluator
 		return EntityRef.FindData() as MechanicEntity;
 	}
 
+	public override string GetCaptionShort()
+	{
+		return EntityRef?.ToString();
+	}
+
 	public override string GetCaption()
 	{
 		return "Object from scene " + EntityRef;

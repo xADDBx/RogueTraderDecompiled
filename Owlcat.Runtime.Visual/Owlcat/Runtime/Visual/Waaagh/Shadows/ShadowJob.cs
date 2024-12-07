@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Owlcat.Runtime.Visual.Collections;
+using Owlcat.Runtime.Visual.Lighting;
 using Owlcat.Runtime.Visual.Waaagh.Lighting;
 using Unity.Burst;
 using Unity.Collections;
@@ -201,7 +202,7 @@ internal struct ShadowJob : IJob
 	private void EvaluateAtlasUpdateNeeds(in LightDescriptor lightDescriptor, in ShadowData shadowData, in ShadowLightData actualLightData, out bool needUpdateRenderData, out bool needRender, out bool needRenderCache)
 	{
 		needUpdateRenderData = actualLightData.LightType == LightType.Directional || !shadowData.RenderDataValid || !actualLightData.NearlyEquals(in shadowData.LightData);
-		needRender = (AlwaysUpdateShadows | needUpdateRenderData) || ShadowDistanceUpdateQualifier.ShouldUpdate(lightDescriptor.MeanZ, shadowData.LastRenderedFrameId);
+		needRender = (AlwaysUpdateShadows | needUpdateRenderData) || lightDescriptor.ShadowUpdateFrequencyByDistance == ShadowUpdateFrequencyByDistance.IgnoreDistanceUpdateEveryFrame || ShadowDistanceUpdateQualifier.ShouldUpdate(lightDescriptor.MeanZ, shadowData.LastRenderedFrameId);
 		if (StaticShadowCacheEnabled)
 		{
 			needRenderCache = (AlwaysUpdateShadows | needUpdateRenderData) || (shadowData.LightData.CanBeCached && !shadowData.StaticCacheAtlasData.HasAllocation());

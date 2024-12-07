@@ -155,7 +155,6 @@ public class CutsceneController : IControllerEnable, IController, IControllerDis
 			Logger.Log("Stop skipping cutscene");
 			Skipping = false;
 			s_ShouldStartSkipping = false;
-			Game.Instance.TimeController.DebugTimeScale = 1f;
 			SoundState.Instance.StopCutsceneSkip();
 			FadeCanvas.Instance.HideLoadingScreen();
 			FadeCanvas.Fadeout(fade: false);

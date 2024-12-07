@@ -1,3 +1,4 @@
+using System.Collections;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Base;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -32,6 +33,8 @@ public class TextureSequentialSelectorView : BaseCharGenAppearancePageComponentV
 	[SerializeField]
 	private VirtualListLayoutElementSettings m_LayoutSettings;
 
+	private bool m_IsCooldownActive;
+
 	public override VirtualListLayoutElementSettings LayoutSettings => m_LayoutSettings;
 
 	protected override void BindViewImplementation()
@@ -49,6 +52,14 @@ public class TextureSequentialSelectorView : BaseCharGenAppearancePageComponentV
 		AddDisposable(base.ViewModel.Value.Subscribe(SetTexture));
 		AddDisposable(base.ViewModel.CurrentIndex.Subscribe(SetCounter));
 		AddDisposable(base.ViewModel.IsAvailable.Subscribe(base.gameObject.SetActive));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_IsCooldownActive = false;
+		StopAllCoroutines();
+		base.DestroyViewImplementation();
+		base.gameObject.SetActive(value: false);
 	}
 
 	private bool OnPreviousHandler()
@@ -85,12 +96,6 @@ public class TextureSequentialSelectorView : BaseCharGenAppearancePageComponentV
 		}
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		base.gameObject.SetActive(value: false);
-	}
-
 	public bool HandleUp()
 	{
 		return false;
@@ -103,11 +108,28 @@ public class TextureSequentialSelectorView : BaseCharGenAppearancePageComponentV
 
 	public bool HandleLeft()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return OnPreviousHandler();
 	}
 
 	public bool HandleRight()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return OnNextHandler();
+	}
+
+	private IEnumerator HandleCooldown()
+	{
+		m_IsCooldownActive = true;
+		yield return new WaitForSecondsRealtime(0.5f);
+		m_IsCooldownActive = false;
 	}
 }

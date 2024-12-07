@@ -19,7 +19,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAreaActivationHandler, ISubscriber, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IGameModeHandler, INetRoleSetHandler, INetEvents
+public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAreaActivationHandler, ISubscriber, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IGameModeHandler, INetRoleSetHandler, INetEvents, IPartyCombatHandler
 {
 	public readonly ReactiveProperty<bool> IsTurnBasedActive = new ReactiveProperty<bool>();
 
@@ -75,10 +75,7 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		{
 			UpdateIsTurnBasedActive();
 		}));
-		AddDisposable(IsTurnBasedActive.Subscribe(delegate(bool s)
-		{
-			TurnBasedModeChanged(s);
-		}));
+		AddDisposable(IsTurnBasedActive.Subscribe(TurnBasedModeChanged));
 		AddDisposable(IngameMenuVM = new IngameMenuVM());
 		AddDisposable(IngameMenuSettingsButtonVM = new IngameMenuSettingsButtonVM());
 		AddDisposable(InspectVM = new InGameInspectVM());
@@ -234,5 +231,13 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 	public void HandleNLoadingScreenClosed()
 	{
 		NetFirstLoadState.Value = PhotonManager.Lobby.IsActive;
+	}
+
+	public void HandlePartyCombatStateChanged(bool inCombat)
+	{
+		if (!(!DeploymentPhase.Value || inCombat))
+		{
+			Game.Instance.TurnController.RequestEndPreparationTurn();
+		}
 	}
 }

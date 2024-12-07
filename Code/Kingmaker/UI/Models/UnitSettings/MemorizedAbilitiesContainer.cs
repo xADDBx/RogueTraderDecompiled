@@ -13,7 +13,7 @@ namespace Kingmaker.UI.Models.UnitSettings;
 [Serializable]
 internal class MemorizedAbilitiesContainer : IHashable
 {
-	private struct MemorizedAbilityData : IHashable
+	internal struct MemorizedAbilityData : IHashable
 	{
 		[JsonProperty]
 		public BlueprintUnitFact ability;
@@ -60,6 +60,16 @@ internal class MemorizedAbilitiesContainer : IHashable
 			ability = ability,
 			sourceItem = sourceItem
 		});
+	}
+
+	internal void IntersectWith(HashSet<MemorizedAbilityData> slots)
+	{
+		m_Memorized.IntersectWith(slots);
+	}
+
+	internal int Count()
+	{
+		return m_Memorized.Count;
 	}
 
 	public virtual Hash128 GetHash128()

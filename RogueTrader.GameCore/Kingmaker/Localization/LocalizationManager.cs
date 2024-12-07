@@ -32,6 +32,8 @@ public class LocalizationManager : ILocalizationProvider
 
 	public static readonly LocalizationManager Instance = new LocalizationManager();
 
+	private static readonly Locale BackupLocale = Locale.enGB;
+
 	private readonly List<ILocaleStorageProvider> m_LocaleStorageProviders = new List<ILocaleStorageProvider>();
 
 	private static readonly Dictionary<string, Locale> SteamCodesToLocales = new Dictionary<string, Locale>
@@ -115,6 +117,9 @@ public class LocalizationManager : ILocalizationProvider
 
 	[CanBeNull]
 	public LocalizationPack CurrentPack { get; private set; }
+
+	[CanBeNull]
+	public LocalizationPack BackupPack { get; private set; }
 
 	[CanBeNull]
 	public LocalizationPack SoundPack { get; private set; }
@@ -213,6 +218,20 @@ public class LocalizationManager : ILocalizationProvider
 				Application.Quit(-1);
 			}
 			CurrentPack = pack;
+			if (locale == BackupLocale)
+			{
+				BackupPack = null;
+			}
+			else
+			{
+				await Awaiters.ThreadPool;
+				BackupPack = LoadPack(BackupLocale);
+				await Awaiters.UnityThread;
+				if (BackupPack == null)
+				{
+					Logger.Error("Failed to load backup localization pack");
+				}
+			}
 			this.LocaleChanged?.Invoke(locale);
 			SetCulture(locale);
 		}

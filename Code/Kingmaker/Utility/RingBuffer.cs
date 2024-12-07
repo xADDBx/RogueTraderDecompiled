@@ -45,6 +45,15 @@ public class RingBuffer<T>
 		Count = 0;
 	}
 
+	public void SetEndIndexAt(int index)
+	{
+		if (index < 0 || index >= Count)
+		{
+			throw new ArgumentOutOfRangeException("index");
+		}
+		Count = index + 1;
+	}
+
 	public void PushBack(T t)
 	{
 		if (Full)

@@ -5,4 +5,8 @@ namespace Kingmaker.PubSubSystem.Core;
 public interface IEscMenuHandler : ISubscriber
 {
 	void HandleOpen();
+
+	void HandleEscMenuOnShow();
+
+	void HandleEscMenuOnHide();
 }

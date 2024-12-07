@@ -65,4 +65,6 @@ public struct LightDescriptor
 	public int LightCookieIndex;
 
 	public LightCookieDescriptor lightCookieDescriptor;
+
+	public ShadowUpdateFrequencyByDistance ShadowUpdateFrequencyByDistance;
 }

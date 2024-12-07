@@ -89,7 +89,7 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	[Space(10f)]
 	[CanBeNull]
-	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.Bark)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset CheckPassedBark;
 
 	[CanBeNull]
@@ -105,7 +105,7 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	[Space(10f)]
 	[CanBeNull]
-	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.Bark)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset CheckFailBark;
 
 	[CanBeNull]

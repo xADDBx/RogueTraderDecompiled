@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -47,7 +48,7 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 
 	private bool m_IsOpened;
 
-	private EventSystem m_storedGamepadModeEventSystem;
+	private EventSystem m_StoredGamepadModeEventSystem;
 
 	private IDisposable m_KeyboardInput;
 
@@ -75,10 +76,7 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 			};
 			AddDisposable(m_ConfirmButton.OnLeftClickAsObservable().Subscribe(SwitchControlMode));
 			AddDisposable(m_DeclineButton.OnLeftClickAsObservable().Subscribe(GamepadConnected));
-			AddDisposable(m_IsGamepadConnected.Subscribe(delegate(bool value)
-			{
-				m_DeclineButton.Interactable = value;
-			}));
+			AddDisposable(m_IsGamepadConnected.Subscribe(m_DeclineButton.SetInteractable));
 			m_ConfirmLabel.text = UIStrings.Instance.ControllerModeTexts.ConfirmSwitchText.Text;
 			m_DeclineLabel.text = UIStrings.Instance.CommonTexts.Cancel.Text;
 		}
@@ -120,9 +118,10 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 	private void Show()
 	{
 		ClearKeyboard();
-		m_storedGamepadModeEventSystem = EventSystem.current;
-		m_storedGamepadModeEventSystem.enabled = false;
+		m_StoredGamepadModeEventSystem = EventSystem.current;
+		m_StoredGamepadModeEventSystem.enabled = false;
 		base.gameObject.SetActive(value: true);
+		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 		m_WindowAnimator.AppearAnimation();
 		m_IsOpened = true;
 		SetupHint();
@@ -162,9 +161,10 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 	{
 		m_WindowAnimator.DisappearAnimation(delegate
 		{
+			UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 			base.gameObject.SetActive(value: false);
-			m_storedGamepadModeEventSystem.enabled = true;
-			m_storedGamepadModeEventSystem = null;
+			m_StoredGamepadModeEventSystem.enabled = true;
+			m_StoredGamepadModeEventSystem = null;
 		});
 		m_IsOpened = false;
 		GamePad.Instance.PopLayer(m_InputLayer);

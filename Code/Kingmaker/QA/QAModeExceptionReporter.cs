@@ -11,6 +11,7 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility;
+using Rewired;
 using UnityEngine;
 
 namespace Kingmaker.QA;
@@ -101,14 +102,16 @@ public class QAModeExceptionReporter : MonoBehaviour
 		GUILayout.BeginArea(new Rect((Screen.width - num) / 2, (Screen.height - num2) / 2, num, num2));
 		GUI.DrawTexture(new Rect(0f, 0f, num, num2), Texture2D.whiteTexture);
 		GUI.contentColor = Color.black;
-		if (GUI.Button(new Rect(10f, 0f, num / 2 - 20, 20f), "Close"))
+		bool flag = Game.Instance.IsControllerGamepad && (ReInput.players.GetPlayer(0)?.GetButtonDown(9) ?? false);
+		if (GUI.Button(new Rect(10f, 0f, num / 2 - 20, 20f), "Close (B)") || flag)
 		{
 			Cursor.visible = s_PrevCursorState;
 			CurrentMessages.Clear();
 			LastException = null;
 			ReportingUtils.Instance.ExceptionSource = null;
 		}
-		if (GUI.Button(new Rect(10 + num / 2, 0f, num / 2 - 20, 20f), "Report"))
+		bool flag2 = Game.Instance.IsControllerGamepad && (ReInput.players.GetPlayer(0)?.GetButtonDown(8) ?? false);
+		if (GUI.Button(new Rect(10 + num / 2, 0f, num / 2 - 20, 20f), "Report (A)") || flag2)
 		{
 			Cursor.visible = s_PrevCursorState;
 			string[] messages = (from x in CurrentMessages

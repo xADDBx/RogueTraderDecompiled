@@ -76,6 +76,10 @@ public class CommandUnitAttack : CommandBase
 
 	public bool Continuous;
 
+	[Tooltip("Finish command immediately after attack ability is executed, without waiting for attacker animation to finish.")]
+	[HideIf("Continuous")]
+	public bool FinishOnAttackExecuted;
+
 	[SerializeReference]
 	public AbstractUnitEvaluator Unit;
 
@@ -333,7 +337,11 @@ public class CommandUnitAttack : CommandBase
 		}
 		if (unitUseAbility.IsActed && unitUseAbility.ExecutionProcess.IsEnded)
 		{
-			return commandData.Interrupted;
+			if (!commandData.Interrupted)
+			{
+				return FinishOnAttackExecuted;
+			}
+			return true;
 		}
 		return false;
 	}
@@ -525,7 +533,7 @@ public class CommandUnitAttack : CommandBase
 
 	public override string GetCaption()
 	{
-		return Unit?.ToString() + " <b>attacks</b> " + (Target ? Target.GetCaption() : "???");
+		return Unit?.GetCaptionShort() + " <b>attacks</b> " + (Target ? Target.GetCaptionShort() : "???");
 	}
 
 	protected override void OnRunException()

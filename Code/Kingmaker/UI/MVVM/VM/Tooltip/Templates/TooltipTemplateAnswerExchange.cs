@@ -67,6 +67,7 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 			{
 				List<AddItemToPlayer> list2 = new List<AddItemToPlayer>();
 				AssembleActionsOfType(answer.OnSelect.Actions, list2);
+				list2.RemoveAll((AddItemToPlayer i) => i.Silent);
 				foreach (AddItemToPlayer item in list2)
 				{
 					BlueprintItem itemToGive = item.ItemToGive;
@@ -91,6 +92,7 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 			{
 				List<RemoveItemFromPlayer> list2 = new List<RemoveItemFromPlayer>();
 				AssembleActionsOfType(answer.OnSelect.Actions, list2);
+				list2.RemoveAll((RemoveItemFromPlayer i) => i.Silent);
 				foreach (RemoveItemFromPlayer item in list2)
 				{
 					BlueprintItem itemToRemove = item.ItemToRemove;
@@ -236,10 +238,11 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 
 	private void GetRewardsFromComponents(out List<ITooltipBrick> gainBricks, out List<ITooltipBrick> looseBricks)
 	{
-		IEnumerable<Reward> rewards = m_BlueprintAnswer.GetRewards();
+		List<Reward> list = m_BlueprintAnswer.GetRewards().ToList();
+		list.RemoveAll((Reward r) => r.HideInUI);
 		gainBricks = new List<ITooltipBrick>();
 		looseBricks = new List<ITooltipBrick>();
-		foreach (Reward item in rewards)
+		foreach (Reward item in list)
 		{
 			RewardUI reward = RewardUIFactory.GetReward(item);
 			List<ITooltipBrick> result = ((reward.Count >= 0) ? gainBricks : looseBricks);
@@ -309,15 +312,14 @@ public class TooltipTemplateAnswerExchange : TooltipBaseTemplate
 
 	private void AddRewardItem(List<ITooltipBrick> result, RewardItemUI item)
 	{
-		for (int i = 0; i < item.Count; i++)
-		{
-			TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((item.Count >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
-			string name = item.Name;
-			Sprite icon = item.Icon;
-			TooltipBaseTemplate tooltip = item.GetTooltip();
-			Color? iconColor = Color.white;
-			result.Add(new TooltipBrickIconStatValue(name, null, null, icon, tooltipBrickIconStatValueType, tooltipBrickIconStatValueType, TooltipBrickIconStatValueStyle.Normal, null, tooltip, null, null, iconColor, null, null, hasValue: false));
-		}
+		TooltipBrickIconStatValueType tooltipBrickIconStatValueType = ((item.Count >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
+		string name = item.Name;
+		string value = item.Count.ToString();
+		Sprite icon = item.Icon;
+		TooltipBaseTemplate tooltip = item.GetTooltip();
+		Color? iconColor = Color.white;
+		bool hasValue = item.Count > 0;
+		result.Add(new TooltipBrickIconStatValue(name, value, null, icon, tooltipBrickIconStatValueType, tooltipBrickIconStatValueType, TooltipBrickIconStatValueStyle.Normal, null, tooltip, null, null, iconColor, null, null, hasValue));
 	}
 
 	private void AddRewardFeature(List<ITooltipBrick> result, RewardAddFeatureUI feature)

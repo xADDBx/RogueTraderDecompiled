@@ -43,6 +43,6 @@ public class CommandMarkOnElevatorSpan : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Mark " + Unit?.GetCaption() + " <b>on elevator</b>";
+		return "Mark " + Unit?.GetCaptionShort() + " <b>on elevator</b>";
 	}
 }

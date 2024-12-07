@@ -464,7 +464,7 @@ public static class GridAreaHelper
 		return GetNodes(node, size, Vector3.forward);
 	}
 
-	public static IEnumerable<CustomGridNodeBase> GetNodesSpiralAround(CustomGridNodeBase node, IntRect rect, int radius)
+	public static IEnumerable<CustomGridNodeBase> GetNodesSpiralAround(CustomGridNodeBase node, IntRect rect, int radius, bool ignoreHeightDiff = true)
 	{
 		if (radius < 1)
 		{
@@ -480,7 +480,7 @@ public static class GridAreaHelper
 			int x2 = node.XCoordinateInGrid + x;
 			int z = node.ZCoordinateInGrid + y;
 			CustomGridNodeBase node2 = graph.GetNode(x2, z);
-			if (node2 != null)
+			if (node2 != null && (ignoreHeightDiff || Mathf.Abs(node2.Vector3Position.y - node.Vector3Position.y) < (float)currentRadius))
 			{
 				yield return node2;
 			}

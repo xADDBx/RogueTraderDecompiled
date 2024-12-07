@@ -26,6 +26,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.UI;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.Utility.UnitDescription;
@@ -480,19 +481,35 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private void AddDamageInfo(List<ITooltipBrick> bricks)
 	{
-		if (!m_IsReload)
+		if (m_IsReload)
 		{
-			string baseDamageText = m_UIAbilityData.BaseDamageText;
-			string valueRight = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.Penetration);
-			if (!string.IsNullOrEmpty(baseDamageText))
-			{
-				Sprite damage = UIConfig.Instance.UIIcons.Damage;
-				Sprite penetration = UIConfig.Instance.UIIcons.Penetration;
-				string label = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Damage);
-				string label2 = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Penetration);
-				bricks.Add(new TooltipBrickTwoColumnsStat(label, label2, baseDamageText, valueRight, damage, penetration));
-			}
+			return;
 		}
+		string baseDamageText = m_UIAbilityData.BaseDamageText;
+		string valueRight = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.Penetration);
+		if (!string.IsNullOrEmpty(baseDamageText))
+		{
+			Sprite damage = UIConfig.Instance.UIIcons.Damage;
+			Sprite penetration = UIConfig.Instance.UIIcons.Penetration;
+			string text = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Damage);
+			string damageType = GetDamageType();
+			if (!string.IsNullOrWhiteSpace(damageType))
+			{
+				text = damageType + " " + text.ToLower();
+			}
+			string label = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Penetration);
+			bricks.Add(new TooltipBrickTwoColumnsStat(text, label, baseDamageText, valueRight, damage, penetration));
+		}
+	}
+
+	private string GetDamageType()
+	{
+		WarhammerOverrideAbilityWeapon warhammerOverrideAbilityWeapon = BlueprintAbility?.GetComponent<WarhammerOverrideAbilityWeapon>();
+		if (warhammerOverrideAbilityWeapon?.Weapon == null)
+		{
+			return string.Empty;
+		}
+		return UIUtilityTexts.GetTextByKey(warhammerOverrideAbilityWeapon.Weapon.DamageType.Type);
 	}
 
 	protected virtual void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)

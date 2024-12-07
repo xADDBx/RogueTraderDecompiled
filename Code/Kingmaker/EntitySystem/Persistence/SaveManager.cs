@@ -31,6 +31,7 @@ using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.QA.Arbiter;
 using Kingmaker.Settings;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.UI.Models.Log.ContextFlag;
@@ -544,7 +545,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		{
 			foreach (SaveInfo savedGame in m_SavedGames)
 			{
-				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && (!PhotonManager.Lobby.IsActive || savedGame.Type == SaveInfo.SaveType.IronMan) && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
+				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && savedGame.Type != SaveInfo.SaveType.IronMan && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
 				{
 					saveInfo = savedGame;
 				}
@@ -565,6 +566,26 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			foreach (SaveInfo savedGame in m_SavedGames)
 			{
 				if (savedGame.IsActuallySaved && savedGame.Type == SaveInfo.SaveType.IronMan && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
+				{
+					saveInfo = savedGame;
+				}
+			}
+			return saveInfo;
+		}
+	}
+
+	public SaveInfo GetAnyLatestSave([CanBeNull] Func<SaveInfo, bool> predicate = null)
+	{
+		if (!AreSavesUpToDate)
+		{
+			Logger.Error("Saves are not up to date");
+		}
+		SaveInfo saveInfo = null;
+		lock (m_Lock)
+		{
+			foreach (SaveInfo savedGame in m_SavedGames)
+			{
+				if (savedGame.IsActuallySaved && savedGame.Type != SaveInfo.SaveType.ForImport && !IsCoopSave(savedGame) && savedGame.CheckDlcAvailable() && (predicate == null || predicate(savedGame)) && (saveInfo == null || saveInfo.SystemSaveTime < savedGame.SystemSaveTime))
 				{
 					saveInfo = savedGame;
 				}
@@ -860,6 +881,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public bool IsSaveAllowed(SaveInfo.SaveType saveType, bool isMainMenu = false)
 	{
+		if (Arbiter.IsInitialized)
+		{
+			return false;
+		}
 		if (Game.Instance.CurrentlyLoadedArea == null && !isMainMenu && !Game.Instance.Player.NextEnterPoint)
 		{
 			return false;
@@ -871,6 +896,10 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		if (saveType == SaveInfo.SaveType.Bugreport)
 		{
 			return true;
+		}
+		if (Game.Instance.RootUiContext.IsGroupChangerWindowShow)
+		{
+			return false;
 		}
 		if (Game.Instance.Player.IsInCombat)
 		{
@@ -1375,10 +1404,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			yield return null;
 		}
 		CurrentState = State.Loading;
-		using (ProfileScope.New("Pre Load Statistics"))
-		{
-			GameStatistic.PreDeserialize(saveInfo);
-		}
 		using (ProfileScope.New("StrictReferenceResolver.Instance.ClearContexts"))
 		{
 			StrictReferenceResolver.Instance.ClearContexts();

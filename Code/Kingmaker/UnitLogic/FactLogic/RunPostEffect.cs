@@ -31,10 +31,13 @@ public class RunPostEffect : RunEffectBase
 	private float m_TargetWeight;
 
 	[NonSerialized]
-	private CoroutineHandler m_AnimationCoroutine;
+	private CoroutineHandler m_AnimationCoroutine = CoroutineHandler.Empty;
 
 	[NonSerialized]
-	private CoroutineHandler m_CallbackCoroutine;
+	private CoroutineHandler m_CallbackCoroutine = CoroutineHandler.Empty;
+
+	[NonSerialized]
+	private CoroutineHandler m_ActivateCoroutine = CoroutineHandler.Empty;
 
 	[NonSerialized]
 	private Volume m_Volume;
@@ -46,9 +49,15 @@ public class RunPostEffect : RunEffectBase
 
 	public override void Activate(Action completeCallback)
 	{
-		base.Activate(completeCallback);
 		Game.Instance.CoroutinesController.Stop(ref m_AnimationCoroutine);
 		Game.Instance.CoroutinesController.Stop(ref m_CallbackCoroutine);
+		Game.Instance.CoroutinesController.Stop(ref m_ActivateCoroutine);
+		base.Activate(completeCallback);
+		m_ActivateCoroutine = Game.Instance.CoroutinesController.InvokeInTime(ActivateImpl, 0.25.Seconds());
+	}
+
+	private void ActivateImpl()
+	{
 		if (TryGetPostProcessingEffectVolume(out var volume))
 		{
 			m_Volume = volume;
@@ -73,6 +82,7 @@ public class RunPostEffect : RunEffectBase
 
 	public override void Deactivate()
 	{
+		Game.Instance.CoroutinesController.Stop(ref m_ActivateCoroutine);
 		Game.Instance.CoroutinesController.Stop(ref m_AnimationCoroutine);
 		Game.Instance.CoroutinesController.Stop(ref m_CallbackCoroutine);
 		if (m_Volume != null)

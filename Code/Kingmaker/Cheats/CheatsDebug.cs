@@ -124,8 +124,6 @@ internal class CheatsDebug
 			SmartConsole.RegisterCommand("open_gamelogfull", OpenGameLogFull);
 			SmartConsole.RegisterCommand("distance", ShowDistance);
 			SmartConsole.RegisterCommand("print_current_dialog", DebugCurrentDialog);
-			SmartConsole.RegisterCommand("debug_crash", CrashGame);
-			SmartConsole.RegisterCommand("debug_exception", ExceptionGame);
 			SmartConsole.RegisterCommand("debug_persistent_path", DebugPersistentPath);
 		}
 	}
@@ -205,7 +203,7 @@ internal class CheatsDebug
 			if (!gameObject.activeInHierarchy)
 			{
 				Transform parent = gameObject.transform.parent;
-				while (parent != null && parent.gameObject.activeSelf)
+				while ((bool)parent && parent.gameObject.activeSelf)
 				{
 					parent = parent.transform.parent;
 				}
@@ -760,14 +758,46 @@ internal class CheatsDebug
 		}
 	}
 
-	private static void CrashGame(string parameters = null)
+	[Cheat(Name = "debug_crash")]
+	public static void CrashGame()
 	{
 		UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.FatalError);
 	}
 
-	private static void ExceptionGame(string parameters = null)
+	[Cheat(Name = "debug_exception")]
+	public static void ExceptionGame()
 	{
-		Runner.ReportException(new Exception("DEBUG EXCEPTION " + parameters));
+		Runner.ReportException(new Exception("DEBUG EXCEPTION"));
+	}
+
+	[Cheat(Name = "test_exception_dbz")]
+	public static void ExceptionDBZ()
+	{
+		int num = 0;
+		_ = 1 / num;
+		UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.FatalError);
+	}
+
+	[Cheat(Name = "test_exception_nre")]
+	public static void ExceptionNRE()
+	{
+		_ = ((SimpleBlueprint)null).name;
+	}
+
+	[Cheat(Name = "test_exception_aiob")]
+	public static void ExceptionAIOB()
+	{
+		IntermediateMethod();
+	}
+
+	private static void IntermediateMethod()
+	{
+		ThrowAIOB();
+	}
+
+	private static void ThrowAIOB()
+	{
+		_ = (new int[3] { 1, 2, 3 })[4];
 	}
 
 	private static void DebugPersistentPath(string parameters = null)
@@ -913,5 +943,12 @@ internal class CheatsDebug
 	public static void EnableLogging()
 	{
 		Owlcat.Runtime.Core.Logging.Logger.Instance.Enabled = true;
+	}
+
+	[Cheat(Name = "reset_bugreport_prefs", Description = "to make a call BugReport`s tutor")]
+	public static void ClearBugReportPrefs()
+	{
+		PlayerPrefs.SetInt("BugReportMessageWasShown", 0);
+		PlayerPrefs.Save();
 	}
 }

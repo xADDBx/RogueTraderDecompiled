@@ -13,7 +13,7 @@ namespace Kingmaker.AreaLogic.Cutscenes.Commands.Timeline;
 
 public class BarkPlayableAsset : PlayableAsset, ITimelineClipAsset
 {
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	[ValidateNotNull]
 	public SharedStringAsset Bark;
 

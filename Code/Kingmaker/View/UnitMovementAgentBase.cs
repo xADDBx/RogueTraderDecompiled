@@ -1075,6 +1075,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		{
 			Unit.OnMovementStarted(pathDestination);
 		}
+		m_NodeLinkTraverser.Reset();
 		ObstaclesHelper.RemoveFromGroup(this);
 		List<Vector3> vectorPath8 = path.vectorPath;
 		Vector3 vector3 = vectorPath8[vectorPath8.Count - 1];

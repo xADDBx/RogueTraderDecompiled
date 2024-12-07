@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Settings;
 using Owlcat.Runtime.UI.MVVM;
 using UnityEngine;
 
@@ -9,6 +10,8 @@ public class DropdownItemVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 	public readonly string Text;
 
 	public readonly Sprite Icon;
+
+	public float FontSizeMultiplier => SettingsRoot.Accessiability.FontSizeMultiplier;
 
 	public DropdownItemVM(string text, Sprite icon = null)
 	{

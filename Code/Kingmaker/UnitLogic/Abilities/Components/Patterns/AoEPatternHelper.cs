@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
@@ -141,6 +144,14 @@ public static class AoEPatternHelper
 			CustomGridNodeBase checkLosFromNode = (provider.CalculateAttackFromPatternCentre ? actualCastNode : innerNodeNearestToTarget);
 			CustomGridNodeBase customGridNodeBase = ((directional || (ability != null && ability.IsScatter)) ? outerNodeNearestToTarget : actualCastNode);
 			Vector3 castDirection = AoEPattern.GetCastDirection(pattern.Type, innerNodeNearestToTarget, customGridNodeBase, targetNode);
+			AbilityData abilityData = ability?.Data;
+			MechanicEntity mechanicEntity = caster;
+			if (ContextData<MechanicsContext.Data>.Current?.Context is AbilityExecutionContext abilityExecutionContext)
+			{
+				abilityData = abilityExecutionContext.Ability;
+				mechanicEntity = abilityExecutionContext.MaybeCaster ?? mechanicEntity;
+			}
+			castDirection = ((mechanicEntity is AreaEffectEntity entity) ? entity.ApplyFlipPattern(castDirection) : mechanicEntity.ApplyFlipPattern(abilityData, castDirection));
 			return pattern.GetOriented(checkLosFromNode, customGridNodeBase, castDirection, provider.IsIgnoreLos, provider.IsIgnoreLevelDifference, directional, coveredTargetsOnly, provider.UseMeleeLos);
 		}
 	}

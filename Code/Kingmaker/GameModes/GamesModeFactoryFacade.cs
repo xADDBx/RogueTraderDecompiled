@@ -83,7 +83,7 @@ public class GamesModeFactoryFacade
 		Register(new StabilizeInterpolationController(), All);
 		Register(new SuppressEntitiesController(), Default, Dialog, Pause, Cutscene);
 		Register(Game.Instance.UnitGroupsController, Default, SpaceCombat, StarSystem, Dialog, Cutscene);
-		Register(new SlowMoController(), GameModeType.Default);
+		Register(new SlowMoController(), Default, Cutscene);
 		Register(Game.Instance.TimeController, Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap, CutsceneGlobalMap);
 		Register(new KeyboardAccessTicker(), Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene, GlobalMap, CutsceneGlobalMap, GameOver, BugReport);
 		Register(new UnitPlaceOnGroundController(), Default, Pause);

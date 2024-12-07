@@ -30,6 +30,8 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public FlagModifiersManager AutoCrits = new FlagModifiersManager();
 
+	public FlagModifiersManager NeverCrits = new FlagModifiersManager();
+
 	public AbilityData Ability { get; }
 
 	public int BurstIndex { get; }

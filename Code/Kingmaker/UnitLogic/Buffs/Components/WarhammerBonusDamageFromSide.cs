@@ -18,6 +18,7 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.Utility.Random;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using UnityEngine;
@@ -95,24 +96,27 @@ public class WarhammerBonusDamageFromSide : UnitBuffComponentDelegate, ITargetRu
 	protected override void OnActivate()
 	{
 		base.OnActivate();
-		WarhammerCombatSide warhammerCombatSide;
-		if (IsRandomSide)
+		if (!ContextData<UnitHelper.PreviewUnit>.Current)
 		{
-			warhammerCombatSide = (WarhammerCombatSide)base.Owner.Random.Range(0, 4);
+			WarhammerCombatSide warhammerCombatSide;
+			if (IsRandomSide)
+			{
+				warhammerCombatSide = (WarhammerCombatSide)PFStatefulRandom.UnitRandom.Range(0, 4);
+			}
+			else if (ClosestToCasterSide)
+			{
+				Vector3 forward = base.Owner.Forward;
+				Vector3 normalized = (base.Owner.Center - base.Context.MaybeCaster.Center).normalized;
+				warhammerCombatSide = CustomGraphHelper.GetWarhammerAttackSide(forward, normalized, base.Owner.Size);
+			}
+			else
+			{
+				warhammerCombatSide = Side;
+			}
+			base.Owner.GetOrCreate<UnitPartSideVulnerability>().Add(base.Fact, warhammerCombatSide, CanStack);
+			RequestSavableData<Data>().ChosenSide = warhammerCombatSide;
+			ShowBonusDamageMarker();
 		}
-		else if (ClosestToCasterSide)
-		{
-			Vector3 forward = base.Owner.Forward;
-			Vector3 normalized = (base.Owner.Center - base.Context.MaybeCaster.Center).normalized;
-			warhammerCombatSide = CustomGraphHelper.GetWarhammerAttackSide(forward, normalized, base.Owner.Size);
-		}
-		else
-		{
-			warhammerCombatSide = Side;
-		}
-		base.Owner.GetOrCreate<UnitPartSideVulnerability>().Add(base.Fact, warhammerCombatSide, CanStack);
-		RequestSavableData<Data>().ChosenSide = warhammerCombatSide;
-		ShowBonusDamageMarker();
 	}
 
 	protected override void OnDeactivate()
@@ -124,7 +128,7 @@ public class WarhammerBonusDamageFromSide : UnitBuffComponentDelegate, ITargetRu
 
 	public void OnEventAboutToTrigger(RuleCalculateDamage evt)
 	{
-		if (base.Owner.GetOptional<UnitPartSideVulnerability>()?.Get(base.Fact) == null || evt.MaybeTarget == null || evt.MaybeTarget.Facts.Contains(MarkedForDestruction))
+		if (base.Owner.GetOptional<UnitPartSideVulnerability>()?.Get(base.Fact) == null || (bool)ContextData<UnitHelper.PreviewUnit>.Current || evt.MaybeTarget == null || evt.MaybeTarget.Facts.Contains(MarkedForDestruction))
 		{
 			return;
 		}
@@ -167,7 +171,7 @@ public class WarhammerBonusDamageFromSide : UnitBuffComponentDelegate, ITargetRu
 	public void OnEventDidTrigger(RuleDealDamage evt)
 	{
 		UnitPartSideVulnerability.Entry entry = base.Owner.GetOptional<UnitPartSideVulnerability>()?.Get(base.Fact);
-		if (entry == null)
+		if (entry == null || (bool)ContextData<UnitHelper.PreviewUnit>.Current)
 		{
 			return;
 		}
@@ -206,7 +210,7 @@ public class WarhammerBonusDamageFromSide : UnitBuffComponentDelegate, ITargetRu
 	private void ShowBonusDamageMarker()
 	{
 		UnitPartSideVulnerability.Entry entry = base.Owner.GetOptional<UnitPartSideVulnerability>()?.Get(base.Fact);
-		if (entry != null && !(base.Owner.View == null))
+		if (entry != null && !(base.Owner.View == null) && !ContextData<UnitHelper.PreviewUnit>.Current)
 		{
 			if (entry.Marker == null)
 			{

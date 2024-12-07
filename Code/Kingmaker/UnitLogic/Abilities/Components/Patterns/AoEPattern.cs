@@ -59,7 +59,7 @@ public class AoEPattern
 		}
 	}
 
-	private bool IsCustom => m_Type == PatternType.Custom;
+	public bool IsCustom => m_Type == PatternType.Custom;
 
 	private bool IsCone
 	{
@@ -111,6 +111,8 @@ public class AoEPattern
 			return IntRect.Union(patternGridData.Bounds, patternGridData2.Bounds);
 		}
 	}
+
+	public bool IsDirectional => Blueprint.IsDirectional;
 
 	public PatternGridData GetGridData(Vector2 direction, Size entitySizeRect = Size.Medium)
 	{

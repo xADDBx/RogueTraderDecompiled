@@ -132,7 +132,7 @@ public class GraphicsSettingsController
 
 	public QualityOption AntialiasingQuality => m_Settings.AntialiasingQuality.GetValue();
 
-	public GraphicsSettingsController()
+	public GraphicsSettingsController(UnityEngine.Resolution? maximumResolution)
 	{
 		m_Settings = SettingsRoot.Graphics;
 		SettingsController.Instance.OnConfirmedAllSettings += OnSettingsConfirmed;
@@ -222,7 +222,7 @@ public class GraphicsSettingsController
 		};
 		m_Settings.WindowedCursorLock.OnValueChanged += OnWindowedCursorLockChanged;
 		OnWindowedCursorLockChanged(m_Settings.WindowedCursorLock);
-		GenerateResolutionsList();
+		GenerateResolutionsList(maximumResolution);
 		m_Width = m_Settings.ScreenResolution.Select(GetWidthAtIndex);
 		m_Height = m_Settings.ScreenResolution.Select(GetHeightAtIndex);
 		GenerateDisplayLayout();
@@ -544,6 +544,7 @@ public class GraphicsSettingsController
 		PFLog.Settings.Log("Relevant Resolutions: " + string.Join(",", m_RelevantResolutions.Select((UnityEngine.Resolution r) => $"{r.width}x{r.height}")));
 		PFLog.Settings.Log($"Current Screen Resolution: {Screen.width}x{Screen.height}");
 		PFLog.Settings.Log($"Current Resolution ID: {m_Settings.ScreenResolution.GetValue()}");
+		PFLog.Settings.Log($"Current Fullscreen Mode: {Screen.fullScreenMode}, Saved Fullscreen Mode: {m_Settings.FullScreenMode.GetValue()}");
 		int currentWidth = Screen.width;
 		int currentHeight = Screen.height;
 		if (!m_Settings.ScreenResolutionWasTouched.GetValue() || (currentWidth < 640 && currentHeight < 480) || !m_RelevantResolutions.Any((UnityEngine.Resolution r) => r.width == currentWidth && r.height == currentHeight))
@@ -553,7 +554,7 @@ public class GraphicsSettingsController
 		if (m_Width.GetValue() != Screen.width || m_Height.GetValue() != Screen.height || m_Settings.FullScreenMode.GetValue() != Screen.fullScreenMode)
 		{
 			SetSafeResolution(m_Width.GetValue(), m_Height.GetValue(), m_Settings.FullScreenMode.GetValue());
-			PFLog.Settings.Log($"Changed screen resolution to: {m_Width.GetValue()}x{m_Height.GetValue()}");
+			CorrectPS5ProGraphicsQualitySetting();
 		}
 	}
 
@@ -575,6 +576,20 @@ public class GraphicsSettingsController
 		PFLog.Settings.Log($"Saved Resolution: {m_Width.GetValue()}x{m_Height.GetValue()}");
 	}
 
+	private void CorrectPS5ProGraphicsQualitySetting()
+	{
+		if (m_Width.GetValue() == 3840 && m_Height.GetValue() == 2160)
+		{
+			m_Settings.PS5ProGraphicsQuality.SetTempValue(PS5ProGraphicsQualityOption.Quality);
+		}
+		else
+		{
+			m_Settings.PS5ProGraphicsQuality.SetTempValue(PS5ProGraphicsQualityOption.Performance);
+		}
+		SettingsController.Instance.ConfirmAllTempValues();
+		SettingsController.Instance.SaveAll();
+	}
+
 	private void OnWindowedCursorLockChanged(bool lockCursor)
 	{
 		CoroutineRunner.Start(UpdateCursorMode(lockCursor));
@@ -584,6 +599,7 @@ public class GraphicsSettingsController
 	{
 		CoroutineRunner.Start(SetResolution(width, height, fullscreenMode));
 		CoroutineRunner.Start(UpdateCursorMode(m_Settings.WindowedCursorLock));
+		PFLog.Settings.Log($"Changed screen resolution to: {width}x{height}, mode: {fullscreenMode}");
 	}
 
 	private IEnumerator SetResolution(int width, int height, FullScreenMode fullscreenMode)
@@ -654,7 +670,7 @@ public class GraphicsSettingsController
 		}
 	}
 
-	private void GenerateResolutionsList()
+	private void GenerateResolutionsList(UnityEngine.Resolution? maxResolution)
 	{
 		m_RelevantResolutions.Clear();
 		int num = m_Settings.Display;
@@ -687,7 +703,7 @@ public class GraphicsSettingsController
 			UnityEngine.Resolution resolution = resolutions[j];
 			PFLog.Settings.Log($"- {resolution.width}x{resolution.height} : {resolution.refreshRate}");
 			float b2 = (float)resolution.width / (float)resolution.height;
-			if ((Mathf.Approximately(a2, b2) || m_CommonResolutions.Contains((UnityEngine.Resolution r) => r.width == resolution.width && r.height == resolution.height)) && !m_RelevantResolutions.Contains((UnityEngine.Resolution r) => r.width == resolution.width && r.height == resolution.height))
+			if ((Mathf.Approximately(a2, b2) || m_CommonResolutions.Contains((UnityEngine.Resolution r) => r.width == resolution.width && r.height == resolution.height)) && (!maxResolution.HasValue || (resolution.width <= maxResolution.Value.width && resolution.height <= maxResolution.Value.height)) && !m_RelevantResolutions.Contains((UnityEngine.Resolution r) => r.width == resolution.width && r.height == resolution.height))
 			{
 				m_RelevantResolutions.Add(resolution);
 			}

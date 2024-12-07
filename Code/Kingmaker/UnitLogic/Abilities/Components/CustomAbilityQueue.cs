@@ -79,12 +79,9 @@ public class CustomAbilityQueue : AbilityCustomLogic
 				executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
 				yield return null;
 			}
-			if (executionProcess != null)
+			while (!commands.Empty || (executionProcess != null && !executionProcess.IsEnded))
 			{
-				while (!executionProcess.IsEnded)
-				{
-					yield return null;
-				}
+				yield return null;
 			}
 			yield return null;
 			while (context.Caster.Parts.GetOptional<UnitPartJump>() != null || commands.IsRunning())

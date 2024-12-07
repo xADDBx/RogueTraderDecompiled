@@ -48,34 +48,43 @@ public class NetInitializingState : StateLongAsync
 		bool storeNotInitialized = false;
 		if (!(exception is StoreNotInitializedException))
 		{
-			GetAuthDataException ex = exception as GetAuthDataException;
-			if (ex == null)
+			if (!(exception is GetAuthDataException))
 			{
-				if (!(exception is GetAuthDataTimeoutException))
+				if (!(exception is NoMultiplayerPermissionException))
 				{
-					if (!(exception is PhotonDisconnectedException))
+					if (!(exception is GetAuthDataTimeoutException))
 					{
-						if (exception is PhotonCustomAuthenticationFailedException)
+						if (!(exception is PhotonDisconnectedException))
 						{
-							EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+							if (exception is PhotonCustomAuthenticationFailedException)
 							{
-								h.HandlePhotonCustomAuthenticationFailedError();
-							});
+								EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+								{
+									h.HandlePhotonCustomAuthenticationFailedError();
+								});
+							}
+							else
+							{
+								EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+								{
+									h.HandleUnknownException();
+								});
+							}
 						}
-						else
+					}
+					else
+					{
+						EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 						{
-							EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
-							{
-								h.HandleUnknownException();
-							});
-						}
+							h.HandleGetAuthDataTimeout();
+						});
 					}
 				}
 				else
 				{
 					EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 					{
-						h.HandleGetAuthDataTimeout();
+						h.HandleUserPermissionsError(reconnectDialog: true);
 					});
 				}
 			}
@@ -83,7 +92,7 @@ public class NetInitializingState : StateLongAsync
 			{
 				EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 				{
-					h.HandleGetAuthDataError(ex.FormatErrorMessage());
+					h.HandleGetAuthDataError();
 				});
 			}
 		}

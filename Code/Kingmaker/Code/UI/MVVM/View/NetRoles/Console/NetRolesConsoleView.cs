@@ -1,9 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.View.BugReport;
+using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
+using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
+using Kingmaker.Code.UI.MVVM.View.Common.InputField;
+using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.MVVM.View.EscMenu;
 using Kingmaker.UI.MVVM.View.NetLobby.Base;
 using Kingmaker.UI.MVVM.View.NetRoles.Base;
 using Owlcat.Runtime.Core.Utility;
@@ -36,6 +42,8 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 
 	private readonly BoolReactiveProperty m_GamersTagsMode = new BoolReactiveProperty();
 
+	public static readonly string InputLayerGamersTagsContextName = "GamersTags";
+
 	public override void Initialize()
 	{
 		base.Initialize();
@@ -53,6 +61,7 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		}
 		base.BindViewImplementation();
 		CreateInput();
+		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -144,7 +153,7 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		AddDisposable(m_GamersTagsNavigationBehavior = new GridConsoleNavigationBehaviour());
 		m_GamersTagsInputLayer = m_GamersTagsNavigationBehavior.GetInputLayer(new InputLayer
 		{
-			ContextName = "GamersTags"
+			ContextName = InputLayerGamersTagsContextName
 		});
 		m_Players.ForEach(delegate(NetRolesPlayerConsoleView p)
 		{
@@ -186,6 +195,16 @@ public class NetRolesConsoleView : NetRolesBaseView, INetRolesConsoleHandler, IS
 		if (list.Any())
 		{
 			m_GamersTagsNavigationBehavior.SetEntitiesVertical(list);
+		}
+	}
+
+	private void OnCurrentInputLayerChanged()
+	{
+		GamePad instance = GamePad.Instance;
+		if (instance.CurrentInputLayer != m_InputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName) && !(instance.CurrentInputLayer.ContextName == EscMenuBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == InputLayerGamersTagsContextName))
+		{
+			instance.PopLayer(m_InputLayer);
+			instance.PushLayer(m_InputLayer);
 		}
 	}
 }

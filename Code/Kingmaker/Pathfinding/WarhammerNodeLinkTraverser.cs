@@ -66,6 +66,10 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	public float VerticalSpeed { get; set; }
 
+	public bool IsHighTraverseHorizontal { get; set; }
+
+	public bool IsJumpTraverseHorizontal { get; set; }
+
 	public bool IsInQueue => LastState == State.WaitForTraverse;
 
 	public bool IsTraverseNow
@@ -225,6 +229,8 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 			m_GraphNodeFrom = fromNode;
 			m_GraphNodeTo = toNode;
 			m_LastTraversedPathLink = currentLink;
+			IsHighTraverseHorizontal = ((WarhammerNodeLink)currentLink)?.IsHighTraverse ?? false;
+			IsJumpTraverseHorizontal = ((WarhammerNodeLink)currentLink)?.IsJumpTraverse ?? false;
 			LastState = State.WaitForTraverse;
 		}
 	}

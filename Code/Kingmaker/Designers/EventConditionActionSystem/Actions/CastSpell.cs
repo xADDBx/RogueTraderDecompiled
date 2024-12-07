@@ -43,6 +43,8 @@ public class CastSpell : GameAction
 
 	public AttackHitPolicyType HitPolicy = AttackHitPolicyType.AutoHit;
 
+	public ActionList ActionToDoIfCastIsNotValid;
+
 	public bool DisableLog;
 
 	public BlueprintAbility Ability => m_Ability;
@@ -77,14 +79,22 @@ public class CastSpell : GameAction
 			obj = (TargetWrapper)mechanicEntity2;
 		}
 		TargetWrapper target = (TargetWrapper)obj;
-		RulePerformAbility rulePerformAbility = new RulePerformAbility(new AbilityData(Ability, mechanicEntity), target);
-		rulePerformAbility.IgnoreCooldown = true;
-		rulePerformAbility.ForceFreeAction = true;
-		rulePerformAbility.Context.IsForced = true;
-		rulePerformAbility.DisableGameLog = DisableLog;
-		rulePerformAbility.Context.DisableLog = DisableLog;
-		Rulebook.Trigger(rulePerformAbility);
-		rulePerformAbility.Context.HitPolicy = HitPolicy;
-		rulePerformAbility.Context.RewindActionIndex();
+		AbilityData abilityData = new AbilityData(Ability, mechanicEntity);
+		if (abilityData.IsValid(target))
+		{
+			RulePerformAbility rulePerformAbility = new RulePerformAbility(abilityData, target);
+			rulePerformAbility.IgnoreCooldown = true;
+			rulePerformAbility.ForceFreeAction = true;
+			rulePerformAbility.Context.IsForced = true;
+			rulePerformAbility.DisableGameLog = DisableLog;
+			rulePerformAbility.Context.DisableLog = DisableLog;
+			Rulebook.Trigger(rulePerformAbility);
+			rulePerformAbility.Context.HitPolicy = HitPolicy;
+			rulePerformAbility.Context.RewindActionIndex();
+		}
+		else
+		{
+			ActionToDoIfCastIsNotValid.Run();
+		}
 	}
 }

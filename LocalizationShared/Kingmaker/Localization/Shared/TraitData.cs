@@ -18,6 +18,14 @@ public class TraitData
 	[JsonProperty(PropertyName = "locale_text", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
 	public string LocaleText = "";
 
+	[NotNull]
+	[JsonProperty(PropertyName = "speaker")]
+	public string Speaker;
+
+	[NotNull]
+	[JsonProperty(PropertyName = "speaker_gender")]
+	public string SpeakerGender;
+
 	[JsonConstructor]
 	public TraitData()
 	{

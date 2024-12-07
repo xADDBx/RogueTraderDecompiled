@@ -63,6 +63,11 @@ public abstract class PageNavigationBase : MonoBehaviour, IDisposable
 		Disposables.Add(m_CurrentIndex.Subscribe(OnCurrentIndexChanged));
 	}
 
+	public virtual void Dispose()
+	{
+		Clear();
+	}
+
 	public void Show(int pageCount, IntReactiveProperty pageIndexProperty = null, int pageIndexInt = -1)
 	{
 		Clear();
@@ -160,10 +165,5 @@ public abstract class PageNavigationBase : MonoBehaviour, IDisposable
 		});
 		Disposables.Clear();
 		m_CurrentIndex = null;
-	}
-
-	public virtual void Dispose()
-	{
-		Clear();
 	}
 }

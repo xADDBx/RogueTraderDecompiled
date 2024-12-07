@@ -56,6 +56,8 @@ public abstract class MessageBoxBaseView : ViewBase<MessageBoxVM>
 
 	private Tweener m_ProgressTweener;
 
+	protected readonly BoolReactiveProperty CanEditNameByYourself = new BoolReactiveProperty(initialValue: true);
+
 	public virtual void Initialize()
 	{
 		ResetCanvasesAnimation();

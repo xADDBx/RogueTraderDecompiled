@@ -1,10 +1,13 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Core.Async;
 using Core.Cheats;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CommandLineArgs;
 using Kingmaker.Utility.DotNetExtensions;
@@ -21,9 +24,49 @@ public static class StackTraceSpamDetector
 
 		private GameModeType m_GameMode = GameModeType.None;
 
+		private CancellationTokenSource m_CancellationTokenSource;
+
+		private Task m_CheckTask;
+
 		public StackTraceSpamDetectorDisposableLogSink()
 		{
 			EventBus.Subscribe(this);
+			m_CancellationTokenSource = new CancellationTokenSource();
+			m_CheckTask = CheckTask(m_CancellationTokenSource.Token);
+		}
+
+		private async Task CheckTask(CancellationToken token)
+		{
+			while (!token.IsCancellationRequested)
+			{
+				try
+				{
+					DateTime now = DateTime.Now;
+					Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[] s_DetectionStrategies = StackTraceSpamDetector.s_DetectionStrategies;
+					for (int i = 0; i < s_DetectionStrategies.Length; i++)
+					{
+						var (spamDetectionStrategy2, action2) = s_DetectionStrategies[i];
+						var (flag, spamDetectionResult) = spamDetectionStrategy2.Check(s_RegistrerService);
+						if (spamDetectionResult != null)
+						{
+							action2(spamDetectionResult);
+							s_RegistrerService.Clear();
+							s_CooldownTimer = now + s_CooldownTime;
+							break;
+						}
+						if (flag)
+						{
+							break;
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					_ = ex;
+					await Task.Delay(1000, token);
+				}
+				await Task.Delay(100, token);
+			}
 		}
 
 		public void Log(LogInfo logInfo)
@@ -47,6 +90,7 @@ public static class StackTraceSpamDetector
 		public void Dispose()
 		{
 			EventBus.Unsubscribe(this);
+			m_CancellationTokenSource.Cancel();
 		}
 
 		public void HandleCloseLoadingScreen()
@@ -79,13 +123,13 @@ public static class StackTraceSpamDetector
 
 	private static RegistrationService<LogItem> s_RegistrerService = new RegistrationService<LogItem>(300);
 
-	private static readonly CountInTimeDetectionStrategy ExtremelyFastSpam = new CountInTimeDetectionStrategy("Extremely fast spam!", "critical", "current", 10, TimeSpan.FromMilliseconds(100.0));
+	private static readonly CountInTimeDetectionStrategy ExtremelyFastSpam = new CountInTimeDetectionStrategy("Extremely fast spam!", ReportingUtils.Severity.Critical, ReportingUtils.FixVersions.Current, 10, TimeSpan.FromMilliseconds(100.0));
 
-	private static readonly LongTermSpamDetectionStrategy LongTermFastSpam = new LongTermSpamDetectionStrategy("Fast long term spam!", "critical", "current", 40, TimeSpan.FromSeconds(1.0), 2);
+	private static readonly LongTermSpamDetectionStrategy LongTermFastSpam = new LongTermSpamDetectionStrategy("Fast long term spam!", ReportingUtils.Severity.Critical, ReportingUtils.FixVersions.Current, 40, TimeSpan.FromSeconds(1.0), 2);
 
-	private static readonly LongTermSpamDetectionStrategy LongTermNormalSpam = new LongTermSpamDetectionStrategy("Long term spam! Put a bug on this, because there will be lags on consolas!", "normal", "current", 10, TimeSpan.FromSeconds(1.0), 3);
+	private static readonly LongTermSpamDetectionStrategy LongTermNormalSpam = new LongTermSpamDetectionStrategy("Long term spam! Put a bug on this, because there will be lags on consolas!", ReportingUtils.Severity.Normal, ReportingUtils.FixVersions.Current, 1, TimeSpan.FromSeconds(1.0), 3);
 
-	private static readonly ShiftedCountInTimeDetectionStrategy NormalSpam = new ShiftedCountInTimeDetectionStrategy("Put a bug on this, because there will be lags on consolas!", "normal", "afterrelease", 10, TimeSpan.FromSeconds(1.0), 1, TimeSpan.FromSeconds(1.0));
+	private static readonly ShiftedCountInTimeDetectionStrategy NormalSpam = new ShiftedCountInTimeDetectionStrategy("Put a bug on this, because there will be lags on consolas!", ReportingUtils.Severity.Normal, ReportingUtils.FixVersions.After, 10, TimeSpan.FromSeconds(1.0), 1, TimeSpan.FromSeconds(1.0));
 
 	private static Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[] s_DetectionStrategies = new Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[4]
 	{
@@ -217,43 +261,20 @@ public static class StackTraceSpamDetector
 	private static void LogCallback(LogInfo logInfo)
 	{
 		LogSeverity severity = logInfo.Severity;
-		if ((severity != LogSeverity.Error && severity != LogSeverity.Warning) || !IsDetectionEnabled || logInfo.Callstack == null || logInfo.Callstack.Empty())
+		if ((severity == LogSeverity.Error || severity == LogSeverity.Warning) && IsDetectionEnabled && logInfo.Callstack != null && !logInfo.Callstack.Empty() && !(DateTime.Now < s_CooldownTimer))
 		{
-			return;
-		}
-		DateTime now = DateTime.Now;
-		if (now < s_CooldownTimer)
-		{
-			return;
-		}
-		LogItem logItem = new LogItem();
-		logItem.Callstack = logInfo.Callstack[0].GetFormattedMethodName();
-		logItem.Message = $"[{logInfo.GetTimeStampAsString()} - {logInfo.Channel?.Name}][{logInfo.Severity:G}]: {logInfo.Message}";
-		logItem.Time = logInfo.TimeStamp;
-		LogItem item = logItem;
-		s_RegistrerService.Register(item);
-		Tuple<ISpamDetectionStrategy, Action<SpamDetectionResult>>[] array = s_DetectionStrategies;
-		for (int i = 0; i < array.Length; i++)
-		{
-			var (spamDetectionStrategy2, action2) = array[i];
-			var (flag, spamDetectionResult) = spamDetectionStrategy2.Check(s_RegistrerService);
-			if (spamDetectionResult != null)
-			{
-				action2(spamDetectionResult);
-				s_RegistrerService.Clear();
-				s_CooldownTimer = now + s_CooldownTime;
-				break;
-			}
-			if (flag)
-			{
-				break;
-			}
+			LogItem logItem = new LogItem();
+			logItem.Callstack = logInfo.Callstack[0].GetFormattedMethodName();
+			logItem.Message = $"[{logInfo.GetTimeStampAsString()} - {logInfo.Channel?.Name}][{logInfo.Severity:G}]: {logInfo.Message}";
+			logItem.Time = logInfo.TimeStamp;
+			LogItem item = logItem;
+			s_RegistrerService.Register(item);
 		}
 	}
 
 	private static void MaybeShowError(SpamDetectionResult result)
 	{
 		string message = result.Message;
-		QAModeExceptionEvents.Instance.MaybeShowError($"{message}\nGameModeType:{Game.Instance.CurrentMode}\non [{DateTime.Now}]", new SpamDetectionException(Game.Instance.CurrentMode, result.Items));
+		QAModeExceptionEvents.Instance.MaybeShowError($"{message}\nGameModeType:{Game.Instance.CurrentMode}\non [{DateTime.Now}]", new SpamDetectionException(Game.Instance.CurrentMode, result.Severity, result.TargetVersion, result.Items));
 	}
 }

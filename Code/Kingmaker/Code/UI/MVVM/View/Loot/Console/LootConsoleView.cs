@@ -91,6 +91,8 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 
 	private readonly BoolReactiveProperty m_LootFocus = new BoolReactiveProperty();
 
+	private readonly BoolReactiveProperty m_CanTransferFromOneSlot = new BoolReactiveProperty();
+
 	private IConsoleEntity m_CurrentEntity;
 
 	private IConsoleHint m_MiddleConfirmHint;
@@ -278,7 +280,8 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 			AddDisposable(m_MiddleHintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.ContextMenu.ContextMenu));
 			AddDisposable(inputBindStruct2);
 		}
-		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CanTransfer.Select((bool value) => value || base.ViewModel.IsPlayerStash).And(m_LootFocus).ToReactiveProperty();
+		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CanTransfer.Select((bool value) => value || base.ViewModel.IsPlayerStash).Or(m_CanTransferFromOneSlot).And(m_LootFocus)
+			.ToReactiveProperty();
 		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
 		{
 		}, 8, readOnlyReactiveProperty);
@@ -436,17 +439,20 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 			ItemSlotVM itemSlotVM = (m_CurrentEntity as IItemSlotView)?.SlotVM;
 			m_HasItem.Value = itemSlotVM?.HasItem ?? false;
 			m_CanTransfer.Value = itemSlotVM?.CanTransfer ?? false;
+			m_CanTransferFromOneSlot.Value = base.ViewModel.IsOneSlot && ((m_CurrentEntity as IItemSlotView)?.SlotVM?.CanTransferToInventory).GetValueOrDefault();
 		}
 		else if ((m_CurrentEntity as VirtualListElement)?.Data != null)
 		{
 			IVirtualListElementData obj = (m_CurrentEntity as VirtualListElement)?.Data;
 			m_HasItem.Value = (obj as CargoSlotVM)?.CargoEntity != null;
 			m_CanTransfer.Value = false;
+			m_CanTransferFromOneSlot.Value = false;
 		}
 		else
 		{
 			m_HasItem.Value = false;
 			m_CanTransfer.Value = false;
+			m_CanTransferFromOneSlot.Value = false;
 		}
 		DefineFocusPanel(entity);
 		SetConfirmLabel(entity);

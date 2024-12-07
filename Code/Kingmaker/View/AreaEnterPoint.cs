@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Cheats;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -23,6 +24,7 @@ using UnityEngine;
 namespace Kingmaker.View;
 
 [ExecuteAlways]
+[KnowledgeDatabaseID("8f59cb0f2927d264d8bbe23c108687e6")]
 public class AreaEnterPoint : MonoBehaviour
 {
 	private static readonly List<AreaEnterPoint> Instances = new List<AreaEnterPoint>();

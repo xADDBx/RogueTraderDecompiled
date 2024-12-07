@@ -337,6 +337,16 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 		{
 			SpeedUp(state: false);
 		}, 17, InputActionEventType.ButtonLongPressJustReleased));
+		AddDisposable(inputLayer.AddButton(delegate
+		{
+			if (ConsoleCursor.Instance.CanFlipZoneAbility)
+			{
+				EventBus.RaiseEvent(delegate(IFlipZoneAbilityHandler h)
+				{
+					h.HandleFlipZoneAbility();
+				});
+			}
+		}, 10));
 		m_ActionBarConsoleView.AddInput(inputLayer, inCombat: true);
 		m_CombatLogConsoleView.AddInputToCombat(inputLayer);
 		m_InitiativeTrackerView.AddInput(inputLayer);

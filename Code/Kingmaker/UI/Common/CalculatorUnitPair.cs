@@ -47,7 +47,7 @@ public class CalculatorUnitPair : IDisposable, ILevelUpCompleteUIHandler, ISubsc
 						using (ContextData<GameCommandHelper.PreviewItem>.Request())
 						{
 							BaseUnitEntity @this = m_SelectedUnit.Value ?? Game.Instance.Player.MainCharacterEntity;
-							CalculatorUnit = @this.CreatePreview(createView: false);
+							CalculatorUnit = @this.CreatePreview(createView: false, forceEnableBuffs: true);
 						}
 					}
 				}

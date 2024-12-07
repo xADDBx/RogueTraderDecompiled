@@ -376,8 +376,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		bool flag2 = IsGamepadMovement(handle);
 		if (actionData.State == MovementState.Run && handle.Unit != null && handle.Unit.AgentASP.IsInNodeLinkQueue && !flag2)
 		{
-			actionData.State = MovementState.Out;
-			actionData.OutDistance = 0f;
+			actionData.State = MovementState.Idle;
 			flag = true;
 		}
 		if (actionData.State == MovementState.Idle && !flag && handle.Unit != null && !handle.Unit.AgentASP.IsInNodeLinkQueue)

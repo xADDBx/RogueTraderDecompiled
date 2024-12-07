@@ -31,9 +31,9 @@ public class ColonyProjectsPageVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly AutoDisposingList<ColonyProjectsRequirementElementVM> Requirements = new AutoDisposingList<ColonyProjectsRequirementElementVM>();
 
-	public readonly ColonyProjectsHeaderElementVM RewardsHeader = new ColonyProjectsHeaderElementVM(UIStrings.Instance.ColonyProjectsTexts.ProjectRewards.Text);
+	public readonly ColonyProjectsHeaderElementVM RewardsHeader = new ColonyProjectsHeaderElementVM(UIStrings.Instance.QuesJournalTexts.RewardsResources.Text);
 
-	public readonly ColonyProjectsHeaderElementVM RequirementsHeader = new ColonyProjectsHeaderElementVM(UIStrings.Instance.ColonyProjectsTexts.ProjectRequirements.Text);
+	public readonly ColonyProjectsHeaderElementVM RequirementsHeader = new ColonyProjectsHeaderElementVM(UIStrings.Instance.QuesJournalTexts.RequiredResources.Text);
 
 	private BlueprintColonyProject m_BlueprintColonyProject;
 

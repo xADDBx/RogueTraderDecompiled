@@ -19,9 +19,9 @@ namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 
 public class TooltipTemplateColonyProject : TooltipBaseTemplate
 {
-	private BlueprintColonyProject m_BlueprintColonyProject;
+	private readonly BlueprintColonyProject m_BlueprintColonyProject;
 
-	private Colony m_Colony;
+	private readonly Colony m_Colony;
 
 	public TooltipTemplateColonyProject(BlueprintColonyProject blueprintColonyProject, Colony colony)
 	{
@@ -44,7 +44,7 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 			list.Add(new TooltipBrickColonyProjectProgress(UIConfig.Instance.UIIcons.TooltipIcons.Duration, string.Format(UIStrings.Instance.ColonyProjectsTexts.BuildingInProgress.Text, num.ToString())));
 		}
 		list.Add(new TooltipBricksGroupStart());
-		list.Add(new TooltipBrickText(UIStrings.Instance.ColonyProjectsTexts.ProjectRewards, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
+		list.Add(new TooltipBrickText(UIStrings.Instance.QuesJournalTexts.RewardsResources, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
 		foreach (Reward component in m_BlueprintColonyProject.GetComponents<Reward>())
 		{
 			RewardUI reward = RewardUIFactory.GetReward(component);
@@ -80,7 +80,7 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 		}
 		list.Add(new TooltipBricksGroupEnd());
 		list.Add(new TooltipBricksGroupStart());
-		list.Add(new TooltipBrickText(UIStrings.Instance.ColonyProjectsTexts.ProjectRequirements, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
+		list.Add(new TooltipBrickText(UIStrings.Instance.QuesJournalTexts.RequiredResources, TooltipTextType.Bold, isHeader: false, TooltipTextAlignment.Left));
 		foreach (Requirement component2 in m_BlueprintColonyProject.GetComponents<Requirement>())
 		{
 			RequirementUI requirement = RequirementUIFactory.GetRequirement(component2);

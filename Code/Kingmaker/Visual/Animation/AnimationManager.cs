@@ -485,6 +485,10 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 
 	public void StopEvents()
 	{
+		if (m_DefaultMixer == null || m_DefaultMixer.Playables == null)
+		{
+			return;
+		}
 		foreach (PlayableInfo playable in m_DefaultMixer.Playables)
 		{
 			playable.StopEvents();

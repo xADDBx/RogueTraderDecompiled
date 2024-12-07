@@ -1,4 +1,7 @@
 using Kingmaker.Code.UI.MVVM.VM.Common.Dropdown;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.Controls.Toggles;
 using Owlcat.Runtime.UI.MVVM;
@@ -9,7 +12,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 
-public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, IConsoleEntity, IWidgetView
+public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, IConsoleEntity, IWidgetView, ISettingsFontSizeUIHandler, ISubscriber
 {
 	[SerializeField]
 	private OwlcatToggle m_Toggle;
@@ -19,6 +22,9 @@ public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, I
 
 	[SerializeField]
 	private Image m_Image;
+
+	[SerializeField]
+	private float m_DefaultFontSize = 26f;
 
 	public MonoBehaviour MonoBehaviour => this;
 
@@ -36,10 +42,12 @@ public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, I
 	protected override void BindViewImplementation()
 	{
 		m_Text.text = base.ViewModel.Text;
+		SetTextFontSize();
 		if (base.ViewModel.Icon != null && m_Image != null)
 		{
 			m_Image.sprite = base.ViewModel.Icon;
 		}
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -55,6 +63,11 @@ public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, I
 		}
 	}
 
+	private void SetTextFontSize()
+	{
+		m_Text.fontSize = m_DefaultFontSize * (Game.Instance.IsControllerGamepad ? 1f : base.ViewModel.FontSizeMultiplier);
+	}
+
 	public void BindWidgetVM(IViewModel vm)
 	{
 		Bind(vm as DropdownItemVM);
@@ -63,5 +76,10 @@ public class DropdownItemView : ViewBase<DropdownItemVM>, IConsoleEntityProxy, I
 	public bool CheckType(IViewModel viewModel)
 	{
 		return viewModel is DropdownItemVM;
+	}
+
+	public void HandleChangeFontSizeSettings(float size)
+	{
+		m_Text.fontSize = m_DefaultFontSize * (Game.Instance.IsControllerGamepad ? 1f : size);
 	}
 }

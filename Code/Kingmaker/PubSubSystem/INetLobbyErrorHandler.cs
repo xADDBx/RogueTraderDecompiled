@@ -8,11 +8,13 @@ public interface INetLobbyErrorHandler : ISubscriber
 
 	void HandleGetAuthDataTimeout();
 
-	void HandleGetAuthDataError(string errorMessage);
+	void HandleGetAuthDataError();
 
 	void HandleChangeRegionError();
 
 	void HandleNoPlayStationPlusError();
+
+	void HandleUserPermissionsError(bool reconnectDialog = false);
 
 	void HandleLobbyNotFoundError();
 

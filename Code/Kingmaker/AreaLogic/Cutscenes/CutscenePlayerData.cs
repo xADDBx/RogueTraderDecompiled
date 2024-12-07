@@ -96,6 +96,8 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 
 	public readonly HashSet<CommandBase> FailedCommands = new HashSet<CommandBase>();
 
+	public readonly HashSet<CommandBase> FailedCheckCommands = new HashSet<CommandBase>();
+
 	public readonly HashSet<Track> FinishedTracks = new HashSet<Track>();
 
 	public SimpleBlueprint OriginBlueprint;
@@ -119,6 +121,8 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	public bool IsFinished { get; private set; }
 
 	public bool PreventDestruction { get; set; }
+
+	public bool TraceCommands { get; set; }
 
 	public ParametrizedContextSetter ParameterSetter { get; set; }
 
@@ -1188,6 +1192,18 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		else
 		{
 			Logger.Error(Cutscene, message);
+		}
+	}
+
+	public void LogCommandTrace(string message)
+	{
+		if (TraceCommands)
+		{
+			LogSeverity minStackTraceLevel = Logger.MinStackTraceLevel;
+			Logger.SetMinStackTraceLevel(LogSeverity.Error);
+			CutsceneLogSink.Instance.PrepareForLog(this, null);
+			Logger.Log(Cutscene, $"[{Cutscene}] {message}");
+			Logger.SetMinStackTraceLevel(minStackTraceLevel);
 		}
 	}
 

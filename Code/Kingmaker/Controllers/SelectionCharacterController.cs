@@ -15,6 +15,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.Controllers;
@@ -44,6 +45,8 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	private CompositeDisposable m_SelectedUnitsSubscription;
 
 	private bool m_ControllerStarted;
+
+	private bool m_IsResetScheduled;
 
 	public ReactiveCollection<BaseUnitEntity> SelectedUnits { get; } = new ReactiveCollection<BaseUnitEntity>();
 
@@ -131,7 +134,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		{
 			m_NeedUpdate = true;
 		}));
-		m_SelectedUnitsSubscription.Add(SelectedUnits.ObserveReset().Subscribe(delegate
+		m_SelectedUnitsSubscription.Add(ObservableExtensions.Subscribe(SelectedUnits.ObserveReset(), delegate
 		{
 			m_NeedUpdate = true;
 		}));
@@ -237,10 +240,19 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			{
 				m_FullScreenSelectedUnit = Game.Instance.Player?.MainCharacterEntity;
 			}
+			m_IsResetScheduled = false;
 		}
 		else
 		{
-			m_FullScreenSelectedUnit = null;
+			m_IsResetScheduled = true;
+			DelayedInvoker.InvokeInFrames(delegate
+			{
+				if (m_IsResetScheduled)
+				{
+					m_FullScreenSelectedUnit = null;
+					m_IsResetScheduled = false;
+				}
+			}, 3);
 		}
 		m_NeedUpdate = true;
 	}
@@ -248,7 +260,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	private void UpdateSelectedUnits()
 	{
 		UIUtility.GetGroup(m_ActualGroup, WithRemote, WithRemote);
-		if (RootUIContext.Instance.IsSurface)
+		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
 			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
 			{

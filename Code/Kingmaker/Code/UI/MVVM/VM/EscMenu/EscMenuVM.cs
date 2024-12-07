@@ -53,10 +53,18 @@ public class EscMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 			IsSavingAllowed = Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual) && !SettingsRoot.Difficulty.OnlyOneSave;
 		}));
 		AddDisposable(EventBus.Subscribe(this));
+		EventBus.RaiseEvent(delegate(IEscMenuHandler h)
+		{
+			h.HandleEscMenuOnShow();
+		});
 	}
 
 	protected override void DisposeImplementation()
 	{
+		EventBus.RaiseEvent(delegate(IEscMenuHandler h)
+		{
+			h.HandleEscMenuOnHide();
+		});
 	}
 
 	public void OnClose()

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.NetRoles;
 
-public class NetRolesPlayerCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetRoleSetHandler, ISubscriber
+public class NetRolesPlayerCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetRoleSetHandler, ISubscriber, INetRoleRegisterChangeHandler
 {
 	public readonly BoolReactiveProperty CanUp = new BoolReactiveProperty(initialValue: false);
 
@@ -78,7 +78,7 @@ public class NetRolesPlayerCharacterVM : BaseDisposable, IViewModel, IBaseDispos
 	{
 		if (!player.Equals(PlayerOwner))
 		{
-			Game.Instance.CoopData.PlayerRole.Set(Character.Id, player.ToNetPlayer(NetPlayer.Empty), enable: true);
+			UpdateMoveAbility(player);
 		}
 	}
 
@@ -97,6 +97,27 @@ public class NetRolesPlayerCharacterVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			CanUp.Value = m_CanUp && PlayerRoleMe.Value;
 			CanDown.Value = m_CanDown && PlayerRoleMe.Value;
+		}
+	}
+
+	private void UpdateMoveAbility(PhotonActorNumber player)
+	{
+		EventBus.RaiseEvent(delegate(INetRoleRegisterChangeHandler h)
+		{
+			h.HandleRoleRegisterChange(Character.Id, player);
+		});
+	}
+
+	public void HandleRoleRegisterChange(string characterId, PhotonActorNumber newPlayerOwner)
+	{
+		if (!(characterId != Character.Id))
+		{
+			PlayerRoleMe.Value = !m_IsEmpty && newPlayerOwner.Equals(PlayerOwner);
+			if (PhotonManager.Instance.IsRoomOwner)
+			{
+				CanUp.Value = m_CanUp && PlayerRoleMe.Value;
+				CanDown.Value = m_CanDown && PlayerRoleMe.Value;
+			}
 		}
 	}
 }

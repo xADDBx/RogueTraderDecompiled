@@ -27,6 +27,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.ColonyManagement;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Encyclopedia;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap;
@@ -87,6 +88,7 @@ public class ReportingRaycaster : MonoBehaviour
 		Epilog,
 		Inventory,
 		Journal,
+		Encyclopedia,
 		LevelUp,
 		LoadingScreen,
 		LocalMap,
@@ -202,6 +204,10 @@ public class ReportingRaycaster : MonoBehaviour
 		{
 			uifeatureenum.Journal,
 			"Journal"
+		},
+		{
+			uifeatureenum.Encyclopedia,
+			"Encyclopedia"
 		},
 		{
 			uifeatureenum.LevelUp,
@@ -456,6 +462,10 @@ public class ReportingRaycaster : MonoBehaviour
 			if (IsType(type, typeof(JournalVM)))
 			{
 				return uifeatureenum.Journal;
+			}
+			if (IsType(type, typeof(EncyclopediaVM)))
+			{
+				return uifeatureenum.Encyclopedia;
 			}
 			if (IsType(type, typeof(LoadingScreenVM)))
 			{

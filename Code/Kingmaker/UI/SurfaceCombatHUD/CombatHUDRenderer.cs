@@ -598,59 +598,68 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 
 	private void ExtendMovementAreaByUnitSize(List<GraphNode> movementNodes, IntRect sizeRect)
 	{
-		Dictionary<Vector2Int, CustomGridNode> dictionary = new Dictionary<Vector2Int, CustomGridNode>();
-		List<Vector2Int> list = new List<Vector2Int>();
-		List<Vector2Int> list2 = new List<Vector2Int>();
-		for (int i = 0; i < movementNodes.Count; i++)
+		Dictionary<Vector2Int, CustomGridNode> value;
+		using (CollectionPool<Dictionary<Vector2Int, CustomGridNode>, KeyValuePair<Vector2Int, CustomGridNode>>.Get(out value))
 		{
-			if (movementNodes[i] is CustomGridNode customGridNode)
+			List<Vector2Int> value2;
+			using (CollectionPool<List<Vector2Int>, Vector2Int>.Get(out value2))
 			{
-				Vector2Int key = new Vector2Int(customGridNode.XCoordinateInGrid, customGridNode.ZCoordinateInGrid);
-				dictionary.Add(key, customGridNode);
-			}
-		}
-		foreach (Vector2Int key2 in dictionary.Keys)
-		{
-			if (!dictionary.ContainsKey(key2 + Vector2Int.up))
-			{
-				list.Add(key2);
-			}
-			if (!dictionary.ContainsKey(key2 + Vector2Int.right))
-			{
-				list2.Add(key2);
-			}
-		}
-		for (int j = 0; j < sizeRect.Height - 1; j++)
-		{
-			for (int num = list.Count - 1; num >= 0; num--)
-			{
-				CustomGridNodeBase neighbourAlongDirection = dictionary[list[num]].GetNeighbourAlongDirection(2);
-				if (neighbourAlongDirection != null)
+				List<Vector2Int> value3;
+				using (CollectionPool<List<Vector2Int>, Vector2Int>.Get(out value3))
 				{
-					list.RemoveAt(num);
-					Vector2Int vector2Int = new Vector2Int(neighbourAlongDirection.XCoordinateInGrid, neighbourAlongDirection.ZCoordinateInGrid);
-					dictionary[vector2Int] = neighbourAlongDirection as CustomGridNode;
-					list.Add(vector2Int);
-					movementNodes.Add(neighbourAlongDirection);
-					if (neighbourAlongDirection.GetNeighbourAlongDirection(1) != null && !list2.Contains(vector2Int))
+					for (int i = 0; i < movementNodes.Count; i++)
 					{
-						list2.Add(vector2Int);
+						if (movementNodes[i] is CustomGridNode customGridNode)
+						{
+							Vector2Int key = new Vector2Int(customGridNode.XCoordinateInGrid, customGridNode.ZCoordinateInGrid);
+							value.Add(key, customGridNode);
+						}
 					}
-				}
-			}
-		}
-		for (int k = 0; k < sizeRect.Width - 1; k++)
-		{
-			for (int num2 = list2.Count - 1; num2 >= 0; num2--)
-			{
-				CustomGridNodeBase neighbourAlongDirection2 = dictionary[list2[num2]].GetNeighbourAlongDirection(1);
-				if (neighbourAlongDirection2 != null)
-				{
-					list2.RemoveAt(num2);
-					Vector2Int vector2Int2 = new Vector2Int(neighbourAlongDirection2.XCoordinateInGrid, neighbourAlongDirection2.ZCoordinateInGrid);
-					dictionary[vector2Int2] = neighbourAlongDirection2 as CustomGridNode;
-					list2.Add(vector2Int2);
-					movementNodes.Add(neighbourAlongDirection2);
+					foreach (Vector2Int key2 in value.Keys)
+					{
+						if (!value.ContainsKey(key2 + Vector2Int.up))
+						{
+							value2.Add(key2);
+						}
+						if (!value.ContainsKey(key2 + Vector2Int.right))
+						{
+							value3.Add(key2);
+						}
+					}
+					for (int j = 0; j < sizeRect.Height - 1; j++)
+					{
+						for (int num = value2.Count - 1; num >= 0; num--)
+						{
+							CustomGridNodeBase neighbourAlongDirection = value[value2[num]].GetNeighbourAlongDirection(2);
+							if (neighbourAlongDirection != null)
+							{
+								value2.RemoveAt(num);
+								Vector2Int vector2Int = new Vector2Int(neighbourAlongDirection.XCoordinateInGrid, neighbourAlongDirection.ZCoordinateInGrid);
+								value[vector2Int] = neighbourAlongDirection as CustomGridNode;
+								value2.Add(vector2Int);
+								movementNodes.Add(neighbourAlongDirection);
+								if (neighbourAlongDirection.GetNeighbourAlongDirection(1) != null && !value3.Contains(vector2Int))
+								{
+									value3.Add(vector2Int);
+								}
+							}
+						}
+					}
+					for (int k = 0; k < sizeRect.Width - 1; k++)
+					{
+						for (int num2 = value3.Count - 1; num2 >= 0; num2--)
+						{
+							CustomGridNodeBase neighbourAlongDirection2 = value[value3[num2]].GetNeighbourAlongDirection(1);
+							if (neighbourAlongDirection2 != null)
+							{
+								value3.RemoveAt(num2);
+								Vector2Int vector2Int2 = new Vector2Int(neighbourAlongDirection2.XCoordinateInGrid, neighbourAlongDirection2.ZCoordinateInGrid);
+								value[vector2Int2] = neighbourAlongDirection2 as CustomGridNode;
+								value3.Add(vector2Int2);
+								movementNodes.Add(neighbourAlongDirection2);
+							}
+						}
+					}
 				}
 			}
 		}

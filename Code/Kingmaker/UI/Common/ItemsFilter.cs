@@ -60,11 +60,7 @@ public static class ItemsFilter
 			}
 			return true;
 		case ItemsFilterType.Notable:
-			if (!blueprintItem.IsNotable)
-			{
-				return blueprintItem.Rarity == BlueprintItem.ItemRarity.Quest;
-			}
-			return true;
+			return UIUtilityItem.IsQuestItem(blueprintItem);
 		case ItemsFilterType.NonUsable:
 			if (!blueprintItem.IsNotable && !(blueprintItem is BlueprintItemEquipmentUsable) && !(blueprintItem is BlueprintItemWeapon) && !(blueprintItem is BlueprintItemArmor) && !(blueprintItem is BlueprintItemShield) && !(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentShirt) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintStarshipItem))
 			{

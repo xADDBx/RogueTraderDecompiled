@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
+using Owlcat.Runtime.Core.Utility;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -35,6 +36,9 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 	[SerializeField]
 	private TextMeshProUGUI m_LowerText;
 
+	[SerializeField]
+	protected TextMeshProUGUI m_CanFlipZoneText;
+
 	[Header("Additional")]
 	[SerializeField]
 	protected GameObject m_NoMoveObject;
@@ -42,6 +46,8 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 	protected CursorType m_CurrentType;
 
 	protected bool m_CastMode;
+
+	public bool CanFlipZoneAbility;
 
 	protected CompositeDisposable m_Disposable;
 
@@ -77,6 +83,7 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 		m_CursorTransform.gameObject.SetActive(value: false);
 		m_Disposable = new CompositeDisposable();
 		OnBind();
+		SetCanFlipZone();
 		return this;
 	}
 
@@ -138,11 +145,13 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 		return true;
 	}
 
-	public void SetCursor(CursorType type)
+	public void SetCursor(CursorType type, bool canFlipZone = false)
 	{
+		m_CastMode = type == CursorType.Cast || type == CursorType.CastRestricted;
+		m_CanFlipZoneText.Or(null)?.gameObject.SetActive(canFlipZone && m_CastMode);
+		CanFlipZoneAbility = canFlipZone && m_CastMode;
 		if (m_CurrentType != type)
 		{
-			m_CastMode = type == CursorType.Cast || type == CursorType.CastRestricted;
 			m_CursorImage.sprite = BlueprintRoot.Instance.Cursors.GetSprite(type);
 			Vector2 hotspot = ((type != CursorType.Vertical && type != CursorType.Horizontal && type != CursorType.DiagonalLeft && type != CursorType.DiagonalRight && type != CursorType.RotateCamera) ? Vector2.zero : new Vector2(32f, 32f));
 			Cursor.SetCursor(BlueprintRoot.Instance.Cursors.GetTexture(type), hotspot, CursorMode.Auto);
@@ -156,10 +165,10 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 	{
 	}
 
-	public void SetAbilityCursor(Sprite abilityIcon)
+	public void SetAbilityCursor(Sprite abilityIcon, bool canFlipZone)
 	{
 		m_AbilityImage.sprite = abilityIcon;
-		SetCursor(CursorType.Cast);
+		SetCursor(CursorType.Cast, canFlipZone);
 	}
 
 	public void SetTexts(string upperText, string lowerText)
@@ -174,6 +183,18 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 		}
 	}
 
+	private void SetCanFlipZone()
+	{
+		if (!(m_CanFlipZoneText == null))
+		{
+			SetCanFlipZoneImpl();
+		}
+	}
+
+	protected virtual void SetCanFlipZoneImpl()
+	{
+	}
+
 	protected virtual void OnSetText(bool hasText)
 	{
 	}
@@ -186,6 +207,8 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 	public void ClearComponents()
 	{
 		m_AbilityImage.sprite = null;
+		m_CanFlipZoneText.Or(null)?.gameObject.SetActive(value: false);
+		CanFlipZoneAbility = false;
 		m_AbilityGroup.SetActive(value: false);
 		SetTexts(null, null);
 		SetNoMove(noMove: false);

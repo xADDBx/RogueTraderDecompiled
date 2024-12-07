@@ -442,18 +442,15 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 
 	public static void CreateInstance()
 	{
-		if (BuildModeUtility.IsCoopEnabled)
+		if (s_Instance != null)
 		{
-			if (s_Instance != null)
-			{
-				PFLog.Net.Error("Another instance of PhotonManager already initialized!");
-				return;
-			}
-			PFLog.Net.Log("Creating PhotonManager Instance...");
-			s_Instance = new GameObject("PhotonManager").AddComponent<PhotonManager>();
-			UnityEngine.Object.DontDestroyOnLoad(s_Instance);
-			s_Instance.Init();
+			PFLog.Net.Error("Another instance of PhotonManager already initialized!");
+			return;
 		}
+		PFLog.Net.Log("Creating PhotonManager Instance...");
+		s_Instance = new GameObject("PhotonManager").AddComponent<PhotonManager>();
+		UnityEngine.Object.DontDestroyOnLoad(s_Instance);
+		s_Instance.Init();
 	}
 
 	private void Init()
@@ -904,6 +901,14 @@ public class PhotonManager : MonoBehaviour, IMatchmakingCallbacks, IConnectionCa
 	public void StopPlaying(string reason)
 	{
 		NetGame.StopPlaying(shouldLeaveLobby: true, reason);
+	}
+
+	public void ForceDisconnect()
+	{
+		StopPlaying("ForceDisconnect");
+		UIUtility.ShowMessageBox(UIStrings.Instance.NetLobbyErrorsTexts.PhotonDisconnectedErrorMessage, DialogMessageBoxBase.BoxType.Message, delegate
+		{
+		});
 	}
 
 	public void Kick()

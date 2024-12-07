@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UniRx;
@@ -18,12 +19,13 @@ public class CargoRewardsPCView : CargoRewardsBaseView
 
 	protected override void InitializeImpl()
 	{
-		m_CompleteButtonLabel.text = UIStrings.Instance.CommonTexts.Accept;
+		m_CompleteButtonLabel.text = UIStrings.Instance.CommonTexts.Accept.Text + " [" + UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("CollectAllLoot")) + "]";
 	}
 
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
 		AddDisposable(m_CompleteButton.OnLeftClickAsObservable().Subscribe(base.HandleComplete));
+		AddDisposable(Game.Instance.Keyboard.Bind(UISettingsRoot.Instance.UIKeybindGeneralSettings.CollectAllLoot.name, base.HandleComplete));
 	}
 }

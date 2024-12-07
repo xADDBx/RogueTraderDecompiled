@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -16,7 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.SectorMap.SpaceSystemInformationWindow.Console;
 
-public class SpaceSystemInformationWindowConsoleView : SpaceSystemInformationWindowBaseView
+public class SpaceSystemInformationWindowConsoleView : SpaceSystemInformationWindowBaseView, IEscMenuHandler, ISubscriber
 {
 	[Header("Hints")]
 	[SerializeField]
@@ -64,6 +65,7 @@ public class SpaceSystemInformationWindowConsoleView : SpaceSystemInformationWin
 		{
 			m_ShowSystemWindow.Value = value;
 		}));
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	public void AddSystemInformationInput(InputLayer inputLayer)
@@ -183,14 +185,39 @@ public class SpaceSystemInformationWindowConsoleView : SpaceSystemInformationWin
 
 	public void ShowTooltipInfo()
 	{
-		IConsoleEntity consoleEntity = m_SystemInformationWindowBehavior.Entities.FirstOrDefault((IConsoleEntity e) => e is PlanetInfoSpaceSystemInformationWindowView planetInfoSpaceSystemInformationWindowView && planetInfoSpaceSystemInformationWindowView.IsFocused);
-		PlanetInfoSpaceSystemInformationWindowView planet = consoleEntity as PlanetInfoSpaceSystemInformationWindowView;
+		PlanetInfoSpaceSystemInformationWindowView planet = FocusedPlanet();
 		if (!(planet == null))
 		{
 			EventBus.RaiseEvent(delegate(ITooltipHandler h)
 			{
 				h.HandleInfoRequest(planet.CurrentTooltipInfo, m_SystemInformationWindowBehavior, shouldNotHideLittleTooltip: true);
 			});
+		}
+	}
+
+	private PlanetInfoSpaceSystemInformationWindowView FocusedPlanet()
+	{
+		return m_SystemInformationWindowBehavior.Entities.FirstOrDefault((IConsoleEntity e) => e is PlanetInfoSpaceSystemInformationWindowView planetInfoSpaceSystemInformationWindowView && planetInfoSpaceSystemInformationWindowView.IsFocused) as PlanetInfoSpaceSystemInformationWindowView;
+	}
+
+	public void HandleOpen()
+	{
+	}
+
+	public void HandleEscMenuOnShow()
+	{
+		if (!(FocusedPlanet() == null))
+		{
+			TooltipHelper.HideTooltip();
+		}
+	}
+
+	public void HandleEscMenuOnHide()
+	{
+		PlanetInfoSpaceSystemInformationWindowView planetInfoSpaceSystemInformationWindowView = FocusedPlanet();
+		if (!(planetInfoSpaceSystemInformationWindowView == null))
+		{
+			planetInfoSpaceSystemInformationWindowView.ShowTooltip();
 		}
 	}
 }

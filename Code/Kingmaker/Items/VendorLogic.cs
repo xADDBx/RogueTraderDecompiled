@@ -387,7 +387,6 @@ public class VendorLogic : IController, IChangeChapterHandler, ISubscriber
 			PFLog.Default.Error("Trade deal is impossible");
 			return;
 		}
-		Game.Instance.Statistic.HandleVendorDeal(vendor, ItemsForBuy);
 		ItemEntity dealItem = null;
 		ItemEntity[] array = ItemsForBuy.ToArray();
 		foreach (ItemEntity itemEntity in array)

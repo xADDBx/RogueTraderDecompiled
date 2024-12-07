@@ -12,17 +12,18 @@ using Kingmaker.UnitLogic.Levelup.Selections.Voice;
 using Kingmaker.Utility.GameConst;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.SelectionGroup;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.Voice;
 
-public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICharGenAppearancePhaseVoiceHandler, ISubscriber
+public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICharGenAppearancePhaseVoiceHandler, ISubscriber, ICharGenChangePhaseHandler
 {
 	public SelectionGroupRadioVM<CharGenVoiceItemVM> VoiceSelector;
 
-	public readonly ReactiveProperty<CharGenVoiceItemVM> SelectedVoiceVM = new ReactiveProperty<CharGenVoiceItemVM>();
+	private readonly ReactiveProperty<CharGenVoiceItemVM> m_SelectedVoiceVM = new ReactiveProperty<CharGenVoiceItemVM>();
 
-	public readonly ReactiveProperty<UnitAsksComponent> Barks = new ReactiveProperty<UnitAsksComponent>();
+	private readonly ReactiveProperty<UnitAsksComponent> m_Barks = new ReactiveProperty<UnitAsksComponent>();
 
 	private readonly ReactiveCollection<CharGenVoiceItemVM> m_VoicesList = new ReactiveCollection<CharGenVoiceItemVM>();
 
@@ -31,6 +32,8 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 	private SelectionStateVoice m_SelectionStateVoice;
 
 	private bool m_IsSelectedManually;
+
+	private CharGenPhaseType m_CurrentPhase;
 
 	private Gender DollGender => m_CharGenContext.Doll.Gender;
 
@@ -41,10 +44,10 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 		CreateVoices();
 		AddDisposable(m_CharGenContext.CurrentUnit.Subscribe(delegate
 		{
-			UpdateFromMechanic();
+			DelayedInvoker.InvokeInFrames(UpdateFromMechanic, 1);
 		}));
 		AddDisposable(m_CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
-		AddDisposable(SelectedVoiceVM.Subscribe(delegate(CharGenVoiceItemVM value)
+		AddDisposable(m_SelectedVoiceVM.Subscribe(delegate(CharGenVoiceItemVM value)
 		{
 			OnChooseVoice(value);
 			m_IsSelectedManually = true;
@@ -71,7 +74,7 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 				m_VoicesList.Add(charGenVoiceItemVM);
 			}
 		}
-		VoiceSelector = AddDisposableAndReturn(new SelectionGroupRadioVM<CharGenVoiceItemVM>(m_VoicesList, SelectedVoiceVM));
+		VoiceSelector = AddDisposableAndReturn(new SelectionGroupRadioVM<CharGenVoiceItemVM>(m_VoicesList, m_SelectedVoiceVM));
 	}
 
 	private void UpdateSelector()
@@ -86,9 +89,9 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 		{
 			UpdateFromMechanic();
 		}
-		if (SelectedVoiceVM.Value != null)
+		if (m_SelectedVoiceVM.Value != null)
 		{
-			OnChooseVoice(SelectedVoiceVM.Value);
+			OnChooseVoice(m_SelectedVoiceVM.Value);
 		}
 		else
 		{
@@ -102,13 +105,13 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 		BlueprintUnitAsksList pregenVoice = value.PreviewUnit.Asks.List;
 		if (!m_CharGenContext.IsCustomCharacter.Value && pregenVoice != null)
 		{
-			SelectedVoiceVM.Value = VoiceSelector.EntitiesCollection.FirstOrDefault((CharGenVoiceItemVM item) => item.Voice == pregenVoice);
+			m_SelectedVoiceVM.Value = VoiceSelector.EntitiesCollection.FirstOrDefault((CharGenVoiceItemVM item) => item.Voice == pregenVoice);
 			return;
 		}
 		BlueprintCharGenRoot charGenRoot = BlueprintRoot.Instance.CharGenRoot;
 		int value2 = ((DollGender == Gender.Male) ? charGenRoot.MaleVoiceDefaultId : charGenRoot.FemaleVoiceDefaultId);
 		value2 = Math.Clamp(value2, 0, VoiceSelector.EntitiesCollection.Count - 1);
-		SelectedVoiceVM.Value = VoiceSelector.EntitiesCollection.ElementAt(value2);
+		m_SelectedVoiceVM.Value = VoiceSelector.EntitiesCollection.ElementAt(value2);
 		m_IsSelectedManually = false;
 	}
 
@@ -128,10 +131,13 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 			PFLog.UI.Error("BlueprintUnitAsksList not found! ID=" + blueprint.AssetGuid);
 			return;
 		}
-		SelectedVoiceVM.Value = charGenVoiceItemVM;
+		m_SelectedVoiceVM.Value = charGenVoiceItemVM;
 		m_SelectionStateVoice?.SelectVoice(charGenVoiceItemVM.Voice);
-		Barks.Value = charGenVoiceItemVM.Barks;
-		Barks.Value.PlayPreview();
+		m_Barks.Value = charGenVoiceItemVM.Barks;
+		if (!m_CharGenContext.IsCustomCharacter.Value || m_CurrentPhase != 0)
+		{
+			m_Barks.Value.PlayPreview();
+		}
 		Changed();
 	}
 
@@ -145,5 +151,10 @@ public class CharGenVoiceSelectorVM : BaseCharGenAppearancePageComponentVM, ICha
 				m_SelectionStateVoice = manager.GetSelectionState(manager.Path, selectionByType, 0) as SelectionStateVoice;
 			}
 		}
+	}
+
+	public void HandlePhaseChange(CharGenPhaseType phaseType)
+	{
+		m_CurrentPhase = phaseType;
 	}
 }

@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.CodeTimer;
+using Kingmaker.View;
 
 namespace Kingmaker.UnitLogic.Commands;
 
@@ -45,11 +46,28 @@ public class UnitJumpAsideDodge : UnitCommand<UnitJumpAsideDodgeParams>
 	protected override void OnTick()
 	{
 		base.OnTick();
-		if ((bool)base.Executor.Features.CantMove)
+		if (base.Executor == null)
+		{
+			PFLog.Ability.Error("Executor for jump dodge is missing");
+			ForceFinish(ResultType.Success);
+		}
+		FeatureCountableFlag featureCountableFlag = base.Executor.Features?.CantMove;
+		if (featureCountableFlag != null && (bool)featureCountableFlag)
 		{
 			ForceFinish(ResultType.Fail);
 		}
-		if (!base.Executor.View.MovementAgent.WantsToMove)
+		UnitEntityView view = base.Executor.View;
+		bool? obj;
+		if ((object)view == null)
+		{
+			obj = null;
+		}
+		else
+		{
+			UnitMovementAgentBase movementAgent = view.MovementAgent;
+			obj = (((object)movementAgent != null) ? new bool?(!movementAgent.WantsToMove) : null);
+		}
+		if (obj ?? true)
 		{
 			ForceFinish(ResultType.Success);
 		}

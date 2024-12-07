@@ -56,6 +56,6 @@ public class CommandMarkOnPlatform : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Mark " + UnitEvaluator?.GetCaption() + " <b>on platform</b>";
+		return "Mark " + UnitEvaluator?.GetCaptionShort() + " <b>on platform</b>";
 	}
 }

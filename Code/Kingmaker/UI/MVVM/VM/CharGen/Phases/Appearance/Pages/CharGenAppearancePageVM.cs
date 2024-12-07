@@ -76,12 +76,19 @@ public class CharGenAppearancePageVM : SelectionGroupEntityVM
 		foreach (CharGenAppearancePageComponent components in CharGenAppearancePages.GetComponentsList(PageType))
 		{
 			BaseCharGenAppearancePageComponentVM component = CharGenAppearanceComponentFactory.GetComponent(components, m_CharGenContext);
-			if (component != null)
+			if (component == null)
 			{
-				Components.Add(component);
-				m_ComponentsByType[components] = component;
-				m_ComponentSubscriptions.Add(component.OnChanged.ObserveLastValueOnLateUpdate().Subscribe(OnComponentChanged));
+				continue;
 			}
+			Components.Add(component);
+			m_ComponentsByType[components] = component;
+			m_ComponentSubscriptions.Add(component.OnChanged.ObserveLastValueOnLateUpdate().Subscribe(delegate(CharGenAppearancePageComponent value)
+			{
+				DelayedInvoker.InvokeInFrames(delegate
+				{
+					OnComponentChanged(value);
+				}, 1);
+			}));
 		}
 	}
 

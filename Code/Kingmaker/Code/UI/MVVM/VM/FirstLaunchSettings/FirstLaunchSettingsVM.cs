@@ -71,6 +71,12 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		DisposeAll();
+		PlayerPrefs.Save();
+	}
+
 	private void CreateMenuEntity(LocalizedString localizedString, UISettingsManager.SettingsScreen screenType)
 	{
 		SettingsMenuEntityVM settingsMenuEntityVM = new SettingsMenuEntityVM(localizedString, screenType, null);
@@ -116,12 +122,6 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 		DisplayPageVM.Value = null;
 		AccessiabilityPageVM.Value?.Dispose();
 		AccessiabilityPageVM.Value = null;
-	}
-
-	protected override void DisposeImplementation()
-	{
-		DisposeAll();
-		PlayerPrefs.Save();
 	}
 
 	private void ApplySettings()

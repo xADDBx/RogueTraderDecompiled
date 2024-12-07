@@ -43,6 +43,6 @@ public class CommandMarkPassiveSpan : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Mark " + Unit?.GetCaption() + " <b>passive</b>";
+		return "Mark " + Unit?.GetCaptionShort() + " <b>passive</b>";
 	}
 }

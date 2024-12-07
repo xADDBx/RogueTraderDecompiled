@@ -6,6 +6,7 @@ using Kingmaker.Pathfinding;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
+using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -35,6 +36,11 @@ public class BlueprintAttackPattern : BlueprintScriptableObject
 	[RangeWithStep(30, 180, 30)]
 	private int m_Angle;
 
+	[ShowIf("CanBeDirectional")]
+	[InfoBox("'Directional' spreading works only with Sector, Cone and Ray patterns")]
+	[SerializeField]
+	private bool m_Directional;
+
 	[SerializeField]
 	[ShowIf("IsCustom")]
 	private CustomAttackPattern AxisAlignedPattern;
@@ -63,6 +69,15 @@ public class BlueprintAttackPattern : BlueprintScriptableObject
 		}
 	}
 
+	public bool CanBeDirectional
+	{
+		get
+		{
+			PatternType type = Type;
+			return type == PatternType.Ray || type == PatternType.Cone || type == PatternType.Sector;
+		}
+	}
+
 	public int Radius
 	{
 		get
@@ -84,6 +99,18 @@ public class BlueprintAttackPattern : BlueprintScriptableObject
 		PatternType.Custom => 360, 
 		_ => 360, 
 	};
+
+	public bool IsDirectional
+	{
+		get
+		{
+			if (CanBeDirectional)
+			{
+				return m_Directional;
+			}
+			return false;
+		}
+	}
 
 	static BlueprintAttackPattern()
 	{

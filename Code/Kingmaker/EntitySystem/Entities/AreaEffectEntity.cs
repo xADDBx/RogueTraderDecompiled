@@ -19,6 +19,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -231,6 +232,14 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 			throw new Exception("Area effect is attached to unit, but unit is missing");
 		}
 		m_Context = context ?? new MechanicsContext(this, null, blueprint, null, m_Target);
+		try
+		{
+			m_Context?.MaybeCaster?.GetOptional<UnitPartStrategistKeystoneRearAbilityFlipPattern>()?.AddAreaEffect(this);
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Error(ex);
+		}
 		m_Target = target;
 		m_CreationTime = creationTime;
 		Duration = duration?.ToRounds();
@@ -318,6 +327,14 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 
 	protected override void OnDispose()
 	{
+		try
+		{
+			m_Context?.MaybeCaster?.GetOptional<UnitPartStrategistKeystoneRearAbilityFlipPattern>()?.RemoveAreaEffect(this);
+		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Error(ex);
+		}
 		EventBus.RaiseEvent((IAreaEffectEntity)this, (Action<IAreaEffectHandler>)delegate(IAreaEffectHandler h)
 		{
 			h.HandleAreaEffectDestroyed();

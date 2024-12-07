@@ -21,6 +21,32 @@ namespace Kingmaker.Blueprints.Quests;
 [MemoryPackable(GenerateType.NoGenerate)]
 public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 {
+	public class SilentQuestNotificationOverride : IDisposable
+	{
+		[CanBeNull]
+		private readonly BlueprintQuest m_Quest;
+
+		private readonly QuestNotificationState m_OriginalState;
+
+		public SilentQuestNotificationOverride([CanBeNull] BlueprintQuest quest, QuestNotificationState stateOverride)
+		{
+			m_Quest = quest;
+			if (m_Quest != null)
+			{
+				m_OriginalState = m_Quest.m_SilentQuestNotification;
+				m_Quest.m_SilentQuestNotification = stateOverride;
+			}
+		}
+
+		public void Dispose()
+		{
+			if (m_Quest != null)
+			{
+				m_Quest.m_SilentQuestNotification = m_OriginalState;
+			}
+		}
+	}
+
 	[NotNull]
 	public LocalizedString Description;
 

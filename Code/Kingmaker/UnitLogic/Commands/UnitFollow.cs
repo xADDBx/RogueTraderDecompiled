@@ -63,6 +63,8 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 
 	private Vector3 m_RememberedDestination;
 
+	private bool m_RepathedOnce;
+
 	public override bool IsMoveUnit => true;
 
 	private Vector3 Destination => base.Params.Destination;
@@ -115,7 +117,7 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 
 	private bool ShouldMatchTargetMovement(TargetEntityMovementData targetData)
 	{
-		if (!targetData.IsMoving)
+		if (!targetData.IsMoving || !targetData.Direction.HasValue)
 		{
 			return false;
 		}
@@ -128,7 +130,7 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 	{
 		UnitMovementAgentContinuous unitMovementAgentContinuous = SetMoveAgentContinuous();
 		unitMovementAgentContinuous.MaxSpeedOverride = targetData.MaxSpeedOverride;
-		unitMovementAgentContinuous.DirectionFromController = targetData.Direction ?? (Destination - base.Executor.Position).normalized.To2D();
+		unitMovementAgentContinuous.DirectionFromController = targetData.Direction ?? (Destination - base.Executor.Position).To2D().normalized;
 		unitMovementAgentContinuous.DirectionFromControllerMagnitude = targetData.Multiplier ?? 1f;
 		unitMovementAgentContinuous.m_Acceleration = 200f;
 		base.Params.MovementType = targetData.MovementType ?? WalkSpeedType.Walk;
@@ -138,9 +140,9 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 	{
 		if (!targetData.IsMoving || base.Executor.MovementAgent.WantsToMove)
 		{
-			if ((m_RememberedDestination - Destination).sqrMagnitude > 1f)
+			if ((m_RememberedDestination - Destination).sqrMagnitude > 1f && m_RepathTimer > 0.3f)
 			{
-				return m_RepathTimer > 0.3f;
+				return !base.Executor.MovementAgent.IsTraverseInProgress;
 			}
 			return false;
 		}
@@ -151,6 +153,10 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 	{
 		m_RepathTimer = 0f;
 		m_RememberedDestination = Destination;
+		if (!m_RepathedOnce)
+		{
+			base.Executor.View.StopMoving();
+		}
 		BaseUnitEntity executor = base.Executor;
 		PathfindingService.Instance.FindPathRT_Delayed(base.Executor.MovementAgent, Destination, 0f, 1, delegate(ForcedPath path)
 		{
@@ -168,6 +174,7 @@ public sealed class UnitFollow : UnitCommand<UnitFollowParams>
 				executor.View.MoveTo(path, destination, 0.2f);
 			}
 		});
+		m_RepathedOnce = true;
 	}
 
 	private static Vector3 TrimPathToCurrentArea(ForcedPath path)

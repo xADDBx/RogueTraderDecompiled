@@ -34,6 +34,10 @@ public class ContextMenuEntityVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		Sprite = entity?.Icon;
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void UpdateTitle()
 	{
 		SubTitle.Value = m_Entity?.SubTitle;
@@ -65,9 +69,5 @@ public class ContextMenuEntityVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	public UISounds.ButtonSoundsEnum GetHoverSoundType()
 	{
 		return m_Entity.HoverSoundType;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

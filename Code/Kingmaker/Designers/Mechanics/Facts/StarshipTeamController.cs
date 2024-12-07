@@ -135,7 +135,7 @@ public class StarshipTeamController : UnitFactComponentDelegate, IUnitCombatHand
 
 	public void HandleMovementComplete()
 	{
-		if (CheckLanding && (EventInvokerExtensions.StarshipEntity == base.Owner || EventInvokerExtensions.StarshipEntity == Carrier) && DistanceToCarrier() <= LandingDistance)
+		if (CheckLanding && (EventInvokerExtensions.StarshipEntity == base.Owner || EventInvokerExtensions.StarshipEntity == Carrier) && DistanceToCarrier() <= LandingDistance && EventInvokerExtensions.MechanicEntity == base.Owner)
 		{
 			base.Fact.RunActionInContext(LandingActions, Carrier.ToITargetWrapper());
 		}

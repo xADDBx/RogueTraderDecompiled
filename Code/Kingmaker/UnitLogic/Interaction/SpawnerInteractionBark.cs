@@ -12,7 +12,7 @@ namespace Kingmaker.UnitLogic.Interaction;
 [KnowledgeDatabaseID("50ac711133aea7343ae4091a29784c2d")]
 public class SpawnerInteractionBark : SpawnerInteraction
 {
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset Bark;
 
 	[Tooltip("Show bark on user. By default bark is shown on target unit.")]

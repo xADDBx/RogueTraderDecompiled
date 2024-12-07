@@ -18,24 +18,24 @@ public class ColonyProjectsPageConsoleView : ColonyProjectsPageBaseView
 	[SerializeField]
 	private ColonyProjectsHeaderElementConsoleView m_HeaderViewPrefab;
 
-	public readonly AutoDisposingList<IViewModel> RewardsAndRequirements = new AutoDisposingList<IViewModel>();
+	private readonly AutoDisposingList<IViewModel> m_RewardsAndRequirements = new AutoDisposingList<IViewModel>();
 
 	protected override void DestroyViewImplementation()
 	{
-		RewardsAndRequirements.Clear();
+		m_RewardsAndRequirements.Clear();
 		m_RewardsWidgetList.Clear();
 		base.DestroyViewImplementation();
 	}
 
 	protected override void DrawRewardsImpl()
 	{
-		RewardsAndRequirements.Clear();
+		m_RewardsAndRequirements.Clear();
 		m_RewardsWidgetList.Clear();
-		RewardsAndRequirements.Add(base.ViewModel.RewardsHeader);
-		RewardsAndRequirements.AddRange(base.ViewModel.Rewards);
-		RewardsAndRequirements.Add(base.ViewModel.RequirementsHeader);
-		RewardsAndRequirements.AddRange(base.ViewModel.Requirements);
-		m_RewardsWidgetList.DrawMultiEntries(RewardsAndRequirements, new List<IWidgetView> { m_HeaderViewPrefab, m_RewardsViewPrefab, m_RequirementsViewPrefab });
+		m_RewardsAndRequirements.Add(base.ViewModel.RequirementsHeader);
+		m_RewardsAndRequirements.AddRange(base.ViewModel.Requirements);
+		m_RewardsAndRequirements.Add(base.ViewModel.RewardsHeader);
+		m_RewardsAndRequirements.AddRange(base.ViewModel.Rewards);
+		m_RewardsWidgetList.DrawMultiEntries(m_RewardsAndRequirements, new List<IWidgetView> { m_HeaderViewPrefab, m_RequirementsViewPrefab, m_RewardsViewPrefab });
 	}
 
 	protected override void ScrollListInternal(IConsoleEntity entity)

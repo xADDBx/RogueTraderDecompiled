@@ -93,13 +93,14 @@ public class TooltipTemplateAnswerConditions : TooltipBaseTemplate
 	private void FillRequirements(out List<ITooltipBrick> result)
 	{
 		result = new List<ITooltipBrick>();
-		IEnumerable<Requirement> requirements = m_BlueprintAnswer.GetRequirements();
-		if (requirements == null || !requirements.Any())
+		List<Requirement> list = m_BlueprintAnswer.GetRequirements().ToList();
+		list.RemoveAll((Requirement r) => r.HideInUI);
+		if (!list.Any())
 		{
 			return;
 		}
 		result.Add(new TooltipBrickText(UIStrings.Instance.Dialog.OperationAndConditionDesc, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Left));
-		foreach (Requirement item in requirements)
+		foreach (Requirement item in list)
 		{
 			RequirementUI requirement = RequirementUIFactory.GetRequirement(item);
 			if (requirement is RequirementResourceUseDialogUI requirementResourceUseDialogUI)

@@ -43,7 +43,13 @@ public class BlueprintPlanet : BlueprintStarSystemObject
 
 	public PlanetType Type;
 
+	public bool DontShowWorldType;
+
+	public LocalizedString WorldType = new LocalizedString();
+
 	public LocalizedString TitheGrade = new LocalizedString();
+
+	public LocalizedString Aestimare = new LocalizedString();
 
 	public override bool ShouldBeHighlighted => true;
 }

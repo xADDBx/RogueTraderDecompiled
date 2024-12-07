@@ -9,7 +9,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.IngameMenu;
 
-public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, ISubscriber, INetEvents, IPauseHandler, IAreaHandler
+public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, ISubscriber, INetEvents, IPauseHandler, IAreaHandler, IPartyCombatHandler
 {
 	public readonly BoolReactiveProperty PlayerHaveRoles = new BoolReactiveProperty();
 
@@ -25,7 +25,7 @@ public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, 
 
 	public IngameMenuSettingsButtonVM()
 	{
-		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace;
+		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace && !Game.Instance.Player.IsInCombat;
 		IsPause.Value = Game.Instance.IsPaused && !Game.Instance.PauseController.IsPausedByPlayers;
 		HandleRoleSet(string.Empty);
 		NetFirstLoadState.Value = PhotonManager.Lobby.IsActive;
@@ -99,7 +99,12 @@ public class IngameMenuSettingsButtonVM : IngameMenuBaseVM, INetRoleSetHandler, 
 
 	public void OnAreaDidLoad()
 	{
-		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace;
+		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace && !Game.Instance.Player.IsInCombat;
 		IsPause.Value = Game.Instance.IsPaused && !Game.Instance.PauseController.IsPausedByPlayers;
+	}
+
+	public void HandlePartyCombatStateChanged(bool inCombat)
+	{
+		ShowPauseButton.Value = !RootUIContext.Instance.IsSpace && !inCombat;
 	}
 }

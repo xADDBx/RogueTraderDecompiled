@@ -958,10 +958,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		if (IsLoadingInProcess())
 		{
-			using (ProfileScope.New("Stats Tick (Loading)"))
-			{
-				Statistic.Tick(this);
-			}
 			SoundState.Instance.UpdateScheduledAreaMusic();
 			RealTimeController.Suspend();
 			TimeController.Suspend();
@@ -986,10 +982,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			using (ProfileScope.New("Tick Game Mode"))
 			{
 				m_GameModes.Peek().Tick();
-			}
-			using (ProfileScope.New("Stats Tick (Game)"))
-			{
-				Statistic.Tick(this);
 			}
 			using (ProfileScope.New("Tick UnitAsksController"))
 			{
@@ -2100,6 +2092,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		Player.MinDifficultyController.UpdateMinDifficulty(force: true);
 		Player.InvalidateCharacterLists();
+		Player.InitializeOnGameLoad();
 		AreaDataStash.ClearDirectory();
 		AreaDataStash.PrepareFirstLaunch();
 		LoadArea(preset.EnterPoint, preset.MakeAutosave ? AutoSaveMode.AfterEntry : AutoSaveMode.None);

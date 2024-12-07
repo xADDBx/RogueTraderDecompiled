@@ -147,7 +147,7 @@ public class UIWeaponCategories
 		case WeaponClassification.NavigatorStaff:
 			return WeaponClassificationStaff;
 		case WeaponClassification.Chainsaw:
-			return WeaponClassificationChainsaw;
+			return string.Empty;
 		case WeaponClassification.Knife:
 			return WeaponClassificationKnife;
 		case WeaponClassification.Maul:

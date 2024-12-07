@@ -28,6 +28,6 @@ public class CommandCrossfadeToIdle : CommandBase
 
 	public override string GetCaption()
 	{
-		return Unit?.ToString() + "<b> force Idle</b> ";
+		return Unit?.GetCaptionShort() + "<b> force Idle</b> ";
 	}
 }

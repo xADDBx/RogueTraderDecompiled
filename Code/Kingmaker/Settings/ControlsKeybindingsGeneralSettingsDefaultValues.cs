@@ -36,6 +36,8 @@ public class ControlsKeybindingsGeneralSettingsDefaultValues
 
 	public KeyBindingPair OpenSpells;
 
+	public KeyBindingPair FlipZoneStrategist;
+
 	public KeyBindingPair Inspect;
 
 	public KeyBindingPair Pause;

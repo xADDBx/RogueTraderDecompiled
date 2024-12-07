@@ -33,7 +33,7 @@ public class CommandBarkUnit : CommandBase
 
 	public string Text;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	[ValidateNotNull]
 	public SharedStringAsset SharedText;
 
@@ -58,6 +58,9 @@ public class CommandBarkUnit : CommandBase
 
 	[Tooltip("Allow set exact playback time")]
 	public bool OverrideBarkDuration;
+
+	[Tooltip("Try playing the voiceover if available")]
+	public bool TryPlayVoiceOver = true;
 
 	[Tooltip("Exact playback time")]
 	[ShowIf("OverrideBarkDuration")]
@@ -111,7 +114,7 @@ public class CommandBarkUnit : CommandBase
 		}
 		else if (value != null && value.LifeState.IsConscious)
 		{
-			commandData.BarkHandle = (SharedText ? BarkPlayer.Bark(value, SharedText.String, duration, BarkDurationByText) : BarkPlayer.Bark(value, Text, duration));
+			commandData.BarkHandle = (SharedText ? BarkPlayer.Bark(value, SharedText.String, duration, TryPlayVoiceOver) : BarkPlayer.Bark(value, Text, duration));
 		}
 		commandData.Delay = CommandDurationShift;
 		commandData.StopPlaySignal = SignalService.Instance.RegisterNext();
@@ -137,7 +140,11 @@ public class CommandBarkUnit : CommandBase
 
 	public override string GetCaption()
 	{
-		return Unit?.ToString() + "<b> bark</b> " + (SharedText ? ((string)SharedText.String) : Text);
+		if ((bool)Unit)
+		{
+			return Unit.GetCaptionShort() + "<b> bark</b> " + (SharedText ? ((string)SharedText.String) : Text);
+		}
+		return "No unit<b> bark</b> " + (SharedText ? ((string)SharedText.String) : Text);
 	}
 
 	public override string GetWarning()

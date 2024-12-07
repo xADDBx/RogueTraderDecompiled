@@ -50,7 +50,7 @@ public class InteractionLootSettings : InteractionSettings
 	public bool DestroyWhenEmpty;
 
 	[FormerlySerializedAs("MapMarkerDesc")]
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.MapMarker, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.MapMarker)]
 	public SharedStringAsset MapMarkerName;
 
 	[CanBeNull]

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Pointer.AbilityTarget;
 
-public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHandler, ISubscriber, IAbilityTargetHoverUIHandler, ITurnBasedModeHandler
+public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHandler, ISubscriber, IAbilityTargetHoverUIHandler, ITurnBasedModeHandler, IFlippedZoneAbilityHandler
 {
 	protected AbilityData Ability;
 
@@ -64,12 +64,12 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 	{
 	}
 
-	protected virtual void SetRangeToCasterPosition()
+	protected virtual void SetRangeToCasterPosition(bool ignoreCache = false)
 	{
-		SetRangeToWorldPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
+		SetRangeToWorldPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster), ignoreCache);
 	}
 
-	protected virtual void SetRangeToWorldPosition(Vector3 castPosition)
+	protected virtual void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
 	{
 	}
 
@@ -110,6 +110,14 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 		if (!isTurnBased)
 		{
 			SetAbility(null);
+		}
+	}
+
+	void IFlippedZoneAbilityHandler.HandleFlippedZoneAbility()
+	{
+		if (!(this is AbilitySingleTargetRange))
+		{
+			SetRangeToWorldPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster), ignoreCache: true);
 		}
 	}
 }

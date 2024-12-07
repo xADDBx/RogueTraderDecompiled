@@ -39,6 +39,11 @@ public class InteractionSlotPartView : ViewBase<InteractionSlotPartVM>
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	private void SetLabels()
 	{
 		m_DescriptionBlock.SetActive(base.ViewModel.Description != string.Empty);
@@ -59,10 +64,5 @@ public class InteractionSlotPartView : ViewBase<InteractionSlotPartVM>
 	private void Hide()
 	{
 		base.gameObject.SetActive(value: false);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 }

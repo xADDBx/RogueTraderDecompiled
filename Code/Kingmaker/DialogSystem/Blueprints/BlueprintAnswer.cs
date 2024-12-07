@@ -100,7 +100,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 	{
 		get
 		{
-			if (!GetRewards().Any())
+			if (!GetRewards().Any((Reward r) => !r.HideInUI))
 			{
 				return HasExchangeDataOnSelect();
 			}
@@ -112,7 +112,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 	{
 		get
 		{
-			if (!GetRequirements().Any())
+			if (!GetRequirements().Any((Requirement r) => !r.HideInUI))
 			{
 				return HasConditionsOnSelect();
 			}
@@ -128,8 +128,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 			{
 				return FakeChecks;
 			}
-			BlueprintCheck blueprintCheck = NextCue.Select() as BlueprintCheck;
-			if ((bool)blueprintCheck && !blueprintCheck.Hidden)
+			if (NextCue.Select() is BlueprintCheck { Hidden: false } blueprintCheck)
 			{
 				return new CheckData[1]
 				{
@@ -340,7 +339,10 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 			typeof(GainColonyResources),
 			typeof(RemoveColonyResources)
 		};
-		return ExpandConditionals(OnSelect.Actions.ToList()).Any((GameAction a) => exchangeActions.Contains(a.GetType()));
+		List<GameAction> list = ExpandConditionals(OnSelect.Actions.ToList());
+		list.RemoveAll((GameAction a) => a is AddItemToPlayer addItemToPlayer && addItemToPlayer.Silent);
+		list.RemoveAll((GameAction a) => a is RemoveItemFromPlayer removeItemFromPlayer && removeItemFromPlayer.Silent);
+		return list.Any((GameAction a) => exchangeActions.Contains(a.GetType()));
 	}
 
 	private List<GameAction> ExpandConditionals(List<GameAction> initActions)

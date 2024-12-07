@@ -36,11 +36,22 @@ public class TranslocateUnit : GameAction
 	private bool m_PrecisePosition;
 
 	[SerializeField]
+	private bool m_RestrictByHeightDifference;
+
+	[SerializeField]
 	private bool m_CopyRotation;
 
 	[ShowIf("m_CopyRotation")]
 	[SerializeReference]
 	public FloatEvaluator translocateOrientationEvaluator;
+
+	[SerializeField]
+	[HideIf("m_PrecisePosition")]
+	private ActionList m_ActionsOnSuccess = new ActionList();
+
+	[SerializeField]
+	[HideIf("m_PrecisePosition")]
+	private ActionList m_ActionsOnFail = new ActionList();
 
 	public override string GetCaption()
 	{
@@ -73,18 +84,21 @@ public class TranslocateUnit : GameAction
 		CustomGridNodeBase nearestNodeXZ = position.GetNearestNodeXZ();
 		if (nearestNodeXZ == null)
 		{
+			m_ActionsOnFail.Run();
 			return;
 		}
 		if (!WarhammerBlockManager.Instance.CanUnitStandOnNode(targetUnit, nearestNodeXZ) && nearestNodeXZ.Walkable)
 		{
-			nearestNodeXZ = GridAreaHelper.GetNodesSpiralAround(nearestNodeXZ, new IntRect(0, 0, 0, 0), 2).FirstOrDefault((CustomGridNodeBase node) => WarhammerBlockManager.Instance.CanUnitStandOnNode(targetUnit, node) && node.Walkable);
+			nearestNodeXZ = GridAreaHelper.GetNodesSpiralAround(nearestNodeXZ, new IntRect(0, 0, 0, 0), 2, !m_RestrictByHeightDifference).FirstOrDefault((CustomGridNodeBase node) => WarhammerBlockManager.Instance.CanUnitStandOnNode(targetUnit, node) && node.Walkable);
 			if (nearestNodeXZ == null)
 			{
+				m_ActionsOnFail.Run();
 				return;
 			}
 			position = nearestNodeXZ.Vector3Position;
 		}
 		MoveUnit(targetUnit, position);
+		m_ActionsOnSuccess.Run();
 	}
 
 	private void MoveUnit(AbstractUnitEntity unit, Vector3 position)
@@ -97,7 +111,8 @@ public class TranslocateUnit : GameAction
 		}
 		else if (m_CopyRotation)
 		{
-			unit.SetOrientation(translocatePosition.FindView().ViewTransform.rotation.eulerAngles.y);
+			Transform transform = translocatePosition?.FindView()?.ViewTransform;
+			unit.SetOrientation((transform == null) ? 0f : transform.rotation.eulerAngles.y);
 		}
 	}
 }

@@ -35,8 +35,6 @@ public class MessageBoxConsoleView : MessageBoxBaseView
 
 	private ConsoleHintDescription m_DeclineHint;
 
-	protected readonly BoolReactiveProperty CanEditNameByYourself = new BoolReactiveProperty(initialValue: true);
-
 	protected override void BindViewImplementation()
 	{
 		CreateInput();

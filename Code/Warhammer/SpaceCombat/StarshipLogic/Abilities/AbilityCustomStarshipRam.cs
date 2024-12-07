@@ -138,6 +138,23 @@ public class AbilityCustomStarshipRam : AbilityCustomLogic, ICustomShipPathProvi
 			targetUnit = keyValuePair.Key;
 			pathLen = keyValuePair.Value;
 		}
+		if (targetUnit != null && !grapNodes.ContainsKey(targetNode))
+		{
+			bool flag = true;
+			foreach (GraphNode key in grapNodes.Keys)
+			{
+				if (((CustomGridNodeBase)key).TryGetUnit(out var unit) && unit == targetUnit)
+				{
+					targetNode = (CustomGridNodeBase)key;
+					flag = false;
+					break;
+				}
+			}
+			if (flag)
+			{
+				yield break;
+			}
+		}
 		for (CustomPathNode customPathNode = grapNodes[targetNode]; customPathNode != null; customPathNode = customPathNode.Parent)
 		{
 			GraphNode node = customPathNode.Node;

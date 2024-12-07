@@ -282,10 +282,10 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		Game.Instance.SaveManager.UpdateSaveListIfNeeded();
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			SaveInfo latestSave = Game.Instance.SaveManager.GetLatestSave();
-			if (latestSave != null)
+			SaveInfo anyLatestSave = Game.Instance.SaveManager.GetAnyLatestSave();
+			if (anyLatestSave != null)
 			{
-				Game.Instance.LoadGameFromMainMenu(latestSave);
+				Game.Instance.LoadGameFromMainMenu(anyLatestSave);
 			}
 			else
 			{

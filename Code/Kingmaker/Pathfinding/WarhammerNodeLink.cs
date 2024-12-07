@@ -36,6 +36,12 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	private Bounds m_Bounds;
 
 	[SerializeField]
+	private bool m_IsHighTraverse;
+
+	[SerializeField]
+	private bool m_IsJumpTraverse;
+
+	[SerializeField]
 	private WarhammerNodeLink m_ConnectedNode;
 
 	private CustomGridNodeBase m_StartNode;
@@ -71,6 +77,10 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	public Vector3 EndToStartDirection { get; private set; }
 
 	public Bounds Bounds => m_Bounds;
+
+	public bool IsHighTraverse => m_IsHighTraverse;
+
+	public bool IsJumpTraverse => m_IsJumpTraverse;
 
 	public Transform TransformStart => m_Start;
 
@@ -210,8 +220,10 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 		{
 			PFLog.Default.Error("WarhammerNodeLink is not setup properly or doesn't belong to mechanic scene");
 		}
-		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_StartPosition).node;
-		CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_EndPosition).node;
+		NNConstraint @default = NNConstraint.Default;
+		@default.constrainWalkability = NNConstraint.WalkableConstraintType.StaticWalkabale;
+		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_StartPosition, null, @default).node;
+		CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_EndPosition, null, @default).node;
 		if (customGridNodeBase == null)
 		{
 			PFLog.Default.Error("WarhammerNodeLink not found startNode");

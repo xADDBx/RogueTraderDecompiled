@@ -387,12 +387,13 @@ public class TaskNodeSetupMoveCommand : TaskNode
 			Mode.LureCaster => GetUnitNodeAndSize(context.LuredTo), 
 			Mode.BetterPosition => GetUnitNodeAndSize(GetClosestEnemy(context)), 
 			Mode.SquadLeader => (context.SquadLeaderNode, context.SquadLeader.SizeRect), 
+			Mode.ClosestEnemy => GetUnitNodeAndSize(GetClosestEnemy(context)), 
 			_ => (null, default(IntRect)), 
 		};
 	}
 
 	private (CustomGridNodeBase, IntRect) GetUnitNodeAndSize(MechanicEntity unit)
 	{
-		return (unit.GetNearestNodeXZ(), unit.SizeRect);
+		return (unit?.GetNearestNodeXZ(), unit?.SizeRect ?? default(IntRect));
 	}
 }

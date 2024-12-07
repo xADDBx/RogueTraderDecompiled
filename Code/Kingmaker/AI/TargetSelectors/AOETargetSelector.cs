@@ -65,7 +65,7 @@ public class AOETargetSelector : AbilityTargetSelector
 				{
 					continue;
 				}
-				if (unit2.CombatGroup.IsEnemy(item2))
+				if (unit2.CombatGroup.IsEnemy(item2) || unit2.Brain.IsTraitor)
 				{
 					num2 += ((!flag2) ? (10000f - (item2.Position - vector3Position).sqrMagnitude) : ((0f - hitUnintendedTargetPenalty) * 10000f));
 					num3 += ((!flag2) ? 1 : 0);

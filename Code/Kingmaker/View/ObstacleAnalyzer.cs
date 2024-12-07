@@ -113,7 +113,7 @@ public struct ObstacleAnalyzer
 		UnwalkableXZConstraint.distanceXZ = (DefaultXZConstraint.distanceXZ = true);
 		UnwalkableXZConstraint.constrainTags = (DefaultXZConstraint.constrainTags = true);
 		UnwalkableXZConstraint.tags = (DefaultXZConstraint.tags = 1);
-		UnwalkableXZConstraint.constrainWalkability = false;
+		UnwalkableXZConstraint.constrainWalkability = NNConstraint.WalkableConstraintType.None;
 	}
 
 	public ObstacleAnalyzer(Vector3 position, Vector2 forward, float radius, float speed)

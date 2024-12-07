@@ -13,7 +13,6 @@ using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Kingmaker.Utility;
-using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -130,15 +129,8 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		m_LoadView.Bind(base.ViewModel.LoadVm);
 		m_OptionsView.Bind(base.ViewModel.OptionsVm);
 		m_CreditView.Bind(base.ViewModel.CreditVm);
-		if (BuildModeUtility.IsCoopEnabled)
-		{
-			m_NetView.gameObject.SetActive(value: true);
-			m_NetView.Bind(base.ViewModel.NetVm);
-		}
-		else
-		{
-			m_NetView.gameObject.SetActive(value: false);
-		}
+		m_NetView.gameObject.SetActive(value: true);
+		m_NetView.Bind(base.ViewModel.NetVm);
 		m_AddonsView.gameObject.SetActive(value: true);
 		m_AddonsView.Bind(base.ViewModel.DlcManagerVm);
 		m_DiscordButton.Or(null)?.gameObject.SetActive(value: true);

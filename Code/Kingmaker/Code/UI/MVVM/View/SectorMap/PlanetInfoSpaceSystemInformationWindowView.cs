@@ -197,9 +197,14 @@ public class PlanetInfoSpaceSystemInformationWindowView : ViewBase<PlanetInfoSpa
 		IsFocused = value;
 		if (value)
 		{
-			CurrentTooltipInfo = new TooltipTemplateSystemMapPlanet(null, null, base.ViewModel.BlueprintPlanet, base.ViewModel.BlueprintStarSystemMap);
-			this.ShowTooltip(CurrentTooltipInfo, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace), null, m_ParentNavigationBehaviour, shouldNotHideLittleTooltip: true);
+			ShowTooltip();
 		}
+	}
+
+	public void ShowTooltip()
+	{
+		CurrentTooltipInfo = new TooltipTemplateSystemMapPlanet(null, null, base.ViewModel.BlueprintPlanet, base.ViewModel.BlueprintStarSystemMap);
+		this.ShowTooltip(CurrentTooltipInfo, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace), null, m_ParentNavigationBehaviour, shouldNotHideLittleTooltip: true);
 	}
 
 	public bool IsValid()

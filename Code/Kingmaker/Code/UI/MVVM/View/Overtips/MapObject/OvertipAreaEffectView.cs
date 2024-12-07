@@ -8,6 +8,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.UI.Controls.Button;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Overtips.MapObject;
 
@@ -31,6 +32,9 @@ public class OvertipAreaEffectView : BaseOvertipView<OvertipAreaEffectVM>
 
 	[SerializeField]
 	private OwlcatButton m_InfoButton;
+
+	[SerializeField]
+	private Image m_OvertipIcon;
 
 	private readonly ReactiveProperty<UnitOvertipVisibility> m_Visibility = new ReactiveProperty<UnitOvertipVisibility>();
 
@@ -60,6 +64,16 @@ public class OvertipAreaEffectView : BaseOvertipView<OvertipAreaEffectVM>
 			UpdateVisibility();
 		}));
 		AddDisposable(m_Visibility.Subscribe(DoVisibility));
+		SetOvertipSprite();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_FadeAnimator?.Kill();
+		m_FadeAnimator = null;
+		m_ScaleAnimator?.Kill();
+		m_ScaleAnimator = null;
+		base.DestroyViewImplementation();
 	}
 
 	private void DoVisibility(UnitOvertipVisibility unitOvertipVisibility)
@@ -89,12 +103,12 @@ public class OvertipAreaEffectView : BaseOvertipView<OvertipAreaEffectVM>
 		m_Visibility.Value = (flag ? UnitOvertipVisibility.Full : UnitOvertipVisibility.Near);
 	}
 
-	protected override void DestroyViewImplementation()
+	private void SetOvertipSprite()
 	{
-		m_FadeAnimator?.Kill();
-		m_FadeAnimator = null;
-		m_ScaleAnimator?.Kill();
-		m_ScaleAnimator = null;
-		base.DestroyViewImplementation();
+		Sprite overtipSprite = base.ViewModel.OvertipSprite;
+		if (!(overtipSprite == null))
+		{
+			m_OvertipIcon.sprite = overtipSprite;
+		}
 	}
 }

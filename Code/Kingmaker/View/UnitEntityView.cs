@@ -811,10 +811,14 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		HandsEquipment?.Dispose();
 	}
 
-	public void AddRagdollImpulse(Vector3 direction, float addMagnitude, DamageType damageType)
+	public void AddRagdollImpulse(Vector3 direction, float addMagnitude, DamageType damageType, bool isCutscene = false)
 	{
 		if ((bool)RigidbodyController)
 		{
+			if (isCutscene)
+			{
+				RigidbodyController.maxRagdollValue = addMagnitude;
+			}
 			RigidbodyController.ApplyImpulse(direction, addMagnitude);
 		}
 		if ((bool)base.DismembermentManager)

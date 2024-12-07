@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -160,18 +159,6 @@ public class HardwareConfigDetect
 			}
 			else
 			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				if (!flag)
-				{
-					dictionary.Add("cpu_name", SystemInfo.processorType);
-				}
-				if (!flag2)
-				{
-					dictionary.Add("gpu_vendorid", SystemInfo.graphicsDeviceVendorID.ToString());
-					dictionary.Add("gpu_deviceid", SystemInfo.graphicsDeviceID.ToString());
-					dictionary.Add("gpu_name", SystemInfo.graphicsDeviceName);
-				}
-				AnalyticsHelper.SendEvent("report_unknown_hardware", dictionary);
 				s_ConfigIndex = s_DefaultConfigIndex;
 			}
 			s_Detected = true;

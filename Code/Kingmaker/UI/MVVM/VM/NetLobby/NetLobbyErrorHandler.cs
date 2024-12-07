@@ -26,6 +26,7 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		SaveNotFoundError,
 		SendMessageFailError,
 		NoPlaystationPlusError,
+		PlaystationNetworkIsNotInitialized,
 		UnknownException
 	}
 
@@ -51,9 +52,9 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataTimeout));
 	}
 
-	public void HandleGetAuthDataError(string errorMessage)
+	public void HandleGetAuthDataError()
 	{
-		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataError) + " " + errorMessage);
+		UINetUtility.ShowReconnectDialog(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.GetAuthDataError));
 	}
 
 	public void HandleChangeRegionError()
@@ -64,6 +65,19 @@ public class NetLobbyErrorHandler : INetLobbyErrorHandler, ISubscriber, INetGame
 	public void HandleNoPlayStationPlusError()
 	{
 		Show(ErrorsTexts.GetErrorMessage(NetLobbyErrorType.NoPlaystationPlusError));
+	}
+
+	public void HandleUserPermissionsError(bool reconnectDialog)
+	{
+		string text = UIStrings.Instance.NetLobbyTexts.CantJoinLobbyDuePrivacySettings;
+		if (reconnectDialog)
+		{
+			UINetUtility.ShowReconnectDialog(text);
+		}
+		else
+		{
+			Show(text);
+		}
 	}
 
 	public void HandleLobbyNotFoundError()

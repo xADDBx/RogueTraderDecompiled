@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.GameModes;
 using Kingmaker.Networking;
 using Kingmaker.Networking.Player;
@@ -12,13 +13,15 @@ using Photon.Realtime;
 
 namespace Kingmaker.UI.MVVM.VM.NetRoles;
 
-public class NetRolesVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetLobbyPlayersHandler, ISubscriber, IAreaHandler, IGameModeHandler
+public class NetRolesVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, INetLobbyPlayersHandler, ISubscriber, IAreaHandler, IGameModeHandler, INetRoleRegisterChangeHandler
 {
 	private readonly Action m_CloseAction;
 
 	public readonly List<NetRolesPlayerVM> PlayerVms = new List<NetRolesPlayerVM>();
 
 	public readonly bool IsRoomOwner;
+
+	private readonly Dictionary<string, PhotonActorNumber> m_Changes = new Dictionary<string, PhotonActorNumber>();
 
 	public NetRolesVM(Action closeAction)
 	{
@@ -40,11 +43,19 @@ public class NetRolesVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void OnClose()
 	{
+		if (m_Changes.Any())
+		{
+			foreach (KeyValuePair<string, PhotonActorNumber> change in m_Changes)
+			{
+				Game.Instance.CoopData.PlayerRole.Set(change.Key, change.Value.ToNetPlayer(NetPlayer.Empty), enable: true);
+			}
+		}
 		PlayerVms.ForEach(delegate(NetRolesPlayerVM p)
 		{
 			p.Dispose();
 		});
 		PlayerVms.Clear();
+		m_Changes.Clear();
 		m_CloseAction?.Invoke();
 	}
 
@@ -88,5 +99,10 @@ public class NetRolesVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public void OnAreaDidLoad()
 	{
+	}
+
+	public void HandleRoleRegisterChange(string characterId, PhotonActorNumber newPlayerOwner)
+	{
+		m_Changes[characterId] = newPlayerOwner;
 	}
 }

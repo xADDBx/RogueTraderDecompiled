@@ -273,6 +273,8 @@ public class LocalizedStringData
 				locale2.Traits.Add(traitData);
 			}
 			traitData.LocaleText = locale2.Text;
+			traitData.Speaker = Speaker;
+			traitData.SpeakerGender = SpeakerGender;
 			traitData.ModificationDate = DateTimeOffset.UtcNow;
 		}
 	}

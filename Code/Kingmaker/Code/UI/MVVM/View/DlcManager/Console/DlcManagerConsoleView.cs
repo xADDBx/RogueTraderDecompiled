@@ -1,9 +1,14 @@
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.View.BugReport;
+using Kingmaker.Code.UI.MVVM.View.Common.Console.InputField;
+using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
+using Kingmaker.Code.UI.MVVM.View.Common.InputField;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Base;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.Console;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Mods.Console;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.SwitchOnDlcs.Console;
+using Kingmaker.Code.UI.MVVM.View.MessageBox.Console;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -107,6 +112,7 @@ public class DlcManagerConsoleView : DlcManagerBaseView
 		{
 			UpdateNavigation();
 		}));
+		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -253,6 +259,16 @@ public class DlcManagerConsoleView : DlcManagerBaseView
 		else if (base.ViewModel.SelectedMenuEntity.Value.DlcManagerTabVM == base.ViewModel.SwitchOnDlcsVM && base.ViewModel.InGame)
 		{
 			m_DlcManagerTabSwitchOnDlcsConsoleView.Scroll(obj, value);
+		}
+	}
+
+	private void OnCurrentInputLayerChanged()
+	{
+		GamePad instance = GamePad.Instance;
+		if (instance.CurrentInputLayer != m_InputLayer && !(instance.CurrentInputLayer.ContextName == BugReportBaseView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == BugReportDrawingView.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == "BugReportDuplicatesViewInput") && !(instance.CurrentInputLayer.ContextName == OwlcatDropdown.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == OwlcatInputField.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == CrossPlatformConsoleVirtualKeyboard.InputLayerContextName) && !(instance.CurrentInputLayer.ContextName == MessageBoxConsoleView.InputLayerName))
+		{
+			instance.PopLayer(m_InputLayer);
+			instance.PushLayer(m_InputLayer);
 		}
 	}
 }

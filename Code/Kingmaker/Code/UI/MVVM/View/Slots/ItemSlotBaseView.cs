@@ -22,6 +22,10 @@ public abstract class ItemSlotBaseView : ViewBase<ItemSlotVM>, IItemSlotView
 		UpdateSlotLayer();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	public void SetAvailable(bool available)
 	{
 		if (!(m_MainButton == null))
@@ -96,9 +100,5 @@ public abstract class ItemSlotBaseView : ViewBase<ItemSlotVM>, IItemSlotView
 			rectTransform = (RectTransform)rectTransform.parent;
 		}
 		return rectTransform;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

@@ -41,6 +41,10 @@ public class WarhammerAbilityCasterHasSpentActionPoints : BlueprintComponent, IA
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
 	{
-		return BlueprintRoot.Instance.LocalizedTexts.Reasons.UnavailableGeneric;
+		if (not)
+		{
+			return checkMP ? BlueprintRoot.Instance.LocalizedTexts.Reasons.NeedNoSpendMP : BlueprintRoot.Instance.LocalizedTexts.Reasons.NeedNoSpendAP;
+		}
+		return checkMP ? BlueprintRoot.Instance.LocalizedTexts.Reasons.NeedSpendMP : BlueprintRoot.Instance.LocalizedTexts.Reasons.NeedSpendAP;
 	}
 }

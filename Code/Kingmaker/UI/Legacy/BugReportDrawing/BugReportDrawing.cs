@@ -13,9 +13,9 @@ public class BugReportDrawing
 
 	private static readonly Color32 ClearColor = new Color32(0, 0, 0, 0);
 
-	private static readonly Color32 PenColor = Color.green;
+	private static readonly Color32 PenColor = Color.red;
 
-	private const int PenWidth = 2;
+	private const int PenWidth = 6;
 
 	private Color32[] m_CurColors;
 
@@ -88,11 +88,11 @@ public class BugReportDrawing
 		m_CurColors = BugreportDrawingView.DrawingTexture.GetPixels32();
 		if (m_PreviousDragPosition == Vector2.zero)
 		{
-			DrawPen(vector, 2, PenColor);
+			DrawPen(vector, 6, PenColor);
 		}
 		else
 		{
-			DrawLine(m_PreviousDragPosition, vector, 2, PenColor);
+			DrawLine(m_PreviousDragPosition, vector, 6, PenColor);
 		}
 		ApplyMarkedPixelChanges();
 		m_PreviousDragPosition = vector;

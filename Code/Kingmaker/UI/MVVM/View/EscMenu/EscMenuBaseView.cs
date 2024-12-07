@@ -13,7 +13,6 @@ using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
-using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -116,39 +115,30 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		}));
 		bool isActive = PhotonManager.Lobby.IsActive;
 		bool flag = SettingsRoot.Difficulty.OnlyOneSave;
-		if (BuildModeUtility.IsCoopEnabled)
+		m_MultiplayerButton.gameObject.SetActive(value: true);
+		m_MultiplayerButton.SetInteractable(!flag);
+		if (flag)
 		{
-			m_MultiplayerButton.gameObject.SetActive(value: true);
-			m_MultiplayerButton.SetInteractable(!flag);
-			if (flag)
-			{
-				AddDisposable(m_MultiplayerButton.SetHint(UIStrings.Instance.EscapeMenu.CoopIsNotPossibleInIronMan));
-			}
-			m_MultiplayerRolesButton.gameObject.SetActive(isActive);
-			m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
-			AddDisposable(m_MultiplayerButton.OnLeftClickAsObservable().Subscribe(delegate
-			{
-				base.ViewModel.OnMultiplayer();
-			}));
-			AddDisposable(m_MultiplayerRolesButton.OnLeftClickAsObservable().Subscribe(delegate
-			{
-				base.ViewModel.OnMultiplayerRoles();
-			}));
-			AddDisposable(m_MultiplayerButton.OnConfirmClickAsObservable().Subscribe(delegate
-			{
-				base.ViewModel.OnMultiplayer();
-			}));
-			AddDisposable(m_MultiplayerRolesButton.OnConfirmClickAsObservable().Subscribe(delegate
-			{
-				base.ViewModel.OnMultiplayerRoles();
-			}));
+			AddDisposable(m_MultiplayerButton.SetHint(UIStrings.Instance.EscapeMenu.CoopIsNotPossibleInIronMan));
 		}
-		else
+		m_MultiplayerRolesButton.gameObject.SetActive(isActive);
+		m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
+		AddDisposable(m_MultiplayerButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			m_MultiplayerButton.gameObject.SetActive(value: false);
-			m_MultiplayerRolesButton.gameObject.SetActive(value: false);
-			m_MultiplayerRolesButton.SetInteractable(state: false);
-		}
+			base.ViewModel.OnMultiplayer();
+		}));
+		AddDisposable(m_MultiplayerRolesButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.OnMultiplayerRoles();
+		}));
+		AddDisposable(m_MultiplayerButton.OnConfirmClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.OnMultiplayer();
+		}));
+		AddDisposable(m_MultiplayerRolesButton.OnConfirmClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.OnMultiplayerRoles();
+		}));
 		m_QuitButton.gameObject.SetActive(value: true);
 		AddDisposable(m_QuitButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
@@ -277,10 +267,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 
 	private void UpdateInteractableButtons()
 	{
-		if (BuildModeUtility.IsCoopEnabled)
-		{
-			m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
-		}
+		m_MultiplayerRolesButton.SetInteractable(!Game.Instance.IsSpaceCombat && base.ViewModel.IsSavingAllowed);
 		m_SaveButton.SetInteractable(base.ViewModel.IsSavingAllowed);
 		m_FormationButton.SetInteractable(base.ViewModel.IsFormationAllowed);
 		m_OptionsButton.SetInteractable(base.ViewModel.IsOptionsAllowed);
@@ -303,7 +290,7 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		{
 			list.Add(m_ModsButton);
 		}
-		if (BuildModeUtility.IsCoopEnabled && !SettingsRoot.Difficulty.OnlyOneSave)
+		if (!SettingsRoot.Difficulty.OnlyOneSave)
 		{
 			list.Add(m_MultiplayerButton);
 			list.Add(m_MultiplayerRolesButton);

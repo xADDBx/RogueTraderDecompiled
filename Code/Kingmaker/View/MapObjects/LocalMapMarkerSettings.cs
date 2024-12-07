@@ -13,7 +13,7 @@ public class LocalMapMarkerSettings
 {
 	public LocalMapMarkType Type = LocalMapMarkType.VeryImportantThing;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.MapMarker, GetNameFromAsset = true)]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.MapMarker)]
 	public SharedStringAsset Description;
 
 	[SerializeField]

@@ -116,10 +116,6 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 
 	private void HandleOnRefreshDLC()
 	{
-		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(BlueprintDlc);
-		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && IsRealConsole.Value;
-		DlcIsBought.Value = iDLCStatus.Purchased;
-		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && IsRealConsole.Value;
 		SetStory(CurrentCampaign, BlueprintDlc);
 	}
 

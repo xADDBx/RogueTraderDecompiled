@@ -936,6 +936,15 @@ public static class UIUtilityItem
 		return false;
 	}
 
+	public static bool IsQuestItem(BlueprintItem blueprintItem)
+	{
+		if (!blueprintItem.IsNotable)
+		{
+			return blueprintItem.Rarity == BlueprintItem.ItemRarity.Quest;
+		}
+		return true;
+	}
+
 	public static bool[] GetEquipPosibility(ItemEntity item)
 	{
 		BaseUnitEntity baseUnitEntity = UIUtility.GetCurrentSelectedUnit() ?? Game.Instance?.Player?.MainCharacterEntity;

@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.RenderPipeline.Shadows;
 
-[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.225\\Runtime\\RenderPipeline\\Shadows\\ShadowData.cs")]
+[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.230\\Runtime\\RenderPipeline\\Shadows\\ShadowData.cs")]
 public struct ShadowMatrix
 {
 	public Matrix4x4 worldToShadow;

@@ -68,6 +68,6 @@ public class AbilityRestrictionStrategist : BlueprintComponent, IAbilityRestrict
 
 	public string GetAbilityPatternRestrictionUIText(AbilityData ability, MechanicEntity caster, TargetWrapper target)
 	{
-		return LocalizedTexts.Instance.Reasons.AreaEffectsCannotOverlap;
+		return LocalizedTexts.Instance.Reasons.StrategistZonesCantOverlap;
 	}
 }

@@ -61,6 +61,21 @@ namespace Kingmaker.Utility;
 
 public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IPortraitHoverUIHandler, ISubscriber<IBaseUnitEntity>, IBugReportDescriptionUIHandler, IGlobalRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, IGlobalRulebookSubscriber, IBugReportUIHandler, IReportSender, IService
 {
+	public enum Severity
+	{
+		Critical,
+		Normal,
+		Suggestion
+	}
+
+	public enum FixVersions
+	{
+		Current,
+		Next,
+		After,
+		Empty
+	}
+
 	public static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("ReportingUtils");
 
 	private const string Project = "WH";
@@ -121,7 +136,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	private static readonly List<string> OwlcatDomains = new List<string> { "@owlcat.games", "@sutstrikestudios.com" };
 
-	public static readonly string[] FixVersions = new string[4] { "Current", "Next", "After", "Empty" };
+	private FixVersions m_SelectedFixVersion;
 
 	private readonly CancellationTokenSource m_Cts = new CancellationTokenSource();
 
@@ -134,8 +149,6 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	private readonly List<BugContext> m_ContextVariants = new List<BugContext>();
 
 	private readonly string m_GameVersion;
-
-	private string m_SelectedFixVersion = "Current";
 
 	private readonly List<string> m_ReporterErrors = new List<string>();
 
@@ -251,13 +264,24 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			SaveInfo latestSave = Game.Instance.SaveManager.GetLatestSave();
 			if (latestSave == null)
 			{
+				Logger.Log("GetLatestSave() returned null");
+				Logger.Log("UpdateSaveListIfNeeded() before");
 				Game.Instance.SaveManager.UpdateSaveListIfNeeded();
+				Logger.Log("UpdateSaveListIfNeeded() after");
 				latestSave = Game.Instance.SaveManager.GetLatestSave();
+				if (latestSave == null)
+				{
+					Logger.Warning("GetLatestSave() after UpdateSaveListIfNeeded() returned null");
+				}
 			}
 			Logger.Log("Create save file with name: " + latestSave.FileName);
+			Logger.Log("CopySaveFile, WH_CONSOLE: false");
+			Logger.Log($"saveInfo != null is {latestSave != null}");
 			if (latestSave != null && File.Exists(latestSave.FolderName))
 			{
+				Logger.Log("FolderName " + latestSave.FolderName + " exists");
 				bool flag = !string.IsNullOrEmpty(m_TemporarySaveLabel) && latestSave.Name.Contains(m_TemporarySaveLabel);
+				Logger.Log($"temporarySave is {flag}");
 				string text = Path.Combine(outputPath, flag ? "saveatthemoment.zks" : "save.zks");
 				File.Copy(latestSave.FolderName, text);
 				Logger.Log("Copy save file " + latestSave.FileName + " to " + text);
@@ -270,6 +294,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			}
 			if (latestSave != null)
 			{
+				Logger.Log("FolderName " + latestSave.FolderName + " DOES NOT exists");
 				LogReporterError("Failed to add save file: " + latestSave.Name + " has no real save file on disk");
 				return "";
 			}
@@ -443,10 +468,18 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 					list.Add(item.Key);
 				}
 			}
+			if (m_Exception is ReportingException ex4)
+			{
+				list.AddRange(ex4.AdditionalLabels);
+			}
 			if (NetworkingManager.IsActive)
 			{
 				list.Add("Coop");
 				coopPlayersCount = NetworkingManager.PlayersCount.ToString();
+			}
+			if (m_Context.Type == BugContext.ContextType.Debug)
+			{
+				list.Add("Debug");
 			}
 			if (m_Context.Type == BugContext.ContextType.Encounter)
 			{
@@ -511,7 +544,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				AreaDesigner = Utilities.GetDesigner(CheatsJira.GetCurrentArea()),
 				Context = m_Context.Type.ToString("G"),
 				Aspect = m_Context.Aspect.ToString("G"),
-				FixVersion = m_SelectedFixVersion,
+				FixVersion = m_SelectedFixVersion.ToString(),
 				ExtendedContext = text3,
 				PartyContext = text2,
 				OtherContext = otherContext,
@@ -547,9 +580,9 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			message = message.Replace("\v", "\r\n");
 			return header + " " + message + "\n\n\n\n" + contextLink;
 		}
-		catch (Exception ex4)
+		catch (Exception ex5)
 		{
-			LogReporterError("Failed create parameters file: \n" + ex4.Message + "\n" + ex4.StackTrace);
+			LogReporterError("Failed create parameters file: \n" + ex5.Message + "\n" + ex5.StackTrace);
 			return message;
 		}
 		static string getConsoleHardwareType()
@@ -803,6 +836,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				m_Context = m_ContextVariants[0];
 				return;
 			}
+			BlueprintScriptableObject underMouseBlueprint = ReportingRaycaster.Instance.GetUnderMouseBlueprint();
 			m_ContextVariants.Add(new BugContext(Game.Instance?.DialogController.Dialog));
 			m_ContextVariants.AddRange(MakeBugContextList(CheatsJira.Tooltip()));
 			if (!string.IsNullOrEmpty(m_UiFeatureName))
@@ -865,7 +899,6 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			}
 			if (MainMenuUI.IsActive || Game.Instance.CurrentMode == GameModeType.GameOver || m_ActiveFullScreenUIType == FullScreenUIType.Journal || m_ActiveFullScreenUIType == FullScreenUIType.Encyclopedia || Game.Instance.CurrentMode == GameModeType.Default)
 			{
-				BlueprintScriptableObject underMouseBlueprint = ReportingRaycaster.Instance.GetUnderMouseBlueprint();
 				if (underMouseBlueprint != null)
 				{
 					try
@@ -899,19 +932,15 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				m_ContextVariants.Add(new BugContext(BugContext.ContextType.TransitionMap));
 			}
-			if (m_IsGlobalMapOpened && !m_ContextVariants.Any((BugContext x) => x.ContextObject != null))
+			if (m_IsGlobalMapOpened && !m_ContextVariants.Any((BugContext x) => x.ContextObject != null) && underMouseBlueprint != null)
 			{
-				BlueprintScriptableObject underMouseBlueprint2 = ReportingRaycaster.Instance.GetUnderMouseBlueprint();
-				if (underMouseBlueprint2 != null)
+				try
 				{
-					try
-					{
-						BugContext item3 = new BugContext(underMouseBlueprint2, BugContext.ContextType.Crusade);
-						m_ContextVariants.Add(item3);
-					}
-					catch
-					{
-					}
+					BugContext item3 = new BugContext(underMouseBlueprint, BugContext.ContextType.Crusade);
+					m_ContextVariants.Add(item3);
+				}
+				catch
+				{
 				}
 			}
 			TooltipData tooltipData = MouseHoverBlueprintSystem.Instance.TooltipData;
@@ -939,18 +968,18 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 												if (tooltipTemplateItem.Item != null)
 												{
 													bugContext2.ContextObject = tooltipTemplateItem.Item.Blueprint;
-													goto IL_062d;
+													goto IL_061c;
 												}
 												ItemEntity itemEntity = (ItemEntity)typeof(TooltipTemplateItem).GetField("m_Item", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(tooltipTemplateItem);
 												if (itemEntity != null)
 												{
 													bugContext2.ContextObject = itemEntity.Blueprint;
-													goto IL_062d;
+													goto IL_061c;
 												}
-												goto end_IL_05cd;
-												IL_062d:
+												goto end_IL_05bc;
+												IL_061c:
 												m_ContextVariants.Add(bugContext2);
-												end_IL_05cd:;
+												end_IL_05bc:;
 											}
 											catch (Exception ex)
 											{
@@ -1026,7 +1055,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			else if (Game.Instance.Player.IsInCombat)
 			{
 				m_ContextVariants.Add(new BugContext(BugContext.ContextType.SurfaceCombat));
-				m_ContextVariants.Add(new BugContext(CheatsJira.GetCurrentArea(), BugContext.ContextType.Encounter));
+				m_ContextVariants.Add(new BugContext(currentArea, BugContext.ContextType.Encounter));
 			}
 			if (CheatsJira.GetCurrentArea().NameSafe().Contains("KoronusExpanse"))
 			{
@@ -1034,7 +1063,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			}
 			if (NetworkingManager.IsActive)
 			{
-				m_ContextVariants.Add(new BugContext(BugContext.ContextType.Coop));
+				m_ContextVariants.Add(new BugContext(currentArea, BugContext.ContextType.Coop));
 			}
 			if (PhotonManager.Initialized && PhotonManager.Sync.HasDesync)
 			{
@@ -1322,15 +1351,20 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	public void SelectFixVersion(int versionIdx)
 	{
-		if (versionIdx >= 0 && versionIdx < FixVersions.Length)
+		if (CanSelectFixVersion() && Enum.IsDefined(typeof(FixVersions), versionIdx))
 		{
-			m_SelectedFixVersion = FixVersions[versionIdx];
+			m_SelectedFixVersion = (FixVersions)versionIdx;
 		}
 	}
 
-	public int GetCurrentFixVersionIndex()
+	public bool CanSelectFixVersion()
 	{
-		return FixVersions.IndexOf(m_SelectedFixVersion);
+		return !(m_Exception is ReportingException);
+	}
+
+	public bool CanSelectContext()
+	{
+		return !(m_Exception is SpamDetectionException);
 	}
 
 	public bool CheckCrashDumpFound()
@@ -1778,6 +1812,11 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		return m_labelsDictionary;
 	}
 
+	public Severity GetSuggestedSeverity()
+	{
+		return (m_Exception as ReportingException)?.SuggestionSeverity ?? Severity.Normal;
+	}
+
 	public void ResetLabelsList()
 	{
 		foreach (string item in m_labelsDictionary.Keys.ToList())
@@ -1842,5 +1881,47 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	public void SetMode(ReportSendingMode mode)
 	{
 		ReportSender?.SetMode(mode);
+	}
+
+	public void StoreEmail(string email)
+	{
+		PlayerPrefs.SetString("BugReportEmail", email);
+	}
+
+	public void StoreDiscord(string discord)
+	{
+		PlayerPrefs.SetString("BugReportDiscord", discord);
+	}
+
+	public void StoreFixVersion(int index)
+	{
+		if (CanSelectFixVersion())
+		{
+			PlayerPrefs.SetInt("BugReportFixVersion", index);
+		}
+	}
+
+	public string RestoreEmail()
+	{
+		return PlayerPrefs.GetString("BugReportEmail", string.Empty);
+	}
+
+	public string RestoreDiscord()
+	{
+		return PlayerPrefs.GetString("BugReportDiscord", string.Empty);
+	}
+
+	public int RestoreFixVersion()
+	{
+		if (m_Exception is ReportingException ex)
+		{
+			return (int)ex.TargetVersion;
+		}
+		int @int = PlayerPrefs.GetInt("BugReportFixVersion", 0);
+		if (!Enum.IsDefined(typeof(FixVersions), @int))
+		{
+			return 0;
+		}
+		return @int;
 	}
 }

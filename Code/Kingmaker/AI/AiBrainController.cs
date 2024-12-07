@@ -98,6 +98,7 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 		if (Game.Instance.TimeController.RealTime - CurrentUnitTurnStartTime > AiTimeout)
 		{
 			AILogger.Instance.Error(new AILogReason(AILogReasonType.AITimeout));
+			PFLog.AI.Error("current unit " + currentUnit.Name + ". Running ability : " + Game.Instance.AbilityExecutor.Abilities.FirstItem()?.Context?.AbilityBlueprint.Name);
 			currentUnit.GetCommandsOptional()?.InterruptAll((AbstractUnitCommand cmd) => true);
 			brainOptional.UpdateIdleRoundsCounter();
 			EndUnitTurn(currentUnit);

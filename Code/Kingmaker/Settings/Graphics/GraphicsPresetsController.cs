@@ -10,6 +10,8 @@ public class GraphicsPresetsController
 {
 	private interface IImplementation
 	{
+		Resolution? MaximumAllowedResolution { get; }
+
 		void Initialize();
 	}
 
@@ -20,6 +22,8 @@ public class GraphicsPresetsController
 		private readonly Dictionary<QualityPresetOption, GraphicsPreset> m_Presets;
 
 		private GraphicsPreset m_LastAppliedPreset;
+
+		public Resolution? MaximumAllowedResolution => null;
 
 		public DefaultImplementation(GraphicsPresetsList graphicsPresetsList)
 		{
@@ -236,6 +240,29 @@ public class GraphicsPresetsController
 	{
 		private readonly GraphicsPresetsList.UserControlledValues m_UserControlledValues;
 
+		public Resolution? MaximumAllowedResolution
+		{
+			get
+			{
+				Resolution value;
+				if (!IsTrinityMode())
+				{
+					Resolution resolution = default(Resolution);
+					resolution.width = 1920;
+					resolution.height = 1080;
+					value = resolution;
+				}
+				else
+				{
+					Resolution resolution = default(Resolution);
+					resolution.width = 3840;
+					resolution.height = 2160;
+					value = resolution;
+				}
+				return value;
+			}
+		}
+
 		public ConsoleImplementation(GraphicsPresetsList graphicsPresetsList)
 		{
 			m_UserControlledValues = graphicsPresetsList.ConsoleUserControlledValues;
@@ -243,92 +270,134 @@ public class GraphicsPresetsController
 
 		public void Initialize()
 		{
-			GraphicsSettings graphics = SettingsRoot.Graphics;
+			GraphicsSettings settings = SettingsRoot.Graphics;
 			if (!m_UserControlledValues.VSyncMode)
 			{
-				graphics.VSyncMode.ResetToDefault();
+				settings.VSyncMode.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FrameRateLimitEnabled)
 			{
-				graphics.FrameRateLimitEnabled.ResetToDefault();
+				settings.FrameRateLimitEnabled.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FrameRateLimit)
 			{
-				graphics.FrameRateLimit.ResetToDefault();
+				settings.FrameRateLimit.ResetToDefault();
 			}
 			if (!m_UserControlledValues.ShadowsQuality)
 			{
-				graphics.ShadowsQuality.ResetToDefault();
+				settings.ShadowsQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.TexturesQuality)
 			{
-				graphics.TexturesQuality.ResetToDefault();
+				settings.TexturesQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.DepthOfField)
 			{
-				graphics.DepthOfField.ResetToDefault();
+				settings.DepthOfField.ResetToDefault();
 			}
 			if (!m_UserControlledValues.Bloom)
 			{
-				graphics.Bloom.ResetToDefault();
+				settings.Bloom.ResetToDefault();
 			}
 			if (!m_UserControlledValues.SSAOQuality)
 			{
-				graphics.SSAOQuality.ResetToDefault();
+				settings.SSAOQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.SSRQuality)
 			{
-				graphics.SSRQuality.ResetToDefault();
+				settings.SSRQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.AntialiasingMode)
 			{
-				graphics.AntialiasingMode.ResetToDefault();
+				settings.AntialiasingMode.ResetToDefault();
 			}
 			if (!m_UserControlledValues.AntialiasingQuality)
 			{
-				graphics.AntialiasingQuality.ResetToDefault();
+				settings.AntialiasingQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FootprintsMode)
 			{
-				graphics.FootprintsMode.ResetToDefault();
+				settings.FootprintsMode.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FsrMode)
 			{
-				graphics.FsrMode.ResetToDefault();
+				settings.FsrMode.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FsrSharpness)
 			{
-				graphics.FsrSharpness.ResetToDefault();
+				settings.FsrSharpness.ResetToDefault();
 			}
 			if (!m_UserControlledValues.VolumetricLightingQuality)
 			{
-				graphics.VolumetricLightingQuality.ResetToDefault();
+				settings.VolumetricLightingQuality.ResetToDefault();
 			}
 			if (!m_UserControlledValues.ParticleSystemsLightingEnabled)
 			{
-				graphics.ParticleSystemsLightingEnabled.ResetToDefault();
+				settings.ParticleSystemsLightingEnabled.ResetToDefault();
 			}
 			if (!m_UserControlledValues.ParticleSystemsShadowsEnabled)
 			{
-				graphics.ParticleSystemsShadowsEnabled.ResetToDefault();
+				settings.ParticleSystemsShadowsEnabled.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FilmGrainEnabled)
 			{
-				graphics.FilmGrainEnabled.ResetToDefault();
+				settings.FilmGrainEnabled.ResetToDefault();
 			}
 			if (!m_UserControlledValues.UIFrequentTimerInterval)
 			{
-				graphics.UIFrequentTimerInterval.ResetToDefault();
+				settings.UIFrequentTimerInterval.ResetToDefault();
 			}
 			if (!m_UserControlledValues.UIInfrequentTimerInterval)
 			{
-				graphics.UIInfrequentTimerInterval.ResetToDefault();
+				settings.UIInfrequentTimerInterval.ResetToDefault();
 			}
 			if (!m_UserControlledValues.CrowdQuality)
 			{
-				graphics.CrowdQuality.ResetToDefault();
+				settings.CrowdQuality.ResetToDefault();
 			}
+			settings.PS5ProGraphicsQuality.OnTempValueChanged += delegate(PS5ProGraphicsQualityOption qualityValue)
+			{
+				switch (qualityValue)
+				{
+				case PS5ProGraphicsQualityOption.Quality:
+				{
+					int indexOfResolution2 = GetIndexOfResolution(3840, 2160, settings.ScreenResolution.GetValue());
+					settings.ScreenResolution.SetTempValue(indexOfResolution2);
+					break;
+				}
+				case PS5ProGraphicsQualityOption.Performance:
+				{
+					int indexOfResolution = GetIndexOfResolution(1920, 1080, settings.ScreenResolution.GetValue());
+					settings.ScreenResolution.SetTempValue(indexOfResolution);
+					break;
+				}
+				}
+			};
 			LogResetMessage();
+		}
+
+		private static bool IsTrinityMode()
+		{
+			return false;
+		}
+
+		private static int GetIndexOfResolution(int width, int height, int defaultIndex)
+		{
+			GraphicsSettingsController graphicsSettingsController = SettingsController.Instance.GraphicsSettingsController;
+			if (graphicsSettingsController == null)
+			{
+				return defaultIndex;
+			}
+			List<Resolution> list = graphicsSettingsController.RelevantResolutions.ToList();
+			for (int i = 0; i < list.Count; i++)
+			{
+				Resolution resolution = list[i];
+				if (resolution.width == width && resolution.height == height)
+				{
+					return i;
+				}
+			}
+			return defaultIndex;
 		}
 
 		private void LogResetMessage()
@@ -434,6 +503,8 @@ public class GraphicsPresetsController
 	}
 
 	private readonly IImplementation m_Implementation;
+
+	public Resolution? MaximumAllowedResolution => m_Implementation.MaximumAllowedResolution;
 
 	public GraphicsPresetsController(GraphicsPresetsList graphicsPresetsList)
 	{

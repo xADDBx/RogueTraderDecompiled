@@ -4,8 +4,6 @@ using System.Linq;
 using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.Units;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Formations;
-using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UI.Common;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
@@ -24,6 +22,11 @@ public class InteractionStairsPart : InteractionPart<InteractionStairsSettings>,
 
 	protected override void OnInteract(BaseUnitEntity user)
 	{
+		BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnit.Value;
+		if (value != null)
+		{
+			user = value;
+		}
 		if (user.IsDirectlyControllable())
 		{
 			GraphNode node = ObstacleAnalyzer.GetNearestNode(user.Position).node;
@@ -34,14 +37,12 @@ public class InteractionStairsPart : InteractionPart<InteractionStairsSettings>,
 		}
 	}
 
-	private void MoveOnStairs(BaseUnitEntity selectedUnit, Vector3 posToMove)
+	private static void MoveOnStairs(BaseUnitEntity selectedUnit, Vector3 posToMove)
 	{
 		Vector3 defaultDirection = ClickGroundHandler.GetDefaultDirection(posToMove);
-		List<BaseUnitEntity> list = Game.Instance.SelectionCharacter.SelectedUnits.Where((BaseUnitEntity u) => u.IsDirectlyControllable() && !u.MovementAgent.IsTraverseInProgress).ToList();
-		List<BaseUnitEntity> list2 = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable()).ToList();
-		int unitIndex = list2.IndexOf(selectedUnit);
-		Vector3 worldPosition = PartyFormationHelper.FindFormationCenterFromOneUnit(FormationAnchor.Front, defaultDirection, unitIndex, posToMove, list2, list.Select((BaseUnitEntity u) => u.FromBaseUnitEntity()).ToArray());
-		UnitCommandsRunner.MoveSelectedUnitsToPointRT(selectedUnit, worldPosition, defaultDirection, isControllerGamepad: true, preview: false, 1f, list, null, list2);
+		List<BaseUnitEntity> selectedUnits = Game.Instance.SelectionCharacter.SelectedUnits.Where((BaseUnitEntity u) => u.IsDirectlyControllable() && !u.MovementAgent.IsTraverseInProgress).ToList();
+		List<BaseUnitEntity> allUnits = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsDirectlyControllable()).ToList();
+		UnitCommandsRunner.MoveSelectedUnitsToPointRT(selectedUnit, posToMove, defaultDirection, isControllerGamepad: false, anchorOnMainUnit: true, preview: false, 1f, selectedUnits, null, allUnits);
 	}
 
 	public override Hash128 GetHash128()

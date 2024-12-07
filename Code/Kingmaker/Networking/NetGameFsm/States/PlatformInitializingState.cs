@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Async;
+using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Networking.Platforms;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -29,6 +30,10 @@ public class PlatformInitializingState : StateLongAsync
 		PhotonManager.Invite.InitPlatform();
 		if (await PlatformServices.Platform.WaitInitialization())
 		{
+			if (FirstLaunchSettingsVM.HasShown)
+			{
+				PhotonManager.Invite.CheckAvailableInvite();
+			}
 			m_NetGame.OnPlatformInitialized();
 			return;
 		}

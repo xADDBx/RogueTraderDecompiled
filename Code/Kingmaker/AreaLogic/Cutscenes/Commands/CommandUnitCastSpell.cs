@@ -217,9 +217,9 @@ public class CommandUnitCastSpell : CommandBase
 
 	public override string GetCaption()
 	{
-		string text = m_UnitEvaluator?.ToString() ?? "<null>";
+		string text = m_UnitEvaluator?.GetCaptionShort() ?? "<null>";
 		string text2 = ((!UseCustomAbility) ? m_Type.ToString() : (m_SpellBlueprint?.Get()?.NameSafe() ?? "<null>"));
-		string text3 = m_TargetUnitEvaluator?.ToString() ?? m_TargetPointEvaluator?.ToString() ?? "<null>";
+		string text3 = m_TargetUnitEvaluator?.GetCaptionShort() ?? m_TargetPointEvaluator?.GetCaptionShort() ?? "<null>";
 		return text + " <b>cast ability</b> " + text2 + " <b>to</b> " + text3;
 	}
 

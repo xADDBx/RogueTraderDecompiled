@@ -29,9 +29,13 @@ public class SaveSlotCollectionVM : BaseDisposable, IViewModel, IBaseDisposable,
 		m_BackButtonAction = backButtonAction;
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void HandleNewSave(SaveSlotVM slot)
 	{
-		SaveSlotGroupVM saveSlotGroupVM = SaveSlotGroups.FirstOrDefault((SaveSlotGroupVM group) => group.GameId == slot.GameId.Value);
+		SaveSlotGroupVM saveSlotGroupVM = SaveSlotGroups.FirstOrDefault((SaveSlotGroupVM group) => group.GameId == slot.GameId.Value && group.CharacterName == slot.Reference.PlayerCharacterName);
 		if (saveSlotGroupVM != null)
 		{
 			int index = AllTitlesAndSlots.IndexOf(saveSlotGroupVM.LastElement) + 1;
@@ -109,10 +113,6 @@ public class SaveSlotCollectionVM : BaseDisposable, IViewModel, IBaseDisposable,
 	public void OnBack()
 	{
 		m_BackButtonAction?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	public void RefreshDLC()

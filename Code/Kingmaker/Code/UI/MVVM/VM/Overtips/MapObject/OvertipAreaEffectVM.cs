@@ -14,6 +14,8 @@ public class OvertipAreaEffectVM : OvertipEntityVM
 
 	public readonly ReactiveProperty<Vector3> CameraDistance = new ReactiveProperty<Vector3>();
 
+	public readonly Sprite OvertipSprite;
+
 	public BlueprintBuff Buff { get; }
 
 	protected override bool UpdateEnabled => AreaEffectEntity.IsVisibleForPlayer;
@@ -42,6 +44,7 @@ public class OvertipAreaEffectVM : OvertipEntityVM
 	{
 		AreaEffectEntity = areaEffectEntity;
 		Buff = areaEffectEntity.Blueprint.BlueprintBuffForTooltip;
+		OvertipSprite = areaEffectEntity.Blueprint.Icon;
 	}
 
 	protected override void OnUpdateHandler()

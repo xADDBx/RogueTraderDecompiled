@@ -5,6 +5,8 @@ namespace Kingmaker.Settings.Graphics;
 [Serializable]
 public class GraphicsPreset : IComparable<GraphicsPreset>
 {
+	public PS5ProGraphicsQualityOption PS5ProGraphicsQuality;
+
 	public QualityPresetOption GraphicsQuality;
 
 	public VSyncModeOptions VSyncMode;

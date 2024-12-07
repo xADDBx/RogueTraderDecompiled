@@ -267,8 +267,9 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	public void RemoveSlot(int index)
 	{
-		if (index < Slots.Count)
+		if (index >= 0 && index < Slots.Count)
 		{
+			RemoveAlreadyAutomaticallyAddedIfNeed(Slots[index]);
 			Slots[index] = new MechanicActionBarSlotEmpty
 			{
 				Unit = base.Owner
@@ -278,7 +279,44 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	public void RemoveFromIndexToEnd(int index)
 	{
-		Slots.RemoveRange(index, Slots.Count - index);
+		if (index >= 0 && index < Slots.Count)
+		{
+			for (int i = index; i < Slots.Count; i++)
+			{
+				RemoveAlreadyAutomaticallyAddedIfNeed(Slots[i]);
+			}
+			Slots.RemoveRange(index, Slots.Count - index);
+		}
+	}
+
+	private void RemoveAlreadyAutomaticallyAddedIfNeed(MechanicActionBarSlot slot)
+	{
+		if (slot is MechanicActionBarSlotAbility mechanicActionBarSlotAbility && mechanicActionBarSlotAbility.Ability != null && m_AlreadyAutomaticallyAdded.Contains(mechanicActionBarSlotAbility.Ability.Blueprint, mechanicActionBarSlotAbility.Ability.SourceItem))
+		{
+			m_AlreadyAutomaticallyAdded.Remove(mechanicActionBarSlotAbility.Ability.Blueprint, mechanicActionBarSlotAbility.Ability.SourceItem);
+		}
+	}
+
+	protected override void OnApplyPostLoadFixes()
+	{
+		base.OnApplyPostLoadFixes();
+		if (m_AlreadyAutomaticallyAdded.Count() <= 0)
+		{
+			return;
+		}
+		HashSet<MemorizedAbilitiesContainer.MemorizedAbilityData> hashSet = new HashSet<MemorizedAbilitiesContainer.MemorizedAbilityData>();
+		foreach (MechanicActionBarSlot slot in Slots)
+		{
+			if (slot is MechanicActionBarSlotAbility mechanicActionBarSlotAbility && !(mechanicActionBarSlotAbility.Ability == null))
+			{
+				hashSet.Add(new MemorizedAbilitiesContainer.MemorizedAbilityData
+				{
+					ability = mechanicActionBarSlotAbility.Ability.Blueprint,
+					sourceItem = mechanicActionBarSlotAbility.Ability.SourceItem
+				});
+			}
+		}
+		m_AlreadyAutomaticallyAdded.IntersectWith(hashSet);
 	}
 
 	public void TryToInitialize()

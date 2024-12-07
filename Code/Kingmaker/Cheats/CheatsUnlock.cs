@@ -13,6 +13,7 @@ using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UnitLogic.Parts;
@@ -56,7 +57,19 @@ public class CheatsUnlock
 			SmartConsole.RegisterCommand("etude_check", CheckEtude);
 			SmartConsole.RegisterCommand("etude_update", UpdateEtudes);
 			SmartConsole.RegisterCommand("etude_uncomplete", UncompleteEtude);
+			SmartConsole.RegisterCommand("ironman_on", TurnIronmanOn);
+			SmartConsole.RegisterCommand("ironman_off", TurnIronmanOff);
 		}
+	}
+
+	private static void TurnIronmanOn(string parameters)
+	{
+		SettingsRoot.Difficulty.OnlyOneSave.SetValueAndConfirm(value: true);
+	}
+
+	private static void TurnIronmanOff(string parameters)
+	{
+		SettingsRoot.Difficulty.OnlyOneSave.SetValueAndConfirm(value: false);
 	}
 
 	private static void UncompleteEtude(string parameters)

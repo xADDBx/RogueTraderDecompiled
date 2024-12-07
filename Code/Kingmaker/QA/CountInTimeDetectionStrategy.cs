@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Utility;
 
 namespace Kingmaker.QA;
 
@@ -10,11 +11,11 @@ public class CountInTimeDetectionStrategy : ISpamDetectionStrategy
 
 	private TimeSpan _time;
 
-	private readonly string m_Severity;
+	private readonly ReportingUtils.Severity m_Severity;
 
-	private readonly string m_TargetVersion;
+	private readonly ReportingUtils.FixVersions m_TargetVersion;
 
-	public CountInTimeDetectionStrategy(string message, string severity, string targetVersion, int count, TimeSpan time)
+	public CountInTimeDetectionStrategy(string message, ReportingUtils.Severity severity, ReportingUtils.FixVersions targetVersion, int count, TimeSpan time)
 	{
 		m_Message = message;
 		_count = count;

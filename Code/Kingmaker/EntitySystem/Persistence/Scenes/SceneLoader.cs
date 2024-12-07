@@ -1346,6 +1346,10 @@ public class SceneLoader
 		Game.Instance.State.LoadedAreaState.Deactivate();
 		if (VFXWeatherSystem.Instance != null)
 		{
+			if (VFXWeatherSystem.Instance.IsProfileOverriden)
+			{
+				VFXWeatherSystem.Instance.OverrideProfile(overrideProfile: false, null);
+			}
 			VFXWeatherSystem.Instance.Stop();
 		}
 		if (!forDispose)

@@ -54,6 +54,6 @@ public class CommandAttachBuffSpan : CommandBase
 
 	public override string GetCaption()
 	{
-		return "<b>Buff</b> " + Unit?.GetCaption() + " <b>with</b> " + Buff?.Get().NameSafe();
+		return "<b>Buff</b> " + Unit?.GetCaptionShort() + " <b>with</b> " + Buff?.Get().NameSafe();
 	}
 }

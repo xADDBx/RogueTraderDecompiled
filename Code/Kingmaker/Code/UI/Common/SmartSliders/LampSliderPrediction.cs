@@ -44,11 +44,12 @@ public class LampSliderPrediction : SliderPrediction
 	{
 		Prepare();
 		IDisposable result = base.Bind(maxValue, currentValue, predictionValue, isYellowPoints);
-		AddDisposable(maxValue.Subscribe(delegate(float v)
+		AddDisposable(maxValue.CombineLatest(currentValue, (float max, float current) => new { max, current }).Subscribe(value =>
 		{
-			DrawLamps(m_DisableLampsContainer, m_DisableLampImage, m_DisableLampsPool, Mathf.RoundToInt(v));
-			DrawLamps(m_BackLampsContainer, m_BackLampImage, m_BackLampsPool, Mathf.RoundToInt(v));
-			DrawLamps(m_FrontLampsContainer, m_FrontLampImage, m_FrontLampsPool, Mathf.RoundToInt(v));
+			float f = ((value.current > value.max) ? value.current : value.max);
+			DrawLamps(m_DisableLampsContainer, m_DisableLampImage, m_DisableLampsPool, Mathf.RoundToInt(f));
+			DrawLamps(m_BackLampsContainer, m_BackLampImage, m_BackLampsPool, Mathf.RoundToInt(f));
+			DrawLamps(m_FrontLampsContainer, m_FrontLampImage, m_FrontLampsPool, Mathf.RoundToInt(f));
 		}));
 		m_IsActionPoints = isYellowPoints;
 		if ((bool)m_HintPlace)

@@ -9,7 +9,6 @@ public class StringCreateTemplateAttribute : Attribute
 		UnitName,
 		UIText,
 		ItemText,
-		Bark,
 		MapObject
 	}
 

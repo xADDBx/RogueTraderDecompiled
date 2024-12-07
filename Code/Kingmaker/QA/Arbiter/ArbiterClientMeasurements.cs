@@ -499,17 +499,18 @@ public class ArbiterClientMeasurements
 		}
 		Kingmaker.QA.Arbiter.Profiling.Counters.All.ForEach(delegate(Counter x)
 		{
-			results.Add("Counter." + x.Name, x.GetMedian().ToString("0.00", CultureInfo.InvariantCulture));
+			results.Add(x.Name, x.GetMedian().ToString("0.00", CultureInfo.InvariantCulture));
 			Dictionary<string, string> dictionary = results;
-			string key = "Counter." + x.Name + ".Budget";
+			string key = "Limit." + x.Name + ".Failed";
 			double warningLevel = x.WarningLevel;
 			dictionary.Add(key, warningLevel.ToString("0.00", CultureInfo.InvariantCulture));
 		});
 		ObjectLimits.Entries.AsEnumerable().ForEach(delegate(ObjectLimits.Entry x)
 		{
 			string text = x.Name.Replace(" ", "");
-			results.Add("Limits." + text, x.Getter().ToString());
-			results.Add("Limits." + text + ".Threshold", x.Threshold.ToString());
+			results.Add(text, x.Getter().ToString("0.00", CultureInfo.InvariantCulture));
+			results.Add("Limits." + text + ".Warning", x.Threshold.ToString("0.00", CultureInfo.InvariantCulture));
+			results.Add("Limits." + text + ".Failed", ((double)x.Threshold * 1.1).ToString("0.00", CultureInfo.InvariantCulture));
 		});
 		AddDataFromMemoryTool(ref results);
 		AddArbiterMeasurementTimers(ref results);

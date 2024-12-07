@@ -144,6 +144,22 @@ public abstract class CustomGridNodeBase : GraphNode
 
 	public override bool ContainsConnection(GraphNode node)
 	{
+		if (ContainsCustomConnection(node))
+		{
+			return true;
+		}
+		for (int i = 0; i < 8; i++)
+		{
+			if (node == GetNeighbourAlongDirection(i))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool ContainsCustomConnection(GraphNode node)
+	{
 		if (connections != null)
 		{
 			for (int i = 0; i < connections.Length; i++)
@@ -152,13 +168,6 @@ public abstract class CustomGridNodeBase : GraphNode
 				{
 					return true;
 				}
-			}
-		}
-		for (int j = 0; j < 8; j++)
-		{
-			if (node == GetNeighbourAlongDirection(j))
-			{
-				return true;
 			}
 		}
 		return false;

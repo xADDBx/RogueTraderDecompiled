@@ -42,7 +42,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		return false;
 	}
 
-	protected override void SetRangeToWorldPosition(Vector3 castPosition)
+	protected override void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
 	{
 		PointerController clickEventsController = Game.Instance.ClickEventsController;
 		TargetWrapper target = Game.Instance.SelectedAbilityHandler.GetTarget(clickEventsController.PointerOn, clickEventsController.WorldPosition, Ability, castPosition);

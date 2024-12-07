@@ -8,6 +8,7 @@ using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
+using Kingmaker.View;
 using Kingmaker.View.Mechanics.Entities;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.Particles;
@@ -148,6 +149,13 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 
 	public List<GameObject> skeletonBones;
 
+	[Tooltip("Weapon objects with rigidbody component")]
+	public List<Rigidbody> WeaponRigidBones = new List<Rigidbody>();
+
+	public List<BoneImpulseMultiplier> WeaponImpulseMultiplier = new List<BoneImpulseMultiplier>();
+
+	public UnitEntityView UnitEntityViewRCC;
+
 	public RagdollState State
 	{
 		get
@@ -232,6 +240,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 	public void InitRigidbodyCreatureController()
 	{
 		EntityView = GetComponentInParent<AbstractUnitEntityView>();
+		UnitEntityViewRCC = GetComponentInParent<UnitEntityView>();
 		if (EntityView == null)
 		{
 			Logger.Error(this, "No EntityView found {0}", this);
@@ -334,21 +343,47 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 
 	public void StartRagdoll()
 	{
-		if ((bool)RootBone && RigidBones.Count > 0 && State != RagdollState.Falling)
+		if (!RootBone || RigidBones.Count <= 0 || State == RagdollState.Falling)
 		{
-			InitBakedCharactersBonesPosition();
-			State = RagdollState.Falling;
-			m_DeathPoint = base.transform.position;
-			SaveBonesPosition(m_BonesData);
-			SwitchRigidbodies(enable: true);
-			SwitchKinematic(enable: false);
-			SwitchRigidbodiesSleep(enable: true);
-			m_StartTime = Game.Instance.TimeController.GameTime;
-			base.gameObject.GetComponent<HumanoidRagdollManager>()?.Enabled(flag: true);
-			if (m_LastImpulse != null && Game.Instance.TimeController.GameTime - m_LastImpulse.Time < 0.2f.Seconds())
+			return;
+		}
+		InitBakedCharactersBonesPosition();
+		GameObject weaponModel = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: false);
+		GameObject weaponModel2 = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: true);
+		List<GameObject> list = new List<GameObject>();
+		if (weaponModel != null)
+		{
+			list.Add(weaponModel);
+		}
+		if (weaponModel2 != null)
+		{
+			list.Add(weaponModel2);
+		}
+		foreach (GameObject item2 in list)
+		{
+			Rigidbody component = item2.gameObject.GetComponent<Rigidbody>();
+			if (component != null)
 			{
-				ApplyImpulseDirectly(m_LastImpulse.Direction, m_LastImpulse.MagnitudeModifier);
+				WeaponRigidBones.Add(component);
+				RigidBones.Add(component);
+				BoneImpulseMultiplier item = default(BoneImpulseMultiplier);
+				item.bone = component;
+				item.multiplier = 120f;
+				WeaponImpulseMultiplier.Add(item);
+				component.transform.SetParent(null, worldPositionStays: true);
 			}
+		}
+		State = RagdollState.Falling;
+		m_DeathPoint = base.transform.position;
+		SaveBonesPosition(m_BonesData);
+		SwitchRigidbodies(enable: true);
+		SwitchKinematic(enable: false);
+		SwitchRigidbodiesSleep(enable: true);
+		m_StartTime = Game.Instance.TimeController.GameTime;
+		base.gameObject.GetComponent<HumanoidRagdollManager>()?.Enabled(flag: true);
+		if (m_LastImpulse != null && Game.Instance.TimeController.GameTime - m_LastImpulse.Time < 0.2f.Seconds())
+		{
+			ApplyImpulseDirectly(m_LastImpulse.Direction, m_LastImpulse.MagnitudeModifier);
 		}
 	}
 
@@ -379,9 +414,6 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		{
 			num4 = -1;
 		}
-		float multiplyVectorYAxis;
-		float impulseValueMultiplierToChildren;
-		float impulseValueMultiplierToParents;
 		if (ApplyImpulseToAllBones)
 		{
 			foreach (BoneImpulseMultiplier boneImpulseMultiplier in BoneImpulseMultipliers)
@@ -393,25 +425,41 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 				num2 = (BaseImpulseValue + PFStatefulRandom.Visuals.Rigidbody.Range(AdditionalImpulseMin, AdditionalImpulseMax)) * (float)num4 * (1f + additionalMagnitude) * num * num3;
 				num2 = Mathf.Clamp(num2, minRagdollValue, maxRagdollValue);
 				Vector3 impulseDirection = num2 * direction;
-				impulseValueMultiplierToParents = ImpulseValueMultiplierToParents;
-				impulseValueMultiplierToChildren = ImpulseValueMultiplierToChildren;
-				multiplyVectorYAxis = MultiplyVectorYAxis;
+				float impulseValueMultiplierToParents = ImpulseValueMultiplierToParents;
+				float impulseValueMultiplierToChildren = ImpulseValueMultiplierToChildren;
+				float multiplyVectorYAxis = MultiplyVectorYAxis;
 				ApplyImpulseToRagdoll(bone, impulseDirection, default(Vector3), zeroVerticalVector: false, default(Vector3), impulseValueMultiplierToParents, impulseValueMultiplierToChildren, multiplyVectorYAxis);
 			}
-			return;
 		}
-		int num5 = PFStatefulRandom.Visuals.Rigidbody.Range(0, BoneImpulseMultipliers.Count);
-		Rigidbody bone2 = BoneImpulseMultipliers[num5].bone;
-		num = ((num5 < BoneImpulseMultipliers.Count) ? BoneImpulseMultipliers[num5].multiplier : 1f);
-		AbstractUnitEntity entityData2 = EntityView.EntityData;
-		num3 = ((entityData2 != null && entityData2.State.IsProne) ? InProneMultiplier : 1f);
-		num2 = (BaseImpulseValue + PFStatefulRandom.Visuals.Rigidbody.Range(AdditionalImpulseMin, AdditionalImpulseMax)) * (float)num4 * (1f + additionalMagnitude) * num * num3;
-		num2 = Mathf.Clamp(num2, minRagdollValue, maxRagdollValue);
-		Vector3 impulseDirection2 = num2 * direction;
-		multiplyVectorYAxis = ImpulseValueMultiplierToParents;
-		impulseValueMultiplierToChildren = ImpulseValueMultiplierToChildren;
-		impulseValueMultiplierToParents = MultiplyVectorYAxis;
-		ApplyImpulseToRagdoll(bone2, impulseDirection2, default(Vector3), zeroVerticalVector: false, default(Vector3), multiplyVectorYAxis, impulseValueMultiplierToChildren, impulseValueMultiplierToParents);
+		else
+		{
+			int num5 = PFStatefulRandom.Visuals.Rigidbody.Range(0, BoneImpulseMultipliers.Count);
+			Rigidbody bone2 = BoneImpulseMultipliers[num5].bone;
+			num = ((num5 < BoneImpulseMultipliers.Count) ? BoneImpulseMultipliers[num5].multiplier : 1f);
+			AbstractUnitEntity entityData2 = EntityView.EntityData;
+			num3 = ((entityData2 != null && entityData2.State.IsProne) ? InProneMultiplier : 1f);
+			num2 = (BaseImpulseValue + PFStatefulRandom.Visuals.Rigidbody.Range(AdditionalImpulseMin, AdditionalImpulseMax)) * (float)num4 * (1f + additionalMagnitude) * num * num3;
+			num2 = Mathf.Clamp(num2, minRagdollValue, maxRagdollValue);
+			Vector3 impulseDirection2 = num2 * direction;
+			float multiplyVectorYAxis = ImpulseValueMultiplierToParents;
+			float impulseValueMultiplierToChildren = ImpulseValueMultiplierToChildren;
+			float impulseValueMultiplierToParents = MultiplyVectorYAxis;
+			ApplyImpulseToRagdoll(bone2, impulseDirection2, default(Vector3), zeroVerticalVector: false, default(Vector3), multiplyVectorYAxis, impulseValueMultiplierToChildren, impulseValueMultiplierToParents);
+		}
+		foreach (BoneImpulseMultiplier item in WeaponImpulseMultiplier)
+		{
+			Rigidbody bone3 = item.bone;
+			num = ((0f != item.multiplier) ? item.multiplier : 1f);
+			AbstractUnitEntity entityData3 = EntityView.EntityData;
+			num3 = ((entityData3 != null && entityData3.State.IsProne) ? InProneMultiplier : 1f);
+			num2 = (BaseImpulseValue + PFStatefulRandom.Visuals.Rigidbody.Range(AdditionalImpulseMin, AdditionalImpulseMax)) * (float)num4 * (1f + additionalMagnitude) * num * num3;
+			num2 = Mathf.Clamp(num2, minRagdollValue, maxRagdollValue * 1.25f);
+			Vector3 impulseDirection3 = num2 * direction;
+			float impulseValueMultiplierToParents = ImpulseValueMultiplierToParents;
+			float impulseValueMultiplierToChildren = ImpulseValueMultiplierToChildren;
+			float multiplyVectorYAxis = MultiplyVectorYAxis;
+			ApplyImpulseToRagdoll(bone3, impulseDirection3, default(Vector3), zeroVerticalVector: false, default(Vector3), impulseValueMultiplierToParents, impulseValueMultiplierToChildren, multiplyVectorYAxis);
+		}
 	}
 
 	public static void ApplyImpulseToRagdoll([NotNull] Rigidbody impulseTarget, Vector3 impulseDirection, Vector3 additionalDirection = default(Vector3), bool zeroVerticalVector = false, Vector3 torque = default(Vector3), float impulseValueMultiplierToParents = 0f, float impulseValueMultiplierToChildren = 0f, float multiplyVectorYAxis = 1f)

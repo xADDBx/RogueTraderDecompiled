@@ -6,6 +6,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Blueprints.Quests.Logic;
+using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Enums;
@@ -39,6 +40,8 @@ public class Quest : EntityFact<QuestBook>, IHashable
 
 	[JsonProperty]
 	private bool m_IsViewed;
+
+	private bool m_IsSilentFailInProgress;
 
 	public bool IsViewed
 	{
@@ -335,6 +338,21 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		}
 	}
 
+	public void FailQuest(bool doFailSilently)
+	{
+		if (doFailSilently)
+		{
+			using (new BlueprintQuest.SilentQuestNotificationOverride(Blueprint, QuestNotificationState.Failed))
+			{
+				m_IsSilentFailInProgress = true;
+				OnQuestFinished(completed: false);
+				m_IsSilentFailInProgress = false;
+				return;
+			}
+		}
+		OnQuestFinished(completed: false);
+	}
+
 	protected virtual void OnQuestFinished(bool completed)
 	{
 		m_State = (completed ? QuestState.Completed : QuestState.Failed);
@@ -362,7 +380,16 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		}
 		m_Objectives.ForEach(delegate(KeyValuePair<BlueprintQuestObjective, QuestObjective> pair)
 		{
-			pair.Value.TryFailOnQuestFinished();
+			QuestObjective value = pair.Value;
+			if (m_IsSilentFailInProgress)
+			{
+				using (new BlueprintQuestObjective.SilentQuestNotificationOverride(value.Blueprint, QuestNotificationState.Failed))
+				{
+					value.TryFailOnQuestFinished();
+					return;
+				}
+			}
+			value.TryFailOnQuestFinished();
 		});
 	}
 

@@ -13,9 +13,9 @@ namespace Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 
 public static class ContextMenuHelper
 {
-	private static bool m_Show;
+	private static bool s_Show;
 
-	public static IDisposable SetContextMenu(this MonoBehaviour component, List<ContextMenuCollectionEntity> entities, bool isLeftClick = false)
+	private static IDisposable SetContextMenu(this MonoBehaviour component, List<ContextMenuCollectionEntity> entities, bool isLeftClick = false)
 	{
 		if (entities.Empty())
 		{
@@ -27,7 +27,7 @@ public static class ContextMenuHelper
 		{
 			return Disposable.Empty;
 		}
-		m_Show = false;
+		s_Show = false;
 		IDisposable rightClick = component.OnPointerClickAsObservable().Subscribe(delegate(PointerEventData data)
 		{
 			if (!isLeftClick)
@@ -37,9 +37,9 @@ public static class ContextMenuHelper
 					TooltipHelper.HideTooltip();
 					EventBus.RaiseEvent(delegate(IContextMenuHandler h)
 					{
-						h.HandleContextMenuRequest((!m_Show) ? collection : null);
+						h.HandleContextMenuRequest((!s_Show) ? collection : null);
 					});
-					m_Show = !m_Show;
+					s_Show = !s_Show;
 				}
 			}
 			else if (data.button == PointerEventData.InputButton.Left)
@@ -47,16 +47,16 @@ public static class ContextMenuHelper
 				TooltipHelper.HideTooltip();
 				EventBus.RaiseEvent(delegate(IContextMenuHandler h)
 				{
-					h.HandleContextMenuRequest((!m_Show) ? collection : null);
+					h.HandleContextMenuRequest((!s_Show) ? collection : null);
 				});
-				m_Show = !m_Show;
+				s_Show = !s_Show;
 			}
 		});
 		return Disposable.Create(delegate
 		{
-			if (m_Show)
+			if (s_Show)
 			{
-				m_Show = false;
+				s_Show = false;
 				EventBus.RaiseEvent(delegate(IContextMenuHandler h)
 				{
 					h.HandleContextMenuRequest(null);
@@ -100,10 +100,15 @@ public static class ContextMenuHelper
 
 	public static void HideContextMenu()
 	{
-		m_Show = false;
+		s_Show = false;
 		EventBus.RaiseEvent(delegate(IContextMenuHandler h)
 		{
 			h.HandleContextMenuRequest(null);
 		});
+	}
+
+	public static bool ContextMenuIsShow()
+	{
+		return s_Show;
 	}
 }

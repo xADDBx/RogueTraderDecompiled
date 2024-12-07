@@ -194,7 +194,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
-	private Dictionary<OwlcatToggle, string> m_IssueTypes;
+	private Dictionary<OwlcatToggle, ReportingUtils.Severity> m_IssueTypes;
 
 	private IDisposable m_FixVersionDropdownDisposable;
 
@@ -205,11 +205,20 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	public void Initialize()
 	{
 		base.gameObject.SetActive(value: false);
-		m_IssueTypes = new Dictionary<OwlcatToggle, string>
+		m_IssueTypes = new Dictionary<OwlcatToggle, ReportingUtils.Severity>
 		{
-			{ m_CriticalToggle, "Critical" },
-			{ m_NormalToggle, "Normal" },
-			{ m_SuggestionToggle, "Suggestion" }
+			{
+				m_CriticalToggle,
+				ReportingUtils.Severity.Critical
+			},
+			{
+				m_NormalToggle,
+				ReportingUtils.Severity.Normal
+			},
+			{
+				m_SuggestionToggle,
+				ReportingUtils.Severity.Suggestion
+			}
 		};
 		m_MessageInputField.SetMaxTextLength(1000u);
 		m_BugReportDrawingView.gameObject.SetActive(value: false);
@@ -331,16 +340,18 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private void StoreUserData()
 	{
-		PlayerPrefs.SetString("BugReportEmail", m_EmailInputField.Text);
-		PlayerPrefs.SetString("BugReportDiscord", m_DiscordInputField.Text);
-		int currentFixVersionIndex = ReportingUtils.Instance.GetCurrentFixVersionIndex();
-		PlayerPrefs.SetInt("BugReportFixVersion", currentFixVersionIndex);
+		ReportingUtils.Instance.StoreEmail(m_EmailInputField.Text);
+		ReportingUtils.Instance.StoreDiscord(m_DiscordInputField.Text);
+		if (BuildModeUtility.IsDevelopment && ReportingUtils.Instance.Assignees.IsCompletedSuccessfully)
+		{
+			ReportingUtils.Instance.StoreFixVersion(m_FixVersionDropdown.Index.Value);
+		}
 	}
 
 	private void RestoreUserData(bool restoreDevFields)
 	{
-		m_EmailInputField.Text = PlayerPrefs.GetString("BugReportEmail", string.Empty);
-		m_DiscordInputField.Text = PlayerPrefs.GetString("BugReportDiscord", string.Empty);
+		m_EmailInputField.Text = ReportingUtils.Instance.RestoreEmail();
+		m_DiscordInputField.Text = ReportingUtils.Instance.RestoreDiscord();
 		if (restoreDevFields)
 		{
 			RestoreDevFields();
@@ -360,8 +371,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			}
 			else
 			{
-				int @int = PlayerPrefs.GetInt("BugReportFixVersion", 0);
-				m_FixVersionDropdown.SetIndex(@int);
+				m_FixVersionDropdown.SetIndex(ReportingUtils.Instance.RestoreFixVersion());
 			}
 		}
 	}
@@ -376,19 +386,19 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			});
 			return;
 		}
-		OwlcatToggle key = m_IssueTypeToggleGroup.ActiveToggles().FirstOrDefault();
-		string issueType = m_IssueTypes[key];
+		OwlcatToggle key = m_IssueTypeToggleGroup.ActiveToggles().FirstOrDefault() ?? m_NormalToggle;
+		string issueType = m_IssueTypes[key].ToString();
 		ReportingUtils.Instance.SendReport(m_MessageInputField.Text, m_EmailInputField.Text, SystemInfo.deviceUniqueIdentifier, issueType, m_DiscordInputField.Text, m_EmailUpdatesToggle.IsOn.Value);
 		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 		{
 			h.HandleWarning(BlueprintRoot.Instance.LocalizedTexts.UserInterfacesText.CommonTexts.WarningBugReportWasSend);
 		});
 		m_MessageInputField.Text = "";
+		StoreUserData();
 		EventBus.RaiseEvent(delegate(IBugReportUIHandler h)
 		{
 			h.HandleBugReportHide();
 		});
-		StoreUserData();
 		ReportingUtils.Instance.PrivacyStuffManage(m_EmailInputField.Text, m_EmailUpdatesToggle.IsOn.Value, m_PrivacyToggle.IsOn.Value, isSend: true);
 		ReportingUtils.Instance.Clear();
 		InputLog.SetLogInput(state: false);
@@ -396,11 +406,11 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	public void OnClose()
 	{
+		StoreUserData();
 		EventBus.RaiseEvent(delegate(IBugReportUIHandler h)
 		{
 			h.HandleBugReportHide();
 		});
-		StoreUserData();
 		ReportingUtils.Instance.PrivacyStuffManage(m_EmailInputField.Text, m_EmailUpdatesToggle.IsOn.Value, m_PrivacyToggle.IsOn.Value, isSend: false);
 		ReportingUtils.Instance.Clear();
 	}
@@ -419,7 +429,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private void OnShow()
 	{
-		m_NormalToggle.Set(value: true);
+		(m_IssueTypes.FirstOrDefault((KeyValuePair<OwlcatToggle, ReportingUtils.Severity> kvp) => kvp.Value == ReportingUtils.Instance.GetSuggestedSeverity()).Key ?? m_NormalToggle).Set(value: true);
 		m_IsLabelsShow = false;
 		HideLabelsButton();
 		m_ContextDropdown.Bind(base.ViewModel.ContextDropdownVM);
@@ -434,6 +444,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 				m_AssigneeDropdown.Bind(base.ViewModel.GetAssigneeDropDownVM(m_ContextDropdown.Index.Value));
 				m_FixVersionGO.SetActive(value: true);
 				m_FixVersionDropdown.Bind(base.ViewModel.GetFixVersionDropDownVM());
+				m_FixVersionDropdown.SetInteractable(ReportingUtils.Instance.CanSelectFixVersion());
+				m_ContextDropdown.SetInteractable(ReportingUtils.Instance.CanSelectContext());
 				SetupDropdowns();
 				m_LabelsGroup.SetActive(value: true);
 				ReportingUtils.Instance.ResetLabelsList();

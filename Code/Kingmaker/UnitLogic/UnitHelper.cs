@@ -200,7 +200,7 @@ public static class UnitHelper
 		CannotMove
 	}
 
-	public static BaseUnitEntity Copy(this BaseUnitEntity unit, bool createView, bool preview, bool copyItems = true)
+	public static BaseUnitEntity Copy(this BaseUnitEntity unit, bool createView, bool preview, bool copyItems = true, bool forceEnableBuffs = false)
 	{
 		LevelUpController levelUpController = Game.Instance.LevelUpController;
 		Game.Instance.LevelUpController = null;
@@ -208,7 +208,7 @@ public static class UnitHelper
 		{
 			using (ProfileScope.New("Copy Unit"))
 			{
-				return CopyInternal(unit, createView, preview, copyItems);
+				return CopyInternal(unit, createView, preview, copyItems, forceEnableBuffs);
 			}
 		}
 		catch (Exception exception)
@@ -222,7 +222,7 @@ public static class UnitHelper
 		}
 	}
 
-	private static BaseUnitEntity CopyInternal(BaseUnitEntity unit, bool createView, bool preview, bool copyItems)
+	private static BaseUnitEntity CopyInternal(BaseUnitEntity unit, bool createView, bool preview, bool copyItems, bool forceEnableBuffs = false)
 	{
 		BaseUnitEntity baseUnitEntity;
 		using (ContextData<DisableStatefulRandomContext>.RequestIf(preview))
@@ -244,7 +244,7 @@ public static class UnitHelper
 		baseUnitEntity.UISettings.SetPortrait(unit.Portrait);
 		baseUnitEntity.ViewSettings.SetDoll(unit.ViewSettings.Doll);
 		baseUnitEntity.Inventory.EnsureOwn();
-		if (preview)
+		if (preview && !forceEnableBuffs)
 		{
 			baseUnitEntity.Facts.EnsureFactProcessor<BuffCollection>().SetupPreview(baseUnitEntity);
 		}
@@ -417,9 +417,9 @@ public static class UnitHelper
 		return _this.Progression.GetRank(BlueprintRoot.Instance.NavigatorOccupation) > 0;
 	}
 
-	public static BaseUnitEntity CreatePreview(this BaseUnitEntity _this, bool createView)
+	public static BaseUnitEntity CreatePreview(this BaseUnitEntity _this, bool createView, bool forceEnableBuffs = false)
 	{
-		return _this.Copy(createView, preview: true);
+		return _this.Copy(createView, preview: true, copyItems: true, forceEnableBuffs);
 	}
 
 	[CanBeNull]

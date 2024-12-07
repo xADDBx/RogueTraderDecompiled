@@ -25,6 +25,8 @@ public class CommandUnitLookAt : CommandBase
 		public bool Freeze;
 	}
 
+	private string CaptionText;
+
 	[SerializeField]
 	[ValidateNotNull]
 	[SerializeReference]
@@ -189,7 +191,7 @@ public class CommandUnitLookAt : CommandBase
 
 	public override string GetCaption()
 	{
-		return m_Unit?.ToString() + " <b>look at</b> " + m_Position;
+		return m_Unit?.GetCaptionShort() + " <b>look at</b> " + m_Position?.GetCaptionShort();
 	}
 
 	public override IAbstractUnitEntity GetControlledUnit()

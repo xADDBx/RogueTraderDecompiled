@@ -109,9 +109,9 @@ public class CommandSetCombatMode : CommandBase
 	{
 		if (!Continuous)
 		{
-			return "Switch <b>combat mode</b> for " + (Target ? Target.GetCaption() : "???");
+			return "Switch <b>combat mode</b> for " + (Target ? Target.GetCaptionShort() : "???");
 		}
-		return "Set <b>combat mode</b> for " + (Target ? Target.GetCaption() : "???");
+		return "Set <b>combat mode</b> for " + (Target ? Target.GetCaptionShort() : "???");
 	}
 
 	public override IAbstractUnitEntity GetControlledUnit()

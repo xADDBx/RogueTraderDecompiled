@@ -127,6 +127,7 @@ public class CombatRandomEncounterController : IControllerEnable, IController, I
 				if (!(unitSpawner2 == null))
 				{
 					unitSpawner2.Blueprint = combatRandomEncounterState.AllyBlueprint;
+					unitSpawner2.Spawn();
 				}
 			}
 		}

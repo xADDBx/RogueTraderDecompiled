@@ -5,7 +5,6 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
-using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
@@ -36,14 +35,15 @@ public static class PartyFormationHelper
 		}
 	}
 
-	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<BaseUnitEntity> units, IList<BaseUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false)
+	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<BaseUnitEntity> units, IList<BaseUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false, int anchorUnitIndex = -1)
 	{
-		FillFormationPositions(pos, anchor, direction, ((IEnumerable<BaseUnitEntity>)units).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), ((IEnumerable<BaseUnitEntity>)selectedUnits).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), formation, resultPositions, spaceFactor, forceRelax);
+		FillFormationPositions(pos, anchor, direction, ((IEnumerable<BaseUnitEntity>)units).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), ((IEnumerable<BaseUnitEntity>)selectedUnits).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), formation, resultPositions, spaceFactor, forceRelax, anchorUnitIndex);
 	}
 
-	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<AbstractUnitEntity> units, IList<AbstractUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false)
+	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<AbstractUnitEntity> units, IList<AbstractUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false, int anchorUnitIndex = -1)
 	{
-		CustomGridNodeBase nearestNodeXZ = units[0].GetNearestNodeXZ();
+		int index = ((anchor == FormationAnchor.SelectedUnit && anchorUnitIndex >= 0 && anchorUnitIndex < units.Count) ? anchorUnitIndex : 0);
+		CustomGridNodeBase nearestNodeXZ = units[index].GetNearestNodeXZ();
 		if (nearestNodeXZ != null)
 		{
 			Constraint.constrainArea = true;
@@ -60,98 +60,77 @@ public static class PartyFormationHelper
 		}
 		direction.y = 0f;
 		Quaternion quaternion = Quaternion.LookRotation(direction);
-		Vector2 zero = Vector2.zero;
-		float num = float.MinValue;
-		for (int i = 0; i < units.Count; i++)
-		{
-			if (selectedUnits.Contains(units[i]))
-			{
-				Vector2 offset = formation.GetOffset(i, units[i]);
-				if (offset.y > num)
-				{
-					num = offset.y;
-				}
-				zero += offset;
-			}
-		}
-		if (selectedUnits.Count > 0)
-		{
-			zero /= (float)selectedUnits.Count;
-		}
 		if (units.Count > 0)
 		{
-			Vector3 vector = new Vector3(0f, 0f, 0f);
 			if (units.Count == 1)
 			{
 				anchor = FormationAnchor.Center;
 			}
-			vector = anchor switch
-			{
-				FormationAnchor.Center => quaternion * zero.To3D(), 
-				FormationAnchor.Front => quaternion * new Vector2(0f, num).To3D(), 
-				_ => vector, 
-			};
+			Vector3 vector = quaternion * GetFormationAnchorPoint().To3D();
 			NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(pos);
-			Vector3 position = nearestNode.position;
-			for (int j = 0; j < units.Count; j++)
+			if (nearestNode.node == null)
 			{
-				Vector3 end = position - vector + quaternion * formation.GetOffset(j, units[j]).To3D();
+				nearestNode = ObstacleAnalyzer.GetNearestNode(pos, null, ObstacleAnalyzer.UnwalkableXZConstraint);
+			}
+			Vector3 position = nearestNode.position;
+			for (int i = 0; i < units.Count; i++)
+			{
+				Vector3 end = position - vector + quaternion * formation.GetOffset(i, units[i]).To3D();
 				Linecast.LinecastGrid(nearestNode.node.Graph, position, end, nearestNode.node, out var hit, ObstacleAnalyzer.DefaultXZConstraint, ref Linecast.HasConnectionTransition.Instance);
 				Vector3 point = hit.point;
 				GraphNode node = hit.node;
-				resultPositions[j] = ObstacleAnalyzer.FindClosestPointToStandOn(point, units[j].MovementAgent.Corpulence, (CustomGridNodeBase)node);
+				resultPositions[i] = ObstacleAnalyzer.FindClosestPointToStandOn(point, units[i].MovementAgent.Corpulence, (CustomGridNodeBase)node);
 			}
 		}
-	}
-
-	public static Vector3 FindFormationCenterFromOneUnit(FormationAnchor anchor, Vector3 direction, int unitIndex, Vector3 unitPosition, List<BaseUnitEntity> units, UnitReference[] selectedUnits)
-	{
-		if (units.Count <= 0)
-		{
-			return Vector3.zero;
-		}
-		if (selectedUnits.Length == 1)
-		{
-			return unitPosition;
-		}
-		direction.y = 0f;
-		Quaternion quaternion = Quaternion.LookRotation(direction);
-		IPartyFormation currentFormation = Game.Instance.Player.FormationManager.CurrentFormation;
-		Vector2 zero = Vector2.zero;
-		float num = float.MinValue;
-		for (int i = 0; i < units.Count; i++)
-		{
-			if (selectedUnits.IndexOf(units[i].FromBaseUnitEntity()) != -1)
-			{
-				Vector2 offset = currentFormation.GetOffset(i, units[i]);
-				if (offset.y > num)
-				{
-					num = offset.y;
-				}
-				zero += offset;
-			}
-		}
-		if (selectedUnits.Length != 0)
-		{
-			zero /= (float)selectedUnits.Length;
-		}
-		if (!units.IsValidIndex(unitIndex))
-		{
-			return Vector3.zero;
-		}
-		Vector3 result = unitPosition - quaternion * currentFormation.GetOffset(unitIndex, units[unitIndex]).To3D();
-		if (units.Count > 1)
+		Vector2 GetFormationAnchorPoint()
 		{
 			switch (anchor)
 			{
 			case FormationAnchor.Center:
-				result += quaternion * zero.To3D();
-				break;
+				return GetFormationCenter();
 			case FormationAnchor.Front:
-				result += quaternion * new Vector2(0f, num).To3D();
+				return GetFormationFront();
+			case FormationAnchor.SelectedUnit:
+				if (anchorUnitIndex >= 0 && anchorUnitIndex < units.Count)
+				{
+					return formation.GetOffset(anchorUnitIndex, units[anchorUnitIndex]);
+				}
 				break;
 			}
+			return Vector2.zero;
 		}
-		return result;
+		Vector2 GetFormationCenter()
+		{
+			Vector2 zero = Vector2.zero;
+			for (int j = 0; j < units.Count; j++)
+			{
+				if (selectedUnits.Contains(units[j]))
+				{
+					Vector2 offset = formation.GetOffset(j, units[j]);
+					zero += offset;
+				}
+			}
+			if (selectedUnits.Count > 0)
+			{
+				zero /= (float)selectedUnits.Count;
+			}
+			return zero;
+		}
+		Vector2 GetFormationFront()
+		{
+			float num = float.MinValue;
+			for (int k = 0; k < units.Count; k++)
+			{
+				if (selectedUnits.Contains(units[k]))
+				{
+					Vector2 offset2 = formation.GetOffset(k, units[k]);
+					if (offset2.y > num)
+					{
+						num = offset2.y;
+					}
+				}
+			}
+			return new Vector2(0f, num);
+		}
 	}
 }

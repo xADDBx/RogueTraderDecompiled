@@ -93,7 +93,7 @@ public class SettingsController : ISettingsController
 		DifficultyPresetsController = new DifficultyPresetsController(difficultyPresetsList);
 		GraphicsPresetsController = new GraphicsPresetsController(graphicsPresetsList);
 		GraphicsPresetsController.Initialize();
-		GraphicsSettingsController = new GraphicsSettingsController();
+		GraphicsSettingsController = new GraphicsSettingsController(GraphicsPresetsController.MaximumAllowedResolution);
 		DisplaySettingsController = new DisplaySettingsController();
 		AccessiabilitySettingsController = new AccessiabilitySettingsController();
 		GameSettingsController = new GameSettingsController();

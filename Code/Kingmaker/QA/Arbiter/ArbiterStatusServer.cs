@@ -18,6 +18,9 @@ public class ArbiterStatusServer : IDisposable
 
 	private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
+	public DateTime LastStatus { get; set; } = DateTime.Now;
+
+
 	public ArbiterStatusServer()
 	{
 		try
@@ -93,6 +96,7 @@ public class ArbiterStatusServer : IDisposable
 				{
 					if (context.Request.HttpMethod == "GET" && context.Request.Url.LocalPath == "/Status")
 					{
+						LastStatus = DateTime.Now;
 						Status(context.Response);
 						return;
 					}

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.MapObjects;
 using Kingmaker.Controllers.TurnBased;
@@ -278,5 +279,11 @@ public class ConsoleCursor : BaseCursor, IRewiredCursorController, ITurnBasedMod
 	{
 		SwitchRotate(CheckRotation);
 		m_CursorImage.gameObject.SetActive(CheckVisibility);
+	}
+
+	protected override void SetCanFlipZoneImpl()
+	{
+		base.SetCanFlipZoneImpl();
+		m_CanFlipZoneText.text = UIStrings.Instance.Tooltips.FlipZoneStrategistConsole;
 	}
 }

@@ -4,6 +4,7 @@ using Core.Cheats;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Designers;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Entities;
@@ -390,6 +391,12 @@ public class CheatsCommon
 				h.HandleHideDebugBubble();
 			});
 		}
+	}
+
+	[Cheat(Name = "show_message_box", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void ShowDebugMessageBox()
+	{
+		UIUtility.ShowMessageBox("this is debug message box. Hallo!", DialogMessageBoxBase.BoxType.Dialog, null);
 	}
 
 	private static void ShuffleParty(string parameters)

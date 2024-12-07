@@ -55,6 +55,6 @@ public class CommandMarkHiddenSpan : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Mark " + Unit?.GetCaption() + " <b>hidden</b>";
+		return "Mark " + Unit?.GetCaptionShort() + " <b>hidden</b>";
 	}
 }

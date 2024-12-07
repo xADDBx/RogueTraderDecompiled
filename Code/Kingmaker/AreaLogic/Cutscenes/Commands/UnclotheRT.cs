@@ -57,10 +57,12 @@ public class UnclotheRT : CommandBase
 				playerCharacter.View.CharacterAvatar.AddEquipmentEntity(equipmentEntityLink);
 			}
 			playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: false);
+			playerCharacter.View.HandsEquipment.HiddenByCutscene = true;
 		}
 		else
 		{
 			playerCharacter.View.CharacterAvatar.RestoreEquipment();
+			playerCharacter.View.HandsEquipment.HiddenByCutscene = false;
 			playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: true);
 		}
 	}

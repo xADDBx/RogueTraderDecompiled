@@ -197,7 +197,7 @@ public class CommandMoveUnit : CommandBase
 
 	public override string GetCaption()
 	{
-		return Unit?.ToString() + " <b>move</b> to " + (Target ? Target.GetCaption() : "???");
+		return Unit?.GetCaptionShort() + " <b>move</b> to " + (Target ? Target.GetCaptionShort() : "???");
 	}
 
 	public override string GetWarning()

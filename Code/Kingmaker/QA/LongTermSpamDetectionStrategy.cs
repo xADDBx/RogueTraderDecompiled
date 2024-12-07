@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Kingmaker.Utility;
 
 namespace Kingmaker.QA;
 
@@ -13,11 +14,11 @@ public class LongTermSpamDetectionStrategy : ISpamDetectionStrategy
 
 	private int m_Times;
 
-	private readonly string m_TargetVersion;
+	private readonly ReportingUtils.FixVersions m_TargetVersion;
 
-	private readonly string m_Severity;
+	private readonly ReportingUtils.Severity m_Severity;
 
-	public LongTermSpamDetectionStrategy(string message, string severity, string targetVersion, int count, TimeSpan time, int times)
+	public LongTermSpamDetectionStrategy(string message, ReportingUtils.Severity severity, ReportingUtils.FixVersions targetVersion, int count, TimeSpan time, int times)
 	{
 		m_Message = message;
 		m_Count = count;

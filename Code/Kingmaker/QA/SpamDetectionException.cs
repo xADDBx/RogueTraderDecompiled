@@ -1,12 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kingmaker.GameModes;
+using Kingmaker.Utility;
 
 namespace Kingmaker.QA;
 
-internal class SpamDetectionException : Exception
+internal class SpamDetectionException : ReportingException
 {
 	public readonly GameModeType GameModeType;
 
@@ -37,7 +37,8 @@ internal class SpamDetectionException : Exception
 		orderby s
 		select s).Aggregate(new StringBuilder(1024), (StringBuilder builder, string s) => builder.AppendLine(s)).ToString();
 
-	public SpamDetectionException(GameModeType gameModeType, IEnumerable<LogItem> items)
+	public SpamDetectionException(GameModeType gameModeType, ReportingUtils.Severity suggestedSeverity, ReportingUtils.FixVersions targetVersion, IEnumerable<LogItem> items)
+		: base(suggestedSeverity, targetVersion, new string[1] { "SpamDetection" })
 	{
 		GameModeType = gameModeType;
 		m_Items = items;

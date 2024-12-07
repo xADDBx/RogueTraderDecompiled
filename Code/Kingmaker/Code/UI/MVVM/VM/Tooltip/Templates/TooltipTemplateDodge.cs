@@ -84,24 +84,16 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 		foreach (StatBonusEntry sortedBonuse in breakdownData.SortedBonuses)
 		{
 			string text = string.Empty;
-			if (sortedBonuse.Descriptor != 0)
-			{
-				text = Game.Instance.BlueprintRoot.LocalizedTexts.Descriptors.GetText(sortedBonuse.Descriptor);
-			}
-			else if (!string.IsNullOrWhiteSpace(sortedBonuse.Source))
+			if (!string.IsNullOrWhiteSpace(sortedBonuse.Source))
 			{
 				text = sortedBonuse.Source;
-			}
-			if (sortedBonuse.Descriptor != 0 && !string.IsNullOrWhiteSpace(sortedBonuse.Source))
-			{
-				text = text + " [" + sortedBonuse.Source + "]";
 			}
 			if (sortedBonuse.Descriptor == ModifierDescriptor.Difficulty && SettingsHelper.CalculateCRModifier() < 1f)
 			{
 				text = text + " (" + UIStrings.Instance.Tooltips.DifficultyReduceDescription.Text + ")";
 			}
 			TooltipBrickIconStatValueType type = ((sortedBonuse.Bonus >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
-			string value = (isValueModifiers ? UIConfig.Instance.PercentHelper.AddPercentTo(UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus)) : ("×" + ((float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
+			string value = (isValueModifiers ? UIConfig.Instance.PercentHelper.AddPercentTo(UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus)) : ("×" + (1f - (float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
 			bricks.Add(new TooltipBrickIconStatValue(text, value, null, null, type));
 		}
 	}

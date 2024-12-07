@@ -16,6 +16,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.Selection;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Interaction;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View;
@@ -274,13 +275,22 @@ public sealed class ClickUnitHandler : IClickEventHandler
 
 	private static void RunMoveCommandTB(BaseUnitEntity unit, MoveCommandSettings settings)
 	{
-		if (Game.Instance.TurnController.TurnBasedModeActive && unit == Game.Instance.TurnController.CurrentUnit)
+		if (!Game.Instance.TurnController.TurnBasedModeActive || unit != Game.Instance.TurnController.CurrentUnit)
 		{
-			UnitMoveToProperParams unitMoveToProperParams = unit.TryCreateMoveCommandTB(settings, showMovePrediction: false);
-			if (unitMoveToProperParams != null)
+			return;
+		}
+		if (unit is StarshipEntity starshipEntity)
+		{
+			AbstractUnitCommand current = starshipEntity.Commands.Current;
+			if (current != null && current.IsMoveUnit)
 			{
-				unit?.Commands.Run(unitMoveToProperParams);
+				return;
 			}
+		}
+		UnitMoveToProperParams unitMoveToProperParams = unit.TryCreateMoveCommandTB(settings, showMovePrediction: false);
+		if (unitMoveToProperParams != null)
+		{
+			unit?.Commands.Run(unitMoveToProperParams);
 		}
 	}
 

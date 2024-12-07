@@ -76,6 +76,7 @@ public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScr
 				GetLogChannel().Log("Loading Instruction Index.");
 				m_Index = JsonConvert.DeserializeObject<Dictionary<string, BlueprintReference<TInstruction>>>(streamReader.ReadToEnd());
 				CheckDeletedInstructions();
+				GetLogChannel().Log("Loaded {0} instructions", m_Index.Count);
 				return;
 			}
 			catch (Exception ex)

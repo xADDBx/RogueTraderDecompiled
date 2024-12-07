@@ -100,6 +100,12 @@ public class JoiningLobbyState : IStateAsync
 				h.HandleNoPlayStationPlusError();
 			});
 			break;
+		case 3001:
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleUserPermissionsError();
+			});
+			break;
 		case 32758:
 			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 			{

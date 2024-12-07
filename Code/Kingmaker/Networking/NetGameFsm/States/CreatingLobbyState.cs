@@ -124,19 +124,26 @@ public class CreatingLobbyState : IStateAsync
 	{
 		PFLog.Net.Error($"[CreatingLobbyState.Fail] code={returnCode}, msg={message}");
 		m_NetGame.OnLobbyCreationFailed();
-		if (returnCode == 3000)
+		switch (returnCode)
 		{
+		case 3000:
 			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 			{
 				h.HandleNoPlayStationPlusError();
 			});
-		}
-		else
-		{
+			break;
+		case 3001:
+			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
+			{
+				h.HandleUserPermissionsError();
+			});
+			break;
+		default:
 			EventBus.RaiseEvent(delegate(INetLobbyErrorHandler h)
 			{
 				h.HandleCreatingLobbyError(returnCode);
 			});
+			break;
 		}
 	}
 }

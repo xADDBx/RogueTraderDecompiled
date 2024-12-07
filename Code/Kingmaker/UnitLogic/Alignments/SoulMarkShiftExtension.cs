@@ -39,20 +39,22 @@ public static class SoulMarkShiftExtension
 		{
 			throw new Exception("No predefined soul marks on main character");
 		}
-		int value = shift.Value;
+		int delayedSoulMarkValue = soulMark.Owner.GetDelayedSoulMarkValue(shift.Direction);
+		int num = shift.Value + delayedSoulMarkValue;
 		if (source == null)
 		{
 			return;
 		}
-		EntityFactSource item = new EntityFactSource(source, value);
+		EntityFactSource item = new EntityFactSource(source, num);
 		if (!soulMark.Sources.ToList().HasItem(item))
 		{
-			soulMark.AddSource(source, value);
-			soulMark.AddRank(value);
+			soulMark.AddSource(source, num);
+			soulMark.AddRank(num);
 			EventBus.RaiseEvent(delegate(ISoulMarkShiftRewardHandler h)
 			{
 				h.HandleSoulMarkShift(shift);
 			});
+			soulMark.Owner.FreeDelayedShift(shift.Direction);
 		}
 	}
 

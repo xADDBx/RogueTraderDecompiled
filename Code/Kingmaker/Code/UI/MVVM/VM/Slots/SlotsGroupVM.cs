@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.EntitySystem.Entities;
@@ -98,6 +99,10 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void SetNewItems(IEnumerable<ItemEntity> items)
 	{
 		m_ItemEntities = items;
@@ -106,7 +111,13 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	public void UpdateVisibleCollection()
 	{
-		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(InternalUpdate);
+		MainThreadDispatcher.StartCoroutine(InvokeAtEndOfFrameCoroutine());
+	}
+
+	private IEnumerator InvokeAtEndOfFrameCoroutine()
+	{
+		yield return null;
+		InternalUpdate();
 	}
 
 	private void InternalUpdate()
@@ -114,7 +125,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		List<ItemEntity> list = ItemsFilter.ItemSorter(Items.Where(ShouldShowItem).ToList(), SorterType.Value, FilterType.Value);
 		if (!ShowUnavailable.Value)
 		{
-			list.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i));
+			list.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
 		}
 		if (SorterType.Value != 0)
 		{
@@ -275,11 +286,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 	{
 		if (from == MechanicCollection || to == MechanicCollection)
 		{
-			UpdateVisibleCollection();
+			DelayedInvoker.InvokeInFrames(UpdateVisibleCollection, 5);
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

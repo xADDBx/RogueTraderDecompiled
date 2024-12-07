@@ -61,6 +61,9 @@ public class OwlcatAdditionalLightData : MonoBehaviour, IAdditionalData
 	[SerializeField]
 	private bool m_ShadowmapUpdateOnLightMovement;
 
+	[SerializeField]
+	private ShadowUpdateFrequencyByDistance m_ShadowUpdateFrequencyByDistance;
+
 	public bool UsePipelineSettings
 	{
 		get
@@ -230,6 +233,18 @@ public class OwlcatAdditionalLightData : MonoBehaviour, IAdditionalData
 		set
 		{
 			m_ShadowmapUpdateOnLightMovement = value;
+		}
+	}
+
+	public ShadowUpdateFrequencyByDistance ShadowUpdateFrequencyByDistance
+	{
+		get
+		{
+			return m_ShadowUpdateFrequencyByDistance;
+		}
+		set
+		{
+			m_ShadowUpdateFrequencyByDistance = value;
 		}
 	}
 

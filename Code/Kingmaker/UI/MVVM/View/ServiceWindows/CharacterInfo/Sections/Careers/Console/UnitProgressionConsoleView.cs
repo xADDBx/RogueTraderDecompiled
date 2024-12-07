@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -135,12 +134,20 @@ public class UnitProgressionConsoleView : UnitProgressionCommonView, ICharInfoCo
 			bool isFocused = m_NavigationBehaviour.IsFocused;
 			m_NavigationBehaviour.Clear();
 			UnitProgressionWindowState value = base.ViewModel.State.Value;
-			ConsoleNavigationBehaviour entity = value switch
+			GridConsoleNavigationBehaviour navigationBehaviour = default(GridConsoleNavigationBehaviour);
+			switch (value)
 			{
-				UnitProgressionWindowState.CareerPathList => CareerPathsListsConsoleView.GetNavigationBehaviour(this), 
-				UnitProgressionWindowState.CareerPathProgression => CareerPathProgressionConsoleView.GetNavigationBehaviour(this), 
-				_ => throw new SwitchExpressionException(value), 
-			};
+			case UnitProgressionWindowState.CareerPathList:
+				navigationBehaviour = CareerPathsListsConsoleView.GetNavigationBehaviour(this);
+				break;
+			case UnitProgressionWindowState.CareerPathProgression:
+				navigationBehaviour = CareerPathProgressionConsoleView.GetNavigationBehaviour(this);
+				break;
+			default:
+				global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(value);
+				break;
+			}
+			ConsoleNavigationBehaviour entity = navigationBehaviour;
 			m_NavigationBehaviour.AddEntityVertical(entity);
 			if (isFocused)
 			{

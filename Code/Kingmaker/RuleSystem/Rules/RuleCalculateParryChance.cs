@@ -107,7 +107,7 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		DefenderSkill = (UseBallisticSkill ? Defender.Attributes.WarhammerBallisticSkill : Defender.Attributes.WarhammerWeaponSkill);
+		DefenderSkill = ((UseBallisticSkill && (int)Defender.Attributes.WarhammerBallisticSkill >= (int)Defender.Attributes.WarhammerWeaponSkill) ? Defender.Attributes.WarhammerBallisticSkill : Defender.Attributes.WarhammerWeaponSkill);
 		int num = DefenderSkill + DefenderCurrentAttackSkillValueModifiers.Value;
 		int num2 = 0;
 		if (MaybeAttacker != null)

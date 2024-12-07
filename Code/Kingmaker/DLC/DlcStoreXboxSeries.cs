@@ -11,6 +11,8 @@ public class DlcStoreXboxSeries : DlcStore, IDLCStoreXboxSeries
 	[SerializeField]
 	private string m_StoreID = "XXXXXXXXXXXX";
 
+	public string StoreID => m_StoreID;
+
 	public override bool IsSuitable => StoreManager.Store == StoreType.XboxSeries;
 
 	public override bool AllowsInstalling => true;

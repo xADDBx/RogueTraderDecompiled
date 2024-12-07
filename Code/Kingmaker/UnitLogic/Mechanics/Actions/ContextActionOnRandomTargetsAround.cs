@@ -31,6 +31,8 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 
 	public bool LowestWounds;
 
+	public bool HighestWounds;
+
 	public bool AffectDead;
 
 	[SerializeField]
@@ -98,6 +100,18 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 				}
 			}
 			list.RemoveAll((BaseUnitEntity p) => p.Health.HitPointsLeft > lowest);
+		}
+		if (HighestWounds)
+		{
+			int highest = 0;
+			foreach (BaseUnitEntity item3 in list)
+			{
+				if (item3.Health.HitPointsLeft > highest)
+				{
+					highest = item3.Health.HitPointsLeft;
+				}
+			}
+			list.RemoveAll((BaseUnitEntity p) => p.Health.HitPointsLeft < highest);
 		}
 		int num = NumberOfTargets;
 		while (num > 0 && !list.Empty())

@@ -135,9 +135,6 @@
     <Reference Include="Kingmaker.GameInfo">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.GameInfo.dll</HintPath>
     </Reference>
-    <Reference Include="Kingmaker.UnitLogic.Enums">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.UnitLogic.Enums.dll</HintPath>
-    </Reference>
     <Reference Include="Kingmaker.QA.Arbiter.Profiling">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.QA.Arbiter.Profiling.dll</HintPath>
     </Reference>
@@ -152,6 +149,9 @@
     </Reference>
     <Reference Include="UnityEngine.TerrainModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Kingmaker.UnitLogic.Enums">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Kingmaker.UnitLogic.Enums.dll</HintPath>
     </Reference>
     <Reference Include="CatmullRomSplines">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\CatmullRomSplines.dll</HintPath>
@@ -228,11 +228,11 @@
     <Reference Include="Utility.ModsInfo">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Utility.ModsInfo.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Async">
-      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Core.Async.dll</HintPath>
-    </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Core.Async">
+      <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\Core.Async.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\..\..\..\..\..\Games\Steam\steamapps\common\Warhammer 40,000 Rogue Trader\WH40KRT_Data\Managed\UnityEngine.UIModule.dll</HintPath>

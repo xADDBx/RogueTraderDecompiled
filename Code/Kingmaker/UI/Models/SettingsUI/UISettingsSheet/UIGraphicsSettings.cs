@@ -22,6 +22,8 @@ public class UIGraphicsSettings : IUISettingsSheet
 
 	public UISettingsEntityBool CameraShake;
 
+	public UISettingsEntityDropdownPS5ProGraphicsQuality PS5ProGraphicsQuality;
+
 	public UISettingsEntityDropdownGraphicsPreset GraphicsQuality;
 
 	public UISettingsEntityDropdownVSyncMode VSyncMode;
@@ -69,6 +71,7 @@ public class UIGraphicsSettings : IUISettingsSheet
 		ScreenResolution.LinkSetting(SettingsRoot.Graphics.ScreenResolution);
 		WindowedMouseLock.LinkSetting(SettingsRoot.Graphics.WindowedCursorLock);
 		CameraShake.LinkSetting(SettingsRoot.Graphics.CameraShake);
+		PS5ProGraphicsQuality.LinkSetting(SettingsRoot.Graphics.PS5ProGraphicsQuality);
 		GraphicsQuality.LinkSetting(SettingsRoot.Graphics.GraphicsQuality);
 		VSyncMode.LinkSetting(SettingsRoot.Graphics.VSyncMode);
 		FrameRateLimitEnabled.LinkSetting(SettingsRoot.Graphics.FrameRateLimitEnabled);

@@ -43,6 +43,6 @@ public class CommandMarkUntargetableSpan : CommandBase
 
 	public override string GetCaption()
 	{
-		return "Mark " + Unit?.GetCaption() + " <b>untargetable</b>";
+		return "Mark " + Unit?.GetCaptionShort() + " <b>untargetable</b>";
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
@@ -9,6 +10,8 @@ using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
+using Kingmaker.Items;
+using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -32,7 +35,8 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 		EnemyDifficulty,
 		Damage,
 		DamageOverflow,
-		Penetration
+		Penetration,
+		EquipmentSlotNumber
 	}
 
 	[SerializeField]
@@ -89,24 +93,23 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 		{
 			return;
 		}
-		if (PropertyToSave != 0)
+		switch (PropertyToSave)
 		{
-			if (PropertyToSave == PropertyParameter.EnemyDifficulty)
-			{
-				base.Context[ContextPropertyName] = (int)(((evt.Target as UnitEntity)?.Blueprint.DifficultyType + 1) ?? UnitDifficultyType.Common);
-			}
-			if (PropertyToSave == PropertyParameter.Damage)
-			{
-				base.Context[ContextPropertyName] = evt.Result;
-			}
-			if (PropertyToSave == PropertyParameter.DamageOverflow)
-			{
-				base.Context[ContextPropertyName] = Math.Max(evt.Result - evt.HPBeforeDamage, 0);
-			}
-			if (PropertyToSave == PropertyParameter.Penetration)
-			{
-				base.Context[ContextPropertyName] = Math.Max(evt.Damage.Penetration.Value, 0);
-			}
+		case PropertyParameter.EnemyDifficulty:
+			base.Context[ContextPropertyName] = (int)(((evt.Target as UnitEntity)?.Blueprint.DifficultyType + 1) ?? UnitDifficultyType.Common);
+			break;
+		case PropertyParameter.Damage:
+			base.Context[ContextPropertyName] = evt.Result;
+			break;
+		case PropertyParameter.DamageOverflow:
+			base.Context[ContextPropertyName] = Math.Max(evt.Result - evt.HPBeforeDamage, 0);
+			break;
+		case PropertyParameter.Penetration:
+			base.Context[ContextPropertyName] = Math.Max(evt.Damage.Penetration.Value, 0);
+			break;
+		case PropertyParameter.EquipmentSlotNumber:
+			base.Context[ContextPropertyName] = GetItemEquipmentSlotNumber(base.Owner.Body.EquipmentSlots, evt.SourceAbility?.Weapon);
+			break;
 		}
 		using (base.Context.GetDataScope(base.Owner.ToITargetWrapper()))
 		{
@@ -173,6 +176,22 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 		{
 			base.Owner.Facts.Remove(base.Fact);
 		}
+	}
+
+	private int GetItemEquipmentSlotNumber(List<ItemSlot> itemSlots, ItemEntity itemEntity)
+	{
+		if (itemSlots == null || itemEntity == null)
+		{
+			return -1;
+		}
+		for (int i = 0; i < itemSlots.Count; i++)
+		{
+			if (itemSlots[i].MaybeItem == itemEntity)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	public override Hash128 GetHash128()

@@ -39,7 +39,7 @@ public class AbilityStarshipPushPhaseRestriction : BlueprintComponent, IAbilityC
 			StarshipEntity obj = caster as StarshipEntity;
 			if (obj == null || obj.Navigation.IsEndingMovementPhase)
 			{
-				return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
+				return LocalizedTexts.Instance.Reasons.PastPushAndMiddlePhase;
 			}
 		}
 		return LocalizedTexts.Instance.Reasons.PastPushPhase;

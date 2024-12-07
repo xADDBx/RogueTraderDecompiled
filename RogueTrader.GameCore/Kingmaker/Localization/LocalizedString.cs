@@ -77,6 +77,12 @@ public class LocalizedString
 		{
 			return true;
 		}
+		LocalizationPack backupPack = LocalizationManager.Instance.BackupPack;
+		if (backupPack != null && TryGetText(backupPack, out txt))
+		{
+			txt = $"[{backupPack.Locale}] {txt}";
+			return true;
+		}
 		txt = string.Empty;
 		return false;
 	}
@@ -90,7 +96,7 @@ public class LocalizedString
 		return "<null>";
 	}
 
-	private static LocalizedString Dereference(LocalizedString ls)
+	public static LocalizedString Dereference(LocalizedString ls)
 	{
 		int num = 0;
 		while ((bool)ls.Shared)

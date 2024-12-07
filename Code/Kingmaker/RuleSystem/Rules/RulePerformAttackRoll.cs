@@ -163,7 +163,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			num = num * 10 + (int)ResultChanceRule / 10;
 			ResultHitLocation = ((num <= 10) ? HitLocation.Head : ((num <= 30) ? HitLocation.Arms : ((num <= 70) ? HitLocation.Body : HitLocation.Legs)));
 		}
-		if (HitChanceRule.ResultRighteousFuryChance > 0 || HitChanceRule.AutoCrits.Value)
+		if (CanBeCriticalAttack())
 		{
 			ResultRighteousFuryD100 = Dice.D100;
 			ResultIsRighteousFury = ((int)ResultRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance || HitChanceRule.AutoCrits.Value) && !ShouldHaveBeenRighteousFury;
@@ -175,7 +175,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			RighteousFuryAmount += (((int)ResultSecondRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance - 50) ? 0.5f : 0f);
 		}
 		RighteousFuryAmount += base.InitiatorUnit.Facts.GetComponents<IncreaseCriticalHitMultiplier>().Count();
-		Result = (((!ResultIsRighteousFury && !HitChanceRule.AutoCrits.Value) || ShouldHaveBeenRighteousFury) ? AttackResult.Hit : AttackResult.RighteousFury);
+		Result = ((!IsCritical() || ShouldHaveBeenRighteousFury) ? AttackResult.Hit : AttackResult.RighteousFury);
 	}
 
 	private void TryParry(UnitEntity targetUnit, RulebookEventContext context)
@@ -336,5 +336,31 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			});
 		}
 		ResultIsHit = false;
+	}
+
+	public bool IsCritical()
+	{
+		if (!HitChanceRule.NeverCrits.Value)
+		{
+			if (!ResultIsRighteousFury)
+			{
+				return HitChanceRule.AutoCrits.Value;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private bool CanBeCriticalAttack()
+	{
+		if (!HitChanceRule.NeverCrits.Value)
+		{
+			if (HitChanceRule.ResultRighteousFuryChance <= 0)
+			{
+				return HitChanceRule.AutoCrits.Value;
+			}
+			return true;
+		}
+		return false;
 	}
 }

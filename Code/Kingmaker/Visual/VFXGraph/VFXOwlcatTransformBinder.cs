@@ -55,11 +55,31 @@ public class VFXOwlcatTransformBinder : VFXBinderBase
 
 	public override bool IsValid(VisualEffect component)
 	{
-		if (Target != null && component.HasVector3(Position) && component.HasVector3(Angles))
+		if (Position == null || Angles == null || Scale == null)
 		{
-			return component.HasVector3(Scale);
+			UpdateSubProperties();
 		}
-		return false;
+		if (component == null)
+		{
+			return false;
+		}
+		if (Target == null)
+		{
+			return false;
+		}
+		if (!component.HasVector3(Position))
+		{
+			return false;
+		}
+		if (!component.HasVector3(Angles))
+		{
+			return false;
+		}
+		if (!component.HasVector3(Scale))
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public override void UpdateBinding(VisualEffect component)

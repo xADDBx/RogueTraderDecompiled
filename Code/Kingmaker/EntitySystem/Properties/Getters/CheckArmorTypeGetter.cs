@@ -19,11 +19,18 @@ public class CheckArmorTypeGetter : PropertyGetter, PropertyContextAccessor.ITar
 
 	protected override int GetBaseValue()
 	{
-		BaseUnitEntity baseUnitEntity = this.GetTargetByType(Target) as BaseUnitEntity;
-		ArmorSlot armorSlot = baseUnitEntity?.Body.Armor;
-		if (armorSlot == null || !armorSlot.HasArmor)
+		if (!(this.GetTargetByType(Target) is BaseUnitEntity baseUnitEntity))
 		{
+			PFLog.Default.Error("CheckArmorTypeGetter: target unit is null (not a BaseUnitEntity)");
 			return 0;
+		}
+		if (m_ArmorType == WarhammerArmorCategory.None)
+		{
+			ArmorSlot armorSlot = baseUnitEntity?.Body.Armor;
+			if (armorSlot == null || !armorSlot.HasArmor)
+			{
+				return 1;
+			}
 		}
 		if (baseUnitEntity.Body.Armor.MaybeArmor?.Blueprint.Category != m_ArmorType)
 		{

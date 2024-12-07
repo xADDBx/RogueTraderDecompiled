@@ -619,6 +619,7 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.ShowDebugBubble), "void ShowDebugBubble()", "emperor_open_my_eyes", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsCommon.ShowDebugMessageBox), "void ShowDebugMessageBox()", "show_message_box", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.StatCoercion), "void StatCoercion()", "stat_coercion", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.CleanSpace), "void CleanSpace()", "clean_space", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsContextData.RandomEncounterStatusSwitch), "void RandomEncounterStatusSwitch()", "break_context_data", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
@@ -642,6 +643,11 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ResetWidgetStash), "void ResetWidgetStash()", "reset_widget_stash", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUINextPlatform), "void ChangeUINextPlatform()", "change_ui_next_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUIPrevPlatform), "void ChangeUIPrevPlatform()", "change_ui_prev_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.CrashGame), "void CrashGame()", "debug_crash", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionGame), "void ExceptionGame()", "debug_exception", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionDBZ), "void ExceptionDBZ()", "test_exception_dbz", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionNRE), "void ExceptionNRE()", "test_exception_nre", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionAIOB), "void ExceptionAIOB()", "test_exception_aiob", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ReturnToMainMenu), "void ReturnToMainMenu()", "return_to_main_menu", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.LogDisposables), "void LogDisposables()", "log_disposables", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.TakeSnapshot), "void TakeSnapshot(string name = null)", "snapshot", "", "", ExecutionPolicy.All, new CheatParameter[1]
@@ -738,6 +744,7 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.DebugStopSpam), "void DebugStopSpam()", "debug_stop_spam", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.DisableLogging), "void DisableLogging()", "disable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.EnableLogging), "void EnableLogging()", "enable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDebug.ClearBugReportPrefs), "void ClearBugReportPrefs()", "reset_bugreport_prefs", "to make a call BugReport`s tutor", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string>(CheatsExportCharacter.ExportCharacter), "void ExportCharacter(string preset)", "export_character", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter

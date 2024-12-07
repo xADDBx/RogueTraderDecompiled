@@ -36,6 +36,12 @@ public class Paginator : MonoBehaviour, IDisposable
 		m_IndexSubscription = m_PageIndex.Subscribe(OnIndexChanged);
 	}
 
+	public void Dispose()
+	{
+		m_PageNavigation.Dispose();
+		m_IndexSubscription?.Dispose();
+	}
+
 	public void UpdateView()
 	{
 		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
@@ -51,11 +57,5 @@ public class Paginator : MonoBehaviour, IDisposable
 	private void OnIndexChanged(int index)
 	{
 		m_Content.anchoredPosition = new Vector2(0f, (float)index * m_ViewPortHeight);
-	}
-
-	public void Dispose()
-	{
-		m_PageNavigation.Dispose();
-		m_IndexSubscription?.Dispose();
 	}
 }

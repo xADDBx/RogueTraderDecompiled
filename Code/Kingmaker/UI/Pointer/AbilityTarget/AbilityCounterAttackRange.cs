@@ -17,7 +17,7 @@ public class AbilityCounterAttackRange : AbilityRange
 		return false;
 	}
 
-	protected override void SetRangeToWorldPosition(Vector3 castPosition)
+	protected override void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
 	{
 		int counterAttackRange = Ability.CounterAttackRange;
 		if (counterAttackRange >= 0)

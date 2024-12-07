@@ -49,8 +49,8 @@ public class ColonyProjectsPageBaseView : ViewBase<ColonyProjectsPageVM>
 
 	public void Initialize()
 	{
-		m_RewardsTitle.text = UIStrings.Instance.ColonyProjectsTexts.ProjectRewards.Text;
-		m_RequirementsTitle.text = UIStrings.Instance.ColonyProjectsTexts.ProjectRequirements.Text;
+		m_RequirementsTitle.text = UIStrings.Instance.QuesJournalTexts.RequiredResources;
+		m_RewardsTitle.text = UIStrings.Instance.QuesJournalTexts.RewardsResources;
 	}
 
 	protected override void BindViewImplementation()
@@ -72,7 +72,6 @@ public class ColonyProjectsPageBaseView : ViewBase<ColonyProjectsPageVM>
 
 	protected override void DestroyViewImplementation()
 	{
-		Hide();
 	}
 
 	public List<IConsoleNavigationEntity> GetRewardsNavigationEntities()
@@ -83,14 +82,6 @@ public class ColonyProjectsPageBaseView : ViewBase<ColonyProjectsPageVM>
 	public List<IConsoleNavigationEntity> GetRequirementsNavigationEntities()
 	{
 		return m_RequirementsWidgetList.GetNavigationEntities();
-	}
-
-	public void Show()
-	{
-	}
-
-	private void Hide()
-	{
 	}
 
 	public void ScrollList(IConsoleEntity entity)

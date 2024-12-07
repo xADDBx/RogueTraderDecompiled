@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.ElementsSystem;
+using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
 using UnityEngine;
 
@@ -16,6 +17,13 @@ public class UnitIsMovedThisTurn : Condition
 	[SerializeReference]
 	public AbstractUnitEvaluator Unit;
 
+	[SerializeField]
+	private bool CheckMovedMoreCellsThanAmount;
+
+	[ShowIf("CheckMovedMoreCellsThanAmount")]
+	[SerializeField]
+	private float CellsAmount;
+
 	protected override string GetConditionCaption()
 	{
 		return $"({Unit}) moved this turn";
@@ -23,6 +31,19 @@ public class UnitIsMovedThisTurn : Condition
 
 	protected override bool CheckCondition()
 	{
-		return Unit.GetValue().GetCombatStateOptional()?.IsMovedThisTurn ?? false;
+		PartUnitCombatState combatStateOptional = Unit.GetValue().GetCombatStateOptional();
+		if (combatStateOptional == null)
+		{
+			return false;
+		}
+		if (!CheckMovedMoreCellsThanAmount)
+		{
+			return combatStateOptional.IsMovedThisTurn;
+		}
+		if (combatStateOptional.IsMovedThisTurn)
+		{
+			return combatStateOptional.MovedCellsThisTurn > CellsAmount;
+		}
+		return false;
 	}
 }

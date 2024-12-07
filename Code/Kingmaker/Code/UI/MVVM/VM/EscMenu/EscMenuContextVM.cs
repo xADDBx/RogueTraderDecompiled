@@ -42,4 +42,12 @@ public class EscMenuContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		RequestEscMenu();
 	}
+
+	public void HandleEscMenuOnShow()
+	{
+	}
+
+	public void HandleEscMenuOnHide()
+	{
+	}
 }

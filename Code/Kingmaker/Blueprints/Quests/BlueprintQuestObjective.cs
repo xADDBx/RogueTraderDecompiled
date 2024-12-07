@@ -19,6 +19,32 @@ namespace Kingmaker.Blueprints.Quests;
 [TypeId("9d27cf036b8dcef408e34b42d5234400")]
 public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObjectiveReference, IEditorCommentHolder
 {
+	public class SilentQuestNotificationOverride : IDisposable
+	{
+		[CanBeNull]
+		private readonly BlueprintQuestObjective m_Objective;
+
+		private readonly QuestNotificationState m_OriginalState;
+
+		public SilentQuestNotificationOverride([CanBeNull] BlueprintQuestObjective objective, QuestNotificationState stateOverride)
+		{
+			m_Objective = objective;
+			if (m_Objective != null)
+			{
+				m_OriginalState = m_Objective.m_SilentQuestNotification;
+				m_Objective.m_SilentQuestNotification = stateOverride;
+			}
+		}
+
+		public void Dispose()
+		{
+			if (m_Objective != null)
+			{
+				m_Objective.m_SilentQuestNotification = m_OriginalState;
+			}
+		}
+	}
+
 	public enum Type
 	{
 		Objective,

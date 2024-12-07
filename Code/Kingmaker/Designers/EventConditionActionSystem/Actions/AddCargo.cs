@@ -5,7 +5,9 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Loot;
 using Kingmaker.Cargo;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
+using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 
@@ -28,34 +30,45 @@ public class AddCargo : GameAction
 
 	protected override void RunAction()
 	{
-		CargoEntity cargoEntity = null;
 		List<CargoEntity> cargoes = new List<CargoEntity>();
+		Action<CargoEntity> action = delegate(CargoEntity cargoEntity)
+		{
+			cargoes.Add(cargoEntity);
+			EventBus.RaiseEvent(delegate(ICargoStateChangedHandler h)
+			{
+				h.HandleCreateNewCargo(cargoEntity);
+			});
+		};
+		CargoEntity cargoEntity2 = null;
 		LootEntry[] items = Loot.Items;
 		foreach (LootEntry lootEntry in items)
 		{
 			int num = lootEntry.Count;
 			while (num > 0)
 			{
-				if (cargoEntity == null || cargoEntity.IsFull)
+				if (cargoEntity2 == null || cargoEntity2.IsFull)
 				{
-					cargoEntity = Game.Instance.Player.CargoState.Create(m_Origin);
+					using (ContextData<ItemsCollection.SuppressEvents>.Request())
+					{
+						cargoEntity2 = Game.Instance.Player.CargoState.Create(m_Origin);
+					}
 				}
-				if (!cargoEntity.CanAdd(lootEntry.Item, out var canAddCount) || canAddCount <= 0)
+				if (!cargoEntity2.CanAdd(lootEntry.Item, out var canAddCount) || canAddCount <= 0)
 				{
 					break;
 				}
 				int num2 = Math.Min(num, canAddCount);
 				num -= num2;
-				cargoEntity.AddItem(lootEntry.Item, num2);
-				if (cargoEntity.IsFull)
+				cargoEntity2.AddItem(lootEntry.Item, num2);
+				if (cargoEntity2.IsFull)
 				{
-					cargoes.Add(cargoEntity);
+					action(cargoEntity2);
 				}
 			}
 		}
-		if (cargoEntity != null && !cargoEntity.IsFull)
+		if (cargoEntity2 != null && !cargoEntity2.IsFull)
 		{
-			cargoes.Add(cargoEntity);
+			action(cargoEntity2);
 		}
 		EventBus.RaiseEvent(delegate(IAddCargoActionHandler h)
 		{

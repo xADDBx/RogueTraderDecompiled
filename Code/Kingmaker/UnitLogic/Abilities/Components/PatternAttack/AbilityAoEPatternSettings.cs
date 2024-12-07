@@ -57,6 +57,18 @@ public class AbilityAoEPatternSettings : IAbilityAoEPatternProvider
 
 	private bool CanBeDirectional => CurrentPattern.CanBeDirectional;
 
+	private bool IsDirectional
+	{
+		get
+		{
+			if (!CurrentPattern.IsCustom)
+			{
+				return m_Directional;
+			}
+			return CurrentPattern.IsDirectional;
+		}
+	}
+
 	public void OverridePattern(AoEPattern pattern)
 	{
 		m_OverridePattern = pattern;
@@ -65,6 +77,6 @@ public class AbilityAoEPatternSettings : IAbilityAoEPatternProvider
 	public OrientedPatternData GetOrientedPattern(IAbilityDataProviderForPattern ability, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, bool coveredTargetsOnly = false)
 	{
 		CustomGridNodeBase actualCastNode;
-		return AoEPatternHelper.GetOrientedPattern(ability, ability.Caster, CurrentPattern, this, casterNode, targetNode, CastOnSameLevel, m_Directional, coveredTargetsOnly, out actualCastNode);
+		return AoEPatternHelper.GetOrientedPattern(ability, ability.Caster, CurrentPattern, this, casterNode, targetNode, CastOnSameLevel, IsDirectional, coveredTargetsOnly, out actualCastNode);
 	}
 }

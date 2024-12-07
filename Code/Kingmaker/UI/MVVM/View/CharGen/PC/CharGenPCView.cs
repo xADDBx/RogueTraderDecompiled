@@ -7,6 +7,7 @@ using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.PC;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using TMPro;
@@ -38,6 +39,9 @@ public class CharGenPCView : CharGenView
 
 	[SerializeField]
 	private TextMeshProUGUI m_BackButtonLabel;
+
+	[SerializeField]
+	private RectTransform m_BottomButtonsContainer;
 
 	private readonly StringReactiveProperty m_NextButtonHint = new StringReactiveProperty(string.Empty);
 
@@ -106,10 +110,11 @@ public class CharGenPCView : CharGenView
 
 	private void CheckCoopButtons(bool isMainCharacter)
 	{
-		m_CloseButton.gameObject.SetActive(isMainCharacter);
-		m_NextButton.gameObject.SetActive(isMainCharacter);
-		m_BackButton.gameObject.SetActive(isMainCharacter);
-		m_VisualSettingsViewButton.gameObject.SetActive(isMainCharacter);
+		m_CloseButton.Or(null)?.gameObject.Or(null)?.SetActive(isMainCharacter);
+		m_NextButton.Or(null)?.gameObject.Or(null)?.SetActive(isMainCharacter);
+		m_BackButton.Or(null)?.gameObject.Or(null)?.SetActive(isMainCharacter);
+		m_VisualSettingsViewButton.Or(null)?.gameObject.Or(null)?.SetActive(isMainCharacter);
+		m_BottomButtonsContainer.Or(null)?.gameObject.Or(null)?.SetActive(isMainCharacter);
 	}
 
 	private void SetActiveNextPhaseButton(bool active)

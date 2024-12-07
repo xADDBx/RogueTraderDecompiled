@@ -51,4 +51,6 @@ public class ArbiterStartupParameters
 	public string ArbiterInstructionsPart { get; set; }
 
 	public string ArbiterExternalTestRunId { get; set; }
+
+	public int? ArbiterExitOnNotObserved { get; set; }
 }

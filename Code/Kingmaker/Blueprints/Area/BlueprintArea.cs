@@ -45,6 +45,7 @@ public class BlueprintArea : BlueprintAreaPart
 
 	public RandomEncounterSettings RandomEncounterSettings;
 
+	[HideInInspector]
 	public SettingType ArtSetting;
 
 	public LocalizedString AreaName;
@@ -244,13 +245,17 @@ public class BlueprintArea : BlueprintAreaPart
 
 	public int GetCR()
 	{
-		int value = 0;
-		AreaCROverrideManager optional = Game.Instance.Player.GetOptional<AreaCROverrideManager>();
-		if (optional == null || !optional.TryGetValue(AssetGuid, out value))
+		if (Application.isPlaying)
 		{
-			return m_CR;
+			int value = 0;
+			AreaCROverrideManager optional = Game.Instance.Player.GetOptional<AreaCROverrideManager>();
+			if (optional == null || !optional.TryGetValue(AssetGuid, out value))
+			{
+				return m_CR;
+			}
+			return value;
 		}
-		return value;
+		return m_CR;
 	}
 
 	public IEnumerable<BlueprintAreaPart> GetParts()

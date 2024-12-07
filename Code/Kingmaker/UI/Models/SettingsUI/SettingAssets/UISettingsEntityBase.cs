@@ -54,6 +54,9 @@ public abstract class UISettingsEntityBase : ScriptableObject, IUISettingsEntity
 	[SerializeField]
 	private bool m_NoDefaultReset;
 
+	[SerializeField]
+	private bool m_IsTrinityModeOnly;
+
 	public LocalizedString Description => m_Description;
 
 	public LocalizedString TooltipDescription => m_TooltipDescription;
@@ -75,4 +78,6 @@ public abstract class UISettingsEntityBase : ScriptableObject, IUISettingsEntity
 	public bool HasCoopTooltipDescription => m_HasCoopTooltipDescription;
 
 	public bool NoDefaultReset => m_NoDefaultReset;
+
+	public bool IsTrinityModeOnly => m_IsTrinityModeOnly;
 }

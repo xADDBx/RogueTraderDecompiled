@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM.VM.ChoseControllerMode;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
+using Kingmaker.UI.Sound;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -194,6 +195,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 
 	private void Decline()
 	{
+		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
 		base.ViewModel.DeclineController();
 		Hide();
 	}
@@ -230,6 +232,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 
 	private void SwitchControlMode()
 	{
+		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
 		m_HeaderLabel.text = UIStrings.Instance.ControllerModeTexts.ChangeInputProcess;
 		m_HintLabel.text = string.Empty;
 		HandleCurrentState(value: false);
@@ -253,6 +256,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 	private void Show()
 	{
 		base.gameObject.SetActive(value: true);
+		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 		m_WindowAnimator.AppearAnimation();
 		m_IsOpened = true;
 		CreateNavigation();
@@ -263,6 +267,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 	{
 		m_WindowAnimator.DisappearAnimation(delegate
 		{
+			UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 			base.gameObject.SetActive(value: false);
 			m_IsOpened = false;
 			GamePad.Instance.PopLayer(m_WindowInputLayer);

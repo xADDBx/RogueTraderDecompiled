@@ -32,15 +32,15 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 	[SerializeField]
 	private CargoRewardSlotView m_CargoRewardSlotPrefab;
 
-	protected InputLayer m_InputLayer;
+	protected InputLayer InputLayer;
 
-	protected GridConsoleNavigationBehaviour m_NavigationBehaviour;
+	protected GridConsoleNavigationBehaviour NavigationBehaviour;
 
 	private bool m_IsInputLayerPushed;
 
 	private bool m_IsWaitingForDialogNavigationBuild;
 
-	protected bool m_ShowTooltip;
+	protected bool ShowTooltip;
 
 	public void Initialize()
 	{
@@ -56,11 +56,11 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
+		AddDisposable(NavigationBehaviour = new GridConsoleNavigationBehaviour());
 		DrawCargoes();
 		AddDisposable(base.ViewModel.UpdateCargo.Subscribe(DrawCargoes));
 		CreateInput();
-		AddDisposable(m_NavigationBehaviour.DeepestFocusAsObservable.Subscribe(OnPageFocusChanged));
+		AddDisposable(NavigationBehaviour.DeepestFocusAsObservable.Subscribe(OnPageFocusChanged));
 		if (!m_IsWaitingForDialogNavigationBuild)
 		{
 			Show();
@@ -69,9 +69,9 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 
 	protected override void DestroyViewImplementation()
 	{
-		m_NavigationBehaviour.Clear();
-		m_NavigationBehaviour = null;
-		m_InputLayer = null;
+		NavigationBehaviour.Clear();
+		NavigationBehaviour = null;
+		InputLayer = null;
 	}
 
 	protected void HandleComplete()
@@ -83,10 +83,10 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 	{
 		base.gameObject.SetActive(value: true);
 		UISounds.Instance.Sounds.Rewards.CargoRewardsShowWindow.Play();
-		GamePad.Instance.PushLayer(m_InputLayer);
+		GamePad.Instance.PushLayer(InputLayer);
 		m_IsInputLayerPushed = true;
 		m_IsWaitingForDialogNavigationBuild = false;
-		m_ShowTooltip = false;
+		ShowTooltip = false;
 	}
 
 	private void Hide()
@@ -95,7 +95,7 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 		base.gameObject.SetActive(value: false);
 		if (m_IsInputLayerPushed)
 		{
-			GamePad.Instance.PopLayer(m_InputLayer);
+			GamePad.Instance.PopLayer(InputLayer);
 			m_IsInputLayerPushed = false;
 		}
 		TooltipHelper.HideTooltip();
@@ -104,13 +104,13 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 
 	private void CreateNavigation()
 	{
-		m_NavigationBehaviour.Clear();
-		m_NavigationBehaviour.AddRow(m_WidgetListCargoes.GetNavigationEntities());
+		NavigationBehaviour.Clear();
+		NavigationBehaviour.AddRow(m_WidgetListCargoes.GetNavigationEntities());
 	}
 
 	private void CreateInput()
 	{
-		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
+		InputLayer = NavigationBehaviour.GetInputLayer(new InputLayer
 		{
 			ContextName = "CargoRewards"
 		}, null, leftStick: true, rightStick: true);
@@ -141,7 +141,7 @@ public class CargoRewardsBaseView : ViewBase<CargoRewardsVM>, IDialogNavigationC
 		m_IsWaitingForDialogNavigationBuild = true;
 		if (m_IsInputLayerPushed)
 		{
-			GamePad.Instance.PopLayer(m_InputLayer);
+			GamePad.Instance.PopLayer(InputLayer);
 			m_IsInputLayerPushed = false;
 		}
 	}

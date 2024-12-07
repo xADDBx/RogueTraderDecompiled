@@ -6,6 +6,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -26,6 +27,7 @@ using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Groups;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
@@ -302,6 +304,18 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 				ReturnPosition = SizePathfindingHelper.FromViewToMechanicsPosition(base.Owner, base.Owner.Position, inBattle: true).GetNearestNodeXZUnwalkable()?.Vector3Position ?? base.Owner.CurrentNode.position;
 				base.Owner.Position = ReturnPosition.Value;
 				ReturnOrientation = base.Owner.DesiredOrientation;
+			}
+			if (Game.Instance.TurnController.IsPreparationTurn)
+			{
+				UnitGroupEnumerator enumerator = Game.Instance.Player.Group.GetEnumerator();
+				while (enumerator.MoveNext())
+				{
+					BaseUnitEntity current2 = enumerator.Current;
+					if (current2.DistanceToInCells(base.Owner) <= 1)
+					{
+						current2.CombatState.StartedCombatNearEnemy = true;
+					}
+				}
 			}
 		}
 		else

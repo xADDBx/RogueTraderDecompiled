@@ -341,28 +341,36 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 
 	private void EnterTb()
 	{
-		if (!Data.InCombat)
+		if (Data.InCombat)
 		{
-			Data.InCombat = true;
-			EventBus.RaiseEvent(delegate(ITurnBasedModeHandler h)
-			{
-				h.HandleTurnBasedModeSwitched(isTurnBased: true);
-			});
-			MomentumController.InitializeGroups();
-			InitiativeHelper.Update();
-			AddUnitsToCombat();
-			NetService.Instance.CancelCurrentCommands();
-			NextRound(isFirst: true);
-			if (NeedDeploymentPhase)
-			{
-				BeginPreparationTurn(IsDeploymentAllowed);
-			}
-			else
-			{
-				NextTurnTB();
-			}
-			HandleJoinedThisTickEntities();
+			return;
 		}
+		Data.InCombat = true;
+		EventBus.RaiseEvent(delegate(ITurnBasedModeHandler h)
+		{
+			h.HandleTurnBasedModeSwitched(isTurnBased: true);
+		});
+		MomentumController.InitializeGroups();
+		InitiativeHelper.Update();
+		AddUnitsToCombat();
+		NetService.Instance.CancelCurrentCommands();
+		if (!Game.Instance.AbilityExecutor.Abilities.Empty())
+		{
+			Game.Instance.AbilityExecutor.Abilities.ForEach(delegate(AbilityExecutionProcess ability)
+			{
+				ability.InstantDeliver();
+			});
+		}
+		NextRound(isFirst: true);
+		if (NeedDeploymentPhase)
+		{
+			BeginPreparationTurn(IsDeploymentAllowed);
+		}
+		else
+		{
+			NextTurnTB();
+		}
+		HandleJoinedThisTickEntities();
 	}
 
 	private void ExitTb()

@@ -1,3 +1,4 @@
+using System.Collections;
 using JetBrains.Annotations;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Base;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components;
@@ -56,6 +57,8 @@ public class SlideSelectorCommonView : BaseCharGenAppearancePageComponentView<Sl
 	[SerializeField]
 	private VirtualListLayoutElementSettings m_LayoutSettings;
 
+	private bool m_IsCooldownActive;
+
 	public override VirtualListLayoutElementSettings LayoutSettings => m_LayoutSettings;
 
 	public bool IsActive => base.ViewModel?.IsAvailable.Value ?? false;
@@ -104,6 +107,14 @@ public class SlideSelectorCommonView : BaseCharGenAppearancePageComponentView<Sl
 			CheckCoopButtons(base.ViewModel.IsAvailable.Value, value);
 		}));
 		DelayedInvoker.InvokeInFrames(CalculateHandleSize, 1);
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_IsCooldownActive = false;
+		StopAllCoroutines();
+		base.DestroyViewImplementation();
+		base.gameObject.SetActive(value: false);
 	}
 
 	private void CheckCoopButtons(bool isAvailable, bool isMainCharacter)
@@ -164,12 +175,6 @@ public class SlideSelectorCommonView : BaseCharGenAppearancePageComponentView<Sl
 		return true;
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		base.gameObject.SetActive(value: false);
-	}
-
 	public void OnScroll(PointerEventData eventData)
 	{
 	}
@@ -186,11 +191,28 @@ public class SlideSelectorCommonView : BaseCharGenAppearancePageComponentView<Sl
 
 	public bool HandleLeft()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return OnPreviousHandler();
 	}
 
 	public bool HandleRight()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return OnNextHandler();
+	}
+
+	private IEnumerator HandleCooldown()
+	{
+		m_IsCooldownActive = true;
+		yield return new WaitForSecondsRealtime(0.5f);
+		m_IsCooldownActive = false;
 	}
 }

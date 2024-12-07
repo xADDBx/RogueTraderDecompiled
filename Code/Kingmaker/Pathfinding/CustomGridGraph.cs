@@ -77,7 +77,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 				{
 					ApplyChannel(node, x, z, color.b, channels[2], factors[2]);
 				}
-				node.WalkableErosion = node.Walkable;
+				node.WalkableErosion = node.StaticWalkable;
 			}
 		}
 
@@ -94,7 +94,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 			case ChannelUse.WalkablePenalty:
 				if (value == 0)
 				{
-					node.Walkable = false;
+					node.StaticWalkable = false;
 				}
 				else
 				{
@@ -141,6 +141,9 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	[JsonMember]
 	public Vector3 center;
+
+	[JsonMember]
+	public bool snapCenterToWorldGrid;
 
 	[JsonMember]
 	public Vector2 unclampedSize;
@@ -936,10 +939,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		}
 		yield return new Progress(0.9f, "Calculating erosion");
 		ErodeWalkableArea();
-		if (!Application.isPlaying || meshNodes == null)
-		{
-			meshNodes = new CustomGridMeshNodeBaker(this).Bake();
-		}
+		meshNodes = new CustomGridMeshNodeBaker(this).Bake();
 	}
 
 	public void InitLosCache()
@@ -1013,14 +1013,14 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		}
 		if (m_NavmeshMasks.IsRemoved(x, z) || (!m_IsScanningNow && m_GridCuts.IsRemoved(x, z)))
 		{
-			customGridNode.Walkable = false;
-			customGridNode.WalkableErosion = customGridNode.Walkable;
+			customGridNode.StaticWalkable = false;
+			customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 			return;
 		}
 		if (m_NavmeshMasks.IsAdded(x, z) || (!m_IsScanningNow && m_GridCuts.IsAdded(x, z)))
 		{
-			customGridNode.Walkable = true;
-			customGridNode.WalkableErosion = customGridNode.Walkable;
+			customGridNode.StaticWalkable = true;
+			customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 			return;
 		}
 		if (walkable && useRaycastNormal && collision.heightCheck && hit.normal != Vector3.zero)
@@ -1037,8 +1037,8 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 			}
 		}
 		walkable = walkable && collision.Check((Vector3)customGridNode.position);
-		customGridNode.Walkable = walkable;
-		customGridNode.WalkableErosion = customGridNode.Walkable;
+		customGridNode.StaticWalkable = walkable;
+		customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 	}
 
 	protected virtual bool ErosionAnyFalseConnections(GraphNode baseNode)
@@ -1069,15 +1069,15 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	private void ErodeNode(GraphNode node)
 	{
-		if (node.Walkable && ErosionAnyFalseConnections(node))
+		if (node.StaticWalkable && ErosionAnyFalseConnections(node))
 		{
-			node.Walkable = false;
+			node.StaticWalkable = false;
 		}
 	}
 
 	private void ErodeNodeWithTagsInit(GraphNode node)
 	{
-		if (node.Walkable && ErosionAnyFalseConnections(node))
+		if (node.StaticWalkable && ErosionAnyFalseConnections(node))
 		{
 			node.Tag = (uint)erosionFirstTag;
 		}
@@ -1090,7 +1090,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 	private void ErodeNodeWithTags(GraphNode node, int iteration)
 	{
 		CustomGridNodeBase customGridNodeBase = node as CustomGridNodeBase;
-		if (!customGridNodeBase.Walkable || customGridNodeBase.Tag < erosionFirstTag || customGridNodeBase.Tag >= erosionFirstTag + iteration)
+		if (!customGridNodeBase.StaticWalkable || customGridNodeBase.Tag < erosionFirstTag || customGridNodeBase.Tag >= erosionFirstTag + iteration)
 		{
 			return;
 		}
@@ -1187,7 +1187,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	public virtual bool IsValidConnection(CustomGridNodeBase node1, CustomGridNodeBase node2)
 	{
-		if (!node1.Walkable || !node2.Walkable)
+		if (!node1.StaticWalkable || !node2.StaticWalkable)
 		{
 			return false;
 		}
@@ -1246,7 +1246,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 	public virtual void CalculateConnections(int x, int z)
 	{
 		CustomGridNode customGridNode = nodes[z * width + x];
-		if (!customGridNode.Walkable)
+		if (!customGridNode.StaticWalkable)
 		{
 			customGridNode.ResetConnectionsInternal();
 			return;
@@ -1510,6 +1510,79 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		ArrayPool<Color>.Release(ref array3);
 	}
 
+	private void CreateMeshNodesVisualization(GraphGizmoHelper helper)
+	{
+		if (nodes == null || meshNodes == null)
+		{
+			return;
+		}
+		int num = 0;
+		for (int i = 0; i < nodes.Length; i++)
+		{
+			if (nodes[i].Walkable)
+			{
+				num++;
+			}
+		}
+		int[] obj = ((neighbours == NumNeighbours.Six) ? hexagonNeighbourIndices : new int[4] { 0, 1, 2, 3 });
+		float num2 = ((neighbours == NumNeighbours.Six) ? 0.333333f : 0.5f);
+		int num3 = obj.Length - 2;
+		int num4 = 3 * num3;
+		Vector3[] array = ArrayPool<Vector3>.Claim(num * num4);
+		Color[] array2 = ArrayPool<Color>.Claim(num * num4);
+		int num5 = 0;
+		for (int j = 0; j < nodes.Length; j++)
+		{
+			CustomGridNode customGridNode = nodes[j];
+			if (customGridNode.Walkable)
+			{
+				Color color = new Color(1f, 0.2f, 0.2f, 0.3f);
+				ref CustomGridMeshNode reference = ref meshNodes[j];
+				Vector3 vector = new Vector3((float)customGridNode.XCoordinateInGrid + 0.5f, 0f, (float)customGridNode.ZCoordinateInGrid + 0.5f);
+				vector.y += transform.InverseTransform((Vector3)customGridNode.position).y;
+				reference.Unpack(vector.y, out var cornerHeightSW, out var cornerHeightSE, out var cornerHeightNW, out var cornerHeightNE);
+				float num6 = num2;
+				Vector3 point = new Vector3(vector.x - num6, cornerHeightSW, vector.z - num6);
+				Vector3 point2 = new Vector3(vector.x + num6, cornerHeightSE, vector.z - num6);
+				Vector3 point3 = new Vector3(vector.x - num6, cornerHeightNW, vector.z + num6);
+				Vector3 point4 = new Vector3(vector.x + num6, cornerHeightNE, vector.z + num6);
+				point2 = transform.Transform(point2);
+				point = transform.Transform(point);
+				point3 = transform.Transform(point3);
+				point4 = transform.Transform(point4);
+				array[num5] = point2;
+				array[num5 + 1] = point;
+				array[num5 + 2] = point3;
+				array[num5 + 3] = point4;
+				if (neighbours == NumNeighbours.Six)
+				{
+					array[num5 + 6] = array[num5];
+					array[num5 + 7] = array[num5 + 2];
+					array[num5 + 8] = array[num5 + 3];
+					array[num5 + 9] = array[num5];
+					array[num5 + 10] = array[num5 + 3];
+					array[num5 + 11] = array[num5 + 5];
+				}
+				else
+				{
+					array[num5 + 4] = array[num5];
+					array[num5 + 5] = array[num5 + 2];
+				}
+				for (int k = 0; k < num4; k++)
+				{
+					array2[num5 + k] = color;
+				}
+				num5 += num4;
+			}
+		}
+		if (showMeshSurface)
+		{
+			helper.DrawTriangles(array, array2, num5 * num3 / num4);
+		}
+		ArrayPool<Vector3>.Release(ref array);
+		ArrayPool<Color>.Release(ref array2);
+	}
+
 	protected IntRect GetRectFromBounds(Bounds bounds)
 	{
 		bounds = transform.InverseTransform(bounds);
@@ -1724,11 +1797,11 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 					point.y = 0f;
 					if (bounds.Contains(point))
 					{
-						customGridNode.Walkable = customGridNode.WalkableErosion;
+						customGridNode.StaticWalkable = customGridNode.WalkableErosion;
 						o.Apply(customGridNode);
 						customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 					}
-					customGridNode.WalkableErosion = customGridNode.Walkable;
+					customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 				}
 				else
 				{
@@ -1759,11 +1832,11 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 				{
 					int num6 = num5 * width + num4;
 					CustomGridNode customGridNode2 = nodes[num6];
-					bool walkable = customGridNode2.Walkable;
-					customGridNode2.Walkable = customGridNode2.WalkableErosion;
+					bool staticWalkable = customGridNode2.StaticWalkable;
+					customGridNode2.StaticWalkable = customGridNode2.WalkableErosion;
 					if (!a.Contains(num4, num5))
 					{
-						customGridNode2.TmpWalkable = walkable;
+						customGridNode2.TmpWalkable = staticWalkable;
 					}
 				}
 			}
@@ -1783,7 +1856,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 					{
 						int num11 = num10 * width + num9;
 						CustomGridNode obj = nodes[num11];
-						obj.Walkable = obj.TmpWalkable;
+						obj.StaticWalkable = obj.TmpWalkable;
 					}
 				}
 			}
@@ -2023,7 +2096,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		}
 		CustomGridNode customGridNode = nodes[node.NodeInGridIndex + neighbourOffsets[num]];
 		CustomGridNode customGridNode2 = nodes[node.NodeInGridIndex + neighbourOffsets[num2]];
-		if (!customGridNode.Walkable || !customGridNode2.Walkable)
+		if (!customGridNode.StaticWalkable || !customGridNode2.StaticWalkable)
 		{
 			return false;
 		}
@@ -2167,7 +2240,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		{
 			if (!validAreas.Contains(customGridNode.Area))
 			{
-				customGridNode.Walkable = false;
+				customGridNode.StaticWalkable = false;
 			}
 		}
 	}

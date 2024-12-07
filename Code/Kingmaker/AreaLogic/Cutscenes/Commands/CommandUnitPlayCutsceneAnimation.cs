@@ -148,6 +148,8 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		}
 	}
 
+	public AnimationClipWrapper ClipWrapperForEditor => m_CutsceneClipWrapperLink.LoadAsset();
+
 	private bool ClipIsLooping
 	{
 		get
@@ -438,6 +440,6 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 			text2 = m_CutsceneClipWrapperLink?.LoadAsset()?.AnimationClip.name;
 		}
 		string text3 = (RandomDelayBeforeAnimation ? $" With Delay {m_RandomDelayMin}s-{m_RandomDelayMax}s " : string.Empty);
-		return (m_Unit?.GetCaption() ?? "(none)") + " <b>animation</b> " + (flag ? text2 : "(none)") + text3 + text;
+		return (m_Unit?.GetCaptionShort() ?? "(none)") + " <b>animation</b> " + (flag ? text2 : "(none)") + text3 + text;
 	}
 }

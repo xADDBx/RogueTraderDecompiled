@@ -96,7 +96,7 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 
 	private void OnWeaponSetChanged(WeaponSetVM set)
 	{
-		if (CanChangeEquipment.Value && Unit?.Value != null)
+		if (CanChangeEquipment.Value && Unit?.Value != null && Unit.Value.IsDirectlyControllable())
 		{
 			Game.Instance.GameCommandQueue.SwitchHandEquipment(Unit.Value, set.Index);
 			OnWeaponSetChangedAction();

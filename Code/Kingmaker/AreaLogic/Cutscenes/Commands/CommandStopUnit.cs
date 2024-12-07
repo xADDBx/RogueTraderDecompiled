@@ -32,7 +32,7 @@ public class CommandStopUnit : CommandBase
 		{
 			return "<b>Stop</b> none";
 		}
-		return "<b>Stop</b> " + Unit.GetCaption();
+		return "<b>Stop</b> " + Unit?.GetCaptionShort();
 	}
 
 	public override string GetWarning()

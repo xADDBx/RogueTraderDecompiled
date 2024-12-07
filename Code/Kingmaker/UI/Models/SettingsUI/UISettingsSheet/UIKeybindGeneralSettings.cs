@@ -83,6 +83,8 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 
 	public UISettingsEntityKeyBinding NextCharacter;
 
+	public UISettingsEntityKeyBinding FlipZoneStrategist;
+
 	public void LinkToSettings()
 	{
 		HighlightObjects.LinkSetting(SettingsRoot.Controls.Keybindings.General.HighlightObjects);
@@ -123,6 +125,7 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 		NextTab.LinkSetting(SettingsRoot.Controls.Keybindings.General.NextTab);
 		PrevCharacter.LinkSetting(SettingsRoot.Controls.Keybindings.General.PrevCharacter);
 		NextCharacter.LinkSetting(SettingsRoot.Controls.Keybindings.General.NextCharacter);
+		FlipZoneStrategist.LinkSetting(SettingsRoot.Controls.Keybindings.General.FlipZoneStrategist);
 	}
 
 	public void InitializeSettings()

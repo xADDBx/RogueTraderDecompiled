@@ -28,10 +28,7 @@ public class GameLogEventCargoCollection : GameLogEvent<GameLogEventCargoCollect
 
 		public void HandleAddItemToCargo(ItemEntity item, ItemsCollection from, CargoEntity to, int oldIndex)
 		{
-			if (from != Game.Instance.Player.Inventory)
-			{
-				TryAddEvent(EventType.CargoReplenished, to, item);
-			}
+			TryAddEvent(EventType.CargoReplenished, to, item);
 			if (to.IsFull)
 			{
 				TryAddEvent(EventType.CargoFormed, to, item);

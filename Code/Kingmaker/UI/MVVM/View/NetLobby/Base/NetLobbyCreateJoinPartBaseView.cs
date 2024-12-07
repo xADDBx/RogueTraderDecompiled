@@ -120,7 +120,7 @@ public class NetLobbyCreateJoinPartBaseView : ViewBase<NetLobbyVM>
 		{
 			m_JoinableUserTypesLabel.text = UIStrings.Instance.NetLobbyTexts.JoinableUserTypesLabel;
 			m_JoinableUserTypesDropdown.Bind(base.ViewModel.JoinableUserTypesDropdownVM);
-			m_JoinableUserTypesDropdown.SetIndex((int)base.ViewModel.CurrentJoinableUserType.Value);
+			m_JoinableUserTypesDropdown.SetIndex(base.ViewModel.JoinableUserTypeIndex.Value);
 			AddDisposable(m_JoinableUserTypesDropdown.Index.Subscribe(base.ViewModel.SetJoinableUserType));
 		}
 		bool flag2 = base.ViewModel.InvitableUserTypesDropdownVM != null;
@@ -129,7 +129,7 @@ public class NetLobbyCreateJoinPartBaseView : ViewBase<NetLobbyVM>
 		{
 			m_InvitableUserTypesLabel.text = UIStrings.Instance.NetLobbyTexts.InvitableUserTypesLabel;
 			m_InvitableUserTypesDropdown.Bind(base.ViewModel.InvitableUserTypesDropdownVM);
-			m_InvitableUserTypesDropdown.SetIndex((int)base.ViewModel.CurrentInvitableUserType.Value);
+			m_InvitableUserTypesDropdown.SetIndex(base.ViewModel.InvitableUserTypeIndex.Value);
 			AddDisposable(m_InvitableUserTypesDropdown.Index.Subscribe(base.ViewModel.SetInvitableUserType));
 		}
 	}

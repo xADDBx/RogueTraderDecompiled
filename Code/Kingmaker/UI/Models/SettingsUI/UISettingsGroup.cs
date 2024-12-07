@@ -15,11 +15,20 @@ public class UISettingsGroup : ScriptableObject
 
 	public UISettingsEntityBase[] SettingsList;
 
-	public bool IsVisible => SettingVisible(SettingPlatform);
+	public bool IsVisible => IsVisibleOnPlatform(SettingPlatform);
 
-	public List<UISettingsEntityBase> VisibleSettingsList => SettingsList.Where((UISettingsEntityBase s) => SettingVisible(s.SettingsPlatform)).ToList();
+	public List<UISettingsEntityBase> VisibleSettingsList => SettingsList.Where(IsSettingVisible).ToList();
 
-	private bool SettingVisible(UISettingsEntityBase.UISettingsPlatform platform)
+	private bool IsSettingVisible(UISettingsEntityBase setting)
+	{
+		if (setting.IsTrinityModeOnly && !IsTrinityMode())
+		{
+			return false;
+		}
+		return IsVisibleOnPlatform(setting.SettingsPlatform);
+	}
+
+	private bool IsVisibleOnPlatform(UISettingsEntityBase.UISettingsPlatform platform)
 	{
 		if (platform == UISettingsEntityBase.UISettingsPlatform.Hide)
 		{
@@ -35,5 +44,10 @@ public class UISettingsGroup : ScriptableObject
 			return false;
 		}
 		return true;
+	}
+
+	private static bool IsTrinityMode()
+	{
+		return false;
 	}
 }

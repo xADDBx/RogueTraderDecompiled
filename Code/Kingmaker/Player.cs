@@ -728,7 +728,6 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public void InitializeHack()
 	{
 		GameTime = BlueprintRoot.Instance.InitialDate.GetTime();
-		Achievements.Activate();
 		PSNObjects.Activate();
 		InitializeReputation();
 		GlobalMapRandomGenerationState.Initialize();
@@ -736,6 +735,11 @@ public sealed class Player : Entity, IDisposable, IHashable
 		ProfitFactor.Initialize();
 		AppliedPlayerUpgraders.AddRange(BlueprintRoot.Instance.PlayerUpgradeActions.Upgraders);
 		IgnoredNotAppliedPlayerUpgraders.AddRange(BlueprintRoot.Instance.PlayerUpgradeActions.IgnoreUpgraders);
+	}
+
+	public void InitializeOnGameLoad()
+	{
+		Achievements.Activate();
 	}
 
 	protected override void OnDispose()
@@ -796,13 +800,13 @@ public sealed class Player : Entity, IDisposable, IHashable
 			instance.SavedPosition = m_CameraPos;
 			instance.SavedRotation = m_CameraRot;
 		}
-		Achievements.Activate();
 		PSNObjects.Activate();
 		if (StartPreset == null)
 		{
 			StartPreset = BlueprintRoot.Instance.NewGamePreset;
 		}
 		GlobalMapRandomGenerationState.Initialize();
+		InitializeOnGameLoad();
 	}
 
 	protected override void OnSubscribe()

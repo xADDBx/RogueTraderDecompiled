@@ -194,12 +194,13 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 			return;
 		}
 		InitializeLogger();
-		InitPlatformDataPath();
+		PlatformDataPath = Arguments.ArbiterPlatformDataPath ?? ApplicationPaths.DevelopmentDataPath;
+		PFLog.Arbiter.Log("Using PlatformDataPath = {0}", PlatformDataPath);
+		ArbiterClientMeasurements.s_IsMemoryToolAvailable = true;
 		HardwareInfo = new HardwareInfo();
 		ArbiterClientIntegration.SetQaMode(b: false);
 		SendToServer = Arguments.Arbiter != null || Application.isEditor;
 		s_ServerAddress = Arguments.ArbiterServer ?? s_ServerAddress;
-		PlatformDataPath = Arguments.ArbiterPlatformDataPath ?? PlatformDataPath;
 		if (s_StatusServer == null)
 		{
 			s_StatusServer = new ArbiterStatusServer();
@@ -263,12 +264,6 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 			File.Move(text, text2);
 		}
 		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ArbiterUberLoggerFilter(new UberLoggerFile("arbiter.log", null, includeCallStacks: false)));
-	}
-
-	private static void InitPlatformDataPath()
-	{
-		PlatformDataPath = ApplicationPaths.DevelopmentDataPath;
-		ArbiterClientMeasurements.s_IsMemoryToolAvailable = true;
 	}
 
 	public void RunInstruction(string instructionName)
@@ -342,6 +337,11 @@ public class Arbiter : MonoBehaviour, IArbiterEventHandler, ISubscriber
 
 	private void GetNextTest()
 	{
+		if (Arguments.ArbiterExitOnNotObserved.HasValue && DateTime.Now - s_StatusServer.LastStatus > TimeSpan.FromSeconds(Arguments.ArbiterExitOnNotObserved ?? int.MaxValue))
+		{
+			PFLog.Arbiter.Error("There was no status request for too long, so exit");
+			Application.Quit(1);
+		}
 		if (m_InstructionsToRun.Empty())
 		{
 			m_IsFinished = true;

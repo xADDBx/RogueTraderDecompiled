@@ -122,14 +122,14 @@ public class BaseItemPart : TooltipBaseTemplate
 
 	protected bool TryAddIconStatValue(List<ITooltipBrick> bricks, TooltipElement element, Sprite icon = null, TooltipBrickIconStatValueType type = TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType bgrType = TooltipBrickIconStatValueType.Normal)
 	{
-		string text = ItemTooltipData.GetText(element);
-		if (string.IsNullOrEmpty(text))
+		string value = ((element == TooltipElement.ArmorDodgePenalty) ? "×" : string.Empty) + ItemTooltipData.GetText(element);
+		if (string.IsNullOrEmpty(value))
 		{
 			return false;
 		}
 		string addText = ItemTooltipData.GetAddText(element);
 		string label = ItemTooltipData.GetLabel(element);
-		return TryAddIconStatValue(bricks, label, text, addText, icon, type, bgrType);
+		return TryAddIconStatValue(bricks, label, value, addText, icon, type, bgrType);
 	}
 
 	protected bool TryAddIconAndName(List<ITooltipBrick> bricks, TooltipElement element, Sprite icon)

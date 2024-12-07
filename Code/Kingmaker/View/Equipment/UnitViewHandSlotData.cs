@@ -492,13 +492,9 @@ public class UnitViewHandSlotData
 			{
 				foreach (ItemEnchantment enchantment in VisibleItem.Enchantments)
 				{
-					if ((!enchantment.FxObject || flag) && enchantment.Active)
+					if (!enchantment.FxObject || flag)
 					{
 						enchantment.RespawnFx();
-					}
-					if (!enchantment.Active)
-					{
-						enchantment.DestroyFx();
 					}
 				}
 				return;

@@ -138,7 +138,7 @@ public class CommandMoveByPath : CommandBase
 
 	public override string GetCaption()
 	{
-		return Unit?.ToString() + " <b>move along</b> " + Path;
+		return Unit?.GetCaptionShort() + " <b>move along</b> " + Path;
 	}
 
 	public override string GetWarning()

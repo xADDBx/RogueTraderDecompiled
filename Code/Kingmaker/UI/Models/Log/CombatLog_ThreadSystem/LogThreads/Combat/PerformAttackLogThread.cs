@@ -280,7 +280,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		}
 		if (resultDamage != null && !resultDamage.Damage.CalculatedValue.HasValue)
 		{
-			bool autoCrit = rule.RollPerformAttackRule.HitChanceRule.AutoCrits.Value;
+			bool autoCrit = rule.RollPerformAttackRule.HitChanceRule.AutoCrits.Value && !rule.RollPerformAttackRule.HitChanceRule.NeverCrits.Value;
 			int criticalNestedLevel = 1;
 			yield return new TooltipBrickChance(s.CriticalHit.Text, Math.Clamp(autoCrit ? 100 : GameLogContext.RfChance.Value, 0, 100), Math.Clamp(GameLogContext.RfD100.Value.Result, 0, 100), criticalNestedLevel, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: false, isBeigeBackground: true);
 			if (isInfotip)
