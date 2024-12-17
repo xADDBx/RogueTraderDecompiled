@@ -9,7 +9,7 @@ public class FirstLaunchLanguagePageVM : FirstLaunchSettingsPageVM
 
 	public FirstLaunchLanguagePageVM()
 	{
-		Languages = new FirstLaunchEntityLanguageVM(UISettingsRoot.Instance.UIGameMainSettings.Localization, forceSetValue: true);
+		Languages = new FirstLaunchEntityLanguageVM(UISettingsRoot.Instance.UIGameMainSettings.LocalizationSetting, forceSetValue: true);
 	}
 
 	protected override void DisposeImplementation()

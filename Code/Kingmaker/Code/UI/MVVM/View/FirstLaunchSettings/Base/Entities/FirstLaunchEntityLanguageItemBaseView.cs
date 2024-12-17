@@ -32,12 +32,12 @@ public abstract class FirstLaunchEntityLanguageItemBaseView : ViewBase<FirstLaun
 		AddDisposable(m_Button.OnConfirmClickAsObservable().Subscribe(base.ViewModel.SetSelected));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void SetValueFromSettings(bool value)
 	{
 		m_Button.SetActiveLayer(value ? "On" : "Off");
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 }

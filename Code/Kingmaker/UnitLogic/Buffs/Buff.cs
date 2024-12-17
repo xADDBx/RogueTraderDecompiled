@@ -39,7 +39,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Buffs;
 
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWithRanks, IBuff, IHashable
+public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWithRanks, IBuff, IEquatable<Buff>, IHashable
 {
 	public class Data : ContextData<Data>
 	{
@@ -446,7 +446,24 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 
 	public void Remove()
 	{
+		if (base.Manager == null)
+		{
+			EntityFactsManager entityFactsManager2 = (base.Manager = base.Owner?.Facts);
+		}
 		base.Manager?.Remove(this);
+	}
+
+	public override bool IsEqual(EntityFact fact)
+	{
+		if (!(fact is Buff buff))
+		{
+			return false;
+		}
+		if (base.UniqueId == buff.UniqueId)
+		{
+			return base.Blueprint == buff.Blueprint;
+		}
+		return false;
 	}
 
 	public void MarkExpired()
@@ -614,6 +631,15 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			int value = DurationInRounds.Rounds().Value + rounds.Value.Value;
 			SetDuration(new Rounds(value));
 		}
+	}
+
+	public bool Equals(Buff other)
+	{
+		if (other == null || other.UniqueId == null || base.UniqueId == null)
+		{
+			return false;
+		}
+		return base.UniqueId.Equals(other.UniqueId);
 	}
 
 	public override Hash128 GetHash128()

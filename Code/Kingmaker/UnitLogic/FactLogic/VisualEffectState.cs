@@ -41,6 +41,10 @@ public class VisualEffectState : UnitFactComponentDelegate, IHashable
 	protected override void OnActivateOrPostLoad()
 	{
 		base.OnActivate();
+		if (m_OwnerBuff == null)
+		{
+			m_OwnerBuff = base.Fact as Buff;
+		}
 		if (BlueprintRoot.Instance.WarhammerRoot.PostProcessingEffectsLibrary.GetEffectWwiseEvents.TryGetValue(m_VisualStateEffectType, out m_SoundEventReferences))
 		{
 			if (m_UseWeatherEffect)
@@ -107,9 +111,9 @@ public class VisualEffectState : UnitFactComponentDelegate, IHashable
 
 	private void OnActivationComplete()
 	{
-		if (m_InstantExpire && m_UsePostEffect == m_RunPostEffect.WasActivated && m_UseWeatherEffect == m_RunWeatherEffect.WasActivated && m_OwnerBuff != null)
+		if (m_InstantExpire && m_UsePostEffect == m_RunPostEffect.WasActivated && m_UseWeatherEffect == m_RunWeatherEffect.WasActivated)
 		{
-			m_OwnerBuff.Remove();
+			m_OwnerBuff?.Remove();
 		}
 	}
 

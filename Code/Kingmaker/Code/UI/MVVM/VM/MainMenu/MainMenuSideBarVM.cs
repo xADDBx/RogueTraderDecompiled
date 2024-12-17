@@ -10,6 +10,7 @@ using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Localization;
+using Kingmaker.Localization.Enums;
 using Kingmaker.Localization.Shared;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -140,7 +141,8 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 				PFLog.UI.Error("Introductory Text File is bad on the path " + path);
 				return false;
 			}
-			text = localizedStringData.GetText(LocalizationManager.Instance.CurrentLocale);
+			string text2 = localizedStringData.GetText(LocalizationManager.Instance.CurrentLocale);
+			text = ((!string.IsNullOrWhiteSpace(text2)) ? text2 : localizedStringData.GetText(Locale.enGB));
 			return true;
 		}
 		catch (Exception ex)
@@ -181,7 +183,9 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 			}
 			try
 			{
-				string obj = JsonConvert.DeserializeObject<LocalizedStringData>(text3)?.GetText(LocalizationManager.Instance.CurrentLocale);
+				LocalizedStringData localizedStringData = JsonConvert.DeserializeObject<LocalizedStringData>(text3);
+				string text4 = localizedStringData?.GetText(LocalizationManager.Instance.CurrentLocale);
+				string obj = ((!string.IsNullOrWhiteSpace(text4)) ? text4 : localizedStringData?.GetText(Locale.enGB));
 				callback?.Invoke(obj);
 				yield break;
 			}

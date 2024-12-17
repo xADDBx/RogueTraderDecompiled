@@ -22,12 +22,12 @@ public class FirstLaunchEntityLanguageItemVM : BaseDisposable, IViewModel, IBase
 		Title = language;
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void SetSelected()
 	{
 		m_SetSelected?.Invoke(m_Index);
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

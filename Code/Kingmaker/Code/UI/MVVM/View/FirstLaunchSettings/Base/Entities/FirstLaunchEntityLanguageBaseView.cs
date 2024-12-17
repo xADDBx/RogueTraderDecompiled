@@ -30,9 +30,19 @@ public abstract class FirstLaunchEntityLanguageBaseView<TFirstLaunchEntityLangua
 		base.gameObject.SetActive(value: true);
 		for (int i = 0; i < base.ViewModel.Items.Count; i++)
 		{
-			m_ItemViews[i].Bind(base.ViewModel.Items[i]);
+			m_ItemViews[i]?.Bind(base.ViewModel.Items[i]);
+		}
+		for (int j = base.ViewModel.Items.Count; j < m_ItemViews.Count; j++)
+		{
+			m_ItemViews[j]?.gameObject.Or(null)?.SetActive(value: false);
 		}
 		BuildNavigation();
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.gameObject.SetActive(value: false);
+		m_NavigationBehaviour.Clear();
 	}
 
 	public override void OnModificationChanged(string reason, bool allowed = true)
@@ -47,12 +57,6 @@ public abstract class FirstLaunchEntityLanguageBaseView<TFirstLaunchEntityLangua
 	public override bool HandleRight()
 	{
 		return false;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.gameObject.SetActive(value: false);
-		m_NavigationBehaviour.Clear();
 	}
 
 	private void BuildNavigation()

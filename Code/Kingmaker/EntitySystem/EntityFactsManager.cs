@@ -279,8 +279,9 @@ public class EntityFactsManager : IDisposable, IHashable
 			if (owner != null && owner.IsPostLoadExecuted)
 			{
 				fact = DelegatePrepareFactForDetach(fact);
-				if (fact != null && m_Facts.Remove(fact))
+				if (fact != null && TryGetFact(fact, out fact))
 				{
+					m_Facts.Remove(fact);
 					m_Cache.Remove(fact);
 					DelegateOnFactWillDetach(fact);
 					fact.Detach();
@@ -294,6 +295,20 @@ public class EntityFactsManager : IDisposable, IHashable
 			}
 		}
 		fact.RemoveWhenActivatedOrPostLoaded();
+	}
+
+	private bool TryGetFact([NotNull] EntityFact fact, out EntityFact outFact)
+	{
+		for (int i = 0; i < m_Facts.Count; i++)
+		{
+			if (fact.IsEqual(m_Facts[i]))
+			{
+				outFact = m_Facts[i];
+				return true;
+			}
+		}
+		outFact = null;
+		return false;
 	}
 
 	public void Remove(BlueprintFact blueprint)

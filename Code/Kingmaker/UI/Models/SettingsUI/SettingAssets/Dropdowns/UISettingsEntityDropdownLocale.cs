@@ -42,6 +42,10 @@ public class UISettingsEntityDropdownLocale : UISettingsEntityDropdownEnum<Local
 		},
 		{
 			7,
+			Locale.trTR
+		},
+		{
+			8,
 			Locale.dev
 		}
 	};

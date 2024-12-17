@@ -49,6 +49,12 @@ public class SettingsEntityDropdownVM : SettingsEntityWithValueVM, IVirtualListE
 		}).ToReadOnlyReactiveProperty(uiSettingsEntity.GetIndexTempValue()));
 	}
 
+	protected override void DisposeImplementation()
+	{
+		m_DropdownVM?.Dispose();
+		base.DisposeImplementation();
+	}
+
 	public int GetTempValue()
 	{
 		return m_UISettingsEntity.GetIndexTempValue();
@@ -101,11 +107,5 @@ public class SettingsEntityDropdownVM : SettingsEntityWithValueVM, IVirtualListE
 		}
 		m_DropdownVM?.Dispose();
 		return m_DropdownVM = new OwlcatDropdownVM(list);
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_DropdownVM?.Dispose();
-		base.DisposeImplementation();
 	}
 }

@@ -362,7 +362,7 @@ public class CheatsCommon
 		SettingsController.Instance.Sync();
 		SettingsController.Instance.ConfirmAllTempValues();
 		SettingsController.Instance.SaveAll();
-		UISettingsRoot.Instance.UIGameMainSettings.Localization.SetIndexValueAndConfirm((int)locale);
+		UISettingsRoot.Instance.UIGameMainSettings.LocalizationSetting.SetIndexValueAndConfirm((int)locale);
 		bool isMainMenu = Game.Instance.SceneLoader.LoadedUIScene == GameScenes.MainMenu;
 		Game.ResetUI(delegate
 		{

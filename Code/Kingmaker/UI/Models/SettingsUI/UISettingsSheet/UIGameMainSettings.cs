@@ -12,6 +12,8 @@ public class UIGameMainSettings : IUISettingsSheet
 {
 	public UISettingsEntityDropdownLocale Localization;
 
+	public UISettingsEntityDropdownLocale LocalizationConsole;
+
 	public UISettingsEntityBool AutofillActionbarSlots;
 
 	public UISettingsEntityBool LootInCombat;
@@ -28,9 +30,12 @@ public class UIGameMainSettings : IUISettingsSheet
 
 	public UISettingsEntityBool AcceleratedMove;
 
+	public UISettingsEntityDropdownLocale LocalizationSetting => Localization;
+
 	public void LinkToSettings()
 	{
 		Localization.LinkSetting(SettingsRoot.Game.Main.Localization);
+		LocalizationConsole.LinkSetting(SettingsRoot.Game.Main.Localization);
 		AutofillActionbarSlots.LinkSetting(SettingsRoot.Game.Main.AutofillActionbarSlots);
 		LootInCombat.LinkSetting(SettingsRoot.Game.Main.LootInCombat);
 		SendGameStatistic.LinkSetting(SettingsRoot.Game.Main.SendGameStatistic);
@@ -47,7 +52,7 @@ public class UIGameMainSettings : IUISettingsSheet
 
 	public void UpdateInteractable()
 	{
-		Localization.ModificationAllowedCheck = RootUIContext.CanChangeLanguage;
-		Localization.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.Language);
+		LocalizationSetting.ModificationAllowedCheck = RootUIContext.CanChangeLanguage;
+		LocalizationSetting.ModificationAllowedReason = UIStrings.Instance.InteractableSettingsReasons.GetLabelByOrigin(SettingsNotInteractableReasonType.Language);
 	}
 }

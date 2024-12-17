@@ -171,7 +171,7 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		if (m_IsTravelling)
 		{
 			int num = (Game.Instance.TimeController.GameTime - m_TravelResumed + m_TravelPaused - m_TravelStartedTime).TotalSegments();
-			if ((float)num > (float)m_TravelDuration / 2f && (TryRunMiddleOfJumpSimpleEvents() || TryRunOncePerTravelEvent() || TryRunRandomEncounter()))
+			if ((float)num > (float)m_TravelDuration / 2f && num <= m_TravelDuration && (TryRunMiddleOfJumpSimpleEvents() || TryRunOncePerTravelEvent() || TryRunRandomEncounter()))
 			{
 				return;
 			}
@@ -300,7 +300,7 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		m_REProceeded = true;
 	}
 
-	private EtudeTriggerActionInWarpDelayed ShouldPlayEtudeTrigger(SectorMapPassageEntity passage)
+	private EtudeTriggerActionInWarpDelayed ShouldPlayOncePerTravelEtudeTrigger(SectorMapPassageEntity passage)
 	{
 		int num = ((passage.CurrentDifficulty == SectorMapPassageEntity.PassageDifficulty.Deadly) ? 20 : int.MinValue);
 		EtudeTriggerActionInWarpDelayed result = null;
@@ -308,7 +308,7 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		foreach (BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> item in Game.Instance.Player.WarpTravelState.EtudesInWarpQueue)
 		{
 			EtudeTriggerActionInWarpDelayed etudeTriggerActionInWarpDelayed = item.Get();
-			if (etudeTriggerActionInWarpDelayed.Priority > num2 && etudeTriggerActionInWarpDelayed.Priority > num)
+			if (etudeTriggerActionInWarpDelayed.TriggerType == EtudeTriggerActionInWarpDelayed.EventType.OncePerTravel && etudeTriggerActionInWarpDelayed.Priority > num2 && etudeTriggerActionInWarpDelayed.Priority > num)
 			{
 				num2 = etudeTriggerActionInWarpDelayed.Priority;
 				result = etudeTriggerActionInWarpDelayed;
@@ -356,7 +356,7 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 
 	private void SetupEncounter(BlueprintDialog encounter, RandomWeightsForSave<BlueprintDialogReference> weights)
 	{
-		m_ShouldProceedRE = (Game.Instance.Player.WarpTravelState.TriggeredEtude = ShouldPlayEtudeTrigger(m_Passage)) == null && encounter != null;
+		m_ShouldProceedRE = (Game.Instance.Player.WarpTravelState.TriggeredEtude = ShouldPlayOncePerTravelEtudeTrigger(m_Passage)) == null && encounter != null;
 		m_RandomEncounter = (m_ShouldProceedRE ? encounter : null);
 		Game.Instance.Player.GlobalMapRandomGenerationState.GetRandomEncountersDialogs(m_Passage.CurrentDifficulty).CopyCurrentWeights(weights);
 	}

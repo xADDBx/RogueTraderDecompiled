@@ -207,7 +207,7 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 	[JsonProperty]
 	public bool IsActive { get; private set; }
 
-	public EntityFactsManager Manager { get; private set; }
+	public EntityFactsManager Manager { get; protected set; }
 
 	public bool IsSubscribedOnEventBus { get; private set; }
 
@@ -1260,6 +1260,11 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 
 	protected virtual void OnDispose()
 	{
+	}
+
+	public virtual bool IsEqual(EntityFact fact)
+	{
+		return this == fact;
 	}
 
 	[CanBeNull]
