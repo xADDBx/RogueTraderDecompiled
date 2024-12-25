@@ -193,7 +193,7 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 
 	private void TryAddUnit(BaseUnitEntity unit)
 	{
-		using (ContextData<ScriptZoneTriggerData>.Request().Setup(unit))
+		using (ContextData<ScriptZoneTriggerData>.Request().Setup(unit, HoldingState))
 		{
 			if (View.Blueprint != null && !View.Blueprint.TriggerConditions.Check())
 			{
@@ -241,7 +241,7 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 			}
 			WasEntered = false;
 		}
-		using (ContextData<ScriptZoneTriggerData>.Request().Setup(unit))
+		using (ContextData<ScriptZoneTriggerData>.Request().Setup(unit, HoldingState))
 		{
 			OnUnitExit(unit);
 			View.OnUnitExited.Invoke(unit, View);

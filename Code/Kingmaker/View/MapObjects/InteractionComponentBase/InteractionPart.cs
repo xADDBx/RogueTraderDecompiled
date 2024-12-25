@@ -549,6 +549,13 @@ public abstract class InteractionPart : ViewBasedPart, IDestructionHandler, ISub
 		m_LastCombatRoundInteractionAttempt = -1;
 	}
 
+	public virtual void OnResetToDefault()
+	{
+		PlayersClose.Clear();
+		AlreadyUnlocked = false;
+		m_LastCombatRoundInteractionAttempt = -1;
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

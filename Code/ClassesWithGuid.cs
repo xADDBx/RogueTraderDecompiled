@@ -596,6 +596,7 @@ public static class ClassesWithGuid
 		(typeof(RemoveItemsFromCollection), "57055a7958e0457cb16c1654f5bb4826"),
 		(typeof(RemoveMechadendriteFromUnit), "f2def0549b9944738fe73d6c85d551b1"),
 		(typeof(RemoveScrap), "fa408806425b4c56a0bc5c7770a2ff60"),
+		(typeof(ResetInteractionSkillCheck), "92f1b65b092f4e599036b28efc5bbeb0"),
 		(typeof(ResetPreparedRoundsForParty), "d294e8bd03f44d75a58752bc32bc1351"),
 		(typeof(ResetQuest), "2a4d2a4c33b3d6f4592972051e98bee3"),
 		(typeof(ResetQuestObjective), "f0af50224a8742b5ba869f84d7e3f8d5"),

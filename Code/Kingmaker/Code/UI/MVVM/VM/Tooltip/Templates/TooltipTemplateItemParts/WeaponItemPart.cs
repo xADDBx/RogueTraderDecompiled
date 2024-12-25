@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
-using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Items.Weapons;
@@ -143,32 +142,40 @@ public class WeaponItemPart : BaseItemPart
 		{
 			return;
 		}
-		BlueprintUnitFact blueprintUnitFact = blueprint.GetComponent<AddFactToEquipmentWielder>()?.Fact;
-		if (blueprintUnitFact == null)
+		BlueprintComponentsEnumerator<AddFactToEquipmentWielder> components = blueprint.GetComponents<AddFactToEquipmentWielder>();
+		if (components.Empty())
 		{
 			return;
 		}
-		AbilityLifecycleTriggerCaster component = blueprintUnitFact.GetComponent<AbilityLifecycleTriggerCaster>();
-		if (component == null)
+		AbilityLifecycleTriggerCaster abilityLifecycleTriggerCaster = null;
+		foreach (AddFactToEquipmentWielder item in components)
+		{
+			abilityLifecycleTriggerCaster = item.Fact.GetComponent<AbilityLifecycleTriggerCaster>();
+			if (abilityLifecycleTriggerCaster != null)
+			{
+				break;
+			}
+		}
+		if (abilityLifecycleTriggerCaster == null)
 		{
 			return;
 		}
 		int num = -1;
 		BlueprintBuff buff = null;
-		foreach (BlueprintMechanicEntityFact fact in component.Facts)
+		foreach (BlueprintMechanicEntityFact fact in abilityLifecycleTriggerCaster.Facts)
 		{
 			if (!(fact is BlueprintBuff blueprint2))
 			{
 				continue;
 			}
-			BuffVisualPart component2 = blueprint2.GetComponent<BuffVisualPart>();
-			if (component2 != null)
+			BuffVisualPart component = blueprint2.GetComponent<BuffVisualPart>();
+			if (component != null)
 			{
-				ContextStackingUnitProperty component3 = blueprint2.GetComponent<ContextStackingUnitProperty>();
-				if (component3 != null)
+				ContextStackingUnitProperty component2 = blueprint2.GetComponent<ContextStackingUnitProperty>();
+				if (component2 != null)
 				{
-					buff = component2.Buff;
-					num = component3.PropertyValue.Value;
+					buff = component.Buff;
+					num = component2.PropertyValue.Value;
 					break;
 				}
 			}

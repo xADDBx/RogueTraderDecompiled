@@ -52,7 +52,11 @@ public class WeaponAbilitySlotConsoleView : ActionBarBaseSlotView, IConsoleNavig
 
 	public bool CanFunc02Click()
 	{
-		return base.ViewModel.HasConvert.Value;
+		if (base.ViewModel.HasConvert.Value)
+		{
+			return base.ViewModel.IsPossibleActive.Value;
+		}
+		return false;
 	}
 
 	public void OnFunc02Click()

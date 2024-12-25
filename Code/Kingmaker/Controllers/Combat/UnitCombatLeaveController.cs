@@ -65,6 +65,7 @@ public class UnitCombatLeaveController : IControllerTick, IController
 			allCharacter.Abilities.OnCombatEnd();
 			allCharacter.GetFirstWeapon()?.Reload();
 			allCharacter.GetSecondaryHandWeapon()?.Reload();
+			TurnController.TickAbilityCooldowns(allCharacter, interrupt: false);
 		}
 		EventBus.RaiseEvent(delegate(IPartyCombatHandler h)
 		{

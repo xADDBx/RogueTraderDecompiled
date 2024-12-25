@@ -9,6 +9,7 @@ using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.UnitSettings;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -83,10 +84,7 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 		AddDisposable(base.ViewModel.HasConvert.And(base.ViewModel.IsPossibleActive).Subscribe(delegate(bool value)
 		{
 			m_ConvertedView.gameObject.SetActive(value);
-			if (m_ConvertButton != null)
-			{
-				m_ConvertButton.gameObject.SetActive(value);
-			}
+			m_ConvertButton.Or(null)?.gameObject.SetActive(value);
 		}));
 		AddDisposable(base.ViewModel.ConvertedVm.Subscribe(delegate(ActionBarConvertedVM value)
 		{

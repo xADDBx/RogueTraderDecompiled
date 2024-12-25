@@ -80,7 +80,7 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	{
 		AddDisposable(Consumables = new SurfaceActionBarPartConsumablesVM());
 		AddDisposable(Weapons = new SurfaceActionBarPartWeaponsVM());
-		AddDisposable(Abilities = new SurfaceActionBarPartAbilitiesVM(isInCharScreen: false));
+		AddDisposable(Abilities = new SurfaceActionBarPartAbilitiesVM(isInCharScreen: false, IsNotControllableCharacter));
 		AddDisposable(SurfaceMomentumVM = new SurfaceMomentumVM());
 		AddDisposable(VeilThickness = new VeilThicknessVM());
 		CurrentCombatUnit = currentUnit;

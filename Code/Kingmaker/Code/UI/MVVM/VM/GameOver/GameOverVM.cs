@@ -31,7 +31,7 @@ public class GameOverVM : CommonStaticComponentVM
 		Reason.Value = GetReasonString();
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			CanQuickLoad.Value = SaveManager.GetLatestSave() != null;
+			CanQuickLoad.Value = SaveManager.GetLatestSave((SaveInfo info) => info.Type != SaveInfo.SaveType.IronMan) != null;
 		}));
 	}
 
@@ -79,7 +79,7 @@ public class GameOverVM : CommonStaticComponentVM
 	{
 		MainThreadDispatcher.StartCoroutine(UIUtilityCheckSaves.WaitForSaveUpdated(delegate
 		{
-			Game.Instance.LoadGame(SaveManager.GetLatestSave());
+			Game.Instance.LoadGame(SaveManager.GetLatestSave((SaveInfo info) => info.Type != SaveInfo.SaveType.IronMan));
 		}));
 	}
 

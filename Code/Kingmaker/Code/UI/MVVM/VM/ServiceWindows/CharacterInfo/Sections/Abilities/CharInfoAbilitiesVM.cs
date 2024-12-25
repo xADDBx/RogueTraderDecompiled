@@ -37,6 +37,12 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 	{
 	}
 
+	protected override void DisposeImplementation()
+	{
+		ActiveAbilities.Clear();
+		PassiveAbilities.Clear();
+	}
+
 	protected override void RefreshData()
 	{
 		base.RefreshData();
@@ -154,12 +160,6 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 			}
 			return obj.Tier == tier;
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
-		ActiveAbilities.Clear();
-		PassiveAbilities.Clear();
 	}
 
 	public void MoveSlot(Ability sourceAbility, int targetIndex)

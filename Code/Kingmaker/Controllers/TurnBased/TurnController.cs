@@ -791,7 +791,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 	}
 
-	private static void TickAbilityCooldowns([CanBeNull] MechanicEntity unit, bool interrupt)
+	public static void TickAbilityCooldowns([CanBeNull] MechanicEntity unit, bool interrupt)
 	{
 		unit?.GetAbilityCooldownsOptional()?.TickCooldowns(interrupt);
 	}

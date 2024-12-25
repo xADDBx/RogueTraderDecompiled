@@ -43,6 +43,9 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 
 	private bool m_InteractOnlyByNotInteractedUnit;
 
+	[JsonProperty]
+	private int m_VersionResetToDefault = -1;
+
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int DCOverride { get; set; }
 
@@ -376,6 +379,16 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 		m_InteractOnlyByNotInteractedUnit = Game.Instance.BlueprintRoot.Interaction.GlobalInteractionSkillCheckSettings.CheckInteractOnlyByNotInteractedUnit(GetSkill());
 	}
 
+	public override void OnResetToDefault()
+	{
+		base.OnResetToDefault();
+		AlreadyUsed = false;
+		ExperienceObtained = false;
+		CheckPassed = false;
+		InteractedUnits.Clear();
+		m_PunishedUsers.Clear();
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -413,6 +426,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 			}
 			result.Append(num2);
 		}
+		result.Append(ref m_VersionResetToDefault);
 		return result;
 	}
 }

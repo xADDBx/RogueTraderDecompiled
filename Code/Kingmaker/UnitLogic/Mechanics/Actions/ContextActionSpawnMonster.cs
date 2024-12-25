@@ -38,6 +38,8 @@ public class ContextActionSpawnMonster : ContextAction
 
 	public bool IsDirectlyControllable;
 
+	public bool OnlyOnReachableGround;
+
 	public BlueprintUnit Blueprint => m_Blueprint?.Get();
 
 	public BlueprintSummonPool SummonPool => m_SummonPool?.Get();
@@ -55,6 +57,11 @@ public class ContextActionSpawnMonster : ContextAction
 			Element.LogError(this, "Caster is missing");
 			return;
 		}
+		if (base.Target == null)
+		{
+			Element.LogError(this, "Target is null");
+			return;
+		}
 		Rounds duration = DurationValue.Calculate(base.Context);
 		int num = CountValue.Calculate(base.Context);
 		int level = LevelValue.Calculate(base.Context);
@@ -63,20 +70,24 @@ public class ContextActionSpawnMonster : ContextAction
 		IntRect rectForSize = SizePathfindingHelper.GetRectForSize(Blueprint.Size);
 		WarhammerSingleNodeBlocker exceptBlocker = ((maybeCaster is BaseUnitEntity baseUnitEntity) ? baseUnitEntity.View.MovementAgent.Blocker : null);
 		CustomGridNode nearestNodeXZUnwalkable = ObstacleAnalyzer.GetNearestNodeXZUnwalkable(base.Target.Point);
-		if (nearestNodeXZUnwalkable != null && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, nearestNodeXZUnwalkable, exceptBlocker))
+		uint area = maybeCaster.CurrentNode.node.Area;
+		if (nearestNodeXZUnwalkable != null)
 		{
-			aroundPoint = nearestNodeXZUnwalkable.Vector3Position;
-			flag = true;
-		}
-		else
-		{
-			foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(nearestNodeXZUnwalkable, rectForSize, 2))
+			if ((!OnlyOnReachableGround && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, nearestNodeXZUnwalkable, exceptBlocker)) || (nearestNodeXZUnwalkable.Area == area && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, nearestNodeXZUnwalkable, exceptBlocker)))
 			{
-				if (WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker))
+				aroundPoint = nearestNodeXZUnwalkable.Vector3Position;
+				flag = true;
+			}
+			else
+			{
+				foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(nearestNodeXZUnwalkable, rectForSize, 2))
 				{
-					aroundPoint = item.Vector3Position;
-					flag = true;
-					break;
+					if ((!OnlyOnReachableGround && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)) || (nearestNodeXZUnwalkable.Area == area && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)))
+					{
+						aroundPoint = item.Vector3Position;
+						flag = true;
+						break;
+					}
 				}
 			}
 		}

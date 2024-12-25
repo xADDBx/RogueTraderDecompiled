@@ -39,7 +39,7 @@ public class ScriptZoneTrigger : EntityFactComponentDelegate, IScriptZoneHandler
 		{
 			return;
 		}
-		using (ContextData<ScriptZoneTriggerData>.Request().Setup(EventInvokerExtensions.BaseUnitEntity))
+		using (ContextData<ScriptZoneTriggerData>.Request().Setup(EventInvokerExtensions.BaseUnitEntity, zone.Data?.HoldingState))
 		{
 			if (OnEnterConditions.Check())
 			{
@@ -54,7 +54,7 @@ public class ScriptZoneTrigger : EntityFactComponentDelegate, IScriptZoneHandler
 		{
 			return;
 		}
-		using (ContextData<ScriptZoneTriggerData>.Request().Setup(EventInvokerExtensions.BaseUnitEntity))
+		using (ContextData<ScriptZoneTriggerData>.Request().Setup(EventInvokerExtensions.BaseUnitEntity, zone.Data?.HoldingState))
 		{
 			if (OnExitConditions.Check())
 			{

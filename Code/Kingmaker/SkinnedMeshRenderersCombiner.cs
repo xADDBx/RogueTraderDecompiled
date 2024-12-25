@@ -47,6 +47,12 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 	[SerializeField]
 	private bool m_useMatrices = true;
 
+	[SerializeField]
+	public string _texturePath = "Assets/Art/Characters/Creatures/";
+
+	[SerializeField]
+	public bool _addTexturesToPrefab;
+
 	public int atlasWidth = 1024;
 
 	public int atlasHeight = 512;
@@ -75,6 +81,12 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 		bindPoses.Clear();
 		Transform transform = null;
 		smRenderers = renderersToCombine;
+		if (AtlasMaterial == null)
+		{
+			AtlasMaterial = new Material(Shader.Find("Owlcat/Lit"));
+			AtlasMaterial.SetFloat("_Metallic", 1f);
+			AtlasMaterial.name = "AtlasMaterial";
+		}
 		for (int i = 0; i < allMaterials.Count; i++)
 		{
 			List<CombineInstance> list = new List<CombineInstance>();

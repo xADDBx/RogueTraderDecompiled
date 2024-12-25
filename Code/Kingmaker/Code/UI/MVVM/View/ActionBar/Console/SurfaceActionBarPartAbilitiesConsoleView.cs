@@ -293,7 +293,7 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased);
 		AddDisposable(inputBindStruct2);
 		AddDisposable(m_HintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information));
-		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(ShowContextMenu, 10, m_HasContextMenu);
+		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(ShowContextMenu, 10, m_HasContextMenu.And(base.ViewModel.IsNotControllableCharacter?.Not()).ToReactiveProperty());
 		AddDisposable(inputBindStruct3);
 		AddDisposable(m_HintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.ContextMenu.ContextMenu));
 		InputBindStruct inputBindStruct4 = m_MoveAbilityInputLayer.AddButton(delegate

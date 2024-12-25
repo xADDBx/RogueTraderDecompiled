@@ -29,6 +29,8 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 
 	public readonly ReactiveProperty<ActionBarSlotVM> ChooseAbilitySlot = new ReactiveProperty<ActionBarSlotVM>();
 
+	public readonly BoolReactiveProperty IsNotControllableCharacter;
+
 	public readonly BoolReactiveProperty IsActive = new BoolReactiveProperty();
 
 	public readonly ReactiveProperty<AbilitySelectorWindowVM> AbilitySelectorWindowVM = new ReactiveProperty<AbilitySelectorWindowVM>();
@@ -70,9 +72,10 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 		return Unit.Entity;
 	}
 
-	public SurfaceActionBarPartAbilitiesVM(bool isInCharScreen)
+	public SurfaceActionBarPartAbilitiesVM(bool isInCharScreen, BoolReactiveProperty isNotControllableCharacter = null)
 	{
 		IsInCharScreen = isInCharScreen;
+		IsNotControllableCharacter = isNotControllableCharacter;
 		AddDisposable(EventBus.Subscribe(this));
 	}
 

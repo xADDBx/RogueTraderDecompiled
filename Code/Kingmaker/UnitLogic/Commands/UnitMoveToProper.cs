@@ -47,6 +47,11 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 		{
 			if (base.Params.IsSynchronized && base.Executor.IsInCombat)
 			{
+				if (base.ForcedPath == null)
+				{
+					PFLog.Default.Error("Something bad happened, ForcePath==null. returning CanStart=false, this fixes progress block after moving out from invalid state (ship was in occupied cell)");
+					return false;
+				}
 				float num = 0.5f * GraphParamsMechanicsCache.GridCellSize;
 				Vector3 vector = base.ForcedPath.vectorPath.Get(0);
 				Vector3 position = base.Executor.Position;

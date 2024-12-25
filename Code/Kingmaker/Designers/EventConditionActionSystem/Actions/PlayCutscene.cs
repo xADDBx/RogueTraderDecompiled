@@ -75,7 +75,7 @@ public class PlayCutscene : GameAction, ICutsceneReference
 				cutscenePlayerData.PreventDestruction = false;
 			}
 		}
-		SceneEntitiesState state = ContextData<SpawnedUnitData>.Current?.State;
+		SceneEntitiesState state = ContextData<SpawnedUnitData>.Current?.State ?? ContextData<ScriptZoneTriggerData>.Current?.State;
 		m_CutscenePlayerView = CutscenePlayerView.Play(Cutscene, Parameters, PutInQueue, state);
 		m_CutscenePlayerView.PlayerData.PlayActionId = name;
 		m_CutscenePlayerView.PlayerData.OriginBlueprint = base.Owner;
