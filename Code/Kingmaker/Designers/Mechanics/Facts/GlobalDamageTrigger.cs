@@ -57,7 +57,7 @@ public class GlobalDamageTrigger : UnitFactComponentDelegate, IGlobalRulebookHan
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
 		MechanicEntity mechanicEntity = (MechanicEntity)evt.Initiator;
 		MechanicEntity mechanicEntity2 = (MechanicEntity)evt.Target;
-		if (maybeCaster != null && mechanicEntity != null && mechanicEntity2 != null)
+		if (maybeCaster != null && mechanicEntity != null && mechanicEntity2 != null && !mechanicEntity2.IsPreview && !mechanicEntity.IsPreview && !maybeCaster.IsPreview)
 		{
 			bool flag;
 			using (base.Context.GetDataScope(maybeCaster.ToITargetWrapper()))

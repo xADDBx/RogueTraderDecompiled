@@ -48,7 +48,7 @@ public class UnitDeathTrigger : UnitFactComponentDelegate, IUnitHandler, IUnitSp
 	public void HandleUnitDeath()
 	{
 		BaseUnitEntity baseUnitEntity = EventInvokerExtensions.BaseUnitEntity;
-		if (baseUnitEntity == base.Owner || baseUnitEntity == null)
+		if (baseUnitEntity == base.Owner || baseUnitEntity == null || baseUnitEntity.IsPreview || base.Owner.IsPreview)
 		{
 			return;
 		}

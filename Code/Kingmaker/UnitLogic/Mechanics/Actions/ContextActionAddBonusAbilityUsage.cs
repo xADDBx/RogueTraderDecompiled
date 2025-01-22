@@ -53,6 +53,12 @@ public class ContextActionAddBonusAbilityUsage : ContextAction
 			Logger.Error(this, "Unable to add bonus ability usage: no context found");
 			return;
 		}
+		MechanicEntity entity = base.Target.Entity;
+		if (entity != null && entity.IsPreview)
+		{
+			Logger.Warning(this, "Wont add bonus ability usage: target is preview");
+			return;
+		}
 		MechanicEntity mechanicEntity = (m_ToTarget ? base.Target.Entity : mechanicsContext.MaybeCaster);
 		if (mechanicEntity == null)
 		{

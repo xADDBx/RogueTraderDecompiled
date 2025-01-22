@@ -25,7 +25,7 @@ public class AbilityTriggerGlobal : AbilityTrigger, IGlobalRulebookHandler<RuleP
 
 	public void OnEventDidTrigger(RulePerformAbility evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Spell))
+		if (!base.Owner.IsPreview && Restrictions.IsPassed(base.Fact, evt, evt.Spell))
 		{
 			BlueprintAbility ability = evt.Spell.Blueprint;
 			MechanicEntity concreteInitiator = evt.ConcreteInitiator;

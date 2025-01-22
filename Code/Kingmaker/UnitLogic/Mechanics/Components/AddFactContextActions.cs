@@ -65,7 +65,7 @@ public class AddFactContextActions : EntityFactComponentDelegate, ITickEachRound
 
 	protected override void OnActivate()
 	{
-		if (!DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
+		if (!base.Owner.IsPreview && !DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
 		{
 			base.Fact.RunActionInContext(Activated);
 		}
@@ -73,7 +73,7 @@ public class AddFactContextActions : EntityFactComponentDelegate, ITickEachRound
 
 	protected override void OnDeactivate()
 	{
-		if (!DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
+		if (!base.Owner.IsPreview && !DisabledBecauseOfReapply && !DisabledBecauseOfLevelUp)
 		{
 			base.Fact.RunActionInContext(Deactivated);
 		}
