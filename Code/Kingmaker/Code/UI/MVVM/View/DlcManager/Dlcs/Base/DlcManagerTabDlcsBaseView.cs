@@ -5,6 +5,7 @@ using Kingmaker.UI.Common;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
@@ -120,6 +121,10 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
 		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;
 		m_InstallButtonLabel.text = UIStrings.Instance.DlcManager.Install;
+		AddDisposable(m_InstallButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.InstallDlc();
+		}));
 		SetTextFontSize(base.ViewModel.FontMultiplier);
 	}
 

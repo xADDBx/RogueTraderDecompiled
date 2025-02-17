@@ -96,7 +96,7 @@ public class NewGamePhaseStoryScenarioEntityVM : SelectionGroupEntityVM
 		{
 			hashSet.Add(item);
 		}
-		foreach (BlueprintDlc item2 in m_CampaignReference.Get().AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc))
+		foreach (BlueprintDlc item2 in m_CampaignReference.Get().AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc && dlc.IsAvailable))
 		{
 			if (!hashSet.Contains(item2))
 			{

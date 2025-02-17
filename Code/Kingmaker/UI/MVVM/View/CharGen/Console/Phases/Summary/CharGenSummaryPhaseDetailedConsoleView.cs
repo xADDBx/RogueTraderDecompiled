@@ -97,37 +97,41 @@ public class CharGenSummaryPhaseDetailedConsoleView : CharGenSummaryPhaseDetaile
 	{
 		AddDisposable(m_ActivePhaseNavigation.Subscribe(UpdateActiveNavigation));
 		AddDisposable(inputLayer.AddAxis(Scroll, 3));
+		BindEditName(ref inputLayer);
 		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
-		{
-			OnFunc02Click();
-		}, 11, m_CanDecline.Not().And(isMainCharacter).ToReactiveProperty());
-		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CharGen.EditName));
-		AddDisposable(inputBindStruct);
-		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 		{
 			SwitchNavigation();
 		}, 10, m_CanSwitchNavigation);
-		AddDisposable(hintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Information));
-		AddDisposable(inputBindStruct2);
-		InputBindStruct inputBindStruct3 = inputLayer.AddButton(delegate
+		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct);
+		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
 		{
 			OnDeclineClick();
 		}, 9, m_CanDecline);
-		AddDisposable(hintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.CommonTexts.Back));
-		AddDisposable(inputBindStruct3);
-		InputBindStruct inputBindStruct4 = inputLayer.AddButton(delegate
+		AddDisposable(hintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.CommonTexts.Back));
+		AddDisposable(inputBindStruct2);
+		InputBindStruct inputBindStruct3 = inputLayer.AddButton(delegate
 		{
 			SwitchNavigation();
 		}, 10, m_CanConfirm);
-		AddDisposable(hintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.CommonTexts.Information));
-		AddDisposable(inputBindStruct4);
-		InputBindStruct inputBindStruct5 = inputLayer.AddButton(delegate
+		AddDisposable(hintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct3);
+		InputBindStruct inputBindStruct4 = inputLayer.AddButton(delegate
 		{
 			ToggleTooltip();
 		}, 19, m_CanShowInfo, InputActionEventType.ButtonJustReleased);
-		AddDisposable(hintsWidget.BindHint(inputBindStruct5, UIStrings.Instance.CommonTexts.Information));
-		AddDisposable(inputBindStruct5);
+		AddDisposable(hintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.CommonTexts.Information));
+		AddDisposable(inputBindStruct4);
 		navigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationBehaviour);
+		void BindEditName(ref InputLayer inputLayer)
+		{
+			InputBindStruct inputBindStruct5 = inputLayer.AddButton(delegate
+			{
+				OnFunc02Click();
+			}, 11, m_CanDecline.Not().And(isMainCharacter).ToReactiveProperty());
+			AddDisposable(hintsWidget.BindHint(inputBindStruct5, UIStrings.Instance.CharGen.EditName));
+			AddDisposable(inputBindStruct5);
+		}
 	}
 
 	private void UpdateActiveNavigation(ActivePhaseNavigation activeNavigation)

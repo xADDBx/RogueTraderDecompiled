@@ -113,6 +113,16 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 	[SerializeField]
 	private Image m_DlcBottomMonitorArt;
 
+	[Header("XBox")]
+	[SerializeField]
+	protected GameObject m_XBoxGamerGroup;
+
+	[SerializeField]
+	protected TextMeshProUGUI m_XBoxGamerTagText;
+
+	[SerializeField]
+	protected RawImage m_XBoxGamerRawImage;
+
 	public void Initialize()
 	{
 		m_WelcomeTextContainer.SetActive(value: false);

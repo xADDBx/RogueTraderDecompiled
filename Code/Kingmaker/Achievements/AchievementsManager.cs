@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Core.Cheats;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Networking;
@@ -45,6 +46,12 @@ public class AchievementsManager : IReadOnlyCollection<AchievementEntity>, IEnum
 				PFLog.SmartConsole.Log($"{achievement}");
 			}
 		}
+	}
+
+	[Cheat(Name = "add_achievement")]
+	public static void AddAchievement(string param = "")
+	{
+		Game.Instance.Player.Achievements.m_Achievements.Where((AchievementEntity ach) => ach.Data.name == param).Single().Unlock();
 	}
 
 	public void Activate()

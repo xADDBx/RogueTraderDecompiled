@@ -21,7 +21,7 @@ public class PauseNotificationBaseView : ViewBase<PauseNotificationVM>
 
 	protected override void BindViewImplementation()
 	{
-		m_PauseText.text = UIStrings.Instance.CommonTexts.Pause;
+		m_PauseText.text = UIStrings.Instance.CommonTexts.Paused;
 		ChangeAlphaPause(base.ViewModel.IsPaused);
 		AddDisposable(base.ViewModel.ShowPause.Subscribe(PlayPause));
 		AddDisposable(base.ViewModel.ChangeAlphaPause.Subscribe(ChangeAlphaPause));

@@ -746,6 +746,7 @@ public static class ClassesWithGuid
 		(typeof(IsCutsceneSkipping), "db9f89badbaa44e298e89a7425d26d59"),
 		(typeof(IsDLCEnabled), "2b18dfce84724c54903d3f6af08e4fac"),
 		(typeof(IsEnemy), "9ebbae81b66bb174b9050f3a92549ca3"),
+		(typeof(IsGateActivated), "04d841c4b838459b930b877555a8b32a"),
 		(typeof(IsInCombat), "95ab8455743b4254580bb0adfaf3be54"),
 		(typeof(IsInCoop), "b62f7e34c1de4544b5280e62e30dff58"),
 		(typeof(IsListContainsItem), "34b0aecf92fe44f9a3c2fae68364983f"),

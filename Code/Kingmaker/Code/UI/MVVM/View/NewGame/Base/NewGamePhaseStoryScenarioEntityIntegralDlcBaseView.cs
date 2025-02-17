@@ -5,6 +5,7 @@ using Kingmaker.DLC;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.MVVM.View.Pantograph;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup.View;
@@ -32,6 +33,9 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 	private Sprite m_DlcNotAvailableSprite;
 
 	[SerializeField]
+	private Sprite m_DlcBoughtAndNotInstalled;
+
+	[SerializeField]
 	private TextMeshProUGUI m_OnText;
 
 	[SerializeField]
@@ -52,7 +56,7 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 		m_OnText.text = UIStrings.Instance.SettingsUI.SettingsToggleOn;
 		m_OffText.text = UIStrings.Instance.SettingsUI.SettingsToggleOff;
 		m_DlcIsOn = base.ViewModel.BlueprintDlc.GetDlcSwitchOnOffState();
-		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (m_DlcIsOn ? "On" : "Off"));
+		UpdateButtonState(m_DlcIsOn);
 		SetupPantographConfig();
 		AddDisposable(EventBus.Subscribe(this));
 	}
@@ -87,7 +91,11 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 		{
 			list.Add(m_DlcNotAvailableSprite);
 		}
-		string textIcon = (base.ViewModel.BlueprintDlc.IsPurchased ? ((string)(m_DlcIsOn ? UIStrings.Instance.SettingsUI.SettingsToggleOn : UIStrings.Instance.SettingsUI.SettingsToggleOff)) : string.Empty);
+		if (base.ViewModel.BlueprintDlc.IsPurchased && base.ViewModel.BlueprintDlc.GetDownloadState() == DownloadState.NotLoaded)
+		{
+			list.Add(m_DlcBoughtAndNotInstalled);
+		}
+		string textIcon = ((base.ViewModel.BlueprintDlc.IsPurchased && base.ViewModel.BlueprintDlc.GetDownloadState() != 0) ? ((string)(m_DlcIsOn ? UIStrings.Instance.SettingsUI.SettingsToggleOn : UIStrings.Instance.SettingsUI.SettingsToggleOff)) : string.Empty);
 		PantographConfig = new PantographConfig(base.transform, base.ViewModel.Title, list, useLargeView: false, textIcon);
 	}
 
@@ -108,7 +116,7 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 			return;
 		}
 		m_DlcIsOn = value;
-		m_Button.SetActiveLayer((!base.ViewModel.BlueprintDlc.IsPurchased) ? "NotAvailable" : (value ? "On" : "Off"));
+		UpdateButtonState(value);
 		if (m_IsSelected)
 		{
 			SetupPantographConfig();
@@ -117,5 +125,15 @@ public class NewGamePhaseStoryScenarioEntityIntegralDlcBaseView : SelectionGroup
 				h.Bind(PantographConfig);
 			});
 		}
+	}
+
+	private void UpdateButtonState(bool dlcIsOn)
+	{
+		string activeLayer = "NotAvailable";
+		if (base.ViewModel.BlueprintDlc.IsPurchased)
+		{
+			activeLayer = ((base.ViewModel.BlueprintDlc.GetDownloadState() != 0) ? (dlcIsOn ? "On" : "Off") : "NotLoaded");
+		}
+		m_Button.SetActiveLayer(activeLayer);
 	}
 }

@@ -69,17 +69,20 @@ public class OutOfCasterTurnFactActivator : MechanicEntityFactComponentDelegate,
 	private void UpdateFact(bool add)
 	{
 		MechanicEntity owner = base.Owner;
-		SavableData savableData = RequestSavableData<SavableData>();
-		if (add && savableData.FactId == null)
+		if (!owner.IsPreview)
 		{
-			MechanicEntityFact mechanicEntityFact = FactBlueprint.CreateFact(base.Context, owner, default(BuffDuration));
-			owner.Facts.Add(mechanicEntityFact);
-			savableData.FactId = mechanicEntityFact.UniqueId;
-		}
-		else if (!add && savableData.FactId != null)
-		{
-			owner.Facts.RemoveById(savableData.FactId);
-			savableData.FactId = null;
+			SavableData savableData = RequestSavableData<SavableData>();
+			if (add && savableData.FactId == null)
+			{
+				MechanicEntityFact mechanicEntityFact = FactBlueprint.CreateFact(base.Context, owner, default(BuffDuration));
+				owner.Facts.Add(mechanicEntityFact);
+				savableData.FactId = mechanicEntityFact.UniqueId;
+			}
+			else if (!add && savableData.FactId != null)
+			{
+				owner.Facts.RemoveById(savableData.FactId);
+				savableData.FactId = null;
+			}
 		}
 	}
 

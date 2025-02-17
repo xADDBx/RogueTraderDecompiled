@@ -146,9 +146,9 @@ public class SettingsController : ISettingsController
 
 	private void StartGeneralSettings()
 	{
-		GeneralSettingsProvider generalSettingsProvider = new GeneralSettingsProvider(GeneralSettingsProviderPath);
-		SettingsUpgraderRoot.Apply(generalSettingsProvider);
-		SetGeneralSettingsProvider(generalSettingsProvider);
+		ISettingsProvider settingsProvider = new GeneralSettingsProvider(GeneralSettingsProviderPath);
+		SettingsUpgraderRoot.Apply(settingsProvider);
+		SetGeneralSettingsProvider(settingsProvider);
 	}
 
 	private void StopGeneralSettings()

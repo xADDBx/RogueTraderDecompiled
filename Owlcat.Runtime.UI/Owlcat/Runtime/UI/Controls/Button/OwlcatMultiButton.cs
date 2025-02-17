@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Reflection;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -7,6 +8,7 @@ using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -17,6 +19,20 @@ namespace Owlcat.Runtime.UI.Controls.Button;
 [DisallowMultipleComponent]
 public class OwlcatMultiButton : OwlcatMultiSelectable, IConfirmClickHandler, IConsoleEntity, ILongConfirmClickHandler, IDeclineClickHandler, ILongDeclineClickHandler, IFunc01ClickHandler, ILongFunc01ClickHandler, IFunc02ClickHandler, ILongFunc02ClickHandler, IPointerClickHandler, IEventSystemHandler, IConsolePointerLeftClickEvent, IConsoleNavigationEntity
 {
+	private class ButtonClickedEventWithCounter : UnityEngine.UI.Button.ButtonClickedEvent
+	{
+		private static readonly MethodInfo sPrepareInvokeMethodInfo = typeof(UnityEvent).GetMethod("PrepareInvoke", BindingFlags.Instance | BindingFlags.NonPublic);
+
+		private readonly Func<IList> m_PrepareInvoke;
+
+		public bool HasListeners => m_PrepareInvoke().Count > 0;
+
+		public ButtonClickedEventWithCounter()
+		{
+			m_PrepareInvoke = (Func<IList>)Delegate.CreateDelegate(typeof(Func<IList>), this, sPrepareInvokeMethodInfo, throwOnBindFailure: true);
+		}
+	}
+
 	[SerializeField]
 	private ClickEvent m_ConfirmClickEvent = new ClickEvent();
 
@@ -69,40 +85,40 @@ public class OwlcatMultiButton : OwlcatMultiSelectable, IConfirmClickHandler, IC
 	private const float m_EndTime = 0.3f;
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnLeftClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnLeftClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnRightClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnRightClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnSingleLeftClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnSingleLeftClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnSingleRightClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnSingleRightClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnLeftDoubleClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnLeftDoubleClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnRightDoubleClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnRightDoubleClick = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnLeftClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnLeftClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnRightClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnRightClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnSingleLeftClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnSingleLeftClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnSingleRightClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnSingleRightClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnLeftDoubleClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnLeftDoubleClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	[SerializeField]
-	private UnityEngine.UI.Button.ButtonClickedEvent m_OnRightDoubleClickNotInteractable = new UnityEngine.UI.Button.ButtonClickedEvent();
+	private ButtonClickedEventWithCounter m_OnRightDoubleClickNotInteractable = new ButtonClickedEventWithCounter();
 
 	private float m_Time;
 
@@ -335,7 +351,7 @@ public class OwlcatMultiButton : OwlcatMultiSelectable, IConfirmClickHandler, IC
 		switch (eventData.button)
 		{
 		case PointerEventData.InputButton.Left:
-			PointerLeftClickCommand.Execute();
+			PointerLeftClickCommand.Execute(Unit.Default);
 			if (!eventData.dragging)
 			{
 				StartCoroutine(LeftClickTime());
@@ -398,7 +414,8 @@ public class OwlcatMultiButton : OwlcatMultiSelectable, IConfirmClickHandler, IC
 
 	private IEnumerator LeftClickTime()
 	{
-		while (m_Time < 0.3f)
+		ButtonClickedEventWithCounter doubleClick = (base.Interactable ? m_OnLeftDoubleClick : m_OnLeftDoubleClickNotInteractable);
+		while (m_Time < 0.3f && doubleClick.HasListeners)
 		{
 			m_Time += Time.unscaledDeltaTime;
 			yield return null;
@@ -416,7 +433,8 @@ public class OwlcatMultiButton : OwlcatMultiSelectable, IConfirmClickHandler, IC
 
 	private IEnumerator RightClickTime()
 	{
-		while (m_Time < 0.3f)
+		ButtonClickedEventWithCounter doubleClick = (base.Interactable ? m_OnRightDoubleClick : m_OnRightDoubleClickNotInteractable);
+		while (m_Time < 0.3f && doubleClick.HasListeners)
 		{
 			m_Time += Time.unscaledDeltaTime;
 			yield return null;

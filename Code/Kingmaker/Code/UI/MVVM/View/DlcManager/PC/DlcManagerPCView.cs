@@ -100,7 +100,8 @@ public class DlcManagerPCView : DlcManagerBaseView
 		}));
 		if (base.ViewModel.InGame)
 		{
-			AddDisposable(base.ViewModel.ModsVM.NeedReload.CombineLatest(base.ViewModel.SwitchOnDlcsVM.NeedResave, (bool needReload, bool needResave) => new { needReload, needResave }).Subscribe(value =>
+			BoolReactiveProperty left = base.ViewModel.ModsVM?.NeedReload ?? new BoolReactiveProperty();
+			AddDisposable(left.CombineLatest(base.ViewModel.SwitchOnDlcsVM.NeedResave, (bool needReload, bool needResave) => new { needReload, needResave }).Subscribe(value =>
 			{
 				m_ApplyBottomButton.SetInteractable(value.needReload || value.needResave);
 				m_DefaultBottomButton.SetInteractable(value.needReload || value.needResave);

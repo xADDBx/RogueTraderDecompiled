@@ -90,6 +90,10 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 			}
 		}
 		ComponentData componentData = RequestTransientData<ComponentData>();
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		if (isTurnBased)
 		{
 			if (IsInCorrectCombatState)
@@ -133,12 +137,13 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
-		if (isTurnBased && IsInCorrectCombatState)
+		if (base.Owner.IsPreviewUnit || !isTurnBased || !IsInCorrectCombatState)
 		{
-			using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
-			{
-				base.Fact.RunActionInContext(RoundStartActions, base.OwnerTargetWrapper);
-			}
+			return;
+		}
+		using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
+		{
+			base.Fact.RunActionInContext(RoundStartActions, base.OwnerTargetWrapper);
 		}
 	}
 
@@ -151,12 +156,13 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
-		if (isTurnBased && IsInCorrectCombatState)
+		if (base.Owner.IsPreviewUnit || !isTurnBased || !IsInCorrectCombatState)
 		{
-			using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
-			{
-				base.Fact.RunActionInContext(RoundEndActions, base.OwnerTargetWrapper);
-			}
+			return;
+		}
+		using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
+		{
+			base.Fact.RunActionInContext(RoundEndActions, base.OwnerTargetWrapper);
 		}
 	}
 
@@ -169,8 +175,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (!isTurnBased || (mechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(mechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
+		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || !isTurnBased || (mechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(mechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
 		{
 			return;
 		}
@@ -200,8 +210,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (!isTurnBased || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
+		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || !isTurnBased || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
 		{
 			return;
 		}
@@ -235,8 +249,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if ((EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns))
+		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns))
 		{
 			return;
 		}
@@ -266,8 +284,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 				return;
 			}
 		}
+		if (base.Owner.IsPreviewUnit)
+		{
+			return;
+		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns)
+		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns))
 		{
 			return;
 		}

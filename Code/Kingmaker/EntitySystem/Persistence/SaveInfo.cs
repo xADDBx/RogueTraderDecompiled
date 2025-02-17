@@ -173,9 +173,6 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	public int QuickSaveNumber { get; set; }
 
 	[JsonProperty]
-	public int LoadedTimes { get; set; }
-
-	[JsonProperty]
 	public BlueprintArea Area { get; set; }
 
 	[JsonProperty]
@@ -393,7 +390,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteObjectHeader(24);
+		writer.WriteObjectHeader(23);
 		writer.WriteString(value.Name);
 		writer.WriteString(value.Description);
 		writer.WriteString(value.SaveId);
@@ -408,24 +405,23 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		SaveType value5 = value.Type;
 		bool value6 = value.IsAutoLevelupSave;
 		value3 = value.QuickSaveNumber;
-		int value7 = value.LoadedTimes;
-		writer.WriteUnmanaged(in value5, in value6, in value3, in value7);
-		BlueprintArea value8 = value.Area;
+		writer.WriteUnmanaged(in value5, in value6, in value3);
+		BlueprintArea value7 = value.Area;
+		writer.WriteValue(in value7);
+		BlueprintAreaPart value8 = value.AreaPart;
 		writer.WriteValue(in value8);
-		BlueprintAreaPart value9 = value.AreaPart;
-		writer.WriteValue(in value9);
 		writer.WriteString(value.AreaNameOverride);
 		List<PortraitForSave> source = value.PartyPortraits;
 		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in source));
-		DateTime? value10 = value.GameStartSystemTime;
-		DateTime value11 = value.SystemSaveTime;
-		TimeSpan value12 = value.GameSaveTime;
-		writer.DangerousWriteUnmanaged(in value10, in value11, in value12);
+		DateTime? value9 = value.GameStartSystemTime;
+		DateTime value10 = value.SystemSaveTime;
+		TimeSpan value11 = value.GameSaveTime;
+		writer.DangerousWriteUnmanaged(in value9, in value10, in value11);
 		writer.WriteString(value.GameSaveTimeText);
-		value12 = value.GameTotalTime;
-		writer.WriteUnmanaged(in value12);
-		List<int> value13 = value.Versions;
-		writer.WriteValue(in value13);
+		value11 = value.GameTotalTime;
+		writer.WriteUnmanaged(in value11);
+		List<int> value12 = value.Versions;
+		writer.WriteValue(in value12);
 		value3 = value.CompatibilityVersion;
 		writer.WriteUnmanaged(in value3);
 		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in value.StatefulRandomStates));
@@ -445,17 +441,16 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		SaveType value5;
 		bool value6;
 		int value7;
-		int value8;
-		BlueprintArea value9;
-		BlueprintAreaPart value10;
-		List<PortraitForSave> value11;
-		DateTime? value12;
-		DateTime value13;
+		BlueprintArea value8;
+		BlueprintAreaPart value9;
+		List<PortraitForSave> value10;
+		DateTime? value11;
+		DateTime value12;
+		TimeSpan value13;
 		TimeSpan value14;
-		TimeSpan value15;
-		List<int> value16;
-		int value17;
-		List<SerializableRandState> value18;
+		List<int> value15;
+		int value16;
+		List<SerializableRandState> value17;
 		string name;
 		string description;
 		string saveId;
@@ -463,7 +458,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		string gameId;
 		string areaNameOverride;
 		string gameSaveTimeText;
-		if (memberCount == 24)
+		if (memberCount == 23)
 		{
 			if (value != null)
 			{
@@ -478,19 +473,18 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				value5 = value.Type;
 				value6 = value.IsAutoLevelupSave;
 				value7 = value.QuickSaveNumber;
-				value8 = value.LoadedTimes;
-				value9 = value.Area;
-				value10 = value.AreaPart;
+				value8 = value.Area;
+				value9 = value.AreaPart;
 				areaNameOverride = value.AreaNameOverride;
-				value11 = value.PartyPortraits;
-				value12 = value.GameStartSystemTime;
-				value13 = value.SystemSaveTime;
-				value14 = value.GameSaveTime;
+				value10 = value.PartyPortraits;
+				value11 = value.GameStartSystemTime;
+				value12 = value.SystemSaveTime;
+				value13 = value.GameSaveTime;
 				gameSaveTimeText = value.GameSaveTimeText;
-				value15 = value.GameTotalTime;
-				value16 = value.Versions;
-				value17 = value.CompatibilityVersion;
-				value18 = value.StatefulRandomStates;
+				value14 = value.GameTotalTime;
+				value15 = value.Versions;
+				value16 = value.CompatibilityVersion;
+				value17 = value.StatefulRandomStates;
 				name = reader.ReadString();
 				description = reader.ReadString();
 				saveId = reader.ReadString();
@@ -502,20 +496,19 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				reader.ReadUnmanaged<SaveType>(out value5);
 				reader.ReadUnmanaged<bool>(out value6);
 				reader.ReadUnmanaged<int>(out value7);
-				reader.ReadUnmanaged<int>(out value8);
+				reader.ReadValue(ref value8);
 				reader.ReadValue(ref value9);
-				reader.ReadValue(ref value10);
 				areaNameOverride = reader.ReadString();
-				ListFormatter.DeserializePackable(ref reader, ref value11);
-				reader.DangerousReadUnmanaged<DateTime?>(out value12);
-				reader.ReadUnmanaged<DateTime>(out value13);
-				reader.ReadUnmanaged<TimeSpan>(out value14);
+				ListFormatter.DeserializePackable(ref reader, ref value10);
+				reader.DangerousReadUnmanaged<DateTime?>(out value11);
+				reader.ReadUnmanaged<DateTime>(out value12);
+				reader.ReadUnmanaged<TimeSpan>(out value13);
 				gameSaveTimeText = reader.ReadString();
-				reader.ReadUnmanaged<TimeSpan>(out value15);
-				reader.ReadValue(ref value16);
-				reader.ReadUnmanaged<int>(out value17);
-				ListFormatter.DeserializePackable(ref reader, ref value18);
-				goto IL_050b;
+				reader.ReadUnmanaged<TimeSpan>(out value14);
+				reader.ReadValue(ref value15);
+				reader.ReadUnmanaged<int>(out value16);
+				ListFormatter.DeserializePackable(ref reader, ref value17);
+				goto IL_04dc;
 			}
 			name = reader.ReadString();
 			description = reader.ReadString();
@@ -525,23 +518,23 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			reader.ReadUnmanaged<int>(out value3);
 			gameId = reader.ReadString();
 			value4 = reader.ReadValue<IEnumerable<BlueprintDlcReward>>();
-			reader.ReadUnmanaged<SaveType, bool, int, int>(out value5, out value6, out value7, out value8);
-			value9 = reader.ReadValue<BlueprintArea>();
-			value10 = reader.ReadValue<BlueprintAreaPart>();
+			reader.ReadUnmanaged<SaveType, bool, int>(out value5, out value6, out value7);
+			value8 = reader.ReadValue<BlueprintArea>();
+			value9 = reader.ReadValue<BlueprintAreaPart>();
 			areaNameOverride = reader.ReadString();
-			value11 = ListFormatter.DeserializePackable<PortraitForSave>(ref reader);
-			reader.DangerousReadUnmanaged<DateTime?, DateTime, TimeSpan>(out value12, out value13, out value14);
+			value10 = ListFormatter.DeserializePackable<PortraitForSave>(ref reader);
+			reader.DangerousReadUnmanaged<DateTime?, DateTime, TimeSpan>(out value11, out value12, out value13);
 			gameSaveTimeText = reader.ReadString();
-			reader.ReadUnmanaged<TimeSpan>(out value15);
-			value16 = reader.ReadValue<List<int>>();
-			reader.ReadUnmanaged<int>(out value17);
-			value18 = ListFormatter.DeserializePackable<SerializableRandState>(ref reader);
+			reader.ReadUnmanaged<TimeSpan>(out value14);
+			value15 = reader.ReadValue<List<int>>();
+			reader.ReadUnmanaged<int>(out value16);
+			value17 = ListFormatter.DeserializePackable<SerializableRandState>(ref reader);
 		}
 		else
 		{
-			if (memberCount > 24)
+			if (memberCount > 23)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SaveInfo), 24, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SaveInfo), 23, memberCount);
 				return;
 			}
 			if (value == null)
@@ -557,19 +550,18 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				value5 = SaveType.Manual;
 				value6 = false;
 				value7 = 0;
-				value8 = 0;
+				value8 = null;
 				value9 = null;
-				value10 = null;
 				areaNameOverride = null;
+				value10 = null;
 				value11 = null;
-				value12 = null;
-				value13 = default(DateTime);
-				value14 = default(TimeSpan);
+				value12 = default(DateTime);
+				value13 = default(TimeSpan);
 				gameSaveTimeText = null;
-				value15 = default(TimeSpan);
-				value16 = null;
-				value17 = 0;
-				value18 = null;
+				value14 = default(TimeSpan);
+				value15 = null;
+				value16 = 0;
+				value17 = null;
 			}
 			else
 			{
@@ -584,19 +576,18 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 				value5 = value.Type;
 				value6 = value.IsAutoLevelupSave;
 				value7 = value.QuickSaveNumber;
-				value8 = value.LoadedTimes;
-				value9 = value.Area;
-				value10 = value.AreaPart;
+				value8 = value.Area;
+				value9 = value.AreaPart;
 				areaNameOverride = value.AreaNameOverride;
-				value11 = value.PartyPortraits;
-				value12 = value.GameStartSystemTime;
-				value13 = value.SystemSaveTime;
-				value14 = value.GameSaveTime;
+				value10 = value.PartyPortraits;
+				value11 = value.GameStartSystemTime;
+				value12 = value.SystemSaveTime;
+				value13 = value.GameSaveTime;
 				gameSaveTimeText = value.GameSaveTimeText;
-				value15 = value.GameTotalTime;
-				value16 = value.Versions;
-				value17 = value.CompatibilityVersion;
-				value18 = value.StatefulRandomStates;
+				value14 = value.GameTotalTime;
+				value15 = value.Versions;
+				value16 = value.CompatibilityVersion;
+				value17 = value.StatefulRandomStates;
 			}
 			if (memberCount != 0)
 			{
@@ -633,45 +624,41 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 														reader.ReadUnmanaged<int>(out value7);
 														if (memberCount != 11)
 														{
-															reader.ReadUnmanaged<int>(out value8);
+															reader.ReadValue(ref value8);
 															if (memberCount != 12)
 															{
 																reader.ReadValue(ref value9);
 																if (memberCount != 13)
 																{
-																	reader.ReadValue(ref value10);
+																	areaNameOverride = reader.ReadString();
 																	if (memberCount != 14)
 																	{
-																		areaNameOverride = reader.ReadString();
+																		ListFormatter.DeserializePackable(ref reader, ref value10);
 																		if (memberCount != 15)
 																		{
-																			ListFormatter.DeserializePackable(ref reader, ref value11);
+																			reader.DangerousReadUnmanaged<DateTime?>(out value11);
 																			if (memberCount != 16)
 																			{
-																				reader.DangerousReadUnmanaged<DateTime?>(out value12);
+																				reader.ReadUnmanaged<DateTime>(out value12);
 																				if (memberCount != 17)
 																				{
-																					reader.ReadUnmanaged<DateTime>(out value13);
+																					reader.ReadUnmanaged<TimeSpan>(out value13);
 																					if (memberCount != 18)
 																					{
-																						reader.ReadUnmanaged<TimeSpan>(out value14);
+																						gameSaveTimeText = reader.ReadString();
 																						if (memberCount != 19)
 																						{
-																							gameSaveTimeText = reader.ReadString();
+																							reader.ReadUnmanaged<TimeSpan>(out value14);
 																							if (memberCount != 20)
 																							{
-																								reader.ReadUnmanaged<TimeSpan>(out value15);
+																								reader.ReadValue(ref value15);
 																								if (memberCount != 21)
 																								{
-																									reader.ReadValue(ref value16);
+																									reader.ReadUnmanaged<int>(out value16);
 																									if (memberCount != 22)
 																									{
-																										reader.ReadUnmanaged<int>(out value17);
-																										if (memberCount != 23)
-																										{
-																											ListFormatter.DeserializePackable(ref reader, ref value18);
-																											_ = 24;
-																										}
+																										ListFormatter.DeserializePackable(ref reader, ref value17);
+																										_ = 23;
 																									}
 																								}
 																							}
@@ -697,7 +684,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			}
 			if (value != null)
 			{
-				goto IL_050b;
+				goto IL_04dc;
 			}
 		}
 		value = new SaveInfo
@@ -713,22 +700,21 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 			Type = value5,
 			IsAutoLevelupSave = value6,
 			QuickSaveNumber = value7,
-			LoadedTimes = value8,
-			Area = value9,
-			AreaPart = value10,
+			Area = value8,
+			AreaPart = value9,
 			AreaNameOverride = areaNameOverride,
-			PartyPortraits = value11,
-			GameStartSystemTime = value12,
-			SystemSaveTime = value13,
-			GameSaveTime = value14,
+			PartyPortraits = value10,
+			GameStartSystemTime = value11,
+			SystemSaveTime = value12,
+			GameSaveTime = value13,
 			GameSaveTimeText = gameSaveTimeText,
-			GameTotalTime = value15,
-			Versions = value16,
-			CompatibilityVersion = value17,
-			StatefulRandomStates = value18
+			GameTotalTime = value14,
+			Versions = value15,
+			CompatibilityVersion = value16,
+			StatefulRandomStates = value17
 		};
 		return;
-		IL_050b:
+		IL_04dc:
 		value.Name = name;
 		value.Description = description;
 		value.SaveId = saveId;
@@ -740,18 +726,17 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		value.Type = value5;
 		value.IsAutoLevelupSave = value6;
 		value.QuickSaveNumber = value7;
-		value.LoadedTimes = value8;
-		value.Area = value9;
-		value.AreaPart = value10;
+		value.Area = value8;
+		value.AreaPart = value9;
 		value.AreaNameOverride = areaNameOverride;
-		value.PartyPortraits = value11;
-		value.GameStartSystemTime = value12;
-		value.SystemSaveTime = value13;
-		value.GameSaveTime = value14;
+		value.PartyPortraits = value10;
+		value.GameStartSystemTime = value11;
+		value.SystemSaveTime = value12;
+		value.GameSaveTime = value13;
 		value.GameSaveTimeText = gameSaveTimeText;
-		value.GameTotalTime = value15;
-		value.Versions = value16;
-		value.CompatibilityVersion = value17;
-		value.StatefulRandomStates = value18;
+		value.GameTotalTime = value14;
+		value.Versions = value15;
+		value.CompatibilityVersion = value16;
+		value.StatefulRandomStates = value17;
 	}
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput.ConsoleTypeProviders;
 using Owlcat.Runtime.UI.ConsoleTools.RewiredCursor;
 using Owlcat.Runtime.UI.Dependencies;
 using Owlcat.Runtime.UI.Utility;
@@ -28,25 +29,17 @@ public class GamePad
 
 	private static GamePad s_Instance;
 
-	private const string RewiredDualShock4Name = "Sony DualShock 4";
+	public readonly ReactiveCommand OnLayerPushed = new ReactiveCommand();
 
-	private const string RewiredDualSense5Name = "Sony DualSense";
+	public readonly ReactiveCommand OnLayerPoped = new ReactiveCommand();
 
-	private const string RewiredNintendoSwitchName = "Nintendo Switch Pro Controller";
+	public readonly ReactiveProperty<ConsoleType> ConsoleTypeProperty = new ReactiveProperty<ConsoleType>();
 
-	private const string RewiredSteamControllerName = "Steam Controller";
+	private readonly OverriddenPlatformProvider m_OverriddenPlatform = new OverriddenPlatformProvider();
 
-	public ReactiveCommand OnLayerPushed = new ReactiveCommand();
-
-	public ReactiveCommand OnLayerPoped = new ReactiveCommand();
-
-	public ReactiveProperty<ConsoleType> ConsoleTypeProperty = new ReactiveProperty<ConsoleType>();
-
-	public ReactiveProperty<bool> IsSwitchController = new ReactiveProperty<bool>();
+	private readonly List<ConsoleTypeProvider> m_TypeProviders;
 
 	private Player m_Player;
-
-	private bool m_IsRunOnSteamDeck;
 
 	private InputLayer m_BugReportLayer;
 
@@ -56,17 +49,7 @@ public class GamePad
 
 	private List<InputLayer> m_Layers = new List<InputLayer>();
 
-	public static GamePad Instance
-	{
-		get
-		{
-			if (s_Instance == null)
-			{
-				s_Instance = new GamePad();
-			}
-			return s_Instance;
-		}
-	}
+	public static GamePad Instance => s_Instance ?? (s_Instance = new GamePad());
 
 	public ConsoleType Type => ConsoleTypeProperty.Value;
 
@@ -123,59 +106,39 @@ public class GamePad
 
 	private GamePad()
 	{
+		m_TypeProviders = new List<ConsoleTypeProvider>
+		{
+			m_OverriddenPlatform,
+			new PlatformTypeProvider(),
+			new RewiredTypeProvider(),
+			new DefaultTypeProvider()
+		};
 		UpdateConsoleType();
 		ReInput.ControllerConnectedEvent += delegate
 		{
 			UpdateConsoleType();
 		};
-		IsSwitchController.Subscribe(delegate
-		{
-			UpdateConsoleType();
-		});
 	}
 
 	private void UpdateConsoleType()
 	{
-		SwapButtonsForJapanese = IsSwitchController.Value;
-		if (IsSwitchController.Value)
+		foreach (ConsoleTypeProvider typeProvider in m_TypeProviders)
 		{
-			ConsoleTypeProperty.Value = ConsoleType.Switch;
-			return;
+			if (typeProvider.TryGetConsoleType(out var type))
+			{
+				ConsoleTypeProperty.Value = type;
+				break;
+			}
 		}
-		if (m_IsRunOnSteamDeck)
+		if (ConsoleTypeProperty.Value == ConsoleType.Switch)
 		{
-			ConsoleTypeProperty.Value = ConsoleType.SteamDeck;
-			return;
-		}
-		Joystick[] array = ReInput.controllers?.GetJoysticks();
-		if (array == null || array.Length == 0 || array[0] == null)
-		{
-			ConsoleTypeProperty.Value = ConsoleType.XBox;
-			return;
-		}
-		switch (array[0].name)
-		{
-		case "Sony DualShock 4":
-			ConsoleTypeProperty.Value = ConsoleType.PS4;
-			break;
-		case "Sony DualSense":
-			ConsoleTypeProperty.Value = ConsoleType.PS5;
-			break;
-		case "Nintendo Switch Pro Controller":
-			ConsoleTypeProperty.Value = ConsoleType.Switch;
-			break;
-		case "Steam Controller":
-			ConsoleTypeProperty.Value = ConsoleType.SteamController;
-			break;
-		default:
-			ConsoleTypeProperty.Value = ConsoleType.XBox;
-			break;
+			SwapButtonsForJapanese = true;
 		}
 	}
 
-	public void SetIsRunOnSteamDeck(bool value)
+	public void SetOverriddenConsoleType(ConsoleType type)
 	{
-		m_IsRunOnSteamDeck = value;
+		m_OverriddenPlatform.SetConsoleType(type);
 		UpdateConsoleType();
 	}
 

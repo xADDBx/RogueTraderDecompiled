@@ -76,6 +76,15 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(AchievementsManager.AddAchievement), "void AddAchievement(string param = \\\"\\\")", "add_achievement", "", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "param",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(CutsceneCheats.SkipCutscene), "void SkipCutscene()", "skip_cutscene", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CutsceneCheats.SkipBark), "void SkipBark()", "skip_bark", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(EtudeBracketForbidColonization.ChangeForbidColonization), "void ChangeForbidColonization()", "change_colonization_access", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),

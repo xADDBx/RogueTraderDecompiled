@@ -35,7 +35,8 @@ public class UISettingsGroup : ScriptableObject
 			return false;
 		}
 		bool flag = false;
-		if (platform != 0 && !(platform == UISettingsEntityBase.UISettingsPlatform.Console && flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PC || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.GamepadAndPC || !Game.Instance.IsControllerGamepad || flag))
+		bool flag2 = false;
+		if (platform != 0 && !(platform == UISettingsEntityBase.UISettingsPlatform.Console && flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PC || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PCAndNotMSStore || flag || flag2) && (platform != UISettingsEntityBase.UISettingsPlatform.GamepadAndPC || !Game.Instance.IsControllerGamepad || flag))
 		{
 			if (platform == UISettingsEntityBase.UISettingsPlatform.PCMouseOnly && Game.Instance.IsControllerMouse)
 			{

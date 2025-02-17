@@ -33,6 +33,10 @@ public class NewGamePhaseStoryPCView : NewGamePhaseStoryBaseView
 		{
 			base.ViewModel.ShowInStore();
 		}));
+		AddDisposable(m_InstallButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.InstallDlc();
+		}));
 	}
 
 	protected override void ShowHideVideoImpl(bool state)

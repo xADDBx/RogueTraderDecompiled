@@ -15,11 +15,9 @@ using Owlcat.Runtime.UI.ConsoleTools.NavigationTool.TMPLinkNavigation;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UniRx;
 using Rewired;
-using TMPro;
 using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.MainMenu.Console;
 
@@ -37,16 +35,6 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 
 	[SerializeField]
 	private OwlcatMultiButton m_SecondGlossaryFocus;
-
-	[Header("XBox")]
-	[SerializeField]
-	protected GameObject m_XBoxGamerGroup;
-
-	[SerializeField]
-	protected TextMeshProUGUI m_XBoxGamerTagText;
-
-	[SerializeField]
-	protected RawImage m_XBoxGamerRawImage;
 
 	private InputLayer m_InputLayer;
 
@@ -68,8 +56,8 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 
 	protected override void BindViewImplementation()
 	{
+		m_XBoxGamerGroup.SetActive(value: false);
 		base.BindViewImplementation();
-		m_XBoxGamerGroup.gameObject.SetActive(value: false);
 		BuildNavigation();
 	}
 

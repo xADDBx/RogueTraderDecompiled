@@ -322,21 +322,25 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 
 	public static void InitializeUIKitDependencies()
 	{
-		if (!s_UIKitDependenciesInitialized && !UIKitDependenciesInitializing)
+		if (s_UIKitDependenciesInitialized || (bool)UIKitDependenciesInitializing)
 		{
-			using (UIKitDependenciesInitializing.Retain())
-			{
-				LogChannelLoggerWrapper logger = new LogChannelLoggerWrapper(PFLog.UI, "UI");
-				UIKitLogger.SetLogger(logger);
-				UniRxLogger.SetLogger(logger);
-				UIKitSoundManager.SetSoundManager(UISounds.Instance);
-				UIKitRewiredCursorController.SetRewiredCursorController(ConsoleCursor.Instance);
-				InputLayer.SetCanReceiveInputPredicate(LoadingProcess.Instance.CanReceiveInput);
-				GamePadIcons.SetInstance(ConsoleRoot.Instance.Icons);
-				GamePad.Instance.SetIsRunOnSteamDeck(ApplicationHelper.IsRunOnSteamDeck);
-			}
-			s_UIKitDependenciesInitialized = true;
+			return;
 		}
+		using (UIKitDependenciesInitializing.Retain())
+		{
+			LogChannelLoggerWrapper logger = new LogChannelLoggerWrapper(PFLog.UI, "UI");
+			UIKitLogger.SetLogger(logger);
+			UniRxLogger.SetLogger(logger);
+			UIKitSoundManager.SetSoundManager(UISounds.Instance);
+			UIKitRewiredCursorController.SetRewiredCursorController(ConsoleCursor.Instance);
+			InputLayer.SetCanReceiveInputPredicate(LoadingProcess.Instance.CanReceiveInput);
+			GamePadIcons.SetInstance(ConsoleRoot.Instance.Icons);
+			if (ApplicationHelper.IsRunOnSteamDeck)
+			{
+				GamePad.Instance.SetOverriddenConsoleType(ConsoleType.SteamDeck);
+			}
+		}
+		s_UIKitDependenciesInitialized = true;
 	}
 
 	protected override void DisposeImplementation()

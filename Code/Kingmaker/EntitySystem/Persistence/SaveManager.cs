@@ -857,7 +857,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		save.PartyPortraits = Game.Instance.Player.PartyCharacters.Select((UnitReference r) => ExtractPortrait(r.Entity.ToBaseUnitEntity())).ToList();
 		save.GameTotalTime = Game.Instance.Player.RealTime;
 		save.QuestWithSaveDescription = GetQuestWithSaveDescription();
-		save.LoadedTimes = 0;
 		save.Versions = JsonUpgradeSystem.KnownVersions;
 		save.DlcRewards = Game.Instance.Player.DlcRewardsToSave;
 		PFStatefulRandom.GetStates(ref save.StatefulRandomStates);
@@ -1426,15 +1425,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				}
 				using (saveInfo.GetReadScope(upgradeable: true))
 				{
-					saveInfo.LoadedTimes++;
-					using (ProfileScope.New("Save Header"))
-					{
-						using (saveInfo.GetWriteScope())
-						{
-							saveInfo.Saver.SaveJson("header", SaveSystemJsonSerializer.Serializer.SerializeObject(saveInfo));
-							saveInfo.Saver.Save();
-						}
-					}
 					using (ProfileScope.New("Dispose State"))
 					{
 						Game.Instance.DisposeState();
@@ -1470,10 +1460,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			}
 		}
 		PFStatefulRandom.SetStates(saveInfo.StatefulRandomStates);
-		if (NetworkingManager.IsMultiplayer && !NetworkingManager.IsGameOwner && Application.isConsolePlatform)
-		{
-			ReplaceUserGeneratedContent();
-		}
 		foreach (AreaPersistentState savedAreaState in Game.Instance.State.SavedAreaStates)
 		{
 			savedAreaState.RestoreAreaBlueprint();
