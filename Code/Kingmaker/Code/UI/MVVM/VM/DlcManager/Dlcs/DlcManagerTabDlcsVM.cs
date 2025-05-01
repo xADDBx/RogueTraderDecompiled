@@ -60,7 +60,7 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		foreach (IBlueprintDlc purchasableDLC in StoreManager.GetPurchasableDLCs())
 		{
 			BlueprintDlc dlc = purchasableDLC as BlueprintDlc;
-			if (dlc == null || !dlc.HideWhoNotBuyDlc)
+			if (dlc == null || (!dlc.HideWhoNotBuyDlc && !dlc.HideDlcForAll) || 1 == 0)
 			{
 				DlcManagerDlcEntityVM dlcManagerDlcEntityVM = new DlcManagerDlcEntityVM(dlc, delegate
 				{

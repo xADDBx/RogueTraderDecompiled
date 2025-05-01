@@ -54,7 +54,7 @@ public class NewGamePhaseStoryScenarioEntityVM : SelectionGroupEntityVM
 		m_CampaignReference = campaign.ToReference<BlueprintCampaignReference>();
 		m_SetStory = setStory;
 		IntegralDlcVms = new List<NewGamePhaseStoryScenarioEntityIntegralDlcVM>();
-		foreach (BlueprintDlc item in campaign.AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc))
+		foreach (BlueprintDlc item in campaign.AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc && !dlc.HideDlcForAll))
 		{
 			IntegralDlcVms.Add(new NewGamePhaseStoryScenarioEntityIntegralDlcVM(campaign, item));
 		}
@@ -96,7 +96,7 @@ public class NewGamePhaseStoryScenarioEntityVM : SelectionGroupEntityVM
 		{
 			hashSet.Add(item);
 		}
-		foreach (BlueprintDlc item2 in m_CampaignReference.Get().AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc && dlc.IsAvailable))
+		foreach (BlueprintDlc item2 in m_CampaignReference.Get().AdditionalContentDlc.Where((BlueprintDlc dlc) => !dlc.HideWhoNotBuyDlc && !dlc.HideDlcForAll && dlc.IsAvailable))
 		{
 			if (!hashSet.Contains(item2))
 			{

@@ -54,11 +54,12 @@ public class DlcManagerTabSwitchOnDlcsVM : DlcManagerTabBaseVM, ISettingsDescrip
 		IEnumerable<IBlueprintDlc> second = from dlc in StoreManager.GetPurchasableDLCs()
 			where dlc.DlcType == DlcTypeEnum.CosmeticDlc && dlc.IsAvailable
 			select dlc;
-		List<DlcManagerSwitchOnDlcEntityVM> list = (from dlc in availableAdditionalContentDlcForCurrentCampaign.Concat(second)
+		List<DlcManagerSwitchOnDlcEntityVM> list = (from dlc in availableAdditionalContentDlcForCurrentCampaign.Concat(second).OfType<BlueprintDlc>()
+			where !dlc.HideDlcForAll && (!dlc.HideWhoNotBuyDlc || dlc.IsPurchased)
 			orderby dlc.DlcType
-			select dlc).ToList().Select(delegate(IBlueprintDlc dlcEntity)
+			select dlc).ToList().Select(delegate(BlueprintDlc dlcEntity)
 		{
-			DlcManagerSwitchOnDlcEntityVM dlcManagerSwitchOnDlcEntityVM = new DlcManagerSwitchOnDlcEntityVM(dlcEntity as BlueprintDlc, CheckModNeedToResaveCommand);
+			DlcManagerSwitchOnDlcEntityVM dlcManagerSwitchOnDlcEntityVM = new DlcManagerSwitchOnDlcEntityVM(dlcEntity, CheckModNeedToResaveCommand);
 			AddDisposable(dlcManagerSwitchOnDlcEntityVM);
 			return dlcManagerSwitchOnDlcEntityVM;
 		}).ToList();

@@ -242,6 +242,7 @@ public class MainMenuButtonFx : ContextButtonFx
 	{
 		return (from dlc in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>()
 			where !dlc.HideWhoNotBuyDlc
+			where !dlc.HideWhoNotBuyDlc
 			select dlc).Any((BlueprintDlc dlc) => PlayerPrefs.GetInt("DLCMANAGER_I_SAW_" + dlc.name, 0) == 0);
 	}
 }

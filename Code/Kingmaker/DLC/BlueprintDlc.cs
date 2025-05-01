@@ -77,7 +77,10 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	private BlueprintDlcReference m_ParentDlc;
 
 	[SerializeField]
-	private bool m_HideDlc = true;
+	private bool m_ShowOnlyForOwners;
+
+	[SerializeField]
+	private bool m_HideDlcForAll = true;
 
 	[Header("MainMenu")]
 	[SerializeField]
@@ -181,17 +184,35 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public BlueprintDlc ParentDlc => m_ParentDlc;
 
-	public bool HideDlc => m_HideDlc;
+	public bool ShowOnlyForOwners => m_ShowOnlyForOwners;
 
 	public bool HideWhoNotBuyDlc
 	{
 		get
 		{
-			if (m_HideDlc)
+			if (m_ShowOnlyForOwners)
 			{
 				return !IsPurchased;
 			}
 			return false;
+		}
+	}
+
+	public bool HideDlcForAll => m_HideDlcForAll;
+
+	public bool HideForAll
+	{
+		get
+		{
+			if (!m_HideDlcForAll)
+			{
+				if (m_ShowOnlyForOwners)
+				{
+					return !IsPurchased;
+				}
+				return false;
+			}
+			return true;
 		}
 	}
 
