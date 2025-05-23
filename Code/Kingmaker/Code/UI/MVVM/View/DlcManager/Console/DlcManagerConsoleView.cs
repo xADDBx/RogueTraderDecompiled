@@ -129,11 +129,11 @@ public class DlcManagerConsoleView : DlcManagerBaseView
 		m_NavigationBehaviour.Clear();
 		if (base.ViewModel.SelectedMenuEntity.Value.DlcManagerTabVM == base.ViewModel.DlcsVM && !base.ViewModel.InGame)
 		{
-			m_NavigationBehaviour.SetEntitiesVertical(m_DlcManagerTabDlcsConsoleView.GetNavigationEntities());
+			m_NavigationBehaviour.SetEntitiesVertical<GridConsoleNavigationBehaviour>(m_DlcManagerTabDlcsConsoleView.GetNavigationBehaviour());
 			m_NavigationBehaviour.FocusOnFirstValidEntity();
 			m_DlcManagerTabDlcsConsoleView.ScrollToTop();
 			m_Disposable?.Clear();
-			m_Disposable?.Add(m_NavigationBehaviour.Focus.Subscribe(m_DlcManagerTabDlcsConsoleView.ScrollList));
+			m_Disposable?.Add(m_NavigationBehaviour.DeepestFocusAsObservable.Subscribe(m_DlcManagerTabDlcsConsoleView.ScrollList));
 		}
 		else if (base.ViewModel.SelectedMenuEntity.Value.DlcManagerTabVM == base.ViewModel.ModsVM && !base.ViewModel.IsConsole)
 		{

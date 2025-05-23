@@ -55,7 +55,7 @@ public class DlcManagerTabSwitchOnDlcsVM : DlcManagerTabBaseVM, ISettingsDescrip
 			where dlc.DlcType == DlcTypeEnum.CosmeticDlc && dlc.IsAvailable
 			select dlc;
 		List<DlcManagerSwitchOnDlcEntityVM> list = (from dlc in availableAdditionalContentDlcForCurrentCampaign.Concat(second).OfType<BlueprintDlc>()
-			where !dlc.HideDlcForAll && (!dlc.HideWhoNotBuyDlc || dlc.IsPurchased)
+			where (!dlc.IsConsole() && !dlc.HideDlcForAll && (!dlc.HideWhoNotBuyDlc || dlc.IsPurchased)) || (dlc.IsConsole() && !dlc.HideDlcForAll && (!dlc.HideWhoNotBuyDlc || dlc.IsPurchased) && !dlc.HideInConsoleStores)
 			orderby dlc.DlcType
 			select dlc).ToList().Select(delegate(BlueprintDlc dlcEntity)
 		{

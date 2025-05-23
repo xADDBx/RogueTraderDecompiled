@@ -10,7 +10,8 @@ public class CharGenConfig
 	public enum CharGenMode
 	{
 		NewGame,
-		NewCompanion
+		NewCompanion,
+		Appearance
 	}
 
 	public enum CharGenCompanionType
@@ -84,7 +85,18 @@ public class CharGenConfig
 
 	public void OpenUI()
 	{
-		if (!IsUIForbidden)
+		if (IsUIForbidden)
+		{
+			return;
+		}
+		if (Mode == CharGenMode.Appearance)
+		{
+			EventBus.RaiseEvent(delegate(IChangeAppearanceHandler h)
+			{
+				h.HandleShowChangeAppearance(this);
+			});
+		}
+		else
 		{
 			EventBus.RaiseEvent(delegate(ICharGenInitiateUIHandler h)
 			{

@@ -54,21 +54,24 @@ public class CharacterVisualSettingsConsoleView : CharacterVisualSettingsView<Ch
 		m_HelmetEntityView.AddInput(m_InputLayer);
 		m_HelmetAboveAllEntityView.AddInput(m_InputLayer);
 		m_BackpackEntityView.AddInput(m_InputLayer);
-		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct = m_InputLayer.AddButton(delegate
 		{
 			base.ViewModel.Close();
-		}, 9), UIStrings.Instance.CommonTexts.CloseWindow));
+		}, 9, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.CloseWindow));
+		AddDisposable(inputBindStruct);
 		AddDisposable(m_InputLayer.AddAxis(RotateDoll, 2));
 		AddDisposable(m_InputLayer.AddAxis(ZoomDoll, 3));
-		InputBindStruct inputBindStruct = m_InputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(delegate
 		{
 			base.ViewModel.Close();
 		}, 16);
 		if (m_CloseHint != null)
 		{
-			AddDisposable(m_CloseHint.Bind(inputBindStruct));
+			AddDisposable(m_CloseHint.Bind(inputBindStruct2));
 			m_CloseHint.SetLabel(UIStrings.Instance.CharGen.HideVisualSettings);
 		}
+		AddDisposable(inputBindStruct2);
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}

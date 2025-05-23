@@ -57,6 +57,9 @@ public class BlueprintCharGenRoot : BlueprintScriptableObject
 	[SerializeField]
 	private BlueprintOriginPath.Reference m_NewCompanionNavigatorPregenChargenPath;
 
+	[SerializeField]
+	private BlueprintOriginPath.Reference m_ChangeAppearanceChargenPath;
+
 	[NotNull]
 	[SerializeField]
 	[FormerlySerializedAs("Portraits")]
@@ -172,6 +175,8 @@ public class BlueprintCharGenRoot : BlueprintScriptableObject
 	public BlueprintOriginPath NewCompanionNavigatorCustomChargenPath => m_NewCompanionNavigatorCustomChargenPath?.Get();
 
 	public BlueprintOriginPath NewCompanionNavigatorPregenChargenPath => m_NewCompanionNavigatorPregenChargenPath?.Get();
+
+	public BlueprintOriginPath ChangeAppearanceChargenPath => m_ChangeAppearanceChargenPath?.Get();
 
 	public ReferenceArrayProxy<BlueprintPortrait> Portraits
 	{

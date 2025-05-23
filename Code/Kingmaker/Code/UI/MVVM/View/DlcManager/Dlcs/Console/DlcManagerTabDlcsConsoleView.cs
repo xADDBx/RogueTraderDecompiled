@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.CustomUIVideoPlayer.Console;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.Base;
-using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
+using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
@@ -99,9 +98,9 @@ public class DlcManagerTabDlcsConsoleView : DlcManagerTabDlcsBaseView
 		m_CustomUIVideoPlayerConsoleView.CreateInputImpl(inputLayer, hintsWidget, playPauseVideoHint, base.ViewModel.IsEnabled);
 	}
 
-	public List<IConsoleEntity> GetNavigationEntities()
+	public GridConsoleNavigationBehaviour GetNavigationBehaviour()
 	{
-		return m_DlcSelectorConsoleView.GetNavigationEntities();
+		return m_DlcSelectorConsoleView.GetNavigationBehaviour();
 	}
 
 	protected override void ShowHideVideoImpl(bool state)

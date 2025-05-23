@@ -103,6 +103,10 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 		}
 		SetupName();
 		SetupPortrait();
+		base.ViewModel.PortraitChanged.Subscribe(delegate
+		{
+			SetupPortrait();
+		});
 		SetupDifficulty();
 		UnitBuffPartPCView.Bind(base.ViewModel.UnitBuffs);
 		if (HasMarkers)
@@ -124,10 +128,10 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 				SetupUnableToAct();
 			}));
 		}
-		AddDisposable(base.ViewModel.UnitHealthPartVM.Subscribe(delegate(UnitHealthPartVM h)
+		AddDisposable(base.ViewModel.UnitHealthPartVM.Subscribe(delegate(UnitHealthPartVM healthPartVM)
 		{
-			UnitHealthPartTextPCView.Bind(h);
-			UnitHealthPartProgressPCView.Bind(h);
+			UnitHealthPartTextPCView.Bind(healthPartVM);
+			UnitHealthPartProgressPCView.Bind(healthPartVM);
 		}));
 		if (Button != null)
 		{

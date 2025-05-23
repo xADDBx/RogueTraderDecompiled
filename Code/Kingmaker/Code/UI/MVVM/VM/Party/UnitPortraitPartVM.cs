@@ -3,6 +3,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Parts;
@@ -12,7 +13,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Party;
 
-public class UnitPortraitPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEntitySubscriber, IUnitPortraitChangedHandler<EntitySubscriber>, IUnitPortraitChangedHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitPortraitChangedHandler, EntitySubscriber>
+public class UnitPortraitPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEntitySubscriber, IUnitPortraitChangedHandler<EntitySubscriber>, IUnitPortraitChangedHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitPortraitChangedHandler, EntitySubscriber>, IChangeAppearanceCloseHandler
 {
 	public readonly ReactiveProperty<Sprite> Portrait = new ReactiveProperty<Sprite>(null);
 
@@ -51,15 +52,25 @@ public class UnitPortraitPartVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		}
 	}
 
+	private void UpdatePortrait()
+	{
+		Portrait.Value = m_Unit.Entity?.Portrait.SmallPortrait;
+	}
+
 	public void SetUnitData(BaseUnitEntity unit)
 	{
 		m_Unit = unit;
-		Portrait.Value = m_Unit.Entity?.Portrait.SmallPortrait;
+		UpdatePortrait();
 		UpdateFields();
 	}
 
 	public void HandlePortraitChanged()
 	{
-		Portrait.Value = m_Unit.Entity?.Portrait.SmallPortrait;
+		UpdatePortrait();
+	}
+
+	public void HandleCloseChangeAppearance()
+	{
+		UpdatePortrait();
 	}
 }

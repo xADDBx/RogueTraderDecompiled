@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.VM.ChangeAppearance;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -9,9 +10,11 @@ using UniRx;
 
 namespace Kingmaker.UI.MVVM.VM.CharGen;
 
-public class CharGenContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICharGenInitiateUIHandler, ISubscriber
+public class CharGenContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICharGenInitiateUIHandler, ISubscriber, IChangeAppearanceHandler
 {
 	public readonly ReactiveProperty<CharGenVM> CharGenVM = new ReactiveProperty<CharGenVM>();
+
+	public readonly ReactiveProperty<ChangeAppearanceVM> ChangeAppearanceVM = new ReactiveProperty<ChangeAppearanceVM>();
 
 	private Action m_EnterNewGameAction;
 
@@ -66,5 +69,32 @@ public class CharGenContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	{
 		DisposeAndRemove(CharGenVM);
 		m_CloseSoundAction?.Invoke();
+	}
+
+	private void CloseChangeAppearance()
+	{
+		DisposeAndRemove(ChangeAppearanceVM);
+		m_CloseSoundAction?.Invoke();
+	}
+
+	private void CompleteChangeAppearance(BaseUnitEntity resultUnit)
+	{
+		m_CompleteAction?.Invoke(resultUnit);
+		CloseChangeAppearance();
+		EventBus.RaiseEvent(delegate(IChangeAppearanceCloseHandler h)
+		{
+			h.HandleCloseChangeAppearance();
+		});
+	}
+
+	public void HandleShowChangeAppearance(CharGenConfig config)
+	{
+		DisposeAndRemove(ChangeAppearanceVM);
+		m_CloseWithoutCompleteAction = config.OnClose;
+		m_CompleteAction = config.OnComplete;
+		m_CloseSoundAction = config.OnCloseSoundAction;
+		m_ShowNewGameAction = config.OnShowNewGameAction;
+		ChangeAppearanceVM disposable = (ChangeAppearanceVM.Value = new ChangeAppearanceVM(config, CloseChangeAppearance, CompleteChangeAppearance));
+		AddDisposable(disposable);
 	}
 }

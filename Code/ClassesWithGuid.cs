@@ -500,6 +500,7 @@ public static class ClassesWithGuid
 		(typeof(CameraToPosition), "1a0449d4049c34149a17869dd62dc64a"),
 		(typeof(CastSpell), "2208984b829b49fd878da37b3413ce46"),
 		(typeof(ChangeAccessibleStarshipInventory), "106327c1089dd0242b12633b4dc0f8e3"),
+		(typeof(ChangeAppearance), "dc92edc6368e48c9b2222f0bf32297de"),
 		(typeof(ChangeColonyStats), "fad8e98d61f54ac7ac8ce20cc204b9ca"),
 		(typeof(ChangeMainCharacter), "3e87f8eb96e94fb8ade22f6aa8b57ecf"),
 		(typeof(ChangeMinersProductivity), "adc099b2458f409482d08821e5b33baf"),

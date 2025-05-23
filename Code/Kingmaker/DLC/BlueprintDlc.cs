@@ -82,6 +82,9 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	[SerializeField]
 	private bool m_HideDlcForAll = true;
 
+	[SerializeField]
+	private bool m_HideInConsoleStores;
+
 	[Header("MainMenu")]
 	[SerializeField]
 	private VideoLink m_MainMenuBackgroundVideoLink;
@@ -216,6 +219,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 		}
 	}
 
+	public bool HideInConsoleStores => m_HideInConsoleStores;
+
 	public VideoClip MainMenuBackgroundVideo => m_MainMenuBackgroundVideoLink?.Load();
 
 	public Sprite TopMonitorArt => m_TopMonitorArtLink?.Load();
@@ -242,7 +247,7 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public Sprite GetKeyArt()
 	{
-		if (0 == 0 || !(DefaultConsoleKeyArt != null))
+		if (!IsConsole() || !(DefaultConsoleKeyArt != null))
 		{
 			if (!(DefaultKeyArt != null))
 			{
@@ -251,6 +256,11 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 			return DefaultKeyArt;
 		}
 		return DefaultConsoleKeyArt;
+	}
+
+	public bool IsConsole()
+	{
+		return false;
 	}
 
 	public string GetDlcName()

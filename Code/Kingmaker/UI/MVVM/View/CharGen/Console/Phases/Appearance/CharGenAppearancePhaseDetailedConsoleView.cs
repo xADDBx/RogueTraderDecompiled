@@ -1,11 +1,9 @@
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Phases.Appearance.Components.Base;
-using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Pages;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
@@ -16,12 +14,13 @@ using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.VirtualListSystem;
 using Owlcat.Runtime.UniRx;
+using Rewired;
 using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.CharGen.Console.Phases.Appearance;
 
-public class CharGenAppearancePhaseDetailedConsoleView : CharGenAppearancePhaseDetailedView, IConsoleNavigationEntity, IConsoleEntity, INavigationDirectionsHandler, INavigationVerticalDirectionsHandler, INavigationUpDirectionHandler, INavigationDownDirectionHandler, INavigationHorizontalDirectionsHandler, INavigationLeftDirectionHandler, INavigationRightDirectionHandler, ICharGenAppearancePageComponentHandler, ISubscriber
+public class CharGenAppearancePhaseDetailedConsoleView : CharGenAppearancePhaseDetailedView, IConsoleNavigationEntity, IConsoleEntity, INavigationDirectionsHandler, INavigationVerticalDirectionsHandler, INavigationUpDirectionHandler, INavigationDownDirectionHandler, INavigationHorizontalDirectionsHandler, INavigationLeftDirectionHandler, INavigationRightDirectionHandler
 {
 	[Header("Console")]
 	[SerializeField]
@@ -67,7 +66,7 @@ public class CharGenAppearancePhaseDetailedConsoleView : CharGenAppearancePhaseD
 		InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 		{
 			OnConfirmClick();
-		}, 8, m_CanConfirm.And(isMainCharacter).ToReactiveProperty());
+		}, 8, m_CanConfirm.And(isMainCharacter).ToReactiveProperty(), InputActionEventType.ButtonJustReleased);
 		AddDisposable(m_SelectHint.Bind(inputBindStruct));
 		AddDisposable(inputBindStruct);
 		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate

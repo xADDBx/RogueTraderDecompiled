@@ -21,9 +21,11 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public readonly SelectionGroupRadioVM<DlcManagerDlcEntityVM> SelectionGroup;
 
+	public readonly ReactiveCommand ChangeStory = new ReactiveCommand();
+
 	private BlueprintDlc m_CurrentDlc;
 
-	public readonly ReactiveCommand ChangeStory = new ReactiveCommand();
+	private ReactiveCollection<DlcManagerDlcEntityVM> m_DLCsCollection = new ReactiveCollection<DlcManagerDlcEntityVM>();
 
 	public readonly BoolReactiveProperty DlcIsBought = new BoolReactiveProperty();
 
@@ -56,24 +58,9 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public DlcManagerTabDlcsVM()
 	{
-		List<DlcManagerDlcEntityVM> list = new List<DlcManagerDlcEntityVM>();
-		foreach (IBlueprintDlc purchasableDLC in StoreManager.GetPurchasableDLCs())
-		{
-			BlueprintDlc dlc = purchasableDLC as BlueprintDlc;
-			if (dlc == null || (!dlc.HideWhoNotBuyDlc && !dlc.HideDlcForAll) || 1 == 0)
-			{
-				DlcManagerDlcEntityVM dlcManagerDlcEntityVM = new DlcManagerDlcEntityVM(dlc, delegate
-				{
-					SetDlc(dlc);
-				});
-				list.Add(dlcManagerDlcEntityVM);
-				AddDisposable(dlcManagerDlcEntityVM);
-			}
-		}
-		List<DlcManagerDlcEntityVM> list2 = list.OrderBy((DlcManagerDlcEntityVM dlc) => dlc.DlcType).ToList();
-		SelectionGroup = new SelectionGroupRadioVM<DlcManagerDlcEntityVM>(list2, SelectedEntity);
+		SelectionGroup = new SelectionGroupRadioVM<DlcManagerDlcEntityVM>(m_DLCsCollection, SelectedEntity);
 		AddDisposable(SelectionGroup);
-		SelectedEntity.Value = list2.FirstOrDefault();
+		UpdateDLCs();
 		AddDisposable(CustomUIVideoPlayerVM = new CustomUIVideoPlayerVM());
 		IsRealConsole.Value = false;
 		AddDisposable(EventBus.Subscribe(this));
@@ -85,8 +72,43 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		StoreManager.OnRefreshDLC -= HandleOnRefreshDLC;
 	}
 
+	private void UpdateDLCs()
+	{
+		List<DlcManagerDlcEntityVM> list = new List<DlcManagerDlcEntityVM>();
+		foreach (IBlueprintDlc item in from dlc in StoreManager.GetPurchasableDLCs()
+			orderby dlc.DlcType
+			select dlc)
+		{
+			BlueprintDlc dlc = item as BlueprintDlc;
+			if (dlc == null || (!dlc.HideWhoNotBuyDlc && !dlc.HideDlcForAll) || 1 == 0)
+			{
+				DlcManagerDlcEntityVM dlcManagerDlcEntityVM = new DlcManagerDlcEntityVM(dlc, delegate
+				{
+					SetDlc(dlc);
+				});
+				list.Add(dlcManagerDlcEntityVM);
+				AddDisposable(dlcManagerDlcEntityVM);
+			}
+		}
+		if (list.Count == m_DLCsCollection.Count)
+		{
+			return;
+		}
+		m_DLCsCollection.Clear();
+		foreach (DlcManagerDlcEntityVM item2 in list)
+		{
+			m_DLCsCollection.Add(item2);
+		}
+		ReactiveProperty<DlcManagerDlcEntityVM> selectedEntity = SelectedEntity;
+		if (selectedEntity.Value == null)
+		{
+			DlcManagerDlcEntityVM dlcManagerDlcEntityVM3 = (selectedEntity.Value = m_DLCsCollection.FirstOrDefault());
+		}
+	}
+
 	private void HandleOnRefreshDLC()
 	{
+		UpdateDLCs();
 		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(m_CurrentDlc);
 		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && IsRealConsole.Value;
 		DlcIsBought.Value = iDLCStatus.Purchased;

@@ -17,6 +17,7 @@ using Kingmaker.Visual.CharacterSystem;
 using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.UnitLogic.Levelup.Selections.Doll;
 
@@ -60,6 +61,8 @@ public class DollState : ICanConvertPropertiesToReactive
 			}
 		}
 	}
+
+	private delegate int GetRampIndexDelegate(EEAdapter eeAdapter, bool secondary = false);
 
 	[NotNull]
 	private static readonly List<Texture2D> s_EmptyRamps = new List<Texture2D>();
@@ -404,9 +407,49 @@ public class DollState : ICanConvertPropertiesToReactive
 		Gender = unit.Gender;
 		Race = unit.Progression.Race;
 		Portrait = unit.Blueprint.PortraitSafe;
-		UpdateMechanicsEntities(unit);
+		Validate();
 		PopulatePregenDollSettings(settings);
 		SetTrackPortrait(state: false);
+		UpdateMechanicsEntities(unit);
+	}
+
+	public void SetupFromUnit(BaseUnitEntity unit)
+	{
+		BlueprintPortrait portrait = unit.UISettings.PortraitBlueprint ?? unit.Blueprint.PortraitSafe;
+		SetTrackPortrait(state: true);
+		SetPortrait(portrait);
+		SetTrackPortrait(state: false);
+		Gender = unit.Gender;
+		if (Race == null)
+		{
+			BlueprintRace blueprintRace = (Race = unit.Progression.Race);
+		}
+		Validate();
+		DollData doll = unit.ViewSettings.Doll;
+		if (doll != null)
+		{
+			PopulateFromDollData(doll);
+		}
+		else
+		{
+			PregenDollSettings component = unit.Blueprint.GetComponent<PregenDollSettings>();
+			if (component != null)
+			{
+				PopulatePregenDollSettings(component);
+			}
+			else
+			{
+				Character characterAvatar = unit.View.CharacterAvatar;
+				if (characterAvatar != null)
+				{
+					PopulateFromCharacterView(characterAvatar);
+				}
+				else
+				{
+					PFLog.Default.Error($"Cannot populate DollData for character {unit}: it has neither DollData, PregenDollSettings, Character component!");
+				}
+			}
+		}
 		UpdateMechanicsEntities(unit);
 	}
 
@@ -434,6 +477,105 @@ public class DollState : ICanConvertPropertiesToReactive
 		EquipmentRampIndexSecondary = m_DefaultSettings.EquipmentRampIndexSecondary;
 		Scars = GetScarsList(Race, Gender);
 		Updated();
+	}
+
+	private void PopulateFromDollData(DollData dollData)
+	{
+		RacePreset = dollData.RacePreset;
+		PopulateFromEEIdList(dollData.EquipmentEntityIds, GetRampIndex, dollData.ClothesPrimaryIndex, dollData.ClothesSecondaryIndex);
+		int GetRampIndex(EEAdapter ee, bool secondary = false)
+		{
+			EquipmentEntityLink link = ee.GetLink();
+			if (link == null)
+			{
+				return -1;
+			}
+			return (secondary ? dollData.EntitySecondaryRampIdices : dollData.EntityRampIdices).GetValueOrDefault(link.AssetId, -1);
+		}
+	}
+
+	private void PopulateFromCharacterView(Character character)
+	{
+		PopulateFromEEIdList(character.SavedEquipmentEntities.Select((EquipmentEntityLink ee) => ee.AssetId), GetRampIndex);
+		int GetRampIndex(EEAdapter ee, bool secondary = false)
+		{
+			EquipmentEntityLink link = ee.GetLink();
+			if (link == null)
+			{
+				return -1;
+			}
+			Character.SavedSelectedRampIndices savedSelectedRampIndices = character.m_SavedRampIndices.Find((Character.SavedSelectedRampIndices ri) => ri.EquipmentEntityLink.AssetId == link.AssetId);
+			if (savedSelectedRampIndices == null)
+			{
+				return -1;
+			}
+			if (!secondary)
+			{
+				return savedSelectedRampIndices.PrimaryIndex;
+			}
+			return savedSelectedRampIndices.SecondaryIndex;
+		}
+	}
+
+	private void PopulateFromEEIdList(IEnumerable<string> eeIds, GetRampIndexDelegate getRampIndex, int clothesIndexPrimary = -1, int clotherIndexSecondary = -1)
+	{
+		if (Race == null)
+		{
+			return;
+		}
+		CustomizationOptions customizationOptions = ((Gender == Gender.Male) ? Race.MaleOptions : Race.FemaleOptions);
+		HashSet<string> eeIdSet;
+		using (CollectionPool<HashSet<string>, string>.Get(out eeIdSet))
+		{
+			eeIdSet.AddRange(eeIds);
+			Head = GetEE(customizationOptions.Heads);
+			CreateWarpaints(null);
+			CreateTattoos(null);
+			CreatePorts(null);
+			LoadDollPrintList(Warpaints);
+			LoadDollPrintList(Tattoos);
+			LoadDollPrintList(Ports);
+			Scar = GetEE(customizationOptions.Scars);
+			Hair = GetEE(customizationOptions.Hair);
+			Eyebrows = GetEE(customizationOptions.Eyebrows);
+			Beard = GetEE(customizationOptions.Beards);
+			Horn = GetEE(customizationOptions.Horns);
+			NavigatorMutation = GetEE(customizationOptions.NavigatorMutations);
+			HairRampIndex = getRampIndex(Hair);
+			SkinRampIndex = getRampIndex(Head);
+			EyesColorRampIndex = getRampIndex(Head, secondary: true);
+			HornsRampIndex = getRampIndex(Horn);
+			EyebrowsColorRampIndex = getRampIndex(Eyebrows);
+			BeardColorRampIndex = getRampIndex(Beard);
+			EquipmentRampIndex = clothesIndexPrimary;
+			EquipmentRampIndexSecondary = clotherIndexSecondary;
+			Scars = GetScarsList(Race, Gender);
+			Updated();
+		}
+		EEAdapter GetEE(IList<EquipmentEntityLink> availableEELinks)
+		{
+			return new EEAdapter(availableEELinks.FirstOrDefault((EquipmentEntityLink ee) => eeIdSet.Contains(ee.AssetId)));
+		}
+		void LoadDollPrintList(List<DollPrint> list)
+		{
+			LoadDollPrintListInternal(list, eeIdSet, getRampIndex);
+		}
+	}
+
+	private static void LoadDollPrintListInternal(List<DollPrint> list, HashSet<string> eeIdSet, GetRampIndexDelegate rampIndexGetter)
+	{
+		List<EquipmentEntityLink> value;
+		using (CollectionPool<List<EquipmentEntityLink>, EquipmentEntityLink>.Get(out value))
+		{
+			value.Clear();
+			value.AddRange(list[0].Paints.Where((EquipmentEntityLink ee) => eeIdSet.Contains(ee.AssetId)));
+			for (int i = 0; i < value.Count && i < list.Count; i++)
+			{
+				DollPrint dollPrint = list[i];
+				dollPrint.PaintEE = new EEAdapter(value[i]);
+				dollPrint.PaintRampIndex = rampIndexGetter(dollPrint.PaintEE);
+			}
+		}
 	}
 
 	private static List<EquipmentEntityLink> GetScarsList(BlueprintRace race, Gender gender)
@@ -1139,11 +1281,11 @@ public class DollState : ICanConvertPropertiesToReactive
 			}
 		}
 		SetRampIdices(SkinRampIndex, GetSkinEntities(), ref data);
-		SetRampIdices(HairRampIndex, Hair, ref data);
+		SetRampIndex(HairRampIndex, Hair, ref data);
 		SetRampIdices(EyesColorRampIndex, GetHeadEntities(), ref data, secondary: true);
-		SetRampIdices(HornsRampIndex, Horn, ref data);
-		SetRampIdices(BeardColorRampIndex, Beard, ref data);
-		SetRampIdices(EyebrowsColorRampIndex, Eyebrows, ref data);
+		SetRampIndex(HornsRampIndex, Horn, ref data);
+		SetRampIndex(BeardColorRampIndex, Beard, ref data);
+		SetRampIndex(EyebrowsColorRampIndex, Eyebrows, ref data);
 		data.ClothesPrimaryIndex = EquipmentRampIndex;
 		data.ClothesSecondaryIndex = EquipmentRampIndexSecondary;
 		return data;
@@ -1153,11 +1295,11 @@ public class DollState : ICanConvertPropertiesToReactive
 	{
 		foreach (EEAdapter ee in ees)
 		{
-			SetRampIdices(rampIndex, ee, ref data, secondary);
+			SetRampIndex(rampIndex, ee, ref data, secondary);
 		}
 	}
 
-	private void SetRampIdices(int rampIndex, EEAdapter ee, ref DollData data, bool secondary = false)
+	private static void SetRampIndex(int rampIndex, EEAdapter ee, ref DollData data, bool secondary = false)
 	{
 		if (rampIndex >= 0 && !(ee.Load() == null))
 		{

@@ -15,6 +15,6 @@ public class DlcManagerDlcEntityConsoleView : DlcManagerDlcEntityBaseView
 	public override void SetFocus(bool value)
 	{
 		base.SetFocus(value);
-		base.ViewModel.SetSelected(value);
+		base.ViewModel?.SetSelected(value);
 	}
 }

@@ -69,6 +69,10 @@ public class CharGenAppearancePhaseDetailedView : CharGenPhaseDetailedView<CharG
 
 	protected override bool HasYScrollBindInternal => false;
 
+	public ReactiveProperty<bool> CurrentPageIsFirst => base.ViewModel.CurrentPageIsFirst;
+
+	public ReactiveProperty<bool> CurrentPhaseIsLast => base.ViewModel.CurrentPageIsLast;
+
 	public override void Initialize()
 	{
 		base.Initialize();

@@ -2042,6 +2042,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		State.PlayerState.SetMainStarship(baseUnitEntity2);
 		State.PlayerState.InitMainStarship(preset);
 		State.PlayerState.SetMainCharacter(baseUnitEntity);
+		State.PlayerState.UpdateClaimedDlcRewardsByChosenAppearance(baseUnitEntity);
 		State.PlayerState.GameId = Guid.NewGuid().ToString("N");
 		Player.StartDate = DateTime.UtcNow;
 		foreach (BlueprintUnitReference companion in preset.Companions)

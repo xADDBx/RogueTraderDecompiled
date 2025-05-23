@@ -61,6 +61,7 @@ using Kingmaker.Utility.FlagCountable;
 using Kingmaker.Utility.ModsInfo;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
+using Kingmaker.Visual.CharacterSystem;
 using Kingmaker.Visual.Sound;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Logging;
@@ -912,6 +913,34 @@ public sealed class Player : Entity, IDisposable, IHashable
 		m_CharacterListsValid = false;
 		MainCharacter.Entity.ToAbstractUnitEntity().GetOrCreate<UnitPartMainCharacter>();
 		MainCharacterOriginal = MainCharacter;
+	}
+
+	public void UpdateClaimedDlcRewardsByChosenAppearance(BaseUnitEntity playerPartyCharacter)
+	{
+		PartUnitViewSettings optional = playerPartyCharacter.GetOptional<PartUnitViewSettings>();
+		if (optional?.Doll == null)
+		{
+			return;
+		}
+		foreach (string equipmentEntityId in optional.Doll.EquipmentEntityIds)
+		{
+			IEnumerable<BlueprintDlcReward> enumerable = ObjectExtensions.Or(ResourcesLibrary.TryGetResource<EquipmentEntity>(equipmentEntityId), null).RequiresDlc?.Rewards.Select((IBlueprintDlcReward r) => r as BlueprintDlcReward);
+			if (enumerable == null)
+			{
+				continue;
+			}
+			foreach (BlueprintDlcReward item in enumerable)
+			{
+				if (item != null && !ClaimedDlcRewards.Contains(item))
+				{
+					ClaimedDlcRewards.Add(item);
+				}
+			}
+		}
+		foreach (string equipmentEntityId2 in optional.Doll.EquipmentEntityIds)
+		{
+			ResourcesLibrary.FreeResourceRequest(equipmentEntityId2);
+		}
 	}
 
 	public void SetCompanionToMainCharacter(BaseUnitEntity unit)

@@ -51,7 +51,6 @@ public class CharGenContext : IDisposable, ICharGenDollStateHandler, ISubscriber
 	{
 		bool flag = unit != null;
 		BaseUnitEntity baseUnitEntity = (flag ? unit : BaseChargenUnit);
-		BlueprintOriginPath originPath = GetOriginPath(flag);
 		Doll = new DollState();
 		IsCustomCharacter.Value = !flag;
 		CurrentUnit.Value = baseUnitEntity;
@@ -68,30 +67,40 @@ public class CharGenContext : IDisposable, ICharGenDollStateHandler, ISubscriber
 			Doll.SetTrackPortrait(state: true);
 			Doll.UpdateMechanicsEntities(baseUnitEntity);
 		}
+		InitLevelUpManager(baseUnitEntity);
+	}
+
+	public void InitForChangeAppearance()
+	{
+		IsCustomCharacter.Value = true;
+		BaseUnitEntity baseChargenUnit = BaseChargenUnit;
+		CurrentUnit.Value = baseChargenUnit;
+		Doll = new DollState();
+		Doll.SetupFromUnit(baseChargenUnit);
+		InitLevelUpManager(baseChargenUnit);
+	}
+
+	private void InitLevelUpManager(BaseUnitEntity unit)
+	{
+		BlueprintOriginPath originPath = GetOriginPath(!IsCustomCharacter.Value);
 		LevelUpManager.Value?.Dispose();
-		LevelUpManager.Value = new LevelUpManager(baseUnitEntity, originPath, autoCommit: false);
+		LevelUpManager.Value = new LevelUpManager(unit, originPath, autoCommit: false);
 	}
 
 	private BlueprintOriginPath GetOriginPath(bool isPregen)
 	{
-		if (CharGenConfig.Mode == CharGenConfig.CharGenMode.NewGame)
+		return CharGenConfig.Mode switch
 		{
-			if (!isPregen)
-			{
-				return BlueprintCharGenRoot.Instance.NewGameCustomChargenPath;
-			}
-			return BlueprintCharGenRoot.Instance.NewGamePregenChargenPath;
-		}
-		if (CharGenConfig.Mode == CharGenConfig.CharGenMode.NewCompanion)
-		{
-			return CharGenConfig.CompanionType switch
+			CharGenConfig.CharGenMode.Appearance => BlueprintCharGenRoot.Instance.ChangeAppearanceChargenPath, 
+			CharGenConfig.CharGenMode.NewGame => isPregen ? BlueprintCharGenRoot.Instance.NewGamePregenChargenPath : BlueprintCharGenRoot.Instance.NewGameCustomChargenPath, 
+			CharGenConfig.CharGenMode.NewCompanion => CharGenConfig.CompanionType switch
 			{
 				CharGenConfig.CharGenCompanionType.Common => isPregen ? BlueprintCharGenRoot.Instance.NewCompanionPregenChargenPath : BlueprintCharGenRoot.Instance.NewCompanionCustomChargenPath, 
 				CharGenConfig.CharGenCompanionType.Navigator => isPregen ? BlueprintCharGenRoot.Instance.NewCompanionNavigatorPregenChargenPath : BlueprintCharGenRoot.Instance.NewCompanionNavigatorCustomChargenPath, 
 				_ => null, 
-			};
-		}
-		return null;
+			}, 
+			_ => null, 
+		};
 	}
 
 	public void RequestSetGender(Gender gender, int index)

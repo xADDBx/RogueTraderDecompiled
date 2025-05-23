@@ -108,12 +108,6 @@ public class DlcManagerDlcEntityBaseView : SelectionGroupEntityView<DlcManagerDl
 		CheckInstallState(base.ViewModel.DownloadingInProgress.Value, base.ViewModel.DlcIsBoughtAndNotInstalled.Value);
 	}
 
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		WidgetFactory.DisposeWidget(this);
-	}
-
 	private void SetMainContent()
 	{
 		m_DlcTitle.text = base.ViewModel.Title;

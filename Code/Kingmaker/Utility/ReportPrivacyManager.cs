@@ -68,9 +68,9 @@ public class ReportPrivacyManager
 	public (bool promo, bool priv) GetEmailAgreements(string email)
 	{
 		InicDictionary();
-		if (!string.IsNullOrEmpty(email) && m_EmailsDict.ContainsKey(email))
+		if (!string.IsNullOrWhiteSpace(email) && m_EmailsDict.TryGetValue(email, out (bool, bool) value))
 		{
-			return m_EmailsDict[email];
+			return value;
 		}
 		return (promo: false, priv: false);
 	}

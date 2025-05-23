@@ -1,5 +1,7 @@
+using Kingmaker.Code.UI.MVVM.VM.ChangeAppearance;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.DollRoom;
+using Kingmaker.UI.MVVM.View.ChangeAppearance.PC;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UI.Workarounds;
 using Owlcat.Runtime.UI.MVVM;
@@ -14,6 +16,9 @@ public class CharGenContextPCView : ViewBase<CharGenContextVM>
 	private UIDestroyViewLink<CharGenPCView, CharGenVM> m_CharGenPCView;
 
 	[SerializeField]
+	private UIDestroyViewLink<ChangeAppearancePCView, ChangeAppearanceVM> m_AppearancePCView;
+
+	[SerializeField]
 	private CanvasScalerWorkaround m_CanvasScaler;
 
 	public void Initialize()
@@ -26,6 +31,8 @@ public class CharGenContextPCView : ViewBase<CharGenContextVM>
 		base.gameObject.SetActive(value: true);
 		m_CharGenPCView.CustomInitialize = InitializeScalers;
 		AddDisposable(base.ViewModel.CharGenVM.Subscribe(m_CharGenPCView.Bind));
+		m_AppearancePCView.CustomInitialize = InitializeScalers;
+		AddDisposable(base.ViewModel.ChangeAppearanceVM.Subscribe(m_AppearancePCView.Bind));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -33,7 +40,7 @@ public class CharGenContextPCView : ViewBase<CharGenContextVM>
 		base.gameObject.SetActive(value: false);
 	}
 
-	private void InitializeScalers(CharGenPCView view)
+	private void InitializeScalers(MonoBehaviour view)
 	{
 		DollRoomTargetController[] componentsInChildren = view.gameObject.GetComponentsInChildren<DollRoomTargetController>();
 		for (int i = 0; i < componentsInChildren.Length; i++)

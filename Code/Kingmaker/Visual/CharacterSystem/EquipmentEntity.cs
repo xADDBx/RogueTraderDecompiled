@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
+using Kingmaker.DLC;
 using Kingmaker.ResourceLinks.BaseInterfaces;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -229,6 +231,9 @@ public class EquipmentEntity : ScriptableObject, IResource
 	[Tooltip("For showing helmet and other base outfit that players want to see even if they wear armor")]
 	public bool ShowAboveAllIgnoreLayer;
 
+	[SerializeField]
+	private BlueprintDlcReference m_RequiresDlc;
+
 	public int Layer;
 
 	[LongAsEnumFlags(typeof(BodyPartType))]
@@ -269,6 +274,30 @@ public class EquipmentEntity : ScriptableObject, IResource
 
 	[HideInInspector]
 	public int ForcedSecondaryIndex = -1;
+
+	public BlueprintDlc RequiresDlc
+	{
+		get
+		{
+			if (!m_RequiresDlc.IsEmpty())
+			{
+				return m_RequiresDlc.Get();
+			}
+			return null;
+		}
+	}
+
+	public bool IsAvailable
+	{
+		get
+		{
+			if (!m_RequiresDlc.IsEmpty())
+			{
+				return m_RequiresDlc.Get().IsActive;
+			}
+			return true;
+		}
+	}
 
 	public BodyPartType HideBodyParts
 	{

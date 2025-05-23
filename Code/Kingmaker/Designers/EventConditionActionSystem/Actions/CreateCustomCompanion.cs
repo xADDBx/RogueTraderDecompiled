@@ -62,6 +62,7 @@ public class CreateCustomCompanion : GameAction
 				Game.Instance.EntitySpawner.SpawnEntityImmediately(newCompanion, crossSceneState);
 				bool flag = Game.Instance.Player.Party.Count >= 6;
 				Game.Instance.Player.AddCompanion(newCompanion, flag);
+				Game.Instance.Player.UpdateClaimedDlcRewardsByChosenAppearance(newCompanion);
 				newCompanion.IsInGame = !flag;
 			}
 			using (ContextData<SpawnedUnitData>.Request().Setup(newCompanion))

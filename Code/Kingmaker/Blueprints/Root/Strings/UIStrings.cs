@@ -76,6 +76,8 @@ public class UIStrings : StringsContainer
 
 	public UICharGen CharGen;
 
+	public UIChangeAppearance ChangeAppearance;
+
 	public UINewGame NewGameWin;
 
 	public UIGameOverScreen GameOverScreen;

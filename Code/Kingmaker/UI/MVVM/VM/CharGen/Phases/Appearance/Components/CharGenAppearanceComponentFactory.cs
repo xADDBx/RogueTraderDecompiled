@@ -122,6 +122,10 @@ public static class CharGenAppearanceComponentFactory
 
 	private static TextureSequentialSelectorVM GetGenderSelectorVM(CharGenContext ctx)
 	{
+		if (ctx.CharGenConfig.Mode == CharGenConfig.CharGenMode.Appearance)
+		{
+			return null;
+		}
 		TextureSequentialEntity current;
 		TextureSequentialSelectorVM textureSequentialSelectorVM = new TextureSequentialSelectorVM(GetGenderList(ctx, out current), current);
 		textureSequentialSelectorVM.Type = CharGenAppearancePageComponent.Gender;
@@ -297,24 +301,26 @@ public static class CharGenAppearanceComponentFactory
 		}
 		ReactiveCollection<TextureSelectorItemVM> entitiesCollection = selector.SelectionGroup.EntitiesCollection;
 		EquipmentEntityLink[] hair = ((doll.Gender == Gender.Male) ? doll.Race.MaleOptions : doll.Race.FemaleOptions).Hair;
-		for (int j = 0; j < hair.Length; j++)
+		int nextIndexToSet = 0;
+		for (int i = 0; i < hair.Length; i++)
 		{
-			EquipmentEntityLink item = hair[j];
+			EquipmentEntityLink item = hair[i];
 			EquipmentEntity equipmentEntity = item.Load();
-			if (!(equipmentEntity == null))
+			if (!(equipmentEntity == null) && equipmentEntity.IsAvailable)
 			{
-				int i1 = j;
-				GetTextureSelectorItemVM(entitiesCollection, j, equipmentEntity.PreviewTexture, delegate
+				GetTextureSelectorItemVM(entitiesCollection, i, equipmentEntity.PreviewTexture, delegate
 				{
-					ctx.RequestSetHair(item, i1);
+					ctx.RequestSetHair(item, nextIndexToSet);
 				});
 				if (item.Load() == doll.Hair.Load())
 				{
-					selector.SelectionGroup.TrySelectEntity(entitiesCollection[j]);
+					selector.SelectionGroup.TrySelectEntity(entitiesCollection[i]);
 				}
+				int num = nextIndexToSet;
+				nextIndexToSet = num + 1;
 			}
 		}
-		selector.SelectionGroup.ClearFromIndex(hair.Length);
+		selector.SelectionGroup.ClearFromIndex(nextIndexToSet);
 	}
 
 	private static TextureSelectorVM GetHairColorSelectorVM(CharGenContext ctx)
@@ -661,7 +667,7 @@ public static class CharGenAppearanceComponentFactory
 		{
 			EquipmentEntityLink item = tattoos2[j];
 			EquipmentEntity equipmentEntity = item.Load();
-			if (!(equipmentEntity == null))
+			if (!(equipmentEntity == null) && equipmentEntity.IsAvailable)
 			{
 				int i1 = j;
 				GetTextureSelectorItemVM(entitiesCollection, j, equipmentEntity.PreviewTexture, delegate
@@ -735,7 +741,7 @@ public static class CharGenAppearanceComponentFactory
 		{
 			EquipmentEntityLink item = ports2[j];
 			EquipmentEntity equipmentEntity = item.Load();
-			if (!(equipmentEntity == null))
+			if (!(equipmentEntity == null) && equipmentEntity.IsAvailable)
 			{
 				int i1 = j;
 				GetTextureSelectorItemVM(entitiesCollection, j, equipmentEntity.PreviewTexture, delegate

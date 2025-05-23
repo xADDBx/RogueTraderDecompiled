@@ -24,12 +24,21 @@ public class SurfaceCombatInitiativeOrderSquadUnitView : ViewBase<SurfaceCombatU
 
 	protected override void BindViewImplementation()
 	{
-		m_Portrait.sprite = base.ViewModel.SmallPortrait;
+		SetupPortrait();
+		base.ViewModel.PortraitChanged.Subscribe(delegate
+		{
+			SetupPortrait();
+		});
 		AddDisposable(base.ViewModel.UnitHealthPartVM.Subscribe(m_UnitHealthPartProgressPCView.Bind));
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	private void SetupPortrait()
+	{
+		m_Portrait.sprite = base.ViewModel.SmallPortrait;
 	}
 
 	public void BindWidgetVM(IViewModel viewModel)

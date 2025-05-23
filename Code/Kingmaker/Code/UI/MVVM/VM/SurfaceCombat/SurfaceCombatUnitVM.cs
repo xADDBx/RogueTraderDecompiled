@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IAbilityTargetSelectionUIHandler, ICellAbilityHandler
+public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IAbilityTargetSelectionUIHandler, ICellAbilityHandler, IUnitPortraitChangedHandler<EntitySubscriber>, IUnitPortraitChangedHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitPortraitChangedHandler, EntitySubscriber>, IChangeAppearanceCloseHandler
 {
 	public readonly UnitState UnitState;
 
@@ -75,6 +75,8 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	public readonly BoolReactiveProperty NeedToShow = new BoolReactiveProperty();
 
 	public readonly IntReactiveProperty SquadGroupIndex = new IntReactiveProperty(-1);
+
+	public readonly ReactiveCommand PortraitChanged = new ReactiveCommand();
 
 	public readonly bool UsedSubtypeIcon;
 
@@ -337,5 +339,15 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		{
 			CanBeShowed.Value = Game.Instance.CurrentMode == GameModeType.Default || Game.Instance.CurrentMode == GameModeType.None || Game.Instance.CurrentMode == GameModeType.Pause || Game.Instance.CurrentMode == GameModeType.BugReport || Game.Instance.CurrentMode == GameModeType.GlobalMap || Game.Instance.CurrentMode == GameModeType.StarSystem || Game.Instance.CurrentMode == GameModeType.SpaceCombat;
 		}
+	}
+
+	public void HandlePortraitChanged()
+	{
+		PortraitChanged.Execute();
+	}
+
+	public void HandleCloseChangeAppearance()
+	{
+		PortraitChanged.Execute();
 	}
 }
