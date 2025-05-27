@@ -405,7 +405,7 @@ public class DollState : ICanConvertPropertiesToReactive
 	public void Setup(BaseUnitEntity unit, PregenDollSettings settings)
 	{
 		Gender = unit.Gender;
-		Race = unit.Progression.Race;
+		Race = unit.Progression.Race ?? ProgressionRoot.Instance.CharacterRaces.FirstOrDefault();
 		Portrait = unit.Blueprint.PortraitSafe;
 		Validate();
 		PopulatePregenDollSettings(settings);
@@ -422,7 +422,9 @@ public class DollState : ICanConvertPropertiesToReactive
 		Gender = unit.Gender;
 		if (Race == null)
 		{
-			BlueprintRace blueprintRace = (Race = unit.Progression.Race);
+			BlueprintRace obj = unit.Progression.Race ?? ProgressionRoot.Instance.CharacterRaces.FirstOrDefault();
+			BlueprintRace blueprintRace = obj;
+			Race = obj;
 		}
 		Validate();
 		DollData doll = unit.ViewSettings.Doll;
