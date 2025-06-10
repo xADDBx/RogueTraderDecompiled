@@ -7,6 +7,7 @@ using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Console.CareerPathProgression.SelectionTabs;
@@ -34,7 +35,7 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 
 	private Action<IConsoleEntity> m_RefreshParentFocus;
 
-	private List<CharInfoFeatureGroupConsoleView> m_FeatureGroups = new List<CharInfoFeatureGroupConsoleView>();
+	private readonly List<CharInfoFeatureGroupConsoleView> m_FeatureGroups = new List<CharInfoFeatureGroupConsoleView>();
 
 	private SurfaceActionBarPartAbilitiesConsoleView m_ActionBarConsoleView;
 
@@ -179,7 +180,7 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 	public void AddInput(ref InputLayer inputLayer, ref GridConsoleNavigationBehaviour navigationBehaviour, ConsoleHintsWidget hintsWidget)
 	{
 		navigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationBehaviour);
-		InputBindStruct inputBindStruct = inputLayer.AddButton(ShowContextMenu, 10, m_ActionBarActive);
+		InputBindStruct inputBindStruct = inputLayer.AddButton(ShowContextMenu, 10, m_ActionBarActive.And(base.ViewModel.IsNotControllableCharacter?.Not()).ToReactiveProperty());
 		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.ContextMenu.ContextMenu));
 		AddDisposable(inputBindStruct);
 		m_ActionBarConsoleView.AddInputToPages(inputLayer, m_ActionBarActive);
@@ -189,6 +190,10 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 		}, 18);
 		AddDisposable(m_ChangeTabHint.Bind(inputBindStruct2));
 		AddDisposable(inputBindStruct2);
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_ChangeTabHint.gameObject.SetActive(!u.IsPet);
+		}));
 	}
 
 	public List<GridConsoleNavigationBehaviour> GetIgnoreNavigation()

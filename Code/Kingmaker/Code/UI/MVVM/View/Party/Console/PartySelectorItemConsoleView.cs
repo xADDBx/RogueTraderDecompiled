@@ -52,16 +52,16 @@ public class PartySelectorItemConsoleView : ViewBase<PartyCharacterVM>, IConsole
 		if (!RootUIContext.Instance.IsSpace)
 		{
 			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
-			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && UnitEntityData.IsDirectlyControllable())
+			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && (UnitEntityData.IsDirectlyControllable() || UnitEntityData.IsPet))
 			{
 				AddDisposable(base.ViewModel.IsLinked.Subscribe(m_ConnectedIcon.SetActive));
-				goto IL_00af;
+				goto IL_00bc;
 			}
 		}
 		m_ConnectedIcon.SetActive(value: false);
-		goto IL_00af;
-		IL_00af:
-		AddDisposable(base.ViewModel.IsLevelUp.Subscribe(m_LevelUpObject.SetActive));
+		goto IL_00bc;
+		IL_00bc:
+		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsServiceWindowAvailable, (bool levelup, bool serviceWindowAvailable) => levelup && serviceWindowAvailable).Subscribe(m_LevelUpObject.gameObject.SetActive));
 	}
 
 	protected override void DestroyViewImplementation()

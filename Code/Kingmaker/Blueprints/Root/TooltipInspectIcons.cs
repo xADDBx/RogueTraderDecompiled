@@ -15,6 +15,10 @@ public class TooltipInspectIcons
 
 	public Sprite DamageDeflection;
 
+	public Sprite CoverMagnitude;
+
+	public Sprite ParryChance;
+
 	public Sprite Armor;
 
 	public Sprite Dodge;

@@ -39,6 +39,15 @@ public class DollData : IHashable
 	public Dictionary<string, int> EntitySecondaryRampIdices = new Dictionary<string, int>();
 
 	[JsonProperty]
+	public int PetColorRampIndex = -1;
+
+	[JsonProperty]
+	public int PetRamp01Index = -1;
+
+	[JsonProperty]
+	public int PetRamp02Index = -1;
+
+	[JsonProperty]
 	public bool LeftHanded;
 
 	[JsonProperty]
@@ -122,6 +131,23 @@ public class DollData : IHashable
 		}
 	}
 
+	public void ApplyPetRamps(UnitEntityView petView)
+	{
+		if (!(petView == null))
+		{
+			PetCharacter componentInChildren = petView.gameObject.GetComponentInChildren<PetCharacter>();
+			if (componentInChildren == null)
+			{
+				PFLog.UI.Warning("ApplyPetRamps: PetCharacter component not found on pet view");
+			}
+			else if (PetRamp01Index >= 0 || PetRamp02Index >= 0)
+			{
+				componentInChildren.ApplyRampsByIndicesFromOwnPresets(PetRamp01Index, PetRamp02Index);
+				PFLog.UI.Log($"ApplyPetRamps: Applied saved ramp indices {PetRamp01Index}, {PetRamp02Index} to pet");
+			}
+		}
+	}
+
 	public void PreloadEquipmentEntities()
 	{
 		if (RacePreset != null)
@@ -181,6 +207,9 @@ public class DollData : IHashable
 			}
 			result.Append(ref val6);
 		}
+		result.Append(ref PetColorRampIndex);
+		result.Append(ref PetRamp01Index);
+		result.Append(ref PetRamp02Index);
 		result.Append(ref LeftHanded);
 		result.Append(ref ClothesPrimaryIndex);
 		result.Append(ref ClothesSecondaryIndex);

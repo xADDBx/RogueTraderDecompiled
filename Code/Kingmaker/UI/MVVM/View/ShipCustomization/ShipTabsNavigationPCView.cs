@@ -21,6 +21,9 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 	[SerializeField]
 	private OwlcatMultiButton m_PostsButton;
 
+	[SerializeField]
+	private OwlcatMultiButton m_AbilitiesButton;
+
 	[Header("Labels")]
 	[SerializeField]
 	private TextMeshProUGUI m_UpgradeLabel;
@@ -30,6 +33,9 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 
 	[SerializeField]
 	private TextMeshProUGUI m_PostsLabel;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AbilitiesLabel;
 
 	private readonly string m_ActiveTabLayer = "Active";
 
@@ -50,6 +56,10 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 		{
 			base.ViewModel.SetActiveTab(ShipCustomizationTab.Posts);
 		}));
+		AddDisposable(m_AbilitiesButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.SetActiveTab(ShipCustomizationTab.Abilities);
+		}));
 		AddDisposable(base.ViewModel.ActiveTab.AsObservable().Subscribe(UpdateActiveTab));
 		AddDisposable(EventBus.Subscribe(this));
 	}
@@ -63,6 +73,7 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 		m_UpgradeButton.SetActiveLayer((activeTab == ShipCustomizationTab.Upgrade) ? m_ActiveTabLayer : m_UnactiveTabLayer);
 		m_SkillsButton.SetActiveLayer((activeTab == ShipCustomizationTab.Skills) ? m_ActiveTabLayer : m_UnactiveTabLayer);
 		m_PostsButton.SetActiveLayer((activeTab == ShipCustomizationTab.Posts) ? m_ActiveTabLayer : m_UnactiveTabLayer);
+		m_AbilitiesButton.SetActiveLayer((activeTab == ShipCustomizationTab.Abilities) ? m_ActiveTabLayer : m_UnactiveTabLayer);
 		base.ViewModel.SetActiveTab(activeTab);
 	}
 
@@ -76,6 +87,7 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 		m_UpgradeButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Upgrade) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		m_SkillsButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Skills) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		m_PostsButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Posts) ? m_UnactiveTabLayer : m_ActiveTabLayer);
+		m_AbilitiesButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Abilities) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		base.ViewModel.SetNextTab();
 	}
 
@@ -84,6 +96,7 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 		m_UpgradeButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Upgrade) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		m_SkillsButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Skills) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		m_PostsButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Posts) ? m_UnactiveTabLayer : m_ActiveTabLayer);
+		m_AbilitiesButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == ShipCustomizationTab.Abilities) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		base.ViewModel.SetPrevTab();
 	}
 
@@ -92,5 +105,6 @@ public class ShipTabsNavigationPCView : ViewBase<ShipTabsNavigationVM>
 		m_UpgradeLabel.text = UIStrings.Instance.ShipCustomization.MenuItemComponents;
 		m_SkillsLabel.text = UIStrings.Instance.ShipCustomization.MenuItemUpgrade;
 		m_PostsLabel.text = UIStrings.Instance.HUDTexts.PostsBar;
+		m_AbilitiesLabel.text = UIStrings.Instance.ShipCustomization.Accolades;
 	}
 }

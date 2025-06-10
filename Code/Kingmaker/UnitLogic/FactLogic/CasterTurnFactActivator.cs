@@ -20,7 +20,7 @@ namespace Kingmaker.UnitLogic.FactLogic;
 
 [Serializable]
 [TypeId("05a79e0f416f45e5a96ce2156a15828e")]
-public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnStartHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, IHashable
+public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IContinueTurnHandler, ITurnStartHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, IInterruptTurnContinueHandler, IHashable
 {
 	public class SavableData : IEntityFactComponentSavableData, IHashable
 	{
@@ -68,6 +68,14 @@ public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITur
 		}
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		if (isTurnBased && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
+		{
+			UpdateFact(add: true);
+		}
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
 		if (IncludingInterrupts && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
@@ -92,20 +100,31 @@ public class CasterTurnFactActivator : MechanicEntityFactComponentDelegate, ITur
 		}
 	}
 
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
+	{
+		if (IncludingInterrupts && EventInvokerExtensions.MechanicEntity == base.Context.MaybeCaster)
+		{
+			UpdateFact(add: true);
+		}
+	}
+
 	private void UpdateFact(bool add)
 	{
-		MechanicEntity owner = base.Owner;
-		SavableData savableData = RequestSavableData<SavableData>();
-		if (add && savableData.FactId == null)
+		if (!base.Owner.IsPreview)
 		{
-			MechanicEntityFact mechanicEntityFact = FactBlueprint.CreateFact(base.Context, owner, default(BuffDuration));
-			owner.Facts.Add(mechanicEntityFact);
-			savableData.FactId = mechanicEntityFact.UniqueId;
-		}
-		else if (!add && savableData.FactId != null)
-		{
-			owner.Facts.RemoveById(savableData.FactId);
-			savableData.FactId = null;
+			MechanicEntity owner = base.Owner;
+			SavableData savableData = RequestSavableData<SavableData>();
+			if (add && savableData.FactId == null)
+			{
+				MechanicEntityFact mechanicEntityFact = FactBlueprint.CreateFact(base.Context, owner, default(BuffDuration));
+				owner.Facts.Add(mechanicEntityFact);
+				savableData.FactId = mechanicEntityFact.UniqueId;
+			}
+			else if (!add && savableData.FactId != null)
+			{
+				owner.Facts.RemoveById(savableData.FactId);
+				savableData.FactId = null;
+			}
 		}
 	}
 

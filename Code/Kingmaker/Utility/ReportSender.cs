@@ -24,7 +24,7 @@ public class ReportSender : IDisposable
 {
 	public const string SentReportsFileName = "SentReports.txt";
 
-	public const string InternalApiAddress = "http://siren.owlcat.local";
+	public const string InternalApiAddress = "https://siren.owlcat.local";
 
 	public const string RecieverAddress = "https://report.owlcat.games";
 
@@ -314,7 +314,7 @@ public class ReportSender : IDisposable
 			return;
 		}
 		Logger.Log("Check result for report ( " + sendEntry.Guid + " ) with reportId ( " + sendEntry.ReportId + " )");
-		string requestUri = "http://siren.owlcat.local/api/report/issues?filename=" + sendEntry.ReportId;
+		string requestUri = "https://siren.owlcat.local/api/report/issues?filename=" + sendEntry.ReportId;
 		try
 		{
 			using HttpClient client = new HttpClient();

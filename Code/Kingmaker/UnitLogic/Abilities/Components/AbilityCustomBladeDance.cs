@@ -83,9 +83,9 @@ public class AbilityCustomBladeDance : AbilityCustomLogic
 			weapon = ((primaryHandMaybeWeapon?.Blueprint.Classification == Classification) ? primaryHandMaybeWeapon : secondaryHandMaybeWeapon);
 		}
 		bool hasTwoMeleeWeapons = ((!UseSpecificWeaponClassification) ? (!UseSpecificWeapon && primaryHandMaybeWeapon != null && secondaryHandMaybeWeapon != null) : (!UseSpecificWeapon && primaryHandMaybeWeapon?.Blueprint?.Classification == Classification && secondaryHandMaybeWeapon?.Blueprint?.Classification == Classification));
-		while (burstCounter < Math.Min(RateOfAttack.Calculate(context), context.Ability.OverrideRateOfFire) && possibleTargets.Any((MechanicEntity p) => CheckEntityTargetable(caster, p)))
+		while (burstCounter < Math.Min(RateOfAttack.Calculate(context), context.Ability.OverrideRateOfFire) && possibleTargets.Any((MechanicEntity p) => CheckEntityTargetable(caster, p)) && !(context.MaybeCaster?.IsDeadOrUnconscious ?? false))
 		{
-			if (burstCounter + 1 != context.ActionIndex)
+			if (burstCounter + 1 > context.ActionIndex)
 			{
 				yield return null;
 				continue;

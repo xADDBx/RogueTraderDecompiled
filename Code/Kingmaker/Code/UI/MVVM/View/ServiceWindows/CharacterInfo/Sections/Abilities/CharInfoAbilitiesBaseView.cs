@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Utility;
@@ -58,6 +59,15 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	[SerializeField]
 	private TextMeshProUGUI m_NoAbilitiesLabel;
 
+	[SerializeField]
+	private GameObject m_AbilitiesTypeSelectorContainer;
+
+	[SerializeField]
+	private GameObject m_AbilitiesTypeSelectorPetTypeContainer;
+
+	[SerializeField]
+	private TextMeshProUGUI m_PassiveAbilitiesPetVariantLabel;
+
 	protected readonly BoolReactiveProperty ActiveAbilitiesSelected = new BoolReactiveProperty(initialValue: true);
 
 	private AccessibilityTextHelper m_TextHelper;
@@ -97,6 +107,21 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	protected override void RefreshView()
 	{
 		base.RefreshView();
+		BaseUnitEntity value = base.ViewModel.Unit.Value;
+		if (value != null && value.IsPet)
+		{
+			m_PassiveAbilities.SetActiveLayer("Normal");
+			ActiveAbilitiesSelected.Value = false;
+			m_AbilitiesTypeSelectorContainer.SetActive(value: false);
+			m_AbilitiesTypeSelectorPetTypeContainer.SetActive(value: true);
+		}
+		else
+		{
+			m_ActiveAbilities.gameObject.SetActive(value: true);
+			m_PassiveAbilities.Interactable = true;
+			m_AbilitiesTypeSelectorContainer.SetActive(value: true);
+			m_AbilitiesTypeSelectorPetTypeContainer.SetActive(value: false);
+		}
 		DrawEntities();
 		UpdateNoAbilitiesContainerView();
 		m_ScrollRect.ScrollToTop();
@@ -143,6 +168,7 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 		UITextCharSheet characterSheet = UIStrings.Instance.CharacterSheet;
 		m_ActiveAbilitiesLabel.text = characterSheet.ActiveAbilitiesLabel;
 		m_PassiveAbilitiesLabel.text = characterSheet.PassiveAbilitiesLabel;
+		m_PassiveAbilitiesPetVariantLabel.text = characterSheet.PassiveAbilitiesLabel;
 		m_NoAbilitiesLabel.text = characterSheet.NoAbilitiesLabel;
 		if (m_ActionBarLabel != null)
 		{

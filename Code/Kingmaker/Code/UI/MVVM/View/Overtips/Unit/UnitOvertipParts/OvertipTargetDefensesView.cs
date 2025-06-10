@@ -24,7 +24,10 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	[Header("Dodge")]
 	[SerializeField]
-	private CanvasGroup m_Dodge;
+	private GameObject m_Dodge;
+
+	[SerializeField]
+	private CanvasGroup m_DodgeBlockCanvasGroup;
 
 	[SerializeField]
 	private TextMeshProUGUI m_DodgeChance;
@@ -36,7 +39,10 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	[Header("Parry")]
 	[SerializeField]
-	private CanvasGroup m_Parry;
+	private GameObject m_Parry;
+
+	[SerializeField]
+	private CanvasGroup m_ParryBlockCanvasGroup;
 
 	[SerializeField]
 	private TextMeshProUGUI m_ParryChance;
@@ -48,7 +54,10 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	[Header("Cover")]
 	[SerializeField]
-	private CanvasGroup m_Cover;
+	private GameObject m_Cover;
+
+	[SerializeField]
+	private CanvasGroup m_CoverBlockCanvasGroup;
 
 	[SerializeField]
 	private TextMeshProUGUI m_CoverChance;
@@ -56,9 +65,18 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 	[SerializeField]
 	private Image m_CoverHintPlace;
 
+	[Header("Shield")]
+	[SerializeField]
+	private GameObject m_ShieldBlock;
+
+	[SerializeField]
+	private CanvasGroup m_ShieldBlockCanvasGroup;
+
 	private ReactiveProperty<string> m_CoverHint = new ReactiveProperty<string>();
 
 	private StringBuilder m_StringBuilder = new StringBuilder();
+
+	private List<GameObject> m_OvertipObjects;
 
 	private List<CanvasGroup> m_CanvasGroups;
 
@@ -72,7 +90,8 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	protected override void BindViewImplementation()
 	{
-		m_CanvasGroups = new List<CanvasGroup> { m_Dodge, m_Parry, m_Cover };
+		m_OvertipObjects = new List<GameObject> { m_Dodge, m_Parry, m_Cover };
+		m_CanvasGroups = new List<CanvasGroup> { m_DodgeBlockCanvasGroup, m_ParryBlockCanvasGroup, m_CoverBlockCanvasGroup };
 		m_Labels = new List<TextMeshProUGUI> { m_DodgeChance, m_ParryChance, m_CoverChance };
 		m_Hints = new List<ReactiveProperty<string>> { m_DodgeHint, m_ParryHint, m_CoverHint };
 		UICombatTexts combatTexts = UIStrings.Instance.CombatTexts;
@@ -90,6 +109,7 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 		{
 			SetValues(value.chance, value.visible, DefenseType.Cover);
 		}));
+		AddDisposable(base.ViewModel.ShieldEquipped.Subscribe(OnShieldEquippedHandlerSetValue));
 		for (int i = 0; i < Enum.GetNames(typeof(DefenseType)).Length; i++)
 		{
 			AddDisposable(m_HintPlaces[i].SetHint(m_Hints[i], null, m_Labels[i].color));
@@ -98,7 +118,8 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	private void SetValues(float chance, bool visible, DefenseType type)
 	{
-		m_CanvasGroups[(int)type].alpha = Mathf.Clamp01(chance);
+		float num = Mathf.Clamp01(chance);
+		m_OvertipObjects[(int)type].SetActive(num != 0f);
 		m_CanvasGroups[(int)type].blocksRaycasts = visible && chance > 0f;
 		m_StringBuilder.Append(UIUtilityTexts.GetPercentString(chance));
 		m_Labels[(int)type].text = m_StringBuilder.ToString();
@@ -109,5 +130,11 @@ public class OvertipTargetDefensesView : ViewBase<OvertipHitChanceBlockVM>
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	private void OnShieldEquippedHandlerSetValue(bool value)
+	{
+		m_ShieldBlock.SetActive(value);
+		m_ShieldBlockCanvasGroup.blocksRaycasts = value;
 	}
 }

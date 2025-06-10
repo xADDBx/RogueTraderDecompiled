@@ -14,4 +14,10 @@ internal static class CheatsCutscenes
 			item.Stop();
 		}
 	}
+
+	[Cheat(Name = "play_cutscene", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void PlayCutscene(Cutscene cutscene)
+	{
+		CutscenePlayerView.Play(cutscene, null);
+	}
 }

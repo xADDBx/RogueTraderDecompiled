@@ -181,6 +181,18 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		{
 			tempRenderer.gameObject.layer = 15;
 		}
+		if (m_Unit != null && m_Unit.IsPet && m_SimpleAvatar != null)
+		{
+			SkinnedMeshRenderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
+			foreach (SkinnedMeshRenderer skinnedMeshRenderer in componentsInChildren)
+			{
+				if (skinnedMeshRenderer != null && !skinnedMeshRenderer.enabled)
+				{
+					PFLog.UI.Warning("UpdateAvatarRenderers: Re-enabling disabled SkinnedMeshRenderer on " + skinnedMeshRenderer.gameObject.name + " for pet " + m_Unit.CharacterName);
+					skinnedMeshRenderer.enabled = true;
+				}
+			}
+		}
 		UnscaleFxTimes(gameObject);
 		WeaponParticlesSnapMap weaponParticlesSnapMap = m_AvatarHands?.GetWeaponModel(offHand: false)?.GetComponent<WeaponParticlesSnapMap>();
 		if ((bool)weaponParticlesSnapMap && weaponParticlesSnapMap == m_Unit?.Body?.PrimaryHand?.FxSnapMap)
@@ -249,36 +261,88 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 	{
 		m_SimpleAvatar = Object.Instantiate(player.View, m_TargetPlaceholder, worldPositionStays: false);
 		Transform viewTransform = m_SimpleAvatar.ViewTransform;
-		viewTransform.localPosition = Vector3.zero;
-		viewTransform.localRotation = Quaternion.identity;
-		viewTransform.localScale = player.View.ViewTransform.localScale;
+		SkinnedMeshRenderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
+		if (componentsInChildren.Length != 0)
+		{
+			PFLog.UI.Log($"CreateSimpleAvatar: Found {componentsInChildren.Length} SkinnedMeshRenderer components for pet {player.CharacterName}");
+			SkinnedMeshRenderersCombiner[] componentsInChildren2 = m_SimpleAvatar.GetComponentsInChildren<SkinnedMeshRenderersCombiner>();
+			SkinnedMeshRendererToStatic[] componentsInChildren3 = m_SimpleAvatar.GetComponentsInChildren<SkinnedMeshRendererToStatic>();
+			if (componentsInChildren2.Length != 0)
+			{
+				PFLog.UI.Log($"CreateSimpleAvatar: Found {componentsInChildren2.Length} SkinnedMeshRenderersCombiner components");
+			}
+			if (componentsInChildren3.Length != 0)
+			{
+				PFLog.UI.Log($"CreateSimpleAvatar: Found {componentsInChildren3.Length} SkinnedMeshRendererToStatic components");
+			}
+			SkinnedMeshRenderer[] array = componentsInChildren;
+			foreach (SkinnedMeshRenderer skinnedMeshRenderer in array)
+			{
+				if (skinnedMeshRenderer != null)
+				{
+					bool num = skinnedMeshRenderer.enabled;
+					skinnedMeshRenderer.enabled = true;
+					if (!num)
+					{
+						PFLog.UI.Log("CreateSimpleAvatar: Enabled SkinnedMeshRenderer on " + skinnedMeshRenderer.gameObject.name);
+					}
+				}
+			}
+		}
+		DollRoomPositionOverride component = player.View.GetComponent<DollRoomPositionOverride>();
+		if (component != null)
+		{
+			viewTransform.localPosition = new Vector3(component.X, component.Y, component.Z);
+			viewTransform.rotation = Quaternion.Euler(0f, -45f, 0f);
+			viewTransform.localScale = player.View.ViewTransform.localScale;
+		}
+		else
+		{
+			viewTransform.localPosition = Vector3.zero;
+			viewTransform.localRotation = Quaternion.identity;
+			viewTransform.localRotation = Quaternion.Euler(0f, -45f, 0f);
+			viewTransform.localScale = player.View.ViewTransform.localScale;
+		}
 		if (!m_SimpleAvatar.gameObject.activeSelf)
 		{
 			m_SimpleAvatar.gameObject.SetActive(value: true);
-			Renderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<Renderer>();
-			if (componentsInChildren.Any((Renderer r) => !r.enabled))
+			Renderer[] componentsInChildren4 = m_SimpleAvatar.GetComponentsInChildren<Renderer>();
+			Renderer[] array2 = componentsInChildren4.Where((Renderer r) => !r.enabled).ToArray();
+			Renderer[] array3;
+			if (array2.Length != 0)
 			{
-				PFLog.UI.Warning("SimpleAvatar has disabled renderers " + player.View.gameObject.name);
+				PFLog.UI.Warning($"SimpleAvatar has {array2.Length} disabled renderers for {player.View.gameObject.name}");
+				array3 = array2;
+				foreach (Renderer renderer in array3)
+				{
+					PFLog.UI.Log("  - Disabled renderer: " + renderer.gameObject.name + " (Type: " + renderer.GetType().Name + ")");
+				}
 			}
-			Renderer[] array = componentsInChildren;
-			for (int i = 0; i < array.Length; i++)
+			array3 = componentsInChildren4;
+			for (int i = 0; i < array3.Length; i++)
 			{
-				array[i].enabled = true;
+				array3[i].enabled = true;
 			}
 		}
 		UpdateAvatarRenderers();
-		Bounds bounds = (from r in m_SimpleAvatar.GetComponentsInChildren<Renderer>()
-			select r.bounds).Aggregate(SumBounds);
-		if (bounds.size.y * viewTransform.localScale.y > 2.5f)
-		{
-			float num = 2.5f / (bounds.size.y * viewTransform.localScale.y);
-			viewTransform.localScale *= num;
-		}
 		if ((bool)m_Camera)
 		{
 			string text = m_SimpleAvatar.CharacterAvatar?.Skeleton?.DollRoomZoomPreset.TargetBoneName ?? "Head";
 			Transform targetTransform = viewTransform.FindChildRecursive(text);
 			m_Camera.LookAt(targetTransform, m_SimpleAvatar.CharacterAvatar?.Skeleton?.DollRoomZoomPreset);
+		}
+		SkinnedMeshRenderer[] array4 = (from smr in m_SimpleAvatar.GetComponentsInChildren<SkinnedMeshRenderer>()
+			where smr != null && !smr.enabled
+			select smr).ToArray();
+		if (array4.Length != 0)
+		{
+			PFLog.UI.Warning($"CreateSimpleAvatar: After setup, {array4.Length} SkinnedMeshRenderer components are still disabled for pet {player.CharacterName}");
+			SkinnedMeshRenderer[] array = array4;
+			foreach (SkinnedMeshRenderer skinnedMeshRenderer2 in array)
+			{
+				PFLog.UI.Log("  - Still disabled SMR: " + skinnedMeshRenderer2.gameObject.name);
+				skinnedMeshRenderer2.enabled = true;
+			}
 		}
 	}
 
@@ -288,6 +352,8 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		{
 			animationManager.PlayableGraph.SetTimeUpdateMode(DirectorUpdateMode.UnscaledGameTime);
 			animationManager.IsInCombat = true;
+			animationManager.IsInDollRoom = true;
+			animationManager.OnAnimationSetChanged();
 			animationManager.Tick(RealTimeController.SystemStepDurationSeconds);
 		}
 	}
@@ -496,12 +562,47 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 
 	public void HandleUnitChangeEquipmentColor(int rampIndex, bool secondary)
 	{
-		if (m_Unit.View.Or(null)?.CharacterAvatar != null)
+		if (m_Unit.IsPet && m_SimpleAvatar != null)
+		{
+			ApplyColorToPetMaterials(rampIndex, secondary);
+		}
+		else if (m_Unit.View.Or(null)?.CharacterAvatar != null)
 		{
 			DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
 			{
 				m_Avatar.CopyRampIndicesFrom(m_Unit.View.CharacterAvatar);
 			});
 		}
+	}
+
+	private void ApplyColorToPetMaterials(int rampIndex, bool secondary)
+	{
+		if (m_SimpleAvatar == null)
+		{
+			PFLog.UI.Error("ApplyColorToPetMaterials: m_SimpleAvatar is null");
+			return;
+		}
+		Renderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<Renderer>();
+		if (componentsInChildren == null || componentsInChildren.Length == 0)
+		{
+			PFLog.UI.Warning("ApplyColorToPetMaterials: No renderers found in SimpleAvatar for pet: " + m_Unit.CharacterName);
+			return;
+		}
+		Renderer[] componentsInChildren2 = m_Unit.View.GetComponentsInChildren<Renderer>();
+		if (componentsInChildren2 == null || componentsInChildren2.Length == 0)
+		{
+			PFLog.UI.Warning("ApplyColorToPetMaterials: No renderers found in main pet: " + m_Unit.CharacterName);
+			return;
+		}
+		for (int i = 0; i < componentsInChildren.Length && i < componentsInChildren2.Length; i++)
+		{
+			Renderer renderer = componentsInChildren[i];
+			Renderer renderer2 = componentsInChildren2[i];
+			if (renderer != null && renderer2 != null)
+			{
+				renderer.sharedMaterials = renderer2.sharedMaterials;
+			}
+		}
+		PFLog.UI.Log($"ApplyColorToPetMaterials: Applied color rampIndex={rampIndex}, secondary={secondary} to pet {m_Unit.CharacterName} in DollRoom");
 	}
 }

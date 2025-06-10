@@ -67,6 +67,8 @@ public class UICharGen
 
 	public LocalizedString SanctionedPsykerSelection;
 
+	public LocalizedString ArbitratorSelection;
+
 	public LocalizedString Occupation;
 
 	public LocalizedString Navigator;
@@ -246,6 +248,7 @@ public class UICharGen
 			CharGenPhaseType.ImperialHomeworldChild => ImperialHomeworldChildSelection, 
 			CharGenPhaseType.ForgeHomeworldChild => ForgeHomeworldChildSelection, 
 			CharGenPhaseType.SanctionedPsyker => SanctionedPsykerSelection, 
+			CharGenPhaseType.Arbitrator => ArbitratorSelection, 
 			CharGenPhaseType.Navigator => Navigator, 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};

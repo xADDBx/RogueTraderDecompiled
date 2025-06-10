@@ -9,14 +9,12 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.EntitySystem.Properties;
 using Kingmaker.GameModes;
 using Kingmaker.Items;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.UI;
@@ -359,52 +357,9 @@ public class TooltipTemplateShipAbility : TooltipBaseTemplate
 		description = TooltipTemplateUtils.AggregateDescription(description, TooltipTemplateUtils.GetAdditionalDescription(BlueprintAbility));
 		if (!string.IsNullOrEmpty(description))
 		{
-			description = UpdateDescriptionWithUIProperties(description);
+			description = TooltipTemplateUtils.UpdateDescriptionWithUIProperties(description, m_Caster, BlueprintAbility);
 			bricks.Add(new TooltipBrickText("\n" + description + "\n\n", TooltipTextType.Paragraph));
 		}
-	}
-
-	private string UpdateDescriptionWithUIProperties(string description)
-	{
-		int num = 0;
-		string text = "";
-		while (num < description.Length)
-		{
-			int num2 = description.IndexOf("{uip|", num);
-			if (num2 == -1)
-			{
-				text += description.Substring(num);
-				break;
-			}
-			_ = description[num2];
-			text += description.Substring(num, num2 - num);
-			num = num2;
-			num2 = description.IndexOf("}");
-			string name = description.Substring(num + 5, num2 - num - 5);
-			num = num2 + 1;
-			if (m_Caster != null)
-			{
-				Ability ability = m_Caster.Facts.Get<Ability>(BlueprintAbility);
-				if ((ability?.GetComponent<UIPropertiesComponent>())?.Properties.First((UIPropertySettings property) => property.Name == name) != null)
-				{
-					string text2 = ability.GetComponent<PropertyCalculatorComponent>()?.GetValue(new PropertyContext(m_Caster, ability)).ToString();
-					if (text2 != null)
-					{
-						name = "<link=\"uip:" + BlueprintAbility.AssetGuid + ":" + name + "\">{" + text2 + "}</link>";
-					}
-				}
-			}
-			else
-			{
-				UIPropertySettings uIPropertySettings = BlueprintAbility.GetComponent<UIPropertiesComponent>()?.Properties.First((UIPropertySettings property) => property.Name == name);
-				if (uIPropertySettings != null)
-				{
-					name = uIPropertySettings.Description;
-				}
-			}
-			text += name;
-		}
-		return text;
 	}
 
 	private void AddMovementActionVeil(List<ITooltipBrick> bricks, TooltipTemplateType type)

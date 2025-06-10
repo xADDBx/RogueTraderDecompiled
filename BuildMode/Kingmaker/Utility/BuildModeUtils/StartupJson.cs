@@ -33,7 +33,7 @@ public class StartupJson
 		public bool DisableLowMemoryOverrides;
 	}
 
-	public bool betatest;
+	public bool playtest;
 
 	public bool development;
 

@@ -73,7 +73,7 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 		{
 			UpdateProperties();
 		}));
-		AddDisposable(m_HasAbility.CombineLatest(UnitState.IsMouseOverUnit, UnitState.IsAoETarget, (bool hasAbility, bool isHover, bool isAoE) => hasAbility && (isHover || (isAoE && !UnitState.IsStarshipAttack.Value))).Subscribe(CollectAbilityProperty));
+		AddDisposable(m_HasAbility.CombineLatest(UnitState.IsMouseOverUnit, UnitState.IsAoETarget, UnitState.IsAbilityRelay, UnitState.IsAbilityRedirected, (bool hasAbility, bool isHover, bool isAoE, bool isAbilityRelay, bool isAbilityRedirected) => hasAbility && !isAbilityRelay && !isAbilityRedirected && (isHover || (isAoE && !UnitState.IsStarshipAttack.Value))).Subscribe(CollectAbilityProperty));
 	}
 
 	protected override void DisposeImplementation()

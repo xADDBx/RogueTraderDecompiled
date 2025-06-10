@@ -3,6 +3,7 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Localization;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
 using StateHasher.Core;
 using UnityEngine;
@@ -18,14 +19,18 @@ public class InteractionBarkPart : InteractionPart<InteractionBarkSettings>, IHa
 
 	public override bool CanInteract()
 	{
-		ConditionsReference condition = base.Settings.Condition;
-		if ((bool)condition.Get() && condition.Get().Conditions.HasConditions)
+		ConditionsHolder conditionsHolder = base.Settings.Condition?.Get();
+		if (conditionsHolder != null)
 		{
-			using (ContextData<MechanicEntityData>.Request().Setup(base.Owner))
+			ConditionsChecker conditions = conditionsHolder.Conditions;
+			if (conditions != null && conditions.HasConditions)
 			{
-				if (!condition.Get().Conditions.Check())
+				using (ContextData<MechanicEntityData>.Request().Setup(base.Owner))
 				{
-					return false;
+					if (!conditionsHolder.Conditions.Check())
+					{
+						return false;
+					}
 				}
 			}
 		}
@@ -34,13 +39,19 @@ public class InteractionBarkPart : InteractionPart<InteractionBarkSettings>, IHa
 
 	protected override void OnInteract(BaseUnitEntity user)
 	{
-		if (base.Settings.Bark == null)
+		SharedStringAsset bark = base.Settings.GetBark();
+		if (bark == null)
 		{
 			return;
 		}
-		BarkPlayer.Bark(base.Settings.ShowOnUser ? ((MechanicEntity)user) : ((MechanicEntity)base.Owner), base.Settings.Bark.String, -1f, base.Settings.BarkPlayVoiceOver, user);
+		BarkPlayer.Bark(base.Settings.ShowOnUser ? user : ((base.Settings.TargetUnit != null) ? ((MechanicEntity)base.Settings.TargetUnit.GetValue()) : ((MechanicEntity)((base.Settings.TargetMapObject != null) ? base.Settings.TargetMapObject.GetValue() : base.Owner))), bark.String, -1f, base.Settings.BarkPlayVoiceOver, user);
 		ActionsHolder actionsHolder = base.Settings.BarkActions?.Get();
-		if (actionsHolder == null || !actionsHolder.Actions.HasActions || (base.Settings.RunActionsOnce && base.Settings.ActionsRan))
+		if (actionsHolder == null)
+		{
+			return;
+		}
+		ActionList actions = actionsHolder.Actions;
+		if (actions == null || !actions.HasActions || (base.Settings.RunActionsOnce && base.Settings.ActionsRan))
 		{
 			return;
 		}

@@ -411,6 +411,8 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 			RegisterBinding("SwitchNetMenu", KeyCode.BackQuote, gameModesArray2, ctrl: true, alt: false, shift: false);
 			RegisterBinding("Kill", KeyCode.K, gameModesArray3);
 			RegisterBinding("KillAll", KeyCode.K, gameModesArray3, ctrl: false, alt: true, shift: false);
+			RegisterBinding("KillAllBossRemovebuff", KeyCode.K, gameModesArray3, ctrl: true, alt: true, shift: false);
+			RegisterBinding("KillAllBossRemoveImmortal", KeyCode.K, gameModesArray3, ctrl: true, alt: true, shift: true);
 			RegisterBinding("ChecksFail", KeyCode.Keypad1, gameModesArray, ctrl: true, alt: false, shift: false);
 			RegisterBinding("ChecksFail", KeyCode.End, gameModesArray, ctrl: true, alt: false, shift: false);
 			RegisterBinding("ChecksSuccess", KeyCode.Keypad2, gameModesArray, ctrl: true, alt: false, shift: false);

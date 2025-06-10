@@ -43,6 +43,8 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 
 	public bool m_CanBeAttackedDirectly = true;
 
+	public bool BoundsWithTransform;
+
 	[SerializeField]
 	private DestructionStageSettings[] m_DestructionStages = new DestructionStageSettings[0];
 
@@ -204,6 +206,18 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 						bounds.Value.Encapsulate(collider.bounds);
 					}
 				}
+			}
+		}
+		if (BoundsWithTransform)
+		{
+			Bounds bounds2 = new Bounds(base.transform.position, base.transform.rotation * base.transform.localScale);
+			if (!bounds.HasValue)
+			{
+				bounds = bounds2;
+			}
+			else
+			{
+				bounds.Value.Encapsulate(bounds2);
 			}
 		}
 		Bounds valueOrDefault = bounds.GetValueOrDefault();

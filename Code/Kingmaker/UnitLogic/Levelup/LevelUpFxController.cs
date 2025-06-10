@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Levelup;
 
-public class LevelUpFxController : IController, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ICloseLoadingScreenHandler, IUnitGainExperienceHandler
+public class LevelUpFxController : IController, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ICloseLoadingScreenHandler, IUnitGainExperienceHandler, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler
 {
 	private bool m_UpdateRequired;
 
@@ -34,7 +34,7 @@ public class LevelUpFxController : IController, IUnitCombatHandler, ISubscriber<
 
 	private void CheckUnitLevelUpAvailable(BaseUnitEntity unitEntity)
 	{
-		if (!unitEntity.IsDeadOrUnconscious && unitEntity.IsInPlayerParty && unitEntity.Progression.CanLevelUp && !unitEntity.CombatState.IsInCombat)
+		if (!Game.Instance.Player.ServiceWindowsBlocked && !Game.Instance.Player.CharacterInfoWindowBlocked && !unitEntity.IsDeadOrUnconscious && unitEntity.IsInPlayerParty && unitEntity.Progression.CanLevelUp && !unitEntity.CombatState.IsInCombat)
 		{
 			SpawnLevelUpFx(unitEntity);
 			if (Time.time - m_LastSFXPlayTime > 3f)
@@ -88,6 +88,16 @@ public class LevelUpFxController : IController, IUnitCombatHandler, ISubscriber<
 	}
 
 	public void HandleCloseLoadingScreen()
+	{
+		CheckIsLevelUpAvailable();
+	}
+
+	public void HandleServiceWindowsBlocked()
+	{
+		CheckIsLevelUpAvailable();
+	}
+
+	public void HandleSelectedWindowsBlocked()
 	{
 		CheckIsLevelUpAvailable();
 	}

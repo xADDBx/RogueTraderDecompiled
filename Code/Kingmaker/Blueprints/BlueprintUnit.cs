@@ -145,6 +145,9 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		private BlueprintItemEquipmentShouldersReference m_Shoulders;
 
 		[SerializeField]
+		private BlueprintItemEquipmentPetProtocolReference m_PetProtocol;
+
+		[SerializeField]
 		private BlueprintItemEquipmentUsableReference[] m_QuickSlots = new BlueprintItemEquipmentUsableReference[4];
 
 		[SerializeField]
@@ -194,6 +197,8 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		public BlueprintItemEquipmentWrist Wrist => m_Wrist?.Get();
 
 		public BlueprintItemEquipmentShoulders Shoulders => m_Shoulders?.Get();
+
+		public BlueprintItemEquipmentPetProtocol PetProtocol => m_PetProtocol?.Get();
 
 		public ReferenceArrayProxy<BlueprintItemEquipmentUsable> QuickSlots
 		{

@@ -1,5 +1,5 @@
 using System;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;

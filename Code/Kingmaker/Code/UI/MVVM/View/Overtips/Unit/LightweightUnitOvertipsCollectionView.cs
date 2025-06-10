@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;

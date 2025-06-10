@@ -8,6 +8,8 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerP
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
+using Kingmaker.UnitLogic.Progression;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
@@ -95,7 +97,9 @@ public class TooltipTemplateCareerProgression : TooltipBaseTemplate
 		if (m_CareerPath.Prerequisite != null)
 		{
 			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.Prerequisites, TooltipTitleType.H5));
-			bricks.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(m_CareerPath.Prerequisite)));
+			CalculatedPrerequisiteComposite obj = m_CareerPath.Prerequisite as CalculatedPrerequisiteComposite;
+			bool oneFromList = obj != null && obj.Composition == FeaturePrerequisiteComposition.Or;
+			bricks.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(m_CareerPath.Prerequisite, addTooltip: true), oneFromList));
 		}
 	}
 }

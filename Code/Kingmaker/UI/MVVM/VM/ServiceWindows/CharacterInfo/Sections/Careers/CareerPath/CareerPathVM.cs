@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores.Experience;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.Enums;
 using Kingmaker.GameCommands;
 using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
@@ -94,6 +97,8 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 
 	public readonly ReactiveProperty<CareerItemState> ItemState = new ReactiveProperty<CareerItemState>();
 
+	public readonly ReactiveProperty<CharGenChangeNameMessageBoxVM> PetChangeNameVM = new ReactiveProperty<CharGenChangeNameMessageBoxVM>();
+
 	private TooltipBaseTemplate m_CareerTooltip;
 
 	private TooltipBaseTemplate m_CareerProgressionTooltip;
@@ -101,6 +106,8 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 	private TooltipBaseTemplate m_CareerProgressionDesc;
 
 	public List<BlueprintCareerPath> PrerequisiteCareerPaths = new List<BlueprintCareerPath>();
+
+	public List<BlueprintFeature> PrerequisiteFeatures = new List<BlueprintFeature>();
 
 	public readonly CharInfoAvailableRanksVM AvailableRanksVM;
 
@@ -546,8 +553,39 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 			return;
 		}
 		HasSelectionsToUpgrade = AvailableSelections.Any((RankEntrySelectionVM s) => s.NeedToSelect && !s.SelectionMade);
+		if (AvailableSelections.Any((RankEntrySelectionVM s) => s.FeatureGroup == FeatureGroup.PetKeystone))
+		{
+			PetKeystoneInfoComponent petInfoComponent = AvailableSelections.FirstOrDefault((RankEntrySelectionVM s) => s.FeatureGroup == FeatureGroup.PetKeystone)?.SelectedFeature.Value.Feature.GetComponent<PetKeystoneInfoComponent>();
+			if (petInfoComponent == null)
+			{
+				return;
+			}
+			if (UnitProgressionVM.Unit.Value.IsCustomCompanion() || UnitProgressionVM.Unit.Value.IsPregenCustomCompanion() || UnitProgressionVM.Unit.Value.IsMainCharacter)
+			{
+				PetChangeNameVM.Value = new CharGenChangeNameMessageBoxVM(UIStrings.Instance.CharGen.ChooseName, UIStrings.Instance.SettingsUI.DialogApply, delegate(string text)
+				{
+					UnitProgressionVM.Unit.Value.Description.CustomPetName = text;
+				}, delegate(DialogMessageBoxBase.BoxButton value)
+				{
+					if (value == DialogMessageBoxBase.BoxButton.Yes)
+					{
+						UnitProgressionVM.Commit();
+						OnCommit.Execute();
+					}
+				}, GetRandomPetName(petInfoComponent.PetType), () => GetRandomPetName(petInfoComponent.PetType), delegate
+				{
+					PetChangeNameVM?.Value.Dispose();
+				});
+				return;
+			}
+		}
 		UnitProgressionVM.Commit();
 		OnCommit.Execute();
+	}
+
+	private string GetRandomPetName(PetType petType, string exceptName = "")
+	{
+		return BlueprintCharGenRoot.Instance.PregenCharacterNames.GetRandomPetName(petType, exceptName);
 	}
 
 	private bool IsCareerInProgress(BlueprintCareerPath careerPath, bool canUsePreviewUnit)
@@ -757,8 +795,8 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		if (UnitProgressionVM?.CurrentCareer.Value == this)
 		{
 			UpdateState(updateRanks: true);
-			UpdateSelectedItemInfoSection(UnitProgressionVM?.CurrentRankEntryItem.Value);
 			RefreshTooltipUnit();
+			UpdateSelectedItemInfoSection(UnitProgressionVM?.CurrentRankEntryItem.Value);
 		}
 	}
 
@@ -835,12 +873,48 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 	{
 		if (UnitProgressionVM?.CurrentCareer.Value == this)
 		{
-			UpdateSelectedItemInfoSection((featureVM != null) ? new List<TooltipBaseTemplate> { featureVM.TooltipTemplate() } : UnitProgressionVM?.CurrentRankEntryItem.Value?.TooltipTemplates());
+			if (UnitProgressionVM.CurrentRankEntryItem != null && UnitProgressionVM != null && UnitProgressionVM.CurrentRankEntryItem != null && UnitProgressionVM.CurrentRankEntryItem.Value.GetFeatureGroup().Value == FeatureGroup.PetKeystone && featureVM != null)
+			{
+				List<TooltipBaseTemplate> templates = new List<TooltipBaseTemplate>
+				{
+					new TooltipTemplatePetKeystone(featureVM as RankEntrySelectionFeatureVM, Unit)
+				};
+				UpdateSelectedItemInfoSection(templates);
+			}
+			else
+			{
+				UpdateSelectedItemInfoSection((featureVM != null) ? new List<TooltipBaseTemplate> { featureVM.TooltipTemplate() } : UnitProgressionVM?.CurrentRankEntryItem.Value?.TooltipTemplates());
+			}
 		}
 	}
 
 	public void SetTooltip(TooltipBaseTemplate template)
 	{
 		UpdateSelectedItemInfoSection(new List<TooltipBaseTemplate> { template });
+	}
+
+	public bool HasPrerequisiteFeatures()
+	{
+		foreach (BlueprintFeature prerequisiteFeature in PrerequisiteFeatures)
+		{
+			if (Unit.Facts.Contains(prerequisiteFeature))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool SelectionHasPrerequisiteFeatures()
+	{
+		if (LevelUpManager == null)
+		{
+			return false;
+		}
+		if (LevelUpManager.Selections.FirstOrDefault((SelectionState x) => x is SelectionStateFeature selectionStateFeature2 && selectionStateFeature2.Blueprint.Group == FeatureGroup.ChargenOccupation) is SelectionStateFeature { SelectionItem: not null } selectionStateFeature)
+		{
+			return PrerequisiteFeatures.Contains(selectionStateFeature.SelectionItem.Value.Feature);
+		}
+		return false;
 	}
 }

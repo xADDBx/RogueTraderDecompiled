@@ -87,10 +87,10 @@ public class BugDuplicateItemView : ViewBase<BugDuplicateItemVM>, IWidgetView, I
 
 	protected override void BindViewImplementation()
 	{
-		m_Button.OnLeftClickAsObservable().Subscribe(OpenUrl);
-		m_Button.OnConfirmClickAsObservable().Subscribe(OpenUrl);
-		m_OpenButton.OnLeftClickAsObservable().Subscribe(OpenUrl);
-		m_MetButton.OnLeftClickAsObservable().Subscribe(OpenMet);
+		AddDisposable(m_Button.OnLeftClickAsObservable().Subscribe(OpenUrl));
+		AddDisposable(m_Button.OnConfirmClickAsObservable().Subscribe(OpenUrl));
+		AddDisposable(m_OpenButton.OnLeftClickAsObservable().Subscribe(OpenUrl));
+		AddDisposable(m_MetButton.OnLeftClickAsObservable().Subscribe(OpenMet));
 		DateTime result;
 		double num = (DateTime.TryParse(base.ViewModel.Created, out result) ? (DateTime.UtcNow - result).TotalDays : 0.0);
 		TextMeshProUGUI createdText = m_CreatedText;

@@ -3,7 +3,7 @@ using Kingmaker.Code.UI.MVVM.View.Overtips.MapObject;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject.Collections;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;

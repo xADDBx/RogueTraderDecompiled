@@ -38,6 +38,11 @@ public class ForcedCoversController : IControllerTick, IController
 		m_RegisteredCoverProviders.Remove(coverProvider);
 	}
 
+	public bool ContainsCoverProvider(IDynamicCoverProvider coverProvider)
+	{
+		return m_RegisteredCoverProviders.Contains(coverProvider);
+	}
+
 	public bool TryGetCoverType(CustomGridNodeBase node, out LosCalculations.CoverType coverType)
 	{
 		return m_Cache.TryGetValue(node, out coverType);

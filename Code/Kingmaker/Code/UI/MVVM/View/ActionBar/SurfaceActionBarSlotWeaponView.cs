@@ -30,11 +30,11 @@ public abstract class SurfaceActionBarSlotWeaponView : ViewBase<ItemSlotVM>
 	[SerializeField]
 	private TextMeshProUGUI m_AmmoCountText;
 
-	private BoolReactiveProperty m_FakeSlot = new BoolReactiveProperty(initialValue: false);
+	private readonly BoolReactiveProperty m_FakeSlot = new BoolReactiveProperty();
 
 	private RectTransform m_TooltipCustomPlace;
 
-	protected List<Vector2> m_TooltipPriorityPivots;
+	protected List<Vector2> TooltipPriorityPivots;
 
 	protected RectTransform TooltipPlace
 	{
@@ -78,6 +78,10 @@ public abstract class SurfaceActionBarSlotWeaponView : ViewBase<ItemSlotVM>
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	public void SetFakeMode(bool state)
 	{
 		m_FakeSlot.Value = state;
@@ -86,10 +90,6 @@ public abstract class SurfaceActionBarSlotWeaponView : ViewBase<ItemSlotVM>
 	public void SetTooltipCustomPosition(RectTransform rectTransform, List<Vector2> pivots = null)
 	{
 		m_TooltipCustomPlace = rectTransform;
-		m_TooltipPriorityPivots = pivots;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
+		TooltipPriorityPivots = pivots;
 	}
 }

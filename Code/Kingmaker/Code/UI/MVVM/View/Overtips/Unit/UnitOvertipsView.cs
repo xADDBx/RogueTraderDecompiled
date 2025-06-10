@@ -4,7 +4,7 @@ using Kingmaker.Code.UI.MVVM.View.Overtips.Unit.OvertipSpaceShipUnit;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameModes;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;

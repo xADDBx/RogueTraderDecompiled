@@ -43,6 +43,14 @@ public static class TypeSorter
 		ItemsItemType.Shoulders
 	};
 
+	private static readonly List<ItemsItemType> PetProtocolSortingOrder = new List<ItemsItemType>
+	{
+		ItemsItemType.PetProtocolMastiff,
+		ItemsItemType.PetProtocolRaven,
+		ItemsItemType.PetProtocolEagle,
+		ItemsItemType.PetProtocolSkulls
+	};
+
 	private static readonly List<ItemsItemType> ShipSortingOrder = new List<ItemsItemType>
 	{
 		ItemsItemType.StarshipVoidShieldGenerator,
@@ -137,9 +145,20 @@ public static class TypeSorter
 		case ItemsItemType.Neck:
 		case ItemsItemType.Shoulders:
 		{
-			int num7 = EquipSortingOrder.IndexOf(itemType);
-			num = ((num7 >= 0) ? num7 : EquipSortingOrder.Count);
+			int num9 = EquipSortingOrder.IndexOf(itemType);
+			num = ((num9 >= 0) ? num9 : EquipSortingOrder.Count);
 			num2 = 2;
+			break;
+		}
+		case ItemsItemType.PetProtocolMastiff:
+		case ItemsItemType.PetProtocolRaven:
+		case ItemsItemType.PetProtocolEagle:
+		case ItemsItemType.PetProtocolSkulls:
+		{
+			int num7 = PetProtocolSortingOrder.IndexOf(itemType);
+			int rarity = (int)item.Blueprint.Rarity;
+			num = ((num7 >= 0) ? (num7 + rarity) : (PetProtocolSortingOrder.Count + rarity));
+			num2 = 3;
 			break;
 		}
 		case ItemsItemType.Usable:
@@ -147,7 +166,7 @@ public static class TypeSorter
 			{
 				num = (int)blueprintItemEquipmentUsable.Tag;
 			}
-			num2 = 3;
+			num2 = 4;
 			break;
 		case ItemsItemType.StarshipWeapon:
 		case ItemsItemType.StarshipPlasmaDrives:
@@ -166,11 +185,11 @@ public static class TypeSorter
 				num8 = (int)(num8 + blueprintStarshipWeapon.WeaponType);
 			}
 			num = num8;
-			num2 = 6;
+			num2 = 7;
 			break;
 		}
 		default:
-			num2 = ((item.Blueprint.IsNotable || item.Blueprint.Rarity == BlueprintItem.ItemRarity.Quest) ? 4 : 5);
+			num2 = ((item.Blueprint.IsNotable || item.Blueprint.Rarity == BlueprintItem.ItemRarity.Quest) ? 5 : 6);
 			break;
 		}
 		return num2 * 100 + num;

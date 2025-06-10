@@ -35,7 +35,7 @@ public class TooltipTemplateSkillCheckResult : TooltipBaseTemplate
 			if (check != null)
 			{
 				yield return new TooltipBrickPortraitAndName(check.ActingUnit.Portrait.SmallPortrait, check.ActingUnit.CharacterName, new TooltipBrickTitle($"{UIUtilityTexts.GetSkillCheckName(check.StatType)}: {check.StatValue}", TooltipTitleType.H6, TextAlignmentOptions.Left));
-				yield return new TooltipBrickChance(tooltips.SkillCheckChance.Text, check.TotalSkill, check.RollResult, 0, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+				yield return new TooltipBrickChance(tooltips.SkillCheckChance.Text, UIUtilityTexts.GetSkillCheckChance(check), check.RollResult, 0, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
 				yield return new TooltipBrickTextValue(tooltips.SkillValue.Text, check.StatValue.ToString("+#;-#;0"), 1);
 				if (check.DC != 0)
 				{

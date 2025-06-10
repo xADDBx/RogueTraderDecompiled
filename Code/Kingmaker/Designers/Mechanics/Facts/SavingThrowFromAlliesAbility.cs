@@ -22,7 +22,7 @@ public class SavingThrowFromAlliesAbility : UnitFactComponentDelegate, IGlobalRu
 	{
 		if (evt.InitiatorUnit != null && evt.InitiatorUnit.IsAlly(base.Owner))
 		{
-			evt.AutoPass = true;
+			evt.SetAlwaysSucceed(base.Fact);
 		}
 	}
 

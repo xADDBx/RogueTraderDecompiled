@@ -13,6 +13,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Localization;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -66,6 +67,16 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 	[SerializeField]
 	private BlueprintBuffReference m_BuffOnMovement;
 
+	[SerializeField]
+	private bool m_SkipSpeedOverride;
+
+	[HideIf("m_SkipSpeedOverride")]
+	[SerializeField]
+	private float m_MaxSpeedOverride = 10f;
+
+	[SerializeField]
+	private float m_DelayAfterMovement;
+
 	public BlueprintBuff BuffOnMovement => m_BuffOnMovement.Get();
 
 	public bool IsIgnoreLos => false;
@@ -77,6 +88,8 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 	public int PatternAngle => 0;
 
 	public bool CalculateAttackFromPatternCentre => false;
+
+	public bool ExcludeUnwalkable => false;
 
 	TargetType IAbilityAoEPatternProvider.Targets => TargetType.Any;
 
@@ -116,7 +129,7 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			PFLog.Ability.ErrorWithReport($"{context.Ability}: can't find path for custom movement");
 			yield break;
 		}
-		Buff buff = caster.Buffs.Add(BuffOnMovement, context, null);
+		Buff buff = caster.Buffs.Add(BuffOnMovement, context, new BuffDuration(null, BuffEndCondition.TurnEndOrCombatEnd));
 		try
 		{
 			int pathCellsCount = pathNodes.Count;
@@ -130,6 +143,10 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			}
 			using (context.GetDataScope(caster.ToITargetWrapper()))
 			{
+				EventBus.RaiseEvent(delegate(IUnitMovedByAbilityHandler h)
+				{
+					h.HandleUnitMovedByAbility(context, pathCellsCount);
+				});
 				ActionsOnCaster.Run();
 			}
 		}
@@ -163,7 +180,10 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		}
 		float distanceToHandle = Mathf.Sqrt(2f) * 1.Cells().Meters * 1.1f;
 		HashSet<MechanicEntity> handledTargets = new HashSet<MechanicEntity>(targets.Length * 2);
-		movementAgent.MaxSpeedOverride = 10f;
+		if (!m_SkipSpeedOverride)
+		{
+			movementAgent.MaxSpeedOverride = ((!m_MaxSpeedOverride.Approximately(0f)) ? m_MaxSpeedOverride : 10f);
+		}
 		movementAgent.IsCharging = true;
 		if (casterUnit != null)
 		{
@@ -172,7 +192,7 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		bool failedToStartPath = false;
 		try
 		{
-			movementAgent.ForcePath(path);
+			movementAgent.ForcePath(path, disableApproachRadius: true);
 		}
 		catch (Exception exception)
 		{
@@ -198,6 +218,16 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			{
 				PFLog.Default.ErrorWithReport("Direct movement takes too long time, force finished");
 				break;
+			}
+		}
+		if (m_DelayAfterMovement > Mathf.Epsilon)
+		{
+			startTime = Game.Instance.TimeController.GameTime;
+			TimeSpan timeSpan = startTime;
+			while (timeSpan < startTime + m_DelayAfterMovement.Seconds())
+			{
+				yield return null;
+				timeSpan = Game.Instance.TimeController.GameTime;
 			}
 		}
 		context.Caster.Position = lastNode.Vector3Position;
@@ -283,11 +313,11 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		{
 			foreach (CustomGridNodeBase occupiedNode in caster.GetOccupiedNodes(item.Vector3Position))
 			{
-				BaseUnitEntity unit = occupiedNode.GetUnit();
-				if (unit != null && unit != caster && !unit.IsDeadOrUnconscious && !list2.Contains(unit) && (!IgnoreAllies || !caster.IsAlly(unit)) && (!IgnoreEnemies || !caster.IsEnemy(unit)))
+				BaseUnitEntity baseUnitEntity = occupiedNode.GetAllUnits()?.FirstOrDefault((BaseUnitEntity u) => u != caster);
+				if (baseUnitEntity != null && !baseUnitEntity.IsDeadOrUnconscious && !list2.Contains(baseUnitEntity) && (!IgnoreAllies || !caster.IsAlly(baseUnitEntity)) && (!IgnoreEnemies || !caster.IsEnemy(baseUnitEntity)))
 				{
 					limit--;
-					list2.Add(unit);
+					list2.Add(baseUnitEntity);
 					if (limit < 1)
 					{
 						break;
@@ -309,6 +339,12 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 
 	public override void Cleanup(AbilityExecutionContext context)
 	{
+		if (context.Caster is UnitEntity unitEntity)
+		{
+			unitEntity.View.MovementAgent.IsCharging = false;
+			unitEntity.View.MovementAgent.MaxSpeedOverride = null;
+			unitEntity.State.IsCharging = false;
+		}
 	}
 
 	public void OverridePattern(AoEPattern pattern)

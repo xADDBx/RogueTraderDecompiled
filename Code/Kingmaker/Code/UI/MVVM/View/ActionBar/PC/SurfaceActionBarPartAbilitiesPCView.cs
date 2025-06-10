@@ -48,10 +48,11 @@ public class SurfaceActionBarPartAbilitiesPCView : SurfaceActionBarPartAbilities
 					h.HandleOpenCharacterInfoPage(CharInfoPageType.Biography, base.ViewModel.Unit);
 				});
 			}));
-			AddDisposable(m_CharacterButton.SetHint(UIStrings.Instance.MainMenu.CharacterInfo, "OpenCharacterScreen"));
+			CheckServiceWindowsBlocked();
 		}
 		AddDisposable(base.ViewModel.UnitChanged.Subscribe(DrawEntries));
 		AddDisposable(base.ViewModel.SlotCountChanged.Subscribe(DrawEntries));
+		AddDisposable(base.ViewModel.CheckServiceWindowsBlocked.Subscribe(CheckServiceWindowsBlocked));
 		DrawEntries();
 	}
 
@@ -120,5 +121,12 @@ public class SurfaceActionBarPartAbilitiesPCView : SurfaceActionBarPartAbilities
 			m_RowsPool[i].gameObject.SetActive(value: false);
 			i++;
 		}
+	}
+
+	private void CheckServiceWindowsBlocked()
+	{
+		bool flag = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
+		m_CharacterButton.SetInteractable(!flag);
+		AddDisposable(flag ? m_CharacterButton.SetHint(UIStrings.Instance.ExplorationTexts.ExploNotInteractable, "NotInteractable") : m_CharacterButton.SetHint(UIStrings.Instance.MainMenu.CharacterInfo, "OpenCharacterScreen"));
 	}
 }

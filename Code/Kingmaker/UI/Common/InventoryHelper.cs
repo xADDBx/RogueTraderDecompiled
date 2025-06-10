@@ -151,7 +151,7 @@ public static class InventoryHelper
 			return false;
 		}
 		Game.Instance.GameCommandQueue.UnequipItem(baseUnitEntity, slot.ToSlotRef(), null);
-		UISounds.Instance.PlayItemSound(SlotAction.Take, slot.ItemEntity, equipSound: true);
+		UISounds.Instance.PlayItemSound(SlotAction.Take, slot.ItemEntity, equipSound: true, baseUnitEntity.IsStarship());
 		return true;
 	}
 
@@ -223,6 +223,10 @@ public static class InventoryHelper
 			return;
 		}
 		ItemEntity itemEntity = slot.ItemEntity;
+		if (unit.IsPet && itemEntity.Blueprint.ItemType != ItemsItemType.PetProtocol)
+		{
+			return;
+		}
 		if (!CanEquipItem(itemEntity, unit))
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
@@ -584,6 +588,8 @@ public static class InventoryHelper
 			return partUnitBody.Wrist;
 		case EquipSlotType.Shoulders:
 			return partUnitBody.Shoulders;
+		case EquipSlotType.PetProtocol:
+			return partUnitBody.PetProtocol;
 		case EquipSlotType.Glasses:
 			return partUnitBody.Glasses;
 		case EquipSlotType.Shirt:

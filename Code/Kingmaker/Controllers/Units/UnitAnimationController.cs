@@ -111,7 +111,7 @@ public class UnitAnimationController : BaseUnitController, IControllerStart, ICo
 				manager.IsAnimating = unit is LightweightUnitEntity || (stateOptional != null && stateOptional.IsAnimating) || manager.IsGoingProne;
 				manager.IsUnconscious = unit.LifeState.IsUnconscious;
 				manager.CoverType = ((manager.IsInCombat && unit is BaseUnitEntity baseUnitEntity) ? baseUnitEntity.GetCoverType() : LosCalculations.CoverType.None);
-				manager.ForceMoveDistance = (unit.GetOptional<UnitPartForceMove>()?.Active?.RemainingDistance).GetValueOrDefault();
+				manager.IsForceMove = unit.GetOptional<UnitPartForceMove>()?.Active != null;
 				manager.ForceMoveTime = (manager.GetAction(UnitAnimationType.ForceMove) as UnitAnimationActionForceMove)?.GetClipsLength();
 				manager.DodgeDistance = ((unit.Commands.Current is UnitJumpAsideDodge { ForcedPath: not null } unitJumpAsideDodge) ? unitJumpAsideDodge.ForcedPath.GetTotalLength() : 0f);
 				manager.CombatMicroIdle = (unit.Commands.Empty ? CombatMicroIdle.Weapon : CombatMicroIdle.None);

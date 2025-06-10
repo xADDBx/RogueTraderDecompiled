@@ -33,7 +33,7 @@ public class UnitActivatableAbilitiesController : BaseUnitController
 			if (ability.IsWaitingForTarget)
 			{
 				bool num = ability.Owner.Commands.Contains((AbstractUnitCommand c) => (c as UnitUseAbility)?.Ability.Fact == ability.SelectTargetAbility && !c.IsFinished);
-				bool flag = Game.Instance.SelectedAbilityHandler.Ability?.Fact == ability.SelectTargetAbility;
+				bool flag = Game.Instance.SelectedAbilityHandler.RootAbility?.Fact == ability.SelectTargetAbility;
 				if (!num && !flag)
 				{
 					ability.IsOn = false;

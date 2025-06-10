@@ -51,10 +51,7 @@ public class UnitPartInspectedBuffs : BaseUnitPart, IHashable
 		StatType statType = StatType.SkillTechUse;
 		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
 		{
-			if (item.LifeState.IsConscious && (item.Stats.GetStat<ModifiableValueSkill>(statType)?.BaseValue ?? 0) > 0 && GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(item, statType, dC)
-			{
-				IgnoreDifficultyBonusToDC = true
-			}, null, allowPartyCheckInCamp: false).RollResult >= dC)
+			if (item.LifeState.IsConscious && (item.Stats.GetStat<ModifiableValueSkill>(statType)?.BaseValue ?? 0) > 0 && GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(item, statType, dC, ignoreDCIncreaseFromDifficulty: true), null, allowPartyCheckInCamp: false).RollResult >= dC)
 			{
 				return true;
 			}

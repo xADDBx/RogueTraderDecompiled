@@ -101,6 +101,10 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 		[CanBeNull]
 		public BlueprintItemEquipmentShoulders Shoulders;
 
+		[JsonProperty]
+		[CanBeNull]
+		public BlueprintItemEquipmentPetProtocol PetProtocol;
+
 		public override Hash128 GetHash128()
 		{
 			Hash128 result = default(Hash128);
@@ -150,6 +154,8 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 			result.Append(ref val15);
 			Hash128 val16 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(Shoulders);
 			result.Append(ref val16);
+			Hash128 val17 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(PetProtocol);
+			result.Append(ref val17);
 			return result;
 		}
 	}
@@ -189,6 +195,8 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 			UnequipItem(bodyOptional.Wrist);
 			data.Shoulders = bodyOptional.Shoulders.MaybeItem?.Blueprint as BlueprintItemEquipmentShoulders;
 			UnequipItem(bodyOptional.Shoulders);
+			data.PetProtocol = bodyOptional.PetProtocol.MaybeItem?.Blueprint as BlueprintItemEquipmentPetProtocol;
+			UnequipItem(bodyOptional.PetProtocol);
 			if (bodyOptional.QuickSlots != null)
 			{
 				UsableSlot[] quickSlots = bodyOptional.QuickSlots;
@@ -242,6 +250,7 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 			EquipItem(data.Ring2, bodyOptional.Ring2);
 			EquipItem(data.Wrist, bodyOptional.Wrist);
 			EquipItem(data.Shoulders, bodyOptional.Shoulders);
+			EquipItem(data.PetProtocol, bodyOptional.PetProtocol);
 			for (int i = 0; i < data.QuickSlots.Count; i++)
 			{
 				EquipItem(data.QuickSlots[i], bodyOptional.QuickSlots[i]);

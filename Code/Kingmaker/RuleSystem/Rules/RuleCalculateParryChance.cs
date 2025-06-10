@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Code.UnitLogic.FactLogic;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -49,6 +50,9 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 	public bool IsAutoParry { get; private set; }
 
 	public bool IsRangedParry { get; private set; }
+
+	public UseBallisticSkillToParry.BallisticSkillApplyPolicies BallisticSkillApplyPolicy { get; set; } = UseBallisticSkillToParry.BallisticSkillApplyPolicies.None;
+
 
 	private bool UseBallisticSkill => Defender.Features.CanUseBallisticSkillToParry.Value;
 
@@ -107,7 +111,19 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		DefenderSkill = ((UseBallisticSkill && (int)Defender.Attributes.WarhammerBallisticSkill >= (int)Defender.Attributes.WarhammerWeaponSkill) ? Defender.Attributes.WarhammerBallisticSkill : Defender.Attributes.WarhammerWeaponSkill);
+		DefenderSkill = Defender.Attributes.WarhammerWeaponSkill;
+		if (UseBallisticSkill)
+		{
+			switch (BallisticSkillApplyPolicy)
+			{
+			case UseBallisticSkillToParry.BallisticSkillApplyPolicies.UseAlways:
+				DefenderSkill = Defender.Attributes.WarhammerBallisticSkill;
+				break;
+			case UseBallisticSkillToParry.BallisticSkillApplyPolicies.UseIfGreaterThanOrEqual:
+				DefenderSkill = (((int)Defender.Attributes.WarhammerBallisticSkill >= (int)Defender.Attributes.WarhammerWeaponSkill) ? Defender.Attributes.WarhammerBallisticSkill : Defender.Attributes.WarhammerWeaponSkill);
+				break;
+			}
+		}
 		int num = DefenderSkill + DefenderCurrentAttackSkillValueModifiers.Value;
 		int num2 = 0;
 		if (MaybeAttacker != null)

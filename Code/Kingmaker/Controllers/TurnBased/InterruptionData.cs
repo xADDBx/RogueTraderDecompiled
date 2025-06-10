@@ -9,4 +9,10 @@ public class InterruptionData
 	public bool WaitForCommandsToFinish;
 
 	public RestrictionCalculator RestrictionsOnInterrupt = new RestrictionCalculator();
+
+	public bool InterruptionWithoutInitiativeAndPanelUpdate;
+
+	public int GrantedAP;
+
+	public int GrantedMP;
 }

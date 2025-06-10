@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.View.Mechanics.ScriptZones;

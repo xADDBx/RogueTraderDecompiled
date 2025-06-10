@@ -8,6 +8,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -17,6 +18,7 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEnt
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
@@ -78,7 +80,17 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	public TooltipBaseTemplate HintTooltip => m_HintTooltip ?? (m_HintTooltip = new TooltipTemplateGlossary(GlossaryEntryKey));
 
-	public TooltipBaseTemplate Tooltip => m_Tooltip ?? (m_Tooltip = SelectedFeature.Value?.TooltipTemplate());
+	public TooltipBaseTemplate Tooltip
+	{
+		get
+		{
+			if (SelectedFeature.Value != null)
+			{
+				return SelectedFeature.Value?.TooltipTemplate();
+			}
+			return m_Tooltip;
+		}
+	}
 
 	public bool IsValidSelection
 	{
@@ -152,9 +164,10 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		m_CareerPathVM = careerPathVM;
 		m_SelectAction = selectAction;
 		m_SelectionFeature = selectionFeature;
-		if (FeatureGroup == FeatureGroup.UltimateAbility && careerPathVM.CareerPathUIMetaData != null && careerPathVM.CareerPathUIMetaData.UltimateFeatures.NotNull().Any())
+		if (FeatureGroup == FeatureGroup.UltimateUpgradeAbility && careerPathVM.CareerPathUIMetaData != null && careerPathVM.CareerPathUIMetaData.UltimateFeatures.NotNull().Any())
 		{
-			AddDisposable(UltimateFeature = new CharInfoFeatureVM(new UIFeature(careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault()), careerPathVM.Unit));
+			BlueprintFeature correctUltimateFeature = GetCorrectUltimateFeature(careerPathVM);
+			AddDisposable(UltimateFeature = new CharInfoFeatureVM(new UIFeature(correctUltimateFeature ?? careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault()), careerPathVM.Unit));
 		}
 		if (RankEntryUtils.HasFilter(FeatureGroup))
 		{
@@ -168,12 +181,21 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		{
 			UpdateFeatures();
 		}
-		GlossaryEntryKey = $"{FeatureGroup}_CareerPath_Selection";
+		GlossaryEntryKey = $"{((FeatureGroup != FeatureGroup.PetUltimateAbility) ? FeatureGroup : FeatureGroup.UltimateAbility)}_CareerPath_Selection";
+		OverrideTooltip();
 		AddDisposable(UnitProgressionVM.CurrentRankEntryItem.Subscribe(delegate(IRankEntrySelectItem item)
 		{
 			IsCurrentRankEntryItem.Value = item == this;
 		}));
 		AddDisposable(EventBus.Subscribe(this));
+	}
+
+	private void OverrideTooltip()
+	{
+		if (FeatureGroup == FeatureGroup.PetKeystone)
+		{
+			m_Tooltip = new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.KeystoneFeaturesHeader.Text, UIStrings.Instance.CharacterSheet.KeystoneFeaturesChargenDescription.Text);
+		}
 	}
 
 	private List<RankEntryFeatureGroupVM> CreateGroups()
@@ -370,10 +392,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	public void HandleClick()
 	{
-		if (m_ShowGroupList == null)
-		{
-			m_ShowGroupList = CreateGroups();
-		}
+		m_ShowGroupList = CreateGroups();
 		m_SelectAction?.Invoke(this);
 		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
 	}
@@ -482,6 +501,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 					return obj != null && obj.FeatureState.Value == RankFeatureState.NotSelectable;
 				});
 			}
+			filtered.RemoveAll((VirtualListElementVMBase f) => f is BaseRankEntryFeatureVM baseRankEntryFeatureVM && baseRankEntryFeatureVM.FeatureState.Value == RankFeatureState.NotSelectable && baseRankEntryFeatureVM.Feature.HideNotAvailibleInUI && !((RankEntrySelectionFeatureVM)f).UnitHasFeature);
 			if (flag && RankEntryUtils.HasFilter(FeatureGroup) && filtered.Any())
 			{
 				FilteredGroupList.Add(AddDisposableAndReturn(new SeparatorElementVM()));
@@ -555,5 +575,22 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			return false;
 		}
 		return showGroupList.SelectMany((RankEntryFeatureGroupVM l) => l.FeatureList).FindIndex((BaseRankEntryFeatureVM f) => f.Feature.AssetGuid == key) >= 0;
+	}
+
+	private BlueprintFeature GetCorrectUltimateFeature(CareerPathVM careerPathVM)
+	{
+		UnitPartPetOwner optional = careerPathVM.Unit.GetOptional<UnitPartPetOwner>();
+		if (optional == null)
+		{
+			return null;
+		}
+		return optional.PetType switch
+		{
+			PetType.Mastiff => careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault((BlueprintFeature f) => f.NameForAcronym == "Master_Ultimate_Feature"), 
+			PetType.Eagle => careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault((BlueprintFeature f) => f.NameForAcronym == "Master_Ultimate_Eagle_Feature"), 
+			PetType.Raven => careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault((BlueprintFeature f) => f.NameForAcronym == "Master_Ultimate_Raven_Feature"), 
+			PetType.ServoskullSwarm => careerPathVM.CareerPathUIMetaData.UltimateFeatures.FirstOrDefault((BlueprintFeature f) => f.NameForAcronym == "Master_Ultimate_Servoskull_Feature"), 
+			_ => null, 
+		};
 	}
 }

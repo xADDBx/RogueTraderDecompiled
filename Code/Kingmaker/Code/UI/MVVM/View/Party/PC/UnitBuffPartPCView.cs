@@ -80,6 +80,9 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 	[SerializeField]
 	private int m_BuffsLimit = 5;
 
+	[SerializeField]
+	private bool m_PartyCharacter;
+
 	[HideInInspector]
 	public BoolReactiveProperty IsHovered = new BoolReactiveProperty();
 
@@ -107,8 +110,27 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Clear();
+	}
+
 	private void DrawBuffs()
 	{
+		if (!m_PartyCharacter)
+		{
+			if (base.ViewModel.EntityIsDeadOrUnconscious())
+			{
+				m_MainContainer.gameObject.SetActive(value: false);
+				m_AdditionalTrigger.gameObject.SetActive(value: false);
+				return;
+			}
+			m_MainContainer.gameObject.SetActive(value: true);
+		}
+		else
+		{
+			m_MainContainer.gameObject.SetActive(value: true);
+		}
 		base.ViewModel.SortBuffs();
 		DrawVisibleBuffs();
 		DrawAllBuffs();
@@ -219,11 +241,6 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 	public void SetAdditionalBuffsVisible(bool visible)
 	{
 		m_AdditionalContainer.gameObject.SetActive(visible);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Clear();
 	}
 
 	private void Clear()

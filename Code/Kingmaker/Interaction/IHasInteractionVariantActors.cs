@@ -6,5 +6,7 @@ public interface IHasInteractionVariantActors
 {
 	bool InteractThroughVariants { get; }
 
+	float OvertipCorrection { get; }
+
 	IEnumerable<IInteractionVariantActor> GetInteractionVariantActors();
 }

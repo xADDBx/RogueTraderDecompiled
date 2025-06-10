@@ -32,7 +32,7 @@ public class WarhammerDodgeAndParryBonus : UnitBuffComponentDelegate, IInitiator
 
 	public void OnEventAboutToTrigger(RuleCalculateParryChance evt)
 	{
-		evt.ParryValueModifiers.Add(DodgeBonus.Calculate(base.Context), base.Fact);
+		evt.ParryValueModifiers.Add(ParryBonus.Calculate(base.Context), base.Fact);
 	}
 
 	public void OnEventDidTrigger(RuleCalculateParryChance evt)

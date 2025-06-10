@@ -163,6 +163,16 @@ public class CutsceneControlledUnit
 		return m_Active?.Cutscene?.Cutscene;
 	}
 
+	public static bool IsFreezingAllowed(IAbstractUnitEntity unit)
+	{
+		CutscenePlayerData cutscenePlayerData = unit.ToAbstractUnitEntity().CutsceneControlledUnit?.m_Active?.Cutscene;
+		if (cutscenePlayerData == null)
+		{
+			return true;
+		}
+		return !cutscenePlayerData.Cutscene.Freezeless;
+	}
+
 	public static bool IsSleepingAllowed(IAbstractUnitEntity unit)
 	{
 		return (unit.ToAbstractUnitEntity().CutsceneControlledUnit?.m_Active?.Cutscene)?.Paused ?? true;

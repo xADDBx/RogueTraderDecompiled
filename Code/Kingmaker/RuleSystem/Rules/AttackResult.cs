@@ -8,5 +8,6 @@ public enum AttackResult
 	Miss,
 	Dodge,
 	RighteousFury,
-	Parried
+	Parried,
+	Blocked
 }

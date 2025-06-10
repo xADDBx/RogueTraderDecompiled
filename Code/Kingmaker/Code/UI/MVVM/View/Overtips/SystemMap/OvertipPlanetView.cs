@@ -12,7 +12,9 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints;
+using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
+using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
@@ -56,6 +58,9 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 
 	[SerializeField]
 	private Image m_QuestStateIcon;
+
+	[SerializeField]
+	private Image m_CrownIcon;
 
 	[SerializeField]
 	private Image m_ResourceStateIcon;
@@ -146,7 +151,9 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 
 	private IDisposable m_PingDelay;
 
-	protected override bool CheckVisibility => true;
+	private bool m_Visible;
+
+	protected override bool CheckVisibility => m_Visible;
 
 	public void Initialize()
 	{
@@ -166,7 +173,12 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 			base.ViewModel.RequestVisit();
 		}));
 		SystemObject = base.ViewModel.PlanetObject?.View;
+		m_Visible = base.ViewModel.PlanetIsVisible.Value;
 		AddDisposable(EventBus.Subscribe(this));
+		AddDisposable(base.ViewModel.PlanetIsVisible.Subscribe(delegate(bool value)
+		{
+			UpdateVisibility(value);
+		}));
 		AddDisposable(base.ViewModel.PlanetIsScanned.Subscribe(delegate
 		{
 			SetPlanetName();
@@ -259,6 +271,11 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 	public void UnfocusButton()
 	{
 		m_PlanetButton.Or(null)?.OnPointerExit();
+	}
+
+	private void UpdateVisibility(bool isVisible)
+	{
+		m_Visible = isVisible;
 	}
 
 	public void SetPlanetName()
@@ -415,6 +432,19 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 				AddDisposable(m_PoiStateIcon.SetHint(string.Concat(UIStrings.Instance.SystemMap.PoIsDetected, ":\n", text)));
 			}
 		}));
+		AddDisposable(base.ViewModel.Colony.Subscribe(delegate(Colony colony)
+		{
+			bool active = colony?.ColonyTraits.Any((KeyValuePair<BlueprintColonyTrait, TimeSpan> t) => t.Key.name == "DLC2_DargonusTithe_Trait") ?? false;
+			m_CrownIcon.gameObject.SetActive(active);
+		}));
+		AddDisposable(base.ViewModel.Colony.Subscribe(delegate
+		{
+			UpdateCrownIcon();
+		}));
+		AddDisposable(base.ViewModel.UpdateColonizeHint.Subscribe(delegate
+		{
+			UpdateCrownIcon();
+		}));
 	}
 
 	private void PingEntity(NetPlayer player, Entity entity)
@@ -444,5 +474,11 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 		{
 			m_TargetPingEntity.DisappearAnimation();
 		}, 7.5f);
+	}
+
+	private void UpdateCrownIcon()
+	{
+		bool active = base.ViewModel.Colony.Value?.ColonyTraits.Any((KeyValuePair<BlueprintColonyTrait, TimeSpan> t) => t.Key.name == "DLC2_DargonusTithe_Trait") ?? false;
+		m_CrownIcon.gameObject.SetActive(active);
 	}
 }

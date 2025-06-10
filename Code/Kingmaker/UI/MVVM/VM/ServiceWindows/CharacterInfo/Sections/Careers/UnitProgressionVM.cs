@@ -113,6 +113,7 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 
 	public override void HandleUICommitChanges()
 	{
+		UpdateState();
 	}
 
 	public override void SetRankEntry(IRankEntrySelectItem rankEntryItem)

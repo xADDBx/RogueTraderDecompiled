@@ -53,19 +53,7 @@ public class UnitPartCompanion : BaseUnitPart, IHashable
 
 	public static BaseUnitEntity FindCompanion(BlueprintUnit bp, CompanionState state)
 	{
-		return Game.Instance.Player.AllCrossSceneUnits.FirstOrDefault(delegate(BaseUnitEntity u)
-		{
-			if (u.Blueprint == bp)
-			{
-				UnitPartCompanion optional = u.GetOptional<UnitPartCompanion>();
-				if (optional == null)
-				{
-					return false;
-				}
-				return optional.State == state;
-			}
-			return false;
-		});
+		return Game.Instance.Player.AllCrossSceneUnits.FirstOrDefault((BaseUnitEntity u) => u.Blueprint == bp && u.GetCompanionState() == state);
 	}
 
 	public void SetSpawner([CanBeNull] CompanionSpawner spawner)

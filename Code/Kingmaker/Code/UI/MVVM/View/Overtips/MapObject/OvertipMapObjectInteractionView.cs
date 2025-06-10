@@ -71,6 +71,9 @@ public abstract class OvertipMapObjectInteractionView : BaseOvertipMapObjectView
 	[SerializeField]
 	private UIInteractionTypeSprites m_CreditsSprites;
 
+	[SerializeField]
+	private UIInteractionTypeSprites m_PetsSprites;
+
 	[Header("Common Block")]
 	[SerializeField]
 	private CanvasGroup m_InnerCanvasGroup;
@@ -207,6 +210,7 @@ public abstract class OvertipMapObjectInteractionView : BaseOvertipMapObjectView
 			UIInteractionType.Move => m_MoveSprites, 
 			UIInteractionType.Info => m_InfoSprites, 
 			UIInteractionType.Credits => m_CreditsSprites, 
+			UIInteractionType.Pets => m_PetsSprites, 
 			_ => throw new ArgumentOutOfRangeException(), 
 		};
 		m_MainImage.sprite = uIInteractionTypeSprites.Main;

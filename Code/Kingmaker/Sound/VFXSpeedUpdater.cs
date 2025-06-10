@@ -64,6 +64,9 @@ public class VFXSpeedUpdater : MonoBehaviour, IVisualWeaponStateChangeHandle, IS
 			WeaponVisualState.InAttack => AttackSpeed, 
 			_ => OutHandSpeed, 
 		};
-		m_VisualEffect.SetFloat(s_SpeedPropertyId, f);
+		if (m_VisualEffect.HasFloat(s_SpeedPropertyId))
+		{
+			m_VisualEffect.SetFloat(s_SpeedPropertyId, f);
+		}
 	}
 }

@@ -140,7 +140,14 @@ public class OvertipUnitNameView : ViewBase<OvertipHitChanceBlockVM>
 
 	private void UpdateVisibility()
 	{
-		m_Animator.PlayAnimation(CheckVisibility);
+		if (base.ViewModel.UnitState.IsEnemy.Value && base.ViewModel.UnitState.IsDeadOrUnconsciousIsDead.Value && !base.ViewModel.UnitState.IsTBM.Value && !base.ViewModel.UnitState.HasLoot.Value)
+		{
+			m_Animator.PlayAnimation(value: false);
+		}
+		else
+		{
+			m_Animator.PlayAnimation(CheckVisibility);
+		}
 	}
 
 	protected override void DestroyViewImplementation()

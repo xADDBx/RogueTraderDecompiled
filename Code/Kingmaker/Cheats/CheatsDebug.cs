@@ -64,6 +64,8 @@ internal class CheatsDebug
 		public CategoryInfo UI_NoAtlases;
 	}
 
+	private static string CurrentUnityProfilingPath;
+
 	private static HashSet<int> s_DeltaHistory;
 
 	[Cheat(Name = "draw_fps", Description = "When false, FPS Counter is disabled")]
@@ -181,6 +183,29 @@ internal class CheatsDebug
 	{
 		AKRESULT aKRESULT = AkSoundEngine.StartProfilerCapture(Path.Combine(ApplicationPaths.DevelopmentDataPath, "WwiseProfilerSession.prof"));
 		PFLog.Audio.Log((aKRESULT == AKRESULT.AK_Success) ? "Wwise Profiler Started" : $"Failed to start Wwise Profiler {aKRESULT}");
+	}
+
+	[Cheat(Name = "unity_profile", Description = "Starts recording unity profiling data to profiler.raw")]
+	public static void UnityProfilerCapture(string name = null)
+	{
+		if (Profiler.enabled)
+		{
+			Profiler.enabled = false;
+			Profiler.logFile = "";
+			Profiler.enableBinaryLog = false;
+			PFLog.SmartConsole.Log("Unity Profiler Finished");
+			return;
+		}
+		if (string.IsNullOrEmpty(name))
+		{
+			name = "profiling";
+		}
+		CurrentUnityProfilingPath = Path.Combine(Application.temporaryCachePath, name) + ".raw";
+		Profiler.logFile = CurrentUnityProfilingPath;
+		Profiler.enableBinaryLog = true;
+		Profiler.enabled = true;
+		Profiler.maxUsedMemory = 268435456;
+		PFLog.SmartConsole.Log("Unity Profiler Started");
 	}
 
 	private static void DebugPointerController(string parameters)
@@ -457,6 +482,21 @@ internal class CheatsDebug
 	public static void ChangeUIPrevPlatform()
 	{
 		Game.ChangeUIPlatform(nextPlatform: false);
+	}
+
+	[Cheat(Name = "set_camera_pos", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SetCameraPosition(string parameters)
+	{
+		if (Utilities.TryGetFormatedPositionAndRotation(parameters, out var position, out var eulerAngles))
+		{
+			CameraRig instance = CameraRig.Instance;
+			instance.ScrollToImmediately(position);
+			instance.RotateToImmediately(eulerAngles.y);
+		}
+		else
+		{
+			PFLog.SmartConsole.Log("Can't parse camera position and rotation value '" + parameters + "'");
+		}
 	}
 
 	private static void UnloadScene(string parameters)

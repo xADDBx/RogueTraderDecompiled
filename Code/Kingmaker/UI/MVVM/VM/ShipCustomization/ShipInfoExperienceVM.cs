@@ -21,7 +21,7 @@ public class ShipInfoExperienceVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly ReactiveProperty<int> AvailablePoints = new ReactiveProperty<int>();
 
-	public readonly ReactiveProperty<int> CurrentLevelBar = new ReactiveProperty<int>();
+	private readonly ReactiveProperty<int> m_CurrentLevelBar = new ReactiveProperty<int>();
 
 	public readonly ReactiveProperty<int> Ranks = new ReactiveProperty<int>();
 
@@ -36,13 +36,17 @@ public class ShipInfoExperienceVM : BaseDisposable, IViewModel, IBaseDisposable,
 		}));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	private void UpdateStats()
 	{
 		StarshipEntity playerShip = Game.Instance.Player.PlayerShip;
 		ShipExperience.Value = playerShip.StarshipProgression.Progression.Experience + " / " + ExperienceTable.GetBonus(playerShip.StarshipProgression.Progression.ExperienceLevel + 1);
 		ShipExperienceBar.Value = (float)playerShip.StarshipProgression.Progression.Experience / (float)ExperienceTable.GetBonus(playerShip.StarshipProgression.Progression.ExperienceLevel + 1);
 		ShipLvl.Value = playerShip.StarshipProgression.Progression.ExperienceLevel;
-		CurrentLevelBar.Value = Math.Abs(ShipLvl.Value - ExperienceTable.Bonuses[ExperienceTable.Bonuses.Length - 1]);
+		m_CurrentLevelBar.Value = Math.Abs(ShipLvl.Value - ExperienceTable.Bonuses[^1]);
 		NextLevelExp.Value = ExperienceTable.GetBonus(playerShip.StarshipProgression.Progression.CharacterLevel + 1);
 		ShipLvl.Value = playerShip.StarshipProgression.Progression.ExperienceLevel;
 		int characterLevel = playerShip.StarshipProgression.Progression.CharacterLevel;
@@ -50,9 +54,5 @@ public class ShipInfoExperienceVM : BaseDisposable, IViewModel, IBaseDisposable,
 		int experienceLevel = playerShip.StarshipProgression.Progression.ExperienceLevel;
 		int value = Math.Max(0, experienceLevel - characterLevel);
 		Ranks.Value = value;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

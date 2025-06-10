@@ -12,6 +12,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -80,9 +81,13 @@ public static class AttackOfOpportunityHelper
 			}
 			foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 			{
-				if (allBaseAwakeUnit is UnitEntity unitEntity && allBaseAwakeUnit.IsInCombat && unitEntity != target && unitEntity.CanMakeAttackOfOpportunity(target) && unitEntity.IsThreat(target, prevNode) && !unitEntity.IsThreat(target, node))
+				if (allBaseAwakeUnit is UnitEntity unitEntity && allBaseAwakeUnit.IsInCombat && unitEntity != target)
 				{
-					yield return new AttackOfOpportunityData(unitEntity, prevNode.Vector3Position);
+					WeaponSlot threatHand = unitEntity.GetThreatHand();
+					if ((threatHand == null || !threatHand.HasShield || threatHand.GetAttackOfOpportunityAbility(unitEntity) == null || !unitEntity.HasMechanicFeature(MechanicsFeatureType.DisableAttacksOfOpportunityForShield)) && unitEntity.CanMakeAttackOfOpportunity(target) && unitEntity.IsThreat(target, prevNode) && !unitEntity.IsThreat(target, node))
+					{
+						yield return new AttackOfOpportunityData(unitEntity, prevNode.Vector3Position);
+					}
 				}
 			}
 			prevNode = node;
@@ -115,7 +120,7 @@ public static class AttackOfOpportunityHelper
 			return false;
 		}
 		WeaponSlot threatHand = attacker.GetThreatHand();
-		if (threatHand?.Weapon.Blueprint.AttackOfOpportunityAbility == null)
+		if (threatHand?.GetAttackOfOpportunityAbility(attacker) == null)
 		{
 			return false;
 		}
@@ -129,12 +134,12 @@ public static class AttackOfOpportunityHelper
 
 	public static bool IsThreat(this BaseUnitEntity attacker, GraphNode targetNode, Vector3 attackerPosition, IntRect targetSize = default(IntRect))
 	{
-		if (!attacker.State.CanAct)
+		if (!attacker.State.CanAct || (bool)attacker.GetMechanicFeature(MechanicsFeatureType.Hidden))
 		{
 			return false;
 		}
 		WeaponSlot threatHand = attacker.GetThreatHand();
-		if (threatHand?.Weapon.Blueprint.AttackOfOpportunityAbility == null)
+		if (threatHand?.GetAttackOfOpportunityAbility(attacker) == null)
 		{
 			return false;
 		}
@@ -150,8 +155,8 @@ public static class AttackOfOpportunityHelper
 	{
 		using (ProfileScope.New("IsAttackOfOpportunityReach"))
 		{
-			int attackRange = hand.Weapon.AttackRange;
-			return attacker.InRangeInCells(targetNode.Vector3Position, target.SizeRect, attackRange) && attacker.Vision.HasLOS(targetNode, attackerNode.Vector3Position + LosCalculations.EyeShift) && LosCalculations.HasMeleeLos(attacker.Position, attacker.SizeRect, targetNode.Vector3Position, target.SizeRect);
+			int attackOfOpportunityThreatingRange = hand.GetAttackOfOpportunityThreatingRange(attacker);
+			return attacker.InRangeInCells(targetNode.Vector3Position, target.SizeRect, attackOfOpportunityThreatingRange) && attacker.Vision.HasLOS(targetNode, attackerNode.Vector3Position + LosCalculations.EyeShift) && LosCalculations.HasMeleeLos(attacker.Position, attacker.SizeRect, targetNode.Vector3Position, target.SizeRect);
 		}
 	}
 
@@ -187,13 +192,13 @@ public static class AttackOfOpportunityHelper
 		{
 			hand = unit.GetThreatHand();
 		}
-		if (hand?.Weapon.Blueprint.AttackOfOpportunityAbility == null)
+		if (hand?.GetAttackOfOpportunityAbility(unit) == null)
 		{
 			return null;
 		}
-		int attackRange = hand.Weapon.AttackRange;
+		int attackOfOpportunityThreatingRange = hand.GetAttackOfOpportunityThreatingRange(unit);
 		HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
-		GridPatterns.AddCircleNodes(hashSet, attackRange);
+		GridPatterns.AddCircleNodes(hashSet, attackOfOpportunityThreatingRange);
 		HashSet<GraphNode> hashSet2 = TempHashSet.Get<GraphNode>();
 		foreach (CustomGridNodeBase occupiedNode in unit.GetOccupiedNodes())
 		{
@@ -203,7 +208,7 @@ public static class AttackOfOpportunityHelper
 			foreach (Vector2Int item in hashSet)
 			{
 				CustomGridNodeBase node = customGridGraph.GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
-				if (node != null && !hashSet2.Contains(node) && (float)CustomGraphHelper.GetWarhammerCellDistance(occupiedNode, node) <= unit.Corpulence + (float)attackRange && occupiedNode.HasMeleeLos(node))
+				if (node != null && !hashSet2.Contains(node) && (float)CustomGraphHelper.GetWarhammerCellDistance(occupiedNode, node) <= unit.Corpulence + (float)attackOfOpportunityThreatingRange && occupiedNode.HasMeleeLos(node))
 				{
 					hashSet2.Add(node);
 				}
@@ -220,5 +225,33 @@ public static class AttackOfOpportunityHelper
 			return UnitAttackOfOpportunity.AllActive.HasItem(CheckIsWaitingForIncomingAoo);
 		}
 		return false;
+	}
+
+	public static BlueprintAbility GetAttackOfOpportunityAbility(this WeaponSlot slot, BaseUnitEntity unit)
+	{
+		BlueprintAbility blueprintAbility = slot.AttackOfOpportunityAbility;
+		if (blueprintAbility == null)
+		{
+			UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
+			if (optional != null && optional.EnableAndPrioritizeRangedAttack)
+			{
+				blueprintAbility = slot.MaybeWeapon?.Blueprint.WeaponAbilities.Ability1.Ability;
+			}
+		}
+		return blueprintAbility;
+	}
+
+	public static int GetAttackOfOpportunityThreatingRange(this WeaponSlot slot, BaseUnitEntity unit)
+	{
+		int result = slot.AttackRange;
+		if (slot.IsRanged)
+		{
+			UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
+			if (optional != null && optional.EnableAndPrioritizeRangedAttack)
+			{
+				result = 1;
+			}
+		}
+		return result;
 	}
 }

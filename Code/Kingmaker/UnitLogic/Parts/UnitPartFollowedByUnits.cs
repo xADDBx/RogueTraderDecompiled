@@ -1,14 +1,21 @@
 using System.Collections.Generic;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class UnitPartFollowedByUnits : BaseUnitPart, IHashable
+public class UnitPartFollowedByUnits : BaseUnitPart, IUnitCommandStartHandler<EntitySubscriber>, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitCommandStartHandler, EntitySubscriber>, IHashable
 {
 	public readonly HashSet<AbstractUnitEntity> Followers = new HashSet<AbstractUnitEntity>();
+
+	public readonly HashSet<AbstractUnitEntity> IndependentFollowers = new HashSet<AbstractUnitEntity>();
 
 	public readonly Dictionary<AbstractUnitEntity, FollowerAction> FollowerDesiredActions = new Dictionary<AbstractUnitEntity, FollowerAction>();
 
@@ -33,9 +40,27 @@ public class UnitPartFollowedByUnits : BaseUnitPart, IHashable
 	{
 		foreach (AbstractUnitEntity follower in Followers)
 		{
-			if (!follower.IsSleeping && !follower.LifeState.IsDead)
+			if (!follower.IsSleeping && !follower.LifeState.IsDeadOrUnconscious)
 			{
 				yield return follower;
+			}
+		}
+		foreach (AbstractUnitEntity independentFollower in IndependentFollowers)
+		{
+			if (!independentFollower.LifeState.IsDeadOrUnconscious)
+			{
+				yield return independentFollower;
+			}
+		}
+	}
+
+	public IEnumerable<AbstractUnitEntity> GetIndependentActiveFollowers()
+	{
+		foreach (AbstractUnitEntity independentFollower in IndependentFollowers)
+		{
+			if (!independentFollower.IsSleeping && !independentFollower.LifeState.IsDeadOrUnconscious)
+			{
+				yield return independentFollower;
 			}
 		}
 	}
@@ -46,11 +71,27 @@ public class UnitPartFollowedByUnits : BaseUnitPart, IHashable
 		ForceRefresh = true;
 	}
 
+	public void AddIndependentFollower(AbstractUnitEntity follower)
+	{
+		IndependentFollowers.Add(follower);
+		ForceRefresh = true;
+	}
+
 	public void RemoveFollower(AbstractUnitEntity follower)
 	{
 		Followers.Remove(follower);
 		FollowerDesiredActions.Remove(follower);
-		if (Followers.Count < 1)
+		if (Followers.Count < 1 && IndependentFollowers.Count < 1)
+		{
+			base.Owner.Remove<UnitPartFollowedByUnits>();
+		}
+	}
+
+	public void RemoveIndependentFollower(AbstractUnitEntity follower)
+	{
+		IndependentFollowers.Remove(follower);
+		FollowerDesiredActions.Remove(follower);
+		if (Followers.Count < 1 && IndependentFollowers.Count < 1)
 		{
 			base.Owner.Remove<UnitPartFollowedByUnits>();
 		}
@@ -66,9 +107,18 @@ public class UnitPartFollowedByUnits : BaseUnitPart, IHashable
 	public void Cleanup()
 	{
 		Followers.RemoveWhere((AbstractUnitEntity u) => u?.GetOptional<UnitPartFollowUnit>() == null);
-		if (Followers.Count < 1)
+		IndependentFollowers.RemoveWhere((AbstractUnitEntity u) => u?.GetOptional<UnitPartFollowUnit>() == null);
+		if (Followers.Count < 1 && IndependentFollowers.Count < 1)
 		{
 			base.Owner.Remove<UnitPartFollowedByUnits>();
+		}
+	}
+
+	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
+	{
+		if (command.IsMoveUnit)
+		{
+			ForceRefresh = true;
 		}
 	}
 

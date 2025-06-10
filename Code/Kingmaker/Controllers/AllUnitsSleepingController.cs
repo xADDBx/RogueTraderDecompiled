@@ -20,6 +20,5 @@ public class AllUnitsSleepingController : IControllerTick, IController
 				item.IsSleeping = true;
 			}
 		}
-		Game.Instance.ReadyForCombatUnitGroups.Clear();
 	}
 }

@@ -13,9 +13,10 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.QA.Analytics;
-using Kingmaker.QA.Arbiter;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Arbiter.GameCore;
+using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Overlays;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.Utility.BuildModeUtils;
@@ -212,10 +213,9 @@ public class Runner : MonoBehaviour
 			LoadingProcess.Instance.StopAll();
 			return;
 		}
-		if (Arbiter.IsRunning)
+		if (ArbiterService.Instance.IsRunning)
 		{
-			ArbiterClientIntegration.HandleFatalError(ex);
-			Game.Instance.ResetToMainMenu();
+			ArbiterIntegration.HandleFatalError(ex);
 			return;
 		}
 		if (ex is LoadGameException)

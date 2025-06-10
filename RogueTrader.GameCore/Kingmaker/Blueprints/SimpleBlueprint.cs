@@ -85,6 +85,10 @@ public class SimpleBlueprint : IScriptableObjectWithAssetId, ICanBeLogContext
 	{
 	}
 
+	public virtual void Reset()
+	{
+	}
+
 	public int GetInstanceID()
 	{
 		return AssetGuid?.GetHashCode() ?? 0;
@@ -104,18 +108,23 @@ public class SimpleBlueprint : IScriptableObjectWithAssetId, ICanBeLogContext
 	{
 	}
 
+	public void Save()
+	{
+	}
+
 	public virtual void Cleanup()
 	{
 	}
 
-	public void AddToElementsList(Element e)
+	public void AddToElementsList(Element e, int atIndex = -1)
 	{
 		e.Owner = this;
 		if (m_AllElements == null)
 		{
 			m_AllElements = new List<Element>();
 		}
-		m_AllElements.Add(e);
+		atIndex = ((atIndex < 0 || atIndex > m_AllElements.Count) ? m_AllElements.Count : atIndex);
+		m_AllElements.Insert(atIndex, e);
 	}
 
 	public void RemoveFromElementsList(Element element)

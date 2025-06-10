@@ -7,6 +7,7 @@ using Kingmaker.Controllers.Projectiles;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem.Rules;
@@ -32,10 +33,13 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 
 		public Projectile Projectile { get; private set; }
 
-		public Data Setup([NotNull] RulePerformAttack rule, [NotNull] Projectile projectile)
+		public TargetWrapper ClickedTarget { get; private set; }
+
+		public Data Setup([NotNull] RulePerformAttack rule, [NotNull] Projectile projectile, TargetWrapper clickedTarget)
 		{
 			AttackRule = rule;
 			Projectile = projectile;
+			ClickedTarget = clickedTarget;
 			return this;
 		}
 
@@ -55,10 +59,17 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	[JsonProperty]
 	public readonly TargetWrapper ClickedTarget;
 
+	[JsonIgnore]
+	private HashSet<EntityRef<UnitEntity>> m_UnitsBlockingAttack;
+
 	private bool m_PatternConfigured;
 
 	[CanBeNull]
 	private OrientedPatternData m_Pattern;
+
+	public bool RedirectActive;
+
+	public readonly List<MechanicEntity> RedirectTargets = new List<MechanicEntity>();
 
 	private readonly Vector3 m_CastPosition;
 
@@ -66,6 +77,9 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 
 	[JsonIgnore]
 	public bool ExecutionFromPsychicPhenomena;
+
+	[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+	public List<TargetWrapper> AllTargets { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int ActionIndex { get; private set; }
@@ -182,9 +196,9 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	{
 	}
 
-	public static Data GetAbilityDataScope(RulePerformAttack rule, Projectile projectile)
+	public static Data GetAbilityDataScope(RulePerformAttack rule, Projectile projectile, TargetWrapper clickedTarget)
 	{
-		return ContextData<Data>.Request().Setup(rule, projectile);
+		return ContextData<Data>.Request().Setup(rule, projectile, clickedTarget);
 	}
 
 	private void TryConfigurePattern()
@@ -215,6 +229,23 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 				ApproachingEffects = null;
 			}
 		}
+	}
+
+	public void AddUnitBlockingAttack(UnitEntity unit)
+	{
+		if (unit != null)
+		{
+			if (m_UnitsBlockingAttack == null)
+			{
+				m_UnitsBlockingAttack = new HashSet<EntityRef<UnitEntity>>();
+			}
+			m_UnitsBlockingAttack.Add(new EntityRef<UnitEntity>(unit));
+		}
+	}
+
+	public bool IsUnitBlockingAttack(UnitEntity unit)
+	{
+		return m_UnitsBlockingAttack?.Contains(unit) ?? false;
 	}
 
 	public override T TriggerRule<T>(T rule)
@@ -252,25 +283,34 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 		result.Append(ref val3);
 		Hash128 val4 = ClassHasher<TargetWrapper>.GetHash128(ClickedTarget);
 		result.Append(ref val4);
-		int val5 = ActionIndex;
-		result.Append(ref val5);
+		List<TargetWrapper> allTargets = AllTargets;
+		if (allTargets != null)
+		{
+			for (int i = 0; i < allTargets.Count; i++)
+			{
+				Hash128 val5 = ClassHasher<TargetWrapper>.GetHash128(allTargets[i]);
+				result.Append(ref val5);
+			}
+		}
+		int val6 = ActionIndex;
+		result.Append(ref val6);
 		if (DelayBetweenActions.HasValue)
 		{
-			TimeSpan val6 = DelayBetweenActions.Value;
-			result.Append(ref val6);
+			TimeSpan val7 = DelayBetweenActions.Value;
+			result.Append(ref val7);
 		}
-		TimeSpan val7 = CastTime;
-		result.Append(ref val7);
-		AttackHitPolicyType val8 = HitPolicy;
+		TimeSpan val8 = CastTime;
 		result.Append(ref val8);
-		DamagePolicyType val9 = DamagePolicy;
+		AttackHitPolicyType val9 = HitPolicy;
 		result.Append(ref val9);
-		bool val10 = KillTarget;
+		DamagePolicyType val10 = DamagePolicy;
 		result.Append(ref val10);
-		bool val11 = DisableLog;
+		bool val11 = KillTarget;
 		result.Append(ref val11);
-		bool val12 = IsForced;
+		bool val12 = DisableLog;
 		result.Append(ref val12);
+		bool val13 = IsForced;
+		result.Append(ref val13);
 		return result;
 	}
 }

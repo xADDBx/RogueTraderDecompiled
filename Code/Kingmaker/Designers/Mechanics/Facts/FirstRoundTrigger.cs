@@ -38,7 +38,7 @@ public class FirstRoundTrigger : UnitFactComponentDelegate, ITurnStartHandler, I
 
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
-		if (!isTurnBased)
+		if (base.Owner.IsPreview || !isTurnBased)
 		{
 			return;
 		}

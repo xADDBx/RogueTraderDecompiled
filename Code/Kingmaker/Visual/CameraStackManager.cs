@@ -40,6 +40,26 @@ public class CameraStackManager
 		}
 	}
 
+	public class CameraStackStateChangeScope : IDisposable
+	{
+		public readonly CameraStackState State;
+
+		private CameraStackManager m_Manager;
+
+		public CameraStackStateChangeScope(CameraStackManager manager, CameraStackState tempState)
+		{
+			State = tempState;
+			m_Manager = manager;
+			manager.StateAdd(this);
+		}
+
+		public void Dispose()
+		{
+			m_Manager?.StateRemove(this);
+			m_Manager = null;
+		}
+	}
+
 	private sealed class CameraInstance : IComparable<CameraInstance>
 	{
 		[CanBeNull]
@@ -116,22 +136,18 @@ public class CameraStackManager
 
 	private readonly List<CameraRecord> m_StackCameraRecords = new List<CameraRecord>();
 
-	private CameraStackState m_State;
+	private readonly List<CameraStackStateChangeScope> m_StateStack = new List<CameraStackStateChangeScope>();
 
 	public CameraStackState State
 	{
 		get
 		{
-			return m_State;
-		}
-		set
-		{
-			if (m_State != value)
+			if (m_StateStack.Count <= 0)
 			{
-				m_State = value;
-				LogCameraStackStateChanged(value);
-				UpdateStack();
+				return CameraStackState.Full;
 			}
+			List<CameraStackStateChangeScope> stateStack = m_StateStack;
+			return stateStack[stateStack.Count - 1].State;
 		}
 	}
 
@@ -139,6 +155,36 @@ public class CameraStackManager
 	public Camera ActiveMainCamera => GetCamera(CameraStackType.Main);
 
 	public event EventHandler StackChanged;
+
+	public CameraStackStateChangeScope SetTempState(CameraStackState state)
+	{
+		return new CameraStackStateChangeScope(this, state);
+	}
+
+	private void StateAdd(CameraStackStateChangeScope scope)
+	{
+		CameraStackState state = State;
+		m_StateStack.Add(scope);
+		if (state != scope.State)
+		{
+			LogCameraStackStateChanged(scope.State);
+			UpdateStack();
+		}
+	}
+
+	private void StateRemove(CameraStackStateChangeScope scope)
+	{
+		CameraStackState state = State;
+		if (m_StateStack.Remove(scope))
+		{
+			CameraStackState state2 = State;
+			if (state != state2)
+			{
+				LogCameraStackStateChanged(state2);
+				UpdateStack();
+			}
+		}
+	}
 
 	[CanBeNull]
 	public Camera GetMain()
@@ -277,7 +323,7 @@ public class CameraStackManager
 
 	private CameraStackType GetCameraStackTypeFilter()
 	{
-		return m_State switch
+		return State switch
 		{
 			CameraStackState.Full => CameraStackType.Background | CameraStackType.Main | CameraStackType.Ui, 
 			CameraStackState.UiOnly => CameraStackType.Ui, 

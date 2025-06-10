@@ -33,7 +33,7 @@ public class AbilityEffectRunAction : AbilityApplyEffect
 				PFLog.Default.Error(context.AbilityBlueprint, "Can't roll SavingThrow because target is not an unit");
 				return;
 			}
-			rule = context.TriggerRule(CreateSavingThrow(target.Entity, context, persistentSpell: false));
+			rule = context.TriggerRule(CreateSavingThrow(target.Entity, context));
 		}
 		using (ContextData<SavingThrowData>.Request().Setup(rule))
 		{
@@ -41,13 +41,11 @@ public class AbilityEffectRunAction : AbilityApplyEffect
 		}
 	}
 
-	private RulePerformSavingThrow CreateSavingThrow(MechanicEntity unit, MechanicsContext context, bool persistentSpell)
+	private RulePerformSavingThrow CreateSavingThrow(MechanicEntity unit, MechanicsContext context)
 	{
 		return new RulePerformSavingThrow(unit, SavingThrowType, 0)
 		{
-			Reason = context,
-			Buff = ContextActionSavingThrow.FindApplyBuffAction(Actions)?.Buff,
-			PersistentSpell = persistentSpell
+			Reason = context
 		};
 	}
 

@@ -78,6 +78,15 @@ public class DestructibleEntity : MapObjectEntity, PartStatsContainer.IOwner, IE
 		}
 	}
 
+	public override bool CanBeTurnedOn
+	{
+		get
+		{
+			BaseUnitEntity unit;
+			return !this.GetOccupiedNodes().Any((CustomGridNodeBase node) => node.TryGetUnit(out unit));
+		}
+	}
+
 	public DestructibleEntity(DestructibleEntityView view)
 		: base(view.UniqueId, view.IsInGameBySettings, view.Blueprint)
 	{

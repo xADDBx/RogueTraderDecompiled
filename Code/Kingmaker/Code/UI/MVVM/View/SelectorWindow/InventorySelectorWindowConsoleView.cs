@@ -6,6 +6,7 @@ using Kingmaker.Localization;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
 using UniRx;
 using UnityEngine;
@@ -36,10 +37,12 @@ public class InventorySelectorWindowConsoleView : SelectorWindowConsoleView<Equi
 		{
 			Unequip();
 		}, 11, m_SelectedEquipped), UIStrings.Instance.ContextMenu.TakeOff));
+		UISounds.Instance.Sounds.Inventory.InventorySelectorWindowShow.Play();
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+		UISounds.Instance.Sounds.Inventory.InventorySelectorWindowHide.Play();
 		base.DestroyViewImplementation();
 		if (m_UnequippedItemTooltipCo != null)
 		{

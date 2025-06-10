@@ -25,7 +25,7 @@ public class InvisibleKittenHolderPart : ViewBasedPart, IDamageHandler, ISubscri
 		{
 			EntityViewBase entityViewBase = (EntityViewBase)base.View;
 			BlueprintUnit invisibleKittenUnit = BlueprintRootReferenceHelper.GetRoot().InvisibleKittenUnit;
-			BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(invisibleKittenUnit, entityViewBase.ViewTransform.position, entityViewBase.ViewTransform.rotation, base.ConcreteOwner.HoldingState);
+			BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(invisibleKittenUnit, entityViewBase.ViewTransform.position, entityViewBase.ViewTransform.rotation, base.ConcreteOwner?.HoldingState);
 			baseUnitEntity.IsInGame = false;
 			m_Kitten = baseUnitEntity.FromBaseUnitEntity();
 			return baseUnitEntity;

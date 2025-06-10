@@ -18,6 +18,8 @@ public static class UIConsts
 
 	public const string DebuffedStatFormat = "<color=#B40431FF>{0}</color>";
 
+	public const int GroupMaxCountWithPets = 12;
+
 	public const int GroupMaxCount = 6;
 
 	public const int GroupMaxNavigatorsCount = 1;

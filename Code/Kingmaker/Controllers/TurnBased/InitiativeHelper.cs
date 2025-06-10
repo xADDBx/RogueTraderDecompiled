@@ -6,7 +6,9 @@ using Kingmaker.Controllers.Combat;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility.DotNetExtensions;
@@ -256,29 +258,25 @@ public static class InitiativeHelper
 			}
 			if (multiInitiative.ByEnemiesCount)
 			{
-				multiInitiative.AdditionalTurnsCount = Game.Instance.TurnController.AllUnits.Count((MechanicEntity e) => !e.IsDeadOrUnconscious && e.IsInCombat && entity.IsEnemy(e)) - 1;
+				multiInitiative.AdditionalTurnsCount = Game.Instance.TurnController.AllUnits.Count(IsActiveEnemy) - 1;
 			}
-			IEnumerable<InitiativePlaceholderEntity> enumerable = multiInitiative.EnsurePlaceholders();
-			multiInitiative.Placeholders = enumerable.ToList();
+			IEnumerable<InitiativePlaceholderEntity> source = multiInitiative.EnsurePlaceholders();
+			multiInitiative.Placeholders = source.ToList();
 			int num = multiInitiative.AdditionalTurnsCount + 1;
-			MechanicEntity[] array = (from unit in Game.Instance.TurnController.AllUnits
-				where unit.IsInCombat && unit.IsEnemy(entity)
-				select unit into u
+			MechanicEntity[] array = (from u in Game.Instance.TurnController.AllUnits.Where(IsActiveEnemy)
 				orderby u.Initiative.Value descending
 				select u).ToArray();
 			float[] array2 = array.Select((MechanicEntity unit) => unit.Initiative.Value).ToArray();
 			float num2 = (float)array2.Count() / (float)num;
 			int num3 = 0;
-			int num4;
-			foreach (InitiativePlaceholderEntity item in enumerable)
+			foreach (MechanicEntity item in source.Prepend(entity))
 			{
-				num4 = Mathf.FloorToInt(num2 * (float)num3);
+				int num4 = Mathf.FloorToInt(num2 * (float)num3);
 				if (num4 >= array2.Count() - 1)
 				{
 					if (multiInitiative.ByEnemiesCount)
 					{
-						item.CorrespondingEnemy = array.Last();
-						item.Initiative.LastTurn = item.CorrespondingEnemy.Initiative.LastTurn;
+						SetCorrespondingEnemy(item, array.Last());
 					}
 					OverrideInitiative(item, array2.Last() / 2f);
 				}
@@ -286,31 +284,19 @@ public static class InitiativeHelper
 				{
 					if (multiInitiative.ByEnemiesCount)
 					{
-						item.CorrespondingEnemy = array[num4];
-						item.Initiative.LastTurn = item.CorrespondingEnemy.Initiative.LastTurn;
+						SetCorrespondingEnemy(item, array[num4]);
 					}
 					OverrideInitiative(item, (array2[num4] + array2[num4 + 1]) / 2f);
 				}
 				num3++;
 			}
-			num4 = Mathf.FloorToInt(num2 * (float)num3);
-			if (num4 >= array2.Count() - 1)
+			bool IsActiveEnemy(MechanicEntity e)
 			{
-				if (multiInitiative.ByEnemiesCount)
+				if (!e.IsDeadOrUnconscious && e.IsInCombat && entity.IsEnemy(e))
 				{
-					multiInitiative.CorrespondingEnemy = array.Last();
-					entity.Initiative.LastTurn = multiInitiative.CorrespondingEnemy.Initiative.LastTurn;
+					return !e.HasMechanicFeature(MechanicsFeatureType.HasNoStandardTurn);
 				}
-				OverrideInitiative(entity, array2.Last() / 2f);
-			}
-			else
-			{
-				if (multiInitiative.ByEnemiesCount)
-				{
-					multiInitiative.CorrespondingEnemy = array[num4];
-					entity.Initiative.LastTurn = multiInitiative.CorrespondingEnemy.Initiative.LastTurn;
-				}
-				OverrideInitiative(entity, (array2[num4] + array2[num4 + 1]) / 2f);
+				return false;
 			}
 			void OverrideInitiative(MechanicEntity e, float value)
 			{
@@ -318,6 +304,19 @@ public static class InitiativeHelper
 				e.Initiative.Value = value;
 				e.Initiative.Order = CalculateOrder(e);
 			}
+		}
+		static void SetCorrespondingEnemy(MechanicEntity e, MechanicEntity enemy)
+		{
+			if (e is InitiativePlaceholderEntity initiativePlaceholderEntity)
+			{
+				initiativePlaceholderEntity.CorrespondingEnemy = enemy;
+			}
+			else
+			{
+				e.GetMultiInitiative().CorrespondingEnemy = enemy;
+			}
+			e.Initiative.LastTurn = enemy.Initiative.LastTurn;
+			e.Initiative.WasPreparedForRound = enemy.Initiative.WasPreparedForRound;
 		}
 	}
 

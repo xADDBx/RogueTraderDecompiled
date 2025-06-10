@@ -2,6 +2,8 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.Enums;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
 using Kingmaker.View.Mechanics;
@@ -18,7 +20,41 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	private WeaponParticlesSnapMap m_FxSnapMap;
 
+	public BlueprintAbility AttackOfOpportunityAbility => MaybeWeapon?.Blueprint.AttackOfOpportunityAbility;
+
+	public BlueprintAbilityFXSettings AttackOfOpportunityAbilityFXSettings => MaybeWeapon?.Blueprint.AttackOfOpportunityAbilityFXSettings;
+
 	public bool HasWeapon => MaybeWeapon != null;
+
+	public virtual bool HasShield => false;
+
+	public bool IsMelee
+	{
+		get
+		{
+			if (MaybeWeapon != null)
+			{
+				return MaybeWeapon.Blueprint.IsMelee;
+			}
+			return false;
+		}
+	}
+
+	public bool IsRanged
+	{
+		get
+		{
+			if (MaybeWeapon != null)
+			{
+				return MaybeWeapon.Blueprint.IsRanged;
+			}
+			return false;
+		}
+	}
+
+	public int AttackRange => Weapon.AttackRange;
+
+	public int AttackOptimalRange => Weapon.AttackOptimalRange;
 
 	[NotNull]
 	public ItemEntityWeapon Weapon
@@ -45,6 +81,9 @@ public class WeaponSlot : ItemSlot, IHashable
 			return base.MaybeItem as ItemEntityWeapon;
 		}
 	}
+
+	[CanBeNull]
+	public virtual ItemEntityShield MaybeShield => null;
 
 	public WeaponParticlesSnapMap FxSnapMap
 	{
@@ -76,7 +115,12 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public virtual WeaponAnimationStyle GetWeaponStyle(bool isDollRoom = false)
 	{
-		return MaybeWeapon?.GetAnimationStyle(isDollRoom) ?? WeaponAnimationStyle.None;
+		return MaybeWeapon?.GetAnimationStyle(isDollRoom, base.Owner) ?? WeaponAnimationStyle.None;
+	}
+
+	public WeaponClassification GetWeaponClassification()
+	{
+		return MaybeWeapon?.Blueprint.Classification ?? WeaponClassification.None;
 	}
 
 	public void FindSnapMapForNaturalWeapon()

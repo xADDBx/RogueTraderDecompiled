@@ -1,10 +1,14 @@
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.Enums;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
@@ -76,19 +80,34 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 	{
 		get
 		{
-			if (base.Owner != null && base.Owner is UnitEntity unitEntity && unitEntity.GetOptional<UnitPartMechadendrites>() != null)
+			if (base.Owner is UnitEntity unitEntity)
 			{
-				return false;
+				if (unitEntity.GetOptional<UnitPartMechadendrites>() != null)
+				{
+					return false;
+				}
+				if ((bool)unitEntity.Features.CarryShotgunInOneHand && base.Blueprint.Classification == WeaponClassification.Shotgun)
+				{
+					return false;
+				}
 			}
 			return base.Blueprint.IsTwoHanded;
 		}
 	}
 
-	public WeaponAnimationStyle GetAnimationStyle(bool forDollRoom = false)
+	public WeaponAnimationStyle GetAnimationStyle(bool forDollRoom = false, MechanicEntity owner = null)
 	{
 		if (IsShield)
 		{
 			return WeaponAnimationStyle.Shield;
+		}
+		if (owner == null)
+		{
+			owner = base.Owner;
+		}
+		if (owner != null && base.Blueprint.Classification == WeaponClassification.Shotgun && (bool)owner.Features.CarryShotgunInOneHand)
+		{
+			return WeaponAnimationStyle.ShotgunOneHanded;
 		}
 		return base.Blueprint.VisualParameters.AnimStyle;
 	}
@@ -108,31 +127,62 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 	protected override void OnReapplyFactsForWielder()
 	{
 		base.OnReapplyFactsForWielder();
-		ReapplyAbilities();
+		ReapplyAbilitiesImpl();
 	}
 
-	private void ReapplyAbilities()
+	public void ReapplyAbilities()
+	{
+		ReapplyAbilitiesImpl();
+	}
+
+	private void ReapplyAbilitiesImpl()
 	{
 		base.Abilities.ForEach(delegate(Ability v)
 		{
 			base.Wielder.Facts.Remove(v);
 		});
 		base.Abilities.Clear();
-		MechanicEntity wielderUnit = base.Wielder;
-		if (base.Blueprint == null || wielderUnit == null)
+		MechanicEntity wielder = base.Wielder;
+		if (base.Blueprint != null && wielder != null)
 		{
-			return;
+			base.Abilities.AddRange((from i in (from i in base.Blueprint.WeaponAbilities.AllWithIndex
+					where i.Slot.Ability != null
+					select ((WeaponAbility Slot, int SlotIndex, EntityFact Source))(Slot: i.Slot, SlotIndex: i.Index, Source: null)).Concat(GetExtraAbilitiesFromWielder())
+				orderby i.Slot.Type == WeaponAbilityType.Reload
+				select AddAbility(i.Slot, i.SlotIndex, i.Source)).NotNull());
 		}
-		base.Abilities.AddRange(base.Blueprint.WeaponAbilities.AllWithIndex.Where(((int Index, WeaponAbility Slot) i) => i.Slot.Ability != null).Select(delegate((int Index, WeaponAbility Slot) i)
+	}
+
+	private IEnumerable<(WeaponAbility Slot, int SlotIndex, EntityFact Source)> GetExtraAbilitiesFromWielder()
+	{
+		foreach (EntityFact fact in base.Wielder.Facts.GetAll<EntityFact>())
 		{
-			Ability ability = base.Wielder.Facts.Add(new Ability(i.Slot.Ability, wielderUnit));
-			if (ability != null)
+			AddAbilitiesToCurrentWeapon addAbilities = fact.GetComponent<AddAbilitiesToCurrentWeapon>();
+			if (addAbilities?.ShouldAddAbilities(this) ?? false)
 			{
-				ability.Data.ItemSlotIndex = i.Index;
+				for (int abilityIndex = 0; abilityIndex < addAbilities.WeaponAbilities.Count; abilityIndex++)
+				{
+					WeaponAbility item = addAbilities.WeaponAbilities[abilityIndex];
+					yield return (Slot: item, SlotIndex: abilityIndex, Source: fact);
+				}
 			}
-			ability?.AddSource(this);
-			return ability;
-		}).NotNull());
+		}
+	}
+
+	private Ability AddAbility(WeaponAbility weaponAbility, int itemSlotIndex, EntityFact itemSlotSource)
+	{
+		Ability ability = base.Wielder.Facts.Add(new Ability(weaponAbility.Ability, base.Wielder));
+		if (ability == null)
+		{
+			return null;
+		}
+		ability.Data.ItemSlotSource = itemSlotSource;
+		ability.Data.ItemSlotIndex = itemSlotIndex;
+		ItemEntity itemEntity = (ItemEntity)(((object)Shield) ?? ((object)this));
+		ability.AddSource(itemEntity);
+		itemEntity.Abilities.RemoveAll((Ability o) => o.Blueprint == ability.Blueprint);
+		itemEntity.Abilities.Add(ability);
+		return ability;
 	}
 
 	private void EnsureAbilitiesCoherency()
@@ -147,7 +197,7 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 		{
 			int index = item2.Index;
 			WeaponAbility item = item2.Slot;
-			Ability ability = base.Abilities.FirstItem((Ability i) => i != null && i.Data.ItemSlotIndex == index);
+			Ability ability = base.Abilities.FirstItem((Ability i) => i != null && i.Data.ItemSlotIndex == index && i.Data.ItemSlotSource == null);
 			flag = (ability == null && !item.IsNone && item.Ability != null) || (ability != null && (item.IsNone || item.Ability == null));
 			if (flag)
 			{
@@ -160,7 +210,7 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 		}
 		if (flag)
 		{
-			ReapplyAbilities();
+			ReapplyAbilitiesImpl();
 		}
 	}
 

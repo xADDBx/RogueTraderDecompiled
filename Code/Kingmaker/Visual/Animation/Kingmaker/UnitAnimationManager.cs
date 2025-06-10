@@ -124,7 +124,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 
 	public bool PreviousInCombat { get; set; }
 
-	public float ForceMoveDistance { get; set; }
+	public bool IsForceMove { get; set; }
 
 	public float[] ForceMoveTime { get; set; }
 
@@ -193,6 +193,8 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 
 	private bool IsBusyByLoopAnimation => base.CurrentAction.Action is WarhammerBuffLoopAction;
 
+	private bool IsBusyByForceMoveAnimation => base.CurrentAction.Action is UnitAnimationActionForceMove;
+
 	public bool InCover
 	{
 		get
@@ -239,9 +241,9 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 	{
 		get
 		{
-			if (IsInCombat && View is UnitEntityView && InCutsceneCoverAvailable && View != null && View.Data?.Commands.Current is UnitUseAbility unitUseAbility && unitUseAbility.Target != unitUseAbility.Executor)
+			if (IsInCombat && CoverType == LosCalculations.CoverType.Full && View is UnitEntityView && InCutsceneCoverAvailable && View != null && View.Data?.Commands.Current is UnitUseAbility unitUseAbility && unitUseAbility.Target != unitUseAbility.Executor)
 			{
-				return CoverType == LosCalculations.CoverType.Full;
+				return unitUseAbility.Ability.Blueprint.ShouldTurnToTarget;
 			}
 			return false;
 		}
@@ -336,18 +338,22 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		}
 	}
 
-	public bool IsPreventingMovement => m_ExclusiveState switch
+	public bool IsPreventingMovement
 	{
-		ExclusiveStateType.None => false, 
-		ExclusiveStateType.Stun => false, 
-		ExclusiveStateType.StandUpInCover => false, 
-		ExclusiveStateType.CoverSideStep => false, 
-		ExclusiveStateType.TraverseNodeLink => false, 
-		ExclusiveStateType.JumpAsideDodge => false, 
-		ExclusiveStateType.ForceMove => false, 
-		ExclusiveStateType.Prone => false, 
-		_ => true, 
-	};
+		get
+		{
+			if (!ExclusiveStateIsPreventingMovement(m_ExclusiveState))
+			{
+				UnitAnimationActionHandle buffLoopAction = BuffLoopAction;
+				if (buffLoopAction != null && !buffLoopAction.IsReleased && buffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction)
+				{
+					return warhammerBuffLoopAction.IsExiting(BuffLoopAction);
+				}
+				return false;
+			}
+			return true;
+		}
+	}
 
 	public bool IsPreventingRotation
 	{
@@ -411,7 +417,23 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		}
 	}
 
-	public void AtachToView(AbstractUnitEntityView view, BlueprintRace animationRace)
+	private static bool ExclusiveStateIsPreventingMovement(ExclusiveStateType exclusiveState)
+	{
+		return exclusiveState switch
+		{
+			ExclusiveStateType.None => false, 
+			ExclusiveStateType.Stun => false, 
+			ExclusiveStateType.StandUpInCover => false, 
+			ExclusiveStateType.CoverSideStep => false, 
+			ExclusiveStateType.TraverseNodeLink => false, 
+			ExclusiveStateType.JumpAsideDodge => false, 
+			ExclusiveStateType.ForceMove => false, 
+			ExclusiveStateType.Prone => false, 
+			_ => true, 
+		};
+	}
+
+	public void AttachToView(AbstractUnitEntityView view, BlueprintRace animationRace)
 	{
 		View = view;
 		AnimationRace = animationRace;
@@ -423,13 +445,10 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 				CustomIdleWrappers = View.Blueprint.GetComponent<CustomIdleAnimationBlueprintComponent>()?.IdleClips;
 			}
 		}
-		m_MicroIdle = (UnitAnimationActionMicroIdle)GetAction(UnitAnimationType.MicroIdle);
-		m_VariantIdle = (UnitAnimationActionVariantIdle)GetAction(UnitAnimationType.VariantIdle);
-		m_RandomIdleTracker = ((m_VariantIdle != null) ? m_VariantIdle.RetriggerProbability.Track(base.StatefulRandom) : null);
 		PreviousInCombat = IsInCombat;
 	}
 
-	public void ChangeLocoMotion(WarhammerUnitAnimationActionLocoMotion action)
+	public void ChangeLocoMotion(UnitAnimationAction action)
 	{
 		m_LocoMotionHandle = (UnitAnimationActionHandle)CreateHandle(action);
 		if (m_LocoMotionHandle != null)
@@ -503,7 +522,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 			SetExclusiveAnimation(ExclusiveStateType.Prone);
 			return;
 		}
-		if (ForceMoveDistance > 0f)
+		if (IsForceMove)
 		{
 			SetExclusiveAnimation(ExclusiveStateType.ForceMove);
 			return;
@@ -764,7 +783,7 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		}
 	}
 
-	protected override void OnAnimationSetChanged()
+	public override void OnAnimationSetChanged()
 	{
 		base.OnAnimationSetChanged();
 		m_MicroIdle = (UnitAnimationActionMicroIdle)GetAction(UnitAnimationType.MicroIdle);
@@ -862,9 +881,9 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 		UnitAnimationType type = unitAnimationAction.Type;
 		if (type == UnitAnimationType.Dodge || type == UnitAnimationType.JumpAsideDodge || type == UnitAnimationType.Hit)
 		{
-			if (!IsWaitingForIncomingAttackOfOpportunity && !IsProne && !IsGoingProne)
+			if (!IsWaitingForIncomingAttackOfOpportunity && !IsProne && !IsGoingProne && !IsBusyByLoopAnimation)
 			{
-				return !IsBusyByLoopAnimation;
+				return !IsBusyByForceMoveAnimation;
 			}
 			return false;
 		}

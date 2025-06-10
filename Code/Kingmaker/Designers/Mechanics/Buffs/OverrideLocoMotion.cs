@@ -1,7 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.Visual.Animation.Kingmaker;
-using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -10,7 +9,7 @@ namespace Kingmaker.Designers.Mechanics.Buffs;
 [TypeId("151c0db8bb630d045ade4bbc9932b176")]
 public class OverrideLocoMotion : UnitBuffComponentDelegate, IHashable
 {
-	public WarhammerUnitAnimationActionLocoMotion LocoMotion;
+	public UnitAnimationAction LocoMotion;
 
 	protected override void OnActivate()
 	{

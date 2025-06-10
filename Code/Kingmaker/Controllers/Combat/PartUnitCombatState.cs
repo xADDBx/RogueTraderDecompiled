@@ -135,6 +135,9 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	[JsonProperty]
 	public Vector3? LastAttackPosition { get; private set; }
 
+	[JsonProperty]
+	public bool WasFreezeOutsideCamera { get; private set; }
+
 	public bool RecheckEquipmentRestrictionsAfterCombatEnd { get; set; }
 
 	public float? OverrideInitiative
@@ -213,13 +216,25 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		}
 	}
 
+	public bool IsEngagedExcludeOffEngageForTarget
+	{
+		get
+		{
+			if (m_InCombat)
+			{
+				return base.Owner.GetEngagedByUnits().Any();
+			}
+			return false;
+		}
+	}
+
 	public bool IsEngagedInRealOrVirtualPosition
 	{
 		get
 		{
 			if (Game.Instance.VirtualPositionController == null || !Game.Instance.VirtualPositionController.TryGetVirtualPosition(base.Owner, out var virtualPosition))
 			{
-				return IsEngaged;
+				return IsEngagedExcludeOffEngageForTarget;
 			}
 			if (m_InCombat)
 			{
@@ -235,9 +250,9 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	{
 		get
 		{
-			if (!base.Owner.State.HasCondition(UnitCondition.DisableAttacksOfOpportunity) && !base.Owner.Passive && (AttacksOfOpportunityMadeThisTurnCount < MaxAttacksOfOpportunityPerRound || base.Owner.IsPlayerFaction || base.Owner.Blueprint.DifficultyType >= UnitDifficultyType.Elite) && base.Owner.CanAttack((BaseUnitEntity unit) => unit.GetThreatHand()?.Weapon))
+			if (!base.Owner.State.HasCondition(UnitCondition.DisableAttacksOfOpportunity) && !base.Owner.Passive && (AttacksOfOpportunityMadeThisTurnCount < MaxAttacksOfOpportunityPerRound || base.Owner.IsPlayerFaction || base.Owner.Blueprint.DifficultyType >= UnitDifficultyType.Elite))
 			{
-				return base.Owner.GetThreatHand()?.Weapon.Blueprint.AttackOfOpportunityAbility != null;
+				return base.Owner.CanAttackOfOpportunity();
 			}
 			return false;
 		}
@@ -324,6 +339,8 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 			ReturnOrientation = null;
 		}
 		Surprised = surprised;
+		WasFreezeOutsideCamera = base.Owner.FreezeOutsideCamera;
+		base.Owner.FreezeOutsideCamera = false;
 		CutsceneControlledUnit.UpdateActiveCutscene(base.Owner);
 		EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitCombatHandler>)delegate(IUnitCombatHandler h)
 		{
@@ -377,6 +394,11 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		{
 			h.HandleUnitLeaveCombat(base.Owner);
 		});
+		if (!base.Owner.IsDead)
+		{
+			base.Owner.FreezeOutsideCamera = WasFreezeOutsideCamera;
+		}
+		WasFreezeOutsideCamera = false;
 		PFLog.Default.Log(base.Owner.View, "Unit leave combat: {0}", base.Owner);
 	}
 
@@ -419,6 +441,10 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 				return !starshipNavigationOptional.HasAnotherPlaceToStand;
 			}
 			return true;
+		}
+		if (Game.Instance.TurnController.AllUnits.Any((MechanicEntity u) => u.IsInCombat && u.IsBusy))
+		{
+			return false;
 		}
 		return true;
 	}
@@ -758,6 +784,8 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 			Vector3 val27 = LastAttackPosition.Value;
 			result.Append(ref val27);
 		}
+		bool val28 = WasFreezeOutsideCamera;
+		result.Append(ref val28);
 		return result;
 	}
 }

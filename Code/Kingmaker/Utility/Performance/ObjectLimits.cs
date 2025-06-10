@@ -48,19 +48,17 @@ public static class ObjectLimits
 		}
 	}
 
-	private const int TotalUnitsThreshold = 200;
+	private const int TotalUnitsThreshold = 250;
 
-	private const int NormalUnitsThreshold = 75;
+	private const int NormalUnitsThreshold = 125;
 
-	public static readonly Entry[] Entries = new Entry[13]
+	public static readonly Entry[] Entries = new Entry[11]
 	{
-		("TOTAL UNITS", 200, (Func<int>)(() => State.AllUnits.Count())),
-		("NORMAL UNITS", 75, (Func<int>)GetNormalUnitsCount),
-		("EXTRA UNITS", (Func<int>)GetExtraUnitsThreshold, (Func<int>)GetExtraUnitsCount),
+		("TOTAL UNITS", 250, (Func<int>)(() => State.AllUnits.Count())),
+		("NORMAL UNITS", 125, (Func<int>)GetNormalUnitsCount),
 		("AWAKE UNITS", 45, (Func<int>)(() => State.AllAwakeUnits.Count)),
-		("COMBAT GROUPS", 10, (Func<int>)(() => Game.Instance.ReadyForCombatUnitGroups.Count)),
 		("COMBAT UNITS", 35, (Func<int>)(() => State.AllUnits.Count((AbstractUnitEntity i) => i.IsInCombat))),
-		("MAP OBJECTS", 100, (Func<int>)(() => State.MapObjects.Count((MapObjectEntity i) => !(i is ScriptZoneEntity)))),
+		("MAP OBJECTS", 300, (Func<int>)(() => State.MapObjects.Count((MapObjectEntity i) => !(i is ScriptZoneEntity)))),
 		("SCRIPT ZONES", 50, (Func<int>)(() => State.ScriptZones.Count() + State.AreaEffects.Count())),
 		("AREA EFFECTS", 25, (Func<int>)(() => State.AreaEffects.Count())),
 		("AREA CR", 1000, (Func<int>)(() => Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)),
@@ -84,16 +82,11 @@ public static class ObjectLimits
 
 	private static int GetNormalUnitsCount()
 	{
-		return State.AllUnits.Count((AbstractUnitEntity i) => i is BaseUnitEntity && !i.IsExtra);
+		return State.AllUnits.Count((AbstractUnitEntity i) => i is BaseUnitEntity && !i.IsExtra && !i.FreezeOutsideCamera);
 	}
 
 	private static int GetExtraUnitsCount()
 	{
 		return State.AllUnits.Count((AbstractUnitEntity i) => i is LightweightUnitEntity || i.IsExtra);
-	}
-
-	private static int GetExtraUnitsThreshold()
-	{
-		return 200 - Math.Min(75, GetNormalUnitsCount());
 	}
 }

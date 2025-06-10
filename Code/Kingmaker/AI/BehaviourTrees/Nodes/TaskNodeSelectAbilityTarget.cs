@@ -9,9 +9,12 @@ public class TaskNodeSelectAbilityTarget : TaskNode
 {
 	private readonly CastTimepointType m_CastTimepoint;
 
-	public TaskNodeSelectAbilityTarget(CastTimepointType castTimepoint)
+	private readonly bool m_TryTargetAllEnemies;
+
+	public TaskNodeSelectAbilityTarget(CastTimepointType castTimepoint, bool tryTargetAllEnemies = false)
 	{
 		m_CastTimepoint = castTimepoint;
+		m_TryTargetAllEnemies = tryTargetAllEnemies;
 	}
 
 	protected override Status TickInternal(Blackboard blackboard)
@@ -19,7 +22,12 @@ public class TaskNodeSelectAbilityTarget : TaskNode
 		AILogger.Instance.Log(AILogAbility.SelectAbility(m_CastTimepoint));
 		DecisionContext decisionContext = blackboard.DecisionContext;
 		decisionContext.AbilityTarget = null;
+		decisionContext.TryTargetAllInsteadOfHatedOnly = m_TryTargetAllEnemies;
 		List<AbilityData> sortedAbilityList = decisionContext.GetSortedAbilityList(m_CastTimepoint);
+		if (m_CastTimepoint == CastTimepointType.BeforeMove && (bool)decisionContext.Unit.Brain.TryActionBeforeMove)
+		{
+			sortedAbilityList = decisionContext.GetSortedAbilityList(CastTimepointType.Any);
+		}
 		if (sortedAbilityList != null)
 		{
 			foreach (AbilityData item in sortedAbilityList)
@@ -29,12 +37,14 @@ public class TaskNodeSelectAbilityTarget : TaskNode
 				{
 					decisionContext.Ability = item;
 					decisionContext.AbilityTarget = targetWrapper;
+					decisionContext.TryTargetAllInsteadOfHatedOnly = false;
 					AILogger.Instance.Log(AILogAbility.TargetFound(m_CastTimepoint, item, targetWrapper));
 					return Status.Success;
 				}
 				AILogger.Instance.Log(AILogAbility.TargetNotFound(m_CastTimepoint, item));
 			}
 		}
+		decisionContext.TryTargetAllInsteadOfHatedOnly = false;
 		AILogger.Instance.Log(AILogAbility.AbilityNotSelected(m_CastTimepoint));
 		return Status.Failure;
 	}

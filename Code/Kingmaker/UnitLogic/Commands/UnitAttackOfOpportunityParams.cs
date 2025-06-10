@@ -37,6 +37,9 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 	[CanBeNull]
 	public readonly BlueprintFact Reason;
 
+	[JsonProperty]
+	public readonly bool IsRanged;
+
 	public override int DefaultApproachRadius => 10000;
 
 	protected override bool DefaultFreeAction => true;
@@ -44,9 +47,10 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 	protected override bool DefaultSlowMotionRequired => true;
 
 	[MemoryPackConstructor]
-	private UnitAttackOfOpportunityParams([CanBeNull] BlueprintFact reason)
+	private UnitAttackOfOpportunityParams([CanBeNull] BlueprintFact reason, bool isRanged)
 	{
 		Reason = reason;
+		IsRanged = isRanged;
 	}
 
 	[JsonConstructor]
@@ -55,10 +59,11 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 	{
 	}
 
-	public UnitAttackOfOpportunityParams([NotNull] BaseUnitEntity target, [CanBeNull] BlueprintFact reason)
+	public UnitAttackOfOpportunityParams([NotNull] BaseUnitEntity target, [CanBeNull] BlueprintFact reason, bool isRanged)
 		: base((TargetWrapper)target)
 	{
 		Reason = reason;
+		IsRanged = isRanged;
 	}
 
 	static UnitAttackOfOpportunityParams()
@@ -111,7 +116,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(15, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(16, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -123,6 +128,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 		writer.WritePackable(in value.m_ForcedPath);
 		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired);
 		writer.WriteValue(in value.Reason);
+		writer.WriteUnmanaged(in value.IsRanged);
 	}
 
 	[Preserve]
@@ -148,7 +154,8 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 		bool? value14;
 		bool? value15;
 		BlueprintFact value16;
-		if (memberCount == 15)
+		bool value17;
+		if (memberCount == 16)
 		{
 			if (value == null)
 			{
@@ -159,6 +166,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value12 = reader.ReadPackable<ForcedPath>();
 				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?>(out value13, out value14, out value15);
 				value16 = reader.ReadValue<BlueprintFact>();
+				reader.ReadUnmanaged<bool>(out value17);
 			}
 			else
 			{
@@ -177,6 +185,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Reason;
+				value17 = value.IsRanged;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -192,13 +201,14 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				reader.DangerousReadUnmanaged<bool?>(out value14);
 				reader.DangerousReadUnmanaged<bool?>(out value15);
 				reader.ReadValue(ref value16);
+				reader.ReadUnmanaged<bool>(out value17);
 			}
 		}
 		else
 		{
-			if (memberCount > 15)
+			if (memberCount > 16)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitAttackOfOpportunityParams), 15, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitAttackOfOpportunityParams), 16, memberCount);
 				return;
 			}
 			if (value == null)
@@ -218,6 +228,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value14 = null;
 				value15 = null;
 				value16 = null;
+				value17 = false;
 			}
 			else
 			{
@@ -236,6 +247,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Reason;
+				value17 = value.IsRanged;
 			}
 			if (memberCount != 0)
 			{
@@ -282,7 +294,11 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 																	if (memberCount != 14)
 																	{
 																		reader.ReadValue(ref value16);
-																		_ = 15;
+																		if (memberCount != 15)
+																		{
+																			reader.ReadUnmanaged<bool>(out value17);
+																			_ = 16;
+																		}
 																	}
 																}
 															}
@@ -300,7 +316,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 			}
 			_ = value;
 		}
-		value = new UnitAttackOfOpportunityParams(value16)
+		value = new UnitAttackOfOpportunityParams(value16, value17)
 		{
 			Type = value2,
 			OwnerRef = value3,

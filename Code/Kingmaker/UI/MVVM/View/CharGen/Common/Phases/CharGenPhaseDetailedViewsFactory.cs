@@ -57,6 +57,9 @@ public class CharGenPhaseDetailedViewsFactory : ICharGenPhaseDetailedViewsFactor
 	private CharGenBackgroundBasePhaseDetailedView m_SanctionedPsykerPhaseDetailedView;
 
 	[SerializeField]
+	private CharGenBackgroundBasePhaseDetailedView m_ArbitratorPhaseDetailedView;
+
+	[SerializeField]
 	private CharGenBackgroundBasePhaseDetailedView m_DarkestHourPhaseDetailedView;
 
 	[SerializeField]
@@ -149,12 +152,17 @@ public class CharGenPhaseDetailedViewsFactory : ICharGenPhaseDetailedViewsFactor
 														{
 															if (!(viewModel is CharGenForgeHomeworldChildPhaseVM viewModel15))
 															{
-																if (viewModel is CharGenSanctionedPsykerChildPhaseVM viewModel16)
+																if (!(viewModel is CharGenSanctionedPsykerChildPhaseVM viewModel16))
 																{
-																	m_SanctionedPsykerPhaseDetailedView.Bind(viewModel16);
-																	return m_SanctionedPsykerPhaseDetailedView;
+																	if (viewModel is CharGenArbitratorChildPhaseVM viewModel17)
+																	{
+																		m_ArbitratorPhaseDetailedView.Bind(viewModel17);
+																		return m_ArbitratorPhaseDetailedView;
+																	}
+																	return null;
 																}
-																return null;
+																m_SanctionedPsykerPhaseDetailedView.Bind(viewModel16);
+																return m_SanctionedPsykerPhaseDetailedView;
 															}
 															m_ForgeHomeworldChildPhaseDetailedView.Bind(viewModel15);
 															return m_ForgeHomeworldChildPhaseDetailedView;

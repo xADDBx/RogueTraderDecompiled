@@ -19,6 +19,7 @@ using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.FlagCountable;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
@@ -48,6 +49,12 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	[JsonProperty]
 	private List<EntityRef<MechanicEntity>> m_CustomLowPriorityTargets = new List<EntityRef<MechanicEntity>>();
+
+	[JsonProperty]
+	public CountableFlag TryActionBeforeMove = new CountableFlag();
+
+	[JsonProperty]
+	private CustomBehaviourType m_CustomBehaviourType;
 
 	private ScoreOrder m_ForcedOrder;
 
@@ -166,10 +173,21 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 		}
 	}
 
+	public void SetCustomBehaviour(CustomBehaviourType customBehaviourType)
+	{
+		m_CustomBehaviourType = customBehaviourType;
+		UpdateBehaviourTree();
+	}
+
 	public void SetBrain(BlueprintBrainBase brain)
 	{
 		Blueprint = brain;
-		m_BehaviourTree = BehaviourTreeBuilder.Create(base.Owner);
+		UpdateBehaviourTree();
+	}
+
+	private void UpdateBehaviourTree()
+	{
+		m_BehaviourTree = (BehaviourTreeBuilder.TryCreateCustom(base.Owner, m_CustomBehaviourType, out var behaviourTree) ? behaviourTree : BehaviourTreeBuilder.Create(base.Owner));
 	}
 
 	public void RestoreAvailableActions()
@@ -356,6 +374,9 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 		result.Append(ref val8);
 		bool val9 = IsIdling;
 		result.Append(ref val9);
+		Hash128 val10 = ClassHasher<CountableFlag>.GetHash128(TryActionBeforeMove);
+		result.Append(ref val10);
+		result.Append(ref m_CustomBehaviourType);
 		return result;
 	}
 }

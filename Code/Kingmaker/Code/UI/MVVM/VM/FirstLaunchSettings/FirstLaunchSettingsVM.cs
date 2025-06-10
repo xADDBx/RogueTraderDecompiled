@@ -25,7 +25,7 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public readonly SelectionGroupRadioVM<SettingsMenuEntityVM> SelectionGroup;
 
-	private readonly ReactiveProperty<SettingsMenuEntityVM> m_SelectedMenuEntity = new ReactiveProperty<SettingsMenuEntityVM>();
+	public readonly ReactiveProperty<SettingsMenuEntityVM> SelectedMenuEntity = new ReactiveProperty<SettingsMenuEntityVM>();
 
 	private readonly List<SettingsMenuEntityVM> m_MenuEntitiesList = new List<SettingsMenuEntityVM>();
 
@@ -59,9 +59,9 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 		}
 		CreateMenuEntity(UIStrings.Instance.SettingsUI.SectionNameDisplay, UISettingsManager.SettingsScreen.Display);
 		CreateMenuEntity(UIStrings.Instance.SettingsUI.SectionNameAccessiability, UISettingsManager.SettingsScreen.Accessiability);
-		AddDisposable(SelectionGroup = new SelectionGroupRadioVM<SettingsMenuEntityVM>(m_MenuEntitiesList, m_SelectedMenuEntity));
+		AddDisposable(SelectionGroup = new SelectionGroupRadioVM<SettingsMenuEntityVM>(m_MenuEntitiesList, SelectedMenuEntity));
 		SelectionGroup.TrySelectFirstValidEntity();
-		AddDisposable(m_SelectedMenuEntity.Subscribe(delegate(SettingsMenuEntityVM e)
+		AddDisposable(SelectedMenuEntity.Subscribe(delegate(SettingsMenuEntityVM e)
 		{
 			if (e != null)
 			{
@@ -140,7 +140,7 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public void RevertSettings()
 	{
-		SettingsController.Instance.ResetToDefault(m_SelectedMenuEntity.Value.SettingsScreenType);
+		SettingsController.Instance.ResetToDefault(SelectedMenuEntity.Value.SettingsScreenType);
 	}
 
 	public void NextPage()

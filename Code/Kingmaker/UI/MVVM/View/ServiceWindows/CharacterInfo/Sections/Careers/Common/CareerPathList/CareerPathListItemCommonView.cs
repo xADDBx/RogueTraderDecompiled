@@ -386,7 +386,7 @@ public class CareerPathListItemCommonView : ViewBase<CareerPathVM>, IWidgetView,
 			for (int i = 0; i < list.Count; i++)
 			{
 				CareerPathVM linkedCareer = list[i];
-				if (allCareer.ViewModel.CareerPath.Tier == linkedCareer.CareerPath.Tier + 1 && allCareer.ViewModel.PrerequisiteCareerPaths.Contains(linkedCareer.CareerPath))
+				if (allCareer.ViewModel.CareerPath.Tier == linkedCareer.CareerPath.Tier + 1 && (allCareer.ViewModel.PrerequisiteCareerPaths.Contains(linkedCareer.CareerPath) || allCareer.ViewModel.SelectionHasPrerequisiteFeatures()))
 				{
 					list.Add(allCareer.ViewModel);
 					CareerPathListItemCommonView item = allCareers.FirstOrDefault((CareerPathListItemCommonView c) => c.ViewModel == linkedCareer);

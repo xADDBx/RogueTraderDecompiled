@@ -45,7 +45,7 @@ public class TaskSolveDialog : ClockworkRunnerTask
 				}
 				yield return null;
 			}
-			BlueprintAnswer sb = controller.Answers.Where((BlueprintAnswer a) => !Game.Instance.Player.Dialog.SelectedAnswers.Contains(a) && Clockwork.Instance.Scenario.CanUseAnswer(a)).Random(PFStatefulRandom.Qa);
+			BlueprintAnswer sb = controller.Answers.Where((BlueprintAnswer a) => !Game.Instance.Player.Dialog.SelectedAnswersContains(a) && Clockwork.Instance.Scenario.CanUseAnswer(a)).Random(PFStatefulRandom.Qa);
 			sb = SimpleBlueprintExtendAsObject.Or(sb, null) ?? (from a in controller.Answers
 				where Clockwork.Instance.Scenario.CanUseAnswer(a)
 				orderby s_AnswerTime.Get(a, 0f)
@@ -135,7 +135,7 @@ public class TaskSolveDialog : ClockworkRunnerTask
 	{
 		if (answer is BlueprintAnswer blueprintAnswer && IsAvailableAnswer(blueprintAnswer))
 		{
-			return !Game.Instance.Player.Dialog.SelectedAnswers.Contains(blueprintAnswer);
+			return !Game.Instance.Player.Dialog.SelectedAnswersContains(blueprintAnswer);
 		}
 		return false;
 	}

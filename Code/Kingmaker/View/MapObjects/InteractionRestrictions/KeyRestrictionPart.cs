@@ -22,7 +22,7 @@ public class KeyRestrictionPart : InteractionRestrictionPart<KeyRestrictionSetti
 
 	public InteractionActorType Type => InteractionActorType.Key;
 
-	public InteractionPart InteractionPart => base.ConcreteOwner.GetAll<InteractionPart>().FirstOrDefault();
+	public InteractionPart InteractionPart => base.ConcreteOwner?.GetAll<InteractionPart>()?.FirstOrDefault();
 
 	public StatType Skill => StatType.Unknown;
 

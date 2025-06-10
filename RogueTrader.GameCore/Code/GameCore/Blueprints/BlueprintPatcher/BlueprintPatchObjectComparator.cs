@@ -86,7 +86,7 @@ public static class BlueprintPatchObjectComparator
 			Logger.Log("Blueprint patch inspection: parsing BlueprintReferenceBase derived type field " + fieldPath);
 			BlueprintReferenceBase blueprintReferenceBase = protoItem as BlueprintReferenceBase;
 			object obj = Activator.CreateInstance(blueprintReferenceBase.GetType());
-			string text = (string)targetItem;
+			string text = (targetItem as string) ?? targetItem?.ToString();
 			if (text != null && text.StartsWith("!bp_"))
 			{
 				text = text.Substring(4);

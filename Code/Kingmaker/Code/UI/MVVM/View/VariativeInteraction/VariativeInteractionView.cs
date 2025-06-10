@@ -29,14 +29,17 @@ public class VariativeInteractionView<TInteractionVariant> : ViewBase<VariativeI
 	{
 		base.gameObject.SetActive(value: true);
 		UISounds.Instance.Sounds.Buttons.ButtonClick.Play();
-		AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().Subscribe(delegate
 		{
 			OnUpdateHandler();
 		}));
 		OnUpdateHandler();
 		AddDisposable(WidgetList.DrawEntries(base.ViewModel.Variants.ToArray(), m_InteractionVariantViewPrefab));
 		SetButtonsPosition(WidgetList.VisibleEntries.Select((IWidgetView v) => v.MonoBehaviour.transform as RectTransform).ToList());
-		((RectTransform)base.transform).sizeDelta = new Vector2((((RectTransform)m_InteractionVariantViewPrefab.transform).rect.width + 5f) * (float)base.ViewModel.Variants.Count(), ((RectTransform)m_InteractionVariantViewPrefab.transform).rect.height);
+		RectTransform obj = (RectTransform)base.transform;
+		Rect rect = ((RectTransform)m_InteractionVariantViewPrefab.transform).rect;
+		obj.sizeDelta = new Vector2((rect.width + 5f) * (float)base.ViewModel.Variants.Count, rect.height);
+		obj.anchoredPosition = new Vector2(0f, base.ViewModel.VerticalCorrection + 5f - rect.height);
 	}
 
 	protected override void DestroyViewImplementation()

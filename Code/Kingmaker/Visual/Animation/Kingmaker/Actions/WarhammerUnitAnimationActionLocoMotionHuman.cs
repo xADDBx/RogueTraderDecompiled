@@ -232,9 +232,9 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 
 	private static bool IsGamepadMovement(UnitAnimationActionHandle handle)
 	{
-		if (!(handle.Unit?.Or(null)?.MovementAgent is UnitMovementAgentContinuous))
+		if (!(handle.Unit.Or(null)?.MovementAgent is UnitMovementAgentContinuous))
 		{
-			if (handle.Unit?.EntityData.Commands.Current is UnitFollow { Params: { } @params })
+			if (handle.Unit.Or(null)?.EntityData?.Commands.Current is UnitFollow { Params: { } @params })
 			{
 				return @params.IsGamepadMovement;
 			}
@@ -268,7 +268,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		actionData.InCombat = handle.Manager.IsInCombat;
 		actionData.WalkSpeedType = handle.Manager.WalkSpeedType;
 		CurrentWalkingStyleLayer walkingStyleLair;
-		AnimationClipWrapper animationClipWrapper = SelectClip(handle, forOffhand: true, out walkingStyleLair);
+		AnimationClipWrapper animationClipWrapper = ((OffHandMask != null) ? SelectClip(handle, forOffhand: true, out walkingStyleLair) : null);
 		CurrentWalkingStyleLayer walkingStyleLair2;
 		AnimationClipWrapper animationClipWrapper2 = SelectClip(handle, forOffhand: false, out walkingStyleLair2);
 		AnimationBase activeAnimation = handle.ActiveAnimation;
@@ -318,11 +318,13 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 			{
 				float num = actionData.OutDistance / walkingStyleLair2.OutSpeed;
 				actionData.StartAnimationTime = handle.GetTime();
-				actionData.EndAnimationTime = handle.GetTime() + num;
+				float num2 = 1f;
 				if (walkingStyleLair2.OutSpeed > 0f && actionData.OutDistance > walkingStyleLair2.OutDistance / 3f)
 				{
-					handle.ActiveAnimation.SetSpeed(walkingStyleLair2.Out.Length / num);
+					num2 = walkingStyleLair2.Out.Length / num;
+					handle.ActiveAnimation.SetSpeed(num2);
 				}
+				actionData.EndAnimationTime = handle.GetTime() + num / num2;
 			}
 			if (activeAnimation != null)
 			{
@@ -382,7 +384,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 		if (actionData.State == MovementState.Idle && !flag && handle.Unit != null && !handle.Unit.AgentASP.IsInNodeLinkQueue)
 		{
 			AbstractUnitEntity data = handle.Unit.Data;
-			if (((data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted) && handle.Unit.MovementAgent.IsReallyMoving) || handle.Unit.MovementAgent.IsCharging) && !handle.Manager.IsGoingCover && (actionData.EndAnimationTime.Approximately(0f) || handle.GetTime() > actionData.EndAnimationTime))
+			if (((data != null && data.Commands.Contains((AbstractUnitCommand x) => x.IsMoveUnit && x.IsStarted)) || handle.Unit.MovementAgent.IsCharging) && handle.Unit.MovementAgent.IsReallyMoving && !handle.Manager.IsGoingCover && (actionData.EndAnimationTime.Approximately(0f) || handle.GetTime() > actionData.EndAnimationTime))
 			{
 				actionData.State = MovementState.Run;
 				if (!flag2 && currentWalkingStyleLayer != null && currentWalkingStyleLayer.In != null)

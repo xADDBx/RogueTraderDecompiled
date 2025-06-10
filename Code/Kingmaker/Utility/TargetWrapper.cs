@@ -145,7 +145,7 @@ public class TargetWrapper : ITargetWrapper, IMemoryPackable<TargetWrapper>, IMe
 		EntityRef = entity;
 	}
 
-	protected TargetWrapper([NotNull] TargetWrapper other)
+	public TargetWrapper([NotNull] TargetWrapper other)
 	{
 		m_Point = other.m_Point;
 		m_Orientation = other.m_Orientation;

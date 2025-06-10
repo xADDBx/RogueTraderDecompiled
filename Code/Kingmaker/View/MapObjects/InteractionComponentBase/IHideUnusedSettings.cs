@@ -26,6 +26,8 @@ public interface IHideUnusedSettings
 
 	bool ShouldShowTrap { get; }
 
+	bool ShouldShowDoNotNeedCollider { get; }
+
 	bool ShouldShowUnlimitedInteractionsPerRound { get; }
 
 	bool ShouldShowOverrideActionPointsCost { get; }

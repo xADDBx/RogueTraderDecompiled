@@ -67,4 +67,12 @@ public class UICombatLogTexts
 
 	[Space]
 	public LocalizedString LanceResultTitle;
+
+	[Space]
+	public LocalizedString AlwaysSucceed;
+
+	public LocalizedString AlwaysFail;
+
+	[Space]
+	public LocalizedString Reflected;
 }

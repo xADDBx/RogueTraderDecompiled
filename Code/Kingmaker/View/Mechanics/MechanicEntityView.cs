@@ -10,6 +10,7 @@ namespace Kingmaker.View.Mechanics;
 [KnowledgeDatabaseID("cfe1163b47d64ccb87bda1355e624620")]
 public abstract class MechanicEntityView : EntityViewBase
 {
+	[CanBeNull]
 	public new MechanicEntity Data => (MechanicEntity)base.Data;
 
 	public MechanicEntity EntityData => Data;

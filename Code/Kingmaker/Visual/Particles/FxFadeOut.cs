@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Visual.Particles.GameObjectsPooling;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Updatables;
 using UnityEngine;
 
@@ -32,6 +33,12 @@ public class FxFadeOut : UpdateableBehaviour
 	[Tooltip("Required for level designers, they will use it in cutscene when they want to dissolve FX manually.")]
 	public bool StartForceFadeOut;
 
+	[Tooltip("Required for level designers, they will use it in cutscene when they want to fade in FX manually.")]
+	public bool StartFadeIn;
+
+	[Tooltip("If true, the FX object will be released to pool after fade out. If false, it will remain in the scene but with opacity set to 0.")]
+	public bool DestroyFxObject = true;
+
 	public List<ParticleSystem> StopParticlesEmission = new List<ParticleSystem>();
 
 	[Tooltip("Applied for non standard shaders.")]
@@ -47,6 +54,8 @@ public class FxFadeOut : UpdateableBehaviour
 	private bool m_IsAnimationPlaying;
 
 	private float m_AnimationStartTime;
+
+	private bool m_IsFadingIn;
 
 	private readonly List<IOpacitySource> m_OpacitySources = new List<IOpacitySource>();
 
@@ -102,28 +111,49 @@ public class FxFadeOut : UpdateableBehaviour
 			StartFadeOut();
 			StartForceFadeOut = false;
 		}
+		if (StartFadeIn)
+		{
+			StartFadeInFunc();
+			StartFadeIn = false;
+		}
 		bool num = m_IsAnimationPlaying || m_OpacitySources.Count > 0 || m_OpacitySourcesChanged;
 		m_OpacitySourcesChanged = false;
 		if (num)
 		{
-			m_Fader.SetOpacity(ResolveOpacity(), m_IsAnimationPlaying);
+			m_Fader.SetOpacity(ResolveOpacity(), m_IsAnimationPlaying && !m_IsFadingIn);
 		}
-		if (m_IsAnimationPlaying && (Duration == 0f || Time.unscaledTime - m_AnimationStartTime > Duration))
+		if (!m_IsAnimationPlaying || (Duration != 0f && !(Time.unscaledTime - m_AnimationStartTime > Duration)))
 		{
-			m_IsAnimationPlaying = false;
-			m_AnimationStartTime = 0f;
-			ReleaseSelf();
+			return;
 		}
+		m_IsAnimationPlaying = false;
+		m_AnimationStartTime = 0f;
+		if (!m_IsFadingIn)
+		{
+			GetComponent<SoundFx>()?.PlayDestroyEventsManually();
+			if (DestroyFxObject)
+			{
+				ReleaseSelf();
+			}
+		}
+		m_IsFadingIn = false;
 	}
 
 	public void StartFadeOut()
 	{
-		if (!m_IsAnimationPlaying)
+		if (m_IsAnimationPlaying && m_IsFadingIn)
+		{
+			float num = ResolveOpacity();
+			m_IsFadingIn = false;
+			m_AnimationStartTime = Time.unscaledTime - (1f - num) * Duration;
+		}
+		else if (!m_IsAnimationPlaying || m_IsFadingIn)
 		{
 			if (Duration > 0f)
 			{
 				base.enabled = true;
 				m_IsAnimationPlaying = true;
+				m_IsFadingIn = false;
 				m_AnimationStartTime = Time.unscaledTime;
 			}
 			else
@@ -133,9 +163,26 @@ public class FxFadeOut : UpdateableBehaviour
 		}
 	}
 
+	public void StartFadeInFunc()
+	{
+		if (m_IsAnimationPlaying && !m_IsFadingIn)
+		{
+			float num = ResolveOpacity();
+			m_IsFadingIn = true;
+			m_AnimationStartTime = Time.unscaledTime - num * Duration;
+		}
+		else if ((!m_IsAnimationPlaying || !m_IsFadingIn) && Duration > 0f)
+		{
+			base.enabled = true;
+			m_IsAnimationPlaying = true;
+			m_IsFadingIn = true;
+			m_AnimationStartTime = Time.unscaledTime;
+		}
+	}
+
 	private float ResolveOpacity()
 	{
-		float a = ((!m_IsAnimationPlaying) ? 1f : (1f - Mathf.Clamp01((Time.unscaledTime - m_AnimationStartTime) / Duration)));
+		float a = ((!m_IsAnimationPlaying) ? 1f : ((!m_IsFadingIn) ? (1f - Mathf.Clamp01((Time.unscaledTime - m_AnimationStartTime) / Duration)) : Mathf.Clamp01((Time.unscaledTime - m_AnimationStartTime) / Duration)));
 		float num;
 		if (m_IgnoreExternalOpacitySources || m_OpacitySources.Count == 0)
 		{
@@ -154,6 +201,9 @@ public class FxFadeOut : UpdateableBehaviour
 
 	private void ReleaseSelf()
 	{
-		GameObjectsPool.Release(base.gameObject);
+		if (DestroyFxObject)
+		{
+			GameObjectsPool.Release(base.gameObject);
+		}
 	}
 }

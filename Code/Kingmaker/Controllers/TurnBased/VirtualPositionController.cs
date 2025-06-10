@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.TurnBased;
 
-public class VirtualPositionController : IController, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, ITurnEndHandler, IInterruptTurnEndHandler
+public class VirtualPositionController : IController, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IContinueTurnHandler, IInterruptTurnStartHandler, ITurnEndHandler, IInterruptTurnEndHandler, IInterruptTurnContinueHandler
 {
 	private readonly TurnController m_TurnController;
 
@@ -53,6 +53,10 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 		}
 	}
 
+	public MechanicEntity VirtualPositionUnit { get; set; }
+
+	public MechanicEntity CurrentUnit => VirtualPositionUnit ?? m_TurnController.CurrentUnit;
+
 	public VirtualPositionController(TurnController controller)
 	{
 		m_TurnController = controller;
@@ -60,39 +64,18 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 
 	public Vector3 GetDesiredPosition(MechanicEntity entity)
 	{
-		if (entity != m_TurnController.CurrentUnit)
+		if (!TryGetVirtualPosition(entity, out var virtualPosition))
 		{
 			return entity.Position;
 		}
-		if (!m_TurnController.CurrentUnit.IsInPlayerParty)
-		{
-			return entity.Position;
-		}
-		if (entity.GetCommandsOptional()?.Current != null)
-		{
-			return entity.Position;
-		}
-		return m_VirtualPosition ?? entity.Position;
+		return virtualPosition;
 	}
 
 	public bool TryGetVirtualPosition(MechanicEntity entity, out Vector3 virtualPosition)
 	{
-		virtualPosition = Vector3.zero;
-		if (entity != m_TurnController.CurrentUnit)
+		if (entity != CurrentUnit || (entity != null && !entity.IsInPlayerParty) || entity.GetCommandsOptional()?.Current != null || !m_VirtualPosition.HasValue)
 		{
-			return false;
-		}
-		MechanicEntity currentUnit = m_TurnController.CurrentUnit;
-		if (currentUnit != null && !currentUnit.IsInPlayerParty)
-		{
-			return false;
-		}
-		if (entity.GetCommandsOptional()?.Current != null)
-		{
-			return false;
-		}
-		if (!m_VirtualPosition.HasValue)
-		{
+			virtualPosition = Vector3.zero;
 			return false;
 		}
 		virtualPosition = m_VirtualPosition.Value;
@@ -101,19 +84,11 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 
 	public Vector3 GetDesiredRotation(MechanicEntity entity)
 	{
-		if (entity != m_TurnController.CurrentUnit)
+		if (entity != CurrentUnit || !entity.IsInPlayerParty || entity.GetCommandsOptional()?.Current != null || !m_VirtualRotation.HasValue)
 		{
 			return entity.Forward;
 		}
-		if (!m_TurnController.CurrentUnit.IsInPlayerParty)
-		{
-			return entity.Forward;
-		}
-		if (entity.GetCommandsOptional()?.Current != null)
-		{
-			return entity.Forward;
-		}
-		return m_VirtualRotation ?? entity.Forward;
+		return m_VirtualRotation.Value;
 	}
 
 	public void CleanVirtualPosition()
@@ -123,6 +98,11 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 	}
 
 	void ITurnStartHandler.HandleUnitStartTurn(bool isTurnBased)
+	{
+		CleanVirtualPosition();
+	}
+
+	void IContinueTurnHandler.HandleUnitContinueTurn(bool isTurnBased)
 	{
 		CleanVirtualPosition();
 	}
@@ -138,6 +118,11 @@ public class VirtualPositionController : IController, ITurnStartHandler, ISubscr
 	}
 
 	void IInterruptTurnEndHandler.HandleUnitEndInterruptTurn()
+	{
+		CleanVirtualPosition();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		CleanVirtualPosition();
 	}

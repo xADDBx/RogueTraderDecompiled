@@ -5,6 +5,7 @@ using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.Blueprints.Root.Strings;
 
@@ -170,6 +171,8 @@ public class UITextCharSheet
 	[Header("Biography")]
 	public LocalizedString EmptyBiographyDesc;
 
+	public LocalizedString EmptySoulMarkShiftsDesc;
+
 	[Header("Progression")]
 	public LocalizedString CareerPathHeader;
 
@@ -282,7 +285,10 @@ public class UITextCharSheet
 
 	public LocalizedString TalentFeatureGroupLabel;
 
-	public LocalizedString UltimateAbilityFeatureGroupLabel;
+	[FormerlySerializedAs("UltimateAbilityFeatureGroupLabel")]
+	public LocalizedString UltimateUpgradeAbilityFeatureGroupLabel;
+
+	public LocalizedString UltimateMainAbilityFeatureGroupLabel;
 
 	public LocalizedString ActiveAbilityFeatureGroupLabel;
 
@@ -291,6 +297,10 @@ public class UITextCharSheet
 	public LocalizedString SkillFeatureGroupHint;
 
 	public LocalizedString TalentFeatureGroupHint;
+
+	public LocalizedString KeystoneGroupLabel;
+
+	public LocalizedString KeystoneGroupHint;
 
 	public LocalizedString AscensionFirstCareerAbilityFeatureGroupLabel;
 
@@ -328,7 +338,10 @@ public class UITextCharSheet
 
 	public LocalizedString CommonTalentFeatureGroupHint;
 
-	public LocalizedString UltimateAbilityFeatureGroupHint;
+	[FormerlySerializedAs("UltimateAbilityFeatureGroupHint")]
+	public LocalizedString UltimateUpgradeAbilityFeatureGroupHint;
+
+	public LocalizedString UltimateMainAbilityFeatureGroupHint;
 
 	public LocalizedString ActiveAbilityFeatureGroupHint;
 
@@ -354,7 +367,10 @@ public class UITextCharSheet
 
 	public LocalizedString ChooseTalentFeatureGroupHint;
 
-	public LocalizedString ChooseUltimateAbilityFeatureGroupHint;
+	[FormerlySerializedAs("ChooseUltimateAbilityFeatureGroupHint")]
+	public LocalizedString ChooseUltimateUpgradeAbilityFeatureGroupHint;
+
+	public LocalizedString ChooseUltimateMainAbilityFeatureGroupHint;
 
 	public LocalizedString ChooseActiveAbilityFeatureGroupHint;
 
@@ -395,6 +411,15 @@ public class UITextCharSheet
 	public LocalizedString Human;
 
 	public LocalizedString Xenos;
+
+	[Header("Pets")]
+	public LocalizedString ChoosePetHint;
+
+	public LocalizedString PetChoosedHint;
+
+	public LocalizedString PetUltimateChooseHint;
+
+	public LocalizedString PetltimateChoosedAbilityHint;
 
 	[Header("Feature Groups Description")]
 	public LocalizedString AscensionFirstCareerAbilityFeatureGroupDescription;
@@ -512,8 +537,10 @@ public class UITextCharSheet
 			FeatureGroup.FirstOrSecondCareerTalent => AscensionFirstOrSecondCareerTalentFeatureGroupLabel, 
 			FeatureGroup.CommonTalent => CommonTalentFeatureGroupLabel, 
 			FeatureGroup.BackgroundFeature => BackgroundAbilityFeatureGroupLabel, 
-			FeatureGroup.UltimateAbility => UltimateAbilityFeatureGroupLabel, 
+			FeatureGroup.UltimateUpgradeAbility => UltimateUpgradeAbilityFeatureGroupLabel, 
+			FeatureGroup.UltimateAbility => UltimateMainAbilityFeatureGroupLabel, 
 			FeatureGroup.ShipTotalAbility => ActiveAbilityFeatureGroupLabel, 
+			FeatureGroup.Keystone => KeystoneGroupLabel, 
 			_ => throw new ArgumentOutOfRangeException("featureGroup", featureGroup, "GetFeatureGroupLabel"), 
 		};
 	}
@@ -539,6 +566,7 @@ public class UITextCharSheet
 			FeatureGroup.Attribute => canChoose ? ChooseAttributeFeatureGroupHint : AttributeFeatureGroupHint, 
 			FeatureGroup.Skill => canChoose ? ChooseSkillFeatureGroupHint : SkillFeatureGroupHint, 
 			FeatureGroup.Talent => canChoose ? ChooseTalentFeatureGroupHint : TalentFeatureGroupHint, 
+			FeatureGroup.Keystone => KeystoneGroupHint, 
 			FeatureGroup.AscensionTalent => canChoose ? ChooseAscensionTalentFeatureGroupHint : AscensionTalentFeatureGroupHint, 
 			FeatureGroup.FirstCareerAbility => canChoose ? ChooseAscensionFirstCareerAbilityFeatureGroupHint : AscensionFirstCareerAbilityFeatureGroupHint, 
 			FeatureGroup.FirstCareerTalent => canChoose ? ChooseAscensionFirstCareerTalentFeatureGroupHint : AscensionFirstCareerTalentFeatureGroupHint, 
@@ -549,12 +577,15 @@ public class UITextCharSheet
 			FeatureGroup.CommonTalent => canChoose ? ChooseCommonTalentFeatureGroupHint : CommonTalentFeatureGroupHint, 
 			FeatureGroup.BackgroundFeature => canChoose ? ChooseBackgroundAbilityFeatureGroupHint : BackgroundAbilityFeatureGroupHint, 
 			FeatureGroup.ActiveAbility => canChoose ? ChooseActiveAbilityFeatureGroupHint : ActiveAbilityFeatureGroupHint, 
-			FeatureGroup.UltimateAbility => canChoose ? ChooseUltimateAbilityFeatureGroupHint : UltimateAbilityFeatureGroupHint, 
+			FeatureGroup.UltimateUpgradeAbility => canChoose ? ChooseUltimateUpgradeAbilityFeatureGroupHint : UltimateUpgradeAbilityFeatureGroupHint, 
+			FeatureGroup.UltimateAbility => canChoose ? ChooseUltimateMainAbilityFeatureGroupHint : UltimateMainAbilityFeatureGroupHint, 
 			FeatureGroup.ShipUpgrade => canChoose ? ChooseShipUpgradeGroupHint : ActiveShipUpgradeGroupHint, 
 			FeatureGroup.AdvancedAbility => canChoose ? ChooseAdvancedAbilityGroupHint : ActiveAdvancedAbilityGroupHint, 
 			FeatureGroup.ShipActiveAbility => canChoose ? ChooseShipActiveAbilityGroupHint : ActiveShipActiveAbilityGroupHint, 
 			FeatureGroup.ShipUltimateAbility => canChoose ? ChooseShipUltimateAbilityGroupHint : ActiveShipUltimateAbilityGroupHint, 
 			FeatureGroup.ShipTotalAbility => canChoose ? ChooseShipUpgradeGroupHint : ActiveShipUpgradeGroupHint, 
+			FeatureGroup.PetKeystone => canChoose ? ChoosePetHint : PetChoosedHint, 
+			FeatureGroup.PetUltimateAbility => canChoose ? HeaderFeatureDescriptionTab : HeaderImprovement, 
 			_ => string.Empty, 
 		};
 	}

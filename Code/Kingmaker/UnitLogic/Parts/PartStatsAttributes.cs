@@ -16,7 +16,7 @@ public class PartStatsAttributes : EntityPart, IHashable
 
 	private ModifiableValueAttributeStat[] m_List;
 
-	private StatsContainer Container => base.ConcreteOwner.GetRequired<PartStatsContainer>().Container;
+	private StatsContainer Container => base.ConcreteOwner?.GetRequired<PartStatsContainer>().Container;
 
 	public ModifiableValueAttributeStat WarhammerBallisticSkill => Container.GetAttribute(StatType.WarhammerBallisticSkill);
 

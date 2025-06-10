@@ -10,6 +10,8 @@ public class UINotificationTexts
 
 	public LocalizedString ItemsRecievedFormat;
 
+	public LocalizedString ColonyResourceReceivedFormat;
+
 	public LocalizedString XPGainedFormat;
 
 	public LocalizedString CargoAddedFormat;

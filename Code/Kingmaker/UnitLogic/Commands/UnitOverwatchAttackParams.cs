@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
@@ -104,6 +106,10 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 		{
 			MemoryPackFormatterProvider.Register(new UnmanagedFormatter<DamagePolicyType>());
 		}
+		if (!MemoryPackFormatterProvider.IsRegistered<List<TargetWrapper>>())
+		{
+			MemoryPackFormatterProvider.Register(new ListFormatter<TargetWrapper>());
+		}
 	}
 
 	[Preserve]
@@ -114,7 +120,7 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(19, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(20, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -133,6 +139,8 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 		DamagePolicyType value8 = value.DamagePolicy;
 		value4 = value.KillTarget;
 		writer.DangerousWriteUnmanaged(in movementType, in isOneFrameCommand, in slowMotionRequired, in ignoreCooldown, in value3, in value7, in value8, in value4);
+		List<TargetWrapper> source = value.AllTargets;
+		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in source));
 	}
 
 	[Preserve]
@@ -162,7 +170,8 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 		AttackHitPolicyType value18;
 		DamagePolicyType value19;
 		bool value20;
-		if (memberCount == 19)
+		List<TargetWrapper> value21;
+		if (memberCount == 20)
 		{
 			if (value != null)
 			{
@@ -185,6 +194,7 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 				value18 = value.HitPolicy;
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
+				value21 = value.AllTargets;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -204,7 +214,8 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 				reader.ReadUnmanaged<AttackHitPolicyType>(out value18);
 				reader.ReadUnmanaged<DamagePolicyType>(out value19);
 				reader.ReadUnmanaged<bool>(out value20);
-				goto IL_03f0;
+				ListFormatter.DeserializePackable(ref reader, ref value21);
+				goto IL_0425;
 			}
 			reader.ReadUnmanaged<CommandType>(out value2);
 			value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
@@ -212,12 +223,13 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 			reader.DangerousReadUnmanaged<bool, bool, float?, bool, bool?, bool?, int?>(out value5, out value6, out value7, out value8, out value9, out value10, out value11);
 			value12 = reader.ReadPackable<ForcedPath>();
 			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, bool?, bool, AttackHitPolicyType, DamagePolicyType, bool>(out value13, out value14, out value15, out value16, out value17, out value18, out value19, out value20);
+			value21 = ListFormatter.DeserializePackable<TargetWrapper>(ref reader);
 		}
 		else
 		{
-			if (memberCount > 19)
+			if (memberCount > 20)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitOverwatchAttackParams), 19, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitOverwatchAttackParams), 20, memberCount);
 				return;
 			}
 			if (value == null)
@@ -241,6 +253,7 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 				value18 = AttackHitPolicyType.Default;
 				value19 = DamagePolicyType.Default;
 				value20 = false;
+				value21 = null;
 			}
 			else
 			{
@@ -263,6 +276,7 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 				value18 = value.HitPolicy;
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
+				value21 = value.AllTargets;
 			}
 			if (memberCount != 0)
 			{
@@ -321,7 +335,11 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 																					if (memberCount != 18)
 																					{
 																						reader.ReadUnmanaged<bool>(out value20);
-																						_ = 19;
+																						if (memberCount != 19)
+																						{
+																							ListFormatter.DeserializePackable(ref reader, ref value21);
+																							_ = 20;
+																						}
 																					}
 																				}
 																			}
@@ -343,7 +361,7 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 			}
 			if (value != null)
 			{
-				goto IL_03f0;
+				goto IL_0425;
 			}
 		}
 		value = new UnitOverwatchAttackParams
@@ -366,10 +384,11 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 			DisableLog = value17,
 			HitPolicy = value18,
 			DamagePolicy = value19,
-			KillTarget = value20
+			KillTarget = value20,
+			AllTargets = value21
 		};
 		return;
-		IL_03f0:
+		IL_0425:
 		value.Type = value2;
 		value.OwnerRef = value3;
 		value.Target = value4;
@@ -389,5 +408,6 @@ public sealed class UnitOverwatchAttackParams : UnitUseAbilityParams, IMemoryPac
 		value.HitPolicy = value18;
 		value.DamagePolicy = value19;
 		value.KillTarget = value20;
+		value.AllTargets = value21;
 	}
 }

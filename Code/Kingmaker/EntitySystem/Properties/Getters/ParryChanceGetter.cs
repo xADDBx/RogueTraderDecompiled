@@ -41,6 +41,10 @@ public class ParryChanceGetter : MechanicEntityPropertyGetter, PropertyContextAc
 					num += item.Value;
 				}
 			}
+			if (!ruleCalculateParryChance.ParryValueMultipliers.Empty)
+			{
+				num *= ruleCalculateParryChance.ParryValueMultipliers.Value;
+			}
 		}
 		else
 		{

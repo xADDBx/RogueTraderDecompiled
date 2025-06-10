@@ -1,5 +1,6 @@
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models.SettingsUI;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -19,6 +20,7 @@ public class CreditsPCView : CreditsBaseView
 
 	protected override void BindViewImplementation()
 	{
+		UISounds.Instance.SetClickAndHoverSound(m_CloseButton, UISounds.ButtonSoundsEnum.PlastickSound);
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.ViewModel.CloseCredits));
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(delegate
 		{

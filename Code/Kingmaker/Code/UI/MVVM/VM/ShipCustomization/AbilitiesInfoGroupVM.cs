@@ -14,13 +14,13 @@ public class AbilitiesInfoGroupVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly List<PostAbilityVM> CurrentAbilities = new List<PostAbilityVM>();
 
-	public readonly Post Post;
+	private readonly Post m_Post;
 
-	public ReactiveCommand UpdateEventsCommand = new ReactiveCommand();
+	public readonly ReactiveCommand UpdateEventsCommand = new ReactiveCommand();
 
 	public AbilitiesInfoGroupVM(Post post)
 	{
-		Post = post;
+		m_Post = post;
 	}
 
 	protected override void DisposeImplementation()
@@ -31,11 +31,11 @@ public class AbilitiesInfoGroupVM : BaseDisposable, IViewModel, IBaseDisposable,
 	public void UpdateAbilities()
 	{
 		Clear();
-		foreach (Ability item2 in Post.UnlockedAbilities())
+		foreach (Ability item2 in m_Post.UnlockedAbilities())
 		{
 			if (!item2.Hidden && !item2.Blueprint.IsCantrip)
 			{
-				PostAbilityVM item = new PostAbilityVM(item2.Blueprint, Post);
+				PostAbilityVM item = new PostAbilityVM(item2.Blueprint, m_Post);
 				AllAbilities.Add(item);
 				CurrentAbilities.Add(item);
 			}

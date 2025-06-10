@@ -24,6 +24,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Abilities.Components.ProjectileAttack;
+using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
@@ -71,7 +72,30 @@ public static class AbilityDataHelper
 		{
 			return false;
 		}
-		if (ability.Caster.IsAttackingGreenNPC(target))
+		AbilityCanTargetOnlyPetUnits canTargetOnlyPetUnitsComponent = ability.Blueprint.CanTargetOnlyPetUnitsComponent;
+		if (canTargetOnlyPetUnitsComponent != null)
+		{
+			if (canTargetOnlyPetUnitsComponent.Inverted)
+			{
+				if (target is BaseUnitEntity { IsPet: not false })
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (!(target is BaseUnitEntity { IsPet: not false } baseUnitEntity2))
+				{
+					return false;
+				}
+				if (canTargetOnlyPetUnitsComponent.CanTargetOnlyOwnersPet && baseUnitEntity2.Master != ability.Caster)
+				{
+					return false;
+				}
+			}
+		}
+		MechanicEntity caster = ability.Caster;
+		if (caster != null && caster.IsAttackingGreenNPC(target))
 		{
 			return false;
 		}
@@ -82,9 +106,10 @@ public static class AbilityDataHelper
 		return true;
 	}
 
-	public static bool IsPatternRestrictionPassed(this AbilityData abilityData, TargetWrapper target)
+	public static bool IsPatternRestrictionPassed(this AbilityData abilityData, TargetWrapper target, out AbilityData.UnavailabilityReasonType unavailabilityReason)
 	{
-		return abilityData.Blueprint?.GetComponent<IAbilityPatternRestriction>()?.IsPatternRestrictionPassed(abilityData, abilityData.Caster, target) ?? true;
+		unavailabilityReason = AbilityData.UnavailabilityReasonType.None;
+		return abilityData.Blueprint?.GetComponent<IAbilityPatternRestriction>()?.IsPatternRestrictionPassed(abilityData, abilityData.Caster, target, out unavailabilityReason) ?? true;
 	}
 
 	public static ReadonlyList<CustomGridNodeBase> GetSingleShotAffectedNodes(this AbilityData ability, TargetWrapper target)

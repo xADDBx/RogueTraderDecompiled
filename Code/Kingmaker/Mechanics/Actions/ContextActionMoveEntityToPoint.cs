@@ -13,5 +13,7 @@ public class ContextActionMoveEntityToPoint : ContextActionMove
 	protected override void RunAction()
 	{
 		base.TargetEntity.Position = m_TargetPoint.GetValue();
+		base.TargetEntity.MaybeMovementAgent?.Blocker?.Unblock();
+		base.TargetEntity.MaybeMovementAgent?.UpdateBlocker();
 	}
 }

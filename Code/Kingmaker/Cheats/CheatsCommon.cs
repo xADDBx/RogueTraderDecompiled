@@ -52,7 +52,7 @@ public class CheatsCommon
 
 		public void OnEventDidTrigger(RuleRollDice evt)
 		{
-			if (evt.Initiator.IsPlayerFaction)
+			if (evt.Initiator.IsPlayerFaction && !evt.ResultOverride.HasValue)
 			{
 				evt.Override(Additive);
 			}
@@ -463,5 +463,22 @@ public class CheatsCommon
 		}
 		FxHelper.DestroyAll();
 		MonoSingleton<ParticleSystemCustomSubEmitterDelegate>.Instance.ClearAllParticles();
+	}
+
+	[Cheat(Name = "block_service_windows", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void ServiceWindowsBlock(bool block)
+	{
+		if (block)
+		{
+			Game.Instance.Player.ServiceWindowsBlocked.Retain();
+		}
+		else
+		{
+			Game.Instance.Player.ServiceWindowsBlocked.Release();
+		}
+		EventBus.RaiseEvent(delegate(ICanAccessServiceWindowsHandler h)
+		{
+			h.HandleServiceWindowsBlocked();
+		});
 	}
 }

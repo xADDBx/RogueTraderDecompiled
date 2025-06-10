@@ -7,6 +7,7 @@ using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.Globalmap.Blueprints.Colonization;
+using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.PubSubSystem;
@@ -55,6 +56,24 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 
 	[SerializeField]
 	private TextMeshProUGUI m_TitheGradeValueText;
+
+	[SerializeField]
+	private GameObject m_TitheGradeFrame;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AestimareText;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AestimareValueText;
+
+	[SerializeField]
+	private GameObject m_AestimareFrame;
+
+	[SerializeField]
+	private TextMeshProUGUI m_PlanetTypeValueText;
+
+	[SerializeField]
+	private GameObject m_PlanetTypeFrame;
 
 	[SerializeField]
 	private FadeAnimator m_TabletAnimator;
@@ -223,16 +242,27 @@ public abstract class ExplorationBaseView : ViewBase<ExplorationVM>, IChangePlan
 	{
 		string text = ((!(base.ViewModel.StarSystemObjectView != null)) ? null : (forceUpdate ? base.ViewModel.StarSystemObjectView.Data.Name : (base.ViewModel.StarSystemObjectView.Data.IsScanned ? base.ViewModel.StarSystemObjectView.Data.Name : "???")));
 		m_PlanetNameText.text = text;
-		if (base.ViewModel.IsPlanet)
+		BlueprintPlanet blueprintPlanet = base.ViewModel.PlanetView?.Data?.Blueprint;
+		bool flag = base.ViewModel.IsPlanet && blueprintPlanet != null && blueprintPlanet.DontShowWorldType;
+		if (base.ViewModel.IsPlanet && !flag)
 		{
 			m_TitheGradeText.text = UIStrings.Instance.ExplorationTexts.TitheGrade.Text;
-			m_TitheGradeValueText.text = (base.ViewModel.PlanetView.Data.IsScanned ? base.ViewModel.PlanetView.Data.Blueprint.TitheGrade.Text : UIStrings.Instance.ExplorationTexts.TitheGradeUndetermined.Text);
+			m_TitheGradeValueText.text = (base.ViewModel.PlanetView.Data.IsScanned ? blueprintPlanet.TitheGrade.Text : UIStrings.Instance.ExplorationTexts.TitheGradeUndetermined.Text);
+			m_AestimareText.text = UIStrings.Instance.ExplorationTexts.Aestimare.Text;
+			m_AestimareValueText.text = (base.ViewModel.PlanetView.Data.IsScanned ? blueprintPlanet.Aestimare.Text : UIStrings.Instance.ExplorationTexts.TitheGradeUndetermined.Text);
+			m_PlanetTypeValueText.text = (base.ViewModel.PlanetView.Data.IsScanned ? blueprintPlanet.WorldType.Text : UIStrings.Instance.ExplorationTexts.TitheGradeUndetermined.Text);
 		}
 		else
 		{
 			m_TitheGradeText.text = null;
 			m_TitheGradeValueText.text = null;
+			m_AestimareText.text = null;
+			m_AestimareValueText.text = null;
+			m_PlanetTypeValueText.text = null;
 		}
+		m_TitheGradeFrame.SetActive(!string.IsNullOrEmpty(m_TitheGradeText.text));
+		m_AestimareFrame.SetActive(!string.IsNullOrEmpty(m_AestimareText.text));
+		m_PlanetTypeFrame.SetActive(!string.IsNullOrEmpty(m_PlanetTypeValueText.text));
 	}
 
 	void IChangePlanetTypeHandler.HandleChangePlanetType()

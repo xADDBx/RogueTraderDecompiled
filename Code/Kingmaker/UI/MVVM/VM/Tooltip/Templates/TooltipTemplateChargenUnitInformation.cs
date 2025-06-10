@@ -103,10 +103,13 @@ public class TooltipTemplateChargenUnitInformation : TooltipBaseTemplate
 		List<IUIDataProvider> list = new List<IUIDataProvider>();
 		list.AddRange(UIUtilityUnit.CollectAbilities(m_Unit));
 		list.AddRange(UIUtilityUnit.CollectActivatableAbilities(m_Unit));
-		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharacterSheet.Abilities, TooltipTitleType.H3));
-		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, GetLayoutParams()));
-		bricks.AddRange(list.Select((IUIDataProvider ability) => new TooltipBrickFeature(ability)));
-		bricks.Add(new TooltipBricksGroupEnd());
+		if (list.Count != 0)
+		{
+			bricks.Add(new TooltipBrickTitle(UIStrings.Instance.CharacterSheet.Abilities, TooltipTitleType.H3));
+			bricks.Add(new TooltipBricksGroupStart(hasBackground: false, GetLayoutParams()));
+			bricks.AddRange(list.Select((IUIDataProvider ability) => new TooltipBrickFeature(ability)));
+			bricks.Add(new TooltipBricksGroupEnd());
+		}
 	}
 
 	private TooltipBricksGroupLayoutParams GetLayoutParams()

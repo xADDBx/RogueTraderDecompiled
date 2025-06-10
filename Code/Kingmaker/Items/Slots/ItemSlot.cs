@@ -123,7 +123,7 @@ public class ItemSlot : IHashable
 		}
 	}
 
-	public void PostLoad()
+	public virtual void PostLoad()
 	{
 		ItemEntity maybeItem = MaybeItem;
 		if (maybeItem != null && !maybeItem.IsPostLoadExecuted)
@@ -306,6 +306,7 @@ public class ItemSlot : IHashable
 		{
 			return false;
 		}
+		OnItemRemoved();
 		if (Active)
 		{
 			item.OnWillUnequip();
@@ -329,6 +330,10 @@ public class ItemSlot : IHashable
 	}
 
 	protected virtual void OnItemInserted()
+	{
+	}
+
+	protected virtual void OnItemRemoved()
 	{
 	}
 

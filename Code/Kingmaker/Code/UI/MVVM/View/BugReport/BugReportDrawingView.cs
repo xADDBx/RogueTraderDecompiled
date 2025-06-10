@@ -94,12 +94,6 @@ public class BugReportDrawingView : ViewBase<BugReportDrawingVM>
 
 	private void CreateInput()
 	{
-		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
-		{
-			ContextName = InputLayerContextName,
-			CursorEnabled = true
-		});
-		m_InputLayer.AddCursor(OnMoveLeftStick, 0, 1);
 		AddDisposable(m_ClearButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			ClearCanvas();
@@ -125,6 +119,16 @@ public class BugReportDrawingView : ViewBase<BugReportDrawingVM>
 		{
 			base.ViewModel.Close();
 		}));
+		if (!Game.Instance.IsControllerGamepad)
+		{
+			return;
+		}
+		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
+		{
+			ContextName = InputLayerContextName,
+			CursorEnabled = true
+		});
+		m_InputLayer.AddCursor(OnMoveLeftStick, 0, 1);
 		if (m_HintsWidget != null)
 		{
 			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
@@ -155,7 +159,10 @@ public class BugReportDrawingView : ViewBase<BugReportDrawingVM>
 
 	protected override void DestroyViewImplementation()
 	{
-		m_InputLayer.CursorEnabled = false;
+		if (Game.Instance.IsControllerGamepad)
+		{
+			m_InputLayer.CursorEnabled = false;
+		}
 		base.gameObject.SetActive(value: false);
 		m_InputLayer = null;
 	}

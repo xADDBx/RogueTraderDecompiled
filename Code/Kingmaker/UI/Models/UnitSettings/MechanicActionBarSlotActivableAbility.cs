@@ -1,4 +1,6 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.UI.Models.UnitSettings.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Commands;
 using Newtonsoft.Json;
@@ -18,7 +20,28 @@ public class MechanicActionBarSlotActivableAbility : MechanicActionBarSlot, IHas
 
 	protected override bool IsNotAvailable => !ActivatableAbility.IsAvailable;
 
-	public override string KeyName => ActivatableAbility?.Blueprint?.name;
+	public override string KeyName
+	{
+		get
+		{
+			object obj = ActivatableAbility?.Blueprint?.GetComponent<ActionPanelLogic>()?.UseKeyNameFromFact?.Get()?.name;
+			if (obj == null)
+			{
+				ActivatableAbility activatableAbility = ActivatableAbility;
+				if (activatableAbility == null)
+				{
+					return null;
+				}
+				BlueprintActivatableAbility blueprint = activatableAbility.Blueprint;
+				if (blueprint == null)
+				{
+					return null;
+				}
+				obj = blueprint.name;
+			}
+			return (string)obj;
+		}
+	}
 
 	public override bool IsBad()
 	{

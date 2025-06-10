@@ -63,12 +63,12 @@ public class StarshipOverrideCustomTeleportLocation : BlueprintComponent, IAbili
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
 	{
-		return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
+		return LocalizedTexts.Instance.Reasons.NotEnoughMovementPoints;
 	}
 
 	public string GetAbilityTargetRestrictionUIText(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
 	{
-		return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
+		return LocalizedTexts.Instance.Reasons.PathBlocked;
 	}
 
 	private List<Vector3> GetNodesToTp(StarshipEntity starship, TargetWrapper target)

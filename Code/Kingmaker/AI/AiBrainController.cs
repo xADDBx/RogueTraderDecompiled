@@ -1,6 +1,7 @@
 using System;
 using Core.Cheats;
 using Kingmaker.AI.DebugUtilities;
+using Kingmaker.Controllers;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
@@ -13,10 +14,11 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Enums;
 
 namespace Kingmaker.AI;
 
-public class AiBrainController : IControllerTick, IController, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, ITurnBasedModeHandler, IAbilityExecutionProcessHandler
+public class AiBrainController : IControllerTick, IController, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, IContinueTurnHandler, IInterruptTurnContinueHandler, ITurnBasedModeHandler, IAbilityExecutionProcessHandler
 {
 	[Cheat]
 	public static float SecondsToWaitAtStart { get; set; } = 0.5f;
@@ -47,22 +49,49 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 	public float AiAbilitySpeedMod { get; private set; } = 1f;
 
 
-	public bool IsBusy => Game.Instance.AbilityExecutor.Abilities.Count > 0;
+	public bool IsBusy
+	{
+		get
+		{
+			foreach (AbilityExecutionProcess ability in Game.Instance.AbilityExecutor.Abilities)
+			{
+				MechanicEntity caster = ability.Context.Ability.Caster;
+				if (caster != null && caster.IsInCombat)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	}
 
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
-		if (isTurnBased)
+		if (isTurnBased && ((!(EventInvokerExtensions.MechanicEntity?.HasMechanicFeature(MechanicsFeatureType.HasNoStandardTurn))) ?? true))
 		{
-			MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-			if (Game.Instance.TurnController.IsAiTurn || AutoCombat)
-			{
-				mechanicEntity.GetBrainOptional()?.Init();
-			}
-			AILogger.Instance.Log(AILogTurn.StartTurn(mechanicEntity));
+			HandleStartTurn();
 		}
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleStartTurn();
+	}
+
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		if (isTurnBased)
+		{
+			HandleStartTurn();
+		}
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
+	{
+		HandleStartTurn();
+	}
+
+	private void HandleStartTurn()
 	{
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
 		if (Game.Instance.TurnController.IsAiTurn || AutoCombat)
@@ -79,12 +108,12 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 
 	public void Tick()
 	{
-		if (!Game.Instance.TurnController.IsAiTurn && !AutoCombat)
+		if (!Game.Instance.TurnController.TurnBasedModeActive || (!Game.Instance.TurnController.IsAiTurn && !AutoCombat) || Game.Instance.TurnController.EndingTurn)
 		{
 			return;
 		}
 		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
-		if (currentUnit is MeteorStreamEntity)
+		if (currentUnit == null || currentUnit is MeteorStreamEntity)
 		{
 			return;
 		}

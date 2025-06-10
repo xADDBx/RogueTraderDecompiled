@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Entities;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
@@ -20,6 +21,10 @@ public class NamedParameterPosition : PositionEvaluator
 		if (!current.Context.Params.TryGetValue(Parameter, out var value))
 		{
 			Element.LogError(this, "Cannot find position {0} in context parameters", Parameter);
+		}
+		if (value is UnitReference unitReference)
+		{
+			return unitReference.Get()?.Position ?? Vector3.zero;
 		}
 		if (value != null && !(value is Vector3))
 		{

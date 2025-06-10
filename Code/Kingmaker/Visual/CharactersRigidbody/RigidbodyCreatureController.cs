@@ -348,30 +348,37 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 			return;
 		}
 		InitBakedCharactersBonesPosition();
-		GameObject weaponModel = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: false);
-		GameObject weaponModel2 = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: true);
-		List<GameObject> list = new List<GameObject>();
-		if (weaponModel != null)
+		if (UnitEntityViewRCC != null)
 		{
-			list.Add(weaponModel);
-		}
-		if (weaponModel2 != null)
-		{
-			list.Add(weaponModel2);
-		}
-		foreach (GameObject item2 in list)
-		{
-			Rigidbody component = item2.gameObject.GetComponent<Rigidbody>();
-			if (component != null)
+			GameObject weaponModel = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: false);
+			GameObject weaponModel2 = UnitEntityViewRCC.HandsEquipment.GetWeaponModel(offHand: true);
+			List<GameObject> list = new List<GameObject>();
+			if (weaponModel != null)
 			{
-				WeaponRigidBones.Add(component);
-				RigidBones.Add(component);
-				BoneImpulseMultiplier item = default(BoneImpulseMultiplier);
-				item.bone = component;
-				item.multiplier = 120f;
-				WeaponImpulseMultiplier.Add(item);
-				component.transform.SetParent(null, worldPositionStays: true);
+				list.Add(weaponModel);
 			}
+			if (weaponModel2 != null)
+			{
+				list.Add(weaponModel2);
+			}
+			foreach (GameObject item2 in list)
+			{
+				Rigidbody component = item2.gameObject.GetComponent<Rigidbody>();
+				if (component != null)
+				{
+					WeaponRigidBones.Add(component);
+					RigidBones.Add(component);
+					BoneImpulseMultiplier item = default(BoneImpulseMultiplier);
+					item.bone = component;
+					item.multiplier = 120f;
+					WeaponImpulseMultiplier.Add(item);
+					component.transform.SetParent(null, worldPositionStays: true);
+				}
+			}
+		}
+		else
+		{
+			PFLog.TechArt.Warning("Check unit, maybe lightweight");
 		}
 		State = RagdollState.Falling;
 		m_DeathPoint = base.transform.position;

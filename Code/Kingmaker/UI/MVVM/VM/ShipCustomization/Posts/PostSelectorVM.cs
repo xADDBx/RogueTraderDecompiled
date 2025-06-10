@@ -10,30 +10,27 @@ namespace Kingmaker.UI.MVVM.VM.ShipCustomization.Posts;
 
 public class PostSelectorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public readonly List<PostEntityVM> Posts = new List<PostEntityVM>();
+	private readonly List<PostEntityVM> m_Posts = new List<PostEntityVM>();
 
-	public readonly ReactiveProperty<PostEntityVM> CurrentSelectedPost;
-
-	public SelectionGroupRadioVM<PostEntityVM> Selector;
+	public readonly SelectionGroupRadioVM<PostEntityVM> Selector;
 
 	public PostSelectorVM(ReactiveProperty<PostEntityVM> currentSelectedPost)
 	{
-		CurrentSelectedPost = currentSelectedPost;
 		List<Post> posts = Game.Instance.Player.PlayerShip.GetHull().Posts;
 		for (int i = 0; i < posts.Count; i++)
 		{
-			Posts.Add(new PostEntityVM(i, posts[i]));
+			m_Posts.Add(new PostEntityVM(i, posts[i]));
 		}
-		Selector = new SelectionGroupRadioVM<PostEntityVM>(Posts, CurrentSelectedPost);
+		Selector = new SelectionGroupRadioVM<PostEntityVM>(m_Posts, currentSelectedPost);
 		Selector.SelectNextValidEntity();
 	}
 
 	protected override void DisposeImplementation()
 	{
-		Posts.ForEach(delegate(PostEntityVM postVm)
+		m_Posts.ForEach(delegate(PostEntityVM postVm)
 		{
 			postVm.Dispose();
 		});
-		Posts.Clear();
+		m_Posts.Clear();
 	}
 }

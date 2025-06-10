@@ -57,6 +57,17 @@ public class CutscenePlayerTrackData : IHashable
 
 	public bool IsRepeat => Track.Repeat;
 
+	public static CutscenePlayerTrackData Create(CutscenePlayerGateData gate, int trackIndex)
+	{
+		return new CutscenePlayerTrackData
+		{
+			StartGate = gate,
+			TrackIndex = trackIndex,
+			CommandIndex = -1,
+			IsPlaying = false
+		};
+	}
+
 	public void Tick(CutscenePlayerData player, [CanBeNull] out CutscenePlayerGateData signalReceiver, bool skipping)
 	{
 		signalReceiver = null;
@@ -96,13 +107,22 @@ public class CutscenePlayerTrackData : IHashable
 				}
 			}
 		}
-		if (!IsPlaying)
+		int commandIndex = CommandIndex;
+		while (!IsPlaying)
 		{
 			StartNextCommand(skipping, flag);
-			if (IsFinished && !SignalSent)
+			if (IsFinished)
 			{
-				SignalSent = true;
-				signalReceiver = EndGate;
+				if (!SignalSent)
+				{
+					SignalSent = true;
+					signalReceiver = EndGate;
+				}
+				break;
+			}
+			if (CommandIndex == commandIndex || (commandIndex == -1 && CommandIndex == Track.Commands.Count - 1) || m_Terminated)
+			{
+				break;
 			}
 		}
 	}
@@ -134,6 +154,7 @@ public class CutscenePlayerTrackData : IHashable
 			{
 			case CommandBase.EntryFailResult.RemoveTrack:
 				StartGate.StartedTracks.Remove(this);
+				m_Terminated = true;
 				break;
 			case CommandBase.EntryFailResult.FinishTrack:
 				ForceStop();
@@ -179,7 +200,7 @@ public class CutscenePlayerTrackData : IHashable
 			IsPlaying = false;
 			StartGate.Player.HandleException(e, this, command);
 		}
-		if (controlledUnit != null && IsPlaying)
+		if (controlledUnit != null && IsPlaying && !skipping)
 		{
 			CutsceneControlledUnit.MarkUnit(controlledUnit, StartGate.Player);
 		}

@@ -25,4 +25,10 @@ public static class CustomGridNodeBaseExtensions
 	{
 		return Game.Instance?.CustomGridNodeController.GetUnit(node);
 	}
+
+	[CanBeNull]
+	public static BaseUnitEntity[] GetAllUnits(this CustomGridNodeBase node)
+	{
+		return Game.Instance?.CustomGridNodeController.GetAllUnits(node);
+	}
 }

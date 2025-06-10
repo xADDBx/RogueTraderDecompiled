@@ -7,6 +7,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
+using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Owlcat.Runtime.UniRx;
@@ -18,7 +19,7 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 {
 	public readonly ShipInfoExperienceVM ShipInfoExperienceVM;
 
-	public CareerPathVM CareerPathVM;
+	public readonly CareerPathVM CareerPathVM;
 
 	public ShipProgressionVM(IReadOnlyReactiveProperty<BaseUnitEntity> unit, IReactiveProperty<LevelUpManager> levelUpManager)
 		: base(unit, levelUpManager)
@@ -27,6 +28,14 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 		BlueprintCareerPath shipPath = ProgressionRoot.Instance.ShipPath;
 		AddDisposable(CareerPathVM = new CareerPathVM(Unit.Value, shipPath, this));
 		SetCareerPath(CareerPathVM, force: true);
+	}
+
+	protected override void DisposeImplementation()
+	{
+		TrySaveState();
+		DestroyLevelUpManager();
+		CareerPathVM?.Dispose();
+		CurrentCareer.Value = null;
 	}
 
 	protected override void RefreshData()
@@ -41,6 +50,7 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 	public override void Commit()
 	{
 		Game.Instance.Player.PlayerShip.StarshipProgression.AddStarshipLevel(m_LevelUpManager.Value);
+		UISounds.Instance.Sounds.Ship.ShipLevelUpgradedNotification.Play();
 		DestroyLevelUpManager();
 	}
 
@@ -79,28 +89,26 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(SetFirstAvailableRankEntry);
 	}
 
-	public void SetFirstAvailableRankEntry()
+	private void SetFirstAvailableRankEntry()
 	{
 		if (CurrentCareer.Value == null)
 		{
 			return;
 		}
 		RankEntrySelectionVM rankEntrySelectionVM = CurrentCareer.Value.AllSelections?.LastOrDefault((RankEntrySelectionVM s) => s.SelectionMade);
-		if (CurrentCareer.Value.IsInLevelupProcess)
+		if (!CurrentCareer.Value.IsInLevelupProcess)
 		{
-			SetRankEntry(rankEntrySelectionVM);
-			if (CurrentCareer.Value.LastEntryToUpgrade == rankEntrySelectionVM)
-			{
-				CurrentCareer.Value.SetRankEntry(rankEntrySelectionVM);
-			}
-			else
-			{
-				CurrentCareer.Value.SelectNextItem(skipSelected: false);
-			}
+			CurrentCareer.Value.SetRankEntry(null);
+			return;
+		}
+		SetRankEntry(rankEntrySelectionVM);
+		if (CurrentCareer.Value.LastEntryToUpgrade == rankEntrySelectionVM)
+		{
+			CurrentCareer.Value.SetRankEntry(rankEntrySelectionVM);
 		}
 		else
 		{
-			CurrentCareer.Value.SetRankEntry(null);
+			CurrentCareer.Value.SelectNextItem(skipSelected: false);
 		}
 	}
 
@@ -128,13 +136,5 @@ public sealed class ShipProgressionVM : BaseUnitProgressionVM
 				h.HandleCreateLevelUpManager(manager);
 			});
 		}
-	}
-
-	protected override void DisposeImplementation()
-	{
-		TrySaveState();
-		DestroyLevelUpManager();
-		CareerPathVM?.Dispose();
-		CurrentCareer.Value = null;
 	}
 }

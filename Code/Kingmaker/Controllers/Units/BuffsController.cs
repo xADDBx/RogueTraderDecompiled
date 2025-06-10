@@ -17,7 +17,7 @@ using Owlcat.Runtime.Core.Utility;
 
 namespace Kingmaker.Controllers.Units;
 
-public class BuffsController : IControllerTick, IController, IControllerEnable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnEndHandler, IInterruptTurnStartHandler, IRoundStartHandler, IRoundEndHandler, ITurnBasedModeHandler, IFactCollectionUpdatedHandler, IExitSpaceCombatHandler, IAreaHandler
+public class BuffsController : IControllerTick, IController, IControllerEnable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IContinueTurnHandler, ITurnEndHandler, IInterruptTurnStartHandler, IInterruptTurnContinueHandler, IRoundStartHandler, IRoundEndHandler, ITurnBasedModeHandler, IFactCollectionUpdatedHandler, IExitSpaceCombatHandler, IAreaHandler
 {
 	[CanBeNull]
 	private EntityFactsManager m_CurrentManager;
@@ -126,7 +126,17 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 		TickBuffs(isTurnBased, Initiative.Event.TurnStart);
 	}
 
+	void IContinueTurnHandler.HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleBuffsWhichShouldBeDisabledOutOfCasterTurn();
+	}
+
 	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleBuffsWhichShouldBeDisabledOutOfCasterTurn();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleBuffsWhichShouldBeDisabledOutOfCasterTurn();
 	}

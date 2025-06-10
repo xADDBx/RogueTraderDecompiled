@@ -34,7 +34,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler
+public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler, IContinueTurnHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler
 {
 	public readonly SurfaceActionBarPartConsumablesVM Consumables;
 
@@ -72,7 +72,17 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	private IFullScreenUIHandler m_FullScreenUIHandlerImplementation;
 
-	private BaseUnitEntity CurrentUnit => CurrentCombatUnit?.Value?.UnitAsBaseUnitEntity;
+	private BaseUnitEntity CurrentUnit
+	{
+		get
+		{
+			if (!(CurrentCombatUnit?.Value?.UnitAsBaseUnitEntity?.IsPet).GetValueOrDefault())
+			{
+				return CurrentCombatUnit?.Value?.UnitAsBaseUnitEntity;
+			}
+			return CurrentCombatUnit.Value.UnitAsBaseUnitEntity.Master;
+		}
+	}
 
 	public IReadOnlyReactiveProperty<bool> IsVisible => m_IsVisible;
 
@@ -380,6 +390,11 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		UpdateSlots();
 	}
 
+	public void HandleExecutionProcessCleared(AbilityExecutionContext context)
+	{
+		UpdateSlots();
+	}
+
 	public void HandleBeginPreparationTurn(bool canDeploy)
 	{
 		OnUnitChanged();
@@ -402,7 +417,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
-		UpdateSlots();
+		if (!interruptionData.InterruptionWithoutInitiativeAndPanelUpdate)
+		{
+			UpdateSlots();
+		}
 	}
 
 	public void HandleUnitEndInterruptTurn()
@@ -433,6 +451,16 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	}
 
 	public void HandleUnitStartTurn(bool isTurnBased)
+	{
+		UpdateSlots();
+	}
+
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateSlots();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateSlots();
 	}

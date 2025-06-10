@@ -331,9 +331,9 @@ public class EntityPartsManager : IDisposable, IHashable
 
 	public void PostLoad()
 	{
-		foreach (EntityPart part in m_Parts)
+		foreach (EntityPart item in m_Parts.ToTempList())
 		{
-			part.PostLoad();
+			item.PostLoad();
 		}
 	}
 

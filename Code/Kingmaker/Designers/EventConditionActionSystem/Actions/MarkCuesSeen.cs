@@ -50,7 +50,7 @@ public class MarkCuesSeen : GameAction
 	{
 		foreach (BlueprintCueBase cue in Cues)
 		{
-			Game.Instance.Player.Dialog.ShownCues.Add(cue);
+			Game.Instance.Player.Dialog.ShownCuesAdd(cue);
 		}
 	}
 }

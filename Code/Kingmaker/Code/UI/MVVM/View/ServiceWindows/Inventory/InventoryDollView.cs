@@ -52,6 +52,9 @@ public abstract class InventoryDollView<TSlotView> : CharInfoComponentView<Inven
 	[SerializeField]
 	protected TSlotView m_Ring2;
 
+	[SerializeField]
+	protected TSlotView m_Protocol;
+
 	[Header("Quick slots")]
 	[SerializeField]
 	protected TSlotView[] m_QuickSlots;
@@ -120,6 +123,7 @@ public abstract class InventoryDollView<TSlotView> : CharInfoComponentView<Inven
 		m_Neck.Bind(base.ViewModel.Neck);
 		m_Ring1.Bind(base.ViewModel.Ring1);
 		m_Ring2.Bind(base.ViewModel.Ring2);
+		m_Protocol.Bind(base.ViewModel.Protocol);
 		for (int i = 0; i < m_QuickSlots.Length; i++)
 		{
 			m_QuickSlots[i].Bind(base.ViewModel.QuickSlots[i]);

@@ -17,6 +17,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -102,11 +103,35 @@ public class AbilityExecutionProcess : IDisposable
 			});
 		}
 		IsEnded = true;
+		if (Context.MaybeCaster != null)
+		{
+			EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessClearedHandler>)delegate(IAbilityExecutionProcessClearedHandler h)
+			{
+				h.HandleExecutionProcessCleared(Context);
+			}, isCheckRuntime: true);
+		}
 	}
 
 	public static void PrepareCast(AbilityExecutionContext context)
 	{
 		context.Recalculate();
+		if (context.Ability.CanRedirectFromTarget(context.ClickedTarget))
+		{
+			context.RedirectActive = true;
+			context.RedirectTargets.AddRange(context.Ability.CalculateRedirectTargets(context.ClickedTarget));
+			if (context.RedirectTargets.Empty() && context.Ability.RedirectSettings.CastOnSelfIfNoTargetsAvailable)
+			{
+				context.RedirectActive = false;
+			}
+		}
+		if (context.RedirectActive)
+		{
+			PartAbilityRedirect orCreate = context.Caster.GetOrCreate<PartAbilityRedirect>();
+			orCreate.LastUsedAbility = context.Ability.Fact;
+			orCreate.LastUsedAbilityTarget = context.ClickedTarget.Entity;
+			context.Caster.GetOrCreate<UnitPartStatsOverride>().Setup(context.Ability.RedirectSettings?.StatsToOverrideForCaster.ToList(), context.ClickedTarget.Entity);
+			context.Recalculate();
+		}
 		context.AbilityBlueprint.CallComponents(delegate(IAbilityOnCastLogic c)
 		{
 			c.OnCast(context);
@@ -139,26 +164,67 @@ public class AbilityExecutionProcess : IDisposable
 		AbilitySelectTarget selectTargets = Context.AbilityBlueprint.GetComponent<AbilitySelectTarget>();
 		PrepareCast(Context);
 		SpawnFxs(Context, AbilitySpawnFxTime.OnStart);
+		EventBus.RaiseEvent(delegate(IDeliverAbilityEffectHandler h)
+		{
+			h.OnDeliverAbilityEffect(Context, Context.ClickedTarget);
+		});
 		if (component != null && !m_InstantDeliver)
 		{
 			IEnumerator<AbilityDeliveryTarget> deliverProcess = component.Deliver(Context, Context.ClickedTarget);
-			EventBus.RaiseEvent(delegate(IDeliverAbilityEffectHandler h)
-			{
-				h.OnDeliverAbilityEffect(Context, Context.ClickedTarget);
-			});
-			while (TickDeliveryProcess(deliverProcess, Context, selectTargets, applyEffectComponents))
+			IEnumerable<AbilityApplyEffect> applyEffects = ((!Context.RedirectActive) ? applyEffectComponents.AsEnumerable() : null);
+			while (TickDeliveryProcess(deliverProcess, Context, selectTargets, applyEffects, isInRedirectProcess: false))
 			{
 				yield return null;
 			}
 		}
 		else
 		{
-			EventBus.RaiseEvent(delegate(IDeliverAbilityEffectHandler h)
-			{
-				h.OnDeliverAbilityEffect(Context, Context.ClickedTarget);
-			});
 			AbilityDeliveryTarget deliveryTarget = new AbilityDeliveryTarget(Context.ClickedTarget);
-			ApplyEffectHit(Context, deliveryTarget, applyEffectComponents, selectTargets, m_InstantDeliver);
+			IEnumerable<AbilityApplyEffect> applyEffects2 = ((!Context.RedirectActive) ? applyEffectComponents.AsEnumerable() : null);
+			ApplyEffectHit(Context, deliveryTarget, applyEffects2, selectTargets, m_InstantDeliver);
+		}
+		AbilityRedirect redirectSettings = Context.Ability.RedirectSettings;
+		if (redirectSettings != null && !Context.RedirectTargets.Empty())
+		{
+			Context.Ability.IsRedirected = true;
+			EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessRedirectHandler>)delegate(IAbilityExecutionProcessRedirectHandler h)
+			{
+				h.HandleAbilityRedirected(Context);
+			}, isCheckRuntime: true);
+			IEnumerator<AbilityDeliveryTarget>[] deliveryProcessList = new IEnumerator<AbilityDeliveryTarget>[Context.RedirectTargets.Count];
+			for (int i = 0; i < Context.RedirectTargets.Count; i++)
+			{
+				MechanicEntity mechanicEntity = Context.RedirectTargets[i];
+				if (!m_InstantDeliver)
+				{
+					deliveryProcessList[i] = redirectSettings.Deliver(Context, mechanicEntity);
+					continue;
+				}
+				AbilityDeliveryTarget deliveryTarget2 = new AbilityDeliveryTarget(Context.RedirectTargets[i]);
+				ApplyEffectHit(Context, deliveryTarget2, applyEffectComponents.AsEnumerable(), selectTargets, m_InstantDeliver);
+			}
+			while (true)
+			{
+				bool flag = false;
+				for (int j = 0; j < deliveryProcessList.Length; j++)
+				{
+					IEnumerator<AbilityDeliveryTarget> enumerator = deliveryProcessList[j];
+					if (enumerator != null)
+					{
+						bool flag2 = TickDeliveryProcess(enumerator, Context, selectTargets, applyEffectComponents.AsEnumerable(), isInRedirectProcess: true);
+						if (!flag2)
+						{
+							deliveryProcessList[j] = null;
+						}
+						flag = flag || flag2;
+					}
+				}
+				if (!flag)
+				{
+					break;
+				}
+				yield return null;
+			}
 		}
 		if (Context.Ability.IsWeaponAttackThatRequiresAmmo)
 		{
@@ -178,13 +244,14 @@ public class AbilityExecutionProcess : IDisposable
 			Context.CleanupApproachingEffects();
 			yield return null;
 		}
+		Context.Caster.GetOptional<UnitPartStatsOverride>()?.Remove();
 		EventBus.RaiseEvent((IMechanicEntity)Context.Caster, (Action<IAbilityExecutionProcessHandler>)delegate(IAbilityExecutionProcessHandler h)
 		{
 			h.HandleExecutionProcessEnd(Context);
 		}, isCheckRuntime: true);
 	}
 
-	private static bool TickDeliveryProcess(IEnumerator<AbilityDeliveryTarget> deliveryProcess, AbilityExecutionContext context, [CanBeNull] AbilitySelectTarget selectTargets, [CanBeNull] IEnumerable<AbilityApplyEffect> effects)
+	private static bool TickDeliveryProcess(IEnumerator<AbilityDeliveryTarget> deliveryProcess, AbilityExecutionContext context, [CanBeNull] AbilitySelectTarget selectTargets, [CanBeNull] IEnumerable<AbilityApplyEffect> effects, bool isInRedirectProcess)
 	{
 		try
 		{
@@ -218,6 +285,11 @@ public class AbilityExecutionProcess : IDisposable
 						}
 						if (flag && deliveryProcess.Current != null)
 						{
+							if (!isInRedirectProcess && context.RedirectActive && deliveryProcess.Current.Target == context.ClickedTarget)
+							{
+								flag = false;
+								break;
+							}
 							using (ProfileScope.New("ApplyEffect"))
 							{
 								ApplyEffect(context, deliveryProcess.Current, effects, selectTargets);
@@ -260,7 +332,7 @@ public class AbilityExecutionProcess : IDisposable
 		}
 	}
 
-	private static void ApplyEffectHit(AbilityExecutionContext context, AbilityDeliveryTarget deliveryTarget, [CanBeNull] IEnumerable<AbilityApplyEffect> applyEffects, [CanBeNull] AbilitySelectTarget selectTargets, bool instant)
+	public static void ApplyEffectHit(AbilityExecutionContext context, AbilityDeliveryTarget deliveryTarget, [CanBeNull] IEnumerable<AbilityApplyEffect> applyEffects, [CanBeNull] AbilitySelectTarget selectTargets, bool instant)
 	{
 		if (selectTargets != null)
 		{
@@ -335,7 +407,7 @@ public class AbilityExecutionProcess : IDisposable
 			});
 			using (context.GetDataScope(target.Target))
 			{
-				using (AbilityExecutionContext.GetAbilityDataScope(target.AttackRule, target.Projectile))
+				using (AbilityExecutionContext.GetAbilityDataScope(target.AttackRule, target.Projectile, context.ClickedTarget))
 				{
 					applyEffect?.Apply(context, target.Target);
 					foreach (BlueprintAbilityAdditionalEffect additionalEffect in context.Ability.AdditionalEffects)

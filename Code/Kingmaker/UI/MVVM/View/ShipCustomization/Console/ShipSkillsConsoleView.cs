@@ -55,11 +55,11 @@ public class ShipSkillsConsoleView : ShipSkillsBaseView<ShipCareerPathSelectionT
 
 	private bool m_HasTooltip;
 
-	private bool m_ShowTooltip = true;
+	private readonly bool m_ShowTooltip = true;
 
 	private TooltipConfig m_TooltipConfig;
 
-	private Dictionary<ConsoleNavigationBehaviour, IConsoleEntity> m_PreviousEntities = new Dictionary<ConsoleNavigationBehaviour, IConsoleEntity>();
+	private readonly Dictionary<ConsoleNavigationBehaviour, IConsoleEntity> m_PreviousEntities = new Dictionary<ConsoleNavigationBehaviour, IConsoleEntity>();
 
 	private ConsoleNavigationBehaviour m_PreviousNavigation;
 

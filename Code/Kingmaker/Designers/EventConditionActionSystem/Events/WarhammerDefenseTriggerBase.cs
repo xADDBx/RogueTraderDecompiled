@@ -3,7 +3,11 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Block;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.Utility;
 using StateHasher.Core;
@@ -31,78 +35,67 @@ public abstract class WarhammerDefenseTriggerBase : MechanicEntityFactComponentD
 
 	public bool TriggerOnCover;
 
+	public bool TriggerOnBlock;
+
 	protected void TryTriggerDodgeActions(RulePerformDodge evt)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+		if (TriggerOnDodge && CheckRestrictions(evt, evt.Ability))
 		{
-			if (!Restrictions.IsPassed(base.Fact, evt, evt.Ability))
-			{
-				return;
-			}
-		}
-		if (TriggerOnDodge)
-		{
-			if (!evt.Result)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfHit, (TargetWrapper)evt.Attacker);
-				base.Fact.RunActionInContext(ActionsOnTargetHit, (TargetWrapper)evt.Defender);
-			}
-			if (evt.Result)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfMiss, (TargetWrapper)evt.Attacker);
-				base.Fact.RunActionInContext(ActionsOnTargetMiss, (TargetWrapper)evt.Defender);
-			}
+			RunActions(!evt.Result, evt.Attacker, evt.Defender);
 			base.ExecutesCount++;
 		}
 	}
 
 	protected void TryTriggerParryActions(RuleRollParry evt)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+		if (TriggerOnParry && CheckRestrictions(evt, evt.Ability))
 		{
-			if (!Restrictions.IsPassed(base.Fact, evt, evt.Ability))
-			{
-				return;
-			}
+			RunActions(!evt.Result, evt.Attacker, evt.Defender);
+			base.ExecutesCount++;
 		}
-		if (TriggerOnParry)
+	}
+
+	protected void TryTriggerBlockActions(RuleRollBlock evt)
+	{
+		if (TriggerOnBlock && CheckRestrictions(evt, evt.ChancesRule.Ability))
 		{
-			if (!evt.Result)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfHit, (TargetWrapper)evt.Attacker);
-				base.Fact.RunActionInContext(ActionsOnTargetHit, (TargetWrapper)evt.Defender);
-			}
-			if (evt.Result)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfMiss, (TargetWrapper)evt.Attacker);
-				base.Fact.RunActionInContext(ActionsOnTargetMiss, (TargetWrapper)evt.Defender);
-			}
+			RunActions(!evt.Result, evt.Attacker, evt.Defender);
 			base.ExecutesCount++;
 		}
 	}
 
 	protected void TryTriggerCoverActions(RuleRollCoverHit evt)
 	{
+		if (TriggerOnCover && CheckRestrictions(evt, evt.Reason.Ability))
+		{
+			RunActions(!evt.ResultIsHit, evt.ConcreteInitiator, evt.MaybeTarget);
+			base.ExecutesCount++;
+		}
+	}
+
+	private bool CheckRestrictions(RulebookEvent evt, AbilityData ability)
+	{
 		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
 		{
-			if (!Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability))
+			if (!Restrictions.IsPassed(base.Fact, evt, ability))
 			{
-				return;
+				return false;
 			}
 		}
-		if (TriggerOnCover)
+		return true;
+	}
+
+	private void RunActions(bool isHit, MechanicEntity self, MechanicEntity target)
+	{
+		if (isHit)
 		{
-			if (!evt.ResultIsHit)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfHit, (TargetWrapper)evt.ConcreteInitiator);
-				base.Fact.RunActionInContext(ActionsOnTargetHit, (TargetWrapper)evt.MaybeTarget);
-			}
-			if (evt.ResultIsHit)
-			{
-				base.Fact.RunActionInContext(ActionOnSelfMiss, (TargetWrapper)evt.ConcreteInitiator);
-				base.Fact.RunActionInContext(ActionsOnTargetMiss, (TargetWrapper)evt.MaybeTarget);
-			}
-			base.ExecutesCount++;
+			base.Fact.RunActionInContext(ActionOnSelfHit, (TargetWrapper)self);
+			base.Fact.RunActionInContext(ActionsOnTargetHit, (TargetWrapper)target);
+		}
+		else
+		{
+			base.Fact.RunActionInContext(ActionOnSelfMiss, (TargetWrapper)self);
+			base.Fact.RunActionInContext(ActionsOnTargetMiss, (TargetWrapper)target);
 		}
 	}
 

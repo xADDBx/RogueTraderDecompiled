@@ -6,24 +6,19 @@ using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.Visual;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
 
-public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ILoadingScreen, IDialogMessageBoxUIHandler, ISubscriber, IAreaHandler, IAreaLoadingStagesHandler
+public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ILoadingScreen, IDialogMessageBoxUIHandler, ISubscriber, IAreaHandler
 {
 	public readonly ReactiveProperty<LoadingScreenVM> LoadingScreenVM = new ReactiveProperty<LoadingScreenVM>();
 
 	private BlueprintArea m_Area;
 
 	private readonly List<DialogMessageBoxData> m_DialogMessageBoxDatas = new List<DialogMessageBoxData>();
-
-	private CameraDisabler m_MainCameraDisabler;
-
-	private CameraDisabler m_BackgroundCameraDisabler;
 
 	public LoadingScreenRootVM()
 	{
@@ -53,7 +48,6 @@ public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	private void DisposeLoadingScreen()
 	{
-		EnableBaseCameras();
 		DisposeAndRemove(LoadingScreenVM);
 		m_Area = null;
 		foreach (DialogMessageBoxData data in m_DialogMessageBoxDatas)
@@ -86,44 +80,9 @@ public class LoadingScreenRootVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public void OnAreaBeginUnloading()
 	{
-		DisableBaseCameras();
 	}
 
 	public void OnAreaDidLoad()
 	{
-	}
-
-	public void OnAreaScenesLoaded()
-	{
-	}
-
-	public void OnAreaLoadingComplete()
-	{
-		EnableBaseCameras();
-	}
-
-	private void DisableBaseCameras()
-	{
-		if (m_BackgroundCameraDisabler != null || m_MainCameraDisabler != null)
-		{
-			PFLog.System.Warning("Main and Background cameras already disables!");
-			return;
-		}
-		m_MainCameraDisabler = CameraDisabler.Disable(CameraStackManager.CameraStackType.Main);
-		m_BackgroundCameraDisabler = CameraDisabler.Disable(CameraStackManager.CameraStackType.Background);
-	}
-
-	private void EnableBaseCameras()
-	{
-		if (m_BackgroundCameraDisabler != null)
-		{
-			m_BackgroundCameraDisabler.Dispose();
-			m_BackgroundCameraDisabler = null;
-		}
-		if (m_MainCameraDisabler != null)
-		{
-			m_MainCameraDisabler.Dispose();
-			m_MainCameraDisabler = null;
-		}
 	}
 }

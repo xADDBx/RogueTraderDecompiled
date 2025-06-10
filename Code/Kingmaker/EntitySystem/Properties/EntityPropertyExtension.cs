@@ -33,6 +33,11 @@ public static class EntityPropertyExtension
 			return Stat(e, StatType.WarhammerBallisticSkill);
 			static int? Stat(Entity entity, StatType type)
 			{
+				UnitPartStatsOverride optional = entity.GetOptional<UnitPartStatsOverride>();
+				if (optional != null && optional.TryGetOverride(type, out var value))
+				{
+					return value;
+				}
 				return entity.GetOptional<PartStatsContainer>()?.GetStatOptional(type);
 			}
 		});

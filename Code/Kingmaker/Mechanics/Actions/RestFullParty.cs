@@ -16,13 +16,13 @@ public class RestFullParty : ContextAction
 
 	protected override void RunAction()
 	{
-		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			PartHealth.RestUnit(item);
+			PartHealth.RestUnit(partyAndPet);
 		}
-		foreach (ItemEntity item2 in Game.Instance.Player.Inventory)
+		foreach (ItemEntity item in Game.Instance.Player.Inventory)
 		{
-			item2.RestoreCharges();
+			item.RestoreCharges();
 		}
 	}
 }

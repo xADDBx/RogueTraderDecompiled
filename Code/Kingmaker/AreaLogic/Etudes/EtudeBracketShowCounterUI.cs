@@ -16,9 +16,13 @@ public class EtudeBracketShowCounterUI : EtudeBracketTrigger, IHashable
 {
 	public LocalizedString Label;
 
+	public LocalizedString SubLabel;
+
 	public PropertyCalculator Value;
 
 	public PropertyCalculator TargetValue;
+
+	public EtudeUICounterTypes UICounterType = EtudeUICounterTypes.Label;
 
 	protected override void OnEnter()
 	{
@@ -46,16 +50,16 @@ public class EtudeBracketShowCounterUI : EtudeBracketTrigger, IHashable
 		PropertyContext context = new PropertyContext(mainCharacterEntity, null, null, base.Context);
 		EventBus.RaiseEvent(delegate(IEtudeCounterHandler h)
 		{
-			h.ShowEtudeCounter(GetCounterId(), Label, ValueGetter, TargetValueGetter);
+			h.ShowEtudeCounter(new EtudeShowCounterUIStruct
+			{
+				Id = GetCounterId(),
+				Type = UICounterType,
+				Label = Label,
+				SubLabel = SubLabel,
+				ValueGetter = () => Value.GetValue(context),
+				TargetValueGetter = () => TargetValue.GetValue(context)
+			});
 		});
-		int TargetValueGetter()
-		{
-			return TargetValue.GetValue(context);
-		}
-		int ValueGetter()
-		{
-			return Value.GetValue(context);
-		}
 	}
 
 	private void Hide()

@@ -12,11 +12,12 @@ using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 
-public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandEndHandler, IUnitCommandStartHandler, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IAreaHandler
+public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCommandEndHandler, IUnitCommandStartHandler, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IAreaHandler, IInterruptTurnContinueHandler
 {
 	public readonly ReactiveCollection<LineOfSightVM> LinesVMs = new ReactiveCollection<LineOfSightVM>();
 
@@ -67,7 +68,20 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 		}
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		if (isTurnBased)
+		{
+			SetNewUnit();
+		}
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		SetNewUnit();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		SetNewUnit();
 	}
@@ -144,7 +158,7 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	public void HandleTurnBasedModeResumed()
 	{
-		SetNewUnit();
+		DelayedInvoker.InvokeInFrames(SetNewUnit, 1);
 	}
 
 	public void OnAreaBeginUnloading()

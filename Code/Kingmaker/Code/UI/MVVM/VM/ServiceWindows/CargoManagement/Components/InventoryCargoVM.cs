@@ -77,7 +77,7 @@ public class InventoryCargoVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			CollectSlots();
 		}));
 		AddDisposable(CurrentSorter.Subscribe(OnSorterChanged));
-		IsCargoLocked = Game.Instance.Player.CargoState.LockTransferFromCargo;
+		IsCargoLocked = (bool)Game.Instance.Player.CargoState.LockTransferFromCargo || (bool)Game.Instance.Player.ServiceWindowsBlocked;
 	}
 
 	protected override void DisposeImplementation()

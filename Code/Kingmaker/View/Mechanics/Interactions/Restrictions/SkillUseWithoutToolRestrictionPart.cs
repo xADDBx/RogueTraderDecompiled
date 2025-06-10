@@ -40,7 +40,7 @@ internal class SkillUseWithoutToolRestrictionPart : InteractionRestrictionPart<S
 
 	InteractionPart IInteractionVariantActor.InteractionPart => InteractionPart;
 
-	private InteractionSkillCheckPart InteractionPart => base.ConcreteOwner.GetRequired<InteractionSkillCheckPart>();
+	private InteractionSkillCheckPart InteractionPart => base.ConcreteOwner?.GetRequired<InteractionSkillCheckPart>();
 
 	protected override void OnAttach()
 	{
@@ -50,6 +50,10 @@ internal class SkillUseWithoutToolRestrictionPart : InteractionRestrictionPart<S
 
 	public string GetInteractionName()
 	{
+		if (InteractionPart == null)
+		{
+			return string.Empty;
+		}
 		return LocalizedTexts.Instance.Stats.GetText(InteractionPart.GetSkill());
 	}
 
@@ -85,8 +89,8 @@ internal class SkillUseWithoutToolRestrictionPart : InteractionRestrictionPart<S
 		}
 		BlueprintItem item = base.Settings.Type switch
 		{
-			InteractionActorType.Logic => base.ConcreteOwner.GetOptional<RitualSetRestrictionPart>()?.Settings?.GetItem(), 
-			InteractionActorType.LoreXenos => base.ConcreteOwner.GetOptional<MultikeyRestrictionPart>()?.Settings?.GetItem(), 
+			InteractionActorType.Logic => base.ConcreteOwner?.GetOptional<RitualSetRestrictionPart>()?.Settings?.GetItem(), 
+			InteractionActorType.LoreXenos => base.ConcreteOwner?.GetOptional<MultikeyRestrictionPart>()?.Settings?.GetItem(), 
 			_ => null, 
 		};
 		if (item != null)

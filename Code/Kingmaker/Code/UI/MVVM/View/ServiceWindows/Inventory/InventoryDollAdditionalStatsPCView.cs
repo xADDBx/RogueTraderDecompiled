@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Selectable;
@@ -117,6 +118,10 @@ public class InventoryDollAdditionalStatsPCView : CharInfoComponentView<Inventor
 		AddDisposable(base.ViewModel.Parry.Subscribe(delegate(string value)
 		{
 			m_ParryValue.text = value;
+		}));
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_ResolveTooltip.gameObject.SetActive(!u.IsPet);
 		}));
 	}
 

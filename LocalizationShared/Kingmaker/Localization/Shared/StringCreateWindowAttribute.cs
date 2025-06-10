@@ -10,6 +10,7 @@ public class StringCreateWindowAttribute : Attribute
 		Action,
 		Bark,
 		Buff,
+		ByProperty,
 		EntryPoint,
 		Item,
 		LocationName,

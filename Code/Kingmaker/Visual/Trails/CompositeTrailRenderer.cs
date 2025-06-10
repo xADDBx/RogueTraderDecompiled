@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DG.DemiLib.Attributes;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 using UnityEngine.Rendering;

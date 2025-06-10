@@ -1,6 +1,8 @@
-using System.Collections;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.QA.Arbiter.GameCore;
+using Kingmaker.QA.Arbiter.Tasks;
 
 namespace Kingmaker.QA.Arbiter;
 
@@ -14,17 +16,17 @@ public class TeleportToPointTask : ArbiterTask
 		m_BlueprintAreaEnterPointReference = blueprintAreaEnterPointReference;
 	}
 
-	protected override IEnumerator Routine()
+	protected override IEnumerator<ArbiterTask> Routine()
 	{
-		using (ArbiterClientMeasurements.StartTimer("TeleportToPoint"))
+		using (ArbiterMeasurementTimer.StartTimer("TeleportToPoint"))
 		{
-			ArbiterClientIntegration.TeleportToEnterPoint(m_BlueprintAreaEnterPointReference);
+			ArbiterIntegration.TeleportToEnterPoint(m_BlueprintAreaEnterPointReference);
 			yield return null;
 			while (LoadingProcess.Instance.IsLoadingInProcess)
 			{
 				yield return null;
 			}
-			yield return new WaitForCutsceneTask(this);
+			yield return new WaitForDefaultModeTask(this);
 		}
 	}
 }

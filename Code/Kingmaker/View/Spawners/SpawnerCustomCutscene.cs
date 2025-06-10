@@ -32,7 +32,7 @@ public class SpawnerCustomCutscene : EntityPartComponent<SpawnerCustomCutscene.P
 			{
 				return;
 			}
-			using (ContextData<SpawnedUnitData>.Request().Setup(unit, base.ConcreteOwner.HoldingState))
+			using (ContextData<SpawnedUnitData>.Request().Setup(unit, base.ConcreteOwner?.HoldingState))
 			{
 				CutscenePlayerView cutscenePlayerView = CutscenePlayerView.Play(Source.Cutscene.Get(), new ParametrizedContextSetter
 				{
@@ -41,7 +41,7 @@ public class SpawnerCustomCutscene : EntityPartComponent<SpawnerCustomCutscene.P
 						"Spawned",
 						(object)unit.FromAbstractUnitEntity()
 					} }
-				}, queued: false, base.ConcreteOwner.HoldingState);
+				}, queued: false, base.ConcreteOwner?.HoldingState);
 				m_Cutscene = cutscenePlayerView.PlayerData;
 				cutscenePlayerView.PlayerData.TickScene();
 			}
@@ -67,10 +67,11 @@ public class SpawnerCustomCutscene : EntityPartComponent<SpawnerCustomCutscene.P
 		{
 			if (Source.m_RestartIfAbsent)
 			{
-				EntityRef<AbstractUnitEntity> spawnedUnit = ((UnitSpawnerBase.MyData)base.ConcreteOwner).SpawnedUnit;
-				if (spawnedUnit != null)
+				EntityRef<AbstractUnitEntity>? entityRef = ((UnitSpawnerBase.MyData)base.ConcreteOwner)?.SpawnedUnit;
+				if (entityRef.HasValue)
 				{
-					OnSpawn(spawnedUnit);
+					EntityRef<AbstractUnitEntity>? entityRef2 = entityRef;
+					OnSpawn(entityRef2.HasValue ? ((AbstractUnitEntity)entityRef2.GetValueOrDefault()) : null);
 				}
 			}
 		}

@@ -58,7 +58,7 @@ public class RulePerformCollision : RulebookTargetEvent<MechanicEntity, Mechanic
 		{
 			return;
 		}
-		RulePerformSkillCheck rulePerformSkillCheck = new RulePerformSkillCheck(Pushed, StatType.WarhammerAgility, 0);
+		RulePerformSkillCheck rulePerformSkillCheck = new RulePerformSkillCheck(Pushed, StatType.WarhammerAgility, 0, ignoreDCIncreaseFromDifficulty: true);
 		Rulebook.Trigger(rulePerformSkillCheck);
 		if (!rulePerformSkillCheck.ResultIsSuccess)
 		{

@@ -15,7 +15,6 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
@@ -29,7 +28,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic;
 
-public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IPartyCombatHandler, IAbilityTargetSelectionUIHandler, IUnitDirectHoverUIHandler, ITurnStartHandler, IInterruptTurnStartHandler, IUnitPathManagerHandler, IUnitMovableAreaHandler, IAbilityTargetHoverUIHandler, IAbilityTargetMarkerHoverUIHandler
+public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IPartyCombatHandler, IAbilityTargetSelectionUIHandler, IUnitDirectHoverUIHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitPathManagerHandler, IUnitMovableAreaHandler, IAbilityTargetHoverUIHandler, IAbilityTargetMarkerHoverUIHandler, IInterruptTurnContinueHandler
 {
 	[SerializeField]
 	private float m_LoSinHoverDelayTime = 1f;
@@ -38,6 +37,8 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 	private float m_AooUpdateDelayTime = 0.15f;
 
 	private UnitHologram m_VirtualHologram;
+
+	private UnitHologram m_MovementHologram;
 
 	private Vector3? m_VirtualHologramPosition;
 
@@ -81,8 +82,6 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 
 	public static Vector3? RealHologramPosition { get; private set; }
 
-	public OrientedPatternData AffectedNodes { get; private set; }
-
 	private bool HasAbility => m_SelectedAbility != null;
 
 	private Path UnitPath
@@ -100,7 +99,22 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 	}
 
 	[CanBeNull]
-	private BaseUnitEntity CurrentUnit => Game.Instance.TurnController.CurrentUnit as BaseUnitEntity;
+	private BaseUnitEntity CurrentUnit
+	{
+		get
+		{
+			object obj = m_SelectedAbility?.Caster as BaseUnitEntity;
+			if (obj == null)
+			{
+				if (!(m_VirtualHologram != null))
+				{
+					return Game.Instance.TurnController.CurrentUnit as BaseUnitEntity;
+				}
+				obj = m_VirtualHologram.Parent;
+			}
+			return (BaseUnitEntity)obj;
+		}
+	}
 
 	public float BluePointsCost => m_BluePointsCost;
 
@@ -180,14 +194,24 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		UpdateVirtualLoSPosition();
 	}
 
-	public void SetHologramPosition(BaseUnitEntity unit, Vector3 position, Vector3 direction)
+	public void SetMovementHologramPosition(BaseUnitEntity unit, Vector3 position, Vector3 direction)
 	{
 		m_VirtualHologramPosition = position;
 		direction.y = 0f;
 		m_VirtualHologramDirection = direction;
-		CreateHologramIfNeeded(unit);
+		CreateHologramIfNeeded(unit, allowSecondHologram: false, isMovementHologram: true);
 		UpdateVirtualHologramPosition();
 		UpdateVirtualLoSPosition();
+	}
+
+	public void ClearHologramPosition(BaseUnitEntity unit)
+	{
+		if (m_VirtualHologramPosition.HasValue && !(m_VirtualHologram == null) && m_VirtualHologram.Parent == unit)
+		{
+			m_VirtualHologramPosition = null;
+			m_VirtualHologramDirection = null;
+			UpdateVirtualHologramPosition();
+		}
 	}
 
 	public void HandleSetUnitMovableArea(List<GraphNode> nodes)
@@ -213,71 +237,72 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		m_MovableAreaPositions = new List<Vector3>();
 	}
 
-	public void SetAbilityArea(Vector3 casterPosition, Vector3 targetPosition, OrientedPatternData affectedNodes)
+	public void SetAbilityPositions(Vector3 casterPosition, Vector3 targetPosition)
 	{
-		AffectedNodes = affectedNodes;
 		m_AbilityCasterPosition = casterPosition;
 		m_AbilityTargetPosition = targetPosition;
 		CreateHologramIfNeeded(CurrentUnit);
 		UpdateVirtualHologramPosition();
 	}
 
+	private void ClearAbilityArea()
+	{
+		m_SelectedAbility = null;
+		m_AbilityCasterPosition = null;
+		m_AbilityTargetPosition = null;
+	}
+
 	private Vector3? GetBestShootingPosition()
 	{
-		Vector3? vector = null;
-		if (m_AbilityCasterPosition.HasValue)
-		{
-			vector = m_AbilityCasterPosition.Value;
-		}
+		Vector3 position;
 		if (m_HoveredUnit != null && m_SelectedAbility.CanTargetFromDesiredPosition(m_HoveredUnit))
 		{
-			vector = m_SelectedAbility.GetBestShootingPositionForDesiredPosition(m_HoveredUnit).Vector3Position;
+			position = m_SelectedAbility.GetBestShootingPositionForDesiredPosition(m_HoveredUnit).Vector3Position;
+		}
+		else
+		{
+			if (!m_AbilityCasterPosition.HasValue)
+			{
+				return null;
+			}
+			position = m_AbilityCasterPosition.Value;
 		}
 		Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(m_SelectedAbility.Caster);
-		CustomGridNodeBase customGridNodeBase = vector?.GetNearestNodeXZUnwalkable();
-		CustomGridNodeBase nearestNodeXZUnwalkable = desiredPosition.GetNearestNodeXZUnwalkable();
-		if (m_SelectedAbility.Caster.IsUnitPositionContainsNode(desiredPosition, customGridNodeBase))
+		CustomGridNodeBase nearestNodeXZUnwalkable = position.GetNearestNodeXZUnwalkable();
+		CustomGridNodeBase nearestNodeXZUnwalkable2 = desiredPosition.GetNearestNodeXZUnwalkable();
+		if (m_SelectedAbility.Caster.IsUnitPositionContainsNode(desiredPosition, nearestNodeXZUnwalkable))
 		{
-			return nearestNodeXZUnwalkable?.Vector3Position;
+			return nearestNodeXZUnwalkable2?.Vector3Position;
 		}
-		if (customGridNodeBase == nearestNodeXZUnwalkable)
+		if (nearestNodeXZUnwalkable == nearestNodeXZUnwalkable2)
 		{
 			return null;
 		}
-		return customGridNodeBase?.Vector3Position;
+		return nearestNodeXZUnwalkable?.Vector3Position;
 	}
 
 	private void UpdateVirtualHologramPosition()
 	{
 		if (!(m_VirtualHologram == null))
 		{
+			Vector3? position = m_VirtualHologramPosition ?? (HasAbility ? GetBestShootingPosition() : null);
 			Vector3? vector = null;
-			Vector3? vector2 = null;
-			if (HasAbility)
+			Vector3? vector2 = m_AbilityTargetPosition ?? m_HoveredUnit?.Position;
+			bool flag = m_SelectedAbility?.Blueprint.ShouldTurnToTarget ?? false;
+			if (position.HasValue && vector2.HasValue && flag)
 			{
-				vector = GetBestShootingPosition();
+				Vector3 normalized = (vector2.Value - position.Value).normalized;
+				normalized.y = 0f;
+				vector = normalized;
 			}
 			Vector3? vector3 = vector;
 			if (!vector3.HasValue)
 			{
-				vector = m_VirtualHologramPosition;
+				vector = m_VirtualHologramDirection;
 			}
-			Vector3? vector4 = m_AbilityTargetPosition ?? m_HoveredUnit?.Position;
-			bool flag = m_SelectedAbility?.Blueprint.ShouldTurnToTarget ?? false;
-			if (vector.HasValue && vector4.HasValue && flag)
+			if (position.HasValue)
 			{
-				Vector3 normalized = (vector4.Value - vector.Value).normalized;
-				normalized.y = 0f;
-				vector2 = normalized;
-			}
-			vector3 = vector2;
-			if (!vector3.HasValue)
-			{
-				vector2 = m_VirtualHologramDirection;
-			}
-			if (vector.HasValue)
-			{
-				UpdateHologram(m_VirtualHologram, vector, vector2);
+				UpdateHologram(m_VirtualHologram, position, vector);
 			}
 			else
 			{
@@ -295,8 +320,10 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		if (!HasAbility && m_ShowHoverPosition && !m_IsCameraRotation && m_VirtualHoverPosition.HasValue && ((m_MovableAreaPositions.Contains(m_VirtualHoverPosition.Value) && !m_VirtualHologramPosition.HasValue) || m_IsCtrlHold))
 		{
 			Game.Instance.VirtualPositionController.VirtualPosition = m_VirtualHoverPosition.Value;
+			return;
 		}
-		else if (m_VirtualHologramPosition.HasValue)
+		Game.Instance.VirtualPositionController.VirtualPositionUnit = m_SelectedAbility?.Caster;
+		if (m_VirtualHologramPosition.HasValue)
 		{
 			Game.Instance.VirtualPositionController.VirtualPosition = m_VirtualHologramPosition.Value;
 			if (m_VirtualHologramDirection.HasValue)
@@ -310,7 +337,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		}
 	}
 
-	private void CreateHologramIfNeeded([CanBeNull] BaseUnitEntity unit)
+	private void CreateHologramIfNeeded([CanBeNull] BaseUnitEntity unit, bool allowSecondHologram = false, bool isMovementHologram = false)
 	{
 		if (unit == null || !unit.Faction.IsPlayer)
 		{
@@ -320,19 +347,35 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		{
 			m_AbilityCasterPosition = null;
 			m_AbilityTargetPosition = null;
-			AffectedNodes = OrientedPatternData.Empty;
 		}
-		Vector3 vector = m_AbilityCasterPosition ?? m_VirtualHologramPosition ?? unit.Position;
-		if (!((unit.Position - vector).sqrMagnitude < 1f) && (m_VirtualHologramPosition.HasValue || !unit.GetOccupiedNodes().Contains(vector.GetNearestNodeXZ())) && (m_VirtualHologram == null || m_VirtualHologram.Parent != unit))
+		if ((!m_VirtualHologramPosition.HasValue && m_AbilityCasterPosition.HasValue && unit.GetOccupiedNodes().Contains(m_AbilityCasterPosition.Value.GetNearestNodeXZ())) || (!(m_VirtualHologram == null) && m_VirtualHologram.Parent == unit && !((m_MovementHologram == m_VirtualHologram) ? allowSecondHologram : isMovementHologram)))
 		{
-			if (m_VirtualHologram != null)
+			return;
+		}
+		if (m_MovementHologram != null && m_MovementHologram != m_VirtualHologram && isMovementHologram)
+		{
+			UnityEngine.Object.Destroy(m_MovementHologram.gameObject);
+			m_MovementHologram = null;
+		}
+		if (m_VirtualHologram != null)
+		{
+			if (m_VirtualHologram == m_MovementHologram && allowSecondHologram)
+			{
+				m_VirtualHologram = null;
+			}
+			else
 			{
 				UnityEngine.Object.Destroy(m_VirtualHologram.gameObject);
+				m_VirtualHologram = null;
 			}
-			if (Game.Instance.TurnController.TurnBasedModeActive)
+		}
+		if (Game.Instance.TurnController.TurnBasedModeActive && (!m_VirtualHologramPosition.HasValue || WarhammerBlockManager.Instance.CanUnitStandOnNode(unit, m_VirtualHologramPosition.Value.GetNearestNodeXZUnwalkable())))
+		{
+			StarshipView componentInChildren = unit.View.GetComponentInChildren<StarshipView>();
+			m_VirtualHologram = (componentInChildren ? unit.CreateHologramSpaceship() : unit.CreateHologram());
+			if (isMovementHologram)
 			{
-				StarshipView componentInChildren = unit.View.GetComponentInChildren<StarshipView>();
-				m_VirtualHologram = (componentInChildren ? unit.CreateHologramSpaceship() : unit.CreateHologram());
+				m_MovementHologram = m_VirtualHologram;
 			}
 		}
 	}
@@ -365,9 +408,22 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		}
 	}
 
-	public void ClearHologram(BaseUnitEntity unit)
+	public void ClearMovementHologram(BaseUnitEntity unit)
 	{
+		if (m_MovementHologram != null && m_MovementHologram != m_VirtualHologram && m_MovementHologram.Parent == unit)
+		{
+			UnityEngine.Object.Destroy(m_MovementHologram.gameObject);
+			m_MovementHologram = null;
+		}
 		if (!(m_VirtualHologram == null) && m_VirtualHologram.Parent == unit)
+		{
+			ClearHologram();
+		}
+	}
+
+	private void ClearExtraHologramOnly()
+	{
+		if (m_VirtualHologram != null && m_MovementHologram == null)
 		{
 			ClearHologram();
 		}
@@ -375,11 +431,16 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 
 	private void ClearHologram()
 	{
+		if (m_MovementHologram != null && m_MovementHologram != m_VirtualHologram)
+		{
+			UnityEngine.Object.Destroy(m_MovementHologram.gameObject);
+		}
 		if (m_VirtualHologram != null)
 		{
 			UnityEngine.Object.Destroy(m_VirtualHologram.gameObject);
 		}
 		m_VirtualHologram = null;
+		m_MovementHologram = null;
 		m_VirtualHologramPosition = null;
 		m_VirtualHologramDirection = null;
 		RealHologramPosition = null;
@@ -407,22 +468,35 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 	public void HandleAbilityTargetSelectionStart(AbilityData ability)
 	{
 		m_SelectedAbility = ability;
+		UpdateSecondHologramForSelectedAbility();
 		UpdateVirtualLoSPosition();
+	}
+
+	public void UpdateSecondHologramForSelectedAbility()
+	{
+		if (!(m_SelectedAbility == null) && m_SelectedAbility.TryGetCasterDesiredPositionAndDirection(out var position, out var direction))
+		{
+			m_VirtualHologramPosition = position;
+			m_VirtualHologramDirection = direction;
+			CreateHologramIfNeeded(CurrentUnit, allowSecondHologram: true);
+			UpdateVirtualHologramPosition();
+		}
 	}
 
 	public void HandleAbilityTargetSelectionEnd(AbilityData ability)
 	{
-		m_SelectedAbility = null;
-		m_AbilityCasterPosition = null;
-		m_AbilityTargetPosition = null;
-		AffectedNodes = OrientedPatternData.Empty;
-		UpdateVirtualHologramPosition();
+		if (!(m_SelectedAbility == null))
+		{
+			ClearAbilityArea();
+			ClearExtraHologramOnly();
+			UpdateVirtualHologramPosition();
+		}
 	}
 
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
 	{
 		m_HoveredUnit = (isHover ? unitEntityView.Data : null);
-		if (m_HoveredUnit != null)
+		if (m_HoveredUnit != null && m_SelectedAbility != null)
 		{
 			CreateHologramIfNeeded(CurrentUnit);
 		}
@@ -431,7 +505,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand command)
 	{
-		if (command.Executor == CurrentUnit && CheckUnitCommand(command))
+		if ((command.Executor == CurrentUnit || command.Executor == Game.Instance.TurnController.CurrentUnit) && CheckUnitCommand(command))
 		{
 			ClearAll();
 		}
@@ -447,7 +521,17 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		HandleUnitStartTurnInternal();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleUnitStartTurnInternal();
 	}

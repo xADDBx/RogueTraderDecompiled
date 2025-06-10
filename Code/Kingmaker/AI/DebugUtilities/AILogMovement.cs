@@ -7,21 +7,21 @@ public class AILogMovement : AILogObject
 {
 	private readonly bool isIntention;
 
-	private readonly TaskNodeSetupMoveCommand.Mode moveTarget;
+	private readonly SetupMoveCommandMode moveTarget;
 
 	private readonly GraphNode node;
 
-	public static AILogMovement Intent(TaskNodeSetupMoveCommand.Mode moveTarget)
+	public static AILogMovement Intent(SetupMoveCommandMode moveTarget)
 	{
 		return new AILogMovement(isIntention: true, moveTarget, null);
 	}
 
 	public static AILogMovement Move(GraphNode node)
 	{
-		return new AILogMovement(isIntention: false, TaskNodeSetupMoveCommand.Mode.BetterPosition, node);
+		return new AILogMovement(isIntention: false, SetupMoveCommandMode.BetterPosition, node);
 	}
 
-	private AILogMovement(bool isIntention, TaskNodeSetupMoveCommand.Mode moveTarget, GraphNode node)
+	private AILogMovement(bool isIntention, SetupMoveCommandMode moveTarget, GraphNode node)
 	{
 		this.isIntention = isIntention;
 		this.moveTarget = moveTarget;

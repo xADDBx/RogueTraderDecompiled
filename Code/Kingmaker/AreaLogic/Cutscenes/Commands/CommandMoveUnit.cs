@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -46,6 +47,8 @@ public class CommandMoveUnit : CommandBase
 	[WorkspaceSecondTarget]
 	public PositionEvaluator Target;
 
+	public float ApproachRadius;
+
 	[SerializeReference]
 	public FloatEvaluator Orientation;
 
@@ -80,6 +83,11 @@ public class CommandMoveUnit : CommandBase
 		{
 			throw new Exception($"Unit {commandData.Unit} not found");
 		}
+		if ((commandData.Unit.Position - targetPosition).magnitude < ApproachRadius)
+		{
+			commandData.TakingTooLong = true;
+			return;
+		}
 		commandData.Path = PathfindingService.Instance.FindPathRT_Delayed(commandData.Unit.MovementAgent, targetPosition, 0.3f, 1, delegate(ForcedPath path)
 		{
 			commandData.Path = null;
@@ -95,6 +103,33 @@ public class CommandMoveUnit : CommandBase
 			}
 			else
 			{
+				float num = ApproachRadius;
+				while (num > 0f && path.vectorPath.Count > 1 && path.path.Count > 0)
+				{
+					List<Vector3> vectorPath = path.vectorPath;
+					Vector3 vector = vectorPath[vectorPath.Count - 1];
+					List<Vector3> vectorPath2 = path.vectorPath;
+					Vector3 vector2 = vector - vectorPath2[vectorPath2.Count - 2];
+					float magnitude = vector2.magnitude;
+					if (magnitude > num)
+					{
+						List<Vector3> vectorPath3 = path.vectorPath;
+						int index = vectorPath3.Count - 1;
+						List<Vector3> vectorPath4 = path.vectorPath;
+						vectorPath3[index] = vectorPath4[vectorPath4.Count - 2] + vector2.normalized * (magnitude - num);
+						List<Vector3> vectorPath5 = path.vectorPath;
+						targetPosition = vectorPath5[vectorPath5.Count - 1];
+						num = 0f;
+					}
+					else
+					{
+						num -= magnitude;
+						List<Vector3> vectorPath6 = path.vectorPath;
+						targetPosition = vectorPath6[vectorPath6.Count - 2];
+						path.vectorPath.RemoveAt(path.vectorPath.Count - 1);
+						path.path.RemoveAt(path.path.Count - 1);
+					}
+				}
 				UnitMoveToParams cmdParams = new UnitMoveToParams(path, targetPosition)
 				{
 					MovementType = ((Animation == WalkSpeedType.Sprint) ? WalkSpeedType.Walk : Animation),
@@ -128,7 +163,14 @@ public class CommandMoveUnit : CommandBase
 		{
 			unit?.View.MovementAgent.Stop();
 			unit?.View.MovementAgent.Blocker.BlockAtCurrentPosition();
-			unit?.Translocate(Target.GetValue(), null);
+			Vector3? vector = commandData.CommandHandle?.Target?.Point;
+			Vector3 valueOrDefault = vector.GetValueOrDefault();
+			if (!vector.HasValue)
+			{
+				valueOrDefault = Target.GetValue();
+				vector = valueOrDefault;
+			}
+			unit?.Translocate(vector.Value, null);
 			return true;
 		}
 		if (commandData.Path != null)

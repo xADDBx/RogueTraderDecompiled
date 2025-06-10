@@ -21,7 +21,7 @@ public class BlueprintAnswersList : BlueprintAnswerBase
 
 	public bool CanSelect()
 	{
-		if (ShowOnce && Game.Instance.Player.Dialog.ShownAnswerLists.Contains(this))
+		if (ShowOnce && Game.Instance.Player.Dialog.ShownAnswerListsContains(this))
 		{
 			DialogDebug.Add(this, "(show once) was selected before", Color.red);
 			return false;

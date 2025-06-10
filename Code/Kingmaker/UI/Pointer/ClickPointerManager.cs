@@ -9,13 +9,12 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
-using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using UnityEngine;
 
 namespace Kingmaker.UI.Pointer;
 
-public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber, IViewDetachedHandler, ISubscriber<IEntity>, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IPartyCombatHandler
+public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber, IViewDetachedHandler, ISubscriber<IEntity>, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IPartyCombatHandler, IInterruptTurnContinueHandler
 {
 	public ClickPointerPrefab PointerPrefab;
 
@@ -109,9 +108,9 @@ public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber,
 			UnitMoveTo currentOrQueued = key.Commands.GetCurrentOrQueued<UnitMoveTo>();
 			UnitMoveToProper currentOrQueued2 = key.Commands.GetCurrentOrQueued<UnitMoveToProper>();
 			UnitAreaTransition current2 = key.Commands.GetCurrent<UnitAreaTransition>();
-			bool flag = (currentOrQueued != null && !currentOrQueued.IsFinished) || (currentOrQueued2 != null && !currentOrQueued2.IsFinished) || (current2 != null && !current2.IsFinished);
-			bool flag2 = TurnController.IsInTurnBasedCombat();
-			if (key.GetSaddledUnit() == null && flag && !Game.Instance.IsControllerGamepad && IsCorrectMode(Game.Instance.CurrentMode) && !flag2)
+			bool num = (currentOrQueued != null && !currentOrQueued.IsFinished) || (currentOrQueued2 != null && !currentOrQueued2.IsFinished) || (current2 != null && !current2.IsFinished);
+			bool flag = TurnController.IsInTurnBasedCombat();
+			if (num && !Game.Instance.IsControllerGamepad && IsCorrectMode(Game.Instance.CurrentMode) && !flag)
 			{
 				if (Game.Instance.SelectionCharacter.SelectedUnits.Contains(key))
 				{
@@ -211,6 +210,14 @@ public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber,
 		}
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		if (isTurnBased)
+		{
+			CancelPreview();
+		}
+	}
+
 	private void Clear()
 	{
 		BaseUnitEntity key;
@@ -241,6 +248,11 @@ public class ClickPointerManager : MonoBehaviour, IGameModeHandler, ISubscriber,
 	}
 
 	public void HandlePartyCombatStateChanged(bool inCombat)
+	{
+		CancelPreview();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		CancelPreview();
 	}

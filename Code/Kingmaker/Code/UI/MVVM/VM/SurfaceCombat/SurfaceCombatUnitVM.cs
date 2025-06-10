@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IAbilityTargetSelectionUIHandler, ICellAbilityHandler, IUnitPortraitChangedHandler<EntitySubscriber>, IUnitPortraitChangedHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitPortraitChangedHandler, EntitySubscriber>, IChangeAppearanceCloseHandler
+public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IRoundStartHandler, IAbilityTargetSelectionUIHandler, ICellAbilityHandler, IInterruptTurnContinueHandler, IUnitPortraitChangedHandler<EntitySubscriber>, IUnitPortraitChangedHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitPortraitChangedHandler, EntitySubscriber>, IChangeAppearanceCloseHandler
 {
 	public readonly UnitState UnitState;
 
@@ -104,6 +104,10 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	{
 		IsCurrent.Value = isCurrent;
 		IsNewUnit = true;
+		if (entity == null)
+		{
+			return;
+		}
 		MechanicEntity mechanicEntity = entity;
 		if (entity is UnitSquad unitSquad)
 		{
@@ -201,7 +205,17 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UpdateIsCurrentUnit();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateIsCurrentUnit();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateIsCurrentUnit();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateIsCurrentUnit();
 	}
@@ -293,7 +307,7 @@ public class SurfaceCombatUnitVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	{
 		if (Unit is BaseUnitEntity baseUnitEntity)
 		{
-			IsUnableToAct.Value = !baseUnitEntity.State.CanAct;
+			IsUnableToAct.Value = !baseUnitEntity.State.CanActMechanically;
 			WillNotTakeTurn.Value = !WillTakeTurn(baseUnitEntity);
 			HasControlLossEffects.Value = baseUnitEntity.HasControlLossEffects();
 		}

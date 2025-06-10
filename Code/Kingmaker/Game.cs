@@ -52,6 +52,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.Scenes;
 using Kingmaker.GameCommands;
+using Kingmaker.GameInfo;
 using Kingmaker.GameModes;
 using Kingmaker.IngameConsole;
 using Kingmaker.Items;
@@ -60,6 +61,7 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.Networking.Tests;
+using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -349,6 +351,8 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	public readonly CameraFXController CameraFXController = new CameraFXController();
 
 	public readonly CameraFXSoundController CameraFXSoundController = new CameraFXSoundController();
+
+	public readonly PlayerInputInCombatController PlayerInputInCombatController = new PlayerInputInCombatController();
 
 	public readonly PointerController DefaultPointerController = new PointerController(new ClickWithSelectedAbilityHandler(), new ClickUnitHandler(), new ClickMapObjectHandler(), new SectorMapClickObjectHandler(), new ClickGroundHandler(), new ClickOnDetectClicksObjectHandler(), new ClickSurfaceDeploymentHandler());
 
@@ -741,6 +745,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			return;
 		}
+		PFLog.Default.Log("Initializing Game. Version: " + GameVersion.GetVersion());
 		using (CodeTimer.New("Game ctor"))
 		{
 			if (!DontChangeController)
@@ -1874,7 +1879,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			partyAndPet.LifeState.HideIfDead();
 		}
-		UnitsPlacer.MovePartyToNavmesh();
 		PFLog.System.Log("HandleActiveAreaChanged: finished");
 	}
 
@@ -1928,6 +1932,8 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		LightProbes.TetrahedralizeAsync();
 		Player.VisitedAreas.Add(CurrentlyLoadedArea);
 		yield return null;
+		UpdateNavMesh();
+		UnitsPlacer.MovePartyToNavmesh();
 		EventBus.RaiseEvent(delegate(IAreaLoadingStagesHandler h)
 		{
 			h.OnAreaLoadingComplete();
@@ -1935,6 +1941,15 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		MaybeSuggestDLCImport();
 		yield return null;
 		ParticleSystemsQualityController.Instance.Init();
+		void UpdateNavMesh()
+		{
+			AstarPath active = AstarPath.active;
+			if (!(active == null) && CurrentlyLoadedArea.IsNavmeshArea)
+			{
+				GraphUpdateRouter.ForceUpdateAll();
+				active.FlushGraphUpdates();
+			}
+		}
 	}
 
 	public void MaybeSuggestDLCImport()
@@ -2256,7 +2271,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		UnitGroupsController.Clear();
 		DialogController.Dispose();
 		State.ClearAwakeUnits();
-		ReadyForCombatUnitGroups.Clear();
 		Services.EndLifetime(ServiceLifetimeType.GameSession);
 		GamesModeFactoryFacade.ResetControllers();
 		State.PlayerState = null;

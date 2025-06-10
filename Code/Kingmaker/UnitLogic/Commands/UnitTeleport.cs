@@ -10,6 +10,18 @@ public class UnitTeleport : UnitCommand<UnitTeleportParams>
 
 	public override bool IsMoveUnit => true;
 
+	public override bool IsInterruptible
+	{
+		get
+		{
+			if (base.IsInterruptible)
+			{
+				return base.Params.IsInterruptible;
+			}
+			return false;
+		}
+	}
+
 	public UnitTeleport([NotNull] UnitTeleportParams @params)
 		: base(@params)
 	{

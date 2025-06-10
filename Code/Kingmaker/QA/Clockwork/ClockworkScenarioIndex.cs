@@ -18,11 +18,6 @@ public class ClockworkScenarioIndex : BotInstructionIndex<BlueprintClockworkScen
 		}
 	}
 
-	public ClockworkScenarioIndex()
-		: base("clockwork.json")
-	{
-	}
-
 	protected override LogChannel GetLogChannel()
 	{
 		return PFLog.Clockwork;

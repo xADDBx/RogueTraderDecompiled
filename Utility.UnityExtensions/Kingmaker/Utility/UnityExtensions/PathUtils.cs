@@ -3,13 +3,13 @@ using UnityEngine;
 
 namespace Kingmaker.Utility.UnityExtensions;
 
-public class PathUtils
+public static class PathUtils
 {
-	public const string BlueprintsFolder = "Blueprints";
+	private const string BlueprintsFolder = "Blueprints";
 
 	public static readonly string BundlesFolder = Path.Combine(Application.streamingAssetsPath, "Bundles");
 
-	public static string BlueprintPath(string pathComponent = null)
+	public static string BlueprintPath(string? pathComponent = null)
 	{
 		if (pathComponent == null)
 		{
@@ -18,7 +18,7 @@ public class PathUtils
 		return Path.Combine("Blueprints", pathComponent);
 	}
 
-	public static string BundlePath(string pathComponent = null)
+	public static string BundlePath(string? pathComponent = null)
 	{
 		if (pathComponent == null)
 		{

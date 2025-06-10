@@ -1,3 +1,5 @@
+using UnityEngine.Serialization;
+
 namespace Kingmaker.Blueprints.Root.Strings;
 
 public class UIStrings : StringsContainer
@@ -141,6 +143,11 @@ public class UIStrings : StringsContainer
 	public UIPopupWindows PopUps;
 
 	public UIWeaponCategories WeaponCategories;
+
+	[FormerlySerializedAs("CharscreenPets")]
+	public UIPets Pets;
+
+	public UIBlockStrings BlockStrings;
 
 	public static UIStrings Instance => LocalizedTexts.Instance.UserInterfacesText;
 }

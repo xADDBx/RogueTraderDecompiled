@@ -14,7 +14,7 @@ public class MarkDialogUnseen : PlayerUpgraderOnlyAction
 		BlueprintDialog blueprintDialog = Dialog.Get();
 		if ((bool)blueprintDialog)
 		{
-			Game.Instance.Player.Dialog.ShownDialogs.Remove(blueprintDialog);
+			Game.Instance.Player.Dialog.ShownDialogsRemove(blueprintDialog);
 		}
 	}
 

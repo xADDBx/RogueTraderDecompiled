@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
@@ -35,12 +37,23 @@ public class InteractionLootSettings : InteractionSettings
 		public BlueprintItem SpecificItem => m_SpecificItem?.Get();
 	}
 
+	[Serializable]
+	public class ConditionableLootTable
+	{
+		public ConditionsReference Conditions = new ConditionsReference();
+
+		public List<BlueprintLootReference> LootTables = new List<BlueprintLootReference>();
+	}
+
 	[Header("Loot settings")]
 	[SerializeField]
 	public LootContainerType LootContainerType;
 
 	[SerializeField]
 	private BlueprintLootReference[] m_LootTables = new BlueprintLootReference[0];
+
+	[SerializeField]
+	private ConditionableLootTable[] m_ConditionableLootTables = new ConditionableLootTable[0];
 
 	public bool AddMapMarker = true;
 
@@ -86,8 +99,11 @@ public class InteractionLootSettings : InteractionSettings
 	{
 		get
 		{
-			BlueprintReference<BlueprintLoot>[] lootTables = m_LootTables;
-			return lootTables;
+			List<BlueprintLootReference> list = m_LootTables.ToList();
+			IEnumerable<BlueprintLootReference> collection = m_ConditionableLootTables.Where((ConditionableLootTable c) => c.Conditions.Get().Check()).SelectMany((ConditionableLootTable c) => c.LootTables);
+			list.AddRange(collection);
+			BlueprintReference<BlueprintLoot>[] array = list.ToArray();
+			return array;
 		}
 	}
 

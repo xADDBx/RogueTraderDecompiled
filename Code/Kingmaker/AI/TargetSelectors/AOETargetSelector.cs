@@ -37,10 +37,6 @@ public class AOETargetSelector : AbilityTargetSelector
 		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
 		foreach (CustomGridNodeBase item in hashSet)
 		{
-			if (item == casterNode)
-			{
-				continue;
-			}
 			abilityTargets.Clear();
 			BaseUnitEntity unit = null;
 			if (flag && !item.TryGetUnit(out unit))
@@ -189,6 +185,10 @@ public class AOETargetSelector : AbilityTargetSelector
 				flag2 = !flag2;
 			}
 			hashSet = hashSet2;
+		}
+		if (AbilityInfo.ability.Blueprint.CanTargetSelf)
+		{
+			hashSet.Add(casterNode);
 		}
 		return hashSet;
 	}

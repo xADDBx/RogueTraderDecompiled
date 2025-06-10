@@ -17,6 +17,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
@@ -58,7 +59,12 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		}
 	}
 
+	public AbilityData RootAbility { get; private set; }
+
 	public AbilityData Ability { get; private set; }
+
+	public AbilityMultiTargetSelectionHandler MultiTargetHandler { get; } = new AbilityMultiTargetSelectionHandler();
+
 
 	public PointerMode GetMode()
 	{
@@ -115,9 +121,31 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 			{
 				return result;
 			}
-			if (!targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.Blueprint.CanTargetFriends)
+			if (!targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.Blueprint.CanTargetFriends && !Ability.CanRedirectFromTarget(targetForDesiredPosition.Entity))
 			{
 				return result;
+			}
+			AbilityCanTargetOnlyPetUnits canTargetOnlyPetUnitsComponent = Ability.Blueprint.CanTargetOnlyPetUnitsComponent;
+			if (canTargetOnlyPetUnitsComponent != null)
+			{
+				if (canTargetOnlyPetUnitsComponent.Inverted)
+				{
+					if (targetForDesiredPosition.Entity is BaseUnitEntity { IsPet: not false })
+					{
+						return result;
+					}
+				}
+				else
+				{
+					if (!(targetForDesiredPosition.Entity is BaseUnitEntity { IsPet: not false } baseUnitEntity2))
+					{
+						return result;
+					}
+					if (canTargetOnlyPetUnitsComponent.CanTargetOnlyOwnersPet && baseUnitEntity2.Master != Ability.Caster)
+					{
+						return result;
+					}
+				}
 			}
 			return 2f;
 		}
@@ -225,8 +253,15 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 			UISounds.Instance.Sounds.Combat.CombatGridCantPerformActionClick.Play();
 			return false;
 		}
+		AbilityData abilityData = MultiTargetHandler.AddTarget(target);
+		if (abilityData != null)
+		{
+			SetCurrentTargetAbility(abilityData);
+			UISounds.Instance.Sounds.Combat.CombatGridConfirmActionClick.Play();
+			return true;
+		}
 		bool shouldApproach = unavailabilityReason == AbilityData.UnavailabilityReasonType.TargetTooFar;
-		UnitCommandsRunner.TryUnitUseAbility(Ability, target, shouldApproach);
+		UnitCommandsRunner.TryUnitUseAbility(RootAbility, MultiTargetHandler.Targets[0], shouldApproach);
 		UISounds.Instance.Sounds.Combat.CombatGridConfirmActionClick.Play();
 		Game.Instance.GameCommandQueue.ClearPointerMode();
 		return true;
@@ -254,9 +289,9 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 
 	public void SetAbility([NotNull] AbilityData ability)
 	{
-		if (Ability != null)
+		if (RootAbility != null)
 		{
-			if (ability == Ability)
+			if (ability == RootAbility)
 			{
 				Game.Instance.ClickEventsController.ClearPointerMode();
 				return;
@@ -264,18 +299,27 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 			DropAbility();
 		}
 		Game.Instance.ClickEventsController.SetPointerMode(PointerMode.Ability);
-		Ability = ability;
+		RootAbility = ability;
+		MultiTargetHandler.OnRootAbilitySelected(ability);
+		SetCurrentTargetAbility(MultiTargetHandler.GetAbilityForNextTarget());
+	}
+
+	private void SetCurrentTargetAbility(AbilityData abilityData)
+	{
+		Ability = abilityData;
 		EventBus.RaiseEvent(delegate(IAbilityTargetSelectionUIHandler h)
 		{
-			h.HandleAbilityTargetSelectionStart(ability);
+			h.HandleAbilityTargetSelectionStart(Ability);
 		});
 	}
 
 	public void DropAbility()
 	{
-		if (!(Ability == null))
+		if (!(RootAbility == null))
 		{
-			Ability = null;
+			AbilityData rootAbility = (Ability = null);
+			RootAbility = rootAbility;
+			MultiTargetHandler.OnRootAbilitySelected(null);
 			EventBus.RaiseEvent(delegate(IAbilityTargetSelectionUIHandler h)
 			{
 				h.HandleAbilityTargetSelectionEnd(Ability);

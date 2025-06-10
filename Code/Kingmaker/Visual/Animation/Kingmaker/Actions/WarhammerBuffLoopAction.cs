@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Controllers;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
@@ -49,6 +50,8 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 	private class HandleData
 	{
 		public State State;
+
+		public bool IsExiting;
 	}
 
 	[SerializeField]
@@ -82,47 +85,51 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 
 	public override bool BlocksCover => true;
 
+	private static float CrossfadeTime => RealTimeController.SystemStepDurationSeconds;
+
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
 		handle.SkipFirstTick = false;
+		handle.SkipFirstTickOnHandle = false;
+		handle.CorrectTransitionOutTime = true;
 		handle.HasCrossfadePriority = true;
-		AnimationEntry animation = GetAnimation(handle);
-		if ((bool)animation?.EnterWrapper)
+		HandleData handleData2 = (HandleData)(handle.ActionData = new HandleData());
+		if (!handle.SkipEnterAnimation && TryPlayAnimation(handle, (AnimationEntry e) => e.EnterWrapper))
 		{
-			handle.StartClip(animation.EnterWrapper, ClipDurationType.Oneshot);
-			handle.ActiveAnimation.DoNotZeroOtherAnimations = true;
-			HandleData actionData = new HandleData
-			{
-				State = State.Start
-			};
-			handle.ActionData = actionData;
+			handleData2.State = State.Start;
+			handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
+		}
+		else if (TryPlayAnimation(handle, (AnimationEntry e) => e.LoopWrapper))
+		{
+			handleData2.State = State.Loop;
+			handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
+		}
+		else
+		{
+			handleData2.State = State.End;
+			handle.Release();
 		}
 		handle.Manager.CurrentEquipHandle = handle;
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
 	{
-		if (!(handle.ActionData is HandleData handleData) || handle.IsReleased)
+		if (!(handle.ActionData is HandleData handleData) || handle.IsReleased || handle.IsInterrupted)
 		{
 			handle.Release();
+			if (handle.IsInterrupted && handle.ActiveAnimation != null)
+			{
+				handle.ActiveAnimation.TransitionOut = handle.Manager.GetTransitionOutDuration(handle);
+			}
 			return;
 		}
 		State state = handleData.State;
-		if (state == State.Start || state == State.Loop)
+		if ((state == State.Start || state == State.Loop) && !handleData.IsExiting)
 		{
-			AnimationEntry animation = GetAnimation(handle);
-			if ((bool)animation?.LoopWrapper)
+			if (TryPlayAnimation(handle, (AnimationEntry e) => e.LoopWrapper))
 			{
-				AnimationEntry animation2 = GetAnimation(handle, isOffHand: true);
-				if (animation2 != null)
-				{
-					handle.Manager.AddAnimationClip(handle, animation.LoopWrapper, null, useEmptyAvatarMask: true, isAdditive: false, ClipDurationType.Oneshot, new AnimationComposition(handle));
-					handle.Manager.AddClipToComposition(handle, animation2.LoopWrapper, OffHandMask, isAdditive: false);
-				}
-				else
-				{
-					handle.StartClip(animation.LoopWrapper, ClipDurationType.Oneshot);
-				}
+				handle.ActiveAnimation.TransitionIn = CrossfadeTime;
+				handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
 				handleData.State = State.Loop;
 			}
 			else
@@ -144,17 +151,48 @@ public class WarhammerBuffLoopAction : UnitAnimationAction
 		}
 		else if (handleData.State != State.End)
 		{
-			handleData.State = State.End;
-			AnimationEntry animation = GetAnimation(handle);
-			if ((bool)animation?.ExitWrapper)
+			handleData.IsExiting = true;
+			float transitionOutDuration = handle.Manager.GetTransitionOutDuration(handle);
+			handle.ActiveAnimation.TransitionOut = transitionOutDuration;
+			if (TryPlayAnimation(handle, (AnimationEntry e) => e.ExitWrapper))
 			{
-				handle.StartClip(animation?.ExitWrapper, ClipDurationType.Oneshot);
+				handle.ActiveAnimation.TransitionIn = transitionOutDuration;
 			}
 			else
 			{
 				handle.Release();
 			}
+			handleData.State = State.End;
 		}
+	}
+
+	public bool IsExiting(UnitAnimationActionHandle handle)
+	{
+		if (handle.ActionData is HandleData handleData)
+		{
+			return handleData.IsExiting;
+		}
+		return false;
+	}
+
+	private bool TryPlayAnimation(UnitAnimationActionHandle handle, Func<AnimationEntry, AnimationClipWrapper> wrapperGetter)
+	{
+		AnimationEntry animation = GetAnimation(handle);
+		if (animation == null || !wrapperGetter(animation))
+		{
+			return false;
+		}
+		AnimationEntry animation2 = GetAnimation(handle, isOffHand: true);
+		if (animation2 != null && (bool)wrapperGetter(animation2))
+		{
+			handle.Manager.AddAnimationClip(handle, wrapperGetter(animation), null, useEmptyAvatarMask: true, isAdditive: false, ClipDurationType.Oneshot, new AnimationComposition(handle));
+			handle.Manager.AddClipToComposition(handle, wrapperGetter(animation2), OffHandMask, isAdditive: false);
+		}
+		else
+		{
+			handle.StartClip(wrapperGetter(animation), ClipDurationType.Oneshot);
+		}
+		return true;
 	}
 
 	[CanBeNull]

@@ -76,6 +76,8 @@ public class UIExplorationTexts
 
 	public LocalizedString TitheGradeUndetermined;
 
+	public LocalizedString Aestimare;
+
 	public LocalizedString DiscoveredResources;
 
 	public LocalizedString ResourceMining;

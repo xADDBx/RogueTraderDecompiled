@@ -53,25 +53,25 @@ public class ProvokeAttackOfOpportunity : ContextAction
 		case Type.TargetFromAnyone:
 			if (targetUnit != null)
 			{
-				attackOfOpportunityController.Provoke(targetUnit, base.Context.AssociatedBlueprint as BlueprintFact);
+				attackOfOpportunityController.Provoke(targetUnit, base.Context.AssociatedBlueprint as BlueprintFact, canUseInRange: false, canMove: true);
 			}
 			break;
 		case Type.TargetFromCaster:
 			if (targetUnit != null && casterUnit != null)
 			{
-				attackOfOpportunityController.Provoke(targetUnit, casterUnit, base.Context.AssociatedBlueprint as BlueprintFact);
+				attackOfOpportunityController.Provoke(targetUnit, casterUnit, base.Context.AssociatedBlueprint as BlueprintFact, canUseInRange: false, canMove: true);
 			}
 			break;
 		case Type.CasterFromAnyone:
 			if (casterUnit != null)
 			{
-				attackOfOpportunityController.Provoke(casterUnit, base.Context.AssociatedBlueprint as BlueprintFact);
+				attackOfOpportunityController.Provoke(casterUnit, base.Context.AssociatedBlueprint as BlueprintFact, canUseInRange: false, canMove: true);
 			}
 			break;
 		case Type.CasterFromTarget:
 			if (targetUnit != null && casterUnit != null)
 			{
-				attackOfOpportunityController.Provoke(casterUnit, targetUnit, base.Context.AssociatedBlueprint as BlueprintFact);
+				attackOfOpportunityController.Provoke(casterUnit, targetUnit, base.Context.AssociatedBlueprint as BlueprintFact, canUseInRange: false, canMove: true);
 			}
 			break;
 		case Type.TargetFromAlliesAdjacentToCaster:
@@ -88,7 +88,7 @@ public class ProvokeAttackOfOpportunity : ContextAction
 					{
 						if (ConditionsOnOpportunityAttacker.Check())
 						{
-							attackOfOpportunityController.Provoke(targetUnit, item, base.Context.AssociatedBlueprint as BlueprintFact);
+							attackOfOpportunityController.Provoke(targetUnit, item, base.Context.AssociatedBlueprint as BlueprintFact, canUseInRange: false, canMove: true);
 							ActionsOnOpportunityAttacker.Run();
 						}
 					}

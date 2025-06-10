@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.CountingGuard;
 using Kingmaker.Utility.FlagCountable;
@@ -354,7 +354,7 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 		}
 	}
 
-	protected virtual void OnAnimationSetChanged()
+	public virtual void OnAnimationSetChanged()
 	{
 	}
 

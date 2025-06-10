@@ -1,3 +1,4 @@
+using Kingmaker.EntitySystem.Entities;
 using Owlcat.Runtime.UI.Tooltips;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
@@ -16,7 +17,9 @@ public class TooltipBrickTextVM : TooltipBaseBrickVM
 
 	public readonly int TextSize;
 
-	public TooltipBrickTextVM(string text, TooltipTextType type, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool isHeader = false, bool needChangeSize = false, int textSize = 18)
+	public readonly MechanicEntity MechanicEntity;
+
+	public TooltipBrickTextVM(string text, TooltipTextType type, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool isHeader = false, bool needChangeSize = false, int textSize = 18, MechanicEntity mechanicEntity = null)
 	{
 		Text = text;
 		Type = type;
@@ -24,5 +27,6 @@ public class TooltipBrickTextVM : TooltipBaseBrickVM
 		Alignment = alignment;
 		NeedChangeSize = needChangeSize;
 		TextSize = textSize;
+		MechanicEntity = mechanicEntity;
 	}
 }

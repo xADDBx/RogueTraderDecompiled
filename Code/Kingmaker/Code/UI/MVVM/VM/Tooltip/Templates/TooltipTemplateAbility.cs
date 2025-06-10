@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.Root;
@@ -9,13 +10,16 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.Controllers.Enums;
+using Kingmaker.DLC;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.GameModes;
 using Kingmaker.Items;
+using Kingmaker.Localization;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Stores;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
@@ -25,8 +29,11 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.UI;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.Utility.UnitDescription;
@@ -61,9 +68,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private string m_Veil = string.Empty;
 
-	private string m_Target = string.Empty;
-
-	private Sprite m_TargetIcon;
+	private List<(string Text, Sprite Icon)> m_Targets;
 
 	private string m_Cooldown = string.Empty;
 
@@ -141,12 +146,11 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	{
 		try
 		{
-			BlueprintItemWeapon blueprintItem = SourceItem as BlueprintItemWeapon;
+			BlueprintItemWeapon blueprintItemWeapon = SourceItem as BlueprintItemWeapon;
 			m_Name = blueprintAbility.Name;
 			m_Icon = blueprintAbility.Icon;
 			m_Type = GetAbilityType(blueprintAbility);
-			m_Target = UIUtilityTexts.GetAbilityTarget(blueprintAbility, blueprintItem);
-			m_TargetIcon = UIUtilityTexts.GetTargetImage(blueprintAbility);
+			m_Targets = GetTargets(blueprintAbility, blueprintItemWeapon).ToList();
 			m_Cooldown = blueprintAbility.CooldownRounds.ToString();
 			m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(blueprintAbility);
 			m_EndTurn = GetEndTurn(blueprintAbility);
@@ -155,7 +159,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			m_LongDescriptionText = blueprintAbility.Description;
 			m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
 			m_ActionTime = UIUtilityTexts.GetAbilityActionText(blueprintAbility);
-			m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItem, Caster);
+			m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItemWeapon, Caster);
 			m_IsReload = UIUtilityItem.IsReload(blueprintAbility);
 		}
 		catch (Exception arg)
@@ -178,8 +182,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 				m_Veil = GetVeil(abilityData);
 				m_EndTurn = GetEndTurn(abilityData.Blueprint);
 				m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(abilityData.Blueprint);
-				m_Target = UIUtilityTexts.GetAbilityTarget(abilityData);
-				m_TargetIcon = UIUtilityTexts.GetTargetImage(abilityData.Blueprint);
+				m_Targets = GetTargets(abilityData).ToList();
 				m_Cooldown = abilityData.Blueprint.CooldownRounds.ToString();
 				m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(abilityData.Blueprint);
 				m_ShortDescriptionText = abilityData.ShortenedDescription;
@@ -209,13 +212,96 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		AddCantUseInfo(list);
 		AddDamageInfo(list);
-		AddTarget(list);
+		AddTargets(list);
 		AddCooldown(list);
 		AddHitChances(list);
 		AddDescription(list, type);
 		AddMovementActionVeil(list, type);
+		TryAddRetargetableIconBrick(list, type);
+		TryAddRedirectDrivenBrick(list);
 		return list;
+	}
+
+	private void TryAddRetargetableIconBrick(List<ITooltipBrick> result, TooltipTemplateType type)
+	{
+		if (StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().FirstOrDefault((BlueprintDlc dlc) => dlc.DlcType == DlcTypeEnum.AdditionalContentDlc && dlc.IsPurchased && dlc.IsEnabled && dlc.name == "DLC2LexImperialis") == null || BlueprintAbility == null)
+		{
+			return;
+		}
+		AbilityRedirect component = BlueprintAbility.GetComponent<AbilityRedirect>();
+		if (component == null)
+		{
+			return;
+		}
+		if (type == TooltipTemplateType.Tooltip)
+		{
+			TextFieldParams textFieldParams = new TextFieldParams
+			{
+				FontColor = UIConfig.Instance.TooltipColors.Default,
+				FontStyles = TMPro.FontStyles.Strikethrough
+			};
+			if (component.CasterRestrictions.Property.Empty)
+			{
+				textFieldParams.FontStyles = TMPro.FontStyles.Normal;
+			}
+			result.Add(new TooltipBrickTripleText(UIStrings.Instance.Tooltips.RetargetableAbilityTooltip, string.Empty, string.Empty, UIConfig.Instance.UIIcons.TooltipIcons.PetPawIcon, null, null, textFieldParams));
+		}
+		else
+		{
+			TextFieldParams textFieldParams2 = new TextFieldParams
+			{
+				FontColor = UIConfig.Instance.TooltipColors.Default,
+				FontStyles = TMPro.FontStyles.Normal
+			};
+			LocalizedString retargetableAbilityTooltip = UIStrings.Instance.Tooltips.RetargetableAbilityTooltip;
+			LocalizedString localizedString = (component.CasterRestrictions.Property.Empty ? UIStrings.Instance.Tooltips.RetargetableAbilityTooltipCanBeUsed : UIStrings.Instance.Tooltips.RetargetableAbilityTooltipCanBeUsedUltimate);
+			result.Add(new TooltipBrickTripleText(retargetableAbilityTooltip, "-", localizedString, UIConfig.Instance.UIIcons.TooltipIcons.PetPawIcon, null, null, textFieldParams2, null, textFieldParams2));
+		}
+	}
+
+	private void TryAddRedirectDrivenBrick(List<ITooltipBrick> result)
+	{
+		if (BlueprintAbility != null && Caster != null)
+		{
+			PartAbilityRedirect optional = Caster.GetOptional<PartAbilityRedirect>();
+			if (!(BlueprintAbility.name != "RavenPet_Cycle_Ability") && optional?.LastUsedAbility.Fact != null)
+			{
+				result.Add(new TooltipBrickLastUsedAbilityPaper(optional?.LastUsedAbility.Fact.Data.Name, optional?.LastUsedAbility.Fact.Data.Icon));
+			}
+		}
+	}
+
+	private void AddCantUseInfo(List<ITooltipBrick> result)
+	{
+		if (BlueprintAbility == null || Caster == null)
+		{
+			return;
+		}
+		AbilityCasterHasNoFacts component = BlueprintAbility.GetComponent<AbilityCasterHasNoFacts>();
+		AbilityCasterHasFacts component2 = BlueprintAbility.GetComponent<AbilityCasterHasFacts>();
+		if (component != null && component.Facts.Length != 0)
+		{
+			foreach (BlueprintUnitFact fact in component.Facts)
+			{
+				if (Caster.Facts.Contains(fact))
+				{
+					result.Add(new TooltipBrickCantUsePaper(UIStrings.Instance.Tooltips.CantUseRemove, fact.LocalizedName, fact.Icon));
+				}
+			}
+		}
+		if (component2 == null || component2.Facts.Length == 0)
+		{
+			return;
+		}
+		foreach (BlueprintUnitFact fact2 in component2.Facts)
+		{
+			if (!Caster.Facts.Contains(fact2))
+			{
+				result.Add(new TooltipBrickCantUsePaper(UIStrings.Instance.Tooltips.CantUseNeed, fact2.LocalizedName, fact2.Icon));
+			}
+		}
 	}
 
 	public override IEnumerable<ITooltipBrick> GetFooter(TooltipTemplateType type)
@@ -333,11 +419,10 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	private string GetEndTurn(BlueprintAbility blueprintAbility)
 	{
 		WarhammerEndTurn component = blueprintAbility.GetComponent<WarhammerEndTurn>();
-		if (component != null)
-		{
-			return component.clearMPInsteadOfEndingTurn ? UIStrings.Instance.Tooltips.SpendAllMovementPoints : UIStrings.Instance.Tooltips.EndsTurn;
-		}
-		return string.Empty;
+		string text = ((component == null) ? string.Empty : ((string)(component.clearMPInsteadOfEndingTurn ? UIStrings.Instance.Tooltips.SpendAllMovementPoints : UIStrings.Instance.Tooltips.EndsTurn)));
+		CheckBuffForMPSpendTooltip component2 = blueprintAbility.GetComponent<CheckBuffForMPSpendTooltip>();
+		BaseUnitEntity currentSelectedUnit = UIUtility.GetCurrentSelectedUnit();
+		return (component2 == null || currentSelectedUnit == null) ? text : (component2.CheckContainsBuff(currentSelectedUnit) ? ((string)UIStrings.Instance.Tooltips.SpendAllMovementPoints) : string.Empty);
 	}
 
 	private string GetAttackAbilityGroupCooldown(BlueprintAbility blueprintAbility)
@@ -357,19 +442,54 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		return UIStrings.Instance.Tooltips.AttackAbilityGroupCooldown;
 	}
 
-	private void AddTarget(List<ITooltipBrick> bricks)
+	private static IEnumerable<(string, Sprite)> GetTargets(BlueprintAbility blueprintAbility, BlueprintItemWeapon weaponBlueprint)
 	{
-		if (!m_IsReload && !string.IsNullOrEmpty(m_Target) && !(m_TargetIcon == null))
+		if (!blueprintAbility.TryGetComponent<IAbilityMultiTarget>(out var component))
 		{
-			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
+			return new(string, Sprite)[1] { (UIUtilityTexts.GetAbilityTarget(blueprintAbility, weaponBlueprint), UIUtilityTexts.GetTargetImage(blueprintAbility)) };
+		}
+		return component.GetAllTargetsForTooltip(new AbilityData(blueprintAbility, UIUtility.GetCurrentSelectedUnit())).Select(AbilityToTargetInfo);
+	}
+
+	private static IEnumerable<(string, Sprite)> GetTargets(AbilityData abilityData)
+	{
+		return GetTargetsFromAbility(abilityData).Select(AbilityToTargetInfo);
+	}
+
+	private static (string, Sprite) AbilityToTargetInfo(AbilityData abilityData)
+	{
+		return (UIUtilityTexts.GetAbilityTarget(abilityData), UIUtilityTexts.GetTargetImage(abilityData.Blueprint));
+	}
+
+	private static IEnumerable<AbilityData> GetTargetsFromAbility(AbilityData abilityData)
+	{
+		if (!abilityData.Blueprint.TryGetComponent<IAbilityMultiTarget>(out var component))
+		{
+			return new AbilityData[1] { abilityData };
+		}
+		return component.GetAllTargetsForTooltip(abilityData);
+	}
+
+	private void AddTargets(List<ITooltipBrick> bricks)
+	{
+		if (m_IsReload || m_Targets == null)
+		{
+			return;
+		}
+		foreach (var (text, sprite) in m_Targets)
+		{
+			if (!string.IsNullOrEmpty(text) && !(sprite == null))
 			{
-				Text = string.Empty
-			};
-			TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
-			{
-				Text = m_Target
-			};
-			bricks.Add(new TooltipBrickIconPattern(m_TargetIcon, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
+				TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
+				{
+					Text = string.Empty
+				};
+				TooltipBrickIconPattern.TextFieldValues secondaryValues = new TooltipBrickIconPattern.TextFieldValues
+				{
+					Text = text
+				};
+				bricks.Add(new TooltipBrickIconPattern(sprite, m_UIAbilityData.PatternData, titleValues, secondaryValues, null, null, IconPatternMode.IconMode));
+			}
 		}
 	}
 
@@ -535,7 +655,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 					{
 						description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, PreviewEntity);
 						description = UpdateDescriptionWithUICommonProperties(description);
-						bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
+						bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: false, 18, PreviewEntity));
 					}
 				}
 			}

@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.RuleSystem.Rules.Interfaces;
 using Kingmaker.UI.Models.Log.Enums;
 using Kingmaker.UnitLogic.Mechanics.Facts.Interfaces;
@@ -112,6 +112,8 @@ public static class GameLogContext
 
 	public static Property<IRuleRollD100> ParryD100;
 
+	public static Property<IRuleRollD100> BlockD100;
+
 	public static Property<IRuleRollD100> RfD100;
 
 	public static Property<IRuleRollD100> CoverHitD100;
@@ -121,6 +123,8 @@ public static class GameLogContext
 	public static Property<int> DodgeChance;
 
 	public static Property<int> ParryChance;
+
+	public static Property<int> BlockChance;
 
 	public static Property<int> RfChance;
 

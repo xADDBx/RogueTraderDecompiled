@@ -1,9 +1,13 @@
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Localization;
+using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using UnityEngine;
@@ -47,6 +51,11 @@ public class AbilityCasterHasFacts : BlueprintComponent, IAbilityCasterRestricti
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
 	{
-		return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
+		LocalizedString noRequiredCondition = LocalizedTexts.Instance.Reasons.NoRequiredCondition;
+		string facts = string.Join(", ", Facts.ToArray().Select(UIUtilityTexts.GetBlueprintUnitFactNameText));
+		return noRequiredCondition.ToString(delegate
+		{
+			GameLogContext.Text = facts;
+		});
 	}
 }

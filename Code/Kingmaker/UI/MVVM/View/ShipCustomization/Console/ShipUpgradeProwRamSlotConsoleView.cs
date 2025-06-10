@@ -30,6 +30,12 @@ public class ShipUpgradeProwRamSlotConsoleView : ShipUpgradeProwRamSlotPCView, I
 		m_HintText.text = UIStrings.Instance.ShipCustomization.UpgradeProwRam;
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_Hint.SetActive(value: false);
+	}
+
 	public void SetFocus(bool value)
 	{
 		m_MultiButton.SetFocus(value);
@@ -73,11 +79,5 @@ public class ShipUpgradeProwRamSlotConsoleView : ShipUpgradeProwRamSlotPCView, I
 	public void SetAvailable(bool value)
 	{
 		m_IsAvailable = value;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		m_Hint.SetActive(value: false);
 	}
 }

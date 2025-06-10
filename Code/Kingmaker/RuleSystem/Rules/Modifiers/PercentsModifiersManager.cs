@@ -13,6 +13,8 @@ public class PercentsModifiersManager : AbstractModifiersManager
 
 	public float Bonus => (float)GetSum() / 100f;
 
+	public int FlatBonus => GetSum();
+
 	public void Add(int value, [NotNull] EntityFact source, ModifierDescriptor descriptor = ModifierDescriptor.None)
 	{
 		Add(new Modifier(ModifierType.PctMul, value, source, descriptor));

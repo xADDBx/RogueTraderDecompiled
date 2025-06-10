@@ -32,7 +32,7 @@ public class RuleRollChance : RuleRollD100
 
 	public IMechanicEntity AttackInitiator { get; }
 
-	public bool IsResultOverriden => ResultOverride.HasValue;
+	public bool IsResultOverriden => base.ResultOverride.HasValue;
 
 	public int? RerollChance
 	{
@@ -56,7 +56,7 @@ public class RuleRollChance : RuleRollD100
 		Chance = chance;
 		Type = type;
 		RollTypeValue = rollType;
-		ResultOverride = resultOverride;
+		base.ResultOverride = resultOverride;
 		AttackInitiator = attackInitiator;
 	}
 

@@ -42,9 +42,12 @@ public class CareerPathsListsConsoleView : CareerPathsListsCommonView
 		{
 			bool isFocused = m_NavigationBehaviour.IsFocused;
 			m_NavigationBehaviour.Clear();
-			m_NavigationBehaviour.AddColumn((from i in m_CareerPathsLists
+			GridConsoleNavigationBehaviour gridConsoleNavigationBehaviour = new GridConsoleNavigationBehaviour();
+			gridConsoleNavigationBehaviour.AddColumn((from i in m_CareerPathsLists
 				where i.IsBinded
 				select i.GetNavigationBehaviour()).ToList());
+			m_NavigationBehaviour.AddRow<GridConsoleNavigationBehaviour>(m_UnitBackgroundBlockCommonView.GetNavigationBehaviour());
+			m_NavigationBehaviour.AddRow<GridConsoleNavigationBehaviour>(gridConsoleNavigationBehaviour);
 			if (isFocused)
 			{
 				m_NavigationBehaviour.FocusOnCurrentEntity();

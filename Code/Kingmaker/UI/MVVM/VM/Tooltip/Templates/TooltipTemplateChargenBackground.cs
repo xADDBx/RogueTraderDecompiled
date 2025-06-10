@@ -11,6 +11,7 @@ using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.UnitLogic.Components;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -25,6 +26,8 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 	private readonly BlueprintFeature m_Feature;
 
 	private readonly bool m_IsInfoWindow;
+
+	private readonly bool m_IsCharGen;
 
 	private static readonly TooltipBricksGroupLayoutParams AttributesTooltipLayout = new TooltipBricksGroupLayoutParams
 	{
@@ -58,10 +61,11 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 		CellSize = new Vector2(300f, 72f)
 	};
 
-	public TooltipTemplateChargenBackground(BlueprintFeature feature, bool isInfoWindow = true)
+	public TooltipTemplateChargenBackground(BlueprintFeature feature, bool isInfoWindow = true, bool isCharGen = false)
 	{
 		m_Feature = feature;
 		m_IsInfoWindow = isInfoWindow;
+		m_IsCharGen = isCharGen;
 	}
 
 	public override IEnumerable<ITooltipBrick> GetHeader(TooltipTemplateType type)
@@ -90,10 +94,12 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 
 	private void AddDescription(List<ITooltipBrick> bricks)
 	{
-		if (!string.IsNullOrEmpty(m_Feature.Description))
+		ReplaceDescriptionForCharGen component;
+		string text = ((m_IsCharGen && m_Feature.TryGetComponent<ReplaceDescriptionForCharGen>(out component)) ? ((string)component.CharGenDescription) : m_Feature.Description);
+		if (!string.IsNullOrEmpty(text))
 		{
-			string text = UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Feature.Description, null);
-			bricks.Add(new TooltipBrickText(text));
+			string text2 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text, null);
+			bricks.Add(new TooltipBrickText(text2));
 		}
 	}
 

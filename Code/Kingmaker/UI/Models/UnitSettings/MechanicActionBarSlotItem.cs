@@ -9,7 +9,6 @@ using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
@@ -81,30 +80,9 @@ public class MechanicActionBarSlotItem : MechanicActionBarSlot, IHashable
 	public override void OnHover(bool state)
 	{
 		base.OnHover(state);
-		if (Ability == null)
+		if (Ability != null)
 		{
-			return;
-		}
-		EventBus.RaiseEvent(delegate(IAbilityTargetHoverUIHandler h)
-		{
-			h.HandleAbilityTargetHover(Ability.Data, state);
-		});
-		if (state)
-		{
-			if (Ability.Data.TargetAnchor == AbilityTargetAnchor.Owner)
-			{
-				EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
-				{
-					h.HandleAoEMove(base.Unit.Position, Ability.Data);
-				});
-			}
-		}
-		else
-		{
-			EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
-			{
-				h.HandleAoECancel();
-			});
+			TriggerAbilityHoverEvents(Ability.Data, state);
 		}
 	}
 

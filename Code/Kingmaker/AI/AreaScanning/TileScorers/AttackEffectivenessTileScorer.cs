@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.AI.AreaScanning.Scoring;
@@ -29,7 +30,7 @@ public class AttackEffectivenessTileScorer : ProtectionTileScorer
 		result.Set(ScoreType.EnemyCoverScore, new Score(fireCoverValues[(int)los]));
 		result.Set(ScoreType.EffectiveDistanceScore, new Score((distance <= abilityInfo.effectiveRange) ? 1f : 0f));
 		result.Set(ScoreType.EnemyThreatScore, CalculateEnemyTargetThreatScore(context, target));
-		result.Set(ScoreType.PriorityScore, new Score(context.GetTargetPriority(target)));
+		result.Set(ScoreType.PriorityScore, new Score(context.Unit.Brain.GetTargetPriority(abilityInfo.ability, target)));
 		PartHealth healthOptional = target.GetHealthOptional();
 		result.Set(ScoreType.EnemyHPLeftScore, new Score((healthOptional != null) ? (1f / (float)healthOptional.HitPointsLeft) : 0f));
 		result.Set(ScoreType.ClosinessScore, new Score((float)(abilityInfo.maxRange - distance) / (float)abilityInfo.maxRange));
@@ -41,13 +42,32 @@ public class AttackEffectivenessTileScorer : ProtectionTileScorer
 		AbilityInfo abilityInfo = context.AbilityInfo;
 		if (abilityInfo == null)
 		{
+			if (scoreOrder != null && scoreOrder.Order.First() == ScoreType.BodyGuardScore)
+			{
+				List<CustomGridNodeBase> list = TempList.Get<CustomGridNodeBase>();
+				list.AddRange(nodes);
+				ScoreOrder scoreOrder2 = new ScoreOrder();
+				foreach (object value in Enum.GetValues(typeof(ScoreType)))
+				{
+					scoreOrder2.SetFactor((ScoreType)value, ScoreFactor.Ignored);
+				}
+				scoreOrder2.SetFactor(ScoreType.BodyGuardScore, ScoreFactor.Default);
+				return base.GetHighestScoreNode(context, list, scoreOrder2);
+			}
 			return null;
 		}
-		AbilityTargetSelector targetSelector = abilityInfo.GetAbilityTargetSelector();
-		List<CustomGridNodeBase> list = TempList.Get<CustomGridNodeBase>();
-		list.AddRange(nodes.Where((CustomGridNodeBase n) => targetSelector.HasPossibleTarget(context, n)));
+		List<CustomGridNodeBase> list2 = TempList.Get<CustomGridNodeBase>();
+		if (scoreOrder == null || scoreOrder.Order.First() != ScoreType.BodyGuardScore)
+		{
+			AbilityTargetSelector targetSelector = abilityInfo.GetAbilityTargetSelector();
+			list2.AddRange(nodes.Where((CustomGridNodeBase n) => targetSelector.HasPossibleTarget(context, n)));
+		}
+		else
+		{
+			list2.AddRange(nodes);
+		}
 		AffectedTargetsCache.Clear();
-		return base.GetHighestScoreNode(context, list, scoreOrder);
+		return base.GetHighestScoreNode(context, list2, scoreOrder);
 	}
 
 	private List<MechanicEntity> GetTargets(DecisionContext context, CustomGridNodeBase node)
@@ -142,6 +162,17 @@ public class AttackEffectivenessTileScorer : ProtectionTileScorer
 			result += new Score((float)(abilityInfo.maxRange - num) / (float)abilityInfo.maxRange);
 		}
 		return result;
+	}
+
+	protected override Score CalculateBodyGuardScore(DecisionContext context, CustomGridNodeBase node)
+	{
+		UnitPartBodyGuard optional = context.Unit.GetOptional<UnitPartBodyGuard>();
+		if (optional == null || optional.Defendant == null || optional.Defendant.IsDeadOrUnconscious)
+		{
+			return default(Score);
+		}
+		float num = optional.Defendant.DistanceToInCells(node.Vector3Position);
+		return new Score((num == 0f) ? 2f : (1f / num));
 	}
 
 	private Score CalculateEnemyTargetThreatScore(DecisionContext context, MechanicEntity entity)

@@ -14,6 +14,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.UI.Models.Log.ContextFlag;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Visual.Animation.Kingmaker;
@@ -67,12 +68,25 @@ public class UnitLifeController : BaseUnitController
 		{
 			return UnitLifeState.Conscious;
 		}
-		UnitPartCompanion companionOptional = unit.GetCompanionOptional();
-		if (companionOptional == null || companionOptional.State == CompanionState.ExCompanion || unit is StarshipEntity)
+		if (!unit.Features.UnconsciousOnZeroHealth && !IsActiveCompanionUnit(unit))
 		{
 			return UnitLifeState.Dead;
 		}
 		return UnitLifeState.Unconscious;
+	}
+
+	private static bool IsActiveCompanionUnit(AbstractUnitEntity unit)
+	{
+		if (!(unit is StarshipEntity))
+		{
+			UnitPartCompanion companionOptional = unit.GetCompanionOptional();
+			if (companionOptional != null)
+			{
+				return companionOptional.State != CompanionState.ExCompanion;
+			}
+			return false;
+		}
+		return false;
 	}
 
 	public static void ForceUnitConscious(AbstractUnitEntity unit)
@@ -98,18 +112,26 @@ public class UnitLifeController : BaseUnitController
 				OnUnitDeath(unit);
 				break;
 			case UnitLifeState.Conscious:
+				unit.Initiative.WasPreparedForRound = Mathf.Max(unit.Initiative.WasPreparedForRound, Game.Instance.TurnController.GameRound - 1);
 				unit.GetCombatStateOptional()?.ReturnToStartingPositionIfNeeded();
 				break;
 			}
 			if (!unit.LifeState.IsConscious)
 			{
-				unit.Commands.InterruptAllInterruptible();
+				if (unit.LifeState.IsDead)
+				{
+					unit.Commands.InterruptAll((AbstractUnitCommand _) => true);
+				}
+				else
+				{
+					unit.Commands.InterruptAllInterruptible();
+				}
 			}
 			EventBus.RaiseEvent((IAbstractUnitEntity)unit, (Action<IUnitLifeStateChanged>)delegate(IUnitLifeStateChanged h)
 			{
 				h.HandleUnitLifeStateChanged(prevLifeState);
 			}, isCheckRuntime: true);
-			if ((unit.IsPlayerFaction && newLifeState == UnitLifeState.Unconscious) || newLifeState == UnitLifeState.Dead)
+			if (newLifeState == UnitLifeState.Unconscious || newLifeState == UnitLifeState.Dead)
 			{
 				EventBus.RaiseEvent(delegate(IUnitDeathHandler h)
 				{
@@ -153,7 +175,7 @@ public class UnitLifeController : BaseUnitController
 				return;
 			}
 			float num = ((unit.GetSummonedMonsterOption() != null) ? Root.Common.Progression.SummonedUnitExperienceFactor : 1f);
-			GameHelper.GainExperience(Mathf.RoundToInt((float)ExperienceHelper.GetMobExp(unit.Blueprint.DifficultyType, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0) * num), null, isExperienceForDeath: true);
+			GameHelper.GainExperience(Mathf.RoundToInt((float)ExperienceHelper.GetMobExp(unit.Blueprint.DifficultyType, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0) * num), isExperienceForDeath: true);
 		}
 		unit.GiveExperienceOnDeath = false;
 	}

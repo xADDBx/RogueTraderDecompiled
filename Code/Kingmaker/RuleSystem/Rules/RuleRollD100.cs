@@ -13,7 +13,7 @@ public class RuleRollD100 : RuleRollDice, IRuleRollD100, IRuleRollDice
 	public RuleRollD100(IMechanicEntity initiator, int resultOverride)
 		: base(initiator, new DiceFormula(1, DiceType.D100))
 	{
-		ResultOverride = resultOverride;
+		base.ResultOverride = resultOverride;
 	}
 
 	public static RuleRollD100 FromInt(IMechanicEntity initiator, int roll)

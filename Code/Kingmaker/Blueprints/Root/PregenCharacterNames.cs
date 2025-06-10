@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Base;
+using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.Utility.DotNetExtensions;
@@ -17,7 +18,7 @@ public class PregenCharacterNames : ScriptableObject
 	private List<PregenCharacterNameList> m_CharacterNames;
 
 	[SerializeField]
-	private LocalizedString m_PetNames;
+	private List<PregenPetNamesList> m_PetNames;
 
 	[SerializeField]
 	private LocalizedString m_ShipNames;
@@ -25,6 +26,11 @@ public class PregenCharacterNames : ScriptableObject
 	private List<string> GetNamesList(Race race, Gender gender, CharGenConfig.CharGenMode mode, string exceptName)
 	{
 		return GetNamesFromStringExcept((m_CharacterNames.FirstOrDefault((PregenCharacterNameList ch) => ch.Race == race && ch.Gender == gender && ch.CharGenMode == mode)?.NameList)?.Text, exceptName);
+	}
+
+	private List<string> GetPetNamesList(PetType petType, string exceptName)
+	{
+		return GetNamesFromStringExcept((m_PetNames.FirstOrDefault((PregenPetNamesList ch) => ch.PetType == petType)?.NameList)?.Text, exceptName);
 	}
 
 	public string GetRandomName(Race race, Gender gender, CharGenConfig.CharGenMode mode, string exceptName)
@@ -37,9 +43,9 @@ public class PregenCharacterNames : ScriptableObject
 		return GetNamesList(race, gender, mode, exceptName).FirstOrDefault();
 	}
 
-	public string GetRandomPetName(string exceptName)
+	public string GetRandomPetName(PetType petType, string exceptName)
 	{
-		return GetNamesFromStringExcept(m_PetNames.Text, exceptName).Random(PFStatefulRandom.Blueprints);
+		return GetPetNamesList(petType, exceptName).Random(PFStatefulRandom.Blueprints);
 	}
 
 	public string GetRandomShipName(string exceptName)
@@ -84,5 +90,15 @@ public class PregenCharacterNames : ScriptableObject
 			return namesFromStringExcept.Random(PFStatefulRandom.NonDeterministic);
 		}
 		return shipName;
+	}
+
+	public string ReplacePetNameIfCustom(PetType petType, string petName)
+	{
+		List<string> petNamesList = GetPetNamesList(petType, string.Empty);
+		if (!petNamesList.Contains(petName))
+		{
+			return petNamesList.Random(PFStatefulRandom.NonDeterministic);
+		}
+		return petName;
 	}
 }

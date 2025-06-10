@@ -10,6 +10,7 @@ public enum CharGenPhaseType
 	ForgeHomeworldChild,
 	Occupation,
 	SanctionedPsyker,
+	Arbitrator,
 	Navigator,
 	MomentOfTriumph,
 	DarkestHour,

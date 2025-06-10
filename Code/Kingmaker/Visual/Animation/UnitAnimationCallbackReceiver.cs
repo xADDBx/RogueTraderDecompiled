@@ -9,7 +9,6 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
-using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
@@ -69,15 +68,8 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 		}
 		if (m_UnitView != null)
 		{
-			if (m_UnitView.EntityData == null)
-			{
-				if (m_UnitView.gameObject.GetComponent<UnitHologram>() == null)
-				{
-					PFLog.Default.Error(this, $"No unit for view {m_UnitView}");
-				}
-				return 0u;
-			}
-			float in_value = ((!m_UnitView.EntityData.IsInFogOfWar) ? 1f : (m_UnitView.EntityData.IsRevealed ? 0.5f : 0f));
+			AbstractUnitEntity entityData = m_UnitView.EntityData;
+			float in_value = ((entityData == null || !entityData.IsInFogOfWar) ? 1f : (m_UnitView.EntityData.IsRevealed ? 0.5f : 0f));
 			AkSoundEngine.SetRTPCValue("Audibility", in_value, m_UnitView.gameObject);
 			float in_value2 = m_UnitView.AnimationManager?.CurrentAction?.SpeedScale ?? 1f;
 			AkSoundEngine.SetRTPCValue("CombatSpeed", in_value2, m_UnitView.gameObject);
@@ -141,10 +133,10 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 	{
 		if (!(m_UnitView == null) && m_UnitView is UnitEntityView unitEntityView)
 		{
-			ItemEntityWeapon maybeWeapon = unitEntityView.EntityData.Body.SecondaryHand.MaybeWeapon;
-			if (maybeWeapon != null)
+			ItemEntityWeapon itemEntityWeapon = unitEntityView.EntityData?.Body.SecondaryHand.MaybeWeapon;
+			if (itemEntityWeapon != null)
 			{
-				string equipSound = maybeWeapon.Blueprint.VisualParameters.EquipSound;
+				string equipSound = itemEntityWeapon.Blueprint.VisualParameters.EquipSound;
 				PostEvent(equipSound, 1f, withPrefix: false);
 			}
 		}
@@ -207,9 +199,9 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 			}
 			else
 			{
-				unitEntityView.Blueprint.VisualSettings.BodyTypeSoundSwitch.Set(unitEntityView.gameObject);
+				unitEntityView.Blueprint?.VisualSettings.BodyTypeSoundSwitch.Set(unitEntityView.gameObject);
 			}
-			unitEntityView.Blueprint.VisualSettings.BodySizeSoundSwitch.Set(unitEntityView.gameObject);
+			unitEntityView.Blueprint?.VisualSettings.BodySizeSoundSwitch.Set(unitEntityView.gameObject);
 			SetTerrainSwitch();
 			PostEvent(eventName, 1f, withPrefix: false);
 		}
@@ -221,8 +213,8 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 		if (!(unitView == null))
 		{
 			SpawnDustFx(eventName);
-			unitView.Blueprint.VisualSettings.FootTypeSoundSwitch.Set(unitView.gameObject);
-			unitView.Blueprint.VisualSettings.FootSizeSoundSwitch.Set(unitView.gameObject);
+			unitView.Blueprint?.VisualSettings.FootTypeSoundSwitch.Set(unitView.gameObject);
+			unitView.Blueprint?.VisualSettings.FootSizeSoundSwitch.Set(unitView.gameObject);
 			SetTerrainSwitch();
 			PostEvent(eventName, 1f, withPrefix: false);
 		}
@@ -280,7 +272,7 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 		if (decorator != null && decorator.Duration > 0f && decorator.Entries.Length != 0 && m_AnimationManager != null && m_UnitView != null)
 		{
 			UnitAnimationDecoratorManager decoratorManager = m_AnimationManager.DecoratorManager;
-			if (!decorator.UseGender || m_UnitView.Blueprint.Gender == decorator.gender)
+			if (!decorator.UseGender || m_UnitView.Blueprint == null || m_UnitView.Blueprint.Gender == decorator.gender)
 			{
 				decoratorManager.ShowDecorator(decorator, m_UnitView);
 			}

@@ -86,9 +86,9 @@ public class UnitViewHandsEquipment
 		}
 	}
 
-	public WeaponAnimationStyle ActiveMainHandWeaponStyle => m_ActiveSet?.MainHand?.Slot?.GetWeaponStyle(IsDollRoom) ?? WeaponAnimationStyle.Fist;
+	public WeaponAnimationStyle ActiveMainHandWeaponStyle => GetWeaponStyleForHand(m_ActiveSet?.MainHand?.Slot);
 
-	public WeaponAnimationStyle ActiveOffHandWeaponStyle => m_ActiveSet?.OffHand?.Slot?.GetWeaponStyle(IsDollRoom) ?? WeaponAnimationStyle.Fist;
+	public WeaponAnimationStyle ActiveOffHandWeaponStyle => GetWeaponStyleForHand(m_ActiveSet?.OffHand?.Slot);
 
 	public bool IsDollRoom => View.HandsEquipment != this;
 
@@ -221,6 +221,16 @@ public class UnitViewHandsEquipment
 			MatchWithCurrentCombatState();
 			ForceEndChangeEquipment();
 		}
+	}
+
+	public WeaponAnimationStyle GetWeaponStyleForHand(HandSlot slot)
+	{
+		return slot?.GetWeaponStyle(IsDollRoom) ?? WeaponAnimationStyle.Fist;
+	}
+
+	public WeaponAnimationStyle GetWeaponStyleForWeapon(ItemEntityWeapon weapon)
+	{
+		return weapon.GetAnimationStyle(forDollRoom: false, Owner);
 	}
 
 	public void Dispose()

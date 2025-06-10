@@ -43,18 +43,25 @@ internal class CutsceneEntry
 
 	public void Resume()
 	{
-		if (m_Paused && Cutscene != null)
+		if (!m_Paused || Cutscene == null)
 		{
-			m_Paused = false;
-			if (Cutscene.Cutscene.MarkedUnitHandling == Kingmaker.AreaLogic.Cutscenes.Cutscene.MarkedUnitHandlingType.PauseAndRestart)
+			return;
+		}
+		m_Paused = false;
+		if (Cutscene.Cutscene.MarkedUnitHandling == Kingmaker.AreaLogic.Cutscenes.Cutscene.MarkedUnitHandlingType.PauseAndRestart)
+		{
+			Cutscene.Stop();
+			try
 			{
-				Cutscene.Stop();
 				CutscenePlayerView.Play(Cutscene.Cutscene, Cutscene.ParameterSetter, queued: false, Cutscene.HoldingState);
+				return;
 			}
-			else
+			catch (Exception e)
 			{
-				Cutscene.SetPaused(value: false, CutscenePauseReason.MarkedUnitControlledByOtherCutscene);
+				Cutscene.HandleException(e, null, null);
+				return;
 			}
 		}
+		Cutscene.SetPaused(value: false, CutscenePauseReason.MarkedUnitControlledByOtherCutscene);
 	}
 }

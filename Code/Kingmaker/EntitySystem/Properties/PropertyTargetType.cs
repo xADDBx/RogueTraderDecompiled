@@ -7,5 +7,6 @@ public enum PropertyTargetType
 	ContextCaster,
 	ContextMainTarget,
 	RuleInitiator,
-	RuleTarget
+	RuleTarget,
+	EvaluatedTarget
 }

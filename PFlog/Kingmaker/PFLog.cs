@@ -97,8 +97,6 @@ public class PFLog : LogChannelFactory
 
 	public static readonly LogChannel Clockwork = LogChannelFactory.GetOrCreate("Clockwork");
 
-	public static readonly LogChannel Arbiter = LogChannelFactory.GetOrCreate("Arbiter");
-
 	public static readonly LogChannel Bebilith = LogChannelFactory.GetOrCreate("Bebilith");
 
 	public static readonly LogChannel UnitDescriptionExport = LogChannelFactory.GetOrCreate("UnitDescriptionExport");

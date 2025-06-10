@@ -68,6 +68,10 @@ public class ScriptZoneCylinder : ScriptZoneShape
 
 	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
+		if ((double)forward.sqrMagnitude < 0.01)
+		{
+			forward = Vector3.forward;
+		}
 		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, size, forward))
 		{
 			if (ContainsPoint(node2.Vector3Position))

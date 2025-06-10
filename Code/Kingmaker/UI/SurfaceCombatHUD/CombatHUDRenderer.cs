@@ -12,6 +12,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Enums;
 using Owlcat.Runtime.UniRx;
 using Pathfinding;
 using UnityEngine;
@@ -298,6 +299,10 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 				}
 			}
 		}
+		EventBus.RaiseEvent(delegate(IUpdateShieldPatternBeforeAreaLoadHandler h)
+		{
+			h.HandleUpdateShieldPatternBeforeAreaLoad();
+		});
 		m_PendingRefresh = true;
 	}
 
@@ -583,7 +588,7 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 		}
 		if (movementNodes == null)
 		{
-			int num = (int)m_ActiveUnit.CombatState.ActionPointsBlue;
+			int num = ((!m_ActiveUnit.HasMechanicFeature(MechanicsFeatureType.CantMove)) ? ((int)m_ActiveUnit.CombatState.ActionPointsBlue) : 0);
 			if (num > 0)
 			{
 				movementNodes = PathfindingService.Instance.FindAllReachableTiles_Blocking(m_ActiveUnit.View.MovementAgent, m_ActiveUnit.Position, num).Keys.ToList();

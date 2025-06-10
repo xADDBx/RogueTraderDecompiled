@@ -35,6 +35,9 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 	[JsonProperty]
 	public readonly Vector3 Position;
 
+	[JsonProperty]
+	public readonly bool IsInterruptible = true;
+
 	[JsonConstructor]
 	public UnitTeleportParams()
 		: base(default(JsonConstructorMark))
@@ -48,11 +51,12 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 		Position = position;
 	}
 
-	public UnitTeleportParams(Vector3 position, bool isSynchronized)
+	public UnitTeleportParams(Vector3 position, bool isSynchronized, bool interruptible = true)
 		: base((TargetWrapper)null)
 	{
 		Position = position;
 		base.IsSynchronized = isSynchronized;
+		IsInterruptible = interruptible;
 	}
 
 	static UnitTeleportParams()
@@ -105,7 +109,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(15, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(16, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -115,7 +119,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 		bool value6 = value.DoNotInterruptAfterFight;
 		writer.DangerousWriteUnmanaged(in value3, in value4, in value5, in value6, in value.m_FreeAction, in value.m_NeedLoS, in value.m_ApproachRadius);
 		writer.WritePackable(in value.m_ForcedPath);
-		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired, in value.Position);
+		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired, in value.Position, in value.IsInterruptible);
 	}
 
 	[Preserve]
@@ -141,7 +145,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 		bool? value14;
 		bool? value15;
 		Vector3 value16;
-		if (memberCount == 15)
+		if (memberCount == 16)
 		{
 			if (value == null)
 			{
@@ -150,7 +154,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 				value4 = reader.ReadPackable<TargetWrapper>();
 				reader.DangerousReadUnmanaged<bool, bool, float?, bool, bool?, bool?, int?>(out value5, out value6, out value7, out value8, out value9, out value10, out value11);
 				value12 = reader.ReadPackable<ForcedPath>();
-				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, Vector3>(out value13, out value14, out value15, out value16);
+				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, Vector3, bool>(out value13, out value14, out value15, out value16, out var _);
 			}
 			else
 			{
@@ -169,6 +173,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Position;
+				bool value17 = value.IsInterruptible;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -184,15 +189,17 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 				reader.DangerousReadUnmanaged<bool?>(out value14);
 				reader.DangerousReadUnmanaged<bool?>(out value15);
 				reader.ReadUnmanaged<Vector3>(out value16);
+				reader.ReadUnmanaged<bool>(out value17);
 			}
 		}
 		else
 		{
-			if (memberCount > 15)
+			if (memberCount > 16)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitTeleportParams), 15, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitTeleportParams), 16, memberCount);
 				return;
 			}
+			bool value17;
 			if (value == null)
 			{
 				value2 = CommandType.None;
@@ -210,6 +217,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 				value14 = null;
 				value15 = null;
 				value16 = default(Vector3);
+				value17 = false;
 			}
 			else
 			{
@@ -228,6 +236,7 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 				value14 = value.m_IsOneFrameCommand;
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Position;
+				value17 = value.IsInterruptible;
 			}
 			if (memberCount != 0)
 			{
@@ -274,7 +283,11 @@ public sealed class UnitTeleportParams : UnitCommandParams<UnitTeleport>, IMemor
 																	if (memberCount != 14)
 																	{
 																		reader.ReadUnmanaged<Vector3>(out value16);
-																		_ = 15;
+																		if (memberCount != 15)
+																		{
+																			reader.ReadUnmanaged<bool>(out value17);
+																			_ = 16;
+																		}
 																	}
 																}
 															}

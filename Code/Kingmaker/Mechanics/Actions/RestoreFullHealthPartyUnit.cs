@@ -30,11 +30,11 @@ public class RestoreFullHealthPartyUnit : ContextAction
 		{
 			return;
 		}
-		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			if (item.Blueprint == blueprintUnit)
+			if (partyAndPet.Blueprint == blueprintUnit)
 			{
-				item.GetHealthOptional()?.HealDamageAll();
+				partyAndPet.GetHealthOptional()?.HealDamageAll();
 				break;
 			}
 		}

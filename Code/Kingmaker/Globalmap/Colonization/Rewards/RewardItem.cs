@@ -47,11 +47,6 @@ public class RewardItem : Reward
 			PFLog.Default.Error("Empty item in RewardItem");
 			return;
 		}
-		if (colony != null)
-		{
-			colony.LootToReceive.AddItem(Item, Count);
-			return;
-		}
 		ItemsCollection inventory = Game.Instance.Player.Inventory;
 		if (Item.IsActuallyStackable)
 		{

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.Cutscenes;
@@ -29,6 +30,7 @@ using Kingmaker.QA;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Alignments;
+using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
@@ -405,7 +407,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		});
 		ScheduleCue(blueprintCueBase);
 		DialogDebug.Add(Dialog, "Started dialog", Color.green);
-		Game.Instance.Player.Dialog.ShownDialogs.Add(Dialog);
+		Game.Instance.Player.Dialog.ShownDialogsAdd(Dialog);
 	}
 
 	public bool TryMoveCameraToCurrentSpeaker()
@@ -526,8 +528,63 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		}
 	}
 
-	public void StopDialog()
+	private void CheckAbnormalTermination()
 	{
+		if (Dialog == null)
+		{
+			return;
+		}
+		bool flag = false;
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.AppendLine("Dialog '" + Dialog.name + "' was unexpectedly terminated. See some reasons below.");
+		if (m_Answers.Count <= 0)
+		{
+			stringBuilder.AppendLine("No final answers were shown.");
+			flag = true;
+		}
+		else
+		{
+			BlueprintAnswer[] array = m_Answers.Intersect(LocalSelectedAnswers).ToArray();
+			int num = array.Length;
+			if (num > 0)
+			{
+				if (num == 1)
+				{
+					BlueprintAnswer blueprintAnswer = array[0];
+					if (blueprintAnswer.NextCue.Cues.Count > 0)
+					{
+						stringBuilder.AppendLine("Final answer '" + blueprintAnswer.name + "' has next cues present.");
+						flag = true;
+					}
+				}
+				else
+				{
+					stringBuilder.AppendLine("More than one final answer was selected.");
+					flag = true;
+				}
+			}
+			else
+			{
+				stringBuilder.AppendLine("No final answer was selected.");
+				flag = true;
+			}
+		}
+		if (flag)
+		{
+			if (CurrentCue != null)
+			{
+				stringBuilder.AppendLine("Current cue: '" + CurrentCue.name + "'");
+			}
+			PFLog.History.Dialog.ErrorWithReport(stringBuilder.ToString());
+		}
+	}
+
+	public void StopDialog(bool force = false)
+	{
+		if (BuildModeUtility.IsDevelopment)
+		{
+			CheckAbnormalTermination();
+		}
 		if (DialogStopScheduled)
 		{
 			return;
@@ -537,12 +594,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		CameraRig instance = CameraRig.Instance;
 		if (instance != null)
 		{
-			instance.SetViewportOffset(Vector2.zero);
-			IAbstractUnitEntity entity = Game.Instance.Player.MainCharacter.Entity;
-			if (entity.IsInGame)
-			{
-				instance.ScrollTo(entity.Position);
-			}
+			instance.SetViewportOffset(Vector2.zero, tryKeepView: true);
 		}
 		if (!Game.Instance.GameCommandQueue.ContainsCommand((StartScheduledDialogCommand _) => true))
 		{
@@ -566,7 +618,10 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			FirstSpeaker.DesiredOrientation = m_FirstSpeakerReturnOrientation;
 		}
-		dialog?.FinishActions.Run();
+		if (!force)
+		{
+			dialog?.FinishActions.Run();
+		}
 		Clear();
 	}
 
@@ -603,7 +658,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		DialogDebug.Init(Dialog);
 		AddHistoryEntry(CurrentCue, CurrentSpeakerName);
 		AddHistoryEntry(answer, (!(CurrentCue.Listener?.name != "Player Character")) ? null : CurrentCue.Listener?.CharacterName);
-		Game.Instance.Player.Dialog.SelectedAnswers.Add(answer);
+		Game.Instance.Player.Dialog.SelectedAnswersAdd(answer);
 		LocalSelectedAnswers.Add(answer);
 		Dictionary<BlueprintDialog, List<BlueprintScriptableObject>> bookEventLog = Game.Instance.Player.Dialog.BookEventLog;
 		if (bookEventLog.ContainsKey(Dialog))
@@ -721,7 +776,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 			return;
 		}
 		LocalShownCues.Add(cue);
-		Game.Instance.Player.Dialog.ShownCues.Add(cue);
+		Game.Instance.Player.Dialog.ShownCuesAdd(cue);
 		m_Answers.Clear();
 		m_ContinueCue = null;
 		DialogDebug.Add(cue, "played", Color.green);
@@ -751,7 +806,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 			{
 				if (answer2 is BlueprintAnswersList blueprintAnswersList && blueprintAnswersList.CanSelect())
 				{
-					Game.Instance.Player.Dialog.ShownAnswerLists.Add(blueprintAnswersList);
+					Game.Instance.Player.Dialog.ShownAnswerListsAdd(blueprintAnswersList);
 					LocalShownAnswerLists.Add(blueprintAnswersList);
 					AddAnswers(blueprintAnswersList.Answers.Dereference(), null);
 					EventBus.RaiseEvent(delegate(IDialogAnswersShownHandler i)
@@ -870,7 +925,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			LocalPassedChecks.Add(check);
 			LocalFailedChecks.Remove(check);
-			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExp(skillCheckResult.DC, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)), skillCheckResult.ActingUnit);
+			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExp(skillCheckResult.DC, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)));
 			check.OnCheckSuccessActions?.Run();
 		}
 		else if (!LocalPassedChecks.Contains(check))

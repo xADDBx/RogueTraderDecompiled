@@ -269,14 +269,14 @@ public static class GameHelper
 		return 0;
 	}
 
-	public static void GainExperience(int gained, BaseUnitEntity unit = null, bool isExperienceForDeath = false)
+	public static void GainExperience(int gained, bool isExperienceForDeath = false, bool hideInCombatLog = false)
 	{
-		Game.Instance.Player.GainPartyExperience(gained, isExperienceForDeath);
+		Game.Instance.Player.GainPartyExperience(gained, isExperienceForDeath, hideInCombatLog);
 	}
 
-	public static void GainExperienceForSkillCheck(int gained, [NotNull] BaseUnitEntity unit)
+	public static void GainExperienceForSkillCheck(int gained, bool hideInCombatLog = false)
 	{
-		Game.Instance.Player.GainPartyExperience(gained);
+		Game.Instance.Player.GainPartyExperience(gained, isExperienceForDeath: false, hideInCombatLog);
 	}
 
 	public static bool IsAttackingGreenNPC([NotNull] this MechanicEntity attacker, [NotNull] MechanicEntity target)

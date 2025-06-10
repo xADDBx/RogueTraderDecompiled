@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using Kingmaker.AreaLogic.Cutscenes.Commands;
 using Kingmaker.AreaLogic.Cutscenes.Components;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
@@ -72,6 +73,9 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	[JsonProperty]
 	private bool m_Remove;
 
+	[JsonProperty]
+	private readonly List<EntityFactRef> m_HiddenPetFacts = new List<EntityFactRef>();
+
 	private bool m_RestoreCalled;
 
 	private bool m_StoppingInProgress;
@@ -120,6 +124,8 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	[JsonProperty]
 	public bool IsFinished { get; private set; }
 
+	public bool IsStoppingInProgress => m_StoppingInProgress;
+
 	public bool PreventDestruction { get; set; }
 
 	public bool TraceCommands { get; set; }
@@ -131,6 +137,20 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 	public new CutscenePlayerView View => (CutscenePlayerView)base.View;
 
 	public List<CutscenePlayerGateData> ActivatedGates => m_ActivatedGates;
+
+	public bool IsFrozen { get; private set; }
+
+	public bool ShouldBeFreezed
+	{
+		get
+		{
+			if (!Cutscene.Freezeless && Anchors.Count > 0)
+			{
+				return CheckIsShouldBeFreezed();
+			}
+			return false;
+		}
+	}
 
 	public bool AllAnchorsInactive
 	{
@@ -332,6 +352,30 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		return false;
 	}
 
+	private bool CheckIsShouldBeFreezed()
+	{
+		if (Cutscene.LockControl || Cutscene.Sleepless)
+		{
+			return false;
+		}
+		bool flag = false;
+		bool flag2 = true;
+		foreach (EntityRef anchor in Anchors)
+		{
+			IEntity entity = anchor.Entity;
+			if (entity != null && entity.IsInGame && entity is AbstractUnitEntity { FreezeOutsideCamera: not false } abstractUnitEntity)
+			{
+				flag = true;
+				if (!abstractUnitEntity.IsSleeping)
+				{
+					flag2 = false;
+					break;
+				}
+			}
+		}
+		return flag && flag2;
+	}
+
 	private bool CheckIsAnyAnchorActive()
 	{
 		if (Cutscene.Sleepless)
@@ -367,36 +411,15 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		return !flag;
 	}
 
-	private void FillGateData(CutscenePlayerGateData gate)
+	private void FillGateData(CutscenePlayerGateData gate, bool logCreate = false)
 	{
 		gate.Player = this;
-		gate.StartedTracks = (gate.Gate ? gate.Gate.StartedTracks.Select((Track t, int i) => new CutscenePlayerTrackData
-		{
-			StartGate = gate,
-			TrackIndex = i,
-			CommandIndex = -1,
-			IsPlaying = false
-		}).ToList() : new List<CutscenePlayerTrackData>());
+		gate.StartedTracks = (gate.Gate ? gate.Gate.StartedTracks.Select((Track t, int i) => CutscenePlayerTrackData.Create(gate, i)).ToList() : new List<CutscenePlayerTrackData>());
 		m_GateData[gate.Gate] = gate;
 		foreach (CutscenePlayerTrackData startedTrack in gate.StartedTracks)
 		{
 			startedTrack.Track.Commands.RemoveAll((CommandBase c) => !c);
-			if (!startedTrack.Track.EndGate)
-			{
-				startedTrack.EndGate = m_ExitGate;
-			}
-			else
-			{
-				if (!m_GateData.TryGetValue(startedTrack.Track.EndGate, out var value))
-				{
-					value = new CutscenePlayerGateData
-					{
-						Gate = startedTrack.Track.EndGate
-					};
-					FillGateData(value);
-				}
-				startedTrack.EndGate = value;
-			}
+			startedTrack.EndGate = (startedTrack.Track.EndGate ? GetOrCreateAndFillGateData(startedTrack.Track.EndGate, logCreate) : m_ExitGate);
 			startedTrack.EndGate.IncomingTracks = startedTrack.EndGate.IncomingTracks ?? new List<CutscenePlayerTrackData>();
 			startedTrack.EndGate.IncomingTracks.Add(startedTrack);
 			foreach (CommandBase command in startedTrack.Track.Commands)
@@ -404,13 +427,9 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 				CommandBase.CommandSignalData[] array = command.GetExtraSignals().EmptyIfNull();
 				foreach (CommandBase.CommandSignalData commandSignalData in array)
 				{
-					if (commandSignalData?.Gate != null && !m_GateData.TryGetValue(commandSignalData.Gate, out var value2))
+					if (commandSignalData?.Gate != null)
 					{
-						value2 = new CutscenePlayerGateData
-						{
-							Gate = commandSignalData.Gate
-						};
-						FillGateData(value2);
+						GetOrCreateAndFillGateData(commandSignalData.Gate, logCreate);
 					}
 				}
 			}
@@ -423,11 +442,28 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		gate.Player = this;
 		foreach (CutscenePlayerTrackData startedTrack in gate.StartedTracks)
 		{
-			if (startedTrack.Track.EndGate != null && !m_GateData.TryGetValue(startedTrack.Track.EndGate, out var _))
+			if (startedTrack.EndGate?.Gate != null && !m_GateData.ContainsKey(startedTrack.EndGate.Gate))
 			{
 				RestoreGateData(startedTrack.EndGate);
 			}
 		}
+	}
+
+	private CutscenePlayerGateData GetOrCreateAndFillGateData(Gate gate, bool logCreate = false)
+	{
+		if (!m_GateData.TryGetValue(gate, out var value))
+		{
+			if (logCreate)
+			{
+				LogError($"Cutscene {Cutscene} was missing Gate Data for {gate}, adding.");
+			}
+			value = new CutscenePlayerGateData
+			{
+				Gate = gate
+			};
+			FillGateData(value, logCreate);
+		}
+		return value;
 	}
 
 	protected override IEntityViewBase CreateViewForData()
@@ -614,6 +650,11 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			{
 				return;
 			}
+			IsFrozen = ShouldBeFreezed;
+			if (IsFrozen)
+			{
+				return;
+			}
 			m_TickInProgress = true;
 			m_PauseDelayed.Clear();
 			Parameters.Cutscene = this;
@@ -680,6 +721,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		if (IsFinished)
 		{
 			Cutscene.OnFinished?.Run();
+			if (Cutscene.LockControl && !Cutscene.ShowPets)
+			{
+				TryShowPets();
+			}
 		}
 		if (IsFinished && !PreventDestruction)
 		{
@@ -716,6 +761,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		{
 			h.HandleCutsceneStarted(queued);
 		});
+		if (Cutscene.LockControl && !Cutscene.ShowPets)
+		{
+			TryHidePets();
+		}
 	}
 
 	private void CollectResourcesFromAction(GameAction action, HashSet<EntityRef> result, HashSet<Gate> seenGates)
@@ -969,6 +1018,13 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					});
 					return;
 				}
+				m_GateData = new Dictionary<Gate, CutscenePlayerGateData>();
+				RestoreGateData(m_CutsceneData);
+				foreach (CutscenePlayerGateData item in PooledList<CutscenePlayerGateData>.Get(m_GateData.Values))
+				{
+					RemoveInvalidAndAddMissingTracks(item);
+					FixInvalidGateConnections(item);
+				}
 				using (Parameters.RequestContextData())
 				{
 					foreach (CutscenePlayerGateData activatedGate in m_ActivatedGates)
@@ -1012,19 +1068,96 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		m_ActivatedGates.Clear();
 	}
 
+	private void RemoveInvalidAndAddMissingTracks(CutscenePlayerGateData gate)
+	{
+		if (gate.StartedTracks == null || gate.Gate?.StartedTracks == null)
+		{
+			return;
+		}
+		List<CutscenePlayerTrackData> list = null;
+		using PooledHashSet<int> pooledHashSet = PooledHashSet<int>.Get();
+		foreach (CutscenePlayerTrackData startedTrack in gate.StartedTracks)
+		{
+			if (startedTrack.TrackIndex >= gate.Gate.StartedTracks.Count)
+			{
+				if (list == null)
+				{
+					list = ListPool<CutscenePlayerTrackData>.Claim();
+				}
+				LogError($"Cutscene {Cutscene} has saved track from gate {gate.Gate} with invalid index {startedTrack.TrackIndex}, removing.");
+				list.Add(startedTrack);
+			}
+			else
+			{
+				pooledHashSet.Add(startedTrack.TrackIndex);
+			}
+		}
+		if (list != null)
+		{
+			foreach (CutscenePlayerTrackData item in list)
+			{
+				gate.StartedTracks.Remove(item);
+			}
+			ListPool<CutscenePlayerTrackData>.Release(list);
+			list = null;
+		}
+		for (int i = 0; i < gate.Gate.StartedTracks.Count; i++)
+		{
+			if (!pooledHashSet.Contains(i))
+			{
+				LogError($"Cutscene {Cutscene} is missing track #{i} on gate {gate.Gate}, adding.");
+				gate.StartedTracks.Add(CutscenePlayerTrackData.Create(gate, i));
+			}
+		}
+		if (gate.IncomingTracks == null)
+		{
+			return;
+		}
+		foreach (CutscenePlayerTrackData incomingTrack in gate.IncomingTracks)
+		{
+			if (incomingTrack.TrackIndex >= incomingTrack.StartGate.Gate.StartedTracks.Count)
+			{
+				if (list == null)
+				{
+					list = ListPool<CutscenePlayerTrackData>.Claim();
+				}
+				LogError($"Cutscene {Cutscene} has saved incoming track to gate {gate.Gate} with invalid index {incomingTrack.TrackIndex}, removing.");
+				list.Add(incomingTrack);
+			}
+		}
+		if (list == null)
+		{
+			return;
+		}
+		foreach (CutscenePlayerTrackData item2 in list)
+		{
+			gate.IncomingTracks.Remove(item2);
+		}
+		ListPool<CutscenePlayerTrackData>.Release(list);
+	}
+
+	private void FixInvalidGateConnections(CutscenePlayerGateData gate)
+	{
+		if (gate.StartedTracks == null)
+		{
+			return;
+		}
+		foreach (CutscenePlayerTrackData startedTrack in gate.StartedTracks)
+		{
+			if (startedTrack.Track.EndGate != null && (startedTrack.EndGate == null || startedTrack.EndGate.Gate != startedTrack.Track.EndGate))
+			{
+				CutscenePlayerGateData orCreateAndFillGateData = GetOrCreateAndFillGateData(startedTrack.Track.EndGate, logCreate: true);
+				LogError($"Cutscene {Cutscene}, gate {gate.Gate} track #{startedTrack.TrackIndex} has incorrect EndGate, fixing.");
+				startedTrack.EndGate?.IncomingTracks.Remove(startedTrack);
+				startedTrack.EndGate = orCreateAndFillGateData;
+				orCreateAndFillGateData.IncomingTracks.Add(startedTrack);
+			}
+		}
+	}
+
 	public bool IsGateActive(Gate gate)
 	{
 		return m_ActivatedGates.Any((CutscenePlayerGateData gd) => gd.Gate == gate);
-	}
-
-	public bool IsTrackPlaying(Track track)
-	{
-		CutscenePlayerTrackData trackData = GetTrackData(track);
-		if (trackData != null && trackData.IsPlaying)
-		{
-			return !trackData.IsFinished;
-		}
-		return false;
 	}
 
 	public CutscenePlayerTrackData GetTrackData(Track track)
@@ -1077,6 +1210,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		{
 			h.HandleCutsceneStopped();
 		});
+		if (Cutscene.LockControl && !Cutscene.ShowPets)
+		{
+			TryShowPets();
+		}
 		IsFinished = true;
 		m_StoppingInProgress = false;
 		if (!PreventDestruction)
@@ -1283,6 +1420,26 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		EventBus.RaiseEvent(entity, action, isCheckRuntime);
 	}
 
+	private void TryHidePets()
+	{
+		TryShowPets();
+		foreach (BaseUnitEntity item in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity u) => u.IsPet))
+		{
+			EntityFact entityFact = item.AddFact(BlueprintRoot.Instance.CutsceneHiddenFeature);
+			m_HiddenPetFacts.Add(entityFact);
+		}
+	}
+
+	private void TryShowPets()
+	{
+		foreach (EntityFactRef hiddenPetFact in m_HiddenPetFacts)
+		{
+			EntityFact entityFact = hiddenPetFact;
+			entityFact.Owner.ToEntity().Facts.Remove(entityFact);
+		}
+		m_HiddenPetFacts.Clear();
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -1315,8 +1472,18 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		result.Append(PlayActionId);
 		bool val9 = IsFinished;
 		result.Append(ref val9);
-		Hash128 val10 = ClassHasher<StatefulRandom>.GetHash128(m_Random);
-		result.Append(ref val10);
+		List<EntityFactRef> hiddenPetFacts = m_HiddenPetFacts;
+		if (hiddenPetFacts != null)
+		{
+			for (int j = 0; j < hiddenPetFacts.Count; j++)
+			{
+				EntityFactRef obj = hiddenPetFacts[j];
+				Hash128 val10 = StructHasher<EntityFactRef>.GetHash128(ref obj);
+				result.Append(ref val10);
+			}
+		}
+		Hash128 val11 = ClassHasher<StatefulRandom>.GetHash128(m_Random);
+		result.Append(ref val11);
 		return result;
 	}
 }

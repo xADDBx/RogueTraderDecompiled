@@ -31,9 +31,10 @@ using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.QA.Arbiter;
+using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.Settings;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Log.ContextFlag;
 using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UnitLogic;
@@ -377,8 +378,8 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			Area = Game.Instance.Player.SavedInArea,
 			AreaPart = Game.Instance.Player.SavedInAreaPart,
 			QuestWithSaveDescription = GetQuestWithSaveDescription(),
-			PlayerCharacterName = (Game.Instance.Player.MainCharacter.Entity?.CharacterName ?? "Unnamed"),
-			PlayerCharacterRank = (Game.Instance.Player.MainCharacterEntity?.Progression.CharacterLevel ?? 0),
+			PlayerCharacterName = (Game.Instance.Player.MainCharacterOriginalEntity?.CharacterName ?? "Unnamed"),
+			PlayerCharacterRank = (Game.Instance.Player.MainCharacterOriginalEntity?.Progression.CharacterLevel ?? 0),
 			GameSaveTime = Game.Instance.TimeController.GameTime,
 			GameSaveTimeText = "",
 			GameId = Game.Instance.Player.GameId,
@@ -387,7 +388,9 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		};
 		if (extended)
 		{
-			saveInfo.PartyPortraits = Game.Instance.Player.PartyCharacters.Select((UnitReference r) => ExtractPortrait(r.Entity.ToBaseUnitEntity())).ToList();
+			List<BaseUnitEntity> list = new List<BaseUnitEntity>();
+			UIUtility.GetActualGroup(list);
+			saveInfo.PartyPortraits = list.Select((BaseUnitEntity r) => ExtractPortrait(r.ToBaseUnitEntity())).ToList();
 		}
 		try
 		{
@@ -852,9 +855,11 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			Logger.Exception(ex, "Exception in DateTime");
 			save.SystemSaveTime = DateTime.MinValue;
 		}
-		save.PlayerCharacterName = Game.Instance.Player.MainCharacter.Entity?.CharacterName ?? "Unnamed";
-		save.PlayerCharacterRank = Game.Instance.Player.MainCharacterEntity?.Progression.CharacterLevel ?? 0;
-		save.PartyPortraits = Game.Instance.Player.PartyCharacters.Select((UnitReference r) => ExtractPortrait(r.Entity.ToBaseUnitEntity())).ToList();
+		save.PlayerCharacterName = Game.Instance.Player.MainCharacterOriginalEntity?.CharacterName ?? "Unnamed";
+		save.PlayerCharacterRank = Game.Instance.Player.MainCharacterOriginalEntity?.Progression.CharacterLevel ?? 0;
+		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
+		UIUtility.GetActualGroup(list);
+		save.PartyPortraits = list.Select((BaseUnitEntity r) => ExtractPortrait(r)).ToList();
 		save.GameTotalTime = Game.Instance.Player.RealTime;
 		save.QuestWithSaveDescription = GetQuestWithSaveDescription();
 		save.Versions = JsonUpgradeSystem.KnownVersions;
@@ -880,7 +885,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public bool IsSaveAllowed(SaveInfo.SaveType saveType, bool isMainMenu = false)
 	{
-		if (Arbiter.IsInitialized)
+		if (ArbiterService.IsInitialized)
 		{
 			return false;
 		}
@@ -902,13 +907,13 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		}
 		if (Game.Instance.Player.IsInCombat)
 		{
-			if (Game.Instance.TurnController.IsAiTurn)
-			{
-				return false;
-			}
 			if (Game.Instance.TurnController.IsPreparationTurn)
 			{
 				return true;
+			}
+			if (Game.Instance.TurnController.IsAiTurn)
+			{
+				return false;
 			}
 			PartUnitCommands partUnitCommands = Game.Instance.TurnController.CurrentUnit?.GetCommandsOptional();
 			if (partUnitCommands == null || !partUnitCommands.Empty)
@@ -1568,6 +1573,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				}
 				string name = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplaceCharacterNameIfCustom(Race.Human, description2.CustomGender.GetValueOrDefault(), CharGenConfig.CharGenMode.NewGame, description2.CustomName);
 				description2.SetName(name);
+				FixPetName(baseUnitEntity, description2);
 			}
 			if (baseUnitEntity.IsCustomCompanion() || baseUnitEntity.IsPregenCustomCompanion())
 			{
@@ -1577,6 +1583,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				}
 				string name2 = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplaceCharacterNameIfCustom(Race.Human, description3.CustomGender.GetValueOrDefault(), CharGenConfig.CharGenMode.NewCompanion, description3.CustomName);
 				description3.SetName(name2);
+				FixPetName(baseUnitEntity, description3);
 			}
 			if (baseUnitEntity.Parts.GetAll<PartStarship>().Any() && GetDescription(allEntityDatum, out var description4))
 			{
@@ -1588,6 +1595,15 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		{
 			description = character.Parts.GetAll<PartUnitDescription>().FirstOrDefault();
 			return description != null;
+		}
+	}
+
+	private void FixPetName(BaseUnitEntity baseUnit, PartUnitDescription baseUnitDescription)
+	{
+		if (baseUnit.IsMaster)
+		{
+			UnitPartPetOwner optional = baseUnit.GetOptional<UnitPartPetOwner>();
+			optional.PetUnit.Description?.SetName(baseUnitDescription.CustomPetName = BlueprintCharGenRoot.Instance.PregenCharacterNames.ReplacePetNameIfCustom(optional.PetType, baseUnitDescription.CustomPetName));
 		}
 	}
 

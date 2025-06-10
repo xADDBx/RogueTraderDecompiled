@@ -68,13 +68,13 @@ public class EnsurePartyOnCommonNavMeshArea : PlayerUpgraderOnlyAction
 
 	private static void FixPartyMembersPositions(uint area, Vector3 position)
 	{
-		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			if (item.CurrentUnwalkableNode.Area != area)
+			if (partyAndPet.CurrentUnwalkableNode.Area != area)
 			{
-				item.Position = position;
-				item.SnapToGrid();
-				PFLog.Default.Log("Moved unit: {0}", item);
+				partyAndPet.Position = position;
+				partyAndPet.SnapToGrid();
+				PFLog.Default.Log("Moved unit: {0}", partyAndPet);
 			}
 		}
 	}

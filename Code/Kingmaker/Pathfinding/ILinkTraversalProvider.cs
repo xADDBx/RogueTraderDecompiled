@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Pathfinding;
 
@@ -11,5 +12,5 @@ public interface ILinkTraversalProvider
 
 	bool AllowOtherToUseLink { get; }
 
-	bool CanBuildPathThroughLink(GraphNode from, GraphNode to, INodeLink link);
+	bool CanBuildPathThroughLink(GraphNode from, GraphNode to, [CanBeNull] INodeLink link);
 }

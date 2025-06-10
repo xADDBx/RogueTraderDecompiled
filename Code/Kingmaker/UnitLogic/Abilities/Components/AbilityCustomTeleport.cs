@@ -12,6 +12,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.Utility;
@@ -39,6 +40,10 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 	[Tooltip("Регулирует искать для телепортацию точку ближайшую к врагам или наиболее удаленную")]
 	public bool RunFromEnemies;
 
+	public BlueprintAbilityAreaEffectReference AreaEffectToLookFor;
+
+	public bool StayOutOfAreaEffect = true;
+
 	[Space(4f)]
 	public GameObject PortalFromPrefab;
 
@@ -53,6 +58,12 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 	public GameObject SideDisappearFx;
 
 	public GameObject SideAppearFx;
+
+	[SerializeField]
+	private float m_CasterDisappearDuration;
+
+	[SerializeField]
+	private float m_CasterAppearDuration;
 
 	[SerializeField]
 	private BlueprintProjectileReference m_CasterDisappearProjectile;
@@ -96,6 +107,8 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 		teleportSettings.CasterAppearFx = CasterAppearFx;
 		teleportSettings.SideDisappearFx = SideDisappearFx;
 		teleportSettings.SideAppearFx = SideAppearFx;
+		teleportSettings.CasterDisappearDuration = m_CasterDisappearDuration;
+		teleportSettings.CasterAppearDuration = m_CasterAppearDuration;
 		teleportSettings.CasterDisappearProjectile = CasterDisappearProjectile;
 		teleportSettings.CasterAppearProjectile = CasterAppearProjectile;
 		teleportSettings.SideDisappearProjectile = SideDisappearProjectile;
@@ -104,13 +117,13 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 		teleportSettings.LookAtPoint = GetLookAtPoint(caster, target.Point);
 		teleportSettings.RelaxPoints = true;
 		TeleportSettings settings = teleportSettings;
-		CustomGridNodeBase node;
 		if (FindPosition)
 		{
 			HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
 			GridPatterns.AddCircleNodes(hashSet, Range, caster.Size);
 			IEnumerable<BaseUnitEntity> enemies = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity unit) => caster.IsEnemy(unit) && caster.IsConscious);
 			HashSet<GraphNode> hashSet2 = TempHashSet.Get<GraphNode>();
+			BlueprintAbilityAreaEffect areaEffectBp2 = AreaEffectToLookFor?.Get();
 			foreach (Vector2Int item in hashSet)
 			{
 				bool flag = true;
@@ -118,9 +131,8 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 				{
 					int xCoordinateInGrid = occupiedNode.XCoordinateInGrid;
 					int zCoordinateInGrid = occupiedNode.ZCoordinateInGrid;
-					CustomGridGraph customGridGraph = (CustomGridGraph)occupiedNode.Graph;
-					node = customGridGraph.GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
-					if (!UsableForLanding(node))
+					CustomGridNodeBase node2 = ((CustomGridGraph)occupiedNode.Graph).GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
+					if (!UsableForLanding(node2, areaEffectBp2))
 					{
 						flag = false;
 						break;
@@ -138,7 +150,6 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 			settings.Targets = new List<BaseUnitEntity> { caster };
 			target = new TargetWrapper(graphNode.Vector3Position);
 		}
-		caster.Features.CantAct.Retain();
 		IEnumerator<AbilityDeliveryTarget> deliver = Deliver(context, settings, caster, target);
 		while (deliver.MoveNext())
 		{
@@ -148,14 +159,17 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 		{
 			ActionsOnCasterAfter.Run();
 		}
-		caster.Features.CantAct.Release();
-		bool UsableForLanding(CustomGridNodeBase landingNode)
+		bool UsableForLanding(CustomGridNodeBase landingNode, BlueprintAbilityAreaEffect areaEffectBp)
 		{
-			if (landingNode.Walkable)
+			if (landingNode.Walkable && (!landingNode.TryGetUnit(out var unit2) || !unit2.IsConscious || unit2 == caster))
 			{
-				if (node.TryGetUnit(out var unit2) && unit2.IsConscious)
+				if (areaEffectBp != null && (!StayOutOfAreaEffect || Game.Instance.State.AreaEffects.All.Any((AreaEffectEntity area) => area.Blueprint == areaEffectBp && area.Contains(landingNode))))
 				{
-					return unit2 == caster;
+					if (!StayOutOfAreaEffect)
+					{
+						return Game.Instance.State.AreaEffects.All.Any((AreaEffectEntity area) => area.Blueprint == areaEffectBp && area.Contains(landingNode));
+					}
+					return false;
 				}
 				return true;
 			}
@@ -192,6 +206,10 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 		if (settings.RelaxPoints)
 		{
 			FreePlaceSelector.RelaxPoints(pointsArray, radiusArray, targets.Count);
+		}
+		if (target.NearestNode == caster.CurrentUnwalkableNode && context.Ability.Blueprint.CanTargetSelf)
+		{
+			pointsArray[0] = target.Point;
 		}
 		Vector3 vector2 = pointsArray[0];
 		GameObject gameObject = FxHelper.SpawnFxOnEntity(settings.PortalFromPrefab, caster.View);

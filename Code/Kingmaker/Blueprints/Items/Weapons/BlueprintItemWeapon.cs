@@ -236,6 +236,12 @@ public class BlueprintItemWeapon : BlueprintItemEquipmentHand
 
 	public DamageStatBonusFactor DamageStatBonusFactor => m_DamageStatBonusFactor;
 
+	public override void Reset()
+	{
+		base.Reset();
+		SpendCharges = false;
+	}
+
 	public string GetEnchantmentSuffixes()
 	{
 		if (m_Enchantments == null || m_Enchantments.Empty())

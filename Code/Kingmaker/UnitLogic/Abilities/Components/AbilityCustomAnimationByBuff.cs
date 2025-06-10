@@ -26,20 +26,16 @@ public class AbilityCustomAnimationByBuff : BlueprintComponent, IAbilityCustomAn
 		[FormerlySerializedAs("Buff")]
 		private BlueprintBuffReference m_Buff;
 
-		[Obsolete]
-		public UnitAnimationAction Animation;
-
 		[ValidateNotNull]
 		public UnitAnimationActionLink AnimationLink;
 
 		public BlueprintBuff Buff => m_Buff?.Get();
 	}
 
-	[Obsolete]
-	public UnitAnimationAction DefaultAnimation;
-
 	[ValidateNotNull]
 	public UnitAnimationActionLink DefaultAnimationLink;
+
+	public UnitAnimationType OverrideAnimationType = UnitAnimationType.Unused;
 
 	public Entry[] Variants;
 

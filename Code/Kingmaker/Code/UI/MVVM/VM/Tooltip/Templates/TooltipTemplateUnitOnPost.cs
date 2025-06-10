@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.SpaceCombat.Blueprints;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ShipCustomization.Posts;
@@ -75,7 +76,7 @@ public class TooltipTemplateUnitOnPost : TooltipBaseTemplate
 		{
 			Post post = m_Posts[i];
 			IEnumerable<BlueprintShipPostExpertise> enumerable = post.UnitExpertises(m_Unit);
-			if (enumerable == null || !enumerable.Any())
+			if (enumerable == null || !enumerable.Any() || post.DefaultAbilities == null || !post.DefaultAbilities.Any())
 			{
 				continue;
 			}
@@ -83,12 +84,12 @@ public class TooltipTemplateUnitOnPost : TooltipBaseTemplate
 			{
 				foreach (BlueprintAbility defaultAbility in post.DefaultAbilities)
 				{
-					if (item.DefaultPostAbility == defaultAbility && post == m_SelectedPost.Value.Post)
+					if (item?.DefaultPostAbility == defaultAbility && post == m_SelectedPost?.Value?.Post)
 					{
 						list2.Add(new TooltipBrickTitle(UIStrings.Instance.SpaceCombatTexts.GetPostStrings(i).Title, TooltipTitleType.H4));
 						ModifiableValue statOptional = m_Unit.GetStatOptional(post.PostData.AssociatedSkill);
 						list2.Add(new TooltipBrickFeature(defaultAbility));
-						list2.Add(new TooltipBrickIconStatValue(LocalizedTexts.Instance.Stats.GetText(statOptional.Type), statOptional.ModifiedValue.ToString()));
+						list2.Add(new TooltipBrickIconStatValue(LocalizedTexts.Instance.Stats.GetText(statOptional?.Type ?? StatType.Unknown), statOptional?.ModifiedValue.ToString()));
 					}
 				}
 			}

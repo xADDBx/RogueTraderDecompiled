@@ -31,7 +31,7 @@ public class TaskWinCombat : ClockworkRunnerTask
 					Game.Instance.Rulebook.TriggerEvent(new RuleDealDamage(player, enemy.Unit, new DamageData(DamageType.Direct, 20)));
 				}
 			}
-			if (Game.Instance.Player.Party.Any((BaseUnitEntity u) => u.Health.Damage > u.Health.HitPoints.ModifiedValue / 2 || u.LifeState.IsDead))
+			if (Game.Instance.Player.PartyAndPets.Any((BaseUnitEntity u) => u.Health.Damage > u.Health.HitPoints.ModifiedValue / 2 || u.LifeState.IsDead))
 			{
 				yield return new TaskHeal(Runner);
 			}

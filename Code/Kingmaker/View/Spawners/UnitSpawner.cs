@@ -24,6 +24,8 @@ public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISu
 
 	private bool m_SquadLeader;
 
+	private bool m_SeparateUnitsAfterLeaderDeath;
+
 	private bool m_GroupIsDisabledOnSimplified;
 
 	public bool IgnoreInEncoutnerStatistic;
@@ -90,9 +92,10 @@ public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISu
 		m_SquadId = id;
 	}
 
-	public void MarkAsSquadLeader()
+	public void MarkAsSquadLeader(bool separateUnitsAfterLeaderDeath = false)
 	{
 		m_SquadLeader = true;
+		m_SeparateUnitsAfterLeaderDeath = separateUnitsAfterLeaderDeath;
 	}
 
 	protected override AbstractUnitEntity SpawnUnit(Vector3 position, Quaternion rotation)
@@ -126,6 +129,7 @@ public class UnitSpawner : UnitSpawnerBase, IUnitHandler, IUnitSpawnHandler, ISu
 		{
 			PartSquad orCreate = baseUnit.GetOrCreate<PartSquad>();
 			orCreate.Id = m_SquadId;
+			orCreate.SeparateUnitsAfterLeaderDeath = m_SeparateUnitsAfterLeaderDeath;
 			if (m_SquadLeader)
 			{
 				orCreate.Squad.Leader = baseUnit;

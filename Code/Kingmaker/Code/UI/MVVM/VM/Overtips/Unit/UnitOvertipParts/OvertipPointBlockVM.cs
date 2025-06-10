@@ -11,7 +11,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit.UnitOvertipParts;
 
-public class OvertipPointBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler
+public class OvertipPointBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IContinueTurnHandler, IInterruptTurnStartHandler, IInterruptTurnContinueHandler
 {
 	public readonly UnitState UnitState;
 
@@ -50,7 +50,17 @@ public class OvertipPointBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		OnNewUnitTurnCheck(EventInvokerExtensions.MechanicEntity);
 	}

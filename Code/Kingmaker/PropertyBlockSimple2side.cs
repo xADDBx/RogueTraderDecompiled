@@ -33,6 +33,8 @@ public class PropertyBlockSimple2side : MonoBehaviour
 
 	public GameObject _mObject;
 
+	public bool _bObjectHorizontal;
+
 	private void Start()
 	{
 		_propBlock = new MaterialPropertyBlock();
@@ -40,36 +42,45 @@ public class PropertyBlockSimple2side : MonoBehaviour
 		mHeight = Shader.PropertyToID("_FloatHeight");
 		mHeight3 = Shader.PropertyToID("_FloatHeight2");
 		_upDown1 = Shader.PropertyToID("_UpDown");
-		if (_propBlock != null)
+		if (_propBlock == null)
 		{
-			_renderer.GetPropertyBlock(_propBlock);
-			if (_bObjectHeight)
+			return;
+		}
+		_renderer.GetPropertyBlock(_propBlock);
+		if (_bObjectHeight)
+		{
+			if (!_bObjectHorizontal)
 			{
 				_propBlock.SetFloat(ShaderProps._FloatHeight, mHeight2 + _mObject.transform.position.y);
 				_propBlock.SetFloat(ShaderProps._FloatHeight2, mHeight4 + _mObject.transform.position.y);
 			}
 			else
 			{
-				_propBlock.SetFloat(ShaderProps._FloatHeight, mHeight2);
-				_propBlock.SetFloat(ShaderProps._FloatHeight2, mHeight4);
+				_propBlock.SetFloat(ShaderProps._FloatHeight, mHeight2 + _mObject.transform.position.x);
+				_propBlock.SetFloat(ShaderProps._FloatHeight2, mHeight4 + _mObject.transform.position.x);
 			}
-			if (_upDown2)
-			{
-				_propBlock.SetInt(ShaderProps._UpDown, 1);
-			}
-			else
-			{
-				_propBlock.SetInt(ShaderProps._UpDown, 0);
-			}
-			if (_OnlyBottom)
-			{
-				_propBlock.SetInt(ShaderProps._OnlyBottom, 1);
-			}
-			else
-			{
-				_propBlock.SetInt(ShaderProps._OnlyBottom, 0);
-			}
-			_renderer.SetPropertyBlock(_propBlock);
 		}
+		else
+		{
+			_propBlock.SetFloat(ShaderProps._FloatHeight, mHeight2);
+			_propBlock.SetFloat(ShaderProps._FloatHeight2, mHeight4);
+		}
+		if (_upDown2)
+		{
+			_propBlock.SetInt(ShaderProps._UpDown, 1);
+		}
+		else
+		{
+			_propBlock.SetInt(ShaderProps._UpDown, 0);
+		}
+		if (_OnlyBottom)
+		{
+			_propBlock.SetInt(ShaderProps._OnlyBottom, 1);
+		}
+		else
+		{
+			_propBlock.SetInt(ShaderProps._OnlyBottom, 0);
+		}
+		_renderer.SetPropertyBlock(_propBlock);
 	}
 }

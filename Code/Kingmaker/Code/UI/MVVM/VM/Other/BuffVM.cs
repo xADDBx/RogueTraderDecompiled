@@ -29,6 +29,8 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public readonly ReactiveProperty<bool> IsDamage = new ReactiveProperty<bool>();
 
+	private readonly Subject<Unit> m_CalculateDamageSubject = new Subject<Unit>();
+
 	private readonly UnitPartNonStackBonuses m_NonStackBonus;
 
 	public Buff Buff { get; }
@@ -48,12 +50,16 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		m_NonStackBonus = Buff?.Owner?.GetOptional<UnitPartNonStackBonuses>();
 		Icon.Value = ObjectExtensions.Or(buff.Icon, UIConfig.Instance.UIIcons.DefaultAbilityIcon);
 		ShowNonStackNotification.Value = ShowNonStackWarning();
-		UpdateRank();
 		DOTLogicVisual dOTLogicVisual = buff.Blueprint?.GetComponent<DOTLogicVisual>();
 		IsDamage.Value = dOTLogicVisual != null;
 		SetGroup();
 		SetSortOrder();
 		AddDisposable(EventBus.Subscribe(this));
+		AddDisposable(m_CalculateDamageSubject.ThrottleFirstFrame(1).Subscribe(delegate
+		{
+			CalculateDamage();
+		}));
+		UpdateRank();
 	}
 
 	protected override void DisposeImplementation()
@@ -149,8 +155,15 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		if (Buff.Blueprint?.GetComponent<DOTLogicVisual>() == null)
 		{
 			Rank.Value = Buff.Rank;
-			return;
 		}
+		else
+		{
+			m_CalculateDamageSubject.OnNext(default(Unit));
+		}
+	}
+
+	private void CalculateDamage()
+	{
 		DamageData damageData = DOTLogicUIExtensions.CalculateDOTDamage(Buff);
 		if (damageData != null)
 		{

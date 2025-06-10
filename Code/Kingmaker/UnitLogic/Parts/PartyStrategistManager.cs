@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IAreaActivationHandler, IAreaEffectForceEndHandler, IHashable
+public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IAreaActivationHandler, IAreaEffectForceEndHandler, IInterruptTurnContinueHandler, IHashable
 {
 	private readonly Dictionary<StrategistTacticsAreaEffectType, AreaEffectEntity> m_StrategistAreaEffectEntities = new Dictionary<StrategistTacticsAreaEffectType, AreaEffectEntity>();
 
@@ -59,7 +59,17 @@ public class PartyStrategistManager : EntityPart<Player>, ITurnBasedModeHandler,
 		}
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		IsCastRestricted = false;
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		IsCastRestricted = false;
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		IsCastRestricted = false;
 	}

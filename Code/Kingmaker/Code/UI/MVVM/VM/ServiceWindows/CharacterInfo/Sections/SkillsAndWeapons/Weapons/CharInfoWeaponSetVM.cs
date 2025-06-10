@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Items;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -65,9 +66,13 @@ public class CharInfoWeaponSetVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		{
 			if (weaponAbility.Ability != uIConfig.ReloadAbility)
 			{
-				CharInfoWeaponSetAbilityVM charInfoWeaponSetAbilityVM = new CharInfoWeaponSetAbilityVM(weaponAbility.Ability, itemEntityWeapon.Blueprint);
-				Abilities.Add(charInfoWeaponSetAbilityVM);
-				AddDisposable(charInfoWeaponSetAbilityVM);
+				BlueprintAbility ability = weaponAbility.Ability;
+				if (ability == null || !ability.HiddenInUI)
+				{
+					CharInfoWeaponSetAbilityVM charInfoWeaponSetAbilityVM = new CharInfoWeaponSetAbilityVM(weaponAbility.Ability, itemEntityWeapon.Blueprint);
+					Abilities.Add(charInfoWeaponSetAbilityVM);
+					AddDisposable(charInfoWeaponSetAbilityVM);
+				}
 			}
 		}
 	}

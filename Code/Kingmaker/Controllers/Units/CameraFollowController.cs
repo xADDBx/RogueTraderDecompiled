@@ -218,7 +218,7 @@ public class CameraFollowController : IControllerTick, IController, IControllerS
 			ICameraFollowTask result;
 			if (m_CurrentTask != null && m_CurrentTask.Priority < task.Priority)
 			{
-				m_Tasks.AddFirst(m_CurrentTask);
+				m_Tasks.EnqueueFirst(m_CurrentTask);
 				StartTask(task);
 			}
 			else if (m_CurrentTask != null && CompareTasks(m_CurrentTask, task))

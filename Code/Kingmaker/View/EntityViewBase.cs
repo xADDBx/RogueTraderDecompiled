@@ -70,6 +70,7 @@ public abstract class EntityViewBase : MonoBehaviour, IEntityViewBase, IFadeOutA
 
 	public List<NavmeshCut> NavmeshCuts => m_NavmeshCuts;
 
+	[CanBeNull]
 	public IEntity Data { get; private set; }
 
 	private Entity m_Data => (Entity)Data;
@@ -336,7 +337,7 @@ public abstract class EntityViewBase : MonoBehaviour, IEntityViewBase, IFadeOutA
 				}
 			}
 		}
-		if (flag4)
+		if (flag4 && IsVisible != visible)
 		{
 			IsVisible = visible;
 			OnVisibilityChanged();

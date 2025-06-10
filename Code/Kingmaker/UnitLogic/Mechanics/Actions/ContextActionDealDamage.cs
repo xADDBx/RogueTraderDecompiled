@@ -9,6 +9,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -57,6 +58,9 @@ public class ContextActionDealDamage : ContextAction
 	public ContextValue BonusDamage;
 
 	public ContextDiceValue Penetration;
+
+	[Tooltip("Может критовать?")]
+	public bool HasRighteousFury;
 
 	[Header("Misc")]
 	public bool Half;
@@ -166,12 +170,23 @@ public class ContextActionDealDamage : ContextAction
 		{
 			value2 = entity.DistanceToInCells(customGridNodeBase.Vector3Position);
 		}
-		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, base.AbilityContext?.Ability, null, DamageType.CreateDamage(min, max), value, value2, DoNotUseCrModifier).Trigger().ResultDamage;
+		AbilityData abilityData = base.AbilityContext?.Ability;
+		RulePerformAttackRoll rulePerformAttackRoll = null;
+		if (HasRighteousFury && abilityData != null)
+		{
+			rulePerformAttackRoll = new RulePerformAttackRoll(maybeCaster, entity, abilityData, 0, disableDodgeForAlly: true, null, null)
+			{
+				OverrideAttackHitPolicy = true,
+				AttackHitPolicyType = AttackHitPolicyType.AutoHit
+			};
+			base.Context.TriggerRule(rulePerformAttackRoll);
+		}
+		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, abilityData, rulePerformAttackRoll, DamageType.CreateDamage(min, max), value, value2, DoNotUseCrModifier).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = info.PreRolledValue;
 		RuleDealDamage ruleDealDamage = new RuleDealDamage(maybeCaster, entity, resultDamage)
 		{
 			Projectile = base.Projectile,
-			SourceAbility = (base.AbilityContext?.Ability ?? base.Context.SourceAbilityContext?.Ability),
+			SourceAbility = (abilityData ?? base.Context.SourceAbilityContext?.Ability),
 			SourceArea = (base.Context.AssociatedBlueprint as BlueprintAbilityAreaEffect),
 			ContextDamageWeapon = Weapon
 		};

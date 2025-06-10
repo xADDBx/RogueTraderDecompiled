@@ -9,7 +9,6 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Items.Ecnchantments;
 using Kingmaker.Blueprints.Items.Equipment;
-using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Cheats;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -33,6 +32,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.SpaceCombat.MeteorStream;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.PathRenderer;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -434,7 +434,7 @@ public static class UnitHelper
 		{
 			return bodyOptional.PrimaryHand;
 		}
-		if (0 == 0 && unit.IsThreatHandMelee(bodyOptional.SecondaryHand))
+		if (unit.IsThreatHandMelee(bodyOptional.SecondaryHand))
 		{
 			return bodyOptional.SecondaryHand;
 		}
@@ -460,6 +460,25 @@ public static class UnitHelper
 	}
 
 	[CanBeNull]
+	public static WeaponSlot GetThreatHandRangedAnyHand(this MechanicEntity unit)
+	{
+		PartUnitBody bodyOptional = unit.GetBodyOptional();
+		if (bodyOptional == null)
+		{
+			return null;
+		}
+		if (unit.IsThreatHandRanged(bodyOptional.PrimaryHand))
+		{
+			return bodyOptional.PrimaryHand;
+		}
+		if (unit.IsThreatHandRanged(bodyOptional.SecondaryHand))
+		{
+			return bodyOptional.SecondaryHand;
+		}
+		return null;
+	}
+
+	[CanBeNull]
 	public static WeaponSlot GetThreatHand(this MechanicEntity unit)
 	{
 		using (ProfileScope.New("GetThreatHand"))
@@ -469,17 +488,29 @@ public static class UnitHelper
 			{
 				return null;
 			}
-			if (unit.IsThreatHand(bodyOptional.PrimaryHand))
+			UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
+			if (optional != null && optional.EnableAndPrioritizeRangedAttack)
+			{
+				if (unit.IsThreatHandRanged(bodyOptional.PrimaryHand) && PartAbilitySettings.GetThreatenedAreaSetting(unit, bodyOptional.PrimaryHand.Weapon.Blueprint.WeaponAbilities.Ability1.Ability) != BlueprintAbility.UsingInThreateningAreaType.CannotUse)
+				{
+					return bodyOptional.PrimaryHand;
+				}
+				if (unit.IsThreatHandRanged(bodyOptional.SecondaryHand) && PartAbilitySettings.GetThreatenedAreaSetting(unit, bodyOptional.SecondaryHand.Weapon.Blueprint.WeaponAbilities.Ability1.Ability) != BlueprintAbility.UsingInThreateningAreaType.CannotUse)
+				{
+					return bodyOptional.SecondaryHand;
+				}
+			}
+			if (unit.IsThreatHandMelee(bodyOptional.PrimaryHand))
 			{
 				return bodyOptional.PrimaryHand;
 			}
-			if (0 == 0 && unit.IsThreatHand(bodyOptional.SecondaryHand))
+			if (unit.IsThreatHandMelee(bodyOptional.SecondaryHand))
 			{
 				return bodyOptional.SecondaryHand;
 			}
 			foreach (WeaponSlot additionalLimb in bodyOptional.AdditionalLimbs)
 			{
-				if (unit.IsThreatHand(additionalLimb))
+				if (unit.IsThreatHandMelee(additionalLimb))
 				{
 					return additionalLimb;
 				}
@@ -490,25 +521,12 @@ public static class UnitHelper
 
 	private static bool IsThreatHandMelee(this MechanicEntity unit, WeaponSlot hand)
 	{
-		if (unit.IsThreatHand(hand))
-		{
-			return hand.Weapon.Blueprint.IsMelee;
-		}
-		return false;
+		return hand.IsMelee;
 	}
 
 	private static bool IsThreatHandRanged(this MechanicEntity unit, WeaponSlot hand)
 	{
-		return hand.Weapon.Blueprint.IsRanged;
-	}
-
-	private static bool IsThreatHand(this MechanicEntity unit, WeaponSlot hand)
-	{
-		if (hand.HasWeapon)
-		{
-			return hand.Weapon.Blueprint.IsMelee;
-		}
-		return false;
+		return hand.IsRanged;
 	}
 
 	public static bool CanAttack(this MechanicEntity unit, ItemEntityWeapon weapon)
@@ -517,6 +535,30 @@ public static class UnitHelper
 		if (weapon != null && optional != null)
 		{
 			return optional.CanAttack(weapon.Blueprint.AttackType);
+		}
+		return true;
+	}
+
+	public static bool CanAttackOfOpportunity(this BaseUnitEntity unit)
+	{
+		WeaponSlot threatHand = unit.GetThreatHand();
+		if (threatHand?.GetAttackOfOpportunityAbility(unit) == null)
+		{
+			return false;
+		}
+		if (threatHand.HasShield)
+		{
+			return true;
+		}
+		UnitPartAttackTypeRestriction optional = unit.GetOptional<UnitPartAttackTypeRestriction>();
+		if (optional == null)
+		{
+			return true;
+		}
+		ItemEntityWeapon maybeWeapon = threatHand.MaybeWeapon;
+		if (maybeWeapon != null)
+		{
+			return optional.CanAttack(maybeWeapon.Blueprint.AttackType);
 		}
 		return true;
 	}
@@ -536,52 +578,13 @@ public static class UnitHelper
 		return true;
 	}
 
-	public static bool IsReach(this BaseUnitEntity unit, BaseUnitEntity enemy, WeaponSlot hand)
-	{
-		float num = hand.Weapon.AttackRange;
-		if ((float)unit.DistanceToInCells(enemy) <= unit.Corpulence + enemy.Corpulence + num)
-		{
-			return unit.Vision.HasLOS(enemy);
-		}
-		return false;
-	}
-
-	public static bool IsAttackOfOpportunityReach(this BaseUnitEntity attacker, BaseUnitEntity target, WeaponSlot hand)
-	{
-		using (ProfileScope.New("IsAttackOfOpportunityReach"))
-		{
-			float num = hand.Weapon.AttackRange;
-			return (float)attacker.DistanceToInCells(target) <= num && attacker.Vision.HasLOS(target) && attacker.HasMeleeLos(target);
-		}
-	}
-
 	public static bool IsAttackOfOpportunityReach(this BaseUnitEntity attacker, GraphNode targetNode, Vector3 attackerPosition, IntRect targetSize, WeaponSlot hand)
 	{
 		using (ProfileScope.New("IsAttackOfOpportunityReach"))
 		{
-			int attackRange = hand.Weapon.AttackRange;
-			return WarhammerGeometryUtils.DistanceToInCells(attackerPosition, attacker.SizeRect, targetNode.Vector3Position, targetSize) <= attackRange && attacker.Vision.HasLOS(targetNode, attackerPosition + LosCalculations.EyeShift) && LosCalculations.HasMeleeLos(attackerPosition, attacker.SizeRect, targetNode.Vector3Position, targetSize);
+			int attackOfOpportunityThreatingRange = hand.GetAttackOfOpportunityThreatingRange(attacker);
+			return WarhammerGeometryUtils.DistanceToInCells(attackerPosition, attacker.SizeRect, targetNode.Vector3Position, targetSize) <= attackOfOpportunityThreatingRange && attacker.Vision.HasLOS(targetNode, attackerPosition + LosCalculations.EyeShift) && LosCalculations.HasMeleeLos(attackerPosition, attacker.SizeRect, targetNode.Vector3Position, targetSize);
 		}
-	}
-
-	public static void SetUnitEquipmentColorRampIndex(this BaseUnitEntity unit, int rampIndex, bool secondary = false)
-	{
-		if (unit.ViewSettings.Doll == null)
-		{
-			unit.ViewSettings.SetDoll(new DollData());
-		}
-		if (secondary)
-		{
-			unit.ViewSettings.Doll.ClothesSecondaryIndex = rampIndex;
-		}
-		else
-		{
-			unit.ViewSettings.Doll.ClothesPrimaryIndex = rampIndex;
-		}
-		EventBus.RaiseEvent((IMechanicEntity)unit, (Action<IUnitVisualChangeHandler>)delegate(IUnitVisualChangeHandler h)
-		{
-			h.HandleUnitChangeEquipmentColor(rampIndex, secondary);
-		}, isCheckRuntime: true);
 	}
 
 	public static void SetUnitEquipmentColorRampIndex(this BaseUnitEntity unit, RampColorPreset.IndexSet rampIndex)
@@ -590,29 +593,28 @@ public static class UnitHelper
 		{
 			unit.ViewSettings.SetDoll(new DollData());
 		}
-		unit.ViewSettings.Doll.ClothesSecondaryIndex = rampIndex.SecondaryIndex;
-		unit.ViewSettings.Doll.ClothesPrimaryIndex = rampIndex.PrimaryIndex;
+		if (!unit.IsPet)
+		{
+			unit.ViewSettings.Doll.ClothesSecondaryIndex = rampIndex.SecondaryIndex;
+			unit.ViewSettings.Doll.ClothesPrimaryIndex = rampIndex.PrimaryIndex;
+		}
+		else
+		{
+			PetCharacter componentInChildren = unit.View.gameObject.GetComponentInChildren<PetCharacter>();
+			if (componentInChildren == null)
+			{
+				PFLog.Default.Warning("SetUnitEquipmentColorRampIndex: PetCharacter component not found on pet: " + unit.CharacterName);
+				return;
+			}
+			unit.ViewSettings.Doll.PetRamp01Index = rampIndex.PrimaryIndex;
+			unit.ViewSettings.Doll.PetRamp02Index = rampIndex.SecondaryIndex;
+			componentInChildren.ApplyRampsByIndicesFromOwnPresets(rampIndex.PrimaryIndex, rampIndex.SecondaryIndex);
+			PFLog.TechArt.Log($"SetUnitEquipmentColorRampIndex: Applied pet ramps {rampIndex.PrimaryIndex}, {rampIndex.SecondaryIndex} to pet: {unit.CharacterName}");
+		}
 		EventBus.RaiseEvent((IMechanicEntity)unit, (Action<IUnitVisualChangeHandler>)delegate(IUnitVisualChangeHandler h)
 		{
 			h.HandleUnitChangeEquipmentColor(rampIndex.PrimaryIndex, secondary: false);
 		}, isCheckRuntime: true);
-	}
-
-	[CanBeNull]
-	public static BaseUnitEntity GetSaddledUnit(this BaseUnitEntity unit)
-	{
-		return null;
-	}
-
-	[CanBeNull]
-	public static BaseUnitEntity GetRider(this BaseUnitEntity unit)
-	{
-		return null;
-	}
-
-	public static int GetWeaponOptimalRange(this MechanicEntity unit, [CanBeNull] BlueprintItemWeapon weapon = null)
-	{
-		return SimpleBlueprintExtendAsObject.Or(weapon, null)?.AttackOptimalRange ?? 1;
 	}
 
 	public static DamageEstimate EstimateDamage(ItemEntityWeapon weapon, BaseUnitEntity target)
@@ -625,6 +627,41 @@ public static class UnitHelper
 		result.BypassDR = true;
 		result.Chunks = new DamageData[1] { damageData };
 		return result;
+	}
+
+	public static Vector3 GetUnitSpawnerSize(BlueprintUnit unit)
+	{
+		Vector3 vector = new Vector3(1.35f, 1.35f, 1.35f);
+		switch (unit?.Size ?? Size.Medium)
+		{
+		case Size.Fine:
+			return vector * 0.1f;
+		case Size.Diminutive:
+			return vector * 0.3f;
+		case Size.Tiny:
+			return vector * 0.5f;
+		case Size.Small:
+			return vector * 0.7f;
+		case Size.Large:
+			return vector * 2f;
+		case Size.Huge:
+			return vector * 3f;
+		case Size.Gargantuan:
+			return vector * 4f;
+		case Size.Colossal:
+			return vector * 5f;
+		case Size.Frigate_1x2:
+			return vector * 1.2f;
+		case Size.Cruiser_2x4:
+			return vector * 2f;
+		case Size.GrandCruiser_3x6:
+			return vector * 3f;
+		default:
+			throw new ArgumentOutOfRangeException();
+		case Size.Medium:
+		case Size.Raider_1x1:
+			return vector;
+		}
 	}
 
 	public static bool IsStoryCompanion(this BaseUnitEntity unit)
@@ -915,7 +952,7 @@ public static class UnitHelper
 				vector2 = (vector - vectorPath2[vectorPath2.Count - 2]).normalized;
 			}
 			Vector3 direction = vector2;
-			UnitPredictionManager.Instance.SetHologramPosition(unit, vector, direction);
+			UnitPredictionManager.Instance.SetMovementHologramPosition(unit, vector, direction);
 		}
 		catch (Exception ex)
 		{
@@ -1026,7 +1063,7 @@ public static class UnitHelper
 
 	public static UnitMoveToParams CreateMoveCommandParamsRT(BaseUnitEntity unit, MoveCommandSettings settings, ForcedPath path)
 	{
-		UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, settings.Destination, settings.DisableApproachRadius ? 0f : 0.3f)
+		UnitMoveToParams unitMoveToParams = new UnitMoveToParams(path, settings.Destination, settings.DisableApproachRadius ? 0f : 0.3f, settings.LeaveFollowers)
 		{
 			IsSynchronized = true
 		};

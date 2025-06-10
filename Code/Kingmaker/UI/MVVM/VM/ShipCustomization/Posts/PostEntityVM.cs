@@ -22,13 +22,13 @@ public class PostEntityVM : SelectionGroupEntityVM, IStarshipPostHandler, ISubsc
 
 	public readonly ReactiveProperty<bool> IsPostBlocked = new ReactiveProperty<bool>();
 
-	public readonly ReactiveProperty<string> BlockDuration = new ReactiveProperty<string>();
+	private readonly ReactiveProperty<string> m_BlockDuration = new ReactiveProperty<string>();
 
-	public readonly ReactiveProperty<bool> FXActivated = new ReactiveProperty<bool>();
+	private readonly ReactiveProperty<bool> m_FXActivated = new ReactiveProperty<bool>();
 
 	public readonly Post Post;
 
-	public ReactiveCommand OnPostUpdate = new ReactiveCommand();
+	public readonly ReactiveCommand OnPostUpdate = new ReactiveCommand();
 
 	public PostEntityVM(int index, Post post)
 		: base(allowSwitchOff: false)
@@ -37,14 +37,18 @@ public class PostEntityVM : SelectionGroupEntityVM, IStarshipPostHandler, ISubsc
 		Post = post;
 		Portrait = ((!(post?.Portrait?.SmallPortrait)) ? BlueprintRoot.Instance.UIConfig.Portraits.LeaderPlaceholderPortrait.SmallPortrait : post?.Portrait?.SmallPortrait);
 		IsPostBlocked.Value = false;
-		BlockDuration.Value = "0";
-		FXActivated.Value = false;
+		m_BlockDuration.Value = "0";
+		m_FXActivated.Value = false;
 		AddDisposable(AbilitiesGroup = new AbilitiesInfoGroupVM(Post));
 		UpdateUnitOnPost();
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
-	public void UpdateUnitOnPost()
+	protected override void DisposeImplementation()
+	{
+	}
+
+	private void UpdateUnitOnPost()
 	{
 		Portrait = ((!(Post?.CurrentUnit?.Portrait?.SmallPortrait)) ? BlueprintRoot.Instance.UIConfig.Portraits.LeaderPlaceholderPortrait.SmallPortrait : Post?.CurrentUnit?.Portrait?.SmallPortrait);
 		AbilitiesGroup.UpdateAbilities();
@@ -52,10 +56,6 @@ public class PostEntityVM : SelectionGroupEntityVM, IStarshipPostHandler, ISubsc
 	}
 
 	protected override void DoSelectMe()
-	{
-	}
-
-	protected override void DisposeImplementation()
 	{
 	}
 

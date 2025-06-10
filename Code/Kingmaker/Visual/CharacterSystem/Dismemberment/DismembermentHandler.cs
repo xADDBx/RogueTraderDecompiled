@@ -128,7 +128,7 @@ public static class DismembermentHandler
 		{
 			return false;
 		}
-		return unit.View.DismembermentManager.LastImpulse.DamageType != DamageType.Toxic;
+		return true;
 	}
 
 	public static DeathType GetDeathType(AbstractUnitEntity unit)
@@ -145,6 +145,7 @@ public static class DismembermentHandler
 		switch (unit.GetOptional<PartHealth>()?.LastHandledDamage?.Damage.Type)
 		{
 		case DamageType.Fire:
+		case DamageType.Shock:
 		case DamageType.Energy:
 		case DamageType.Neural:
 		case DamageType.Direct:
@@ -155,30 +156,26 @@ public static class DismembermentHandler
 		case DamageType.Piercing:
 		case DamageType.Toxic:
 		case DamageType.Warp:
-			if (unit.GetOptional<PartHealth>()?.LastHandledDamage?.Result > (BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.MinimumDamageForDismember ?? 8))
-			{
-				deathType = DeathType.Dismemberment;
-			}
-			else
-			{
-				deathType = DeathType.RagDoll;
-			}
+			deathType = ((!(unit.GetOptional<PartHealth>()?.LastHandledDamage?.Result > (BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.MinimumDamageForDismember ?? 8))) ? DeathType.RagDoll : DeathType.Dismemberment);
 			break;
 		default:
 			deathType = DeathType.Animation;
 			break;
 		}
-		int num = 0;
-		List<WeaponsListDism.PrefabInPair> obj = BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.WeaponsListDismArray.WeaponsChancesArray;
-		string text = unit?.GetOptional<PartHealth>()?.LastHandledDamage?.Reason.Ability?.Weapon?.Blueprint?.VisualParameters?.Model?.name;
-		foreach (WeaponsListDism.PrefabInPair item in obj)
+		if (deathType != DeathType.Animation)
 		{
-			if (text != null && item.PrefabPairGo != null && item.PrefabPairGo.name.ToLower().Equals(text.ToLower()))
+			int num = 0;
+			List<WeaponsListDism.PrefabInPair> obj = BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.WeaponsListDismArray.WeaponsChancesArray;
+			string text = unit?.GetOptional<PartHealth>()?.LastHandledDamage?.Reason.Ability?.Weapon?.Blueprint?.VisualParameters?.Model?.name;
+			foreach (WeaponsListDism.PrefabInPair item in obj)
 			{
-				num = item.PrefabPairInt;
+				if (text != null && item.PrefabPairGo != null && item.PrefabPairGo.name.ToLower().Equals(text.ToLower()))
+				{
+					num = item.PrefabPairInt;
+				}
 			}
+			deathType = ((((unit.Random.Range(0, 100) < num) ? 1 : 0) != 1) ? DeathType.RagDoll : DeathType.Dismemberment);
 		}
-		deathType = ((((unit.Random.Range(0, 100) < num) ? 1 : 0) != 1) ? DeathType.RagDoll : DeathType.Dismemberment);
 		bool? obj2 = BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.WeaponsListDismArray.ForceRagdoll;
 		bool? flag = BlueprintWarhammerRoot.Instance.BlueprintDismembermentRoot?.WeaponsListDismArray.ForceDismemberment;
 		if (obj2 == true)
@@ -215,6 +212,11 @@ public static class DismembermentHandler
 		if (deathType == DeathType.Dismemberment)
 		{
 			unit?.View.DismembermentManager.StartDismemberment(unit.Random, unit.LifeState.DismembermentLimbsApartType);
+			AbstractUnitEntity abstractUnitEntity = unit;
+			if (abstractUnitEntity != null && abstractUnitEntity.LifeState.ForceDismember == UnitDismemberType.ForcedNone)
+			{
+				deathType = DeathType.RagDoll;
+			}
 		}
 		if (deathType == DeathType.RagDoll)
 		{

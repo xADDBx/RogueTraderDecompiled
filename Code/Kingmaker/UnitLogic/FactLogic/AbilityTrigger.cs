@@ -51,12 +51,38 @@ public abstract class AbilityTrigger : UnitFactComponentDelegate, IHashable
 	[SerializeField]
 	private BlueprintAbilityGroupReference m_AbilityGroup;
 
+	[ShowIf("ForAbilityGroup")]
+	[SerializeField]
+	private BlueprintAbilityGroupReference[] m_OtherAbilityGroupList;
+
 	[SerializeField]
 	protected bool ForUltimateAbilities;
 
 	public BlueprintAbility Ability => m_Ability?.Get();
 
-	public BlueprintAbilityGroup AbilityGroup => m_AbilityGroup.Get();
+	private IEnumerable<BlueprintAbilityGroup> GetAbilityGroups()
+	{
+		if (!ForAbilityGroup)
+		{
+			yield break;
+		}
+		if (m_AbilityGroup != null)
+		{
+			yield return m_AbilityGroup.Get();
+		}
+		if (m_OtherAbilityGroupList == null)
+		{
+			yield break;
+		}
+		BlueprintAbilityGroupReference[] otherAbilityGroupList = m_OtherAbilityGroupList;
+		foreach (BlueprintAbilityGroupReference blueprintAbilityGroupReference in otherAbilityGroupList)
+		{
+			if (blueprintAbilityGroupReference != null)
+			{
+				yield return blueprintAbilityGroupReference.Get();
+			}
+		}
+	}
 
 	protected void RunAction(BlueprintAbility ability, [CanBeNull] MechanicEntity initiator, [CanBeNull] TargetWrapper target, bool assignAsTarget, AbilityTrigger componentType)
 	{
@@ -88,9 +114,25 @@ public abstract class AbilityTrigger : UnitFactComponentDelegate, IHashable
 		base.Fact.RunActionInContext(Action, assignAsTarget ? ((TargetWrapper)context.Caster) : target);
 	}
 
+	protected bool CheckAbilityGroup(BlueprintAbility ability)
+	{
+		if (!ForAbilityGroup)
+		{
+			return true;
+		}
+		foreach (BlueprintAbilityGroup abilityGroup in GetAbilityGroups())
+		{
+			if (abilityGroup != null && ability.AbilityGroups.Contains(abilityGroup))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private bool CanRunActions(BlueprintAbility ability)
 	{
-		if ((!ForOneAbility || ability == Ability) && (!ForMultipleAbilities || Abilities.HasItem((BlueprintAbilityReference r) => r.Is(ability))) && (!ForAbilityGroup || ability.AbilityGroups.Contains(AbilityGroup)))
+		if ((!ForOneAbility || ability == Ability) && (!ForMultipleAbilities || Abilities.HasItem((BlueprintAbilityReference r) => r.Is(ability))) && CheckAbilityGroup(ability))
 		{
 			if (ForUltimateAbilities && !ability.IsHeroicAct)
 			{

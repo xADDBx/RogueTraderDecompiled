@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
@@ -86,8 +87,8 @@ public class PartVendor : PartItemsCollection, IHashable
 
 	public float GetProfitFactorCost(ItemEntity item)
 	{
-		VendorLootItem value;
-		float num = (GetItemEntityToVendorLootItemPairs().TryGetValue(item, out value) ? ((float)value.ProfitFactorCosts) : item.ProfitFactorCost);
+		VendorLootItem value = GetItemEntityToVendorLootItemPairs().FirstOrDefault((KeyValuePair<ItemEntity, VendorLootItem> i) => i.Key.Blueprint == item.Blueprint).Value;
+		float num = ((value != null) ? ((float)value.ProfitFactorCosts) : item.ProfitFactorCost);
 		FactionType factionType = FactionType;
 		Game.Instance.Player.ProfitFactor.VendorDiscounts.TryGetValue(factionType, out var value2);
 		return Mathf.Max(0f, num - (float)Mathf.Abs(value2));

@@ -16,6 +16,8 @@ public class ScatterPattern : IAbilityAoEPatternProvider
 
 	public bool CalculateAttackFromPatternCentre => false;
 
+	public bool ExcludeUnwalkable => false;
+
 	TargetType IAbilityAoEPatternProvider.Targets => TargetType.Any;
 
 	public AoEPattern Pattern => null;

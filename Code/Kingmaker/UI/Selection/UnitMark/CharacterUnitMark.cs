@@ -9,6 +9,8 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
@@ -90,7 +92,7 @@ public class CharacterUnitMark : BaseSurfaceUnitMark, INetRoleSetHandler, ISubsc
 			bool flag = base.State.HasFlag(UnitMarkState.CurrentTurn);
 			bool flag2 = base.State.HasFlag(UnitMarkState.DialogCurrentSpeaker);
 			bool flag3 = base.State.HasFlag(UnitMarkState.Selected);
-			bool flag4 = base.State.HasFlag(UnitMarkState.IsInCombat);
+			bool flag4 = base.State.HasFlag(UnitMarkState.IsInCombat) && !base.Unit.HasMechanicFeature(MechanicsFeatureType.Hidden);
 			bool isDirectlyControllable = base.Unit.IsDirectlyControllable;
 			bool flag5 = base.State.HasFlag(UnitMarkState.GamepadSelected);
 			bool flag6 = base.Unit.IsMyNetRole();

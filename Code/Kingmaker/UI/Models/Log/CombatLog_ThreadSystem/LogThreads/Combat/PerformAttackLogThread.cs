@@ -12,6 +12,7 @@ using Kingmaker.Enums;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.RuleSystem.Rules.Interfaces;
 using Kingmaker.RuleSystem.Rules.Modifiers;
@@ -61,6 +62,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		GameLogContext.HitD100 = (GameLogContext.Property<IRuleRollD100>)(IRuleRollD100)rule.RollPerformAttackRule.ResultChanceRule;
 		GameLogContext.DodgeD100 = (GameLogContext.Property<IRuleRollD100>)(IRuleRollD100)(rule.ResultDodgeRule?.ResultChanceRule);
 		GameLogContext.ParryD100 = (GameLogContext.Property<IRuleRollD100>)(IRuleRollD100)(rule.ResultParryRule?.RollChanceRule);
+		GameLogContext.BlockD100 = (GameLogContext.Property<IRuleRollD100>)(IRuleRollD100)(rule.ResultBlockRule?.RollChanceRule);
 		RuleRollD100 ruleRollD = rule.RollPerformAttackRule.ResultRighteousFuryD100;
 		if (ruleRollD == null && evt.Attacker != null)
 		{
@@ -75,6 +77,7 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		GameLogContext.HitChance = rule.RollPerformAttackRule.HitChanceRule.ResultHitChance;
 		GameLogContext.DodgeChance = rule.RollPerformAttackRule.ResultDodgeRule?.ChancesRule.Result ?? 0;
 		GameLogContext.ParryChance = rule.RollPerformAttackRule.ResultParryRule?.ChancesRule.Result ?? 0;
+		GameLogContext.BlockChance = rule.ResultBlockRule?.ChancesRule.Result ?? 0;
 		GameLogContext.RfChance = ((rule.RollPerformAttackRule.HitChanceRule.ResultRighteousFuryChance > 0) ? rule.RollPerformAttackRule.HitChanceRule.ResultRighteousFuryChance : rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.RawResult);
 		GameLogContext.CoverHitChance = rule.RollPerformAttackRule.HitChanceRule.ResultCoverHitChanceRule?.ResultChance ?? 0;
 		GameLogContext.TargetSuperiorityPenalty = rule.RollPerformAttackRule.HitChanceRule.ResultTargetSuperiorityPenalty * 2;
@@ -278,6 +281,41 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				}
 			}
 		}
+		bool isBlockSuccess = false;
+		if (GameLogContext.BlockD100.Value != null && rule.ResultBlockRule != null)
+		{
+			isBlockSuccess = rule.ResultBlockRule.Result;
+			int sufficientValue4 = rule.ResultBlockRule.RollChanceRule.RerollChance ?? GameLogContext.BlockChance.Value;
+			int value4 = ((rule.ResultBlockRule.RollChanceRule.RollHistory.Count > 1) ? rule.ResultBlockRule.RollChanceRule.RollHistory.LastOrDefault() : GameLogContext.BlockD100.Value.Result);
+			yield return new TooltipBrickChance(UIStrings.Instance.BlockStrings.Block, sufficientValue4, value4, 2, isResultValue: false, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+			if (rule.ResultBlockRule.ChancesRule.IsAutoBlock && rule.TargetUnit != null)
+			{
+				yield return new TooltipBrickTriggeredAuto(UIStrings.Instance.BlockStrings.AutoBlock, evt.GetAutoBlockAssociatedBuffs(), isSuccess: true);
+			}
+			else if (isInfotip)
+			{
+				if (rule.ResultBlockRule.RollChanceRule.RollHistory.Count > 1)
+				{
+					IEnumerable<ITooltipBrick> enumerable7 = LogThreadBase.ShowReroll(rule.ResultBlockRule.RollChanceRule, GameLogContext.BlockChance.Value, isTargetHitIcon: false, isProtectionIcon: true);
+					foreach (ITooltipBrick item7 in enumerable7)
+					{
+						yield return item7;
+					}
+				}
+				yield return new TooltipBrickTextValue(UIStrings.Instance.BlockStrings.BaseBlock, UIUtilityTexts.GetPercentString(0f), 2);
+				if (rule.ResultBlockRule.ChancesRule.ShieldBlockChance > 0)
+				{
+					int shieldBlockChance = rule.ResultBlockRule.ChancesRule.ShieldBlockChance;
+					yield return new TooltipBrickTextValue(UIStrings.Instance.BlockStrings.BaseBlockChance, "+" + UIUtilityTexts.GetPercentString(shieldBlockChance), 2);
+				}
+				IEnumerable<ITooltipBrick> enumerable8 = LogThreadBase.CreateBrickModifiers(rule.ResultBlockRule.ChancesRule.AllModifiersList, valueIsPercent: true, null, 2);
+				foreach (ITooltipBrick item8 in enumerable8)
+				{
+					yield return item8;
+				}
+				yield return LogThreadBase.MinMaxChanceBorder(rule.ResultBlockRule.ChancesRule.RawResult, BlueprintRoot.Instance.WarhammerRoot.CombatRoot.HitChanceOverkillBorder);
+			}
+		}
 		if (resultDamage != null && !resultDamage.Damage.CalculatedValue.HasValue)
 		{
 			bool autoCrit = rule.RollPerformAttackRule.HitChanceRule.AutoCrits.Value && !rule.RollPerformAttackRule.HitChanceRule.NeverCrits.Value;
@@ -288,33 +326,33 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				if (autoCrit)
 				{
 					List<FeatureCountableFlag.BuffList.Element> list = new List<FeatureCountableFlag.BuffList.Element>();
-					foreach (Modifier item7 in rule.RollPerformAttackRule.HitChanceRule.AutoCrits.List)
+					foreach (Modifier item9 in rule.RollPerformAttackRule.HitChanceRule.AutoCrits.List)
 					{
-						if (item7.Fact != null)
+						if (item9.Fact != null)
 						{
-							list.Add(new FeatureCountableFlag.BuffList.Element(item7.Fact));
+							list.Add(new FeatureCountableFlag.BuffList.Element(item9.Fact));
 						}
-						else if (item7.Item != null)
+						else if (item9.Item != null)
 						{
-							list.Add(new FeatureCountableFlag.BuffList.Element(item7.Item));
+							list.Add(new FeatureCountableFlag.BuffList.Element(item9.Item));
 						}
 					}
 					yield return new TooltipBrickTriggeredAuto(s.AutoCrit.Text, list, isSuccess: true);
 				}
 				else if (rule.RollPerformAttackRule.HitChanceRule.IsMelee)
 				{
-					IEnumerable<ITooltipBrick> enumerable7 = CreateMeleeCritHitModifiers(evt.InitiatorWeaponSkillModifierValues, evt.TargetWeaponSkillModifierValues, rule.RollPerformAttackRule.HitChanceRule, criticalNestedLevel + 1);
-					foreach (ITooltipBrick item8 in enumerable7)
+					IEnumerable<ITooltipBrick> enumerable9 = CreateMeleeCritHitModifiers(evt.InitiatorWeaponSkillModifierValues, evt.TargetWeaponSkillModifierValues, rule.RollPerformAttackRule.HitChanceRule, criticalNestedLevel + 1);
+					foreach (ITooltipBrick item10 in enumerable9)
 					{
-						yield return item8;
+						yield return item10;
 					}
 				}
 				else
 				{
-					IEnumerable<ITooltipBrick> enumerable8 = LogThreadBase.CreateBrickModifiers(rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.AllModifiersList, valueIsPercent: true, null, criticalNestedLevel, isResultValue: false, isFirstWithoutPlus: true);
-					foreach (ITooltipBrick item9 in enumerable8)
+					IEnumerable<ITooltipBrick> enumerable10 = LogThreadBase.CreateBrickModifiers(rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.AllModifiersList, valueIsPercent: true, null, criticalNestedLevel, isResultValue: false, isFirstWithoutPlus: true);
+					foreach (ITooltipBrick item11 in enumerable10)
 					{
-						yield return item9;
+						yield return item11;
 					}
 					yield return LogThreadBase.MinMaxChanceBorder(rule.RollPerformAttackRule.HitChanceRule.RighteousFuryChanceRule.RawResult, 100, criticalNestedLevel);
 				}
@@ -335,9 +373,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			if (isInfotip && minMaxModifiers.Any())
 			{
 				yield return new TooltipBrickTextValue(s.BaseModifier.Text, damage.MinValueBase + " — " + damage.MaxValueBase, 2, isResultValue: true);
-				foreach (ITooltipBrick item10 in minMaxModifiers)
+				foreach (ITooltipBrick item12 in minMaxModifiers)
 				{
-					yield return item10;
+					yield return item12;
 				}
 			}
 			if (!damage.CalculatedValue.HasValue && damage.IsCritical)
@@ -346,10 +384,10 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				yield return new TooltipBrickIconTextValue(s.CriticalDamageModifier.Text, "<b>+" + damage.CriticalRolledValue + "</b>", 2, isResultValue: true, "=" + num2, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 				if (isInfotip)
 				{
-					IEnumerable<ITooltipBrick> enumerable9 = LogThreadBase.CreateBrickModifiers(damage.CriticalDamageModifiers.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true);
-					foreach (ITooltipBrick item11 in enumerable9)
+					IEnumerable<ITooltipBrick> enumerable11 = LogThreadBase.CreateBrickModifiers(damage.CriticalDamageModifiers.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true);
+					foreach (ITooltipBrick item13 in enumerable11)
 					{
-						yield return item11;
+						yield return item13;
 					}
 				}
 			}
@@ -361,9 +399,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				yield return new TooltipBrickIconTextValue(s.AdditionalDamage.Text, "<b>" + UIUtility.AddSign(num3) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 				if (isInfotip)
 				{
-					foreach (ITooltipBrick item12 in initialDamageModifiers)
+					foreach (ITooltipBrick item14 in initialDamageModifiers)
 					{
-						yield return item12;
+						yield return item14;
 					}
 				}
 			}
@@ -371,6 +409,20 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			{
 				criticalNestedLevel = Mathf.RoundToInt((float)result.RolledValue * damage.EffectiveOverpenetrationFactor);
 				yield return new TooltipBrickIconTextValue(s.Overpenetration.Text, "<b>×" + damage.EffectiveOverpenetrationFactor.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+			}
+			int resultReflected = resultDamage.RollDamageRule.ResultReflected;
+			if (resultReflected > 0)
+			{
+				criticalNestedLevel = Mathf.Max(0, criticalNestedLevel - resultReflected);
+				yield return new TooltipBrickIconTextValue(UIStrings.Instance.CombatLog.Reflected, "<b>-" + resultReflected.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+				if (isInfotip)
+				{
+					IEnumerable<ITooltipBrick> enumerable12 = LogThreadBase.CreateBrickModifiers(resultDamage.RollDamageRule.AllReflectModifiersList, valueIsPercent: false, null, 2, isResultValue: true, isFirstWithoutPlus: true);
+					foreach (ITooltipBrick item15 in enumerable12)
+					{
+						yield return item15;
+					}
+				}
 			}
 			if (!resultDamage.RollDamageRule.IgnoreDeflection)
 			{
@@ -381,42 +433,42 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 					yield return new TooltipBrickIconTextValue(s.DamageDeflection.Text, "<b>" + UIUtility.AddSign(damage.Deflection.Value) + "</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
 					if (isInfotip)
 					{
-						IEnumerable<ITooltipBrick> enumerable10 = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true, isFirstWithoutPlus: true);
-						foreach (ITooltipBrick item13 in enumerable10)
+						IEnumerable<ITooltipBrick> enumerable13 = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: true, isFirstWithoutPlus: true);
+						foreach (ITooltipBrick item16 in enumerable13)
 						{
-							yield return item13;
+							yield return item16;
 						}
 					}
 				}
-				if ((int)GameLogContext.Absorption > 0)
+			}
+			if (!resultDamage.RollDamageRule.IgnoreArmourAbsorption && (int)GameLogContext.Absorption > 0)
+			{
+				criticalNestedLevel = (int)((float)criticalNestedLevel * damage.AbsorptionFactorWithPenetration);
+				yield return new TooltipBrickIconTextValue(s.EffectiveArmour.Text, "<b>×" + damage.AbsorptionFactorWithPenetration.ToString(CultureInfo.InvariantCulture) + " (" + damage.AbsorptionFactorWithPenetration * 100f + "%)</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+				if (isInfotip && (((rule.Ability.Weapon != null) ? rule.Ability.Weapon : evt.AbilityWeaponInfo) != null || isGrenade))
 				{
-					criticalNestedLevel = (int)((float)criticalNestedLevel * damage.AbsorptionFactorWithPenetration);
-					yield return new TooltipBrickIconTextValue(s.EffectiveArmour.Text, "<b>×" + damage.AbsorptionFactorWithPenetration.ToString(CultureInfo.InvariantCulture) + " (" + damage.AbsorptionFactorWithPenetration * 100f + "%)</b>", 2, isResultValue: true, "=" + criticalNestedLevel, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-					if (isInfotip && (((rule.Ability.Weapon != null) ? rule.Ability.Weapon : evt.AbilityWeaponInfo) != null || isGrenade))
+					yield return new TooltipBrickIconTextValue("<b>" + s.BaseModifier.Text + "</b>", "<b>100%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+					yield return new TooltipBrickIconTextValue("<b>" + s.Armor.Text + "</b>", "<b>-" + GameLogContext.Absorption.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+					IEnumerable<ITooltipBrick> enumerable14 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
+					if (enumerable14.Count() > 1)
 					{
-						yield return new TooltipBrickIconTextValue("<b>" + s.BaseModifier.Text + "</b>", "<b>100%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
-						yield return new TooltipBrickIconTextValue("<b>" + s.Armor.Text + "</b>", "<b>-" + GameLogContext.Absorption.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
-						IEnumerable<ITooltipBrick> enumerable11 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
-						if (enumerable11.Count() > 1)
+						foreach (ITooltipBrick item17 in enumerable14)
 						{
-							foreach (ITooltipBrick item14 in enumerable11)
-							{
-								yield return item14;
-							}
+							yield return item17;
 						}
-						yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
-						enumerable11 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
-						if (enumerable11.Count() > 1)
-						{
-							foreach (ITooltipBrick item15 in enumerable11)
-							{
-								yield return item15;
-							}
-						}
-						int num4 = 100 - (int)GameLogContext.Absorption + (int)GameLogContext.Penetration;
-						int minValue = 10;
-						yield return LogThreadBase.AddMinMaxValue(num4, 3, minValue, isResultValue: true);
 					}
+					yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+					enumerable14 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
+					if (enumerable14.Count() > 1)
+					{
+						foreach (ITooltipBrick item18 in enumerable14)
+						{
+							yield return item18;
+						}
+					}
+					int num4 = 100 - (int)GameLogContext.Absorption + (int)GameLogContext.Penetration;
+					int minValue = 10;
+					yield return LogThreadBase.AddMinMaxValue(num4, 3, minValue, isResultValue: true);
 				}
 			}
 		}
@@ -433,14 +485,18 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 		{
 			yield return new TooltipBrickMinimalAdmissibleDamage(resultDamage.Result, ">" + resultDamage.RollDamageRule.UIMinimumDamagePercent + "%");
 		}
-		string value4;
+		string value5;
 		if (nullifyInformation != null && nullifyInformation.HasDamageNullify)
 		{
-			value4 = GameLogStrings.Instance.TooltipBrickStrings.NullifierResultSuccess.Text;
+			value5 = GameLogStrings.Instance.TooltipBrickStrings.NullifierResultSuccess.Text;
 		}
 		else if (isDodgeSuccess && isParrySuccess)
 		{
-			value4 = LogThreadBase.Strings.AttackResultStrings.AttackResultDodgeParried;
+			value5 = LogThreadBase.Strings.AttackResultStrings.AttackResultDodgeParried;
+		}
+		else if (isBlockSuccess)
+		{
+			value5 = UIStrings.Instance.BlockStrings.Blocked;
 		}
 		else
 		{
@@ -449,9 +505,9 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			{
 				result2 = AttackResult.Hit;
 			}
-			value4 = LogThreadBase.Strings.AttackResultStrings.GetAttackResultText(result2);
+			value5 = LogThreadBase.Strings.AttackResultStrings.GetAttackResultText(result2);
 		}
-		yield return new TooltipBrickIconTextValue(s.Result.Text, value4, 1, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+		yield return new TooltipBrickIconTextValue(s.Result.Text, value5, 1, isResultValue: false, null, isProtectionIcon: false, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
 	}
 
 	private static IEnumerable<ITooltipBrick> CreateMeleeCritHitModifiers(GameLogEventAttack.WeaponSkillModifierValues initiator, GameLogEventAttack.WeaponSkillModifierValues target, RuleCalculateHitChances rule, int nestedLevel)
@@ -545,6 +601,11 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 			{
 				return LogThreadBase.Strings.WarhammerDodge;
 			}
+			RuleRollBlock resultBlockRule = rule.ResultBlockRule;
+			if (resultBlockRule != null && resultBlockRule.Result)
+			{
+				return LogThreadBase.Strings.WarhammerBlock;
+			}
 			return LogThreadBase.Strings.WarhammerMiss;
 		}
 		if (rule.ResultIsHit)
@@ -593,6 +654,11 @@ public class PerformAttackLogThread : LogThreadBase, IGameLogEventHandler<GameLo
 				return LogThreadBase.Strings.WarhammerParry;
 			}
 			return LogThreadBase.Strings.WarhammerParrySuperiority;
+		}
+		RuleRollBlock resultBlockRule2 = rule.ResultBlockRule;
+		if (resultBlockRule2 != null && resultBlockRule2.Result)
+		{
+			return LogThreadBase.Strings.WarhammerBlock;
 		}
 		return LogThreadBase.Strings.WarhammerMiss;
 	}

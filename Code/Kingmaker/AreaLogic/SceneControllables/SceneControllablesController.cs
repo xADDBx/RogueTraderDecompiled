@@ -50,7 +50,7 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 			{
 				return;
 			}
-			controllable.Reset();
+			controllable.ResetUniqueId();
 		}
 		m_Components[controllable.UniqueId] = controllable;
 		ControllableState state = (CurrentState.TryGetValue(controllable.UniqueId, out state) ? controllable.GetDefaultState().MergeWith(state) : controllable.GetDefaultState());

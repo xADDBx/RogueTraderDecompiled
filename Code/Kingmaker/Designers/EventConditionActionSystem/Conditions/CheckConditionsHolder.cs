@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
 using Kingmaker.ElementsSystem;
@@ -9,6 +10,7 @@ namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 [TypeId("e7954d43ad5cff74d8fe2efd30388d73")]
 public class CheckConditionsHolder : Condition
 {
+	[ShowCreator]
 	[ValidateNotNull]
 	public ConditionsReference ConditionsHolder;
 

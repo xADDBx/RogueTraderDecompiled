@@ -5,6 +5,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using UnityEngine;
 
@@ -22,6 +23,9 @@ public class ContextActionPush : ContextAction
 
 	[SerializeField]
 	private bool m_UseFactOwnerAsCaster;
+
+	[SerializeField]
+	private bool m_PushBack;
 
 	public override string GetCaption()
 	{
@@ -42,7 +46,7 @@ public class ContextActionPush : ContextAction
 		}
 		MechanicEntity caster = (m_UseFactOwnerAsCaster ? base.Context.MaybeOwner : base.Context.MaybeCaster);
 		Game.Instance.AbilityExecutor.Abilities.FirstItem((AbilityExecutionProcess process) => process.Context.MaybeCaster == base.TargetEntity)?.Detach();
-		Vector3 fromPoint = GetFromPoint();
+		Vector3 fromPoint = GetFromPoint(base.TargetEntity);
 		int distance = Math.Min(Cells.Calculate(base.Context), 5);
 		EventBus.RaiseEvent(delegate(IUnitGetAbilityPush h)
 		{
@@ -50,11 +54,19 @@ public class ContextActionPush : ContextAction
 		});
 	}
 
-	private Vector3 GetFromPoint()
+	private Vector3 GetFromPoint(MechanicEntity target)
 	{
 		if (base.Projectile != null && (base.AbilityContext?.Ability?.Blueprint.IsGrenade).GetValueOrDefault())
 		{
 			return base.Projectile.GetTargetPoint();
+		}
+		if (m_PushBack)
+		{
+			PartMovable optional = target.GetOptional<PartMovable>();
+			if (optional != null && optional.HasMotionThisSimulationTick)
+			{
+				return target.Position + (target.Position - optional.PreviousPosition).normalized;
+			}
 		}
 		if (!m_UseFactOwnerAsCaster)
 		{

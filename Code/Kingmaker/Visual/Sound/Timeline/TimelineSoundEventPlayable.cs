@@ -30,7 +30,7 @@ public class TimelineSoundEventPlayable : PlayableAsset, ITimelineClipAsset
 	public bool PrintDebugInformation;
 
 	[SerializeField]
-	private bool StopEventAtClipEnd = true;
+	private bool StopEventAtClipEnd;
 
 	ClipCaps ITimelineClipAsset.clipCaps => ClipCaps.Looping | ClipCaps.Blending;
 

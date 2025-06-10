@@ -37,6 +37,19 @@ public static class EntityHelper
 		return entity.InRangeInCells(center.Point, radius);
 	}
 
+	public static bool InRangeInCells([NotNull] this MechanicEntity entity, Vector3 entityPosition, [NotNull] TargetWrapper center, int radius)
+	{
+		if (!center.IsPoint)
+		{
+			if (center.Entity != null)
+			{
+				return entity.DistanceToInCells(entityPosition, center.Entity.Position, center.Entity.SizeRect, center.Entity.Forward) <= radius;
+			}
+			return false;
+		}
+		return entity.DistanceToInCells(entityPosition, center.Point, default(IntRect), Vector3.forward) <= radius;
+	}
+
 	public static int DistanceToInCells([NotNull] this MechanicEntity entity, [NotNull] MechanicEntity other)
 	{
 		return entity.DistanceToInCells(other.Position, other.SizeRect, other.Forward);
@@ -60,6 +73,11 @@ public static class EntityHelper
 	public static int DistanceToInCells([NotNull] this MechanicEntity entity, Vector3 point, IntRect targetSize, Vector3 targetForward)
 	{
 		return WarhammerGeometryUtils.DistanceToInCells(entity.Position, entity.SizeRect, entity.Forward, point, targetSize, targetForward);
+	}
+
+	public static int DistanceToInCells([NotNull] this MechanicEntity entity, Vector3 entityPosition, Vector3 point, IntRect targetSize, Vector3 targetForward)
+	{
+		return WarhammerGeometryUtils.DistanceToInCells(entityPosition, entity.SizeRect, entity.Forward, point, targetSize, targetForward);
 	}
 
 	public static float DistanceTo(this MechanicEntity entity, MechanicEntity other)

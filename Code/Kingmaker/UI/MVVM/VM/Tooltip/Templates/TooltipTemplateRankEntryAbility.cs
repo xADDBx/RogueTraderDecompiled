@@ -49,7 +49,7 @@ public class TooltipTemplateRankEntryAbility : TooltipTemplateAbility
 		if (Prerequisite != null)
 		{
 			list.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.Prerequisites, TooltipTitleType.H2));
-			list.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(Prerequisite)));
+			list.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(Prerequisite), oneFromList: false));
 		}
 		return list;
 	}

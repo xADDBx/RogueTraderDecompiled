@@ -16,14 +16,22 @@ public class CameraToPosition : GameAction
 	[SerializeReference]
 	public PositionEvaluator Position;
 
+	[SerializeReference]
+	public FloatEvaluator Rotation;
+
 	public override string GetDescription()
 	{
-		return $"Моментально перемещает камеру в указанную позицию {Position}";
+		return $"Моментально перемещает камеру в указанную позицию {Position}" + ((Rotation != null) ? $" с поворотом {Rotation}" : "");
 	}
 
 	protected override void RunAction()
 	{
 		CameraRig.Instance.ScrollTo(Position.GetValue());
+		if (Rotation != null)
+		{
+			float position = Rotation.GetValue() + 180f;
+			CameraRig.Instance.RotateTo(position);
+		}
 	}
 
 	public override string GetCaption()

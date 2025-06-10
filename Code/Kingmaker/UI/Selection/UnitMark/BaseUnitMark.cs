@@ -11,7 +11,9 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.Core.Registry;
 using Owlcat.Runtime.Core.Updatables;
@@ -20,7 +22,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Selection.UnitMark;
 
-public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, IUnitSizeHandler<EntitySubscriber>, IUnitSizeHandler, ISubscriber<IMechanicEntity>, IEntitySubscriber, IEventTag<IUnitSizeHandler, EntitySubscriber>, IDialogCueHandler, IUnitHighlightUIHandler, IInteractionHighlightUIHandler, IGameModeHandler, ITurnStartHandler, IInterruptTurnStartHandler, ITurnBasedModeResumeHandler, IUIVisibilityHandler, ILateUpdatable, IDialogFinishHandler, IAbilityTargetSelectionUIHandler
+public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, IUnitSizeHandler<EntitySubscriber>, IUnitSizeHandler, ISubscriber<IMechanicEntity>, IEntitySubscriber, IEventTag<IUnitSizeHandler, EntitySubscriber>, IDialogCueHandler, IUnitHighlightUIHandler, IInteractionHighlightUIHandler, IGameModeHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IInterruptTurnContinueHandler, ITurnBasedModeResumeHandler, IUIVisibilityHandler, ILateUpdatable, IDialogFinishHandler, IAbilityTargetSelectionUIHandler, IAbilityExecutionProcessHandler
 {
 	private static readonly int _Color = Shader.PropertyToID("_BaseColor");
 
@@ -96,10 +98,10 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 
 	private void UpdateCombatState()
 	{
-		SetState(UnitMarkState.IsInCombat, Unit.IsInCombat);
+		SetState(UnitMarkState.IsInCombat, Unit.IsInCombat && !Unit.HasMechanicFeature(MechanicsFeatureType.Hidden));
 		if (Game.Instance.TurnController.IsPreparationTurn && Unit is BaseUnitEntity unit)
 		{
-			SetState(UnitMarkState.CurrentTurn, Game.Instance.SelectionCharacter.IsSelected(unit));
+			SetState(UnitMarkState.CurrentTurn, Game.Instance.SelectionCharacter.IsSelected(unit) && !Unit.HasMechanicFeature(MechanicsFeatureType.Hidden));
 		}
 	}
 
@@ -147,7 +149,17 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 		UpdateUnitCurrentTurnState();
 	}
 
+	void IContinueTurnHandler.HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateUnitCurrentTurnState();
+	}
+
 	void IInterruptTurnStartHandler.HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateUnitCurrentTurnState();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateUnitCurrentTurnState();
 	}
@@ -157,9 +169,21 @@ public abstract class BaseUnitMark : RegisteredBehaviour, IUnitCombatHandler<Ent
 		UpdateUnitCurrentTurnState();
 	}
 
+	void IAbilityExecutionProcessHandler.HandleExecutionProcessStart(AbilityExecutionContext context)
+	{
+	}
+
+	void IAbilityExecutionProcessHandler.HandleExecutionProcessEnd(AbilityExecutionContext context)
+	{
+		UpdateUnitCurrentTurnState();
+	}
+
 	private void UpdateUnitCurrentTurnState()
 	{
-		SetState(UnitMarkState.CurrentTurn, Unit == Game.Instance.TurnController.CurrentUnit);
+		bool flag = TurnController.IsInTurnBasedCombat() && Unit is BaseUnitEntity baseUnitEntity && baseUnitEntity.Master == Game.Instance.TurnController.CurrentUnit;
+		bool active = TurnController.IsInTurnBasedCombat() && (Unit == Game.Instance.TurnController.CurrentUnit || (flag && !Unit.HasMechanicFeature(MechanicsFeatureType.Hidden)));
+		SetState(UnitMarkState.CurrentTurn, active);
+		SetState(UnitMarkState.Selected, active);
 	}
 
 	void IUnitHighlightUIHandler.HandleHighlightChange(AbstractUnitEntityView unit)

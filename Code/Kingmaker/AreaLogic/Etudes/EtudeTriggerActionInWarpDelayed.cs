@@ -91,7 +91,7 @@ public class EtudeTriggerActionInWarpDelayed : EtudeBracketTrigger, ISectorMapWa
 			}
 		}
 		List<BlueprintComponentReference<EtudeTriggerActionInWarpDelayed>> triggeredEtudeInMiddleOfJump = Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump;
-		if (savableData.IsReadyToTrigger && TriggerType == EventType.SimpleEvent && !triggeredEtudeInMiddleOfJump.Contains(this))
+		if (savableData.IsReadyToTrigger && !savableData.IsCompleted && TriggerType == EventType.SimpleEvent && !triggeredEtudeInMiddleOfJump.Contains(this))
 		{
 			triggeredEtudeInMiddleOfJump.Add(this);
 		}

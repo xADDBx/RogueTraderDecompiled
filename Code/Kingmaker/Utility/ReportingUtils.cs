@@ -48,6 +48,7 @@ using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Reporting.Base;
 using Kingmaker.Utility.UnityExtensions;
+using Kingmaker.View;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility.Locator;
@@ -89,6 +90,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	private const string TemporarySaveDefaultLabel = "SavedFromBug";
 
 	private const string TemporarySaveFileName = "saveatthemoment.zks";
+
+	private const string LastAutosaveFileName = "lastAutosave.zks";
 
 	private const string SystemInfoFileName = "systemInfo.txt";
 
@@ -138,6 +141,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	private FixVersions m_SelectedFixVersion;
 
+	private bool m_IsFeedback;
+
 	private readonly CancellationTokenSource m_Cts = new CancellationTokenSource();
 
 	private string m_TemporarySaveLabel = string.Empty;
@@ -166,6 +171,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	private string m_SuggestedAssignee = string.Empty;
 
+	private SaveInfo m_SelectedManualSave;
+
+	private BugContext.AspectType? m_InitialAspect;
+
 	private Exception m_Exception;
 
 	private string[] m_ErrorMessages;
@@ -179,6 +188,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	private readonly ReportPrivacyManager m_ReportPrivacyManager;
 
 	private Dictionary<string, bool> m_labelsDictionary = new Dictionary<string, bool>();
+
+	private List<SaveInfo> m_ManualSaves = new List<SaveInfo>();
 
 	private ReportSender ReportSender;
 
@@ -509,6 +520,14 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				list.Add("Exploration");
 			}
+			if (BuildModeUtility.IsDevelopment && m_Context.Aspect != 0 && m_Context.Aspect != BugContext.AspectType.UI && m_Context.Aspect != BugContext.AspectType.Visual)
+			{
+				list.Add(m_Context.Aspect.ToString());
+			}
+			if (BuildModeUtility.IsPlayTest)
+			{
+				list.Add("Playtest");
+			}
 			if (list.Count > 0)
 			{
 				labels = string.Join("|", list.ToArray());
@@ -519,7 +538,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				text5 = "Chapter0" + text5;
 			}
-			ReportParameters value = new ReportParameters
+			ReportParameters reportParameters = new ReportParameters
 			{
 				Project = "WH",
 				Email = (string.IsNullOrEmpty(email) ? empty : email),
@@ -527,8 +546,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				IsSendMarketingMats = isSendMarketing,
 				ReportDateTime = DateTime.UtcNow,
 				PlayerLanguage = LocalizationManager.Instance.CurrentLocale.ToString(),
-				operatingSystem = SystemInfo.operatingSystem,
-				operatingSystemFamily = SystemInfo.operatingSystemFamily.ToString(),
+				OperatingSystem = SystemInfo.operatingSystem,
+				OperatingSystemFamily = SystemInfo.operatingSystemFamily.ToString(),
 				UniqueIdentifier = (string.IsNullOrEmpty(uniqueIdentifier) ? empty : uniqueIdentifier),
 				Blueprint = m_Context.GetContextObjectBlueprintName(),
 				BlueprintArea = ((currentAreaPart == null) ? empty : Utilities.GetBlueprintName(currentAreaPart)),
@@ -536,6 +555,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				Version = (string.IsNullOrEmpty(GameVersion.GetVersion()) ? empty : GameVersion.GetVersion()),
 				Guid = (string.IsNullOrEmpty(fileName) ? empty : fileName),
 				IssueType = (string.IsNullOrEmpty(issueType) ? empty : issueType),
+				IsFeedback = m_IsFeedback,
 				StaticScene = (string.IsNullOrEmpty(text) ? empty : text),
 				LightScene = (string.IsNullOrEmpty(lightScene) ? empty : lightScene),
 				MainCharacter = $"{Utilities.GetBlueprintName(GetBlueprintRace())}/{GetGender()}",
@@ -551,7 +571,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				Cutscenes = CheatsJira.GetCutscenesInfo(),
 				SuggestedAssignee = ((m_SuggestedAssignee != "Assignee to me") ? m_SuggestedAssignee : email.Split("@")[0]),
 				ModifiedSaveFiles = modifiedSaveFiles,
-				Revision = ReportVersionManager.GetCommitOrRevision(),
+				BuildDateTime = ReportBuildInfo.DateTime,
+				Revision = ReportBuildInfo.Revision,
 				Label = label,
 				Labels = labels,
 				ModManagerMods = text4,
@@ -562,11 +583,15 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				Exception = JsonConvert.SerializeObject(m_Exception),
 				CoopPlayersCount = coopPlayersCount
 			};
+			if (CameraRig.Instance != null)
+			{
+				reportParameters.CameraPosition = Utilities.FormatPositionAndRotation(CameraRig.Instance.transform);
+			}
 			JsonSerializerSettings settings = new JsonSerializerSettings
 			{
 				PreserveReferencesHandling = PreserveReferencesHandling.None
 			};
-			string contents = JsonConvert.SerializeObject(value, settings);
+			string contents = JsonConvert.SerializeObject(reportParameters, settings);
 			string text6 = Path.Combine(CurrentReportFolder, "parameters.json");
 			File.WriteAllText(text6, contents);
 			Logger.Log("Create " + text6);
@@ -578,7 +603,14 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			string contextLink = m_Context.GetContextLink();
 			message = AddErrorMessages(message);
 			message = message.Replace("\v", "\r\n");
-			return header + " " + message + "\n\n\n\n" + contextLink;
+			string text8 = BuildScreenshotAttachment();
+			string text9 = BuildAttachmentsHyperlinks("saveatthemoment.zks", "lastAutosave.zks", m_SelectedManualSave?.FileName);
+			string text10 = ((text9.Length > 0) ? ("Сейв: " + text9) : "");
+			string text11 = BuildLogDescription();
+			string[] array = message.Split("\n");
+			string text12 = array[0];
+			string text13 = string.Join("\n", array, 1, array.Length - 1);
+			return header + " " + text12 + "\n\n" + text10 + "\n" + text8 + "\n\n" + text13 + "\n\n" + text11 + "\n\n" + contextLink;
 		}
 		catch (Exception ex5)
 		{
@@ -589,6 +621,78 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		{
 			return string.Empty;
 		}
+	}
+
+	private string BuildScreenshotAttachment(string format = "thumbnail")
+	{
+		if (TryBuildPictureAttachment("edited_screen.png", out var attachment, format))
+		{
+			return attachment;
+		}
+		if (TryBuildPictureAttachment("screen.png", out var attachment2, format))
+		{
+			return attachment2;
+		}
+		return "";
+	}
+
+	private bool TryBuildPictureAttachment(string pictureName, out string attachment, string format = "thumbnail")
+	{
+		if (File.Exists(Path.Combine(CurrentReportFolder, pictureName)))
+		{
+			attachment = "!" + pictureName + "|" + format + "!";
+			return true;
+		}
+		attachment = null;
+		return false;
+	}
+
+	private string BuildAttachmentsHyperlinks(params string[] attachmentsNames)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < attachmentsNames.Length; i++)
+		{
+			if (attachmentsNames[i] != null && File.Exists(Path.Combine(CurrentReportFolder, attachmentsNames[i])))
+			{
+				stringBuilder.Append("[^" + attachmentsNames[i] + "]");
+				if (i != attachmentsNames.Length - 1)
+				{
+					stringBuilder.Append(", ");
+				}
+			}
+		}
+		return stringBuilder.ToString();
+	}
+
+	private string BuildLogDescription()
+	{
+		if (!BuildModeUtility.IsDevelopment)
+		{
+			return "";
+		}
+		if (m_Context.Aspect != BugContext.AspectType.LogError)
+		{
+			return "";
+		}
+		if (UberLoggerAppWindow.Instance == null)
+		{
+			return "";
+		}
+		LogInfo selectedLog = UberLoggerAppWindow.Instance.GetSelectedLog();
+		if (selectedLog == null)
+		{
+			return "";
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("-------------- Call stack --------------");
+		stringBuilder.AppendLine("{code:C#}");
+		stringBuilder.Append(selectedLog.Message);
+		for (int i = 0; i < selectedLog.Callstack.Count; i++)
+		{
+			stringBuilder.AppendLine(selectedLog.Callstack[i].GetFormattedMethodName());
+		}
+		stringBuilder.Append("{code}\n\n");
+		return stringBuilder.ToString();
 	}
 
 	private void CreateCombatLogFile()
@@ -932,6 +1036,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				m_ContextVariants.Add(new BugContext(BugContext.ContextType.TransitionMap));
 			}
+			if (m_ActiveFullScreenUIType == FullScreenUIType.DlcModManager)
+			{
+				m_ContextVariants.Add(new BugContext(BugContext.ContextType.DlcModManager));
+			}
 			if (m_IsGlobalMapOpened && !m_ContextVariants.Any((BugContext x) => x.ContextObject != null) && underMouseBlueprint != null)
 			{
 				try
@@ -968,18 +1076,18 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 												if (tooltipTemplateItem.Item != null)
 												{
 													bugContext2.ContextObject = tooltipTemplateItem.Item.Blueprint;
-													goto IL_061c;
+													goto IL_0638;
 												}
 												ItemEntity itemEntity = (ItemEntity)typeof(TooltipTemplateItem).GetField("m_Item", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(tooltipTemplateItem);
 												if (itemEntity != null)
 												{
 													bugContext2.ContextObject = itemEntity.Blueprint;
-													goto IL_061c;
+													goto IL_0638;
 												}
-												goto end_IL_05bc;
-												IL_061c:
+												goto end_IL_05d8;
+												IL_0638:
 												m_ContextVariants.Add(bugContext2);
-												end_IL_05bc:;
+												end_IL_05d8:;
 											}
 											catch (Exception ex)
 											{
@@ -1152,6 +1260,15 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		}
 	}
 
+	private void CheckForActiveLogger()
+	{
+		if (BuildModeUtility.IsDevelopment && !(UberLoggerAppWindow.Instance == null) && UberLoggerAppWindow.Instance.IsShown && UberLoggerAppWindow.Instance.GetSelectedLog() != null)
+		{
+			m_InitialAspect = BugContext.AspectType.LogError;
+			UberLoggerAppWindow.Instance.Hide();
+		}
+	}
+
 	private BugContext CreateContextFromFeature(string featureName)
 	{
 		if (featureName == "Colonization")
@@ -1167,6 +1284,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 
 	public IEnumerator MakeNewReport(bool makeScreenshot, bool makeSave, bool addCrashDump)
 	{
+		CheckForActiveLogger();
 		yield return new WaitForEndOfFrame();
 		try
 		{
@@ -1257,6 +1375,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				SettingsController.Instance.ConfirmAllTempValues();
 				SettingsController.Instance.SaveAll();
 				CopyLogFiles();
+				if (m_SelectedManualSave != null)
+				{
+					CopySaveFile(m_SelectedManualSave, CurrentReportFolder, m_SelectedManualSave.FileName);
+				}
 				string message2 = CreateParametersFile(email, uniqueIdentifier, issueType, message, historyLog, additionalContacts, isSendMarketing);
 				CreateMessageFile(message2);
 				CreateReporterErrorLog();
@@ -1286,6 +1408,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	{
 		try
 		{
+			m_IsFeedback = false;
 			if (string.IsNullOrEmpty(CurrentReportFolder))
 			{
 				return;
@@ -1311,6 +1434,19 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		}
 	}
 
+	public void InitializeManualSaves(Action<SaveInfo> actionWithSave)
+	{
+		m_ManualSaves.Clear();
+		foreach (SaveInfo item in from item in Game.Instance.SaveManager
+			orderby item.SystemSaveTime descending
+			where item.Type == SaveInfo.SaveType.Manual
+			select item)
+		{
+			m_ManualSaves.Add(item);
+			actionWithSave(item);
+		}
+	}
+
 	public (string Description, List<(BugContext.AspectType? Aspect, string Assignee)> Assignees)[] GetContextDescriptions()
 	{
 		List<(string, List<(BugContext.AspectType?, string)>)> list = new List<(string, List<(BugContext.AspectType?, string)>)>();
@@ -1331,6 +1467,22 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 		return list.ToArray();
 	}
 
+	public int GetInitialAspectIndex()
+	{
+		if (!m_InitialAspect.HasValue)
+		{
+			return 0;
+		}
+		BugContext.AspectType value = m_InitialAspect.Value;
+		m_InitialAspect = null;
+		return (int)value;
+	}
+
+	public void SelectManualSave(int saveIdx)
+	{
+		m_SelectedManualSave = ((saveIdx >= 0 && saveIdx < m_ManualSaves.Count) ? m_ManualSaves[saveIdx] : null);
+	}
+
 	public void SelectContext(int contextIdx)
 	{
 		if (contextIdx >= 0 && contextIdx < m_ContextVariants.Count)
@@ -1347,6 +1499,11 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	public void SelectAssignee(string assignee)
 	{
 		m_SuggestedAssignee = assignee;
+	}
+
+	public void SelectIsFeedback(bool isFeedback)
+	{
+		m_IsFeedback = isFeedback;
 	}
 
 	public void SelectFixVersion(int versionIdx)

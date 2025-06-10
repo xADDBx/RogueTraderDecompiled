@@ -7,6 +7,7 @@ using Kingmaker.Code.UI.MVVM.VM.SystemMap;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Models;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UniRx;
@@ -59,11 +60,19 @@ public class RespecVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		{
 			SystemMapSpaceResourcesVM.JournalOrderProfitFactorVM.IsNegative.Value = !value;
 		}));
+		EventBus.RaiseEvent(delegate(IModalWindowUIHandler h)
+		{
+			h.HandleModalWindowUiChanged(state: true, ModalWindowUIType.Respec);
+		});
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DisposeImplementation()
 	{
+		EventBus.RaiseEvent(delegate(IModalWindowUIHandler h)
+		{
+			h.HandleModalWindowUiChanged(state: false, ModalWindowUIType.Respec);
+		});
 	}
 
 	public void OnConfirm()

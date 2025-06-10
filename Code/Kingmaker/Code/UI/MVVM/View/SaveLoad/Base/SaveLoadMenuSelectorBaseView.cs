@@ -40,10 +40,10 @@ public class SaveLoadMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<SaveL
 		AddDisposable(base.ViewModel.SelectedEntity.Subscribe(delegate(SaveLoadMenuEntityVM selectedEntity)
 		{
 			SaveLoadMenuEntityBaseView selectedButton = ((selectedEntity.Mode == SaveLoadMode.Save) ? m_SaveButton : m_LoadButton);
-			DelayedInvoker.InvokeInFrames(delegate
+			AddDisposable(DelayedInvoker.InvokeInFrames(delegate
 			{
-				UIUtility.MoveXLensPosition(m_Selector.transform, selectedButton.transform.localPosition.x, 0.55f);
-			}, 1);
+				AddDisposable(UIUtility.CreateMoveXLensPosition(m_Selector.transform, selectedButton.transform.localPosition.x, 0.55f));
+			}, 1));
 		}));
 	}
 

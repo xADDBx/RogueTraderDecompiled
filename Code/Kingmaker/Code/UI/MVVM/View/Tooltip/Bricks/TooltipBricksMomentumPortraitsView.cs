@@ -11,8 +11,8 @@ public class TooltipBricksMomentumPortraitsView : TooltipBaseBrickView<TooltipBr
 
 	protected override void BindViewImplementation()
 	{
-		int count = base.ViewModel.MomentumPortraits.Count;
-		for (int i = 0; i < count; i++)
+		int num = Mathf.Min(base.ViewModel.MomentumPortraits.Count, MomentumPortraitViews?.Count ?? 0);
+		for (int i = 0; i < num; i++)
 		{
 			if (base.ViewModel.MomentumPortraits[i] != null)
 			{
@@ -23,7 +23,7 @@ public class TooltipBricksMomentumPortraitsView : TooltipBaseBrickView<TooltipBr
 				MomentumPortraitViews[i].gameObject.SetActive(value: false);
 			}
 		}
-		for (int j = count; j < MomentumPortraitViews.Count; j++)
+		for (int j = num; j < MomentumPortraitViews.Count; j++)
 		{
 			MomentumPortraitViews[j].gameObject.SetActive(value: false);
 		}

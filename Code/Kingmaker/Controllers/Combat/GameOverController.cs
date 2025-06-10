@@ -28,7 +28,7 @@ public class GameOverController : IControllerTick, IController
 			num = ((Game.Instance.CurrentMode == GameModeType.GlobalMap) ? 1 : 0);
 			if (num == 0)
 			{
-				num2 = (Game.Instance.Player.PartyAndPets.All((BaseUnitEntity u) => !u.LifeState.IsConscious) ? 1 : 0);
+				num2 = (Game.Instance.Player.Party.All((BaseUnitEntity u) => !u.LifeState.IsConscious) ? 1 : 0);
 				goto IL_008c;
 			}
 		}

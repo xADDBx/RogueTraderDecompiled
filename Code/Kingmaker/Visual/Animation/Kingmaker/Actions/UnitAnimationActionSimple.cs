@@ -25,6 +25,8 @@ public class UnitAnimationActionSimple : UnitAnimationAction
 
 	public WeaponStyleOverride[] WeaponStyleOverrides = new WeaponStyleOverride[0];
 
+	private UnitAnimationType? m_OverrideUnitAnimationType;
+
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers
 	{
 		get
@@ -43,11 +45,16 @@ public class UnitAnimationActionSimple : UnitAnimationAction
 		}
 	}
 
-	public override UnitAnimationType Type => UnitAnimationType.Hit;
+	public override UnitAnimationType Type => m_OverrideUnitAnimationType ?? UnitAnimationType.Hit;
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
 		WeaponStyleOverride weaponStyleOverride = WeaponStyleOverrides.FirstItem((WeaponStyleOverride x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
 		handle.StartClip(weaponStyleOverride?.ClipWrapper ? weaponStyleOverride.ClipWrapper : ClipWrapper, ClipDurationType.Oneshot);
+	}
+
+	public void OverrideUnitAnimationType(UnitAnimationType animationType)
+	{
+		m_OverrideUnitAnimationType = animationType;
 	}
 }

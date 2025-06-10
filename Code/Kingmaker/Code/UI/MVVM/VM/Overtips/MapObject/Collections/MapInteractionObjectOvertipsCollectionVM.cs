@@ -10,6 +10,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects.InteractionRestrictions;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject.Collections;
 
@@ -113,6 +114,7 @@ public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCol
 
 	public void HandleItemsAdded(ItemsCollection collection, ItemEntity item, int count)
 	{
+		KeyRestrictionCheck(item);
 		if (IsInteractionItem(item))
 		{
 			Overtips.Where((OvertipMapObjectVM o) => o.RequiredResourceCount.HasValue).ForEach(delegate(OvertipMapObjectVM o)
@@ -124,6 +126,7 @@ public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCol
 
 	public void HandleItemsRemoved(ItemsCollection collection, ItemEntity item, int count)
 	{
+		KeyRestrictionCheck(item);
 		if (IsInteractionItem(item))
 		{
 			Overtips.Where((OvertipMapObjectVM o) => o.RequiredResourceCount.HasValue).ForEach(delegate(OvertipMapObjectVM o)
@@ -140,6 +143,18 @@ public class MapInteractionObjectOvertipsCollectionVM : BaseMapObjectOvertipsCol
 			return item.Blueprint == Game.Instance.BlueprintRoot.SystemMechanics.Consumables.VoidCryptKeyItem;
 		}
 		return true;
+	}
+
+	private void KeyRestrictionCheck(ItemEntity item)
+	{
+		foreach (OvertipMapObjectVM item2 in Overtips.Where((OvertipMapObjectVM o) => o.RequiredResourceCount.HasValue))
+		{
+			KeyRestrictionPart optional = item2.MapObjectEntity.Parts.GetOptional<KeyRestrictionPart>();
+			if (optional != null && optional.RequiredItem == item.Blueprint)
+			{
+				item2.InventoryChanged?.Execute();
+			}
+		}
 	}
 
 	public void HandleEntityRevealed()

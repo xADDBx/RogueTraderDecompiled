@@ -13,6 +13,10 @@ public class UIInspect
 	[Header("Surface")]
 	public LocalizedString Wounds;
 
+	public LocalizedString ParryChance;
+
+	public LocalizedString CoverMagnitude;
+
 	public LocalizedString DamageDeflection;
 
 	public LocalizedString Armor;

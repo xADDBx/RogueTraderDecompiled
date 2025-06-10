@@ -102,7 +102,7 @@ public class AbilityMeleeBurst : AbilityCustomLogic, IAbilityAoEPatternProviderH
 		m_FirstAttackCalculated = false;
 		while (burstCounter < maxCount && caster.CanAct)
 		{
-			if (burstCounter + 1 != context.ActionIndex)
+			if (burstCounter + 1 > context.ActionIndex)
 			{
 				yield return null;
 				continue;

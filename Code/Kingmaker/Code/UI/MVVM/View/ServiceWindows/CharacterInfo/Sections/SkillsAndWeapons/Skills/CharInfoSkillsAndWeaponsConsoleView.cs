@@ -4,6 +4,9 @@ using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.LevelClassScores.AbilityScores;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
+using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -24,7 +27,7 @@ public class CharInfoSkillsAndWeaponsConsoleView : CharInfoSkillsAndWeaponsBaseV
 
 	private Action<IConsoleEntity> m_OnFocusChangeAction;
 
-	private readonly List<CharInfoComponentType> m_ViewsOrder = new List<CharInfoComponentType>
+	private List<CharInfoComponentType> m_ViewsOrder = new List<CharInfoComponentType>
 	{
 		CharInfoComponentType.Abilities,
 		CharInfoComponentType.Skills,
@@ -42,6 +45,29 @@ public class CharInfoSkillsAndWeaponsConsoleView : CharInfoSkillsAndWeaponsBaseV
 	{
 		base.BindViewImplementation();
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_ViewsOrder = new List<CharInfoComponentType>
+			{
+				CharInfoComponentType.Abilities,
+				CharInfoComponentType.Skills,
+				CharInfoComponentType.Weapons
+			};
+			UnitPartPetOwner unitPartPetOwner = (u.IsPet ? u.Master.GetOptional<UnitPartPetOwner>() : null);
+			if (unitPartPetOwner != null)
+			{
+				PetType petType = unitPartPetOwner.PetType;
+				if (petType != PetType.Mastiff && petType != PetType.Eagle)
+				{
+					m_ViewsOrder = new List<CharInfoComponentType>
+					{
+						CharInfoComponentType.Abilities,
+						CharInfoComponentType.Skills
+					};
+				}
+				CurrentSection.Value = m_ViewsOrder.First();
+			}
+		}));
 		AddDisposable(CurrentSection.Subscribe(UpdateNavigation));
 		CurrentSection.Value = m_ViewsOrder.First();
 	}

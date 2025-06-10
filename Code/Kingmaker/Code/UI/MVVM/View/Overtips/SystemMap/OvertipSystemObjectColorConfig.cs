@@ -19,6 +19,6 @@ public class OvertipSystemObjectColorConfig
 			}
 		}
 		PFLog.UI.Log("OvertipSystemObjectColorConfig.GetColorByState - can't find color for state " + state);
-		return Color.white;
+		return new Color(0.5f, 0.675f, 0.435f, 0.5f);
 	}
 }

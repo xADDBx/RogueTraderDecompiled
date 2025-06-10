@@ -34,6 +34,9 @@ public class TurnDataPart : EntityPart, IHashable
 	[JsonProperty(PropertyName = "m_EndTurnRequested")]
 	public bool EndTurnRequested { get; set; }
 
+	[JsonProperty]
+	public bool EndingTurn { get; set; }
+
 	[JsonProperty(PropertyName = "m_IsUltimateAbilityUsedThisRound")]
 	public bool IsUltimateAbilityUsedThisRound { get; set; }
 
@@ -83,24 +86,26 @@ public class TurnDataPart : EntityPart, IHashable
 		result.Append(ref val2);
 		bool val3 = EndTurnRequested;
 		result.Append(ref val3);
-		bool val4 = IsUltimateAbilityUsedThisRound;
+		bool val4 = EndingTurn;
 		result.Append(ref val4);
-		TimeSpan val5 = LastTurnTime;
+		bool val5 = IsUltimateAbilityUsedThisRound;
 		result.Append(ref val5);
-		result.Append(ref m_GameRound);
-		int val6 = CombatRound;
+		TimeSpan val6 = LastTurnTime;
 		result.Append(ref val6);
+		result.Append(ref m_GameRound);
+		int val7 = CombatRound;
+		result.Append(ref val7);
 		List<MomentumGroup> momentumGroups = MomentumGroups;
 		if (momentumGroups != null)
 		{
 			for (int i = 0; i < momentumGroups.Count; i++)
 			{
-				Hash128 val7 = ClassHasher<MomentumGroup>.GetHash128(momentumGroups[i]);
-				result.Append(ref val7);
+				Hash128 val8 = ClassHasher<MomentumGroup>.GetHash128(momentumGroups[i]);
+				result.Append(ref val8);
 			}
 		}
-		Hash128 val8 = ClassHasher<TurnOrderQueue>.GetHash128(TurnOrder);
-		result.Append(ref val8);
+		Hash128 val9 = ClassHasher<TurnOrderQueue>.GetHash128(TurnOrder);
+		result.Append(ref val9);
 		return result;
 	}
 }

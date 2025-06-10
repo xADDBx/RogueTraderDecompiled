@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
@@ -11,6 +12,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
@@ -99,7 +101,7 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 		}
 		foreach (IScriptZoneShape shape in View.Shapes)
 		{
-			List<BaseUnitEntity> list = (View.PlayersOnly ? Game.Instance.Player.PartyAndPets : (EntityBoundsHelper.FindUnitsInShape(shape) ?? Game.Instance.State.AllBaseAwakeUnits));
+			List<BaseUnitEntity> list = (View.PlayersOnly ? Game.Instance.Player.PartyAndPets.ToList() : (EntityBoundsHelper.FindUnitsInShape(shape) ?? Game.Instance.State.AllBaseAwakeUnits));
 			using (ProfileScope.New("Tick one shape"))
 			{
 				foreach (BaseUnitEntity item in list)
@@ -137,7 +139,7 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 				break;
 			}
 		}
-		if ((unitInfo == null || !unitInfo.InsideThisTick) && shape.Contains(unit.Position) && !AbstractUnitCommand.CommandTargetUntargetable(null, unit))
+		if ((unitInfo == null || !unitInfo.InsideThisTick) && shape.Contains(unit.Position, unit.SizeRect) && !AbstractUnitCommand.CommandTargetUntargetable(null, unit))
 		{
 			if (unitInfo != null)
 			{
@@ -180,11 +182,15 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 
 	private bool IsInterestedInUnit(BaseUnitEntity unit)
 	{
-		if (unit.LifeState.IsDead)
+		if (!View.UseDeads && unit.LifeState.IsDead)
 		{
 			return false;
 		}
-		if (View.PlayersOnly && !unit.Faction.IsPlayer)
+		if (View.PlayersOnly && (!unit.Faction.IsPlayer || unit.GetCompanionState() == CompanionState.Remote))
+		{
+			return false;
+		}
+		if ((bool)unit.GetOptional<UnitPartFollowUnit>())
 		{
 			return false;
 		}
@@ -308,6 +314,15 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 			return;
 		}
 		InsideUnits.Remove((UnitInfo i) => i.Reference == entityData);
+	}
+
+	protected override void OnIsInGameChanged()
+	{
+		base.OnIsInGameChanged();
+		if (!base.IsInGame)
+		{
+			RemoveAll();
+		}
 	}
 
 	public void RemoveAll()

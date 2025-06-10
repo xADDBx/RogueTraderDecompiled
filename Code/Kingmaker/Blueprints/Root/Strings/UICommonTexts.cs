@@ -83,4 +83,6 @@ public class UICommonTexts
 	public LocalizedString UIVisibility;
 
 	public LocalizedString DontAskAgain;
+
+	public LocalizedString ShowTooltip;
 }

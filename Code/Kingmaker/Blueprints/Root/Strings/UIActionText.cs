@@ -25,4 +25,6 @@ public class UIActionText
 	public LocalizedString Talk;
 
 	public LocalizedString Rotate;
+
+	public LocalizedString PetInteract;
 }

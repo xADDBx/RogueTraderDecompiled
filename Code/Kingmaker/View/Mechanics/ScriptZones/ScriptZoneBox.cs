@@ -38,14 +38,50 @@ public class ScriptZoneBox : ScriptZoneShape
 	{
 		using (ProfileScope.New("ScriptZoneBox.Contains"))
 		{
-			Vector3 point2 = base.transform.InverseTransformPoint(point);
-			return Bounds.Contains(point2);
+			if (size.Width <= 1 && size.Height <= 1)
+			{
+				return ContainsPoint(point);
+			}
+			CustomGridNodeBase nearestNodeXZUnwalkable = point.GetNearestNodeXZUnwalkable();
+			Vector3 vector = point - nearestNodeXZUnwalkable.Vector3Position;
+			if ((double)forward.sqrMagnitude < 0.01)
+			{
+				forward = Vector3.forward;
+			}
+			foreach (CustomGridNodeBase node in GridAreaHelper.GetNodes(nearestNodeXZUnwalkable, size, forward))
+			{
+				if (ContainsPoint(node.Vector3Position + vector))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
 	public override bool Contains(CustomGridNodeBase node, IntRect size = default(IntRect), Vector3 forward = default(Vector3))
 	{
-		return Contains(node.Vector3Position, size);
+		using (ProfileScope.New("ScriptZoneBox.Contains"))
+		{
+			if ((double)forward.sqrMagnitude < 0.01)
+			{
+				forward = Vector3.forward;
+			}
+			foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, size, forward))
+			{
+				if (ContainsPoint(node2.Vector3Position))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
+	private bool ContainsPoint(Vector3 point)
+	{
+		Vector3 point2 = base.transform.InverseTransformPoint(point);
+		return Bounds.Contains(point2);
 	}
 
 	public override Bounds GetBounds()

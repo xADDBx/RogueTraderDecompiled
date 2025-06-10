@@ -109,11 +109,11 @@ public class StackingEquipmentPropertyGetter : PropertyGetter, PropertyContextAc
 		List<ItemSlot> list = ((!m_IsWeaponBased) ? new List<ItemSlot>
 		{
 			bodyOptional.Armor, bodyOptional.Belt, bodyOptional.Feet, bodyOptional.Gloves, bodyOptional.Glasses, bodyOptional.Head, bodyOptional.Neck, bodyOptional.Ring1, bodyOptional.Ring2, bodyOptional.Shirt,
-			bodyOptional.Shoulders, bodyOptional.Wrist, bodyOptional.PrimaryHand, bodyOptional.SecondaryHand
+			bodyOptional.Shoulders, bodyOptional.Wrist, bodyOptional.PetProtocol, bodyOptional.PrimaryHand, bodyOptional.SecondaryHand
 		} : new List<ItemSlot>
 		{
 			bodyOptional.Armor, bodyOptional.Belt, bodyOptional.Feet, bodyOptional.Gloves, bodyOptional.Glasses, bodyOptional.Head, bodyOptional.Neck, bodyOptional.Ring1, bodyOptional.Ring2, bodyOptional.Shirt,
-			bodyOptional.Shoulders, bodyOptional.Wrist
+			bodyOptional.Shoulders, bodyOptional.Wrist, bodyOptional.PetProtocol
 		});
 		int num5 = 0;
 		foreach (ItemSlot item4 in list)

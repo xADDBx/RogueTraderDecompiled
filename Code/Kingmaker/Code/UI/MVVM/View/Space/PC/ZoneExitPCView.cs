@@ -46,7 +46,7 @@ public class ZoneExitPCView : ZoneExitBaseView
 			base.ViewModel.ExitToShip();
 		}));
 		AddDisposable(m_ExitToShipButton.SetHint(UIStrings.Instance.SpaceCombatTexts.BackToShipBridge));
-		UISounds.Instance.SetClickAndHoverSound(m_ShipCustomizationButton, UISounds.ButtonSoundsEnum.ExitToWarpSound);
+		UISounds.Instance.SetClickAndHoverSound(m_ShipCustomizationButton, UISounds.ButtonSoundsEnum.PlastickSound);
 		AddDisposable(m_ShipCustomizationButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.OpenShipCustomization();

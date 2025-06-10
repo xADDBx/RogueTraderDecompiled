@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.AI.AreaScanning.Scoring;
 using Kingmaker.AI.AreaScanning.TileScorers;
 using Kingmaker.AI.BehaviourTrees.Nodes;
 using Kingmaker.AI.DebugUtilities;
@@ -16,23 +19,46 @@ namespace Kingmaker.AI.BehaviourTrees;
 
 public static class BehaviourTreeBuilder
 {
+	private static Dictionary<CustomBehaviourType, ICustomBehaviourTreeBuilder> CustomBehaviourTreeBuilders;
+
 	public static BehaviourTreeNode MovementDecisionSubtree;
 
 	static BehaviourTreeBuilder()
 	{
+		CustomBehaviourTreeBuilders = new Dictionary<CustomBehaviourType, ICustomBehaviourTreeBuilder> { 
+		{
+			CustomBehaviourType.DLC2_FeudalWorld_GovernorAndGolemsSquad,
+			new DLC2_FeudalWorld_GovernorAndGolemsSquad()
+		} };
 		MovementDecisionSubtree = new Condition((Blackboard b) => b.DecisionContext.Unit.Brain.IsHoldingPosition, new Sequence(new AsyncTaskNodeCreateMoveVariants(50), TaskNodeSetupMoveCommand.ToHoldPosition()), new Selector(new Condition((Blackboard b) => !b.DecisionContext.Unit.Brain.IsUsualMeleeUnit, new Sequence(new TaskNodeExecute(delegate(Blackboard b)
 		{
 			b.DecisionContext.ConsideringAbility = null;
 		}), new Selector(new Condition((Blackboard b) => b.DecisionContext.IsMovementInfluentAbility, new Sequence(new AsyncTaskNodeCreateMoveVariants(), new TaskNodeFindBetterPlace(new AttackEffectivenessTileScorer()), new TaskNodeExecuteWithResult(delegate(Blackboard b)
 		{
 			DecisionContext decisionContext2 = b.DecisionContext;
-			return (new AbilityInfo(decisionContext2.Ability).GetAbilityTargetSelector().SelectTarget(decisionContext2, (CustomGridNodeBase)decisionContext2.FoundBetterPlace.BestCell.Node) != null) ? Status.Success : Status.Failure;
+			if (!(new AbilityInfo(decisionContext2.Ability).GetAbilityTargetSelector().SelectTarget(decisionContext2, (CustomGridNodeBase)decisionContext2.FoundBetterPlace.BestCell.Node) != null))
+			{
+				ScoreOrder scoreOrder2 = decisionContext2.ScoreOrder;
+				if (scoreOrder2 == null || scoreOrder2.Order?.First() != ScoreType.BodyGuardScore)
+				{
+					return Status.Failure;
+				}
+			}
+			return Status.Success;
 		}), TaskNodeSetupMoveCommand.ToBetterPosition())), new LoopOverAbilities(new Sequence(new AsyncTaskNodeCreateMoveVariants(), new TaskNodeFindBetterPlace(new AttackEffectivenessTileScorer()), new TaskNodeExecuteWithResult(delegate(Blackboard b)
 		{
 			DecisionContext decisionContext = b.DecisionContext;
 			AbilityTargetSelector abilityTargetSelector = new AbilityInfo(decisionContext.ConsideringAbility).GetAbilityTargetSelector();
 			decisionContext.AbilityTarget = abilityTargetSelector.SelectTarget(decisionContext, (CustomGridNodeBase)decisionContext.FoundBetterPlace.BestCell.Node);
-			return (decisionContext.AbilityTarget != null) ? Status.Success : Status.Failure;
+			if (!(decisionContext.AbilityTarget != null))
+			{
+				ScoreOrder scoreOrder = decisionContext.ScoreOrder;
+				if (scoreOrder == null || scoreOrder.Order?.First() != ScoreType.BodyGuardScore)
+				{
+					return Status.Failure;
+				}
+			}
+			return Status.Success;
 		}), new TaskNodeExecute(delegate(Blackboard b)
 		{
 			b.DecisionContext.Ability = b.DecisionContext.ConsideringAbility;
@@ -59,13 +85,32 @@ public static class BehaviourTreeBuilder
 		return null;
 	}
 
-	public static BehaviourTree CreateForUnit(UnitEntity unit)
+	public static bool TryCreateCustom(MechanicEntity entity, CustomBehaviourType type, out BehaviourTree behaviourTree)
+	{
+		behaviourTree = null;
+		if (type == CustomBehaviourType.None)
+		{
+			return false;
+		}
+		if (CustomBehaviourTreeBuilders.TryGetValue(type, out var value))
+		{
+			behaviourTree = value.Create(entity);
+		}
+		return behaviourTree != null;
+	}
+
+	private static BehaviourTree CreateForUnit(UnitEntity unit)
 	{
 		LuredStrategy luredStrategy = new LuredStrategy();
 		HideAwayStrategy hideAwayStrategy = new HideAwayStrategy();
 		MoveAndCastStrategy moveAndCastStrategy = new MoveAndCastStrategy();
+		BodyGuardStrategy bodyGuardStrategy = new BodyGuardStrategy();
 		ResponseToAoOThreatStrategy responseToAoOThreatStrategy = new ResponseToAoOThreatStrategy();
-		Selector rootNode = new Selector(new Sequence(new TaskNodeWaitCommandsDone(), new Condition((Blackboard b) => b.Unit.Commands.Empty && b.Unit.State.CanActInTurnBased, new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new TaskNodeTryCompleteScenario(), new TaskNodeSelectReferenceAbility(), new Selector(new Condition((Blackboard b) => b.DecisionContext.IsLured, new Sequence(luredStrategy.CreateBehaviourTree(), new Condition((Blackboard b) => b.DecisionContext.Ability != null, moveAndCastStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreatAfterAbility, responseToAoOThreatStrategy.CreateBehaviourTree()), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove), new TaskNodeCastAbility()))), new Condition((Blackboard b) => b.DecisionContext.Unit.IsInSquad, new Sequence(new TaskNodeExecute(delegate(Blackboard b)
+		Selector rootNode = new Selector(new Sequence(new TaskNodeWaitCommandsDone(), new Condition((Blackboard b) => b.Unit.Commands.Empty && b.Unit.State.CanActInTurnBased, new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new TaskNodeTryCompleteScenario(), new TaskNodeSelectReferenceAbility(), new Selector(new Condition((Blackboard b) => b.DecisionContext.IsLured, new Sequence(luredStrategy.CreateBehaviourTree(), new Condition(delegate(Blackboard b)
+		{
+			ScoreOrder scoreOrder2 = b.DecisionContext.ScoreOrder;
+			return scoreOrder2 != null && scoreOrder2.Order?.First() == ScoreType.BodyGuardScore;
+		}, bodyGuardStrategy.CreateBehaviourTree(), new Condition((Blackboard b) => b.DecisionContext.Ability != null, moveAndCastStrategy.CreateBehaviourTree())), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreatAfterAbility, responseToAoOThreatStrategy.CreateBehaviourTree()), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove), new TaskNodeCastAbility()))), new Condition((Blackboard b) => b.DecisionContext.Unit.IsInSquad, new Sequence(new TaskNodeExecute(delegate(Blackboard b)
 		{
 			DecisionContext decisionContext2 = b.DecisionContext;
 			decisionContext2.AbilityTarget = decisionContext2.Unit.GetSquadOptional().Squad.CommonTarget;
@@ -96,11 +141,15 @@ public static class BehaviourTreeBuilder
 		}, new Succeeder(new TaskNodeCastAbility()), new Succeeder(new Sequence(new TaskNodeExecute(delegate(Blackboard b)
 		{
 			AILogger.Instance.Log(new AILogMessage($"{b.DecisionContext.Unit} from squad chooses tries to choose new target"));
-		}), new TaskNodeSelectAbilityTarget(CastTimepointType.None), new TaskNodeCastAbility()))), new TaskNodeWaitCommandsDone(), new TaskNodeTryFinishTurn())), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.BeforeMove), new TaskNodeCastAbility()), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreat, responseToAoOThreatStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.Ability == null, hideAwayStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.Ability != null, moveAndCastStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreatAfterAbility, responseToAoOThreatStrategy.CreateBehaviourTree()), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove), new TaskNodeCastAbility()))))), new TaskNodeTryFinishTurn());
+		}), new TaskNodeSelectAbilityTarget(CastTimepointType.None), new TaskNodeCastAbility()))), new TaskNodeWaitCommandsDone(), new TaskNodeTryFinishTurn())), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.BeforeMove), new TaskNodeCastAbility()), new Condition(delegate(Blackboard b)
+		{
+			ScoreOrder scoreOrder = b.DecisionContext.ScoreOrder;
+			return scoreOrder != null && scoreOrder.Order?.First() == ScoreType.BodyGuardScore;
+		}, bodyGuardStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreat, responseToAoOThreatStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.Ability == null, hideAwayStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.Ability != null, moveAndCastStrategy.CreateBehaviourTree()), new Condition((Blackboard b) => b.DecisionContext.ShouldResponseToAoOThreatAfterAbility, responseToAoOThreatStrategy.CreateBehaviourTree()), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove), new TaskNodeCastAbility()))))), new Condition((Blackboard b) => (b.Unit.Brain?.Blueprint?.TargetOthersIfCantReachHated).GetValueOrDefault(), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.None, tryTargetAllEnemies: true), new TaskNodeCastAbility())), new Condition((Blackboard b) => (b.Unit.Brain?.Blueprint?.TargetOthersIfCantReachHated).GetValueOrDefault(), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove, tryTargetAllEnemies: true), new TaskNodeCastAbility())), new TaskNodeTryFinishTurn());
 		return new BehaviourTree(unit, rootNode, new DecisionContext());
 	}
 
-	public static BehaviourTree CreateForSquad(UnitSquad squad)
+	private static BehaviourTree CreateForSquad(UnitSquad squad)
 	{
 		Sequence rootNode = new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new TaskNodeTryCompleteScenario(), new TaskNodeSelectReferenceAbility(), new Loop(delegate(Blackboard b)
 		{
@@ -141,7 +190,7 @@ public static class BehaviourTreeBuilder
 		return new BehaviourTree(squad, rootNode, new DecisionContext());
 	}
 
-	public static BehaviourTree CreateForStarship(StarshipEntity starship)
+	private static BehaviourTree CreateForStarship(StarshipEntity starship)
 	{
 		Sequence rootNode = new Sequence(new TaskNodeWaitCommandsDone(), new Succeeder(new Condition((Blackboard b) => Game.Instance.CurrentlyLoadedArea.GetComponent<TimeSurvival>()?.IsShouldDoNothing(b.Unit) ?? false, new Sequence(new TaskNodeWaitSpawnTimeSurvival(), new TaskNodeWaitCommandsDone()), new Condition((Blackboard b) => b.Unit.Commands.Empty && b.Unit.State.CanActInTurnBased, new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new TaskNodeFindBestTrajectory(), new Selector(new Condition(delegate(Blackboard b)
 		{

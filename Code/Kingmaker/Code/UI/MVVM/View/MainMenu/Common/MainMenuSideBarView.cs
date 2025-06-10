@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ContextMenu.Common;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
+using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
 using Kingmaker.DLC;
 using Kingmaker.Settings;
@@ -173,7 +174,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		DelayedInvoker.InvokeInTime(delegate
 		{
 			m_WelcomeTextBlock.AppearAnimation();
-			if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Settings)
+			if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Settings && FirstLaunchSettingsVM.HasShown)
 			{
 				UISounds.Instance.Sounds.MainMenu.MessageOfTheDayShow.Play();
 			}

@@ -81,7 +81,7 @@ public class InteractionVariantView : ViewBase<InteractionVariantVM>, IWidgetVie
 		}
 		AddDisposable(base.ViewModel.InteractionName.Subscribe(delegate(string text)
 		{
-			m_ActionName.text = text;
+			m_ActionName.text = ((!string.IsNullOrWhiteSpace(text)) ? text : string.Empty);
 		}));
 		m_Button.Interactable = !base.ViewModel.Disabled;
 		base.gameObject.name = "InteractionVariantView " + base.ViewModel.InteractionName.Value + " " + base.ViewModel.ResourceName;

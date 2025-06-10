@@ -63,7 +63,12 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 	public bool OnlyEnemyKill;
 
 	[SerializeField]
+	[Tooltip("Основная группа, может отсутствовать")]
 	private BlueprintAbilityGroupReference m_AffectedGroup;
+
+	[SerializeField]
+	[Tooltip("Дополнительные группы, приоритет как у основной")]
+	private BlueprintAbilityGroupReference[] m_OtherAffectedGroupList;
 
 	[SerializeField]
 	private BlueprintUnitFactReference[] m_FilterFacts = new BlueprintUnitFactReference[0];
@@ -72,7 +77,22 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 
 	public PropertyParameter PropertyToSave;
 
-	public BlueprintAbilityGroup AffectedGroup => m_AffectedGroup?.Get();
+	private bool HasAffectedGroups
+	{
+		get
+		{
+			if (m_AffectedGroup == null)
+			{
+				BlueprintAbilityGroupReference[] otherAffectedGroupList = m_OtherAffectedGroupList;
+				if (otherAffectedGroupList != null)
+				{
+					return otherAffectedGroupList.Length > 0;
+				}
+				return false;
+			}
+			return true;
+		}
+	}
 
 	public ReferenceArrayProxy<BlueprintUnitFact> FilterFacts
 	{
@@ -80,6 +100,26 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 		{
 			BlueprintReference<BlueprintUnitFact>[] filterFacts = m_FilterFacts;
 			return filterFacts;
+		}
+	}
+
+	private IEnumerable<BlueprintAbilityGroup> GetAffectedGroups()
+	{
+		if (m_AffectedGroup != null)
+		{
+			yield return m_AffectedGroup.Get();
+		}
+		if (m_OtherAffectedGroupList == null)
+		{
+			yield break;
+		}
+		BlueprintAbilityGroupReference[] otherAffectedGroupList = m_OtherAffectedGroupList;
+		foreach (BlueprintAbilityGroupReference blueprintAbilityGroupReference in otherAffectedGroupList)
+		{
+			if (blueprintAbilityGroupReference != null)
+			{
+				yield return blueprintAbilityGroupReference.Get();
+			}
 		}
 	}
 
@@ -159,12 +199,15 @@ public class WarhammerKillTrigger : UnitFactComponentDelegate, IInitiatorRuleboo
 		{
 			return;
 		}
-		if (AffectedGroup != null && sourceAbility.Blueprint.AbilityGroups.Contains(AffectedGroup))
+		foreach (BlueprintAbilityGroup affectedGroup in GetAffectedGroups())
 		{
-			abilityCooldownsOptional.RemoveGroupCooldown(AffectedGroup);
-			abilityCooldownsOptional.RemoveAbilityCooldown(sourceAbility.Blueprint);
+			if (affectedGroup != null && sourceAbility.Blueprint.AbilityGroups.Contains(affectedGroup))
+			{
+				abilityCooldownsOptional.RemoveGroupCooldown(affectedGroup);
+				abilityCooldownsOptional.RemoveAbilityCooldown(sourceAbility.Blueprint);
+			}
 		}
-		if (AffectedGroup == null)
+		if (!HasAffectedGroups)
 		{
 			foreach (BlueprintAbilityGroup abilityGroup in sourceAbility.Blueprint.AbilityGroups)
 			{

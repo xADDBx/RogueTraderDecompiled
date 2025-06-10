@@ -1,5 +1,7 @@
 using System;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -10,6 +12,7 @@ using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.View;
@@ -129,37 +132,44 @@ public class CastAsksController : IUnitAsksController, IDisposable, IClickAction
 		{
 			return;
 		}
-		if (ability.Blueprint.IsMomentum && ability.Caster.View.Asks.MomentumAction.HasBarks)
+		using (ContextData<MechanicsContext.Data>.Request().Setup(new MechanicsContext(ability.Caster, ability.Caster, ability.Caster.Blueprint), ability.Caster))
 		{
-			ability.Caster.View.Asks.MomentumAction.Schedule();
-			return;
-		}
-		BarkWrapper barkWrapper = ability.Caster.View.Asks.Order;
-		switch (ability.Blueprint.AbilityTag)
-		{
-		case AbilityTag.ThrowingGrenade:
-			if (ability.Caster.View.Asks.ThrowingGrenade.HasBarks)
+			using (ContextData<PropertyContextData>.Request().Setup(new PropertyContext(ability, target.Entity)))
 			{
-				barkWrapper = ability.Caster.View.Asks.ThrowingGrenade;
+				ContextData<MechanicsContext.Data>.Current.Context.SetSourceAbility(ability.Blueprint);
+				if (ability.Blueprint.IsMomentum && ability.Caster.View.Asks.MomentumAction.HasBarks)
+				{
+					ability.Caster.View.Asks.MomentumAction.Schedule();
+					return;
+				}
+				BarkWrapper barkWrapper = ability.Caster.View.Asks.Order;
+				switch (ability.Blueprint.AbilityTag)
+				{
+				case AbilityTag.ThrowingGrenade:
+					if (ability.Caster.View.Asks.ThrowingGrenade.HasBarks)
+					{
+						barkWrapper = ability.Caster.View.Asks.ThrowingGrenade;
+					}
+					break;
+				case AbilityTag.UsingCombatDrug:
+					if (ability.Caster.View.Asks.UsingCombatDrug.HasBarks)
+					{
+						barkWrapper = ability.Caster.View.Asks.UsingCombatDrug;
+					}
+					break;
+				case AbilityTag.Heal:
+					ScheduleHeal(ability.Caster, target.Entity);
+					return;
+				case AbilityTag.StarshipShotAbility:
+				case AbilityTag.StarshipUltimateAbility:
+					return;
+				default:
+					throw new ArgumentOutOfRangeException();
+				case AbilityTag.None:
+					break;
+				}
+				barkWrapper?.Schedule();
 			}
-			break;
-		case AbilityTag.UsingCombatDrug:
-			if (ability.Caster.View.Asks.UsingCombatDrug.HasBarks)
-			{
-				barkWrapper = ability.Caster.View.Asks.UsingCombatDrug;
-			}
-			break;
-		case AbilityTag.Heal:
-			ScheduleHeal(ability.Caster, target.Entity);
-			return;
-		case AbilityTag.StarshipShotAbility:
-		case AbilityTag.StarshipUltimateAbility:
-			return;
-		default:
-			throw new ArgumentOutOfRangeException();
-		case AbilityTag.None:
-			break;
 		}
-		barkWrapper?.Schedule();
 	}
 }

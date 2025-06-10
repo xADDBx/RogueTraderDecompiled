@@ -12,6 +12,7 @@ using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Items;
 using Kingmaker.UI.Common.UIConfigComponents;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic;
@@ -250,5 +251,28 @@ public static class UIUtilityUnit
 			return unit.CanBeControlled();
 		}
 		return false;
+	}
+
+	public static bool HasEquipedShield(MechanicEntity target)
+	{
+		if (!target.IsPlayerEnemy)
+		{
+			return false;
+		}
+		return target.GetInventoryOptional()?.Items.HasItem((ItemEntity i) => i.Blueprint.ItemType == ItemsItemType.Shield) ?? false;
+	}
+
+	public static int GetShieldBlockChance(UnitEntity unit)
+	{
+		if (unit == null)
+		{
+			return 0;
+		}
+		UnitPartAeldariShields optional = unit.GetOptional<UnitPartAeldariShields>();
+		if (optional != null)
+		{
+			return optional.ActiveEntries().FirstOrDefault()?.Item2.BlockChance ?? 0;
+		}
+		return unit.Body.SecondaryHand.MaybeShield?.Blueprint.BlockChance ?? 0;
 	}
 }

@@ -84,7 +84,7 @@ public class DlcManagerMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<Dlc
 			DlcManagerMenuEntityBaseView dlcManagerMenuEntityBaseView = ((selectedEntity.DlcManagerTabVM is DlcManagerTabDlcsVM && !m_InGame) ? m_DlcsButton : ((selectedEntity.DlcManagerTabVM is DlcManagerTabSwitchOnDlcsVM && m_InGame) ? m_SwithcOnDlcsButton : ((!m_IsConsole) ? m_ModsButton : null)));
 			if (!(dlcManagerMenuEntityBaseView == null) && m_Selector.transform.localPosition.x != dlcManagerMenuEntityBaseView.transform.localPosition.x)
 			{
-				UIUtility.MoveXLensPosition(m_Selector.transform, dlcManagerMenuEntityBaseView.transform.localPosition.x, m_LensSwitchAnimationDuration);
+				AddDisposable(UIUtility.CreateMoveXLensPosition(m_Selector.transform, dlcManagerMenuEntityBaseView.transform.localPosition.x, m_LensSwitchAnimationDuration));
 			}
 		}));
 		ResetLensPosition();

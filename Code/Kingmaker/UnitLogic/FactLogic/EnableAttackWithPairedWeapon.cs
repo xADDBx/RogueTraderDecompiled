@@ -45,18 +45,22 @@ public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActi
 		HandsEquipmentSet handsEquipmentSet = base.Owner.GetBodyOptional()?.CurrentHandsEquipmentSet;
 		foreach (Ability rawFact in base.Owner.Abilities.RawFacts)
 		{
-			ItemEntityWeapon sourceWeapon = rawFact.Data.SourceWeapon;
-			if (sourceWeapon != null && !sourceWeapon.HoldInTwoHands)
+			ItemEntityWeapon itemEntityWeapon = rawFact.Data.SourceWeapon;
+			if (itemEntityWeapon == null)
 			{
-				if (sourceWeapon.HoldingSlot == handsEquipmentSet?.PrimaryHand)
+				itemEntityWeapon = (rawFact.Data.SourceItem as ItemEntityShield)?.WeaponComponent;
+			}
+			if (itemEntityWeapon != null && !itemEntityWeapon.HoldInTwoHands)
+			{
+				if (itemEntityWeapon.HoldingSlot == handsEquipmentSet?.PrimaryHand)
 				{
 					rawFact.Data.AbilityGroups.Remove(combatRoot.SecondaryHandAbilityGroup);
 				}
-				if (sourceWeapon.HoldingSlot == handsEquipmentSet?.SecondaryHand)
+				if (itemEntityWeapon.HoldingSlot == handsEquipmentSet?.SecondaryHand)
 				{
 					rawFact.Data.AbilityGroups.Remove(combatRoot.PrimaryHandAbilityGroup);
 				}
-				if (sourceWeapon.HoldingSlot != handsEquipmentSet?.PrimaryHand && sourceWeapon.HoldingSlot != handsEquipmentSet?.SecondaryHand)
+				if (itemEntityWeapon.HoldingSlot != handsEquipmentSet?.PrimaryHand && itemEntityWeapon.HoldingSlot != handsEquipmentSet?.SecondaryHand)
 				{
 					rawFact.Data.AbilityGroups.Remove(combatRoot.PrimaryHandAbilityGroup);
 					rawFact.Data.AbilityGroups.Remove(combatRoot.SecondaryHandAbilityGroup);

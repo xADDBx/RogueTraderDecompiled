@@ -173,7 +173,7 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		AkSoundEngine.SetRTPCValue("UI_HintPitch", value);
 	}
 
-	public void PlayItemSound(SlotAction action, ItemEntity item, bool equipSound)
+	public void PlayItemSound(SlotAction action, ItemEntity item, bool equipSound, bool isStarship = false)
 	{
 		if (item == null)
 		{
@@ -188,10 +188,17 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 				switch (action)
 				{
 				case SlotAction.Put:
-					text = blueprintItemEquipment.InventoryEquipSound;
+					try
+					{
+						text = ((!isStarship) ? blueprintItemEquipment.InventoryEquipSound : Instance.Sounds.Ship.ShipItemDefaultEquip.Id);
+					}
+					catch (NotImplementedException)
+					{
+						text = Instance.Sounds.Ship.ShipItemDefaultEquip.Id;
+					}
 					break;
 				case SlotAction.Take:
-					text = blueprintItemEquipment.InventoryPutSound;
+					text = ((!isStarship) ? blueprintItemEquipment.InventoryPutSound : Instance.Sounds.Ship.ShipItemDefaultUnequip.Id);
 					break;
 				}
 			}

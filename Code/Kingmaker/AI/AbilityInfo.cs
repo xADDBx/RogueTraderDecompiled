@@ -68,6 +68,8 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 
 	public AbilityData Data => ability;
 
+	public bool NeedLoS => ability.NeedLoS;
+
 	public AbilityInfo(AbilityData ability)
 	{
 		this.ability = ability;

@@ -30,7 +30,7 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly Sprite ImageDisabled;
 
-	public StringReactiveProperty InteractionName = new StringReactiveProperty();
+	public readonly StringReactiveProperty InteractionName = new StringReactiveProperty();
 
 	public int? RequiredResourceCount;
 
@@ -38,15 +38,15 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public int? UnitCount;
 
-	public bool OnlyOnceCheck;
+	public readonly bool OnlyOnceCheck;
 
-	public string ResourceName;
+	public readonly string ResourceName;
 
 	private readonly Action m_OnInteract;
 
-	public bool Disabled;
+	public readonly bool Disabled;
 
-	private IDisposable m_SelectedUnitsSubscription;
+	private readonly IDisposable m_SelectedUnitsSubscription;
 
 	public bool LimitedUnitsCheck => UnitCount.HasValue;
 
@@ -82,6 +82,11 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 		}
 	}
 
+	protected override void DisposeImplementation()
+	{
+		m_SelectedUnitsSubscription?.Dispose();
+	}
+
 	public void Interact()
 	{
 		using (ContextData<InteractionVariantData>.Request().Setup(m_InteractionActor))
@@ -89,10 +94,5 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 			ClickMapObjectHandler.TryInteract(m_InteractionActor.InteractionPart, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), muteEvents: false, m_InteractionActor);
 		}
 		m_OnInteract?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_SelectedUnitsSubscription?.Dispose();
 	}
 }

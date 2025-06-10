@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.SkillsAndWeapons.Skills;
+using Kingmaker.UI.Sound;
 using UniRx;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ public class CharGenCharInfoSkillView : CharInfoSkillPCView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		UISounds.Instance.SetHoverSound(m_Selectable, UISounds.ButtonSoundsEnum.NormalSound);
 		AddDisposable(base.ViewModel.HighlightedBySource.Subscribe(delegate(bool value)
 		{
 			string activeLayer = (value ? "Highlighted" : "Normal");
@@ -19,10 +21,7 @@ public class CharGenCharInfoSkillView : CharInfoSkillPCView
 		}));
 		if ((bool)m_RecommendedMark)
 		{
-			AddDisposable(base.ViewModel.IsRecommended.Subscribe(delegate(bool value)
-			{
-				m_RecommendedMark.SetActive(value);
-			}));
+			AddDisposable(base.ViewModel.IsRecommended.Subscribe(m_RecommendedMark.SetActive));
 		}
 	}
 

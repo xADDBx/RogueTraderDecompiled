@@ -55,6 +55,7 @@ public abstract class LootCollectorView : ViewBase<LootCollectorVM>
 		{
 			m_ScrollRect.ScrollToTop();
 		}));
+		m_ScrollRect.ScrollToTop();
 		m_ToCargoText.text = UIStrings.Instance.LootWindow.TrashLootObject;
 		m_ToInventoryText.text = UIStrings.Instance.LootWindow.ItemsLootObject;
 	}

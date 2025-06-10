@@ -22,7 +22,7 @@ public class AbilityCounterAttackRange : AbilityRange
 		int counterAttackRange = Ability.CounterAttackRange;
 		if (counterAttackRange >= 0)
 		{
-			NodeList nodes = Ability.Caster.GetOccupiedNodes(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
+			NodeList nodes = Ability.Caster.GetOccupiedNodes(castPosition);
 			if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))
 			{
 				CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHudInfo = default(CombatHUDRenderer.AbilityAreaHudInfo);

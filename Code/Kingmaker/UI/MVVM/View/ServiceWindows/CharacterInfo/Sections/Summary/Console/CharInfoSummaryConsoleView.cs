@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Summary;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Summary.Console;
 
@@ -16,9 +17,13 @@ public class CharInfoSummaryConsoleView : CharInfoSummaryPCView, ICharInfoCompon
 
 	private SimpleConsoleNavigationEntity m_ActionPointsConsoleEntity;
 
+	[SerializeField]
+	private PetSummaryConsoleView m_PetSummaryConsoleView;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		m_PetSummaryConsoleView.Bind(base.ViewModel.PetSummaryVM);
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
 		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 		{
@@ -32,6 +37,7 @@ public class CharInfoSummaryConsoleView : CharInfoSummaryPCView, ICharInfoCompon
 	{
 		m_NavigationBehaviour.Clear();
 		m_AlignmentWheelPCView.AddInput(ref m_InputLayer, ref m_NavigationBehaviour, null);
+		m_PetSummaryConsoleView.AddInput(ref inputLayer, ref m_NavigationBehaviour, hintsWidget);
 		GridConsoleNavigationBehaviour navigationBehaviour2 = new GridConsoleNavigationBehaviour();
 		(m_StatusEffectsView as ICharInfoComponentConsoleView)?.AddInput(ref inputLayer, ref navigationBehaviour2, hintsWidget);
 		navigationBehaviour2.AddRow<SimpleConsoleNavigationEntity>(m_MovePointsConsoleEntity);

@@ -28,7 +28,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SpaceCombat;
 
-public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IClickMechanicActionBarSlotHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IStarshipLevelUpHandler, ISubscriber<IStarshipEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitDirectHoverUIHandler
+public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IClickMechanicActionBarSlotHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IStarshipLevelUpHandler, ISubscriber<IStarshipEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitDirectHoverUIHandler, IInterruptTurnContinueHandler
 {
 	public readonly ReactiveProperty<bool> IsPlayerTurn = new ReactiveProperty<bool>();
 
@@ -204,6 +204,11 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		UpdateSlots();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateSlots();
+	}
+
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
 		UpdatePlayerTurn(isTurnBased);
@@ -222,6 +227,11 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateSlots();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateSlots();
 	}

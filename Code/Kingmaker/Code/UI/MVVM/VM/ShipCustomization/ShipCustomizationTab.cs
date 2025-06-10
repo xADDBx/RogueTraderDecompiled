@@ -4,5 +4,6 @@ public enum ShipCustomizationTab
 {
 	Upgrade,
 	Skills,
-	Posts
+	Posts,
+	Abilities
 }

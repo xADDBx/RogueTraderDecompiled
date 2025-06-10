@@ -45,7 +45,6 @@ public class ScrambledTMP : MonoBehaviour
 
 	public void OnDestroy()
 	{
-		StopText();
 	}
 
 	public void SetText(string startText, string endText)

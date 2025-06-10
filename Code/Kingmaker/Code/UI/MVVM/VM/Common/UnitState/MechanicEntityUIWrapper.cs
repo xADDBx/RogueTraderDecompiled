@@ -10,6 +10,7 @@ using Kingmaker.Enums;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using UnityEngine;
 
@@ -141,6 +142,8 @@ public readonly struct MechanicEntityUIWrapper
 			return false;
 		}
 	}
+
+	public bool CantMove => MechanicEntity.GetMechanicFeature(MechanicsFeatureType.CantMove);
 
 	[CanBeNull]
 	public PartUnitCombatState CombatState => m_MechanicEntity.Entity?.GetCombatStateOptional();

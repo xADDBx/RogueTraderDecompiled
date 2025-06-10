@@ -145,21 +145,21 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
-		ClipSetByHeight clipSetByHeight = m_SlipSetsByHeight.FirstItem((ClipSetByHeight x) => Math.Abs(handle.Unit.MovementAgent.NodeLinkTraverser.TraverseHeight - x.TraverseHeight) < 0.5f) ?? m_SlipSetsByHeight.FirstItem();
-		if (clipSetByHeight != null)
+		ClipSetByHeight setByTraverseHeight = GetSetByTraverseHeight(handle);
+		if (setByTraverseHeight != null)
 		{
-			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpVerticalClipDuration = clipSetByHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpVerticalDistance = clipSetByHeight.UpVerticalOutDistance;
-			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpHorizontalClipDuration = clipSetByHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseUpHorizontalOut)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.InUpVerticalClipDuration = clipSetByHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseIn)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.InDownVerticalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseIn)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.InDownVerticalDistance = clipSetByHeight.DownVerticalInDistance;
-			handle.Unit.MovementAgent.NodeLinkTraverser.InDownHorizontalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseDownHorizontalIn)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
-			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = clipSetByHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpVerticalClipDuration = setByTraverseHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpVerticalDistance = setByTraverseHeight.UpVerticalOutDistance;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OutUpHorizontalClipDuration = setByTraverseHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseUpHorizontalOut)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.InUpVerticalClipDuration = setByTraverseHeight.UpAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseIn)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.InDownVerticalClipDuration = setByTraverseHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseIn)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.InDownVerticalDistance = setByTraverseHeight.DownVerticalInDistance;
+			handle.Unit.MovementAgent.NodeLinkTraverser.InDownHorizontalClipDuration = setByTraverseHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseDownHorizontalIn)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = setByTraverseHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
+			handle.Unit.MovementAgent.NodeLinkTraverser.OutDownVerticalClipDuration = setByTraverseHeight.DownAnimationsSet.GetAnimationClip(WarhammerNodeLinkTraverser.State.TraverseOut)?.Length ?? 0f;
 			handle.Unit.MovementAgent.NodeLinkTraverser.OnlyHorizontalTraverseTime = ((!handle.Unit.MovementAgent.NodeLinkTraverser.IsHighTraverseHorizontal) ? ((!handle.Unit.MovementAgent.NodeLinkTraverser.IsJumpTraverseHorizontal) ? (m_HorizontalTraverse?.Length ?? 0f) : (m_HorizontalTraverseJump?.Length ?? 0f)) : (m_HorizontalTraverseHigh?.Length ?? 0f));
 			WarhammerNodeLinkTraverser nodeLinkTraverser = handle.Unit.MovementAgent.NodeLinkTraverser;
-			float verticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.VerticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet.VerticalSpeed : clipSetByHeight.DownAnimationsSet.VerticalSpeed));
+			float verticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.VerticalSpeed = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? setByTraverseHeight.UpAnimationsSet.VerticalSpeed : setByTraverseHeight.DownAnimationsSet.VerticalSpeed));
 			nodeLinkTraverser.VerticalSpeed = verticalSpeed;
 			handle.HasCrossfadePriority = true;
 		}
@@ -192,12 +192,12 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 		{
 			AnimationType = animationType
 		};
-		ClipSetByHeight clipSetByHeight = m_SlipSetsByHeight.FirstItem((ClipSetByHeight x) => Math.Abs(handle.Unit.MovementAgent.NodeLinkTraverser.TraverseHeight - x.TraverseHeight) < 0.5f) ?? m_SlipSetsByHeight.FirstItem();
-		if (clipSetByHeight == null)
+		ClipSetByHeight setByTraverseHeight = GetSetByTraverseHeight(handle);
+		if (setByTraverseHeight == null)
 		{
 			return;
 		}
-		ClipSet clipSet = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? clipSetByHeight.UpAnimationsSet : clipSetByHeight.DownAnimationsSet);
+		ClipSet clipSet = (handle.Unit.MovementAgent.NodeLinkTraverser.IsUpTraverse ? setByTraverseHeight.UpAnimationsSet : setByTraverseHeight.DownAnimationsSet);
 		AnimationClipWrapper animationClipWrapper = ((!handle.Unit.MovementAgent.NodeLinkTraverser.IsOnlyHorizontalTraverse) ? clipSet.GetAnimationClip(animationType) : (handle.Unit.MovementAgent.NodeLinkTraverser.IsHighTraverseHorizontal ? m_HorizontalTraverseHigh : (handle.Unit.MovementAgent.NodeLinkTraverser.IsJumpTraverseHorizontal ? m_HorizontalTraverseJump : m_HorizontalTraverse)));
 		float speedScale = 1f;
 		ClipDurationType duration = ClipDurationType.Endless;
@@ -241,5 +241,10 @@ public class UnitAnimationActionTraverseNodeLink : UnitAnimationAction
 		{
 			handle.StartClip(animationClipWrapper, duration);
 		}
+	}
+
+	private ClipSetByHeight GetSetByTraverseHeight(UnitAnimationActionHandle handle)
+	{
+		return m_SlipSetsByHeight.MinBy((ClipSetByHeight x) => Math.Abs(handle.Unit.MovementAgent.NodeLinkTraverser.TraverseHeight - x.TraverseHeight));
 	}
 }

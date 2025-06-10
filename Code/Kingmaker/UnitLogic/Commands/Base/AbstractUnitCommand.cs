@@ -58,6 +58,8 @@ public abstract class AbstractUnitCommand
 	[CanBeNull]
 	public UnitAnimationActionHandle Animation { get; protected set; }
 
+	public AbstractUnitCommand StartBlocker { get; private set; }
+
 	public float TimeSinceStart { get; private set; }
 
 	protected float PretendActTime { get; private set; }
@@ -94,6 +96,8 @@ public abstract class AbstractUnitCommand
 
 	public bool SlowMotionRequired => Params.SlowMotionRequired;
 
+	public bool ShouldReturnCamera => true;
+
 	public bool DoNotInterruptAfterFight => Params.DoNotInterruptAfterFight;
 
 	public bool IsRunning
@@ -114,9 +118,10 @@ public abstract class AbstractUnitCommand
 	{
 		get
 		{
-			if (Animation != null && m_IsAnimationActHandled)
+			UnitAnimationActionHandle animation = Animation;
+			if (animation != null && !animation.IsFinished && !animation.DoesNotPreventMovement)
 			{
-				return !Animation.DoesNotPreventMovement;
+				return m_IsAnimationActHandled;
 			}
 			return false;
 		}
@@ -176,6 +181,18 @@ public abstract class AbstractUnitCommand
 
 	public virtual bool NeedEquipWeapons => false;
 
+	public bool IsStartBlocked
+	{
+		get
+		{
+			if (StartBlocker != null)
+			{
+				return !StartBlocker.IsFinished;
+			}
+			return false;
+		}
+	}
+
 	public virtual bool CanStart => true;
 
 	public virtual bool DontWaitForHands => false;
@@ -197,6 +214,8 @@ public abstract class AbstractUnitCommand
 	protected virtual int ExpectedActEventsCount => 1;
 
 	public virtual bool IsWaitingForAnimation => false;
+
+	protected virtual float PretendActDelay => 1f;
 
 	protected AbstractUnitCommand([NotNull] UnitCommandParams @params)
 	{
@@ -240,9 +259,9 @@ public abstract class AbstractUnitCommand
 		return null;
 	}
 
-	protected void ScheduleAct(float delay = 1f)
+	protected void ScheduleAct()
 	{
-		PretendActTime = TimeSinceStart + delay / Game.CombatAnimSpeedUp;
+		PretendActTime = TimeSinceStart + PretendActDelay / Game.CombatAnimSpeedUp;
 	}
 
 	protected void StartAnimation(UnitAnimationType animationType, [CanBeNull] Action<UnitAnimationActionHandle> initializer = null)
@@ -252,7 +271,7 @@ public abstract class AbstractUnitCommand
 		HasAnimation = true;
 		if (Animation == null)
 		{
-			ScheduleAct((this is UnitAttackOfOpportunity) ? SlowMoController.SlowMoFactor : 1f);
+			ScheduleAct();
 			return;
 		}
 		initializer?.Invoke(Animation);
@@ -535,6 +554,11 @@ public abstract class AbstractUnitCommand
 
 	protected virtual void OnPostLoad()
 	{
+	}
+
+	public void BlockOn(AbstractUnitCommand cmd)
+	{
+		StartBlocker = cmd;
 	}
 }
 public abstract class AbstractUnitCommand<TParams> : AbstractUnitCommand where TParams : UnitCommandParams

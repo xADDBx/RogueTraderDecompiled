@@ -257,8 +257,8 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 			return null;
 		}
 		LightweightUnitEntity lightweightUnitEntity = Entity.Initialize(new LightweightUnitEntity(Uuid.Instance.CreateString(), isInGame: true, unit));
-		lightweightUnitEntity.CreateView(prefab, position, rotation);
 		lightweightUnitEntity.Position = position;
+		lightweightUnitEntity.CreateView(prefab, position, rotation);
 		lightweightUnitEntity.SetOrientation(rotation.eulerAngles.y);
 		SpawnEntity(lightweightUnitEntity, state);
 		return lightweightUnitEntity;
@@ -364,7 +364,7 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 	public void SpawnEntityImmediately([NotNull] Entity entity, [NotNull] SceneEntitiesState state)
 	{
 		state.AddEntityData(entity);
-		if (state == Game.Instance.Player.CrossSceneState)
+		if (state == Game.Instance.Player.CrossSceneState && entity is MechanicEntity)
 		{
 			entity.GetOrCreate<PartHoldPrefabBundle>();
 		}

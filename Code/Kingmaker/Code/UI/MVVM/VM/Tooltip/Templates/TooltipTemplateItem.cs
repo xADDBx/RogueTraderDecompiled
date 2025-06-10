@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Equipment;
+using Kingmaker.Blueprints.Items.Shields;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates.TooltipTemplateItemParts;
@@ -122,11 +123,15 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 		{
 			if (!(blueprintItem is BlueprintItemEquipmentUsable))
 			{
-				if (blueprintItem is BlueprintItemArmor)
+				if (!(blueprintItem is BlueprintItemArmor))
 				{
-					return typeof(ArmorItemPart);
+					if (blueprintItem is BlueprintItemShield)
+					{
+						return typeof(ShieldItemPart);
+					}
+					return typeof(BaseItemPart);
 				}
-				return typeof(BaseItemPart);
+				return typeof(ArmorItemPart);
 			}
 			return typeof(UsableItemPart);
 		}
@@ -139,11 +144,15 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 		{
 			if (!(blueprintItem is BlueprintItemEquipmentUsable))
 			{
-				if (blueprintItem is BlueprintItemArmor)
+				if (!(blueprintItem is BlueprintItemArmor))
 				{
-					return typeof(ArmorItemPart);
+					if (blueprintItem is BlueprintItemShield)
+					{
+						return typeof(ShieldItemPart);
+					}
+					return typeof(BaseItemPart);
 				}
-				return typeof(BaseItemPart);
+				return typeof(ArmorItemPart);
 			}
 			return typeof(UsableItemPart);
 		}

@@ -23,34 +23,14 @@ public class ShipTabsNavigationVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public void SetNextTab()
 	{
-		if (ActiveTab.Value == ShipCustomizationTab.Upgrade)
-		{
-			SetActiveTab(ShipCustomizationTab.Skills);
-		}
-		else if (ActiveTab.Value == ShipCustomizationTab.Skills)
-		{
-			SetActiveTab(ShipCustomizationTab.Posts);
-		}
-		else
-		{
-			SetActiveTab(ShipCustomizationTab.Upgrade);
-		}
+		int length = Enum.GetValues(typeof(ShipCustomizationTab)).Length;
+		SetActiveTab((ShipCustomizationTab)((int)(ActiveTab.Value + 1) % length));
 	}
 
 	public void SetPrevTab()
 	{
-		if (ActiveTab.Value == ShipCustomizationTab.Upgrade)
-		{
-			SetActiveTab(ShipCustomizationTab.Posts);
-		}
-		else if (ActiveTab.Value == ShipCustomizationTab.Skills)
-		{
-			SetActiveTab(ShipCustomizationTab.Upgrade);
-		}
-		else
-		{
-			SetActiveTab(ShipCustomizationTab.Skills);
-		}
+		int length = Enum.GetValues(typeof(ShipCustomizationTab)).Length;
+		SetActiveTab((ShipCustomizationTab)((int)(ActiveTab.Value - 1 + length) % length));
 	}
 
 	public void OnNextActiveTab()

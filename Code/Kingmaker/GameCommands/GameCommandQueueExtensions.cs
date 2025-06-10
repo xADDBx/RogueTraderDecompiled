@@ -553,6 +553,11 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new SetEquipmentColorGameCommand(indexSet, unit));
 	}
 
+	public static void SetEquipmentColor(this GameCommandQueue gameCommandQueue, BaseUnitEntity unit, Texture2D texture)
+	{
+		gameCommandQueue.AddCommand(new SetEquipmentColorGameCommand(unit, texture));
+	}
+
 	public static void GroupChanger([NotNull] this GameCommandQueue gameCommandQueue, UnitReference unitReference)
 	{
 		gameCommandQueue.AddCommand(new GroupChangerGameCommand(unitReference));

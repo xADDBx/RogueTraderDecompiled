@@ -106,6 +106,12 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 		BlueprintBuff = blueprintBuff;
 	}
 
+	public TooltipTemplateBuff(BlueprintBuff blueprintBuff, MechanicEntity overrideCaster = null)
+	{
+		BlueprintBuff = blueprintBuff;
+		m_OverrideCaster = new EntityRef(overrideCaster);
+	}
+
 	public override IEnumerable<ITooltipBrick> GetHeader(TooltipTemplateType type)
 	{
 		TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
@@ -174,13 +180,17 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 
 	private void AddDescription(List<ITooltipBrick> bricks)
 	{
-		if (Buff == null)
+		if (Buff != null)
 		{
-			bricks.Add(new TooltipBrickText(m_Desc, TooltipTextType.Paragraph));
+			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, ((IBuff)Buff).Caster), TooltipTextType.Paragraph));
+		}
+		else if (BlueprintBuff != null)
+		{
+			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, m_OverrideCaster.Entity as MechanicEntity), TooltipTextType.Paragraph));
 		}
 		else
 		{
-			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, ((IBuff)Buff).Caster), TooltipTextType.Paragraph));
+			bricks.Add(new TooltipBrickText(m_Desc, TooltipTextType.Paragraph));
 		}
 	}
 

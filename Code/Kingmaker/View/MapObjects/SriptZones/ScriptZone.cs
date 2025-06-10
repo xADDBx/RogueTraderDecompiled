@@ -46,6 +46,10 @@ public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 	private bool m_PlayersOnly;
 
 	[SerializeField]
+	[Tooltip("When set, zone also detects dead units")]
+	private bool m_UseDeads;
+
+	[SerializeField]
 	[Tooltip("When set, zone starts inactive. Set IsActive to true to start detecting units.")]
 	private bool m_StartInactive;
 
@@ -54,6 +58,8 @@ public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 	public UnitEvent OnUnitExited;
 
 	public readonly List<IScriptZoneShape> Shapes = new List<IScriptZoneShape>();
+
+	public bool UseDeads => m_UseDeads;
 
 	public bool PlayersOnly => m_PlayersOnly;
 
@@ -77,7 +83,12 @@ public class ScriptZone : MapObjectView, IBlueprintedMapObjectView
 		}
 		set
 		{
+			bool isActive = Data.IsActive;
 			Data.IsActive = value;
+			if (!value && isActive)
+			{
+				Data.RemoveAll();
+			}
 		}
 	}
 

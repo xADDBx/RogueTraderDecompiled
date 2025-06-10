@@ -10,6 +10,22 @@ namespace Kingmaker.UI.Sound;
 public class BlueprintUISound : BlueprintScriptableObject
 {
 	[Serializable]
+	public class UISoundEtudeCounter
+	{
+		public UISound EtudeCounterShow;
+
+		public UISound EtudeCounterHide;
+
+		public UISound EtudeCounterChangeCounter;
+
+		public UISound EtudeCounterChangeProgress;
+
+		public UISound EtudeCounterSuccess;
+
+		public UISound EtudeCounterFail;
+	}
+
+	[Serializable]
 	public class UISoundCharacter
 	{
 		public UISound NewLevelNotification;
@@ -39,6 +55,12 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound ShipUpgrade;
 
 		public UISound ShipDowngrade;
+
+		public UISound ShipItemDefaultEquip;
+
+		public UISound ShipItemDefaultUnequip;
+
+		public UISound ShipLevelUpgradedNotification;
 	}
 
 	[Serializable]
@@ -55,6 +77,10 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound InventoryVisualSettingsShow;
 
 		public UISound InventoryVisualSettingsHide;
+
+		public UISound InventorySelectorWindowShow;
+
+		public UISound InventorySelectorWindowHide;
 	}
 
 	[Serializable]
@@ -267,6 +293,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound ExitBattlePopupExperienceGrowStart;
 
 		public UISound ExitBattlePopupExperienceGrowStop;
+
+		public UISound PreparationTurnDeployUnit;
 	}
 
 	[Serializable]
@@ -623,6 +651,8 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundSpaceColonization SpaceColonization;
 
 	public UITitlesSound TitlesSound;
+
+	public UISoundEtudeCounter EtudeCounterSound;
 
 	public UISoundLoadingScreen LoadingScreen;
 

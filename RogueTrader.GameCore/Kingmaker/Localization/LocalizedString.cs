@@ -14,6 +14,8 @@ namespace Kingmaker.Localization;
 [Serializable]
 public class LocalizedString
 {
+	private const string JsonExt = ".json";
+
 	public static readonly LogChannel Logger = LogChannelFactory.GetOrCreate("Localization");
 
 	[SerializeField]

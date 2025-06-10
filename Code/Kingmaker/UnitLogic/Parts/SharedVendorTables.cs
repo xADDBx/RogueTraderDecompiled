@@ -243,10 +243,6 @@ public class SharedVendorTables : IHashable
 				m_PersistentTables.Add(tableData);
 			}
 			HashSet<VendorLootItem> fixedItems = GetFixedItems(tableData.Loot);
-			if (ShouldFixEntries(tableData.KnownLootItems))
-			{
-				tableData.KnownLootItems = GetFixedItems(tableData.Loot);
-			}
 			List<LootEntry> entries = tableData.Entries;
 			foreach (KeyValuePair<VendorLootItem, int> item in GetLootDifference(tableData.KnownLootItems, fixedItems, entries))
 			{
@@ -279,11 +275,7 @@ public class SharedVendorTables : IHashable
 
 	private static bool ShouldFixEntries(HashSet<VendorLootItem> savedKnownLootItems)
 	{
-		if (savedKnownLootItems.HasItem((VendorLootItem i) => i.Item != null))
-		{
-			return savedKnownLootItems.Empty();
-		}
-		return true;
+		return !savedKnownLootItems.HasItem((VendorLootItem i) => i.Item != null);
 	}
 
 	private static void MakeItemEntityToVendorLootItemPairs(ReadonlyList<ItemEntity> items, HashSet<VendorLootItem> vendorLootItems, Dictionary<ItemEntity, VendorLootItem> itemEntityToVendorLootItem)
@@ -373,12 +365,7 @@ public class SharedVendorTables : IHashable
 		Dictionary<VendorLootItem, int> dictionary = new Dictionary<VendorLootItem, int>();
 		HashSet<VendorLootItem> hashSet = new HashSet<VendorLootItem>();
 		hashSet.AddRange(newKnownItems);
-		IEnumerable<VendorLootItem> enumerable = oldKnownItems.Where((VendorLootItem i) => i.Item != null);
-		if (enumerable.Empty())
-		{
-			return dictionary;
-		}
-		foreach (VendorLootItem oldItem in enumerable)
+		foreach (VendorLootItem oldItem in oldKnownItems.Where((VendorLootItem i) => i.Item != null))
 		{
 			if (!hashSet.HasItem((VendorLootItem i) => i.Equals(oldItem)))
 			{

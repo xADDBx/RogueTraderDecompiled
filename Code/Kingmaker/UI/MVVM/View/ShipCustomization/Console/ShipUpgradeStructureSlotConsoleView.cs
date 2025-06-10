@@ -30,6 +30,12 @@ public class ShipUpgradeStructureSlotConsoleView : ShipUpgradeStructureSlotPCVie
 		m_HintText.text = UIStrings.Instance.ShipCustomization.UpgradeInternalStructure;
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_Hint.SetActive(value: false);
+	}
+
 	public void SetFocus(bool value)
 	{
 		m_MultiButton.SetFocus(value);
@@ -73,11 +79,5 @@ public class ShipUpgradeStructureSlotConsoleView : ShipUpgradeStructureSlotPCVie
 	public void SetAvailable(bool value)
 	{
 		m_IsAvailable = value;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		m_Hint.SetActive(value: false);
 	}
 }

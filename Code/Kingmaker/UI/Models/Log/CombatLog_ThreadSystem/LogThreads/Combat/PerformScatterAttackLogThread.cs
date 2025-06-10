@@ -128,6 +128,7 @@ public class PerformScatterAttackLogThread : LogThreadBase, IGameLogEventHandler
 			AttackResult.Dodge => GameLogStrings.Instance.WarhammerDodge.Message.Text, 
 			AttackResult.RighteousFury => GameLogStrings.Instance.WarhammerRFHit.Message.Text, 
 			AttackResult.Parried => GameLogStrings.Instance.WarhammerParry.Message.Text, 
+			AttackResult.Blocked => "%BLOCKED%", 
 			_ => GameLogStrings.Instance.AttackResultStrings.AttackResultUnknown.Text, 
 		};
 	}

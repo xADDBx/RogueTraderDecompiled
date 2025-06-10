@@ -274,6 +274,10 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			BlueprintBuff.InitiativeType.ByOwner => base.Owner, 
 			_ => throw new ArgumentOutOfRangeException(), 
 		};
+		if (mechanicEntity is BaseUnitEntity { Master: not null } baseUnitEntity)
+		{
+			mechanicEntity = baseUnitEntity.Master;
+		}
 		Initiative initiative = ((TurnController.IsInTurnBasedCombat() && mechanicEntity != null && mechanicEntity.IsInCombat) ? mechanicEntity.Initiative : null);
 		Initiative.Value = initiative?.Value ?? 0f;
 		Initiative.Order = initiative?.Order ?? 0;
@@ -537,7 +541,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		{
 			m_IsReapplying.Release();
 		}
-		if (base.Owner != null)
+		if (base.Owner != null && base.IsActive)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitBuffHandler>)delegate(IUnitBuffHandler h)
 			{

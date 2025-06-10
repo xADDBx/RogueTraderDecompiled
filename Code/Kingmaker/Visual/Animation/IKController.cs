@@ -1,7 +1,6 @@
 using System;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
-using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
@@ -236,10 +235,6 @@ public class IKController : MonoBehaviour
 			{
 				GrounderIk.enabled = !IsDollRoom;
 			}
-			if (Game.Instance.IsPaused && !IsDollRoom)
-			{
-				GrounderIk.enabled = false;
-			}
 			if (!(CharacterUnitEntity.EntityData?.View == null) && !CharacterUnitEntity.EntityData.Body.IsPolymorphed)
 			{
 				CheckStylesForIk(handsEquipment.ActiveMainHandWeaponStyle, handsEquipment.ActiveOffHandWeaponStyle, CharacterUnitEntity);
@@ -454,14 +449,6 @@ public class IKController : MonoBehaviour
 				GrounderIk.enabled = false;
 				return;
 			}
-			BaseUnitEntity baseUnitEntity = CharacterUnitEntity.Or(null)?.EntityData?.GetSaddledUnit();
-			if (!IsDollRoom && baseUnitEntity?.View != null)
-			{
-				BipedIk.enabled = true;
-				BipedIk.solver.iterations = 1;
-				MountedCombatIk(baseUnitEntity);
-				return;
-			}
 			BipedIk.references.root.transform.localPosition = Vector3.zero;
 			BipedIk.references.root.transform.localScale = Vector3.one;
 			BipedIk.solver.iterations = 0;
@@ -474,6 +461,11 @@ public class IKController : MonoBehaviour
 			BipedIk.solver.leftLegChain.bendConstraint.weight = 0f;
 			BipedIk.solver.rightLegChain.bendConstraint.weight = 0f;
 			m_MountConfigApplied = false;
+			if (CharacterUnitEntity?.EntityData?.LifeState != null && !CharacterUnitEntity.EntityData.LifeState.IsDead && !m_EnableIK)
+			{
+				m_EnableIK = true;
+				SetupIkSystem(CharacterSystem);
+			}
 			CheckState();
 			if (m_RightHand != null)
 			{

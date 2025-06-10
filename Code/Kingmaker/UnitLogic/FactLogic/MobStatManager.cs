@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
@@ -8,6 +9,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.Settings;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -48,7 +50,8 @@ public class MobStatManager : UnitDifficultyModifiersManager, IInitiatorRulebook
 		int val = base.Owner.Blueprint.GetDifficultyPenetrationBonus(base.Owner.Blueprint.DifficultyType, currentCR) + modifier;
 		evt.Penetration.Add(ModifierType.ValAdd, Math.Max(val, 0), base.Fact);
 		ItemEntityWeapon itemEntityWeapon = evt.Ability?.Weapon;
-		if (itemEntityWeapon != null)
+		BlueprintBuff blueprintBuff = ((evt.Reason.Fact?.Blueprint is BlueprintBuff) ? (evt.Reason.Fact.Blueprint as BlueprintBuff) : null);
+		if ((blueprintBuff == null || !blueprintBuff.AbilityGroups.Contains(BlueprintWarhammerRoot.Instance.CombatRoot.DamageOverTimeAbilityGroup)) && itemEntityWeapon != null)
 		{
 			difficultyDamageBonus = (itemEntityWeapon.Blueprint.IsMelee ? (difficultyDamageBonus / 2) : difficultyDamageBonus);
 			evt.MinValueModifiers.Add(difficultyDamageBonus, base.Fact);

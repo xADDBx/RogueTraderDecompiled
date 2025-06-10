@@ -4,6 +4,7 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic.Parts;
 
 namespace Kingmaker.Visual.Sound;
 
@@ -21,9 +22,21 @@ public class AwarenessAsksController : IUnitAsksController, IDisposable, IAwaren
 
 	void IAwarenessHandler.OnEntityNoticed(BaseUnitEntity spotter)
 	{
-		if (!(spotter.View == null))
+		if (spotter.View == null)
 		{
-			spotter.View.Asks?.Discovery.Schedule();
+			return;
 		}
+		BaseUnitEntity master = spotter.Master;
+		spotter.View.Asks?.Discovery.Schedule(is2D: false, delegate
+		{
+			if (master != null && !(master.View == null) && master.View.Asks != null)
+			{
+				PartLifeState lifeStateOptional = master.GetLifeStateOptional();
+				if (lifeStateOptional != null && lifeStateOptional.IsConscious)
+				{
+					master.View.Asks?.ReactToPetDiscovery.Schedule();
+				}
+			}
+		});
 	}
 }

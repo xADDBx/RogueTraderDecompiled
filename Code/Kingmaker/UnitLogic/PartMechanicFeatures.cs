@@ -17,7 +17,7 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag Immortality;
 
-	public FeatureCountableFlag AllowDyingCondition;
+	public FeatureCountableFlag UnconsciousOnZeroHealth;
 
 	public FeatureCountableFlag IsIgnoredByCombat;
 
@@ -47,6 +47,8 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag ProvidesFullCover;
 
+	public FeatureCountableFlag ProvidesHalfCover;
+
 	public FeatureCountableFlag CanRerollSavingThrow;
 
 	public FeatureCountableFlag IgnoreMediumArmourDodgePenalty;
@@ -66,6 +68,8 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 	public FeatureCountableFlag CantJumpAside;
 
 	public FeatureCountableFlag FreshInjuryImmunity;
+
+	public FeatureCountableFlag OldInjuryImmunity;
 
 	public FeatureCountableFlag ImmuneToMovementPointReduction;
 
@@ -115,11 +119,29 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag DisableSnapToGrid;
 
+	public FeatureCountableFlag DeadCountedForAI;
+
+	public FeatureCountableFlag OverrideShieldWeaponSetsPlacement;
+
+	public FeatureCountableFlag ForceAIControl;
+
+	public FeatureCountableFlag CanDeployNearEnemy;
+
+	public FeatureCountableFlag CarryShotgunInOneHand;
+
+	public FeatureCountableFlag HasNoStandardTurn;
+
+	public FeatureCountableFlag DeathAndTraumasDoesNotAffectMomentum;
+
+	public FeatureCountableFlag AutoBlock;
+
 	public FeatureCountableFlag CantAct;
 
 	public FeatureCountableFlag CantMove;
 
 	public FeatureCountableFlag DisableAttacksOfOpportunity;
+
+	public FeatureCountableFlag DisableAttacksOfOpportunityForShield;
 
 	public FeatureCountableFlag Vanguard;
 
@@ -138,7 +160,7 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		Flying = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.Flying);
 		IsUntargetable = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IsUntargetable);
 		Immortality = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.Immortality);
-		AllowDyingCondition = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AllowDyingCondition);
+		UnconsciousOnZeroHealth = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.UnconsciousOnZeroHealth);
 		IsIgnoredByCombat = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IsIgnoredByCombat);
 		Hidden = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.Hidden);
 		OnElevator = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.OnElevator);
@@ -149,6 +171,7 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		CantAct = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CantAct);
 		CantMove = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CantMove);
 		DisableAttacksOfOpportunity = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DisableAttacksOfOpportunity);
+		DisableAttacksOfOpportunityForShield = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DisableAttacksOfOpportunityForShield);
 		SuppressedDismember = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.SuppressedDismember);
 		SuppressedDecomposition = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.SuppressedDecomposition);
 		CanUseBallisticSkillToParry = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanUseBallisticSkillToParry);
@@ -158,6 +181,7 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		AutoHit = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AutoHit);
 		AutoMiss = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AutoMiss);
 		ProvidesFullCover = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ProvidesFullCover);
+		ProvidesHalfCover = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ProvidesHalfCover);
 		IgnoreMediumArmourDodgePenalty = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IgnoreMediumArmourDodgePenalty);
 		CanRerollSavingThrow = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanRerollSavingThrow);
 		CanShootInMelee = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanShootInMelee);
@@ -169,6 +193,7 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		IgnoreAnyForceMove = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IgnoreAnyForceMove);
 		CantJumpAside = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CantJumpAside);
 		FreshInjuryImmunity = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.FreshInjuryImmunity);
+		OldInjuryImmunity = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.OldInjuryImmunity);
 		ImmuneToMovementPointReduction = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ImmuneToMovementPointReduction);
 		SecondaryCriticalChance = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.SecondaryCriticalChance);
 		OverpenetrationDoesNotDecreaseDamage = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.OverpenetrationDoesNotDecreaseDamage);
@@ -195,6 +220,14 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		HideRealHealthInUI = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HideRealHealthInUI);
 		DisableSnapToGrid = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DisableSnapToGrid);
 		AllAttacksCountAsAoe = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AllAttacksCountAsAoe);
+		DeadCountedForAI = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DeadCountedForAI);
+		OverrideShieldWeaponSetsPlacement = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.OverrideShieldWeaponSetsPlacement);
+		ForceAIControl = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ForceAIControl);
+		CanDeployNearEnemy = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanDeployNearEnemy);
+		CarryShotgunInOneHand = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CarryShotgunInOneHand);
+		HasNoStandardTurn = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HasNoStandardTurn);
+		DeathAndTraumasDoesNotAffectMomentum = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum);
+		AutoBlock = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AutoBlock);
 	}
 
 	protected override void OnAttach()

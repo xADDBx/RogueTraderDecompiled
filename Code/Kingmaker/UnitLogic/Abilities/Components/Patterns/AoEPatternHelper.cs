@@ -34,14 +34,14 @@ public static class AoEPatternHelper
 		}
 	}
 
-	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity caster, Vector3 castPosition, Vector3 target, int minRange = 0, int maxRange = int.MaxValue)
+	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity caster, Vector3 casterPosition, Vector3 target, int minRange = 0, int maxRange = int.MaxValue)
 	{
-		return GetActualCastNode(caster, castPosition.GetNearestNodeXZUnwalkable(), target, minRange, maxRange);
+		return GetActualCastNode(caster, casterPosition.GetNearestNodeXZUnwalkable(), target, minRange, maxRange);
 	}
 
-	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity caster, CustomGridNodeBase castNode, CustomGridNodeBase targetNode, int minRange = 0, int maxRange = int.MaxValue)
+	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, int minRange = 0, int maxRange = int.MaxValue)
 	{
-		return GetActualCastNode(caster, castNode, targetNode.Vector3Position, minRange, maxRange);
+		return GetActualCastNode(caster, casterNode, targetNode.Vector3Position, minRange, maxRange);
 	}
 
 	public static Vector3 GetActualCastPosition([NotNull] MechanicEntity caster, Vector3 castPosition, Vector3 target, int minRange, int maxRange)
@@ -54,10 +54,10 @@ public static class AoEPatternHelper
 		return GetActualCastNode(caster, casterPosition, target, minRange, maxRange).Vector3Position;
 	}
 
-	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity casterEntity, CustomGridNodeBase castNode, Vector3 target, int minRange, int maxRange)
+	public static CustomGridNodeBase GetActualCastNode([NotNull] MechanicEntity casterEntity, CustomGridNodeBase casterNode, Vector3 target, int minRange, int maxRange)
 	{
-		CustomGridNodeBase innerNodeNearestToTarget = casterEntity.GetInnerNodeNearestToTarget(castNode, target);
-		NavGraph graph = castNode.Graph;
+		CustomGridNodeBase innerNodeNearestToTarget = casterEntity.GetInnerNodeNearestToTarget(casterNode, target);
+		NavGraph graph = casterNode.Graph;
 		List<CustomGridNodeBase> list = TempList.Get<CustomGridNodeBase>();
 		list.Add(innerNodeNearestToTarget);
 		NodeCollector condition = new NodeCollector(list);
@@ -77,7 +77,7 @@ public static class AoEPatternHelper
 				target += Vector3.back;
 			}
 			target = vector3Position + (target - vector3Position).normalized * (minRange * 2);
-			Linecast.LinecastGrid(graph, vector3Position, target, castNode, out hit, ref condition);
+			Linecast.LinecastGrid(graph, vector3Position, target, casterNode, out hit, ref condition);
 			for (i = 0; i < list.Count - 1 && innerNodeNearestToTarget.CellDistanceTo(list[i]) < minRange; i++)
 			{
 			}
@@ -86,7 +86,7 @@ public static class AoEPatternHelper
 		num = ((!num2) ? innerNodeNearestToTarget.CellDistanceTo(list[i]) : 0);
 		if (num2 || num < minRange || num > maxRange)
 		{
-			return castNode;
+			return casterNode;
 		}
 		return list[i];
 	}
@@ -152,7 +152,7 @@ public static class AoEPatternHelper
 				mechanicEntity = abilityExecutionContext.MaybeCaster ?? mechanicEntity;
 			}
 			castDirection = ((mechanicEntity is AreaEffectEntity entity) ? entity.ApplyFlipPattern(castDirection) : mechanicEntity.ApplyFlipPattern(abilityData, castDirection));
-			return pattern.GetOriented(checkLosFromNode, customGridNodeBase, castDirection, provider.IsIgnoreLos, provider.IsIgnoreLevelDifference, directional, coveredTargetsOnly, provider.UseMeleeLos);
+			return pattern.GetOriented(checkLosFromNode, customGridNodeBase, castDirection, provider.IsIgnoreLos, provider.IsIgnoreLevelDifference, directional, coveredTargetsOnly, provider.UseMeleeLos, provider.ExcludeUnwalkable);
 		}
 	}
 }

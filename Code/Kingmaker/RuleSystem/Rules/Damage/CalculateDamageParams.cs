@@ -35,13 +35,15 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 
 	public readonly bool DoNotUseCrModifier;
 
+	public readonly bool Unmodifiable;
+
 	public bool FakeRule { get; set; }
 
 	public bool HasNoTarget { get; set; }
 
 	public RuleReason? Reason { get; set; }
 
-	public CalculateDamageParams([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false)
+	public CalculateDamageParams([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
 	{
 		Initiator = initiator;
 		Target = target;
@@ -56,13 +58,14 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 		FakeRule = false;
 		HasNoTarget = false;
 		Reason = null;
+		Unmodifiable = unmodifiable;
 	}
 
 	public bool Equals(CalculateDamageParams other)
 	{
-		if (Initiator.Equals(other.Initiator) && object.Equals(Target, other.Target) && object.Equals(Ability, other.Ability) && object.Equals(PerformAttackRoll, other.PerformAttackRoll) && object.Equals(BaseDamageOverride, other.BaseDamageOverride) && BasePenetrationOverride == other.BasePenetrationOverride && Distance == other.Distance && ForceCrit == other.ForceCrit && CalculatedOverpenetration == other.CalculatedOverpenetration)
+		if (Initiator.Equals(other.Initiator) && object.Equals(Target, other.Target) && object.Equals(Ability, other.Ability) && object.Equals(PerformAttackRoll, other.PerformAttackRoll) && object.Equals(BaseDamageOverride, other.BaseDamageOverride) && BasePenetrationOverride == other.BasePenetrationOverride && Distance == other.Distance && ForceCrit == other.ForceCrit && CalculatedOverpenetration == other.CalculatedOverpenetration && DoNotUseCrModifier == other.DoNotUseCrModifier)
 		{
-			return DoNotUseCrModifier == other.DoNotUseCrModifier;
+			return Unmodifiable == other.Unmodifiable;
 		}
 		return false;
 	}
@@ -89,6 +92,7 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 		hashCode.Add(ForceCrit);
 		hashCode.Add(CalculatedOverpenetration);
 		hashCode.Add(DoNotUseCrModifier);
+		hashCode.Add(Unmodifiable);
 		return hashCode.ToHashCode();
 	}
 

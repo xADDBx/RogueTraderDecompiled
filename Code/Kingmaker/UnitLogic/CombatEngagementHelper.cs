@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -42,9 +43,9 @@ public static class CombatEngagementHelper
 		return Dereference(GetEngageListInternal(unit));
 	}
 
-	public static IEnumerable<BaseUnitEntity> GetEngagedByUnits(this BaseUnitEntity unit)
+	public static IEnumerable<BaseUnitEntity> GetEngagedByUnits(this BaseUnitEntity unit, bool needCheckOffEngageForTarget = true)
 	{
-		return Dereference(GetEngagedByListInternal(unit));
+		return Dereference(GetEngagedByListInternal(unit, needCheckOffEngageForTarget));
 	}
 
 	public static bool IsEngage(this BaseUnitEntity attacker, BaseUnitEntity target)
@@ -73,10 +74,10 @@ public static class CombatEngagementHelper
 		return Engage.Get(unit) ?? CollectEngage(unit);
 	}
 
-	private static List<EntityRef<BaseUnitEntity>> GetEngagedByListInternal(BaseUnitEntity unit)
+	private static List<EntityRef<BaseUnitEntity>> GetEngagedByListInternal(BaseUnitEntity unit, bool needCheckOffEngageForTarget = true)
 	{
 		DropCacheIfNecessary();
-		return EngagedBy.Get(unit) ?? CollectEngagedBy(unit);
+		return EngagedBy.Get(unit) ?? CollectEngagedBy(unit, needCheckOffEngageForTarget);
 	}
 
 	private static IEnumerable<BaseUnitEntity> Dereference(List<EntityRef<BaseUnitEntity>> list)
@@ -115,12 +116,12 @@ public static class CombatEngagementHelper
 		return Engage[unit] = CollectUnitsAround(unit, (BaseUnitEntity entity) => unit.IsThreat(entity));
 	}
 
-	private static List<EntityRef<BaseUnitEntity>> CollectEngagedBy(BaseUnitEntity unit)
+	private static List<EntityRef<BaseUnitEntity>> CollectEngagedBy(BaseUnitEntity unit, bool needCheckOffEngageForTarget = true)
 	{
-		return EngagedBy[unit] = CollectUnitsAround(unit, (BaseUnitEntity entity) => entity.IsThreat(unit));
+		return EngagedBy[unit] = CollectUnitsAround(unit, (BaseUnitEntity entity) => entity.IsThreat(unit) && (!needCheckOffEngageForTarget || !entity.IsOffEngageForTarget(unit)));
 	}
 
-	public static bool IsEngagedInPosition(this BaseUnitEntity unit, Vector3 desiredPosition)
+	public static bool IsEngagedInPosition(this BaseUnitEntity unit, Vector3 desiredPosition, bool needCheckOffEngageForTarget = true)
 	{
 		CustomGridNodeBase nearestNodeXZUnwalkable = desiredPosition.GetNearestNodeXZUnwalkable();
 		if (nearestNodeXZUnwalkable == null)
@@ -133,6 +134,10 @@ public static class CombatEngagementHelper
 			BaseUnitEntity unit2 = item.GetUnit();
 			if (unit2 != null && unit2.IsThreat(unit))
 			{
+				if (needCheckOffEngageForTarget && unit2.IsOffEngageForTarget(unit))
+				{
+					return false;
+				}
 				return true;
 			}
 		}

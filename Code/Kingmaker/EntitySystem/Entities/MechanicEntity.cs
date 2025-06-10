@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using JetBrains.Annotations;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.Controllers;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.ElementsSystem.ContextData;
@@ -18,6 +19,7 @@ using Kingmaker.QA;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Groups;
 using Kingmaker.UnitLogic.Interaction;
@@ -125,7 +127,18 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	public virtual bool IsInCombat => this.GetCombatStateOptional()?.IsInCombat ?? false;
 
-	public virtual bool IsDirectlyControllable => this.GetFactionOptional()?.IsDirectlyControllable ?? false;
+	public virtual bool IsDirectlyControllable
+	{
+		get
+		{
+			PartFaction factionOptional = this.GetFactionOptional();
+			if ((object)factionOptional != null && factionOptional.IsDirectlyControllable)
+			{
+				return !this.GetMechanicFeature(MechanicsFeatureType.ForceAIControl);
+			}
+			return false;
+		}
+	}
 
 	public bool IsConscious => this.GetLifeStateOptional()?.IsConscious ?? false;
 
@@ -167,11 +180,26 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	public bool CanMove => this.GetStateOptional()?.CanMove ?? true;
 
+	public bool CanMoveWithoutCutsceneAffect => this.GetStateOptional()?.CanMoveWithoutCutsceneAffect ?? true;
+
 	public bool CanAct => this.GetStateOptional()?.CanAct ?? true;
 
 	public bool CanActInTurnBased => this.GetStateOptional()?.CanActInTurnBased ?? true;
 
 	public bool CanCast => true;
+
+	public bool IsBusy
+	{
+		get
+		{
+			PartUnitCommands commandsOptional = this.GetCommandsOptional();
+			if (commandsOptional == null || commandsOptional.Empty || (commandsOptional.Queue.Empty() && (commandsOptional.Current == null || commandsOptional.Current.IsFinished)))
+			{
+				return Game.Instance.AbilityExecutor.Abilities.Contains((AbilityExecutionProcess a) => a.Context.Caster == this && !a.IsEnded);
+			}
+			return true;
+		}
+	}
 
 	public Size Size => this.GetStateOptional()?.Size ?? OriginalSize;
 
@@ -198,6 +226,12 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 	public virtual bool IsCheater => false;
 
 	public virtual Vector3 Forward => Quaternion.AngleAxis(Orientation, Vector3.up) * Vector3.forward;
+
+	public Vector3 Backward => Quaternion.AngleAxis(0f - Orientation, Vector3.up) * Vector3.back;
+
+	public Vector3 Right => Quaternion.AngleAxis(Orientation, Vector3.up) * Vector3.right;
+
+	public Vector3 Left => Quaternion.AngleAxis(0f - Orientation, Vector3.up) * Vector3.left;
 
 	public virtual Type RequiredBlueprintType => typeof(BlueprintMechanicEntityFact);
 
@@ -477,6 +511,11 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	[CanBeNull]
 	public virtual ItemEntityWeapon GetPrimaryHandWeapon()
+	{
+		return null;
+	}
+
+	public virtual ItemEntityShield GetShieldInHand()
 	{
 		return null;
 	}

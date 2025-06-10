@@ -7,6 +7,7 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.QA.Validation;
 using UnityEngine;
@@ -30,7 +31,7 @@ public class DestroyUnit : GameAction
 	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
-		if (value is BaseUnitEntity baseUnitEntity && value.IsPlayerFaction)
+		if (value is BaseUnitEntity baseUnitEntity && value.IsPlayerFaction && !baseUnitEntity.Facts.HasComponent<TransientPartyMemberFlag>())
 		{
 			Element.LogError("{0}: trying to destroy {1} who is a companion. Do not do that!", new object[2] { name, value });
 			baseUnitEntity.GetOptional<UnitPartCompanion>()?.SetState(CompanionState.ExCompanion);

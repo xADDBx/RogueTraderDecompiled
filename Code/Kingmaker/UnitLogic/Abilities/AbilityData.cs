@@ -103,7 +103,9 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		FriendlyFire,
 		NullTarget,
 		RestrictedByInterruption,
-		TargetEntityDisposed
+		TargetEntityDisposed,
+		OnlyUseInCombat,
+		StrategistZonesCantOverlap
 	}
 
 	public class IgnoreCooldown : ContextFlag<IgnoreCooldown>
@@ -139,6 +141,8 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	private IAbilityVisibilityProvider[] m_CachedVisibilityProviders;
 
 	private readonly bool m_IsPreview;
+
+	private AbilityData m_CachedInitialTargetAbility;
 
 	private List<RuleCalculateScatterShotHitDirectionProbability> m_ScatterShotHitDirectionProbabilities;
 
@@ -181,6 +185,9 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	public int ItemSlotIndex { get; set; }
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public EntityFact ItemSlotSource { get; set; }
+
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	[CanBeNull]
 	public BlueprintAbilityFXSettings FXSettingsOverride { get; set; }
 
@@ -198,18 +205,23 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public bool IsAttackOfOpportunity { get; set; }
 
+	public bool IsRedirected { get; set; }
+
 	public bool IgnoreUsingInThreateningArea { get; set; }
 
 	[CanBeNull]
-	public WeaponAbility SettingsFromItem
+	public WeaponAbility SettingsFromItem => ItemSlotList?[ItemSlotIndex];
+
+	[CanBeNull]
+	private IReadOnlyList<WeaponAbility> ItemSlotList
 	{
 		get
 		{
-			if (Weapon == null)
+			if (ItemSlotSource == null)
 			{
-				return StarshipWeapon?.Blueprint?.WeaponAbilities[ItemSlotIndex];
+				return (Weapon == null) ? StarshipWeapon?.Blueprint?.WeaponAbilities : Weapon?.Blueprint?.WeaponAbilities;
 			}
-			return Weapon?.Blueprint?.WeaponAbilities[ItemSlotIndex];
+			return ItemSlotSource.GetComponent<AddAbilitiesToCurrentWeapon>()?.WeaponAbilities;
 		}
 	}
 
@@ -218,7 +230,14 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	[CanBeNull]
 	public ItemEntityWeapon Weapon => OverrideWeapon ?? SourceWeapon;
 
-	public bool SourceItemIsWeapon => SourceItem is ItemEntityWeapon;
+	public bool SourceItemIsWeapon
+	{
+		get
+		{
+			ItemEntity sourceItem = SourceItem;
+			return sourceItem is ItemEntityWeapon || sourceItem is ItemEntityShield;
+		}
+	}
 
 	public int BurstAttacksCount
 	{
@@ -758,10 +777,6 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 							return true;
 						}
 					}
-					if (ShouldDelegateToMount && SameMountAbility == null)
-					{
-						return true;
-					}
 					if (StarshipWeapon != null && (bool)StarshipWeapon.IsBlocked)
 					{
 						return true;
@@ -814,11 +829,6 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	[CanBeNull]
 	public BlueprintScriptableObject RequiredResource => SimpleBlueprintExtendAsObject.Or(OverrideRequiredResource, null);
 
-	public bool ShouldDelegateToMount => false;
-
-	[CanBeNull]
-	public AbilityData SameMountAbility => null;
-
 	[CanBeNull]
 	public BlueprintAbilityFXSettings FXSettings => FXSettingsOverride ?? SettingsFromItem?.FXSettings ?? Blueprint.FXSettings;
 
@@ -869,7 +879,23 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		}
 	}
 
-	public BlueprintAbility.UsingInThreateningAreaType UsingInThreateningArea => PartAbilitySettings.GetThreatenedAreaSetting(this);
+	public BlueprintAbility.UsingInThreateningAreaType UsingInThreateningArea => PartAbilitySettings.GetThreatenedAreaSetting(Caster, Blueprint);
+
+	public AbilityData InitialTargetAbility
+	{
+		get
+		{
+			AbilityData abilityData = m_CachedInitialTargetAbility;
+			if ((object)abilityData == null)
+			{
+				AbilityData obj = GetAbilityForTargetIndex(0) ?? this;
+				AbilityData abilityData2 = obj;
+				m_CachedInitialTargetAbility = obj;
+				abilityData = abilityData2;
+			}
+			return abilityData;
+		}
+	}
 
 	public AbilityData Data => this;
 
@@ -892,6 +918,32 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			}
 			return list;
 		}
+	}
+
+	[CanBeNull]
+	public AbilityRedirect RedirectSettings => Blueprint.GetComponent<AbilityRedirect>();
+
+	public AoEPattern RedirectPattern => RedirectSettings?.CustomPattern ?? Root.WH.AbilityRedirect.Pattern;
+
+	public bool CanRedirect => RedirectSettings?.CasterRestrictions.IsPassed(new PropertyContext(this, Caster)) ?? false;
+
+	public bool TryGetCasterDesiredPositionAndDirection(out Vector3 position, out Vector3 direction)
+	{
+		if (Blueprint.TryGetComponent<IAbilityOverrideCasterDesiredPosition>(out var component))
+		{
+			return component.TryGetDesiredPositionAndDirection(this, out position, out direction);
+		}
+		position = (direction = default(Vector3));
+		return false;
+	}
+
+	private AbilityData GetAbilityForTargetIndex(int targetIndex)
+	{
+		if (!Blueprint.TryGetComponent<IAbilityMultiTarget>(out var component) || !component.TryGetNextTargetAbilityAndCaster(this, targetIndex, out var ability, out var caster))
+		{
+			return null;
+		}
+		return new AbilityData(ability, caster);
 	}
 
 	private AbilityData([NotNull] BlueprintAbility blueprint, [NotNull] MechanicEntity caster, [CanBeNull] Ability fact, [CanBeNull] string guid)
@@ -1211,7 +1263,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetSelf;
 				return false;
 			}
-			if (!Blueprint.CanTargetFriends && target.Entity != Caster && Caster.IsAlly(target.Entity))
+			if (!Blueprint.CanTargetFriends && target.Entity != Caster && Caster.IsAlly(target.Entity) && !CanRedirectFromTarget(target))
 			{
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetAlly;
 				return false;
@@ -1230,6 +1282,31 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			{
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetAlive;
 				return false;
+			}
+			AbilityCanTargetOnlyPetUnits canTargetOnlyPetUnitsComponent = Blueprint.CanTargetOnlyPetUnitsComponent;
+			if (canTargetOnlyPetUnitsComponent != null)
+			{
+				if (canTargetOnlyPetUnitsComponent.Inverted)
+				{
+					if (target.Entity is BaseUnitEntity { IsPet: not false })
+					{
+						unavailabilityReason = UnavailabilityReasonType.TargetRestrictionNotPassed;
+						return false;
+					}
+				}
+				else
+				{
+					if (!(target.Entity is BaseUnitEntity { IsPet: not false } baseUnitEntity2))
+					{
+						unavailabilityReason = UnavailabilityReasonType.TargetRestrictionNotPassed;
+						return false;
+					}
+					if (canTargetOnlyPetUnitsComponent.CanTargetOnlyOwnersPet && baseUnitEntity2.Master != Caster)
+					{
+						unavailabilityReason = UnavailabilityReasonType.TargetRestrictionNotPassed;
+						return false;
+					}
+				}
 			}
 		}
 		if (!Blueprint.CanTargetSelf && TargetAnchor == AbilityTargetAnchor.Point && Caster.GetOccupiedNodes(casterPosition).Contains(target.NearestNode))
@@ -1306,7 +1383,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			{
 				foreach (UnitGroupMemory.UnitInfo enemy in combatGroupOptional.Memory.Enemies)
 				{
-					if (enemy.Unit.IsThreat(casterPosition.GetNearestNodeXZUnwalkable(), enemy.Unit.Position, Caster.SizeRect))
+					if (enemy.Unit.IsThreat(casterPosition.GetNearestNodeXZUnwalkable(), enemy.Unit.Position, Caster.SizeRect) && !enemy.Unit.IsOffEngageForTarget(Caster as BaseUnitEntity))
 					{
 						unavailabilityReason = UnavailabilityReasonType.CannotUseInThreatenedArea;
 						return false;
@@ -1372,26 +1449,33 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public bool CanTargetFromNode(CustomGridNodeBase casterNode, CustomGridNodeBase targetNodeHint, TargetWrapper target, out int distance, out LosCalculations.CoverType los, out UnavailabilityReasonType? unavailabilityReason, int? casterDirection = null)
 	{
-		distance = WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, Caster.SizeRect, casterDirection.HasValue ? CustomGraphHelper.GetVector3Direction(casterDirection.Value) : Caster.Forward, target.Point, target.SizeRect, target.Forward);
+		MechanicEntity caster;
+		bool num = TryGetCasterForDistanceCalculation(out caster);
+		if (caster == null)
+		{
+			caster = Caster;
+		}
+		Vector3 vector = (num ? caster.CurrentUnwalkableNode.Vector3Position : casterNode.Vector3Position);
+		distance = WarhammerGeometryUtils.DistanceToInCells(vector, caster.SizeRect, casterDirection.HasValue ? CustomGraphHelper.GetVector3Direction(casterDirection.Value) : caster.Forward, target.Point, target.SizeRect, target.Forward);
 		los = LosCalculations.CoverType.None;
-		CustomGridNodeBase bestShootingPosition = GetBestShootingPosition(casterNode, target);
-		if (!IsValid(target, casterNode.Vector3Position, out var unavailabilityReason2))
+		if (!IsValid(target, vector, out var unavailabilityReason2))
 		{
 			unavailabilityReason = unavailabilityReason2;
 			return false;
 		}
-		if (!this.IsPatternRestrictionPassed(target))
+		if (!this.IsPatternRestrictionPassed(target, out var unavailabilityReason3))
 		{
-			unavailabilityReason = UnavailabilityReasonType.AreaEffectsCannotOverlap;
+			unavailabilityReason = ((unavailabilityReason3 != UnavailabilityReasonType.None) ? unavailabilityReason3 : UnavailabilityReasonType.AreaEffectsCannotOverlap);
 			return false;
 		}
 		CustomGridNodeBase customGridNodeBase = targetNodeHint ?? target.NearestNode;
-		if (IsMelee && !LosCalculations.HasMeleeLos(bestShootingPosition, Caster.SizeRect, customGridNodeBase, target.SizeRect))
+		CustomGridNodeBase bestShootingPosition = GetBestShootingPosition(casterNode, target);
+		if (IsMelee && !LosCalculations.HasMeleeLos(bestShootingPosition, caster.SizeRect, customGridNodeBase, target.SizeRect))
 		{
 			unavailabilityReason = UnavailabilityReasonType.HasNoLosToTarget;
 			return false;
 		}
-		if (target.HasEntity && target.Entity.Buffs.SelectComponents<UnitBuffUntargetableByAbilityGroups>().Any((UnitBuffUntargetableByAbilityGroups buff) => buff.BlockedGroups.Any((BlueprintAbilityGroupReference group) => AbilityGroups.Contains(group))))
+		if (target.HasEntity && target.Entity.Buffs.SelectComponents<UnitBuffUntargetableByAbilityGroups>().Any((UnitBuffUntargetableByAbilityGroups buff) => buff.IsBlocked(AbilityGroups)))
 		{
 			unavailabilityReason = UnavailabilityReasonType.UntargetableForAbilityGroup;
 			return false;
@@ -1535,10 +1619,6 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		{
 			list.Add(UnavailabilityReasonType.AlreadyFullAmmo);
 		}
-		if (Caster.IsEngagedInMelee() && UsingInThreateningArea == BlueprintAbility.UsingInThreateningAreaType.CannotUse && !Caster.GetMechanicFeature(MechanicsFeatureType.CanShootInMelee).Value)
-		{
-			list.Add(UnavailabilityReasonType.CannotUseInThreatenedArea);
-		}
 		CustomGridNodeBase node = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(castPosition).node;
 		if (!Blueprint.IsWeaponAbility && AreaEffectsController.CheckConcussionEffect(node))
 		{
@@ -1564,7 +1644,8 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		{
 			list.Add(UnavailabilityReasonType.UnitFactRequired);
 		}
-		if (Fact != null && !Fact.Active)
+		Ability fact = Fact;
+		if (fact != null && !fact.Active)
 		{
 			list.Add(UnavailabilityReasonType.AbilityDisabled);
 		}
@@ -1579,6 +1660,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		if (IsUltimate && Game.Instance.TurnController.IsUltimateAbilityUsedThisRound)
 		{
 			list.Add(UnavailabilityReasonType.IsUltimateAbilityUsedThisRound);
+		}
+		if (Blueprint.CombatStateRestriction == BlueprintAbility.CombatStateRestrictionType.InCombatOnly && !Caster.IsInCombat)
+		{
+			list.Add(UnavailabilityReasonType.OnlyUseInCombat);
 		}
 		return list;
 	}
@@ -1617,6 +1702,8 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	{
 		switch (type)
 		{
+		case UnavailabilityReasonType.OnlyUseInCombat:
+			return LocalizedTexts.Instance.Reasons.CombatRequired;
 		case UnavailabilityReasonType.AbilityDisabled:
 			return LocalizedTexts.Instance.Reasons.AbilityDisabled;
 		case UnavailabilityReasonType.CasterRestrictionNotPassed:
@@ -1679,8 +1766,14 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			return LocalizedTexts.Instance.Reasons.HasNoLosToTarget;
 		case UnavailabilityReasonType.AreaEffectsCannotOverlap:
 			return LocalizedTexts.Instance.Reasons.AreaEffectsCannotOverlap;
+		case UnavailabilityReasonType.StrategistZonesCantOverlap:
+			return LocalizedTexts.Instance.Reasons.StrategistZonesCantOverlap;
 		case UnavailabilityReasonType.IsUltimateAbilityUsedThisRound:
 			return LocalizedTexts.Instance.Reasons.AlreadyDesperateMeasuredThisTurn;
+		case UnavailabilityReasonType.CannotTargetAlly:
+			return LocalizedTexts.Instance.Reasons.TargetIsEnemy;
+		case UnavailabilityReasonType.CannotTargetEnemy:
+			return LocalizedTexts.Instance.Reasons.TargetIsAlly;
 		}
 		return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
 	}
@@ -1743,6 +1836,18 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		result.Add(ability);
 	}
 
+	public bool TryGetCasterNodeForDistanceCalculation(out CustomGridNodeBase node, bool forUi = false)
+	{
+		node = (TryGetCasterForDistanceCalculation(out var caster, forUi) ? caster.CurrentUnwalkableNode : null);
+		return node != null;
+	}
+
+	public bool TryGetCasterForDistanceCalculation(out MechanicEntity caster, bool forUi = false)
+	{
+		caster = (Blueprint.TryGetComponent<IAbilityOverrideCasterForRange>(out var component) ? component.GetCaster(Caster, forUi) : null);
+		return caster != null;
+	}
+
 	public CustomGridNodeBase GetBestShootingPosition(TargetWrapper target)
 	{
 		return GetBestShootingPosition(Caster.CurrentUnwalkableNode, target);
@@ -1750,7 +1855,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public CustomGridNodeBase GetBestShootingPositionForDesiredPosition(TargetWrapper target)
 	{
-		return GetBestShootingPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Caster).GetNearestNodeXZUnwalkable(), target);
+		return GetBestShootingPosition((Game.Instance.VirtualPositionController?.GetDesiredPosition(Caster) ?? Caster.Position).GetNearestNodeXZUnwalkable(), target);
 	}
 
 	public CustomGridNodeBase GetBestShootingPosition(CustomGridNodeBase castNode, TargetWrapper target)
@@ -1904,6 +2009,61 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		return stringBuilder.ToString();
 	}
 
+	public bool CanRedirectFromTarget(TargetWrapper target)
+	{
+		if (CanRedirect)
+		{
+			MechanicEntity entity = target.Entity;
+			if (entity != null && entity.Facts.Contains(Root.WH.AbilityRedirect.AllowRedirectFact))
+			{
+				return RedirectSettings.ClickedTargetRestrictions.IsPassed(new PropertyContext(this, entity));
+			}
+		}
+		return false;
+	}
+
+	public IEnumerable<MechanicEntity> CalculateRedirectTargets(TargetWrapper mainTarget)
+	{
+		AbilityRedirect redirect = RedirectSettings;
+		Vector3 direction = Quaternion.Euler(0f, mainTarget.Orientation, 0f) * Vector3.forward;
+		foreach (CustomGridNodeBase node in RedirectPattern.GetOriented(mainTarget.NearestNode, direction).Nodes)
+		{
+			BaseUnitEntity unit = node.GetUnit();
+			if (unit != null && IsValidTargetForRedirect(redirect, mainTarget, unit))
+			{
+				yield return unit;
+			}
+		}
+	}
+
+	private bool IsValidTargetForRedirect([NotNull] AbilityRedirect redirect, [NotNull] TargetWrapper mainTarget, [NotNull] BaseUnitEntity unit)
+	{
+		if (!redirect.IncludeClickedTarget && mainTarget.Entity == unit)
+		{
+			return false;
+		}
+		switch (redirect.RedirectTargetType)
+		{
+		case TargetType.Enemy:
+			if (!Caster.IsEnemy(unit))
+			{
+				return false;
+			}
+			break;
+		case TargetType.Ally:
+			if (!Caster.IsAlly(unit))
+			{
+				return false;
+			}
+			break;
+		default:
+			throw new ArgumentOutOfRangeException();
+		case TargetType.Any:
+			break;
+		}
+		return redirect.RedirectTargetRestrictions.IsPassed(new PropertyContext(this, unit));
+	}
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -1934,8 +2094,10 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		result.Append(ref val11);
 		int val12 = ItemSlotIndex;
 		result.Append(ref val12);
-		Hash128 val13 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(FXSettingsOverride);
+		Hash128 val13 = ClassHasher<EntityFact>.GetHash128(ItemSlotSource);
 		result.Append(ref val13);
+		Hash128 val14 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(FXSettingsOverride);
+		result.Append(ref val14);
 		return result;
 	}
 }

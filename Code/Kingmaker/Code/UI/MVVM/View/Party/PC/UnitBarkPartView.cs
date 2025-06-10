@@ -17,9 +17,6 @@ public class UnitBarkPartView : BarkBlockView<UnitBarkPartVM>
 		{
 			FadeAnimator.PlayAnimation(value);
 		}));
-		AddDisposable(base.ViewModel.IsBarkActive.Subscribe(delegate(bool value)
-		{
-			m_BarkActiveIcon.SetActive(value);
-		}));
+		AddDisposable(base.ViewModel.IsBarkActive.Subscribe(m_BarkActiveIcon.SetActive));
 	}
 }

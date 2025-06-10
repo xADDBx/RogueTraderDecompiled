@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.Controllers.Interfaces;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UnitLogic.Groups;
 using Kingmaker.Utility.CodeTimer;
 using Owlcat.Runtime.Core.Utility;
 
@@ -60,23 +58,6 @@ public class SleepingUnitsController : IControllerTick, IController, IController
 			Game.Instance.State.SetNewAwakeUnits(list);
 			ListPool<AbstractUnitEntity>.Release(list);
 		}
-		using (ProfileScope.New("Groups"))
-		{
-			List<UnitGroup> readyForCombatUnitGroups = Game.Instance.ReadyForCombatUnitGroups;
-			readyForCombatUnitGroups.Clear();
-			foreach (UnitGroup unitGroup in Game.Instance.UnitGroups)
-			{
-				for (int i = 0; i < unitGroup.Count; i++)
-				{
-					BaseUnitEntity baseUnitEntity = unitGroup[i];
-					if (baseUnitEntity != null && !baseUnitEntity.IsSleeping && !baseUnitEntity.Faction.Peaceful && (!baseUnitEntity.IsInFogOfWar || baseUnitEntity.IsInCombat || baseUnitEntity.AwakeTimer > 0f))
-					{
-						readyForCombatUnitGroups.Add(unitGroup);
-						break;
-					}
-				}
-			}
-		}
 	}
 
 	private static bool ShouldBeSleeping(AbstractUnitEntity unit)
@@ -85,12 +66,20 @@ public class SleepingUnitsController : IControllerTick, IController, IController
 		{
 			return true;
 		}
+		if (!unit.Sleepless && unit.FreezeOutsideCamera && CutsceneControlledUnit.IsFreezingAllowed(unit) && !unit.IsInCameraFrustum)
+		{
+			return true;
+		}
 		if (unit.AwakeTimer >= 0f)
 		{
 			unit.AwakeTimer -= Game.Instance.TimeController.DeltaTime;
 			return false;
 		}
-		if ((bool)unit.Sleepless || !CutsceneControlledUnit.IsSleepingAllowed(unit))
+		if ((bool)unit.Sleepless)
+		{
+			return false;
+		}
+		if (!CutsceneControlledUnit.IsSleepingAllowed(unit))
 		{
 			return false;
 		}

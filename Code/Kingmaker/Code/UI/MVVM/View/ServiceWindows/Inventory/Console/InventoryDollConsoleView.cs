@@ -128,7 +128,7 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 			AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
 			List<IConsoleEntity> navigationEntities = WeaponSetConsoleView.GetNavigationEntities();
 			GridConsoleNavigationBehaviour navigationBehaviour = m_NavigationBehaviour;
-			IConsoleEntity[][] array = new IConsoleEntity[7][];
+			IConsoleEntity[][] array = new IConsoleEntity[8][];
 			IConsoleEntity[] array2 = new InventoryEquipSlotConsoleView[2] { m_HeadArmor, m_Neck };
 			array[0] = array2;
 			array2 = new InventoryEquipSlotConsoleView[2] { m_BodyArmor, m_Ring2 };
@@ -145,13 +145,15 @@ public class InventoryDollConsoleView : InventoryDollView<InventoryEquipSlotCons
 				navigationEntities?.ElementAtOrDefault(1),
 				m_Boots
 			};
-			array[5] = new IConsoleEntity[3]
+			array2 = new InventoryEquipSlotConsoleView[1] { m_Protocol };
+			array[5] = array2;
+			array[6] = new IConsoleEntity[3]
 			{
 				navigationEntities?.ElementAtOrDefault(2),
 				m_QuickSlots[0],
 				m_QuickSlots[1]
 			};
-			array[6] = new IConsoleEntity[3]
+			array[7] = new IConsoleEntity[3]
 			{
 				navigationEntities?.ElementAtOrDefault(3),
 				m_QuickSlots[2],

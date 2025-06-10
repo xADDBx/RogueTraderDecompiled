@@ -17,6 +17,18 @@ public class SpaceCombatBackgroundComposerConfigs : ScriptableObject
 	}
 
 	[Serializable]
+	public class StarLightPropertiesOverride
+	{
+		public bool OverrideLightSettings;
+
+		public Color Color;
+
+		public float Intensity;
+
+		public float Range;
+	}
+
+	[Serializable]
 	public class PlanetObjectProperties
 	{
 		public PrefabLink Prefab;
@@ -55,6 +67,9 @@ public class SpaceCombatBackgroundComposerConfigs : ScriptableObject
 	[Header("Star and Planets")]
 	[SerializeField]
 	public StarProperties Star;
+
+	[SerializeField]
+	public StarLightPropertiesOverride StarLight;
 
 	[Header("Properties of instanced\nplanets prefabs can\nbe set in realtime")]
 	[SerializeField]

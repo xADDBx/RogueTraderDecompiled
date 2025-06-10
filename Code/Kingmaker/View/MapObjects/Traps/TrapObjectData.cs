@@ -17,6 +17,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
@@ -196,7 +197,11 @@ public abstract class TrapObjectData : MapObjectEntity, IHashable
 	{
 		if (TrapActive)
 		{
-			TriggerTrap(unit);
+			TrapIgnore trapIgnore = unit.Facts.GetComponents<TrapIgnore>().FirstOrDefault();
+			if (trapIgnore == null || trapIgnore.ShouldInteractWithTrap())
+			{
+				TriggerTrap(unit);
+			}
 		}
 	}
 

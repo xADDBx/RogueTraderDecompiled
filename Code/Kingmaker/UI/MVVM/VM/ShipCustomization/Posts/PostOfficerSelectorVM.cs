@@ -46,15 +46,18 @@ public class PostOfficerSelectorVM : BaseDisposable, IViewModel, IBaseDisposable
 		list.AddRange(Game.Instance.Player.RemoteCompanions);
 		foreach (BaseUnitEntity unit in list)
 		{
-			PostOfficerVM postOfficerVM = new PostOfficerVM(unit, m_CurrentSelectedPost, delegate
+			if (!unit.IsPet)
 			{
-				AppointOnCurrentPost(unit);
-			}, delegate
-			{
-				AppointOnCurrentPost(null);
-			});
-			AddDisposable(postOfficerVM);
-			m_InfoPosts.Add(postOfficerVM);
+				PostOfficerVM postOfficerVM = new PostOfficerVM(unit, m_CurrentSelectedPost, delegate
+				{
+					AppointOnCurrentPost(unit);
+				}, delegate
+				{
+					AppointOnCurrentPost(null);
+				});
+				AddDisposable(postOfficerVM);
+				m_InfoPosts.Add(postOfficerVM);
+			}
 		}
 		int num = UIConsts.MinConsoleLootSlotsInSingleObj - m_InfoPosts.Count;
 		if (num > 0)

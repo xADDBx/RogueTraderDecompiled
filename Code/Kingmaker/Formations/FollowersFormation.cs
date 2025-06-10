@@ -13,10 +13,6 @@ public class FollowersFormation : BlueprintScriptableObject, IImmutablePartyForm
 	private Vector2 m_PlayerOffset;
 
 	[SerializeField]
-	[Tooltip("Followers formation.")]
-	private Vector2[] m_Formation;
-
-	[SerializeField]
 	[Tooltip("Distance between current follower position and his target position on which follower remains idle.")]
 	private float m_RepathDistance = 4f;
 
@@ -28,15 +24,22 @@ public class FollowersFormation : BlueprintScriptableObject, IImmutablePartyForm
 	[Tooltip("Look angle spread. Follower look angle will be equal to main character look angle + Random(-LookAngleSpread/2,LookAngleSpread/2).")]
 	private float m_LookAngleRandomSpread = 90f;
 
+	[SerializeField]
+	private FormationPersonalSettings StandartSettings;
+
+	[SerializeField]
+	[Tooltip("Followers formation.")]
+	private Vector2[] m_Formation;
+
 	public const float MoveProximity = 0.1f;
 
-	public Vector2 PlayerOffset => m_PlayerOffset;
+	public Vector2 PlayerOffset => StandartSettings.m_Offset;
 
-	public float RepathDistance => m_RepathDistance;
+	public float RepathDistance => StandartSettings.m_RepathDistance;
 
 	public float RepathCooldownSec => m_RepathCooldownSec;
 
-	public float LookAngleRandomSpread => m_LookAngleRandomSpread;
+	public float LookAngleRandomSpread => StandartSettings.m_LookAngleRandomSpread;
 
 	public float Length => 1f;
 

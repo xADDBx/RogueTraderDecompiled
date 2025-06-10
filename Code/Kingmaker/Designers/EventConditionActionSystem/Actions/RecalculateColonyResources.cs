@@ -53,19 +53,25 @@ public class RecalculateColonyResources : GameAction
 				AddNotFromColony(resource2, count);
 			}
 		}
-		foreach (BlueprintCueBase shownCue in Game.Instance.Player.Dialog.ShownCues)
+		foreach (string shownCue in Game.Instance.Player.Dialog.ShownCues)
 		{
-			foreach (RewardResourceNotFromColony component in shownCue.GetComponents<RewardResourceNotFromColony>())
+			BlueprintCue blueprintCue = BlueprintReferenceBase.CreateTyped<BlueprintReference<BlueprintCue>>(shownCue).Get();
+			foreach (RewardResourceNotFromColony component in blueprintCue.GetComponents<RewardResourceNotFromColony>())
 			{
 				BlueprintResource resource3 = component.Resource;
 				int count2 = component.Count;
 				AddNotFromColony(resource3, count2);
 			}
-			if (!(shownCue is BlueprintCue blueprintCue) || !blueprintCue.OnStop.HasActions)
+			if (blueprintCue == null)
 			{
 				continue;
 			}
-			GameAction[] array = blueprintCue.OnStop?.Actions;
+			BlueprintCue blueprintCue2 = blueprintCue;
+			if (!blueprintCue2.OnStop.HasActions)
+			{
+				continue;
+			}
+			GameAction[] array = blueprintCue2.OnStop?.Actions;
 			for (int i = 0; i < array.Length; i++)
 			{
 				if (array[i] is GainColonyResources { Resources: var resources })
@@ -79,19 +85,20 @@ public class RecalculateColonyResources : GameAction
 				}
 			}
 		}
-		foreach (BlueprintAnswer selectedAnswer in Game.Instance.Player.Dialog.SelectedAnswers)
+		foreach (string selectedAnswer in Game.Instance.Player.Dialog.SelectedAnswers)
 		{
-			foreach (RewardResourceNotFromColony component2 in selectedAnswer.GetComponents<RewardResourceNotFromColony>())
+			BlueprintAnswer blueprintAnswer = BlueprintReferenceBase.CreateTyped<BlueprintReference<BlueprintAnswer>>(selectedAnswer).Get();
+			foreach (RewardResourceNotFromColony component2 in blueprintAnswer.GetComponents<RewardResourceNotFromColony>())
 			{
 				BlueprintResource resource5 = component2.Resource;
 				int count4 = component2.Count;
 				AddNotFromColony(resource5, count4);
 			}
-			if (!selectedAnswer.OnSelect.HasActions)
+			if (!blueprintAnswer.OnSelect.HasActions)
 			{
 				continue;
 			}
-			GameAction[] array = selectedAnswer.OnSelect.Actions;
+			GameAction[] array = blueprintAnswer.OnSelect.Actions;
 			for (int i = 0; i < array.Length; i++)
 			{
 				if (array[i] is GainColonyResources { Resources: var resources2 })
@@ -145,16 +152,16 @@ public class RecalculateColonyResources : GameAction
 				Game.Instance.ColonizationController.UseResourceFromPool(item5.ResourceBlueprint, item5.Count, needEvent: false);
 			}
 		}
-		foreach (BlueprintCueBase shownCue2 in Game.Instance.Player.Dialog.ShownCues)
+		foreach (string shownCue2 in Game.Instance.Player.Dialog.ShownCues)
 		{
-			foreach (RequirementResourceUseDialog component4 in shownCue2.GetComponents<RequirementResourceUseDialog>())
+			foreach (RequirementResourceUseDialog component4 in BlueprintReferenceBase.CreateTyped<BlueprintReference<BlueprintCueBase>>(shownCue2).Get().GetComponents<RequirementResourceUseDialog>())
 			{
 				Game.Instance.ColonizationController.UseResourceFromPool(component4.ResourceBlueprint, component4.Count, needEvent: false);
 			}
 		}
-		foreach (BlueprintAnswer selectedAnswer2 in Game.Instance.Player.Dialog.SelectedAnswers)
+		foreach (string selectedAnswer2 in Game.Instance.Player.Dialog.SelectedAnswers)
 		{
-			foreach (RequirementResourceUseDialog component5 in selectedAnswer2.GetComponents<RequirementResourceUseDialog>())
+			foreach (RequirementResourceUseDialog component5 in BlueprintReferenceBase.CreateTyped<BlueprintReference<BlueprintAnswer>>(selectedAnswer2).Get().GetComponents<RequirementResourceUseDialog>())
 			{
 				Game.Instance.ColonizationController.UseResourceFromPool(component5.ResourceBlueprint, component5.Count, needEvent: false);
 			}

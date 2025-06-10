@@ -27,6 +27,11 @@ public class UnitBuffPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		return m_Unit;
 	}
 
+	public bool EntityIsDeadOrUnconscious()
+	{
+		return m_Unit?.IsDeadOrUnconscious ?? true;
+	}
+
 	public UnitBuffPartVM(MechanicEntity unit)
 	{
 		if (unit != null)
@@ -37,6 +42,13 @@ public class UnitBuffPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			ClearBuffs();
 		}
+	}
+
+	protected override void DisposeImplementation()
+	{
+		m_Subscription?.Dispose();
+		m_Subscription = null;
+		ClearBuffs();
 	}
 
 	public void SetUnitData(MechanicEntity unit)
@@ -57,13 +69,6 @@ public class UnitBuffPartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			vm.Dispose();
 		});
 		Buffs.Clear();
-	}
-
-	protected override void DisposeImplementation()
-	{
-		m_Subscription?.Dispose();
-		m_Subscription = null;
-		ClearBuffs();
 	}
 
 	public void HandleBuffDidAdded(Buff buff)

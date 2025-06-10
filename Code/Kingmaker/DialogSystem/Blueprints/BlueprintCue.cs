@@ -7,6 +7,7 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.Colonization.Rewards;
 using Kingmaker.Localization;
+using Kingmaker.Localization.Shared;
 using Kingmaker.UnitLogic.Alignments;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -16,6 +17,7 @@ namespace Kingmaker.DialogSystem.Blueprints;
 [TypeId("8eee9d45ddcfa614d99610c1892993e3")]
 public class BlueprintCue : BlueprintCueBase, ISoulMarkShiftProvider, ILocalizedStringHolder
 {
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.ByProperty)]
 	public LocalizedString Text;
 
 	public SoulMarkShift SoulMarkRequirement = new SoulMarkShift();

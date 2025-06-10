@@ -1,5 +1,7 @@
 using System;
 using JetBrains.Annotations;
+using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Pathfinding;
 using UnityEngine;
@@ -9,22 +11,40 @@ namespace Kingmaker.EntitySystem.Properties;
 public static class PropertyContextHelper
 {
 	[CanBeNull]
-	public static MechanicEntity GetTargetEntity(this PropertyContext context, PropertyTargetType type)
+	public static MechanicEntity GetTargetEntity(this PropertyContext context, PropertyTargetType type, AbstractUnitEvaluator entityEvaluator = null)
 	{
-		return type switch
+		switch (type)
 		{
-			PropertyTargetType.CurrentEntity => context.CurrentEntity, 
-			PropertyTargetType.CurrentTarget => context.CurrentTarget, 
-			PropertyTargetType.ContextCaster => context.ContextCaster, 
-			PropertyTargetType.ContextMainTarget => context.ContextMainTarget, 
-			PropertyTargetType.RuleInitiator => context.RuleInitiator, 
-			PropertyTargetType.RuleTarget => context.RuleTarget, 
-			_ => throw new ArgumentOutOfRangeException("type", type, null), 
-		};
+		case PropertyTargetType.CurrentEntity:
+			return context.CurrentEntity;
+		case PropertyTargetType.CurrentTarget:
+			return context.CurrentTarget;
+		case PropertyTargetType.ContextCaster:
+			return context.ContextCaster;
+		case PropertyTargetType.ContextMainTarget:
+			return context.ContextMainTarget;
+		case PropertyTargetType.RuleInitiator:
+			return context.RuleInitiator;
+		case PropertyTargetType.RuleTarget:
+			return context.RuleTarget;
+		case PropertyTargetType.EvaluatedTarget:
+			using (ContextData<PropertyContextData>.Request().Setup(context.WithCurrentEntity(context.CurrentEntity)))
+			{
+				return context.GetEvaluatedTarget(entityEvaluator);
+			}
+		default:
+			throw new ArgumentOutOfRangeException("type", type, null);
+		}
 	}
 
 	[CanBeNull]
-	public static Vector3? GetTargetPosition(this PropertyContext context, PropertyTargetType type)
+	public static MechanicEntity GetEvaluatedTarget(this PropertyContext context, AbstractUnitEvaluator entityEvaluator = null)
+	{
+		return entityEvaluator?.GetValue() ?? context.CurrentEntity;
+	}
+
+	[CanBeNull]
+	public static Vector3? GetTargetPosition(this PropertyContext context, PropertyTargetType type, AbstractUnitEvaluator entityEvaluator = null)
 	{
 		return type switch
 		{
@@ -34,6 +54,7 @@ public static class PropertyContextHelper
 			PropertyTargetType.ContextMainTarget => context.ContextMainTargetPosition, 
 			PropertyTargetType.RuleInitiator => context.RuleInitiator?.Position, 
 			PropertyTargetType.RuleTarget => context.RuleTarget?.Position, 
+			PropertyTargetType.EvaluatedTarget => context.GetEvaluatedTarget(entityEvaluator)?.Position, 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}
@@ -63,6 +84,7 @@ public static class PropertyContextHelper
 			PropertyTargetType.ContextMainTarget => "CMT", 
 			PropertyTargetType.RuleInitiator => "RI", 
 			PropertyTargetType.RuleTarget => "RT", 
+			PropertyTargetType.EvaluatedTarget => "ET", 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}

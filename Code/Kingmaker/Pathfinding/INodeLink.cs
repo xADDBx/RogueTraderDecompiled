@@ -13,6 +13,8 @@ public interface INodeLink
 
 	Vector3 GetConnectionPosition(ILinkTraversalProvider warhammerNodeLinkTraverser);
 
+	bool CanBuildPathThroughLink(ILinkTraversalProvider traverser);
+
 	bool CanStartTraverse(ILinkTraversalProvider traverser);
 
 	bool IsInTraverse();

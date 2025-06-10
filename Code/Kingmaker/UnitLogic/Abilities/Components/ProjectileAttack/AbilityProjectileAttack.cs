@@ -138,28 +138,64 @@ public class AbilityProjectileAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 				num = warhammerLength;
 			}
 		}
-		return CollectNodes(customGridNodeBase2, customGridNodeBase, target, num);
+		RuleCalculateOtherTargetForOffEngage ruleCalculateOtherTargetForOffEngage = new RuleCalculateOtherTargetForOffEngage(ability.Caster, target, customGridNodeBase2, customGridNodeBase, num);
+		Rulebook.Trigger(ruleCalculateOtherTargetForOffEngage);
+		return CollectNodes(customGridNodeBase2, customGridNodeBase, target, num, ruleCalculateOtherTargetForOffEngage.OtherTargetNode);
 	}
 
-	private static (ReadonlyList<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, CustomGridNodeBase toNode, MechanicEntity target, int range)
+	private static (ReadonlyList<CustomGridNodeBase> Nodes, CustomGridNodeBase From, CustomGridNodeBase To) CollectNodes(CustomGridNodeBase fromNode, CustomGridNodeBase toNode, MechanicEntity target, int range, CustomGridNodeBase otherTargetNode = null)
 	{
 		Linecast.Ray2NodeOffsets offsets = new Linecast.Ray2NodeOffsets(fromNode.CoordinatesInGrid, (toNode.Vector3Position - fromNode.Vector3Position).To2D());
 		Linecast.Ray2Nodes ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)fromNode.Graph, in offsets);
-		NodeList occupiedNodes = target.GetOccupiedNodes();
 		List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
-		foreach (CustomGridNodeBase item in ray2Nodes)
+		if (otherTargetNode != null)
 		{
-			if (item == null || CustomGraphHelper.GetWarhammerLength(item.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range)
+			NodeList occupiedNodes = target.GetOccupiedNodes();
+			foreach (CustomGridNodeBase item in ray2Nodes)
 			{
-				if (list.Count == 0)
+				if (item == null || CustomGraphHelper.GetWarhammerLength(item.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range)
 				{
-					return (Nodes: ReadonlyList<CustomGridNodeBase>.Empty, From: fromNode, To: toNode);
+					if (list.Count == 0)
+					{
+						return (Nodes: ReadonlyList<CustomGridNodeBase>.Empty, From: fromNode, To: toNode);
+					}
+					break;
 				}
-				break;
+				if (occupiedNodes.Contains(item))
+				{
+					list.Add(item);
+					break;
+				}
 			}
-			if (occupiedNodes.Contains(item) || list.Count > 0)
+			offsets = new Linecast.Ray2NodeOffsets(toNode.CoordinatesInGrid, (otherTargetNode.Vector3Position - toNode.Vector3Position).To2D());
+			ray2Nodes = new Linecast.Ray2Nodes((CustomGridGraph)toNode.Graph, in offsets);
+			int count = list.Count;
+			foreach (CustomGridNodeBase item2 in ray2Nodes)
 			{
-				list.Add(item);
+				if (otherTargetNode == item2 || list.Count > count)
+				{
+					list.Add(item2);
+					break;
+				}
+			}
+		}
+		else
+		{
+			NodeList occupiedNodes2 = target.GetOccupiedNodes();
+			foreach (CustomGridNodeBase item3 in ray2Nodes)
+			{
+				if (item3 == null || CustomGraphHelper.GetWarhammerLength(item3.CoordinatesInGrid - fromNode.CoordinatesInGrid) > range)
+				{
+					if (list.Count == 0)
+					{
+						return (Nodes: ReadonlyList<CustomGridNodeBase>.Empty, From: fromNode, To: toNode);
+					}
+					break;
+				}
+				if (occupiedNodes2.Contains(item3) || list.Count > 0)
+				{
+					list.Add(item3);
+				}
 			}
 		}
 		return (Nodes: list, From: fromNode, To: toNode);

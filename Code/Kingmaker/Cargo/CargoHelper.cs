@@ -93,9 +93,9 @@ public static class CargoHelper
 
 	public static bool IsQuestItem(BlueprintItem item)
 	{
-		if (item != null && item.GetType() == typeof(BlueprintItem))
+		if (item != null && item.GetType() == typeof(BlueprintItem) && item.IsNotable)
 		{
-			return item.IsNotable;
+			return item.Rarity != BlueprintItem.ItemRarity.Quest;
 		}
 		return false;
 	}

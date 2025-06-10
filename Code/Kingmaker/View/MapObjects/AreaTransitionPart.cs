@@ -31,12 +31,15 @@ public class AreaTransitionPart : ViewBasedPart<AreaTransitionSettings>, IUnlock
 	{
 		if (base.Settings.AddMapMarker)
 		{
-			LocalMapMarkerPart orCreate = base.ConcreteOwner.GetOrCreate<LocalMapMarkerPart>();
-			orCreate.IsRuntimeCreated = true;
-			orCreate.Settings.Type = LocalMapMarkType.Exit;
-			if (AreaEnterPoint != null)
+			LocalMapMarkerPart localMapMarkerPart = base.ConcreteOwner?.GetOrCreate<LocalMapMarkerPart>();
+			if (localMapMarkerPart != null)
 			{
-				orCreate.NonLocalizedDescription = AreaEnterPoint.Tooltip(base.Settings.TooltipIndex);
+				localMapMarkerPart.IsRuntimeCreated = true;
+				localMapMarkerPart.Settings.Type = LocalMapMarkType.Exit;
+				if (AreaEnterPoint != null)
+				{
+					localMapMarkerPart.NonLocalizedDescription = AreaEnterPoint.Tooltip(base.Settings.TooltipIndex);
+				}
 			}
 		}
 		UpdateVisibility();
@@ -61,19 +64,22 @@ public class AreaTransitionPart : ViewBasedPart<AreaTransitionSettings>, IUnlock
 		{
 			return true;
 		}
-		InteractionRestrictionPart interactionRestrictionPart = base.ConcreteOwner.GetAll<InteractionRestrictionPart>().FirstOrDefault();
+		InteractionRestrictionPart interactionRestrictionPart = base.ConcreteOwner?.GetAll<InteractionRestrictionPart>()?.FirstOrDefault();
 		if (interactionRestrictionPart == null)
 		{
 			AlreadyUnlocked = true;
 			return true;
 		}
-		foreach (InteractionRestrictionPart item in base.ConcreteOwner.Parts.GetAll<InteractionRestrictionPart>())
+		if (base.ConcreteOwner != null)
 		{
-			if (item.CheckRestriction(user))
+			foreach (InteractionRestrictionPart item in base.ConcreteOwner.Parts.GetAll<InteractionRestrictionPart>())
 			{
-				item.ShowSuccessBark(user);
-				AlreadyUnlocked = true;
-				return true;
+				if (item.CheckRestriction(user))
+				{
+					item.ShowSuccessBark(user);
+					AlreadyUnlocked = true;
+					return true;
+				}
 			}
 		}
 		interactionRestrictionPart.ShowRestrictionBark(user);
@@ -122,10 +128,10 @@ public class AreaTransitionPart : ViewBasedPart<AreaTransitionSettings>, IUnlock
 	{
 		if (base.Settings.AddMapMarker)
 		{
-			LocalMapMarkerPart orCreate = base.ConcreteOwner.GetOrCreate<LocalMapMarkerPart>();
-			if (AreaEnterPoint != null)
+			LocalMapMarkerPart localMapMarkerPart = base.ConcreteOwner?.GetOrCreate<LocalMapMarkerPart>();
+			if (AreaEnterPoint != null && localMapMarkerPart != null)
 			{
-				orCreate.NonLocalizedDescription = AreaEnterPoint.Tooltip(base.Settings.TooltipIndex);
+				localMapMarkerPart.NonLocalizedDescription = AreaEnterPoint.Tooltip(base.Settings.TooltipIndex);
 			}
 		}
 	}

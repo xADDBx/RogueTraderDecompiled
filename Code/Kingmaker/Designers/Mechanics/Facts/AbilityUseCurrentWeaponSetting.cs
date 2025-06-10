@@ -24,6 +24,18 @@ public class AbilityUseCurrentWeaponSetting : MechanicEntityFactComponentDelegat
 
 	private MechanicEntity ConcreteOwner => base.Owner;
 
+	public ItemEntityWeapon Weapon
+	{
+		get
+		{
+			if (useSecondWeapon)
+			{
+				return ConcreteOwner.GetSecondaryHandWeapon();
+			}
+			return ConcreteOwner.GetFirstWeapon();
+		}
+	}
+
 	protected override void OnActivate()
 	{
 		ResetSettings();
@@ -48,11 +60,11 @@ public class AbilityUseCurrentWeaponSetting : MechanicEntityFactComponentDelegat
 		{
 			return;
 		}
-		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? ConcreteOwner.GetFirstWeapon() : ConcreteOwner.GetSecondaryHandWeapon());
-		ability.Data.OverrideWeapon = itemEntityWeapon;
-		if (itemEntityWeapon != null)
+		ItemEntityWeapon weapon = Weapon;
+		ability.Data.OverrideWeapon = weapon;
+		if (weapon != null)
 		{
-			BlueprintAbilityFXSettings fXSettingsOverride = itemEntityWeapon.Abilities.FirstItem((Ability x) => x.Blueprint.IsBurst)?.Data.FXSettings;
+			BlueprintAbilityFXSettings fXSettingsOverride = weapon.Abilities.FirstItem((Ability x) => x.Blueprint.IsBurst)?.Data.FXSettings;
 			ability.Data.FXSettingsOverride = fXSettingsOverride;
 		}
 	}

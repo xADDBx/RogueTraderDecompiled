@@ -10,6 +10,8 @@ namespace Kingmaker.AI.Blueprints;
 [TypeId("a89e5e0465016b448b297c4d108f9add")]
 public abstract class BlueprintBrainBase : BlueprintScriptableObject
 {
+	public virtual bool TargetOthersIfCantReachHated { get; }
+
 	public virtual List<TargetInfo> GetHatedTargets(PropertyContext context, List<TargetInfo> enemies)
 	{
 		return new List<TargetInfo>();

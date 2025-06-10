@@ -180,7 +180,7 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 		{
 			return;
 		}
-		Game.Instance.Player.StarSystemsState.InteractedAnomalies.TryGetValue(m_SectorMapObject.Data.StarSystemArea ?? m_Area, out var value);
+		Game.Instance.Player.StarSystemsState.InteractedAnomalies.TryGetValue(ObjectExtensions.Or(m_SectorMapObject, null)?.Data?.StarSystemArea ?? m_Area, out var value);
 		foreach (BlueprintAnomaly item in value.EmptyIfNull())
 		{
 			if (list.Contains(item) && !item.HideInUI)

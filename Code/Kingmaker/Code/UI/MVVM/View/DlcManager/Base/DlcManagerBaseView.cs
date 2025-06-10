@@ -43,7 +43,7 @@ public class DlcManagerBaseView : ViewBase<DlcManagerVM>
 	{
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
 		{
-			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.NewGame);
+			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.DlcModManager);
 		});
 		UISounds.Instance.Sounds.LocalMap.MapOpen.Play();
 	}
@@ -52,7 +52,7 @@ public class DlcManagerBaseView : ViewBase<DlcManagerVM>
 	{
 		EventBus.RaiseEvent(delegate(IFullScreenUIHandler h)
 		{
-			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.NewGame);
+			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.DlcModManager);
 		});
 		UISounds.Instance.Sounds.LocalMap.MapClose.Play();
 	}

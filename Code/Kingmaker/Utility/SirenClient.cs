@@ -58,7 +58,7 @@ public class SirenClient
 			client.Headers[HttpRequestHeader.ContentType] = "application/json";
 			ServicePointManager.ServerCertificateValidationCallback = (object _, X509Certificate _, X509Chain _, SslPolicyErrors _) => true;
 			string data = JsonConvert.SerializeObject(request);
-			string address = "http://siren.owlcat.local/api/tickets";
+			string address = "https://siren.owlcat.local/api/tickets";
 			return JsonConvert.DeserializeObject<FindTicketsResponse>(await client.UploadStringTaskAsync(address, data));
 		}
 	}

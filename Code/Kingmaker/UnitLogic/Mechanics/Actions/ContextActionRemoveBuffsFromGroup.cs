@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
@@ -17,6 +18,9 @@ public class ContextActionRemoveBuffsFromGroup : ContextAction
 {
 	[SerializeField]
 	private BlueprintAbilityGroupReference[] m_Groups;
+
+	[Tooltip("Makes Groups act as white list: buffs NOT in any of the groups will be removed.")]
+	public bool RemoveBuffsNotInGroups;
 
 	public bool RemoveOneRandomBuff;
 
@@ -49,7 +53,8 @@ public class ContextActionRemoveBuffsFromGroup : ContextAction
 		{
 			return;
 		}
-		List<Buff> list = mechanicEntity.Buffs.Enumerable.Where((Buff buff) => buff.Blueprint.AbilityGroups.Any((BlueprintAbilityGroup group) => Groups.Contains(group))).ToList();
+		Func<Buff, bool> predicate = (RemoveBuffsNotInGroups ? new Func<Buff, bool>(BuffIsNotInGroups) : new Func<Buff, bool>(BuffIsInGroups));
+		List<Buff> list = mechanicEntity.Buffs.Enumerable.Where(predicate).ToList();
 		if (RemoveOneRandomBuff)
 		{
 			list.Random(PFStatefulRandom.Mechanics)?.Remove();
@@ -58,6 +63,14 @@ public class ContextActionRemoveBuffsFromGroup : ContextAction
 		foreach (Buff item in list)
 		{
 			item.Remove();
+		}
+		bool BuffIsInGroups(Buff buff)
+		{
+			return buff.Blueprint.AbilityGroups.Any((BlueprintAbilityGroup group) => Groups.Contains(group));
+		}
+		bool BuffIsNotInGroups(Buff buff)
+		{
+			return buff.Blueprint.AbilityGroups.All((BlueprintAbilityGroup group) => !Groups.Contains(group));
 		}
 	}
 }

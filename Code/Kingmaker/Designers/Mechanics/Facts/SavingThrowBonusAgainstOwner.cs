@@ -26,15 +26,28 @@ public class SavingThrowBonusAgainstOwner : UnitFactComponentDelegate, IGlobalRu
 
 	public ContextValue Bonus;
 
+	[Tooltip("Всегда успех")]
+	public bool AlwaysSucceed;
+
+	[Tooltip("Всегда провал")]
+	public bool AlwaysFail;
+
 	public void OnEventAboutToTrigger(RulePerformSavingThrow evt)
 	{
-		if (evt.Reason.Ability?.Caster == base.Owner && Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability))
+		if (evt.Reason.Ability?.Caster == base.Owner && Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability) && evt.Reason.Context != null && evt.Reason.Ability != null)
 		{
-			int value = Bonus.Calculate(base.Context) + Value * base.Fact.GetRank();
-			if (evt.Reason.Context != null && evt.Reason.Ability != null)
+			if (AlwaysSucceed)
 			{
-				evt.ValueModifiers.Add(value, base.Fact, ModifierDescriptor);
+				evt.SetAlwaysSucceed(base.Fact, ModifierDescriptor);
+				return;
 			}
+			if (AlwaysFail)
+			{
+				evt.SetAlwaysFail(base.Fact, ModifierDescriptor);
+				return;
+			}
+			int value = Bonus.Calculate(base.Context) + Value * base.Fact.GetRank();
+			evt.AddValueModifiers(value, base.Fact, ModifierDescriptor);
 		}
 	}
 

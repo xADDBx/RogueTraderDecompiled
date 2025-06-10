@@ -99,8 +99,12 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 			return;
 		}
 		base.Executor.View.MovementAgent.ForcePath(base.ForcedPath, base.Params.DisableApproachRadius);
-		float a = CalculatePathCost();
-		MovePointsSpent = Mathf.Min(a, base.Executor.CombatState.ActionPointsBlue);
+		float num = CalculatePathCost();
+		MovePointsSpent = Mathf.Min(num, base.Executor.CombatState.ActionPointsBlue);
+		if (num > MovePointsSpent)
+		{
+			base.Executor.CombatState.RegisterMoveCells(num - MovePointsSpent);
+		}
 		PartUnitCombatState combatState = base.Executor.CombatState;
 		float? blue = MovePointsSpent;
 		combatState.SpendActionPoints(null, blue);
@@ -183,7 +187,7 @@ public sealed class UnitMoveToProper : UnitCommand<UnitMoveToProperParams>
 			Vector3 forward = CustomGraphHelper.AdjustDirection(base.Executor.MovementAgent.FinalDirection);
 			base.Executor.SetOrientation(Quaternion.LookRotation(forward).eulerAngles.y);
 		}
-		UnitPredictionManager.Instance.ClearHologram(base.Executor);
+		UnitPredictionManager.Instance.ClearMovementHologram(base.Executor);
 		UnitPathManager.Instance.RemovePath(base.Executor);
 		base.Executor.View.MovementAgent.Blocker.BlockAtCurrentPosition();
 		base.Executor.View.MovementAgent.Stop();

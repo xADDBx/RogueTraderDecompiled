@@ -93,7 +93,7 @@ public static class AbilityProjectileAttackLineHelper
 				for (int i = 0; i < array.Length; i++)
 				{
 					AbilityProjectileAttackLine.HitData hitData2 = array[i];
-					if (hitData2.IsRedirecting)
+					if (hitData2.IsRedirecting || hitData2.IsBlocking)
 					{
 						isCoverHit = true;
 						value = WarhammerGeometryUtils.DistanceToInCells(targetWrapper2.Point, default(IntRect), hitData2.Entity.Center, default(IntRect));
@@ -148,7 +148,7 @@ public static class AbilityProjectileAttackLineHelper
 
 	private static TargetWrapper GetProjectileTarget(AbilityExecutionContext context, AbilityProjectileAttackLine attackLine, AbilityProjectileAttackLine.HitData[] hits)
 	{
-		CustomGridNodeBase customGridNodeBase = attackLine.Nodes.LastOrDefault((CustomGridNodeBase x) => IsNodeAffected(null, attackLine.FromNode, x, attackLine.StepHeight)) ?? attackLine.Nodes.Last();
+		CustomGridNodeBase customGridNodeBase = attackLine.Nodes.LastOrDefault((CustomGridNodeBase x) => IsNodeAffected(context.Ability, attackLine.FromNode, x, attackLine.StepHeight)) ?? attackLine.Nodes.Last();
 		AbilityProjectileAttackLine.HitData hitData = hits.LastItem();
 		AbilityProjectileAttackLine.HitData hitData2 = hits.LastItem((AbilityProjectileAttackLine.HitData i) => i.Entity is UnitEntity && i.RollPerformAttackRule.ResultIsHit);
 		Vector3 vector3Position;
@@ -289,16 +289,19 @@ public static class AbilityProjectileAttackLineHelper
 	{
 		using (ProfileScope.New("HasLos"))
 		{
-			if (ability != null)
+			if (ability == null || ability.NeedLoS)
 			{
-				if (!ability.HasLosCached(fromNode, targetNode))
+				if (ability != null)
+				{
+					if (!ability.HasLosCached(fromNode, targetNode))
+					{
+						return false;
+					}
+				}
+				else if (!LosCalculations.HasLos(fromNode, default(IntRect), targetNode, default(IntRect)))
 				{
 					return false;
 				}
-			}
-			else if (!LosCalculations.HasLos(fromNode, default(IntRect), targetNode, default(IntRect)))
-			{
-				return false;
 			}
 		}
 		int num = Mathf.Max(Mathf.Abs(fromNode.XCoordinateInGrid - targetNode.XCoordinateInGrid), Mathf.Abs(fromNode.ZCoordinateInGrid - targetNode.ZCoordinateInGrid));

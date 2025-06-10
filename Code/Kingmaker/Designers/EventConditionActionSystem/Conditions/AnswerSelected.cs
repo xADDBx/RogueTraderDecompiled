@@ -32,7 +32,7 @@ public class AnswerSelected : Condition
 	{
 		if (!CurrentDialog)
 		{
-			return Game.Instance.Player.Dialog.SelectedAnswers.Contains(Answer);
+			return Game.Instance.Player.Dialog.SelectedAnswersContains(Answer);
 		}
 		return Game.Instance.DialogController.LocalSelectedAnswers.Contains(Answer);
 	}

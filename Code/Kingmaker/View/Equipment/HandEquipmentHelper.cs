@@ -14,7 +14,7 @@ public class HandEquipmentHelper : CustomYieldInstruction, IDisposable
 
 	public Action Callback;
 
-	public float Duration => ((IUnitAnimationActionHandEquip)m_Handle.Action).GetDuration(m_Handle);
+	public float Duration => ((IUnitAnimationActionHandEquip)(m_Handle?.Action))?.GetDuration(m_Handle) ?? 0f;
 
 	public override bool keepWaiting
 	{
@@ -34,7 +34,10 @@ public class HandEquipmentHelper : CustomYieldInstruction, IDisposable
 
 	public void Scale(float scale)
 	{
-		m_Handle.SpeedScale = scale;
+		if (m_Handle != null)
+		{
+			m_Handle.SpeedScale = scale;
+		}
 	}
 
 	public static HandEquipmentHelper StartEquipMainHand(UnitAnimationManager manager, UnitEquipmentAnimationSlotType slot, WeaponAnimationStyle style)
@@ -59,17 +62,20 @@ public class HandEquipmentHelper : CustomYieldInstruction, IDisposable
 
 	private HandEquipmentHelper(UnitAnimationManager manager, UnitEquipmentAnimationSlotType slot, bool equip, bool mainHand, WeaponAnimationStyle style)
 	{
-		m_Handle = manager.CreateHandle((!equip) ? (mainHand ? UnitAnimationType.MainHandUnequip : UnitAnimationType.OffHandUnequip) : (mainHand ? UnitAnimationType.MainHandEquip : UnitAnimationType.OffHandEquip));
-		m_Handle.EquipmentSlot = slot;
-		m_Handle.AttackWeaponStyle = style;
-		manager.Execute(m_Handle);
+		m_Handle = manager.CreateHandle((!equip) ? (mainHand ? UnitAnimationType.MainHandUnequip : UnitAnimationType.OffHandUnequip) : (mainHand ? UnitAnimationType.MainHandEquip : UnitAnimationType.OffHandEquip), errorOnEmpty: false);
+		if (m_Handle != null)
+		{
+			m_Handle.EquipmentSlot = slot;
+			m_Handle.AttackWeaponStyle = style;
+			manager.Execute(m_Handle);
+		}
 	}
 
 	public void Dispose()
 	{
 		if (!m_IsDisposed)
 		{
-			m_Handle.Release();
+			m_Handle?.Release();
 			m_IsDisposed = true;
 		}
 	}
@@ -81,11 +87,16 @@ public class HandEquipmentHelper : CustomYieldInstruction, IDisposable
 			PFLog.Default.Error("Do not use disposed HandEquipmentHelper");
 			return false;
 		}
-		if (Callback != null && (m_Handle.IsActed || m_Handle.IsReleased))
+		if (Callback != null && (m_Handle == null || m_Handle.IsActed || m_Handle.IsReleased))
 		{
 			Callback();
 			Callback = null;
 		}
-		return !m_Handle.IsReleased;
+		UnitAnimationActionHandle handle = m_Handle;
+		if (handle != null)
+		{
+			return !handle.IsReleased;
+		}
+		return false;
 	}
 }

@@ -45,8 +45,8 @@ public class ProtectionTileScorer : TileScorer
 		{
 			int num2 = WarhammerGeometryUtils.DistanceToInCells(node.Vector3Position, context.Unit.SizeRect, context.Unit.Forward, enemy.Entity.Position, enemy.Entity.SizeRect, enemy.Entity.Forward);
 			BlueprintUnit blueprint = ((BaseUnitEntity)enemy.Entity).Blueprint;
-			float num3 = (float)(2 * blueprint.WarhammerInitialAPBlue) / blueprint.WarhammerMovementApPerCell;
-			num += Mathf.Min(num2, num3) / num3;
+			float b = (float)(2 * blueprint.WarhammerInitialAPBlue) / Mathf.Max(1f, blueprint.WarhammerMovementApPerCell);
+			num += Mathf.Min(num2, b) / Mathf.Max(1f, b);
 		}
 		return new Score(num / (float)context.Enemies.Count);
 	}

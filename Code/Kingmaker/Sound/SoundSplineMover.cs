@@ -9,7 +9,9 @@ public class SoundSplineMover : MonoBehaviour
 
 	private Transform m_ThisTransform;
 
-	private Transform m_FollowObj;
+	private Camera m_Camera;
+
+	private float maxDistance = 25f;
 
 	private void Start()
 	{
@@ -23,11 +25,11 @@ public class SoundSplineMover : MonoBehaviour
 				Camera componentInChildren = rootGameObjects[i].GetComponentInChildren<Camera>();
 				if (componentInChildren != null)
 				{
-					m_FollowObj = componentInChildren.transform;
+					m_Camera = componentInChildren;
 					break;
 				}
 			}
-			if (m_FollowObj == null)
+			if (m_Camera == null)
 			{
 				Debug.LogError("MainCamera не найдена в другой сцене!");
 			}
@@ -40,10 +42,10 @@ public class SoundSplineMover : MonoBehaviour
 
 	private void Update()
 	{
-		if (m_FollowObj != null && spline != null)
+		if (m_Camera != null && spline != null)
 		{
-			Vector3 position = m_FollowObj.position;
-			m_ThisTransform.position = spline.WhereOnSpline(position);
+			Vector3 point = m_Camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)).GetPoint(maxDistance);
+			m_ThisTransform.position = spline.WhereOnSpline(point);
 		}
 	}
 }

@@ -11,15 +11,15 @@ namespace Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 
 public class ShipComponentItemSlotVM : SelectionGroupEntityVM
 {
-	public Sprite Icon;
+	public readonly Sprite Icon;
 
-	public string DisplayName;
+	public readonly string DisplayName;
 
-	public ReactiveProperty<TooltipBaseTemplate> Tooltip = new ReactiveProperty<TooltipBaseTemplate>();
+	public readonly ReactiveProperty<TooltipBaseTemplate> Tooltip = new ReactiveProperty<TooltipBaseTemplate>();
 
-	public ItemEntity Item;
+	public readonly ItemEntity Item;
 
-	public new BoolReactiveProperty IsSelected = new BoolReactiveProperty();
+	public new readonly BoolReactiveProperty IsSelected = new BoolReactiveProperty();
 
 	public ShipComponentItemSlotVM(ItemEntity item)
 		: base(allowSwitchOff: false)

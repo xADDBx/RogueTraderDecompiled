@@ -7,7 +7,9 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
+using Newtonsoft.Json;
 using Owlcat.QA.Validation;
 using UnityEngine;
 
@@ -17,130 +19,57 @@ namespace Kingmaker.Blueprints.Items.Shields;
 public class BlueprintItemShield : BlueprintItemEquipmentHand
 {
 	[SerializeField]
+	[JsonProperty(PropertyName = "AbilityContainer")]
+	public WeaponAbilityContainer WeaponAbilities;
+
+	[SerializeField]
+	private WarhammerArmorCategory m_Category;
+
+	[SerializeField]
+	[Tooltip("Базовый шанс блока")]
+	private int m_BlockChance;
+
+	[SerializeField]
+	[Tooltip("Опциональный оружейны компонент, для нанесения урона")]
 	private BlueprintItemWeaponReference m_WeaponComponent;
 
 	[SerializeField]
-	[ValidateNotNull]
-	private BlueprintItemArmorReference m_ArmorComponent;
+	[Tooltip("После первого блока скаттер шот выстрела, блокировать все следующие попадания проджектайлов этого выстрела?")]
+	private bool m_EnableScatterAutoBlockAfterFirstBlock;
 
-	public override float Weight => ArmorComponent?.Weight ?? base.Weight;
+	[SerializeField]
+	[ValidateNoNullEntries]
+	private BlueprintEquipmentEnchantmentReference[] m_Enchantments;
 
 	[CanBeNull]
-	public BlueprintItemWeapon WeaponComponent => m_WeaponComponent.Get();
+	public BlueprintItemWeapon WeaponComponent => m_WeaponComponent?.Get();
 
-	public BlueprintItemArmor ArmorComponent => m_ArmorComponent.Get();
+	public WarhammerArmorCategory Category => m_Category;
 
-	public override string Name
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(base.Name))
-			{
-				return base.Name;
-			}
-			return ArmorComponent.Name;
-		}
-	}
+	public int BlockChance => m_BlockChance;
 
-	public override string Description
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(base.Description))
-			{
-				return ArmorComponent.Description;
-			}
-			return base.Description;
-		}
-	}
+	public bool EnableScatterAutoBlockAfterFirstBlock => m_EnableScatterAutoBlockAfterFirstBlock;
+
+	public override string SubtypeName => Game.Instance.BlueprintRoot.LocalizedTexts.UnidentifiedItemNames.GetText(ItemsItemType.Shield);
 
 	public override ItemsItemType ItemType => ItemsItemType.Shield;
 
-	public override Sprite Icon
+	public override IEnumerable<BlueprintAbility> Abilities => base.Abilities.Concat(WeaponAbilities.Select((WeaponAbility i) => i.Ability).NotNull());
+
+	public override bool GainAbility
 	{
 		get
 		{
-			if (!(base.Icon == null))
+			if (!base.GainAbility)
 			{
-				return base.Icon;
+				return WeaponAbilities.Any();
 			}
-			return ArmorComponent.Icon;
-		}
-	}
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(base.InventoryEquipSound))
-			{
-				return base.InventoryEquipSound;
-			}
-			return ArmorComponent.InventoryEquipSound;
-		}
-	}
-
-	public override string InventoryTakeSound
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(base.InventoryTakeSound))
-			{
-				return base.InventoryTakeSound;
-			}
-			return ArmorComponent.InventoryTakeSound;
-		}
-	}
-
-	public override string InventoryPutSound
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(base.InventoryPutSound))
-			{
-				return base.InventoryPutSound;
-			}
-			return ArmorComponent.InventoryPutSound;
-		}
-	}
-
-	public BlueprintShieldType Type => ArmorComponent.Type as BlueprintShieldType;
-
-	public override string SubtypeName
-	{
-		get
-		{
-			if (ArmorComponent == null)
-			{
-				return "";
-			}
-			return ArmorComponent.SubtypeName;
-		}
-	}
-
-	public override string SubtypeDescription
-	{
-		get
-		{
-			if (ArmorComponent == null)
-			{
-				return "";
-			}
-			return ArmorComponent.SubtypeDescription;
+			return true;
 		}
 	}
 
 	protected override IEnumerable<BlueprintItemEnchantment> CollectEnchantments()
 	{
-		return ArmorComponent.Enchantments.Concat((WeaponComponent?.Enchantments).EmptyIfNull());
-	}
-
-	public override void OnEnableWithLibrary()
-	{
-		base.OnEnableWithLibrary();
-		if (Type != null && base.VisualParameters != null)
-		{
-			base.VisualParameters.Prototype = Type.HandVisualParameters;
-		}
+		return m_Enchantments.EmptyIfNull().Dereference().Concat((WeaponComponent?.Enchantments).EmptyIfNull());
 	}
 }

@@ -1,6 +1,6 @@
 using Kingmaker.Code.UI.MVVM.View.Credits;
 using Kingmaker.Code.UI.MVVM.View.Dialog.Dialog.Console;
-using Kingmaker.Code.UI.MVVM.View.EtudeCounter;
+using Kingmaker.Code.UI.MVVM.View.EtudeCounter.Console;
 using Kingmaker.Code.UI.MVVM.View.Formation.Console;
 using Kingmaker.Code.UI.MVVM.View.GameOver;
 using Kingmaker.Code.UI.MVVM.View.Loot.Console;
@@ -13,7 +13,6 @@ using Kingmaker.Code.UI.MVVM.View.UIVisibility;
 using Kingmaker.Code.UI.MVVM.View.Vendor;
 using Kingmaker.Code.UI.MVVM.View.Vendor.Console;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
-using Kingmaker.Code.UI.MVVM.VM.EtudeCounter;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
 using Kingmaker.Code.UI.MVVM.VM.GameOver;
 using Kingmaker.Code.UI.MVVM.VM.Surface;
@@ -67,7 +66,7 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	private UIDestroyViewLink<TransitionConsoleView, TransitionVM> m_TransitionConsoleViewLink;
 
 	[SerializeField]
-	private UIDestroyViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
+	private EtudeCounterConsoleView m_EtudeCounterView;
 
 	[SerializeField]
 	private CharGenContextConsoleView m_CharGenContextConsoleView;
@@ -137,6 +136,7 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	public void AddCombatInput(InputLayer inputLayer)
 	{
 		m_SurfaceHUDConsoleView.AddCombatInput(inputLayer);
+		m_EtudeCounterView.AddInput(inputLayer);
 	}
 
 	public void OnShowEscMenu()

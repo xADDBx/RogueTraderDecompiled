@@ -31,7 +31,7 @@ public sealed class AreaTransitionGroupCommand : GroupCommand
 		{
 			if (!base.CanStart)
 			{
-				if (Units.All((BaseUnitEntity u) => GeometryUtils.SqrMechanicsDistance(u.Position, TransitionPart.Owner.Position) <= 36f))
+				if (Units.All((BaseUnitEntity u) => u.IsPet || GeometryUtils.SqrMechanicsDistance(u.Position, TransitionPart.Owner.Position) <= 36f))
 				{
 					return Units.All((BaseUnitEntity u) => u.Commands.GroupCommand != null);
 				}
@@ -45,7 +45,7 @@ public sealed class AreaTransitionGroupCommand : GroupCommand
 	{
 		get
 		{
-			if (Units.Any((BaseUnitEntity u) => GeometryUtils.MechanicsDistance(u.Position, TransitionPart.View.ViewTransform.position) <= TransitionPart.ProximityDistance))
+			if (Units.Any((BaseUnitEntity u) => !u.IsPet && GeometryUtils.MechanicsDistance(u.Position, TransitionPart.View.ViewTransform.position) <= TransitionPart.ProximityDistance))
 			{
 				return Units.All((BaseUnitEntity u) => u.Commands.GroupCommand != null);
 			}

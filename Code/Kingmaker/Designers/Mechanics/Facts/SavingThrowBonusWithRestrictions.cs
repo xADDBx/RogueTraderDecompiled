@@ -29,12 +29,28 @@ public class SavingThrowBonusWithRestrictions : UnitFactComponentDelegate, IInit
 
 	public SavingThrowType Type;
 
+	[Tooltip("Всегда успех")]
+	public bool AlwaysSucceed;
+
+	[Tooltip("Всегда провал")]
+	public bool AlwaysFail;
+
 	public void OnEventAboutToTrigger(RulePerformSavingThrow evt)
 	{
 		if ((Type == SavingThrowType.Unknown || evt.Type == Type) && Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability))
 		{
+			if (AlwaysSucceed)
+			{
+				evt.SetAlwaysSucceed(base.Fact, ModifierDescriptor);
+				return;
+			}
+			if (AlwaysFail)
+			{
+				evt.SetAlwaysFail(base.Fact, ModifierDescriptor);
+				return;
+			}
 			int value = Bonus.Calculate(base.Context) * Multiplier;
-			evt.ValueModifiers.Add(value, base.Fact, ModifierDescriptor);
+			evt.AddValueModifiers(value, base.Fact, ModifierDescriptor);
 		}
 	}
 

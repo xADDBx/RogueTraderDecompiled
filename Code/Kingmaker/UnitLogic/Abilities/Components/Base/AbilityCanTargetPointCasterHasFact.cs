@@ -3,6 +3,9 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Localization;
+using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using UnityEngine;
 
@@ -16,7 +19,7 @@ public class AbilityCanTargetPointCasterHasFact : BlueprintComponent, IAbilityCa
 	[SerializeField]
 	private BlueprintUnitFactReference m_Fact;
 
-	public BlueprintFact Fact => m_Fact?.Get();
+	private BlueprintUnitFact Fact => m_Fact?.Get();
 
 	public bool IsAbilityCanTargetPointRestrictionPassed(AbilityData ability)
 	{
@@ -25,6 +28,11 @@ public class AbilityCanTargetPointCasterHasFact : BlueprintComponent, IAbilityCa
 
 	public string GetAbilityCanTargetPointRestrictionUIText()
 	{
-		return LocalizedTexts.Instance.Reasons.UnavailableGeneric;
+		LocalizedString noRequiredCondition = LocalizedTexts.Instance.Reasons.NoRequiredCondition;
+		string facts = UIUtilityTexts.GetBlueprintUnitFactNameText(Fact);
+		return noRequiredCondition.ToString(delegate
+		{
+			GameLogContext.Text = facts;
+		});
 	}
 }

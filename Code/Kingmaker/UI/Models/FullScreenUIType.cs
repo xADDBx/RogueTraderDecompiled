@@ -22,5 +22,6 @@ public enum FullScreenUIType
 	NewGame,
 	FirstLaunchSettings,
 	GroupChanger,
+	DlcModManager,
 	Loot
 }

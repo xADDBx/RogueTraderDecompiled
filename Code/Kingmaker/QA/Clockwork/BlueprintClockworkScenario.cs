@@ -62,7 +62,7 @@ public class BlueprintClockworkScenario : BlueprintScriptableObject
 
 	[ShowIf("IsStartFromSave")]
 	[SaveFilePicker]
-	public string Save;
+	public new string Save;
 
 	[ShowIf("IsStartFromRemoteSave")]
 	public string RemoteSave;

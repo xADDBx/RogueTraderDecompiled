@@ -61,6 +61,8 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 
 	private bool m_Initialized;
 
+	private bool m_NeedUpdate;
+
 	private bool m_ObsoleteEventsExist => ActionsOnEvent.Count > 0;
 
 	protected override void Awake()
@@ -69,10 +71,24 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 		Setup();
 	}
 
+	private void Update()
+	{
+		if (m_NeedUpdate)
+		{
+			m_Animator.Update(0f);
+			m_NeedUpdate = false;
+		}
+	}
+
 	public void Setup()
 	{
 		if (!m_Initialized)
 		{
+			if (string.IsNullOrEmpty(UniqueId))
+			{
+				ResetUniqueId();
+				PFLog.Default.Log("[ControllableAnimator] Generated new UniqueId: " + UniqueId + " for " + base.gameObject.name);
+			}
 			m_Initialized = true;
 			if (m_Animator == null)
 			{
@@ -181,6 +197,7 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 				for (int i = 0; i < value; i++)
 				{
 					m_Animator.Update(m_SubTickDeltaTime);
+					m_NeedUpdate = true;
 				}
 			}
 		}

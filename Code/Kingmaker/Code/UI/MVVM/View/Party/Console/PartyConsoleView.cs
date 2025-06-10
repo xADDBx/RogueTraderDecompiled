@@ -38,6 +38,12 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 	[SerializeField]
 	private List<FullScreenUIType> m_WindowsWithParty = new List<FullScreenUIType> { FullScreenUIType.Inventory };
 
+	[SerializeField]
+	private GameObject m_LeftArrow;
+
+	[SerializeField]
+	private GameObject m_RightArrow;
+
 	private RectTransform m_RectTransform;
 
 	private CanvasGroup m_CanvasGroup;
@@ -51,6 +57,8 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 	private bool m_PartySelectorEnabled;
 
 	private readonly List<PartyCharacterConsoleView> m_Characters = new List<PartyCharacterConsoleView>();
+
+	private PartyCharacterConsoleView[] m_CharacterViews;
 
 	public bool PartySelectorEnabled
 	{
@@ -68,8 +76,9 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 	public void Initialize()
 	{
 		m_Characters.Clear();
-		PartyCharacterConsoleView[] componentsInChildren = GetComponentsInChildren<PartyCharacterConsoleView>(includeInactive: true);
-		foreach (PartyCharacterConsoleView partyCharacterConsoleView in componentsInChildren)
+		m_CharacterViews = GetComponentsInChildren<PartyCharacterConsoleView>(includeInactive: true);
+		PartyCharacterConsoleView[] characterViews = m_CharacterViews;
+		foreach (PartyCharacterConsoleView partyCharacterConsoleView in characterViews)
 		{
 			partyCharacterConsoleView.Initialize(null);
 			m_Characters.Add(partyCharacterConsoleView);
@@ -88,6 +97,8 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 				UpdateLayout();
 			}));
 		}
+		UpdatePartySizeAndLayout();
+		AddDisposable(base.ViewModel.UpdateViewLayout.Subscribe(UpdatePartySizeAndLayout));
 		UpdateLayout();
 		CheckVisible();
 	}
@@ -149,7 +160,7 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 		}
 		else
 		{
-			HideAnimation(m_FullScreenUIType != 0 && !m_WindowsWithParty.Contains(m_FullScreenUIType));
+			HideAnimation((m_FullScreenUIType != 0 || base.ViewModel.ModalWindowUIType == ModalWindowUIType.Respec) && !m_WindowsWithParty.Contains(m_FullScreenUIType));
 		}
 	}
 
@@ -173,5 +184,53 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 	{
 		m_LocalMapEnabled = state;
 		CheckVisible();
+	}
+
+	private void UpdatePartySizeAndLayout()
+	{
+		m_LeftArrow.SetActive(value: false);
+		m_RightArrow.SetActive(value: false);
+		int num = 6;
+		if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Inventory)
+		{
+			num = 12;
+		}
+		int num2 = Game.Instance.SelectionCharacter.ActualGroup.IndexOf(Game.Instance.SelectionCharacter.SelectedUnitInUI.Value);
+		int num3 = num - 1;
+		int num4 = 0;
+		if (num2 > num3)
+		{
+			num4 = Game.Instance.SelectionCharacter.ActualGroup.Count - num;
+			m_LeftArrow.SetActive(value: true);
+			m_RightArrow.SetActive(value: false);
+		}
+		else if (Game.Instance.SelectionCharacter.ActualGroup.Count > num3 + 1)
+		{
+			m_LeftArrow.SetActive(value: false);
+			m_RightArrow.SetActive(value: true);
+		}
+		m_Characters.Clear();
+		PartyCharacterConsoleView[] characterViews = m_CharacterViews;
+		foreach (PartyCharacterConsoleView partyCharacterConsoleView in characterViews)
+		{
+			partyCharacterConsoleView.gameObject.SetActive(value: false);
+			partyCharacterConsoleView.Initialize(null);
+			m_Characters.Add(partyCharacterConsoleView);
+		}
+		for (int j = 0; j < num; j++)
+		{
+			PartyCharacterVM partyCharacterVM = base.ViewModel.CharactersVM[num4 + j];
+			m_Characters[j].Bind(partyCharacterVM);
+			AddDisposable(partyCharacterVM.IsEnable.Subscribe(delegate
+			{
+				UpdateLayout();
+			}));
+		}
+		UpdateLayout();
+		CheckVisible();
+	}
+
+	private void UpdateHintArrows()
+	{
 	}
 }

@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -14,6 +15,8 @@ public class CommandMarkHiddenSpan : CommandBase
 	{
 		[CanBeNull]
 		public AbstractUnitEntity Unit;
+
+		public bool ShouldUnhidePet;
 	}
 
 	[SerializeReference]
@@ -27,21 +30,32 @@ public class CommandMarkHiddenSpan : CommandBase
 	{
 		Data commandData = player.GetCommandData<Data>(this);
 		commandData.Unit = Unit.GetValue();
-		commandData.Unit?.Features.Hidden.Retain();
-		if (NoFadeOut)
+		commandData.ShouldUnhidePet = false;
+		doRun(commandData.Unit);
+		if (commandData.Unit is BaseUnitEntity { Pet: not null } baseUnitEntity && !baseUnitEntity.Pet.Features.Hidden.Value)
 		{
-			AbstractUnitEntity unit = commandData.Unit;
-			if (((unit == null) ? null : unit.View.Or(null)?.Fader) != null)
+			commandData.ShouldUnhidePet = true;
+			doRun(baseUnitEntity.Pet);
+		}
+		void doRun(AbstractUnitEntity abstractUnitEntity)
+		{
+			abstractUnitEntity?.Features.Hidden.Retain();
+			if (NoFadeOut && ((abstractUnitEntity == null) ? null : abstractUnitEntity.View.Or(null)?.Fader) != null)
 			{
-				commandData.Unit.View.Fader.Visible = false;
-				commandData.Unit.View.Fader.FastForward();
+				abstractUnitEntity.View.Fader.Visible = false;
+				abstractUnitEntity.View.Fader.FastForward();
 			}
 		}
 	}
 
 	protected override void OnStop(CutscenePlayerData player)
 	{
-		player.GetCommandData<Data>(this).Unit?.Features.Hidden.Release();
+		Data commandData = player.GetCommandData<Data>(this);
+		commandData.Unit?.Features.Hidden.Release();
+		if (commandData.ShouldUnhidePet && commandData.Unit is BaseUnitEntity baseUnitEntity)
+		{
+			baseUnitEntity.Pet?.Features.Hidden.Release();
+		}
 	}
 
 	public override bool IsFinished(CutscenePlayerData player)

@@ -26,7 +26,7 @@ public class RuleCalculateStatsArmor : RulebookEvent
 	public int? MinDeflectionValue;
 
 	[CanBeNull]
-	public ItemEntityArmor Armor { get; }
+	private ItemEntityArmor Armor { get; }
 
 	public int ResultBaseAbsorption { get; private set; }
 

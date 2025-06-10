@@ -17,11 +17,7 @@ namespace Kingmaker.UnitLogic;
 
 public class UnitHologram : MonoBehaviour
 {
-	private Character m_OriginalAvatar;
-
 	private BaseUnitEntity m_OriginalBaseUnit;
-
-	private Character m_HologramAvatar;
 
 	private UnitViewHandsEquipment m_AvatarHands;
 
@@ -29,9 +25,11 @@ public class UnitHologram : MonoBehaviour
 
 	private UnitEntityView m_HologramEntityView;
 
+	private UnitAnimationManager m_AnimationManager;
+
 	private bool m_IsStarshipHologram;
 
-	private UnitAnimationManager AnimationManager => m_HologramAvatar?.AnimationManager;
+	private UnitAnimationManager AnimationManager => m_AnimationManager;
 
 	public LosCalculations.CoverType CoverType
 	{
@@ -82,10 +80,8 @@ public class UnitHologram : MonoBehaviour
 	{
 		m_OriginalBaseUnit = originalUnit.EntityData;
 		m_HologramEntityView = hologramUnit;
-		Character characterAvatar = hologramUnit.CharacterAvatar;
-		m_OriginalAvatar = characterAvatar;
-		m_HologramAvatar = SetupAvatar(m_OriginalAvatar);
-		m_AvatarHands = originalUnit.HandsEquipment;
+		SetupAvatar(hologramUnit.CharacterAvatar);
+		m_AvatarHands = ((originalUnit.HandsEquipment.Character != null) ? originalUnit.HandsEquipment : null);
 		hologramUnit.Blueprint = originalUnit.Blueprint;
 		SetupShading(BlueprintRoot.Instance.FxRoot.Hologram.MainFx);
 	}
@@ -99,43 +95,62 @@ public class UnitHologram : MonoBehaviour
 		SetupShading(BlueprintRoot.Instance.FxRoot.Hologram.MainFx);
 	}
 
-	[NotNull]
-	private Character SetupAvatar(Character originalAvatar)
+	private void SetupAvatar(Character originalAvatar)
 	{
 		Character component = base.gameObject.GetComponent<Character>();
-		component.PreventUpdate = false;
-		component.transform.localScale = originalAvatar.transform.localScale;
-		component.IsInDollRoom = true;
-		component.ForbidBeltItemVisualization = originalAvatar.ForbidBeltItemVisualization;
-		component.AnimatorPrefab = originalAvatar.AnimatorPrefab;
-		component.OnStart();
-		if (component.Animator != null)
+		if (component == null || originalAvatar == null)
 		{
-			if (!component.Animator.gameObject.GetComponent<UnitAnimationCallbackReceiver>())
+			UnitAnimationManager componentInChildren = base.gameObject.GetComponentInChildren<UnitAnimationManager>();
+			if (!(componentInChildren == null))
 			{
-				component.Animator.gameObject.AddComponent<UnitAnimationCallbackReceiver>();
-			}
-			component.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-		}
-		if (component.AnimationManager != null)
-		{
-			component.AnimationManager.AtachToView(m_HologramEntityView, m_OriginalBaseUnit?.Progression.Race);
-			if ((bool)component.AnimationManager)
-			{
-				component.AnimationManager.IsInCombat = true;
-				component.AnimationManager.Tick(RealTimeController.SystemStepDurationSeconds);
+				SetupAnimator(componentInChildren.Animator);
+				SetupAnimationManager(componentInChildren);
 			}
 		}
-		return component;
+		else
+		{
+			component.PreventUpdate = false;
+			component.transform.localScale = originalAvatar.transform.localScale;
+			component.IsInDollRoom = true;
+			component.ForbidBeltItemVisualization = originalAvatar.ForbidBeltItemVisualization;
+			component.AnimatorPrefab = originalAvatar.AnimatorPrefab;
+			component.OnStart();
+			SetupAnimator(component.Animator);
+			SetupAnimationManager(component.AnimationManager);
+		}
+	}
+
+	private static void SetupAnimator(Animator animator)
+	{
+		if (!(animator == null))
+		{
+			if (!animator.gameObject.GetComponent<UnitAnimationCallbackReceiver>())
+			{
+				animator.gameObject.AddComponent<UnitAnimationCallbackReceiver>();
+			}
+			animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+		}
+	}
+
+	private void SetupAnimationManager(UnitAnimationManager animationManager)
+	{
+		if (!(animationManager == null))
+		{
+			m_AnimationManager = animationManager;
+			animationManager.AttachToView(m_HologramEntityView, m_OriginalBaseUnit?.Progression.Race);
+			animationManager.IsInCombat = true;
+			animationManager.OnAnimationSetChanged();
+			animationManager.Tick(RealTimeController.SystemStepDurationSeconds);
+		}
 	}
 
 	private void Update()
 	{
-		if (!m_IsStarshipHologram && m_HologramAvatar.AnimationManager != null)
+		if (!m_IsStarshipHologram && AnimationManager != null && m_AvatarHands != null)
 		{
-			m_HologramAvatar.AnimationManager.ActiveMainHandWeaponStyle = m_AvatarHands.ActiveMainHandWeaponStyle;
-			m_HologramAvatar.AnimationManager.ActiveOffHandWeaponStyle = m_AvatarHands.ActiveOffHandWeaponStyle;
-			m_HologramAvatar.AnimationManager.Tick(Time.deltaTime);
+			AnimationManager.ActiveMainHandWeaponStyle = m_AvatarHands.ActiveMainHandWeaponStyle;
+			AnimationManager.ActiveOffHandWeaponStyle = m_AvatarHands.ActiveOffHandWeaponStyle;
+			AnimationManager.Tick(Time.deltaTime);
 			UnitViewHandsEquipment avatarHands = m_AvatarHands;
 			if (avatarHands != null && !avatarHands.InCombat)
 			{

@@ -6,6 +6,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities;
@@ -65,6 +66,8 @@ public class RulePerformAttack : RulebookTargetEvent
 
 	[CanBeNull]
 	public RuleRollParry ResultParryRule => RollPerformAttackRule.ResultParryRule;
+
+	public RuleRollBlock ResultBlockRule => RollPerformAttackRule.ResultBlockRule;
 
 	public HitLocation ResultHitLocation => RollPerformAttackRule.ResultHitLocation;
 

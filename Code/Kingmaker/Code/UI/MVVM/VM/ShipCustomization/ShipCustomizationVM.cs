@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.VM.Space;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.UI.MVVM.VM.ShipCustomization.Posts;
 using Kingmaker.UnitLogic.Levelup;
 using Owlcat.Runtime.UI.MVVM;
@@ -26,7 +27,7 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	private readonly ReactiveProperty<LevelUpManager> m_LevelUpManager = new ReactiveProperty<LevelUpManager>();
 
-	private AutoDisposingList<ShipComponentSlotVM> m_AllSlots = new AutoDisposingList<ShipComponentSlotVM>();
+	private readonly AutoDisposingList<ShipComponentSlotVM> m_AllSlots = new AutoDisposingList<ShipComponentSlotVM>();
 
 	private readonly Action m_CloseAction;
 
@@ -41,6 +42,8 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	public ShipSkillsVM ShipSkillsVM;
 
 	public ShipPostsVM ShipPostsVM;
+
+	public ShipAbilitiesVM ShipAbilitiesVM;
 
 	public ShipCustomizationVM(Action closeAction, ShipCustomizationTab tab = ShipCustomizationTab.Upgrade)
 	{
@@ -67,6 +70,7 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		ShipUpgradeVm?.Dispose();
 		ShipSkillsVM?.Dispose();
 		ShipPostsVM?.Dispose();
+		ShipAbilitiesVM?.Dispose();
 	}
 
 	private void SelectWindow(ShipCustomizationTab tab)
@@ -84,6 +88,10 @@ public class ShipCustomizationVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		case ShipCustomizationTab.Posts:
 			ShipPostsVM?.Dispose();
 			ShipPostsVM = new ShipPostsVM(CanChangeEquipment.Value);
+			break;
+		case ShipCustomizationTab.Abilities:
+			ShipAbilitiesVM?.Dispose();
+			ShipAbilitiesVM = new ShipAbilitiesVM();
 			break;
 		}
 		ActiveTab.Value = tab;

@@ -289,6 +289,10 @@ public class BaseItemPart : TooltipBaseTemplate
 		}
 		foreach (UIUtilityItem.UIAbilityData ability in ItemTooltipData.Abilities)
 		{
+			if (ability.BlueprintAbility.HiddenInUI)
+			{
+				continue;
+			}
 			TooltipTemplateAbility tooltip = new TooltipTemplateAbility(ability.BlueprintAbility, BlueprintItem);
 			TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
 			{

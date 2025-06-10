@@ -1,5 +1,4 @@
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.UI.Common;
 using Kingmaker.UI.InputSystems;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
@@ -25,27 +24,38 @@ public class GroupChangerPCView : GroupChangerBaseView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		bool flag = UINetUtility.IsControlMainCharacter();
-		m_AcceptButton.Or(null)?.gameObject.SetActive(flag);
-		if (flag)
+		if (m_AcceptLabel != null)
 		{
-			AddDisposable(m_AcceptButton.OnLeftClickAsObservable().Subscribe(delegate
-			{
-				OnAccept();
-			}));
-			if (m_AcceptLabel != null)
-			{
-				m_AcceptLabel.text = UIStrings.Instance.CommonTexts.Accept;
-			}
+			m_AcceptLabel.text = UIStrings.Instance.CommonTexts.Accept;
 		}
-		m_CloseButton.Interactable = base.ViewModel.CloseEnabled.Value;
-		if (base.ViewModel.CloseEnabled.Value)
+		AddDisposable(m_AcceptButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
-			AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
-			{
-				OnCancel();
-			}));
-			AddDisposable(EscHotkeyManager.Instance.Subscribe(base.OnCancel));
+			OnAccept();
+		}));
+		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
+		{
+			OnCancel();
+		}));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		EscHotkeyManager.Instance.Unsubscribe(base.OnCancel);
+	}
+
+	protected override void CheckCoopButtonsImpl(bool isMainCharacter)
+	{
+		base.CheckCoopButtonsImpl(isMainCharacter);
+		m_AcceptButton.Or(null)?.gameObject.SetActive(isMainCharacter);
+		m_CloseButton.Interactable = base.ViewModel.CloseEnabled.Value && isMainCharacter;
+		if (isMainCharacter && base.ViewModel.CloseEnabled.Value)
+		{
+			EscHotkeyManager.Instance.Subscribe(base.OnCancel);
+		}
+		else
+		{
+			EscHotkeyManager.Instance.Unsubscribe(base.OnCancel);
 		}
 	}
 }

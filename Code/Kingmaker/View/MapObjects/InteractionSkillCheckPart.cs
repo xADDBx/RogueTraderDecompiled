@@ -63,6 +63,8 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 
 	public override bool InteractThroughVariants { get; protected set; }
 
+	public float OvertipCorrection => base.Settings.OvertipVerticalCorrection;
+
 	public bool IsFailed
 	{
 		get
@@ -157,7 +159,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 					{
 						if (!ExperienceObtained && skill != 0)
 						{
-							GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExp(num, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0), rollUnit);
+							GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExp(num, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
 							ExperienceObtained = true;
 						}
 						break;

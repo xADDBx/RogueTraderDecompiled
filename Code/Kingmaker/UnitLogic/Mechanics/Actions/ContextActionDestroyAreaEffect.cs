@@ -14,19 +14,29 @@ public class ContextActionDestroyAreaEffect : ContextAction
 	[FormerlySerializedAs("AreaEffect")]
 	private BlueprintAbilityAreaEffectReference m_AreaEffect;
 
+	[SerializeField]
+	private bool m_DestroyAreaEffectOnlyFromCaster;
+
 	public BlueprintAbilityAreaEffect AreaEffect => m_AreaEffect?.Get();
+
+	public bool DestroyAreaEffectOnlyFromCaster => m_DestroyAreaEffectOnlyFromCaster;
 
 	public override string GetCaption()
 	{
-		string text = ((AreaEffect != null) ? AreaEffect.ToString() : "<undefined>");
-		return "Destroy " + text + " ";
+		return string.Concat("Destroy " + (m_DestroyAreaEffectOnlyFromCaster ? "only casters " : "all "), (AreaEffect != null) ? AreaEffect.ToString() : "<undefined>");
 	}
 
 	protected override void RunAction()
 	{
+		MechanicEntity mechanicEntity = (DestroyAreaEffectOnlyFromCaster ? base.Context.MaybeCaster : null);
+		if (DestroyAreaEffectOnlyFromCaster && mechanicEntity == null)
+		{
+			PFLog.Default.Error("Context.MaybeCaster can't be null!");
+			return;
+		}
 		foreach (AreaEffectEntity areaEffect in Game.Instance.State.AreaEffects)
 		{
-			if (areaEffect.Blueprint == AreaEffect)
+			if (areaEffect.Blueprint == AreaEffect && (!DestroyAreaEffectOnlyFromCaster || areaEffect.Context.MaybeCaster == mechanicEntity))
 			{
 				areaEffect.ForceEnd();
 			}

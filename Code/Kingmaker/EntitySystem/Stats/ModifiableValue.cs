@@ -566,7 +566,15 @@ public class ModifiableValue : IHashable
 		UpdateInternalModifiers();
 		m_UpdateInternalModifiers = false;
 		ModifiedValueRaw = ApplyModifiersFiltered(CalculateBaseValue(BaseValue), null);
-		ModifiedValue = Math.Max(MinValue, ModifiedValueRaw);
+		UnitPartStatsOverride optional = Owner.GetOptional<UnitPartStatsOverride>();
+		if (optional != null && optional.TryGetOverride(Type, out var value))
+		{
+			ModifiedValue = value;
+		}
+		else
+		{
+			ModifiedValue = Math.Max(MinValue, ModifiedValueRaw);
+		}
 		PermanentValue = CalculatePermanentValue();
 		OnUpdate();
 		if (m_UpdateDependentFacts)

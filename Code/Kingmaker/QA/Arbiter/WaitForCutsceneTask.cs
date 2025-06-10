@@ -1,8 +1,10 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
+using Kingmaker.QA.Arbiter.Service;
+using Kingmaker.QA.Arbiter.Tasks;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
@@ -17,16 +19,15 @@ public class WaitForCutsceneTask : ArbiterTask
 	{
 	}
 
-	protected override IEnumerator Routine()
+	protected override IEnumerator<ArbiterTask> Routine()
 	{
 		float startTime = Time.unscaledTime;
 		while (IsWaitingForCutscene(startTime))
 		{
 			float num = Time.unscaledTime - startTime;
-			base.Status = $"Wait for cut scene... ({num:F})";
+			base.Status = $"Wait for cut scene... ({num:g})";
 			yield return new DelayTask(TimeSpan.FromSeconds(5.0), this);
 		}
-		Game.Instance.DialogController.StopDialog();
 	}
 
 	private bool IsWaitingForCutscene(float startTime)
@@ -35,7 +36,7 @@ public class WaitForCutsceneTask : ArbiterTask
 		{
 			if (Time.unscaledTime - startTime > 10f)
 			{
-				PFLog.Arbiter.Log("Force stop locked cutscenes");
+				ArbiterService.Logger.Log("Force stop locked cutscenes");
 				foreach (CutscenePlayerData item in Game.Instance.State.Cutscenes.ToTempList())
 				{
 					if (item.Cutscene.LockControl)

@@ -10,6 +10,7 @@ using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -101,7 +102,7 @@ public class Post : IHashable
 
 	public EntityRef<StarshipEntity> ShipRef => Starship;
 
-	public IEnumerable<BlueprintAbility> DefaultAbilities => PostData.DefaultAbilities;
+	public IEnumerable<BlueprintAbility> DefaultAbilities => PostData?.DefaultAbilities;
 
 	[JsonProperty(PropertyName = "CurrentUnit")]
 	private BaseUnitEntity CurrentUnit_Obsolete
@@ -116,7 +117,7 @@ public class Post : IHashable
 
 	public bool HasPenalty => CurrentSkillValue < 1;
 
-	public int CurrentSkillValue => (CurrentUnit?.GetStatOptional(PostData.AssociatedSkill)?.ModifiedValue).GetValueOrDefault();
+	public int CurrentSkillValue => (CurrentUnit?.GetStatOptional(PostData?.AssociatedSkill ?? StatType.Unknown)?.ModifiedValue).GetValueOrDefault();
 
 	public BlueprintPortrait Portrait => CurrentUnit?.Blueprint?.PortraitSafe ?? BlueprintRoot.Instance.UIConfig.Portraits.LeaderPlaceholderPortrait;
 
@@ -124,7 +125,33 @@ public class Post : IHashable
 
 	public bool IsBlocked => BlockingBuff != null;
 
-	public PostData PostData => Ship.Blueprint.Posts.Find((PostData x) => x.type == PostType);
+	public PostData PostData
+	{
+		get
+		{
+			object obj = Ship?.Blueprint?.Posts?.Find((PostData x) => x?.type == PostType);
+			if (obj == null)
+			{
+				StarshipEntity ship = Ship;
+				if (ship == null)
+				{
+					return null;
+				}
+				BlueprintStarship blueprint = ship.Blueprint;
+				if (blueprint == null)
+				{
+					return null;
+				}
+				List<PostData> posts = blueprint.Posts;
+				if (posts == null)
+				{
+					return null;
+				}
+				obj = posts.FirstOrDefault();
+			}
+			return (PostData)obj;
+		}
+	}
 
 	public IEnumerable<Ability> CurrentAbilities()
 	{
@@ -170,7 +197,7 @@ public class Post : IHashable
 		{
 			m_Initialized = true;
 			AbstractUnitEntity value = null;
-			PostData.DefaultUnit?.TryGetValue(out value);
+			PostData?.DefaultUnit?.TryGetValue(out value);
 			SetUnitOnPost(value as BaseUnitEntity);
 		}
 	}

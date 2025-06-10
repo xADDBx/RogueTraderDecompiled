@@ -92,7 +92,6 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 
 	public BlueprintBuff BlueprintBuffForTooltip => m_BlueprintBuffForTooltip?.Get();
 
-	[NotNull]
 	public AoEPattern Pattern
 	{
 		get
@@ -163,6 +162,8 @@ public class BlueprintAbilityAreaEffect : BlueprintMechanicEntityFact, IAbilityA
 	int IAbilityAoEPatternProvider.PatternAngle => 0;
 
 	bool IAbilityAoEPatternProvider.CalculateAttackFromPatternCentre => true;
+
+	public bool ExcludeUnwalkable => IsStrategistAbility;
 
 	TargetType IAbilityAoEPatternProvider.Targets => TargetType;
 

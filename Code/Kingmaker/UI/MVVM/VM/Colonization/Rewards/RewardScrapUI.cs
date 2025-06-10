@@ -8,7 +8,7 @@ namespace Kingmaker.UI.MVVM.VM.Colonization.Rewards;
 
 public class RewardScrapUI : RewardUI<RewardScrap>
 {
-	public override string Name => string.Empty;
+	public override string Name => UIStrings.Instance.ShipCustomization.Scrap;
 
 	public override string Description => UIStrings.Instance.ShipCustomization.Scrap;
 

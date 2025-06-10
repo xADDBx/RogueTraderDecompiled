@@ -19,12 +19,12 @@ public class AllowDyingCondition : BlueprintComponent, IRuntimeEntityFactCompone
 	{
 		protected override void OnActivateOrPostLoad()
 		{
-			base.Owner.Features.AllowDyingCondition.Retain();
+			base.Owner.Features.UnconsciousOnZeroHealth.Retain();
 		}
 
 		protected override void OnDeactivate()
 		{
-			base.Owner.Features.AllowDyingCondition.Release();
+			base.Owner.Features.UnconsciousOnZeroHealth.Release();
 		}
 
 		public override Hash128 GetHash128()

@@ -7,13 +7,16 @@ public class TooltipBrickPrerequisite : ITooltipBrick
 {
 	private readonly List<PrerequisiteEntryVM> m_PrerequisiteEntries;
 
-	public TooltipBrickPrerequisite(List<PrerequisiteEntryVM> prerequisiteEntries)
+	private readonly bool m_OneFromList;
+
+	public TooltipBrickPrerequisite(List<PrerequisiteEntryVM> prerequisiteEntries, bool oneFromList)
 	{
 		m_PrerequisiteEntries = prerequisiteEntries;
+		m_OneFromList = oneFromList;
 	}
 
 	public TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickPrerequisiteVM(m_PrerequisiteEntries);
+		return new TooltipBrickPrerequisiteVM(m_PrerequisiteEntries, m_OneFromList);
 	}
 }

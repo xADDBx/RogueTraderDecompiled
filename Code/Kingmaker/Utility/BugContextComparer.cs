@@ -40,6 +40,10 @@ public class BugContextComparer : IComparer<BugContext>
 			10
 		},
 		{
+			BugContext.ContextType.DlcModManager,
+			10
+		},
+		{
 			BugContext.ContextType.Dialog,
 			20
 		},

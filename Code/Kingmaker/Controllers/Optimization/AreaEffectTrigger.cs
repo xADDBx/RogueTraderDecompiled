@@ -36,6 +36,7 @@ public class AreaEffectTrigger : MonoBehaviour
 			else
 			{
 				Entered.Add(baseUnitEntity.FromBaseUnitEntity());
+				Unit?.HandleEntityPositionChanged();
 			}
 		}
 	}
@@ -51,6 +52,7 @@ public class AreaEffectTrigger : MonoBehaviour
 			else
 			{
 				Exited.Add(baseUnitEntity.FromBaseUnitEntity());
+				Unit?.HandleEntityPositionChanged();
 			}
 		}
 	}

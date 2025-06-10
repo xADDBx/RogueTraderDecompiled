@@ -31,6 +31,10 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 	[SerializeField]
 	protected SurfaceCombatUnitOrderVerticalView m_CurrentUnit;
 
+	[SerializeField]
+	[Header("Condition Part")]
+	protected GameObject m_CombatConditionContainer;
+
 	private Vector2 m_BaseSize;
 
 	private float m_FixedNormalizedPosition;
@@ -57,6 +61,7 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 	{
 		base.BindViewImplementation();
 		m_HasScroll.Value = false;
+		AddDisposable(base.ViewModel.NeedShowEtudeCounter.Subscribe(m_CombatConditionContainer.SetActive));
 	}
 
 	protected override void OnUnitHovered()
@@ -70,8 +75,6 @@ public abstract class InitiativeTrackerVerticalView : InitiativeTrackerView, IHi
 		{
 			return;
 		}
-		m_ScrollBackTask?.Dispose();
-		m_ScrollBackTask = null;
 		ITurnVirtualItemData turnVirtualItemData = VirtualEntries.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == base.ViewModel.HoveredUnit.Value);
 		if (turnVirtualItemData != null && !VirtualList.IsVisible(turnVirtualItemData))
 		{

@@ -49,7 +49,7 @@ public class PostAbilityVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public bool IsFullHP;
 
-	public TooltipTemplateShipAbility TooltipTemplateAbility;
+	public readonly TooltipTemplateShipAbility TooltipTemplateAbility;
 
 	public TooltipTemplateShipAbility TooltipTemplateAttunedAbility;
 
@@ -163,17 +163,13 @@ public class PostAbilityVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 	private BlueprintAbility GetAttuneAbility()
 	{
 		IEnumerable<BlueprintShipPostExpertise> enumerable = m_Post.UnitExpertises(m_Post.CurrentUnit);
-		if (enumerable != null && enumerable.Any())
+		if (enumerable == null || !enumerable.Any())
 		{
-			foreach (BlueprintShipPostExpertise item in enumerable)
-			{
-				if (item.DefaultPostAbility == Ability)
-				{
-					return item.ChangedPostAbility;
-				}
-			}
+			return null;
 		}
-		return null;
+		return (from expertise in enumerable
+			where expertise.DefaultPostAbility == Ability
+			select expertise.ChangedPostAbility).FirstOrDefault();
 	}
 
 	public void TryAttune()
@@ -199,8 +195,7 @@ public class PostAbilityVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public List<TooltipBaseTemplate> TooltipTemplates()
 	{
-		List<TooltipBaseTemplate> list = new List<TooltipBaseTemplate>();
-		list.Add(TooltipTemplateAbility);
+		List<TooltipBaseTemplate> list = new List<TooltipBaseTemplate> { TooltipTemplateAbility };
 		if (TooltipTemplateAttunedAbility != null)
 		{
 			list.Add(TooltipTemplateAttunedAbility);

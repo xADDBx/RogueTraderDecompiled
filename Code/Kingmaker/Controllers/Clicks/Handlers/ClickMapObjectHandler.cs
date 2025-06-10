@@ -11,6 +11,7 @@ using Kingmaker.Interaction;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.Mechanics.Entities;
@@ -144,16 +145,19 @@ public class ClickMapObjectHandler : IClickEventHandler
 			UnitCommandsRunner.DirectInteract(baseUnitEntity, interaction);
 			return true;
 		}
+		bool leaveFollowers = false;
 		if (interaction.HasVisibleTrap() || interaction is DisableTrapInteractionPart)
 		{
 			foreach (BaseUnitEntity user in users)
 			{
 				user.Commands.InterruptMove(byPlayer: true);
+				(user.GetOptional<UnitPartPetOwner>()?.PetUnit)?.Commands.InterruptMove(byPlayer: true);
 			}
+			leaveFollowers = true;
 		}
 		if (interaction.Type == InteractionType.Approach)
 		{
-			UnitInteractWithObject.ApproachAndInteract(baseUnitEntity, interaction, variantActor);
+			UnitInteractWithObject.ApproachAndInteract(baseUnitEntity, interaction, variantActor, leaveFollowers);
 		}
 		return true;
 	}

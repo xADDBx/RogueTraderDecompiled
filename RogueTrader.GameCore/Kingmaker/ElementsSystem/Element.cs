@@ -40,6 +40,10 @@ public abstract class Element : ICanBeLogContext, IHaveCaption, IHaveDescription
 		get
 		{
 			string text = name;
+			if (text.Length == 0)
+			{
+				return "";
+			}
 			int num = text.IndexOf("$", 1, StringComparison.Ordinal);
 			if (num < 0 || num >= text.Length - 1 - 4)
 			{

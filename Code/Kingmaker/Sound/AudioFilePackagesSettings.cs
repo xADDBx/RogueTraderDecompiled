@@ -11,7 +11,8 @@ public class AudioFilePackagesSettings : ScriptableObject
 	public enum AudioChunk
 	{
 		MainGame,
-		DLC1
+		DLC1,
+		DLC2
 	}
 
 	[Serializable]

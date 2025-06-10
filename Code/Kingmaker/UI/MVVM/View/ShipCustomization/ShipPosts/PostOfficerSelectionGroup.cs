@@ -39,10 +39,10 @@ public class PostOfficerSelectionGroup : ViewBase<SelectionGroupRadioVM<PostOffi
 	{
 	}
 
-	protected void OnFocus(IConsoleEntity entity)
+	private void OnFocus(IConsoleEntity entity)
 	{
 		PostOfficerView postOfficerView = entity as PostOfficerView;
-		if (postOfficerView != null)
+		if (!(postOfficerView == null))
 		{
 			m_ScrollRect.EnsureVisible(postOfficerView.RectTransform);
 		}

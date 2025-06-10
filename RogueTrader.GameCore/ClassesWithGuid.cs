@@ -26,7 +26,6 @@ public static class ClassesWithGuid
 		(typeof(BlueprintComponentList), "ca9d3271950638d4e955338f6381dbe7"),
 		(typeof(BlueprintFaction), "9c187edec85a6b845a4998e7cf445685"),
 		(typeof(BlueprintItemsStash), "5e67da75e2474764a5fde3375352ac8f"),
-		(typeof(BlueprintPet), "923b2d325a4900b49af56a5ac18ceceb"),
 		(typeof(BlueprintProjectileTrajectory), "55a39726d0cce8a45877d1ffb0c3e5e6"),
 		(typeof(BlueprintScriptableObject), "3ec4f91d40b87d34197f44f40a969d92"),
 		(typeof(BlueprintSummonPool), "fc91c2d06c5f09a419eeca7a14709271"),

@@ -31,14 +31,14 @@ public class QAModeExceptionReporter : MonoBehaviour
 	public static bool MaybeShowError(string message, Exception ex = null, UnityEngine.Object ctx = null, bool addMessageToReport = true)
 	{
 		int num;
-		if (BuildModeUtility.IsDevelopment)
+		if (!BuildModeUtility.IsPlayTest && BuildModeUtility.IsDevelopment)
 		{
 			if (!CheatsJira.QaMode)
 			{
 				num = ((ex is SpamDetectionException) ? 1 : 0);
 				if (num == 0)
 				{
-					goto IL_006e;
+					goto IL_0075;
 				}
 			}
 			else
@@ -60,8 +60,8 @@ public class QAModeExceptionReporter : MonoBehaviour
 		{
 			num = 0;
 		}
-		goto IL_006e;
-		IL_006e:
+		goto IL_0075;
+		IL_0075:
 		return (byte)num != 0;
 	}
 

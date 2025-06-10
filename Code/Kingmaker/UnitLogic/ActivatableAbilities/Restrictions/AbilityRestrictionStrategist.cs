@@ -38,8 +38,9 @@ public class AbilityRestrictionStrategist : BlueprintComponent, IAbilityRestrict
 		return BlueprintRoot.Instance.LocalizedTexts.Reasons.IsOnCooldown;
 	}
 
-	public bool IsPatternRestrictionPassed(AbilityData ability, MechanicEntity caster, TargetWrapper target)
+	public bool IsPatternRestrictionPassed(AbilityData ability, MechanicEntity caster, TargetWrapper target, out AbilityData.UnavailabilityReasonType unavailabilityReason)
 	{
+		unavailabilityReason = AbilityData.UnavailabilityReasonType.None;
 		OrientedPatternData orientedPattern = ability.GetPatternSettings().GetOrientedPattern(ability, ability.Caster.GetNearestNodeXZ(), target.NearestNode);
 		if (ability.Blueprint.GetComponent<AbilityRestrictionStrategist>() == null)
 		{
@@ -55,15 +56,10 @@ public class AbilityRestrictionStrategist : BlueprintComponent, IAbilityRestrict
 			}
 		}
 		int count = list.Count;
-		if (count <= 1)
-		{
-			if (count == 0)
-			{
-				return true;
-			}
-			return list[0].Blueprint.TacticsAreaEffectType == strategistTacticsAreaEffectType;
-		}
-		return false;
+		bool flag = count <= 1 && (count == 0 || list[0].Blueprint.TacticsAreaEffectType == strategistTacticsAreaEffectType);
+		bool flag2 = flag;
+		unavailabilityReason = ((!flag2) ? AbilityData.UnavailabilityReasonType.StrategistZonesCantOverlap : AbilityData.UnavailabilityReasonType.None);
+		return flag2;
 	}
 
 	public string GetAbilityPatternRestrictionUIText(AbilityData ability, MechanicEntity caster, TargetWrapper target)

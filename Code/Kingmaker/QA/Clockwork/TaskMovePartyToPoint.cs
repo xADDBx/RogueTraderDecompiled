@@ -36,7 +36,7 @@ public class TaskMovePartyToPoint : ClockworkRunnerTask
 		UnitMoveTo command = null;
 		while (command == null && TimeLeft > 1f)
 		{
-			command = Game.Instance.Player.Party.Select((BaseUnitEntity u) => u.Commands.Current as UnitMoveTo).NotNull().FirstOrDefault();
+			command = Game.Instance.Player.PartyAndPets.Select((BaseUnitEntity u) => u.Commands.Current as UnitMoveTo).NotNull().FirstOrDefault();
 			yield return null;
 		}
 		if (command == null)
@@ -44,7 +44,7 @@ public class TaskMovePartyToPoint : ClockworkRunnerTask
 			PFLog.Clockwork.Error("TaskMovePartyToPoint failed: no UnitMoveTo command created");
 			yield break;
 		}
-		while (!command.IsFinished || !Game.Instance.Player.Party.All(ReachedDestination))
+		while (!command.IsFinished || !Game.Instance.Player.PartyAndPets.All(ReachedDestination))
 		{
 			yield return 0.5f;
 		}

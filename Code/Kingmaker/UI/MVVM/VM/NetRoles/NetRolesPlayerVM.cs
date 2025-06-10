@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Networking;
@@ -10,7 +11,7 @@ public class NetRolesPlayerVM : NetLobbyPlayerVM
 {
 	public readonly List<NetRolesPlayerCharacterVM> Players = new List<NetRolesPlayerCharacterVM>();
 
-	private static List<BaseUnitEntity> Characters => Game.Instance.SelectionCharacter.ActualGroup;
+	private static List<BaseUnitEntity> Characters => Game.Instance.SelectionCharacter.ActualGroup.Where((BaseUnitEntity u) => !u.IsPet).ToList();
 
 	protected override void DisposeImplementation()
 	{

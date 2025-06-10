@@ -14,11 +14,12 @@ using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.UI.MVVM;
+using Photon.Realtime;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.GroupChanger;
 
-public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubscriber, IChangeGroupHandler, ICloseChangeGroupHandler
+public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubscriber, IChangeGroupHandler, ICloseChangeGroupHandler, INetLobbyPlayersHandler
 {
 	private Action m_ActionGo;
 
@@ -41,6 +42,8 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 	private List<UnitReference> m_OverrideRemoteCharacters;
 
 	public readonly BoolReactiveProperty CloseActionsIsSame = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty IsMainCharacter = new BoolReactiveProperty();
 
 	public IReadOnlyReactiveCollection<GroupChangerCharacterVM> PartyCharacter => m_PartyCharacter;
 
@@ -65,6 +68,7 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 		RequiredUnits.AddRange(requiredUnits);
 		IsCapital = isCapital;
 		m_CloseEnabled.Value = closeEnabled;
+		IsMainCharacter.Value = UINetUtility.IsControlMainCharacter();
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -175,7 +179,7 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 		string cantMove = CanMoveCharacterFromRemoteToParty(unitReference);
 		if (!string.IsNullOrEmpty(cantMove))
 		{
-			if (UINetUtility.IsControlMainCharacter())
+			if (IsMainCharacter.Value)
 			{
 				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 				{
@@ -216,5 +220,26 @@ public abstract class GroupChangerVM : VMBase, IAcceptChangeGroupHandler, ISubsc
 		m_RemoteCharacter.Remove(characterVm);
 		m_PartyCharacter.Add(characterVm);
 		characterVm.SetIsInParty(isInParty: true);
+	}
+
+	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
+	{
+	}
+
+	public void HandlePlayerLeftRoom(Photon.Realtime.Player player)
+	{
+		IsMainCharacter.Value = UINetUtility.IsControlMainCharacter();
+	}
+
+	public void HandlePlayerChanged()
+	{
+	}
+
+	public void HandleLastPlayerLeftLobby()
+	{
+	}
+
+	public void HandleRoomOwnerChanged()
+	{
 	}
 }

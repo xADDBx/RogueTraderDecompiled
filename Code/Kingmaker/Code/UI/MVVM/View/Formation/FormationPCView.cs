@@ -5,6 +5,7 @@ using Kingmaker.Code.UI.MVVM.View.Formation.Base;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models.SettingsUI;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.Utility;
@@ -42,6 +43,8 @@ public class FormationPCView : FormationBaseView
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		UISounds.Instance.SetClickAndHoverSound(m_CloseButton, UISounds.ButtonSoundsEnum.PlastickSound);
+		UISounds.Instance.SetClickAndHoverSound(m_ResetButton, UISounds.ButtonSoundsEnum.PlastickSound);
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.Close));
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(delegate
 		{

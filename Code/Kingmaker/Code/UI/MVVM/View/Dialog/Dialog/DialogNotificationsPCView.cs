@@ -81,6 +81,9 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 	private TextMeshProUGUI m_NotificatoinSoulMarksShift;
 
 	[SerializeField]
+	private TextMeshProUGUI m_NotificationColonyResourcesGain;
+
+	[SerializeField]
 	private bool m_IsSpaceEvent;
 
 	[SerializeField]
@@ -97,7 +100,11 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 
 	public void Initialize(DialogColors dialogColors)
 	{
-		if (!m_IsInit)
+		if (base.ViewModel == null)
+		{
+			Debug.LogWarning("DialogNotificationsPCView.Initialize: ViewModel is null.");
+		}
+		else if (!m_IsInit)
 		{
 			m_DialogColors = dialogColors;
 			base.gameObject.SetActive(value: false);
@@ -132,6 +139,7 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 		m_NotificationAbilityAdded.fontSize = fontSize;
 		m_NotificationBuffAdded.fontSize = fontSize;
 		m_NotificatoinSoulMarksShift.fontSize = fontSize;
+		m_NotificationColonyResourcesGain.fontSize = fontSize;
 	}
 
 	private void Clear()
@@ -152,6 +160,7 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 		m_NotificationAbilityAdded.gameObject.SetActive(value: false);
 		m_NotificationBuffAdded.gameObject.SetActive(value: false);
 		m_NotificatoinSoulMarksShift.gameObject.SetActive(value: false);
+		m_NotificationColonyResourcesGain.gameObject.SetActive(value: false);
 	}
 
 	private void OnUpdateHandler(bool show)
@@ -187,6 +196,28 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 		SetFactionVendorDiscountChanged();
 		SetAbilityAdded();
 		SetBuffAdded();
+		SetColonyResourcesGain();
+	}
+
+	private void SetColonyResourcesGain()
+	{
+		List<KeyValuePair<string, int>> list = base.ViewModel.ResourcesChanged.Where((KeyValuePair<string, int> k) => k.Value > 0).ToList();
+		if (list.Count <= 0)
+		{
+			return;
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < list.Count; i++)
+		{
+			if (i > 0)
+			{
+				stringBuilder.Append(", ");
+			}
+			SmartAppend(list[i], stringBuilder);
+		}
+		m_NotificationColonyResourcesGain.text = string.Format(UINotificationTexts.Instance.ColonyResourceReceivedFormat, stringBuilder);
+		m_NotificationColonyResourcesGain.gameObject.SetActive(value: true);
+		m_Disposable.Add(m_NotificationColonyResourcesGain.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
 	}
 
 	private void SetItemReceivedOrLostNotification()
@@ -558,7 +589,7 @@ public class DialogNotificationsPCView : ViewBase<DialogNotificationsVM>, ISetti
 		return new List<TextMeshProUGUI>
 		{
 			m_NotificationPhraseLocations, m_NotificationPhraseItemsReceived, m_NotificationPhraseItemsLost, m_NotificationProfitFactorChanged, m_NotificationXpGained, m_NotificationCargoAdded, m_NotificationCargoLost, m_NotificationDamageDealt, m_NotificationNavigatorResourceAdded, m_NotificationFactionReputationReceived,
-			m_NotificationFactionReputationLost, m_NotificationFactionVendorDiscountReceived, m_NotificationFactionVendorDiscountLost, m_NotificationAbilityAdded, m_NotificationBuffAdded, m_NotificatoinSoulMarksShift
+			m_NotificationFactionReputationLost, m_NotificationFactionVendorDiscountReceived, m_NotificationFactionVendorDiscountLost, m_NotificationAbilityAdded, m_NotificationBuffAdded, m_NotificatoinSoulMarksShift, m_NotificationColonyResourcesGain
 		};
 	}
 }

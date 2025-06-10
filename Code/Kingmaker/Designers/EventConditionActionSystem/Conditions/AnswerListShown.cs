@@ -32,7 +32,7 @@ public class AnswerListShown : Condition
 	{
 		if (!CurrentDialog)
 		{
-			return Game.Instance.Player.Dialog.ShownAnswerLists.Contains(AnswersList);
+			return Game.Instance.Player.Dialog.ShownAnswerListsContains(AnswersList);
 		}
 		return Game.Instance.DialogController.LocalShownAnswerLists.Contains(AnswersList);
 	}

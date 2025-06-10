@@ -36,6 +36,8 @@ public class CharGenNameVM : CharInfoComponentWithLevelUpVM
 				SetNameAndNotify(text);
 			}
 			onComplete?.Invoke();
+		}, delegate
+		{
 		}, UnitName.Value, GetRandomName, DisposeMessageBox);
 	}
 

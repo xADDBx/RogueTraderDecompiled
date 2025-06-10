@@ -47,7 +47,7 @@ public abstract class BaseCharGenAppearancePageComponentView<TViewModel> : Virtu
 		}
 	}
 
-	public bool IsValid()
+	public virtual bool IsValid()
 	{
 		return base.ViewModel.IsAvailable.Value;
 	}

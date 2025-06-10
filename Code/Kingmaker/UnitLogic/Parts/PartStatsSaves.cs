@@ -16,7 +16,7 @@ public class PartStatsSaves : EntityPart, IHashable
 
 	private ModifiableValueSavingThrow[] m_List;
 
-	private StatsContainer Container => base.ConcreteOwner.GetRequired<PartStatsContainer>().Container;
+	private StatsContainer Container => base.ConcreteOwner?.GetRequired<PartStatsContainer>().Container;
 
 	public ModifiableValueSavingThrow SaveFortitude => Container.GetStat<ModifiableValueSavingThrow>(StatType.SaveFortitude);
 

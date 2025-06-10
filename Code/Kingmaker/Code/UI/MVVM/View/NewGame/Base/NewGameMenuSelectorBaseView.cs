@@ -47,7 +47,7 @@ public class NewGameMenuSelectorBaseView : ViewBase<SelectionGroupRadioVM<NewGam
 			NewGameMenuEntityBaseView newGameMenuEntityBaseView = ((selectedEntity.NewGamePhaseVM is NewGamePhaseStoryVM) ? m_GameModeButton : m_DifficultyButton);
 			if (m_Selector.transform.localPosition.x != newGameMenuEntityBaseView.transform.localPosition.x)
 			{
-				UIUtility.MoveXLensPosition(m_Selector.transform, newGameMenuEntityBaseView.transform.localPosition.x, m_LensSwitchAnimationDuration);
+				AddDisposable(UIUtility.CreateMoveXLensPosition(m_Selector.transform, newGameMenuEntityBaseView.transform.localPosition.x, m_LensSwitchAnimationDuration));
 			}
 		}));
 		ResetLensPosition();

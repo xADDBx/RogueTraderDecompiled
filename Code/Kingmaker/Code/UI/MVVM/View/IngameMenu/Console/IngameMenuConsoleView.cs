@@ -152,8 +152,21 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 
 	private void BindItems()
 	{
-		m_Inventory.Bind(base.ViewModel.OpenInventory);
-		m_Character.Bind(base.ViewModel.OpenCharScreen);
+		bool flag = Game.Instance.Player.ServiceWindowsBlocked;
+		bool flag2 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
+		bool flag3 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
+		if (!flag2)
+		{
+			m_Inventory.Bind(base.ViewModel.OpenInventory);
+		}
+		if (!flag3)
+		{
+			m_Character.Bind(base.ViewModel.OpenCharScreen);
+		}
+		if (!flag)
+		{
+			m_CargoManagement.Bind(base.ViewModel.OpenCargoManagement);
+		}
 		m_Journal.Bind(base.ViewModel.OpenJournal);
 		if (!base.ViewModel.IsInSpace())
 		{
@@ -161,13 +174,15 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		}
 		m_Map.gameObject.SetActive(!base.ViewModel.IsInSpace());
 		m_Encyclopedia.Bind(base.ViewModel.OpenEncyclopedia);
-		m_CargoManagement.Bind(base.ViewModel.OpenCargoManagement);
 		bool canAccessStarshipInventory = Game.Instance.Player.CanAccessStarshipInventory;
-		bool flag = Game.Instance.Player.ColoniesState.ForbidColonization;
+		bool flag4 = Game.Instance.Player.ColoniesState.ForbidColonization;
 		if (canAccessStarshipInventory)
 		{
-			m_ShipCustomization.Bind(base.ViewModel.OpenShipCustomization);
 			if (!flag)
+			{
+				m_ShipCustomization.Bind(base.ViewModel.OpenShipCustomization);
+			}
+			if (!flag4)
 			{
 				m_ColonyManagement.Bind(base.ViewModel.OpenColonyManagement);
 			}
@@ -176,13 +191,15 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 				m_VoidshipLevelUp.Bind(base.ViewModel.OpenShipLevelUp);
 			}
 		}
-		if (base.ViewModel.HasLevelUp())
+		if (base.ViewModel.HasLevelUp() && !flag)
 		{
 			m_LevelUp.Bind(base.ViewModel.OpenLevelUpOnFirstDecentUnit);
 		}
-		m_LevelUp.gameObject.SetActive(base.ViewModel.HasLevelUp());
-		m_ShipCustomization.gameObject.SetActive(canAccessStarshipInventory);
-		m_ColonyManagement.gameObject.SetActive(canAccessStarshipInventory && !flag);
+		m_LevelUp.gameObject.SetActive(base.ViewModel.HasLevelUp() && !flag);
+		m_Character.gameObject.SetActive(!flag3);
+		m_Inventory.gameObject.SetActive(!flag2);
+		m_CargoManagement.gameObject.SetActive(canAccessStarshipInventory && !flag);
+		m_ShipCustomization.gameObject.SetActive(canAccessStarshipInventory && !flag);
 		m_VoidshipLevelUp.gameObject.SetActive(canAccessStarshipInventory && base.ViewModel.HasShipLvlUp());
 	}
 

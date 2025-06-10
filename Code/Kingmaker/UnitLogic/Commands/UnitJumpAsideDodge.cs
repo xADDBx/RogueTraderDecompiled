@@ -73,7 +73,10 @@ public class UnitJumpAsideDodge : UnitCommand<UnitJumpAsideDodgeParams>
 		}
 		if (!base.Executor.View.MovementAgent.IsReallyMoving)
 		{
-			base.Executor.Position = base.ForcedPath.vectorPath.Last();
+			if (base.ForcedPath != null)
+			{
+				base.Executor.Position = base.ForcedPath.vectorPath.Last();
+			}
 			ForceFinish(ResultType.Success);
 		}
 	}

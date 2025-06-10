@@ -591,7 +591,7 @@ public static class GridAreaHelper
 		return 7;
 	}
 
-	public static bool AllNodesConnectedToNeighbours(IntRect rect, GraphNode node)
+	public static bool AllNodesConnectedToNeighbours(IntRect rect, GraphNode node, ILinkTraversalProvider linkTraversalProvider = null)
 	{
 		if (rect.Width == 1 && rect.Height == 1)
 		{
@@ -604,17 +604,45 @@ public static class GridAreaHelper
 			for (int j = rect.ymin; j <= rect.ymax; j++)
 			{
 				CustomGridNodeBase node2 = customGridGraph.GetNode(coordinatesInGrid.x + i, coordinatesInGrid.y + j);
-				if (i != rect.xmax && !node2.HasConnectionInDirection(1))
+				if (i != rect.xmax && !HasConnectionInDirection(node2, 1, linkTraversalProvider))
 				{
 					return false;
 				}
-				if (j != rect.ymax && !node2.HasConnectionInDirection(2))
+				if (j != rect.ymax && !HasConnectionInDirection(node2, 2, linkTraversalProvider))
 				{
 					return false;
 				}
 			}
 		}
 		return true;
+	}
+
+	public static bool HasConnectionInDirection(CustomGridNodeBase node, int direction, ILinkTraversalProvider linkTraversalProvider)
+	{
+		if (!node.HasConnectionInDirection(direction))
+		{
+			return HasCustomConnectionInDirection(node, direction, linkTraversalProvider);
+		}
+		return true;
+	}
+
+	private static bool HasCustomConnectionInDirection(CustomGridNodeBase node, int direction, ILinkTraversalProvider linkTraversalProvider)
+	{
+		if (linkTraversalProvider == null)
+		{
+			return false;
+		}
+		CustomGridNodeBase neighbourAlongDirection = node.GetNeighbourAlongDirection(direction, checkConnectivity: false);
+		return HasCustomConnection(node, neighbourAlongDirection, linkTraversalProvider);
+	}
+
+	private static bool HasCustomConnection(CustomGridNodeBase from, CustomGridNodeBase to, ILinkTraversalProvider linkTraversalProvider)
+	{
+		if (linkTraversalProvider != null && NodeLinksExtensions.AreConnected(from, to, out var currentLink))
+		{
+			return linkTraversalProvider.CanBuildPathThroughLink(from, to, currentLink);
+		}
+		return false;
 	}
 
 	public static bool TryGetStandableNode(UnitEntity targetEntity, CustomGridNodeBase endPoint, int maxDistance, out CustomGridNodeBase targetNode)

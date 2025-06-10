@@ -20,7 +20,7 @@ public static class TooltipPrerequisitesUtils
 		{
 			AddOr(result);
 		}
-		result.Add(new TooltipBrickPrerequisite(list));
+		result.Add(new TooltipBrickPrerequisite(list, oneFromList: false));
 		if (flag)
 		{
 			AddAnd(result);
@@ -33,7 +33,7 @@ public static class TooltipPrerequisitesUtils
 				AddOr(result);
 			}
 			result.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.NoFeature, TooltipTitleType.H3));
-			result.Add(new TooltipBrickPrerequisite(list2));
+			result.Add(new TooltipBrickPrerequisite(list2, oneFromList: false));
 		}
 		if (isOr && list3.Any())
 		{

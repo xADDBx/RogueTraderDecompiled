@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.AI.Blueprints.Components;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -39,6 +41,8 @@ public class UnitSquad : MechanicEntity, IHashable
 		set
 		{
 			m_Leader = value.FromBaseUnitEntity();
+			CustomBehaviourType customBehaviour = m_Leader.ToBaseUnitEntity().Blueprint.GetComponent<AiCustomBehaviourForSquad>()?.BehaviourType ?? CustomBehaviourType.None;
+			GetRequired<PartUnitBrain>().SetCustomBehaviour(customBehaviour);
 		}
 	}
 

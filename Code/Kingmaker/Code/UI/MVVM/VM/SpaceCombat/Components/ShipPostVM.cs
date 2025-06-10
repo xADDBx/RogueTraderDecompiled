@@ -20,7 +20,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Posts;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SpaceCombat.Components;
 
-public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IStarshipPostHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler
+public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IStarshipPostHandler, ISubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IInterruptTurnContinueHandler
 {
 	public readonly int Index;
 
@@ -135,7 +135,17 @@ public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		HandleUnitStartTurnInternal();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleUnitStartTurnInternal();
 	}

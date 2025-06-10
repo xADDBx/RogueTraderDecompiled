@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
-using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
@@ -30,15 +29,21 @@ public class AbilityCasterHasWeaponOfClassification : BlueprintComponent, IAbili
 		{
 			return false;
 		}
+		ItemEntityWeapon itemEntityWeapon = null;
+		ItemEntityWeapon itemEntityWeapon2 = null;
 		if (!CheckCurrentSet)
 		{
 			foreach (HandsEquipmentSet item in list)
 			{
-				flag |= (item.PrimaryHand.MaybeItem?.Blueprint is BlueprintItemWeapon blueprintItemWeapon && blueprintItemWeapon.Classification == Classification) || (item.SecondaryHand.MaybeItem?.Blueprint is BlueprintItemWeapon blueprintItemWeapon2 && blueprintItemWeapon2.Classification == Classification);
+				itemEntityWeapon = item.PrimaryHand.MaybeWeapon;
+				itemEntityWeapon2 = item.SecondaryHand.MaybeWeapon;
+				flag |= (itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification);
 			}
 			return flag;
 		}
-		return flag | ((caster.GetBodyOptional()?.PrimaryHand.MaybeItem?.Blueprint is BlueprintItemWeapon blueprintItemWeapon3 && blueprintItemWeapon3.Classification == Classification) || (caster.GetBodyOptional()?.SecondaryHand.MaybeItem?.Blueprint is BlueprintItemWeapon blueprintItemWeapon4 && blueprintItemWeapon4.Classification == Classification));
+		itemEntityWeapon = caster.GetBodyOptional()?.PrimaryHand.MaybeWeapon;
+		itemEntityWeapon2 = caster.GetBodyOptional()?.SecondaryHand.MaybeWeapon;
+		return flag | ((itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification));
 	}
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)

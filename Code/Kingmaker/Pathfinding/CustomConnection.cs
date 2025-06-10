@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Pathfinding;
 
 namespace Kingmaker.Pathfinding;
@@ -6,6 +7,7 @@ public struct CustomConnection
 {
 	public GraphNode Node;
 
+	[CanBeNull]
 	public INodeLink Link;
 
 	public uint Cost;

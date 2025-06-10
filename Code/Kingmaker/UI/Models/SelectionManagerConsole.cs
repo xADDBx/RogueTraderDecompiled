@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Selection;
 using Kingmaker.UI.Selection.UnitMark;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.UniRx;
@@ -33,12 +34,23 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 			return;
 		}
 		BaseUnitEntity entityData = unit.EntityData;
-		if (!entityData.IsDirectlyControllable)
+		if (!entityData.IsDirectlyControllable && !entityData.IsPet)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)entityData, (Action<ITrySelectNotControllableHandler>)delegate(ITrySelectNotControllableHandler h)
 			{
 				h.HandleSelectNotControllable(single, ask);
 			}, isCheckRuntime: true);
+			return;
+		}
+		UnitPartPetOwner optional = entityData.GetOptional<UnitPartPetOwner>();
+		if (optional != null)
+		{
+			SelectUnitAsPet(optional.PetUnit, value: true);
+		}
+		if (entityData.IsPet)
+		{
+			SelectUnitAsPet(entityData, value: true);
+			SelectUnit(entityData.Master.View, single, sendSelectionEvent, ask);
 		}
 		else
 		{
@@ -117,6 +129,7 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 			{
 				h.OnUnitSelectionRemove();
 			}, isCheckRuntime: true);
+			ToggleSelectAsPetUnit(data, value: false);
 		}
 	}
 

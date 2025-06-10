@@ -146,6 +146,7 @@ public class WarhammerUnitAnimationActionHandEquipHuman : UnitAnimationAction, I
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
+		handle.HasCrossfadePriority = true;
 		AnimationClipWrapper clip = GetClip(handle);
 		if ((bool)clip)
 		{

@@ -7,9 +7,12 @@ public class GameLogEventPartyGainExperience : GameLogEvent<GameLogEventPartyGai
 {
 	private class EventsHandler : GameLogController.GameEventsHandler, IPartyGainExperienceHandler, ISubscriber
 	{
-		public void HandlePartyGainExperience(int gained, bool isExperienceForDeath)
+		public void HandlePartyGainExperience(int gained, bool isExperienceForDeath, bool hideInCombatLog)
 		{
-			AddEvent(new GameLogEventPartyGainExperience(gained, isExperienceForDeath));
+			if (!(gained == 0 || hideInCombatLog))
+			{
+				AddEvent(new GameLogEventPartyGainExperience(gained, isExperienceForDeath));
+			}
 		}
 	}
 

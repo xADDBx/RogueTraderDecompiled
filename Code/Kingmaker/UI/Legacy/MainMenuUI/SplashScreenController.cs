@@ -100,6 +100,11 @@ public class SplashScreenController : MonoBehaviour
 
 	public void ShowSplashScreen()
 	{
+		if (GameStarter.IsSkippingMainMenu())
+		{
+			StartCoroutine(SkipWaitingSplashScreens());
+			return;
+		}
 		m_Enabled = true;
 		BaseCanvas.alpha = 1f;
 		m_FirstTime = PlayerPrefs.GetInt("FirstTimeLogoShow", -1) == -1;
@@ -112,11 +117,6 @@ public class SplashScreenController : MonoBehaviour
 			{
 				UIUtilityShowSplashScreen.ShowSplashScreen(screen, m_TweenSequence, base.gameObject);
 			}
-		}
-		if (GameStarter.IsArbiterMode())
-		{
-			StartCoroutine(SkipWaitingSplashScreens());
-			return;
 		}
 		m_TweenSequence.AppendCallback(OnComplete);
 		StartCoroutine(DelayedShow());

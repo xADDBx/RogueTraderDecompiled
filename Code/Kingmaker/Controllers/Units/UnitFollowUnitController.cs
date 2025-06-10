@@ -23,7 +23,7 @@ public class UnitFollowUnitController : BaseUnitController
 		}
 		foreach (AbstractUnitEntity activeFollower in optional.GetActiveFollowers())
 		{
-			if (!activeFollower.IsInGame)
+			if (!activeFollower.IsInGame || !activeFollower.CanMoveWithoutCutsceneAffect)
 			{
 				continue;
 			}
@@ -55,17 +55,23 @@ public class UnitFollowUnitController : BaseUnitController
 			if (leader.IsInCombat && !unit.IsInCombat)
 			{
 				baseUnitEntity.CombatState.JoinCombat();
-				baseUnitEntity.CombatGroup.Group.IsFollowingUnitInCombat = true;
+				if (baseUnitEntity.CombatGroup.Group != leader.CombatGroup.Group)
+				{
+					baseUnitEntity.CombatGroup.Group.IsFollowingUnitInCombat = true;
+				}
 			}
 			if (!leader.IsInCombat && leader.LifeState.IsConscious && unit.IsInCombat)
 			{
 				baseUnitEntity.CombatState.LeaveCombat();
-				baseUnitEntity.CombatGroup.Group.IsFollowingUnitInCombat = false;
+				if (baseUnitEntity.CombatGroup.Group != leader.CombatGroup.Group)
+				{
+					baseUnitEntity.CombatGroup.Group.IsFollowingUnitInCombat = false;
+				}
 			}
 		}
 		if (!unit.IsInCombat && ShouldAct(unit, position))
 		{
-			float orientation = action.Orientation;
+			float? orientation = action.Orientation;
 			if (type == FollowerActionType.Teleport)
 			{
 				Teleport(unit, action.Position, orientation);
@@ -80,7 +86,7 @@ public class UnitFollowUnitController : BaseUnitController
 	private static bool ShouldAct(AbstractUnitEntity follower, Vector3 desiredPosition)
 	{
 		bool result = false;
-		float num = Mathf.Pow(Game.Instance.BlueprintRoot.Formations.FollowersFormation.RepathDistance, 2f);
+		float num = Mathf.Pow(follower.GetOptional<UnitPartFollowUnit>()?.FollowingSettings?.m_RepathDistance ?? Game.Instance.BlueprintRoot.Formations.FollowersFormation.RepathDistance, 2f);
 		UnitMoveTo currentMoveTo = follower.Commands.CurrentMoveTo;
 		if (currentMoveTo != null)
 		{
@@ -117,10 +123,13 @@ public class UnitFollowUnitController : BaseUnitController
 		}
 	}
 
-	private static void Teleport(AbstractUnitEntity unit, Vector3 targetPoint, float orientation)
+	private static void Teleport(AbstractUnitEntity unit, Vector3 targetPoint, float? orientation)
 	{
 		unit.Position = targetPoint;
-		unit.DesiredOrientation = orientation;
+		if (orientation.HasValue)
+		{
+			unit.DesiredOrientation = orientation.Value;
+		}
 		EntityFader entityFader = unit.View?.Fader;
 		if ((bool)entityFader)
 		{
@@ -130,7 +139,7 @@ public class UnitFollowUnitController : BaseUnitController
 		}
 	}
 
-	private static void Move(AbstractUnitEntity unit, Vector3 targetPoint, float orientation, bool canRun)
+	private static void Move(AbstractUnitEntity unit, Vector3 targetPoint, float? orientation, bool canRun)
 	{
 		PathfindingService.Instance.FindPathRT_Delayed(unit.MovementAgent, targetPoint, 0.1f, 1, delegate(ForcedPath path)
 		{

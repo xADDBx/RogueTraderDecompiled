@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM;
@@ -11,6 +12,7 @@ using Kingmaker.ResourceLinks;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
+using Kingmaker.View;
 using Kingmaker.View.Mechadendrites;
 using Kingmaker.Visual.Animation;
 using Kingmaker.Visual.Animation.Kingmaker;
@@ -629,32 +631,27 @@ public class Character : RegisteredBehaviour, IUpdatable
 		SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices i) => i.EquipmentEntity == ee);
 		if (selectedRampIndices != null)
 		{
-			if (primaryRampIndex.HasValue && selectedRampIndices.PrimaryIndex != primaryRampIndex && primaryRampIndex.HasValue)
+			if (primaryRampIndex.HasValue && selectedRampIndices.PrimaryIndex != primaryRampIndex)
 			{
 				selectedRampIndices.PrimaryIndex = primaryRampIndex.Value;
 			}
-			if (secondaryRampIndex.HasValue && selectedRampIndices.SecondaryIndex != secondaryRampIndex && secondaryRampIndex.HasValue)
+			if (secondaryRampIndex.HasValue && selectedRampIndices.SecondaryIndex != secondaryRampIndex)
 			{
 				selectedRampIndices.SecondaryIndex = secondaryRampIndex.Value;
 			}
 		}
 		else
 		{
-			SelectedRampIndices selectedRampIndices2 = new SelectedRampIndices
+			SelectedRampIndices item = new SelectedRampIndices
 			{
-				EquipmentEntity = ee
+				EquipmentEntity = ee,
+				PrimaryIndex = primaryRampIndex.GetValueOrDefault(),
+				SecondaryIndex = secondaryRampIndex.GetValueOrDefault()
 			};
-			if (primaryRampIndex.HasValue)
-			{
-				selectedRampIndices2.PrimaryIndex = primaryRampIndex.Value;
-			}
-			if (secondaryRampIndex.HasValue)
-			{
-				selectedRampIndices2.SecondaryIndex = secondaryRampIndex.Value;
-			}
-			RampIndices.Add(selectedRampIndices2);
+			RampIndices.Add(item);
 		}
 		IsAtlasesDirty = true;
+		UpdateColorizedOutfitRamps(ee);
 	}
 
 	public void CacheSkeletonBones()
@@ -756,7 +753,35 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void AddEquipmentEntity(EquipmentEntity ee, bool saved = false)
 	{
-		if (ee == null || EquipmentEntities.Contains(ee))
+		if (ee == null)
+		{
+			return;
+		}
+		if (base.name.Contains("Pregen") && !ee.name.ToLower().Contains("head") && !EquipmentEntities.Any((EquipmentEntity existing) => existing.name.ToLower().Contains("head")))
+		{
+			UnitEntityView unitEntityView = GetComponentInParent<UnitEntityView>();
+			if (unitEntityView == null)
+			{
+				unitEntityView = GetComponent<UnitEntityView>();
+			}
+			if (unitEntityView == null)
+			{
+				unitEntityView = base.transform.root.GetComponentInChildren<UnitEntityView>();
+			}
+			if (unitEntityView?.EntityData != null)
+			{
+				PregenDollSettings component = unitEntityView.EntityData.Blueprint.GetComponent<PregenDollSettings>();
+				if (component?.Default?.Head != null)
+				{
+					EquipmentEntity equipmentEntity = component.Default.Head.Load();
+					if (equipmentEntity != null && !EquipmentEntities.Contains(equipmentEntity))
+					{
+						EquipmentEntities.Add(equipmentEntity);
+					}
+				}
+			}
+		}
+		if (EquipmentEntities.Contains(ee))
 		{
 			return;
 		}
@@ -960,7 +985,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void UpdateSkeletonDirectly(Transform root = null)
 	{
-		root = root.Or(Animator.transform);
+		root = ObjectExtensions.Or(root, Animator.transform);
 		using (ProfileScope.New("UpdateSkeletonEditor"))
 		{
 			foreach (Skeleton.Bone bone in Skeleton.Bones)
@@ -1365,6 +1390,47 @@ public class Character : RegisteredBehaviour, IUpdatable
 		if (IsInDollRoom)
 		{
 			this.OnUpdated?.Invoke(this);
+		}
+	}
+
+	public void UpdateColorizedOutfitRamps(EquipmentEntity ee)
+	{
+		foreach (OutfitPartInfo item in m_OutfitObjectsSpawned)
+		{
+			if (!(item.Ee != ee))
+			{
+				if (item.OutfitPart.ColorMask == null)
+				{
+					break;
+				}
+				SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices i) => i.EquipmentEntity == ee);
+				if (selectedRampIndices == null)
+				{
+					break;
+				}
+				if (ee.PrimaryRamps.Count < selectedRampIndices.PrimaryIndex)
+				{
+					PFLog.TechArt.Error("Character " + base.gameObject.name + ". Can't find color ramp index " + selectedRampIndices.PrimaryIndex + " in EE: " + ee.name);
+					break;
+				}
+				if (ee.SecondaryRamps.Count < selectedRampIndices.SecondaryIndex)
+				{
+					PFLog.TechArt.Error("Character " + base.gameObject.name + ". Can't find color ramp index " + selectedRampIndices.SecondaryIndex + " in EE: " + ee.name);
+					break;
+				}
+				Renderer componentInChildren = item.GameObject.GetComponentInChildren<Renderer>();
+				if (componentInChildren == null)
+				{
+					PFLog.TechArt.Error("No renderer in " + item.GameObject.name);
+					break;
+				}
+				Material[] sharedMaterials = componentInChildren.sharedMaterials;
+				foreach (Material obj in sharedMaterials)
+				{
+					obj.SetTexture(ShaderProps._Ramp1, ee.PrimaryRamps[selectedRampIndices.PrimaryIndex]);
+					obj.SetTexture(ShaderProps._Ramp2, ee.SecondaryRamps[selectedRampIndices.SecondaryIndex]);
+				}
+			}
 		}
 	}
 

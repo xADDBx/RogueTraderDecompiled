@@ -30,11 +30,14 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 
 	public int TargetSlotIndex = -1;
 
+	public readonly BoolReactiveProperty IsNotControllableCharacter;
+
 	private static UITextCharSheet Strings => UIStrings.Instance.CharacterSheet;
 
-	public CharInfoAbilitiesVM(IReactiveProperty<BaseUnitEntity> unit)
+	public CharInfoAbilitiesVM(IReactiveProperty<BaseUnitEntity> unit, BoolReactiveProperty isNotControllableCharacter = null)
 		: base(unit)
 	{
+		IsNotControllableCharacter = isNotControllableCharacter;
 	}
 
 	protected override void DisposeImplementation()
@@ -101,14 +104,7 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 
 	private List<Ability> GetItemsAndSoulMarksAbilities()
 	{
-		IEnumerable<Ability> visible = Unit.Value.Abilities.Visible;
-		List<Ability> list = (from a in visible
-			where !a.Blueprint.IsCantrip && a.SourceItem != null
-			where a.SourceItem != Unit.Value.GetFirstWeapon() && a.SourceItem != Unit.Value.GetSecondaryHandWeapon()
-			select a).ToList();
-		List<Ability> collection = visible.Where((Ability f) => f.FirstSource?.Blueprint is BlueprintSoulMark).ToList();
-		list.AddRange(collection);
-		return list;
+		return new List<Ability>();
 	}
 
 	private void AssemblePassiveAbilities()

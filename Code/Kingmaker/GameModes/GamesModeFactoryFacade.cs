@@ -154,6 +154,7 @@ public class GamesModeFactoryFacade
 		Register(new CameraController(allowScroll: false), Dialog);
 		Register(new CameraController(allowScroll: false, allowZoom: false, clamp: false, rotate: false), Cutscene);
 		Register(new GameOverController(), Default, SpaceCombat, StarSystem, GlobalMap);
+		Register(Game.Instance.PlayerInputInCombatController, Default, SpaceCombat);
 		Register(new InspectUnitsController(), Default, Dialog, Cutscene);
 		Register(new EtudeSystemController(), Default, SpaceCombat, StarSystem, Dialog, Cutscene, GlobalMap, CutsceneGlobalMap);
 		Register(new ShadowSpellController(), Default, SpaceCombat, StarSystem, Dialog, Pause, Cutscene);

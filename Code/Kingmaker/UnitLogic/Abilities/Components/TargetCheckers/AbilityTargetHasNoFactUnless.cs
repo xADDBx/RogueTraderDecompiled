@@ -19,14 +19,28 @@ namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 [AllowedOn(typeof(BlueprintAbility))]
 [AllowMultipleComponents]
 [TypeId("c86d7ab572ddfea4ca09cb8c04facb87")]
-public class AbilityTargetHasNoFactUnless : BlueprintComponent, IAbilityTargetRestriction
+public class AbilityTargetHasNoFactUnless : BlueprintComponent, IAbilityTargetRestriction, IAbilityCasterRestriction
 {
+	private enum CheckedTargets
+	{
+		Target,
+		Caster
+	}
+
 	[SerializeField]
 	[ValidateNoNullEntries]
 	private BlueprintUnitFactReference[] m_CheckedFacts;
 
 	[SerializeField]
+	[Tooltip("Target для проверки отсутствия CheckedFacts, по умолчанию это Target")]
+	private CheckedTargets m_CheckedFactsTarget;
+
+	[SerializeField]
 	private BlueprintUnitFactReference m_UnlessFact;
+
+	[SerializeField]
+	[Tooltip("Target для проверки наличия UnlessFact, по умолчанию это Caster")]
+	private CheckedTargets m_UnlessFactTarget = CheckedTargets.Caster;
 
 	public ReferenceArrayProxy<BlueprintUnitFact> CheckedFacts
 	{
@@ -40,23 +54,70 @@ public class AbilityTargetHasNoFactUnless : BlueprintComponent, IAbilityTargetRe
 	[CanBeNull]
 	public BlueprintUnitFact UnlessFact => m_UnlessFact?.Get();
 
+	private bool IsCasterRestriction
+	{
+		get
+		{
+			if (m_CheckedFactsTarget == CheckedTargets.Caster)
+			{
+				return m_UnlessFactTarget == CheckedTargets.Caster;
+			}
+			return false;
+		}
+	}
+
+	public bool IsCasterRestrictionPassed(MechanicEntity caster)
+	{
+		if (IsCasterRestriction)
+		{
+			return IsTargetRestrictionPassedInternal(caster, null);
+		}
+		return true;
+	}
+
+	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
+	{
+		return GetAbilityTargetRestrictionUIText(null, null, default(Vector3));
+	}
+
 	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
 	{
-		MechanicEntity entity = target.Entity;
-		if (entity == null)
+		if (!IsCasterRestriction)
+		{
+			return IsTargetRestrictionPassedInternal(ability.Caster, target);
+		}
+		return true;
+	}
+
+	public bool IsTargetRestrictionPassedInternal(MechanicEntity caster, TargetWrapper target)
+	{
+		MechanicEntity mechanicEntity = ((m_CheckedFactsTarget == CheckedTargets.Target) ? target.Entity : caster);
+		if (mechanicEntity == null)
 		{
 			return false;
 		}
 		bool flag = false;
 		foreach (BlueprintUnitFact checkedFact in CheckedFacts)
 		{
-			flag = entity.Facts.Contains(checkedFact);
+			flag = mechanicEntity.Facts.Contains(checkedFact);
 			if (flag)
 			{
 				break;
 			}
 		}
-		bool flag2 = UnlessFact != null && ability.Caster.Facts.Contains(UnlessFact);
+		bool flag2 = false;
+		if (UnlessFact != null)
+		{
+			switch (m_UnlessFactTarget)
+			{
+			case CheckedTargets.Target:
+				flag2 = target.Entity?.Facts.Contains(UnlessFact) ?? false;
+				break;
+			case CheckedTargets.Caster:
+				flag2 = caster.Facts.Contains(UnlessFact);
+				break;
+			}
+		}
 		return !flag || flag2;
 	}
 

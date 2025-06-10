@@ -135,6 +135,7 @@ internal static class CheatsTransfer
 			select x);
 	}
 
+	[Cheat(Name = "party_teleport", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void LocalTeleport(Vector3 tpPosition)
 	{
 		LocalTeleport(tpPosition, Game.Instance.SelectionCharacter.SelectedUnits);

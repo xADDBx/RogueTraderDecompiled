@@ -49,9 +49,13 @@ public class AbilityAoEPatternSettings : IAbilityAoEPatternProvider
 
 	bool IAbilityAoEPatternProvider.CalculateAttackFromPatternCentre => CalculateAttackFromPatternCentre;
 
+	public bool ExcludeUnwalkable => false;
+
 	TargetType IAbilityAoEPatternProvider.Targets => Targets;
 
 	AoEPattern IAbilityAoEPatternProvider.Pattern => CurrentPattern;
+
+	public AoEPattern OriginalPattern => Pattern;
 
 	public int Radius => CurrentPattern.Radius;
 

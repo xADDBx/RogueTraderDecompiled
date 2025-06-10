@@ -431,7 +431,10 @@ public class Projectile : IInterpolatable
 		float fullDistance = this.Distance(targetPoint, LaunchPosition);
 		Vector3 vector2 = ((Blueprint.Trajectory != null) ? TrajectoryCalculator.CalculateShift(Blueprint.Trajectory, targetPoint - LaunchPosition, fullDistance, passedDistance, progress, time, InvertUpDirectionForTrajectories) : Vector3.zero);
 		Vector3 vector3 = vector + vector2;
-		View.transform.LookAt(vector3);
+		if (!IsHit)
+		{
+			View.transform.LookAt(vector3);
+		}
 		View.transform.position = vector3;
 	}
 

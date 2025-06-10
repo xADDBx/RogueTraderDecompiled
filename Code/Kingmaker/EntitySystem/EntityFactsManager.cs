@@ -9,6 +9,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -309,6 +310,19 @@ public class EntityFactsManager : IDisposable, IHashable
 		}
 		outFact = null;
 		return false;
+	}
+
+	public void RemoveWithRanks(BlueprintFeatureReference blueprint)
+	{
+		Feature feature = Get<Feature>((BlueprintFeature)blueprint);
+		if (feature != null)
+		{
+			while (feature.Rank > 1)
+			{
+				feature.RemoveRank();
+			}
+			Remove((BlueprintFeature)blueprint);
+		}
 	}
 
 	public void Remove(BlueprintFact blueprint)

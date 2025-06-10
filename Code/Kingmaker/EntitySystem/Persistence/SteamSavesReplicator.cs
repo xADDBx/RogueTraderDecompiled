@@ -6,9 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Core.Cheats;
 using JetBrains.Annotations;
-using Kingmaker.GameInfo;
 using Kingmaker.Stores;
-using Kingmaker.Utility.BuildModeUtils;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Logging;
 using Steamworks;
@@ -35,7 +33,7 @@ public class SteamSavesReplicator
 
 	public void RegisterSave(SaveInfo saveInfo)
 	{
-		if (GameVersion.Mode != BuildMode.Betatest && StoreManager.Store == StoreType.Steam)
+		if (StoreManager.Store == StoreType.Steam)
 		{
 			Initialize();
 			Task.Run(delegate
@@ -47,7 +45,7 @@ public class SteamSavesReplicator
 
 	public void PullUpdates()
 	{
-		if (GameVersion.Mode != BuildMode.Betatest && StoreManager.Store == StoreType.Steam)
+		if (StoreManager.Store == StoreType.Steam)
 		{
 			PullUpdatesImpl();
 		}
@@ -55,7 +53,7 @@ public class SteamSavesReplicator
 
 	public void DeleteSave(SaveInfo saveInfo)
 	{
-		if (GameVersion.Mode != BuildMode.Betatest && StoreManager.Store == StoreType.Steam)
+		if (StoreManager.Store == StoreType.Steam)
 		{
 			Initialize();
 			string fileName = saveInfo.FileName;
@@ -68,10 +66,6 @@ public class SteamSavesReplicator
 
 	private void RegisterSaveThreaded(SaveInfo saveInfo)
 	{
-		if (GameVersion.Mode == BuildMode.Betatest)
-		{
-			return;
-		}
 		try
 		{
 			lock (this)
@@ -105,10 +99,6 @@ public class SteamSavesReplicator
 
 	private static void EnsureCloudSpace(ulong requiredBytes)
 	{
-		if (GameVersion.Mode == BuildMode.Betatest)
-		{
-			return;
-		}
 		requiredBytes += 1048576;
 		SteamRemoteStorage.GetQuota(out var pnTotalBytes, out var puAvailableBytes);
 		if (puAvailableBytes >= requiredBytes)
@@ -158,10 +148,6 @@ public class SteamSavesReplicator
 
 	private void PullUpdatesImpl()
 	{
-		if (GameVersion.Mode == BuildMode.Betatest)
-		{
-			return;
-		}
 		try
 		{
 			lock (this)
@@ -222,10 +208,6 @@ public class SteamSavesReplicator
 
 	private void DeleteSaveThreaded(string fileName)
 	{
-		if (GameVersion.Mode == BuildMode.Betatest)
-		{
-			return;
-		}
 		try
 		{
 			lock (this)
@@ -277,7 +259,7 @@ public class SteamSavesReplicator
 
 	public void Initialize()
 	{
-		if (GameVersion.Mode == BuildMode.Betatest || m_Initialized)
+		if (m_Initialized)
 		{
 			return;
 		}

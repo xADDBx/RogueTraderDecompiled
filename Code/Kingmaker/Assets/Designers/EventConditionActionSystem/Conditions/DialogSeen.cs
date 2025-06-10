@@ -25,6 +25,6 @@ public class DialogSeen : Condition
 
 	protected override bool CheckCondition()
 	{
-		return Game.Instance.Player.Dialog.ShownDialogs.Contains(Dialog);
+		return Game.Instance.Player.Dialog.ShownDialogsContains(Dialog);
 	}
 }

@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Projectiles;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
@@ -11,6 +12,7 @@ using Kingmaker.UnitLogic.Abilities.Components.PatternAttack;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Groups;
 using Kingmaker.Utility;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
 using Kingmaker.View.Covers;
 using UnityEngine;
@@ -38,6 +40,13 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 	[SerializeField]
 	private ConditionsChecker m_Condition;
 
+	[SerializeField]
+	private bool m_CheckNumberOfTargets;
+
+	[SerializeField]
+	[ShowIf("m_CheckNumberOfTargets")]
+	private PropertyCalculator m_NumberOfTargets;
+
 	public bool IsIgnoreLos => m_PatternSettings.IsIgnoreLos;
 
 	public bool UseMeleeLos => m_PatternSettings.UseMeleeLos;
@@ -47,6 +56,8 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 	public int PatternAngle => m_PatternSettings.PatternAngle;
 
 	public bool CalculateAttackFromPatternCentre => m_PatternSettings.CalculateAttackFromPatternCentre;
+
+	public bool ExcludeUnwalkable => false;
 
 	public TargetType Targets => m_PatternSettings.Targets;
 
@@ -68,6 +79,8 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 		CustomGridNodeBase targetNode = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(anchor.Point).node;
 		CustomGridNodeBase casterNode = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(caster.Position).node;
 		OrientedPatternData pattern = GetOrientedPattern(context.Ability, casterNode, targetNode);
+		PropertyContext context2 = new PropertyContext(context.Caster, null, null, context, null, context.Ability);
+		int numberOfTargets = (m_CheckNumberOfTargets ? m_NumberOfTargets.GetValue(context2) : int.MaxValue);
 		foreach (MechanicEntity mechanicEntity in Game.Instance.State.MechanicEntities)
 		{
 			if ((!m_IncludeNonUnitTargets && !(mechanicEntity is BaseUnitEntity)) || (!m_IncludeDead && mechanicEntity != null && mechanicEntity.IsDeadOrUnconscious) || (mechanicEntity == context.Caster && !m_IncludeCaster) || !AoEPatternHelper.WouldTargetEntity(pattern, mechanicEntity))
@@ -110,6 +123,11 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 					new ProjectileLauncher(m_Projectile.Get(), anchor, mechanicEntity).Ability(context.Ability).Launch();
 				}
 				yield return new TargetWrapper(mechanicEntity);
+				numberOfTargets--;
+				if (numberOfTargets <= 0)
+				{
+					break;
+				}
 			}
 		}
 	}

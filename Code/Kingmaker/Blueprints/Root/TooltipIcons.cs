@@ -39,6 +39,8 @@ public class TooltipIcons
 
 	public Sprite MaxValueCap;
 
+	public Sprite PetPawIcon;
+
 	[Header("Stats")]
 	public Sprite Damage;
 

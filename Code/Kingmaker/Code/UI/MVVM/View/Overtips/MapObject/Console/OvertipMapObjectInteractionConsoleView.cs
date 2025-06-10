@@ -78,6 +78,8 @@ public class OvertipMapObjectInteractionConsoleView : OvertipMapObjectInteractio
 			return actionTexts.Move;
 		case UIInteractionType.Info:
 			return actionTexts.Inspect;
+		case UIInteractionType.Pets:
+			return actionTexts.PetInteract;
 		default:
 			return string.Empty;
 		}

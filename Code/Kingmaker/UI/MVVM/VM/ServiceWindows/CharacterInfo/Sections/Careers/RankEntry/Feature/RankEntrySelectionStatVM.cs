@@ -27,6 +27,12 @@ public class RankEntrySelectionStatVM : RankEntrySelectionFeatureVM
 
 	private readonly ModifiableValue m_UnitStat;
 
+	public FeatureSelectionItem FeatureSelectionItem => SelectionItem;
+
+	public IReadOnlyReactiveProperty<SelectionStateFeature> SelectionStateFeature => SelectionState;
+
+	public ModifiableValue UnitStat => m_UnitStat;
+
 	public RankEntrySelectionStatVM(RankEntrySelectionVM owner, CareerPathVM careerPathVM, FeatureSelectionItem featureSelectionItem, IReadOnlyReactiveProperty<SelectionStateFeature> selectionState, Action<FeatureSelectionItem?> selectFeature)
 		: base(owner, careerPathVM, featureSelectionItem, selectionState, selectFeature)
 	{

@@ -37,6 +37,10 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		}
 		context.CastTime = Game.Instance.TimeController.GameTime;
 		m_Abilities.Add(abilityExecutionProcess);
+		if (caster.IsInCombat)
+		{
+			Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
+		}
 		return abilityExecutionProcess;
 	}
 
@@ -46,7 +50,12 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			throw new Exception("Attempting to access AbilityExecutionController that is disabled");
 		}
+		bool num = process.Context?.Caster.IsInCombat ?? true;
 		process.Dispose();
+		if (num)
+		{
+			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+		}
 		m_Abilities.Remove(process);
 	}
 
@@ -54,8 +63,13 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 	{
 		foreach (AbilityExecutionProcess ability in m_Abilities)
 		{
-			PFLog.Ability.Log("[AbilityExecutionController] '" + ability.GetType().Name + "' will be detached...");
+			bool isInCombat = ability.Context.Caster.IsInCombat;
+			PFLog.Ability.Log("[AbilityExecutionController] '" + ability.Context.AbilityBlueprint.Name + "' will be detached...");
 			ability.Dispose();
+			if (isInCombat)
+			{
+				Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+			}
 		}
 		m_Abilities.Clear();
 	}
@@ -88,7 +102,12 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			if (p.IsEnded)
 			{
+				bool num = p.Context?.Caster.IsInCombat ?? true;
 				p.Dispose();
+				if (num)
+				{
+					Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+				}
 				return true;
 			}
 			return false;

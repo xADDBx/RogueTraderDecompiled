@@ -34,7 +34,7 @@ public class AbilityTriggerGlobal : AbilityTrigger, IGlobalRulebookHandler<RuleP
 			{
 				PFLog.Default.Error("AbilityTrigger: Both initiator and target are null!");
 			}
-			else if ((!ForOneAbility || ability == base.Ability) && (!ForMultipleAbilities || Abilities.HasItem((BlueprintAbilityReference r) => r.Is(ability))) && (!ForAbilityGroup || ability.AbilityGroups.Contains(base.AbilityGroup)))
+			else if ((!ForOneAbility || ability == base.Ability) && (!ForMultipleAbilities || Abilities.HasItem((BlueprintAbilityReference r) => r.Is(ability))) && CheckAbilityGroup(ability))
 			{
 				base.Fact.RunActionInContext(Action, AssignOwnerAsTarget ? ((TargetWrapper)base.Owner) : (AssignCasterAsTarget ? ((TargetWrapper)concreteInitiator) : spellTarget));
 			}

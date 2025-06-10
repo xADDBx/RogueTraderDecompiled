@@ -3,6 +3,7 @@ using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Biography;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
+using UniRx;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -58,6 +59,10 @@ public class CharInfoAlignmentWheelPCView : CharInfoComponentView<CharInfoAlignm
 
 	protected override void BindViewImplementation()
 	{
+		AddDisposable(base.ViewModel.IsUnitPet.Subscribe(delegate
+		{
+			m_FadeAnimator.PlayAnimation(!base.ViewModel.IsUnitPet.Value);
+		}));
 		m_ConvictionBar.Bind(base.ViewModel.ConvictionBar);
 		m_FaithSectorView.BindSection(base.ViewModel.FaithSector);
 		m_CorruptionSectorView.BindSection(base.ViewModel.CorruptionSector);

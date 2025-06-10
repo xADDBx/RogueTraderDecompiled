@@ -78,13 +78,27 @@ public class PointMarkerVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	private void UpdateVisibility()
 	{
-		if ((Game.Instance.CurrentMode != GameModeType.Default && Game.Instance.CurrentMode != GameModeType.SpaceCombat && Game.Instance.CurrentMode != GameModeType.GlobalMap && Game.Instance.CurrentMode != GameModeType.Pause) || Game.GetCamera() == null)
+		if ((!(Game.Instance.CurrentMode != GameModeType.Default) || !(Game.Instance.CurrentMode != GameModeType.SpaceCombat) || !(Game.Instance.CurrentMode != GameModeType.GlobalMap) || !(Game.Instance.CurrentMode != GameModeType.Pause)) && !(Game.GetCamera() == null))
 		{
-			IsVisible.Value = false;
-			return;
+			BaseUnitEntity unit = Unit;
+			bool? obj;
+			if (unit == null)
+			{
+				obj = null;
+			}
+			else
+			{
+				UnitEntityView view = unit.View;
+				obj = (((object)view != null) ? new bool?(!view.IsInGame) : null);
+			}
+			if ((!obj) ?? false)
+			{
+				m_PositionInUI = Game.GetCamera().WorldToScreenPoint(Position);
+				IsVisible.Value = m_PositionInUI.x <= 0f || m_PositionInUI.x >= (float)Game.GetCamera().pixelWidth || m_PositionInUI.y <= 0f || m_PositionInUI.y >= (float)Game.GetCamera().pixelHeight;
+				return;
+			}
 		}
-		m_PositionInUI = Game.GetCamera().WorldToScreenPoint(Position);
-		IsVisible.Value = m_PositionInUI.x <= 0f || m_PositionInUI.x >= (float)Game.GetCamera().pixelWidth || m_PositionInUI.y <= 0f || m_PositionInUI.y >= (float)Game.GetCamera().pixelHeight;
+		IsVisible.Value = false;
 	}
 
 	private UnitRelation GetUnitRelation(BaseUnitEntity unitEntity)

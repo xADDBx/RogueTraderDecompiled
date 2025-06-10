@@ -44,6 +44,9 @@ public class PropertyCalculator : ElementsList
 	[SerializeField]
 	public PropertyTargetType TargetType;
 
+	[SerializeReference]
+	public AbstractUnitEvaluator TargetEvaluator;
+
 	[SerializeField]
 	public bool FailSilentlyIfNoTarget;
 
@@ -105,7 +108,7 @@ public class PropertyCalculator : ElementsList
 			{
 				if (TargetType != 0)
 				{
-					MechanicEntity targetEntity = context.GetTargetEntity(TargetType);
+					MechanicEntity targetEntity = context.GetTargetEntity(TargetType, TargetEvaluator);
 					if (targetEntity == null)
 					{
 						bool flag = context.Rule is IRulebookHasNoTarget rulebookHasNoTarget && rulebookHasNoTarget.HasNoTarget;

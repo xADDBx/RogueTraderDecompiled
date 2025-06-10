@@ -293,7 +293,7 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 				list2 = list2.Where((ItemSlot i) => i.Active).ToList();
 			}
 			List<TooltipTemplateItem> list3 = new List<TooltipTemplateItem>();
-			if (list2 != null && list2.Count >= 4)
+			if (list2 != null && list2.Count >= 3)
 			{
 				for (int j = 0; j < list2.Count - 1; j += 2)
 				{
@@ -325,6 +325,10 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 
 	private bool IsSlotAllowedToCompare(ItemSlot slot)
 	{
+		if (slot == null)
+		{
+			return false;
+		}
 		if (!slot.HasItem || !slot.IsItemSupported(ItemEntity) || ItemEntity is ItemEntityUsable)
 		{
 			return false;

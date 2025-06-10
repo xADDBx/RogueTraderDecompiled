@@ -18,7 +18,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 
 namespace Kingmaker.Controllers.SpaceCombat;
 
-public class StarshipPathController : IControllerTick, IController, IControllerStop, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IUnitCommandStartHandler, ITurnStartHandler, IInterruptTurnStartHandler, IUnitDeathHandler
+public class StarshipPathController : IControllerTick, IController, IControllerStop, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IUnitCommandStartHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitDeathHandler, IInterruptTurnContinueHandler
 {
 	private StarshipEntity m_CurrentStarship;
 
@@ -71,6 +71,16 @@ public class StarshipPathController : IControllerTick, IController, IControllerS
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
+	}
+
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}

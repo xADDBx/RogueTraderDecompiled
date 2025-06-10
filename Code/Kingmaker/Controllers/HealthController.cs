@@ -53,13 +53,13 @@ public class HealthController : IControllerTick, IController, IControllerStop, I
 				baseUnitEntity = unitWithBestMedicae;
 			}
 		}
-		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
 			int num = 0;
-			while (!(item is StarshipEntity) && !item.IsDead && num < item.Health.Damage)
+			while (!(partyAndPet is StarshipEntity) && !partyAndPet.IsDead && num < partyAndPet.Health.Damage)
 			{
-				num = item.Health.Damage;
-				Rulebook.Trigger(new RulePerformMedicaeHeal(baseUnitEntity, item, 0));
+				num = partyAndPet.Health.Damage;
+				Rulebook.Trigger(new RulePerformMedicaeHeal(baseUnitEntity, partyAndPet, 0));
 			}
 		}
 	}

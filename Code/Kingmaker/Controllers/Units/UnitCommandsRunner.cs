@@ -31,7 +31,6 @@ using Kingmaker.View;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility;
-using Pathfinding;
 using UnityEngine;
 using Warhammer.SpaceCombat.Blueprints;
 using Warhammer.SpaceCombat.StarshipLogic;
@@ -270,6 +269,11 @@ public static class UnitCommandsRunner
 			Logger.Log("Unit {0} has active command {1}, cant move.", baseUnitEntity, baseUnitEntity.Commands.Current);
 			return;
 		}
+		if (baseUnitEntity.IsDirectlyControllable && Game.Instance.PlayerInputInCombatController.IsLocked)
+		{
+			Logger.Log("Cant run move command while player input is locked");
+			return;
+		}
 		if (!baseUnitEntity.IsStarship() && !WarhammerBlockManager.Instance.CanUnitStandOnNode(baseUnitEntity, customGridNodeBase))
 		{
 			Logger.Log("Unit {0} can't stand on the node {1}", baseUnitEntity, customGridNodeBase);
@@ -345,7 +349,7 @@ public static class UnitCommandsRunner
 			return;
 		}
 		Span<Vector3> resultPositions = stackalloc Vector3[allUnits.Count];
-		PartyFormationHelper.FillFormationPositions(worldPosition, anchorOnMainUnit ? FormationAnchor.SelectedUnit : FormationAnchor.Front, direction, allUnits, selectedUnits, currentFormation, resultPositions, formationSpaceFactor, forceRelax: false, anchorOnMainUnit ? allUnits.IndexOf(mainUnit) : (-1));
+		PartyFormationHelper.FillFormationPositions(worldPosition, anchorOnMainUnit ? FormationAnchor.SelectedUnit : FormationAnchor.Front, direction, allUnits, selectedUnits, currentFormation, resultPositions, anchorOnMainUnit ? allUnits.IndexOf(mainUnit) : (-1));
 		for (int i = 0; i < allUnits.Count; i++)
 		{
 			if (isControllerGamepad && allUnits[i] == mainUnit && flag)
@@ -471,7 +475,7 @@ public static class UnitCommandsRunner
 
 	public static void ShowDestination(BaseUnitEntity unit, Vector3 point)
 	{
-		if (unit.GetSaddledUnit() != null || !unit.View.MovementAgent || UnitWaitAgentList.HasItem(unit))
+		if (!unit.View.MovementAgent || UnitWaitAgentList.HasItem(unit))
 		{
 			return;
 		}
@@ -496,35 +500,38 @@ public static class UnitCommandsRunner
 		});
 	}
 
-	public static void ShowDestination(BaseUnitEntity unit, Path path)
-	{
-		if (unit.GetSaddledUnit() == null && path.vectorPath.Count > 0)
-		{
-			List<Vector3> vectorPath = path.vectorPath;
-			Vector3 pathDestination = vectorPath[vectorPath.Count - 1];
-			unit.View.OnMovementStarted(pathDestination, s_MovePreview);
-		}
-	}
-
 	private static UnitCommandParams CreateUseAbilityCommandParams(AbilityData abilityData, TargetWrapper target)
 	{
-		PlayerUseAbilityParams result = new PlayerUseAbilityParams(abilityData, target)
+		PlayerUseAbilityParams playerUseAbilityParams = new PlayerUseAbilityParams(abilityData, target);
+		playerUseAbilityParams.IsSynchronized = true;
+		IReadOnlyList<TargetWrapper> readOnlyList = Game.Instance.SelectedAbilityHandler?.MultiTargetHandler.Targets;
+		if (readOnlyList != null)
 		{
-			IsSynchronized = true
-		};
+			playerUseAbilityParams.AllTargets = new List<TargetWrapper>(readOnlyList.Count);
+			foreach (TargetWrapper item in readOnlyList)
+			{
+				playerUseAbilityParams.AllTargets.Add(new TargetWrapper(item));
+			}
+		}
+		else
+		{
+			playerUseAbilityParams.AllTargets = new List<TargetWrapper>();
+		}
 		if (abilityData.SourceItem != null)
 		{
 			EventBus.RaiseEvent(delegate(IClickActionHandler h)
 			{
 				h.OnItemUseRequested(abilityData, target);
 			});
-			return result;
 		}
-		EventBus.RaiseEvent(delegate(IClickActionHandler h)
+		else
 		{
-			h.OnCastRequested(abilityData, target);
-		});
-		return result;
+			EventBus.RaiseEvent(delegate(IClickActionHandler h)
+			{
+				h.OnCastRequested(abilityData, target);
+			});
+		}
+		return playerUseAbilityParams;
 	}
 
 	private static void RunMoveCommand(BaseUnitEntity unit, UnitCommandParams cmdParams)

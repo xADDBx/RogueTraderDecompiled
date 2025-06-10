@@ -61,6 +61,8 @@ public class AbilityCustomRam : AbilityCustomLogic, IAbilityTargetRestriction, I
 
 	bool IAbilityAoEPatternProvider.CalculateAttackFromPatternCentre => false;
 
+	public bool ExcludeUnwalkable => false;
+
 	TargetType IAbilityAoEPatternProvider.Targets => TargetType.Any;
 
 	public AoEPattern Pattern => null;

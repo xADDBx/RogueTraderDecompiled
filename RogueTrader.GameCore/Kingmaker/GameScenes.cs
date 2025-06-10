@@ -18,15 +18,13 @@ public static class GameScenes
 
 	public const string LoadingScreen = "LoadingScreen";
 
-	public const string Arbiter = "Arbiter";
-
 	public const string IngameConsoleScene = "IngameConsole";
 
 	public static readonly SceneReference SurfaceUIRef = new SceneReference("UI_Surface_Scene");
 
 	public static readonly SceneReference SpaceUIRef = new SceneReference("UI_Space_Scene");
 
-	public static readonly string[] ScenesToIncludeInBundles = new string[7] { MainMenu, "UI_Surface_Scene", "UI_Common_Scene", "UI_Space_Scene", "Arbiter", "IngameConsole", "LoadingScreen" };
+	public static readonly string[] ScenesToIncludeInBundles = new string[6] { MainMenu, "UI_Surface_Scene", "UI_Common_Scene", "UI_Space_Scene", "IngameConsole", "LoadingScreen" };
 
 	public static string MainMenu => "MainMenu";
 }

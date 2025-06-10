@@ -196,7 +196,7 @@ public class AreaEnterPoint : MonoBehaviour
 		Span<Vector3> resultPositions = stackalloc Vector3[list.Count];
 		Vector3 direction = base.transform.rotation * Vector3.forward;
 		Game.Instance.Player.FormationManager.UpdateAutoFormation();
-		PartyFormationHelper.FillFormationPositions(base.transform.position, FormationAnchor.Center, direction, list, list, Game.Instance.Player.FormationManager.CurrentFormation, resultPositions);
+		PartyFormationHelper.FillFormationPositions(base.transform.position, FormationAnchor.Center, direction, list, list, Game.Instance.Player.FormationManager.CurrentFormation, resultPositions, -1, base.transform.position.GetNearestNodeXZ());
 		for (int i = 0; i < list.Count; i++)
 		{
 			BaseUnitEntity baseUnitEntity = list[i];
@@ -262,12 +262,7 @@ public class AreaEnterPoint : MonoBehaviour
 		BaseUnitEntity baseUnitEntity = character.Master ?? character;
 		if (baseUnitEntity.Faction.IsDirectlyControllable && !character.LifeState.IsFinallyDead && !baseUnitEntity.IsDetached)
 		{
-			UnitPartCompanion optional = baseUnitEntity.GetOptional<UnitPartCompanion>();
-			if (optional == null)
-			{
-				return true;
-			}
-			return optional.State != CompanionState.ExCompanion;
+			return baseUnitEntity.GetCompanionState() != CompanionState.ExCompanion;
 		}
 		return false;
 	}

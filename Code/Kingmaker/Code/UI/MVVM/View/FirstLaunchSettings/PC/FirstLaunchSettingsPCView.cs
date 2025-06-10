@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.FirstLaunchSettings.Base;
 using Kingmaker.Code.UI.MVVM.View.Settings.PC.Menu;
+using Kingmaker.Code.UI.MVVM.VM.Settings.Menu;
 using Kingmaker.Localization;
 using Kingmaker.UI.Models.SettingsUI;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -88,8 +89,10 @@ public class FirstLaunchSettingsPCView : FirstLaunchSettingsBaseView
 
 	protected override void SetupTexts()
 	{
+		SettingsMenuEntityVM settingsMenuEntityVM = base.ViewModel.SelectedMenuEntity?.Value;
+		bool num = settingsMenuEntityVM != null && settingsMenuEntityVM.SettingsScreenType == UISettingsManager.SettingsScreen.Accessiability;
 		LocalizedString localizedString = (IsFocusedOnLanguageItem ? UIStrings.Instance.SettingsUI.Cancel : UIStrings.Instance.ContextMenu.Back);
-		LocalizedString localizedString2 = (IsFocusedOnLanguageItem ? UIStrings.Instance.SettingsUI.Apply : UIStrings.Instance.MainMenu.Continue);
+		LocalizedString localizedString2 = (num ? UIStrings.Instance.SettingsUI.Apply : UIStrings.Instance.MainMenu.Continue);
 		m_ResetToDefaultText.text = UIStrings.Instance.SettingsUI.Default;
 		m_BackText.text = localizedString;
 		m_ContinueText.text = localizedString2;

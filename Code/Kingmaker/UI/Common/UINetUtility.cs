@@ -117,7 +117,15 @@ public static class UINetUtility
 
 	public static bool IsMyNetRole([CanBeNull] this MechanicEntity entry)
 	{
-		return entry.IsDirectlyControllable();
+		if (!entry.IsDirectlyControllable())
+		{
+			if (entry is BaseUnitEntity baseUnitEntity)
+			{
+				return baseUnitEntity.Master.IsDirectlyControllable();
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public static bool CanBeControlled([CanBeNull] this MechanicEntity entry)

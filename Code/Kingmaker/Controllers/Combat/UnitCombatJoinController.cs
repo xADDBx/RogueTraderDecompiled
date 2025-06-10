@@ -30,9 +30,9 @@ public class UnitCombatJoinController : IControllerEnable, IController, IControl
 		try
 		{
 			bool isInCombat = Game.Instance.Player.IsInCombat;
-			foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
+			foreach (BaseUnitEntity item in Game.Instance.State.AllBaseAwakeUnitsForSure)
 			{
-				TickUnit(allBaseAwakeUnit);
+				TickUnit(item);
 			}
 			Game.Instance.Player.UpdateIsInCombat();
 			for (int i = 0; i < m_TryStartCombat.Count; i++)
@@ -201,6 +201,10 @@ public class UnitCombatJoinController : IControllerEnable, IController, IControl
 			return false;
 		}
 		if (enemy.LifeState.IsDead || (bool)enemy.Features.IsIgnoredByCombat || (bool)enemy.Passive)
+		{
+			return false;
+		}
+		if (enemy.IsPet)
 		{
 			return false;
 		}

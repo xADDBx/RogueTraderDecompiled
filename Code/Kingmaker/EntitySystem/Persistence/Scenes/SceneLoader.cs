@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -314,7 +315,7 @@ public class SceneLoader
 					select SceneManager.GetSceneAt(i)).ToList();
 				foreach (Scene scene in list)
 				{
-					if (scene.isLoaded && !(scene.name == m_LoadedUIScene) && !(scene.name == "BaseMechanics") && !(scene.name == "EntityBounds") && !(scene.name == "UI_Common_Scene") && !(scene.name == "Arbiter") && !(scene.name == "IngameConsole") && !(scene.name == "LoadingScreen") && (CrossSceneRoot == null || !(scene.name == CrossSceneRoot.Name)) && !m_LoadedAreaScenes.Any((SceneReference sr) => sr.SceneName == scene.name) && !HotScenesManager.IsSceneDeactivated(scene.name))
+					if (scene.isLoaded && !(scene.name == m_LoadedUIScene) && !(scene.name == "BaseMechanics") && !(scene.name == "EntityBounds") && !(scene.name == "UI_Common_Scene") && !(scene.name == "IngameConsole") && !(scene.name == "LoadingScreen") && (CrossSceneRoot == null || !(scene.name == CrossSceneRoot.Name)) && !m_LoadedAreaScenes.Any((SceneReference sr) => sr.SceneName == scene.name) && !HotScenesManager.IsSceneDeactivated(scene.name))
 					{
 						PFLog.SceneLoader.Log("Unload scene: {0}", scene.name);
 						reload = BundledSceneLoader.UnloadSceneAsync(scene.name);
@@ -756,20 +757,15 @@ public class SceneLoader
 		}
 		Game.Instance?.EntitySpawner?.SuppressSpawn.Retain();
 		IEnumerable<EntityViewBase> enumerable = sceneByName.GetRootGameObjects().SelectMany((GameObject obj) => obj.GetComponentsInChildren<EntityViewBase>(includeInactive: true));
-		if (!state.HasEntityData)
+		IEnumerator entitiesIterator = (state.HasEntityData ? LoadSceneEntitiesCoroutine(state, enumerable) : CreateSceneEntitiesCoroutine(state, enumerable));
+		Stopwatch entitiesIteratorSw = Stopwatch.StartNew();
+		while (entitiesIterator.MoveNext())
 		{
-			IEnumerator createEntities = CreateSceneEntitiesCoroutine(state, enumerable);
-			while (createEntities.MoveNext())
+			TimeSpan timeSpan = TimeSpan.FromSeconds(0.2);
+			if (entitiesIteratorSw.Elapsed >= timeSpan)
 			{
 				yield return null;
-			}
-		}
-		else
-		{
-			IEnumerator createEntities = LoadSceneEntitiesCoroutine(state, enumerable);
-			while (createEntities.MoveNext())
-			{
-				yield return null;
+				entitiesIteratorSw.Restart();
 			}
 		}
 		state.IsSceneLoadedThreadSafe = true;
@@ -1293,7 +1289,7 @@ public class SceneLoader
 			if (!value && (bool)allEntityDatum.View?.GO)
 			{
 				((state == Game.Instance.State.PlayerState.CrossSceneState) ? CrossSceneRoot : DynamicRoot).Add(allEntityDatum.View.ViewTransform);
-				if (state == Game.Instance.State.PlayerState.CrossSceneState)
+				if (state == Game.Instance.State.PlayerState.CrossSceneState && allEntityDatum is MechanicEntity)
 				{
 					allEntityDatum.GetOrCreate<PartHoldPrefabBundle>();
 				}
@@ -1362,7 +1358,7 @@ public class SceneLoader
 			{
 				BaseUnitEntity item = allCrossSceneUnit.Master ?? allCrossSceneUnit;
 				allCrossSceneUnit.IsInGame = Game.Instance.Player.Party.Contains(item);
-				if (!allCrossSceneUnit.IsInGame && !allCrossSceneUnit.GetOptional<UnitPartCompanion>())
+				if (!allCrossSceneUnit.IsInGame && !allCrossSceneUnit.GetOptional<UnitPartCompanion>() && !allCrossSceneUnit.IsPet)
 				{
 					Game.Instance.EntityDestroyer.Destroy(allCrossSceneUnit);
 				}
@@ -1472,14 +1468,13 @@ public class SceneLoader
 			}
 			m_LoadedAreaScenes.Clear();
 			RenderTexture rt = RenderTexture.GetTemporary(Screen.width, Screen.height, 0);
-			CameraStackManager.CameraStackState state2 = CameraStackManager.Instance.State;
-			CameraStackManager.Instance.State = CameraStackManager.CameraStackState.UiOnly;
+			using CameraStackManager.CameraStackStateChangeScope tempState = CameraStackManager.Instance.SetTempState(CameraStackManager.CameraStackState.UiOnly);
 			Camera firstBase = CameraStackManager.Instance.GetFirstBase();
 			RenderTexture targetTexture = firstBase.targetTexture;
 			firstBase.targetTexture = rt;
 			firstBase.Render();
 			firstBase.targetTexture = targetTexture;
-			CameraStackManager.Instance.State = state2;
+			tempState.Dispose();
 			FakeLoadingScreen fake = new GameObject("fake loading screen").AddComponent<FakeLoadingScreen>();
 			fake.Texture = rt;
 			UnityEngine.Object.DontDestroyOnLoad(fake);

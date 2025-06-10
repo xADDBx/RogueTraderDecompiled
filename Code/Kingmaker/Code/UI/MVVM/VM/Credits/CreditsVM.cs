@@ -37,19 +37,24 @@ public class CreditsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 
 	public CreditsVM(Action closeAction, bool onlyBakers = false)
 	{
+		CreditsVM creditsVM = this;
 		m_CloseAction = closeAction;
 		Groups = Game.Instance.BlueprintRoot.UIConfig.Credits.Groups.Select((BlueprintCreditsGroupReference g) => g.Get()).ToList();
-		if (onlyBakers)
+		Groups = Groups.Where(delegate(BlueprintCreditsGroup g)
 		{
-			Groups = Groups.Where((BlueprintCreditsGroup g) => g.IsBakers && g.ShowInGameCredits).ToList();
-		}
-		else
-		{
-			Groups = Groups.Where((BlueprintCreditsGroup g) => !g.IsBakers || g.ShowInMainMenuCredits).ToList();
-		}
+			if (!onlyBakers)
+			{
+				if (g.IsBakers)
+				{
+					return g.ShowInMainMenuCredits;
+				}
+				return true;
+			}
+			return g.IsBakers && g.ShowInGameCredits;
+		}).ToList();
 		m_MenuEntitiesList = Groups.Select((BlueprintCreditsGroup g) => new CreditsMenuEntityVM(g.PageIcon, g.HeaderText, delegate
 		{
-			OnSelectGroup?.Execute(g);
+			creditsVM.OnSelectGroup?.Execute(g);
 		})).ToList();
 		AddDisposable(SelectionGroup = new SelectionGroupRadioVM<CreditsMenuEntityVM>(m_MenuEntitiesList, m_SelectedMenuEntity));
 		AddDisposable(Selector = new LensSelectorVM());

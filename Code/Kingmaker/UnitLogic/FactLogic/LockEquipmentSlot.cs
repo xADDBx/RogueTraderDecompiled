@@ -35,7 +35,8 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 		Weapon7,
 		Weapon8,
 		Glasses,
-		Shirt
+		Shirt,
+		PetProtocol
 	}
 
 	[SerializeField]
@@ -99,6 +100,8 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 			return base.Owner.Body.SecondaryHand;
 		case SlotType.Cloak:
 			return base.Owner.Body.Shoulders;
+		case SlotType.PetProtocol:
+			return base.Owner.Body.PetProtocol;
 		case SlotType.Bracers:
 			return base.Owner.Body.Wrist;
 		case SlotType.Boots:

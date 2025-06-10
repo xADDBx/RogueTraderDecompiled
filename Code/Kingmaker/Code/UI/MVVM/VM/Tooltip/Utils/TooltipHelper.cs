@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Encyclopedia;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.Dialog;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
@@ -306,7 +307,7 @@ public static class TooltipHelper
 		component.ShowLinkTooltip(UIUtility.GetKeysFromLink(key), skillCheckDcs, skillCheckResults, config);
 	}
 
-	public static IDisposable SetLinkTooltip(this TextMeshProUGUI text, List<SkillCheckDC> skillCheckDcs = null, List<SkillCheckResult> skillCheckResults = null, TooltipConfig config = default(TooltipConfig))
+	public static IDisposable SetLinkTooltip(this TextMeshProUGUI text, List<SkillCheckDC> skillCheckDcs = null, List<SkillCheckResult> skillCheckResults = null, TooltipConfig config = default(TooltipConfig), MechanicEntity mechanicEntity = null)
 	{
 		if (text == null)
 		{
@@ -342,7 +343,7 @@ public static class TooltipHelper
 			{
 				linkIndex = num2;
 				linkKeys = UIUtility.GetKeysFromLink(text.textInfo.linkInfo[linkIndex.Value].GetLinkID());
-				TooltipBaseTemplate template = GetLinkTooltipTemplate(linkKeys, skillCheckDcs, skillCheckResults, config.IsEncyclopedia);
+				TooltipBaseTemplate template = GetLinkTooltipTemplate(linkKeys, skillCheckDcs, skillCheckResults, config.IsEncyclopedia, mechanicEntity);
 				if (template != null)
 				{
 					ref RectTransform tooltipPlace = ref config.TooltipPlace;
@@ -431,7 +432,7 @@ public static class TooltipHelper
 		return GetLinkTooltipTemplate(UIUtility.GetKeysFromLink(key));
 	}
 
-	private static TooltipBaseTemplate GetLinkTooltipTemplate(string[] keys, List<SkillCheckDC> skillCheckDcs = null, List<SkillCheckResult> skillCheckResults = null, bool isEncyclopedia = false)
+	private static TooltipBaseTemplate GetLinkTooltipTemplate(string[] keys, List<SkillCheckDC> skillCheckDcs = null, List<SkillCheckResult> skillCheckResults = null, bool isEncyclopedia = false, MechanicEntity mechanicEntity = null)
 	{
 		if (keys.Empty())
 		{
@@ -466,15 +467,15 @@ public static class TooltipHelper
 					{
 						if (unitFact is BlueprintBuff blueprintBuff)
 						{
-							return new TooltipTemplateBuff(blueprintBuff);
+							return new TooltipTemplateBuff(blueprintBuff, mechanicEntity);
 						}
 						return null;
 					}
 					return new TooltipTemplateActivatableAbility(activatableAbility);
 				}
-				return new TooltipTemplateAbility(blueprintAbility);
+				return new TooltipTemplateAbility(blueprintAbility, null, mechanicEntity);
 			}
-			return new TooltipTemplateFeature(feature);
+			return new TooltipTemplateFeature(feature, withVariants: false, mechanicEntity);
 		}
 		case EntityLink.Type.GroupAbility:
 			return new TooltipTemplateAbility(LinksHelper.GetPartyAbility(keys[1]));

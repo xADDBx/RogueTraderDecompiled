@@ -313,6 +313,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 					break;
 				case UIInteractionType.Action:
 				case UIInteractionType.Credits:
+				case UIInteractionType.Pets:
 					SetCursor(CursorType.Gear);
 					break;
 				case UIInteractionType.Move:

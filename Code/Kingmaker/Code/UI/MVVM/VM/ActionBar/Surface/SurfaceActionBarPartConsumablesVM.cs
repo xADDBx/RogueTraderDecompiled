@@ -11,12 +11,15 @@ using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Critters;
+using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarPartConsumablesVM : SurfaceActionBarBasePartVM, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, ISubscriber
+public class SurfaceActionBarPartConsumablesVM : SurfaceActionBarBasePartVM, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, ISubscriber, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler
 {
 	public readonly List<ActionBarSlotVM> Slots = new List<ActionBarSlotVM>();
+
+	public readonly ReactiveCommand CheckServiceWindowsBlocked = new ReactiveCommand();
 
 	private const int MaxQuickSlotCount = 4;
 
@@ -92,5 +95,15 @@ public class SurfaceActionBarPartConsumablesVM : SurfaceActionBarBasePartVM, IUn
 			OnUnitChanged();
 			UnitChanged.Execute();
 		}
+	}
+
+	public void HandleServiceWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
+	}
+
+	public void HandleSelectedWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
 	}
 }

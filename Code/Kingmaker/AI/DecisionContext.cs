@@ -69,6 +69,8 @@ public class DecisionContext
 
 	public MechanicEntity LuredTo;
 
+	public bool TryTargetAllInsteadOfHatedOnly;
+
 	public AiAreaScanner.PathData UnitMoveVariants;
 
 	public BetterPlace FoundBetterPlace;
@@ -107,7 +109,7 @@ public class DecisionContext
 		}
 	}
 
-	public CustomGridNodeBase UnitNode => Self[0].Node;
+	public CustomGridNodeBase UnitNode => Unit.CurrentUnwalkableNode;
 
 	public ScoreOrder ScoreOrder => Unit.Brain.ScoreOrder ?? DefaultScoreOrder;
 
@@ -184,6 +186,14 @@ public class DecisionContext
 			{
 				UpdateTargetsPriority();
 			}
+			if (TryTargetAllInsteadOfHatedOnly)
+			{
+				if (m_Enemies.Count <= 0)
+				{
+					return m_LowPriorityTargets;
+				}
+				return m_Enemies;
+			}
 			PriorityTargetScenario priorityTargetScenario = Unit.Brain.CurrentScenario as PriorityTargetScenario;
 			if (IsMoveCommand && priorityTargetScenario != null)
 			{
@@ -247,7 +257,7 @@ public class DecisionContext
 		{
 			if (!m_AlliesInitialized)
 			{
-				Game.Instance.TurnController.AllUnits.Where((MechanicEntity u) => u.IsInCombat && u != Unit && Unit.IsAlly(u)).ForEach(delegate(MechanicEntity u)
+				Game.Instance.TurnController.AllUnits.Where((MechanicEntity u) => (u.IsInCombat || (bool)u.Features.DeadCountedForAI) && u != Unit && Unit.IsAlly(u)).ForEach(delegate(MechanicEntity u)
 				{
 					m_Allies.Add(CreateTargetInfo(u));
 				});
@@ -262,7 +272,7 @@ public class DecisionContext
 	public void InitSquadUnitsEnumerator()
 	{
 		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
-		SquadUnitsEnumerator = ((currentUnit is UnitSquad squad) ? squad.GetConsciousUnits().GetEnumerator() : null);
+		SquadUnitsEnumerator = ((currentUnit is UnitSquad squad) ? squad.GetActingUnitsWithLeaderFirst().GetEnumerator() : null);
 	}
 
 	public void ConsiderNextSquadUnit()
@@ -594,7 +604,7 @@ public class DecisionContext
 
 	private bool IsSafeToCast(AbilityData ability)
 	{
-		if (ability.Caster.GetCombatStateOptional().IsEngaged)
+		if (ability.Caster.GetCombatStateOptional().IsEngagedExcludeOffEngageForTarget)
 		{
 			return ability.UsingInThreateningArea == BlueprintAbility.UsingInThreateningAreaType.CanUseWithoutAOO;
 		}
@@ -746,7 +756,7 @@ public class DecisionContext
 		foreach (TargetInfo enemy in Enemies)
 		{
 			BaseUnitEntity baseUnitEntity = (BaseUnitEntity)enemy.Entity;
-			if (baseUnitEntity.GetThreatHand()?.Weapon.Blueprint.AttackOfOpportunityAbility != null)
+			if (baseUnitEntity.GetThreatHand()?.GetAttackOfOpportunityAbility(baseUnitEntity) != null)
 			{
 				yield return baseUnitEntity;
 			}

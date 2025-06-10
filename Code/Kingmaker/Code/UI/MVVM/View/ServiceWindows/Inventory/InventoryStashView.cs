@@ -3,11 +3,13 @@ using Kingmaker.Code.UI.MVVM.View.Loot.PC;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Common.Animations;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
@@ -41,6 +43,9 @@ public abstract class InventoryStashView : ViewBase<InventoryStashVM>, IVendorBu
 	[SerializeField]
 	private InsertableLootSlotView m_InsertableSlotPrefab;
 
+	[SerializeField]
+	private FadeAnimator m_RightSlots;
+
 	public void Initialize()
 	{
 		m_ItemSlotsGroup.Initialize(m_InventorySlotPrefab);
@@ -60,6 +65,18 @@ public abstract class InventoryStashView : ViewBase<InventoryStashVM>, IVendorBu
 		m_InsertableSlotsGroup.Or(null)?.Bind(base.ViewModel.InsertableSlotsGroup);
 		m_ItemsFilter.Bind(base.ViewModel.ItemsFilter);
 		AddDisposable(EventBus.Subscribe(this));
+		if (base.ViewModel.Unit == null)
+		{
+			return;
+		}
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_RightSlots.PlayAnimation(value: true);
+			if (u.IsPet)
+			{
+				m_RightSlots.PlayAnimation(value: false);
+			}
+		}));
 	}
 
 	protected override void DestroyViewImplementation()

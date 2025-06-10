@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Kingmaker.Controllers.TurnBased;
@@ -20,6 +19,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
@@ -28,7 +28,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 
-public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ICellAbilityHandler, IAbilityTargetSelectionUIHandler, IAbilityTargetHoverUIHandler, IPartyCombatHandler, IInteractionHighlightUIHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IEntitySubscriber, IGameModeHandler, IUnitFactionHandler, IUnitChangeAttackFactionsHandler, IUnitCommandStartHandler<EntitySubscriber>, IUnitCommandStartHandler, IEventTag<IUnitCommandStartHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, IEventTag<IUnitCommandActHandler, EntitySubscriber>, INetRoleSetHandler, INetStopPlayingHandler, INetPingEntity, ILootDroppedAsAttachedHandler<EntitySubscriber>, ILootDroppedAsAttachedHandler, IEventTag<ILootDroppedAsAttachedHandler, EntitySubscriber>, IDestructibleEntityHandler
+public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ICellAbilityHandler, IAbilityTargetSelectionUIHandler, IAbilityTargetHoverUIHandler, IPartyCombatHandler, IInteractionHighlightUIHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IEntitySubscriber, IGameModeHandler, IUnitFactionHandler, IUnitChangeAttackFactionsHandler, IUnitCommandStartHandler<EntitySubscriber>, IUnitCommandStartHandler, IEventTag<IUnitCommandStartHandler, EntitySubscriber>, IUnitCommandEndHandler<EntitySubscriber>, IUnitCommandEndHandler, IEventTag<IUnitCommandEndHandler, EntitySubscriber>, IUnitCommandActHandler<EntitySubscriber>, IUnitCommandActHandler, IEventTag<IUnitCommandActHandler, EntitySubscriber>, INetRoleSetHandler, INetStopPlayingHandler, INetPingEntity, ILootDroppedAsAttachedHandler<EntitySubscriber>, ILootDroppedAsAttachedHandler, IEventTag<ILootDroppedAsAttachedHandler, EntitySubscriber>, IDestructibleEntityHandler, IInterruptTurnContinueHandler
 {
 	public readonly MechanicEntityUIWrapper Unit;
 
@@ -82,6 +82,10 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	public readonly ReactiveProperty<bool> HasLoot = new ReactiveProperty<bool>(initialValue: false);
 
+	public readonly ReactiveProperty<bool> IsAbilityRedirected = new ReactiveProperty<bool>(initialValue: false);
+
+	public readonly ReactiveProperty<bool> IsAbilityRelay = new ReactiveProperty<bool>(initialValue: false);
+
 	public Sprite HoverAbilityIcon;
 
 	private Tween m_PingTween;
@@ -134,11 +138,29 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
 	{
-		if (Unit.MechanicEntity is AbstractUnitEntity abstractUnitEntity && unitEntityView.Data == abstractUnitEntity)
+		if (!(Unit.MechanicEntity is AbstractUnitEntity abstractUnitEntity) || unitEntityView.Data != abstractUnitEntity)
 		{
-			IsMouseOverUnit.Value = isHover;
-			UpdateGamepadHint();
+			return;
 		}
+		ReactiveProperty<bool> isAbilityRelay = IsAbilityRelay;
+		int value3;
+		if (isHover)
+		{
+			AbilityData value = Ability.Value;
+			if ((object)value != null && value.CanRedirectFromTarget(abstractUnitEntity))
+			{
+				AbilityData value2 = Ability.Value;
+				value3 = (((object)value2 != null && value2.RedirectSettings?.IncludeClickedTarget == false) ? 1 : 0);
+				goto IL_008e;
+			}
+		}
+		value3 = 0;
+		goto IL_008e;
+		IL_008e:
+		isAbilityRelay.Value = (byte)value3 != 0;
+		IsAbilityRedirected.Value = false;
+		IsMouseOverUnit.Value = isHover;
+		UpdateGamepadHint();
 	}
 
 	private void UpdateGamepadHint()
@@ -167,7 +189,17 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 		UpdateTBMUnit();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateTBMUnit();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateTBMUnit();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateTBMUnit();
 	}
@@ -210,7 +242,9 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 			IsAoETarget.Value = false;
 			return;
 		}
-		IsAoETarget.Value = abilityTargets.Any((AbilityTargetUIData n) => n.Target == Unit.MechanicEntity);
+		AbilityTargetUIData abilityTargetUIData = abilityTargets.FirstItem((AbilityTargetUIData n) => n.Target == Unit.MechanicEntity);
+		IsAoETarget.Value = abilityTargetUIData != default(AbilityTargetUIData);
+		IsAbilityRedirected.Value = abilityTargetUIData.IsAbilityRedirected;
 	}
 
 	public void HandleAbilityTargetSelectionStart(AbilityData ability)
@@ -227,6 +261,7 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 		IsStarshipAttack.Value = false;
 		Ability.Value = null;
 		IsCaster.Value = false;
+		IsAbilityRedirected.Value = false;
 	}
 
 	public void HandlePartyCombatStateChanged(bool inCombat)

@@ -49,6 +49,8 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 
 	public EquipSlotVM Shirt;
 
+	public EquipSlotVM Protocol;
+
 	public readonly EquipSlotVM[] QuickSlots = new EquipSlotVM[4];
 
 	public SelectionGroupRadioVM<WeaponSetVM> WeaponSetSelector;
@@ -71,8 +73,6 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 
 	private InventorySlotConsoleView m_ItemToSlotView;
 
-	public readonly bool IsPet;
-
 	private Action OnWeaponSetChangedAction;
 
 	public InventorySlotConsoleView ItemToSlotView => m_ItemToSlotView;
@@ -81,7 +81,6 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		: base(unit)
 	{
 		OnWeaponSetChangedAction = onWeaponSetChanged;
-		IsPet = unit?.Value != null && (unit.Value.Body.IsPolymorphed || unit.Value.IsPet);
 		AddDisposable(CurrentSet.Subscribe(OnWeaponSetChanged));
 		AddDisposable(EncumbranceVM = new CharInfoEncumbranceVM(unit));
 		AddDisposable(InventorySelectorWindowVM = new ReactiveProperty<InventorySelectorWindowVM>());
@@ -146,6 +145,8 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		m_AllEquipSlots.Add(Glasses);
 		AddDisposable(Shirt = new EquipSlotVM(EquipSlotType.Shirt, body.Shirt));
 		m_AllEquipSlots.Add(Shirt);
+		AddDisposable(Protocol = new EquipSlotVM(EquipSlotType.PetProtocol, body.PetProtocol));
+		m_AllEquipSlots.Add(Protocol);
 		for (int i = 0; i < body.QuickSlots.Length; i++)
 		{
 			QuickSlots[i]?.Dispose();
@@ -178,6 +179,8 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 			AddDisposable(disposable);
 			m_AllEquipSlots.Add(WeaponSets[k].Secondary);
 		}
+		WeaponSets[0].Secondary.InitializeSecondSetSecondaryFakeItem(WeaponSets[1].Secondary);
+		WeaponSets[1].Secondary.InitializeSecondSetSecondaryFakeItem(WeaponSets[0].Secondary);
 		CurrentSet.Value = WeaponSets[Unit.Value.Body.CurrentHandEquipmentSetIndex];
 		UpdateVisualSettings();
 	}

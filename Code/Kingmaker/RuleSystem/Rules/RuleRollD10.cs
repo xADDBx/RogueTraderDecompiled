@@ -14,7 +14,7 @@ public class RuleRollD10 : RuleRollDice, IRuleRollD10, IRuleRollDice
 	public RuleRollD10(BaseUnitEntity initiator, int resultOverride)
 		: base(initiator, new DiceFormula(1, DiceType.D10))
 	{
-		ResultOverride = resultOverride;
+		base.ResultOverride = resultOverride;
 	}
 
 	public static RuleRollD10 FromInt(BaseUnitEntity initiator, int roll)

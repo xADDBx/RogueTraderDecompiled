@@ -1,16 +1,23 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.Items;
+using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
@@ -18,7 +25,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit.UnitOvertipParts;
 
-public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICellAbilityHandler, ISubscriber
+public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ICellAbilityHandler, ISubscriber, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, IUnitDirectHoverUIHandler
 {
 	public readonly UnitState UnitState;
 
@@ -51,6 +58,10 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 	public readonly ReactiveProperty<float> CoverChance = new ReactiveProperty<float>(0f);
 
 	public readonly ReactiveProperty<float> EvasionChance = new ReactiveProperty<float>(0f);
+
+	public readonly ReactiveProperty<float> BlockChance = new ReactiveProperty<float>(0f);
+
+	public readonly ReactiveProperty<bool> ShieldEquipped = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly BoolReactiveProperty IsVisibleTrigger = new BoolReactiveProperty();
 
@@ -94,7 +105,7 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	private void UpdateSingleSelectedAbilityProperty()
 	{
-		if (UnitState.IsInCombat.Value && !UnitState.IsDeadOrUnconsciousIsDead.Value && !(UnitState.Ability.Value == null) && UnitState.Ability.Value.TargetAnchor == AbilityTargetAnchor.Unit && !UnitState.Ability.Value.IsChainLighting())
+		if (UnitState.IsInCombat.Value && !UnitState.IsDeadOrUnconsciousIsDead.Value && !(UnitState.Ability.Value == null) && UnitState.Ability.Value.TargetAnchor == AbilityTargetAnchor.Unit && !UnitState.Ability.Value.IsChainLighting() && !UnitState.Ability.Value.CanRedirect)
 		{
 			AbilityTargetUIData orCreate = AbilityTargetUIDataCache.Instance.GetOrCreate(UnitState.Ability.Value, Unit, Game.Instance.VirtualPositionController.GetDesiredPosition(UnitState.Ability.Value.Caster));
 			m_AbilityTargetUIData.SetValueAndForceNotify(orCreate);
@@ -115,7 +126,7 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	private void UpdateProperties()
 	{
-		if (UnitState.Ability.Value == null)
+		if (UnitState.Ability.Value == null || UnitState.Ability.Value?.Blueprint != m_AbilityTargetUIData.Value.Ability?.Blueprint)
 		{
 			ClearProperties();
 			return;
@@ -134,12 +145,13 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 		BurstIndex.Value = m_AbilityTargetUIData.Value.BurstIndex;
 		HitChance.Value = m_AbilityTargetUIData.Value.HitWithAvoidanceChance;
 		InitialHitChance.Value = m_AbilityTargetUIData.Value.InitialHitChance;
-		MinDamage.Value = m_AbilityTargetUIData.Value.MinDamage;
-		MaxDamage.Value = m_AbilityTargetUIData.Value.MaxDamage;
+		MinDamage.Value = ((!m_AbilityTargetUIData.Value.IsAbilityRedirected) ? m_AbilityTargetUIData.Value.MinDamage : 0);
+		MaxDamage.Value = ((!m_AbilityTargetUIData.Value.IsAbilityRedirected) ? m_AbilityTargetUIData.Value.MaxDamage : 0);
 		DodgeChance.Value = m_AbilityTargetUIData.Value.DodgeChance;
 		ParryChance.Value = m_AbilityTargetUIData.Value.ParryChance;
 		CoverChance.Value = m_AbilityTargetUIData.Value.CoverChance;
 		EvasionChance.Value = m_AbilityTargetUIData.Value.EvasionChance;
+		BlockChance.Value = m_AbilityTargetUIData.Value.BlockChance;
 		CanPush.Value = m_AbilityTargetUIData.Value.CanPush;
 		if (m_AbilityTargetUIData.Value.BurstHitChances != null)
 		{
@@ -194,6 +206,45 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 			return true;
 		default:
 			return false;
+		}
+	}
+
+	public void HandleEquipmentSlotUpdated(ItemSlot slot, ItemEntity previousItem)
+	{
+		if (slot.Owner == Unit)
+		{
+			if (slot.HasItem && slot.Item.Blueprint.ItemType == ItemsItemType.Shield)
+			{
+				ShieldEquipped.Value = true;
+			}
+			else if (previousItem != null && previousItem.Blueprint.ItemType == ItemsItemType.Shield && ((slot.HasItem && slot.Item.Blueprint.ItemType != ItemsItemType.Shield) || !slot.HasItem))
+			{
+				ShieldEquipped.Value = false;
+			}
+		}
+	}
+
+	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
+	{
+		if (unitEntityView.GetSubscribingEntity().ToEntity() != Unit || !Unit.IsPlayerEnemy)
+		{
+			return;
+		}
+		PartInventory inventoryOptional = Unit.GetInventoryOptional();
+		if (inventoryOptional == null)
+		{
+			return;
+		}
+		if (isHover)
+		{
+			if (inventoryOptional.Items.HasItem((ItemEntity i) => i.Blueprint.ItemType == ItemsItemType.Shield))
+			{
+				ShieldEquipped.Value = true;
+			}
+		}
+		else
+		{
+			ShieldEquipped.Value = false;
 		}
 	}
 }

@@ -25,7 +25,7 @@ public class TaskNodeCastAbility : CoroutineTaskNode
 			yield return Status.Running;
 		}
 		UnitCommandHandle commandHandle = context.Unit.Commands.Run(cmd);
-		while (!context.Unit.Commands.Empty)
+		while (context.Unit.IsBusy)
 		{
 			yield return Status.Running;
 		}

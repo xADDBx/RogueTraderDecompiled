@@ -115,6 +115,8 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	public bool Hidden;
 
+	public bool HiddenInUI;
+
 	public bool DisableBestShootingPosition;
 
 	public bool NeedEquipWeapons;
@@ -147,6 +149,13 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	public bool IsFreeAction;
 
 	public bool ShouldTurnToTarget = true;
+
+	[ShowIf("ShouldTurnToTarget")]
+	public bool SyncRotationAndAttack;
+
+	[ShowIf("SyncRotationAndAttack")]
+	[Tooltip("Delay in seconds before executing the attack after rotation is complete.")]
+	public float SyncRotationDelay;
 
 	[SerializeField]
 	private bool m_IsStratagem;
@@ -256,6 +265,8 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	private bool IsRangePersonal => Range == AbilityRange.Personal;
 
 	public bool CanCastToDeadTarget => this.GetComponent<ICanTargetDeadUnits>() != null;
+
+	public AbilityCanTargetOnlyPetUnits CanTargetOnlyPetUnitsComponent => this.GetComponent<AbilityCanTargetOnlyPetUnits>();
 
 	public IAbilityAoEPatternProvider PatternSettings => GetPatternSettings();
 

@@ -59,7 +59,7 @@ public class AbilityResourceWounds : BlueprintComponent, IAbilityResourceLogic, 
 		{
 			Type = DamageType.Direct
 		};
-		DamageData resultDamage = new CalculateDamageParams(caster, caster, ability, null, damageTypeDescription.CreateDamage(num, num), 0, 0, forceCrit: false, calculatedOverpenetration: false, doNotUseCrModifier: true).Trigger().ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(caster, caster, ability, null, damageTypeDescription.CreateDamage(num, num), 0, 0, forceCrit: false, calculatedOverpenetration: false, doNotUseCrModifier: true, unmodifiable: true).Trigger().ResultDamage;
 		Rulebook.Trigger(new RuleDealDamage(caster, caster, resultDamage)
 		{
 			SourceAbility = ability

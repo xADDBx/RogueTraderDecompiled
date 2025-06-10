@@ -5,6 +5,7 @@ using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap.Blueprints.Colonization;
@@ -23,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.SystemMap;
 
-public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISubscriber, IGameModeHandler, IAreaLoadingStagesHandler
+public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISubscriber, IGameModeHandler, IAreaLoadingStagesHandler, IInGameHandler, ISubscriber<IEntity>
 {
 	public readonly MapObjectEntity PlanetObject;
 
@@ -44,6 +45,8 @@ public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISu
 	public readonly ReactiveProperty<bool> HasPoi = new ReactiveProperty<bool>();
 
 	public readonly BoolReactiveProperty PlanetIsScanned = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty PlanetIsVisible = new BoolReactiveProperty();
 
 	public readonly ReactiveProperty<PlanetView> PlanetView = new ReactiveProperty<PlanetView>();
 
@@ -73,6 +76,7 @@ public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISu
 		PlanetView.Value = PlanetObject.View.gameObject.GetComponent<PlanetView>();
 		SetPlanetIconsState();
 		PlanetIsScanned.Value = CheckScanned();
+		PlanetIsVisible.Value = PlanetObject.IsInGame;
 	}
 
 	protected override void DisposeImplementation()
@@ -237,6 +241,15 @@ public class OvertipEntityPlanetVM : OvertipEntityVM, IExplorationUIHandler, ISu
 		if (Game.Instance.CurrentMode == GameModeType.StarSystem)
 		{
 			CheckIconStateAndScan();
+		}
+	}
+
+	public void HandleObjectInGameChanged()
+	{
+		MapObjectEntity mapObjectEntity = EventInvokerExtensions.MapObjectEntity;
+		if (mapObjectEntity != null && PlanetObject != null && PlanetObject == mapObjectEntity)
+		{
+			PlanetIsVisible.Value = PlanetObject.IsInGame;
 		}
 	}
 }

@@ -20,6 +20,8 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 	{
 		public readonly List<ClipSettings> Sequence = new List<ClipSettings>();
 
+		public AnimationClipWrapper OffHandWrapper;
+
 		public int Index { get; set; } = -1;
 
 
@@ -295,11 +297,28 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 	}
 
+	[Serializable]
+	private class OffHandAnimationSettings
+	{
+		public WeaponAnimationStyle Style;
+
+		[AssetPicker("")]
+		[ValidateNotNull]
+		[DrawEventWarning]
+		public AnimationClipWrapper ClipWrapper;
+	}
+
 	[SerializeField]
 	private bool m_IsMainHand;
 
 	[SerializeField]
 	private List<WeaponStyleSettings> m_Settings = new List<WeaponStyleSettings>();
+
+	[SerializeField]
+	private List<OffHandAnimationSettings> m_OffHandSettings = new List<OffHandAnimationSettings>();
+
+	[SerializeField]
+	private AvatarMask m_OffHandMask;
 
 	public List<WeaponStyleSettings> Settings => m_Settings;
 
@@ -327,7 +346,8 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 	}
 
-	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.SelectMany((WeaponStyleSettings i) => i.ClipWrappers);
+	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.SelectMany((WeaponStyleSettings i) => i.ClipWrappers).Concat(from i in m_OffHandSettings.EmptyIfNull()
+		select i.ClipWrapper);
 
 	private static Data GetData(UnitAnimationActionHandle handle)
 	{
@@ -442,8 +462,11 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		if (handle.Manager.NeedStepOut && handle.Manager.StepOutDirectionAnimationType != 0)
 		{
 			data2.Invalid = true;
+			return;
 		}
-		else if ((!handle.NeedPreparingForShooting || handle.IsPreparingForShooting) && !Next(handle))
+		WeaponAnimationStyle offHandStyle = (IsMainHand ? handle.Manager.ActiveOffHandWeaponStyle : handle.Manager.ActiveMainHandWeaponStyle);
+		data2.OffHandWrapper = m_OffHandSettings.FirstOrDefault((OffHandAnimationSettings s) => s.Style == offHandStyle)?.ClipWrapper;
+		if ((!handle.NeedPreparingForShooting || handle.IsPreparingForShooting) && !Next(handle))
 		{
 			handle.Release();
 		}
@@ -457,7 +480,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 		else
 		{
-			Update(handle);
+			UpdateInternal(handle);
 		}
 	}
 
@@ -470,7 +493,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 	}
 
-	private static void Update(UnitAnimationActionHandle handle)
+	private void UpdateInternal(UnitAnimationActionHandle handle)
 	{
 		AnimationBase activeAnimation = handle.ActiveAnimation;
 		bool flag = false;
@@ -493,7 +516,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		}
 	}
 
-	private static bool Next(UnitAnimationActionHandle handle)
+	private bool Next(UnitAnimationActionHandle handle)
 	{
 		Data data = GetData(handle);
 		ClipSettings clipSettings = data.Sequence.Get(data.Index + 1);
@@ -502,7 +525,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 			return false;
 		}
 		data.Index++;
-		StartClip(handle, clipSettings);
+		StartClip(handle, clipSettings, data.OffHandWrapper);
 		if (handle.ActiveAnimation != null)
 		{
 			if (data.Index > 0)
@@ -517,9 +540,18 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		return true;
 	}
 
-	private static void StartClip(UnitAnimationActionHandle handle, ClipSettings settings)
+	private void StartClip(UnitAnimationActionHandle handle, ClipSettings settings, AnimationClipWrapper offHandWrapper)
 	{
-		handle.StartClip(settings.ClipWrapper, ClipDurationType.Endless);
+		if (offHandWrapper != null)
+		{
+			handle.Manager.AddAnimationClip(handle, settings.ClipWrapper, null, useEmptyAvatarMask: true, isAdditive: false, ClipDurationType.Endless, new AnimationComposition(handle));
+			handle.Manager.AddClipToComposition(handle, offHandWrapper, m_OffHandMask, isAdditive: false);
+		}
+		else
+		{
+			handle.StartClip(settings.ClipWrapper, ClipDurationType.Endless);
+		}
+		handle.ActiveAnimation.OnlySendEventsOnce = true;
 	}
 
 	private static float GetNextClipStartTime(UnitAnimationActionHandle handle)

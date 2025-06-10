@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber, ITurnBasedModeHandler
+public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber, ITurnBasedModeHandler, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler
 {
 	public readonly bool IsInCharScreen;
 
@@ -30,6 +30,8 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 	public readonly ReactiveProperty<ActionBarSlotVM> ChooseAbilitySlot = new ReactiveProperty<ActionBarSlotVM>();
 
 	public readonly BoolReactiveProperty IsNotControllableCharacter;
+
+	public readonly ReactiveCommand CheckServiceWindowsBlocked = new ReactiveCommand();
 
 	public readonly BoolReactiveProperty IsActive = new BoolReactiveProperty();
 
@@ -289,5 +291,15 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 		{
 			IsActive.Value = false;
 		}
+	}
+
+	public void HandleServiceWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
+	}
+
+	public void HandleSelectedWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
 	}
 }

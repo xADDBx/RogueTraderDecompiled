@@ -228,6 +228,25 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public void DealWounds(int count)
 	{
+		if ((bool)base.Owner.Features.FreshInjuryImmunity)
+		{
+			EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitWoundHandler>)delegate(IUnitWoundHandler h)
+			{
+				h.HandleWoundAvoided();
+			}, isCheckRuntime: true);
+		}
+		else
+		{
+			DealWoundsImpl(count);
+		}
+	}
+
+	private void DealWoundsImpl(int count)
+	{
+		if (base.Owner is BaseUnitEntity { IsPet: not false })
+		{
+			return;
+		}
 		int num = (base.Owner.IsInPlayerParty ? Game.Instance.Player.TraumasModification.WoundStacksForTraumaModifier : 0);
 		if (!DiscardTrauma && WoundFreshStacks + WoundOldStacks + 1 >= SettingsRoot.Difficulty.WoundStacksForTrauma.GetValue() + num)
 		{
@@ -235,7 +254,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 			return;
 		}
 		base.Owner.Buffs.Add(Root.WH.BlueprintTraumaRoot.FreshWound)?.AddRank(count - 1);
-		EventBus.RaiseEvent((IMechanicEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitWoundHandler>)delegate(IUnitWoundHandler h)
+		EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitWoundHandler>)delegate(IUnitWoundHandler h)
 		{
 			h.HandleWoundReceived();
 		}, isCheckRuntime: true);
@@ -243,13 +262,31 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public void DealTraumas(int count)
 	{
-		base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.FreshWound);
-		base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.OldWound);
-		base.Owner.Buffs.Add(Root.WH.BlueprintTraumaRoot.Trauma)?.AddRank(count - 1);
-		EventBus.RaiseEvent((IMechanicEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
+		if ((bool)base.Owner.Features.OldInjuryImmunity)
 		{
-			h.HandleTraumaReceived();
-		}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
+			{
+				h.HandleTraumaAvoided();
+			}, isCheckRuntime: true);
+		}
+		else
+		{
+			DealTraumasImpl(count);
+		}
+	}
+
+	private void DealTraumasImpl(int count)
+	{
+		if (!(base.Owner is BaseUnitEntity { IsPet: not false }))
+		{
+			base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.FreshWound);
+			base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.OldWound);
+			base.Owner.Buffs.Add(Root.WH.BlueprintTraumaRoot.Trauma)?.AddRank(count - 1);
+			EventBus.RaiseEvent((IMechanicEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
+			{
+				h.HandleTraumaReceived();
+			}, isCheckRuntime: true);
+		}
 	}
 
 	private void AddWoundsAndTraumasIfNecessary(int prevHPLeft, int prevDamage)
@@ -267,17 +304,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 		int num2 = Mathf.CeilToInt((float)MaxHitPoints * num);
 		if ((damageReceivedThisTurn < num2 && m_DamageReceivedThisTurn >= num2) || (bool)ContextData<PartHealthExtension.IgnoreWoundThreshold>.Current)
 		{
-			if ((bool)base.Owner.Features.FreshInjuryImmunity)
-			{
-				EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitWoundHandler>)delegate(IUnitWoundHandler h)
-				{
-					h.HandleWoundAvoided();
-				}, isCheckRuntime: true);
-			}
-			else
-			{
-				DealWounds(1);
-			}
+			DealWounds(1);
 			m_DamageReceivedThisTurn = 0;
 		}
 		DiscardTrauma = false;
@@ -509,6 +536,11 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 			return m_TemporaryHitPoints.Where((TemporaryHitPointsData p1) => p1.Source.Fact?.Blueprint == sourceBuff).Sum((TemporaryHitPointsData p2) => p2.Value);
 		}
 		return 0;
+	}
+
+	public void CleanupTemporaryHitPoints()
+	{
+		m_TemporaryHitPoints?.Clear();
 	}
 
 	public static void RestUnit(BaseUnitEntity unit)

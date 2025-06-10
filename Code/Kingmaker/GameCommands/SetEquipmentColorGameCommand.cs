@@ -7,6 +7,7 @@ using MemoryPack.Formatters;
 using MemoryPack.Internal;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
+using UnityEngine;
 
 namespace Kingmaker.GameCommands;
 
@@ -63,13 +64,17 @@ public sealed class SetEquipmentColorGameCommand : GameCommand, IMemoryPackable<
 		m_UnitRef = UnitReference.FromIAbstractUnitEntity(unit);
 	}
 
+	public SetEquipmentColorGameCommand(BaseUnitEntity indexSet, Texture2D texture)
+	{
+	}
+
 	protected override void ExecuteInternal()
 	{
 		RampColorPreset.IndexSet indexSet = new RampColorPreset.IndexSet();
 		indexSet.PrimaryIndex = m_PrimaryIndex;
 		indexSet.SecondaryIndex = m_SecondaryIndex;
 		m_UnitRef.Entity.ToBaseUnitEntity().SetUnitEquipmentColorRampIndex(indexSet);
-		m_UnitRef.Entity.ToBaseUnitEntity().View.Or(null)?.UpdateEquipmentColor();
+		m_UnitRef.Entity.ToBaseUnitEntity().View.Or(null)?.UpdateEquipmentColorRampIndices();
 	}
 
 	static SetEquipmentColorGameCommand()

@@ -19,6 +19,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -282,7 +283,7 @@ public class CommandUnitAttack : CommandBase
 	{
 		Data commandData = player.GetCommandData<Data>(this);
 		commandData.MoveCmdHandle?.Interrupt();
-		if (commandData.Interrupted)
+		if (commandData.Interrupted || player.IsStoppingInProgress)
 		{
 			commandData.AttackCmdHandle?.Interrupt();
 		}
@@ -404,16 +405,21 @@ public class CommandUnitAttack : CommandBase
 		if (moveCmdHandle != null && !moveCmdHandle.IsFinished && moveCmdHandle.Cmd != null)
 		{
 			AbstractUnitEntity unit = commandData.Unit;
-			if (unit != null)
+			if (unit == null)
 			{
-				unit.View.MovementAgent.Stop();
-				unit.View.MovementAgent.Blocker.BlockAtCurrentPosition();
-				Vector3 vector = commandData.MoveCmdHandle.Cmd.ForcedPath.vectorPath.Last();
-				Vector3 vector2 = commandData.Target.Position - vector;
-				Vector3 normalized = new Vector3(vector2.x, 0f, vector2.z).normalized;
-				float? orientation = ((normalized.magnitude > 0.5f) ? new float?(Quaternion.FromToRotation(Vector3.forward, normalized).eulerAngles.y) : null);
-				unit.Translocate(vector, orientation);
+				return;
 			}
+			unit.View.MovementAgent.Stop();
+			unit.View.MovementAgent.Blocker.BlockAtCurrentPosition();
+			Vector3 vector = commandData.MoveCmdHandle.Cmd.ForcedPath.vectorPath.Last();
+			Vector3 vector2 = commandData.Target.Position - vector;
+			Vector3 normalized = new Vector3(vector2.x, 0f, vector2.z).normalized;
+			float? orientation = ((normalized.magnitude > 0.5f) ? new float?(Quaternion.FromToRotation(Vector3.forward, normalized).eulerAngles.y) : null);
+			unit.Translocate(vector, orientation);
+		}
+		if (!Continuous && KillTarget)
+		{
+			Target.GetValue().GetLifeStateOptional().MarkedForDeath = true;
 		}
 	}
 
@@ -428,7 +434,8 @@ public class CommandUnitAttack : CommandBase
 			NeedLoS = NeedLoS,
 			KillTarget = killTarget,
 			CustomAnimationOverride = customAnimationOverride,
-			DisableCameraFollow = true
+			DisableCameraFollow = true,
+			DisableCameraReturn = (ability.Blueprint.GetComponent<AbilityMultiTarget>() != null)
 		};
 	}
 

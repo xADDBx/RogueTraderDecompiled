@@ -70,7 +70,7 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		else
 		{
 			TooltipTemplate = new TooltipTemplateAbility(mechanicActionBarSlotAbility.Ability);
-			IsApplying.Value = mechanicActionBarSlotAbility.Ability.TargetAnchor != 0 && Game.Instance.SelectedAbilityHandler != null && Game.Instance.SelectedAbilityHandler.Ability == mechanicActionBarSlotAbility.Ability && MechanicActionBarSlot.GetResource() != 0;
+			IsApplying.Value = mechanicActionBarSlotAbility.Ability.TargetAnchor != 0 && Game.Instance.SelectedAbilityHandler != null && Game.Instance.SelectedAbilityHandler.RootAbility == mechanicActionBarSlotAbility.Ability && MechanicActionBarSlot.GetResource() != 0;
 		}
 		IsCasting.Value = MechanicActionBarSlot.IsCasting();
 		CountText.Value = MechanicActionBarSlot.GetCountText(MechanicActionBarSlot.GetResource());

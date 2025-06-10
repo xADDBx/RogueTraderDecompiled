@@ -53,7 +53,7 @@ public class InteractionSettings : IHideUnusedSettings
 	[ShowIf("ShouldShowShowOvertip")]
 	public bool ShowOvertip;
 
-	[ShowIf("ShowOvertip")]
+	[ShowIf("ShouldShowShowHighlight")]
 	public bool ShowHighlight;
 
 	[ShowIf("ShouldShowProximityRadius")]
@@ -86,6 +86,7 @@ public class InteractionSettings : IHideUnusedSettings
 	[CanBeNull]
 	public TrapObjectView Trap;
 
+	[ShowIf("ShouldShowDoNotNeedCollider")]
 	public bool DoNotNeedCollider;
 
 	[ShowIf("ShouldShowUnlimitedInteractionsPerRound")]
@@ -101,8 +102,19 @@ public class InteractionSettings : IHideUnusedSettings
 	public InteractWithToolFXData InteractWithMeltaChargeFXData;
 
 	[ShowIf("ShouldShowOvertipVerticalCorrection")]
-	[Header("Vertical overtip UI correction (pixels)")]
-	public float OvertipVerticalCorrection = 60f;
+	public float OvertipVerticalCorrection;
+
+	private bool ShouldShowShowHighlight
+	{
+		get
+		{
+			if (ShouldShowShowOvertip)
+			{
+				return ShowOvertip;
+			}
+			return false;
+		}
+	}
 
 	public virtual bool ShouldShowUIType => true;
 
@@ -127,6 +139,8 @@ public class InteractionSettings : IHideUnusedSettings
 	public virtual bool ShouldShowInteractionStopSound => true;
 
 	public virtual bool ShouldShowTrap => true;
+
+	public virtual bool ShouldShowDoNotNeedCollider => true;
 
 	public virtual bool ShouldShowUnlimitedInteractionsPerRound => true;
 

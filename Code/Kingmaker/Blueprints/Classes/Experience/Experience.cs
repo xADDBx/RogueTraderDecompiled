@@ -35,6 +35,8 @@ public class Experience : EntityFactComponentDelegate, IQuestLogic, IQuestObject
 	[DrawExperienceFromCR]
 	public bool Dummy;
 
+	public bool HideInCombatLog;
+
 	public static void Apply(Experience e, [CanBeNull] BaseUnitEntity targetUnit = null)
 	{
 		e.Apply(targetUnit);
@@ -48,12 +50,12 @@ public class Experience : EntityFactComponentDelegate, IQuestLogic, IQuestObject
 	private void Apply([CanBeNull] BaseUnitEntity targetUnit = null)
 	{
 		float num = ((targetUnit?.GetSummonedMonsterOption() != null) ? Kingmaker.Blueprints.Root.Root.Common.Progression.SummonedUnitExperienceFactor : 1f);
-		GameHelper.GainExperience(ExperienceHelper.GetXp(Encounter, CR, Modifier * num, Count), targetUnit);
+		GameHelper.GainExperience(ExperienceHelper.GetXp(Encounter, CR, Modifier * num, Count), isExperienceForDeath: false, HideInCombatLog);
 	}
 
 	private void ApplyForSkillCheck([NotNull] BaseUnitEntity actor)
 	{
-		GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(Encounter, CR, Modifier, Count), actor);
+		GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(Encounter, CR, Modifier, Count), HideInCombatLog);
 	}
 
 	void IQuestLogic.OnStarted()

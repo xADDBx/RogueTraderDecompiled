@@ -17,6 +17,7 @@ using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Summary;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 using Kingmaker.UnitLogic.Levelup;
 using Owlcat.Runtime.UI.MVVM;
@@ -49,6 +50,10 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	private readonly ReactiveProperty<LevelUpManager> m_LevelUpManager = new ReactiveProperty<LevelUpManager>();
 
+	private readonly BoolReactiveProperty m_IsNotControllableCharacter = new BoolReactiveProperty();
+
+	private bool m_PetSummaryTypeCache;
+
 	public bool CanCloseWindow
 	{
 		get
@@ -76,12 +81,13 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public CharacterInfoVM(CharInfoPageType selectedPageType = CharInfoPageType.Summary)
 	{
+		CharacterInfoVM characterInfoVM = this;
 		AddDisposable(m_CharInfoPages = new CharInfoPagesPC());
 		AddDisposable(m_CurrentPage.Subscribe(delegate(CharInfoPagesMenuEntityVM value)
 		{
 			if (value != null)
 			{
-				PageType.Value = value.PageType;
+				characterInfoVM.PageType.Value = value.PageType;
 			}
 		}));
 		ReactiveProperty<BaseUnitEntity> selectedUnitInUI = Game.Instance.SelectionCharacter.SelectedUnitInUI;
@@ -99,47 +105,102 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		AddDisposable(PagesSelectionGroupRadioVM = new SelectionGroupRadioVM<CharInfoPagesMenuEntityVM>(m_Pages));
 		AddDisposable(PagesSelectionGroupRadioVM.SelectedEntity.Subscribe(delegate(CharInfoPagesMenuEntityVM value)
 		{
-			if (value != m_CurrentPage.Value)
+			if (value != characterInfoVM.m_CurrentPage.Value)
 			{
-				if (ComponentVMs[CharInfoComponentType.Progression].Value is UnitProgressionVM unitProgressionVM)
+				if (characterInfoVM.ComponentVMs[CharInfoComponentType.Progression].Value is UnitProgressionVM unitProgressionVM)
 				{
 					unitProgressionVM.TryClose(delegate
 					{
-						m_CurrentPage.Value = value;
+						characterInfoVM.m_CurrentPage.Value = value;
 					}, delegate
 					{
-						PagesSelectionGroupRadioVM.TrySelectEntity(m_CurrentPage.Value);
+						characterInfoVM.PagesSelectionGroupRadioVM.TrySelectEntity(characterInfoVM.m_CurrentPage.Value);
 					});
 				}
 				else
 				{
-					m_CurrentPage.Value = value;
+					characterInfoVM.m_CurrentPage.Value = value;
 				}
 			}
 		}));
-		foreach (CharInfoPageType item in m_CharInfoPages.PagesOrder)
-		{
-			CharInfoPagesMenuEntityVM charInfoPagesMenuEntityVM = new CharInfoPagesMenuEntityVM(item, m_Unit);
-			m_Pages.Add(charInfoPagesMenuEntityVM);
-			AddDisposable(charInfoPagesMenuEntityVM);
-			if (item == selectedPageType)
-			{
-				m_CurrentPage.Value = charInfoPagesMenuEntityVM;
-				PagesSelectionGroupRadioVM.TrySelectEntity(charInfoPagesMenuEntityVM);
-			}
-		}
+		SetUpPageTabs(selectedPageType);
+		UpdateSelectedPage();
 		AddDisposable(m_CurrentPage.Subscribe(delegate
 		{
-			UpdateData();
+			characterInfoVM.UpdateData();
 		}));
-		AddDisposable(m_Unit.Subscribe(delegate
+		AddDisposable(m_Unit.Subscribe(delegate(BaseUnitEntity newUnit)
 		{
-			if (m_CurrentPage.Value.PageType == CharInfoPageType.Biography)
+			if (newUnit.IsPet != characterInfoVM.m_PetSummaryTypeCache)
 			{
-				UpdateData();
-				BiographyUpdated.Execute();
+				characterInfoVM.SetUpPageTabs(selectedPageType);
+			}
+			characterInfoVM.UpdateSelectedPage();
+			if (characterInfoVM.m_CurrentPage.Value.PageType == CharInfoPageType.Biography)
+			{
+				characterInfoVM.UpdateData();
+				characterInfoVM.BiographyUpdated.Execute();
+				characterInfoVM.CheckAnotherPlayerUnit();
 			}
 		}));
+	}
+
+	private void SetUpPageTabs(CharInfoPageType selectedPageType)
+	{
+		foreach (CharInfoPagesMenuEntityVM page in m_Pages)
+		{
+			page.Dispose();
+		}
+		m_Pages.Clear();
+		m_PetSummaryTypeCache = m_Unit.Value?.IsPet ?? false;
+		foreach (CharInfoPageType item in m_CharInfoPages.PagesOrder)
+		{
+			if (!m_PetSummaryTypeCache || item == CharInfoPageType.Summary || item == CharInfoPageType.Features)
+			{
+				CharInfoPagesMenuEntityVM charInfoPagesMenuEntityVM = new CharInfoPagesMenuEntityVM(item, m_Unit);
+				m_Pages.Add(charInfoPagesMenuEntityVM);
+				AddDisposable(charInfoPagesMenuEntityVM);
+				if (item == selectedPageType)
+				{
+					m_CurrentPage.Value = charInfoPagesMenuEntityVM;
+					PagesSelectionGroupRadioVM.TrySelectEntity(charInfoPagesMenuEntityVM);
+				}
+			}
+		}
+	}
+
+	private void UpdateSelectedPage()
+	{
+		bool flag = m_Unit.Value.IsPet;
+		bool flag2;
+		if (flag)
+		{
+			CharInfoPageType? charInfoPageType = m_CurrentPage.Value?.PageType;
+			if (charInfoPageType.HasValue)
+			{
+				CharInfoPageType valueOrDefault = charInfoPageType.GetValueOrDefault();
+				if ((uint)valueOrDefault <= 1u)
+				{
+					flag2 = true;
+					goto IL_0055;
+				}
+			}
+			flag2 = false;
+			goto IL_0055;
+		}
+		goto IL_005a;
+		IL_0055:
+		flag = !flag2;
+		goto IL_005a;
+		IL_005a:
+		if (flag)
+		{
+			SetCurrentPage(CharInfoPageType.Summary);
+		}
+		else
+		{
+			m_CurrentPage.Value.SetSelected(state: true);
+		}
 	}
 
 	protected override void DisposeImplementation()
@@ -209,7 +270,7 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			CharInfoComponentType.NameAndPortrait => new CharInfoNameAndPortraitVM(m_Unit), 
 			CharInfoComponentType.LevelClassScores => new CharInfoLevelClassScoresVM(m_Unit, m_LevelUpManager), 
 			CharInfoComponentType.Skills => new CharInfoSkillsBlockVM(m_Unit, m_LevelUpManager), 
-			CharInfoComponentType.Abilities => new CharInfoAbilitiesVM(m_Unit), 
+			CharInfoComponentType.Abilities => new CharInfoAbilitiesVM(m_Unit, m_IsNotControllableCharacter), 
 			CharInfoComponentType.AlignmentWheel => new CharInfoAlignmentVM(m_Unit), 
 			CharInfoComponentType.AlignmentHistory => new CharInfoAlignmentHistoryVM(m_Unit), 
 			CharInfoComponentType.Stories => new CharInfoStoriesVM(m_Unit), 
@@ -220,6 +281,7 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			CharInfoComponentType.SkillsAndWeapons => new CharInfoSkillsAndWeaponsVM(m_Unit, m_LevelUpManager), 
 			CharInfoComponentType.FactionsReputation => new CharInfoFactionsReputationVM(m_Unit), 
 			CharInfoComponentType.Summary => new CharInfoSummaryVM(m_Unit), 
+			CharInfoComponentType.PetSummary => new PetSummaryVM(m_Unit), 
 			_ => null, 
 		};
 	}
@@ -244,5 +306,18 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	public void ClearProgressionIfNeeded(BaseUnitEntity newUnitEntity)
 	{
 		(ComponentVMs[CharInfoComponentType.Progression].Value as UnitProgressionVM)?.ClearLevelupManagerIfNeeded(newUnitEntity);
+	}
+
+	private void CheckAnotherPlayerUnit()
+	{
+		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
+		if (!UINetUtility.InLobbyAndPlaying || currentUnit == null)
+		{
+			m_IsNotControllableCharacter.Value = false;
+			return;
+		}
+		bool isPlayerFaction = currentUnit.IsPlayerFaction;
+		bool flag = !currentUnit.IsMyNetRole();
+		m_IsNotControllableCharacter.Value = isPlayerFaction && flag;
 	}
 }

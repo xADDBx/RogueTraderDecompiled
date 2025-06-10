@@ -69,7 +69,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 
 	private Scene m_SavedActiveScene;
 
-	private CameraStackManager.CameraStackState m_CameraStackState;
+	private CameraStackManager.CameraStackStateChangeScope m_CameraStackState;
 
 	public bool IsVisible { get; private set; }
 
@@ -293,8 +293,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 			m_Camera.SetTargetTexture(m_RenderTexture);
 			m_Camera.EnableCamera();
 		}
-		m_CameraStackState = CameraStackManager.Instance.State;
-		CameraStackManager.Instance.State = CameraStackManager.CameraStackState.UiOnly;
+		m_CameraStackState = CameraStackManager.Instance.SetTempState(CameraStackManager.CameraStackState.UiOnly);
 		m_SavedActiveScene = SceneManager.GetActiveScene();
 		SceneManager.SetActiveScene(base.gameObject.scene);
 		m_SavedShadowDistance = QualitySettings.shadowDistance;
@@ -318,7 +317,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 	{
 		EnsureCamera();
 		m_Camera.DisableCamera();
-		CameraStackManager.Instance.State = m_CameraStackState;
+		m_CameraStackState.Dispose();
 		if (m_SavedActiveScene.isLoaded)
 		{
 			SceneManager.SetActiveScene(m_SavedActiveScene);

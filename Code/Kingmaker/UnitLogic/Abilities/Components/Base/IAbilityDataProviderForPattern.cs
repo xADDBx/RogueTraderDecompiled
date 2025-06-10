@@ -24,6 +24,8 @@ public interface IAbilityDataProviderForPattern
 
 	AbilityData Data { get; }
 
+	bool NeedLoS { get; }
+
 	CustomGridNodeBase GetBestShootingPosition(CustomGridNodeBase castNode, TargetWrapper target);
 
 	float CalculateDodgeChanceCached(UnitEntity unit, LosCalculations.CoverType coverType);

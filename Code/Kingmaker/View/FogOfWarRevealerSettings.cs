@@ -15,8 +15,10 @@ public class FogOfWarRevealerSettings : MonoBehaviour, IUpdatable
 	[CanBeNull]
 	private EntityViewBase m_EntityView;
 
+	[Tooltip("Reveal range if defined by scale, if set")]
 	public Texture2D MaskTexture;
 
+	[Tooltip("Has no effect if Mask Texture is set")]
 	public float Radius;
 
 	[Tooltip("Use Radius == GameConsts.FogOfWarVisionRadius (11.7m)")]
@@ -133,16 +135,19 @@ public class FogOfWarRevealerSettings : MonoBehaviour, IUpdatable
 			m_Revealer.HeightMinMax = instance.CalculateHeightMinMax(position.y);
 			m_Revealer.MaskTexture = MaskTexture;
 			m_Revealer.Radius = instance.RevealerInnerRadius;
-			if (DefaultRadius)
-			{
-				m_Revealer.Range = instance.RevealerOutterRadius;
-			}
-			else
-			{
-				m_Revealer.Range = Radius + instance.BorderWidth;
-			}
-			m_Revealer.Range += instance.BorderOffset;
+			m_Revealer.Range = GetRevealerRange(instance);
 		}
+	}
+
+	public float GetRevealerRange(FogOfWarSettings fow)
+	{
+		return (DefaultRadius ? fow.RevealerOutterRadius : (Radius + fow.BorderWidth)) + fow.BorderOffset;
+	}
+
+	public void SetRevealerRadius(float range, FogOfWarSettings fow)
+	{
+		Radius = (DefaultRadius ? fow.RevealerOutterRadius : (range - fow.BorderWidth));
+		Radius -= fow.BorderOffset;
 	}
 
 	public void UpdateRadiusAndPosition()

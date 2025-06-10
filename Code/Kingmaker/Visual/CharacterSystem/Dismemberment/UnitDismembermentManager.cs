@@ -107,7 +107,15 @@ public class UnitDismembermentManager : MonoBehaviour
 
 	public void StartDismemberment([NotNull] StatefulRandom random, DismembermentLimbsApartType? dismemberingType = null)
 	{
-		if (m_LastImpulse != null && !(Game.Instance.TimeController.RealTime > m_LastImpulse.Time + 0.2f.Seconds()) && m_LastImpulse.DamageType != DamageType.Toxic)
+		if (m_LastImpulse == null || Game.Instance.TimeController.RealTime > m_LastImpulse.Time + 0.2f.Seconds())
+		{
+			UnitEntityView component = GetComponent<UnitEntityView>();
+			if ((bool)component)
+			{
+				component.Data.LifeState.ForceDismember = UnitDismemberType.ForcedNone;
+			}
+		}
+		else
 		{
 			StartDismemberment(random, GetSetIndex(random, dismemberingType), m_LastImpulse.Direction);
 		}

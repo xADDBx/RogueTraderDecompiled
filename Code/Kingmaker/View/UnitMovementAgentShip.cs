@@ -365,7 +365,7 @@ public class UnitMovementAgentShip : UnitMovementAgentBase
 
 	private void TrySkipWaypoints(ref float distanceToWaypoint, float deltaTime)
 	{
-		while (!OnLastSegment && distanceToWaypoint < m_Speed * deltaTime && IsDistanceCloseEnough(distanceToWaypoint))
+		while (!OnLastSegment && distanceToWaypoint < m_Speed * deltaTime)
 		{
 			Vector2 nextWaypoint = m_NextWaypoint;
 			SetWaypoint(m_NextPointIndex + 1);

@@ -32,7 +32,7 @@ public class CueSeen : Condition
 	{
 		if (!CurrentDialog)
 		{
-			return Game.Instance.Player.Dialog.ShownCues.Contains(Cue);
+			return Game.Instance.Player.Dialog.ShownCuesContains(Cue);
 		}
 		return Game.Instance.DialogController.LocalShownCues.Contains(Cue);
 	}

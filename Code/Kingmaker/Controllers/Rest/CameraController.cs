@@ -91,7 +91,12 @@ public class CameraController : IControllerEnable, IController, IControllerDisab
 
 		public void TryFollow()
 		{
-			if (CameraRig.Instance == null || m_Entity == null)
+			if (CameraRig.Instance == null)
+			{
+				return;
+			}
+			MechanicEntity entity = m_Entity;
+			if (entity == null || !entity.IsInGame)
 			{
 				return;
 			}

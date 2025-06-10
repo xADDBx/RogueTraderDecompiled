@@ -14,7 +14,7 @@ public class MarkDialogSeen : PlayerUpgraderOnlyAction
 		BlueprintDialog blueprintDialog = Dialog.Get();
 		if ((bool)blueprintDialog)
 		{
-			Game.Instance.Player.Dialog.ShownDialogs.Add(blueprintDialog);
+			Game.Instance.Player.Dialog.ShownDialogsAdd(blueprintDialog);
 		}
 	}
 

@@ -1,5 +1,5 @@
 using JetBrains.Annotations;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
 using UnityEngine;

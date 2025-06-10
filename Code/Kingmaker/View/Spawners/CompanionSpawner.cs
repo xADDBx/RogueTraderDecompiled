@@ -183,9 +183,9 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 		{
 			return false;
 		}
-		CompanionState companionState = unit.GetOptional<UnitPartCompanion>()?.State ?? CompanionState.None;
+		CompanionState valueOrDefault = unit.GetCompanionState().GetValueOrDefault();
 		bool capitalPartyMode = Game.Instance.LoadedAreaState.Settings.CapitalPartyMode;
-		if (((m_SpawnWhenNone && companionState == CompanionState.None) || (m_SpawnWhenRemote && companionState == CompanionState.Remote) || (m_SpawnWhenEx && companionState == CompanionState.ExCompanion) || (m_SpawnWhenInCapital && capitalPartyMode && (companionState == CompanionState.Remote || companionState == CompanionState.InParty))) && ShouldShowUnit(unit))
+		if (((m_SpawnWhenNone && valueOrDefault == CompanionState.None) || (m_SpawnWhenRemote && valueOrDefault == CompanionState.Remote) || (m_SpawnWhenEx && valueOrDefault == CompanionState.ExCompanion) || (m_SpawnWhenInCapital && capitalPartyMode && (valueOrDefault == CompanionState.Remote || valueOrDefault == CompanionState.InParty))) && ShouldShowUnit(unit))
 		{
 			return (ControlCondition?.Get())?.Check() ?? true;
 		}
@@ -251,6 +251,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 				unit.View.ViewTransform.position = base.ViewTransform.position;
 			}
 			didPlace = true;
+			unit.GetOptional<UnitPartPetOwner>()?.PlacePet();
 		}
 		else if (!stayInGame)
 		{

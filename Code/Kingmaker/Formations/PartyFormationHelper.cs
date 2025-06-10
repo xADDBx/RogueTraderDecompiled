@@ -35,19 +35,21 @@ public static class PartyFormationHelper
 		}
 	}
 
-	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<BaseUnitEntity> units, IList<BaseUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false, int anchorUnitIndex = -1)
+	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<BaseUnitEntity> units, IList<BaseUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, int anchorUnitIndex = -1, CustomGridNodeBase anchorPosConstraintNode = null)
 	{
-		FillFormationPositions(pos, anchor, direction, ((IEnumerable<BaseUnitEntity>)units).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), ((IEnumerable<BaseUnitEntity>)selectedUnits).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), formation, resultPositions, spaceFactor, forceRelax, anchorUnitIndex);
+		FillFormationPositions(pos, anchor, direction, ((IEnumerable<BaseUnitEntity>)units).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), ((IEnumerable<BaseUnitEntity>)selectedUnits).Select((Func<BaseUnitEntity, AbstractUnitEntity>)((BaseUnitEntity x) => x)).ToList(), formation, resultPositions, anchorUnitIndex, anchorPosConstraintNode);
 	}
 
-	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<AbstractUnitEntity> units, IList<AbstractUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, float spaceFactor = 1f, bool forceRelax = false, int anchorUnitIndex = -1)
+	public static void FillFormationPositions(Vector3 pos, FormationAnchor anchor, Vector3 direction, IList<AbstractUnitEntity> units, IList<AbstractUnitEntity> selectedUnits, IImmutablePartyFormation formation, Span<Vector3> resultPositions, int anchorUnitIndex = -1, CustomGridNodeBase anchorPosConstraintNode = null)
 	{
-		int index = ((anchor == FormationAnchor.SelectedUnit && anchorUnitIndex >= 0 && anchorUnitIndex < units.Count) ? anchorUnitIndex : 0);
-		CustomGridNodeBase nearestNodeXZ = units[index].GetNearestNodeXZ();
-		if (nearestNodeXZ != null)
+		if (anchorPosConstraintNode == null)
+		{
+			anchorPosConstraintNode = units[GetConstraintRefUnitIndex()].GetNearestNodeXZ();
+		}
+		if (anchorPosConstraintNode != null)
 		{
 			Constraint.constrainArea = true;
-			Constraint.area = (int)nearestNodeXZ.Area;
+			Constraint.area = (int)anchorPosConstraintNode.Area;
 		}
 		else
 		{
@@ -66,7 +68,7 @@ public static class PartyFormationHelper
 			{
 				anchor = FormationAnchor.Center;
 			}
-			Vector3 vector = quaternion * GetFormationAnchorPoint().To3D();
+			Vector3 vector = GetFormationAnchorPoint().To3D();
 			NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(pos);
 			if (nearestNode.node == null)
 			{
@@ -75,12 +77,21 @@ public static class PartyFormationHelper
 			Vector3 position = nearestNode.position;
 			for (int i = 0; i < units.Count; i++)
 			{
-				Vector3 end = position - vector + quaternion * formation.GetOffset(i, units[i]).To3D();
+				Vector3 vector2 = formation.GetOffset(i, units[i]).To3D() - vector;
+				Vector3 end = position + quaternion * vector2;
 				Linecast.LinecastGrid(nearestNode.node.Graph, position, end, nearestNode.node, out var hit, ObstacleAnalyzer.DefaultXZConstraint, ref Linecast.HasConnectionTransition.Instance);
 				Vector3 point = hit.point;
 				GraphNode node = hit.node;
 				resultPositions[i] = ObstacleAnalyzer.FindClosestPointToStandOn(point, units[i].MovementAgent.Corpulence, (CustomGridNodeBase)node);
 			}
+		}
+		int GetConstraintRefUnitIndex()
+		{
+			if (anchor != FormationAnchor.SelectedUnit || anchorUnitIndex < 0 || anchorUnitIndex >= units.Count)
+			{
+				return 0;
+			}
+			return anchorUnitIndex;
 		}
 		Vector2 GetFormationAnchorPoint()
 		{

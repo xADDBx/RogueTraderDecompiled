@@ -79,21 +79,13 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 	{
 		get
 		{
-			if (Unit != null)
+			if (Unit == null)
 			{
-				if (Game.Instance.IsControllerGamepad)
-				{
-					if (Unit.IsInState)
-					{
-						if (!Unit.IsVisibleForPlayer)
-						{
-							return !Unit.IsDirectlyControllable;
-						}
-						return false;
-					}
-					return true;
-				}
-				if (Unit.IsInState && Unit is AbstractUnitEntity { IsAwake: not false })
+				return true;
+			}
+			if (Game.Instance.IsControllerGamepad)
+			{
+				if (Unit.IsInState)
 				{
 					if (!Unit.IsVisibleForPlayer)
 					{
@@ -102,6 +94,14 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 					return false;
 				}
 				return true;
+			}
+			if (Unit.IsInState && Unit is AbstractUnitEntity { IsAwake: not false })
+			{
+				if (!Unit.IsVisibleForPlayer)
+				{
+					return !Unit.IsDirectlyControllable;
+				}
+				return false;
 			}
 			return true;
 		}

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Controllers.Clicks;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -49,69 +48,63 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		return false;
 	}
 
-	protected override void SetRangeToCasterPosition(bool ignoreCache = false)
-	{
-		SetRangeToWorldPosition(GetBestCastingPosition(Ability.Caster).Vector3Position);
-	}
-
-	public CustomGridNodeBase GetBestCastingPosition(MechanicEntity caster)
-	{
-		PointerController clickEventsController = Game.Instance.ClickEventsController;
-		Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(caster);
-		return caster.GetInnerNodeNearestToTarget(desiredPosition.GetNearestNodeXZUnwalkable(), clickEventsController.WorldPosition);
-	}
-
-	protected override void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
+	protected override void SetRangeToWorldPosition(Vector3 desiredCastPosition, bool ignoreCache = false)
 	{
 		foreach (GameObject cellMarker in m_CellMarkers)
 		{
 			cellMarker.SetActive(value: false);
 		}
 		PointerController clickEventsController = Game.Instance.ClickEventsController;
-		TargetWrapper target = Game.Instance.SelectedAbilityHandler.GetTarget(clickEventsController.PointerOn, clickEventsController.WorldPosition, Ability, castPosition);
+		TargetWrapper target = Game.Instance.SelectedAbilityHandler.GetTarget(clickEventsController.PointerOn, clickEventsController.WorldPosition, Ability, desiredCastPosition);
 		Vector3 vector = ((target != null) ? target.Point : clickEventsController.WorldPosition);
-		CustomGridNodeBase bestShootingPositionForDesiredPosition = Ability.GetBestShootingPositionForDesiredPosition(vector);
-		CustomGridNodeBase customGridNodeBase = AoEPatternHelper.GetActualCastNode(Ability.Caster, bestShootingPositionForDesiredPosition, vector, MinRangeCells, MaxRangeCells);
+		CustomGridNodeBase node;
+		bool flag = Ability.TryGetCasterNodeForDistanceCalculation(out node, forUi: true);
+		if (!flag)
+		{
+			node = Ability.GetBestShootingPosition(desiredCastPosition.GetNearestNodeXZUnwalkable(), vector);
+		}
+		CustomGridNodeBase customGridNodeBase = AoEPatternHelper.GetActualCastNode(Ability.Caster, node, vector, MinRangeCells, MaxRangeCells);
 		if (Game.Instance.IsSpaceCombat)
 		{
 			customGridNodeBase = AoEPatternHelper.GetGridNode(AdjustTargetWithAngleRestriction(customGridNodeBase.Vector3Position));
 		}
-		if (!(m_CachedCasterNode != bestShootingPositionForDesiredPosition || m_CachedTargetNode != customGridNodeBase || ignoreCache))
+		if (!(m_CachedCasterNode != node || m_CachedTargetNode != customGridNodeBase || ignoreCache))
 		{
 			return;
 		}
 		OrientedPatternData orientedPattern;
 		using (ProfileScope.New("GetOrientedPattern"))
 		{
-			orientedPattern = PatternProvider.GetOrientedPattern(Ability, bestShootingPositionForDesiredPosition, customGridNodeBase);
+			orientedPattern = PatternProvider.GetOrientedPattern(Ability, node, customGridNodeBase);
 		}
-		m_CachedCasterNode = bestShootingPositionForDesiredPosition;
+		m_CachedCasterNode = node;
 		m_CachedTargetNode = customGridNodeBase;
 		m_AbilityTargets.Clear();
 		using (ProfileScope.New("GatherAffectedTargetsData"))
 		{
-			Ability.GatherAffectedTargetsData(orientedPattern, bestShootingPositionForDesiredPosition.Vector3Position, target, in m_AbilityTargets);
+			Ability.GatherAffectedTargetsData(orientedPattern, node.Vector3Position, target, in m_AbilityTargets);
 		}
 		int effectiveRange = ((Ability.Weapon != null) ? (MaxRangeCells / 2 + 1) : 0);
-		Vector3 desiredPosition = Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster);
-		NodeList nodes = Ability.Caster.GetOccupiedNodes(desiredPosition);
+		Vector3 position = (flag ? node.Vector3Position : desiredCastPosition);
+		NodeList nodes = Ability.Caster.GetOccupiedNodes(position);
 		if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))
 		{
-			bool flag = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
-			bool flag2 = Ability.Blueprint.ComponentsArray.HasItem((BlueprintComponent c) => c is WarhammerAbilityAttackDelivery warhammerAbilityAttackDelivery && warhammerAbilityAttackDelivery.Special == WarhammerAbilityAttackDelivery.SpecialType.Burst);
+			bool flag2 = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
+			bool flag3 = Ability.Blueprint.ComponentsArray.HasItem((BlueprintComponent c) => c is WarhammerAbilityAttackDelivery warhammerAbilityAttackDelivery && warhammerAbilityAttackDelivery.Special == WarhammerAbilityAttackDelivery.SpecialType.Burst);
 			CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHudInfo = default(CombatHUDRenderer.AbilityAreaHudInfo);
 			abilityAreaHudInfo.pattern = orientedPattern;
 			abilityAreaHudInfo.casterRect = result;
 			abilityAreaHudInfo.minRange = MinRangeCells;
 			abilityAreaHudInfo.maxRange = MaxRangeCells;
 			abilityAreaHudInfo.effectiveRange = effectiveRange;
-			abilityAreaHudInfo.ignoreRangesByDefault = flag || !flag2;
+			abilityAreaHudInfo.ignoreRangesByDefault = flag2 || !flag3;
 			abilityAreaHudInfo.ignorePatternPrimaryAreaByDefault = false;
 			abilityAreaHudInfo.combatHudCommandsOverride = Ability.Blueprint.CombatHudCommandsOverride;
 			CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHUD = abilityAreaHudInfo;
 			CombatHUDRenderer.Instance.SetAbilityAreaHUD(abilityAreaHUD);
 		}
-		ObjectExtensions.Or(UnitPredictionManager.Instance, null)?.SetAbilityArea(bestShootingPositionForDesiredPosition.Vector3Position, customGridNodeBase.Vector3Position, orientedPattern);
+		Vector3 casterPosition = (flag ? desiredCastPosition : node.Vector3Position);
+		ObjectExtensions.Or(UnitPredictionManager.Instance, null)?.SetAbilityPositions(casterPosition, customGridNodeBase.Vector3Position);
 		EventBus.RaiseEvent(delegate(ICellAbilityHandler h)
 		{
 			h.HandleCellAbility(m_AbilityTargets);

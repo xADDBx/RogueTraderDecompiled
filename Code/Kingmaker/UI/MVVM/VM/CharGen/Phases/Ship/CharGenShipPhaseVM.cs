@@ -232,6 +232,8 @@ public class CharGenShipPhaseVM : CharGenPhaseBaseVM, ICharGenShipPhaseHandler, 
 				SetName(text, isManual: true);
 			}
 			onComplete?.Invoke();
+		}, delegate
+		{
 		}, ShipName.Value, GetRandomName, DisposeMessageBox);
 	}
 

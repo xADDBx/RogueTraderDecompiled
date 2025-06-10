@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.View.Space.PC;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
@@ -19,7 +20,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization;
 
-public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealthAndRepair> : ViewBase<ShipCustomizationVM>, IInitializable
+public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealthAndRepair, TShipAbilitiesView> : ViewBase<ShipCustomizationVM>, IInitializable
 {
 	[Header("Common Block")]
 	[SerializeField]
@@ -62,6 +63,10 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 	[SerializeField]
 	protected PostsBaseView m_ShipPostsView;
 
+	[Header("Abilities")]
+	[SerializeField]
+	protected TShipAbilitiesView m_ShipAbilitiesView;
+
 	[Header("Lock state")]
 	[SerializeField]
 	protected GameObject LockState;
@@ -86,24 +91,12 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 		}));
 		m_SpaceShipPCView.Bind(base.ViewModel.SpaceShipVM);
 		m_ShipStatsPCView.Bind(base.ViewModel.ShipStatsVM);
-		AddDisposable(EscHotkeyManager.Instance.Subscribe(delegate
-		{
-			Close();
-		}));
-		AddDisposable(base.ViewModel.CanChangeEquipment.Subscribe(delegate(bool val)
-		{
-			LockState.SetActive(val);
-		}));
+		AddDisposable(EscHotkeyManager.Instance.Subscribe(Close));
+		AddDisposable(base.ViewModel.CanChangeEquipment.Subscribe(LockState.SetActive));
 		BindShip();
-		AddDisposable(base.ViewModel.ActiveTab.Subscribe(delegate(ShipCustomizationTab val)
-		{
-			BindSelectedView(val);
-		}));
+		AddDisposable(base.ViewModel.ActiveTab.Subscribe(BindSelectedView));
 		m_SelectorView.Bind(base.ViewModel.Selector);
-		AddDisposable(m_NeedShowShipLevel.Subscribe(delegate(bool val)
-		{
-			m_HasShipLevel.SetActive(val);
-		}));
+		AddDisposable(m_NeedShowShipLevel.Subscribe(m_HasShipLevel.SetActive));
 		m_SelectorView.ChangeTab((int)base.ViewModel.ActiveTab.Value);
 		LockStateText.text = UIStrings.Instance.ExplorationTexts.ExploNotInteractable.Text;
 	}
@@ -124,18 +117,7 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 
 	protected virtual void BindSelectedView(ShipCustomizationTab tab)
 	{
-		switch (tab)
-		{
-		case ShipCustomizationTab.Upgrade:
-			SetupAdditionalWindows(value: true);
-			break;
-		case ShipCustomizationTab.Skills:
-			SetupAdditionalWindows(value: false);
-			break;
-		case ShipCustomizationTab.Posts:
-			SetupAdditionalWindows(value: false);
-			break;
-		}
+		SetupAdditionalWindows(tab == ShipCustomizationTab.Upgrade);
 	}
 
 	private void SetupAdditionalWindows(bool value)
@@ -146,12 +128,14 @@ public class ShipCustomizationBaseView<TShipUpgradeView, TShipSkills, TShipHealt
 
 	protected void SetPrevTab()
 	{
+		TooltipHelper.HideTooltip();
 		m_SelectorView.SetPrevTab();
 		m_ShipTabsNavigationPCView.SetPrevTab();
 	}
 
 	protected void SetNextTab()
 	{
+		TooltipHelper.HideTooltip();
 		m_SelectorView.SetNextTab();
 		m_ShipTabsNavigationPCView.SetNextTab();
 	}

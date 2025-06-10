@@ -47,6 +47,18 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 
 	private readonly Action m_DisposeAction;
 
+	public bool IsPet
+	{
+		get
+		{
+			if (m_DollState == null)
+			{
+				return Unit?.IsPet ?? false;
+			}
+			return false;
+		}
+	}
+
 	private CharacterVisualSettingsVM(Action disposeAction)
 	{
 		m_DisposeAction = disposeAction;
@@ -61,7 +73,7 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			UISounds.Instance.Sounds.Inventory.InventoryVisualSettingsShow.Play();
 			OutfitMainColorSelector = new TextureSelectorVM(new SelectionGroupRadioVM<TextureSelectorItemVM>(new ReactiveCollection<TextureSelectorItemVM>()), TextureSelectorType.Paged);
-			CreateOutfitColorSelector();
+			TryCreateOutfitColorSelector();
 			AddDisposable(EventBus.Subscribe(this));
 			AddDisposable(Cloth = new CharacterVisualSettingsEntityVM(m_DollState.ShowCloth, SwitchCloth));
 			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(m_DollState.ShowHelm, SwitchHelmet));
@@ -83,7 +95,7 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			UISounds.Instance.Sounds.Inventory.InventoryVisualSettingsShow.Play();
 			OutfitMainColorSelector = new TextureSelectorVM(new SelectionGroupRadioVM<TextureSelectorItemVM>(new ReactiveCollection<TextureSelectorItemVM>()), TextureSelectorType.Paged);
-			CreateOutfitColorSelector();
+			TryCreateOutfitColorSelector();
 			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelm, SwitchHelmet));
 			AddDisposable(HelmetAboveAll = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelmAboveAll, SwitchHelmetAboveAll));
 			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowBackpack, SwitchBackpack));
@@ -115,7 +127,7 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			Backpack.SetValue(m_DollState.ShowCloth);
 			Helmet.SetLock(!m_DollState.ShowCloth);
 			Backpack.SetLock(!m_DollState.ShowCloth && Unit.HasMechadendrites());
-			UpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary: false);
+			TryUpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary: false);
 			OutfitMainColorSelector.SetActiveState(m_DollState.ShowCloth);
 		}
 	}
@@ -156,16 +168,124 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		}
 	}
 
-	private void CreateOutfitColorSelector(bool secondary = false)
+	private void TryCreateOutfitColorSelector(bool secondary = false)
 	{
-		UpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary);
+		if (!TryUpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary) && !TryUpdatePetColorListFromPet(OutfitMainColorSelector))
+		{
+			TryUpdatePetColorListFromMaster(OutfitMainColorSelector);
+		}
 		string title = (secondary ? UIStrings.Instance.CharGen.SecondaryClothColor : UIStrings.Instance.CharGen.PrimaryClothColor);
 		OutfitMainColorSelector.SetTitle(title);
 		OutfitMainColorSelector.SetNoItemsDescription((m_DollState == null) ? UIStrings.Instance.CharacterSheet.VisualSettingsDisabledForCharacter : UIStrings.Instance.CharacterSheet.VisualSettingsEnableClothes);
 	}
 
-	private void UpdateClothesPrimaryPaintColorList(TextureSelectorVM selector, bool secondary)
+	private bool TryUpdatePetColorListFromPet(TextureSelectorVM selector)
 	{
+		if (!IsPet)
+		{
+			return false;
+		}
+		if (m_DollState != null)
+		{
+			return false;
+		}
+		_ = Unit;
+		return false;
+	}
+
+	private Texture2D CreateColorTexture(Color color)
+	{
+		Texture2D texture2D = new Texture2D(32, 32);
+		Color[] array = new Color[1024];
+		for (int i = 0; i < array.Length; i++)
+		{
+			array[i] = color;
+		}
+		texture2D.SetPixels(array);
+		texture2D.Apply();
+		return texture2D;
+	}
+
+	private Color GetFallbackColorForIndex(int index)
+	{
+		Color[] array = new Color[8]
+		{
+			Color.red,
+			Color.green,
+			Color.blue,
+			Color.yellow,
+			Color.magenta,
+			Color.cyan,
+			Color.white,
+			Color.gray
+		};
+		return array[index % array.Length];
+	}
+
+	private bool TryUpdatePetColorListFromMaster(TextureSelectorVM selector)
+	{
+		if (!IsPet)
+		{
+			return false;
+		}
+		if (m_DollState != null)
+		{
+			return false;
+		}
+		if (Unit == null)
+		{
+			return false;
+		}
+		PetCharacter componentInChildren = Unit.View.gameObject.GetComponentInChildren<PetCharacter>();
+		if (componentInChildren == null)
+		{
+			PFLog.TechArt.Warning("TryUpdatePetColorListFromMaster: PetCharacter component not found on pet: " + Unit.CharacterName);
+			return false;
+		}
+		if (componentInChildren.RampColorPresetFile == null || componentInChildren.RampColorPresetFile.IndexPairs == null || componentInChildren.RampColorPresetFile.IndexPairs.Count == 0)
+		{
+			PFLog.TechArt.Log("TryUpdatePetColorListFromMaster: No ramps found in pet's RampColorPresetFile for pet: " + Unit.CharacterName);
+			return false;
+		}
+		ReactiveCollection<TextureSelectorItemVM> entitiesCollection = selector.SelectionGroup.EntitiesCollection;
+		int num = 0;
+		PFLog.TechArt.Log($"TryUpdatePetColorListFromMaster: Adding {componentInChildren.RampColorPresetFile.IndexPairs.Count} ramps from pet");
+		for (int i = 0; i < componentInChildren.RampColorPresetFile.IndexPairs.Count; i++)
+		{
+			int petPresetIndex = i;
+			RampColorPreset.IndexSet petPreset = componentInChildren.RampColorPresetFile.IndexPairs[i];
+			Texture2D texture2D = componentInChildren.GetRampTextureByIndex(petPreset.PrimaryIndex);
+			if (texture2D == null)
+			{
+				texture2D = CreateColorTexture(GetFallbackColorForIndex(petPresetIndex));
+			}
+			RampColorPreset.IndexSet petRampIndexSet = new RampColorPreset.IndexSet
+			{
+				PrimaryIndex = petPreset.PrimaryIndex,
+				SecondaryIndex = petPreset.SecondaryIndex,
+				Name = (petPreset.Name ?? $"Pet Ramp {petPreset.PrimaryIndex}")
+			};
+			CharGenAppearanceComponentFactory.GetTextureSelectorItemVM(entitiesCollection, num, texture2D, delegate
+			{
+				PFLog.TechArt.Log($"TryUpdatePetColorListFromMaster: Selected pet preset {petPresetIndex} (ramp {petPreset.PrimaryIndex}) for pet: {Unit.CharacterName}");
+				SetEquipmentColor(petRampIndexSet);
+			});
+			if (GetCurrentPetRampIndex() == petPreset.PrimaryIndex)
+			{
+				selector.SelectionGroup.TrySelectEntity(entitiesCollection[num]);
+			}
+			num++;
+		}
+		selector.SelectionGroup.ClearFromIndex(num);
+		return true;
+	}
+
+	private bool TryUpdateClothesPrimaryPaintColorList(TextureSelectorVM selector, bool secondary)
+	{
+		if (IsPet)
+		{
+			return false;
+		}
 		List<EquipmentEntityLink> list = m_DollState?.Clothes;
 		if (list == null && Unit != null)
 		{
@@ -178,13 +298,13 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		}
 		if (list == null)
 		{
-			return;
+			return false;
 		}
 		RampColorPreset colorPreset;
 		CharacterColorsProfile clothesColorsProfile = CharGenUtility.GetClothesColorsProfile(list, out colorPreset, secondary);
 		if (colorPreset == null)
 		{
-			return;
+			return false;
 		}
 		ReactiveCollection<TextureSelectorItemVM> entitiesCollection = selector.SelectionGroup.EntitiesCollection;
 		List<TextureIndexPair> listTexIndexPrimary = new List<TextureIndexPair>();
@@ -203,7 +323,7 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			TextureIndexPair textureIndexPair = listTexIndexPrimary[j];
 			CharGenAppearanceComponentFactory.GetTextureSelectorItemVM(entitiesCollection, j, textureIndexPair.Texture, delegate
 			{
-				SetEquipmentColor(listTexIndexPrimary[i1].TexturesIndexSet, secondary: false);
+				SetEquipmentColor(listTexIndexPrimary[i1].TexturesIndexSet);
 			});
 			if (GetCurrentEquipmentRampIndex(secondary: false) == textureIndexPair.TexturesIndexSet.PrimaryIndex && GetCurrentEquipmentRampIndex(secondary: true) == textureIndexPair.TexturesIndexSet.SecondaryIndex)
 			{
@@ -211,6 +331,7 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			}
 		}
 		selector.SelectionGroup.ClearFromIndex(listTexIndexPrimary.Count);
+		return true;
 	}
 
 	private int GetCurrentEquipmentRampIndex(bool secondary)
@@ -234,7 +355,25 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		return -1;
 	}
 
-	private void SetEquipmentColor(RampColorPreset.IndexSet rampIndex, bool secondary)
+	private int GetCurrentPetColorIndex()
+	{
+		if (Unit?.ViewSettings.Doll != null)
+		{
+			return Unit.ViewSettings.Doll.PetColorRampIndex;
+		}
+		return -1;
+	}
+
+	private int GetCurrentPetRampIndex()
+	{
+		if (Unit?.ViewSettings.Doll != null)
+		{
+			return Unit.ViewSettings.Doll.PetRamp01Index;
+		}
+		return -1;
+	}
+
+	private void SetEquipmentColor(RampColorPreset.IndexSet rampIndex)
 	{
 		if (m_DollState != null)
 		{

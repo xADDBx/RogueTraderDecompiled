@@ -277,14 +277,15 @@ public abstract class CustomGridNodeBase : GraphNode
 				}
 			}
 		}
-		int num = ((connections != null) ? connections.Length : 0);
-		CustomConnection[] array = new CustomConnection[num + 1];
+		CustomConnection[] array = connections;
+		int num = ((array != null) ? array.Length : 0);
+		CustomConnection[] array2 = new CustomConnection[num + 1];
 		for (int j = 0; j < num; j++)
 		{
-			array[j] = connections[j];
+			array2[j] = connections[j];
 		}
-		array[num] = new CustomConnection(node, cost, byte.MaxValue, link);
-		connections = array;
+		array2[num] = new CustomConnection(node, cost, byte.MaxValue, link);
+		connections = array2;
 		AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 	}
 

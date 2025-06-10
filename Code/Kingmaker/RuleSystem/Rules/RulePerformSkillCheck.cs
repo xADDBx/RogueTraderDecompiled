@@ -24,6 +24,8 @@ public class RulePerformSkillCheck : RulebookEvent
 
 	public readonly ValueModifiersManager DifficultyModifiers = new ValueModifiersManager();
 
+	private bool IgnoreDifficultyBonusToDC;
+
 	private bool m_ValueCalculated;
 
 	public BaseUnitEntity SkinningTarget { get; }
@@ -35,8 +37,6 @@ public class RulePerformSkillCheck : RulebookEvent
 	public bool Silent { get; set; }
 
 	public VoicingType Voice { get; set; }
-
-	public bool IgnoreDifficultyBonusToDC { get; set; }
 
 	public bool ShowAnyway { get; set; }
 
@@ -72,11 +72,12 @@ public class RulePerformSkillCheck : RulebookEvent
 		DifficultyModifiers.CopyFrom(sourceCheck.DifficultyModifiers, (Modifier i) => i.Descriptor != ModifierDescriptor.Difficulty);
 	}
 
-	public RulePerformSkillCheck([NotNull] MechanicEntity unit, StatType statType, int difficulty)
+	public RulePerformSkillCheck([NotNull] MechanicEntity unit, StatType statType, int difficulty, bool ignoreDCIncreaseFromDifficulty = false)
 		: base(unit)
 	{
 		StatType = statType;
 		BaseDifficulty = difficulty;
+		IgnoreDifficultyBonusToDC = ignoreDCIncreaseFromDifficulty;
 		UpdateValues();
 	}
 

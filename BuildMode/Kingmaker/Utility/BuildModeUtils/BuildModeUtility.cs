@@ -56,7 +56,7 @@ public class BuildModeUtility
 			{
 				if (Data != null && !Data.development)
 				{
-					return !Data.betatest;
+					return !Data.playtest;
 				}
 				return false;
 			}
@@ -64,7 +64,7 @@ public class BuildModeUtility
 		}
 	}
 
-	public static bool IsBeta => Data?.betatest ?? false;
+	public static bool IsPlayTest => Data?.playtest ?? false;
 
 	public static BuildMode Mode
 	{
@@ -72,11 +72,11 @@ public class BuildModeUtility
 		{
 			if (!IsRelease)
 			{
-				if (!IsBeta)
+				if (!IsPlayTest)
 				{
 					return BuildMode.Development;
 				}
-				return BuildMode.Betatest;
+				return BuildMode.Playtest;
 			}
 			return BuildMode.Release;
 		}

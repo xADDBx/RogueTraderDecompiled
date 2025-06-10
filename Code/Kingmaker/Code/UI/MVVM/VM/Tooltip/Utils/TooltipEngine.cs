@@ -176,315 +176,357 @@ public static class TooltipEngine
 																																																																									{
 																																																																										if (!(vm is TooltipBrickAttributeVM viewModel71))
 																																																																										{
-																																																																											if (vm is TooltipBrickItemHeaderVM viewModel72)
+																																																																											if (!(vm is TooltipBrickItemHeaderVM viewModel72))
 																																																																											{
-																																																																												TooltipBrickItemHeaderView widget = WidgetFactory.GetWidget(config.BrickItemHeaderView, activate: true, strictMatching: true);
-																																																																												widget.Bind(viewModel72);
-																																																																												return widget;
+																																																																												if (!(vm is TooltipBrickLastUsedAbilityPaperVM viewModel73))
+																																																																												{
+																																																																													if (!(vm is TooltipBrickPetInfoVM viewModel74))
+																																																																													{
+																																																																														if (!(vm is TooltipBrickShortLabelVM viewModel75))
+																																																																														{
+																																																																															if (!(vm is TooltipBrickOverseerPaperVM viewModel76))
+																																																																															{
+																																																																																if (!(vm is TooltipBrickProtocolPetVM viewModel77))
+																																																																																{
+																																																																																	if (!(vm is TooltipBrickRecommendPaperVM viewModel78))
+																																																																																	{
+																																																																																		if (vm is TooltipBrickCantUsePaperVM viewModel79)
+																																																																																		{
+																																																																																			TooltipBrickCantUsePaperView widget = WidgetFactory.GetWidget(config.BrickCantUsePaperView, activate: true, strictMatching: true);
+																																																																																			widget.Bind(viewModel79);
+																																																																																			return widget;
+																																																																																		}
+																																																																																		return null;
+																																																																																	}
+																																																																																	TooltipBrickRecommendPaperView widget2 = WidgetFactory.GetWidget(config.BrickRecommendPaperView, activate: true, strictMatching: true);
+																																																																																	widget2.Bind(viewModel78);
+																																																																																	return widget2;
+																																																																																}
+																																																																																TooltipBrickProtocolPetView widget3 = WidgetFactory.GetWidget(config.BrickProtocolPetView, activate: true, strictMatching: true);
+																																																																																widget3.Bind(viewModel77);
+																																																																																return widget3;
+																																																																															}
+																																																																															TooltipBrickOverseerPaperView widget4 = WidgetFactory.GetWidget(config.BrickOverseerPaperView, activate: true, strictMatching: true);
+																																																																															widget4.Bind(viewModel76);
+																																																																															return widget4;
+																																																																														}
+																																																																														TooltipBrickShortLabelView widget5 = WidgetFactory.GetWidget(config.BrickShortLabelView, activate: true, strictMatching: true);
+																																																																														widget5.Bind(viewModel75);
+																																																																														return widget5;
+																																																																													}
+																																																																													TooltipBrickPetInfoView widget6 = WidgetFactory.GetWidget(config.BrickPetInfoView, activate: true, strictMatching: true);
+																																																																													widget6.Bind(viewModel74);
+																																																																													return widget6;
+																																																																												}
+																																																																												TooltipBrickLastUsedAbilityPaperView widget7 = WidgetFactory.GetWidget(config.BrickLastUsedAbilityPaperView, activate: true, strictMatching: true);
+																																																																												widget7.Bind(viewModel73);
+																																																																												return widget7;
 																																																																											}
-																																																																											return null;
+																																																																											TooltipBrickItemHeaderView widget8 = WidgetFactory.GetWidget(config.BrickItemHeaderView, activate: true, strictMatching: true);
+																																																																											widget8.Bind(viewModel72);
+																																																																											return widget8;
 																																																																										}
-																																																																										TooltipBrickAttributeView widget2 = WidgetFactory.GetWidget(config.BrickAttributeView, activate: true, strictMatching: true);
-																																																																										widget2.Bind(viewModel71);
-																																																																										return widget2;
+																																																																										TooltipBrickAttributeView widget9 = WidgetFactory.GetWidget(config.BrickAttributeView, activate: true, strictMatching: true);
+																																																																										widget9.Bind(viewModel71);
+																																																																										return widget9;
 																																																																									}
-																																																																									TooltipBrickNestedMessageView widget3 = WidgetFactory.GetWidget(config.BrickNestedMessageView, activate: true, strictMatching: true);
-																																																																									widget3.Bind(viewModel70);
-																																																																									return widget3;
+																																																																									TooltipBrickNestedMessageView widget10 = WidgetFactory.GetWidget(config.BrickNestedMessageView, activate: true, strictMatching: true);
+																																																																									widget10.Bind(viewModel70);
+																																																																									return widget10;
 																																																																								}
-																																																																								TooltipBrickTextBackgroundView widget4 = WidgetFactory.GetWidget(config.BrickTextBackgroundView, activate: true, strictMatching: true);
-																																																																								widget4.Bind(viewModel69);
-																																																																								return widget4;
+																																																																								TooltipBrickTextBackgroundView widget11 = WidgetFactory.GetWidget(config.BrickTextBackgroundView, activate: true, strictMatching: true);
+																																																																								widget11.Bind(viewModel69);
+																																																																								return widget11;
 																																																																							}
-																																																																							TooltipBrickRankEntrySelectionView widget5 = WidgetFactory.GetWidget(config.BrickRankEntrySelectionView, activate: true, strictMatching: true);
-																																																																							widget5.Bind(viewModel68);
-																																																																							return widget5;
+																																																																							TooltipBrickRankEntrySelectionView widget12 = WidgetFactory.GetWidget(config.BrickRankEntrySelectionView, activate: true, strictMatching: true);
+																																																																							widget12.Bind(viewModel68);
+																																																																							return widget12;
 																																																																						}
-																																																																						TooltipBrickTitleWithIconView widget6 = WidgetFactory.GetWidget(config.BrickTitleWithIconView, activate: true, strictMatching: true);
-																																																																						widget6.Bind(viewModel67);
-																																																																						return widget6;
+																																																																						TooltipBrickTitleWithIconView widget13 = WidgetFactory.GetWidget(config.BrickTitleWithIconView, activate: true, strictMatching: true);
+																																																																						widget13.Bind(viewModel67);
+																																																																						return widget13;
 																																																																					}
-																																																																					TooltipBrickDamageNullifierView widget7 = WidgetFactory.GetWidget(config.BrickDamageNullifierView, activate: true, strictMatching: true);
-																																																																					widget7.Bind(viewModel66);
-																																																																					return widget7;
+																																																																					TooltipBrickDamageNullifierView widget14 = WidgetFactory.GetWidget(config.BrickDamageNullifierView, activate: true, strictMatching: true);
+																																																																					widget14.Bind(viewModel66);
+																																																																					return widget14;
 																																																																				}
-																																																																				TooltipBrickCalculatedFormulaView widget8 = WidgetFactory.GetWidget(config.CalculatedFormulaView, activate: true, strictMatching: true);
-																																																																				widget8.Bind(viewModel65);
-																																																																				return widget8;
+																																																																				TooltipBrickCalculatedFormulaView widget15 = WidgetFactory.GetWidget(config.CalculatedFormulaView, activate: true, strictMatching: true);
+																																																																				widget15.Bind(viewModel65);
+																																																																				return widget15;
 																																																																			}
-																																																																			TooltipBrickMinimalAdmissibleDamageView widget9 = WidgetFactory.GetWidget(config.BrickMinimalAdmissibleDamageView, activate: true, strictMatching: true);
-																																																																			widget9.Bind(viewModel64);
-																																																																			return widget9;
+																																																																			TooltipBrickMinimalAdmissibleDamageView widget16 = WidgetFactory.GetWidget(config.BrickMinimalAdmissibleDamageView, activate: true, strictMatching: true);
+																																																																			widget16.Bind(viewModel64);
+																																																																			return widget16;
 																																																																		}
-																																																																		TooltipBrickTriggeredAutoView widget10 = WidgetFactory.GetWidget(config.BrickTriggeredAutoView, activate: true, strictMatching: true);
-																																																																		widget10.Bind(viewModel63);
-																																																																		return widget10;
+																																																																		TooltipBrickTriggeredAutoView widget17 = WidgetFactory.GetWidget(config.BrickTriggeredAutoView, activate: true, strictMatching: true);
+																																																																		widget17.Bind(viewModel63);
+																																																																		return widget17;
 																																																																	}
-																																																																	TooltipBrickIconTextValueView widget11 = WidgetFactory.GetWidget(config.BrickIconTextValueView, activate: true, strictMatching: true);
-																																																																	widget11.Bind(viewModel62);
-																																																																	return widget11;
+																																																																	TooltipBrickIconTextValueView widget18 = WidgetFactory.GetWidget(config.BrickIconTextValueView, activate: true, strictMatching: true);
+																																																																	widget18.Bind(viewModel62);
+																																																																	return widget18;
 																																																																}
-																																																																TooltipBrickWidgetView widget12 = WidgetFactory.GetWidget(config.BrickWidgetView, activate: true, strictMatching: true);
-																																																																widget12.Bind(viewModel61);
-																																																																return widget12;
+																																																																TooltipBrickWidgetView widget19 = WidgetFactory.GetWidget(config.BrickWidgetView, activate: true, strictMatching: true);
+																																																																widget19.Bind(viewModel61);
+																																																																return widget19;
 																																																															}
-																																																															TooltipBrickDamageRangeView widget13 = WidgetFactory.GetWidget(config.BrickDamageRangeView, activate: true, strictMatching: true);
-																																																															widget13.Bind(viewModel60);
-																																																															return widget13;
+																																																															TooltipBrickDamageRangeView widget20 = WidgetFactory.GetWidget(config.BrickDamageRangeView, activate: true, strictMatching: true);
+																																																															widget20.Bind(viewModel60);
+																																																															return widget20;
 																																																														}
-																																																														TooltipBrickTextSignatureValueView widget14 = WidgetFactory.GetWidget(config.BrickTextSignatureValueView, activate: true, strictMatching: true);
-																																																														widget14.Bind(viewModel59);
-																																																														return widget14;
+																																																														TooltipBrickTextSignatureValueView widget21 = WidgetFactory.GetWidget(config.BrickTextSignatureValueView, activate: true, strictMatching: true);
+																																																														widget21.Bind(viewModel59);
+																																																														return widget21;
 																																																													}
-																																																													TooltipBrickTextValueView widget15 = WidgetFactory.GetWidget(config.BrickTextValueView, activate: true, strictMatching: true);
-																																																													widget15.Bind(viewModel58);
-																																																													return widget15;
+																																																													TooltipBrickTextValueView widget22 = WidgetFactory.GetWidget(config.BrickTextValueView, activate: true, strictMatching: true);
+																																																													widget22.Bind(viewModel58);
+																																																													return widget22;
 																																																												}
-																																																												TooltipBrickIconTextView widget16 = WidgetFactory.GetWidget(config.BrickIconTextView, activate: true, strictMatching: true);
-																																																												widget16.Bind(viewModel57);
-																																																												return widget16;
+																																																												TooltipBrickIconTextView widget23 = WidgetFactory.GetWidget(config.BrickIconTextView, activate: true, strictMatching: true);
+																																																												widget23.Bind(viewModel57);
+																																																												return widget23;
 																																																											}
-																																																											TooltipBrickShotDeviationWithNameView widget17 = WidgetFactory.GetWidget(config.BrickShotDeviationWithNameView, activate: true, strictMatching: true);
-																																																											widget17.Bind(viewModel56);
-																																																											return widget17;
+																																																											TooltipBrickShotDeviationWithNameView widget24 = WidgetFactory.GetWidget(config.BrickShotDeviationWithNameView, activate: true, strictMatching: true);
+																																																											widget24.Bind(viewModel56);
+																																																											return widget24;
 																																																										}
-																																																										TooltipBrickShotDeviationView widget18 = WidgetFactory.GetWidget(config.BrickShotDeviationView, activate: true, strictMatching: true);
-																																																										widget18.Bind(viewModel55);
-																																																										return widget18;
+																																																										TooltipBrickShotDeviationView widget25 = WidgetFactory.GetWidget(config.BrickShotDeviationView, activate: true, strictMatching: true);
+																																																										widget25.Bind(viewModel55);
+																																																										return widget25;
 																																																									}
-																																																									TooltipBrickChanceView widget19 = WidgetFactory.GetWidget(config.BrickChanceView, activate: true, strictMatching: true);
-																																																									widget19.Bind(viewModel54);
-																																																									return widget19;
+																																																									TooltipBrickChanceView widget26 = WidgetFactory.GetWidget(config.BrickChanceView, activate: true, strictMatching: true);
+																																																									widget26.Bind(viewModel54);
+																																																									return widget26;
 																																																								}
-																																																								TooltipBrickIconAndTextWithCustomColorsView widget20 = WidgetFactory.GetWidget(config.IconAndTextWithCustomColorsView, activate: true, strictMatching: true);
-																																																								widget20.Bind(viewModel53);
-																																																								return widget20;
+																																																								TooltipBrickIconAndTextWithCustomColorsView widget27 = WidgetFactory.GetWidget(config.IconAndTextWithCustomColorsView, activate: true, strictMatching: true);
+																																																								widget27.Bind(viewModel53);
+																																																								return widget27;
 																																																							}
-																																																							TooltipBrickEventsView widget21 = WidgetFactory.GetWidget(config.EventsView, activate: true, strictMatching: true);
-																																																							widget21.Bind(viewModel52);
-																																																							return widget21;
+																																																							TooltipBrickEventsView widget28 = WidgetFactory.GetWidget(config.EventsView, activate: true, strictMatching: true);
+																																																							widget28.Bind(viewModel52);
+																																																							return widget28;
 																																																						}
-																																																						TooltipBrickArmorStatsView widget22 = WidgetFactory.GetWidget(config.ArmorStatsView, activate: true, strictMatching: true);
-																																																						widget22.Bind(viewModel51);
-																																																						return widget22;
+																																																						TooltipBrickArmorStatsView widget29 = WidgetFactory.GetWidget(config.ArmorStatsView, activate: true, strictMatching: true);
+																																																						widget29.Bind(viewModel51);
+																																																						return widget29;
 																																																					}
-																																																					TooltipBrickWeaponSetView widget23 = WidgetFactory.GetWidget(config.WeaponSetView, activate: true, strictMatching: true);
-																																																					widget23.Bind(viewModel50);
-																																																					return widget23;
+																																																					TooltipBrickWeaponSetView widget30 = WidgetFactory.GetWidget(config.WeaponSetView, activate: true, strictMatching: true);
+																																																					widget30.Bind(viewModel50);
+																																																					return widget30;
 																																																				}
-																																																				TooltipBrickSliderView widget24 = WidgetFactory.GetWidget(config.SliderView, activate: true, strictMatching: true);
-																																																				widget24.Bind(viewModel49);
-																																																				return widget24;
+																																																				TooltipBrickSliderView widget31 = WidgetFactory.GetWidget(config.SliderView, activate: true, strictMatching: true);
+																																																				widget31.Bind(viewModel49);
+																																																				return widget31;
 																																																			}
-																																																			TooltipBrickPortraitFeaturesView widget25 = WidgetFactory.GetWidget(config.PortraitFeaturesView, activate: true, strictMatching: true);
-																																																			widget25.Bind(viewModel48);
-																																																			return widget25;
+																																																			TooltipBrickPortraitFeaturesView widget32 = WidgetFactory.GetWidget(config.PortraitFeaturesView, activate: true, strictMatching: true);
+																																																			widget32.Bind(viewModel48);
+																																																			return widget32;
 																																																		}
-																																																		TooltipBricksMomentumPortraitsView widget26 = WidgetFactory.GetWidget(config.MomentumPortraitsView, activate: true, strictMatching: true);
-																																																		widget26.Bind(viewModel47);
-																																																		return widget26;
+																																																		TooltipBricksMomentumPortraitsView widget33 = WidgetFactory.GetWidget(config.MomentumPortraitsView, activate: true, strictMatching: true);
+																																																		widget33.Bind(viewModel47);
+																																																		return widget33;
 																																																	}
-																																																	TooltipBrickMomentumPortraitView widget27 = WidgetFactory.GetWidget(config.MomentumPortraitView, activate: true, strictMatching: true);
-																																																	widget27.Bind(viewModel46);
-																																																	return widget27;
+																																																	TooltipBrickMomentumPortraitView widget34 = WidgetFactory.GetWidget(config.MomentumPortraitView, activate: true, strictMatching: true);
+																																																	widget34.Bind(viewModel46);
+																																																	return widget34;
 																																																}
-																																																TooltipBrickGlobalMapPositionView widget28 = WidgetFactory.GetWidget(config.GlobalMapPositionView, activate: true, strictMatching: true);
-																																																widget28.Bind(viewModel45);
-																																																return widget28;
+																																																TooltipBrickGlobalMapPositionView widget35 = WidgetFactory.GetWidget(config.GlobalMapPositionView, activate: true, strictMatching: true);
+																																																widget35.Bind(viewModel45);
+																																																return widget35;
 																																															}
-																																															TooltipBrickCargoCapacityView widget29 = WidgetFactory.GetWidget(config.CargoCapacityView, activate: true, strictMatching: true);
-																																															widget29.Bind(viewModel44);
-																																															return widget29;
+																																															TooltipBrickCargoCapacityView widget36 = WidgetFactory.GetWidget(config.CargoCapacityView, activate: true, strictMatching: true);
+																																															widget36.Bind(viewModel44);
+																																															return widget36;
 																																														}
 																																														if (tooltipBricksGroupVM.Type == TooltipBricksGroupType.Start)
 																																														{
-																																															TooltipBricksGroupView widget30 = WidgetFactory.GetWidget(config.BricksGroupView, activate: true, strictMatching: true);
-																																															widget30.Bind(tooltipBricksGroupVM);
-																																															return widget30;
+																																															TooltipBricksGroupView widget37 = WidgetFactory.GetWidget(config.BricksGroupView, activate: true, strictMatching: true);
+																																															widget37.Bind(tooltipBricksGroupVM);
+																																															return widget37;
 																																														}
 																																														return null;
 																																													}
-																																													TooltipBrickIconPatternView widget31 = WidgetFactory.GetWidget(config.IconPatternView, activate: true, strictMatching: true);
-																																													widget31.Bind(viewModel43);
-																																													return widget31;
+																																													TooltipBrickIconPatternView widget38 = WidgetFactory.GetWidget(config.IconPatternView, activate: true, strictMatching: true);
+																																													widget38.Bind(viewModel43);
+																																													return widget38;
 																																												}
-																																												TooltipBrickProfitFactorView widget32 = WidgetFactory.GetWidget(config.ProfitFactorView, activate: true, strictMatching: true);
-																																												widget32.Bind(viewModel42);
-																																												return widget32;
+																																												TooltipBrickProfitFactorView widget39 = WidgetFactory.GetWidget(config.ProfitFactorView, activate: true, strictMatching: true);
+																																												widget39.Bind(viewModel42);
+																																												return widget39;
 																																											}
-																																											TooltipBrickUnifiedStatusView widget33 = WidgetFactory.GetWidget(config.UnifiedStatusView, activate: true, strictMatching: true);
-																																											widget33.Bind(viewModel41);
-																																											return widget33;
+																																											TooltipBrickUnifiedStatusView widget40 = WidgetFactory.GetWidget(config.UnifiedStatusView, activate: true, strictMatching: true);
+																																											widget40.Bind(viewModel41);
+																																											return widget40;
 																																										}
-																																										TooltipBrickResourceInfoView widget34 = WidgetFactory.GetWidget(config.ResourceInfoView, activate: true, strictMatching: true);
-																																										widget34.Bind(viewModel40);
-																																										return widget34;
+																																										TooltipBrickResourceInfoView widget41 = WidgetFactory.GetWidget(config.ResourceInfoView, activate: true, strictMatching: true);
+																																										widget41.Bind(viewModel40);
+																																										return widget41;
 																																									}
-																																									TooltipBrickAnomalyInfoView widget35 = WidgetFactory.GetWidget(config.AnomalyInfoView, activate: true, strictMatching: true);
-																																									widget35.Bind(viewModel39);
-																																									return widget35;
+																																									TooltipBrickAnomalyInfoView widget42 = WidgetFactory.GetWidget(config.AnomalyInfoView, activate: true, strictMatching: true);
+																																									widget42.Bind(viewModel39);
+																																									return widget42;
 																																								}
-																																								TooltipBrickOtherObjectsInfoView widget36 = WidgetFactory.GetWidget(config.OtherObjectsInfoView, activate: true, strictMatching: true);
-																																								widget36.Bind(viewModel38);
-																																								return widget36;
+																																								TooltipBrickOtherObjectsInfoView widget43 = WidgetFactory.GetWidget(config.OtherObjectsInfoView, activate: true, strictMatching: true);
+																																								widget43.Bind(viewModel38);
+																																								return widget43;
 																																							}
-																																							TooltipBrickPlanetInfoView widget37 = WidgetFactory.GetWidget(config.PlanetInfoView, activate: true, strictMatching: true);
-																																							widget37.Bind(viewModel37);
-																																							return widget37;
+																																							TooltipBrickPlanetInfoView widget44 = WidgetFactory.GetWidget(config.PlanetInfoView, activate: true, strictMatching: true);
+																																							widget44.Bind(viewModel37);
+																																							return widget44;
 																																						}
-																																						TooltipBrickHintView widget38 = WidgetFactory.GetWidget(config.BrickHintView, activate: true, strictMatching: true);
-																																						widget38.Bind(viewModel36);
-																																						return widget38;
+																																						TooltipBrickHintView widget45 = WidgetFactory.GetWidget(config.BrickHintView, activate: true, strictMatching: true);
+																																						widget45.Bind(viewModel36);
+																																						return widget45;
 																																					}
-																																					TooltipBrickAbilityTargetView widget39 = WidgetFactory.GetWidget(config.BrickAbilityTargetView, activate: true, strictMatching: true);
-																																					widget39.Bind(viewModel35);
-																																					return widget39;
+																																					TooltipBrickAbilityTargetView widget46 = WidgetFactory.GetWidget(config.BrickAbilityTargetView, activate: true, strictMatching: true);
+																																					widget46.Bind(viewModel35);
+																																					return widget46;
 																																				}
-																																				TooltipBrickSkillsView widget40 = WidgetFactory.GetWidget(config.BrickSkillsView, activate: true, strictMatching: true);
-																																				widget40.Bind(viewModel34);
-																																				return widget40;
+																																				TooltipBrickSkillsView widget47 = WidgetFactory.GetWidget(config.BrickSkillsView, activate: true, strictMatching: true);
+																																				widget47.Bind(viewModel34);
+																																				return widget47;
 																																			}
-																																			TooltipBrickFeatureShortDescriptionView widget41 = WidgetFactory.GetWidget(config.BrickFeatureShortDescriptionView, activate: true, strictMatching: true);
-																																			widget41.Bind(viewModel33);
-																																			return widget41;
+																																			TooltipBrickFeatureShortDescriptionView widget48 = WidgetFactory.GetWidget(config.BrickFeatureShortDescriptionView, activate: true, strictMatching: true);
+																																			widget48.Bind(viewModel33);
+																																			return widget48;
 																																		}
-																																		TooltipBrickRateView widget42 = WidgetFactory.GetWidget(config.BrickRateView, activate: true, strictMatching: true);
-																																		widget42.Bind(viewModel32);
-																																		return widget42;
+																																		TooltipBrickRateView widget49 = WidgetFactory.GetWidget(config.BrickRateView, activate: true, strictMatching: true);
+																																		widget49.Bind(viewModel32);
+																																		return widget49;
 																																	}
-																																	TooltipBrickPrerequisiteView widget43 = WidgetFactory.GetWidget(config.BrickPrerequisiteView, activate: true, strictMatching: true);
-																																	widget43.Bind(viewModel31);
-																																	return widget43;
+																																	TooltipBrickPrerequisiteView widget50 = WidgetFactory.GetWidget(config.BrickPrerequisiteView, activate: true, strictMatching: true);
+																																	widget50.Bind(viewModel31);
+																																	return widget50;
 																																}
-																																TooltipBrickNonStackView widget44 = WidgetFactory.GetWidget(config.BrickNonStackView, activate: true, strictMatching: true);
-																																widget44.Bind(viewModel30);
-																																return widget44;
+																																TooltipBrickNonStackView widget51 = WidgetFactory.GetWidget(config.BrickNonStackView, activate: true, strictMatching: true);
+																																widget51.Bind(viewModel30);
+																																return widget51;
 																															}
-																															TooltipBrickHistoryManagementView widget45 = WidgetFactory.GetWidget(config.BrickHistoryManagementView, activate: true, strictMatching: true);
-																															widget45.Bind(viewModel29);
-																															return widget45;
+																															TooltipBrickHistoryManagementView widget52 = WidgetFactory.GetWidget(config.BrickHistoryManagementView, activate: true, strictMatching: true);
+																															widget52.Bind(viewModel29);
+																															return widget52;
 																														}
-																														TooltipBrickButtonView widget46 = WidgetFactory.GetWidget(config.BrickButtonView, activate: true, strictMatching: true);
-																														widget46.Bind(viewModel28);
-																														return widget46;
+																														TooltipBrickButtonView widget53 = WidgetFactory.GetWidget(config.BrickButtonView, activate: true, strictMatching: true);
+																														widget53.Bind(viewModel28);
+																														return widget53;
 																													}
-																													TooltipBrickEncumbranceView widget47 = WidgetFactory.GetWidget(config.BrickEncumbranceView, activate: true, strictMatching: true);
-																													widget47.Bind(viewModel27);
-																													return widget47;
+																													TooltipBrickEncumbranceView widget54 = WidgetFactory.GetWidget(config.BrickEncumbranceView, activate: true, strictMatching: true);
+																													widget54.Bind(viewModel27);
+																													return widget54;
 																												}
-																												TooltipBrickAbilityScoresView widget48 = WidgetFactory.GetWidget(config.BrickAbilityScoresView, activate: true, strictMatching: true);
-																												widget48.Bind(viewModel26);
-																												return widget48;
+																												TooltipBrickAbilityScoresView widget55 = WidgetFactory.GetWidget(config.BrickAbilityScoresView, activate: true, strictMatching: true);
+																												widget55.Bind(viewModel26);
+																												return widget55;
 																											}
-																											TooltipBrickAbilityScoresBlockView widget49 = WidgetFactory.GetWidget(config.BrickAbilityScoresBlockView, activate: true, strictMatching: true);
-																											widget49.Bind(viewModel25);
-																											return widget49;
+																											TooltipBrickAbilityScoresBlockView widget56 = WidgetFactory.GetWidget(config.BrickAbilityScoresBlockView, activate: true, strictMatching: true);
+																											widget56.Bind(viewModel25);
+																											return widget56;
 																										}
 																										if (tooltipBrickFeatureVM.IsHeader)
 																										{
-																											TooltipBrickFeatureHeaderView widget50 = WidgetFactory.GetWidget(config.BrickFeatureHeaderView, activate: true, strictMatching: true);
-																											widget50.Bind(tooltipBrickFeatureVM);
-																											return widget50;
+																											TooltipBrickFeatureHeaderView widget57 = WidgetFactory.GetWidget(config.BrickFeatureHeaderView, activate: true, strictMatching: true);
+																											widget57.Bind(tooltipBrickFeatureVM);
+																											return widget57;
 																										}
-																										TooltipBrickFeatureView widget51 = WidgetFactory.GetWidget(config.BrickFeatureView, activate: true, strictMatching: true);
-																										widget51.Bind(tooltipBrickFeatureVM);
-																										return widget51;
+																										TooltipBrickFeatureView widget58 = WidgetFactory.GetWidget(config.BrickFeatureView, activate: true, strictMatching: true);
+																										widget58.Bind(tooltipBrickFeatureVM);
+																										return widget58;
 																									}
-																									TooltipBrickWeaponDOTInitialDamageView widget52 = WidgetFactory.GetWidget(config.BrickWeaponDOTInitialDamageView, activate: true, strictMatching: true);
-																									widget52.Bind(viewModel24);
-																									return widget52;
+																									TooltipBrickWeaponDOTInitialDamageView widget59 = WidgetFactory.GetWidget(config.BrickWeaponDOTInitialDamageView, activate: true, strictMatching: true);
+																									widget59.Bind(viewModel24);
+																									return widget59;
 																								}
-																								TooltipBrickBuffDOTView widget53 = WidgetFactory.GetWidget(config.BrickBuffDOTView, activate: true, strictMatching: true);
-																								widget53.Bind(viewModel23);
-																								return widget53;
+																								TooltipBrickBuffDOTView widget60 = WidgetFactory.GetWidget(config.BrickBuffDOTView, activate: true, strictMatching: true);
+																								widget60.Bind(viewModel23);
+																								return widget60;
 																							}
-																							TooltipBrickBuffView widget54 = WidgetFactory.GetWidget(config.BrickBuffView, activate: true, strictMatching: true);
-																							widget54.Bind(viewModel22);
-																							return widget54;
+																							TooltipBrickBuffView widget61 = WidgetFactory.GetWidget(config.BrickBuffView, activate: true, strictMatching: true);
+																							widget61.Bind(viewModel22);
+																							return widget61;
 																						}
-																						TooltipBrickEntityHeaderView widget55 = WidgetFactory.GetWidget(config.BrickEntityHeaderView, activate: true, strictMatching: true);
-																						widget55.Bind(viewModel21);
-																						return widget55;
+																						TooltipBrickEntityHeaderView widget62 = WidgetFactory.GetWidget(config.BrickEntityHeaderView, activate: true, strictMatching: true);
+																						widget62.Bind(viewModel21);
+																						return widget62;
 																					}
-																					TooltipBrickValueStatFormulaView widget56 = WidgetFactory.GetWidget(config.BrickValueStatFormulaView, activate: true, strictMatching: true);
-																					widget56.Bind(viewModel20);
-																					return widget56;
+																					TooltipBrickValueStatFormulaView widget63 = WidgetFactory.GetWidget(config.BrickValueStatFormulaView, activate: true, strictMatching: true);
+																					widget63.Bind(viewModel20);
+																					return widget63;
 																				}
-																				TooltipBrickTwoColumnsStatView widget57 = WidgetFactory.GetWidget(config.BrickTwoColumnsStatView, activate: true, strictMatching: true);
-																				widget57.Bind(viewModel19);
-																				return widget57;
+																				TooltipBrickTwoColumnsStatView widget64 = WidgetFactory.GetWidget(config.BrickTwoColumnsStatView, activate: true, strictMatching: true);
+																				widget64.Bind(viewModel19);
+																				return widget64;
 																			}
-																			TooltipBrickIconStatValueView widget58 = WidgetFactory.GetWidget(config.BrickIconStatValueView, activate: true, strictMatching: true);
-																			widget58.Bind(viewModel18);
-																			return widget58;
+																			TooltipBrickIconStatValueView widget65 = WidgetFactory.GetWidget(config.BrickIconStatValueView, activate: true, strictMatching: true);
+																			widget65.Bind(viewModel18);
+																			return widget65;
 																		}
-																		TooltipBrickIconValueStatView widget59 = WidgetFactory.GetWidget(config.BrickIconValueStatView, activate: true, strictMatching: true);
-																		widget59.Bind(viewModel17);
-																		return widget59;
+																		TooltipBrickIconValueStatView widget66 = WidgetFactory.GetWidget(config.BrickIconValueStatView, activate: true, strictMatching: true);
+																		widget66.Bind(viewModel17);
+																		return widget66;
 																	}
-																	TooltipBrickDoubleTextView widget60 = WidgetFactory.GetWidget(config.BrickDoubleTextView, activate: true, strictMatching: true);
-																	widget60.Bind(viewModel16);
-																	return widget60;
+																	TooltipBrickDoubleTextView widget67 = WidgetFactory.GetWidget(config.BrickDoubleTextView, activate: true, strictMatching: true);
+																	widget67.Bind(viewModel16);
+																	return widget67;
 																}
-																TooltipBrickTripleTextView widget61 = WidgetFactory.GetWidget(config.BrickTripleTextView, activate: true, strictMatching: true);
-																widget61.Bind(viewModel15);
-																return widget61;
+																TooltipBrickTripleTextView widget68 = WidgetFactory.GetWidget(config.BrickTripleTextView, activate: true, strictMatching: true);
+																widget68.Bind(viewModel15);
+																return widget68;
 															}
-															TooltipBrickItemFooterView widget62 = WidgetFactory.GetWidget(config.BrickItemFooterView, activate: true, strictMatching: true);
-															widget62.Bind(viewModel14);
-															return widget62;
+															TooltipBrickItemFooterView widget69 = WidgetFactory.GetWidget(config.BrickItemFooterView, activate: true, strictMatching: true);
+															widget69.Bind(viewModel14);
+															return widget69;
 														}
-														TooltipBrickFactionStatusView widget63 = WidgetFactory.GetWidget(config.FactionStatusView, activate: true, strictMatching: true);
-														widget63.Bind(viewModel13);
-														return widget63;
+														TooltipBrickFactionStatusView widget70 = WidgetFactory.GetWidget(config.FactionStatusView, activate: true, strictMatching: true);
+														widget70.Bind(viewModel13);
+														return widget70;
 													}
-													TooltipBrickIconAndNameView widget64 = WidgetFactory.GetWidget(config.BrickIconAndNameView, activate: true, strictMatching: true);
-													widget64.Bind(viewModel12);
-													return widget64;
+													TooltipBrickIconAndNameView widget71 = WidgetFactory.GetWidget(config.BrickIconAndNameView, activate: true, strictMatching: true);
+													widget71.Bind(viewModel12);
+													return widget71;
 												}
-												TooltipBrickPFIconAndNameView widget65 = WidgetFactory.GetWidget(config.BrickPFIconAndNameView, activate: true, strictMatching: true);
-												widget65.Bind(viewModel11);
-												return widget65;
+												TooltipBrickPFIconAndNameView widget72 = WidgetFactory.GetWidget(config.BrickPFIconAndNameView, activate: true, strictMatching: true);
+												widget72.Bind(viewModel11);
+												return widget72;
 											}
-											TooltipBrickColonyProjectProgressView widget66 = WidgetFactory.GetWidget(config.BrickColonyProjectProgressView, activate: true, strictMatching: true);
-											widget66.Bind(viewModel10);
-											return widget66;
+											TooltipBrickColonyProjectProgressView widget73 = WidgetFactory.GetWidget(config.BrickColonyProjectProgressView, activate: true, strictMatching: true);
+											widget73.Bind(viewModel10);
+											return widget73;
 										}
-										TooltipBrickResourceIconAndNameView widget67 = WidgetFactory.GetWidget(config.BrickResourceIconAndNameView, activate: true, strictMatching: true);
-										widget67.Bind(viewModel9);
-										return widget67;
+										TooltipBrickResourceIconAndNameView widget74 = WidgetFactory.GetWidget(config.BrickResourceIconAndNameView, activate: true, strictMatching: true);
+										widget74.Bind(viewModel9);
+										return widget74;
 									}
-									TooltipBrickItemIconAndNameView widget68 = WidgetFactory.GetWidget(config.BrickItemIconAndNameView, activate: true, strictMatching: true);
-									widget68.Bind(viewModel8);
-									return widget68;
+									TooltipBrickItemIconAndNameView widget75 = WidgetFactory.GetWidget(config.BrickItemIconAndNameView, activate: true, strictMatching: true);
+									widget75.Bind(viewModel8);
+									return widget75;
 								}
-								TooltipBrickPortraitAndNameView widget69 = WidgetFactory.GetWidget(config.BrickPortraitAndNameView, activate: true, strictMatching: true);
-								widget69.Bind(viewModel7);
-								return widget69;
+								TooltipBrickPortraitAndNameView widget76 = WidgetFactory.GetWidget(config.BrickPortraitAndNameView, activate: true, strictMatching: true);
+								widget76.Bind(viewModel7);
+								return widget76;
 							}
-							TooltipBrickPictureView widget70 = WidgetFactory.GetWidget(config.BrickPictureView, activate: true, strictMatching: true);
-							widget70.Bind(viewModel6);
-							return widget70;
+							TooltipBrickPictureView widget77 = WidgetFactory.GetWidget(config.BrickPictureView, activate: true, strictMatching: true);
+							widget77.Bind(viewModel6);
+							return widget77;
 						}
-						TooltipBrickTitleView widget71 = WidgetFactory.GetWidget(config.BrickTitleView, activate: true, strictMatching: true);
-						widget71.Bind(viewModel5);
-						return widget71;
+						TooltipBrickTitleView widget78 = WidgetFactory.GetWidget(config.BrickTitleView, activate: true, strictMatching: true);
+						widget78.Bind(viewModel5);
+						return widget78;
 					}
-					TooltipBrickSpaceView widget72 = WidgetFactory.GetWidget(config.BrickSpaceView, activate: true, strictMatching: true);
-					widget72.Bind(viewModel4);
-					return widget72;
+					TooltipBrickSpaceView widget79 = WidgetFactory.GetWidget(config.BrickSpaceView, activate: true, strictMatching: true);
+					widget79.Bind(viewModel4);
+					return widget79;
 				}
-				TooltipBrickSeparatorView widget73 = WidgetFactory.GetWidget(config.BrickSeparatorView, activate: true, strictMatching: true);
-				widget73.Bind(viewModel3);
-				return widget73;
+				TooltipBrickSeparatorView widget80 = WidgetFactory.GetWidget(config.BrickSeparatorView, activate: true, strictMatching: true);
+				widget80.Bind(viewModel3);
+				return widget80;
 			}
-			TooltipBrickTextView widget74 = WidgetFactory.GetWidget(config.BrickTextView, activate: true, strictMatching: true);
-			widget74.Bind(viewModel2);
-			return widget74;
+			TooltipBrickTextView widget81 = WidgetFactory.GetWidget(config.BrickTextView, activate: true, strictMatching: true);
+			widget81.Bind(viewModel2);
+			return widget81;
 		}
-		TooltipBrickTimerView widget75 = WidgetFactory.GetWidget(config.BrickTimerView, activate: true, strictMatching: true);
-		widget75.Bind(viewModel);
-		return widget75;
+		TooltipBrickTimerView widget82 = WidgetFactory.GetWidget(config.BrickTimerView, activate: true, strictMatching: true);
+		widget82.Bind(viewModel);
+		return widget82;
 	}
 
 	public static void DestroyBrickView(MonoBehaviour view)

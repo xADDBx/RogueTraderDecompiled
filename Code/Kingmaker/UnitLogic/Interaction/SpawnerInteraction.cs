@@ -25,11 +25,11 @@ public abstract class SpawnerInteraction : EntityPartComponent<SpawnerInteractio
 	public bool TriggerOnApproach;
 
 	[JsonProperty]
-	[ConditionalShow("TriggerOnApproach")]
+	[ShowIf("TriggerOnApproach")]
 	public bool TriggerOnParty = true;
 
 	[JsonProperty]
-	[ConditionalShow("TriggerOnApproach")]
+	[ShowIf("TriggerOnApproach")]
 	public float Cooldown = 5f;
 
 	[JsonConstructor]

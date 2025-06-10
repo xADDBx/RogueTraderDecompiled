@@ -45,7 +45,7 @@ public class UnmarkAnswersSelected : GameAction
 	{
 		foreach (BlueprintAnswer answer in Answers)
 		{
-			Game.Instance.Player.Dialog.SelectedAnswers.Remove(answer);
+			Game.Instance.Player.Dialog.SelectedAnswersRemove(answer);
 		}
 	}
 }

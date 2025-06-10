@@ -21,7 +21,10 @@ public class PartFadeOutAndDestroy : EntityPart, IGameTimeChangedHandler, ISubsc
 
 	public void Setup(float destroyDelay)
 	{
-		base.ConcreteOwner.WillBeDestroyed = true;
+		if (base.ConcreteOwner != null)
+		{
+			base.ConcreteOwner.WillBeDestroyed = true;
+		}
 		DestroyTime = Game.Instance.TimeController.GameTime + destroyDelay.Seconds();
 		EventBus.RaiseEvent(base.Owner, delegate(IFadeOutAndDestroyHandler h)
 		{

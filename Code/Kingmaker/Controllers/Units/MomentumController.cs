@@ -17,6 +17,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
@@ -95,23 +96,27 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 	void IUnitWoundHandler.HandleWoundReceived()
 	{
 		BaseUnitEntity baseUnitEntity = EventInvokerExtensions.BaseUnitEntity;
-		if (baseUnitEntity is UnitEntity && baseUnitEntity.IsInCombat)
+		if (baseUnitEntity is UnitEntity && baseUnitEntity.IsInCombat && !baseUnitEntity.HasMechanicFeature(MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum))
 		{
 			Rulebook.Trigger(RulePerformMomentumChange.CreateWound(baseUnitEntity));
 		}
 	}
 
-	public void HandleWoundAvoided()
+	void IUnitWoundHandler.HandleWoundAvoided()
 	{
 	}
 
 	void IUnitTraumaHandler.HandleTraumaReceived()
 	{
 		BaseUnitEntity baseUnitEntity = EventInvokerExtensions.BaseUnitEntity;
-		if (baseUnitEntity is UnitEntity && baseUnitEntity.IsInCombat)
+		if (baseUnitEntity is UnitEntity && baseUnitEntity.IsInCombat && !baseUnitEntity.HasMechanicFeature(MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum))
 		{
 			Rulebook.Trigger(RulePerformMomentumChange.CreateTrauma(baseUnitEntity));
 		}
+	}
+
+	void IUnitTraumaHandler.HandleTraumaAvoided()
+	{
 	}
 
 	public void HandleUnitLifeStateChanged(UnitLifeState prevLifeState)
@@ -185,13 +190,17 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 		{
 			return;
 		}
-		if (!unit.LifeState.IsConscious && !(unit is StarshipEntity))
+		if (!unit.LifeState.IsConscious && !(unit is StarshipEntity) && !unit.HasMechanicFeature(MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum))
 		{
 			Rulebook.Trigger(RulePerformMomentumChange.CreateBecameDeadOrUnconscious(unit));
 		}
 		momentumGroup.Units.Remove(unit);
 		BlueprintMomentumRoot root = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
 		MechanicEntity mechanicEntity = unit.GetHealthOptional()?.LastHandledDamage?.ConcreteInitiator;
+		if (mechanicEntity is BaseUnitEntity { Master: not null } baseUnitEntity)
+		{
+			mechanicEntity = baseUnitEntity.Master;
+		}
 		if (mechanicEntity == null || unit.LifeState.IsConscious || unit is StarshipEntity)
 		{
 			return;

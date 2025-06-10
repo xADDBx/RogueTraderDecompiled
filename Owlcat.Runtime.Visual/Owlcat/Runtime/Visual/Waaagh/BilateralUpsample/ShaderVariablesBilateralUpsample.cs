@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh.BilateralUpsample;
 
-[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.230\\Runtime\\Waaagh\\BilateralUpsample\\BilateralUpsampleConstants.cs", needAccessors = false, generateCBuffer = true)]
+[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.232\\Runtime\\Waaagh\\BilateralUpsample\\BilateralUpsampleConstants.cs", needAccessors = false, generateCBuffer = true)]
 internal struct ShaderVariablesBilateralUpsample
 {
 	public Vector4 _HalfScreenSize;

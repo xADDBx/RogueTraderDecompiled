@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Designers.Mechanics.Buffs;
+using Kingmaker.EntitySystem;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View.Animation;
@@ -106,6 +108,7 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 		{
 			handle.IsSkipped = true;
 			handle.Release();
+			RestoreLoopAnimation(handle);
 			return;
 		}
 		AnimationEntry animationEntry = animationStyleEntry.Overrides.SingleOrDefault((AnimationEntryWeaponOverride e) => e.Weapon == wpnStyle)?.Entry ?? animationStyleEntry.Default;
@@ -124,6 +127,13 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 		float speed = CastSpeedup * animationEntry.CastSpeedup;
 		handle.ActiveAnimation.SetSpeed(speed);
 		handle.IsPrecastFinished = true;
+		handle.SkipFirstTick = false;
+		handle.SkipFirstTickOnHandle = false;
+		handle.CorrectTransitionOutTime = true;
+		if (handle.Manager.BuffLoopAction != null)
+		{
+			handle.HasCrossfadePriority = true;
+		}
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
@@ -131,7 +141,16 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 		if (handle.SpecialCastBehaviour != SpecialBehaviourType.NoCast && handle.IsPrecastFinished)
 		{
 			base.OnTransitionOutStarted(handle);
+			RestoreLoopAnimation(handle);
 		}
+	}
+
+	private static void RestoreLoopAnimation(UnitAnimationActionHandle handle)
+	{
+		handle.Unit.Data.Facts.GetAll((EntityFact ef) => ef.GetComponent<PlayLoopAnimationByBuff>() != null).FirstOrDefault()?.CallComponents(delegate(PlayLoopAnimationByBuff playLoop)
+		{
+			playLoop.TrySetAction(skipEnter: true);
+		});
 	}
 
 	public override void OnUpdate(UnitAnimationActionHandle handle, float deltaTime)

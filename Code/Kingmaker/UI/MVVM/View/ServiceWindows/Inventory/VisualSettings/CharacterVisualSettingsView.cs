@@ -51,10 +51,13 @@ public class CharacterVisualSettingsView<TBoolEntity> : ViewBase<CharacterVisual
 		m_Header.text = UIStrings.Instance.CharacterSheet.VisualSettingsTitle;
 		m_FadeAnimator.AppearAnimation();
 		m_OutfitMainColorSelectorView.Bind(base.ViewModel.OutfitMainColorSelector);
-		m_ClothEntityView.Or(null)?.Bind(base.ViewModel.Cloth);
-		m_HelmetEntityView.Or(null)?.Bind(base.ViewModel.Helmet);
-		m_BackpackEntityView.Or(null)?.Bind(base.ViewModel.Backpack);
-		m_HelmetAboveAllEntityView.Or(null)?.Bind(base.ViewModel.HelmetAboveAll);
+		if (!base.ViewModel.IsPet)
+		{
+			m_ClothEntityView.Or(null)?.Bind(base.ViewModel.Cloth);
+			m_HelmetEntityView.Or(null)?.Bind(base.ViewModel.Helmet);
+			m_BackpackEntityView.Or(null)?.Bind(base.ViewModel.Backpack);
+			m_HelmetAboveAllEntityView.Or(null)?.Bind(base.ViewModel.HelmetAboveAll);
+		}
 	}
 
 	protected override void DestroyViewImplementation()

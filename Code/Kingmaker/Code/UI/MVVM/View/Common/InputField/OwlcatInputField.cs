@@ -34,8 +34,6 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 
 	private string m_TittleText;
 
-	private string m_InputText;
-
 	private string m_PlaceholderText;
 
 	private uint m_MaxTextLength = 128u;
@@ -51,8 +49,6 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 	public static readonly string InputLayerContextName = "InputField";
 
 	private Locale m_KeyboardLanguage;
-
-	private Action<string> m_OnEndEdit;
 
 	private bool m_IsEditing;
 
@@ -98,15 +94,8 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 		}
 		set
 		{
-			m_InputText = value;
 			m_InputField.text = value ?? "";
 		}
-	}
-
-	public void Bind(string defaultText, Action<string> onEndEditAction)
-	{
-		m_OnEndEdit = onEndEditAction;
-		Text = defaultText;
 	}
 
 	private void OnEnable()
@@ -196,7 +185,7 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 		m_Disposables.Add(GamePad.Instance.PushLayer(m_InputLayer));
 		m_Button.SetActiveLayer("On");
 		m_InputField.OnSelect(null);
-		VirtualKeyboard.OpenKeyboard(OnKeyboardEditSucceeded, OnKeyboardEditDeclined, m_TittleText, m_InputText, m_PlaceholderText, m_KeyboardLanguage, m_MaxTextLength);
+		VirtualKeyboard.OpenKeyboard(OnKeyboardEditSucceeded, OnKeyboardEditDeclined, m_TittleText, Text, m_PlaceholderText, m_KeyboardLanguage, m_MaxTextLength);
 	}
 
 	public void OnScroll(PointerEventData eventData)
@@ -233,13 +222,11 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 	{
 		Abort();
 		Text = text;
-		m_OnEndEdit?.Invoke(text);
 	}
 
 	private void OnKeyboardEditDeclined()
 	{
 		Abort();
-		m_OnEndEdit?.Invoke(m_InputText);
 	}
 
 	public bool CanConfirmClick()

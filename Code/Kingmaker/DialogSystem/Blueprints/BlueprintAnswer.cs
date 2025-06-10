@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
@@ -16,6 +17,7 @@ using Kingmaker.Globalmap.Colonization;
 using Kingmaker.Globalmap.Colonization.Requirements;
 using Kingmaker.Globalmap.Colonization.Rewards;
 using Kingmaker.Localization;
+using Kingmaker.Localization.Shared;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Alignments;
@@ -29,6 +31,7 @@ namespace Kingmaker.DialogSystem.Blueprints;
 [TypeId("df78945bb9f434e40b897758499cb714")]
 public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILocalizedStringHolder
 {
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.ByProperty)]
 	public LocalizedString Text;
 
 	public CueSelection NextCue;
@@ -229,7 +232,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 					return false;
 				}
 			}
-			else if (dialog.SelectedAnswers.Contains(this))
+			else if (dialog.SelectedAnswersContains(this))
 			{
 				DialogDebug.Add(this, "(show once) was selected before (global)", Color.red);
 				return false;
@@ -237,9 +240,9 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 		}
 		if (HasShowCheck)
 		{
-			if (dialog.AnswerChecks.TryGetValue(this, out var value))
+			if (dialog.AnswerChecksTryGetValue(this, out var res))
 			{
-				if (value == CheckResult.Failed)
+				if (res == CheckResult.Failed)
 				{
 					DialogDebug.Add(this, "check failed (before)", Color.red);
 					return false;
@@ -248,7 +251,7 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 			else
 			{
 				RulePerformPartySkillCheck rulePerformPartySkillCheck = Rulebook.Trigger(new RulePerformPartySkillCheck(ShowCheck.Type, ShowCheck.GetDC(), CapitalPartyChecksEnabled));
-				dialog.AnswerChecks[this] = ((!rulePerformPartySkillCheck.Success) ? CheckResult.Failed : CheckResult.Passed);
+				dialog.AnswerChecksAdd(this, (!rulePerformPartySkillCheck.Success) ? CheckResult.Failed : CheckResult.Passed);
 				if (rulePerformPartySkillCheck.Success)
 				{
 					OnCheckSuccess?.Run();
@@ -268,6 +271,12 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 		{
 			DialogDebug.Add(this, "no valid cue following", Color.red);
 			return false;
+		}
+		ForcedConditionsState forcedCondition = DialogDebugRoot.Instance.GetForcedCondition(this);
+		if (forcedCondition != 0)
+		{
+			DialogDebug.Add(this, $"condtions forced to {forcedCondition == ForcedConditionsState.ForceTrue}", Color.magenta);
+			return forcedCondition == ForcedConditionsState.ForceTrue;
 		}
 		if (!ShowConditions.Check(this))
 		{

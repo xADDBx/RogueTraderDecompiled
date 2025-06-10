@@ -26,7 +26,6 @@ using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
-using Kingmaker.View.MapObjects.Traps.Simple;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
 using UniRx;
@@ -65,8 +64,6 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 	private readonly bool m_IsInSpace;
 
 	private bool m_IsLoot;
-
-	private bool m_IsNotInCombat;
 
 	public readonly ReactiveProperty<int?> HasResourceCount = new ReactiveProperty<int?>();
 
@@ -307,115 +304,120 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 		{
 			return;
 		}
-		OvertipVerticalCorrection = m_Interactions.FirstOrDefault()?.Settings.OvertipVerticalCorrection ?? 0f;
-		bool value = false;
-		InteractionSkillCheckPart skillCheck = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionSkillCheckPart).FirstOrDefault();
-		if (skillCheck != null && skillCheck.Enabled)
+		InteractionPart interactionPart = m_Interactions.FirstOrDefault();
+		if (interactionPart == null)
 		{
-			value = true;
-			m_IsNotInCombat = skillCheck.Settings.NotInCombat;
-			InteractionSkillCheckSettings settings = skillCheck.Settings;
-			if (skillCheck.AlreadyUsed && settings.OnlyCheckOnce)
+			OvertipVerticalCorrection = 0f;
+			return;
+		}
+		OvertipVerticalCorrection = interactionPart.Settings.OvertipVerticalCorrection;
+		bool flag = interactionPart.Enabled;
+		if (flag)
+		{
+			InteractionSkillCheckPart interactionSkillCheckPart = interactionPart as InteractionSkillCheckPart;
+			if (interactionSkillCheckPart == null)
 			{
-				ObjectDescription.Value = (skillCheck.CheckPassed ? GetString(settings.ShortDescriptionPassed, string.Empty) : GetString(settings.ShortDescriptionFailed, string.Empty));
-				ObjectSkillCheckText.Value = string.Empty;
-				Name.Value = GetString(settings.DisplayNameAfterUse, string.Empty);
+				DisableTrapInteractionPart disableTrapInteractionPart = interactionPart as DisableTrapInteractionPart;
+				if (disableTrapInteractionPart == null)
+				{
+					if (!(interactionPart is InteractionDoorPart interactionDoorPart))
+					{
+						if (!(interactionPart is InteractionLootPart interactionLootPart))
+						{
+							if (!(interactionPart is InteractionStairsPart))
+							{
+								if (!(interactionPart is InteractionTwitchDropsPart))
+								{
+									if (interactionPart is InteractionActionPart interactionActionPart)
+									{
+										Name.Value = GetString(interactionActionPart.Settings.DisplayName, string.Empty);
+									}
+								}
+								else
+								{
+									IsTwitchDrops = true;
+									Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Trap;
+								}
+							}
+							else
+							{
+								Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Ladder;
+								flag = Game.Instance.IsControllerGamepad;
+							}
+						}
+						else
+						{
+							m_IsLoot = true;
+							Name.Value = ((!StringUtility.IsNullOrInvisible(interactionLootPart.GetName())) ? interactionLootPart.GetName() : UIStrings.Instance.LootWindow.GetLootName(interactionLootPart.Settings.LootContainerType));
+						}
+					}
+					else
+					{
+						Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Door;
+						ObjectDescription.Value = (interactionDoorPart.GetState() ? Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.DoorClose : Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.DoorOpen);
+						ObjectSkillCheckText.Value = string.Empty;
+					}
+				}
+				else
+				{
+					Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Trap;
+					if (disableTrapInteractionPart.Owner.TrapActive)
+					{
+						ObjectDescription.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.TrapNeutralize;
+						ObjectSkillCheckText.Value = UIUtility.GetTrapSkillCheckText(disableTrapInteractionPart, Game.Instance.SelectionCharacter.SelectedUnits.ToList());
+						m_SelectedUnitsSubscription = UniRxExtensionMethods.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate
+						{
+							ObjectSkillCheckText.Value = UIUtility.GetTrapSkillCheckText(disableTrapInteractionPart, Game.Instance.SelectionCharacter.SelectedUnits.ToList());
+						});
+					}
+					else
+					{
+						ObjectDescription.Value = string.Empty;
+						ObjectSkillCheckText.Value = string.Empty;
+					}
+				}
 			}
 			else
 			{
-				Name.Value = GetString(settings.DisplayName, string.Empty);
-				ObjectDescription.Value = GetString(settings.ShortDescription, string.Empty);
-				ObjectSkillCheckText.Value = UIUtility.GetOvertipSkillCheckText(skillCheck, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), out var needChance);
-				if (needChance)
+				InteractionSkillCheckSettings settings = interactionSkillCheckPart.Settings;
+				if (interactionSkillCheckPart.AlreadyUsed && settings.OnlyCheckOnce)
 				{
-					m_SelectedUnitsSubscription = UniRxExtensionMethods.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate
-					{
-						ObjectSkillCheckText.Value = UIUtility.GetOvertipSkillCheckText(skillCheck, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), out needChance);
-					});
+					ObjectDescription.Value = (interactionSkillCheckPart.CheckPassed ? GetString(settings.ShortDescriptionPassed, string.Empty) : GetString(settings.ShortDescriptionFailed, string.Empty));
+					ObjectSkillCheckText.Value = string.Empty;
+					Name.Value = GetString(settings.DisplayNameAfterUse, string.Empty);
 				}
-			}
-			IInteractionVariantActor interactionVariantActor = MapObjectEntity.GetAll<IInteractionVariantActor>().FirstOrDefault();
-			if (interactionVariantActor != null)
-			{
-				BlueprintItem item = interactionVariantActor.RequiredItem;
-				if (item != null)
+				else
 				{
-					RequiredResourceCount = interactionVariantActor.RequiredItemsCount;
-					UpdateResourceCount(item);
-					AddDisposable(ObservableExtensions.Subscribe(InventoryChanged, delegate
+					Name.Value = GetString(settings.DisplayName, string.Empty);
+					ObjectDescription.Value = GetString(settings.ShortDescription, string.Empty);
+					ObjectSkillCheckText.Value = UIUtility.GetOvertipSkillCheckText(interactionSkillCheckPart, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), out var needChance);
+					if (needChance)
 					{
+						m_SelectedUnitsSubscription = UniRxExtensionMethods.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate
+						{
+							ObjectSkillCheckText.Value = UIUtility.GetOvertipSkillCheckText(interactionSkillCheckPart, Game.Instance.SelectionCharacter.SelectedUnits.ToList(), out needChance);
+						});
+					}
+				}
+				IInteractionVariantActor interactionVariantActor = MapObjectEntity.GetAll<IInteractionVariantActor>().FirstOrDefault();
+				if (interactionVariantActor != null)
+				{
+					BlueprintItem item = interactionVariantActor.RequiredItem;
+					if (item != null)
+					{
+						RequiredResourceCount = interactionVariantActor.RequiredItemsCount;
 						UpdateResourceCount(item);
-					}));
-					ResourceName = GetItemName(item);
+						AddDisposable(ObservableExtensions.Subscribe(InventoryChanged, delegate
+						{
+							UpdateResourceCount(item);
+						}));
+						ResourceName = GetItemName(item);
+					}
 				}
 			}
-		}
-		DisableTrapInteractionPart trap = m_Interactions.Select((InteractionPart interaction) => interaction as DisableTrapInteractionPart).FirstOrDefault();
-		if (trap != null && trap.Enabled)
-		{
-			value = true;
-			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Trap;
-			if (trap.Owner.TrapActive)
-			{
-				ObjectDescription.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.TrapNeutralize;
-				Entry entry = BlueprintRoot.Instance.LocalizedTexts.Stats.Entries.FirstOrDefault((Entry k) => k.Stat == (trap.View as SimpleTrapObjectView)?.Info.DisarmSkill);
-				if (entry != null)
-				{
-					ObjectSkillCheckText.Value = "[" + entry.Text.Text + "]";
-				}
-			}
-			else
-			{
-				ObjectDescription.Value = string.Empty;
-				ObjectSkillCheckText.Value = string.Empty;
-			}
-		}
-		InteractionDoorPart interactionDoorPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionDoorPart).FirstOrDefault();
-		if (interactionDoorPart != null && interactionDoorPart.Enabled)
-		{
-			value = true;
-			m_IsNotInCombat = interactionDoorPart.Settings.NotInCombat;
-			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Door;
-			ObjectDescription.Value = (interactionDoorPart.GetState() ? Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.DoorClose : Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.DoorOpen);
-			ObjectSkillCheckText.Value = string.Empty;
-		}
-		InteractionLootPart interactionLootPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionLootPart).FirstOrDefault();
-		if (interactionLootPart != null && interactionLootPart.Enabled)
-		{
-			value = true;
-			m_IsNotInCombat = interactionLootPart.Settings.NotInCombat;
-			m_IsLoot = true;
-			Name.Value = ((!StringUtility.IsNullOrInvisible(interactionLootPart.GetName())) ? interactionLootPart.GetName() : UIStrings.Instance.LootWindow.GetLootName(interactionLootPart.Settings.LootContainerType));
-		}
-		InteractionBarkPart interactionBarkPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionBarkPart).FirstOrDefault();
-		if (interactionBarkPart != null && interactionBarkPart.Enabled)
-		{
-			m_IsNotInCombat = interactionBarkPart.Settings.NotInCombat;
-			value = true;
-		}
-		InteractionDialogPart interactionDialogPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionDialogPart).FirstOrDefault();
-		if (interactionDialogPart != null && interactionDialogPart.Enabled)
-		{
-			m_IsNotInCombat = interactionDialogPart.Settings.NotInCombat;
-			value = true;
-		}
-		InteractionStairsPart interactionStairsPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionStairsPart).FirstOrDefault();
-		if (interactionStairsPart != null && interactionStairsPart.Enabled)
-		{
-			m_IsNotInCombat = interactionStairsPart.Settings.NotInCombat;
-			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Ladder;
-			value = Game.Instance.IsControllerGamepad;
-		}
-		InteractionTwitchDropsPart interactionTwitchDropsPart = m_Interactions.Select((InteractionPart interaction) => interaction as InteractionTwitchDropsPart).FirstOrDefault();
-		if (interactionTwitchDropsPart != null && interactionTwitchDropsPart.Enabled)
-		{
-			m_IsNotInCombat = interactionTwitchDropsPart.Settings.NotInCombat;
-			IsTwitchDrops = true;
-			Name.Value = Game.Instance.BlueprintRoot.LocalizedTexts.UserInterfacesText.Tooltips.Trap;
-			value = true;
 		}
 		UpdateCanInteract();
-		IsEnabled.Value = value;
+		IsEnabled.Value = flag;
 		void UpdateResourceCount(BlueprintItem blueprintItem)
 		{
 			HasResourceCount.Value = Game.Instance.Player.Inventory.Items.Where((ItemEntity i) => i.Blueprint == blueprintItem).Sum((ItemEntity i) => i.Count);

@@ -81,7 +81,20 @@ public static class UIUtilityTexts
 
 	public static int GetSkillCheckChance(SkillCheckDC skillCheckDC)
 	{
+		if (skillCheckDC == null)
+		{
+			return 0;
+		}
 		return Mathf.Clamp(skillCheckDC.ConditionDC + skillCheckDC.ValueDC, 0, 100);
+	}
+
+	public static int GetSkillCheckChance(SkillCheckResult skillCheckDC)
+	{
+		if (skillCheckDC == null)
+		{
+			return 0;
+		}
+		return Mathf.Clamp(skillCheckDC.TotalSkill, 0, 100);
 	}
 
 	public static string GetSkillCheckThrow(SkillCheckResult result)
@@ -206,11 +219,6 @@ public static class UIUtilityTexts
 				OverrideWeapon = overrideWeapon
 			});
 		}
-	}
-
-	public static string GetAbilityTarget(Ability ability)
-	{
-		return GetAbilityTarget(ability.Data);
 	}
 
 	public static string GetAbilityTarget(AbilityData abilitydata)
@@ -339,6 +347,15 @@ public static class UIUtilityTexts
 		return localizedString;
 	}
 
+	public static string GetBlueprintUnitFactNameText(BlueprintUnitFact blueprintUnitFact)
+	{
+		if (blueprintUnitFact == null)
+		{
+			return string.Empty;
+		}
+		return blueprintUnitFact.Name;
+	}
+
 	public static void TryAddWordSeparator(StringBuilder description, string conjunction)
 	{
 		if (description.Length > 0)
@@ -405,7 +422,7 @@ public static class UIUtilityTexts
 			{
 				while (num < description.Length)
 				{
-					int num2 = description.IndexOf("{uip|", num);
+					int num2 = description.IndexOf("{" + EntityLink.GetTag(EntityLink.Type.UIProperty) + "|", num);
 					if (num2 == -1)
 					{
 						text += description.Substring(num);
@@ -443,7 +460,7 @@ public static class UIUtilityTexts
 							string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
 							if (num5.HasValue)
 							{
-								link = $"<b><color={glossaryMechanicsHTML}><link=\"uip:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>";
+								link = $"<b><color={glossaryMechanicsHTML}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>";
 							}
 						}
 						else
@@ -495,6 +512,22 @@ public static class UIUtilityTexts
 		{
 			if (item.Owner == null)
 			{
+				if (currentSelectedUnit.IsPet)
+				{
+					if (item.Blueprint is BlueprintItemEquipmentPetProtocol && !item.CanBeEquippedBy(currentSelectedUnit))
+					{
+						return (UITooltips.PetCanNotEquip, ItemHeaderType.CanNotEquip);
+					}
+					if (item.Blueprint is BlueprintItemEquipmentPetProtocol && item.CanBeEquippedBy(currentSelectedUnit))
+					{
+						return (UITooltips.CanBeEquip, ItemHeaderType.Header);
+					}
+					return (UITooltips.PetCanNotEquip, ItemHeaderType.CanNotEquip);
+				}
+				if (item.Blueprint is BlueprintItemEquipmentPetProtocol)
+				{
+					return (UITooltips.OnlyPetCanEquip, ItemHeaderType.Header);
+				}
 				if (item.CanBeEquippedBy(currentSelectedUnit))
 				{
 					return (UITooltips.CanBeEquip, ItemHeaderType.Header);

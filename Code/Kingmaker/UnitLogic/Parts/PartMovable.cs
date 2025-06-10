@@ -52,7 +52,7 @@ public class PartMovable : EntityPart, IHashable
 	[JsonProperty]
 	public TimeSpan LastMoveTime { get; set; }
 
-	private StatsContainer StatsContainer => base.ConcreteOwner.GetRequired<PartStatsContainer>().Container;
+	private StatsContainer StatsContainer => base.ConcreteOwner?.GetRequired<PartStatsContainer>().Container;
 
 	public ModifiableValueSpeed Speed => StatsContainer.GetStat<ModifiableValueSpeed>(StatType.Speed);
 
@@ -68,9 +68,9 @@ public class PartMovable : EntityPart, IHashable
 			{
 				return Speed.Mps;
 			}
-			bool num = base.ConcreteOwner.GetOptional<PartFaction>()?.IsPlayer ?? false;
-			bool flag = base.ConcreteOwner.GetOptional<PartUnitCombatState>()?.IsInCombat ?? false;
-			if (num && !flag)
+			bool valueOrDefault = (base.ConcreteOwner?.GetOptional<PartFaction>()?.IsPlayer).GetValueOrDefault();
+			bool valueOrDefault2 = (base.ConcreteOwner?.GetOptional<PartUnitCombatState>()?.IsInCombat).GetValueOrDefault();
+			if (valueOrDefault && !valueOrDefault2)
 			{
 				return Mathf.Max(NonCombatBaseSpeedMps, Speed.Mps);
 			}
@@ -127,7 +127,7 @@ public class PartMovable : EntityPart, IHashable
 
 	private float CalculateCurrentSpeed()
 	{
-		AbstractUnitCommand abstractUnitCommand = base.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current;
+		AbstractUnitCommand abstractUnitCommand = (base.ConcreteOwner?.GetOptional<PartUnitCommands>())?.Current;
 		if (abstractUnitCommand != null && abstractUnitCommand.OverrideSpeed.HasValue)
 		{
 			return abstractUnitCommand.OverrideSpeed.Value * SlowMoSpeedMod;
@@ -181,8 +181,7 @@ public class PartMovable : EntityPart, IHashable
 		{
 			return 1f;
 		}
-		PartUnitState optional = base.ConcreteOwner.GetOptional<PartUnitState>();
-		if (optional != null && optional.HasCondition(UnitCondition.Entangled))
+		if ((base.ConcreteOwner?.GetOptional<PartUnitState>()?.HasCondition(UnitCondition.Entangled)).GetValueOrDefault())
 		{
 			num *= 0.5f;
 		}

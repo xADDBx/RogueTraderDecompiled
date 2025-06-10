@@ -4,6 +4,7 @@ using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
 using Kingmaker.QA;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics;
 
 namespace Kingmaker.EntitySystem.Properties;
@@ -44,7 +45,16 @@ public static class PropertyCalculatorComponentHelper
 
 	private static int CalculatePropertyValue(ContextPropertyName propertyName, MechanicEntity currentEntity, MechanicsContext context, out bool calculated, PropertyCalculatorComponent property, BlueprintComponent component)
 	{
-		PropertyContext context2 = ((ContextData<PropertyContextData>.Current == null) ? new PropertyContext(currentEntity, null, null, context) : ContextData<PropertyContextData>.Current.Context.WithCurrentEntity(currentEntity).WithContext(context));
+		PropertyContext context2;
+		if (ContextData<PropertyContextData>.Current != null)
+		{
+			context2 = ContextData<PropertyContextData>.Current.Context.WithCurrentEntity(currentEntity).WithContext(context);
+		}
+		else
+		{
+			AbilityData ability = (context as AbilityExecutionContext)?.Ability;
+			context2 = new PropertyContext(currentEntity, null, null, context, null, ability);
+		}
 		int value = property.GetValue(context2);
 		calculated = true;
 		return value;

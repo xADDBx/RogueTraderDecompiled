@@ -28,12 +28,32 @@ public class SavingThrowBonusAgainstAbilityType : UnitFactComponentDelegate, IIn
 
 	public bool OnlyPositiveValue;
 
+	[Tooltip("Всегда успех")]
+	public bool AlwaysSucceed;
+
+	[Tooltip("Всегда провал")]
+	public bool AlwaysFail;
+
 	public void OnEventAboutToTrigger(RulePerformSavingThrow evt)
 	{
-		int num = Bonus.Calculate(base.Context) + Value * base.Fact.GetRank();
-		if (evt.Reason.Context != null && evt.Reason.Ability != null && evt.Reason.Ability.Blueprint.Type == AbilityType && (!OnlyPositiveValue || num > Value))
+		if (evt.Reason.Context == null || !(evt.Reason.Ability != null) || evt.Reason.Ability.Blueprint.Type != AbilityType)
 		{
-			evt.ValueModifiers.Add(num, base.Fact, ModifierDescriptor);
+			return;
+		}
+		if (AlwaysSucceed)
+		{
+			evt.SetAlwaysSucceed(base.Fact, ModifierDescriptor);
+			return;
+		}
+		if (AlwaysFail)
+		{
+			evt.SetAlwaysFail(base.Fact, ModifierDescriptor);
+			return;
+		}
+		int num = Bonus.Calculate(base.Context) + Value * base.Fact.GetRank();
+		if (!OnlyPositiveValue || num > Value)
+		{
+			evt.AddValueModifiers(num, base.Fact, ModifierDescriptor);
 		}
 	}
 

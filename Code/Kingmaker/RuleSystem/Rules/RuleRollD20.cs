@@ -12,7 +12,7 @@ public class RuleRollD20 : RuleRollDice
 	public RuleRollD20(IMechanicEntity initiator, int resultOverride)
 		: base(initiator, new DiceFormula(1, DiceType.D20))
 	{
-		ResultOverride = resultOverride;
+		base.ResultOverride = resultOverride;
 	}
 
 	public static RuleRollD20 FromInt(IMechanicEntity initiator, int roll)

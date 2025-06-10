@@ -23,6 +23,10 @@ public class CharGenCustomPortraitCreatorVM : BaseDisposable, IViewModel, IBaseD
 		m_OnClose = onClose;
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void OnOpenFolderClick()
 	{
 		m_OnOpenFolder?.Invoke();
@@ -36,9 +40,5 @@ public class CharGenCustomPortraitCreatorVM : BaseDisposable, IViewModel, IBaseD
 	public void OnClose()
 	{
 		m_OnClose?.Invoke();
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 }

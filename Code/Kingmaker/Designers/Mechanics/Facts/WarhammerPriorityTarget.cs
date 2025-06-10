@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Parts;
@@ -15,12 +16,20 @@ public class WarhammerPriorityTarget : UnitBuffComponentDelegate, IHashable
 {
 	protected override void OnActivate()
 	{
-		(base.Context?.MaybeCaster)?.GetOrCreate<UnitPartPriorityTarget>().AddTarget(base.Buff);
+		MechanicEntity mechanicEntity = base.Context?.MaybeCaster;
+		if (mechanicEntity != null && !mechanicEntity.IsPreview && !base.Owner.IsPreview)
+		{
+			mechanicEntity.GetOrCreate<UnitPartPriorityTarget>().AddTarget(base.Buff);
+		}
 	}
 
 	protected override void OnDeactivate()
 	{
-		(base.Context?.MaybeCaster)?.GetOptional<UnitPartPriorityTarget>()?.RemoveTarget(base.Buff);
+		MechanicEntity mechanicEntity = base.Context?.MaybeCaster;
+		if (mechanicEntity != null && !mechanicEntity.IsPreview && !base.Owner.IsPreview)
+		{
+			mechanicEntity.GetOptional<UnitPartPriorityTarget>()?.RemoveTarget(base.Buff);
+		}
 	}
 
 	public override Hash128 GetHash128()

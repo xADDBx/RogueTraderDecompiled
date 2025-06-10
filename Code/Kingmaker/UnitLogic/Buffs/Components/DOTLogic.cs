@@ -17,9 +17,12 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.FlagCountable;
 using Newtonsoft.Json;
 using StateHasher.Core;
+using StateHasher.Core.Hashers;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.UnitLogic.Buffs.Components;
 
@@ -95,7 +98,7 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 		}
 	}
 
-	private class PartDOTDirector : MechanicEntityPart, IHashable
+	public class PartDOTDirector : MechanicEntityPart, IHashable
 	{
 		private readonly struct Entry
 		{
@@ -123,6 +126,9 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 				return Buff.RequestSavableData<Data>(Logic);
 			}
 		}
+
+		[JsonProperty]
+		public CountableFlag m_SkipEffect = new CountableFlag();
 
 		private readonly Dictionary<DOT, List<Entry>> m_DOTs = new Dictionary<DOT, List<Entry>>();
 
@@ -161,6 +167,61 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			}
 		}
 
+		public void WeakenDotsOfType(DOT dotType, int weakeningValue)
+		{
+			if (weakeningValue < 1)
+			{
+				return;
+			}
+			List<Entry> list = m_DOTs.Get(dotType);
+			if (list == null)
+			{
+				return;
+			}
+			foreach (Entry item in list)
+			{
+				Data data = item.GetData();
+				data.Damage -= weakeningValue;
+				if (data.Damage < 1)
+				{
+					item.Buff.MarkExpired();
+				}
+			}
+			UpdateList(list);
+		}
+
+		public void IntensifyDotsOfType(DOT dotType, int intensifyingValue)
+		{
+			if (intensifyingValue < 1)
+			{
+				return;
+			}
+			List<Entry> list = m_DOTs.Get(dotType);
+			if (list == null)
+			{
+				return;
+			}
+			foreach (Entry item in list)
+			{
+				item.GetData().Damage += intensifyingValue;
+			}
+			UpdateList(list);
+		}
+
+		public void RetainSkipEffect(EntityFact source)
+		{
+			m_SkipEffect.Retain();
+		}
+
+		public void ReleaseSkipEffect(EntityFact source)
+		{
+			m_SkipEffect.Release();
+			if (m_DOTs.Empty())
+			{
+				RemoveSelf();
+			}
+		}
+
 		public void OnNewRound(Buff buff, DOTLogic logic, bool onlyDamage = false, MechanicEntity targetOverride = null)
 		{
 			if (buff == null)
@@ -180,7 +241,7 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			}
 			int damage = entry.Damage;
 			int penetration = entry.Penetration;
-			if (damage > 0)
+			if (!m_SkipEffect && damage > 0)
 			{
 				MechanicEntity mechanicEntity2 = buff.Context.MaybeCaster ?? mechanicEntity;
 				DamageData baseDamageOverride = logic.DamageType.CreateDamage(damage);
@@ -285,6 +346,10 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 
 		public bool TryDealDamageByDOTImmediately(DOT type, MechanicEntity target)
 		{
+			if ((bool)m_SkipEffect)
+			{
+				return false;
+			}
 			if (!TryCreateDamageDataOfType(type, out var damageData, out var dotEntry))
 			{
 				return false;
@@ -310,48 +375,60 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 		{
 			damageData = null;
 			dotEntry = default(Entry);
+			if ((bool)m_SkipEffect)
+			{
+				return false;
+			}
 			List<Entry> list = m_DOTs.Get(type);
 			if (list.Empty())
 			{
 				return false;
 			}
 			int index = -1;
-			for (int i = 0; i < list.Count; i++)
+			Dictionary<(int, int), DamageData> value;
+			using (CollectionPool<Dictionary<(int, int), DamageData>, KeyValuePair<(int, int), DamageData>>.Get(out value))
 			{
-				if (TryCreateDamageDataForEntry(list[i], out var data) && (damageData == null || data.AverageValue > (damageData?.AverageValue ?? 0)))
+				for (int i = 0; i < list.Count; i++)
 				{
-					damageData = data;
-					index = i;
+					Entry dotEffect = list[i];
+					(int, int) key = (dotEffect.Damage, dotEffect.Penetration);
+					if (!value.TryGetValue(key, out var value2))
+					{
+						value2 = CreateDamageDataForEntry(dotEffect);
+						value.Add(key, value2);
+					}
+					if (value2 != null && (damageData == null || value2.AverageValue > (damageData?.AverageValue ?? 0)))
+					{
+						damageData = value2;
+						index = i;
+					}
 				}
+				if (damageData == null)
+				{
+					return false;
+				}
+				dotEntry = list[index];
+				return true;
 			}
-			if (damageData == null)
-			{
-				return false;
-			}
-			dotEntry = list[index];
-			return true;
 		}
 
-		private bool TryCreateDamageDataForEntry(Entry dotEffect, out DamageData data)
+		private DamageData CreateDamageDataForEntry(Entry dotEffect)
 		{
-			data = null;
 			if (dotEffect.Buff == null || dotEffect.Logic == null)
 			{
-				return false;
+				return null;
 			}
 			int damage = dotEffect.Damage;
 			int penetration = dotEffect.Penetration;
 			if (damage <= 0)
 			{
-				return false;
+				return null;
 			}
 			MechanicEntity mechanicEntity = dotEffect.Buff.Context.MaybeCaster ?? base.Owner;
 			DamageData baseDamageOverride = dotEffect.Logic.DamageType.CreateDamage(damage);
 			CalculateDamageParams calculateDamageParams = new CalculateDamageParams(mechanicEntity, base.Owner, dotEffect.Buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity.DistanceToInCells(base.Owner));
 			calculateDamageParams.Reason = dotEffect.Buff;
-			RuleCalculateDamage ruleCalculateDamage = calculateDamageParams.Trigger();
-			data = ruleCalculateDamage.ResultDamage;
-			return true;
+			return calculateDamageParams.Trigger().ResultDamage;
 		}
 
 		public override Hash128 GetHash128()
@@ -359,6 +436,8 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			Hash128 result = default(Hash128);
 			Hash128 val = base.GetHash128();
 			result.Append(ref val);
+			Hash128 val2 = ClassHasher<CountableFlag>.GetHash128(m_SkipEffect);
+			result.Append(ref val2);
 			return result;
 		}
 	}

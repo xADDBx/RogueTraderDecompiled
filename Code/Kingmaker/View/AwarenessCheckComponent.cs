@@ -14,7 +14,7 @@ public class AwarenessCheckComponent : MonoBehaviour
 	[SerializeField]
 	private int DC;
 
-	public float Radius;
+	public float Radius = 7f;
 
 	public int GetDC()
 	{

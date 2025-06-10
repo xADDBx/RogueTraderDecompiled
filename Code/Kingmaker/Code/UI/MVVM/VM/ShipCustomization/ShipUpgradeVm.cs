@@ -47,23 +47,23 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public readonly ShipInventoryStashVM ShipInventoryStashVM;
 
-	public BoolReactiveProperty IsLocked = new BoolReactiveProperty();
+	private readonly BoolReactiveProperty m_IsLocked = new BoolReactiveProperty();
 
-	public readonly AutoDisposingList<ShipComponentSlotVM> AllSlots = new AutoDisposingList<ShipComponentSlotVM>();
+	private readonly AutoDisposingList<ShipComponentSlotVM> m_AllSlots = new AutoDisposingList<ShipComponentSlotVM>();
 
-	public ReactiveProperty<ShipItemSelectorWindowVM> ShipSelectorWindowVM = new ReactiveProperty<ShipItemSelectorWindowVM>();
+	public readonly ReactiveProperty<ShipItemSelectorWindowVM> ShipSelectorWindowVM = new ReactiveProperty<ShipItemSelectorWindowVM>();
 
 	public readonly BoolReactiveProperty ChooseSlotMode = new BoolReactiveProperty();
 
 	public InventorySlotConsoleView ItemToSlotView;
 
-	public BoolReactiveProperty CanSetDefaultPosition = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty CanSetDefaultPosition = new BoolReactiveProperty();
 
-	public PlayerShipType ShipType;
+	public readonly PlayerShipType ShipType;
 
 	public ShipUpgradeVm(bool isLocked)
 	{
-		IsLocked.Value = isLocked;
+		m_IsLocked.Value = isLocked;
 		AddDisposable(ShipInventoryStashVM = new ShipInventoryStashVM(inventory: true));
 		AddDisposable(EventBus.Subscribe(this));
 		ShipType = Game.Instance.Player.PlayerShip.Blueprint.ShipType;
@@ -126,69 +126,64 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		ShipSelectorWindowVM.Value = null;
 	}
 
-	protected static List<ShipComponentItemSlotVM> SetupSlots(ItemsCollection itemsCollection, ShipComponentSlotVM slot, ItemsSorterType sorterType, ItemsFilterType filterType)
+	private static List<ShipComponentItemSlotVM> SetupSlots(ItemsCollection itemsCollection, ShipComponentSlotVM slot, ItemsSorterType sorterType, ItemsFilterType filterType)
 	{
-		List<ShipComponentItemSlotVM> list = new List<ShipComponentItemSlotVM>();
-		List<ItemEntity> list2 = ItemsFilter.ItemSorter(itemsCollection.ToList(), sorterType, filterType);
-		list2.RemoveAll((ItemEntity item) => item != null && !ItemsFilter.ShouldShowItem(item, filterType));
-		list2.RemoveAll((ItemEntity item) => item.HoldingSlot != null || !slot.ItemSlot.PossibleEquipItem(item));
+		List<ItemEntity> list = ItemsFilter.ItemSorter(itemsCollection.ToList(), sorterType, filterType);
+		list.RemoveAll((ItemEntity item) => item != null && !ItemsFilter.ShouldShowItem(item, filterType));
+		list.RemoveAll((ItemEntity item) => item.HoldingSlot != null || !slot.ItemSlot.PossibleEquipItem(item));
 		if (slot.HasItem)
 		{
-			list2.Insert(0, slot.ItemEntity);
+			list.Insert(0, slot.ItemEntity);
 		}
-		foreach (ItemEntity item in list2)
-		{
-			list.Add(new ShipComponentItemSlotVM(item));
-		}
-		return list;
+		return list.Select((ItemEntity item) => new ShipComponentItemSlotVM(item)).ToList();
 	}
 
 	private void UpdateSlots()
 	{
 		Warhammer.SpaceCombat.StarshipLogic.Equipment.HullSlots hullSlots = Game.Instance.Player.PlayerShip.GetHull().HullSlots;
-		AllSlots.Clear();
-		AddDisposable(PlasmaDrives = new ShipComponentSlotVM(ShipComponentSlotType.PlasmaDrives, hullSlots.PlasmaDrives, -1, WeaponSlotType.None, IsLocked.Value));
-		AllSlots.Add(PlasmaDrives);
-		AddDisposable(VoidShieldGenerator = new ShipComponentSlotVM(ShipComponentSlotType.VoidShieldGenerator, hullSlots.VoidShieldGenerator, -1, WeaponSlotType.None, IsLocked.Value));
-		AllSlots.Add(VoidShieldGenerator);
-		AddDisposable(AugerArray = new ShipComponentSlotVM(ShipComponentSlotType.AugerArray, hullSlots.AugerArray, -1, WeaponSlotType.None, IsLocked.Value));
-		AllSlots.Add(AugerArray);
-		AddDisposable(ArmorPlating = new ShipComponentSlotVM(ShipComponentSlotType.ArmorPlating, hullSlots.ArmorPlating, -1, WeaponSlotType.None, IsLocked.Value));
-		AllSlots.Add(ArmorPlating);
+		m_AllSlots.Clear();
+		AddDisposable(PlasmaDrives = new ShipComponentSlotVM(ShipComponentSlotType.PlasmaDrives, hullSlots.PlasmaDrives, -1, WeaponSlotType.None, m_IsLocked.Value));
+		m_AllSlots.Add(PlasmaDrives);
+		AddDisposable(VoidShieldGenerator = new ShipComponentSlotVM(ShipComponentSlotType.VoidShieldGenerator, hullSlots.VoidShieldGenerator, -1, WeaponSlotType.None, m_IsLocked.Value));
+		m_AllSlots.Add(VoidShieldGenerator);
+		AddDisposable(AugerArray = new ShipComponentSlotVM(ShipComponentSlotType.AugerArray, hullSlots.AugerArray, -1, WeaponSlotType.None, m_IsLocked.Value));
+		m_AllSlots.Add(AugerArray);
+		AddDisposable(ArmorPlating = new ShipComponentSlotVM(ShipComponentSlotType.ArmorPlating, hullSlots.ArmorPlating, -1, WeaponSlotType.None, m_IsLocked.Value));
+		m_AllSlots.Add(ArmorPlating);
 		for (int i = 0; i < hullSlots.Arsenals.Count; i++)
 		{
-			ShipComponentSlotVM item = new ShipComponentSlotVM(ShipComponentSlotType.Arsenal, hullSlots.Arsenals[i], i, WeaponSlotType.None, IsLocked.Value);
+			ShipComponentSlotVM item = new ShipComponentSlotVM(ShipComponentSlotType.Arsenal, hullSlots.Arsenals[i], i, WeaponSlotType.None, m_IsLocked.Value);
 			Arsenals.Add(item);
-			AllSlots.Add(item);
+			m_AllSlots.Add(item);
 		}
 		for (int j = 0; j < hullSlots.WeaponSlots.Count; j++)
 		{
 			switch (hullSlots.WeaponSlots[j].Type)
 			{
 			case WeaponSlotType.Prow:
-				Weapons.Add(Weapons.Any((ShipComponentSlotVM x) => x.WeaponSlotType == WeaponSlotType.Prow) ? new ShipComponentSlotVM(ShipComponentSlotType.Prow1, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, IsLocked.Value) : new ShipComponentSlotVM(ShipComponentSlotType.Prow2, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, IsLocked.Value));
-				AllSlots.Add(Weapons[j]);
+				Weapons.Add(Weapons.Any((ShipComponentSlotVM x) => x.WeaponSlotType == WeaponSlotType.Prow) ? new ShipComponentSlotVM(ShipComponentSlotType.Prow1, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, m_IsLocked.Value) : new ShipComponentSlotVM(ShipComponentSlotType.Prow2, hullSlots.WeaponSlots[j], j, WeaponSlotType.Prow, m_IsLocked.Value));
+				m_AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Port:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Port, hullSlots.WeaponSlots[j], j, WeaponSlotType.Port, IsLocked.Value));
-				AllSlots.Add(Weapons[j]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Port, hullSlots.WeaponSlots[j], j, WeaponSlotType.Port, m_IsLocked.Value));
+				m_AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Starboard:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Starboard, hullSlots.WeaponSlots[j], j, WeaponSlotType.Starboard, IsLocked.Value));
-				AllSlots.Add(Weapons[j]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Starboard, hullSlots.WeaponSlots[j], j, WeaponSlotType.Starboard, m_IsLocked.Value));
+				m_AllSlots.Add(Weapons[j]);
 				break;
 			case WeaponSlotType.Dorsal:
-				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Dorsal, hullSlots.WeaponSlots[j], j, WeaponSlotType.Dorsal, IsLocked.Value));
-				AllSlots.Add(Weapons[j]);
+				Weapons.Add(new ShipComponentSlotVM(ShipComponentSlotType.Dorsal, hullSlots.WeaponSlots[j], j, WeaponSlotType.Dorsal, m_IsLocked.Value));
+				m_AllSlots.Add(Weapons[j]);
 				break;
 			}
 		}
 		InternalStructure?.Dispose();
 		RemoveDisposable(InternalStructure);
-		AddDisposable(InternalStructure = new ShipUpgradeSlotVM(IsLocked.Value));
+		AddDisposable(InternalStructure = new ShipUpgradeSlotVM(m_IsLocked.Value));
 		ProwRam?.Dispose();
 		RemoveDisposable(ProwRam);
-		AddDisposable(ProwRam = new ShipUpgradeSlotVM(IsLocked.Value));
+		AddDisposable(ProwRam = new ShipUpgradeSlotVM(m_IsLocked.Value));
 	}
 
 	public void HandleOpenShipCustomization()
@@ -205,7 +200,7 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void HandleTryMoveSlot(ItemSlotVM from, ItemSlotVM to)
 	{
-		if (IsLocked.Value)
+		if (m_IsLocked.Value)
 		{
 			return;
 		}
@@ -236,7 +231,7 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void HandleTrySplitSlot(ItemSlotVM slot)
 	{
-		if (!IsLocked.Value)
+		if (!m_IsLocked.Value)
 		{
 			InventoryHelper.TrySplitSlot(slot, isLoot: false);
 		}
@@ -267,7 +262,7 @@ public class ShipUpgradeVm : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void ChooseSlotToItem(InventorySlotConsoleView item)
 	{
-		List<ShipComponentSlotVM> list = AllSlots.Where((ShipComponentSlotVM slotVM) => slotVM.IsPossibleTarget(item.SlotVM.ItemEntity)).ToList();
+		List<ShipComponentSlotVM> list = m_AllSlots.Where((ShipComponentSlotVM slotVM) => slotVM.IsPossibleTarget(item.SlotVM.ItemEntity)).ToList();
 		if (list.Count > 1)
 		{
 			ItemToSlotView = item;

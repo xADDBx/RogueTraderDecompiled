@@ -93,7 +93,7 @@ public class UnitCommandController : BaseUnitController
 			{
 				command.Interrupt();
 			}
-			else
+			else if (!command.IsStartBlocked)
 			{
 				bool turnBasedModeActive = Game.Instance.TurnController.TurnBasedModeActive;
 				if (ShouldStartCommand(command))

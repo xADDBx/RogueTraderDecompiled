@@ -3,6 +3,9 @@ using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Inspect;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Sound;
@@ -14,6 +17,7 @@ using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Party.PC;
@@ -66,6 +70,26 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 	[SerializeField]
 	private GameObject m_PersonalEncumbranceObject;
 
+	[FormerlySerializedAs("m_PetLable")]
+	[Header("PetLabel")]
+	[SerializeField]
+	private GameObject m_PetLabel;
+
+	[SerializeField]
+	private GameObject m_PetLabelHologram;
+
+	[SerializeField]
+	private Image m_FrameSelectorImage;
+
+	[SerializeField]
+	private Image m_PetNumberIconOnRoundLabel;
+
+	[SerializeField]
+	private Image m_PetNumberIconOnHologram;
+
+	[SerializeField]
+	private GameObject m_AscendedLabel;
+
 	private RectTransform m_RectTransform;
 
 	private RectTransform m_ParentTransform;
@@ -82,11 +106,13 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 
 	private Action<PartyCharacterPCView> m_SwitchAction;
 
+	public bool SelectedAsPet;
+
 	public RectTransform RectTransform => m_RectTransform;
 
 	public bool HasUnit => base.ViewModel?.IsEnable.Value ?? false;
 
-	public BaseUnitEntity UnitEntityData => base.ViewModel?.UnitEntityData ?? null;
+	public BaseUnitEntity UnitEntityData => base.ViewModel?.UnitEntityData;
 
 	public void Initialize(Action<PartyCharacterPCView> switchAction)
 	{
@@ -109,18 +135,49 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		{
 			UpdateEncumbrance();
 		}));
+		AddDisposable(base.ViewModel.AscendedLabel.Subscribe(UpdateAscendedLabel));
+		AddDisposable(base.ViewModel.HasPet.Subscribe(PetLabelSetActiveHandler));
+		AddDisposable(base.ViewModel.SelectorFrameIcon.Subscribe(delegate(Sprite s)
+		{
+			m_FrameSelectorImage.sprite = s;
+		}));
+		AddDisposable(base.ViewModel.PetMasterNumberIcon.Subscribe(delegate(Sprite s)
+		{
+			m_PetNumberIconOnRoundLabel.sprite = s;
+			m_PetNumberIconOnHologram.sprite = s;
+		}));
+		AddDisposable(base.ViewModel.IsHudActive.Subscribe(delegate(bool v)
+		{
+			if (base.ViewModel.HasPet.Value)
+			{
+				if (v)
+				{
+					m_PetLabel.SetActive(value: true);
+					m_PetLabelHologram.SetActive(value: false);
+				}
+				else
+				{
+					m_PetLabel.SetActive(value: false);
+					m_PetLabelHologram.SetActive(value: true);
+				}
+			}
+		}));
 		AddDisposable(base.ViewModel.IsEnable.Subscribe(base.gameObject.SetActive));
 		AddDisposable(base.ViewModel.IsSelected.Subscribe(SetSelected));
 		AddDisposable(ObservableExtensions.Subscribe(m_LevelUpButton.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.LevelUp();
 		}));
+		AddDisposable(ObservableExtensions.Subscribe(m_CharacterButton.OnRightClickAsObservable(), delegate
+		{
+			InvokeUnitInspect();
+		}));
 		AddDisposable(m_CharacterButton.OnHoverAsObservable().Subscribe(delegate(bool value)
 		{
 			m_HealthTextView.gameObject.SetActive(value);
 			base.ViewModel.OnCharacterHover(value);
 		}));
-		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsLevelUpCurrent, base.ViewModel.IsLevelUpInProgress, base.ViewModel.IsInCombat, (bool _, bool _, bool _, bool _) => true).Subscribe(delegate
+		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsLevelUpCurrent, base.ViewModel.IsLevelUpInProgress, base.ViewModel.IsInCombat, base.ViewModel.IsServiceWindowAvailable, (bool _, bool _, bool _, bool _, bool _) => true).Subscribe(delegate
 		{
 			UpdateLevelUp();
 		}));
@@ -159,6 +216,21 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		}
 	}
 
+	public void InvokeUnitInspect()
+	{
+		if (InspectUnitsHelper.IsInspectAllow(base.ViewModel.UnitEntityData))
+		{
+			EventBus.RaiseEvent(delegate(IUnitClickUIHandler h)
+			{
+				h.HandleUnitRightClick(UnitEntityData);
+			});
+		}
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	public void UpdateBasePosition()
 	{
 		BasePositionX = m_RectTransform.localPosition.x;
@@ -169,11 +241,7 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		if (value != m_IsSelected)
 		{
 			m_IsSelected = value;
-			DelayedInvoker.InvokeInFrames(delegate
-			{
-				m_CharacterButton.SetActiveLayer(m_IsSelected.Value ? 1 : 0);
-				m_SelectorMoveAnimator.PlayAnimation(m_IsSelected.Value);
-			}, value ? 1 : 0);
+			ToggleSelector(value);
 			if (value)
 			{
 				UISounds.Instance.Sounds.Character.CharacterSelect.Play();
@@ -181,8 +249,13 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		}
 	}
 
-	protected override void DestroyViewImplementation()
+	private void ToggleSelector(bool value)
 	{
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			m_CharacterButton.SetActiveLayer(value ? 1 : 0);
+			m_SelectorMoveAnimator.PlayAnimation(value);
+		}, value ? 1 : 0);
 	}
 
 	private void UpdateEncumbrance()
@@ -207,7 +280,7 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 
 	private void UpdateLevelUp()
 	{
-		m_LevelUpButton.gameObject.SetActive(base.ViewModel.IsLevelUp.Value && !base.ViewModel.IsInCombat.Value);
+		m_LevelUpButton.gameObject.SetActive(base.ViewModel.IsLevelUp.Value && !base.ViewModel.IsInCombat.Value && base.ViewModel.IsServiceWindowAvailable.Value);
 		string activeLayer = "Default";
 		if (base.ViewModel.IsLevelUpInProgress.Value)
 		{
@@ -272,5 +345,30 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		localPosition.x = Mathf.Clamp(m_RectTransform.localPosition.x, vector.x, vector2.x);
 		localPosition.y = Mathf.Clamp(m_RectTransform.localPosition.y, vector.y, vector2.y);
 		m_RectTransform.localPosition = localPosition;
+	}
+
+	private void PetLabelSetActiveHandler(bool value)
+	{
+		if (base.ViewModel.IsHudActive.Value)
+		{
+			if (m_PetLabelHologram.activeInHierarchy)
+			{
+				m_PetLabelHologram.SetActive(value: false);
+			}
+			m_PetLabel.SetActive(value);
+		}
+		else
+		{
+			if (m_PetLabel.activeInHierarchy)
+			{
+				m_PetLabel.SetActive(value: false);
+			}
+			m_PetLabelHologram.SetActive(value);
+		}
+	}
+
+	private void UpdateAscendedLabel(bool value)
+	{
+		m_AscendedLabel.SetActive(value);
 	}
 }

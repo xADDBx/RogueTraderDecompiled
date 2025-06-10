@@ -61,6 +61,8 @@ public class PersistentState : IPersistentState, InterfaceService
 
 	public CoopData CoopData = new CoopData();
 
+	public IEnumerable<BaseUnitEntity> AllBaseAwakeUnitsForSure => AllBaseAwakeUnits.Where((BaseUnitEntity x) => x.IsInGame);
+
 	public AreaPersistentState LoadedAreaState { get; set; }
 
 	public AreaPersistentState GetStateForArea(BlueprintArea area)

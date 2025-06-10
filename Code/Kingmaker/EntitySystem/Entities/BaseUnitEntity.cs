@@ -60,13 +60,14 @@ using Kingmaker.Visual.HitSystem;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
+using StateHasher.Core.Hashers;
 using UniRx;
 using UnityEngine;
 using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.EntitySystem.Entities;
 
-public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOwner, IEntityPartOwner<PartUnitAlignment>, IEntityPartOwner, PartUnitCombatState.IOwner, IEntityPartOwner<PartUnitCombatState>, PartFaction.IOwner, IEntityPartOwner<PartFaction>, PartCombatGroup.IOwner, IEntityPartOwner<PartCombatGroup>, PartVision.IOwner, IEntityPartOwner<PartVision>, PartUnitStealth.IOwner, IEntityPartOwner<PartUnitStealth>, PartUnitProgression.IOwner, IEntityPartOwner<PartUnitProgression>, PartStatsAttributes.IOwner, IEntityPartOwner<PartStatsAttributes>, PartStatsSkills.IOwner, IEntityPartOwner<PartStatsSkills>, PartStatsSaves.IOwner, IEntityPartOwner<PartStatsSaves>, PartUnitProficiency.IOwner, IEntityPartOwner<PartUnitProficiency>, PartAbilityResourceCollection.IOwner, IEntityPartOwner<PartAbilityResourceCollection>, PartInventory.IOwner, IEntityPartOwner<PartInventory>, PartUnitBody.IOwner, IEntityPartOwner<PartUnitBody>, PartUnitBrain.IOwner, IEntityPartOwner<PartUnitBrain>, PartUnitDescription.IOwner, IEntityPartOwner<PartUnitDescription>, PartAbilityCooldowns.IOwner, IEntityPartOwner<PartAbilityCooldowns>, ILootable, IBaseUnitEntity, IAbstractUnitEntity, IMechanicEntity, IEntity, IDisposable, IHashable
+public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOwner, IEntityPartOwner<PartUnitAlignment>, IEntityPartOwner, PartUnitCombatState.IOwner, IEntityPartOwner<PartUnitCombatState>, PartFaction.IOwner, IEntityPartOwner<PartFaction>, PartCombatGroup.IOwner, IEntityPartOwner<PartCombatGroup>, PartVision.IOwner, IEntityPartOwner<PartVision>, PartUnitStealth.IOwner, IEntityPartOwner<PartUnitStealth>, PartUnitProgression.IOwner, IEntityPartOwner<PartUnitProgression>, PartStatsAttributes.IOwner, IEntityPartOwner<PartStatsAttributes>, PartStatsSkills.IOwner, IEntityPartOwner<PartStatsSkills>, PartStatsSaves.IOwner, IEntityPartOwner<PartStatsSaves>, PartUnitProficiency.IOwner, IEntityPartOwner<PartUnitProficiency>, PartAbilityResourceCollection.IOwner, IEntityPartOwner<PartAbilityResourceCollection>, PartInventory.IOwner, IEntityPartOwner<PartInventory>, PartUnitBody.IOwner, IEntityPartOwner<PartUnitBody>, PartUnitBrain.IOwner, IEntityPartOwner<PartUnitBrain>, PartUnitDescription.IOwner, IEntityPartOwner<PartUnitDescription>, PartAbilityCooldowns.IOwner, IEntityPartOwner<PartAbilityCooldowns>, ILootable, IBaseUnitEntity, IAbstractUnitEntity, IMechanicEntity, IEntity, IDisposable, IFakeSelectHandler<EntitySubscriber>, IFakeSelectHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEntitySubscriber, IEventTag<IFakeSelectHandler, EntitySubscriber>, IHashable
 {
 	public new interface IUnitAsleepHandler<TTag> : IUnitAsleepHandler, ISubscriber<IEntity>, ISubscriber, IEventTag<IUnitAsleepHandler, TTag>
 	{
@@ -92,6 +93,10 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	[GameStateIgnore]
 	public bool IsSelected { get; set; } = true;
 
+
+	[JsonProperty]
+	[GameStateIgnore]
+	public bool IsFakeSelected { get; set; }
 
 	[JsonProperty]
 	[GameStateIgnore]
@@ -122,6 +127,9 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	[JsonProperty]
 	[GameStateIgnore]
 	public bool SpawnFromPsychicPhenomena { get; private set; }
+
+	[JsonProperty(PropertyName = "MasterRef")]
+	private EntityRef<BaseUnitEntity> m_MasterRef { get; set; }
 
 	public ReactiveCommand UpdateCommand { get; } = new ReactiveCommand();
 
@@ -207,11 +215,7 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
 			if (loadedAreaState != null && loadedAreaState.Settings.CapitalPartyMode)
 			{
-				if (this != Game.Instance.Player.MainCharacterEntity)
-				{
-					return Master == Game.Instance.Player.MainCharacterEntity;
-				}
-				return true;
+				return this == Game.Instance.Player.MainCharacterEntity;
 			}
 			if (!Faction.IsDirectlyControllable || base.LifeState.IsFinallyDead || State.IsPanicked || IsDetached)
 			{
@@ -220,6 +224,10 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			if (GetOptional<UnitPartSummonedMonster>() != null)
 			{
 				return Faction.IsDirectlyControllable;
+			}
+			if (this.HasMechanicFeature(MechanicsFeatureType.ForceAIControl))
+			{
+				return false;
 			}
 			UnitPartCompanion unitPartCompanion = Master?.GetOptional<UnitPartCompanion>() ?? GetOptional<UnitPartCompanion>();
 			if (unitPartCompanion != null && unitPartCompanion.State != CompanionState.ExCompanion)
@@ -254,12 +262,7 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			{
 				return master.IsDetached;
 			}
-			UnitPartCompanion optional = GetOptional<UnitPartCompanion>();
-			if (optional == null)
-			{
-				return false;
-			}
-			return optional.State == CompanionState.InPartyDetached;
+			return GetCompanionState() == CompanionState.InPartyDetached;
 		}
 	}
 
@@ -277,10 +280,13 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 
 	public bool SilentCaster => GetOptional<PartPolymorphed>()?.Component?.SilentCaster ?? base.Blueprint.VisualSettings.SilentCaster;
 
-	[CanBeNull]
-	public BaseUnitEntity Master => null;
+	public BaseUnitEntity Master => m_MasterRef;
 
-	public bool IsPet => false;
+	public bool IsPet => Master != null;
+
+	public bool IsMaster => GetOptional<UnitPartPetOwner>()?.HasPet ?? false;
+
+	public BaseUnitEntity Pet => GetOptional<UnitPartPetOwner>()?.PetUnit;
 
 	public int BaseCR => Math.Max(0, CR);
 
@@ -577,12 +583,16 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	protected override void OnIsInGameChanged()
 	{
 		base.OnIsInGameChanged();
-		if ((bool)Parts.GetOptional<UnitPartCompanion>())
+		if ((bool)Parts.GetOptional<UnitPartCompanion>() || IsPet)
 		{
 			Game.Instance.Player.InvalidateCharacterLists();
 		}
 		ActivatableAbilities.SetSubscribedOnEventBus(base.IsInGame);
 		Abilities.SetSubscribedOnEventBus(base.IsInGame);
+		if (!base.IsInGame && IsInCombat)
+		{
+			CombatState.LeaveCombat();
+		}
 	}
 
 	protected override void OnDestroy()
@@ -710,6 +720,25 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 		return false;
 	}
 
+	public void InitAsPet(BaseUnitEntity owner)
+	{
+		m_MasterRef = owner;
+		OnGainPathRank(null);
+		EventBus.RaiseEvent((IAbstractUnitEntity)this, (Action<IPetInitializationHandler>)delegate(IPetInitializationHandler handler)
+		{
+			handler.OnPetInitialized();
+		}, isCheckRuntime: true);
+	}
+
+	public CompanionState? GetCompanionState()
+	{
+		if (base.IsDisposed)
+		{
+			return CompanionState.None;
+		}
+		return GetOptional<UnitPartCompanion>()?.State;
+	}
+
 	public bool IsUnseen()
 	{
 		return !Game.Instance.UnitGroups.Any((UnitGroup group) => group.IsEnemy(this) && group.Memory.ContainsVisible(this));
@@ -801,6 +830,11 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 		}
 	}
 
+	public void HandleFakeSelected(bool value)
+	{
+		IsFakeSelected = value;
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -828,6 +862,9 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 		}
 		result.Append(MusicBossFightTypeGroup);
 		result.Append(MusicBossFightTypeValue);
+		EntityRef<BaseUnitEntity> obj = m_MasterRef;
+		Hash128 val7 = StructHasher<EntityRef<BaseUnitEntity>>.GetHash128(ref obj);
+		result.Append(ref val7);
 		return result;
 	}
 }

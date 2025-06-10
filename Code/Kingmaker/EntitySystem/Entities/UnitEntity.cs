@@ -163,6 +163,11 @@ public class UnitEntity : BaseUnitEntity, PartMomentum.IOwner, IEntityPartOwner<
 		return Body.SecondaryHand.MaybeWeapon;
 	}
 
+	public override ItemEntityShield GetShieldInHand()
+	{
+		return Body.SecondaryHand.MaybeShield;
+	}
+
 	protected override void OnNodeChanged()
 	{
 		base.OnNodeChanged();

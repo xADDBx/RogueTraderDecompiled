@@ -55,7 +55,7 @@ public abstract class BlueprintCueBase : BlueprintScriptableObject, IConditionDe
 					return false;
 				}
 			}
-			else if (dialog.ShownCues.Contains(this))
+			else if (dialog.ShownCuesContains(this))
 			{
 				DialogDebug.Add(this, "(show once) was shown before (global)", Color.red);
 				return false;

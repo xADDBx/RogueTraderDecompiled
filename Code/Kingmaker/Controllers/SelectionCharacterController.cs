@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Code.UI.MVVM;
@@ -13,6 +14,8 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
+using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
@@ -236,7 +239,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			{
 				m_FullScreenSelectedUnit = SelectedUnit.Value ?? FirstSelectedUnit;
 			}
-			if (!(m_FullScreenSelectedUnit is UnitEntity))
+			if (!(m_FullScreenSelectedUnit is UnitEntity) || m_FullScreenSelectedUnit.Facts.HasComponent<TransientPartyMemberFlag>())
 			{
 				m_FullScreenSelectedUnit = Game.Instance.Player?.MainCharacterEntity;
 			}
@@ -254,12 +257,21 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 				}
 			}, 3);
 		}
+		UIAccess.SelectionManager.Or(null)?.SetFakeSelectedFlags(value: false);
+		UIAccess.SelectionManager.Or(null)?.RefreshUnitFakeSelectionFlags(SelectedUnitInUI.Value, SingleSelectedUnit.Value, m_FullScreenState);
+		if (m_FullScreenState)
+		{
+			foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
+			{
+				allCharacter.IsSelected = SelectedUnitInUI.Value == allCharacter;
+			}
+		}
 		m_NeedUpdate = true;
 	}
 
 	private void UpdateSelectedUnits()
 	{
-		UIUtility.GetGroup(m_ActualGroup, WithRemote, WithRemote);
+		UIUtility.GetGroup(m_ActualGroup, WithRemote, withPet: true);
 		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
 			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
@@ -276,8 +288,19 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		{
 			SingleSelectedUnit.Value = null;
 		}
-		BaseUnitEntity value = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
-		SelectedUnitInUI.Value = value;
+		BaseUnitEntity current = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
+		if (SelectedUnitInUI != null && SelectedUnitInUI.Value != null)
+		{
+			UnitPartPetOwner optional = SelectedUnitInUI.Value.GetOptional<UnitPartPetOwner>();
+			if (optional != null)
+			{
+				EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+				{
+					h.HandleFakeSelected(SelectedUnitInUI.Value == current);
+				}, isCheckRuntime: true);
+			}
+		}
+		SelectedUnitInUI.Value = current;
 	}
 
 	public void HandleAddCompanion()
@@ -309,16 +332,16 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	{
 		if (unit1?.Master == null && m_ActualGroup.Contains(unit1) && unit2?.Master == null && m_ActualGroup.Contains(unit2))
 		{
-			int num = Game.Instance.Player.PartyCharacters.IndexOf(unit1.FromBaseUnitEntity());
-			int num2 = Game.Instance.Player.PartyCharacters.IndexOf(unit2.FromBaseUnitEntity());
-			List<UnitReference> partyCharacters = Game.Instance.Player.PartyCharacters;
+			int num = Game.Instance.Player.PartyAndPets.IndexOf(unit1);
+			int num2 = Game.Instance.Player.PartyAndPets.IndexOf(unit2);
+			List<BaseUnitEntity> partyAndPets = Game.Instance.Player.PartyAndPets;
 			int index = num;
-			List<UnitReference> partyCharacters2 = Game.Instance.Player.PartyCharacters;
+			List<BaseUnitEntity> partyAndPets2 = Game.Instance.Player.PartyAndPets;
 			int index2 = num2;
-			UnitReference unitReference = Game.Instance.Player.PartyCharacters[num2];
-			UnitReference unitReference2 = Game.Instance.Player.PartyCharacters[num];
-			UnitReference unitReference4 = (partyCharacters[index] = unitReference);
-			unitReference4 = (partyCharacters2[index2] = unitReference2);
+			BaseUnitEntity baseUnitEntity = Game.Instance.Player.PartyAndPets[num2];
+			BaseUnitEntity baseUnitEntity2 = Game.Instance.Player.PartyAndPets[num];
+			BaseUnitEntity baseUnitEntity4 = (partyAndPets[index] = baseUnitEntity);
+			baseUnitEntity4 = (partyAndPets2[index2] = baseUnitEntity2);
 			Game.Instance.Player.InvalidateCharacterLists();
 			m_NeedUpdate = true;
 			EventBus.RaiseEvent(delegate(ISwitchPartyCharactersHandler h)

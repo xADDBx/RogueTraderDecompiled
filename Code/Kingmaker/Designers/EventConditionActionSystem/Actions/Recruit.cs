@@ -164,8 +164,8 @@ public class Recruit : GameAction
 	{
 		Player player = Game.Instance.Player;
 		BaseUnitEntity baseUnitEntity = player.AllCharacters.FirstOrDefault((BaseUnitEntity u) => u.Blueprint == data.CompanionBlueprint);
-		bool flag = baseUnitEntity != null && baseUnitEntity.GetOptional<UnitPartCompanion>()?.State == CompanionState.ExCompanion;
-		bool flag2 = baseUnitEntity != null && baseUnitEntity.GetOptional<UnitPartCompanion>()?.State == CompanionState.Remote;
+		bool flag = baseUnitEntity != null && baseUnitEntity.GetCompanionState() == CompanionState.ExCompanion;
+		bool flag2 = baseUnitEntity != null && baseUnitEntity.GetCompanionState() == CompanionState.Remote;
 		BaseUnitEntity baseUnitEntity2 = null;
 		if (data.NPCUnit != null)
 		{
@@ -202,7 +202,6 @@ public class Recruit : GameAction
 			baseUnitEntity.IsInGame = true;
 			player.AddCompanion(baseUnitEntity);
 		}
-		baseUnitEntity.CombatGroup.Id = "<directly-controllable-unit>";
 		if (data.Portrait?.Get() != null)
 		{
 			baseUnitEntity.UISettings.SetPortrait(data.Portrait);

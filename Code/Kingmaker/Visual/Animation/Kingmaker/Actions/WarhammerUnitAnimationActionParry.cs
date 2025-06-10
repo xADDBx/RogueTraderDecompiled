@@ -15,6 +15,12 @@ public class WarhammerUnitAnimationActionParry : UnitAnimationAction
 		public WeaponStyleSettings Settings;
 	}
 
+	public enum ParrySubType
+	{
+		Parry,
+		Block
+	}
+
 	[Serializable]
 	public class WeaponStyleSettings
 	{
@@ -24,37 +30,34 @@ public class WarhammerUnitAnimationActionParry : UnitAnimationAction
 
 		public AnimationClipWrapper Start;
 
-		[HideInInspector]
-		public AnimationClipWrapper Middle;
-
-		[HideInInspector]
-		public AnimationClipWrapper End;
-
-		private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
-
 		public IEnumerable<AnimationClipWrapper> ClipWrappers
 		{
 			get
 			{
-				if (m_ClipWrappersHashSet != null)
-				{
-					return m_ClipWrappersHashSet;
-				}
-				m_ClipWrappersHashSet = new HashSet<AnimationClipWrapper>();
-				m_ClipWrappersHashSet.Add(Start);
-				m_ClipWrappersHashSet.Add(Middle);
-				m_ClipWrappersHashSet.Add(End);
-				return m_ClipWrappersHashSet;
+				yield return Start;
 			}
 		}
 	}
+
+	[SerializeField]
+	private ParrySubType m_SubType;
 
 	[SerializeField]
 	private List<WeaponStyleSettings> m_Settings = new List<WeaponStyleSettings>();
 
 	public List<WeaponStyleSettings> Settings => m_Settings;
 
-	public override UnitAnimationType Type => UnitAnimationType.Parry;
+	public override UnitAnimationType Type
+	{
+		get
+		{
+			if (m_SubType == ParrySubType.Block)
+			{
+				return UnitAnimationType.Block;
+			}
+			return UnitAnimationType.Parry;
+		}
+	}
 
 	public override IEnumerable<AnimationClipWrapper> ClipWrappers => m_Settings.SelectMany((WeaponStyleSettings setting) => setting.ClipWrappers);
 

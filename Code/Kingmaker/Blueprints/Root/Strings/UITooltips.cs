@@ -17,6 +17,10 @@ public class UITooltips
 
 	public LocalizedString CannotbeUsed;
 
+	public LocalizedString CantUseNeed;
+
+	public LocalizedString CantUseRemove;
+
 	public LocalizedString IsNotRemovable;
 
 	public LocalizedString Loot;
@@ -60,6 +64,12 @@ public class UITooltips
 	public LocalizedString or;
 
 	public LocalizedString lbs;
+
+	public LocalizedString not;
+
+	public LocalizedString notSimple;
+
+	public LocalizedString OneFromList;
 
 	public LocalizedString PartyEncumbrance;
 
@@ -213,6 +223,8 @@ public class UITooltips
 
 	public LocalizedString CoverAvoidance;
 
+	public LocalizedString BlockAvoidance;
+
 	public LocalizedString YouWillGainTitle;
 
 	public LocalizedString YouWillLoseTitle;
@@ -268,4 +280,25 @@ public class UITooltips
 	public LocalizedString DoctrinesShortDesc;
 
 	public LocalizedString DoctrinesDescription;
+
+	[Header("Pet")]
+	public LocalizedString ProtocolTitle;
+
+	public LocalizedString PetButtonHoverTooltip;
+
+	public LocalizedString MasterButtonHoverTooltip;
+
+	[Header("PetAbilities")]
+	public LocalizedString CycleAbilityLastRetargeted;
+
+	public LocalizedString RetargetableAbilityTooltip;
+
+	public LocalizedString RetargetableAbilityTooltipCanBeUsed;
+
+	public LocalizedString RetargetableAbilityTooltipCanBeUsedUltimate;
+
+	[Header("PetItemsTooltips")]
+	public LocalizedString OnlyPetCanEquip;
+
+	public LocalizedString PetCanNotEquip;
 }

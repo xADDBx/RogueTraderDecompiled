@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.ElementsSystem;
 using Kingmaker.Enums.Sound;
 using Kingmaker.Localization;
 using Kingmaker.Sound.Base;
@@ -45,6 +46,13 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 		[FormerlySerializedAs("ExcludedFlags")]
 		private BlueprintUnlockableFlagReference[] m_ExcludedFlags;
 
+		[Tooltip("we trigger condition met barks with higher priorities first, we fallback to lower priority only if condition executes to false")]
+		[ShowIf("HasCondition")]
+		public int ConditionPriority;
+
+		[Tooltip("bark with no condition specified is always treated at zero priority")]
+		public ConditionsChecker Condition;
+
 		[NonSerialized]
 		public int ExclusionCounter;
 
@@ -56,6 +64,8 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 				return requiredFlags;
 			}
 		}
+
+		public bool HasCondition => Condition?.HasConditions ?? false;
 
 		public ReferenceArrayProxy<BlueprintUnlockableFlag> ExcludedFlags
 		{
@@ -225,6 +235,8 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 
 	public Bark Discovery = new Bark();
 
+	public Bark ReactToPetDiscovery = new Bark();
+
 	public Bark OrderMove = new Bark();
 
 	public Bark OrderMoveExploration = new Bark();
@@ -288,6 +300,7 @@ public class UnitAsksComponent : BlueprintComponent, IUnlockableFlagReference
 		list.Add(CheckSuccess);
 		list.Add(CheckFail);
 		list.Add(Discovery);
+		list.Add(ReactToPetDiscovery);
 		list.Add(OrderMove);
 		list.Add(OrderMoveExploration);
 		list.Add(MomentumAction);

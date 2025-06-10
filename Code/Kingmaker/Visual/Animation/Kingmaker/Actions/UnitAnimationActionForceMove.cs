@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
 using Owlcat.Runtime.Core.Logging;
@@ -130,7 +130,7 @@ public class UnitAnimationActionForceMove : UnitAnimationAction
 			State = State.Fly
 		};
 		handle.ActionData = actionData;
-		int range = Mathf.RoundToInt(handle.Manager.ForceMoveDistance / GraphParamsMechanicsCache.GridCellSize);
+		int range = handle.Unit.Data.GetOptional<UnitPartForceMove>()?.Active?.DistanceCells ?? 1;
 		handle.StartClip(GetClipByRange(range), ClipDurationType.Endless);
 	}
 
@@ -140,7 +140,7 @@ public class UnitAnimationActionForceMove : UnitAnimationAction
 		{
 			handle.Release();
 		}
-		else if (handle.Manager.ForceMoveDistance <= 0.01f && actionData.State == State.Fly)
+		else if (!handle.Manager.IsForceMove && actionData.State == State.Fly && !handle.IsInterrupted)
 		{
 			actionData.State = State.StandUp;
 			if (m_RangeSettings.StandUp == null)

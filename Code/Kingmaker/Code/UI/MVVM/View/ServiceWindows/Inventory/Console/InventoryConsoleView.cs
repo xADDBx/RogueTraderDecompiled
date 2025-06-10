@@ -14,16 +14,19 @@ using Kingmaker.Code.UI.MVVM.VM.CounterWindow;
 using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.DollRoom;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.Items;
 using Kingmaker.UI.MVVM.View.ShipCustomization.Console;
 using Kingmaker.UI.Workarounds;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
@@ -69,6 +72,10 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	[SerializeField]
 	private CanvasSortingComponent m_CanvasSortingComponent;
 
+	[Header("Right weapons slots")]
+	[SerializeField]
+	private FadeAnimator m_RightSlots;
+
 	[SerializeField]
 	private List<CanvasSortingComponent> m_NestedComponentsWorkaround = new List<CanvasSortingComponent>();
 
@@ -93,6 +100,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private readonly BoolReactiveProperty m_CanChoose = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_CanSelect = new BoolReactiveProperty();
+
+	private readonly BoolReactiveProperty m_CanMasterPetSwitch = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_CanFuncAdd = new BoolReactiveProperty();
 
@@ -154,6 +163,18 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 			}
 		}));
 		AddDisposable(base.ViewModel.DollVM.ChooseSlotMode.Subscribe(SetBusyTooltipMode));
+		if (base.ViewModel.Unit == null)
+		{
+			return;
+		}
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_RightSlots.PlayAnimation(value: true);
+			if (u.IsPet)
+			{
+				m_RightSlots.PlayAnimation(value: false);
+			}
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -237,6 +258,9 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		AddDisposable(m_TooltipHint = m_ConsoleHintsWidget.BindHint(inputBindStruct2));
 		AddDisposable(inputBindStruct2);
 		m_TooltipHint.SetLabel(UIStrings.Instance.CommonTexts.Information);
+		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(SwitchToMasterOrPet, 11, m_CanMasterPetSwitch, InputActionEventType.ButtonJustLongPressed);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.Tooltips.MasterButtonHoverTooltip.Text + "/" + UIStrings.Instance.Tooltips.PetButtonHoverTooltip.Text));
+		AddDisposable(inputBindStruct3);
 		m_StashView.ItemsFilter.AddInput(m_InputLayer, m_FocusOnRightPanel, m_ConsoleHintsWidget);
 		(m_SkillsAndWeaponsView as CharInfoSkillsAndWeaponsConsoleView)?.AddInput(m_InputLayer, m_ConsoleHintsWidget);
 		m_DollView.AddInput(m_InputLayer, m_ConsoleHintsWidget, null, m_ShowTooltip);
@@ -244,32 +268,45 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		{
 			charInfoNameAndPortraitConsoleView.AddInput(m_InputLayer, m_ConsoleHintsWidget, m_FocusOnRightPanel.Not().ToReactiveProperty());
 		}
-		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(ShowContextMenu, 10, m_HasContextMenu, InputActionEventType.ButtonJustReleased);
-		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.ContextMenu.ContextMenu));
-		AddDisposable(inputBindStruct3);
-		InputBindStruct inputBindStruct4 = m_InputLayer.AddButton(delegate
-		{
-			OnFuncAdditionalClick();
-		}, 17, m_CanFuncAdd);
-		AddDisposable(m_FuncAddHint = m_ConsoleHintsWidget.BindHint(inputBindStruct4));
+		InputBindStruct inputBindStruct4 = m_InputLayer.AddButton(ShowContextMenu, 10, m_HasContextMenu, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct4, UIStrings.Instance.ContextMenu.ContextMenu));
 		AddDisposable(inputBindStruct4);
 		InputBindStruct inputBindStruct5 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanEquip, InputActionEventType.ButtonJustReleased);
-		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct5, UIStrings.Instance.ContextMenu.Equip));
+			OnFuncAdditionalClick();
+		}, 17, m_CanFuncAdd);
+		AddDisposable(m_FuncAddHint = m_ConsoleHintsWidget.BindHint(inputBindStruct5));
 		AddDisposable(inputBindStruct5);
 		InputBindStruct inputBindStruct6 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanChoose, InputActionEventType.ButtonJustReleased);
-		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct6, UIStrings.Instance.InventoryScreen.ChooseItem));
+		}, 8, m_CanEquip, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct6, UIStrings.Instance.ContextMenu.Equip));
 		AddDisposable(inputBindStruct6);
 		InputBindStruct inputBindStruct7 = m_InputLayer.AddButton(delegate
 		{
-		}, 8, m_CanSelect, InputActionEventType.ButtonJustReleased);
-		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct7, UIStrings.Instance.CommonTexts.Select));
+		}, 8, m_CanChoose, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct7, UIStrings.Instance.InventoryScreen.ChooseItem));
 		AddDisposable(inputBindStruct7);
+		InputBindStruct inputBindStruct8 = m_InputLayer.AddButton(delegate
+		{
+		}, 8, m_CanSelect, InputActionEventType.ButtonJustReleased);
+		AddDisposable(m_ConsoleHintsWidget.BindHint(inputBindStruct8, UIStrings.Instance.CommonTexts.Select));
+		AddDisposable(inputBindStruct8);
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 		AddDisposable(m_CanvasSortingComponent.PushView());
+	}
+
+	private void SwitchToMasterOrPet(InputActionEventData obj)
+	{
+		UnitPartPetOwner optional = base.ViewModel.Unit.Value.GetOptional<UnitPartPetOwner>();
+		if (base.ViewModel.Unit.Value.IsPet)
+		{
+			Game.Instance.SelectionCharacter.SetSelected(base.ViewModel.Unit.Value.Master);
+		}
+		else if (optional != null)
+		{
+			Game.Instance.SelectionCharacter.SetSelected(optional.PetUnit);
+		}
 	}
 
 	private void OnFocusToPanelLeft(IConsoleEntity entity)
@@ -396,6 +433,8 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 		m_CanEquip.Value = !(m_CurrentItemSlot.Value?.SlotVM?.Item.Value?.Blueprint is BlueprintStarshipItem) && (m_CurrentItemSlot.Value?.SlotVM?.IsEquipPossible).GetValueOrDefault() && !m_DollView.IsSlot(entity) && base.ViewModel.Unit.Value.CanBeControlled();
 		m_CanChoose.Value = m_DollView.IsSlot(entity);
 		m_CanSelect.Value = m_NavigationPanelLeft.IsFocused && ((entity as IConfirmClickHandler)?.CanConfirmClick() ?? false);
+		UnitPartPetOwner optional = base.ViewModel.Unit.Value.GetOptional<UnitPartPetOwner>();
+		m_CanMasterPetSwitch.Value = base.ViewModel.Unit.Value.IsPet || optional != null;
 		if (entity is IFuncAdditionalClickHandler funcAdditionalClickHandler)
 		{
 			m_CanFuncAdd.Value = funcAdditionalClickHandler.CanFuncAdditionalClick();

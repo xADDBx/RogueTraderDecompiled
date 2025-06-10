@@ -1,9 +1,12 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Stats;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
+using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -180,6 +183,48 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 
 	public TooltipBaseTemplate TooltipTemplate()
 	{
+		UpdateTemplate();
 		return Tooltip.Value;
+	}
+
+	public void UpdateTemplate()
+	{
+		if (!(this is RankEntrySelectionStatVM rankEntrySelectionStatVM))
+		{
+			return;
+		}
+		ModifiableValue stat = rankEntrySelectionStatVM.UnitProgressionVM.LevelUpManager.PreviewUnit.Stats.GetStat(rankEntrySelectionStatVM.UnitStat.Type);
+		StatTooltipData statTooltipData = default(StatTooltipData);
+		if (!(stat is ModifiableValueAttributeStat attribute))
+		{
+			if (!(stat is ModifiableValueSkill skill))
+			{
+				if (!(stat is ModifiableValueSavingThrow savingThrow))
+				{
+					if (stat != null)
+					{
+						statTooltipData = new StatTooltipData(stat);
+					}
+					else
+					{
+						global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(stat);
+					}
+				}
+				else
+				{
+					statTooltipData = new StatTooltipData(savingThrow);
+				}
+			}
+			else
+			{
+				statTooltipData = new StatTooltipData(skill);
+			}
+		}
+		else
+		{
+			statTooltipData = new StatTooltipData(attribute);
+		}
+		StatTooltipData statData = statTooltipData;
+		Tooltip.Value = new TooltipTemplateRankEntryStat(statData, rankEntrySelectionStatVM.FeatureSelectionItem, rankEntrySelectionStatVM.SelectionStateFeature, showCompanionStats: true);
 	}
 }

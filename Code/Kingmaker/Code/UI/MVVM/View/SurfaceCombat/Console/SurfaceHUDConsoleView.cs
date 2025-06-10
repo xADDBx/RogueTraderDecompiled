@@ -10,6 +10,7 @@ using Kingmaker.Code.UI.MVVM.View.Surface.InputLayers;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Controllers.MapObjects;
+using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
@@ -33,7 +34,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.SurfaceCombat.Console;
 
-public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubscriber
+public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubscriber, IDialogStartHandler
 {
 	[SerializeField]
 	private IngameMenuConsoleView m_IngameMenuConsoleView;
@@ -196,6 +197,25 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 			m_NetRolesAttentionMark.gameObject.SetActive(value.netFirstLoadState && !value.haveRoles);
 			m_NetRolesAttentionSurfaceCombatMark.gameObject.SetActive(value.netFirstLoadState && !value.haveRoles);
 		}));
+	}
+
+	protected override void DestroyViewImplementation()
+	{
+		m_SelectedUnitSubscription?.Dispose();
+		m_SelectedUnitSubscription = null;
+		m_TurnUnitSubscription?.Dispose();
+		m_TurnUnitSubscription = null;
+		if (m_CutSceneInputLayer != null)
+		{
+			GamePad.Instance.PopLayer(m_CutSceneInputLayer);
+			m_CutSceneInputLayer = null;
+		}
+		if (m_HideCloseCutsceneHint != null)
+		{
+			HideCutsceneHints();
+			StopCoroutine(m_HideCloseCutsceneHint);
+			m_HideCloseCutsceneHint = null;
+		}
 	}
 
 	public void ActionBarVisibilityChanged(bool state)
@@ -551,22 +571,8 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 		Game.Instance.CameraController?.Follower?.ScrollTo(base.ViewModel.CurrentUnit.HasValue ? base.ViewModel.CurrentUnit.Value.Unit : Game.Instance.Player.MainCharacterEntity);
 	}
 
-	protected override void DestroyViewImplementation()
+	public void HandleDialogStarted(BlueprintDialog dialog)
 	{
-		m_SelectedUnitSubscription?.Dispose();
-		m_SelectedUnitSubscription = null;
-		m_TurnUnitSubscription?.Dispose();
-		m_TurnUnitSubscription = null;
-		if (m_CutSceneInputLayer != null)
-		{
-			GamePad.Instance.PopLayer(m_CutSceneInputLayer);
-			m_CutSceneInputLayer = null;
-		}
-		if (m_HideCloseCutsceneHint != null)
-		{
-			HideCutsceneHints();
-			StopCoroutine(m_HideCloseCutsceneHint);
-			m_HideCloseCutsceneHint = null;
-		}
+		SwitchPartySelector(isEnabled: false);
 	}
 }

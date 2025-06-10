@@ -22,10 +22,10 @@ public class ReportParameters
 	public DateTime ReportDateTime;
 
 	[JsonProperty]
-	public string operatingSystem;
+	public string OperatingSystem;
 
 	[JsonProperty]
-	public string operatingSystemFamily;
+	public string OperatingSystemFamily;
 
 	[JsonProperty]
 	public string PlayerLanguage;
@@ -50,6 +50,9 @@ public class ReportParameters
 
 	[JsonProperty]
 	public string IssueType;
+
+	[JsonProperty]
+	public bool IsFeedback;
 
 	[JsonProperty]
 	public string StaticScene;
@@ -106,6 +109,9 @@ public class ReportParameters
 	public string Revision;
 
 	[JsonProperty]
+	public string BuildDateTime;
+
+	[JsonProperty]
 	public string Label;
 
 	[JsonProperty]
@@ -131,4 +137,7 @@ public class ReportParameters
 
 	[JsonProperty]
 	public string CoopPlayersCount;
+
+	[JsonProperty]
+	public string CameraPosition;
 }

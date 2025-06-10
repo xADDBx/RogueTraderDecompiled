@@ -54,11 +54,12 @@ public class SurfaceActionBarPartConsumablesPCView : ViewBase<SurfaceActionBarPa
 				h.HandleOpenInventory();
 			});
 		}));
-		AddDisposable(m_InventoryButton.SetHint(UIStrings.Instance.MainMenu.Inventory, "OpenInventory"));
+		CheckServiceWindowsBlocked();
 		AddDisposable(base.ViewModel.UnitChanged.Subscribe(delegate
 		{
 			DrawEntries();
 		}));
+		AddDisposable(base.ViewModel.CheckServiceWindowsBlocked.Subscribe(CheckServiceWindowsBlocked));
 		DrawEntries();
 	}
 
@@ -95,5 +96,12 @@ public class SurfaceActionBarPartConsumablesPCView : ViewBase<SurfaceActionBarPa
 			s.BindWidgetVM(null);
 		});
 		m_WidgetList.Clear();
+	}
+
+	private void CheckServiceWindowsBlocked()
+	{
+		bool flag = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
+		m_InventoryButton.SetInteractable(!flag);
+		AddDisposable(flag ? m_InventoryButton.SetHint(UIStrings.Instance.ExplorationTexts.ExploNotInteractable, "NotInteractable") : m_InventoryButton.SetHint(UIStrings.Instance.MainMenu.Inventory, "OpenInventory"));
 	}
 }

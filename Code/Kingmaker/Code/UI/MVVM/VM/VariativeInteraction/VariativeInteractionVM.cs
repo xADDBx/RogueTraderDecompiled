@@ -17,6 +17,8 @@ public class VariativeInteractionVM : BaseDisposable, IViewModel, IBaseDisposabl
 {
 	public readonly MapObjectView MapObjectView;
 
+	public readonly float VerticalCorrection;
+
 	private readonly Action m_CloseCallback;
 
 	public readonly AutoDisposingReactiveCollection<InteractionVariantVM> Variants = new AutoDisposingReactiveCollection<InteractionVariantVM>();
@@ -47,23 +49,29 @@ public class VariativeInteractionVM : BaseDisposable, IViewModel, IBaseDisposabl
 	{
 		MapObjectView = mapObjectView;
 		m_CloseCallback = closeCallback;
-		foreach (IInteractionVariantActor item3 in GetIHasInteractionVariants(MapObjectView)?.GetInteractionVariantActors())
+		IHasInteractionVariantActors iHasInteractionVariants = GetIHasInteractionVariants(MapObjectView);
+		if (iHasInteractionVariants == null)
 		{
-			if (item3 is UnlockRestrictionPart || !item3.CanUse)
+			return;
+		}
+		VerticalCorrection = iHasInteractionVariants.OvertipCorrection;
+		foreach (IInteractionVariantActor interactionVariantActor in iHasInteractionVariants.GetInteractionVariantActors())
+		{
+			if (interactionVariantActor is UnlockRestrictionPart || !interactionVariantActor.CanUse)
 			{
 				continue;
 			}
-			BlueprintItem item = item3.RequiredItem;
+			BlueprintItem item = interactionVariantActor.RequiredItem;
 			int? resourceCount = null;
 			int? requiredResourceCount = null;
 			int? num = null;
 			if (item != null)
 			{
 				resourceCount = Game.Instance.Player.Inventory.Items.Where((ItemEntity i) => i.Blueprint == item).Sum((ItemEntity i) => i.Count);
-				requiredResourceCount = item3.RequiredItemsCount;
+				requiredResourceCount = interactionVariantActor.RequiredItemsCount;
 			}
 			num = InteractionHelper.GetUnitsToInteractCount(MapObjectView.Data.Parts.GetAll<InteractionPart>().FirstOrDefault());
-			InteractionVariantVM item2 = new InteractionVariantVM(mapObjectView, item3, item?.Name, resourceCount, requiredResourceCount, num, Close);
+			InteractionVariantVM item2 = new InteractionVariantVM(mapObjectView, interactionVariantActor, item?.Name, resourceCount, requiredResourceCount, num, Close);
 			if (requiredResourceCount.HasValue && requiredResourceCount.GetValueOrDefault() > 0)
 			{
 				Variants.Add(item2);

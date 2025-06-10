@@ -47,6 +47,9 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 	[JsonProperty(PropertyName = "roa")]
 	public bool Roaming { get; set; }
 
+	[JsonProperty(PropertyName = "lf")]
+	public bool LeaveFollowers { get; set; }
+
 	[MemoryPackIgnore]
 	public float MaxApproachForAgentASP => Mathf.Max(Mathf.Sqrt(2.Cells().Meters), ApproachRadiusForAgentASP);
 
@@ -59,11 +62,12 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 	{
 	}
 
-	public UnitMoveToParams([NotNull] ForcedPath path, [CanBeNull] TargetWrapper target, float approachRadiusForAgent = 0.3f)
+	public UnitMoveToParams([NotNull] ForcedPath path, [CanBeNull] TargetWrapper target, float approachRadiusForAgent = 0.3f, bool leaveFollowers = false)
 		: base(target)
 	{
 		base.ForcedPath = path;
 		ApproachRadiusForAgentASP = approachRadiusForAgent;
+		LeaveFollowers = leaveFollowers;
 	}
 
 	static UnitMoveToParams()
@@ -116,7 +120,7 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(18, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(19, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -133,7 +137,8 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 		value5 = value.Orientation;
 		value3 = value.RunAway;
 		value4 = value.Roaming;
-		writer.DangerousWriteUnmanaged(in movementType, in isOneFrameCommand, in slowMotionRequired, in approachRadiusForAgentASP, in value5, in value3, in value4);
+		value6 = value.LeaveFollowers;
+		writer.DangerousWriteUnmanaged(in movementType, in isOneFrameCommand, in slowMotionRequired, in approachRadiusForAgentASP, in value5, in value3, in value4, in value6);
 	}
 
 	[Preserve]
@@ -162,7 +167,8 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 		float? value17;
 		bool value18;
 		bool value19;
-		if (memberCount == 18)
+		bool value20;
+		if (memberCount == 19)
 		{
 			if (value != null)
 			{
@@ -184,6 +190,7 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 				value17 = value.Orientation;
 				value18 = value.RunAway;
 				value19 = value.Roaming;
+				value20 = value.LeaveFollowers;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -202,20 +209,21 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 				reader.DangerousReadUnmanaged<float?>(out value17);
 				reader.ReadUnmanaged<bool>(out value18);
 				reader.ReadUnmanaged<bool>(out value19);
-				goto IL_03c5;
+				reader.ReadUnmanaged<bool>(out value20);
+				goto IL_03f4;
 			}
 			reader.ReadUnmanaged<CommandType>(out value2);
 			value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
 			value4 = reader.ReadPackable<TargetWrapper>();
 			reader.DangerousReadUnmanaged<bool, bool, float?, bool, bool?, bool?, int?>(out value5, out value6, out value7, out value8, out value9, out value10, out value11);
 			value12 = reader.ReadPackable<ForcedPath>();
-			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, float, float?, bool, bool>(out value13, out value14, out value15, out value16, out value17, out value18, out value19);
+			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, float, float?, bool, bool, bool>(out value13, out value14, out value15, out value16, out value17, out value18, out value19, out value20);
 		}
 		else
 		{
-			if (memberCount > 18)
+			if (memberCount > 19)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitMoveToParams), 18, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitMoveToParams), 19, memberCount);
 				return;
 			}
 			if (value == null)
@@ -238,6 +246,7 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 				value17 = null;
 				value18 = false;
 				value19 = false;
+				value20 = false;
 			}
 			else
 			{
@@ -259,6 +268,7 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 				value17 = value.Orientation;
 				value18 = value.RunAway;
 				value19 = value.Roaming;
+				value20 = value.LeaveFollowers;
 			}
 			if (memberCount != 0)
 			{
@@ -314,7 +324,11 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 																				if (memberCount != 17)
 																				{
 																					reader.ReadUnmanaged<bool>(out value19);
-																					_ = 18;
+																					if (memberCount != 18)
+																					{
+																						reader.ReadUnmanaged<bool>(out value20);
+																						_ = 19;
+																					}
 																				}
 																			}
 																		}
@@ -335,7 +349,7 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 			}
 			if (value != null)
 			{
-				goto IL_03c5;
+				goto IL_03f4;
 			}
 		}
 		value = new UnitMoveToParams
@@ -357,10 +371,11 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 			ApproachRadiusForAgentASP = value16,
 			Orientation = value17,
 			RunAway = value18,
-			Roaming = value19
+			Roaming = value19,
+			LeaveFollowers = value20
 		};
 		return;
-		IL_03c5:
+		IL_03f4:
 		value.Type = value2;
 		value.OwnerRef = value3;
 		value.Target = value4;
@@ -379,5 +394,6 @@ public sealed class UnitMoveToParams : UnitCommandParams<UnitMoveTo>, IMemoryPac
 		value.Orientation = value17;
 		value.RunAway = value18;
 		value.Roaming = value19;
+		value.LeaveFollowers = value20;
 	}
 }

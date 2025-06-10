@@ -7,6 +7,8 @@ namespace Kingmaker.PubSubSystem;
 public interface IUnitTraumaHandler : ISubscriber<IMechanicEntity>, ISubscriber
 {
 	void HandleTraumaReceived();
+
+	void HandleTraumaAvoided();
 }
 public interface IUnitTraumaHandler<TTag> : IUnitTraumaHandler, ISubscriber<IMechanicEntity>, ISubscriber, IEventTag<IUnitTraumaHandler, TTag>
 {

@@ -9,6 +9,7 @@ using Kingmaker.Blueprints.Items.Shields;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UnitLogic.Mechanics.Damage;
@@ -48,17 +49,17 @@ public static class ItemsFilter
 			}
 			return true;
 		case ItemsFilterType.Accessories:
-			if (!(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses))
+			if (!(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentShirt))
 			{
-				return blueprintItem is BlueprintItemEquipmentShirt;
+				return blueprintItem is BlueprintItemEquipmentPetProtocol;
 			}
 			return true;
 		case ItemsFilterType.Usable:
-			if (!(blueprintItem is BlueprintItemEquipmentUsable))
+			if (blueprintItem is BlueprintItemEquipmentUsable || blueprintItem.Tag != 0)
 			{
-				return blueprintItem.Tag != ItemTag.None;
+				return !(blueprintItem is BlueprintItemEquipmentPetProtocol);
 			}
-			return true;
+			return false;
 		case ItemsFilterType.Notable:
 			return UIUtilityItem.IsQuestItem(blueprintItem);
 		case ItemsFilterType.NonUsable:
@@ -345,11 +346,22 @@ public static class ItemsFilter
 																			{
 																				if (!(blueprintItem is BlueprintItemAugerArray))
 																				{
-																					if (blueprintItem is BlueprintStarshipWeapon)
+																					if (!(blueprintItem is BlueprintStarshipWeapon))
 																					{
-																						return ItemsItemType.StarshipWeapon;
+																						if (blueprintItem is BlueprintItemEquipmentPetProtocol blueprintItemEquipmentPetProtocol)
+																						{
+																							return blueprintItemEquipmentPetProtocol.PetType switch
+																							{
+																								PetType.Mastiff => ItemsItemType.PetProtocolMastiff, 
+																								PetType.Raven => ItemsItemType.PetProtocolRaven, 
+																								PetType.Eagle => ItemsItemType.PetProtocolEagle, 
+																								PetType.ServoskullSwarm => ItemsItemType.PetProtocolSkulls, 
+																								_ => ItemsItemType.PetProtocol, 
+																							};
+																						}
+																						return ItemsItemType.NonUsable;
 																					}
-																					return ItemsItemType.NonUsable;
+																					return ItemsItemType.StarshipWeapon;
 																				}
 																				return ItemsItemType.StarshipAugerArray;
 																			}

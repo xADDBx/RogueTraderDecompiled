@@ -9,6 +9,10 @@ public class StatusBuffsRoot : ScriptableObject
 {
 	public StatDamageEntry[] Entries = new StatDamageEntry[0];
 
+	[Space]
+	[Header("Pets status buffs")]
+	public BlueprintBuffReference AscendBuff;
+
 	[CanBeNull]
 	public BlueprintBuff GetDamageBuff(StatType attribute, bool drain)
 	{

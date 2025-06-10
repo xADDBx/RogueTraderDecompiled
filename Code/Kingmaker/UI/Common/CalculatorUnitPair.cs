@@ -42,13 +42,24 @@ public class CalculatorUnitPair : IDisposable, ILevelUpCompleteUIHandler, ISubsc
 				using (ContextData<UnitHelper.PreviewUnit>.Request())
 				{
 					CalculatorUnit?.Dispose();
-					using (ContextData<ItemSlot.IgnoreLock>.Request())
+					try
 					{
-						using (ContextData<GameCommandHelper.PreviewItem>.Request())
+						using (ContextData<ItemSlot.IgnoreLock>.Request())
 						{
-							BaseUnitEntity @this = m_SelectedUnit.Value ?? Game.Instance.Player.MainCharacterEntity;
-							CalculatorUnit = @this.CreatePreview(createView: false, forceEnableBuffs: true);
+							using (ContextData<GameCommandHelper.PreviewItem>.Request())
+							{
+								BaseUnitEntity baseUnitEntity = m_SelectedUnit.Value ?? Game.Instance.Player.MainCharacterEntity;
+								CalculatorUnit = baseUnitEntity.CreatePreview(createView: false, forceEnableBuffs: true);
+								if (baseUnitEntity.Master != null)
+								{
+									CalculatorUnit.InitAsPet(baseUnitEntity.Master);
+								}
+							}
 						}
+					}
+					catch (Exception arg)
+					{
+						PFLog.UI.Error($"Cannot update calculator unit: {arg}");
 					}
 				}
 			}

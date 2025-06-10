@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Controllers.Combat;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
@@ -31,7 +30,14 @@ public class ContextActionStartAdditionalTurn : ContextAction
 	private RestrictionCalculator AbilityRestrictionForInterrupt;
 
 	[SerializeField]
+	private bool InterruptionWithoutUIUpdates;
+
+	[SerializeField]
 	private bool LetCurrentUnitFinishAction;
+
+	[SerializeField]
+	[Tooltip("If target allready has interruption turn in queue this action doesn't resolve and cancels itself.")]
+	private bool ForbidChainInterruption;
 
 	public override string GetCaption()
 	{
@@ -45,7 +51,7 @@ public class ContextActionStartAdditionalTurn : ContextAction
 	protected override void RunAction()
 	{
 		MechanicEntity entity = base.Target.Entity;
-		if (entity == null || !entity.IsInCombat || (entity == Game.Instance.TurnController.CurrentUnit && !m_AllowOnCurrentTurnUnit))
+		if (entity == null || !entity.IsInCombat || (entity == Game.Instance.TurnController.CurrentUnit && !m_AllowOnCurrentTurnUnit) || (ForbidChainInterruption && entity.Initiative.InterruptingOrder > 0))
 		{
 			return;
 		}
@@ -55,21 +61,18 @@ public class ContextActionStartAdditionalTurn : ContextAction
 		{
 			list.RemoveAll((CasterExtraTurnBonus p) => p.OnlyIfTargetIsNotOwner);
 		}
-		PartUnitCombatState combatStateOptional = entity.GetCombatStateOptional();
-		if (combatStateOptional != null)
-		{
-			int num = GrantedAP.Calculate(base.Context);
-			num += ((num > 0) ? list.Sum((CasterExtraTurnBonus p) => p.ActionPointsBonus.Calculate(base.Context)) : 0);
-			combatStateOptional.SetYellowPoint(num);
-			int num2 = GrantedMP.Calculate(base.Context);
-			num2 += ((num2 > 0) ? list.Sum((CasterExtraTurnBonus p) => p.MovementPointsBonus.Calculate(base.Context)) : 0);
-			combatStateOptional.SetBluePoint(num2);
-		}
+		int num = GrantedAP.Calculate(base.Context);
+		num += ((num > 0) ? list.Sum((CasterExtraTurnBonus p) => p.ActionPointsBonus.Calculate(base.Context)) : 0);
+		int num2 = GrantedMP.Calculate(base.Context);
+		num2 += ((num2 > 0) ? list.Sum((CasterExtraTurnBonus p) => p.MovementPointsBonus.Calculate(base.Context)) : 0);
 		Game.Instance.TurnController.InterruptCurrentTurn(entity, base.Caster, new InterruptionData
 		{
 			AsExtraTurn = !AsInterruption,
 			RestrictionsOnInterrupt = AbilityRestrictionForInterrupt,
-			WaitForCommandsToFinish = LetCurrentUnitFinishAction
+			WaitForCommandsToFinish = LetCurrentUnitFinishAction,
+			InterruptionWithoutInitiativeAndPanelUpdate = InterruptionWithoutUIUpdates,
+			GrantedAP = num,
+			GrantedMP = num2
 		});
 		using (base.Context.GetDataScope(entity.ToITargetWrapper()))
 		{

@@ -1,7 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Parts;
 using StateHasher.Core;
@@ -27,9 +26,9 @@ public class OverrideAbilityThreatenedAreaSetting : UnitFactComponentDelegate, I
 		base.Owner.GetOptional<PartAbilitySettings>()?.Remove(this);
 	}
 
-	public BlueprintAbility.UsingInThreateningAreaType? GetThreatenedAreaRule(AbilityData ability)
+	public BlueprintAbility.UsingInThreateningAreaType? GetThreatenedAreaRule()
 	{
-		if (!Restriction.IsPassed(base.Fact, base.Context, null, ability))
+		if (!Restriction.IsPassed(base.Fact, base.Context))
 		{
 			return null;
 		}

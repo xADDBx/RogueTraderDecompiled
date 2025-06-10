@@ -8,6 +8,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Formations;
+using Kingmaker.Pathfinding;
 using Kingmaker.QA;
 using Kingmaker.View;
 using Owlcat.QA.Validation;
@@ -77,7 +78,7 @@ public class TranslocatePlayer : GameAction
 		List<BaseUnitEntity> list = Game.Instance.Player.PartyAndPets.Where(ShouldMoveCharacterOnLocator).ToList();
 		Span<Vector3> resultPositions = stackalloc Vector3[list.Count];
 		Vector3 direction = targetRotation * Vector3.forward;
-		PartyFormationHelper.FillFormationPositions(targetPosition, FormationAnchor.Center, direction, list, list, Game.Instance.Player.FormationManager.CurrentFormation, resultPositions);
+		PartyFormationHelper.FillFormationPositions(targetPosition, FormationAnchor.Center, direction, list, list, Game.Instance.Player.FormationManager.CurrentFormation, resultPositions, -1, targetPosition.GetNearestNodeXZ());
 		for (int i = 0; i < list.Count; i++)
 		{
 			if (!list[i].LifeState.IsFinallyDead)

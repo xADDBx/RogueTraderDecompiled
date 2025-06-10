@@ -29,6 +29,9 @@ public class CombatLogPCView : CombatLogBaseView
 	[SerializeField]
 	private ResizePanel m_ResizePanel;
 
+	[SerializeField]
+	private OwlcatButton m_ResizePanelButton;
+
 	[Header("Filters")]
 	[SerializeField]
 	private FadeAnimator m_FiltersAnimator;
@@ -95,6 +98,10 @@ public class CombatLogPCView : CombatLogBaseView
 		m_IsFiltersVisible = IsPinned.Or(m_IsMoseHovered).ToReadOnlyReactiveProperty();
 		AddDisposable(m_IsFiltersVisible.Subscribe(SwitchFiltersVisibility));
 		UISounds.Instance.SetClickAndHoverSound(m_SwitchPinButton, UISounds.ButtonSoundsEnum.PlastickSound);
+		if (m_ResizePanelButton != null)
+		{
+			UISounds.Instance.SetClickAndHoverSound(m_ResizePanelButton, UISounds.ButtonSoundsEnum.PlastickSound);
+		}
 		AddDisposable(UniRxExtensionMethods.Subscribe(m_SwitchPinButton.OnLeftClickAsObservable(), delegate
 		{
 			IsPinned.Value = !IsPinned.Value;

@@ -3,9 +3,11 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
 using Pathfinding;
@@ -65,6 +67,7 @@ public class TranslocateUnit : GameAction
 		{
 			return;
 		}
+		targetUnit.Commands.InterruptMove();
 		targetUnit.View.StopMoving();
 		Vector3 position;
 		if (translocatePositionEvaluator == null)
@@ -104,7 +107,11 @@ public class TranslocateUnit : GameAction
 	private void MoveUnit(AbstractUnitEntity unit, Vector3 position)
 	{
 		unit.Position = position;
-		unit.View.MovementAgent.Blocker.BlockAt(unit.Position);
+		if (!m_PrecisePosition && unit.IsInCombat && unit is BaseUnitEntity unit2)
+		{
+			unit2.SnapToGrid();
+		}
+		unit.View.MovementAgent.UpdateBlocker();
 		if (m_CopyRotation && translocateOrientationEvaluator != null)
 		{
 			unit.SetOrientation(translocateOrientationEvaluator.GetValue());

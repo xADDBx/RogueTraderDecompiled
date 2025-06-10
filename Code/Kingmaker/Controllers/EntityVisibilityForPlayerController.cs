@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Parts;
@@ -8,6 +9,8 @@ namespace Kingmaker.Controllers;
 public class EntityVisibilityForPlayerController : IControllerTick, IController
 {
 	private int m_VisibleEntityRevealingDisabledCounter;
+
+	private readonly HashSet<MechanicEntity> m_InstantlyHiddenEntities = new HashSet<MechanicEntity>();
 
 	public void EnableVisibleEntityRevealing()
 	{
@@ -38,14 +41,33 @@ public class EntityVisibilityForPlayerController : IControllerTick, IController
 		}
 	}
 
-	private static void Update(MechanicEntity entity, bool revealVisible)
+	private void Update(MechanicEntity entity, bool revealVisible)
 	{
 		BaseUnitEntity baseUnitEntity = entity as BaseUnitEntity;
 		if (!(entity.View == null) && (baseUnitEntity == null || !baseUnitEntity.IsSleeping || (baseUnitEntity.LifeState.IsFinallyDead && !baseUnitEntity.LifeState.IsDeathRevealed)))
 		{
-			bool visible = ((baseUnitEntity != null) ? IsVisible(baseUnitEntity) : IsVisible(entity));
-			entity.View.SetVisible(visible, force: false, revealVisible);
+			bool flag = ((baseUnitEntity != null) ? IsVisible(baseUnitEntity) : IsVisible(entity));
+			bool flag2 = IsHiddenInstantly(entity);
+			if (flag2 && !flag && entity.View.IsVisible)
+			{
+				m_InstantlyHiddenEntities.Add(entity);
+			}
+			else if (!flag2 && flag && m_InstantlyHiddenEntities.Contains(entity))
+			{
+				m_InstantlyHiddenEntities.Remove(entity);
+				flag2 = true;
+			}
+			entity.View.SetVisible(flag, flag2, revealVisible);
 		}
+	}
+
+	private static bool IsHiddenInstantly(MechanicEntity entity)
+	{
+		if ((bool)entity.Features.Hidden)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	private static bool IsVisible(BaseUnitEntity unit)

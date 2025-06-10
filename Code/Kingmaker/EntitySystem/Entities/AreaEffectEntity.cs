@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.FogOfWar.LineOfSight;
 using Kingmaker.Controllers.Optimization;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Mechanics.Entities;
@@ -17,6 +18,7 @@ using Kingmaker.QA;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
@@ -33,7 +35,7 @@ using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Entities;
 
-public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAreaHandler, ISubscriber, IAreaEffectEntity, IMechanicEntity, IEntity, IDisposable, IEntityPositionChangedHandler, ISubscriber<IEntity>, ICameraFocusTarget, IHashable
+public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAreaHandler, ISubscriber, IAreaEffectEntity, IMechanicEntity, IEntity, IDisposable, IEntityPositionChangedHandler, ISubscriber<IEntity>, ICameraFocusTarget, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IHashable
 {
 	public interface IUnitWithinBoundsHandler
 	{
@@ -394,6 +396,12 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 
 	public void UpdateViewAndUnits()
 	{
+		if (View?.Shape == null)
+		{
+			PFLog.Entity.Warning(" Area Effect Entity " + Name + " missing it's view. Disposing.");
+			Dispose();
+			return;
+		}
 		Bounds bounds = View.Shape.GetBounds();
 		if (!base.Blueprint.IsAllArea)
 		{
@@ -608,7 +616,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	{
 		using (ProfileScope.NewScope("ShouldUnitBeInside"))
 		{
-			return unit.IsInGame && (!unit.IsInFogOfWar || unit.IsInCombat || unit.AwakeTimer > 0f) && (unit.LifeState.IsConscious || base.Blueprint.AffectDead) && IsSuitableTargetType(unit) && (base.Blueprint.IsAllArea || (Contains(unit) && !LineOfSightGeometry.Instance.HasObstacle(View.ViewTransform.position, unit.Position))) && !AbstractUnitCommand.CommandTargetUntargetable(this, unit) && (!unit.Features.Flying || !Context.SpellDescriptor.HasAnyFlag(SpellDescriptor.Ground));
+			return base.IsInGame && unit.IsInGame && (!unit.IsInFogOfWar || unit.IsInCombat || unit.AwakeTimer > 0f) && (unit.LifeState.IsConscious || base.Blueprint.AffectDead) && IsSuitableTargetType(unit) && (base.Blueprint.IsAllArea || (Contains(unit) && !LineOfSightGeometry.Instance.HasObstacle(View.ViewTransform.position, unit.Position))) && !AbstractUnitCommand.CommandTargetUntargetable(this, unit) && (!unit.Features.Flying || !Context.SpellDescriptor.HasAnyFlag(SpellDescriptor.Ground));
 		}
 	}
 
@@ -705,7 +713,14 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	{
 		base.OnIsInGameChanged();
 		UpdateFxs();
-		m_ForceUpdate = true;
+		if (base.IsInGame)
+		{
+			m_ForceUpdate = true;
+		}
+		else
+		{
+			UpdateUnits();
+		}
 	}
 
 	private void UpdateFxs()
@@ -726,6 +741,14 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	public void HandleEntityPositionChanged()
 	{
 		m_ForceUpdate = true;
+	}
+
+	public void HandleUnitLifeStateChanged(UnitLifeState prevLifeState)
+	{
+		if (ContextData<EventInvoker>.Current?.InvokerEntity is BaseUnitEntity unit && Contains(unit))
+		{
+			m_ForceUpdate = true;
+		}
 	}
 
 	public override Hash128 GetHash128()

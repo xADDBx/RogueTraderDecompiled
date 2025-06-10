@@ -32,6 +32,7 @@ using Pathfinding;
 using StateHasher.Core;
 using UnityEngine;
 using Warhammer.SpaceCombat;
+using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.AreaLogic.TimeSurvival;
 
@@ -234,10 +235,31 @@ public class TimeSurvival : EntityFactComponentDelegate, IRoundStartHandler, ISu
 		}
 		data.IsEnded = true;
 		data.RoundsSurvived = -1;
+		HandlePlayerStarshipProgression();
 		EventBus.RaiseEvent(delegate(IEndSpaceCombatHandler h)
 		{
 			h.HandleEndSpaceCombat();
 		});
+	}
+
+	private static void HandlePlayerStarshipProgression()
+	{
+		StarshipEntity ship = Game.Instance.Player.PlayerShip;
+		PartUnitProgression shipProgression = ship.Progression;
+		BlueprintArea currentlyLoadedArea = Game.Instance.CurrentlyLoadedArea;
+		BlueprintSpaceCombatArea spaceCombatArea = currentlyLoadedArea as BlueprintSpaceCombatArea;
+		if (spaceCombatArea != null)
+		{
+			shipProgression.GainExperience(spaceCombatArea.AdditionalExperience);
+			EventBus.RaiseEvent((IStarshipEntity)ship, (Action<IUISpaceCombatExperienceGainedPerAreaHandler>)delegate(IUISpaceCombatExperienceGainedPerAreaHandler o)
+			{
+				o.HandlerOnSpaceCombatExperienceGainedPerArea(spaceCombatArea.AdditionalExperience);
+			}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IStarshipEntity)ship, (Action<IStarshipExpToNextLevelHandler>)delegate(IStarshipExpToNextLevelHandler h)
+			{
+				h.HandleStarshipExpToNextLevel(shipProgression.ExperienceLevel, ship.StarshipProgression.ExpToNextLevel, spaceCombatArea.AdditionalExperience);
+			}, isCheckRuntime: true);
+		}
 	}
 
 	private List<SpawnData> ActiveSpawnData(IEnumerable<SpawnData> data, int currentRound)

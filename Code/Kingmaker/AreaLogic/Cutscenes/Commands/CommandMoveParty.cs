@@ -5,15 +5,21 @@ using Code.Visual.Animation;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Clicks.Handlers;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Formations;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility.Attributes;
-using Kingmaker.View;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.QA.Validation;
+using Owlcat.Runtime.Core.Logging;
 using Pathfinding;
 using UnityEngine;
 
@@ -43,13 +49,20 @@ public class CommandMoveParty : CommandBase
 		public bool Interrupt;
 	}
 
+	private static readonly LogChannel Logger = PFLog.Cutscene;
+
 	[SerializeField]
 	private Player.CharactersList m_UnitsList;
 
-	[AllowedEntityType(typeof(LocatorView))]
+	[SerializeReference]
+	public AbstractUnitEvaluator[] ExceptThese;
+
+	[HideIf("True")]
+	public EntityReference[] Targets;
+
 	[ValidateNotEmpty]
 	[ValidateNoNullEntries]
-	public EntityReference[] Targets;
+	public CommandTranslocateParty.Target[] TargetsV2;
 
 	public WalkSpeedType Animation = WalkSpeedType.Walk;
 
@@ -67,70 +80,103 @@ public class CommandMoveParty : CommandBase
 
 	private readonly double m_Timeout = 20.0;
 
+	private bool True => true;
+
+	public override void OnEnable()
+	{
+		base.OnEnable();
+		if (TargetsV2.Empty() && !Targets.Empty())
+		{
+			TargetsV2 = Targets?.Select((EntityReference x) => new CommandTranslocateParty.Target
+			{
+				Entity = x
+			}).ToArray();
+			Targets = null;
+		}
+	}
+
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
 		Data commandData = player.GetCommandData<Data>(this);
 		int num = 0;
-		Vector3[] positions = GetPositions();
-		foreach (BaseUnitEntity characters in Game.Instance.Player.GetCharactersList(m_UnitsList))
+		AbstractUnitEntity value;
+		IEnumerable<BaseUnitEntity> enumerable = from x in Game.Instance.Player.GetCharactersList(m_UnitsList)
+			where !x.HasMechanicFeature(MechanicsFeatureType.Hidden) && x.IsInGame
+			where !ElementExtendAsObject.Valid(ExceptThese).Any((AbstractUnitEvaluator y) => y != null && y.TryGetValue(out value) && x == value)
+			select x;
+		if (MoveWithFormation)
 		{
-			Vector3 targetPosition = positions[num++ % positions.Length];
+			Vector3[] formationPositions = GetFormationPositions();
+			{
+				foreach (BaseUnitEntity item in enumerable)
+				{
+					Vector3 targetPosition2 = formationPositions[num++ % formationPositions.Length];
+					Move(item, targetPosition2);
+				}
+				return;
+			}
+		}
+		CommandTranslocateParty.Distribute(enumerable, TargetsV2, delegate(BaseUnitEntity character, EntityReference targetRef, int characterIndex)
+		{
+			IEntityViewBase entityViewBase = targetRef.FindView();
+			if (entityViewBase == null)
+			{
+				Logger.Error($"{this}: Can't find locator {targetRef} for teleport unit");
+			}
+			else
+			{
+				Move(character, entityViewBase.ViewTransform.position, entityViewBase.ViewTransform.rotation);
+			}
+		});
+		UnitData Move(BaseUnitEntity character, Vector3 targetPosition, Quaternion? targetRotation = null)
+		{
 			UnitData affectedUnit = new UnitData
 			{
-				Unit = characters,
+				Unit = character,
 				TargetPosition = targetPosition,
 				Interrupt = skipping
 			};
-			Transform transform = Targets[num % positions.Length]?.FindData()?.View?.ViewTransform;
-			if (!MoveWithFormation && transform != null)
+			if (targetRotation.HasValue)
 			{
-				affectedUnit.TargetRotation = transform.rotation;
+				affectedUnit.TargetRotation = targetRotation.Value;
 			}
 			commandData.AffectedUnits.Add(affectedUnit);
-			if (skipping)
+			if (!skipping)
 			{
-				continue;
-			}
-			affectedUnit.Path = PathfindingService.Instance.FindPathRT_Delayed(characters.MovementAgent, affectedUnit.TargetPosition, 0.3f, 1, delegate(ForcedPath path)
-			{
-				affectedUnit.Path = null;
-				if (path.error)
+				affectedUnit.Path = PathfindingService.Instance.FindPathRT_Delayed(character.MovementAgent, affectedUnit.TargetPosition, 0.3f, 1, delegate(ForcedPath path)
 				{
-					PFLog.Pathfinding.Error("An error path was returned. Ignoring");
-				}
-				else if (!affectedUnit.Interrupt)
-				{
-					UnitMoveToParams cmdParams = new UnitMoveToParams(path, affectedUnit.TargetPosition)
+					affectedUnit.Path = null;
+					if (path.error)
 					{
-						OverrideSpeed = (OverrideSpeed ? new float?(Speed) : null),
-						MovementType = Animation
-					};
-					BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
-					if (baseUnitEntity == null)
-					{
-						CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
+						PFLog.Pathfinding.Error("An error path was returned. Ignoring");
 					}
-					else
+					else if (!affectedUnit.Interrupt)
 					{
-						UnitCommandHandle command = baseUnitEntity.Commands.Run(cmdParams);
-						affectedUnit.Command = command;
-						if (DisableAvoidance)
+						UnitMoveToParams cmdParams = new UnitMoveToParams(path, affectedUnit.TargetPosition)
 						{
-							baseUnitEntity.View.MovementAgent.AvoidanceDisabled = true;
+							OverrideSpeed = (OverrideSpeed ? new float?(Speed) : null),
+							MovementType = Animation,
+							Orientation = targetRotation?.eulerAngles.y
+						};
+						BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
+						if (baseUnitEntity == null)
+						{
+							CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
+						}
+						else
+						{
+							UnitCommandHandle command = baseUnitEntity.Commands.Run(cmdParams);
+							affectedUnit.Command = command;
+							if (DisableAvoidance)
+							{
+								baseUnitEntity.View.MovementAgent.AvoidanceDisabled = true;
+							}
 						}
 					}
-				}
-			});
+				});
+			}
+			return affectedUnit;
 		}
-	}
-
-	private Vector3[] GetPositions()
-	{
-		if (!MoveWithFormation)
-		{
-			return Targets.Select((EntityReference x) => x.FindData().Position).ToArray();
-		}
-		return GetFormationPositions();
 	}
 
 	private Vector3[] GetFormationPositions()
@@ -139,7 +185,7 @@ public class CommandMoveParty : CommandBase
 		IPartyFormation currentFormation = Game.Instance.Player.FormationManager.CurrentFormation;
 		Span<Vector3> resultPositions = stackalloc Vector3[list.Count];
 		Vector3 position = (Targets[0].FindData() ?? throw new Exception("No data for target at " + name)).Position;
-		PartyFormationHelper.FillFormationPositions(position, FormationAnchor.Front, ClickGroundHandler.GetDirection(position, list), list, list, currentFormation, resultPositions, FormationSpaceFactor);
+		PartyFormationHelper.FillFormationPositions(position, FormationAnchor.Front, ClickGroundHandler.GetDirection(position, list), list, list, currentFormation, resultPositions);
 		return resultPositions.ToArray();
 	}
 

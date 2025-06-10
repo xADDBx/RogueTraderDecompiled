@@ -63,7 +63,7 @@ public class PostOfficerView : SelectionGroupEntityView<PostOfficerVM>, IFunc01C
 	{
 	}
 
-	protected void SetupEmptyState()
+	private void SetupEmptyState()
 	{
 		if (base.ViewModel.Unit == null)
 		{

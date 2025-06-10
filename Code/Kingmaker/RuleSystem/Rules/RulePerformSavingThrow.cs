@@ -3,104 +3,51 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Enums;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules.Modifiers;
-using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.Utility.DotNetExtensions;
 
 namespace Kingmaker.RuleSystem.Rules;
 
 public class RulePerformSavingThrow : RulebookEvent
 {
-	public readonly ValueModifiersManager ValueModifiers = new ValueModifiersManager();
-
-	public readonly int DifficultyClassBase;
-
 	public readonly StatType StatType;
 
 	public readonly SavingThrowType Type;
+
+	private readonly ValueModifiersManager m_ValueModifiers = new ValueModifiersManager();
+
+	private readonly int m_DifficultyClassBase;
+
+	public bool AutoPass { get; private set; }
 
 	public RuleRollD100 D100 { get; }
 
 	public int StatValue { get; private set; }
 
-	private int DifficultyClassMod { get; set; }
+	public ReadonlyList<Modifier> ValueModifiersList => m_ValueModifiers.List;
 
-	public bool AutoPass { get; set; }
+	public bool AlwaysSucceed { get; private set; }
 
-	public int SuccessBonus { get; set; }
+	public bool AlwaysFail { get; private set; }
 
-	[CanBeNull]
-	public EntityFact SuccessBonusSource { get; set; }
+	public EntityFact AlwaysSource { get; private set; }
 
-	public bool? IsAlternativePassed { get; set; }
+	public ModifierDescriptor AlwaysDescriptor { get; private set; }
 
-	[CanBeNull]
-	public BlueprintBuff Buff { get; set; }
-
-	public bool PersistentSpell { get; set; }
-
-	public int DifficultyClass => DifficultyClassBase + DifficultyClassMod;
-
-	public int RollResult
-	{
-		get
-		{
-			if (!RequiresSuccessBonus)
-			{
-				return BaseRollResult;
-			}
-			return BaseRollResult - SuccessBonus;
-		}
-	}
-
-	public bool RequiresSuccessBonus
-	{
-		get
-		{
-			if (BaseRollResult > StatValue && SuccessBonus != 0)
-			{
-				return BaseRollResult - SuccessBonus > StatValue;
-			}
-			return false;
-		}
-	}
+	public int DifficultyClass => m_DifficultyClassBase;
 
 	public bool IsPassed
 	{
 		get
 		{
-			if (!AutoPass && !IsSuccessRoll(D100, RequiresSuccessBonus ? SuccessBonus : 0))
+			if (!AutoPass)
 			{
-				return IsAlternativePassed == true;
+				return IsSuccessRoll(D100);
 			}
 			return true;
 		}
-	}
-
-	public int BaseRollResult => (int)D100 + DifficultyClass;
-
-	public bool IsSuccessRoll(int d100, int successBonus = 0)
-	{
-		if (d100 != 1)
-		{
-			if (d100 > 1)
-			{
-				return d100 < StatValue + successBonus + DifficultyClass;
-			}
-			return false;
-		}
-		return true;
-	}
-
-	private static StatType GetSave(SavingThrowType type)
-	{
-		return type switch
-		{
-			SavingThrowType.Fortitude => StatType.SaveFortitude, 
-			SavingThrowType.Reflex => StatType.SaveReflex, 
-			SavingThrowType.Will => StatType.SaveWill, 
-			_ => StatType.Unknown, 
-		};
 	}
 
 	public RulePerformSavingThrow(MechanicEntity entity, SavingThrowType saveType, int difficultyClass)
@@ -108,7 +55,7 @@ public class RulePerformSavingThrow : RulebookEvent
 	{
 		Type = saveType;
 		StatType = GetSave(saveType);
-		DifficultyClassBase = difficultyClass;
+		m_DifficultyClassBase = difficultyClass;
 		D100 = new RuleRollD100(entity);
 	}
 
@@ -126,16 +73,61 @@ public class RulePerformSavingThrow : RulebookEvent
 			{
 				D100.Reroll(base.ConcreteInitiator?.MainFact, takeBest: true);
 			}
-			StatValue = savingThrowOptional.ModifiedValue + ValueModifiers.Value;
-			if (SuccessBonusSource != null && RequiresSuccessBonus)
-			{
-				ValueModifiers.Add(SuccessBonus, SuccessBonusSource);
-			}
+			StatValue = savingThrowOptional.ModifiedValue + m_ValueModifiers.Value;
 		}
 	}
 
-	public void AddBonusDC(int dc)
+	public void AddValueModifiers(int value, [NotNull] EntityFact source, ModifierDescriptor descriptor = ModifierDescriptor.None)
 	{
-		DifficultyClassMod += dc;
+		m_ValueModifiers.Add(value, source, descriptor);
+	}
+
+	public void SetAlwaysSucceed([NotNull] EntityFact source, ModifierDescriptor descriptor = ModifierDescriptor.None)
+	{
+		if (!AlwaysSucceed && !AlwaysFail)
+		{
+			AlwaysSucceed = true;
+			AlwaysSource = source;
+			AlwaysDescriptor = descriptor;
+		}
+	}
+
+	public void SetAlwaysFail([NotNull] EntityFact source, ModifierDescriptor descriptor = ModifierDescriptor.None)
+	{
+		if (!AlwaysFail)
+		{
+			AlwaysFail = true;
+			AlwaysSucceed = false;
+			AlwaysSource = source;
+			AlwaysDescriptor = descriptor;
+		}
+	}
+
+	private bool IsSuccessRoll(int d100)
+	{
+		if (AlwaysFail)
+		{
+			return false;
+		}
+		if (!AlwaysSucceed && d100 != 1)
+		{
+			if (d100 > 1)
+			{
+				return d100 < StatValue + DifficultyClass;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	private static StatType GetSave(SavingThrowType type)
+	{
+		return type switch
+		{
+			SavingThrowType.Fortitude => StatType.SaveFortitude, 
+			SavingThrowType.Reflex => StatType.SaveReflex, 
+			SavingThrowType.Will => StatType.SaveWill, 
+			_ => StatType.Unknown, 
+		};
 	}
 }

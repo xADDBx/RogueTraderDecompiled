@@ -6,6 +6,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.DollRoom;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using UnityEngine;
 using UnityEngine.UI;
@@ -107,14 +108,14 @@ public class ShipUpgradeBaseView<TShipInventoryStash, TShipComponentSlot, TShipU
 
 	private void HideWindow()
 	{
-		ShipRoom?.Hide();
+		ShipRoom.Or(null)?.Hide();
 		ContextMenuHelper.HideContextMenu();
 		m_FadeAnimator.DisappearAnimation(OnDisappearEnd);
 	}
 
 	private void OnAppearEnd()
 	{
-		ShipRoom?.Show();
+		ShipRoom.Or(null)?.Show();
 	}
 
 	private void OnDisappearEnd()

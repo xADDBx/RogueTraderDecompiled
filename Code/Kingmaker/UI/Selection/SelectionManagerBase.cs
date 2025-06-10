@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem;
@@ -14,6 +15,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Selection.UnitMark;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View;
@@ -213,7 +215,7 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 	{
 		foreach (BaseUnitEntity selectedUnit in SelectedUnits)
 		{
-			if (selectedUnit.IsDisposed || !selectedUnit.IsDirectlyControllable())
+			if (selectedUnit.IsDisposed || (!selectedUnit.IsDirectlyControllable() && !selectedUnit.IsPet))
 			{
 				m_UnitsToUnselect.Add(selectedUnit);
 			}
@@ -278,5 +280,79 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 		{
 			UnselectUnit(SelectedUnit.Value);
 		}
+	}
+
+	public void RefreshUnitFakeSelectionFlags(BaseUnitEntity selectedInUIUnit, BaseUnitEntity singleSelectedUnit = null, bool fullScreenState = false)
+	{
+		if (Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.None)
+		{
+			selectedInUIUnit = null;
+		}
+		foreach (BaseUnitEntity item in Game.Instance.SelectionCharacter.ActualGroup)
+		{
+			UnitPartPetOwner optional = item.GetOptional<UnitPartPetOwner>();
+			if (optional != null && !item.IsPet)
+			{
+				bool isPetFakeSelectionNeeded = false;
+				if (!fullScreenState)
+				{
+					isPetFakeSelectionNeeded = (Game.Instance.IsControllerGamepad ? (singleSelectedUnit == optional.Owner) : SelectedUnits.Contains(optional.Owner));
+				}
+				EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+				{
+					h.HandleFakeSelected(isPetFakeSelectionNeeded);
+				}, isCheckRuntime: true);
+			}
+		}
+	}
+
+	public void SetFakeSelectedFlags(bool value)
+	{
+		foreach (BaseUnitEntity item in Game.Instance.SelectionCharacter.ActualGroup)
+		{
+			EventBus.RaiseEvent((IBaseUnitEntity)item, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			{
+				h.HandleFakeSelected(value);
+			}, isCheckRuntime: true);
+		}
+	}
+
+	public void ToggleSelectAsPetUnit(BaseUnitEntity unit, bool value)
+	{
+		if (Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.None)
+		{
+			return;
+		}
+		UnitPartPetOwner optional = unit.GetOptional<UnitPartPetOwner>();
+		if (optional != null)
+		{
+			EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			{
+				h.HandleFakeSelected(value);
+			}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			{
+				h.HandleFakeSelected(value);
+			}, isCheckRuntime: true);
+		}
+		else if (unit.IsPet)
+		{
+			EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			{
+				h.HandleFakeSelected(value);
+			}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IBaseUnitEntity)unit.Master, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			{
+				h.HandleFakeSelected(value);
+			}, isCheckRuntime: true);
+		}
+	}
+
+	protected void SelectUnitAsPet(BaseUnitEntity unit, bool value)
+	{
+		EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+		{
+			h.HandleFakeSelected(value);
+		}, isCheckRuntime: true);
 	}
 }

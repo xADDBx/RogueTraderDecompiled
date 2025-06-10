@@ -76,6 +76,8 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 
 	private Tween m_PingTween;
 
+	public override bool CreatesDataOnLoad => true;
+
 	public BlueprintSectorMapPoint Blueprint => m_Blueprint.Get();
 
 	public BlueprintSectorMapPointStarSystem StarSystemBlueprint

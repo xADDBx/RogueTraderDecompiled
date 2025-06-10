@@ -43,6 +43,7 @@ using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
+using Kingmaker.View.MapObjects.Traps.Simple;
 using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
@@ -54,6 +55,31 @@ namespace Kingmaker.UI.Common;
 
 public static class UIUtility
 {
+	private class TweenDisposer : IDisposable
+	{
+		private readonly Tween m_Tween;
+
+		private bool m_Disposed;
+
+		public TweenDisposer(Tween tween)
+		{
+			m_Tween = tween;
+		}
+
+		public void Dispose()
+		{
+			if (!m_Disposed)
+			{
+				m_Disposed = true;
+				if (m_Tween.IsActive() && m_Tween.IsPlaying())
+				{
+					m_Tween.Complete(withCallbacks: true);
+					m_Tween.Kill(complete: true);
+				}
+			}
+		}
+	}
+
 	public enum EndDragAction
 	{
 		Put,
@@ -400,16 +426,17 @@ public static class UIUtility
 	public static void GetGroup(List<BaseUnitEntity> characters, bool withRemote = false, bool withPet = false)
 	{
 		characters.Clear();
+		IEnumerable<BaseUnitEntity> enumerable = Game.Instance.Player.Party.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>());
 		if (withRemote)
 		{
-			characters.AddRange(Game.Instance.Player.Party);
+			characters.AddRange(enumerable);
 			List<BaseUnitEntity> list = Game.Instance.Player.RemoteCompanions.ToList();
 			list.Reverse();
 			characters.AddRange(list);
 		}
 		else
 		{
-			characters.AddRange(Game.Instance.Player.Party.Where(IsViewActiveUnit));
+			characters.AddRange(enumerable.Where(IsViewActiveUnit));
 		}
 		if (!withPet)
 		{
@@ -419,15 +446,25 @@ public static class UIUtility
 		{
 			BaseUnitEntity master = item.Master;
 			int num = characters.FindIndex((BaseUnitEntity m) => m == master);
-			if (num < 0 || num + 1 >= characters.Count)
+			if (enumerable.Contains(item.Master))
 			{
-				characters.Add(item);
-			}
-			else
-			{
-				characters.Insert(num + 1, item);
+				if (num < 0 || num + 1 >= characters.Count)
+				{
+					characters.Add(item);
+				}
+				else
+				{
+					characters.Insert(num + 1, item);
+				}
 			}
 		}
+	}
+
+	public static void GetActualGroup(List<BaseUnitEntity> characters)
+	{
+		characters.Clear();
+		IEnumerable<BaseUnitEntity> collection = Game.Instance.SelectionCharacter.ActualGroup.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>());
+		characters.AddRange(collection);
 	}
 
 	public static bool IsViewActiveUnit(BaseUnitEntity unit)
@@ -623,9 +660,9 @@ public static class UIUtility
 			.SetUpdate(isIndependentUpdate: true);
 	}
 
-	public static void MoveXLensPosition(Transform lens, float target, float duration, bool withSound = true)
+	public static IDisposable CreateMoveXLensPosition(Transform lens, float target, float duration, bool withSound = true)
 	{
-		lens.DOLocalMoveX(target, duration).OnStart(delegate
+		return new TweenDisposer(lens.DOLocalMoveX(target, duration).OnStart(delegate
 		{
 			if (withSound)
 			{
@@ -638,7 +675,7 @@ public static class UIUtility
 				StopSelectorSound();
 			}
 		})
-			.SetUpdate(isIndependentUpdate: true);
+			.SetUpdate(isIndependentUpdate: true));
 	}
 
 	private static void PlaySelectorSound()
@@ -674,7 +711,7 @@ public static class UIUtility
 		return text;
 	}
 
-	public static List<PrerequisiteEntryVM> GetPrerequisiteEntries(CalculatedPrerequisite prerequisite)
+	public static List<PrerequisiteEntryVM> GetPrerequisiteEntries(CalculatedPrerequisite prerequisite, bool addTooltip = false)
 	{
 		List<PrerequisiteEntryVM> list = new List<PrerequisiteEntryVM>();
 		if (!(prerequisite is CalculatedPrerequisiteFact calculatedPrerequisiteFact))
@@ -706,24 +743,42 @@ public static class UIUtility
 			}
 			else if (CanUnpackComposite(calculatedPrerequisiteComposite))
 			{
-				list.Add(UnpackPrerequisiteComposite(calculatedPrerequisiteComposite));
+				list.Add(UnpackPrerequisiteComposite(calculatedPrerequisiteComposite, addTooltip));
 			}
 			else
 			{
 				foreach (CalculatedPrerequisite item in calculatedPrerequisiteComposite.Prerequisites.Where((CalculatedPrerequisite i) => !(i is CalculatedPrerequisiteComposite)))
 				{
-					list.AddRange(GetPrerequisiteEntries(item));
+					list.AddRange(GetPrerequisiteEntries(item, addTooltip));
 				}
 				foreach (CalculatedPrerequisite item2 in calculatedPrerequisiteComposite.Prerequisites.Where((CalculatedPrerequisite i) => i is CalculatedPrerequisiteComposite))
 				{
-					list.Add(new PrerequisiteEntryVM(GetPrerequisiteEntries(item2), calculatedPrerequisiteComposite.Value, calculatedPrerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or));
+					list.Add(new PrerequisiteEntryVM(GetPrerequisiteEntries(item2, addTooltip), calculatedPrerequisiteComposite.Value, calculatedPrerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or));
 				}
 			}
 		}
 		else if (!calculatedPrerequisiteFact.IsDlcRestrictedContent)
 		{
-			string text2 = GetPrerequisiteFactName(calculatedPrerequisiteFact) + " " + GetFactName(calculatedPrerequisiteFact) + ".";
-			list.Add(new PrerequisiteEntryVM(text2, calculatedPrerequisiteFact.Value, calculatedPrerequisiteFact.Not));
+			BlueprintUnitFact fact = calculatedPrerequisiteFact.Fact;
+			string text3;
+			if (fact is BlueprintFeature && fact.name == "AeldariRace")
+			{
+				if (calculatedPrerequisiteFact.Not)
+				{
+					string text2 = UIStrings.Instance.Tooltips.not.Text;
+					text3 = string.Format(text2, GetFactName(calculatedPrerequisiteFact, addTooltip)) ?? "";
+				}
+				else
+				{
+					text3 = GetPrerequisiteFactName(calculatedPrerequisiteFact) + " " + GetFactName(calculatedPrerequisiteFact, addTooltip) + ".";
+				}
+			}
+			else
+			{
+				string text2 = (calculatedPrerequisiteFact.Not ? UIStrings.Instance.Tooltips.notSimple.Text : "{0}");
+				text3 = GetPrerequisiteFactName(calculatedPrerequisiteFact) + " " + string.Format(text2, GetFactName(calculatedPrerequisiteFact, addTooltip)) + ".";
+			}
+			list.Add(new PrerequisiteEntryVM(text3, calculatedPrerequisiteFact.Value, calculatedPrerequisiteFact.Not));
 		}
 		return list;
 	}
@@ -733,7 +788,7 @@ public static class UIUtility
 		return prerequisiteComposite.Prerequisites.All((CalculatedPrerequisite i) => i is CalculatedPrerequisiteFact);
 	}
 
-	private static PrerequisiteEntryVM UnpackPrerequisiteComposite(CalculatedPrerequisiteComposite prerequisiteComposite)
+	private static PrerequisiteEntryVM UnpackPrerequisiteComposite(CalculatedPrerequisiteComposite prerequisiteComposite, bool addTooltip)
 	{
 		StringBuilder stringBuilder = new StringBuilder(GetPrerequisiteFactName(prerequisiteComposite.Prerequisites.First() as CalculatedPrerequisiteFact) + ".");
 		string separator = ((prerequisiteComposite.Composition == FeaturePrerequisiteComposition.Or) ? (" " + UIStrings.Instance.Tooltips.or.Text + " ") : (" " + UIStrings.Instance.Tooltips.and.Text + " "));
@@ -744,7 +799,16 @@ public static class UIUtility
 			{
 				if (!calculatedPrerequisiteFact.IsDlcRestrictedContent)
 				{
-					list.Add(GetFactName(calculatedPrerequisiteFact));
+					string text = (calculatedPrerequisiteFact.Not ? UIStrings.Instance.Tooltips.notSimple.Text : "{0}");
+					if (prerequisiteComposite.Composition == FeaturePrerequisiteComposition.And)
+					{
+						separator = ".\n";
+					}
+					else
+					{
+						text = text.ToLower();
+					}
+					list.Add(string.Format(text, GetFactName(calculatedPrerequisiteFact, addTooltip)));
 				}
 				continue;
 			}
@@ -755,12 +819,12 @@ public static class UIUtility
 		return new PrerequisiteEntryVM(stringBuilder.ToString(), prerequisiteComposite.Value, prerequisiteComposite.Not);
 	}
 
-	private static string GetFactName(CalculatedPrerequisiteFact prerequisiteFact)
+	private static string GetFactName(CalculatedPrerequisiteFact prerequisiteFact, bool addTooltip)
 	{
 		string text = "<b>" + prerequisiteFact.Fact.Name + "</b>";
 		if (prerequisiteFact.Fact is BlueprintFeature blueprintFeature)
 		{
-			text = "<link=\"Highlight:" + blueprintFeature.AssetGuid + "\">" + text + "</link>";
+			text = (addTooltip ? ("<link=\"f:" + blueprintFeature.AssetGuid + "\">" + text + "</link>") : text);
 		}
 		return text;
 	}
@@ -887,6 +951,10 @@ public static class UIUtility
 		if (EntityLink.GetEntityType(keysFromLink[0]) != EntityLink.Type.Encyclopedia)
 		{
 			return true;
+		}
+		if (keysFromLink.Length < 2)
+		{
+			return false;
 		}
 		BlueprintEncyclopediaGlossaryEntry glossaryEntry = GetGlossaryEntry(keysFromLink[1]);
 		if (glossaryEntry == null)
@@ -1018,6 +1086,25 @@ public static class UIUtility
 		needChanceText = true;
 		num = InteractionHelper.GetInteractionSkillCheckChance(skillCheck.SelectUnit(units), statType, num);
 		return $"[{text}: {num}%]";
+	}
+
+	public static string GetTrapSkillCheckText(DisableTrapInteractionPart trap, List<BaseUnitEntity> units)
+	{
+		if (trap == null)
+		{
+			return string.Empty;
+		}
+		SimpleTrapObjectView simpleTrapObjectView = trap.View as SimpleTrapObjectView;
+		SimpleTrapObjectInfo simpleTrapObjectInfo = simpleTrapObjectView?.Info;
+		if (simpleTrapObjectInfo == null)
+		{
+			return string.Empty;
+		}
+		StatType disarmSkill = simpleTrapObjectInfo.DisarmSkill;
+		string text = BlueprintRoot.Instance.LocalizedTexts.Stats.GetText(disarmSkill);
+		int disableDC = simpleTrapObjectView.Data.DisableDC;
+		int interactionSkillCheckChance = InteractionHelper.GetInteractionSkillCheckChance(trap.SelectUnit(units), disarmSkill, disableDC);
+		return $"[{text}: {interactionSkillCheckChance}%]";
 	}
 
 	public static void SendWarning(string message)

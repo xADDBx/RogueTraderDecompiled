@@ -1,6 +1,7 @@
-using System.Collections;
+using System.Collections.Generic;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
+using Kingmaker.QA.Arbiter.Tasks;
 
 namespace Kingmaker.QA.Arbiter;
 
@@ -14,7 +15,7 @@ public class StartNewGameFromPresetTask : ArbiterTask
 		m_Preset = preset;
 	}
 
-	protected override IEnumerator Routine()
+	protected override IEnumerator<ArbiterTask> Routine()
 	{
 		yield return new ResetToMainMenuTask(this);
 		if (MainMenuUI.Instance == null)

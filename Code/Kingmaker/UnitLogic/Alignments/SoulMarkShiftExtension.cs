@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
@@ -37,7 +36,8 @@ public static class SoulMarkShiftExtension
 		SoulMark soulMark = GetSoulMark(shift.Direction);
 		if (soulMark == null)
 		{
-			throw new Exception("No predefined soul marks on main character");
+			PFLog.Default.Error("No predefined soul marks on main character");
+			return;
 		}
 		int delayedSoulMarkValue = soulMark.Owner.GetDelayedSoulMarkValue(shift.Direction);
 		int num = shift.Value + delayedSoulMarkValue;

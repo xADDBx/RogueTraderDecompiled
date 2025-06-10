@@ -16,10 +16,14 @@ public interface IAbilityAoEPatternProvider
 
 	bool CalculateAttackFromPatternCentre { get; }
 
+	bool ExcludeUnwalkable { get; }
+
 	TargetType Targets { get; }
 
 	[CanBeNull]
 	AoEPattern Pattern { get; }
+
+	AoEPattern OriginalPattern => Pattern;
 
 	void OverridePattern(AoEPattern pattern);
 

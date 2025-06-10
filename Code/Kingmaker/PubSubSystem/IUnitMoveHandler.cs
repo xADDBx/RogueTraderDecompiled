@@ -9,3 +9,6 @@ public interface IUnitMoveHandler : ISubscriber<IAbstractUnitEntity>, ISubscribe
 {
 	void HandleUnitMovement(AbstractUnitEntity unit);
 }
+public interface IUnitMoveHandler<TTag> : IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IEventTag<IUnitMoveHandler, TTag>
+{
+}

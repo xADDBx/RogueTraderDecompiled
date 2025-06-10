@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace Kingmaker.AreaLogic.Etudes;
 
-public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHandler, ICompanionChangeHandler, ISubscriber<IBaseUnitEntity>, IPartyHandler, IAreaHandler, IQuestObjectiveHandler, ITimeOfDayChangedHandler, ISummonPoolHandler, ISubscriber<IMechanicEntity>, IAreaPartHandler, IAdditiveAreaSwitchHandler, IUnitCombatHandler, IHashable
+public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHandler, ICompanionChangeHandler, ISubscriber<IBaseUnitEntity>, IPartyHandler, IAreaHandler, IQuestObjectiveHandler, ITimeOfDayChangedHandler, ISummonPoolHandler, ISubscriber<IMechanicEntity>, IAreaPartHandler, IAdditiveAreaSwitchHandler, IUnitCombatHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IHashable
 {
 	public class EtudesDataGameStateAdapter : DictionaryConverter
 	{
@@ -447,6 +447,11 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 	}
 
 	public void HandleCompanionRemoved(bool stayInGame)
+	{
+		MarkConditionsDirty();
+	}
+
+	public void HandleUnitSpawned()
 	{
 		MarkConditionsDirty();
 	}

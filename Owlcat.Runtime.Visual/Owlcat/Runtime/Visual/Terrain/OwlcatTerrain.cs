@@ -30,7 +30,8 @@ public class OwlcatTerrain : MonoBehaviour
 		x128 = 0x80,
 		x256 = 0x100,
 		x512 = 0x200,
-		x1024 = 0x400
+		x1024 = 0x400,
+		x2048 = 0x800
 	}
 
 	[HideInInspector]

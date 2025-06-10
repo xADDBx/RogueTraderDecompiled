@@ -57,7 +57,10 @@ public class EscHotkeyManager : IService, IDisposable
 
 	public IDisposable Subscribe(Action callback)
 	{
-		m_EscSequence.Add(callback);
+		if (!m_EscSequence.Contains(callback))
+		{
+			m_EscSequence.Add(callback);
+		}
 		return Disposable.Create(delegate
 		{
 			Unsubscribe(callback);

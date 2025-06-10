@@ -73,7 +73,7 @@ public class UnitPartStrategistKeystoneRearAbilityFlipPattern : BaseUnitPart, IH
 
 	public void AddAreaEffect(AreaEffectEntity areaEffectEntity)
 	{
-		if (areaEffectEntity != null && !m_AreaEffectEntityIds.ContainsKey(areaEffectEntity.UniqueId) && areaEffectEntity.Context != null && areaEffectEntity.Context.SourceAbility.HasLogic<IsFlipZoneAbility>())
+		if (areaEffectEntity != null && !m_AreaEffectEntityIds.ContainsKey(areaEffectEntity.UniqueId) && areaEffectEntity.Context?.SourceAbility != null && areaEffectEntity.Context.SourceAbility.HasLogic<IsFlipZoneAbility>())
 		{
 			m_AreaEffectEntityIds.Add(areaEffectEntity.UniqueId, m_FlipState);
 		}

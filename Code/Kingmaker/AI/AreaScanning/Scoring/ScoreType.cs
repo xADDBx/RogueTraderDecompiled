@@ -10,5 +10,6 @@ public enum ScoreType
 	HideScore,
 	StayingAwayScore,
 	EnemyHPLeftScore,
-	ClosinessScore
+	ClosinessScore,
+	BodyGuardScore
 }

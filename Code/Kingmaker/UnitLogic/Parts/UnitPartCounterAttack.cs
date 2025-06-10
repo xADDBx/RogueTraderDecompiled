@@ -1,17 +1,18 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
-using Kingmaker.Items;
-using Kingmaker.Mechanics.Entities;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
-using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
@@ -24,7 +25,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ISubscriber, ITargetRulebookSubscriber, IUnitRunCommandHandler, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, IHashable
+public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, ISubscriber, ITargetRulebookSubscriber, IUnitRunCommandHandler, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, ITurnStartHandler<EntitySubscriber>, ITurnStartHandler, IEntitySubscriber, IEventTag<ITurnStartHandler, EntitySubscriber>, IHashable
 {
 	public class Entry : IHashable
 	{
@@ -35,10 +36,9 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		public readonly string ComponentId;
 
 		[JsonProperty]
-		public int? UsageLimit { get; private set; }
-
-		[JsonProperty]
 		public int UseCount { get; private set; }
+
+		public int UsageLimit { get; private set; }
 
 		public BaseUnitEntity Owner { get; private set; }
 
@@ -48,32 +48,15 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 
 		public Cells MaxDistanceToAlly { get; private set; }
 
-		public bool CanUse(CounterAttack.TriggerType trigger, [CanBeNull] BaseUnitEntity targetAlly)
+		public bool CanUse(Func<CounterAttack.TriggerType, bool> triggerFn)
 		{
-			if (Owner == null || Fact == null || Component == null)
+			if (UsageLimit != -1 && UseCount >= UsageLimit)
 			{
 				return false;
 			}
-			if (UseCount >= UsageLimit)
+			if (Component == null || !triggerFn(Component.Trigger))
 			{
 				return false;
-			}
-			CounterAttack component = Component;
-			if (component != null && component.Trigger < trigger)
-			{
-				return false;
-			}
-			int value = MaxDistanceToAlly.Value;
-			if (targetAlly != null)
-			{
-				if (!Component.GuardAllies)
-				{
-					return false;
-				}
-				if (value > 0 && Owner.DistanceToInCells(targetAlly) > value)
-				{
-					return false;
-				}
 			}
 			return true;
 		}
@@ -83,14 +66,13 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		{
 		}
 
-		public Entry(BaseUnitEntity owner, UnitFact fact, CounterAttack component)
+		public Entry(string factId, string componentId)
 		{
-			FactId = fact.UniqueId;
-			Component = component;
-			Setup(owner, fact, component);
+			FactId = factId;
+			ComponentId = componentId;
 		}
 
-		public void Setup(BaseUnitEntity owner, UnitFact fact, CounterAttack component)
+		public void Setup(BaseUnitEntity owner, UnitFact fact, CounterAttack component, int limit)
 		{
 			Owner = owner;
 			Fact = fact;
@@ -99,14 +81,17 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 			{
 				MaxDistanceToAlly = component.GuardAlliesRange.Calculate(Fact.MaybeContext).Cells();
 			}
+			UsageLimit = limit;
 		}
 
 		public void Use()
 		{
-			if (UsageLimit.HasValue)
-			{
-				UseCount++;
-			}
+			UseCount++;
+		}
+
+		public void ResetUse()
+		{
+			UseCount = 0;
 		}
 
 		public virtual Hash128 GetHash128()
@@ -114,13 +99,8 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 			Hash128 result = default(Hash128);
 			result.Append(FactId);
 			result.Append(ComponentId);
-			if (UsageLimit.HasValue)
-			{
-				int val = UsageLimit.Value;
-				result.Append(ref val);
-			}
-			int val2 = UseCount;
-			result.Append(ref val2);
+			int val = UseCount;
+			result.Append(ref val);
 			return result;
 		}
 	}
@@ -128,19 +108,17 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 	[JsonProperty]
 	private readonly List<Entry> m_Entries = new List<Entry>();
 
-	private Entry m_DelayedCounterAttackEntry;
+	private Action m_DelayedCounterAttackFn;
 
-	public void Add(UnitFact fact, CounterAttack component)
+	public void Add(UnitFact fact, CounterAttack component, int limit)
 	{
 		Entry entry = m_Entries.Find((Entry i) => i.FactId == fact.UniqueId && i.ComponentId == component.name);
-		if (entry != null)
+		if (entry == null)
 		{
-			entry.Setup(base.Owner, fact, component);
+			entry = new Entry(fact.UniqueId, component.name);
+			m_Entries.Add(entry);
 		}
-		else
-		{
-			m_Entries.Add(new Entry(base.Owner, fact, component));
-		}
+		entry.Setup(base.Owner, fact, component, limit);
 	}
 
 	public void Remove(UnitFact fact, CounterAttack component)
@@ -153,10 +131,10 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 	}
 
 	[CanBeNull]
-	private Entry GetBestEntry([CanBeNull] Entry e1, [CanBeNull] Entry e2, CounterAttack.TriggerType trigger, [CanBeNull] BaseUnitEntity targetAlly)
+	private Entry GetBestEntry([CanBeNull] Entry e1, [CanBeNull] Entry e2, Func<CounterAttack.TriggerType, bool> triggerFn)
 	{
-		bool flag = CanUse(e1, trigger, targetAlly);
-		bool flag2 = CanUse(e2, trigger, targetAlly);
+		bool flag = CanUse(e1, triggerFn);
+		bool flag2 = CanUse(e2, triggerFn);
 		if (!flag && !flag2)
 		{
 			return null;
@@ -169,78 +147,51 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		{
 			return e2;
 		}
-		bool hasValue = e1.UsageLimit.HasValue;
-		bool hasValue2 = e2.UsageLimit.HasValue;
-		if (!hasValue && hasValue2)
+		bool flag3 = e1.UsageLimit != -1;
+		bool flag4 = e2.UsageLimit != -1;
+		if (!flag3 && flag4)
 		{
 			return e1;
 		}
-		if (hasValue && !hasValue2)
+		if (flag3 && !flag4)
 		{
 			return e2;
 		}
 		return e1;
-		static bool CanUse(Entry e, CounterAttack.TriggerType t, [CanBeNull] BaseUnitEntity ally)
+		static bool CanUse(Entry e, Func<CounterAttack.TriggerType, bool> t)
 		{
-			return e?.CanUse(t, ally) ?? false;
+			return e?.CanUse(t) ?? false;
 		}
 	}
 
 	[CanBeNull]
-	private Entry FindBestEntry(CounterAttack.TriggerType trigger, [CanBeNull] BaseUnitEntity targetAlly)
+	private Entry FindBestEntry(Func<CounterAttack.TriggerType, bool> triggerFn)
 	{
 		Entry entry = null;
 		foreach (Entry entry2 in m_Entries)
 		{
-			entry = GetBestEntry(entry, entry2, trigger, targetAlly);
+			if (entry2.Owner != null && entry2.Fact != null && entry2.Component != null)
+			{
+				entry = GetBestEntry(entry, entry2, triggerFn);
+			}
 		}
 		return entry;
 	}
 
-	public void OnEventAboutToTrigger(RulePerformAttack evt)
+	private BaseUnitEntity ComputeTargetAllyUnit(UnitUseAbility useAbilityCmd)
 	{
-	}
-
-	public void OnEventDidTrigger(RulePerformAttack evt)
-	{
-		if (!evt.IsMelee)
-		{
-			return;
-		}
-		CounterAttack.TriggerType trigger = ((evt.Result != AttackResult.Parried) ? CounterAttack.TriggerType.AfterAnyAttack : CounterAttack.TriggerType.AfterParryAttack);
-		Entry entry = FindBestEntry(trigger, null);
-		if (entry != null)
-		{
-			if (Game.Instance.AttackOfOpportunityController.Provoke(evt.InitiatorUnit, base.Owner, entry.Fact))
-			{
-				entry.Use();
-			}
-			else if (entry.Component.CanUseInRange && TryCounterAttackInRange(evt.InitiatorUnit, base.Owner))
-			{
-				entry.Use();
-			}
-		}
-	}
-
-	public void HandleUnitRunCommand(AbstractUnitCommand cmd)
-	{
-		if (!(cmd is UnitUseAbility unitUseAbility) || unitUseAbility.Ability.Blueprint.AttackType != AttackAbilityType.Melee || cmd.Executor == base.Owner || cmd.TargetUnit == base.Owner)
-		{
-			return;
-		}
-		AbilityData ability = unitUseAbility.Ability;
 		BaseUnitEntity baseUnitEntity = null;
-		if (ability.GetPatternSettings() == null)
+		if (useAbilityCmd.Ability.GetPatternSettings() == null)
 		{
-			if (cmd.TargetUnit != null && base.Owner.IsAlly(cmd.TargetUnit) && cmd.TargetUnit is BaseUnitEntity baseUnitEntity2)
+			if (useAbilityCmd.TargetUnit != null && base.Owner.IsAlly(useAbilityCmd.TargetUnit) && useAbilityCmd.TargetUnit is BaseUnitEntity baseUnitEntity2)
 			{
 				baseUnitEntity = baseUnitEntity2;
 			}
 		}
 		else
 		{
-			Vector3 vector3Position = ability.GetBestShootingPosition(cmd.Target).Vector3Position;
-			foreach (CustomGridNodeBase node in ability.GetPattern(cmd.Target, vector3Position).Nodes)
+			Vector3 vector3Position = useAbilityCmd.Ability.GetBestShootingPosition(useAbilityCmd.Target).Vector3Position;
+			foreach (CustomGridNodeBase node in useAbilityCmd.Ability.GetPattern(useAbilityCmd.Target, vector3Position).Nodes)
 			{
 				BaseUnitEntity unit = node.GetUnit();
 				if (unit != null && base.Owner.IsAlly(unit) && (baseUnitEntity == null || base.Owner.DistanceTo(unit) < base.Owner.DistanceTo(baseUnitEntity)))
@@ -249,66 +200,132 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 				}
 			}
 		}
-		if (baseUnitEntity != null)
+		return baseUnitEntity;
+	}
+
+	private (Entry, BaseUnitEntity) FindBestEntryWithAlliesOnly(Func<CounterAttack.TriggerType, bool> triggerFn, UnitUseAbility useAbilityCmd)
+	{
+		BaseUnitEntity baseUnitEntity = null;
+		bool flag = false;
+		Entry entry = null;
+		foreach (Entry entry2 in m_Entries)
 		{
-			m_DelayedCounterAttackEntry = FindBestEntry(CounterAttack.TriggerType.AfterAnyAttack, baseUnitEntity);
+			if (entry2.Owner == null || entry2.Fact == null || entry2.Component == null || !entry2.Component.GuardAllies)
+			{
+				continue;
+			}
+			int value = entry2.MaxDistanceToAlly.Value;
+			if (value > 0)
+			{
+				if (!flag)
+				{
+					baseUnitEntity = ComputeTargetAllyUnit(useAbilityCmd);
+					flag = true;
+				}
+				if (base.Owner.DistanceToInCells(baseUnitEntity) <= value)
+				{
+					entry = GetBestEntry(entry, entry2, triggerFn);
+				}
+			}
+		}
+		return ValueTuple.Create(entry, baseUnitEntity);
+	}
+
+	public void OnEventAboutToTrigger(RulePerformAttack evt)
+	{
+	}
+
+	public void OnEventDidTrigger(RulePerformAttack evt)
+	{
+		if (m_DelayedCounterAttackFn != null || base.Owner.Commands.Queue.Any((UnitCommandParams x) => x is UnitAttackOfOpportunityParams))
+		{
+			return;
+		}
+		Entry entry = FindBestEntry(ShouldTrigger);
+		if (entry == null || !entry.Component.Restriction.IsPassed(new PropertyContext(entry.Fact, evt.InitiatorUnit, evt, evt.Ability)))
+		{
+			return;
+		}
+		m_DelayedCounterAttackFn = delegate
+		{
+			if (Game.Instance.AttackOfOpportunityController.Provoke(evt.InitiatorUnit, base.Owner, entry.Fact, entry.Component.CanUseInRange, canMove: false) != null)
+			{
+				entry.Use();
+			}
+		};
+		bool ShouldTrigger(CounterAttack.TriggerType componentTrigger)
+		{
+			return componentTrigger switch
+			{
+				CounterAttack.TriggerType.AfterDodgeAttack => evt.ResultDodgeRule?.Result ?? false, 
+				CounterAttack.TriggerType.AfterParryAttack => evt.ResultParryRule?.Result ?? false, 
+				CounterAttack.TriggerType.AfterBlockAttack => evt.ResultBlockRule?.Result ?? false, 
+				CounterAttack.TriggerType.AfterAnyAttack => true, 
+				_ => false, 
+			};
+		}
+	}
+
+	public void HandleUnitRunCommand(AbstractUnitCommand cmd)
+	{
+		if (!(cmd is UnitUseAbility unitUseAbility) || base.Owner.IsDeadOrUnconscious || !unitUseAbility.Ability.Blueprint.AttackType.HasValue)
+		{
+			return;
+		}
+		if (cmd.Executor != base.Owner && cmd.Executor is BaseUnitEntity target)
+		{
+			Entry entry2 = FindBestEntry((CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.BeforeAttack);
+			if (entry2 != null && ComputeTargetAllyUnit(unitUseAbility) == base.Owner && Rulebook.Trigger(new RuleCalculateCounterAttackChance(base.Owner, target)).Result > 0)
+			{
+				UnitCommandHandle unitCommandHandle = Game.Instance.AttackOfOpportunityController.Provoke(target, base.Owner, entry2.Fact, entry2.Component.CanUseInRange, canMove: false);
+				if (unitCommandHandle != null)
+				{
+					cmd.BlockOn(unitCommandHandle.Cmd);
+					entry2.Use();
+				}
+			}
+		}
+		if (cmd.Executor == base.Owner || cmd.TargetUnit == base.Owner)
+		{
+			return;
+		}
+		var (entry, currentTarget) = FindBestEntryWithAlliesOnly((CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.AfterAnyAttack, unitUseAbility);
+		if (entry == null || !entry.Component.GuardAlliesRestriction.IsPassed(new PropertyContext(base.Owner, null, currentTarget)))
+		{
+			return;
+		}
+		m_DelayedCounterAttackFn = delegate
+		{
+			if (cmd.Executor is BaseUnitEntity target2 && Game.Instance.AttackOfOpportunityController.Provoke(target2, base.Owner, entry.Fact, entry.Component.CanUseInRange, entry.Component.GuardAlliesCanMove) != null)
+			{
+				entry.Use();
+			}
+		};
+		if (entry.Component.Trigger == CounterAttack.TriggerType.BeforeAttack)
+		{
+			m_DelayedCounterAttackFn();
 		}
 	}
 
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand cmd)
 	{
-		if (m_DelayedCounterAttackEntry != null)
+		if (m_DelayedCounterAttackFn != null)
 		{
-			if (cmd.Executor is BaseUnitEntity target && Game.Instance.AttackOfOpportunityController.Provoke(target, base.Owner, m_DelayedCounterAttackEntry.Fact))
-			{
-				m_DelayedCounterAttackEntry.Use();
-			}
-			else if (m_DelayedCounterAttackEntry.Component.CanUseInRange && TryCounterAttackInRange(cmd.Executor, base.Owner))
-			{
-				m_DelayedCounterAttackEntry.Use();
-			}
-			m_DelayedCounterAttackEntry = null;
+			m_DelayedCounterAttackFn();
+			m_DelayedCounterAttackFn = null;
 		}
 	}
 
-	public void HandleUnitFinishedCommand()
+	public void HandleUnitStartTurn(bool isTurnBased)
 	{
-	}
-
-	private bool TryCounterAttackInRange(AbstractUnitEntity target, BaseUnitEntity attacker)
-	{
-		if (!attacker.IsEnemy(target))
+		if (!isTurnBased)
 		{
-			return false;
+			return;
 		}
-		if (target.LifeState.IsDead)
+		foreach (Entry entry in m_Entries)
 		{
-			return false;
+			entry.ResetUse();
 		}
-		if (!attacker.CombatState.CanActInCombat || !attacker.State.CanAct)
-		{
-			return false;
-		}
-		ItemEntityWeapon itemEntityWeapon = attacker.GetThreatHandMelee()?.Weapon;
-		if (itemEntityWeapon == null)
-		{
-			return false;
-		}
-		Ability ability2 = itemEntityWeapon.Abilities.FirstItem((Ability ability) => ability.Data.IsMelee);
-		if (ability2 == null)
-		{
-			PFLog.Default.Error("No abilities in blueprint ranged weapon " + itemEntityWeapon.Name + " for counter attack (unit " + attacker.Name + ")");
-			return false;
-		}
-		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability2.Data, target)
-		{
-			IgnoreCooldown = true,
-			FreeAction = true,
-			NeedLoS = false,
-			IgnoreAbilityUsingInThreateningArea = true
-		};
-		attacker.Commands.AddToQueue(cmdParams);
-		return true;
 	}
 
 	public override Hash128 GetHash128()

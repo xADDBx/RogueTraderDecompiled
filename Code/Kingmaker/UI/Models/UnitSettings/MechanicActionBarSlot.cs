@@ -10,7 +10,10 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Newtonsoft.Json;
 using Owlcat.Runtime.UI.Tooltips;
@@ -45,6 +48,8 @@ public abstract class MechanicActionBarSlot : IHashable
 
 	protected virtual bool IsNotAvailable => false;
 
+	private bool IsPlayerInputLocked => Game.Instance.PlayerInputInCombatController.IsLocked;
+
 	protected int ResourceCount { get; private set; }
 
 	protected int ResourceCost { get; private set; }
@@ -55,7 +60,7 @@ public abstract class MechanicActionBarSlot : IHashable
 	{
 		get
 		{
-			bool flag = !IsDisabled(GetResource()) && !IsNotAvailable && (!TurnController.IsInTurnBasedCombat() || CanUseIfTurnBased());
+			bool flag = !IsDisabled(GetResource()) && !IsPlayerInputLocked && !IsNotAvailable && (!TurnController.IsInTurnBasedCombat() || CanUseIfTurnBased());
 			if (flag && UINetUtility.InLobbyAndPlaying)
 			{
 				flag = ((Game.Instance.CurrentMode == GameModeType.SpaceCombat) ? UINetUtility.IsControlMainCharacter() : (Unit != null && Unit.IsMyNetRole()));
@@ -80,11 +85,29 @@ public abstract class MechanicActionBarSlot : IHashable
 		}
 	}
 
-	public virtual bool IsAutoUse => false;
+	public bool IsPossibleToConvert
+	{
+		get
+		{
+			if (!IsDisabled(GetResource()) && !IsPlayerInputLocked)
+			{
+				if (TurnController.IsInTurnBasedCombat())
+				{
+					return CanUseIfTurnBased();
+				}
+				return true;
+			}
+			return false;
+		}
+	}
 
 	public virtual bool IsDisabled(int resourceCount)
 	{
 		if (!Unit.LifeState.IsConscious)
+		{
+			return true;
+		}
+		if ((bool)Unit.GetMechanicFeature(MechanicsFeatureType.ForceAIControl))
 		{
 			return true;
 		}
@@ -151,10 +174,6 @@ public abstract class MechanicActionBarSlot : IHashable
 			return UIStrings.Instance.TurnBasedTexts.NotEnoughActionsMessage;
 		}
 		return string.Empty;
-	}
-
-	public virtual void OnRightClick()
-	{
 	}
 
 	public virtual bool IsActive()
@@ -288,6 +307,32 @@ public abstract class MechanicActionBarSlot : IHashable
 	public virtual int AmmoCost()
 	{
 		return -1;
+	}
+
+	protected void TriggerAbilityHoverEvents(AbilityData abilityData, bool state)
+	{
+		AbilityData targetingAbility = abilityData.InitialTargetAbility;
+		EventBus.RaiseEvent(delegate(IAbilityTargetHoverUIHandler h)
+		{
+			h.HandleAbilityTargetHover(targetingAbility, state);
+		});
+		if (state)
+		{
+			if (abilityData.TargetAnchor == AbilityTargetAnchor.Owner)
+			{
+				EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
+				{
+					h.HandleAoEMove(Unit.Position, abilityData);
+				});
+			}
+		}
+		else
+		{
+			EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
+			{
+				h.HandleAoECancel();
+			});
+		}
 	}
 
 	public virtual Hash128 GetHash128()

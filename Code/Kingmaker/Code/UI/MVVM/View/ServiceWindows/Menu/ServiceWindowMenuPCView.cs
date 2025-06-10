@@ -40,12 +40,16 @@ public class ServiceWindowMenuPCView : ViewBase<ServiceWindowsMenuVM>
 		{
 			base.ViewModel.Close();
 		}));
+		AddDisposable(base.ViewModel.IsDialogActive.Subscribe(delegate(bool value)
+		{
+			m_CloseButton.gameObject.SetActive(!value && Game.Instance.IsControllerMouse);
+		}));
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(base.ViewModel.Close));
 		if (m_AdditionalBackground != null)
 		{
 			AddDisposable(base.ViewModel.IsAdditionalBackgroundNeeded.Subscribe(m_AdditionalBackground.SetActive));
 		}
-		m_CloseButton.gameObject.SetActive(Game.Instance.IsControllerMouse);
+		m_CloseButton.gameObject.SetActive(!base.ViewModel.IsDialogActive.Value && Game.Instance.IsControllerMouse);
 	}
 
 	protected override void DestroyViewImplementation()

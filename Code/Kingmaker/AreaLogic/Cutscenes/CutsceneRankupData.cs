@@ -43,7 +43,7 @@ public class CutsceneRankupData
 			Context.ItemsChanged.Add(item.Name, -count);
 		}
 
-		public void HandlePartyGainExperience(int gained, bool isExperienceForDeath)
+		public void HandlePartyGainExperience(int gained, bool isExperienceForDeath, bool hideInCombatLog)
 		{
 			Context.XpGaineds.Add(gained);
 		}

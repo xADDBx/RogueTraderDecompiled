@@ -3,6 +3,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 using Kingmaker.UnitLogic.Progression.Features;
+using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
@@ -55,6 +56,8 @@ public class UnitBackgroundBlockCommonView : ViewBase<UnitBackgroundBlockVM>
 
 	private AccessibilityTextHelper m_TextHelper;
 
+	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
+
 	public void Initialize()
 	{
 		m_TextHelper = new AccessibilityTextHelper(m_HomeworldTitle, m_HomeworldLabel, m_OccupationTitle, m_OccupationLabel, m_MomentOfTriumphTitle, m_MomentOfTriumphLabel, m_DarkestHourTitle, m_DarkestHourLabel);
@@ -99,5 +102,13 @@ public class UnitBackgroundBlockCommonView : ViewBase<UnitBackgroundBlockVM>
 	private void SetBackgroundName(TextMeshProUGUI textField, BlueprintFeature feature)
 	{
 		textField.text = feature?.Name ?? string.Empty;
+	}
+
+	public GridConsoleNavigationBehaviour GetNavigationBehaviour()
+	{
+		AddDisposable(m_NavigationBehaviour ?? (m_NavigationBehaviour = new GridConsoleNavigationBehaviour()));
+		m_NavigationBehaviour.Clear();
+		m_NavigationBehaviour.AddRow<SimpleConsoleNavigationEntity>(new SimpleConsoleNavigationEntity(m_HomeworldButton, base.ViewModel.HomeworldTooltip.Value), new SimpleConsoleNavigationEntity(m_OccupationButton, base.ViewModel.OccupationTooltip.Value), new SimpleConsoleNavigationEntity(m_MomentOfTriumphButton, base.ViewModel.MomentOfTriumphTooltip.Value), new SimpleConsoleNavigationEntity(m_DarkestHourButton, base.ViewModel.DarkestHourTooltip.Value));
+		return m_NavigationBehaviour;
 	}
 }

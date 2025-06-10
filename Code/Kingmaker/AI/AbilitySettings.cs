@@ -49,6 +49,11 @@ public class AbilitySettings
 
 	public List<BlueprintAbility> Abilities => AbilitySource?.Abilities;
 
+	public static AbilitySettings UnplayableSetting => new AbilitySettings
+	{
+		CantCastUntilRound = int.MaxValue
+	};
+
 	public bool IsValidTarget(PropertyContext context)
 	{
 		return CheckAgainstConditions(context, ValidTargetConditions, defaultResult: true);

@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Enums;
 using Kingmaker.Inspect;
@@ -12,7 +13,12 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.PathRenderer;
+using Kingmaker.UI.Sound;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Enums;
+using Kingmaker.UnitLogic.Parts;
+using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
@@ -22,6 +28,8 @@ namespace Kingmaker.Controllers.Clicks.Handlers;
 
 public class ClickSurfaceDeploymentHandler : IClickEventHandler
 {
+	private const int PET_DISTANCE_RESTRICTION_IN_CELLS = 2;
+
 	public PointerMode GetMode()
 	{
 		return PointerMode.Default;
@@ -73,7 +81,7 @@ public class ClickSurfaceDeploymentHandler : IClickEventHandler
 		{
 			return false;
 		}
-		if (unit == null || !unit.EntityData.IsDirectlyControllable)
+		if (unit == null || (!unit.EntityData.IsDirectlyControllable && !unit.EntityData.IsPet))
 		{
 			if (PhotonManager.Ping.CheckPingCoop(delegate
 			{
@@ -134,20 +142,34 @@ public class ClickSurfaceDeploymentHandler : IClickEventHandler
 			return false;
 		}
 		CustomGridNodeBase customGridNodeBase = UnitPathManager.Instance?.CurrentNode ?? worldPosition.GetNearestNodeXZUnwalkable();
-		if (!CanDeployUnit(customGridNodeBase, value.SizeRect))
+		if (!CanDeployUnit(customGridNodeBase))
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{
-				h.HandleWarning(LocalizedTexts.Instance.Reasons.UnavailableGeneric, addToLog: false, WarningNotificationFormat.Attention);
+				h.HandleWarning(LocalizedTexts.Instance.Reasons.PathBlocked, addToLog: false, WarningNotificationFormat.Attention);
 			});
 			return false;
 		}
 		UnitTeleportParams cmdParams = new UnitTeleportParams(customGridNodeBase.Vector3Position, isSynchronized: true);
 		value.Commands.Run(cmdParams);
+		UISounds.Instance.Sounds.Combat.PreparationTurnDeployUnit.Play();
+		UnitPartPetOwner petOwner = value.GetOptional<UnitPartPetOwner>();
+		if (petOwner != null && petOwner.PetUnit.DistanceToInCells(worldPosition, value.SizeRect) > 2)
+		{
+			UnitTeleportParams cmdParams2 = new UnitTeleportParams((from n in GridAreaHelper.GetNodesSpiralAround(customGridNodeBase, value.SizeRect, 2)
+				where CanDeployUnit(n, petOwner.PetUnit, ignorePetRestriction: true)
+				select n).MinBy((CustomGridNodeBase n) => petOwner.PetUnit.DistanceTo(n.Vector3Position)).Vector3Position, isSynchronized: true);
+			petOwner.PetUnit.Commands.Run(cmdParams2);
+		}
 		return true;
 	}
 
-	public static bool CanDeployUnit(GraphNode node, IntRect sizeRect)
+	public static bool CanDeployUnit(GraphNode node)
+	{
+		return CanDeployUnit(node, Game.Instance.SelectionCharacter.SelectedUnit.Value);
+	}
+
+	public static bool CanDeployUnit(GraphNode node, BaseUnitEntity unit, bool ignorePetRestriction = false)
 	{
 		if (!(node is CustomGridNode customGridNode))
 		{
@@ -176,12 +198,11 @@ public class ClickSurfaceDeploymentHandler : IClickEventHandler
 				}
 			}
 		}
-		BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnit.Value;
-		if (!value.CanMove)
+		if (!unit.CanMove)
 		{
 			return false;
 		}
-		CustomGridNodeBase nearestNodeXZUnwalkable = value.Position.GetNearestNodeXZUnwalkable();
+		CustomGridNodeBase nearestNodeXZUnwalkable = unit.Position.GetNearestNodeXZUnwalkable();
 		if (nearestNodeXZUnwalkable == null)
 		{
 			return false;
@@ -192,16 +213,25 @@ public class ClickSurfaceDeploymentHandler : IClickEventHandler
 		{
 			return false;
 		}
-		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(customGridNode, sizeRect))
+		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(customGridNode, unit.SizeRect))
 		{
 			if (!dictionary.ContainsKey(node2.CoordinatesInGrid))
 			{
 				return false;
 			}
 		}
-		if (!WarhammerBlockManager.Instance.CanUnitStandOnNode(value, customGridNode))
+		if (!WarhammerBlockManager.Instance.CanUnitStandOnNode(unit, customGridNode))
 		{
 			return false;
+		}
+		if (!ignorePetRestriction && unit.IsPet && unit.Master.DistanceToInCells(node.Vector3Position) > 2)
+		{
+			return false;
+		}
+		UnitPartPetOwner petOwner = unit.GetOptional<UnitPartPetOwner>();
+		if (petOwner != null && !petOwner.PetUnit.HasMechanicFeature(MechanicsFeatureType.Hidden))
+		{
+			return dictionary.Any((KeyValuePair<Vector2Int, GraphNode> n) => unit.DistanceToInCells(node.Vector3Position, n.Value.Vector3Position, petOwner.PetUnit.SizeRect, unit.Forward) <= 2);
 		}
 		return true;
 	}

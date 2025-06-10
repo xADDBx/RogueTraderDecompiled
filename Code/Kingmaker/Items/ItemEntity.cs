@@ -1082,13 +1082,9 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 
 	private static bool IsSuitableUnitForUseAbility(BaseUnitEntity unit)
 	{
-		if (unit != null && unit.State.CanAct && unit.Master == null)
+		if (unit != null && unit.State.CanAct && unit.Master == null && unit.GetCompanionState() != CompanionState.ExCompanion)
 		{
-			UnitPartCompanion optional = unit.GetOptional<UnitPartCompanion>();
-			if (optional == null || optional.State != CompanionState.ExCompanion)
-			{
-				return !unit.IsDetached;
-			}
+			return !unit.IsDetached;
 		}
 		return false;
 	}
@@ -1111,7 +1107,6 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 			PFLog.Default.Error($"Can't use item {this}");
 			return false;
 		}
-		_ = blueprintAbility?.Range;
 		Ability ability = user.Abilities.Add(blueprintAbility);
 		if (ability == null)
 		{

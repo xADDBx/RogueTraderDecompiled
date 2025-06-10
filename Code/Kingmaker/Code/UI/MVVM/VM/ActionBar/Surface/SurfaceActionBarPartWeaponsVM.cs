@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.Items;
@@ -6,14 +7,17 @@ using Kingmaker.Items.Slots;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Mechadendrites;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarPartWeaponsVM : SurfaceActionBarBasePartVM, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, ISubscriber, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, INetRoleSetHandler
+public class SurfaceActionBarPartWeaponsVM : SurfaceActionBarBasePartVM, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, ISubscriber, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, INetRoleSetHandler, IAbilityExecutionProcessHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IWarhammerAttackHandler, IUnitCommandStartHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler, IPlayerInputLockHandler
 {
 	public readonly ReactiveProperty<bool> CanSwitchSets = new ReactiveProperty<bool>();
 
@@ -108,6 +112,71 @@ public class SurfaceActionBarPartWeaponsVM : SurfaceActionBarBasePartVM, IUnitEq
 
 	private void RefreshCanSwitchSets()
 	{
-		CanSwitchSets.Value = Unit.Entity.IsDirectlyControllable() && !Unit.Entity.HasMechadendrites();
+		CanSwitchSets.Value = Unit.Entity.IsDirectlyControllable() && !Unit.Entity.HasMechadendrites() && (!TurnController.IsInTurnBasedCombat() || !(Unit.Entity?.IsBusy ?? false));
+	}
+
+	public void HandleExecutionProcessStart(AbilityExecutionContext context)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleExecutionProcessEnd(AbilityExecutionContext context)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleExecutionProcessCleared(AbilityExecutionContext context)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleAttack(RulePerformAttack withWeaponAttackHit)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitCommandDidAct(AbstractUnitCommand command)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitCommandDidEnd(AbstractUnitCommand command)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitStartTurn(bool isTurnBased)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		RefreshCanSwitchSets();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
+	{
+		RefreshCanSwitchSets();
+	}
+
+	void IPlayerInputLockHandler.HandlePlayerInputLocked()
+	{
+		RefreshCanSwitchSets();
+	}
+
+	void IPlayerInputLockHandler.HandlePlayerInputUnlocked()
+	{
+		RefreshCanSwitchSets();
 	}
 }

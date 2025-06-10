@@ -132,6 +132,9 @@ public class BlueprintRoot : BlueprintScriptableObject
 	[FormerlySerializedAs("InvisibleKittenUnit")]
 	private BlueprintUnitReference m_InvisibleKittenUnit;
 
+	[SerializeField]
+	private BlueprintFeatureReference m_CutsceneHiddenFeature;
+
 	public LocalizedTexts LocalizedTexts;
 
 	public UISettingsRoot UISettingsRoot;
@@ -312,6 +315,8 @@ public class BlueprintRoot : BlueprintScriptableObject
 	public BlueprintActionCameraSettings ActionCameraSettings => m_ActionCameraSettings;
 
 	public BlueprintUnit InvisibleKittenUnit => m_InvisibleKittenUnit?.Get();
+
+	public BlueprintFeature CutsceneHiddenFeature => m_CutsceneHiddenFeature?.Get();
 
 	public DifficultyPresetsList DifficultyList => m_DifficultyList;
 

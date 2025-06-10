@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.AreaLogic.Etudes;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -9,6 +10,8 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.UI.MVVM;
@@ -16,7 +19,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IInGameHandler, ISubscriber<IEntity>, IUnitDirectHoverUIHandler, IUnitMountHandler, IUnitBecameVisibleHandler, IUnitBecameInvisibleHandler, IInitiativeChangeHandler, IInitiativeTrackerShowGroup
+public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IRoundStartHandler, IUnitHandler, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IInGameHandler, ISubscriber<IEntity>, IUnitDirectHoverUIHandler, IUnitMountHandler, IUnitBecameVisibleHandler, IUnitBecameInvisibleHandler, IInitiativeChangeHandler, IInitiativeTrackerShowGroup, IUnitFeaturesHandler, IInterruptTurnContinueHandler, IEtudeCounterHandler
 {
 	public List<InitiativeTrackerUnitVM> Units = new List<InitiativeTrackerUnitVM>();
 
@@ -34,6 +37,8 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public ReactiveProperty<bool> CanInterruptMovement = new ReactiveProperty<bool>();
 
+	public BoolReactiveProperty NeedShowEtudeCounter = new BoolReactiveProperty();
+
 	public IntReactiveProperty RoundCounter = new IntReactiveProperty();
 
 	public ReactiveProperty<InitiativeTrackerUnitVM> CurrentUnit = new ReactiveProperty<InitiativeTrackerUnitVM>();
@@ -43,6 +48,8 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	public bool SkipScroll;
 
 	public BoolReactiveProperty ConsoleActive = new BoolReactiveProperty();
+
+	private List<string> m_EtudeShowCounters = new List<string>();
 
 	public InitiativeTrackerVM()
 	{
@@ -85,6 +92,7 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		}
 		Dictionary.Clear();
 		CanInterruptMovement.Value = false;
+		m_EtudeShowCounters.Clear();
 	}
 
 	public void HandleUnitSpawned()
@@ -209,6 +217,10 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	private bool CheckVisibiltyInTracker(MechanicEntity entity)
 	{
+		if (!(entity is UnitSquad) && entity is UnitEntity entity2 && entity2.HasMechanicFeature(MechanicsFeatureType.HasNoStandardTurn))
+		{
+			return false;
+		}
 		if (!(entity is UnitSquad))
 		{
 			if (!entity.IsVisibleForPlayer && (!(entity is BaseUnitEntity baseUnitEntity) || !baseUnitEntity.IsSummoned()))
@@ -260,10 +272,11 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 			{
 				PartSquad squadOptional = baseUnitEntity.GetSquadOptional();
 				BaseUnitEntity leader = squadOptional?.Leader ?? ((squadOptional != null) ? squadOptional.Units.FirstOrDefault().ToBaseUnitEntity() : null);
-				if (leader != null)
-				{
-					SquadLeaderUnit.Value = Units.LastOrDefault((InitiativeTrackerUnitVM unit) => unit.Unit == leader);
-				}
+				SquadLeaderUnit.Value = ((leader != null) ? Units.LastOrDefault((InitiativeTrackerUnitVM unit) => unit.Unit == leader) : null);
+			}
+			else
+			{
+				SquadLeaderUnit.Value = null;
 			}
 			HoveredUnit.Value = Units.LastOrDefault((InitiativeTrackerUnitVM unit) => unit.Unit?.View == unitEntityView);
 			{
@@ -297,7 +310,20 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		m_NeedUpdate = true;
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		m_NeedUpdate = true;
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		if (!interruptionData.InterruptionWithoutInitiativeAndPanelUpdate)
+		{
+			m_NeedUpdate = true;
+		}
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		m_NeedUpdate = true;
 	}
@@ -309,7 +335,7 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public void OnEntityBecameVisible()
 	{
-		if (EventInvokerExtensions.BaseUnitEntity != null)
+		if (EventInvokerExtensions.BaseUnitEntity != null && EventInvokerExtensions.BaseUnitEntity.IsInCombat)
 		{
 			m_NeedUpdate = true;
 		}
@@ -317,7 +343,7 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public void OnEntityBecameInvisible()
 	{
-		if (EventInvokerExtensions.BaseUnitEntity != null)
+		if (EventInvokerExtensions.BaseUnitEntity != null && EventInvokerExtensions.BaseUnitEntity.IsInCombat)
 		{
 			m_NeedUpdate = true;
 		}
@@ -332,5 +358,27 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 	{
 		m_NeedUpdate = true;
 		SkipScroll = true;
+	}
+
+	public void HandleFeatureAdded(FeatureCountableFlag feature)
+	{
+		m_NeedUpdate = true;
+	}
+
+	public void HandleFeatureRemoved(FeatureCountableFlag feature)
+	{
+		m_NeedUpdate = true;
+	}
+
+	public void ShowEtudeCounter(EtudeShowCounterUIStruct counterUIStruct)
+	{
+		m_EtudeShowCounters.Add(counterUIStruct.Id);
+		NeedShowEtudeCounter.Value = m_EtudeShowCounters.Count > 0;
+	}
+
+	public void HideEtudeCounter(string id)
+	{
+		m_EtudeShowCounters.Remove(id);
+		NeedShowEtudeCounter.Value = m_EtudeShowCounters.Count > 0;
 	}
 }

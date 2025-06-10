@@ -41,9 +41,12 @@ public class UnitAnimationActionDodge : UnitAnimationAction
 	[SerializeField]
 	private WeaponStyleSettings[] m_Settings = new WeaponStyleSettings[1];
 
+	[SerializeField]
+	private bool m_NotAdditive;
+
 	public IReadOnlyList<WeaponStyleSettings> Settings => m_Settings;
 
-	public override bool IsAdditive => true;
+	public override bool IsAdditive => !m_NotAdditive;
 
 	public override bool IsAdditiveToItself => false;
 

@@ -109,6 +109,52 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		}
 	}
 
+	[Serializable]
+	private class OffHandStyleSettings
+	{
+		public WeaponAnimationStyle Style;
+
+		public bool IsMainHand;
+
+		public AnimationClipWrapper HalfCoverEntering;
+
+		public AnimationClipWrapper HalfCoverIdle;
+
+		public AnimationClipWrapper HalfCoverExiting;
+
+		public AnimationClipWrapper FullCoverEntering;
+
+		public AnimationClipWrapper FullCoverIdle;
+
+		public AnimationClipWrapper FullCoverExiting;
+
+		public AnimationClipWrapper LeftStepFullCoverEntering;
+
+		public AnimationClipWrapper LeftStepFullCoverExiting;
+
+		public AnimationClipWrapper RightStepFullCoverEntering;
+
+		public AnimationClipWrapper RightStepFullCoverExiting;
+
+		private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
+
+		public IEnumerable<AnimationClipWrapper> ClipWrappers
+		{
+			get
+			{
+				HashSet<AnimationClipWrapper> hashSet = m_ClipWrappersHashSet;
+				if (hashSet == null)
+				{
+					HashSet<AnimationClipWrapper> obj = new HashSet<AnimationClipWrapper> { HalfCoverEntering, HalfCoverIdle, HalfCoverExiting, FullCoverEntering, FullCoverIdle, FullCoverExiting, LeftStepFullCoverEntering, LeftStepFullCoverExiting, RightStepFullCoverEntering, RightStepFullCoverExiting };
+					HashSet<AnimationClipWrapper> hashSet2 = obj;
+					m_ClipWrappersHashSet = obj;
+					hashSet = hashSet2;
+				}
+				return hashSet;
+			}
+		}
+	}
+
 	public AnimationClipWrapper HalfCoverEntering;
 
 	public AnimationClipWrapper HalfCoverIdle;
@@ -144,6 +190,15 @@ public class UnitAnimationActionCover : UnitAnimationAction
 
 	public AnimationClipWrapper RightStepFullCoverExitingForCast;
 
+	[SerializeField]
+	private List<OffHandStyleSettings> m_InactiveHandWeaponStyleOverrides = new List<OffHandStyleSettings>();
+
+	[SerializeField]
+	private AvatarMask m_OffHandMask;
+
+	[SerializeField]
+	private AvatarMask m_MainHandMask;
+
 	private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
 
 	public override UnitAnimationType Type => UnitAnimationType.Cover;
@@ -178,6 +233,10 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			foreach (WeaponStyleSettings weaponStyleOverride in WeaponStyleOverrides)
 			{
 				m_ClipWrappersHashSet.AddRange(weaponStyleOverride.ClipWrappers);
+			}
+			foreach (OffHandStyleSettings inactiveHandWeaponStyleOverride in m_InactiveHandWeaponStyleOverrides)
+			{
+				m_ClipWrappersHashSet.AddRange(inactiveHandWeaponStyleOverride.ClipWrappers);
 			}
 			return m_ClipWrappersHashSet;
 		}
@@ -358,16 +417,28 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		{
 			return;
 		}
-		AnimationClipWrapper animationClip = GetAnimationClip(handle, data.CurrentAnimationState);
+		(AnimationClipWrapper, AnimationClipWrapper) animationClips = GetAnimationClips(handle, data);
+		AnimationClipWrapper item = animationClips.Item1;
+		AnimationClipWrapper item2 = animationClips.Item2;
 		data.IsForce = false;
-		if (animationClip == null)
+		if (item == null)
 		{
 			handle.Release();
 			return;
 		}
 		AnimationState currentAnimationState = data.CurrentAnimationState;
 		bool flag = currentAnimationState == AnimationState.ForceExitingTheCover || currentAnimationState == AnimationState.SideStepOut;
-		handle.StartClip(animationClip, flag ? ClipDurationType.Oneshot : ClipDurationType.Endless);
+		ClipDurationType clipDurationType = (flag ? ClipDurationType.Oneshot : ClipDurationType.Endless);
+		if (item2 != null)
+		{
+			handle.Manager.AddAnimationClip(handle, item, AvatarMasks, UseEmptyAvatarMask, IsAdditive, clipDurationType, new AnimationComposition(handle));
+			AvatarMask avatarMask = (data.SideStepAbilityIsOffHand ? m_MainHandMask : m_OffHandMask);
+			handle.Manager.AddClipToComposition(handle, item2, avatarMask, isAdditive: false);
+		}
+		else
+		{
+			handle.StartClip(item, clipDurationType);
+		}
 		if (handle.ActiveAnimation != null)
 		{
 			if (handle.Manager.HitAnimationIsActive)
@@ -389,7 +460,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		}
 		data.ActionFinished = false;
 		data.ActionStarted = true;
-		data.Time = handle.GetTime() + animationClip.Length;
+		data.Time = handle.GetTime() + item.Length;
 		data.FirstAnimationStarted = true;
 		handle.ActionData = data;
 	}
@@ -420,16 +491,12 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		base.OnFinish(handle);
 	}
 
-	private AnimationClipWrapper GetAnimationClip(UnitAnimationActionHandle handle, AnimationState animState)
+	private (AnimationClipWrapper, AnimationClipWrapper) GetAnimationClips(UnitAnimationActionHandle handle, Data data)
 	{
-		Data data = (Data)handle.ActionData;
-		bool isOffhand = data?.SideStepAbilityIsOffHand ?? false;
-		WeaponAnimationStyle weaponStyle = (isOffhand ? handle.Manager.ActiveOffHandWeaponStyle : handle.Manager.ActiveMainHandWeaponStyle);
-		WeaponStyleSettings weaponStyleSettings = WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == weaponStyle && x.IsOffHand == isOffhand) ?? WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
 		if (handle.Manager.CoverType == LosCalculations.CoverType.Full && handle.Manager.AbilityIsSpell)
 		{
 			AnimationClipWrapper animationClipWrapper = null;
-			switch (animState)
+			switch (data.CurrentAnimationState)
 			{
 			case AnimationState.SideStepOut:
 				switch (handle.Manager.StepOutDirectionAnimationType)
@@ -456,18 +523,27 @@ public class UnitAnimationActionCover : UnitAnimationAction
 			}
 			if (animationClipWrapper != null)
 			{
-				return animationClipWrapper;
+				return (animationClipWrapper, null);
 			}
 		}
+		return (GetActingHandAnimationClip(handle, data), GetInactiveHandAnimationClip(handle, data));
+	}
+
+	private AnimationClipWrapper GetActingHandAnimationClip(UnitAnimationActionHandle handle, Data data)
+	{
+		bool isSideStepOffhand = data.SideStepAbilityIsOffHand;
+		WeaponAnimationStyle weaponStyle = (isSideStepOffhand ? handle.Manager.ActiveOffHandWeaponStyle : handle.Manager.ActiveMainHandWeaponStyle);
+		WeaponStyleSettings weaponStyleSettings = WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == weaponStyle && x.IsOffHand == isSideStepOffhand) ?? WeaponStyleOverrides.FirstItem((WeaponStyleSettings x) => x.WeaponAnimationStyle == handle.Manager.ActiveMainHandWeaponStyle);
+		AnimationState currentAnimationState = data.CurrentAnimationState;
 		if (weaponStyleSettings != null)
 		{
 			return handle.Manager.CoverType switch
 			{
-				LosCalculations.CoverType.Full => animState switch
+				LosCalculations.CoverType.Full => currentAnimationState switch
 				{
-					AnimationState.ForceEnteringTheCover => (data == null || !data.IsForce) ? (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering) : ((FullCoverInside != null) ? FullCoverInside : (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering)), 
+					AnimationState.ForceEnteringTheCover => (!data.IsForce) ? (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering) : ((FullCoverInside != null) ? FullCoverInside : (weaponStyleSettings.FullCoverEntering ? weaponStyleSettings.FullCoverEntering : FullCoverEntering)), 
 					AnimationState.Idle => (weaponStyleSettings.FullCoverIdle != null) ? weaponStyleSettings.FullCoverIdle : FullCoverIdle, 
-					AnimationState.ForceExitingTheCover => (data == null || !data.IsForce) ? (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting) : ((FullCoverOutside != null) ? FullCoverOutside : (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting)), 
+					AnimationState.ForceExitingTheCover => (!data.IsForce) ? (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting) : ((FullCoverOutside != null) ? FullCoverOutside : (weaponStyleSettings.FullCoverExiting ? weaponStyleSettings.FullCoverExiting : FullCoverExiting)), 
 					AnimationState.SideStepOut => handle.Manager.StepOutDirectionAnimationType switch
 					{
 						StepOutDirectionAnimationType.Left => (weaponStyleSettings.LeftStepFullCoverEntering != null) ? weaponStyleSettings.LeftStepFullCoverEntering : LeftStepFullCoverEntering, 
@@ -484,7 +560,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 					}, 
 					_ => null, 
 				}, 
-				LosCalculations.CoverType.Half => animState switch
+				LosCalculations.CoverType.Half => currentAnimationState switch
 				{
 					AnimationState.SideStepOut => (weaponStyleSettings.HalfCoverEntering != null) ? weaponStyleSettings.HalfCoverEntering : HalfCoverEntering, 
 					AnimationState.ForceEnteringTheCover => (weaponStyleSettings.HalfCoverEntering != null) ? weaponStyleSettings.HalfCoverEntering : HalfCoverEntering, 
@@ -498,7 +574,7 @@ public class UnitAnimationActionCover : UnitAnimationAction
 		}
 		return handle.Manager.CoverType switch
 		{
-			LosCalculations.CoverType.Full => animState switch
+			LosCalculations.CoverType.Full => currentAnimationState switch
 			{
 				AnimationState.ForceEnteringTheCover => FullCoverEntering, 
 				AnimationState.SideStepOut => handle.Manager.StepOutDirectionAnimationType switch
@@ -519,13 +595,59 @@ public class UnitAnimationActionCover : UnitAnimationAction
 				AnimationState.ForceExitingTheCover => FullCoverExiting, 
 				_ => null, 
 			}, 
-			LosCalculations.CoverType.Half => animState switch
+			LosCalculations.CoverType.Half => currentAnimationState switch
 			{
 				AnimationState.SideStepOut => HalfCoverEntering, 
 				AnimationState.ForceEnteringTheCover => HalfCoverEntering, 
 				AnimationState.Idle => HalfCoverIdle, 
 				AnimationState.SideStepIn => HalfCoverExiting, 
 				AnimationState.ForceExitingTheCover => HalfCoverExiting, 
+				_ => null, 
+			}, 
+			_ => null, 
+		};
+	}
+
+	private AnimationClipWrapper GetInactiveHandAnimationClip(UnitAnimationActionHandle handle, Data data)
+	{
+		bool isSideStepOffhand = data.SideStepAbilityIsOffHand;
+		WeaponAnimationStyle weaponStyle = (isSideStepOffhand ? handle.Manager.ActiveMainHandWeaponStyle : handle.Manager.ActiveOffHandWeaponStyle);
+		OffHandStyleSettings offHandStyleSettings = m_InactiveHandWeaponStyleOverrides.FirstItem((OffHandStyleSettings x) => x.Style == weaponStyle && x.IsMainHand == isSideStepOffhand);
+		if (offHandStyleSettings == null)
+		{
+			return null;
+		}
+		AnimationState currentAnimationState = data.CurrentAnimationState;
+		return handle.Manager.CoverType switch
+		{
+			LosCalculations.CoverType.Full => currentAnimationState switch
+			{
+				AnimationState.ForceEnteringTheCover => offHandStyleSettings.FullCoverEntering, 
+				AnimationState.Idle => offHandStyleSettings.FullCoverIdle, 
+				AnimationState.ForceExitingTheCover => offHandStyleSettings.FullCoverExiting, 
+				AnimationState.SideStepOut => handle.Manager.StepOutDirectionAnimationType switch
+				{
+					StepOutDirectionAnimationType.Left => offHandStyleSettings.LeftStepFullCoverEntering, 
+					StepOutDirectionAnimationType.Right => offHandStyleSettings.RightStepFullCoverEntering, 
+					StepOutDirectionAnimationType.None => offHandStyleSettings.FullCoverEntering, 
+					_ => null, 
+				}, 
+				AnimationState.SideStepIn => handle.Manager.StepOutDirectionAnimationType switch
+				{
+					StepOutDirectionAnimationType.Left => offHandStyleSettings.LeftStepFullCoverExiting, 
+					StepOutDirectionAnimationType.Right => offHandStyleSettings.RightStepFullCoverExiting, 
+					StepOutDirectionAnimationType.None => offHandStyleSettings.FullCoverExiting, 
+					_ => null, 
+				}, 
+				_ => null, 
+			}, 
+			LosCalculations.CoverType.Half => currentAnimationState switch
+			{
+				AnimationState.SideStepOut => offHandStyleSettings.HalfCoverEntering, 
+				AnimationState.ForceEnteringTheCover => offHandStyleSettings.HalfCoverEntering, 
+				AnimationState.Idle => offHandStyleSettings.HalfCoverIdle, 
+				AnimationState.SideStepIn => offHandStyleSettings.HalfCoverExiting, 
+				AnimationState.ForceExitingTheCover => offHandStyleSettings.HalfCoverExiting, 
 				_ => null, 
 			}, 
 			_ => null, 

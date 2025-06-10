@@ -1,3 +1,7 @@
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
+using Kingmaker.UI.Common.Animations;
+using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using UniRx;
@@ -31,6 +35,34 @@ public class CharInfoNameAndPortraitConsoleView : CharInfoNameAndPortraitPCView
 		{
 			m_NextButton.gameObject.SetActive(!value);
 			m_PrevButton.gameObject.SetActive(!value);
+		}));
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_LeftCommonSlots.PlayAnimation(value: true);
+			m_CommonWeaponSet.PlayAnimation(value: true);
+			m_PetSlots.PlayAnimation(value: false);
+			if (!u.IsPet)
+			{
+				return;
+			}
+			UnitPartPetOwner unitPartPetOwner = (u.IsPet ? u.Master.GetOptional<UnitPartPetOwner>() : null);
+			m_LeftCommonSlots.PlayAnimation(value: false);
+			FadeAnimator commonWeaponSet = m_CommonWeaponSet;
+			bool value2;
+			if (unitPartPetOwner != null)
+			{
+				PetType petType = unitPartPetOwner.PetType;
+				if ((uint)(petType - 1) <= 1u)
+				{
+					value2 = true;
+					goto IL_0071;
+				}
+			}
+			value2 = false;
+			goto IL_0071;
+			IL_0071:
+			commonWeaponSet.PlayAnimation(value2);
+			m_PetSlots.PlayAnimation(value: true);
 		}));
 	}
 }

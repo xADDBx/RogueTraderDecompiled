@@ -10,6 +10,8 @@ namespace Kingmaker.Visual.Animation;
 
 public abstract class AnimationBase
 {
+	private const float EpsilonTime = 1E-06f;
+
 	protected float m_LastSetSpeed = 1f;
 
 	protected float m_LastSetTime;
@@ -38,6 +40,8 @@ public abstract class AnimationBase
 
 	public float WeightFromManager { get; private set; }
 
+	public bool OnlySendEventsOnce { get; set; }
+
 	protected bool NeedChangeSpeed(float speed)
 	{
 		if (Mathf.Approximately(speed, 0f) || Mathf.Approximately(m_LastSetSpeed, 0f) || Mathf.Approximately(speed, 1f) || Mathf.Approximately(m_LastSetSpeed, 1f))
@@ -65,9 +69,15 @@ public abstract class AnimationBase
 		Handle = handle;
 	}
 
+	public virtual void Reset()
+	{
+		UpdatedOnce = false;
+	}
+
 	public virtual void IncrementTime(float deltaTime)
 	{
 		Time += deltaTime;
+		m_LastSetTime = Time;
 	}
 
 	public abstract void UpdateEvents();
@@ -119,9 +129,14 @@ public abstract class AnimationBase
 
 	internal void StartTransitionOut()
 	{
+		StartTransitionOut(forceSetTime: false);
+	}
+
+	private void StartTransitionOut(bool forceSetTime)
+	{
 		if (State != AnimationState.TransitioningOut && State != AnimationState.Finished)
 		{
-			TransitionOutStartTime = (Handle.CorrectTransitionOutTime ? 0f : Time);
+			TransitionOutStartTime = ((!forceSetTime && Handle.CorrectTransitionOutTime) ? 0f : Time);
 			State = AnimationState.TransitioningOut;
 			if (this == Handle.ActiveAnimation)
 			{
@@ -159,11 +174,11 @@ public abstract class AnimationBase
 			case AnimationState.TransitioningIn:
 				using (ProfileScope.New("TransitioningIn"))
 				{
-					if (!(TransitionIn <= 0f) && !(Time >= TransitionIn))
+					if (!(TransitionIn <= 0f) && !(Time > TransitionIn - 1E-06f))
 					{
 						break;
 					}
-					if (TransitionOutStartTime > 0f && Time >= TransitionOutStartTime)
+					if (TransitionOutStartTime > 0f && Time > TransitionOutStartTime - 1E-06f)
 					{
 						if (TransitionOut <= 0f)
 						{
@@ -172,7 +187,7 @@ public abstract class AnimationBase
 						}
 						else
 						{
-							StartTransitionOut();
+							StartTransitionOut(forceSetTime: true);
 						}
 					}
 					else
@@ -184,9 +199,9 @@ public abstract class AnimationBase
 			case AnimationState.Playing:
 				using (ProfileScope.New("Playing"))
 				{
-					if ((TransitionOutStartTime > 0f && Time >= TransitionOutStartTime) || Handle.IsReleased)
+					if ((TransitionOutStartTime > 0f && Time > TransitionOutStartTime - 1E-06f) || Handle.IsReleased)
 					{
-						StartTransitionOut();
+						StartTransitionOut(forceSetTime: true);
 						if (TransitionOut <= 0f)
 						{
 							StopEvents();
@@ -202,7 +217,7 @@ public abstract class AnimationBase
 					{
 						TransitionOutStartTime = Time;
 					}
-					if (TransitionOut <= 0f || Time >= TransitionOutStartTime + TransitionOut)
+					if (TransitionOut <= 0f || Time > TransitionOutStartTime + TransitionOut - 1E-06f)
 					{
 						StopEvents();
 						State = AnimationState.Finished;

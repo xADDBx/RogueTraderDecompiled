@@ -147,7 +147,14 @@ public class SpaceCombatBackgroundComposer : MonoBehaviour
 		m_Star.transform.localScale = new Vector3(m_BackGroundComposerConfig.Star.Scale, m_BackGroundComposerConfig.Star.Scale, m_BackGroundComposerConfig.Star.Scale);
 		if (BlueprintRoot.Instance.FxRoot.StarLight != null)
 		{
-			Object.Instantiate(BlueprintRoot.Instance.FxRoot.StarLight, m_Star.transform);
+			GameObject gameObject = Object.Instantiate(BlueprintRoot.Instance.FxRoot.StarLight, m_Star.transform);
+			if (m_BackGroundComposerConfig.StarLight.OverrideLightSettings)
+			{
+				Light component = gameObject.GetComponent<Light>();
+				component.color = m_BackGroundComposerConfig.StarLight.Color;
+				component.intensity = m_BackGroundComposerConfig.StarLight.Intensity;
+				component.range = m_BackGroundComposerConfig.StarLight.Range;
+			}
 		}
 		else
 		{

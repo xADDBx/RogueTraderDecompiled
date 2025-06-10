@@ -16,7 +16,7 @@ public class PartStatsSkills : EntityPart, IHashable
 
 	private ModifiableValueSkill[] m_List;
 
-	private StatsContainer Container => base.ConcreteOwner.GetRequired<PartStatsContainer>().Container;
+	private StatsContainer Container => base.ConcreteOwner?.GetRequired<PartStatsContainer>().Container;
 
 	public ModifiableValueSkill SkillAthletics => Container.GetSkill(StatType.SkillAthletics);
 

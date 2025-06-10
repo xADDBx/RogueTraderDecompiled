@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
@@ -6,6 +7,7 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.SkillsAn
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Localization;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.MVVM.View.CharGen.Console.Phases;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Console.CareerPathProgression.SelectionTabs;
 using Kingmaker.UI.MVVM.View.Tooltip.PC.Bricks.CombatLog;
@@ -28,6 +30,9 @@ namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.C
 public class CareerPathProgressionConsoleView : CareerPathProgressionCommonView, ICharInfoCanHookConfirm
 {
 	[Header("Console")]
+	[SerializeField]
+	private CharGenChangeNameMessageBoxConsoleView m_PetChangeNameMessageBox;
+
 	[SerializeField]
 	protected CharInfoSkillsAndWeaponsConsoleView m_SkillsAndWeaponsView;
 
@@ -95,6 +100,12 @@ public class CareerPathProgressionConsoleView : CareerPathProgressionCommonView,
 
 	private GridConsoleNavigationBehaviour RightNavigation => CareerPathSelectionTabsConsoleView.GetNavigationBehaviour();
 
+	public override void Initialize(Action<bool> returnAction)
+	{
+		m_PetChangeNameMessageBox?.Initialize();
+		base.Initialize(returnAction);
+	}
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -106,6 +117,7 @@ public class CareerPathProgressionConsoleView : CareerPathProgressionCommonView,
 				new Vector2(1f, 0.5f)
 			}
 		};
+		AddDisposable(base.ViewModel.PetChangeNameVM.Subscribe(m_PetChangeNameMessageBox.Bind));
 		AddDisposable(m_IsShown.And(base.ViewModel.HasNewValidSelections).Subscribe(delegate(bool value)
 		{
 			m_CanReset.Value = value;

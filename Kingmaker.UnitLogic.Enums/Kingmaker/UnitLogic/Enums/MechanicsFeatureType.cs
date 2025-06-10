@@ -1,3 +1,5 @@
+using UnityEngine.Serialization;
+
 namespace Kingmaker.UnitLogic.Enums;
 
 public enum MechanicsFeatureType
@@ -9,7 +11,8 @@ public enum MechanicsFeatureType
 	Flying,
 	IsUntargetable,
 	Immortality,
-	AllowDyingCondition,
+	[FormerlySerializedAs("AllowDyingCondition")]
+	UnconsciousOnZeroHealth,
 	IsIgnoredByCombat,
 	Hidden,
 	DoNotProvokeAttacksOfOpportunity,
@@ -64,5 +67,16 @@ public enum MechanicsFeatureType
 	HalfSuperiorityCriticalChance,
 	HideRealHealthInUI,
 	DisableSnapToGrid,
-	AllAttacksCountAsAoe
+	AllAttacksCountAsAoe,
+	DeadCountedForAI,
+	OverrideShieldWeaponSetsPlacement,
+	ForceAIControl,
+	CanDeployNearEnemy,
+	CarryShotgunInOneHand,
+	DisableAttacksOfOpportunityForShield,
+	HasNoStandardTurn,
+	DeathAndTraumasDoesNotAffectMomentum,
+	AutoBlock,
+	OldInjuryImmunity,
+	ProvidesHalfCover
 }

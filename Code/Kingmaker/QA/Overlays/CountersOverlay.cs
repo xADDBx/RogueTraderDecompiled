@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Owlcat.Core.Overlays;
 using Owlcat.Runtime.Core.ProfilingCounters;
 
@@ -16,7 +16,7 @@ public class CountersOverlay : Overlay
 
 	private static IEnumerable<OverlayElement> CreateElements()
 	{
-		return from l in Kingmaker.QA.Arbiter.Profiling.Counters.All.Select(CreateLabel).Concat(Kingmaker.QA.Arbiter.Profiling.Counters.All.Select(CreateGraph))
+		return from l in Kingmaker.QA.Profiling.Counters.All.Select(CreateLabel).Concat(Kingmaker.QA.Profiling.Counters.All.Select(CreateGraph))
 			orderby l.Name
 			select l;
 	}

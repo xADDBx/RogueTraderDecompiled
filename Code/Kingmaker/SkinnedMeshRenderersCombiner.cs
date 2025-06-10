@@ -87,93 +87,95 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 			AtlasMaterial.SetFloat("_Metallic", 1f);
 			AtlasMaterial.name = "AtlasMaterial";
 		}
-		for (int i = 0; i < allMaterials.Count; i++)
+		foreach (SkinnedMeshRenderer item3 in renderersToCombine)
 		{
-			List<CombineInstance> list = new List<CombineInstance>();
-			for (int j = 0; j < renderersToCombine.Count; j++)
+			if (!(item3 == null) && !(item3.sharedMesh == null))
 			{
-				SkinnedMeshRenderer skinnedMeshRenderer = smRenderers[j];
-				for (int k = 0; k < skinnedMeshRenderer.sharedMaterials.Length; k++)
+				for (int i = 0; i < item3.sharedMesh.subMeshCount; i++)
 				{
-					if (allMaterials[i] == skinnedMeshRenderer.sharedMaterials[k])
-					{
-						CombineInstance item = default(CombineInstance);
-						item.mesh = skinnedMeshRenderer.sharedMesh;
-						item.subMeshIndex = k;
-						item.transform = skinnedMeshRenderer.transform.localToWorldMatrix;
-						list.Add(item);
-					}
+					CombineInstance combineInstance = default(CombineInstance);
+					combineInstance.mesh = item3.sharedMesh;
+					combineInstance.subMeshIndex = i;
+					combineInstance.transform = item3.transform.localToWorldMatrix;
+					CombineInstance item = combineInstance;
+					combineInstances.Add(item);
 				}
 			}
-			SkinnedMeshRenderer skinnedMeshRenderer2 = o.AddComponent<SkinnedMeshRenderer>();
-			skinnedMeshRenderer2.enabled = false;
-			skinnedMeshRenderer2.sharedMesh = new Mesh();
-			skinnedMeshRenderer2.sharedMesh.CombineMeshes(list.ToArray(), mergeSubMeshes: true, useMatrices: true);
-			CombineInstance item2 = default(CombineInstance);
-			item2.mesh = skinnedMeshRenderer2.sharedMesh;
-			Debug.Log("Material ci.mesh.vertexCount:" + item2.mesh.vertexCount);
-			item2.transform = skinnedMeshRenderer2.transform.localToWorldMatrix;
-			combineInstances.Add(item2);
-			Object.DestroyImmediate(skinnedMeshRenderer2);
 		}
 		int num = 0;
-		for (int l = 0; l < renderersToCombine.Count; l++)
+		for (int j = 0; j < renderersToCombine.Count; j++)
 		{
-			SkinnedMeshRenderer skinnedMeshRenderer3 = smRenderers[l];
-			transform = ((transform == null) ? skinnedMeshRenderer3.rootBone : transform);
-			BoneWeight[] array = skinnedMeshRenderer3.sharedMesh.boneWeights;
-			for (int n = 0; n < array.Length; n++)
+			SkinnedMeshRenderer skinnedMeshRenderer = smRenderers[j];
+			transform = ((transform == null) ? skinnedMeshRenderer.rootBone : transform);
+			BoneWeight[] array = skinnedMeshRenderer.sharedMesh.boneWeights;
+			for (int k = 0; k < array.Length; k++)
 			{
-				BoneWeight item3 = array[n];
-				item3.boneIndex0 += num;
-				item3.boneIndex1 += num;
-				item3.boneIndex2 += num;
-				item3.boneIndex3 += num;
-				boneWeights.Add(item3);
+				BoneWeight item2 = array[k];
+				if (item2.weight0 > 0f)
+				{
+					item2.boneIndex0 += num;
+				}
+				if (item2.weight1 > 0f)
+				{
+					item2.boneIndex1 += num;
+				}
+				if (item2.weight2 > 0f)
+				{
+					item2.boneIndex2 += num;
+				}
+				if (item2.weight3 > 0f)
+				{
+					item2.boneIndex3 += num;
+				}
+				boneWeights.Add(item2);
 			}
-			num += skinnedMeshRenderer3.bones.Length;
-			Transform[] array2 = skinnedMeshRenderer3.bones;
-			for (int num2 = 0; num2 < array2.Length; num2++)
+			num += skinnedMeshRenderer.bones.Length;
+			Transform[] array2 = skinnedMeshRenderer.bones;
+			for (int l = 0; l < array2.Length; l++)
 			{
-				bones.Add(array2[num2]);
-				bindPoses.Add(skinnedMeshRenderer3.sharedMesh.bindposes[num2] * skinnedMeshRenderer3.transform.worldToLocalMatrix);
+				bones.Add(array2[l]);
+				bindPoses.Add(skinnedMeshRenderer.sharedMesh.bindposes[l] * skinnedMeshRenderer.transform.worldToLocalMatrix);
 			}
 		}
-		SkinnedMeshRenderer skinnedMeshRenderer4 = o.AddComponent<SkinnedMeshRenderer>();
-		skinnedMeshRenderer4.enabled = false;
-		skinnedMeshRenderer4.rootBone = transform;
-		skinnedMeshRenderer4.sharedMesh = new Mesh();
-		skinnedMeshRenderer4.sharedMesh.CombineMeshes(combineInstances.ToArray(), mergeSubMeshes: true, m_useMatrices);
-		skinnedMeshRenderer4.sharedMesh.name = o.name + "_CombineMesh";
-		Debug.Log("r.sharedMesh.vertexCount2:" + skinnedMeshRenderer4.sharedMesh.vertexCount);
+		SkinnedMeshRenderer skinnedMeshRenderer2 = o.AddComponent<SkinnedMeshRenderer>();
+		skinnedMeshRenderer2.enabled = false;
+		skinnedMeshRenderer2.rootBone = transform;
+		skinnedMeshRenderer2.sharedMesh = new Mesh();
+		skinnedMeshRenderer2.sharedMesh.CombineMeshes(combineInstances.ToArray(), mergeSubMeshes: true, m_useMatrices);
+		skinnedMeshRenderer2.sharedMesh.name = o.name + "_CombineMesh";
+		Debug.Log("r.sharedMesh.vertexCount2:" + skinnedMeshRenderer2.sharedMesh.vertexCount);
 		Debug.Log("Mesh.boneWeights:" + boneWeights.ToArray().Length);
-		_ = skinnedMeshRenderer4.sharedMesh.uv;
+		_ = skinnedMeshRenderer2.sharedMesh.uv;
 		if (allMaterials.Count > 1)
 		{
-			skinnedMeshRenderer4.sharedMaterials = allMaterials.ToArray();
+			skinnedMeshRenderer2.sharedMaterials = allMaterials.ToArray();
 		}
-		if (allMaterials.Count == 1 && AtlasMaterial == null)
+		if (allMaterials.Count == 1 && !isAtlas)
 		{
-			skinnedMeshRenderer4.sharedMaterials = allMaterials.ToArray();
+			skinnedMeshRenderer2.sharedMaterials = allMaterials.ToArray();
 		}
 		else
 		{
-			skinnedMeshRenderer4.sharedMaterial = AtlasMaterial;
+			skinnedMeshRenderer2.sharedMaterial = AtlasMaterial;
 		}
 		if (isAtlas)
 		{
-			skinnedMeshRenderer4.sharedMaterials = new Material[0];
-			skinnedMeshRenderer4.sharedMaterial = AtlasMaterial;
+			skinnedMeshRenderer2.sharedMaterials = new Material[0];
+			skinnedMeshRenderer2.sharedMaterial = AtlasMaterial;
 		}
-		skinnedMeshRenderer4.bones = bones.ToArray();
-		skinnedMeshRenderer4.sharedMesh.boneWeights = boneWeights.ToArray();
-		skinnedMeshRenderer4.sharedMesh.bindposes = bindPoses.ToArray();
-		skinnedMeshRenderer4.sharedMesh.RecalculateBounds();
-		skinnedMeshRenderer4.sharedMesh.UploadMeshData(markNoLongerReadable: true);
-		SmrPrefab = skinnedMeshRenderer4;
+		skinnedMeshRenderer2.bones = bones.ToArray();
+		skinnedMeshRenderer2.sharedMesh.boneWeights = boneWeights.ToArray();
+		skinnedMeshRenderer2.sharedMesh.bindposes = bindPoses.ToArray();
+		skinnedMeshRenderer2.sharedMesh.RecalculateBounds();
+		skinnedMeshRenderer2.sharedMesh.UploadMeshData(markNoLongerReadable: true);
+		SmrPrefab = skinnedMeshRenderer2;
 	}
 
 	public void CombineSMR()
+	{
+	}
+
+	public void CombineSMR_onlyOneObj()
 	{
 	}
 
@@ -187,6 +189,11 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 	{
 	}
 
+	private Texture2D AddTextureToPrefabViaMemory(Texture2D sourceTexture, string name, string prefabPath)
+	{
+		return null;
+	}
+
 	public void FixUV()
 	{
 		SMRListFixedUV.Clear();
@@ -198,14 +205,28 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 		foreach (SkinnedMeshRenderer item2 in SMRListFixedUV)
 		{
 			int num = allMaterials.IndexOf(item2.sharedMaterial);
+			if (num < 0 || num >= Rects.Length)
+			{
+				continue;
+			}
 			List<Vector2> list = new List<Vector2>();
 			item2.sharedMesh = Object.Instantiate(item2.sharedMesh);
 			item2.sharedMesh.GetUVs(0, list);
 			for (int i = 0; i < list.Count; i++)
 			{
-				list[i] = new Vector2(list[i].x * Rects[num].width + Rects[num].x, list[i].y * Rects[num].height + Rects[num].y);
-				item2.sharedMesh.SetUVs(0, list);
+				float num2 = list[i].x;
+				float num3 = list[i].y;
+				if (num2 < 0f || num2 > 1f)
+				{
+					num2 -= Mathf.Floor(num2);
+				}
+				if (num3 < 0f || num3 > 1f)
+				{
+					num3 -= Mathf.Floor(num3);
+				}
+				list[i] = new Vector2(num2 * Rects[num].width + Rects[num].x, num3 * Rects[num].height + Rects[num].y);
 			}
+			item2.sharedMesh.SetUVs(0, list);
 		}
 	}
 

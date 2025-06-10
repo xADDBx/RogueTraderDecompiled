@@ -27,15 +27,6 @@ public class ArmyTypeGetter : UnitPropertyGetter
 	[ShowIf("SpecificArmyType")]
 	private BlueprintArmyDescriptionReference[] m_Armies = new BlueprintArmyDescriptionReference[0];
 
-	public ReferenceArrayProxy<BlueprintArmyDescription> Armies
-	{
-		get
-		{
-			BlueprintReference<BlueprintArmyDescription>[] armies = m_Armies;
-			return armies;
-		}
-	}
-
 	protected override string GetInnerCaption(bool useLineBreaks)
 	{
 		List<string> list = new List<string>();

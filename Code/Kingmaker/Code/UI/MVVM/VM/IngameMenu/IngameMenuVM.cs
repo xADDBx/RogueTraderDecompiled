@@ -14,13 +14,15 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.IngameMenu;
 
-public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler, ISubscriber, ICanAccessColonizationHandler
+public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler, ISubscriber, ICanAccessColonizationHandler, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler
 {
 	private List<UnitReference> m_PartyCharacters;
 
 	public readonly ReactiveCommand CheckCanAccessStarshipInventoryButtons = new ReactiveCommand();
 
 	public readonly ReactiveCommand CheckCanAccessColonizationButton = new ReactiveCommand();
+
+	public readonly ReactiveCommand CheckServiceWindowsBlocked = new ReactiveCommand();
 
 	public IngameMenuVM()
 	{
@@ -206,5 +208,15 @@ public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler
 	public void HandleCanAccessColonization()
 	{
 		CheckCanAccessColonizationButton.Execute();
+	}
+
+	public void HandleServiceWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
+	}
+
+	public void HandleSelectedWindowsBlocked()
+	{
+		CheckServiceWindowsBlocked.Execute();
 	}
 }

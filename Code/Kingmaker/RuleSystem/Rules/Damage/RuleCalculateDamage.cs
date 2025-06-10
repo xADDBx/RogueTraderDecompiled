@@ -34,6 +34,8 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	private bool m_DoNotUseCrModifier;
 
+	public bool Unmodifiable;
+
 	public CompositeModifiersManager ValueModifiers => m_DamageModifiersHolder.Modifiers;
 
 	public ValueModifiersManager MinValueModifiers => m_DamageModifiersHolder.MinValueModifiers;
@@ -69,7 +71,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public DamageType DamageType => InitiatorWeaponStatsRule.BaseDamage.Type;
 
-	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false)
+	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
 		: base(initiator, target)
 	{
 		InitiatorWeaponStatsRule = ((baseDamageOverride == null && !basePenetrationOverride.HasValue) ? WeaponStatsHelper.GetWeaponStats(ability, ability?.Weapon, (MechanicEntity)base.Initiator, MaybeTarget) : new RuleCalculateStatsWeapon(initiator, target, ability, baseDamageOverride, basePenetrationOverride));
@@ -82,10 +84,11 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		m_DamageModifiersHolder = new DamageData(DamageType.Direct, 0);
 		DistanceToTarget = distance.GetValueOrDefault();
 		base.HasNoTarget = target == null;
+		Unmodifiable = unmodifiable;
 	}
 
 	private RuleCalculateDamage(CalculateDamageParams @params)
-		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier)
+		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier, @params.Unmodifiable)
 	{
 		base.FakeRule = @params.FakeRule;
 		base.HasNoTarget = @params.HasNoTarget;

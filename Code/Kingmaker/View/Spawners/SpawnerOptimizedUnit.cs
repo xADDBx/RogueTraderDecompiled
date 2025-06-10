@@ -20,7 +20,12 @@ public class SpawnerOptimizedUnit : EntityPartComponent<SpawnerOptimizedUnit.Par
 
 		public void OnInitialize(AbstractUnitEntity unit)
 		{
-			unit.MarkExtra();
+			SpawnerOptimizedUnit spawnerOptimizedUnit = (SpawnerOptimizedUnit)base.Source;
+			if (spawnerOptimizedUnit.m_IsExtra)
+			{
+				unit.MarkExtra();
+			}
+			unit.FreezeOutsideCamera = spawnerOptimizedUnit.m_FreezeOutsideCamera;
 		}
 
 		public void OnDispose(AbstractUnitEntity unit)
@@ -35,6 +40,13 @@ public class SpawnerOptimizedUnit : EntityPartComponent<SpawnerOptimizedUnit.Par
 			return result;
 		}
 	}
+
+	[SerializeField]
+	[Tooltip("If set, unit will be deactivate outside camera and cutscene associated with it will be set on pause (true pause)")]
+	private bool m_FreezeOutsideCamera;
+
+	[SerializeField]
+	private bool m_IsExtra = true;
 
 	[SerializeField]
 	private bool m_IsLightweight;

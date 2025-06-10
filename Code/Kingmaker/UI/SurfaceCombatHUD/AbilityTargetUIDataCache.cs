@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.SurfaceCombatHUD;
 
-public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUIHandler, ISubscriber, IVirtualPositionUIHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler
+public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUIHandler, ISubscriber, IVirtualPositionUIHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IInterruptTurnContinueHandler
 {
 	private readonly Dictionary<(AbilityData ability, MechanicEntity target, Vector3 casterPosition), AbilityTargetUIData> m_UIDataCache = new Dictionary<(AbilityData, MechanicEntity, Vector3), AbilityTargetUIData>();
 
@@ -59,7 +59,17 @@ public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUI
 		Clear();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		Clear();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		Clear();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		Clear();
 	}

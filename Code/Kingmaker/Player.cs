@@ -405,6 +405,15 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public CountableFlag CannotAccessContracts = new CountableFlag();
 
 	[JsonProperty]
+	public CountableFlag ServiceWindowsBlocked = new CountableFlag();
+
+	[JsonProperty]
+	public CountableFlag InventoryWindowBlocked = new CountableFlag();
+
+	[JsonProperty]
+	public CountableFlag CharacterInfoWindowBlocked = new CountableFlag();
+
+	[JsonProperty]
 	public readonly HashSet<BlueprintItem> ItemsToCargo = new HashSet<BlueprintItem>();
 
 	[JsonProperty]
@@ -1005,23 +1014,23 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public void MoveCharacters([NotNull] AreaEnterPoint areaEnterPoint, bool moveFollowers, bool moveCamera)
 	{
 		areaEnterPoint.PositionCharacters();
-		if (moveFollowers)
+		foreach (BaseUnitEntity item in Party)
 		{
-			foreach (BaseUnitEntity item in Party)
+			UnitPartFollowedByUnits optional = item.GetOptional<UnitPartFollowedByUnits>();
+			if (optional == null || !item.IsInGame || (optional.IndependentFollowers.Empty() && !moveFollowers))
 			{
-				UnitPartFollowedByUnits optional = item.GetOptional<UnitPartFollowedByUnits>();
-				if (optional == null)
+				continue;
+			}
+			foreach (var (abstractUnitEntity2, followerAction2) in Game.Instance.FollowersFormationController.CalculateTeleportToLeaderDestinations(optional))
+			{
+				if ((optional.IndependentFollowers.Contains(abstractUnitEntity2) || moveFollowers) && (bool)abstractUnitEntity2.View)
 				{
-					continue;
+					abstractUnitEntity2.View.StopMoving();
 				}
-				foreach (var (abstractUnitEntity2, followerAction2) in Game.Instance.FollowersFormationController.CalculateTeleportToLeaderDestinations(optional))
+				abstractUnitEntity2.Position = followerAction2.Position;
+				if (followerAction2.Orientation.HasValue)
 				{
-					if ((bool)abstractUnitEntity2.View)
-					{
-						abstractUnitEntity2.View.StopMoving();
-					}
-					abstractUnitEntity2.Position = followerAction2.Position;
-					abstractUnitEntity2.DesiredOrientation = followerAction2.Orientation;
+					abstractUnitEntity2.DesiredOrientation = followerAction2.Orientation.Value;
 				}
 			}
 		}
@@ -1042,7 +1051,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 		});
 	}
 
-	public void GainPartyExperience(int gained, bool isExperienceForDeath = false)
+	public void GainPartyExperience(int gained, bool isExperienceForDeath = false, bool hideInCombatLog = false)
 	{
 		if (gained < 0)
 		{
@@ -1055,7 +1064,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 		}
 		EventBus.RaiseEvent(delegate(IPartyGainExperienceHandler h)
 		{
-			h.HandlePartyGainExperience(gained, isExperienceForDeath);
+			h.HandlePartyGainExperience(gained, isExperienceForDeath, hideInCombatLog);
 		});
 	}
 
@@ -1088,6 +1097,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 	public void AddCompanion(BaseUnitEntity value, bool remote = false)
 	{
 		value.GetOrCreate<UnitPartCompanion>().SetState(remote ? CompanionState.Remote : CompanionState.InParty);
+		value.CombatGroup.Id = "<directly-controllable-unit>";
 		value.Faction.Set(BlueprintRoot.Instance.PlayerFaction);
 		TryUpdateLevel(value);
 		if (!remote)
@@ -1255,6 +1265,13 @@ public sealed class Player : Entity, IDisposable, IHashable
 		m_RemoteCompanions.Clear();
 		m_AllStarships.Clear();
 		m_AllCharactersAndStarships.Clear();
+		for (int num = m_PartyAndPetsDetached.Count - 1; num >= 0; num--)
+		{
+			if (m_PartyAndPetsDetached[num].IsDisposed || m_PartyAndPetsDetached[num].IsDisposingNow)
+			{
+				m_PartyAndPetsDetached.RemoveAt(num);
+			}
+		}
 		foreach (UnitReference item in PartyCharacters.ToTempList())
 		{
 			AddCharacterToLists(item.Entity.ToBaseUnitEntity());
@@ -1282,60 +1299,50 @@ public sealed class Player : Entity, IDisposable, IHashable
 		if (unit == null)
 		{
 			PFLog.Default.Error("Unit is null! (maybe you load old save)");
-			return;
 		}
-		if (m_AllCharacters.Contains(unit))
+		else if (!m_AllCharacters.Contains(unit))
 		{
-			return;
-		}
-		BaseUnitEntity baseUnitEntity = unit.Master ?? unit;
-		UnitReference unitReference = baseUnitEntity.FromBaseUnitEntity();
-		CompanionState? obj = baseUnitEntity.GetOptional<UnitPartCompanion>()?.State;
-		bool flag = obj == CompanionState.InParty;
-		bool num = obj == CompanionState.InPartyDetached;
-		bool isPet = unit.IsPet;
-		if (flag && !PartyCharacters.Contains(unitReference))
-		{
-			LogChannel.Default.Warning($"Unit {unitReference} in party, but not in party list. Fixing.");
-			AddPartyCharacter(unitReference);
-		}
-		if (!flag && RemovePartyCharacter(unitReference))
-		{
-			LogChannel.Default.Warning($"Unit {unitReference} not in party, but in party list. Fixing.");
-		}
-		if (CapitalPartyMode)
-		{
-			flag = baseUnitEntity.IsMainCharacter;
-		}
-		if (!isPet && flag)
-		{
-			m_Party.Add(unit);
-		}
-		if (!isPet && flag && unitReference != MainCharacter)
-		{
-			m_ActiveCompanions.Add(unit);
-		}
-		UnitPartCompanion optional = baseUnitEntity.GetOptional<UnitPartCompanion>();
-		if (optional == null || optional.State != CompanionState.Remote)
-		{
-			UnitPartCompanion optional2 = baseUnitEntity.GetOptional<UnitPartCompanion>();
-			if (optional2 == null || optional2.State != CompanionState.InParty || flag)
+			BaseUnitEntity baseUnitEntity = unit.Master ?? unit;
+			UnitReference unitReference = baseUnitEntity.FromBaseUnitEntity();
+			CompanionState? companionState = baseUnitEntity.GetCompanionState();
+			bool flag = companionState == CompanionState.InParty;
+			bool num = companionState == CompanionState.InPartyDetached;
+			bool isPet = unit.IsPet;
+			if (flag && !PartyCharacters.Contains(unitReference))
 			{
-				goto IL_0163;
+				LogChannel.Default.Warning($"Unit {unitReference} in party, but not in party list. Fixing.");
+				AddPartyCharacter(unitReference);
 			}
+			if (!flag && RemovePartyCharacter(unitReference))
+			{
+				LogChannel.Default.Warning($"Unit {unitReference} not in party, but in party list. Fixing.");
+			}
+			if (CapitalPartyMode)
+			{
+				flag = baseUnitEntity.IsMainCharacter;
+			}
+			if (!isPet && flag)
+			{
+				m_Party.Add(unit);
+			}
+			if (!isPet && flag && unitReference != MainCharacter)
+			{
+				m_ActiveCompanions.Add(unit);
+			}
+			if (baseUnitEntity.GetCompanionState() == CompanionState.Remote || (baseUnitEntity.GetCompanionState() == CompanionState.InParty && !flag))
+			{
+				m_RemoteCompanions.Add(unit);
+			}
+			if (flag)
+			{
+				m_PartyAndPets.Add(unit);
+			}
+			if (num)
+			{
+				m_PartyAndPetsDetached.Add(unit);
+			}
+			m_AllCharacters.Add(unit);
 		}
-		m_RemoteCompanions.Add(unit);
-		goto IL_0163;
-		IL_0163:
-		if (flag && unit.IsInGame)
-		{
-			m_PartyAndPets.Add(unit);
-		}
-		if (num && unit.IsInGame)
-		{
-			m_PartyAndPetsDetached.Add(unit);
-		}
-		m_AllCharacters.Add(unit);
 	}
 
 	private void AddStarshipToLists(BaseUnitEntity starship)
@@ -1371,7 +1378,7 @@ public sealed class Player : Entity, IDisposable, IHashable
 			return new StarshipEntity[1] { Game.Instance.Player.PlayerShip };
 		}
 		return from u in PartyAndPets
-			where u.IsDirectlyControllable
+			where u.IsDirectlyControllable || u.IsPet
 			where u.IsMyNetRole()
 			where u.State.CanMove
 			where !checkArea || ObstacleAnalyzer.GetArea(u.Position) == area
@@ -1891,6 +1898,12 @@ public sealed class Player : Entity, IDisposable, IHashable
 		result.Append(ref CanAccessStarshipInventory);
 		Hash128 val55 = ClassHasher<CountableFlag>.GetHash128(CannotAccessContracts);
 		result.Append(ref val55);
+		Hash128 val56 = ClassHasher<CountableFlag>.GetHash128(ServiceWindowsBlocked);
+		result.Append(ref val56);
+		Hash128 val57 = ClassHasher<CountableFlag>.GetHash128(InventoryWindowBlocked);
+		result.Append(ref val57);
+		Hash128 val58 = ClassHasher<CountableFlag>.GetHash128(CharacterInfoWindowBlocked);
+		result.Append(ref val58);
 		HashSet<BlueprintItem> itemsToCargo = ItemsToCargo;
 		if (itemsToCargo != null)
 		{
@@ -1904,26 +1917,26 @@ public sealed class Player : Entity, IDisposable, IHashable
 		Dictionary<BlueprintDlc, bool> startNewGameAdditionalContentDlcStatus = m_StartNewGameAdditionalContentDlcStatus;
 		if (startNewGameAdditionalContentDlcStatus != null)
 		{
-			int val56 = 0;
+			int val59 = 0;
 			foreach (KeyValuePair<BlueprintDlc, bool> item7 in startNewGameAdditionalContentDlcStatus)
 			{
 				Hash128 hash4 = default(Hash128);
-				Hash128 val57 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item7.Key);
-				hash4.Append(ref val57);
+				Hash128 val60 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item7.Key);
+				hash4.Append(ref val60);
 				bool obj9 = item7.Value;
-				Hash128 val58 = UnmanagedHasher<bool>.GetHash128(ref obj9);
-				hash4.Append(ref val58);
-				val56 ^= hash4.GetHashCode();
+				Hash128 val61 = UnmanagedHasher<bool>.GetHash128(ref obj9);
+				hash4.Append(ref val61);
+				val59 ^= hash4.GetHashCode();
 			}
-			result.Append(ref val56);
+			result.Append(ref val59);
 		}
 		List<BlueprintDlcReward> usedDlcRewards = UsedDlcRewards;
 		if (usedDlcRewards != null)
 		{
 			for (int num4 = 0; num4 < usedDlcRewards.Count; num4++)
 			{
-				Hash128 val59 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(usedDlcRewards[num4]);
-				result.Append(ref val59);
+				Hash128 val62 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(usedDlcRewards[num4]);
+				result.Append(ref val62);
 			}
 		}
 		List<BlueprintDlcReward> claimedDlcRewards = ClaimedDlcRewards;
@@ -1931,8 +1944,8 @@ public sealed class Player : Entity, IDisposable, IHashable
 		{
 			for (int num5 = 0; num5 < claimedDlcRewards.Count; num5++)
 			{
-				Hash128 val60 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(claimedDlcRewards[num5]);
-				result.Append(ref val60);
+				Hash128 val63 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(claimedDlcRewards[num5]);
+				result.Append(ref val63);
 			}
 		}
 		List<string> claimedTwitchDrops = ClaimedTwitchDrops;
@@ -1940,8 +1953,8 @@ public sealed class Player : Entity, IDisposable, IHashable
 		{
 			for (int num6 = 0; num6 < claimedTwitchDrops.Count; num6++)
 			{
-				Hash128 val61 = StringHasher.GetHash128(claimedTwitchDrops[num6]);
-				result.Append(ref val61);
+				Hash128 val64 = StringHasher.GetHash128(claimedTwitchDrops[num6]);
+				result.Append(ref val64);
 			}
 		}
 		HashSet<BlueprintCampaign> importedCampaigns = ImportedCampaigns;
@@ -1957,17 +1970,17 @@ public sealed class Player : Entity, IDisposable, IHashable
 		Dictionary<BlueprintCampaign, CampaignImportSettings> campaignsToOfferImport = CampaignsToOfferImport;
 		if (campaignsToOfferImport != null)
 		{
-			int val62 = 0;
+			int val65 = 0;
 			foreach (KeyValuePair<BlueprintCampaign, CampaignImportSettings> item9 in campaignsToOfferImport)
 			{
 				Hash128 hash5 = default(Hash128);
-				Hash128 val63 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item9.Key);
-				hash5.Append(ref val63);
-				Hash128 val64 = ClassHasher<CampaignImportSettings>.GetHash128(item9.Value);
-				hash5.Append(ref val64);
-				val62 ^= hash5.GetHashCode();
+				Hash128 val66 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item9.Key);
+				hash5.Append(ref val66);
+				Hash128 val67 = ClassHasher<CampaignImportSettings>.GetHash128(item9.Value);
+				hash5.Append(ref val67);
+				val65 ^= hash5.GetHashCode();
 			}
-			result.Append(ref val62);
+			result.Append(ref val65);
 		}
 		HashSet<string> claimedAchievementRewards = m_ClaimedAchievementRewards;
 		if (claimedAchievementRewards != null)
@@ -1979,15 +1992,15 @@ public sealed class Player : Entity, IDisposable, IHashable
 			}
 			result.Append(num8);
 		}
-		Hash128 val65 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
-		result.Append(ref val65);
+		Hash128 val68 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(NextEnterPoint);
+		result.Append(ref val68);
 		List<string> brokenEntities = BrokenEntities;
 		if (brokenEntities != null)
 		{
 			for (int num9 = 0; num9 < brokenEntities.Count; num9++)
 			{
-				Hash128 val66 = StringHasher.GetHash128(brokenEntities[num9]);
-				result.Append(ref val66);
+				Hash128 val69 = StringHasher.GetHash128(brokenEntities[num9]);
+				result.Append(ref val69);
 			}
 		}
 		return result;

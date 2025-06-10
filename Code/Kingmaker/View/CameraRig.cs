@@ -724,9 +724,36 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 		m_WorldToClipMatrixCached = Camera.projectionMatrix * Camera.worldToCameraMatrix;
 	}
 
-	public void SetViewportOffset(Vector2 viewportOffset)
+	public void SetViewportOffset(Vector2 viewportOffset, bool tryKeepView = false)
 	{
+		Vector3 viewportOffset2 = GetViewportOffset();
 		m_ViewportOffset = viewportOffset;
+		if (!tryKeepView || m_HardBindPositionEnabled || CameraZoom.EnablePhysicalZoom)
+		{
+			return;
+		}
+		Vector3 position = base.transform.position;
+		Vector3 inPoint = position - viewportOffset2;
+		Plane plane = new Plane(Vector3.up, inPoint);
+		Vector3 position2 = Camera.transform.position;
+		Vector3 vector = position - position2;
+		Ray ray = new Ray(position2, vector);
+		if (plane.Raycast(ray, out var enter))
+		{
+			Vector3 point = ray.GetPoint(enter);
+			Vector3 vector2 = position - point;
+			float num = (vector + vector2).magnitude / vector.magnitude;
+			float num2 = Mathf.Atan(Mathf.Tan(MathF.PI / 180f * Camera.fieldOfView) / num);
+			float value = 57.29578f * num2;
+			value = Mathf.Clamp(value, CameraZoom.FovMin, CameraZoom.FovMax);
+			if (!(value < 1E-06f))
+			{
+				m_TargetPosition = point;
+				base.transform.position = point;
+				float position3 = Mathf.Abs(CameraZoom.FovMax - value) / Mathf.Abs(CameraZoom.FovMax - CameraZoom.FovMin);
+				CameraZoom.ZoomToImmediate(position3);
+			}
+		}
 	}
 
 	private Vector3 GetViewportOffset()

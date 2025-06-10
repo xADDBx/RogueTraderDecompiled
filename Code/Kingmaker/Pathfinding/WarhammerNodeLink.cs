@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Enums;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
+using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using Pathfinding;
 using UnityEngine;
 
@@ -43,6 +47,10 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 
 	[SerializeField]
 	private WarhammerNodeLink m_ConnectedNode;
+
+	[InfoBox("By default only humanoids (units with IsHumanoid == True in their Army type) and player characters can use this links.\nUse this option to set different conditions, like \"Unit has fact\" or \"Unit is a daemon\"\nIMPORTANT: If you still need it to be a humanoid or player character, you should set it manually.")]
+	[SerializeField]
+	private PropertyCalculator m_CustomConditionForEntity;
 
 	private CustomGridNodeBase m_StartNode;
 
@@ -98,6 +106,25 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 			return base.transform.position;
 		}
 		return base.transform.parent.position;
+	}
+
+	public bool CanBuildPathThroughLink(ILinkTraversalProvider traverser)
+	{
+		if (!IsCorrectSize(traverser))
+		{
+			return false;
+		}
+		AbstractUnitEntity abstractUnitEntity = (AbstractUnitEntity)traverser.Traverser;
+		if (!m_CustomConditionForEntity.Empty)
+		{
+			return m_CustomConditionForEntity.GetBoolValue(new PropertyContext(abstractUnitEntity, null));
+		}
+		BlueprintArmyDescription army = abstractUnitEntity.Blueprint.Army;
+		if (army == null || !army.IsHumanoid)
+		{
+			return abstractUnitEntity.IsPlayerFaction;
+		}
+		return true;
 	}
 
 	public bool CanStartTraverse(ILinkTraversalProvider traverser)
@@ -166,29 +193,33 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	{
 		base.OnPostScan();
 		AddConnection();
-		CalculateTraverseOffset();
-		CalculateCompositeWidth();
+		Initialize();
 	}
 
 	public override void OnPostCacheLoad()
 	{
 		base.OnPostCacheLoad();
 		AddConnection();
-		CalculateTraverseOffset();
-		CalculateCompositeWidth();
+		Initialize();
 	}
 
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		CalculateTraverseOffset();
-		CalculateCompositeWidth();
+		Initialize();
 	}
 
 	protected override void OnDisable()
 	{
 		base.OnDisable();
 		RemoveConnection();
+	}
+
+	private void Initialize()
+	{
+		CalculateTraverseOffset();
+		CalculateCompositeWidth();
+		WarmupPropertyCalculator();
 	}
 
 	private void CalculateTraverseOffset()
@@ -256,6 +287,14 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 		if (m_EndNode != null)
 		{
 			NodeLinksCache.Remove(m_EndNode);
+		}
+	}
+
+	private void WarmupPropertyCalculator()
+	{
+		if (!m_CustomConditionForEntity.Empty)
+		{
+			m_CustomConditionForEntity.GetBoolValue(new PropertyContext(Game.Instance.DefaultUnit, null));
 		}
 	}
 }

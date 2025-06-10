@@ -1,5 +1,4 @@
 using System;
-using Kingmaker.Blueprints;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameModes;
@@ -167,24 +166,15 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	public bool CanBuildPathThroughLink(GraphNode from, GraphNode to, INodeLink link)
 	{
-		if (!IsCorrectMode)
+		if (!IsCorrectMode || link == null)
 		{
 			return false;
 		}
-		if (!link.ConnectsNodes(from, to))
+		if (link.ConnectsNodes(from, to))
 		{
-			return false;
+			return link.CanBuildPathThroughLink(this);
 		}
-		if (!link.IsCorrectSize(this))
-		{
-			return false;
-		}
-		BlueprintArmyDescription army = Entity.Blueprint.Army;
-		if ((army == null || !army.IsHumanoid) && !Entity.IsPlayerFaction)
-		{
-			return false;
-		}
-		return true;
+		return false;
 	}
 
 	public void Tick(float deltaTime)
@@ -223,7 +213,7 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	private void TryFindNode()
 	{
-		if (m_MovementAgent.IsReallyMoving && NodeLinksExtensions.AreConnected(m_MovementAgent.Position, m_MovementAgent.NextWaypoint, out var fromNode, out var toNode, out var currentLink) && m_LastTraversedPathLink != currentLink)
+		if (m_MovementAgent.IsReallyMoving && NodeLinksExtensions.AreConnected(m_MovementAgent.Position, m_MovementAgent.NextWaypoint, out var fromNode, out var toNode, out var currentLink) && !((CustomGridNodeBase)fromNode).HasConnectionInDirection(CustomGraphHelper.GuessDirection(toNode.Vector3Position - fromNode.Vector3Position)) && m_LastTraversedPathLink != currentLink)
 		{
 			m_TraverseTimer = 0f;
 			m_GraphNodeFrom = fromNode;

@@ -48,6 +48,8 @@ public sealed class Ability : MechanicEntityFact, IHashable
 		}
 	}
 
+	public bool HiddenInUI => Blueprint.HiddenInUI;
+
 	public Ability(BlueprintAbility blueprint, MechanicEntity ownerUnit)
 		: base(blueprint)
 	{

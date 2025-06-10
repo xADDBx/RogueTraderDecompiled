@@ -197,6 +197,7 @@ public class SpaceStaticPartPCView : ViewBase<SpaceStaticPartVM>
 		m_GameOverPCView.Initialize();
 		m_ComponentViews[SpaceStaticComponentType.GameOver] = m_GameOverPCView;
 		m_SubtitleView.Initialize();
+		m_SectorMapPCView.Initialize();
 	}
 
 	protected override void BindViewImplementation()

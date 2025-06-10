@@ -183,6 +183,7 @@ public class ExitBattlePopupBaseView : ViewBase<ExitBattlePopupVM>
 	private void Show()
 	{
 		m_Animator.AppearAnimation();
+		AkSoundEngine.SetState("SpaceCombat_WinScreen", "On");
 		UISounds.Instance.Sounds.Combat.ExitBattlePopupShow.Play();
 		GamePad.Instance.PushLayer(m_InputLayer);
 		m_IsInputLayerPushed = true;
@@ -192,6 +193,7 @@ public class ExitBattlePopupBaseView : ViewBase<ExitBattlePopupVM>
 	{
 		m_ShowTooltip = false;
 		UISounds.Instance.Play(UISounds.Instance.Sounds.Combat.ExitBattlePopupExperienceGrowStop, isButton: false, playAnyway: true);
+		AkSoundEngine.SetState("SpaceCombat_WinScreen", "None");
 		m_Animator.DisappearAnimation();
 		if (m_IsInputLayerPushed)
 		{

@@ -26,7 +26,7 @@ public static class SizePathfindingHelper
 			Size.Raider_1x1 => new IntRect(0, 0, 0, 0), 
 			Size.Frigate_1x2 => new IntRect(0, 0, 0, 1), 
 			Size.Cruiser_2x4 => new IntRect(0, 0, 1, 3), 
-			Size.GrandCruiser_3x6 => new IntRect(-1, -1, 1, 4), 
+			Size.GrandCruiser_3x6 => new IntRect(0, 0, 2, 5), 
 			_ => throw new ArgumentOutOfRangeException("size", size, null), 
 		};
 	}
@@ -44,7 +44,7 @@ public static class SizePathfindingHelper
 
 	public static Vector3 GetSizePositionOffset(MechanicEntity entity)
 	{
-		return GetSizePositionOffset(entity, Game.Instance.TurnController.TurnBasedModeActive);
+		return GetSizePositionOffset(entity, entity.IsInCombat);
 	}
 
 	public static Vector3 GetSizePositionOffset(MechanicEntity entity, bool inBattle)
@@ -121,7 +121,7 @@ public static class SizePathfindingHelper
 		}
 		float num3 = Mathf.Clamp01(Mathf.Max(Math.Abs(direction.x), Mathf.Abs(direction.z)) - 0.707f) / 0.29299998f;
 		Vector3 vector2 = Quaternion.AngleAxis(90f, Vector3.up) * direction.normalized;
-		return result - vector2 * ((float)(size.Width - 1) * num2 * num3);
+		return result - vector2 * ((float)(1 - size.Width % 2) * num2 * num3);
 	}
 
 	public static int GetLesserSide(this Size size)
@@ -132,7 +132,7 @@ public static class SizePathfindingHelper
 
 	public static Vector3 FromMechanicsToViewPosition(MechanicEntity entity, Vector3 mechanicsPosition)
 	{
-		return FromMechanicsToViewPosition(entity, mechanicsPosition, Game.Instance.TurnController.TurnBasedModeActive);
+		return FromMechanicsToViewPosition(entity, mechanicsPosition, entity.IsInCombat);
 	}
 
 	public static Vector3 FromMechanicsToViewPosition(MechanicEntity entity, Vector3 mechanicsPosition, bool inBattle)
@@ -143,7 +143,7 @@ public static class SizePathfindingHelper
 
 	public static Vector3 FromViewToMechanicsPosition(MechanicEntity entity, Vector3 mechanicsPosition)
 	{
-		return FromViewToMechanicsPosition(entity, mechanicsPosition, Game.Instance.TurnController.TurnBasedModeActive);
+		return FromViewToMechanicsPosition(entity, mechanicsPosition, entity.IsInCombat);
 	}
 
 	public static Vector3 FromViewToMechanicsPosition(MechanicEntity entity, Vector3 viewPosition, bool inBattle)

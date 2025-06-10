@@ -8,5 +8,6 @@ public enum AbilityEventType
 	ProjectileLaunched,
 	ProjectileHit,
 	EndAreaEffect,
-	StarUseAbilityCommand
+	StarUseAbilityCommand,
+	Redirected
 }

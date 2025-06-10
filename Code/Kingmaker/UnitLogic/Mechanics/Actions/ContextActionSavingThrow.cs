@@ -67,7 +67,7 @@ public class ContextActionSavingThrow : ContextAction
 				}
 			}
 			int dc = (HasCustomDC ? CustomDC.Calculate(base.Context) : num);
-			RulePerformSavingThrow rule = base.Context.TriggerRule(CreateSavingThrow(base.Target.Entity, dc, persistentSpell: false));
+			RulePerformSavingThrow rule = base.Context.TriggerRule(CreateSavingThrow(base.Target.Entity, dc));
 			using (ContextData<SavingThrowData>.Request().Setup(rule))
 			{
 				Actions.Run();
@@ -90,12 +90,8 @@ public class ContextActionSavingThrow : ContextAction
 		return null;
 	}
 
-	private RulePerformSavingThrow CreateSavingThrow(MechanicEntity unit, int dc, bool persistentSpell)
+	private RulePerformSavingThrow CreateSavingThrow(MechanicEntity unit, int dc)
 	{
-		return new RulePerformSavingThrow(unit, Type, dc)
-		{
-			Buff = ((!FromBuff) ? null : FindApplyBuffAction(Actions)?.Buff),
-			PersistentSpell = persistentSpell
-		};
+		return new RulePerformSavingThrow(unit, Type, dc);
 	}
 }

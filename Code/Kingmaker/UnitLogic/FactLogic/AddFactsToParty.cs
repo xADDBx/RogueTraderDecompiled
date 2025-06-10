@@ -7,7 +7,6 @@ using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
-using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
@@ -94,19 +93,7 @@ public class AddFactsToParty : MechanicEntityFactComponentDelegate, IAreaHandler
 
 	public void HandleCompanionStateChanged()
 	{
-		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (mechanicEntity == base.Owner)
-		{
-			UpdateFacts();
-		}
-		else if (IsSuitable(mechanicEntity))
-		{
-			AddFactsIfRestrictionPassed(mechanicEntity);
-		}
-		else
-		{
-			RemoveFacts(mechanicEntity);
-		}
+		UpdateFacts();
 	}
 
 	public void HandleAcceptChangeGroup()

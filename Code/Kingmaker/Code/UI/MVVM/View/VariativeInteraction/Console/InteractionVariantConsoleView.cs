@@ -44,7 +44,7 @@ public class InteractionVariantConsoleView : InteractionVariantView, IConsoleNav
 		resourcesHint.text = ((requiredResourceCount.HasValue && requiredResourceCount.GetValueOrDefault() > 0) ? GetConsoleResourceHint() : string.Empty);
 	}
 
-	protected string GetConsoleResourceHint()
+	private string GetConsoleResourceHint()
 	{
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append($"{UIStrings.Instance.Overtips.HasResourceCount.Text}: {base.ViewModel.ResourceCount}\n");

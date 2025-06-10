@@ -245,6 +245,8 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 		}
 	}
 
+	public bool FreezeOutsideCamera { get; set; }
+
 	public ShieldType ShieldType { get; set; }
 
 	public SurfaceType SurfaceType => base.Blueprint.VisualSettings.SurfaceType;
@@ -414,7 +416,7 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 	public void ForceLookAt(Vector3 point)
 	{
 		SetOrientation(GetLookAtAngle(point));
-		if (Game.Instance.IsPaused && View != null)
+		if (View != null && (Game.Instance.IsPaused || !View.IsVisible))
 		{
 			View.ViewTransform.rotation = Quaternion.Euler(0f, Orientation, 0f);
 		}

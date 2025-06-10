@@ -34,6 +34,8 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public const int MaxValueCap = 95;
 
+	private int? m_OverrideDodgeArmorPercentPenalty;
+
 	public CompositeModifiersManager WeaponDodgePenetrationModifiers;
 
 	[CanBeNull]
@@ -117,7 +119,7 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		int num = CalculateDodgeArmorPercentPenalty(Defender);
+		int num = CalculateDodgeArmorPercentPenalty(Defender, m_OverrideDodgeArmorPercentPenalty);
 		StatType statType = StatType.WarhammerAgility;
 		int modifiedValue = Defender.Stats.GetStat(statType).ModifiedValue;
 		foreach (StatType agilityReplacementStat in AgilityReplacementStats)
@@ -183,15 +185,15 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 		SpecialOverrideWithFeatures();
 	}
 
-	public static int CalculateDodgeArmorPercentPenalty(UnitEntity defender, BlueprintItemArmor armor = null)
+	public static int CalculateDodgeArmorPercentPenalty(UnitEntity defender, int? overrideDodgeArmorPercentPenalty, BlueprintItemArmor armor = null)
 	{
 		WarhammerArmorCategory warhammerArmorCategory = armor?.Category ?? defender.Body.Armor.MaybeArmor?.Blueprint.Category ?? WarhammerArmorCategory.None;
 		BlueprintArmorType blueprintArmorType = armor?.Type ?? defender.Body.Armor.MaybeArmor?.Blueprint.Type;
 		return warhammerArmorCategory switch
 		{
-			WarhammerArmorCategory.Power => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnorePowerArmourDodgePenalty).Value) ? (blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
-			WarhammerArmorCategory.Heavy => blueprintArmorType?.DodgeArmorPercentPenalty ?? 50, 
-			WarhammerArmorCategory.Medium => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnoreMediumArmourDodgePenalty).Value) ? (blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
+			WarhammerArmorCategory.Power => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnorePowerArmourDodgePenalty).Value) ? (overrideDodgeArmorPercentPenalty ?? blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
+			WarhammerArmorCategory.Heavy => overrideDodgeArmorPercentPenalty ?? blueprintArmorType?.DodgeArmorPercentPenalty ?? 50, 
+			WarhammerArmorCategory.Medium => (!defender.GetMechanicFeature(MechanicsFeatureType.IgnoreMediumArmourDodgePenalty).Value) ? (overrideDodgeArmorPercentPenalty ?? blueprintArmorType?.DodgeArmorPercentPenalty ?? 25) : 0, 
 			_ => 0, 
 		};
 	}
@@ -225,12 +227,17 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 		}
 	}
 
+	public void SetOverrideDodgeArmorPercentPenalty(int dodgeArmorPercentPenalty)
+	{
+		m_OverrideDodgeArmorPercentPenalty = dodgeArmorPercentPenalty;
+	}
+
 	public static int CalculateChapterSpecificDodgeValue(UnitEntity unit, ItemEntityArmor armor)
 	{
 		int num = Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0;
 		RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(unit));
-		int num2 = CalculateDodgeArmorPercentPenalty(unit);
-		int num3 = CalculateDodgeArmorPercentPenalty(unit, armor.Blueprint);
+		int num2 = CalculateDodgeArmorPercentPenalty(unit, ruleCalculateDodgeChance.m_OverrideDodgeArmorPercentPenalty);
+		int num3 = CalculateDodgeArmorPercentPenalty(unit, ruleCalculateDodgeChance.m_OverrideDodgeArmorPercentPenalty, armor?.Blueprint);
 		int num4 = ruleCalculateDodgeChance.Result * 100 / (100 - num2) * (100 - num3) / 100;
 		int num5 = ((num > 43) ? 70 : ((num > 31) ? 65 : ((num > 28) ? 55 : ((num > 15) ? 45 : ((num > 2) ? 30 : 25)))));
 		return Math.Max(num4 - num5, 0);

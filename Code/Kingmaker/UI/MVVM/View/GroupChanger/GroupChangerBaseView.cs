@@ -14,6 +14,7 @@ using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
+using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.GroupChanger;
@@ -38,6 +39,10 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 	[SerializeField]
 	private WindowAnimator m_WindowAnimator;
 
+	[Header("ScrollBar")]
+	[SerializeField]
+	protected ScrollRectExtended m_ScrollRect;
+
 	private readonly List<GroupChangerCharacterBaseView> m_PartyCharacterViews = new List<GroupChangerCharacterBaseView>();
 
 	protected readonly List<GroupChangerCharacterBaseView> RemoteCharacterViews = new List<GroupChangerCharacterBaseView>();
@@ -52,6 +57,7 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 	{
 		m_WindowAnimator.AppearAnimation();
 		UISounds.Instance.Sounds.GroupChanger.GroupChangerOpen.Play();
+		ScrollToTop();
 		foreach (GroupChangerCharacterVM item in base.ViewModel.PartyCharacter.Concat(base.ViewModel.RemoteCharacter))
 		{
 			CreateCharacterView(item, m_PartyCharacterView, AddToParty);
@@ -62,6 +68,8 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 		{
 			h.HandleFullScreenUiChanged(state: true, FullScreenUIType.GroupChanger);
 		});
+		AddDisposable(base.ViewModel.IsMainCharacter.Subscribe(CheckCoopButtons));
+		CheckCoopButtons(base.ViewModel.IsMainCharacter.Value);
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -76,6 +84,15 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 			h.HandleFullScreenUiChanged(state: false, FullScreenUIType.GroupChanger);
 		});
 		base.gameObject.SetActive(value: false);
+	}
+
+	private void CheckCoopButtons(bool isMainCharacter)
+	{
+		CheckCoopButtonsImpl(isMainCharacter);
+	}
+
+	protected virtual void CheckCoopButtonsImpl(bool isMainCharacter)
+	{
 	}
 
 	protected void OnAccept()
@@ -120,6 +137,11 @@ public class GroupChangerBaseView : ViewBase<GroupChangerVM>, IGameModeHandler, 
 	{
 		RemoteCharacterViews.Add(pcView);
 		pcView.transform.SetParent(m_RemoteContainer, worldPositionStays: false);
+	}
+
+	private void ScrollToTop()
+	{
+		m_ScrollRect.ScrollToTop();
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)

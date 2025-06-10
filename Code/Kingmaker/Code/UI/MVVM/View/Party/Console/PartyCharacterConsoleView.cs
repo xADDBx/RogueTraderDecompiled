@@ -4,6 +4,9 @@ using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.View.Party.PC;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
@@ -67,6 +70,25 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 	[SerializeField]
 	private GameObject m_PersonalEncumbranceObject;
 
+	[Header("PetLable")]
+	[SerializeField]
+	private GameObject m_PetLabel;
+
+	[SerializeField]
+	private GameObject m_PetLabelHologram;
+
+	[SerializeField]
+	private Image m_FrameSelectorImage;
+
+	[SerializeField]
+	private Image m_PetNumberIconOnRoundLabel;
+
+	[SerializeField]
+	private Image m_PetNumberIconOnHologram;
+
+	[SerializeField]
+	private GameObject m_AscendLabel;
+
 	private RectTransform m_RectTransform;
 
 	private RectTransform m_ParentTransform;
@@ -80,6 +102,8 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 	public float BasePositionX;
 
 	private Action<PartyCharacterPCView> m_SwitchAction;
+
+	public BaseUnitEntity UnitEntityData => base.ViewModel?.UnitEntityData;
 
 	public void Initialize(Action<PartyCharacterPCView> switchAction)
 	{
@@ -102,8 +126,20 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 		{
 			UpdateEncumbrance();
 		}));
+		AddDisposable(base.ViewModel.AscendedLabel.Subscribe(UpdateAscendedLabel));
+		AddDisposable(base.ViewModel.HasPet.Subscribe(PetLabelSetActiveHandler));
 		AddDisposable(base.ViewModel.IsEnable.Subscribe(base.gameObject.SetActive));
-		AddDisposable(base.ViewModel.IsLevelUp.Subscribe(m_LevelUpButton.gameObject.SetActive));
+		AddDisposable(base.ViewModel.FakeSelected.Subscribe(SetSelected));
+		AddDisposable(base.ViewModel.SelectorFrameIcon.Subscribe(delegate(Sprite s)
+		{
+			m_FrameSelectorImage.sprite = s;
+		}));
+		AddDisposable(base.ViewModel.PetMasterNumberIcon.Subscribe(delegate(Sprite s)
+		{
+			m_PetNumberIconOnRoundLabel.sprite = s;
+			m_PetNumberIconOnHologram.sprite = s;
+		}));
+		AddDisposable(base.ViewModel.IsLevelUp.CombineLatest(base.ViewModel.IsServiceWindowAvailable, (bool levelup, bool serviceWindowAvailable) => levelup && serviceWindowAvailable).Subscribe(m_LevelUpButton.gameObject.SetActive));
 		AddDisposable(base.ViewModel.IsSingleSelected.Subscribe(SetSelected));
 		AddDisposable(base.ViewModel.IsLinked.Subscribe(delegate(bool value)
 		{
@@ -122,6 +158,22 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 				m_NetLock.sprite = value;
 			}));
 		}
+		AddDisposable(base.ViewModel.IsHudActive.Subscribe(delegate(bool v)
+		{
+			if (base.ViewModel.HasPet.Value)
+			{
+				if (v)
+				{
+					m_PetLabel.SetActive(value: true);
+					m_PetLabelHologram.SetActive(value: false);
+				}
+				else
+				{
+					m_PetLabel.SetActive(value: false);
+					m_PetLabelHologram.SetActive(value: true);
+				}
+			}
+		}));
 	}
 
 	public void UpdateBasePosition()
@@ -218,5 +270,38 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 		localPosition.x = Mathf.Clamp(m_RectTransform.localPosition.x, vector.x, vector2.x);
 		localPosition.y = Mathf.Clamp(m_RectTransform.localPosition.y, vector.y, vector2.y);
 		m_RectTransform.localPosition = localPosition;
+	}
+
+	private void PetLabelSetActiveHandler(bool value)
+	{
+		if (base.ViewModel.IsHudActive.Value)
+		{
+			if (m_PetLabelHologram.activeInHierarchy)
+			{
+				m_PetLabelHologram.SetActive(value: false);
+			}
+			m_PetLabel.SetActive(value);
+		}
+		else
+		{
+			if (m_PetLabel.activeInHierarchy)
+			{
+				m_PetLabel.SetActive(value: false);
+			}
+			m_PetLabelHologram.SetActive(value);
+		}
+	}
+
+	private void UpdateAscendedLabel(bool value)
+	{
+		m_AscendLabel.SetActive(value);
+	}
+
+	public void ShowInspect()
+	{
+		EventBus.RaiseEvent(delegate(IUnitClickUIHandler h)
+		{
+			h.HandleUnitConsoleInvoke(UnitEntityData);
+		});
 	}
 }

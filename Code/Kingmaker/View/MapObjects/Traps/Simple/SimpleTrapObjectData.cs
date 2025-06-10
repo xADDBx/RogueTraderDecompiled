@@ -100,7 +100,7 @@ public class SimpleTrapObjectData : TrapObjectData, IHashable
 
 	public override void RunDisableActions(BaseUnitEntity unit)
 	{
-		GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExp(DisableDC, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)), unit);
+		GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExp(DisableDC, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)));
 		ActionsHolder disableActions = View.DisableActions;
 		if (disableActions != null && disableActions.HasActions)
 		{

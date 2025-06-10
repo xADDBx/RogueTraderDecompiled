@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Items;
@@ -85,5 +87,37 @@ public static class InteractionHelper
 			num += stat.ModifiedValue;
 		}
 		return Mathf.Clamp(num, 0, 100);
+	}
+
+	public static int GetNextRandomIdx(int count, bool doNotRepeatLastOne, ref int lastIdx)
+	{
+		if (count > 0)
+		{
+			if (count == 1)
+			{
+				lastIdx = 0;
+				return lastIdx;
+			}
+			if (!doNotRepeatLastOne)
+			{
+				lastIdx = UnityEngine.Random.Range(0, count);
+				return lastIdx;
+			}
+			int num;
+			if (count == 2)
+			{
+				num = ((lastIdx < 0) ? UnityEngine.Random.Range(0, 2) : ((lastIdx == 0) ? 1 : 0));
+			}
+			else
+			{
+				List<int> list = Enumerable.Range(0, count).ToList();
+				list.Remove(lastIdx);
+				num = list[UnityEngine.Random.Range(0, list.Count)];
+			}
+			lastIdx = num;
+			return num;
+		}
+		lastIdx = -1;
+		return lastIdx;
 	}
 }

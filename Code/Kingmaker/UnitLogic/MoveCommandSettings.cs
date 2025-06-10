@@ -12,4 +12,6 @@ public struct MoveCommandSettings
 	public bool IsControllerGamepad;
 
 	public bool DisableApproachRadius;
+
+	public bool LeaveFollowers;
 }

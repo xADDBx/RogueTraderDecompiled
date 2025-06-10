@@ -117,7 +117,7 @@ public class InventoryCargoView : ViewBase<InventoryCargoVM>
 				{
 					LockedCargoBlock.SetActive(!value);
 				}));
-				LockedCargoText.text = UIStrings.Instance.LootWindow.LootLockedState;
+				LockedCargoText.text = (Game.Instance.Player.ServiceWindowsBlocked ? UIStrings.Instance.ExplorationTexts.ExploNotInteractable : UIStrings.Instance.LootWindow.LootLockedState);
 			}
 		}
 		if (m_EmptyCargoText != null)

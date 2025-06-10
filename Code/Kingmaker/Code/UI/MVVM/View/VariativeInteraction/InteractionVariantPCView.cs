@@ -41,6 +41,12 @@ public class InteractionVariantPCView : InteractionVariantView
 		}));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		HideHint();
+	}
+
 	private void ShowHint()
 	{
 		int? requiredResourceCount = base.ViewModel.RequiredResourceCount;
@@ -66,11 +72,5 @@ public class InteractionVariantPCView : InteractionVariantView
 		stringBuilder.Append($"{UIStrings.Instance.Overtips.HasResourceCount.Text}: {base.ViewModel.ResourceCount}\n");
 		stringBuilder.Append($"{UIStrings.Instance.Overtips.RequiredResourceCount.Text}: {base.ViewModel.RequiredResourceCount}\n");
 		return stringBuilder.ToString();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		base.DestroyViewImplementation();
-		HideHint();
 	}
 }

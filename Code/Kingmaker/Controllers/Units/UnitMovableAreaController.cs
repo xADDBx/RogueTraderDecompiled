@@ -13,9 +13,12 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.PathRenderer;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
 using Pathfinding;
@@ -24,7 +27,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IDirectMovementHandler, IUnitGetAbilityJump, ISubscriber<IBaseUnitEntity>, IUnitMoveToProperHandler
+public class UnitMovableAreaController : IControllerDisable, IController, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitCommandActHandler, IUnitActionPointsHandler, IUnitSpentMovementPoints, IUnitGainMovementPoints, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IDirectMovementHandler, IUnitGetAbilityJump, ISubscriber<IBaseUnitEntity>, IUnitMoveToProperHandler, IAbilityExecutionProcessHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler, ITurnEndHandler, IInterruptTurnEndHandler, IPlayerInputLockHandler
 {
 	private BaseUnitEntity m_CurrentUnit;
 
@@ -49,7 +52,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
 	{
-		if (ShouldHandle(command.Executor) && (command is UnitMoveToProper || command is UnitUseAbility))
+		if (ShouldHandle(command.Executor) && (command is UnitMoveToProper || command is UnitUseAbility || command.Executor.IsBusy))
 		{
 			HideMovableArea();
 		}
@@ -57,9 +60,33 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	public void HandleUnitCommandDidAct(AbstractUnitCommand command)
 	{
-		if (!(command is UnitUseAbility))
+		if (!(command is UnitUseAbility) && !command.Executor.IsBusy)
 		{
 			UpdateMovableAreaIfNeeded(command.Executor);
+		}
+	}
+
+	public void HandleExecutionProcessStart(AbilityExecutionContext context)
+	{
+		if (ShouldHandle(context.MaybeCaster as AbstractUnitEntity))
+		{
+			HideMovableArea();
+		}
+	}
+
+	public void HandleExecutionProcessEnd(AbilityExecutionContext context)
+	{
+	}
+
+	public void HandleExecutionProcessCleared(AbilityExecutionContext context)
+	{
+		if (ShouldHandle(context.MaybeCaster as AbstractUnitEntity))
+		{
+			MechanicEntity maybeCaster = context.MaybeCaster;
+			if (maybeCaster == null || !maybeCaster.IsBusy)
+			{
+				UpdateMovableAreaIfNeeded(context.MaybeCaster as AbstractUnitEntity);
+			}
 		}
 	}
 
@@ -126,7 +153,20 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		if (!interruptionData.InterruptionWithoutInitiativeAndPanelUpdate)
+		{
+			HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
+		}
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleNewUnitStartTurn(EventInvokerExtensions.MechanicEntity);
 	}
@@ -138,9 +178,9 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 			Clear();
 			UpdateMovableAreaForParty();
 			MechanicEntity mechanicEntity = (Game.Instance.TurnController.IsPreparationTurn ? (entity ?? Game.Instance.TurnController.CurrentUnit) : (Game.Instance.TurnController.CurrentUnit ?? entity));
-			if (mechanicEntity is BaseUnitEntity currentUnit && mechanicEntity.IsDirectlyControllable)
+			if (mechanicEntity is BaseUnitEntity baseUnitEntity && (baseUnitEntity.IsPet || mechanicEntity.IsDirectlyControllable))
 			{
-				m_CurrentUnit = currentUnit;
+				m_CurrentUnit = baseUnitEntity;
 				UpdateMovableArea();
 			}
 		}
@@ -187,7 +227,8 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 			vector = m_CurrentUnit.Position;
 		}
 		CurrentUnitMovableArea = GetMovableArea(m_CurrentUnit, vector);
-		DeploymentForbiddenArea = (m_DeploymentPhase ? GetDeploymentForbiddenArea().ToList() : null);
+		bool flag = m_CurrentUnit.HasMechanicFeature(MechanicsFeatureType.CanDeployNearEnemy);
+		DeploymentForbiddenArea = ((!m_DeploymentPhase) ? null : (flag ? new List<GraphNode>() : GetDeploymentForbiddenArea().ToList()));
 		EventBus.RaiseEvent((IMechanicEntity)m_CurrentUnit, (Action<IUnitMovableAreaHandler>)delegate(IUnitMovableAreaHandler h)
 		{
 			h.HandleSetUnitMovableArea(CurrentUnitMovableArea);
@@ -196,12 +237,12 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	private List<GraphNode> GetMovableArea(BaseUnitEntity unit, Vector3 position)
 	{
-		float actionPointsBlue = unit.CombatState.ActionPointsBlue;
-		if (!(actionPointsBlue > 0f))
+		float num = (unit.IsPet ? 2f : (unit.HasMechanicFeature(MechanicsFeatureType.CantMove) ? 0f : unit.CombatState.ActionPointsBlue));
+		if (!(num > 0f))
 		{
 			return null;
 		}
-		return PathfindingService.Instance.FindAllReachableTiles_Blocking(unit.View.MovementAgent, position, actionPointsBlue).Keys.ToList();
+		return PathfindingService.Instance.FindAllReachableTiles_Blocking(unit.View.MovementAgent, unit.IsPet ? unit.Master.Position : position, num).Keys.ToList();
 	}
 
 	private static IEnumerable<GraphNode> GetDeploymentForbiddenArea()
@@ -313,5 +354,28 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity target, MechanicEntity caster, bool useAttack)
 	{
+	}
+
+	public void HandleUnitEndTurn(bool isTurnBased)
+	{
+		Clear();
+	}
+
+	public void HandleUnitEndInterruptTurn()
+	{
+		Clear();
+	}
+
+	public void HandlePlayerInputLocked()
+	{
+		HideMovableArea();
+	}
+
+	public void HandlePlayerInputUnlocked()
+	{
+		if (m_CurrentUnit != null)
+		{
+			UpdateMovableArea();
+		}
 	}
 }

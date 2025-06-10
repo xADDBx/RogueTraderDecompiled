@@ -74,14 +74,8 @@ public class PartyPCView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber, IFu
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		AddDisposable(base.ViewModel.NextEnable.Subscribe(delegate(bool value)
-		{
-			m_Next.gameObject.SetActive(value);
-		}));
-		AddDisposable(base.ViewModel.PrevEnable.Subscribe(delegate(bool value)
-		{
-			m_Prev.gameObject.SetActive(value);
-		}));
+		AddDisposable(base.ViewModel.NextEnable.Subscribe(m_Next.gameObject.SetActive));
+		AddDisposable(base.ViewModel.PrevEnable.Subscribe(m_Prev.gameObject.SetActive));
 		AddDisposable(ObservableExtensions.Subscribe(m_Next.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.Next();
@@ -161,7 +155,7 @@ public class PartyPCView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber, IFu
 			HideAnimation(hide: true);
 			return;
 		}
-		HideAnimation(m_FullScreenUIType switch
+		bool flag = m_FullScreenUIType switch
 		{
 			FullScreenUIType.Encyclopedia => true, 
 			FullScreenUIType.Journal => true, 
@@ -169,7 +163,10 @@ public class PartyPCView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber, IFu
 			FullScreenUIType.ShipCustomization => true, 
 			FullScreenUIType.ColonyManagement => true, 
 			_ => false, 
-		});
+		};
+		bool flag2 = base.ViewModel.ModalWindowUIType == ModalWindowUIType.Respec;
+		bool flag3 = flag2;
+		HideAnimation(flag || flag3);
 	}
 
 	public void HideAnimation(bool hide)
@@ -221,16 +218,18 @@ public class PartyPCView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber, IFu
 
 	public void HandleSwitchPartyCharacters(BaseUnitEntity unit1, BaseUnitEntity unit2)
 	{
-		PartyCharacterPCView partyCharacterPCView = m_Characters.FirstOrDefault((PartyCharacterPCView c) => c.UnitEntityData == unit1);
-		PartyCharacterPCView partyCharacterPCView2 = m_Characters.FirstOrDefault((PartyCharacterPCView c) => c.UnitEntityData == unit2);
-		if (!(partyCharacterPCView == null) && !(partyCharacterPCView2 == null))
+		PartyCharacterPCView mainCharacter = m_Characters.FirstOrDefault((PartyCharacterPCView c) => c.UnitEntityData == unit1);
+		PartyCharacterPCView secondCharacter = m_Characters.FirstOrDefault((PartyCharacterPCView c) => c.UnitEntityData == unit2);
+		if (!(mainCharacter == null) && !(secondCharacter == null))
 		{
-			int index = m_Characters.IndexOf(partyCharacterPCView);
-			int index2 = m_Characters.IndexOf(partyCharacterPCView2);
-			m_Characters[index] = partyCharacterPCView2;
-			m_Characters[index2] = partyCharacterPCView;
-			m_Characters[index].Bind(base.ViewModel.CharactersVM[index]);
-			m_Characters[index2].Bind(base.ViewModel.CharactersVM[index2]);
+			int index = m_Characters.IndexOf(mainCharacter);
+			int index2 = m_Characters.IndexOf(secondCharacter);
+			m_Characters[index] = secondCharacter;
+			m_Characters[index2] = mainCharacter;
+			PartyCharacterVM viewModel = base.ViewModel.CharactersVM.FirstOrDefault((PartyCharacterVM vm) => vm.UnitEntityData == secondCharacter.UnitEntityData);
+			PartyCharacterVM viewModel2 = base.ViewModel.CharactersVM.FirstOrDefault((PartyCharacterVM vm) => vm.UnitEntityData == mainCharacter.UnitEntityData);
+			m_Characters[index].Bind(viewModel);
+			m_Characters[index2].Bind(viewModel2);
 		}
 	}
 }

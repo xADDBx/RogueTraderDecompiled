@@ -70,6 +70,10 @@ public class RankEntryStatItemCommonView : VirtualListElementViewBase<RankEntryS
 				new Vector2(1f, 0.5f)
 			}
 		}));
+		AddDisposable(m_MainButton.OnHoverAsObservable().Subscribe(delegate
+		{
+			base.ViewModel.UpdateTemplate();
+		}));
 		AddDisposable(m_MainButton.OnLeftClickAsObservable().Subscribe(delegate
 		{
 			DoClick();

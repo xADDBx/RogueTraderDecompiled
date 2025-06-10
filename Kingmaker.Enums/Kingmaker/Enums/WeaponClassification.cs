@@ -15,5 +15,6 @@ public enum WeaponClassification
 	Chainsaw,
 	Knife,
 	Maul,
-	Hammer
+	Hammer,
+	Shield
 }

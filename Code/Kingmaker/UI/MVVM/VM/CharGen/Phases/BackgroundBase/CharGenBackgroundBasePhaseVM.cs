@@ -285,6 +285,6 @@ public abstract class CharGenBackgroundBasePhaseVM<TViewModel> : CharGenPhaseBas
 		{
 			return null;
 		}
-		return new TooltipTemplateChargenBackground(SelectedItem.Value.Feature);
+		return new TooltipTemplateChargenBackground(SelectedItem.Value.Feature, isInfoWindow: true, isCharGen: true);
 	}
 }

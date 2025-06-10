@@ -28,6 +28,8 @@ using Kingmaker.Localization;
 using Kingmaker.Networking;
 using Kingmaker.Pathfinding;
 using Kingmaker.QA.Analytics;
+using Kingmaker.QA.Arbiter.GameCore;
+using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Clockwork;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
@@ -366,18 +368,17 @@ public class GameStarter : MonoBehaviour
 			bugReportCanvas.BindKeyboard(Game.Instance.Keyboard);
 		}
 		Game.Instance.Keyboard.RegisterBuiltinBindings();
+		m_MainMenuLoadingScreen.EndLoading(UnloadStarterScene);
 		if (IsArbiterMode())
 		{
-			PFLog.Arbiter.Log("Starting Arbiter");
-			BundledSceneLoader.LoadScene("Arbiter");
-			m_MainMenuLoadingScreen.EndLoading(UnloadStarterScene);
+			PFLog.System.Log("Starting Arbiter");
+			ArbiterService.Initialize<GameCoreArbiterConfigurationProvider>();
 			yield break;
 		}
 		if (IsClockworkMode())
 		{
 			Clockwork.Enabled = true;
 		}
-		m_MainMenuLoadingScreen.EndLoading(UnloadStarterScene);
 		PhotonManager.NetGame.InitPlatform();
 	}
 
@@ -551,5 +552,15 @@ public class GameStarter : MonoBehaviour
 		bool num = CommandLineArguments.Parse().Contains("-clockwork");
 		bool flag = !string.IsNullOrEmpty(PlayerPrefs.GetString("ClockworkScenario", ""));
 		return num || flag;
+	}
+
+	public static bool IsSkippingMainMenu()
+	{
+		CommandLineArguments commandLineArguments = CommandLineArguments.Parse();
+		if (!commandLineArguments.Contains("-start_from"))
+		{
+			return commandLineArguments.Contains("skipmainmenu");
+		}
+		return true;
 	}
 }

@@ -40,7 +40,8 @@ using Kingmaker.Localization.Enums;
 using Kingmaker.Networking;
 using Kingmaker.QA;
 using Kingmaker.QA.Analytics;
-using Kingmaker.QA.Arbiter;
+using Kingmaker.QA.Arbiter.GameCore;
+using Kingmaker.QA.Arbiter.GameCore.StaticPerformanceChecker;
 using Kingmaker.Replay;
 using Kingmaker.Settings;
 using Kingmaker.Settings.Graphics;
@@ -193,47 +194,6 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsBots.ConsoleClockworkStop), "void ConsoleClockworkStop()", "clockwork_stop", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Func<string>(CheatsBots.ConsoleClockworkScenarioList), "string ConsoleClockworkScenarioList()", "clockwork_list_scenarios", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
 		new CheatMethodInfoInternal(new Func<string>(CheatsBots.ConsoleClockworkStatus), "string ConsoleClockworkStatus()", "clockwork_status", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
-		new CheatMethodInfoInternal(new Action<string>(CheatsBots.ConsoleArbiterStart), "void ConsoleArbiterStart(string instruction)", "arbiter_start", "", "", ExecutionPolicy.All, new CheatParameter[1]
-		{
-			new CheatParameter
-			{
-				Name = "instruction",
-				Type = "System.String",
-				HasDefaultValue = false
-			}
-		}, "void"),
-		new CheatMethodInfoInternal(new Action(CheatsBots.ConsoleArbiterStop), "void ConsoleArbiterStop()", "arbiter_stop", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Func<string>(CheatsBots.ConsoleArbiterInstructionList), "string ConsoleArbiterInstructionList()", "arbiter_list_instructions", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
-		new CheatMethodInfoInternal(new Action<string, int>(CheatsBots.MakeScreenshot), "void MakeScreenshot(string instructionName, int pointId)", "arbiter_screenshot", "", "", ExecutionPolicy.All, new CheatParameter[2]
-		{
-			new CheatParameter
-			{
-				Name = "instructionName",
-				Type = "System.String",
-				HasDefaultValue = false
-			},
-			new CheatParameter
-			{
-				Name = "pointId",
-				Type = "System.Int32",
-				HasDefaultValue = false
-			}
-		}, "void"),
-		new CheatMethodInfoInternal(new Action<string, int>(CheatsBots.ArbiterTeleportCamera), "void ArbiterTeleportCamera(string instructionName, int pointId)", "arbiter_camera_teleport", "", "", ExecutionPolicy.All, new CheatParameter[2]
-		{
-			new CheatParameter
-			{
-				Name = "instructionName",
-				Type = "System.String",
-				HasDefaultValue = false
-			},
-			new CheatParameter
-			{
-				Name = "pointId",
-				Type = "System.Int32",
-				HasDefaultValue = false
-			}
-		}, "void"),
 		new CheatMethodInfoInternal(new Action<BlueprintPlanet>(CheatsColonization.ColonizePlanet), "void ColonizePlanet(BlueprintPlanet blueprintPlanet)", "colonize", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -379,6 +339,8 @@ public static class AllCheats
 		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsColonization.CheatLogColoniesEvents), "void CheatLogColoniesEvents()", "log_colonies_events", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCombat.KillAll), "void KillAll()", "kill_all", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsCombat.KillAllBossRemoveBuff), "void KillAllBossRemoveBuff()", "kill_all_boss_removebuff", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsCombat.KillAllBossRemoveImmortal), "void KillAllBossRemoveImmortal()", "kill_all_boss_removeimmortal", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<BaseUnitEntity>(CheatsCombat.Kill), "void Kill(BaseUnitEntity unit)", "kill", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -450,7 +412,28 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action<BlueprintUnit, BlueprintFaction, Vector3>(CheatsCombat.SpawnEnemyUnderCursor), "void SpawnEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))", "summon", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
+		new CheatMethodInfoInternal(new Func<BlueprintUnit, BlueprintFaction, Vector3, BaseUnitEntity>(CheatsCombat.SpawnEnemyUnderCursor), "BaseUnitEntity SpawnEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))", "summon", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "bp",
+				Type = "Kingmaker.Blueprints.BlueprintUnit",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "factionBp",
+				Type = "Kingmaker.Blueprints.BlueprintFaction",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "position",
+				Type = "UnityEngine.Vector3",
+				HasDefaultValue = true
+			}
+		}, "BaseUnitEntity"),
+		new CheatMethodInfoInternal(new Action<BlueprintUnit, BlueprintFaction, Vector3>(CheatsCombat.SpawnOptimizedEnemyUnderCursor), "void SpawnOptimizedEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))", "summon_freezed", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
 			new CheatParameter
 			{
@@ -517,6 +500,66 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action<int, bool>(CheatsCombat.SpawnExtraSparse), "void SpawnExtraSparse(int number, bool roaming = false)", "spawn_extra_sparse", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "number",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "roaming",
+				Type = "System.Boolean",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, bool>(CheatsCombat.SpawnLightweightDense), "void SpawnLightweightDense(int number, bool roaming = false)", "spawn_lightweight_dense", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "number",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "roaming",
+				Type = "System.Boolean",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, bool>(CheatsCombat.SpawnLightweightSparse), "void SpawnLightweightSparse(int number, bool roaming = false)", "spawn_lightweight_sparse", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "number",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "roaming",
+				Type = "System.Boolean",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, bool>(CheatsCombat.SpawnFreezeDense), "void SpawnFreezeDense(int number, bool roaming = false)", "spawn_freeze_dense", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
+		{
+			new CheatParameter
+			{
+				Name = "number",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "roaming",
+				Type = "System.Boolean",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int, bool>(CheatsCombat.SpawnFreezeSparse), "void SpawnFreezeSparse(int number, bool roaming = false)", "spawn_freeze_sparse", "", "", ExecutionPolicy.PlayMode, new CheatParameter[2]
 		{
 			new CheatParameter
 			{
@@ -631,8 +674,26 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsCommon.ShowDebugMessageBox), "void ShowDebugMessageBox()", "show_message_box", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.StatCoercion), "void StatCoercion()", "stat_coercion", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsCommon.CleanSpace), "void CleanSpace()", "clean_space", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<bool>(CheatsCommon.ServiceWindowsBlock), "void ServiceWindowsBlock(bool block)", "block_service_windows", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "block",
+				Type = "System.Boolean",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsContextData.RandomEncounterStatusSwitch), "void RandomEncounterStatusSwitch()", "break_context_data", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<Cutscene>(CheatsCutscenes.StopCutscenes), "void StopCutscenes(Cutscene cutscene)", "stop_cutscene", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "cutscene",
+				Type = "Kingmaker.AreaLogic.Cutscenes.Cutscene",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<Cutscene>(CheatsCutscenes.PlayCutscene), "void PlayCutscene(Cutscene cutscene)", "play_cutscene", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -648,10 +709,28 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.Quit), "void Quit()", "quit", "Call SystemUtil.ApplicationQuit()", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.QuitForce), "void QuitForce()", "quit_force", "Call Application.Quit(1)", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.WwiseProfilerCapture), "void WwiseProfilerCapture()", "wwise_profile", "Launch Wwise profiler session", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.UnityProfilerCapture), "void UnityProfilerCapture(string name = null)", "unity_profile", "Starts recording unity profiling data to profiler.raw", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "name",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ReloadUI), "void ReloadUI()", "reload_ui", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ResetWidgetStash), "void ResetWidgetStash()", "reset_widget_stash", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUINextPlatform), "void ChangeUINextPlatform()", "change_ui_next_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ChangeUIPrevPlatform), "void ChangeUIPrevPlatform()", "change_ui_prev_platform", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsDebug.SetCameraPosition), "void SetCameraPosition(string parameters)", "set_camera_pos", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "parameters",
+				Type = "System.String",
+				HasDefaultValue = false
+			}
+		}, "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.CrashGame), "void CrashGame()", "debug_crash", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionGame), "void ExceptionGame()", "debug_exception", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ExceptionDBZ), "void ExceptionDBZ()", "test_exception_dbz", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
@@ -754,6 +833,7 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Action(CheatsDebug.DisableLogging), "void DisableLogging()", "disable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.EnableLogging), "void EnableLogging()", "enable_logging", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CheatsDebug.ClearBugReportPrefs), "void ClearBugReportPrefs()", "reset_bugreport_prefs", "to make a call BugReport`s tutor", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsDialogs.StopDialog), "void StopDialog()", "stop_dialog", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string>(CheatsExportCharacter.ExportCharacter), "void ExportCharacter(string preset)", "export_character", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1033,6 +1113,15 @@ public static class AllCheats
 			{
 				Name = "selectedUnits",
 				Type = "System.String",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<Vector3>(CheatsTransfer.LocalTeleport), "void LocalTeleport(Vector3 tpPosition)", "party_teleport", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "tpPosition",
+				Type = "UnityEngine.Vector3",
 				HasDefaultValue = false
 			}
 		}, "void"),
@@ -1562,7 +1651,28 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "Task"),
-		new CheatMethodInfoInternal(new Func<InclemencyType, InclemencyType>(ArbiterClientIntegration.SetWeather), "InclemencyType SetWeather(InclemencyType type = Clear)", "weather_set", "Сменить погоду", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action<float, int, int>(Kingmaker.QA.Arbiter.GameCore.Cheats.ArbiterRunStaticPerformanceTest), "void ArbiterRunStaticPerformanceTest(float step = 10, int type = 0, int iVSync = -1)", "arbiter_spt", "Run Arbiter Static Performance Test. <step> - jump interval for camera ([10]), <type> type of algorithm ([0],1,2), <vsync> - ([-1]/0/1)", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
+		{
+			new CheatParameter
+			{
+				Name = "step",
+				Type = "System.Single",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "type",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			},
+			new CheatParameter
+			{
+				Name = "iVSync",
+				Type = "System.Int32",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Func<InclemencyType, InclemencyType>(Kingmaker.QA.Arbiter.GameCore.Cheats.SetWeather), "InclemencyType SetWeather(InclemencyType type = Clear)", "weather_set", "Сменить погоду", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -1571,9 +1681,9 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "InclemencyType"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.DisableClouds), "void DisableClouds()", "clouds_disable", "Отключить облака", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.EnableClouds), "void EnableClouds()", "clouds_enable", "Включить облака", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action<bool>(ArbiterClientIntegration.DisableFog), "void DisableFog(bool disable = true)", "fog_disable", "Отключить туманных объемы", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.DisableClouds), "void DisableClouds()", "clouds_disable", "Отключить облака", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.EnableClouds), "void EnableClouds()", "clouds_enable", "Включить облака", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<bool>(Kingmaker.QA.Arbiter.GameCore.Cheats.DisableFog), "void DisableFog(bool disable = true)", "fog_disable", "Отключить туманных объемы", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -1582,7 +1692,7 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action<bool>(ArbiterClientIntegration.EnableFog), "void EnableFog(bool disable = true)", "fog_enable", "Включить туманных объемы", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action<bool>(Kingmaker.QA.Arbiter.GameCore.Cheats.EnableFog), "void EnableFog(bool disable = true)", "fog_enable", "Включить туманных объемы", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -1591,7 +1701,7 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action<bool>(ArbiterClientIntegration.DisableWind), "void DisableWind(bool disable = true)", "wind_disable", "Отключить ветер", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action<bool>(Kingmaker.QA.Arbiter.GameCore.Cheats.DisableWind), "void DisableWind(bool disable = true)", "wind_disable", "Отключить ветер", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -1600,32 +1710,66 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action<bool>(ArbiterClientIntegration.EnableWind), "void EnableWind(bool disable = true)", "wind_enable", "Включить ветер", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.EnableWind), "void EnableWind()", "wind_enable", "Включить ветер", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.DisableFow), "void DisableFow()", "fow_disable", "Отключить туман войны", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.EnableFow), "void EnableFow()", "fow_enable", "Включить туман войны", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.DisableFx), "void DisableFx()", "fx_disable", "Отключить fx", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.EnableFx), "void EnableFx()", "fx_enable", "Включить fx", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.HideUnits), "void HideUnits()", "units_hide", "Скрыть юниты", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.ShowUnits), "void ShowUnits()", "units_show", "Показать юниты", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.HideUi), "void HideUi()", "ui_hide", "Скрыть UI", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(Kingmaker.QA.Arbiter.GameCore.Cheats.ShowUi), "void ShowUi()", "ui_show", "Показать UI", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<Vector3, string, float>(Kingmaker.QA.Arbiter.GameCore.StaticPerformanceChecker.Cheats.MoveCameraToPoint), "void MoveCameraToPoint(Vector3 position, string rotation, float zoom = 4)", "arbiter_spt_view", "Set camera position with rotation and zoom <x;y;z> <rotation=up|right|down|left> <zoom=4>", "", ExecutionPolicy.All, new CheatParameter[3]
 		{
 			new CheatParameter
 			{
-				Name = "disable",
-				Type = "System.Boolean",
+				Name = "position",
+				Type = "UnityEngine.Vector3",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "rotation",
+				Type = "System.String",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "zoom",
+				Type = "System.Single",
 				HasDefaultValue = true
 			}
 		}, "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.DisableFow), "void DisableFow()", "fow_disable", "Отключить туман войны", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.EnableFow), "void EnableFow()", "fow_enable", "Включить туман войны", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Func<int, int>(ArbiterClientIntegration.SetVSync), "int SetVSync(int value)", "vsync_set", "Установить количество v-синков между кадрами", "", ExecutionPolicy.All, new CheatParameter[1]
+		new CheatMethodInfoInternal(new Action<Vector3, float, float>(Kingmaker.QA.Arbiter.GameCore.StaticPerformanceChecker.Cheats.MoveCameraToPoint), "void MoveCameraToPoint(Vector3 position, float rotation, float zoom = 4)", "set_camera", "Move camera to position with rotation and zoom <x;y;z> <0-360> <zoom=4>", "", ExecutionPolicy.All, new CheatParameter[3]
 		{
 			new CheatParameter
 			{
-				Name = "value",
-				Type = "System.Int32",
+				Name = "position",
+				Type = "UnityEngine.Vector3",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "rotation",
+				Type = "System.Single",
+				HasDefaultValue = false
+			},
+			new CheatParameter
+			{
+				Name = "zoom",
+				Type = "System.Single",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<Vector3>(Kingmaker.QA.Arbiter.GameCore.StaticPerformanceChecker.Cheats.MoveArbiterRevealerToPoint), "void MoveArbiterRevealerToPoint(Vector3 position)", "revealer_teleport", "Move revealer to position <x;y;z>", "", ExecutionPolicy.All, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "position",
+				Type = "UnityEngine.Vector3",
 				HasDefaultValue = false
 			}
-		}, "int"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.DisableFx), "void DisableFx()", "fx_disable", "Отключить fx", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.EnableFx), "void EnableFx()", "fx_enable", "Включить fx", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.HideUnits), "void HideUnits()", "units_hide", "Скрыть юниты", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.ShowUnits), "void ShowUnits()", "units_show", "Показать юниты", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.HideUi), "void HideUi()", "ui_hide", "Скрыть UI", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
-		new CheatMethodInfoInternal(new Action(ArbiterClientIntegration.ShowUi), "void ShowUi()", "ui_show", "Показать UI", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		}, "void"),
 		new CheatMethodInfoInternal(new Action<string>(OwlcatProtocol.OwlcatProtocolHandler), "void OwlcatProtocolHandler(string message)", "owlcat_protocol", "", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
 			new CheatParameter

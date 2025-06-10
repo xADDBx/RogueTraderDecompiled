@@ -548,7 +548,7 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 		if (!(Game.Instance.CurrentMode == GameModeType.Cutscene) && !(Game.Instance.CurrentMode == GameModeType.Dialog) && !LoadingProcess.Instance.IsLoadingScreenActive && (!Game.Instance.SectorMapTravelController.IsTravelling || !(Game.Instance.CurrentMode == GameModeType.GlobalMap)))
 		{
 			FullScreenUIType fullScreenUIType = m_FullScreenUIType;
-			if (fullScreenUIType != FullScreenUIType.EscapeMenu && fullScreenUIType != FullScreenUIType.TransitionMap && fullScreenUIType != FullScreenUIType.Vendor && fullScreenUIType != FullScreenUIType.Credits && fullScreenUIType != FullScreenUIType.Chargen && fullScreenUIType != FullScreenUIType.NewGame)
+			if (fullScreenUIType != FullScreenUIType.EscapeMenu && fullScreenUIType != FullScreenUIType.TransitionMap && fullScreenUIType != FullScreenUIType.Vendor && fullScreenUIType != FullScreenUIType.Credits && fullScreenUIType != FullScreenUIType.Chargen && fullScreenUIType != FullScreenUIType.NewGame && fullScreenUIType != FullScreenUIType.DlcModManager)
 			{
 				return m_ModalWindowUIType == ModalWindowUIType.GameEndingTitles;
 			}

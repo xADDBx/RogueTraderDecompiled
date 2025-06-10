@@ -5,7 +5,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UnitLogic.Abilities.Visual.Blueprints;
 using Kingmaker.Utility.Attributes;
-using Kingmaker.Visual.Animation.Kingmaker;
 using MemoryPack;
 using UnityEngine;
 
@@ -33,29 +32,13 @@ public class BlueprintAbilityFXSettings : BlueprintScriptableObject
 	private BlueprintAbilitySoundFXSettings.Reference m_SoundFXSettings;
 
 	[SerializeField]
-	[Obsolete]
-	private UnitAnimationAction m_Action;
-
-	[SerializeField]
 	private UnitAnimationActionLink m_ActionLink;
-
-	[SerializeField]
-	[Obsolete]
-	private UnitAnimationAction m_OffHandAction;
 
 	[SerializeField]
 	private UnitAnimationActionLink m_OffHandActionLink;
 
 	[SerializeField]
-	[Obsolete]
-	private UnitAnimationAction m_CornerAction;
-
-	[SerializeField]
 	private UnitAnimationActionLink m_CornerActionLink;
-
-	[SerializeField]
-	[Obsolete]
-	private UnitAnimationAction m_OffHandCornerAction;
 
 	[SerializeField]
 	private UnitAnimationActionLink m_OffHandCornerActionLink;

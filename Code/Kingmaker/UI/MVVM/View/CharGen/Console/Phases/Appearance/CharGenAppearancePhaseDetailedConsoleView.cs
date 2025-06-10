@@ -55,7 +55,6 @@ public class CharGenAppearancePhaseDetailedConsoleView : CharGenAppearancePhaseD
 	{
 		base.BindViewImplementation();
 		AddDisposable(m_ContentNavigation = new GridConsoleNavigationBehaviour());
-		AddDisposable(base.ViewModel.OnPageChanged.Subscribe(HandlePageChanged));
 	}
 
 	public override void AddInput(ref InputLayer inputLayer, ref GridConsoleNavigationBehaviour navigationBehaviour, ConsoleHintsWidget hintsWidget, BoolReactiveProperty isMainCharacter)

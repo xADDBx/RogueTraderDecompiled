@@ -32,6 +32,9 @@ public class Cutscene : Gate, ICutscene
 	[Tooltip("If set, the cutscene auto-pauses when there's a dialog, rest, or exclusive cutscene playing")]
 	public bool IsBackground;
 
+	[Tooltip("If set, cutscene will override unit FreezeOutsideCamera flag to false")]
+	public bool Freezeless;
+
 	[Tooltip("If not set, cutscene is paused when all anchors are in fog of war or away enough from party")]
 	public bool Sleepless;
 
@@ -39,6 +42,9 @@ public class Cutscene : Gate, ICutscene
 	public bool AllowCopies;
 
 	public bool LockControl;
+
+	[ShowIf("LockControl")]
+	public bool ShowPets;
 
 	public bool ShowOverlay;
 

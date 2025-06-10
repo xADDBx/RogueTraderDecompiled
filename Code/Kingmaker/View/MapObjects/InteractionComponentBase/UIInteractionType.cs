@@ -6,5 +6,6 @@ public enum UIInteractionType
 	Action,
 	Move,
 	Info,
-	Credits
+	Credits,
+	Pets
 }

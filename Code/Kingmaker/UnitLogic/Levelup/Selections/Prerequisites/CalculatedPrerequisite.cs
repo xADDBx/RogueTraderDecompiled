@@ -42,6 +42,11 @@ public abstract class CalculatedPrerequisite
 		return CalculateInternal(careerPath.Prerequisites, unit);
 	}
 
+	public static CalculatedPrerequisite Calculate([NotNull] PrerequisitesList prerequisitesList, [NotNull] BaseUnitEntity unit)
+	{
+		return CalculateInternal(prerequisitesList, unit);
+	}
+
 	[CanBeNull]
 	public static CalculatedPrerequisite Calculate(SelectionStateFeature selection, FeatureSelectionItem selectionItem, [NotNull] BaseUnitEntity unit)
 	{

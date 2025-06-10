@@ -12,6 +12,8 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Localization;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
@@ -151,6 +153,10 @@ public class AbilityCustomMoveToTarget : AbilityCustomLogic, IAbilityTargetRestr
 			using (context.GetDataScope(entity.ToITargetWrapper()))
 			{
 				m_ActionsOnTargetAfterMoved?.Run();
+				EventBus.RaiseEvent(delegate(IUnitMovedByAbilityHandler h)
+				{
+					h.HandleUnitMovedByAbility(context, path.path.Count - 1);
+				});
 			}
 		}
 		m_ActionsAfterMoved?.Run();

@@ -88,7 +88,7 @@ public class AnswerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public bool IsAlreadySelected()
 	{
-		return Game.Instance.Player.Dialog.SelectedAnswers.Contains(Answer.Value);
+		return Game.Instance.Player.Dialog.SelectedAnswersContains(Answer.Value);
 	}
 
 	public void HandleChooseCharacter(BlueprintAnswer answer)

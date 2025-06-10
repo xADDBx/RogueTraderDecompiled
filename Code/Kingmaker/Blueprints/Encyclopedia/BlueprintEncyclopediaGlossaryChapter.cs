@@ -39,15 +39,15 @@ public class BlueprintEncyclopediaGlossaryChapter : BlueprintEncyclopediaChapter
 					UberDebug.LogError(item.name + " has no title!");
 					continue;
 				}
-				string text = title.Substring(0, 1);
-				if (m_IndexPages.TryGetValue(text, out var value))
+				string firstVisibleLetter = GetFirstVisibleLetter(title);
+				if (m_IndexPages.TryGetValue(firstVisibleLetter, out var value))
 				{
 					value.AddChild(item);
 					continue;
 				}
-				GlossaryLetterIndexPage glossaryLetterIndexPage = new GlossaryLetterIndexPage(this, text);
+				GlossaryLetterIndexPage glossaryLetterIndexPage = new GlossaryLetterIndexPage(this, firstVisibleLetter);
 				glossaryLetterIndexPage.AddChild(item);
-				m_IndexPages[text] = glossaryLetterIndexPage;
+				m_IndexPages[firstVisibleLetter] = glossaryLetterIndexPage;
 			}
 		}
 		m_ChildLetterIndexPages = new List<IPage>(m_IndexPages.Values.OrderBy((GlossaryLetterIndexPage page) => page.SortIndex).ToList());
@@ -63,5 +63,28 @@ public class BlueprintEncyclopediaGlossaryChapter : BlueprintEncyclopediaChapter
 	{
 		Initialize();
 		return m_IndexPages[key];
+	}
+
+	private string GetFirstVisibleLetter(string text)
+	{
+		bool flag = false;
+		for (int i = 0; i < text.Length; i++)
+		{
+			char c = text[i];
+			switch (c)
+			{
+			case '<':
+				flag = true;
+				continue;
+			case '>':
+				flag = false;
+				continue;
+			}
+			if (!flag && !char.IsWhiteSpace(c))
+			{
+				return c.ToString();
+			}
+		}
+		return string.Empty;
 	}
 }

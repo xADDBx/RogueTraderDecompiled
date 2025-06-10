@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
@@ -235,15 +237,16 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		BaseUnitEntity targetUnit = base.TargetUnit;
 		ResultSuperiorityNumber = ((targetUnit == null || !targetUnit.HasMechanicFeature(MechanicsFeatureType.IgnoreMeleeOutnumbering)) ? Math.Max(0, ResultSuperiorityNumber) : 0);
 		ResultTargetSuperiorityPenalty = ResultSuperiorityNumber * (10 + SuperiorityValueModifiers.Value);
-		int num3 = ((MechanicEntity)base.Initiator).GetAttributeOptional(StatType.WarhammerWeaponSkill)?.ModifiedValue ?? 0;
+		StatType statType = Ability.Blueprint.GetComponent<WarhammerOverrideAbilityMeleeStat>()?.Stat ?? StatType.WarhammerWeaponSkill;
+		int num3 = ((MechanicEntity)base.Initiator).GetAttributeOptional(statType)?.ModifiedValue ?? 0;
 		ResultWeaponSkillPenalty = Rulebook.Trigger(new RuleCalculateAttackPenalty((MechanicEntity)base.Initiator, Ability)).ResultWeaponSkillPenalty;
 		int num4 = Math.Max(num3 - ResultWeaponSkillPenalty, 0) + InitiatorWeaponSkillValueModifiers.Value;
-		int num5 = (((MechanicEntity)Target).GetAttributeOptional(StatType.WarhammerWeaponSkill)?.ModifiedValue ?? 0) + TargetWeaponSkillValueModifiers.Value;
+		int num5 = (((MechanicEntity)Target).GetAttributeOptional(statType)?.ModifiedValue ?? 0) + TargetWeaponSkillValueModifiers.Value;
 		ResultRighteousFurySuperiorityBonus = (base.TargetUnit?.Features?.HalfSuperiorityCriticalChance ? (ResultTargetSuperiorityPenalty / 2) : ResultTargetSuperiorityPenalty);
 		int num6 = num4 - num5 + ResultRighteousFurySuperiorityBonus;
 		if (num6 != 0)
 		{
-			RighteousFuryChanceRule.ChanceModifiers.Add(num6, this, StatType.WarhammerWeaponSkill);
+			RighteousFuryChanceRule.ChanceModifiers.Add(num6, this, statType);
 		}
 	}
 

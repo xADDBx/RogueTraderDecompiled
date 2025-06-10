@@ -156,6 +156,7 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		CheckEnabledInGameMenuButtons();
 		AddDisposable(base.ViewModel.CheckCanAccessStarshipInventoryButtons.Subscribe(CheckEnabledInGameMenuButtons));
 		AddDisposable(base.ViewModel.CheckCanAccessColonizationButton.Subscribe(CheckEnabledColonizationButton));
+		AddDisposable(base.ViewModel.CheckServiceWindowsBlocked.Subscribe(CheckServiceWindowsBlocked));
 	}
 
 	private void CheckEnabledInGameMenuButtons()
@@ -170,6 +171,17 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		bool canAccessStarshipInventory = Game.Instance.Player.CanAccessStarshipInventory;
 		bool flag = Game.Instance.Player.ColoniesState.ForbidColonization;
 		m_ColonyManagement.gameObject.SetActive(canAccessStarshipInventory && !flag);
+	}
+
+	private void CheckServiceWindowsBlocked()
+	{
+		bool flag = Game.Instance.Player.ServiceWindowsBlocked;
+		bool flag2 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
+		bool flag3 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
+		m_Inventory.gameObject.SetActive(!flag2);
+		m_Character.gameObject.SetActive(!flag3);
+		m_CargoManagement.gameObject.SetActive(!flag);
+		m_ShipCustomization.gameObject.SetActive(!flag);
 	}
 
 	private void SetPlastickButtonsSoundsTypes()

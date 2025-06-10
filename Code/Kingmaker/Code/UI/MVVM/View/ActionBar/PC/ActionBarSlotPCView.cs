@@ -81,7 +81,7 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 		{
 			return;
 		}
-		AddDisposable(base.ViewModel.HasConvert.And(base.ViewModel.IsPossibleActive).Subscribe(delegate(bool value)
+		AddDisposable(base.ViewModel.HasConvert.And(base.ViewModel.IsCanConvert).Subscribe(delegate(bool value)
 		{
 			m_ConvertedView.gameObject.SetActive(value);
 			m_ConvertButton.Or(null)?.gameObject.SetActive(value);

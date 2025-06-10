@@ -12,14 +12,16 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Selection;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Party;
 
-public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IBarkHandler, ISubscriber<IEntity>, ISubscriber
+public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IBarkHandler, ISubscriber<IEntity>, ISubscriber, IPetInitializationHandler, ISubscriber<IAbstractUnitEntity>, IModalWindowUIHandler, IFullScreenUIHandler
 {
 	public readonly List<PartyCharacterVM> CharactersVM = new List<PartyCharacterVM>();
 
@@ -31,6 +33,16 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 
 	private List<BaseUnitEntity> m_ActualGroupCopy = new List<BaseUnitEntity>();
 
+	private Dictionary<PartyCharacterVM, PartyCharacterVM> m_masterToPetMap = new Dictionary<PartyCharacterVM, PartyCharacterVM>();
+
+	private List<PartyCharacterVM> m_GroupWithPets = new List<PartyCharacterVM>();
+
+	private bool m_needUpdate;
+
+	public ReactiveCommand UpdateViewLayout = new ReactiveCommand();
+
+	public ModalWindowUIType ModalWindowUIType;
+
 	private List<BaseUnitEntity> ActualGroup => Game.Instance.SelectionCharacter.ActualGroup;
 
 	private int StartIndex
@@ -41,7 +53,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		}
 		set
 		{
-			int num = ActualGroup.Count - 6;
+			int num = ActualGroup.Count - 12;
 			if (num < 0)
 			{
 				num = 0;
@@ -49,7 +61,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			value = Mathf.Clamp(value, 0, num);
 			m_StartIndex = value;
 			PrevEnable.Value = value > 0;
-			NextEnable.Value = ActualGroup.Count > m_StartIndex + 6;
+			NextEnable.Value = ActualGroup.Count > m_StartIndex + 12;
 			for (int i = 0; i < CharactersVM.Count; i++)
 			{
 				int num2 = m_StartIndex + i;
@@ -61,18 +73,51 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 	public PartyVM()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		for (int i = 0; i < 6; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			CharactersVM.Add(new PartyCharacterVM(NextPrev, i));
 		}
-		AddDisposable(Game.Instance.SelectionCharacter.ActualGroupUpdated.Subscribe(delegate
+		AddDisposable(Game.Instance.SelectionCharacter.SelectedUnitInUI.Subscribe(delegate
 		{
-			if (!m_ActualGroupCopy.SequenceEqual(ActualGroup))
+			UpdateParty();
+		}));
+		AddDisposable(ObservableExtensions.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate
+		{
+			if (m_ActualGroupCopy.SequenceEqual(ActualGroup))
 			{
-				SetGroup();
-				m_ActualGroupCopy = new List<BaseUnitEntity>(ActualGroup);
+				return;
+			}
+			SetGroup();
+			m_ActualGroupCopy = new List<BaseUnitEntity>(ActualGroup);
+			CharactersVM.ForEach(delegate(PartyCharacterVM c)
+			{
+				c.ClearPetMasterData();
+			});
+			int num = 1;
+			foreach (PartyCharacterVM item in CharactersVM)
+			{
+				UnitPartPetOwner petPart = item.UnitEntityData?.GetOptional<UnitPartPetOwner>();
+				if (petPart != null)
+				{
+					int num2 = CharactersVM.FindIndex((PartyCharacterVM p) => p.UnitEntityData == petPart.PetUnit);
+					int num3 = CharactersVM.FindIndex((PartyCharacterVM p) => p.UnitEntityData == petPart.Owner);
+					if (num2 != -1 && num3 != -1)
+					{
+						CharactersVM[num2].SetMasterVMReference(item);
+						CharactersVM[num3].SetPetVMReference(CharactersVM[num2]);
+						item.SetNumPetMasterLabelNumber(num);
+						CharactersVM[num2].SetNumPetMasterLabelNumber(num);
+						num++;
+					}
+				}
 			}
 		}));
+		UpdateViewLayout.Execute();
+	}
+
+	private void UpdateParty()
+	{
+		UpdateViewLayout.Execute();
 	}
 
 	protected override void DisposeImplementation()
@@ -124,7 +169,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			return null;
 		}
 		int neighbourIndex = GetNeighbourIndex(num, CharactersVM.Count, next);
-		while (neighbourIndex != num && !CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable())
+		while (neighbourIndex != num && (CharactersVM[neighbourIndex].UnitEntityData.IsPet || !CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable()))
 		{
 			neighbourIndex = GetNeighbourIndex(neighbourIndex, CharactersVM.Count, next);
 		}
@@ -174,7 +219,14 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			{
 				num += list.Count;
 			}
-			SelectionManagerBase.Instance.SelectUnit(list[num].View);
+			if (list[num].IsPet && selectedUnit.Value == list[num].Master && (!(Game.Instance?.TurnController?.TbActive).GetValueOrDefault() || !(Game.Instance?.TurnController?.IsPreparationTurn).GetValueOrDefault()))
+			{
+				SelectShiftedCharacter(shift + ((shift > 0) ? 1 : (-1)));
+			}
+			else
+			{
+				SelectionManagerBase.Instance.SelectUnit(list[num].View);
+			}
 		}
 	}
 
@@ -188,7 +240,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		{
 			units = units.Where((BaseUnitEntity u) => u.IsMainCharacter);
 		}
-		return units.Where((BaseUnitEntity u) => u.IsInGame && u.IsDirectlyControllable());
+		return units.Where((BaseUnitEntity u) => (u.IsInGame && u.IsDirectlyControllable()) || (u.IsInGame && u.IsPet));
 	}
 
 	public void SwitchCharacter(BaseUnitEntity unit1, BaseUnitEntity unit2)
@@ -223,7 +275,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 	public void SetMassLink()
 	{
 		SelectionManagerConsole.Instance.SetMassLink((from c in CharactersVM
-			where c.UnitEntityData.IsDirectlyControllable()
+			where c.UnitEntityData != null && (c.UnitEntityData.IsDirectlyControllable() || c.UnitEntityData.IsPet)
 			select c.UnitEntityData).ToList());
 		CharactersVM.Where((PartyCharacterVM c) => c.UnitEntityData.IsDirectlyControllable()).ForEach(delegate(PartyCharacterVM c)
 		{
@@ -237,6 +289,24 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		{
 			CharactersVM.Add(new PartyCharacterVM(NextPrev, i));
 			CharactersVM[i].SetUnitData(ActualGroup[i]);
+		}
+	}
+
+	public void OnPetInitialized()
+	{
+		DelayedInvoker.InvokeInFrames(SetGroup, 1);
+	}
+
+	public void HandleModalWindowUiChanged(bool state, ModalWindowUIType modalWindowUIType)
+	{
+		ModalWindowUIType = (state ? modalWindowUIType : ModalWindowUIType.Unknown);
+	}
+
+	public void HandleFullScreenUiChanged(bool state, FullScreenUIType fullScreenUIType)
+	{
+		if (fullScreenUIType == FullScreenUIType.Inventory)
+		{
+			UpdateParty();
 		}
 	}
 }

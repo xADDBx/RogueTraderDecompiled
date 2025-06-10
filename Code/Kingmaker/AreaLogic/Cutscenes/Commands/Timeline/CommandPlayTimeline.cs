@@ -62,7 +62,14 @@ public class CommandPlayTimeline : CommandBase
 		}
 		playableDirector.Play();
 		directorAdapter.Play();
-		directorAdapter.SetTime(skipping ? ((float)playableDirector.duration + 1f) : 0f);
+		if (skipping)
+		{
+			RewindToTheEnd(commandData);
+		}
+		else
+		{
+			directorAdapter.SetTime(0f);
+		}
 	}
 
 	public override bool IsFinished(CutscenePlayerData player)
@@ -105,13 +112,23 @@ public class CommandPlayTimeline : CommandBase
 		}
 	}
 
+	private static void RewindToTheEnd(Data data)
+	{
+		for (double num = data.Director.time; num < data.Director.duration; num += 0.016666667)
+		{
+			data.Director.time = num;
+			data.Director.Evaluate();
+		}
+		data.Adapter.SetTime((float)data.Director.duration);
+	}
+
 	public override void Interrupt(CutscenePlayerData player)
 	{
 		base.Interrupt(player);
 		Data commandData = player.GetCommandData<Data>(this);
 		if ((bool)commandData.Director && (bool)commandData.Adapter)
 		{
-			commandData.Adapter.SetTime((float)commandData.Director.duration + 1f);
+			RewindToTheEnd(commandData);
 		}
 	}
 

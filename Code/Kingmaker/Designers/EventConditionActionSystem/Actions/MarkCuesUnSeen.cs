@@ -46,7 +46,7 @@ public class MarkCuesUnSeen : PlayerUpgraderOnlyAction
 	{
 		foreach (BlueprintCueBase cue in Cues)
 		{
-			Game.Instance.Player.Dialog.ShownCues.Remove(cue);
+			Game.Instance.Player.Dialog.ShownCuesRemove(cue);
 		}
 	}
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -10,6 +11,7 @@ using Kingmaker.Items.Slots;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
@@ -42,6 +44,8 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 
 	public bool IsOverpenetration { get; set; }
 
+	public bool IsBlockPreviewScatterHit { get; set; }
+
 	public bool OverrideAttackHitPolicy { get; set; }
 
 	public AttackHitPolicyType AttackHitPolicyType { get; set; }
@@ -51,6 +55,9 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 
 	[CanBeNull]
 	public RuleRollParry ResultParryRule { get; private set; }
+
+	[CanBeNull]
+	public RuleRollBlock ResultBlockRule { get; private set; }
 
 	public MechanicEntity ActualParryUnit { get; private set; }
 
@@ -147,6 +154,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		{
 			TryDodge(unitEntity);
 			TryParry(unitEntity, context);
+			TryBlock(unitEntity);
 			if (!ResultIsHit)
 			{
 				return;
@@ -176,6 +184,77 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		}
 		RighteousFuryAmount += base.InitiatorUnit.Facts.GetComponents<IncreaseCriticalHitMultiplier>().Count();
 		Result = ((!IsCritical() || ShouldHaveBeenRighteousFury) ? AttackResult.Hit : AttackResult.RighteousFury);
+	}
+
+	private void TryBlock(UnitEntity defender)
+	{
+		if (!(base.Initiator is UnitEntity unitEntity) || defender == null)
+		{
+			return;
+		}
+		RuleRollBlock resultBlockRule;
+		if (Result != AttackResult.Dodge && Result != AttackResult.Parried)
+		{
+			UnitPartAeldariShields optional = defender.GetOptional<UnitPartAeldariShields>();
+			if (optional != null)
+			{
+				foreach (Tuple<string, UnitPartAeldariShields.Entry> item in optional.ActiveEntries())
+				{
+					ResultBlockRule = Rulebook.Trigger(new RuleRollBlock(defender, item.Item2.BlockChance, unitEntity, Ability, isAutoBlock: false));
+					resultBlockRule = ResultBlockRule;
+					if (resultBlockRule != null && resultBlockRule.Result)
+					{
+						Result = AttackResult.Blocked;
+						ResultIsHit = false;
+						item.Item2.SpendCharge(Game.Instance.TurnController.CombatRound);
+						EventBus.RaiseEvent((IBaseUnitEntity)defender, (Action<IAeldariShieldBlockHandle>)delegate(IAeldariShieldBlockHandle h)
+						{
+							h.HandleAeldariShieldBlock();
+						}, isCheckRuntime: true);
+						EventBus.RaiseEvent((IBaseUnitEntity)defender, (Action<IAeldariShieldBlockHandlerUI>)delegate(IAeldariShieldBlockHandlerUI h)
+						{
+							h.HandleAeldariShieldBlock();
+						}, isCheckRuntime: true);
+						BarkPlayer.Bark(defender, "Aeldari BLOCKED");
+						return;
+					}
+				}
+			}
+		}
+		if (!defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield || (!IsMelee && Ability.IsAOE))
+		{
+			return;
+		}
+		bool flag = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.MaybeShield?.Blueprint.EnableScatterAutoBlockAfterFirstBlock ?? false;
+		int blockChance = defender.Body.SecondaryHand.MaybeShield?.Blueprint.BlockChance ?? 0;
+		ResultBlockRule = Rulebook.Trigger(new RuleRollBlock(defender, blockChance, unitEntity, Ability, IsBlockPreviewScatterHit && flag));
+		resultBlockRule = ResultBlockRule;
+		if (resultBlockRule != null && resultBlockRule.Result)
+		{
+			Result = AttackResult.Blocked;
+			ResultIsHit = false;
+			defender.SetOrientation(defender.GetLookAtAngle(unitEntity.Position));
+			EventBus.RaiseEvent((IBaseUnitEntity)defender, (Action<IShieldBlockHandle>)delegate(IShieldBlockHandle h)
+			{
+				h.HandleShieldBlock();
+			}, isCheckRuntime: true);
+			EventBus.RaiseEvent((IBaseUnitEntity)defender, (Action<IShieldBlockHandlerUI>)delegate(IShieldBlockHandlerUI h)
+			{
+				h.HandleShieldBlock();
+			}, isCheckRuntime: true);
+			BarkPlayer.Bark(defender, "BLOCKED");
+			TryTriggerBlockAnimation(defender);
+		}
+	}
+
+	private static void TryTriggerBlockAnimation(UnitEntity defender)
+	{
+		if (!(defender.View == null) && !(defender.View.AnimationManager == null) && !(defender.View.AnimationManager.CurrentAction?.Action is UnitAnimationAction { Type: UnitAnimationType.Block }))
+		{
+			UnitAnimationActionHandle unitAnimationActionHandle = defender.View.AnimationManager.CreateHandle(UnitAnimationType.Block);
+			unitAnimationActionHandle.CastInOffhand = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield;
+			defender.View.AnimationManager.Execute(unitAnimationActionHandle);
+		}
 	}
 
 	private void TryParry(UnitEntity targetUnit, RulebookEventContext context)
@@ -209,21 +288,16 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		{
 			Result = AttackResult.Parried;
 			ResultIsHit = false;
-			if (!IsMelee || targetUnit.HasMechanicFeature(MechanicsFeatureType.RangedParry) || !(targetUnit.View != null) || !(targetUnit.View.AnimationManager != null))
+			if (IsMelee && !targetUnit.HasMechanicFeature(MechanicsFeatureType.RangedParry) && targetUnit.View != null && targetUnit.View.AnimationManager != null)
 			{
-				return;
-			}
-			UnitAnimationActionHandle unitAnimationActionHandle = targetUnit.View.AnimationManager.CreateHandle(UnitAnimationType.Parry);
-			if (targetUnit.GetThreatHandMelee() != null || (targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRanged() != null))
-			{
-				WeaponSlot weaponSlot = ((targetUnit.GetThreatHandMelee() != null) ? targetUnit.GetThreatHandMelee() : ((targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRanged() != null) ? targetUnit.GetThreatHandRanged() : null));
-				if (weaponSlot != null && weaponSlot is HandSlot handSlot)
+				UnitAnimationActionHandle unitAnimationActionHandle = targetUnit.View.AnimationManager.CreateHandle(UnitAnimationType.Parry);
+				if ((targetUnit.GetThreatHandMelee() != null || (targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRangedAnyHand() != null)) && ((targetUnit.GetThreatHandMelee() != null) ? targetUnit.GetThreatHandMelee() : ((targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRangedAnyHand() != null) ? targetUnit.GetThreatHandRangedAnyHand() : null)) is HandSlot handSlot)
 				{
 					unitAnimationActionHandle.CastInOffhand = !handSlot.IsPrimaryHand;
 				}
+				targetUnit.View.AnimationManager.Execute(unitAnimationActionHandle);
+				targetUnit.SetOrientation(targetUnit.GetLookAtAngle(base.ConcreteInitiator.Position));
 			}
-			targetUnit.View.AnimationManager.Execute(unitAnimationActionHandle);
-			targetUnit.SetOrientation(targetUnit.GetLookAtAngle(base.ConcreteInitiator.Position));
 			return;
 		}
 		List<EntityRef<BaseUnitEntity>> list = CombatEngagementHelper.CollectUnitsAround(targetUnit, (BaseUnitEntity entity) => entity.IsAlly(targetUnit) && entity.Facts.HasComponent<WarhammerAllyParry>());
@@ -285,7 +359,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			{
 				if (unit.Features.CanUseBallisticSkillToParry.Value)
 				{
-					return unit.GetThreatHandRanged() != null;
+					return unit.GetThreatHandRangedAnyHand() != null;
 				}
 				return false;
 			}

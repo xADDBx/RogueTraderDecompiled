@@ -20,6 +20,7 @@ using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -114,7 +115,10 @@ public class ColonyManagementBaseView : ViewBase<ColonyManagementVM>, IColonizat
 
 	protected void BuildNavigation()
 	{
-		BuildNavigationImpl();
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			BuildNavigationImpl();
+		}, 1);
 	}
 
 	protected virtual void BuildNavigationImpl()
@@ -205,6 +209,7 @@ public class ColonyManagementBaseView : ViewBase<ColonyManagementVM>, IColonizat
 				PlanetRoom.Initialize(m_CharacterController);
 				PlanetRoom.Show();
 				m_CharacterController.gameObject.SetActive(gameObject);
+				BuildNavigation();
 			}
 		}
 	}

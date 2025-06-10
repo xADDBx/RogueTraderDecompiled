@@ -327,7 +327,7 @@ public class ReportingRaycaster : MonoBehaviour
 		if ((object)instance != null)
 		{
 			CanvasGroup component = instance.GetComponent<CanvasGroup>();
-			if ((object)component != null && !component.blocksRaycasts)
+			if (component != null && !component.blocksRaycasts)
 			{
 				component.blocksRaycasts = true;
 				canvasGroup = component;

@@ -86,5 +86,16 @@ public class GridNavmeshModifier : NavmeshClipper
 	public override void ForceUpdate()
 	{
 		m_LastPosition = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+		ForceUpdateColliderBounds();
+	}
+
+	private void ForceUpdateColliderBounds()
+	{
+		Collider[] colliders = m_Colliders;
+		foreach (Collider obj in colliders)
+		{
+			obj.enabled = false;
+			obj.enabled = true;
+		}
 	}
 }

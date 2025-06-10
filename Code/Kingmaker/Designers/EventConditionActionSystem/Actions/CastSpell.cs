@@ -9,6 +9,7 @@ using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
@@ -40,6 +41,9 @@ public class CastSpell : GameAction
 	[SerializeField]
 	[ValidateNotNull]
 	private BlueprintAbilityReference m_Ability;
+
+	[Tooltip("Enables animation for casting and initiates full UseAbility command instead of simply triggering cast rule")]
+	public bool UseFullAbilityCastCycle;
 
 	public AttackHitPolicyType HitPolicy = AttackHitPolicyType.AutoHit;
 
@@ -82,6 +86,20 @@ public class CastSpell : GameAction
 		AbilityData abilityData = new AbilityData(Ability, mechanicEntity);
 		if (abilityData.IsValid(target))
 		{
+			if (UseFullAbilityCastCycle)
+			{
+				PartUnitCommands commandsOptional = mechanicEntity.GetCommandsOptional();
+				if (commandsOptional != null)
+				{
+					UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, target)
+					{
+						IgnoreCooldown = true,
+						FreeAction = true
+					};
+					commandsOptional.AddToQueue(cmdParams);
+					return;
+				}
+			}
 			RulePerformAbility rulePerformAbility = new RulePerformAbility(abilityData, target);
 			rulePerformAbility.IgnoreCooldown = true;
 			rulePerformAbility.ForceFreeAction = true;

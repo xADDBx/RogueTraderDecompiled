@@ -93,6 +93,9 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 	[JsonProperty]
 	public EquipmentSlot<BlueprintItemEquipmentShoulders> Shoulders;
 
+	[JsonProperty]
+	public EquipmentSlot<BlueprintItemEquipmentPetProtocol> PetProtocol;
+
 	[JsonProperty(PropertyName = "m_Mechadendrites")]
 	public List<EquipmentSlot<BlueprintItemMechadendrite>> Mechadendrites = new List<EquipmentSlot<BlueprintItemMechadendrite>>();
 
@@ -124,7 +127,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 				m_EquipmentWeight = 0f;
 				foreach (ItemSlot equipmentSlot in EquipmentSlots)
 				{
-					m_EquipmentWeight += equipmentSlot.MaybeItem?.TotalWeight ?? 0f;
+					m_EquipmentWeight += (equipmentSlot?.MaybeItem?.TotalWeight).GetValueOrDefault();
 				}
 				m_EquipmentWeightDirty = false;
 			}
@@ -190,27 +193,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 
 	public HandSlot SecondaryHand => CurrentHandsEquipmentSet.SecondaryHand;
 
-	public IEnumerable<ItemSlot> CurrentEquipmentSlots
-	{
-		get
-		{
-			yield return CurrentHandsEquipmentSet.PrimaryHand;
-			yield return CurrentHandsEquipmentSet.SecondaryHand;
-			yield return Armor;
-			yield return Shirt;
-			yield return Belt;
-			yield return Head;
-			yield return Glasses;
-			yield return Feet;
-			yield return Gloves;
-			yield return Neck;
-			yield return Ring1;
-			yield return Ring2;
-			yield return Wrist;
-			yield return Shoulders;
-		}
-	}
-
 	public IEnumerable<ItemEntity> Items => from s in EquipmentSlots
 		where s?.HasItem ?? false
 		select s.Item;
@@ -261,6 +243,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		Ring2 = new EquipmentSlot<BlueprintItemEquipmentRing>(base.Owner);
 		Wrist = new EquipmentSlot<BlueprintItemEquipmentWrist>(base.Owner);
 		Shoulders = new EquipmentSlot<BlueprintItemEquipmentShoulders>(base.Owner);
+		PetProtocol = new EquipmentSlot<BlueprintItemEquipmentPetProtocol>(base.Owner);
 		CollectAllSlots();
 	}
 
@@ -292,6 +275,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		AddEquipmentSlot(Ring2);
 		AddEquipmentSlot(Wrist);
 		AddEquipmentSlot(Shoulders);
+		AddEquipmentSlot(PetProtocol);
 		UsableSlot[] quickSlots = QuickSlots;
 		foreach (UsableSlot slot2 in quickSlots)
 		{
@@ -351,6 +335,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			TryInsertItem(body.Ring2, Ring2);
 			TryInsertItem(body.Wrist, Wrist);
 			TryInsertItem(body.Shoulders, Shoulders);
+			TryInsertItem(body.PetProtocol, PetProtocol);
 		}
 		finally
 		{
@@ -519,7 +504,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		for (int i = 0; i < m_HandsEquipmentSets.Length; i++)
 		{
 			HandsEquipmentSet handsEquipmentSet = m_HandsEquipmentSets[i];
-			if (handsEquipmentSet.PrimaryHand == slot || handsEquipmentSet.SecondaryHand == slot)
+			if ((handsEquipmentSet.PrimaryHand == slot && !handsEquipmentSet.IsOverridePrimaryHand) || (handsEquipmentSet.SecondaryHand == slot && !handsEquipmentSet.IsOverrideSecondaryHand))
 			{
 				return handsEquipmentSet;
 			}
@@ -606,6 +591,10 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 
 	protected override void OnPrePostLoad()
 	{
+		if (PetProtocol == null)
+		{
+			PetProtocol = new EquipmentSlot<BlueprintItemEquipmentPetProtocol>(base.Owner);
+		}
 		CollectAllSlots();
 		AllSlots.ForEach(delegate(ItemSlot s)
 		{
@@ -745,7 +734,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			{
 				if (item.Collection != null && item.Collection != base.Owner.Inventory.Collection)
 				{
-					item.Collection.Transfer(item, base.Owner.Inventory.Collection);
+					item.Collection.TransferWithoutMerge(item, item.Count, base.Owner.Inventory.Collection);
 				}
 			}
 		}
@@ -847,13 +836,15 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		result.Append(ref val17);
 		Hash128 val18 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentShoulders>>.GetHash128(Shoulders);
 		result.Append(ref val18);
+		Hash128 val19 = ClassHasher<EquipmentSlot<BlueprintItemEquipmentPetProtocol>>.GetHash128(PetProtocol);
+		result.Append(ref val19);
 		List<EquipmentSlot<BlueprintItemMechadendrite>> mechadendrites = Mechadendrites;
 		if (mechadendrites != null)
 		{
 			for (int m = 0; m < mechadendrites.Count; m++)
 			{
-				Hash128 val19 = ClassHasher<EquipmentSlot<BlueprintItemMechadendrite>>.GetHash128(mechadendrites[m]);
-				result.Append(ref val19);
+				Hash128 val20 = ClassHasher<EquipmentSlot<BlueprintItemMechadendrite>>.GetHash128(mechadendrites[m]);
+				result.Append(ref val20);
 			}
 		}
 		return result;

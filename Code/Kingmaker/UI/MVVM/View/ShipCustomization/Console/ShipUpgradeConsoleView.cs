@@ -8,7 +8,6 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
-using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.Core.Utility;
@@ -71,7 +70,7 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 
 	private IEnumerator m_Back;
 
-	private Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView> m_SlotsMap = new Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView>();
+	private readonly Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView> m_SlotsMap = new Dictionary<ShipComponentSlotVM, ShipComponentSlotConsoleView>();
 
 	private TooltipConfig m_MainTooltipConfig = new TooltipConfig
 	{
@@ -107,14 +106,8 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
 		AddDisposable(m_SlotsNavigation = new FloatConsoleNavigationBehaviour(m_Parameters));
 		AddDisposable(m_NavigationBehaviour?.DeepestFocusAsObservable.Subscribe(OnFocusEntity));
-		AddDisposable(base.ViewModel.ShipSelectorWindowVM.Subscribe(delegate(ShipItemSelectorWindowVM val)
-		{
-			DelFocus(val);
-		}));
-		AddDisposable(RootUIContext.Instance.CommonVM.ContextMenuVM.Subscribe(delegate(ContextMenuVM val)
-		{
-			DelFocus(val);
-		}));
+		AddDisposable(base.ViewModel.ShipSelectorWindowVM.Subscribe(DelFocus));
+		AddDisposable(RootUIContext.Instance.CommonVM.ContextMenuVM.Subscribe(DelFocus));
 		AddDisposable(m_PlasmaDrives.SlotVM.Item.Subscribe(delegate
 		{
 			RotateToDefaultPosition();

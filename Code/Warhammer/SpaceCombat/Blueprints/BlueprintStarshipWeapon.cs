@@ -87,4 +87,10 @@ public class BlueprintStarshipWeapon : BlueprintStarshipItem
 	public BlueprintStarshipAmmo AlternateAmmo => m_AlternateAmmo?.Get();
 
 	public AkSwitchReference SoundTypeSwitch => m_SoundTypeSwitch;
+
+	public override void Reset()
+	{
+		base.Reset();
+		SpendCharges = true;
+	}
 }

@@ -22,6 +22,7 @@ public class TextTemplateEngine : BaseTextTemplateEngine
 		AddTemplate("rt_mf", new RtMaleFemaleTemplate());
 		AddTemplate("race", new RaceTemplate());
 		AddTemplate("name", new NameTemplate());
+		AddTemplate("petName", new PetNameTemplate());
 		AddTemplate("rt_name", new RtNameTemplate());
 		AddTemplate("date", new DateTemplate());
 		AddTemplate("time", new TimeTempate());

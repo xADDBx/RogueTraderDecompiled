@@ -27,6 +27,6 @@ public class TaskNodeWaitCommandsDone : TaskNode
 		{
 			return TempList.Get<BaseUnitEntity>().Append(blackboard.Unit);
 		}
-		return ((UnitSquad)Game.Instance.TurnController.CurrentUnit).GetConsciousUnits();
+		return ((UnitSquad)Game.Instance.TurnController.CurrentUnit).GetActingUnitsWithLeaderFirst();
 	}
 }

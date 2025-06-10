@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
@@ -15,6 +16,7 @@ using Owlcat.Runtime.UI.ConsoleTools.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
 using TMPro;
@@ -100,6 +102,13 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 
 	private FloatConsoleNavigationBehaviour m_NavigationBehaviour;
 
+	[Header("Icons")]
+	[SerializeField]
+	private Image m_Check;
+
+	[SerializeField]
+	private Image m_NotCheck;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
@@ -110,6 +119,8 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 		Color color2 = (m_Value.color = (base.ViewModel.Done ? m_DoneTextColor : m_RequiredTextColor));
 		text.color = color2;
 		m_Background.color = (base.ViewModel.Done ? m_DoneBGColor : m_RequiredBGColor);
+		m_Check.gameObject.SetActive(base.ViewModel.Done);
+		m_NotCheck.gameObject.SetActive(!base.ViewModel.Done);
 		bool isControllerMouse = Game.Instance.IsControllerMouse;
 		m_Text.fontSize = (isControllerMouse ? m_DefaultFontSizeText : m_DefaultConsoleFontSizeText) * base.ViewModel.FontMultiplier;
 		m_Value.fontSize = (isControllerMouse ? m_DefaultFontSizeValue : m_DefaultConsoleFontSizeValue) * base.ViewModel.FontMultiplier;
@@ -223,12 +234,21 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 				else if (num != m_LinkIndex)
 				{
 					m_LinkIndex = num;
-					m_LinkEntities.ElementAtOrDefault(m_LinkIndex.Value)?.SetFocus(value: true);
-					m_LinkKey = UIUtility.GetKeysFromLink(m_Text.textInfo.linkInfo[m_LinkIndex.Value].GetLinkID())[1];
-					EventBus.RaiseEvent(delegate(IUIHighlighter h)
+					string[] keysFromLink = UIUtility.GetKeysFromLink(m_Text.textInfo.linkInfo.ElementAtOrDefault(m_LinkIndex.Value).GetLinkID());
+					if (keysFromLink.Length < 2)
 					{
-						h.StartHighlight(m_LinkKey);
-					});
+						ClearFocusIfNeeded();
+						ClearLinkIndexIfNeeded();
+					}
+					else
+					{
+						m_LinkEntities.ElementAtOrDefault(m_LinkIndex.Value)?.SetFocus(value: true);
+						m_LinkKey = keysFromLink.ElementAtOrDefault(1);
+						EventBus.RaiseEvent(delegate(IUIHighlighter h)
+						{
+							h.StartHighlight(m_LinkKey);
+						});
+					}
 				}
 			}
 		});
@@ -239,6 +259,7 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 				HighlightCurrentOnce();
 			}
 		});
+		AddDisposable(m_Text.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
 		return Disposable.Create(delegate
 		{
 			enter?.Dispose();

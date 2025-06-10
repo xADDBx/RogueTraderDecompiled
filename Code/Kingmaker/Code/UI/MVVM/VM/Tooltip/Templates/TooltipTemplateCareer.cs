@@ -14,6 +14,8 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerP
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
+using Kingmaker.UnitLogic.Progression;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
@@ -133,7 +135,9 @@ public class TooltipTemplateCareer : TooltipBaseTemplate
 	{
 		if (m_CareerPath.Prerequisite != null && !m_CareerPath.IsUnlocked)
 		{
-			bricks.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(m_CareerPath.Prerequisite)));
+			CalculatedPrerequisiteComposite obj = m_CareerPath.Prerequisite as CalculatedPrerequisiteComposite;
+			bool oneFromList = obj != null && obj.Composition == FeaturePrerequisiteComposition.Or;
+			bricks.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(m_CareerPath.Prerequisite, addTooltip: true), oneFromList));
 		}
 	}
 

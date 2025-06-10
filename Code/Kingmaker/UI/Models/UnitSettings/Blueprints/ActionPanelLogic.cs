@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
+using Owlcat.Runtime.Core.Utility.EditorAttributes;
 
 namespace Kingmaker.UI.Models.UnitSettings.Blueprints;
 
@@ -17,4 +18,7 @@ public class ActionPanelLogic : BlueprintComponent
 	public ConditionsChecker AutoFillConditions;
 
 	public ConditionsChecker AutoCastConditions;
+
+	[InfoBox("The KeyName used in the ActionBar to save the position of deactivated abilities, and also for Coop pings. If you assign another ability here, its KeyName will be used as the source for generating the KeyName.")]
+	public BlueprintUnitFactReference UseKeyNameFromFact;
 }

@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.QA.Validation;
@@ -35,29 +36,58 @@ public class HideUnit : GameAction
 	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
-		AbstractUnitEntityView view = value.View;
-		if (Unhide)
+		UnitPartPetOwner optional = value.GetOptional<UnitPartPetOwner>();
+		if (optional != null)
 		{
-			view.UnFade();
-			if (value.IsInGame)
+			optional.InHidingProcess = true;
+		}
+		doRun(value);
+		if (optional != null && optional.PetUnit != null)
+		{
+			if (Unhide)
 			{
-				view.UpdateViewActive();
+				if (optional.ShouldUnhidePet)
+				{
+					optional.ShouldUnhidePet = false;
+					doRun(optional.PetUnit);
+				}
+			}
+			else if (optional.PetUnit.IsInGame)
+			{
+				optional.ShouldUnhidePet = true;
+				doRun(optional.PetUnit);
+			}
+		}
+		if (optional != null)
+		{
+			optional.InHidingProcess = false;
+		}
+		void doRun(AbstractUnitEntity abstractUnitEntity)
+		{
+			AbstractUnitEntityView view = abstractUnitEntity.View;
+			if (Unhide)
+			{
+				view.UnFade();
+				if (abstractUnitEntity.IsInGame)
+				{
+					view.UpdateViewActive();
+				}
+				else
+				{
+					abstractUnitEntity.IsInGame = true;
+				}
+			}
+			else if (Fade)
+			{
+				abstractUnitEntity.Commands.InterruptAllInterruptible();
+				view.FadeHide();
+				view.MovementAgent.Blocker.Unblock();
+				abstractUnitEntity.IsInGame = false;
 			}
 			else
 			{
-				value.IsInGame = true;
+				abstractUnitEntity.IsInGame = false;
 			}
-		}
-		else if (Fade)
-		{
-			value.Commands.InterruptAllInterruptible();
-			view.FadeHide();
-			view.MovementAgent.Blocker.Unblock();
-			value.IsInGame = false;
-		}
-		else
-		{
-			value.IsInGame = false;
 		}
 	}
 }

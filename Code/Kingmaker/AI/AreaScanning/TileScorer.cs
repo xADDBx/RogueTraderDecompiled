@@ -26,6 +26,10 @@ public abstract class TileScorer
 				continue;
 			}
 			Score score = default(Score);
+			if (item.factor == ScoreFactor.Inverted)
+			{
+				score += new Score(float.MaxValue);
+			}
 			list2.Clear();
 			foreach (CustomGridNodeBase item2 in list)
 			{
@@ -64,6 +68,7 @@ public abstract class TileScorer
 			ScoreType.StayingAwayScore => CalculateStayingAwayScore(context, node), 
 			ScoreType.EnemyHPLeftScore => CalculateEnemyHPLeftScore(context, node), 
 			ScoreType.ClosinessScore => CalculateClosinessScore(context, node), 
+			ScoreType.BodyGuardScore => CalculateBodyGuardScore(context, node), 
 			_ => default(Score), 
 		};
 	}
@@ -109,6 +114,11 @@ public abstract class TileScorer
 	}
 
 	protected virtual Score CalculateClosinessScore(DecisionContext context, CustomGridNodeBase node)
+	{
+		return default(Score);
+	}
+
+	protected virtual Score CalculateBodyGuardScore(DecisionContext context, CustomGridNodeBase node)
 	{
 		return default(Score);
 	}

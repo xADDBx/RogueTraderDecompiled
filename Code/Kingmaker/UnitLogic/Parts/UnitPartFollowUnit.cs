@@ -2,6 +2,7 @@ using Kingmaker.AreaLogic.Etudes;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.Formations;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Visual.Critters;
 using StateHasher.Core;
@@ -15,6 +16,8 @@ public class UnitPartFollowUnit : EntityPart<AbstractUnitEntity>, IHashable
 
 	private EntityRef<BaseUnitEntity> m_LeaderRef;
 
+	public FormationPersonalSettings FollowingSettings;
+
 	public bool AlwaysRun { get; private set; }
 
 	public bool CanBeSlowerThanLeader { get; private set; }
@@ -27,7 +30,7 @@ public class UnitPartFollowUnit : EntityPart<AbstractUnitEntity>, IHashable
 
 	public void Init(BaseUnitEntity leader, FollowerSettings settings)
 	{
-		Init(leader, settings.AlwaysRun, settings.CanBeSlowerThanLeader, settings.FollowWhileCutscene, settings.FollowInCombat);
+		Init(leader, settings.AlwaysRun, settings.CanBeSlowerThanLeader, settings.FollowWhileCutscene, settings.FollowInCombat, settings.UsePersonalSettings ? settings.FollowingSettingsOverride : null);
 	}
 
 	public void Init(BaseUnitEntity leader, EtudeBracketFollowUnit settings)
@@ -40,13 +43,14 @@ public class UnitPartFollowUnit : EntityPart<AbstractUnitEntity>, IHashable
 		Init(leader, settings.AlwaysRun, settings.CanBeSlowerThanLeader, settings.FollowWhileCutscene);
 	}
 
-	private void Init(BaseUnitEntity leader, bool alwaysRun, bool canBeSlowerThanLeader, bool followWhileCutscene, bool followInCombat = true)
+	private void Init(BaseUnitEntity leader, bool alwaysRun, bool canBeSlowerThanLeader, bool followWhileCutscene, bool followInCombat = true, FormationPersonalSettings personalSettings = null)
 	{
 		m_LeaderRef = leader;
 		AlwaysRun = alwaysRun;
 		CanBeSlowerThanLeader = canBeSlowerThanLeader;
 		FollowWhileCutscene = followWhileCutscene;
 		FollowInCombat = followInCombat;
+		FollowingSettings = personalSettings;
 		if (Leader == null)
 		{
 			PFLog.Default.Error("UnitPartFollowUnit.Init: Leader is null");
@@ -61,18 +65,32 @@ public class UnitPartFollowUnit : EntityPart<AbstractUnitEntity>, IHashable
 	{
 		if (Leader != null && !m_Initialized)
 		{
-			base.Owner.Sleepless.Retain();
-			Leader.GetOrCreate<UnitPartFollowedByUnits>().AddFollower(base.Owner);
+			if (FollowingSettings == null)
+			{
+				base.Owner.Sleepless.Retain();
+				Leader.GetOrCreate<UnitPartFollowedByUnits>().AddFollower(base.Owner);
+			}
+			else
+			{
+				Leader.GetOrCreate<UnitPartFollowedByUnits>().AddIndependentFollower(base.Owner);
+			}
 			m_Initialized = true;
 		}
 	}
 
 	protected override void OnDetach()
 	{
-		if (m_Initialized)
+		if (Leader != null && m_Initialized)
 		{
-			base.Owner.Sleepless.Release();
-			Leader.GetOrCreate<UnitPartFollowedByUnits>().RemoveFollower(base.Owner);
+			if (FollowingSettings == null)
+			{
+				base.Owner.Sleepless.Release();
+				Leader.GetOrCreate<UnitPartFollowedByUnits>().RemoveFollower(base.Owner);
+			}
+			else
+			{
+				Leader.GetOrCreate<UnitPartFollowedByUnits>().RemoveIndependentFollower(base.Owner);
+			}
 			m_Initialized = false;
 		}
 	}

@@ -76,6 +76,7 @@ public class TextScrambler : IDisposable
 			m_Chars = new char[newText.Length + Chars.Length];
 			newText.ToCharArray().CopyTo(m_Chars, 0);
 			Chars.CopyTo(m_Chars, newText.Length);
+			m_TextComponent.text = oldText;
 		}
 		else
 		{

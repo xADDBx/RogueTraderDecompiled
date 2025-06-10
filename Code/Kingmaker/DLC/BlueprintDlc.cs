@@ -80,7 +80,7 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	private bool m_ShowOnlyForOwners;
 
 	[SerializeField]
-	private bool m_HideDlcForAll = true;
+	private bool m_HideDlcForAll;
 
 	[SerializeField]
 	private bool m_HideInConsoleStores;
@@ -186,8 +186,6 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	public DlcTypeEnum DlcType => m_DlcType;
 
 	public BlueprintDlc ParentDlc => m_ParentDlc;
-
-	public bool ShowOnlyForOwners => m_ShowOnlyForOwners;
 
 	public bool HideWhoNotBuyDlc
 	{

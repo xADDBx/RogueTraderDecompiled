@@ -22,6 +22,15 @@ namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 [TypeId("471113ce4758b9b4d8a3162276d8d570")]
 public class AbilityTargetHasFact : BlueprintComponent, IAbilityTargetRestriction
 {
+	private enum TypesOfFactChecking
+	{
+		And,
+		Or
+	}
+
+	[SerializeField]
+	private TypesOfFactChecking m_TypeOfFactChecking = TypesOfFactChecking.Or;
+
 	[SerializeField]
 	[FormerlySerializedAs("CheckedFacts")]
 	private BlueprintUnitFactReference[] m_CheckedFacts;
@@ -50,7 +59,7 @@ public class AbilityTargetHasFact : BlueprintComponent, IAbilityTargetRestrictio
 		foreach (BlueprintUnitFact fact in CheckedFacts)
 		{
 			flag = entity.Facts.List.Any((EntityFact p) => p.Blueprint == fact && (!FromThisCaster || p.MaybeContext?.MaybeCaster == ability.Caster));
-			if (flag)
+			if ((m_TypeOfFactChecking == TypesOfFactChecking.Or && flag) || (m_TypeOfFactChecking == TypesOfFactChecking.And && ((!Inverted && !flag) || (Inverted && flag))))
 			{
 				break;
 			}

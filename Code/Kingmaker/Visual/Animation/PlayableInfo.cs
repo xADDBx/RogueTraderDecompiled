@@ -68,6 +68,7 @@ public class PlayableInfo : AnimationBase
 
 	internal void Reset(AnimationActionHandle handle)
 	{
+		base.Reset();
 		StopEvents();
 		base.Handle = handle;
 		base.CreationTime = ((handle.Manager.PlayableGraph.GetTimeUpdateMode() == DirectorUpdateMode.UnscaledGameTime) ? Game.Instance.TimeController.RealTime : Game.Instance.TimeController.GameTime);
@@ -211,7 +212,7 @@ public class PlayableInfo : AnimationBase
 
 	public override void UpdateEvents()
 	{
-		if (m_Events == null || m_Events.Length == 0 || m_IsStopped || Playable.IsPlayableOfType<AnimatorControllerPlayable>())
+		if (m_Events == null || m_Events.Length == 0 || m_IsStopped || (base.OnlySendEventsOnce && m_LoopCount > 0) || Playable.IsPlayableOfType<AnimatorControllerPlayable>())
 		{
 			return;
 		}
@@ -254,7 +255,7 @@ public class PlayableInfo : AnimationBase
 
 	public void UpdateEvents(float time, float length)
 	{
-		if (m_Events == null || m_Events.Length == 0 || m_IsStopped)
+		if (m_Events == null || m_Events.Length == 0 || m_IsStopped || (base.OnlySendEventsOnce && m_LoopCount > 0))
 		{
 			return;
 		}
@@ -311,15 +312,18 @@ public class PlayableInfo : AnimationBase
 		float num2 = (m_IsFirstUpdate ? (RealTimeController.SystemStepDurationSeconds * GetSpeed()) : (time - m_LastTime));
 		float num3 = time + num2 / 2f;
 		m_LastTime = time;
-		while (m_NextEventIndex < m_Events.Length && m_Events[m_NextEventIndex].Time < num3)
+		if (!base.OnlySendEventsOnce || m_LoopCount == 0)
 		{
-			try
+			while (m_NextEventIndex < m_Events.Length && m_Events[m_NextEventIndex].Time < num3)
 			{
-				StartEvent(m_Events[m_NextEventIndex++]);
-			}
-			catch (Exception ex2)
-			{
-				PFLog.Animations.Exception(ex2);
+				try
+				{
+					StartEvent(m_Events[m_NextEventIndex++]);
+				}
+				catch (Exception ex2)
+				{
+					PFLog.Animations.Exception(ex2);
+				}
 			}
 		}
 		m_IsFirstUpdate = false;

@@ -8,6 +8,8 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.View.Mechadendrites;
 using UniRx;
 using UnityEngine;
@@ -26,9 +28,11 @@ public class EquipSlotVM : ItemSlotVM, IEquipSlotPossibleTarget, ISubscriber<Ite
 
 	public readonly ReactiveProperty<bool> IsNotRemovable = new ReactiveProperty<bool>(initialValue: false);
 
-	private readonly ReactiveProperty<ItemEntity> m_FakeItem = new ReactiveProperty<ItemEntity>();
+	private ReactiveProperty<ItemEntity> m_FakeItem = new ReactiveProperty<ItemEntity>();
 
 	private readonly ItemSlot m_ItemSlot;
+
+	public EquipSlotVM SecondSetSecondarySlot;
 
 	public ItemSlot ItemSlot => m_ItemSlot;
 
@@ -63,9 +67,30 @@ public class EquipSlotVM : ItemSlotVM, IEquipSlotPossibleTarget, ISubscriber<Ite
 		}));
 	}
 
+	public void InitializeSecondSetSecondaryFakeItem(EquipSlotVM secondSetSecondarySlot)
+	{
+		if (secondSetSecondarySlot.HasItem && secondSetSecondarySlot.Item.Value is ItemEntityShield && !m_ItemSlot.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement))
+		{
+			SecondSetSecondarySlot = secondSetSecondarySlot;
+			m_FakeItem = secondSetSecondarySlot.Item;
+			AddDisposable(m_FakeItem.Subscribe(delegate
+			{
+				Icon.Value = GetIcon();
+			}));
+			AddDisposable(m_FakeItem.CombineLatest(Item, (ItemEntity fake, ItemEntity item) => new { fake, item }).Subscribe(value =>
+			{
+				CanBeFakeItem.Value = value.fake != null && value.item == null;
+			}));
+		}
+	}
+
 	protected override Sprite GetIcon()
 	{
 		ItemEntity value = m_FakeItem.Value;
+		if (value is ItemEntityShield)
+		{
+			return value.Icon;
+		}
 		if (base.HasItem || !(value is ItemEntityWeapon { HoldInTwoHands: not false } itemEntityWeapon))
 		{
 			return base.GetIcon();

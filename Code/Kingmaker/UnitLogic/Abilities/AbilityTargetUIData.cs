@@ -7,7 +7,9 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Starships;
+using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.Utility.StatefulRandom;
@@ -43,6 +45,8 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 
 	public float CoverChance { get; private set; }
 
+	public float BlockChance { get; private set; }
+
 	public float EvasionChance { get; private set; }
 
 	public bool CanPush { get; private set; }
@@ -50,6 +54,8 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 	public List<float> BurstHitChances { get; }
 
 	public bool HitAlways { get; }
+
+	public bool IsAbilityRedirected { get; }
 
 	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition, bool hitAlways, float initialHitChance, float hitWithAvoidanceChance, int minDamage, int maxDamage, int lines, int burstIndex, List<float> burstHitChances, float dodgeChance, float coverChance, float evasionChance)
 	{
@@ -65,13 +71,15 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		BurstIndex = burstIndex;
 		BurstHitChances = burstHitChances;
 		DodgeChance = dodgeChance;
-		CoverChance = coverChance;
 		EvasionChance = evasionChance;
+		CoverChance = coverChance;
 		ParryChance = 0f;
+		BlockChance = 0f;
 		CanPush = false;
+		IsAbilityRedirected = false;
 	}
 
-	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition)
+	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition, bool isAbilityRedirected = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -87,10 +95,12 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			MaxDamage = 0;
 			DodgeChance = 0f;
 			CoverChance = 0f;
+			BlockChance = 0f;
 			ParryChance = 0f;
 			EvasionChance = 0f;
 			CanPush = false;
 			HitAlways = Ability.IsAOE || Ability.IsCharge;
+			IsAbilityRedirected = isAbilityRedirected;
 			SetAbilityWeapon(Ability);
 			ItemEntityWeapon weapon = Ability.Weapon;
 			ItemEntityStarshipWeapon starshipWeapon = Ability.StarshipWeapon;
@@ -159,14 +169,16 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			float num3 = Math.Max(ruleCalculateHitChances.ResultHitChance, 0);
 			DodgeChance = 0f;
 			ParryChance = 0f;
+			BlockChance = 0f;
 			if (target is UnitEntity defender)
 			{
 				RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(defender, caster, ability, warhammerLos2, i));
 				DodgeChance = Mathf.Min(Math.Max(ruleCalculateDodgeChance.Result, 0f), 100f);
 				RuleCalculateParryChance ruleCalculateParryChance = Rulebook.Trigger(new RuleCalculateParryChance(defender, caster, ability, ruleCalculateHitChances.ResultSuperiorityNumber));
 				ParryChance = (weapon.Blueprint.IsMelee ? Mathf.Min(Math.Max(ruleCalculateParryChance.Result, 0f), 100f) : 0f);
+				BlockChance = CalculateBlockChance(ability.Caster, target, ability);
 			}
-			array2[i] = num3 * (1f - DodgeChance / 100f) * (1f - ParryChance / 100f) * (1f - CoverChance / 100f);
+			array2[i] = num3 * (1f - DodgeChance / 100f) * (1f - ParryChance / 100f) * (1f - CoverChance / 100f) * (1f - BlockChance / 100f);
 			num += array[i];
 			num2 += array2[i];
 			BurstHitChances?.Add(array2[i]);
@@ -183,6 +195,20 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			float hitWithAvoidanceChance2 = (InitialHitChance = -1f);
 			HitWithAvoidanceChance = hitWithAvoidanceChance2;
 		}
+	}
+
+	private float CalculateBlockChance(MechanicEntity abilityCaster, MechanicEntity target, AbilityData ability)
+	{
+		if (!UIUtilityUnit.HasEquipedShield(target))
+		{
+			return 0f;
+		}
+		if (target is UnitEntity unitEntity)
+		{
+			int shieldBlockChance = UIUtilityUnit.GetShieldBlockChance(unitEntity);
+			return Rulebook.Trigger(new RuleCalculateBlockChance(unitEntity, shieldBlockChance, abilityCaster, ability)).Result;
+		}
+		return 0f;
 	}
 
 	private void UpdateWithStarshipWeapon(AbilityData ability, StarshipEntity target, Vector3 casterPosition, ItemEntityStarshipWeapon weapon)
@@ -219,9 +245,9 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 
 	public bool Equals(AbilityTargetUIData other)
 	{
-		if (object.Equals(Ability, other.Ability) && object.Equals(Target, other.Target) && CasterPosition.Equals(other.CasterPosition) && object.Equals(HitWithAvoidanceChance, other.HitWithAvoidanceChance) && object.Equals(InitialHitChance, other.InitialHitChance) && MaxDamage == other.MaxDamage)
+		if (object.Equals(Ability, other.Ability) && object.Equals(Target, other.Target) && CasterPosition.Equals(other.CasterPosition) && object.Equals(HitWithAvoidanceChance, other.HitWithAvoidanceChance) && object.Equals(InitialHitChance, other.InitialHitChance) && MaxDamage == other.MaxDamage && MinDamage == other.MinDamage)
 		{
-			return MinDamage == other.MinDamage;
+			return IsAbilityRedirected == other.IsAbilityRedirected;
 		}
 		return false;
 	}

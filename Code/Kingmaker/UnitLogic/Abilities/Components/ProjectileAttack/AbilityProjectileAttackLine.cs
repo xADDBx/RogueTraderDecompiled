@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Buffs.Components;
@@ -40,6 +41,8 @@ public class AbilityProjectileAttackLine
 		public bool IsOverpenetration;
 
 		public bool IsRedirecting;
+
+		public bool IsBlocking => (RollPerformAttackRule?.ResultBlockRule?.Result).GetValueOrDefault();
 
 		public bool Empty => Node == null;
 
@@ -83,6 +86,8 @@ public class AbilityProjectileAttackLine
 	[CanBeNull]
 	public MechanicEntity PriorityTarget => ProjectileAttack.PriorityTarget;
 
+	public bool BlockHasTriggered { get; private set; }
+
 	public AbilityProjectileAttackLine(AbilityProjectileAttack projectileAttack, int index, CustomGridNodeBase fromNode, CustomGridNodeBase toNode, ReadonlyList<CustomGridNodeBase> nodes, bool disableWeaponAttackDamage = false, bool disableDodgeForAlly = false)
 	{
 		Index = index;
@@ -107,6 +112,7 @@ public class AbilityProjectileAttackLine
 	public IEnumerable<HitData> CalculateHits()
 	{
 		List<HitData> list = TempList.Get<HitData>();
+		BlockHasTriggered = false;
 		bool flag = false;
 		DamageData damageData = null;
 		foreach (var item3 in EnumerateTargets())
@@ -119,7 +125,8 @@ public class AbilityProjectileAttackLine
 			RulePerformAttackRoll rulePerformAttackRoll = new RulePerformAttackRoll(Context.Caster, item3.Entity, Context.Ability, Index, DodgeForAllyDisabled, FromNode.Vector3Position, item3.Node.Vector3Position, damageData?.EffectiveOverpenetrationFactor ?? 1f)
 			{
 				IsControlledScatterAutoMiss = flag,
-				IsOverpenetration = (damageData != null)
+				IsOverpenetration = (damageData != null),
+				IsBlockPreviewScatterHit = Context.IsUnitBlockingAttack(item3.Entity as UnitEntity)
 			};
 			using (ContextData<AttackHitPolicyContextData>.Request().Setup(ProjectileAttack.AttackHitPolicy))
 			{
@@ -172,7 +179,7 @@ public class AbilityProjectileAttackLine
 					HitData item2 = new HitData(item3.Node, rulePerformAttackRoll);
 					(item2.Entity, _, _) = item3;
 					list.Add(item2);
-					continue;
+					goto IL_048a;
 				}
 			}
 			MechanicEntity actualParryUnit = rulePerformAttackRoll.ActualParryUnit;
@@ -214,6 +221,15 @@ public class AbilityProjectileAttackLine
 				break;
 			}
 			damageData = ruleRollDamage2.ResultOverpenetration;
+			goto IL_048a;
+			IL_048a:
+			RuleRollBlock resultBlockRule = rulePerformAttackRoll.ResultBlockRule;
+			if (resultBlockRule != null && resultBlockRule.Result)
+			{
+				Context.AddUnitBlockingAttack(item3.Entity as UnitEntity);
+				BlockHasTriggered = true;
+				break;
+			}
 		}
 		return list;
 	}
@@ -223,12 +239,12 @@ public class AbilityProjectileAttackLine
 		List<MechanicEntity> targets = TempList.Get<MechanicEntity>();
 		foreach (CustomGridNodeBase node in m_Nodes)
 		{
-			if (!AbilityProjectileAttackLineHelper.IsNodeAffected(null, FromNode, node, StepHeight))
+			if (!AbilityProjectileAttackLineHelper.IsNodeAffected(Context.Ability, FromNode, node, StepHeight))
 			{
 				continue;
 			}
-			MechanicEntity targetByNode = GetTargetByNode(node);
-			if (targetByNode == null || !Context.Ability.IsValidTargetForAttack(targetByNode) || targets.Contains(targetByNode))
+			MechanicEntity targetByNode = GetTargetByNode(node, Context.Ability);
+			if (targetByNode == null || targets.Contains(targetByNode))
 			{
 				continue;
 			}
@@ -248,16 +264,16 @@ public class AbilityProjectileAttackLine
 	}
 
 	[CanBeNull]
-	private static MechanicEntity GetTargetByNode(CustomGridNodeBase node)
+	private static MechanicEntity GetTargetByNode(CustomGridNodeBase node, AbilityData abilityData)
 	{
-		BaseUnitEntity unit = node.GetUnit();
-		if (unit != null)
+		BaseUnitEntity baseUnitEntity = node.GetAllUnits().FirstOrDefault(abilityData.IsValidTargetForAttack);
+		if (baseUnitEntity != null)
 		{
-			return unit;
+			return baseUnitEntity;
 		}
 		foreach (DestructibleEntity destructibleEntity in Game.Instance.State.DestructibleEntities)
 		{
-			if (destructibleEntity.GetOccupiedNodes().Contains(node))
+			if (destructibleEntity.GetOccupiedNodes().Contains(node) && abilityData.IsValidTargetForAttack(destructibleEntity))
 			{
 				return destructibleEntity;
 			}

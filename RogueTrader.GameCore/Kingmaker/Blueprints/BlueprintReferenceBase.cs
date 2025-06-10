@@ -71,6 +71,14 @@ public class BlueprintReferenceBase : IEquatable<BlueprintReferenceBase>, IRefer
 		};
 	}
 
+	public static TRef CreateTyped<TRef>(string bpGuid) where TRef : BlueprintReferenceBase, new()
+	{
+		return new TRef
+		{
+			guid = bpGuid
+		};
+	}
+
 	public bool Equals(BlueprintReferenceBase other)
 	{
 		if (other == null)

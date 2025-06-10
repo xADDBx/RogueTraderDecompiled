@@ -292,7 +292,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		base.MechadendritesEquipment = new UnitViewMechadendritesEquipment(this, base.CharacterAvatar);
 		UpdateBodyEquipmentModel();
 		UpdateClassEquipment();
-		UpdateEquipmentColor();
+		UpdateEquipmentColorRampIndices();
 		base.CharacterAvatar?.RebuildOutfit();
 		HandsEquipment.UpdateAll();
 		base.MechadendritesEquipment.UpdateAll();
@@ -470,7 +470,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		}
 	}
 
-	public void UpdateEquipmentColor()
+	public void UpdateEquipmentColorRampIndices()
 	{
 		if (EntityData == null || base.CharacterAvatar == null)
 		{
@@ -545,7 +545,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		}
 		foreach (EquipmentEntity ee in ees)
 		{
-			if (!(ee.ColorPresets == null) && ee.ColorPresets.IndexPairs.Count > 0)
+			if (!(ee.ColorPresets == null) && ee.ColorPresets.IndexPairs.Count > 0 && ee.ColorPresets.IndexPairs.Count - 1 >= blueprintItemEquipment.ForcedRampColorPresetIndex)
 			{
 				int primaryIndex = ee.ColorPresets.IndexPairs[blueprintItemEquipment.ForcedRampColorPresetIndex].PrimaryIndex;
 				int secondaryIndex = ee.ColorPresets.IndexPairs[blueprintItemEquipment.ForcedRampColorPresetIndex].SecondaryIndex;

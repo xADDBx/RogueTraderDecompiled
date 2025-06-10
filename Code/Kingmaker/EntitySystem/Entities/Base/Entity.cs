@@ -11,7 +11,7 @@ using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
@@ -205,7 +205,7 @@ public abstract class Entity : IEntity, IDisposable, IHashable
 		}
 		set
 		{
-			if (m_IsInGame != value)
+			if (!(!CanBeTurnedOn && value) && m_IsInGame != value)
 			{
 				m_IsInGame = value;
 				if (View != null)
@@ -221,6 +221,8 @@ public abstract class Entity : IEntity, IDisposable, IHashable
 			}
 		}
 	}
+
+	public virtual bool CanBeTurnedOn => true;
 
 	public virtual Vector3 Position
 	{

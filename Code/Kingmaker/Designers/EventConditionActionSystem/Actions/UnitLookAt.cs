@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.Mechanics.Entities;
 using Owlcat.QA.Validation;
 using UnityEngine;
 
@@ -23,6 +24,15 @@ public class UnitLookAt : GameAction
 
 	protected override void RunAction()
 	{
-		Unit.GetValue().LookAt(Position.GetValue());
+		AbstractUnitEntity value = Unit.GetValue();
+		Vector3 value2 = Position.GetValue();
+		if (value.View.IsVisible)
+		{
+			value.LookAt(value2);
+		}
+		else
+		{
+			value.ForceLookAt(value2);
+		}
 	}
 }

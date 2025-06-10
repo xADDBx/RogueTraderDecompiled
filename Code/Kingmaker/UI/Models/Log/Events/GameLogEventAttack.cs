@@ -236,6 +236,11 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 		return GetMechanicFeatureAssociatedBuffs(MechanicsFeatureType.AutoParry);
 	}
 
+	public IReadOnlyList<FeatureCountableFlag.BuffList.Element> GetAutoBlockAssociatedBuffs()
+	{
+		return GetMechanicFeatureAssociatedBuffs(MechanicsFeatureType.AutoBlock);
+	}
+
 	private void HandleCriticalHit(RuleCalculateHitChances rule)
 	{
 		ModifiableValueAttributeStat attributeOptional = rule.ConcreteInitiator.GetAttributeOptional(StatType.WarhammerWeaponSkill);

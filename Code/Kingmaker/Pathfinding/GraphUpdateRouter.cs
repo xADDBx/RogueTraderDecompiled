@@ -34,6 +34,11 @@ public static class GraphUpdateRouter
 
 	private static void OnPostScan(AstarPath script)
 	{
+		ForceUpdateAll();
+	}
+
+	public static void ForceUpdateAll()
+	{
 		foreach (NavmeshClipper item in NavmeshClipper.allEnabled)
 		{
 			item.ForceUpdate();

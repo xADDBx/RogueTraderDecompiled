@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ShipCustomization;
 
-public class ShipCustomizationPCView : ShipCustomizationBaseView<ShipUpgradePCView, ShipSkillsPCView, ShipHealthAndRepairPCView>
+public class ShipCustomizationPCView : ShipCustomizationBaseView<ShipUpgradePCView, ShipSkillsPCView, ShipHealthAndRepairPCView, ShipAbilitiesPCView>
 {
 	[SerializeField]
 	private OwlcatMultiButton m_CloseButton;
@@ -20,6 +20,7 @@ public class ShipCustomizationPCView : ShipCustomizationBaseView<ShipUpgradePCVi
 		m_ShipUpgradeView.Initialize();
 		m_ShipSkillsPCView.Initialize();
 		m_ShipPostsView.Initialize();
+		m_ShipAbilitiesView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -45,23 +46,34 @@ public class ShipCustomizationPCView : ShipCustomizationBaseView<ShipUpgradePCVi
 		{
 		case ShipCustomizationTab.Upgrade:
 			m_ShipUpgradeView.Bind(base.ViewModel.ShipUpgradeVm);
+			m_SkillsAndPostsFadeAnimator.DisappearAnimation();
 			m_ShipSkillsPCView.Unbind();
 			m_ShipPostsView.Unbind();
-			m_SkillsAndPostsFadeAnimator.DisappearAnimation();
+			m_ShipAbilitiesView.Unbind();
 			m_ShipInfo.SetActive(value: true);
 			break;
 		case ShipCustomizationTab.Skills:
-			m_ShipUpgradeView.Unbind();
 			m_ShipSkillsPCView.Bind(base.ViewModel.ShipSkillsVM);
-			m_ShipPostsView.Unbind();
 			m_SkillsAndPostsFadeAnimator.AppearAnimation();
+			m_ShipUpgradeView.Unbind();
+			m_ShipPostsView.Unbind();
+			m_ShipAbilitiesView.Unbind();
 			m_ShipInfo.SetActive(value: false);
 			break;
 		case ShipCustomizationTab.Posts:
-			m_ShipUpgradeView.Unbind();
-			m_ShipSkillsPCView.Unbind();
 			m_ShipPostsView.Bind(base.ViewModel.ShipPostsVM);
 			m_SkillsAndPostsFadeAnimator.AppearAnimation();
+			m_ShipUpgradeView.Unbind();
+			m_ShipSkillsPCView.Unbind();
+			m_ShipAbilitiesView.Unbind();
+			m_ShipInfo.SetActive(value: false);
+			break;
+		case ShipCustomizationTab.Abilities:
+			m_ShipAbilitiesView.Bind(base.ViewModel.ShipAbilitiesVM);
+			m_SkillsAndPostsFadeAnimator.AppearAnimation();
+			m_ShipUpgradeView.Unbind();
+			m_ShipSkillsPCView.Unbind();
+			m_ShipPostsView.Unbind();
 			m_ShipInfo.SetActive(value: false);
 			break;
 		}

@@ -16,7 +16,7 @@ public class CareerPathsListsCommonView : CharInfoComponentView<UnitProgressionV
 	private RankExpCounterCommonView m_RankExpCounterCommonView;
 
 	[SerializeField]
-	private UnitBackgroundBlockCommonView m_UnitBackgroundBlockCommonView;
+	protected UnitBackgroundBlockCommonView m_UnitBackgroundBlockCommonView;
 
 	[SerializeField]
 	protected List<CareerPathsListCommonView> m_CareerPathsLists;

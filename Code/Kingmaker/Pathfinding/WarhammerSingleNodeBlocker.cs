@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Pathfinding;
 using UnityEngine;
@@ -15,9 +16,19 @@ public class WarhammerSingleNodeBlocker
 
 	private Vector3 m_LastDirection;
 
-	public BaseUnitEntity OwnerUnit => m_Owner as BaseUnitEntity;
+	public AbstractUnitEntity OwnerUnit => m_Owner as AbstractUnitEntity;
 
-	public NodeList BlockedNodes => WarhammerBlockManager.Instance.GetBlockedNodes(m_LastBlocked, m_Owner.SizeRect, m_LastDirection);
+	public NodeList BlockedNodes
+	{
+		get
+		{
+			if (!IsBlocking)
+			{
+				return NodeList.Empty;
+			}
+			return WarhammerBlockManager.Instance.GetBlockedNodes(m_LastBlocked, m_Owner.SizeRect, m_LastDirection);
+		}
+	}
 
 	public bool IsBlocking => m_LastBlocked != null;
 
@@ -60,9 +71,9 @@ public class WarhammerSingleNodeBlocker
 		IntRect sizeRect = m_Owner.SizeRect;
 		Vector3 forward = m_Owner.Forward;
 		BlockType blockType = BlockType.Enemy;
-		if (OwnerUnit != null)
+		if (OwnerUnit is BaseUnitEntity baseUnitEntity)
 		{
-			blockType = (OwnerUnit.IsInvisible ? BlockType.Invisible : (OwnerUnit.Faction.IsPlayerEnemy ? BlockType.Enemy : BlockType.Friend));
+			blockType = (baseUnitEntity.IsInvisible ? BlockType.Invisible : (baseUnitEntity.Faction.IsPlayerEnemy ? BlockType.Enemy : BlockType.Friend));
 		}
 		if (WarhammerBlockManager.Instance != null)
 		{

@@ -11,6 +11,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.DragNDrop;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Selection.UnitMark;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View;
 
 namespace Kingmaker.UI.Selection;
@@ -39,7 +40,7 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 
 	public override void SelectUnit(UnitEntityView unit, bool single = true, bool sendSelectionEvent = true, bool ask = true)
 	{
-		if (unit == null || !unit.EntityData.IsDirectlyControllable())
+		if (unit == null || (!unit.EntityData.IsDirectlyControllable() && !unit.EntityData.IsPet))
 		{
 			return;
 		}
@@ -50,12 +51,23 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 		{
 			Clear();
 		}
-		if (!selectedUnit.IsDirectlyControllable)
+		if (!selectedUnit.IsDirectlyControllable && !selectedUnit.IsPet)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)selectedUnit, (Action<ITrySelectNotControllableHandler>)delegate(ITrySelectNotControllableHandler h)
 			{
 				h.HandleSelectNotControllable(single, ask);
 			}, isCheckRuntime: true);
+			return;
+		}
+		UnitPartPetOwner optional = selectedUnit.GetOptional<UnitPartPetOwner>();
+		if (optional != null)
+		{
+			SelectUnitAsPet(optional.PetUnit, value: true);
+		}
+		if (selectedUnit.IsPet && (!(Game.Instance?.TurnController?.TbActive).GetValueOrDefault() || !(Game.Instance?.TurnController?.IsPreparationTurn).GetValueOrDefault()))
+		{
+			SelectUnitAsPet(selectedUnit, value: true);
+			SelectUnit(selectedUnit.Master.View, single, sendSelectionEvent, ask);
 			return;
 		}
 		m_UnitMarks.Find((BaseUnitMark decal) => decal.Unit == selectedUnit)?.Selected(isSelected: true);
@@ -90,6 +102,11 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 		foreach (BaseUnitEntity selected in base.SelectedUnits)
 		{
 			selected.IsSelected = false;
+			UnitPartPetOwner optional = selected.GetOptional<UnitPartPetOwner>();
+			if (optional != null && !selected.IsPet)
+			{
+				SelectUnitAsPet(optional.PetUnit, value: false);
+			}
 			m_UnitMarks.Find((BaseUnitMark mark) => mark.Unit == selected)?.Selected(isSelected: false);
 			EventBus.RaiseEvent((IBaseUnitEntity)selected, (Action<ISelectionHandler>)delegate(ISelectionHandler h)
 			{

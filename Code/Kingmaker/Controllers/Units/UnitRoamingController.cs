@@ -72,7 +72,8 @@ public class UnitRoamingController : IControllerTick, IController, IRoamingTurnE
 		if (part.NextPoint == null)
 		{
 			part.NextPoint = RollNextPoint(part);
-			if (part.Settings.Radius > 0f)
+			RoamingUnitSettings settings = part.Settings;
+			if (settings != null && settings.Radius > 0f && part.NextPoint != null)
 			{
 				part.CachedTargetPosition = part.NextPoint.Position;
 			}
@@ -108,8 +109,8 @@ public class UnitRoamingController : IControllerTick, IController, IRoamingTurnE
 						Orientation = point.Orientation,
 						Roaming = true
 					};
-					RoamingUnitSettings settings = part.Settings;
-					obj.OverrideSpeed = ((settings == null || !(settings.MovementSpeed > 0f)) ? null : part.Settings?.MovementSpeed);
+					RoamingUnitSettings settings2 = part.Settings;
+					obj.OverrideSpeed = ((settings2 == null || !(settings2.MovementSpeed > 0f)) ? null : part.Settings?.MovementSpeed);
 					UnitMoveToParams cmdParams = obj;
 					unit.Commands.Run(cmdParams);
 				}

@@ -20,7 +20,7 @@ public class CheckDamageFromDOTGetter : PropertyGetter, PropertyContextAccessor.
 		{
 			return 0;
 		}
-		if (rule is RuleDealDamage ruleDealDamage && rule.Reason.Fact != null && ruleDealDamage.Reason.Fact.Blueprint.HasLogic<DOTLogic>())
+		if (rule is RuleDealDamage { Reason: { Fact: not null }, Reason: var reason2 } && reason2.Fact.Blueprint.HasLogic<DOTLogic>())
 		{
 			return 1;
 		}

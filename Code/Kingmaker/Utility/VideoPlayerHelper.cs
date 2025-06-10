@@ -374,7 +374,10 @@ public class VideoPlayerHelper : MonoBehaviour
 
 	private void SetVideoPlaybackSpeed(float playbackSpeed)
 	{
-		m_VideoPlayer.playbackSpeed = playbackSpeed;
+		if (m_VideoPlayer != null)
+		{
+			m_VideoPlayer.playbackSpeed = playbackSpeed;
+		}
 	}
 
 	private void SetDefaultVideoPlaybackSpeed()

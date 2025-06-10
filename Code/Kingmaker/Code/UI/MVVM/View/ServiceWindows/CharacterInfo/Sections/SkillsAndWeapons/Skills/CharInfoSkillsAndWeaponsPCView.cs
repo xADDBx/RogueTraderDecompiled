@@ -1,4 +1,7 @@
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
+using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using UniRx;
@@ -20,14 +23,32 @@ public class CharInfoSkillsAndWeaponsPCView : CharInfoSkillsAndWeaponsBaseView
 
 	private float m_CurrentAngle;
 
+	private bool m_IsPet;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
-		if (m_SkillsButton != null)
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_WeaponsButton.gameObject.SetActive(value: true);
+			m_TabSelector.gameObject.SetActive(value: true);
+			UnitPartPetOwner unitPartPetOwner = (u.IsPet ? u.Master.GetOptional<UnitPartPetOwner>() : null);
+			if (unitPartPetOwner != null)
+			{
+				PetType petType = unitPartPetOwner.PetType;
+				if (petType != PetType.Mastiff && petType != PetType.Eagle)
+				{
+					m_WeaponsButton.gameObject.SetActive(value: false);
+					m_TabSelector.gameObject.SetActive(value: false);
+				}
+				m_IsPet = u.IsPet;
+			}
+		}));
+		if (m_SkillsButton != null || m_IsPet)
 		{
 			m_SkillsButton.SetActiveLayer((CurrentSection.Value == CharInfoComponentType.Skills) ? 1 : 0);
 		}
-		if (m_WeaponsButton != null)
+		if (m_WeaponsButton != null && !m_IsPet)
 		{
 			m_WeaponsButton.SetActiveLayer((CurrentSection.Value == CharInfoComponentType.Weapons) ? 1 : 0);
 		}

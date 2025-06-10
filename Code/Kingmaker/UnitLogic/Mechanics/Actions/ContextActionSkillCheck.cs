@@ -10,6 +10,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
 [TypeId("de19bd4eb40decb419caec8194765ed0")]
+[KDB("Performs a skill check. DOES NOT take DC increase from difficulty into account!")]
 public class ContextActionSkillCheck : ContextAction
 {
 	[Serializable]
@@ -64,7 +65,7 @@ public class ContextActionSkillCheck : ContextAction
 			}
 		}
 		int num2 = (UseCustomDC ? CustomDC.Calculate(base.Context) : 0);
-		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(base.Target.Entity, Stat, num2 + num)
+		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(base.Target.Entity, Stat, num2 + num, ignoreDCIncreaseFromDifficulty: true)
 		{
 			ShowAnyway = true
 		}, base.Context);

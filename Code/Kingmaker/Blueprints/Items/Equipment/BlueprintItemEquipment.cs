@@ -77,7 +77,7 @@ public abstract class BlueprintItemEquipment : BlueprintItem
 
 	public abstract string InventoryEquipSound { get; }
 
-	public bool CanBeEquippedBy(MechanicEntity entity)
+	public virtual bool CanBeEquippedBy(MechanicEntity entity)
 	{
 		return this.GetComponents<EquipmentRestriction>().Aggregate(seed: true, (bool r, EquipmentRestriction restriction) => r && restriction.CanBeEquippedBy(entity));
 	}

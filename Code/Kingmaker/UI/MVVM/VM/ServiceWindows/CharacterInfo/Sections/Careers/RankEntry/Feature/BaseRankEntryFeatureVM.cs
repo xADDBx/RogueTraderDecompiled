@@ -65,7 +65,7 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 			}
 			if (IsUltimateFeature)
 			{
-				return UIStrings.Instance.CharacterSheet.UltimateAbilityFeatureGroupHint.Text;
+				return UIStrings.Instance.CharacterSheet.UltimateUpgradeAbilityFeatureGroupHint.Text;
 			}
 			if (IsKeystoneAbility)
 			{
@@ -113,7 +113,7 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 		}
 		if (IsUltimateFeature)
 		{
-			return new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.UltimateAbilityFeatureGroupHint.Text, UIStrings.Instance.CharacterSheet.UltimateAbilitiesChargenDescription.Text);
+			return new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.UltimateUpgradeAbilityFeatureGroupHint.Text, UIStrings.Instance.CharacterSheet.UltimateAbilitiesChargenDescription.Text);
 		}
 		return new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.HeaderImprovement, UIStrings.Instance.CharacterSheet.PredefinedAbilitiesChargenDescription.Text);
 	}

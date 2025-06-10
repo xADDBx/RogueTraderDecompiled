@@ -22,6 +22,10 @@ public class BuffGroupImmunity : UnitFactComponentDelegate, IInitiatorRulebookHa
 	[SerializeField]
 	private bool m_DisableGameLog;
 
+	[SerializeField]
+	[Tooltip("If true, immunity will apply to all buffs, except those in Groups.")]
+	private bool m_InvertCondition;
+
 	public ReferenceArrayProxy<BlueprintAbilityGroup> Groups
 	{
 		get
@@ -33,8 +37,9 @@ public class BuffGroupImmunity : UnitFactComponentDelegate, IInitiatorRulebookHa
 
 	public void OnEventAboutToTrigger(RuleCalculateCanApplyBuff evt)
 	{
-		if (evt.Blueprint.AbilityGroups.Any((BlueprintAbilityGroup p) => Groups.Contains(p)))
+		if (IsImmune(evt))
 		{
+			Debug.Log("Immunity to " + evt.Blueprint.name);
 			evt.Immunity = true;
 			evt.DisableGameLog = m_DisableGameLog;
 		}
@@ -42,6 +47,16 @@ public class BuffGroupImmunity : UnitFactComponentDelegate, IInitiatorRulebookHa
 
 	public void OnEventDidTrigger(RuleCalculateCanApplyBuff evt)
 	{
+	}
+
+	private bool IsImmune(RuleCalculateCanApplyBuff evt)
+	{
+		ReferenceArrayProxy<BlueprintAbilityGroup> abilityGroups = evt.Blueprint.AbilityGroups;
+		if (!m_InvertCondition)
+		{
+			return abilityGroups.Any((BlueprintAbilityGroup p) => Groups.Contains(p));
+		}
+		return abilityGroups.All((BlueprintAbilityGroup p) => !Groups.Contains(p));
 	}
 
 	public override Hash128 GetHash128()

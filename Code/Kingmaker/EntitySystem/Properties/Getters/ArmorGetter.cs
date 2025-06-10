@@ -39,11 +39,22 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 		MechanicEntity mechanicEntity2 = (AgainstTarget ? ((MechanicEntity)this.GetTargetByType(Defender)) : base.CurrentEntity);
 		if (OnlyBodyArmour)
 		{
+			PartUnitBody bodyOptional = mechanicEntity2.GetBodyOptional();
 			if (Deflection)
 			{
-				return (mechanicEntity2.GetBodyOptional()?.Armor.MaybeArmor?.Blueprint.DamageDeflection).GetValueOrDefault();
+				int num = 0;
+				if (bodyOptional == null)
+				{
+					return num;
+				}
+				return num + (bodyOptional.Armor.MaybeArmor?.Blueprint.DamageDeflection ?? 0);
 			}
-			return (mechanicEntity2.GetBodyOptional()?.Armor.MaybeArmor?.Blueprint.DamageAbsorption).GetValueOrDefault();
+			int num2 = 0;
+			if (bodyOptional == null)
+			{
+				return num2;
+			}
+			return num2 + (bodyOptional.Armor.MaybeArmor?.Blueprint.DamageAbsorption ?? 0);
 		}
 		if (mechanicEntity == null || mechanicEntity2 == null)
 		{

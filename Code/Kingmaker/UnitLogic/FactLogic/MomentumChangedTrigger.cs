@@ -27,7 +27,7 @@ public class MomentumChangedTrigger : UnitFactComponentDelegate, IGlobalRulebook
 	public void OnEventDidTrigger(RulePerformMomentumChange evt)
 	{
 		MechanicEntity mechanicEntity = (m_RunActionsOnFactOwner ? base.Owner : base.Context.MaybeCaster);
-		if (mechanicEntity != null)
+		if (mechanicEntity != null && !mechanicEntity.IsPreview)
 		{
 			base.Fact.RunActionInContext(Actions, mechanicEntity.ToITargetWrapper());
 		}

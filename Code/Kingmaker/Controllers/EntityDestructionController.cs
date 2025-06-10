@@ -8,6 +8,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UI;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;
@@ -119,7 +120,7 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 
 	private static bool TryUnrecruit(BaseUnitEntity unit)
 	{
-		if ((bool)unit.GetOptional<UnitPartCompanion>())
+		if ((bool)unit.GetOptional<UnitPartCompanion>() && !unit.Facts.HasComponent<TransientPartyMemberFlag>())
 		{
 			Logger.Error($"Trying to destroy {unit} who is a companion. Do not do that!");
 			unit.GetOptional<UnitPartCompanion>()?.SetState(CompanionState.ExCompanion);

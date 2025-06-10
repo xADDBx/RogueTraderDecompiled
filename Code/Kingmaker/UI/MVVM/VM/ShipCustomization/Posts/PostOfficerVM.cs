@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -84,7 +85,7 @@ public class PostOfficerVM : SelectionGroupEntityVM, IOnNewUnitOnPostHandler, IS
 
 	private void UpdatePostData()
 	{
-		if (m_SelectedPost.Value == null || Unit == null)
+		if (m_SelectedPost.Value == null || Unit == null || Unit.IsPet)
 		{
 			UnitAbility = null;
 			SkillValue = 0;
@@ -93,27 +94,27 @@ public class PostOfficerVM : SelectionGroupEntityVM, IOnNewUnitOnPostHandler, IS
 			return;
 		}
 		m_AttachedPost.Value = Game.Instance.Player.PlayerShip.Hull.Posts.FirstOrDefault((Post x) => x.CurrentUnit == Unit);
-		ModifiableValue statOptional = Unit.GetStatOptional(m_SelectedPost.Value.Post.PostData.AssociatedSkill);
-		SkillValue = statOptional.ModifiedValue;
-		SkillName = LocalizedTexts.Instance.Stats.GetText(statOptional.Type);
-		SkillRecommendation = UIUtilityUnit.GetSkillGraduation(m_SelectedPost.Value.Post.PostData.AssociatedSkill, Unit, Game.Instance.Player.AllCharacters);
+		ModifiableValue statOptional = Unit.GetStatOptional((m_SelectedPost?.Value?.Post?.PostData?.AssociatedSkill).GetValueOrDefault());
+		SkillValue = statOptional?.ModifiedValue ?? 0;
+		SkillName = LocalizedTexts.Instance.Stats.GetText(statOptional?.Type ?? StatType.Unknown);
+		SkillRecommendation = UIUtilityUnit.GetSkillGraduation((m_SelectedPost?.Value?.Post?.PostData?.AssociatedSkill).GetValueOrDefault(), Unit, Game.Instance.Player.AllCharacters);
 		IEnumerable<BlueprintShipPostExpertise> enumerable = m_SelectedPost.Value.Post?.UnitExpertises(Unit);
 		UnitAbility?.Dispose();
 		UnitAbility = null;
-		if (enumerable != null)
+		if (enumerable != null && m_SelectedPost?.Value?.Post?.DefaultAbilities != null)
 		{
 			foreach (BlueprintShipPostExpertise item in enumerable)
 			{
-				foreach (BlueprintAbility defaultAbility in m_SelectedPost.Value.Post.DefaultAbilities)
+				foreach (BlueprintAbility item2 in m_SelectedPost?.Value?.Post?.DefaultAbilities)
 				{
-					if (item.DefaultPostAbility == defaultAbility)
+					if (item.DefaultPostAbility == item2)
 					{
-						AddDisposable(UnitAbility = new PostAbilityVM(defaultAbility, m_SelectedPost.Value?.Post));
+						AddDisposable(UnitAbility = new PostAbilityVM(item2, m_SelectedPost?.Value?.Post));
 					}
 				}
 			}
 		}
-		PostSprite = m_AttachedPost.Value?.PostData.PostSpriteHolographic;
+		PostSprite = m_AttachedPost.Value?.PostData?.PostSpriteHolographic;
 		DataUpdated.Execute();
 	}
 

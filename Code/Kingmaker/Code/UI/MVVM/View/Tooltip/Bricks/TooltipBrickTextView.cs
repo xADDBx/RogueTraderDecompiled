@@ -51,7 +51,7 @@ public class TooltipBrickTextView : TooltipBaseBrickView<TooltipBrickTextVM>
 		{
 			ChangeTextSize();
 		}
-		AddDisposable(m_Text.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
+		AddDisposable(m_Text.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true), base.ViewModel.MechanicEntity));
 	}
 
 	private void ApplyStyle(TooltipTextType type)

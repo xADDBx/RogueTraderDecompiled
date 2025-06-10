@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -6,6 +7,8 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
 using Kingmaker.View.Mechadendrites;
@@ -22,7 +25,19 @@ public class HandSlot : WeaponSlot, IHashable
 
 	public bool IsDirty { get; set; }
 
-	public bool HasShield => MaybeShield != null;
+	public override bool HasShield => MaybeShield != null;
+
+	private bool CanUnActive
+	{
+		get
+		{
+			if (HasShield)
+			{
+				return base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement);
+			}
+			return false;
+		}
+	}
 
 	[NotNull]
 	public ItemEntityShield Shield
@@ -38,7 +53,35 @@ public class HandSlot : WeaponSlot, IHashable
 	}
 
 	[CanBeNull]
-	public ItemEntityShield MaybeShield => base.MaybeItem as ItemEntityShield;
+	public override ItemEntityShield MaybeShield
+	{
+		get
+		{
+			if (base.MaybeItem == null || !base.Active)
+			{
+				return null;
+			}
+			return base.MaybeItem as ItemEntityShield;
+		}
+	}
+
+	public override ItemEntityWeapon MaybeWeapon
+	{
+		get
+		{
+			ItemEntityWeapon itemEntityWeapon = base.MaybeWeapon;
+			if (itemEntityWeapon == null)
+			{
+				ItemEntityShield maybeShield = MaybeShield;
+				if (maybeShield == null)
+				{
+					return null;
+				}
+				itemEntityWeapon = maybeShield.WeaponComponent;
+			}
+			return itemEntityWeapon;
+		}
+	}
 
 	public HandsEquipmentSet HandsEquipmentSet => base.Owner.GetBodyOptional()?.GetHandsEquipmentSet(this) ?? throw new Exception($"Can't find HandsEquipmentSet for HandSlot ({base.Owner})");
 
@@ -60,7 +103,7 @@ public class HandSlot : WeaponSlot, IHashable
 	public override void UpdateActive()
 	{
 		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
-		base.Active = !base.Disabled && (bodyOptional == null || HandsEquipmentSet == bodyOptional.CurrentHandsEquipmentSet);
+		base.Active = !base.Disabled && (!CanUnActive || bodyOptional == null || HandsEquipmentSet == bodyOptional.CurrentHandsEquipmentSet);
 	}
 
 	public static IDisposable SuppressNotifyEquipment()
@@ -135,6 +178,18 @@ public class HandSlot : WeaponSlot, IHashable
 
 	protected override void OnItemInserted()
 	{
+		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
+		if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) && (!IsPrimaryHand || base.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false }) && bodyOptional != null)
+		{
+			IList<HandsEquipmentSet> handsEquipmentSets = bodyOptional.HandsEquipmentSets;
+			for (int i = 0; i < handsEquipmentSets.Count; i++)
+			{
+				if (handsEquipmentSets[i] != HandsEquipmentSet && handsEquipmentSets[i].SecondaryHand.HasShield)
+				{
+					handsEquipmentSets[i].SecondaryHand.RemoveItem();
+				}
+			}
+		}
 		if (!IsPrimaryHand)
 		{
 			HandSlot primaryHand = HandsEquipmentSet.PrimaryHand;
@@ -143,7 +198,7 @@ public class HandSlot : WeaponSlot, IHashable
 				primaryHand.RemoveItem();
 			}
 		}
-		if (base.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false } itemEntityWeapon2)
+		if (base.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false } itemEntityWeapon3)
 		{
 			if (IsPrimaryHand)
 			{
@@ -152,7 +207,44 @@ public class HandSlot : WeaponSlot, IHashable
 			else
 			{
 				RemoveItem();
-				PairSlot.InsertItem(itemEntityWeapon2);
+				PairSlot.InsertItem(itemEntityWeapon3);
+			}
+		}
+		if (base.MaybeItem is ItemEntityShield)
+		{
+			if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement))
+			{
+				if (bodyOptional != null)
+				{
+					IList<HandsEquipmentSet> handsEquipmentSets2 = bodyOptional.HandsEquipmentSets;
+					for (int j = 0; j < handsEquipmentSets2.Count; j++)
+					{
+						if (handsEquipmentSets2[j] != HandsEquipmentSet)
+						{
+							if (handsEquipmentSets2[j].PrimaryHand.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false })
+							{
+								handsEquipmentSets2[j].PrimaryHand.RemoveItem();
+							}
+							if (handsEquipmentSets2[j].SecondaryHand.HasItem)
+							{
+								handsEquipmentSets2[j].SecondaryHand.RemoveItem();
+							}
+							handsEquipmentSets2[j].OverrideSecondaryHand(HandsEquipmentSet.SecondaryHand);
+						}
+					}
+				}
+			}
+			else if (bodyOptional != null)
+			{
+				IList<HandsEquipmentSet> handsEquipmentSets3 = bodyOptional.HandsEquipmentSets;
+				for (int k = 0; k < handsEquipmentSets3.Count; k++)
+				{
+					if (handsEquipmentSets3[k] != HandsEquipmentSet && base.MaybeItem == handsEquipmentSets3[k].SecondaryHand.MaybeItem)
+					{
+						handsEquipmentSets3[k].OverrideSecondaryHand(null);
+						handsEquipmentSets3[k].SecondaryHand.IsDirty = true;
+					}
+				}
 			}
 		}
 		IsDirty = true;
@@ -167,6 +259,23 @@ public class HandSlot : WeaponSlot, IHashable
 		return false;
 	}
 
+	protected override void OnItemRemoved()
+	{
+		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
+		if (base.MaybeItem is ItemEntityShield && !base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) && bodyOptional != null)
+		{
+			IList<HandsEquipmentSet> handsEquipmentSets = bodyOptional.HandsEquipmentSets;
+			for (int i = 0; i < handsEquipmentSets.Count; i++)
+			{
+				if (handsEquipmentSets[i] != HandsEquipmentSet)
+				{
+					handsEquipmentSets[i].OverrideSecondaryHand(null);
+				}
+			}
+		}
+		IsDirty = true;
+	}
+
 	public override WeaponAnimationStyle GetWeaponStyle(bool isDollRoom = false)
 	{
 		if (!HasShield)
@@ -174,6 +283,24 @@ public class HandSlot : WeaponSlot, IHashable
 			return base.GetWeaponStyle(isDollRoom);
 		}
 		return WeaponAnimationStyle.Shield;
+	}
+
+	public override void PostLoad()
+	{
+		base.PostLoad();
+		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
+		if (!(base.MaybeItem is ItemEntityShield) || base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) || bodyOptional == null)
+		{
+			return;
+		}
+		IList<HandsEquipmentSet> handsEquipmentSets = bodyOptional.HandsEquipmentSets;
+		for (int i = 0; i < handsEquipmentSets.Count; i++)
+		{
+			if (handsEquipmentSets[i] != HandsEquipmentSet)
+			{
+				handsEquipmentSets[i].OverrideSecondaryHand(HandsEquipmentSet.SecondaryHand);
+			}
+		}
 	}
 
 	public override Hash128 GetHash128()

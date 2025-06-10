@@ -3,6 +3,7 @@ using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.View.CharGen.Common.Portrait;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.Portrait;
 using Kingmaker.UI.MVVM.VM.CharGen.Portrait;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -82,19 +83,21 @@ public class CharGenCustomPortraitCreatorView : ViewBase<CharGenCustomPortraitCr
 		SetupLabels();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		Hide();
+	}
+
 	protected virtual void Show()
 	{
 		m_Animator.AppearAnimation();
+		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 	}
 
 	protected virtual void Hide()
 	{
+		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
 		m_Animator.DisappearAnimation();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		Hide();
 	}
 
 	private void SetupLabels()

@@ -57,7 +57,7 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 
 	protected void TryApply(RuleCalculateDamage rule)
 	{
-		if (!Restrictions.IsPassed(base.Fact, rule, rule.Ability) || (rule.DamageType == DamageType.Direct && !ModifyEvenDirectDamage))
+		if (!Restrictions.IsPassed(base.Fact, rule, rule.Ability) || rule.Unmodifiable || (rule.DamageType == DamageType.Direct && !ModifyEvenDirectDamage))
 		{
 			return;
 		}

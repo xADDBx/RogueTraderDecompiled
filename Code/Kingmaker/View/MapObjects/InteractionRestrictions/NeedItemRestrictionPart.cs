@@ -20,7 +20,7 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public BlueprintItem RequiredItem => base.Settings.GetItem();
 
-	public int? InteractionDC => (InteractionPart.Settings as InteractionSkillCheckSettings)?.GetDC();
+	public int? InteractionDC => (InteractionPart?.Settings as InteractionSkillCheckSettings)?.GetDC();
 
 	public virtual InteractionActorType Type
 	{
@@ -42,11 +42,11 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 		}
 	}
 
-	public InteractionPart InteractionPart => base.ConcreteOwner.GetAll<InteractionPart>().FirstOrDefault();
+	public InteractionPart InteractionPart => base.ConcreteOwner?.GetAll<InteractionPart>()?.FirstOrDefault();
 
-	public StatType Skill => (InteractionPart.Settings as InteractionSkillCheckSettings)?.Skill ?? StatType.Unknown;
+	public StatType Skill => (InteractionPart?.Settings as InteractionSkillCheckSettings)?.Skill ?? StatType.Unknown;
 
-	public virtual bool CheckOnlyOnce => (InteractionPart.Settings as InteractionSkillCheckSettings)?.OnlyCheckOnce ?? false;
+	public virtual bool CheckOnlyOnce => (InteractionPart?.Settings as InteractionSkillCheckSettings)?.OnlyCheckOnce ?? false;
 
 	public virtual bool CanUse => true;
 
@@ -95,7 +95,7 @@ public abstract class NeedItemRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	public virtual string GetInteractionName()
 	{
-		if (InteractionPart.Settings is InteractionSkillCheckSettings interactionSkillCheckSettings)
+		if (InteractionPart?.Settings is InteractionSkillCheckSettings interactionSkillCheckSettings)
 		{
 			return LocalizedTexts.Instance.Stats.GetText(interactionSkillCheckSettings.Skill);
 		}

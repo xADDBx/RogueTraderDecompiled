@@ -48,7 +48,8 @@ public class BugContext : IComparable<BugContext>
 		Coop,
 		Desync,
 		TransitionMap,
-		GroupChanger
+		GroupChanger,
+		DlcModManager
 	}
 
 	public enum AspectType
@@ -61,7 +62,8 @@ public class BugContext : IComparable<BugContext>
 		Code,
 		Visual,
 		Animation,
-		Localization
+		Localization,
+		LogError
 	}
 
 	public enum InnerContextType

@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
@@ -25,25 +25,25 @@ public class PartAbilitySettings : BaseUnitPart, IInterruptTurnStartHandler, ISu
 
 	private readonly List<(EntityFactComponent Runtime, OverrideAbilityThreatenedAreaSetting Component)> m_ThreatenedAreaEntries = new List<(EntityFactComponent, OverrideAbilityThreatenedAreaSetting)>();
 
-	public static BlueprintAbility.UsingInThreateningAreaType GetThreatenedAreaSetting(AbilityData ability)
+	public static BlueprintAbility.UsingInThreateningAreaType GetThreatenedAreaSetting(MechanicEntity caster, BlueprintAbility blueprint)
 	{
-		PartAbilitySettings abilitySettingsOptional = ability.Caster.GetAbilitySettingsOptional();
+		PartAbilitySettings abilitySettingsOptional = caster.GetAbilitySettingsOptional();
 		if (abilitySettingsOptional == null)
 		{
-			return ability.Blueprint.UsingInThreateningArea;
+			return blueprint.UsingInThreateningArea;
 		}
 		foreach (var threatenedAreaEntry in abilitySettingsOptional.m_ThreatenedAreaEntries)
 		{
 			using (threatenedAreaEntry.Runtime.RequestEventContext())
 			{
-				BlueprintAbility.UsingInThreateningAreaType? threatenedAreaRule = threatenedAreaEntry.Component.GetThreatenedAreaRule(ability);
+				BlueprintAbility.UsingInThreateningAreaType? threatenedAreaRule = threatenedAreaEntry.Component.GetThreatenedAreaRule();
 				if (threatenedAreaRule.HasValue)
 				{
 					return threatenedAreaRule.GetValueOrDefault();
 				}
 			}
 		}
-		return ability.Blueprint.UsingInThreateningArea;
+		return blueprint.UsingInThreateningArea;
 	}
 
 	public void Add(OverrideAbilityThreatenedAreaSetting component)
@@ -59,7 +59,7 @@ public class PartAbilitySettings : BaseUnitPart, IInterruptTurnStartHandler, ISu
 
 	private void RemoveSelfIfEmpty()
 	{
-		if (m_ThreatenedAreaEntries.Empty())
+		if (m_ThreatenedAreaEntries.Empty() && InterruptionAbilityRestrictions == null)
 		{
 			RemoveSelf();
 		}
@@ -78,6 +78,7 @@ public class PartAbilitySettings : BaseUnitPart, IInterruptTurnStartHandler, ISu
 		if (EventInvokerExtensions.MechanicEntity == base.Owner)
 		{
 			InterruptionAbilityRestrictions = null;
+			RemoveSelfIfEmpty();
 		}
 	}
 

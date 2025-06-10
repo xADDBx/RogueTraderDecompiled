@@ -90,7 +90,7 @@ public class StateSerializationController : IControllerTick, IController, IContr
 				{
 					return null;
 				}
-				return (unit.EntityData.Movable.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current)?.OverrideSpeed;
+				return ((unit.EntityData?.Movable?.ConcreteOwner?.GetOptional<PartUnitCommands>())?.Current)?.OverrideSpeed;
 			}
 			static WalkSpeedType? GetMovementType(AbstractUnitEntityView unit)
 			{
@@ -98,7 +98,7 @@ public class StateSerializationController : IControllerTick, IController, IContr
 				{
 					return null;
 				}
-				return (unit.EntityData.Movable.ConcreteOwner.GetOptional<PartUnitCommands>()?.Current)?.MovementType;
+				return ((unit.EntityData?.Movable?.ConcreteOwner?.GetOptional<PartUnitCommands>())?.Current)?.MovementType;
 			}
 		}
 	}

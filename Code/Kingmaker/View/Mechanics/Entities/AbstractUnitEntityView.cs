@@ -207,6 +207,7 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 	[UsedImplicitly]
 	private bool HideColliderFieldsInInspector => GetType() == typeof(AbstractUnitEntityView);
 
+	[CanBeNull]
 	public new AbstractUnitEntity EntityData => (AbstractUnitEntity)base.EntityData;
 
 	public new AbstractUnitEntity Data => (AbstractUnitEntity)base.Data;
@@ -420,13 +421,14 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 			OverrideAnimationRaceComponent component = Blueprint.GetComponent<OverrideAnimationRaceComponent>();
 			if (component != null)
 			{
-				AnimationManager.AtachToView(this, component.BlueprintRace.Get());
+				AnimationManager.AttachToView(this, component.BlueprintRace.Get());
 			}
 			else
 			{
 				PartUnitProgression optional = EntityData.GetOptional<PartUnitProgression>();
-				AnimationManager.AtachToView(this, optional?.Race);
+				AnimationManager.AttachToView(this, optional?.Race);
 			}
+			AnimationManager.OnAnimationSetChanged();
 			AnimationManager.FireEvents = true;
 			EventBus.Subscribe(AnimationManager);
 		}

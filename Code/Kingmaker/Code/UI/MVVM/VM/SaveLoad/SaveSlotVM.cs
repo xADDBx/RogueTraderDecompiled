@@ -57,6 +57,8 @@ public class SaveSlotVM : SelectionGroupEntityVM
 
 	public readonly ReactiveProperty<Texture2D> ScreenShotHighRes = new ReactiveProperty<Texture2D>();
 
+	public readonly BoolReactiveProperty ShowArrowPartyHint = new BoolReactiveProperty();
+
 	private readonly SaveLoadActions m_SaveLoadActions;
 
 	public SaveInfo Reference { get; private set; }
@@ -173,12 +175,13 @@ public class SaveSlotVM : SelectionGroupEntityVM
 		ShowQuickSaveMark.Value = Reference.Type == SaveInfo.SaveType.Quick;
 		if (Reference.PartyPortraits != null)
 		{
-			PartyPortraits.Value = Reference.PartyPortraits.Where((PortraitForSave portrait) => portrait != null).Take(6).Select(delegate(PortraitForSave portrait)
+			PartyPortraits.Value = Reference.PartyPortraits.Where((PortraitForSave portrait) => portrait != null).Take(12).Select(delegate(PortraitForSave portrait)
 			{
 				string rank = (portrait.IsMainCharacter ? Reference.PlayerCharacterRank.ToString() : string.Empty);
 				return new SaveLoadPortraitVM(portrait.Data.SmallPortrait, rank);
 			})
 				.ToList();
+			ShowArrowPartyHint.Value = Reference.PartyPortraits.Count > 6;
 		}
 		IsCurrentIronManSave.Value = saveInfo.Type == SaveInfo.SaveType.IronMan && !RootUIContext.Instance.IsMainMenu && saveInfo.GameId == Game.Instance.Player.GameId;
 		CheckDLC();

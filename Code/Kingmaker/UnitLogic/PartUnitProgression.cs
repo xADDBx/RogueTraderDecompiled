@@ -45,8 +45,10 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 	[JsonProperty]
 	private readonly List<FeatureSelectionData> m_Selections = new List<FeatureSelectionData>();
 
-	[JsonProperty]
-	public int CharacterLevel { get; private set; }
+	[JsonProperty("CharacterLevel")]
+	private int m_CharacterLevel { get; set; }
+
+	public int CharacterLevel => base.Owner.Master?.Progression.CharacterLevel ?? m_CharacterLevel;
 
 	[JsonProperty]
 	public RespecInfo RespecInfo { get; private set; }
@@ -271,14 +273,14 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 	public void AdvanceToNextLevel()
 	{
 		int num = Features.RawFacts.Where((Feature i) => i.Blueprint is BlueprintCareerPath).Sum((Feature i) => i.GetRank());
-		CharacterLevel = Math.Clamp(num + 1, 0, ExperienceLevel);
+		m_CharacterLevel = Math.Clamp(num + 1, 0, ExperienceLevel);
 	}
 
 	public void CopyFrom(PartUnitProgression other)
 	{
 		SetRace(other.Race);
 		Experience = other.Experience;
-		CharacterLevel = other.CharacterLevel;
+		m_CharacterLevel = other.CharacterLevel;
 		foreach (FeatureSelectionData selection in other.m_Selections)
 		{
 			AddFeatureSelection(selection.Path, selection.Level, selection.Selection, selection.Feature, selection.Rank);
@@ -396,7 +398,7 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 				(path, rank) = AllCareerPaths.Last();
 			}
 			rank--;
-			CharacterLevel--;
+			m_CharacterLevel--;
 		}
 	}
 
@@ -435,7 +437,7 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 		result.Append(ref val);
 		Hash128 val2 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(m_Race);
 		result.Append(ref val2);
-		int val3 = CharacterLevel;
+		int val3 = m_CharacterLevel;
 		result.Append(ref val3);
 		List<FeatureSelectionData> selections = m_Selections;
 		if (selections != null)

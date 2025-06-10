@@ -136,6 +136,8 @@ public class InteractionLootPart : InteractionPart<InteractionLootSettings>, IIt
 		}
 	}
 
+	public float OvertipCorrection => base.Settings.OvertipVerticalCorrection;
+
 	protected override void OnPrePostLoad()
 	{
 		base.OnPrePostLoad();

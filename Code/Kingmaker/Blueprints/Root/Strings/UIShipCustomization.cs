@@ -151,6 +151,8 @@ public class UIShipCustomization
 
 	public LocalizedString RepairDescription;
 
+	public LocalizedString Accolades;
+
 	[Header("MenuItems")]
 	public LocalizedString MenuItemUpgrade;
 

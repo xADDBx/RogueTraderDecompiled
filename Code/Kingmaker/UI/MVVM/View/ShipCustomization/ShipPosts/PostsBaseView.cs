@@ -73,7 +73,7 @@ public class PostsBaseView : ViewBase<ShipPostsVM>
 	[SerializeField]
 	protected GameObject m_LockBackground;
 
-	protected GridConsoleNavigationBehaviour Navigation;
+	private GridConsoleNavigationBehaviour m_Navigation;
 
 	private readonly ReactiveCommand m_OnPostUpdated = new ReactiveCommand();
 
@@ -85,9 +85,18 @@ public class PostsBaseView : ViewBase<ShipPostsVM>
 	protected override void BindViewImplementation()
 	{
 		ShowWindow();
-		AddDisposable(Navigation = new GridConsoleNavigationBehaviour());
+		AddDisposable(m_Navigation = new GridConsoleNavigationBehaviour());
 		PostSelectorView.Bind(base.ViewModel.PostsSelectorVM);
 		PostOfficerSelector.Bind(base.ViewModel.PostOfficerSelectorVM);
+		TextMeshProUGUI postDescriptionSkillHeader = m_PostDescriptionSkillHeader;
+		string text = (m_PostDescriptionSkill.text = string.Empty);
+		postDescriptionSkillHeader.text = text;
+		TextMeshProUGUI postOfficerHeaderSkillValue = m_PostOfficerHeaderSkillValue;
+		text = (m_PostOfficerHeaderSkillName.text = string.Empty);
+		postOfficerHeaderSkillValue.text = text;
+		TextMeshProUGUI postOfficerHeader = m_PostOfficerHeader;
+		text = (m_PostOfficerHeaderName.text = string.Empty);
+		postOfficerHeader.text = text;
 		AddDisposable(base.ViewModel.OnPostUpdated.Subscribe(delegate
 		{
 			SetPostDescription(base.ViewModel.CurrentSelectedPost.Value);
@@ -101,7 +110,7 @@ public class PostsBaseView : ViewBase<ShipPostsVM>
 		HideWindow();
 	}
 
-	protected void SetPostDescription(PostEntityVM post)
+	private void SetPostDescription(PostEntityVM post)
 	{
 		if (post != null)
 		{
@@ -145,16 +154,16 @@ public class PostsBaseView : ViewBase<ShipPostsVM>
 
 	public ConsoleNavigationBehaviour GetNavigationBehaviour()
 	{
-		if (!base.ViewModel.IsLocked.Value)
+		if (base.ViewModel.IsLocked.Value)
 		{
-			Navigation.AddRow<ConsoleNavigationBehaviour>(PostSelectorView.GetNavigationBehaviour());
-			Navigation.AddRow(new List<IConsoleNavigationEntity>
-			{
-				PostOfficerSelector.GetNavigationBehaviour(),
-				m_PostAbilitiesGroupDetailedBaseView.GetNavigationBehaviour()
-			});
-			return Navigation;
+			return null;
 		}
-		return null;
+		m_Navigation.AddRow<ConsoleNavigationBehaviour>(PostSelectorView.GetNavigationBehaviour());
+		m_Navigation.AddRow(new List<IConsoleNavigationEntity>
+		{
+			PostOfficerSelector.GetNavigationBehaviour(),
+			m_PostAbilitiesGroupDetailedBaseView.GetNavigationBehaviour()
+		});
+		return m_Navigation;
 	}
 }

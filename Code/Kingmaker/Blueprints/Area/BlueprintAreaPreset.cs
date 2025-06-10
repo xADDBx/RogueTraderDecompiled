@@ -218,15 +218,15 @@ public class BlueprintAreaPreset : BlueprintScriptableObject
 		}
 		foreach (BlueprintCueBaseReference item8 in CuesSeen.EmptyIfNull().NotNull())
 		{
-			Game.Instance.Player.Dialog.ShownCues.Add(item8.Get());
+			Game.Instance.Player.Dialog.ShownCuesAdd(item8.Get());
 		}
 		foreach (BlueprintDialogReference item9 in DialogsSeen.EmptyIfNull().NotNull())
 		{
-			Game.Instance.Player.Dialog.ShownDialogs.Add(item9.Get());
+			Game.Instance.Player.Dialog.ShownDialogsAdd(item9.Get());
 		}
 		foreach (BlueprintAnswerReference item10 in AnswersSelected.EmptyIfNull().NotNull())
 		{
-			Game.Instance.Player.Dialog.SelectedAnswers.Add(item10.Get());
+			Game.Instance.Player.Dialog.SelectedAnswersAdd(item10.Get());
 		}
 		foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
 		{

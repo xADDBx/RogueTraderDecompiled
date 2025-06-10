@@ -1,6 +1,6 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.QA.Arbiter.Attributes;
+using Kingmaker.QA.Clockwork.Attributes;
 
 namespace Kingmaker.QA.Clockwork;
 

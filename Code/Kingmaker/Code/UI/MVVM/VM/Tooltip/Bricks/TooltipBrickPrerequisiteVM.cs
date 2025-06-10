@@ -7,9 +7,12 @@ public class TooltipBrickPrerequisiteVM : TooltipBaseBrickVM
 {
 	public readonly List<PrerequisiteEntryVM> PrerequisiteEntries;
 
-	public TooltipBrickPrerequisiteVM(List<PrerequisiteEntryVM> prerequisiteEntries)
+	public readonly bool OneFromList;
+
+	public TooltipBrickPrerequisiteVM(List<PrerequisiteEntryVM> prerequisiteEntries, bool oneFromList)
 	{
 		PrerequisiteEntries = prerequisiteEntries;
+		OneFromList = oneFromList;
 	}
 
 	protected override void DisposeImplementation()

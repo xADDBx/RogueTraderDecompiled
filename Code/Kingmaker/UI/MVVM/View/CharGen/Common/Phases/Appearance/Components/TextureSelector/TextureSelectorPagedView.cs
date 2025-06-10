@@ -33,4 +33,9 @@ public class TextureSelectorPagedView : TextureSelectorCommonView
 			go.SetActive(state);
 		});
 	}
+
+	public override bool IsValid()
+	{
+		return true;
+	}
 }

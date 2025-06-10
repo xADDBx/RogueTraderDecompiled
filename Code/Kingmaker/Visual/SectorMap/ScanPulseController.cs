@@ -15,7 +15,7 @@ public class ScanPulseController : MonoBehaviour
 
 	private TimeSpan m_ScanStartTime;
 
-	private static TimeSpan CurrentTime => Game.Instance.TimeController.RealTime;
+	private static TimeSpan CurrentTime => Game.Instance.TimeController.GameTime;
 
 	public float PulseRadius => m_ScanSpeed * (float)(CurrentTime - m_ScanStartTime).TotalSeconds;
 
@@ -50,7 +50,7 @@ public class ScanPulseController : MonoBehaviour
 	private IEnumerator IncreaseSize(float range, float duration)
 	{
 		Vector3 initialScale = base.transform.localScale;
-		for (float time = 0f; time < duration; time += Time.unscaledDeltaTime)
+		for (float time = 0f; time < duration; time += Time.deltaTime)
 		{
 			float t = Mathf.PingPong(time, duration) / duration;
 			base.gameObject.transform.localScale = Vector3.Lerp(initialScale, new Vector3(range, range, range), t);

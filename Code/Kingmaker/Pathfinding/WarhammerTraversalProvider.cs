@@ -13,12 +13,15 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 
 	private readonly WarhammerSingleNodeBlocker m_Executor;
 
+	private readonly ILinkTraversalProvider m_LinkTraversalProvider;
+
 	public WarhammerTraversalProvider(WarhammerSingleNodeBlocker executor, IntRect sizeRect, bool isPlayersEnemy, bool isSoftUnit = false)
 	{
 		m_Executor = executor ?? throw new ArgumentNullException("executor");
 		m_IsPlayersEnemy = isPlayersEnemy;
 		m_SizeRect = sizeRect;
 		m_IsSoftUnit = isSoftUnit;
+		m_LinkTraversalProvider = m_Executor.OwnerUnit.MovementAgent.NodeLinkTraverser;
 	}
 
 	public bool CanTraverse(Path path, GraphNode node)
@@ -26,6 +29,10 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 		if (m_IsSoftUnit)
 		{
 			return true;
+		}
+		if (!GridAreaHelper.AllNodesConnectedToNeighbours(m_SizeRect, node, m_LinkTraversalProvider))
+		{
+			return false;
 		}
 		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, m_SizeRect))
 		{
@@ -43,6 +50,10 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 		{
 			return true;
 		}
+		if (!GridAreaHelper.AllNodesConnectedToNeighbours(m_SizeRect, node, m_LinkTraversalProvider))
+		{
+			return false;
+		}
 		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, m_SizeRect, direction))
 		{
 			if (!CanTraverseSingleCell(path, node2, m_Executor, m_IsPlayersEnemy))
@@ -50,7 +61,7 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 				return false;
 			}
 		}
-		if (m_SizeRect.Height == m_SizeRect.Width && !GridAreaHelper.AllNodesConnectedToNeighbours(m_SizeRect.ShiftRectByDirection(direction), node))
+		if (m_SizeRect.Height == m_SizeRect.Width && !GridAreaHelper.AllNodesConnectedToNeighbours(m_SizeRect.ShiftRectByDirection(direction), node, m_LinkTraversalProvider))
 		{
 			return false;
 		}
@@ -59,7 +70,7 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 
 	private static bool CanTraverseSingleCell(Path path, GraphNode node, WarhammerSingleNodeBlocker executor, bool enemy)
 	{
-		if (node == null || !node.Walkable || ((path.enabledTags >> (int)node.Tag) & 1) == 0)
+		if (node == null || ((path.enabledTags >> (int)node.Tag) & 1) == 0)
 		{
 			return false;
 		}
@@ -110,7 +121,7 @@ public class WarhammerTraversalProvider : IWarhammerTraversalProvider, ITraversa
 		}
 		foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, m_SizeRect, direction))
 		{
-			if (node2.GetNeighbourAlongDirection(direction) == null)
+			if (!GridAreaHelper.HasConnectionInDirection(node2, direction, m_LinkTraversalProvider))
 			{
 				return false;
 			}

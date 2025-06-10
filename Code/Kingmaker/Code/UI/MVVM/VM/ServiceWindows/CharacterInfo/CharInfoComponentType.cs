@@ -19,5 +19,6 @@ public enum CharInfoComponentType
 	Weapons,
 	SkillsAndWeapons,
 	FactionsReputation,
-	Summary
+	Summary,
+	PetSummary
 }

@@ -11,6 +11,7 @@ namespace Kingmaker.RuleSystem.Rules;
 
 public class RuleCalculateAttackPenalty : RulebookEvent
 {
+	[CanBeNull]
 	private readonly AbilityData m_Ability;
 
 	public int ResultBallisticSkillPenalty { get; private set; }
@@ -25,8 +26,7 @@ public class RuleCalculateAttackPenalty : RulebookEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		AbilityData ability = m_Ability;
-		if (((object)ability == null || !ability.IsAttackOfOpportunity) && IsInitiatorAttackedThisTurn())
+		if (!(m_Ability == null) && !m_Ability.IsAttackOfOpportunity && IsInitiatorAttackedThisTurn())
 		{
 			BlueprintCombatRoot combatRoot = BlueprintWarhammerRoot.Instance.CombatRoot;
 			BlueprintAbilityGroup item = combatRoot.PrimaryHandAbilityGroup.Get();

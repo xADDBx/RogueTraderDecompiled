@@ -71,7 +71,7 @@ public class FPSCounter : MonoBehaviour
 		{
 			MemoryUsageHelper.MemoryStatsProvider stats = MemoryUsageHelper.Stats;
 			return (Current: stats.SystemMemoryUsed, Max: stats.SystemMemoryLimit, Peak: stats.SystemMemoryUsedPeak);
-		}, systemMemoryWarnOffsetMb * 1024 * 1024), new Label("NODE INDEX", GetNodeUnderPointerInfo));
+		}, systemMemoryWarnOffsetMb * 1024 * 1024), new Label("NODE INDEX", GetNodeUnderPointerInfo), new Label("PLAYER INPUT", GetPlayerInputLockStatus));
 		OverlayService.Instance?.RegisterOverlay(o);
 		m_MaxSystemMemory = MemoryUsageHelper.Stats.SystemMemoryLimit;
 	}
@@ -125,6 +125,15 @@ public class FPSCounter : MonoBehaviour
 			return "(-, -)";
 		}
 		return $"({nearestNodeXZUnwalkable.XCoordinateInGrid}, {nearestNodeXZUnwalkable.ZCoordinateInGrid})";
+	}
+
+	private string GetPlayerInputLockStatus()
+	{
+		if (!Game.Instance.PlayerInputInCombatController.IsLocked)
+		{
+			return "";
+		}
+		return "LOCKED";
 	}
 
 	private static string MemString(long bytes)

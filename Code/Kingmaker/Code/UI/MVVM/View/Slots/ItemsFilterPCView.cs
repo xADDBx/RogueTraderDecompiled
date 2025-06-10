@@ -261,7 +261,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 				float num = m_LensStartPosition + (float)m_SortedFiltersList.IndexOf(itemsFilterType2) * m_LensOffsetDelta;
 				if (Math.Abs(m_Lens.transform.localPosition.x - num) > 0.0001f)
 				{
-					UIUtility.MoveXLensPosition(m_Lens.transform, num, FilterSwitchAnimationDuration);
+					AddDisposable(UIUtility.CreateMoveXLensPosition(m_Lens.transform, num, FilterSwitchAnimationDuration));
 				}
 				break;
 			}
@@ -274,7 +274,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		float num = m_LensStartPosition + (float)m_SortedFiltersList.IndexOf(type) * m_LensOffsetDelta;
 		if (Math.Abs(m_Lens.transform.localPosition.x - num) > 0.0001f)
 		{
-			UIUtility.MoveXLensPosition(m_Lens.transform, num, FilterSwitchAnimationDuration);
+			UIUtility.CreateMoveXLensPosition(m_Lens.transform, num, FilterSwitchAnimationDuration);
 		}
 	}
 

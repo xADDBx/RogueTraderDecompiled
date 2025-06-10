@@ -14,9 +14,7 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 
 	private bool m_IsActive;
 
-	private bool m_AbilitySelected;
-
-	private bool m_AbilityHovered;
+	private AbilityData m_SelectedAbility;
 
 	[UsedImplicitly]
 	public virtual void OnEnable()
@@ -64,9 +62,9 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 	{
 	}
 
-	protected virtual void SetRangeToCasterPosition(bool ignoreCache = false)
+	protected void SetRangeToCasterPosition()
 	{
-		SetRangeToWorldPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster), ignoreCache);
+		SetRangeToWorldPosition(Game.Instance.VirtualPositionController.GetDesiredPosition(Ability.Caster));
 	}
 
 	protected virtual void SetRangeToWorldPosition(Vector3 castPosition, bool ignoreCache = false)
@@ -75,13 +73,13 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 
 	public virtual void HandleAbilityTargetSelectionStart(AbilityData ability)
 	{
-		m_AbilitySelected = true;
+		m_SelectedAbility = ability;
 		SetAbility(ability);
 	}
 
 	public virtual void HandleAbilityTargetSelectionEnd(AbilityData ability)
 	{
-		m_AbilitySelected = false;
+		m_SelectedAbility = null;
 		SetAbility(null);
 	}
 
@@ -98,11 +96,7 @@ public abstract class AbilityRange : MonoBehaviour, IAbilityTargetSelectionUIHan
 
 	public void HandleAbilityTargetHover(AbilityData ability, bool hover)
 	{
-		m_AbilityHovered = hover;
-		if (!m_AbilitySelected)
-		{
-			SetAbility(hover ? ability : null);
-		}
+		SetAbility(hover ? ability : m_SelectedAbility);
 	}
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)

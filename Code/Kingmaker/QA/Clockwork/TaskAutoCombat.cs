@@ -3,7 +3,6 @@ using System.Collections;
 using Kingmaker.AI;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.QA.Arbiter;
 using UnityEngine;
 
 namespace Kingmaker.QA.Clockwork;
@@ -14,11 +13,15 @@ public class TaskAutoCombat : ClockworkRunnerTask
 
 	private float m_UnitTurnTimeout;
 
+	public static readonly float UnitCombatTurnTimeout = 10f;
+
+	public static readonly float CombatTimeout = 100f;
+
 	public TaskAutoCombat(ClockworkRunner runner)
 		: base(runner)
 	{
-		m_UnitTurnTimeout = BlueprintArbiterRoot.Instance.UnitCombatTurnTimeout;
-		TimeLeft = BlueprintArbiterRoot.Instance.CombatTimeout;
+		m_UnitTurnTimeout = UnitCombatTurnTimeout;
+		TimeLeft = CombatTimeout;
 	}
 
 	protected override IEnumerator Routine()
@@ -53,7 +56,7 @@ public class TaskAutoCombat : ClockworkRunnerTask
 			return false;
 		}
 		m_CurrentUnit = Game.Instance.TurnController.CurrentUnit;
-		m_UnitTurnTimeout = BlueprintArbiterRoot.Instance.UnitCombatTurnTimeout;
+		m_UnitTurnTimeout = UnitCombatTurnTimeout;
 		return false;
 	}
 }

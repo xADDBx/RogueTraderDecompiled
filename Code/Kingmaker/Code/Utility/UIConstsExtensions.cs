@@ -1,6 +1,7 @@
 using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Controllers.Dialog;
 using Kingmaker.DialogSystem;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.Settings;
@@ -32,7 +33,7 @@ public static class UIConstsExtensions
 		string text = string.Empty;
 		if ((bool)dialogs.ShowSkillcheckDC)
 		{
-			text = answer.SkillChecks.Aggregate("", (string current, CheckData skillCheck) => current + string.Format(checkFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, skillCheck.Type), LocalizedTexts.Instance.Stats.GetText(skillCheck.Type), skillCheck.DC + (int)SettingsRoot.Difficulty.SkillCheckModifier));
+			text = answer.SkillChecks.Aggregate("", (string current, CheckData skillCheck) => current + string.Format(checkFormat, UIUtility.PackKeys(EntityLink.Type.SkillcheckDC, skillCheck.Type), LocalizedTexts.Instance.Stats.GetText(skillCheck.Type) + ":", UIUtilityTexts.GetPercentString(UIUtilityTexts.GetSkillCheckChance(answer.SkillChecksDC.FirstOrDefault((SkillCheckDC s) => s.StatType == skillCheck.Type)))));
 		}
 		string text2 = string.Empty;
 		if (answer.HasExchangeData)

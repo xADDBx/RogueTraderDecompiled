@@ -33,13 +33,12 @@ public static class CameraStackScreenshoter
 		{
 			h.HandleBeforeMadeScreenshot();
 		});
-		CameraStackManager.CameraStackState state = CameraStackManager.Instance.State;
-		CameraStackManager.Instance.State = CameraStackManager.CameraStackState.AllExceptUi;
+		using CameraStackManager.CameraStackStateChangeScope cameraStackStateChangeScope = CameraStackManager.Instance.SetTempState(CameraStackManager.CameraStackState.AllExceptUi);
 		Camera firstBase = CameraStackManager.Instance.GetFirstBase();
 		if (firstBase == null)
 		{
 			PFLog.System.ErrorWithReport("Screenshoter: failed to get camera from stack");
-			CameraStackManager.Instance.State = state;
+			cameraStackStateChangeScope.Dispose();
 			return RenderTexture.GetTemporary(Screen.width, Screen.height);
 		}
 		bool enabled = firstBase.enabled;
@@ -49,7 +48,7 @@ public static class CameraStackScreenshoter
 		firstBase.Render();
 		firstBase.targetTexture = targetTexture;
 		firstBase.enabled = enabled;
-		CameraStackManager.Instance.State = state;
+		cameraStackStateChangeScope.Dispose();
 		EventBus.RaiseEvent(delegate(ISaveManagerHandler h)
 		{
 			h.HandleAfterMadeScreenshot();
@@ -75,23 +74,5 @@ public static class CameraStackScreenshoter
 			return SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
 		}
 		return SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
-	}
-
-	public static byte[] TakePNG(int width, int height)
-	{
-		width = ((width == 0) ? Screen.width : width);
-		height = ((height == 0) ? Screen.height : height);
-		RenderTexture renderTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
-		TakeScreenshot(renderTexture);
-		RenderTexture active = RenderTexture.active;
-		RenderTexture.active = renderTexture;
-		Texture2D texture2D = new Texture2D(width, height, TextureFormat.RGB24, mipChain: false);
-		texture2D.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
-		texture2D.Apply();
-		byte[] result = texture2D.EncodeToPNG();
-		RenderTexture.active = active;
-		renderTexture.Release();
-		UnityEngine.Object.DestroyImmediate(texture2D);
-		return result;
 	}
 }

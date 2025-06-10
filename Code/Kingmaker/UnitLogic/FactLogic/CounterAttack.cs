@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
@@ -39,16 +40,27 @@ public class CounterAttack : UnitFactComponentDelegate, IHashable
 
 	public enum TriggerType
 	{
-		AfterParryAttack,
-		AfterAnyAttack
+		BeforeAttack = -1,
+		AfterParryAttack = 0,
+		AfterDodgeAttack = 2,
+		AfterBlockAttack = 3,
+		AfterAnyAttack = 1
 	}
 
 	public TriggerType Trigger;
 
+	public RestrictionCalculator Restriction = new RestrictionCalculator();
+
 	public bool GuardAllies;
 
 	[ShowIf("GuardAllies")]
+	public bool GuardAlliesCanMove = true;
+
+	[ShowIf("GuardAllies")]
 	public ContextValue GuardAlliesRange;
+
+	[ShowIf("GuardAllies")]
+	public RestrictionCalculator GuardAlliesRestriction = new RestrictionCalculator();
 
 	public bool Limited;
 
@@ -59,7 +71,7 @@ public class CounterAttack : UnitFactComponentDelegate, IHashable
 
 	protected override void OnActivateOrPostLoad()
 	{
-		base.Owner.GetOrCreate<UnitPartCounterAttack>().Add(base.Fact, this);
+		base.Owner.GetOrCreate<UnitPartCounterAttack>().Add(base.Fact, this, Limited ? UsageLimit.Calculate(base.Context) : (-1));
 	}
 
 	protected override void OnDeactivate()

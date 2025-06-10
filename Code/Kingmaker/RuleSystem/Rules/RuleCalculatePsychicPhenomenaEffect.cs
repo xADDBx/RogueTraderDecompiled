@@ -6,6 +6,7 @@ using Kingmaker.Designers.WarhammerSurfaceCombatPrototype;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Random;
 
@@ -24,6 +25,9 @@ public class RuleCalculatePsychicPhenomenaEffect : RulebookEvent
 	public bool IsPsychicPhenomena { get; protected set; }
 
 	public bool IsPerilsOfTheWarp { get; protected set; }
+
+	[CanBeNull]
+	public (MechanicEntity Entity, MechanicEntityFact Reason)? OverrideTarget { get; set; }
 
 	public RuleCalculatePsychicPhenomenaEffect([NotNull] IMechanicEntity initiator)
 		: base(initiator)

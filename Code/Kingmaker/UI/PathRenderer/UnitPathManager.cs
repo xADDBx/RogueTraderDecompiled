@@ -25,6 +25,7 @@ using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GeometryExtensions;
@@ -36,7 +37,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.PathRenderer;
 
-public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IHideUIWhileActionCameraHandler, IAreaHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IAbilityTargetHoverUIHandler, IAbilityOwnerTargetSelectionHandler, IAbilityTargetSelectionUIHandler, IUnitMovableAreaHandler, INetPingPosition
+public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IRoundStartHandler, IHideUIWhileActionCameraHandler, IAreaHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetRoleSetHandler, IAbilityTargetHoverUIHandler, IAbilityOwnerTargetSelectionHandler, IAbilityTargetSelectionUIHandler, IUnitMovableAreaHandler, INetPingPosition, IInterruptTurnContinueHandler
 {
 	private class PathData
 	{
@@ -169,6 +170,19 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 	}
 
 	public float MemorizedPathCost => m_MemorizedPaths.Values.FirstOrDefault()?.PathCost ?? 0f;
+
+	private bool CantMove
+	{
+		get
+		{
+			FeatureCountableFlag featureCountableFlag = SelectedUnit?.GetMechanicFeature(MechanicsFeatureType.CantMove);
+			if (featureCountableFlag == null)
+			{
+				return false;
+			}
+			return featureCountableFlag;
+		}
+	}
 
 	private void Awake()
 	{
@@ -333,7 +347,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	private async Task OnUpdateAsync(CancellationToken token)
 	{
-		await DrawPathToPoint(m_CurrentDecalPosition, token);
+		await DrawPathToPoint(PointerWorldCorrectedPosition, token);
 	}
 
 	private void UpdatePredict()
@@ -444,14 +458,14 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		{
 			flag2 = true;
 		}
-		bool flag3 = (m_DeploymentPhase ? (flag2 || !ClickSurfaceDeploymentHandler.CanDeployUnit(node, selectedUnit.SizeRect)) : (flag2 || m_TooFarForUnit || !WarhammerBlockManager.Instance.CanUnitStandOnNode(selectedUnit, node as CustomGridNode)));
-		AbilityData selectedAbility = Game.Instance.CursorController.SelectedAbility;
-		bool flag4 = selectedAbility != null && selectedAbility.TargetAnchor == AbilityTargetAnchor.Unit;
+		bool flag3 = (m_DeploymentPhase ? (flag2 || !ClickSurfaceDeploymentHandler.CanDeployUnit(node)) : (flag2 || m_TooFarForUnit || !WarhammerBlockManager.Instance.CanUnitStandOnNode(selectedUnit, node as CustomGridNode)));
+		AbilityData abilityData = Game.Instance.SelectedAbilityHandler?.Ability;
+		bool flag4 = abilityData != null && abilityData.TargetAnchor == AbilityTargetAnchor.Unit;
 		m_CreatedPointerCellDecal.SetTargetType(flag4 ? PointerCellDecal.TargetType.Unit : PointerCellDecal.TargetType.Ground);
 		PointerCellDecal.ActionType actionType;
-		if (selectedAbility == null)
+		if (abilityData == null)
 		{
-			actionType = (flag3 ? PointerCellDecal.ActionType.Unable : PointerCellDecal.ActionType.Move);
+			actionType = ((flag3 || CantMove) ? PointerCellDecal.ActionType.Unable : PointerCellDecal.ActionType.Move);
 			List<Vector3> list = m_MemorizedPaths.Values.FirstOrDefault()?.path?.vectorPath;
 			bool state = false;
 			if (list != null)
@@ -465,7 +479,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		{
 			PointerController clickEventsController = Game.Instance.ClickEventsController;
 			TargetWrapper targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(clickEventsController.PointerOn, clickEventsController.WorldPosition);
-			actionType = ((targetForDesiredPosition != null && selectedAbility.CanTargetFromDesiredPosition(targetForDesiredPosition)) ? PointerCellDecal.ActionType.Attack : PointerCellDecal.ActionType.Unable);
+			actionType = ((targetForDesiredPosition != null && abilityData.CanTargetFromDesiredPosition(targetForDesiredPosition)) ? PointerCellDecal.ActionType.Attack : PointerCellDecal.ActionType.Unable);
 		}
 		UpdateMoveMarker();
 		m_CreatedPointerCellDecal.SetActionType(actionType);
@@ -487,7 +501,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 
 	private void UpdateMoveMarker()
 	{
-		m_CreatedPointerCellDecal.ShowPathEndMarker((m_PathRenderer.PathShown && Game.Instance.CursorController.SelectedAbility == null && !Game.Instance.VirtualPositionController.HasVirtualPosition) || Game.Instance.TurnController.IsPreparationTurn);
+		m_CreatedPointerCellDecal.ShowPathEndMarker(!CantMove && ((m_PathRenderer.PathShown && Game.Instance.CursorController.SelectedAbility == null && !Game.Instance.VirtualPositionController.HasVirtualPosition) || Game.Instance.TurnController.IsPreparationTurn));
 	}
 
 	private async Task DrawPathToPoint(Vector3? position, CancellationToken token)
@@ -498,7 +512,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		}
 		else
 		{
-			if ((m_CameraRig.Or(null)?.RotationByMouse ?? false) || m_DeploymentPhase || !m_MemorizedPaths.Empty())
+			if ((m_CameraRig.Or(null)?.RotationByMouse ?? false) || m_DeploymentPhase || m_AbilityHover || !m_MemorizedPaths.Empty())
 			{
 				return;
 			}
@@ -544,7 +558,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 						}
 						Vector3 unitSizeOffset = m_SizeOffset;
 						UnitMovementAgentBase unitMovementAgent = unit.View.MovementAgent;
-						using PathDisposable<WarhammerPathPlayer> pathDisposable = await PathfindingService.Instance.FindPathTB_Task(unitMovementAgent, position.Value - unitSizeOffset, -1, this);
+						using PathDisposable<WarhammerPathPlayer> pathDisposable = await PathfindingService.Instance.FindPathTB_Task(unitMovementAgent, position.Value, -1, this);
 						token.ThrowIfCancellationRequested();
 						WarhammerPathPlayer warhammerPathPlayer = pathDisposable?.Path;
 						List<GraphNode> list = ((warhammerPathPlayer != null && !warhammerPathPlayer.error) ? warhammerPathPlayer.path : null);
@@ -751,7 +765,17 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		UpdatePlayerTurn();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdatePlayerTurn();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdatePlayerTurn();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdatePlayerTurn();
 	}
@@ -821,21 +845,27 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 	public void HandleAbilityTargetHover(AbilityData ability, bool hover)
 	{
 		m_AbilityHover = hover;
-		if (!hover)
-		{
-			m_UpdateTaskCancelToken.Cancel();
-		}
+		m_UpdateTaskCancelToken.Cancel();
 		if (ability.TargetAnchor == AbilityTargetAnchor.Owner)
 		{
 			if (hover)
 			{
 				UnitHelper.ClearPrediction();
 			}
-			else if (m_UnitCached is BaseUnitEntity unit && m_PathCached != null)
+			else
 			{
-				UnitHelper.DrawMovePrediction(unit, m_PathCached, m_ApCostPerEveryCellCached);
+				RedrawCachedMovePrediction();
 			}
 		}
+	}
+
+	public void RedrawCachedMovePrediction()
+	{
+		if (m_UnitCached is BaseUnitEntity unit && m_PathCached?.path != null)
+		{
+			UnitHelper.DrawMovePredictionLocal(unit, m_PathCached, m_ApCostPerEveryCellCached);
+		}
+		UnitPredictionManager.Instance.UpdateSecondHologramForSelectedAbility();
 	}
 
 	public void HandleOwnerAbilitySelected(AbilityData ability)
@@ -922,5 +952,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 	public void HandleAbilityTargetSelectionEnd(AbilityData ability)
 	{
 		m_LastShownPosition = null;
+		UnitPredictionManager.Instance.HandleAbilityTargetSelectionEnd(ability);
+		RedrawCachedMovePrediction();
 	}
 }

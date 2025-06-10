@@ -289,11 +289,25 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			h.HandleCloseFormation();
 		});
-		if (!ServiceWindowNowIsOpening && !RootUIContext.Instance.IsVendorShow && (!RootUIContext.Instance.IsBlockedFullScreenUIType() || (CanShowEncyclopedia() && Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Chargen)))
+		bool flag = type == ServiceWindowsType.Inventory || type == ServiceWindowsType.CargoManagement || type == ServiceWindowsType.CharacterInfo || type == ServiceWindowsType.ShipCustomization;
+		if (((bool)Game.Instance.Player.ServiceWindowsBlocked && flag) || ((bool)Game.Instance.Player.InventoryWindowBlocked && type == ServiceWindowsType.Inventory) || ((bool)Game.Instance.Player.CharacterInfoWindowBlocked && type == ServiceWindowsType.CharacterInfo) || ServiceWindowNowIsOpening || RootUIContext.Instance.IsVendorShow)
 		{
-			ServiceWindowNowIsOpening = true;
-			HandleOpenWindowDelayed(type);
+			return;
 		}
+		if (RootUIContext.Instance.IsBlockedFullScreenUIType())
+		{
+			if (!CanShowEncyclopedia())
+			{
+				return;
+			}
+			FullScreenUIType fullScreenUIType = Game.Instance.RootUiContext.FullScreenUIType;
+			if (fullScreenUIType == FullScreenUIType.Chargen || fullScreenUIType == FullScreenUIType.TransitionMap)
+			{
+				return;
+			}
+		}
+		ServiceWindowNowIsOpening = true;
+		HandleOpenWindowDelayed(type);
 		bool CanShowEncyclopedia()
 		{
 			if (type == ServiceWindowsType.Encyclopedia && RootUIContext.Instance.CommonVM.EscMenuContextVM.EscMenu.Value == null)

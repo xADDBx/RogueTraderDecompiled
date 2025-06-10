@@ -51,7 +51,7 @@ public class DlcManagerTabDlcsPCView : DlcManagerTabDlcsBaseView
 		base.UpdateDlcEntitiesImpl();
 		m_DlcSelectorPCView.UpdateDlcEntities();
 		base.ViewModel.SelectedEntity.SetValueAndForceNotify(base.ViewModel.SelectionGroup.EntitiesCollection.FirstOrDefault());
-		base.ViewModel.SelectedEntity.Value.IsSelected.SetValueAndForceNotify(value: true);
+		base.ViewModel.SelectedEntity.Value?.IsSelected.SetValueAndForceNotify(value: true);
 	}
 
 	protected override void SetTextFontSize(float multiplier)

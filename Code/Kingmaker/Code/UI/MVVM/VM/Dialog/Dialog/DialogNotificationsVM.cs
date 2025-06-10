@@ -12,6 +12,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Enums;
+using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -34,11 +35,13 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 
-public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IPartyGainExperienceHandler, ISubscriber, IItemsCollectionHandler, IDialogNotificationHandler, IDialogCueHandler, IBookPageHandler, ICargoStateChangedHandler, IDamageHandler, INavigatorResourceCountChangedHandler, ISoulMarkShiftHandler, IProfitFactorHandler, IGainFactionReputationHandler, IGainFactionVendorDiscountHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>
+public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IPartyGainExperienceHandler, ISubscriber, IItemsCollectionHandler, IDialogNotificationHandler, IDialogCueHandler, IBookPageHandler, ICargoStateChangedHandler, IDamageHandler, INavigatorResourceCountChangedHandler, ISoulMarkShiftHandler, IProfitFactorHandler, IGainFactionReputationHandler, IGainFactionVendorDiscountHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IColonizationResourcesHandler
 {
 	public readonly List<string> RevealedLocationNames = new List<string>();
 
 	public readonly Dictionary<string, int> ItemsChanged = new Dictionary<string, int>();
+
+	public readonly Dictionary<string, int> ResourcesChanged = new Dictionary<string, int>();
 
 	public readonly List<int> XpGains = new List<int>();
 
@@ -82,7 +85,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 	private void OnUpdate(CueShowData cueData = null)
 	{
 		CueData = cueData;
-		bool parameter = RevealedLocationNames.Count > 0 || ItemsChanged.Count > 0 || XpGains.Count > 0 || CustomNotifications.Count > 0 || CargoAdded.Count > 0 || CargoLost.Count > 0 || DamageDealt.Count > 0 || NavigatorResourceAdded.Count > 0 || SoulMarkShifts.Count > 0 || ProfitFactorChanged.Count > 0 || FactionReputationChanged.Count > 0 || FactionVendorDiscountChanged.Count > 0 || AbilityAdded.Count > 0 || BuffAdded.Count > 0;
+		bool parameter = RevealedLocationNames.Count > 0 || ItemsChanged.Count > 0 || XpGains.Count > 0 || CustomNotifications.Count > 0 || CargoAdded.Count > 0 || CargoLost.Count > 0 || DamageDealt.Count > 0 || NavigatorResourceAdded.Count > 0 || SoulMarkShifts.Count > 0 || ProfitFactorChanged.Count > 0 || FactionReputationChanged.Count > 0 || FactionVendorDiscountChanged.Count > 0 || AbilityAdded.Count > 0 || BuffAdded.Count > 0 || ResourcesChanged.Count > 0;
 		OnUpdateCommand.Execute(parameter);
 		Clear();
 	}
@@ -107,6 +110,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 		RevealedLocationNames.Clear();
 		XpGains.Clear();
 		ItemsChanged.Clear();
+		ResourcesChanged.Clear();
 		CustomNotifications.Clear();
 		CargoAdded.Clear();
 		CargoLost.Clear();
@@ -128,9 +132,9 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 		return "<b><color=" + text + "><link=\"" + link + "\">" + label + "</link></color></b>";
 	}
 
-	public void HandlePartyGainExperience(int gained, bool isExperienceForDeath)
+	public void HandlePartyGainExperience(int gained, bool isExperienceForDeath, bool hideInCombatLog)
 	{
-		if (SettingsRoot.Game.Dialogs.ShowXPGainedNotification.GetValue())
+		if (!(!SettingsRoot.Game.Dialogs.ShowXPGainedNotification.GetValue() || hideInCombatLog) && gained != 0)
 		{
 			XpGains.Add(gained);
 		}
@@ -299,5 +303,29 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 		{
 			FactionVendorDiscountChanged.Add(factionType, discount);
 		}
+	}
+
+	public void HandleColonyResourcesUpdated(BlueprintResource resource, int count)
+	{
+		if (!SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() || resource == null || string.IsNullOrWhiteSpace(resource.Name) || count == 0)
+		{
+			return;
+		}
+		string key = LinkGenerate(resource.Name, "ib:" + resource.name);
+		if (!ContextData<GameLogDisabled>.Current)
+		{
+			if (ResourcesChanged.TryGetValue(key, out var _))
+			{
+				ResourcesChanged[key] += count;
+			}
+			else
+			{
+				ResourcesChanged.Add(key, count);
+			}
+		}
+	}
+
+	public void HandleNotFromColonyResourcesUpdated(BlueprintResource resource, int count)
+	{
 	}
 }

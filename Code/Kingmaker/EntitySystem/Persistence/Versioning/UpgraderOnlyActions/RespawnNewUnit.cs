@@ -21,6 +21,10 @@ internal class RespawnNewUnit : PlayerUpgraderOnlyAction
 		{
 			throw new Exception("CompanionSpawner is not allowed in RespawnNewUnit action");
 		}
+		if (unitSpawner is PartyPetSpawner)
+		{
+			throw new Exception("PartyPetSpawner is not allowed in RespawnNewUnit action");
+		}
 		unitSpawner.ForceReSpawn();
 	}
 

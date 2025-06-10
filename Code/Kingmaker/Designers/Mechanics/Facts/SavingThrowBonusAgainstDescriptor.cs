@@ -34,15 +34,35 @@ public class SavingThrowBonusAgainstDescriptor : UnitFactComponentDelegate, IIni
 	[FormerlySerializedAs("DisablingFeature")]
 	private BlueprintUnitFactReference m_DisablingFeature;
 
+	[Tooltip("Всегда успех")]
+	public bool AlwaysSucceed;
+
+	[Tooltip("Всегда провал")]
+	public bool AlwaysFail;
+
 	public BlueprintUnitFact DisablingFeature => m_DisablingFeature?.Get();
 
 	public void OnEventAboutToTrigger(RulePerformSavingThrow evt)
 	{
-		int num = Bonus.Calculate(base.Fact.MaybeContext) + Value * base.Fact.GetRank();
-		bool flag = evt.Reason.Context != null && (evt.Reason.Context.SpellDescriptor & SpellDescriptor) != Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells.SpellDescriptor.None && (!OnlyPositiveValue || num > Value);
-		if (!base.Owner.Facts.Contains(DisablingFeature) && flag)
+		bool flag = evt.Reason.Context != null && (evt.Reason.Context.SpellDescriptor & SpellDescriptor) != Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells.SpellDescriptor.None;
+		if (!(!base.Owner.Facts.Contains(DisablingFeature) && flag))
 		{
-			evt.ValueModifiers.Add(num, base.Fact, ModifierDescriptor);
+			return;
+		}
+		if (AlwaysSucceed)
+		{
+			evt.SetAlwaysSucceed(base.Fact, ModifierDescriptor);
+			return;
+		}
+		if (AlwaysFail)
+		{
+			evt.SetAlwaysFail(base.Fact, ModifierDescriptor);
+			return;
+		}
+		int num = Bonus.Calculate(base.Fact.MaybeContext) + Value * base.Fact.GetRank();
+		if (!OnlyPositiveValue || num > Value)
+		{
+			evt.AddValueModifiers(num, base.Fact, ModifierDescriptor);
 		}
 	}
 

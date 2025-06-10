@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.Common.Dropdown;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.UI.MVVM.VM.BugReport;
 using Kingmaker.Utility;
+using Kingmaker.Utility.BuildModeUtils;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
@@ -24,6 +26,10 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 	private OwlcatDropdownVM m_AssigneeDropdownVM;
 
 	private OwlcatDropdownVM m_FixVersionDropdownVM;
+
+	private OwlcatDropdownVM m_ManualSaveDropdownVM;
+
+	private OwlcatDropdownVM m_DevPriorityDropdownVM;
 
 	private Dictionary<(int, int), int> m_ContextAspectToAssigneeMap = new Dictionary<(int, int), int>();
 
@@ -46,7 +52,10 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		string[] names = Enum.GetNames(typeof(BugContext.AspectType));
 		foreach (string text in names)
 		{
-			list2.Add(new DropdownItemVM(text));
+			if (BuildModeUtility.IsDevelopment || !(text == BugContext.AspectType.LogError.ToString()))
+			{
+				list2.Add(new DropdownItemVM(text));
+			}
 		}
 		AddDisposable(AspectDropdownVM = new OwlcatDropdownVM(list2));
 	}
@@ -90,6 +99,37 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		return m_FixVersionDropdownVM = new OwlcatDropdownVM(list);
 	}
 
+	public OwlcatDropdownVM GetManualSaveDropDownVM()
+	{
+		List<DropdownItemVM> manualSaveVMCollection = new List<DropdownItemVM>
+		{
+			new DropdownItemVM("-")
+		};
+		ReportingUtils.Instance.InitializeManualSaves(delegate(SaveInfo saveInfo)
+		{
+			manualSaveVMCollection.Add(new DropdownItemVM(saveInfo.Name));
+		});
+		return m_ManualSaveDropdownVM = new OwlcatDropdownVM(manualSaveVMCollection);
+	}
+
+	public int GetDefaultDevPriorityIndex()
+	{
+		return 3;
+	}
+
+	public OwlcatDropdownVM GetDevPriorityDropDownVM()
+	{
+		List<DropdownItemVM> vmCollection = new List<DropdownItemVM>
+		{
+			new DropdownItemVM("Blocker"),
+			new DropdownItemVM("Crit"),
+			new DropdownItemVM("Major"),
+			new DropdownItemVM("Normal"),
+			new DropdownItemVM("Minor")
+		};
+		return m_DevPriorityDropdownVM = new OwlcatDropdownVM(vmCollection);
+	}
+
 	public void ShowDrawing()
 	{
 		m_BugReportDrawingVM.Value = new BugReportDrawingVM(HideDrawing);
@@ -116,5 +156,6 @@ public class BugReportVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		HideDuplicates();
 		m_AssigneeDropdownVM?.Dispose();
 		m_FixVersionDropdownVM?.Dispose();
+		m_DevPriorityDropdownVM?.Dispose();
 	}
 }

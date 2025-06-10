@@ -81,7 +81,7 @@ public class TooltipTemplateGlossary : TooltipBaseTemplate
 	{
 		RootUIContext rootUiContext = Game.Instance.RootUiContext;
 		FullScreenUIType fullScreenUIType = rootUiContext.FullScreenUIType;
-		bool flag = fullScreenUIType == FullScreenUIType.Settings || fullScreenUIType == FullScreenUIType.NewGame || fullScreenUIType == FullScreenUIType.FirstLaunchSettings;
+		bool flag = fullScreenUIType == FullScreenUIType.Settings || fullScreenUIType == FullScreenUIType.NewGame || fullScreenUIType == FullScreenUIType.DlcModManager || fullScreenUIType == FullScreenUIType.FirstLaunchSettings;
 		bool flag2 = rootUiContext.FullScreenUIType == FullScreenUIType.Chargen;
 		if (type == TooltipTemplateType.Info && m_IsHistory && !flag && !flag2 && !GlossaryEntry.HideInEncyclopedia)
 		{

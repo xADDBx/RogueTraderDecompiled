@@ -11,6 +11,8 @@ namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Alignm
 
 public class CharInfoAlignmentVM : CharInfoComponentVM
 {
+	public ReactiveProperty<bool> IsUnitPet = new ReactiveProperty<bool>();
+
 	public readonly ConvictionBarVM ConvictionBar;
 
 	public readonly CharInfoSoulMarksSectorVM FaithSector;

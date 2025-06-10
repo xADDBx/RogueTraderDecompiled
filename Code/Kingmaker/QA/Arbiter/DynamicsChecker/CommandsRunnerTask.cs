@@ -1,10 +1,13 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
+using Kingmaker.QA.Arbiter.GameCore.DynamicsChecker;
+using Kingmaker.QA.Arbiter.Service;
+using Kingmaker.QA.Arbiter.Tasks;
 using Kingmaker.QA.Clockwork;
 using UnityEngine;
 
@@ -32,15 +35,14 @@ public class CommandsRunnerTask : ArbiterTask
 		m_CommandList.Initialize();
 	}
 
-	protected override IEnumerator Routine()
+	protected override IEnumerator<ArbiterTask> Routine()
 	{
 		m_Finished = false;
-		ArbiterClientMeasurements.StartProfilerRecorders();
-		ArbiterClientMeasurements.StartEveryFrameMeasurements();
+		ArbiterService.Instance.MeasureProvider.StartProfilerRecorders();
+		ArbiterService.Instance.Profiler.StartProfiling(new string[1] { "FPS" });
 		EnableImmortality();
 		while (!m_Finished)
 		{
-			ArbiterClientMeasurements.TickEveryFrameMeasurements();
 			HandleGameModeChange();
 			HandleCameraPosition();
 			if (IsWaitingForCutscene())
@@ -57,11 +59,11 @@ public class CommandsRunnerTask : ArbiterTask
 			TickCurrentTask();
 			yield return null;
 		}
-		ArbiterClientMeasurements.StopEveryFrameMeasurements();
-		ArbiterClientMeasurements.StopProfilerRecorders();
-		DynamicProbeData dynamicProbeData = new DynamicProbeData();
-		dynamicProbeData.AddCustomMeasurements(ArbiterClientMeasurements.GetEveryFrameMeasurements());
-		m_ProbeData.ProbeDataList.Add(dynamicProbeData);
+		ArbiterService.Instance.Profiler.StopProfiling();
+		ArbiterService.Instance.MeasureProvider.StopProfilerRecorders();
+		DynamicSampleData dynamicSampleData = new DynamicSampleData();
+		dynamicSampleData.AddCustomMeasurements(ArbiterService.Instance.Profiler.GetMeasures());
+		m_ProbeData.SampleDataList.Add(dynamicSampleData);
 	}
 
 	private void EnableImmortality()

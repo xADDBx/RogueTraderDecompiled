@@ -1,5 +1,4 @@
 using Kingmaker.Blueprints.Root.Strings;
-using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -26,6 +25,7 @@ public class GroupChangerConsoleView : GroupChangerBaseView, IConsoleNavigationO
 	{
 		base.BindViewImplementation();
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour(this, null, Vector2Int.one));
+		AddDisposable(m_NavigationBehaviour?.DeepestFocusAsObservable.Subscribe(OnFocus));
 		AddDisposable(GamePad.Instance.PushLayer(GetInputLayer()));
 		CreateNavigation();
 	}
@@ -40,14 +40,12 @@ public class GroupChangerConsoleView : GroupChangerBaseView, IConsoleNavigationO
 
 	private void CreateNavigation()
 	{
-		if (RemoteCharacterViews.Count <= 6)
+		int num = Mathf.CeilToInt((float)RemoteCharacterViews.Count / 6f);
+		for (int i = 0; i < num; i++)
 		{
-			m_NavigationBehaviour.AddRow(RemoteCharacterViews);
-		}
-		else
-		{
-			m_NavigationBehaviour.AddRow(RemoteCharacterViews.GetRange(0, 6));
-			m_NavigationBehaviour.AddRow(RemoteCharacterViews.GetRange(6, RemoteCharacterViews.Count - 6));
+			int num2 = i * 6;
+			int count = Mathf.Min(6, RemoteCharacterViews.Count - num2);
+			m_NavigationBehaviour.AddRow(RemoteCharacterViews.GetRange(num2, count));
 		}
 		m_NavigationBehaviour.FocusOnFirstValidEntity();
 	}
@@ -58,22 +56,30 @@ public class GroupChangerConsoleView : GroupChangerBaseView, IConsoleNavigationO
 		{
 			ContextName = "GroupChanger"
 		}, null, leftStick: true, rightStick: true);
-		if (UINetUtility.IsControlMainCharacter())
+		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
 		{
-			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
-			{
-				OnCancel();
-			}, 9, base.ViewModel.CloseActionsIsSame.Not().And(base.ViewModel.CloseEnabled).ToReactiveProperty()), UIStrings.Instance.CommonTexts.Cancel));
-			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
-			{
-				OnAccept();
-			}, 10, InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.CommonTexts.Accept));
-			AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
-			{
-				OnSelectedClick();
-			}, 8), UIStrings.Instance.CommonTexts.Select));
-		}
+			OnCancel();
+		}, 9, base.ViewModel.CloseActionsIsSame.Not().And(base.ViewModel.CloseEnabled).And(base.ViewModel.IsMainCharacter)
+			.ToReactiveProperty()), UIStrings.Instance.CommonTexts.Cancel));
+		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		{
+			OnAccept();
+		}, 10, base.ViewModel.IsMainCharacter, InputActionEventType.ButtonJustLongPressed), UIStrings.Instance.CommonTexts.Accept));
+		AddDisposable(m_HintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		{
+			OnSelectedClick();
+		}, 8, base.ViewModel.IsMainCharacter), UIStrings.Instance.CommonTexts.Select));
 		return m_InputLayer;
+	}
+
+	private void OnFocus(IConsoleEntity entity)
+	{
+		GroupChangerCharacterConsoleView groupChangerCharacterConsoleView = entity as GroupChangerCharacterConsoleView;
+		if ((bool)groupChangerCharacterConsoleView)
+		{
+			RectTransform targetRect = groupChangerCharacterConsoleView.transform as RectTransform;
+			m_ScrollRect.EnsureVisibleVertical(targetRect);
+		}
 	}
 
 	public void EntityFocused(IConsoleEntity entity)

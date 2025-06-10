@@ -38,7 +38,7 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 	{
 		get
 		{
-			if (Owner.FeatureGroup != FeatureGroup.UltimateAbility)
+			if (Owner.FeatureGroup != FeatureGroup.UltimateUpgradeAbility)
 			{
 				return 0;
 			}
@@ -171,6 +171,13 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 	private void OverrideTooltip()
 	{
 		BlueprintAbility abilityFromFeature = RankEntryUtils.GetAbilityFromFeature(UIFeature.Feature);
-		base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)));
+		if (Owner.FeatureGroup == FeatureGroup.PetKeystone)
+		{
+			base.Tooltip.Value = null;
+		}
+		else
+		{
+			base.Tooltip.Value = ((abilityFromFeature != null) ? ((TooltipBaseTemplate)new TooltipTemplateRankEntryAbility(abilityFromFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)) : ((TooltipBaseTemplate)new TooltipTemplateRankEntryFeature(UIFeature, SelectionItem, SelectionState, Owner, CareerPathVM.Unit, CareerPathVM.TooltipsPreviewUnit)));
+		}
 	}
 }

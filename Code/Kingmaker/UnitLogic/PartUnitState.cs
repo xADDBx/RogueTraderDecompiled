@@ -129,18 +129,26 @@ public class PartUnitState : AbstractUnitPart, IHashable
 		{
 			if (!(Game.Instance.CurrentMode == GameModeType.Cutscene))
 			{
-				if (!IsHelpless && IsAble && !base.Owner.Features.CantMove && !base.Owner.GetOptional<UnitPartForceMove>())
-				{
-					UnitPartEncumbrance optional = base.Owner.GetOptional<UnitPartEncumbrance>();
-					if (optional == null)
-					{
-						return true;
-					}
-					return optional.Value != Encumbrance.Overload;
-				}
-				return false;
+				return CanMoveWithoutCutsceneAffect;
 			}
 			return true;
+		}
+	}
+
+	public bool CanMoveWithoutCutsceneAffect
+	{
+		get
+		{
+			if (!IsHelpless && IsAble && !base.Owner.Features.CantMove && !base.Owner.GetOptional<UnitPartForceMove>())
+			{
+				UnitPartEncumbrance optional = base.Owner.GetOptional<UnitPartEncumbrance>();
+				if (optional == null)
+				{
+					return true;
+				}
+				return optional.Value != Encumbrance.Overload;
+			}
+			return false;
 		}
 	}
 
@@ -150,7 +158,7 @@ public class PartUnitState : AbstractUnitPart, IHashable
 		{
 			if (!(Game.Instance.CurrentMode == GameModeType.Cutscene))
 			{
-				if (!IsHelpless && IsAble && !base.Owner.Features.CantAct)
+				if (CanActMechanically)
 				{
 					AbstractUnitEntityView abstractUnitEntityView = base.Owner.View.Or(null);
 					bool? obj;
@@ -188,6 +196,18 @@ public class PartUnitState : AbstractUnitPart, IHashable
 				return false;
 			}
 			return true;
+		}
+	}
+
+	public bool CanActMechanically
+	{
+		get
+		{
+			if (!IsHelpless && IsAble)
+			{
+				return !base.Owner.Features.CantAct;
+			}
+			return false;
 		}
 	}
 

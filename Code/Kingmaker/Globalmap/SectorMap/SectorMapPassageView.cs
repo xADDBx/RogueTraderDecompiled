@@ -52,6 +52,8 @@ public class SectorMapPassageView : EntityViewBase
 		}
 	}
 
+	public override bool CreatesDataOnLoad => true;
+
 	public new SectorMapPassageEntity Data => (SectorMapPassageEntity)base.Data;
 
 	public override Entity CreateEntityData(bool load)

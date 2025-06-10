@@ -53,6 +53,8 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public readonly ReactiveProperty<bool> IsPossibleActive = new ReactiveProperty<bool>();
 
+	public readonly ReactiveProperty<bool> IsCanConvert = new ReactiveProperty<bool>();
+
 	public readonly ReactiveProperty<bool> IsPossibleWithoutNetRole = new ReactiveProperty<bool>();
 
 	public readonly ReactiveProperty<bool> IsFake = new ReactiveProperty<bool>();
@@ -220,12 +222,13 @@ public class ActionBarSlotVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 			AmmoCost.Value = MechanicActionBarSlot.AmmoCost();
 			IsCasting.Value = MechanicActionBarSlot.IsCasting();
 			IsPossibleActive.Value = MechanicActionBarSlot.IsPossibleActive;
+			IsCanConvert.Value = MechanicActionBarSlot.IsPossibleToConvert;
 			IsPossibleWithoutNetRole.Value = MechanicActionBarSlot.IsPossibleActiveWithoutNetRole;
 			ActionPointCost.Value = MechanicActionBarSlot.ActionPointCost();
 			HasAvailableConvert.Value = m_Conversion.Any((AbilityData abilityData) => abilityData.IsAvailable);
 			if (AbilityData != null)
 			{
-				IsSelected.Value = Game.Instance.SelectedAbilityHandler != null && Game.Instance.SelectedAbilityHandler.Ability == AbilityData;
+				IsSelected.Value = Game.Instance.SelectedAbilityHandler != null && Game.Instance.SelectedAbilityHandler.RootAbility == AbilityData;
 				IsOnCooldown.Value = AbilityData.IsOnCooldown;
 				CooldownText.Value = ((AbilityData.Cooldown > 0) ? AbilityData.Cooldown.ToString() : string.Empty);
 			}

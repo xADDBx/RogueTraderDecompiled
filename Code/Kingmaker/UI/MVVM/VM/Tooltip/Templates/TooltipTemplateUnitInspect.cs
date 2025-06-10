@@ -10,11 +10,13 @@ using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
 using Kingmaker.Inspect;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Inspect;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
@@ -74,27 +76,29 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 
 	public override IEnumerable<ITooltipBrick> GetHeader(TooltipTemplateType type)
 	{
+		List<ITooltipBrick> list = new List<ITooltipBrick>();
 		if (m_Unit == null)
 		{
-			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.UnitIsNotInspected);
-			yield break;
+			list.Add(new TooltipBrickText(UIStrings.Instance.Tooltips.UnitIsNotInspected));
+			return list;
 		}
-		BlueprintArmyDescription army = m_Unit.Blueprint.Army;
-		string title = string.Empty;
-		if (army?.IsDaemon ?? false)
+		string unitTypeTitle = GetUnitTypeTitle(m_Unit);
+		TooltipBrickPortraitAndName item = new TooltipBrickPortraitAndName(UIUtilityUnit.GetSurfaceCombatStandardPortrait(m_Unit, UIUtilityUnit.PortraitCombatSize.Small), m_Unit.CharacterName, new TooltipBrickTitle(unitTypeTitle, TooltipTitleType.H6, TextAlignmentOptions.Left), (!m_Unit.IsInPlayerParty) ? UIUtilityUnit.GetSurfaceEnemyDifficulty(m_Unit) : 0, UIUtilityUnit.UsedSubtypeIcon(m_Unit), m_Unit.IsPlayerEnemy, !m_Unit.IsInPlayerParty && !m_Unit.IsPlayerEnemy);
+		list.Add(item);
+		UnitPartPetOwner unitPartPetOwner = ((!m_Unit.IsPet) ? m_Unit.GetOptional<UnitPartPetOwner>() : null);
+		if (m_Unit.IsPet)
 		{
-			title = UIStrings.Instance.CharacterSheet.Chaos;
+			TooltipBrickOverseerPaper item2 = new TooltipBrickOverseerPaper(UIUtilityUnit.GetSurfaceCombatStandardPortrait(m_Unit.Master, UIUtilityUnit.PortraitCombatSize.Small), m_Unit.Master.CharacterName, GetUnitTypeTitle(m_Unit.Master), m_Unit.Master);
+			list.Add(item2);
+			return list;
 		}
-		if (army?.IsXenos ?? false)
+		if (unitPartPetOwner != null)
 		{
-			title = UIStrings.Instance.CharacterSheet.Xenos;
+			TooltipBrickOverseerPaper item3 = new TooltipBrickOverseerPaper(UIUtilityUnit.GetSurfaceCombatStandardPortrait(unitPartPetOwner.PetUnit, UIUtilityUnit.PortraitCombatSize.Small), unitPartPetOwner.PetUnit.CharacterName, GetUnitTypeTitle(unitPartPetOwner.PetUnit), unitPartPetOwner.PetUnit);
+			list.Add(item3);
+			return list;
 		}
-		if (army?.IsHuman ?? false)
-		{
-			title = UIStrings.Instance.CharacterSheet.Human;
-		}
-		Sprite surfaceCombatStandardPortrait = UIUtilityUnit.GetSurfaceCombatStandardPortrait(m_Unit, UIUtilityUnit.PortraitCombatSize.Small);
-		yield return new TooltipBrickPortraitAndName(surfaceCombatStandardPortrait, m_Unit.CharacterName, new TooltipBrickTitle(title, TooltipTitleType.H6, TextAlignmentOptions.Left), (!m_Unit.IsInPlayerParty) ? UIUtilityUnit.GetSurfaceEnemyDifficulty(m_Unit) : 0, UIUtilityUnit.UsedSubtypeIcon(m_Unit), m_Unit.IsPlayerEnemy, !m_Unit.IsInPlayerParty && !m_Unit.IsPlayerEnemy);
+		return list;
 	}
 
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
@@ -132,12 +136,15 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		AddArmorAbsorption(result);
 		AddDodge(result);
 		AddMovePoints(result);
+		AddBlockChance(result);
 		result.Add(new TooltipBrickSpace(2f));
 		result.Add(new TooltipBrickAbilityScoresBlock(m_UnitReactiveProperty));
 		result.Add(new TooltipBrickSpace(2f));
 		AddBuffsAndStatusEffects(result);
 		result.Add(new TooltipBrickSpace(2f));
 		AddWeapon(result);
+		result.Add(new TooltipBrickSpace(2f));
+		AddProtocols(result);
 		result.Add(new TooltipBrickSpace(2f));
 		result.Add(new TooltipBrickTitle(UIStrings.Instance.Inspect.AbilitiesTitle));
 		bool flag = false;
@@ -178,6 +185,15 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		if (!flag)
 		{
 			result.Add(new TooltipBrickText(UIStrings.Instance.Inspect.NoAbilities.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16));
+		}
+	}
+
+	private void AddProtocols(List<ITooltipBrick> result)
+	{
+		if (m_Unit.IsPet && m_Unit.Body.PetProtocol != null && m_Unit.Body.PetProtocol.HasItem)
+		{
+			result.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.ProtocolTitle, TooltipTitleType.H1));
+			result.Add(new TooltipBrickProtocolPet(m_Unit.Body.PetProtocol));
 		}
 	}
 
@@ -249,6 +265,29 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		else
 		{
 			bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Inspect.MovePoints.Text, InspectExtensions.GetMovementPoints(m_Unit), null, tooltip: new TooltipTemplateGlossary("MovementPoints"), icon: UIConfig.Instance.UIIcons.TooltipInspectIcons.MovePoints));
+		}
+	}
+
+	private void AddBlockChance(List<ITooltipBrick> bricks)
+	{
+		if (m_Unit == null || m_Unit.Items == null)
+		{
+			return;
+		}
+		ItemEntityShield maybeShield = m_Unit.Body.CurrentHandsEquipmentSet.PrimaryHand.MaybeShield;
+		ItemEntityShield maybeShield2 = m_Unit.Body.CurrentHandsEquipmentSet.SecondaryHand.MaybeShield;
+		if (maybeShield != null || maybeShield2 != null)
+		{
+			if (maybeShield != null)
+			{
+				int result = Rulebook.Trigger(new RuleCalculateBlockChance((UnitEntity)m_Unit, maybeShield.Blueprint.BlockChance)).Result;
+				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.BlockStrings.BaseBlockChance, $"{result}%", null, tooltip: new TooltipTemplateGlossary("BlockChance"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.CoverMagnitude));
+			}
+			if (maybeShield2 != null)
+			{
+				int result2 = Rulebook.Trigger(new RuleCalculateBlockChance((UnitEntity)m_Unit, maybeShield2.Blueprint.BlockChance)).Result;
+				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.BlockStrings.BaseBlockChance, $"{result2}%", null, tooltip: new TooltipTemplateGlossary("BlockChance"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.CoverMagnitude));
+			}
 		}
 	}
 
@@ -417,5 +456,49 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			break;
 		}
 		}
+	}
+
+	private string GetUnitTypeTitle(BaseUnitEntity unit)
+	{
+		string result = string.Empty;
+		if (!unit.IsPet)
+		{
+			BlueprintArmyDescription army = unit.Blueprint.Army;
+			if (army != null && army.IsDaemon)
+			{
+				result = UIStrings.Instance.CharacterSheet.Chaos;
+			}
+			if (army != null && army.IsXenos)
+			{
+				result = UIStrings.Instance.CharacterSheet.Xenos;
+			}
+			if (army != null && army.IsHuman)
+			{
+				result = UIStrings.Instance.CharacterSheet.Human;
+			}
+		}
+		else
+		{
+			UnitPartPetOwner unitPartPetOwner = (unit.IsPet ? unit.Master.GetOptional<UnitPartPetOwner>() : null);
+			if (unitPartPetOwner != null)
+			{
+				switch (unitPartPetOwner.PetType)
+				{
+				case PetType.Mastiff:
+					result = UIStrings.Instance.Pets.MastiffPetType;
+					break;
+				case PetType.Raven:
+					result = UIStrings.Instance.Pets.RavenPetType;
+					break;
+				case PetType.ServoskullSwarm:
+					result = UIStrings.Instance.Pets.SkullPetType;
+					break;
+				case PetType.Eagle:
+					result = UIStrings.Instance.Pets.EaglePetType;
+					break;
+				}
+			}
+		}
+		return result;
 	}
 }

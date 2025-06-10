@@ -43,6 +43,8 @@ public class AbilityTargetsInPattern : AbilitySelectTarget, IAbilityAoEPatternPr
 
 	public bool CalculateAttackFromPatternCentre => m_PatternSettings.CalculateAttackFromPatternCentre;
 
+	public bool ExcludeUnwalkable => false;
+
 	public TargetType Targets => m_PatternSettings.Targets;
 
 	public AoEPattern Pattern => m_PatternSettings.Pattern;

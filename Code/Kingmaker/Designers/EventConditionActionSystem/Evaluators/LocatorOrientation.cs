@@ -16,6 +16,8 @@ public class LocatorOrientation : FloatEvaluator
 	[AllowedEntityType(typeof(LocatorView))]
 	public EntityReference Locator;
 
+	public float Offset;
+
 	public override string GetDescription()
 	{
 		return "Возвращает угол поворота локатора:\n" + (LocatorEval ? LocatorEval.GetCaption() : Locator.ToString()) + "\n";
@@ -33,7 +35,12 @@ public class LocatorOrientation : FloatEvaluator
 			IEntityViewBase entityViewBase2 = LocatorEval.GetValue()?.View;
 			entityViewBase = entityViewBase2;
 		}
-		return entityViewBase?.ViewTransform.rotation.eulerAngles.y ?? 0f;
+		IEntityViewBase entityViewBase3 = entityViewBase;
+		if (entityViewBase3 == null)
+		{
+			return 0f;
+		}
+		return entityViewBase3.ViewTransform.rotation.eulerAngles.y + Offset;
 	}
 
 	public override string GetCaption()

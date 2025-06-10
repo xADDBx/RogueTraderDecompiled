@@ -6,7 +6,7 @@ using System.Reflection;
 using Core.Cheats;
 using Core.Reflection;
 using Kingmaker.EntitySystem.Persistence.SavesStorage;
-using Kingmaker.QA.Arbiter;
+using Kingmaker.QA.Arbiter.Code.QA.Arbiter.GameCore.Tasks;
 using Kingmaker.QA.Clockwork;
 using Kingmaker.Utility.CommandLineArgs;
 using Kingmaker.Utility.DotNetExtensions;

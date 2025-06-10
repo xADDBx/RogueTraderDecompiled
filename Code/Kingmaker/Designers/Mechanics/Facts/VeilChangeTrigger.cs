@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
@@ -44,14 +45,18 @@ public class VeilChangeTrigger : UnitFactComponentDelegate, IGlobalRulebookHandl
 			base.Fact.RunActionInContext(ActionsOnUnchaingedVeil, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
 			return;
 		}
-		base.Fact.RunActionInContext(ActionsOnVeilChange, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
-		if (evt.Result > componentData.OldVeil)
+		BaseUnitEntity initiatorUnit = evt.InitiatorUnit;
+		if ((initiatorUnit == null || !initiatorUnit.IsPreview) && !base.Owner.IsPreview)
 		{
-			base.Fact.RunActionInContext(ActionsOnMoreVeil, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
-		}
-		if (evt.Result < componentData.OldVeil)
-		{
-			base.Fact.RunActionInContext(ActionsOnLessVeil, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
+			base.Fact.RunActionInContext(ActionsOnVeilChange, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
+			if (evt.Result > componentData.OldVeil)
+			{
+				base.Fact.RunActionInContext(ActionsOnMoreVeil, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
+			}
+			if (evt.Result < componentData.OldVeil)
+			{
+				base.Fact.RunActionInContext(ActionsOnLessVeil, AssingVeilChangeInitiatorAsTarget ? evt.InitiatorUnit : base.Owner);
+			}
 		}
 	}
 

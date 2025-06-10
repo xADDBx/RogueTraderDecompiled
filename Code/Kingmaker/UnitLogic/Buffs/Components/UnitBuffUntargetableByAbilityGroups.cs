@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -17,7 +18,18 @@ public class UnitBuffUntargetableByAbilityGroups : UnitBuffComponentDelegate, IH
 	[SerializeField]
 	private List<BlueprintAbilityGroupReference> m_BlockedGroups;
 
-	public List<BlueprintAbilityGroupReference> BlockedGroups => m_BlockedGroups;
+	[SerializeField]
+	[Tooltip("If true, immunity will apply to all abilities, except those in Groups.")]
+	private bool m_InvertCondition;
+
+	public bool IsBlocked(IEnumerable<BlueprintAbilityGroup> groups)
+	{
+		if (!m_InvertCondition)
+		{
+			return m_BlockedGroups.Any((BlueprintAbilityGroupReference p) => groups.Contains(p));
+		}
+		return m_BlockedGroups.All((BlueprintAbilityGroupReference p) => !groups.Contains(p));
+	}
 
 	public override Hash128 GetHash128()
 	{

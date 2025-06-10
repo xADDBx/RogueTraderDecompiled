@@ -75,6 +75,18 @@ public class SoundFx : MonoBehaviour, IRegistrationCallback, IPooledComponent
 		m_ShouldPlayOnDestroy = false;
 	}
 
+	public void PlayDestroyEventsManually()
+	{
+		if (!BlockSoundFXPlaying)
+		{
+			SoundFXSettings[] array = (Prefab ? Prefab.EventsOnDestroy : EventsOnDestroy);
+			for (int i = 0; i < array.Length; i++)
+			{
+				SoundEventPlayer.PlaySound(array[i], base.gameObject);
+			}
+		}
+	}
+
 	public void OnAfterRegister()
 	{
 		Game.Instance.CoroutinesController.Start(PostponedAfterRegister());

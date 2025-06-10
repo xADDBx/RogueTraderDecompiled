@@ -369,6 +369,11 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 		}, isCheckRuntime: true);
 	}
 
+	public void ResetSavedCooldowns()
+	{
+		m_SavedCooldowns.Clear();
+	}
+
 	public int GroupCooldown(BlueprintAbilityGroup abilityGroup)
 	{
 		if (!base.Owner.IsInCombat)

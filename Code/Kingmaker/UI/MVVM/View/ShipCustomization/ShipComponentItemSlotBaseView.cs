@@ -29,6 +29,10 @@ public class ShipComponentItemSlotBaseView : VirtualListElementViewBase<ShipComp
 		SetupIcon();
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	public void SetupName()
 	{
 		if (!(m_Text == null))
@@ -41,10 +45,6 @@ public class ShipComponentItemSlotBaseView : VirtualListElementViewBase<ShipComp
 	{
 		m_Icon.color = Color.white;
 		m_Icon.sprite = base.ViewModel.Icon;
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	protected void OnClick()

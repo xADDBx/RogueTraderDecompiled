@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
+using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.CharacterSystem;
 using Kingmaker.Visual.CharacterSystem.Dismemberment;
 using Owlcat.QA.Validation;
@@ -116,7 +118,12 @@ public class UnitAnimationActionProne : UnitAnimationAction
 		ActionData actionData2 = (ActionData)(handle.ActionData = new ActionData());
 		handle.HasCrossfadePriority = true;
 		AbstractUnitEntity entityData = handle.Unit.EntityData;
-		if (DismembermentHandler.CanUseAnimation(entityData))
+		if (IsFromForceMove(handle) && (bool)animationClipWrapper && (bool)animationClipWrapper.AnimationClip)
+		{
+			handle.StartClip(animationClipWrapper, ClipDurationType.Endless);
+			actionData2.FallingFinished = true;
+		}
+		else if (DismembermentHandler.CanUseAnimation(entityData))
 		{
 			AnimationClipWrapper animationClipWrapper2 = (handle.DeathFromProne ? m_DyingWhileProne : m_Falling);
 			animationClipWrapper2 = (animationClipWrapper2 ? animationClipWrapper2 : m_Falling);
@@ -144,6 +151,11 @@ public class UnitAnimationActionProne : UnitAnimationAction
 			actionData2.IsRagdoll = true;
 			DismembermentHandler.UseWithoutAnimationDeath(entityData);
 		}
+	}
+
+	private bool IsFromForceMove(UnitAnimationActionHandle handle)
+	{
+		return handle.Manager.ActiveActions.Any((AnimationActionHandle ah) => ah.Action is UnitAnimationActionForceMove);
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)

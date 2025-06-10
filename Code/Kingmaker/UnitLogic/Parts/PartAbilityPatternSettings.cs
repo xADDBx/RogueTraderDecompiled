@@ -42,14 +42,14 @@ public class PartAbilityPatternSettings : UnitPart, IHashable
 		{
 			abilityAoEPatternProvider = ability.Blueprint.PatternSettings ?? currentPattern;
 		}
-		AoEPattern pattern = abilityAoEPatternProvider?.Pattern;
+		AoEPattern pattern = abilityAoEPatternProvider?.OriginalPattern;
 		if (abilityPatternSettingsOptional != null && abilityAoEPatternProvider != null)
 		{
 			foreach (var item in abilityPatternSettingsOptional.m_OverrideRadius)
 			{
 				using (item.Runtime.RequestEventContext())
 				{
-					pattern = item.Component.OverrideRadius(ability, abilityAoEPatternProvider.Pattern);
+					pattern = item.Component.OverrideRadius(ability, abilityAoEPatternProvider.OriginalPattern);
 				}
 			}
 		}

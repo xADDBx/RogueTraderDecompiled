@@ -60,7 +60,7 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		}
 		foreach (AttackOfOpportunityData item in unitUseAbility.CalculateAttackOfOpportunity())
 		{
-			MakeAttackOfOpportunity(item.Attacker, unitUseAbility.Executor, item.Reason);
+			MakeAttackOfOpportunity(item.Attacker, unitUseAbility.Executor, item.Reason, canUseInRange: false, canMove: true);
 		}
 	}
 
@@ -91,49 +91,80 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 			if (!(magnitude < magnitude2))
 			{
 				optional.AcceptNextAttack();
-				bool made = MakeAttackOfOpportunity(value.Attacker, baseUnitEntity, null);
-				UpdateAttackOfOpportunityMadeThisTurnCount(value.Attacker, made);
+				UnitCommandHandle unitCommandHandle = null;
+				UnitPartAttackOfOpportunityModifier optional2 = value.Attacker.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
+				if (optional2 != null && optional2.EnableAndPrioritizeRangedAttack)
+				{
+					unitCommandHandle = MakeRangedAttackOfOpportunity(value.Attacker, baseUnitEntity, null);
+				}
+				if (unitCommandHandle == null)
+				{
+					unitCommandHandle = MakeAttackOfOpportunity(value.Attacker, baseUnitEntity, null, canUseInRange: false, canMove: false);
+				}
+				UpdateAttackOfOpportunityMadeThisTurnCount(value.Attacker, unitCommandHandle != null);
 				continue;
 			}
 			break;
 		}
 	}
 
-	private static bool MakeAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason)
+	private static UnitCommandHandle MakeRangedAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason)
 	{
-		UnitAttackOfOpportunityParams unitAttackOfOpportunityParams = new UnitAttackOfOpportunityParams(target, reason);
-		CustomGridNodeBase customGridNodeBase = FindSuitablePositionForAttackOfOpportunity(attacker, target);
-		if (customGridNodeBase == null)
+		if (attacker.GetThreatHandRangedAnyHand()?.MaybeWeapon != null)
 		{
-			return false;
+			UnitAttackOfOpportunityParams cmdParams = new UnitAttackOfOpportunityParams(target, reason, isRanged: true);
+			return attacker.Commands.Run(cmdParams);
 		}
-		if (customGridNodeBase == attacker.CurrentUnwalkableNode)
-		{
-			attacker.Commands.Run(unitAttackOfOpportunityParams);
-			return true;
-		}
-		WarhammerPathPlayer warhammerPathPlayer = PathfindingService.Instance.FindPathTB_Blocking(attacker.MovementAgent, customGridNodeBase.Vector3Position);
-		using (PathDisposable<WarhammerPathPlayer>.Get(warhammerPathPlayer, attacker))
-		{
-			UnitMoveToProperParams cmdParams = new UnitMoveToProperParams(ForcedPath.Construct(warhammerPathPlayer), 0f, null)
-			{
-				SlowMotionRequired = true
-			};
-			attacker.Commands.Run(cmdParams);
-			attacker.Commands.AddToQueueFirst(unitAttackOfOpportunityParams);
-			return true;
-		}
+		return null;
 	}
 
-	public bool Provoke(BaseUnitEntity target, BaseUnitEntity attacker, BlueprintFact reason)
+	private static UnitCommandHandle MakeAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason, bool canUseInRange, bool canMove)
+	{
+		if (attacker.GetThreatHand()?.MaybeWeapon != null)
+		{
+			CustomGridNodeBase customGridNodeBase = FindSuitablePositionForAttackOfOpportunity(attacker, target);
+			if (customGridNodeBase != null)
+			{
+				if (customGridNodeBase == attacker.CurrentUnwalkableNode)
+				{
+					UnitAttackOfOpportunityParams cmdParams = new UnitAttackOfOpportunityParams(target, reason, isRanged: false);
+					return attacker.Commands.Run(cmdParams);
+				}
+				if (canMove)
+				{
+					WarhammerPathPlayer warhammerPathPlayer = PathfindingService.Instance.FindPathTB_Blocking(attacker.MovementAgent, customGridNodeBase.Vector3Position);
+					using (PathDisposable<WarhammerPathPlayer>.Get(warhammerPathPlayer, attacker))
+					{
+						if (warhammerPathPlayer.CompleteState == PathCompleteState.Complete)
+						{
+							UnitAttackOfOpportunityParams cmd = new UnitAttackOfOpportunityParams(target, reason, isRanged: false);
+							UnitMoveToProperParams cmdParams2 = new UnitMoveToProperParams(ForcedPath.Construct(warhammerPathPlayer), 0f, null)
+							{
+								SlowMotionRequired = true
+							};
+							attacker.Commands.Run(cmdParams2);
+							return attacker.Commands.AddToQueueFirst(cmd);
+						}
+					}
+				}
+			}
+		}
+		if (canUseInRange)
+		{
+			return MakeRangedAttackOfOpportunity(attacker, target, reason);
+		}
+		return null;
+	}
+
+	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, BlueprintFact reason, bool canUseInRange, bool canMove)
 	{
 		if (!attacker.CanMakeAttackOfOpportunity(target))
 		{
-			return false;
+			return null;
 		}
-		bool flag = MakeAttackOfOpportunity(attacker, target, reason);
-		UpdateAttackOfOpportunityMadeThisTurnCount(attacker, flag);
-		return flag;
+		UnitCommandHandle unitCommandHandle = MakeAttackOfOpportunity(attacker, target, reason, canUseInRange, canMove);
+		UpdateAttackOfOpportunityMadeThisTurnCount(attacker, unitCommandHandle != null);
+		return unitCommandHandle;
 	}
 
 	private static void UpdateAttackOfOpportunityMadeThisTurnCount(BaseUnitEntity attacker, bool made)
@@ -148,22 +179,22 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		}
 	}
 
-	public bool Provoke(BaseUnitEntity target, BaseUnitEntity attacker, EntityFact reason)
+	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, EntityFact reason, bool canUseInRange, bool canMove)
 	{
-		return Provoke(target, attacker, reason.Blueprint);
+		return Provoke(target, attacker, reason.Blueprint, canUseInRange, canMove);
 	}
 
-	public void Provoke(BaseUnitEntity target, BlueprintFact reason)
+	public void Provoke(BaseUnitEntity target, BlueprintFact reason, bool canUseInRange, bool canMove)
 	{
 		foreach (BaseUnitEntity engagedByUnit in target.GetEngagedByUnits())
 		{
-			Provoke(target, engagedByUnit, reason);
+			Provoke(target, engagedByUnit, reason, canUseInRange, canMove);
 		}
 	}
 
 	public void Provoke(BaseUnitEntity target, EntityFact reason)
 	{
-		Provoke(target, reason.Blueprint);
+		Provoke(target, reason.Blueprint, canUseInRange: false, canMove: true);
 	}
 
 	[CanBeNull]
@@ -174,18 +205,19 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		{
 			return null;
 		}
-		int attackRange = attacker.GetThreatHand().Weapon.AttackRange;
+		int attackOfOpportunityThreatingRange = attacker.GetThreatHand().GetAttackOfOpportunityThreatingRange(attacker);
 		int num = attacker.DistanceToInCells(target);
-		if (attackRange >= num)
+		if (attackOfOpportunityThreatingRange >= num)
 		{
 			return customGridNode;
 		}
 		int width = target.SizeRect.Width;
 		int height = target.SizeRect.Height;
 		int num2 = num + Math.Max(width, height) + Math.Min(width, height) / 2 + 1;
-		List<(GraphNode Node, int Distance)> list = PathfindingService.Instance.FindAllReachableTiles_Blocking(attacker.MovementAgent, customGridNode.Vector3Position, num2).Keys.Select((GraphNode i) => (Node: i, Distance: target.DistanceToInCells(i.Vector3Position))).ToTempList();
-		list.Sort(((GraphNode Node, int Distance) n1, (GraphNode Node, int Distance) n2) => n1.Distance.CompareTo(n2.Distance));
-		foreach (var item in list)
+		foreach (var item in (from i in PathfindingService.Instance.FindAllReachableTiles_Blocking(attacker.MovementAgent, customGridNode.Vector3Position, num2).Values
+			select (Node: i.Node, Len: i.Length, Distance: target.DistanceToInCells(i.Node.Vector3Position)) into i
+			orderby i.Distance, i.Len
+			select i).ToTempList())
 		{
 			if (attacker.IsThreat(target.CurrentUnwalkableNode, item.Node.Vector3Position, target.SizeRect) && attacker.CanStandHere(item.Node))
 			{

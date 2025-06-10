@@ -16,6 +16,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
+using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
@@ -53,6 +54,11 @@ public class WarhammerContextActionPerformAttack : ContextAction
 	[ShowIf("UseSpecificWeaponClassification")]
 	public WeaponClassification Classification;
 
+	[SerializeField]
+	private BlueprintAbilityReference m_SpecificAttack;
+
+	public BlueprintAbility SpecificAttack => m_SpecificAttack?.Get();
+
 	protected override void RunAction()
 	{
 		MechanicEntity maybeCaster = base.Context.MaybeCaster;
@@ -67,7 +73,7 @@ public class WarhammerContextActionPerformAttack : ContextAction
 		ItemEntityWeapon itemEntityWeapon3 = ((itemEntityWeapon != null && (!OnlyMeleeWeapon || itemEntityWeapon.Blueprint.IsMelee) && (!UseSpecificWeaponClassification || itemEntityWeapon.Blueprint.Classification == Classification)) ? itemEntityWeapon : itemEntityWeapon2);
 		if (UseCurrentWeapon)
 		{
-			BlueprintAbility blueprintAbility = itemEntityWeapon3?.Blueprint.WeaponAbilities.FirstOrDefault()?.Ability;
+			BlueprintAbility blueprintAbility = SpecificAttack ?? itemEntityWeapon3?.Blueprint.WeaponAbilities.FirstOrDefault()?.Ability;
 			if (blueprintAbility == null)
 			{
 				return;

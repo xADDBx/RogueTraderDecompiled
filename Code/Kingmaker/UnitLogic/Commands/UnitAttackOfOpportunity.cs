@@ -6,10 +6,12 @@ using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Designers.Mechanics.Buffs;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
@@ -17,6 +19,7 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
+using Kingmaker.View.Covers;
 using Kingmaker.View.Equipment;
 using Kingmaker.View.Mechadendrites;
 using Kingmaker.Visual.Animation.Kingmaker;
@@ -57,7 +60,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	{
 		get
 		{
-			if (base.Executor != null)
+			if (base.Executor != null && !Hand.HasShield)
 			{
 				return !base.Executor.CanAttack(Hand?.Weapon);
 			}
@@ -65,7 +68,34 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		}
 	}
 
+	public override bool IsUnitEnoughClose
+	{
+		get
+		{
+			if (Target == null || Ability.IsRangeUnrestrictedForTarget(Target))
+			{
+				return true;
+			}
+			if (!base.Executor.InRangeInCells(Target, Ability.RangeCells) && !base.FromCutscene)
+			{
+				return false;
+			}
+			CustomGridNode currentUnwalkableNode = base.Executor.CurrentUnwalkableNode;
+			int distance;
+			LosCalculations.CoverType los;
+			if (base.NeedLoS)
+			{
+				return Ability.CanTargetFromNode(currentUnwalkableNode, null, Target, out distance, out los);
+			}
+			return true;
+		}
+	}
+
 	public override bool IsMoveUnit => false;
+
+	public override bool IsInterruptible => false;
+
+	protected override float PretendActDelay => SlowMoController.SlowMoFactor;
 
 	public int CurrentActionIndex => ExecutionProcess?.Context.ActionIndex ?? 0;
 
@@ -82,7 +112,11 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			{
 				return WeaponAnimationStyle.Fist;
 			}
-			return Ability.Weapon?.GetAnimationStyle() ?? base.Executor.Body.PrimaryHand?.GetWeaponStyle() ?? WeaponAnimationStyle.None;
+			if (Ability.Weapon != null)
+			{
+				return base.Executor.View.HandsEquipment?.GetWeaponStyleForWeapon(Ability.Weapon) ?? Ability.Weapon.GetAnimationStyle();
+			}
+			return base.Executor.View.HandsEquipment?.GetWeaponStyleForHand(base.Executor.Body.PrimaryHand) ?? WeaponAnimationStyle.None;
 		}
 	}
 
@@ -105,14 +139,13 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 
 	protected override void TriggerAnimation()
 	{
-		base.Executor.View.HideOffWeapon(hide: true);
 		IAbilityCustomAnimation component = Ability.Blueprint.GetComponent<IAbilityCustomAnimation>();
 		if (component != null)
 		{
 			UnitAnimationAction unitAnimationAction = component.GetAbilityAction(base.Executor)?.Load();
 			if (!unitAnimationAction)
 			{
-				ScheduleAct(SlowMoController.SlowMoFactor);
+				ScheduleAct();
 			}
 			else if (base.Executor.View.AnimationManager?.CreateHandle(unitAnimationAction) is UnitAnimationActionHandle unitAnimationActionHandle)
 			{
@@ -128,7 +161,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			else
 			{
 				PFLog.Default.Error(base.Executor.View, $"{base.Executor} cannot start custom animation {unitAnimationAction} for {Ability.Blueprint}");
-				ScheduleAct(SlowMoController.SlowMoFactor);
+				ScheduleAct();
 			}
 		}
 		else
@@ -195,27 +228,39 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	{
 		base.OnInit(executor);
 		AllActive.Add(this);
-		Hand = base.Executor.GetThreatHand();
+		if (base.Params.IsRanged)
+		{
+			Hand = base.Executor.GetThreatHandRangedAnyHand();
+		}
+		else
+		{
+			Hand = base.Executor.GetThreatHand();
+		}
 		if (Hand == null)
 		{
 			throw new Exception($"{base.Executor} can't make attack of opportunity: has no threat hand");
 		}
-		m_AbilityBlueprint = Hand.Weapon.Blueprint.AttackOfOpportunityAbility;
+		m_AbilityBlueprint = Hand.GetAttackOfOpportunityAbility(base.Executor);
+		if (m_AbilityBlueprint == null && Hand.Weapon.Blueprint.IsRanged)
+		{
+			m_AbilityBlueprint = Hand.Weapon.Blueprint.WeaponAbilities.Ability1.Ability;
+		}
 		if (m_AbilityBlueprint == null)
 		{
 			throw new Exception($"{base.Executor} can't make attack of opportunity: weapon in threat hand doesn't have any ability for AOO");
 		}
 		AbilityData abilityData = new AbilityData(m_AbilityBlueprint, base.Executor)
 		{
-			OverrideWeapon = Hand.Weapon,
+			OverrideWeapon = Hand.MaybeWeapon,
 			IsAttackOfOpportunity = true
 		};
-		if (Hand.Weapon?.Blueprint?.AttackOfOpportunityAbilityFXSettings != null)
+		if (Hand.AttackOfOpportunityAbilityFXSettings != null)
 		{
-			abilityData.FXSettingsOverride = Hand.Weapon.Blueprint.AttackOfOpportunityAbilityFXSettings;
+			abilityData.FXSettingsOverride = Hand.AttackOfOpportunityAbilityFXSettings;
 		}
 		ActionsCount = abilityData.BurstAttacksCount;
 		Ability = abilityData;
+		m_loopingAnimationBuff = base.Executor.Facts.GetComponents<PlayLoopAnimationByBuff>().FirstOrDefault();
 		if (!base.IsOneFrameCommand)
 		{
 			m_CastAnimStyle = Ability.Blueprint.Animation;
@@ -262,7 +307,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	{
 		if (m_loopingAnimationBuff != null)
 		{
-			m_loopingAnimationBuff.TrySetAction();
+			m_loopingAnimationBuff.TryRequeueAction();
 			m_loopingAnimationBuff = null;
 		}
 	}
@@ -273,6 +318,11 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		if (bodyOptional == null)
 		{
 			return true;
+		}
+		ItemEntityWeapon weapon = ability.Weapon;
+		if (weapon != null && weapon.IsShield)
+		{
+			return false;
 		}
 		if (ability.Caster?.GetOptional<UnitPartMechadendrites>() == null)
 		{
@@ -288,17 +338,14 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 			if (CurrentActionIndex >= ActionsCount)
 			{
 				PFLog.Default.Error($"CurrentActionIndex {CurrentActionIndex} >= ActionsCount {ActionsCount}");
-				RestoreLoopAnimation();
 				return ResultType.Fail;
 			}
 			if (ExecutionProcess == null)
 			{
 				PFLog.Default.Error("ExecutionProcess == null");
-				RestoreLoopAnimation();
 				return ResultType.Fail;
 			}
 			ExecutionProcess.Context.NextAction();
-			RestoreLoopAnimation();
 			if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 			{
 				return ResultType.Success;
@@ -308,12 +355,17 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		AbilityExecutionContext context = Ability.CreateExecutionContext(Target);
 		ExecutionProcess = Game.Instance.AbilityExecutor.Execute(context);
 		ExecutionProcess.Context.NextAction();
-		RestoreLoopAnimation();
 		if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 		{
 			return ResultType.Success;
 		}
 		return ResultType.None;
+	}
+
+	protected override void OnEnded()
+	{
+		base.OnEnded();
+		RestoreLoopAnimation();
 	}
 
 	protected override void OnPostLoad()

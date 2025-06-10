@@ -81,10 +81,15 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	public bool PlayOnlyFirstHitSound;
 
 	[SerializeField]
+	private int m_priorityInUI;
+
+	[SerializeField]
 	private BlueprintAbilityGroupReference[] m_AbilityGroups;
 
 	[SerializeField]
 	private bool m_Cyclical;
+
+	public int PriorityInUI => m_priorityInUI;
 
 	public int MaxRank
 	{

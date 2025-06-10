@@ -56,6 +56,10 @@ public enum Authors
 	[Description("kharybin")]
 	[DescriptionEmail("<kharybin@owlcat.games>")]
 	AntonKharybin = 13,
+	[InspectorName("LD/IgorDmitriev")]
+	[Description("dmitriev")]
+	[DescriptionEmail("<dmitriev@owlcat.games>")]
+	IgorDmitriev = 14,
 	[InspectorName("GD/AlexanderGusev")]
 	[Description("a.gusev")]
 	[DescriptionEmail("<a.gusev@owlcat.games>")]
@@ -104,6 +108,14 @@ public enum Authors
 	[Description("arhipovlinev")]
 	[DescriptionEmail("<arhipovlinev@owlcat.games>")]
 	VasiliiArkhiplovLinev = 111,
+	[InspectorName("GD/AntonZinovev")]
+	[Description("a.zinovev@owlcat.games")]
+	[DescriptionEmail("<a.zinovev@owlcat.games>")]
+	AntonZinovev = 112,
+	[InspectorName("GD/VasiliyBakula")]
+	[Description("bakula")]
+	[DescriptionEmail("<bakula@owlcat.games>")]
+	VasiliyBakula = 113,
 	[InspectorName("SD/KonstantinKuzenkov")]
 	[Description("kuzenkov")]
 	[DescriptionEmail("<kuzenkov@owlcat.games>")]

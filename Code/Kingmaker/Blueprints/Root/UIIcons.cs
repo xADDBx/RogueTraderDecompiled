@@ -196,6 +196,25 @@ public class UIIcons
 	[Header("QuestTypes")]
 	public QuestTypeIcons QuestTypesIcons;
 
+	[Space]
+	[Header("PetPartyIcons")]
+	public Sprite SelectorFrameNormal;
+
+	public Sprite SelectorFramePet;
+
+	[Space]
+	public Sprite PetNumberI;
+
+	public Sprite PetNumberII;
+
+	public Sprite PetNumberIII;
+
+	public Sprite PetNumberIV;
+
+	public Sprite PetNumberV;
+
+	public Sprite PetNumberVI;
+
 	public Sprite GetFactionIcon(FactionType factionType)
 	{
 		return factionType switch
@@ -247,6 +266,29 @@ public class UIIcons
 		{
 			Gender.Male => Male, 
 			Gender.Female => Female, 
+			_ => null, 
+		};
+	}
+
+	public Sprite GetSelectorFrame(bool isPet)
+	{
+		if (!isPet)
+		{
+			return SelectorFrameNormal;
+		}
+		return SelectorFramePet;
+	}
+
+	public Sprite GetPetNumberIcon(int number)
+	{
+		return number switch
+		{
+			1 => PetNumberI, 
+			2 => PetNumberII, 
+			3 => PetNumberIII, 
+			4 => PetNumberIV, 
+			5 => PetNumberV, 
+			6 => PetNumberVI, 
 			_ => null, 
 		};
 	}

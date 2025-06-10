@@ -73,6 +73,8 @@ public readonly struct OrientedPatternData
 
 	public NodesWithExtraDataEnumerable NodesWithExtraData => new NodesWithExtraDataEnumerable(Nodes, m_NodesExtraData);
 
+	public bool IsEmpty => Nodes.IsEmpty;
+
 	public OrientedPatternData([NotNull] Dictionary<CustomGridNodeBase, PatternCellDataAccumulator> nodes, [NotNull] CustomGridNodeBase applicationNode)
 	{
 		ApplicationNode = applicationNode;

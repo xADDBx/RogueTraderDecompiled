@@ -609,7 +609,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 				}
 				bool flag3 = (IsPositionChanged = (vector - m_PreviousPosition).sqrMagnitude > 1E-08f);
 				m_PreviousPosition = vector;
-				while (!OnLastSegment && num < m_Speed * deltaTime && IsDistanceCloseEnough(num))
+				while (!OnLastSegment && num < m_Speed * deltaTime)
 				{
 					Vector2 nextWaypoint = m_NextWaypoint;
 					SetWaypoint(m_NextPointIndex + 1);
@@ -1285,13 +1285,9 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 
 	private bool IsNodeBlockNeeded()
 	{
-		if (Unit != null && !Unit.Data.LifeState.IsDead)
+		if (Unit != null && !Unit.Data.LifeState.IsDeadOrUnconscious)
 		{
-			if (Unit.Data.IsPlayerFaction && Unit.Data.LifeState.IsUnconscious)
-			{
-				return Unit.Data.Health.HitPointsLeft != 0;
-			}
-			return true;
+			return !Unit.Data.HasMechanicFeature(MechanicsFeatureType.Hidden);
 		}
 		return false;
 	}
@@ -1312,10 +1308,5 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 			return Vector3.Distance(end, point);
 		}
 		return Vector3.Cross(start - point, rhs).magnitude / rhs.magnitude;
-	}
-
-	protected virtual bool IsDistanceCloseEnough(float distance)
-	{
-		return true;
 	}
 }

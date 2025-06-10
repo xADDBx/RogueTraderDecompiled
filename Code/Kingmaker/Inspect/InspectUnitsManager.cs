@@ -165,10 +165,7 @@ public class InspectUnitsManager : IHashable
 			}
 			if ((item.Stats.GetStat<ModifiableValueSkill>(statType)?.BaseValue ?? 0) > 0)
 			{
-				RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(item, statType, dC)
-				{
-					IgnoreDifficultyBonusToDC = true
-				});
+				RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(item, statType, dC, ignoreDCIncreaseFromDifficulty: true));
 				if (rulePerformSkillCheck.ResultIsSuccess)
 				{
 					result = true;
@@ -210,10 +207,7 @@ public class InspectUnitsManager : IHashable
 		}
 		if ((inspector.Stats.GetStat<ModifiableValueSkill>(statType)?.BaseValue ?? 0) > 0)
 		{
-			RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(inspector, statType, dC)
-			{
-				IgnoreDifficultyBonusToDC = true
-			});
+			RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(inspector, statType, dC, ignoreDCIncreaseFromDifficulty: true));
 			if (rulePerformSkillCheck.ResultIsSuccess)
 			{
 				result = true;

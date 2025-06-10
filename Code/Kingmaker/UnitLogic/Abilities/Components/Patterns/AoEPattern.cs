@@ -133,7 +133,7 @@ public class AoEPattern
 		return GetOriented(applicationNode, applicationNode, direction, isIgnoreLos: true, isIgnoreLevelDifference: true);
 	}
 
-	public PatternGridData GetOrientedGridData(CustomGridNodeBase checkLosFromNode, CustomGridNodeBase applicationNode, Vector3 direction, bool isIgnoreLos = false, bool isIgnoreLevelDifference = false, bool isDirectional = false, bool coveredTargetsOnly = false, bool useMeleeLos = false, Size entitySizeRect = Size.Medium)
+	public PatternGridData GetOrientedGridData(CustomGridNodeBase checkLosFromNode, CustomGridNodeBase applicationNode, Vector3 direction, bool isIgnoreLos = false, bool isIgnoreLevelDifference = false, bool isDirectional = false, bool coveredTargetsOnly = false, bool useMeleeLos = false, Size entitySizeRect = Size.Medium, bool excludeUnwalkable = false)
 	{
 		Vector2 direction2 = (((double)direction.sqrMagnitude < 0.0001) ? Vector2.down : direction.To2D().normalized);
 		float num = 0f;
@@ -169,7 +169,7 @@ public class AoEPattern
 					{
 						num7 = Mathf.Abs(vector.y);
 					}
-					if (!(num7 > num3) && (isIgnoreLos || (useMeleeLos ? checkLosFromNode.HasMeleeLos(item) : LosCalculations.HasLos(checkLosFromNode, default(IntRect), item, default(IntRect)))))
+					if (!(num7 > num3) && (isIgnoreLos || (useMeleeLos ? checkLosFromNode.HasMeleeLos(item) : LosCalculations.HasLos(checkLosFromNode, default(IntRect), item, default(IntRect)))) && (!excludeUnwalkable || item.Walkable))
 					{
 						value.Add(item.CoordinatesInGrid);
 					}
@@ -179,9 +179,9 @@ public class AoEPattern
 		}
 	}
 
-	public OrientedPatternData GetOriented(CustomGridNodeBase checkLosFromNode, [NotNull] CustomGridNodeBase applicationNode, Vector3 direction, bool isIgnoreLos = false, bool isIgnoreLevelDifference = false, bool isDirectional = false, bool coveredTargetsOnly = false, bool useMeleeLos = false)
+	public OrientedPatternData GetOriented(CustomGridNodeBase checkLosFromNode, [NotNull] CustomGridNodeBase applicationNode, Vector3 direction, bool isIgnoreLos = false, bool isIgnoreLevelDifference = false, bool isDirectional = false, bool coveredTargetsOnly = false, bool useMeleeLos = false, bool excludeUnwalkable = false)
 	{
-		PatternGridData orientedGridData = GetOrientedGridData(checkLosFromNode, applicationNode, direction, isIgnoreLos, isIgnoreLevelDifference, isDirectional, coveredTargetsOnly, useMeleeLos);
+		PatternGridData orientedGridData = GetOrientedGridData(checkLosFromNode, applicationNode, direction, isIgnoreLos, isIgnoreLevelDifference, isDirectional, coveredTargetsOnly, useMeleeLos, Size.Medium, excludeUnwalkable);
 		CustomGridGraph graph = (CustomGridGraph)applicationNode.Graph;
 		return new OrientedPatternData(orientedGridData.Select((Vector2Int i) => graph.GetNode(i.x, i.y)).ToTempList(), applicationNode);
 	}

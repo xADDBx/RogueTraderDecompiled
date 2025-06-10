@@ -30,7 +30,7 @@ public class PsychicPhenomenaController : IController, IAbilityExecutionProcessH
 		{
 			RuleCalculatePsychicPhenomenaEffect ruleCalculatePsychicPhenomenaEffect = new RuleCalculatePsychicPhenomenaEffect(context.Caster, context);
 			Rulebook.Trigger(ruleCalculatePsychicPhenomenaEffect);
-			RunPsychicPhenomenaEffectOnTarget(context.Caster, context, ruleCalculatePsychicPhenomenaEffect.ResultPerilsEffect, ruleCalculatePsychicPhenomenaEffect.ResultPsychicPhenomena);
+			RunPsychicPhenomenaEffectOnTarget(ruleCalculatePsychicPhenomenaEffect.OverrideTarget?.Entity ?? context.Caster, context, ruleCalculatePsychicPhenomenaEffect.ResultPerilsEffect, ruleCalculatePsychicPhenomenaEffect.ResultPsychicPhenomena);
 		}
 	}
 

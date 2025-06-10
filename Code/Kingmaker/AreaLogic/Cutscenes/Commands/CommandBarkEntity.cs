@@ -25,10 +25,12 @@ public class CommandBarkEntity : CommandBase
 		internal SignalWrapper StopPlaySignal;
 	}
 
+	private const int CaptionTextLength = 15;
+
 	public string Text;
 
-	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	[ValidateNotNull]
+	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset SharedText;
 
 	[SerializeReference]
@@ -129,7 +131,14 @@ public class CommandBarkEntity : CommandBase
 
 	public override string GetCaption()
 	{
-		return Entity?.ToString() + "<b> bark</b> " + (SharedText ? ((string)SharedText.String) : Text);
+		string text = ((SharedText == null) ? Text : ((string)SharedText.String));
+		text = ((text.Length > 15) ? text.Substring(0, 15) : text);
+		text = " <b>bark</b> " + text;
+		if (Entity != null)
+		{
+			return Entity.GetCaptionShort() + text;
+		}
+		return "No entity" + text;
 	}
 
 	public override string GetWarning()

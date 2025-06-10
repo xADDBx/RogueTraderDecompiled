@@ -152,6 +152,10 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 			{
 				h.HandleUnitRunCommand(cmd);
 			});
+			if (base.Owner.IsInCombat)
+			{
+				Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
+			}
 			return UnitCommandHandle.Request(m_Current);
 		}
 	}
@@ -185,6 +189,10 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 
 	private UnitCommandHandle AddToQueueInternal(UnitCommandParams cmd, bool first)
 	{
+		if (base.Owner.IsInCombat)
+		{
+			Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
+		}
 		if (first)
 		{
 			m_Queue.AddFirst(cmd);
@@ -280,11 +288,16 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 	{
 		ClearCommand(m_Current, interrupt);
 		m_Current = null;
+		if (base.Owner == null || base.Owner.IsInCombat)
+		{
+			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+		}
 	}
 
 	private void ClearQueue()
 	{
 		m_Queue.Clear();
+		Game.Instance.PlayerInputInCombatController.RequestUpdate();
 	}
 
 	public void RemoveFinishedAndUpdateQueue()
@@ -300,6 +313,10 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 			if (unitCommandParams != null && m_Current == null)
 			{
 				m_Queue.RemoveFirst();
+				if (base.Owner == null || base.Owner.IsInCombat)
+				{
+					Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+				}
 				RunInternal(unitCommandParams, fromQueue: true);
 			}
 		}
@@ -314,7 +331,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 		ClearQueue();
 	}
 
-	public void InterruptAllInterruptible()
+	public bool InterruptAllInterruptible()
 	{
 		bool flag = false;
 		AbstractUnitCommand current = m_Current;
@@ -340,7 +357,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 		{
 			ClearQueue();
 		}
-		return;
+		return !flag;
 		IL_0062:
 		flag = true;
 		goto IL_0064;

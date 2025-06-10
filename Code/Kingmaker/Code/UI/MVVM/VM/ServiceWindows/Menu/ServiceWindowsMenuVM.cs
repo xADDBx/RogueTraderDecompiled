@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.DialogSystem.Blueprints;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.SelectionGroup;
@@ -7,7 +11,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Menu;
 
-public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IDialogStartHandler, ISubscriber, IDialogFinishHandler
 {
 	public readonly SelectionGroupRadioVM<ServiceWindowsMenuEntityVM> SelectionGroup;
 
@@ -16,6 +20,8 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 	private readonly Action<ServiceWindowsType> m_OnSelect;
 
 	public readonly ReactiveProperty<bool> IsAdditionalBackgroundNeeded = new ReactiveProperty<bool>();
+
+	public readonly ReactiveProperty<bool> IsDialogActive = new ReactiveProperty<bool>();
 
 	public ReactiveProperty<ServiceWindowsMenuEntityVM> SelectedEntity { get; }
 
@@ -26,6 +32,7 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 		SelectedEntity = new ReactiveProperty<ServiceWindowsMenuEntityVM>();
 		AddDisposable(SelectionGroup = new SelectionGroupRadioVM<ServiceWindowsMenuEntityVM>(m_EntitiesList, SelectedEntity));
 		AddDisposable(SelectedEntity.Skip(1).Subscribe(OnEntitySelected));
+		AddDisposable(EventBus.Subscribe(this));
 	}
 
 	protected override void DisposeImplementation()
@@ -65,5 +72,15 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 		{
 			m_OnSelect?.Invoke(ServiceWindowsType.None);
 		}
+	}
+
+	public void HandleDialogStarted(BlueprintDialog dialog)
+	{
+		IsDialogActive.Value = true;
+	}
+
+	public void HandleDialogFinished(BlueprintDialog dialog, bool success)
+	{
+		IsDialogActive.Value = false;
 	}
 }

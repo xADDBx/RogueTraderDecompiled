@@ -132,6 +132,10 @@ public class BlueprintWarhammerRoot : BlueprintScriptableObject
 	[ValidateNotNull]
 	private BlueprintProneRoot.Reference m_ProneRoot;
 
+	[SerializeField]
+	[ValidateNotNull]
+	private AbilityRedirectRoot.Reference m_AbilityRedirect;
+
 	public static BlueprintWarhammerRoot Instance => BlueprintRoot.Instance.WarhammerRoot;
 
 	public BlueprintAreaPreset GamescomPreset => m_GamescomPreset;
@@ -189,4 +193,6 @@ public class BlueprintWarhammerRoot : BlueprintScriptableObject
 	public LevelUpFxLibrary LevelUpFxLibrary => m_LevelUpFxLibrary?.Get();
 
 	public BlueprintProneRoot ProneRoot => m_ProneRoot.Get();
+
+	public AbilityRedirectRoot AbilityRedirect => m_AbilityRedirect;
 }

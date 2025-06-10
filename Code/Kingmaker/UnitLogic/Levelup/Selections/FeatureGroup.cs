@@ -6,7 +6,7 @@ public enum FeatureGroup
 	Attribute = 1,
 	Skill = 2,
 	Talent = 3,
-	UltimateAbility = 4,
+	UltimateUpgradeAbility = 4,
 	ActiveAbility = 5,
 	ChargenHomeworld = 6,
 	ChargenOccupation = 7,
@@ -29,10 +29,15 @@ public enum FeatureGroup
 	FirstOrSecondCareerAbility = 24,
 	ChargenSoulMark = 25,
 	ChargenNavigator = 26,
+	ChargenArbitrator = 27,
 	ChargenImperialWorld = 30,
 	ChargenPsyker = 31,
 	ChargenForgeWorld = 32,
 	ShipActiveAbility = 33,
 	ShipUltimateAbility = 34,
-	ShipTotalAbility = 35
+	ShipTotalAbility = 35,
+	Keystone = 36,
+	UltimateAbility = 37,
+	PetKeystone = 38,
+	PetUltimateAbility = 39
 }

@@ -128,6 +128,53 @@ public class Utilities
 		return null;
 	}
 
+	public static string FormatPositionAndRotation(Transform transform)
+	{
+		Vector3 position = transform.position;
+		Vector3 eulerAngles = transform.eulerAngles;
+		return $"position=x:{position.x};y:{position.y};z:{position.z}|rotation=x:{eulerAngles.x};y:{eulerAngles.y};z:{eulerAngles.z}";
+	}
+
+	public static bool TryGetFormatedPositionAndRotation(string parameters, out Vector3 position, out Vector3 eulerAngles)
+	{
+		string[] array = parameters.Split("|");
+		if (array.Length != 2)
+		{
+			position = Vector3.zero;
+			eulerAngles = Vector3.zero;
+			return false;
+		}
+		string formatedVector = array[0];
+		string formatedVector2 = array[1];
+		position = GetVector3FromFormatedString(formatedVector);
+		eulerAngles = GetVector3FromFormatedString(formatedVector2);
+		return true;
+	}
+
+	private static Vector3 GetVector3FromFormatedString(string formatedVector)
+	{
+		Vector3 result = default(Vector3);
+		string[] array = formatedVector.Split("=")[1].Split(";");
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split(":");
+			float num = float.Parse(array2[1]);
+			switch (array2[0])
+			{
+			case "x":
+				result.x = num;
+				break;
+			case "y":
+				result.y = num;
+				break;
+			case "z":
+				result.z = num;
+				break;
+			}
+		}
+		return result;
+	}
+
 	public static TEnum? GetParamEnum<TEnum>(string parameters, int index, string message) where TEnum : struct, Enum
 	{
 		string paramString = GetParamString(parameters, index, message);

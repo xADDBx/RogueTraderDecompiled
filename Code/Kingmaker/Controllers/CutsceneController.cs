@@ -18,7 +18,7 @@ using Owlcat.Runtime.Core.Utility;
 
 namespace Kingmaker.Controllers;
 
-public class CutsceneController : IControllerEnable, IController, IControllerDisable, IControllerTick, IGameModeHandler, ISubscriber
+public class CutsceneController : IControllerEnable, IController, IControllerDisable, IControllerTick, IGameModeHandler, ISubscriber, IGameOverHandler
 {
 	private static readonly LogChannel Logger = PFLog.Cutscene;
 
@@ -148,9 +148,9 @@ public class CutsceneController : IControllerEnable, IController, IControllerDis
 	{
 	}
 
-	public void OnGameModeStop(GameModeType gameMode)
+	private void StopCutsceneSkipping()
 	{
-		if ((gameMode == GameModeType.Cutscene || gameMode == GameModeType.CutsceneGlobalMap) && (Skipping || s_ShouldStartSkipping))
+		if (Skipping || s_ShouldStartSkipping)
 		{
 			Logger.Log("Stop skipping cutscene");
 			Skipping = false;
@@ -159,6 +159,19 @@ public class CutsceneController : IControllerEnable, IController, IControllerDis
 			FadeCanvas.Instance.HideLoadingScreen();
 			FadeCanvas.Fadeout(fade: false);
 		}
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
+		if (gameMode == GameModeType.Cutscene || gameMode == GameModeType.CutsceneGlobalMap)
+		{
+			StopCutsceneSkipping();
+		}
+	}
+
+	public void HandleGameOver(Player.GameOverReasonType reason)
+	{
+		StopCutsceneSkipping();
 	}
 
 	private static void StartCutsceneSkip()

@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar;
 
-public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAbilityTargetSelectionUIHandler, ISubscriber, IAbilityTargetHoverUIHandler, IAbilityTargetMarkerHoverUIHandler, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, IUnitCommandStartHandler, IUnitCommandActHandler, IUnitRunCommandHandler, IUnitPathManagerHandler, ITurnStartHandler, IInterruptTurnStartHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, ITurnBasedModeHandler, IUnitSpentActionPoints, IUnitGainActionPoints, IUnitSpentMovementPoints, IUnitGainMovementPoints
+public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAbilityTargetSelectionUIHandler, ISubscriber, IAbilityTargetHoverUIHandler, IAbilityTargetMarkerHoverUIHandler, IUnitCommandEndHandler, ISubscriber<IMechanicEntity>, IUnitCommandStartHandler, IUnitCommandActHandler, IUnitRunCommandHandler, IUnitPathManagerHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IInterruptTurnContinueHandler, IInteractionObjectUIHandler, ISubscriber<IMapObjectEntity>, ITurnBasedModeHandler, IUnitSpentActionPoints, IUnitGainActionPoints, IUnitSpentMovementPoints, IUnitGainMovementPoints
 {
 	public readonly ReactiveProperty<float> MaxBlueAP = new ReactiveProperty<float>();
 
@@ -117,7 +117,7 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		if (m_UnitUIWrapper.MechanicEntity != null && m_UnitUIWrapper.CombatState != null)
 		{
 			MaxBlueAP.Value = ((m_UnitUIWrapper.CombatState.ActionPointsBlue <= (float)m_UnitUIWrapper.CombatState.WarhammerInitialAPBlue.ModifiedValue) ? ((float)m_UnitUIWrapper.CombatState.WarhammerInitialAPBlue.ModifiedValue) : m_UnitUIWrapper.CombatState.ActionPointsBlue);
-			BlueAP.Value = m_UnitUIWrapper.CombatState.ActionPointsBlue;
+			BlueAP.Value = GetBlueAP();
 			PredictedBlueAP.Value = BlueAP.Value;
 			SpentBlueAP.Value = m_UnitUIWrapper.CombatState.ActionPointsBlueSpentThisTurn;
 			MaxYellowAP.Value = ((m_UnitUIWrapper.CombatState.ActionPointsYellow <= m_UnitUIWrapper.CombatState.WarhammerInitialAPYellow.ModifiedValue) ? m_UnitUIWrapper.CombatState.WarhammerInitialAPYellow.ModifiedValue : m_UnitUIWrapper.CombatState.ActionPointsYellow);
@@ -131,7 +131,7 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 	{
 		if (m_UnitUIWrapper.MechanicEntity != null && m_UnitUIWrapper.CombatState != null)
 		{
-			BlueAP.Value = m_UnitUIWrapper.CombatState.ActionPointsBlue;
+			BlueAP.Value = GetBlueAP();
 			SpentBlueAP.Value = m_UnitUIWrapper.CombatState.ActionPointsBlueSpentThisTurn;
 			if (PredictedBlueAP.Value > BlueAP.Value)
 			{
@@ -144,6 +144,19 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			}
 			SpentYellowAP.Value = (MaxYellowAP.Value - (float)m_UnitUIWrapper.CombatState.ActionPointsYellow) / MaxYellowAP.Value * 6f;
 		}
+	}
+
+	private float GetBlueAP()
+	{
+		if (m_UnitUIWrapper.CombatState == null)
+		{
+			return 0f;
+		}
+		if (!m_UnitUIWrapper.CantMove)
+		{
+			return m_UnitUIWrapper.CombatState.ActionPointsBlue;
+		}
+		return 0f;
 	}
 
 	private void SetBlueAPCost(float cost)
@@ -287,7 +300,17 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		HandleUnitStartTurnInternal();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleUnitStartTurnInternal();
 	}

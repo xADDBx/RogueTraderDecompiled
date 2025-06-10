@@ -58,6 +58,19 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public bool DisableFxAndSound { get; set; }
 
+	public new RuleReason Reason
+	{
+		get
+		{
+			return base.Reason;
+		}
+		set
+		{
+			base.Reason = value;
+			RollDamageRule.Reason = value;
+		}
+	}
+
 	public RuleDealDamage([NotNull] IMechanicEntity initiator, [NotNull] IMechanicEntity target, [NotNull] DamageData damage)
 		: this(initiator, target, new RuleRollDamage(initiator, target, damage))
 	{
@@ -77,7 +90,8 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 		: base(initiator, target)
 	{
 		TargetHealth = target.GetHealthOptional();
-		IsFake = DamagePolicyContextData.Current == DamagePolicyType.FxOnly;
+		DamagePolicyType current = DamagePolicyContextData.Current;
+		IsFake = current == DamagePolicyType.FxOnly || current == DamagePolicyType.FakeDamage;
 		RollDamageRule = rollDamage;
 	}
 
@@ -97,7 +111,7 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 		{
 			return;
 		}
-		IsDot = base.Reason.Context?.AssociatedBlueprint is BlueprintBuff;
+		IsDot = Reason.Context?.AssociatedBlueprint is BlueprintBuff;
 		TargetHealth.LastHandledDamage = this;
 		if (IsFake)
 		{

@@ -5,10 +5,12 @@ using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Summary;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Summary;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Summary;
 
@@ -41,6 +43,10 @@ public class CharInfoSummaryPCView : CharInfoComponentView<CharInfoSummaryVM>
 	[SerializeField]
 	protected CharInfoAlignmentWheelPCView m_AlignmentWheelPCView;
 
+	[FormerlySerializedAs("m_PetSummaryView")]
+	[SerializeField]
+	protected PetSummaryPCView m_PetSummaryPCView;
+
 	[SerializeField]
 	protected CharInfoCurrentCareerView m_CareerView;
 
@@ -66,6 +72,7 @@ public class CharInfoSummaryPCView : CharInfoComponentView<CharInfoSummaryVM>
 		}));
 		m_StatusEffectsView.Bind(base.ViewModel.StatusEffects.Value);
 		m_AlignmentWheelPCView.Bind(base.ViewModel.CharInfoAlignmentVM);
+		m_PetSummaryPCView.Or(null)?.Bind(base.ViewModel.PetSummaryVM);
 		base.BindViewImplementation();
 		SetupTexts();
 		m_TextHelper.UpdateTextSize();
@@ -81,6 +88,7 @@ public class CharInfoSummaryPCView : CharInfoComponentView<CharInfoSummaryVM>
 
 	private void UpdatePoints()
 	{
+		m_ActionPointsButton.gameObject.SetActive(!(base.ViewModel.Unit.Value?.IsPet ?? false));
 		ActionPointsVM value = base.ViewModel.ActionPointVM.Value;
 		if (value != null)
 		{

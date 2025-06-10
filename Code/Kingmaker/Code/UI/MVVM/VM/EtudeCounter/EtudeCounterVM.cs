@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using Kingmaker.AreaLogic.Etudes;
+using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -11,75 +13,129 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.EtudeCounter;
 
-public class EtudeCounterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEtudeCounterHandler, ISubscriber
+public class EtudeCounterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEtudeCounterHandler, ISubscriber, IEtudeCounterSystemHandler
 {
-	private class EtudeCounterConfig
-	{
-		public string Label;
+	public readonly StringReactiveProperty Label = new StringReactiveProperty();
 
-		public Func<int> ValueGetter;
+	public readonly StringReactiveProperty SubLabel = new StringReactiveProperty();
 
-		public Func<int> TargetValueGetter;
-	}
+	public readonly StringReactiveProperty Counter = new StringReactiveProperty();
 
-	public readonly StringReactiveProperty CounterText = new StringReactiveProperty();
+	public readonly FloatReactiveProperty Progress = new FloatReactiveProperty(0f);
 
-	private Dictionary<string, EtudeCounterConfig> m_Configs = new Dictionary<string, EtudeCounterConfig>();
+	public readonly BoolReactiveProperty ShowProgress = new BoolReactiveProperty();
 
-	private StringBuilder m_StringBuilder = new StringBuilder();
+	public readonly BoolReactiveProperty ShowCounter = new BoolReactiveProperty();
 
-	private IDisposable m_UpdateSubscription;
+	public readonly BoolReactiveProperty IsShowing = new BoolReactiveProperty();
+
+	public readonly ReactiveCommand CounterChanged = new ReactiveCommand();
+
+	public readonly ReactiveCommand ProgressChanged = new ReactiveCommand();
+
+	public readonly BoolReactiveProperty IsSystemFailEnabled = new BoolReactiveProperty();
+
+	public readonly BoolReactiveProperty IsSystemSuccessEnabled = new BoolReactiveProperty();
+
+	public BoolReactiveProperty IsExtraTextShowed = new BoolReactiveProperty();
+
+	public ReactiveCommand<bool> ShowExtraText = new ReactiveCommand<bool>();
+
+	private readonly Dictionary<string, EtudeShowCounterUIStruct> m_Configs = new Dictionary<string, EtudeShowCounterUIStruct>();
 
 	public EtudeCounterVM()
 	{
 		AddDisposable(EventBus.Subscribe(this));
+		IsExtraTextShowed.Value = true;
+		AddDisposable(MainThreadDispatcher.InfrequentUpdateAsObservable().Subscribe(UpdateValues));
 	}
 
 	protected override void DisposeImplementation()
 	{
-		CounterText.Value = null;
-		m_UpdateSubscription?.Dispose();
-		m_UpdateSubscription = null;
 	}
 
-	void IEtudeCounterHandler.ShowEtudeCounter(string id, string label, Func<int> valueGetter, Func<int> targetValueGetter)
+	void IEtudeCounterHandler.ShowEtudeCounter(EtudeShowCounterUIStruct counterUIStruct)
 	{
-		m_Configs.Add(id, new EtudeCounterConfig
-		{
-			Label = label,
-			ValueGetter = valueGetter,
-			TargetValueGetter = targetValueGetter
-		});
-		if (m_UpdateSubscription == null && !m_Configs.Empty())
-		{
-			m_UpdateSubscription = MainThreadDispatcher.InfrequentUpdateAsObservable().Subscribe(UpdateValues);
-		}
+		m_Configs.Add(counterUIStruct.Id, counterUIStruct);
 	}
 
 	void IEtudeCounterHandler.HideEtudeCounter(string id)
 	{
 		m_Configs.Remove(id);
-		if (m_Configs.Empty() && m_UpdateSubscription != null)
+	}
+
+	public void ToggleExtraText()
+	{
+		if (IsExtraTextShowed.Value)
 		{
-			m_UpdateSubscription.Dispose();
-			m_UpdateSubscription = null;
-			CounterText.Value = null;
+			IsExtraTextShowed.Value = false;
+			ShowExtraText.Execute(parameter: false);
+		}
+		else
+		{
+			IsExtraTextShowed.Value = true;
+			ShowExtraText.Execute(parameter: true);
 		}
 	}
 
 	private void UpdateValues()
 	{
-		m_StringBuilder.Clear();
-		foreach (EtudeCounterConfig value in m_Configs.Values)
+		if (m_Configs.Empty() || Game.Instance.CurrentMode == GameModeType.Cutscene)
 		{
-			if (m_StringBuilder.Length > 0)
-			{
-				m_StringBuilder.Append('\n');
-			}
-			m_StringBuilder.Append(value.Label);
-			m_StringBuilder.Append(' ');
-			m_StringBuilder.Append(value.ValueGetter());
+			IsShowing.Value = false;
+			return;
 		}
-		CounterText.Value = m_StringBuilder.ToString();
+		EtudeShowCounterUIStruct etudeShowCounterUIStruct = m_Configs.Values.First();
+		Label.Value = etudeShowCounterUIStruct.Label;
+		SubLabel.Value = etudeShowCounterUIStruct.SubLabel;
+		if (etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Slider) || etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Label))
+		{
+			int num = etudeShowCounterUIStruct.ValueGetter?.Invoke() ?? 0;
+			int num2 = etudeShowCounterUIStruct.TargetValueGetter?.Invoke() ?? 0;
+			ShowCounter.Value = etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Label);
+			ShowProgress.Value = etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Slider) && (float)num2 > 0f;
+			if (ShowCounter.Value)
+			{
+				Counter.Value = ((num2 > 0) ? $"{num}/{num2}" : $"{num}");
+				CounterChanged.Execute();
+			}
+			else if (ShowProgress.Value)
+			{
+				Progress.Value = (float)num / (float)num2;
+				ProgressChanged.Execute();
+			}
+		}
+		else
+		{
+			ShowProgress.Value = false;
+			ShowCounter.Value = false;
+		}
+		IsShowing.Value = true;
+	}
+
+	public void ShowEtudeCounterSystem(EtudeUICounterSystemTypes type)
+	{
+		switch (type)
+		{
+		case EtudeUICounterSystemTypes.Fail:
+			IsSystemFailEnabled.Value = true;
+			break;
+		case EtudeUICounterSystemTypes.Success:
+			IsSystemSuccessEnabled.Value = true;
+			break;
+		}
+	}
+
+	public void HideEtudeCounterSystem(EtudeUICounterSystemTypes type)
+	{
+		switch (type)
+		{
+		case EtudeUICounterSystemTypes.Fail:
+			IsSystemFailEnabled.Value = false;
+			break;
+		case EtudeUICounterSystemTypes.Success:
+			IsSystemSuccessEnabled.Value = false;
+			break;
+		}
 	}
 }

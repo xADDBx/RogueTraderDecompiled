@@ -115,6 +115,18 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	private OwlcatDropdown m_AssigneeDropdown;
 
 	[SerializeField]
+	private GameObject m_ManualSaveGroup;
+
+	[SerializeField]
+	private GameObject m_DevPriorityGroup;
+
+	[SerializeField]
+	private OwlcatDropdown m_ManualSaveDropdown;
+
+	[SerializeField]
+	private OwlcatDropdown m_DevPriorityDropdown;
+
+	[SerializeField]
 	private GameObject m_FixVersionGO;
 
 	[SerializeField]
@@ -135,6 +147,10 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	[SerializeField]
 	private OwlcatToggle m_SuggestionToggle;
+
+	[Header("Feedback")]
+	[SerializeField]
+	private OwlcatToggle m_FeedbackToggle;
 
 	[Header("Labels")]
 	[SerializeField]
@@ -200,6 +216,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private IDisposable m_AssigneeDropdownDisposable;
 
+	private IDisposable m_ManualSaveDropdownDisposable;
+
 	public static string LabelsDisposableString => "m_LabelsDisposable";
 
 	public void Initialize()
@@ -220,7 +238,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 				ReportingUtils.Severity.Suggestion
 			}
 		};
-		m_MessageInputField.SetMaxTextLength(1000u);
+		m_MessageInputField.SetMaxTextLength(BuildModeUtility.IsDevelopment ? uint.MaxValue : 1000u);
 		m_BugReportDrawingView.gameObject.SetActive(value: false);
 		m_BugReportDuplicatesBaseView.gameObject.SetActive(value: false);
 		m_LabelsBlocker.onClick.AddListener(OnLabelsShow);
@@ -231,6 +249,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		Show(state: true);
 		AddDisposable(base.ViewModel.BugReportDrawingVM.Subscribe(m_BugReportDrawingView.Bind));
 		AddDisposable(base.ViewModel.BugReportDuplicatesVM.Subscribe(m_BugReportDuplicatesBaseView.Bind));
+		AddDisposable(m_FeedbackToggle.IsOn.Subscribe(OnFeedbackToggleValueChanged));
 		AddDisposable(m_PrivacyToggle.IsOn.Subscribe(m_SendButton.SetInteractable));
 		AddDisposable(m_ContextDropdown.Index.Subscribe(delegate
 		{
@@ -241,6 +260,11 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			OnAspectDropdownValueChanged();
 		}));
 		m_MessageInputField.SetPlaceholderText(UIStrings.Instance.UIBugReport.AdditionalPlaceholderText.Text);
+		if (BuildModeUtility.IsDevelopment)
+		{
+			m_MessageInputField.Text = "\n\nШаги воспроизведения:\n\n\nФактический результат:\n\n\nОжидаемый результат:\n";
+			m_BottomDescriptionText.text = "<b>Blocker:</b> ошибка, физически блокирующая разработку;\n<b>Crit:</b> ошибка, блокирующая выпуск версии;\n<b>Major:</b> ошибка, близкая к криту по нужности в версию, но не блокирующая ее выпуск;\n<b>Normal:</b> остальные ошибки, помимо критических;\n<b>Minor:</b> ошибка не влияющая на выпуск версии.";
+		}
 		BuildNavigation();
 		m_DuplicatesButton.gameObject.SetActive(value: false);
 	}
@@ -256,19 +280,27 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private void SetupDropdowns()
 	{
-		if (m_FixVersionDropdownDisposable != null || m_AssigneeDropdownDisposable != null)
+		if (m_FixVersionDropdownDisposable != null || m_AssigneeDropdownDisposable != null || m_ManualSaveDropdownDisposable != null)
 		{
 			DisposeDropdowns();
 		}
-		if (BuildModeUtility.IsDevelopment && ReportingUtils.Instance.Assignees.IsCompletedSuccessfully)
+		if (!BuildModeUtility.IsDevelopment || !ReportingUtils.Instance.Assignees.IsCompletedSuccessfully)
 		{
-			m_FixVersionDropdownDisposable = m_FixVersionDropdown.Index.Subscribe(delegate
+			return;
+		}
+		m_FixVersionDropdownDisposable = m_FixVersionDropdown.Index.Subscribe(delegate
+		{
+			OnFixVersionDropdownValueChanged();
+		});
+		m_AssigneeDropdownDisposable = m_AssigneeDropdown.Index.Subscribe(delegate
+		{
+			OnAssigneeDropdownValueChanged();
+		});
+		if (m_ManualSaveDropdown != null)
+		{
+			m_ManualSaveDropdownDisposable = m_ManualSaveDropdown.Index.Subscribe(delegate
 			{
-				OnFixVersionDropdownValueChanged();
-			});
-			m_AssigneeDropdownDisposable = m_AssigneeDropdown.Index.Subscribe(delegate
-			{
-				OnAssigneeDropdownValueChanged();
+				OnManualSaveDropdownValueChanged();
 			});
 		}
 	}
@@ -279,6 +311,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		m_FixVersionDropdownDisposable = null;
 		m_AssigneeDropdownDisposable?.Dispose();
 		m_AssigneeDropdownDisposable = null;
+		m_ManualSaveDropdownDisposable?.Dispose();
+		m_ManualSaveDropdownDisposable = null;
 	}
 
 	private void BuildNavigation()
@@ -299,16 +333,24 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		m_NavigationBehaviour.AddRow(entities);
 		List<IConsoleEntity> entities2 = new List<IConsoleEntity> { m_EmailInputField, m_DiscordInputField };
 		m_NavigationBehaviour.AddRow(entities2);
-		List<IConsoleEntity> entities3 = new List<IConsoleEntity> { m_LabelsButton, m_FixVersionDropdown, m_AssigneeDropdown };
-		m_NavigationBehaviour.AddRow(entities3);
+		List<IConsoleEntity> list = new List<IConsoleEntity> { m_LabelsButton, m_FixVersionDropdown, m_AssigneeDropdown };
+		if (m_ManualSaveDropdown != null)
+		{
+			list.Add(m_ManualSaveDropdown);
+		}
+		m_NavigationBehaviour.AddRow(list);
 		m_NavigationBehaviour.AddEntityVertical(m_MessageInputField);
-		List<IConsoleEntity> entities4 = new List<IConsoleEntity> { m_CriticalToggle, m_NormalToggle, m_SuggestionToggle };
-		m_NavigationBehaviour.AddRow(entities4);
+		List<IConsoleEntity> list2 = new List<IConsoleEntity> { m_CriticalToggle, m_NormalToggle, m_SuggestionToggle, m_FeedbackToggle };
+		if (m_DevPriorityDropdown != null)
+		{
+			list2.Add(m_DevPriorityDropdown);
+		}
+		m_NavigationBehaviour.AddRow(list2);
 		m_NavigationBehaviour.AddEntityVertical(m_PrivacyToggle);
 		m_NavigationBehaviour.AddEntityVertical(m_EmailUpdatesToggle);
 		m_NavigationBehaviour.AddEntityVertical(m_SendButton);
-		List<IConsoleNavigationEntity> entities5 = new List<IConsoleNavigationEntity> { m_CloseButton, m_DrawingButton, m_DuplicatesButton };
-		m_NavigationBehaviour.AddColumn(entities5);
+		List<IConsoleNavigationEntity> entities3 = new List<IConsoleNavigationEntity> { m_CloseButton, m_DrawingButton, m_DuplicatesButton };
+		m_NavigationBehaviour.AddColumn(entities3);
 	}
 
 	protected virtual void CreateInputImpl(InputLayer inputLayer)
@@ -386,8 +428,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			});
 			return;
 		}
-		OwlcatToggle key = m_IssueTypeToggleGroup.ActiveToggles().FirstOrDefault() ?? m_NormalToggle;
-		string issueType = m_IssueTypes[key].ToString();
+		string issueType = GetIssueType();
 		ReportingUtils.Instance.SendReport(m_MessageInputField.Text, m_EmailInputField.Text, SystemInfo.deviceUniqueIdentifier, issueType, m_DiscordInputField.Text, m_EmailUpdatesToggle.IsOn.Value);
 		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 		{
@@ -446,6 +487,20 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 				m_FixVersionDropdown.Bind(base.ViewModel.GetFixVersionDropDownVM());
 				m_FixVersionDropdown.SetInteractable(ReportingUtils.Instance.CanSelectFixVersion());
 				m_ContextDropdown.SetInteractable(ReportingUtils.Instance.CanSelectContext());
+				if (m_ManualSaveGroup != null && m_ManualSaveDropdown != null)
+				{
+					m_ManualSaveGroup.SetActive(value: true);
+					m_ManualSaveDropdown.Bind(base.ViewModel.GetManualSaveDropDownVM());
+				}
+				if (m_DevPriorityGroup != null && m_DevPriorityDropdown != null)
+				{
+					m_DevPriorityGroup.SetActive(value: true);
+					m_CriticalToggle.gameObject.SetActive(value: false);
+					m_NormalToggle.gameObject.SetActive(value: false);
+					m_SuggestionToggle.gameObject.SetActive(value: false);
+					m_DevPriorityDropdown.Bind(base.ViewModel.GetDevPriorityDropDownVM());
+					m_DevPriorityDropdown.SetIndex(base.ViewModel.GetDefaultDevPriorityIndex());
+				}
 				SetupDropdowns();
 				m_LabelsGroup.SetActive(value: true);
 				ReportingUtils.Instance.ResetLabelsList();
@@ -465,6 +520,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			m_FixVersionGO.SetActive(value: false);
 			m_LabelsGroup.SetActive(value: false);
 		}
+		m_FeedbackToggle.gameObject.SetActive(flag);
 		ToggleAdditionalContactsVisibility(IsEmailMatchRegexp());
 		ExpandDescriptionOverMarket();
 		RestoreUserData(flag);
@@ -553,10 +609,15 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		m_LabelsDisposable.Clear();
 	}
 
+	public void OnFeedbackToggleValueChanged(bool isFeedback)
+	{
+		ReportingUtils.Instance.SelectIsFeedback(isFeedback);
+	}
+
 	public void OnContextDropdownValueChanged()
 	{
 		ReportingUtils.Instance.SelectContext(m_ContextDropdown.Index.Value);
-		m_AspectDropdown.SetIndex(0);
+		m_AspectDropdown.SetIndex(ReportingUtils.Instance.GetInitialAspectIndex());
 		if (BuildModeUtility.IsDevelopment && ReportingUtils.Instance.Assignees.IsCompletedSuccessfully)
 		{
 			try
@@ -632,6 +693,11 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		ReportingUtils.Instance.SelectFixVersion(m_FixVersionDropdown.Index.Value);
 	}
 
+	public void OnManualSaveDropdownValueChanged()
+	{
+		ReportingUtils.Instance.SelectManualSave(m_ManualSaveDropdown.Index.Value - 1);
+	}
+
 	public void OnLinkClick(PointerEventData eventData, TMP_LinkInfo linkInfo)
 	{
 		if (linkInfo.GetLinkID() == "pp")
@@ -656,6 +722,16 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		m_BottomDescriptionText.text = UIStrings.Instance.UIBugReport.ButtomDescription;
 		m_PrivacyDescriptionText.text = UIStrings.Instance.UIBugReport.PrivacyCheckBoxDescription;
 		m_EmailUpdatesDescriptionText.text = UIStrings.Instance.UIBugReport.EmailUpdatesCheckBoxDescription;
+	}
+
+	private string GetIssueType()
+	{
+		if (BuildModeUtility.IsDevelopment)
+		{
+			return m_DevPriorityDropdown.GetCurrentTextValue();
+		}
+		OwlcatToggle key = m_IssueTypeToggleGroup.ActiveToggles().FirstOrDefault() ?? m_NormalToggle;
+		return m_IssueTypes[key].ToString();
 	}
 
 	private bool IsEmailMatchRegexp()

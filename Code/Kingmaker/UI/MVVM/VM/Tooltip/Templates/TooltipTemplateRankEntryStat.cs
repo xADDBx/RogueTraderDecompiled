@@ -32,7 +32,7 @@ public class TooltipTemplateRankEntryStat : TooltipTemplateStat
 		if (calculatedPrerequisite != null)
 		{
 			list.Add(new TooltipBrickTitle(UIStrings.Instance.Tooltips.Prerequisites, TooltipTitleType.H2));
-			list.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(calculatedPrerequisite)));
+			list.Add(new TooltipBrickPrerequisite(UIUtility.GetPrerequisiteEntries(calculatedPrerequisite), oneFromList: false));
 		}
 		return list;
 	}

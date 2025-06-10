@@ -61,6 +61,9 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 	private UnitAnimationActionCastSpell.SpecialBehaviourType m_Special;
 
 	[JsonProperty]
+	private bool m_RotateIsDone;
+
+	[JsonProperty]
 	public static bool TestPauseOnCast { get; set; }
 
 	public AbilityExecutionProcess ExecutionProcess { get; private set; }
@@ -112,7 +115,11 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			{
 				return WeaponAnimationStyle.Fist;
 			}
-			return Ability.Weapon?.GetAnimationStyle() ?? base.Executor.Body.PrimaryHand?.GetWeaponStyle() ?? WeaponAnimationStyle.None;
+			if (Ability.Weapon != null)
+			{
+				return base.Executor.View.HandsEquipment?.GetWeaponStyleForWeapon(Ability.Weapon) ?? Ability.Weapon.GetAnimationStyle();
+			}
+			return base.Executor.View.HandsEquipment?.GetWeaponStyleForHand(base.Executor.Body.PrimaryHand) ?? WeaponAnimationStyle.None;
 		}
 	}
 
@@ -123,6 +130,20 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 	public DamagePolicyType DamagePolicy => base.Params.DamagePolicy;
 
 	public bool KillTarget => base.Params.KillTarget;
+
+	public bool RotateIsDone => m_RotateIsDone;
+
+	public bool SyncRotationAndAttack
+	{
+		get
+		{
+			if (ShouldTurnToTarget)
+			{
+				return Ability.Blueprint.SyncRotationAndAttack;
+			}
+			return false;
+		}
+	}
 
 	public override bool ShouldBeInterrupted
 	{
@@ -148,7 +169,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			{
 				return true;
 			}
-			if (!base.Executor.InRangeInCells(base.Target, Ability.RangeCells) && !base.FromCutscene)
+			if (!base.FromCutscene && !(Ability.TryGetCasterForDistanceCalculation(out var caster) ? caster : base.Executor).InRangeInCells(base.Target, Ability.RangeCells))
 			{
 				return false;
 			}
@@ -209,9 +230,31 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	protected override int ExpectedActEventsCount => ActionsCount;
 
+	protected override float PretendActDelay
+	{
+		get
+		{
+			if (!Ability.Blueprint.TryGetComponent<AbilityNoCastAnimation>(out var component))
+			{
+				return 1f;
+			}
+			return component.PretendActDelay;
+		}
+	}
+
 	public UnitUseAbility([NotNull] UnitUseAbilityParams @params)
 		: base(@params)
 	{
+		m_RotateIsDone = true;
+	}
+
+	protected void ForceImmediateAction()
+	{
+		ResultType resultType = OnAction();
+		if (resultType != 0)
+		{
+			ForceFinish(resultType);
+		}
 	}
 
 	protected override void OnInit(AbstractUnitEntity executor)
@@ -259,24 +302,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 	}
 
-	public override void OnRun()
-	{
-		base.OnRun();
-		TryDelegateCommandToMount();
-	}
-
-	private void TryDelegateCommandToMount()
-	{
-		BaseUnitEntity saddledUnit = base.Executor.GetSaddledUnit();
-		if (saddledUnit != null && Ability.ShouldDelegateToMount && Ability.SameMountAbility != null)
-		{
-			saddledUnit.Commands.Run(new UnitUseAbilityParams(Ability.SameMountAbility, base.Target));
-		}
-	}
-
 	protected override void TriggerAnimation()
 	{
-		if (Ability.Weapon == null && Ability.Blueprint.GetComponent<AbilityCustomBladeDance>() == null)
+		AbilityData ability = Ability;
+		if ((object)ability != null && !ability.SourceItemIsWeapon && ability.OverrideWeapon == null && Ability.Blueprint.GetComponent<AbilityCustomBladeDance>() == null)
 		{
 			base.Executor.View.HideOffWeapon(hide: true);
 		}
@@ -348,6 +377,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			}
 			else if (base.Executor.View.AnimationManager?.CreateHandle(unitAnimationAction) is UnitAnimationActionHandle unitAnimationActionHandle)
 			{
+				if (unitAnimationActionHandle.Action is UnitAnimationActionSimple unitAnimationActionSimple && abilityCustomAnimation is AbilityCustomAnimationByBuff { OverrideAnimationType: not UnitAnimationType.Unused } abilityCustomAnimationByBuff)
+				{
+					unitAnimationActionSimple.OverrideUnitAnimationType(abilityCustomAnimationByBuff.OverrideAnimationType);
+				}
 				SetHandlesParameters(unitAnimationActionHandle);
 				unitAnimationActionHandle.IsCornerAttack = isCornerAttack;
 				StartAnimation(unitAnimationActionHandle);
@@ -538,6 +571,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	public override void TurnToTarget()
 	{
+		if (SyncRotationAndAttack)
+		{
+			m_RotateIsDone = false;
+		}
 		BlueprintAbilityFXSettings fXSettings = Ability.FXSettings;
 		if (fXSettings != null && fXSettings.ShouldOffsetTargetRelativePosition)
 		{
@@ -614,13 +651,33 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 	protected override void OnTick()
 	{
 		base.OnTick();
+		if (SyncRotationAndAttack)
+		{
+			if (Mathf.Abs(Mathf.DeltaAngle(base.Executor.Orientation, base.Executor.DesiredOrientation)) < 5f)
+			{
+				m_RotateIsDone = true;
+				float num = Ability.Blueprint.SyncRotationDelay;
+				if (num < 0f)
+				{
+					num = 0f;
+				}
+				Game.Instance.CustomCallbackController.InvokeInTime(delegate
+				{
+					ForceImmediateAction();
+				}, num);
+			}
+			else
+			{
+				m_RotateIsDone = false;
+			}
+		}
 		if (base.Animation != null && base.Animation.IsPrecastFinished && !m_AfterPrecastFxSpawned)
 		{
 			m_AfterPrecastFxSpawned = true;
 			CastAbilityFx(AbilitySpawnFxTime.OnPrecastFinished);
 		}
 		AbilityExecutionProcess executionProcess = ExecutionProcess;
-		if ((executionProcess != null && (executionProcess.IsEngageUnit || executionProcess.IsEnded)) ? true : false)
+		if (executionProcess != null && executionProcess.IsEnded)
 		{
 			UnitAnimationActionHandle animation = base.Animation;
 			if (animation == null || animation.IsReleased)
@@ -636,6 +693,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	protected override ResultType OnAction()
 	{
+		if (SyncRotationAndAttack && !RotateIsDone)
+		{
+			return ResultType.None;
+		}
 		if (CurrentActionIndex > 0)
 		{
 			if (CurrentActionIndex >= ActionsCount)
@@ -649,7 +710,6 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 				return ResultType.Fail;
 			}
 			ExecutionProcess.Context.NextAction();
-			ExecutionProcess.Tick();
 			if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 			{
 				return ResultType.Success;
@@ -698,6 +758,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		rulePerformAbility.Context.HitPolicy = HitPolicy;
 		rulePerformAbility.Context.DamagePolicy = DamagePolicy;
 		rulePerformAbility.Context.KillTarget = KillTarget;
+		rulePerformAbility.Context.AllTargets = base.Params.AllTargets;
 		rulePerformAbility.DisableGameLog = DisableLog;
 		rulePerformAbility.IgnoreCooldown = IgnoreCooldown;
 		rulePerformAbility.ForceFreeAction = base.IsFreeAction;

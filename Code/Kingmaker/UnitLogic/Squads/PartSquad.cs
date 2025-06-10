@@ -1,5 +1,8 @@
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -8,12 +11,14 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Squads;
 
-public class PartSquad : BaseUnitPart, IHashable
+public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 {
 	[JsonProperty]
 	private string m_Id;
 
 	private UnitSquad m_Squad;
+
+	public bool SeparateUnitsAfterLeaderDeath;
 
 	public UnitSquad Squad => UpdateSquad();
 
@@ -40,7 +45,17 @@ public class PartSquad : BaseUnitPart, IHashable
 	[CanBeNull]
 	public BaseUnitEntity Leader => m_Squad.Leader;
 
-	public bool IsLeader => Leader == base.Owner;
+	public bool IsLeader
+	{
+		get
+		{
+			if (m_Squad != null)
+			{
+				return Leader == base.Owner;
+			}
+			return false;
+		}
+	}
 
 	public ReadonlyList<UnitReference> Units => m_Squad.Units;
 
@@ -73,6 +88,24 @@ public class PartSquad : BaseUnitPart, IHashable
 	{
 		m_Squad?.Remove(base.Owner);
 		m_Squad = null;
+	}
+
+	public void HandleUnitDeath(AbstractUnitEntity unitEntity)
+	{
+		if (unitEntity != base.Owner || m_Squad == null || !IsLeader || !SeparateUnitsAfterLeaderDeath)
+		{
+			return;
+		}
+		for (int num = m_Squad.Units.Count - 1; num >= 0; num--)
+		{
+			UnitReference unitReference = m_Squad.Units[num];
+			if (!(unitReference == base.Owner))
+			{
+				unitReference.ToBaseUnitEntity().Remove<PartSquad>();
+			}
+		}
+		m_Id = null;
+		base.Owner.ToBaseUnitEntity().Remove<PartSquad>();
 	}
 
 	public override Hash128 GetHash128()

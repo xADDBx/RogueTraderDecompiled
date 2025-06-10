@@ -123,6 +123,10 @@ public class RulePerformMomentumChange : RulebookOptionalTargetEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
+		if (base.ConcreteInitiator is BaseUnitEntity { Master: not null })
+		{
+			return;
+		}
 		MomentumGroup group = Game.Instance.TurnController.MomentumController.GetGroup(base.ConcreteInitiator);
 		switch (ChangeReason)
 		{

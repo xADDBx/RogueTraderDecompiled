@@ -1,13 +1,15 @@
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
+using Owlcat.Runtime.UI.Utility;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
 
-public class TooltipBrickIconAndNameView : TooltipBaseBrickView<TooltipBrickIconAndNameVM>
+public class TooltipBrickIconAndNameView : TooltipBaseBrickView<TooltipBrickIconAndNameVM>, IWidgetView
 {
 	[SerializeField]
 	protected Image m_Icon;
@@ -35,6 +37,8 @@ public class TooltipBrickIconAndNameView : TooltipBaseBrickView<TooltipBrickIcon
 
 	[SerializeField]
 	private float m_DefaultConsoleFontSize = 18f;
+
+	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
 	{
@@ -67,5 +71,15 @@ public class TooltipBrickIconAndNameView : TooltipBaseBrickView<TooltipBrickIcon
 			AddDisposable(this.SetTooltip(base.ViewModel.Tooltip));
 		}
 		m_Title.fontSize = (Game.Instance.IsControllerMouse ? m_DefaultFontSize : m_DefaultConsoleFontSize) * FontMultiplier;
+	}
+
+	public void BindWidgetVM(IViewModel vm)
+	{
+		Bind(vm as TooltipBrickIconAndNameVM);
+	}
+
+	public bool CheckType(IViewModel viewModel)
+	{
+		return viewModel is TooltipBrickIconAndNameVM;
 	}
 }

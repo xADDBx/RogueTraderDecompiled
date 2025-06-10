@@ -1,5 +1,4 @@
 using System;
-using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.PagesMenu;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound;
@@ -24,11 +23,17 @@ public class CharInfoPagesMenuEntityPCView : SelectionGroupEntityView<CharInfoPa
 
 	private float m_LensAnimationDuration;
 
+	private IDisposable m_DisposableAnimation;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		AddDisposable(base.ViewModel.Active.Subscribe(delegate(bool v)
+		{
+			base.gameObject.SetActive(v);
+		}));
 		m_Label.text = base.ViewModel.Label;
 	}
 
@@ -65,7 +70,7 @@ public class CharInfoPagesMenuEntityPCView : SelectionGroupEntityView<CharInfoPa
 	{
 		if (base.ViewModel != null && base.ViewModel.IsSelected.Value && !(m_Lens == null))
 		{
-			DOTween.Kill(m_Lens.transform);
+			m_DisposableAnimation?.Dispose();
 			m_Lens.transform.localPosition = base.gameObject.transform.localPosition;
 		}
 	}
@@ -74,8 +79,8 @@ public class CharInfoPagesMenuEntityPCView : SelectionGroupEntityView<CharInfoPa
 	{
 		if (base.ViewModel.IsSelected.Value && !(m_Lens == null) && !(Math.Abs(m_Lens.transform.localPosition.x - base.gameObject.transform.localPosition.x) < m_LensDistanceThreshold))
 		{
-			DOTween.Kill(m_Lens.transform);
-			UIUtility.MoveXLensPosition(m_Lens.transform, base.gameObject.transform.localPosition.x, m_LensAnimationDuration);
+			m_DisposableAnimation?.Dispose();
+			AddDisposable(UIUtility.CreateMoveXLensPosition(m_Lens.transform, base.gameObject.transform.localPosition.x, m_LensAnimationDuration));
 		}
 	}
 }

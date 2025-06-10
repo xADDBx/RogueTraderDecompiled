@@ -212,6 +212,20 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		EnableMainRaycasts(enable: true);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_HoverDelay?.Dispose();
+		m_FadeAnimator?.Kill();
+		m_FadeAnimator = null;
+		m_ScaleAnimator?.Kill();
+		m_ScaleAnimator = null;
+		m_PositionAnimator?.Kill();
+		m_PositionAnimator = null;
+		EnableMainRaycasts(enable: false);
+		EnableAdditionalRaycasts(enable: false);
+		base.DestroyViewImplementation();
+	}
+
 	private void DoDeath()
 	{
 		UISounds.Instance.Sounds.Combat.UnitDeath.Play();
@@ -259,6 +273,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 		{
 			m_UnitBuffPartPCView.SetAdditionalBuffsVisible(visible: false);
 		}
+		m_UnitBuffPartPCView.gameObject.SetActive(!base.ViewModel.IsBarkActive.Value);
 	}
 
 	private void UpdateVisibility()
@@ -293,20 +308,6 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 			Visibility.Value = ((!flag) ? UnitOvertipVisibility.Far : UnitOvertipVisibility.Near);
 		}
 		m_CombatTextBlockPCView.UpdateVisualForCommon();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_HoverDelay?.Dispose();
-		m_FadeAnimator?.Kill();
-		m_FadeAnimator = null;
-		m_ScaleAnimator?.Kill();
-		m_ScaleAnimator = null;
-		m_PositionAnimator?.Kill();
-		m_PositionAnimator = null;
-		EnableMainRaycasts(enable: false);
-		EnableAdditionalRaycasts(enable: false);
-		base.DestroyViewImplementation();
 	}
 
 	public void OnPointerEnter(PointerEventData eventData)

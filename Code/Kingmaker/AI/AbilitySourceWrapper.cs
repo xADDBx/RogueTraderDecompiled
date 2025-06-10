@@ -62,7 +62,7 @@ public class AbilitySourceWrapper
 			{
 				m_Abilities = m_RandomGroup.Select((BlueprintAbilityReference a) => a.Get()).ToList();
 			}
-			return m_Abilities;
+			return m_Abilities ?? (m_Abilities = new List<BlueprintAbility>());
 		}
 	}
 

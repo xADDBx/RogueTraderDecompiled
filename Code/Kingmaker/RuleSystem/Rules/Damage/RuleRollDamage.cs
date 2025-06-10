@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -14,6 +15,10 @@ namespace Kingmaker.RuleSystem.Rules.Damage;
 
 public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 {
+	public readonly PercentsModifiersManager ReflectPercentDamageModifiers = new PercentsModifiersManager();
+
+	public readonly ValueModifiersManager ReflectFlatDamageModifiers = new ValueModifiersManager();
+
 	public DamageData Damage { get; private set; }
 
 	public DamageValue Result { get; private set; }
@@ -23,6 +28,8 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 	public int ResultValueWithoutReduction { get; private set; }
 
 	public int ResultValueBeforeDifficulty { get; private set; }
+
+	public int ResultReflected { get; private set; }
 
 	[CanBeNull]
 	public DamageData ResultOverpenetration { get; private set; }
@@ -36,6 +43,21 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 	public bool IgnoreDeflection { get; set; }
 
 	public bool IgnoreArmourAbsorption { get; set; }
+
+	public IEnumerable<Modifier> AllReflectModifiersList
+	{
+		get
+		{
+			foreach (Modifier item in ReflectPercentDamageModifiers.List)
+			{
+				yield return item;
+			}
+			foreach (Modifier item2 in ReflectFlatDamageModifiers.List)
+			{
+				yield return item2;
+			}
+		}
+	}
 
 	public RuleRollDamage([NotNull] IMechanicEntity initiator, [NotNull] IMechanicEntity target, [NotNull] DamageData damage)
 		: this((MechanicEntity)initiator, (MechanicEntity)target, damage)
@@ -58,7 +80,8 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 			RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams((MechanicEntity)base.Initiator, (MechanicEntity)Target, base.Reason.Ability, (base.Reason.Rule as RulePerformAttack)?.RollPerformAttackRule, Damage).Trigger();
 			Damage = ruleCalculateDamage.ResultDamage;
 		}
-		Result = RollDamage(Damage, IgnoreDeflection, IgnoreArmourAbsorption);
+		Result = RollDamage(Damage, IgnoreDeflection, IgnoreArmourAbsorption, ReflectPercentDamageModifiers.FlatBonus, ReflectFlatDamageModifiers.Value, out var reflectedDamage);
+		ResultReflected = reflectedDamage;
 		ResultOverpenetration = CalculateOverpenetration(Result.RolledValue);
 		int num = ((Result.Source.Type == DamageType.Direct) ? Result.FinalValue : 0);
 		ResultValue = Result.FinalValue;
@@ -75,17 +98,25 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		TryNullifyDamage();
 	}
 
-	public static DamageValue RollDamage(DamageData damage, bool ignoreDeflection = false, bool ignoreArmourAbsorption = false)
+	public static DamageValue RollDamage(DamageData damage)
+	{
+		int reflectedDamage;
+		return RollDamage(damage, ignoreDeflection: false, ignoreArmourAbsorption: false, 0, 0, out reflectedDamage);
+	}
+
+	public static DamageValue RollDamage(DamageData damage, bool ignoreDeflection, bool ignoreArmourAbsorption, int reflectPercentDamageModifer, int reflectFlatDamageModifer, out int reflectedDamage)
 	{
 		int num = (damage.CalculatedValue.HasValue ? damage.Modifiers.ApplyPctMulExtra(damage.CalculatedValue.Value) : RollWithoutArmorReduction(damage));
-		int val = ((damage.Overpenetrating && !damage.UnreducedOverpenetration) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
-		int num2 = ((!damage.Immune) ? Math.Max(0, val) : 0);
-		int num3 = ((!ignoreDeflection) ? damage.Deflection.Value : 0);
-		float num4 = (ignoreArmourAbsorption ? 1f : damage.AbsorptionFactorWithPenetration);
-		int val2 = (int)((float)(num2 - num3) * num4);
-		int num5 = Math.Max(0, val2);
-		int reduction = Math.Max(0, num2 - num5);
-		return new DamageValue(damage, num5, num, reduction);
+		int num2 = ((damage.Overpenetrating && !damage.UnreducedOverpenetration) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
+		reflectedDamage = Math.Clamp(Mathf.RoundToInt((float)num2 * 0.01f * (float)reflectPercentDamageModifer) + reflectFlatDamageModifer, 0, num2);
+		num2 -= reflectedDamage;
+		int num3 = ((!damage.Immune) ? Math.Max(0, num2) : 0);
+		int num4 = ((!ignoreDeflection) ? damage.Deflection.Value : 0);
+		float num5 = (ignoreArmourAbsorption ? 1f : damage.AbsorptionFactorWithPenetration);
+		int val = (int)((float)(num3 - num4) * num5);
+		int num6 = Math.Max(0, val);
+		int reduction = Math.Max(0, num3 - num6);
+		return new DamageValue(damage, num6, num, reduction);
 	}
 
 	private static int RollWithoutArmorReduction(DamageData damage)
@@ -140,7 +171,6 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		{
 			Result = new DamageValue(Result.Source, 0, Result.RolledValue, 0);
 		}
-		Damage.Modifiers.Add(ModifierType.PctMul_Extra, 0, source);
 	}
 
 	private void TryNullifyDamage()

@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.Utility;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ public class AbilityRuleTriggerInitiator : AbilityTrigger, IInitiatorRulebookHan
 {
 	public bool AssignOwnerAsTarget;
 
+	public bool AssignContextFromAbility;
+
 	public void OnEventAboutToTrigger(RulePerformAbility evt)
 	{
 	}
@@ -22,7 +25,14 @@ public class AbilityRuleTriggerInitiator : AbilityTrigger, IInitiatorRulebookHan
 	{
 		if (Restrictions.IsPassed(base.Fact, evt, evt.Spell))
 		{
-			RunAction(evt.Spell.Blueprint, evt.ConcreteInitiator, evt.SpellTarget, AssignOwnerAsTarget, this);
+			if (AssignContextFromAbility)
+			{
+				RunAction(evt.Context.Ability.Blueprint, evt.Context, AssignOwnerAsTarget ? ((TargetWrapper)base.Owner) : evt.SpellTarget, AssignOwnerAsTarget, assignContextFromAbility: true);
+			}
+			else
+			{
+				RunAction(evt.Spell.Blueprint, evt.ConcreteInitiator, evt.SpellTarget, AssignOwnerAsTarget, this);
+			}
 		}
 	}
 

@@ -1,9 +1,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.ResourceLinks;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.Visual.Animation;
@@ -20,34 +22,15 @@ public static class UnitHologramExtension
 	{
 		UnitHologram unitHologram = null;
 		UnitEntityView unitEntityView = null;
-		if (unit.View.CharacterAvatar == null && unit.View.GetComponentInChildren<StarshipView>() != null)
-		{
-			LogChannel.Default.Warning(unit.View, "This unit is not a Character nor a Starship, creating a hologram for this thing isn't possible.");
-			return null;
-		}
-		Skeleton skeleton = unit.View.CharacterAvatar.Skeleton;
-		HologramRaceFx[] hologramPrefabs = BlueprintRoot.Instance.FxRoot.HologramPrefabs;
 		Transform transform = null;
-		HologramRaceFx[] array = hologramPrefabs;
-		foreach (HologramRaceFx hologramRaceFx in array)
+		PrefabLink hologramPrefab = GetHologramPrefab(unit);
+		if (hologramPrefab != null && hologramPrefab.Exists())
 		{
-			if (hologramRaceFx.Race == null)
-			{
-				LogChannel.Default.Error(unit.View, "No Skeletal config in HologramFx list in BlueprintFxRoot was found.");
-			}
-			else if (hologramRaceFx.HologramPrefab == null)
-			{
-				LogChannel.Default.Error(unit.View, "No HologramPrefab in HologramFx list in BlueprintFxRoot was found.");
-			}
-			else if (hologramRaceFx.Race == skeleton)
-			{
-				unitEntityView = SetupHologramPrefab(hologramRaceFx.HologramPrefab, unit);
-				transform = unitEntityView.transform.FindChildRecursive("R_WeaponBone");
-				break;
-			}
+			unitEntityView = SetupHologramPrefab(hologramPrefab, unit);
+			transform = unitEntityView.transform.FindChildRecursive("R_WeaponBone");
 		}
 		GameObject gameObject = null;
-		if (unit.Body.PrimaryHand.HasWeapon)
+		if (unit.Body.PrimaryHand.HasWeapon && transform != null && unit.Body.PrimaryHand.Weapon.Blueprint.VisualParameters.Model != null)
 		{
 			gameObject = UnityEngine.Object.Instantiate(unit.Body.PrimaryHand.Weapon.Blueprint.VisualParameters.Model);
 		}
@@ -109,6 +92,38 @@ public static class UnitHologramExtension
 			UnityEngine.Object.Destroy(unitEntityView.gameObject);
 		}
 		return unitHologram;
+	}
+
+	private static PrefabLink GetHologramPrefab(BaseUnitEntity unit)
+	{
+		UnitCustomHologram component = unit.Blueprint.GetComponent<UnitCustomHologram>();
+		if (component != null && component.Prefab.Exists())
+		{
+			return component.Prefab;
+		}
+		Character characterAvatar = unit.View.CharacterAvatar;
+		if (characterAvatar == null)
+		{
+			return null;
+		}
+		Skeleton skeleton = characterAvatar.Skeleton;
+		HologramRaceFx[] hologramPrefabs = BlueprintRoot.Instance.FxRoot.HologramPrefabs;
+		foreach (HologramRaceFx hologramRaceFx in hologramPrefabs)
+		{
+			if (hologramRaceFx.Race == null)
+			{
+				LogChannel.Default.Error(unit.View, "No Skeletal config in HologramFx list in BlueprintFxRoot was found.");
+			}
+			else if (hologramRaceFx.HologramPrefab == null)
+			{
+				LogChannel.Default.Error(unit.View, "No HologramPrefab in HologramFx list in BlueprintFxRoot was found.");
+			}
+			else if (hologramRaceFx.Race == skeleton)
+			{
+				return hologramRaceFx.HologramPrefab;
+			}
+		}
+		return null;
 	}
 
 	private static UnitEntityView SetupHologramPrefab(PrefabLink holoPrefabLink, BaseUnitEntity unit)

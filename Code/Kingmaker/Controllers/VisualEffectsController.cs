@@ -35,7 +35,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers;
 
-public class VisualEffectsController : IController, IAnimationEventHandler, ISubscriber<IMechanicEntity>, ISubscriber, IAbilityExecutionProcessHandler, IApplyAbilityEffectHandler, IProjectileLaunchedHandler, IProjectileHitHandler, IDamageFXHandler, IDodgeHandler, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IGlobalRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, IGlobalRulebookSubscriber, IBuffEffectHandler, IUnitCommandStartHandler
+public class VisualEffectsController : IController, IAnimationEventHandler, ISubscriber<IMechanicEntity>, ISubscriber, IAbilityExecutionProcessHandler, IApplyAbilityEffectHandler, IProjectileLaunchedHandler, IProjectileHitHandler, IDamageFXHandler, IDodgeHandler, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IGlobalRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, IGlobalRulebookSubscriber, IBuffEffectHandler, IUnitCommandStartHandler, IAbilityExecutionProcessRedirectHandler
 {
 	private static void TryPlayVisualFX([NotNull] MechanicEntity caster, [CanBeNull] TargetWrapper target, [CanBeNull] AbilityData ability, MappedAnimationEventType? animationEvent, AbilityEventType? abilityEvent)
 	{
@@ -180,7 +180,9 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 
 	private static void TryPlayHitEffect(Projectile projectile, TargetWrapper target)
 	{
-		if (projectile.Hits.Length != 0 && !projectile.DoNotPlayHitEffect)
+		AbilityData ability = projectile.Ability;
+		bool flag = (object)ability != null && ability.Blueprint.AbilityTag == AbilityTag.ThrowingGrenade;
+		if (projectile.Hits.Length != 0 && !projectile.DoNotPlayHitEffect && !flag)
 		{
 			if (projectile.IsCoverHit)
 			{
@@ -478,5 +480,15 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		{
 			TryPlayVisualFX(unitUseAbility.Executor, unitUseAbility.Target, unitUseAbility.Ability, AbilityEventType.StarUseAbilityCommand);
 		}
+	}
+
+	public void HandleAbilityRedirected(AbilityExecutionContext context)
+	{
+		GameObject gameObject = Root.WH.AbilityRedirect.Fx?.Load();
+		if ((object)gameObject != null)
+		{
+			FxHelper.SpawnFxOnPoint(gameObject, context.ClickedTarget.Point);
+		}
+		TryPlayVisualFX(context.Caster, context.ClickedTarget, context.Ability, AbilityEventType.Redirected);
 	}
 }

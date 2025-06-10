@@ -19,9 +19,9 @@ public class RuleRollDice : RulebookEvent
 
 	private int? m_PreRolledResult;
 
-	protected int? ResultOverride;
-
 	private int m_ResultModifier;
+
+	public int? ResultOverride { get; protected set; }
 
 	public bool ReplaceOneWithMax { get; set; }
 

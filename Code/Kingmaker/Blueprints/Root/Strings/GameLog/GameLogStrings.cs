@@ -61,6 +61,8 @@ public class GameLogStrings : StringsContainer
 
 	public GameLogMessage WarhammerParry;
 
+	public GameLogMessage WarhammerBlock;
+
 	public GameLogMessage WarhammerDodgeAndParry;
 
 	public GameLogMessage WarhammerDamageNegated;

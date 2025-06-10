@@ -19,6 +19,14 @@ public class BlueprintBrain : BlueprintBrainBase
 	[SerializeField]
 	private PropertyCalculator[] HatedTargetConditions;
 
+	[SerializeField]
+	private bool m_TargetOthersIfCantReachHated;
+
+	[Space(4f)]
+	[SerializeField]
+	[Tooltip("If it's on, unit will not consider using abilities outside of AbilityPriorityOrder")]
+	private bool m_UseOnlyListedAbilities;
+
 	[Tooltip("The earlier the ability in the list, the higher its priority. Abilities that are not listed here follow priority abilities")]
 	public AbilityOrder AbilityPriorityOrder;
 
@@ -58,6 +66,8 @@ public class BlueprintBrain : BlueprintBrainBase
 
 	public IReadOnlyList<AbilitySettings> AbilitySettingsReadOnly => AbilitySettings;
 
+	public override bool TargetOthersIfCantReachHated => m_TargetOthersIfCantReachHated;
+
 	public override List<TargetInfo> GetHatedTargets(PropertyContext context, List<TargetInfo> enemies)
 	{
 		List<TargetInfo> list = TempList.Get<TargetInfo>();
@@ -85,6 +95,10 @@ public class BlueprintBrain : BlueprintBrainBase
 
 	public override AbilitySettings GetCustomAbilitySettings(BlueprintAbility ability)
 	{
+		if (m_UseOnlyListedAbilities && !AbilityPriorityOrder.Order.Any((AbilitySourceWrapper o) => o.Abilities.Contains(ability)))
+		{
+			return Kingmaker.AI.AbilitySettings.UnplayableSetting;
+		}
 		AbilitySettings[] abilitySettings = AbilitySettings;
 		foreach (AbilitySettings abilitySettings2 in abilitySettings)
 		{

@@ -32,7 +32,10 @@ public static class CheatGameCommandSystem
 	{
 		CheatsManagerHolder.CheatSystem system = (CheatsManagerHolder.System = CreateForThisDomainWithExternals(SmartConsole.ExecuteLineImpl));
 		s_Server?.Dispose();
-		s_Server = new RestServer(CreateServerPlugins(in system));
+		if (BuildModeUtility.CheatsEnabled)
+		{
+			s_Server = new RestServer(CreateServerPlugins(in system));
+		}
 		if (!BuildModeUtility.IsDevelopment)
 		{
 			ConsoleLogSink.SetMessageBufferSize(100);
@@ -41,7 +44,10 @@ public static class CheatGameCommandSystem
 		await Task.Delay(15000);
 		try
 		{
-			await s_Server.Start();
+			if (BuildModeUtility.CheatsEnabled)
+			{
+				await s_Server.Start();
+			}
 			await system.Parser.Execute("exec autoexec.cfg True");
 		}
 		catch (Exception ex)

@@ -20,6 +20,10 @@ public class PartUnitDescription : BaseUnitPart, IHashable
 
 	[JsonProperty]
 	[CanBeNull]
+	public string CustomPetName;
+
+	[JsonProperty]
+	[CanBeNull]
 	public Gender? CustomGender { get; private set; }
 
 	[JsonProperty]
@@ -85,6 +89,7 @@ public class PartUnitDescription : BaseUnitPart, IHashable
 			result.Append(ref val2);
 		}
 		result.Append(CustomName);
+		result.Append(CustomPetName);
 		bool val3 = ForceUseClassEquipment;
 		result.Append(ref val3);
 		return result;

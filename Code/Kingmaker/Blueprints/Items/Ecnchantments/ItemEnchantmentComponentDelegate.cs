@@ -19,16 +19,9 @@ public abstract class ItemEnchantmentComponentDelegate<TItemEntity> : EntityFact
 		get
 		{
 			TItemEntity owner = base.Owner;
-			if (owner is ItemEntityShield itemEntityShield)
+			if (owner is ItemEntityShield itemEntityShield && typeof(TItemEntity) == typeof(ItemEntityWeapon))
 			{
-				if (typeof(TItemEntity) == typeof(ItemEntityArmor))
-				{
-					return itemEntityShield.ArmorComponent as TItemEntity;
-				}
-				if (typeof(TItemEntity) == typeof(ItemEntityWeapon))
-				{
-					return itemEntityShield.WeaponComponent as TItemEntity;
-				}
+				return itemEntityShield.WeaponComponent as TItemEntity;
 			}
 			return owner;
 		}

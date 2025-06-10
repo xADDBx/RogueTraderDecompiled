@@ -44,15 +44,15 @@ public class ShipUpgradeStructureSlotPCView : ShipUpgradeSlotPCView, IHasTooltip
 	protected override void SetupContextMenu()
 	{
 		base.SetupContextMenu();
-		m_HeaderEntity = new ContextMenuCollectionEntity(SetupHeaderText(), SetupSubTitleText(), isHeader: true);
-		m_UpgradeEntity = new ContextMenuCollectionEntity(SetupUpgradeText(), TryUpgrade, condition: true, base.ViewModel.CanUpgradeInternalStructure.Value, m_Upgrade, UISounds.ButtonSoundsEnum.NoSound);
-		m_DowngradeEntity = new ContextMenuCollectionEntity(SetupDowngradeText(), TryDowngrade, condition: true, base.ViewModel.CanDowngradeInternalStructure, m_Downgrade, UISounds.ButtonSoundsEnum.NoSound);
+		HeaderEntity = new ContextMenuCollectionEntity(SetupHeaderText(), SetupSubTitleText(), isHeader: true);
+		UpgradeEntity = new ContextMenuCollectionEntity(SetupUpgradeText(), TryUpgrade, condition: true, base.ViewModel.CanUpgradeInternalStructure.Value, m_Upgrade, UISounds.ButtonSoundsEnum.NoSound);
+		DowngradeEntity = new ContextMenuCollectionEntity(SetupDowngradeText(), TryDowngrade, condition: true, base.ViewModel.CanDowngradeInternalStructure, m_Downgrade, UISounds.ButtonSoundsEnum.NoSound);
 		base.ViewModel.ContextMenu.Value = new List<ContextMenuCollectionEntity>
 		{
-			m_HeaderEntity,
+			HeaderEntity,
 			new ContextMenuCollectionEntity(null, null),
-			m_UpgradeEntity,
-			m_DowngradeEntity
+			UpgradeEntity,
+			DowngradeEntity
 		};
 	}
 
@@ -88,12 +88,12 @@ public class ShipUpgradeStructureSlotPCView : ShipUpgradeSlotPCView, IHasTooltip
 
 	private void UpdateCostValue()
 	{
-		m_HeaderEntity.SetNewTitleText(ContextMenuText.UpgradeInternalStructure.Text);
-		m_HeaderEntity.SetSubtitleText(UIStrings.Instance.ShipCustomization.CurrentUpgradeLevel.Text + "  " + UIUtility.ArabicToRoman(m_CurrentLevel));
-		m_UpgradeEntity.SetNewTitleText(ContextMenuText.UpgradeInternalStructure.Text + ": " + $"{Hull.InternalStructure.Blueprint.UpgradeCost[(Hull.InternalStructure.Blueprint.UpgradeCost.Length <= Hull.InternalStructure.UpgradeLevel + 1) ? Hull.InternalStructure.UpgradeLevel : (Hull.InternalStructure.UpgradeLevel + 1)]} " + UIStrings.Instance.ShipCustomization.Scrap.Text);
-		m_UpgradeEntity.ForceUpdateInteractive(base.ViewModel.CanUpgradeInternalStructure.Value);
-		m_DowngradeEntity.SetNewTitleText(ContextMenuText.DowngradeInternalStructure.Text + ": " + $"{Hull.InternalStructure.Blueprint.UpgradeCost[Hull.InternalStructure.UpgradeLevel]} " + UIStrings.Instance.ShipCustomization.Scrap.Text);
-		m_DowngradeEntity.ForceUpdateInteractive(base.ViewModel.CanDowngradeInternalStructure);
+		HeaderEntity.SetNewTitleText(ContextMenuText.UpgradeInternalStructure.Text);
+		HeaderEntity.SetSubtitleText(UIStrings.Instance.ShipCustomization.CurrentUpgradeLevel.Text + "  " + UIUtility.ArabicToRoman(m_CurrentLevel));
+		UpgradeEntity.SetNewTitleText(ContextMenuText.UpgradeInternalStructure.Text + ": " + $"{Hull.InternalStructure.Blueprint.UpgradeCost[(Hull.InternalStructure.Blueprint.UpgradeCost.Length <= Hull.InternalStructure.UpgradeLevel + 1) ? Hull.InternalStructure.UpgradeLevel : (Hull.InternalStructure.UpgradeLevel + 1)]} " + UIStrings.Instance.ShipCustomization.Scrap.Text);
+		UpgradeEntity.ForceUpdateInteractive(base.ViewModel.CanUpgradeInternalStructure.Value);
+		DowngradeEntity.SetNewTitleText(ContextMenuText.DowngradeInternalStructure.Text + ": " + $"{Hull.InternalStructure.Blueprint.UpgradeCost[Hull.InternalStructure.UpgradeLevel]} " + UIStrings.Instance.ShipCustomization.Scrap.Text);
+		DowngradeEntity.ForceUpdateInteractive(base.ViewModel.CanDowngradeInternalStructure);
 	}
 
 	private void UpdateInternalStructureLevel(int value)

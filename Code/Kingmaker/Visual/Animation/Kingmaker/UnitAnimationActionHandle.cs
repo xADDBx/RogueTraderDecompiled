@@ -82,6 +82,8 @@ public class UnitAnimationActionHandle : AnimationActionHandle, ICloneable
 
 	public UnitAnimationActionCastSpell.SpecialBehaviourType SpecialCastBehaviour { get; set; }
 
+	public bool SkipEnterAnimation { get; set; }
+
 	public AnimationClipWrapper AnimationClipWrapper { get; set; }
 
 	public int Variant { get; set; }

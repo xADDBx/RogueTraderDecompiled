@@ -16,6 +16,7 @@ using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility;
@@ -25,7 +26,7 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units.CameraFollow;
 
-public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInterruptTurnStartHandler, IWarhammerAttackHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitDeathHandler, IUnitCommandActHandler, ICameraFocusTargetHandler
+public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IContinueTurnHandler, IInterruptTurnStartHandler, IWarhammerAttackHandler, IUnitCommandStartHandler, IUnitCommandEndHandler, IUnitDeathHandler, IUnitCommandActHandler, ICameraFocusTargetHandler, IInterruptTurnContinueHandler
 {
 	private readonly Action<ICameraFollowTask, bool, float> m_AddTask;
 
@@ -60,10 +61,23 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
+		if ((!(EventInvokerExtensions.MechanicEntity?.HasMechanicFeature(MechanicsFeatureType.HasNoStandardTurn))) ?? true)
+		{
+			HandleUnitStartTurnInternal();
+		}
+	}
+
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
 		HandleUnitStartTurnInternal();
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		HandleUnitStartTurnInternal();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		HandleUnitStartTurnInternal();
 	}
@@ -200,6 +214,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 			cameraFollowTaskContext.Owner = unitUseAbility.Executor;
 			cameraFollowTaskContext.Params = readyToAttack;
 			cameraFollowTaskContext.IsMelee = isMelee;
+			cameraFollowTaskContext.Priority = 2;
 			CameraFollowTaskContext context = cameraFollowTaskContext;
 			AddTask(CameraFollowTaskFactory.GetScrollToTask(context), checkOnScreen: true);
 		}
@@ -220,7 +235,7 @@ public class SurfaceCombatFollowTasksProvider : IDisposable, ITurnStartHandler, 
 		if (!command.Params.FromCutscene && command is UnitUseAbility && CameraScrollToCurrentUnit)
 		{
 			m_IsCommandInAction = false;
-			if (!IsAttackCooldown)
+			if (!IsAttackCooldown && !(command is UnitUseAbility { Params: { DisableCameraReturn: not false } }))
 			{
 				TryAddReturnToUnitTask(command.Executor);
 			}

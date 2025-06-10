@@ -38,15 +38,15 @@ public class PostAbilityView : ViewBase<PostAbilityVM>, IFloatConsoleNavigationE
 		UpdateIcon(base.ViewModel.Icon.Value);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_Icon.sprite = m_EmptySprite;
+	}
+
 	private void UpdateIcon(Sprite sprite)
 	{
 		m_Icon.sprite = ((sprite != null) ? sprite : m_EmptySprite);
 		m_IconGrayScale.sprite = ((sprite != null) ? sprite : null);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_Icon.sprite = m_EmptySprite;
 	}
 
 	public void SetupIcon()

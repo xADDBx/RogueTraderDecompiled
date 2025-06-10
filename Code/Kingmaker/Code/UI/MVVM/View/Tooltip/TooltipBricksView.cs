@@ -135,6 +135,20 @@ public class TooltipBricksView : MonoBehaviour
 
 	public TooltipBrickItemHeaderView BrickItemHeaderView;
 
+	public TooltipBrickLastUsedAbilityPaperView BrickLastUsedAbilityPaperView;
+
+	public TooltipBrickPetInfoView BrickPetInfoView;
+
+	public TooltipBrickShortLabelView BrickShortLabelView;
+
+	public TooltipBrickOverseerPaperView BrickOverseerPaperView;
+
+	public TooltipBrickProtocolPetView BrickProtocolPetView;
+
+	public TooltipBrickRecommendPaperView BrickRecommendPaperView;
+
+	public TooltipBrickCantUsePaperView BrickCantUsePaperView;
+
 	[Header("Combat Log")]
 	public TooltipBrickChanceView BrickChanceView;
 

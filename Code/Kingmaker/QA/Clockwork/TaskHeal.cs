@@ -16,14 +16,14 @@ public class TaskHeal : ClockworkRunnerTask
 	protected override IEnumerator Routine()
 	{
 		yield return 1f;
-		foreach (BaseUnitEntity item in Game.Instance.Player.Party)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			if (item.LifeState.IsDead)
+			if (partyAndPet.LifeState.IsDead)
 			{
-				item.LifeState.Resurrect();
+				partyAndPet.LifeState.Resurrect();
 			}
-			RemoveAllBuffs(item);
-			GameHelper.HealDamage(item, item, item.Health.Damage);
+			RemoveAllBuffs(partyAndPet);
+			GameHelper.HealDamage(partyAndPet, partyAndPet, partyAndPet.Health.Damage);
 		}
 		yield return 1f;
 	}

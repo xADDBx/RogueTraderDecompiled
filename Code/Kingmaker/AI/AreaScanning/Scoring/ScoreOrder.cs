@@ -30,7 +30,7 @@ public class ScoreOrder
 	public ScoreOrder(ScoreOrder other)
 	{
 		order = new ScorePair[ScoreHelper.ScoreTypesNum];
-		for (int i = 0; i < ScoreHelper.ScoreTypesNum; i++)
+		for (int i = 0; i < ScoreHelper.ScoreTypesNum && i < other.order.Length; i++)
 		{
 			order[i] = other.order[i];
 		}

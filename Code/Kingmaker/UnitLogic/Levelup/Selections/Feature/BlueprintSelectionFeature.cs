@@ -49,7 +49,7 @@ public class BlueprintSelectionFeature : BlueprintSelection
 			Debug.LogError("Features contains NULL: " + unit.Blueprint?.name + " path: " + path?.name);
 		}
 		return source.SelectMany((AddFeaturesToLevelUp allFeatures) => from f in allFeatures.Features
-			where f != null && !f.IsDlcRestricted()
+			where f != null && !f.IsDlcRestricted() && (!f.HideNotAvailibleInUI || f.Prerequisites.Meet(unit))
 			select f into feature
 			select CreateItem(feature, allFeatures)).ToArray();
 		FeatureSelectionItem CreateItem(BlueprintFeature feature, AddFeaturesToLevelUp pool)

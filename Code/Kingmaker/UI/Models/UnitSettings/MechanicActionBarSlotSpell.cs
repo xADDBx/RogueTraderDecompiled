@@ -1,8 +1,8 @@
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.Units;
-using Kingmaker.PubSubSystem;
-using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Models.UnitSettings.Blueprints;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
@@ -17,7 +17,28 @@ public abstract class MechanicActionBarSlotSpell : MechanicActionBarSlot, IHasha
 	[CanBeNull]
 	public abstract AbilityData Spell { get; }
 
-	public override string KeyName => Spell?.Blueprint?.name;
+	public override string KeyName
+	{
+		get
+		{
+			object obj = Spell?.Blueprint?.GetComponent<ActionPanelLogic>()?.UseKeyNameFromFact?.Get()?.name;
+			if (obj == null)
+			{
+				AbilityData spell = Spell;
+				if ((object)spell == null)
+				{
+					return null;
+				}
+				BlueprintAbility blueprint = spell.Blueprint;
+				if (blueprint == null)
+				{
+					return null;
+				}
+				obj = blueprint.name;
+			}
+			return (string)obj;
+		}
+	}
 
 	protected override bool IsNotAvailable
 	{
@@ -58,30 +79,9 @@ public abstract class MechanicActionBarSlotSpell : MechanicActionBarSlot, IHasha
 
 	public override void OnHover(bool state)
 	{
-		EventBus.RaiseEvent(delegate(IAbilityTargetHoverUIHandler h)
+		if (!(Spell == null))
 		{
-			h.HandleAbilityTargetHover(Spell, state);
-		});
-		if (!(Spell != null))
-		{
-			return;
-		}
-		if (state)
-		{
-			if (Spell.TargetAnchor == AbilityTargetAnchor.Owner)
-			{
-				EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
-				{
-					h.HandleAoEMove(base.Unit.Position, Spell);
-				});
-			}
-		}
-		else
-		{
-			EventBus.RaiseEvent(delegate(IShowAoEAffectedUIHandler h)
-			{
-				h.HandleAoECancel();
-			});
+			TriggerAbilityHoverEvents(Spell, state);
 		}
 	}
 

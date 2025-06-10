@@ -43,6 +43,10 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	private MemorizedAbilitiesContainer m_AlreadyAutomaticallyAdded = new MemorizedAbilitiesContainer();
 
 	[JsonProperty]
+	[GameStateIgnore]
+	public Dictionary<string, int> PreferredAbilitiesPositions = new Dictionary<string, int>();
+
+	[JsonProperty]
 	private int m_SlotRowIndexConsole;
 
 	[JsonProperty]
@@ -202,7 +206,7 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	public MechanicActionBarSlot GetSlot(int index, BaseUnitEntity unit)
 	{
-		FillSlots(index);
+		EnsureSlotsTillIndex(index);
 		MechanicActionBarSlot mechanicActionBarSlot = Slots[index];
 		if (mechanicActionBarSlot != null && !mechanicActionBarSlot.IsBad())
 		{
@@ -216,7 +220,7 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		return mechanicActionBarSlot;
 	}
 
-	private void FillSlots(int index)
+	private void EnsureSlotsTillIndex(int index)
 	{
 		for (int i = Slots.Count; i < index + 1; i++)
 		{
@@ -231,8 +235,12 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	{
 		if (index != -1)
 		{
-			FillSlots(index);
+			EnsureSlotsTillIndex(index);
 			Slots[index] = slot;
+			if (slot.KeyName != null)
+			{
+				PreferredAbilitiesPositions[slot.KeyName] = index;
+			}
 		}
 	}
 
@@ -243,7 +251,13 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	private bool TrySetSlotInternal(MechanicActionBarSlot slot)
 	{
-		for (int i = 0; i < 100; i++)
+		int i = 0;
+		if (PreferredAbilitiesPositions.TryGetValue(slot.KeyName, out i) && GetSlot(i, slot.Unit) is MechanicActionBarSlotEmpty)
+		{
+			SetSlot(slot, i);
+			return true;
+		}
+		for (; i < 100; i++)
 		{
 			if (GetSlot(i, slot.Unit) is MechanicActionBarSlotEmpty)
 			{
@@ -402,7 +416,8 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	{
 		foreach (Ability item in unit.Abilities.Visible)
 		{
-			if (!(item.SourceItem is ItemEntityWeapon) && item.Blueprint.IsMomentum == isMomentum)
+			IItemEntity sourceItem = item.SourceItem;
+			if (!(sourceItem is ItemEntityWeapon) && !(sourceItem is ItemEntityShield) && item.Blueprint.IsMomentum == isMomentum)
 			{
 				ActionPanelLogic component = item.Blueprint.GetComponent<ActionPanelLogic>();
 				if ((isMomentum || component == null || component.AutoFillConditions.Check()) && (isMomentum || !m_AlreadyAutomaticallyAdded.Contains(item.Blueprint, (ItemEntity)item.SourceItem)))

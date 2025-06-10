@@ -95,7 +95,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 	{
 		get
 		{
-			if ((base.OwnerUnit == null || !base.OwnerUnit.Faction.IsPlayer) && !base.ConcreteOwner.GetOptional<UnitPartUnlootable>() && base.HasLoot)
+			if ((base.OwnerUnit == null || !base.OwnerUnit.Faction.IsPlayer) && !(base.ConcreteOwner?.GetOptional<UnitPartUnlootable>()) && base.HasLoot)
 			{
 				return !IsLootDroppedAsEntity;
 			}
@@ -150,7 +150,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 
 	protected override void OnHoldingStateChanged()
 	{
-		if (base.ConcreteOwner.HoldingState != Game.Instance.Player.CrossSceneState && base.ConcreteOwner.HoldingState != null && !HasOwnInventory)
+		if (base.ConcreteOwner?.HoldingState != Game.Instance.Player.CrossSceneState && base.ConcreteOwner?.HoldingState != null && !HasOwnInventory)
 		{
 			using (ContextData<ItemsCollection.SuppressEvents>.Request())
 			{
@@ -176,7 +176,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 		}
 		DroppedLoot unityObject = ((dismember && base.OwnerUnit != null) ? BlueprintRoot.Instance.HitSystemRoot.GetDismemberLoot(base.OwnerUnit.SurfaceType) : null);
 		unityObject = unityObject.Or(null) ?? BlueprintRoot.Instance.Prefabs.DroppedLootBag;
-		DroppedLoot droppedLoot = Game.Instance.EntitySpawner.SpawnEntityWithView(unityObject, overridePos ?? base.Owner.Position, base.Owner.View.Or(null)?.ViewTransform.rotation ?? Quaternion.identity, base.ConcreteOwner.HoldingState);
+		DroppedLoot droppedLoot = Game.Instance.EntitySpawner.SpawnEntityWithView(unityObject, overridePos ?? base.Owner.Position, base.Owner.View.Or(null)?.ViewTransform.rotation ?? Quaternion.identity, base.ConcreteOwner?.HoldingState);
 		StatefulRandom statefulRandom = ((base.OwnerUnit != null) ? base.OwnerUnit.Random : PFStatefulRandom.UnitLogic.Parts);
 		Vector3 rotation = Vector3.up * statefulRandom.Range(0f, 360f);
 		UnitHelper.UpdateDropTransform(base.OwnerUnit, droppedLoot.ViewTransform, rotation);
@@ -197,7 +197,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 		LocalMapMarkerPart orCreate = ((MapObjectView)droppedLoot).Data.GetOrCreate<LocalMapMarkerPart>();
 		orCreate.IsRuntimeCreated = true;
 		orCreate.Settings.Type = LocalMapMarkType.Loot;
-		orCreate.NonLocalizedDescription = base.ConcreteOwner.GetOptional<PartUnitDescription>()?.Name ?? "";
+		orCreate.NonLocalizedDescription = base.ConcreteOwner?.GetOptional<PartUnitDescription>()?.Name ?? "";
 	}
 
 	public void TransferInventoryToDroppedLoot()
@@ -255,11 +255,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 
 	void IPartyHandler.HandleCompanionActivated()
 	{
-		if (base.OwnerUnit != null && base.OwnerUnit.Faction.IsPlayer)
-		{
-			HasOwnInventory = false;
-		}
-		Setup();
+		MakeSharedInventory();
 	}
 
 	void IPartyHandler.HandleCompanionRemoved(bool stayInGame)
@@ -268,6 +264,15 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 
 	void IPartyHandler.HandleCapitalModeChanged()
 	{
+	}
+
+	public void MakeSharedInventory()
+	{
+		if (base.OwnerUnit != null && base.OwnerUnit.Faction.IsPlayer)
+		{
+			HasOwnInventory = false;
+		}
+		Setup();
 	}
 
 	public override Hash128 GetHash128()

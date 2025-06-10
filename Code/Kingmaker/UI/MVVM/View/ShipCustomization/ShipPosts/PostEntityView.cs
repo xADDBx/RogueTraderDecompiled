@@ -65,6 +65,11 @@ public class PostEntityView : SelectionGroupEntityView<PostEntityVM>
 		AddDisposable(base.ViewModel.OnPostUpdate.Subscribe(OnUpdatePost));
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+		m_PostBlockTw?.Kill();
+	}
+
 	private void OnUpdatePost()
 	{
 		m_Portrait.sprite = (base.ViewModel.Portrait ? base.ViewModel.Portrait : null);
@@ -72,11 +77,6 @@ public class PostEntityView : SelectionGroupEntityView<PostEntityVM>
 		m_EmptyPortrait.gameObject.SetActive(!m_Portrait.gameObject.activeSelf);
 		byte a = (byte)((m_Portrait.sprite == base.ViewModel.Portrait) ? m_NotEmptyAlpha : m_EmptyAlpha);
 		m_Portrait.color = new Color32((byte)m_NotEmptyAlpha, (byte)m_NotEmptyAlpha, (byte)m_NotEmptyAlpha, a);
-	}
-
-	protected override void DestroyViewImplementation()
-	{
-		m_PostBlockTw?.Kill();
 	}
 
 	private void ShowPostBlocked(bool val)

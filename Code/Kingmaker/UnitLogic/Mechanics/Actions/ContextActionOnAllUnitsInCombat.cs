@@ -27,6 +27,9 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 
 	public bool OnlyParty;
 
+	[ShowIf("OnlyParty")]
+	public bool WithoutPets;
+
 	[SerializeField]
 	private BlueprintUnitFactReference[] m_FilterNoFacts = new BlueprintUnitFactReference[0];
 
@@ -42,6 +45,8 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 	public bool OnlyNotVisible;
 
 	public bool IncludeDead;
+
+	public bool IncludeUntargetable;
 
 	public ReferenceArrayProxy<BlueprintUnitFact> FilterNoFacts
 	{
@@ -73,7 +78,7 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 		{
 			return;
 		}
-		List<BaseUnitEntity> list = ((!OnlyParty) ? Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && (IncludeDead || !p.LifeState.IsDead) && p.IsInCombat).ToList() : Game.Instance.State.PlayerState.Party.ToList());
+		List<BaseUnitEntity> list = ((!OnlyParty) ? Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => (IncludeUntargetable || !p.Features.IsUntargetable) && (IncludeDead || !p.LifeState.IsDead) && p.IsInCombat).ToList() : (WithoutPets ? Game.Instance.State.PlayerState.Party.ToList() : Game.Instance.State.PlayerState.PartyAndPets.ToList()));
 		if (OnlyEnemies)
 		{
 			list.RemoveAll((BaseUnitEntity p) => !p.CombatGroup.IsEnemy(base.Context.MaybeCaster));

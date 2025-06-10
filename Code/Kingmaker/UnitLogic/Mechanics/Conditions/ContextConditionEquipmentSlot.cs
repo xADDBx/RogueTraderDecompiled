@@ -43,6 +43,7 @@ public class ContextConditionEquipmentSlot : ContextCondition
 			EquipSlotType.Ring2 => partUnitBody.Ring2.HasItem, 
 			EquipSlotType.Wrist => partUnitBody.Wrist.HasItem, 
 			EquipSlotType.Shoulders => partUnitBody.Shoulders.HasItem, 
+			EquipSlotType.PetProtocol => partUnitBody.PetProtocol.HasItem, 
 			EquipSlotType.Glasses => partUnitBody.Glasses.HasItem, 
 			EquipSlotType.Shirt => partUnitBody.Shirt.HasItem, 
 			EquipSlotType.QuickSlot1 => partUnitBody.QuickSlots[0].HasItem, 

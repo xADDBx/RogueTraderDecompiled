@@ -31,7 +31,10 @@ public class TurnOrderQueue : IHashable
 
 	public IEnumerable<MechanicEntity> UnitsOrder => UnitsInCombat.OrderByDescending((MechanicEntity i) => i.Initiative.TurnOrderPriority);
 
-	public IEnumerable<MechanicEntity> CurrentRoundUnitsOrder => InterruptingTurnOrder.Concat(UnitsOrder.Where((MechanicEntity i) => !i.Initiative.ActedThisRound));
+	public IEnumerable<MechanicEntity> CurrentRoundUnitsOrder => InterruptingTurnOrder.Concat(from i in UnitsOrder
+		where !i.Initiative.ActedThisRound
+		orderby i.Initiative.WasPreparedForRound descending
+		select i);
 
 	public IEnumerable<MechanicEntity> NextRoundUnitsOrder => UnitsOrder.Where((MechanicEntity i) => i.Initiative.ActedThisRound);
 
@@ -143,7 +146,7 @@ public class TurnOrderQueue : IHashable
 		{
 			return CurrentUnit = null;
 		}
-		CalculateCurrentUnit();
+		ProcessToNextUnit();
 		if (CurrentUnit != null)
 		{
 			return CurrentUnit;
@@ -153,7 +156,7 @@ public class TurnOrderQueue : IHashable
 		return CurrentUnit = null;
 	}
 
-	public void CalculateCurrentUnit()
+	public void ProcessToNextUnit()
 	{
 		MechanicEntity mechanicEntity = CurrentRoundUnitsOrder.FirstOrDefault();
 		if (mechanicEntity != null)
@@ -162,6 +165,7 @@ public class TurnOrderQueue : IHashable
 			{
 				CurrentUnit = ((InitiativePlaceholderEntity)mechanicEntity).Delegate;
 				mechanicEntity.Initiative.LastTurn = Game.Instance.TurnController.GameRound;
+				mechanicEntity.Initiative.WasPreparedForRound = Game.Instance.TurnController.CombatRound;
 			}
 			else
 			{

@@ -5,6 +5,11 @@ namespace Kingmaker.Code.UI.MVVM.View.SectorMap.Base;
 
 public class SectorMapBaseView : CommonStaticComponentView<SectorMapVM>
 {
+	public void Initialize()
+	{
+		base.gameObject.SetActive(value: false);
+	}
+
 	protected override void BindViewImplementation()
 	{
 		base.gameObject.SetActive(value: true);

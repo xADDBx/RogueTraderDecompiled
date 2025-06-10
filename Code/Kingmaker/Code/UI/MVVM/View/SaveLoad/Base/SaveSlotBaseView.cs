@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
@@ -21,6 +22,9 @@ namespace Kingmaker.Code.UI.MVVM.View.SaveLoad.Base;
 
 public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetView
 {
+	[SerializeField]
+	protected bool m_IsInfo;
+
 	[SerializeField]
 	protected bool m_IsDetailedView;
 
@@ -63,6 +67,9 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 	[SerializeField]
 	private WidgetListMVVM m_WidgetListMvvm;
 
+	[SerializeField]
+	private GameObject m_ArrowBigPartyHint;
+
 	protected UISaveLoadTexts Texts => BlueprintRoot.Instance.LocalizedTexts.UserInterfacesText.SaveLoadTexts;
 
 	public MonoBehaviour MonoBehaviour => this;
@@ -91,6 +98,13 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 		AddDisposable(base.ViewModel.ScreenShot.Subscribe(SetScreenshot));
 		AddDisposable(base.ViewModel.ShowAutoSaveMark.Subscribe(ShowAutoSaveMark));
 		AddDisposable(base.ViewModel.ShowQuickSaveMark.Subscribe(ShowQuickSaveMark));
+		if (m_ArrowBigPartyHint != null)
+		{
+			AddDisposable(base.ViewModel.ShowArrowPartyHint.Subscribe(delegate
+			{
+				m_ArrowBigPartyHint.SetActive(base.ViewModel.ShowArrowPartyHint.Value);
+			}));
+		}
 		base.ViewModel.UpdateScreenshot();
 		bool flag = base.ViewModel.Reference.Type == SaveInfo.SaveType.IronMan;
 		m_IronManIcon.Or(null)?.gameObject.SetActive(flag);
@@ -160,7 +174,15 @@ public class SaveSlotBaseView : SelectionGroupEntityView<SaveSlotVM>, IWidgetVie
 
 	private void SetPortraits(List<SaveLoadPortraitVM> sprites)
 	{
-		m_WidgetListMvvm.DrawEntries(base.ViewModel.PartyPortraits.Value?.ToArray(), m_PortraitPrefab);
+		if (!m_IsInfo)
+		{
+			IEnumerable<SaveLoadPortraitVM> source = base.ViewModel.PartyPortraits.Value.Take(6);
+			m_WidgetListMvvm.DrawEntries(source.ToArray(), m_PortraitPrefab);
+		}
+		else
+		{
+			m_WidgetListMvvm.DrawEntries(base.ViewModel.PartyPortraits.Value.ToArray(), m_PortraitPrefab);
+		}
 	}
 
 	private void ShowAutoSaveMark(bool b)

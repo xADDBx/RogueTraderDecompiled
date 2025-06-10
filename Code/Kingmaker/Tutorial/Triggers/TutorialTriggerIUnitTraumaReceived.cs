@@ -24,6 +24,10 @@ public class TutorialTriggerIUnitTraumaReceived : TutorialTrigger, IUnitTraumaHa
 		}
 	}
 
+	public void HandleTraumaAvoided()
+	{
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

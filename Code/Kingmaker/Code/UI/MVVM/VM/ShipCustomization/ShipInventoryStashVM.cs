@@ -30,13 +30,13 @@ public class ShipInventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly ItemsFilterVM ItemsFilter;
 
-	public readonly EncumbranceVM EncumbranceVM;
+	private readonly EncumbranceVM m_EncumbranceVM;
 
-	public IReactiveProperty<long> Scrap = new ReactiveProperty<long>();
+	public readonly IReactiveProperty<long> Scrap = new ReactiveProperty<long>();
 
 	private ItemsCollection ItemsCollection => Game.Instance.Player.PlayerShip.Inventory.Collection;
 
-	public ReactiveProperty<ItemsSorterType> CurrentSorter => ItemsFilter.CurrentSorter;
+	private ReactiveProperty<ItemsSorterType> CurrentSorter => ItemsFilter.CurrentSorter;
 
 	public ReactiveProperty<ItemsFilterType> CurrentFilter => ItemsFilter.CurrentFilter;
 
@@ -46,7 +46,7 @@ public class ShipInventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public ShipInventoryStashVM(bool inventory, Func<ItemEntity, bool> canInsertItem = null)
 	{
-		AddDisposable(EncumbranceVM = new EncumbranceVM(EncumbranceHelper.GetPartyCarryingCapacity()));
+		AddDisposable(m_EncumbranceVM = new EncumbranceVM(EncumbranceHelper.GetPartyCarryingCapacity()));
 		if (canInsertItem == null)
 		{
 			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, ItemsFilterType.ShipNoFilter, Game.Instance.Player.UISettings.InventorySorter, showUnavailableItems: true, showSlotHoldItemsInSlots: false, ItemSlotsGroupType.Inventory));
@@ -76,6 +76,10 @@ public class ShipInventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable,
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	protected override void DisposeImplementation()
+	{
+	}
+
 	public void CollectionChanged()
 	{
 		ItemSlotsGroup?.UpdateVisibleCollection();
@@ -90,16 +94,12 @@ public class ShipInventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	private void UpdateCapacity()
 	{
-		EncumbranceVM.SetCapacity(EncumbranceHelper.GetPartyCarryingCapacity());
+		m_EncumbranceVM.SetCapacity(EncumbranceHelper.GetPartyCarryingCapacity());
 	}
 
 	private void UpdateScrap()
 	{
 		Scrap.Value = (int)Game.Instance.Player.Scrap;
-	}
-
-	protected override void DisposeImplementation()
-	{
 	}
 
 	void ISetInventorySorterHandler.HandleSetInventorySorter(ItemsSorterType sorterType)

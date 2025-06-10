@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Overtips.Unit.UnitOvertipParts;
 
-public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IInterruptTurnStartHandler, IRoundStartHandler, IUnitCommandEndHandler, IUnitCommandStartHandler, IVirtualPositionUIHandler
+public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IRoundStartHandler, IUnitCommandEndHandler, IUnitCommandStartHandler, IVirtualPositionUIHandler, IInterruptTurnContinueHandler
 {
 	public readonly UnitState UnitState;
 
@@ -25,6 +25,8 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public readonly ReactiveProperty<float> CoverChance = new ReactiveProperty<float>(0f);
 
+	private bool m_ErrorLoggedOnce;
+
 	private MechanicEntity Unit => UnitState.Unit.MechanicEntity;
 
 	public OvertipCoverBlockVM(UnitState unitState)
@@ -32,6 +34,7 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UnitState = unitState;
 		AddDisposable(EventBus.Subscribe(this));
 		UpdateCover();
+		m_ErrorLoggedOnce = false;
 	}
 
 	protected override void DisposeImplementation()
@@ -53,7 +56,17 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		UpdateCover();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdateCover();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdateCover();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateCover();
 	}
@@ -87,7 +100,11 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 			}
 			if (Unit == null)
 			{
-				UberDebug.LogError("UnitState: Unit is null");
+				if (!m_ErrorLoggedOnce)
+				{
+					UberDebug.LogError("UnitState: Unit is null");
+					m_ErrorLoggedOnce = true;
+				}
 				return;
 			}
 			bool isPlayerTurn = Game.Instance.TurnController.IsPlayerTurn;
@@ -98,11 +115,13 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 				Vector3 bestShootingPosition = LosCalculations.GetBestShootingPosition(virtualPositionController.GetDesiredPosition(currentUnit), currentUnit.SizeRect, Unit.Position, Unit.SizeRect);
 				CoverType.Value = LosCalculations.GetWarhammerLos(bestShootingPosition, currentUnit.SizeRect, Unit);
 				NeedCover.Value = true;
+				return;
 			}
-			else
+			CoverChance.Value = 0f;
+			NeedCover.Value = false;
+			if (m_ErrorLoggedOnce)
 			{
-				CoverChance.Value = 0f;
-				NeedCover.Value = false;
+				m_ErrorLoggedOnce = false;
 			}
 		}
 	}

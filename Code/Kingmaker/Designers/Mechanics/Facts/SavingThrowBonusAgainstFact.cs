@@ -29,6 +29,12 @@ public class SavingThrowBonusAgainstFact : UnitFactComponentDelegate, IInitiator
 
 	public int Value;
 
+	[Tooltip("Всегда успех")]
+	public bool AlwaysSucceed;
+
+	[Tooltip("Всегда провал")]
+	public bool AlwaysFail;
+
 	public BlueprintFeature CheckedFact => m_CheckedFact?.Get();
 
 	public void OnEventAboutToTrigger(RulePerformSavingThrow evt)
@@ -36,7 +42,18 @@ public class SavingThrowBonusAgainstFact : UnitFactComponentDelegate, IInitiator
 		MechanicEntity caster = evt.Reason.Caster;
 		if (caster != null && caster.Facts.Contains(CheckedFact))
 		{
-			evt.ValueModifiers.Add(Value * base.Fact.GetRank(), base.Fact, Descriptor);
+			if (AlwaysSucceed)
+			{
+				evt.SetAlwaysSucceed(base.Fact, Descriptor);
+			}
+			else if (AlwaysFail)
+			{
+				evt.SetAlwaysFail(base.Fact, Descriptor);
+			}
+			else
+			{
+				evt.AddValueModifiers(Value * base.Fact.GetRank(), base.Fact, Descriptor);
+			}
 		}
 	}
 

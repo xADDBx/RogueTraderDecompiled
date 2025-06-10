@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
@@ -12,7 +13,7 @@ namespace Kingmaker.Controllers;
 
 public class CustomGridNodeController : IControllerTick, IController, IControllerReset
 {
-	private readonly Dictionary<CustomGridNodeBase, EntityRef<BaseUnitEntity>> m_Cache = new Dictionary<CustomGridNodeBase, EntityRef<BaseUnitEntity>>();
+	private readonly Dictionary<CustomGridNodeBase, List<EntityRef<BaseUnitEntity>>> m_Cache = new Dictionary<CustomGridNodeBase, List<EntityRef<BaseUnitEntity>>>();
 
 	public bool ContainsUnit(CustomGridNodeBase node)
 	{
@@ -23,7 +24,7 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 	{
 		if (m_Cache.TryGetValue(node, out var value))
 		{
-			return value == unit;
+			return value.Contains(unit);
 		}
 		return false;
 	}
@@ -32,7 +33,7 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 	{
 		if (m_Cache.TryGetValue(node, out var value))
 		{
-			unit = value.Entity;
+			unit = value.FirstOrDefault().Entity;
 			return unit != null;
 		}
 		unit = null;
@@ -44,6 +45,15 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 	{
 		TryGetUnit(node, out var unit);
 		return unit;
+	}
+
+	public BaseUnitEntity[] GetAllUnits(CustomGridNodeBase node)
+	{
+		if (m_Cache.TryGetValue(node, out var value))
+		{
+			return value.Select((EntityRef<BaseUnitEntity> uRef) => uRef.Entity).ToArray();
+		}
+		return null;
 	}
 
 	public void Clear()
@@ -64,22 +74,52 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 		{
 			foreach (CustomGridNodeBase unitNode in GetUnitNodes(allBaseAwakeUnit))
 			{
-				BaseUnitEntity entity = m_Cache.Get(unitNode).Entity;
-				if (entity == null)
+				if (!m_Cache.TryGetValue(unitNode, out var value))
 				{
-					m_Cache.Add(unitNode, allBaseAwakeUnit);
+					Dictionary<CustomGridNodeBase, List<EntityRef<BaseUnitEntity>>> cache = m_Cache;
+					List<EntityRef<BaseUnitEntity>> obj = new List<EntityRef<BaseUnitEntity>> { allBaseAwakeUnit };
+					value = obj;
+					cache.Add(unitNode, obj);
 				}
-				else if (isInCombat && allBaseAwakeUnit.CombatState.IsInCombat && !(Game.Instance.CurrentMode != GameModeType.Default))
+				if (value.Contains(allBaseAwakeUnit))
 				{
-					if (!entity.CombatState.IsInCombat)
+					continue;
+				}
+				if (value.Count > 0)
+				{
+					BaseUnitEntity entity = value[0].Entity;
+					if (entity != null && !entity.IsInCombat && allBaseAwakeUnit.IsInCombat)
 					{
-						m_Cache[unitNode] = allBaseAwakeUnit;
-					}
-					else if (!CanOccupySameNode(allBaseAwakeUnit, entity))
-					{
-						PFLog.Default.Error("Two units occupy the same node: ({0}, {1}), {2}, {3}", unitNode.XCoordinateInGrid, unitNode.ZCoordinateInGrid, entity, allBaseAwakeUnit);
+						value.Insert(0, allBaseAwakeUnit);
+						continue;
 					}
 				}
+				value.Add(allBaseAwakeUnit);
+			}
+		}
+		if (!isInCombat || Game.Instance.CurrentMode != GameModeType.Default)
+		{
+			return;
+		}
+		foreach (CustomGridNodeBase key in m_Cache.Keys)
+		{
+			List<EntityRef<BaseUnitEntity>> list = m_Cache.Get(key);
+			if (list.Count != 1 && list.Count(delegate(EntityRef<BaseUnitEntity> u)
+			{
+				BaseUnitEntity entity2 = u.Entity;
+				if (entity2 != null && entity2.IsInCombat)
+				{
+					PartStarshipNavigation starshipNavigationOptional = u.Entity.GetStarshipNavigationOptional();
+					if (starshipNavigationOptional == null)
+					{
+						return false;
+					}
+					return !starshipNavigationOptional.IsSoftUnit;
+				}
+				return false;
+			}) > 1)
+			{
+				PFLog.Default.Error("Two units occupy the same node: ({0}, {1}) : {2}", key.XCoordinateInGrid, key.ZCoordinateInGrid, list);
 			}
 		}
 	}

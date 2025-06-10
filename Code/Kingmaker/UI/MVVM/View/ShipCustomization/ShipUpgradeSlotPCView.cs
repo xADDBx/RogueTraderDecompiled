@@ -38,11 +38,11 @@ public class ShipUpgradeSlotPCView : ViewBase<ShipUpgradeSlotVM>, IVoidShipRotat
 
 	protected PartStarshipHull Hull;
 
-	protected ContextMenuCollectionEntity m_HeaderEntity;
+	protected ContextMenuCollectionEntity HeaderEntity;
 
-	protected ContextMenuCollectionEntity m_UpgradeEntity;
+	protected ContextMenuCollectionEntity UpgradeEntity;
 
-	protected ContextMenuCollectionEntity m_DowngradeEntity;
+	protected ContextMenuCollectionEntity DowngradeEntity;
 
 	protected override void BindViewImplementation()
 	{

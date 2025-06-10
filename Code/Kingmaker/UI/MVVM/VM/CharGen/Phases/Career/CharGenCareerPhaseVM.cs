@@ -59,7 +59,7 @@ public class CharGenCareerPhaseVM : CharGenPhaseBaseVM, ICareerPathHoverHandler,
 	{
 		if (!m_Subscribed)
 		{
-			UnitProgressionVM = AddDisposableAndReturn(new UnitProgressionVM(CharGenContext.CurrentUnit, m_LevelUpManager, UnitProgressionMode.CharGen));
+			UnitProgressionVM = AddDisposableAndReturn(new UnitProgressionVM(CharGenContext.CurrentUnit, CharGenContext.LevelUpManager, UnitProgressionMode.CharGen));
 			AddDisposable(CharGenContext.LevelUpManager.Subscribe(HandleLevelUpManager));
 			AddDisposable(UnitProgressionVM.PreselectedCareer.Subscribe(HandleSelectCareer));
 			m_Subscribed = true;
@@ -159,9 +159,11 @@ public class CharGenCareerPhaseVM : CharGenPhaseBaseVM, ICareerPathHoverHandler,
 			return;
 		}
 		bool flag = UnitProgressionVM.AllCareerPaths.FirstOrDefault((CareerPathVM c) => c.CareerPath == careerPath)?.IsUnlocked ?? false;
+		LevelUpManager value = CharGenContext.LevelUpManager.Value;
+		SelectionStateFeature selectionStateFeature = ((value != null) ? value.Selections.FirstOrDefault((SelectionState x) => x is SelectionStateFeature selectionStateFeature2 && selectionStateFeature2.Blueprint.Group == FeatureGroup.ChargenOccupation) : null) as SelectionStateFeature;
 		foreach (CareerPathVM allCareerPath in UnitProgressionVM.AllCareerPaths)
 		{
-			if (allCareerPath.PrerequisiteCareerPaths.Contains(careerPath))
+			if (allCareerPath.PrerequisiteCareerPaths.Contains(careerPath) || (selectionStateFeature != null && selectionStateFeature.SelectionItem.HasValue && allCareerPath.PrerequisiteFeatures.Contains(selectionStateFeature.SelectionItem.Value.Feature)))
 			{
 				allCareerPath.ItemState.Value = CareerItemState.Highlighted;
 			}

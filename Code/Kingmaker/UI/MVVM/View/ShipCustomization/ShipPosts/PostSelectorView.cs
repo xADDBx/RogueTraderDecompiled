@@ -20,19 +20,19 @@ public class PostSelectorView : ViewBase<PostSelectorVM>
 		{
 			GetPostsEntities();
 		}
-		for (int i = 0; i < m_PostEntities.Count; i++)
+		for (int i = 0; i < m_PostEntities?.Count; i++)
 		{
 			m_PostEntities[i].Bind(base.ViewModel.Selector.EntitiesCollection[i]);
 		}
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
 	private void GetPostsEntities()
 	{
 		m_PostEntities = m_Content.GetComponentsInChildren<PostEntityView>().ToList();
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public ConsoleNavigationBehaviour GetNavigationBehaviour()

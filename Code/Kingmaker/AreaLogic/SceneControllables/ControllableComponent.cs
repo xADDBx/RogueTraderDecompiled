@@ -1,5 +1,4 @@
 using System;
-using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.AreaLogic.SceneControllables;
@@ -17,7 +16,6 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 	[ExecuteAlways]
 	protected virtual void Awake()
 	{
-		Initialize();
 	}
 
 	public void GatherStateAtStartUp()
@@ -35,7 +33,7 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 	{
 	}
 
-	public void Reset()
+	public void ResetUniqueId()
 	{
 		UniqueId = Guid.NewGuid().ToString();
 	}
@@ -68,15 +66,6 @@ public abstract class ControllableComponent : MonoBehaviour, ISerializationCallb
 
 	public void OnAfterDeserialize()
 	{
-		Initialize();
-	}
-
-	private void Initialize()
-	{
-		if (ControllableComponentCache.All.TryFind((ControllableComponent x) => x.UniqueId == UniqueId, out var result) && result != this)
-		{
-			Reset();
-		}
 	}
 
 	public virtual ControllableState GetDefaultState()

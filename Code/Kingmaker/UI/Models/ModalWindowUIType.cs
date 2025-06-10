@@ -6,5 +6,6 @@ public enum ModalWindowUIType
 	InGameMenu,
 	PartySelector,
 	NetRoles,
-	GameEndingTitles
+	GameEndingTitles,
+	Respec
 }

@@ -18,7 +18,7 @@ public class RewardConsumableUI : RewardUI<RewardConsumable>
 
 	public override string NameForAcronym => null;
 
-	public override string CountText => "x" + base.Reward.MaxCount + " Max";
+	public override string CountText => "x" + base.Reward.MaxCount;
 
 	public RewardConsumableUI(RewardConsumable reward)
 		: base(reward)

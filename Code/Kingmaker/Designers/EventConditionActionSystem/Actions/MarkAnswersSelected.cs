@@ -50,7 +50,7 @@ public class MarkAnswersSelected : GameAction
 	{
 		foreach (BlueprintAnswer answer in Answers)
 		{
-			Game.Instance.Player.Dialog.SelectedAnswers.Add(answer);
+			Game.Instance.Player.Dialog.SelectedAnswersAdd(answer);
 		}
 	}
 }

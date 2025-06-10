@@ -85,6 +85,9 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 	protected CharGenBackgroundBasePhaseRoadmapView m_DarkestHourPhaseRoadmapView;
 
 	[SerializeField]
+	protected CharGenBackgroundBasePhaseRoadmapView m_ArbitratorPhaseRoadmapView;
+
+	[SerializeField]
 	protected CharGenCareerPhaseRoadmapView m_CareerPhaseRoadmapView;
 
 	[SerializeField]
@@ -137,6 +140,7 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 		m_ImperialHomeworldChildPhaseRoadmapView.Initialize(CharGenPhaseType.ImperialHomeworldChild);
 		m_ForgeHomeworldChildPhaseRoadmapView.Initialize(CharGenPhaseType.ForgeHomeworldChild);
 		m_SanctionedPsykerChildPhaseRoadmapView.Initialize(CharGenPhaseType.SanctionedPsyker);
+		m_ArbitratorPhaseRoadmapView.Initialize(CharGenPhaseType.Arbitrator);
 	}
 
 	protected override void BindViewImplementation()
@@ -263,7 +267,14 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 														{
 															if (!(phaseVM is CharGenForgeHomeworldChildPhaseVM viewModel14))
 															{
-																if (phaseVM is CharGenSanctionedPsykerChildPhaseVM viewModel15)
+																if (!(phaseVM is CharGenSanctionedPsykerChildPhaseVM viewModel15))
+																{
+																	if (phaseVM is CharGenArbitratorChildPhaseVM viewModel16)
+																	{
+																		m_ArbitratorPhaseRoadmapView.Bind(viewModel16);
+																	}
+																}
+																else
 																{
 																	m_SanctionedPsykerChildPhaseRoadmapView.Bind(viewModel15);
 																}
@@ -369,11 +380,15 @@ public class CharGenRoadmapMenuView : ViewBase<SelectionGroupRadioVM<CharGenPhas
 														{
 															if (!(phaseVM is CharGenForgeHomeworldChildPhaseVM))
 															{
-																if (phaseVM is CharGenSanctionedPsykerChildPhaseVM)
+																if (!(phaseVM is CharGenSanctionedPsykerChildPhaseVM))
 																{
-																	return m_SanctionedPsykerChildPhaseRoadmapView;
+																	if (phaseVM is CharGenArbitratorChildPhaseVM)
+																	{
+																		return m_ArbitratorPhaseRoadmapView;
+																	}
+																	return null;
 																}
-																return null;
+																return m_SanctionedPsykerChildPhaseRoadmapView;
 															}
 															return m_ForgeHomeworldChildPhaseRoadmapView;
 														}

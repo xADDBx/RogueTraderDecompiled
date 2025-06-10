@@ -70,6 +70,10 @@ public class ScriptZonePattern : MonoBehaviour, IScriptZoneShape
 			{
 				return m_GridData.Contains(node);
 			}
+			if ((double)forward.sqrMagnitude < 0.01)
+			{
+				forward = Vector3.forward;
+			}
 			foreach (CustomGridNodeBase node2 in GridAreaHelper.GetNodes(node, size, forward))
 			{
 				if (m_GridData.Contains(node2))

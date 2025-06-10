@@ -152,11 +152,12 @@ public class AbilityCutsceneAttack : AbilityCustomLogic
 		DamageData baseDamageOverride = (UseCustomDamageForFX ? DamageForFX.CreateDamage() : null);
 		DamageData resultDamage = new CalculateDamageParams(context.Caster, target.Entity, context.Ability, null, baseDamageOverride).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = resultDamage.AverageValueWithoutArmorReduction;
-		DamageValue damage = RuleRollDamage.RollDamage(resultDamage);
-		if (context.DamagePolicy == DamagePolicyType.Default && target.Entity != null)
+		if (context.DamagePolicy != DamagePolicyType.FxOnly && target.Entity != null)
 		{
 			Rulebook.Trigger(new RuleDealDamage(context.Caster, target.Entity, resultDamage));
+			return;
 		}
+		DamageValue damage = RuleRollDamage.RollDamage(resultDamage);
 		HitFXPlayer.PlayDamageHit(context.Caster, target.Entity, context.MainTarget, projectile, context.Ability, damage, isCritical: false, isDot: false);
 	}
 }

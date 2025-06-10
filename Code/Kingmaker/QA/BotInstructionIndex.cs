@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Kingmaker.Blueprints;
-using Kingmaker.Utility.UnityExtensions;
-using Newtonsoft.Json;
+using Kingmaker.Cheats;
 using Owlcat.Runtime.Core.Logging;
 
 namespace Kingmaker.QA;
 
 public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScriptableObject
 {
-	private string m_IndexFile;
-
 	private Dictionary<string, BlueprintReference<TInstruction>> m_Index;
 
 	public IEnumerable<string> Instructions
@@ -22,11 +18,6 @@ public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScr
 			CheckInit();
 			return m_Index.Keys;
 		}
-	}
-
-	public BotInstructionIndex(string indexFile)
-	{
-		m_IndexFile = indexFile;
 	}
 
 	protected virtual LogChannel GetLogChannel()
@@ -47,7 +38,7 @@ public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScr
 		CheckInit();
 		if (!m_Index.TryGetValue(name, out var value))
 		{
-			GetLogChannel().Error("Instruction not found: " + name);
+			GetLogChannel().Error("Instruction not found: {0}", name);
 		}
 		return value;
 	}
@@ -62,47 +53,19 @@ public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScr
 
 	public void Init()
 	{
-		if (string.IsNullOrEmpty(m_IndexFile))
-		{
-			GetLogChannel().Error("Failed to load Instruction Index: Index file name is not set!");
-			return;
-		}
-		string path = Path.Combine(ApplicationPaths.streamingAssetsPath, m_IndexFile);
-		if (File.Exists(path))
-		{
-			try
-			{
-				using StreamReader streamReader = new StreamReader(path);
-				GetLogChannel().Log("Loading Instruction Index.");
-				m_Index = JsonConvert.DeserializeObject<Dictionary<string, BlueprintReference<TInstruction>>>(streamReader.ReadToEnd());
-				CheckDeletedInstructions();
-				GetLogChannel().Log("Loaded {0} instructions", m_Index.Count);
-				return;
-			}
-			catch (Exception ex)
-			{
-				GetLogChannel().Error("Failed to load Instruction Index");
-				GetLogChannel().Exception(ex);
-				return;
-			}
-		}
-		GetLogChannel().Log("Created empty Instruction Index.");
 		m_Index = new Dictionary<string, BlueprintReference<TInstruction>>();
-		Dump();
-	}
-
-	public void Dump()
-	{
-		try
+		foreach (TInstruction item in Utilities.GetScriptableObjects<TInstruction>().ToList())
 		{
-			CheckInit();
-			using StreamWriter streamWriter = new StreamWriter(Path.Combine(ApplicationPaths.streamingAssetsPath, m_IndexFile));
-			streamWriter.Write(JsonConvert.SerializeObject(m_Index, Formatting.Indented));
+			if (m_Index.ContainsKey(item.name))
+			{
+				m_Index[item.name] = item.ToReference<BlueprintReference<TInstruction>>();
+			}
+			else
+			{
+				m_Index.Add(item.name, item.ToReference<BlueprintReference<TInstruction>>());
+			}
 		}
-		catch (Exception arg)
-		{
-			GetLogChannel().Error($"Failed to save instruction index: \n{arg}");
-		}
+		GetLogChannel().Log("Initialize index with {0} items", m_Index.Count);
 	}
 
 	public void Register(TInstruction instruction)
@@ -110,38 +73,18 @@ public class BotInstructionIndex<TInstruction> where TInstruction : BlueprintScr
 		try
 		{
 			CheckInit();
-			if (m_Index.TryGetValue(instruction.name, out var value))
+			if (m_Index.ContainsKey(instruction.name))
 			{
-				if (instruction == value.Get())
-				{
-					return;
-				}
-				GetLogChannel().Log("Instruction [" + instruction.name + "] changed guid!");
-			}
-			List<KeyValuePair<string, BlueprintReference<TInstruction>>> list = m_Index.Where((KeyValuePair<string, BlueprintReference<TInstruction>> x) => x.Value.Get() == instruction).ToList();
-			if (list.Count > 1)
-			{
-				GetLogChannel().Error("Found too many duplicates in index!");
-			}
-			else if (list.Count == 1)
-			{
-				GetLogChannel().Log("Renaming instruction [" + list[0].Key + " -> " + instruction.name + "]");
-				m_Index.Remove(list[0].Key);
+				m_Index[instruction.name] = instruction.ToReference<BlueprintReference<TInstruction>>();
 			}
 			else
 			{
-				GetLogChannel().Log("Registering instruction [" + instruction.name + "]");
+				m_Index.Add(instruction.name, instruction.ToReference<BlueprintReference<TInstruction>>());
 			}
-			m_Index[instruction.name] = instruction.ToReference<BlueprintReference<TInstruction>>();
-			Dump();
 		}
 		catch (Exception arg)
 		{
 			GetLogChannel().Error($"Failed to register instruction: \n{arg}");
 		}
-	}
-
-	public void RegenerateIndex()
-	{
 	}
 }

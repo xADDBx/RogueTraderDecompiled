@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Mechanics;
@@ -93,7 +94,14 @@ public class PartUnitViewSettings : MechanicEntityPart<AbstractUnitEntity>, IHas
 			return null;
 		}
 		Quaternion rotation2 = (unitEntityView3.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
-		return Object.Instantiate(unitEntityView3, base.Owner.Position, rotation2);
+		UnitEntityView unitEntityView4 = Object.Instantiate(unitEntityView3, base.Owner.Position, rotation2);
+		if (base.Owner is BaseUnitEntity { IsPet: not false } baseUnitEntity && Doll != null)
+		{
+			PFLog.UI.Log("PartUnitViewSettings.Instantiate: Applying saved pet ramps for pet: " + baseUnitEntity.CharacterName);
+			Doll.ApplyPetRamps(unitEntityView4);
+			_ = baseUnitEntity.Master;
+		}
+		return unitEntityView4;
 	}
 
 	public void PreloadResources()

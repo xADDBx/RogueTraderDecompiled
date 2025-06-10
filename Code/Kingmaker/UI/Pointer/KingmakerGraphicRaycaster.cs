@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.QA.Arbiter.Profiling;
+using Kingmaker.QA.Profiling;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;

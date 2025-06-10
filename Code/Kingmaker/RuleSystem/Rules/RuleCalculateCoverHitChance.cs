@@ -8,6 +8,7 @@ using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.Settings;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.View.Covers;
+using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
@@ -25,7 +26,11 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 	[CanBeNull]
 	public readonly MechanicEntity Cover;
 
-	public readonly int BaseChance;
+	private int? m_ShieldCoverMagnitude;
+
+	public int BaseChance { get; private set; }
+
+	public bool OverrideByShield { get; private set; }
 
 	public int ResultChance { get; private set; }
 
@@ -49,11 +54,16 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		LosCalculations.CoverType los = Los;
-		if (los == LosCalculations.CoverType.Invisible || los == LosCalculations.CoverType.None)
+		OverrideByShield = BaseChance < m_ShieldCoverMagnitude;
+		BaseChance = Mathf.Max(BaseChance, m_ShieldCoverMagnitude.GetValueOrDefault());
+		if (!OverrideByShield)
 		{
-			ResultChance = BaseChance;
-			return;
+			LosCalculations.CoverType los = Los;
+			if (los == LosCalculations.CoverType.Invisible || los == LosCalculations.CoverType.None)
+			{
+				ResultChance = BaseChance;
+				return;
+			}
 		}
 		float num = SettingsHelper.CalculateCRModifier(SettingsRoot.Difficulty.CoverHitBonusHalfModifier);
 		float num2 = SettingsHelper.CalculateCRModifier(SettingsRoot.Difficulty.CoverHitBonusFullModifier);
@@ -74,5 +84,10 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 		}
 		int value2 = (int)((float)(BaseChance + ChanceValueModifiers.Value) * ChancePercentModifiers.Value);
 		ResultChance = Math.Clamp(value2, 0, 95);
+	}
+
+	public void AddShieldCoverMagnitude(int coverMagnitude)
+	{
+		m_ShieldCoverMagnitude = Mathf.Max(0, coverMagnitude);
 	}
 }

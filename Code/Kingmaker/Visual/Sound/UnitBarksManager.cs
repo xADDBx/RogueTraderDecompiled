@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Core.Cheats;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
+using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Enums.Sound;
 using Kingmaker.Mechanics.Entities;
@@ -11,6 +14,8 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using UnityEngine;
@@ -50,6 +55,8 @@ public class UnitBarksManager
 	public readonly BarkWrapper CheckFail;
 
 	public readonly BarkWrapper Discovery;
+
+	public readonly BarkWrapper ReactToPetDiscovery;
 
 	public readonly BarkWrapper OrderMove;
 
@@ -136,6 +143,7 @@ public class UnitBarksManager
 		CheckSuccess = Wrap(component.CheckSuccess);
 		CheckFail = Wrap(component.CheckFail);
 		Discovery = Wrap(component.Discovery);
+		ReactToPetDiscovery = Wrap(component.ReactToPetDiscovery);
 		OrderMove = Wrap(component.OrderMove);
 		OrderMoveExploration = Wrap(component.OrderMoveExploration);
 		MomentumAction = Wrap(component.MomentumAction);
@@ -248,7 +256,13 @@ public class UnitBarksManager
 		{
 			return false;
 		}
-		UnitAsksComponent.BarkEntry entry = ((bark.Entries.Length == 1) ? bark.Entries[0] : SelectRandomEntry(bark));
+		MechanicsContext context = ContextData<MechanicsContext.Data>.Current?.Context ?? new MechanicsContext(Unit, Unit, Unit.Blueprint);
+		TargetWrapper target = ContextData<MechanicsContext.Data>.Current?.CurrentTarget ?? ((TargetWrapper)Unit);
+		UnitAsksComponent.BarkEntry entry;
+		using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
+		{
+			entry = SelectRandomEntry(bark);
+		}
 		float num2 = PFStatefulRandom.Visuals.Sounds.Range(bark.DelayMin, bark.DelayMax);
 		if (num2 < 0.01f || Unit == null)
 		{
@@ -269,32 +283,65 @@ public class UnitBarksManager
 
 	private static UnitAsksComponent.BarkEntry SelectRandomEntry(UnitAsksComponent.Bark bark)
 	{
+		if (bark.Entries.Length == 1)
+		{
+			return bark.Entries[0];
+		}
+		IOrderedEnumerable<IGrouping<int, UnitAsksComponent.BarkEntry>> orderedEnumerable = from x in bark.Entries.Where(delegate(UnitAsksComponent.BarkEntry x)
+			{
+				if (!x.Locked)
+				{
+					ConditionsChecker condition = x.Condition;
+					if (condition != null && condition.HasConditions)
+					{
+						return x.Condition.Check();
+					}
+					return true;
+				}
+				return false;
+			})
+			group x by x.HasCondition ? x.ConditionPriority : 0 into x
+			orderby x.Key descending
+			select x;
+		UnitAsksComponent.BarkEntry barkEntry = null;
+		foreach (IGrouping<int, UnitAsksComponent.BarkEntry> item in orderedEnumerable)
+		{
+			barkEntry = SelectRandomEntry(item);
+			if (barkEntry != null)
+			{
+				break;
+			}
+		}
+		if (barkEntry == null)
+		{
+			barkEntry = bark.Entries.FirstOrDefault();
+		}
+		barkEntry.ExclusionCounter = barkEntry.ExcludeTime;
+		return barkEntry;
+	}
+
+	private static UnitAsksComponent.BarkEntry SelectRandomEntry(IEnumerable<UnitAsksComponent.BarkEntry> entries)
+	{
 		UnitAsksComponent.BarkEntry barkEntry = null;
 		float num = 0f;
-		for (int i = 0; i < bark.Entries.Length; i++)
+		foreach (UnitAsksComponent.BarkEntry entry in entries)
 		{
-			UnitAsksComponent.BarkEntry barkEntry2 = bark.Entries[i];
-			if (barkEntry2.Locked)
+			if (entry.ExclusionCounter > 0)
 			{
+				entry.ExclusionCounter--;
 				continue;
 			}
-			if (barkEntry2.ExclusionCounter > 0)
-			{
-				barkEntry2.ExclusionCounter--;
-				continue;
-			}
-			float randomWeight = barkEntry2.RandomWeight;
+			float randomWeight = entry.RandomWeight;
 			if (PFStatefulRandom.Visuals.Sounds.Range(0f, num + randomWeight) >= num)
 			{
-				barkEntry = barkEntry2;
+				barkEntry = entry;
 			}
 			num += randomWeight;
 		}
 		if (barkEntry == null)
 		{
-			barkEntry = bark.Entries[0];
+			barkEntry = entries.FirstOrDefault();
 		}
-		barkEntry.ExclusionCounter = barkEntry.ExcludeTime;
 		return barkEntry;
 	}
 

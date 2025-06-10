@@ -82,10 +82,27 @@ public static class UnitUpgraderHelper
 					unit.Abilities.Remove(item);
 				}
 			}
+			RemoveBrokenAbilities(unit.Body.SecondaryHand.MaybeItem);
+			RemoveBrokenAbilities(unit.Body.PrimaryHand.MaybeItem);
 		}
 		catch (Exception ex)
 		{
 			PFLog.Default.Exception(ex);
+		}
+		void RemoveBrokenAbilities(ItemEntity item)
+		{
+			if (item == null)
+			{
+				return;
+			}
+			foreach (Ability item2 in item.Abilities.ToTempList())
+			{
+				if (item2.Owner == null)
+				{
+					PFLog.Ability.Log($"Ability removed from {item} on {unit}, because  it is broken");
+					item.Abilities.Remove(item2);
+				}
+			}
 		}
 	}
 

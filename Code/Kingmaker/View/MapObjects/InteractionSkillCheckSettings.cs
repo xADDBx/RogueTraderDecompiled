@@ -58,13 +58,13 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	public bool DisableAfterUse;
 
-	[ConditionalHide("DisableAfterUse")]
+	[HideIf("DisableAfterUse")]
 	public bool OnlyCheckOnce = true;
 
-	[ConditionalHide("OnlyCheckOnce")]
+	[HideIf("OnlyCheckOnce")]
 	public bool CheckConditionsOnEveryInteraction;
 
-	[ConditionalShow("OnlyCheckOnce")]
+	[ShowIf("OnlyCheckOnce")]
 	public bool TriggerActionsEveryClick;
 
 	[StringCreateTemplate(StringCreateTemplateAttribute.StringType.MapObject)]
@@ -87,12 +87,13 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	public bool ApplyPenaltyAfterFade = true;
 
-	[Space(10f)]
 	[CanBeNull]
+	[Space(10f)]
 	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset CheckPassedBark;
 
 	[CanBeNull]
+	[ShowCreator]
 	public ActionsReference CheckPassedActions;
 
 	[SerializeField]
@@ -103,14 +104,16 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	[FormerlySerializedAs("TeleportOnFail")]
 	private BlueprintAreaEnterPointReference m_TeleportOnFail;
 
-	[Space(10f)]
 	[CanBeNull]
+	[Space(10f)]
 	[StringCreateWindow(StringCreateWindowAttribute.StringType.Bark)]
 	public SharedStringAsset CheckFailBark;
 
 	[CanBeNull]
+	[ShowCreator]
 	public ActionsReference CheckFailedActions;
 
+	[ShowCreator]
 	[Space(10f)]
 	[CanBeNull]
 	public ConditionsReference Condition;

@@ -121,6 +121,12 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 			Notify(baseUnitEntity);
 			return;
 		}
+		if (active.IsFinishedMove)
+		{
+			active.LastTick = true;
+			TriggerCollision(active, entity);
+			return;
+		}
 		Vector3 vector = (active.TargetPosition - baseUnitEntity.Position).normalized * Math.Min(GeometryUtils.Distance2D(active.TargetPosition, baseUnitEntity.Position) / (active.MaxTime - active.PassedTime) * deltaTime, GeometryUtils.Distance2D(active.TargetPosition, baseUnitEntity.Position));
 		Vector3 vector2 = baseUnitEntity.Position + vector;
 		NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(baseUnitEntity.Position);
@@ -138,12 +144,16 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		{
 			active.PassedTime = active.MaxTime;
 		}
-		if (active.IsFinished && active.CollisionDamageRank > 0)
+	}
+
+	private static void TriggerCollision(UnitPartForceMove.Chunk chunk, AbstractUnitEntity entity)
+	{
+		if (chunk.CollisionDamageRank > 0)
 		{
-			Rulebook.Trigger(new RulePerformCollision(active.Pusher, entity, active.CollisionDamageRank));
-			if (active.CollisionEntityRef.Entity != null)
+			Rulebook.Trigger(new RulePerformCollision(chunk.Pusher, entity, chunk.CollisionDamageRank));
+			if (chunk.CollisionEntityRef.Entity != null)
 			{
-				Rulebook.Trigger(new RulePerformCollision(active.Pusher, active.CollisionEntityRef.Entity, active.CollisionDamageRank));
+				Rulebook.Trigger(new RulePerformCollision(chunk.Pusher, chunk.CollisionEntityRef.Entity, chunk.CollisionDamageRank));
 			}
 		}
 	}

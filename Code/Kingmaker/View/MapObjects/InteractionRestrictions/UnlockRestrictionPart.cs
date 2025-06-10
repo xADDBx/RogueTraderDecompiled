@@ -24,7 +24,7 @@ public class UnlockRestrictionPart : InteractionRestrictionPart<UnlockRestrictio
 
 	public InteractionActorType Type => InteractionActorType.Unlock;
 
-	public InteractionPart InteractionPart => base.ConcreteOwner.GetAll<InteractionPart>().FirstOrDefault();
+	public InteractionPart InteractionPart => base.ConcreteOwner?.GetAll<InteractionPart>()?.FirstOrDefault();
 
 	public bool CheckOnlyOnce => false;
 

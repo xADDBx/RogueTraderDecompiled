@@ -41,6 +41,13 @@ namespace Kingmaker.Cheats;
 
 internal class CheatsCombat
 {
+	private enum CheatSpawnUnitType
+	{
+		Normal,
+		Extra,
+		Lightweight
+	}
+
 	private const string CrTable = "Assets/Mechanics/Blueprints/Classes/Basic/CRTable.asset";
 
 	private const string CrTableGuid = "19b09eaa18b203645b6f1d5f2edcb1e4";
@@ -61,6 +68,14 @@ internal class CheatsCombat
 			keyboard.Bind("KillAll", delegate
 			{
 				CheatsHelper.Run("kill_all");
+			});
+			keyboard.Bind("KillAllBossRemoveBuff", delegate
+			{
+				CheatsHelper.Run("kill_all_boss_removeBuff");
+			});
+			keyboard.Bind("KillAllBossRemoveImmortal", delegate
+			{
+				CheatsHelper.Run("kill_all_boss_removeImmortal");
 			});
 			keyboard.Bind("Damage", delegate
 			{
@@ -236,17 +251,89 @@ internal class CheatsCombat
 		}
 	}
 
+	[Cheat(Name = "kill_all_boss_removeBuff", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void KillAllBossRemoveBuff()
+	{
+		foreach (BaseUnitEntity allBaseUnit in Game.Instance.State.AllBaseUnits)
+		{
+			if (!allBaseUnit.CombatState.IsInCombat || !allBaseUnit.CombatGroup.IsEnemy(GameHelper.GetPlayerCharacter()))
+			{
+				continue;
+			}
+			try
+			{
+				foreach (Buff item in new List<Buff>(allBaseUnit.Buffs.Enumerable))
+				{
+					allBaseUnit.Facts.Remove(item);
+				}
+			}
+			catch (Exception ex)
+			{
+				PFLog.Default.Error("Error removing buffs from " + allBaseUnit.CharacterName + ": " + ex.Message);
+			}
+			Damage(allBaseUnit, tryToKill: true);
+		}
+		if (Game.Instance.IsPaused)
+		{
+			Game.Instance.StopMode(GameModeType.Pause);
+		}
+	}
+
+	[Cheat(Name = "kill_all_boss_removeImmortal", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void KillAllBossRemoveImmortal()
+	{
+		foreach (BaseUnitEntity allBaseUnit in Game.Instance.State.AllBaseUnits)
+		{
+			if (!allBaseUnit.CombatState.IsInCombat || !allBaseUnit.CombatGroup.IsEnemy(GameHelper.GetPlayerCharacter()))
+			{
+				continue;
+			}
+			try
+			{
+				foreach (Buff item in new List<Buff>(allBaseUnit.Buffs.Enumerable))
+				{
+					allBaseUnit.Facts.Remove(item);
+				}
+			}
+			catch (Exception ex)
+			{
+				PFLog.Default.Error("Error removing buffs from " + allBaseUnit.CharacterName + ": " + ex.Message);
+			}
+			allBaseUnit.Features.Immortality.ReleaseAll();
+			Damage(allBaseUnit, tryToKill: true);
+			allBaseUnit.LifeState.MarkedForDeath = true;
+		}
+		if (Game.Instance.IsPaused)
+		{
+			Game.Instance.StopMode(GameModeType.Pause);
+		}
+	}
+
 	[Cheat(ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void Kill(BaseUnitEntity unit)
 	{
 		if (unit == null)
 		{
 			UIUtility.SendWarning("No unit under mouse");
+			return;
 		}
-		else
+		try
 		{
-			KillUnit(unit);
+			foreach (Buff item in new List<Buff>(unit.Buffs.Enumerable))
+			{
+				if (!item.Blueprint.StayOnDeath)
+				{
+					unit.Facts.Remove(item);
+				}
+			}
 		}
+		catch (Exception ex)
+		{
+			PFLog.Default.Error("Error removing buffs from " + unit.CharacterName + ": " + ex.Message);
+		}
+		unit.Features.Immortality.ReleaseAll();
+		Damage(unit, tryToKill: true);
+		unit.LifeState.MarkedForDeath = true;
 	}
 
 	[Cheat(ExecutionPolicy = ExecutionPolicy.PlayMode)]
@@ -388,7 +475,7 @@ internal class CheatsCombat
 	}
 
 	[Cheat(Name = "summon", ExecutionPolicy = ExecutionPolicy.PlayMode)]
-	public static void SpawnEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))
+	public static BaseUnitEntity SpawnEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))
 	{
 		Vector3 position2 = ((position != default(Vector3)) ? position : Game.Instance.ClickEventsController.WorldPosition);
 		if (bp == null)
@@ -401,9 +488,16 @@ internal class CheatsCombat
 		{
 			baseUnitEntity.Faction.Set(factionBp);
 		}
+		return baseUnitEntity;
 	}
 
-	private static void SpawnFromList(string[] guids, int number, bool nearPlayer, bool isExtra, bool roam = false)
+	[Cheat(Name = "summon_freezed", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SpawnOptimizedEnemyUnderCursor(BlueprintUnit bp = null, BlueprintFaction factionBp = null, Vector3 position = default(Vector3))
+	{
+		SpawnEnemyUnderCursor(bp, factionBp, position).FreezeOutsideCamera = true;
+	}
+
+	private static void SpawnFromList(string[] guids, int number, bool nearPlayer, CheatSpawnUnitType type, bool freeze = false, bool roam = false)
 	{
 		for (int i = 0; i < number; i++)
 		{
@@ -427,14 +521,26 @@ internal class CheatsCombat
 			}
 			BlueprintUnit blueprintUnit = BlueprintsDatabase.LoadById<BlueprintUnit>(guids[num]);
 			PFLog.SmartConsole.Log("Summoning: " + Utilities.GetBlueprintPath(blueprintUnit));
-			BaseUnitEntity baseUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(blueprintUnit, pos, Quaternion.identity, Game.Instance.State.LoadedAreaState.MainState);
-			if (isExtra)
+			AbstractUnitEntity abstractUnitEntity;
+			if (type == CheatSpawnUnitType.Lightweight)
 			{
-				baseUnitEntity.MarkExtra();
+				abstractUnitEntity = Game.Instance.EntitySpawner.SpawnLightweightUnit(blueprintUnit, pos, Quaternion.identity, Game.Instance.State.LoadedAreaState.MainState, null);
+			}
+			else
+			{
+				abstractUnitEntity = Game.Instance.EntitySpawner.SpawnUnit(blueprintUnit, pos, Quaternion.identity, Game.Instance.State.LoadedAreaState.MainState);
+				if (type == CheatSpawnUnitType.Extra)
+				{
+					abstractUnitEntity.MarkExtra();
+				}
+			}
+			if (freeze)
+			{
+				abstractUnitEntity.FreezeOutsideCamera = true;
 			}
 			if (roam)
 			{
-				UnitPartRoaming orCreate = baseUnitEntity.GetOrCreate<UnitPartRoaming>();
+				UnitPartRoaming orCreate = abstractUnitEntity.GetOrCreate<UnitPartRoaming>();
 				orCreate.Settings = new RoamingUnitSettings();
 				orCreate.Settings.Radius = 10f;
 				orCreate.Settings.MinIdleTime = 1f;
@@ -446,31 +552,55 @@ internal class CheatsCombat
 	[Cheat(Name = "spawn_units_dense", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SpawnUnitsDense(int number, bool roaming = false)
 	{
-		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, isExtra: false, roaming);
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, CheatSpawnUnitType.Normal, freeze: false, roaming);
 	}
 
 	[Cheat(Name = "spawn_units_sparse", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SpawnUnitsSparse(int number, bool roaming = false)
 	{
-		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, isExtra: false, roaming);
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, CheatSpawnUnitType.Normal, freeze: false, roaming);
 	}
 
 	[Cheat(Name = "spawn_extra_dense", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SpawnExtraDense(int number, bool roaming = false)
 	{
-		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, isExtra: true, roaming);
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, CheatSpawnUnitType.Extra, freeze: false, roaming);
 	}
 
 	[Cheat(Name = "spawn_extra_sparse", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SpawnExtraSparse(int number, bool roaming = false)
 	{
-		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, isExtra: true, roaming);
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, CheatSpawnUnitType.Extra, freeze: false, roaming);
+	}
+
+	[Cheat(Name = "spawn_lightweight_dense", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SpawnLightweightDense(int number, bool roaming = false)
+	{
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, CheatSpawnUnitType.Lightweight, freeze: false, roaming);
+	}
+
+	[Cheat(Name = "spawn_lightweight_sparse", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SpawnLightweightSparse(int number, bool roaming = false)
+	{
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, CheatSpawnUnitType.Lightweight, freeze: false, roaming);
+	}
+
+	[Cheat(Name = "spawn_freeze_dense", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SpawnFreezeDense(int number, bool roaming = false)
+	{
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: true, CheatSpawnUnitType.Extra, freeze: true, roaming);
+	}
+
+	[Cheat(Name = "spawn_freeze_sparse", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void SpawnFreezeSparse(int number, bool roaming = false)
+	{
+		SpawnFromList(peacefulUnitsGuids, number, nearPlayer: false, CheatSpawnUnitType.Extra, freeze: true, roaming);
 	}
 
 	[Cheat(Name = "spawn_enemies", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void SpawnEnemies(int number)
 	{
-		SpawnFromList(enemyUnitsGuids, number, nearPlayer: true, isExtra: false);
+		SpawnFromList(enemyUnitsGuids, number, nearPlayer: true, CheatSpawnUnitType.Normal);
 	}
 
 	public static IEnumerator SpawnTestCoroutine()
@@ -478,7 +608,7 @@ internal class CheatsCombat
 		int i = 0;
 		while (i < 10)
 		{
-			SpawnFromList(peacefulUnitsGuids, 10, nearPlayer: true, isExtra: true, roam: true);
+			SpawnFromList(peacefulUnitsGuids, 10, nearPlayer: true, CheatSpawnUnitType.Lightweight, freeze: false, roam: true);
 			int num;
 			for (int frame = 0; frame < 10; frame = num)
 			{

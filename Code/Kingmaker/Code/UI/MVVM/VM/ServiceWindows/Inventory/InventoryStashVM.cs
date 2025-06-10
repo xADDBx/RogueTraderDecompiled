@@ -1,6 +1,7 @@
 using System;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameCommands;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
@@ -22,6 +23,8 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly SlotsGroupVM<InsertableLootSlotVM> InsertableSlotsGroup;
 
+	public readonly IReadOnlyReactiveProperty<BaseUnitEntity> Unit;
+
 	public readonly ItemsFilterVM ItemsFilter;
 
 	public readonly EncumbranceVM EncumbranceVM;
@@ -38,8 +41,9 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public ItemSlotVM FirstEmptySlot => ItemSlotsGroup.VisibleCollection.FirstOrDefault((ItemSlotVM x) => !x.HasItem);
 
-	public InventoryStashVM(bool inventory, Func<ItemEntity, bool> canInsertItem = null)
+	public InventoryStashVM(bool inventory, Func<ItemEntity, bool> canInsertItem = null, IReadOnlyReactiveProperty<BaseUnitEntity> unit = null)
 	{
+		Unit = unit;
 		if (canInsertItem == null)
 		{
 			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));

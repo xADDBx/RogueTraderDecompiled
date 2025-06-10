@@ -38,9 +38,4 @@ public class UnitMovementAgent : UnitMovementAgentBase
 		}
 		return base.GetNextWaypoint2D(index);
 	}
-
-	protected override bool IsDistanceCloseEnough(float distance)
-	{
-		return distance < 0.3f;
-	}
 }

@@ -11,11 +11,27 @@ namespace Kingmaker.Items;
 
 public class HandsEquipmentSet : IHashable
 {
-	[JsonProperty]
-	public readonly HandSlot PrimaryHand;
+	[JsonProperty(PropertyName = "PrimaryHand")]
+	private HandSlot m_PrimaryHand;
 
-	[JsonProperty]
-	public readonly HandSlot SecondaryHand;
+	[JsonProperty(PropertyName = "SecondaryHand")]
+	private HandSlot m_SecondaryHand;
+
+	private HandSlot m_OverridePrimaryHand;
+
+	private HandSlot m_OverrideSecondaryHand;
+
+	[JsonIgnore]
+	public HandSlot PrimaryHand => m_OverridePrimaryHand ?? m_PrimaryHand;
+
+	[JsonIgnore]
+	public HandSlot SecondaryHand => m_OverrideSecondaryHand ?? m_SecondaryHand;
+
+	[JsonIgnore]
+	public bool IsOverridePrimaryHand => m_OverridePrimaryHand != null;
+
+	[JsonIgnore]
+	public bool IsOverrideSecondaryHand => m_OverrideSecondaryHand != null;
 
 	public IEnumerable<HandSlot> Hands
 	{
@@ -28,8 +44,8 @@ public class HandsEquipmentSet : IHashable
 
 	public HandsEquipmentSet(BaseUnitEntity owner)
 	{
-		PrimaryHand = new HandSlot(owner);
-		SecondaryHand = new HandSlot(owner);
+		m_PrimaryHand = new HandSlot(owner);
+		m_SecondaryHand = new HandSlot(owner);
 	}
 
 	[JsonConstructor]
@@ -47,24 +63,22 @@ public class HandsEquipmentSet : IHashable
 		return false;
 	}
 
-	public void RetainDeactivateFlag()
+	public void OverridePrimaryHand(HandSlot primaryHand)
 	{
-		PrimaryHand.RetainDeactivateFlag();
-		SecondaryHand.RetainDeactivateFlag();
+		m_OverridePrimaryHand = primaryHand;
 	}
 
-	public void ReleaseDeactivateFlag()
+	public void OverrideSecondaryHand(HandSlot secondaryHand)
 	{
-		PrimaryHand.ReleaseDeactivateFlag();
-		SecondaryHand.ReleaseDeactivateFlag();
+		m_OverrideSecondaryHand = secondaryHand;
 	}
 
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
-		Hash128 val = ClassHasher<HandSlot>.GetHash128(PrimaryHand);
+		Hash128 val = ClassHasher<HandSlot>.GetHash128(m_PrimaryHand);
 		result.Append(ref val);
-		Hash128 val2 = ClassHasher<HandSlot>.GetHash128(SecondaryHand);
+		Hash128 val2 = ClassHasher<HandSlot>.GetHash128(m_SecondaryHand);
 		result.Append(ref val2);
 		return result;
 	}

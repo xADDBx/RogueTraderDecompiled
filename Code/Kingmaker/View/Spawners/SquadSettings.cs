@@ -11,4 +11,6 @@ public class SquadSettings
 
 	[ValidateNotNull]
 	public UnitSpawner Leader;
+
+	public bool SeparateUnitsAfterLeaderDeath;
 }

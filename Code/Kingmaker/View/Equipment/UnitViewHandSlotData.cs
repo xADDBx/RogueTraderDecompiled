@@ -15,6 +15,7 @@ using Kingmaker.UI.DollRoom;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.Utility;
+using Kingmaker.View.Animation;
 using Kingmaker.View.Mechadendrites;
 using Kingmaker.Visual.CharacterSystem;
 using Kingmaker.Visual.Particles;
@@ -352,6 +353,10 @@ public class UnitViewHandSlotData
 				{
 					VisualModel.SetActive(value: false);
 				}
+				else if (!(VisibleItem is ItemEntityShield) && m_Equipment.Sets.Count((KeyValuePair<HandsEquipmentSet, WeaponSet> x) => x.Value.MainHand.VisibleItem == VisibleItem || x.Value.OffHand.VisibleItem == VisibleItem) > 1)
+				{
+					VisualModel.SetActive(value: false);
+				}
 				transform = m_Equipment.GetVisualSlotBone(VisualSlot);
 			}
 			if (!transform)
@@ -381,7 +386,7 @@ public class UnitViewHandSlotData
 					UnitPartMechadendrites optional = Owner.GetOptional<UnitPartMechadendrites>();
 					if (optional != null && optional.Mechadendrites.ContainsKey(MechadendritesType.Ballistic))
 					{
-						goto IL_0272;
+						goto IL_02ac;
 					}
 				}
 				component.Apply((!IsInHand) ? VisualSlot : UnitEquipmentVisualSlotType.None, IsOff || VisibleItemBlueprint.VisualParameters.IsBow, Character);
@@ -392,8 +397,8 @@ public class UnitViewHandSlotData
 					MirrorRigidbodyWeaponForMirroredCharacter(component);
 				}
 			}
-			goto IL_0272;
-			IL_0272:
+			goto IL_02ac;
+			IL_02ac:
 			ShowItem(Owner.View.IsVisible);
 			m_Equipment.RaiseModelSpawned();
 			EventBus.RaiseEvent(delegate(IVisualWeaponStateChangeHandle h)
@@ -593,7 +598,8 @@ public class UnitViewHandSlotData
 			AttachModel(toHand: true);
 			return null;
 		}
-		HandEquipmentHelper handEquipmentHelper = (flag ? HandEquipmentHelper.StartEquipOffHand(m_Equipment.AnimationManager, unitEquipmentAnimationSlotType, blueprintItemEquipmentHand.VisualParameters.AnimStyle) : HandEquipmentHelper.StartEquipMainHand(m_Equipment.AnimationManager, unitEquipmentAnimationSlotType, blueprintItemEquipmentHand.VisualParameters.AnimStyle));
+		WeaponAnimationStyle weaponStyleForHand = m_Equipment.GetWeaponStyleForHand(Slot);
+		HandEquipmentHelper handEquipmentHelper = (flag ? HandEquipmentHelper.StartEquipOffHand(m_Equipment.AnimationManager, unitEquipmentAnimationSlotType, weaponStyleForHand) : HandEquipmentHelper.StartEquipMainHand(m_Equipment.AnimationManager, unitEquipmentAnimationSlotType, weaponStyleForHand));
 		handEquipmentHelper.Callback = delegate
 		{
 			AttachModel(toHand: true);
@@ -613,7 +619,11 @@ public class UnitViewHandSlotData
 			AttachModel(toHand: false);
 			return null;
 		}
-		HandEquipmentHelper handEquipmentHelper = ((IsOff || ((bool)VisibleItemBlueprint && VisibleItemBlueprint.VisualParameters.IsBow)) ? HandEquipmentHelper.StartUnequipOffHand(m_Equipment.AnimationManager, EquipmentSlotType, VisibleItemBlueprint.VisualParameters.AnimStyle) : HandEquipmentHelper.StartUnequipMainHand(m_Equipment.AnimationManager, EquipmentSlotType, VisibleItemBlueprint.VisualParameters.AnimStyle));
+		bool num = IsOff || ((bool)VisibleItemBlueprint && VisibleItemBlueprint.VisualParameters.IsBow);
+		ItemEntity visibleItem = VisibleItem;
+		WeaponAnimationStyle weaponAnimationStyle = ((visibleItem is ItemEntityWeapon weapon) ? m_Equipment.GetWeaponStyleForWeapon(weapon) : ((visibleItem is ItemEntityShield) ? WeaponAnimationStyle.Shield : WeaponAnimationStyle.None));
+		WeaponAnimationStyle style = weaponAnimationStyle;
+		HandEquipmentHelper handEquipmentHelper = (num ? HandEquipmentHelper.StartUnequipOffHand(m_Equipment.AnimationManager, EquipmentSlotType, style) : HandEquipmentHelper.StartUnequipMainHand(m_Equipment.AnimationManager, EquipmentSlotType, style));
 		handEquipmentHelper.Callback = delegate
 		{
 			AttachModel(toHand: false);

@@ -82,7 +82,7 @@ public class ContextActionSpawnMonster : ContextAction
 			{
 				foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(nearestNodeXZUnwalkable, rectForSize, 2))
 				{
-					if ((!OnlyOnReachableGround && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)) || (nearestNodeXZUnwalkable.Area == area && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)))
+					if ((!OnlyOnReachableGround && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)) || (item.Area == area && WarhammerBlockManager.Instance.CanUnitStandOnNode(rectForSize, item, exceptBlocker)))
 					{
 						aroundPoint = item.Vector3Position;
 						flag = true;

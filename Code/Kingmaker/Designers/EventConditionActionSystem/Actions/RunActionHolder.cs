@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 
@@ -8,6 +9,7 @@ public class RunActionHolder : GameAction
 {
 	public string Comment;
 
+	[ShowCreator]
 	public ActionsReference Holder;
 
 	public override string GetCaption()

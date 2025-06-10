@@ -63,7 +63,7 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 	{
 	}
 
-	public static void ApproachAndInteract(BaseUnitEntity unit, InteractionPart interaction, IInteractionVariantActor variantActor = null)
+	public static void ApproachAndInteract(BaseUnitEntity unit, InteractionPart interaction, IInteractionVariantActor variantActor = null, bool leaveFollowers = false)
 	{
 		if (unit == null || !interaction.HasEnoughActionPoints(unit))
 		{
@@ -86,6 +86,7 @@ public sealed class UnitInteractWithObject : UnitCommand<UnitInteractWithObjectP
 					MoveCommandSettings moveCommandSettings = default(MoveCommandSettings);
 					moveCommandSettings.Destination = interaction.Owner.Position;
 					moveCommandSettings.DisableApproachRadius = true;
+					moveCommandSettings.LeaveFollowers = leaveFollowers;
 					MoveCommandSettings settings = moveCommandSettings;
 					UnitMoveToParams unitMoveToParams = UnitHelper.CreateMoveCommandParamsRT(unit, settings, path);
 					if (Game.Instance.CurrentMode == GameModeType.StarSystem)

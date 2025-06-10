@@ -250,11 +250,11 @@ public static class UIUtilityItem
 		return false;
 	}
 
-	public static ArmorData GetArmorData(ItemEntityArmor armor)
+	public static ArmorData GetArmorData(ItemEntityArmor armor, ItemEntityShield shield)
 	{
 		using (GameLogContext.Scope)
 		{
-			float num = armor.Blueprint.Category switch
+			float num = (armor?.Blueprint.Category ?? shield.Blueprint.Category) switch
 			{
 				WarhammerArmorCategory.Power => 0.75f, 
 				WarhammerArmorCategory.Heavy => 0.5f, 
@@ -262,13 +262,13 @@ public static class UIUtilityItem
 				_ => 0f, 
 			};
 			ArmorData armorData = default(ArmorData);
-			armorData.DamageAbsorption = armor.Blueprint.DamageAbsorption;
-			armorData.DamageDeflection = armor.Blueprint.DamageDeflection;
+			armorData.DamageAbsorption = armor?.Blueprint.DamageAbsorption ?? 0;
+			armorData.DamageDeflection = armor?.Blueprint.DamageDeflection ?? 0;
 			armorData.MovePointAdjustment = 0;
 			armorData.RangedHitChanceBonus = 0;
 			armorData.ArmorDodgePenalty = ((num > 0f) ? $"{num}" : string.Empty);
 			ArmorData result = armorData;
-			UnitEntity unitEntity = (armor.Wielder as UnitEntity) ?? (Game.Instance?.SelectionCharacter?.SelectedUnitInUI?.Value as UnitEntity);
+			UnitEntity unitEntity = ((armor?.Wielder ?? shield?.Wielder) as UnitEntity) ?? (Game.Instance?.SelectionCharacter?.SelectedUnitInUI?.Value as UnitEntity);
 			if (unitEntity == null)
 			{
 				return result;
@@ -538,6 +538,24 @@ public static class UIUtilityItem
 				try
 				{
 					data.Abilities.Add(GetUIAbilityData(weaponAbility.Ability, weapon));
+				}
+				catch (Exception ex)
+				{
+					LogChannel.Default.Error(ex);
+				}
+			}
+		}
+	}
+
+	private static void FillShieldAbilities(ItemTooltipData data, ItemEntityShield shield)
+	{
+		foreach (WeaponAbility weaponAbility in shield.Blueprint.WeaponAbilities)
+		{
+			if (weaponAbility.Ability != BlueprintRoot.Instance.UIConfig.ReloadAbility)
+			{
+				try
+				{
+					data.Abilities.Add(GetUIAbilityData(weaponAbility.Ability, shield));
 				}
 				catch (Exception ex)
 				{
@@ -928,10 +946,14 @@ public static class UIUtilityItem
 
 	public static bool IsEquipPossible(ItemEntity item)
 	{
-		BaseUnitEntity owner = UIUtility.GetCurrentSelectedUnit() ?? Game.Instance.Player.MainCharacterEntity;
+		BaseUnitEntity baseUnitEntity = UIUtility.GetCurrentSelectedUnit() ?? Game.Instance.Player.MainCharacterEntity;
+		if ((baseUnitEntity.IsPet && !(item.Blueprint is BlueprintItemEquipmentPetProtocol)) || (baseUnitEntity.IsPet && item.Blueprint is BlueprintItemEquipmentPetProtocol && !item.CanBeEquippedBy(baseUnitEntity)))
+		{
+			return false;
+		}
 		if (item.Blueprint is BlueprintItemEquipment)
 		{
-			return item.CanBeEquippedBy(owner);
+			return item.CanBeEquippedBy(baseUnitEntity);
 		}
 		return false;
 	}
@@ -955,6 +977,10 @@ public static class UIUtilityItem
 			if (item.Blueprint is BlueprintItemEquipment)
 			{
 				flag = item.CanBeEquippedBy(baseUnitEntity);
+			}
+			if (baseUnitEntity.IsPet && !(item.Blueprint is BlueprintItemEquipmentPetProtocol))
+			{
+				flag = false;
 			}
 			return new bool[2] { flag, flag2 };
 		}
@@ -1137,7 +1163,7 @@ public static class UIUtilityItem
 		}
 		else if (item is ItemEntityArmor itemEntityArmor)
 		{
-			ArmorData armorData = GetArmorData(itemEntityArmor);
+			ArmorData armorData = GetArmorData(itemEntityArmor, null);
 			itemTooltipData.Texts[TooltipElement.ArmorDeflection] = armorData.DamageDeflection.ToString();
 			itemTooltipData.CompareData[TooltipElement.ArmorDeflection] = new CompareData
 			{
@@ -1162,13 +1188,17 @@ public static class UIUtilityItem
 				itemTooltipData.Texts[TooltipElement.ArmourDodgeChanceDescription] = armorData.ArmourDodgeChanceDescription;
 			}
 		}
-		else if (item is ItemEntityShield itemEntityShield)
+		else if (item is ItemEntityShield shield)
 		{
-			ArmorData armorData2 = GetArmorData(itemEntityShield.ArmorComponent);
+			ArmorData armorData2 = GetArmorData(null, shield);
+			itemTooltipData.Texts[TooltipElement.Subname] = GetItemType(item);
+			itemTooltipData.Texts[TooltipElement.FullArmorClass] = armorData2.DamageDeflection.ToString();
+			itemTooltipData.Texts[TooltipElement.ArmorClass] = armorData2.DamageAbsorption.ToString();
 			itemTooltipData.Texts[TooltipElement.ArmorDodgePenalty] = armorData2.ArmorDodgePenalty;
 			itemTooltipData.Texts[TooltipElement.ArmorCheckPenalty] = armorData2.RangedHitChanceBonus.ToString();
 			itemTooltipData.Texts[TooltipElement.ArcaneSpellFailure] = armorData2.MovePointAdjustment.ToString();
-			text = FillShieldEnchantments(itemTooltipData, itemEntityShield, text);
+			text = FillShieldEnchantments(itemTooltipData, shield, text);
+			FillShieldAbilities(itemTooltipData, shield);
 		}
 		return text;
 	}

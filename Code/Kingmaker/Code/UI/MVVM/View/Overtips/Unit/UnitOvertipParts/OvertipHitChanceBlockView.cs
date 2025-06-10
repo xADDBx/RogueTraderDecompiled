@@ -115,9 +115,9 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 		{
 			m_HitChance.text = Mathf.Round(value).ToString();
 		}));
-		AddDisposable(base.ViewModel.HitChance.CombineLatest(base.ViewModel.InitialHitChance, base.ViewModel.DodgeChance, base.ViewModel.ParryChance, base.ViewModel.CoverChance, (float hitChance, float initHitChance, float dodge, float parry, float cover) => new { hitChance, initHitChance, dodge, parry, cover }).ObserveLastValueOnLateUpdate().Subscribe(value =>
+		AddDisposable(base.ViewModel.HitChance.CombineLatest(base.ViewModel.InitialHitChance, base.ViewModel.DodgeChance, base.ViewModel.ParryChance, base.ViewModel.CoverChance, base.ViewModel.BlockChance, (float hitChance, float initHitChance, float dodge, float parry, float cover, float block) => new { hitChance, initHitChance, dodge, parry, cover, block }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{
-			m_HitChanceHint.Value = GetHitChanceHint(value.hitChance, value.initHitChance, value.dodge, value.parry, value.cover);
+			m_HitChanceHint.Value = GetHitChanceHint(value.hitChance, value.initHitChance, value.dodge, value.parry, value.cover, value.block);
 		}));
 		AddDisposable(m_HitChance.SetHint(m_HitChanceHint));
 		AddDisposable(m_Ability.SetHint(m_HitChanceHint));
@@ -192,7 +192,7 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 		}
 	}
 
-	private string GetHitChanceHint(float hitChance, float initHitChance, float dodge, float parry, float cover)
+	private string GetHitChanceHint(float hitChance, float initHitChance, float dodge, float parry, float cover, float block)
 	{
 		m_StringBuilder.Clear();
 		UITooltips tooltips = UIStrings.Instance.Tooltips;
@@ -212,6 +212,10 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 		if (cover > 0f)
 		{
 			m_StringBuilder.AppendLine("<color=#" + text2 + ">" + UIUtilityTexts.GetPercentString(cover) + " " + tooltips.CoverAvoidance.Text + "</color>");
+		}
+		if (block > 0f)
+		{
+			m_StringBuilder.AppendLine("<color=#" + text2 + ">" + UIUtilityTexts.GetPercentString(block) + " " + tooltips.BlockAvoidance.Text + "</color>");
 		}
 		return m_StringBuilder.ToString();
 	}

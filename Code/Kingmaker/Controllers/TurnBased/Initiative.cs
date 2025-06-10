@@ -48,6 +48,9 @@ public class Initiative : IHashable
 
 	public bool RollEmpty => Roll < 0.001f;
 
+	[JsonIgnore]
+	public bool IsInEndInterrupting { get; set; }
+
 	public void Clear()
 	{
 		Value = 0f;

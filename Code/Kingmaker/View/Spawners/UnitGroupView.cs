@@ -65,7 +65,7 @@ public class UnitGroupView : EntityViewBase
 				if (squadSettings.Leader != null)
 				{
 					squadSettings.Leader.SetSquadId($"{UniqueId}_squad{i}");
-					squadSettings.Leader.MarkAsSquadLeader();
+					squadSettings.Leader.MarkAsSquadLeader(squadSettings.SeparateUnitsAfterLeaderDeath);
 				}
 			}
 		}

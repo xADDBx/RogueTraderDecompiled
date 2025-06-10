@@ -5,6 +5,7 @@ using System.Text;
 using JetBrains.Annotations;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
@@ -287,6 +288,10 @@ public class LevelUpManager : LevelUpManager.IOnSelectionChangedAccess, IDisposa
 			{
 				AdvancePathRankTo(unit, selection.Path, i);
 			}
+			EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IChangeUnitLevel>)delegate(IChangeUnitLevel h)
+			{
+				h.HandleChangeUnitLevel();
+			}, isCheckRuntime: true);
 			selection.Apply(unit);
 			if (invalidateNext)
 			{

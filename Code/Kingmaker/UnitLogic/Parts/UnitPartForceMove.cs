@@ -37,11 +37,29 @@ public class UnitPartForceMove : BaseUnitPart, IHashable
 		public Vector3 TargetPosition;
 
 		[JsonProperty]
+		public int DistanceCells;
+
+		[JsonProperty]
 		public MechanicEntity Pusher;
 
-		public bool IsFinished => PassedTime >= MaxTime;
+		[JsonProperty]
+		public bool LastTick;
 
-		public float RemainingDistance => Mathf.Max(0f, MaxTime - PassedTime);
+		public bool IsFinished
+		{
+			get
+			{
+				if (IsFinishedMove)
+				{
+					return LastTick;
+				}
+				return false;
+			}
+		}
+
+		public bool IsFinishedMove => PassedTime >= MaxTime;
+
+		public float RemainingTime => Mathf.Max(0f, MaxTime - PassedTime);
 
 		public virtual Hash128 GetHash128()
 		{
@@ -55,8 +73,10 @@ public class UnitPartForceMove : BaseUnitPart, IHashable
 			Hash128 val = StructHasher<EntityRef<MechanicEntity>>.GetHash128(ref obj);
 			result.Append(ref val);
 			result.Append(ref TargetPosition);
+			result.Append(ref DistanceCells);
 			Hash128 val2 = ClassHasher<MechanicEntity>.GetHash128(Pusher);
 			result.Append(ref val2);
+			result.Append(ref LastTick);
 			return result;
 		}
 	}
@@ -88,8 +108,9 @@ public class UnitPartForceMove : BaseUnitPart, IHashable
 			return null;
 		}
 		Vector3 vector = targetNode.Vector3Position - base.Owner.Position;
-		float num = ((base.Owner.View.AnimationManager.ForceMoveTime == null) ? (vector.magnitude / 5f) : base.Owner.View.AnimationManager.ForceMoveTime[Mathf.RoundToInt(vector.magnitude / GraphParamsMechanicsCache.GridCellSize)]);
-		if (num == 0f)
+		int num = Mathf.RoundToInt(vector.magnitude / GraphParamsMechanicsCache.GridCellSize);
+		float num2 = ((base.Owner.View.AnimationManager.ForceMoveTime == null) ? (vector.magnitude / 5f) : base.Owner.View.AnimationManager.ForceMoveTime[num]);
+		if (num2 == 0f)
 		{
 			PFLog.Default.Error("Push time is zero");
 			return null;
@@ -98,11 +119,12 @@ public class UnitPartForceMove : BaseUnitPart, IHashable
 		base.Owner.View.MovementAgent.Blocker.Block(targetNode);
 		Chunk chunk = new Chunk
 		{
-			MaxTime = num,
+			MaxTime = num2,
 			ProvokeAttackOfOpportunity = provokeAttackOfOpportunity,
 			CollisionDamageRank = cellsRemaining,
 			CollisionEntityRef = collisionEntity,
 			TargetPosition = targetNode.Vector3Position,
+			DistanceCells = num,
 			Pusher = pusher
 		};
 		m_Chunks.Enqueue(chunk);

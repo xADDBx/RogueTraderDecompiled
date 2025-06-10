@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.UI.CoverVisualiserSystem;
 
-public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, IInterruptTurnStartHandler, IRoundStartHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler
+public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, IContinueTurnHandler, IInterruptTurnStartHandler, IRoundStartHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, IInterruptTurnContinueHandler
 {
 	private const int CoverGridExtents = 2;
 
@@ -129,7 +129,7 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 				if (node != null && IsNodeCoverVisible(node) && node.Walkable)
 				{
 					BaseUnitEntity unit = node.GetUnit();
-					if (unit == null || !unit.Features.ProvidesFullCover)
+					if (unit == null || (!unit.Features.ProvidesFullCover && !unit.Features.ProvidesHalfCover))
 					{
 						coverCellController.gameObject.SetActive(value: true);
 						coverCellController.transform.position = (Vector3)node.position;
@@ -216,7 +216,17 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 		UpdatePlayerTurn();
 	}
 
+	public void HandleUnitContinueTurn(bool isTurnBased)
+	{
+		UpdatePlayerTurn();
+	}
+
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
+	{
+		UpdatePlayerTurn();
+	}
+
+	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdatePlayerTurn();
 	}

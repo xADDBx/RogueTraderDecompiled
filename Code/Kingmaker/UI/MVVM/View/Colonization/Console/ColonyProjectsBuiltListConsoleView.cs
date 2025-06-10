@@ -26,7 +26,7 @@ public class ColonyProjectsBuiltListConsoleView : ColonyProjectsBuiltListBaseVie
 		if (m_HasAddButton)
 		{
 			list.AddRange(m_ColonyProjects.Except(m_ColonyProjects[m_LastFreeElemIndex]));
-			list.Add(m_ColonyProjectsBuiltListAddElemConsoleView);
+			list.Insert(m_LastFreeElemIndex, m_ColonyProjectsBuiltListAddElemConsoleView);
 		}
 		else
 		{

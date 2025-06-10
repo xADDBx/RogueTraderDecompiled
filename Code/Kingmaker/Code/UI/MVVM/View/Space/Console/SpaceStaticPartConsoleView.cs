@@ -224,6 +224,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 		m_GameOverConsoleView.Initialize();
 		m_SpacePointMarkersPCView.Initialize(m_CanvasScalerWorkaround);
 		m_PartyConsoleView.Initialize();
+		m_SectorMapConsoleView.Initialize();
 	}
 
 	protected override void BindViewImplementation()

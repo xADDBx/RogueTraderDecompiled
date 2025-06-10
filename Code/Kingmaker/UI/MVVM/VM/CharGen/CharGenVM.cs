@@ -296,13 +296,18 @@ public class CharGenVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposabl
 		{
 			AddPhase(phasesList, new CharGenSanctionedPsykerChildPhaseVM(CharGenContext));
 		}
-		bool check5 = HasFeatureGroupInSelections(FeatureGroup.ChargenMomentOfTriumph);
-		if (TryClearPhaseFromList<CharGenMomentOfTriumphPhaseVM>(check5, phasesList))
+		bool check5 = HasFeatureGroupInSelections(FeatureGroup.ChargenArbitrator);
+		if (TryClearPhaseFromList<CharGenArbitratorChildPhaseVM>(check5, phasesList))
+		{
+			AddPhase(phasesList, new CharGenArbitratorChildPhaseVM(CharGenContext));
+		}
+		bool check6 = HasFeatureGroupInSelections(FeatureGroup.ChargenMomentOfTriumph);
+		if (TryClearPhaseFromList<CharGenMomentOfTriumphPhaseVM>(check6, phasesList))
 		{
 			AddPhase(phasesList, new CharGenMomentOfTriumphPhaseVM(CharGenContext));
 		}
-		bool check6 = HasFeatureGroupInSelections(FeatureGroup.ChargenDarkestHour);
-		if (TryClearPhaseFromList<CharGenDarkestHourPhaseVM>(check6, phasesList))
+		bool check7 = HasFeatureGroupInSelections(FeatureGroup.ChargenDarkestHour);
+		if (TryClearPhaseFromList<CharGenDarkestHourPhaseVM>(check7, phasesList))
 		{
 			AddPhase(phasesList, new CharGenDarkestHourPhaseVM(CharGenContext));
 		}

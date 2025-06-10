@@ -118,6 +118,10 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 					return buff;
 				case StackingType.Rank:
 					OnBuffRankAdd(buff, duration.Rounds);
+					if (!buff.IsActive)
+					{
+						return null;
+					}
 					return buff;
 				case StackingType.HighestByProperty:
 					if (context[blueprint.PriorityProperty] >= buff.Context[blueprint.PriorityProperty])

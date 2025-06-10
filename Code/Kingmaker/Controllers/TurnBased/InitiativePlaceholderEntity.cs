@@ -63,6 +63,7 @@ public class InitiativePlaceholderEntity : MechanicEntity, IPartyCombatHandler, 
 	{
 		base.OnInitialize();
 		AllList.Add(this);
+		base.Initiative.WasPreparedForRound = Game.Instance.TurnController.CombatRound - 1;
 	}
 
 	protected override void OnDispose()

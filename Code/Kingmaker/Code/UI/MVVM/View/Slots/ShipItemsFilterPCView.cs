@@ -109,7 +109,7 @@ public class ShipItemsFilterPCView : ViewBase<ItemsFilterVM>
 			ScrollToTop();
 			if (m_Lens.transform.localPosition.x != value.Item2)
 			{
-				UIUtility.MoveXLensPosition(m_Lens.transform, value.Item2, FilterSwitchAnimationDuration);
+				AddDisposable(UIUtility.CreateMoveXLensPosition(m_Lens.transform, value.Item2, FilterSwitchAnimationDuration));
 			}
 		}
 	}

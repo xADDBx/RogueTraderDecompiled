@@ -1,8 +1,11 @@
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.Units;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Models.UnitSettings.Blueprints;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Newtonsoft.Json;
 using Owlcat.Runtime.UI.Tooltips;
@@ -17,7 +20,28 @@ public class MechanicActionBarSlotSpontaneusConvertedSpell : MechanicActionBarSl
 	[JsonProperty]
 	public AbilityData Spell;
 
-	public override string KeyName => Spell?.Blueprint?.name;
+	public override string KeyName
+	{
+		get
+		{
+			object obj = Spell?.Blueprint?.GetComponent<ActionPanelLogic>()?.UseKeyNameFromFact?.Get()?.name;
+			if (obj == null)
+			{
+				AbilityData spell = Spell;
+				if ((object)spell == null)
+				{
+					return null;
+				}
+				BlueprintAbility blueprint = spell.Blueprint;
+				if (blueprint == null)
+				{
+					return null;
+				}
+				obj = blueprint.name;
+			}
+			return (string)obj;
+		}
+	}
 
 	protected override bool IsNotAvailable
 	{
@@ -58,7 +82,7 @@ public class MechanicActionBarSlotSpontaneusConvertedSpell : MechanicActionBarSl
 		base.OnHover(state);
 		EventBus.RaiseEvent(delegate(IAbilityTargetHoverUIHandler h)
 		{
-			h.HandleAbilityTargetHover(Spell, state);
+			h.HandleAbilityTargetHover(Spell.InitialTargetAbility, state);
 		});
 	}
 
