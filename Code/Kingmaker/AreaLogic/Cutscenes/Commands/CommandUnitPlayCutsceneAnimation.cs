@@ -163,6 +163,8 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 		}
 	}
 
+	public AnimationClipWrapper ClipWrapperForEditor => m_CutsceneClipWrapperLink.LoadAsset();
+
 	public AbstractUnitEvaluator UnitEvaluator => m_Unit;
 
 	private bool GetIsLooping()
@@ -237,7 +239,7 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 			data.Handle?.Release();
 			return;
 		}
-		if (unit.LifeState.IsDead || unit.IsInCombat)
+		if (unit.LifeState.IsDead)
 		{
 			data.Finished = true;
 			data.Handle?.Release();

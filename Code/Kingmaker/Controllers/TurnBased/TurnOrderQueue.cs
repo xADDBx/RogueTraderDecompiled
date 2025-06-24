@@ -6,6 +6,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
+using Kingmaker.UnitLogic.Commands;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -180,26 +181,31 @@ public class TurnOrderQueue : IHashable
 
 	public void InterruptCurrentUnit(MechanicEntity interruptingUnit)
 	{
-		if (TurnController.IsInTurnBasedCombat())
+		if (!TurnController.IsInTurnBasedCombat())
 		{
-			if (CurrentUnit == null)
-			{
-				PFLog.Default.ErrorWithReport($"Unit {interruptingUnit} can't interrupt turn because CurrentUnit is null");
-				return;
-			}
-			if (!interruptingUnit.IsInCombat)
-			{
-				PFLog.Default.ErrorWithReport($"Interrupting unit {interruptingUnit} is not in combat");
-				return;
-			}
-			if (interruptingUnit.Initiative.InterruptingOrder > 0)
-			{
-				PFLog.Default.ErrorWithReport($"Unit {interruptingUnit} can't interrupt turn while interrupting turn");
-				return;
-			}
-			interruptingUnit.Initiative.InterruptingOrder = InterruptingTurnOrder.Count() + 1;
-			CurrentUnit = interruptingUnit;
+			return;
 		}
+		if (CurrentUnit == null)
+		{
+			PFLog.Default.ErrorWithReport($"Unit {interruptingUnit} can't interrupt turn because CurrentUnit is null");
+			return;
+		}
+		if (!interruptingUnit.IsInCombat)
+		{
+			PFLog.Default.ErrorWithReport($"Interrupting unit {interruptingUnit} is not in combat");
+			return;
+		}
+		if (interruptingUnit.Initiative.InterruptingOrder > 0)
+		{
+			PFLog.Default.ErrorWithReport($"Unit {interruptingUnit} can't interrupt turn while interrupting turn");
+			return;
+		}
+		if (interruptingUnit.IsDirectlyControllable)
+		{
+			CurrentUnit.GetCommandsOptional()?.RequestUnlockPlayerInputEarlier();
+		}
+		interruptingUnit.Initiative.InterruptingOrder = InterruptingTurnOrder.Count() + 1;
+		CurrentUnit = interruptingUnit;
 	}
 
 	private void BeginRoamingUnitsTurn()

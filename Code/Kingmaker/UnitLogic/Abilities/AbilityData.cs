@@ -31,6 +31,7 @@ using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 using Kingmaker.UnitLogic.Buffs.Components;
@@ -706,6 +707,18 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public bool IsBonusUsage => Caster.GetBonusAbilityUseOptional()?.HasBonusAbilityUsage(this) ?? false;
 
+	public bool SummonedLimitOnlyRestrictionValue
+	{
+		get
+		{
+			if (Blueprint.CasterRestrictions.Length != 1)
+			{
+				return false;
+			}
+			return Blueprint.CasterRestrictions.FirstOrDefault((IAbilityCasterRestriction r) => r is StarshipSummonedUnitsLimit) != null;
+		}
+	}
+
 	public bool IsRestricted
 	{
 		get
@@ -1258,6 +1271,11 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 		}
 		if (target.Entity != null && TargetAnchor != AbilityTargetAnchor.Point)
 		{
+			if ((bool)target.Entity.Features.IsUntargetable && target.Entity != Caster)
+			{
+				unavailabilityReason = UnavailabilityReasonType.NullTarget;
+				return false;
+			}
 			if (!Blueprint.CanTargetSelf && target.Entity == Caster)
 			{
 				unavailabilityReason = UnavailabilityReasonType.CannotTargetSelf;
@@ -2026,14 +2044,20 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 	{
 		AbilityRedirect redirect = RedirectSettings;
 		Vector3 direction = Quaternion.Euler(0f, mainTarget.Orientation, 0f) * Vector3.forward;
-		foreach (CustomGridNodeBase node in RedirectPattern.GetOriented(mainTarget.NearestNode, direction).Nodes)
+		NodeList nodes = RedirectPattern.GetOriented(mainTarget.NearestNode, direction).Nodes;
+		List<BaseUnitEntity> tmpList = ListPool<BaseUnitEntity>.Claim();
+		tmpList.Clear();
+		foreach (CustomGridNodeBase item in nodes)
 		{
-			BaseUnitEntity unit = node.GetUnit();
-			if (unit != null && IsValidTargetForRedirect(redirect, mainTarget, unit))
+			BaseUnitEntity unit = item.GetUnit();
+			if (unit != null && IsValidTargetForRedirect(redirect, mainTarget, unit) && !tmpList.Contains(unit))
 			{
+				tmpList.Add(unit);
 				yield return unit;
 			}
 		}
+		tmpList.Clear();
+		ListPool<BaseUnitEntity>.Release(tmpList);
 	}
 
 	private bool IsValidTargetForRedirect([NotNull] AbilityRedirect redirect, [NotNull] TargetWrapper mainTarget, [NotNull] BaseUnitEntity unit)

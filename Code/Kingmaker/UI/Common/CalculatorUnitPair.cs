@@ -48,12 +48,8 @@ public class CalculatorUnitPair : IDisposable, ILevelUpCompleteUIHandler, ISubsc
 						{
 							using (ContextData<GameCommandHelper.PreviewItem>.Request())
 							{
-								BaseUnitEntity baseUnitEntity = m_SelectedUnit.Value ?? Game.Instance.Player.MainCharacterEntity;
-								CalculatorUnit = baseUnitEntity.CreatePreview(createView: false, forceEnableBuffs: true);
-								if (baseUnitEntity.Master != null)
-								{
-									CalculatorUnit.InitAsPet(baseUnitEntity.Master);
-								}
+								BaseUnitEntity @this = m_SelectedUnit.Value ?? Game.Instance.Player.MainCharacterEntity;
+								CalculatorUnit = @this.CreatePreview(createView: false, forceEnableBuffs: true);
 							}
 						}
 					}

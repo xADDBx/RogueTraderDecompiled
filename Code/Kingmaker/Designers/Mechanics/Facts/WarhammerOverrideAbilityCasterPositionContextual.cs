@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -17,8 +18,13 @@ public class WarhammerOverrideAbilityCasterPositionContextual : BlueprintCompone
 	[SerializeReference]
 	private MechanicEntityEvaluator m_FakeCasterEvaluator;
 
+	[CanBeNull]
 	public MechanicEntity GetCaster(MechanicEntity originalCaster, bool forUi)
 	{
-		return m_FakeCasterEvaluator.GetValue();
+		if (!m_FakeCasterEvaluator.TryGetValue(out var value))
+		{
+			return null;
+		}
+		return value;
 	}
 }

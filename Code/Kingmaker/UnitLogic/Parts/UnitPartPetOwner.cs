@@ -6,12 +6,14 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Enums;
+using Kingmaker.Localization;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Newtonsoft.Json;
 using StateHasher.Core;
@@ -106,11 +108,17 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 		else
 		{
 			baseUnitEntity = ((BlueprintUnit)PetBlueprint.unit).CreateEntity();
+			baseUnitEntity.Inventory.EnsureOwn();
 		}
 		m_PetRef = baseUnitEntity;
 		baseUnitEntity.Faction.Set(base.Owner.Faction.Blueprint);
 		baseUnitEntity.InitAsPet(base.Owner);
-		if (!string.IsNullOrEmpty(base.Owner.Description.CustomPetName))
+		SharedStringAsset sharedStringAsset = base.Owner.Facts.GetComponents<PetNamingComponent>().FirstOrDefault()?.GetPetNameByType(PetBlueprint.type);
+		if (sharedStringAsset != null)
+		{
+			baseUnitEntity.Description.SetName(sharedStringAsset.String);
+		}
+		else if (!string.IsNullOrEmpty(base.Owner.Description.CustomPetName))
 		{
 			baseUnitEntity.Description.SetName(base.Owner.Description.CustomPetName);
 		}

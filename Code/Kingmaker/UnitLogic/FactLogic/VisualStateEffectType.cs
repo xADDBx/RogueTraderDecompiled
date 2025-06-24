@@ -9,5 +9,6 @@ public enum VisualStateEffectType
 	CassiaInfluence,
 	Hallucinations,
 	Darkness,
-	HallucinationsNoSound
+	HallucinationsNoSound,
+	PainNoSound
 }

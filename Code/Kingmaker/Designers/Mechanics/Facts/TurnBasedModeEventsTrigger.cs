@@ -70,7 +70,15 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 		{
 			if (!TriggerIfNotInCombat)
 			{
-				return base.Owner.IsInCombat;
+				if (!base.Owner.IsInCombat)
+				{
+					if (base.Owner.IsPet)
+					{
+						return base.Owner.Master.IsInCombat;
+					}
+					return false;
+				}
+				return true;
 			}
 			return false;
 		}

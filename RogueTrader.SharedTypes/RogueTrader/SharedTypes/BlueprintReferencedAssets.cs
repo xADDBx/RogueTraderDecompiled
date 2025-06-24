@@ -43,6 +43,7 @@ public class BlueprintReferencedAssets : ScriptableObject
 
 	public UnityEngine.Object Get(string assetId, long fileId)
 	{
+		Debug.Log(m_Entries.Count + " - Wonderful BRAs");
 		return FirstItem(m_Entries, (Entry e) => e.AssetId.Equals(assetId, StringComparison.Ordinal) && e.FileId == fileId).Asset;
 	}
 

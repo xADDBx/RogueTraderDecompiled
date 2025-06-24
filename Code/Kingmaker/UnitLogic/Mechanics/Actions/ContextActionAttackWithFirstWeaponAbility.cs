@@ -9,6 +9,7 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
@@ -34,75 +35,46 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 
 	protected override void RunAction()
 	{
-		if (!(base.Caster is BaseUnitEntity baseUnitEntity))
+		BaseUnitEntity attacker = GetAttacker(base.Context, base.Caster);
+		MechanicEntity mechanicEntity = base.Target.Entity;
+		if (ContextCasterIsTarget)
 		{
-			Element.LogError(this, "Caster is missing");
+			mechanicEntity = base.Context.MaybeCaster;
+		}
+		if (TargetIsPriorityTarget)
+		{
+			BaseUnitEntity baseUnitEntity = attacker.GetOptional<UnitPartPriorityTarget>()?.GetPriorityTarget(PriorityTargetBuff);
+			if (baseUnitEntity == null)
+			{
+				return;
+			}
+			mechanicEntity = baseUnitEntity;
+		}
+		if (mechanicEntity == null)
+		{
+			Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
 			return;
 		}
-		BaseUnitEntity baseUnitEntity2 = (OwnerIsAttacker ? ((BaseUnitEntity)base.Context.MaybeOwner) : baseUnitEntity);
-		if (baseUnitEntity2 == null)
+		AbilityData ability = GetAbility(attacker);
+		if (ability == null || !ability.CanTarget(mechanicEntity, out var _))
 		{
-			Element.LogError(this, "Caster is missing");
+			return;
 		}
-		else
+		if (SaveMPAfterUsingWeaponAbility)
 		{
-			if ((bool)baseUnitEntity2.Features.CantAct)
+			PartUnitCombatState combatStateOptional = attacker.GetCombatStateOptional();
+			if (combatStateOptional != null)
 			{
-				return;
-			}
-			MechanicEntity mechanicEntity = base.Target.Entity;
-			if (ContextCasterIsTarget)
-			{
-				mechanicEntity = base.Context.MaybeCaster;
-			}
-			if (TargetIsPriorityTarget)
-			{
-				BaseUnitEntity baseUnitEntity3 = baseUnitEntity2.GetOptional<UnitPartPriorityTarget>()?.GetPriorityTarget(PriorityTargetBuff);
-				if (baseUnitEntity3 == null)
-				{
-					return;
-				}
-				mechanicEntity = baseUnitEntity3;
-			}
-			if (mechanicEntity == null)
-			{
-				Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
-				return;
-			}
-			ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondaryHandWeapon());
-			if (itemEntityWeapon == null)
-			{
-				Element.LogError(this, "No weapon in hand");
-				return;
-			}
-			Ability ability = itemEntityWeapon.Abilities[0];
-			if (ability == null)
-			{
-				Element.LogError(this, "No ability in weapon");
-			}
-			else
-			{
-				if (!ability.Data.CanTarget(mechanicEntity, out var _))
-				{
-					return;
-				}
-				if (SaveMPAfterUsingWeaponAbility)
-				{
-					PartUnitCombatState combatStateOptional = baseUnitEntity2.GetCombatStateOptional();
-					if (combatStateOptional != null)
-					{
-						combatStateOptional.SaveMPAfterUsingNextAbility = true;
-					}
-				}
-				UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability.Data, mechanicEntity)
-				{
-					IgnoreCooldown = true,
-					FreeAction = true,
-					OriginatedFrom = base.Context.SourceAbility
-				};
-				baseUnitEntity2.Commands.AddToQueue(cmdParams);
+				combatStateOptional.SaveMPAfterUsingNextAbility = true;
 			}
 		}
+		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability, mechanicEntity)
+		{
+			IgnoreCooldown = true,
+			FreeAction = true,
+			OriginatedFrom = base.Context.SourceAbility
+		};
+		attacker.Commands.AddToQueue(cmdParams);
 	}
 
 	public override string GetCaption()
@@ -116,12 +88,22 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 		{
 			return null;
 		}
-		if (!(context.Caster is BaseUnitEntity baseUnitEntity))
+		BaseUnitEntity attacker = GetAttacker(context, context.Caster);
+		if (attacker == null)
+		{
+			return null;
+		}
+		return GetAbility(attacker)?.Data.GetDamagePrediction(targetEntity, casterPosition);
+	}
+
+	private BaseUnitEntity GetAttacker(MechanicsContext context, MechanicEntity casterEntity)
+	{
+		if (!(casterEntity is BaseUnitEntity baseUnitEntity))
 		{
 			Element.LogError(this, "Caster is missing");
 			return null;
 		}
-		BaseUnitEntity baseUnitEntity2 = (OwnerIsAttacker ? ((BaseUnitEntity)base.Context.MaybeOwner) : baseUnitEntity);
+		BaseUnitEntity baseUnitEntity2 = (OwnerIsAttacker ? ((BaseUnitEntity)context.MaybeOwner) : baseUnitEntity);
 		if (baseUnitEntity2 == null)
 		{
 			Element.LogError(this, "Caster is missing");
@@ -131,18 +113,23 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 		{
 			return null;
 		}
-		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? baseUnitEntity2.GetFirstWeapon() : baseUnitEntity2.GetSecondaryHandWeapon());
+		return baseUnitEntity2;
+	}
+
+	private AbilityData GetAbility(BaseUnitEntity attacker)
+	{
+		ItemEntityWeapon itemEntityWeapon = ((!useSecondWeapon) ? attacker.GetFirstWeapon() : attacker.GetSecondaryHandWeapon());
 		if (itemEntityWeapon == null)
 		{
 			Element.LogError(this, "No weapon in hand");
 			return null;
 		}
-		Ability ability = itemEntityWeapon.Abilities[0];
+		Ability ability = itemEntityWeapon.Shield?.Abilities.Get(0) ?? itemEntityWeapon.Abilities.Get(0);
 		if (ability == null)
 		{
 			Element.LogError(this, "No ability in weapon");
 			return null;
 		}
-		return ability.Data.GetDamagePrediction(targetEntity, casterPosition);
+		return ability.Data;
 	}
 }

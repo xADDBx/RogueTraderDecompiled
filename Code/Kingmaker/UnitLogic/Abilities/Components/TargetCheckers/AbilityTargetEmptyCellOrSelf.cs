@@ -17,7 +17,12 @@ public class AbilityTargetEmptyCellOrSelf : BlueprintComponent, IAbilityTargetRe
 {
 	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
 	{
-		return !WarhammerBlockManager.Instance.NodeContainsAnyExcept(target.NearestNode, ability.Caster.MaybeMovementAgent.Blocker);
+		CustomGridNodeBase nearestNode = target.NearestNode;
+		if (!WarhammerBlockManager.Instance.NodeContainsAnyExcept(nearestNode, ability.Caster.MaybeMovementAgent.Blocker))
+		{
+			return !AbilityTargetEmptyCell.IsVirtualPositionBlockingCell(nearestNode);
+		}
+		return false;
 	}
 
 	public string GetAbilityTargetRestrictionUIText(AbilityData ability, TargetWrapper target, Vector3 casterPosition)

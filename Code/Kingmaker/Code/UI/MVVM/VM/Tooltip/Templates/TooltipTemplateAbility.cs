@@ -146,21 +146,24 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	{
 		try
 		{
-			BlueprintItemWeapon blueprintItemWeapon = SourceItem as BlueprintItemWeapon;
-			m_Name = blueprintAbility.Name;
-			m_Icon = blueprintAbility.Icon;
-			m_Type = GetAbilityType(blueprintAbility);
-			m_Targets = GetTargets(blueprintAbility, blueprintItemWeapon).ToList();
-			m_Cooldown = blueprintAbility.CooldownRounds.ToString();
-			m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(blueprintAbility);
-			m_EndTurn = GetEndTurn(blueprintAbility);
-			m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(blueprintAbility);
-			m_ShortDescriptionText = blueprintAbility.GetShortenedDescription();
-			m_LongDescriptionText = blueprintAbility.Description;
-			m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
-			m_ActionTime = UIUtilityTexts.GetAbilityActionText(blueprintAbility);
-			m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItemWeapon, Caster);
-			m_IsReload = UIUtilityItem.IsReload(blueprintAbility);
+			using (ContextData<DisableStatefulRandomContext>.Request())
+			{
+				BlueprintItemWeapon blueprintItemWeapon = SourceItem as BlueprintItemWeapon;
+				m_Name = blueprintAbility.Name;
+				m_Icon = blueprintAbility.Icon;
+				m_Type = GetAbilityType(blueprintAbility);
+				m_Targets = GetTargets(blueprintAbility, blueprintItemWeapon).ToList();
+				m_Cooldown = blueprintAbility.CooldownRounds.ToString();
+				m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(blueprintAbility);
+				m_EndTurn = GetEndTurn(blueprintAbility);
+				m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(blueprintAbility);
+				m_ShortDescriptionText = blueprintAbility.GetShortenedDescription();
+				m_LongDescriptionText = blueprintAbility.Description;
+				m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(blueprintAbility);
+				m_ActionTime = UIUtilityTexts.GetAbilityActionText(blueprintAbility);
+				m_UIAbilityData = UIUtilityItem.GetUIAbilityData(blueprintAbility, blueprintItemWeapon, Caster);
+				m_IsReload = UIUtilityItem.IsReload(blueprintAbility);
+			}
 		}
 		catch (Exception arg)
 		{
@@ -172,25 +175,34 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 	{
 		try
 		{
-			using (GameLogContext.Scope)
+			using (ContextData<DisableStatefulRandomContext>.Request())
 			{
-				GameLogContext.UnitEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)Caster;
-				m_Name = abilityData.Name;
-				m_Icon = abilityData.Icon;
-				m_Type = GetAbilityType(abilityData.Blueprint);
-				m_Cost = GetCost(abilityData);
-				m_Veil = GetVeil(abilityData);
-				m_EndTurn = GetEndTurn(abilityData.Blueprint);
-				m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(abilityData.Blueprint);
-				m_Targets = GetTargets(abilityData).ToList();
-				m_Cooldown = abilityData.Blueprint.CooldownRounds.ToString();
-				m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(abilityData.Blueprint);
-				m_ShortDescriptionText = abilityData.ShortenedDescription;
-				m_LongDescriptionText = abilityData.Description;
-				m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(abilityData.Blueprint);
-				m_ActionTime = UIUtilityTexts.GetAbilityActionText(abilityData);
-				m_UIAbilityData = UIUtilityItem.GetUIAbilityData(abilityData.Blueprint, abilityData.Weapon);
-				m_IsReload = UIUtilityItem.IsReload(abilityData);
+				using (ContextData<UnitHelper.PreviewUnit>.Request())
+				{
+					using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+					{
+						using (GameLogContext.Scope)
+						{
+							GameLogContext.UnitEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)Caster;
+							m_Name = abilityData.Name;
+							m_Icon = abilityData.Icon;
+							m_Type = GetAbilityType(abilityData.Blueprint);
+							m_Cost = GetCost(abilityData);
+							m_Veil = GetVeil(abilityData);
+							m_EndTurn = GetEndTurn(abilityData.Blueprint);
+							m_AttackAbilityGroupCooldown = GetAttackAbilityGroupCooldown(abilityData.Blueprint);
+							m_Targets = GetTargets(abilityData).ToList();
+							m_Cooldown = abilityData.Blueprint.CooldownRounds.ToString();
+							m_IsOnTimeInBattleAbility = CheckOneTimeInBattleAbility(abilityData.Blueprint);
+							m_ShortDescriptionText = abilityData.ShortenedDescription;
+							m_LongDescriptionText = abilityData.Description;
+							m_SpellDescriptor = UIUtilityTexts.GetSpellDescriptorsText(abilityData.Blueprint);
+							m_ActionTime = UIUtilityTexts.GetAbilityActionText(abilityData);
+							m_UIAbilityData = UIUtilityItem.GetUIAbilityData(abilityData.Blueprint, abilityData.Weapon);
+							m_IsReload = UIUtilityItem.IsReload(abilityData);
+						}
+					}
+				}
 			}
 		}
 		catch (Exception arg)

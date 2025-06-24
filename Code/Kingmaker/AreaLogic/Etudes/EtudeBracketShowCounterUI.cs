@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Localization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -16,6 +17,9 @@ public class EtudeBracketShowCounterUI : EtudeBracketTrigger, IHashable
 {
 	public LocalizedString Label;
 
+	public bool ShowSubLabel;
+
+	[ConditionalShow("ShowSubLabel")]
 	public LocalizedString SubLabel;
 
 	public PropertyCalculator Value;
@@ -55,6 +59,7 @@ public class EtudeBracketShowCounterUI : EtudeBracketTrigger, IHashable
 				Id = GetCounterId(),
 				Type = UICounterType,
 				Label = Label,
+				ShowSubLabel = ShowSubLabel,
 				SubLabel = SubLabel,
 				ValueGetter = () => Value.GetValue(context),
 				TargetValueGetter = () => TargetValue.GetValue(context)

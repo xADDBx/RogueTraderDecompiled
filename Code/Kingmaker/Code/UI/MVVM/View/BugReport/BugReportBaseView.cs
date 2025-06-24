@@ -262,8 +262,12 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		m_MessageInputField.SetPlaceholderText(UIStrings.Instance.UIBugReport.AdditionalPlaceholderText.Text);
 		if (BuildModeUtility.IsDevelopment)
 		{
-			m_MessageInputField.Text = "\n\nШаги воспроизведения:\n\n\nФактический результат:\n\n\nОжидаемый результат:\n";
-			m_BottomDescriptionText.text = "<b>Blocker:</b> ошибка, физически блокирующая разработку;\n<b>Crit:</b> ошибка, блокирующая выпуск версии;\n<b>Major:</b> ошибка, близкая к криту по нужности в версию, но не блокирующая ее выпуск;\n<b>Normal:</b> остальные ошибки, помимо критических;\n<b>Minor:</b> ошибка не влияющая на выпуск версии.";
+			m_MessageInputField.ResetScroll();
+			if (string.IsNullOrEmpty(m_MessageInputField.Text))
+			{
+				m_MessageInputField.Text = "\n\nШаги воспроизведения:\n\n\nФактический результат:\n\n\nОжидаемый результат:\n";
+				m_BottomDescriptionText.text = "<b>Blocker:</b> ошибка, физически блокирующая разработку;\n<b>Crit:</b> ошибка, блокирующая выпуск версии;\n<b>Major:</b> ошибка, близкая к криту по нужности в версию, но не блокирующая ее выпуск;\n<b>Normal:</b> остальные ошибки, помимо критических;\n<b>Minor:</b> ошибка не влияющая на выпуск версии.";
+			}
 		}
 		BuildNavigation();
 		m_DuplicatesButton.gameObject.SetActive(value: false);
@@ -516,6 +520,13 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		}
 		else
 		{
+			if (m_DevPriorityGroup != null && m_DevPriorityDropdown != null)
+			{
+				m_DevPriorityGroup.SetActive(value: false);
+			}
+			m_CriticalToggle.gameObject.SetActive(value: true);
+			m_NormalToggle.gameObject.SetActive(value: true);
+			m_SuggestionToggle.gameObject.SetActive(value: true);
 			m_AssigneeGO.gameObject.SetActive(value: false);
 			m_FixVersionGO.SetActive(value: false);
 			m_LabelsGroup.SetActive(value: false);

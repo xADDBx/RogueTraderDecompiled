@@ -325,13 +325,16 @@ public class UnitViewHandsEquipment
 		m_ActiveSet.MainHand.MatchVisuals();
 		m_ActiveSet.OffHand.MatchVisuals();
 		RedistributeSlots();
-		if (IsDollRoom)
+		if (IsDollRoom && activeSet != m_ActiveSet)
 		{
 			activeSet.MainHand.AttachModel(!InCombat);
 			activeSet.OffHand.AttachModel(!InCombat);
 		}
-		activeSet.MainHand.MatchVisuals();
-		activeSet.OffHand.MatchVisuals();
+		if (activeSet != m_ActiveSet)
+		{
+			activeSet.MainHand.MatchVisuals();
+			activeSet.OffHand.MatchVisuals();
+		}
 	}
 
 	public void StartCombatChangeAnimation()

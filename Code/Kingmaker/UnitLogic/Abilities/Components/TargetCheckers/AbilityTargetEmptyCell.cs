@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
@@ -17,7 +18,28 @@ public class AbilityTargetEmptyCell : BlueprintComponent, IAbilityTargetRestrict
 {
 	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
 	{
-		return !WarhammerBlockManager.Instance.NodeContainsAny(target.NearestNode);
+		CustomGridNodeBase nearestNode = target.NearestNode;
+		if (!WarhammerBlockManager.Instance.NodeContainsAny(nearestNode))
+		{
+			return !IsVirtualPositionBlockingCell(nearestNode);
+		}
+		return false;
+	}
+
+	public static bool IsVirtualPositionBlockingCell(CustomGridNodeBase targetNode)
+	{
+		VirtualPositionController virtualPositionController = Game.Instance.VirtualPositionController;
+		if (virtualPositionController != null && virtualPositionController.VirtualPosition.HasValue && virtualPositionController.VirtualPositionUnit != null)
+		{
+			foreach (CustomGridNodeBase occupiedNode in virtualPositionController.VirtualPositionUnit.GetOccupiedNodes(virtualPositionController.VirtualPosition.Value))
+			{
+				if (occupiedNode == targetNode)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public string GetAbilityTargetRestrictionUIText(AbilityData ability, TargetWrapper target, Vector3 casterPosition)

@@ -154,7 +154,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 			});
 			if (base.Owner.IsInCombat)
 			{
-				Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
+				Game.Instance.PlayerInputInCombatController.RequestLockPlayerInputWithSource(this);
 			}
 			return UnitCommandHandle.Request(m_Current);
 		}
@@ -191,7 +191,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 	{
 		if (base.Owner.IsInCombat)
 		{
-			Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
+			Game.Instance.PlayerInputInCombatController.RequestLockPlayerInputWithSource(this);
 		}
 		if (first)
 		{
@@ -290,7 +290,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 		m_Current = null;
 		if (base.Owner == null || base.Owner.IsInCombat)
 		{
-			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInputWithSource(this);
 		}
 	}
 
@@ -315,7 +315,7 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 				m_Queue.RemoveFirst();
 				if (base.Owner == null || base.Owner.IsInCombat)
 				{
-					Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+					Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInputWithSource(this);
 				}
 				RunInternal(unitCommandParams, fromQueue: true);
 			}
@@ -445,6 +445,11 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 		{
 			InterruptMove();
 		}
+	}
+
+	public void RequestUnlockPlayerInputEarlier()
+	{
+		Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInputWithSource(this);
 	}
 
 	public override Hash128 GetHash128()

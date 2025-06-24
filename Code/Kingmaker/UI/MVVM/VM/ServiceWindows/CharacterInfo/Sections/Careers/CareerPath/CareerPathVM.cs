@@ -13,6 +13,7 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Enums;
 using Kingmaker.GameCommands;
 using Kingmaker.Items.Slots;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -564,7 +565,7 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 			{
 				PetChangeNameVM.Value = new CharGenChangeNameMessageBoxVM(UIStrings.Instance.CharGen.ChooseName, UIStrings.Instance.SettingsUI.DialogApply, delegate(string text)
 				{
-					UnitProgressionVM.Unit.Value.Description.CustomPetName = text;
+					Game.Instance.GameCommandQueue.AddCommand(new SetPetCustomNameGameCommand(UnitProgressionVM.Unit.Value.FromBaseUnitEntity(), text));
 				}, delegate(DialogMessageBoxBase.BoxButton value)
 				{
 					if (value == DialogMessageBoxBase.BoxButton.Yes)

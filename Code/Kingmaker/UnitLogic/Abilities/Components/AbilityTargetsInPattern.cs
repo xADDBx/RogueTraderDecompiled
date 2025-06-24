@@ -67,7 +67,7 @@ public class AbilityTargetsInPattern : AbilitySelectTarget, IAbilityAoEPatternPr
 		OrientedPatternData pattern = GetOrientedPattern(context.Ability, casterNode, targetNode);
 		foreach (MechanicEntity mechanicEntity in Game.Instance.State.MechanicEntities)
 		{
-			if ((!m_IncludeNonUnitTargets && !(mechanicEntity is BaseUnitEntity)) || (!m_IncludeDead && mechanicEntity != null && mechanicEntity.IsDeadOrUnconscious) || (mechanicEntity == context.Caster && !m_IncludeCaster) || !AoEPatternHelper.WouldTargetEntity(pattern, mechanicEntity))
+			if ((!m_IncludeNonUnitTargets && !(mechanicEntity is BaseUnitEntity)) || (!m_IncludeDead && mechanicEntity != null && mechanicEntity.IsDeadOrUnconscious) || (mechanicEntity == context.Caster && !m_IncludeCaster) || ((mechanicEntity != context.Caster || !m_IncludeCaster) && (bool)mechanicEntity.Features.IsUntargetable) || !AoEPatternHelper.WouldTargetEntity(pattern, mechanicEntity))
 			{
 				continue;
 			}

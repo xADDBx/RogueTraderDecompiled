@@ -24,6 +24,9 @@ public class TurnVirtualListController : MonoBehaviour
 	[SerializeField]
 	private VirtualListDirection m_VirtualDirection;
 
+	[SerializeField]
+	private bool m_KeepInvisibleItems;
+
 	[Header("Content paddings")]
 	[SerializeField]
 	[UsedImplicitly]
@@ -392,11 +395,11 @@ public class TurnVirtualListController : MonoBehaviour
 		{
 			return;
 		}
-		List<ITurnVirtualItemData> range = DataList.GetRange(m_FirstItemIndex, m_LastItemIndex - m_FirstItemIndex + 1);
+		List<ITurnVirtualItemData> list = (m_KeepInvisibleItems ? DataList.ToList() : DataList.GetRange(m_FirstItemIndex, m_LastItemIndex - m_FirstItemIndex + 1));
 		Queue<ITurnVirtualItemView> queue = new Queue<ITurnVirtualItemView>();
 		foreach (ITurnVirtualItemView visibleItem in VisibleItems)
 		{
-			ITurnVirtualItemData turnVirtualItemData = range.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == visibleItem.GetViewModel());
+			ITurnVirtualItemData turnVirtualItemData = list.FirstOrDefault((ITurnVirtualItemData data) => data.ViewModel == visibleItem.GetViewModel());
 			if (turnVirtualItemData != null)
 			{
 				if (turnVirtualItemData.BoundView == null)
@@ -407,33 +410,45 @@ public class TurnVirtualListController : MonoBehaviour
 				{
 					visibleItem.SetAnchoredPosition(new Vector2(turnVirtualItemData.VirtualPosition.x + (float)Padding.left, 0f - (turnVirtualItemData.VirtualPosition.y + (float)Padding.top)));
 				}
-				range.Remove(turnVirtualItemData);
+				list.Remove(turnVirtualItemData);
 			}
 			else
 			{
 				queue.Enqueue(visibleItem);
 			}
 		}
-		for (int i = 0; i < range.Count; i++)
+		for (int i = 0; i < list.Count; i++)
 		{
 			if (i < queue.Count)
 			{
 				ITurnVirtualItemView turnVirtualItemView = queue.Dequeue();
 				turnVirtualItemView.WillBeReused = true;
-				SetupItemView(turnVirtualItemView, range[i]);
+				SetupItemView(turnVirtualItemView, list[i]);
 				turnVirtualItemView.WillBeReused = false;
 			}
 			else
 			{
 				ITurnVirtualItemView view = ClaimItemView();
-				SetupItemView(view, range[i]);
+				SetupItemView(view, list[i]);
 			}
 		}
 		foreach (ITurnVirtualItemView item in queue)
 		{
 			ReleaseItem(item);
 		}
-		UpdateSiblingIndexes();
+		if (!m_KeepInvisibleItems)
+		{
+			return;
+		}
+		for (int j = 0; j < DataList.Count; j++)
+		{
+			ITurnVirtualItemView boundView = DataList[j].BoundView;
+			float alpha = boundView.CanvasGroup.alpha;
+			if (alpha == 0f || alpha == 1f)
+			{
+				boundView.CanvasGroup.alpha = ((j >= m_FirstItemIndex && j <= m_LastItemIndex) ? 1f : 0f);
+			}
+		}
 	}
 
 	private void UpdateSiblingIndexes()

@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs;
@@ -21,12 +22,18 @@ public class AddMechanicsFeature : BlueprintComponent, IRuntimeEntityFactCompone
 	{
 		protected override void OnActivateOrPostLoad()
 		{
-			base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Retain(base.Fact as Buff);
+			if (!(base.Fact is UnitFact fact) || base.SourceBlueprintComponent.m_Restrictions.IsPassed(fact))
+			{
+				base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Retain(base.Fact as Buff);
+			}
 		}
 
 		protected override void OnDeactivate()
 		{
-			base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Release(base.Fact as Buff);
+			if (!(base.Fact is UnitFact fact) || base.SourceBlueprintComponent.m_Restrictions.IsPassed(fact))
+			{
+				base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Release(base.Fact as Buff);
+			}
 		}
 
 		public override Hash128 GetHash128()
@@ -40,6 +47,9 @@ public class AddMechanicsFeature : BlueprintComponent, IRuntimeEntityFactCompone
 
 	[SerializeField]
 	private MechanicsFeatureType m_Feature;
+
+	[SerializeField]
+	private RestrictionCalculator m_Restrictions = new RestrictionCalculator();
 
 	public MechanicsFeatureType Feature => m_Feature;
 

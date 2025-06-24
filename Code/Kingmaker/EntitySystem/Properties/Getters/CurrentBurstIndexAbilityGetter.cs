@@ -1,6 +1,8 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Properties.BaseGetter;
+using Kingmaker.RuleSystem;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
@@ -16,10 +18,7 @@ public class CurrentBurstIndexAbilityGetter : PropertyGetter, PropertyContextAcc
 
 	protected override int GetBaseValue()
 	{
-		if (base.PropertyContext.Rule is RuleCalculateDamage { RollPerformAttackRule: not null } ruleCalculateDamage)
-		{
-			return ruleCalculateDamage.RollPerformAttackRule.BurstIndex;
-		}
-		return 0;
+		RulebookEvent rule = base.PropertyContext.Rule;
+		return ((rule is RuleCalculateDamage ruleCalculateDamage) ? ruleCalculateDamage.RollPerformAttackRule : ((!(rule is RulePerformAttack rulePerformAttack)) ? null : rulePerformAttack.RollPerformAttackRule))?.BurstIndex ?? 0;
 	}
 }

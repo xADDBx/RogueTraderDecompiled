@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Controllers.TurnBased;
@@ -21,6 +22,8 @@ public class PlayerInputInCombatController : IControllerTick, IController, ITurn
 	private bool m_UpdateRequested;
 
 	private int m_LockCounter;
+
+	private Dictionary<object, int> m_LockCounterWithSource = new Dictionary<object, int>();
 
 	public bool IsLocked
 	{
@@ -74,6 +77,31 @@ public class PlayerInputInCombatController : IControllerTick, IController, ITurn
 		}
 	}
 
+	public void RequestLockPlayerInputWithSource(object source)
+	{
+		if (Game.Instance.TurnController.InCombat)
+		{
+			m_LockCounterWithSource.TryGetValue(source, out var value);
+			m_LockCounterWithSource[source] = value + 1;
+		}
+	}
+
+	public void RequestUnlockPlayerInputWithSource(object source)
+	{
+		if (Game.Instance.TurnController.InCombat)
+		{
+			m_LockCounterWithSource.TryGetValue(source, out var value);
+			if (value > 1)
+			{
+				m_LockCounterWithSource[source] = value - 1;
+			}
+			else if (value == 1)
+			{
+				m_LockCounterWithSource.Remove(source);
+			}
+		}
+	}
+
 	public void RequestUpdate()
 	{
 		m_UpdateRequested = true;
@@ -81,7 +109,7 @@ public class PlayerInputInCombatController : IControllerTick, IController, ITurn
 
 	private void UpdateLockStatus()
 	{
-		bool flag = m_LockCounter > 0;
+		bool flag = m_LockCounter > 0 || m_LockCounterWithSource.Count > 0;
 		if (flag != m_IsPlayerInputLocked)
 		{
 			if (flag)
@@ -98,6 +126,7 @@ public class PlayerInputInCombatController : IControllerTick, IController, ITurn
 	private void ForceUnlockPlayerInput()
 	{
 		m_LockCounter = 0;
+		m_LockCounterWithSource.Clear();
 		UnlockPlayerInput();
 	}
 

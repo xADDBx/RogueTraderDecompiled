@@ -45,7 +45,7 @@ public class PregenCharacterNames : ScriptableObject
 
 	public string GetRandomPetName(PetType petType, string exceptName)
 	{
-		return GetPetNamesList(petType, exceptName).Random(PFStatefulRandom.Blueprints);
+		return GetPetNamesList(petType, exceptName).Random(PFStatefulRandom.NonDeterministic);
 	}
 
 	public string GetRandomShipName(string exceptName)

@@ -16,16 +16,16 @@ public class SpawnerOptimizedUnit : EntityPartComponent<SpawnerOptimizedUnit.Par
 	{
 		public void OnSpawn(AbstractUnitEntity unit)
 		{
+			SpawnerOptimizedUnit spawnerOptimizedUnit = (SpawnerOptimizedUnit)base.Source;
+			unit.FreezeOutsideCamera = spawnerOptimizedUnit.m_FreezeOutsideCamera;
 		}
 
 		public void OnInitialize(AbstractUnitEntity unit)
 		{
-			SpawnerOptimizedUnit spawnerOptimizedUnit = (SpawnerOptimizedUnit)base.Source;
-			if (spawnerOptimizedUnit.m_IsExtra)
+			if (((SpawnerOptimizedUnit)base.Source).m_IsExtra)
 			{
 				unit.MarkExtra();
 			}
-			unit.FreezeOutsideCamera = spawnerOptimizedUnit.m_FreezeOutsideCamera;
 		}
 
 		public void OnDispose(AbstractUnitEntity unit)

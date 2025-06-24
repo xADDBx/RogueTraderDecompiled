@@ -32,7 +32,7 @@ public class UnitPartStatsOverride : UnitPart, IHashable
 
 	public void AddOverride(StatType type, int value)
 	{
-		if (overrides.Any((StatOverride o) => o.statType == type))
+		if (HasOverride(type))
 		{
 			RemoveOverride(type);
 		}
@@ -68,22 +68,26 @@ public class UnitPartStatsOverride : UnitPart, IHashable
 		}
 	}
 
-	public void RemoveOverride(StatType type)
+	private void RemoveOverride(StatType type)
 	{
-		if (overrides.Any((StatOverride o) => o.statType == type))
-		{
-			overrides.RemoveAt(overrides.FindIndex((StatOverride o) => o.statType == type));
-			base.Owner.Stats.GetStatOptional(type)?.UpdateValue();
-		}
+		overrides.RemoveAt(overrides.FindIndex((StatOverride o) => o.statType == type));
+		base.Owner.Stats.GetStatOptional(type)?.UpdateValue();
 	}
 
 	public void Remove()
 	{
-		foreach (StatType item in overrides.Select((StatOverride o) => o.statType))
+		List<StatType> list = overrides.Select((StatOverride o) => o.statType).ToList();
+		while (list.Count > 0)
 		{
-			RemoveOverride(item);
+			RemoveOverride(list[0]);
+			list.RemoveAt(0);
 		}
 		RemoveSelf();
+	}
+
+	private bool HasOverride(StatType type)
+	{
+		return overrides.Any((StatOverride o) => o.statType == type);
 	}
 
 	public override Hash128 GetHash128()

@@ -105,7 +105,7 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		{
 			return 0f;
 		}
-		if (targetForDesiredPosition != null && Ability.CanTargetFromDesiredPosition(targetForDesiredPosition) && targetForDesiredPosition.Entity != null)
+		if (targetForDesiredPosition?.Entity != null && Ability.CanTargetFromDesiredPosition(targetForDesiredPosition))
 		{
 			float result = (Ability.Blueprint.CanTargetPoint ? 1f : 0f);
 			bool isDeadOrUnconscious = targetForDesiredPosition.Entity.IsDeadOrUnconscious;

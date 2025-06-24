@@ -3,14 +3,17 @@ using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.Controllers.Units;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Models.UnitSettings.Blueprints;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.Utility.StatefulRandom;
 using Newtonsoft.Json;
 using Owlcat.Runtime.UI.Tooltips;
 using StateHasher.Core;
@@ -81,6 +84,22 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		}
 	}
 
+	protected override bool IsPossibleToConvertWhileNotAvailable
+	{
+		get
+		{
+			if (Ability == null)
+			{
+				return false;
+			}
+			if (Ability.Caster == null)
+			{
+				return false;
+			}
+			return Ability.SummonedLimitOnlyRestrictionValue;
+		}
+	}
+
 	public bool IsSameAbility(Ability other)
 	{
 		return m_AbilityRef == other;
@@ -135,9 +154,19 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 	public override void OnHover(bool state)
 	{
 		base.OnHover(state);
-		if (!(Ability == null))
+		if (Ability == null)
 		{
-			TriggerAbilityHoverEvents(Ability, state);
+			return;
+		}
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			using (ContextData<UnitHelper.PreviewUnit>.Request())
+			{
+				using (ContextData<UnitHelper.DoNotCreateItems>.Request())
+				{
+					TriggerAbilityHoverEvents(Ability, state);
+				}
+			}
 		}
 	}
 

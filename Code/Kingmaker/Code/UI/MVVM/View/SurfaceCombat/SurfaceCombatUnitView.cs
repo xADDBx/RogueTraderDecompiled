@@ -42,7 +42,6 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 	protected UnitHealthPartProgressPCView UnitHealthPartProgressPCView;
 
 	[Header("Name")]
-	[ConditionalShow("HasNameView")]
 	[SerializeField]
 	protected TextMeshProUGUI m_NameNormal;
 

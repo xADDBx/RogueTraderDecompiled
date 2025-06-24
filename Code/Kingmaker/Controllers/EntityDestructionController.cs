@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Controllers.Interfaces;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.UI;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
@@ -29,6 +31,19 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 		if (entity == null || (entity.HoldingState == null && Game.Instance.EntitySpawner.TryRemoveFromSpawnQueue(entity)))
 		{
 			entity?.Dispose();
+			return;
+		}
+		int currentDepth = ContextData<UnitHelper.UnitBeingDestroyed>.CurrentDepth;
+		if (currentDepth >= 0)
+		{
+			if (currentDepth >= 5)
+			{
+				Logger.ErrorWithReport("Infinite destroy loop detected!");
+			}
+			else
+			{
+				DestroyImmediate(entity);
+			}
 			return;
 		}
 		entity.WillBeDestroyed = true;
@@ -57,23 +72,9 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 		foreach (Entity item in m_ToDestroy)
 		{
 			item.WillBeDestroyed = false;
-			if (item.HoldingState != null)
+			if (!DestroyImmediate(item))
 			{
-				if (item.IsDisposed)
-				{
-					Logger.ErrorWithReport("Disposed entity in the game state!");
-					item.HoldingState.RemoveEntityData(item);
-					return;
-				}
-				try
-				{
-					PerformDestroy(item);
-					CheckCleanUp(item as BaseUnitEntity);
-				}
-				catch (Exception ex)
-				{
-					Logger.Exception(ex);
-				}
+				return;
 			}
 		}
 		if (m_CleanupAwakeUnits)
@@ -82,6 +83,30 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 			m_CleanupAwakeUnits = false;
 		}
 		m_ToDestroy.Clear();
+	}
+
+	private bool DestroyImmediate(Entity entity)
+	{
+		if (entity.HoldingState == null && !entity.IsPreview)
+		{
+			return true;
+		}
+		if (entity.IsDisposed)
+		{
+			Logger.ErrorWithReport("Disposed entity in the game state!");
+			entity.HoldingState?.RemoveEntityData(entity);
+			return false;
+		}
+		try
+		{
+			PerformDestroy(entity);
+			CheckCleanUp(entity as BaseUnitEntity);
+		}
+		catch (Exception ex)
+		{
+			Logger.Exception(ex);
+		}
+		return true;
 	}
 
 	private static bool NeedFadeOut(Entity entity)
@@ -95,19 +120,22 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 
 	private static void PerformDestroy(Entity entity)
 	{
-		if (entity is BaseUnitEntity baseUnitEntity)
+		using (ContextData<UnitHelper.UnitBeingDestroyed>.Request())
 		{
-			bool flag = baseUnitEntity.GetOptional<UnitPartSummonedMonster>();
-			if (baseUnitEntity.Faction.IsPlayer && !baseUnitEntity.IsPet && !flag && TryUnrecruit(baseUnitEntity))
+			if (entity is BaseUnitEntity baseUnitEntity)
 			{
-				Logger.Error($"Cancel unit's destruction: {baseUnitEntity}");
-				return;
+				bool flag = baseUnitEntity.GetOptional<UnitPartSummonedMonster>();
+				if (baseUnitEntity.Faction.IsPlayer && !baseUnitEntity.IsPet && !flag && TryUnrecruit(baseUnitEntity))
+				{
+					Logger.Error($"Cancel unit's destruction: {baseUnitEntity}");
+					return;
+				}
 			}
+			entity.Remove<PartFadeOutAndDestroy>();
+			entity.HoldingState?.RemoveEntityData(entity);
+			entity.HandleDestroy();
+			entity.Dispose();
 		}
-		entity.Remove<PartFadeOutAndDestroy>();
-		entity.HoldingState?.RemoveEntityData(entity);
-		entity.HandleDestroy();
-		entity.Dispose();
 	}
 
 	private void CheckCleanUp(BaseUnitEntity unit)

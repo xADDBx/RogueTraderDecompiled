@@ -33,7 +33,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 
 	private List<BaseUnitEntity> m_ActualGroupCopy = new List<BaseUnitEntity>();
 
-	private Dictionary<PartyCharacterVM, PartyCharacterVM> m_masterToPetMap = new Dictionary<PartyCharacterVM, PartyCharacterVM>();
+	private Dictionary<BaseUnitEntity, int> m_PetAndMasterIndexMap = new Dictionary<BaseUnitEntity, int>();
 
 	private List<PartyCharacterVM> m_GroupWithPets = new List<PartyCharacterVM>();
 
@@ -65,7 +65,18 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			for (int i = 0; i < CharactersVM.Count; i++)
 			{
 				int num2 = m_StartIndex + i;
-				CharactersVM[i].SetUnitData((ActualGroup.Count > num2) ? ActualGroup[num2] : null);
+				if (ActualGroup.Count > num2)
+				{
+					CharactersVM[i].SetUnitData(ActualGroup[num2]);
+					if (m_PetAndMasterIndexMap.ContainsKey(ActualGroup[num2]))
+					{
+						CharactersVM[i].SetNumPetMasterLabelNumber(m_PetAndMasterIndexMap[ActualGroup[num2]]);
+					}
+				}
+				else
+				{
+					CharactersVM[i].SetUnitData(null);
+				}
 			}
 		}
 	}
@@ -87,27 +98,34 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			{
 				return;
 			}
-			SetGroup();
 			m_ActualGroupCopy = new List<BaseUnitEntity>(ActualGroup);
+			m_PetAndMasterIndexMap.Clear();
 			CharactersVM.ForEach(delegate(PartyCharacterVM c)
 			{
 				c.ClearPetMasterData();
 			});
 			int num = 1;
-			foreach (PartyCharacterVM item in CharactersVM)
+			foreach (BaseUnitEntity item in m_ActualGroupCopy)
 			{
-				UnitPartPetOwner petPart = item.UnitEntityData?.GetOptional<UnitPartPetOwner>();
+				if (num <= 16 && item.IsMaster)
+				{
+					m_PetAndMasterIndexMap.Add(item, num);
+					m_PetAndMasterIndexMap.Add(item.Pet, num);
+					num++;
+				}
+			}
+			SetGroup();
+			foreach (PartyCharacterVM item2 in CharactersVM)
+			{
+				UnitPartPetOwner petPart = item2.UnitEntityData?.GetOptional<UnitPartPetOwner>();
 				if (petPart != null)
 				{
 					int num2 = CharactersVM.FindIndex((PartyCharacterVM p) => p.UnitEntityData == petPart.PetUnit);
 					int num3 = CharactersVM.FindIndex((PartyCharacterVM p) => p.UnitEntityData == petPart.Owner);
 					if (num2 != -1 && num3 != -1)
 					{
-						CharactersVM[num2].SetMasterVMReference(item);
+						CharactersVM[num2].SetMasterVMReference(item2);
 						CharactersVM[num3].SetPetVMReference(CharactersVM[num2]);
-						item.SetNumPetMasterLabelNumber(num);
-						CharactersVM[num2].SetNumPetMasterLabelNumber(num);
-						num++;
 					}
 				}
 			}

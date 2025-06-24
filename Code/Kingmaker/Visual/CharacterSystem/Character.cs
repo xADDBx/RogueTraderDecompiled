@@ -157,6 +157,9 @@ public class Character : RegisteredBehaviour, IUpdatable
 	[Tooltip("Sometimes we need to forbid visualization of belt items, for Example on Ulfar")]
 	public bool ForbidBeltItemVisualization;
 
+	[Tooltip("Отключает создание и запекание текстурных атласов для быстрой сборки только геометрии")]
+	public bool makeTextures = true;
+
 	public bool SaveRagdoll;
 
 	public AtlasSize MaxAtlasSize = AtlasSize.AtlasSize2048;
@@ -1158,16 +1161,24 @@ public class Character : RegisteredBehaviour, IUpdatable
 			m_AtlasMaterial = AtlasMaterial;
 			if (m_AtlasMaterial == null)
 			{
-				m_AtlasMaterial = new Material(m_OverlayBodyParts.FirstOrDefault((BodyPart x) => null != x.Material)?.Material);
+				if (makeTextures)
+				{
+					m_AtlasMaterial = new Material(m_OverlayBodyParts.FirstOrDefault((BodyPart x) => null != x.Material)?.Material);
+				}
+				else
+				{
+					m_AtlasMaterial = new Material(Shader.Find("Standard"));
+					m_AtlasMaterial.name = "SimpleMesh_" + base.name;
+				}
 			}
 		}
-		if (false || !LoadingProcess.Instance.IsLoadingInProcess)
+		if ((false || !LoadingProcess.Instance.IsLoadingInProcess) && makeTextures)
 		{
 			MergeOverlays(m_OverlayBodyParts);
 		}
 		else
 		{
-			OverlaysMerged = false;
+			OverlaysMerged = !makeTextures;
 		}
 		BuildMesh(dictionary);
 		RebuildOutfit();
@@ -1702,7 +1713,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private void MergeOverlays(List<BodyPart> overlayBodyParts)
 	{
-		if (overlayBodyParts.Count == 0)
+		if (overlayBodyParts.Count == 0 || !makeTextures)
 		{
 			return;
 		}

@@ -337,7 +337,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		BaseUnitEntity[] array = Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy).ToArray();
 		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			if (partyAndPet.CombatState.StartedCombatNearEnemy || partyAndPet.HasMechanicFeature(MechanicsFeatureType.CanDeployNearEnemy))
+			if (partyAndPet.CombatState.StartedCombatNearEnemy || partyAndPet.HasMechanicFeature(MechanicsFeatureType.CanDeployNearEnemy) || !partyAndPet.IsInGame || (bool)partyAndPet.Features.Hidden)
 			{
 				continue;
 			}

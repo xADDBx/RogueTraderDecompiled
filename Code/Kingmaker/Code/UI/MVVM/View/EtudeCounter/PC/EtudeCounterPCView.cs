@@ -24,16 +24,22 @@ public class EtudeCounterPCView : EtudeCounterView
 	{
 		base.OnShow();
 		base.gameObject.SetActive(value: true);
+		m_ContainterTransform.DOComplete();
 		m_ContainterTransform.DOKill();
 		m_FadeAnimator.AppearAnimation();
-		m_ContainterTransform.DOAnchorPosY(0f, 0.5f).From().SetDelay(1f)
+		m_ContainterTransform.DOAnchorPosY(0f, 0.5f).From(isRelative: true).SetDelay(1f)
 			.SetEase(Ease.InExpo);
-		m_ContainterTransform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), 0.5f).From().SetEase(Ease.InExpo);
+		m_ContainterTransform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), 0.5f).From(isRelative: true).SetEase(Ease.InExpo);
 	}
 
 	protected override void OnHide()
 	{
 		base.OnHide();
-		m_FadeAnimator.DisappearAnimation();
+		m_ContainterTransform.DOComplete();
+		m_ContainterTransform.DOKill();
+		m_FadeAnimator.DisappearAnimation(delegate
+		{
+			base.gameObject.SetActive(value: false);
+		});
 	}
 }

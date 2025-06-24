@@ -97,8 +97,11 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 				UpdateLayout();
 			}));
 		}
-		UpdatePartySizeAndLayout();
-		AddDisposable(base.ViewModel.UpdateViewLayout.Subscribe(UpdatePartySizeAndLayout));
+		DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 1);
+		AddDisposable(UniRxExtensionMethods.Subscribe(base.ViewModel.UpdateViewLayout, delegate
+		{
+			DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 1);
+		}));
 		UpdateLayout();
 		CheckVisible();
 	}
@@ -197,18 +200,17 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 		}
 		int num2 = Game.Instance.SelectionCharacter.ActualGroup.IndexOf(Game.Instance.SelectionCharacter.SelectedUnitInUI.Value);
 		int num3 = num - 1;
-		int num4 = 0;
-		if (num2 > num3)
+		int num4 = num2 / num * num;
+		if (num2 / num > 0 && num2 % num == 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 >= 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 < 6)
 		{
 			num4 = Game.Instance.SelectionCharacter.ActualGroup.Count - num;
-			m_LeftArrow.SetActive(value: true);
-			m_RightArrow.SetActive(value: false);
 		}
-		else if (Game.Instance.SelectionCharacter.ActualGroup.Count > num3 + 1)
+		if (num4 < 0)
 		{
-			m_LeftArrow.SetActive(value: false);
-			m_RightArrow.SetActive(value: true);
+			num4 = 0;
 		}
+		m_LeftArrow.SetActive(num2 > num3);
+		m_RightArrow.SetActive(num2 < Game.Instance.SelectionCharacter.ActualGroup.Count - num - 1);
 		m_Characters.Clear();
 		PartyCharacterConsoleView[] characterViews = m_CharacterViews;
 		foreach (PartyCharacterConsoleView partyCharacterConsoleView in characterViews)
@@ -228,9 +230,5 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 		}
 		UpdateLayout();
 		CheckVisible();
-	}
-
-	private void UpdateHintArrows()
-	{
 	}
 }

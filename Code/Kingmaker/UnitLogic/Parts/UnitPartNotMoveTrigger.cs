@@ -6,6 +6,7 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameModes;
@@ -15,6 +16,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.View;
 using Newtonsoft.Json;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
@@ -23,7 +25,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscriber, IUnitMoveHandler<EntitySubscriber>, IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitMoveHandler, EntitySubscriber>, IDialogStartHandler, IDialogFinishHandler, IHashable
+public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscriber, IUnitMoveHandler<EntitySubscriber>, IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitMoveHandler, EntitySubscriber>, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitCombatHandler, EntitySubscriber>, IDialogStartHandler, IDialogFinishHandler, IHashable
 {
 	public const string IDLE_REACTION_UNIT = "REACTING_UNIT";
 
@@ -83,7 +85,7 @@ public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscr
 
 	public void HandleGameTimeChanged(TimeSpan delta)
 	{
-		if (m_Component == null || m_Paused || Game.Instance.CurrentMode != GameModeType.Default)
+		if (m_Component == null || m_Paused || Game.Instance.CurrentMode != GameModeType.Default || !base.Owner.IsInGame || Game.Instance.TurnController.InCombat)
 		{
 			return;
 		}
@@ -92,11 +94,16 @@ public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscr
 			Abort(stopCutscene: true);
 			return;
 		}
-		if (!base.Owner.MovementAgent.IsReallyMoving)
+		UnitMovementAgentBase maybeMovementAgent = base.Owner.MaybeMovementAgent;
+		if (maybeMovementAgent == null)
+		{
+			return;
+		}
+		if (!maybeMovementAgent.IsReallyMoving)
 		{
 			m_TimeSinceNotMoving += delta;
 		}
-		if (base.Owner.IsConscious && m_TimeSinceNotMoving.Seconds >= m_Component.TimerValue && !m_Triggered)
+		if (base.Owner.IsConscious && m_TimeSinceNotMoving.Seconds >= m_Component.TimerValue && !m_Triggered && Game.Instance.CurrentMode != GameModeType.StarSystem && Game.Instance.CurrentMode != GameModeType.SpaceCombat)
 		{
 			using (ContextData<FactData>.Request().Setup(m_ReactingFact))
 			{
@@ -130,15 +137,22 @@ public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscr
 	private void PlayCutscene(CutsceneReference cutsceneReference)
 	{
 		StopCutscene();
-		CutscenePlayerView unityObject = CutscenePlayerView.Play(cutsceneReference.Get(), new ParametrizedContextSetter
+		if (base.Owner.IsInGame)
 		{
-			AdditionalParams = { 
+			BaseUnitEntity owner = m_ReactingFact.Owner;
+			if (owner != null && owner.IsInGame)
 			{
-				"REACTING_UNIT",
-				(object)m_ReactingFact.Owner.FromAbstractUnitEntity()
-			} }
-		}, queued: false, base.Owner.HoldingState);
-		m_CutsceneDataRef = ObjectExtensions.Or(unityObject, null)?.PlayerData;
+				CutscenePlayerView unityObject = CutscenePlayerView.Play(cutsceneReference.Get(), new ParametrizedContextSetter
+				{
+					AdditionalParams = { 
+					{
+						"REACTING_UNIT",
+						(object)m_ReactingFact.Owner.FromAbstractUnitEntity()
+					} }
+				}, queued: false, base.Owner.HoldingState);
+				m_CutsceneDataRef = ObjectExtensions.Or(unityObject, null)?.PlayerData;
+			}
+		}
 	}
 
 	public void HandleNonGameTimeChanged()
@@ -151,6 +165,18 @@ public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscr
 		{
 			Abort();
 		}
+	}
+
+	public void HandleUnitJoinCombat()
+	{
+		if (m_Component != null)
+		{
+			Abort();
+		}
+	}
+
+	public void HandleUnitLeaveCombat()
+	{
 	}
 
 	protected override void OnPostLoad()

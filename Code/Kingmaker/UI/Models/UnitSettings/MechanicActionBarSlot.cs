@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
@@ -23,12 +24,14 @@ using UnityEngine;
 
 namespace Kingmaker.UI.Models.UnitSettings;
 
-public abstract class MechanicActionBarSlot : IHashable
+public abstract class MechanicActionBarSlot : IRoundEndHandler, ISubscriber, IHashable
 {
 	[JsonProperty]
 	private EntityRef<BaseUnitEntity> m_UnitRef;
 
 	private bool m_IsCastingActive;
+
+	private bool m_IsUnlocked = true;
 
 	public bool HoverState;
 
@@ -47,6 +50,8 @@ public abstract class MechanicActionBarSlot : IHashable
 	public virtual string KeyName { get; }
 
 	protected virtual bool IsNotAvailable => false;
+
+	protected virtual bool IsPossibleToConvertWhileNotAvailable => false;
 
 	private bool IsPlayerInputLocked => Game.Instance.PlayerInputInCombatController.IsLocked;
 
@@ -89,15 +94,11 @@ public abstract class MechanicActionBarSlot : IHashable
 	{
 		get
 		{
-			if (!IsDisabled(GetResource()) && !IsPlayerInputLocked)
+			if (!IsPossibleActive && IsPossibleToConvertWhileNotAvailable && m_IsUnlocked)
 			{
-				if (TurnController.IsInTurnBasedCombat())
-				{
-					return CanUseIfTurnBased();
-				}
 				return true;
 			}
-			return false;
+			return IsPossibleActive;
 		}
 	}
 
@@ -144,6 +145,7 @@ public abstract class MechanicActionBarSlot : IHashable
 		{
 			h.HandleClickMechanicActionBarSlot(this);
 		});
+		m_IsUnlocked = false;
 	}
 
 	public void PlaySound()
@@ -332,6 +334,14 @@ public abstract class MechanicActionBarSlot : IHashable
 			{
 				h.HandleAoECancel();
 			});
+		}
+	}
+
+	public void HandleRoundEnd(bool isTurnBased)
+	{
+		if (isTurnBased)
+		{
+			m_IsUnlocked = true;
 		}
 	}
 

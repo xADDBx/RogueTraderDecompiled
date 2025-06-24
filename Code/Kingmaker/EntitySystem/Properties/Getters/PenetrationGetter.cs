@@ -50,6 +50,7 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		case PenetrationParameterType.ArmorPenetration:
 			calculateDamageParams = new CalculateDamageParams(mechanicEntity, mechanicEntity2, ability);
 			calculateDamageParams.FakeRule = true;
+			calculateDamageParams.HasNoTarget = !AgainstTarget;
 			return calculateDamageParams.Trigger().ResultDamage.Penetration.Value;
 		case PenetrationParameterType.DodgePenetration:
 		{
@@ -68,6 +69,7 @@ public class PenetrationGetter : MechanicEntityPropertyGetter, PropertyContextAc
 		{
 			calculateDamageParams = new CalculateDamageParams(mechanicEntity, mechanicEntity2, abilityData);
 			calculateDamageParams.FakeRule = true;
+			calculateDamageParams.HasNoTarget = !AgainstTarget;
 			RuleCalculateDamage ruleCalculateDamage = calculateDamageParams.Trigger();
 			int value = ruleCalculateDamage.ResultDamage.Penetration.Value;
 			int value2 = ruleCalculateDamage.ResultDamage.Absorption.Value;

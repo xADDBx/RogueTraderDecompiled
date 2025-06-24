@@ -38,6 +38,7 @@ public static class Updateables
 		typeof(HumanoidRagdollManager),
 		typeof(RigidbodyCreatureController),
 		typeof(Character),
+		typeof(StatueCharacterNew),
 		typeof(Bird),
 		typeof(Rabbit),
 		typeof(StandardMaterialController),

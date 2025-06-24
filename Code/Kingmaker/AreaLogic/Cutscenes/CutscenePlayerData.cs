@@ -1435,7 +1435,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		foreach (EntityFactRef hiddenPetFact in m_HiddenPetFacts)
 		{
 			EntityFact entityFact = hiddenPetFact;
-			entityFact.Owner.ToEntity().Facts.Remove(entityFact);
+			entityFact?.Owner.ToEntity().Facts.Remove(entityFact);
 		}
 		m_HiddenPetFacts.Clear();
 	}

@@ -288,19 +288,25 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		{
 			SingleSelectedUnit.Value = null;
 		}
-		BaseUnitEntity current = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
-		if (SelectedUnitInUI != null && SelectedUnitInUI.Value != null)
+		BaseUnitEntity baseUnitEntity = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
+		ReactiveProperty<BaseUnitEntity> selectedUnitInUI = SelectedUnitInUI;
+		if (selectedUnitInUI != null)
 		{
-			UnitPartPetOwner optional = SelectedUnitInUI.Value.GetOptional<UnitPartPetOwner>();
-			if (optional != null)
+			BaseUnitEntity value2 = selectedUnitInUI.Value;
+			if (value2 != null && !value2.IsDisposed && !value2.IsDisposingNow)
 			{
-				EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+				UnitPartPetOwner optional = SelectedUnitInUI.Value.GetOptional<UnitPartPetOwner>();
+				if (optional != null)
 				{
-					h.HandleFakeSelected(SelectedUnitInUI.Value == current);
-				}, isCheckRuntime: true);
+					bool value = !m_FullScreenState && SelectedUnitInUI.Value == baseUnitEntity;
+					EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+					{
+						h.HandleFakeSelected(value);
+					}, isCheckRuntime: true);
+				}
 			}
 		}
-		SelectedUnitInUI.Value = current;
+		SelectedUnitInUI.Value = baseUnitEntity;
 	}
 
 	public void HandleAddCompanion()

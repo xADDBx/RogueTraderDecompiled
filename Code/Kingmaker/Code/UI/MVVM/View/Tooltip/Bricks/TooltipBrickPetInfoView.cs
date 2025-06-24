@@ -1,7 +1,9 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.LevelClassScores.AbilityScores;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Sound;
+using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
 using TMPro;
@@ -20,7 +22,7 @@ public class TooltipBrickPetInfoView : TooltipBaseBrickView<TooltipBrickPetInfoV
 	private TextMeshProUGUI m_MovementPoints;
 
 	[SerializeField]
-	private TextMeshProUGUI m_NarrativeDescription;
+	protected TextMeshProUGUI m_NarrativeDescription;
 
 	[SerializeField]
 	private TextMeshProUGUI m_CharacteristicsTitle;
@@ -61,6 +63,7 @@ public class TooltipBrickPetInfoView : TooltipBaseBrickView<TooltipBrickPetInfoV
 		{
 			m_NarrativeDescription.text = base.ViewModel.PetDescription.Value;
 		}));
+		AddDisposable(m_NarrativeDescription.SetLinkTooltip(null, null, new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
 		AddDisposable(m_AbilitiesList.DrawEntries(base.ViewModel.CoreAbilities, m_BrickIconAndNameViewPrefab));
 		AddDisposable(m_KeyStatsList.DrawEntries(base.ViewModel.KeyStats, m_BrickShortLabelViewPrefab));
 		m_AbilityScorePCView.Initialize();

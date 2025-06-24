@@ -16,6 +16,10 @@ public static class PlayerRoleExtenstion
 		{
 			return playerRole.Can(Game.Instance.Player.MainCharacter.Id, player);
 		}
+		if (entity is BaseUnitEntity { IsPet: not false } baseUnitEntity)
+		{
+			return playerRole.Can(baseUnitEntity.Master.UniqueId, player);
+		}
 		return playerRole.Can(entity.UniqueId, player);
 	}
 }

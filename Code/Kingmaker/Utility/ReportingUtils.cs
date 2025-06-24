@@ -564,7 +564,6 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				AreaDesigner = Utilities.GetDesigner(CheatsJira.GetCurrentArea()),
 				Context = m_Context.Type.ToString("G"),
 				Aspect = m_Context.Aspect.ToString("G"),
-				FixVersion = m_SelectedFixVersion.ToString(),
 				ExtendedContext = text3,
 				PartyContext = text2,
 				OtherContext = otherContext,
@@ -583,6 +582,10 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				Exception = JsonConvert.SerializeObject(m_Exception),
 				CoopPlayersCount = coopPlayersCount
 			};
+			if (BuildModeUtility.IsDevelopment)
+			{
+				reportParameters.FixVersion = m_SelectedFixVersion.ToString();
+			}
 			if (CameraRig.Instance != null)
 			{
 				reportParameters.CameraPosition = Utilities.FormatPositionAndRotation(CameraRig.Instance.transform);

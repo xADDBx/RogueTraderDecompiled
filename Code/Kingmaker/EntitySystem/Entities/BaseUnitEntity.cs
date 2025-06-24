@@ -797,6 +797,10 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			{
 				using (ContextData<UnitHelper.PreviewUnit>.RequestIf(isPreviewUnit))
 				{
+					if (isPreviewUnit && IsPet)
+					{
+						Game.Instance.EntityDestroyer.Destroy(Master);
+					}
 					base.DisposeImplementation();
 				}
 			}

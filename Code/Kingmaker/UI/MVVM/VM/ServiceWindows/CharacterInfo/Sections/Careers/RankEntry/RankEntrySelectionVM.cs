@@ -196,6 +196,10 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		{
 			m_Tooltip = new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.KeystoneFeaturesHeader.Text, UIStrings.Instance.CharacterSheet.KeystoneFeaturesChargenDescription.Text);
 		}
+		if (FeatureGroup == FeatureGroup.PetUltimateAbility)
+		{
+			m_Tooltip = new TooltipTemplateSimple(UIStrings.Instance.CharacterSheet.UltimateUpgradeAbilityFeatureGroupHint.Text, UIStrings.Instance.CharacterSheet.UltimateAbilitiesChargenDescription.Text);
+		}
 	}
 
 	private List<RankEntryFeatureGroupVM> CreateGroups()

@@ -126,7 +126,7 @@ public class SpaceCombatAsksController : IUnitAsksController, IDisposable, IPart
 			return;
 		}
 		StarshipEntity ship = EventInvokerExtensions.StarshipEntity;
-		if (ship != null && !ship.IsPlayerShip() && ship.LifeState.IsDead && UnitAsksHelper.EnemyShipSizesToBarkEnemyDeathSC.Any((Size x) => x == ship.Size))
+		if (ship != null && !ship.IsPlayerShip() && ship.IsPlayerEnemy && ship.LifeState.IsDead && UnitAsksHelper.EnemyShipSizesToBarkEnemyDeathSC.Any((Size x) => x == ship.Size))
 		{
 			UnitAsksHelper.ScheduleRandomPersonalizedSpaceCombatBark((UnitBarksManager x) => x.EnemyDeathSpaceCombat);
 		}
@@ -154,7 +154,7 @@ public class SpaceCombatAsksController : IUnitAsksController, IDisposable, IPart
 		{
 			UnitAsksHelper.ScheduleRandomPersonalizedSpaceCombatBark((UnitBarksManager x) => x.ShieldSectionIsDownSpaceCombat);
 		}
-		else if (UnitAsksHelper.EnemyShipSizesToBarkShieldIsDownSC.Any((Size x) => x == unit.Size))
+		else if (unit.IsPlayerEnemy && UnitAsksHelper.EnemyShipSizesToBarkShieldIsDownSC.Any((Size x) => x == unit.Size))
 		{
 			UnitAsksHelper.ScheduleRandomPersonalizedSpaceCombatBark((UnitBarksManager x) => x.EnemyShieldSectionIsDownSpaceCombat);
 		}

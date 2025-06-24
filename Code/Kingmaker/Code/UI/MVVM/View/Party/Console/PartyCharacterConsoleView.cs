@@ -129,7 +129,6 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 		AddDisposable(base.ViewModel.AscendedLabel.Subscribe(UpdateAscendedLabel));
 		AddDisposable(base.ViewModel.HasPet.Subscribe(PetLabelSetActiveHandler));
 		AddDisposable(base.ViewModel.IsEnable.Subscribe(base.gameObject.SetActive));
-		AddDisposable(base.ViewModel.FakeSelected.Subscribe(SetSelected));
 		AddDisposable(base.ViewModel.SelectorFrameIcon.Subscribe(delegate(Sprite s)
 		{
 			m_FrameSelectorImage.sprite = s;

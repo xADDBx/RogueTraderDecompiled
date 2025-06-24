@@ -124,6 +124,8 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 
 	private readonly List<ItemEnchantment> m_CachedEnchantments = new List<ItemEnchantment>();
 
+	public bool NeedDialogNotify = true;
+
 	[JsonProperty]
 	public TimeSpan Time { get; set; }
 

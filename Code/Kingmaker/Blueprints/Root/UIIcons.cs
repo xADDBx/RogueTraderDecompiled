@@ -215,6 +215,26 @@ public class UIIcons
 
 	public Sprite PetNumberVI;
 
+	public Sprite PetNumberVII;
+
+	public Sprite PetNumberVIII;
+
+	public Sprite PetNumberIX;
+
+	public Sprite PetNumberX;
+
+	public Sprite PetNumberXI;
+
+	public Sprite PetNumberXII;
+
+	public Sprite PetNumberXIII;
+
+	public Sprite PetNumberXIV;
+
+	public Sprite PetNumberXV;
+
+	public Sprite PetNumberXVI;
+
 	public Sprite GetFactionIcon(FactionType factionType)
 	{
 		return factionType switch
@@ -289,6 +309,16 @@ public class UIIcons
 			4 => PetNumberIV, 
 			5 => PetNumberV, 
 			6 => PetNumberVI, 
+			7 => PetNumberVII, 
+			8 => PetNumberVIII, 
+			9 => PetNumberIX, 
+			10 => PetNumberX, 
+			11 => PetNumberXI, 
+			12 => PetNumberXII, 
+			13 => PetNumberXIII, 
+			14 => PetNumberXIV, 
+			15 => PetNumberXV, 
+			16 => PetNumberXVI, 
 			_ => null, 
 		};
 	}

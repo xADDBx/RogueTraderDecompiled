@@ -142,7 +142,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public void HandleItemsAdded(ItemsCollection collection, ItemEntity item, int count)
 	{
-		if (SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection == GameHelper.GetPlayerCharacter().Inventory.Collection && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
+		if (item.NeedDialogNotify && SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection == GameHelper.GetPlayerCharacter().Inventory.Collection && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
 		{
 			OnItemsReceived(LinkGenerate(item.Name, "i:" + item.UniqueId), count);
 		}
@@ -150,7 +150,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public void HandleItemsRemoved(ItemsCollection collection, ItemEntity item, int count)
 	{
-		if (SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection.IsPlayerInventory && item.IsLootable && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
+		if (item.NeedDialogNotify && SettingsRoot.Game.Dialogs.ShowItemsReceivedNotification.GetValue() && collection.IsPlayerInventory && item.IsLootable && item?.Blueprint != null && !string.IsNullOrWhiteSpace(item.Name) && count != 0)
 		{
 			OnItemsReceived(LinkGenerate(item.Name, "ib:" + item.Blueprint.name), -count);
 		}

@@ -133,9 +133,12 @@ public class EtudeCounterView : ViewBase<EtudeCounterVM>
 		}));
 		AddDisposable(base.ViewModel.SubLabel.Subscribe(delegate(string text)
 		{
-			m_SubLabelButton.gameObject.SetActive(text != null && !(text == "<null>"));
-			m_ExtraTextMoveAnimator.gameObject.SetActive(text != null && !(text == "<null>"));
 			m_SubLabel.text = text;
+		}));
+		AddDisposable(base.ViewModel.ShowSubLabel.Subscribe(delegate(bool value)
+		{
+			m_SubLabelButton.gameObject.SetActive(value);
+			m_ExtraTextMoveAnimator.gameObject.SetActive(value);
 		}));
 		AddDisposable(base.ViewModel.IsExtraTextShowed.Subscribe(delegate(bool isShowed)
 		{

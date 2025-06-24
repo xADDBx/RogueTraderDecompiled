@@ -76,6 +76,10 @@ public static class UnitHelper
 	{
 	}
 
+	public class UnitBeingDestroyed : ContextFlag<UnitBeingDestroyed>
+	{
+	}
+
 	public struct DamageEstimate
 	{
 		public int Value;
@@ -419,6 +423,10 @@ public static class UnitHelper
 
 	public static BaseUnitEntity CreatePreview(this BaseUnitEntity _this, bool createView, bool forceEnableBuffs = false)
 	{
+		if (_this.IsPet)
+		{
+			return _this.Master.CreatePreview(createView, forceEnableBuffs).GetOptional<UnitPartPetOwner>()?.PetUnit;
+		}
 		return _this.Copy(createView, preview: true, copyItems: true, forceEnableBuffs);
 	}
 

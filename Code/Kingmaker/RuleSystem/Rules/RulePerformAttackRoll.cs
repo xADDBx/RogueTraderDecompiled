@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -242,7 +243,10 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			{
 				h.HandleShieldBlock();
 			}, isCheckRuntime: true);
-			BarkPlayer.Bark(defender, "BLOCKED");
+			EventBus.RaiseEvent(delegate(ICustomCombatText h)
+			{
+				h.HandleCustomCombatText(defender, UIStrings.Instance.BlockStrings.Blocked);
+			});
 			TryTriggerBlockAnimation(defender);
 		}
 	}

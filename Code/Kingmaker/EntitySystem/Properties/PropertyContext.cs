@@ -63,19 +63,6 @@ public readonly struct PropertyContext
 	}
 
 	[CanBeNull]
-	public (Vector3 Position, float Orientation)? CurrentTargetPositionAndOrientation
-	{
-		get
-		{
-			if (!CurrentTargetPosition.HasValue || !CurrentTargetOrientation.HasValue)
-			{
-				return null;
-			}
-			return (CurrentTargetPosition.Value, CurrentTargetOrientation.Value);
-		}
-	}
-
-	[CanBeNull]
 	public MechanicEntity ContextMainTarget => ContextMainTargetWrapper?.Entity;
 
 	[CanBeNull]
@@ -139,11 +126,6 @@ public readonly struct PropertyContext
 		MechanicContext = mechanicContext;
 		Rule = rule;
 		Ability = ability;
-	}
-
-	public static PropertyContext Compose([NotNull] MechanicEntityFact fact, [CanBeNull] MechanicsContext mechanicsContext, [CanBeNull] RulebookEvent rule, [CanBeNull] AbilityData ability)
-	{
-		return new PropertyContext(fact.ConcreteOwner, fact, null, mechanicsContext ?? fact.MaybeContext, rule, ability);
 	}
 
 	public int GetValue(PropertyCalculator calculator)

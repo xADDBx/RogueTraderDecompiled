@@ -1,12 +1,14 @@
 using System.Linq;
 using Kingmaker.AreaLogic.Cutscenes;
-using Kingmaker.Designers.EventConditionActionSystem.NamedParameters;
+using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Networking;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -19,10 +21,6 @@ namespace Kingmaker.View.MapObjects;
 
 public class PetInterestPart : ViewBasedPart<PetInterestSettings>, IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IHashable
 {
-	public const string PET_PARAM_NAME = "Pet";
-
-	public const string POSITION_PARAM_NAME = "Point";
-
 	private double m_StartTime;
 
 	private CutscenePlayerView m_CutscenePlayerView;
@@ -61,7 +59,7 @@ public class PetInterestPart : ViewBasedPart<PetInterestSettings>, IUnitMoveHand
 				return;
 			}
 		}
-		if (!base.Owner.IsInGame || Game.Instance.TimeController.GameTime.TotalMilliseconds - m_StartTime < (double)(base.Settings.ReactionCooldown * 1000) || !unit.IsInPlayerParty || !Game.Instance.SelectionCharacter.SelectedUnits.Contains(unit as BaseUnitEntity))
+		if (NetworkingManager.IsActive || !base.Owner.IsInGame || Game.Instance.TimeController.GameTime.TotalMilliseconds - m_StartTime < (double)(base.Settings.ReactionCooldown * 1000) || !unit.IsInPlayerParty || !Game.Instance.SelectionCharacter.SelectedUnits.Contains(unit as BaseUnitEntity))
 		{
 			return;
 		}
@@ -81,24 +79,21 @@ public class PetInterestPart : ViewBasedPart<PetInterestSettings>, IUnitMoveHand
 		{
 			if (!path.error && !(path.GetTotalLength() > base.Settings.PetPathLimit))
 			{
-				petOwner.LastReactionMoment = Game.Instance.TimeController.GameTime.TotalMilliseconds;
-				m_CutscenePlayerView = CutscenePlayerView.Play(base.Settings.PetCutscenes.First((CutsceneByPet p) => p.PetyType == petOwner.PetType).Cutscene.Get(), new ParametrizedContextSetter
+				CutsceneReference cutscene = base.Settings.PetCutscenes.First((CutsceneByPet p) => p.PetyType == petOwner.PetType).Cutscene;
+				BaseUnitEntity petUnit = petOwner.PetUnit;
+				if (cutscene != null && petUnit != null)
 				{
-					AdditionalParams = 
-					{
-						{
-							"Pet",
-							(object)petOwner.PetUnit.FromAbstractUnitEntity()
-						},
-						{
-							"Point",
-							(object)base.Owner.View.ViewTransform.position
-						}
-					}
-				}, queued: false, unit.HoldingState);
-				m_InterestedOwner = UnitReference.FromIAbstractUnitEntity(unit);
+					petOwner.LastReactionMoment = Game.Instance.TimeController.GameTime.TotalMilliseconds;
+					Game.Instance.GameCommandQueue.AddCommand(new PlayPetInterestCutsceneGameCommand(base.Settings.PetCutscenes.First((CutsceneByPet p) => p.PetyType == petOwner.PetType).Cutscene, petOwner.PetUnit, base.Owner.View.ViewTransform.position, base.Owner));
+					m_InterestedOwner = UnitReference.FromIAbstractUnitEntity(unit);
+				}
 			}
 		});
+	}
+
+	public void RegisterCutscene(CutscenePlayerView cutscenePlayer)
+	{
+		m_CutscenePlayerView = cutscenePlayer;
 	}
 
 	public override Hash128 GetHash128()

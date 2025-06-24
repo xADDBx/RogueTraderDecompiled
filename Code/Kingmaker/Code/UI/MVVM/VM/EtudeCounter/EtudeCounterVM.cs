@@ -17,6 +17,8 @@ public class EtudeCounterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 {
 	public readonly StringReactiveProperty Label = new StringReactiveProperty();
 
+	public readonly BoolReactiveProperty ShowSubLabel = new BoolReactiveProperty();
+
 	public readonly StringReactiveProperty SubLabel = new StringReactiveProperty();
 
 	public readonly StringReactiveProperty Counter = new StringReactiveProperty();
@@ -87,6 +89,7 @@ public class EtudeCounterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		}
 		EtudeShowCounterUIStruct etudeShowCounterUIStruct = m_Configs.Values.First();
 		Label.Value = etudeShowCounterUIStruct.Label;
+		ShowSubLabel.Value = etudeShowCounterUIStruct.ShowSubLabel;
 		SubLabel.Value = etudeShowCounterUIStruct.SubLabel;
 		if (etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Slider) || etudeShowCounterUIStruct.Type.HasFlag(EtudeUICounterTypes.Label))
 		{

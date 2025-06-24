@@ -46,7 +46,6 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 	[Header("HitChances")]
 	public bool HasHitChances;
 
-	[ConditionalShow("HasNameView")]
 	[SerializeField]
 	protected InitiativeTrackerUnitHitChanceView InitiativeTrackerUnitHitChanceView;
 

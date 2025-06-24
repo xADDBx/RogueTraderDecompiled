@@ -431,7 +431,17 @@ public static class UIUtility
 		{
 			characters.AddRange(enumerable);
 			List<BaseUnitEntity> list = Game.Instance.Player.RemoteCompanions.ToList();
-			list.Reverse();
+			foreach (BaseUnitEntity entity in list.ToList())
+			{
+				if (entity.IsMaster)
+				{
+					int num = list.IndexOf(entity);
+					BaseUnitEntity item = list.Find((BaseUnitEntity e) => e.Master == entity);
+					int num2 = list.IndexOf(item);
+					list.Insert(num + 1, item);
+					list.RemoveAt(num2 + 1);
+				}
+			}
 			characters.AddRange(list);
 		}
 		else
@@ -442,19 +452,19 @@ public static class UIUtility
 		{
 			return;
 		}
-		foreach (BaseUnitEntity item in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet))
+		foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet))
 		{
-			BaseUnitEntity master = item.Master;
-			int num = characters.FindIndex((BaseUnitEntity m) => m == master);
-			if (enumerable.Contains(item.Master))
+			BaseUnitEntity master = item2.Master;
+			int num3 = characters.FindIndex((BaseUnitEntity m) => m == master);
+			if (enumerable.Contains(item2.Master))
 			{
-				if (num < 0 || num + 1 >= characters.Count)
+				if (num3 < 0 || num3 + 1 >= characters.Count)
 				{
-					characters.Add(item);
+					characters.Add(item2);
 				}
 				else
 				{
-					characters.Insert(num + 1, item);
+					characters.Insert(num3 + 1, item2);
 				}
 			}
 		}

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.Utility;
+using Kingmaker.Utility.StatefulRandom;
 
 namespace Kingmaker.Controllers.Clicks.Handlers;
 
@@ -70,6 +72,9 @@ public class AbilityMultiTargetSelectionHandler
 		{
 			return m_RootAbilityData;
 		}
-		return new AbilityData(ability ?? m_RootAbilityData.Blueprint, caster ?? m_RootAbilityData.Caster);
+		using (ContextData<DisableStatefulRandomContext>.Request())
+		{
+			return new AbilityData(ability ?? m_RootAbilityData.Blueprint, caster ?? m_RootAbilityData.Caster);
+		}
 	}
 }

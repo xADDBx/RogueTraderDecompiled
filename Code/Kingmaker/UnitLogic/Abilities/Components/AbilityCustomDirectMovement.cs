@@ -314,7 +314,7 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			foreach (CustomGridNodeBase occupiedNode in caster.GetOccupiedNodes(item.Vector3Position))
 			{
 				BaseUnitEntity baseUnitEntity = occupiedNode.GetAllUnits()?.FirstOrDefault((BaseUnitEntity u) => u != caster);
-				if (baseUnitEntity != null && !baseUnitEntity.IsDeadOrUnconscious && !list2.Contains(baseUnitEntity) && (!IgnoreAllies || !caster.IsAlly(baseUnitEntity)) && (!IgnoreEnemies || !caster.IsEnemy(baseUnitEntity)))
+				if (baseUnitEntity != null && !baseUnitEntity.IsDeadOrUnconscious && !baseUnitEntity.Features.IsUntargetable && !list2.Contains(baseUnitEntity) && (!IgnoreAllies || !caster.IsAlly(baseUnitEntity)) && (!IgnoreEnemies || !caster.IsEnemy(baseUnitEntity)))
 				{
 					limit--;
 					list2.Add(baseUnitEntity);

@@ -12,6 +12,8 @@ namespace Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 [TypeId("712982c8d20b4248b196a035787cc9d8")]
 public class CutscenePetUnit : AbstractUnitEvaluator
 {
+	public const string PET_PARAM_NAME = "Pet";
+
 	protected override AbstractUnitEntity GetAbstractUnitEntityInternal()
 	{
 		Dictionary<string, object> dictionary = ContextData<NamedParametersContext.ContextData>.Current?.Context?.Params;

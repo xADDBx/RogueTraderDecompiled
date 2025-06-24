@@ -89,4 +89,10 @@ public class BlueprintArmyDescription : BlueprintScriptableObject
 			_ => throw new InvalidEnumArgumentException("statType", (int)statType, typeof(StatType)), 
 		};
 	}
+
+	public void Editor_AddFeature(BlueprintFeature feature)
+	{
+		Array.Resize(ref m_Features, m_Features.Length + 1);
+		m_Features[^1] = feature.ToReference<BlueprintFeatureReference>();
+	}
 }

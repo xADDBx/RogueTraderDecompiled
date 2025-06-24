@@ -42,7 +42,7 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 				return false;
 			}
 			StoppedOnUnit = nodeTo.GetUnit();
-			if (StoppedOnUnit != null)
+			if (StoppedOnUnit != null && !StoppedOnUnit.IsDeadOrUnconscious)
 			{
 				return StoppedOnUnit == m_Unit;
 			}
@@ -73,7 +73,7 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 				return false;
 			}
 			StoppedOnUnit = nodeTo.GetUnit();
-			if (StoppedOnUnit != null)
+			if (StoppedOnUnit != null && !StoppedOnUnit.IsDeadOrUnconscious)
 			{
 				return StoppedOnUnit == m_Unit;
 			}

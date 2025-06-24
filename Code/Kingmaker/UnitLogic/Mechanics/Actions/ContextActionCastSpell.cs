@@ -65,7 +65,7 @@ public class ContextActionCastSpell : ContextAction
 			}
 			if (UseFullAbilityCastCycle)
 			{
-				PartUnitCommands commandsOptional = base.Caster.GetCommandsOptional();
+				PartUnitCommands commandsOptional = mechanicEntity.GetCommandsOptional();
 				if (commandsOptional != null)
 				{
 					UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, base.Target)

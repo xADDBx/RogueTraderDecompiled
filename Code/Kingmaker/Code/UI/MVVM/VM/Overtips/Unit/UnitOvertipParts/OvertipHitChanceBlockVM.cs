@@ -118,7 +118,7 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 		{
 			ClearProperties();
 		}
-		else
+		else if (!UnitState.Unit.IsCover && !UnitState.Unit.IsDead)
 		{
 			UpdateProperties();
 		}

@@ -160,6 +160,8 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 		}
 	}
 
+	public bool NeedDialogNotify = true;
+
 	protected override void OnFactAttached()
 	{
 		base.OnFactAttached();
@@ -270,6 +272,10 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 	private void UnequipItem(ItemSlot slot)
 	{
 		ItemEntity maybeItem = slot.MaybeItem;
+		if (slot.MaybeItem != null)
+		{
+			slot.MaybeItem.NeedDialogNotify = NeedDialogNotify;
+		}
 		slot.MaybeItem?.OnWillUnequip();
 		slot.MaybeItem?.Dispose();
 		maybeItem?.Collection?.Extract(maybeItem);
@@ -277,13 +283,19 @@ public class RemoveAllEquipment : UnitFactComponentDelegate, IHashable
 
 	private void EquipItem(BlueprintItem itemBp, ItemSlot slot)
 	{
-		if (slot != null)
+		if (slot == null)
 		{
-			slot.RemoveItem(autoMerge: true, force: true);
-			if (itemBp != null)
+			return;
+		}
+		slot.RemoveItem(autoMerge: true, force: true);
+		if (itemBp != null)
+		{
+			ItemEntity itemEntity = itemBp.CreateEntity();
+			itemEntity.NeedDialogNotify = NeedDialogNotify;
+			slot.InsertItem(itemEntity, force: true);
+			if (slot.MaybeItem != null && !NeedDialogNotify)
 			{
-				ItemEntity item = itemBp.CreateEntity();
-				slot.InsertItem(item, force: true);
+				slot.MaybeItem.NeedDialogNotify = !NeedDialogNotify;
 			}
 		}
 	}

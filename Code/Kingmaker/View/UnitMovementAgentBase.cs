@@ -4,6 +4,7 @@ using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Controllers.Optimization;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameModes;
@@ -502,16 +503,22 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 	[UsedImplicitly]
 	private void OnEnable()
 	{
-		AllAgents.Add(this);
-		UpdateBlocker();
+		if (!ContextData<UnitHelper.PreviewUnit>.Current)
+		{
+			AllAgents.Add(this);
+			UpdateBlocker();
+		}
 	}
 
 	[UsedImplicitly]
 	private void OnDisable()
 	{
-		AllAgents.Remove(this);
-		ObstaclesHelper.RemoveFromGroup(this);
-		m_Blocker?.Unblock();
+		if (!ContextData<UnitHelper.PreviewUnit>.Current)
+		{
+			AllAgents.Remove(this);
+			ObstaclesHelper.RemoveFromGroup(this);
+			m_Blocker?.Unblock();
+		}
 	}
 
 	[UsedImplicitly]

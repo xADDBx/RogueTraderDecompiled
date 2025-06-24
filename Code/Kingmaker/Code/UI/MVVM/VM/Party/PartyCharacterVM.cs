@@ -68,8 +68,6 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveProperty<Encumbrance> PartyEncumbrance = new ReactiveProperty<Encumbrance>();
 
-	public readonly ReactiveCommand<bool> FakeSelected = new ReactiveCommand<bool>();
-
 	public readonly UnitHealthPartVM HealthPartVM;
 
 	public readonly UnitPortraitPartVM PortraitPartVM;
@@ -419,12 +417,6 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		SetMasterVMReference(null);
 		SetPetVMReference(null);
 		AscendedLabel.Value = false;
-		FakeSelected.Execute(parameter: false);
-	}
-
-	public void HandleSelectAsPet(bool value)
-	{
-		FakeSelected.Execute(value);
 	}
 
 	private Sprite SetFrameColor(BaseUnitEntity value)

@@ -793,6 +793,17 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 	{
 	}
 
+	public void Editor_AddFact(BlueprintUnitFact fact)
+	{
+		Array.Resize(ref m_AddFacts, m_AddFacts.Length + 1);
+		m_AddFacts[^1] = fact.ToReference<BlueprintUnitFactReference>();
+	}
+
+	public void Editor_SetBrain(BlueprintBrain bp)
+	{
+		m_Brain = bp.ToReference<BlueprintBrainBaseReference>();
+	}
+
 	void IBlueprintUnitExportCharacter.SyncBody(PartUnitBody body)
 	{
 		((IUnitBodyExtension)Body)?.SetBody(body, this);

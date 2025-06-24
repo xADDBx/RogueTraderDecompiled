@@ -82,6 +82,8 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 
 	private List<GameObject> m_TrailFxObjects;
 
+	private bool m_trailFXObjectsSpawned;
+
 	[JsonProperty]
 	public int Rank { get; private set; }
 
@@ -121,7 +123,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			}
 			if (IsPermanent)
 			{
-				if (!Game.Instance.Player.IsInCombat && !(Game.Instance.CurrentMode == GameModeType.SpaceCombat))
+				if (!Game.Instance.Player.IsInCombat && !Game.Instance.TurnController.InCombat && !(Game.Instance.CurrentMode == GameModeType.SpaceCombat))
 				{
 					return EndCondition != BuffEndCondition.RemainAfterCombat;
 				}
@@ -387,7 +389,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 
 	public void SpawnFxFromBuffComponent()
 	{
-		if (!(Context.MainTarget.Entity?.View != null) || !(Context.MaybeCaster?.View != null))
+		if (m_trailFXObjectsSpawned || !(Context.MainTarget.Entity?.View != null) || !(Context.MaybeCaster?.View != null))
 		{
 			return;
 		}
@@ -395,6 +397,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		{
 			component.Spawn(Context, Context.MainTarget, component.DestroyOnDeAttach ? SureTrailFxList() : null);
 		}
+		m_trailFXObjectsSpawned = true;
 	}
 
 	private void BuffEffectsSpawnHandler(IBuffEffectHandler h)
@@ -500,6 +503,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			}
 			m_TrailFxObjects = null;
 		}
+		m_trailFXObjectsSpawned = false;
 		m_ParticleEffectOwner = null;
 		if (m_ManagedEffects != null && m_ManagedEffects.Count > 0)
 		{

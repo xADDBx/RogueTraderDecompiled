@@ -23,6 +23,7 @@ public class EtudeCounterConsoleView : EtudeCounterView
 	{
 		base.OnShow();
 		m_HasEtude = true;
+		TryToShow();
 	}
 
 	protected override void OnHide()

@@ -74,11 +74,17 @@ public class InteractionHighlightController : IControllerEnable, IController, IC
 		m_IsHighlighting = true;
 		foreach (MapObjectEntity mapObject in Game.Instance.State.MapObjects)
 		{
-			mapObject.View.UpdateHighlight();
+			if (mapObject.View != null)
+			{
+				mapObject.View.UpdateHighlight();
+			}
 		}
 		foreach (AbstractUnitEntity allUnit in Game.Instance.State.AllUnits)
 		{
-			allUnit.View.UpdateHighlight(raiseEvent: false);
+			if (allUnit.View != null)
+			{
+				allUnit.View.UpdateHighlight(raiseEvent: false);
+			}
 		}
 		EventBus.RaiseEvent(delegate(IInteractionHighlightUIHandler h)
 		{
@@ -95,11 +101,17 @@ public class InteractionHighlightController : IControllerEnable, IController, IC
 		m_IsHighlighting = false;
 		foreach (MapObjectEntity mapObject in Game.Instance.State.MapObjects)
 		{
-			mapObject.View.UpdateHighlight();
+			if (mapObject.View != null)
+			{
+				mapObject.View.UpdateHighlight();
+			}
 		}
 		foreach (AbstractUnitEntity allUnit in Game.Instance.State.AllUnits)
 		{
-			allUnit.View.UpdateHighlight(raiseEvent: false);
+			if (allUnit.View != null)
+			{
+				allUnit.View.UpdateHighlight(raiseEvent: false);
+			}
 		}
 		EventBus.RaiseEvent(delegate(IInteractionHighlightUIHandler h)
 		{

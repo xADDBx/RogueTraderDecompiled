@@ -329,6 +329,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		{
 			SwitchKinematic(enable: true);
 			SwitchRigidbodies(enable: false);
+			SwitchRigidbodiesSleep(enable: false);
 			SaveBonesPosition(RagdollCurrentPositions);
 			base.gameObject.GetComponent<HumanoidRagdollManager>()?.Enabled(flag: false);
 		}
@@ -543,6 +544,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		GetComponent<HumanoidRagdollManager>().Or(null)?.CopyPoseFromRagdoll();
 		State = RagdollState.Lying;
 		SwitchRigidbodies(enable: true);
+		SwitchRigidbodiesSleep(enable: true);
 		SwitchKinematic(enable: false);
 		IsRagdollPositionsRestored = true;
 	}

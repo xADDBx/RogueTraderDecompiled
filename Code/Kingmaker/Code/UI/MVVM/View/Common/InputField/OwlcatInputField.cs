@@ -138,6 +138,11 @@ public class OwlcatInputField : MonoBehaviour, IConfirmClickHandler, IConsoleEnt
 		m_MaxTextLength = maxTextLength;
 	}
 
+	public void ResetScroll()
+	{
+		m_InputField.textComponent.rectTransform.anchoredPosition = Vector2.zero;
+	}
+
 	public void SetFocus(bool value)
 	{
 		if (!m_IsEnteredWithMouse || !value)

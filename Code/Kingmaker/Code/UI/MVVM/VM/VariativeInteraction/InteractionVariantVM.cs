@@ -68,7 +68,7 @@ public class InteractionVariantVM : BaseDisposable, IViewModel, IBaseDisposable,
 		UnitCount = unitCount;
 		OnlyOnceCheck = interactionActor.CheckOnlyOnce;
 		ResourceName = resourceName;
-		Disabled = (interactionSkillCheckPart != null && interactionSkillCheckPart.IsFailed && interactionSkillCheckPart.Settings.InteractOnlyWithToolAfterFail && !RequiredResourceCount.HasValue) || resourceCount < requiredResourceCount || !interactionActor.CanUse || (LimitedUnitsCheck && UnitCount <= 0);
+		Disabled = (interactionSkillCheckPart != null && interactionSkillCheckPart.IsFailed && interactionSkillCheckPart.Settings.InteractOnlyWithToolAfterFail && !RequiredResourceCount.HasValue) || resourceCount < requiredResourceCount || !interactionActor.CanUse || ((!resourceCount.HasValue || !requiredResourceCount.HasValue) && LimitedUnitsCheck && UnitCount <= 0);
 		if (needChance)
 		{
 			m_SelectedUnitsSubscription = UniRxExtensionMethods.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate

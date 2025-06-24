@@ -276,6 +276,11 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	protected override void OnPrePostLoad()
 	{
 		InitializeStats();
+		if (IsInCombat && base.Owner.FreezeOutsideCamera)
+		{
+			WasFreezeOutsideCamera = base.Owner.FreezeOutsideCamera;
+			base.Owner.FreezeOutsideCamera = false;
+		}
 	}
 
 	private void InitializeStats()
