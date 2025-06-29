@@ -23,7 +23,7 @@ using UniRx;
 
 namespace Kingmaker.Controllers;
 
-public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>, AbstractUnitEntity.IUnitAsleepHandler
+public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>, IRespecHandler, AbstractUnitEntity.IUnitAsleepHandler
 {
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnit = new ReactiveProperty<BaseUnitEntity>();
 
@@ -307,6 +307,11 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			}
 		}
 		SelectedUnitInUI.Value = baseUnitEntity;
+	}
+
+	public void HandleRespecFinished()
+	{
+		m_NeedUpdate = true;
 	}
 
 	public void HandleAddCompanion()

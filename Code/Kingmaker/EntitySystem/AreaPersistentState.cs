@@ -157,6 +157,12 @@ public class AreaPersistentState : IHashable
 		{
 			RestoreAreaBlueprint();
 		}
+		if (m_MainState.SceneName.Equals("Lair3_DefaultMechanics"))
+		{
+			m_MainState.SceneName = Blueprint.DynamicScene.SceneName;
+			m_MainState.AllEntityData.Clear();
+			m_AddStates.Clear();
+		}
 		m_MainState.PostLoad();
 		foreach (SceneEntitiesState addState in m_AddStates)
 		{

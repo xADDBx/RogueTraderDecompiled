@@ -503,7 +503,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 	[UsedImplicitly]
 	private void OnEnable()
 	{
-		if (!ContextData<UnitHelper.PreviewUnit>.Current)
+		if (!ContextData<UnitHelper.UnitHologram>.Current)
 		{
 			AllAgents.Add(this);
 			UpdateBlocker();
@@ -513,7 +513,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 	[UsedImplicitly]
 	private void OnDisable()
 	{
-		if (!ContextData<UnitHelper.PreviewUnit>.Current)
+		if (!ContextData<UnitHelper.UnitHologram>.Current)
 		{
 			AllAgents.Remove(this);
 			ObstaclesHelper.RemoveFromGroup(this);

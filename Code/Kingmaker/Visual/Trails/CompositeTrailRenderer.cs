@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using DG.DemiLib.Attributes;
 using Kingmaker.QA.Profiling;
+using Kingmaker.UI.Common;
+using Kingmaker.UI.DollRoom;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -122,6 +124,11 @@ public class CompositeTrailRenderer : MonoBehaviour
 		}
 	}
 
+	public TrailAlignment GetEffectiveAlignment()
+	{
+		return Alignment;
+	}
+
 	private void OnEnable()
 	{
 		if (m_SpawnersEnabled.Count > 0)
@@ -181,7 +188,7 @@ public class CompositeTrailRenderer : MonoBehaviour
 	{
 		using (Counters.Trails?.Measure())
 		{
-			if (!m_HasNoActiveEmitters && !(Game.GetCamera() == null))
+			if (!m_HasNoActiveEmitters && !(GetCamera() == null))
 			{
 				int pointsCount = UpdateEmitters(instancing: false);
 				UpdateGeometry(pointsCount);
@@ -275,7 +282,13 @@ public class CompositeTrailRenderer : MonoBehaviour
 	{
 		if (m_ActiveTrails.Count > 0 && IndexOffset >= 3)
 		{
-			Graphics.DrawMesh(Mesh, matrix, Material, base.gameObject.layer, null, 0, null, ShadowCastingMode.Off, receiveShadows: false, ProbeAnchor, UseLightProbes);
+			int layer = base.gameObject.layer;
+			UIDollRooms instance = UIDollRooms.Instance;
+			if ((object)instance != null && instance.CharacterDollRoom?.IsVisible == true)
+			{
+				layer = 15;
+			}
+			Graphics.DrawMesh(Mesh, matrix, Material, layer, null, 0, null, ShadowCastingMode.Off, receiveShadows: false, ProbeAnchor, UseLightProbes);
 		}
 	}
 
@@ -383,5 +396,36 @@ public class CompositeTrailRenderer : MonoBehaviour
 	private void OnValidate()
 	{
 		m_MinVertexDistance = Mathf.Max(m_MinVertexDistance, 0.001f);
+	}
+
+	private Camera GetCamera()
+	{
+		if (UIDollRooms.Instance != null)
+		{
+			CharacterDollRoom characterDollRoom = UIDollRooms.Instance.CharacterDollRoom;
+			if (characterDollRoom != null && characterDollRoom.IsVisible)
+			{
+				Camera componentInChildren = characterDollRoom.GetComponentInChildren<Camera>();
+				if (Time.frameCount % 120 == 0)
+				{
+					PFLog.TechArt.Log($"Trail {base.name}: DollRoom camera found: {componentInChildren != null}, cullingMask={componentInChildren?.cullingMask}");
+				}
+				return componentInChildren;
+			}
+			if (Time.frameCount % 120 == 0)
+			{
+				PFLog.TechArt.Log($"Trail {base.name}: DollRoom not visible or null. dollRoom={characterDollRoom != null}, isVisible={characterDollRoom?.IsVisible}");
+			}
+		}
+		else if (Time.frameCount % 120 == 0)
+		{
+			PFLog.TechArt.Log("Trail " + base.name + ": UIDollRooms.Instance is null");
+		}
+		Camera camera = Game.GetCamera();
+		if (Time.frameCount % 120 == 0)
+		{
+			PFLog.TechArt.Log($"Trail {base.name}: Game camera found: {camera != null}");
+		}
+		return camera;
 	}
 }

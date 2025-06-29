@@ -227,6 +227,10 @@ public class CharacterInfoConsoleView : CharacterInfoPCView, IUpdateFocusHandler
 				m_CanDecline.Value = true;
 			}
 		}
+		if (m_NameAndPortraitView is CharInfoNameAndPortraitConsoleView charInfoNameAndPortraitConsoleView)
+		{
+			charInfoNameAndPortraitConsoleView.AddInput(m_InputLayer, m_ConsoleHintsWidget, m_LeftPanelSelected);
+		}
 		m_NavigationPanelLeft.FocusOnEntityManual(m_NavigationPanelLeft.Entities.LastOrDefault());
 		m_NavigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationPanelLeft);
 		m_NavigationBehaviour.AddColumn<GridConsoleNavigationBehaviour>(m_NavigationPanelRight);

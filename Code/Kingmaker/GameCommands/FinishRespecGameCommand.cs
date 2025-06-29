@@ -1,6 +1,8 @@
+using System;
 using Kingmaker.Code.Globalmap.Colonization;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 using MemoryPack;
@@ -67,6 +69,10 @@ public sealed class FinishRespecGameCommand : GameCommand, IMemoryPackable<Finis
 			progression.CountRespecIn();
 		}
 		Game.Instance.AdvanceGameTime(1.Days());
+		EventBus.RaiseEvent((IBaseUnitEntity)m_RespecEntity.Entity, (Action<IRespecHandler>)delegate(IRespecHandler h)
+		{
+			h.HandleRespecFinished();
+		}, isCheckRuntime: true);
 	}
 
 	static FinishRespecGameCommand()

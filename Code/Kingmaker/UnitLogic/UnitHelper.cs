@@ -80,6 +80,10 @@ public static class UnitHelper
 	{
 	}
 
+	public class UnitHologram : ContextFlag<UnitHologram>
+	{
+	}
+
 	public struct DamageEstimate
 	{
 		public int Value;

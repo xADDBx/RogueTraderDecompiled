@@ -36,6 +36,10 @@ public class CharInfoNameAndPortraitConsoleView : CharInfoNameAndPortraitPCView
 			m_NextButton.gameObject.SetActive(!value);
 			m_PrevButton.gameObject.SetActive(!value);
 		}));
+		if (base.ViewModel == null)
+		{
+			return;
+		}
 		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
 		{
 			m_LeftCommonSlots.PlayAnimation(value: true);

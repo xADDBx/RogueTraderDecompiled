@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.UI.Common;
 using Kingmaker.Utility.Random;
 using UnityEngine;
 
@@ -61,13 +62,17 @@ public class TrailEmitter
 		TrailPoint trailPoint = m_ControlPoints[0];
 		bool flag = false;
 		SpawnType spawnType = GetSpawnType(instancing);
-		if (spawnType != 0 && !instancing)
+		if (spawnType != 0 && !instancing && !UseUnscaledTime)
 		{
 			TrailPoint trailPoint2 = m_ControlPoints[m_ControlPoints.Count - 1];
-			flag = GameCameraCulling.IsCulled(GetPosition()) && GameCameraCulling.IsCulled(trailPoint2.Position);
+			flag = GameCameraCulling.IsCulled(GetPosition(context)) && GameCameraCulling.IsCulled(trailPoint2.Position);
 		}
 		if (flag || !Enabled || m_Time < Delay || spawnType == SpawnType.Invalid || (spawnType & SpawnType.Disabled) != 0)
 		{
+			if (UseUnscaledTime && Time.frameCount % 120 == 0)
+			{
+				PFLog.TechArt.Log($"TrailEmitter early exit: culled={flag}, enabled={Enabled}, time={m_Time:F2}, delay={Delay}, spawn={spawnType}");
+			}
 			if (DontDestroyOnDisable)
 			{
 				trailPoint.Velocity = GetVelocity(context);
@@ -80,8 +85,8 @@ public class TrailEmitter
 			return;
 		}
 		TrailPoint trailPoint3 = ((m_ControlPoints.Count > 1) ? m_ControlPoints[1] : null);
-		Vector3 value = GetPosition();
-		Vector3 right = GetRight(context.Width);
+		Vector3 value = GetPosition(context);
+		Vector3 right = GetRight(context.Width, context);
 		trailPoint.Position = value;
 		trailPoint.Right = right;
 		trailPoint.Lifetime = context.Lifetime;
@@ -140,20 +145,36 @@ public class TrailEmitter
 
 	private void UpdatePoints(CompositeTrailRenderer context)
 	{
-		bool flag = Game.GetCamera() != null;
-		Vector3 value = default(Vector3);
+		Camera camera = null;
+		UIDollRooms instance = UIDollRooms.Instance;
+		bool flag = (object)instance != null && instance.CharacterDollRoom?.IsVisible == true;
 		if (flag)
 		{
-			value = Game.GetCamera().transform.position;
+			camera = UIDollRooms.Instance.CharacterDollRoom.GetComponentInChildren<Camera>();
+		}
+		if (camera == null)
+		{
+			camera = Game.GetCamera();
+		}
+		bool flag2 = camera != null;
+		Vector3 value = default(Vector3);
+		if (flag2)
+		{
+			value = camera.transform.position;
 		}
 		float num = 0f;
 		Vector3 result = Vector3.forward;
 		for (int i = 0; i < m_ControlPoints.Count; i++)
 		{
 			TrailPoint trailPoint = m_ControlPoints[i];
-			MathHelper.Vector3Multiply(ref trailPoint.Velocity, Time.deltaTime, out var result2);
+			float num2 = (UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+			if (flag && UseUnscaledTime)
+			{
+				num2 = Mathf.Min(num2, 0.0167f);
+			}
+			MathHelper.Vector3Multiply(ref trailPoint.Velocity, num2, out var result2);
 			MathHelper.Vector3Add(ref trailPoint.Position, ref result2, out trailPoint.Position);
-			trailPoint.Lifetime -= Time.deltaTime;
+			trailPoint.Lifetime -= num2;
 			if (trailPoint.Lifetime <= 0f)
 			{
 				trailPoint.Lifetime = 0f;
@@ -200,7 +221,7 @@ public class TrailEmitter
 				result.y /= result3;
 				result.z /= result3;
 			}
-			if (context.Alignment == CompositeTrailRenderer.TrailAlignment.View && flag)
+			if (context.GetEffectiveAlignment() == CompositeTrailRenderer.TrailAlignment.View && flag2)
 			{
 				MathHelper.Vector3Subtract(ref value, ref trailPoint.Position, out trailPoint.Normal);
 				MathHelper.Vector3Normalize(ref trailPoint.Normal, out trailPoint.Normal);
@@ -265,7 +286,7 @@ public class TrailEmitter
 					float num2 = num / result;
 					MathHelper.Vector3CatmullRom(ref prevPoint.Position, ref trailPoint.Position, ref nextPoint.Position, ref nextPoint2.Position, num2, out var result2);
 					Vector3 result3;
-					if (context.Alignment == CompositeTrailRenderer.TrailAlignment.View)
+					if (context.GetEffectiveAlignment() == CompositeTrailRenderer.TrailAlignment.View)
 					{
 						MathHelper.Vector3CatmullRom(ref prevPoint.ViewRight, ref trailPoint.ViewRight, ref nextPoint.ViewRight, ref nextPoint2.ViewRight, num2, out result3);
 					}
@@ -281,28 +302,34 @@ public class TrailEmitter
 					float num5 = context.CalculateWidthScale(num3, normPos, num4) * WidthFactor;
 					if (UseSpawnerScale)
 					{
-						num5 *= GetSingleSpawner().transform.localScale.x;
+						GameObject singleSpawner = GetSingleSpawner();
+						if (singleSpawner != null)
+						{
+							num5 *= singleSpawner.transform.localScale.x;
+						}
 					}
 					result3 *= num5;
 					MathHelper.Vector3Lerp(ref trailPoint.Normal, ref nextPoint.Normal, num2, out var result4);
 					UpdateGeometryByPoint(context, m_PointsCount, indexOffset, vertexOffset, ref result2, ref result3, ref result4, num3, normPos, num4, posFromStart);
 				}
+				continue;
 			}
-			else
+			Vector3 pos = trailPoint.Position;
+			Vector3 right = ((context.GetEffectiveAlignment() == CompositeTrailRenderer.TrailAlignment.View) ? trailPoint.ViewRight : trailPoint.Right);
+			float positionFromStart = trailPoint.PositionFromStart;
+			float normLifetime = trailPoint.Lifetime / context.Lifetime;
+			float normPos2 = ((m_Length > 0f) ? (trailPoint.PositionInTrail / m_Length) : 0f);
+			float num6 = context.CalculateWidthScale(normLifetime, normPos2, trailPoint.PositionInTrail) * WidthFactor;
+			if (UseSpawnerScale)
 			{
-				Vector3 pos = trailPoint.Position;
-				Vector3 right = ((context.Alignment == CompositeTrailRenderer.TrailAlignment.View) ? trailPoint.ViewRight : trailPoint.Right);
-				float positionFromStart = trailPoint.PositionFromStart;
-				float normLifetime = trailPoint.Lifetime / context.Lifetime;
-				float normPos2 = ((m_Length > 0f) ? (trailPoint.PositionInTrail / m_Length) : 0f);
-				float num6 = context.CalculateWidthScale(normLifetime, normPos2, trailPoint.PositionInTrail) * WidthFactor;
-				if (UseSpawnerScale)
+				GameObject singleSpawner2 = GetSingleSpawner();
+				if (singleSpawner2 != null)
 				{
-					num6 *= GetSingleSpawner().transform.localScale.x;
+					num6 *= singleSpawner2.transform.localScale.x;
 				}
-				right *= num6;
-				UpdateGeometryByPoint(context, i, indexOffset, vertexOffset, ref pos, ref right, ref trailPoint.Normal, normLifetime, normPos2, trailPoint.PositionInTrail, positionFromStart);
 			}
+			right *= num6;
+			UpdateGeometryByPoint(context, i, indexOffset, vertexOffset, ref pos, ref right, ref trailPoint.Normal, normLifetime, normPos2, trailPoint.PositionInTrail, positionFromStart);
 		}
 		context.VertexOffset = vertexOffset + m_PointsCount * 2;
 		context.IndexOffset = indexOffset + (m_PointsCount - 1) * 6;
@@ -368,22 +395,40 @@ public class TrailEmitter
 		return m_ControlPoints[i];
 	}
 
-	private Vector3 GetRight(float width)
+	private Vector3 GetRight(float width, CompositeTrailRenderer context = null)
 	{
 		if (GetSpawnType() == SpawnType.Double)
 		{
 			return (SecondSpawner.transform.position - Spawner.transform.position) * 0.5f;
 		}
-		return -GetSingleSpawner().transform.right * width;
+		GameObject singleSpawner = GetSingleSpawner();
+		if (singleSpawner != null)
+		{
+			return -singleSpawner.transform.right * width;
+		}
+		if (context != null)
+		{
+			return -context.transform.right * width;
+		}
+		return -Vector3.right * width;
 	}
 
-	public Vector3 GetPosition()
+	public Vector3 GetPosition(CompositeTrailRenderer context = null)
 	{
 		if (GetSpawnType() == SpawnType.Double)
 		{
 			return (SecondSpawner.transform.position + Spawner.transform.position) * 0.5f;
 		}
-		return GetSingleSpawner().transform.position;
+		GameObject singleSpawner = GetSingleSpawner();
+		if (singleSpawner != null)
+		{
+			return singleSpawner.transform.position;
+		}
+		if (context != null)
+		{
+			return context.transform.position;
+		}
+		return Vector3.zero;
 	}
 
 	private Vector3 GetVelocity(CompositeTrailRenderer context)
@@ -393,13 +438,24 @@ public class TrailEmitter
 		{
 			vector = PFStatefulRandom.Trails.onUnitSphere * RandomizeVelocity;
 		}
-		return VelocityType switch
+		switch (VelocityType)
 		{
-			VelocityType.None => default(Vector3), 
-			VelocityType.Self => GetSingleSpawner().transform.TransformDirection(context.PointVelocity) + vector, 
-			VelocityType.World => context.PointVelocity + vector, 
-			_ => default(Vector3), 
-		};
+		case VelocityType.None:
+			return default(Vector3);
+		case VelocityType.Self:
+		{
+			GameObject singleSpawner = GetSingleSpawner();
+			if (singleSpawner != null)
+			{
+				return singleSpawner.transform.TransformDirection(context.PointVelocity) + vector;
+			}
+			return context.PointVelocity + vector;
+		}
+		case VelocityType.World:
+			return context.PointVelocity + vector;
+		default:
+			return default(Vector3);
+		}
 	}
 
 	public void DrawGizmos()
@@ -441,6 +497,10 @@ public class TrailEmitter
 			{
 				spawnType |= SpawnType.Disabled;
 			}
+		}
+		if (spawnType == SpawnType.Invalid && UseUnscaledTime)
+		{
+			spawnType = SpawnType.Single;
 		}
 		return spawnType;
 	}

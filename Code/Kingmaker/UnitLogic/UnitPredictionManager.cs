@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Fx;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
@@ -18,6 +19,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.View;
 using Kingmaker.View.Covers;
 using Kingmaker.View.Mechanics.Entities;
@@ -369,14 +371,21 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 				m_VirtualHologram = null;
 			}
 		}
-		if (Game.Instance.TurnController.TurnBasedModeActive && (!m_VirtualHologramPosition.HasValue || WarhammerBlockManager.Instance.CanUnitStandOnNode(unit, m_VirtualHologramPosition.Value.GetNearestNodeXZUnwalkable())))
+		if (!Game.Instance.TurnController.TurnBasedModeActive || (m_VirtualHologramPosition.HasValue && !WarhammerBlockManager.Instance.CanUnitStandOnNode(unit, m_VirtualHologramPosition.Value.GetNearestNodeXZUnwalkable())))
 		{
-			StarshipView componentInChildren = unit.View.GetComponentInChildren<StarshipView>();
-			m_VirtualHologram = (componentInChildren ? unit.CreateHologramSpaceship() : unit.CreateHologram());
-			if (isMovementHologram)
+			return;
+		}
+		StarshipView componentInChildren = unit.View.GetComponentInChildren<StarshipView>();
+		using (ContextData<UnitHelper.UnitHologram>.Request())
+		{
+			using (ContextData<DisableStatefulRandomContext>.Request())
 			{
-				m_MovementHologram = m_VirtualHologram;
+				m_VirtualHologram = (componentInChildren ? unit.CreateHologramSpaceship() : unit.CreateHologram());
 			}
+		}
+		if (isMovementHologram)
+		{
+			m_MovementHologram = m_VirtualHologram;
 		}
 	}
 
