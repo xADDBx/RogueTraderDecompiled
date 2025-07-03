@@ -33,7 +33,7 @@ public class HandSlot : WeaponSlot, IHashable
 		{
 			if (HasShield)
 			{
-				return base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement);
+				return !base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement);
 			}
 			return false;
 		}
@@ -103,7 +103,7 @@ public class HandSlot : WeaponSlot, IHashable
 	public override void UpdateActive()
 	{
 		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
-		base.Active = !base.Disabled && (!CanUnActive || bodyOptional == null || HandsEquipmentSet == bodyOptional.CurrentHandsEquipmentSet);
+		base.Active = !base.Disabled && (CanUnActive || bodyOptional == null || HandsEquipmentSet == bodyOptional.CurrentHandsEquipmentSet);
 	}
 
 	public static IDisposable SuppressNotifyEquipment()

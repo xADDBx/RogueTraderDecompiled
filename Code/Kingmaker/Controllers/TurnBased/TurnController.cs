@@ -654,7 +654,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 
 	private void StartUnitTurn([NotNull] MechanicEntity entity, bool isTurnBased, InterruptionData interruptionData = null)
 	{
-		bool flag = entity.Initiative.WasPreparedForRound == CombatRound && entity.IsInCombat;
+		bool flag = entity.Initiative.WasPreparedForRound == CombatRound && entity.IsInCombat && !entity.Features.DoesNotCountTurns;
 		if (entity is UnitSquad unitSquad)
 		{
 			unitSquad.Units.ForEach(delegate(UnitReference u)
@@ -785,12 +785,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		Data.EndTurnRequested = false;
 		if (unit != null)
 		{
-			int interruptingOrder = GetInterruptingOrder(unit);
-			if (unit.Initiative.WasPreparedForRound != CombatRound && interruptingOrder == 0)
-			{
-				unit.Initiative.WasPreparedForRound = CombatRound;
-			}
-			if (interruptingOrder > 0)
+			if (GetInterruptingOrder(unit) > 0)
 			{
 				unit.Initiative.IsInEndInterrupting = true;
 				unit.GetAbilityCooldownsOptional()?.RestoreCooldownData();
@@ -804,9 +799,16 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			else
 			{
 				TickAbilityCooldowns(unit, interrupt: false);
-				if (!unit.Features.DoesNotCountTurns && TurnOrder?.CurrentRoundUnitsOrder.FirstOrDefault() == unit)
+				if (!unit.Features.DoesNotCountTurns)
 				{
-					unit.Initiative.LastTurn = GameRound;
+					if (unit.Initiative.WasPreparedForRound != CombatRound)
+					{
+						unit.Initiative.WasPreparedForRound = CombatRound;
+					}
+					if (TurnOrder?.CurrentRoundUnitsOrder.FirstOrDefault() == unit)
+					{
+						unit.Initiative.LastTurn = GameRound;
+					}
 				}
 				EventBus.RaiseEvent((IMechanicEntity)unit, (Action<ITurnEndHandler>)delegate(ITurnEndHandler h)
 				{

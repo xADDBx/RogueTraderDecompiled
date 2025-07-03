@@ -6,7 +6,9 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -31,6 +33,8 @@ public class TurnOrderQueue : IHashable
 		select i;
 
 	public IEnumerable<MechanicEntity> UnitsOrder => UnitsInCombat.OrderByDescending((MechanicEntity i) => i.Initiative.TurnOrderPriority);
+
+	public IEnumerable<MechanicEntity> UnitsOrderWithStandardTurn => UnitsOrder.Where((MechanicEntity u) => !u.HasMechanicFeature(MechanicsFeatureType.HasNoStandardTurn));
 
 	public IEnumerable<MechanicEntity> CurrentRoundUnitsOrder => InterruptingTurnOrder.Concat(from i in UnitsOrder
 		where !i.Initiative.ActedThisRound

@@ -30,13 +30,12 @@ public class ContextActionChangeInitiative : ContextAction
 		{
 			return;
 		}
-		MechanicEntity[] array = Game.Instance.TurnController.TurnOrder.UnitsOrder.ToArray();
+		MechanicEntity[] array = Game.Instance.TurnController.TurnOrder.UnitsOrderWithStandardTurn.ToArray();
 		if (!array.Contains(entity) || array.Length <= 2)
 		{
 			return;
 		}
 		int num = array.IndexOf(entity);
-		BuffDuration duration = new BuffDuration(1.Rounds(), BuffEndCondition.TurnStartOrCombatEnd);
 		entity.Initiative.WasPreparedForRound = 0;
 		if (num < 2)
 		{
@@ -45,6 +44,7 @@ public class ContextActionChangeInitiative : ContextAction
 			{
 				entity.Initiative.ChangePlaces(array.Last().Initiative);
 			}
+			BuffDuration duration = new BuffDuration(1.Rounds(), BuffEndCondition.TurnEndOrCombatEnd);
 			entity.Buffs.Add(OverflowBuff, base.Context, duration);
 		}
 		else

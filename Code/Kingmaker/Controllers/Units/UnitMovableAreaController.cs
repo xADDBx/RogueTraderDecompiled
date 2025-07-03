@@ -197,12 +197,11 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	private void UpdateMovableAreaForParty()
 	{
-		foreach (UnitReference partyCharacter in Game.Instance.Player.PartyCharacters)
+		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
-			IAbstractUnitEntity entity = partyCharacter.Entity;
-			if (entity != null && !m_InitialPositions.ContainsKey(entity.UniqueId))
+			if (partyAndPet != null && !m_InitialPositions.ContainsKey(partyAndPet.UniqueId))
 			{
-				m_InitialPositions.Add(entity.UniqueId, entity.Position);
+				m_InitialPositions.Add(partyAndPet.UniqueId, partyAndPet.Position);
 			}
 		}
 	}
