@@ -39,7 +39,6 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Replay;
 using Kingmaker.Stores;
-using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.SettingsUI;
@@ -571,11 +570,11 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		{
 			return;
 		}
-		List<BlueprintDlc> list = (from d in Game.Instance?.Player?.GetAvailableAdditionalContentDlcForCurrentCampaign()
-			select d as BlueprintDlc into dlc
+		List<BlueprintDlc> allInactiveDlcs = (from dlc in Game.Instance?.Player?.GetAvailableAdditionalContentDlcForCurrentCampaign().OfType<BlueprintDlc>()
 			where dlc != null && dlc.DlcType == DlcTypeEnum.AdditionalContentDlc
+			where !dlc.IsEnabled
 			select dlc).ToList();
-		if (CanSwitchDlcAfterPurchaseShown || list == null || list.Count <= 0 || list.All((BlueprintDlc dlc) => dlc.IsEnabled))
+		if (allInactiveDlcs == null || allInactiveDlcs.Count == 0 || allInactiveDlcs.Where((BlueprintDlc dlc) => !IsHideDlcHintSet(dlc.AssetGuid)).ToList().Count == 0)
 		{
 			return;
 		}
@@ -590,8 +589,30 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 						h.HandleOpenDlcManager(inGame: true);
 					});
 				}
-			}, null, UIStrings.Instance.SettingsUI.DialogOk, UIStrings.Instance.SettingsUI.DialogCancel, null, null, null, 0, uint.MaxValue, null, null, SetCanSwitchDlcAfterPurchasePrefs);
+			}, null, UIStrings.Instance.SettingsUI.DialogOk, UIStrings.Instance.SettingsUI.DialogCancel, null, null, null, 0, uint.MaxValue, null, null, delegate
+			{
+				foreach (BlueprintDlc item in allInactiveDlcs)
+				{
+					SetHideDlcHint(item.AssetGuid);
+				}
+			});
 		});
+	}
+
+	private static string GetDlcHintKey(string guid)
+	{
+		return "hide_dlc_hint_" + guid;
+	}
+
+	private static bool IsHideDlcHintSet(string guid)
+	{
+		return PlayerPrefs.GetInt(GetDlcHintKey(guid), 0) == 1;
+	}
+
+	private static void SetHideDlcHint(string guid)
+	{
+		PlayerPrefs.SetInt(GetDlcHintKey(guid), 1);
+		PlayerPrefs.Save();
 	}
 
 	[Cheat(Name = "clear_can_switch_dlc_after_purchase")]

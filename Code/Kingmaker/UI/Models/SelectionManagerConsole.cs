@@ -43,18 +43,18 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 			return;
 		}
 		UnitPartPetOwner optional = entityData.GetOptional<UnitPartPetOwner>();
-		if (optional != null)
+		if (optional != null && optional.PetUnit.Master.IsDirectlyControllable)
 		{
-			SelectUnitAsPet(optional.PetUnit, value: true);
+			ToggleSelectAsPetUnit(optional.PetUnit, value: true);
 		}
-		if (entityData.IsPet)
+		if (entityData.IsPet && !Game.Instance.Player.IsInCombat)
 		{
-			SelectUnitAsPet(entityData, value: true);
+			ToggleSelectAsPetUnit(entityData, value: true);
 			SelectUnit(entityData.Master.View, single, sendSelectionEvent, ask);
 		}
 		else
 		{
-			if (!entityData.IsDirectlyControllable())
+			if (!entityData.IsDirectlyControllable() && !entityData.IsPet)
 			{
 				return;
 			}
@@ -287,8 +287,8 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 			u.IsSelected = false;
 		});
 		base.SelectedUnits.Clear();
-		BaseUnitEntity value = base.SelectedUnit.Value;
-		if (m_LinkedUnits.Contains(value) || value == null)
+		BaseUnitEntity selectedUnit = base.SelectedUnit.Value;
+		if (m_LinkedUnits.Contains(selectedUnit) || selectedUnit == null)
 		{
 			foreach (BaseUnitEntity linkedUnit in m_LinkedUnits)
 			{
@@ -298,13 +298,21 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 				}
 			}
 		}
-		else if (value != null && value.IsDirectlyControllable())
+		else if (selectedUnit != null && selectedUnit.IsDirectlyControllable())
 		{
-			base.SelectedUnits.Add(value);
+			base.SelectedUnits.Add(selectedUnit);
 		}
 		base.SelectedUnits.ForEach(delegate(BaseUnitEntity u)
 		{
 			u.IsSelected = true;
+		});
+		base.SelectedUnits.ForEach(delegate(BaseUnitEntity u)
+		{
+			if (u.IsInitialized && u.IsMaster)
+			{
+				u.HandleFakeSelected(u == selectedUnit);
+				u.Pet.HandleFakeSelected(u == selectedUnit);
+			}
 		});
 	}
 

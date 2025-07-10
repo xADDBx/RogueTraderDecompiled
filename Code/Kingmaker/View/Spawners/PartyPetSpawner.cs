@@ -86,7 +86,8 @@ public class PartyPetSpawner : UnitSpawnerBase, IAddInspectorGUI, IEtudesUpdateH
 		}
 		bool isPetFollowing = unitPartPetOwner.IsPetFollowing;
 		bool flag = (m_ControlCondition?.Get())?.Check() ?? true;
-		if (flag && isPetFollowing && !IsInControl)
+		bool flag2 = existingPet.IsInCombat || existingPet.Master.IsInCombat;
+		if (flag && isPetFollowing && !IsInControl && !flag2)
 		{
 			unitPartPetOwner.StopFollowing();
 			IsInControl = true;

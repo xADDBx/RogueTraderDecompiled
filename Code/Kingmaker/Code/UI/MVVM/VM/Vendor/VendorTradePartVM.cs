@@ -68,6 +68,8 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 
 	public readonly bool NeedHidePfAndReputation;
 
+	public readonly bool NeedHideReputationCompletely;
+
 	private VendorLogic Vendor => VendorHelper.Vendor;
 
 	public bool HasDiscount
@@ -106,6 +108,7 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 		}));
 		VendorFractionName = Game.Instance.Vendor.VendorFaction.DisplayName.Text;
 		NeedHidePfAndReputation = Game.Instance.Vendor.NeedHidePfAndReputation;
+		NeedHideReputationCompletely = Game.Instance.Vendor.NeedHideReputationCompletely;
 		VendorFaction.Value = Game.Instance.Vendor.VendorFaction.FactionType;
 		ReactiveProperty<string> vendorName = VendorName;
 		object obj = Game.Instance.Vendor.VendorName ?? string.Empty;

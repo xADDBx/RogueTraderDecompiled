@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Visual.CharacterSystem;
 using RogueTrader.Code.ShaderConsts;
@@ -50,8 +52,17 @@ public class PetCharacter : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private IEnumerator ApplyDefaultRampsCoroutine()
 	{
+		yield return new WaitForSeconds(0.1f);
+		PFLog.TechArt.Log("PetCharacter.ApplyDefaultRampsCoroutine: Applying default ramps (0,0) to: " + base.name);
+		if (m_PetRamp01Index < 0 || m_PetRamp02Index < 0)
+		{
+			RampColorPreset.IndexSet indexSet = RampColorPresetFile.IndexPairs[0];
+			m_PetRamp01Index = indexSet.PrimaryIndex;
+			m_PetRamp02Index = indexSet.SecondaryIndex;
+			ApplyRampsByIndicesFromOwnPresets(indexSet.PrimaryIndex, indexSet.SecondaryIndex);
+		}
 	}
 
 	public Texture2D GetRampTextureByIndex(int rampIndex)
@@ -210,5 +221,11 @@ public class PetCharacter : MonoBehaviour
 			ApplyRampsByIndicesFromOwnPresets(petRamp01Index, petRamp02Index);
 			PFLog.TechArt.Log($"LoadRampIndicesFromDoll: Loaded and applied ramp indices {petRamp01Index}, {petRamp02Index} from pet doll data");
 		}
+	}
+
+	public void HandlePetInitialized(BlueprintPet pet)
+	{
+		PFLog.TechArt.Log("PetCharacter.HandlePetInitialized: Pet initialized, applying default ramps to: " + base.name);
+		StartCoroutine(ApplyDefaultRampsCoroutine());
 	}
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Code.Enums;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -35,6 +36,15 @@ public static class ItemsFilter
 		if (ShouldSkipItem())
 		{
 			return false;
+		}
+		ItemInventoryFiltersOverride component = blueprintItem.GetComponent<ItemInventoryFiltersOverride>();
+		if (component != null)
+		{
+			if (filter != component.ItemFilterOverride)
+			{
+				return filter == ItemsFilterType.NoFilter;
+			}
+			return true;
 		}
 		switch (filter)
 		{

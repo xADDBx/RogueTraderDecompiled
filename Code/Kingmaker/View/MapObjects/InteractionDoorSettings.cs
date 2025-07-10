@@ -30,6 +30,4 @@ public class InteractionDoorSettings : InteractionSettings
 
 	[AkEventReference]
 	public string CloseSound;
-
-	public bool DonNotNeedNavmeshCut;
 }

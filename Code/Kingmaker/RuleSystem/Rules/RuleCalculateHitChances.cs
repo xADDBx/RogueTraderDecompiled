@@ -10,10 +10,8 @@ using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules.Modifiers;
-using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
-using Kingmaker.UnitLogic.Enums;
 using Kingmaker.View.Covers;
 using Pathfinding;
 using UnityEngine;
@@ -24,8 +22,6 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 {
 	public readonly ValueModifiersManager HitChanceValueModifiers = new ValueModifiersManager();
 
-	public readonly ValueModifiersManager SuperiorityValueModifiers = new ValueModifiersManager();
-
 	public readonly ValueModifiersManager InitiatorWeaponSkillValueModifiers = new ValueModifiersManager();
 
 	public readonly ValueModifiersManager TargetWeaponSkillValueModifiers = new ValueModifiersManager();
@@ -33,6 +29,8 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 	public FlagModifiersManager AutoCrits = new FlagModifiersManager();
 
 	public FlagModifiersManager NeverCrits = new FlagModifiersManager();
+
+	private RuleCalculateSuperiority m_RuleCalculateSuperiority;
 
 	public AbilityData Ability { get; }
 
@@ -60,9 +58,9 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 	[CanBeNull]
 	public RuleCalculateCoverHitChance ResultCoverHitChanceRule { get; private set; }
 
-	public int ResultSuperiorityNumber { get; private set; }
+	public int ResultSuperiorityNumber => m_RuleCalculateSuperiority?.ResultSuperiorityNumber ?? 0;
 
-	public int ResultTargetSuperiorityPenalty { get; private set; }
+	public int ResultTargetSuperiorityPenalty => m_RuleCalculateSuperiority?.ResultTargetSuperiorityPenalty ?? 0;
 
 	public int ResultRighteousFurySuperiorityBonus { get; private set; }
 
@@ -112,9 +110,12 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 			{
 				yield return item;
 			}
-			foreach (Modifier item2 in SuperiorityValueModifiers.List)
+			if (m_RuleCalculateSuperiority != null)
 			{
-				yield return item2;
+				foreach (Modifier item2 in m_RuleCalculateSuperiority.SuperiorityValueModifiers.List)
+				{
+					yield return item2;
+				}
 			}
 			foreach (Modifier item3 in InitiatorWeaponSkillValueModifiers.List)
 			{
@@ -209,44 +210,17 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 	{
 		RawResult = 100;
 		ResultHitChance = 100;
-		int num = Math.Max(0, (int)(base.Initiator.Size - 4));
-		PartUnitBody optional = ((MechanicEntity)Target).GetOptional<PartUnitBody>();
-		int num2 = ((optional != null && optional.PrimaryHand.MaybeWeapon?.Blueprint.IsMelee == true) ? Math.Max(0, (int)(Target.Size - 4)) : 0);
-		ResultSuperiorityNumber = num - num2;
-		if (base.InitiatorUnit.HasMechanicFeature(MechanicsFeatureType.HiveOutnumber) && ResultSuperiorityNumber > 0)
-		{
-			ResultSuperiorityNumber++;
-		}
-		if (base.TargetUnit != null && base.TargetUnit != Game.Instance.DefaultUnit && base.InitiatorUnit != null)
-		{
-			foreach (BaseUnitEntity engagedByUnit in base.TargetUnit.GetEngagedByUnits())
-			{
-				if (engagedByUnit != base.Initiator)
-				{
-					ResultSuperiorityNumber += Math.Max(1, (int)(engagedByUnit.Size - 3));
-				}
-			}
-			foreach (BaseUnitEntity engagedByUnit2 in base.InitiatorUnit.GetEngagedByUnits())
-			{
-				if (engagedByUnit2 != Target)
-				{
-					ResultSuperiorityNumber -= Math.Max(1, (int)(engagedByUnit2.Size - 3));
-				}
-			}
-		}
-		BaseUnitEntity targetUnit = base.TargetUnit;
-		ResultSuperiorityNumber = ((targetUnit == null || !targetUnit.HasMechanicFeature(MechanicsFeatureType.IgnoreMeleeOutnumbering)) ? Math.Max(0, ResultSuperiorityNumber) : 0);
-		ResultTargetSuperiorityPenalty = ResultSuperiorityNumber * (10 + SuperiorityValueModifiers.Value);
+		m_RuleCalculateSuperiority = Rulebook.Trigger(new RuleCalculateSuperiority(base.Initiator, Target, Ability));
 		StatType statType = Ability.Blueprint.GetComponent<WarhammerOverrideAbilityMeleeStat>()?.Stat ?? StatType.WarhammerWeaponSkill;
-		int num3 = ((MechanicEntity)base.Initiator).GetAttributeOptional(statType)?.ModifiedValue ?? 0;
+		int num = ((MechanicEntity)base.Initiator).GetAttributeOptional(statType)?.ModifiedValue ?? 0;
 		ResultWeaponSkillPenalty = Rulebook.Trigger(new RuleCalculateAttackPenalty((MechanicEntity)base.Initiator, Ability)).ResultWeaponSkillPenalty;
-		int num4 = Math.Max(num3 - ResultWeaponSkillPenalty, 0) + InitiatorWeaponSkillValueModifiers.Value;
-		int num5 = (((MechanicEntity)Target).GetAttributeOptional(statType)?.ModifiedValue ?? 0) + TargetWeaponSkillValueModifiers.Value;
+		int num2 = Math.Max(num - ResultWeaponSkillPenalty, 0) + InitiatorWeaponSkillValueModifiers.Value;
+		int num3 = (((MechanicEntity)Target).GetAttributeOptional(statType)?.ModifiedValue ?? 0) + TargetWeaponSkillValueModifiers.Value;
 		ResultRighteousFurySuperiorityBonus = (base.TargetUnit?.Features?.HalfSuperiorityCriticalChance ? (ResultTargetSuperiorityPenalty / 2) : ResultTargetSuperiorityPenalty);
-		int num6 = num4 - num5 + ResultRighteousFurySuperiorityBonus;
-		if (num6 != 0)
+		int num4 = num2 - num3 + ResultRighteousFurySuperiorityBonus;
+		if (num4 != 0)
 		{
-			RighteousFuryChanceRule.ChanceModifiers.Add(num6, this, statType);
+			RighteousFuryChanceRule.ChanceModifiers.Add(num4, this, statType);
 		}
 	}
 

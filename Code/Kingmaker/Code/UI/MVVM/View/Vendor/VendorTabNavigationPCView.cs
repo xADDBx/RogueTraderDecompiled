@@ -19,6 +19,9 @@ public class VendorTabNavigationPCView : ViewBase<VendorTabNavigationVM>
 	[SerializeField]
 	private OwlcatButton m_ReputationDoubleButton;
 
+	[SerializeField]
+	private GameObject m_TabsMiddleArrow;
+
 	private readonly string m_ActiveTabLayer = "Active";
 
 	private readonly string m_UnactiveTabLayer = "Unactive";
@@ -42,6 +45,7 @@ public class VendorTabNavigationPCView : ViewBase<VendorTabNavigationVM>
 			base.ViewModel.SetActiveTab(VendorWindowsTab.Reputation);
 		}));
 		AddDisposable(base.ViewModel.ActiveTab.AsObservable().Subscribe(UpdateActiveTab));
+		AddDisposable(base.ViewModel.NeedHideReputationCompletely.Subscribe(SetUpTabs));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -67,5 +71,11 @@ public class VendorTabNavigationPCView : ViewBase<VendorTabNavigationVM>
 		m_TradeButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == VendorWindowsTab.Trade) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		m_ReputationButton.SetActiveLayer((base.ViewModel.ActiveTab.Value == VendorWindowsTab.Reputation) ? m_UnactiveTabLayer : m_ActiveTabLayer);
 		base.ViewModel.SetNextTab();
+	}
+
+	private void SetUpTabs(bool needHideReputationCompletely)
+	{
+		m_ReputationButton.gameObject.SetActive(!needHideReputationCompletely);
+		m_TabsMiddleArrow.SetActive(!needHideReputationCompletely);
 	}
 }

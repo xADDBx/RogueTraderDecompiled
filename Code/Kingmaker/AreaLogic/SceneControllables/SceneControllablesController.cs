@@ -130,5 +130,9 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 	public void OnAreaLoadingComplete()
 	{
 		Rescan();
+		if (AstarPath.active != null)
+		{
+			AstarPath.active.Tick();
+		}
 	}
 }

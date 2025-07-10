@@ -65,6 +65,7 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 			m_Initialized = true;
 			PetBlueprint = pet;
 			PreparePet();
+			InitializePetColors();
 			if (!base.Owner.IsPreview)
 			{
 				EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IPetInitializedHandle>)delegate(IPetInitializedHandle h)
@@ -74,6 +75,21 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 			}
 		}
 		StartFollowing();
+	}
+
+	private void InitializePetColors()
+	{
+		if (PetUnit?.ViewSettings != null)
+		{
+			if (PetUnit.ViewSettings.Doll == null)
+			{
+				PetUnit.ViewSettings.SetDoll(new DollData());
+			}
+			if (PetUnit.View != null)
+			{
+				PetUnit.ViewSettings.Doll.ApplyPetRamps(PetUnit.View);
+			}
+		}
 	}
 
 	public void OnAreaBeginUnloading()

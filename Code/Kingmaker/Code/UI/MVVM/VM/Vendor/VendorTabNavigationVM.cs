@@ -8,6 +8,8 @@ public class VendorTabNavigationVM : BaseDisposable, IViewModel, IBaseDisposable
 {
 	public readonly ReactiveProperty<VendorWindowsTab> ActiveTab = new ReactiveProperty<VendorWindowsTab>(VendorWindowsTab.Trade);
 
+	public readonly ReactiveProperty<bool> NeedHideReputationCompletely = new ReactiveProperty<bool>();
+
 	protected override void DisposeImplementation()
 	{
 	}

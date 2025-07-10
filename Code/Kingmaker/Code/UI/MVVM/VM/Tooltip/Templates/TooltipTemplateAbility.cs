@@ -243,7 +243,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			return;
 		}
 		AbilityRedirect component = BlueprintAbility.GetComponent<AbilityRedirect>();
-		if (component == null)
+		if (component == null || (AbilityData != null && !AbilityData.CanRedirect))
 		{
 			return;
 		}

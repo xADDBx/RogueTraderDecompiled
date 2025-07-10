@@ -278,6 +278,11 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 
 	private void UpdateVisibility()
 	{
+		if (!base.ViewModel.UnitState.IsPlayer.Value && base.ViewModel.UnitState.IsDeadOrUnconsciousIsDead.Value)
+		{
+			Visibility.Value = UnitOvertipVisibility.Invisible;
+			return;
+		}
 		if (!CheckVisibility || base.ViewModel.IsCutscene || base.ViewModel.IsInDialog)
 		{
 			Visibility.Value = UnitOvertipVisibility.Invisible;

@@ -124,10 +124,13 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 				float hitWithAvoidanceChance = (InitialHitChance = num2);
 				HitWithAvoidanceChance = hitWithAvoidanceChance;
 			}
-			DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
-			HealPredictionData healPrediction = Ability.GetHealPrediction(target);
-			MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
-			MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
+			if (Ability.IsValid(target, casterPosition))
+			{
+				DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
+				HealPredictionData healPrediction = Ability.GetHealPrediction(target);
+				MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
+				MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
+			}
 		}
 	}
 

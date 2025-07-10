@@ -17,7 +17,11 @@ public class PetKeystoneInfoComponent : BlueprintComponent
 
 	public LocalizedString PetInfoTitleName;
 
-	public VideoLink PetVideo;
+	public VideoLink PetVideoPC;
+
+	public VideoLink PetVideoPS;
+
+	public VideoLink PetVideoXbox;
 
 	public BlueprintEncyclopediaGlossaryEntryReference DescriptionReference;
 
@@ -28,4 +32,6 @@ public class PetKeystoneInfoComponent : BlueprintComponent
 	public BlueprintUnitReference PetUnitReference;
 
 	public List<PetRecommendedFeature> RecommendedFeatures;
+
+	public VideoLink VideoToShow => PetVideoPC;
 }

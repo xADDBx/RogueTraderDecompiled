@@ -5,6 +5,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.TurnBased;
+using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -309,6 +310,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			base.Executor.View.HideOffWeapon(hide: true);
 		}
+		TryStopBuffLoopAction();
 		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
 		if (component != null && !component.UseOnSourceWeapon)
 		{
@@ -452,6 +454,17 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			h.BurstAnimationDelay = Ability.Weapon?.Blueprint.VisualParameters.BurstAnimationDelay ?? 0f;
 			h.IsBladeDance = HasTwoMeleeForBladeDance();
 		}
+	}
+
+	private void TryStopBuffLoopAction()
+	{
+		base.Executor.Facts.GetAll((EntityFact ef) => ef.GetComponent<PlayLoopAnimationByBuff>() != null).ForEach(delegate(EntityFact ef)
+		{
+			ef.CallComponents(delegate(PlayLoopAnimationByBuff playLoop)
+			{
+				playLoop.TryResetAction();
+			});
+		});
 	}
 
 	private void SetHandlesParameters(UnitAnimationActionHandle h)

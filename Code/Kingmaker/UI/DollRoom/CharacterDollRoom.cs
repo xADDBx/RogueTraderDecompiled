@@ -93,7 +93,6 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		if ((bool)m_OriginalAvatar)
 		{
 			m_OriginalAvatar.enabled = true;
-			m_OriginalAvatar = null;
 		}
 	}
 
@@ -155,7 +154,6 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 			m_AvatarHands?.Dispose();
 			m_AvatarHands = null;
 			m_Mechadendrites = null;
-			m_Unit = null;
 			if (unit?.View != null)
 			{
 				unit?.View.HandsEquipment.UpdateVisibility(unit.View.IsVisible);
@@ -166,6 +164,8 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 			Object.Destroy(m_SimpleAvatar.gameObject);
 			m_SimpleAvatar = null;
 		}
+		m_OriginalAvatar = null;
+		m_Unit = null;
 		base.Cleanup();
 	}
 

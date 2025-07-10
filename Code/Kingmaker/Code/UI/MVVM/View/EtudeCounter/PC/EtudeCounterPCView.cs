@@ -20,6 +20,11 @@ public class EtudeCounterPCView : EtudeCounterView
 		}));
 	}
 
+	public void SetEtudeCounterVisible(bool value)
+	{
+		base.gameObject.SetActive(value);
+	}
+
 	protected override void OnShow()
 	{
 		base.OnShow();
@@ -30,6 +35,7 @@ public class EtudeCounterPCView : EtudeCounterView
 		m_ContainterTransform.DOAnchorPosY(0f, 0.5f).From(isRelative: true).SetDelay(1f)
 			.SetEase(Ease.InExpo);
 		m_ContainterTransform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), 0.5f).From(isRelative: true).SetEase(Ease.InExpo);
+		TweenTimeoutReset();
 	}
 
 	protected override void OnHide()
@@ -41,5 +47,6 @@ public class EtudeCounterPCView : EtudeCounterView
 		{
 			base.gameObject.SetActive(value: false);
 		});
+		TweenTimeoutReset();
 	}
 }

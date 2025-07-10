@@ -149,7 +149,10 @@ public class StarshipUnitMark : BaseUnitMark, IUnitCommandActHandler<EntitySubsc
 	protected override void OnDisabled()
 	{
 		base.OnDisabled();
-		CurrentShipDecalData.DisposeShields();
+		if (CurrentShipDecalData != null)
+		{
+			CurrentShipDecalData?.DisposeShields();
+		}
 	}
 
 	private ShipDecalData GetShipDecalData(int occupiedNodes, bool pingDecals = false)

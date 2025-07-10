@@ -178,6 +178,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private List<SelectedRampIndices> m_SavedBeforeCutsceneRampIndices = new List<SelectedRampIndices>();
 
+	private bool? m_SavedBeforeCutsceneShowHelmAboveAll;
+
 	[SerializeField]
 	public List<SavedSelectedRampIndices> m_SavedRampIndices = new List<SavedSelectedRampIndices>();
 
@@ -287,6 +289,18 @@ public class Character : RegisteredBehaviour, IUpdatable
 		set
 		{
 			m_SavedBeforeCutsceneRampIndices = value;
+		}
+	}
+
+	public bool? SavedBeforeCutsceneShowHelmAboveAll
+	{
+		get
+		{
+			return m_SavedBeforeCutsceneShowHelmAboveAll;
+		}
+		set
+		{
+			m_SavedBeforeCutsceneShowHelmAboveAll = value;
 		}
 	}
 

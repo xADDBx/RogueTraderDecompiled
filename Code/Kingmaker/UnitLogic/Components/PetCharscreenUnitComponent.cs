@@ -10,11 +10,17 @@ namespace Kingmaker.UnitLogic.Components;
 [TypeId("2f9bd7c5553520a49a16bba33d80b7ab")]
 public class PetCharscreenUnitComponent : BlueprintComponent
 {
-	public VideoLink PetGameplayVideoLink;
+	public VideoLink PetGameplayVideoLinkPC;
+
+	public VideoLink PetGameplayVideoLinkPS;
+
+	public VideoLink PetGameplayVideoLinkXbox;
 
 	public BlueprintEncyclopediaGlossaryEntryReference NarrativeDescription;
 
 	public LocalizedString StrategyDescription;
 
 	public LocalizedString TipsDescription;
+
+	public VideoLink VideoToShow => PetGameplayVideoLinkPC;
 }

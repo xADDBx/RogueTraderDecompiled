@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Code.UI.MVVM;
@@ -15,7 +14,6 @@ using Kingmaker.UI;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
@@ -257,15 +255,25 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 				}
 			}, 3);
 		}
-		UIAccess.SelectionManager.Or(null)?.SetFakeSelectedFlags(value: false);
-		UIAccess.SelectionManager.Or(null)?.RefreshUnitFakeSelectionFlags(SelectedUnitInUI.Value, SingleSelectedUnit.Value, m_FullScreenState);
 		if (m_FullScreenState)
 		{
+			UIAccess.SelectionManager.Or(null)?.SetFakeSelectedFlags(value: false);
 			foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
 			{
 				allCharacter.IsSelected = SelectedUnitInUI.Value == allCharacter;
 			}
 		}
+		else
+		{
+			foreach (BaseUnitEntity item in Game.Instance.Player.AllCharacters.Where((BaseUnitEntity u) => u.IsPet))
+			{
+				if (item.IsInitialized)
+				{
+					item.HandleFakeSelected(item.Master.IsSelected);
+				}
+			}
+		}
+		UIAccess.SelectionManager.Or(null)?.RefreshUnitFakeSelectionFlags(SelectedUnitInUI.Value, SingleSelectedUnit.Value, m_FullScreenState);
 		m_NeedUpdate = true;
 	}
 
@@ -288,25 +296,17 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		{
 			SingleSelectedUnit.Value = null;
 		}
-		BaseUnitEntity baseUnitEntity = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
+		BaseUnitEntity value = (m_FullScreenState ? m_FullScreenSelectedUnit : (SelectedUnit.Value ?? FirstSelectedUnit));
 		ReactiveProperty<BaseUnitEntity> selectedUnitInUI = SelectedUnitInUI;
 		if (selectedUnitInUI != null)
 		{
 			BaseUnitEntity value2 = selectedUnitInUI.Value;
-			if (value2 != null && !value2.IsDisposed && !value2.IsDisposingNow)
+			if (value2 != null && !value2.IsDisposed)
 			{
-				UnitPartPetOwner optional = SelectedUnitInUI.Value.GetOptional<UnitPartPetOwner>();
-				if (optional != null)
-				{
-					bool value = !m_FullScreenState && SelectedUnitInUI.Value == baseUnitEntity;
-					EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
-					{
-						h.HandleFakeSelected(value);
-					}, isCheckRuntime: true);
-				}
+				_ = value2.IsDisposingNow;
 			}
 		}
-		SelectedUnitInUI.Value = baseUnitEntity;
+		SelectedUnitInUI.Value = value;
 	}
 
 	public void HandleRespecFinished()

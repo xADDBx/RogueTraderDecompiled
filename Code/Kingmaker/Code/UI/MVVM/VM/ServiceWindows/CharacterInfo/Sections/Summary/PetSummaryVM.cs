@@ -33,7 +33,7 @@ public class PetSummaryVM : CharInfoComponentVM
 		PetCharscreenUnitComponent component = Unit.Value.Blueprint.GetComponent<PetCharscreenUnitComponent>();
 		if (component != null)
 		{
-			PetVideoClip.Value = component.PetGameplayVideoLink.Load();
+			PetVideoClip.Value = component.VideoToShow.Load();
 			StrategyDescription.Value = new TooltipBrickTextVM(component.StrategyDescription, TooltipTextType.Simple);
 			TipsDescription.Value = component.TipsDescription;
 			NarrativeDescription.Value = component.NarrativeDescription.Get().Description;

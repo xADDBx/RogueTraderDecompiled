@@ -29,11 +29,16 @@ public class AddSharedVendor : EntityFactComponentDelegate<MechanicEntity>, IHas
 	[SerializeField]
 	private bool m_NeedHidePfAndReputation;
 
+	[SerializeField]
+	private bool m_HideReputationCompletely;
+
 	public BlueprintSharedVendorTable Table => m_Table?.Get();
 
 	public BlueprintVendorFaction Faction => m_Faction?.Get();
 
 	public bool NeedHidePfAndReputation => m_NeedHidePfAndReputation;
+
+	public bool HideReputationCompletely => m_HideReputationCompletely;
 
 	protected override void OnActivate()
 	{

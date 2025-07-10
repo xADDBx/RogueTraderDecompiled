@@ -95,11 +95,15 @@ public class PartUnitViewSettings : MechanicEntityPart<AbstractUnitEntity>, IHas
 		}
 		Quaternion rotation2 = (unitEntityView3.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
 		UnitEntityView unitEntityView4 = Object.Instantiate(unitEntityView3, base.Owner.Position, rotation2);
-		if (base.Owner is BaseUnitEntity { IsPet: not false } baseUnitEntity && Doll != null)
+		if (base.Owner is BaseUnitEntity { IsPet: not false } baseUnitEntity)
 		{
-			PFLog.UI.Log("PartUnitViewSettings.Instantiate: Applying saved pet ramps for pet: " + baseUnitEntity.CharacterName);
+			if (Doll == null)
+			{
+				SetDoll(new DollData());
+				PFLog.TechArt.Log("PartUnitViewSettings.Instantiate: Created DollData for pet: " + baseUnitEntity.CharacterName);
+			}
+			PFLog.TechArt.Log("PartUnitViewSettings.Instantiate: Applying saved pet ramps for pet: " + baseUnitEntity.CharacterName);
 			Doll.ApplyPetRamps(unitEntityView4);
-			_ = baseUnitEntity.Master;
 		}
 		return unitEntityView4;
 	}

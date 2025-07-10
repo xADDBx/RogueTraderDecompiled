@@ -385,6 +385,17 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 		}
 	}
 
+	public void UpdateViewTransformImmediately()
+	{
+		Movable.PreviousPosition = Position;
+		Movable.PreviousOrientation = m_Orientation;
+		if (View != null)
+		{
+			View.ViewTransform.position = Position;
+			View.ViewTransform.rotation = Quaternion.Euler(0f, m_Orientation, 0f);
+		}
+	}
+
 	public void SetOrientation(float value)
 	{
 		m_Orientation = value;

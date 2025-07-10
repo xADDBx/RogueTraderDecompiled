@@ -82,6 +82,18 @@ public class VendorLogic : IController, IChangeChapterHandler, ISubscriber
 		}
 	}
 
+	public bool NeedHideReputationCompletely
+	{
+		get
+		{
+			if (m_VendorEntity != null)
+			{
+				return m_VendorEntity.Blueprint.GetComponent<AddSharedVendor>().HideReputationCompletely;
+			}
+			return false;
+		}
+	}
+
 	public ItemsCollection StoreItems => VendorInventory?.Collection;
 
 	public ItemsCollection ItemsForBuy => Player.UISettings.ItemsForBuy;

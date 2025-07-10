@@ -17,7 +17,7 @@ public class ScanPulseController : MonoBehaviour
 
 	private static TimeSpan CurrentTime => Game.Instance.TimeController.GameTime;
 
-	public float PulseRadius => m_ScanSpeed * (float)(CurrentTime - m_ScanStartTime).TotalSeconds;
+	public float PulseRadius => m_ScanSpeed * (float)(CurrentTime - m_ScanStartTime).Seconds;
 
 	private void Awake()
 	{

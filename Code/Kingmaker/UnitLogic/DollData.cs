@@ -140,10 +140,14 @@ public class DollData : IHashable
 			{
 				PFLog.UI.Warning("ApplyPetRamps: PetCharacter component not found on pet view");
 			}
-			else if (PetRamp01Index >= 0 || PetRamp02Index >= 0)
+			else if (PetRamp01Index < 0 || PetRamp02Index < 0)
+			{
+				RampColorPreset.IndexSet indexSet = componentInChildren.RampColorPresetFile.IndexPairs[0];
+				componentInChildren.ApplyRampsByIndicesFromOwnPresets(indexSet.PrimaryIndex, indexSet.SecondaryIndex);
+			}
+			else
 			{
 				componentInChildren.ApplyRampsByIndicesFromOwnPresets(PetRamp01Index, PetRamp02Index);
-				PFLog.UI.Log($"ApplyPetRamps: Applied saved ramp indices {PetRamp01Index}, {PetRamp02Index} to pet");
 			}
 		}
 	}

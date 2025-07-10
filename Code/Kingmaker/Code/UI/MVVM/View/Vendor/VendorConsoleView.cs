@@ -162,21 +162,23 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 			}
 			m_NavigationBehaviour.AddEntityGrid(m_StashView.GetNavigation());
 			m_NavigationBehaviour.FocusOnFirstValidEntity();
-			return;
 		}
-		VendorReputationPartConsoleView vendorReputationPartConsoleView = m_VendorReputationPartPCView as VendorReputationPartConsoleView;
-		if (vendorReputationPartConsoleView != null)
+		else if (!Game.Instance.Vendor.NeedHideReputationCompletely)
 		{
-			m_NavigationBehaviour.AddEntityGrid(vendorReputationPartConsoleView.GetNavigation());
-		}
-		m_NavigationBehaviour.AddEntityGrid(m_StashView.GetNavigation());
-		if ((bool)vendorReputationPartConsoleView)
-		{
-			m_NavigationBehaviour.FocusOnEntityManual(vendorReputationPartConsoleView.m_CurrentFocus);
-		}
-		else
-		{
-			m_NavigationBehaviour.FocusOnFirstValidEntity();
+			VendorReputationPartConsoleView vendorReputationPartConsoleView = m_VendorReputationPartPCView as VendorReputationPartConsoleView;
+			if (vendorReputationPartConsoleView != null)
+			{
+				m_NavigationBehaviour.AddEntityGrid(vendorReputationPartConsoleView.GetNavigation());
+			}
+			m_NavigationBehaviour.AddEntityGrid(m_StashView.GetNavigation());
+			if ((bool)vendorReputationPartConsoleView)
+			{
+				m_NavigationBehaviour.FocusOnEntityManual(vendorReputationPartConsoleView.m_CurrentFocus);
+			}
+			else
+			{
+				m_NavigationBehaviour.FocusOnFirstValidEntity();
+			}
 		}
 	}
 
@@ -189,6 +191,10 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		}
 		else
 		{
+			if (Game.Instance.Vendor.NeedHideReputationCompletely)
+			{
+				return;
+			}
 			VendorReputationPartConsoleView vendorReputationPartConsoleView = m_VendorReputationPartPCView as VendorReputationPartConsoleView;
 			if (vendorReputationPartConsoleView != null)
 			{
@@ -375,18 +381,21 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		}, 9);
 		m_DisposableVendorBinds.Add(m_HintsWidget.BindHint(inputBindStruct, UIStrings.Instance.CommonTexts.CloseWindow));
 		m_DisposableVendorBinds.Add(inputBindStruct);
-		InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(delegate
+		if (!Game.Instance.Vendor.NeedHideReputationCompletely)
 		{
-			SetNextTab();
-		}, 14, IsPlayerStashSelected.Not().ToReactiveProperty());
-		m_DisposableVendorBinds.Add(m_PrevWindowHint.Bind(inputBindStruct2));
-		m_DisposableVendorBinds.Add(inputBindStruct2);
-		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
-		{
-			SetNextTab();
-		}, 15, IsPlayerStashSelected.Not().ToReactiveProperty());
-		m_DisposableVendorBinds.Add(m_NextWindowHint.Bind(inputBindStruct3));
-		m_DisposableVendorBinds.Add(inputBindStruct3);
+			InputBindStruct inputBindStruct2 = m_InputLayer.AddButton(delegate
+			{
+				SetNextTab();
+			}, 14, IsPlayerStashSelected.Not().ToReactiveProperty());
+			m_DisposableVendorBinds.Add(m_PrevWindowHint.Bind(inputBindStruct2));
+			m_DisposableVendorBinds.Add(inputBindStruct2);
+			InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
+			{
+				SetNextTab();
+			}, 15, IsPlayerStashSelected.Not().ToReactiveProperty());
+			m_DisposableVendorBinds.Add(m_NextWindowHint.Bind(inputBindStruct3));
+			m_DisposableVendorBinds.Add(inputBindStruct3);
+		}
 		InputBindStruct inputBindStruct4 = m_InputLayer.AddButton(delegate
 		{
 		}, 8, m_IsVendorBuyItem, InputActionEventType.ButtonJustReleased);

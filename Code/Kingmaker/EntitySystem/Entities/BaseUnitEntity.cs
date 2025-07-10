@@ -28,6 +28,8 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.QA;
 using Kingmaker.StateHasher.Hashers;
+using Kingmaker.UI.Common;
+using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
@@ -73,6 +75,8 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 	{
 	}
 
+	private bool m_IsSelected = true;
+
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	[CanBeNull]
 	private List<BlueprintUnitUpgrader> m_AppliedUpgraders;
@@ -91,8 +95,21 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 
 	[JsonProperty]
 	[GameStateIgnore]
-	public bool IsSelected { get; set; } = true;
-
+	public bool IsSelected
+	{
+		get
+		{
+			return m_IsSelected;
+		}
+		set
+		{
+			m_IsSelected = value;
+			if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Inventory && Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.CharacterScreen && !Game.Instance.IsControllerGamepad && base.IsInitialized)
+			{
+				Pet?.HandleFakeSelected(m_IsSelected);
+			}
+		}
+	}
 
 	[JsonProperty]
 	[GameStateIgnore]
@@ -832,11 +849,19 @@ public abstract class BaseUnitEntity : AbstractUnitEntity, PartUnitAlignment.IOw
 			}
 			Remove<UnitPartDeploymentPhaseInitialPosition>();
 		}
+		HandleFakeSelected(value: false);
 	}
 
 	public void HandleFakeSelected(bool value)
 	{
-		IsFakeSelected = value;
+		if (!this.CanBeControlled())
+		{
+			IsFakeSelected = false;
+		}
+		else
+		{
+			IsFakeSelected = value;
+		}
 	}
 
 	public override Hash128 GetHash128()

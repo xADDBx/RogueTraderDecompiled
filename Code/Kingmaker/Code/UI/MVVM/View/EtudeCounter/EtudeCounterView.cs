@@ -170,11 +170,26 @@ public class EtudeCounterView : ViewBase<EtudeCounterVM>
 		UISounds.Instance.Sounds.EtudeCounterSound.EtudeCounterHide.Play();
 	}
 
-	protected void ShowExtraText(bool value)
+	private void ShowExtraText(bool value)
 	{
 		DelayedInvoker.InvokeInFrames(delegate
 		{
 			m_ExtraTextMoveAnimator.PlayAnimation(value);
 		}, value ? 1 : 0);
+	}
+
+	protected void TweenTimeoutReset()
+	{
+		DelayedInvoker.InvokeInTime(ResetScaleInternal, 2f);
+	}
+
+	private void ResetScaleInternal()
+	{
+		if (!Mathf.Approximately(m_ContainterTransform.gameObject.transform.localScale.x, 1f))
+		{
+			m_ContainterTransform.DOComplete();
+			m_ContainterTransform.DOKill();
+			m_ContainterTransform.gameObject.transform.localScale = Vector3.one * 1f;
+		}
 	}
 }

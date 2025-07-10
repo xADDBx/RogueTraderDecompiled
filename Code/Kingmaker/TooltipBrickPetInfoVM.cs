@@ -33,7 +33,7 @@ public class TooltipBrickPetInfoVM : TooltipBaseBrickVM
 	public TooltipBrickPetInfoVM(PetKeystoneInfoComponent petKeystoneInfoComponent, BaseUnitEntity pet)
 	{
 		m_PetKeystoneInfoComponent = petKeystoneInfoComponent;
-		PetVideo.Value = m_PetKeystoneInfoComponent.PetVideo.Load();
+		PetVideo.Value = m_PetKeystoneInfoComponent.VideoToShow.Load();
 		PetDescription.Value = m_PetKeystoneInfoComponent.DescriptionReference.Get().Description;
 		CoreAbilitiesCount.Value = m_PetKeystoneInfoComponent.CoreAbilitiesReferences.Count;
 		MovementPoints.Value = pet.CombatState.WarhammerInitialAPBlue.BaseValue;

@@ -435,11 +435,9 @@ public static class UIUtility
 			{
 				if (entity.IsMaster)
 				{
-					int num = list.IndexOf(entity);
 					BaseUnitEntity item = list.Find((BaseUnitEntity e) => e.Master == entity);
-					int num2 = list.IndexOf(item);
-					list.Insert(num + 1, item);
-					list.RemoveAt(num2 + 1);
+					list.RemoveAt(list.IndexOf(item));
+					list.Insert(list.IndexOf(entity) + 1, item);
 				}
 			}
 			characters.AddRange(list);
@@ -455,16 +453,16 @@ public static class UIUtility
 		foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet))
 		{
 			BaseUnitEntity master = item2.Master;
-			int num3 = characters.FindIndex((BaseUnitEntity m) => m == master);
+			int num = characters.FindIndex((BaseUnitEntity m) => m == master);
 			if (enumerable.Contains(item2.Master))
 			{
-				if (num3 < 0 || num3 + 1 >= characters.Count)
+				if (num < 0 || num + 1 >= characters.Count)
 				{
 					characters.Add(item2);
 				}
 				else
 				{
-					characters.Insert(num3 + 1, item2);
+					characters.Insert(num + 1, item2);
 				}
 			}
 		}

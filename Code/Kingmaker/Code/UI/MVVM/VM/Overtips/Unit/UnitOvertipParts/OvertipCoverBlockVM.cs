@@ -115,13 +115,11 @@ public class OvertipCoverBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 				Vector3 bestShootingPosition = LosCalculations.GetBestShootingPosition(virtualPositionController.GetDesiredPosition(currentUnit), currentUnit.SizeRect, Unit.Position, Unit.SizeRect);
 				CoverType.Value = LosCalculations.GetWarhammerLos(bestShootingPosition, currentUnit.SizeRect, Unit);
 				NeedCover.Value = true;
-				return;
 			}
-			CoverChance.Value = 0f;
-			NeedCover.Value = false;
-			if (m_ErrorLoggedOnce)
+			else
 			{
-				m_ErrorLoggedOnce = false;
+				CoverChance.Value = 0f;
+				NeedCover.Value = false;
 			}
 		}
 	}

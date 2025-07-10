@@ -37,6 +37,12 @@ public class VendorView<TStashView, TInventoryCargoView, TItemsFilter, TVendorSl
 	[SerializeField]
 	protected CargoDropZonePCView m_DropZonePCView;
 
+	[SerializeField]
+	protected GameObject m_ReputationButton;
+
+	[SerializeField]
+	protected GameObject m_ArrowMiddle;
+
 	public virtual void Initialize()
 	{
 		base.gameObject.SetActive(value: false);

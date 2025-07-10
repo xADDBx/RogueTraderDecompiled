@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
@@ -647,26 +648,32 @@ public static class GridAreaHelper
 
 	public static bool TryGetStandableNode(UnitEntity targetEntity, CustomGridNodeBase endPoint, int maxDistance, out CustomGridNodeBase targetNode)
 	{
-		targetNode = null;
-		if (WarhammerBlockManager.Instance.CanUnitStandOnNode(targetEntity, endPoint) && endPoint.Walkable)
+		using (ProfileScope.NewScope("TryGetStandableNode"))
 		{
-			targetNode = endPoint;
-		}
-		else
-		{
-			IEnumerable<CustomGridNodeBase> nodesSpiralAround = GetNodesSpiralAround(endPoint, targetEntity.SizeRect, maxDistance);
-			int num = maxDistance;
-			foreach (CustomGridNodeBase item in nodesSpiralAround)
+			targetNode = null;
+			if (WarhammerBlockManager.Instance.CanUnitStandOnNode(targetEntity, endPoint) && endPoint.Walkable)
 			{
-				int num2 = item.CellDistanceTo(endPoint);
-				int num3 = item.CellDistanceTo(targetEntity.GetNearestNodeXZ());
-				if (WarhammerBlockManager.Instance.CanUnitStandOnNode(targetEntity, item) && item.Walkable && num2 < num && num3 <= maxDistance)
+				targetNode = endPoint;
+			}
+			else
+			{
+				IEnumerable<CustomGridNodeBase> nodesSpiralAround = GetNodesSpiralAround(targetEntity.CurrentUnwalkableNode, targetEntity.SizeRect, maxDistance);
+				int num = targetEntity.CurrentUnwalkableNode.CellDistanceTo(endPoint);
+				CustomGridNodeBase nearestNodeXZ = targetEntity.GetNearestNodeXZ();
+				foreach (CustomGridNodeBase item in nodesSpiralAround)
 				{
-					targetNode = item;
-					num = num2;
+					if (item.Walkable)
+					{
+						int num2 = item.CellDistanceTo(endPoint);
+						if (num2 < num && item.CellDistanceTo(nearestNodeXZ) <= maxDistance && WarhammerBlockManager.Instance.CanUnitStandOnNode(targetEntity, item))
+						{
+							targetNode = item;
+							num = num2;
+						}
+					}
 				}
 			}
+			return targetNode != null;
 		}
-		return targetNode != null;
 	}
 }

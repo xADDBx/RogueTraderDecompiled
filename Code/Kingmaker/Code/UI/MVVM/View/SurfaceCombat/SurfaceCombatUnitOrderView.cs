@@ -234,6 +234,7 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 		}
 		m_BoundData = null;
 		m_IsInitialized = false;
+		EventBus.Unsubscribe(this);
 	}
 
 	private void OnDestroy()

@@ -104,7 +104,6 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 		}
 		m_Animator.Or(null)?.Update(0f);
 		AttachPlayableDirector();
-		m_PlayableDirector.Or(null)?.Evaluate();
 		if (!m_Inited)
 		{
 			m_Inited = true;
@@ -122,6 +121,7 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 			}
 		}
 		SetNavmeshCutState();
+		m_PlayableDirector.Or(null)?.Evaluate();
 	}
 
 	protected override void OnDetach()

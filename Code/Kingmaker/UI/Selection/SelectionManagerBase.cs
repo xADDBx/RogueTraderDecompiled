@@ -290,6 +290,10 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 		}
 		foreach (BaseUnitEntity item in Game.Instance.SelectionCharacter.ActualGroup)
 		{
+			if (item.IsDisposed)
+			{
+				continue;
+			}
 			UnitPartPetOwner optional = item.GetOptional<UnitPartPetOwner>();
 			if (optional != null && !item.IsPet)
 			{
@@ -319,18 +323,17 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 
 	public void ToggleSelectAsPetUnit(BaseUnitEntity unit, bool value)
 	{
-		if (Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.None)
+		if (!unit.IsInitialized)
 		{
 			return;
 		}
-		UnitPartPetOwner optional = unit.GetOptional<UnitPartPetOwner>();
-		if (optional != null)
+		if (unit.IsMaster)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
 			{
 				h.HandleFakeSelected(value);
 			}, isCheckRuntime: true);
-			EventBus.RaiseEvent((IBaseUnitEntity)optional.PetUnit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
+			EventBus.RaiseEvent((IBaseUnitEntity)unit.Pet, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
 			{
 				h.HandleFakeSelected(value);
 			}, isCheckRuntime: true);
@@ -346,13 +349,5 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 				h.HandleFakeSelected(value);
 			}, isCheckRuntime: true);
 		}
-	}
-
-	protected void SelectUnitAsPet(BaseUnitEntity unit, bool value)
-	{
-		EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IFakeSelectHandler>)delegate(IFakeSelectHandler h)
-		{
-			h.HandleFakeSelected(value);
-		}, isCheckRuntime: true);
 	}
 }

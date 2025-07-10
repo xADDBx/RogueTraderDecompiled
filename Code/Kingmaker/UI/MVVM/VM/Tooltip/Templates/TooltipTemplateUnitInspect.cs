@@ -174,7 +174,12 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 				AddAbilities(result, list.ToArray(), TooltipTemplateType.Info);
 			}
 		}
-		UIFeature[] array2 = UIUtilityUnit.CollectFeats(m_Unit).ToArray();
+		IEnumerable<UIFeature> source = UIUtilityUnit.CollectFeats(m_Unit);
+		if (m_Unit.IsPlayerEnemy)
+		{
+			source = source.Where((UIFeature f) => f.Feature.GetComponent<HideFeatureInEnemyUnitInspect>() == null);
+		}
+		UIFeature[] array2 = source.ToArray();
 		if (array2.Any())
 		{
 			flag = true;

@@ -15,6 +15,9 @@ public class EtudeCounterConsoleView : EtudeCounterView
 	[SerializeField]
 	private ConsoleHint m_ConsoleHint;
 
+	[SerializeField]
+	private GameObject m_EtudeCounterConsoleGO;
+
 	private bool m_HasEtude;
 
 	private bool m_IsShowing;
@@ -64,6 +67,7 @@ public class EtudeCounterConsoleView : EtudeCounterView
 			m_FadeAnimator.AppearAnimation();
 			UISounds.Instance.Sounds.GreenMessageLine.GreenMessageLineShow.Play();
 		}
+		TweenTimeoutReset();
 	}
 
 	private void TryToHide()
@@ -73,6 +77,15 @@ public class EtudeCounterConsoleView : EtudeCounterView
 			m_IsShowing = false;
 			m_FadeAnimator.DisappearAnimation();
 			UISounds.Instance.Sounds.GreenMessageLine.GreenMessageLineHide.Play();
+		}
+		TweenTimeoutReset();
+	}
+
+	public void SetEtudeCounterVisible(bool value)
+	{
+		if (m_EtudeCounterConsoleGO != null)
+		{
+			m_EtudeCounterConsoleGO.SetActive(value);
 		}
 	}
 }

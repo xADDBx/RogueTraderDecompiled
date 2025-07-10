@@ -36,6 +36,16 @@ public class UnclotheRT : CommandBase
 			{
 				playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneRampIndices.Add(rampIndex);
 			}
+			if (!playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll.HasValue)
+			{
+				playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll = playerCharacter.UISettings.ShowHelmAboveAll;
+				PFLog.TechArt.Log($"[UnclotheRT] Saving ShowHelmAboveAll state: {playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll}");
+			}
+			else
+			{
+				PFLog.TechArt.Log($"[UnclotheRT] ShowHelmAboveAll already saved: {playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll}, current UI: {playerCharacter.UISettings.ShowHelmAboveAll}");
+			}
+			playerCharacter.View.CharacterAvatar.UpdateHelmetVisibilityAboveAll(showHelmetAboveAll: false);
 			List<EquipmentEntityLink> source = ((playerCharacter.Gender == Gender.Male) ? BlueprintRoot.Instance.CharGenRoot.MaleDontUnequip : BlueprintRoot.Instance.CharGenRoot.FemaleDontUnequip);
 			playerCharacter.View.CharacterAvatar.RemoveAllEquipmentEntities();
 			IEnumerable<EquipmentEntity> source2 = source.Select((EquipmentEntityLink x) => x.Load());
@@ -61,7 +71,18 @@ public class UnclotheRT : CommandBase
 		}
 		else
 		{
+			if (playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll.HasValue)
+			{
+				PFLog.TechArt.Log($"[UnclotheRT] Restoring ShowHelmAboveAll state: {playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll}, current UI: {playerCharacter.UISettings.ShowHelmAboveAll}");
+				playerCharacter.View.CharacterAvatar.UpdateHelmetVisibilityAboveAll(playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll.Value);
+				playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll = null;
+			}
+			else
+			{
+				PFLog.TechArt.Log($"[UnclotheRT] No saved ShowHelmAboveAll state found, current UI: {playerCharacter.UISettings.ShowHelmAboveAll}");
+			}
 			playerCharacter.View.CharacterAvatar.RestoreEquipment();
+			playerCharacter.View.CharacterAvatar.IsDirty = true;
 			playerCharacter.View.HandsEquipment.HiddenByCutscene = false;
 			playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: true);
 		}
@@ -80,7 +101,18 @@ public class UnclotheRT : CommandBase
 	{
 		base.Interrupt(player);
 		BaseUnitEntity playerCharacter = GameHelper.GetPlayerCharacter();
+		if (playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll.HasValue)
+		{
+			PFLog.TechArt.Log($"[UnclotheRT] Interrupt - Restoring ShowHelmAboveAll state: {playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll}");
+			playerCharacter.View.CharacterAvatar.UpdateHelmetVisibilityAboveAll(playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll.Value);
+			playerCharacter.View.CharacterAvatar.SavedBeforeCutsceneShowHelmAboveAll = null;
+		}
+		else
+		{
+			PFLog.TechArt.Log("[UnclotheRT] Interrupt - No saved ShowHelmAboveAll state found");
+		}
 		playerCharacter.View.CharacterAvatar.RestoreEquipment();
+		playerCharacter.View.CharacterAvatar.IsDirty = true;
 		playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: true);
 	}
 }

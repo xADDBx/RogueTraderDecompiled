@@ -121,5 +121,6 @@ public class TranslocateUnit : GameAction
 			Transform transform = translocatePosition?.FindView()?.ViewTransform;
 			unit.SetOrientation((transform == null) ? 0f : transform.rotation.eulerAngles.y);
 		}
+		unit.UpdateViewTransformImmediately();
 	}
 }

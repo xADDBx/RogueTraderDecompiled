@@ -11,7 +11,6 @@ using Kingmaker.UI.Common;
 using Kingmaker.UI.DragNDrop;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Selection.UnitMark;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View;
 
 namespace Kingmaker.UI.Selection;
@@ -59,14 +58,8 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 			}, isCheckRuntime: true);
 			return;
 		}
-		UnitPartPetOwner optional = selectedUnit.GetOptional<UnitPartPetOwner>();
-		if (optional != null)
-		{
-			SelectUnitAsPet(optional.PetUnit, value: true);
-		}
 		if (selectedUnit.IsPet && (!(Game.Instance?.TurnController?.TbActive).GetValueOrDefault() || !(Game.Instance?.TurnController?.IsPreparationTurn).GetValueOrDefault()))
 		{
-			SelectUnitAsPet(selectedUnit, value: true);
 			SelectUnit(selectedUnit.Master.View, single, sendSelectionEvent, ask);
 			return;
 		}
@@ -102,11 +95,6 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 		foreach (BaseUnitEntity selected in base.SelectedUnits)
 		{
 			selected.IsSelected = false;
-			UnitPartPetOwner optional = selected.GetOptional<UnitPartPetOwner>();
-			if (optional != null && !selected.IsPet)
-			{
-				SelectUnitAsPet(optional.PetUnit, value: false);
-			}
 			m_UnitMarks.Find((BaseUnitMark mark) => mark.Unit == selected)?.Selected(isSelected: false);
 			EventBus.RaiseEvent((IBaseUnitEntity)selected, (Action<ISelectionHandler>)delegate(ISelectionHandler h)
 			{

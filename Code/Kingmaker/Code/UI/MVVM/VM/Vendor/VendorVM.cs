@@ -63,6 +63,7 @@ public class VendorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		{
 			SelectWindow(val);
 		}));
+		VendorTabNavigationVM.NeedHideReputationCompletely.Value = Vendor.NeedHideReputationCompletely;
 		AddDisposable(Selector = new LensSelectorVM());
 		TryCreateDropZone();
 	}

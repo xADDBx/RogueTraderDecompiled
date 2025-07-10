@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
@@ -21,76 +22,86 @@ namespace Kingmaker.Designers.Mechanics.Buffs;
 [TypeId("ccdeb99837c64fb79ebc26eb36f2f47b")]
 public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable
 {
+	private class LoopComponentRuntime : UnitBuffComponentRuntime, IHashable
+	{
+		public UnitAnimationManager AnimationManager { get; set; }
+
+		public override Hash128 GetHash128()
+		{
+			Hash128 result = default(Hash128);
+			Hash128 val = base.GetHash128();
+			result.Append(ref val);
+			return result;
+		}
+	}
+
 	public WarhammerBuffLoopAction BuffLoopAction;
 
 	[SerializeField]
 	private BlueprintBuffReference m_SuppressionBuff;
 
-	private UnitAnimationManager m_AnimationManager;
+	private static LoopComponentRuntime CurrentRuntime => (LoopComponentRuntime)ComponentEventContext.CurrentRuntime;
 
 	public BlueprintBuff SuppressionBuff => m_SuppressionBuff?.Get();
 
+	public override EntityFactComponent CreateRuntimeFactComponent()
+	{
+		return new LoopComponentRuntime();
+	}
+
 	protected override void OnActivateOrPostLoad()
 	{
+		LoopComponentRuntime currentRuntime = CurrentRuntime;
 		BaseUnitEntity owner = base.Owner;
-		m_AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
+		currentRuntime.AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
 		TrySetAction();
 		base.OnActivateOrPostLoad();
 	}
 
 	protected override void OnDeactivate()
 	{
-		m_AnimationManager = null;
 		TryResetAction();
+		CurrentRuntime.AnimationManager = null;
 		base.OnDeactivate();
 	}
 
 	protected override void OnViewDidAttach()
 	{
+		LoopComponentRuntime currentRuntime = CurrentRuntime;
 		BaseUnitEntity owner = base.Owner;
-		m_AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
+		currentRuntime.AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
 		TrySetAction();
 		base.OnViewDidAttach();
 	}
 
 	protected override void OnViewWillDetach()
 	{
-		m_AnimationManager = null;
 		TryResetAction();
+		CurrentRuntime.AnimationManager = null;
 		base.OnViewDidAttach();
 	}
 
 	public void TrySetAction(bool skipEnter = false)
 	{
-		if (m_AnimationManager != null)
+		UnitAnimationManager animationManager = CurrentRuntime.AnimationManager;
+		if (animationManager != null)
 		{
-			UnitAnimationActionHandle buffLoopAction = m_AnimationManager.BuffLoopAction;
+			UnitAnimationActionHandle buffLoopAction = animationManager.BuffLoopAction;
 			if (buffLoopAction != null && !buffLoopAction.IsReleased && buffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction && !warhammerBuffLoopAction.IsExiting(buffLoopAction))
 			{
 				PFLog.Animations.Error(base.Fact.Blueprint, $"Trying to start BuffLoopAction {BuffLoopAction} before removing the previous one. This is not properly supported!");
 			}
-			UnitAnimationActionHandle unitAnimationActionHandle = (UnitAnimationActionHandle)m_AnimationManager.CreateHandle(BuffLoopAction);
+			UnitAnimationActionHandle unitAnimationActionHandle = (UnitAnimationActionHandle)animationManager.CreateHandle(BuffLoopAction);
 			unitAnimationActionHandle.SkipEnterAnimation = skipEnter;
-			m_AnimationManager.Execute(unitAnimationActionHandle);
-			m_AnimationManager.BuffLoopAction = unitAnimationActionHandle;
+			animationManager.Execute(unitAnimationActionHandle);
+			animationManager.BuffLoopAction = unitAnimationActionHandle;
 		}
 	}
 
 	public void TryRequeueAction(bool skipEnter = false)
 	{
-		if (m_AnimationManager != null)
-		{
-			UnitAnimationActionHandle buffLoopAction = m_AnimationManager.BuffLoopAction;
-			if (buffLoopAction != null && !buffLoopAction.IsReleased && buffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction && !warhammerBuffLoopAction.IsExiting(buffLoopAction))
-			{
-				PFLog.Animations.Error(base.Fact.Blueprint, $"Trying to start BuffLoopAction {BuffLoopAction} before removing the previous one. This is not properly supported!");
-			}
-			BuffLoopAction.ExecutionMode = ExecutionMode.Sequenced;
-			UnitAnimationActionHandle unitAnimationActionHandle = (UnitAnimationActionHandle)m_AnimationManager.CreateHandle(BuffLoopAction);
-			unitAnimationActionHandle.SkipEnterAnimation = skipEnter;
-			m_AnimationManager.Execute(unitAnimationActionHandle);
-			m_AnimationManager.BuffLoopAction = unitAnimationActionHandle;
-		}
+		BuffLoopAction.ExecutionMode = ExecutionMode.Sequenced;
+		TrySetAction(skipEnter);
 	}
 
 	public void TryResetAction()
@@ -114,7 +125,8 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandSt
 	{
 		if (command.Executor == base.Owner && SuppressionBuff != null)
 		{
-			base.Owner.Buffs.Add(SuppressionBuff, (BuffDuration)null);
+			BuffDuration duration = new BuffDuration(null, BuffEndCondition.TurnStartOrCombatEnd);
+			base.Owner.Buffs.Add(SuppressionBuff, duration);
 		}
 	}
 

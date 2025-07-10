@@ -697,6 +697,10 @@ public class UnitViewHandsEquipment
 				break;
 			}
 		}
+		if (handSlot.VisualSlot == UnitEquipmentVisualSlotType.None && handSlot.VisibleItem is ItemEntityShield && possibleSlots.Contains(UnitEquipmentVisualSlotType.Shield))
+		{
+			handSlot.VisualSlot = UnitEquipmentVisualSlotType.Shield;
+		}
 		if (handSlot.VisualSlot == UnitEquipmentVisualSlotType.None && force && possibleSlots.Count > 0)
 		{
 			if (!IsDollRoom || !handSlot.IsActiveSet)

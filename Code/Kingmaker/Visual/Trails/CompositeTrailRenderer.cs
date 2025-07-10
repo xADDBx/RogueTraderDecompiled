@@ -406,26 +406,19 @@ public class CompositeTrailRenderer : MonoBehaviour
 			if (characterDollRoom != null && characterDollRoom.IsVisible)
 			{
 				Camera componentInChildren = characterDollRoom.GetComponentInChildren<Camera>();
-				if (Time.frameCount % 120 == 0)
-				{
-					PFLog.TechArt.Log($"Trail {base.name}: DollRoom camera found: {componentInChildren != null}, cullingMask={componentInChildren?.cullingMask}");
-				}
+				_ = Time.frameCount % 120;
 				return componentInChildren;
 			}
-			if (Time.frameCount % 120 == 0)
+			if (Time.frameCount % 120 != 0)
 			{
-				PFLog.TechArt.Log($"Trail {base.name}: DollRoom not visible or null. dollRoom={characterDollRoom != null}, isVisible={characterDollRoom?.IsVisible}");
 			}
 		}
-		else if (Time.frameCount % 120 == 0)
+		else
 		{
-			PFLog.TechArt.Log("Trail " + base.name + ": UIDollRooms.Instance is null");
+			_ = Time.frameCount % 120;
 		}
 		Camera camera = Game.GetCamera();
-		if (Time.frameCount % 120 == 0)
-		{
-			PFLog.TechArt.Log($"Trail {base.name}: Game camera found: {camera != null}");
-		}
+		_ = Time.frameCount % 120;
 		return camera;
 	}
 }

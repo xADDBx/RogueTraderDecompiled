@@ -140,8 +140,8 @@ public class VendorTradePartView<TItemsFilter, TVendorSlot, TVendorTransitionWin
 	protected override void BindViewImplementation()
 	{
 		m_FadeAnimator.AppearAnimation();
-		SetReputationAndPF(base.ViewModel.NeedHidePfAndReputation);
-		if (base.ViewModel.NeedHidePfAndReputation)
+		SetReputationAndPF(base.ViewModel.NeedHidePfAndReputation || base.ViewModel.NeedHideReputationCompletely);
+		if (base.ViewModel.NeedHidePfAndReputation || base.ViewModel.NeedHideReputationCompletely)
 		{
 			m_VendorHidenInfoText.text = "\\\\-- > " + UIStrings.Instance.ExplorationTexts.ExploNotInteractable.Text + " < ---";
 			m_VendorHidenPFText.text = UIStrings.Instance.QuesJournalTexts.NoData.Text;

@@ -146,6 +146,7 @@ public class CommandTranslocateParty : CommandBase
 					character.MovementAgent.Stop();
 					character.SetOrientation(entityViewBase.ViewTransform.rotation.eulerAngles.y);
 				}
+				character.UpdateViewTransformImmediately();
 				part = AreaService.FindMechanicBoundsContainsPoint(character.Position);
 			}
 		}

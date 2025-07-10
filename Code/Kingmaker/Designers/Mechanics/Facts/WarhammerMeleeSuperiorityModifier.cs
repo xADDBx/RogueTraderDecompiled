@@ -13,16 +13,16 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 
 [AllowedOn(typeof(BlueprintBuff))]
 [TypeId("fdcb0bfd84d766847a95c3717e443adf")]
-public class WarhammerMeleeSuperiorityModifier : UnitBuffComponentDelegate, ITargetRulebookHandler<RuleCalculateHitChances>, IRulebookHandler<RuleCalculateHitChances>, ISubscriber, ITargetRulebookSubscriber, IHashable
+public class WarhammerMeleeSuperiorityModifier : UnitBuffComponentDelegate, ITargetRulebookHandler<RuleCalculateSuperiority>, IRulebookHandler<RuleCalculateSuperiority>, ISubscriber, ITargetRulebookSubscriber, IHashable
 {
 	public ContextValue SuperiorityModifier;
 
-	public void OnEventAboutToTrigger(RuleCalculateHitChances evt)
+	public void OnEventAboutToTrigger(RuleCalculateSuperiority evt)
 	{
 		evt.SuperiorityValueModifiers.Add(SuperiorityModifier.Calculate(base.Context), base.Fact);
 	}
 
-	public void OnEventDidTrigger(RuleCalculateHitChances evt)
+	public void OnEventDidTrigger(RuleCalculateSuperiority evt)
 	{
 	}
 
