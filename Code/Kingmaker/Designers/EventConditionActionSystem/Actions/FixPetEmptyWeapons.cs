@@ -9,6 +9,8 @@ namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 [TypeId("30ce39fc16e14ee195ce5dc9a0a6d6f5")]
 public class FixPetEmptyWeapons : GameAction
 {
+	public bool UnEquipCurrentWeapons;
+
 	public override string GetCaption()
 	{
 		return "Fix pet`s weapon missing, set default weapon in empty slot";
@@ -18,12 +20,20 @@ public class FixPetEmptyWeapons : GameAction
 	{
 		foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
 		{
-			if (allCharacter.CombatGroup.Id == "<directly-controllable-unit>")
+			if (!(allCharacter.CombatGroup.Id == "<directly-controllable-unit>"))
 			{
-				BaseUnitEntity pet = allCharacter.Pet;
-				if (pet != null && !pet.Body.PrimaryHand.HasWeapon)
+				continue;
+			}
+			BaseUnitEntity pet = allCharacter.Pet;
+			if (pet != null)
+			{
+				if (!pet.Body.PrimaryHand.HasWeapon)
 				{
 					pet.Body.UpgradeHandsFromBlueprint();
+				}
+				else if (UnEquipCurrentWeapons)
+				{
+					pet.Body.UpgradeHandsFromBlueprint(removeOldItems: false);
 				}
 			}
 		}

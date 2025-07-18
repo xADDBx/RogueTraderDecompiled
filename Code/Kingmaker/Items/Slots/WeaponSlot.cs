@@ -147,7 +147,7 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public override bool RemoveItem(bool autoMerge = true, bool force = false)
 	{
-		bool result = base.RemoveItem(autoMerge);
+		bool result = base.RemoveItem(autoMerge, force);
 		m_FxSnapMap = null;
 		m_NaturalFxSnapMap = null;
 		return result;

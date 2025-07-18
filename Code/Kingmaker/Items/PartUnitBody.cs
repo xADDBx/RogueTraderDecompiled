@@ -394,7 +394,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		return eq.OverridenUnitItemEquipmentHandSettings ?? eq.ItemEquipmentHandSettings;
 	}
 
-	public void UpgradeHandsFromBlueprint()
+	public void UpgradeHandsFromBlueprint(bool removeOldItems = true)
 	{
 		using (ContextData<ItemSlot.IgnoreLock>.Request())
 		{
@@ -406,13 +406,19 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 				if (maybeItem != null)
 				{
 					handsEquipmentSet.PrimaryHand.RemoveItem();
-					maybeItem.Collection?.Remove(maybeItem);
+					if (removeOldItems)
+					{
+						maybeItem.Collection?.Remove(maybeItem);
+					}
 				}
 				maybeItem = handsEquipmentSet.SecondaryHand.MaybeItem;
 				if (maybeItem != null)
 				{
 					handsEquipmentSet.SecondaryHand.RemoveItem();
-					maybeItem.Collection?.Remove(maybeItem);
+					if (removeOldItems)
+					{
+						maybeItem.Collection?.Remove(maybeItem);
+					}
 				}
 			}
 		}
