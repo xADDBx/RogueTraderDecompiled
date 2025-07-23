@@ -95,7 +95,7 @@ public class UnitCombatJoinController : IControllerEnable, IController, IControl
 		}
 		if (unit.IsPlayerFaction)
 		{
-			if (!unit.IsInCombat && Game.Instance.Player.IsInCombat)
+			if (!unit.IsInCombat && Game.Instance.Player.IsInCombat && (unit.Master == null || unit.Master.IsInCombat))
 			{
 				unit.CombatState.JoinCombat();
 			}

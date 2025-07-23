@@ -25,21 +25,25 @@ public class DestroyStarship : ContextAction
 	{
 		MechanicEntity maybeOwner = base.Context.MaybeOwner;
 		StarshipEntity starship = maybeOwner as StarshipEntity;
-		if (starship != null)
+		if (starship == null)
 		{
-			if (NoLog)
-			{
-				starship.GetOrCreate<Kill.SilentDeathUnitPart>();
-			}
-			if (NoExp)
-			{
-				starship.GiveExperienceOnDeath = false;
-			}
-			starship.LifeState.MarkedForDeath = true;
-			Game.Instance.CoroutinesController.InvokeInTime(delegate
+			return;
+		}
+		if (NoLog)
+		{
+			starship.GetOrCreate<Kill.SilentDeathUnitPart>();
+		}
+		if (NoExp)
+		{
+			starship.GiveExperienceOnDeath = false;
+		}
+		starship.LifeState.MarkedForDeath = true;
+		Game.Instance.CoroutinesController.InvokeInTime(delegate
+		{
+			if (!starship.IsDisposed)
 			{
 				Game.Instance.EntityDestroyer.Destroy(starship);
-			}, TimeSpan.FromSeconds(1.0));
-		}
+			}
+		}, TimeSpan.FromSeconds(1.0));
 	}
 }

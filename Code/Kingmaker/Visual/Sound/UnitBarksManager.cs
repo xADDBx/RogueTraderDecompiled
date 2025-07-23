@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core.Cheats;
+using JetBrains.Annotations;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
@@ -28,6 +29,7 @@ public class UnitBarksManager
 
 	private uint m_CurrentlyPlayingId;
 
+	[CanBeNull]
 	public readonly AbstractUnitEntity Unit;
 
 	private readonly string[] m_SoundBanks;
@@ -256,7 +258,7 @@ public class UnitBarksManager
 		{
 			return false;
 		}
-		MechanicsContext context = ContextData<MechanicsContext.Data>.Current?.Context ?? new MechanicsContext(Unit, Unit, Unit.Blueprint);
+		MechanicsContext context = ContextData<MechanicsContext.Data>.Current?.Context ?? new MechanicsContext(Unit, Unit, Unit?.Blueprint);
 		TargetWrapper target = ContextData<MechanicsContext.Data>.Current?.CurrentTarget ?? ((TargetWrapper)Unit);
 		UnitAsksComponent.BarkEntry entry;
 		using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))

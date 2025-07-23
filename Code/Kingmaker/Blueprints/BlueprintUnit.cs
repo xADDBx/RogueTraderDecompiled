@@ -521,13 +521,18 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		return typeof(EntityFact);
 	}
 
-	public bool CheckEqualsWithPrototype(BlueprintUnit other)
+	public bool CheckEqualsWithPrototype(BlueprintUnit other, int level = 0)
 	{
+		if (++level > 10)
+		{
+			PFLog.Default.Error(string.Format("{0}(): infinite recursion when checking {1} against {2}", "CheckEqualsWithPrototype", this, other));
+			return false;
+		}
 		if (this != other)
 		{
 			if (base.PrototypeLink is BlueprintUnit blueprintUnit)
 			{
-				return blueprintUnit.CheckEqualsWithPrototype(other);
+				return blueprintUnit.CheckEqualsWithPrototype(other, level);
 			}
 			return false;
 		}

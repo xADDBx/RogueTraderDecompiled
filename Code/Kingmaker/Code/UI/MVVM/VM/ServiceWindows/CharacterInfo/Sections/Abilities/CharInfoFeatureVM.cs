@@ -12,6 +12,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
@@ -193,7 +194,12 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		{
 			return;
 		}
-		ModifiableValue stat = rankEntrySelectionStatVM.UnitProgressionVM.LevelUpManager.PreviewUnit.Stats.GetStat(rankEntrySelectionStatVM.UnitStat.Type);
+		LevelUpManager levelUpManager = rankEntrySelectionStatVM.UnitProgressionVM.LevelUpManager;
+		if (levelUpManager == null)
+		{
+			return;
+		}
+		ModifiableValue stat = levelUpManager.PreviewUnit.Stats.GetStat(rankEntrySelectionStatVM.UnitStat.Type);
 		StatTooltipData statTooltipData = default(StatTooltipData);
 		if (!(stat is ModifiableValueAttributeStat attribute))
 		{

@@ -8,6 +8,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View.Mechanics.Entities;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
 using UnityEngine;
 
@@ -71,7 +72,7 @@ public class UnitMarkManager : MonoBehaviour, IUnitLifeStateChanged, ISubscriber
 		{
 			value.Dispose();
 			Utils.EditorSafeDestroy(value.gameObject);
-			unit.View.MarkRenderersAndCollidersAreUpdated();
+			unit.View.Or(null)?.MarkRenderersAndCollidersAreUpdated();
 			m_Marks.Remove(unit);
 		}
 	}
@@ -102,7 +103,7 @@ public class UnitMarkManager : MonoBehaviour, IUnitLifeStateChanged, ISubscriber
 
 	private void UpdateProperties(AbstractUnitEntity unit)
 	{
-		if (UnitNeedsMark(unit) && (bool)unit.View)
+		if ((bool)unit.View && UnitNeedsMark(unit))
 		{
 			AddMark(unit, unit.View);
 		}

@@ -87,14 +87,14 @@ public class EntityDestructionController : IControllerTick, IController, IContro
 
 	private bool DestroyImmediate(Entity entity)
 	{
-		if (entity.HoldingState == null && !entity.IsPreview)
+		if (entity.HoldingState == null)
 		{
 			return true;
 		}
 		if (entity.IsDisposed)
 		{
 			Logger.ErrorWithReport("Disposed entity in the game state!");
-			entity.HoldingState?.RemoveEntityData(entity);
+			entity.HoldingState.RemoveEntityData(entity);
 			return false;
 		}
 		try

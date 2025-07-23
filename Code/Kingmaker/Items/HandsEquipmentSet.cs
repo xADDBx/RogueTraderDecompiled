@@ -73,6 +73,15 @@ public class HandsEquipmentSet : IHashable
 		m_OverrideSecondaryHand = secondaryHand;
 	}
 
+	public bool HasSlot(HandSlot handSlot)
+	{
+		if (m_PrimaryHand != handSlot)
+		{
+			return m_SecondaryHand == handSlot;
+		}
+		return true;
+	}
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

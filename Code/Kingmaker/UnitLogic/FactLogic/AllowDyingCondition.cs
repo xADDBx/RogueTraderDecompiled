@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
-[ComponentName("Allows KO condition")]
+[Deprecated]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [AllowedOn(typeof(BlueprintUnit))]
 [TypeId("addae4953430725479cc27bae68ad849")]
@@ -19,12 +19,10 @@ public class AllowDyingCondition : BlueprintComponent, IRuntimeEntityFactCompone
 	{
 		protected override void OnActivateOrPostLoad()
 		{
-			base.Owner.Features.UnconsciousOnZeroHealth.Retain();
 		}
 
 		protected override void OnDeactivate()
 		{
-			base.Owner.Features.UnconsciousOnZeroHealth.Release();
 		}
 
 		public override Hash128 GetHash128()

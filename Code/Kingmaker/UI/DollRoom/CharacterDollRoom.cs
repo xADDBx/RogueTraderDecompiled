@@ -523,7 +523,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 
 	public void HandleEquipmentSlotUpdated(ItemSlot slot, ItemEntity previousItem)
 	{
-		if (slot.Owner != m_Unit)
+		if (slot.Owner != m_Unit || m_OriginalAvatar == null)
 		{
 			return;
 		}

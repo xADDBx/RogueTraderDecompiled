@@ -184,7 +184,7 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 			m_UnitContainer?.gameObject.SetActive(value: false);
 			m_EndOfRound?.gameObject.SetActive(value: true);
 			base.transform.SetAsFirstSibling();
-			if (m_EndOfRound != null)
+			if (m_EndOfRound != null && base.ViewModel.Round != null)
 			{
 				AddDisposable(base.ViewModel.Round.Subscribe(m_EndOfRound.SetRound));
 			}

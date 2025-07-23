@@ -510,7 +510,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		for (int i = 0; i < m_HandsEquipmentSets.Length; i++)
 		{
 			HandsEquipmentSet handsEquipmentSet = m_HandsEquipmentSets[i];
-			if ((handsEquipmentSet.PrimaryHand == slot && !handsEquipmentSet.IsOverridePrimaryHand) || (handsEquipmentSet.SecondaryHand == slot && !handsEquipmentSet.IsOverrideSecondaryHand))
+			if (handsEquipmentSet.HasSlot(slot))
 			{
 				return handsEquipmentSet;
 			}

@@ -330,7 +330,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 			BaseUnitEntity baseUnitEntity = entity as BaseUnitEntity;
 			if (baseUnitEntity != null)
 			{
-				if (Game.Instance.Player.PartyCharacters.Where((UnitReference c) => c.Entity.IsDirectlyControllable).Contains(baseUnitEntity.FromBaseUnitEntity()) || (baseUnitEntity.IsPet && Game.Instance.Player.PartyCharacters.Contains(baseUnitEntity.Master.FromBaseUnitEntity())) || baseUnitEntity.IsInFogOfWar)
+				if (Game.Instance.Player.PartyCharacters.Where((UnitReference c) => c.Entity.IsDirectlyControllable).Contains(baseUnitEntity.FromBaseUnitEntity()) || (baseUnitEntity.IsPet && !baseUnitEntity.PetCanDialogInteract && Game.Instance.Player.PartyCharacters.Contains(baseUnitEntity.Master.FromBaseUnitEntity())) || baseUnitEntity.IsInFogOfWar)
 				{
 					continue;
 				}

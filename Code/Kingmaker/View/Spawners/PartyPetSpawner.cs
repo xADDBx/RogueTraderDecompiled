@@ -94,12 +94,14 @@ public class PartyPetSpawner : UnitSpawnerBase, IAddInspectorGUI, IEtudesUpdateH
 			base.Data.SpawnedUnit = existingPet;
 			existingPet.Position = base.ViewTransform.position;
 			existingPet.SetOrientation(base.ViewTransform.rotation.eulerAngles.y);
+			existingPet.PetCanDialogInteract = true;
 			return existingPet;
 		}
 		if (!flag && IsInControl)
 		{
 			unitPartPetOwner.StartFollowing();
 			IsInControl = false;
+			existingPet.PetCanDialogInteract = true;
 			base.Data.SpawnedUnit = default(EntityRef<AbstractUnitEntity>);
 			base.HasSpawned = false;
 		}

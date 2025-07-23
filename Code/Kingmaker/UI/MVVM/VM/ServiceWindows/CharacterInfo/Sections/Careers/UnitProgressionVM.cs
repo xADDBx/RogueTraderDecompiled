@@ -9,9 +9,11 @@ using Kingmaker.Code.UI.MVVM.VM.MessageBox;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores.Experience;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerPath;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
@@ -22,10 +24,11 @@ using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
 using UniRx;
+using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers;
 
-public class UnitProgressionVM : BaseUnitProgressionVM
+public class UnitProgressionVM : BaseUnitProgressionVM, IRespecHandler, ISubscriber<IBaseUnitEntity>, ISubscriber
 {
 	public readonly ReactiveProperty<UnitProgressionWindowState> State = new ReactiveProperty<UnitProgressionWindowState>(UnitProgressionWindowState.CareerPathList);
 
@@ -389,5 +392,11 @@ public class UnitProgressionVM : BaseUnitProgressionVM
 		m_AllCareerPaths.Clear();
 		CareerPathsList.Clear();
 		Breadcrumbs.Clear();
+	}
+
+	public void HandleRespecFinished()
+	{
+		Debug.Log("Handled rescec");
+		UpdateState();
 	}
 }

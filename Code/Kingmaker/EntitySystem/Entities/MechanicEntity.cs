@@ -188,6 +188,8 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	public bool CanCast => true;
 
+	public bool PetCanDialogInteract { get; set; }
+
 	public bool IsBusy
 	{
 		get

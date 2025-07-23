@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Party;
 
-public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IUnitGainExperienceHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ILevelUpCompleteUIHandler, IPartyCombatHandler, ILevelUpManagerUIHandler, ICanAccessServiceWindowsHandler, IPartyEncumbranceHandler, IUnitEncumbranceHandler, INetRoleSetHandler, INetStopPlayingHandler, INetLobbyPlayersHandler
+public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IUnitGainExperienceHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, ILevelUpCompleteUIHandler, IPartyCombatHandler, ILevelUpManagerUIHandler, ICanAccessServiceWindowsHandler, IRespecHandler, IPartyEncumbranceHandler, IUnitEncumbranceHandler, INetRoleSetHandler, INetStopPlayingHandler, INetLobbyPlayersHandler
 {
 	public readonly ReactiveProperty<bool> IsEnable = new ReactiveProperty<bool>(initialValue: false);
 
@@ -364,6 +364,14 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public void HandleUISelectionChanged()
 	{
+	}
+
+	public void HandleRespecFinished()
+	{
+		if (EventInvokerExtensions.BaseUnitEntity == UnitEntityData)
+		{
+			UpdateLevelUpField(UnitEntityData);
+		}
 	}
 
 	public void HandleRoleSet(string entityId)
