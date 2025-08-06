@@ -187,7 +187,7 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 			return null;
 		}
 		int neighbourIndex = GetNeighbourIndex(num, CharactersVM.Count, next);
-		while (neighbourIndex != num && (CharactersVM[neighbourIndex].UnitEntityData.IsPet || !CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable()))
+		while (neighbourIndex != num && (CharactersVM[neighbourIndex].UnitEntityData == null || CharactersVM[neighbourIndex].UnitEntityData.IsPet || !CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable()))
 		{
 			neighbourIndex = GetNeighbourIndex(neighbourIndex, CharactersVM.Count, next);
 		}

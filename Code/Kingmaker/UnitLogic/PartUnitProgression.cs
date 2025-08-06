@@ -352,36 +352,33 @@ public class PartUnitProgression : BaseUnitPart, IHashable
 		int defaultLevel = base.Owner.Blueprint.GetDefaultLevel();
 		while (CharacterLevel > defaultLevel && path != null)
 		{
-			foreach (BlueprintFeature feature2 in path.RankEntries[rank].Features)
+			foreach (BlueprintFeature feature4 in path.RankEntries[rank].Features)
 			{
-				if (Features.GetRank(feature2) > 1)
+				if (Features.GetRank(feature4) > 1)
 				{
-					Features.Get(feature2).RemoveRank();
+					Features.Get(feature4).RemoveRank();
 					continue;
 				}
-				Features.Get(feature2)?.RemoveRank();
-				Features.Remove(feature2);
+				Feature feature = Features.Get(feature4);
+				feature?.Deactivate();
+				feature?.RemoveRank();
+				Features.Remove(feature4);
 			}
 			List<FeatureSelectionData> list = m_Selections.Where((FeatureSelectionData selection) => selection.Path == path && selection.Level == rank + 1).ToList();
 			for (int i = 1; i <= list.Count; i++)
 			{
-				EntityFactsManager facts = base.Owner.Facts;
 				int num = i;
-				Feature feature = facts.Get<Feature>(list[list.Count - num].Feature);
-				if (feature != null && feature.GetRank() > 1)
+				BlueprintFeature feature2 = list[list.Count - num].Feature;
+				Feature feature3 = base.Owner.Facts.Get<Feature>(feature2);
+				if (feature3 != null && feature3.GetRank() > 1)
 				{
-					EntityFactsManager facts2 = base.Owner.Facts;
-					num = i;
-					facts2.Get<Feature>(list[list.Count - num].Feature)?.RemoveRank();
+					feature3.RemoveRank();
 				}
 				else
 				{
-					EntityFactsManager facts3 = base.Owner.Facts;
-					num = i;
-					facts3.Get<Feature>(list[list.Count - num].Feature)?.RemoveRank();
-					EntityFactsManager facts4 = base.Owner.Facts;
-					num = i;
-					facts4.Remove(list[list.Count - num].Feature);
+					feature3?.Deactivate();
+					feature3?.RemoveRank();
+					base.Owner.Facts.Remove(feature2);
 				}
 				List<FeatureSelectionData> selections = m_Selections;
 				num = i;

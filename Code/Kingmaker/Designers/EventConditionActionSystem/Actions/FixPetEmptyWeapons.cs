@@ -11,6 +11,8 @@ public class FixPetEmptyWeapons : GameAction
 {
 	public bool UnEquipCurrentWeapons;
 
+	public bool FixAllPets;
+
 	public override string GetCaption()
 	{
 		return "Fix pet`s weapon missing, set default weapon in empty slot";
@@ -20,7 +22,7 @@ public class FixPetEmptyWeapons : GameAction
 	{
 		foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
 		{
-			if (!(allCharacter.CombatGroup.Id == "<directly-controllable-unit>"))
+			if (!FixAllPets && !(allCharacter.CombatGroup.Id == "<directly-controllable-unit>"))
 			{
 				continue;
 			}

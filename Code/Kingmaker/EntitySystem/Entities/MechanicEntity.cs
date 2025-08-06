@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using Kingmaker.Code.Enums.Helper;
@@ -418,6 +419,20 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 
 	protected override void OnDestroy()
 	{
+	}
+
+	protected override void DisposeImplementation()
+	{
+		AbilityExecutionController abilityExecutionController = Game.Instance?.AbilityExecutor;
+		if (abilityExecutionController == null)
+		{
+			return;
+		}
+		foreach (AbilityExecutionProcess item in abilityExecutionController.Abilities.Where((AbilityExecutionProcess a) => a.Context.Caster == this))
+		{
+			abilityExecutionController.Detach(item);
+		}
+		base.DisposeImplementation();
 	}
 
 	protected override void OnDispose()

@@ -226,6 +226,10 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 		{
 			h.HandleWarpTravelStarted(m_Passage);
 		}, isCheckRuntime: true);
+		EventBus.RaiseEvent(delegate(ISectorMapWarpTravelRepeatedEventHandler h)
+		{
+			h.HandleStartJumpEvent();
+		});
 	}
 
 	private void StopTravel()

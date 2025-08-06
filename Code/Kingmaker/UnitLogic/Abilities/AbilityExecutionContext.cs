@@ -145,7 +145,7 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	public override TargetWrapper MainTarget => ClickedTarget;
 
 	[NotNull]
-	public MechanicEntity Caster => base.MaybeCaster ?? throw new Exception("Caster is missing");
+	public MechanicEntity Caster => base.MaybeCaster ?? throw new Exception("Caster is missing. Ability : " + AbilityBlueprint?.Name);
 
 	public void TemporarilyBlockNode(Vector3 pos, BaseUnitEntity unit)
 	{

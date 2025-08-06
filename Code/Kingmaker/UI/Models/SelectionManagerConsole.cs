@@ -72,6 +72,13 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 				base.SelectedUnits.ForEach(delegate(BaseUnitEntity u)
 				{
 					u.IsSelected = false;
+					bool value = u == unit.EntityData;
+					UnitPartPetOwner optional2 = u.GetOptional<UnitPartPetOwner>();
+					if (optional2 != null && optional2.PetUnit.Master.IsDirectlyControllable)
+					{
+						ToggleSelectAsPetUnit(u, value);
+						ToggleSelectAsPetUnit(optional2.PetUnit, value);
+					}
 				});
 				base.SelectedUnits.Clear();
 				base.SelectedUnits.Add(entityData);

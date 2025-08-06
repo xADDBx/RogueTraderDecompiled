@@ -12,6 +12,8 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.ResourceLinks;
 using Kingmaker.Settings;
+using Kingmaker.UnitLogic.Buffs;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.HitSystem;
@@ -311,6 +313,7 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 			PooledFootprints.Add(footprintPrefab, list);
 		}
 		Footprint footprint = list.LastItem();
+		FootprintsModification(unit);
 		if (footprint == null)
 		{
 			GameObject gameObject = UnityEngine.Object.Instantiate(footprintPrefab, FxHelper.FootprintsRoot);
@@ -411,5 +414,17 @@ public class FootprintsController : IControllerTick, IController, IControllerSto
 			return null;
 		}
 		return unitFootLocator;
+	}
+
+	private static void FootprintsModification(AbstractUnitEntity unit)
+	{
+		foreach (Buff buff in unit.Buffs)
+		{
+			FootprintModification component = buff.GetComponent<FootprintModification>();
+			if (component != null)
+			{
+				FxHelper.SpawnFxOnEntity(component.PrefabToAdd?.Load(), unit.View);
+			}
+		}
 	}
 }

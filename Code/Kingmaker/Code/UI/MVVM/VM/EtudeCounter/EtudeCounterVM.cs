@@ -82,7 +82,7 @@ public class EtudeCounterVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	private void UpdateValues()
 	{
-		if (m_Configs.Empty() || Game.Instance.CurrentMode == GameModeType.Cutscene)
+		if (m_Configs.Empty() || Game.Instance.CurrentMode == GameModeType.Cutscene || Game.Instance.TurnController.IsPreparationTurn)
 		{
 			IsShowing.Value = false;
 			return;

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.AI;
+using Kingmaker.Blueprints;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
@@ -15,6 +18,8 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 	private readonly List<AbilityExecutionProcess> m_Abilities = new List<AbilityExecutionProcess>();
 
 	private bool m_Enabled;
+
+	private TimeSpan m_LastExecutionProcessListChangeTime;
 
 	public ReadonlyList<AbilityExecutionProcess> Abilities => m_Abilities;
 
@@ -37,6 +42,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		}
 		context.CastTime = Game.Instance.TimeController.GameTime;
 		m_Abilities.Add(abilityExecutionProcess);
+		m_LastExecutionProcessListChangeTime = Game.Instance.TimeController.RealTime;
 		if (caster.IsInCombat)
 		{
 			Game.Instance.PlayerInputInCombatController.RequestLockPlayerInput();
@@ -57,6 +63,7 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
 		}
 		m_Abilities.Remove(process);
+		m_LastExecutionProcessListChangeTime = Game.Instance.TimeController.RealTime;
 	}
 
 	public void DetachAll()
@@ -102,16 +109,30 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			if (p.IsEnded)
 			{
-				bool num = p.Context?.Caster.IsInCombat ?? true;
+				bool flag = Game.Instance.TurnController.InCombat;
+				try
+				{
+					flag = p.Context?.Caster.IsInCombat ?? true;
+				}
+				catch (Exception ex)
+				{
+					PFLog.Ability.Error(ex);
+				}
 				p.Dispose();
-				if (num)
+				if (flag)
 				{
 					Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
 				}
+				m_LastExecutionProcessListChangeTime = Game.Instance.TimeController.RealTime;
 				return true;
 			}
 			return false;
 		});
+		if (Abilities.Count > 0 && Game.Instance.TimeController.RealTime - m_LastExecutionProcessListChangeTime > TimeSpan.FromSeconds(AiBrainController.SecondsAiTimeout))
+		{
+			PFLog.Ability.Error("Ability process got stuck, forcing it to end. Ability : " + Abilities.First().Context.AbilityBlueprint.NameSafe() + " by " + Abilities.First().Context.Caster.Name);
+			Abilities.First().Detach();
+		}
 	}
 
 	void IControllerStop.OnStop()

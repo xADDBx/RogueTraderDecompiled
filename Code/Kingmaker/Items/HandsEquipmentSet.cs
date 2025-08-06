@@ -82,6 +82,19 @@ public class HandsEquipmentSet : IHashable
 		return true;
 	}
 
+	public void ClearForShieldInOtherSet(HandsEquipmentSet setWithShield)
+	{
+		if (m_PrimaryHand.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false })
+		{
+			m_PrimaryHand.RemoveItem();
+		}
+		if (m_SecondaryHand.HasItem)
+		{
+			m_SecondaryHand.RemoveItem();
+		}
+		OverrideSecondaryHand(setWithShield.SecondaryHand);
+	}
+
 	public virtual Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

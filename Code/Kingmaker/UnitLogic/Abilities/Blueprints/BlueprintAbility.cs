@@ -113,9 +113,14 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	public bool CanTargetSelf = true;
 
+	[InfoBox("Hidden in tooltips")]
 	public bool Hidden;
 
+	[InfoBox("Hidden in panels")]
 	public bool HiddenInUI;
+
+	[InfoBox("Disabled in log and overtips", order = -1)]
+	public bool DisableLog;
 
 	public bool DisableBestShootingPosition;
 
@@ -174,8 +179,6 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	{
 		Count = 1
 	};
-
-	public bool DisableLog;
 
 	public string[] ResourceAssetIds;
 

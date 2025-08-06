@@ -120,7 +120,7 @@ public class WarhammerOverrideAbilityApCost : MechanicEntityFactComponentDelegat
 				return;
 			}
 		}
-		if ((AffectedGroup == null && Ability == null && AbilityGroupList.Length == 0 && evt.Blueprint != base.OwnerBlueprint) || (AffectedGroup != null && ((NotSelectedGroup && evt.Blueprint.AbilityGroups.Contains(AffectedGroup)) || (!NotSelectedGroup && !evt.Blueprint.AbilityGroups.Contains(AffectedGroup)))) || (AbilityGroupList.Length != 0 && !evt.Blueprint.AbilityGroups.Intersect(AbilityGroupList).Any()) || (Ability != null && evt.Blueprint != Ability))
+		if ((AffectedGroup == null && Ability == null && AbilityGroupList.Length == 0 && evt.Blueprint != base.OwnerBlueprint) || (AffectedGroup != null && ((NotSelectedGroup && evt.Blueprint.AbilityGroups.Contains(AffectedGroup)) || (!NotSelectedGroup && !evt.Blueprint.AbilityGroups.Contains(AffectedGroup)))) || (AbilityGroupList.Length != 0 && ((NotSelectedGroup && evt.Blueprint.AbilityGroups.Intersect(AbilityGroupList).Any()) || (!NotSelectedGroup && !evt.Blueprint.AbilityGroups.Intersect(AbilityGroupList).Any()))) || (Ability != null && evt.Blueprint != Ability))
 		{
 			return;
 		}

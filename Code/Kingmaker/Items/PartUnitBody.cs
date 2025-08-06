@@ -15,6 +15,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
@@ -27,7 +28,7 @@ using UnityEngine;
 
 namespace Kingmaker.Items;
 
-public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber>, IUnitInventoryChanged, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitInventoryChanged, EntitySubscriber>, IHashable
+public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber>, IUnitInventoryChanged, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitInventoryChanged, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IHashable
 {
 	public interface IOwner : IEntityPartOwner<PartUnitBody>, IEntityPartOwner
 	{
@@ -771,6 +772,62 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 				Services.GetInstance<FXPrewarmService>().PrewarmWeaponSet(CurrentHandsEquipmentSet);
 			}
 		}
+	}
+
+	public void HandleFeatureAdded(FeatureCountableFlag feature)
+	{
+		if (feature.Type == MechanicsFeatureType.OverrideShieldWeaponSetsPlacement)
+		{
+			HandleShieldWeaponSetPlacementOverrideEnabled();
+		}
+	}
+
+	public void HandleFeatureRemoved(FeatureCountableFlag feature)
+	{
+		if (feature.Type == MechanicsFeatureType.OverrideShieldWeaponSetsPlacement && !feature.Value)
+		{
+			HandleShieldWeaponSetPlacementOverrideDisabled();
+		}
+	}
+
+	private void HandleShieldWeaponSetPlacementOverrideEnabled()
+	{
+		for (int i = 0; i < m_HandsEquipmentSets.Length; i++)
+		{
+			HandsEquipmentSet handsEquipmentSet = m_HandsEquipmentSets[i];
+			if (handsEquipmentSet.IsOverrideSecondaryHand && handsEquipmentSet.SecondaryHand.MaybeItem is ItemEntityShield)
+			{
+				handsEquipmentSet.OverrideSecondaryHand(null);
+				handsEquipmentSet.SecondaryHand.IsDirty = true;
+			}
+		}
+	}
+
+	private void HandleShieldWeaponSetPlacementOverrideDisabled()
+	{
+		int num = -1;
+		for (int i = 0; i < m_HandsEquipmentSets.Length; i++)
+		{
+			HandsEquipmentSet handsEquipmentSet = m_HandsEquipmentSets[i];
+			if (!handsEquipmentSet.IsOverrideSecondaryHand && handsEquipmentSet.SecondaryHand.MaybeItem is ItemEntityShield)
+			{
+				num = i;
+				break;
+			}
+		}
+		if (num < 0)
+		{
+			return;
+		}
+		HandsEquipmentSet handsEquipmentSet2 = m_HandsEquipmentSets[num];
+		for (int j = 0; j < m_HandsEquipmentSets.Length; j++)
+		{
+			if (j != num)
+			{
+				m_HandsEquipmentSets[j].ClearForShieldInOtherSet(handsEquipmentSet2);
+			}
+		}
+		handsEquipmentSet2.SecondaryHand.IsDirty = true;
 	}
 
 	public override Hash128 GetHash128()

@@ -210,39 +210,28 @@ public class HandSlot : WeaponSlot, IHashable
 				PairSlot.InsertItem(itemEntityWeapon3);
 			}
 		}
-		if (base.MaybeItem is ItemEntityShield)
+		if (base.MaybeItem is ItemEntityShield && bodyOptional != null)
 		{
+			IList<HandsEquipmentSet> handsEquipmentSets2 = bodyOptional.HandsEquipmentSets;
 			if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement))
 			{
-				if (bodyOptional != null)
+				for (int j = 0; j < handsEquipmentSets2.Count; j++)
 				{
-					IList<HandsEquipmentSet> handsEquipmentSets2 = bodyOptional.HandsEquipmentSets;
-					for (int j = 0; j < handsEquipmentSets2.Count; j++)
+					if (handsEquipmentSets2[j] != HandsEquipmentSet)
 					{
-						if (handsEquipmentSets2[j] != HandsEquipmentSet)
-						{
-							if (handsEquipmentSets2[j].PrimaryHand.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false })
-							{
-								handsEquipmentSets2[j].PrimaryHand.RemoveItem();
-							}
-							if (handsEquipmentSets2[j].SecondaryHand.HasItem)
-							{
-								handsEquipmentSets2[j].SecondaryHand.RemoveItem();
-							}
-							handsEquipmentSets2[j].OverrideSecondaryHand(HandsEquipmentSet.SecondaryHand);
-						}
+						handsEquipmentSets2[j].ClearForShieldInOtherSet(HandsEquipmentSet);
 					}
 				}
 			}
-			else if (bodyOptional != null)
+			else
 			{
-				IList<HandsEquipmentSet> handsEquipmentSets3 = bodyOptional.HandsEquipmentSets;
-				for (int k = 0; k < handsEquipmentSets3.Count; k++)
+				for (int k = 0; k < handsEquipmentSets2.Count; k++)
 				{
-					if (handsEquipmentSets3[k] != HandsEquipmentSet && base.MaybeItem == handsEquipmentSets3[k].SecondaryHand.MaybeItem)
+					HandsEquipmentSet handsEquipmentSet = handsEquipmentSets2[k];
+					if (handsEquipmentSet != HandsEquipmentSet && base.MaybeItem == handsEquipmentSet.SecondaryHand.MaybeItem)
 					{
-						handsEquipmentSets3[k].OverrideSecondaryHand(null);
-						handsEquipmentSets3[k].SecondaryHand.IsDirty = true;
+						handsEquipmentSet.OverrideSecondaryHand(null);
+						handsEquipmentSet.SecondaryHand.IsDirty = true;
 					}
 				}
 			}
