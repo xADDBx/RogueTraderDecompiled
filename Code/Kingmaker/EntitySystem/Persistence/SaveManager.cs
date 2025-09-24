@@ -31,7 +31,6 @@ using Kingmaker.Networking;
 using Kingmaker.Networking.Settings;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.Settings;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
 using Kingmaker.UI.Common;
@@ -148,8 +147,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	public bool SaveListUpdateInProgress => !m_UpdateTask.IsCompleted;
 
 	public bool CommitInProgress => m_CommitInProgress;
-
-	public bool HasDowngradedIronManSave => m_downgradedIronManSave != null;
 
 	public void UpdateSaveListAsync()
 	{
@@ -707,32 +704,17 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public void DowngradeSaveFromIronMan(SaveInfo saveInfo)
 	{
-		if (saveInfo.Type != SaveInfo.SaveType.IronMan)
+		if (saveInfo.Type == SaveInfo.SaveType.IronMan)
 		{
-			return;
-		}
-		saveInfo.Type = SaveInfo.SaveType.Manual;
-		m_downgradedIronManSave = saveInfo;
-		using (saveInfo.GetWriteScope())
-		{
-			saveInfo.Saver.SaveJson("header", SaveSystemJsonSerializer.Serializer.SerializeObject(saveInfo));
-			saveInfo.Saver.Save();
-		}
-	}
-
-	public void DeleteDowngradedIronManSave()
-	{
-		if (m_downgradedIronManSave != null)
-		{
-			DeleteSave(m_downgradedIronManSave);
-		}
-	}
-
-	public void LoadDowngradedIronManSave()
-	{
-		if (m_downgradedIronManSave != null)
-		{
-			Game.Instance.LoadGame(m_downgradedIronManSave);
+			Game.Instance.LoadGame(saveInfo, delegate
+			{
+				PFLog.System.Log("Loading ironman save: " + saveInfo.FolderName);
+				SettingsRoot.Difficulty.OnlyOneSave.SetValueAndConfirm(value: false);
+				PFLog.System.Log("Deleting ironman save: " + saveInfo.FolderName);
+				DeleteSave(saveInfo);
+				PFLog.System.Log("Creating autosave instead of ironman:  " + saveInfo.FolderName);
+				Game.Instance.SaveGame(Game.Instance.SaveManager.GetNextAutoslot());
+			});
 		}
 	}
 
@@ -806,7 +788,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	private void GenerateTempFolderName(SaveInfo save)
 	{
 		FindUnusedSaveNumber(save.Type);
-		save.FolderName = Path.Combine(Application.temporaryCachePath, save.SaveId);
+		save.FolderName = Path.Combine(ApplicationPaths.temporaryCachePath, save.SaveId);
 	}
 
 	private static void SetUpSaver(SaveInfo save)
@@ -885,10 +867,6 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 
 	public bool IsSaveAllowed(SaveInfo.SaveType saveType, bool isMainMenu = false)
 	{
-		if (ArbiterService.IsInitialized)
-		{
-			return false;
-		}
 		if (Game.Instance.CurrentlyLoadedArea == null && !isMainMenu && !Game.Instance.Player.NextEnterPoint)
 		{
 			return false;

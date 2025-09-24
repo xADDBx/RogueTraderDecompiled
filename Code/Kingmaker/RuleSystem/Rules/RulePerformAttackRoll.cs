@@ -175,7 +175,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		if (CanBeCriticalAttack())
 		{
 			ResultRighteousFuryD100 = Dice.D100;
-			ResultIsRighteousFury = ((int)ResultRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance || HitChanceRule.AutoCrits.Value) && !ShouldHaveBeenRighteousFury;
+			ResultIsRighteousFury = ((int)ResultRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance || HitChanceRule.AutoCritModifier.Value) && !ShouldHaveBeenRighteousFury;
 			RighteousFuryAmount += (ResultIsRighteousFury ? 1 : 0);
 		}
 		if ((bool)(base.Initiator as UnitEntity)?.Features.SecondaryCriticalChance)
@@ -418,11 +418,11 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 
 	public bool IsCritical()
 	{
-		if (!HitChanceRule.NeverCrits.Value)
+		if (!HitChanceRule.NeverCritMofifier.Value)
 		{
 			if (!ResultIsRighteousFury)
 			{
-				return HitChanceRule.AutoCrits.Value;
+				return HitChanceRule.AutoCritModifier.Value;
 			}
 			return true;
 		}
@@ -431,11 +431,11 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 
 	private bool CanBeCriticalAttack()
 	{
-		if (!HitChanceRule.NeverCrits.Value)
+		if (!HitChanceRule.NeverCritMofifier.Value)
 		{
 			if (HitChanceRule.ResultRighteousFuryChance <= 0)
 			{
-				return HitChanceRule.AutoCrits.Value;
+				return HitChanceRule.AutoCritModifier.Value;
 			}
 			return true;
 		}

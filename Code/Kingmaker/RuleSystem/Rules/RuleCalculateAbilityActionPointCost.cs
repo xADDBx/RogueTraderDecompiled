@@ -25,6 +25,8 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 
 	public int CostBonusAfterMinimum { get; set; }
 
+	public bool NoTwoWeaponFightingPenalty { get; set; }
+
 	public int CostMinimum
 	{
 		get
@@ -95,7 +97,7 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 	{
 		PartTwoWeaponFighting twoWeaponFightingOptional = m_AbilityData.Caster.GetTwoWeaponFightingOptional();
 		ItemEntityWeapon weapon = m_AbilityData.Weapon;
-		if (twoWeaponFightingOptional != null && twoWeaponFightingOptional.EnableAttackWithPairedWeapon && twoWeaponFightingOptional.IsOtherAbilityGroupOnCooldown(m_AbilityData) && weapon != null && !weapon.HoldInTwoHands && !m_AbilityData.IsFreeAction && !m_AbilityData.Caster.Features.HasNoAPPenaltyCostForTwoWeaponFighting && m_AbilityData.Blueprint.Type == AbilityType.Weapon && !m_AbilityData.IsBonusUsage && !m_AbilityData.IsHeroicAct)
+		if (twoWeaponFightingOptional != null && twoWeaponFightingOptional.EnableAttackWithPairedWeapon && twoWeaponFightingOptional.IsOtherAbilityGroupOnCooldown(m_AbilityData) && !NoTwoWeaponFightingPenalty && weapon != null && !weapon.HoldInTwoHands && !m_AbilityData.IsFreeAction && m_AbilityData.Blueprint.Type == AbilityType.Weapon && !m_AbilityData.IsBonusUsage && !m_AbilityData.IsHeroicAct)
 		{
 			return !m_AbilityData.IsDesperateMeasure;
 		}

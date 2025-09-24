@@ -156,7 +156,12 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 			m_Mechadendrites = null;
 			if (unit?.View != null)
 			{
+				PFLog.Default.Log("[CharacterDollRoom.Cleanup] Updating visibility for unit " + unit.CharacterName);
 				unit?.View.HandsEquipment.UpdateVisibility(unit.View.IsVisible);
+			}
+			else
+			{
+				PFLog.Default.Log("[CharacterDollRoom.Cleanup] Unit or View is null, skipping visibility update");
 			}
 		}
 		if ((bool)m_SimpleAvatar)
@@ -166,6 +171,12 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		}
 		m_OriginalAvatar = null;
 		m_Unit = null;
+		if (unit?.View != null)
+		{
+			PFLog.Default.Log("[CharacterDollRoom.Cleanup] Calling ForceUpdateWeaponEnchantmentFx after m_Unit cleared");
+			unit?.View.HandsEquipment.ForceUpdateWeaponEnchantmentFx();
+			PFLog.Default.Log("[CharacterDollRoom.Cleanup] ForceUpdateWeaponEnchantmentFx completed");
+		}
 		base.Cleanup();
 	}
 
@@ -536,7 +547,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		m_Avatar.RampIndices.AddRange(collection);
 		m_Avatar.IsAtlasesDirty = true;
 		m_Avatar.RemoveEquipmentEntities(ees);
-		m_Avatar.AddEquipmentEntities(ees2);
+		m_Avatar.AddEquipmentEntities(ees2, saved: false, isFromEquippedItems: true);
 		if (slot is HandSlot slot2)
 		{
 			m_AvatarHands?.HandleEquipmentSlotUpdated(slot2, previousItem);

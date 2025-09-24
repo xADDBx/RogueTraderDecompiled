@@ -46,6 +46,10 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 	[ShowIf("SetMinimumDodgeChance")]
 	public ContextValue MinimumDodgeChance;
 
+	public bool AutoDodge;
+
+	public bool NeverDodge;
+
 	private bool ModifyDodgeChance => (Properties & PropertyType.DodgeChance) != 0;
 
 	protected void TryApply(RuleCalculateDodgeChance rule)
@@ -72,6 +76,14 @@ public abstract class WarhammerDodgeChanceModifier : MechanicEntityFactComponent
 		if (SetMinimumDodgeChance)
 		{
 			rule.MinimumDodgeValueModifier.Add(MinimumDodgeChance.Calculate(base.Context), base.Fact);
+		}
+		if (AutoDodge)
+		{
+			rule.AutoDodgeModifiers.Add(base.Fact);
+		}
+		if (NeverDodge)
+		{
+			rule.NeverDodgeModifiers.Add(base.Fact);
 		}
 		OnApply();
 	}

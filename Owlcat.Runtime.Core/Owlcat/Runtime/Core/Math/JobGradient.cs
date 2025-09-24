@@ -52,8 +52,8 @@ public struct JobGradient
 		num = rhsAlphaKey.time - time2;
 		if (num != 0f)
 		{
-			float s = (time - time2) / num;
-			result.a = math.lerp(lhsAlphaKey.alpha, rhsAlphaKey.alpha, s);
+			float t2 = (time - time2) / num;
+			result.a = math.lerp(lhsAlphaKey.alpha, rhsAlphaKey.alpha, t2);
 		}
 		else
 		{

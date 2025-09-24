@@ -5,6 +5,7 @@ using System.Text;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
@@ -412,7 +413,7 @@ public static class UIUtilityTexts
 		};
 	}
 
-	public static string UpdateDescriptionWithUIProperties(string description, MechanicEntity calculationSource)
+	public static string UpdateDescriptionWithUIProperties(string description, MechanicEntity calculationSource, bool selectedUnitCalculateInInventory = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -458,9 +459,10 @@ public static class UIUtilityTexts
 						{
 							int? num5 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : unitFact.Blueprint)).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
 							string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+							string text2 = ((num5 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
 							if (num5.HasValue)
 							{
-								link = $"<b><color={glossaryMechanicsHTML}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>";
+								link = $"<b><color={glossaryMechanicsHTML}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>{text2}";
 							}
 						}
 						else
@@ -468,7 +470,20 @@ public static class UIUtilityTexts
 							property = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings p) => p.LinkKey == link);
 							if (property != null)
 							{
-								link = FormatIndent(property.Description);
+								if (!selectedUnitCalculateInInventory)
+								{
+									link = FormatIndent(property.Description);
+								}
+								else
+								{
+									int? num6 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : unitFact.Blueprint)).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
+									string text3 = ((num6 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
+									string glossaryMechanicsHTML2 = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+									if (num6.HasValue)
+									{
+										link = $"<b><color={glossaryMechanicsHTML2}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num6.Value)}</link></color></b>{text3}";
+									}
+								}
 							}
 						}
 					}
@@ -516,7 +531,29 @@ public static class UIUtilityTexts
 				{
 					if (item.Blueprint is BlueprintItemEquipmentPetProtocol && !item.CanBeEquippedBy(currentSelectedUnit))
 					{
-						return (UITooltips.PetCanNotEquip, ItemHeaderType.CanNotEquip);
+						LocalizedString localizedString = UITooltips.PetCanNotEquip;
+						EquipmentRestrictionMasterHasFacts component = item.Blueprint.GetComponent<EquipmentRestrictionMasterHasFacts>();
+						if (component != null && !component.CanBeEquippedBy(currentSelectedUnit))
+						{
+							BlueprintUnitFact blueprintUnitFact = component.Facts.FirstOrDefault((BlueprintUnitFact f) => f is BlueprintSoulMark);
+							if (blueprintUnitFact == null || blueprintUnitFact.NameForAcronym == null)
+							{
+								return (localizedString, ItemHeaderType.CanNotEquip);
+							}
+							if (blueprintUnitFact.NameForAcronym.Contains("Faith"))
+							{
+								localizedString = UITooltips.PetCanNotEquipOverseerDogmatic;
+							}
+							else if (blueprintUnitFact.NameForAcronym.Contains("Hope"))
+							{
+								localizedString = UITooltips.PetCanNotEquipOverseerSchismatic;
+							}
+							else if (blueprintUnitFact.NameForAcronym.Contains("Corruption"))
+							{
+								localizedString = UITooltips.PetCanNotEquipOverseerHeretic;
+							}
+						}
+						return (localizedString, ItemHeaderType.CanNotEquip);
 					}
 					if (item.Blueprint is BlueprintItemEquipmentPetProtocol && item.CanBeEquippedBy(currentSelectedUnit))
 					{

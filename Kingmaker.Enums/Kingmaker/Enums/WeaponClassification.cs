@@ -16,5 +16,8 @@ public enum WeaponClassification
 	Knife,
 	Maul,
 	Hammer,
-	Shield
+	Shield,
+	Webber,
+	ArcRifle,
+	Pistol
 }

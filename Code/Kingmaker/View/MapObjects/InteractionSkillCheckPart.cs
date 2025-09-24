@@ -159,7 +159,7 @@ public class InteractionSkillCheckPart : InteractionPart<InteractionSkillCheckSe
 					{
 						if (!ExperienceObtained && skill != 0)
 						{
-							GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExp(num, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
+							GameHelper.GainExperienceForSkillCheck((DCOverride == 0) ? ExperienceHelper.GetCheckExpByDifficulty(base.Settings.Difficulty, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0) : ExperienceHelper.GetCheckExpByDifficulty(SkillCheckDifficulty.Custom, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
 							ExperienceObtained = true;
 						}
 						break;

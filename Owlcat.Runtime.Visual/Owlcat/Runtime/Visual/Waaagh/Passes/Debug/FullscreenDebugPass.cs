@@ -2,7 +2,7 @@ using Owlcat.Runtime.Visual.Waaagh.Debugging;
 using Owlcat.ShaderLibrary.Visual.Debug;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 
@@ -42,7 +42,7 @@ public class FullscreenDebugPass : ScriptableRenderPass<FullscreenDebugPassData>
 				TextureDesc desc = textureDesc;
 				data.TempTarget = builder.CreateTransientTexture(in desc);
 			}
-			data.FullScreenDebugBuffer = ((m_DebugData.RenderingDebug.OverdrawMode == DebugOverdrawMode.QuadOverdraw) ? builder.ReadComputeBuffer(in m_Resources.FullScreenDebugBuffer) : default(ComputeBufferHandle));
+			data.FullScreenDebugBuffer = ((m_DebugData.RenderingDebug.OverdrawMode == DebugOverdrawMode.QuadOverdraw) ? builder.ReadBuffer(in m_Resources.FullScreenDebugBuffer) : default(BufferHandle));
 			data.DebugData = m_DebugData;
 			data.Material = m_Material;
 			builder.AllowPassCulling(value: true);

@@ -6,19 +6,24 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Constraints;
 
 public class ConstraintSoA : StructureOfArrayBase
 {
-	public NativeArray<int> Index0;
+	public struct ConstraintData
+	{
+		public int Index0;
 
-	public NativeArray<int> Index1;
+		public int Index1;
 
-	public NativeArray<int> Index2;
+		public int Index2;
 
-	public NativeArray<int> Index3;
+		public int Index3;
 
-	public NativeArray<float4> Parameters0;
+		public float4 Parameters0;
 
-	public NativeArray<float4> Parameters1;
+		public float4 Parameters1;
 
-	public NativeArray<int> Type;
+		public int Type;
+	}
+
+	public NativeArray<ConstraintData> m_ConstraintData;
 
 	public NativeArray<int> Id;
 
@@ -28,25 +33,27 @@ public class ConstraintSoA : StructureOfArrayBase
 		{
 			Constraint result = default(Constraint);
 			result.id = Id[index];
-			result.index0 = Index0[index];
-			result.index1 = Index1[index];
-			result.index2 = Index2[index];
-			result.index3 = Index3[index];
-			result.parameters0 = Parameters0[index];
-			result.parameters1 = Parameters1[index];
-			result.type = (ConstraintType)Type[index];
+			result.index0 = m_ConstraintData[index].Index0;
+			result.index1 = m_ConstraintData[index].Index1;
+			result.index2 = m_ConstraintData[index].Index2;
+			result.index3 = m_ConstraintData[index].Index3;
+			result.parameters0 = m_ConstraintData[index].Parameters0;
+			result.parameters1 = m_ConstraintData[index].Parameters1;
+			result.type = (ConstraintType)m_ConstraintData[index].Type;
 			return result;
 		}
 		set
 		{
 			Id[index] = value.id;
-			Index0[index] = value.index0;
-			Index1[index] = value.index1;
-			Index2[index] = value.index2;
-			Index3[index] = value.index3;
-			Parameters0[index] = value.parameters0;
-			Parameters1[index] = value.parameters1;
-			Type[index] = (int)value.type;
+			ConstraintData value2 = default(ConstraintData);
+			value2.Index0 = value.index0;
+			value2.Index1 = value.index1;
+			value2.Index2 = value.index2;
+			value2.Index3 = value.index3;
+			value2.Parameters0 = value.parameters0;
+			value2.Parameters1 = value.parameters1;
+			value2.Type = (int)value.type;
+			m_ConstraintData[index] = value2;
 		}
 	}
 
@@ -64,27 +71,15 @@ public class ConstraintSoA : StructureOfArrayBase
 	public override void Resize(int newSize)
 	{
 		base.Resize(newSize);
-		Index0 = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Index1 = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Index2 = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Index3 = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Parameters0 = new NativeArray<float4>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Parameters1 = new NativeArray<float4>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-		Type = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+		m_ConstraintData = new NativeArray<ConstraintData>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 		Id = new NativeArray<int>(newSize, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 	}
 
 	public override void Dispose()
 	{
-		if (Index0.IsCreated)
+		if (m_ConstraintData.IsCreated)
 		{
-			Index0.Dispose();
-			Index1.Dispose();
-			Index2.Dispose();
-			Index3.Dispose();
-			Parameters0.Dispose();
-			Parameters1.Dispose();
-			Type.Dispose();
+			m_ConstraintData.Dispose();
 			Id.Dispose();
 		}
 	}

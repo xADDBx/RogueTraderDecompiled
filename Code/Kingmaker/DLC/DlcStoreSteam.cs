@@ -1,7 +1,10 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
+using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.ManualCoroutines;
 using Steamworks;
 using UnityEngine;
 
@@ -16,6 +19,8 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 	[SerializeField]
 	private string m_ShopLink = "https://store.steampowered.com/app/2186680/Warhammer_40000_Rogue_Trader/";
 
+	private CoroutineHandler? m_LoadingCoroutine;
+
 	public uint SteamId => m_SteamId;
 
 	public override bool IsSuitable => StoreManager.Store == StoreType.Steam;
@@ -27,10 +32,32 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 		value = DLCStatus.UnAvailable;
 		try
 		{
-			if (SteamManager.Initialized && SteamApps.BIsDlcInstalled(new AppId_t(SteamId)))
+			if (SteamManager.Initialized)
 			{
-				value = DLCStatus.Available;
-				PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Steam (ID {SteamId}).");
+				TryStopLoadingCoroutine();
+				AppId_t appId_t = new AppId_t(SteamId);
+				ulong punBytesDownloaded;
+				ulong punBytesTotal;
+				if (SteamApps.BIsDlcInstalled(appId_t))
+				{
+					value = DLCStatus.Available;
+					PFLog.System.Log($"DLC {base.OwnerBlueprint} is available through Steam (ID {SteamId}).");
+				}
+				else if (SteamApps.GetDlcDownloadProgress(appId_t, out punBytesDownloaded, out punBytesTotal))
+				{
+					value = new DLCStatus
+					{
+						Purchased = true,
+						DownloadState = ((punBytesDownloaded != 0L) ? DownloadState.Loading : DownloadState.NotLoaded),
+						IsMounted = false
+					};
+					m_LoadingCoroutine = Game.Instance.CoroutinesController.InvokeInTime(StoreManager.RefreshAllDLCStatuses, 10.Seconds());
+					PFLog.System.Log($"DLC {base.OwnerBlueprint} is available but not downloaded through Steam (ID {SteamId}).");
+				}
+				else
+				{
+					PFLog.System.Log($"DLC {base.OwnerBlueprint} is not available through Steam (ID {SteamId}).");
+				}
 			}
 			else
 			{
@@ -42,6 +69,15 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 			PFLog.Default.Exception(ex, ExceptionMessage);
 		}
 		return true;
+	}
+
+	private void TryStopLoadingCoroutine()
+	{
+		if (m_LoadingCoroutine.HasValue)
+		{
+			Game.Instance.CoroutinesController.Stop(m_LoadingCoroutine.Value);
+			m_LoadingCoroutine = null;
+		}
 	}
 
 	public override bool OpenShop()

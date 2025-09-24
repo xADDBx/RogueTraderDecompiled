@@ -37,8 +37,15 @@ public class HealUnit : GameAction
 	{
 		AbstractUnitEntity value = Target.GetValue();
 		int maxHitPoints = value.Health.MaxHitPoints;
-		int bonus = (ToFullHP ? maxHitPoints : HealAmount.GetValue());
-		Rulebook.Trigger(new RuleHealDamage((Source != null) ? Source.GetValue() : value, value, bonus));
+		int num = (ToFullHP ? maxHitPoints : HealAmount.GetValue());
+		if (value.LifeState.IsUnconscious)
+		{
+			value.LifeState.Resurrect(num);
+		}
+		else
+		{
+			Rulebook.Trigger(new RuleHealDamage((Source != null) ? Source.GetValue() : value, value, num));
+		}
 	}
 
 	public override string GetCaption()

@@ -70,16 +70,10 @@ public struct SimulationJob : IJobParallelFor
 	public NativeArray<float2> MaterialParameters;
 
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> BasePosition;
+	public NativeArray<ParticlePositionPair> PositionPairs;
 
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Position;
-
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Predicted;
-
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Velocity;
+	public NativeArray<ParticleMotionPair> MotionPairs;
 
 	[NativeDisableParallelForRestriction]
 	public NativeArray<quaternion> Orientation;
@@ -92,43 +86,11 @@ public struct SimulationJob : IJobParallelFor
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float> Mass;
+	public NativeArray<ParticleExtendedData> ExtendedData;
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float> Radius;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<uint> Flags;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<int> Index0;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<int> Index1;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<int> Index2;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<int> Index3;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float4> Parameters0;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float4> Parameters1;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<int> Type;
+	public NativeArray<ConstraintSoA.ConstraintData> ConstraintData;
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
@@ -223,41 +185,41 @@ public struct SimulationJob : IJobParallelFor
 	{
 		for (int i = particlesOffset; i < particlesOffset + particlesCount; i++)
 		{
-			float num = Mass[i];
-			if (num <= 0f)
+			float mass = ExtendedData[i].Mass;
+			if (mass <= 0f)
 			{
 				continue;
 			}
-			float3 value = Velocity[i];
-			uint flags = Flags[i];
-			float3 position = Position[i];
-			float num2 = ((num > 0f) ? math.rcp(num) : 0f);
+			float3 velocity = MotionPairs[i].Velocity;
+			uint flags = ExtendedData[i].Flags;
+			float3 position = PositionPairs[i].Position;
+			float num = ((mass > 0f) ? math.rcp(mass) : 0f);
 			if (!flags.HasFlag(ParticleFlags.SkipGlobalGravity))
 			{
-				value += dt * Gravity * num;
+				velocity += dt * Gravity * mass;
 			}
 			if (!flags.HasFlag(ParticleFlags.SkipGlobalWind))
 			{
-				float num3 = 0f;
+				float num2 = 0f;
 				for (int j = 0; j < CompressedStrengthOctaves.Length; j++)
 				{
 					float4 @float = CompressedStrengthOctaves[j];
-					num3 += (SimplexNoise2D.snoise(position.xz * @float.y - @float.zw) + 1f) * 0.5f * @float.x;
+					num2 += (SimplexNoise2D.snoise(position.xz * @float.y - @float.zw) + 1f) * 0.5f * @float.x;
 				}
-				float y = math.saturate(0.5f + StrengthNoiseContrast * (num3 - 0.5f));
-				y = math.lerp(1f, y, StrengthNoiseWeight);
-				float num4 = 0f;
+				float end = math.saturate(0.5f + StrengthNoiseContrast * (num2 - 0.5f));
+				end = math.lerp(1f, end, StrengthNoiseWeight);
+				float num3 = 0f;
 				for (int k = 0; k < CompressedShiftOctaves.Length; k++)
 				{
 					float4 float2 = CompressedShiftOctaves[k];
-					num4 += SimplexNoise2D.snoise(position.xz * float2.y - float2.zw) * float2.x;
+					num3 += SimplexNoise2D.snoise(position.xz * float2.y - float2.zw) * float2.x;
 				}
 				float2 float3 = WindVector;
-				if (num4 > 0f)
+				if (num3 > 0f)
 				{
-					float3 = math.mul(float2x2.Rotate(num4), WindVector);
+					float3 = math.mul(float2x2.Rotate(num3), WindVector);
 				}
-				value.xz += float3 * y * dt * num2;
+				velocity.xz += float3 * end * dt * num;
 			}
 			switch (BroadphaseType)
 			{
@@ -265,47 +227,49 @@ public struct SimulationJob : IJobParallelFor
 				if (position.x >= gridAabbMin.x && position.z >= gridAabbMin.z && position.x <= gridAabbMax.x && position.z <= gridAabbMax.z)
 				{
 					float2 float4 = new float2(position.x - gridAabbMin.x, position.z - gridAabbMin.z);
-					int2 x = new int2((int)(float4.x / gridCellSize.x), (int)(float4.y / gridCellSize.y));
-					x = math.clamp(x, 0, BroadphaseGridResolution - 1);
-					int num7 = x.y * BroadphaseGridResolution * 17 + x.x * 17;
-					int num8 = BodyForceVolumePairs[num7];
-					for (int m = 0; m < num8; m++)
+					int2 valueToClamp = new int2((int)(float4.x / gridCellSize.x), (int)(float4.y / gridCellSize.y));
+					valueToClamp = math.clamp(valueToClamp, 0, BroadphaseGridResolution - 1);
+					int num6 = valueToClamp.y * BroadphaseGridResolution * 17 + valueToClamp.x * 17;
+					int num7 = BodyForceVolumePairs[num6];
+					for (int m = 0; m < num7; m++)
 					{
-						int forceVolumeIndex = BodyForceVolumePairs[num7 + m + 1];
-						value += dt * num2 * GetForce(forceVolumeIndex, position);
+						int forceVolumeIndex = BodyForceVolumePairs[num6 + m + 1];
+						velocity += dt * num * GetForce(forceVolumeIndex, position);
 					}
 				}
 				break;
 			case BroadphaseType.MultilevelGrid:
 			{
-				int num9 = bodyIndex * 8;
+				int num8 = bodyIndex * 8;
 				for (int n = 0; n < 8; n++)
 				{
-					int num10 = BodyForceVolumePairs[num9 + n];
-					if (num10 < 0)
+					int num9 = BodyForceVolumePairs[num8 + n];
+					if (num9 < 0)
 					{
 						break;
 					}
-					value += dt * num2 * GetForce(num10, position);
+					velocity += dt * num * GetForce(num9, position);
 				}
 				break;
 			}
 			case BroadphaseType.OptimizedSpatialHashing:
 			{
-				int num5 = bodyIndex * 8;
+				int num4 = bodyIndex * 8;
 				for (int l = 0; l < 8; l++)
 				{
-					int num6 = BodyForceVolumePairs[num5 + l];
-					if (num6 < 0)
+					int num5 = BodyForceVolumePairs[num4 + l];
+					if (num5 < 0)
 					{
 						break;
 					}
-					value += dt * num2 * GetForce(num6, position);
+					velocity += dt * num * GetForce(num5, position);
 				}
 				break;
 			}
 			}
-			Velocity[i] = value;
+			ParticleMotionPair value = MotionPairs[i];
+			value.Velocity = velocity;
+			MotionPairs[i] = value;
 		}
 	}
 
@@ -398,7 +362,9 @@ public struct SimulationJob : IJobParallelFor
 	{
 		for (int i = particlesOffset; i < particlesOffset + particlesCount; i++)
 		{
-			Predicted[i] = Position[i] + dt * Velocity[i] * Decay;
+			ParticleMotionPair value = MotionPairs[i];
+			value.Predicted = PositionPairs[i].Position + dt * MotionPairs[i].Velocity * Decay;
+			MotionPairs[i] = value;
 			if (UseExperimentalFeatures)
 			{
 				quaternion q = Orientation[i];
@@ -416,18 +382,18 @@ public struct SimulationJob : IJobParallelFor
 			CollisionContact contact = default(CollisionContact);
 			contact.ColliderId = -1;
 			contact.ParticleId = -1;
-			if (Mass[num] <= 0f)
+			if (ExtendedData[num].Mass <= 0f)
 			{
 				contacts[i] = contact;
 				continue;
 			}
-			if (Flags[num].HasFlag(ParticleFlags.SkipCollision))
+			if (ExtendedData[num].Flags.HasFlag(ParticleFlags.SkipCollision))
 			{
 				contacts[i] = contact;
 				continue;
 			}
-			float3 predicted = Predicted[num];
-			float radius = Radius[num];
+			float3 predicted = MotionPairs[num].Predicted;
+			float radius = ExtendedData[num].Radius;
 			float restitution = bodyRestitution;
 			float friction = bodyFriction;
 			if (localCollidersCount > 0)
@@ -456,9 +422,9 @@ public struct SimulationJob : IJobParallelFor
 						break;
 					}
 					float2 @float = new float2(predicted.x - gridAabbMin.x, predicted.z - gridAabbMin.z);
-					int2 x = new int2((int)(@float.x / gridCellSize.x), (int)(@float.y / gridCellSize.y));
-					x = math.clamp(x, 0, BroadphaseGridResolution - 1);
-					int num4 = x.y * BroadphaseGridResolution * 17 + x.x * 17;
+					int2 valueToClamp = new int2((int)(@float.x / gridCellSize.x), (int)(@float.y / gridCellSize.y));
+					valueToClamp = math.clamp(valueToClamp, 0, BroadphaseGridResolution - 1);
+					int num4 = valueToClamp.y * BroadphaseGridResolution * 17 + valueToClamp.x * 17;
 					int num5 = BodyColliderPairs[num4];
 					bool flag2 = false;
 					int num6 = 0;
@@ -519,48 +485,48 @@ public struct SimulationJob : IJobParallelFor
 	private bool CheckContact(ref int colliderIndex, ref float3 predicted, ref float radius, ref float restitution, ref float friction, ref CollisionContact contact)
 	{
 		bool result = false;
-		float4 x = ColliderParameters0[colliderIndex];
-		float4 y = ColliderParameters1[colliderIndex];
+		float4 start = ColliderParameters0[colliderIndex];
+		float4 end = ColliderParameters1[colliderIndex];
 		float2 @float = ColliderMaterialParameters[colliderIndex];
-		float x2 = @float.x;
-		float y2 = @float.y;
+		float x = @float.x;
+		float y = @float.y;
 		switch ((ColliderType)ColliderTypeList[colliderIndex])
 		{
 		case ColliderType.Plane:
 		{
-			float num4 = math.dot(x.xyz, predicted) + x.w - radius;
+			float num4 = math.dot(start.xyz, predicted) + start.w - radius;
 			if (num4 < 0f)
 			{
-				contact.Normal = math.normalize(x.xyz);
-				contact.Position = predicted + x.xyz * (0f - num4);
-				contact.Restitution = math.min(y2, restitution);
-				contact.Friction = math.max(x2, friction);
+				contact.Normal = math.normalize(start.xyz);
+				contact.Position = predicted + start.xyz * (0f - num4);
+				contact.Restitution = math.min(y, restitution);
+				contact.Friction = math.max(x, friction);
 				contact.ColliderId = colliderIndex;
 				result = true;
 			}
 			break;
 		}
 		case ColliderType.Sphere:
-			if (math.distance(x.xyz, predicted) < x.w + radius)
+			if (math.distance(start.xyz, predicted) < start.w + radius)
 			{
-				contact.Normal = math.normalize(predicted - x.xyz);
-				contact.Position = x.xyz + contact.Normal * (x.w + radius);
-				contact.Restitution = math.min(y2, restitution);
-				contact.Friction = math.max(x2, friction);
+				contact.Normal = math.normalize(predicted - start.xyz);
+				contact.Position = start.xyz + contact.Normal * (start.w + radius);
+				contact.Restitution = math.min(y, restitution);
+				contact.Friction = math.max(x, friction);
 				contact.ColliderId = colliderIndex;
 				result = true;
 			}
 			break;
 		case ColliderType.Capsule:
 		{
-			float s = ClosestPointSegmentRatio(predicted, x.xyz, y.xyz);
-			float4 float14 = math.lerp(x, y, s);
+			float t = ClosestPointSegmentRatio(predicted, start.xyz, end.xyz);
+			float4 float14 = math.lerp(start, end, t);
 			if (math.distance(float14.xyz, predicted) < float14.w + radius)
 			{
 				contact.Normal = math.normalize(predicted - float14.xyz);
 				contact.Position = float14.xyz + contact.Normal * (float14.w + radius);
-				contact.Restitution = math.min(y2, restitution);
-				contact.Friction = math.max(x2, friction);
+				contact.Restitution = math.min(y, restitution);
+				contact.Friction = math.max(x, friction);
 				contact.ColliderId = colliderIndex;
 				result = true;
 			}
@@ -569,10 +535,10 @@ public struct SimulationJob : IJobParallelFor
 		case ColliderType.Box:
 		{
 			float4 float2 = ColliderParameters2[colliderIndex];
-			float3 xyz = x.xyz;
-			float3 xyz2 = y.xyz;
+			float3 xyz = start.xyz;
+			float3 xyz2 = end.xyz;
 			float3 xyz3 = float2.xyz;
-			float3 float3 = new float3(x.w, y.w, float2.w);
+			float3 float3 = new float3(start.w, end.w, float2.w);
 			float3 float4 = math.normalize(xyz);
 			float3 float5 = math.normalize(xyz2);
 			float3 float6 = math.normalize(xyz3);
@@ -646,8 +612,8 @@ public struct SimulationJob : IJobParallelFor
 			{
 				contact.Normal = math.normalize(float13);
 				contact.Position = predicted + float13 * (0f - num);
-				contact.Restitution = math.min(y2, restitution);
-				contact.Friction = math.max(x2, friction);
+				contact.Restitution = math.min(y, restitution);
+				contact.Friction = math.max(x, friction);
 				contact.ColliderId = colliderIndex;
 				result = true;
 			}
@@ -667,21 +633,21 @@ public struct SimulationJob : IJobParallelFor
 	{
 		for (int i = constraintsOffset; i < constraintsOffset + constraintsCount; i++)
 		{
-			ConstraintType constraintType = (ConstraintType)Type[i];
-			float4 constraintParameters = Parameters0[i];
-			float4 constraintParameters2 = Parameters1[i];
-			int num = Index0[i];
-			int num2 = Index1[i];
-			float mass = Mass[num];
-			float mass2 = Mass[num2];
-			float3 basePosition = BasePosition[num];
-			float3 basePosition2 = BasePosition[num2];
-			float3 predicted = Predicted[num];
-			float3 predicted2 = Predicted[num2];
-			float3 position = Position[num2];
-			quaternion predictedOrientation = (UseExperimentalFeatures ? PredictedOrientation[num] : quaternion.identity);
-			quaternion predictedOrientation2 = (UseExperimentalFeatures ? PredictedOrientation[num2] : quaternion.identity);
-			switch (constraintType)
+			ConstraintType type = (ConstraintType)ConstraintData[i].Type;
+			float4 constraintParameters = ConstraintData[i].Parameters0;
+			float4 constraintParameters2 = ConstraintData[i].Parameters1;
+			int index = ConstraintData[i].Index0;
+			int index2 = ConstraintData[i].Index1;
+			float mass = ExtendedData[index].Mass;
+			float mass2 = ExtendedData[index2].Mass;
+			float3 basePosition = PositionPairs[index].BasePosition;
+			float3 basePosition2 = PositionPairs[index2].BasePosition;
+			float3 predicted = MotionPairs[index].Predicted;
+			float3 predicted2 = MotionPairs[index2].Predicted;
+			float3 position = PositionPairs[index2].Position;
+			quaternion predictedOrientation = (UseExperimentalFeatures ? PredictedOrientation[index] : quaternion.identity);
+			quaternion predictedOrientation2 = (UseExperimentalFeatures ? PredictedOrientation[index2] : quaternion.identity);
+			switch (type)
 			{
 			case ConstraintType.Distance:
 				ResolveDistanceConstraint(ref mass, ref mass2, ref basePosition, ref basePosition2, ref constraintParameters, ref di, ref predicted, ref predicted2);
@@ -706,11 +672,17 @@ public struct SimulationJob : IJobParallelFor
 				}
 				break;
 			}
-			Predicted[num] = predicted;
-			Predicted[num2] = predicted2;
-			Position[num2] = position;
-			PredictedOrientation[UseExperimentalFeatures ? num : 0] = predictedOrientation;
-			PredictedOrientation[UseExperimentalFeatures ? num2 : 0] = predictedOrientation2;
+			ParticleMotionPair value = MotionPairs[index];
+			value.Predicted = predicted;
+			MotionPairs[index] = value;
+			value = MotionPairs[index2];
+			value.Predicted = predicted2;
+			MotionPairs[index2] = value;
+			ParticlePositionPair value2 = PositionPairs[index2];
+			value2.Position = position;
+			PositionPairs[index2] = value2;
+			PredictedOrientation[UseExperimentalFeatures ? index : 0] = predictedOrientation;
+			PredictedOrientation[UseExperimentalFeatures ? index2 : 0] = predictedOrientation2;
 		}
 	}
 
@@ -877,14 +849,14 @@ public struct SimulationJob : IJobParallelFor
 			if (collisionContact.ParticleId >= 0)
 			{
 				int index = i + particlesOffset;
-				float3 @float = Predicted[index];
-				float4 float2 = new float4(collisionContact.Normal, 0f - math.dot(collisionContact.Position, collisionContact.Normal));
-				float num = math.dot(@float, float2.xyz) + float2.w;
+				ParticleMotionPair value = MotionPairs[index];
+				float4 @float = new float4(collisionContact.Normal, 0f - math.dot(collisionContact.Position, collisionContact.Normal));
+				float num = math.dot(value.Predicted, @float.xyz) + @float.w;
 				if (num < 0f)
 				{
-					@float -= float2.xyz * num;
+					value.Predicted -= @float.xyz * num;
 				}
-				Predicted[index] = @float;
+				MotionPairs[index] = value;
 			}
 		}
 	}
@@ -893,14 +865,16 @@ public struct SimulationJob : IJobParallelFor
 	{
 		for (int i = particlesOffset; i < particlesOffset + particlesCount; i++)
 		{
-			float3 @float = Predicted[i] - Position[i];
+			ParticleMotionPair value = MotionPairs[i];
+			float3 @float = value.Predicted - PositionPairs[i].Position;
 			float num = math.rcp(dt);
 			float3 float2 = @float * num;
 			if (math.dot(float2, float2) < sleepTreshold)
 			{
 				float2 = 0;
 			}
-			Velocity[i] = float2;
+			value.Velocity = float2;
+			MotionPairs[i] = value;
 			if (UseExperimentalFeatures)
 			{
 				float4 float3 = new float4((math.mul(PredictedOrientation[i], math.inverse(Orientation[i])).value * 2f * num).xyz, 0f);
@@ -921,13 +895,15 @@ public struct SimulationJob : IJobParallelFor
 			if (collisionContact.ParticleId >= 0)
 			{
 				int index = i + particlesOffset;
-				float3 @float = Velocity[index];
-				float3 float2 = @float;
-				float2 -= 2f * math.dot(float2, collisionContact.Normal) * collisionContact.Normal;
-				float3 float3 = -(float2 - math.dot(float2, collisionContact.Normal) * collisionContact.Normal);
-				@float += float3 * collisionContact.Friction;
-				@float *= collisionContact.Restitution;
-				Velocity[index] = @float;
+				ParticleMotionPair value = MotionPairs[index];
+				float3 velocity = value.Velocity;
+				float3 @float = velocity;
+				@float -= 2f * math.dot(@float, collisionContact.Normal) * collisionContact.Normal;
+				float3 float2 = -(@float - math.dot(@float, collisionContact.Normal) * collisionContact.Normal);
+				velocity += float2 * collisionContact.Friction;
+				velocity *= collisionContact.Restitution;
+				value.Velocity = velocity;
+				MotionPairs[index] = value;
 			}
 		}
 	}
@@ -936,7 +912,9 @@ public struct SimulationJob : IJobParallelFor
 	{
 		for (int i = particlesOffset; i < particlesOffset + particlesCount; i++)
 		{
-			Position[i] = Predicted[i];
+			ParticlePositionPair value = PositionPairs[i];
+			value.Position = MotionPairs[i].Predicted;
+			PositionPairs[i] = value;
 			if (UseExperimentalFeatures)
 			{
 				Orientation[i] = PredictedOrientation[i];

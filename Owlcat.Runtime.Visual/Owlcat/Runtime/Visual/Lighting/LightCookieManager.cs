@@ -14,8 +14,8 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Lighting;
 
@@ -229,7 +229,7 @@ public class LightCookieManager : IDisposable
 
 		private static readonly Vector4 kIdentityScaleOffset = new Vector4(1f, 1f, 0f, 0f);
 
-		private static readonly RenderFunc<PassData> s_RenderFunc = Render;
+		private static readonly BaseRenderFunc<PassData, RenderGraphContext> s_RenderFunc = Render;
 
 		private readonly TextureHandle m_AtlasTexture;
 
@@ -262,7 +262,7 @@ public class LightCookieManager : IDisposable
 		protected override void RecordRenderGraph(ref RenderingData renderingData)
 		{
 			PassData passData;
-			using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PassData>(Name, out passData);
+			using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PassData>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Lighting\\LightCookieManager.cs", 406);
 			passData.hasAnyLightWithCookie = m_CookieDataList.Length > 0;
 			passData.atlasTexture = m_AtlasTexture;
 			passData.blitCookieTextures = m_BlitCookieTextures;

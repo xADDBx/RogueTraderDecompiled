@@ -905,7 +905,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			if (baseUnitEntity != null)
 			{
-				return new SkillCheckResult(GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(baseUnitEntity, check.Type, check.GetDC()), null, allowPartyCheckInCamp: false), baseUnitEntity);
+				return new SkillCheckResult(GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(baseUnitEntity, check.Type, Dialog.OverrideCRForSkillChecks ? check.GetDCByCR(Dialog.OverridenCR) : check.GetDC()), null, allowPartyCheckInCamp: false), baseUnitEntity);
 			}
 			RulePerformPartySkillCheck rulePerformPartySkillCheck = new RulePerformPartySkillCheck(check.Type, check.GetDC(), m_CapitalPartyChecksEnabled);
 			Game.Instance.Rulebook.TriggerEvent(rulePerformPartySkillCheck);
@@ -925,7 +925,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			LocalPassedChecks.Add(check);
 			LocalFailedChecks.Remove(check);
-			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExp(skillCheckResult.DC, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)));
+			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetXp(EncounterType.SkillCheck, ExperienceHelper.GetCheckExpByDifficulty(check.Difficulty, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0)));
 			check.OnCheckSuccessActions?.Run();
 		}
 		else if (!LocalPassedChecks.Contains(check))
@@ -1092,6 +1092,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			CutsceneControlledUnit.UpdateActiveCutscene(item);
 		}
+		Game.Instance.RootUiContext.SurfaceVM.StaticPartVM.DialogContextVM.ToggleDialogFade(value: false);
 	}
 
 	private static void StopDialogAnimations(BaseUnitEntity unit)

@@ -246,18 +246,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 
 	public bool CanActInCombat => m_InCombat;
 
-	public bool CanAttackOfOpportunity
-	{
-		get
-		{
-			if (!base.Owner.State.HasCondition(UnitCondition.DisableAttacksOfOpportunity) && !base.Owner.Passive && (AttacksOfOpportunityMadeThisTurnCount < MaxAttacksOfOpportunityPerRound || base.Owner.IsPlayerFaction || base.Owner.Blueprint.DifficultyType >= UnitDifficultyType.Elite))
-			{
-				return base.Owner.CanAttackOfOpportunity();
-			}
-			return false;
-		}
-	}
-
 	public int MaxAttacksOfOpportunityPerRound => Math.Max(1, StatsContainer.GetStat(StatType.AttackOfOpportunityCount));
 
 	private StatsContainer StatsContainer => base.Owner.GetRequired<PartStatsContainer>().Container;
@@ -267,6 +255,15 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	public ModifiableValue WarhammerInitialAPYellow => StatsContainer.GetStat(StatType.WarhammerInitialAPYellow);
 
 	public ModifiableValue InitiativeBonus => StatsContainer.GetStat(StatType.Initiative);
+
+	public bool CanAttackOfOpportunity(bool canUseInRange)
+	{
+		if (!base.Owner.State.HasCondition(UnitCondition.DisableAttacksOfOpportunity) && !base.Owner.Passive && (AttacksOfOpportunityMadeThisTurnCount < MaxAttacksOfOpportunityPerRound || base.Owner.IsPlayerFaction || base.Owner.Blueprint.DifficultyType >= UnitDifficultyType.Elite))
+		{
+			return base.Owner.CanAttackOfOpportunity(canUseInRange);
+		}
+		return false;
+	}
 
 	protected override void OnAttach()
 	{

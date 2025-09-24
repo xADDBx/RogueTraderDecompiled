@@ -1,6 +1,6 @@
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -16,10 +16,10 @@ public class DecalPreviewPass : DrawRendererListPass<DecalPreviewPassData>
 		m_ShaderTagId = new ShaderTagId("DecalPreview");
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
 		RendererListDesc desc = CreateRendererListDesc(ref renderingData);
-		rendererList = renderingData.RenderGraph.CreateRendererList(in desc);
+		rendererList = renderingData.Context.CreateRendererList(desc);
 	}
 
 	private RendererListDesc CreateRendererListDesc(ref RenderingData renderingData)

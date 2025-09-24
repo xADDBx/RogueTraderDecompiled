@@ -91,8 +91,6 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag DoesNotCountTurns;
 
-	public FeatureCountableFlag HasNoAPPenaltyCostForTwoWeaponFighting;
-
 	public FeatureCountableFlag IgnoreCoverEfficiency;
 
 	public FeatureCountableFlag WitheringShard;
@@ -204,7 +202,6 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		AoEDodgeWithoutMovement = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AoEDodgeWithoutMovement);
 		IgnoreMeleeOutnumbering = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IgnoreMeleeOutnumbering);
 		DoesNotCountTurns = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DoesNotCountTurns);
-		HasNoAPPenaltyCostForTwoWeaponFighting = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HasNoAPPenaltyCostForTwoWeaponFighting);
 		IgnoreCoverEfficiency = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.IgnoreCoverEfficiency);
 		WitheringShard = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.WitheringShard);
 		HiveOutnumber = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HiveOutnumber);

@@ -48,6 +48,8 @@ public class UnitPartNotMoveTrigger : UnitPart, IGameTimeChangedHandler, ISubscr
 	[JsonProperty]
 	private bool m_IgnoreDialogue;
 
+	public bool Triggered => m_Triggered;
+
 	public void Add(UnitFact fact, bool allowDuringDialogue, UnitNotMovingTrigger component)
 	{
 		m_Component = component;

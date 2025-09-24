@@ -8,5 +8,6 @@ public enum UIPropertyName
 	MaxDamage,
 	Range,
 	APCost,
-	MPCost
+	MPCost,
+	Recovery
 }

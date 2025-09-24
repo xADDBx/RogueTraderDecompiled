@@ -10,7 +10,7 @@ using Owlcat.Runtime.Visual.Waaagh.Passes;
 using Owlcat.Runtime.Visual.Waaagh.RendererFeatures.PositionBasedDynamics.Broadphase;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.PositionBasedDynamics.Passes;
 
@@ -228,7 +228,7 @@ public class SimulationPass : ScriptableRenderPass<SimulationPassData>
 		SimulationStep(data, context);
 		Skinning(data, context);
 		Mesh(data, context);
-		context.cmd.SetGlobalBuffer(GPUParticleSoA._PbdParticlesPositionBuffer, data.GpuData.ParticlesSoA.PositionBuffer);
+		context.cmd.SetGlobalBuffer(GPUParticleSoA._PbdParticlesPositionPairsBuffer, data.GpuData.ParticlesSoA.PositionPairsBuffer);
 	}
 
 	private void SetupShaderConstants(SimulationPassData data, RenderGraphContext context)

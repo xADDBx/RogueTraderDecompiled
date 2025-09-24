@@ -98,6 +98,7 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 			h.HandleModalWindowUiChanged(state: true, ModalWindowUIType.InGameMenu);
 		});
 		AddDisposable(GamePad.Instance.OnLayerPushed.Subscribe(OnCurrentInputLayerChanged));
+		base.ViewModel.IsShown = true;
 	}
 
 	protected override void DestroyViewImplementation()
@@ -114,6 +115,7 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		{
 			h.HandleModalWindowUiChanged(state: false, ModalWindowUIType.InGameMenu);
 		});
+		base.ViewModel.IsShown = false;
 	}
 
 	private InputLayer GetInputLayer()

@@ -13,6 +13,7 @@ using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Owlcat.Runtime.UniRx;
+using UniRx;
 using UnityEngine;
 
 namespace Kingmaker.UI.Models;
@@ -22,6 +23,8 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 	private readonly List<BaseUnitEntity> m_LinkedUnits = new List<BaseUnitEntity>();
 
 	public bool StopMoveFlag;
+
+	private ReactiveProperty<BaseUnitEntity> SelectedUnitPetsAllowed => Game.Instance.SelectionCharacter.SelectedUnitPetsAllowed;
 
 	protected override bool CanMultiSelect => false;
 
@@ -34,6 +37,7 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 			return;
 		}
 		BaseUnitEntity entityData = unit.EntityData;
+		SelectedUnitPetsAllowed.Value = entityData;
 		if (!entityData.IsDirectlyControllable && !entityData.IsPet)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)entityData, (Action<ITrySelectNotControllableHandler>)delegate(ITrySelectNotControllableHandler h)
@@ -51,6 +55,7 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 		{
 			ToggleSelectAsPetUnit(entityData, value: true);
 			SelectUnit(entityData.Master.View, single, sendSelectionEvent, ask);
+			SelectedUnitPetsAllowed.Value = entityData;
 		}
 		else
 		{

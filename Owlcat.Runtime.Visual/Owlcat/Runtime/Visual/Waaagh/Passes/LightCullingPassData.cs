@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -10,7 +10,7 @@ public class LightCullingPassData : PassDataBase
 
 	public int BuildLightTilesKernel;
 
-	public ComputeBufferHandle LightTilesBuffer;
+	public BufferHandle LightTilesBuffer;
 
 	public int3 DispatchSize;
 

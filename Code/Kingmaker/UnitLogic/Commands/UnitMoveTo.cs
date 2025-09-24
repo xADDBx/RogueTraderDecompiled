@@ -100,6 +100,8 @@ public sealed class UnitMoveTo : AbstractUnitCommand<UnitMoveToParams>
 				base.Executor.HoldState = true;
 			}
 		}
+		base.Executor.View.MovementAgent.Blocker.Unblock();
+		base.Executor.View.MovementAgent.UpdateBlocker();
 		if (RunAway)
 		{
 			DoRunAway();

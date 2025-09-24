@@ -11,5 +11,6 @@ public enum ItemsSorterType
 	NameDown,
 	DateUp,
 	DateDown,
+	Favorite,
 	CargoValue
 }

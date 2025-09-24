@@ -1,4 +1,3 @@
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
 
@@ -10,7 +9,7 @@ public class WaaaghRendererLists
 	{
 		public RendererListDesc Desc;
 
-		public RendererListHandle List;
+		public RendererList List;
 	}
 
 	private ShaderTagId m_GBufferShaderTagId = new ShaderTagId("GBuffer");
@@ -37,19 +36,20 @@ public class WaaaghRendererLists
 
 	public void Init(ref RenderingData renderingData)
 	{
+		ref ScriptableRenderContext context = ref renderingData.Context;
 		PerObjectData rendererConfiguration = PerObjectData.LightProbe | PerObjectData.Lightmaps | PerObjectData.ShadowMask;
 		SortingCriteria sortingCriteria = SortingCriteria.SortingLayer | SortingCriteria.RenderQueue | SortingCriteria.OptimizeStateChanges | SortingCriteria.CanvasOrder;
 		OpaqueGBuffer.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_GBufferShaderTagId, rendererConfiguration, WaaaghRenderQueue.OpaquePreDistortion, sortingCriteria);
-		OpaqueGBuffer.List = renderingData.RenderGraph.CreateRendererList(in OpaqueGBuffer.Desc);
+		OpaqueGBuffer.List = context.CreateRendererList(OpaqueGBuffer.Desc);
 		OpaqueDistortionGBuffer.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_GBufferShaderTagId, rendererConfiguration, WaaaghRenderQueue.OpaqueDistortion, renderingData.CameraData.DefaultOpaqueSortFlags);
-		OpaqueDistortionGBuffer.List = renderingData.RenderGraph.CreateRendererList(in OpaqueDistortionGBuffer.Desc);
+		OpaqueDistortionGBuffer.List = context.CreateRendererList(OpaqueDistortionGBuffer.Desc);
 		OpaqueDistortionForward.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_ForwardShaderTags, renderingData.PerObjectData, WaaaghRenderQueue.OpaqueDistortion);
-		OpaqueDistortionForward.List = renderingData.RenderGraph.CreateRendererList(in OpaqueDistortionForward.Desc);
+		OpaqueDistortionForward.List = context.CreateRendererList(OpaqueDistortionForward.Desc);
 		Transparent.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_ForwardShaderTags, -1, renderingData.PerObjectData, WaaaghRenderQueue.Transparent, SortingCriteria.CommonTransparent);
-		Transparent.List = renderingData.RenderGraph.CreateRendererList(in Transparent.Desc);
+		Transparent.List = context.CreateRendererList(Transparent.Desc);
 		DistortionVectors.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_DistortionVectorShaderTagId, PerObjectData.None, WaaaghRenderQueue.Transparent);
-		DistortionVectors.List = renderingData.RenderGraph.CreateRendererList(in DistortionVectors.Desc);
+		DistortionVectors.List = context.CreateRendererList(DistortionVectors.Desc);
 		Overlay.Desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_ForwardShaderTags, -1, renderingData.PerObjectData, WaaaghRenderQueue.Overlay, SortingCriteria.CommonTransparent);
-		Overlay.List = renderingData.RenderGraph.CreateRendererList(in Overlay.Desc);
+		Overlay.List = context.CreateRendererList(Overlay.Desc);
 	}
 }

@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -19,6 +20,7 @@ public abstract class ItemSlotBaseView : ViewBase<ItemSlotVM>, IItemSlotView
 		{
 			UpdateSlotLayer();
 		}));
+		AddDisposable(base.ViewModel.SetHintTextCommand.Subscribe(AddHint));
 		UpdateSlotLayer();
 	}
 
@@ -100,5 +102,10 @@ public abstract class ItemSlotBaseView : ViewBase<ItemSlotVM>, IItemSlotView
 			rectTransform = (RectTransform)rectTransform.parent;
 		}
 		return rectTransform;
+	}
+
+	private void AddHint(string hint)
+	{
+		AddDisposable(m_MainButton.SetHint(hint));
 	}
 }

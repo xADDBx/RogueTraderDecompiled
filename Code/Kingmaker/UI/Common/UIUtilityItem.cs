@@ -35,6 +35,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
@@ -315,7 +316,7 @@ public static class UIUtilityItem
 			}
 			AbilityData abilityData = new AbilityData(blueprintAbility, caster)
 			{
-				OverrideWeapon = (itemEntity as ItemEntityWeapon)
+				OverrideWeapon = ((blueprintAbility.GetComponent<WarhammerOverrideAbilityWeapon>()?.Weapon?.CreateEntity() ?? itemEntity) as ItemEntityWeapon)
 			};
 			if (itemEntity is ItemEntityWeapon itemEntityWeapon)
 			{
@@ -667,6 +668,11 @@ public static class UIUtilityItem
 	{
 		string description = usable.Abilities.FirstOrDefault()?.Data.ShortenedDescription ?? ability?.ShortenedDescription;
 		return UpdateDescriptionWithOwner(usable, description);
+	}
+
+	public static string UpdateAbilityDescription(ItemEntity item, string description)
+	{
+		return UpdateDescriptionWithOwner(item, description);
 	}
 
 	private static string GetMechanicDescription(BlueprintItem blueprintItem)

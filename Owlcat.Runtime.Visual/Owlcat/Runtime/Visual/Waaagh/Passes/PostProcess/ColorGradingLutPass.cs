@@ -3,8 +3,8 @@ using Owlcat.Runtime.Visual.Waaagh.Data;
 using Owlcat.Runtime.Visual.Waaagh.PostProcess;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.PostProcess;
 

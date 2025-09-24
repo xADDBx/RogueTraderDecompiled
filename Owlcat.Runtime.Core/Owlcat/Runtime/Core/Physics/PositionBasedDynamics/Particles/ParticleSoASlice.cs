@@ -5,13 +5,9 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 
 public struct ParticleSoASlice
 {
-	public NativeSlice<float3> BasePosition;
+	public NativeSlice<ParticlePositionPair> PositionPairs;
 
-	public NativeSlice<float3> Position;
-
-	public NativeSlice<float3> Predicted;
-
-	public NativeSlice<float3> Velocity;
+	public NativeSlice<ParticleMotionPair> MotionPairs;
 
 	public NativeSlice<quaternion> Orientation;
 
@@ -19,9 +15,5 @@ public struct ParticleSoASlice
 
 	public NativeSlice<float4> AngularVelocity;
 
-	public NativeSlice<float> Mass;
-
-	public NativeSlice<float> Radius;
-
-	public NativeSlice<uint> Flags;
+	public NativeSlice<ParticleExtendedData> ExtendedData;
 }

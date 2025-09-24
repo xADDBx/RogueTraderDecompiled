@@ -50,6 +50,8 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 
 	private bool m_ShowHoverPosition;
 
+	private bool m_IsPredictedPositionHologram;
+
 	private IDisposable m_DelayedUpdateLos;
 
 	private IDisposable m_DelayedUpdateAoo;
@@ -212,6 +214,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		{
 			m_VirtualHologramPosition = null;
 			m_VirtualHologramDirection = null;
+			m_IsPredictedPositionHologram = false;
 			UpdateVirtualHologramPosition();
 		}
 	}
@@ -324,7 +327,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 			Game.Instance.VirtualPositionController.VirtualPosition = m_VirtualHoverPosition.Value;
 			return;
 		}
-		Game.Instance.VirtualPositionController.VirtualPositionUnit = m_SelectedAbility?.Caster;
+		Game.Instance.VirtualPositionController.VirtualPositionUnit = ((!m_IsPredictedPositionHologram) ? null : m_SelectedAbility?.Caster);
 		if (m_VirtualHologramPosition.HasValue)
 		{
 			Game.Instance.VirtualPositionController.VirtualPosition = m_VirtualHologramPosition.Value;
@@ -452,6 +455,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		m_MovementHologram = null;
 		m_VirtualHologramPosition = null;
 		m_VirtualHologramDirection = null;
+		m_IsPredictedPositionHologram = false;
 		RealHologramPosition = null;
 		ClearMoveCost();
 	}
@@ -477,16 +481,17 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 	public void HandleAbilityTargetSelectionStart(AbilityData ability)
 	{
 		m_SelectedAbility = ability;
-		UpdateSecondHologramForSelectedAbility();
+		UpdatePredictedPositionHologramForSelectedAbility();
 		UpdateVirtualLoSPosition();
 	}
 
-	public void UpdateSecondHologramForSelectedAbility()
+	public void UpdatePredictedPositionHologramForSelectedAbility()
 	{
-		if (!(m_SelectedAbility == null) && m_SelectedAbility.TryGetCasterDesiredPositionAndDirection(out var position, out var direction))
+		if (!(m_SelectedAbility == null) && m_SelectedAbility.TryGetPredictedCasterPositionAndDirection(out var position, out var direction))
 		{
 			m_VirtualHologramPosition = position;
 			m_VirtualHologramDirection = direction;
+			m_IsPredictedPositionHologram = true;
 			CreateHologramIfNeeded(CurrentUnit, allowSecondHologram: true);
 			UpdateVirtualHologramPosition();
 		}

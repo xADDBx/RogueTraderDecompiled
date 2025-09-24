@@ -1,8 +1,8 @@
 using Owlcat.Runtime.Visual.FogOfWar;
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.FogOfWar.Passes;
 

@@ -10,6 +10,7 @@ internal enum WaaaghProfileId
 	RendererSetup,
 	RendererExecute,
 	RendererSortRenderPasses,
+	RendererConfigureRendererLists,
 	WaaaghLightsSetup,
 	LightCookieSetup,
 	ShadowsSetup,

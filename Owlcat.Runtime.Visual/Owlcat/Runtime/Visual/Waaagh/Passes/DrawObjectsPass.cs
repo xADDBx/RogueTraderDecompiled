@@ -1,6 +1,6 @@
 using Owlcat.Runtime.Visual.IndirectRendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -30,7 +30,7 @@ public class DrawObjectsPass : DrawRendererListPass<DrawObjectsPassData>
 		m_Name = $"DrawObjects.{m_RendererListType}";
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
 		switch (m_RendererListType)
 		{

@@ -7,6 +7,7 @@ public class GameLoadingWaitTask : WaitTask
 	public GameLoadingWaitTask(ArbiterTask parent)
 		: base(parent)
 	{
+		base.Status = "Game loading wait...";
 	}
 
 	protected override bool Predicate()

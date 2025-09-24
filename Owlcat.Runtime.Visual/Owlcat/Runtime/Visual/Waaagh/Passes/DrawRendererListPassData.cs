@@ -1,8 +1,8 @@
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
 public class DrawRendererListPassData : PassDataBase
 {
-	public RendererListHandle RendererList;
+	public RendererList RendererList;
 }

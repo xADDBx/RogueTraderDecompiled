@@ -85,7 +85,7 @@ public class WaaaghCameraBuffer
 
 	private RTHandle AllocDepthHistoryBuffer(RTHandleSystem rts, int frameIndex)
 	{
-		return rts.Alloc(CameraRenderPixelSize.x, CameraRenderPixelSize.y, 1, DepthBits.None, GraphicsFormat.R32_SFloat, FilterMode.Point, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistoryDepth{frameIndex}");
+		return rts.Alloc(CameraRenderPixelSize.x, CameraRenderPixelSize.y, 1, DepthBits.None, GraphicsFormat.R32_SFloat, FilterMode.Point, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistoryDepth{frameIndex}");
 	}
 
 	private RTHandle AllocColorHistoryBuffer(RTHandleSystem rts, int frameIndex)
@@ -94,7 +94,7 @@ public class WaaaghCameraBuffer
 		bool isHdrEnabled = Camera.allowHDR && WaaaghPipeline.Asset.SupportsHDR;
 		HDRColorBufferPrecision hDRColorBufferPrecision = WaaaghPipeline.Asset.HDRColorBufferPrecision;
 		GraphicsFormat colorFormat = WaaaghPipeline.MakeRenderTextureGraphicsFormat(isHdrEnabled, hDRColorBufferPrecision, needsAlpha);
-		return rts.Alloc(CameraRenderPixelSize.x, CameraRenderPixelSize.y, 1, DepthBits.None, colorFormat, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistoryColor{frameIndex}");
+		return rts.Alloc(CameraRenderPixelSize.x, CameraRenderPixelSize.y, 1, DepthBits.None, colorFormat, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistoryColor{frameIndex}");
 	}
 
 	private int2 GetSsrSize()
@@ -105,7 +105,7 @@ public class WaaaghCameraBuffer
 	private RTHandle AllocSSRHistoryBuffer(RTHandleSystem rts, int frameIndex)
 	{
 		int2 ssrSize = GetSsrSize();
-		return rts.Alloc(ssrSize.x, ssrSize.y, 1, DepthBits.None, m_SsrColorFormat, FilterMode.Bilinear, TextureWrapMode.Repeat, TextureDimension.Tex2D, enableRandomWrite: true, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistorySSR{frameIndex}");
+		return rts.Alloc(ssrSize.x, ssrSize.y, 1, DepthBits.None, m_SsrColorFormat, FilterMode.Bilinear, TextureWrapMode.Repeat, TextureDimension.Tex2D, enableRandomWrite: true, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{Camera.name}_HistorySSR{frameIndex}");
 	}
 
 	public RTHandle GetCurrentFrameRT(HistoryType historyType)

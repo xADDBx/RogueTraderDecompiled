@@ -240,11 +240,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		{
 			throw new Exception($"{base.Executor} can't make attack of opportunity: has no threat hand");
 		}
-		m_AbilityBlueprint = Hand.GetAttackOfOpportunityAbility(base.Executor);
-		if (m_AbilityBlueprint == null && Hand.Weapon.Blueprint.IsRanged)
-		{
-			m_AbilityBlueprint = Hand.Weapon.Blueprint.WeaponAbilities.Ability1.Ability;
-		}
+		m_AbilityBlueprint = Hand.GetAttackOfOpportunityAbility(base.Executor, base.Params.IsRanged);
 		if (m_AbilityBlueprint == null)
 		{
 			throw new Exception($"{base.Executor} can't make attack of opportunity: weapon in threat hand doesn't have any ability for AOO");

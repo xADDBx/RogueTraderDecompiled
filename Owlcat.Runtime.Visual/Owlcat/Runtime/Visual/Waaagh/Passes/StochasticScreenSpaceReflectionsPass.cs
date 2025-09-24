@@ -4,8 +4,8 @@ using Owlcat.Runtime.Visual.Waaagh.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -118,10 +118,13 @@ public class StochasticScreenSpaceReflectionsPass : ScriptableRenderPass<Stochas
 		m_PipelineTextures = textures;
 	}
 
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		DependsOn(in resources.RendererLists.OpaqueGBuffer.List);
+	}
+
 	protected override void Setup(RenderGraphBuilder builder, StochasticScreenSpaceReflectionsPassData data, ref RenderingData renderingData)
 	{
-		builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(value: true);
 		WaaaghCameraBuffer waaaghCameraBuffer = WaaaghCameraBuffers.EnsureCamera(ref renderingData.CameraData);
 		VolumeStack stack = VolumeManager.instance.stack;
 		m_Settings = stack.GetComponent<ScreenSpaceReflections>();

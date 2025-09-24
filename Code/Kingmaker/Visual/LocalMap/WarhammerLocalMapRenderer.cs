@@ -188,9 +188,9 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 		for (int k = 0; k < list.Count; k++)
 		{
 			list[k] = (list[k] - num2) * x;
-			int x2 = (int)math.round(list[k] * (float)(num - 1));
-			x2 = math.clamp(x2, 0, num - 1);
-			array[x2].Add(k);
+			int valueToClamp = (int)math.round(list[k] * (float)(num - 1));
+			valueToClamp = math.clamp(valueToClamp, 0, num - 1);
+			array[valueToClamp].Add(k);
 		}
 		for (int l = 0; l < num; l++)
 		{
@@ -216,7 +216,7 @@ public class WarhammerLocalMapRenderer : MonoBehaviour
 		{
 			UnityEngine.Object.DestroyImmediate(m_LocalMapTexture);
 		}
-		m_LocalMapTexture = new Texture2D(m_CachedGraph.width, m_CachedGraph.depth, TextureFormat.R8, mipChain: false);
+		m_LocalMapTexture = new Texture2D(m_CachedGraph.width, m_CachedGraph.depth, TextureFormat.R8, mipChain: false, linear: true);
 		m_LocalMapTexture.filterMode = FilterMode.Point;
 		m_LocalMapTexture.name = "LocalMap_NavMeshTexture";
 		m_LocalMapTexture.wrapMode = TextureWrapMode.Clamp;

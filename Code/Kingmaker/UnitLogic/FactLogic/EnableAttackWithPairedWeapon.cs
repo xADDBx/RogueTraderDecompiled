@@ -16,7 +16,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.FactLogic;
 
 [TypeId("80356eece01ff7949a0c0191afdf7a3a")]
-public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActiveEquipmentSetHandler<EntitySubscriber>, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitActiveEquipmentSetHandler, EntitySubscriber>, IUnitEquipmentHandler<EntitySubscriber>, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, IEventTag<IUnitEquipmentHandler, EntitySubscriber>, IEntitySubscriber, IHashable
+public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActiveEquipmentSetHandler<EntitySubscriber>, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitActiveEquipmentSetHandler, EntitySubscriber>, IUnitEquipmentHandler<EntitySubscriber>, IUnitEquipmentHandler, ISubscriber<IMechanicEntity>, IEventTag<IUnitEquipmentHandler, EntitySubscriber>, IUnitWeaponReimplementedHandler, IEntitySubscriber, IHashable
 {
 	protected override void OnActivateOrPostLoad()
 	{
@@ -111,6 +111,11 @@ public class EnableAttackWithPairedWeapon : UnitFactComponentDelegate, IUnitActi
 	}
 
 	public void HandleUnitChangeActiveEquipmentSet()
+	{
+		UpdateAbilityWeaponGroups();
+	}
+
+	public void HandleUnitWeaponReimplemented()
 	{
 		UpdateAbilityWeaponGroups();
 	}

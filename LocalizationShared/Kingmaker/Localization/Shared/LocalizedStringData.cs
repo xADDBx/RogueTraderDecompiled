@@ -55,6 +55,7 @@ public class LocalizedStringData
 	{
 		Source = source;
 		Key = key;
+		Languages.Add(new LocaleData(Locale.Sound));
 	}
 
 	[JsonConstructor]

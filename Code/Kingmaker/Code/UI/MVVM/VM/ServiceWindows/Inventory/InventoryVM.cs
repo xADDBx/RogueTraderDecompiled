@@ -54,18 +54,13 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		AddDisposable(LevelClassScoresVM = new CharInfoLevelClassScoresVM(Unit));
 		AddDisposable(CharInfoSkillsAndWeaponsVM = new CharInfoSkillsAndWeaponsVM(Unit));
 		AddDisposable(StashVM = new InventoryStashVM(inventory: true, null, Unit));
-		AddDisposable(DollVM = new InventoryDollVM(Unit, OnWeaponSetChanged));
+		AddDisposable(DollVM = new InventoryDollVM(Unit));
 		AddDisposable(UnitBuffPartVM = new UnitBuffPartVM(Unit.Value));
 		EventBus.RaiseEvent(delegate(IUIEventHandler h)
 		{
 			h.HandleUIEvent(UIEventType.InventoryOpen);
 		});
 		Refresh();
-	}
-
-	private void OnWeaponSetChanged()
-	{
-		StashVM?.OnWeaponSetChanged();
 	}
 
 	private void OnUnitChanged()

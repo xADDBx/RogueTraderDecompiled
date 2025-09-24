@@ -156,9 +156,20 @@ public class UnitViewHandsEquipment
 	{
 		get
 		{
+			IEnumerable<EquipmentEntity.OutfitPart> source = from p in Character.EquipmentEntities.SelectMany((EquipmentEntity ee) => ee.OutfitParts)
+				where p.Special == EquipmentEntity.OutfitPartSpecialType.Backpack && (p.StaysInPeacefulMode || !Character.PeacefulMode)
+				select p;
+			if (source.Any(delegate(EquipmentEntity.OutfitPart p)
+			{
+				EquipmentEntity equipmentEntity = Character.EquipmentEntities.FirstOrDefault((EquipmentEntity e) => e.OutfitParts.Contains(p));
+				return equipmentEntity != null && equipmentEntity.CantBeHiddenByDollRoom;
+			}))
+			{
+				return true;
+			}
 			if (Owner.UISettings.ShowBackpack)
 			{
-				return Character.EquipmentEntities.SelectMany((EquipmentEntity ee) => ee.OutfitParts).Any((EquipmentEntity.OutfitPart p) => p.Special == EquipmentEntity.OutfitPartSpecialType.Backpack && (p.StaysInPeacefulMode || !Character.PeacefulMode));
+				return source.Any();
 			}
 			return false;
 		}
@@ -215,9 +226,15 @@ public class UnitViewHandsEquipment
 			Owner.UISettings.SubscribeOnBackpackVisibilityChange(UpdateBackpackVisibility);
 			Owner.UISettings.SubscribeOnHelmetVisibilityChange(UpdateHelmetVisibility);
 			Owner.UISettings.SubscribeOnHelmetVisibilityAboveAllChange(UpdateHelmetVisibilityAboveAll);
+			Owner.UISettings.SubscribeOnGlovesVisibilityChange(UpdateGlovesVisibility);
+			Owner.UISettings.SubscribeOnBootsVisibilityChange(UpdateBootsVisibility);
+			Owner.UISettings.SubscribeOnArmorVisibilityChange(UpdateArmorVisibility);
 			UpdateHelmetVisibility();
 			UpdateHelmetVisibilityAboveAll();
 			UpdateBackpackVisibility();
+			UpdateGlovesVisibility();
+			UpdateBootsVisibility();
+			UpdateArmorVisibility();
 			MatchWithCurrentCombatState();
 			ForceEndChangeEquipment();
 		}
@@ -240,6 +257,9 @@ public class UnitViewHandsEquipment
 			Owner.UISettings.UnsubscribeFromBackpackVisibilityChange(UpdateBackpackVisibility);
 			Owner.UISettings.UnsubscribeFromHelmetVisibilityChange(UpdateHelmetVisibility);
 			Owner.UISettings.UnsubscribeFromHelmetVisibilityAboveAllChange(UpdateHelmetVisibilityAboveAll);
+			Owner.UISettings.UnsubscribeFromGlovesVisibilityChange(UpdateGlovesVisibility);
+			Owner.UISettings.UnsubscribeFromBootsVisibilityChange(UpdateBootsVisibility);
+			Owner.UISettings.UnsubscribeFromArmorVisibilityChange(UpdateArmorVisibility);
 		}
 	}
 
@@ -256,6 +276,21 @@ public class UnitViewHandsEquipment
 	private void UpdateHelmetVisibilityAboveAll()
 	{
 		Character.UpdateHelmetVisibilityAboveAll(Owner.UISettings.ShowHelmAboveAll);
+	}
+
+	private void UpdateGlovesVisibility()
+	{
+		Character.UpdateGlovesVisibility(Owner.UISettings.ShowGloves);
+	}
+
+	private void UpdateBootsVisibility()
+	{
+		Character.UpdateBootsVisibility(Owner.UISettings.ShowBoots);
+	}
+
+	private void UpdateArmorVisibility()
+	{
+		Character.UpdateArmorVisibility(Owner.UISettings.ShowArmor);
 	}
 
 	public void RaiseModelSpawned()
@@ -638,6 +673,11 @@ public class UnitViewHandsEquipment
 	{
 		if (part.Special == EquipmentEntity.OutfitPartSpecialType.Backpack)
 		{
+			EquipmentEntity equipmentEntity = Character.EquipmentEntities.FirstOrDefault((EquipmentEntity e) => e.OutfitParts.Contains(part));
+			if (equipmentEntity != null && equipmentEntity.CantBeHiddenByDollRoom)
+			{
+				return true;
+			}
 			return Owner.UISettings.ShowBackpack;
 		}
 		if (part.Special == EquipmentEntity.OutfitPartSpecialType.Cloak || part.Special == EquipmentEntity.OutfitPartSpecialType.CloakSquashed)
@@ -732,7 +772,7 @@ public class UnitViewHandsEquipment
 		if (Active)
 		{
 			m_ShouldBeInCombat.Value = inCombat;
-			if (Owner.IsInPlayerParty && !inCombat)
+			if (Owner.IsInPlayerParty && !inCombat && (bool)m_ShouldBeInCombatVisual)
 			{
 				m_ShouldBeInCombatVisual.Value = false;
 			}
@@ -928,6 +968,25 @@ public class UnitViewHandsEquipment
 				equipmentLight.gameObject.SetActive(isVisible);
 			}
 		}
+	}
+
+	public void ForceUpdateWeaponEnchantmentFx()
+	{
+		PFLog.Default.Log($"[ForceUpdateWeaponEnchantmentFx] Called for unit {Owner?.CharacterName}, Active={Active}");
+		if (!Active)
+		{
+			PFLog.Default.Log("[ForceUpdateWeaponEnchantmentFx] Not active, skipping");
+			return;
+		}
+		foreach (KeyValuePair<HandsEquipmentSet, WeaponSet> set in Sets)
+		{
+			string arg = set.Value.MainHand.VisibleItem?.Blueprint?.name ?? "none";
+			string arg2 = set.Value.OffHand.VisibleItem?.Blueprint?.name ?? "none";
+			PFLog.Default.Log($"[ForceUpdateWeaponEnchantmentFx] Updating set {set.Key}: MainHand={arg}, OffHand={arg2}");
+			set.Value.MainHand.UpdateWeaponEnchantmentFx(isVisible: true, force: true);
+			set.Value.OffHand.UpdateWeaponEnchantmentFx(isVisible: true, force: true);
+		}
+		PFLog.Default.Log("[ForceUpdateWeaponEnchantmentFx] Completed");
 	}
 
 	public void HideOffWeapon(bool hide)

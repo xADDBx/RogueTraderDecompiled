@@ -5,8 +5,8 @@ using Owlcat.Runtime.Visual.Waaagh.Passes;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -211,10 +211,10 @@ public class VolumetricLightingPass : ScriptableRenderPass<VolumetricLightingPas
 		if (data.LocalVolumesEnabled)
 		{
 			data.LocalVolumetricFogClusteringParams = m_Feature.FogClusteringParams;
-			data.LocalFogBoundsBuffer = builder.ReadComputeBuffer(in m_Feature.VisibleVolumesBoundsBufferHandle);
-			data.LocalFogTilesBuffer = builder.ReadComputeBuffer(in m_Feature.FogTilesBufferHandle);
-			data.LocalFogGpuDataBuffer = builder.ReadComputeBuffer(in m_Feature.VisibleVolumesDataBufferHandle);
-			data.LocalFogZBinsBuffer = builder.ReadComputeBuffer(in m_Feature.ZBinsBufferHandle);
+			data.LocalFogBoundsBuffer = builder.ReadBuffer(in m_Feature.VisibleVolumesBoundsBufferHandle);
+			data.LocalFogTilesBuffer = builder.ReadBuffer(in m_Feature.FogTilesBufferHandle);
+			data.LocalFogGpuDataBuffer = builder.ReadBuffer(in m_Feature.VisibleVolumesDataBufferHandle);
+			data.LocalFogZBinsBuffer = builder.ReadBuffer(in m_Feature.ZBinsBufferHandle);
 			data.ScreenProjMatrix = GetScreenProjMatrix(ref cameraData);
 			data.VolumeMaskAtlas = LocalVolumetricFogManager.Instance.VolumeAtlas.GetAtlas();
 			if (data.VolumeMaskAtlas == null)

@@ -53,7 +53,8 @@ public class TooltipTemplateSoulMarkFeature : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		bool isLocked = m_MainDirection.HasValue && m_MainDirection.Value != m_SoulMarkDirection && m_Tier > 2;
-		if (!m_MainDirection.HasValue || m_MainDirection.Value == m_SoulMarkDirection)
+		bool isRougeTraderSoulMark = UIUtility.GetCurrentSelectedUnit() == Game.Instance.Player.MainCharacter.Get();
+		if (!m_MainDirection.HasValue || (m_MainDirection.Value == m_SoulMarkDirection && isRougeTraderSoulMark))
 		{
 			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkMayBeLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
 		}
@@ -61,8 +62,12 @@ public class TooltipTemplateSoulMarkFeature : TooltipBaseTemplate
 		{
 			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkIsLocked, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
 		}
+		if (!isRougeTraderSoulMark)
+		{
+			yield return new TooltipBrickText(UIStrings.Instance.Tooltips.SoulMarkCompanion, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
+		}
 		yield return new TooltipBrickText(m_BlueprintSoulMark.Description, TooltipTextType.Simple, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true);
-		if (!isLocked)
+		if (!isLocked && isRougeTraderSoulMark)
 		{
 			yield return new TooltipBricksGroupStart(hasBackground: true, null, Color.white);
 			yield return new TooltipBrickFeature(m_Feature);

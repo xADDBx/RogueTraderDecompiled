@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Utilities;
 
-[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@1.1.232\\Runtime\\Utilities\\GeometryUtils.cs")]
+[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Utilities\\GeometryUtils.cs")]
 [BurstCompile]
 public struct OrientedBBox
 {

@@ -18,7 +18,7 @@ public class AutoPauseController : IController, IAwarenessHandler, ISubscriber<I
 {
 	private static void Pause(bool condition = true, BaseUnitEntity unit = null)
 	{
-		if (!TurnController.IsInTurnBasedCombat() && condition && (unit == null || unit.IsDirectlyControllable))
+		if (!TurnController.IsInTurnBasedCombat() && condition && (unit == null || unit.IsDirectlyControllable || (unit != null && !unit.IsDirectlyControllable && unit.IsPet)))
 		{
 			Game.Instance.IsPaused = true;
 		}

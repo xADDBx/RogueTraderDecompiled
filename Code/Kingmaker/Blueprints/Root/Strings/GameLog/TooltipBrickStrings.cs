@@ -146,6 +146,8 @@ public class TooltipBrickStrings
 
 	public LocalizedString AutoCrit;
 
+	public LocalizedString AutoCritFail;
+
 	[Space]
 	public LocalizedString Initiator;
 

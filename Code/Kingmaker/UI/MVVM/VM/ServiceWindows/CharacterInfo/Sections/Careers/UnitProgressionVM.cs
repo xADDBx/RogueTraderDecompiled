@@ -111,7 +111,10 @@ public class UnitProgressionVM : BaseUnitProgressionVM, IRespecHandler, ISubscri
 		}
 		CurrentRankEntryItem.Value = null;
 		SetCareerPath(TryGetActiveLevelupCareer(), force: true);
-		TryGetActiveLevelupCareer()?.UpdateCareerPath();
+		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
+		{
+			TryGetActiveLevelupCareer()?.UpdateCareerPath();
+		});
 	}
 
 	public override void HandleUICommitChanges()

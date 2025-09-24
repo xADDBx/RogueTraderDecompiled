@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Owlcat.Runtime.Visual.Lighting;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh;
 
 public struct RenderingData
 {
+	public ScriptableRenderContext Context;
+
 	public CameraData CameraData;
 
 	public TimeData TimeData;

@@ -1,3 +1,4 @@
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -18,15 +19,11 @@ public struct UpdateBodyAabbJob : IJobParallelFor
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Position;
+	public NativeArray<ParticlePositionPair> PositionPairs;
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> BasePosition;
-
-	[ReadOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float> Radius;
+	public NativeArray<ParticleExtendedData> ExtendedData;
 
 	[WriteOnly]
 	[NativeDisableParallelForRestriction]
@@ -40,24 +37,24 @@ public struct UpdateBodyAabbJob : IJobParallelFor
 	{
 		int index2 = BodyDescriptorsIndices[index];
 		int2 @int = ParticlesOffsetCount[index2];
-		float3 @float = Position[@int.x];
-		float3 float2 = BasePosition[@int.x];
-		float3 float3 = @float - float2;
-		@float = ((math.dot(float3, float3) < 400f) ? @float : float2);
-		float3 float4 = @float - Radius[@int.x];
-		float3 float5 = @float + Radius[@int.x];
+		float3 position = PositionPairs[@int.x].Position;
+		float3 @float = PositionPairs[@int.x].BasePosition;
+		float3 float2 = position - @float;
+		position = ((math.dot(float2, float2) < 400f) ? position : @float);
+		float3 float3 = position - ExtendedData[@int.x].Radius;
+		float3 float4 = position + ExtendedData[@int.x].Radius;
 		for (int i = 1; i < @int.y; i++)
 		{
 			int index3 = i + @int.x;
-			@float = Position[index3];
-			float2 = float2[index3];
-			float3 float6 = @float - float2;
-			@float = ((math.dot(float6, float6) < 400f) ? @float : float2);
-			float num = Radius[index3];
-			float4 = math.min(float4, @float - num);
-			float5 = math.max(float5, @float + num);
+			position = PositionPairs[index3].Position;
+			@float = @float[index3];
+			float3 float5 = position - @float;
+			position = ((math.dot(float5, float5) < 400f) ? position : @float);
+			float radius = ExtendedData[index3].Radius;
+			float3 = math.min(float3, position - radius);
+			float4 = math.max(float4, position + radius);
 		}
-		AabbMin[index + BodiesAabbOffset] = float4;
-		AabbMax[index + BodiesAabbOffset] = float5;
+		AabbMin[index + BodiesAabbOffset] = float3;
+		AabbMax[index + BodiesAabbOffset] = float4;
 	}
 }

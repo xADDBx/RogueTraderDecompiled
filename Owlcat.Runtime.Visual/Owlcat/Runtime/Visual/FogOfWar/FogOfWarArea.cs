@@ -139,7 +139,7 @@ public class FogOfWarArea : MonoBehaviour
 					Vector3 size = m_Bounds.size;
 					int width = Mathf.Min((int)(instance.TextureDensity * size.x), 2048);
 					int height = Mathf.Min((int)(instance.TextureDensity * size.z), 2048);
-					m_FogOfWarMapRT = RTHandles.Alloc(width, height, 1, DepthBits.None, GraphicsFormat.R8G8B8A8_UNorm, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, "FogOfWarMapRT_" + base.name);
+					m_FogOfWarMapRT = RTHandles.Alloc(width, height, 1, DepthBits.None, GraphicsFormat.R8G8B8A8_UNorm, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, "FogOfWarMapRT_" + base.name);
 					RenderTexture active = RenderTexture.active;
 					RenderTexture.active = m_FogOfWarMapRT;
 					GL.Clear(clearDepth: true, clearColor: true, new Color(0f, 0f, 0f, 0f));

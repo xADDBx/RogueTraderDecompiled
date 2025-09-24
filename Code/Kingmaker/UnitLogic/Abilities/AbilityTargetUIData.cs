@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Designers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
@@ -164,7 +165,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		LosCalculations.CoverType warhammerLos = LosCalculations.GetWarhammerLos(caster, casterPosition, target);
 		LosDescription warhammerLos2 = LosCalculations.GetWarhammerLos(bestShootingPosition, caster.SizeRect, target.Position, target.SizeRect);
 		LosDescription warhammerLos3 = LosCalculations.GetWarhammerLos(bestShootingPosition, caster.SizeRect, target);
-		CoverChance = Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, target, ability, warhammerLos3, null)).ResultChance;
+		CoverChance = (weapon.Blueprint.IsMelee ? 0f : ((float)Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, target, ability, warhammerLos3, null)).ResultChance));
 		for (int i = 0; i < BurstIndex; i++)
 		{
 			RuleCalculateHitChances ruleCalculateHitChances = GameHelper.TriggerRule(new RuleCalculateHitChances(caster, target, ability, i, bestShootingPosition, target.Position));
@@ -240,7 +241,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		{
 			if (actions[i] is WarhammerContextActionPerformAttack { UseCurrentWeapon: not false })
 			{
-				ability.OverrideWeapon = ability.Caster.GetFirstWeapon();
+				ability.OverrideWeapon = (ability.Blueprint.GetComponent<WarhammerOverrideAbilityWeapon>()?.Weapon?.CreateEntity() as ItemEntityWeapon) ?? ability.Caster.GetFirstWeapon();
 				break;
 			}
 		}

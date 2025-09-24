@@ -96,11 +96,11 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 			}
 			if (AbsorptionPenetration.Enabled)
 			{
-				rule.Absorption.Add(ModifierType.ValAdd, AbsorptionPenetration.Calculate(base.Context), base.Fact, ModifierDescriptor);
+				rule.Absorption.Add(ModifierType.ValAdd, -AbsorptionPenetration.Calculate(base.Context), base.Fact, ModifierDescriptor);
 			}
 			if (DeflectionPenetration.Enabled)
 			{
-				rule.Deflection.Add(ModifierType.ValAdd, DeflectionPenetration.Calculate(base.Context), base.Fact, ModifierDescriptor);
+				rule.Deflection.Add(ModifierType.ValAdd, -DeflectionPenetration.Calculate(base.Context), base.Fact, ModifierDescriptor);
 			}
 			if (UnmodifiableFlatDamageModifier.Enabled)
 			{

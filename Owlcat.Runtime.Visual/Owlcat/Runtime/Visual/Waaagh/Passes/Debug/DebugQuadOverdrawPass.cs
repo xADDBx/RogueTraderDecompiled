@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Owlcat.Runtime.Visual.Waaagh.Debugging;
 using Owlcat.ShaderLibrary.Visual.Debug;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 
@@ -19,7 +19,7 @@ public sealed class DebugQuadOverdrawPass : ScriptableRenderPass<DebugQuadOverdr
 
 		public float DepthHelperPlaneLevel;
 
-		public ComputeBufferHandle FullScreenDebugBuffer;
+		public BufferHandle FullScreenDebugBuffer;
 
 		public void Clear()
 		{
@@ -86,7 +86,7 @@ public sealed class DebugQuadOverdrawPass : ScriptableRenderPass<DebugQuadOverdr
 		TextureHandle input = passData.Resources.FinalTarget;
 		builder.UseColorBuffer(in input, 0);
 		builder.UseDepthBuffer(in passData.Resources.FinalTargetDepth, DepthAccess.ReadWrite);
-		passData.FullScreenDebugBuffer = builder.WriteComputeBuffer(in m_Resources.FullScreenDebugBuffer);
+		passData.FullScreenDebugBuffer = builder.WriteBuffer(in m_Resources.FullScreenDebugBuffer);
 		builder.AllowRendererListCulling(value: false);
 		foreach (RendererListHandle rendererList in passData.RendererLists)
 		{

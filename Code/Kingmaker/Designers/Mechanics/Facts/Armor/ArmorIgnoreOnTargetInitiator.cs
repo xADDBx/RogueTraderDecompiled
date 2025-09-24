@@ -25,7 +25,7 @@ public class ArmorIgnoreOnTargetInitiator : MechanicEntityFactComponentDelegate,
 
 	public void OnEventAboutToTrigger(RuleRollDamage evt)
 	{
-		if (Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability) && evt.ConcreteInitiator.IsEnemy(evt.ConcreteTarget))
+		if (Restrictions.IsPassed(base.Fact, evt, evt.Reason.Ability))
 		{
 			if (IgnoreDeflection)
 			{

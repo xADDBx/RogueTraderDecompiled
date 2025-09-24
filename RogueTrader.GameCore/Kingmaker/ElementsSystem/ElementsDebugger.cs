@@ -1,5 +1,6 @@
 using System;
 using Code.GameCore.ElementsSystem;
+using ElementsSystem.Debug;
 using JetBrains.Annotations;
 using Kingmaker.ElementsSystem.ContextData;
 using Owlcat.Runtime.Core.Logging;
@@ -41,11 +42,16 @@ public class ElementsDebugger : ContextData<ElementsDebugger>
 	[CanBeNull]
 	public Exception Exception { get; private set; }
 
+	[CanBeNull]
+	public ContextDebugData ContextDebugData { get; set; }
+
 	public ElementsList List { get; private set; }
 
 	public Element Element { get; private set; }
 
 	public static bool Enabled { get; set; }
+
+	public static bool IsContextDebugEnabled { get; }
 
 	public static bool LogEnabled { get; set; }
 

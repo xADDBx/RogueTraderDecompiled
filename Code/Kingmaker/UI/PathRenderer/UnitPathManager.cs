@@ -519,6 +519,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 			BaseUnitEntity unit = SelectedUnit;
 			if (unit == null || unit.CombatState.ActionPointsBlue == 0f)
 			{
+				Game.Instance.CursorController.SetMoveCursor(state: false, forbidden: true);
 				ClearActivePath();
 			}
 			else if (unit.IsCastingAbility())
@@ -865,7 +866,7 @@ public class UnitPathManager : MonoBehaviour, ITurnBasedModeHandler, ISubscriber
 		{
 			UnitHelper.DrawMovePredictionLocal(unit, m_PathCached, m_ApCostPerEveryCellCached);
 		}
-		UnitPredictionManager.Instance.UpdateSecondHologramForSelectedAbility();
+		UnitPredictionManager.Instance.UpdatePredictedPositionHologramForSelectedAbility();
 	}
 
 	public void HandleOwnerAbilitySelected(AbilityData ability)

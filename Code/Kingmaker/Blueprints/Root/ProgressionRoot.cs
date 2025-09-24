@@ -86,6 +86,11 @@ public class ProgressionRoot
 
 	[NotNull]
 	[SerializeField]
+	[FormerlySerializedAs("CheckDifficultyToExpModifier")]
+	private BlueprintExpByDifficultyProgressionReference m_CheckDifficultyToExpModifier;
+
+	[NotNull]
+	[SerializeField]
 	[FormerlySerializedAs("CategoryDefaults")]
 	private BlueprintCategoryDefaultsReference m_CategoryDefaults;
 
@@ -175,6 +180,8 @@ public class ProgressionRoot
 	public BlueprintStatProgression XPToCRTable => m_XPToCRTable?.Get();
 
 	public BlueprintStatProgression DCToCRTable => m_DCToCRTable?.Get();
+
+	public BlueprintExpByDifficultyProgression CheckDifficultyToExpModifier => m_CheckDifficultyToExpModifier?.Get();
 
 	public BlueprintCategoryDefaults CategoryDefaults => m_CategoryDefaults?.Get();
 

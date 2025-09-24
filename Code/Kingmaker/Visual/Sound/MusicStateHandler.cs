@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Settings;
@@ -72,14 +73,17 @@ public class MusicStateHandler
 
 	public void SetDefaultState(bool setDefaultMusicState = true)
 	{
-		SoundEventsManager.PostEvent(MainMusicEventStart, m_MusicPlayerObject);
-		m_EventStarted = true;
-		m_ActiveBossFight.ReleaseAll();
-		m_ActiveHardUnit.ReleaseAll();
-		if (setDefaultMusicState)
+		if (FirstLaunchSettingsVM.HasShown)
 		{
-			SetMusicSettingState(MusicSettingState.Exploration);
-			SetMusicState(MusicState.MainMenu);
+			SoundEventsManager.PostEvent(MainMusicEventStart, m_MusicPlayerObject);
+			m_EventStarted = true;
+			m_ActiveBossFight.ReleaseAll();
+			m_ActiveHardUnit.ReleaseAll();
+			if (setDefaultMusicState)
+			{
+				SetMusicSettingState(MusicSettingState.Exploration);
+				SetMusicState(MusicState.MainMenu);
+			}
 		}
 	}
 
@@ -231,13 +235,19 @@ public class MusicStateHandler
 		string text = string.Empty;
 		if (state == MusicState.MainMenu)
 		{
-			foreach (BlueprintDlc item in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Reverse())
+			IEnumerable<BlueprintDlc> source = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>();
+			MainMenuTheme mainMenuTheme = SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue();
+			BlueprintDlc blueprintDlc = source.FirstOrDefault((BlueprintDlc bp) => bp.MainMenuSettingsTag == mainMenuTheme);
+			if (blueprintDlc != null)
 			{
-				if (item != null && !string.IsNullOrWhiteSpace(item.MusicSetting?.Value))
+				if (!string.IsNullOrEmpty(blueprintDlc.MusicSetting?.Value))
 				{
-					text = ((SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original) ? string.Empty : item.MusicSetting.Value);
-					break;
+					text = ((mainMenuTheme == MainMenuTheme.Original) ? string.Empty : blueprintDlc.MusicSetting.Value);
 				}
+			}
+			else
+			{
+				text = string.Empty;
 			}
 		}
 		if (IsOverrideAvailable("MusicState", state == MusicState.MainMenu || state == MusicState.Credits))
@@ -296,6 +306,12 @@ public class MusicStateHandler
 	{
 		SoundEventsManager.PostEvent(MainMusicEventStop, m_MusicPlayerObject);
 		m_EventStarted = false;
+	}
+
+	public void StartMusicPlayEvent()
+	{
+		SoundEventsManager.PostEvent(MainMusicEventStart, m_MusicPlayerObject);
+		m_EventStarted = true;
 	}
 
 	public void OverrideAreaSetting(AkStateReference overrideMusicSetting)

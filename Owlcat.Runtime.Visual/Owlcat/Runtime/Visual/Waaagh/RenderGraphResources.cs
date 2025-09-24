@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh;
 
@@ -65,13 +65,13 @@ public class RenderGraphResources
 
 	public TextureHandle TilesMinMaxZTexture;
 
-	public ComputeBufferHandle LightDataConstantBuffer;
+	public BufferHandle LightDataConstantBuffer;
 
-	public ComputeBufferHandle LightVolumeDataConstantBuffer;
+	public BufferHandle LightVolumeDataConstantBuffer;
 
-	public ComputeBufferHandle ZBinsConstantBuffer;
+	public BufferHandle ZBinsConstantBuffer;
 
-	public ComputeBufferHandle LightTilesBuffer;
+	public BufferHandle LightTilesBuffer;
 
 	public WaaaghRendererLists RendererLists = new WaaaghRendererLists();
 
@@ -105,7 +105,6 @@ public class RenderGraphResources
 		desc.enableRandomWrite = true;
 		TextureDesc desc2 = RenderingUtils.CreateTextureDesc(null, cameraData.CameraTargetDescriptor);
 		desc2.colorFormat = GraphicsFormat.D24_UNorm_S8_UInt;
-		desc2.depthBufferBits = DepthBits.Depth32;
 		desc2.filterMode = FilterMode.Point;
 		Vector2Int nonScaledCameraTargetViewportSize = cameraData.NonScaledCameraTargetViewportSize;
 		Vector2Int scaledCameraTargetViewportSize = cameraData.ScaledCameraTargetViewportSize;

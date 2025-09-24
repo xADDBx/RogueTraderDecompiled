@@ -10,6 +10,8 @@ using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Stats;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
 using Kingmaker.Inspect;
 using Kingmaker.Items;
@@ -137,6 +139,7 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		AddDodge(result);
 		AddMovePoints(result);
 		AddBlockChance(result);
+		AddPsyRating(result);
 		result.Add(new TooltipBrickSpace(2f));
 		result.Add(new TooltipBrickAbilityScoresBlock(m_UnitReactiveProperty));
 		result.Add(new TooltipBrickSpace(2f));
@@ -292,6 +295,18 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			{
 				int result2 = Rulebook.Trigger(new RuleCalculateBlockChance((UnitEntity)m_Unit, maybeShield2.Blueprint.BlockChance)).Result;
 				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.BlockStrings.BaseBlockChance, $"{result2}%", null, tooltip: new TooltipTemplateGlossary("BlockChance"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.CoverMagnitude));
+			}
+		}
+	}
+
+	private void AddPsyRating(List<ITooltipBrick> bricks)
+	{
+		if (m_Unit != null)
+		{
+			ModifiableValue statOptional = m_Unit.GetStatOptional(StatType.PsyRating);
+			if (statOptional != null)
+			{
+				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Inspect.PsyRating, $"{statOptional.ModifiedValue}%", null, tooltip: new TooltipTemplateGlossary("PsyRating"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.PsyRating));
 			}
 		}
 	}

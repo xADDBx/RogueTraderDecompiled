@@ -9,8 +9,10 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -49,6 +51,9 @@ public class ShipInventoryStashView : ViewBase<ShipInventoryStashVM>
 	[SerializeField]
 	private CanvasGroup m_ScrapMark;
 
+	[SerializeField]
+	private OwlcatMultiButton m_SortButton;
+
 	private string m_ScrapText;
 
 	public void Initialize()
@@ -68,6 +73,10 @@ public class ShipInventoryStashView : ViewBase<ShipInventoryStashVM>
 			UpdateScrap(value);
 		}));
 		AddDisposable(m_CoinsContainer.SetGlossaryTooltip("ScrapSpace", new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: true)));
+		AddDisposable(UniRxExtensionMethods.Subscribe(m_SortButton.OnLeftClickAsObservable(), delegate
+		{
+			base.ViewModel.ItemSlotsGroup.SortItems();
+		}));
 		m_ItemSlotsGroup.Bind(base.ViewModel.ItemSlotsGroup);
 		m_InsertableSlotsGroup.Or(null)?.Bind(base.ViewModel.InsertableSlotsGroup);
 		m_ItemsFilter.Bind(base.ViewModel.ItemsFilter);

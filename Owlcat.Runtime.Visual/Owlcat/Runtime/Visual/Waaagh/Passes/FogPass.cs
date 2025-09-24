@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -15,13 +15,16 @@ public class FogPass : ScriptableRenderPass<FogPassData>
 		m_Material = material;
 	}
 
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		DependsOn(in resources.RendererLists.OpaqueGBuffer.List);
+	}
+
 	protected override void Setup(RenderGraphBuilder builder, FogPassData data, ref RenderingData renderingData)
 	{
 		data.Material = m_Material;
 		data.CameraColorRT = builder.UseColorBuffer(in data.Resources.CameraColorBuffer, 0);
 		data.CameraDepthCopyRT = builder.ReadTexture(in data.Resources.CameraDepthBuffer);
-		builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(value: true);
 	}
 
 	protected override void Render(FogPassData data, RenderGraphContext context)

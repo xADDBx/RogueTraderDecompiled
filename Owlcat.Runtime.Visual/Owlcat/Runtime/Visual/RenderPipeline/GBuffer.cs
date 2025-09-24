@@ -126,7 +126,7 @@ public class GBuffer
 		CommandBuffer commandBuffer = CommandBufferPool.Get("Initialize GBuffer");
 		CameraData cameraData = renderingData.CameraData;
 		RenderTextureDescriptor cameraTargetDescriptor = cameraData.CameraTargetDescriptor;
-		cameraTargetDescriptor.depthBufferBits = 32;
+		cameraTargetDescriptor.depthBufferBits = 24;
 		cameraTargetDescriptor.autoGenerateMips = false;
 		cameraTargetDescriptor.useMipMap = false;
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.Depth;

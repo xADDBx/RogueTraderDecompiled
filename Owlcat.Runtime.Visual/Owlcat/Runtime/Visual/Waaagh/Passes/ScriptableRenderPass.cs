@@ -1,21 +1,58 @@
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using System.Collections.Generic;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
 public abstract class ScriptableRenderPass
 {
+	private List<RendererList> m_RendererLists = new List<RendererList>();
+
 	public RenderPassEvent RenderPassEvent { get; set; }
 
 	public abstract string Name { get; }
+
+	internal List<RendererList> UsedRendererLists => m_RendererLists;
 
 	public ScriptableRenderPass(RenderPassEvent evt)
 	{
 		RenderPassEvent = evt;
 	}
 
+	public void DependsOn(in RendererList rendererList)
+	{
+		m_RendererLists.Add(rendererList);
+	}
+
+	public void ClearRendererLists()
+	{
+		m_RendererLists.Clear();
+	}
+
+	public virtual bool AreRendererListsEmpty(ScriptableRenderContext context)
+	{
+		int count = m_RendererLists.Count;
+		for (int i = 0; i < count; i++)
+		{
+			if (context.QueryRendererListStatus(m_RendererLists[i]) == RendererListStatus.kRendererListPopulated)
+			{
+				return false;
+			}
+		}
+		if (m_RendererLists.Count > 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
 	public void Execute(ref RenderingData renderingData)
 	{
 		RecordRenderGraph(ref renderingData);
+	}
+
+	public virtual void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
 	}
 
 	protected abstract void RecordRenderGraph(ref RenderingData renderingData);
@@ -32,7 +69,7 @@ public abstract class ScriptableRenderPass
 }
 public abstract class ScriptableRenderPass<T> : ScriptableRenderPass where T : PassDataBase, new()
 {
-	private RenderFunc<T> m_RenderFunc;
+	private BaseRenderFunc<T, RenderGraphContext> m_RenderFunc;
 
 	public ScriptableRenderPass(RenderPassEvent evt)
 		: base(evt)
@@ -43,7 +80,7 @@ public abstract class ScriptableRenderPass<T> : ScriptableRenderPass where T : P
 	protected sealed override void RecordRenderGraph(ref RenderingData renderingData)
 	{
 		T passData;
-		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData);
+		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\ScriptableRenderPass.cs", 100);
 		passData.Resources = renderingData.CameraData.Renderer.RenderGraphResources;
 		Setup(builder, passData, ref renderingData);
 		builder.SetRenderFunc(m_RenderFunc);

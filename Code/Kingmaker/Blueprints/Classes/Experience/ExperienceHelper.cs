@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects;
 using UnityEngine;
 
 namespace Kingmaker.Blueprints.Classes.Experience;
@@ -103,9 +104,15 @@ public static class ExperienceHelper
 		{
 			int num = dCToCRTable.GetBonus(areaCR) - dCToCRTable.GetBonus(level);
 			double num2 = ((num >= 30) ? s_EncounterModifiers[5] : ((num >= 10) ? s_EncounterModifiers[4] : s_EncounterModifiers[6]));
-			return (int)((double)BlueprintRoot.Instance.Progression.CRTable.GetBonus(areaCR) * num2) / 2;
+			return (int)((double)BlueprintRoot.Instance.Progression.CRTable.GetBonus(areaCR) * num2 / 2.0);
 		}
 		return BlueprintRoot.Instance.Progression.CRTable.GetBonus(level);
+	}
+
+	public static int GetCheckExpByDifficulty(SkillCheckDifficulty difficulty, int areaCR)
+	{
+		float modifier = BlueprintRoot.Instance.Progression.CheckDifficultyToExpModifier.GetModifier(difficulty);
+		return (int)((float)BlueprintRoot.Instance.Progression.CRTable.GetBonus(areaCR) * modifier / 2f);
 	}
 
 	public static int GetMobExp(UnitDifficultyType difficultyType, int areaCR)

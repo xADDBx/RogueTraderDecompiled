@@ -436,7 +436,7 @@ public class IndirectRenderingSystem
 		return false;
 	}
 
-	public void Cull(ref ScriptableRenderContext context, Camera camera)
+	public void Cull(ScriptableRenderContext context, Camera camera)
 	{
 		if (m_InstanceDataBuffer == null || m_ArgsBuffer == null || m_IsVisibleBuffer == null || !m_InstanceDataBuffer.IsValid() || !m_ArgsBuffer.IsValid() || !m_IsVisibleBuffer.IsValid())
 		{

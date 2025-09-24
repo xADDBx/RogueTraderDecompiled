@@ -1,7 +1,7 @@
 using Owlcat.Runtime.Visual.Waaagh.Debugging;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 
@@ -9,7 +9,7 @@ public class SetupDebugBuffersPass : ScriptableRenderPass<SetupDebugBuffersPass.
 {
 	public sealed class PassData : PassDataBase
 	{
-		public ComputeBufferHandle FullScreenDebugBuffer;
+		public BufferHandle FullScreenDebugBuffer;
 
 		public int2 FullScreenDebugBufferDimensions;
 
@@ -46,13 +46,13 @@ public class SetupDebugBuffersPass : ScriptableRenderPass<SetupDebugBuffersPass.
 	{
 		int2 fullScreenDebugBufferDimensions = new int2(renderingData.CameraData.ScaledCameraTargetViewportSize.x, renderingData.CameraData.ScaledCameraTargetViewportSize.y);
 		int num = fullScreenDebugBufferDimensions.x * fullScreenDebugBufferDimensions.y;
-		ComputeBufferDesc computeBufferDesc = default(ComputeBufferDesc);
-		computeBufferDesc.count = num;
-		computeBufferDesc.stride = 4;
-		computeBufferDesc.type = ComputeBufferType.Structured;
-		computeBufferDesc.name = "FullScreenDebug";
-		ComputeBufferDesc desc = computeBufferDesc;
-		m_Resources.FullScreenDebugBuffer = renderingData.RenderGraph.CreateComputeBuffer(in desc);
+		BufferDesc bufferDesc = default(BufferDesc);
+		bufferDesc.count = num;
+		bufferDesc.stride = 4;
+		bufferDesc.target = GraphicsBuffer.Target.Structured;
+		bufferDesc.name = "FullScreenDebug";
+		BufferDesc desc = bufferDesc;
+		m_Resources.FullScreenDebugBuffer = renderingData.RenderGraph.CreateBuffer(in desc);
 		m_Resources.FullScreenDebugBufferDimensions = fullScreenDebugBufferDimensions;
 		data.FullScreenDebugBuffer = m_Resources.FullScreenDebugBuffer;
 		data.FullScreenDebugBufferDimensions = m_Resources.FullScreenDebugBufferDimensions;
@@ -60,7 +60,7 @@ public class SetupDebugBuffersPass : ScriptableRenderPass<SetupDebugBuffersPass.
 		data.ClearDebugBuffersShaderMainKernel = m_ClearDebugBuffersShaderMainKernel;
 		data.ClearDebugBuffersThreadGroupsX = Mathf.CeilToInt((float)num / (float)m_ClearDebugBuffersShaderMainKernelThreadGroupSizeX);
 		builder.AllowPassCulling(value: false);
-		builder.WriteComputeBuffer(in m_Resources.FullScreenDebugBuffer);
+		builder.WriteBuffer(in m_Resources.FullScreenDebugBuffer);
 	}
 
 	protected override void Render(PassData data, RenderGraphContext context)

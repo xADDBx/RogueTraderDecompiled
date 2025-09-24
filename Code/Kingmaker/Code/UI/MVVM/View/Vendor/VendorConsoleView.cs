@@ -419,6 +419,12 @@ public class VendorConsoleView : VendorView<InventoryStashConsoleView, Inventory
 		InputBindStruct inputBindStruct8 = m_InputLayer.AddButton(ToggleTooltip, 19, m_HasTooltip, InputActionEventType.ButtonJustReleased);
 		m_DisposableVendorBinds.Add(m_HintsWidget.BindHint(inputBindStruct8, UIStrings.Instance.CommonTexts.Information, ConsoleHintsWidget.HintPosition.Left));
 		m_DisposableVendorBinds.Add(inputBindStruct8);
+		InputBindStruct inputBindStruct9 = m_InputLayer.AddButton(delegate
+		{
+			base.ViewModel.BuyAllAvailable();
+		}, 10, base.ViewModel.HasItemsToBuy, InputActionEventType.ButtonJustLongPressed);
+		m_DisposableBinds.Add(m_BuyAllHint.Bind(inputBindStruct9));
+		m_DisposableBinds.Add(inputBindStruct9);
 		m_DisposableVendorBinds.AddRange(m_StashView.ItemsFilter.AddInputDisposable(m_InputLayer, IsPlayerStashSelected));
 	}
 

@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using UnityEngine;
 
 namespace Kingmaker.View.MapObjects;
 
@@ -16,5 +17,10 @@ public class LocalMapMarker : EntityPartComponent<LocalMapMarkerPart, LocalMapMa
 			return Settings.Description.String;
 		}
 		return "<???>";
+	}
+
+	private void OnDrawGizmos()
+	{
+		Gizmos.DrawIcon(base.transform.position, "LocalMapMarker");
 	}
 }

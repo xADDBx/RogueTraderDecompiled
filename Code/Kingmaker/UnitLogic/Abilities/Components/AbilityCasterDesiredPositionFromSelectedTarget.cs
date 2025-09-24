@@ -10,9 +10,9 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("bfcde29f5c2843aa9aeb292eb60fb20e")]
-public class AbilityCasterDesiredPositionFromSelectedTarget : BlueprintComponent, IAbilityOverrideCasterDesiredPosition
+public class AbilityCasterDesiredPositionFromSelectedTarget : BlueprintComponent, IAbilityPredictedCasterPosition
 {
-	public bool TryGetDesiredPositionAndDirection(AbilityData abilityData, out Vector3 position, out Vector3 direction)
+	public bool TryGetPredictedPositionAndDirection(AbilityData abilityData, out Vector3 position, out Vector3 direction)
 	{
 		TargetWrapper targetWrapper = Game.Instance.SelectedAbilityHandler?.MultiTargetHandler.GetLastTarget();
 		if (targetWrapper == null)

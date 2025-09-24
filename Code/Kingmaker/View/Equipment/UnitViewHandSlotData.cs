@@ -363,7 +363,7 @@ public class UnitViewHandSlotData
 			{
 				DestroyModelIfExists();
 				DestroySheathModelIfExists();
-				return;
+				goto IL_02d2;
 			}
 			if ((bool)VisibleItemBlueprint.VisualParameters.BeltModel)
 			{
@@ -405,6 +405,12 @@ public class UnitViewHandSlotData
 			{
 				h.VisualWeaponStateChangeHandle((!IsInHand) ? VFXSpeedUpdater.WeaponVisualState.OutHand : VFXSpeedUpdater.WeaponVisualState.InHand, VisualModel);
 			});
+			goto IL_02d2;
+			IL_02d2:
+			if (m_Equipment.IsDollRoom && VisibleItem is ItemEntityShield && !m_Equipment.IsUsingHologram)
+			{
+				UpdateWeaponEnchantmentFx(isVisible: true);
+			}
 		}
 	}
 
@@ -483,31 +489,130 @@ public class UnitViewHandSlotData
 		}
 	}
 
-	private void UpdateWeaponEnchantmentFx(bool isVisible)
+	public void UpdateWeaponEnchantmentFx(bool isVisible, bool force = false)
 	{
-		if (!m_Equipment.IsDollRoom && UIDollRooms.Instance != null && UIDollRooms.Instance.CharacterDollRoom != null && UIDollRooms.Instance.CharacterDollRoom.Unit == Owner)
+		string text = VisibleItem?.Blueprint?.name ?? "none";
+		PFLog.Default.Log($"[UpdateWeaponEnchantmentFx] Called for {text}, isVisible={isVisible}, force={force}, IsDollRoom={m_Equipment.IsDollRoom}, IsInHand={IsInHand}, IsActiveSet={IsActiveSet}");
+		if (VisibleItem == null || VisibleItem.Enchantments == null)
 		{
-			return;
+			PFLog.Default.Log("[UpdateWeaponEnchantmentFx] Skipping - no item or enchantments");
 		}
-		if (IsInHand && isVisible)
+		else if (!force && !m_Equipment.IsDollRoom && UIDollRooms.Instance != null && UIDollRooms.Instance.CharacterDollRoom != null && UIDollRooms.Instance.CharacterDollRoom.Unit == Owner)
 		{
-			WeaponParticlesSnapMap weaponParticlesSnapMap = ((VisualModel != null) ? VisualModel.GetComponent<WeaponParticlesSnapMap>() : null);
-			bool flag = weaponParticlesSnapMap != Slot.FxSnapMap;
-			Slot.FxSnapMap = weaponParticlesSnapMap;
+			PFLog.Default.Log("[UpdateWeaponEnchantmentFx] Skipping - unit is in DollRoom but slot is not DollRoom");
+		}
+		else
+		{
+			if (m_Equipment.IsDollRoom && VisibleItem is ItemEntityShield)
 			{
-				foreach (ItemEnchantment enchantment in VisibleItem.Enchantments)
+				WeaponParticlesSnapMap weaponParticlesSnapMap = ((VisualModel != null) ? VisualModel.GetComponent<WeaponParticlesSnapMap>() : null);
+				if (VisualModel != null)
 				{
-					if (!enchantment.FxObject || flag)
+					_ = VisualModel.activeInHierarchy;
+				}
+				else
+					_ = 0;
+				Owner.Body.HandsEquipmentSets.IndexOf(Slot.HandsEquipmentSet);
+				_ = Owner.Body.CurrentHandEquipmentSetIndex;
+				if (weaponParticlesSnapMap != null && (bool)weaponParticlesSnapMap)
+				{
+					_ = weaponParticlesSnapMap.name;
+				}
+				if (Slot.FxSnapMap != null && (bool)Slot.FxSnapMap)
+				{
+					_ = Slot.FxSnapMap.name;
+				}
+				WeaponParticlesSnapMap weaponParticlesSnapMap2 = null;
+				if (weaponParticlesSnapMap != null && (bool)weaponParticlesSnapMap && (bool)weaponParticlesSnapMap.gameObject && weaponParticlesSnapMap.gameObject.activeInHierarchy)
+				{
+					weaponParticlesSnapMap2 = weaponParticlesSnapMap;
+				}
+				else
+				{
+					foreach (HandsEquipmentSet handsEquipmentSet in Owner.Body.HandsEquipmentSets)
 					{
-						enchantment.RespawnFx();
+						HandSlot[] array = new HandSlot[2] { handsEquipmentSet.PrimaryHand, handsEquipmentSet.SecondaryHand };
+						foreach (HandSlot hand in array)
+						{
+							if (hand.MaybeItem != VisibleItem)
+							{
+								continue;
+							}
+							WeaponSet weaponSet = m_Equipment.Sets.Values.FirstOrDefault((WeaponSet s) => s.MainHand.Slot == hand || s.OffHand.Slot == hand);
+							WeaponParticlesSnapMap weaponParticlesSnapMap3 = ((weaponSet?.MainHand.Slot != hand) ? weaponSet?.OffHand.VisualModel?.GetComponent<WeaponParticlesSnapMap>() : weaponSet.MainHand.VisualModel?.GetComponent<WeaponParticlesSnapMap>());
+							if (weaponParticlesSnapMap3 != null && (bool)weaponParticlesSnapMap3 && (bool)weaponParticlesSnapMap3.gameObject && weaponParticlesSnapMap3.gameObject.activeInHierarchy)
+							{
+								weaponParticlesSnapMap2 = weaponParticlesSnapMap3;
+								if ((bool)weaponParticlesSnapMap2)
+								{
+									_ = weaponParticlesSnapMap2.name;
+								}
+								break;
+							}
+						}
+						if (weaponParticlesSnapMap2 != null)
+						{
+							break;
+						}
 					}
 				}
+				if (!(weaponParticlesSnapMap2 != null))
+				{
+					return;
+				}
+				bool flag = weaponParticlesSnapMap2 != Slot.FxSnapMap;
+				if (Slot.FxSnapMap != null && (bool)Slot.FxSnapMap)
+				{
+					_ = Slot.FxSnapMap.name;
+				}
+				if (weaponParticlesSnapMap2 != null && (bool)weaponParticlesSnapMap2)
+				{
+					_ = weaponParticlesSnapMap2.name;
+				}
+				Slot.FxSnapMap = weaponParticlesSnapMap2;
+				if (VisibleItem?.Enchantments == null)
+				{
+					return;
+				}
+				{
+					foreach (ItemEnchantment enchantment in VisibleItem.Enchantments)
+					{
+						if (!enchantment.FxObject || (flag && (bool)enchantment.FxObject))
+						{
+							enchantment.RespawnFx();
+						}
+					}
+					return;
+				}
+			}
+			if (IsInHand && isVisible)
+			{
+				WeaponParticlesSnapMap weaponParticlesSnapMap4 = ((VisualModel != null) ? VisualModel.GetComponent<WeaponParticlesSnapMap>() : null);
+				bool flag2 = weaponParticlesSnapMap4 != Slot.FxSnapMap;
+				Slot.FxSnapMap = weaponParticlesSnapMap4;
+				if (VisibleItem?.Enchantments == null)
+				{
+					return;
+				}
+				{
+					foreach (ItemEnchantment enchantment2 in VisibleItem.Enchantments)
+					{
+						if (!enchantment2.FxObject || flag2)
+						{
+							enchantment2.RespawnFx();
+						}
+					}
+					return;
+				}
+			}
+			if ((m_Equipment.IsDollRoom && VisibleItem is ItemEntityShield) || VisibleItem?.Enchantments == null)
+			{
 				return;
 			}
-		}
-		foreach (ItemEnchantment enchantment2 in VisibleItem.Enchantments)
-		{
-			enchantment2.DestroyFx();
+			foreach (ItemEnchantment enchantment3 in VisibleItem.Enchantments)
+			{
+				enchantment3.DestroyFx();
+			}
 		}
 	}
 
@@ -660,7 +765,7 @@ public class UnitViewHandSlotData
 		UnityEngine.Object.Destroy(VisualModel);
 		VisualModel = null;
 		m_VisualModelRenderers.Clear();
-		if (VisibleItem == null)
+		if (VisibleItem == null || VisibleItem is ItemEntityShield || VisibleItem?.Enchantments == null)
 		{
 			return;
 		}

@@ -116,6 +116,10 @@ public enum Authors
 	[Description("bakula")]
 	[DescriptionEmail("<bakula@owlcat.games>")]
 	VasiliyBakula = 113,
+	[InspectorName("GD/Vladislav Solyannikov")]
+	[Description("solyannikov")]
+	[DescriptionEmail("<solyannikov@owlcat.games>")]
+	VladislavSolyannikov = 114,
 	[InspectorName("SD/KonstantinKuzenkov")]
 	[Description("kuzenkov")]
 	[DescriptionEmail("<kuzenkov@owlcat.games>")]

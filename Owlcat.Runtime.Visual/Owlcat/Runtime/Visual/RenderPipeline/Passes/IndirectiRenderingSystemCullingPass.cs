@@ -12,6 +12,6 @@ public class IndirectiRenderingSystemCullingPass : ScriptableRenderPass
 
 	public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 	{
-		IndirectRenderingSystem.Instance.Cull(ref context, renderingData.CameraData.Camera);
+		IndirectRenderingSystem.Instance.Cull(context, renderingData.CameraData.Camera);
 	}
 }

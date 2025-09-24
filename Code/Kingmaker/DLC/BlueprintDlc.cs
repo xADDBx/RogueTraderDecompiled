@@ -10,6 +10,7 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.ResourceLinks;
+using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
@@ -86,6 +87,10 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	private bool m_HideInConsoleStores;
 
 	[Header("MainMenu")]
+	[Space]
+	[Header("Main menu settings tag")]
+	public MainMenuTheme MainMenuSettingsTag;
+
 	[SerializeField]
 	private VideoLink m_MainMenuBackgroundVideoLink;
 

@@ -208,7 +208,7 @@ public class BookEventConsoleView : BookEventBaseView
 		IEnumerable<TextMeshProUGUI> enumerable = from n in m_DialogNotifications.GetAllNotifications()
 			where n.gameObject.activeSelf
 			select n;
-		if (!enumerable.Empty() && m_DialogNotifications.gameObject.activeSelf && !base.IsShowHistory.Value)
+		if (enumerable != null && !enumerable.Empty() && m_DialogNotifications.gameObject.activeSelf && !base.IsShowHistory.Value)
 		{
 			foreach (TextMeshProUGUI item in enumerable)
 			{

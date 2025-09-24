@@ -5,7 +5,7 @@ using Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Jobs;
 using Owlcat.Runtime.Visual.Waaagh.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -30,14 +30,14 @@ public class LocalVolumetricFogCullingPass : ScriptableRenderPass<LocalVolumetri
 		data.VisibleVolumeDataList = m_Feature.VisibleVolumeDataList;
 		data.VisibleVolumeBoundsList = m_Feature.VisibleVolumeBoundsList;
 		data.VisibleVolumesCount = m_Feature.VisibleVolumesCount;
-		m_Feature.VisibleVolumesBoundsBufferHandle = renderingData.RenderGraph.ImportComputeBuffer(m_Feature.VisibleVolumeBoundsBuffer);
-		m_Feature.VisibleVolumesDataBufferHandle = renderingData.RenderGraph.ImportComputeBuffer(m_Feature.VisibleVolumeDataBuffer);
-		m_Feature.FogTilesBufferHandle = renderingData.RenderGraph.ImportComputeBuffer(m_Feature.FogTilesBuffer);
-		m_Feature.ZBinsBufferHandle = renderingData.RenderGraph.ImportComputeBuffer(m_Feature.ZBinsBuffer);
-		data.VisibleVolumeDataBuffer = builder.ReadComputeBuffer(in m_Feature.VisibleVolumesDataBufferHandle);
-		data.VisibleVolumeBoundsBuffer = builder.ReadComputeBuffer(in m_Feature.VisibleVolumesBoundsBufferHandle);
-		data.ZBinsBuffer = builder.ReadComputeBuffer(in m_Feature.ZBinsBufferHandle);
-		data.FogTilesBuffer = builder.WriteComputeBuffer(in m_Feature.FogTilesBufferHandle);
+		m_Feature.VisibleVolumesBoundsBufferHandle = renderingData.RenderGraph.ImportBuffer(m_Feature.VisibleVolumeBoundsBuffer);
+		m_Feature.VisibleVolumesDataBufferHandle = renderingData.RenderGraph.ImportBuffer(m_Feature.VisibleVolumeDataBuffer);
+		m_Feature.FogTilesBufferHandle = renderingData.RenderGraph.ImportBuffer(m_Feature.FogTilesBuffer);
+		m_Feature.ZBinsBufferHandle = renderingData.RenderGraph.ImportBuffer(m_Feature.ZBinsBuffer);
+		data.VisibleVolumeDataBuffer = builder.ReadBuffer(in m_Feature.VisibleVolumesDataBufferHandle);
+		data.VisibleVolumeBoundsBuffer = builder.ReadBuffer(in m_Feature.VisibleVolumesBoundsBufferHandle);
+		data.ZBinsBuffer = builder.ReadBuffer(in m_Feature.ZBinsBufferHandle);
+		data.FogTilesBuffer = builder.WriteBuffer(in m_Feature.FogTilesBufferHandle);
 		data.FogTilesBufferSize = m_Feature.FogTilesBuffer.count;
 		data.Atlas = LocalVolumetricFogManager.Instance.VolumeAtlas;
 		data.CullingShader = m_Feature.Shaders.LocalVolumetricFogCullingCS;

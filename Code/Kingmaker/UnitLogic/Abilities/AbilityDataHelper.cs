@@ -289,7 +289,7 @@ public static class AbilityDataHelper
 				{
 					MechanicEntity caster = ability.Caster;
 					bool forceCrit = flag;
-					DamageData resultDamage = new CalculateDamageParams(caster, target, ability, null, null, null, null, forceCrit).Trigger().ResultDamage;
+					DamageData resultDamage = new CalculateDamageParams(caster, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
 					if (resultDamage == null)
 					{
 						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
@@ -312,7 +312,7 @@ public static class AbilityDataHelper
 				{
 					MechanicEntity caster2 = ability.Caster;
 					bool forceCrit = flag2;
-					DamageData resultDamage2 = new CalculateDamageParams(caster2, target, ability, null, null, null, null, forceCrit).Trigger().ResultDamage;
+					DamageData resultDamage2 = new CalculateDamageParams(caster2, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
 					if (resultDamage2 == null)
 					{
 						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
@@ -505,12 +505,12 @@ public static class AbilityDataHelper
 				using (ContextData<MechanicsContext.Data>.Request().Setup(context, target))
 				{
 					DamagePredictionData actionsDamage;
-					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 0)))
+					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 0, ability.Caster)))
 					{
 						actionsDamage = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
 					}
 					DamagePredictionData actionsDamage2;
-					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 100)))
+					using (ContextData<SavingThrowData>.Request().Setup(new RulePerformSavingThrow(target.Entity, contextActionSavingThrow.Type, 100, ability.Caster)))
 					{
 						actionsDamage2 = GetActionsDamage(ability, contextActionSavingThrow.Actions, context, casterPosition, target);
 					}

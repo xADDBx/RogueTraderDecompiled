@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Vendor;
 
-public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorDealHandler, ISubscriber, IVendorTransferHandler
+public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IVendorDealHandler, ISubscriber, IVendorTransferHandler, IVendorMultipleTransferHandler
 {
 	public readonly ProfitFactorVM ProfitFactorVM;
 
@@ -198,6 +198,10 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 		TransitionWindowVM.Value = new VendorTransitionWindowVM(Vendor, itemEntity, CloseTransitionWindow);
 	}
 
+	public void HandleTransitionWindow(List<ItemEntity> itemEntities = null)
+	{
+	}
+
 	private void CloseTransitionWindow()
 	{
 		TransitionWindowVM.Value?.Dispose();
@@ -211,5 +215,15 @@ public class VendorTradePartVM : BaseDisposable, IViewModel, IBaseDisposable, ID
 
 	void IVendorDealHandler.HandleCancelVendorDeal()
 	{
+	}
+
+	public void HandleTransitionWindow(List<ItemEntity> itemEntities = null, Action availabilityCheck = null)
+	{
+		CloseTransitionWindow();
+		TransitionWindowVM.Value = new VendorTransitionWindowVM(Vendor, itemEntities, delegate
+		{
+			CloseTransitionWindow();
+			availabilityCheck?.Invoke();
+		});
 	}
 }

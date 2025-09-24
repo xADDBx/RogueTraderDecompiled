@@ -201,11 +201,13 @@ public static class UnitHelper
 	{
 		NewCommandCreated,
 		SamePath,
-		NotEnoughPoints,
+		NotEnoughPathPoints,
 		NoReachableTile,
 		NoForcedPath,
 		NoStartingCell,
-		CannotMove
+		CannotMove,
+		NotEnoughMovementPoints,
+		DestinationUnreachable
 	}
 
 	public static BaseUnitEntity Copy(this BaseUnitEntity unit, bool createView, bool preview, bool copyItems = true, bool forceEnableBuffs = false)
@@ -551,14 +553,18 @@ public static class UnitHelper
 		return true;
 	}
 
-	public static bool CanAttackOfOpportunity(this BaseUnitEntity unit)
+	public static bool CanAttackOfOpportunity(this BaseUnitEntity unit, bool canUseInRange)
 	{
-		WeaponSlot threatHand = unit.GetThreatHand();
-		if (threatHand?.GetAttackOfOpportunityAbility(unit) == null)
+		WeaponSlot weaponSlot = unit.GetThreatHand();
+		if (weaponSlot == null && canUseInRange)
+		{
+			weaponSlot = unit.GetThreatHandRangedAnyHand();
+		}
+		if (weaponSlot?.GetAttackOfOpportunityAbility(unit, canUseInRange) == null)
 		{
 			return false;
 		}
-		if (threatHand.HasShield)
+		if (weaponSlot.HasShield)
 		{
 			return true;
 		}
@@ -567,7 +573,7 @@ public static class UnitHelper
 		{
 			return true;
 		}
-		ItemEntityWeapon maybeWeapon = threatHand.MaybeWeapon;
+		ItemEntityWeapon maybeWeapon = weaponSlot.MaybeWeapon;
 		if (maybeWeapon != null)
 		{
 			return optional.CanAttack(maybeWeapon.Blueprint.AttackType);
@@ -893,6 +899,12 @@ public static class UnitHelper
 		WarhammerPathPlayer warhammerPathPlayer = PathfindingService.Instance.FindPathTB_Blocking(unit.View.MovementAgent, settings.Destination, limitRangeByActionPoints: false);
 		using (PathDisposable<WarhammerPathPlayer>.Get(warhammerPathPlayer, unit))
 		{
+			NodeList nodes = GridAreaHelper.GetNodes(settings.Destination, unit.SizeRect);
+			if (!nodes.Contains(warhammerPathPlayer.CalculatedPath[^1].Node))
+			{
+				status = MoveCommandStatus.DestinationUnreachable;
+				return null;
+			}
 			object obj;
 			if (unit != null)
 			{
@@ -902,11 +914,16 @@ public static class UnitHelper
 			{
 				obj = null;
 			}
-			int num = ((RuleCalculateMovementCost)obj)?.ResultPointCount ?? 0;
-			float[] costPerEveryCell = ((RuleCalculateMovementCost)obj)?.ResultAPCostPerPoint ?? Array.Empty<float>();
+			RuleCalculateMovementCost ruleCalculateMovementCost = (RuleCalculateMovementCost)obj;
+			int num = ruleCalculateMovementCost?.ResultPointCount ?? 0;
+			if (num < warhammerPathPlayer.path.Count)
+			{
+				status = MoveCommandStatus.NotEnoughMovementPoints;
+				return null;
+			}
 			while (num > 0)
 			{
-				NodeList nodes = GridAreaHelper.GetNodes(warhammerPathPlayer.path[num - 1], unit.SizeRect);
+				nodes = GridAreaHelper.GetNodes(warhammerPathPlayer.path[num - 1], unit.SizeRect);
 				if (!WarhammerBlockManager.Instance.NodeContainsAnyExcept(nodes, unit.View.MovementAgent.Blocker))
 				{
 					break;
@@ -915,7 +932,7 @@ public static class UnitHelper
 			}
 			if (num < 2)
 			{
-				status = MoveCommandStatus.NotEnoughPoints;
+				status = MoveCommandStatus.NotEnoughPathPoints;
 				return null;
 			}
 			ForcedPath forcedPath = ForcedPath.Construct(warhammerPathPlayer.path.Take(num));
@@ -928,6 +945,7 @@ public static class UnitHelper
 				return null;
 			}
 			status = MoveCommandStatus.NewCommandCreated;
+			float[] costPerEveryCell = ruleCalculateMovementCost?.ResultAPCostPerPoint ?? Array.Empty<float>();
 			UnitMoveToProperParams unitMoveToProperParams = CreateMoveCommandUnit(unit, settings, costPerEveryCell, forcedPath);
 			if (showMovePrediction)
 			{

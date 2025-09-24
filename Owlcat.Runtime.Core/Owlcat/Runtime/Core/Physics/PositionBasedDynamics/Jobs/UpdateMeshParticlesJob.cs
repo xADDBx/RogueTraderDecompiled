@@ -1,3 +1,4 @@
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -42,14 +43,10 @@ public struct UpdateMeshParticlesJob : IJobParallelFor
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float> Mass;
-
-	[WriteOnly]
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Position;
+	public NativeArray<ParticleExtendedData> ExtendedData;
 
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> BasePosition;
+	public NativeArray<ParticlePositionPair> PositionPairs;
 
 	public void Execute(int index)
 	{
@@ -65,12 +62,14 @@ public struct UpdateMeshParticlesJob : IJobParallelFor
 			int index3 = i + @int.x;
 			float3 xyz = BaseVertices[i + num];
 			float3 xyz2 = math.mul(a, new float4(xyz, 1f)).xyz;
-			float num4 = math.distancesq(BasePosition[index3], xyz2);
-			if (Mass[index3] <= 0f || (num3 > 0f && num4 > num3))
+			float num4 = math.distancesq(PositionPairs[index3].BasePosition, xyz2);
+			ParticlePositionPair value = PositionPairs[index3];
+			if (ExtendedData[index3].Mass <= 0f || (num3 > 0f && num4 > num3))
 			{
-				Position[index3] = xyz2;
+				value.Position = xyz2;
 			}
-			BasePosition[index3] = xyz2;
+			value.BasePosition = xyz2;
+			PositionPairs[index3] = value;
 		}
 	}
 }

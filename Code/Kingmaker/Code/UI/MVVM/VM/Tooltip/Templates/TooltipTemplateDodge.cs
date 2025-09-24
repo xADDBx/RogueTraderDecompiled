@@ -10,6 +10,7 @@ using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.Utility;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
@@ -52,6 +53,10 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 		{
 			AddAutoDodge(list);
 		}
+		else if (m_DodgeRule.IsNeverDodge)
+		{
+			AddAutoHit(list);
+		}
 		else
 		{
 			list.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Tooltips.BaseChance, UIConfig.Instance.PercentHelper.AddPercentTo(m_DodgeRule.BaseValue), null, null, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Bold));
@@ -75,8 +80,42 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 
 	private void AddAutoDodge(List<ITooltipBrick> bricks)
 	{
-		FeatureCountableFlag.BuffList associatedBuffs = m_DodgeRule.Defender.Features.AutoDodge.AssociatedBuffs;
-		bricks.Add(new TooltipBrickTriggeredAuto(GameLogStrings.Instance.TooltipBrickStrings.AutoDodge.Text, associatedBuffs.Buffs.ToList(), isSuccess: true));
+		List<FeatureCountableFlag.BuffList.Element> list = m_DodgeRule.Defender.Features.AutoDodge.AssociatedBuffs.Buffs.ToList();
+		if (m_DodgeRule.AutoDodgeModifiers.Value)
+		{
+			foreach (Modifier item in m_DodgeRule.AutoDodgeModifiers.List)
+			{
+				if (item.Fact != null)
+				{
+					list.Add(new FeatureCountableFlag.BuffList.Element(item.Fact));
+				}
+				else if (item.Item != null)
+				{
+					list.Add(new FeatureCountableFlag.BuffList.Element(item.Item));
+				}
+			}
+		}
+		bricks.Add(new TooltipBrickTriggeredAuto(GameLogStrings.Instance.TooltipBrickStrings.AutoDodge.Text, list, isSuccess: true));
+	}
+
+	private void AddAutoHit(List<ITooltipBrick> bricks)
+	{
+		List<FeatureCountableFlag.BuffList.Element> list = (m_DodgeRule.MaybeAttacker?.Features.AutoHit.AssociatedBuffs ?? new FeatureCountableFlag.BuffList()).Buffs.ToList();
+		if (m_DodgeRule.NeverDodgeModifiers.Value)
+		{
+			foreach (Modifier item in m_DodgeRule.NeverDodgeModifiers.List)
+			{
+				if (item.Fact != null)
+				{
+					list.Add(new FeatureCountableFlag.BuffList.Element(item.Fact));
+				}
+				else if (item.Item != null)
+				{
+					list.Add(new FeatureCountableFlag.BuffList.Element(item.Item));
+				}
+			}
+		}
+		bricks.Add(new TooltipBrickTriggeredAuto(GameLogStrings.Instance.TooltipBrickStrings.AutoHit.Text, list, isSuccess: false));
 	}
 
 	private void AddDodgeModifiers(List<ITooltipBrick> bricks, StatModifiersBreakdownData breakdownData, bool isValueModifiers)

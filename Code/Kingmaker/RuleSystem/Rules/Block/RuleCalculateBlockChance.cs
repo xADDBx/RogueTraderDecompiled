@@ -16,12 +16,18 @@ public class RuleCalculateBlockChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public const int BaseBlockChance = 0;
 
+	public FlagModifiersManager AutoBlockModifier = new FlagModifiersManager();
+
+	public FlagModifiersManager NeverBlockModifier = new FlagModifiersManager();
+
 	private int m_shieldBlockChance;
 
 	[CanBeNull]
 	public AbilityData Ability { get; }
 
 	public bool IsAutoBlock { get; private set; }
+
+	public bool IsAutoHit { get; private set; }
 
 	[CanBeNull]
 	public MechanicEntity MaybeAttacker => base.MaybeTarget;
@@ -87,12 +93,13 @@ public class RuleCalculateBlockChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	private void SpecialOverrideWithFeatures()
 	{
-		if (MaybeAttacker != null && (bool)MaybeAttacker.Features.AutoHit)
+		if (MaybeAttacker != null && ((bool)MaybeAttacker.Features.AutoHit || NeverBlockModifier.Value))
 		{
+			IsAutoHit = true;
 			RawResult = 0;
 			Result = 0;
 		}
-		else if ((bool)Defender.Features.AutoBlock || IsAutoBlock)
+		else if ((bool)Defender.Features.AutoBlock || IsAutoBlock || AutoBlockModifier.Value)
 		{
 			IsAutoBlock = true;
 			RawResult = 100;

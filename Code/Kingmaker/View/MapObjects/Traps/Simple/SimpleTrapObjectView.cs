@@ -7,7 +7,6 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Localization;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
-using Kingmaker.Utility.Random;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.Visual.Animation.Kingmaker;
@@ -88,8 +87,7 @@ public class SimpleTrapObjectView : TrapObjectView
 	{
 		BlueprintTrapSettingsRoot blueprintTrapSettingsRoot = BlueprintRoot.Instance.BlueprintTrapSettingsRoot;
 		BlueprintTrapSettings settings = GetSettings(Game.Instance.LoadedAreaState.Blueprint);
-		int num = ((PFStatefulRandom.View.Range(0, 2) != 0) ? 1 : (-1));
-		int disableDC = ((Info.DisableDifficulty == TrapDisableDifficulty.Easy) ? (settings.DisableDC.from + blueprintTrapSettingsRoot.EasyDisableDCDelta * num) : (settings.DisableDC.to + blueprintTrapSettingsRoot.HardDisableDCDelta * num));
+		int disableDC = ((Info.DisableDifficulty == SkillCheckDifficulty.Custom) ? Info.DC : Info.DisableDifficulty.GetDC());
 		SimpleTrapObjectData simpleTrapObjectData = Entity.Initialize(new SimpleTrapObjectData(this)
 		{
 			Name = base.gameObject.name,

@@ -278,7 +278,7 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			{
 				return;
 			}
-			RulePerformSavingThrow obj = new RulePerformSavingThrow(base.Owner, saveType, num)
+			RulePerformSavingThrow obj = new RulePerformSavingThrow(base.Owner, saveType, num, buff.Context.MaybeCaster)
 			{
 				Reason = buff
 			};

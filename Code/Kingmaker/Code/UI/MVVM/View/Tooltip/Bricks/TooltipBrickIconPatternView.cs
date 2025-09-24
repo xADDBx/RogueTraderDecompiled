@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilitie
 using Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks.AbilityPattern;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic.Levelup.Selections;
@@ -13,6 +14,7 @@ using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WebSocketSharp;
 
 namespace Kingmaker.Code.UI.MVVM.View.Tooltip.Bricks;
 
@@ -73,6 +75,15 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 	[SerializeField]
 	private float m_DefaultConsoleFontSize = 16f;
 
+	[SerializeField]
+	private TextMeshProUGUI m_AbilityPropertyNameText;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AbilityValueText;
+
+	[SerializeField]
+	private GameObject m_AbilityValuesBlock;
+
 	private readonly Dictionary<TextMeshProUGUI, TextFieldParams> m_DefaultParams = new Dictionary<TextMeshProUGUI, TextFieldParams>();
 
 	private Color32? m_DefaultFrameColor;
@@ -106,6 +117,14 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 			AddDisposable(m_SkillIcon.SetTooltip(base.ViewModel.Tooltip));
 		}
 		SetTextSize();
+		m_AbilityValuesBlock.SetActive(!base.ViewModel.AbilityPropertyName.IsNullOrEmpty());
+		m_AbilityPropertyNameText.text = base.ViewModel.AbilityPropertyName;
+		m_AbilityValueText.text = base.ViewModel.AbilityPropertyValue;
+		AddDisposable(m_AbilityValueText.SetTooltip(new TooltipTemplateHint(base.ViewModel.AbilityPropertyDesc)));
+	}
+
+	private void SetText(string text)
+	{
 	}
 
 	private void SetTextSize()

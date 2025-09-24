@@ -6,7 +6,7 @@ using Owlcat.Runtime.Visual.Waaagh.Utilities;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -22,13 +22,13 @@ public class LocalVolumetricFogCullingPassData : PassDataBase
 
 	public int VisibleVolumesCount;
 
-	public ComputeBufferHandle VisibleVolumeBoundsBuffer;
+	public BufferHandle VisibleVolumeBoundsBuffer;
 
-	public ComputeBufferHandle VisibleVolumeDataBuffer;
+	public BufferHandle VisibleVolumeDataBuffer;
 
-	public ComputeBufferHandle FogTilesBuffer;
+	public BufferHandle FogTilesBuffer;
 
-	public ComputeBufferHandle ZBinsBuffer;
+	public BufferHandle ZBinsBuffer;
 
 	public int FogTilesBufferSize;
 

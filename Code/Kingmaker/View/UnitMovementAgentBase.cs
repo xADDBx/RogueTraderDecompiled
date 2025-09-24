@@ -22,6 +22,7 @@ using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.CountingGuard;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.GeometryExtensions;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
@@ -703,9 +704,9 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 				Vector2 vector4 = Position.To2D();
 				MoveDirection = (m_HasTail ? (Position - m_TailPosition).To2D().normalized : vector2.normalized);
 				Vector2 vector5 = Path.vectorPath[m_NextPointIndex - 1].To2D();
-				Vector2 lhs = m_NextWaypoint - vector5;
+				Vector2 vector6 = m_NextWaypoint - vector5;
 				Vector2 rhs = m_NextWaypoint - vector;
-				bool flag5 = num <= 0.0001f || Vector2.Dot(lhs, rhs) < 0f;
+				bool flag5 = num <= 0.0001f || vector6.IsApproximatelyZero() || Vector2.Dot(vector6, rhs) < 0f;
 				if (OnLastSegment)
 				{
 					if (flag2)
@@ -731,10 +732,11 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 				{
 					float sqrMagnitude2 = (vector4 - m_NextWaypoint).sqrMagnitude;
 					float sqrMagnitude3 = (vector - m_NextWaypoint).sqrMagnitude;
-					bool num10 = sqrMagnitude2 < ApproachRadius * ApproachRadius;
+					float num10 = Mathf.Max(ApproachRadius, 0.05f);
+					bool num11 = sqrMagnitude2 < num10 * num10;
 					bool flag6 = (vector4 - vector).sqrMagnitude < 1E-08f;
 					bool flag7 = sqrMagnitude3 < sqrMagnitude2;
-					if (num10 && (flag6 || flag7))
+					if (num11 && (flag6 || flag7))
 					{
 						CompleteMovement(interrupted: false);
 					}

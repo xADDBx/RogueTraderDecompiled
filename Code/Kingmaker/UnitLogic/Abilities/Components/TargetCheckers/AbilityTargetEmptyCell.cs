@@ -29,9 +29,9 @@ public class AbilityTargetEmptyCell : BlueprintComponent, IAbilityTargetRestrict
 	public static bool IsVirtualPositionBlockingCell(CustomGridNodeBase targetNode)
 	{
 		VirtualPositionController virtualPositionController = Game.Instance.VirtualPositionController;
-		if (virtualPositionController != null && virtualPositionController.VirtualPosition.HasValue && virtualPositionController.VirtualPositionUnit != null)
+		if (virtualPositionController != null && virtualPositionController.VirtualPosition.HasValue && virtualPositionController.CurrentUnit != null)
 		{
-			foreach (CustomGridNodeBase occupiedNode in virtualPositionController.VirtualPositionUnit.GetOccupiedNodes(virtualPositionController.VirtualPosition.Value))
+			foreach (CustomGridNodeBase occupiedNode in virtualPositionController.CurrentUnit.GetOccupiedNodes(virtualPositionController.VirtualPosition.Value))
 			{
 				if (occupiedNode == targetNode)
 				{

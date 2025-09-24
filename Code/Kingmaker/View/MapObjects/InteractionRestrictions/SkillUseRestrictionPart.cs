@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
@@ -144,8 +145,8 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 
 	private bool CheckRestrictionInternal(BaseUnitEntity user)
 	{
-		int difficulty = ((DCOverride == 0) ? base.Settings.GetDC() : DCOverride);
-		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(user, base.Settings.GetSkill(), difficulty)
+		int num = ((DCOverride == 0) ? base.Settings.GetDC() : DCOverride);
+		RulePerformSkillCheck rulePerformSkillCheck = GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(user, base.Settings.GetSkill(), num)
 		{
 			Voice = RulePerformSkillCheck.VoicingType.All
 		});
@@ -155,6 +156,7 @@ public abstract class SkillUseRestrictionPart<T> : InteractionRestrictionPart<T>
 			{
 				h.HandlePickLockSuccess(View);
 			}, isCheckRuntime: true);
+			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExp(num, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
 		}
 		else
 		{

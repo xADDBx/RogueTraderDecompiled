@@ -225,7 +225,7 @@ public class EquipmentEntity : ScriptableObject, IResource
 	[HideInInspector]
 	public bool IsExportEnabled;
 
-	[Tooltip("If this is checked, player won't be able to hide this part in DollRoom Settings. Works with helmets only")]
+	[Tooltip("If this is checked, player won't be able to hide this part in DollRoom Settings. Now works with all parts, special mode with cloth")]
 	public bool CantBeHiddenByDollRoom;
 
 	[Tooltip("For showing helmet and other base outfit that players want to see even if they wear armor")]
@@ -242,6 +242,8 @@ public class EquipmentEntity : ScriptableObject, IResource
 	private long m_HideBodyParts;
 
 	public bool ShowLowerMaterials;
+
+	public bool isOnlyRightBP;
 
 	public List<Skeleton.Bone> SkeletonModifiers;
 

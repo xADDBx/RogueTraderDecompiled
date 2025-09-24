@@ -47,13 +47,13 @@ public struct UpdateCollidersGridJob : IJob
 			float3 float6 = CollidersAabbMax[k];
 			float3 float7 = float5 - @float;
 			float3 float8 = float6 - @float;
-			int2 x = new int2((int)(float7.x / float4.x), (int)(float7.z / float4.y));
-			int2 x2 = new int2((int)(float8.x / float4.x) + 1, (int)(float8.z / float4.y) + 1);
-			x = math.clamp(x, 0, GridResolution);
-			x2 = math.clamp(x2, 0, GridResolution);
-			for (int l = x.y; l < x2.y; l++)
+			int2 valueToClamp = new int2((int)(float7.x / float4.x), (int)(float7.z / float4.y));
+			int2 valueToClamp2 = new int2((int)(float8.x / float4.x) + 1, (int)(float8.z / float4.y) + 1);
+			valueToClamp = math.clamp(valueToClamp, 0, GridResolution);
+			valueToClamp2 = math.clamp(valueToClamp2, 0, GridResolution);
+			for (int l = valueToClamp.y; l < valueToClamp2.y; l++)
 			{
-				for (int m = x.x; m < x2.x; m++)
+				for (int m = valueToClamp.x; m < valueToClamp2.x; m++)
 				{
 					int num = l * 17 * GridResolution + m * 17;
 					int num2 = Grid[num];

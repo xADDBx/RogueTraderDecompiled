@@ -8,6 +8,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Enums;
 
 namespace Kingmaker.RuleSystem.Rules;
@@ -32,6 +33,10 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public const int BaseParryChance = 20;
 
+	public FlagModifiersManager AutoParryModifier = new FlagModifiersManager();
+
+	public FlagModifiersManager NeverParryModifier = new FlagModifiersManager();
+
 	[CanBeNull]
 	public AbilityData Ability { get; }
 
@@ -48,6 +53,8 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 	public int AttackerWeaponSkillOverride { get; set; }
 
 	public bool IsAutoParry { get; private set; }
+
+	public bool IsAutoHit { get; private set; }
 
 	public bool IsRangedParry { get; private set; }
 
@@ -111,6 +118,13 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
+		if ((IsRangedParry && !CanParryRanged(Defender)) || (!IsRangedParry && !CanParryMelee(Defender)))
+		{
+			RawResult = 0;
+			Result = 0;
+			DeflectionResult = 0;
+			return;
+		}
 		DefenderSkill = Defender.Attributes.WarhammerWeaponSkill;
 		if (UseBallisticSkill)
 		{
@@ -165,18 +179,45 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	private void SpecialOverrideWithFeatures()
 	{
-		if (MaybeAttacker != null && (bool)MaybeAttacker.Features.AutoHit)
+		if (MaybeAttacker != null && ((bool)MaybeAttacker.Features.AutoHit || NeverParryModifier.Value))
 		{
+			IsAutoHit = true;
 			RawResult = 0;
 			Result = 0;
 			DeflectionResult = 0;
 		}
-		else if ((bool)Defender.Features.AutoParry)
+		else if ((bool)Defender.Features.AutoParry || AutoParryModifier.Value)
 		{
 			IsAutoParry = true;
 			RawResult = 100;
 			Result = 100;
 			DeflectionResult = (IsRangedParry ? 100 : 0);
 		}
+	}
+
+	private bool CanParryMelee(BaseUnitEntity unit)
+	{
+		if (unit.CanAct)
+		{
+			if (unit.GetThreatHandMelee() == null)
+			{
+				if (unit.Features.CanUseBallisticSkillToParry.Value)
+				{
+					return unit.GetThreatHandRangedAnyHand() != null;
+				}
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private bool CanParryRanged(BaseUnitEntity unit)
+	{
+		if (unit.CanAct && unit.HasMechanicFeature(MechanicsFeatureType.RangedParry))
+		{
+			return base.ConcreteInitiator.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == unit).Any();
+		}
+		return false;
 	}
 }

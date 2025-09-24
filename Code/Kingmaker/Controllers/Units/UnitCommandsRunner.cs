@@ -5,6 +5,7 @@ using Code.Visual.Animation;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.Controllers.StarSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -23,6 +24,7 @@ using Kingmaker.UI.Pointer;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility;
@@ -290,7 +292,13 @@ public static class UnitCommandsRunner
 			UISounds.Instance.Sounds.Combat.CombatGridConfirmActionClick.Play();
 			TryRunVirtualMoveCommand();
 			break;
-		case UnitHelper.MoveCommandStatus.NotEnoughPoints:
+		case UnitHelper.MoveCommandStatus.NotEnoughMovementPoints:
+			ShowWarning(LocalizedTexts.Instance.Reasons.NotEnoughMovementPoints);
+			break;
+		case UnitHelper.MoveCommandStatus.DestinationUnreachable:
+			ShowWarning(LocalizedTexts.Instance.Reasons.PathBlocked);
+			break;
+		case UnitHelper.MoveCommandStatus.NotEnoughPathPoints:
 			Logger.Log("Move command: Not enough points to move");
 			break;
 		case UnitHelper.MoveCommandStatus.NoReachableTile:
@@ -310,6 +318,13 @@ public static class UnitCommandsRunner
 			break;
 		case UnitHelper.MoveCommandStatus.NewCommandCreated:
 			break;
+		}
+		static void ShowWarning(string message)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(message, addToLog: false, WarningNotificationFormat.Attention);
+			});
 		}
 	}
 
@@ -502,36 +517,30 @@ public static class UnitCommandsRunner
 
 	private static UnitCommandParams CreateUseAbilityCommandParams(AbilityData abilityData, TargetWrapper target)
 	{
-		PlayerUseAbilityParams playerUseAbilityParams = new PlayerUseAbilityParams(abilityData, target);
-		playerUseAbilityParams.IsSynchronized = true;
-		IReadOnlyList<TargetWrapper> readOnlyList = Game.Instance.SelectedAbilityHandler?.MultiTargetHandler.Targets;
-		if (readOnlyList != null)
+		PlayerUseAbilityParams obj = new PlayerUseAbilityParams(abilityData, target)
 		{
-			playerUseAbilityParams.AllTargets = new List<TargetWrapper>(readOnlyList.Count);
-			foreach (TargetWrapper item in readOnlyList)
-			{
-				playerUseAbilityParams.AllTargets.Add(new TargetWrapper(item));
-			}
-		}
-		else
+			IsSynchronized = true
+		};
+		List<TargetWrapper> list = (from t in (Game.Instance.SelectedAbilityHandler?.MultiTargetHandler.Targets).EmptyIfNull()
+			select new TargetWrapper(t)).ToList();
+		if (list.Count == 0 && abilityData.InitialTargetAbility.TargetAnchor == AbilityTargetAnchor.Owner)
 		{
-			playerUseAbilityParams.AllTargets = new List<TargetWrapper>();
+			list.Add(new TargetWrapper(abilityData.InitialTargetAbility.Caster));
 		}
+		obj.AllTargets = list;
 		if (abilityData.SourceItem != null)
 		{
 			EventBus.RaiseEvent(delegate(IClickActionHandler h)
 			{
 				h.OnItemUseRequested(abilityData, target);
 			});
+			return obj;
 		}
-		else
+		EventBus.RaiseEvent(delegate(IClickActionHandler h)
 		{
-			EventBus.RaiseEvent(delegate(IClickActionHandler h)
-			{
-				h.OnCastRequested(abilityData, target);
-			});
-		}
-		return playerUseAbilityParams;
+			h.OnCastRequested(abilityData, target);
+		});
+		return obj;
 	}
 
 	private static void RunMoveCommand(BaseUnitEntity unit, UnitCommandParams cmdParams)

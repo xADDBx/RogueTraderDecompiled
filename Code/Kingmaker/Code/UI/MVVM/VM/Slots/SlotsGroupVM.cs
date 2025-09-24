@@ -39,6 +39,8 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	private readonly bool m_NeedMaximumLimit;
 
+	private ItemsSorterType m_SorterTypeCache;
+
 	public ItemsCollection MechanicCollection { get; }
 
 	public AutoDisposingReactiveCollection<TViewModel> VisibleCollection { get; } = new AutoDisposingReactiveCollection<TViewModel>();
@@ -65,7 +67,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	public ItemSlotsGroupType Type { get; }
 
-	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0)
+	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0, bool forceSort = false)
 	{
 		MechanicCollection = collection;
 		m_ItemEntities = items;
@@ -77,6 +79,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		m_ShowSlotHoldItems = showSlotHoldItemsInSlots;
 		m_NeedMaximumLimit = needMaximumLimit;
 		SorterType.Value = sorter;
+		m_SorterTypeCache = SorterType.Value;
 		FilterType.Value = filter;
 		ShowUnavailable.Value = showUnavailableItems;
 		AddDisposable(FilterType.Skip(1).Subscribe(delegate
@@ -95,7 +98,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		{
 			UpdateVisibleCollection();
 		}));
-		InternalUpdate();
+		InternalUpdate(forceSort);
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -120,62 +123,74 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		InternalUpdate();
 	}
 
-	private void InternalUpdate()
+	private void InternalUpdate(bool force = false)
 	{
-		List<ItemEntity> list = ItemsFilter.ItemSorter(Items.Where(ShouldShowItem).ToList(), SorterType.Value, FilterType.Value);
+		List<ItemEntity> list = Items.Where(ShouldShowItem).ToList();
+		List<ItemEntity> list2 = list;
+		if (m_SorterTypeCache != SorterType.Value || force)
+		{
+			list2 = ItemsFilter.ItemSorter(list, SorterType.Value, FilterType.Value);
+		}
+		list2.RemoveAll((ItemEntity item) => item != null && !ItemsFilter.ShouldShowItem(item, SorterType.Value));
 		if (!ShowUnavailable.Value)
 		{
-			list.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
+			list2.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
 		}
-		if (SorterType.Value != 0)
+		if ((SorterType.Value != 0 && m_SorterTypeCache != SorterType.Value) || force || RootUIContext.Instance.IsLootShow)
 		{
-			for (int j = 0; j < list.Count; j++)
+			for (int j = 0; j < list2.Count; j++)
 			{
-				list[j].SetSlotIndex(j);
+				list2[j].SetSlotIndex(j);
 			}
 		}
-		List<EntityIndexPair> list2 = new List<EntityIndexPair>();
-		foreach (ItemEntity item in list)
+		List<EntityIndexPair> list3 = new List<EntityIndexPair>();
+		foreach (ItemEntity item in list2)
 		{
 			int inventorySlotIndex = item.InventorySlotIndex;
-			if (inventorySlotIndex < list2.Count)
+			if (inventorySlotIndex < list3.Count)
 			{
-				list2[inventorySlotIndex] = new EntityIndexPair
+				list3[inventorySlotIndex] = new EntityIndexPair
 				{
 					Item = item,
 					Index = inventorySlotIndex
 				};
 				continue;
 			}
-			while (list2.Count < inventorySlotIndex)
+			while (list3.Count < inventorySlotIndex)
 			{
-				list2.Add(new EntityIndexPair
+				list3.Add(new EntityIndexPair
 				{
 					Item = null,
-					Index = list2.Count
+					Index = list3.Count
 				});
 			}
-			list2.Add(new EntityIndexPair
+			list3.Add(new EntityIndexPair
 			{
 				Item = item,
 				Index = inventorySlotIndex
 			});
 		}
-		int num = (list.Any() ? (list.Max((ItemEntity i) => i.InventorySlotIndex) + 1) : 0);
+		int num = (list2.Any() ? (list2.Max((ItemEntity i) => i.InventorySlotIndex) + 1) : 0);
 		bool removeEmpty = NeedRemoveEmptySlot();
-		list2.RemoveAll((EntityIndexPair s) => NeedRemoveSlot(s.Item, removeEmpty));
-		int b = ((!m_NeedMaximumLimit) ? (m_SlotsInRow * (Mathf.CeilToInt((float)list2.Count / (float)m_SlotsInRow) + 1)) : m_MaxSlots);
+		list3.RemoveAll((EntityIndexPair s) => NeedRemoveSlot(s.Item, removeEmpty));
+		int b = ((!m_NeedMaximumLimit) ? (m_SlotsInRow * (Mathf.CeilToInt((float)list3.Count / (float)m_SlotsInRow) + 1)) : m_MaxSlots);
 		int num2 = Mathf.Max(m_MinSlots, b);
-		while (list2.Count < num2)
+		while (list3.Count < num2)
 		{
-			list2.Add(new EntityIndexPair
+			list3.Add(new EntityIndexPair
 			{
 				Item = null,
 				Index = num
 			});
 			num++;
 		}
-		SetNewVisibleCollection(list2);
+		SetNewVisibleCollection(list3);
+		m_SorterTypeCache = SorterType.Value;
+	}
+
+	public void SortItems()
+	{
+		InternalUpdate(force: true);
 	}
 
 	private bool ShouldShowItem(ItemEntity item)
@@ -226,6 +241,10 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	private bool NeedRemoveEmptySlot()
 	{
+		if (m_SorterTypeCache == SorterType.Value)
+		{
+			return false;
+		}
 		if (SorterType.Value != 0)
 		{
 			return true;

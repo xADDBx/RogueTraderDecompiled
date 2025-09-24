@@ -62,7 +62,6 @@ public static class PartMechanicFeaturesExtension
 			MechanicsFeatureType.AoEDodgeWithoutMovement => features.AoEDodgeWithoutMovement, 
 			MechanicsFeatureType.IgnoreMeleeOutnumbering => features.IgnoreMeleeOutnumbering, 
 			MechanicsFeatureType.DoesNotCountTurns => features.DoesNotCountTurns, 
-			MechanicsFeatureType.HasNoAPPenaltyCostForTwoWeaponFighting => features.HasNoAPPenaltyCostForTwoWeaponFighting, 
 			MechanicsFeatureType.IgnoreCoverEfficiency => features.IgnoreCoverEfficiency, 
 			MechanicsFeatureType.WitheringShard => features.WitheringShard, 
 			MechanicsFeatureType.HiveOutnumber => features.HiveOutnumber, 

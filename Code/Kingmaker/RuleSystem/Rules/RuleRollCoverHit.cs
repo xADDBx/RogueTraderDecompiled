@@ -11,7 +11,7 @@ public class RuleRollCoverHit : RulebookOptionalTargetEvent
 	[NotNull]
 	public readonly RuleCalculateCoverHitChance HitChanceRule;
 
-	private bool m_IsAutoHit;
+	private readonly bool m_IsAutoMissCover;
 
 	public RuleRollD100 ResultD100 { get; private set; }
 
@@ -32,11 +32,11 @@ public class RuleRollCoverHit : RulebookOptionalTargetEvent
 		base.HasNoTarget = false;
 	}
 
-	public RuleRollCoverHit([NotNull] RuleCalculateCoverHitChance hitChance, bool isAutoHit = false)
+	public RuleRollCoverHit([NotNull] RuleCalculateCoverHitChance hitChance, bool isAutoMissCover = false)
 		: base(hitChance.ConcreteInitiator, hitChance.MaybeTarget)
 	{
 		base.HasNoTarget = hitChance.MaybeTarget == null;
-		m_IsAutoHit = isAutoHit;
+		m_IsAutoMissCover = isAutoMissCover;
 		HitChanceRule = hitChance;
 	}
 
@@ -44,6 +44,6 @@ public class RuleRollCoverHit : RulebookOptionalTargetEvent
 	{
 		Rulebook.Trigger(HitChanceRule);
 		ResultD100 = Dice.D100;
-		ResultIsHit = !m_IsAutoHit && (int)ResultD100 <= ResultChance;
+		ResultIsHit = !m_IsAutoMissCover && !HitChanceRule.IsAutoMiss && (HitChanceRule.IsAutoHit || (int)ResultD100 <= ResultChance);
 	}
 }

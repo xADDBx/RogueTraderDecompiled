@@ -201,7 +201,7 @@ public class CustomPortraitsManager
 	{
 		if (!Directory.Exists(PortraitsRootFolderPath))
 		{
-			Directory.CreateDirectory(PortraitsRootFolderPath);
+			return Array.Empty<string>();
 		}
 		return (from p in Directory.GetDirectories(PortraitsRootFolderPath)
 			select new DirectoryInfo(p).Name).ToArray();
@@ -216,6 +216,10 @@ public class CustomPortraitsManager
 			num++;
 		}
 		PortraitData portraitData = new PortraitData(num.ToString("D4"));
+		if (!Directory.Exists(PortraitsRootFolderPath))
+		{
+			Directory.CreateDirectory(PortraitsRootFolderPath);
+		}
 		EnsureDirectory(portraitData.CustomId, createNewIfNotExists: true);
 		if (fillDefaultPortraits)
 		{

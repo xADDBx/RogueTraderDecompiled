@@ -1,3 +1,4 @@
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -22,14 +23,11 @@ public struct PBDSkinnedBodyAnimationJob : IAnimationJob
 	public NativeArray<int> ParentMap;
 
 	[ReadOnly]
-	public NativeSlice<float3> BasePositions;
-
-	[ReadOnly]
-	public NativeSlice<float3> Positions;
+	public NativeSlice<ParticlePositionPair> PositionPairs;
 
 	public void ProcessAnimation(AnimationStream stream)
 	{
-		if (Positions.Length == 0 || Positions.Length != BoneHandles.Length)
+		if (PositionPairs.Length == 0 || PositionPairs.Length != BoneHandles.Length)
 		{
 			return;
 		}
@@ -39,23 +37,23 @@ public struct PBDSkinnedBodyAnimationJob : IAnimationJob
 		int length = BoneHandles.Length;
 		for (int i = 0; i < length; i++)
 		{
-			float3 @float = Positions[i];
+			float3 position2 = PositionPairs[i].Position;
 			TransformStreamHandle transformStreamHandle = BoneHandles[i];
-			transformStreamHandle.SetPosition(stream, @float);
+			transformStreamHandle.SetPosition(stream, position2);
 			int num = ParentMap[i];
 			if (num > -1)
 			{
-				float3 float2 = BasePositions[i];
+				float3 basePosition = PositionPairs[i].BasePosition;
 				Matrix4x4 matrix4x2 = matrix4x * Boneposes[i];
-				float3 float3 = Positions[num];
-				float3 float4 = BasePositions[num];
-				float3 float5 = float2 - float4;
-				float3 float6 = @float - float3;
-				float5 = inverse.MultiplyVector(float5);
-				float6 = inverse.MultiplyVector(float6);
-				float3 x = math.cross(float5, float6);
+				float3 position3 = PositionPairs[num].Position;
+				float3 basePosition2 = PositionPairs[num].BasePosition;
+				float3 @float = basePosition - basePosition2;
+				float3 float2 = position2 - position3;
+				@float = inverse.MultiplyVector(@float);
+				float2 = inverse.MultiplyVector(float2);
+				float3 x = math.cross(@float, float2);
 				x = math.normalize(x);
-				Quaternion quaternion = Quaternion.AngleAxis(Vector3.Angle(float5, float6), x);
+				Quaternion quaternion = Quaternion.AngleAxis(Vector3.Angle(@float, float2), x);
 				transformStreamHandle.SetRotation(stream, matrix4x2.rotation * quaternion);
 			}
 		}

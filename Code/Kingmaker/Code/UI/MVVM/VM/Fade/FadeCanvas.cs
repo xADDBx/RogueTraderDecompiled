@@ -1,11 +1,18 @@
+using DG.Tweening;
+
 namespace Kingmaker.Code.UI.MVVM.VM.Fade;
 
 public static class FadeCanvas
 {
-	public static FadeVM Instance;
+	public static FadeVM? Instance;
 
 	public static void Fadeout(bool fade)
 	{
 		Instance?.Fadeout(fade);
+	}
+
+	public static void Fadeout(bool fade, float duration, Ease ease)
+	{
+		Instance?.Fadeout(fade, duration, ease);
 	}
 }

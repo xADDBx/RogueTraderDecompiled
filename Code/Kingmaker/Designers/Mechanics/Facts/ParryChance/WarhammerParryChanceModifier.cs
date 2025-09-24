@@ -48,6 +48,12 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 	[ShowIf("ParryChanceMultiplier")]
 	public ContextValue ParryChanceMultiplierValue = 1;
 
+	[SerializeField]
+	private bool m_AlwaysParry;
+
+	[SerializeField]
+	private bool m_NeverParry;
+
 	private bool ModifyParryChance => (Properties & PropertyType.ParryChance) != 0;
 
 	private bool ModifyAttackerWeaponSkillBonus => (Properties & PropertyType.AttackerWeaponSkillBonus) != 0;
@@ -75,6 +81,14 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 			if (ParryChanceMultiplier)
 			{
 				rule.ParryValueMultipliers.Add(ModifierType.PctMul_Extra, ParryChanceMultiplierValue.Calculate(base.Context), base.Fact);
+			}
+			if (m_AlwaysParry)
+			{
+				rule.AutoParryModifier.Add(base.Fact);
+			}
+			if (m_NeverParry)
+			{
+				rule.NeverParryModifier.Add(base.Fact);
 			}
 		}
 	}

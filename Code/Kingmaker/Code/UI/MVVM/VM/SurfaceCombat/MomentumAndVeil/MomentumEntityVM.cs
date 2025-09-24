@@ -81,12 +81,15 @@ public class MomentumEntityVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		int heroicActThreshold = MomentumRoot.HeroicActThreshold;
 		HeroicActPercent.Value = (float)heroicActThreshold / (float)MomentumRoot.MaximalMomentum;
 		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
-		HeroicActActive.Value = (float)m_Group.Momentum >= (float)heroicActThreshold || MomentumActionActive(currentUnit, MomentumAbilityType.HeroicAct);
-		if (m_IsParty.Value && evt != null)
+		if (currentUnit != null)
 		{
-			UpdateDesperateMeasure(currentUnit.GetDesperateMeasureThreshold(), currentUnit);
-			TryPlayMomentumSound(evt, currentUnit);
-			m_MomentumChanged.Execute();
+			HeroicActActive.Value = (float)m_Group.Momentum >= (float)heroicActThreshold || MomentumActionActive(currentUnit, MomentumAbilityType.HeroicAct);
+			if (m_IsParty.Value && evt != null)
+			{
+				UpdateDesperateMeasure(currentUnit.GetDesperateMeasureThreshold(), currentUnit);
+				TryPlayMomentumSound(evt, currentUnit);
+				m_MomentumChanged.Execute();
+			}
 		}
 	}
 

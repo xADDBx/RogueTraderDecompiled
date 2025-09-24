@@ -30,6 +30,10 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public readonly ValueModifiersManager MinimumDodgeValueModifier = new ValueModifiersManager();
 
+	public FlagModifiersManager AutoDodgeModifiers = new FlagModifiersManager();
+
+	public FlagModifiersManager NeverDodgeModifiers = new FlagModifiersManager();
+
 	public List<StatType> AgilityReplacementStats = new List<StatType>();
 
 	public const int MaxValueCap = 95;
@@ -55,6 +59,8 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 	public int UncappedNegativesCount { get; private set; }
 
 	public bool IsAutoDodge { get; private set; }
+
+	public bool IsNeverDodge { get; private set; }
 
 	[CanBeNull]
 	public MechanicEntity MaybeAttacker => base.MaybeTarget;
@@ -216,13 +222,14 @@ public class RuleCalculateDodgeChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	private void SpecialOverrideWithFeatures()
 	{
-		if ((bool)Defender.Features.AutoDodge || AutoDodgeFlagModifiers.Value || ((bool)Defender.Features.AutoDodgeFriendlyFire && Defender.IsAlly(MaybeAttacker)))
+		if ((bool)Defender.Features.AutoDodge || AutoDodgeFlagModifiers.Value || ((bool)Defender.Features.AutoDodgeFriendlyFire && Defender.IsAlly(MaybeAttacker)) || AutoDodgeModifiers.Value)
 		{
 			IsAutoDodge = true;
 			Result = 100;
 		}
-		else if (MaybeAttacker != null && (bool)MaybeAttacker.Features.AutoHit)
+		else if (MaybeAttacker != null && ((bool)MaybeAttacker.Features.AutoHit || NeverDodgeModifiers.Value))
 		{
+			IsNeverDodge = true;
 			Result = 0;
 		}
 	}

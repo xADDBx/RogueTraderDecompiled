@@ -17,6 +17,10 @@ public abstract class GameAction : Element, ICanBeLogContext
 		{
 			RunAction();
 			elementsDebugger?.SetResult(1);
+			if (elementsDebugger != null)
+			{
+				SetupDebugContext(elementsDebugger);
+			}
 		}
 		catch (Exception exception)
 		{
@@ -27,4 +31,8 @@ public abstract class GameAction : Element, ICanBeLogContext
 	}
 
 	protected abstract void RunAction();
+
+	protected virtual void SetupDebugContext(ElementsDebugger debugger)
+	{
+	}
 }

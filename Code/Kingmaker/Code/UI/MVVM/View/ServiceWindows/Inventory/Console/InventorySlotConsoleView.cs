@@ -8,6 +8,7 @@ using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Items;
+using Kingmaker.Localization;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -15,6 +16,7 @@ using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UniRx;
+using UniRx;
 using UnityEngine;
 using Warhammer.SpaceCombat.Blueprints;
 
@@ -28,6 +30,8 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 
 	private ContextMenuCollectionEntity m_ToCargoAuto = new ContextMenuCollectionEntity();
 
+	private ContextMenuCollectionEntity m_AddRemoveFromFavorites = new ContextMenuCollectionEntity();
+
 	private UISounds.ButtonSoundsEnum m_ConfirmSoundClick = UISounds.ButtonSoundsEnum.NormalSound;
 
 	protected override void BindViewImplementation()
@@ -35,6 +39,10 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		base.BindViewImplementation();
 		m_ItemSlotConsoleView.Bind(base.ViewModel);
 		AddDisposable(base.ViewModel.ToCargoAutomaticallyChange.Subscribe(HandleToCargoAutomaticallyChanged));
+		AddDisposable(base.ViewModel.IsFavorite.Subscribe(delegate
+		{
+			SetupContextMenu();
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -52,6 +60,10 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		ItemEntity value = base.ViewModel.Item.Value;
 		m_ToCargoAuto = new ContextMenuCollectionEntity(title, command, condition, isInteractable: true, (value != null && value.ToCargoAutomatically) ? BlueprintRoot.Instance.UIConfig.UIIcons.Check : BlueprintRoot.Instance.UIConfig.UIIcons.NotCheck);
 		bool flag = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintStarshipItem;
+		value = base.ViewModel.Item.Value;
+		LocalizedString title2 = ((value != null && value.IsFavorite) ? UIStrings.Instance.ContextMenu.RemoveFromFav : UIStrings.Instance.ContextMenu.AddToFav);
+		bool isInteractable = base.ViewModel.Item != null;
+		m_AddRemoveFromFavorites = new ContextMenuCollectionEntity(title2, base.AddRemoveFromFavorites, condition: true, isInteractable);
 		List<ContextMenuCollectionEntity> value2 = new List<ContextMenuCollectionEntity>
 		{
 			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !flag),
@@ -63,6 +75,7 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 			{
 				MoveToInventory(immediately: true);
 			}, condition: true, base.ViewModel.SlotsGroupType == ItemSlotsGroupType.Cargo && base.ViewModel.CanTransferToInventory),
+			m_AddRemoveFromFavorites,
 			m_ToCargoAuto,
 			new ContextMenuCollectionEntity(contextMenu.Split, base.Split, base.ViewModel.IsPosibleSplit),
 			new ContextMenuCollectionEntity(contextMenu.Drop, base.DropItem, base.ViewModel.CanEquip),

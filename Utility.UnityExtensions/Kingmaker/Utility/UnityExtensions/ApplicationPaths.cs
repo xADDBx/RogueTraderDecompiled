@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Kingmaker.Utility.UnityExtensions;
 
-public class ApplicationPaths
+public static class ApplicationPaths
 {
 	public static string dataPath { get; private set; }
 

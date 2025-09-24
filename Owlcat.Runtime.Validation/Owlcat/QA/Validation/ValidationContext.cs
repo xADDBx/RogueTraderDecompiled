@@ -253,7 +253,7 @@ public class ValidationContext : IDisposable
 
 	private void GCPeriodic()
 	{
-		if (!(m_LastGc - DateTime.UtcNow < m_GCInterval))
+		if (!(DateTime.UtcNow - m_LastGc < m_GCInterval))
 		{
 			GC.Collect();
 			m_LastGc = DateTime.UtcNow;

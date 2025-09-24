@@ -2,7 +2,7 @@ using Owlcat.Runtime.Visual.Waaagh.Debugging;
 using Owlcat.Runtime.Visual.Waaagh.Shadows;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 

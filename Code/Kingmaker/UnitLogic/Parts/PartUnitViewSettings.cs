@@ -69,32 +69,45 @@ public class PartUnitViewSettings : MechanicEntityPart<AbstractUnitEntity>, IHas
 	{
 		if (!ignorePolymorph)
 		{
-			PartPolymorphed optional = base.Owner.GetOptional<PartPolymorphed>();
-			UnitEntityView unitEntityView = optional?.Component.GetPrefab(base.Owner).Load();
-			if (unitEntityView != null)
+			PartPetPolymorphed optional = base.Owner.GetOptional<PartPetPolymorphed>();
+			if (optional?.Component != null)
 			{
-				Quaternion rotation = (unitEntityView.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
-				UnitEntityView component = Object.Instantiate(unitEntityView, base.Owner.Position, rotation).GetComponent<UnitEntityView>();
-				optional.ViewReplacement = component.gameObject;
-				component.DisableSizeScaling = true;
-				return component;
+				UnitEntityView unitEntityView = optional.Component.GetPrefab(base.Owner).Load();
+				if (unitEntityView != null)
+				{
+					Quaternion rotation = (unitEntityView.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
+					UnitEntityView component = Object.Instantiate(unitEntityView, base.Owner.Position, rotation).GetComponent<UnitEntityView>();
+					optional.ViewReplacement = component.gameObject;
+					component.DisableSizeScaling = true;
+					return component;
+				}
+			}
+			PartPolymorphed optional2 = base.Owner.GetOptional<PartPolymorphed>();
+			UnitEntityView unitEntityView2 = optional2?.Component.GetPrefab(base.Owner).Load();
+			if (unitEntityView2 != null)
+			{
+				Quaternion rotation2 = (unitEntityView2.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
+				UnitEntityView component2 = Object.Instantiate(unitEntityView2, base.Owner.Position, rotation2).GetComponent<UnitEntityView>();
+				optional2.ViewReplacement = component2.gameObject;
+				component2.DisableSizeScaling = true;
+				return component2;
 			}
 		}
 		if (Doll?.RacePreset != null)
 		{
-			UnitEntityView unitEntityView2 = Doll.CreateUnitView();
-			unitEntityView2.ViewTransform.position = base.Owner.Position;
-			unitEntityView2.ViewTransform.rotation = Quaternion.Euler(0f, base.Owner.Orientation, 0f);
-			return unitEntityView2;
+			UnitEntityView unitEntityView3 = Doll.CreateUnitView();
+			unitEntityView3.ViewTransform.position = base.Owner.Position;
+			unitEntityView3.ViewTransform.rotation = Quaternion.Euler(0f, base.Owner.Orientation, 0f);
+			return unitEntityView3;
 		}
-		UnitEntityView unitEntityView3 = ResourcesLibrary.TryGetResource<UnitEntityView>(PrefabGuid);
-		if (unitEntityView3 == null)
+		UnitEntityView unitEntityView4 = ResourcesLibrary.TryGetResource<UnitEntityView>(PrefabGuid);
+		if (unitEntityView4 == null)
 		{
-			PFLog.Default.Error(base.Owner.Blueprint, "Cannot find prefab for unit: " + PrefabGuid);
+			PFLog.TechArt.Error(base.Owner.Blueprint, "Cannot find prefab for unit: " + PrefabGuid);
 			return null;
 		}
-		Quaternion rotation2 = (unitEntityView3.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
-		UnitEntityView unitEntityView4 = Object.Instantiate(unitEntityView3, base.Owner.Position, rotation2);
+		Quaternion rotation3 = (unitEntityView4.ForbidRotation ? Quaternion.identity : Quaternion.Euler(0f, base.Owner.Orientation, 0f));
+		UnitEntityView unitEntityView5 = Object.Instantiate(unitEntityView4, base.Owner.Position, rotation3);
 		if (base.Owner is BaseUnitEntity { IsPet: not false } baseUnitEntity)
 		{
 			if (Doll == null)
@@ -103,9 +116,9 @@ public class PartUnitViewSettings : MechanicEntityPart<AbstractUnitEntity>, IHas
 				PFLog.TechArt.Log("PartUnitViewSettings.Instantiate: Created DollData for pet: " + baseUnitEntity.CharacterName);
 			}
 			PFLog.TechArt.Log("PartUnitViewSettings.Instantiate: Applying saved pet ramps for pet: " + baseUnitEntity.CharacterName);
-			Doll.ApplyPetRamps(unitEntityView4);
+			Doll.ApplyPetRamps(unitEntityView5);
 		}
-		return unitEntityView4;
+		return unitEntityView5;
 	}
 
 	public void PreloadResources()

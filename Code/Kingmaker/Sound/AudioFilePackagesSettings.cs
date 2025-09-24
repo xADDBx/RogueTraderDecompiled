@@ -96,6 +96,11 @@ public class AudioFilePackagesSettings : ScriptableObject
 
 	private void EnsureInitialized()
 	{
-		AkSoundEngine.AddBasePath(Path.Combine(AkBasePathGetter.GetPlatformBasePath(), "Packages"));
+		string text = Path.Combine(AkBasePathGetter.GetPlatformBasePath(), "Packages");
+		if (Directory.Exists(text))
+		{
+			Directory.CreateDirectory(text);
+		}
+		AkSoundEngine.AddBasePath(text);
 	}
 }

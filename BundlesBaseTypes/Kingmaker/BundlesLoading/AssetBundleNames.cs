@@ -67,6 +67,8 @@ public class AssetBundleNames
 
 	public const string BundleFolderXBoxSeries = "Bundles";
 
+	public const string BundleFolderSwitch2 = "Data/StreamingAssets/Bundles";
+
 	public const string BundleFolderOsx = "Bundles";
 
 	public const string BundleFolderEditor = "IntermediateBuild/Bundles";
@@ -81,6 +83,7 @@ public class AssetBundleNames
 			RuntimePlatform.GameCoreXboxSeries => "Bundles", 
 			RuntimePlatform.OSXPlayer => "Bundles", 
 			RuntimePlatform.WindowsPlayer => "Bundles", 
+			RuntimePlatform.Switch2 => "Data/StreamingAssets/Bundles", 
 			_ => "IntermediateBuild/Bundles", 
 		};
 	}

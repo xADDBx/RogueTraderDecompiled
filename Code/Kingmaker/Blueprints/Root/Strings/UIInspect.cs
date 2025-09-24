@@ -72,6 +72,16 @@ public class UIInspect
 
 	public LocalizedString CriticalChanceDescription;
 
+	public LocalizedString ArmoursAndShields;
+
+	public LocalizedString Fore;
+
+	public LocalizedString Aft;
+
+	public LocalizedString Port;
+
+	public LocalizedString Starboard;
+
 	public LocalizedString Armours;
 
 	public LocalizedString ArmourFore;
@@ -97,6 +107,8 @@ public class UIInspect
 	public LocalizedString WeaponSlotStarboard;
 
 	public LocalizedString WeaponSlotKeel;
+
+	public LocalizedString PsyRating;
 
 	public string GetArmorStringByType(StarshipHitLocation type)
 	{

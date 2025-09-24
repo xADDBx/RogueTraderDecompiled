@@ -82,7 +82,7 @@ public class FluidFeature : ScriptableRendererFeature
 		{
 			if (m_Instance == null)
 			{
-				OwlcatRenderPipelineAsset owlcatRenderPipelineAsset = GraphicsSettings.renderPipelineAsset as OwlcatRenderPipelineAsset;
+				OwlcatRenderPipelineAsset owlcatRenderPipelineAsset = GraphicsSettings.defaultRenderPipeline as OwlcatRenderPipelineAsset;
 				if (owlcatRenderPipelineAsset != null && owlcatRenderPipelineAsset.ScriptableRenderer != null && owlcatRenderPipelineAsset.ScriptableRendererData != null)
 				{
 					m_Instance = owlcatRenderPipelineAsset.ScriptableRendererData.rendererFeatures.FirstOrDefault((ScriptableRendererFeature f) => f is FluidFeature) as FluidFeature;

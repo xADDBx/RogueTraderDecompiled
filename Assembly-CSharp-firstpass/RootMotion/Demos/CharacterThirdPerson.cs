@@ -167,13 +167,13 @@ public class CharacterThirdPerson : CharacterBase
 	private void FixedUpdate()
 	{
 		gravity = GetGravity();
-		verticalVelocity = V3Tools.ExtractVertical(r.velocity, gravity, 1f);
+		verticalVelocity = V3Tools.ExtractVertical(r.linearVelocity, gravity, 1f);
 		velocityY = verticalVelocity.magnitude;
 		if (Vector3.Dot(verticalVelocity, gravity) > 0f)
 		{
 			velocityY = 0f - velocityY;
 		}
-		if (animator != null && animator.updateMode == AnimatorUpdateMode.AnimatePhysics)
+		if (animator != null && animator.updateMode == AnimatorUpdateMode.Fixed)
 		{
 			smoothPhysics = false;
 			characterAnimation.smoothFollow = false;
@@ -194,7 +194,7 @@ public class CharacterThirdPerson : CharacterBase
 		{
 			ZeroFriction();
 		}
-		bool flag = onGround && userControl.state.move == Vector3.zero && r.velocity.magnitude < 0.5f && groundDistance < airborneThreshold * 0.5f;
+		bool flag = onGround && userControl.state.move == Vector3.zero && r.linearVelocity.magnitude < 0.5f && groundDistance < airborneThreshold * 0.5f;
 		if (gravityTarget != null)
 		{
 			r.useGravity = false;
@@ -206,7 +206,7 @@ public class CharacterThirdPerson : CharacterBase
 		if (flag)
 		{
 			r.useGravity = false;
-			r.velocity = Vector3.zero;
+			r.linearVelocity = Vector3.zero;
 		}
 		else if (gravityTarget == null)
 		{
@@ -262,19 +262,19 @@ public class CharacterThirdPerson : CharacterBase
 		else
 		{
 			Vector3 b2 = V3Tools.ExtractHorizontal(userControl.state.move * airSpeed, gravity, 1f);
-			vector = Vector3.Lerp(r.velocity, b2, Time.deltaTime * airControl);
+			vector = Vector3.Lerp(r.linearVelocity, b2, Time.deltaTime * airControl);
 		}
 		if (onGround && Time.time > jumpEndTime)
 		{
-			r.velocity -= base.transform.up * stickyForce * Time.deltaTime;
+			r.linearVelocity -= base.transform.up * stickyForce * Time.deltaTime;
 		}
-		Vector3 vector2 = V3Tools.ExtractVertical(r.velocity, gravity, 1f);
+		Vector3 vector2 = V3Tools.ExtractVertical(r.linearVelocity, gravity, 1f);
 		Vector3 vector3 = V3Tools.ExtractHorizontal(vector, gravity, 1f);
 		if (onGround && Vector3.Dot(vector2, gravity) < 0f)
 		{
 			vector2 = Vector3.ClampMagnitude(vector2, maxVerticalVelocityOnGround);
 		}
-		r.velocity = vector3 + vector2;
+		r.linearVelocity = vector3 + vector2;
 		float b3 = ((!onGround) ? 1f : GetSlopeDamper(-deltaPosition / Time.deltaTime, normal));
 		forwardMlp = Mathf.Lerp(forwardMlp, b3, Time.deltaTime * 5f);
 	}
@@ -302,7 +302,7 @@ public class CharacterThirdPerson : CharacterBase
 		{
 			if (onGround && velocityY < 0f)
 			{
-				r.velocity = V3Tools.ExtractHorizontal(r.velocity, gravity, 1f);
+				r.linearVelocity = V3Tools.ExtractHorizontal(r.linearVelocity, gravity, 1f);
 			}
 			Vector3 vector = V3Tools.ExtractHorizontal(base.transform.forward, gravity, 1f);
 			RaycastHit hitInfo = default(RaycastHit);
@@ -423,9 +423,9 @@ public class CharacterThirdPerson : CharacterBase
 		}
 		onGround = false;
 		jumpEndTime = Time.time + 0.1f;
-		Vector3 velocity = userControl.state.move * airSpeed;
-		r.velocity = velocity;
-		r.velocity += base.transform.up * jumpPower;
+		Vector3 linearVelocity = userControl.state.move * airSpeed;
+		r.linearVelocity = linearVelocity;
+		r.linearVelocity += base.transform.up * jumpPower;
 		return true;
 	}
 
@@ -442,7 +442,7 @@ public class CharacterThirdPerson : CharacterBase
 			bool num2 = onGround;
 			onGround = false;
 			float num3 = ((!num2) ? (airborneThreshold * 0.5f) : airborneThreshold);
-			float magnitude = V3Tools.ExtractHorizontal(r.velocity, gravity, 1f).magnitude;
+			float magnitude = V3Tools.ExtractHorizontal(r.linearVelocity, gravity, 1f).magnitude;
 			if (groundDistance < num3)
 			{
 				num = groundStickyEffect * magnitude * num3;

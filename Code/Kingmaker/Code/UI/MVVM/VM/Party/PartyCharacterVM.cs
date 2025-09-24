@@ -38,6 +38,8 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	public readonly ReactiveProperty<bool> IsSingleSelected = new ReactiveProperty<bool>(initialValue: false);
 
+	public readonly ReactiveProperty<bool> IsSingleSelectedWithoutFakeSelected = new ReactiveProperty<bool>(initialValue: false);
+
 	public readonly ReactiveProperty<bool> IsLinked = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<bool> IsLevelUp = new ReactiveProperty<bool>(initialValue: false);
@@ -146,6 +148,7 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				IsHudActive.Value = Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.None;
 				AscendedLabel.Value = UnitEntityData.Buffs.GetBuff(AscendBuff) != null;
 				bool flag = ((SelectionCharacter.SelectedUnitInUI.Value != null) ? (SelectionCharacter.SelectedUnitInUI.Value == UnitEntityData) : (SelectionCharacter.SingleSelectedUnit.Value == UnitEntityData));
+				IsSingleSelectedWithoutFakeSelected.Value = flag;
 				IsSingleSelected.Value = flag || UnitEntityData.IsFakeSelected;
 				IsLinked.Value = ((m_Master != null) ? m_Master.IsLinked.Value : UnitEntityData.IsLink);
 				if (!PetMasterNumberIcon.Value)
@@ -176,6 +179,7 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			IsSelected.Value = SelectionCharacter.IsSelected(UnitEntityData) || UnitEntityData.IsFakeSelected;
 			IsSingleSelected.Value = ((SelectionCharacter.SelectedUnitInUI.Value != null) ? (SelectionCharacter.SelectedUnitInUI.Value == UnitEntityData) : (SelectionCharacter.SingleSelectedUnit.Value == UnitEntityData));
+			IsSingleSelectedWithoutFakeSelected.Value = IsSingleSelected.Value;
 			IsLinked.Value = UnitEntityData.IsLink;
 		}
 	}

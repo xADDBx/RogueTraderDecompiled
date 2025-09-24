@@ -17,6 +17,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Stores;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility.UnityExtensions;
 using Newtonsoft.Json;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -161,8 +162,8 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 	private static IEnumerator DownloadText(string url, Action<string> callback, string localFileName)
 	{
 		using UnityWebRequest www = UnityWebRequest.Get(url);
-		string text = Path.Combine(Application.streamingAssetsPath, localFileName);
-		string cachedFilePath = Path.Combine(Application.persistentDataPath, localFileName);
+		string text = Path.Combine(ApplicationPaths.streamingAssetsPath, localFileName);
+		string cachedFilePath = Path.Combine(ApplicationPaths.persistentDataPath, localFileName);
 		if (!TryGetIntroductoryLocalFileText(cachedFilePath, out var text2) && !TryGetIntroductoryLocalFileText(text, out text2))
 		{
 			PFLog.UI.Error("Failed to load Introductory Text from default path: " + text);

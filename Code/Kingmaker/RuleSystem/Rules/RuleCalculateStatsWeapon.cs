@@ -108,7 +108,20 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 		int num = basePenetrationOverride ?? weapon?.Blueprint.WarhammerPenetration ?? 0;
 		BaseDamage.Penetration.Add(ModifierType.ValAdd, num, this, ModifierDescriptor.BaseValue);
 		BaseDamage.Overpenetrating = baseDamageOverride?.Overpenetrating ?? false;
-		BaseDamage.UnreducedOverpenetration = initiator.Features.OverpenetrationDoesNotDecreaseDamage;
+		if ((bool)initiator.Features.OverpenetrationDoesNotDecreaseDamage)
+		{
+			goto IL_0201;
+		}
+		if (ability != null)
+		{
+			IgnoreOverpenetrationDamageDecreament component = ability.Blueprint.GetComponent<IgnoreOverpenetrationDamageDecreament>();
+			if (component != null && component.Active(ability?.Fact, this, ability))
+			{
+				goto IL_0201;
+			}
+		}
+		goto IL_020d;
+		IL_020d:
 		int? num2 = null;
 		if (Weapon != null)
 		{
@@ -121,6 +134,10 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 		int baseOverpenetrationChance = BlueprintWarhammerRoot.Instance.CombatRoot.BaseOverpenetrationChance;
 		int value = baseDamageOverride?.OverpenetrationFactorPercents ?? num2 ?? (baseOverpenetrationChance + num);
 		OverpenetrationFactorModifiers.Add(ModifierType.ValAdd, value, this, ModifierDescriptor.BaseValue);
+		return;
+		IL_0201:
+		BaseDamage.UnreducedOverpenetration = true;
+		goto IL_020d;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)

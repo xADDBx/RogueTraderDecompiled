@@ -2,6 +2,7 @@ namespace Kingmaker.Settings;
 
 public enum MainMenuTheme
 {
-	Default,
-	Original
+	Original = 1,
+	Dlc1,
+	Dlc2
 }

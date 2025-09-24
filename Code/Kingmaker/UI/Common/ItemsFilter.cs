@@ -31,6 +31,22 @@ public static class ItemsFilter
 		return ShouldShowItem(item.Blueprint, filter);
 	}
 
+	public static bool ShouldShowItem(ItemEntity item, ItemsSorterType filter)
+	{
+		if (filter == ItemsSorterType.Favorite)
+		{
+			if (item.IsFavorite)
+			{
+				return true;
+			}
+			if (!item.IsFavorite)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static bool ShouldShowItem(BlueprintItem blueprintItem, ItemsFilterType filter)
 	{
 		if (ShouldSkipItem())
@@ -244,6 +260,9 @@ public static class ItemsFilter
 		case ItemsSorterType.NameDown:
 			items.Sort((ItemEntity a, ItemEntity b) => CompareByName(a, b, filter));
 			items.Reverse();
+			break;
+		case ItemsSorterType.Favorite:
+			items.Sort((ItemEntity a, ItemEntity b) => CompareByType(a, b, filter));
 			break;
 		}
 		return items;

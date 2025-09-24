@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -17,10 +16,5 @@ public static class AwaitExtensions
 			};
 		});
 		await tcs.Task;
-	}
-
-	public static TaskAwaiter GetAwaiter(this AsyncOperation op)
-	{
-		return op.AwaitAsyncOp().GetAwaiter();
 	}
 }

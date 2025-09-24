@@ -4,6 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using StateHasher.Core;
 using UnityEngine;
@@ -24,11 +25,19 @@ public class UnitBuffUntargetableByAbilityGroups : UnitBuffComponentDelegate, IH
 
 	public bool IsBlocked(IEnumerable<BlueprintAbilityGroup> groups)
 	{
+		List<BlueprintAbilityGroup> list = new List<BlueprintAbilityGroup>();
+		foreach (BlueprintAbilityGroupReference blockedGroup in m_BlockedGroups)
+		{
+			foreach (BlueprintAbilityGroup allAbilityGroup in VirtualAbilityGroupExtension.GetAllAbilityGroups(blockedGroup))
+			{
+				list.AddUnique(allAbilityGroup);
+			}
+		}
 		if (!m_InvertCondition)
 		{
-			return m_BlockedGroups.Any((BlueprintAbilityGroupReference p) => groups.Contains(p));
+			return Enumerable.Any(list, (BlueprintAbilityGroup p) => groups.Contains(p));
 		}
-		return m_BlockedGroups.All((BlueprintAbilityGroupReference p) => !groups.Contains(p));
+		return list.All((BlueprintAbilityGroup p) => !groups.Contains(p));
 	}
 
 	public override Hash128 GetHash128()

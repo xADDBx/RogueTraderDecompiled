@@ -25,7 +25,13 @@ public class TooltipBrickIconPatternVM : TooltipBaseBrickVM
 
 	public readonly TooltipBaseTemplate Tooltip;
 
-	public TooltipBrickIconPatternVM(Sprite icon, UIUtilityItem.UIPatternData patternData, TooltipBrickIconPattern.TextFieldValues titleValues, TooltipBrickIconPattern.TextFieldValues secondaryValues, TooltipBrickIconPattern.TextFieldValues tertiaryValues, TooltipBaseTemplate tooltip, IconPatternMode iconMode, string acronym, TalentIconInfo talentIconsInfo)
+	public readonly string AbilityPropertyName;
+
+	public readonly string AbilityPropertyValue;
+
+	public readonly string AbilityPropertyDesc;
+
+	public TooltipBrickIconPatternVM(Sprite icon, UIUtilityItem.UIPatternData patternData, TooltipBrickIconPattern.TextFieldValues titleValues, TooltipBrickIconPattern.TextFieldValues secondaryValues, TooltipBrickIconPattern.TextFieldValues tertiaryValues, TooltipBaseTemplate tooltip, IconPatternMode iconMode, string acronym, TalentIconInfo talentIconsInfo, string abilityPropertyName, string abilityPropertyValue, string abilityPropertyDesc)
 	{
 		Icon = icon;
 		PatternData = patternData;
@@ -36,5 +42,8 @@ public class TooltipBrickIconPatternVM : TooltipBaseBrickVM
 		IconMode = iconMode;
 		Acronym = acronym;
 		TalentIconInfo = talentIconsInfo;
+		AbilityPropertyName = abilityPropertyName;
+		AbilityPropertyValue = abilityPropertyValue;
+		AbilityPropertyDesc = abilityPropertyDesc;
 	}
 }

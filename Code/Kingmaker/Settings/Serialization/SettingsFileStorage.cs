@@ -28,6 +28,7 @@ public class SettingsFileStorage
 		{
 			if (!File.Exists(m_Path))
 			{
+				PFLog.Settings.Log("Settings file not found at {0}", m_Path);
 				return null;
 			}
 			using StreamReader reader = File.OpenText(m_Path);

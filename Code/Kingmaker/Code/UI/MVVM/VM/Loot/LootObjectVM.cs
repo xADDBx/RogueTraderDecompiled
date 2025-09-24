@@ -50,11 +50,11 @@ public class LootObjectVM : VirtualListElementVMBase
 		}
 		else if (Game.Instance.IsControllerMouse)
 		{
-			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
+			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot, forceSort: true));
 		}
 		else
 		{
-			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot));
+			AddDisposable(SlotsGroup = new ItemSlotsGroupVM(itemsCollection, items, UIConsts.MinLootSlotsInRow, UIConsts.MinLootSlotsInSingleObj, ItemsFilterType.NoFilter, ItemsSorterType.DateUp, showUnavailableItems: true, showSlotHoldItemsInSlots: true, ItemSlotsGroupType.Loot, forceSort: true));
 		}
 		switch (type)
 		{

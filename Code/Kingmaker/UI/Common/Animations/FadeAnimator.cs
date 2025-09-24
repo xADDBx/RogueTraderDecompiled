@@ -2,6 +2,7 @@ using System;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UniRx;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -44,6 +45,8 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 
 	private bool m_isInit;
 
+	private bool m_IsResetting;
+
 	public CanvasGroup CanvasGroup => m_CanvasGroup = (m_CanvasGroup ? m_CanvasGroup : ((base.gameObject != null) ? this.EnsureComponent<CanvasGroup>() : null));
 
 	public float AppearAnimationTime => m_AppearTime;
@@ -67,6 +70,7 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 		}
 		m_PermanentBlockRaycast = null;
 		m_isInit = true;
+		m_IsResetting = false;
 	}
 
 	public void TryCreateTweens()
@@ -153,6 +157,7 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 			m_AppearTween.ChangeStartValue(CanvasGroup.alpha);
 			m_AppearTween.Play();
 		}
+		TweenTimeoutReset(1f);
 	}
 
 	public void DisappearAnimation([CanBeNull] UnityAction action = null)
@@ -193,6 +198,7 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 			m_DisappearTween.ChangeStartValue(CanvasGroup.alpha);
 			m_DisappearTween.Play();
 		}
+		TweenTimeoutReset(0.001f);
 	}
 
 	public void PlayAnimation(bool value, UnityAction action = null)
@@ -243,5 +249,49 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 	public void SetAlwaysActive(bool state)
 	{
 		m_GameObjectAlwaysActive = state;
+	}
+
+	private void TweenTimeoutReset(float targetValue)
+	{
+		if (targetValue == 1f)
+		{
+			ResetAlphaInternalAppear();
+		}
+		else
+		{
+			ResetAlphaInternalDisappear();
+		}
+	}
+
+	private void ResetAlphaInternalAppear()
+	{
+		DelayedInvoker.InvokeInTime(delegate
+		{
+			if (!m_IsResetting)
+			{
+				m_IsResetting = true;
+				if (!Mathf.Approximately(CanvasGroup.alpha, 1f) || ((m_AppearTween == null || !m_AppearTween.IsPlaying()) && (m_DisappearTween == null || !m_DisappearTween.IsPlaying())))
+				{
+					CanvasGroup.alpha = 1f;
+					m_IsResetting = false;
+				}
+			}
+		}, m_AppearTime);
+	}
+
+	private void ResetAlphaInternalDisappear()
+	{
+		DelayedInvoker.InvokeInTime(delegate
+		{
+			if (!m_IsResetting)
+			{
+				m_IsResetting = true;
+				if (!Mathf.Approximately(CanvasGroup.alpha, 0f) || ((m_AppearTween == null || !m_AppearTween.IsPlaying()) && (m_DisappearTween == null || !m_DisappearTween.IsPlaying())))
+				{
+					CanvasGroup.alpha = 0f;
+					m_IsResetting = false;
+				}
+			}
+		}, m_DisappearTime);
 	}
 }

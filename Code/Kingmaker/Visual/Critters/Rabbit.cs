@@ -196,7 +196,7 @@ public class Rabbit : MonoBehaviour, IUpdatable, IInterpolatable
 	{
 		if (CurrentTick % 4 == 0)
 		{
-			if (Vector3.Distance(cameraRig.position, m_CurrPosition) >= 25f)
+			if (cameraRig == null || Vector3.Distance(cameraRig.position, m_CurrPosition) >= 25f)
 			{
 				wasSleeping = isSleeping;
 				isSleeping = true;

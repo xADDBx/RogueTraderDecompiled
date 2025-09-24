@@ -41,4 +41,10 @@ public class UITextInventory
 	public LocalizedString ToggleStats;
 
 	public LocalizedString ChangeWeaponSet;
+
+	public LocalizedString FavoriteCategory;
+
+	public LocalizedString MainHand;
+
+	public LocalizedString OffHand;
 }

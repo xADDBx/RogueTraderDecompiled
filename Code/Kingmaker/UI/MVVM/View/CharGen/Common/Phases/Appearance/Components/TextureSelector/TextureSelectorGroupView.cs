@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.TextureSelector;
@@ -35,6 +36,8 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
+	protected bool m_IsCooldownActive;
+
 	public bool IsActive => (base.ViewModel?.EntitiesCollection?.Any()).GetValueOrDefault();
 
 	protected override void BindViewImplementation()
@@ -49,6 +52,9 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 
 	protected override void DestroyViewImplementation()
 	{
+		m_IsCooldownActive = false;
+		StopAllCoroutines();
+		base.gameObject.SetActive(value: false);
 	}
 
 	public void SetTitleText(string title)
@@ -74,6 +80,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 		AddDisposable(m_WidgetList.DrawEntries(base.ViewModel.EntitiesCollection.ToArray(), m_ItemPrefab));
 		LayoutRebuilder.ForceRebuildLayoutImmediate(base.transform as RectTransform);
 		UpdateNavigation();
+		base.gameObject.SetActive(value: true);
 	}
 
 	protected virtual void UpdateNavigation()
@@ -84,21 +91,41 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 
 	public virtual bool HandleUp()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleUp();
 	}
 
 	public virtual bool HandleDown()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleDown();
 	}
 
 	public virtual bool HandleLeft()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleLeft();
 	}
 
 	public virtual bool HandleRight()
 	{
+		if (m_IsCooldownActive)
+		{
+			return false;
+		}
+		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleRight();
 	}
 
@@ -142,5 +169,12 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	public string GetConfirmClickHint()
 	{
 		return string.Empty;
+	}
+
+	private IEnumerator HandleCooldown()
+	{
+		m_IsCooldownActive = true;
+		yield return new WaitForSeconds(0.3f);
+		m_IsCooldownActive = false;
 	}
 }

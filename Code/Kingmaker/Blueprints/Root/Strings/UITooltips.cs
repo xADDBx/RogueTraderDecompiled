@@ -213,6 +213,8 @@ public class UITooltips
 
 	public LocalizedString EveryRound;
 
+	public LocalizedString Recovery;
+
 	public LocalizedString TotalHitChance;
 
 	public LocalizedString InitialHitChance;
@@ -301,4 +303,12 @@ public class UITooltips
 	public LocalizedString OnlyPetCanEquip;
 
 	public LocalizedString PetCanNotEquip;
+
+	public LocalizedString PetCanNotEquipOverseerDogmatic;
+
+	public LocalizedString PetCanNotEquipOverseerHeretic;
+
+	public LocalizedString PetCanNotEquipOverseerSchismatic;
+
+	public LocalizedString AooDescriptionTooltip;
 }

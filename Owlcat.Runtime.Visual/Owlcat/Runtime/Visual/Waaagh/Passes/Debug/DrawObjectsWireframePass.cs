@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 
@@ -16,12 +16,12 @@ public class DrawObjectsWireframePass : DrawRendererListPass<DrawObjectsWirefram
 	{
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
 		RendererListDesc desc = sharedRendererLists.Transparent.Desc;
 		desc.rendererConfiguration = PerObjectData.None;
 		desc.renderQueueRange = WaaaghRenderQueue.All;
-		rendererList = renderingData.RenderGraph.CreateRendererList(in desc);
+		rendererList = renderingData.Context.CreateRendererList(desc);
 	}
 
 	protected override void Setup(RenderGraphBuilder builder, DrawObjectsWireframePassData data, ref RenderingData renderingData)

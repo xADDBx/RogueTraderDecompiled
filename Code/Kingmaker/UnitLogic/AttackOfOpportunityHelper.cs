@@ -160,7 +160,7 @@ public static class AttackOfOpportunityHelper
 		}
 	}
 
-	public static bool CanMakeAttackOfOpportunity(this BaseUnitEntity attacker, BaseUnitEntity target)
+	public static bool CanMakeAttackOfOpportunity(this BaseUnitEntity attacker, BaseUnitEntity target, bool canUseInRange = false)
 	{
 		if (Game.Instance.TurnController.CurrentUnit == attacker || (bool)attacker.Features.DisableAttacksOfOpportunity)
 		{
@@ -178,7 +178,7 @@ public static class AttackOfOpportunityHelper
 		{
 			return false;
 		}
-		if (!attacker.CombatState.CanActInCombat || !attacker.CombatState.CanAttackOfOpportunity || !attacker.State.CanAct || attacker.IsInvisible)
+		if (!attacker.CombatState.CanActInCombat || !attacker.CombatState.CanAttackOfOpportunity(canUseInRange) || !attacker.State.CanAct || attacker.IsInvisible)
 		{
 			return false;
 		}
@@ -227,16 +227,12 @@ public static class AttackOfOpportunityHelper
 		return false;
 	}
 
-	public static BlueprintAbility GetAttackOfOpportunityAbility(this WeaponSlot slot, BaseUnitEntity unit)
+	public static BlueprintAbility GetAttackOfOpportunityAbility(this WeaponSlot slot, BaseUnitEntity unit, bool allowRanged = false)
 	{
 		BlueprintAbility blueprintAbility = slot.AttackOfOpportunityAbility;
-		if (blueprintAbility == null)
+		if (blueprintAbility == null && ((unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>()?.EnableAndPrioritizeRangedAttack ?? false) || allowRanged))
 		{
-			UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
-			if (optional != null && optional.EnableAndPrioritizeRangedAttack)
-			{
-				blueprintAbility = slot.MaybeWeapon?.Blueprint.WeaponAbilities.Ability1.Ability;
-			}
+			blueprintAbility = slot.MaybeWeapon?.Blueprint.WeaponAbilities.FirstOrDefault()?.Ability;
 		}
 		return blueprintAbility;
 	}

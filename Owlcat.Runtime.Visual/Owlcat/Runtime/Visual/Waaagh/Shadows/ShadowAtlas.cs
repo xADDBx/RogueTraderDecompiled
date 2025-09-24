@@ -59,6 +59,6 @@ internal sealed class ShadowAtlas : IDisposable
 	private void Setup()
 	{
 		m_Allocator = new ShadowAtlasAllocator(m_Resolution, Unity.Collections.Allocator.Persistent);
-		m_Texture = RTHandles.Alloc((int)m_Resolution, (int)m_Resolution, 1, DepthBits.Depth16, GraphicsFormat.D16_UNorm, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: true, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, m_Name);
+		m_Texture = RTHandles.Alloc((int)m_Resolution, (int)m_Resolution, 1, DepthBits.Depth16, GraphicsFormat.D16_UNorm, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex2D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: true, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, m_Name);
 	}
 }

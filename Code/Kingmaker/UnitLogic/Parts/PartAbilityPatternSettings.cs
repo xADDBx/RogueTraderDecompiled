@@ -17,7 +17,7 @@ public class PartAbilityPatternSettings : UnitPart, IHashable
 {
 	private readonly List<(EntityFactComponent Runtime, OverrideAbilityPatternSettings Component)> m_PatternEntries = new List<(EntityFactComponent, OverrideAbilityPatternSettings)>();
 
-	private readonly List<(EntityFactComponent Runtime, OverrideAbilityPatternRadius Component)> m_OverrideRadius = new List<(EntityFactComponent, OverrideAbilityPatternRadius)>();
+	public readonly List<(EntityFactComponent Runtime, OverrideAbilityPatternRadius Component)> m_OverrideRadius = new List<(EntityFactComponent, OverrideAbilityPatternRadius)>();
 
 	public static IAbilityAoEPatternProvider GetAbilityPatternSettings(AbilityData ability, [CanBeNull] IAbilityAoEPatternProvider currentPattern = null)
 	{

@@ -183,7 +183,7 @@ public class PartyCharacterPCView : ViewBase<PartyCharacterVM>, IScrollHandler, 
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(m_CharacterButton.OnLeftDoubleClickAsObservable(), delegate
 		{
-			if (!m_IsDragging)
+			if (!m_IsDragging && !Game.Instance.IsSpaceCombat)
 			{
 				UISounds.Instance.Sounds.Character.CharacterSelectAll.Play();
 				base.ViewModel.SelectAll();

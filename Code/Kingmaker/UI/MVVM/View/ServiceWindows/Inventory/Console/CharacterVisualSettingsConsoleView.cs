@@ -44,7 +44,7 @@ public class CharacterVisualSettingsConsoleView : CharacterVisualSettingsView<Ch
 	{
 		base.BindViewImplementation();
 		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour());
-		List<IConsoleEntity> entities = new List<IConsoleEntity> { m_OutfitMainColorSelectorView, m_ClothEntityView, m_HelmetEntityView, m_BackpackEntityView, m_HelmetAboveAllEntityView };
+		List<IConsoleEntity> entities = new List<IConsoleEntity> { m_OutfitMainColorSelectorView, m_ClothEntityView, m_HelmetEntityView, m_BackpackEntityView, m_HelmetAboveAllEntityView, m_GlovesEntityView, m_BootsEntityView, m_ArmorEntityView };
 		m_NavigationBehaviour.AddColumn(entities);
 		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 		{
@@ -54,6 +54,9 @@ public class CharacterVisualSettingsConsoleView : CharacterVisualSettingsView<Ch
 		m_HelmetEntityView.AddInput(m_InputLayer);
 		m_HelmetAboveAllEntityView.AddInput(m_InputLayer);
 		m_BackpackEntityView.AddInput(m_InputLayer);
+		m_GlovesEntityView.AddInput(m_InputLayer);
+		m_BootsEntityView.AddInput(m_InputLayer);
+		m_ArmorEntityView.AddInput(m_InputLayer);
 		InputBindStruct inputBindStruct = m_InputLayer.AddButton(delegate
 		{
 			base.ViewModel.Close();

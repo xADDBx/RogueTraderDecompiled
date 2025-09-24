@@ -135,6 +135,13 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 				}
 			}
 		}
+		else if (Owner.Buffs.GetBuff(fact.Blueprint)?.Blueprint == fact.Blueprint)
+		{
+			Buff buff2 = GetBuff(blueprint);
+			OnBuffRankAdd(buff2, duration.Rounds);
+			buff2.StackedBuffsSourcesRefs.Add(fact);
+			return buff2;
+		}
 		fact.SetDuration(duration);
 		return fact;
 	}
@@ -148,6 +155,13 @@ public class BuffCollection : MechanicEntityFactsCollection<Buff>
 		BaseUnitEntity baseUnitEntity = ContextData<CasterUnitData>.Current?.Unit;
 		if (baseUnitEntity != null && fact.Context.MaybeCaster != baseUnitEntity)
 		{
+			return null;
+		}
+		if (Owner.Buffs.GetBuff(fact.Blueprint)?.Blueprint == fact.Blueprint)
+		{
+			Buff buff = GetBuff(fact.Blueprint);
+			buff?.StackedBuffsSourcesRefs.Remove(fact);
+			buff?.RemoveRank();
 			return null;
 		}
 		fact.RemoveRank();

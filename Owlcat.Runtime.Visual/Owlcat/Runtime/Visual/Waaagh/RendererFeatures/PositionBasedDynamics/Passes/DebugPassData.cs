@@ -1,7 +1,7 @@
 using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.GPU;
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.PositionBasedDynamics.Passes;
 

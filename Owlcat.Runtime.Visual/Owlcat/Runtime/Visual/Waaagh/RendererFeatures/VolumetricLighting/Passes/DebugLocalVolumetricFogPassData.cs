@@ -1,6 +1,6 @@
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -14,7 +14,7 @@ public class DebugLocalVolumetricFogPassData : PassDataBase
 
 	public Vector4 LocalFogClusteringParams;
 
-	public ComputeBufferHandle FogTilesBuffer;
+	public BufferHandle FogTilesBuffer;
 
-	public ComputeBufferHandle FogZBinsBuffer;
+	public BufferHandle FogZBinsBuffer;
 }

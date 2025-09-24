@@ -206,6 +206,10 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 			return;
 		}
 		Func<MomentumGroup, bool> predicate = (unit.IsPlayerFaction ? ((Func<MomentumGroup, bool>)((MomentumGroup p) => p.Blueprint != root.PartyGroup)) : ((Func<MomentumGroup, bool>)((MomentumGroup p) => p.Blueprint == root.PartyGroup)));
+		if (mechanicEntity == unit && unit.HasMechanicFeature(MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum))
+		{
+			return;
+		}
 		foreach (MomentumGroup item in Groups.Where(predicate))
 		{
 			Rulebook.Trigger(RulePerformMomentumChange.CreateKillEnemy(mechanicEntity, unit, item));

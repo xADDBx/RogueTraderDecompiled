@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
-using Kingmaker.QA.Arbiter.Service;
 
 namespace Kingmaker.QA.Arbiter.Tasks;
 
@@ -27,14 +26,8 @@ public class LoadPresetTask : ArbiterTask
 			{
 				Game.Instance.LoadNewGame(m_Preset);
 			});
-			BlueprintArea area = m_Preset.Area;
 			yield return new GameLoadingWaitTask(this);
-			yield return new WaitTask(this, delegate
-			{
-				ArbiterService.Logger.Log("Wait for CurrentlyLoadedArea '{0}' should be '{1}'", Game.Instance.CurrentlyLoadedArea, area);
-				return Game.Instance.CurrentlyLoadedArea == area;
-			});
-			base.Status = "Preset '{m_Preset.Area.Name}' loaded";
+			base.Status = "Preset '" + m_Preset.Area.Name + "' loaded";
 		}
 	}
 }

@@ -9,13 +9,18 @@ using Owlcat.Runtime.Visual.Waaagh.Passes.PostProcess;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh;
 
 public class WaaaghRenderer : ScriptableRenderer
 {
+	private static class ShaderConstants
+	{
+		public static int _LightTilesBuffer = Shader.PropertyToID("_LightTilesBuffer");
+	}
+
 	private enum NoiseBasedPostProcessingStage
 	{
 		None,
@@ -253,7 +258,7 @@ public class WaaaghRenderer : ScriptableRenderer
 		bool isLightingEnabled = cameraData.IsLightingEnabled;
 		if (isLightingEnabled)
 		{
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.WaaaghLightsSetup)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.WaaaghLightsSetup)))
 			{
 				m_WaaaghLights.StartSetupJobs(context, ref renderingData, m_Settings.TileSize);
 			}
@@ -447,10 +452,10 @@ public class WaaaghRenderer : ScriptableRenderer
 		desc8.autoGenerateMips = false;
 		desc8.filterMode = FilterMode.Bilinear;
 		resources.CameraColorPyramidRT = resources.RenderGraph.CreateTexture(in desc8);
-		resources.LightDataConstantBuffer = resources.RenderGraph.ImportComputeBuffer(m_WaaaghLights.LightDataConstantBuffer);
-		resources.LightVolumeDataConstantBuffer = resources.RenderGraph.ImportComputeBuffer(m_WaaaghLights.LightVolumeDataConstantBuffer);
-		resources.ZBinsConstantBuffer = resources.RenderGraph.ImportComputeBuffer(m_WaaaghLights.ZBinsConstantBuffer);
-		resources.LightTilesBuffer = resources.RenderGraph.ImportComputeBuffer(m_WaaaghLights.LightTilesBuffer);
+		resources.LightDataConstantBuffer = resources.RenderGraph.ImportBuffer(m_WaaaghLights.LightDataConstantBuffer);
+		resources.LightVolumeDataConstantBuffer = resources.RenderGraph.ImportBuffer(m_WaaaghLights.LightVolumeDataConstantBuffer);
+		resources.ZBinsConstantBuffer = resources.RenderGraph.ImportBuffer(m_WaaaghLights.ZBinsConstantBuffer);
+		resources.LightTilesBuffer = resources.RenderGraph.ImportBuffer(m_WaaaghLights.LightTilesBuffer);
 		resources.RendererLists.Init(ref renderingData);
 	}
 
@@ -474,6 +479,7 @@ public class WaaaghRenderer : ScriptableRenderer
 		commandBuffer.SetGlobalTexture(ShaderPropertyId._CameraDepthTexture, texture2D);
 		commandBuffer.SetGlobalTexture(ShaderPropertyId._ShadowmapRT, texture2D);
 		PBD.SetDummyComputeBuffer(commandBuffer, m_DummyComputeBuffer);
+		commandBuffer.SetGlobalBuffer(ShaderConstants._LightTilesBuffer, m_DummyComputeBuffer);
 		IndirectRenderingSystem.SetupDummyComputeBufferStubs(commandBuffer, m_DummyComputeBuffer);
 		context.ExecuteCommandBuffer(commandBuffer);
 		CommandBufferPool.Release(commandBuffer);
@@ -512,9 +518,9 @@ public class WaaaghRenderer : ScriptableRenderer
 	private static bool SystemSupportsWaveIntrinsics()
 	{
 		GraphicsDeviceType graphicsDeviceType = SystemInfo.graphicsDeviceType;
-		if (graphicsDeviceType != GraphicsDeviceType.Direct3D12 && graphicsDeviceType != GraphicsDeviceType.PlayStation5 && graphicsDeviceType != GraphicsDeviceType.PlayStation5NGGC && graphicsDeviceType != GraphicsDeviceType.XboxOneD3D12 && graphicsDeviceType != GraphicsDeviceType.GameCoreXboxOne)
+		if (graphicsDeviceType != GraphicsDeviceType.Direct3D12 && graphicsDeviceType != GraphicsDeviceType.PlayStation5 && graphicsDeviceType != GraphicsDeviceType.PlayStation5NGGC && graphicsDeviceType != GraphicsDeviceType.XboxOneD3D12 && graphicsDeviceType != GraphicsDeviceType.GameCoreXboxOne && graphicsDeviceType != GraphicsDeviceType.GameCoreXboxSeries)
 		{
-			return graphicsDeviceType == GraphicsDeviceType.GameCoreXboxSeries;
+			return graphicsDeviceType == GraphicsDeviceType.Switch2;
 		}
 		return true;
 	}

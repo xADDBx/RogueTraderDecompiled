@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -61,11 +61,9 @@ public sealed class DrawObjectsWithErrorPass : DrawRendererListPass<DrawObjectsW
 		}
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
-		RenderGraph renderGraph = renderingData.RenderGraph;
-		RendererListDesc desc = CreateRendererListDesc(ref renderingData);
-		rendererList = renderGraph.CreateRendererList(in desc);
+		rendererList = renderingData.Context.CreateRendererList(CreateRendererListDesc(ref renderingData));
 	}
 
 	private RendererListDesc CreateRendererListDesc(ref RenderingData renderingData)

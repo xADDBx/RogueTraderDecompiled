@@ -1,6 +1,9 @@
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
+using Kingmaker.Enums;
+using Kingmaker.Items;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.SelectionGroup.View;
 using TMPro;
 using UniRx;
@@ -19,6 +22,9 @@ public class WeaponSetBaseView : SelectionGroupEntityView<WeaponSetVM>
 	[SerializeField]
 	private TextMeshProUGUI[] m_WeaponSetIndexes;
 
+	[SerializeField]
+	private OwlcatMultiButton m_MainHandObject;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -34,5 +40,25 @@ public class WeaponSetBaseView : SelectionGroupEntityView<WeaponSetVM>
 		{
 			base.gameObject.SetActive(value);
 		}));
+		AddDisposable(base.ViewModel.HasMainHand.Subscribe(delegate(bool value)
+		{
+			m_MainHandObject.gameObject.SetActive(value);
+		}));
+		AddDisposable(base.ViewModel.Primary.Item.Subscribe(delegate(ItemEntity value)
+		{
+			SetMainHandIcons(value);
+		}));
+	}
+
+	private void SetMainHandIcons(ItemEntity item)
+	{
+		if (item is ItemEntityWeapon itemEntityWeapon && base.ViewModel.HasMainHand.Value)
+		{
+			m_MainHandObject.SetActiveLayer((itemEntityWeapon.Blueprint.Category == WeaponCategory.Pistol) ? 1 : 2);
+		}
+		else
+		{
+			m_MainHandObject.SetActiveLayer(0);
+		}
 	}
 }

@@ -20,13 +20,11 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics;
 
 public static class PBD
 {
-	private static class ShaderConstants
+	public static class ShaderConstants
 	{
 		public static int _PbdBindposes = Shader.PropertyToID("_PbdBindposes");
 
-		public static int _PbdParticlesBasePositionBuffer = Shader.PropertyToID("_PbdParticlesBasePositionBuffer");
-
-		public static int _PbdParticlesPositionBuffer = Shader.PropertyToID("_PbdParticlesPositionBuffer");
+		public static int _PbdParticlesPositionPairsBuffer = Shader.PropertyToID("_PbdParticlesPositionPairsBuffer");
 
 		public static int _PBDNormals = Shader.PropertyToID("_PBDNormals");
 
@@ -422,16 +420,35 @@ public static class PBD
 
 	public static void SetDummyComputeBuffer(CommandBuffer cmd, ComputeBuffer dummyComputeBuffer)
 	{
-		if (!IsGpu)
+		if (IsGpu)
 		{
-			cmd.SetGlobalBuffer(ShaderConstants._PbdBindposes, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PBDNormals, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PbdParticlesBasePositionBuffer, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PbdParticlesPositionBuffer, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PBDTangents, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PbdSkinnedBodyBoneIndicesMap, dummyComputeBuffer);
-			cmd.SetGlobalBuffer(ShaderConstants._PbdBodyWorldToLocalMatrices, dummyComputeBuffer);
+			GPUData gPUData = GetGPUData();
+			if (gPUData == null)
+			{
+				SetDummy(cmd, dummyComputeBuffer);
+				return;
+			}
+			cmd.SetGlobalBuffer(ShaderConstants._PbdBindposes, gPUData.SkinnedBodySoA.SimulatedBindposesBuffer);
+			cmd.SetGlobalBuffer(ShaderConstants._PBDNormals, gPUData.MeshBodyVerticesSoA.NormalsBuffer);
+			cmd.SetGlobalBuffer(ShaderConstants._PbdParticlesPositionPairsBuffer, gPUData.ParticlesSoA.PositionPairsBuffer);
+			cmd.SetGlobalBuffer(ShaderConstants._PBDTangents, gPUData.MeshBodyVerticesSoA.TangentsBuffer);
+			cmd.SetGlobalBuffer(ShaderConstants._PbdSkinnedBodyBoneIndicesMap, gPUData.SkinnedBodyBoneIndicesMapSoA.Buffer);
+			cmd.SetGlobalBuffer(ShaderConstants._PbdBodyWorldToLocalMatrices, gPUData.BodyWorldToLocalMatricesSoA.Buffer);
 		}
+		else
+		{
+			SetDummy(cmd, dummyComputeBuffer);
+		}
+	}
+
+	private static void SetDummy(CommandBuffer cmd, ComputeBuffer dummyComputeBuffer)
+	{
+		cmd.SetGlobalBuffer(ShaderConstants._PbdBindposes, dummyComputeBuffer);
+		cmd.SetGlobalBuffer(ShaderConstants._PBDNormals, dummyComputeBuffer);
+		cmd.SetGlobalBuffer(ShaderConstants._PbdParticlesPositionPairsBuffer, dummyComputeBuffer);
+		cmd.SetGlobalBuffer(ShaderConstants._PBDTangents, dummyComputeBuffer);
+		cmd.SetGlobalBuffer(ShaderConstants._PbdSkinnedBodyBoneIndicesMap, dummyComputeBuffer);
+		cmd.SetGlobalBuffer(ShaderConstants._PbdBodyWorldToLocalMatrices, dummyComputeBuffer);
 	}
 
 	public static void DrawGizmos(Body body)

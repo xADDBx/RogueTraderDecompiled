@@ -383,7 +383,6 @@ public class ThemeSettings : ScriptableObject
 		public static implicit operator ColorBlock(CustomColorBlock item)
 		{
 			ColorBlock result = default(ColorBlock);
-			result.selectedColor = item.m_SelectedColor;
 			result.colorMultiplier = item.m_ColorMultiplier;
 			result.disabledColor = item.m_DisabledColor;
 			result.fadeDuration = item.m_FadeDuration;
@@ -475,7 +474,6 @@ public class ThemeSettings : ScriptableObject
 		public static implicit operator SpriteState(CustomSpriteState item)
 		{
 			SpriteState result = default(SpriteState);
-			result.selectedSprite = item.m_SelectedSprite;
 			result.disabledSprite = item.m_DisabledSprite;
 			result.highlightedSprite = item.m_HighlightedSprite;
 			result.pressedSprite = item.m_PressedSprite;
@@ -590,7 +588,6 @@ public class ThemeSettings : ScriptableObject
 		{
 			return new AnimationTriggers
 			{
-				selectedTrigger = item.m_SelectedTrigger,
 				disabledTrigger = item.m_DisabledTrigger,
 				highlightedTrigger = item.m_HighlightedTrigger,
 				normalTrigger = item.m_NormalTrigger,

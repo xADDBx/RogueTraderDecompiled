@@ -126,13 +126,15 @@ public class ContextActionDealDamage : ContextAction
 		if (base.Target.Entity == null)
 		{
 			Element.LogError(this, "Invalid target for effect '{0}'", GetType().Name);
-			return;
 		}
-		DamageInfo damageInfo = GetDamageInfo(base.Context);
-		int value = DealHitPointsDamage(damageInfo);
-		if (WriteResultToSharedValue)
+		else if (!(base.Target.Entity is BaseUnitEntity item) || !Game.Instance.DialogController.InvolvedUnits.Contains(item))
 		{
-			base.Context[ResultSharedValue] = value;
+			DamageInfo damageInfo = GetDamageInfo(base.Context);
+			int value = DealHitPointsDamage(damageInfo);
+			if (WriteResultToSharedValue)
+			{
+				base.Context[ResultSharedValue] = value;
+			}
 		}
 	}
 
@@ -181,7 +183,7 @@ public class ContextActionDealDamage : ContextAction
 			};
 			base.Context.TriggerRule(rulePerformAttackRoll);
 		}
-		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, abilityData, rulePerformAttackRoll, DamageType.CreateDamage(min, max), value, value2, DoNotUseCrModifier).Trigger().ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, abilityData, rulePerformAttackRoll, DamageType.CreateDamage(min, max), value, value2, null, DoNotUseCrModifier).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = info.PreRolledValue;
 		RuleDealDamage ruleDealDamage = new RuleDealDamage(maybeCaster, entity, resultDamage)
 		{

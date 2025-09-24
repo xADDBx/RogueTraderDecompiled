@@ -11,6 +11,7 @@ using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.PatternAttack;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Groups;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.View;
@@ -78,8 +79,22 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 		MechanicEntity caster = context.Caster;
 		CustomGridNodeBase targetNode = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(anchor.Point).node;
 		CustomGridNodeBase casterNode = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(caster.Position).node;
+		AbilityAoEPatternSettings patternSettings = m_PatternSettings;
+		PartAbilityPatternSettings abilityPatternSettingsOptional = caster.GetAbilityPatternSettingsOptional();
+		_ = Pattern;
+		if (abilityPatternSettingsOptional != null)
+		{
+			foreach (var item in abilityPatternSettingsOptional.m_OverrideRadius)
+			{
+				using (item.Runtime.RequestEventContext())
+				{
+					AoEPattern pattern2 = item.Component.OverrideRadius(context.Ability, Pattern);
+					patternSettings.OverridePattern(pattern2);
+				}
+			}
+		}
 		OrientedPatternData pattern = GetOrientedPattern(context.Ability, casterNode, targetNode);
-		PropertyContext context2 = new PropertyContext(context.Caster, null, null, context, null, context.Ability);
+		PropertyContext context2 = new PropertyContext(caster, null, null, context, null, context.Ability);
 		int numberOfTargets = (m_CheckNumberOfTargets ? m_NumberOfTargets.GetValue(context2) : int.MaxValue);
 		foreach (MechanicEntity mechanicEntity in Game.Instance.State.MechanicEntities)
 		{

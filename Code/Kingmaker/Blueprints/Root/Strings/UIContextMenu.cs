@@ -35,4 +35,8 @@ public class UIContextMenu
 	public LocalizedString DowngradeProwRaw;
 
 	public LocalizedString AutoAddToCargo;
+
+	public LocalizedString AddToFav;
+
+	public LocalizedString RemoveFromFav;
 }

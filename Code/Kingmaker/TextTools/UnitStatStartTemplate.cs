@@ -35,7 +35,7 @@ public class UnitStatStartTemplate : TextTemplate
 		{
 			return "<b><color=" + color + ">" + text + "</color></b>";
 		}
-		UnitEntity unitEntity = (GameLogContext.InScope ? (GameLogContext.UnitEntity.Value as UnitEntity) : null);
+		UnitEntity unitEntity = (GameLogContext.InScope ? (GameLogContext.UnitEntity.Value as UnitEntity) : null) ?? (UIUtility.GetCurrentSelectedUnit() as UnitEntity);
 		if (unitEntity == null)
 		{
 			string text2 = (flag ? LocalizedTexts.Instance.Stats.GetBonusText(statType.Value) : LocalizedTexts.Instance.Stats.GetShortText(statType.Value));

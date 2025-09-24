@@ -1,4 +1,4 @@
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -13,8 +13,8 @@ public class DrawSkyboxPass : ScriptableRenderPass<DrawSkyboxPassData>
 
 	protected override void Setup(RenderGraphBuilder builder, DrawSkyboxPassData data, ref RenderingData renderingData)
 	{
-		data.ColorOutput = builder.WriteTexture(in data.Resources.CameraColorBuffer);
-		data.DepthOutput = builder.WriteTexture(in data.Resources.CameraDepthBuffer);
+		data.ColorOutput = builder.ReadWriteTexture(in data.Resources.CameraColorBuffer);
+		data.DepthOutput = builder.ReadWriteTexture(in data.Resources.CameraDepthBuffer);
 		data.Camera = renderingData.CameraData.Camera;
 	}
 

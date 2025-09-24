@@ -7,8 +7,6 @@ internal class GameCoreArbiterEnvironment : IArbiterEnvironment
 {
 	public static bool FatalError;
 
-	public string ProjectAlias => BlueprintArbiterRoot.Instance.Project;
-
 	public string Version => GameVersion.GetVersion();
 
 	public bool IsAvailable
@@ -39,4 +37,6 @@ internal class GameCoreArbiterEnvironment : IArbiterEnvironment
 			return array[0];
 		}
 	}
+
+	public string ProjectAlias => "WH";
 }

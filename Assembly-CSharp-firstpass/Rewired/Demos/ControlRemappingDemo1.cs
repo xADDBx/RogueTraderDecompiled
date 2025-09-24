@@ -802,7 +802,7 @@ public class ControlRemappingDemo1 : MonoBehaviour
 			ControllerSelectionChanged();
 		}
 		bool flag2 = selectedController.type == ControllerType.Keyboard;
-		if (GUILayout.Toggle(flag2, "Keyboard", "Button", GUILayout.ExpandWidth(expand: false)) != flag2)
+		if (GUILayout.Toggle(flag2, ReInput.controllers.Keyboard.name, "Button", GUILayout.ExpandWidth(expand: false)) != flag2)
 		{
 			selectedController.Set(0, ControllerType.Keyboard);
 			ControllerSelectionChanged();
@@ -812,7 +812,7 @@ public class ControlRemappingDemo1 : MonoBehaviour
 			GUI.enabled = false;
 		}
 		flag2 = selectedController.type == ControllerType.Mouse;
-		if (GUILayout.Toggle(flag2, "Mouse", "Button", GUILayout.ExpandWidth(expand: false)) != flag2)
+		if (GUILayout.Toggle(flag2, ReInput.controllers.Mouse.name, "Button", GUILayout.ExpandWidth(expand: false)) != flag2)
 		{
 			selectedController.Set(0, ControllerType.Mouse);
 			ControllerSelectionChanged();

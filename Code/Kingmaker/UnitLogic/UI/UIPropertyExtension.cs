@@ -31,6 +31,7 @@ public static class UIPropertyExtension
 			string name = item2.Name;
 			string description = item2.Description;
 			BlueprintMechanicEntityFact descriptionFact = item2.DescriptionFact;
+			bool main = item2.Main;
 			int? propertyValue = null;
 			if (item2.PropertyName.HasValue && owner != null)
 			{
@@ -41,7 +42,7 @@ public static class UIPropertyExtension
 					propertyValue = propertyValue2;
 				}
 			}
-			yield return new UIProperty(nameType, name, description, descriptionFact, propertyValue);
+			yield return new UIProperty(nameType, name, description, main, descriptionFact, propertyValue);
 		}
 	}
 

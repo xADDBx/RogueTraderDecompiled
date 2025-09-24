@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -57,6 +58,20 @@ public class BlueprintCheck : BlueprintCueBase
 		{
 			return Difficulty.GetDC();
 		}
+		return GetCustomDC();
+	}
+
+	public int GetDCByCR(int cr)
+	{
+		if (Difficulty != 0)
+		{
+			return Root.WH.SkillCheckRoot.GetSkillCheckDC(Difficulty, cr);
+		}
+		return GetCustomDC();
+	}
+
+	private int GetCustomDC()
+	{
 		if (DCModifiers == null)
 		{
 			return DC;

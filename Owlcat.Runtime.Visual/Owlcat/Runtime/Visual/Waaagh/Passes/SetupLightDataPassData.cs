@@ -2,17 +2,17 @@ using Owlcat.Runtime.Visual.Waaagh.Lighting;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
 public class SetupLightDataPassData : PassDataBase
 {
-	public ComputeBufferHandle LightDataConstantBufferHandle;
+	public BufferHandle LightDataConstantBufferHandle;
 
-	public ComputeBufferHandle LightVolumeDataConstantBufferHandle;
+	public BufferHandle LightVolumeDataConstantBufferHandle;
 
-	public ComputeBufferHandle ZBinsConstantBufferHandle;
+	public BufferHandle ZBinsConstantBufferHandle;
 
 	public NativeArray<float4> LightDataRaw;
 

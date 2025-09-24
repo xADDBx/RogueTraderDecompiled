@@ -159,7 +159,7 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		{
 			if (active && convert)
 			{
-				return count != 0 && convertAvailable;
+				return count != 0 || convertAvailable;
 			}
 			return (active && !fake) || base.ViewModel.IsInCharScreen;
 		}).Subscribe(delegate(bool value)

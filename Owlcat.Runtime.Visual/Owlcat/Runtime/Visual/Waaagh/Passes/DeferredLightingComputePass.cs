@@ -2,8 +2,8 @@ using JetBrains.Annotations;
 using Owlcat.Runtime.Visual.Waaagh.Data;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -61,8 +61,6 @@ internal sealed class DeferredLightingComputePass : ScriptableRenderPass<Deferre
 
 	protected override void Setup(RenderGraphBuilder builder, PassData passData, ref RenderingData renderingData)
 	{
-		builder.DependsOn(in passData.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(!renderingData.IrsHasOpaques);
 		passData.CameraColorRT = builder.WriteTexture(in passData.Resources.CameraColorBuffer);
 		builder.ReadTexture(in passData.Resources.CameraAlbedoRT);
 		builder.ReadTexture(in passData.Resources.CameraBakedGIRT);

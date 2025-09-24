@@ -120,6 +120,9 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 	[JsonProperty]
 	private bool m_NotLootable;
 
+	[JsonProperty]
+	private bool m_IsFavorite;
+
 	private int m_EnchantmentsRuntimeVersion;
 
 	private readonly List<ItemEnchantment> m_CachedEnchantments = new List<ItemEnchantment>();
@@ -305,6 +308,18 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 				return Game.Instance.Player.ItemsToCargo.Contains(base.Blueprint);
 			}
 			return true;
+		}
+	}
+
+	public bool IsFavorite
+	{
+		get
+		{
+			return m_IsFavorite;
+		}
+		set
+		{
+			m_IsFavorite = value;
 		}
 	}
 
@@ -1200,6 +1215,7 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 		result.Append(ref m_NotLootable);
 		TimeSpan val6 = Time;
 		result.Append(ref val6);
+		result.Append(ref m_IsFavorite);
 		List<Ability> abilities = Abilities;
 		if (abilities != null)
 		{

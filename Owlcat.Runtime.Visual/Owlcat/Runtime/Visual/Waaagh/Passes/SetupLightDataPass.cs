@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Owlcat.Runtime.Visual.Waaagh.Lighting;
 using Unity.Mathematics;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -19,9 +19,9 @@ public class SetupLightDataPass : ScriptableRenderPass<SetupLightDataPassData>
 
 	protected override void Setup(RenderGraphBuilder builder, SetupLightDataPassData data, ref RenderingData renderingData)
 	{
-		data.LightDataConstantBufferHandle = builder.WriteComputeBuffer(in data.Resources.LightDataConstantBuffer);
-		data.LightVolumeDataConstantBufferHandle = builder.WriteComputeBuffer(in data.Resources.LightVolumeDataConstantBuffer);
-		data.ZBinsConstantBufferHandle = builder.WriteComputeBuffer(in data.Resources.ZBinsConstantBuffer);
+		data.LightDataConstantBufferHandle = builder.WriteBuffer(in data.Resources.LightDataConstantBuffer);
+		data.LightVolumeDataConstantBufferHandle = builder.WriteBuffer(in data.Resources.LightVolumeDataConstantBuffer);
+		data.ZBinsConstantBufferHandle = builder.WriteBuffer(in data.Resources.ZBinsConstantBuffer);
 		data.LightDataRaw = m_WaaaghLights.LightDataRaw;
 		data.LightVolumeDataRaw = m_WaaaghLights.LightVolumeDataRaw;
 		data.ZBins = m_WaaaghLights.ZBins;

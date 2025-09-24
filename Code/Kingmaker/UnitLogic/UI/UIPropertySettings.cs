@@ -36,6 +36,8 @@ public class UIPropertySettings
 	[SerializeField]
 	private string m_LinkKey;
 
+	public bool Main;
+
 	public string LinkKey => m_LinkKey;
 
 	private bool NameIsCustom => NameType == UIPropertyName.Custom;

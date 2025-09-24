@@ -13,6 +13,7 @@ using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Groups;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.View.Mechanics.Entities;
 using Kingmaker.Visual.Particles;
 using Kingmaker.Visual.Sound;
 
@@ -67,7 +68,15 @@ public class PsychicPhenomenaController : IController, IAbilityExecutionProcessH
 		{
 			psychicPhenomenaData.Bark.Chance = 1f;
 			psychicPhenomenaData.Bark.ShowOnScreen = true;
-			new BarkWrapper(psychicPhenomenaData.Bark, target.View.Asks).Schedule();
+			AbstractUnitEntityView abstractUnitEntityView = (target as AbstractUnitEntity)?.View;
+			if (abstractUnitEntityView != null)
+			{
+				if (abstractUnitEntityView.Asks == null)
+				{
+					abstractUnitEntityView.UpdateAsks();
+				}
+				new BarkWrapper(psychicPhenomenaData.Bark, abstractUnitEntityView.Asks).Schedule();
+			}
 		}
 		bool flag = false;
 		if (psychicPhenomenaData.CheckConditionOnAllPartyMembers)

@@ -53,8 +53,11 @@ internal class CutsceneEntry
 			Cutscene.Stop();
 			try
 			{
-				CutscenePlayerView.Play(Cutscene.Cutscene, Cutscene.ParameterSetter, queued: false, Cutscene.HoldingState);
-				return;
+				using (Cutscene.Parameters.RequestContextData())
+				{
+					CutscenePlayerView.Play(Cutscene.Cutscene, Cutscene.ParameterSetter, queued: false, Cutscene.HoldingState);
+					return;
+				}
 			}
 			catch (Exception e)
 			{

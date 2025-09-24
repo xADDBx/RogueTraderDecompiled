@@ -6,7 +6,6 @@ using System.Reflection;
 using Core.Cheats;
 using Core.Reflection;
 using Kingmaker.EntitySystem.Persistence.SavesStorage;
-using Kingmaker.QA.Arbiter.Code.QA.Arbiter.GameCore.Tasks;
 using Kingmaker.QA.Clockwork;
 using Kingmaker.Utility.CommandLineArgs;
 using Kingmaker.Utility.DotNetExtensions;
@@ -47,24 +46,15 @@ public class OwlcatProtocol
 			}
 		};
 		CommandLineArguments commandLineArguments = CommandLineArguments.Parse(value.Split('&'));
-		string areaName = commandLineArguments.Get("area")?.Replace("$", "");
-		string areaEnterPointName = commandLineArguments.Get("enterpoint")?.Replace("$", "");
-		float x = obj(commandLineArguments.Get("x"));
-		float y = obj(commandLineArguments.Get("y"));
-		float z = obj(commandLineArguments.Get("z"));
-		float rotation = obj(commandLineArguments.Get("rotation"));
-		float zoom = obj(commandLineArguments.Get("zoom"));
-		string instruction = commandLineArguments.Get("instruction")?.Replace("$", "");
-		int id = (int)obj(commandLineArguments.Get("id"));
-		ArbiterInstantMoveCameraStarter arbiterInstantMoveCameraStarter = new ArbiterInstantMoveCameraStarter();
-		if (value.Contains("instruction"))
-		{
-			arbiterInstantMoveCameraStarter.AddArbiterMoveCameraTask(instruction, id);
-		}
-		else
-		{
-			arbiterInstantMoveCameraStarter.AddSimpleMoveCameraTask(areaName, areaEnterPointName, x, y, z, rotation, zoom);
-		}
+		commandLineArguments.Get("area")?.Replace("$", "");
+		commandLineArguments.Get("enterpoint")?.Replace("$", "");
+		obj(commandLineArguments.Get("x"));
+		obj(commandLineArguments.Get("y"));
+		obj(commandLineArguments.Get("z"));
+		obj(commandLineArguments.Get("rotation"));
+		obj(commandLineArguments.Get("zoom"));
+		commandLineArguments.Get("instruction")?.Replace("$", "");
+		obj(commandLineArguments.Get("id"));
 	}
 
 	[ProtocolHandler(Address = "owlcat://clockwork/")]

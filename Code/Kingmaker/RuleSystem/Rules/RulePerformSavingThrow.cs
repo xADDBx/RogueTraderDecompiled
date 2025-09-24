@@ -20,6 +20,8 @@ public class RulePerformSavingThrow : RulebookEvent
 
 	private readonly int m_DifficultyClassBase;
 
+	private IMechanicEntity SavingThrowInitiator;
+
 	public bool AutoPass { get; private set; }
 
 	public RuleRollD100 D100 { get; }
@@ -50,13 +52,19 @@ public class RulePerformSavingThrow : RulebookEvent
 		}
 	}
 
-	public RulePerformSavingThrow(MechanicEntity entity, SavingThrowType saveType, int difficultyClass)
+	public override IMechanicEntity GetRuleTarget()
+	{
+		return SavingThrowInitiator;
+	}
+
+	public RulePerformSavingThrow(MechanicEntity entity, SavingThrowType saveType, int difficultyClass, MechanicEntity initiator = null)
 		: base(entity)
 	{
 		Type = saveType;
 		StatType = GetSave(saveType);
 		m_DifficultyClassBase = difficultyClass;
 		D100 = new RuleRollD100(entity);
+		SavingThrowInitiator = initiator;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
@@ -113,7 +121,7 @@ public class RulePerformSavingThrow : RulebookEvent
 		{
 			if (d100 > 1)
 			{
-				return d100 < StatValue + DifficultyClass;
+				return d100 <= StatValue + DifficultyClass;
 			}
 			return false;
 		}

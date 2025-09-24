@@ -2,7 +2,10 @@ using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
+using Kingmaker.EntitySystem;
+using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Mechanics.Facts;
@@ -27,6 +30,13 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 		RighteousFury = 0x10
 	}
 
+	public enum ForcedResultType
+	{
+		None,
+		AutoHit,
+		AutoMiss
+	}
+
 	public RestrictionCalculator Restrictions = new RestrictionCalculator();
 
 	[EnumFlagsAsDropdown]
@@ -46,9 +56,14 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 	[ShowIf("ModifyCoverMagnitude")]
 	public ContextValue CoverMagnitude;
 
+	public bool AutoHit;
+
 	public bool AutoCrit;
 
 	public bool NeverCrit;
+
+	[HideIf("AutoHit")]
+	public ForcedResultType CoverHitAutoResult;
 
 	private bool ModifyHitChance => (Properties & PropertyType.HitChance) != 0;
 
@@ -65,12 +80,20 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 			if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 			{
 				ResolveCrit(rule);
+				if (AutoHit)
+				{
+					rule.AutoHitModifier.Add(base.Fact);
+				}
 			}
 		}
 		else if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
 			ResolveCrit(rule);
 			rule.HitChanceValueModifiers.Add(HitChance.Calculate(base.Context), base.Fact);
+			if (AutoHit)
+			{
+				rule.AutoHitModifier.Add(base.Fact);
+			}
 		}
 	}
 
@@ -96,6 +119,12 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 				int value2 = CoverPenetrationPercent.Calculate(base.Context);
 				rule.ChancePercentModifiers.Add(value2, base.Fact);
 			}
+			((FlagModifiersManager)(CoverHitAutoResult switch
+			{
+				ForcedResultType.AutoHit => rule.AutoHitFlagModifiers, 
+				ForcedResultType.AutoMiss => rule.AutoMissFlagModifiers, 
+				_ => null, 
+			}))?.Add((EntityFact)base.Fact, ModifierDescriptor.None);
 		}
 	}
 
@@ -112,11 +141,11 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 	{
 		if (NeverCrit)
 		{
-			rule.NeverCrits.Add(base.Fact);
+			rule.NeverCritMofifier.Add(base.Fact);
 		}
 		else if (AutoCrit)
 		{
-			rule.AutoCrits.Add(base.Fact);
+			rule.AutoCritModifier.Add(base.Fact);
 		}
 	}
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -45,6 +46,9 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 
 	private BookEventBaseView m_BookEventView;
 
+	[SerializeField]
+	public DOTweenAnimation m_Arrow;
+
 	public TextMeshProUGUI Text => m_AnswerText;
 
 	public List<SkillCheckDC> SkillChecksDC => base.ViewModel?.Answer?.Value?.SkillChecksDC;
@@ -71,6 +75,7 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 		CheckCoopPlayersVotes(base.ViewModel.VotedPlayers);
 		AddDisposable(base.ViewModel.WasChoose.Subscribe(m_OwlcatButton.SetFocus));
 		AddDisposable(base.ViewModel.Enable.Subscribe(m_OwlcatButton.SetInteractable));
+		AddDisposable(base.ViewModel.Enable.Subscribe(EnableTween));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -191,5 +196,16 @@ public class BookEventAnswerView : ViewBase<AnswerVM>, IConsoleNavigationEntity,
 	public string GetConfirmClickHint()
 	{
 		return string.Empty;
+	}
+
+	private void EnableTween(bool value)
+	{
+		if (value)
+		{
+			m_Arrow.DOPlay();
+			return;
+		}
+		m_Arrow.DOPause();
+		m_Arrow.DORewind();
 	}
 }

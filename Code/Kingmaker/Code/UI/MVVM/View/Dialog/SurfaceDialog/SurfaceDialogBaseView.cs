@@ -142,6 +142,9 @@ public class SurfaceDialogBaseView<TAnswerView> : ViewBase<DialogVM>, IEncyclope
 	[SerializeField]
 	private CharGenPortraitView m_PortraitFullView;
 
+	[SerializeField]
+	protected FadeAnimator m_FadeView;
+
 	protected readonly List<DialogHistoryEntity> HistoryEntities = new List<DialogHistoryEntity>();
 
 	private readonly List<IDialogShowData> m_HistoryEntitiesToAdd = new List<IDialogShowData>();

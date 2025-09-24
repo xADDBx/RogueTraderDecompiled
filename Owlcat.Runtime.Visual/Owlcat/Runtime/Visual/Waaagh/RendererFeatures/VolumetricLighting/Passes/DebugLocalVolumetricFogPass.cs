@@ -1,6 +1,6 @@
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -25,8 +25,8 @@ public class DebugLocalVolumetricFogPass : ScriptableRenderPass<DebugLocalVolume
 		data.CameraColorBuffer = builder.UseColorBuffer(in data.Resources.CameraColorBuffer, 0);
 		data.DepthCopyTexture = builder.ReadTexture(in data.Resources.CameraDepthCopyRT);
 		data.LocalFogClusteringParams = m_Feature.FogClusteringParams;
-		data.FogTilesBuffer = builder.ReadComputeBuffer(in m_Feature.FogTilesBufferHandle);
-		data.FogZBinsBuffer = builder.ReadComputeBuffer(in m_Feature.ZBinsBufferHandle);
+		data.FogTilesBuffer = builder.ReadBuffer(in m_Feature.FogTilesBufferHandle);
+		data.FogZBinsBuffer = builder.ReadBuffer(in m_Feature.ZBinsBufferHandle);
 	}
 
 	protected override void Render(DebugLocalVolumetricFogPassData data, RenderGraphContext context)

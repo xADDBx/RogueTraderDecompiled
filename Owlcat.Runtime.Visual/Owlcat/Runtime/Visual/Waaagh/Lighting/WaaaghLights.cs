@@ -36,13 +36,13 @@ public class WaaaghLights
 
 	private readonly ScriptableRenderer m_ScriptableRenderer;
 
-	private ComputeBuffer m_LightDataConstantBuffer;
+	private GraphicsBuffer m_LightDataConstantBuffer;
 
-	private ComputeBuffer m_LightVolumeDataConstantBuffer;
+	private GraphicsBuffer m_LightVolumeDataConstantBuffer;
 
-	private ComputeBuffer m_ZBinsConstantBuffer;
+	private GraphicsBuffer m_ZBinsConstantBuffer;
 
-	private ComputeBuffer m_LightTilesBuffer;
+	private GraphicsBuffer m_LightTilesBuffer;
 
 	private NativeArray<float4> m_LightDataRaw;
 
@@ -64,13 +64,13 @@ public class WaaaghLights
 
 	public bool ShadowmaskEnabled { get; private set; }
 
-	public ComputeBuffer LightDataConstantBuffer => m_LightDataConstantBuffer;
+	public GraphicsBuffer LightDataConstantBuffer => m_LightDataConstantBuffer;
 
-	public ComputeBuffer LightVolumeDataConstantBuffer => m_LightVolumeDataConstantBuffer;
+	public GraphicsBuffer LightVolumeDataConstantBuffer => m_LightVolumeDataConstantBuffer;
 
-	public ComputeBuffer ZBinsConstantBuffer => m_ZBinsConstantBuffer;
+	public GraphicsBuffer ZBinsConstantBuffer => m_ZBinsConstantBuffer;
 
-	public ComputeBuffer LightTilesBuffer => m_LightTilesBuffer;
+	public GraphicsBuffer LightTilesBuffer => m_LightTilesBuffer;
 
 	public NativeArray<float4> LightDataRaw => m_LightDataRaw;
 
@@ -85,11 +85,11 @@ public class WaaaghLights
 	public WaaaghLights(ScriptableRenderer scriptableRenderer)
 	{
 		m_ScriptableRenderer = scriptableRenderer;
-		m_LightDataConstantBuffer = new ComputeBuffer(4096, Marshal.SizeOf<float4>(), ComputeBufferType.Constant);
+		m_LightDataConstantBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Constant, 4096, Marshal.SizeOf<float4>());
 		m_LightDataConstantBuffer.name = "LightDataCB";
-		m_LightVolumeDataConstantBuffer = new ComputeBuffer(3072, Marshal.SizeOf<float4>(), ComputeBufferType.Constant);
+		m_LightVolumeDataConstantBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Constant, 3072, Marshal.SizeOf<float4>());
 		m_LightVolumeDataConstantBuffer.name = "LightVolumeDataCB";
-		m_ZBinsConstantBuffer = new ComputeBuffer(1024, Marshal.SizeOf<float4>(), ComputeBufferType.Constant);
+		m_ZBinsConstantBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Constant, 1024, Marshal.SizeOf<float4>());
 		m_ZBinsConstantBuffer.name = "ZBinsCB";
 		m_LightDataRaw = new NativeArray<float4>(4096, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 		m_LightVolumeDataRaw = new NativeArray<float4>(3072, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
@@ -152,7 +152,7 @@ public class WaaaghLights
 			}
 			if (num2 > 0)
 			{
-				m_LightTilesBuffer = new ComputeBuffer(num2, Marshal.SizeOf<uint>(), ComputeBufferType.Structured);
+				m_LightTilesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, num2, Marshal.SizeOf<uint>());
 				m_LightTilesBuffer.name = "_LightTilesBuffer";
 			}
 		}
@@ -164,11 +164,11 @@ public class WaaaghLights
 	public void CompleteSetupJobs(ScriptableRenderContext context, ref RenderingData renderingData)
 	{
 		m_SetupJobsHandle.Complete();
-		using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.LightCookieSetup)))
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.LightCookieSetup)))
 		{
 			renderingData.lightCookieManager.FinishSetup(m_ScriptableRenderer, ref m_LightDescs, ref renderingData);
 		}
-		using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.ShadowsSetup)))
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.ShadowsSetup)))
 		{
 			renderingData.ShadowData.ShadowManager.FinishSetup(context, ref renderingData);
 		}

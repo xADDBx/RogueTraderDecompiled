@@ -62,6 +62,18 @@ public class Simulation
 		}
 	}
 
+	private static ComputeBuffer CreateDummyComputeBuffer()
+	{
+		ComputeBuffer obj = new ComputeBuffer(1, 64, ComputeBufferType.Structured)
+		{
+			name = "Dummy"
+		};
+		NativeArray<float> data = new NativeArray<float>(16, Allocator.Temp);
+		obj.SetData(data);
+		data.Dispose();
+		return obj;
+	}
+
 	internal int GetBodyDescriptorIndex(Body body)
 	{
 		return m_MemoryManager.GetBodyDescriptorIndex(body);
@@ -603,9 +615,8 @@ public class Simulation
 				jobData.TeleportDistanceTreshold = m_MemoryManager.BodyDescriptorsSoA.TeleportDistanceTreshold;
 				jobData.LocalToWorldMatrices = m_MemoryManager.BodyUpdateBuffersSoA.BoneUpdateParticleMatrices;
 				jobData.Boneposes = m_MemoryManager.SkinnedDataSoA.Boneposes;
-				jobData.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
-				jobData.Position = m_MemoryManager.ParticlesSoA.Position;
-				jobData.Mass = m_MemoryManager.ParticlesSoA.Mass;
+				jobData.PositionPairs = m_MemoryManager.ParticlesSoA.PositionPairs;
+				jobData.ExtendedData = m_MemoryManager.ParticlesSoA.ExtendedData;
 				lastJobHandle = IJobParallelForExtensions.Schedule(jobData, num, 1, lastJobHandle);
 				lastJobHandle.Complete();
 				num2 += math.min(num, 256);
@@ -629,9 +640,8 @@ public class Simulation
 				jobData2.TeleportDistanceTreshold = m_MemoryManager.BodyDescriptorsSoA.TeleportDistanceTreshold;
 				jobData2.LocalToWorldMatrices = m_MemoryManager.BodyUpdateBuffersSoA.VertexUpdateParticleMatrices;
 				jobData2.BaseVertices = m_MemoryManager.MeshBodyVerticesSoA.BaseVertices;
-				jobData2.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
-				jobData2.Position = m_MemoryManager.ParticlesSoA.Position;
-				jobData2.Mass = m_MemoryManager.ParticlesSoA.Mass;
+				jobData2.PositionPairs = m_MemoryManager.ParticlesSoA.PositionPairs;
+				jobData2.ExtendedData = m_MemoryManager.ParticlesSoA.ExtendedData;
 				lastJobHandle = IJobParallelForExtensions.Schedule(jobData2, num, 1, lastJobHandle);
 				lastJobHandle.Complete();
 				num2 += math.min(num, 256);
@@ -647,9 +657,8 @@ public class Simulation
 		jobData.BodiesAabbOffset = m_Broadphase.BodiesAabbOffset;
 		jobData.BodyDescriptorsIndices = m_MemoryManager.BodyDescriptorsIndicesSoA.Array;
 		jobData.ParticlesOffsetCount = m_MemoryManager.BodyDescriptorsSoA.ParticlesOffsetCount;
-		jobData.Position = m_MemoryManager.ParticlesSoA.Position;
-		jobData.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
-		jobData.Radius = m_MemoryManager.ParticlesSoA.Radius;
+		jobData.PositionPairs = m_MemoryManager.ParticlesSoA.PositionPairs;
+		jobData.ExtendedData = m_MemoryManager.ParticlesSoA.ExtendedData;
 		jobData.AabbMin = m_Broadphase.AabbSoA.AabbMin;
 		jobData.AabbMax = m_Broadphase.AabbSoA.AabbMax;
 		lastJobHandle = IJobParallelForExtensions.Schedule(jobData, m_MemoryManager.BodyDescriptorsMap.Count, 1, lastJobHandle);
@@ -670,23 +679,13 @@ public class Simulation
 		simulationJob.ConstraintsOffsetCount = m_MemoryManager.BodyDescriptorsSoA.ConstraintsOffsetCount;
 		simulationJob.LocalCollidersOffsetCount = m_MemoryManager.BodyDescriptorsSoA.LocalCollidersOffsetCount;
 		simulationJob.MaterialParameters = m_MemoryManager.BodyDescriptorsSoA.MaterialParameters;
-		simulationJob.BasePosition = m_MemoryManager.ParticlesSoA.BasePosition;
-		simulationJob.Position = m_MemoryManager.ParticlesSoA.Position;
-		simulationJob.Predicted = m_MemoryManager.ParticlesSoA.Predicted;
-		simulationJob.Velocity = m_MemoryManager.ParticlesSoA.Velocity;
+		simulationJob.PositionPairs = m_MemoryManager.ParticlesSoA.PositionPairs;
+		simulationJob.MotionPairs = m_MemoryManager.ParticlesSoA.MotionPairs;
 		simulationJob.Orientation = m_MemoryManager.ParticlesSoA.Orientation;
 		simulationJob.PredictedOrientation = m_MemoryManager.ParticlesSoA.PredictedOrientation;
 		simulationJob.AngularVelocity = m_MemoryManager.ParticlesSoA.AngularVelocity;
-		simulationJob.Mass = m_MemoryManager.ParticlesSoA.Mass;
-		simulationJob.Radius = m_MemoryManager.ParticlesSoA.Radius;
-		simulationJob.Flags = m_MemoryManager.ParticlesSoA.Flags;
-		simulationJob.Index0 = m_MemoryManager.ConstraintsSoA.Index0;
-		simulationJob.Index1 = m_MemoryManager.ConstraintsSoA.Index1;
-		simulationJob.Index2 = m_MemoryManager.ConstraintsSoA.Index2;
-		simulationJob.Index3 = m_MemoryManager.ConstraintsSoA.Index3;
-		simulationJob.Parameters0 = m_MemoryManager.ConstraintsSoA.Parameters0;
-		simulationJob.Parameters1 = m_MemoryManager.ConstraintsSoA.Parameters1;
-		simulationJob.Type = m_MemoryManager.ConstraintsSoA.Type;
+		simulationJob.ExtendedData = m_MemoryManager.ParticlesSoA.ExtendedData;
+		simulationJob.ConstraintData = m_MemoryManager.ConstraintsSoA.m_ConstraintData;
 		simulationJob.ColliderParameters0 = m_MemoryManager.Colliders.Parameters0;
 		simulationJob.ColliderParameters1 = m_MemoryManager.Colliders.Parameters1;
 		simulationJob.ColliderParameters2 = m_MemoryManager.Colliders.Parameters2;
@@ -739,7 +738,7 @@ public class Simulation
 				jobData.VerticesOffset = m_MemoryManager.BodyDescriptorsSoA.VerticesOffset;
 				jobData.VerticesCount = m_MemoryManager.BodyDescriptorsSoA.VerticesCount;
 				jobData.WorldToLocalMatrices = m_MemoryManager.BodyUpdateBuffersSoA.ParticleUpdateVertexMatrices;
-				jobData.Position = m_MemoryManager.ParticlesSoA.Position;
+				jobData.PositionPairs = m_MemoryManager.ParticlesSoA.PositionPairs;
 				jobData.Indices = m_MemoryManager.MeshBodyIndicesSoA.Array;
 				jobData.Vertices = m_MemoryManager.MeshBodyVerticesSoA.Vertices;
 				jobData.Normals = m_MemoryManager.MeshBodyVerticesSoA.Normals;

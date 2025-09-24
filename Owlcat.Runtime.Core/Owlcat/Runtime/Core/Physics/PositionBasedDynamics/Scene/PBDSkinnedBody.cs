@@ -239,8 +239,7 @@ public class PBDSkinnedBody : PBDBodyBase<SkinnedBody>
 			pBDSkinnedBodyAnimationJob.ParentMap = base.Body.ParentMap;
 			pBDSkinnedBodyAnimationJob.RootSceneHandle = m_RootSceneHandle;
 			pBDSkinnedBodyAnimationJob.RootStreamHandle = m_RootStreamHandle;
-			pBDSkinnedBodyAnimationJob.BasePositions = particles.BasePosition;
-			pBDSkinnedBodyAnimationJob.Positions = particles.Position;
+			pBDSkinnedBodyAnimationJob.PositionPairs = particles.PositionPairs;
 			PBDSkinnedBodyAnimationJob jobData = pBDSkinnedBodyAnimationJob;
 			m_Graph = PlayableGraph.Create("PBDSkinning");
 			m_Graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
@@ -397,8 +396,7 @@ public class PBDSkinnedBody : PBDBodyBase<SkinnedBody>
 		}
 		PBD.GetParticles(base.Body, out var particles);
 		PBDSkinnedBodyAnimationJob jobData = m_AnimationPlayable.GetJobData<PBDSkinnedBodyAnimationJob>();
-		jobData.BasePositions = particles.BasePosition;
-		jobData.Positions = particles.Position;
+		jobData.PositionPairs = particles.PositionPairs;
 		m_AnimationPlayable.SetJobData(jobData);
 	}
 

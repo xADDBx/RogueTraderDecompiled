@@ -5,13 +5,16 @@ namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.PositionBasedDynamics.Br
 
 public class GPUSpatialHashmapSoA : GPUSoABase
 {
-	private static int _SpatialHashmapKeysBuffer = Shader.PropertyToID("_SpatialHashmapKeysBuffer");
+	public struct SpatialHashmapEntry
+	{
+		private uint key;
 
-	private static int _SpatialHashmapValuesBuffer = Shader.PropertyToID("_SpatialHashmapValuesBuffer");
+		private uint value;
+	}
 
-	public ComputeBufferWrapper<uint> KeysBuffer;
+	private static int _SpatialHashmapBuffer = Shader.PropertyToID("_SpatialHashmapBuffer");
 
-	public ComputeBufferWrapper<uint> ValuesBuffer;
+	public ComputeBufferWrapper<SpatialHashmapEntry> HashmapBuffer;
 
 	public override string Name => "GPUSpatialHashmapSoA";
 
@@ -22,10 +25,6 @@ public class GPUSpatialHashmapSoA : GPUSoABase
 
 	protected override ComputeBufferWrapper[] InitBuffers(int size)
 	{
-		return new ComputeBufferWrapper[2]
-		{
-			KeysBuffer = new ComputeBufferWrapper<uint>("_SpatialHashmapKeysBuffer", size),
-			ValuesBuffer = new ComputeBufferWrapper<uint>("_SpatialHashmapValuesBuffer", size)
-		};
+		return new ComputeBufferWrapper[1] { HashmapBuffer = new ComputeBufferWrapper<SpatialHashmapEntry>("_SpatialHashmapBuffer", size) };
 	}
 }

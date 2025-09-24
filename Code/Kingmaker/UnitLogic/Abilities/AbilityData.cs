@@ -901,7 +901,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 			AbilityData abilityData = m_CachedInitialTargetAbility;
 			if ((object)abilityData == null)
 			{
-				AbilityData obj = GetAbilityForTargetIndex(0) ?? this;
+				AbilityData obj = GetFirstTargetAbilityData() ?? this;
 				AbilityData abilityData2 = obj;
 				m_CachedInitialTargetAbility = obj;
 				abilityData = abilityData2;
@@ -940,19 +940,19 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public bool CanRedirect => RedirectSettings?.CasterRestrictions.IsPassed(new PropertyContext(this, Caster)) ?? false;
 
-	public bool TryGetCasterDesiredPositionAndDirection(out Vector3 position, out Vector3 direction)
+	public bool TryGetPredictedCasterPositionAndDirection(out Vector3 position, out Vector3 direction)
 	{
-		if (Blueprint.TryGetComponent<IAbilityOverrideCasterDesiredPosition>(out var component))
+		if (Blueprint.TryGetComponent<IAbilityPredictedCasterPosition>(out var component))
 		{
-			return component.TryGetDesiredPositionAndDirection(this, out position, out direction);
+			return component.TryGetPredictedPositionAndDirection(this, out position, out direction);
 		}
 		position = (direction = default(Vector3));
 		return false;
 	}
 
-	private AbilityData GetAbilityForTargetIndex(int targetIndex)
+	private AbilityData GetFirstTargetAbilityData()
 	{
-		if (!Blueprint.TryGetComponent<IAbilityMultiTarget>(out var component) || !component.TryGetNextTargetAbilityAndCaster(this, targetIndex, out var ability, out var caster))
+		if (!Blueprint.TryGetComponent<IAbilityMultiTarget>(out var component) || !component.TryGetNextTargetAbilityAndCaster(this, 0, out var ability, out var caster))
 		{
 			return null;
 		}
@@ -998,6 +998,11 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 				FakeStarshipWeapon = (ItemEntityStarshipWeapon)(component4.StarshipWeapon(starshipEntity)?.CreateEntity());
 				FakeStarshipWeapon.FakeAmmo = (ItemEntityStarshipAmmo)(component4.StarshipWeaponAmmo(starshipEntity)?.CreateEntity());
 			}
+		}
+		OverrideAbilityFxSettings overrideAbilityFxSettings = caster.Facts.GetComponents<OverrideAbilityFxSettings>().FirstOrDefault((OverrideAbilityFxSettings o) => o.Ability == Blueprint);
+		if (overrideAbilityFxSettings != null)
+		{
+			FXSettingsOverride = overrideAbilityFxSettings.FXSettings;
 		}
 		InitAbilityGroups();
 	}

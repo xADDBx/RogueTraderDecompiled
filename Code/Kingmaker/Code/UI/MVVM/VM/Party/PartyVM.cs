@@ -179,15 +179,18 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 		GetNeighbour(next)?.HandleUnitClick(isDoubleClick: true);
 	}
 
-	private PartyCharacterVM GetNeighbour(bool next)
+	private PartyCharacterVM GetNeighbour(bool next, int selectedIndex = -1)
 	{
-		int num = CharactersVM.FindIndex((PartyCharacterVM c) => c.IsSingleSelected.Value);
-		if (num == -1)
+		if (selectedIndex == -1)
+		{
+			selectedIndex = CharactersVM.FindIndex((PartyCharacterVM c) => c.IsSingleSelectedWithoutFakeSelected.Value);
+		}
+		if (selectedIndex == -1)
 		{
 			return null;
 		}
-		int neighbourIndex = GetNeighbourIndex(num, CharactersVM.Count, next);
-		while (neighbourIndex != num && (CharactersVM[neighbourIndex].UnitEntityData == null || CharactersVM[neighbourIndex].UnitEntityData.IsPet || !CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable()))
+		int neighbourIndex = GetNeighbourIndex(selectedIndex, CharactersVM.Count, next);
+		while (neighbourIndex != selectedIndex && (CharactersVM[neighbourIndex].UnitEntityData == null || (!CharactersVM[neighbourIndex].UnitEntityData.IsDirectlyControllable() && !CharactersVM[neighbourIndex].UnitEntityData.IsPet)))
 		{
 			neighbourIndex = GetNeighbourIndex(neighbourIndex, CharactersVM.Count, next);
 		}
@@ -201,14 +204,19 @@ public class PartyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable,
 
 	public void SwitchCharacter(bool next)
 	{
-		PartyCharacterVM partyCharacterVM = CharactersVM.FirstItem((PartyCharacterVM c) => c.IsSingleSelected.Value);
-		if (partyCharacterVM != null)
+		PartyCharacterVM current = CharactersVM.FirstItem((PartyCharacterVM c) => c.IsSingleSelectedWithoutFakeSelected.Value);
+		if (current == null)
 		{
-			PartyCharacterVM neighbour = GetNeighbour(next);
-			if (partyCharacterVM != neighbour && neighbour != null)
-			{
-				SwitchCharacter(partyCharacterVM.UnitEntityData, neighbour.UnitEntityData);
-			}
+			return;
+		}
+		if (current.HasPet.Value && current.UnitEntityData.Pet == Game.Instance.SelectionCharacter.SelectedUnitPetsAllowed.Value)
+		{
+			current = CharactersVM.FirstItem((PartyCharacterVM c) => c.UnitEntityData == Game.Instance.SelectionCharacter.SelectedUnitPetsAllowed.Value);
+		}
+		PartyCharacterVM neighbour = GetNeighbour(next, CharactersVM.FindIndex((PartyCharacterVM c) => c == current));
+		if (current != neighbour && neighbour != null)
+		{
+			SwitchCharacter(current.UnitEntityData, neighbour.UnitEntityData);
 		}
 	}
 

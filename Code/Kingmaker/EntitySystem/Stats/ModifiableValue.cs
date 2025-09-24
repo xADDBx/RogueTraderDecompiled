@@ -337,7 +337,7 @@ public class ModifiableValue : IHashable
 		list.Sort(Modifier.ValueComparer);
 		if (!IgnoreModifiers)
 		{
-			UpdateValue();
+			UpdateValue(mod.SourceFact);
 		}
 		mod.AppliedTo = this;
 		if (!IgnoreModifiers)
@@ -419,7 +419,7 @@ public class ModifiableValue : IHashable
 		if (value.Remove(mod))
 		{
 			PrepareForRemoval(mod);
-			UpdateValue();
+			UpdateValue(mod.SourceFact);
 			return true;
 		}
 		return false;
@@ -468,7 +468,7 @@ public class ModifiableValue : IHashable
 				return false;
 			});
 		}
-		UpdateValue();
+		UpdateValue(source.Fact);
 	}
 
 	public bool ContainsModifier(ModifierDescriptor descriptor)
@@ -555,7 +555,7 @@ public class ModifiableValue : IHashable
 		});
 	}
 
-	public void UpdateValue()
+	public void UpdateValue(EntityFact reason = null)
 	{
 		if (m_UpdateInternalModifiers)
 		{
@@ -581,7 +581,7 @@ public class ModifiableValue : IHashable
 		{
 			return;
 		}
-		UpdateDependentFactsAndComponents();
+		UpdateDependentFactsAndComponents(reason);
 		if (modifiedValue != ModifiedValue)
 		{
 			this.OnChanged?.Invoke(this, modifiedValue);
@@ -639,7 +639,7 @@ public class ModifiableValue : IHashable
 		return ApplyModifiersFiltered(0, (Modifier m) => m.ModDescriptor == descriptor);
 	}
 
-	private void UpdateDependentFactsAndComponents()
+	private void UpdateDependentFactsAndComponents(EntityFact reason = null)
 	{
 		Entity owner = Owner;
 		if ((owner != null && owner.IsDisposingNow) || m_UpdateDependentFacts)
@@ -651,13 +651,16 @@ public class ModifiableValue : IHashable
 		{
 			foreach (EntityFact item in m_DependentFacts.ToList())
 			{
-				try
+				if (item != reason)
 				{
-					item.Reapply();
-				}
-				catch (Exception ex)
-				{
-					PFLog.Default.Exception(ex);
+					try
+					{
+						item.Reapply();
+					}
+					catch (Exception ex)
+					{
+						PFLog.Default.Exception(ex);
+					}
 				}
 			}
 		}
@@ -670,7 +673,7 @@ public class ModifiableValue : IHashable
 					continue;
 				}
 				EntityFact fact = item2.Fact;
-				if (fact != null && fact.Active)
+				if (fact != null && fact.Active && item2.Fact != reason)
 				{
 					try
 					{

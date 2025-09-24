@@ -4,8 +4,8 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -90,16 +90,18 @@ internal class NativeShadowCasterPass : ScriptableRenderPass<NativeShadowCasterP
 	{
 		BindShadowData(data, context);
 		NativeArray<ShadowRenderRequest> nativeArray;
+		Span<ShadowRenderRequest> span;
 		if (data.CacheEnabled)
 		{
 			if (data.RenderRequests.Length > 0)
 			{
 				context.cmd.SetRenderTarget(data.CachedShadowMapAtlasTexture);
 				nativeArray = data.RenderRequestsForCache.AsArray();
-				Span<ShadowRenderRequest> span = nativeArray.AsSpan();
+				span = nativeArray.AsSpan();
 				for (int i = 0; i < span.Length; i++)
 				{
-					DrawShadows(context, in span[i]);
+					ref ShadowRenderRequest request = ref span[i];
+					DrawShadows(context, in request);
 				}
 			}
 			if (data.ShadowCacheCopyRequests.Length > 0)
@@ -113,10 +115,11 @@ internal class NativeShadowCasterPass : ScriptableRenderPass<NativeShadowCasterP
 		{
 			context.cmd.SetRenderTarget(data.ShadowMapAtlasTexture);
 			nativeArray = data.RenderRequests.AsArray();
-			Span<ShadowRenderRequest> span = nativeArray.AsSpan();
+			span = nativeArray.AsSpan();
 			for (int i = 0; i < span.Length; i++)
 			{
-				DrawShadows(context, in span[i]);
+				ref ShadowRenderRequest request2 = ref span[i];
+				DrawShadows(context, in request2);
 			}
 		}
 	}

@@ -158,7 +158,7 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 
 	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, BlueprintFact reason, bool canUseInRange, bool canMove)
 	{
-		if (!attacker.CanMakeAttackOfOpportunity(target))
+		if (!attacker.CanMakeAttackOfOpportunity(target, canUseInRange))
 		{
 			return null;
 		}

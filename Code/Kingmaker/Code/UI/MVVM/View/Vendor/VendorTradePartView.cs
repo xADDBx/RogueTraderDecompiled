@@ -119,6 +119,9 @@ public class VendorTradePartView<TItemsFilter, TVendorSlot, TVendorTransitionWin
 	[SerializeField]
 	protected CanvasGroup m_VendorHidenReputationGroup;
 
+	[SerializeField]
+	protected CanvasGroup m_VendorInfoGroupReputation;
+
 	[Header("DiscountBlock")]
 	[SerializeField]
 	protected TextMeshProUGUI m_DiscountText;
@@ -140,14 +143,22 @@ public class VendorTradePartView<TItemsFilter, TVendorSlot, TVendorTransitionWin
 	protected override void BindViewImplementation()
 	{
 		m_FadeAnimator.AppearAnimation();
-		SetReputationAndPF(base.ViewModel.NeedHidePfAndReputation || base.ViewModel.NeedHideReputationCompletely);
-		if (base.ViewModel.NeedHidePfAndReputation || base.ViewModel.NeedHideReputationCompletely)
+		SetReputationAndPF(base.ViewModel.NeedHidePfAndReputation);
+		if (base.ViewModel.NeedHidePfAndReputation)
 		{
 			m_VendorHidenInfoText.text = "\\\\-- > " + UIStrings.Instance.ExplorationTexts.ExploNotInteractable.Text + " < ---";
 			m_VendorHidenPFText.text = UIStrings.Instance.QuesJournalTexts.NoData.Text;
 			m_PlayerNoReputationPortrait.sprite = base.ViewModel.PlayerPortrait;
 			m_PlayerNoReputationName.text = base.ViewModel.PlayerName;
 			m_ProfitNoReputationFactorText.text = base.ViewModel.ProfitFactorText;
+		}
+		if (!base.ViewModel.NeedHidePfAndReputation && base.ViewModel.NeedHideReputationCompletely)
+		{
+			m_VendorInfoGroupReputation.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			m_VendorInfoGroupReputation.gameObject.SetActive(value: true);
 		}
 		m_DiscountBlock.SetActive(base.ViewModel.HasDiscount);
 		if (base.ViewModel.HasDiscount)

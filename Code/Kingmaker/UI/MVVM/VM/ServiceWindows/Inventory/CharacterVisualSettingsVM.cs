@@ -43,6 +43,12 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public readonly CharacterVisualSettingsEntityVM Backpack;
 
+	public readonly CharacterVisualSettingsEntityVM Gloves;
+
+	public readonly CharacterVisualSettingsEntityVM Boots;
+
+	public readonly CharacterVisualSettingsEntityVM Armor;
+
 	public readonly TextureSelectorVM OutfitMainColorSelector;
 
 	private readonly Action m_DisposeAction;
@@ -79,11 +85,17 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(m_DollState.ShowHelm, SwitchHelmet));
 			AddDisposable(HelmetAboveAll = new CharacterVisualSettingsEntityVM(m_DollState.ShowHelmAboveAll, SwitchHelmetAboveAll));
 			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(m_DollState.ShowBackpack, SwitchBackpack));
+			AddDisposable(Gloves = new CharacterVisualSettingsEntityVM(m_DollState.ShowGloves, SwitchGloves));
+			AddDisposable(Boots = new CharacterVisualSettingsEntityVM(m_DollState.ShowBoots, SwitchBoots));
+			AddDisposable(Armor = new CharacterVisualSettingsEntityVM(m_DollState.ShowArmor, SwitchArmor));
 			Helmet.SetValue(m_DollState.ShowHelm && m_DollState.ShowCloth);
 			HelmetAboveAll.SetValue(m_DollState.ShowHelmAboveAll);
 			Backpack.SetValue(m_DollState.ShowBackpack && m_DollState.ShowCloth);
 			Helmet.SetLock(!m_DollState.ShowCloth);
 			Backpack.SetLock(!m_DollState.ShowCloth && Unit.HasMechadendrites());
+			Gloves.SetValue(m_DollState.ShowGloves && m_DollState.ShowCloth);
+			Boots.SetValue(m_DollState.ShowBoots && m_DollState.ShowCloth);
+			Armor.SetValue(m_DollState.ShowArmor && m_DollState.ShowCloth);
 		}
 	}
 
@@ -99,6 +111,9 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 			AddDisposable(Helmet = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelm, SwitchHelmet));
 			AddDisposable(HelmetAboveAll = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowHelmAboveAll, SwitchHelmetAboveAll));
 			AddDisposable(Backpack = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowBackpack, SwitchBackpack));
+			AddDisposable(Gloves = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowGloves, SwitchGloves));
+			AddDisposable(Boots = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowBoots, SwitchBoots));
+			AddDisposable(Armor = new CharacterVisualSettingsEntityVM(Unit.UISettings.ShowArmor, SwitchArmor));
 			Backpack.SetLock(Unit.HasMechadendrites());
 		}
 	}
@@ -125,8 +140,14 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		{
 			Helmet.SetValue(m_DollState.ShowCloth);
 			Backpack.SetValue(m_DollState.ShowCloth);
+			Gloves.SetValue(m_DollState.ShowCloth);
+			Boots.SetValue(m_DollState.ShowCloth);
+			Armor.SetValue(m_DollState.ShowCloth);
 			Helmet.SetLock(!m_DollState.ShowCloth);
 			Backpack.SetLock(!m_DollState.ShowCloth && Unit.HasMechadendrites());
+			Gloves.SetLock(!m_DollState.ShowCloth);
+			Boots.SetLock(!m_DollState.ShowCloth);
+			Armor.SetValue(m_DollState.ShowCloth);
 			TryUpdateClothesPrimaryPaintColorList(OutfitMainColorSelector, secondary: false);
 			OutfitMainColorSelector.SetActiveState(m_DollState.ShowCloth);
 		}
@@ -165,6 +186,42 @@ public class CharacterVisualSettingsVM : BaseDisposable, IViewModel, IBaseDispos
 		if (Unit != null)
 		{
 			Unit.UISettings.ShowBackpack = !Unit.UISettings.ShowBackpack;
+		}
+	}
+
+	private void SwitchGloves()
+	{
+		if (m_DollState != null)
+		{
+			m_DollState.ShowGloves = !m_DollState.ShowGloves;
+		}
+		if (Unit != null)
+		{
+			Unit.UISettings.ShowGloves = !Unit.UISettings.ShowGloves;
+		}
+	}
+
+	private void SwitchBoots()
+	{
+		if (m_DollState != null)
+		{
+			m_DollState.ShowBoots = !m_DollState.ShowBoots;
+		}
+		if (Unit != null)
+		{
+			Unit.UISettings.ShowBoots = !Unit.UISettings.ShowBoots;
+		}
+	}
+
+	private void SwitchArmor()
+	{
+		if (m_DollState != null)
+		{
+			m_DollState.ShowArmor = !m_DollState.ShowArmor;
+		}
+		if (Unit != null)
+		{
+			Unit.UISettings.ShowArmor = !Unit.UISettings.ShowArmor;
 		}
 	}
 

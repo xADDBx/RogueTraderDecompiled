@@ -167,7 +167,10 @@ public class BlueprintArea : BlueprintAreaPart
 		}
 	}
 
-	public IEnumerable<SceneReference> LightScenes => PartsAndSelf.Select((BlueprintAreaPart part) => part.LightScene);
+	public IEnumerable<SceneReference> LightScenes => from part in PartsAndSelf
+		select part.LightScene into sceneRef
+		where sceneRef != null
+		select sceneRef;
 
 	public override IEnumerable<SceneReference> AudioScenes => base.AudioScenes.Concat(m_Parts.SelectMany((BlueprintAreaPartReference p) => p.Get().AudioScenes));
 

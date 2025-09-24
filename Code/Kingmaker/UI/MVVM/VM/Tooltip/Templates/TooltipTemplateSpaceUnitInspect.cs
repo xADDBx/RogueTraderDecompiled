@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +7,6 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
-using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Inspect;
@@ -29,7 +27,6 @@ using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
 using UniRx;
 using UnityEngine;
-using Warhammer.SpaceCombat.Blueprints;
 using Warhammer.SpaceCombat.Blueprints.Slots;
 using Warhammer.SpaceCombat.StarshipLogic;
 using Warhammer.SpaceCombat.StarshipLogic.Weapon;
@@ -118,8 +115,7 @@ public class TooltipTemplateSpaceUnitInspect : TooltipBaseTemplate
 		AddHP(result);
 		AddEvasion(result);
 		HitAndCritChance(result);
-		AddArmours(result);
-		AddShields(result);
+		AddArmoursAndShields(result);
 		AddBuffsAndStatusEffects(result);
 	}
 
@@ -128,8 +124,7 @@ public class TooltipTemplateSpaceUnitInspect : TooltipBaseTemplate
 		AddHP(result);
 		AddEvasion(result);
 		HitAndCritChance(result);
-		AddArmours(result);
-		AddShields(result);
+		AddArmoursAndShields(result);
 		AddBuffsAndStatusEffects(result);
 		result.Add(new TooltipBrickSpace(2f));
 		AddWeapon(result);
@@ -190,38 +185,20 @@ public class TooltipTemplateSpaceUnitInspect : TooltipBaseTemplate
 		bricks.Add(new TooltipBrickIconStatValue(text2, value2, null, UIConfig.Instance.UIIcons.TooltipInspectIcons.CriticalChance, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, tooltip));
 	}
 
-	private void AddArmours(List<ITooltipBrick> bricks)
+	private void AddArmoursAndShields(List<ITooltipBrick> bricks)
 	{
-		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Inspect.Armours, TooltipTitleType.H6));
-		bricks.Add(AddArmour(StarshipHitLocation.Fore, (BlueprintItemArmorPlating ap) => ap?.ArmourFore, (StarshipArmorBonus ab) => ab.ArmourFore));
-		bricks.Add(AddArmour(StarshipHitLocation.Aft, (BlueprintItemArmorPlating ap) => ap?.ArmourAft, (StarshipArmorBonus ab) => ab.ArmourAft));
-		bricks.Add(AddArmour(StarshipHitLocation.Port, (BlueprintItemArmorPlating ap) => ap?.ArmourPort, (StarshipArmorBonus ab) => ab.ArmourPort));
-		bricks.Add(AddArmour(StarshipHitLocation.Starboard, (BlueprintItemArmorPlating ap) => ap?.ArmourStarboard, (StarshipArmorBonus ab) => ab.ArmourStarboard));
-	}
-
-	private TooltipBrickIconStatValue AddArmour(StarshipHitLocation type, Func<BlueprintItemArmorPlating, int?> fItemArmor, Func<StarshipArmorBonus, int> fBonusArmor)
-	{
-		int locationDeflection = m_Ship.Hull.GetLocationDeflection(type);
-		TooltipTemplateSimple tooltipTemplateSimple = new TooltipTemplateSimple(UIStrings.Instance.ShipCustomization.ArmorPlating, UIStrings.Instance.ShipCustomization.ArmorPlatingDescription);
-		string armorStringByType = UIStrings.Instance.Inspect.GetArmorStringByType(type);
-		string value = locationDeflection.ToString() ?? "";
-		TooltipBaseTemplate tooltip = tooltipTemplateSimple;
-		return new TooltipBrickIconStatValue(armorStringByType, value, null, UIConfig.Instance.UIIcons.TooltipInspectIcons.GetArmorIconByType(type), TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueType.Normal, TooltipBrickIconStatValueStyle.Normal, null, tooltip);
-	}
-
-	private void AddShields(List<ITooltipBrick> bricks)
-	{
-		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.Inspect.Shields.Text, TooltipTitleType.H6));
-		bricks.Add(CreateShield(StarshipSectorShieldsType.Fore));
-		bricks.Add(CreateShield(StarshipSectorShieldsType.Aft));
-		bricks.Add(CreateShield(StarshipSectorShieldsType.Port));
-		bricks.Add(CreateShield(StarshipSectorShieldsType.Starboard));
-	}
-
-	private TooltipBrickIconStatValue CreateShield(StarshipSectorShieldsType type)
-	{
-		int current = m_Ship.Shields.GetShields(type).Current;
-		return new TooltipBrickIconStatValue(UIStrings.Instance.Inspect.GetShieldStringByType(type), current.ToString(), null, tooltip: new TooltipTemplateGlossary("VoidshipShields"), icon: UIConfig.Instance.UIIcons.TooltipInspectIcons.GetShieldIconByType(type));
+		TooltipBrickShipInspectScheme tooltipBrickShipInspectScheme = new TooltipBrickShipInspectScheme(UIStrings.Instance.Inspect.ArmoursAndShields, UIStrings.Instance.Inspect.Armours, UIStrings.Instance.Inspect.Shields, UIStrings.Instance.Inspect.Port, UIStrings.Instance.Inspect.Fore, UIStrings.Instance.Inspect.Starboard, UIStrings.Instance.Inspect.Aft);
+		TooltipTemplateSimple tooltip = new TooltipTemplateSimple(UIStrings.Instance.ShipCustomization.ArmorPlating, UIStrings.Instance.ShipCustomization.ArmorPlatingDescription);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ArmourPort, m_Ship.Hull.GetLocationDeflection(StarshipHitLocation.Port).ToString(), tooltip);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ArmourFore, m_Ship.Hull.GetLocationDeflection(StarshipHitLocation.Fore).ToString(), tooltip);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ArmourStarboard, m_Ship.Hull.GetLocationDeflection(StarshipHitLocation.Starboard).ToString(), tooltip);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ArmourAft, m_Ship.Hull.GetLocationDeflection(StarshipHitLocation.Aft).ToString(), tooltip);
+		TooltipTemplateGlossary tooltip2 = new TooltipTemplateGlossary("VoidshipShields");
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ShieldPort, m_Ship.Shields.GetShields(StarshipSectorShieldsType.Port).Current.ToString(), tooltip2);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ShieldFore, m_Ship.Shields.GetShields(StarshipSectorShieldsType.Fore).Current.ToString(), tooltip2);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ShieldStarboard, m_Ship.Shields.GetShields(StarshipSectorShieldsType.Starboard).Current.ToString(), tooltip2);
+		tooltipBrickShipInspectScheme.SetArmourValue(ArmourAndShieldValueType.ShieldAft, m_Ship.Shields.GetShields(StarshipSectorShieldsType.Aft).Current.ToString(), tooltip2);
+		bricks.Add(tooltipBrickShipInspectScheme);
 	}
 
 	private void AddBuffsAndStatusEffects(List<ITooltipBrick> bricks)

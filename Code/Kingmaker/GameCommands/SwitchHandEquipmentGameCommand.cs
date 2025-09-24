@@ -2,6 +2,8 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Internal;
@@ -69,11 +71,13 @@ public sealed class SwitchHandEquipmentGameCommand : GameCommand, IMemoryPackabl
 		if (entity == null)
 		{
 			PFLog.GameCommands.Error("Unit #" + m_Unit.Id + " not found!");
+			return;
 		}
-		else
+		entity.Body.CurrentHandEquipmentSetIndex = m_HandEquipmentSetIndex;
+		EventBus.RaiseEvent(delegate(IWeaponSetChangedTooltipUpdateHandler h)
 		{
-			entity.Body.CurrentHandEquipmentSetIndex = m_HandEquipmentSetIndex;
-		}
+			h.OnWeaponChangeTooltipUpdate();
+		});
 	}
 
 	static SwitchHandEquipmentGameCommand()

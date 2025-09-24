@@ -49,4 +49,6 @@ public class UIVendor
 	public LocalizedString VendorDontTakeThisCargo;
 
 	public LocalizedString CargoIsNotFull;
+
+	public LocalizedString BuyAllAvailable;
 }

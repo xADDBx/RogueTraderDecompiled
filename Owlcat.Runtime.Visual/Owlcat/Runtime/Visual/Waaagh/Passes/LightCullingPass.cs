@@ -2,7 +2,7 @@ using Owlcat.Runtime.Visual.Waaagh.Lighting;
 using Owlcat.Runtime.Visual.Waaagh.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -30,7 +30,7 @@ public class LightCullingPass : ScriptableRenderPass<LightCullingPassData>
 	{
 		data.LightCullingShader = m_LightCullingShader;
 		data.BuildLightTilesKernel = m_BuilLightTilesKernel.Index;
-		data.LightTilesBuffer = builder.WriteComputeBuffer(in data.Resources.LightTilesBuffer);
+		data.LightTilesBuffer = builder.WriteBuffer(in data.Resources.LightTilesBuffer);
 		Vector4 clusteringParams = m_WaaaghLights.ClusteringParams;
 		Vector4 lightDataParams = m_WaaaghLights.LightDataParams;
 		int x = (int)(clusteringParams.x * clusteringParams.y);

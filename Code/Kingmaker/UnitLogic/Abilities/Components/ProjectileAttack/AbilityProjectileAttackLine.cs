@@ -133,6 +133,7 @@ public class AbilityProjectileAttackLine
 				Rulebook.Trigger(rulePerformAttackRoll);
 			}
 			bool calculatedOverpenetration;
+			OverpenetrationData? overpenetrationData;
 			if (rulePerformAttackRoll != null && rulePerformAttackRoll.ResultIsCoverHit)
 			{
 				LosDescription item = item3.Los;
@@ -152,10 +153,15 @@ public class AbilityProjectileAttackLine
 				}
 				MechanicEntity caster = Context.Caster;
 				AbilityData ability = Context.Ability;
-				RulePerformAttackRoll performAttackRoll = ((damageData == null) ? rulePerformAttackRoll : null);
-				DamageData baseDamageOverride = damageData;
 				calculatedOverpenetration = damageData != null;
-				RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams(caster, obstacleEntity, ability, performAttackRoll, baseDamageOverride, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
+				overpenetrationData = ((damageData == null) ? null : new OverpenetrationData?(new OverpenetrationData
+				{
+					OverpenetrationPercent = damageData.OverpenetrationFactorPercents,
+					DamageRoll = damageData.Roll,
+					MinBaseValue = damageData.MinValueBase,
+					MaxBaseValue = damageData.MaxValueBase
+				}));
+				RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams(caster, obstacleEntity, ability, rulePerformAttackRoll, null, null, null, overpenetrationData, forceCrit: false, calculatedOverpenetration).Trigger();
 				RuleRollDamage ruleRollDamage = new RuleRollDamage(Context.Caster, obstacleEntity, ruleCalculateDamage.ResultDamage);
 				Rulebook.Trigger(ruleRollDamage);
 				list.Add(new HitData(item3.Node, rulePerformAttackRoll)
@@ -179,7 +185,7 @@ public class AbilityProjectileAttackLine
 					HitData item2 = new HitData(item3.Node, rulePerformAttackRoll);
 					(item2.Entity, _, _) = item3;
 					list.Add(item2);
-					goto IL_048a;
+					goto IL_052e;
 				}
 			}
 			MechanicEntity actualParryUnit = rulePerformAttackRoll.ActualParryUnit;
@@ -188,10 +194,8 @@ public class AbilityProjectileAttackLine
 			{
 				MechanicEntity caster2 = Context.Caster;
 				AbilityData ability2 = Context.Ability;
-				RulePerformAttackRoll performAttackRoll2 = ((damageData == null) ? rulePerformAttackRoll : null);
-				DamageData baseDamageOverride2 = damageData;
 				calculatedOverpenetration = damageData != null;
-				RuleCalculateDamage ruleCalculateDamage2 = new CalculateDamageParams(caster2, actualParryUnit, ability2, performAttackRoll2, baseDamageOverride2, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
+				RuleCalculateDamage ruleCalculateDamage2 = new CalculateDamageParams(caster2, actualParryUnit, ability2, rulePerformAttackRoll, null, null, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
 				Rulebook.Trigger(new RuleRollDamage(Context.Caster, actualParryUnit, ruleCalculateDamage2.ResultDamage));
 				list.Add(new HitData(item3.Node, rulePerformAttackRoll)
 				{
@@ -204,10 +208,15 @@ public class AbilityProjectileAttackLine
 			}
 			MechanicEntity caster3 = Context.Caster;
 			AbilityData ability3 = Context.Ability;
-			RulePerformAttackRoll performAttackRoll3 = ((damageData == null) ? rulePerformAttackRoll : null);
-			DamageData baseDamageOverride3 = damageData;
 			calculatedOverpenetration = damageData != null;
-			RuleCalculateDamage ruleCalculateDamage3 = new CalculateDamageParams(caster3, actualParryUnit, ability3, performAttackRoll3, baseDamageOverride3, null, null, forceCrit: false, calculatedOverpenetration).Trigger();
+			overpenetrationData = ((damageData == null) ? null : new OverpenetrationData?(new OverpenetrationData
+			{
+				OverpenetrationPercent = damageData.OverpenetrationFactorPercents,
+				DamageRoll = damageData.Roll,
+				MinBaseValue = damageData.MinValueBase,
+				MaxBaseValue = damageData.MaxValueBase
+			}));
+			RuleCalculateDamage ruleCalculateDamage3 = new CalculateDamageParams(caster3, actualParryUnit, ability3, rulePerformAttackRoll, null, null, null, overpenetrationData, forceCrit: false, calculatedOverpenetration).Trigger();
 			RuleRollDamage ruleRollDamage2 = new RuleRollDamage(Context.Caster, actualParryUnit, ruleCalculateDamage3.ResultDamage);
 			Rulebook.Trigger(ruleRollDamage2);
 			list.Add(new HitData((CustomGridNodeBase)actualParryUnit.CurrentNode.node, rulePerformAttackRoll)
@@ -221,8 +230,8 @@ public class AbilityProjectileAttackLine
 				break;
 			}
 			damageData = ruleRollDamage2.ResultOverpenetration;
-			goto IL_048a;
-			IL_048a:
+			goto IL_052e;
+			IL_052e:
 			RuleRollBlock resultBlockRule = rulePerformAttackRoll.ResultBlockRule;
 			if (resultBlockRule != null && resultBlockRule.Result)
 			{

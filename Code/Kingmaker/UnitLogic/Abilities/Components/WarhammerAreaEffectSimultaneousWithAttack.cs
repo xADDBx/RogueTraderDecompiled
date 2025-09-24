@@ -3,6 +3,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -27,10 +28,17 @@ public class WarhammerAreaEffectSimultaneousWithAttack : BlueprintComponent
 	[SerializeField]
 	private bool m_GetOrientationFromCaster;
 
+	[SerializeField]
+	private RestrictionCalculator RestrictionsToSpawn;
+
 	private BlueprintAbilityAreaEffect BlueprintAbilityAreaEffect => AreaEffect.Get();
 
 	public void SpawnAreaEffect(AbilityExecutionContext context, TargetWrapper target)
 	{
+		if (!RestrictionsToSpawn.IsPassed(context, context.Caster))
+		{
+			return;
+		}
 		TimeSpan seconds = DurationValue.Calculate(context).Seconds;
 		AreaEffectEntity areaEffectEntity = AreaEffectsController.Spawn(overridenPattern: new OverrideAreaEffectPatternData(context.Pattern, OverridePatternWithAttackPattern), parentContext: context, blueprint: BlueprintAbilityAreaEffect, target: target, duration: seconds, getOrientationFromCaster: m_GetOrientationFromCaster);
 		if (areaEffectEntity == null)

@@ -13,8 +13,6 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.QA.Analytics;
-using Kingmaker.QA.Arbiter.GameCore;
-using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Overlays;
 using Kingmaker.QA.Profiling;
 using Kingmaker.Settings;
@@ -211,11 +209,6 @@ public class Runner : MonoBehaviour
 		{
 			LastError = ex;
 			LoadingProcess.Instance.StopAll();
-			return;
-		}
-		if (ArbiterService.Instance.IsRunning)
-		{
-			ArbiterIntegration.HandleFatalError(ex);
 			return;
 		}
 		if (ex is LoadGameException)

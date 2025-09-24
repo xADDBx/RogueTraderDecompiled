@@ -78,7 +78,9 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		if (!Damage.IsCalculated)
 		{
 			RuleCalculateDamage ruleCalculateDamage = new CalculateDamageParams((MechanicEntity)base.Initiator, (MechanicEntity)Target, base.Reason.Ability, (base.Reason.Rule as RulePerformAttack)?.RollPerformAttackRule, Damage).Trigger();
+			int overpenetrationFactorPercents = Damage.OverpenetrationFactorPercents;
 			Damage = ruleCalculateDamage.ResultDamage;
+			Damage.OverpenetrationFactorPercents = overpenetrationFactorPercents;
 		}
 		Result = RollDamage(Damage, IgnoreDeflection, IgnoreArmourAbsorption, ReflectPercentDamageModifiers.FlatBonus, ReflectFlatDamageModifiers.Value, out var reflectedDamage);
 		ResultReflected = reflectedDamage;
@@ -106,7 +108,7 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public static DamageValue RollDamage(DamageData damage, bool ignoreDeflection, bool ignoreArmourAbsorption, int reflectPercentDamageModifer, int reflectFlatDamageModifer, out int reflectedDamage)
 	{
-		int num = (damage.CalculatedValue.HasValue ? damage.Modifiers.ApplyPctMulExtra(damage.CalculatedValue.Value) : RollWithoutArmorReduction(damage));
+		int num = (damage.CalculatedValue.HasValue ? damage.Modifiers.ApplyPctMulExtra(damage.CalculatedValue.Value) : (damage.Overpenetrating ? (damage.InitialRolledValue + damage.CriticalRolledValue) : RollWithoutArmorReduction(damage)));
 		int num2 = ((damage.Overpenetrating && !damage.UnreducedOverpenetration) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
 		reflectedDamage = Math.Clamp(Mathf.RoundToInt((float)num2 * 0.01f * (float)reflectPercentDamageModifer) + reflectFlatDamageModifer, 0, num2);
 		num2 -= reflectedDamage;
@@ -153,16 +155,15 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		}
 		int overpenetrationFactorPercents = Damage.OverpenetrationFactorPercents;
 		int num = Math.Max(0, overpenetrationFactorPercents - 30);
+		DamageData damageData = Damage.Copy();
+		damageData.OverpenetrationFactorPercents = num;
+		damageData.Overpenetrating = true;
+		damageData.CalculatedValue = damageRoll;
 		if (num <= 0)
 		{
 			return null;
 		}
-		return new DamageData(Damage.Type, damageRoll)
-		{
-			OverpenetrationFactorPercents = num,
-			Overpenetrating = true,
-			CalculatedValue = damageRoll
-		};
+		return damageData;
 	}
 
 	public void NullifyDamage(EntityFact source)

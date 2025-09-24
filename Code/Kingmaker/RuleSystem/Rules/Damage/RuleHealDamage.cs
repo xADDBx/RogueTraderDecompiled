@@ -15,6 +15,9 @@ public class RuleHealDamage : RulebookTargetEvent
 	[CanBeNull]
 	public readonly PartHealth TargetHealth;
 
+	[CanBeNull]
+	public readonly PartLifeState LifeState;
+
 	public int Value => CalculateHealRule.Value;
 
 	public AbilityData Ability { get; set; }
@@ -38,6 +41,7 @@ public class RuleHealDamage : RulebookTargetEvent
 		: base(initiator, target)
 	{
 		TargetHealth = target.GetHealthOptional();
+		LifeState = target.GetLifeStateOptional();
 		CalculateHealRule = new RuleCalculateHeal(initiator, target, dice, bonus);
 		Ability = abilityData;
 	}
@@ -46,6 +50,7 @@ public class RuleHealDamage : RulebookTargetEvent
 		: base(initiator, target)
 	{
 		TargetHealth = target.GetHealthOptional();
+		LifeState = target.GetLifeStateOptional();
 		CalculateHealRule = new RuleCalculateHeal(initiator, target, min, max, bonus);
 		Ability = abilityData;
 	}
@@ -55,7 +60,15 @@ public class RuleHealDamage : RulebookTargetEvent
 		if (TargetHealth != null && !this.SkipBecauseOfShadow())
 		{
 			Rulebook.Trigger(CalculateHealRule);
-			TargetHealth.HealDamage(Value);
+			PartLifeState lifeState = LifeState;
+			if (lifeState != null && lifeState.IsUnconscious)
+			{
+				LifeState.Resurrect(Value);
+			}
+			else
+			{
+				TargetHealth.HealDamage(Value);
+			}
 			EventBus.RaiseEvent(delegate(IHealingHandler h)
 			{
 				h.HandleHealing(this);

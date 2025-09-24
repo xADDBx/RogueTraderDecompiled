@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual;
 
@@ -495,7 +495,6 @@ public static class RenderingUtils
 	{
 		TextureDesc result = new TextureDesc(input.width, input.height);
 		result.colorFormat = input.graphicsFormat;
-		result.depthBufferBits = (DepthBits)input.depthBufferBits;
 		result.dimension = input.dimension;
 		result.slices = input.volumeDepth;
 		result.name = name;

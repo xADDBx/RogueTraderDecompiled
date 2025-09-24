@@ -11,6 +11,7 @@ using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;
@@ -50,6 +51,9 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 
 	[JsonProperty]
 	public bool WasEntered;
+
+	[JsonProperty]
+	private readonly List<UnitReference> m_HiddenUnits = new List<UnitReference>();
 
 	public readonly List<UnitInfo> InsideUnits = new List<UnitInfo>();
 
@@ -333,6 +337,74 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 		}
 	}
 
+	public void AddHiddenUnit(BaseUnitEntity unit)
+	{
+		if (unit == null)
+		{
+			PFLog.Default.Warning("ScriptZoneEntity.AddHiddenUnit: unit is null");
+			return;
+		}
+		UnitReference unitRef = UnitReference.FromIAbstractUnitEntity(unit);
+		if (!m_HiddenUnits.Any((UnitReference r) => r == unitRef))
+		{
+			m_HiddenUnits.Add(unitRef);
+			PFLog.Default.Log($"ScriptZoneEntity.AddHiddenUnit: Added unit {unit.CharacterName} (ID: {unit.UniqueId}) to hidden list. Total hidden: {m_HiddenUnits.Count}");
+			return;
+		}
+		PFLog.Default.Log("ScriptZoneEntity.AddHiddenUnit: Unit " + unit.CharacterName + " (ID: " + unit.UniqueId + ") already in hidden list");
+	}
+
+	public void RemoveHiddenUnit(BaseUnitEntity unit)
+	{
+		if (unit == null)
+		{
+			PFLog.Default.Warning("ScriptZoneEntity.RemoveHiddenUnit: unit is null");
+			return;
+		}
+		UnitReference item = UnitReference.FromIAbstractUnitEntity(unit);
+		if (m_HiddenUnits.Remove(item))
+		{
+			PFLog.Default.Log($"ScriptZoneEntity.RemoveHiddenUnit: Removed unit {unit.CharacterName} (ID: {unit.UniqueId}) from hidden list. Remaining: {m_HiddenUnits.Count}");
+			return;
+		}
+		PFLog.Default.Log("ScriptZoneEntity.RemoveHiddenUnit: Unit " + unit.CharacterName + " (ID: " + unit.UniqueId + ") was not in hidden list");
+	}
+
+	public List<BaseUnitEntity> GetHiddenUnits()
+	{
+		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
+		List<UnitReference> list2 = new List<UnitReference>();
+		PFLog.Default.Log($"ScriptZoneEntity.GetHiddenUnits: Checking {m_HiddenUnits.Count} hidden unit references");
+		foreach (UnitReference hiddenUnit in m_HiddenUnits)
+		{
+			BaseUnitEntity baseUnitEntity = hiddenUnit.Entity?.ToBaseUnitEntity();
+			if (baseUnitEntity != null && baseUnitEntity.IsInState)
+			{
+				list.Add(baseUnitEntity);
+				PFLog.Default.Log($"ScriptZoneEntity.GetHiddenUnits: Found valid unit {baseUnitEntity.CharacterName} (ID: {baseUnitEntity.UniqueId}), IsDead: {baseUnitEntity.LifeState.IsDead}, IsInGame: {baseUnitEntity.IsInGame}");
+			}
+			else
+			{
+				list2.Add(hiddenUnit);
+				PFLog.Default.Log("ScriptZoneEntity.GetHiddenUnits: Invalid unit reference " + hiddenUnit.Id + " - unit is null or not in state");
+			}
+		}
+		foreach (UnitReference item in list2)
+		{
+			m_HiddenUnits.Remove(item);
+			PFLog.Default.Log("ScriptZoneEntity.GetHiddenUnits: Removed invalid reference " + item.Id);
+		}
+		PFLog.Default.Log($"ScriptZoneEntity.GetHiddenUnits: Returning {list.Count} valid units out of {m_HiddenUnits.Count} references");
+		return list;
+	}
+
+	public void ClearHiddenUnits()
+	{
+		int count = m_HiddenUnits.Count;
+		m_HiddenUnits.Clear();
+		PFLog.Default.Log($"ScriptZoneEntity.ClearHiddenUnits: Cleared {count} hidden unit references");
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -340,6 +412,16 @@ public class ScriptZoneEntity : MapObjectEntity, IUnitHandler, IUnitSpawnHandler
 		result.Append(ref val);
 		result.Append(ref IsActive);
 		result.Append(ref WasEntered);
+		List<UnitReference> hiddenUnits = m_HiddenUnits;
+		if (hiddenUnits != null)
+		{
+			for (int i = 0; i < hiddenUnits.Count; i++)
+			{
+				UnitReference obj = hiddenUnits[i];
+				Hash128 val2 = UnitReferenceHasher.GetHash128(ref obj);
+				result.Append(ref val2);
+			}
+		}
 		return result;
 	}
 }

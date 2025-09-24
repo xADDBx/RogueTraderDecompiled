@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -17,6 +17,11 @@ public class DeferredLightingPass : ScriptableRenderPass<DeferredLightingPassDat
 	{
 		m_DeferredReflectionsMaterial = deferredReflectionsMaterial;
 		m_DeferredLightingMaterial = deferredLightingMaterial;
+	}
+
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		DependsOn(in resources.RendererLists.OpaqueGBuffer.List);
 	}
 
 	protected override void Setup(RenderGraphBuilder builder, DeferredLightingPassData data, ref RenderingData renderingData)
@@ -41,7 +46,6 @@ public class DeferredLightingPass : ScriptableRenderPass<DeferredLightingPassDat
 		Color glossyEnvironmentColor = CoreUtils.ConvertLinearToActiveColorSpace(new Color(ambientProbe[0, 0], ambientProbe[1, 0], ambientProbe[2, 0]) * RenderSettings.reflectionIntensity);
 		data.GlossyEnvironmentColor = glossyEnvironmentColor;
 		data.GlossyBlackColor = default(Color);
-		builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
 		builder.AllowRendererListCulling(!renderingData.IrsHasOpaques);
 	}
 

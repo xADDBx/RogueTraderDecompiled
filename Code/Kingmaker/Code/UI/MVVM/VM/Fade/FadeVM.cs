@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DG.Tweening;
 using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
@@ -13,11 +14,27 @@ namespace Kingmaker.Code.UI.MVVM.VM.Fade;
 
 public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ILoadingScreen, IGameModeHandler, ISubscriber
 {
+	public struct AdvancedParams
+	{
+		public Ease Ease;
+
+		public float Duration;
+	}
+
+	public struct Params
+	{
+		public bool Fade;
+
+		public AdvancedParams? FadeParams;
+	}
+
 	private LoadingScreenState m_State;
 
-	public readonly BoolReactiveProperty LoadingScreen = new BoolReactiveProperty();
-
 	public readonly BoolReactiveProperty CutsceneOverlay = new BoolReactiveProperty();
+
+	public readonly ReactiveProperty<Params> LoadingScreen = new ReactiveProperty<Params>();
+
+	private AdvancedParams? FadeParams;
 
 	public FadeVM()
 	{
@@ -32,7 +49,11 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		{
 			PFLog.UI.Log("Show fade");
 			m_State = LoadingScreenState.ShowAnimation;
-			LoadingScreen.Value = true;
+			LoadingScreen.Value = new Params
+			{
+				Fade = true,
+				FadeParams = FadeParams
+			};
 		}
 	}
 
@@ -44,7 +65,11 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		}
 		PFLog.UI.Log("Hide fade");
 		m_State = LoadingScreenState.HideAnimation;
-		LoadingScreen.Value = false;
+		LoadingScreen.Value = new Params
+		{
+			Fade = false,
+			FadeParams = FadeParams
+		};
 		if (Game.Instance.CurrentMode == GameModeType.StarSystem)
 		{
 			EventBus.RaiseEvent(delegate(ISystemMapRadarHandler h)
@@ -70,6 +95,21 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public void Fadeout(bool fade)
 	{
+		Fadeout(fade, null);
+	}
+
+	public void Fadeout(bool fade, float duration, Ease ease)
+	{
+		Fadeout(fade, new AdvancedParams
+		{
+			Ease = ease,
+			Duration = duration
+		});
+	}
+
+	private void Fadeout(bool fade, AdvancedParams? fadeParams)
+	{
+		FadeParams = fadeParams;
 		if (fade)
 		{
 			LoadingProcess.Instance.ShowManualLoadingScreen(this);
@@ -86,9 +126,19 @@ public class FadeVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 		CutsceneOverlay.Value = state && flag;
 	}
 
+	public void SetStateShowAnimation()
+	{
+		m_State = LoadingScreenState.ShowAnimation;
+	}
+
 	public void SetStateShown()
 	{
 		m_State = LoadingScreenState.Shown;
+	}
+
+	public void SetStateHideAnimation()
+	{
+		m_State = LoadingScreenState.HideAnimation;
 	}
 
 	public void SetStateHidden()

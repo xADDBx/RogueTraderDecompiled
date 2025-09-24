@@ -227,8 +227,8 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	public ReportingUtils()
 	{
 		EventBus.Subscribe(this);
-		m_ReportCombatLogManager = new ReportCombatLogManager(ApplicationPaths.persistentDataPath, "combatLog.txt", this);
-		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ReportingUberLoggerFilter(new UberLoggerFile(GetPlatform().ToLower() + "_reporting_util.txt", null, includeCallStacks: false, 5248000, append: true)));
+		m_ReportCombatLogManager = new ReportCombatLogManager(ApplicationPaths.temporaryCachePath, "combatLog.txt", this);
+		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ReportingUberLoggerFilter(new UberLoggerFile(GetPlatform().ToLower() + "_reporting_util.txt", ApplicationPaths.temporaryCachePath, includeCallStacks: false, 5248000, append: true)));
 		Logger.Log("");
 		Logger.Log("Instantiate ReportingUtils");
 		m_ReportFilesMd5Manager = new ReportFilesMd5Manager();
@@ -613,7 +613,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			string[] array = message.Split("\n");
 			string text12 = array[0];
 			string text13 = string.Join("\n", array, 1, array.Length - 1);
-			return header + " " + text12 + "\n\n" + text10 + "\n" + text8 + "\n\n" + text13 + "\n\n" + text11 + "\n\n" + contextLink;
+			return header + " " + text12 + "\n\n" + text13 + "\n\n" + text11 + "\n\n" + text10 + "\n" + text8 + "\n\n" + contextLink;
 		}
 		catch (Exception ex5)
 		{

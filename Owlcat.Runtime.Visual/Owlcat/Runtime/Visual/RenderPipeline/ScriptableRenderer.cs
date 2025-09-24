@@ -213,7 +213,7 @@ public abstract class ScriptableRenderer
 	{
 		RenderBufferLoadAction colorLoadAction = ((clearFlag != 0) ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load);
 		RenderBufferLoadAction depthLoadAction = (((clearFlag & ClearFlag.Depth) != 0) ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load);
-		TextureDimension dimension = (m_InsideStereoRenderBlock ? XRGraphics.eyeTextureDesc.dimension : TextureDimension.Tex2D);
+		TextureDimension dimension = TextureDimension.Tex2D;
 		SetRenderTarget(cmd, colorAttachment, colorLoadAction, RenderBufferStoreAction.Store, depthAttachment, depthLoadAction, RenderBufferStoreAction.Store, clearFlag, clearColor, dimension);
 	}
 

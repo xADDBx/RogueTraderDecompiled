@@ -448,7 +448,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 			return;
 		}
 		IEnumerable<EquipmentEntity> ees = EntityData.Body.AllSlots.SelectMany(ExtractEquipmentEntities);
-		base.CharacterAvatar.AddEquipmentEntities(ees);
+		base.CharacterAvatar.AddEquipmentEntities(ees, saved: false, isFromEquippedItems: true);
 		foreach (ItemSlot allSlot in EntityData.Body.AllSlots)
 		{
 			IEnumerable<EquipmentEntity> ees2 = ExtractEquipmentEntities(allSlot);
@@ -487,7 +487,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		foreach (EquipmentEntityLink clothe in CharGenUtility.GetClothes(unitEquipmentEntities, EntityData.Gender, race))
 		{
 			EquipmentEntity ee = clothe.Load();
-			base.CharacterAvatar.AddEquipmentEntity(ee);
+			base.CharacterAvatar.AddEquipmentEntity(ee, saved: false, isFromEquippedItem: false);
 			if (num >= 0)
 			{
 				base.CharacterAvatar.SetPrimaryRampIndex(ee, num);
@@ -639,7 +639,8 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 				IEnumerable<EquipmentEntity> ees = ExtractEquipmentEntities(previousItem);
 				base.CharacterAvatar.RemoveEquipmentEntities(ees);
 				ees = ExtractEquipmentEntities(slot);
-				base.CharacterAvatar.AddEquipmentEntities(ees);
+				base.CharacterAvatar.AddEquipmentEntities(ees, saved: false, isFromEquippedItems: true);
+				base.CharacterAvatar.IsDirty = true;
 				TryForceRampIndices(slot, ees);
 			}
 		}

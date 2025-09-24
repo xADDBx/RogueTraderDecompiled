@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers;
 using Kingmaker.ElementsSystem;
@@ -91,6 +92,10 @@ public class ContextActionSkillCheck : ContextAction
 		else
 		{
 			Failure.Run();
+		}
+		if (rulePerformSkillCheck.ResultIsSuccess)
+		{
+			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExp(num2, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
 		}
 	}
 

@@ -25,7 +25,7 @@ public class HideEntity : GameAction
 
 	public override string GetCaption()
 	{
-		return (Unhide ? "Show " : "Hide ") + Target?.GetCaption();
+		return (Unhide ? "Show " : "Hide ") + Target?.GetCaption() + " as entity";
 	}
 
 	protected override void RunAction()

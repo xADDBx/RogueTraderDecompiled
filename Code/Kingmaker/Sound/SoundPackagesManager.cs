@@ -51,6 +51,10 @@ public static class SoundPackagesManager
 
 	public static void LoadPackage(string packageName)
 	{
+		if (!AkAudioService.IsPackagesEnabled)
+		{
+			return;
+		}
 		if (string.IsNullOrEmpty(packageName))
 		{
 			PFLog.Audio.Error("Can't load Package with no name!");
@@ -67,13 +71,16 @@ public static class SoundPackagesManager
 
 	public static void UnloadPackage(string packageName)
 	{
-		if (string.IsNullOrEmpty(packageName))
+		if (AkAudioService.IsPackagesEnabled)
 		{
-			PFLog.Audio.Error("Can't unload Package with no name!");
-		}
-		else
-		{
-			s_Handles.Get(packageName)?.Unload();
+			if (string.IsNullOrEmpty(packageName))
+			{
+				PFLog.Audio.Error("Can't unload Package with no name!");
+			}
+			else
+			{
+				s_Handles.Get(packageName)?.Unload();
+			}
 		}
 	}
 }

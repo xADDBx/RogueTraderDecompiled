@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.GameCommands;
 using Kingmaker.Items;
@@ -20,9 +21,12 @@ public class VendorTransitionWindowVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public readonly ItemSlotVM Slot;
 
+	public readonly ItemSlotsGroupVM Slots;
+
 	public VendorTransitionWindowVM(VendorLogic vendor, ItemEntity itemEntity, Action close)
 	{
 		m_Close = close;
+		Slots = null;
 		AddDisposable(Slot = new ItemSlotVM(itemEntity, 0));
 		if (itemEntity != null)
 		{
@@ -36,6 +40,21 @@ public class VendorTransitionWindowVM : BaseDisposable, IViewModel, IBaseDisposa
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
+	public VendorTransitionWindowVM(VendorLogic vendor, List<ItemEntity> itemEntities, Action close)
+	{
+		m_Close = close;
+		Slot = null;
+		ItemsCollection collection = new ItemsCollection(null);
+		for (int i = 0; i < itemEntities.Count; i++)
+		{
+			itemEntities[i].SetSlotIndex(i);
+		}
+		int num = Mathf.Min(itemEntities.Count, 6);
+		AddDisposable(Slots = new ItemSlotsGroupVM(collection, itemEntities, num, num, needMaximumLimit: true));
+		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
+		AddDisposable(EventBus.Subscribe(this));
+	}
+
 	protected override void DisposeImplementation()
 	{
 		UISounds.Instance.Sounds.MessageBox.MessageBoxHide.Play();
@@ -43,6 +62,15 @@ public class VendorTransitionWindowVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public void Deal()
 	{
+		if (Slots != null)
+		{
+			foreach (ItemEntity item in Slots.Items)
+			{
+				Game.Instance.GameCommandQueue.AddForBuyVendor(item, item.Count, makeDeal: true);
+				UISounds.Instance.Sounds.Vendor.Deal.Play();
+			}
+			return;
+		}
 		if (Slot == null)
 		{
 			Close();

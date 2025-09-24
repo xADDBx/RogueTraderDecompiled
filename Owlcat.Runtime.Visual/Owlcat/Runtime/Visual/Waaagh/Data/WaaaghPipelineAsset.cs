@@ -9,7 +9,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Data;
 
-public class WaaaghPipelineAsset : RenderPipelineAsset
+public class WaaaghPipelineAsset : RenderPipelineAsset<WaaaghPipeline>
 {
 	[Serializable]
 	[ReloadGroup]
@@ -65,6 +65,9 @@ public class WaaaghPipelineAsset : RenderPipelineAsset
 
 	[SerializeField]
 	private HDRColorBufferPrecision m_HdrColorBufferPrecision = HDRColorBufferPrecision._64Bits;
+
+	[SerializeField]
+	private HDRColorBufferPrecision m_HdrColorBufferPrecisionSwitch2;
 
 	[SerializeField]
 	[Range(0.1f, 1f)]
@@ -366,6 +369,11 @@ public class WaaaghPipelineAsset : RenderPipelineAsset
 		return new WaaaghPipeline(this);
 	}
 
+	protected override void EnsureGlobalSettings()
+	{
+		base.EnsureGlobalSettings();
+	}
+
 	private void CreateRenderers()
 	{
 		DestroyRenderers();
@@ -413,6 +421,11 @@ public class WaaaghPipelineAsset : RenderPipelineAsset
 			return false;
 		}
 		return m_RendererDataList[index] != null;
+	}
+
+	public void Invalidate()
+	{
+		OnValidate();
 	}
 
 	protected override void OnValidate()

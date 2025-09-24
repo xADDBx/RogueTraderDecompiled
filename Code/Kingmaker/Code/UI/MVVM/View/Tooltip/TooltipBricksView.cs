@@ -149,6 +149,10 @@ public class TooltipBricksView : MonoBehaviour
 
 	public TooltipBrickCantUsePaperView BrickCantUsePaperView;
 
+	public TooltipBrickAttackOfOpportunityPaperView BrickAttackOfOpportunityPaperView;
+
+	public TooltipBrickShipInspectSchemeView BrickShipInspectSchemeView;
+
 	[Header("Combat Log")]
 	public TooltipBrickChanceView BrickChanceView;
 

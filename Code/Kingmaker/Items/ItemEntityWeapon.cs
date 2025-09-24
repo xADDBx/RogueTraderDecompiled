@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -7,6 +8,8 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Enums;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.Utility;
@@ -150,6 +153,10 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 					select ((WeaponAbility Slot, int SlotIndex, EntityFact Source))(Slot: i.Slot, SlotIndex: i.Index, Source: null)).Concat(GetExtraAbilitiesFromWielder())
 				orderby i.Slot.Type == WeaponAbilityType.Reload
 				select AddAbility(i.Slot, i.SlotIndex, i.Source)).NotNull());
+			EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitWeaponReimplementedHandler>)delegate(IUnitWeaponReimplementedHandler h)
+			{
+				h.HandleUnitWeaponReimplemented();
+			}, isCheckRuntime: true);
 		}
 	}
 

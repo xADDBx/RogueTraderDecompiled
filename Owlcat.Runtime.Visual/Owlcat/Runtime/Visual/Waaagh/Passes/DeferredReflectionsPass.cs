@@ -5,8 +5,8 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -26,6 +26,11 @@ public class DeferredReflectionsPass : ScriptableRenderPass<DeferredReflectionsP
 		m_DeferredReflectionsMaterial = deferredReflectionsMaterial;
 		m_BilateralUpsampleCs = bilateralUpsampleCs;
 		m_BilateralUpSampleColorKernel = m_BilateralUpsampleCs.GetKernelDescriptor("BilateralUpSampleColor4");
+	}
+
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		DependsOn(in resources.RendererLists.OpaqueGBuffer.List);
 	}
 
 	protected unsafe override void Setup(RenderGraphBuilder builder, DeferredReflectionsPassData data, ref RenderingData renderingData)
@@ -87,8 +92,6 @@ public class DeferredReflectionsPass : ScriptableRenderPass<DeferredReflectionsP
 		data.VisibleReflectionProbes = renderingData.CullingResults.visibleReflectionProbes;
 		data.DeferredReflectionsMaterial = m_DeferredReflectionsMaterial;
 		data.ActiveColorSpace = QualitySettings.activeColorSpace;
-		builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(value: true);
 	}
 
 	protected override void Render(DeferredReflectionsPassData data, RenderGraphContext context)

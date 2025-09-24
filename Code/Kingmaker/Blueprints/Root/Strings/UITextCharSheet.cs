@@ -449,6 +449,12 @@ public class UITextCharSheet
 
 	public LocalizedString VisualSettingsShowCloth;
 
+	public LocalizedString VisualSettingsShowGloves;
+
+	public LocalizedString VisualSettingsShowBoots;
+
+	public LocalizedString VisualSettingsShowArmor;
+
 	public LocalizedString VisualSettingsEnableClothes;
 
 	public LocalizedString VisualSettingsDisabledForCharacter;

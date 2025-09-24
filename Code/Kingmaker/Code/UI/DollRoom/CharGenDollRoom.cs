@@ -123,6 +123,9 @@ public class CharGenDollRoom : CharacterDollRoom, ILevelUpDollHandler, ISubscrib
 			avatar.UpdateHelmetVisibility(dollState.ShowHelm);
 			avatar.UpdateBackpackVisibility(dollState.ShowBackpack);
 			avatar.UpdateClothVisibility(dollState.ShowCloth);
+			avatar.UpdateGlovesVisibility(dollState.ShowGloves);
+			avatar.UpdateBootsVisibility(dollState.ShowBoots);
+			avatar.UpdateArmorVisibility(dollState.ShowArmor);
 			AnimationClipWrapper rightHandedAnimationWrapper = m_RightHandedAnimationWrapper;
 			if (rightHandedAnimationWrapper != null)
 			{

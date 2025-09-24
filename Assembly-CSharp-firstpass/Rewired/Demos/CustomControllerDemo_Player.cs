@@ -44,7 +44,9 @@ public class CustomControllerDemo_Player : MonoBehaviour
 			if (player.GetButtonDown("Fire"))
 			{
 				Vector3 vector2 = Vector3.Scale(new Vector3(1f, 0f, 0f), base.transform.right);
-				Object.Instantiate(bulletPrefab, base.transform.position + vector2, Quaternion.identity).GetComponent<Rigidbody>().velocity = new Vector3(bulletSpeed * base.transform.right.x, 0f, 0f);
+				GameObject obj = Object.Instantiate(bulletPrefab, base.transform.position + vector2, Quaternion.identity);
+				Vector3 linearVelocity = new Vector3(bulletSpeed * base.transform.right.x, 0f, 0f);
+				obj.GetComponent<Rigidbody>().linearVelocity = linearVelocity;
 			}
 			if (player.GetButtonDown("Change Color"))
 			{

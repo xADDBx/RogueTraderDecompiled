@@ -28,7 +28,7 @@ public class WarhammerContextActionStarshipPBAEAttack : ContextAction
 		}
 		foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 		{
-			if (allBaseAwakeUnit == starshipEntity || !(allBaseAwakeUnit is StarshipEntity starshipEntity2) || starshipEntity2.Navigation.IsSoftUnit || !abilityData.CanTarget(allBaseAwakeUnit))
+			if (allBaseAwakeUnit == starshipEntity || !(allBaseAwakeUnit is StarshipEntity target) || !abilityData.CanTarget(allBaseAwakeUnit))
 			{
 				continue;
 			}
@@ -37,7 +37,7 @@ public class WarhammerContextActionStarshipPBAEAttack : ContextAction
 			List<RuleStarshipPerformAttack> list = new List<RuleStarshipPerformAttack>();
 			for (int i = 0; i < starshipEntity.TeamUnitsAlive; i++)
 			{
-				RuleStarshipPerformAttack ruleStarshipPerformAttack3 = new RuleStarshipPerformAttack(starshipEntity, starshipEntity2, abilityData, abilityData.StarshipWeapon);
+				RuleStarshipPerformAttack ruleStarshipPerformAttack3 = new RuleStarshipPerformAttack(starshipEntity, target, abilityData, abilityData.StarshipWeapon);
 				if (ruleStarshipPerformAttack == null)
 				{
 					ruleStarshipPerformAttack = ruleStarshipPerformAttack3;

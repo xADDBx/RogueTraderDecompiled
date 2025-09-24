@@ -75,7 +75,7 @@ public class CameraObjectClipFeature : ScriptableRendererFeature
 	public override void Create()
 	{
 		m_NoiseBakeMaterial = CoreUtils.CreateEngineMaterial(Shaders.NoiseBakeShader);
-		m_Noise3D = RTHandles.Alloc(32, 32, 32, DepthBits.None, GraphicsFormat.R8_UNorm, FilterMode.Trilinear, TextureWrapMode.Repeat, TextureDimension.Tex3D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, "CameraObjectClipNoise3D");
+		m_Noise3D = RTHandles.Alloc(32, 32, 32, DepthBits.None, GraphicsFormat.R8_UNorm, FilterMode.Trilinear, TextureWrapMode.Repeat, TextureDimension.Tex3D, enableRandomWrite: false, useMipMap: false, autoGenerateMips: true, isShadowMap: false, 1, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, "CameraObjectClipNoise3D");
 		m_PrevNoiseTiling = -1f;
 		m_NoiseBakePass = new CameraObjectClipNoiseBakePass(RenderPassEvent.BeforeRendering, this, m_NoiseBakeMaterial);
 		m_SetupPass = new CameraObjectClipSetupPass(RenderPassEvent.BeforeRendering, this);

@@ -2,8 +2,8 @@ using System;
 using Owlcat.Runtime.Visual.Overrides.HBAO;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -327,8 +327,6 @@ public class HbaoPass : ScriptableRenderPass<HbaoPassData>
 		data.Material = m_Material;
 		VolumeStack stack = VolumeManager.instance.stack;
 		data.Settings = stack.GetComponent<Hbao>();
-		data.RendererList = builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(!renderingData.IrsHasOpaques);
 		builder.AllowPassCulling(value: true);
 		if (data.Settings.IsActive())
 		{
@@ -373,16 +371,16 @@ public class HbaoPass : ScriptableRenderPass<HbaoPassData>
 			context.cmd.SetGlobalTexture(ShaderProperties._CameraDepthTexture, data.CameraDepthRT);
 			if (data.Settings.Deinterleaving.value == Deinterleaving.Disabled)
 			{
-				PrepareCommandBufferHBAO(data, ref context.cmd);
+				PrepareCommandBufferHBAO(data, context.cmd);
 			}
 			else
 			{
-				PrepareCommandBufferHBAO(data, ref context.cmd);
+				PrepareCommandBufferHBAO(data, context.cmd);
 			}
 		}
 	}
 
-	private void PrepareCommandBufferHBAO(HbaoPassData data, ref CommandBuffer cmd)
+	private void PrepareCommandBufferHBAO(HbaoPassData data, CommandBuffer cmd)
 	{
 		cmd.SetRenderTarget(data.HbaoRT);
 		cmd.ClearRenderTarget(clearDepth: false, clearColor: true, Color.white);
@@ -395,7 +393,7 @@ public class HbaoPass : ScriptableRenderPass<HbaoPassData>
 		}
 		cmd.SetGlobalTexture(ShaderProperties.hbaoTex, data.HbaoRT);
 		cmd.SetGlobalFloat(ShaderProperties.intensityGlobal, data.Settings.Intensity.value);
-		RenderHBAO(data, ref cmd);
+		RenderHBAO(data, cmd);
 	}
 
 	protected int GetBlurXPass(HbaoPassData data)
@@ -422,7 +420,7 @@ public class HbaoPass : ScriptableRenderPass<HbaoPassData>
 		};
 	}
 
-	private void RenderHBAO(HbaoPassData data, ref CommandBuffer cmd)
+	private void RenderHBAO(HbaoPassData data, CommandBuffer cmd)
 	{
 		if (_renderTarget.hdr)
 		{

@@ -45,9 +45,15 @@ public class DialogContextConsoleView : ViewBase<DialogContextVM>
 		{
 			AddDisposable(base.ViewModel.InterchapterVM.Subscribe(m_InterchapterView.Bind));
 		}
+		base.ViewModel.ToggleDialogFadeCommand.Subscribe(ToggleFade);
 	}
 
 	protected override void DestroyViewImplementation()
 	{
+	}
+
+	private void ToggleFade(bool value)
+	{
+		m_DialogConsoleView.ViewInstance?.ToggleFade(value);
 	}
 }

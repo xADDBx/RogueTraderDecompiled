@@ -30,7 +30,7 @@ public class OwlcatRenderPipeline : UnityEngine.Rendering.RenderPipeline
 
 	public static Action<Camera> VolumeManagerUpdated;
 
-	public static OwlcatRenderPipelineAsset Asset => GraphicsSettings.renderPipelineAsset as OwlcatRenderPipelineAsset;
+	public static OwlcatRenderPipelineAsset Asset => GraphicsSettings.defaultRenderPipeline as OwlcatRenderPipelineAsset;
 
 	public OwlcatRenderPipeline(OwlcatRenderPipelineAsset asset)
 	{
@@ -262,8 +262,8 @@ public class OwlcatRenderPipeline : UnityEngine.Rendering.RenderPipeline
 		cameraData.IsStereoEnabled = false;
 		Rect rect = camera.rect;
 		cameraData.IsDefaultViewport = !(Math.Abs(rect.x) > 0f) && !(Math.Abs(rect.y) > 0f) && !(Math.Abs(rect.width) < 1f) && !(Math.Abs(rect.height) < 1f);
-		float num = (XRGraphics.enabled ? XRGraphics.eyeTextureResolutionScale : settings.RenderScale);
-		cameraData.RenderScale = ((Mathf.Abs(1f - num) < 0.05f) ? 1f : num);
+		float renderScale = settings.RenderScale;
+		cameraData.RenderScale = ((Mathf.Abs(1f - renderScale) < 0.05f) ? 1f : renderScale);
 		cameraData.RenderScale = ((camera.cameraType == CameraType.Game) ? cameraData.RenderScale : 1f);
 		SortingCriteria sortingCriteria = SortingCriteria.CommonOpaque;
 		SortingCriteria sortingCriteria2 = SortingCriteria.SortingLayer | SortingCriteria.RenderQueue | SortingCriteria.OptimizeStateChanges | SortingCriteria.CanvasOrder;
@@ -331,25 +331,16 @@ public class OwlcatRenderPipeline : UnityEngine.Rendering.RenderPipeline
 	private static RenderTextureDescriptor CreateRenderTextureDescriptor(Camera camera, float renderScale, bool isStereoEnabled, bool isHdrEnabled, int msaaSamples = 1)
 	{
 		RenderTextureFormat renderTextureFormat = RenderTextureFormat.Default;
-		RenderTextureDescriptor result;
-		if (isStereoEnabled)
-		{
-			result = XRGraphics.eyeTextureDesc;
-			renderTextureFormat = result.colorFormat;
-		}
-		else
-		{
-			result = new RenderTextureDescriptor(camera.pixelWidth, camera.pixelHeight);
-			result.width = (int)((float)result.width * renderScale);
-			result.height = (int)((float)result.height * renderScale);
-		}
+		RenderTextureDescriptor result = new RenderTextureDescriptor(camera.pixelWidth, camera.pixelHeight);
+		result.width = (int)((float)result.width * renderScale);
+		result.height = (int)((float)result.height * renderScale);
 		RenderTextureFormat renderTextureFormat2 = ((Application.isMobilePlatform && RenderingUtils.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float)) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR);
 		if (Application.platform == RuntimePlatform.PS4)
 		{
 			renderTextureFormat2 = RenderTextureFormat.ARGBHalf;
 		}
 		result.colorFormat = (isHdrEnabled ? renderTextureFormat2 : renderTextureFormat);
-		result.depthBufferBits = 32;
+		result.depthBufferBits = 24;
 		result.enableRandomWrite = false;
 		result.sRGB = QualitySettings.activeColorSpace == ColorSpace.Linear;
 		result.msaaSamples = msaaSamples;

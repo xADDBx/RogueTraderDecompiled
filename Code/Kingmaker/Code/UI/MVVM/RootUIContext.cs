@@ -315,6 +315,8 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 		}
 	}
 
+	public bool IsIngameMenuShown => SurfaceVM.StaticPartVM.SurfaceHUDVM.IngameMenuVM.IsShown;
+
 	public RootUIContext()
 	{
 		AddDisposable(EventBus.Subscribe(this));

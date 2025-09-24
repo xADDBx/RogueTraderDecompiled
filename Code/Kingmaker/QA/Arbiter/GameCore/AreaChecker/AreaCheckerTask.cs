@@ -1,17 +1,20 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Arbiter.Runtime.Tasks;
 using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Arbiter.Tasks;
 using Unity.Profiling.Memory;
 
 namespace Kingmaker.QA.Arbiter.GameCore.AreaChecker;
 
-public class AreaCheckerTask : ArbiterTask
+public class AreaCheckerTask : ArbiterCheckerTask
 {
 	private readonly ArbiterStartupParameters m_Arguments;
 
 	private readonly AreaCheckerComponent m_AreaCheckerComponent;
+
+	public override string CheckerType => "AreaTest";
 
 	public AreaCheckerTask(AreaCheckerComponent areaCheckerComponent, ArbiterStartupParameters arguments)
 	{
@@ -20,7 +23,7 @@ public class AreaCheckerTask : ArbiterTask
 		base.Status = "Loading " + areaCheckerComponent.OwnerBlueprint.name;
 	}
 
-	protected override IEnumerator<ArbiterTask> Routine()
+	protected override IEnumerable<ArbiterTask> CheckerRoutine(GeneralProbeData probeData)
 	{
 		ArbiterService.Instance.MeasureProvider.StartProfilerRecorders();
 		yield return new SetScreenResolutionTask(m_Arguments, this);
@@ -33,7 +36,6 @@ public class AreaCheckerTask : ArbiterTask
 		yield return new LoadPresetTask(this, m_AreaCheckerComponent.Preset);
 		Dictionary<string, string> afterLoadPreset = GetMemoryMeasurementSnapshot().ToDictionary((KeyValuePair<string, string> kvp) => kvp.Key.Replace("Memory.", "Memory.AfterLoadPreset."), (KeyValuePair<string, string> kvp) => kvp.Value);
 		yield return new SetTimeOfDayTask(this, m_AreaCheckerComponent);
-		GeneralProbeData probeData = ArbiterService.Instance.CreateGeneralProbeData("AreaTest");
 		yield return new AreaPartHopperTask(this, m_AreaCheckerComponent, probeData);
 		yield return new AreaMeasurementsTask(this, m_AreaCheckerComponent, probeData);
 		yield return new ResetToMainMenuTask(this);
@@ -50,7 +52,6 @@ public class AreaCheckerTask : ArbiterTask
 			obj.AddCustomMeasurements(afterLoadPreset);
 			obj.AddCustomMeasurements(measurements);
 		}
-		ArbiterService.Instance.SendToServer(probeData);
 	}
 
 	private Dictionary<string, string> GetMemoryMeasurementSnapshot()

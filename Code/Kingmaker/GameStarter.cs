@@ -28,8 +28,6 @@ using Kingmaker.Localization;
 using Kingmaker.Networking;
 using Kingmaker.Pathfinding;
 using Kingmaker.QA.Analytics;
-using Kingmaker.QA.Arbiter.GameCore;
-using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Clockwork;
 using Kingmaker.Settings;
 using Kingmaker.Sound;
@@ -369,12 +367,6 @@ public class GameStarter : MonoBehaviour
 		}
 		Game.Instance.Keyboard.RegisterBuiltinBindings();
 		m_MainMenuLoadingScreen.EndLoading(UnloadStarterScene);
-		if (IsArbiterMode())
-		{
-			PFLog.System.Log("Starting Arbiter");
-			ArbiterService.Initialize<GameCoreArbiterConfigurationProvider>();
-			yield break;
-		}
 		if (IsClockworkMode())
 		{
 			Clockwork.Enabled = true;
@@ -538,13 +530,6 @@ public class GameStarter : MonoBehaviour
 				s_MainPresetOverride = blueprintByName;
 			}
 		}
-	}
-
-	public static bool IsArbiterMode()
-	{
-		bool num = CommandLineArguments.Parse().Contains("-arbiter");
-		bool flag = !string.IsNullOrEmpty(PlayerPrefs.GetString("ArbiterInstruction", ""));
-		return num || flag;
 	}
 
 	public static bool IsClockworkMode()

@@ -5,27 +5,23 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.GPU;
 
 public class GPUForceVolumeSoA : GPUSoABase
 {
-	public static int _PbdForceVolumeEnumPackedValuesBuffer = Shader.PropertyToID("_PbdForceVolumeEnumPackedValuesBuffer");
+	public struct ForceVolumeInfo
+	{
+		private int enumPackedValue;
 
-	public static int _PbdForceVolumeParametersBuffer = Shader.PropertyToID("_PbdForceVolumeParametersBuffer");
+		private float4x2 parameters;
 
-	public static int _PbdForceVolumeEmissionParametersBuffer = Shader.PropertyToID("_PbdForceVolumeEmissionParametersBuffer");
+		private float4x3 emissionParameters;
+	}
 
-	public ComputeBufferWrapper<int> EnumPackedValuesBuffer;
+	public static int _PbdForceVolumeInfoBuffer = Shader.PropertyToID("_PbdForceVolumeInfoBuffer");
 
-	public ComputeBufferWrapper<float4x2> VolumeParametersBuffer;
-
-	public ComputeBufferWrapper<float4x3> EmissionParametersBuffer;
+	public ComputeBufferWrapper<ForceVolumeInfo> InfoBuffer;
 
 	public override string Name => "GPUForceVolumeSoA";
 
 	protected override ComputeBufferWrapper[] InitBuffers(int size)
 	{
-		return new ComputeBufferWrapper[3]
-		{
-			EnumPackedValuesBuffer = new ComputeBufferWrapper<int>("_PbdForceVolumeEnumPackedValuesBuffer", size),
-			VolumeParametersBuffer = new ComputeBufferWrapper<float4x2>("_PbdForceVolumeParametersBuffer", size),
-			EmissionParametersBuffer = new ComputeBufferWrapper<float4x3>("_PbdForceVolumeEmissionParametersBuffer", size)
-		};
+		return new ComputeBufferWrapper[1] { InfoBuffer = new ComputeBufferWrapper<ForceVolumeInfo>("_PbdForceVolumeInfoBuffer", size) };
 	}
 }

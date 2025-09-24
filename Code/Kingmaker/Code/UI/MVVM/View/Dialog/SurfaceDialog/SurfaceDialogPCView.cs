@@ -43,4 +43,16 @@ public class SurfaceDialogPCView : SurfaceDialogBaseView<DialogAnswerPCView>
 	{
 		TooltipHelper.HideTooltip();
 	}
+
+	public void ToggleFade(bool value)
+	{
+		if (value)
+		{
+			m_FadeView.AppearAnimation();
+		}
+		else
+		{
+			m_FadeView.DisappearAnimation();
+		}
+	}
 }

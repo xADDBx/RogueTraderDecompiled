@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Kingmaker.Blueprints.Quests;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.TMPExtention.ScrambledTextMeshPro;
 using TMPro;
@@ -80,6 +81,36 @@ public class JournalQuestPCView : BaseJournalItemPCView
 		SetTextItem(m_CompletionItem, m_CompletionLabel, base.ViewModel.CompletionText);
 		m_NomosTag.SetActive(base.ViewModel.IsAffectedByNomos);
 		SetupStatuses();
+		m_NewMark.SetActive(value: false);
+		m_DLC1New.SetActive(value: false);
+		m_DLC2New.SetActive(value: false);
+		switch (base.ViewModel.Quest.Blueprint.Dlc)
+		{
+		case Dlc.None:
+			m_NewMark.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
+			break;
+		case Dlc.Dlc1:
+			m_DLC1New.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
+			break;
+		case Dlc.Dlc2:
+			m_DLC2New.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
+			break;
+		}
+		m_DefaultMark.SetActive(value: false);
+		m_DLC1Default.SetActive(value: false);
+		m_DLC2Default.SetActive(value: false);
+		switch (base.ViewModel.Quest.Blueprint.Dlc)
+		{
+		case Dlc.None:
+			m_DefaultMark.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
+			break;
+		case Dlc.Dlc1:
+			m_DLC1Default.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
+			break;
+		case Dlc.Dlc2:
+			m_DLC2Default.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
+			break;
+		}
 	}
 
 	private void PlayEagleAnimation()

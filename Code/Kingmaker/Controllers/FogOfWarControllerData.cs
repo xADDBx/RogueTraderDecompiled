@@ -20,7 +20,7 @@ public static class FogOfWarControllerData
 
 	public static FogOfWarFeature GetFogOfWarFeature()
 	{
-		WaaaghPipelineAsset waaaghPipelineAsset = GraphicsSettings.renderPipelineAsset as WaaaghPipelineAsset;
+		WaaaghPipelineAsset waaaghPipelineAsset = GraphicsSettings.defaultRenderPipeline as WaaaghPipelineAsset;
 		if (waaaghPipelineAsset != null)
 		{
 			ScriptableRendererData[] rendererDataList = waaaghPipelineAsset.RendererDataList;

@@ -77,5 +77,6 @@ public enum TooltipElement
 	ArmourDodgeChanceDescription,
 	BaseDamage,
 	Replenishing,
-	RateOfFireMelee
+	RateOfFireMelee,
+	Recovery
 }

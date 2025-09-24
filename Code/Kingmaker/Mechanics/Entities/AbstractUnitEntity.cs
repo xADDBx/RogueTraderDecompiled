@@ -427,9 +427,14 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 	public void ForceLookAt(Vector3 point)
 	{
 		SetOrientation(GetLookAtAngle(point));
-		if (View != null && (Game.Instance.IsPaused || !View.IsVisible))
+		bool isPaused = Game.Instance.IsPaused;
+		if (View != null && (isPaused || !View.IsVisible))
 		{
 			View.ViewTransform.rotation = Quaternion.Euler(0f, Orientation, 0f);
+			if (isPaused && View.IsVisible)
+			{
+				View.IkController.GrounderIk.ResetPosition();
+			}
 		}
 	}
 

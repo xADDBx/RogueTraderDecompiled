@@ -12,8 +12,8 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting;
 
@@ -77,13 +77,13 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 
 	private Material m_LocalVolumetricFogDebugMaterial;
 
-	private ComputeBuffer m_VisibleVolumeBoundsBuffer;
+	private GraphicsBuffer m_VisibleVolumeBoundsBuffer;
 
-	private ComputeBuffer m_VisibleVolumeDataBuffer;
+	private GraphicsBuffer m_VisibleVolumeDataBuffer;
 
-	private ComputeBuffer m_FogTilesBuffer;
+	private GraphicsBuffer m_FogTilesBuffer;
 
-	private ComputeBuffer m_ZBinsBuffer;
+	private GraphicsBuffer m_ZBinsBuffer;
 
 	private JobHandle m_SetupJobHandle;
 
@@ -109,23 +109,23 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 
 	public VolumetricLightingSettings Settings;
 
-	internal ComputeBufferHandle FogTilesBufferHandle;
+	internal BufferHandle FogTilesBufferHandle;
 
-	internal ComputeBufferHandle VisibleVolumesBoundsBufferHandle;
+	internal BufferHandle VisibleVolumesBoundsBufferHandle;
 
-	internal ComputeBufferHandle VisibleVolumesDataBufferHandle;
+	internal BufferHandle VisibleVolumesDataBufferHandle;
 
-	internal ComputeBufferHandle ZBinsBufferHandle;
+	internal BufferHandle ZBinsBufferHandle;
 
 	public Material ShadowmapDownsampleMaterial => m_ShadowmapDownsampleMaterial;
 
-	public ComputeBuffer VisibleVolumeBoundsBuffer => m_VisibleVolumeBoundsBuffer;
+	public GraphicsBuffer VisibleVolumeBoundsBuffer => m_VisibleVolumeBoundsBuffer;
 
-	public ComputeBuffer VisibleVolumeDataBuffer => m_VisibleVolumeDataBuffer;
+	public GraphicsBuffer VisibleVolumeDataBuffer => m_VisibleVolumeDataBuffer;
 
-	public ComputeBuffer FogTilesBuffer => m_FogTilesBuffer;
+	public GraphicsBuffer FogTilesBuffer => m_FogTilesBuffer;
 
-	public ComputeBuffer ZBinsBuffer => m_ZBinsBuffer;
+	public GraphicsBuffer ZBinsBuffer => m_ZBinsBuffer;
 
 	public NativeArray<LocalVolumetricFogBounds> VisibleVolumeBoundsList => m_VisibleVolumeBoundsList;
 
@@ -158,17 +158,17 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 		m_DebugLocalVolumetricFogPass = new DebugLocalVolumetricFogPass((RenderPassEvent)401, this, m_LocalVolumetricFogDebugMaterial);
 		if (m_VisibleVolumeBoundsBuffer == null)
 		{
-			m_VisibleVolumeBoundsBuffer = new ComputeBuffer(512, Marshal.SizeOf<LocalVolumetricFogBounds>(), ComputeBufferType.Structured);
+			m_VisibleVolumeBoundsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 512, Marshal.SizeOf<LocalVolumetricFogBounds>());
 			m_VisibleVolumeBoundsBuffer.name = "VisibleLocalVolumetricFogBoundsBuffer";
 		}
 		if (m_VisibleVolumeDataBuffer == null)
 		{
-			m_VisibleVolumeDataBuffer = new ComputeBuffer(512, Marshal.SizeOf<LocalVolumetricFogEngineData>(), ComputeBufferType.Structured);
+			m_VisibleVolumeDataBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 512, Marshal.SizeOf<LocalVolumetricFogEngineData>());
 			m_VisibleVolumeDataBuffer.name = "VisibleLocalVolumetricFogDataBuffer";
 		}
 		if (m_ZBinsBuffer == null)
 		{
-			m_ZBinsBuffer = new ComputeBuffer(1024, Marshal.SizeOf<float4>(), ComputeBufferType.Structured);
+			m_ZBinsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1024, Marshal.SizeOf<float4>());
 			m_ZBinsBuffer.name = "VisibleZBinsBuffer";
 		}
 		if (!m_VisibleVolumeBoundsList.IsCreated)
@@ -248,7 +248,7 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 	public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
 	{
 		VolumetricCameraBuffers.CleanUnused();
-		if (!renderingData.CameraData.IsLightingEnabled || !(renderer is WaaaghRenderer waaaghRenderer))
+		if (!renderingData.CameraData.IsLightingEnabled || !(renderer is WaaaghRenderer waaaghRenderer) || !VolumeManager.instance.isInitialized)
 		{
 			return;
 		}
@@ -349,7 +349,7 @@ public class VolumetricLightingFeature : ScriptableRendererFeature
 			}
 			if (num2 > 0)
 			{
-				m_FogTilesBuffer = new ComputeBuffer(num2, Marshal.SizeOf<uint>(), ComputeBufferType.Structured);
+				m_FogTilesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, num2, Marshal.SizeOf<uint>());
 				m_FogTilesBuffer.name = "_LightTilesBuffer";
 			}
 		}

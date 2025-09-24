@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using Owlcat.Runtime.Visual.Overrides;
 using Owlcat.Runtime.Visual.Waaagh.Data;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.PostProcess;
 
@@ -137,7 +137,7 @@ public class BeforeTransparentPostProcessPass : ScriptableRenderPass
 		m_MaskedColorTransform = stack.GetComponent<MaskedColorTransform>();
 		RenderGraph renderGraph = renderingData.RenderGraph;
 		ProfilingSampler sampler = ProfilingSampler.Get(WaaaghProfileId.RenderBeforeTransparentPostProcess);
-		renderGraph.BeginProfilingSampler(sampler);
+		renderGraph.BeginProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\BeforeTransparentPostProcessPass.cs", 99);
 		TextureDesc desc = RenderingUtils.CreateTextureDesc("BeforeTransparentPostProcessRT", renderingData.CameraData.CameraTargetDescriptor);
 		desc.depthBufferBits = DepthBits.None;
 		desc.filterMode = FilterMode.Bilinear;
@@ -154,7 +154,7 @@ public class BeforeTransparentPostProcessPass : ScriptableRenderPass
 			Swap();
 		}
 		PostProcessPassDataBase passData2;
-		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<PostProcessPassDataBase>("RenderBeforeTransparentPostProcess.FinalBlit", out passData2);
+		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<PostProcessPassDataBase>("RenderBeforeTransparentPostProcess.FinalBlit", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\BeforeTransparentPostProcessPass.cs", 139);
 		try
 		{
 			PostProcessPassDataBase postProcessPassDataBase = passData2;
@@ -175,7 +175,7 @@ public class BeforeTransparentPostProcessPass : ScriptableRenderPass
 		{
 			((IDisposable)renderGraphBuilder).Dispose();
 		}
-		renderGraph.EndProfilingSampler(sampler);
+		renderGraph.EndProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\BeforeTransparentPostProcessPass.cs", 156);
 		TextureHandle GetDestination()
 		{
 			if (!destination.IsValid())
@@ -197,7 +197,7 @@ public class BeforeTransparentPostProcessPass : ScriptableRenderPass
 	private void DoSSCS(ref RenderingData renderingData, TextureHandle source, TextureHandle destination)
 	{
 		SSCSPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<SSCSPassData>("RenderBeforeTransparentPostProcess.SSCS", out passData2);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<SSCSPassData>("RenderBeforeTransparentPostProcess.SSCS", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\BeforeTransparentPostProcessPass.cs", 180);
 		passData2.Source = renderGraphBuilder.ReadWriteTexture(in source);
 		passData2.Destination = renderGraphBuilder.ReadWriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -234,7 +234,7 @@ public class BeforeTransparentPostProcessPass : ScriptableRenderPass
 	private void DoMaskedColorTransform(ref RenderingData renderingData, TextureHandle source, TextureHandle destination)
 	{
 		MaskedColorTransformPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<MaskedColorTransformPassData>("RenderBeforeTransparentPostProcess.MaskedColorTrasformPass", out passData2);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<MaskedColorTransformPassData>("RenderBeforeTransparentPostProcess.MaskedColorTrasformPass", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\BeforeTransparentPostProcessPass.cs", 236);
 		passData2.CameraDepthRT = renderGraphBuilder.ReadTexture(in renderingData.CameraData.Renderer.RenderGraphResources.CameraDepthBuffer);
 		passData2.Source = renderGraphBuilder.ReadWriteTexture(in source);
 		passData2.Destination = renderGraphBuilder.ReadWriteTexture(in destination);

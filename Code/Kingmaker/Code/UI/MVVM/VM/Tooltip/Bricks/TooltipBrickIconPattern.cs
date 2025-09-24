@@ -37,7 +37,13 @@ public class TooltipBrickIconPattern : ITooltipBrick
 
 	private readonly TooltipBaseTemplate m_Tooltip;
 
-	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, TextFieldValues titleValues, TextFieldValues secondaryValues = null, TextFieldValues tertiaryValues = null, TooltipBaseTemplate tooltip = null, IconPatternMode iconMode = IconPatternMode.SkillMode, string acronym = null, TalentIconInfo iconsInfo = null)
+	private readonly string m_AbilityPropertyName;
+
+	private readonly string m_AbilityPropertyValue;
+
+	private readonly string m_AbilityPropertyDesc;
+
+	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, TextFieldValues titleValues, TextFieldValues secondaryValues = null, TextFieldValues tertiaryValues = null, TooltipBaseTemplate tooltip = null, IconPatternMode iconMode = IconPatternMode.SkillMode, string acronym = null, TalentIconInfo iconsInfo = null, string abilityPropertyName = null, string abilityPropertyValue = null, string abilityPropertyDesc = null)
 	{
 		m_Icon = icon;
 		m_PatternData = patternData;
@@ -48,6 +54,9 @@ public class TooltipBrickIconPattern : ITooltipBrick
 		m_IconMode = iconMode;
 		m_Acronym = acronym;
 		m_TalentIconsInfo = iconsInfo;
+		m_AbilityPropertyName = abilityPropertyName;
+		m_AbilityPropertyValue = abilityPropertyValue;
+		m_AbilityPropertyDesc = abilityPropertyDesc;
 	}
 
 	public TooltipBrickIconPattern(Sprite icon, UIUtilityItem.UIPatternData patternData, string title, string secondary = null, string tertiary = null, TooltipBaseTemplate tooltip = null, IconPatternMode iconMode = IconPatternMode.SkillMode)
@@ -66,6 +75,6 @@ public class TooltipBrickIconPattern : ITooltipBrick
 
 	public TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickIconPatternVM(m_Icon, m_PatternData, m_TitleValues, m_SecondaryValues, m_TertiaryValues, m_Tooltip, m_IconMode, m_Acronym, m_TalentIconsInfo);
+		return new TooltipBrickIconPatternVM(m_Icon, m_PatternData, m_TitleValues, m_SecondaryValues, m_TertiaryValues, m_Tooltip, m_IconMode, m_Acronym, m_TalentIconsInfo, m_AbilityPropertyName, m_AbilityPropertyValue, m_AbilityPropertyDesc);
 	}
 }

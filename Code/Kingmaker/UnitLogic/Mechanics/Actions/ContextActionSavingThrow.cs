@@ -92,6 +92,6 @@ public class ContextActionSavingThrow : ContextAction
 
 	private RulePerformSavingThrow CreateSavingThrow(MechanicEntity unit, int dc)
 	{
-		return new RulePerformSavingThrow(unit, Type, dc);
+		return new RulePerformSavingThrow(unit, Type, dc, base.Context.MaybeCaster);
 	}
 }

@@ -44,7 +44,7 @@ internal sealed class CombatHudPathProgressTracker : IDisposable
 			float3 position = float3.zero;
 			float traveledDistance = 0f;
 			float3 segmentOrigin = Segments[0].direction;
-			float x = 0f;
+			float start = 0f;
 			for (int i = 1; i < Segments.Length; i++)
 			{
 				ApproximatePathSegment segment = Segments[i];
@@ -53,10 +53,10 @@ internal sealed class CombatHudPathProgressTracker : IDisposable
 				{
 					num = distanceSqToTarget;
 					position = position2;
-					traveledDistance = math.lerp(x, segment.spatialDistanceAtEnd, dot / segment.length);
+					traveledDistance = math.lerp(start, segment.spatialDistanceAtEnd, dot / segment.length);
 				}
 				segmentOrigin += segment.direction * segment.length;
-				x = segment.spatialDistanceAtEnd;
+				start = segment.spatialDistanceAtEnd;
 			}
 			OutResult.Value = new Result
 			{

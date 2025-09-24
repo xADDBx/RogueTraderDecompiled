@@ -8,6 +8,8 @@ public class WeaponSetVM : SelectionGroupEntityVM
 {
 	public readonly ReactiveProperty<bool> IsEnabled = new ReactiveProperty<bool>(initialValue: true);
 
+	public readonly ReactiveProperty<bool> HasMainHand = new ReactiveProperty<bool>(initialValue: true);
+
 	public readonly Action OnSetChange;
 
 	public int Index { get; set; }
@@ -16,11 +18,12 @@ public class WeaponSetVM : SelectionGroupEntityVM
 
 	public EquipSlotVM Secondary { get; set; }
 
-	public WeaponSetVM(int index, Action onSetChange)
+	public WeaponSetVM(int index, Action onSetChange, bool hasMainHand = false)
 		: base(allowSwitchOff: false)
 	{
 		Index = index;
 		OnSetChange = onSetChange;
+		HasMainHand.Value = hasMainHand;
 	}
 
 	public WeaponSetVM(int index, EquipSlotVM primary, EquipSlotVM secondary, Action onSetChange)
@@ -45,5 +48,10 @@ public class WeaponSetVM : SelectionGroupEntityVM
 	{
 		IsEnabled.Value = enabled;
 		SetAvailableState(enabled);
+	}
+
+	public void SetMainHand(bool value)
+	{
+		HasMainHand.Value = value;
 	}
 }

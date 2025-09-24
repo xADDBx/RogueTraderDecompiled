@@ -66,6 +66,8 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 
 	public readonly ReactiveProperty<bool> PossibleTarget = new ReactiveProperty<bool>(initialValue: false);
 
+	public readonly ReactiveProperty<bool> IsFavorite = new ReactiveProperty<bool>(initialValue: false);
+
 	public readonly ReactiveProperty<List<TooltipBaseTemplate>> Tooltip = new ReactiveProperty<List<TooltipBaseTemplate>>();
 
 	public readonly ReactiveProperty<List<ContextMenuCollectionEntity>> ContextMenu = new ReactiveProperty<List<ContextMenuCollectionEntity>>();
@@ -73,6 +75,8 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 	public readonly ReactiveCommand ToCargoAutomaticallyChange = new ReactiveCommand();
 
 	public readonly ReactiveCommand<ItemEntity> ItemChanged = new ReactiveCommand<ItemEntity>();
+
+	public readonly ReactiveCommand<string> SetHintTextCommand = new ReactiveCommand<string>();
 
 	private IDisposable m_UpdateDispatcher;
 
@@ -530,10 +534,6 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 
 	void ISplitItemHandler.HandleBeforeSplitItem(ItemEntity item, ItemsCollection from, ItemsCollection to)
 	{
-		if (ItemEntity == item && from == to && Group != null)
-		{
-			Group.SorterType.Value = ItemsSorterType.NotSorted;
-		}
 	}
 
 	void ISplitItemHandler.HandleAfterSplitItem(ItemEntity item)
@@ -629,5 +629,13 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 			return true;
 		}
 		return blueprintStarshipWeapon?.AllowedSlots.Contains(weaponSlotType) ?? false;
+	}
+
+	public void SetHintText(string value)
+	{
+		if (!string.IsNullOrEmpty(value))
+		{
+			SetHintTextCommand.Execute(value);
+		}
 	}
 }

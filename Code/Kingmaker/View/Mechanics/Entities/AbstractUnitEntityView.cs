@@ -467,7 +467,32 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 		}
 		IkController = GetComponentInChildren<IKController>();
 		GetComponentInChildren<HumanoidRagdollManager>()?.InitHumanoidRagdoll();
-		GetComponentInChildren<RigidbodyCreatureController>()?.InitRigidbodyCreatureController();
+		RigidbodyCreatureController componentInChildren2 = GetComponentInChildren<RigidbodyCreatureController>();
+		if (componentInChildren2 != null)
+		{
+			componentInChildren2.InitRigidbodyCreatureController();
+		}
+		else
+		{
+			Rigidbody[] componentsInChildren = GetComponentsInChildren<Rigidbody>();
+			if (componentsInChildren.Length != 0)
+			{
+				PFLog.Default.Error("No RigidbodyCreatureController, but active RigidBodies on " + base.name + ", manual setup");
+			}
+			Rigidbody[] array = componentsInChildren;
+			foreach (Rigidbody obj in array)
+			{
+				_ = obj.isKinematic;
+				obj.isKinematic = true;
+				obj.detectCollisions = false;
+				obj.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+			}
+			SnapMapBase component3 = GetComponent<SnapMapBase>();
+			if (component3 != null)
+			{
+				component3.Init();
+			}
+		}
 		if (EntityData.LifeState.IsConscious)
 		{
 			return;

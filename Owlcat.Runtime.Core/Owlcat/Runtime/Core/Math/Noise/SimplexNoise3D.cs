@@ -43,18 +43,18 @@ public static class SimplexNoise3D
 		float4 float14 = math.floor(float12 - 7f * float13);
 		float4 x = (float13 * 2f + 0.5f) / 7f - 1f;
 		float4 x2 = (float14 * 2f + 0.5f) / 7f - 1f;
-		float4 y = 1f - math.abs(x) - math.abs(x2);
+		float4 threshold = 1f - math.abs(x) - math.abs(x2);
 		float4 x3 = new float4(x.xy, x2.xy);
 		float4 x4 = new float4(x.zw, x2.zw);
 		float4 float15 = math.floor(x3) * 2f + 1f;
 		float4 float16 = math.floor(x4) * 2f + 1f;
-		float4 float17 = -math.step(y, 0f);
+		float4 float17 = -math.step(threshold, 0f);
 		float4 float18 = x3.xzyw + float15.xzyw * float17.xxyy;
 		float4 float19 = x4.xzyw + float16.xzyw * float17.zzww;
-		float3 float20 = new float3(float18.xy, y.x);
-		float3 float21 = new float3(float18.zw, y.y);
-		float3 float22 = new float3(float19.xy, y.z);
-		float3 float23 = new float3(float19.zw, y.w);
+		float3 float20 = new float3(float18.xy, threshold.x);
+		float3 float21 = new float3(float18.zw, threshold.y);
+		float3 float22 = new float3(float19.xy, threshold.z);
+		float3 float23 = new float3(float19.zw, threshold.w);
 		float4 float24 = taylorInvSqrt(new float4(math.dot(float20, float20), math.dot(float21, float21), math.dot(float22, float22), math.dot(float23, float23)));
 		float20 *= float24.x;
 		float21 *= float24.y;
@@ -63,8 +63,8 @@ public static class SimplexNoise3D
 		float4 float25 = math.max(0.6f - new float4(math.dot(float3, float3), math.dot(float8, float8), math.dot(float9, float9), math.dot(float10, float10)), 0f);
 		float25 *= float25;
 		float25 *= float25;
-		float4 y2 = new float4(math.dot(float3, float20), math.dot(float8, float21), math.dot(float9, float22), math.dot(float10, float23));
-		return 42f * math.dot(float25, y2);
+		float4 y = new float4(math.dot(float3, float20), math.dot(float8, float21), math.dot(float9, float22), math.dot(float10, float23));
+		return 42f * math.dot(float25, y);
 	}
 
 	public static float4 snoise_grad(float3 v)
@@ -86,18 +86,18 @@ public static class SimplexNoise3D
 		float4 float14 = math.floor(float12 - 7f * float13);
 		float4 x = (float13 * 2f + 0.5f) / 7f - 1f;
 		float4 x2 = (float14 * 2f + 0.5f) / 7f - 1f;
-		float4 y = 1f - math.abs(x) - math.abs(x2);
+		float4 threshold = 1f - math.abs(x) - math.abs(x2);
 		float4 x3 = new float4(x.xy, x2.xy);
 		float4 x4 = new float4(x.zw, x2.zw);
 		float4 float15 = math.floor(x3) * 2f + 1f;
 		float4 float16 = math.floor(x4) * 2f + 1f;
-		float4 float17 = -math.step(y, 0f);
+		float4 float17 = -math.step(threshold, 0f);
 		float4 float18 = x3.xzyw + float15.xzyw * float17.xxyy;
 		float4 float19 = x4.xzyw + float16.xzyw * float17.zzww;
-		float3 float20 = new float3(float18.xy, y.x);
-		float3 float21 = new float3(float18.zw, y.y);
-		float3 float22 = new float3(float19.xy, y.z);
-		float3 float23 = new float3(float19.zw, y.w);
+		float3 float20 = new float3(float18.xy, threshold.x);
+		float3 float21 = new float3(float18.zw, threshold.y);
+		float3 float22 = new float3(float19.xy, threshold.z);
+		float3 float23 = new float3(float19.zw, threshold.w);
 		float4 float24 = taylorInvSqrt(new float4(math.dot(float20, float20), math.dot(float21, float21), math.dot(float22, float22), math.dot(float23, float23)));
 		float20 *= float24.x;
 		float21 *= float24.y;

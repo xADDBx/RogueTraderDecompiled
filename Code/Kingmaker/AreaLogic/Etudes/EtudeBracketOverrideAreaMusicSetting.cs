@@ -27,6 +27,14 @@ public class EtudeBracketOverrideAreaMusicSetting : EtudeBracketTrigger, IHashab
 		}
 	}
 
+	protected override void OnDispose()
+	{
+		if (!EtudeBracketTrigger.Etude.IsCompleted && !EtudeBracketTrigger.Etude.CompletionInProgress)
+		{
+			OnExit();
+		}
+	}
+
 	protected override void OnResume()
 	{
 		OnEnter();

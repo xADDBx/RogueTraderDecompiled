@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
+using Owlcat.Runtime.Visual.Waaagh.Data;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh;
 
+[SupportedOnRenderPipeline(typeof(WaaaghPipelineAsset))]
 public class WaaaghPipelineGlobalSettings : RenderPipelineGlobalSettings
 {
 	[SerializeField]
@@ -13,6 +16,9 @@ public class WaaaghPipelineGlobalSettings : RenderPipelineGlobalSettings
 	private int k_AssetPreviousVersion = 1;
 
 	private static WaaaghPipelineGlobalSettings s_CachedInstance = null;
+
+	[SerializeReference]
+	private List<IRenderPipelineGraphicsSettings> m_Settings = new List<IRenderPipelineGraphicsSettings>();
 
 	public static readonly string DefaultAssetName = "WaaaghPipelineGlobalSettings";
 
@@ -59,6 +65,8 @@ public class WaaaghPipelineGlobalSettings : RenderPipelineGlobalSettings
 			return s_CachedInstance;
 		}
 	}
+
+	protected override List<IRenderPipelineGraphicsSettings> settingsList => m_Settings;
 
 	private string[] renderingLayerNames
 	{
@@ -120,24 +128,13 @@ public class WaaaghPipelineGlobalSettings : RenderPipelineGlobalSettings
 		}
 	}
 
-	public void OnAfterDeserialize()
+	public new void OnAfterDeserialize()
 	{
 	}
 
-	internal static void UpdateGraphicsSettings(WaaaghPipelineGlobalSettings newSettings)
+	public void GetAllSettings(List<IRenderPipelineGraphicsSettings> settings)
 	{
-		if (!(newSettings == s_CachedInstance))
-		{
-			if (newSettings != null)
-			{
-				GraphicsSettings.RegisterRenderPipelineSettings<WaaaghPipeline>(newSettings);
-			}
-			else
-			{
-				GraphicsSettings.UnregisterRenderPipelineSettings<WaaaghPipeline>();
-			}
-			s_CachedInstance = newSettings;
-		}
+		settings.AddRange(settingsList);
 	}
 
 	private void Reset()

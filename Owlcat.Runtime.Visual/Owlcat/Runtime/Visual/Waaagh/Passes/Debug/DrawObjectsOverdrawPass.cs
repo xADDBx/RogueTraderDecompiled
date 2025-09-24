@@ -1,9 +1,9 @@
 using Owlcat.Runtime.Visual.IndirectRendering;
 using Owlcat.ShaderLibrary.Visual.Debug;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RendererUtils;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Debug;
 
@@ -46,7 +46,7 @@ public class DrawObjectsOverdrawPass : DrawRendererListPass<DrawObjectsOverdrawP
 	{
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
 		RendererListDesc desc = RenderingUtils.CreateRendererListDesc(renderingData.CullingResults, renderingData.CameraData.Camera, m_OverdrawShaderTags, -1, renderingData.PerObjectData, WaaaghRenderQueue.Transparent, SortingCriteria.CommonTransparent);
 		switch (m_OverdrawMode)
@@ -81,7 +81,7 @@ public class DrawObjectsOverdrawPass : DrawRendererListPass<DrawObjectsOverdrawP
 			stencilState = new StencilState(enabled: false),
 			mask = (RenderStateMask.Blend | RenderStateMask.Depth | RenderStateMask.Stencil)
 		};
-		rendererList = renderingData.RenderGraph.CreateRendererList(in desc);
+		rendererList = renderingData.Context.CreateRendererList(desc);
 		m_RenderQueueRange = desc.renderQueueRange;
 	}
 

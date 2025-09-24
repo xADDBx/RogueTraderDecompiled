@@ -27,11 +27,11 @@ public class BaseJournalItemConsoleView : BaseJournalItemBaseView
 
 	[SerializeField]
 	[UsedImplicitly]
-	private GameObject m_NewMark;
+	protected GameObject m_NewMark;
 
 	[SerializeField]
 	[UsedImplicitly]
-	private GameObject m_DefaultMark;
+	protected GameObject m_DefaultMark;
 
 	[SerializeField]
 	[UsedImplicitly]
@@ -52,6 +52,22 @@ public class BaseJournalItemConsoleView : BaseJournalItemBaseView
 	[SerializeField]
 	[UsedImplicitly]
 	private GameObject m_PostponedMark;
+
+	[SerializeField]
+	[UsedImplicitly]
+	protected GameObject m_DLC1New;
+
+	[SerializeField]
+	[UsedImplicitly]
+	protected GameObject m_DLC2New;
+
+	[SerializeField]
+	[UsedImplicitly]
+	protected GameObject m_DLC1Default;
+
+	[SerializeField]
+	[UsedImplicitly]
+	protected GameObject m_DLC2Default;
 
 	[SerializeField]
 	private Color m_NewColor;

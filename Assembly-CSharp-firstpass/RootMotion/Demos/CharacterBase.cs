@@ -29,9 +29,9 @@ public abstract class CharacterBase : MonoBehaviour
 	[SerializeField]
 	private LayerMask groundLayers;
 
-	private PhysicMaterial zeroFrictionMaterial;
+	private PhysicsMaterial zeroFrictionMaterial;
 
-	private PhysicMaterial highFrictionMaterial;
+	private PhysicsMaterial highFrictionMaterial;
 
 	protected Rigidbody r;
 
@@ -60,13 +60,13 @@ public abstract class CharacterBase : MonoBehaviour
 		r = GetComponent<Rigidbody>();
 		originalHeight = capsule.height;
 		originalCenter = capsule.center;
-		zeroFrictionMaterial = new PhysicMaterial();
+		zeroFrictionMaterial = new PhysicsMaterial();
 		zeroFrictionMaterial.dynamicFriction = 0f;
 		zeroFrictionMaterial.staticFriction = 0f;
-		zeroFrictionMaterial.frictionCombine = PhysicMaterialCombine.Minimum;
+		zeroFrictionMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
 		zeroFrictionMaterial.bounciness = 0f;
-		zeroFrictionMaterial.bounceCombine = PhysicMaterialCombine.Minimum;
-		highFrictionMaterial = new PhysicMaterial();
+		zeroFrictionMaterial.bounceCombine = PhysicsMaterialCombine.Minimum;
+		highFrictionMaterial = new PhysicsMaterial();
 		r.constraints = RigidbodyConstraints.FreezeRotation;
 	}
 

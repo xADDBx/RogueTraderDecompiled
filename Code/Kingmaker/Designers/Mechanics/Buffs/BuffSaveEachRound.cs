@@ -16,7 +16,7 @@ public class BuffSaveEachRound : UnitBuffComponentDelegate, ITickEachRound, IHas
 
 	public void OnNewRound()
 	{
-		RulePerformSavingThrow obj = new RulePerformSavingThrow(base.Owner, SaveType, 0)
+		RulePerformSavingThrow obj = new RulePerformSavingThrow(base.Owner, SaveType, 0, base.Buff.Context.MaybeCaster)
 		{
 			Reason = base.Fact
 		};

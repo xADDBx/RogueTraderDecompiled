@@ -27,10 +27,9 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public readonly int DistanceToTarget;
 
-	[CanBeNull]
-	private DamageData m_CalculatedOverpenetrationDamageData;
-
 	private bool m_CalculatedOverpenetration;
+
+	private OverpenetrationData? m_OverpenetrationData;
 
 	private bool m_DoNotUseCrModifier;
 
@@ -71,15 +70,15 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public DamageType DamageType => InitiatorWeaponStatsRule.BaseDamage.Type;
 
-	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
+	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] OverpenetrationData? overpenetrationData = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
 		: base(initiator, target)
 	{
 		InitiatorWeaponStatsRule = ((baseDamageOverride == null && !basePenetrationOverride.HasValue) ? WeaponStatsHelper.GetWeaponStats(ability, ability?.Weapon, (MechanicEntity)base.Initiator, MaybeTarget) : new RuleCalculateStatsWeapon(initiator, target, ability, baseDamageOverride, basePenetrationOverride));
 		TargetArmorStatsRule = ((MaybeTarget != null) ? new RuleCalculateStatsArmor(MaybeTarget) : null);
 		RollPerformAttackRule = performAttackRoll;
 		m_ForceCrit = forceCrit;
-		m_CalculatedOverpenetrationDamageData = (calculatedOverpenetration ? baseDamageOverride : null);
 		m_CalculatedOverpenetration = calculatedOverpenetration;
+		m_OverpenetrationData = overpenetrationData;
 		m_DoNotUseCrModifier = doNotUseCrModifier;
 		m_DamageModifiersHolder = new DamageData(DamageType.Direct, 0);
 		DistanceToTarget = distance.GetValueOrDefault();
@@ -88,7 +87,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 	}
 
 	private RuleCalculateDamage(CalculateDamageParams @params)
-		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier, @params.Unmodifiable)
+		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.OverpenetrationData, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier, @params.Unmodifiable)
 	{
 		base.FakeRule = @params.FakeRule;
 		base.HasNoTarget = @params.HasNoTarget;
@@ -102,11 +101,19 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		{
 			Rulebook.Trigger(TargetArmorStatsRule);
 		}
-		DamageData damageData = ((m_CalculatedOverpenetration && m_CalculatedOverpenetrationDamageData != null) ? m_CalculatedOverpenetrationDamageData : InitiatorWeaponStatsRule.ResultDamage.Copy());
+		DamageData damageData = InitiatorWeaponStatsRule.ResultDamage.Copy();
 		damageData.CopyModifiersFrom(m_DamageModifiersHolder);
 		if (OverrideDamageType.HasValue && (!CheckDamageType.HasValue || CheckDamageType.Value == damageData.Type))
 		{
 			damageData = damageData.Copy(OverrideDamageType.Value);
+		}
+		if (m_CalculatedOverpenetration && m_OverpenetrationData.HasValue)
+		{
+			damageData.Roll = m_OverpenetrationData.Value.DamageRoll;
+			damageData.MinValueBase = m_OverpenetrationData.Value.MinBaseValue;
+			damageData.MaxValueBase = m_OverpenetrationData.Value.MaxBaseValue;
+			damageData.OverpenetrationFactorPercents = m_OverpenetrationData.Value.OverpenetrationPercent;
+			damageData.Overpenetrating = true;
 		}
 		MechanicEntity maybeTarget = MaybeTarget;
 		if (maybeTarget != null && maybeTarget.IsInPlayerParty && !m_DoNotUseCrModifier)

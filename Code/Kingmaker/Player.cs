@@ -1058,9 +1058,21 @@ public sealed class Player : Entity, IDisposable, IHashable
 			PFLog.LevelUp.ErrorWithReport($"Party received invalid amount of experience: {gained}");
 			return;
 		}
-		foreach (BaseUnitEntity item in (Game.Instance.CurrentMode != GameModeType.SpaceCombat) ? AllCharacters.Where((BaseUnitEntity u) => u.Master == null).Distinct() : AllStarships.Distinct())
+		if (Game.Instance.CurrentMode != GameModeType.SpaceCombat)
 		{
-			item.Progression.GainExperience(gained, log: false);
+			foreach (BaseUnitEntity item in from character in AllCharacters.Where((BaseUnitEntity u) => u.Master == null).Distinct()
+				where character.Progression.Experience <= MainCharacterEntity.Progression.Experience
+				select character)
+			{
+				item.Progression.GainExperience(gained, log: false);
+			}
+		}
+		else
+		{
+			foreach (BaseUnitEntity item2 in AllStarships.Distinct())
+			{
+				item2.Progression.GainExperience(gained, log: false);
+			}
 		}
 		EventBus.RaiseEvent(delegate(IPartyGainExperienceHandler h)
 		{

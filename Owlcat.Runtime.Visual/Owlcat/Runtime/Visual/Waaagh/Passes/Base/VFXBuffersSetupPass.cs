@@ -1,5 +1,5 @@
 using Unity.Mathematics;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.VFX;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes.Base;

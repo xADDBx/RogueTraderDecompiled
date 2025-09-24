@@ -9,6 +9,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
 using Kingmaker.Localization;
@@ -312,17 +313,15 @@ public class BaseItemPart : TooltipBaseTemplate
 				}
 				textFieldValues.TextParams.FontColor = UIConfig.Instance.TooltipColors.TooltipValue;
 			}
-			bricks.Add(new TooltipBrickIconPattern(ability.Icon, ability.PatternData, titleValues, textFieldValues, null, tooltip));
-			if (!ability.UIProperties.Any())
+			if (!ability.UIProperties.Any((UIProperty d) => d.Main))
 			{
+				bricks.Add(new TooltipBrickIconPattern(ability.Icon, ability.PatternData, titleValues, textFieldValues, null, tooltip));
 				continue;
 			}
-			bricks.Add(new TooltipBricksGroupStart());
-			foreach (UIProperty uIProperty in ability.UIProperties)
-			{
-				bricks.Add(new TooltipBrickIconStatValue(uIProperty.Name, uIProperty.PropertyValue?.ToString() ?? string.Empty, uIProperty.Description));
-			}
-			bricks.Add(new TooltipBricksGroupEnd());
+			UIProperty uIProperty = ability.UIProperties.FirstOrDefault((UIProperty d) => d.Main);
+			string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+			string abilityPropertyValue = "<b><color=" + glossaryMechanicsHTML + ">" + uIProperty.PropertyValue + "</color></b>";
+			bricks.Add(new TooltipBrickIconPattern(ability.Icon, ability.PatternData, titleValues, textFieldValues, null, tooltip, IconPatternMode.SkillMode, null, null, uIProperty.Name, abilityPropertyValue, uIProperty.Description));
 		}
 	}
 
@@ -361,6 +360,7 @@ public class BaseItemPart : TooltipBaseTemplate
 
 	protected void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)
 	{
+		BaseUnitEntity currentSelectedUnit = UIUtility.GetCurrentSelectedUnit();
 		string text = ItemTooltipData.GetText(TooltipElement.ShortDescription);
 		string text2 = ItemTooltipData.GetText(TooltipElement.ArtisticDescription);
 		string text3 = ItemTooltipData.GetText(TooltipElement.Description) + ItemTooltipData.GetText(TooltipElement.LongDescription);
@@ -370,21 +370,22 @@ public class BaseItemPart : TooltipBaseTemplate
 		{
 		case TooltipTemplateType.Tooltip:
 		{
-			string text6 = text;
-			if (string.IsNullOrEmpty(text6))
+			string text5 = text;
+			if (string.IsNullOrEmpty(text5))
 			{
-				text6 = text3;
-				if (string.IsNullOrEmpty(text6))
+				text5 = text3;
+				if (string.IsNullOrEmpty(text5))
 				{
-					text6 = text2;
-					if (string.IsNullOrEmpty(text6) && additionalDescription.Count == 0)
+					text5 = text2;
+					if (string.IsNullOrEmpty(text5) && additionalDescription.Count == 0)
 					{
 						return;
 					}
 				}
 			}
-			text6 = TooltipTemplateUtils.AggregateDescription(text6, additionalDescription);
-			bricks.Add(new TooltipBrickText(text6, TooltipTextType.Paragraph));
+			text5 = TooltipTemplateUtils.AggregateDescription(text5, additionalDescription);
+			text5 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text5, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+			bricks.Add(new TooltipBrickText(text5, TooltipTextType.Paragraph));
 			break;
 		}
 		case TooltipTemplateType.Info:
@@ -395,17 +396,20 @@ public class BaseItemPart : TooltipBaseTemplate
 			if (!string.IsNullOrEmpty(text3))
 			{
 				text3 = TooltipTemplateUtils.AggregateDescription(text3, additionalDescription);
+				text3 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text3, currentSelectedUnit, selectedUnitCalculateInInventory: true);
 				bricks.Add(new TooltipBrickText(text3, TooltipTextType.Paragraph));
 			}
 			else if (!string.IsNullOrEmpty(text))
 			{
 				text = TooltipTemplateUtils.AggregateDescription(text, additionalDescription);
+				text = UIUtilityTexts.UpdateDescriptionWithUIProperties(text, currentSelectedUnit, selectedUnitCalculateInInventory: true);
 				bricks.Add(new TooltipBrickText(text, TooltipTextType.Paragraph));
 			}
 			else if (additionalDescription.Count > 0)
 			{
-				string text5 = TooltipTemplateUtils.AggregateDescription("", additionalDescription);
-				bricks.Add(new TooltipBrickText(text5, TooltipTextType.Paragraph));
+				string description = TooltipTemplateUtils.AggregateDescription("", additionalDescription);
+				description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+				bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
 			}
 			if (!string.IsNullOrEmpty(text4))
 			{

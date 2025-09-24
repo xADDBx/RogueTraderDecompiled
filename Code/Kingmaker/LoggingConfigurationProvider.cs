@@ -14,6 +14,8 @@ public static class LoggingConfigurationProvider
 			return new ConsoleLoggingConfiguration(enableLogsForwardingToUnity: false);
 		case RuntimePlatform.GameCoreXboxSeries:
 			return new ConsoleLoggingConfiguration(enableLogsForwardingToUnity: true);
+		case RuntimePlatform.Switch2:
+			return new Switch2LoggingConfiguration();
 		default:
 			if (Application.isEditor)
 			{

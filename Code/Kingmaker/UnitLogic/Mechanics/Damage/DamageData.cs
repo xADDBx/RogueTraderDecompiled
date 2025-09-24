@@ -26,9 +26,9 @@ public class DamageData
 
 	public readonly CompositeModifiersManager Penetration = new CompositeModifiersManager(0);
 
-	private int? m_InitialRolledValue;
-
 	public DamageType Type { get; }
+
+	public float? PredefinedRoll { get; set; }
 
 	public int MinValueBase { get; set; }
 
@@ -48,7 +48,7 @@ public class DamageData
 
 	public bool IsCritical { get; set; }
 
-	private float? Roll { get; set; }
+	public float? Roll { get; set; }
 
 	public int BaseRolledValue
 	{
@@ -211,6 +211,7 @@ public class DamageData
 	{
 		DamageData damageData = new DamageData(overrideDamageType ?? Type, MinValueBase, MaxValueBase)
 		{
+			Roll = Roll,
 			CalculatedValue = CalculatedValue,
 			CausedByCheckFail = CausedByCheckFail,
 			Overpenetrating = Overpenetrating,

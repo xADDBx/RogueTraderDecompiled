@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -18,6 +19,9 @@ namespace Kingmaker.UnitLogic.FactLogic;
 [TypeId("960638d10abe4b71a23cad4873b9a5d5")]
 public class ReplaceBonusDamageStat : UnitFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateStatsWeapon>, IRulebookHandler<RuleCalculateStatsWeapon>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
+	[SerializeField]
+	private RestrictionCalculator m_RestrictionCalculator;
+
 	public StatType NewStat;
 
 	public bool ReplaceStrengthForMeleeDamage;
@@ -26,13 +30,17 @@ public class ReplaceBonusDamageStat : UnitFactComponentDelegate, IInitiatorRuleb
 
 	public void OnEventAboutToTrigger(RuleCalculateStatsWeapon evt)
 	{
-		if (ReplaceStrengthForMeleeDamage)
+		RestrictionCalculator restrictionCalculator = m_RestrictionCalculator;
+		if (restrictionCalculator == null || restrictionCalculator.IsPassed(base.Fact, base.Context, evt))
 		{
-			evt.MeleeDamageStats.Add(NewStat);
-		}
-		if (ReplaceIntelligenceForRangedAreaDamage)
-		{
-			evt.RangedAreaDamageStats.Add(NewStat);
+			if (ReplaceStrengthForMeleeDamage)
+			{
+				evt.MeleeDamageStats.Add(NewStat);
+			}
+			if (ReplaceIntelligenceForRangedAreaDamage)
+			{
+				evt.RangedAreaDamageStats.Add(NewStat);
+			}
 		}
 	}
 

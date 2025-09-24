@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.Blueprints;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Enums;
@@ -110,32 +109,34 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 
 	public bool CanBuildPathThroughLink(ILinkTraversalProvider traverser)
 	{
+		AbstractUnitEntity abstractUnitEntity = (AbstractUnitEntity)traverser.Traverser;
 		if (!IsCorrectSize(traverser))
 		{
 			return false;
 		}
-		AbstractUnitEntity abstractUnitEntity = (AbstractUnitEntity)traverser.Traverser;
 		if (!m_CustomConditionForEntity.Empty)
 		{
 			return m_CustomConditionForEntity.GetBoolValue(new PropertyContext(abstractUnitEntity, null));
 		}
-		BlueprintArmyDescription army = abstractUnitEntity.Blueprint.Army;
-		if (army == null || !army.IsHumanoid)
-		{
-			return abstractUnitEntity.IsPlayerFaction;
-		}
-		return true;
+		bool num = abstractUnitEntity.Blueprint.Army?.IsHumanoid ?? false;
+		bool isPlayerFaction = abstractUnitEntity.IsPlayerFaction;
+		return num || isPlayerFaction;
 	}
 
 	public bool CanStartTraverse(ILinkTraversalProvider traverser)
 	{
+		_ = (AbstractUnitEntity)traverser.Traverser;
 		if (traverser.SizeRect.Width == 1)
 		{
 			return CanUseTraverserLink;
 		}
-		if (!CanUseTraverserLink || m_ConnectedNode == null)
+		if (!CanUseTraverserLink)
 		{
 			return false;
+		}
+		if (m_ConnectedNode == null)
+		{
+			return true;
 		}
 		return m_ConnectedNode.CanUseTraverserLink;
 	}
@@ -153,7 +154,7 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	public void StartTransition(ILinkTraversalProvider traverser)
 	{
 		m_CurrentTraverserList.Add(traverser);
-		if (traverser.SizeRect.Width != 1)
+		if (traverser.SizeRect.Width != 1 && m_ConnectedNode != null)
 		{
 			m_ConnectedNode.m_CurrentTraverserList.Add(traverser);
 		}
@@ -182,7 +183,7 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 		if (m_CurrentTraverserList.Contains(traverser))
 		{
 			m_CurrentTraverserList.Remove(traverser);
-			if (traverser.SizeRect.Width != 1)
+			if (traverser.SizeRect.Width != 1 && m_ConnectedNode != null)
 			{
 				m_ConnectedNode.m_CurrentTraverserList.Remove(traverser);
 			}

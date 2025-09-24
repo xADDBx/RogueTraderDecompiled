@@ -24,8 +24,6 @@ public class TextureSelectorPagedGroupView : TextureSelectorGroupView
 	[SerializeField]
 	private float m_RowHeight = 43f;
 
-	private bool m_IsCooldownActive;
-
 	protected override void BindViewImplementation()
 	{
 		m_Paginator.Initialize();

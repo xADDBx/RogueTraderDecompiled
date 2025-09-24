@@ -2,10 +2,14 @@ using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement.Components;
+using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.VirtualListSystem;
 using Owlcat.Runtime.UniRx;
@@ -63,6 +67,9 @@ public class InventoryCargoView : ViewBase<InventoryCargoVM>
 
 	[SerializeField]
 	protected TextMeshProUGUI LockedCargoText;
+
+	[SerializeField]
+	private OwlcatMultiButton m_SortButton;
 
 	public readonly ReactiveCommand OnCargoViewChange = new ReactiveCommand();
 
@@ -135,6 +142,13 @@ public class InventoryCargoView : ViewBase<InventoryCargoVM>
 		}
 		AddDisposable(base.ViewModel.HasVisibleCargo.Subscribe(SetEmptyCargoText));
 		AddDisposable(base.ViewModel.SlotToScroll.Subscribe(ScrollToCargoItemDelayed));
+		AddDisposable(UniRxExtensionMethods.Subscribe(m_SortButton.OnLeftClickAsObservable(), delegate
+		{
+			EventBus.RaiseEvent(delegate(IForceSortHandler h)
+			{
+				h.HandleForceSort();
+			});
+		}));
 	}
 
 	public void OnSorterDropdownValueChanged()

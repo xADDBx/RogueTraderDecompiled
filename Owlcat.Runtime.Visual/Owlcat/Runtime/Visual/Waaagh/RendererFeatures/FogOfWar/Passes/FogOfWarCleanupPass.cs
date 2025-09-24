@@ -1,5 +1,5 @@
 using Owlcat.Runtime.Visual.Waaagh.Passes;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.FogOfWar.Passes;
 

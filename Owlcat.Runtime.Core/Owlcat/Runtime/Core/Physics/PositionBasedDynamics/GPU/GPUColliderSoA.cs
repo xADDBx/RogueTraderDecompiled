@@ -5,37 +5,27 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.GPU;
 
 public class GPUColliderSoA : GPUSoABase
 {
-	public static int _PbdCollidersParameters0Buffer = Shader.PropertyToID("_PbdCollidersParameters0Buffer");
+	public struct ColliderInfo
+	{
+		private float4 parameters0;
 
-	public static int _PbdCollidersParameters1Buffer = Shader.PropertyToID("_PbdCollidersParameters1Buffer");
+		private float4 parameters1;
 
-	public static int _PbdCollidersParameters2Buffer = Shader.PropertyToID("_PbdCollidersParameters2Buffer");
+		private float4 parameters2;
 
-	public static int _PbdCollidersMaterialParametersBuffer = Shader.PropertyToID("_PbdCollidersMaterialParametersBuffer");
+		private float2 materialParameters;
 
-	public static int _PbdCollidersTypeBuffer = Shader.PropertyToID("_PbdCollidersTypeBuffer");
+		private int type;
+	}
 
-	public ComputeBufferWrapper<float4> Parameters0Buffer;
+	public static int _PbdCollidersDataBuffer = Shader.PropertyToID("_PbdCollidersDataBuffer");
 
-	public ComputeBufferWrapper<float4> Parameters1Buffer;
-
-	public ComputeBufferWrapper<float4> Parameters2Buffer;
-
-	public ComputeBufferWrapper<float2> MaterialParametersBuffer;
-
-	public ComputeBufferWrapper<int> TypeBuffer;
+	public ComputeBufferWrapper<ColliderInfo> InfoBuffer;
 
 	public override string Name => "GPUColliderSoA";
 
 	protected override ComputeBufferWrapper[] InitBuffers(int size)
 	{
-		return new ComputeBufferWrapper[5]
-		{
-			Parameters0Buffer = new ComputeBufferWrapper<float4>("_PbdCollidersParameters0Buffer", size),
-			Parameters1Buffer = new ComputeBufferWrapper<float4>("_PbdCollidersParameters1Buffer", size),
-			Parameters2Buffer = new ComputeBufferWrapper<float4>("_PbdCollidersParameters2Buffer", size),
-			MaterialParametersBuffer = new ComputeBufferWrapper<float2>("_PbdCollidersMaterialParametersBuffer", size),
-			TypeBuffer = new ComputeBufferWrapper<int>("_PbdCollidersTypeBuffer", size)
-		};
+		return new ComputeBufferWrapper[1] { InfoBuffer = new ComputeBufferWrapper<ColliderInfo>("_PbdCollidersDataBuffer", size) };
 	}
 }

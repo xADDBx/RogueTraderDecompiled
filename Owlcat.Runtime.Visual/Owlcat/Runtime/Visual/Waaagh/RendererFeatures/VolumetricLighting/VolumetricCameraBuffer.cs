@@ -50,7 +50,7 @@ public class VolumetricCameraBuffer
 
 	private RTHandle AllocVolumetricHistoryBuffer(RTHandleSystem rts, int frameIndex)
 	{
-		return rts.Alloc(m_RtSize.x, m_RtSize.y, m_RtSize.z, DepthBits.None, GraphicsFormat.R16G16B16A16_SFloat, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex3D, enableRandomWrite: true, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 0, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{m_Camera.name}_VolumetricHistory{frameIndex}");
+		return rts.Alloc(m_RtSize.x, m_RtSize.y, m_RtSize.z, DepthBits.None, GraphicsFormat.R16G16B16A16_SFloat, FilterMode.Bilinear, TextureWrapMode.Clamp, TextureDimension.Tex3D, enableRandomWrite: true, useMipMap: false, autoGenerateMips: false, isShadowMap: false, 0, 0f, MSAASamples.None, bindTextureMS: false, useDynamicScale: false, useDynamicScaleExplicit: false, RenderTextureMemoryless.None, VRTextureUsage.None, $"{m_Camera.name}_VolumetricHistory{frameIndex}");
 	}
 
 	public RTHandle GetCurrentFrameRT()

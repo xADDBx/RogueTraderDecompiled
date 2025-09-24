@@ -56,6 +56,15 @@ public class AddAbilitiesToCurrentWeapon : BlueprintComponent, IRuntimeEntityFac
 	private WeaponClassification m_WeaponClassification;
 
 	[SerializeField]
+	private WeaponFamily m_WeaponFamily;
+
+	[SerializeField]
+	private WeaponHoldingType m_WeaponHoldingType;
+
+	[SerializeField]
+	private WeaponCategory m_WeaponCategory;
+
+	[SerializeField]
 	private WeaponAbility[] m_WeaponAbilities;
 
 	public IReadOnlyList<WeaponAbility> WeaponAbilities => m_WeaponAbilities;
@@ -67,6 +76,14 @@ public class AddAbilitiesToCurrentWeapon : BlueprintComponent, IRuntimeEntityFac
 
 	public bool ShouldAddAbilities(ItemEntityWeapon weapon)
 	{
-		return weapon.Blueprint.Classification == m_WeaponClassification;
+		if ((weapon.Blueprint.Classification == m_WeaponClassification || m_WeaponClassification == WeaponClassification.None) && (weapon.Blueprint.Family == m_WeaponFamily || m_WeaponFamily == WeaponFamily.None) && (weapon.Blueprint.HoldingType == m_WeaponHoldingType || m_WeaponHoldingType == WeaponHoldingType.None))
+		{
+			if (weapon.Blueprint.Category != m_WeaponCategory)
+			{
+				return m_WeaponCategory == WeaponCategory.None;
+			}
+			return true;
+		}
+		return false;
 	}
 }

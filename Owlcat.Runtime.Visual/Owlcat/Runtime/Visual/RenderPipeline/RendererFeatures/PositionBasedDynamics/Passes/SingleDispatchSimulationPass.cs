@@ -233,7 +233,7 @@ public class SingleDispatchSimulationPass : ScriptableRenderPass
 		}
 		Skinning(cmd);
 		Mesh(cmd);
-		cmd.SetGlobalBuffer(GPUParticleSoA._PbdParticlesPositionBuffer, m_GpuData.ParticlesSoA.PositionBuffer);
+		cmd.SetGlobalBuffer(GPUParticleSoA._PbdParticlesPositionPairsBuffer, m_GpuData.ParticlesSoA.PositionPairsBuffer);
 	}
 
 	private void SetupShaderConstants(CommandBuffer cmd)

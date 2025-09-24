@@ -105,6 +105,21 @@ public class ItemEnchantment : MechanicEntityFact<ItemEntity>, IHashable
 			DestroyFx();
 			WeaponParticlesSnapMap weaponSnap = (base.Owner.HoldingSlot as WeaponSlot)?.FxSnapMap;
 			FxObject = FxHelper.SpawnFxOnWeapon(gameObject, base.Owner.Wielder?.View, weaponSnap);
+			return;
+		}
+		GameObject gameObject2 = (Blueprint as BlueprintEquipmentEnchantment)?.EquipmentFxPrefab;
+		if ((bool)gameObject2)
+		{
+			DestroyFx();
+			WeaponParticlesSnapMap weaponParticlesSnapMap = (base.Owner.HoldingSlot as WeaponSlot)?.FxSnapMap;
+			if (weaponParticlesSnapMap != null && weaponParticlesSnapMap.gameObject != null && weaponParticlesSnapMap.gameObject.activeInHierarchy)
+			{
+				FxObject = FxHelper.SpawnFxOnGameObject(gameObject2, weaponParticlesSnapMap.gameObject);
+			}
+			else
+			{
+				FxObject = FxHelper.SpawnFxOnWeapon(gameObject2, base.Owner.Wielder?.View, weaponParticlesSnapMap);
+			}
 		}
 	}
 

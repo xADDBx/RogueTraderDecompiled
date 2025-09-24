@@ -39,13 +39,15 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	private bool m_NeedUpdate;
 
-	private readonly List<BaseUnitEntity> m_ActualGroup = new List<BaseUnitEntity>();
+	private List<BaseUnitEntity> m_ActualGroup = new List<BaseUnitEntity>();
 
 	private bool m_FullScreenState;
 
 	private CompositeDisposable m_SelectedUnitsSubscription;
 
 	private bool m_ControllerStarted;
+
+	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnitPetsAllowed = new ReactiveProperty<BaseUnitEntity>();
 
 	private bool m_IsResetScheduled;
 
@@ -279,7 +281,19 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	private void UpdateSelectedUnits()
 	{
-		UIUtility.GetGroup(m_ActualGroup, WithRemote, withPet: true);
+		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
+		UIUtility.GetGroup(list, WithRemote, withPet: true);
+		if (m_ActualGroup.Count != 0)
+		{
+			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
+			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && Game.Instance.IsControllerGamepad && list.Count == m_ActualGroup.Count)
+			{
+				goto IL_0063;
+			}
+		}
+		m_ActualGroup = list;
+		goto IL_0063;
+		IL_0063:
 		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
 			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
@@ -341,18 +355,18 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	public void SwitchCharacter(BaseUnitEntity unit1, BaseUnitEntity unit2)
 	{
-		if (unit1?.Master == null && m_ActualGroup.Contains(unit1) && unit2?.Master == null && m_ActualGroup.Contains(unit2))
+		if (m_ActualGroup.Contains(unit1) && m_ActualGroup.Contains(unit2))
 		{
-			int num = Game.Instance.Player.PartyAndPets.IndexOf(unit1);
-			int num2 = Game.Instance.Player.PartyAndPets.IndexOf(unit2);
-			List<BaseUnitEntity> partyAndPets = Game.Instance.Player.PartyAndPets;
+			int num = m_ActualGroup.IndexOf(unit1);
+			int num2 = m_ActualGroup.IndexOf(unit2);
+			List<BaseUnitEntity> actualGroup = m_ActualGroup;
 			int index = num;
-			List<BaseUnitEntity> partyAndPets2 = Game.Instance.Player.PartyAndPets;
+			List<BaseUnitEntity> actualGroup2 = m_ActualGroup;
 			int index2 = num2;
-			BaseUnitEntity baseUnitEntity = Game.Instance.Player.PartyAndPets[num2];
-			BaseUnitEntity baseUnitEntity2 = Game.Instance.Player.PartyAndPets[num];
-			BaseUnitEntity baseUnitEntity4 = (partyAndPets[index] = baseUnitEntity);
-			baseUnitEntity4 = (partyAndPets2[index2] = baseUnitEntity2);
+			BaseUnitEntity baseUnitEntity = m_ActualGroup[num2];
+			BaseUnitEntity baseUnitEntity2 = m_ActualGroup[num];
+			BaseUnitEntity baseUnitEntity4 = (actualGroup[index] = baseUnitEntity);
+			baseUnitEntity4 = (actualGroup2[index2] = baseUnitEntity2);
 			Game.Instance.Player.InvalidateCharacterLists();
 			m_NeedUpdate = true;
 			EventBus.RaiseEvent(delegate(ISwitchPartyCharactersHandler h)

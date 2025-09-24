@@ -57,6 +57,12 @@ public class UIWeaponCategories
 
 	public LocalizedString WeaponClassificationHammer;
 
+	public LocalizedString WeaponClassificationWebber;
+
+	public LocalizedString WeaponClassificationArcRifle;
+
+	public LocalizedString WeaponClassificationSniperRifle;
+
 	public LocalizedString WeaponHoldingTypeOneHanded;
 
 	public LocalizedString WeaponHoldingTypeTwoHanded;
@@ -155,6 +161,12 @@ public class UIWeaponCategories
 		case WeaponClassification.MaulOrHammer:
 		case WeaponClassification.Hammer:
 			return WeaponClassificationHammer;
+		case WeaponClassification.Webber:
+			return WeaponClassificationWebber;
+		case WeaponClassification.ArcRifle:
+			return WeaponClassificationArcRifle;
+		case WeaponClassification.SniperRifle:
+			return WeaponClassificationSniperRifle;
 		default:
 			return string.Empty;
 		}

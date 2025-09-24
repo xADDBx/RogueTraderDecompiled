@@ -228,7 +228,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		{
 			if (!rigidBone.isKinematic)
 			{
-				rigidBone.velocity = Vector3.zero;
+				rigidBone.linearVelocity = Vector3.zero;
 			}
 			rigidBone.ResetCenterOfMass();
 			rigidBone.detectCollisions = !enable;
@@ -698,7 +698,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 			float num = MinAllPosition * 30f * (MinAllPosition * 30f);
 			foreach (Rigidbody rigidBone in RigidBones)
 			{
-				if (rigidBone.velocity.sqrMagnitude > num)
+				if (rigidBone.linearVelocity.sqrMagnitude > num)
 				{
 					flag = false;
 					break;

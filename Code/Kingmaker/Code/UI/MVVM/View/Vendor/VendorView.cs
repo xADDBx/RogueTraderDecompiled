@@ -4,7 +4,10 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.PubSubSystem.Core;
+using Owlcat.Runtime.UI.ConsoleTools.HintTool;
+using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -43,6 +46,15 @@ public class VendorView<TStashView, TInventoryCargoView, TItemsFilter, TVendorSl
 	[SerializeField]
 	protected GameObject m_ArrowMiddle;
 
+	[SerializeField]
+	private TextMeshProUGUI m_BuyAllAvailableText;
+
+	[SerializeField]
+	protected OwlcatMultiButton m_BuyAllAvailableButton;
+
+	[SerializeField]
+	protected ConsoleHint m_BuyAllHint;
+
 	public virtual void Initialize()
 	{
 		base.gameObject.SetActive(value: false);
@@ -67,6 +79,18 @@ public class VendorView<TStashView, TInventoryCargoView, TItemsFilter, TVendorSl
 		{
 			AddDisposable(base.ViewModel.InventoryCargoVM.CargoDropZoneVM.Subscribe(m_DropZonePCView.Bind));
 		}
+		m_BuyAllAvailableText.text = UIStrings.Instance.Vendor.BuyAllAvailable;
+		AddDisposable(base.ViewModel.HasItemsToBuy.Subscribe(delegate(bool v)
+		{
+			m_BuyAllAvailableButton.SetInteractable(v);
+		}));
+		AddDisposable(m_BuyAllAvailableButton.OnPointerClickAsObservable().Subscribe(delegate
+		{
+			if (base.ViewModel.ActiveTab.Value == VendorWindowsTab.Trade)
+			{
+				base.ViewModel.BuyAllAvailable();
+			}
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 

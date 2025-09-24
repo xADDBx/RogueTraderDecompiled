@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
@@ -14,11 +13,17 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.VM.CharGen;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.UI.Sound;
+using Kingmaker.UnitLogic.Levelup.Selections;
+using Kingmaker.UnitLogic.Levelup.Selections.Feature;
+using Kingmaker.UnitLogic.Progression.Features;
+using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.View.Mechadendrites;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Utility;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
@@ -73,14 +78,11 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 
 	private InventorySlotConsoleView m_ItemToSlotView;
 
-	private Action OnWeaponSetChangedAction;
-
 	public InventorySlotConsoleView ItemToSlotView => m_ItemToSlotView;
 
-	public InventoryDollVM(IReadOnlyReactiveProperty<BaseUnitEntity> unit, Action onWeaponSetChanged)
+	public InventoryDollVM(IReadOnlyReactiveProperty<BaseUnitEntity> unit)
 		: base(unit)
 	{
-		OnWeaponSetChangedAction = onWeaponSetChanged;
 		AddDisposable(CurrentSet.Subscribe(OnWeaponSetChanged));
 		AddDisposable(EncumbranceVM = new CharInfoEncumbranceVM(unit));
 		AddDisposable(InventorySelectorWindowVM = new ReactiveProperty<InventorySelectorWindowVM>());
@@ -98,7 +100,6 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		if (CanChangeEquipment.Value && Unit?.Value != null && (Unit.Value.IsDirectlyControllable() || Unit.Value.CanBeControlled()))
 		{
 			Game.Instance.GameCommandQueue.SwitchHandEquipment(Unit.Value, set.Index);
-			OnWeaponSetChangedAction();
 		}
 	}
 
@@ -153,6 +154,7 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 			AddDisposable(QuickSlots[i] = new EquipSlotVM(EquipSlotType.QuickSlot1, body.QuickSlots.ElementAt(i), -1, null, i));
 			m_AllEquipSlots.Add(QuickSlots[i]);
 		}
+		bool isUnitComissar = CheckIfUnitIsCommissar(Unit.Value);
 		if (WeaponSets == null)
 		{
 			WeaponSets = new List<WeaponSetVM>();
@@ -162,7 +164,7 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 				WeaponSets.Add(new WeaponSetVM(j, delegate
 				{
 					CurrentSet.Value = WeaponSets.ElementAtOrDefault(setId);
-				}));
+				}, isUnitComissar));
 				AddDisposable(WeaponSets[j]);
 			}
 			AddDisposable(WeaponSetSelector = new SelectionGroupRadioVM<WeaponSetVM>(WeaponSets, CurrentSet));
@@ -170,6 +172,7 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		for (int k = 0; k < WeaponSets.Count; k++)
 		{
 			WeaponSets[k].SetEnabled(!Unit.Value.HasMechadendrites() || k == 0);
+			WeaponSets[k].SetMainHand(isUnitComissar);
 			WeaponSets[k].Primary?.Dispose();
 			EquipSlotVM disposable = (WeaponSets[k].Primary = new EquipSlotVM(EquipSlotType.PrimaryHand, body.HandsEquipmentSets[k].PrimaryHand, -1, null, k));
 			AddDisposable(disposable);
@@ -179,6 +182,13 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 			AddDisposable(disposable);
 			m_AllEquipSlots.Add(WeaponSets[k].Secondary);
 		}
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			WeaponSets[0].Primary?.SetHintText(isUnitComissar ? ((string)UIStrings.Instance.InventoryScreen.MainHand) : string.Empty);
+			WeaponSets[0].Secondary?.SetHintText(isUnitComissar ? ((string)UIStrings.Instance.InventoryScreen.OffHand) : string.Empty);
+			WeaponSets[1].Primary?.SetHintText(isUnitComissar ? ((string)UIStrings.Instance.InventoryScreen.MainHand) : string.Empty);
+			WeaponSets[1].Secondary?.SetHintText(isUnitComissar ? ((string)UIStrings.Instance.InventoryScreen.OffHand) : string.Empty);
+		}, 2);
 		WeaponSets[0].Secondary.InitializeSecondSetSecondaryFakeItem(WeaponSets[1].Secondary);
 		WeaponSets[1].Secondary.InitializeSecondSetSecondaryFakeItem(WeaponSets[0].Secondary);
 		CurrentSet.Value = WeaponSets[Unit.Value.Body.CurrentHandEquipmentSetIndex];
@@ -320,5 +330,26 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 			m_ItemToSlotView = item;
 			ChooseSlotMode.Value = true;
 		}
+	}
+
+	private bool CheckIfUnitIsCommissar(BaseUnitEntity unit)
+	{
+		FeatureGroup group = FeatureGroup.ChargenOccupation;
+		BlueprintOriginPath unitOriginPath = CharGenUtility.GetUnitOriginPath(unit);
+		if (unitOriginPath == null)
+		{
+			return false;
+		}
+		BlueprintSelectionFeature blueprintSelectionFeature = CharGenUtility.GetFeatureSelectionsByGroup(unitOriginPath, group).FirstOrDefault();
+		if (blueprintSelectionFeature == null)
+		{
+			return false;
+		}
+		BlueprintFeature blueprintFeature = unit.Progression.GetSelectedFeature(unitOriginPath, 0, blueprintSelectionFeature)?.Feature;
+		if (blueprintFeature != null)
+		{
+			return blueprintFeature.NameForAcronym == "Commissar_Occupation";
+		}
+		return false;
 	}
 }

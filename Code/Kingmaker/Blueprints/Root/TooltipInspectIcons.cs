@@ -50,6 +50,8 @@ public class TooltipInspectIcons
 
 	public Sprite ShieldStarboard;
 
+	public Sprite PsyRating;
+
 	public Sprite GetArmorIconByType(StarshipHitLocation type)
 	{
 		return type switch

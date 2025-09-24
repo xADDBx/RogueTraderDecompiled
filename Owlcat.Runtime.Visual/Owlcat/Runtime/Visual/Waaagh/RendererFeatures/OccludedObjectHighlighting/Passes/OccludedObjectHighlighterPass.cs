@@ -4,9 +4,9 @@ using Owlcat.Runtime.Visual.Waaagh.Passes;
 using Owlcat.Runtime.Visual.Waaagh.RendererFeatures.Highlighting;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.OccludedObjectHighlighting.Passes;
 

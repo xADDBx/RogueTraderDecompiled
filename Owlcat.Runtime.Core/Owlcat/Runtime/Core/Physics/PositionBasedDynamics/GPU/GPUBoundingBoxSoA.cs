@@ -5,20 +5,22 @@ namespace Owlcat.Runtime.Core.Physics.PositionBasedDynamics.GPU;
 
 public class GPUBoundingBoxSoA : GPUSoABase
 {
-	private int _BoundingBoxMin = Shader.PropertyToID("_PbdBroadphaseAabbMinBuffer");
+	public struct BoundingBoxData
+	{
+		private float3 min;
 
-	private int _BoundingBoxMax = Shader.PropertyToID("_PbdBroadphaseAabbMaxBuffer");
+		private float3 max;
+	}
 
-	public ComputeBufferWrapper<float3> AabbMinBuffer;
+	private int _BoundingBox = Shader.PropertyToID("_PbdBroadphaseAabbBuffer");
 
-	public ComputeBufferWrapper<float3> AabbMaxBuffer;
+	public ComputeBufferWrapper<BoundingBoxData> AabbBuffer;
 
 	public override string Name => "GPUBoundingBoxSoA";
 
 	protected override ComputeBufferWrapper[] InitBuffers(int size)
 	{
-		AabbMinBuffer = new ComputeBufferWrapper<float3>("_PbdBroadphaseAabbMinBuffer", size);
-		AabbMaxBuffer = new ComputeBufferWrapper<float3>("_PbdBroadphaseAabbMaxBuffer", size);
-		return new ComputeBufferWrapper[2] { AabbMinBuffer, AabbMaxBuffer };
+		AabbBuffer = new ComputeBufferWrapper<BoundingBoxData>("_PbdBroadphaseAabbBuffer", size);
+		return new ComputeBufferWrapper[1] { AabbBuffer };
 	}
 }

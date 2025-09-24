@@ -47,7 +47,17 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 
 	public readonly BoolReactiveProperty IsVisibleVerticalDPad = new BoolReactiveProperty();
 
-	public static bool HasShown => PlayerPrefs.GetInt("first_open_first_launch_settings", 0) == 1;
+	public static bool HasShown
+	{
+		get
+		{
+			if (!SettingsController.Instance.GeneralSettingsProvider.HasKey("first_open_first_launch_settings"))
+			{
+				return PlayerPrefs.GetInt("first_open_first_launch_settings", 0) == 1;
+			}
+			return true;
+		}
+	}
 
 	public FirstLaunchSettingsVM(Action closeAction)
 	{
@@ -74,7 +84,7 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 	protected override void DisposeImplementation()
 	{
 		DisposeAll();
-		PlayerPrefs.Save();
+		SettingsController.Instance.GeneralSettingsProvider.SaveAll();
 	}
 
 	private void CreateMenuEntity(LocalizedString localizedString, UISettingsManager.SettingsScreen screenType)
@@ -169,13 +179,15 @@ public class FirstLaunchSettingsVM : BaseDisposable, IViewModel, IBaseDisposable
 	{
 		PlayerPrefs.SetInt("first_open_first_launch_settings", 0);
 		PlayerPrefs.Save();
+		SettingsController.Instance.GeneralSettingsProvider.RemoveKey("first_open_first_launch_settings");
+		SettingsController.Instance.GeneralSettingsProvider.SaveAll();
 	}
 
 	[Cheat(Name = "set_first_launch")]
 	public static void SetFirstLaunchPrefs()
 	{
-		PlayerPrefs.SetInt("first_open_first_launch_settings", 1);
-		PlayerPrefs.Save();
+		SettingsController.Instance.GeneralSettingsProvider.SetValue("first_open_first_launch_settings", 1);
+		SettingsController.Instance.GeneralSettingsProvider.SaveAll();
 	}
 
 	public void HandleLanguageChanged()

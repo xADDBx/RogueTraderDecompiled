@@ -34,8 +34,8 @@ internal static class GeometryMath
 		{
 			return false;
 		}
-		bool c = num < 0f;
-		outDistance = math.select(num, num2, c);
+		bool test = num < 0f;
+		outDistance = math.select(num, num2, test);
 		return outDistance > 0f;
 	}
 

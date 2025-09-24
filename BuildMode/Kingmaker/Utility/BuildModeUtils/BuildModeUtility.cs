@@ -1,4 +1,5 @@
 using System.IO;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -6,11 +7,11 @@ namespace Kingmaker.Utility.BuildModeUtils;
 
 public class BuildModeUtility
 {
-	private static readonly string s_JsonName = "startup.json";
+	public const string s_JsonName = "startup.json";
 
 	private static readonly string s_JsonPath = Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'));
 
-	private static readonly string s_JsonFile = Path.Combine(s_JsonPath, s_JsonName);
+	private static readonly string s_JsonFile = Path.Combine(s_JsonPath, "startup.json");
 
 	private static StartupJson s_Data;
 
@@ -110,13 +111,6 @@ public class BuildModeUtility
 		}
 	}
 
-	public static void CreateJsonMode(string folderPath, StartupJson json)
-	{
-		using StreamWriter streamWriter = new StreamWriter(Path.Combine(folderPath, s_JsonName));
-		streamWriter.WriteLine(JsonConvert.SerializeObject(json, Formatting.Indented));
-		streamWriter.Close();
-	}
-
 	public static bool CheckAndEnableLowMemoryOptimizations()
 	{
 		if (!IsLowMemoryPlatform || (Data?.Loading?.DisableLowMemoryOverrides).GetValueOrDefault())
@@ -137,6 +131,7 @@ public class BuildModeUtility
 		return true;
 	}
 
+	[NotNull]
 	private static StartupJson GetStartUpData()
 	{
 		if (s_Data != null)
@@ -146,30 +141,29 @@ public class BuildModeUtility
 		string[] array = new string[2]
 		{
 			s_JsonFile,
-			Path.Combine(Application.streamingAssetsPath, s_JsonName)
+			Path.Combine(Application.streamingAssetsPath, "startup.json")
 		};
 		foreach (string text in array)
 		{
 			if (File.Exists(text))
 			{
+				Debug.LogFormat("Found {0} at {1}", "startup.json", text);
 				using (StreamReader streamReader = new StreamReader(text))
 				{
 					s_Data = JsonConvert.DeserializeObject<StartupJson>(streamReader.ReadToEnd());
 				}
 				ActualPathToStartUp = text;
-				break;
+				return s_Data;
 			}
 		}
+		Debug.LogFormat("{0} not found, specifically at {1}", "startup.json", s_JsonFile);
 		bool flag = Application.isEditor || Debug.isDebugBuild;
-		if (s_Data == null)
+		s_Data = new StartupJson
 		{
-			s_Data = new StartupJson
-			{
-				development = flag,
-				EnableCheats = flag,
-				EnableCheatStore = flag
-			};
-		}
+			development = flag,
+			EnableCheats = flag,
+			EnableCheatStore = flag
+		};
 		return s_Data;
 	}
 }

@@ -1,3 +1,4 @@
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -38,18 +39,14 @@ public struct UpdateSkinnedParticlesJob : IJobParallelFor
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float> Mass;
+	public NativeArray<ParticleExtendedData> ExtendedData;
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
 	public NativeArray<Matrix4x4> Boneposes;
 
-	[WriteOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Position;
-
-	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> BasePosition;
+	public NativeArray<ParticlePositionPair> PositionPairs;
 
 	public void Execute(int index)
 	{
@@ -65,12 +62,14 @@ public struct UpdateSkinnedParticlesJob : IJobParallelFor
 			int index3 = i + num;
 			int index4 = i + @int.x;
 			float3 xyz = math.mul(a, Boneposes[index3]).c3.xyz;
-			float num4 = math.distancesq(BasePosition[index4], xyz);
-			if (Mass[index4] <= 0f || (num3 > 0f && num4 > num3))
+			float num4 = math.distancesq(PositionPairs[index4].BasePosition, xyz);
+			ParticlePositionPair value = PositionPairs[index4];
+			if (ExtendedData[index4].Mass <= 0f || (num3 > 0f && num4 > num3))
 			{
-				Position[index4] = xyz;
+				value.Position = xyz;
 			}
-			BasePosition[index4] = xyz;
+			value.BasePosition = xyz;
+			PositionPairs[index4] = value;
 		}
 	}
 }

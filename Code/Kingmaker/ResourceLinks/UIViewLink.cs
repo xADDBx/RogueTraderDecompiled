@@ -16,6 +16,8 @@ public class UIViewLink<TView, TViewModel> : WeakResourceLink<TView> where TView
 	[HideInInspector]
 	public Action<TView> CustomInitialize;
 
+	public TView ViewInstance => View;
+
 	public void Bind(TViewModel vm)
 	{
 		if (vm == null)

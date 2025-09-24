@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -57,7 +57,7 @@ public class ClearPass : ScriptableRenderPass<ClearPassData>
 		if (data.ClearFlags != 0)
 		{
 			context.cmd.SetRenderTarget(data.CameraColorBuffer, data.CameraDepthBuffer);
-			context.cmd.ClearRenderTarget(data.ClearFlags, data.ClearColor, 1f, 0u);
+			context.cmd.ClearRenderTarget(data.ClearFlags, data.ClearColor);
 		}
 		context.cmd.SetRenderTarget(data.CameraDepthCopy);
 		context.cmd.ClearRenderTarget(clearDepth: false, clearColor: true, data.DepthCopyClearColor);

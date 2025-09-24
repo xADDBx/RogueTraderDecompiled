@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -204,6 +205,77 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 	}
 
 	private void AddSource(List<ITooltipBrick> bricks)
+	{
+		if (Buff == null)
+		{
+			return;
+		}
+		ITooltipBrick tooltipBrick = null;
+		if (Buff?.SourceAbilityBlueprint != null)
+		{
+			tooltipBrick = new TooltipBrickIconPattern(Buff.SourceAbilityBlueprint.Icon, null, UIStrings.Instance.Tooltips.Source, Buff.SourceAbilityBlueprint.Name);
+		}
+		if (Buff?.SourceFact != null)
+		{
+			BlueprintBuff blueprintBuff = (BlueprintBuff)Buff.SourceFact.Blueprint;
+			if (blueprintBuff == null || !blueprintBuff.IsHiddenInUI)
+			{
+				tooltipBrick = new TooltipBrickIconPattern(Buff.SourceFact.Icon, null, UIStrings.Instance.Tooltips.Source, Buff.SourceFact.Name);
+			}
+		}
+		if (Buff?.SourceItem != null)
+		{
+			tooltipBrick = new TooltipBrickIconPattern(Buff.SourceItem.ToItemEntity().Icon, null, UIStrings.Instance.Tooltips.Source, Buff.SourceItem.ToItemEntity().Name);
+		}
+		if (tooltipBrick == null && m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity)
+		{
+			tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity.CharacterName);
+		}
+		if (tooltipBrick == null && Buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity2)
+		{
+			tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity2.CharacterName);
+		}
+		if (tooltipBrick != null)
+		{
+			bricks.Add(tooltipBrick);
+		}
+		Buff buff = Buff;
+		if (buff == null || buff.Sources.Count <= 1)
+		{
+			return;
+		}
+		for (int i = 1; i < Buff?.Sources.Count; i++)
+		{
+			EntityFactSource entityFactSource = Buff.Sources[i];
+			ITooltipBrick tooltipBrick2 = null;
+			if (entityFactSource?.Fact != null)
+			{
+				BlueprintBuff blueprintBuff2 = (BlueprintBuff)(entityFactSource?.Fact.Blueprint);
+				if (blueprintBuff2 == null || !blueprintBuff2.IsHiddenInUI)
+				{
+					tooltipBrick2 = new TooltipBrickIconPattern(entityFactSource?.Fact.Icon, null, UIStrings.Instance.Tooltips.Source, entityFactSource?.Fact.Name);
+				}
+			}
+			if (entityFactSource?.Entity is IItemEntity itemEntity)
+			{
+				tooltipBrick2 = new TooltipBrickIconPattern(itemEntity.ToItemEntity().Icon, null, UIStrings.Instance.Tooltips.Source, itemEntity.ToItemEntity().Name);
+			}
+			if (tooltipBrick2 == null && m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity3)
+			{
+				tooltipBrick2 = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity3.CharacterName);
+			}
+			if (tooltipBrick2 == null && Buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity4)
+			{
+				tooltipBrick2 = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity4.CharacterName);
+			}
+			if (tooltipBrick2 != null)
+			{
+				bricks.Add(tooltipBrick2);
+			}
+		}
+	}
+
+	private void AddSourceInternal(List<ITooltipBrick> bricks)
 	{
 		if (Buff == null)
 		{

@@ -495,6 +495,12 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		{
 			MarkRemoved();
 		}
+		Cutscene cutscene = Cutscene;
+		if (cutscene != null && cutscene.LockControl)
+		{
+			PFLog.Cutscene.Error("Removing unexpected lock-control cutscene " + Cutscene.Name + " during post-load");
+			MarkRemoved();
+		}
 		foreach (CutscenePlayerGateData activatedGate in m_ActivatedGates)
 		{
 			SetPlayer(activatedGate);

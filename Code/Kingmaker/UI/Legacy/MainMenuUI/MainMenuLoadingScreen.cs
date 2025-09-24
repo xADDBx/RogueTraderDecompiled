@@ -3,6 +3,7 @@ using System.Collections;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Kingmaker.Localization;
+using Kingmaker.Sound;
 using Kingmaker.UI.Common.Animations;
 using TMPro;
 using UnityEngine;
@@ -58,12 +59,6 @@ public class MainMenuLoadingScreen : MonoBehaviour
 	public void OnStart()
 	{
 		PFLog.UI.Log("Logo Show Requested");
-		if (GameStarter.IsArbiterMode())
-		{
-			base.gameObject.SetActive(value: false);
-			GameStarter.Instance.StartGame();
-			return;
-		}
 		m_BackgroundAnimator.Initialize();
 		m_LogoAnimator.Initialize();
 		m_ProgressBarAnimator.Initialize();
@@ -92,9 +87,12 @@ public class MainMenuLoadingScreen : MonoBehaviour
 		yield return null;
 		yield return null;
 		yield return null;
-		while (!AkSoundEngine.IsInitialized())
+		if (AkAudioService.CanUseAudio)
 		{
-			yield return null;
+			while (!AkSoundEngine.IsInitialized())
+			{
+				yield return null;
+			}
 		}
 		PFLog.System.Log("Start Show Logo Animation");
 		Show(state: true);

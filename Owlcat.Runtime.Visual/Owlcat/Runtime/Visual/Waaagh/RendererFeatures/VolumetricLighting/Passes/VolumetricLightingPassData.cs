@@ -1,7 +1,7 @@
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting.Passes;
 
@@ -77,13 +77,13 @@ public class VolumetricLightingPassData : PassDataBase
 
 	public Vector4 LocalVolumetricFogClusteringParams;
 
-	public ComputeBufferHandle LocalFogBoundsBuffer;
+	public BufferHandle LocalFogBoundsBuffer;
 
-	public ComputeBufferHandle LocalFogGpuDataBuffer;
+	public BufferHandle LocalFogGpuDataBuffer;
 
-	public ComputeBufferHandle LocalFogTilesBuffer;
+	public BufferHandle LocalFogTilesBuffer;
 
-	public ComputeBufferHandle LocalFogZBinsBuffer;
+	public BufferHandle LocalFogZBinsBuffer;
 
 	public Matrix4x4 ScreenProjMatrix;
 

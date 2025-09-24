@@ -1932,12 +1932,12 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		LightProbes.TetrahedralizeAsync();
 		Player.VisitedAreas.Add(CurrentlyLoadedArea);
 		yield return null;
-		UpdateNavMesh();
-		UnitsPlacer.MovePartyToNavmesh();
 		EventBus.RaiseEvent(delegate(IAreaLoadingStagesHandler h)
 		{
 			h.OnAreaLoadingComplete();
 		});
+		UpdateNavMesh();
+		UnitsPlacer.MovePartyToNavmesh();
 		MaybeSuggestDLCImport();
 		yield return null;
 		ParticleSystemsQualityController.Instance.Init();

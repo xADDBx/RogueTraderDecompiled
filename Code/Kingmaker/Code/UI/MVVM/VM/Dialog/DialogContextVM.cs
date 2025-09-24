@@ -30,6 +30,8 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	private bool m_IsAnyColonyScreenOpened;
 
+	public ReactiveCommand<bool> ToggleDialogFadeCommand = new ReactiveCommand<bool>();
+
 	private static DialogType State => Game.Instance.DialogController.Dialog.Type;
 
 	public DialogContextVM()
@@ -145,5 +147,10 @@ public class DialogContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		{
 			SoulMarkRewardVM.Value = new SoulMarkRewardVM(direction, soulMarkRankIndex, DisposeSoulMarkReward);
 		}
+	}
+
+	public void ToggleDialogFade(bool value)
+	{
+		ToggleDialogFadeCommand.Execute(value);
 	}
 }

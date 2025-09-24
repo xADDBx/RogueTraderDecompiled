@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.Designers;
@@ -105,6 +106,7 @@ public class PartyAwarenessController : IControllerTick, IController, IEntityPos
 			{
 				h.OnEntityNoticed(character);
 			}, isCheckRuntime: true);
+			GameHelper.GainExperienceForSkillCheck(ExperienceHelper.GetCheckExpByDifficulty(data.View.AwarenessCheckComponent.Difficulty, Game.Instance.CurrentlyLoadedArea?.GetCR() ?? 0));
 		}
 		else if (BuildModeUtility.IsDevelopment)
 		{

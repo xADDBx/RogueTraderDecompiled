@@ -1,8 +1,10 @@
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.Utility.DotNetExtensions;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -47,6 +49,15 @@ public class ContextActionRemoveBuffSingleStack : ContextAction
 			{
 				buff = item;
 				break;
+			}
+			if (item != null && Enumerable.FirstOrDefault(item.StackedBuffsSourcesRefs, (Buff b) => b.Blueprint == TargetBuff) != null)
+			{
+				Buff buff2 = item.StackedBuffsSourcesRefs.FirstOrDefault((Buff b) => b.Blueprint == TargetBuff);
+				if (buff2 != null)
+				{
+					item.StackedBuffsSourcesRefs.Remove(buff2);
+					item.RemoveSource();
+				}
 			}
 		}
 		buff?.Remove();

@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -57,19 +57,6 @@ public class CopyDepthPass : ScriptableRenderPass<CopyDepthPassData>
 		data.DepthPyramidSamplingRatio = m_DepthPyramidSamplingRatio;
 		data.Material = m_Material;
 		data.CullingCriteria = m_CullingCriteria;
-		switch (data.CullingCriteria)
-		{
-		case PassCullingCriteria.Opaque:
-			data.RendererList = builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-			builder.AllowPassCulling(value: true);
-			builder.AllowRendererListCulling(!renderingData.IrsHasOpaques);
-			break;
-		case PassCullingCriteria.OpaqueDistortion:
-			data.RendererList = builder.DependsOn(in data.Resources.RendererLists.OpaqueDistortionGBuffer.List);
-			builder.AllowPassCulling(value: true);
-			builder.AllowRendererListCulling(!renderingData.IrsHasOpaqueDistortions);
-			break;
-		}
 	}
 
 	protected override void Render(CopyDepthPassData data, RenderGraphContext context)

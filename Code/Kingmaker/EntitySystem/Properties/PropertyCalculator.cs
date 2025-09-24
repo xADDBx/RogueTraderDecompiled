@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Code.GameCore.ElementsSystem;
+using ElementsSystem.Debug;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
@@ -125,6 +126,10 @@ public class PropertyCalculator : ElementsList
 				{
 					int result = PropertyCalculatorHelper.CalculateValue(Getters, Operation, this);
 					elementsDebugger?.SetResult(result);
+					if (elementsDebugger != null)
+					{
+						SetupDebugContext(context, elementsDebugger);
+					}
 					return result;
 				}
 			}
@@ -140,6 +145,24 @@ public class PropertyCalculator : ElementsList
 	public bool GetBoolValue(PropertyContext context)
 	{
 		return GetValue(context) != 0;
+	}
+
+	private void SetupDebugContext(PropertyContext context, ElementsDebugger debugger)
+	{
+		if (ElementsDebugger.IsContextDebugEnabled)
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append($"[{PropertyTargetType.CurrentEntity}] : {context.GetTargetEntity(PropertyTargetType.CurrentEntity)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.CurrentTarget}] : {context.GetTargetEntity(PropertyTargetType.CurrentTarget)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.ContextCaster}] : {context.GetTargetEntity(PropertyTargetType.ContextCaster)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.ContextMainTarget}] : {context.GetTargetEntity(PropertyTargetType.ContextMainTarget)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.RuleTarget}] : {context.GetTargetEntity(PropertyTargetType.RuleTarget)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.RuleInitiator}] : {context.GetTargetEntity(PropertyTargetType.RuleInitiator)}");
+			debugger.ContextDebugData = new ContextDebugData
+			{
+				StringData = stringBuilder.ToString()
+			};
+		}
 	}
 
 	public string GenerateDescription(bool useLineBreaks)

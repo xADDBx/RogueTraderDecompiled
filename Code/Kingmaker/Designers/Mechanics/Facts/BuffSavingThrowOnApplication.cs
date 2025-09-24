@@ -21,7 +21,7 @@ public class BuffSavingThrowOnApplication : UnitBuffComponentDelegate, IHashable
 
 	protected override void OnActivate()
 	{
-		RulePerformSavingThrow rulePerformSavingThrow = new RulePerformSavingThrow(base.Owner, SavingThrowType, DifficultyModifier);
+		RulePerformSavingThrow rulePerformSavingThrow = new RulePerformSavingThrow(base.Owner, SavingThrowType, DifficultyModifier, base.Buff.Context.MaybeCaster);
 		Rulebook.Trigger(rulePerformSavingThrow);
 		if (rulePerformSavingThrow.IsPassed)
 		{

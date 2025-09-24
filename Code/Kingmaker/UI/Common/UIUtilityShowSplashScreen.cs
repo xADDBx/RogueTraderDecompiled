@@ -34,7 +34,17 @@ public static class UIUtilityShowSplashScreen
 				su.SoundId = SoundEventsManager.PostEvent(su.AKSoundEvent, soundGameObject, canBeStopped: true);
 				PFLog.System.Log($"Play splash screen audio event={su.AKSoundEvent}, soundId={su.SoundId}");
 			}
-		}));
+		})
+			.OnKill(delegate
+			{
+				if (su.VideoPlayer != null)
+				{
+					PFLog.System.Log("SplashScreenController: Stopping " + cg.name);
+					su.VideoPlayer.Stop();
+				}
+				su.SoundId = 0u;
+				su.FirstLaunchSoundId = 0u;
+			}));
 		if (additionalCanvasGroup != null)
 		{
 			sequence.Join(additionalCanvasGroup.DOFade(1f, su.InTime).SetEase(su.Ease));

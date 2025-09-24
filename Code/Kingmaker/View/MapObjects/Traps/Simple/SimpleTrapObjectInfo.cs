@@ -44,11 +44,16 @@ public class SimpleTrapObjectInfo
 
 	public LocalizedString TrapTriggeredText;
 
-	public TrapDisableDifficulty DisableDifficulty;
+	public SkillCheckDifficulty DisableDifficulty;
+
+	[ShowIf("DifficultyIsCustom")]
+	public int DC;
 
 	public bool DoNotHideWhenInactive;
 
 	public StatType DisarmSkill = StatType.SkillDemolition;
+
+	private bool DifficultyIsCustom => DisableDifficulty == SkillCheckDifficulty.Custom;
 
 	public bool IsSpell => m_Type == Type.Spell;
 

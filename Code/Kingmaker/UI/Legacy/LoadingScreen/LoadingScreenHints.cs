@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.DLC;
 using Kingmaker.Localization;
 using Kingmaker.Networking;
+using Kingmaker.Settings;
 using Kingmaker.Stores;
 using Kingmaker.Utility.StatefulRandom;
 using UnityEngine;
@@ -199,7 +200,12 @@ public class LoadingScreenHints : StringsContainer
 
 	private void LoadPurchasedDLCs()
 	{
-		DLCLoadingScreenInfoList dLCLoadingScreenInfoList = JsonUtility.FromJson<DLCLoadingScreenInfoList>(PlayerPrefs.GetString("LoadingScreenPurchasedDLCs", "{}"));
+		string json = "{}";
+		if (SettingsController.Instance.GeneralSettingsProvider.HasKey("LoadingScreenPurchasedDLCs"))
+		{
+			json = SettingsController.Instance.GeneralSettingsProvider.GetValue<string>("LoadingScreenPurchasedDLCs");
+		}
+		DLCLoadingScreenInfoList dLCLoadingScreenInfoList = JsonUtility.FromJson<DLCLoadingScreenInfoList>(json);
 		m_PlayerPurchasedDLCs = ((dLCLoadingScreenInfoList != null && dLCLoadingScreenInfoList.DlcList != null) ? dLCLoadingScreenInfoList.DlcList : new List<DLCLoadingScreenInfo>());
 	}
 
@@ -209,7 +215,7 @@ public class LoadingScreenHints : StringsContainer
 		{
 			DlcList = m_PlayerPurchasedDLCs
 		});
-		PlayerPrefs.SetString("LoadingScreenPurchasedDLCs", value);
-		PlayerPrefs.Save();
+		SettingsController.Instance.GeneralSettingsProvider.SetValue("LoadingScreenPurchasedDLCs", value);
+		SettingsController.Instance.GeneralSettingsProvider.SaveAll();
 	}
 }

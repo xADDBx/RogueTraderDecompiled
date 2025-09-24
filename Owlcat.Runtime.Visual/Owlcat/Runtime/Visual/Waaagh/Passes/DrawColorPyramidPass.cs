@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -25,6 +25,19 @@ public class DrawColorPyramidPass : ScriptableRenderPass<DrawColorPyramidPassDat
 		m_Name = string.Format("{0}.{1}", "DrawColorPyramidPass", type);
 	}
 
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		switch (m_Type)
+		{
+		case ColorPyramidType.OpaqueDistortion:
+			DependsOn(in resources.RendererLists.OpaqueDistortionGBuffer.List);
+			break;
+		case ColorPyramidType.TransparentDistortion:
+			DependsOn(in resources.RendererLists.DistortionVectors.List);
+			break;
+		}
+	}
+
 	protected override void Setup(RenderGraphBuilder builder, DrawColorPyramidPassData data, ref RenderingData renderingData)
 	{
 		data.Input = builder.ReadWriteTexture(in data.Resources.CameraColorBuffer);
@@ -32,15 +45,6 @@ public class DrawColorPyramidPass : ScriptableRenderPass<DrawColorPyramidPassDat
 		data.TextureSize = new int2(renderingData.CameraData.CameraTargetDescriptor.width, renderingData.CameraData.CameraTargetDescriptor.height);
 		data.BlitMaterial = m_BlitMaterial;
 		data.ColorPyramidMaterial = m_ColorPyramidMaterial;
-		switch (m_Type)
-		{
-		case ColorPyramidType.OpaqueDistortion:
-			builder.DependsOn(in data.Resources.RendererLists.OpaqueDistortionGBuffer.List);
-			break;
-		case ColorPyramidType.TransparentDistortion:
-			builder.DependsOn(in data.Resources.RendererLists.DistortionVectors.List);
-			break;
-		}
 		builder.AllowRendererListCulling(value: true);
 	}
 

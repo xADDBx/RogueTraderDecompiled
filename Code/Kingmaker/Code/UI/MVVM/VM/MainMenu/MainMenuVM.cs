@@ -213,6 +213,7 @@ public class MainMenuVM : VMBase, IUIMainMenu
 			if (!FirstLaunchSettingsVM.HasShown)
 			{
 				FirstLaunchSettingsVM.SetFirstLaunchPrefs();
+				SoundState.Instance.MusicStateHandler.StartMusicPlayEvent();
 				PlayFirstLaunchFX();
 				onClose?.Invoke();
 			}

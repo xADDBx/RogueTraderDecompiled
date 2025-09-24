@@ -208,25 +208,24 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 	private void SetBackgroundVideo()
 	{
 		VideoClip clip = UIConfig.Instance.KeyVideoMainMenu.Load();
-		if (SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		MainMenuTheme mainMenuTheme = SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue();
+		if (mainMenuTheme == MainMenuTheme.Original)
 		{
 			m_BackgroundVideo.SetClip(clip, SoundStateType.Video, prepareVideo: false, null, null);
 			return;
 		}
-		foreach (BlueprintDlc item in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Reverse())
+		BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().FirstOrDefault((BlueprintDlc bp) => bp.MainMenuSettingsTag == mainMenuTheme);
+		if (blueprintDlc != null && blueprintDlc.MainMenuBackgroundVideo != null)
 		{
-			if (!(item.MainMenuBackgroundVideo == null))
-			{
-				clip = item.MainMenuBackgroundVideo;
-				break;
-			}
+			clip = blueprintDlc.MainMenuBackgroundVideo;
 		}
 		m_BackgroundVideo.SetClip(clip, SoundStateType.Video, prepareVideo: false, null, null);
 	}
 
 	private void SetMonitorsArts()
 	{
-		if (SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue() == MainMenuTheme.Original)
+		MainMenuTheme mainMenuTheme = SettingsRoot.Game.MainMenu.MainMenuTheme.GetValue();
+		if (mainMenuTheme == MainMenuTheme.Original)
 		{
 			m_DefaultTopMonitorArt.gameObject.SetActive(value: true);
 			m_DefaultBottomMonitorArt.gameObject.SetActive(value: true);
@@ -236,20 +235,18 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		}
 		bool flag = false;
 		bool flag2 = false;
-		foreach (BlueprintDlc item in StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().Reverse())
+		BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().FirstOrDefault((BlueprintDlc bp) => bp.MainMenuSettingsTag == mainMenuTheme);
+		if (blueprintDlc != null && blueprintDlc.TopMonitorArt != null && blueprintDlc.BottomMonitorArt != null)
 		{
-			if (!(item.TopMonitorArt == null) || !(item.BottomMonitorArt == null))
+			if (blueprintDlc.TopMonitorArt != null && !flag)
 			{
-				if (item.TopMonitorArt != null && !flag)
-				{
-					m_DlcTopMonitorArt.sprite = item.TopMonitorArt;
-					flag = true;
-				}
-				if (item.BottomMonitorArt != null && !flag2)
-				{
-					m_DlcBottomMonitorArt.sprite = item.BottomMonitorArt;
-					flag2 = true;
-				}
+				m_DlcTopMonitorArt.sprite = blueprintDlc.TopMonitorArt;
+				flag = true;
+			}
+			if (blueprintDlc.BottomMonitorArt != null && !flag2)
+			{
+				m_DlcBottomMonitorArt.sprite = blueprintDlc.BottomMonitorArt;
+				flag2 = true;
 			}
 		}
 		m_DefaultTopMonitorArt.gameObject.SetActive(!flag);

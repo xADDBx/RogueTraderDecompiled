@@ -8,6 +8,8 @@ using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.Utility.Attributes;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 
@@ -20,6 +22,13 @@ public class AbilityCasterHasWeaponOfClassification : BlueprintComponent, IAbili
 	public WeaponClassification Classification;
 
 	public bool CheckCurrentSet;
+
+	[HideIf("CheckOnlySecondaryHand")]
+	public bool CheckOnlyPrimaryHand;
+
+	[FormerlySerializedAs("CheckOnySecondaryHand")]
+	[HideIf("CheckOnlyPrimaryHand")]
+	public bool CheckOnlySecondaryHand;
 
 	public bool IsCasterRestrictionPassed(MechanicEntity caster)
 	{
@@ -37,13 +46,13 @@ public class AbilityCasterHasWeaponOfClassification : BlueprintComponent, IAbili
 			{
 				itemEntityWeapon = item.PrimaryHand.MaybeWeapon;
 				itemEntityWeapon2 = item.SecondaryHand.MaybeWeapon;
-				flag |= (itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification);
+				flag |= (!CheckOnlySecondaryHand && itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (!CheckOnlyPrimaryHand && itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification);
 			}
 			return flag;
 		}
 		itemEntityWeapon = caster.GetBodyOptional()?.PrimaryHand.MaybeWeapon;
 		itemEntityWeapon2 = caster.GetBodyOptional()?.SecondaryHand.MaybeWeapon;
-		return flag | ((itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification));
+		return flag | ((!CheckOnlySecondaryHand && itemEntityWeapon != null && itemEntityWeapon.Blueprint.Classification == Classification) || (!CheckOnlyPrimaryHand && itemEntityWeapon2 != null && itemEntityWeapon2.Blueprint.Classification == Classification));
 	}
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)

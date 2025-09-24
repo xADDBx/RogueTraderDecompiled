@@ -7,14 +7,16 @@ using Owlcat.Runtime.Visual.Waaagh.Passes.Base;
 using Owlcat.Runtime.Visual.Waaagh.RendererFeatures;
 using Owlcat.Runtime.Visual.Waaagh.RendererFeatures.VolumetricLighting;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh;
 
 public abstract class ScriptableRenderer : IDisposable
 {
 	private List<ScriptableRenderPass> m_ActiveRenderPassQueue = new List<ScriptableRenderPass>(32);
+
+	private List<RendererList> m_ActiveRendererLists = new List<RendererList>(32);
 
 	private List<ScriptableRendererFeature> m_RendererFeatures = new List<ScriptableRendererFeature>(10);
 
@@ -157,13 +159,26 @@ public abstract class ScriptableRenderer : IDisposable
 
 	protected abstract void Setup(ScriptableRenderContext context, ref RenderingData renderingData);
 
-	public void Execute(ScriptableRenderContext contex, ref RenderingData renderingData)
+	private void ConfigureRendererLists(ref ScriptableRenderContext context, ref RenderingData renderingData)
+	{
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.RendererConfigureRendererLists)))
+		{
+			foreach (ScriptableRenderPass item in m_ActiveRenderPassQueue)
+			{
+				item.ConfigureRendererLists(ref renderingData, m_Resources);
+				m_ActiveRendererLists.AddRange(item.UsedRendererLists);
+			}
+		}
+		context.PrepareRendererListsAsync(m_ActiveRendererLists);
+	}
+
+	public void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 	{
 		ref CameraData cameraData = ref renderingData.CameraData;
 		ref TimeData timeData = ref renderingData.TimeData;
 		Camera camera = cameraData.Camera;
 		RenderGraph renderGraph = renderingData.RenderGraph;
-		using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.RendererSortRenderPasses)))
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.RendererSortRenderPasses)))
 		{
 			SortStable(m_ActiveRenderPassQueue);
 		}
@@ -173,22 +188,27 @@ public abstract class ScriptableRenderer : IDisposable
 		renderGraphParameters.currentFrameIndex = timeData.FrameId;
 		renderGraphParameters.executionName = GetExecutionName(ref cameraData);
 		renderGraphParameters.rendererListCulling = true;
-		renderGraphParameters.scriptableRenderContext = contex;
+		renderGraphParameters.scriptableRenderContext = context;
 		RenderGraphParameters parameters = renderGraphParameters;
-		using (renderGraph.RecordAndExecute(in parameters))
+		renderGraph.BeginRecording(in parameters);
+		renderGraph.BeginProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\ScriptableRenderer.cs", 264);
+		InitRenderGraphResources(ref renderingData);
+		ConfigureRendererLists(ref context, ref renderingData);
+		foreach (ScriptableRenderPass item in m_ActiveRenderPassQueue)
 		{
-			renderGraph.BeginProfilingSampler(TryGetOrAddCameraSampler(camera));
-			InitRenderGraphResources(ref renderingData);
-			foreach (ScriptableRenderPass item in m_ActiveRenderPassQueue)
+			if (!item.AreRendererListsEmpty(context))
 			{
 				item.Execute(ref renderingData);
 			}
-			m_ActiveRenderPassQueue.Clear();
-			renderGraph.EndProfilingSampler(TryGetOrAddCameraSampler(camera));
+			item.ClearRendererLists();
 		}
-		contex.ExecuteCommandBuffer(commandBuffer);
+		m_ActiveRenderPassQueue.Clear();
+		renderGraph.EndProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\ScriptableRenderer.cs", 281);
+		renderGraph.EndRecordingAndExecute();
+		context.ExecuteCommandBuffer(commandBuffer);
 		CommandBufferPool.Release(commandBuffer);
 		m_Resources.Cleanup();
+		m_ActiveRendererLists.Clear();
 	}
 
 	private string GetExecutionName(ref CameraData cameraData)

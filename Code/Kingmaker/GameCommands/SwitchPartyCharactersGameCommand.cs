@@ -62,8 +62,8 @@ public class SwitchPartyCharactersGameCommand : GameCommand, IMemoryPackable<Swi
 	{
 		m_Unit1 = unit1;
 		m_Unit2 = unit2;
-		m_Index1 = (sbyte)Game.Instance.Player.PartyCharacters.FindIndex((UnitReference u) => u == unit1);
-		m_Index2 = (sbyte)Game.Instance.Player.PartyCharacters.FindIndex((UnitReference u) => u == unit2);
+		m_Index1 = (sbyte)Game.Instance.Player.PartyAndPets.FindIndex((BaseUnitEntity u) => u == unit1);
+		m_Index2 = (sbyte)Game.Instance.Player.PartyAndPets.FindIndex((BaseUnitEntity u) => u == unit2);
 	}
 
 	protected override void ExecuteInternal()
@@ -72,8 +72,8 @@ public class SwitchPartyCharactersGameCommand : GameCommand, IMemoryPackable<Swi
 		BaseUnitEntity unit2 = m_Unit2.Entity;
 		if (unit1 != null && unit2 != null)
 		{
-			int num = Game.Instance.Player.PartyCharacters.FindIndex((UnitReference u) => u == unit1);
-			int num2 = Game.Instance.Player.PartyCharacters.FindIndex((UnitReference u) => u == unit2);
+			int num = Game.Instance.Player.PartyAndPets.FindIndex((BaseUnitEntity u) => u == unit1);
+			int num2 = Game.Instance.Player.PartyAndPets.FindIndex((BaseUnitEntity u) => u == unit2);
 			if (num == m_Index1 && num2 == m_Index2)
 			{
 				Game.Instance.SelectionCharacter.SwitchCharacter(unit1, unit2);

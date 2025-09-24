@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using Owlcat.Runtime.Visual.Waaagh.Passes;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.RendererFeatures.Highlighting.Passes;
 
@@ -65,7 +65,6 @@ public class HighlighterPass : ScriptableRenderPass<HighlighterPassData>
 			TextureDesc desc3 = desc;
 			desc3.name = "HighlightDepthRT";
 			desc3.colorFormat = GraphicsFormat.D24_UNorm_S8_UInt;
-			desc3.depthBufferBits = DepthBits.Depth32;
 			data.DepthBuffer = builder.CreateTransientTexture(in desc3);
 			break;
 		}

@@ -195,6 +195,12 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private bool m_ShowHelmetAboveAll;
 
+	private bool m_ShowGloves = true;
+
+	private bool m_ShowBoots = true;
+
+	private bool m_ShowArmor = true;
+
 	private bool m_BackEquipmentIsDirty;
 
 	public Func<EquipmentEntity.OutfitPart, GameObject, bool> OutfitFilter;
@@ -235,6 +241,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 			return m_AtlasRenderer.sharedMaterial;
 		}
 	}
+
+	public IReadOnlyList<OutfitPartInfo> OutfitObjectsSpawned => m_OutfitObjectsSpawned;
 
 	public AnimationSet AnimationSet
 	{
@@ -307,6 +315,9 @@ public class Character : RegisteredBehaviour, IUpdatable
 	public UnitAnimationManager AnimationManager { get; private set; }
 
 	public List<EquipmentEntity> EquipmentEntities { get; } = new List<EquipmentEntity>();
+
+
+	public HashSet<EquipmentEntity> EquippedItemsEntities { get; } = new HashSet<EquipmentEntity>();
 
 
 	public int EquipmentEntityCount => EquipmentEntities.Count;
@@ -417,7 +428,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 			AnimationManager.AnimationSet = AnimationSet;
 		}
 		m_BonesList = Animator.EnsureComponent<CharacterBonesList>();
-		if (m_BonesList.Bones == null)
+		if (m_BonesList != null)
 		{
 			m_BonesList.UpdateCache(CharacterBonesSetup.Instance);
 		}
@@ -457,6 +468,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 			if ((bool)m_AtlasRenderer)
 			{
 				m_AtlasRenderer.sharedMaterial = null;
+				if (m_AtlasRenderer.sharedMesh != null)
+				{
+					UnityEngine.Object.Destroy(m_AtlasRenderer.sharedMesh);
+				}
+				UnityEngine.Object.Destroy(m_AtlasRenderer.gameObject);
 			}
 			UnityEngine.Object.Destroy(m_AtlasMaterial);
 			m_AtlasMaterial = null;
@@ -770,6 +786,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void AddEquipmentEntity(EquipmentEntity ee, bool saved = false)
 	{
+		AddEquipmentEntity(ee, saved, isFromEquippedItem: false);
+	}
+
+	public void AddEquipmentEntity(EquipmentEntity ee, bool saved, bool isFromEquippedItem)
+	{
 		if (ee == null)
 		{
 			return;
@@ -803,6 +824,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 			return;
 		}
 		EquipmentEntities.Add(ee);
+		if (isFromEquippedItem)
+		{
+			EquippedItemsEntities.Add(ee);
+		}
 		if (ee.ForcedPrimaryIndex >= 0 || ee.ForcedSecondaryIndex >= 0)
 		{
 			SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices rampIndices) => rampIndices.EquipmentEntity == ee);
@@ -842,11 +867,16 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void AddEquipmentEntities(IEnumerable<EquipmentEntity> ees, bool saved = false)
 	{
+		AddEquipmentEntities(ees, saved, isFromEquippedItems: false);
+	}
+
+	public void AddEquipmentEntities(IEnumerable<EquipmentEntity> ees, bool saved, bool isFromEquippedItems)
+	{
 		using (ProfileScope.NewScope("AddEquipmentEntities"))
 		{
 			ees.ForEach(delegate(EquipmentEntity ee)
 			{
-				AddEquipmentEntity(ee, saved);
+				AddEquipmentEntity(ee, saved, isFromEquippedItems);
 			});
 		}
 	}
@@ -886,6 +916,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return;
 		}
+		PFLog.TechArt.Log($"RemoveEquipmentEntity: Removing EE {ee?.name}, saved={saved}");
 		m_EquipmentEntitiesTextures.RemoveEquipmentEntity(ee);
 		for (int i = 0; i < RampIndices.Count; i++)
 		{
@@ -895,13 +926,17 @@ public class Character : RegisteredBehaviour, IUpdatable
 				break;
 			}
 		}
-		IsDirty |= EquipmentEntities.Remove(ee);
+		bool flag = EquipmentEntities.Remove(ee);
+		IsDirty |= flag;
+		bool flag2 = EquippedItemsEntities.Remove(ee);
+		PFLog.TechArt.Log($"RemoveEquipmentEntity: Removed from EquipmentEntities={flag}, Removed from EquippedItemsEntities={flag2}");
 	}
 
 	public void RemoveAllEquipmentEntities(bool saved = false)
 	{
 		IsDirty |= EquipmentEntities.Any();
 		EquipmentEntities.Clear();
+		EquippedItemsEntities.Clear();
 		RampIndices.Clear();
 	}
 
@@ -932,10 +967,17 @@ public class Character : RegisteredBehaviour, IUpdatable
 		RemoveAllEquipmentEntities();
 		AddEquipmentEntities(originalAvatar.EquipmentEntities);
 		AddEquipmentEntities(originalAvatar.m_SavedEquipmentEntities.Select((EquipmentEntityLink eel) => eel.Load()), saved: true);
+		foreach (EquipmentEntity equippedItemsEntity in originalAvatar.EquippedItemsEntities)
+		{
+			EquippedItemsEntities.Add(equippedItemsEntity);
+		}
 		CopyRampIndicesFrom(originalAvatar);
 		m_ShowBackpack = originalAvatar.m_ShowBackpack;
 		m_ShowHelmet = originalAvatar.m_ShowHelmet;
 		m_ShowCloth = originalAvatar.m_ShowCloth;
+		m_ShowGloves = originalAvatar.m_ShowGloves;
+		m_ShowBoots = originalAvatar.m_ShowBoots;
+		m_ShowArmor = originalAvatar.m_ShowArmor;
 		IsDirty = true;
 	}
 
@@ -1041,6 +1083,39 @@ public class Character : RegisteredBehaviour, IUpdatable
 		return true;
 	}
 
+	private bool ShouldHideBodyPartFromEquippedItem(BodyPart bodyPart, EquipmentEntity fromEntity)
+	{
+		if (!EquippedItemsEntities.Contains(fromEntity))
+		{
+			return false;
+		}
+		if (!m_ShowGloves && IsGlovesType(bodyPart))
+		{
+			if (fromEntity.CantBeHiddenByDollRoom)
+			{
+				return false;
+			}
+			return true;
+		}
+		if (!m_ShowBoots && IsBootsType(bodyPart))
+		{
+			if (fromEntity.CantBeHiddenByDollRoom)
+			{
+				return false;
+			}
+			return true;
+		}
+		if (!m_ShowArmor && IsArmorType(bodyPart))
+		{
+			if (fromEntity.CantBeHiddenByDollRoom)
+			{
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	private void SetAlwaysVisibleHelmetProxyEe()
 	{
 		if (!m_ShowHelmetAboveAll)
@@ -1136,15 +1211,20 @@ public class Character : RegisteredBehaviour, IUpdatable
 			}
 			foreach (BodyPart bodyPart in item.BodyParts)
 			{
-				if (bodyPart != null && (bodyPartType & bodyPart.Type) == (BodyPartType)0L && !(bodyPart.SkinnedRenderer == null) && !(bodyPart.Material == null))
+				if (bodyPart == null || ShouldHideBodyPartFromEquippedItem(bodyPart, item) || (bodyPartType & bodyPart.Type) != (BodyPartType)0L || bodyPart.SkinnedRenderer == null || bodyPart.Material == null)
 				{
-					KeyValuePair<BodyPart, EquipmentEntity> keyValuePair = dictionary.FirstOrDefault((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == bodyPart.Type);
-					if (keyValuePair.Key != null)
+					continue;
+				}
+				KeyValuePair<BodyPart, EquipmentEntity> keyValuePair = dictionary.FirstOrDefault((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == bodyPart.Type);
+				if (keyValuePair.Key != null)
+				{
+					bool flag = bodyPart.Type == BodyPartType.Forearms;
+					if (!flag || (flag && !item.isOnlyRightBP))
 					{
 						dictionary.Remove(keyValuePair.Key);
 					}
-					dictionary[bodyPart] = item;
 				}
+				dictionary[bodyPart] = item;
 			}
 		}
 		m_OverlayBodyParts = new List<BodyPart>();
@@ -1181,7 +1261,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 				}
 				else
 				{
-					m_AtlasMaterial = new Material(Shader.Find("Standard"));
+					m_AtlasMaterial = new Material(Shader.Find("Owlcat/Lit"));
 					m_AtlasMaterial.name = "SimpleMesh_" + base.name;
 				}
 			}
@@ -1201,28 +1281,62 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private void AddBodyParts(List<BodyPart> bodyParts, BodyPartType type, EquipmentEntity entity)
 	{
-		foreach (BodyPart bodyPart in entity.BodyParts)
+		foreach (BodyPart bodyPart2 in entity.BodyParts)
 		{
-			if (bodyPart.Type != type)
+			if (ShouldHideBodyPartFromEquippedItem(bodyPart2, entity))
 			{
 				continue;
 			}
-			bool flag = true;
-			foreach (CharacterTextureDescription texture in bodyPart.Textures)
+			if (bodyPart2.Type == BodyPartType.Forearms && entity.isOnlyRightBP)
 			{
-				if (texture.GetSourceTexture() == null)
+				BodyPart bodyPart = new BodyPart
 				{
-					if (Application.isEditor)
+					Type = BodyPartType.Augment1,
+					RendererPrefab = bodyPart2.RendererPrefab,
+					Material = bodyPart2.Material,
+					Textures = bodyPart2.Textures
+				};
+				bool flag = true;
+				foreach (CharacterTextureDescription texture in bodyPart.Textures)
+				{
+					if (texture.GetSourceTexture() == null)
 					{
-						PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+						if (Application.isEditor)
+						{
+							PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+						}
+						flag = false;
+						break;
 					}
-					flag = false;
-					break;
+				}
+				if (flag)
+				{
+					bodyParts.Add(bodyPart);
 				}
 			}
-			if (flag)
+			else
 			{
-				bodyParts.Add(bodyPart);
+				if (bodyPart2.Type != type)
+				{
+					continue;
+				}
+				bool flag2 = true;
+				foreach (CharacterTextureDescription texture2 in bodyPart2.Textures)
+				{
+					if (texture2.GetSourceTexture() == null)
+					{
+						if (Application.isEditor)
+						{
+							PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+						}
+						flag2 = false;
+						break;
+					}
+				}
+				if (flag2)
+				{
+					bodyParts.Add(bodyPart2);
+				}
 			}
 		}
 	}
@@ -1583,6 +1697,33 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 	}
 
+	public void UpdateGlovesVisibility(bool showGloves)
+	{
+		if (m_ShowGloves == !showGloves)
+		{
+			IsDirty = true;
+			m_ShowGloves = showGloves;
+		}
+	}
+
+	public void UpdateBootsVisibility(bool showBoots)
+	{
+		if (m_ShowBoots == !showBoots)
+		{
+			IsDirty = true;
+			m_ShowBoots = showBoots;
+		}
+	}
+
+	public void UpdateArmorVisibility(bool showArmor)
+	{
+		if (m_ShowArmor == !showArmor)
+		{
+			IsDirty = true;
+			m_ShowArmor = showArmor;
+		}
+	}
+
 	private void ClearAtlases()
 	{
 		foreach (CharacterAtlas atlase in m_Atlases)
@@ -1643,7 +1784,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		List<Vector2> list5 = new List<Vector2>();
 		GameObject obj = new GameObject("Renderer_" + m_AtlasMaterial.name);
 		obj.transform.parent = Animator.transform;
-		obj.transform.localPosition = default(Vector3);
+		obj.transform.localPosition = Vector3.zero;
 		obj.transform.localScale = Vector3.one;
 		obj.transform.localRotation = Quaternion.identity;
 		SkinnedMeshRenderer skinnedMeshRenderer = obj.AddComponent<SkinnedMeshRenderer>();
@@ -1652,6 +1793,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 			name = "Character"
 		};
 		mesh.Clear();
+		GameObject gameObject = null;
+		if (geometryBodyParts.Count((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == BodyPartType.Forearms) > 1)
+		{
+			gameObject = EditForearmRightMesh(geometryBodyParts);
+		}
 		foreach (KeyValuePair<BodyPart, EquipmentEntity> geometryBodyPart in geometryBodyParts)
 		{
 			SkinnedMeshRenderer skinnedRenderer = geometryBodyPart.Key.SkinnedRenderer;
@@ -1664,15 +1810,16 @@ public class Character : RegisteredBehaviour, IUpdatable
 				int[] bonesMapping = new int[skinnedRenderer.sharedMesh.bindposes.Length];
 				EnsureBones(geometryBodyPart.Key, list, list3, bonesMapping, cachedBones);
 				Vector2[] uv = skinnedRenderer.sharedMesh.uv;
-				foreach (Vector2 item in uv)
+				for (int i = 0; i < uv.Length; i++)
 				{
-					list5.Add(item);
+					list5.Add(uv[i]);
 				}
-				CombineInstance item2 = default(CombineInstance);
-				item2.mesh = skinnedRenderer.sharedMesh;
-				item2.transform = Matrix4x4.identity;
+				CombineInstance combineInstance = default(CombineInstance);
+				combineInstance.mesh = skinnedRenderer.sharedMesh;
+				combineInstance.transform = Matrix4x4.identity;
+				CombineInstance item = combineInstance;
 				InsertBoneWeights(list2, bonesMapping, skinnedRenderer);
-				list4.Add(item2);
+				list4.Add(item);
 			}
 		}
 		mesh.CombineMeshes(list4.ToArray());
@@ -1688,6 +1835,129 @@ public class Character : RegisteredBehaviour, IUpdatable
 		skinnedMeshRenderer.gameObject.layer = 9;
 		skinnedMeshRenderer.sharedMaterial = m_AtlasMaterial;
 		Animator.Rebind();
+		if (gameObject != null)
+		{
+			UnityEngine.Object.DestroyImmediate(gameObject);
+		}
+	}
+
+	private GameObject EditForearmRightMesh(Dictionary<BodyPart, EquipmentEntity> geometryBodyParts)
+	{
+		GameObject newRendererPrefab = null;
+		KeyValuePair<BodyPart, EquipmentEntity> keyValuePair = geometryBodyParts.FirstOrDefault((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == BodyPartType.Forearms && !kvp.Value.isOnlyRightBP);
+		if (keyValuePair.Key.SkinnedRenderer != null)
+		{
+			Mesh mesh = UnityEngine.Object.Instantiate(keyValuePair.Key.SkinnedRenderer.sharedMesh);
+			Vector3[] vertices = mesh.vertices;
+			Vector2[] uv = mesh.uv;
+			int[] triangles = mesh.triangles;
+			Vector3[] normals = mesh.normals;
+			Vector4[] tangents = mesh.tangents;
+			BoneWeight[] boneWeights = mesh.boneWeights;
+			Matrix4x4[] bindposes = mesh.bindposes;
+			Transform[] bones = keyValuePair.Key.SkinnedRenderer.bones;
+			HashSet<int> hashSet = new HashSet<int>();
+			for (int i = 0; i < bones.Length; i++)
+			{
+				if (bones[i] != null && bones[i].name.StartsWith("R_"))
+				{
+					hashSet.Add(i);
+				}
+			}
+			bool[] array = new bool[vertices.Length];
+			for (int j = 0; j < vertices.Length; j++)
+			{
+				BoneWeight boneWeight = boneWeights[j];
+				bool flag = (!hashSet.Contains(boneWeight.boneIndex0) || !(boneWeight.weight0 > 0.01f)) && (!hashSet.Contains(boneWeight.boneIndex1) || !(boneWeight.weight1 > 0.01f)) && (!hashSet.Contains(boneWeight.boneIndex2) || !(boneWeight.weight2 > 0.01f)) && (!hashSet.Contains(boneWeight.boneIndex3) || !(boneWeight.weight3 > 0.01f));
+				array[j] = flag;
+			}
+			int num = 0;
+			for (int k = 0; k < vertices.Length; k++)
+			{
+				if (array[k])
+				{
+					num++;
+				}
+			}
+			int[] array2 = new int[vertices.Length];
+			Vector3[] array3 = new Vector3[num];
+			Vector2[] array4 = new Vector2[num];
+			Vector3[] array5 = new Vector3[num];
+			Vector4[] array6 = new Vector4[num];
+			BoneWeight[] array7 = new BoneWeight[num];
+			int num2 = 0;
+			for (int l = 0; l < vertices.Length; l++)
+			{
+				if (array[l])
+				{
+					array2[l] = num2;
+					array3[num2] = vertices[l];
+					array4[num2] = uv[l];
+					array5[num2] = normals[l];
+					array6[num2] = tangents[l];
+					array7[num2] = boneWeights[l];
+					num2++;
+				}
+				else
+				{
+					array2[l] = -1;
+				}
+			}
+			List<int> list = new List<int>();
+			for (int m = 0; m < triangles.Length; m += 3)
+			{
+				int num3 = array2[triangles[m]];
+				int num4 = array2[triangles[m + 1]];
+				int num5 = array2[triangles[m + 2]];
+				if (num3 != -1 && num4 != -1 && num5 != -1)
+				{
+					list.Add(num3);
+					list.Add(num4);
+					list.Add(num5);
+				}
+			}
+			int[] array8 = list.ToArray();
+			if (array3.Length == 0 || array8.Length == 0)
+			{
+				PFLog.TechArt.Error("Результат фильтрации пустой: вершины или треугольники отсутствуют.");
+				UnityEngine.Object.Destroy(mesh);
+				return null;
+			}
+			mesh.Clear();
+			mesh.vertices = array3;
+			mesh.uv = array4;
+			mesh.normals = array5;
+			mesh.tangents = array6;
+			mesh.boneWeights = array7;
+			mesh.bindposes = bindposes;
+			mesh.triangles = array8;
+			mesh.RecalculateBounds();
+			newRendererPrefab = UnityEngine.Object.Instantiate(keyValuePair.Key.RendererPrefab);
+			newRendererPrefab.name = "Modified_Forearms_Prefab";
+			SkinnedMeshRenderer componentInChildren = newRendererPrefab.GetComponentInChildren<SkinnedMeshRenderer>();
+			componentInChildren.sharedMesh = mesh;
+			componentInChildren.rootBone = keyValuePair.Key.SkinnedRenderer.rootBone;
+			componentInChildren.bones = keyValuePair.Key.SkinnedRenderer.bones;
+			EquipmentEntity equipmentEntity = UnityEngine.Object.Instantiate(keyValuePair.Value);
+			equipmentEntity.name = keyValuePair.Value.name + "_Modified";
+			for (int n = 0; n < equipmentEntity.BodyParts.Count; n++)
+			{
+				if (equipmentEntity.BodyParts[n].Type == BodyPartType.Forearms && equipmentEntity.BodyParts[n].RendererPrefab == keyValuePair.Key.RendererPrefab)
+				{
+					equipmentEntity.BodyParts[n] = new BodyPart
+					{
+						RendererPrefab = newRendererPrefab,
+						Type = keyValuePair.Key.Type,
+						Material = keyValuePair.Key.Material,
+						Textures = new List<CharacterTextureDescription>(keyValuePair.Key.Textures)
+					};
+					break;
+				}
+			}
+			geometryBodyParts.Remove(keyValuePair.Key);
+			geometryBodyParts.Add(equipmentEntity.BodyParts.Find((BodyPart bp) => bp.Type == BodyPartType.Forearms && bp.RendererPrefab == newRendererPrefab), equipmentEntity);
+		}
+		return newRendererPrefab;
 	}
 
 	internal Dictionary<string, Transform> CacheHierarchy()
@@ -1995,6 +2265,51 @@ public class Character : RegisteredBehaviour, IUpdatable
 			BodyPartType.MaskTop => true, 
 			BodyPartType.MaskBottom => true, 
 			BodyPartType.Goggles => true, 
+			_ => false, 
+		};
+	}
+
+	private static bool IsGlovesType(BodyPart bodyPart)
+	{
+		return bodyPart.Type switch
+		{
+			BodyPartType.Hands => true, 
+			BodyPartType.Forearms => true, 
+			BodyPartType.Cuffs => true, 
+			BodyPartType.CuffL => true, 
+			BodyPartType.CuffR => true, 
+			BodyPartType.LowerArmsExtra => true, 
+			_ => false, 
+		};
+	}
+
+	private static bool IsBootsType(BodyPart bodyPart)
+	{
+		return bodyPart.Type switch
+		{
+			BodyPartType.Feet => true, 
+			BodyPartType.LowerLegs => true, 
+			BodyPartType.LowerLegsExtra => true, 
+			BodyPartType.KneeCops => true, 
+			_ => false, 
+		};
+	}
+
+	private static bool IsArmorType(BodyPart bodyPart)
+	{
+		return bodyPart.Type switch
+		{
+			BodyPartType.Torso => true, 
+			BodyPartType.TorsoExtra => true, 
+			BodyPartType.UpperArms => true, 
+			BodyPartType.UpperLegs => true, 
+			BodyPartType.Spaulders => true, 
+			BodyPartType.SpaulderL => true, 
+			BodyPartType.SpaulderR => true, 
+			BodyPartType.Skirt => true, 
+			BodyPartType.HighCollar => true, 
+			BodyPartType.Hoses => true, 
+			BodyPartType.Belt => true, 
 			_ => false, 
 		};
 	}

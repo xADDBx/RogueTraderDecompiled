@@ -118,6 +118,12 @@ public class DollState : ICanConvertPropertiesToReactive
 
 	private bool m_ShowBackpack = true;
 
+	private bool m_ShowGloves = true;
+
+	private bool m_ShowBoots = true;
+
+	private bool m_ShowArmor = true;
+
 	[NotNull]
 	private static BlueprintCharGenRoot Root => BlueprintRoot.Instance.CharGenRoot;
 
@@ -267,6 +273,54 @@ public class DollState : ICanConvertPropertiesToReactive
 			if (m_ShowBackpack != value)
 			{
 				m_ShowBackpack = value;
+				Updated();
+			}
+		}
+	}
+
+	public bool ShowGloves
+	{
+		get
+		{
+			return m_ShowGloves;
+		}
+		set
+		{
+			if (m_ShowGloves != value)
+			{
+				m_ShowGloves = value;
+				Updated();
+			}
+		}
+	}
+
+	public bool ShowBoots
+	{
+		get
+		{
+			return m_ShowBoots;
+		}
+		set
+		{
+			if (m_ShowBoots != value)
+			{
+				m_ShowBoots = value;
+				Updated();
+			}
+		}
+	}
+
+	public bool ShowArmor
+	{
+		get
+		{
+			return m_ShowArmor;
+		}
+		set
+		{
+			if (m_ShowArmor != value)
+			{
+				m_ShowArmor = value;
 				Updated();
 			}
 		}

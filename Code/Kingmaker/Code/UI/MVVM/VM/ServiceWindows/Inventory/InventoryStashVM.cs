@@ -17,7 +17,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 
-public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IPartyEncumbranceHandler, ISubscriber, ISetInventorySorterHandler
+public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IPartyEncumbranceHandler, ISubscriber, ISetInventorySorterHandler, IForceSortHandler, IWeaponSetChangedTooltipUpdateHandler
 {
 	public readonly SlotsGroupVM<ItemSlotVM> ItemSlotsGroup;
 
@@ -127,7 +127,7 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 	}
 
-	public void OnWeaponSetChanged()
+	public void OnWeaponChangeTooltipUpdate()
 	{
 		DelayedInvoker.InvokeInFrames(delegate
 		{
@@ -136,5 +136,10 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				s.UpdateTooltips(force: true);
 			});
 		}, 2);
+	}
+
+	public void HandleForceSort()
+	{
+		ItemSlotsGroup.SortItems();
 	}
 }

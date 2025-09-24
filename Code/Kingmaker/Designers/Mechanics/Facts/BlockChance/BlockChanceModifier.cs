@@ -40,6 +40,12 @@ public abstract class BlockChanceModifier : MechanicEntityFactComponentDelegate,
 	[ShowIf("HasBlockChanceMultiplier")]
 	public ContextValue BlockChanceMultiplierValue = 1;
 
+	[SerializeField]
+	private bool m_AlwaysBlock;
+
+	[SerializeField]
+	private bool m_NeverBlock;
+
 	private bool HasBlockChance => (Properties & PropertyType.BlockChance) != 0;
 
 	private bool HasBlockChanceMultiplier => (Properties & PropertyType.BlockChanceMultiplier) != 0;
@@ -55,6 +61,14 @@ public abstract class BlockChanceModifier : MechanicEntityFactComponentDelegate,
 			if (HasBlockChanceMultiplier)
 			{
 				rule.BlockValueMultipliers.Add(ModifierType.PctMul_Extra, BlockChanceMultiplierValue.Calculate(base.Context), base.Fact);
+			}
+			if (m_AlwaysBlock)
+			{
+				rule.AutoBlockModifier.Add(base.Fact);
+			}
+			if (m_NeverBlock)
+			{
+				rule.NeverBlockModifier.Add(base.Fact);
 			}
 		}
 	}

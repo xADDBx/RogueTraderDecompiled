@@ -18,6 +18,10 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 
 	public readonly ValueModifiersManager ChanceValueModifiers = new ValueModifiersManager();
 
+	public readonly FlagModifiersManager AutoHitFlagModifiers = new FlagModifiersManager();
+
+	public readonly FlagModifiersManager AutoMissFlagModifiers = new FlagModifiersManager();
+
 	[CanBeNull]
 	public readonly AbilityData Ability;
 
@@ -26,13 +30,13 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 	[CanBeNull]
 	public readonly MechanicEntity Cover;
 
-	private int? m_ShieldCoverMagnitude;
-
 	public int BaseChance { get; private set; }
 
-	public bool OverrideByShield { get; private set; }
-
 	public int ResultChance { get; private set; }
+
+	public bool IsAutoHit => AutoHitFlagModifiers.Value;
+
+	public bool IsAutoMiss => AutoMissFlagModifiers.Value;
 
 	public RuleCalculateCoverHitChance([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, LosCalculations.CoverType los, [CanBeNull] MechanicEntity cover)
 		: base(initiator, target)
@@ -54,16 +58,17 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		OverrideByShield = BaseChance < m_ShieldCoverMagnitude;
-		BaseChance = Mathf.Max(BaseChance, m_ShieldCoverMagnitude.GetValueOrDefault());
-		if (!OverrideByShield)
+		BaseChance = Mathf.Max(BaseChance, 0);
+		if (IsAutoHit || IsAutoMiss)
 		{
-			LosCalculations.CoverType los = Los;
-			if (los == LosCalculations.CoverType.Invisible || los == LosCalculations.CoverType.None)
-			{
-				ResultChance = BaseChance;
-				return;
-			}
+			ResultChance = ((!IsAutoMiss) ? 100 : 0);
+			return;
+		}
+		LosCalculations.CoverType los = Los;
+		if (los == LosCalculations.CoverType.Invisible || los == LosCalculations.CoverType.None)
+		{
+			ResultChance = BaseChance;
+			return;
 		}
 		float num = SettingsHelper.CalculateCRModifier(SettingsRoot.Difficulty.CoverHitBonusHalfModifier);
 		float num2 = SettingsHelper.CalculateCRModifier(SettingsRoot.Difficulty.CoverHitBonusFullModifier);
@@ -84,10 +89,5 @@ public class RuleCalculateCoverHitChance : RulebookOptionalTargetEvent
 		}
 		int value2 = (int)((float)(BaseChance + ChanceValueModifiers.Value) * ChancePercentModifiers.Value);
 		ResultChance = Math.Clamp(value2, 0, 95);
-	}
-
-	public void AddShieldCoverMagnitude(int coverMagnitude)
-	{
-		m_ShieldCoverMagnitude = Mathf.Max(0, coverMagnitude);
 	}
 }

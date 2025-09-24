@@ -11,16 +11,19 @@ public readonly struct UIProperty
 
 	public readonly string Description;
 
+	public readonly bool Main;
+
 	[CanBeNull]
 	public readonly BlueprintMechanicEntityFact DescriptionFact;
 
 	public readonly int? PropertyValue;
 
-	public UIProperty(UIPropertyName nameType, string name, string description, [CanBeNull] BlueprintMechanicEntityFact descriptionFact, int? propertyValue)
+	public UIProperty(UIPropertyName nameType, string name, string description, bool main, [CanBeNull] BlueprintMechanicEntityFact descriptionFact, int? propertyValue)
 	{
 		NameType = nameType;
 		Name = name;
 		Description = description;
+		Main = main;
 		DescriptionFact = descriptionFact;
 		PropertyValue = propertyValue;
 	}

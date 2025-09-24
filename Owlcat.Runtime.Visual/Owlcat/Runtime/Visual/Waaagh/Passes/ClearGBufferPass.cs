@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -15,9 +15,6 @@ public sealed class ClearGBufferPass : ScriptableRenderPass<ClearGBufferPassData
 
 	protected override void Setup(RenderGraphBuilder builder, ClearGBufferPassData data, ref RenderingData renderingData)
 	{
-		builder.AllowRendererListCulling(!renderingData.IrsHasOpaques && !renderingData.IrsHasOpaqueDistortions);
-		builder.DependsOn(in renderingData.CameraData.Renderer.RenderGraphResources.RendererLists.OpaqueGBuffer.List);
-		builder.DependsOn(in renderingData.CameraData.Renderer.RenderGraphResources.RendererLists.OpaqueDistortionGBuffer.List);
 		builder.UseDepthBuffer(in data.Resources.CameraDepthBuffer, DepthAccess.Write);
 		data.CameraAlbedoRT = builder.UseColorBuffer(in data.Resources.CameraAlbedoRT, 0);
 		data.CameraSpecularRT = builder.UseColorBuffer(in data.Resources.CameraSpecularRT, 1);

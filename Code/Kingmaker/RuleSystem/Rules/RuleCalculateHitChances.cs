@@ -26,9 +26,11 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public readonly ValueModifiersManager TargetWeaponSkillValueModifiers = new ValueModifiersManager();
 
-	public FlagModifiersManager AutoCrits = new FlagModifiersManager();
+	public FlagModifiersManager AutoHitModifier = new FlagModifiersManager();
 
-	public FlagModifiersManager NeverCrits = new FlagModifiersManager();
+	public FlagModifiersManager AutoCritModifier = new FlagModifiersManager();
+
+	public FlagModifiersManager NeverCritMofifier = new FlagModifiersManager();
 
 	private RuleCalculateSuperiority m_RuleCalculateSuperiority;
 
@@ -82,7 +84,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public bool IsAOE => Ability.IsAOE;
 
-	public bool IsAutoHit { get; private set; }
+	public bool IsAutoHit { get; set; }
 
 	public bool IsAutoMiss { get; private set; }
 
@@ -192,7 +194,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	private void SpecialOverrideWithFeatures()
 	{
-		if ((bool)base.ConcreteInitiator.Features.AutoHit)
+		if ((bool)base.ConcreteInitiator.Features.AutoHit || AutoHitModifier.Value)
 		{
 			IsAutoHit = true;
 			RawResult = 100;

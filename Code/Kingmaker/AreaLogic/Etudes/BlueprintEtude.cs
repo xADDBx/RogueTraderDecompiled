@@ -42,6 +42,8 @@ public class BlueprintEtude : BlueprintFact, IEtudeReference
 	[ShowCreator]
 	private List<BlueprintAreaMechanicsReference> m_AddedAreaMechanics;
 
+	public const string NameOfAddedAreaMechanics = "m_AddedAreaMechanics";
+
 	[FormerlySerializedAs("m_LinkedStart")]
 	[SerializeField]
 	[ShowCreator]

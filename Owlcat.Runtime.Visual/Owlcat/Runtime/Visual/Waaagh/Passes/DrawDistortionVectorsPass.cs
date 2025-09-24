@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -19,7 +19,7 @@ public class DrawDistortionVectorsPass : DrawRendererListPass<DrawDistortionVect
 		m_ApplyDistortionMaterial = applyDistortionMaterial;
 	}
 
-	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererListHandle rendererList)
+	protected override void GetOrCreateRendererList(ref RenderingData renderingData, WaaaghRendererLists sharedRendererLists, out RendererList rendererList)
 	{
 		rendererList = renderingData.CameraData.Renderer.RenderGraphResources.RendererLists.DistortionVectors.List;
 	}

@@ -65,6 +65,8 @@ public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 	[NotNull]
 	public LocalizedString ServiceMessage;
 
+	public Dlc Dlc;
+
 	[SerializeField]
 	private QuestGroupId m_Group;
 

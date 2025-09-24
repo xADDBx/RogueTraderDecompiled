@@ -24,7 +24,7 @@ public class GameOverVM : CommonStaticComponentVM
 
 	public bool IsIronMan => SettingsRoot.Difficulty.OnlyOneSave;
 
-	public bool HasDowngradedIronManSave => SaveManager.HasDowngradedIronManSave;
+	public bool HasDowngradedIronManSave => SaveManager.GetIronmanSave() != null;
 
 	public GameOverVM()
 	{
@@ -90,18 +90,12 @@ public class GameOverVM : CommonStaticComponentVM
 
 	public void OnIronManDeleteSave()
 	{
-		if (HasDowngradedIronManSave)
-		{
-			SaveManager.DeleteDowngradedIronManSave();
-		}
+		SaveManager.DeleteSave(Game.Instance.SaveManager.GetIronmanSave());
 		OnButtonMainMenu();
 	}
 
 	public void OnIronManContinueGame()
 	{
-		if (HasDowngradedIronManSave)
-		{
-			SaveManager.LoadDowngradedIronManSave();
-		}
+		SaveManager.DowngradeSaveFromIronMan(Game.Instance.SaveManager.GetIronmanSave());
 	}
 }

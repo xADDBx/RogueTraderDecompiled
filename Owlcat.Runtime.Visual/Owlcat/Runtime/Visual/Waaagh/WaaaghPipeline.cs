@@ -15,8 +15,8 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.SceneManagement;
 using UnityEngine.VFX;
 
@@ -87,6 +87,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		m_GlobalSettings = WaaaghPipelineGlobalSettings.Instance;
 		SetSupportedRenderingFeatures();
 		Shader.globalRenderPipeline = "OwlcatPipeline";
+		VolumeManager.instance.Initialize();
 		Lightmapping.SetDelegate(LightmappingDelegate);
 		RenderingUtils.ClearSystemInfoCache();
 		m_RenderGraph = new RenderGraph("WaaaghGraph");
@@ -121,6 +122,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		base.Dispose(disposing);
 		Shader.globalRenderPipeline = "";
 		SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
+		VolumeManager.instance.Deinitialize();
 		Lightmapping.ResetDelegate();
 		m_RenderGraph.Cleanup();
 		m_RenderGraph = null;
@@ -141,7 +143,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 	{
 		using (Counters.Render?.Measure())
 		{
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineBeginContextRendering)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineBeginContextRendering)))
 			{
 				UnityEngine.Rendering.RenderPipeline.BeginContextRendering(context, cameras);
 			}
@@ -178,7 +180,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 				}
 			}
 			m_RenderGraph.EndFrame();
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineEndContextRendering)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineEndContextRendering)))
 			{
 				UnityEngine.Rendering.RenderPipeline.EndContextRendering(context, cameras);
 			}
@@ -235,7 +237,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		{
 			WaaaghAdditionalCameraData waaaghAdditionalCameraData = additionalCameraDataList[i];
 			Camera camera = waaaghAdditionalCameraData.camera;
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineBeginCameraRendering)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineBeginCameraRendering)))
 			{
 				UnityEngine.Rendering.RenderPipeline.BeginCameraRendering(context, camera);
 			}
@@ -249,7 +251,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 				InitializeAdditionalCameraData(camera, waaaghAdditionalCameraData, in cameraStackData, i, ref cameraData);
 			}
 			RenderSingleCamera(context, ref cameraData);
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineEndCameraRendering)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineEndCameraRendering)))
 			{
 				UnityEngine.Rendering.RenderPipeline.EndCameraRendering(context, camera);
 			}
@@ -331,7 +333,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 
 	public void RenderSingleCamera(ScriptableRenderContext context, Camera camera)
 	{
-		using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineBeginCameraRendering)))
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineBeginCameraRendering)))
 		{
 			UnityEngine.Rendering.RenderPipeline.BeginCameraRendering(context, camera);
 		}
@@ -350,7 +352,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		CameraStackData cameraStackData = GetCameraStackData(camera, component);
 		InitializeCameraData(camera, additionalCameraData, in cameraStackData, 0, isSsrEnabledInStack: false, out var cameraData);
 		RenderSingleCamera(context, ref cameraData);
-		using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.PipelineEndCameraRendering)))
+		using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.PipelineEndCameraRendering)))
 		{
 			UnityEngine.Rendering.RenderPipeline.EndCameraRendering(context, camera);
 		}
@@ -370,17 +372,17 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		{
 			ScriptableRenderer.Current = renderer;
 			_ = cameraData.IsSceneViewCamera;
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.RendererSetupCullingParameters)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.RendererSetupCullingParameters)))
 			{
 				renderer.SetupCullingParameters(ref cullingParameters, ref cameraData);
 			}
 			CullingResults cullResults = context.Cull(ref cullingParameters);
-			InitializeRenderingData(Asset, ref cameraData, ref cullResults, out var renderingData);
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.RendererSetup)))
+			InitializeRenderingData(ref context, Asset, ref cameraData, ref cullResults, out var renderingData);
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.RendererSetup)))
 			{
 				renderer.SetupInternal(context, ref renderingData);
 			}
-			using (new ProfilingScope(null, ProfilingSampler.Get(WaaaghProfileId.RendererExecute)))
+			using (new ProfilingScope(ProfilingSampler.Get(WaaaghProfileId.RendererExecute)))
 			{
 				renderer.Execute(context, ref renderingData);
 			}
@@ -621,22 +623,43 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 
 	private static bool IsScreenSpaceReflectionsEnabled()
 	{
+		if (!VolumeManager.instance.isInitialized)
+		{
+			return false;
+		}
 		return VolumeManager.instance.stack.GetComponent<ScreenSpaceReflections>().IsActive();
 	}
 
 	private static bool IsDepthPyramidNeed()
 	{
+		if (!VolumeManager.instance.isInitialized)
+		{
+			return false;
+		}
 		return VolumeManager.instance.stack.GetComponent<ScreenSpaceReflections>().IsActive();
 	}
 
 	private static bool IsStochasticSSR()
 	{
+		if (!VolumeManager.instance.isInitialized)
+		{
+			return false;
+		}
 		ScreenSpaceReflections component = VolumeManager.instance.stack.GetComponent<ScreenSpaceReflections>();
 		if (component.IsActive())
 		{
 			return component.StochasticSSR.value;
 		}
 		return false;
+	}
+
+	public static VolumeStack GetVolumeStack()
+	{
+		if (!VolumeManager.instance.isInitialized)
+		{
+			VolumeManager.instance.Initialize();
+		}
+		return VolumeManager.instance.stack;
 	}
 
 	private static bool CheckPostProcessForDepth(in CameraData cameraData)
@@ -659,7 +682,7 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		{
 			result = new RenderTextureDescriptor((int)viewportSize.x, (int)viewportSize.y);
 			result.graphicsFormat = MakeRenderTextureGraphicsFormat(hdrEnabled, hdrColorBufferPrecision, needsAlphaChannel);
-			result.depthBufferBits = 32;
+			result.depthBufferBits = 24;
 			result.msaaSamples = 1;
 			result.sRGB = QualitySettings.activeColorSpace == ColorSpace.Linear;
 		}
@@ -698,8 +721,9 @@ public class WaaaghPipeline : UnityEngine.Rendering.RenderPipeline
 		return SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
 	}
 
-	private void InitializeRenderingData(WaaaghPipelineAsset settings, ref CameraData cameraData, ref CullingResults cullResults, out RenderingData renderingData)
+	private void InitializeRenderingData(ref ScriptableRenderContext context, WaaaghPipelineAsset settings, ref CameraData cameraData, ref CullingResults cullResults, out RenderingData renderingData)
 	{
+		renderingData.Context = context;
 		renderingData.CameraData = cameraData;
 		renderingData.RenderGraph = m_RenderGraph;
 		renderingData.CullingResults = cullResults;

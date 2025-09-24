@@ -50,22 +50,28 @@ public class FadeView : ViewBase<FadeVM>
 		m_Vignette.gameObject.SetActive(state);
 	}
 
-	public void ShowLoadingScreen(bool show)
+	public void ShowLoadingScreen(FadeVM.Params fadeParams)
 	{
 		CancelTween();
-		if (show)
+		Ease ease = fadeParams.FadeParams?.Ease ?? Ease.Linear;
+		float duration = fadeParams.FadeParams?.Duration ?? FadeTimer;
+		if (fadeParams.Fade)
 		{
-			m_Tween = m_FadeImage.DOFade(1f, FadeTimer).OnComplete(delegate
+			base.ViewModel.SetStateShowAnimation();
+			m_Tween = m_FadeImage.DOFade(1f, duration).SetEase(ease).OnComplete(delegate
 			{
 				base.ViewModel.SetStateShown();
-			}).SetUpdate(isIndependentUpdate: true);
+			})
+				.SetUpdate(isIndependentUpdate: true);
 		}
 		else
 		{
-			m_Tween = m_FadeImage.DOFade(0f, FadeTimer).OnComplete(delegate
+			base.ViewModel.SetStateHideAnimation();
+			m_Tween = m_FadeImage.DOFade(0f, duration).SetEase(ease).OnComplete(delegate
 			{
 				base.ViewModel.SetStateHidden();
-			}).SetUpdate(isIndependentUpdate: true);
+			})
+				.SetUpdate(isIndependentUpdate: true);
 		}
 	}
 

@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -18,13 +19,15 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("820d299f01794e10bac98f5908e4a2cd")]
 public class CompanionUnconsciousTrigger : UnitFactComponentDelegate, IUnitDeathHandler, ISubscriber, IUnitResurrectedHandler, ISubscriber<IAbstractUnitEntity>, IHashable
 {
+	public RestrictionCalculator Restrictions = new RestrictionCalculator();
+
 	public ActionList Actions;
 
 	public ActionList RessurectActions;
 
 	public void HandleUnitDeath(AbstractUnitEntity unitEntity)
 	{
-		if (unitEntity != base.Owner && unitEntity != null && unitEntity.IsInPlayerParty)
+		if (unitEntity != base.Owner && unitEntity != null && unitEntity.IsInPlayerParty && Restrictions.IsPassed(base.Fact, unitEntity))
 		{
 			base.Fact.RunActionInContext(Actions, base.OwnerTargetWrapper);
 		}
@@ -33,7 +36,7 @@ public class CompanionUnconsciousTrigger : UnitFactComponentDelegate, IUnitDeath
 	public void HandleUnitResurrected()
 	{
 		UnitEntity unitEntity = EventInvokerExtensions.MechanicEntity as UnitEntity;
-		if (unitEntity != base.Owner && unitEntity != null && unitEntity.IsInPlayerParty)
+		if (unitEntity != base.Owner && unitEntity != null && unitEntity.IsInPlayerParty && Restrictions.IsPassed(base.Fact, unitEntity))
 		{
 			base.Fact.RunActionInContext(RessurectActions, base.OwnerTargetWrapper);
 		}

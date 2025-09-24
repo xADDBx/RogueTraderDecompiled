@@ -183,6 +183,9 @@ public static class StoreManager
 			EpicGamesManager.OnSignIn += RaiseOnSignInEGS;
 			EpicGamesManager.StartManager(Application.isEditor);
 			break;
+		case StoreType.Nintendo:
+			Logger.Error("Store {0} is not supported", Store);
+			break;
 		default:
 			Logger.Log($"Initializing store: unknown store type {Store}");
 			break;

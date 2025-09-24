@@ -6,6 +6,7 @@ using Kingmaker.Controllers.Dialog;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.Interfaces;
 using Kingmaker.Localization;
+using Kingmaker.Utility.Attributes;
 using MemoryPack;
 using UnityEngine;
 
@@ -45,6 +46,11 @@ public class BlueprintDialog : BlueprintScriptableObject, IConditionDebugContext
 	public DialogType Type;
 
 	public LocalizedString Description;
+
+	public bool OverrideCRForSkillChecks;
+
+	[ShowIf("OverrideCRForSkillChecks")]
+	public int OverridenCR;
 
 	[HideInInspector]
 	[SerializeField]

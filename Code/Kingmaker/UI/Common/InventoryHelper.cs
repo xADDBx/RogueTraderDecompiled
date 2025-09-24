@@ -447,9 +447,8 @@ public static class InventoryHelper
 		{
 		case UIUtility.EndDragAction.Put:
 		case UIUtility.EndDragAction.Swap:
-			if (from.Group == to.Group && from.Group != null && !fromShip)
+			if (from.Group != to.Group || from.Group != null)
 			{
-				from.Group.SorterType.Value = ItemsSorterType.NotSorted;
 			}
 			Game.Instance.GameCommandQueue.SwapSlots(from.ItemEntity.Owner, fromRef, toRef, isLootOrCargo);
 			break;

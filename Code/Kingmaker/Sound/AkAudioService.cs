@@ -51,6 +51,10 @@ public class AkAudioService : IService, IDisposable
 
 	private bool m_UsingDummyListener;
 
+	public static Func<bool> CanUseAudioFn;
+
+	public static Func<bool> IsPackagesEnabledFn;
+
 	public static AkAudioService Instance
 	{
 		get
@@ -62,15 +66,42 @@ public class AkAudioService : IService, IDisposable
 
 	public ServiceLifetimeType Lifetime => ServiceLifetimeType.Game;
 
+	public static bool CanUseAudio
+	{
+		get
+		{
+			if (CanUseAudioFn != null)
+			{
+				return CanUseAudioFn();
+			}
+			return true;
+		}
+	}
+
+	public static bool IsPackagesEnabled
+	{
+		get
+		{
+			if (IsPackagesEnabledFn != null)
+			{
+				return IsPackagesEnabledFn();
+			}
+			return true;
+		}
+	}
+
 	public static bool IsInitialized => Instance?.m_IsInitialized ?? false;
 
 	public static void EnsureAudioInitialized()
 	{
-		if (Instance == null)
+		if (CanUseAudio)
 		{
-			Services.RegisterServiceInstance(new AkAudioService());
+			if (Instance == null)
+			{
+				Services.RegisterServiceInstance(new AkAudioService());
+			}
+			Instance?.Initialize();
 		}
-		Instance?.Initialize();
 	}
 
 	private void Initialize()

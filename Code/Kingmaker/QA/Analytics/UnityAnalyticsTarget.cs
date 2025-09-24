@@ -35,7 +35,6 @@ public class UnityAnalyticsTarget : OwlcatAnalytics.IAnalyticsTarget
 
 	public void CustomData(string eventName, IDictionary<string, object> eventParams)
 	{
-		AnalyticsService.Instance.CustomData(eventName, eventParams);
 	}
 
 	private async Task StartDataCollectionAsync()

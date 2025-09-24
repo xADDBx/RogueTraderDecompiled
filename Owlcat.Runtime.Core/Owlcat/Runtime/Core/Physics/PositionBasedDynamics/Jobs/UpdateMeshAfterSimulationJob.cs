@@ -1,3 +1,4 @@
+using Owlcat.Runtime.Core.Physics.PositionBasedDynamics.Particles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -77,7 +78,7 @@ public struct UpdateMeshAfterSimulationJob : IJobParallelFor
 
 	[ReadOnly]
 	[NativeDisableParallelForRestriction]
-	public NativeArray<float3> Position;
+	public NativeArray<ParticlePositionPair> PositionPairs;
 
 	public void Execute(int entryIndex)
 	{
@@ -98,17 +99,17 @@ public struct UpdateMeshAfterSimulationJob : IJobParallelFor
 			int num8 = Indices[num7];
 			int num9 = Indices[num7 + 1];
 			int num10 = Indices[num7 + 2];
-			float3 xyz = Position[num8 + @int.x];
-			float3 xyz2 = Position[num9 + @int.x];
-			float3 xyz3 = Position[num10 + @int.x];
-			xyz = math.mul(a, new float4(xyz, 1f)).xyz;
-			xyz2 = math.mul(a, new float4(xyz2, 1f)).xyz;
-			xyz3 = math.mul(a, new float4(xyz3, 1f)).xyz;
+			float3 position = PositionPairs[num8 + @int.x].Position;
+			float3 position2 = PositionPairs[num9 + @int.x].Position;
+			float3 position3 = PositionPairs[num10 + @int.x].Position;
+			position = math.mul(a, new float4(position, 1f)).xyz;
+			position2 = math.mul(a, new float4(position2, 1f)).xyz;
+			position3 = math.mul(a, new float4(position3, 1f)).xyz;
 			float2 @float = Uvs[num8 + num3];
 			float2 float2 = Uvs[num9 + num3];
 			float2 float3 = Uvs[num10 + num3];
-			float3 float4 = xyz2 - xyz;
-			float3 float5 = xyz3 - xyz;
+			float3 float4 = position2 - position;
+			float3 float5 = position3 - position;
 			nativeArray[i] = math.cross(float4, float5);
 			float3 float6 = float4;
 			float3 float7 = float5;
@@ -149,7 +150,7 @@ public struct UpdateMeshAfterSimulationJob : IJobParallelFor
 				value2.z = float11.z;
 				Tangents[index2] = value2;
 			}
-			Vertices[index2] = math.mul(a, new float4(Position[j + @int.x], 1f)).xyz;
+			Vertices[index2] = math.mul(a, new float4(PositionPairs[j + @int.x].Position, 1f)).xyz;
 		}
 		nativeArray.Dispose();
 		nativeArray2.Dispose();

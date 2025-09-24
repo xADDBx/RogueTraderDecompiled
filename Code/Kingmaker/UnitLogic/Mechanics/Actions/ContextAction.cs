@@ -1,4 +1,6 @@
 using System;
+using System.Text;
+using ElementsSystem.Debug;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Projectiles;
@@ -37,5 +39,20 @@ public abstract class ContextAction : GameAction
 	public virtual bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
 	{
 		return true;
+	}
+
+	protected override void SetupDebugContext(ElementsDebugger debugger)
+	{
+		if (ElementsDebugger.IsContextDebugEnabled)
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append($"target  = {ContextData<MechanicsContext.Data>.Current?.CurrentTarget}\n");
+			stringBuilder.Append($"caster  = {ContextData<MechanicsContext.Data>.Current?.Context?.MaybeCaster}\n");
+			stringBuilder.Append($"owner   = {ContextData<MechanicsContext.Data>.Current?.Context?.MaybeOwner}");
+			debugger.ContextDebugData = new ContextDebugData
+			{
+				StringData = stringBuilder.ToString()
+			};
+		}
 	}
 }

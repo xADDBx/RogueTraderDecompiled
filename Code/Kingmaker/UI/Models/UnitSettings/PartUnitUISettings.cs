@@ -35,6 +35,15 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	private bool m_ShowBackpack = true;
 
 	[JsonProperty]
+	private bool m_ShowGloves = true;
+
+	[JsonProperty]
+	private bool m_ShowBoots = true;
+
+	[JsonProperty]
+	private bool m_ShowArmor = true;
+
+	[JsonProperty]
 	[GameStateIgnore]
 	public List<MechanicActionBarSlot> Slots = new List<MechanicActionBarSlot>();
 
@@ -105,6 +114,54 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		}
 	}
 
+	public bool ShowGloves
+	{
+		get
+		{
+			return m_ShowGloves;
+		}
+		set
+		{
+			if (m_ShowGloves != value)
+			{
+				m_ShowGloves = value;
+				this.OnChangedGlovesVisibility?.Invoke();
+			}
+		}
+	}
+
+	public bool ShowBoots
+	{
+		get
+		{
+			return m_ShowBoots;
+		}
+		set
+		{
+			if (m_ShowBoots != value)
+			{
+				m_ShowBoots = value;
+				this.OnChangedBootsVisibility?.Invoke();
+			}
+		}
+	}
+
+	public bool ShowArmor
+	{
+		get
+		{
+			return m_ShowArmor;
+		}
+		set
+		{
+			if (m_ShowArmor != value)
+			{
+				m_ShowArmor = value;
+				this.OnChangedArmorVisibility?.Invoke();
+			}
+		}
+	}
+
 	public int SlotRowIndexConsole
 	{
 		get
@@ -162,6 +219,12 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	private event Action OnChangedHelmetVisibility;
 
 	private event Action OnChangedHelmetVisibilityAboveAll;
+
+	private event Action OnChangedGlovesVisibility;
+
+	private event Action OnChangedBootsVisibility;
+
+	private event Action OnChangedArmorVisibility;
 
 	public void SetPortrait(BlueprintPortrait portrait)
 	{
@@ -462,6 +525,21 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		OnChangedHelmetVisibilityAboveAll += subscriber;
 	}
 
+	public void SubscribeOnGlovesVisibilityChange(Action subscriber)
+	{
+		OnChangedGlovesVisibility += subscriber;
+	}
+
+	public void SubscribeOnBootsVisibilityChange(Action subscriber)
+	{
+		OnChangedBootsVisibility += subscriber;
+	}
+
+	public void SubscribeOnArmorVisibilityChange(Action subscriber)
+	{
+		OnChangedArmorVisibility += subscriber;
+	}
+
 	public void UnsubscribeFromBackpackVisibilityChange(Action subscriber)
 	{
 		OnChangedBackpackVisibility -= subscriber;
@@ -475,6 +553,21 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	public void UnsubscribeFromHelmetVisibilityAboveAllChange(Action subscriber)
 	{
 		OnChangedHelmetVisibilityAboveAll -= subscriber;
+	}
+
+	public void UnsubscribeFromGlovesVisibilityChange(Action subscriber)
+	{
+		OnChangedGlovesVisibility -= subscriber;
+	}
+
+	public void UnsubscribeFromBootsVisibilityChange(Action subscriber)
+	{
+		OnChangedBootsVisibility -= subscriber;
+	}
+
+	public void UnsubscribeFromArmorVisibilityChange(Action subscriber)
+	{
+		OnChangedArmorVisibility -= subscriber;
 	}
 
 	private static int CompareFactsPriority(BlueprintUnitFact f1, BlueprintUnitFact f2)
@@ -497,6 +590,9 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		result.Append(ref m_ShowHelm);
 		result.Append(ref m_ShowHelmAboveAll);
 		result.Append(ref m_ShowBackpack);
+		result.Append(ref m_ShowGloves);
+		result.Append(ref m_ShowBoots);
+		result.Append(ref m_ShowArmor);
 		result.Append(ref m_SlotRowIndexConsole);
 		Hash128 val2 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(m_Portrait);
 		result.Append(ref val2);

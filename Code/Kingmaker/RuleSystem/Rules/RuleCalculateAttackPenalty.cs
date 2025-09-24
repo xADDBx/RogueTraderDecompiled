@@ -14,6 +14,10 @@ public class RuleCalculateAttackPenalty : RulebookEvent
 	[CanBeNull]
 	private readonly AbilityData m_Ability;
 
+	public AbilityData AbilityData => m_Ability;
+
+	public bool NoTwoWeaponFightingPenalty { get; set; }
+
 	public int ResultBallisticSkillPenalty { get; private set; }
 
 	public int ResultWeaponSkillPenalty { get; private set; }
@@ -26,7 +30,7 @@ public class RuleCalculateAttackPenalty : RulebookEvent
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
-		if (!(m_Ability == null) && !m_Ability.IsAttackOfOpportunity && IsInitiatorAttackedThisTurn())
+		if (!(m_Ability == null) && !m_Ability.IsAttackOfOpportunity && IsInitiatorAttackedThisTurn() && !NoTwoWeaponFightingPenalty)
 		{
 			BlueprintCombatRoot combatRoot = BlueprintWarhammerRoot.Instance.CombatRoot;
 			BlueprintAbilityGroup item = combatRoot.PrimaryHandAbilityGroup.Get();

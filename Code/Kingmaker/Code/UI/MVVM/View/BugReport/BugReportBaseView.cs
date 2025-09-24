@@ -94,6 +94,9 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	private GameObject m_EmailGroup;
 
 	[SerializeField]
+	private GameObject m_EmailAsterix;
+
+	[SerializeField]
 	private OwlcatInputField m_EmailInputField;
 
 	[SerializeField]
@@ -250,7 +253,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		AddDisposable(base.ViewModel.BugReportDrawingVM.Subscribe(m_BugReportDrawingView.Bind));
 		AddDisposable(base.ViewModel.BugReportDuplicatesVM.Subscribe(m_BugReportDuplicatesBaseView.Bind));
 		AddDisposable(m_FeedbackToggle.IsOn.Subscribe(OnFeedbackToggleValueChanged));
-		AddDisposable(m_PrivacyToggle.IsOn.Subscribe(m_SendButton.SetInteractable));
+		AddDisposable(m_PrivacyToggle.IsOn.Subscribe(RefreshSendButtonInteractable));
 		AddDisposable(m_ContextDropdown.Index.Subscribe(delegate
 		{
 			OnContextDropdownValueChanged();
@@ -532,6 +535,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			m_LabelsGroup.SetActive(value: false);
 		}
 		m_FeedbackToggle.gameObject.SetActive(flag);
+		m_EmailAsterix.SetActive(BuildModeUtility.IsDevelopment);
 		ToggleAdditionalContactsVisibility(IsEmailMatchRegexp());
 		ExpandDescriptionOverMarket();
 		RestoreUserData(flag);
@@ -554,6 +558,12 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	{
 		ReportingUtils.Instance.LabelChangeValue(label, b);
 		LabelsButtonChangeText();
+	}
+
+	private void RefreshSendButtonInteractable(bool privacyToggleStatus)
+	{
+		bool flag = !BuildModeUtility.IsDevelopment || m_EmailInputField.Text.Length > 0;
+		m_SendButton.Interactable = privacyToggleStatus && flag;
 	}
 
 	private void LabelsButtonChangeText()
@@ -797,6 +807,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 			(bool, bool) tuple = ReportingUtils.Instance.PrivacyStuffGetEmailAgreements(m_EmailInputField.Text);
 			m_PrivacyToggle.Set(tuple.Item2);
 			ExpandDescriptionOverMarket();
+			RefreshSendButtonInteractable(m_PrivacyToggle.IsOn.Value);
 		}
 		HandleDiscordText();
 	}

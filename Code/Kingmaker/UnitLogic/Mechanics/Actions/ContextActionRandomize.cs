@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.Enums;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using UnityEngine;
@@ -17,7 +20,13 @@ public class ContextActionRandomize : ContextAction
 	{
 		public ActionList Action;
 
+		[HideIf("UseContextValue")]
 		public int Weight;
+
+		public bool UseContextValue;
+
+		[ShowIf("UseContextValue")]
+		public ContextPropertyName ValueName;
 	}
 
 	[UsedImplicitly]
@@ -35,7 +44,7 @@ public class ContextActionRandomize : ContextAction
 		{
 			return;
 		}
-		int num = m_Actions.Sum((ActionWrapper aw) => aw.Weight);
+		int num = ((IEnumerable<ActionWrapper>)m_Actions).Sum((Func<ActionWrapper, int>)GetWeight);
 		if (num < 1)
 		{
 			m_Actions.Random(PFStatefulRandom.Mechanics)?.Action.Run();
@@ -46,12 +55,21 @@ public class ContextActionRandomize : ContextAction
 		ActionWrapper[] actions = m_Actions;
 		foreach (ActionWrapper actionWrapper in actions)
 		{
-			num3 += actionWrapper.Weight;
+			num3 += GetWeight(actionWrapper);
 			if (num3 >= num2)
 			{
 				actionWrapper.Action.Run();
 				break;
 			}
 		}
+	}
+
+	private int GetWeight(ActionWrapper aw)
+	{
+		if (aw.UseContextValue)
+		{
+			return base.Context[aw.ValueName];
+		}
+		return aw.Weight;
 	}
 }

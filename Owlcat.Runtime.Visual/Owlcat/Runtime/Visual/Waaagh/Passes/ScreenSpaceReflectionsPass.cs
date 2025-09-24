@@ -2,8 +2,8 @@ using Owlcat.Runtime.Visual.Overrides;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Passes;
 
@@ -103,10 +103,13 @@ public class ScreenSpaceReflectionsPass : ScriptableRenderPass<ScreenSpaceReflec
 		m_BlitMaterial = blitMaterial;
 	}
 
+	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
+	{
+		DependsOn(in resources.RendererLists.OpaqueGBuffer.List);
+	}
+
 	protected override void Setup(RenderGraphBuilder builder, ScreenSpaceReflectionsPassData data, ref RenderingData renderingData)
 	{
-		builder.DependsOn(in data.Resources.RendererLists.OpaqueGBuffer.List);
-		builder.AllowRendererListCulling(value: true);
 		VolumeStack stack = VolumeManager.instance.stack;
 		m_Settings = stack.GetComponent<ScreenSpaceReflections>();
 		if (m_Settings.IsActive())

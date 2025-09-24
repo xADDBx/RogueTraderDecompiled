@@ -31,6 +31,15 @@ public class CharacterVisualSettingsView<TBoolEntity> : ViewBase<CharacterVisual
 	[SerializeField]
 	protected TBoolEntity m_HelmetAboveAllEntityView;
 
+	[SerializeField]
+	protected TBoolEntity m_GlovesEntityView;
+
+	[SerializeField]
+	protected TBoolEntity m_BootsEntityView;
+
+	[SerializeField]
+	protected TBoolEntity m_ArmorEntityView;
+
 	[Header("Color")]
 	[SerializeField]
 	protected TextureSelectorPagedView m_OutfitMainColorSelectorView;
@@ -44,6 +53,9 @@ public class CharacterVisualSettingsView<TBoolEntity> : ViewBase<CharacterVisual
 		m_HelmetEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowHelmet);
 		m_BackpackEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowBackpack);
 		m_HelmetAboveAllEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowHelmetAboveAll);
+		m_GlovesEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowGloves);
+		m_BootsEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowBoots);
+		m_ArmorEntityView.Or(null)?.Initialize(characterSheet.VisualSettingsShowArmor);
 	}
 
 	protected override void BindViewImplementation()
@@ -57,6 +69,9 @@ public class CharacterVisualSettingsView<TBoolEntity> : ViewBase<CharacterVisual
 			m_HelmetEntityView.Or(null)?.Bind(base.ViewModel.Helmet);
 			m_BackpackEntityView.Or(null)?.Bind(base.ViewModel.Backpack);
 			m_HelmetAboveAllEntityView.Or(null)?.Bind(base.ViewModel.HelmetAboveAll);
+			m_GlovesEntityView.Or(null)?.Bind(base.ViewModel.Gloves);
+			m_BootsEntityView.Or(null)?.Bind(base.ViewModel.Boots);
+			m_ArmorEntityView.Or(null)?.Bind(base.ViewModel.Armor);
 		}
 	}
 

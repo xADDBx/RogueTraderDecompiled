@@ -229,6 +229,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		AddTargets(list);
 		AddCooldown(list);
 		AddHitChances(list);
+		AddAttackOfOpportunity(list);
 		AddDescription(list, type);
 		AddMovementActionVeil(list, type);
 		TryAddRetargetableIconBrick(list, type);
@@ -618,19 +619,19 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			return;
 		}
 		string baseDamageText = m_UIAbilityData.BaseDamageText;
-		string valueRight = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.Penetration);
-		if (!string.IsNullOrEmpty(baseDamageText))
+		string text = UIConfig.Instance.PercentHelper.AddPercentTo(m_UIAbilityData.Penetration);
+		if (!string.IsNullOrEmpty(baseDamageText) && !(baseDamageText == "0-0") && !(text == "0%"))
 		{
 			Sprite damage = UIConfig.Instance.UIIcons.Damage;
 			Sprite penetration = UIConfig.Instance.UIIcons.Penetration;
-			string text = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Damage);
+			string text2 = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Damage);
 			string damageType = GetDamageType();
 			if (!string.IsNullOrWhiteSpace(damageType))
 			{
-				text = damageType + " " + text.ToLower();
+				text2 = damageType + " " + text2.ToLower();
 			}
 			string label = UIStrings.Instance.TooltipsElementLabels.GetLabel(TooltipElement.Penetration);
-			bricks.Add(new TooltipBrickTwoColumnsStat(text, label, baseDamageText, valueRight, damage, penetration));
+			bricks.Add(new TooltipBrickTwoColumnsStat(text2, label, baseDamageText, text, damage, penetration));
 		}
 	}
 
@@ -642,6 +643,14 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 			return string.Empty;
 		}
 		return UIUtilityTexts.GetTextByKey(warhammerOverrideAbilityWeapon.Weapon.DamageType.Type);
+	}
+
+	private void AddAttackOfOpportunity(List<ITooltipBrick> bricks)
+	{
+		if (!(AbilityData == null) && ((BaseUnitEntity)AbilityData.Caster).CalculateAttackOfOpportunity(AbilityData).Count() != 0)
+		{
+			bricks.Add(new TooltipBrickAttackOfOpportunityPaper());
+		}
 	}
 
 	protected virtual void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)

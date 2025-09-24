@@ -27,6 +27,9 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 	[SerializeField]
 	private TextMeshProUGUI m_UsableStacksCount;
 
+	[SerializeField]
+	private GameObject m_FavBlock;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -44,12 +47,38 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 			}
 		}));
 		AddDisposable(base.ViewModel.Item.Subscribe(CheckChangeSounds));
+		AddDisposable(base.ViewModel.IsFavorite.Subscribe(SetFavoriteIcon));
+		AddDisposable(base.ViewModel.Item.Subscribe(RefreshFavoriteNeed));
 	}
 
 	private void CheckChangeSounds(ItemEntity item)
 	{
 		SetServoSkullItemClickAndHoverSound component = item?.Blueprint?.GetComponent<SetServoSkullItemClickAndHoverSound>();
 		CheckChangeSoundsImpl(component);
+	}
+
+	private void SetFavoriteIcon(bool value)
+	{
+		if (m_FavBlock != null)
+		{
+			m_FavBlock.SetActive(value);
+		}
+	}
+
+	private void RefreshFavoriteNeed(ItemEntity item)
+	{
+		if (item == null)
+		{
+			if (m_FavBlock != null)
+			{
+				m_FavBlock.SetActive(value: false);
+			}
+		}
+		else
+		{
+			base.ViewModel.IsFavorite.Value = item.IsFavorite;
+			SetFavoriteIcon(item.IsFavorite);
+		}
 	}
 
 	protected virtual void CheckChangeSoundsImpl(SetServoSkullItemClickAndHoverSound component)
@@ -127,6 +156,12 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 		{
 			h.TryEquip(base.ViewModel);
 		});
+	}
+
+	protected void AddRemoveFromFavorites()
+	{
+		base.ViewModel.Item.Value.IsFavorite = !base.ViewModel.Item.Value.IsFavorite;
+		base.ViewModel.IsFavorite.Value = base.ViewModel.Item.Value.IsFavorite;
 	}
 
 	protected void MoveToInventory(bool immediately)

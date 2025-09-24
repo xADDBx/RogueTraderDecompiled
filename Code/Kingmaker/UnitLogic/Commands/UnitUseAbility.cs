@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -26,6 +27,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
@@ -152,7 +154,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			if (!base.IsActed)
 			{
-				if (!IsTargetingDeadUnit && !base.Executor.State.IsProne)
+				if (!IsTargetingDeadUnit && !base.Executor.State.IsProne && base.Executor.State.CanAct)
 				{
 					return base.Executor.IsDeadOrUnconscious;
 				}
@@ -261,6 +263,11 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 	protected override void OnInit(AbstractUnitEntity executor)
 	{
 		base.OnInit(executor);
+		OverrideAbilityFxSettings overrideAbilityFxSettings = Ability.Caster.Facts.GetComponents<OverrideAbilityFxSettings>().FirstOrDefault((OverrideAbilityFxSettings o) => o.Ability == Ability.Blueprint);
+		if (overrideAbilityFxSettings != null)
+		{
+			Ability.FXSettingsOverride = overrideAbilityFxSettings.FXSettings;
+		}
 		if (!base.FromCutscene && !Ability.CanTarget(base.Target, out var unavailableReason))
 		{
 			PFLog.Default.Error($"{Ability.Blueprint.NameSafe()}: cannot target {base.Target} because of {unavailableReason}. Cast by {base.Executor}");
@@ -864,7 +871,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			}
 			m_GroundFxObjects = null;
 		}
-		if (base.Result == ResultType.Interrupt)
+		if (base.Result == ResultType.Interrupt || base.Result == ResultType.Fail)
 		{
 			ExecutionProcess?.Dispose();
 		}

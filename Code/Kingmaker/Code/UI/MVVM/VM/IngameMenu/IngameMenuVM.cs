@@ -24,6 +24,8 @@ public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler
 
 	public readonly ReactiveCommand CheckServiceWindowsBlocked = new ReactiveCommand();
 
+	public bool IsShown;
+
 	public IngameMenuVM()
 	{
 		UpdatePartyCharacters();

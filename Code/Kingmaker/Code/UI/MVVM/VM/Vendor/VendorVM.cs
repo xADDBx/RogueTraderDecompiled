@@ -43,6 +43,8 @@ public class VendorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public VendorReputationPartVM VendorReputationPartVM;
 
+	public ReactiveProperty<bool> HasItemsToBuy = new ReactiveProperty<bool>();
+
 	public readonly ReactiveProperty<VendorViewType> MiddleView = new ReactiveProperty<VendorViewType>(VendorViewType.BuyView);
 
 	public ReactiveCommand CargoCollectionChange = new ReactiveCommand();
@@ -86,11 +88,13 @@ public class VendorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 			VendorTradePartVM?.Dispose();
 			VendorReputationPartVM?.Dispose();
 			VendorTradePartVM = new VendorTradePartVM();
+			CheckHasItemsToBuy();
 			break;
 		case VendorWindowsTab.Reputation:
 			VendorTradePartVM?.Dispose();
 			VendorReputationPartVM?.Dispose();
 			VendorReputationPartVM = new VendorReputationPartVM(InventoryCargoVM);
+			CheckHasItemsToBuy();
 			break;
 		}
 		ActiveTab.Value = tab;
@@ -220,5 +224,15 @@ public class VendorVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public void HandleRemoveItemFromCargo(ItemEntity item, CargoEntity from)
 	{
+	}
+
+	public void BuyAllAvailable()
+	{
+		VendorHelper.VendorTryBuyAllAvailable(CheckHasItemsToBuy);
+	}
+
+	public void CheckHasItemsToBuy()
+	{
+		HasItemsToBuy.Value = VendorHelper.HasItemsToBuy();
 	}
 }

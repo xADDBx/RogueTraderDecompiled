@@ -64,9 +64,9 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 
 	private static bool CanShowBigWindow(GameModeType gameMode)
 	{
-		if (!Game.Instance.IsModeActive(GameModeType.Cutscene) && !Game.Instance.IsModeActive(GameModeType.CutsceneGlobalMap))
+		if (!Game.Instance.IsModeActive(GameModeType.Cutscene) && !Game.Instance.IsModeActive(GameModeType.CutsceneGlobalMap) && !Game.Instance.IsModeActive(GameModeType.Dialog))
 		{
-			return !Game.Instance.IsModeActive(GameModeType.Dialog);
+			return !Game.Instance.RootUiContext.IsIngameMenuShown;
 		}
 		return false;
 	}

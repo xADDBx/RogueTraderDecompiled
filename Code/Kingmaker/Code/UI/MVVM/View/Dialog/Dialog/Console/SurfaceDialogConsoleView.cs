@@ -452,6 +452,18 @@ public class SurfaceDialogConsoleView : SurfaceDialogBaseView<DialogAnswerConsol
 		}
 	}
 
+	public void ToggleFade(bool value)
+	{
+		if (value)
+		{
+			m_FadeView.AppearAnimation();
+		}
+		else
+		{
+			m_FadeView.DisappearAnimation();
+		}
+	}
+
 	protected override void OnCloseGlossaryMode()
 	{
 		base.OnCloseGlossaryMode();
