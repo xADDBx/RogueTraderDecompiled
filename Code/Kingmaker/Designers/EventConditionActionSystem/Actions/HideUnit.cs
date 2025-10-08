@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Parts;
@@ -37,14 +36,31 @@ public class HideUnit : GameAction
 	protected override void RunAction()
 	{
 		AbstractUnitEntity value = Target.GetValue();
-		doRun(value);
-		if (value is BaseUnitEntity baseUnitEntity)
+		UnitPartPetOwner optional = value.GetOptional<UnitPartPetOwner>();
+		if (optional != null)
 		{
-			UnitPartPetOwner unitPartPetOwner = baseUnitEntity.Master?.GetOptional<UnitPartPetOwner>();
-			if (unitPartPetOwner != null)
+			optional.InHidingProcess = true;
+		}
+		doRun(value);
+		if (optional != null && optional.PetUnit != null)
+		{
+			if (Unhide)
 			{
-				unitPartPetOwner.PetIsInGame = Unhide;
+				if (optional.ShouldUnhidePet)
+				{
+					optional.ShouldUnhidePet = false;
+					doRun(optional.PetUnit);
+				}
 			}
+			else if (optional.PetUnit.IsInGame)
+			{
+				optional.ShouldUnhidePet = true;
+				doRun(optional.PetUnit);
+			}
+		}
+		if (optional != null)
+		{
+			optional.InHidingProcess = false;
 		}
 		void doRun(AbstractUnitEntity abstractUnitEntity)
 		{

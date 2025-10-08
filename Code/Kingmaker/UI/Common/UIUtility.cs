@@ -37,7 +37,6 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Alignments;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
-using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Paths;
@@ -451,12 +450,11 @@ public static class UIUtility
 		{
 			return;
 		}
-		foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet))
+		foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet && IsViewActiveUnit(c)))
 		{
 			BaseUnitEntity master = item2.Master;
-			UnitPartPetOwner optional = master.Parts.GetOptional<UnitPartPetOwner>();
 			int num = characters.FindIndex((BaseUnitEntity m) => m == master);
-			if (enumerable.Contains(master) && !optional.PetIsDeactivated)
+			if (enumerable.Contains(item2.Master))
 			{
 				if (num < 0 || num + 1 >= characters.Count)
 				{

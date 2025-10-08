@@ -157,7 +157,6 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 			m_AppearTween.ChangeStartValue(CanvasGroup.alpha);
 			m_AppearTween.Play();
 		}
-		TweenTimeoutReset(1f);
 	}
 
 	public void DisappearAnimation([CanBeNull] UnityAction action = null)
@@ -198,7 +197,6 @@ public class FadeAnimator : MonoBehaviour, IUIAnimator
 			m_DisappearTween.ChangeStartValue(CanvasGroup.alpha);
 			m_DisappearTween.Play();
 		}
-		TweenTimeoutReset(0.001f);
 	}
 
 	public void PlayAnimation(bool value, UnityAction action = null)

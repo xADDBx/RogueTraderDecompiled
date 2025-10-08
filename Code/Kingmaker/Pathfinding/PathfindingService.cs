@@ -74,16 +74,16 @@ public class PathfindingService : IService
 	public void ForceCompleteAll()
 	{
 		PFLog.Pathfinding.Log($"Force complete all paths... x{m_DelayedPaths.Count}");
-		int num = Game.Instance.RealTimeController.CurrentSystemStepIndex;
-		while (0 < m_DelayedPaths.Count)
+		if (m_DelayedPaths.Count != 0)
 		{
+			int currentSystemStepIndex = Game.Instance.RealTimeController.CurrentSystemStepIndex;
 			List<(Path path, Action<Path> callback, int delayToStep)> delayedPaths = m_DelayedPaths;
-			int num2 = delayedPaths[delayedPaths.Count - 1].delayToStep + 1;
-			for (int i = num; i < num2; i++)
+			int currentSytemStep = Mathf.Max(delayedPaths[delayedPaths.Count - 1].delayToStep + 1, currentSystemStepIndex);
+			TickInternal(currentSytemStep);
+			if (m_DelayedPaths.Count > 0)
 			{
-				TickInternal(i);
+				PFLog.Pathfinding.Error($"Remained paths after TickInternal: {m_DelayedPaths.Count}");
 			}
-			num = num2;
 		}
 	}
 

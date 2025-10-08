@@ -28,7 +28,7 @@ public class RecalculateOnStatChange : UnitFactComponentDelegate, IHashable
 	{
 		StatType stat = Stat;
 		ComponentData componentData = RequestTransientData<ComponentData>();
-		componentData.AppliedToStat = ((!CheckCaster) ? base.Owner.Stats.GetStat(stat) : (base.Context.MaybeCaster?.GetStatOptional(stat) ?? null));
+		componentData.AppliedToStat = ((!CheckCaster) ? base.Owner.Stats.GetStatOptional(stat) : base.Context.MaybeCaster?.GetStatOptional(stat));
 		if (componentData.AppliedToStat != null)
 		{
 			componentData.AppliedToStat.AddDependentFact(base.Fact);

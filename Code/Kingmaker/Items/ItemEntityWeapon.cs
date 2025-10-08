@@ -153,7 +153,7 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 					select ((WeaponAbility Slot, int SlotIndex, EntityFact Source))(Slot: i.Slot, SlotIndex: i.Index, Source: null)).Concat(GetExtraAbilitiesFromWielder())
 				orderby i.Slot.Type == WeaponAbilityType.Reload
 				select AddAbility(i.Slot, i.SlotIndex, i.Source)).NotNull());
-			EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitWeaponReimplementedHandler>)delegate(IUnitWeaponReimplementedHandler h)
+			EventBus.RaiseEvent((IMechanicEntity)wielder, (Action<IUnitWeaponReimplementedHandler>)delegate(IUnitWeaponReimplementedHandler h)
 			{
 				h.HandleUnitWeaponReimplemented();
 			}, isCheckRuntime: true);

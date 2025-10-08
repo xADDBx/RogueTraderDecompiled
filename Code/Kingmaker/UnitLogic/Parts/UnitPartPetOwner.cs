@@ -41,17 +41,13 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 	[JsonProperty]
 	public bool ShouldUnhidePet;
 
-	[JsonProperty]
-	public bool? PetIsInGame;
+	public bool InHidingProcess;
 
 	[JsonIgnore]
 	public double LastReactionMoment;
 
 	[JsonIgnore]
 	public const int INTEREST_REACTION_COOLDOWN = 3;
-
-	[JsonIgnore]
-	private UnitPartNotMoveTrigger m_AfkAnimationsPart;
 
 	public BaseUnitEntity PetUnit => m_PetRef;
 
@@ -62,28 +58,11 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 
 	public bool IsPetFollowing { get; private set; }
 
-	public bool PetIsDeactivated
-	{
-		get
-		{
-			if ((!PetIsInGame) ?? false)
-			{
-				UnitPartNotMoveTrigger afkAnimationsPart = m_AfkAnimationsPart;
-				if (afkAnimationsPart == null || !afkAnimationsPart.Triggered)
-				{
-					return true;
-				}
-			}
-			return !base.Owner.IsInGame;
-		}
-	}
-
 	public void Setup(BlueprintPet pet)
 	{
 		if (!m_Initialized)
 		{
 			m_Initialized = true;
-			PetIsInGame = true;
 			PetBlueprint = pet;
 			PreparePet();
 			InitializePetColors();
@@ -96,7 +75,6 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 			}
 		}
 		StartFollowing();
-		m_AfkAnimationsPart = base.Owner.Parts.GetOptional<UnitPartNotMoveTrigger>();
 	}
 
 	private void InitializePetColors()
@@ -270,22 +248,9 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 
 	private void SyncPetInGameToOwner()
 	{
-		if (PetUnit != null)
+		if (PetUnit != null && !InHidingProcess)
 		{
-			if (!PetIsInGame.HasValue)
-			{
-				PetIsInGame = PetUnit.IsInGame || !base.Owner.IsInGame || ShouldUnhidePet;
-			}
-			PetUnit.IsInGame = base.Owner.IsInGame && PetIsInGame.Value;
-		}
-	}
-
-	protected override void OnPostLoad()
-	{
-		base.OnPostLoad();
-		if (m_AfkAnimationsPart == null)
-		{
-			m_AfkAnimationsPart = base.Owner.Parts.GetOptional<UnitPartNotMoveTrigger>();
+			PetUnit.IsInGame = base.Owner.IsInGame;
 		}
 	}
 
@@ -302,11 +267,6 @@ public class UnitPartPetOwner : BaseUnitPart, IAreaHandler, ISubscriber, IUnitFa
 		Hash128 val3 = StructHasher<EntityRef<BaseUnitEntity>>.GetHash128(ref obj);
 		result.Append(ref val3);
 		result.Append(ref ShouldUnhidePet);
-		if (PetIsInGame.HasValue)
-		{
-			bool val4 = PetIsInGame.Value;
-			result.Append(ref val4);
-		}
 		return result;
 	}
 }
