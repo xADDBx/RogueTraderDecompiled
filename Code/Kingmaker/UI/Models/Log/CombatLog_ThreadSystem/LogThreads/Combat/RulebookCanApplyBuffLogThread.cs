@@ -35,7 +35,7 @@ public class RulebookCanApplyBuffLogThread : LogThreadBase, IGameLogRuleHandler<
 		GameLogContext.Text = rule.Context.Name;
 		GameLogMessage gameLogMessage = GetGameLogMessage(rule);
 		bool flag = rule.AppliedBuff.IsProne && rule.AppliedBuff.Context.MaybeCaster != rule.Reason.Caster;
-		return gameLogMessage?.CreateCombatLogMessage(new TooltipTemplateBuff(rule.AppliedBuff, flag ? rule.Reason.Caster : null), null, isPerformAttackMessage: false, concreteInitiator);
+		return gameLogMessage?.CreateCombatLogMessage(new TooltipTemplateBuff(rule.AppliedBuff, null, flag ? rule.Reason.Caster : null), null, isPerformAttackMessage: false, concreteInitiator);
 	}
 
 	private static GameLogMessage GetGameLogMessage(RuleCalculateCanApplyBuff rule)

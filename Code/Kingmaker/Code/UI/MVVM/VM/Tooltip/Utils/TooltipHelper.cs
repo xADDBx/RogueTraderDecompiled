@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.Dialog;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
@@ -507,6 +508,15 @@ public static class TooltipHelper
 			return null;
 		case EntityLink.Type.UnitStat:
 			return new TooltipTemplateStat(LinksHelper.GetStatData(keys[1], keys[2]));
+		case EntityLink.Type.ColonyResource:
+		{
+			BlueprintResource blueprintResource = LinksHelper.GetBlueprintResource(keys[1]);
+			if (blueprintResource != null)
+			{
+				return new TooltipTemplateSimple(blueprintResource.Name, blueprintResource.Description);
+			}
+			return null;
+		}
 		default:
 			return null;
 		}

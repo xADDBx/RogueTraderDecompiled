@@ -12,6 +12,7 @@ using Kingmaker.Designers;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
@@ -52,6 +53,7 @@ public class CheatsUnlock
 			SmartConsole.RegisterCommand("recruit_companion", RecruitCompanion);
 			SmartConsole.RegisterCommand("list_all_quests", ListAllQuest);
 			SmartConsole.RegisterCommand("add_feature", CheatAddFeature);
+			SmartConsole.RegisterCommand("set_name", CheatChangeName);
 			SmartConsole.RegisterCommand("etude_start", StartEtude);
 			SmartConsole.RegisterCommand("etude_complete", CompleteEtude);
 			SmartConsole.RegisterCommand("etude_check", CheckEtude);
@@ -378,6 +380,17 @@ public class CheatsUnlock
 		{
 			(Utilities.GetUnitUnderMouse() ?? GameHelper.GetPlayerCharacter()).AddFact(blueprint);
 		}
+	}
+
+	private static void CheatChangeName(string parameters)
+	{
+		string paramString = Utilities.GetParamString(parameters, 1, null);
+		BaseUnitEntity entity = Utilities.GetUnitUnderMouse() ?? GameHelper.GetPlayerCharacter();
+		entity.GetDescriptionOptional()?.SetName(paramString);
+		EventBus.RaiseEvent((IBaseUnitEntity)entity, (Action<IUnitNameHandler>)delegate(IUnitNameHandler h)
+		{
+			h.OnUnitNameChanged();
+		}, isCheckRuntime: true);
 	}
 
 	private static void CreateAllItems(string parameters)

@@ -136,6 +136,10 @@ public class AbilityMultiTarget : AbilityDeliverEffect, IAbilityMultiTarget
 				executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
 				yield return null;
 			}
+			if (executionProcess == null)
+			{
+				executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
+			}
 			yield return null;
 			while (!commands.Empty || (executionProcess != null && !executionProcess.IsEnded) || actualCaster.Parts.GetOptional<UnitPartJump>() != null)
 			{

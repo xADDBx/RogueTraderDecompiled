@@ -111,6 +111,8 @@ public class UITooltips
 
 	public LocalizedString Source;
 
+	public LocalizedString Sources;
+
 	public LocalizedString RateOfFire;
 
 	public LocalizedString Recoil;

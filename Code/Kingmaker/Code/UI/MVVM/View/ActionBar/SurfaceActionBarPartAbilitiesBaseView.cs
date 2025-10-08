@@ -12,4 +12,8 @@ public abstract class SurfaceActionBarPartAbilitiesBaseView : ViewBase<SurfaceAc
 	protected int SlotsInRow => 10;
 
 	public abstract void Initialize();
+
+	public virtual void UpdateGrayscale()
+	{
+	}
 }

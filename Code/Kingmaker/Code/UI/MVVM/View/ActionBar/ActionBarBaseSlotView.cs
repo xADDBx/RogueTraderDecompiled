@@ -191,6 +191,15 @@ public abstract class ActionBarBaseSlotView : ViewBase<ActionBarSlotVM>, IWidget
 		}));
 	}
 
+	public void SetGreyscale(bool value)
+	{
+		if (!(m_GrayScale == null))
+		{
+			m_GrayScale.EffectAmount = ((!value) ? 1 : 0);
+			m_GrayScale.Alpha = (value ? 1f : m_GrayScaleAlpha);
+		}
+	}
+
 	protected override void DestroyViewImplementation()
 	{
 		m_AttackAbilityGroupCooldownAlertTweener?.Kill();

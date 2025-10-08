@@ -1,3 +1,4 @@
+using System.Linq;
 using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
@@ -66,7 +67,7 @@ public class BuffPCView : ViewBase<BuffVM>, IPointerEnterHandler, IEventSystemHa
 				IsHovered.Value = false;
 			}));
 		}
-		AddDisposable(this.SetTooltip(new TooltipTemplateBuff(base.ViewModel.Buff), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.None)));
+		AddDisposable(this.SetTooltip(new TooltipTemplateBuff(base.ViewModel.Buff, base.ViewModel.AdditionalSources.Select((BuffVM b) => b.Buff).ToList()), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.None)));
 	}
 
 	protected override void DestroyViewImplementation()

@@ -560,20 +560,41 @@ public static class AbilityDataHelper
 			return;
 		}
 		AbilityExecutionContext context = ability.CreateExecutionContext(clickedTarget);
+		OverpenetrationUIData overpenetrationUIData = default(OverpenetrationUIData);
+		overpenetrationUIData.CountOverpenetration = false;
+		overpenetrationUIData.OverpenetrationDamagePercent = 100;
+		overpenetrationUIData.OverpenetrationHitChance = 100f;
+		OverpenetrationUIData overpenetrationData = overpenetrationUIData;
+		if (ability.IsSingleShot)
+		{
+			pattern.Nodes.OrderBy((CustomGridNodeBase node) => node.CellDistanceTo(casterPosition.GetNearestNodeXZ()));
+			{
+				foreach (CustomGridNodeBase item in pattern.Nodes.OrderBy((CustomGridNodeBase node) => node.CellDistanceTo(casterPosition.GetNearestNodeXZ())))
+				{
+					BaseUnitEntity entity = item.GetUnit();
+					if (entity != null && !listToFill.Contains((AbilityTargetUIData data) => data.Target == entity) && (targetEntity == null || targetEntity == entity) && !entity.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, entity, out var uiData, ref overpenetrationData))
+					{
+						listToFill.Add(uiData);
+						ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData);
+					}
+				}
+				return;
+			}
+		}
 		foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
 		{
-			if ((targetEntity == null || targetEntity == allBaseAwakeUnit) && !allBaseAwakeUnit.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, allBaseAwakeUnit, out var uiData))
+			if ((targetEntity == null || targetEntity == allBaseAwakeUnit) && !allBaseAwakeUnit.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, allBaseAwakeUnit, out var uiData2, ref overpenetrationData))
 			{
-				listToFill.Add(uiData);
-				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData);
+				listToFill.Add(uiData2);
+				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData2);
 			}
 		}
 		foreach (DestructibleEntity destructibleEntity in Game.Instance.State.DestructibleEntities)
 		{
-			if ((targetEntity == null || targetEntity == destructibleEntity) && CheckAffectedEntity(context, pattern, casterPosition, destructibleEntity, out var uiData2))
+			if ((targetEntity == null || targetEntity == destructibleEntity) && CheckAffectedEntity(context, pattern, casterPosition, destructibleEntity, out var uiData3, ref overpenetrationData))
 			{
-				listToFill.Add(uiData2);
-				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData2);
+				listToFill.Add(uiData3);
+				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData3);
 			}
 		}
 	}
@@ -598,7 +619,7 @@ public static class AbilityDataHelper
 		}
 	}
 
-	private static bool CheckAffectedEntity(AbilityExecutionContext context, OrientedPatternData pattern, Vector3 casterPosition, MechanicEntity entity, out AbilityTargetUIData uiData)
+	private static bool CheckAffectedEntity(AbilityExecutionContext context, OrientedPatternData pattern, Vector3 casterPosition, MechanicEntity entity, out AbilityTargetUIData uiData, ref OverpenetrationUIData overpenetrationData)
 	{
 		AbilityData ability = context.Ability;
 		if (!IsEntityAffected(context, entity, pattern, (ability.Caster == entity) ? new Vector3?(casterPosition) : null))
@@ -606,9 +627,19 @@ public static class AbilityDataHelper
 			uiData = default(AbilityTargetUIData);
 			return false;
 		}
-		if (ability.IsAOE || ability.IsCharge || ability.IsSingleShot || ability.IsStarshipAttack)
+		if (ability.IsAOE || ability.IsCharge || ability.IsStarshipAttack)
 		{
-			uiData = new AbilityTargetUIData(ability, entity, casterPosition);
+			uiData = new AbilityTargetUIData(ability, entity, casterPosition, ref overpenetrationData);
+			return true;
+		}
+		if (ability.IsSingleShot)
+		{
+			if ((overpenetrationData.CountOverpenetration && overpenetrationData.OverpenetrationDamagePercent <= 0) || overpenetrationData.OverpenetrationHitChance <= 0.1f)
+			{
+				uiData = default(AbilityTargetUIData);
+				return false;
+			}
+			uiData = new AbilityTargetUIData(ability, entity, casterPosition, ref overpenetrationData);
 			return true;
 		}
 		float num = 0f;

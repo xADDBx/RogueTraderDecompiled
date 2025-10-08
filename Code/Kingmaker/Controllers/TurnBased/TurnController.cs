@@ -619,7 +619,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	{
 		EventBus.RaiseEvent(delegate(IRoundEndHandler h)
 		{
-			h.HandleRoundEnd(TurnBasedModeActive);
+			h.HandleRoundEnd(TurnBasedModeActive, isFirst);
 		});
 		if (TurnBasedModeActive)
 		{

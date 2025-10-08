@@ -136,7 +136,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		{
 			list2.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
 		}
-		if ((SorterType.Value != 0 && m_SorterTypeCache != SorterType.Value) || force || RootUIContext.Instance.IsLootShow)
+		if ((SorterType.Value != 0 && m_SorterTypeCache != SorterType.Value) || force || (RootUIContext.Instance.IsLootShow && Type == ItemSlotsGroupType.Loot))
 		{
 			for (int j = 0; j < list2.Count; j++)
 			{

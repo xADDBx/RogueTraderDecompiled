@@ -100,6 +100,6 @@ public class ShipAbilitiesConsoleView : ShipAbilitiesBaseView, IShipCustomizatio
 
 	public bool CanOverrideClose()
 	{
-		return base.IsBinded;
+		return !base.IsBinded;
 	}
 }

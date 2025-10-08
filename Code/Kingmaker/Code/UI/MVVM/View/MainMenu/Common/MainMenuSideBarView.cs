@@ -236,7 +236,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 		bool flag = false;
 		bool flag2 = false;
 		BlueprintDlc blueprintDlc = StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().FirstOrDefault((BlueprintDlc bp) => bp.MainMenuSettingsTag == mainMenuTheme);
-		if (blueprintDlc != null && blueprintDlc.TopMonitorArt != null && blueprintDlc.BottomMonitorArt != null)
+		if (blueprintDlc != null)
 		{
 			if (blueprintDlc.TopMonitorArt != null && !flag)
 			{
@@ -250,7 +250,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 			}
 		}
 		m_DefaultTopMonitorArt.gameObject.SetActive(!flag);
-		m_DefaultBottomMonitorArt.gameObject.SetActive(!flag2);
+		m_DefaultBottomMonitorArt.gameObject.SetActive(value: true);
 		m_DlcTopMonitorArt.transform.parent.gameObject.SetActive(flag);
 		m_DlcBottomMonitorArt.transform.parent.gameObject.SetActive(flag2);
 	}

@@ -100,16 +100,20 @@ public class ContextActionApplyBuff : ContextAction
 			}
 		}
 		buff.AddRank(count);
-		if (buff.FirstSource == null)
+		if (buff.FirstSource == null && !TryAddAbilitySource(buff))
 		{
-			AddSourceInternal(buff, buffTarget);
-		}
-		else if (buff.StackedBuffsSourcesRefs.Count > 0)
-		{
-			foreach (Buff stackedBuffsSourcesRef in buff.StackedBuffsSourcesRefs)
+			AreaEffectEntity areaEffectEntity = ContextData<AreaEffectContextData>.Current?.Entity;
+			if (areaEffectEntity != null)
 			{
-				_ = stackedBuffsSourcesRef;
-				AddSourceInternal(buff, buffTarget);
+				if (!(base.Caster is StarshipEntity) && buffTarget is StarshipEntity)
+				{
+					return;
+				}
+				buff.AddSource(areaEffectEntity);
+			}
+			else
+			{
+				buff.AddSource(base.Context.AssociatedBlueprint);
 			}
 		}
 		if (AsChild)
@@ -135,26 +139,6 @@ public class ContextActionApplyBuff : ContextAction
 		using (base.Context.GetDataScope(buffTarget.ToITargetWrapper()))
 		{
 			ActionsOnApply?.Run();
-		}
-	}
-
-	private void AddSourceInternal(Buff buff, MechanicEntity target)
-	{
-		if (TryAddAbilitySource(buff))
-		{
-			return;
-		}
-		AreaEffectEntity areaEffectEntity = ContextData<AreaEffectContextData>.Current?.Entity;
-		if (areaEffectEntity != null)
-		{
-			if (base.Caster is StarshipEntity || !(target is StarshipEntity))
-			{
-				buff.AddSource(areaEffectEntity);
-			}
-		}
-		else
-		{
-			buff.AddSource(base.Context.AssociatedBlueprint);
 		}
 	}
 

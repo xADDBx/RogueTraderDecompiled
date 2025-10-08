@@ -207,4 +207,22 @@ public class BlueprintEtude : BlueprintFact, IEtudeReference
 		}
 		return EtudeReferenceType.None;
 	}
+
+	public void ReplaceAddedAreaMechanics(List<BlueprintAreaMechanicsReference> newAddedMechanicsRefs)
+	{
+		m_AddedAreaMechanics = newAddedMechanicsRefs;
+	}
+
+	public void AppendStartWith(BlueprintEtude etude)
+	{
+		m_StartsWith.Add(BlueprintReference<BlueprintEtude>.CreateTyped<BlueprintEtudeReference>(etude));
+	}
+
+	public void SetLinkedAreaPart(BlueprintArea area)
+	{
+		if (area != null)
+		{
+			m_LinkedAreaPart = area.ToReference<BlueprintAreaPartReference>();
+		}
+	}
 }

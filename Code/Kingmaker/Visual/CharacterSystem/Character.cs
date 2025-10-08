@@ -8,6 +8,8 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
 using Kingmaker.EntitySystem.Persistence;
+using Kingmaker.Items;
+using Kingmaker.Items.Slots;
 using Kingmaker.ResourceLinks;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -206,6 +208,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 	public Func<EquipmentEntity.OutfitPart, GameObject, bool> OutfitFilter;
 
 	public HashSet<UnitAnimationManager> MechsAnimationManagers = new HashSet<UnitAnimationManager>();
+
+	private Dictionary<EquipmentEntity, ItemSlot> m_EquipmentEntityToSlot = new Dictionary<EquipmentEntity, ItemSlot>();
 
 	public List<EquipmentEntityLink> EquipmentEntitiesForPreload = new List<EquipmentEntityLink>();
 
@@ -789,11 +793,19 @@ public class Character : RegisteredBehaviour, IUpdatable
 		AddEquipmentEntity(ee, saved, isFromEquippedItem: false);
 	}
 
-	public void AddEquipmentEntity(EquipmentEntity ee, bool saved, bool isFromEquippedItem)
+	public void AddEquipmentEntity(EquipmentEntity ee, bool saved, bool isFromEquippedItem, ItemSlot sourceSlot = null)
 	{
 		if (ee == null)
 		{
 			return;
+		}
+		if (isFromEquippedItem)
+		{
+			EquippedItemsEntities.Add(ee);
+			if (sourceSlot != null)
+			{
+				m_EquipmentEntityToSlot[ee] = sourceSlot;
+			}
 		}
 		if (base.name.Contains("Pregen") && !ee.name.ToLower().Contains("head") && !EquipmentEntities.Any((EquipmentEntity existing) => existing.name.ToLower().Contains("head")))
 		{
@@ -819,50 +831,53 @@ public class Character : RegisteredBehaviour, IUpdatable
 				}
 			}
 		}
-		if (EquipmentEntities.Contains(ee))
+		if (!EquipmentEntities.Contains(ee))
 		{
-			return;
+			EquipmentEntities.Add(ee);
+			if (ee.ForcedPrimaryIndex >= 0 || ee.ForcedSecondaryIndex >= 0)
+			{
+				SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices rampIndices) => rampIndices.EquipmentEntity == ee);
+				if (selectedRampIndices == null)
+				{
+					selectedRampIndices = new SelectedRampIndices
+					{
+						EquipmentEntity = ee,
+						PrimaryIndex = ee.ForcedPrimaryIndex,
+						SecondaryIndex = ee.ForcedSecondaryIndex
+					};
+					RampIndices.Add(selectedRampIndices);
+				}
+				else
+				{
+					selectedRampIndices.PrimaryIndex = ee.ForcedPrimaryIndex;
+					selectedRampIndices.PrimaryIndex = ee.ForcedSecondaryIndex;
+				}
+				IsDirty = true;
+				return;
+			}
+			if (ee.PrimaryRamps.Count > 0 || ee.SecondaryRamps.Count > 0)
+			{
+				SelectedRampIndices selectedRampIndices2 = RampIndices.FirstOrDefault((SelectedRampIndices rampIndices) => rampIndices.EquipmentEntity == ee);
+				if (selectedRampIndices2 == null)
+				{
+					selectedRampIndices2 = new SelectedRampIndices
+					{
+						EquipmentEntity = ee
+					};
+					RampIndices.Add(selectedRampIndices2);
+				}
+				IsAtlasesDirty = true;
+			}
+			IsDirty = true;
 		}
-		EquipmentEntities.Add(ee);
 		if (isFromEquippedItem)
 		{
 			EquippedItemsEntities.Add(ee);
-		}
-		if (ee.ForcedPrimaryIndex >= 0 || ee.ForcedSecondaryIndex >= 0)
-		{
-			SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices rampIndices) => rampIndices.EquipmentEntity == ee);
-			if (selectedRampIndices == null)
+			if (sourceSlot != null)
 			{
-				selectedRampIndices = new SelectedRampIndices
-				{
-					EquipmentEntity = ee,
-					PrimaryIndex = ee.ForcedPrimaryIndex,
-					SecondaryIndex = ee.ForcedSecondaryIndex
-				};
-				RampIndices.Add(selectedRampIndices);
+				m_EquipmentEntityToSlot[ee] = sourceSlot;
 			}
-			else
-			{
-				selectedRampIndices.PrimaryIndex = ee.ForcedPrimaryIndex;
-				selectedRampIndices.PrimaryIndex = ee.ForcedSecondaryIndex;
-			}
-			IsDirty = true;
-			return;
 		}
-		if (ee.PrimaryRamps.Count > 0 || ee.SecondaryRamps.Count > 0)
-		{
-			SelectedRampIndices selectedRampIndices2 = RampIndices.FirstOrDefault((SelectedRampIndices rampIndices) => rampIndices.EquipmentEntity == ee);
-			if (selectedRampIndices2 == null)
-			{
-				selectedRampIndices2 = new SelectedRampIndices
-				{
-					EquipmentEntity = ee
-				};
-				RampIndices.Add(selectedRampIndices2);
-			}
-			IsAtlasesDirty = true;
-		}
-		IsDirty = true;
 	}
 
 	public void AddEquipmentEntities(IEnumerable<EquipmentEntity> ees, bool saved = false)
@@ -870,13 +885,13 @@ public class Character : RegisteredBehaviour, IUpdatable
 		AddEquipmentEntities(ees, saved, isFromEquippedItems: false);
 	}
 
-	public void AddEquipmentEntities(IEnumerable<EquipmentEntity> ees, bool saved, bool isFromEquippedItems)
+	public void AddEquipmentEntities(IEnumerable<EquipmentEntity> ees, bool saved, bool isFromEquippedItems, ItemSlot sourceSlot = null)
 	{
 		using (ProfileScope.NewScope("AddEquipmentEntities"))
 		{
 			ees.ForEach(delegate(EquipmentEntity ee)
 			{
-				AddEquipmentEntity(ee, saved, isFromEquippedItems);
+				AddEquipmentEntity(ee, saved, isFromEquippedItems, sourceSlot);
 			});
 		}
 	}
@@ -916,7 +931,6 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return;
 		}
-		PFLog.TechArt.Log($"RemoveEquipmentEntity: Removing EE {ee?.name}, saved={saved}");
 		m_EquipmentEntitiesTextures.RemoveEquipmentEntity(ee);
 		for (int i = 0; i < RampIndices.Count; i++)
 		{
@@ -928,8 +942,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 		bool flag = EquipmentEntities.Remove(ee);
 		IsDirty |= flag;
-		bool flag2 = EquippedItemsEntities.Remove(ee);
-		PFLog.TechArt.Log($"RemoveEquipmentEntity: Removed from EquipmentEntities={flag}, Removed from EquippedItemsEntities={flag2}");
+		EquippedItemsEntities.Remove(ee);
+		m_EquipmentEntityToSlot.Remove(ee);
 	}
 
 	public void RemoveAllEquipmentEntities(bool saved = false)
@@ -937,6 +951,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		IsDirty |= EquipmentEntities.Any();
 		EquipmentEntities.Clear();
 		EquippedItemsEntities.Clear();
+		m_EquipmentEntityToSlot.Clear();
 		RampIndices.Clear();
 	}
 
@@ -1068,19 +1083,50 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private bool IsHelmetThatShouldBeHidden(EquipmentEntity e)
 	{
-		if (m_ShowHelmet)
+		return false;
+	}
+
+	private bool ShouldHideEquipmentEntity(EquipmentEntity entity)
+	{
+		if (!EquippedItemsEntities.Contains(entity))
 		{
 			return false;
 		}
-		if (e.CantBeHiddenByDollRoom)
+		if (entity.CantBeHiddenByDollRoom)
 		{
 			return false;
 		}
-		if (!e.BodyParts.Any((BodyPart p) => IsHelmetType(p)))
+		if (!m_EquipmentEntityToSlot.TryGetValue(entity, out var value))
+		{
+			if (!m_ShowHelmet && entity != null && entity.BodyParts != null && entity.BodyParts.Any((BodyPart bp) => IsHelmetType(bp)))
+			{
+				return true;
+			}
+			return false;
+		}
+		UnitEntityView componentInParent = GetComponentInParent<UnitEntityView>();
+		if (componentInParent?.EntityData?.Body == null)
 		{
 			return false;
 		}
-		return true;
+		PartUnitBody body = componentInParent.EntityData.Body;
+		if (!m_ShowArmor && value == body.Armor)
+		{
+			return true;
+		}
+		if (!m_ShowHelmet && value == body.Head)
+		{
+			return true;
+		}
+		if (!m_ShowGloves && value == body.Gloves)
+		{
+			return true;
+		}
+		if (!m_ShowBoots && value == body.Feet)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	private bool ShouldHideBodyPartFromEquippedItem(BodyPart bodyPart, EquipmentEntity fromEntity)
@@ -1118,18 +1164,13 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private void SetAlwaysVisibleHelmetProxyEe()
 	{
-		if (!m_ShowHelmetAboveAll)
-		{
-			m_AlwaysVisibleHelmetEe = null;
-			m_ProxyHelmetEe = null;
-			return;
-		}
+		m_AlwaysVisibleHelmetEe = null;
+		m_ProxyHelmetEe = null;
 		foreach (EquipmentEntity equipmentEntity in EquipmentEntities)
 		{
-			if (equipmentEntity.ShowAboveAllIgnoreLayer)
+			if (equipmentEntity != null && equipmentEntity.ShowAboveAllIgnoreLayer)
 			{
 				m_AlwaysVisibleHelmetEe = equipmentEntity;
-				m_ProxyHelmetEe = CreateProxyHeadwearEe(equipmentEntity);
 				break;
 			}
 		}
@@ -1176,10 +1217,41 @@ public class Character : RegisteredBehaviour, IUpdatable
 	private void SetAlwaysVisibleHelmet()
 	{
 		SetAlwaysVisibleHelmetProxyEe();
-		if (m_ShowHelmetAboveAll)
+		if (m_AlwaysVisibleHelmetEe != null && !m_ShowHelmetAboveAll)
 		{
 			m_ProxyEquipmentEntities.Remove(m_AlwaysVisibleHelmetEe);
-			m_ProxyEquipmentEntities.Add(m_ProxyHelmetEe);
+		}
+	}
+
+	private void EnsureEquippedSlotMappingFromBody()
+	{
+		UnitEntityView unitEntityView = GetComponentInParent<UnitEntityView>();
+		if (unitEntityView == null)
+		{
+			unitEntityView = GetComponent<UnitEntityView>();
+		}
+		if (unitEntityView == null)
+		{
+			unitEntityView = ((base.transform.root != null) ? base.transform.root.GetComponentInChildren<UnitEntityView>() : null);
+		}
+		PartUnitBody partUnitBody = unitEntityView?.EntityData?.Body;
+		if (partUnitBody == null)
+		{
+			return;
+		}
+		foreach (ItemSlot allSlot in partUnitBody.AllSlots)
+		{
+			foreach (EquipmentEntity item in unitEntityView.ExtractEquipmentEntities(allSlot))
+			{
+				if (!(item == null))
+				{
+					EquippedItemsEntities.Add(item);
+					if (allSlot != null)
+					{
+						m_EquipmentEntityToSlot[item] = allSlot;
+					}
+				}
+			}
 		}
 	}
 
@@ -1190,21 +1262,26 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			m_ProxyEquipmentEntities.Add(equipmentEntity2);
 		}
+		EnsureEquippedSlotMappingFromBody();
+		if (EquippedItemsEntities != null)
+		{
+			string.Join(", ", EquippedItemsEntities.Select((EquipmentEntity e) => e?.name + ":" + ((!m_EquipmentEntityToSlot.TryGetValue(e, out var value)) ? "none" : value?.GetType().Name)));
+		}
 		SetAlwaysVisibleHelmet();
 		Dictionary<BodyPart, EquipmentEntity> dictionary = new Dictionary<BodyPart, EquipmentEntity>();
-		foreach (EquipmentEntity item in from ee in m_ProxyEquipmentEntities
-			where ee != null && ee.BodyParts.Count > 0
+		foreach (EquipmentEntity item in (from ee in m_ProxyEquipmentEntities
+			where ee != null && ee.BodyParts.Count > 0 && !ShouldHideEquipmentEntity(ee) && !IsHelmetThatShouldBeHidden(ee)
 			orderby ee.Layer
-			select ee)
+			select ee).ToList())
 		{
-			if (IsHelmetThatShouldBeHidden(item))
+			if (ShouldHideEquipmentEntity(item) || IsHelmetThatShouldBeHidden(item))
 			{
 				continue;
 			}
 			BodyPartType bodyPartType = (BodyPartType)0L;
 			foreach (EquipmentEntity proxyEquipmentEntity in m_ProxyEquipmentEntities)
 			{
-				if (!(proxyEquipmentEntity == null) && !(item == proxyEquipmentEntity) && !IsHelmetThatShouldBeHidden(proxyEquipmentEntity))
+				if (!(proxyEquipmentEntity == null) && !(item == proxyEquipmentEntity) && !ShouldHideEquipmentEntity(proxyEquipmentEntity) && !IsHelmetThatShouldBeHidden(proxyEquipmentEntity))
 				{
 					bodyPartType |= proxyEquipmentEntity.HideBodyParts;
 				}
@@ -1238,7 +1315,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 					orderby ee.Layer
 					select ee)
 				{
-					AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item3);
+					if (!ShouldHideEquipmentEntity(item3) && !IsHelmetThatShouldBeHidden(item3))
+					{
+						AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item3);
+					}
 				}
 			}
 			AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, entity);
@@ -1247,7 +1327,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 				orderby ee.Layer
 				select ee)
 			{
-				AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item4);
+				if (!ShouldHideEquipmentEntity(item4) && !IsHelmetThatShouldBeHidden(item4))
+				{
+					AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item4);
+				}
 			}
 		}
 		if (m_OverlayBodyParts != null && m_OverlayBodyParts.Count > 0)
@@ -1662,7 +1745,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void UpdateHelmetVisibility(bool showHelmet)
 	{
-		if (m_ShowHelmet == !showHelmet)
+		if (m_ShowHelmet != showHelmet)
 		{
 			IsDirty = true;
 			m_ShowHelmet = showHelmet;
@@ -1671,7 +1754,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	public void UpdateHelmetVisibilityAboveAll(bool showHelmetAboveAll)
 	{
-		if (m_ShowHelmetAboveAll == !showHelmetAboveAll)
+		if (m_ShowHelmetAboveAll != showHelmetAboveAll)
 		{
 			IsDirty = true;
 			m_ShowHelmetAboveAll = showHelmetAboveAll;

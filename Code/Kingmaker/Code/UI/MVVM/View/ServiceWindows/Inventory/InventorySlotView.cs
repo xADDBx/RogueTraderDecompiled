@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.GameCommands;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Sound;
@@ -160,8 +161,8 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 
 	protected void AddRemoveFromFavorites()
 	{
-		base.ViewModel.Item.Value.IsFavorite = !base.ViewModel.Item.Value.IsFavorite;
-		base.ViewModel.IsFavorite.Value = base.ViewModel.Item.Value.IsFavorite;
+		base.ViewModel.IsFavorite.Value = !base.ViewModel.Item.Value.IsFavorite;
+		Game.Instance.GameCommandQueue.AddRemoveItemAsFavorite(base.ViewModel.Item.Value);
 	}
 
 	protected void MoveToInventory(bool immediately)

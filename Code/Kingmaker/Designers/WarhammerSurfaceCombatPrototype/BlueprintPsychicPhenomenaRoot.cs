@@ -59,6 +59,12 @@ public class BlueprintPsychicPhenomenaRoot : BlueprintScriptableObject
 
 	public BlueprintAbilityReference[] PerilsOfTheWarpMajor;
 
+	public BlueprintUnlockableFlagReference PerilRestrictingFlag;
+
+	public BlueprintAbilityReference[] RestrictedPerilsOfTheWarpMinor;
+
+	public BlueprintAbilityReference[] RestrictedPerilsOfTheWarpMajor;
+
 	public BlueprintFeature SanctionedPsyker => m_SanctionedPsyker;
 
 	public BlueprintFeature UnsanctionedPsyker => m_UnsanctionedPsyker;

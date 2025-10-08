@@ -511,15 +511,19 @@ public class CareerPathVM : SelectionGroupEntityVM, ILevelUpManagerUIHandler, IS
 		}
 		int currentRank = careerPathRankEntryVM.Rank;
 		IRankEntrySelectItem rankEntrySelectItem = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank)?.GetNextFor(currentItem);
-		IRankEntrySelectItem rankEntrySelectItem2 = rankEntrySelectItem;
-		if (rankEntrySelectItem2 == null)
+		IRankEntrySelectItem rankEntrySelectItem2;
+		if (!skipSelected)
 		{
-			CareerPathRankEntryVM careerPathRankEntryVM2 = source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank + 1);
-			if (careerPathRankEntryVM2 == null)
+			rankEntrySelectItem2 = rankEntrySelectItem;
+			if (rankEntrySelectItem2 == null)
 			{
-				return null;
+				return source.FirstOrDefault((CareerPathRankEntryVM re) => re.Rank == currentRank + 1)?.GetFirstItem();
 			}
-			rankEntrySelectItem2 = careerPathRankEntryVM2.GetFirstItem();
+		}
+		else
+		{
+			IRankEntrySelectItem firstSelectable = FirstSelectable;
+			rankEntrySelectItem2 = firstSelectable;
 		}
 		return rankEntrySelectItem2;
 	}

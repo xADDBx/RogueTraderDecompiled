@@ -1526,7 +1526,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 					return false;
 				}
 			}
-			else if (!LosCalculations.HasLos(UseBestShootingPosition ? bestShootingPosition : casterNode, Caster.SizeRect, customGridNodeBase, target.SizeRect))
+			else if (!LosCalculations.HasLos((UseBestShootingPosition || Blueprint.GetComponent<AbilityFakeUseBestShootingPosition>() != null) ? bestShootingPosition : casterNode, Caster.SizeRect, customGridNodeBase, target.SizeRect))
 			{
 				unavailabilityReason = UnavailabilityReasonType.HasNoLosToTarget;
 				return false;
@@ -1883,7 +1883,7 @@ public class AbilityData : IUIDataProvider, IAbilityDataProviderForPattern, IHas
 
 	public CustomGridNodeBase GetBestShootingPosition(CustomGridNodeBase castNode, TargetWrapper target)
 	{
-		if (!UseBestShootingPosition)
+		if (!UseBestShootingPosition && !Blueprint.GetComponent<AbilityFakeUseBestShootingPosition>())
 		{
 			return castNode;
 		}

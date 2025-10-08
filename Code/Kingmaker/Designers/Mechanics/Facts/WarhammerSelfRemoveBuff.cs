@@ -45,7 +45,7 @@ public class WarhammerSelfRemoveBuff : UnitBuffComponentDelegate, ITurnBasedMode
 		}
 	}
 
-	public void HandleRoundEnd(bool isTurnBased)
+	public void HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
 		if (RemoveOnEndOfRound && (!RemoveOnlyOnLastRound || base.Buff.ExpirationInRounds == 1))
 		{

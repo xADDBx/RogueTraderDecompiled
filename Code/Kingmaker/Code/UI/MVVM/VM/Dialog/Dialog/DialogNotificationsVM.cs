@@ -311,7 +311,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 		{
 			return;
 		}
-		string key = LinkGenerate(resource.Name, "ib:" + resource.name);
+		string key = LinkGenerate(resource.Name, "cr:" + resource.name);
 		if (!ContextData<GameLogDisabled>.Current)
 		{
 			if (ResourcesChanged.TryGetValue(key, out var _))

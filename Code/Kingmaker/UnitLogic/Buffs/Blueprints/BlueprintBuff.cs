@@ -89,6 +89,8 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 	[SerializeField]
 	private bool m_Cyclical;
 
+	public bool NeedCollapseStack = true;
+
 	public int PriorityInUI => m_priorityInUI;
 
 	public int MaxRank

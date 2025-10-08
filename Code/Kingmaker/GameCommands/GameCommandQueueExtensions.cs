@@ -128,6 +128,11 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new UnequipItemGameCommand(owner, from, to));
 	}
 
+	public static void AddRemoveItemAsFavorite([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] ItemEntity item)
+	{
+		gameCommandQueue.AddCommand(new AddRemoveItemAsFavoriteCommand(item));
+	}
+
 	public static void SwapSlots([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] MechanicEntity entity, [NotNull] ItemSlotRef from, [NotNull] ItemSlotRef to, bool isLoot)
 	{
 		gameCommandQueue.AddCommand(new SwapSlotsGameCommand(entity, from, to, isLoot));

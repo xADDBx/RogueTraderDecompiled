@@ -36,6 +36,22 @@ public class SurfaceActionBarPartAbilitiesPCView : SurfaceActionBarPartAbilities
 		m_RowsPool = m_RowsContainer.GetComponentsInChildren<SurfaceActionBarAbilitiesRowView>().ToList();
 	}
 
+	public override void UpdateGrayscale()
+	{
+		foreach (SurfaceActionBarSlotAbilityPCView item in m_RowsPool.SelectMany((SurfaceActionBarAbilitiesRowView r) => r.GetSlots()).Cast<SurfaceActionBarSlotAbilityPCView>().ToList())
+		{
+			ActionBarSlotVM actionBarSlotVM = (ActionBarSlotVM)item.GetViewModel();
+			if (actionBarSlotVM.IsPossibleWithoutNetRole.Value && actionBarSlotVM.HasConvert.Value)
+			{
+				item.SetGreyscale(actionBarSlotVM.ResourceCount.Value != 0 || actionBarSlotVM.HasAvailableConvert.Value);
+			}
+			else
+			{
+				item.SetGreyscale((actionBarSlotVM.IsPossibleWithoutNetRole.Value && !actionBarSlotVM.IsFake.Value) || actionBarSlotVM.IsInCharScreen);
+			}
+		}
+	}
+
 	protected override void BindViewImplementation()
 	{
 		if (m_CharacterButton != null)

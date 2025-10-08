@@ -124,6 +124,7 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 		}
 		DrawEntities();
 		UpdateNoAbilitiesContainerView();
+		m_ActionBarPartAbilitiesView.UpdateGrayscale();
 		m_ScrollRect.ScrollToTop();
 	}
 

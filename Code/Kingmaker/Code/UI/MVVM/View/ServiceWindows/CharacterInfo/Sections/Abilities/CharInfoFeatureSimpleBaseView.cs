@@ -29,6 +29,12 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 	[SerializeField]
 	protected TextMeshProUGUI m_AcronymText;
 
+	[SerializeField]
+	protected TextMeshProUGUI m_AcronymTextForGeneratedIcon;
+
+	[SerializeField]
+	protected GameObject m_GeneratedIconBlock;
+
 	protected AccessibilityTextHelper TextHelper;
 
 	public bool ShouldShowTalentIcons => base.ViewModel.ShouldShowTalentIcons;
@@ -93,8 +99,18 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 			SetupAcronym();
 			if (m_GroupsView != null && base.ViewModel.TalentIconsInfo.HasGroups)
 			{
+				m_AcronymText.gameObject.SetActive(value: false);
+				if (m_GeneratedIconBlock != null)
+				{
+					m_GeneratedIconBlock.SetActive(value: true);
+				}
 				m_GroupsView.SetupView(base.ViewModel.TalentIconsInfo);
 				return;
+			}
+			m_AcronymText.gameObject.SetActive(value: true);
+			if (m_GeneratedIconBlock != null)
+			{
+				m_GeneratedIconBlock.SetActive(value: false);
 			}
 			m_FeatureIcon.color = UIUtility.GetColorByText(base.ViewModel.Acronym);
 			m_FeatureIcon.sprite = UIUtility.GetIconByText(base.ViewModel.Acronym);
@@ -102,6 +118,10 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 		}
 		else
 		{
+			if (m_GeneratedIconBlock != null)
+			{
+				m_GeneratedIconBlock.SetActive(value: false);
+			}
 			m_AcronymText.gameObject.SetActive(value: false);
 			m_GroupsView.Or(null)?.SetActiveState(state: false);
 			m_FeatureIcon.color = Color.white;
@@ -114,6 +134,11 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 		m_AcronymText.gameObject.SetActive(value: true);
 		m_AcronymText.text = base.ViewModel.Acronym;
 		m_AcronymText.color = (((bool)m_GroupsView && base.ViewModel.TalentIconsInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
+		if (m_AcronymTextForGeneratedIcon != null)
+		{
+			m_AcronymTextForGeneratedIcon.text = base.ViewModel.Acronym;
+			m_AcronymTextForGeneratedIcon.color = (((bool)m_GroupsView && base.ViewModel.TalentIconsInfo.HasGroups) ? UIConfig.Instance.GroupAcronymColor : UIConfig.Instance.SingleAcronymColor);
+		}
 	}
 
 	public void SetupName()

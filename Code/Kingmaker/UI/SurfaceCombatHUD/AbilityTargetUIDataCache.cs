@@ -80,7 +80,12 @@ public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUI
 		if (!m_UIDataCache.TryGetValue((ability, target, casterPosition), out var value))
 		{
 			flag = false;
-			value = new AbilityTargetUIData(ability, target, casterPosition);
+			OverpenetrationUIData overpenetrationUIData = default(OverpenetrationUIData);
+			overpenetrationUIData.CountOverpenetration = false;
+			overpenetrationUIData.OverpenetrationDamagePercent = 100;
+			overpenetrationUIData.OverpenetrationHitChance = 100f;
+			OverpenetrationUIData overpenetrationData = overpenetrationUIData;
+			value = new AbilityTargetUIData(ability, target, casterPosition, ref overpenetrationData);
 			m_UIDataCache.Add((ability, target, casterPosition), value);
 		}
 		if (flag)

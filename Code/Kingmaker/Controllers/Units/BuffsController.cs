@@ -91,6 +91,7 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 				}
 				if (buff.Active && buff.Initiative.ShouldActNow(isTurnBased, @event, out var actRound))
 				{
+					buff.Initiative.ShouldActNow(isTurnBased, @event, out var _);
 					buff.Initiative.LastTurn = actRound;
 					buff.NextRound();
 				}
@@ -151,9 +152,12 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 		TickBuffs(isTurnBased, Initiative.Event.RoundStart);
 	}
 
-	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased)
+	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
-		TickBuffs(isTurnBased, Initiative.Event.RoundEnd);
+		if (!isFirst)
+		{
+			TickBuffs(isTurnBased, Initiative.Event.RoundEnd);
+		}
 	}
 
 	void ITurnBasedModeHandler.HandleTurnBasedModeSwitched(bool isTurnBased)

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
@@ -25,7 +27,7 @@ public class TooltipBrickBuffVM : TooltipBrickFeatureVM
 
 	private readonly Buff m_Buff;
 
-	public TooltipBrickBuffVM(Buff buff)
+	public TooltipBrickBuffVM(Buff buff, List<Buff> additionalSources = null)
 	{
 		m_Buff = buff;
 		Name = buff.Name;
@@ -40,8 +42,16 @@ public class TooltipBrickBuffVM : TooltipBrickFeatureVM
 			IconColor = UIUtility.GetColorByText(buff.Name);
 			Acronym = UIUtility.GetAbilityAcronym(buff.Name);
 		}
-		SourceName = (m_Buff?.Context?.MaybeCaster as BaseUnitEntity)?.CharacterName ?? string.Empty;
-		Tooltip = new TooltipTemplateBuff(buff);
+		if (additionalSources != null && additionalSources.Count > 0)
+		{
+			List<string> list = additionalSources.Select((Buff b) => (b?.Context?.MaybeCaster as BaseUnitEntity)?.CharacterName ?? string.Empty).ToList();
+			SourceName = ((list.Count > 1) ? $"{list[0]} + {list.Count - 1}" : (list[0] ?? ""));
+		}
+		else
+		{
+			SourceName = (m_Buff?.Context?.MaybeCaster as BaseUnitEntity)?.CharacterName ?? string.Empty;
+		}
+		Tooltip = new TooltipTemplateBuff(buff, additionalSources);
 		AvailableBackground = true;
 		Stack = ((m_Buff != null && m_Buff.Blueprint.MaxRank > 1) ? (m_Buff.GetRank() + "/" + m_Buff.Blueprint.MaxRank) : string.Empty);
 		IsDOT = m_Buff?.Blueprint?.GetComponent<DOTLogicVisual>() != null;

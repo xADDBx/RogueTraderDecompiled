@@ -99,9 +99,6 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool DisabledBecauseOfNotCasterTurn { get; set; }
 
-	public List<Buff> StackedBuffsSourcesRefs { get; set; } = new List<Buff>();
-
-
 	public int DurationInRounds => m_DurationInRounds;
 
 	public int ExpirationInRounds
@@ -592,14 +589,6 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			{
 				h.HandleBuffRankDecreased(this);
 			}, isCheckRuntime: true);
-		}
-	}
-
-	public void RemoveSource()
-	{
-		if (base.Sources.Count > 1)
-		{
-			RemoveSource(base.Sources[1]);
 		}
 	}
 

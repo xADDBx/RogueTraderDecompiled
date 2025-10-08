@@ -337,7 +337,7 @@ public abstract class MechanicActionBarSlot : IRoundEndHandler, ISubscriber, IHa
 		}
 	}
 
-	public void HandleRoundEnd(bool isTurnBased)
+	public void HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
 		if (isTurnBased)
 		{

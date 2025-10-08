@@ -352,10 +352,10 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		if (Ability.NeedLoS && base.Executor.GetOptional<UnitPartJump>()?.Active == null)
 		{
 			CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)(GraphNode)base.Executor.CurrentNode;
-			CustomGridNodeBase bestShootingPosition = Ability.GetBestShootingPosition(customGridNodeBase, base.Target);
+			CustomGridNodeBase customGridNodeBase2 = (Ability.UseBestShootingPosition ? Ability.GetBestShootingPosition(customGridNodeBase, base.Target) : customGridNodeBase);
 			if ((object)base.Executor.MaybeAnimationManager != null)
 			{
-				int num = (bestShootingPosition.XCoordinateInGrid - customGridNodeBase.XCoordinateInGrid) * (base.Target.NearestNode.ZCoordinateInGrid - customGridNodeBase.ZCoordinateInGrid) - (bestShootingPosition.ZCoordinateInGrid - customGridNodeBase.ZCoordinateInGrid) * (base.Target.NearestNode.XCoordinateInGrid - customGridNodeBase.XCoordinateInGrid);
+				int num = (customGridNodeBase2.XCoordinateInGrid - customGridNodeBase.XCoordinateInGrid) * (base.Target.NearestNode.ZCoordinateInGrid - customGridNodeBase.ZCoordinateInGrid) - (customGridNodeBase2.ZCoordinateInGrid - customGridNodeBase.ZCoordinateInGrid) * (base.Target.NearestNode.XCoordinateInGrid - customGridNodeBase.XCoordinateInGrid);
 				UnitAnimationManager maybeAnimationManager = base.Executor.MaybeAnimationManager;
 				UnitAnimationActionCover.StepOutDirectionAnimationType stepOutDirectionAnimationType = ((num > 0) ? UnitAnimationActionCover.StepOutDirectionAnimationType.Right : ((num < 0) ? UnitAnimationActionCover.StepOutDirectionAnimationType.Left : UnitAnimationActionCover.StepOutDirectionAnimationType.None));
 				maybeAnimationManager.StepOutDirectionAnimationType = stepOutDirectionAnimationType;

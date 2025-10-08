@@ -278,7 +278,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 
 	private void UpdateVisibility()
 	{
-		if (!base.ViewModel.UnitState.IsPlayer.Value && base.ViewModel.UnitState.IsDeadOrUnconsciousIsDead.Value)
+		if (!base.ViewModel.UnitState.IsPlayer.Value && base.ViewModel.UnitState.IsDeadOrUnconsciousIsDead.Value && !Game.Instance.IsControllerGamepad)
 		{
 			Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;

@@ -222,8 +222,8 @@ public class CharGenAppearanceComponentAppearancePhaseVM : CharGenPhaseBaseVM, I
 	{
 		if (CurrentPageVM.Value != null)
 		{
-			CharGenUtility.GetClothesColorsProfile(CharGenContext.Doll.Clothes, out var colorPreset);
-			base.ShowVisualSettings.Value = CurrentPageVM.Value.PageType != 0 && (!CharGenContext.Doll.ShowCloth || colorPreset != null);
+			CharGenUtility.GetClothesColorsProfile(CharGenContext.Doll.Clothes, out var _);
+			base.ShowVisualSettings.Value = false;
 		}
 	}
 

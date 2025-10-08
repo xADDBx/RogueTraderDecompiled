@@ -447,12 +447,12 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		{
 			return;
 		}
-		IEnumerable<EquipmentEntity> ees = EntityData.Body.AllSlots.SelectMany(ExtractEquipmentEntities);
-		base.CharacterAvatar.AddEquipmentEntities(ees, saved: false, isFromEquippedItems: true);
 		foreach (ItemSlot allSlot in EntityData.Body.AllSlots)
 		{
-			IEnumerable<EquipmentEntity> ees2 = ExtractEquipmentEntities(allSlot);
-			TryForceRampIndices(allSlot, ees2);
+			IEnumerable<EquipmentEntity> enumerable = ExtractEquipmentEntities(allSlot);
+			PFLog.TechArt.Log(string.Format("UpdateBodyEquipmentModel: slot='{0}', eesCount={1} -> [{2}]", allSlot?.GetType().Name, enumerable?.Count(), string.Join(", ", enumerable.Select((EquipmentEntity e) => e?.name))));
+			base.CharacterAvatar.AddEquipmentEntities(enumerable, saved: false, isFromEquippedItems: true, allSlot);
+			TryForceRampIndices(allSlot, enumerable);
 		}
 	}
 
@@ -636,12 +636,13 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 			}
 			if (!(base.CharacterAvatar == null))
 			{
-				IEnumerable<EquipmentEntity> ees = ExtractEquipmentEntities(previousItem);
-				base.CharacterAvatar.RemoveEquipmentEntities(ees);
-				ees = ExtractEquipmentEntities(slot);
-				base.CharacterAvatar.AddEquipmentEntities(ees, saved: false, isFromEquippedItems: true);
+				IEnumerable<EquipmentEntity> enumerable = ExtractEquipmentEntities(previousItem);
+				base.CharacterAvatar.RemoveEquipmentEntities(enumerable);
+				PFLog.TechArt.Log(string.Format("HandleEquipmentSlotUpdated: slot='{0}', eesCount={1} -> [{2}]", slot?.GetType().Name, enumerable?.Count(), string.Join(", ", enumerable.Select((EquipmentEntity e) => e?.name))));
+				enumerable = ExtractEquipmentEntities(slot);
+				base.CharacterAvatar.AddEquipmentEntities(enumerable, saved: false, isFromEquippedItems: true, slot);
 				base.CharacterAvatar.IsDirty = true;
-				TryForceRampIndices(slot, ees);
+				TryForceRampIndices(slot, enumerable);
 			}
 		}
 	}

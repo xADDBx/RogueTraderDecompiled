@@ -49,7 +49,7 @@ public class SurfaceMomentumVM : SurfaceActionBarBasePartVM, ITurnBasedModeHandl
 		{
 			return;
 		}
-		int num = 0;
+		int num = -1;
 		foreach (MechanicActionBarSlot momentumSlot in Unit.Entity.UISettings.GetMomentumSlots())
 		{
 			ActionBarSlotVM item = new ActionBarSlotVM(momentumSlot, num);
@@ -64,7 +64,7 @@ public class SurfaceMomentumVM : SurfaceActionBarBasePartVM, ITurnBasedModeHandl
 				{
 					DesperateMeasureSlots.Add(item);
 				}
-				num++;
+				num--;
 			}
 		}
 		IsPlayerTurn.Value = Game.Instance.TurnController.IsPlayerTurn;

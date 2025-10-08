@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
@@ -154,7 +155,7 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 			return null;
 		}
 		int overpenetrationFactorPercents = Damage.OverpenetrationFactorPercents;
-		int num = Math.Max(0, overpenetrationFactorPercents - 30);
+		int num = Math.Max(0, overpenetrationFactorPercents - BlueprintWarhammerRoot.Instance.CombatRoot.OverpenetrationReductionPerHit);
 		DamageData damageData = Damage.Copy();
 		damageData.OverpenetrationFactorPercents = num;
 		damageData.Overpenetrating = true;

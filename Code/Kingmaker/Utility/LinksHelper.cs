@@ -11,6 +11,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Items;
 using Kingmaker.Tutorial.Solvers;
 using Kingmaker.UI.Common;
@@ -39,6 +40,12 @@ public static class LinksHelper
 	public static BlueprintItem GetBlueprintItem(string id)
 	{
 		return Utilities.GetBlueprint<BlueprintItem>(id);
+	}
+
+	[CanBeNull]
+	public static BlueprintResource GetBlueprintResource(string id)
+	{
+		return Utilities.GetBlueprint<BlueprintResource>(id);
 	}
 
 	[CanBeNull]

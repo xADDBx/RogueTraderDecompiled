@@ -155,8 +155,12 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 		}
 	}
 
-	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased)
+	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
+		if (isFirst)
+		{
+			return;
+		}
 		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
 		{
 			if (!Restrictions.IsPassed(base.Fact, base.Owner))

@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Code.UI.MVVM.View.Other;
 using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Party;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.Utility.Attributes;
 using Owlcat.Runtime.UI.Controls.Selectable;
 using Owlcat.Runtime.UI.MVVM;
@@ -168,6 +169,7 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 
 	private void DrawBuffsInternal(List<BuffVM> buffs, List<BuffPCView> views, bool isVisibleBuffs)
 	{
+		Dictionary<BlueprintBuff, List<BuffVM>> dictionary = new Dictionary<BlueprintBuff, List<BuffVM>>();
 		for (int i = 0; i < views.Count; i++)
 		{
 			IViewModel viewModel = views[i].GetViewModel();
@@ -187,13 +189,42 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 				i--;
 			}
 		}
-		for (int j = 0; j < buffs.Count; j++)
+		for (int j = 0; j < views.Count; j++)
 		{
-			BuffVM buffVM = buffs[j];
+			BuffVM oldVM = views[j].GetViewModel() as BuffVM;
+			if (oldVM != null && buffs.Where((BuffVM b) => b.Buff.Blueprint == oldVM.Buff.Blueprint && b.Buff.Blueprint.NeedCollapseStack).ToList().Count != 0)
+			{
+				WidgetFactory.DisposeWidget(views[j]);
+				views.RemoveAt(j);
+				j--;
+			}
+		}
+		foreach (BuffVM buff2 in buffs)
+		{
+			if (buff2.Buff.Blueprint.NeedCollapseStack)
+			{
+				dictionary.TryAdd(buff2.Buff.Blueprint, new List<BuffVM>());
+			}
+		}
+		foreach (KeyValuePair<BlueprintBuff, List<BuffVM>> kvp in dictionary)
+		{
+			List<BuffVM> collection = buffs.Where((BuffVM b) => b.Buff.Blueprint == kvp.Key).ToList();
+			if (dictionary.TryGetValue(kvp.Key, out var value))
+			{
+				value.AddRange(collection);
+			}
+		}
+		for (int k = 0; k < buffs.Count; k++)
+		{
+			if (buffs[k].Buff.Blueprint.NeedCollapseStack)
+			{
+				continue;
+			}
+			BuffVM buffVM2 = buffs[k];
 			bool flag2 = false;
 			foreach (BuffPCView view in views)
 			{
-				if (view.GetViewModel() == buffVM)
+				if (view.GetViewModel() == buffVM2)
 				{
 					flag2 = true;
 					break;
@@ -203,15 +234,38 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 			{
 				BuffPCView widget = WidgetFactory.GetWidget(m_BuffView);
 				widget.SetHoverProperty(IsHovered);
-				widget.Bind(buffVM);
-				RectTransform parent = (isVisibleBuffs ? m_MainContainer : GetAdditionalBuffParent(buffVM));
+				widget.Bind(buffVM2);
+				RectTransform parent = (isVisibleBuffs ? m_MainContainer : GetAdditionalBuffParent(buffVM2));
 				widget.transform.SetParent(parent, worldPositionStays: false);
 				if (isVisibleBuffs)
 				{
-					widget.transform.SetSiblingIndex(j);
+					widget.transform.SetSiblingIndex(k);
 				}
 				views.Add(widget);
 			}
+		}
+		foreach (KeyValuePair<BlueprintBuff, List<BuffVM>> item in dictionary)
+		{
+			BuffVM viewModelBuff = item.Value.FirstOrDefault();
+			if (viewModelBuff == null)
+			{
+				continue;
+			}
+			viewModelBuff.AdditionalSources.Clear();
+			foreach (BuffVM item2 in item.Value.Where((BuffVM buffVM) => !viewModelBuff.AdditionalSources.Contains(buffVM)))
+			{
+				viewModelBuff.AdditionalSources.Add(item2);
+			}
+			BuffPCView widget2 = WidgetFactory.GetWidget(m_BuffView);
+			widget2.SetHoverProperty(IsHovered);
+			widget2.Bind(viewModelBuff);
+			RectTransform parent2 = (isVisibleBuffs ? m_MainContainer : GetAdditionalBuffParent(viewModelBuff));
+			widget2.transform.SetParent(parent2, worldPositionStays: false);
+			if (isVisibleBuffs)
+			{
+				widget2.transform.SetSiblingIndex(buffs.IndexOf(viewModelBuff));
+			}
+			views.Add(widget2);
 		}
 	}
 

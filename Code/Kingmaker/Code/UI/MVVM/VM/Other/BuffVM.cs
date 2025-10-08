@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
@@ -28,6 +29,8 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 	public readonly ReactiveProperty<int> Rank = new ReactiveProperty<int>();
 
 	public readonly ReactiveProperty<bool> IsDamage = new ReactiveProperty<bool>();
+
+	public List<BuffVM> AdditionalSources = new List<BuffVM>();
 
 	private readonly Subject<Unit> m_CalculateDamageSubject = new Subject<Unit>();
 

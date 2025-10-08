@@ -66,7 +66,7 @@ public class AreaEffectsController : IControllerTick, IController, ITeleportHand
 		TickAreaEffects(isTurnBased, Initiative.Event.RoundStart);
 	}
 
-	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased)
+	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
 		TickAreaEffects(isTurnBased, Initiative.Event.RoundEnd);
 	}

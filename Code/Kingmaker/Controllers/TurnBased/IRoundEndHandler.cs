@@ -4,5 +4,5 @@ namespace Kingmaker.Controllers.TurnBased;
 
 public interface IRoundEndHandler : ISubscriber
 {
-	void HandleRoundEnd(bool isTurnBased);
+	void HandleRoundEnd(bool isTurnBased, bool isFirst);
 }

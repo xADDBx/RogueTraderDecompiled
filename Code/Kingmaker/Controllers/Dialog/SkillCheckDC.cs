@@ -51,6 +51,6 @@ public class SkillCheckDC
 		chance = Mathf.Clamp(chance, 0, 100);
 		int num2 = ((!passed) ? (chance + 1) : 0);
 		int num3 = (passed ? chance : 101);
-		return num2 + num % (num3 - num2);
+		return num2 + num % Mathf.Max(1, num3 - num2);
 	}
 }

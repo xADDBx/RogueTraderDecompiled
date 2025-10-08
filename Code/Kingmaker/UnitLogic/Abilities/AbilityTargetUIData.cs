@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
@@ -12,6 +13,7 @@ using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.RuleSystem.Rules.Starships;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.View.Covers;
@@ -80,7 +82,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		IsAbilityRedirected = false;
 	}
 
-	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition, bool isAbilityRedirected = false)
+	public AbilityTargetUIData(AbilityData ability, MechanicEntity target, Vector3 casterPosition, ref OverpenetrationUIData overpenetrationData, bool isAbilityRedirected = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -125,12 +127,38 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 				float hitWithAvoidanceChance = (InitialHitChance = num2);
 				HitWithAvoidanceChance = hitWithAvoidanceChance;
 			}
-			if (Ability.IsValid(target, casterPosition))
+			if (!Ability.IsValid(target, casterPosition))
 			{
-				DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
-				HealPredictionData healPrediction = Ability.GetHealPrediction(target);
-				MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
-				MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
+				return;
+			}
+			DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
+			HealPredictionData healPrediction = Ability.GetHealPrediction(target);
+			MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
+			MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
+			if (Ability.IsSingleShot && !IsAbilityRedirected)
+			{
+				if (!overpenetrationData.CountOverpenetration)
+				{
+					overpenetrationData.CountOverpenetration = true;
+					overpenetrationData.OverpenetrationDamagePercent = 100 - BlueprintWarhammerRoot.Instance.CombatRoot.OverpenetrationReductionPerHit;
+					overpenetrationData.OverpenetrationHitChance = HitWithAvoidanceChance * (float)BlueprintWarhammerRoot.Instance.CombatRoot.BaseOverpenetrationChance / 100f;
+				}
+				else
+				{
+					HitWithAvoidanceChance = HitWithAvoidanceChance * overpenetrationData.OverpenetrationHitChance / 100f;
+					overpenetrationData.OverpenetrationHitChance = HitWithAvoidanceChance * (float)BlueprintWarhammerRoot.Instance.CombatRoot.BaseOverpenetrationChance / 100f;
+					MinDamage = MinDamage * overpenetrationData.OverpenetrationDamagePercent / 100;
+					MaxDamage = MaxDamage * overpenetrationData.OverpenetrationDamagePercent / 100;
+					overpenetrationData.OverpenetrationDamagePercent -= BlueprintWarhammerRoot.Instance.CombatRoot.OverpenetrationReductionPerHit;
+				}
+				if (target.HasMechanicFeature(MechanicsFeatureType.BlockOverpenetration))
+				{
+					overpenetrationData.OverpenetrationDamagePercent = 0;
+				}
+				if ((bool)ability.Caster.Features.OverpenetrationDoesNotDecreaseDamage)
+				{
+					overpenetrationData.OverpenetrationDamagePercent = 100;
+				}
 			}
 		}
 	}
@@ -154,7 +182,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
 	}
 
-	private void UpdateWithWeapon(AbilityData ability, MechanicEntity target, Vector3 casterPosition, ItemEntityWeapon weapon)
+	private void UpdateWithWeapon(AbilityData ability, MechanicEntity target, Vector3 casterPosition, ItemEntityWeapon weapon, int counter = 0)
 	{
 		MechanicEntity caster = ability.Caster;
 		float[] array = new float[BurstIndex];
@@ -165,30 +193,33 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		LosCalculations.CoverType warhammerLos = LosCalculations.GetWarhammerLos(caster, casterPosition, target);
 		LosDescription warhammerLos2 = LosCalculations.GetWarhammerLos(bestShootingPosition, caster.SizeRect, target.Position, target.SizeRect);
 		LosDescription warhammerLos3 = LosCalculations.GetWarhammerLos(bestShootingPosition, caster.SizeRect, target);
-		CoverChance = (weapon.Blueprint.IsMelee ? 0f : ((float)Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, target, ability, warhammerLos3, null)).ResultChance));
-		for (int i = 0; i < BurstIndex; i++)
+		using (ability.CreateExecutionContext(target)?.GetDataScope(target))
 		{
-			RuleCalculateHitChances ruleCalculateHitChances = GameHelper.TriggerRule(new RuleCalculateHitChances(caster, target, ability, i, bestShootingPosition, target.Position));
-			array[i] = Math.Max(ruleCalculateHitChances.ResultHitChance, 0);
-			float num3 = Math.Max(ruleCalculateHitChances.ResultHitChance, 0);
-			DodgeChance = 0f;
-			ParryChance = 0f;
-			BlockChance = 0f;
-			if (target is UnitEntity defender)
+			CoverChance = (weapon.Blueprint.IsMelee ? 0f : ((float)Rulebook.Trigger(new RuleCalculateCoverHitChance(ability.Caster, target, ability, warhammerLos3, null)).ResultChance));
+			for (int i = 0; i < BurstIndex; i++)
 			{
-				RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(defender, caster, ability, warhammerLos2, i));
-				DodgeChance = Mathf.Min(Math.Max(ruleCalculateDodgeChance.Result, 0f), 100f);
-				RuleCalculateParryChance ruleCalculateParryChance = Rulebook.Trigger(new RuleCalculateParryChance(defender, caster, ability, ruleCalculateHitChances.ResultSuperiorityNumber));
-				ParryChance = (weapon.Blueprint.IsMelee ? Mathf.Min(Math.Max(ruleCalculateParryChance.Result, 0f), 100f) : 0f);
-				BlockChance = CalculateBlockChance(ability.Caster, target, ability);
+				RuleCalculateHitChances ruleCalculateHitChances = GameHelper.TriggerRule(new RuleCalculateHitChances(caster, target, ability, i, bestShootingPosition, target.Position));
+				array[i] = Math.Max(ruleCalculateHitChances.ResultHitChance, 0);
+				float num3 = Math.Max(ruleCalculateHitChances.ResultHitChance, 0);
+				DodgeChance = 0f;
+				ParryChance = 0f;
+				BlockChance = 0f;
+				if (target is UnitEntity defender)
+				{
+					RuleCalculateDodgeChance ruleCalculateDodgeChance = Rulebook.Trigger(new RuleCalculateDodgeChance(defender, caster, ability, warhammerLos2, i));
+					DodgeChance = Mathf.Min(Math.Max(ruleCalculateDodgeChance.Result, 0f), 100f);
+					RuleCalculateParryChance ruleCalculateParryChance = Rulebook.Trigger(new RuleCalculateParryChance(defender, caster, ability, ruleCalculateHitChances.ResultSuperiorityNumber));
+					ParryChance = (weapon.Blueprint.IsMelee ? Mathf.Min(Math.Max(ruleCalculateParryChance.Result, 0f), 100f) : 0f);
+					BlockChance = CalculateBlockChance(ability.Caster, target, ability);
+				}
+				array2[i] = num3 * (1f - DodgeChance / 100f) * (1f - ParryChance / 100f) * (1f - CoverChance / 100f) * (1f - BlockChance / 100f);
+				num += array[i];
+				num2 += array2[i];
+				BurstHitChances?.Add(array2[i]);
 			}
-			array2[i] = num3 * (1f - DodgeChance / 100f) * (1f - ParryChance / 100f) * (1f - CoverChance / 100f) * (1f - BlockChance / 100f);
-			num += array[i];
-			num2 += array2[i];
-			BurstHitChances?.Add(array2[i]);
 		}
 		float initialHitChance = num / (float)BurstIndex;
-		float hitWithAvoidanceChance = num2 / (float)BurstIndex;
+		float hitWithAvoidanceChance = num2 / (float)BurstIndex - (float)(counter * 10);
 		if ((LosCalculations.CoverType)warhammerLos2 != LosCalculations.CoverType.Invisible || warhammerLos != LosCalculations.CoverType.Invisible)
 		{
 			HitWithAvoidanceChance = hitWithAvoidanceChance;

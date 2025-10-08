@@ -444,6 +444,11 @@ public class BlueprintAreaPart : BlueprintMechanicEntityFact
 		}
 	}
 
+	public void SetAudioScenes(SceneReference[] audioScenes)
+	{
+		m_AudioTimeOfDayVariants = audioScenes;
+	}
+
 	protected override Type GetFactType()
 	{
 		return typeof(Kingmaker.AreaLogic.Area);

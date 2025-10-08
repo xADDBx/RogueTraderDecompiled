@@ -25,7 +25,8 @@ public static class EntityLink
 		Unknown,
 		Empty,
 		DialogConditions,
-		Highlight
+		Highlight,
+		ColonyResource
 	}
 
 	private static Dictionary<Type, string> m_Tags = new Dictionary<Type, string>
@@ -101,6 +102,10 @@ public static class EntityLink
 		{
 			Type.Highlight,
 			"Highlight"
+		},
+		{
+			Type.ColonyResource,
+			"cr"
 		}
 	};
 

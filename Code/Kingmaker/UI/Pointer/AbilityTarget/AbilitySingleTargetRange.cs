@@ -85,6 +85,11 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		UnitPredictionManager.Instance.Or(null)?.SetAbilityPositions(flag ? desiredCastPosition : customGridNodeBase.Vector3Position, actualCastPosition);
 		bool flag2 = false;
 		m_AbilityTargets.Clear();
+		OverpenetrationUIData overpenetrationUIData = default(OverpenetrationUIData);
+		overpenetrationUIData.CountOverpenetration = false;
+		overpenetrationUIData.OverpenetrationDamagePercent = 100;
+		overpenetrationUIData.OverpenetrationHitChance = 100f;
+		OverpenetrationUIData overpenetrationData = overpenetrationUIData;
 		if (target != null && !Ability.IsVariable)
 		{
 			if (Ability.CanRedirectFromTarget(target))
@@ -92,7 +97,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 				flag2 = true;
 				foreach (MechanicEntity item in Ability.CalculateRedirectTargets(target))
 				{
-					m_AbilityTargets.Add(new AbilityTargetUIData(Ability, item, gridAdjustedPosition, isAbilityRedirected: true));
+					m_AbilityTargets.Add(new AbilityTargetUIData(Ability, item, gridAdjustedPosition, ref overpenetrationData, isAbilityRedirected: true));
 				}
 			}
 			else
@@ -105,7 +110,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			MechanicEntity targetEntity = target?.Entity;
 			if (targetEntity != null && !m_AbilityTargets.HasItem((AbilityTargetUIData i) => i.Target == targetEntity))
 			{
-				m_AbilityTargets.Add(new AbilityTargetUIData(Ability, targetEntity, gridAdjustedPosition));
+				m_AbilityTargets.Add(new AbilityTargetUIData(Ability, targetEntity, gridAdjustedPosition, ref overpenetrationData));
 			}
 		}
 		EventBus.RaiseEvent(delegate(ICellAbilityHandler h)
