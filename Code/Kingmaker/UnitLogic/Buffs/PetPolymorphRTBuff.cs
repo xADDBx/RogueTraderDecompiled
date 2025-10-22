@@ -27,7 +27,7 @@ namespace Kingmaker.UnitLogic.Buffs;
 
 [Serializable]
 [TypeId("72edc5c3225c64449ad4766f9c759091")]
-public class PetPolymorphRTBuff : UnitBuffComponentDelegate, IUnitSpawnHandler<EntitySubscriber>, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IEventTag<IUnitSpawnHandler, EntitySubscriber>, IHashable
+public class PetPolymorphRTBuff : UnitBuffComponentDelegate, IUnitSpawnHandler<EntitySubscriber>, IUnitSpawnHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IEventTag<IUnitSpawnHandler, EntitySubscriber>, IAreaHandler, IHashable
 {
 	[SerializeField]
 	[Tooltip("Префаб для Servitor пета")]
@@ -546,6 +546,21 @@ public class PetPolymorphRTBuff : UnitBuffComponentDelegate, IUnitSpawnHandler<E
 		Game.Instance.SelectionCharacter.ReselectCurrentUnit();
 	}
 
+	private BaseUnitEntity GetTargetUnit()
+	{
+		BaseUnitEntity owner = base.Owner;
+		if (owner != null && owner.IsPet)
+		{
+			return owner;
+		}
+		UnitPartPetOwner optional = base.Owner.GetOptional<UnitPartPetOwner>();
+		if (optional != null && optional.PetType >= PetType.Servitor && optional.PetType <= PetType.Raven && optional.PetUnit != null)
+		{
+			return optional.PetUnit;
+		}
+		return null;
+	}
+
 	private bool IsInDollRoomMode()
 	{
 		UIDollRooms instance = UIDollRooms.Instance;
@@ -559,6 +574,123 @@ public class PetPolymorphRTBuff : UnitBuffComponentDelegate, IUnitSpawnHandler<E
 			return true;
 		}
 		return false;
+	}
+
+	public void OnAreaBeginUnloading()
+	{
+		if (IsInDollRoomMode())
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: Skipping as we are in DollRoom mode");
+			return;
+		}
+		BaseUnitEntity targetUnit = GetTargetUnit();
+		if (targetUnit == null)
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaBeginUnloading: No target unit found for Owner " + base.Owner?.CharacterName);
+			return;
+		}
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: Processing unit " + targetUnit?.CharacterName + " (ID: " + targetUnit?.UniqueId + ")");
+		PartPetPolymorphed optional = targetUnit.GetOptional<PartPetPolymorphed>();
+		if (optional != null)
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: PartPetPolymorphed found on " + targetUnit?.CharacterName);
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: Component is " + ((optional.Component != null) ? "NOT NULL" : "NULL"));
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: ViewReplacement is " + ((optional.ViewReplacement != null) ? "NOT NULL" : "NULL"));
+		}
+		else
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaBeginUnloading: No PartPetPolymorphed found on " + targetUnit?.CharacterName);
+		}
+		LogChannel techArt = PFLog.TechArt;
+		string obj = base.Buff?.Blueprint?.name;
+		Buff buff = base.Buff;
+		techArt.Log("PetPolymorphRTBuff.OnAreaBeginUnloading: Buff " + obj + " is " + ((buff != null && buff.IsActive) ? "ACTIVE" : "INACTIVE"));
+	}
+
+	public void OnAreaDidLoad()
+	{
+		if (IsInDollRoomMode())
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: Skipping as we are in DollRoom mode");
+			return;
+		}
+		BaseUnitEntity targetUnit = GetTargetUnit();
+		if (targetUnit == null)
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: No target unit found for Owner " + base.Owner?.CharacterName);
+			return;
+		}
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ========== AREA LOAD DEBUG START ==========");
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: Processing unit " + targetUnit?.CharacterName + " (ID: " + targetUnit?.UniqueId + ")");
+		LogChannel techArt = PFLog.TechArt;
+		string obj = base.Buff?.Blueprint?.name;
+		Buff buff = base.Buff;
+		techArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: Buff " + obj + " is " + ((buff != null && buff.IsActive) ? "ACTIVE" : "INACTIVE"));
+		PartPetPolymorphed partPetPolymorphed = targetUnit.GetOptional<PartPetPolymorphed>();
+		if (partPetPolymorphed == null)
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: No PartPetPolymorphed found on " + targetUnit?.CharacterName + ", creating new one");
+			partPetPolymorphed = targetUnit.GetOrCreate<PartPetPolymorphed>();
+		}
+		else
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: PartPetPolymorphed found on " + targetUnit?.CharacterName);
+		}
+		if (partPetPolymorphed.Component == null)
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: ⚠\ufe0f CRITICAL: Component is NULL on " + targetUnit?.CharacterName + ", restoring reference");
+			partPetPolymorphed.Setup(this);
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ✅ Component reference restored for " + targetUnit?.CharacterName);
+		}
+		else
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: Component is already set on " + targetUnit?.CharacterName);
+			if (partPetPolymorphed.Component != this)
+			{
+				PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: ⚠\ufe0f Component points to different instance, updating");
+				partPetPolymorphed.Setup(this);
+			}
+		}
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: View is " + ((targetUnit.View != null) ? "NOT NULL" : "NULL"));
+		if (targetUnit.View != null)
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: View prefab name: " + targetUnit.View.name);
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: View UniqueId: " + targetUnit.View.UniqueId);
+		}
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ViewReplacement is " + ((partPetPolymorphed.ViewReplacement != null) ? "NOT NULL" : "NULL"));
+		if (partPetPolymorphed.ViewReplacement != null)
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ViewReplacement name: " + partPetPolymorphed.ViewReplacement.name);
+		}
+		UnitViewLink prefab = GetPrefab(targetUnit);
+		if (prefab != null && prefab.Exists())
+		{
+			PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: Expected prefab AssetId: " + prefab.AssetId);
+			if (targetUnit.View != null)
+			{
+				string text = targetUnit.Blueprint?.Prefab?.AssetId;
+				string assetId = prefab.AssetId;
+				if (text != assetId)
+				{
+					PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: ⚠\ufe0f View prefab mismatch!");
+					PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: Current view prefab: " + text);
+					PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: Expected polymorph prefab: " + assetId);
+					PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: This indicates the polymorph visual was lost during area transition!");
+					PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: \ud83d\udd27 Attempting to fix by calling TryReplaceView()");
+					TryReplaceView();
+					PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ✅ TryReplaceView() completed, polymorph visual should be restored");
+				}
+				else
+				{
+					PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ✅ View prefab matches expected polymorph prefab");
+				}
+			}
+		}
+		else
+		{
+			PFLog.TechArt.Warning("PetPolymorphRTBuff.OnAreaDidLoad: Expected prefab is null or doesn't exist");
+		}
+		PFLog.TechArt.Log("PetPolymorphRTBuff.OnAreaDidLoad: ========== AREA LOAD DEBUG END ==========");
 	}
 
 	public override Hash128 GetHash128()

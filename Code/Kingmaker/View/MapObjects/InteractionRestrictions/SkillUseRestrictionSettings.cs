@@ -37,7 +37,7 @@ public abstract class SkillUseRestrictionSettings
 	{
 		if (Difficulty != 0)
 		{
-			return Difficulty.GetDC();
+			return Difficulty.GetDC(GetSkill());
 		}
 		return DC;
 	}

@@ -1,11 +1,13 @@
+using System.Linq;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.EntitySystem.Stats.Base;
 
 namespace Kingmaker.View.MapObjects;
 
 public static class SkillCheckHelper
 {
-	public static int GetDC(this SkillCheckDifficulty difficulty)
+	public static int GetDC(this SkillCheckDifficulty difficulty, StatType statType)
 	{
 		if (difficulty == SkillCheckDifficulty.Custom)
 		{
@@ -20,6 +22,10 @@ public static class SkillCheckHelper
 			PFLog.Default.Error("Area is missing");
 			return 0;
 		}
-		return Root.WH.SkillCheckRoot.GetSkillCheckDC(difficulty, blueprintArea.GetCR());
+		if (!SkillCheckRoot.ListOfStats.Contains(statType))
+		{
+			return Root.WH.SkillCheckRoot.GetSkillCheckDC(difficulty, blueprintArea.GetCR());
+		}
+		return Root.WH.SkillCheckRoot.GetStatCheckDC(difficulty, blueprintArea.GetCR());
 	}
 }

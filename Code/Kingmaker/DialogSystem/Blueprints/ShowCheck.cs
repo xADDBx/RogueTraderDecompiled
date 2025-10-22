@@ -23,7 +23,7 @@ public class ShowCheck
 	{
 		if (Difficulty != 0)
 		{
-			return Difficulty.GetDC();
+			return Difficulty.GetDC(Type);
 		}
 		return DC;
 	}

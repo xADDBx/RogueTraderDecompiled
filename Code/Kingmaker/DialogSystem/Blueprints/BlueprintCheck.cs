@@ -1,3 +1,4 @@
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
@@ -56,7 +57,7 @@ public class BlueprintCheck : BlueprintCueBase
 	{
 		if (Difficulty != 0)
 		{
-			return Difficulty.GetDC();
+			return Difficulty.GetDC(Type);
 		}
 		return GetCustomDC();
 	}
@@ -65,7 +66,11 @@ public class BlueprintCheck : BlueprintCueBase
 	{
 		if (Difficulty != 0)
 		{
-			return Root.WH.SkillCheckRoot.GetSkillCheckDC(Difficulty, cr);
+			if (!SkillCheckRoot.ListOfStats.Contains(Type))
+			{
+				return Root.WH.SkillCheckRoot.GetSkillCheckDC(Difficulty, cr);
+			}
+			return Root.WH.SkillCheckRoot.GetStatCheckDC(Difficulty, cr);
 		}
 		return GetCustomDC();
 	}

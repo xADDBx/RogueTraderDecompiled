@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
 using UnityEngine;
@@ -24,7 +25,40 @@ public class SkillCheckRoot : BlueprintScriptableObject
 	[SerializeField]
 	private DebuffSkillCheckRootReference m_DebuffSkillCheckRoot;
 
+	public static readonly StatType[] ListOfStats = new StatType[9]
+	{
+		StatType.WarhammerWeaponSkill,
+		StatType.WarhammerBallisticSkill,
+		StatType.WarhammerStrength,
+		StatType.WarhammerToughness,
+		StatType.WarhammerAgility,
+		StatType.WarhammerIntelligence,
+		StatType.WarhammerPerception,
+		StatType.WarhammerWillpower,
+		StatType.WarhammerFellowship
+	};
+
 	public SkillCheckDifficultyEntry[] SkillCheckDifficulty = new SkillCheckDifficultyEntry[4]
+	{
+		new SkillCheckDifficultyEntry
+		{
+			Difficulty = Kingmaker.View.MapObjects.SkillCheckDifficulty.Easy
+		},
+		new SkillCheckDifficultyEntry
+		{
+			Difficulty = Kingmaker.View.MapObjects.SkillCheckDifficulty.Normal
+		},
+		new SkillCheckDifficultyEntry
+		{
+			Difficulty = Kingmaker.View.MapObjects.SkillCheckDifficulty.Hard
+		},
+		new SkillCheckDifficultyEntry
+		{
+			Difficulty = Kingmaker.View.MapObjects.SkillCheckDifficulty.Impossible
+		}
+	};
+
+	public SkillCheckDifficultyEntry[] StatCheckDifficulty = new SkillCheckDifficultyEntry[4]
 	{
 		new SkillCheckDifficultyEntry
 		{
@@ -58,7 +92,24 @@ public class SkillCheckRoot : BlueprintScriptableObject
 		SkillCheckDifficultyEntry skillCheckDifficultyEntry = SkillCheckDifficulty.FirstItem((SkillCheckDifficultyEntry i) => i.Difficulty == difficulty);
 		if (skillCheckDifficultyEntry == null || skillCheckDifficultyEntry.CR2DC.Empty())
 		{
-			PFLog.Default.Error($"Settings is missing dor Difficulty == {difficulty}");
+			PFLog.Default.Error($"Settings is missing for Skill Difficulty == {difficulty}");
+			return 0;
+		}
+		cr = Math.Clamp(cr, 0, skillCheckDifficultyEntry.CR2DC.Length - 1);
+		return skillCheckDifficultyEntry.CR2DC[cr];
+	}
+
+	public int GetStatCheckDC(SkillCheckDifficulty difficulty, int cr)
+	{
+		if (difficulty == Kingmaker.View.MapObjects.SkillCheckDifficulty.Custom)
+		{
+			PFLog.Default.Error("Difficulty is Custom");
+			return 0;
+		}
+		SkillCheckDifficultyEntry skillCheckDifficultyEntry = StatCheckDifficulty.FirstItem((SkillCheckDifficultyEntry i) => i.Difficulty == difficulty);
+		if (skillCheckDifficultyEntry == null || skillCheckDifficultyEntry.CR2DC.Empty())
+		{
+			PFLog.Default.Error($"Settings is missing for Stat Difficulty == {difficulty}");
 			return 0;
 		}
 		cr = Math.Clamp(cr, 0, skillCheckDifficultyEntry.CR2DC.Length - 1);

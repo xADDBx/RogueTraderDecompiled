@@ -13,6 +13,8 @@ namespace Kingmaker.Code.UI.MVVM.VM.DlcManager.Mods;
 
 public class DlcManagerModEntityVM : SelectionGroupEntityVM
 {
+	private bool OldState;
+
 	public readonly BoolReactiveProperty ModSwitchState = new BoolReactiveProperty();
 
 	public readonly BoolReactiveProperty WarningUpdateMod = new BoolReactiveProperty();
@@ -34,7 +36,8 @@ public class DlcManagerModEntityVM : SelectionGroupEntityVM
 		m_CheckModNeedToReloadCommand = checkModNeedToReloadCommand;
 		ModSettingsAvailable.Value = modInfo.HasSettings;
 		WarningUpdateMod.Value = modInfo.UpdateRequired;
-		SetTempModState(GetActualModState());
+		OldState = GetActualModState();
+		SetTempModState(OldState);
 		IsSaveAllowed = !LoadingProcess.Instance.IsLoadingInProcess && Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual, isMainMenu);
 	}
 
@@ -72,7 +75,7 @@ public class DlcManagerModEntityVM : SelectionGroupEntityVM
 
 	public void ResetTempModState()
 	{
-		SetTempModState(GetActualModState());
+		SetTempModState(OldState);
 	}
 
 	public void ChangeValue()
@@ -80,18 +83,21 @@ public class DlcManagerModEntityVM : SelectionGroupEntityVM
 		if (IsSaveAllowed)
 		{
 			SetTempModState(!ModSwitchState.Value);
-			return;
+			SetActualModState();
 		}
-		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+		else
 		{
-			h.HandleWarning(UIStrings.Instance.DlcManager.CannotChangeModSwitchState, addToLog: true, WarningNotificationFormat.Attention);
-		});
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.DlcManager.CannotChangeModSwitchState, addToLog: true, WarningNotificationFormat.Attention);
+			});
+		}
 	}
 
 	private void SetTempModState(bool state)
 	{
 		ModSwitchState.Value = state;
-		bool flag = state != GetActualModState();
+		bool flag = state != OldState;
 		WarningReloadGame.Value = flag;
 		m_CheckModNeedToReloadCommand.Execute(flag);
 	}

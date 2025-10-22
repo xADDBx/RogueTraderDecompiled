@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.View.MapObjects;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ public class AwarenessCheckComponent : MonoBehaviour
 	{
 		if (Difficulty != 0)
 		{
-			return Difficulty.GetDC();
+			return Difficulty.GetDC(StatType.SkillAwareness);
 		}
 		return DC;
 	}

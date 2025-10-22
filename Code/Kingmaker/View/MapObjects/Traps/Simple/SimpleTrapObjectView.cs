@@ -87,7 +87,7 @@ public class SimpleTrapObjectView : TrapObjectView
 	{
 		BlueprintTrapSettingsRoot blueprintTrapSettingsRoot = BlueprintRoot.Instance.BlueprintTrapSettingsRoot;
 		BlueprintTrapSettings settings = GetSettings(Game.Instance.LoadedAreaState.Blueprint);
-		int disableDC = ((Info.DisableDifficulty == SkillCheckDifficulty.Custom) ? Info.DC : Info.DisableDifficulty.GetDC());
+		int disableDC = ((Info.DisableDifficulty == SkillCheckDifficulty.Custom) ? Info.DC : Info.DisableDifficulty.GetDC(Info.DisarmSkill));
 		SimpleTrapObjectData simpleTrapObjectData = Entity.Initialize(new SimpleTrapObjectData(this)
 		{
 			Name = base.gameObject.name,

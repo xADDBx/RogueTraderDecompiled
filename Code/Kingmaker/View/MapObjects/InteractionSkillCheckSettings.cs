@@ -140,7 +140,7 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	{
 		if (Difficulty != 0)
 		{
-			return Difficulty.GetDC();
+			return Difficulty.GetDC(Skill);
 		}
 		if (DCModifiers == null)
 		{
