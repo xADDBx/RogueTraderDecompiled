@@ -121,6 +121,7 @@ public class CharGenDollRoom : CharacterDollRoom, ILevelUpDollHandler, ISubscrib
 		{
 			dollState.ApplyRamps(avatar);
 			avatar.UpdateHelmetVisibility(dollState.ShowHelm);
+			avatar.UpdateHelmetVisibilityAboveAll(dollState.ShowHelmAboveAll);
 			avatar.UpdateBackpackVisibility(dollState.ShowBackpack);
 			avatar.UpdateClothVisibility(dollState.ShowCloth);
 			avatar.UpdateGlovesVisibility(dollState.ShowGloves);

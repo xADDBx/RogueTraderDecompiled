@@ -435,7 +435,7 @@ public abstract class AbstractUnitCommand
 			return;
 		}
 		Result = result;
-		m_ActEventsCounter = 1;
+		m_ActEventsCounter = ExpectedActEventsCount;
 		OnEnded();
 	}
 

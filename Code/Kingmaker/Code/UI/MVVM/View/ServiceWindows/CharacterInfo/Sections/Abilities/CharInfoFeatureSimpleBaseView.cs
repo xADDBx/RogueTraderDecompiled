@@ -99,7 +99,6 @@ public class CharInfoFeatureSimpleBaseView : VirtualListElementViewBase<CharInfo
 			SetupAcronym();
 			if (m_GroupsView != null && base.ViewModel.TalentIconsInfo.HasGroups)
 			{
-				m_AcronymText.gameObject.SetActive(value: false);
 				if (m_GeneratedIconBlock != null)
 				{
 					m_GeneratedIconBlock.SetActive(value: true);

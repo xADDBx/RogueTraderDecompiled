@@ -29,7 +29,7 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 	private bool m_ShowHelm = true;
 
 	[JsonProperty]
-	private bool m_ShowHelmAboveAll;
+	private bool m_ShowHelmAboveAll = true;
 
 	[JsonProperty]
 	private bool m_ShowBackpack = true;

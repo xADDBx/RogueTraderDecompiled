@@ -420,8 +420,11 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		FxHelper.SpawnFxOnEntity(BlueprintRoot.Instance.FxRoot.SimpleDodgeFX.Load(), dodgeRule.Defender.View);
 		if ((object)dodgeRule.Defender.MaybeAnimationManager != null)
 		{
-			UnitAnimationActionHandle handle = dodgeRule.Defender.MaybeAnimationManager.CreateHandle(UnitAnimationType.Dodge);
-			dodgeRule.Defender.MaybeAnimationManager.Execute(handle);
+			UnitAnimationActionHandle unitAnimationActionHandle = dodgeRule.Defender.MaybeAnimationManager.CreateHandle(UnitAnimationType.Dodge);
+			if (unitAnimationActionHandle != null)
+			{
+				dodgeRule.Defender.MaybeAnimationManager.Execute(unitAnimationActionHandle);
+			}
 		}
 	}
 

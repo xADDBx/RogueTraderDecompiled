@@ -56,17 +56,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 
 	public new MechanicEntity Target => base.Target?.Entity;
 
-	public override bool ShouldBeInterrupted
-	{
-		get
-		{
-			if (base.Executor != null && !Hand.HasShield)
-			{
-				return !base.Executor.CanAttack(Hand?.Weapon);
-			}
-			return false;
-		}
-	}
+	public override bool ShouldBeInterrupted => false;
 
 	public override bool IsUnitEnoughClose
 	{
@@ -95,11 +85,13 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 
 	public override bool IsInterruptible => false;
 
+	protected override int ExpectedActEventsCount => ActionsCount;
+
 	protected override float PretendActDelay => SlowMoController.SlowMoFactor;
 
 	public int CurrentActionIndex => ExecutionProcess?.Context.ActionIndex ?? 0;
 
-	public int ActionsCount { get; private set; }
+	public int ActionsCount => Ability.ActionsCount;
 
 	private AbilityData Ability { get; set; }
 
@@ -254,7 +246,6 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		{
 			abilityData.FXSettingsOverride = Hand.AttackOfOpportunityAbilityFXSettings;
 		}
-		ActionsCount = abilityData.BurstAttacksCount;
 		Ability = abilityData;
 		m_loopingAnimationBuff = base.Executor.Facts.GetComponents<PlayLoopAnimationByBuff>().FirstOrDefault();
 		if (!base.IsOneFrameCommand)
@@ -289,7 +280,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	protected override void OnTick()
 	{
 		AbilityExecutionProcess executionProcess = ExecutionProcess;
-		if (executionProcess != null && executionProcess.IsEngageUnit && executionProcess.IsEnded)
+		if (executionProcess != null && executionProcess.IsEnded)
 		{
 			UnitAnimationActionHandle animation = base.Animation;
 			if (animation == null || animation.IsReleased)
@@ -350,6 +341,10 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		}
 		AbilityExecutionContext context = Ability.CreateExecutionContext(Target);
 		ExecutionProcess = Game.Instance.AbilityExecutor.Execute(context);
+		if (ExecutionProcess == null)
+		{
+			return ResultType.Fail;
+		}
 		ExecutionProcess.Context.NextAction();
 		if (!ExecutionProcess.IsEngageUnit && CurrentActionIndex >= ActionsCount)
 		{

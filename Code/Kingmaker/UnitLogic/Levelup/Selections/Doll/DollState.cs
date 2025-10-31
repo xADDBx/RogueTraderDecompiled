@@ -114,7 +114,7 @@ public class DollState : ICanConvertPropertiesToReactive
 
 	private bool m_ShowHelm = true;
 
-	private bool m_ShowHelmAboveAll;
+	private bool m_ShowHelmAboveAll = true;
 
 	private bool m_ShowBackpack = true;
 

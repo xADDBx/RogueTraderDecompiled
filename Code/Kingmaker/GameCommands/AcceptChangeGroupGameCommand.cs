@@ -73,6 +73,7 @@ public sealed class AcceptChangeGroupGameCommand : GameCommand, IMemoryPackable<
 
 	protected override void ExecuteInternal()
 	{
+		Game.Instance.SelectionCharacter.ForceUpdateParty = true;
 		if (!CanChangeGroup())
 		{
 			return;

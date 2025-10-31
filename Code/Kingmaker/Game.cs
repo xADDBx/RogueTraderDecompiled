@@ -616,6 +616,8 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public bool IsLoadingProgressPaused { get; private set; }
 
+	public bool IsLoadingFromSave { get; private set; }
+
 	private int[] ModesCount
 	{
 		get
@@ -1665,7 +1667,11 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		if (saveInfo != null)
 		{
-			StartLoadingProcessDetached(() => Instance.SaveManager.LoadRoutine(saveInfo), delegate
+			StartLoadingProcessDetached(delegate
+			{
+				Instance.IsLoadingFromSave = true;
+				return Instance.SaveManager.LoadRoutine(saveInfo);
+			}, delegate
 			{
 				Instance.m_LoadingProgress = 0.4f;
 			});
@@ -1711,6 +1717,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			}
 			Instance.m_LoadingProgress = 1f;
 			Instance.m_LoadingScenesProgress = 1f;
+			Instance.IsLoadingFromSave = false;
 		});
 		if (autoSaveMode == AutoSaveMode.AfterEntry)
 		{

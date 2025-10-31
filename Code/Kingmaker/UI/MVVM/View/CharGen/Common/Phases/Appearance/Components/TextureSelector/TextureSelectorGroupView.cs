@@ -38,7 +38,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 
 	protected bool m_IsCooldownActive;
 
-	public bool IsActive => (base.ViewModel?.EntitiesCollection?.Any()).GetValueOrDefault();
+	public bool IsBusy => m_IsCooldownActive;
 
 	protected override void BindViewImplementation()
 	{
@@ -93,7 +93,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	{
 		if (m_IsCooldownActive)
 		{
-			return false;
+			return true;
 		}
 		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleUp();
@@ -103,7 +103,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	{
 		if (m_IsCooldownActive)
 		{
-			return false;
+			return true;
 		}
 		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleDown();
@@ -113,7 +113,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	{
 		if (m_IsCooldownActive)
 		{
-			return false;
+			return true;
 		}
 		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleLeft();
@@ -123,7 +123,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	{
 		if (m_IsCooldownActive)
 		{
-			return false;
+			return true;
 		}
 		MainThreadDispatcher.StartCoroutine(HandleCooldown());
 		return m_NavigationBehaviour.HandleRight();
@@ -174,7 +174,7 @@ public class TextureSelectorGroupView : ViewBase<SelectionGroupRadioVM<TextureSe
 	private IEnumerator HandleCooldown()
 	{
 		m_IsCooldownActive = true;
-		yield return new WaitForSeconds(0.3f);
+		yield return new WaitForSecondsRealtime(0.2f);
 		m_IsCooldownActive = false;
 	}
 }

@@ -566,16 +566,19 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 			if (handle.Manager != this)
 			{
 				PFLog.Animations.Error("Can't execute handle which created by another manager.");
+				return;
 			}
-			else if (handle.IsStarted)
+			if (handle.IsStarted)
 			{
 				PFLog.Animations.Error("Started animation action handle can't be executed multiple times: " + handle.Action.NameSafe());
+				return;
 			}
-			else if (m_ActiveActions.Contains(handle))
+			if (m_ActiveActions.Contains(handle))
 			{
 				PFLog.Animations.Error("Action handle already added to manager: " + handle.Action.NameSafe());
+				return;
 			}
-			else if (handle.IsAdditive)
+			if (handle.IsAdditive)
 			{
 				if (!handle.Action.IsAdditiveToItself)
 				{
@@ -603,32 +606,27 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 				}
 				AddActionHandle(handle);
 				handle.StartInternal();
+				return;
 			}
-			else if (handle.Action.ExecutionMode == ExecutionMode.Interrupted)
+			if (handle.Action.ExecutionMode == ExecutionMode.Interrupted)
 			{
 				AddActionHandle(handle);
-				if (m_CurrentAction != null && !m_CurrentAction.DontReleaseOnInterrupt && (!(m_CurrentAction.Action is WarhammerUnitAnimationActionHandAttack) || !(handle.Action is UnitAnimationActionCover)))
+				if (m_CurrentAction != null && !m_CurrentAction.DontReleaseOnInterrupt)
 				{
+					if (handle.Action is UnitAnimationActionCover)
+					{
+						AnimationActionBase action = m_CurrentAction.Action;
+						if (action is WarhammerUnitAnimationActionHandAttack || action is UnitAnimationActionCastSpell)
+						{
+							goto IL_024a;
+						}
+					}
 					m_CurrentAction.MarkInterrupted();
 					m_CurrentAction.Release();
 				}
-				m_CurrentAction = handle;
-				m_CurrentAction.StartInternal();
-				foreach (AnimationActionHandle sequencedAction in m_SequencedActions)
-				{
-					if (sequencedAction.Action != null)
-					{
-						PFLog.Animations.Log("Cleared sequenced action: {0}", sequencedAction.Action.NameSafe());
-					}
-					else
-					{
-						PFLog.Animations.Log("Cleared sequenced action: (destroyed)");
-					}
-					sequencedAction.MarkInterrupted();
-				}
-				m_SequencedActions.Clear();
+				goto IL_024a;
 			}
-			else if (m_CurrentAction == null || m_CurrentAction.DontReleaseOnInterrupt)
+			if (m_CurrentAction == null || m_CurrentAction.DontReleaseOnInterrupt)
 			{
 				AddActionHandle(handle);
 				m_CurrentAction = handle;
@@ -642,6 +640,23 @@ public class AnimationManager : MonoBehaviour, IInterpolatable
 			{
 				m_SequencedActions.Enqueue(handle);
 			}
+			return;
+			IL_024a:
+			m_CurrentAction = handle;
+			m_CurrentAction.StartInternal();
+			foreach (AnimationActionHandle sequencedAction in m_SequencedActions)
+			{
+				if (sequencedAction.Action != null)
+				{
+					PFLog.Animations.Log("Cleared sequenced action: {0}", sequencedAction.Action.NameSafe());
+				}
+				else
+				{
+					PFLog.Animations.Log("Cleared sequenced action: (destroyed)");
+				}
+				sequencedAction.MarkInterrupted();
+			}
+			m_SequencedActions.Clear();
 		}
 	}
 

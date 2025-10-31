@@ -12,7 +12,7 @@ public class RequirementProfitFactorCostUI : RequirementUI<RequirementProfitFact
 {
 	public override string Name => UIStrings.Instance.ProfitFactorTexts.Title;
 
-	public override string Description => UIStrings.Instance.ColonyProjectsRequirements.RequirementProfitFactorCost;
+	public override string Description => string.Format(UIStrings.Instance.ColonyProjectsRequirements.RequirementProfitFactorCost, string.Empty);
 
 	public override Sprite Icon => BlueprintRoot.Instance.UIConfig.UIIcons.ProfitFactor;
 

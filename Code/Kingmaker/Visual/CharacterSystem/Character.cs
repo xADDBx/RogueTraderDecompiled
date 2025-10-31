@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.MainMenu;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
@@ -210,6 +211,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 	public HashSet<UnitAnimationManager> MechsAnimationManagers = new HashSet<UnitAnimationManager>();
 
 	private Dictionary<EquipmentEntity, ItemSlot> m_EquipmentEntityToSlot = new Dictionary<EquipmentEntity, ItemSlot>();
+
+	private BaseUnitEntity m_SourceUnit;
 
 	public List<EquipmentEntityLink> EquipmentEntitiesForPreload = new List<EquipmentEntityLink>();
 
@@ -805,6 +808,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 			if (sourceSlot != null)
 			{
 				m_EquipmentEntityToSlot[ee] = sourceSlot;
+				PFLog.TechArt.Log("[AddEquipmentEntity] EE slot-map: name='" + ee?.name + "', slot='" + sourceSlot?.GetType().Name + "'");
+			}
+			else
+			{
+				PFLog.TechArt.Log("[AddEquipmentEntity] EE marked as equipped but NO sourceSlot: name='" + ee?.name + "'");
 			}
 		}
 		if (base.name.Contains("Pregen") && !ee.name.ToLower().Contains("head") && !EquipmentEntities.Any((EquipmentEntity existing) => existing.name.ToLower().Contains("head")))
@@ -977,6 +985,11 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 	}
 
+	public void SetSourceUnit(BaseUnitEntity unit)
+	{
+		m_SourceUnit = unit;
+	}
+
 	public void CopyEquipmentFrom(Character originalAvatar)
 	{
 		RemoveAllEquipmentEntities();
@@ -986,6 +999,10 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			EquippedItemsEntities.Add(equippedItemsEntity);
 		}
+		foreach (KeyValuePair<EquipmentEntity, ItemSlot> item in originalAvatar.m_EquipmentEntityToSlot)
+		{
+			m_EquipmentEntityToSlot[item.Key] = item.Value;
+		}
 		CopyRampIndicesFrom(originalAvatar);
 		m_ShowBackpack = originalAvatar.m_ShowBackpack;
 		m_ShowHelmet = originalAvatar.m_ShowHelmet;
@@ -993,6 +1010,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		m_ShowGloves = originalAvatar.m_ShowGloves;
 		m_ShowBoots = originalAvatar.m_ShowBoots;
 		m_ShowArmor = originalAvatar.m_ShowArmor;
+		m_ShowHelmetAboveAll = originalAvatar.m_ShowHelmetAboveAll;
 		IsDirty = true;
 	}
 
@@ -1088,7 +1106,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private bool ShouldHideEquipmentEntity(EquipmentEntity entity)
 	{
-		if (!EquippedItemsEntities.Contains(entity))
+		if (entity == null)
 		{
 			return false;
 		}
@@ -1096,33 +1114,53 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return false;
 		}
-		if (!m_EquipmentEntityToSlot.TryGetValue(entity, out var value))
+		if (m_EquipmentEntityToSlot.TryGetValue(entity, out var value))
 		{
-			if (!m_ShowHelmet && entity != null && entity.BodyParts != null && entity.BodyParts.Any((BodyPart bp) => IsHelmetType(bp)))
+			return ShouldHideSlot(value);
+		}
+		if (entity.ShowAboveAllIgnoreLayer && !m_ShowHelmetAboveAll)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool ShouldHideSlot(ItemSlot slot)
+	{
+		if (slot == null)
+		{
+			return false;
+		}
+		PartUnitBody partUnitBody = null;
+		if (m_SourceUnit?.Body != null)
+		{
+			partUnitBody = m_SourceUnit.Body;
+		}
+		else
+		{
+			UnitEntityView componentInParent = GetComponentInParent<UnitEntityView>();
+			if (componentInParent?.EntityData?.Body != null)
 			{
-				return true;
+				partUnitBody = componentInParent.EntityData.Body;
 			}
-			return false;
 		}
-		UnitEntityView componentInParent = GetComponentInParent<UnitEntityView>();
-		if (componentInParent?.EntityData?.Body == null)
+		if (partUnitBody == null)
 		{
 			return false;
 		}
-		PartUnitBody body = componentInParent.EntityData.Body;
-		if (!m_ShowArmor && value == body.Armor)
+		if (!m_ShowArmor && slot == partUnitBody.Armor)
 		{
 			return true;
 		}
-		if (!m_ShowHelmet && value == body.Head)
+		if (!m_ShowHelmet && slot == partUnitBody.Head)
 		{
 			return true;
 		}
-		if (!m_ShowGloves && value == body.Gloves)
+		if (!m_ShowGloves && slot == partUnitBody.Gloves)
 		{
 			return true;
 		}
-		if (!m_ShowBoots && value == body.Feet)
+		if (!m_ShowBoots && slot == partUnitBody.Feet)
 		{
 			return true;
 		}
@@ -1135,28 +1173,20 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return false;
 		}
+		if (fromEntity.CantBeHiddenByDollRoom)
+		{
+			return false;
+		}
 		if (!m_ShowGloves && IsGlovesType(bodyPart))
 		{
-			if (fromEntity.CantBeHiddenByDollRoom)
-			{
-				return false;
-			}
 			return true;
 		}
 		if (!m_ShowBoots && IsBootsType(bodyPart))
 		{
-			if (fromEntity.CantBeHiddenByDollRoom)
-			{
-				return false;
-			}
 			return true;
 		}
 		if (!m_ShowArmor && IsArmorType(bodyPart))
 		{
-			if (fromEntity.CantBeHiddenByDollRoom)
-			{
-				return false;
-			}
 			return true;
 		}
 		return false;
@@ -1223,38 +1253,6 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 	}
 
-	private void EnsureEquippedSlotMappingFromBody()
-	{
-		UnitEntityView unitEntityView = GetComponentInParent<UnitEntityView>();
-		if (unitEntityView == null)
-		{
-			unitEntityView = GetComponent<UnitEntityView>();
-		}
-		if (unitEntityView == null)
-		{
-			unitEntityView = ((base.transform.root != null) ? base.transform.root.GetComponentInChildren<UnitEntityView>() : null);
-		}
-		PartUnitBody partUnitBody = unitEntityView?.EntityData?.Body;
-		if (partUnitBody == null)
-		{
-			return;
-		}
-		foreach (ItemSlot allSlot in partUnitBody.AllSlots)
-		{
-			foreach (EquipmentEntity item in unitEntityView.ExtractEquipmentEntities(allSlot))
-			{
-				if (!(item == null))
-				{
-					EquippedItemsEntities.Add(item);
-					if (allSlot != null)
-					{
-						m_EquipmentEntityToSlot[item] = allSlot;
-					}
-				}
-			}
-		}
-	}
-
 	private void UpdateCharacter()
 	{
 		m_ProxyEquipmentEntities.Clear();
@@ -1262,10 +1260,9 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			m_ProxyEquipmentEntities.Add(equipmentEntity2);
 		}
-		EnsureEquippedSlotMappingFromBody();
 		if (EquippedItemsEntities != null)
 		{
-			string.Join(", ", EquippedItemsEntities.Select((EquipmentEntity e) => e?.name + ":" + ((!m_EquipmentEntityToSlot.TryGetValue(e, out var value)) ? "none" : value?.GetType().Name)));
+			string.Join(", ", EquippedItemsEntities.Select((EquipmentEntity e) => e?.name + ":" + ((!m_EquipmentEntityToSlot.TryGetValue(e, out var value)) ? "NO_SLOT" : value?.GetType().Name)));
 		}
 		SetAlwaysVisibleHelmet();
 		Dictionary<BodyPart, EquipmentEntity> dictionary = new Dictionary<BodyPart, EquipmentEntity>();
@@ -1288,7 +1285,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 			}
 			foreach (BodyPart bodyPart in item.BodyParts)
 			{
-				if (bodyPart == null || ShouldHideBodyPartFromEquippedItem(bodyPart, item) || (bodyPartType & bodyPart.Type) != (BodyPartType)0L || bodyPart.SkinnedRenderer == null || bodyPart.Material == null)
+				if (bodyPart == null || ShouldHideBodyPartFromEquippedItem(bodyPart, item) || (bodyPartType & bodyPart.Type) != 0 || bodyPart.SkinnedRenderer == null || bodyPart.Material == null)
 				{
 					continue;
 				}

@@ -256,8 +256,11 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		if (!(defender.View == null) && !(defender.View.AnimationManager == null) && !(defender.View.AnimationManager.CurrentAction?.Action is UnitAnimationAction { Type: UnitAnimationType.Block }))
 		{
 			UnitAnimationActionHandle unitAnimationActionHandle = defender.View.AnimationManager.CreateHandle(UnitAnimationType.Block);
-			unitAnimationActionHandle.CastInOffhand = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield;
-			defender.View.AnimationManager.Execute(unitAnimationActionHandle);
+			if (unitAnimationActionHandle != null)
+			{
+				unitAnimationActionHandle.CastInOffhand = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield;
+				defender.View.AnimationManager.Execute(unitAnimationActionHandle);
+			}
 		}
 	}
 

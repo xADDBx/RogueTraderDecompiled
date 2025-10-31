@@ -117,10 +117,13 @@ public class TooltipBrickIconPatternView : TooltipBaseBrickView<TooltipBrickIcon
 			AddDisposable(m_SkillIcon.SetTooltip(base.ViewModel.Tooltip));
 		}
 		SetTextSize();
-		m_AbilityValuesBlock.SetActive(!base.ViewModel.AbilityPropertyName.IsNullOrEmpty());
-		m_AbilityPropertyNameText.text = base.ViewModel.AbilityPropertyName;
-		m_AbilityValueText.text = base.ViewModel.AbilityPropertyValue;
-		AddDisposable(m_AbilityValueText.SetTooltip(new TooltipTemplateHint(base.ViewModel.AbilityPropertyDesc)));
+		if (!(m_AbilityValuesBlock == null) && !(m_AbilityPropertyNameText == null) && !(m_AbilityValueText == null))
+		{
+			m_AbilityValuesBlock.SetActive(!base.ViewModel.AbilityPropertyName.IsNullOrEmpty());
+			m_AbilityPropertyNameText.text = base.ViewModel.AbilityPropertyName;
+			m_AbilityValueText.text = base.ViewModel.AbilityPropertyValue;
+			AddDisposable(m_AbilityValueText.SetTooltip(new TooltipTemplateHint(base.ViewModel.AbilityPropertyDesc)));
+		}
 	}
 
 	private void SetText(string text)

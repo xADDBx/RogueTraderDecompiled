@@ -101,9 +101,11 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
-		CastAnimationStyle castStyle = handle.CastStyle;
-		WeaponAnimationStyle wpnStyle = handle.AttackWeaponStyle;
-		AnimationStyleEntry animationStyleEntry = Animations.SingleOrDefault((AnimationStyleEntry e) => e.Style == castStyle);
+		if (handle.Manager.NeedStepOut && handle.Manager.StepOutDirectionAnimationType != 0)
+		{
+			return;
+		}
+		AnimationStyleEntry animationStyleEntry = Animations.SingleOrDefault((AnimationStyleEntry e) => e.Style == handle.CastStyle);
 		if (animationStyleEntry == null)
 		{
 			handle.IsSkipped = true;
@@ -111,6 +113,8 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 			RestoreLoopAnimation(handle);
 			return;
 		}
+		CastAnimationStyle castStyle = handle.CastStyle;
+		WeaponAnimationStyle wpnStyle = handle.AttackWeaponStyle;
 		AnimationEntry animationEntry = animationStyleEntry.Overrides.SingleOrDefault((AnimationEntryWeaponOverride e) => e.Weapon == wpnStyle)?.Entry ?? animationStyleEntry.Default;
 		if (!handle.Manager.IsInCombat)
 		{
@@ -163,9 +167,21 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 		{
 			handle.SpeedScale = Game.CombatAnimSpeedUp;
 		}
-		if (((AnimationEntry)handle.ActionData)?.CastClip == null && handle.GetTime() >= handle.CastingTime)
+		if (((AnimationEntry)handle.ActionData)?.CastClip == null)
 		{
-			handle.ActEventsCounter++;
+			UpdateInvalid(handle);
+		}
+	}
+
+	private static void UpdateInvalid(UnitAnimationActionHandle handle)
+	{
+		float time = handle.GetTime();
+		if (handle.ActEventsCounter < 1 && time >= 0.4f)
+		{
+			handle.ActEventsCounter = 1;
+		}
+		if (time >= 0.8f)
+		{
 			handle.Release();
 		}
 	}

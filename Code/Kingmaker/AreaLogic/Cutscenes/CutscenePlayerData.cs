@@ -496,7 +496,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			MarkRemoved();
 		}
 		Cutscene cutscene = Cutscene;
-		if (cutscene != null && cutscene.LockControl)
+		if (cutscene != null && cutscene.LockControl && !Game.Instance.IsLoadingFromSave)
 		{
 			PFLog.Cutscene.Error("Removing unexpected lock-control cutscene " + Cutscene.Name + " during post-load");
 			MarkRemoved();
@@ -632,6 +632,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			if (!m_RestoreCalled)
 			{
 				Restore();
+				if (IsFinished)
+				{
+					return;
+				}
 			}
 			using (ProfileScope.New("UpdateActiveCutscenes"))
 			{
@@ -1072,6 +1076,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		m_IsQueued = false;
 		m_QueuedAfter = null;
 		m_ActivatedGates.Clear();
+		IsFinished = true;
 	}
 
 	private void RemoveInvalidAndAddMissingTracks(CutscenePlayerGateData gate)

@@ -636,13 +636,12 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 			}
 			if (!(base.CharacterAvatar == null))
 			{
-				IEnumerable<EquipmentEntity> enumerable = ExtractEquipmentEntities(previousItem);
-				base.CharacterAvatar.RemoveEquipmentEntities(enumerable);
-				PFLog.TechArt.Log(string.Format("HandleEquipmentSlotUpdated: slot='{0}', eesCount={1} -> [{2}]", slot?.GetType().Name, enumerable?.Count(), string.Join(", ", enumerable.Select((EquipmentEntity e) => e?.name))));
-				enumerable = ExtractEquipmentEntities(slot);
-				base.CharacterAvatar.AddEquipmentEntities(enumerable, saved: false, isFromEquippedItems: true, slot);
+				IEnumerable<EquipmentEntity> ees = ExtractEquipmentEntities(previousItem);
+				base.CharacterAvatar.RemoveEquipmentEntities(ees);
+				ees = ExtractEquipmentEntities(slot);
+				base.CharacterAvatar.AddEquipmentEntities(ees, saved: false, isFromEquippedItems: true, slot);
 				base.CharacterAvatar.IsDirty = true;
-				TryForceRampIndices(slot, enumerable);
+				TryForceRampIndices(slot, ees);
 			}
 		}
 	}

@@ -188,7 +188,7 @@ public class LifeStateAsksController : ITickUnitAsksController, IUnitAsksControl
 		BarkWrapper[] partyMemberUnconsciousPersonalized = asksComponent.PartyMemberUnconsciousPersonalized;
 		foreach (BarkWrapper barkWrapper in partyMemberUnconsciousPersonalized)
 		{
-			if (barkWrapper.HasBarks && !barkWrapper.IsOnCooldown && barkWrapper.Bark is UnitAsksComponent.PersonalizedBark personalizedBark && Enumerable.Any(personalizedBark.UnitReferences, (BlueprintUnitReference unitReference) => unitReference.Get() == unconsciousUnit.Blueprint))
+			if (barkWrapper.HasBarks && !barkWrapper.IsOnCooldown && barkWrapper.Bark is UnitAsksComponent.PersonalizedBark personalizedBark && Enumerable.Any(personalizedBark.UnitReferences, (BlueprintUnitReference unitReference) => unconsciousUnit.Blueprint is BlueprintUnit blueprintUnit && blueprintUnit.CheckEqualsWithPrototype(unitReference.Get())))
 			{
 				return barkWrapper;
 			}

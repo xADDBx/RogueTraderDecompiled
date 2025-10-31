@@ -47,6 +47,8 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	private bool m_ControllerStarted;
 
+	public bool ForceUpdateParty;
+
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnitPetsAllowed = new ReactiveProperty<BaseUnitEntity>();
 
 	private bool m_IsResetScheduled;
@@ -286,14 +288,14 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		if (m_ActualGroup.Count != 0)
 		{
 			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
-			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && Game.Instance.IsControllerGamepad && list.Count == m_ActualGroup.Count)
+			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && Game.Instance.IsControllerGamepad && list.Count == m_ActualGroup.Count && !ForceUpdateParty)
 			{
-				goto IL_0063;
+				goto IL_006b;
 			}
 		}
 		m_ActualGroup = list;
-		goto IL_0063;
-		IL_0063:
+		goto IL_006b;
+		IL_006b:
 		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
 			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
@@ -321,6 +323,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			}
 		}
 		SelectedUnitInUI.Value = value;
+		ForceUpdateParty = false;
 	}
 
 	public void HandleRespecFinished()

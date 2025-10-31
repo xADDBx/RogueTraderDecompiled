@@ -60,7 +60,6 @@ public class RulePerformAbility : RulebookEvent
 			return;
 		}
 		Context.ShadowFactorPercents = 0;
-		Success = true;
 		using (ContextData<AbilityData.IgnoreCooldown>.RequestIf(IgnoreCooldown))
 		{
 			using (ContextData<AbilityData.ForceFreeAction>.RequestIf(ForceFreeAction))
@@ -68,5 +67,6 @@ public class RulePerformAbility : RulebookEvent
 				Result = Spell.Cast(Context);
 			}
 		}
+		Success = Result != null;
 	}
 }

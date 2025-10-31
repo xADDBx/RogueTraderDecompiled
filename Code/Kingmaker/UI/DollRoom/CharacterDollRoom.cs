@@ -114,7 +114,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 			SetupAnimationManager(m_SimpleAvatar.GetComponentInChildren<UnitAnimationManager>());
 			return;
 		}
-		Character character = CreateAvatar(m_OriginalAvatar, m_Unit.ToString());
+		Character character = CreateAvatar(m_OriginalAvatar, m_Unit.ToString(), m_Unit);
 		SetAvatar(character);
 		IKController iKController = m_Avatar.gameObject.AddComponent<IKController>();
 		iKController.IsDollRoom = true;
@@ -377,7 +377,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 	}
 
 	[NotNull]
-	protected Character CreateAvatar(Character originalAvatar, string dollName)
+	protected Character CreateAvatar(Character originalAvatar, string dollName, BaseUnitEntity sourceUnit = null)
 	{
 		Character character = new GameObject("Doll [" + dollName + "]").AddComponent<Character>();
 		character.PreventUpdate = false;
@@ -390,6 +390,10 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		character.OnUpdated += OnCharacterUpdated;
 		character.AtlasData = originalAvatar.AtlasData;
 		character.CopyEquipmentFrom(originalAvatar);
+		if (sourceUnit != null)
+		{
+			character.SetSourceUnit(sourceUnit);
+		}
 		character.OnStart();
 		character.Animator.gameObject.AddComponent<UnitAnimationCallbackReceiver>();
 		character.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -547,7 +551,7 @@ public class CharacterDollRoom : DollRoomBase, IUnitEquipmentHandler<EntitySubsc
 		m_Avatar.RampIndices.AddRange(collection);
 		m_Avatar.IsAtlasesDirty = true;
 		m_Avatar.RemoveEquipmentEntities(ees);
-		m_Avatar.AddEquipmentEntities(ees2, saved: false, isFromEquippedItems: true);
+		m_Avatar.AddEquipmentEntities(ees2, saved: false, isFromEquippedItems: true, slot);
 		if (slot is HandSlot slot2)
 		{
 			m_AvatarHands?.HandleEquipmentSlotUpdated(slot2, previousItem);

@@ -19,6 +19,8 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 
 	private bool m_Enabled;
 
+	private bool m_IsDetachingAll;
+
 	private TimeSpan m_LastExecutionProcessListChangeTime;
 
 	public ReadonlyList<AbilityExecutionProcess> Abilities => m_Abilities;
@@ -28,6 +30,10 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		if (!m_Enabled)
 		{
 			throw new Exception("Attempting to access AbilityExecutionController that is disabled");
+		}
+		if (m_IsDetachingAll)
+		{
+			return null;
 		}
 		AbilityExecutionProcess abilityExecutionProcess = new AbilityExecutionProcess(context);
 		MechanicEntity caster = context.Caster;
@@ -56,29 +62,40 @@ public class AbilityExecutionController : IControllerTick, IController, IControl
 		{
 			throw new Exception("Attempting to access AbilityExecutionController that is disabled");
 		}
+		if (!m_IsDetachingAll)
+		{
+			DetachInternal(process);
+			m_Abilities.Remove(process);
+			m_LastExecutionProcessListChangeTime = Game.Instance.TimeController.RealTime;
+		}
+	}
+
+	private static void DetachInternal(AbilityExecutionProcess process)
+	{
 		bool num = process.Context?.Caster.IsInCombat ?? true;
 		process.Dispose();
 		if (num)
 		{
 			Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
 		}
-		m_Abilities.Remove(process);
-		m_LastExecutionProcessListChangeTime = Game.Instance.TimeController.RealTime;
 	}
 
 	public void DetachAll()
 	{
-		foreach (AbilityExecutionProcess ability in m_Abilities)
+		m_IsDetachingAll = true;
+		try
 		{
-			bool isInCombat = ability.Context.Caster.IsInCombat;
-			PFLog.Ability.Log("[AbilityExecutionController] '" + ability.Context.AbilityBlueprint.Name + "' will be detached...");
-			ability.Dispose();
-			if (isInCombat)
+			foreach (AbilityExecutionProcess ability in m_Abilities)
 			{
-				Game.Instance.PlayerInputInCombatController.RequestUnlockPlayerInput();
+				PFLog.Ability.Log("[AbilityExecutionController] '" + ability.Context.AbilityBlueprint.Name + "' will be detached...");
+				DetachInternal(ability);
 			}
+			m_Abilities.Clear();
 		}
-		m_Abilities.Clear();
+		finally
+		{
+			m_IsDetachingAll = false;
+		}
 	}
 
 	public TickType GetTickType()
