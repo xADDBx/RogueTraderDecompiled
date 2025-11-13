@@ -1309,6 +1309,7 @@ public static class ClassesWithGuid
 		(typeof(StartEtudeForced), "546c217ec8c177f4cb25b4b4b6ca35e8"),
 		(typeof(UnStartEtude), "9834963f1a257bc4e9134d8ed2ffe2c2"),
 		(typeof(UnitUpgraderComponent), "afdb9910a3164c2ab7a573983b2bd959"),
+		(typeof(FixDuplicatedWeaponFactsOnUnit), "01a02b734f4ec824085cbe26c6e563aa"),
 		(typeof(FixItemInInventory), "af25a2d60e0c4fab980df67c71eeb9b7"),
 		(typeof(RemoveBrokenSummon), "4bc4d4630e61e3e439f1f4056e32d2e1"),
 		(typeof(RemoveFactFromUnit), "d79439d3ef3e486088c6d12fe02974da"),

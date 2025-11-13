@@ -22,7 +22,7 @@ public class AddAbilitiesToCurrentWeapon : BlueprintComponent, IRuntimeEntityFac
 {
 	public class Runtime : EntityFactComponent<BaseUnitEntity, AddAbilitiesToCurrentWeapon>, IHashable
 	{
-		protected override void OnActivateOrPostLoad()
+		protected override void OnActivate()
 		{
 			ReapplyFactsForActiveWeapons();
 		}

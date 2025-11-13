@@ -200,7 +200,7 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(23, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(24, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -221,6 +221,8 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 		writer.DangerousWriteUnmanaged(in movementType, in isOneFrameCommand, in slowMotionRequired, in ignoreCooldown, in value3, in value7, in value8, in value4);
 		List<TargetWrapper> source = value.AllTargets;
 		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in source));
+		value3 = value.DoNotClearMovementPoints;
+		writer.WriteUnmanaged(in value3);
 		writer.WriteString(value.m_AbilityId);
 		writer.WriteString(value.m_VariantId);
 		writer.WriteUnmanaged(in value.m_FlipPattern);
@@ -254,10 +256,11 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 		DamagePolicyType value19;
 		bool value20;
 		List<TargetWrapper> value21;
-		UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates value22;
+		bool value22;
+		UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates value23;
 		string abilityId;
 		string variantId;
-		if (memberCount == 23)
+		if (memberCount == 24)
 		{
 			if (value != null)
 			{
@@ -281,9 +284,10 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
 				value21 = value.AllTargets;
+				value22 = value.DoNotClearMovementPoints;
 				abilityId = value.m_AbilityId;
 				variantId = value.m_VariantId;
-				value22 = value.m_FlipPattern;
+				value23 = value.m_FlipPattern;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -304,10 +308,11 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 				reader.ReadUnmanaged<DamagePolicyType>(out value19);
 				reader.ReadUnmanaged<bool>(out value20);
 				ListFormatter.DeserializePackable(ref reader, ref value21);
+				reader.ReadUnmanaged<bool>(out value22);
 				abilityId = reader.ReadString();
 				variantId = reader.ReadString();
-				reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value22);
-				goto IL_04c4;
+				reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value23);
+				goto IL_04f9;
 			}
 			reader.ReadUnmanaged<CommandType>(out value2);
 			value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
@@ -316,15 +321,16 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 			value12 = reader.ReadPackable<ForcedPath>();
 			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, bool?, bool, AttackHitPolicyType, DamagePolicyType, bool>(out value13, out value14, out value15, out value16, out value17, out value18, out value19, out value20);
 			value21 = ListFormatter.DeserializePackable<TargetWrapper>(ref reader);
+			reader.ReadUnmanaged<bool>(out value22);
 			abilityId = reader.ReadString();
 			variantId = reader.ReadString();
-			reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value22);
+			reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value23);
 		}
 		else
 		{
-			if (memberCount > 23)
+			if (memberCount > 24)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PlayerUseAbilityParams), 23, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(PlayerUseAbilityParams), 24, memberCount);
 				return;
 			}
 			if (value == null)
@@ -349,9 +355,10 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 				value19 = DamagePolicyType.Default;
 				value20 = false;
 				value21 = null;
+				value22 = false;
 				abilityId = null;
 				variantId = null;
-				value22 = UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates.FlipNone;
+				value23 = UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates.FlipNone;
 			}
 			else
 			{
@@ -375,9 +382,10 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
 				value21 = value.AllTargets;
+				value22 = value.DoNotClearMovementPoints;
 				abilityId = value.m_AbilityId;
 				variantId = value.m_VariantId;
-				value22 = value.m_FlipPattern;
+				value23 = value.m_FlipPattern;
 			}
 			if (memberCount != 0)
 			{
@@ -441,14 +449,18 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 																							ListFormatter.DeserializePackable(ref reader, ref value21);
 																							if (memberCount != 20)
 																							{
-																								abilityId = reader.ReadString();
+																								reader.ReadUnmanaged<bool>(out value22);
 																								if (memberCount != 21)
 																								{
-																									variantId = reader.ReadString();
+																									abilityId = reader.ReadString();
 																									if (memberCount != 22)
 																									{
-																										reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value22);
-																										_ = 23;
+																										variantId = reader.ReadString();
+																										if (memberCount != 23)
+																										{
+																											reader.ReadUnmanaged<UnitPartStrategistKeystoneRearAbilityFlipPattern.FlipStates>(out value23);
+																											_ = 24;
+																										}
 																									}
 																								}
 																							}
@@ -474,7 +486,7 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 			}
 			if (value != null)
 			{
-				goto IL_04c4;
+				goto IL_04f9;
 			}
 		}
 		value = new PlayerUseAbilityParams
@@ -499,12 +511,13 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 			DamagePolicy = value19,
 			KillTarget = value20,
 			AllTargets = value21,
+			DoNotClearMovementPoints = value22,
 			m_AbilityId = abilityId,
 			m_VariantId = variantId,
-			m_FlipPattern = value22
+			m_FlipPattern = value23
 		};
 		return;
-		IL_04c4:
+		IL_04f9:
 		value.Type = value2;
 		value.OwnerRef = value3;
 		value.Target = value4;
@@ -525,8 +538,9 @@ public sealed class PlayerUseAbilityParams : UnitUseAbilityParams, IMemoryPackab
 		value.DamagePolicy = value19;
 		value.KillTarget = value20;
 		value.AllTargets = value21;
+		value.DoNotClearMovementPoints = value22;
 		value.m_AbilityId = abilityId;
 		value.m_VariantId = variantId;
-		value.m_FlipPattern = value22;
+		value.m_FlipPattern = value23;
 	}
 }

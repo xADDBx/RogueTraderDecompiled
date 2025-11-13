@@ -77,7 +77,7 @@ public static class UnitUpgraderHelper
 		{
 			foreach (Ability item in unit.Abilities.RawFacts.ToTempList())
 			{
-				if (item.FirstSource.IsMissing)
+				if (!(item.FirstSource != null) || item.FirstSource.IsMissing)
 				{
 					unit.Abilities.Remove(item);
 				}

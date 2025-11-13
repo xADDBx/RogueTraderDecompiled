@@ -105,6 +105,9 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool IsForced { get; set; }
 
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public bool DoNotClearMovementPoints { get; set; }
+
 	[CanBeNull]
 	public List<AbilityApproachingEffect> ApproachingEffects { get; private set; }
 
@@ -311,6 +314,8 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 		result.Append(ref val12);
 		bool val13 = IsForced;
 		result.Append(ref val13);
+		bool val14 = DoNotClearMovementPoints;
+		result.Append(ref val14);
 		return result;
 	}
 }

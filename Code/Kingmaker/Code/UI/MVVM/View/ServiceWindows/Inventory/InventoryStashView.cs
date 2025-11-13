@@ -88,7 +88,6 @@ public abstract class InventoryStashView : ViewBase<InventoryStashVM>, IVendorBu
 	{
 		base.gameObject.SetActive(value: true);
 		m_Background.Or(null)?.SetActive(value: true);
-		base.ViewModel.ItemSlotsGroup?.SortItems();
 	}
 
 	private void Hide()

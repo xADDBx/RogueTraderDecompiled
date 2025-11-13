@@ -779,6 +779,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		rulePerformAbility.Context.DamagePolicy = DamagePolicy;
 		rulePerformAbility.Context.KillTarget = KillTarget;
 		rulePerformAbility.Context.AllTargets = base.Params.AllTargets;
+		rulePerformAbility.Context.DoNotClearMovementPoints = base.Params.DoNotClearMovementPoints;
 		rulePerformAbility.DisableGameLog = DisableLog;
 		rulePerformAbility.IgnoreCooldown = IgnoreCooldown;
 		rulePerformAbility.ForceFreeAction = base.IsFreeAction;

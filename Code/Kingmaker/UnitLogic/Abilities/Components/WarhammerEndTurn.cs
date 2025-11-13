@@ -41,16 +41,9 @@ public class WarhammerEndTurn : BlueprintComponent, IAbilityOnCastLogic
 		if (clearMPInsteadOfEndingTurn)
 		{
 			PartUnitCombatState combatStateOptional = context.Caster.GetCombatStateOptional();
-			if (combatStateOptional != null && !(context.MaybeCaster?.Features.DoNotResetMovementPointsOnAttacks))
+			if (combatStateOptional != null && !(context.MaybeCaster?.Features.DoNotResetMovementPointsOnAttacks) && !context.DoNotClearMovementPoints)
 			{
-				if (combatStateOptional.SaveMPAfterUsingNextAbility)
-				{
-					combatStateOptional.SaveMPAfterUsingNextAbility = false;
-				}
-				else
-				{
-					combatStateOptional.SpendActionPointsAll(yellow: false, blue: true);
-				}
+				combatStateOptional.SpendActionPointsAll(yellow: false, blue: true);
 			}
 		}
 		else if (Game.Instance.TurnController.CurrentUnit == context.Caster)

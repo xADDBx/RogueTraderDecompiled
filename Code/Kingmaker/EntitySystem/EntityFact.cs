@@ -223,6 +223,7 @@ public class EntityFact : IDisposable, IUIDataProvider, IEntityFact, IHashable
 
 	public ReadonlyList<EntityFactSource> Sources => m_Sources;
 
+	[CanBeNull]
 	public EntityFactSource FirstSource => m_Sources?.Get(0);
 
 	[CanBeNull]

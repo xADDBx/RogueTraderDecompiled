@@ -151,18 +151,26 @@ public class GogAchievementsManager : MonoBehaviour
 		}
 		foreach (AchievementEntity achievement in Achievements)
 		{
-			if (achievement.NeedCommit)
+			try
 			{
-				if (achievement.IsUnlocked)
+				if (achievement.NeedCommit)
 				{
-					GalaxyInstance.Stats().SetAchievement(achievement.Data.GogId);
-					m_AchievementsForStore.Add(achievement.Data.GogId);
+					if (achievement.IsUnlocked)
+					{
+						GalaxyInstance.Stats().SetAchievement(achievement.Data.GogId);
+						m_AchievementsForStore.Add(achievement.Data.GogId);
+					}
+					else if (achievement.Data.EventsCountForUnlock > 1)
+					{
+						GalaxyInstance.Stats().SetStatInt(ProgressStat(achievement.Data.GogId), achievement.Counter);
+						m_AchievementsForStore.Add(achievement.Data.GogId);
+					}
 				}
-				else if (achievement.Data.EventsCountForUnlock > 1)
-				{
-					GalaxyInstance.Stats().SetStatInt(ProgressStat(achievement.Data.GogId), achievement.Counter);
-					m_AchievementsForStore.Add(achievement.Data.GogId);
-				}
+			}
+			catch (Exception ex)
+			{
+				PFLog.Default.Error("GOG: failed SetAchievement(...) or SetStatInt(...) for " + achievement.Data.name);
+				PFLog.Default.Exception(ex);
 			}
 		}
 		if (!m_AchievementsForStore.Empty())

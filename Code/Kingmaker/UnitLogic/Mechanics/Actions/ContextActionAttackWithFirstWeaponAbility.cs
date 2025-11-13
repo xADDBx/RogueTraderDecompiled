@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Controllers.Combat;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
@@ -56,25 +55,17 @@ public class ContextActionAttackWithFirstWeaponAbility : ContextAction
 			return;
 		}
 		AbilityData ability = GetAbility(attacker);
-		if (ability == null || !ability.CanTarget(mechanicEntity, out var _))
+		if (!(ability == null) && ability.CanTarget(mechanicEntity, out var _))
 		{
-			return;
-		}
-		if (SaveMPAfterUsingWeaponAbility)
-		{
-			PartUnitCombatState combatStateOptional = attacker.GetCombatStateOptional();
-			if (combatStateOptional != null)
+			UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability, mechanicEntity)
 			{
-				combatStateOptional.SaveMPAfterUsingNextAbility = true;
-			}
+				IgnoreCooldown = true,
+				FreeAction = true,
+				OriginatedFrom = base.Context.SourceAbility,
+				DoNotClearMovementPoints = SaveMPAfterUsingWeaponAbility
+			};
+			attacker.Commands.AddToQueue(cmdParams);
 		}
-		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability, mechanicEntity)
-		{
-			IgnoreCooldown = true,
-			FreeAction = true,
-			OriginatedFrom = base.Context.SourceAbility
-		};
-		attacker.Commands.AddToQueue(cmdParams);
 	}
 
 	public override string GetCaption()

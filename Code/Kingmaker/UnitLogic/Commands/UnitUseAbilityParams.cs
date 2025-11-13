@@ -65,6 +65,9 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 	[MemoryPackIgnore]
 	public bool IgnoreAbilityUsingInThreateningArea { get; set; }
 
+	[JsonProperty]
+	public bool DoNotClearMovementPoints { get; set; }
+
 	[MemoryPackIgnore]
 	public BlueprintAbility OriginatedFrom { get; set; }
 
@@ -188,7 +191,7 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(20, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(21, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -209,6 +212,8 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 		writer.DangerousWriteUnmanaged(in movementType, in isOneFrameCommand, in slowMotionRequired, in ignoreCooldown, in value3, in value7, in value8, in value4);
 		List<TargetWrapper> source = value.AllTargets;
 		ListFormatter.SerializePackable(ref writer, ref Unsafe.AsRef(in source));
+		value3 = value.DoNotClearMovementPoints;
+		writer.WriteUnmanaged(in value3);
 	}
 
 	[Preserve]
@@ -239,7 +244,8 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 		DamagePolicyType value19;
 		bool value20;
 		List<TargetWrapper> value21;
-		if (memberCount == 20)
+		bool value22;
+		if (memberCount == 21)
 		{
 			if (value != null)
 			{
@@ -263,6 +269,7 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
 				value21 = value.AllTargets;
+				value22 = value.DoNotClearMovementPoints;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -283,7 +290,8 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 				reader.ReadUnmanaged<DamagePolicyType>(out value19);
 				reader.ReadUnmanaged<bool>(out value20);
 				ListFormatter.DeserializePackable(ref reader, ref value21);
-				goto IL_0425;
+				reader.ReadUnmanaged<bool>(out value22);
+				goto IL_045a;
 			}
 			reader.ReadUnmanaged<CommandType>(out value2);
 			value3 = reader.ReadPackable<EntityRef<BaseUnitEntity>>();
@@ -292,12 +300,13 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 			value12 = reader.ReadPackable<ForcedPath>();
 			reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?, bool?, bool, AttackHitPolicyType, DamagePolicyType, bool>(out value13, out value14, out value15, out value16, out value17, out value18, out value19, out value20);
 			value21 = ListFormatter.DeserializePackable<TargetWrapper>(ref reader);
+			reader.ReadUnmanaged<bool>(out value22);
 		}
 		else
 		{
-			if (memberCount > 20)
+			if (memberCount > 21)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitUseAbilityParams), 20, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitUseAbilityParams), 21, memberCount);
 				return;
 			}
 			if (value == null)
@@ -322,6 +331,7 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 				value19 = DamagePolicyType.Default;
 				value20 = false;
 				value21 = null;
+				value22 = false;
 			}
 			else
 			{
@@ -345,6 +355,7 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 				value19 = value.DamagePolicy;
 				value20 = value.KillTarget;
 				value21 = value.AllTargets;
+				value22 = value.DoNotClearMovementPoints;
 			}
 			if (memberCount != 0)
 			{
@@ -406,7 +417,11 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 																						if (memberCount != 19)
 																						{
 																							ListFormatter.DeserializePackable(ref reader, ref value21);
-																							_ = 20;
+																							if (memberCount != 20)
+																							{
+																								reader.ReadUnmanaged<bool>(out value22);
+																								_ = 21;
+																							}
 																						}
 																					}
 																				}
@@ -429,7 +444,7 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 			}
 			if (value != null)
 			{
-				goto IL_0425;
+				goto IL_045a;
 			}
 		}
 		value = new UnitUseAbilityParams
@@ -453,10 +468,11 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 			HitPolicy = value18,
 			DamagePolicy = value19,
 			KillTarget = value20,
-			AllTargets = value21
+			AllTargets = value21,
+			DoNotClearMovementPoints = value22
 		};
 		return;
-		IL_0425:
+		IL_045a:
 		value.Type = value2;
 		value.OwnerRef = value3;
 		value.Target = value4;
@@ -477,5 +493,6 @@ public class UnitUseAbilityParams : UnitCommandParams<UnitUseAbility>, IMemoryPa
 		value.DamagePolicy = value19;
 		value.KillTarget = value20;
 		value.AllTargets = value21;
+		value.DoNotClearMovementPoints = value22;
 	}
 }

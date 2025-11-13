@@ -87,9 +87,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 	public bool IsMovedThisTurn { get; set; }
 
 	[JsonProperty]
-	public bool SaveMPAfterUsingNextAbility { get; set; }
-
-	[JsonProperty]
 	public bool Surprised { get; private set; }
 
 	[JsonProperty]
@@ -491,7 +488,6 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		StoryModeBuffImmunity = SpellDescriptor.None;
 		StoryModeEnergyDrainImmunity = false;
 		StartedCombatNearEnemy = false;
-		SaveMPAfterUsingNextAbility = false;
 	}
 
 	public void HandleRoundStart(bool isTurnBased)
@@ -739,55 +735,53 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		result.Append(ref val7);
 		bool val8 = IsMovedThisTurn;
 		result.Append(ref val8);
-		bool val9 = SaveMPAfterUsingNextAbility;
+		bool val9 = Surprised;
 		result.Append(ref val9);
-		bool val10 = Surprised;
+		float val10 = ActionPointsBlue;
 		result.Append(ref val10);
-		float val11 = ActionPointsBlue;
+		float val11 = MovedCellsThisTurn;
 		result.Append(ref val11);
-		float val12 = MovedCellsThisTurn;
+		float val12 = ActionPointsBlueSpentThisTurn;
 		result.Append(ref val12);
-		float val13 = ActionPointsBlueSpentThisTurn;
+		float val13 = ActionPointsBlueMax;
 		result.Append(ref val13);
-		float val14 = ActionPointsBlueMax;
+		int val14 = ActionPointsYellow;
 		result.Append(ref val14);
-		int val15 = ActionPointsYellow;
+		int val15 = AttacksOfOpportunityMadeThisTurnCount;
 		result.Append(ref val15);
-		int val16 = AttacksOfOpportunityMadeThisTurnCount;
+		int val16 = ForceMovedDistanceInCells;
 		result.Append(ref val16);
-		int val17 = ForceMovedDistanceInCells;
+		int val17 = LastStraightMoveLength;
 		result.Append(ref val17);
-		int val18 = LastStraightMoveLength;
+		int val18 = LastDiagonalCount;
 		result.Append(ref val18);
-		int val19 = LastDiagonalCount;
-		result.Append(ref val19);
 		if (m_OverrideInitiative.HasValue)
 		{
-			float val20 = m_OverrideInitiative.Value;
-			result.Append(ref val20);
+			float val19 = m_OverrideInitiative.Value;
+			result.Append(ref val19);
 		}
 		result.Append(ref DamageReceivedInCurrentFight);
-		Hash128 val21 = ClassHasher<MechanicEntity>.GetHash128(ManualTarget);
+		Hash128 val20 = ClassHasher<MechanicEntity>.GetHash128(ManualTarget);
+		result.Append(ref val20);
+		SpellDescriptor val21 = StoryModeBuffImmunity;
 		result.Append(ref val21);
-		SpellDescriptor val22 = StoryModeBuffImmunity;
+		bool val22 = StoryModeEnergyDrainImmunity;
 		result.Append(ref val22);
-		bool val23 = StoryModeEnergyDrainImmunity;
+		bool val23 = StartedCombatNearEnemy;
 		result.Append(ref val23);
-		bool val24 = StartedCombatNearEnemy;
-		result.Append(ref val24);
 		EntityRef<MechanicEntity> obj = m_LastTarget;
-		Hash128 val25 = StructHasher<EntityRef<MechanicEntity>>.GetHash128(ref obj);
-		result.Append(ref val25);
+		Hash128 val24 = StructHasher<EntityRef<MechanicEntity>>.GetHash128(ref obj);
+		result.Append(ref val24);
 		EntityRef<ItemEntityWeapon> obj2 = m_LastAbilityWeapon;
-		Hash128 val26 = StructHasher<EntityRef<ItemEntityWeapon>>.GetHash128(ref obj2);
-		result.Append(ref val26);
+		Hash128 val25 = StructHasher<EntityRef<ItemEntityWeapon>>.GetHash128(ref obj2);
+		result.Append(ref val25);
 		if (LastAttackPosition.HasValue)
 		{
-			Vector3 val27 = LastAttackPosition.Value;
-			result.Append(ref val27);
+			Vector3 val26 = LastAttackPosition.Value;
+			result.Append(ref val26);
 		}
-		bool val28 = WasFreezeOutsideCamera;
-		result.Append(ref val28);
+		bool val27 = WasFreezeOutsideCamera;
+		result.Append(ref val27);
 		return result;
 	}
 }
