@@ -53,6 +53,10 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	[JsonProperty]
 	[GameStateIgnore]
+	private MemorizedAbilitiesContainer m_RemovedFromActionBar = new MemorizedAbilitiesContainer();
+
+	[JsonProperty]
+	[GameStateIgnore]
 	public Dictionary<string, int> PreferredAbilitiesPositions = new Dictionary<string, int>();
 
 	[JsonProperty]
@@ -296,14 +300,23 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 
 	public void SetSlot(MechanicActionBarSlot slot, int index)
 	{
-		if (index != -1)
+		if (index == -1)
 		{
-			EnsureSlotsTillIndex(index);
-			Slots[index] = slot;
-			if (slot.KeyName != null)
+			return;
+		}
+		if (slot is MechanicActionBarSlotAbility mechanicActionBarSlotAbility)
+		{
+			m_AlreadyAutomaticallyAdded.Add(mechanicActionBarSlotAbility.Ability.Blueprint, mechanicActionBarSlotAbility.Ability.SourceItem);
+			if (m_RemovedFromActionBar.Contains(mechanicActionBarSlotAbility.Ability.Blueprint, mechanicActionBarSlotAbility.Ability.SourceItem))
 			{
-				PreferredAbilitiesPositions[slot.KeyName] = index;
+				m_RemovedFromActionBar.Remove(mechanicActionBarSlotAbility.Ability.Blueprint, mechanicActionBarSlotAbility.Ability.SourceItem);
 			}
+		}
+		EnsureSlotsTillIndex(index);
+		Slots[index] = slot;
+		if (slot.KeyName != null)
+		{
+			PreferredAbilitiesPositions[slot.KeyName] = index;
 		}
 	}
 
@@ -347,10 +360,19 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		if (index >= 0 && index < Slots.Count)
 		{
 			RemoveAlreadyAutomaticallyAddedIfNeed(Slots[index]);
+			if (Slots[index].KeyName != null)
+			{
+				PreferredAbilitiesPositions.Remove(Slots[index].KeyName, out var _);
+			}
+			MechanicActionBarSlotAbility slotAbility = Slots[index] as MechanicActionBarSlotAbility;
 			Slots[index] = new MechanicActionBarSlotEmpty
 			{
 				Unit = base.Owner
 			};
+			if (slotAbility != null && !Slots.Any((MechanicActionBarSlot s) => s.KeyName == slotAbility.KeyName))
+			{
+				m_RemovedFromActionBar.Add(slotAbility.Ability.Blueprint, slotAbility.Ability.SourceItem);
+			}
 		}
 	}
 
@@ -483,7 +505,7 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 			if (!(sourceItem is ItemEntityWeapon) && !(sourceItem is ItemEntityShield) && item.Blueprint.IsMomentum == isMomentum)
 			{
 				ActionPanelLogic component = item.Blueprint.GetComponent<ActionPanelLogic>();
-				if ((isMomentum || component == null || component.AutoFillConditions.Check()) && (isMomentum || !m_AlreadyAutomaticallyAdded.Contains(item.Blueprint, (ItemEntity)item.SourceItem)))
+				if ((isMomentum || component == null || component.AutoFillConditions.Check()) && (isMomentum || !m_AlreadyAutomaticallyAdded.Contains(item.Blueprint, (ItemEntity)item.SourceItem)) && (isMomentum || !m_RemovedFromActionBar.Contains(item.Blueprint, (ItemEntity)item.SourceItem)))
 				{
 					results.Add(new AbilityWrapper(item));
 				}

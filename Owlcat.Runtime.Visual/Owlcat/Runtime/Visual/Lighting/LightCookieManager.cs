@@ -262,7 +262,7 @@ public class LightCookieManager : IDisposable
 		protected override void RecordRenderGraph(ref RenderingData renderingData)
 		{
 			PassData passData;
-			using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PassData>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Lighting\\LightCookieManager.cs", 406);
+			using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PassData>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Lighting\\LightCookieManager.cs", 406);
 			passData.hasAnyLightWithCookie = m_CookieDataList.Length > 0;
 			passData.atlasTexture = m_AtlasTexture;
 			passData.blitCookieTextures = m_BlitCookieTextures;

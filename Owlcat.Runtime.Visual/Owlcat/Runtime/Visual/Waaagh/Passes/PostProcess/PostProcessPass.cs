@@ -549,7 +549,7 @@ public class PostProcessPass : ScriptableRenderPass
 			SetupDithering(in cameraData, finalPass);
 		}
 		FinalPostProcessPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<FinalPostProcessPassData>("Final Post Process Pass", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 361);
+		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<FinalPostProcessPassData>("Final Post Process Pass", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 361);
 		passData2.Source = renderGraphBuilder.ReadWriteTexture(in input);
 		passData2.Destination = renderGraphBuilder.ReadWriteTexture(in input2);
 		passData2.Materials = m_Materials;
@@ -585,7 +585,7 @@ public class PostProcessPass : ScriptableRenderPass
 		ref CameraData cameraData = ref renderingData.CameraData;
 		RenderGraph renderGraph = renderingData.RenderGraph;
 		ProfilingSampler sampler = ProfilingSampler.Get(WaaaghProfileId.RenderPostProcess);
-		renderGraph.BeginProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 419);
+		renderGraph.BeginProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 419);
 		TextureDesc desc = m_Desc;
 		desc.name = "CameraAfterPostProcessRT";
 		desc.depthBufferBits = DepthBits.None;
@@ -594,7 +594,7 @@ public class PostProcessPass : ScriptableRenderPass
 		TextureHandle source = renderingData.CameraData.Renderer.RenderGraphResources.CameraColorBuffer;
 		TextureHandle destination = TextureHandle.nullHandle;
 		PostProcessPassDataBase passData2;
-		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<PostProcessPassDataBase>("StopNaN and SRGBConversion", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 446);
+		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<PostProcessPassDataBase>("StopNaN and SRGBConversion", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 446);
 		try
 		{
 			PostProcessPassDataBase postProcessPassDataBase = passData2;
@@ -680,7 +680,7 @@ public class PostProcessPass : ScriptableRenderPass
 			Swap();
 		}
 		PostProcessPassDataBase passData3;
-		RenderGraphBuilder renderGraphBuilder2 = renderGraph.AddRenderPass<PostProcessPassDataBase>("Final Blit", out passData3, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 562);
+		RenderGraphBuilder renderGraphBuilder2 = renderGraph.AddRenderPass<PostProcessPassDataBase>("Final Blit", out passData3, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 562);
 		try
 		{
 			PostProcessPassDataBase postProcessPassDataBase3 = passData3;
@@ -701,7 +701,7 @@ public class PostProcessPass : ScriptableRenderPass
 		{
 			((IDisposable)renderGraphBuilder2).Dispose();
 		}
-		renderGraph.EndProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 579);
+		renderGraph.EndProfilingSampler(sampler, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 579);
 		TextureHandle GetDestination()
 		{
 			if (!destination.IsValid())
@@ -723,7 +723,7 @@ public class PostProcessPass : ScriptableRenderPass
 	private void DoCopyHistory(ref RenderingData renderingData, TextureHandle source)
 	{
 		PostProcessPassDataBase passData2;
-		RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Copy History", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 587);
+		RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Copy History", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 587);
 		try
 		{
 			passData2.Materials = m_Materials;
@@ -753,7 +753,7 @@ public class PostProcessPass : ScriptableRenderPass
 		RenderGraph renderGraph = renderingData.RenderGraph;
 		TemporalAntialiasingSettings temporalAntialiasingSettings = WaaaghPipeline.Asset.PostProcessSettings.TemporalAntialiasingSettings;
 		TaaPassData passData2;
-		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<TaaPassData>("TAA", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 627);
+		RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<TaaPassData>("TAA", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 627);
 		try
 		{
 			passData2.Materials = m_Materials;
@@ -812,7 +812,7 @@ public class PostProcessPass : ScriptableRenderPass
 			break;
 		}
 		SmaaPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<SmaaPassData>("SMAA", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 705);
+		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<SmaaPassData>("SMAA", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 705);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -876,7 +876,7 @@ public class PostProcessPass : ScriptableRenderPass
 		CoreUtils.SetKeyword(gaussianDepthOfField, ShaderKeywordStrings.HighQualitySampling, m_DepthOfField.highQualitySampling.value);
 		gaussianDepthOfField.SetVector(ShaderConstants._CoCParams, new Vector3(value, y, a));
 		GaussianDofPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<GaussianDofPassData>("Depth Of Field (Gaussian)", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 807);
+		using RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<GaussianDofPassData>("Depth Of Field (Gaussian)", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 807);
 		passData2.CameraDepthTexture = renderGraphBuilder.ReadTexture(in renderingData.CameraData.Renderer.RenderGraphResources.CameraDepthBuffer);
 		passData2.ViewMatrixToRestore = renderingData.CameraData.GetViewMatrix();
 		passData2.ProjectionMatrixToRestore = renderingData.CameraData.GetProjectionMatrix();
@@ -977,7 +977,7 @@ public class PostProcessPass : ScriptableRenderPass
 			PrepareBokehKernel();
 		}
 		BokehDofPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<BokehDofPassData>("Depth Of Field (Bokeh)", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 959);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<BokehDofPassData>("Depth Of Field (Bokeh)", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 959);
 		passData2.CameraDepthRT = renderGraphBuilder.ReadTexture(in renderingData.CameraData.Renderer.RenderGraphResources.CameraDepthBuffer);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
@@ -1035,7 +1035,7 @@ public class PostProcessPass : ScriptableRenderPass
 		cameraMotionBlur.SetFloat("_Intensity", m_MotionBlur.intensity.value);
 		cameraMotionBlur.SetFloat("_Clamp", m_MotionBlur.clamp.value);
 		MotionBlurPassData passData2;
-		using (RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<MotionBlurPassData>("Motion Blur", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1047))
+		using (RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<MotionBlurPassData>("Motion Blur", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1047))
 		{
 			passData2.Source = renderGraphBuilder.ReadTexture(in source);
 			passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
@@ -1056,7 +1056,7 @@ public class PostProcessPass : ScriptableRenderPass
 		radialBlur.SetFloat("_RadialBlurStrength", m_RadialBlur.Strength.value);
 		radialBlur.SetFloat("_RadialBlurWidth", m_RadialBlur.Width.value);
 		PostProcessPassDataBase passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Radial Blur", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1076);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Radial Blur", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1076);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -1099,7 +1099,7 @@ public class PostProcessPass : ScriptableRenderPass
 		paniniProjection.SetVector(ShaderConstants._Params, new Vector4(vector.x, vector.y, num, w));
 		paniniProjection.EnableKeyword((1f - Mathf.Abs(num) > float.Epsilon) ? ShaderKeywordStrings.PaniniGeneric : ShaderKeywordStrings.PaniniUnitDistance);
 		PostProcessPassDataBase passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Panini Projection", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1162);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<PostProcessPassDataBase>("Panini Projection", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1162);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -1124,7 +1124,7 @@ public class PostProcessPass : ScriptableRenderPass
 		CoreUtils.SetKeyword(bloom, ShaderKeywordStrings.UseRGBM, m_UseRGBM);
 		RenderGraph renderGraph = renderingData.RenderGraph;
 		BloomPassData passData2;
-		using (RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<BloomPassData>("Bloom", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1209))
+		using (RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<BloomPassData>("Bloom", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1209))
 		{
 			passData2.Source = renderGraphBuilder.ReadTexture(in source);
 			passData2.Materials = m_Materials;
@@ -1227,7 +1227,7 @@ public class PostProcessPass : ScriptableRenderPass
 		CoreUtils.SetKeyword(bloomEnhanced, ShaderKeywordStrings.ANTI_FLICKER, m_BloomEnhanced.antiFlicker.value);
 		RenderGraph renderGraph = renderingData.RenderGraph;
 		BloomEnhancedPassData passData2;
-		using (RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<BloomEnhancedPassData>("Bloom Enhanced", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1359))
+		using (RenderGraphBuilder renderGraphBuilder = renderGraph.AddRenderPass<BloomEnhancedPassData>("Bloom Enhanced", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1359))
 		{
 			passData2.Source = renderGraphBuilder.ReadTexture(in source);
 			passData2.Materials = m_Materials;
@@ -1392,7 +1392,7 @@ public class PostProcessPass : ScriptableRenderPass
 	private void DoUberPass(ref RenderingData renderingData, TextureHandle source, TextureHandle destination)
 	{
 		UberPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<UberPassData>("Uber Pass", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1619);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<UberPassData>("Uber Pass", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1619);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -1421,7 +1421,7 @@ public class PostProcessPass : ScriptableRenderPass
 	private void DoDaltonization(ref RenderingData renderingData, TextureHandle source, TextureHandle destination)
 	{
 		DaltonizationPassData passData2;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<DaltonizationPassData>("Daltonization", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1663);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<DaltonizationPassData>("Daltonization", out passData2, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1663);
 		passData2.Source = renderGraphBuilder.ReadTexture(in source);
 		passData2.Destination = renderGraphBuilder.WriteTexture(in destination);
 		passData2.Materials = m_Materials;
@@ -1443,7 +1443,7 @@ public class PostProcessPass : ScriptableRenderPass
 	private void DoRcas(ref RenderingData renderingData, TextureHandle source, TextureHandle destination, float sharpness)
 	{
 		RcasPassData passData;
-		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<RcasPassData>("Rcas", out passData, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1706);
+		using RenderGraphBuilder renderGraphBuilder = renderingData.RenderGraph.AddRenderPass<RcasPassData>("Rcas", out passData, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\PostProcess\\PostProcessPass.cs", 1706);
 		passData.Sharpness = sharpness;
 		passData.Viewport = new Rect(default(Vector2), renderingData.CameraData.FinalTargetViewport.size);
 		passData.Source = renderGraphBuilder.ReadTexture(in source);

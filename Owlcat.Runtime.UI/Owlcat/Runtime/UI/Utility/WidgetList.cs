@@ -51,6 +51,19 @@ public class WidgetList : MonoBehaviour
 		return UpdateWidgets<TWidget>(vmCollection);
 	}
 
+	public IDisposable DrawMultiEntries<TWidget>(IEnumerable<IViewModel> vmCollection, List<TWidget> entryPrefabs, bool strictMatching) where TWidget : IWidgetView
+	{
+		Clear();
+		m_VisibleEntries.Clear();
+		m_PrefabsCollection.Clear();
+		foreach (TWidget entryPrefab in entryPrefabs)
+		{
+			m_PrefabsCollection.Add(entryPrefab);
+		}
+		m_StrictMatching = strictMatching;
+		return UpdateWidgets<TWidget>(vmCollection);
+	}
+
 	private IDisposable UpdateWidgets<TWidget>(IEnumerable<IViewModel> vmCollection) where TWidget : IWidgetView
 	{
 		int num = 0;

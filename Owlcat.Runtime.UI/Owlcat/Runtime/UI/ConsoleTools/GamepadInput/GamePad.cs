@@ -35,6 +35,8 @@ public class GamePad
 
 	public readonly ReactiveProperty<ConsoleType> ConsoleTypeProperty = new ReactiveProperty<ConsoleType>();
 
+	public bool Switch2MouseModeActive;
+
 	private readonly OverriddenPlatformProvider m_OverriddenPlatform = new OverriddenPlatformProvider();
 
 	private readonly List<ConsoleTypeProvider> m_TypeProviders;
@@ -228,7 +230,11 @@ public class GamePad
 
 	public void TryRestoreCursorState()
 	{
-		if (UIKitRewiredCursorController.HasController)
+		if (Switch2Helper.IsRunningOnSwitch2 && Switch2MouseModeActive)
+		{
+			DoRestoreConfigState();
+		}
+		else if (UIKitRewiredCursorController.HasController)
 		{
 			DoRestoreConfigState();
 		}
@@ -236,10 +242,15 @@ public class GamePad
 
 	private void DoRestoreConfigState()
 	{
-		bool active = (UIKitRewiredCursorController.Enabled = CursorEnabled);
+		bool flag = CursorEnabled;
+		if (Switch2Helper.IsRunningOnSwitch2)
+		{
+			flag = Switch2MouseModeActive || CursorEnabled;
+		}
+		UIKitRewiredCursorController.Enabled = flag;
 		if (UIKitRewiredCursorController.HasCursor)
 		{
-			UIKitRewiredCursorController.Cursor.SetActive(active);
+			UIKitRewiredCursorController.Cursor.SetActive(flag);
 		}
 	}
 

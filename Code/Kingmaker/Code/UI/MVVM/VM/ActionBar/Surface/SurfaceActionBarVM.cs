@@ -68,6 +68,8 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public readonly StringReactiveProperty ControllablePlayerNickname = new StringReactiveProperty();
 
+	private readonly ReactiveCommand UpdateSlotsCommand = new ReactiveCommand();
+
 	private bool m_SlotsUpdateQueued;
 
 	private IFullScreenUIHandler m_FullScreenUIHandlerImplementation;
@@ -93,6 +95,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		AddDisposable(Abilities = new SurfaceActionBarPartAbilitiesVM(isInCharScreen: false, IsNotControllableCharacter));
 		AddDisposable(SurfaceMomentumVM = new SurfaceMomentumVM());
 		AddDisposable(VeilThickness = new VeilThicknessVM());
+		AddDisposable(UniRxExtensionMethods.Subscribe(UpdateSlotsCommand.ObserveLastValueOnLateUpdate(), delegate
+		{
+			UpdateSlotsCommandHandler();
+		}));
 		CurrentCombatUnit = currentUnit;
 		AddDisposable(CurrentCombatUnit.Subscribe(delegate
 		{
@@ -104,6 +110,30 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	protected override void DisposeImplementation()
 	{
+	}
+
+	private void UpdateSlotsCommandHandler(bool onTurnStart = false)
+	{
+		UpdateFunc(Consumables.Slots);
+		foreach (SurfaceActionBarPartWeaponSetVM set in Weapons.Sets)
+		{
+			UpdateFunc(set.AllSlots);
+		}
+		UpdateFunc(Abilities.Slots);
+		UpdateFunc(SurfaceMomentumVM.DesperateMeasureSlots);
+		UpdateFunc(SurfaceMomentumVM.HeroicActSlots);
+		CheckAnotherPlayerTurn();
+		void UpdateFunc(IList<ActionBarSlotVM> slots)
+		{
+			foreach (ActionBarSlotVM slot in slots)
+			{
+				slot.UpdateResources();
+				if (onTurnStart)
+				{
+					slot.CloseConvertsOnTurnStart();
+				}
+			}
+		}
 	}
 
 	private void OnUnitChanged()
@@ -139,39 +169,6 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	{
 	}
 
-	private void UpdateSlots(bool onTurnStart = false)
-	{
-		if (m_SlotsUpdateQueued)
-		{
-			return;
-		}
-		m_SlotsUpdateQueued = true;
-		DelayedInvoker.InvokeAtTheEndOfFrameOnlyOnes(delegate
-		{
-			Action<IList<ActionBarSlotVM>> action = delegate(IList<ActionBarSlotVM> slots)
-			{
-				foreach (ActionBarSlotVM slot in slots)
-				{
-					slot.UpdateResources();
-					if (onTurnStart)
-					{
-						slot.CloseConvertsOnTurnStart();
-					}
-				}
-			};
-			action(Consumables.Slots);
-			foreach (SurfaceActionBarPartWeaponSetVM set in Weapons.Sets)
-			{
-				action(set.AllSlots);
-			}
-			action(Abilities.Slots);
-			action(SurfaceMomentumVM.DesperateMeasureSlots);
-			action(SurfaceMomentumVM.HeroicActSlots);
-			CheckAnotherPlayerTurn();
-			m_SlotsUpdateQueued = false;
-		});
-	}
-
 	private void CheckAnotherPlayerTurn()
 	{
 		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
@@ -188,32 +185,32 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleUnitCommandDidStart(AbstractUnitCommand command)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleAttack(RulePerformAttack withWeaponAttackHit)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleUnitCommandDidAct(AbstractUnitCommand command)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand command)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleUnitChangeActiveEquipmentSet()
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void OnDeliverAbilityEffect(AbilityExecutionContext context, TargetWrapper target)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleLevelUpComplete(bool isChargen)
@@ -345,17 +342,17 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleAbilityCooldownStarted(AbilityData ability)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleGroupCooldownRemoved(BlueprintAbilityGroup group)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleCooldownReset()
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
@@ -382,17 +379,17 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleExecutionProcessStart(AbilityExecutionContext context)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleExecutionProcessEnd(AbilityExecutionContext context)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleExecutionProcessCleared(AbilityExecutionContext context)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleBeginPreparationTurn(bool canDeploy)
@@ -403,7 +400,7 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	public void HandleEndPreparationTurn()
 	{
 		OnUnitChanged();
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleRoleSet(string entityId)
@@ -411,7 +408,7 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		CheckAnotherPlayerTurn();
 		if (!(CurrentUnit?.UniqueId != entityId))
 		{
-			UpdateSlots();
+			UpdateSlotsCommand.Execute();
 		}
 	}
 
@@ -419,13 +416,13 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	{
 		if (!interruptionData.InterruptionWithoutInitiativeAndPanelUpdate)
 		{
-			UpdateSlots();
+			UpdateSlotsCommand.Execute();
 		}
 	}
 
 	public void HandleUnitEndInterruptTurn()
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandlePlayerEnteredRoom(Photon.Realtime.Player player)
@@ -452,16 +449,16 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	public void HandleUnitContinueTurn(bool isTurnBased)
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 
 	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
-		UpdateSlots();
+		UpdateSlotsCommand.Execute();
 	}
 }

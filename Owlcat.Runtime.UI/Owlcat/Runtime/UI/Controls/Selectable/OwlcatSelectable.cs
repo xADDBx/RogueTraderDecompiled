@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Owlcat.Runtime.UI.ConsoleTools;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
 using Owlcat.Runtime.UI.ConsoleTools.RewiredCursor;
 using Owlcat.Runtime.UI.Controls.SelectableState;
@@ -298,7 +299,7 @@ public class OwlcatSelectable : UIBehaviour, IConsoleNavigationEntity, IConsoleE
 
 	public void OnPointerEnter(PointerEventData eventData)
 	{
-		if (Cursor.visible || UIKitRewiredCursorController.Enabled)
+		if ((Switch2Helper.IsRunningOnSwitch2 || Cursor.visible || UIKitRewiredCursorController.Enabled) && (!Switch2Helper.IsRunningOnSwitch2 || GamePad.Instance.Switch2MouseModeActive || UIKitRewiredCursorController.Enabled))
 		{
 			OnPointerEnter();
 		}
@@ -312,7 +313,7 @@ public class OwlcatSelectable : UIBehaviour, IConsoleNavigationEntity, IConsoleE
 
 	public void OnPointerExit(PointerEventData eventData)
 	{
-		if (Cursor.visible || UIKitRewiredCursorController.Enabled)
+		if ((Switch2Helper.IsRunningOnSwitch2 || Cursor.visible || UIKitRewiredCursorController.Enabled) && (!Switch2Helper.IsRunningOnSwitch2 || GamePad.Instance.Switch2MouseModeActive || UIKitRewiredCursorController.Enabled))
 		{
 			OnPointerExit();
 		}
@@ -326,7 +327,7 @@ public class OwlcatSelectable : UIBehaviour, IConsoleNavigationEntity, IConsoleE
 
 	public void OnPointerDown(PointerEventData eventData)
 	{
-		if (Cursor.visible || UIKitRewiredCursorController.Enabled)
+		if ((Switch2Helper.IsRunningOnSwitch2 || Cursor.visible || UIKitRewiredCursorController.Enabled) && (!Switch2Helper.IsRunningOnSwitch2 || GamePad.Instance.Switch2MouseModeActive || UIKitRewiredCursorController.Enabled))
 		{
 			OnPointerDown();
 		}
@@ -339,7 +340,7 @@ public class OwlcatSelectable : UIBehaviour, IConsoleNavigationEntity, IConsoleE
 
 	public void OnPointerUp(PointerEventData eventData)
 	{
-		if (Cursor.visible || UIKitRewiredCursorController.Enabled)
+		if ((Switch2Helper.IsRunningOnSwitch2 || Cursor.visible || UIKitRewiredCursorController.Enabled) && (!Switch2Helper.IsRunningOnSwitch2 || GamePad.Instance.Switch2MouseModeActive || UIKitRewiredCursorController.Enabled))
 		{
 			OnPointerUp();
 		}

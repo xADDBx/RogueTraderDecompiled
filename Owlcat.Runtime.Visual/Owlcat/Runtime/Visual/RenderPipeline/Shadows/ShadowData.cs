@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.RenderPipeline.Shadows;
 
-[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\RenderPipeline\\Shadows\\ShadowData.cs")]
+[GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\RenderPipeline\\Shadows\\ShadowData.cs")]
 public struct ShadowData
 {
 	public Vector4 matrixIndices;

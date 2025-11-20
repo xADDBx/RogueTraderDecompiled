@@ -191,7 +191,7 @@ public abstract class ScriptableRenderer : IDisposable
 		renderGraphParameters.scriptableRenderContext = context;
 		RenderGraphParameters parameters = renderGraphParameters;
 		renderGraph.BeginRecording(in parameters);
-		renderGraph.BeginProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\ScriptableRenderer.cs", 264);
+		renderGraph.BeginProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\ScriptableRenderer.cs", 264);
 		InitRenderGraphResources(ref renderingData);
 		ConfigureRendererLists(ref context, ref renderingData);
 		foreach (ScriptableRenderPass item in m_ActiveRenderPassQueue)
@@ -203,7 +203,7 @@ public abstract class ScriptableRenderer : IDisposable
 			item.ClearRendererLists();
 		}
 		m_ActiveRenderPassQueue.Clear();
-		renderGraph.EndProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\ScriptableRenderer.cs", 281);
+		renderGraph.EndProfilingSampler(TryGetOrAddCameraSampler(camera), ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\ScriptableRenderer.cs", 281);
 		renderGraph.EndRecordingAndExecute();
 		context.ExecuteCommandBuffer(commandBuffer);
 		CommandBufferPool.Release(commandBuffer);

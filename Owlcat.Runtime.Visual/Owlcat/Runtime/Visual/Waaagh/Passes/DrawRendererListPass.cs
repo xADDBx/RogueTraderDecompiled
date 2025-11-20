@@ -24,7 +24,7 @@ public abstract class DrawRendererListPass<T> : ScriptableRenderPass where T : D
 	protected sealed override void RecordRenderGraph(ref RenderingData renderingData)
 	{
 		T passData;
-		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@0f6cf20663a3\\Runtime\\Waaagh\\Passes\\DrawRendererListPass.cs", 35);
+		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\DrawRendererListPass.cs", 35);
 		passData.Resources = renderingData.CameraData.Renderer.RenderGraphResources;
 		passData.RendererList = m_RendererList;
 		builder.AllowRendererListCulling(value: true);

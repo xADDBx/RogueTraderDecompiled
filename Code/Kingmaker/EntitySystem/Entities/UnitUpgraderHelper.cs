@@ -79,6 +79,7 @@ public static class UnitUpgraderHelper
 			{
 				if (!(item.FirstSource != null) || item.FirstSource.IsMissing)
 				{
+					PFLog.Ability.Log($"Ability {item.Blueprint.NameSafe()} removed from {unit}, because source is missing");
 					unit.Abilities.Remove(item);
 				}
 			}
@@ -99,7 +100,7 @@ public static class UnitUpgraderHelper
 			{
 				if (item2.Owner == null)
 				{
-					PFLog.Ability.Log($"Ability removed from {item} on {unit}, because  it is broken");
+					PFLog.Ability.Log($"Ability {item2.Blueprint.NameSafe()} removed from {item} on {unit}, because it has no owner");
 					item.Abilities.Remove(item2);
 				}
 			}

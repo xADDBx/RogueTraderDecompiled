@@ -28,7 +28,7 @@ public class WidgetFactoryStash : MonoBehaviour
 		VirtualListViewsFabric.DestroyAll();
 		if (s_Instance == null)
 		{
-			s_Instance = Object.FindObjectOfType<WidgetFactoryStash>();
+			s_Instance = Object.FindFirstObjectByType<WidgetFactoryStash>();
 			if (s_Instance == null && SceneManager.GetActiveScene().isLoaded)
 			{
 				s_Instance = new GameObject("[WidgetFactoryStash]").AddComponent<WidgetFactoryStash>();

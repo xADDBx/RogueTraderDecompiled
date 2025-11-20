@@ -170,7 +170,18 @@ public class Post : IHashable
 
 	public IEnumerable<BlueprintShipPostExpertise> UnitExpertises(BaseUnitEntity unit)
 	{
-		return unit?.Facts?.GetAll((Feature f) => f.Blueprint is BlueprintShipPostExpertise)?.Select((Feature f) => f.Blueprint as BlueprintShipPostExpertise).EmptyIfNull();
+		return UnitExpertiseFacts(unit)?.Select((Feature f) => f.Blueprint as BlueprintShipPostExpertise);
+	}
+
+	private static IEnumerable<Feature> UnitExpertiseFacts(BaseUnitEntity unit)
+	{
+		return unit?.Facts?.GetAll((Feature f) => f.Blueprint is BlueprintShipPostExpertise);
+	}
+
+	private static IEnumerable<(Feature Fact, BlueprintShipPostExpertise Blueprint)> UnitExpertiseFactsA(BaseUnitEntity unit)
+	{
+		return (from f in unit?.Facts?.GetAll((Feature f) => f.Blueprint is BlueprintShipPostExpertise).EmptyIfNull()
+			select (f: f, f.Blueprint as BlueprintShipPostExpertise));
 	}
 
 	public IEnumerable<Ability> UnlockedAbilities()
@@ -256,9 +267,18 @@ public class Post : IHashable
 			Ship.Abilities.Remove(item.AttunedAbility);
 		}
 		m_CurrentUnit = unit;
-		foreach (UnitToAttunedAbility item2 in m_UnitAttunedAbilities.Where((UnitToAttunedAbility a) => a.Unit == CurrentUnit?.Blueprint).EmptyIfNull())
+		foreach (UnitToAttunedAbility attunedAbility in m_UnitAttunedAbilities.Where((UnitToAttunedAbility a) => a.Unit == CurrentUnit?.Blueprint).EmptyIfNull())
 		{
-			Ship.Abilities.Add(item2.AttunedAbility);
+			Ability ability = Ship.Abilities.Add(attunedAbility.AttunedAbility);
+			Feature feature = UnitExpertiseFacts(CurrentUnit)?.FirstOrDefault((Feature f) => ((BlueprintShipPostExpertise)f.Blueprint).DefaultPostAbility == attunedAbility.DefaultAbility);
+			if (feature != null)
+			{
+				ability.AddSource(feature);
+			}
+			else
+			{
+				ability.AddSource(unit);
+			}
 		}
 		EventBus.RaiseEvent(delegate(IOnNewUnitOnPostHandler h)
 		{
@@ -302,8 +322,8 @@ public class Post : IHashable
 		{
 			return false;
 		}
-		BlueprintShipPostExpertise blueprintShipPostExpertise = UnitExpertises(CurrentUnit).FirstOrDefault((BlueprintShipPostExpertise exp) => exp.DefaultPostAbility == ability);
-		if (blueprintShipPostExpertise == null)
+		Feature feature = UnitExpertiseFacts(CurrentUnit)?.FirstOrDefault((Feature f) => ((BlueprintShipPostExpertise)f.Blueprint).DefaultPostAbility == ability);
+		if (feature == null)
 		{
 			return false;
 		}
@@ -325,13 +345,14 @@ public class Post : IHashable
 		}
 		int scrapToAttunePostAbility = BlueprintWarhammerRoot.Instance.BlueprintScrapRoot.ScrapToAttunePostAbility;
 		Game.Instance.Player.Scrap.Spend(scrapToAttunePostAbility);
+		BlueprintShipPostExpertise blueprintShipPostExpertise = (BlueprintShipPostExpertise)feature.Blueprint;
 		m_UnitAttunedAbilities.Add(new UnitToAttunedAbility
 		{
 			Unit = CurrentUnit?.Blueprint,
 			DefaultAbility = ability,
 			AttunedAbility = blueprintShipPostExpertise.ChangedPostAbility
 		});
-		Starship.Entity.Abilities.Add(blueprintShipPostExpertise.ChangedPostAbility);
+		Starship.Entity.Abilities.Add(blueprintShipPostExpertise.ChangedPostAbility).AddSource(feature);
 		EventBus.RaiseEvent(delegate(IOnNewUnitOnPostHandler h)
 		{
 			h.HandleNewUnit();

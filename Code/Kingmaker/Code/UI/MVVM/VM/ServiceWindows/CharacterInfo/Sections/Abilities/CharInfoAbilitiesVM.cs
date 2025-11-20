@@ -59,6 +59,12 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		ActionBarPartAbilitiesVM.SetUnit(Unit.Value);
 	}
 
+	public void RefreshAbilitiesList()
+	{
+		AssembleActiveAbilities();
+		AssemblePassiveAbilities();
+	}
+
 	private void AssembleActiveAbilities()
 	{
 		List<Ability> first = UIUtilityUnit.CollectAbilities(Unit.Value).ToList();
@@ -67,14 +73,20 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		(List<Ability>, string) abilitiesWithTier3 = GetAbilitiesWithTier(CareerPathTier.One);
 		List<Ability> itemsAndSoulMarksAbilities = GetItemsAndSoulMarksAbilities();
 		ActiveAbilities.Clear();
-		ActiveAbilities.Add(ToFeatureGroup(abilitiesWithTier.Item1, abilitiesWithTier.Item2));
-		ActiveAbilities.Add(ToFeatureGroup(abilitiesWithTier2.Item1, abilitiesWithTier2.Item2));
-		ActiveAbilities.Add(ToFeatureGroup(abilitiesWithTier3.Item1, abilitiesWithTier3.Item2));
-		List<Ability> abilities = first.Except(abilitiesWithTier.Item1).Except(abilitiesWithTier2.Item1).Except(abilitiesWithTier3.Item1)
+		AddToFeatureGroup(abilitiesWithTier, ActiveAbilities);
+		AddToFeatureGroup(abilitiesWithTier2, ActiveAbilities);
+		AddToFeatureGroup(abilitiesWithTier3, ActiveAbilities);
+		List<Ability> list = first.Except(abilitiesWithTier.Item1).Except(abilitiesWithTier2.Item1).Except(abilitiesWithTier3.Item1)
 			.Except(itemsAndSoulMarksAbilities)
 			.ToList();
-		ActiveAbilities.Add(ToFeatureGroup(abilities, UIStrings.Instance.CharacterSheet.BackgroundAbilities));
-		ActiveAbilities.Add(ToFeatureGroup(itemsAndSoulMarksAbilities, Strings.ItemsAbilities));
+		if (list.Count > 0)
+		{
+			ActiveAbilities.Add(ToFeatureGroup(list, UIStrings.Instance.CharacterSheet.BackgroundAbilities));
+		}
+		if (itemsAndSoulMarksAbilities.Count > 0)
+		{
+			ActiveAbilities.Add(ToFeatureGroup(itemsAndSoulMarksAbilities, Strings.ItemsAbilities));
+		}
 	}
 
 	private (List<Ability>, string) GetAbilitiesWithTier(CareerPathTier tier)
@@ -92,9 +104,32 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		}
 	}
 
+	private void AddToFeatureGroup((List<Ability>, string) abilitiesTier, AutoDisposingList<CharInfoFeatureGroupVM> targetList)
+	{
+		CharInfoFeatureGroupVM charInfoFeatureGroupVM = ToFeatureGroup(abilitiesTier.Item1, abilitiesTier.Item2);
+		if (charInfoFeatureGroupVM != null)
+		{
+			targetList.Add(charInfoFeatureGroupVM);
+		}
+	}
+
+	private void AddToFeatureGroup((List<Feature>, string) abilitiesTier, AutoDisposingList<CharInfoFeatureGroupVM> targetList)
+	{
+		CharInfoFeatureGroupVM charInfoFeatureGroupVM = ToFeatureGroup(abilitiesTier.Item1, abilitiesTier.Item2);
+		if (charInfoFeatureGroupVM != null)
+		{
+			targetList.Add(charInfoFeatureGroupVM);
+		}
+	}
+
 	private CharInfoFeatureGroupVM ToFeatureGroup(List<Ability> abilities, string name)
 	{
-		return new CharInfoFeatureGroupVM(abilities.Select((Ability a) => new CharInfoFeatureVM(a, Unit.Value)).ToList(), name, CharInfoFeatureGroupVM.FeatureGroupType.Abilities, name);
+		List<CharInfoFeatureVM> list = abilities.Select((Ability a) => new CharInfoFeatureVM(a, Unit.Value)).ToList();
+		if (list.Count == 0)
+		{
+			return null;
+		}
+		return new CharInfoFeatureGroupVM(list, name, CharInfoFeatureGroupVM.FeatureGroupType.Abilities, name);
 	}
 
 	private CharInfoFeatureGroupVM ToFeatureGroup(List<Feature> features, string name)
@@ -116,16 +151,25 @@ public class CharInfoAbilitiesVM : CharInfoComponentVM, IActionBarPartAbilitiesH
 		List<Feature> itemsAndSoulMarkFeatures = GetItemsAndSoulMarkFeatures();
 		List<Feature> postsFeatures = GetPostsFeatures();
 		PassiveAbilities.Clear();
-		PassiveAbilities.Add(ToFeatureGroup(featuresWithTier.Item1, featuresWithTier.Item2));
-		PassiveAbilities.Add(ToFeatureGroup(featuresWithTier2.Item1, featuresWithTier2.Item2));
-		PassiveAbilities.Add(ToFeatureGroup(featuresWithTier3.Item1, featuresWithTier3.Item2));
-		List<Feature> features = first.Except(featuresWithTier.Item1).Except(featuresWithTier2.Item1).Except(featuresWithTier3.Item1)
+		AddToFeatureGroup(featuresWithTier, PassiveAbilities);
+		AddToFeatureGroup(featuresWithTier2, PassiveAbilities);
+		AddToFeatureGroup(featuresWithTier3, PassiveAbilities);
+		List<Feature> list = first.Except(featuresWithTier.Item1).Except(featuresWithTier2.Item1).Except(featuresWithTier3.Item1)
 			.Except(itemsAndSoulMarkFeatures)
 			.Except(postsFeatures)
 			.ToList();
-		PassiveAbilities.Add(ToFeatureGroup(features, Strings.BackgroundAbilities));
-		PassiveAbilities.Add(ToFeatureGroup(postsFeatures, Strings.PostsAbilities));
-		PassiveAbilities.Add(ToFeatureGroup(itemsAndSoulMarkFeatures, Strings.SoulMarkAbilities));
+		if (list.Count > 0)
+		{
+			PassiveAbilities.Add(ToFeatureGroup(list, Strings.BackgroundAbilities));
+		}
+		if (postsFeatures.Count > 0)
+		{
+			PassiveAbilities.Add(ToFeatureGroup(postsFeatures, Strings.PostsAbilities));
+		}
+		if (itemsAndSoulMarkFeatures.Count > 0)
+		{
+			PassiveAbilities.Add(ToFeatureGroup(itemsAndSoulMarkFeatures, Strings.SoulMarkAbilities));
+		}
 	}
 
 	private List<Feature> GetItemsAndSoulMarkFeatures()

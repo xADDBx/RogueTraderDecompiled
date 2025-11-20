@@ -88,7 +88,6 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	{
 		m_ScrollRect.ScrollToTop();
 		m_ActionBarPartAbilitiesView.Bind(base.ViewModel.ActionBarPartAbilitiesVM);
-		m_WidgetList.DrawEntries(null, m_WidgetAbilitiesView, strictMatching: true);
 		AddDisposable(ActiveAbilitiesSelected.Subscribe(delegate
 		{
 			UpdateAbilitiesSelectableView();
@@ -107,6 +106,7 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	protected override void RefreshView()
 	{
 		base.RefreshView();
+		base.ViewModel.RefreshAbilitiesList();
 		BaseUnitEntity value = base.ViewModel.Unit.Value;
 		if (value != null && value.IsPet)
 		{
@@ -130,12 +130,12 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 
 	private void DrawEntities()
 	{
-		AutoDisposingList<CharInfoFeatureGroupVM> vmCollection = (ActiveAbilitiesSelected.Value ? base.ViewModel.ActiveAbilities : base.ViewModel.PassiveAbilities);
+		AutoDisposingList<CharInfoFeatureGroupVM> source = (ActiveAbilitiesSelected.Value ? base.ViewModel.ActiveAbilities : base.ViewModel.PassiveAbilities);
 		m_WidgetList.Entries?.ForEach(delegate(IWidgetView e)
 		{
 			e.MonoBehaviour.gameObject.SetActive(value: false);
 		});
-		AddDisposable(m_WidgetList.DrawMultiEntries(vmCollection, new List<CharInfoFeatureGroupPCView> { m_WidgetAbilitiesView, m_WidgetTalentsView }));
+		AddDisposable(m_WidgetList.DrawMultiEntries(source.Where((CharInfoFeatureGroupVM e) => e.FeatureList.Count > 0).ToList(), new List<CharInfoFeatureGroupPCView> { m_WidgetAbilitiesView, m_WidgetTalentsView }, strictMatching: true));
 		if (m_ExpandAll)
 		{
 			Expand();
