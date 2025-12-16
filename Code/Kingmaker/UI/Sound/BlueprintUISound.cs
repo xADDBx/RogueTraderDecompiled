@@ -582,6 +582,14 @@ public class BlueprintUISound : BlueprintScriptableObject
 		}
 	}
 
+	[Serializable]
+	public class UISoundDarkHeresyPopUp
+	{
+		public UISound PopUpShow;
+
+		public UISound PopUpHide;
+	}
+
 	[Tooltip("This event will be assigned to missing UISounds when \"Fix Missing Events\" button is clicked.")]
 	public UISound DoNothingEvent;
 
@@ -665,4 +673,6 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundRewards Rewards;
 
 	public UISoundVendor Vendor;
+
+	public UISoundDarkHeresyPopUp DarkHeresyPopUp;
 }

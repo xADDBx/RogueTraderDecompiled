@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.View.Credits;
+using Kingmaker.Code.UI.MVVM.View.DarkHeresyPopUp;
 using Kingmaker.Code.UI.MVVM.View.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.View.FirstLaunchSettings.PC;
 using Kingmaker.Code.UI.MVVM.View.NewGame.PC;
@@ -43,6 +44,9 @@ public class MainMenuPCView : ViewBase<MainMenuVM>, IInitializable
 	[SerializeField]
 	private FirstLaunchSettingsPCView m_FirstLaunchSettingsPCView;
 
+	[SerializeField]
+	private DarkHeresyPopUpPCView m_DarkHeresyPopUpView;
+
 	[Header("First Time Launch FX")]
 	[SerializeField]
 	private UIFirstLaunchFX m_FirstLaunchFX;
@@ -56,6 +60,7 @@ public class MainMenuPCView : ViewBase<MainMenuVM>, IInitializable
 		m_FirstLaunchSettingsPCView.Initialize();
 		m_CreditsView.Initialize();
 		m_FadeAnimator.Initialize();
+		m_DarkHeresyPopUpView.Initialize();
 	}
 
 	protected override void BindViewImplementation()
@@ -71,6 +76,7 @@ public class MainMenuPCView : ViewBase<MainMenuVM>, IInitializable
 		AddDisposable(base.ViewModel.TermsOfUseVM.Subscribe(m_TermsOfUsePCView.Bind));
 		AddDisposable(base.ViewModel.CreditsVM.Subscribe(m_CreditsView.Bind));
 		AddDisposable(base.ViewModel.FirstLaunchSettings.Subscribe(m_FirstLaunchSettingsPCView.Bind));
+		AddDisposable(base.ViewModel.DarkHeresyPopUpVM.Subscribe(m_DarkHeresyPopUpView.Bind));
 		AddDisposable(base.ViewModel.PlayFirstLaunchFXCommand.Subscribe(PlayFirstLaunchFX));
 		DelayedInvoker.InvokeInTime(delegate
 		{

@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.View.Credits;
+using Kingmaker.Code.UI.MVVM.View.DarkHeresyPopUp;
 using Kingmaker.Code.UI.MVVM.View.FirstLaunchSettings.Console;
 using Kingmaker.Code.UI.MVVM.View.NewGame.Console;
 using Kingmaker.Code.UI.MVVM.View.TermOfUse.Console;
@@ -41,6 +42,9 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 	private FirstLaunchSettingsConsoleView m_FirstLaunchSettingsConsoleView;
 
 	[SerializeField]
+	private DarkHeresyPopUpConsoleView m_DarkHeresyPopUpView;
+
+	[SerializeField]
 	private ConsoleCursor m_ConsoleCursor;
 
 	[Header("First Time Launch FX")]
@@ -54,6 +58,7 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 		m_NewGameConsoleView.Initialize();
 		m_FirstLaunchSettingsConsoleView.Initialize();
 		m_CreditsView.Initialize();
+		m_DarkHeresyPopUpView.Initialize();
 		m_FadeAnimator.Initialize();
 	}
 
@@ -70,6 +75,7 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 		AddDisposable(base.ViewModel.CreditsVM.Subscribe(m_CreditsView.Bind));
 		AddDisposable(base.ViewModel.FirstLaunchSettings.Subscribe(m_FirstLaunchSettingsConsoleView.Bind));
 		AddDisposable(base.ViewModel.PlayFirstLaunchFXCommand.Subscribe(PlayFirstLaunchFX));
+		AddDisposable(base.ViewModel.DarkHeresyPopUpVM.Subscribe(m_DarkHeresyPopUpView.Bind));
 		AddDisposable(m_ConsoleCursor.Bind());
 		m_ConsoleCursor.SetActive(active: false);
 		DelayedInvoker.InvokeInTime(delegate

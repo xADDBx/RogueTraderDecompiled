@@ -4,6 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
+using Kingmaker.Code.UI.MVVM.VM.DarkHeresyPopUp;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
@@ -12,6 +13,7 @@ using Kingmaker.Code.UI.MVVM.VM.TermOfUse;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.Scenes;
+using Kingmaker.GameInfo;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -33,6 +35,10 @@ namespace Kingmaker.Code.UI.MVVM.VM.MainMenu;
 
 public class MainMenuVM : VMBase, IUIMainMenu
 {
+	private const string VERSION_KEY = "version";
+
+	private const string SUBVERSION_KEY = "subversion";
+
 	public readonly MainMenuSideBarVM MainMenuSideBarVM;
 
 	private bool m_IsChargenMusicTheme;
@@ -50,6 +56,8 @@ public class MainMenuVM : VMBase, IUIMainMenu
 	public readonly ReactiveProperty<CreditsVM> CreditsVM = new ReactiveProperty<CreditsVM>();
 
 	public readonly ReactiveProperty<FirstLaunchSettingsVM> FirstLaunchSettings = new ReactiveProperty<FirstLaunchSettingsVM>();
+
+	public readonly ReactiveProperty<DarkHeresyPopUpVM> DarkHeresyPopUpVM = new ReactiveProperty<DarkHeresyPopUpVM>();
 
 	private readonly ReactiveCommand m_OpenCharGenCommand = new ReactiveCommand();
 
@@ -78,6 +86,10 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		{
 			AddDisposable(FirstLaunchSettings.Value = new FirstLaunchSettingsVM(OnCloseFirstLaunchSettingsVM));
 		}
+		else if (IsVersionUpdated())
+		{
+			AddDisposable(DarkHeresyPopUpVM.Value = new DarkHeresyPopUpVM());
+		}
 	}
 
 	protected override void DisposeImplementation()
@@ -94,6 +106,8 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		FirstLaunchSettings.Value = null;
 		ShowLicense(delegate
 		{
+			DarkHeresyPopUpVM disposable = (DarkHeresyPopUpVM.Value = new DarkHeresyPopUpVM());
+			AddDisposable(disposable);
 			PhotonManager.Invite.CheckAvailableInvite();
 		});
 	}
@@ -199,6 +213,10 @@ public class MainMenuVM : VMBase, IUIMainMenu
 		ShowLicense(null);
 	}
 
+	public void ShowDarkHeresyPopUp()
+	{
+	}
+
 	private void ShowLicense(Action onClose)
 	{
 		ReactiveProperty<TermsOfUseVM> termsOfUseVM = TermsOfUseVM;
@@ -293,6 +311,34 @@ public class MainMenuVM : VMBase, IUIMainMenu
 				Game.Instance.LoadNewGame();
 			}
 		}));
+	}
+
+	private static bool IsVersionUpdated()
+	{
+		string[] array = GameVersion.GetVersion().Split('.');
+		int result = 0;
+		int result2 = 0;
+		if (array.Length > 1)
+		{
+			int.TryParse(array[0], out result);
+			int.TryParse(array[1], out result2);
+		}
+		if (SettingsController.Instance.GeneralSettingsProvider.HasKey("version") && SettingsController.Instance.GeneralSettingsProvider.HasKey("subversion"))
+		{
+			if (SettingsController.Instance.GeneralSettingsProvider.GetValue<int>("version") == result && SettingsController.Instance.GeneralSettingsProvider.GetValue<int>("subversion") == result2)
+			{
+				SettingsController.Instance.GeneralSettingsProvider.SaveAll();
+				return false;
+			}
+			SettingsController.Instance.GeneralSettingsProvider.SetValue("version", result);
+			SettingsController.Instance.GeneralSettingsProvider.SetValue("subversion", result2);
+			SettingsController.Instance.GeneralSettingsProvider.SaveAll();
+			return true;
+		}
+		SettingsController.Instance.GeneralSettingsProvider.SetValue("version", result);
+		SettingsController.Instance.GeneralSettingsProvider.SetValue("subversion", result2);
+		SettingsController.Instance.GeneralSettingsProvider.SaveAll();
+		return true;
 	}
 
 	public void SetNewGamePreset(BlueprintAreaPreset newGamePreset)

@@ -149,5 +149,11 @@ public class UIStrings : StringsContainer
 
 	public UIBlockStrings BlockStrings;
 
+	public UIAugmentations UIAugmentations;
+
+	public UITimer UITimer;
+
+	public UIDarkHeresyPopUp UIDarkHeresyPopUp;
+
 	public static UIStrings Instance => LocalizedTexts.Instance.UserInterfacesText;
 }
