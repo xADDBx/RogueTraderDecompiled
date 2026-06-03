@@ -54,8 +54,6 @@ public class WeaponSlot : ItemSlot, IHashable
 
 	public int AttackRange => Weapon.AttackRange;
 
-	public int AttackOptimalRange => Weapon.AttackOptimalRange;
-
 	[NotNull]
 	public ItemEntityWeapon Weapon
 	{

@@ -42,6 +42,6 @@ public class CharInfoStatusEffectsVM : CharInfoComponentVM
 
 	private List<Buff> GetUnitBuffs(BaseUnitEntity unit)
 	{
-		return unit.Buffs.Enumerable.Where((Buff b) => !b.Blueprint.IsHiddenInUI).ToList();
+		return unit.Buffs.Enumerable.Where((Buff b) => !b.Hidden).ToList();
 	}
 }

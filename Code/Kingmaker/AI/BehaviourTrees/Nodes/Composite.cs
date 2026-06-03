@@ -6,10 +6,17 @@ public abstract class Composite : BehaviourTreeNode
 
 	protected int currentChildIndex;
 
+	public BehaviourTreeNode[] Children => children;
+
 	public Composite(params BehaviourTreeNode[] nodes)
 	{
-		children = nodes;
-		currentChildIndex = 0;
+		InitializeNode(nodes);
+	}
+
+	public Composite(string debugDescription, params BehaviourTreeNode[] nodes)
+		: base(debugDescription)
+	{
+		InitializeNode(nodes);
 	}
 
 	protected override void InitInternal()
@@ -19,5 +26,11 @@ public abstract class Composite : BehaviourTreeNode
 		{
 			children[i].Init();
 		}
+	}
+
+	private void InitializeNode(params BehaviourTreeNode[] nodes)
+	{
+		children = nodes;
+		currentChildIndex = 0;
 	}
 }

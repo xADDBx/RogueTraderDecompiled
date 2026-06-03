@@ -1,4 +1,3 @@
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.EntitySystem;
 using MemoryPack;
 using MemoryPack.Formatters;
@@ -28,7 +27,7 @@ public class SetQuestObjectiveViewedGameCommand : GameCommand, IMemoryPackable<S
 
 	[JsonProperty]
 	[MemoryPackInclude]
-	private EntityFactRef<QuestObjective> m_QuestObjectiveRef;
+	private EntityFactRef<QuestBookEntityEntry> m_QuestObjectiveRef;
 
 	public override bool IsSynchronized => true;
 
@@ -38,14 +37,14 @@ public class SetQuestObjectiveViewedGameCommand : GameCommand, IMemoryPackable<S
 	}
 
 	[JsonConstructor]
-	public SetQuestObjectiveViewedGameCommand(QuestObjective questObjective)
+	public SetQuestObjectiveViewedGameCommand(QuestBookEntityEntry questObjective)
 	{
 		m_QuestObjectiveRef = questObjective;
 	}
 
 	protected override void ExecuteInternal()
 	{
-		QuestObjective fact = m_QuestObjectiveRef.Fact;
+		QuestBookEntityEntry fact = m_QuestObjectiveRef.Fact;
 		if (fact != null)
 		{
 			fact.IsViewed = true;
@@ -90,7 +89,7 @@ public class SetQuestObjectiveViewedGameCommand : GameCommand, IMemoryPackable<S
 			value = null;
 			return;
 		}
-		EntityFactRef<QuestObjective> value2;
+		EntityFactRef<QuestBookEntityEntry> value2;
 		if (memberCount == 1)
 		{
 			if (value != null)
@@ -99,7 +98,7 @@ public class SetQuestObjectiveViewedGameCommand : GameCommand, IMemoryPackable<S
 				reader.ReadPackable(ref value2);
 				goto IL_0070;
 			}
-			value2 = reader.ReadPackable<EntityFactRef<QuestObjective>>();
+			value2 = reader.ReadPackable<EntityFactRef<QuestBookEntityEntry>>();
 		}
 		else
 		{
@@ -108,7 +107,7 @@ public class SetQuestObjectiveViewedGameCommand : GameCommand, IMemoryPackable<S
 				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(SetQuestObjectiveViewedGameCommand), 1, memberCount);
 				return;
 			}
-			value2 = ((value != null) ? value.m_QuestObjectiveRef : default(EntityFactRef<QuestObjective>));
+			value2 = ((value != null) ? value.m_QuestObjectiveRef : default(EntityFactRef<QuestBookEntityEntry>));
 			if (memberCount != 0)
 			{
 				reader.ReadPackable(ref value2);

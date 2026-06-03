@@ -35,7 +35,7 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 
 	public readonly BoolReactiveProperty DlcIsBoughtAndNotInstalled = new BoolReactiveProperty();
 
-	public readonly BoolReactiveProperty IsRealConsole = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty SupportsDlcDownloadState = new BoolReactiveProperty();
 
 	public readonly BoolReactiveProperty IsEditionDlc = new BoolReactiveProperty();
 
@@ -62,7 +62,7 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 		AddDisposable(SelectionGroup);
 		UpdateDLCs();
 		AddDisposable(CustomUIVideoPlayerVM = new CustomUIVideoPlayerVM());
-		IsRealConsole.Value = false;
+		SupportsDlcDownloadState.Value = true;
 		AddDisposable(EventBus.Subscribe(this));
 		StoreManager.OnRefreshDLC += HandleOnRefreshDLC;
 	}
@@ -110,9 +110,9 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 	{
 		UpdateDLCs();
 		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(m_CurrentDlc);
-		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && IsRealConsole.Value;
+		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && SupportsDlcDownloadState.Value;
 		DlcIsBought.Value = iDLCStatus.Purchased;
-		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && IsRealConsole.Value;
+		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && SupportsDlcDownloadState.Value;
 		SetDlc(m_CurrentDlc);
 	}
 
@@ -130,8 +130,8 @@ public class DlcManagerTabDlcsVM : DlcManagerTabBaseVM
 			DlcIsBought.Value = isPurchased;
 			DlcIsAvailableToPurchase.Value = blueprintDlc.GetPurchaseState() != BlueprintDlc.DlcPurchaseState.ComingSoon;
 			DownloadState downloadState = blueprintDlc.GetDownloadState();
-			DownloadingInProgress.Value = downloadState == DownloadState.Loading && IsRealConsole.Value;
-			DlcIsBoughtAndNotInstalled.Value = isPurchased && downloadState == DownloadState.NotLoaded && IsRealConsole.Value;
+			DownloadingInProgress.Value = downloadState == DownloadState.Loading && SupportsDlcDownloadState.Value;
+			DlcIsBoughtAndNotInstalled.Value = isPurchased && downloadState == DownloadState.NotLoaded && SupportsDlcDownloadState.Value;
 			BoolReactiveProperty isEditionDlc = IsEditionDlc;
 			DlcTypeEnum dlcType = blueprintDlc.DlcType;
 			isEditionDlc.Value = dlcType == DlcTypeEnum.CosmeticDlc || dlcType == DlcTypeEnum.PromotionalDlc;

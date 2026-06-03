@@ -88,6 +88,10 @@ public class MechanicsContext : IUIDataProvider, IHashable
 	private BlueprintAbility m_SourceAbility;
 
 	[JsonProperty]
+	[CanBeNull]
+	public HashSet<EntityRef<AreaEffectEntity>> PassedAreaEffects;
+
+	[JsonProperty]
 	private int m_ShadowFactorPercents;
 
 	[JsonProperty]
@@ -96,7 +100,7 @@ public class MechanicsContext : IUIDataProvider, IHashable
 
 	[NotNull]
 	[GameStateInclude]
-	private readonly int[] m_Properties = new int[CountOfValues];
+	private readonly int[] m_Properties = new int[CountOfProperties];
 
 	private List<ContextRankConfig> m_RankSources;
 
@@ -131,7 +135,7 @@ public class MechanicsContext : IUIDataProvider, IHashable
 			int num = Math.Min(m_Properties.Length, CountOfProperties);
 			for (int i = 0; i < num; i++)
 			{
-				if (m_Properties[i] > 0)
+				if (m_Properties[i] != 0)
 				{
 					if (dictionary == null)
 					{
@@ -516,6 +520,17 @@ public class MechanicsContext : IUIDataProvider, IHashable
 		result.Append(ref val5);
 		Hash128 val6 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(m_SourceAbility);
 		result.Append(ref val6);
+		HashSet<EntityRef<AreaEffectEntity>> passedAreaEffects = PassedAreaEffects;
+		if (passedAreaEffects != null)
+		{
+			int num = 0;
+			foreach (EntityRef<AreaEffectEntity> item in passedAreaEffects)
+			{
+				EntityRef<AreaEffectEntity> obj3 = item;
+				num ^= StructHasher<EntityRef<AreaEffectEntity>>.GetHash128(ref obj3).GetHashCode();
+			}
+			result.Append(num);
+		}
 		result.Append(ref m_ShadowFactorPercents);
 		List<ShadowDisbelieveData> shadowDisbelieveData = m_ShadowDisbelieveData;
 		if (shadowDisbelieveData != null)

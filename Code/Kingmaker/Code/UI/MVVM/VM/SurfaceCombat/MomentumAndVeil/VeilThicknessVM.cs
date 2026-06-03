@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Annotations;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Interfaces;
@@ -108,8 +109,11 @@ public class VeilThicknessVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public void Update()
 	{
-		OnGameModeStart(Game.Instance.CurrentMode);
-		IsTurnBasedActive.Value = TurnController.IsInTurnBasedCombat();
-		IsPlayerTurn.Value = Game.Instance.TurnController.IsPlayerTurn;
+		if (!CutsceneUIState.IsCutsceneActive.Value)
+		{
+			OnGameModeStart(Game.Instance.CurrentMode);
+			IsTurnBasedActive.Value = TurnController.IsInTurnBasedCombat();
+			IsPlayerTurn.Value = Game.Instance.TurnController.IsPlayerTurn;
+		}
 	}
 }

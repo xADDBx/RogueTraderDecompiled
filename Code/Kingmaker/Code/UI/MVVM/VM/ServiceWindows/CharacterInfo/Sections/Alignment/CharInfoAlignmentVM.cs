@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Alignment.AlignmentWheel;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -25,9 +26,9 @@ public class CharInfoAlignmentVM : CharInfoComponentVM
 
 	private readonly List<CharInfoSoulMarksSectorVM> m_Sectors;
 
-	public const int MaxUnlockedTierId = 2;
-
 	private SoulMarkDirection? m_MainDirection;
+
+	private static int BlockingRankIndex => BlueprintRoot.Instance.WarhammerRoot.SoulMarksRoot.BlockingRankIndex;
 
 	public CharInfoAlignmentVM(IReactiveProperty<BaseUnitEntity> unit)
 		: base(unit)
@@ -78,7 +79,7 @@ public class CharInfoAlignmentVM : CharInfoComponentVM
 		}
 		foreach (CharInfoSoulMarksSectorVM sectorVM in m_Sectors)
 		{
-			if (Unit.Value.Facts.List.FirstOrDefault((EntityFact f) => f.Blueprint == sectorVM.SoulMarks[2]) != null)
+			if (Unit.Value.Facts.List.FirstOrDefault((EntityFact f) => f.Blueprint == sectorVM.SoulMarks[BlockingRankIndex - 1]) != null)
 			{
 				return sectorVM.Direction;
 			}

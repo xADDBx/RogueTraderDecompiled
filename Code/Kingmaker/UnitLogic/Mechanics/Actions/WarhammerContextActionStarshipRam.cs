@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -8,6 +9,7 @@ using Kingmaker.UnitLogic.Mechanics.Damage;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("1dff6f53c4285d14eaf190d693b96a5a")]
 public class WarhammerContextActionStarshipRam : ContextAction
 {

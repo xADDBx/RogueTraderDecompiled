@@ -23,6 +23,10 @@ public class DealtDamageGetter : PropertyGetter, PropertyContextAccessor.IRule, 
 		{
 			return ruleDealDamage.Result;
 		}
+		if (rule is RuleRollDamage ruleRollDamage)
+		{
+			return ruleRollDamage.ResultValue;
+		}
 		throw new ElementLogicException(this);
 	}
 

@@ -96,6 +96,10 @@ public class BlueprintWarhammerRoot : BlueprintScriptableObject
 
 	[SerializeField]
 	[ValidateNotNull]
+	private BlueprintProfitFactorRoot.Reference m_CombativityRoot;
+
+	[SerializeField]
+	[ValidateNotNull]
 	private CutscenesRoot.Reference m_CutsceneRoot;
 
 	[SerializeField]
@@ -173,6 +177,8 @@ public class BlueprintWarhammerRoot : BlueprintScriptableObject
 	public BlueprintDifficultyRoot DifficultyRoot => m_DifficultyRoot;
 
 	public BlueprintProfitFactorRoot ProfitFactorRoot => m_ProfitFactorRoot;
+
+	public BlueprintProfitFactorRoot CombativityRoot => m_CombativityRoot;
 
 	public CutscenesRoot CutsceneRoot => m_CutsceneRoot;
 

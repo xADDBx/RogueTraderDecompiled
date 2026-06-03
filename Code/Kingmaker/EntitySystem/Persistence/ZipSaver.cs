@@ -83,7 +83,7 @@ public class ZipSaver : ISaver, IDisposable
 			{
 				return null;
 			}
-			FileStream fileStream = File.Open(m_FileName, FileMode, FileAccess, FileShare);
+			FileStream fileStream = new FileStream(m_FileName, FileMode, FileAccess, FileShare, ISaver.BuffersSize, FileOptions.None);
 			try
 			{
 				m_ZipFile = new ZipArchive(fileStream, ZipMode);
@@ -160,7 +160,7 @@ public class ZipSaver : ISaver, IDisposable
 			zipArchiveEntry = ZipFile.CreateEntry(name);
 		}
 		using Stream stream = zipArchiveEntry.Open();
-		using StreamWriter streamWriter = new StreamWriter(stream);
+		using StreamWriter streamWriter = new StreamWriter(stream, ISaver.UTF8NoBom, ISaver.BuffersSize);
 		streamWriter.Write(json);
 		if (m_Mode != ISaver.Mode.WriteOnly)
 		{
@@ -199,7 +199,7 @@ public class ZipSaver : ISaver, IDisposable
 	public void CopyToStash(string fileName)
 	{
 		using AreaDataStashFileAccessor areaDataStashFileAccessor = AreaDataStash.AccessFile(fileName);
-		using FileStream destination = new FileStream(areaDataStashFileAccessor.Path, FileMode.Create);
+		using FileStream destination = new FileStream(areaDataStashFileAccessor.Path, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, ISaver.BuffersSize);
 		ZipFile.Entries.SingleOrDefault((ZipArchiveEntry v) => v.FullName == fileName)?.Open().CopyTo(destination);
 	}
 

@@ -15,6 +15,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("03dfa0208161dbc44a0603b03369ff4b")]
 public class StarshipOverrideCustomTeleportLocation : BlueprintComponent, IAbilityCasterRestriction, IAbilityTargetRestriction

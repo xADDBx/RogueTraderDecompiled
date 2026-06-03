@@ -41,7 +41,23 @@ public class WarhammerNodeLinkTraverser : ILinkTraversalProvider
 
 	private float m_TraverseTimer;
 
-	private static bool IsCorrectMode => Game.Instance.CurrentMode == GameModeType.Default;
+	public static bool AllowLadderTraversalForCurrentMovement { get; set; }
+
+	private static bool IsCorrectMode
+	{
+		get
+		{
+			if (Game.Instance.CurrentMode == GameModeType.Default)
+			{
+				return true;
+			}
+			if (Game.Instance.CurrentMode == GameModeType.Cutscene)
+			{
+				return AllowLadderTraversalForCurrentMovement;
+			}
+			return false;
+		}
+	}
 
 	public State LastState { get; private set; }
 

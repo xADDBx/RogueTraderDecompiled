@@ -1,9 +1,11 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("bc7154ed0f90e564daa577ebd433f137")]
 public class WarhammerContextActionSwitchVoidShields : ContextAction
 {

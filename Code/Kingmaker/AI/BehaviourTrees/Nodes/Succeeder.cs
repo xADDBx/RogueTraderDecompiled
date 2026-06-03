@@ -7,9 +7,14 @@ public class Succeeder : Decorator
 	{
 	}
 
+	public Succeeder(string debugDescription, BehaviourTreeNode node)
+		: base(debugDescription, node)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
-		if (child.Tick(blackboard) == Status.Running)
+		if (base.Child.Tick(blackboard) == Status.Running)
 		{
 			return Status.Running;
 		}

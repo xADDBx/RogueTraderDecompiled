@@ -269,7 +269,7 @@ public static class LinqExtensions
 		}
 	}
 
-	public static T Random<T>(this IList<T> list, Kingmaker.Utility.StatefulRandom.StatefulRandom random)
+	public static T Random<T>(this IReadOnlyList<T> list, Kingmaker.Utility.StatefulRandom.StatefulRandom random)
 	{
 		if (list == null || list.Count <= 0)
 		{

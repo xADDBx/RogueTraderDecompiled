@@ -236,6 +236,11 @@ public sealed class PartyFormationManager : EntityPart<Player>, IUnitEquipmentHa
 	{
 	}
 
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
+		MarkAutoFormationDirty(buff.Owner);
+	}
+
 	public void HandleBuffDidRemoved(Buff buff)
 	{
 		MarkAutoFormationDirty(buff.Owner);

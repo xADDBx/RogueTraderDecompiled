@@ -19,7 +19,6 @@ using Owlcat.Runtime.UniRx;
 using TMPro;
 using UniRx;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
@@ -68,12 +67,6 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 	private Sprite m_AlarmPaperMark;
 
 	[SerializeField]
-	private Sprite m_Dlc1Mark;
-
-	[SerializeField]
-	private Sprite m_Dlc2Mark;
-
-	[SerializeField]
 	private Sprite m_UpdatedPantographMark;
 
 	[SerializeField]
@@ -99,14 +92,6 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 
 	[SerializeField]
 	private Sprite m_ReadyToCompletePantographMark;
-
-	[FormerlySerializedAs("m_Dlc1PantographMark")]
-	[SerializeField]
-	private Sprite m_Dlc1NewQuestPantographMark;
-
-	[FormerlySerializedAs("m_Dlc2PantographMark")]
-	[SerializeField]
-	private Sprite m_Dlc2NewQuestPantographMark;
 
 	[SerializeField]
 	private RectTransform m_ReadyToCompleteImage;
@@ -183,12 +168,7 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 		{
 			return null;
 		}
-		Sprite result = base.ViewModel.Quest.Blueprint.Dlc switch
-		{
-			Dlc.Dlc1 => m_Dlc1Mark, 
-			Dlc.Dlc2 => m_Dlc2Mark, 
-			_ => UIConfig.Instance.TransparentImage, 
-		};
+		Sprite result = UIConfig.Instance.DlcIconConfig.GetListIcon(base.ViewModel.Quest.Blueprint.Dlc) ?? UIConfig.Instance.TransparentImage;
 		JournalQuestVM viewModel = base.ViewModel;
 		if (viewModel != null)
 		{
@@ -214,19 +194,19 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 				}
 				if (viewModel.IsUpdated)
 				{
-					goto IL_00f1;
+					goto IL_00e5;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_00fa;
+					goto IL_00ee;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_0103;
+					goto IL_00f7;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_010c;
+					goto IL_0100;
 				}
 				if (viewModel.IsViewed)
 				{
@@ -237,31 +217,31 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 			{
 				if (viewModel.IsUpdated)
 				{
-					goto IL_00f1;
+					goto IL_00e5;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_00fa;
+					goto IL_00ee;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_0103;
+					goto IL_00f7;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_010c;
+					goto IL_0100;
 				}
 			}
 		}
 		return null;
-		IL_010c:
+		IL_0100:
 		return m_PostponedPaperMark;
-		IL_0103:
-		return m_FailedPaperMark;
-		IL_00fa:
+		IL_00ee:
 		return m_CompletedPaperMark;
-		IL_00f1:
+		IL_00e5:
 		return m_UpdatedPaperMark;
+		IL_00f7:
+		return m_FailedPaperMark;
 	}
 
 	private Sprite GetPantographStatusSprite()
@@ -270,18 +250,7 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 		{
 			return null;
 		}
-		Sprite result = base.ViewModel.Quest.Blueprint.Dlc switch
-		{
-			Dlc.Dlc1 => m_Dlc1NewQuestPantographMark, 
-			Dlc.Dlc2 => m_Dlc2NewQuestPantographMark, 
-			_ => UIConfig.Instance.TransparentImage, 
-		};
-		Sprite result2 = base.ViewModel.Quest.Blueprint.Dlc switch
-		{
-			Dlc.Dlc1 => m_Dlc1NewQuestPantographMark, 
-			Dlc.Dlc2 => m_Dlc2NewQuestPantographMark, 
-			_ => m_NewQuestPantographMark, 
-		};
+		Sprite result = UIConfig.Instance.DlcIconConfig.GetNew(base.ViewModel.Quest.Blueprint.Dlc) ?? UIConfig.Instance.TransparentImage;
 		JournalQuestVM viewModel = base.ViewModel;
 		if (viewModel != null)
 		{
@@ -303,23 +272,23 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 				}
 				else if (!viewModel.QuestIsViewed)
 				{
-					return result2;
+					return result;
 				}
 				if (viewModel.IsUpdated)
 				{
-					goto IL_0138;
+					goto IL_00e0;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_0141;
+					goto IL_00e9;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_014a;
+					goto IL_00f2;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_0153;
+					goto IL_00fb;
 				}
 				if (viewModel.IsViewed)
 				{
@@ -330,31 +299,31 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 			{
 				if (viewModel.IsUpdated)
 				{
-					goto IL_0138;
+					goto IL_00e0;
 				}
 				if (viewModel.IsCompleted)
 				{
-					goto IL_0141;
+					goto IL_00e9;
 				}
 				if (viewModel.IsFailed)
 				{
-					goto IL_014a;
+					goto IL_00f2;
 				}
 				if (viewModel.IsPostponed)
 				{
-					goto IL_0153;
+					goto IL_00fb;
 				}
 			}
 		}
 		return null;
-		IL_014a:
-		return m_FailedPantographMark;
-		IL_0141:
-		return m_CompletedPantographMark;
-		IL_0153:
+		IL_00fb:
 		return m_PostponedPantographMark;
-		IL_0138:
+		IL_00e9:
+		return m_CompletedPantographMark;
+		IL_00e0:
 		return m_UpdatedPantographMark;
+		IL_00f2:
+		return m_FailedPantographMark;
 	}
 
 	private void OnSelected(bool value)
@@ -379,14 +348,14 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 		}
 		if (!value && m_SelectNow)
 		{
-			foreach (QuestObjective objective in Quest.Objectives)
+			foreach (QuestBookEntityEntry objective in Quest.Objectives)
 			{
 				if (!objective.IsVisible || objective.State == QuestObjectiveState.None || objective.Blueprint.IsAddendum)
 				{
 					continue;
 				}
 				objective.NeedToAttention = false;
-				IOrderedEnumerable<QuestObjective> orderedEnumerable = (from b in objective?.Blueprint?.Addendums?.Where((BlueprintQuestObjective b) => b != null)
+				IOrderedEnumerable<QuestBookEntityEntry> orderedEnumerable = (from b in objective?.Blueprint?.Addendums?.Where((BlueprintQuestObjective b) => b != null)
 					select objective?.Quest?.TryGetObjective(b) into a
 					where a != null
 					where a.IsVisible
@@ -396,7 +365,7 @@ public class JournalNavigationGroupElementBaseView : ViewBase<JournalQuestVM>, I
 				{
 					continue;
 				}
-				foreach (QuestObjective item in orderedEnumerable)
+				foreach (QuestBookEntityEntry item in orderedEnumerable)
 				{
 					item.NeedToAttention = false;
 				}

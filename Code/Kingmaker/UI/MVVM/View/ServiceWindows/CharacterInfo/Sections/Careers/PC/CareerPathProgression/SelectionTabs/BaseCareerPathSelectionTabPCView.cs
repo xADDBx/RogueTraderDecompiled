@@ -29,7 +29,7 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 	protected OwlcatMultiButton m_HighlightButton;
 
 	[SerializeField]
-	[ConditionalHide("m_ButtonsSetFromParent")]
+	[HideIf("m_ButtonsSetFromParent")]
 	private CareerButtonsBlock m_ButtonsBlock;
 
 	protected readonly ReactiveProperty<string> HintText = new ReactiveProperty<string>();

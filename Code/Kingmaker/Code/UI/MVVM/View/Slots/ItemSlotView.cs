@@ -43,6 +43,9 @@ public class ItemSlotView<TViewModel> : VirtualListElementViewBase<TViewModel>, 
 	[SerializeField]
 	protected CanvasGroup m_BlinkMark;
 
+	[SerializeField]
+	protected GameObject m_LockIcon;
+
 	public ItemEntity Item => base.ViewModel?.Item?.Value;
 
 	public ItemSlotVM SlotVM => base.ViewModel;
@@ -73,6 +76,13 @@ public class ItemSlotView<TViewModel> : VirtualListElementViewBase<TViewModel>, 
 			SetupContextMenu();
 		}));
 		SetupDropZoneSize();
+		AddDisposable(base.ViewModel.IsLocked.Subscribe(delegate(bool value)
+		{
+			if (m_LockIcon != null)
+			{
+				m_LockIcon.SetActive(value);
+			}
+		}));
 	}
 
 	protected override void DestroyViewImplementation()

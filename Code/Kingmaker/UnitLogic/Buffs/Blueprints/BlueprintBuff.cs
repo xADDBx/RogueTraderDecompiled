@@ -91,6 +91,8 @@ public class BlueprintBuff : BlueprintUnitFact, IResourcesHolder, IResourceIdsHo
 
 	public bool NeedCollapseStack = true;
 
+	public bool IsImportantBuff;
+
 	public int PriorityInUI => m_priorityInUI;
 
 	public int MaxRank

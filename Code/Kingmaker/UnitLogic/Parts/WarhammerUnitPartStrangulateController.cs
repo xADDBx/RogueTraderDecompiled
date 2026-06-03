@@ -133,6 +133,10 @@ public class WarhammerUnitPartStrangulateController : BaseUnitPart, IAreaHandler
 	{
 	}
 
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
+	}
+
 	public void HandleUnitLifeStateChanged(UnitLifeState prevLifeState)
 	{
 		if (base.Owner.State.IsHelpless || !base.Owner.State.IsAble || !base.Owner.State.CanAct)

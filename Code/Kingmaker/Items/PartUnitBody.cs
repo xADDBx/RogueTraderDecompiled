@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.ElementsSystem.ContextData;
@@ -110,6 +111,9 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 	public readonly List<ItemSlot> EquipmentSlots = new List<ItemSlot>();
 
 	public readonly List<ItemSlot> AllSlots = new List<ItemSlot>();
+
+	[JsonProperty]
+	public UnitAugments Augments { get; private set; }
 
 	[JsonProperty]
 	[GameStateIgnore]
@@ -245,6 +249,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		Wrist = new EquipmentSlot<BlueprintItemEquipmentWrist>(base.Owner);
 		Shoulders = new EquipmentSlot<BlueprintItemEquipmentShoulders>(base.Owner);
 		PetProtocol = new EquipmentSlot<BlueprintItemEquipmentPetProtocol>(base.Owner);
+		Augments = new UnitAugments(base.Owner);
 		CollectAllSlots();
 	}
 
@@ -302,6 +307,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			AllSlots.Add(m_PolymorphHandsEquipmentSet.PrimaryHand);
 			AllSlots.Add(m_PolymorphHandsEquipmentSet.SecondaryHand);
 		}
+		AllSlots.AddRange(Augments.Slots.Values);
 		void AddEquipmentSlot(ItemSlot slot)
 		{
 			EquipmentSlots.Add(slot);
@@ -337,6 +343,23 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 			TryInsertItem(body.Wrist, Wrist);
 			TryInsertItem(body.Shoulders, Shoulders);
 			TryInsertItem(body.PetProtocol, PetProtocol);
+			if (body.Augments.Length <= 0)
+			{
+				return;
+			}
+			foreach (BlueprintItemAugment augment in body.Augments)
+			{
+				if (augment != null)
+				{
+					AugmentSlot orCreateSlot = Augments.GetOrCreateSlot(augment.AugmentSlot);
+					TryInsertItem(augment, orCreateSlot);
+					orCreateSlot.ApplyInsertion();
+				}
+			}
+			if (body.AugmentToOverdrive != null)
+			{
+				Augments.OverdriveSlot = body.AugmentToOverdrive.AugmentSlot;
+			}
 		}
 		finally
 		{
@@ -426,6 +449,50 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		InitializeWeapons(base.Owner.OriginalBlueprint.Body);
 	}
 
+	public void ResetMechadendritesFromBlueprint()
+	{
+		try
+		{
+			using (ContextData<ItemSlot.IgnoreLock>.Request())
+			{
+				foreach (EquipmentSlot<BlueprintItemMechadendrite> item in Mechadendrites.ToList())
+				{
+					try
+					{
+						if (item != null)
+						{
+							EquipmentSlot<BlueprintItemMechadendrite> equipmentSlot = item;
+							EquipmentSlots.Remove(equipmentSlot);
+							AllSlots.Remove(equipmentSlot);
+							Mechadendrites.Remove(equipmentSlot);
+							if (equipmentSlot.HasItem)
+							{
+								equipmentSlot.RemoveItem();
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						PFLog.Default.Error("[respec] Error removing mechadendrite slot: " + ex);
+					}
+				}
+				BlueprintUnit.UnitBody body = base.Owner.OriginalBlueprint.Body;
+				for (int i = 0; i < body.Mechadendrites.Length; i++)
+				{
+					EquipmentSlot<BlueprintItemMechadendrite> equipmentSlot2 = new EquipmentSlot<BlueprintItemMechadendrite>(base.Owner);
+					Mechadendrites.Add(equipmentSlot2);
+					EquipmentSlots.Add(equipmentSlot2);
+					AllSlots.Add(equipmentSlot2);
+					TryInsertItem(body.Mechadendrites[i], equipmentSlot2);
+				}
+			}
+		}
+		catch (Exception ex2)
+		{
+			PFLog.Default.Error("[respec] Fatal error in ResetMechadendritesFromBlueprint: " + ex2);
+		}
+	}
+
 	public void TryInsertItem(BlueprintItem bpItem, ItemSlot slot)
 	{
 		if (!bpItem || (bool)ContextData<UnitHelper.DoNotCreateItems>.Current)
@@ -448,35 +515,6 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		using (ContextData<ItemsCollection.SuppressEvents>.Request())
 		{
 			slot.InsertItem(itemEntity);
-		}
-	}
-
-	public ItemSlot FindSlotWithItem(ItemEntity item)
-	{
-		return AllSlots.FirstOrDefault((ItemSlot s) => s.HasItem && s.Item == item);
-	}
-
-	public int AddAdditionalLimb(BlueprintItemWeapon weapon, bool isSecondary = false)
-	{
-		int num = m_AdditionalLimbs.FindIndex((WeaponSlot s) => !s.HasItem);
-		if (num < 0)
-		{
-			m_AdditionalLimbs.Add(new WeaponSlot(base.Owner));
-			num = m_AdditionalLimbs.Count - 1;
-		}
-		ItemEntityWeapon itemEntityWeapon = weapon.CreateEntity<ItemEntityWeapon>();
-		itemEntityWeapon.ForceSecondary = isSecondary;
-		m_AdditionalLimbs[num].InsertItem(itemEntityWeapon);
-		return num;
-	}
-
-	public void RemoveAdditionalLimb(int limbIndex)
-	{
-		if (limbIndex >= 0 && limbIndex < m_AdditionalLimbs.Count && m_AdditionalLimbs[limbIndex].HasItem)
-		{
-			ItemEntity item = m_AdditionalLimbs[limbIndex].Item;
-			m_AdditionalLimbs[limbIndex].RemoveItem();
-			base.Owner.Inventory.Remove(item);
 		}
 	}
 
@@ -602,6 +640,11 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 		{
 			PetProtocol = new EquipmentSlot<BlueprintItemEquipmentPetProtocol>(base.Owner);
 		}
+		if (Augments == null)
+		{
+			UnitAugments unitAugments2 = (Augments = new UnitAugments(base.Owner));
+		}
+		Augments.OnPrePostLoad(base.Owner);
 		CollectAllSlots();
 		AllSlots.ForEach(delegate(ItemSlot s)
 		{
@@ -611,6 +654,7 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 
 	protected override void OnPostLoad()
 	{
+		Augments.OnPostLoad();
 		AllSlots.ForEach(delegate(ItemSlot s)
 		{
 			s.PostLoad();
@@ -910,6 +954,8 @@ public class PartUnitBody : BaseUnitPart, IUnitInventoryChanged<EntitySubscriber
 				result.Append(ref val20);
 			}
 		}
+		Hash128 val21 = ClassHasher<UnitAugments>.GetHash128(Augments);
+		result.Append(ref val21);
 		return result;
 	}
 }

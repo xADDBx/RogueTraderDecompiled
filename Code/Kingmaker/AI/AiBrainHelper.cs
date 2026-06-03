@@ -166,7 +166,8 @@ public static class AiBrainHelper
 
 	private static bool CheckApplyBuffWithDamage(AbilityAreaEffectLogic aeLogic, BaseUnitEntity unit)
 	{
-		if (!(aeLogic is AbilityAreaEffectBuff abilityAreaEffectBuff))
+		AbilityAreaEffectBuff abilityAreaEffectBuff = aeLogic as AbilityAreaEffectBuff;
+		if (abilityAreaEffectBuff?.Buff == null)
 		{
 			return false;
 		}

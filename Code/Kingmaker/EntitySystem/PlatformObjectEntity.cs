@@ -16,8 +16,10 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 {
 	private Dictionary<MechanicEntity, Delta> m_EntitiesOnPlatform = new Dictionary<MechanicEntity, Delta>();
 
+	public Vector3 LastUpdatePosition { get; private set; }
+
 	[GameStateInclude]
-	private Vector3 PlatformPosition => base.View?.ViewTransform.position ?? Vector3.zero;
+	public Vector3 PlatformPosition => base.View?.ViewTransform.position ?? Vector3.zero;
 
 	public PlatformObjectEntity(string uniqueId, bool isInGame)
 		: base(uniqueId, isInGame)
@@ -47,6 +49,7 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 		});
 		if (m_EntitiesOnPlatform.Count == 1)
 		{
+			LastUpdatePosition = PlatformPosition;
 			Game.Instance.CustomUpdateController.Add(this);
 		}
 	}
@@ -62,6 +65,8 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 
 	void IUpdatable.Tick(float delta)
 	{
+		LastUpdatePosition = PlatformPosition;
+		bool hasAwaitingSettle = Game.Instance.SceneControllables.HasAwaitingSettle;
 		foreach (KeyValuePair<MechanicEntity, Delta> item in m_EntitiesOnPlatform)
 		{
 			item.Deconstruct(out var key, out var value);
@@ -70,7 +75,14 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 			EntityPartStayOnPlatform optional = mechanicEntity.GetOptional<EntityPartStayOnPlatform>();
 			if (optional != null && optional.IsOnPlatform(this))
 			{
-				mechanicEntity.Position = PlatformPosition - delta2.Position;
+				if (hasAwaitingSettle)
+				{
+					delta2.Position = PlatformPosition - mechanicEntity.Position;
+				}
+				else
+				{
+					mechanicEntity.Position = PlatformPosition - delta2.Position;
+				}
 			}
 		}
 	}

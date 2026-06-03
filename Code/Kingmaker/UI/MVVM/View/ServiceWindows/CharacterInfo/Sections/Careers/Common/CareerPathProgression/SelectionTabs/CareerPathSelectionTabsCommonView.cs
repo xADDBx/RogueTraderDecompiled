@@ -6,6 +6,7 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEnt
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
+using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.SelectionTabs;
 
@@ -17,6 +18,9 @@ public abstract class CareerPathSelectionTabsCommonView : ViewBase<CareerPathVM>
 		FeatureDescription,
 		FeatureSelection
 	}
+
+	[SerializeField]
+	protected GameObject m_GroupByButtonsObject;
 
 	protected List<ICareerPathSelectionTabView> Tabs;
 

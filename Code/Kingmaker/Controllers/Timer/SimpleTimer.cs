@@ -16,17 +16,27 @@ public class SimpleTimer : ITimer
 	[CanBeNull]
 	private readonly BaseUnitEntity m_InteractingUnitData;
 
-	public TimeSpan TimerTime { get; }
+	private readonly TimeSpan m_DueTime;
 
-	public SimpleTimer(Action callback, TimeSpan timerTime)
+	public SimpleTimer(Action callback, TimeSpan timerDuration)
 	{
 		m_Callback = callback;
-		TimerTime = timerTime;
+		m_DueTime = Game.Instance.TimeController.GameTime + timerDuration;
 		m_MechanicEntityData = MechanicEntityData.CurrentEntity;
 		m_InteractingUnitData = ContextData<InteractingUnitData>.Current?.Unit;
 	}
 
-	public void RunCallback()
+	public bool Tick()
+	{
+		if (Game.Instance.TimeController.GameTime < m_DueTime)
+		{
+			return false;
+		}
+		RunCallback();
+		return true;
+	}
+
+	private void RunCallback()
 	{
 		using ((m_MechanicEntityData != null) ? ContextData<MechanicEntityData>.Request().Setup(m_MechanicEntityData) : null)
 		{

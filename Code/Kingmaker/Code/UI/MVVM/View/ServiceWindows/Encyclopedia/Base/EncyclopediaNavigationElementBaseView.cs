@@ -39,6 +39,9 @@ public class EncyclopediaNavigationElementBaseView : ViewBase<EncyclopediaNaviga
 	[SerializeField]
 	private Sprite m_PantographUncommittedIcon;
 
+	[SerializeField]
+	private Image m_NotViewedIcon;
+
 	public MonoBehaviour MonoBehaviour => this;
 
 	public bool IsSelected => base.ViewModel.IsSelected.Value;
@@ -53,6 +56,7 @@ public class EncyclopediaNavigationElementBaseView : ViewBase<EncyclopediaNaviga
 		AddDisposable(base.ViewModel.IsAvailablePage.Subscribe(base.gameObject.SetActive));
 		SetupPantographConfig();
 		AddDisposable(base.ViewModel.IsSelected.Subscribe(OnSelected));
+		AddDisposable(base.ViewModel.IsViewed.Subscribe(SetViewedState));
 		AddDisposable(base.ViewModel.IsUncommitedPlanetsLittleIcon.Subscribe(delegate(bool value)
 		{
 			if (!value || m_isBigImage)
@@ -84,9 +88,25 @@ public class EncyclopediaNavigationElementBaseView : ViewBase<EncyclopediaNaviga
 		LayoutRebuilder.ForceRebuildLayoutImmediate(base.transform as RectTransform);
 	}
 
+	protected override void DestroyViewImplementation()
+	{
+	}
+
+	private void SetViewedState(bool state)
+	{
+		if (m_NotViewedIcon != null)
+		{
+			m_NotViewedIcon.gameObject.SetActive(!state);
+		}
+	}
+
 	private void OnSelected(bool value)
 	{
 		m_MultiButton.SetActiveLayer(value ? "On" : "Off");
+		if (value && !m_isBigImage)
+		{
+			base.ViewModel.SetIsViewed();
+		}
 		if (value && base.ViewModel.Page is BlueprintEncyclopediaChapter && base.ViewModel.IsAvailablePage.Value)
 		{
 			EventBus.RaiseEvent(delegate(IPantographHandler h)
@@ -94,10 +114,6 @@ public class EncyclopediaNavigationElementBaseView : ViewBase<EncyclopediaNaviga
 				h.Bind(PantographConfig);
 			});
 		}
-	}
-
-	protected override void DestroyViewImplementation()
-	{
 	}
 
 	public void BindWidgetVM(IViewModel vm)

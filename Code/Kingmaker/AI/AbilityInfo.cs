@@ -83,7 +83,7 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 		aoeIntendedTargets = patternProvider?.Targets ?? TargetType.Enemy;
 		isCharge = ability.IsCharge;
 		settings = Caster.GetBrainOptional()?.Blueprint?.GetCustomAbilitySettings(ability.Blueprint);
-		if (ability.Blueprint.CanTargetPointAfterRestrictions(ability) && pattern != null)
+		if (ability.CanTargetPoint && pattern != null)
 		{
 			isGrenadeTypeAOE = true;
 			patternBounds = pattern.Bounds;

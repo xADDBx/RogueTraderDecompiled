@@ -143,6 +143,8 @@ public class SkinnedMeshRenderersCombiner : MonoBehaviour
 		skinnedMeshRenderer2.sharedMesh = new Mesh();
 		skinnedMeshRenderer2.sharedMesh.CombineMeshes(combineInstances.ToArray(), mergeSubMeshes: true, m_useMatrices);
 		skinnedMeshRenderer2.sharedMesh.name = o.name + "_CombineMesh";
+		skinnedMeshRenderer2.sharedMesh.colors = null;
+		skinnedMeshRenderer2.sharedMesh.colors32 = null;
 		Debug.Log("r.sharedMesh.vertexCount2:" + skinnedMeshRenderer2.sharedMesh.vertexCount);
 		Debug.Log("Mesh.boneWeights:" + boneWeights.ToArray().Length);
 		_ = skinnedMeshRenderer2.sharedMesh.uv;

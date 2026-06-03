@@ -161,6 +161,11 @@ public abstract class AbstractModifiersManager
 		Add(new Modifier(type, value, descriptor));
 	}
 
+	public void Add(ModifierType type, int value, ModifierDescriptor descriptor)
+	{
+		Add(new Modifier(type, value, descriptor));
+	}
+
 	public void Add(ModifierType type, int value, RulebookEvent source, StatType stat)
 	{
 		Add(new Modifier(type, value, stat));

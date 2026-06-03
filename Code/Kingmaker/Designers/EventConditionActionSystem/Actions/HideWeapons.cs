@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/HideWeapons")]
+[Group("Actions")]
 [TypeId("2284267c23c69d442a9c3b9e9954283b")]
 public class HideWeapons : GameAction
 {

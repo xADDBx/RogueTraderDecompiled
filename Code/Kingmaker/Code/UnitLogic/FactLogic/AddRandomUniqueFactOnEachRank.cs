@@ -102,6 +102,15 @@ public class AddRandomUniqueFactOnEachRank : MechanicEntityFactComponentDelegate
 			IL_0049:
 			return (byte)num != 0;
 		});
+		HashSet<MechanicEntityFact> hashSet = componentData.AddedFacts.Select((EntityFactRef<MechanicEntityFact> f) => f.Fact).ToTempHashSet();
+		foreach (BlueprintMechanicEntityFact fact in Facts)
+		{
+			MechanicEntityFact mechanicEntityFact = concreteOwner.Facts.Get<MechanicEntityFact>(fact);
+			if (mechanicEntityFact != null && !hashSet.Contains(mechanicEntityFact))
+			{
+				componentData.AddedFacts.Add(mechanicEntityFact);
+			}
+		}
 		while (componentData.AddedFacts.Count > 0 && componentData.AddedFacts.Count > Rank)
 		{
 			List<EntityFactRef<MechanicEntityFact>> addedFacts = componentData.AddedFacts;
@@ -114,11 +123,11 @@ public class AddRandomUniqueFactOnEachRank : MechanicEntityFactComponentDelegate
 			BlueprintMechanicEntityFact blueprintMechanicEntityFact = Facts.Where((BlueprintMechanicEntityFact i) => !concreteOwner.Facts.Contains(i)).Random(PFStatefulRandom.Mechanics);
 			if (blueprintMechanicEntityFact != null)
 			{
-				MechanicEntityFact mechanicEntityFact = concreteOwner.Facts.Add(blueprintMechanicEntityFact.CreateFact(base.Context, concreteOwner, default(BuffDuration)));
-				if (mechanicEntityFact != null)
+				MechanicEntityFact mechanicEntityFact2 = concreteOwner.Facts.Add(blueprintMechanicEntityFact.CreateFact(base.Context, concreteOwner, default(BuffDuration)));
+				if (mechanicEntityFact2 != null)
 				{
-					mechanicEntityFact.AddSource(base.Fact, this);
-					componentData.AddedFacts.Add(mechanicEntityFact);
+					mechanicEntityFact2.AddSource(base.Fact, this);
+					componentData.AddedFacts.Add(mechanicEntityFact2);
 					continue;
 				}
 				break;

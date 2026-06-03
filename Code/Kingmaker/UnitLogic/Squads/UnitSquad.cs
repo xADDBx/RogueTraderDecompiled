@@ -40,7 +40,20 @@ public class UnitSquad : MechanicEntity, IHashable
 		}
 		set
 		{
+			foreach (UnitReference unit in m_Units)
+			{
+				BaseUnitEntity baseUnitEntity = unit.ToBaseUnitEntity();
+				if (baseUnitEntity == null)
+				{
+					return;
+				}
+				baseUnitEntity.Parts.GetRequired<PartSquad>().IsLeader = false;
+			}
 			m_Leader = value.FromBaseUnitEntity();
+			if (value != null)
+			{
+				value.Parts.GetRequired<PartSquad>().IsLeader = true;
+			}
 			CustomBehaviourType customBehaviour = m_Leader.ToBaseUnitEntity().Blueprint.GetComponent<AiCustomBehaviourForSquad>()?.BehaviourType ?? CustomBehaviourType.None;
 			GetRequired<PartUnitBrain>().SetCustomBehaviour(customBehaviour);
 		}
@@ -81,14 +94,14 @@ public class UnitSquad : MechanicEntity, IHashable
 		AllList.Remove(this);
 	}
 
-	public void Add(BaseUnitEntity unit)
+	public void Add(BaseUnitEntity unit, bool isLeader)
 	{
 		if (string.IsNullOrEmpty(Id) || unit.GetSquadOptional()?.Id != Id)
 		{
 			return;
 		}
-		UnitReference item = unit.FromBaseUnitEntity();
-		if (m_Units.Contains(item))
+		UnitReference unitReference = unit.FromBaseUnitEntity();
+		if (m_Units.Contains(unitReference))
 		{
 			PFLog.Default.Error($"Squad already contains unit: {unit}");
 			return;
@@ -97,8 +110,13 @@ public class UnitSquad : MechanicEntity, IHashable
 		{
 			base.Initiative.Value = unit.Initiative.Value;
 			base.Initiative.LastTurn = unit.Initiative.LastTurn;
+			base.Initiative.WasPreparedForRound = unit.Initiative.WasPreparedForRound;
 		}
-		m_Units.Add(item);
+		m_Units.Add(unitReference);
+		if (isLeader)
+		{
+			m_Leader = unitReference;
+		}
 	}
 
 	public void Remove(BaseUnitEntity unit)

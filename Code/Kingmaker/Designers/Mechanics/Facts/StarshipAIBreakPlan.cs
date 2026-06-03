@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintAbility))]
 [AllowedOn(typeof(BlueprintBuff))]
 [TypeId("6691fff49dc96ab479e16f105a740b76")]

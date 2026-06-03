@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Kingmaker.Utility.UnityExtensions;
 
@@ -15,6 +16,10 @@ public interface ISaver : IDisposable
 		Write,
 		WriteOnly
 	}
+
+	static readonly Encoding UTF8NoBom;
+
+	static readonly int BuffersSize;
 
 	string ReadHeader();
 
@@ -59,5 +64,11 @@ public interface ISaver : IDisposable
 			text = $"{ApplicationPaths.temporaryCachePath}/save-staging-{Guid.NewGuid():N}.zip";
 		}
 		return text;
+	}
+
+	static ISaver()
+	{
+		UTF8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+		BuffersSize = 2097152;
 	}
 }

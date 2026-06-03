@@ -11,42 +11,42 @@ public class UnitAnimationSettings
 
 	public bool OverrideSlowWalk;
 
-	[ConditionalShow("OverrideSlowWalk")]
+	[ShowIf("OverrideSlowWalk")]
 	public float SlowWalkCoeff = 1f;
 
 	public bool OverrideSlowWalkNonCombat;
 
-	[ConditionalShow("OverrideSlowWalkNonCombat")]
+	[ShowIf("OverrideSlowWalkNonCombat")]
 	public float SlowWalkNonCombatCoeff = 1f;
 
 	public bool OverrideNormal;
 
-	[ConditionalShow("OverrideNormal")]
+	[ShowIf("OverrideNormal")]
 	public float NormalCoeff = 1f;
 
 	public bool OverrideNormalNonCombat;
 
-	[ConditionalShow("OverrideNormalNonCombat")]
+	[ShowIf("OverrideNormalNonCombat")]
 	public float NormalNonCombatCoeff = 1f;
 
 	public bool OverrideCharge;
 
-	[ConditionalShow("OverrideCharge")]
+	[ShowIf("OverrideCharge")]
 	public float ChargeCoeff = 1f;
 
 	public bool OverrideChargeNonCombat;
 
-	[ConditionalShow("OverrideChargeNonCombat")]
+	[ShowIf("OverrideChargeNonCombat")]
 	public float ChargeNonCombatCoeff = 1f;
 
 	public bool OverrideStealth;
 
-	[ConditionalShow("OverrideStealth")]
+	[ShowIf("OverrideStealth")]
 	public float StealthCoeff = 1f;
 
 	public bool OverrideStealthNonCombat;
 
-	[ConditionalShow("OverrideStealthNonCombat")]
+	[ShowIf("OverrideStealthNonCombat")]
 	public float StealthNonCombatCoeff = 1f;
 
 	public float GetCoeff(WalkSpeedType type, bool inCombat)

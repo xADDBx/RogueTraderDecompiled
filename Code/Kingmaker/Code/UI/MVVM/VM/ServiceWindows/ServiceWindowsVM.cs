@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Augmentations;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.ColonyManagement;
@@ -25,6 +26,8 @@ using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UnitLogic.Levelup.Obsolete;
@@ -56,6 +59,8 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	public readonly ReactiveProperty<ColonyManagementVM> ColonyManagementVM = new ReactiveProperty<ColonyManagementVM>();
 
 	public readonly ReactiveProperty<CargoManagementVM> CargoManagementVM = new ReactiveProperty<CargoManagementVM>();
+
+	public readonly ReactiveProperty<AugmentationsVM> AugmentationsVM = new ReactiveProperty<AugmentationsVM>();
 
 	private readonly ReactiveCommand<ServiceWindowsType> m_OnWindowShown = new ReactiveCommand<ServiceWindowsType>();
 
@@ -128,6 +133,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 	private void BindKeys()
 	{
 		AddDisposable(Game.Instance.Keyboard.Bind("OpenInventory", HandleOpenInventory));
+		AddDisposable(Game.Instance.Keyboard.Bind("OpenAugmentations", HandleOpenAugmentations));
 		AddDisposable(Game.Instance.Keyboard.Bind("OpenCharacterScreen", HandleOpenCharacterInfo));
 		AddDisposable(Game.Instance.Keyboard.Bind("OpenJournal", delegate
 		{
@@ -192,14 +198,19 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		HideMenu();
 	}
 
-	public void HandleOpenWindowOfType(ServiceWindowsType type)
+	public void HandleOpenWindowOfType(ServiceWindowsType type, Action onClosed = null)
 	{
-		HandleOpenWindow(type);
+		HandleOpenWindow(type, onClosed);
 	}
 
 	public void HandleOpenInventory()
 	{
 		HandleOpenWindow(ServiceWindowsType.Inventory);
+	}
+
+	public void HandleOpenAugmentations()
+	{
+		HandleOpenWindow(ServiceWindowsType.Augmentations);
 	}
 
 	public void HandleOpenEncyclopedia(INode page = null)
@@ -282,7 +293,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 	}
 
-	private void HandleOpenWindow(ServiceWindowsType type)
+	private void HandleOpenWindow(ServiceWindowsType type, Action onClosed = null)
 	{
 		UIVisibilityState.ShowAllUI();
 		EventBus.RaiseEvent(delegate(IFormationWindowUIHandler h)
@@ -290,11 +301,11 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			h.HandleCloseFormation();
 		});
 		bool flag = type == ServiceWindowsType.Inventory || type == ServiceWindowsType.CargoManagement || type == ServiceWindowsType.CharacterInfo || type == ServiceWindowsType.ShipCustomization;
-		if (((bool)Game.Instance.Player.ServiceWindowsBlocked && flag) || ((bool)Game.Instance.Player.InventoryWindowBlocked && type == ServiceWindowsType.Inventory) || ((bool)Game.Instance.Player.CharacterInfoWindowBlocked && type == ServiceWindowsType.CharacterInfo) || ServiceWindowNowIsOpening || RootUIContext.Instance.IsVendorShow)
+		if (((bool)Game.Instance.Player.ServiceWindowsBlocked && flag) || (type == ServiceWindowsType.Augmentations && !StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion)) || ((bool)Game.Instance.Player.InventoryWindowBlocked && type == ServiceWindowsType.Inventory) || ((bool)Game.Instance.Player.CharacterInfoWindowBlocked && type == ServiceWindowsType.CharacterInfo) || ((bool)Game.Instance.Player.AugmentationsWindowBlocked && type == ServiceWindowsType.Augmentations) || ServiceWindowNowIsOpening || RootUIContext.Instance.IsVendorShow)
 		{
 			return;
 		}
-		if (RootUIContext.Instance.IsBlockedFullScreenUIType())
+		if (RootUIContext.Instance.IsBlockedFullScreenUIType() && !CanShowAugments())
 		{
 			if (!CanShowEncyclopedia())
 			{
@@ -307,7 +318,19 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			}
 		}
 		ServiceWindowNowIsOpening = true;
-		HandleOpenWindowDelayed(type);
+		HandleOpenWindowDelayed(type, onClosed);
+		bool CanShowAugments()
+		{
+			if (type == ServiceWindowsType.Augmentations && RootUIContext.Instance.CommonVM.EscMenuContextVM.EscMenu.Value == null)
+			{
+				if (!(Game.Instance.CurrentMode == GameModeType.Dialog) && !(Game.Instance.CurrentMode == GameModeType.Default))
+				{
+					return Game.Instance.CurrentMode == GameModeType.Cutscene;
+				}
+				return true;
+			}
+			return false;
+		}
 		bool CanShowEncyclopedia()
 		{
 			if (type == ServiceWindowsType.Encyclopedia && RootUIContext.Instance.CommonVM.EscMenuContextVM.EscMenu.Value == null)
@@ -322,7 +345,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 	}
 
-	private void HandleOpenWindowDelayed(ServiceWindowsType type)
+	private void HandleOpenWindowDelayed(ServiceWindowsType type, Action onClosed = null)
 	{
 		if (RootUIContext.Instance.IsExplorationWindow && type != ServiceWindowsType.Encyclopedia)
 		{
@@ -340,7 +363,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			ShowMenu();
 		}
 		OnOpen?.Execute(type);
-		ServiceWindowsMenuVM.Value?.SelectWindow(type);
+		ServiceWindowsMenuVM.Value?.SelectWindow(type, onClosed);
 	}
 
 	private void OnSelectWindow(ServiceWindowsType type)
@@ -360,6 +383,10 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 				ServiceWindowNowIsOpening = false;
 				return;
 			}
+		}
+		if (CurrentWindow == ServiceWindowsType.Augmentations)
+		{
+			AugmentationsVM.Value?.RemoveNotInstalled();
 		}
 		DoSelectWindow(type);
 	}
@@ -394,14 +421,14 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 		case ServiceWindowsType.Inventory:
 		{
-			InventoryVM disposable4 = (InventoryVM.Value = new InventoryVM());
-			AddDisposable(disposable4);
+			InventoryVM disposable5 = (InventoryVM.Value = new InventoryVM());
+			AddDisposable(disposable5);
 			break;
 		}
 		case ServiceWindowsType.CharacterInfo:
 		{
-			CharacterInfoVM disposable8 = (CharacterInfoVM.Value = new CharacterInfoVM(m_CharInfoPageType));
-			AddDisposable(disposable8);
+			CharacterInfoVM disposable9 = (CharacterInfoVM.Value = new CharacterInfoVM(m_CharInfoPageType));
+			AddDisposable(disposable9);
 			AddDisposable(CharacterInfoVM.Value.PageType.Subscribe(delegate(CharInfoPageType value)
 			{
 				m_CharInfoPageType = value;
@@ -410,38 +437,44 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		}
 		case ServiceWindowsType.Journal:
 		{
-			JournalVM disposable7 = (JournalVM.Value = new JournalVM());
-			AddDisposable(disposable7);
+			JournalVM disposable8 = (JournalVM.Value = new JournalVM());
+			AddDisposable(disposable8);
 			break;
 		}
 		case ServiceWindowsType.LocalMap:
 		{
-			LocalMapVM disposable6 = (LocalMapVM.Value = new LocalMapVM());
-			AddDisposable(disposable6);
+			LocalMapVM disposable7 = (LocalMapVM.Value = new LocalMapVM());
+			AddDisposable(disposable7);
 			break;
 		}
 		case ServiceWindowsType.Encyclopedia:
 		{
-			EncyclopediaVM disposable5 = (EncyclopediaVM.Value = new EncyclopediaVM(m_OpenEncyclopediaPage));
-			AddDisposable(disposable5);
+			EncyclopediaVM disposable6 = (EncyclopediaVM.Value = new EncyclopediaVM(m_OpenEncyclopediaPage));
+			AddDisposable(disposable6);
 			break;
 		}
 		case ServiceWindowsType.ShipCustomization:
 			if (!RootUIContext.Instance.HasDialog)
 			{
-				ShipCustomizationVM disposable3 = (ShipCustomizationVM.Value = new ShipCustomizationVM(null, m_ShipCustomizationTabType));
-				AddDisposable(disposable3);
+				ShipCustomizationVM disposable4 = (ShipCustomizationVM.Value = new ShipCustomizationVM(null, m_ShipCustomizationTabType));
+				AddDisposable(disposable4);
 			}
 			break;
 		case ServiceWindowsType.ColonyManagement:
 		{
-			ColonyManagementVM disposable2 = (ColonyManagementVM.Value = new ColonyManagementVM());
-			AddDisposable(disposable2);
+			ColonyManagementVM disposable3 = (ColonyManagementVM.Value = new ColonyManagementVM());
+			AddDisposable(disposable3);
 			break;
 		}
 		case ServiceWindowsType.CargoManagement:
 		{
-			CargoManagementVM disposable = (CargoManagementVM.Value = new CargoManagementVM());
+			CargoManagementVM disposable2 = (CargoManagementVM.Value = new CargoManagementVM());
+			AddDisposable(disposable2);
+			break;
+		}
+		case ServiceWindowsType.Augmentations:
+		{
+			AugmentationsVM disposable = (AugmentationsVM.Value = new AugmentationsVM());
 			AddDisposable(disposable);
 			break;
 		}
@@ -481,6 +514,9 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			break;
 		case ServiceWindowsType.CargoManagement:
 			DisposeAndRemove(CargoManagementVM);
+			break;
+		case ServiceWindowsType.Augmentations:
+			DisposeAndRemove(AugmentationsVM);
 			break;
 		}
 		m_OnWindowHidden.Execute();
@@ -553,6 +589,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			ServiceWindowsType.LocalMap => FullScreenUIType.LocalMap, 
 			ServiceWindowsType.ColonyManagement => FullScreenUIType.ColonyManagement, 
 			ServiceWindowsType.CargoManagement => FullScreenUIType.CargoManagement, 
+			ServiceWindowsType.Augmentations => FullScreenUIType.Augmentations, 
 			_ => FullScreenUIType.Unknown, 
 		};
 	}

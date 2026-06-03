@@ -214,6 +214,13 @@ public class UICharGen
 
 	public LocalizedString CreateNewNavigatorDescription;
 
+	[Header("Talents")]
+	public LocalizedString OrderByType;
+
+	public LocalizedString OrderBySource;
+
+	public LocalizedString Other;
+
 	public string GetPageLabelByType(CharGenAppearancePageType pageType)
 	{
 		return pageType switch

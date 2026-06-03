@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.MapObjects;
@@ -21,6 +22,7 @@ using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.InteractionRestrictions;
 using Kingmaker.View.MapObjects.Traps;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
@@ -51,7 +53,7 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 
 	public bool CastMode => SelectedAbility != null;
 
-	private BaseCursor CurrentCursor
+	private static BaseCursor CurrentCursor
 	{
 		get
 		{
@@ -63,11 +65,12 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 		}
 	}
 
-	public Vector2 CursorPosition => ObjectExtensions.Or(CurrentCursor, null)?.Position ?? ((Vector2)Input.mousePosition);
+	public static Vector2 CursorPosition => ObjectExtensions.Or(CurrentCursor, null)?.Position ?? ((Vector2)Input.mousePosition);
 
 	public void Activate()
 	{
 		EventBus.Subscribe(this);
+		GamePad.Instance.Switch2MouseModeActive = SettingsRoot.Game.Switch.SwitchJoyConAsMouse;
 		UpdateCursorMode();
 		m_Disposable = new CompositeDisposable();
 		m_Disposable.Add(MainThreadDispatcher.UpdateAsObservable().Subscribe(OnUpdate));
@@ -86,7 +89,14 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 
 	public void SetActive(bool active)
 	{
-		ObjectExtensions.Or(CurrentCursor, null)?.SetActive(active);
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			ObjectExtensions.Or(CurrentCursor, null)?.SetActive(active: true);
+		}
+		else
+		{
+			ObjectExtensions.Or(CurrentCursor, null)?.SetActive(active);
+		}
 	}
 
 	public void SetCursor(CursorType type, bool force = false)
@@ -141,10 +151,24 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 
 	public void SetAbilityCursor()
 	{
-		if (!m_Locked)
+		if (m_Locked)
 		{
-			bool canFlipZone = SelectedAbility.Blueprint.GetComponent<IsFlipZoneAbility>() != null && SelectedAbility.IsAvailable;
-			ObjectExtensions.Or(CurrentCursor, null)?.SetAbilityCursor(SelectedAbility.Icon, canFlipZone);
+			return;
+		}
+		bool canFlipZone = SelectedAbility.Blueprint.GetComponent<IsFlipZoneAbility>() != null && SelectedAbility.IsAvailable;
+		ObjectExtensions.Or(CurrentCursor, null)?.SetAbilityCursor(SelectedAbility.Icon, canFlipZone);
+		if (UIConfig.Instance.IsManipulusMagnarail(SelectedAbility.Blueprint) && Game.Instance.SelectedAbilityHandler.MultiTargetHandler.IsMultiTargetSelected && Game.Instance.SelectedAbilityHandler.MultiTargetHandler.AbilityMultiTarget != null)
+		{
+			if (Game.Instance.SelectedAbilityHandler.MultiTargetHandler.Targets.Count + 1 == 1)
+			{
+				SetTextsInternal(UIStrings.Instance.UIAugmentations.ManipulusMagnarailCursorFirstTarget.Text, "", force: true);
+				return;
+			}
+			string text = UIStrings.Instance.UIAugmentations.ManipulusMagnarailCursorOtherTargets.Text;
+			int num = Game.Instance.SelectedAbilityHandler.MultiTargetHandler.AbilityMultiTarget.TargetAbilityCount - 1;
+			int num2 = Game.Instance.SelectedAbilityHandler.MultiTargetHandler.Targets.Count - 1;
+			int num3 = num;
+			SetTextsInternal(string.Format(text, num, num2, num3), "", force: true);
 		}
 	}
 
@@ -296,10 +320,18 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 			{
 				if (interactionSkillCheckPart.InteractThroughVariants)
 				{
-					goto IL_00a2;
+					goto IL_00af;
 				}
 			}
-			else if (interactionPart2 is InteractionDevicePart && !interactionPart.Settings.ShowOvertip)
+			else if (!(interactionPart2 is InteractionDevicePart))
+			{
+				if (interactionPart2 is InteractionActionPart interactionActionPart && interactionActionPart.Settings.IsFakeLoot)
+				{
+					SetLootCursor();
+					return;
+				}
+			}
+			else if (!interactionPart.Settings.ShowOvertip)
 			{
 				SetCursor(CursorType.Gear);
 				return;
@@ -329,8 +361,8 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 			}
 			return;
 		}
-		goto IL_00a2;
-		IL_00a2:
+		goto IL_00af;
+		IL_00af:
 		if ((bool)mapObjectView.Data.GetOptional<TechUseRestrictionPart>() || (bool)mapObjectView.Data.GetOptional<LoreXenosRestrictionPart>())
 		{
 			if (interactionPart.AlreadyUnlocked || interactionPart is InteractionDoorPart { IsOpen: not false })
@@ -468,24 +500,24 @@ public class CursorController : IFocusHandler, ISubscriber, IAbilityTargetSelect
 				if ((uint)(valueOrDefault - 14) <= 1u)
 				{
 					flag = true;
-					goto IL_0047;
+					goto IL_0046;
 				}
 			}
 			flag = false;
-			goto IL_0047;
+			goto IL_0046;
 		}
 		m_OnGui = false;
 		ClearCursor();
-		goto IL_006f;
-		IL_0047:
+		goto IL_006e;
+		IL_0046:
 		if (flag)
 		{
 			SetCursor(CursorType.Default);
 			ClearComponents();
 		}
 		m_OnGui = true;
-		goto IL_006f;
-		IL_006f:
+		goto IL_006e;
+		IL_006e:
 		ObjectExtensions.Or(CurrentCursor, null)?.OnGuiChanged(m_OnGui);
 	}
 

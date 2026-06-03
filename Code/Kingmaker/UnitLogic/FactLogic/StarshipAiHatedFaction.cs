@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("f317fa10ff77b3f45b4ac4fa3b99d0e5")]
 public class StarshipAiHatedFaction : UnitFactComponentDelegate, IHashable

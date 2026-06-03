@@ -20,6 +20,8 @@ public abstract class AddStringToFact : EntityFactComponentDelegate, IHashable
 
 	public virtual string AdditionalString => m_AdditionalString;
 
+	public LocalizedString AdditionalStringLocalized => m_AdditionalString;
+
 	public string NewString(string baseString)
 	{
 		return JunctionType switch

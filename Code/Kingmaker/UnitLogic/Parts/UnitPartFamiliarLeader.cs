@@ -2,10 +2,15 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem;
+using Kingmaker.GameModes;
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Critters;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using StateHasher.Core.Hashers;
@@ -13,10 +18,12 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class UnitPartFamiliarLeader : BaseUnitPart, IHashable
+public class UnitPartFamiliarLeader : BaseUnitPart, IGameModeHandler, ISubscriber, IHashable
 {
 	[JsonProperty]
 	private readonly List<FamiliarData> m_EquippedFamiliars = new List<FamiliarData>();
+
+	private bool m_TeleportPendingAfterCutscene;
 
 	[JsonProperty(PropertyName = "m_LastEquippedFamiliar")]
 	public BlueprintUnit LastEquippedFamiliar { get; private set; }
@@ -82,6 +89,49 @@ public class UnitPartFamiliarLeader : BaseUnitPart, IHashable
 				unitPartFamiliar.UpdateIsInGameState(base.Owner.IsInGame);
 			}
 		}
+	}
+
+	public void TeleportFamiliarsToOwner(bool afterCutscene = false)
+	{
+		if (afterCutscene && Game.Instance.IsModeActive(GameModeType.Cutscene))
+		{
+			m_TeleportPendingAfterCutscene = true;
+		}
+		else
+		{
+			DoTeleportFamiliarsToOwner();
+		}
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
+		if (m_TeleportPendingAfterCutscene && gameMode == GameModeType.Cutscene)
+		{
+			m_TeleportPendingAfterCutscene = false;
+			DoTeleportFamiliarsToOwner();
+		}
+	}
+
+	private void DoTeleportFamiliarsToOwner()
+	{
+		foreach (FamiliarData equippedFamiliar in m_EquippedFamiliars)
+		{
+			equippedFamiliar.Unit?.View?.GetComponent<FamiliarUnit>()?.TeleportToLeader();
+		}
+	}
+
+	protected override void OnSubscribe()
+	{
+		EventBus.Subscribe(this);
+	}
+
+	protected override void OnUnsubscribe()
+	{
+		EventBus.Unsubscribe(this);
 	}
 
 	protected override void OnApplyPostLoadFixes()

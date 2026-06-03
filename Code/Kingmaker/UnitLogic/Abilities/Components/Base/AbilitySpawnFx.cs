@@ -151,8 +151,8 @@ public class AbilitySpawnFx : BlueprintComponent, IResourcesHolder
 		}
 		else
 		{
-			Quaternion rotation = Quaternion.Euler(0f, target.Orientation, 0f);
-			gameObject = FxHelper.SpawnFxOnPoint(prefab, target.Point, rotation);
+			Quaternion value = Quaternion.Euler(0f, target.Orientation, 0f);
+			gameObject = FxHelper.SpawnFxOnPoint(prefab, target.Point, value);
 		}
 		if ((bool)gameObject)
 		{

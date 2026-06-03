@@ -65,7 +65,7 @@ public abstract class MechanicActionBarSlot : IRoundEndHandler, ISubscriber, IHa
 	{
 		get
 		{
-			bool flag = !IsDisabled(GetResource()) && !IsPlayerInputLocked && !IsNotAvailable && (!TurnController.IsInTurnBasedCombat() || CanUseIfTurnBased());
+			bool flag = IsPossibleActiveWithoutNetRole;
 			if (flag && UINetUtility.InLobbyAndPlaying)
 			{
 				flag = ((Game.Instance.CurrentMode == GameModeType.SpaceCombat) ? UINetUtility.IsControlMainCharacter() : (Unit != null && Unit.IsMyNetRole()));
@@ -78,7 +78,7 @@ public abstract class MechanicActionBarSlot : IRoundEndHandler, ISubscriber, IHa
 	{
 		get
 		{
-			if (!IsDisabled(GetResource()) && !IsNotAvailable)
+			if (!IsDisabled(GetResource()) && !IsPlayerInputLocked && !IsNotAvailable)
 			{
 				if (TurnController.IsInTurnBasedCombat())
 				{

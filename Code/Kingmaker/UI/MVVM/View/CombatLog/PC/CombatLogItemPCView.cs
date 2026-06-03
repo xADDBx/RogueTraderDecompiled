@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,6 +31,7 @@ public class CombatLogItemPCView : CombatLogItemBaseView, IPointerEnterHandler, 
 
 	public void OnPointerEnter(PointerEventData eventData)
 	{
+		UISounds.Instance.PlayHoverSound(6);
 		m_HighlightCanvasGroup.alpha = 1f;
 	}
 
@@ -40,6 +42,7 @@ public class CombatLogItemPCView : CombatLogItemBaseView, IPointerEnterHandler, 
 
 	public void OnPointerClick(PointerEventData eventData)
 	{
+		UISounds.Instance.PlayButtonClickSound(6);
 		if (eventData.button == PointerEventData.InputButton.Left)
 		{
 			Game.Instance.CameraController?.Follower?.ScrollTo(base.ViewModel.Unit);

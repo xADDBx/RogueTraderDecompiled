@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.EntitySystem.Entities;
@@ -52,7 +53,7 @@ public class TooltipTemplateSoulMarkFeature : TooltipBaseTemplate
 
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
-		bool isLocked = m_MainDirection.HasValue && m_MainDirection.Value != m_SoulMarkDirection && m_Tier > 2;
+		bool isLocked = m_MainDirection.HasValue && m_MainDirection.Value != m_SoulMarkDirection && m_Tier >= BlueprintRoot.Instance.WarhammerRoot.SoulMarksRoot.BlockingRankIndex;
 		bool isRougeTraderSoulMark = UIUtility.GetCurrentSelectedUnit() == Game.Instance.Player.MainCharacter.Get();
 		if (!m_MainDirection.HasValue || (m_MainDirection.Value == m_SoulMarkDirection && isRougeTraderSoulMark))
 		{

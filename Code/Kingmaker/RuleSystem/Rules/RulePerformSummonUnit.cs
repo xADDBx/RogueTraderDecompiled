@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
@@ -25,11 +24,7 @@ public class RulePerformSummonUnit : RulebookEvent
 
 	public readonly BlueprintUnit Blueprint;
 
-	public readonly int Level;
-
 	public readonly Vector3 Position;
-
-	public readonly Rounds Duration;
 
 	public BaseUnitEntity SummonedUnit { get; private set; }
 
@@ -37,15 +32,11 @@ public class RulePerformSummonUnit : RulebookEvent
 
 	public bool DoNotLinkToCaster { get; set; }
 
-	public Rounds BonusDuration { get; set; }
-
-	public RulePerformSummonUnit([NotNull] MechanicEntity initiator, [NotNull] BlueprintUnit blueprint, Vector3 position, Rounds duration, int level)
+	public RulePerformSummonUnit([NotNull] MechanicEntity initiator, [NotNull] BlueprintUnit blueprint, Vector3 position)
 		: base(initiator)
 	{
 		Blueprint = blueprint;
 		Position = position;
-		Duration = duration;
-		Level = level;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
@@ -70,15 +61,6 @@ public class RulePerformSummonUnit : RulebookEvent
 			}
 		}
 		baseUnitEntity.GetOrCreate<UnitPartSummonedMonster>().Init(DoNotLinkToCaster ? baseUnitEntity : base.ConcreteInitiator);
-		Rounds value = Duration + BonusDuration;
-		if (Context != null)
-		{
-			baseUnitEntity.Buffs.Add(Game.Instance.BlueprintRoot.SystemMechanics.SummonedUnitBuff, Context, value);
-		}
-		else
-		{
-			baseUnitEntity.Buffs.Add(Game.Instance.BlueprintRoot.SystemMechanics.SummonedUnitBuff, base.ConcreteInitiator, value);
-		}
 		SummonedUnit = baseUnitEntity;
 		if (m_AddFacts != null)
 		{
@@ -112,7 +94,7 @@ public class RulePerformSummonUnit : RulebookEvent
 		m_AddFacts.Add(fact);
 	}
 
-	public void AddBuff(BlueprintBuff buff, TimeSpan? duration = null)
+	public void AddBuff(BlueprintBuff buff)
 	{
 		m_AddBuffs = m_AddBuffs ?? new HashSet<BlueprintBuff>();
 		m_AddBuffs.Add(buff);

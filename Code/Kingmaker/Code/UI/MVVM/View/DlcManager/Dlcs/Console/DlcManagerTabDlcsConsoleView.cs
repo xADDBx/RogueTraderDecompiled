@@ -1,6 +1,7 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.CustomUIVideoPlayer.Console;
 using Kingmaker.Code.UI.MVVM.View.DlcManager.Dlcs.Base;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -72,29 +73,37 @@ public class DlcManagerTabDlcsConsoleView : DlcManagerTabDlcsBaseView
 		if (m_InstallHint != null)
 		{
 			AddDisposable(m_InstallHint.BindCustomAction(11, inputLayer, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought).And(base.ViewModel.DlcIsBoughtAndNotInstalled).And(base.ViewModel.DownloadingInProgress.Not())
-				.And(base.ViewModel.IsRealConsole)
+				.And(base.ViewModel.SupportsDlcDownloadState)
 				.ToReactiveProperty()));
 		}
 		AddDisposable(purchaseHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.ShowInStore();
 		}, 10, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought.Not()).And(base.ViewModel.DlcIsAvailableToPurchase).ToReactiveProperty(), InputActionEventType.ButtonJustReleased)));
-		purchaseHint.SetLabel(UIStrings.Instance.DlcManager.Purchase);
+		purchaseHint.SetLabel(UIStrings.Instance.DlcManager.GetPurchaseLabel());
 		AddDisposable(installHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.InstallDlc();
 		}, 11, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought).And(base.ViewModel.DlcIsBoughtAndNotInstalled).And(base.ViewModel.DownloadingInProgress.Not())
-			.And(base.ViewModel.IsRealConsole)
+			.And(base.ViewModel.SupportsDlcDownloadState)
 			.ToReactiveProperty())));
 		installHint.SetLabel(UIStrings.Instance.DlcManager.Install);
-		AddDisposable(deleteDlcHint.Bind(inputLayer.AddButton(delegate
+		if (!ApplicationHelper.IsRunningOnAnySwitch)
 		{
-			base.ViewModel.DeleteDlc();
-		}, 11, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought).And(base.ViewModel.DlcIsBoughtAndNotInstalled.Not()).And(base.ViewModel.DownloadingInProgress.Not())
-			.And(base.ViewModel.IsRealConsole)
-			.And(base.ViewModel.IsEditionDlc.Not())
-			.ToReactiveProperty())));
-		deleteDlcHint.SetLabel(UIStrings.Instance.DlcManager.DeleteDlc);
+			deleteDlcHint.gameObject.SetActive(value: true);
+			AddDisposable(deleteDlcHint.Bind(inputLayer.AddButton(delegate
+			{
+				base.ViewModel.DeleteDlc();
+			}, 11, base.ViewModel.IsEnabled.And(base.ViewModel.DlcIsBought).And(base.ViewModel.DlcIsBoughtAndNotInstalled.Not()).And(base.ViewModel.DownloadingInProgress.Not())
+				.And(base.ViewModel.SupportsDlcDownloadState)
+				.And(base.ViewModel.IsEditionDlc.Not())
+				.ToReactiveProperty())));
+			deleteDlcHint.SetLabel(UIStrings.Instance.DlcManager.DeleteDlc);
+		}
+		else
+		{
+			deleteDlcHint.gameObject.SetActive(value: false);
+		}
 		m_CustomUIVideoPlayerConsoleView.CreateInputImpl(inputLayer, hintsWidget, playPauseVideoHint, base.ViewModel.IsEnabled);
 	}
 

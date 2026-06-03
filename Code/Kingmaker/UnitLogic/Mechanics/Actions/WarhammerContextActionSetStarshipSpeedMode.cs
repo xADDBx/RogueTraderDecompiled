@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
@@ -5,6 +6,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("5a62434637b179e448bf2f822d6eb945")]
 public class WarhammerContextActionSetStarshipSpeedMode : ContextAction
 {

@@ -364,7 +364,7 @@ public class WarhammerUnitAnimationActionLocoMotionHuman : UnitAnimationAction
 				}
 			}
 		}
-		CurrentWalkingStyleLayer currentWalkingStyleLayer = SelectWalkingStyleLayer(movementStyleLayer, actionData.WalkSpeedType);
+		CurrentWalkingStyleLayer currentWalkingStyleLayer = SelectWalkingStyleLayer(movementStyleLayer, manager.WalkSpeedType);
 		if (actionData.State == MovementState.In && handle.GetTime() > actionData.EndAnimationTime - CrossfadeToRun - 0.001f)
 		{
 			actionData.State = MovementState.Run;

@@ -95,6 +95,11 @@ public class SystemMapSpaceResourcesVM : BaseDisposable, IViewModel, IBaseDispos
 			}
 		}
 		ColonyResourceVM colonyResourceVM = new ColonyResourceVM(blueprintResource, 0);
+		BlueprintResource blueprintResource2 = UIConfig.Instance.CombativityReference.Get();
+		if (blueprintResource == blueprintResource2)
+		{
+			colonyResourceVM = new CombativityResourceVM(blueprintResource, 0);
+		}
 		AddDisposable(colonyResourceVM);
 		ResourcesVMs.Add(colonyResourceVM);
 		return colonyResourceVM;

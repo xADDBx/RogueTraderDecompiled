@@ -58,30 +58,26 @@ public class ReflectAnyDamageToSelf : UnitFactComponentDelegate, IGlobalRulebook
 	public void OnEventDidTrigger(RuleDealDamage evt)
 	{
 		bool flag = evt.RollDamageRule.ReflectFlatDamageModifiers.HasModifier((Modifier o) => o.Fact == base.Fact) || evt.RollDamageRule.ReflectPercentDamageModifiers.HasModifier((Modifier o) => o.Fact == base.Fact);
-		if (base.Owner.IsDeadOrUnconscious || evt.RollDamageRule.ResultReflected == 0 || !flag)
+		if (!base.Owner.IsDeadOrUnconscious && evt.RollDamageRule.ResultReflected != 0 && flag)
 		{
-			return;
-		}
-		RuleCalculateStatsArmor ruleCalculateStatsArmor = new RuleCalculateStatsArmor(base.Owner);
-		Rulebook.Trigger(ruleCalculateStatsArmor);
-		DamageData damageData = evt.Damage.Copy();
-		damageData.MarkCalculated();
-		damageData.CalculatedValue = evt.RollDamageRule.ResultReflected;
-		if (damageData.Absorption.HasModifier((Modifier x) => x.Type == ModifierType.ValAdd))
-		{
+			RuleCalculateStatsArmor ruleCalculateStatsArmor = new RuleCalculateStatsArmor(base.Owner);
+			Rulebook.Trigger(ruleCalculateStatsArmor);
+			DamageData damageData = evt.Damage.Copy();
+			damageData.MarkCalculated();
+			damageData.CalculatedValue = evt.RollDamageRule.ResultReflected;
 			damageData.Absorption.RemoveAll((Modifier x) => true);
-			damageData.Absorption.Add(ModifierType.ValAdd, ruleCalculateStatsArmor.ResultBaseAbsorption, (RulebookEvent)null, ModifierDescriptor.ArmorAbsorption);
-			damageData.Absorption.CopyFrom(ruleCalculateStatsArmor.AbsorptionCompositeModifiers);
-		}
-		if (damageData.Deflection.HasModifier((Modifier x) => x.Type == ModifierType.ValAdd))
-		{
 			damageData.Deflection.RemoveAll((Modifier x) => true);
-			damageData.Deflection.Add(ModifierType.ValAdd, ruleCalculateStatsArmor.ResultBaseDeflection, (RulebookEvent)null, ModifierDescriptor.ArmorDeflection);
-			damageData.Deflection.CopyFrom(ruleCalculateStatsArmor.DeflectionCompositeModifiers);
+			if (damageData.Type != DamageType.Direct)
+			{
+				damageData.Absorption.Add(ModifierType.ValAdd, ruleCalculateStatsArmor.ResultBaseAbsorption, (RulebookEvent)null, ModifierDescriptor.ArmorAbsorption);
+				damageData.Deflection.Add(ModifierType.ValAdd, ruleCalculateStatsArmor.ResultBaseDeflection, (RulebookEvent)null, ModifierDescriptor.ArmorDeflection);
+				damageData.Absorption.CopyFrom(ruleCalculateStatsArmor.AbsorptionCompositeModifiers);
+				damageData.Deflection.CopyFrom(ruleCalculateStatsArmor.DeflectionCompositeModifiers);
+			}
+			RuleRollDamage ruleRollDamage = new RuleRollDamage(evt.ConcreteInitiator, base.Owner, damageData);
+			Rulebook.Trigger(ruleRollDamage);
+			Rulebook.Trigger(new RuleDealDamage(evt.ConcreteInitiator, base.Owner, ruleRollDamage));
 		}
-		RuleRollDamage ruleRollDamage = new RuleRollDamage(evt.ConcreteInitiator, base.Owner, damageData);
-		Rulebook.Trigger(ruleRollDamage);
-		Rulebook.Trigger(new RuleDealDamage(evt.ConcreteInitiator, base.Owner, ruleRollDamage));
 	}
 
 	public override Hash128 GetHash128()

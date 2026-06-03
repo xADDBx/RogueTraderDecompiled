@@ -160,7 +160,7 @@ public static class AttackOfOpportunityHelper
 		}
 	}
 
-	public static bool CanMakeAttackOfOpportunity(this BaseUnitEntity attacker, BaseUnitEntity target, bool canUseInRange = false)
+	public static bool CanMakeAttackOfOpportunity(this BaseUnitEntity attacker, BaseUnitEntity target, bool canUseInRange = false, bool isSpell = false)
 	{
 		if (Game.Instance.TurnController.CurrentUnit == attacker || (bool)attacker.Features.DisableAttacksOfOpportunity)
 		{
@@ -178,7 +178,11 @@ public static class AttackOfOpportunityHelper
 		{
 			return false;
 		}
-		if (!attacker.CombatState.CanActInCombat || !attacker.CombatState.CanAttackOfOpportunity(canUseInRange) || !attacker.State.CanAct || attacker.IsInvisible)
+		if (!attacker.CombatState.CanActInCombat || !attacker.CombatState.CanAttackOfOpportunity(canUseInRange, isSpell) || !attacker.State.CanAct)
+		{
+			return false;
+		}
+		if (attacker.IsInvisible() && !attacker.IsUseAttackOfOpportunityWhileInvisible())
 		{
 			return false;
 		}
@@ -188,33 +192,37 @@ public static class AttackOfOpportunityHelper
 	[CanBeNull]
 	public static HashSet<GraphNode> GetThreateningArea(this BaseUnitEntity unit, WeaponSlot hand = null)
 	{
+		HashSet<GraphNode> hashSet = TempHashSet.Get<GraphNode>();
+		unit.CollectThreateningArea(hashSet, hand);
+		return hashSet;
+	}
+
+	public static void CollectThreateningArea(this BaseUnitEntity unit, HashSet<GraphNode> area, WeaponSlot hand = null)
+	{
 		if (hand == null)
 		{
 			hand = unit.GetThreatHand();
 		}
 		if (hand?.GetAttackOfOpportunityAbility(unit) == null)
 		{
-			return null;
+			return;
 		}
 		int attackOfOpportunityThreatingRange = hand.GetAttackOfOpportunityThreatingRange(unit);
-		HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
-		GridPatterns.AddCircleNodes(hashSet, attackOfOpportunityThreatingRange);
-		HashSet<GraphNode> hashSet2 = TempHashSet.Get<GraphNode>();
+		PatternGridData circle = GridPatterns.GetCircle(attackOfOpportunityThreatingRange);
 		foreach (CustomGridNodeBase occupiedNode in unit.GetOccupiedNodes())
 		{
 			int xCoordinateInGrid = occupiedNode.XCoordinateInGrid;
 			int zCoordinateInGrid = occupiedNode.ZCoordinateInGrid;
 			CustomGridGraph customGridGraph = (CustomGridGraph)occupiedNode.Graph;
-			foreach (Vector2Int item in hashSet)
+			foreach (Vector2Int item in circle)
 			{
 				CustomGridNodeBase node = customGridGraph.GetNode(xCoordinateInGrid + item.x, zCoordinateInGrid + item.y);
-				if (node != null && !hashSet2.Contains(node) && (float)CustomGraphHelper.GetWarhammerCellDistance(occupiedNode, node) <= unit.Corpulence + (float)attackOfOpportunityThreatingRange && occupiedNode.HasMeleeLos(node))
+				if (node != null && !area.Contains(node) && (float)CustomGraphHelper.GetWarhammerCellDistance(occupiedNode, node) <= unit.Corpulence + (float)attackOfOpportunityThreatingRange && occupiedNode.HasMeleeLos(node))
 				{
-					hashSet2.Add(node);
+					area.Add(node);
 				}
 			}
 		}
-		return hashSet2;
 	}
 
 	public static bool IsWaitingForIncomingAttackOfOpportunity([NotNull] this MechanicEntity unit)
@@ -239,15 +247,15 @@ public static class AttackOfOpportunityHelper
 
 	public static int GetAttackOfOpportunityThreatingRange(this WeaponSlot slot, BaseUnitEntity unit)
 	{
-		int result = slot.AttackRange;
-		if (slot.IsRanged)
+		if (slot.IsMelee)
 		{
-			UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
-			if (optional != null && optional.EnableAndPrioritizeRangedAttack)
-			{
-				result = 1;
-			}
+			return 1;
 		}
-		return result;
+		UnitPartAttackOfOpportunityModifier optional = unit.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
+		if (optional != null && optional.EnableAndPrioritizeRangedAttack)
+		{
+			return 1;
+		}
+		return slot.AttackRange;
 	}
 }

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
-[ComponentName("Actions/PlayerStarshipDescriptiveDamageAction")]
+[ComponentName("Starship/Actions/PlayerStarshipDescriptiveDamageAction")]
 [AllowMultipleComponents]
 [TypeId("3ed9f542a3b83084ab7fc16a9d94d9c2")]
 public class PlayerStarshipDescriptiveDamageAction : GameAction

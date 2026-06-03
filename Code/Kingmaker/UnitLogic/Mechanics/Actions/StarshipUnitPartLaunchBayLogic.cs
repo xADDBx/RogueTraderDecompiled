@@ -1,9 +1,11 @@
+using Kingmaker.Blueprints.Attributes;
 using Newtonsoft.Json;
 using StateHasher.Core;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 public class StarshipUnitPartLaunchBayLogic : BaseUnitPart, IHashable
 {
 	[JsonProperty]

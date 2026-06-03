@@ -37,6 +37,10 @@ public class UIProfitFactorTexts
 
 	public LocalizedString ProfitFatorLostNotification;
 
+	public LocalizedString CombativityTitle;
+
+	public LocalizedString CombativityDescription;
+
 	public List<ProfitFactorSourcePair> Sources;
 
 	public LocalizedString GetSource(ProfitFactorModifierType sourceType)

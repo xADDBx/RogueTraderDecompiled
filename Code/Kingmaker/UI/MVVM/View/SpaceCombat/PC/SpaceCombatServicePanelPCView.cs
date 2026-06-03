@@ -10,6 +10,7 @@ using Kingmaker.Settings.Entities;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Kingmaker.Utility.GameConst;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -191,6 +192,12 @@ public class SpaceCombatServicePanelPCView : ViewBase<SpaceCombatServicePanelVM>
 	private void SetEndTurnBindText(KeyBindingPair keyBindingPair = default(KeyBindingPair))
 	{
 		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "EndTurn"));
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			m_EndTurnBindText.transform.parent.gameObject.SetActive(value: false);
+			return;
+		}
+		m_EndTurnBindText.transform.parent.gameObject.SetActive(value: true);
 		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("EndTurn"));
 	}
 }

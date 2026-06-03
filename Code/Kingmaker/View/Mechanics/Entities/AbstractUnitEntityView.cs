@@ -17,6 +17,7 @@ using Kingmaker.Controllers.MapObjects;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
 using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
@@ -137,7 +138,7 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 	private TimeSpan m_StartGetUpTime;
 
 	[InspectorReadOnly]
-	private Bounds m_Bounds;
+	private Bounds? m_CachedLocalBounds;
 
 	private string m_Race;
 
@@ -316,7 +317,20 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 
 	public bool IsCommandsPreventMovement => EntityData.Commands.PreventMovement;
 
-	public Bounds Bounds => m_Bounds;
+	public Bounds RenderersBounds => m_LocalBounds;
+
+	private Bounds m_LocalBounds
+	{
+		get
+		{
+			if (m_CachedLocalBounds.HasValue)
+			{
+				return m_CachedLocalBounds.Value;
+			}
+			m_CachedLocalBounds = GetLocalBoundsFromRenderers(base.gameObject);
+			return m_CachedLocalBounds.Value;
+		}
+	}
 
 	public ViewInterpolationHelper InterpolationHelper { get; private set; }
 
@@ -351,7 +365,6 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 		m_OccludedObjectHighlighter = base.gameObject.EnsureComponent<OccludedObjectHighlighter>();
 		SetAgentASP();
 		SetUnitLayers();
-		m_Bounds = GetMaxBounds(base.gameObject, base.ViewTransform.GetComponentsInChildren<Renderer>());
 		InterpolationHelper = new ViewInterpolationHelper(this);
 	}
 
@@ -449,7 +462,7 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 		SetupSelectionColliders(forceRecreate: false);
 		GetComponentsInChildren(m_Decals);
 		SetOccluderColorAndState();
-		if ((bool)AstarPath.active)
+		if ((bool)AstarPath.active && !LoadingProcess.Instance.IsLoadingInProcess)
 		{
 			ForcePlaceAboveGround();
 		}
@@ -588,6 +601,12 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 
 	public void SetOccluderColorAndState()
 	{
+		BlueprintUnit blueprint = Blueprint;
+		if (blueprint != null && blueprint.VisualSettings.NoHighlight)
+		{
+			m_OccludedObjectHighlighter.enabled = false;
+			return;
+		}
 		m_OccludedObjectHighlighter.Color = BlueprintRoot.Instance.FxRoot.OccluderColorDefault;
 		bool flag = false;
 		if (Data.IsInPlayerParty)
@@ -756,12 +775,15 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 		}
 	}
 
-	private Bounds GetMaxBounds(GameObject g, Renderer[] rend)
+	private Bounds GetLocalBoundsFromRenderers(GameObject g)
 	{
-		Bounds result = new Bounds(g.transform.position, Vector3.zero);
-		foreach (Renderer renderer in rend)
+		Bounds result = new Bounds(Vector3.zero, Vector3.zero);
+		foreach (Renderer renderer in Renderers)
 		{
-			result.Encapsulate(renderer.bounds);
+			if ((bool)renderer && renderer is SkinnedMeshRenderer && renderer.gameObject.activeInHierarchy)
+			{
+				result.Encapsulate(renderer.localBounds);
+			}
 		}
 		return result;
 	}
@@ -875,6 +897,13 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 	{
 		if (EntityData == null)
 		{
+			return;
+		}
+		BlueprintUnit blueprint = Blueprint;
+		if (blueprint != null && blueprint.VisualSettings.NoHighlight)
+		{
+			IsHighlighted = false;
+			m_Highlighter.BaseColor = Color.clear;
 			return;
 		}
 		IsHighlighted = false;
@@ -1097,10 +1126,11 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 			{
 				if (flag)
 				{
-					if (AnimationManager != null)
+					UnitAnimationManager animationManager = AnimationManager;
+					if (animationManager != null)
 					{
 						yield return null;
-						while (AnimationManager.IsGoingProne)
+						while (animationManager != null && animationManager.IsGoingProne)
 						{
 							yield return null;
 						}
@@ -1115,7 +1145,8 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 				FxHelper.RegisterBlood(obj);
 			}
 		}
-		if (!EntityData.IsPlayerFaction && !EntityData.Features.SuppressedDecomposition && ((AnimationManager?.GetAction(UnitAnimationType.Prone) as UnitAnimationActionProne)?.AllowFallingBelowGround ?? false))
+		AbstractUnitEntity entityData = EntityData;
+		if (entityData != null && !entityData.IsPlayerFaction && !EntityData.Features.SuppressedDecomposition && ((AnimationManager?.GetAction(UnitAnimationType.Prone) as UnitAnimationActionProne)?.AllowFallingBelowGround ?? false))
 		{
 			do
 			{
@@ -1182,6 +1213,19 @@ public abstract class AbstractUnitEntityView : MechanicEntityView, IAreaHandler,
 		{
 			UpdateCachedRenderersAndColliders();
 			m_RenderersAndCollidersAreUpdated = false;
+			m_CachedLocalBounds = null;
+		}
+		if (HasOverriddenRotatablePart && !ForbidRotation && EntityData != null)
+		{
+			float turretInterpolatedOrientation = InterpolationHelper.TurretInterpolatedOrientation;
+			Transform parent = OverrideRotatablePart.transform.parent;
+			if (parent != null)
+			{
+				Vector3 forward = parent.forward;
+				forward.y = 0f;
+				float num = ((forward.sqrMagnitude > 0.001f) ? (Mathf.Atan2(forward.x, forward.z) * 57.29578f) : 0f);
+				OverrideRotatablePart.transform.localRotation = Quaternion.Euler(0f, turretInterpolatedOrientation - num, 0f);
+			}
 		}
 		OnDoLateUpdate();
 		if (!(m_SoftCollider != null))

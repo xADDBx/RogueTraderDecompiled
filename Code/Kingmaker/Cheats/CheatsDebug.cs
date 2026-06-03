@@ -15,6 +15,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.RuleSystem;
 using Kingmaker.UI;
 using Kingmaker.UI.InputSystems;
+using Kingmaker.UI.Pointer;
 using Kingmaker.UI.UIKitDependencies;
 using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
@@ -216,7 +217,7 @@ internal class CheatsDebug
 	private static void Raycast(string parameters)
 	{
 		Camera camera = Game.GetCamera();
-		RaycastHit[] array = Physics.RaycastAll(camera.ScreenPointToRay(Input.mousePosition), camera.farClipPlane, 70014209);
+		RaycastHit[] array = Physics.RaycastAll(camera.ScreenPointToRay(CursorController.CursorPosition), camera.farClipPlane, 70014209);
 		foreach (RaycastHit raycastHit in array)
 		{
 			Collider collider = raycastHit.collider;

@@ -183,13 +183,12 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 
 	private void EnsureRenderTexture()
 	{
-		if (m_RenderTexture != null && (m_RenderTexture.width != (int)m_RenderTextureSize.x || m_RenderTexture.height != (int)m_RenderTextureSize.y))
+		if (!(m_RenderTexture != null) || m_RenderTexture.width != (int)m_RenderTextureSize.x || m_RenderTexture.height != (int)m_RenderTextureSize.y)
 		{
 			ReleaseRenderTexture();
+			m_RenderTexture = new RenderTexture((int)m_RenderTextureSize.x, (int)m_RenderTextureSize.y, 0, RenderTextureFormat.ARGBHalf);
+			m_RenderTexture.name = $"DollRoomRT_{m_RenderTexture.width}_{m_RenderTexture.height}_{m_RenderTexture.format}";
 		}
-		m_RenderTexture = new RenderTexture((int)m_RenderTextureSize.x, (int)m_RenderTextureSize.y, 0, RenderTextureFormat.ARGBHalf);
-		m_RenderTexture.name = $"DollRoomRT_{m_RenderTexture.width}_{m_RenderTexture.height}_{m_RenderTexture.format}";
-		m_TargetController.RawImage.texture = m_RenderTexture;
 	}
 
 	private void ReleaseRenderTexture()
@@ -198,6 +197,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 		{
 			m_RenderTexture.Release();
 			m_RenderTexture = null;
+			m_TargetController.RawImage.texture = Texture2D.blackTexture;
 		}
 	}
 
@@ -292,6 +292,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 		{
 			m_Camera.SetTargetTexture(m_RenderTexture);
 			m_Camera.EnableCamera();
+			m_TargetController.RawImage.texture = m_RenderTexture;
 		}
 		m_CameraStackState = CameraStackManager.Instance.SetTempState(CameraStackManager.CameraStackState.UiOnly);
 		m_SavedActiveScene = SceneManager.GetActiveScene();
@@ -317,6 +318,7 @@ public class DollRoomBase : MonoBehaviour, ISaveManagerHandler, ISubscriber
 	{
 		EnsureCamera();
 		m_Camera.DisableCamera();
+		m_TargetController.RawImage.texture = Texture2D.blackTexture;
 		m_CameraStackState.Dispose();
 		if (m_SavedActiveScene.isLoaded)
 		{

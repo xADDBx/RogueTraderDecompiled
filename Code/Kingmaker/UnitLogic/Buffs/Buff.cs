@@ -76,6 +76,12 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public readonly Initiative Initiative = new Initiative();
 
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public BuffUIGroupOverride UIGroupOverride;
+
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public string SourceNameOverride;
+
 	private AbstractUnitEntityView m_ParticleEffectOwner;
 
 	private List<GameObject> m_ManagedEffects;
@@ -206,9 +212,9 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 	{
 		get
 		{
-			if (!base.Hidden)
+			if (!base.Hidden && !base.Blueprint.IsHiddenInUI)
 			{
-				return base.Blueprint.IsHiddenInUI;
+				return IsSuppressed;
 			}
 			return true;
 		}
@@ -560,6 +566,7 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		{
 			return;
 		}
+		bool flag;
 		try
 		{
 			m_IsReapplying.Retain();
@@ -573,17 +580,17 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 			{
 				Activate();
 			}
-			if (Rank <= 0)
-			{
-				Remove();
-				return;
-			}
+			flag = Rank <= 0;
 		}
 		finally
 		{
 			m_IsReapplying.Release();
 		}
-		if (base.Owner != null)
+		if (flag)
+		{
+			Remove();
+		}
+		else if (base.Owner != null)
 		{
 			EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitBuffHandler>)delegate(IUnitBuffHandler h)
 			{
@@ -650,6 +657,11 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		return base.UniqueId.Equals(other.UniqueId);
 	}
 
+	public void SetRankToZero()
+	{
+		Rank = 0;
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);
@@ -681,6 +693,8 @@ public sealed class Buff : UnitFact<BlueprintBuff>, IInitiativeHolder, IFactWith
 		result.Append(ref val8);
 		bool val9 = DisabledBecauseOfNotCasterTurn;
 		result.Append(ref val9);
+		result.Append(ref UIGroupOverride);
+		result.Append(SourceNameOverride);
 		return result;
 	}
 }

@@ -1,4 +1,5 @@
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View.Mechanics.Entities;
 using UnityEngine;
 
@@ -10,11 +11,13 @@ public class ViewInterpolationHelper
 
 	private bool m_ForceUpdatePosition;
 
-	private Vector3 m_NextInterpolationPosition;
+	private Vector3 m_InterpolationFrom;
 
-	private Vector3 m_PreviousInterpolationPosition;
+	private Vector3 m_InterpolationTo;
 
 	private float m_PreviousOrientation;
+
+	public float TurretInterpolatedOrientation { get; private set; }
 
 	public ViewInterpolationHelper(AbstractUnitEntityView view)
 	{
@@ -26,36 +29,45 @@ public class ViewInterpolationHelper
 		AbstractUnitEntity entityData = m_View.EntityData;
 		if (entityData.Movable.PreviousSimulationTick.HasMotion || m_ForceUpdatePosition)
 		{
-			Vector3 position = Vector3.LerpUnclamped(m_PreviousInterpolationPosition, m_NextInterpolationPosition, progress);
-			m_View.transform.position = position;
+			m_View.transform.position = Vector3.LerpUnclamped(m_InterpolationFrom, m_InterpolationTo, progress);
 		}
-		if (entityData.Movable.PreviousSimulationTick.HasRotation && !m_View.ForbidRotation)
+		if (m_View.HasOverriddenRotatablePart)
+		{
+			TurretInterpolatedOrientation = (entityData.Movable.PreviousSimulationTick.HasRotation ? Mathf.LerpAngle(m_PreviousOrientation, entityData.Orientation, progress) : entityData.Orientation);
+		}
+		else if (entityData.Movable.PreviousSimulationTick.HasRotation && !m_View.ForbidRotation)
 		{
 			float y = Mathf.LerpAngle(m_PreviousOrientation, entityData.Orientation, progress);
-			if (!m_View.OverrideRotatablePart)
-			{
-				m_View.transform.rotation = Quaternion.Euler(0f, y, 0f);
-			}
-			else
-			{
-				m_View.OverrideRotatablePart.transform.rotation = Quaternion.Euler(0f, y, 0f);
-			}
+			m_View.transform.rotation = Quaternion.Euler(0f, y, 0f);
 		}
 	}
 
 	public void OnUnitSimulationTickCompleted(bool forceUpdatePositions)
 	{
 		m_ForceUpdatePosition = forceUpdatePositions;
-		m_PreviousInterpolationPosition = m_NextInterpolationPosition;
-		m_NextInterpolationPosition = GetViewPosition(m_View.EntityData.Position);
+		m_InterpolationFrom = m_InterpolationTo;
+		m_InterpolationTo = GetViewPosition(m_View.EntityData.Position);
 		m_PreviousOrientation = m_View.EntityData.Movable.PreviousOrientation;
 	}
 
 	public void ForceUpdatePosition(Vector3 position, float orientation)
 	{
-		m_PreviousInterpolationPosition = position;
-		m_NextInterpolationPosition = position;
+		m_InterpolationFrom = position;
+		m_InterpolationTo = position;
 		m_PreviousOrientation = orientation;
+	}
+
+	public void ApplyPlatformDelta()
+	{
+		AbstractUnitEntity entityData = m_View.EntityData;
+		EntityPartStayOnPlatform entityPartStayOnPlatform = entityData?.GetOptional<EntityPartStayOnPlatform>();
+		if (entityPartStayOnPlatform != null && entityPartStayOnPlatform.IsOnPlatform())
+		{
+			Vector3 platformDeltaSinceLastUpdate = entityPartStayOnPlatform.GetPlatformDeltaSinceLastUpdate();
+			Vector3 vector = GetViewPosition(entityData.Position) + platformDeltaSinceLastUpdate;
+			m_View.transform.position = vector;
+			m_InterpolationTo = vector;
+		}
 	}
 
 	public Vector3 GetViewPosition(Vector3 mechanicsPosition)

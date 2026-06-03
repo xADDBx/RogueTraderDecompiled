@@ -245,7 +245,7 @@ public static class SetupMoveCommandHelper
 		}
 	}
 
-	private static MechanicEntity GetClosestEnemy(DecisionContext context)
+	public static MechanicEntity GetClosestEnemy(DecisionContext context)
 	{
 		BaseUnitEntity unit = context.Unit;
 		int num = int.MaxValue;

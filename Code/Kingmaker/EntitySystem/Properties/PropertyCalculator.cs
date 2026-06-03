@@ -154,6 +154,7 @@ public class PropertyCalculator : ElementsList
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append($"[{PropertyTargetType.CurrentEntity}] : {context.GetTargetEntity(PropertyTargetType.CurrentEntity)}");
 			stringBuilder.Append($"\n[{PropertyTargetType.CurrentTarget}] : {context.GetTargetEntity(PropertyTargetType.CurrentTarget)}");
+			stringBuilder.Append($"\n[{PropertyTargetType.ContextOwner}] : {context.GetTargetEntity(PropertyTargetType.ContextOwner)}");
 			stringBuilder.Append($"\n[{PropertyTargetType.ContextCaster}] : {context.GetTargetEntity(PropertyTargetType.ContextCaster)}");
 			stringBuilder.Append($"\n[{PropertyTargetType.ContextMainTarget}] : {context.GetTargetEntity(PropertyTargetType.ContextMainTarget)}");
 			stringBuilder.Append($"\n[{PropertyTargetType.RuleTarget}] : {context.GetTargetEntity(PropertyTargetType.RuleTarget)}");

@@ -18,6 +18,8 @@ public class ControlsKeybindingsGeneralSettingsDefaultValues
 
 	public KeyBindingPair OpenInventory;
 
+	public KeyBindingPair OpenAugmentations;
+
 	public KeyBindingPair OpenJournal;
 
 	public KeyBindingPair OpenMap;

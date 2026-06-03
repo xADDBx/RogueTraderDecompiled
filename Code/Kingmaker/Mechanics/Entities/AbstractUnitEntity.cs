@@ -426,7 +426,13 @@ public abstract class AbstractUnitEntity : MechanicEntity<BlueprintUnit>, PartSt
 
 	public void ForceLookAt(Vector3 point)
 	{
-		SetOrientation(GetLookAtAngle(point));
+		LookAt(point);
+		ForceRotateToDesired();
+	}
+
+	public void ForceRotateToDesired()
+	{
+		m_Orientation = DesiredOrientation;
 		bool isPaused = Game.Instance.IsPaused;
 		if (View != null && (isPaused || !View.IsVisible))
 		{

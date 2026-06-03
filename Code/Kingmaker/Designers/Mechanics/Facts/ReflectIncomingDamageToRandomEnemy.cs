@@ -64,7 +64,7 @@ public class ReflectIncomingDamageToRandomEnemy : UnitFactComponentDelegate, ITa
 			int num = PercentDamageModifier.Calculate(base.Context);
 			if (rule.TargetUnit == base.Owner && base.Context.MaybeCaster != null)
 			{
-				EntityFactManagerComponentsEnumerator<WarhammerMultiplyIncomingDamageBonus> components = base.Context.MaybeCaster.Facts.GetComponents<WarhammerMultiplyIncomingDamageBonus>();
+				EntityFactManagerComponentsEnumerable<WarhammerMultiplyIncomingDamageBonus> components = base.Context.MaybeCaster.Facts.GetComponents<WarhammerMultiplyIncomingDamageBonus>();
 				float num2 = (components.Any() ? (components.Sum((WarhammerMultiplyIncomingDamageBonus p) => p.PercentIncreaseMultiplier - 1f) + 1f) : 1f);
 				num = (int)((float)num * num2);
 			}

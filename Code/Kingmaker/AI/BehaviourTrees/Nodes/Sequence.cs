@@ -7,6 +7,11 @@ public class Sequence : Composite
 	{
 	}
 
+	public Sequence(string debugDescription, params BehaviourTreeNode[] nodes)
+		: base(debugDescription, nodes)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		while (currentChildIndex < children.Length)
@@ -14,6 +19,10 @@ public class Sequence : Composite
 			Status status = children[currentChildIndex].Tick(blackboard);
 			if (status != Status.Success)
 			{
+				if (status == Status.Failure)
+				{
+					base.FailReason = "Failed at node: " + children[currentChildIndex].DebugName;
+				}
 				return status;
 			}
 			currentChildIndex++;

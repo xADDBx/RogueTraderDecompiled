@@ -1,3 +1,4 @@
+using System;
 using Code.GameCore.Blueprints;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
@@ -22,6 +23,20 @@ namespace Kingmaker.View.Spawners;
 [KnowledgeDatabaseID("dfea570039374dd99e2e6cf487f9add8")]
 public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IAddInspectorGUI, ICompanionChangeHandler, IEtudesUpdateHandler
 {
+	private enum LogContext
+	{
+		Unknown,
+		SceneInit,
+		SpawnUnit,
+		AddedToParty,
+		Activated,
+		RemovedFromParty,
+		CapitalModeChanged,
+		Recruited,
+		Unrecruited,
+		EtudeUpdate
+	}
+
 	private new class MyData : UnitSpawnerBase.MyData
 	{
 		private bool m_NeedInitOnPlace;
@@ -110,11 +125,14 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 	[UsedImplicitly]
 	private bool m_Dummy;
 
+	[NonSerialized]
+	private LogContext spawnLogContext;
+
 	private new MyData Data => (MyData)base.Data;
 
 	private new BaseUnitEntity SpawnedUnit => (BaseUnitEntity)base.SpawnedUnit;
 
-	private bool IsControllingCompanion
+	public bool IsControllingCompanion
 	{
 		get
 		{
@@ -139,6 +157,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	public override void HandleAreaSpawnerInit()
 	{
+		spawnLogContext = LogContext.SceneInit;
 		bool flag = ShouldControlUnit(GetMyCompanion());
 		if (base.HasSpawned)
 		{
@@ -159,9 +178,11 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	protected override AbstractUnitEntity SpawnUnit(Vector3 position, Quaternion rotation)
 	{
+		spawnLogContext = LogContext.SpawnUnit;
 		BaseUnitEntity myCompanion = GetMyCompanion();
 		if (myCompanion == null)
 		{
+			LogSpawn("Companion is not recruited yet.");
 			return null;
 		}
 		ClaimCompanion();
@@ -170,39 +191,66 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	private bool ShouldControlUnit(BaseUnitEntity unit)
 	{
+		bool flag = true;
+		string msg = string.Empty;
 		if (unit == null)
 		{
-			return false;
+			msg = "Companion is not recruited yet.";
+			flag = false;
 		}
-		if (Data == null || (!Data.DidSpawnOnce && !base.SpawnOnSceneInit))
+		else if (Data == null || (!Data.DidSpawnOnce && !base.SpawnOnSceneInit))
 		{
-			return false;
+			msg = "Spawn was not triggered yet.  Just checking..";
+			flag = false;
 		}
-		CompanionSpawner companionSpawner = unit.GetOptional<UnitPartCompanion>()?.GetCurrentSpawner();
-		if (companionSpawner != null && companionSpawner != this && companionSpawner.ShouldControlUnit(unit))
+		else
 		{
-			return false;
+			CompanionSpawner companionSpawner = unit.GetOptional<UnitPartCompanion>()?.GetCurrentSpawner();
+			if (companionSpawner != null && companionSpawner != this && companionSpawner.ShouldControlUnit(unit))
+			{
+				msg = "Already controlled by spawner '" + companionSpawner.name + "'";
+				flag = false;
+			}
+			else
+			{
+				CompanionState companionState = unit.GetOptional<UnitPartCompanion>()?.State ?? CompanionState.None;
+				bool capitalPartyMode = Game.Instance.LoadedAreaState.Settings.CapitalPartyMode;
+				if ((!m_SpawnWhenNone || companionState != 0) && (!m_SpawnWhenRemote || companionState != CompanionState.Remote) && (!m_SpawnWhenEx || companionState != CompanionState.ExCompanion) && (!(m_SpawnWhenInCapital && capitalPartyMode) || (companionState != CompanionState.Remote && companionState != CompanionState.InParty)))
+				{
+					msg = $"State is not a match. Companion state:{companionState}";
+					flag = false;
+				}
+				else if (m_HideIfDead && unit.LifeState.IsFinallyDead)
+				{
+					msg = "Hidden as dead.";
+					flag = false;
+				}
+				else
+				{
+					ConditionsHolder conditionsHolder = ShowCondition?.Get();
+					if (conditionsHolder != null && !conditionsHolder.Check())
+					{
+						msg = "Show condition is false.";
+						flag = false;
+					}
+					else
+					{
+						ConditionsHolder conditionsHolder2 = ControlCondition?.Get();
+						if (conditionsHolder2 != null && !conditionsHolder2.Check())
+						{
+							msg = "Control condition is false.";
+							flag = false;
+						}
+					}
+				}
+			}
 		}
-		CompanionState valueOrDefault = unit.GetCompanionState().GetValueOrDefault();
-		bool capitalPartyMode = Game.Instance.LoadedAreaState.Settings.CapitalPartyMode;
-		if (((m_SpawnWhenNone && valueOrDefault == CompanionState.None) || (m_SpawnWhenRemote && valueOrDefault == CompanionState.Remote) || (m_SpawnWhenEx && valueOrDefault == CompanionState.ExCompanion) || (m_SpawnWhenInCapital && capitalPartyMode && (valueOrDefault == CompanionState.Remote || valueOrDefault == CompanionState.InParty))) && ShouldShowUnit(unit))
+		if (!flag)
 		{
-			return (ControlCondition?.Get())?.Check() ?? true;
+			LogSpawn("Spawner failed to get companion control. Reason:");
+			LogSpawn(msg);
 		}
-		return false;
-	}
-
-	private bool ShouldShowUnit(BaseUnitEntity unit)
-	{
-		if (unit == null)
-		{
-			return false;
-		}
-		if (!m_HideIfDead || !unit.LifeState.IsFinallyDead)
-		{
-			return (ShowCondition?.Get())?.Check() ?? true;
-		}
-		return false;
+		return flag;
 	}
 
 	private void ClaimCompanion(bool stayInGame = false)
@@ -220,6 +268,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	public void ReleaseCompanion()
 	{
+		LogSpawn("Companion released.");
 		Data.Clear();
 	}
 
@@ -240,7 +289,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	private void PlaceCompanion(BaseUnitEntity unit, bool stayInGame)
 	{
-		bool didPlace = false;
+		bool flag = false;
 		if (ShouldControlUnit(unit))
 		{
 			unit.IsInGame = true;
@@ -250,7 +299,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 			{
 				unit.View.ViewTransform.position = base.ViewTransform.position;
 			}
-			didPlace = true;
+			flag = true;
 			unit.GetOptional<UnitPartPetOwner>()?.PlacePet();
 		}
 		else if (!stayInGame)
@@ -261,11 +310,13 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 				unit.IsInGame = false;
 			}
 		}
-		Data.OnPlaceCompanion(didPlace);
+		LogSpawn(flag ? "Spawn Success!" : "Spawn failed.");
+		Data.OnPlaceCompanion(flag);
 	}
 
 	void IPartyHandler.HandleAddCompanion()
 	{
+		spawnLogContext = LogContext.AddedToParty;
 		if (EventInvokerExtensions.BaseUnitEntity.Blueprint.CheckEqualsWithPrototype(base.Blueprint))
 		{
 			UpdateState();
@@ -274,6 +325,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	void IPartyHandler.HandleCompanionActivated()
 	{
+		spawnLogContext = LogContext.Activated;
 		if (EventInvokerExtensions.BaseUnitEntity.Blueprint.CheckEqualsWithPrototype(base.Blueprint))
 		{
 			UpdateState();
@@ -282,6 +334,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	void IPartyHandler.HandleCompanionRemoved(bool stayInGame)
 	{
+		spawnLogContext = LogContext.RemovedFromParty;
 		if (EventInvokerExtensions.BaseUnitEntity.Blueprint.CheckEqualsWithPrototype(base.Blueprint))
 		{
 			UpdateState(stayInGame);
@@ -290,11 +343,13 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	void IPartyHandler.HandleCapitalModeChanged()
 	{
+		spawnLogContext = LogContext.CapitalModeChanged;
 		UpdateState();
 	}
 
 	void ICompanionChangeHandler.HandleRecruit()
 	{
+		spawnLogContext = LogContext.Recruited;
 		if (EventInvokerExtensions.BaseUnitEntity.Blueprint.CheckEqualsWithPrototype(base.Blueprint))
 		{
 			UpdateState();
@@ -303,6 +358,7 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	void ICompanionChangeHandler.HandleUnrecruit()
 	{
+		spawnLogContext = LogContext.Unrecruited;
 		if (EventInvokerExtensions.BaseUnitEntity.Blueprint.CheckEqualsWithPrototype(base.Blueprint))
 		{
 			UpdateState();
@@ -311,6 +367,11 @@ public class CompanionSpawner : UnitSpawnerBase, IPartyHandler, ISubscriber<IBas
 
 	void IEtudesUpdateHandler.OnEtudesUpdate()
 	{
+		spawnLogContext = LogContext.EtudeUpdate;
 		UpdateState();
+	}
+
+	private void LogSpawn(string msg)
+	{
 	}
 }

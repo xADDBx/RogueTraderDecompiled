@@ -8,7 +8,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
-[ComponentName("Increase by 1 attacks count in burst for choosen weapon group")]
+[ComponentName("Starship/Increase by 1 attacks count in burst for choosen weapon group")]
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintFact))]
 [AllowMultipleComponents]

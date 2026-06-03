@@ -17,17 +17,30 @@ public class Loop : Composite
 
 	private BehaviourTreeNode Node;
 
-	private ExitCondition ExitCond;
+	public string Description { get; }
 
-	private bool IsLoopStarted;
+	public ExitCondition ExitCond { get; }
 
-	private bool IterationDone;
+	public bool IsLoopStarted { get; private set; }
 
-	public Loop(Action<Blackboard> initializer, Func<Blackboard, bool> moveNextDelegate, BehaviourTreeNode node, ExitCondition exitCond = ExitCondition.NoCondition)
+	public bool IterationDone { get; private set; }
+
+	public Loop(Action<Blackboard> initializer, Func<Blackboard, bool> moveNextDelegate, string description, BehaviourTreeNode node, ExitCondition exitCond = ExitCondition.NoCondition)
 		: base(node)
 	{
 		InitializeLoop = initializer;
 		NextIteration = moveNextDelegate;
+		Description = description;
+		Node = node;
+		ExitCond = exitCond;
+	}
+
+	public Loop(string debugDescription, Action<Blackboard> initializer, Func<Blackboard, bool> moveNextDelegate, string description, BehaviourTreeNode node, ExitCondition exitCond = ExitCondition.NoCondition)
+		: base(debugDescription, node)
+	{
+		InitializeLoop = initializer;
+		NextIteration = moveNextDelegate;
+		Description = description;
 		Node = node;
 		ExitCond = exitCond;
 	}
@@ -77,6 +90,7 @@ public class Loop : Composite
 		}
 		if (ExitCond != 0)
 		{
+			base.FailReason = "Loop finished without exit condition met";
 			return Status.Failure;
 		}
 		return Status.Success;

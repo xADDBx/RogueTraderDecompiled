@@ -9,6 +9,7 @@ using Kingmaker.Code.UI.MVVM.View.Party.PC;
 using Kingmaker.Code.UI.MVVM.VM.Settings.KeyBindSetupDialog;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Controllers.MapObjects;
 using Kingmaker.GameCommands;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
@@ -21,14 +22,17 @@ using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.MVVM.View.CombatLog.PC;
 using Kingmaker.UI.MVVM.View.SurfaceCombat.PC;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.GameConst;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
+using Rewired;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -82,6 +86,8 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 	private IDisposable m_SelectedUnitSubscribtion;
 
 	private SettingsEntityKeyBindingPair m_PauseBind;
+
+	private InputLayer m_SwitchGamePadInputLayer;
 
 	private bool m_IsFillingSkipCutscene;
 
@@ -165,6 +171,56 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 		m_SkipText.text = UISettingsRoot.Instance.UIKeybindGeneralSettings.SkipCutscene.GetBinding(0).GetPrettyString() + " " + UIStrings.Instance.CommonTexts.SkipHold;
 		m_FillImage.fillAmount = 0f;
 		m_SkipCutsceneHintHolderFade.DisappearAnimation();
+		if (!ApplicationHelper.IsRunningOnSwitch2 && !SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			return;
+		}
+		if (m_SwitchGamePadInputLayer == null)
+		{
+			m_SwitchGamePadInputLayer = new InputLayer
+			{
+				ContextName = "SwitchGamePadInputLayer"
+			};
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				OnHighlightOn(value: true);
+			}, 12));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				OnHighlightOn(value: false);
+			}, 12, InputActionEventType.ButtonJustReleased));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				OnHighlightOn(value: false);
+			}, 12, InputActionEventType.ButtonLongPressJustReleased));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				OnPauseTriggered();
+			}, 14));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				CameraRig.Instance.AddUp();
+			}, 6, InputActionEventType.ButtonLongPressed));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				CameraRig.Instance.AddDown();
+			}, 7, InputActionEventType.ButtonLongPressed));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				CameraRig.Instance.AddLeft();
+			}, 4, InputActionEventType.ButtonLongPressed));
+			AddDisposable(m_SwitchGamePadInputLayer.AddButton(delegate
+			{
+				CameraRig.Instance.AddRight();
+			}, 5, InputActionEventType.ButtonLongPressed));
+		}
+		if (m_SwitchGamePadInputLayer != null)
+		{
+			DelayedInvoker.InvokeInFrames(delegate
+			{
+				AddDisposable(GamePad.Instance.PushLayer(m_SwitchGamePadInputLayer));
+			}, 10);
+		}
 	}
 
 	protected override void DestroyViewImplementation()
@@ -189,6 +245,10 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 			m_FillSkipCutsceneCoroutine = null;
 		}
 		m_CurrentFill.Value = 0f;
+		if (ApplicationHelper.IsRunningOnSwitch2 || (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			GamePad.Instance.PopLayer(m_SwitchGamePadInputLayer);
+		}
 	}
 
 	private void SetSkipCutsceneSettings()
@@ -218,6 +278,24 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 	private void ShowSkipHint()
 	{
 		m_IsSkipCutsceneHintActive.Value = true;
+	}
+
+	public void OnHighlightOn(bool value)
+	{
+		InteractionHighlightController.Instance.Highlight(value);
+	}
+
+	public void OnPauseTriggered()
+	{
+		Game.Instance.IsPaused = !Game.Instance.IsPaused;
+	}
+
+	public void OnHighlightOff(InputActionEventData data)
+	{
+		if (InteractionHighlightController.Instance.IsHighlighting)
+		{
+			InteractionHighlightController.Instance.Highlight(on: false);
+		}
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)
@@ -262,24 +340,29 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 
 	private void HandleSkipCutsceneHintState(bool value)
 	{
-		if (!Game.Instance.State.Cutscenes.TryFind((CutscenePlayerData p) => p.Cutscene.LockControl && p.Cutscene.NonSkippable, out var _))
+		if (Game.Instance.State.Cutscenes.TryFind((CutscenePlayerData p) => p.Cutscene.LockControl && p.Cutscene.NonSkippable, out var _))
 		{
-			if (m_FillSkipCutsceneCoroutine != null && !m_IsFillingSkipCutscene)
+			return;
+		}
+		if (m_FillSkipCutsceneCoroutine != null && !m_IsFillingSkipCutscene)
+		{
+			StopCoroutine(m_FillSkipCutsceneCoroutine);
+		}
+		if (m_HideCloseCutsceneHint != null)
+		{
+			StopCoroutine(m_HideCloseCutsceneHint);
+		}
+		if (value)
+		{
+			string prettyString = UISettingsRoot.Instance.UIKeybindGeneralSettings.SkipCutscene.GetBinding(0).GetPrettyString();
+			m_SkipText.text = "<color=#" + m_SkipHintColorTag + ">[" + prettyString + "]</color> " + UIStrings.Instance.CommonTexts.SkipHold.Text;
+			m_SkipCutsceneHintHolderFade.AppearAnimation();
+			if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
 			{
-				StopCoroutine(m_FillSkipCutsceneCoroutine);
+				m_SkipText.text = string.Empty;
 			}
-			if (m_HideCloseCutsceneHint != null)
-			{
-				StopCoroutine(m_HideCloseCutsceneHint);
-			}
-			if (value)
-			{
-				m_SkipCutsceneHintHolderFade.AppearAnimation();
-				string prettyString = UISettingsRoot.Instance.UIKeybindGeneralSettings.SkipCutscene.GetBinding(0).GetPrettyString();
-				m_SkipText.text = "<color=#" + m_SkipHintColorTag + ">[" + prettyString + "]</color> " + UIStrings.Instance.CommonTexts.SkipHold.Text;
-				m_HideCloseCutsceneHint = HandleSkipHint();
-				StartCoroutine(m_HideCloseCutsceneHint);
-			}
+			m_HideCloseCutsceneHint = HandleSkipHint();
+			StartCoroutine(m_HideCloseCutsceneHint);
 		}
 	}
 
@@ -367,6 +450,12 @@ public class SurfaceHUDPCView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubsc
 	private void SetEndTurnBindText(KeyBindingPair keyBindingPair = default(KeyBindingPair))
 	{
 		AddDisposable(m_EndTurnButton.SetHint(UIStrings.Instance.Tooltips.EndTurn, "EndTurn"));
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			m_EndTurnBindText.transform.parent.gameObject.SetActive(value: false);
+			return;
+		}
+		m_EndTurnBindText.transform.parent.gameObject.SetActive(value: true);
 		m_EndTurnBindText.text = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("EndTurn"));
 	}
 }

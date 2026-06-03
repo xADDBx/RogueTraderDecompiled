@@ -20,9 +20,14 @@ public class VisualSettings
 	[SerializeField]
 	private VisualOverride m_PS4;
 
+	[SerializeField]
+	private VisualOverride m_Switch;
+
 	public VisualOverride XBox => m_XBox;
 
 	public VisualOverride PS4 => m_PS4;
+
+	public VisualOverride Switch => m_Switch;
 
 	public SpriteLink Picture => GetVisualOverride()?.Picture ?? m_Picture;
 
@@ -37,7 +42,6 @@ public class VisualSettings
 			{
 			case ConsoleType.Common:
 			case ConsoleType.XBox:
-			case ConsoleType.Switch:
 			case ConsoleType.SteamController:
 			case ConsoleType.SteamDeck:
 				result = m_XBox;
@@ -45,6 +49,9 @@ public class VisualSettings
 			case ConsoleType.PS4:
 			case ConsoleType.PS5:
 				result = m_PS4;
+				break;
+			case ConsoleType.Switch:
+				result = m_Switch;
 				break;
 			}
 		}

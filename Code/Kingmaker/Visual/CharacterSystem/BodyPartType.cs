@@ -40,6 +40,9 @@ public enum BodyPartType : long
 	CuffR = 0x100000000L,
 	Hoses = 0x200000000L,
 	Teeth = 0x400000000L,
-	Cape = 0x8000000000L,
-	Augment1 = 0x800000000L
+	Augment1 = 0x800000000L,
+	ForearmAugRight = 0x1000000000L,
+	HandsAugRight = 0x2000000000L,
+	UpperArmsAugRight = 0x4000000000L,
+	Cape = 0x8000000000L
 }

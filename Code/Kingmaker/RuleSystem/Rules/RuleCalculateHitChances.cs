@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
-using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
@@ -26,6 +25,8 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public readonly ValueModifiersManager TargetWeaponSkillValueModifiers = new ValueModifiersManager();
 
+	public readonly PercentsMultipliersManager CritChanceOverkillPercentMultipliers = new PercentsMultipliersManager();
+
 	public FlagModifiersManager AutoHitModifier = new FlagModifiersManager();
 
 	public FlagModifiersManager AutoCritModifier = new FlagModifiersManager();
@@ -48,6 +49,8 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public int ResultHitChance { get; private set; }
 
+	public RuleCalculateHitChanceBorder HitChanceBorderRule { get; private set; }
+
 	public int ResultHitChanceNoUpperLimit { get; private set; }
 
 	public int ResultBaseChancesBeforeRecoil { get; private set; }
@@ -68,21 +71,9 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	public int ResultRighteousFuryChance => RighteousFuryChanceRule.ResultChance;
 
-	public bool IsMelee
-	{
-		get
-		{
-			if (Ability.Weapon == null)
-			{
-				return Ability.Blueprint.GetRange() == 1;
-			}
-			return Ability.Weapon.Blueprint.IsMelee;
-		}
-	}
+	public bool IsMelee => Ability.IsMelee;
 
 	public bool IsScatter => Ability.IsScatter;
-
-	public bool IsAOE => Ability.IsAOE;
 
 	public bool IsAutoHit { get; set; }
 
@@ -151,6 +142,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		AbilityTargetPosition = abilityTargetPosition;
 		OverpenetrationModifier = overpenetrationModifier;
 		RighteousFuryChanceRule = new RuleCalculateRighteousFuryChance((MechanicEntity)base.Initiator, (MechanicEntity)Target, Ability);
+		HitChanceBorderRule = new RuleCalculateHitChanceBorder((MechanicEntity)base.Initiator, (MechanicEntity)Target, Ability);
 	}
 
 	public RuleCalculateHitChances([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] AbilityData ability, int burstIndex)
@@ -168,6 +160,9 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		}
 		ResultLos = losDescription;
 		ResultCoverEntity = losDescription.ObstacleEntity;
+		CheckAutoHitOrMiss();
+		HitChanceBorderRule.IsAutoHit = IsAutoHit;
+		Rulebook.Trigger(HitChanceBorderRule);
 		if (IsMelee)
 		{
 			OnTriggerMelee();
@@ -179,10 +174,6 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 			{
 				OnTriggerScatter();
 			}
-			else if (IsAOE)
-			{
-				OnTriggerAOE();
-			}
 			else
 			{
 				OnTriggerRanged();
@@ -192,17 +183,26 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		Rulebook.Trigger(RighteousFuryChanceRule);
 	}
 
-	private void SpecialOverrideWithFeatures()
+	private void CheckAutoHitOrMiss()
 	{
 		if ((bool)base.ConcreteInitiator.Features.AutoHit || AutoHitModifier.Value)
 		{
 			IsAutoHit = true;
-			RawResult = 100;
-			ResultHitChance = 100;
 		}
 		else if ((bool)base.ConcreteInitiator.Features.AutoMiss)
 		{
 			IsAutoMiss = true;
+		}
+	}
+
+	private void SpecialOverrideWithFeatures()
+	{
+		if (IsAutoHit)
+		{
+			SetHitChanceToBorder();
+		}
+		else if (IsAutoMiss)
+		{
 			RawResult = 0;
 			ResultHitChance = 0;
 		}
@@ -210,8 +210,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	private void OnTriggerMelee()
 	{
-		RawResult = 100;
-		ResultHitChance = 100;
+		SetHitChanceToBorder();
 		m_RuleCalculateSuperiority = Rulebook.Trigger(new RuleCalculateSuperiority(base.Initiator, Target, Ability));
 		StatType statType = Ability.Blueprint.GetComponent<WarhammerOverrideAbilityMeleeStat>()?.Stat ?? StatType.WarhammerWeaponSkill;
 		int num = ((MechanicEntity)base.Initiator).GetAttributeOptional(statType)?.ModifiedValue ?? 0;
@@ -228,13 +227,7 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 
 	private void OnTriggerScatter()
 	{
-		RawResult = 100;
-		ResultHitChance = 100;
-	}
-
-	private void OnTriggerAOE()
-	{
-		OnTriggerRanged();
+		SetHitChanceToBorder();
 	}
 
 	private void OnTriggerRanged()
@@ -253,16 +246,22 @@ public class RuleCalculateHitChances : RulebookTargetEvent
 		}
 		WeaponStatsResultRecoil = weaponStats.ResultRecoil;
 		int num = Mathf.RoundToInt((float)((IsScatter ? Math.Max(0, ResultBaseChancesBeforeRecoil - WeaponStatsResultRecoil) : Math.Max(0, ResultBaseChancesBeforeRecoil)) + HitChanceValueModifiers.Value) * OverpenetrationModifier);
-		int hitChanceOverkillBorder = BlueprintRoot.Instance.WarhammerRoot.CombatRoot.HitChanceOverkillBorder;
-		RighteousFuryChanceRule.ChanceModifiers.Add(Mathf.Max(0, num - hitChanceOverkillBorder), this, ModifierDescriptor.HitChanceOverkill);
+		int num2 = Mathf.Max(0, num - HitChanceBorderRule.ResultOverkillBorder);
+		num2 = Mathf.RoundToInt((float)num2 * CritChanceOverkillPercentMultipliers.Value);
+		RighteousFuryChanceRule.ChanceModifiers.Add(num2, this, ModifierDescriptor.HitChanceOverkill);
 		RawResult = num;
 		ResultHitChanceNoUpperLimit = Math.Max(0, RawResult);
-		ResultHitChance = Mathf.Clamp(RawResult, 0, hitChanceOverkillBorder);
+		ResultHitChance = Mathf.Clamp(RawResult, 0, HitChanceBorderRule.ResultOverkillBorder);
 		if (!Ability.IsBurstAttack && Target is DestructibleEntity)
 		{
-			RawResult = 100;
-			ResultHitChance = 100;
+			SetHitChanceToBorder();
 		}
+	}
+
+	private void SetHitChanceToBorder()
+	{
+		int resultHitChance = (RawResult = HitChanceBorderRule.Result);
+		ResultHitChance = resultHitChance;
 	}
 
 	public void SetFakeCover(LosCalculations.CoverType fakeCover, bool ignoreRealCover)

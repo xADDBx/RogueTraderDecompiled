@@ -25,6 +25,8 @@ public class RulePerformAttack : RulebookTargetEvent
 
 	private readonly bool m_DisableDodgeForAlly;
 
+	public bool DisableWeaponAttackDamage => m_DisableWeaponAttackDamage;
+
 	public AbilityData Ability { get; }
 
 	public RulePerformAttackRoll RollPerformAttackRule { get; }
@@ -79,7 +81,7 @@ public class RulePerformAttack : RulebookTargetEvent
 
 	public int BurstIndex => RollPerformAttackRule.BurstIndex;
 
-	public bool IsMelee => Ability.Weapon?.Blueprint.IsMelee ?? false;
+	public bool IsMelee => Ability.IsMelee;
 
 	public RulePerformAttack([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] AbilityData ability, int burstIndex, bool disableWeaponAttackDamage, bool disableDodgeForAlly, [CanBeNull] RulePerformAttackRoll performAttackRoll, [CanBeNull] RuleRollDamage overrideDamageRoll)
 		: base(initiator, target)

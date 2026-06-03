@@ -30,10 +30,7 @@ public class AddMechanicsFeature : BlueprintComponent, IRuntimeEntityFactCompone
 
 		protected override void OnDeactivate()
 		{
-			if (!(base.Fact is UnitFact fact) || base.SourceBlueprintComponent.m_Restrictions.IsPassed(fact))
-			{
-				base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Release(base.Fact as Buff);
-			}
+			base.Owner.GetMechanicFeature(base.SourceBlueprintComponent.m_Feature).Release(base.Fact as Buff);
 		}
 
 		public override Hash128 GetHash128()

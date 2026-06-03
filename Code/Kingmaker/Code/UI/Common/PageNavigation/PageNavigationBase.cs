@@ -15,11 +15,11 @@ public abstract class PageNavigationBase : MonoBehaviour, IDisposable
 	private bool m_HasPoints = true;
 
 	[SerializeField]
-	[ConditionalShow("m_HasPoints")]
+	[ShowIf("m_HasPoints")]
 	private PageNavigationPoint m_PointPrefab;
 
 	[SerializeField]
-	[ConditionalShow("m_HasPoints")]
+	[ShowIf("m_HasPoints")]
 	private Transform m_PointsContainer;
 
 	private Action m_PrevCallback;

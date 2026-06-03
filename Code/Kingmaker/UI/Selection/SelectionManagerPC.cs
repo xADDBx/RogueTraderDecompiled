@@ -168,6 +168,7 @@ public sealed class SelectionManagerPC : SelectionManagerBase, IPartyHandler, IS
 
 	public void OnAreaLoadingComplete()
 	{
+		Game.Instance.SelectionCharacter.OnReset();
 		SelectAll();
 	}
 }

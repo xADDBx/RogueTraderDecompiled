@@ -58,6 +58,9 @@ public class BlueprintBarkBanter : BlueprintScriptableObject, IWeighted
 	[FormerlySerializedAs("Unit")]
 	private BlueprintUnitReference m_Unit;
 
+	[SerializeField]
+	private bool IsNotPartySpeaker;
+
 	[NotNull]
 	public BanterConditions Conditions = new BanterConditions();
 
@@ -130,8 +133,12 @@ public class BlueprintBarkBanter : BlueprintScriptableObject, IWeighted
 		{
 			return new BarkBanterPlayer();
 		}
-		Entity speaker = Speaker;
-		if (speaker == null)
+		Entity entity = Speaker;
+		if (IsNotPartySpeaker)
+		{
+			entity = Unit.CreateEntity();
+		}
+		else if (entity == null)
 		{
 			return null;
 		}
@@ -141,12 +148,12 @@ public class BlueprintBarkBanter : BlueprintScriptableObject, IWeighted
 			return null;
 		}
 		BarkBanterPlayer barkBanterPlayer = new BarkBanterPlayer();
-		barkBanterPlayer.AddEntry(speaker, localizedString);
+		barkBanterPlayer.AddEntry(entity, localizedString);
 		BanterResponseEntry banterResponseEntry = SelectResponse();
-		Entity entity = banterResponseEntry?.Speaker;
-		if (entity != null)
+		Entity entity2 = banterResponseEntry?.Speaker;
+		if (entity2 != null)
 		{
-			barkBanterPlayer.AddEntry(entity, banterResponseEntry.Response);
+			barkBanterPlayer.AddEntry(entity2, banterResponseEntry.Response);
 		}
 		AstropathBriefComponent astropathBriefComponent = this.GetComponents<AstropathBriefComponent>().FirstOrDefault();
 		if (astropathBriefComponent != null)

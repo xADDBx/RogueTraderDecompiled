@@ -1,15 +1,13 @@
 using System;
-using System.Collections.Generic;
-using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Designers.EventConditionActionSystem.ContextData;
-using Kingmaker.Designers.Mechanics.Facts.Restrictions;
-using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.EntitySystem;
+using Kingmaker.Designers.Mechanics.Facts;
+using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Enums;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Damage;
-using Kingmaker.UnitLogic;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
-using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Parts;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -17,45 +15,84 @@ namespace Kingmaker.Code.UnitLogic.FactLogic;
 
 [Serializable]
 [TypeId("e0ecefa49eeb4f80a63dba55e4f9dfd8")]
-public abstract class WarhammerDamageTrigger : UnitFactComponentDelegate, IHashable
+public abstract class WarhammerDamageTrigger : WarhammerDamageTriggerBase, IHashable
 {
-	private static readonly HashSet<EntityFactComponent> TriggeringNow = new HashSet<EntityFactComponent>();
+	public bool TriggerBeforeDamageHappens;
 
-	[SerializeField]
-	protected RestrictionCalculator Restrictions = new RestrictionCalculator();
+	public ActionList Actions;
 
-	public bool TriggersForDamageOverTime;
+	public ActionList ActionsOnAttacker;
 
-	protected void TryTrigger(RuleDealDamage rule)
+	public ContextPropertyName ContextPropertyName;
+
+	public WarhammerKillTrigger.PropertyParameter PropertyToSave;
+
+	protected override void OnTrigger<TEvent>(TEvent rule)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+		if (base.Fact.MaybeContext == null)
 		{
-			if (!Restrictions.IsPassed(base.Fact, rule, rule.SourceAbility))
-			{
-				return;
-			}
+			Actions?.Run();
+			return;
 		}
-		BlueprintScriptableObject blueprintScriptableObject = rule.Reason.Context?.AssociatedBlueprint;
-		if ((!(blueprintScriptableObject is BlueprintBuff) && !(blueprintScriptableObject is BlueprintAbilityAreaEffect)) || TriggersForDamageOverTime)
+		int? contextPropertyToSave = GetContextPropertyToSave(rule);
+		if (contextPropertyToSave.HasValue)
 		{
-			if (TriggeringNow.Contains(base.Runtime))
-			{
-				throw new Exception($"Cycled trigger: {base.Fact}.{name}");
-			}
-			try
-			{
-				TriggeringNow.Add(base.Runtime);
-				OnTrigger(rule);
-			}
-			finally
-			{
-				TriggeringNow.Remove(base.Runtime);
-			}
-			base.ExecutesCount++;
+			base.Context[ContextPropertyName] = contextPropertyToSave.Value;
+		}
+		ActionList actions = Actions;
+		if (actions != null && actions.HasActions)
+		{
+			base.Fact.RunActionInContext(Actions, rule.ConcreteTarget.ToITargetWrapper());
+		}
+		actions = ActionsOnAttacker;
+		if (actions != null && actions.HasActions)
+		{
+			base.Fact.RunActionInContext(ActionsOnAttacker, rule.ConcreteInitiator.ToITargetWrapper());
 		}
 	}
 
-	protected abstract void OnTrigger(RuleDealDamage rule);
+	private int? GetContextPropertyToSave<TEvent>(TEvent rule) where TEvent : RulebookTargetEvent, IDamageHolderRule
+	{
+		return PropertyToSave switch
+		{
+			WarhammerKillTrigger.PropertyParameter.EnemyDifficulty => ((int?)(rule.Target as UnitEntity)?.Blueprint.DifficultyType).GetValueOrDefault(), 
+			WarhammerKillTrigger.PropertyParameter.Damage => GetDamage(rule), 
+			WarhammerKillTrigger.PropertyParameter.DamageOverflow => Math.Max(GetDamage(rule) - GetHPBeforeDamage(rule), 0), 
+			WarhammerKillTrigger.PropertyParameter.Penetration => Math.Max(GetPenetration(rule), 0), 
+			_ => null, 
+		};
+	}
+
+	private static int GetDamage(RulebookTargetEvent rule)
+	{
+		if (!(rule is RuleDealDamage { Result: var result }))
+		{
+			if (!(rule is RuleRollDamage { ResultValue: var resultValue }))
+			{
+				throw new NotImplementedException();
+			}
+			return resultValue;
+		}
+		return result;
+	}
+
+	private static int GetHPBeforeDamage(RulebookTargetEvent rule)
+	{
+		if (!(rule is RuleDealDamage { HPBeforeDamage: var hPBeforeDamage }))
+		{
+			if (rule is RuleRollDamage ruleRollDamage)
+			{
+				return ruleRollDamage.ConcreteTarget.GetHealthOptional()?.HitPointsLeft ?? 0;
+			}
+			throw new NotImplementedException();
+		}
+		return hPBeforeDamage;
+	}
+
+	private static int GetPenetration(IDamageHolderRule rule)
+	{
+		return rule.Damage.Penetration.Value;
+	}
 
 	public override Hash128 GetHash128()
 	{

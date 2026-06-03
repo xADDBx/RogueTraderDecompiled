@@ -87,6 +87,8 @@ public struct ObstacleAnalyzer
 
 	private const float CollisionTime = 1.5f;
 
+	private const int FindNearestNodeOnLevelSearchRadius = 4;
+
 	[NotNull]
 	internal static readonly NNConstraint DefaultXZConstraint;
 
@@ -112,8 +114,8 @@ public struct ObstacleAnalyzer
 		UnwalkableXZConstraint = NNConstraint.Default;
 		UnwalkableXZConstraint.distanceXZ = (DefaultXZConstraint.distanceXZ = true);
 		UnwalkableXZConstraint.constrainTags = (DefaultXZConstraint.constrainTags = true);
-		UnwalkableXZConstraint.tags = (DefaultXZConstraint.tags = 1);
-		UnwalkableXZConstraint.constrainWalkability = NNConstraint.WalkableConstraintType.None;
+		UnwalkableXZConstraint.tags = (DefaultXZConstraint.tags = -2147483647);
+		UnwalkableXZConstraint.constrainWalkability = false;
 	}
 
 	public ObstacleAnalyzer(Vector3 position, Vector2 forward, float radius, float speed)
@@ -478,6 +480,90 @@ public struct ObstacleAnalyzer
 			}
 			return AstarPath.active.GetNearest(pos, constraint, hint);
 		}
+	}
+
+	public static NNInfo FindNearestNodeOnLevel(Vector3 pos, float yTolerance)
+	{
+		if (AstarPath.active == null)
+		{
+			PFLog.Default.Log("FindNearestNodeOnLevel: AstarPath.active == null");
+			return default(NNInfo);
+		}
+		NavGraph[] graphs = AstarPath.active.graphs;
+		if (graphs == null || graphs.Length == 0)
+		{
+			PFLog.Default.Log("FindNearestNodeOnLevel: no graphs");
+			return default(NNInfo);
+		}
+		CustomGridGraph customGridGraph = null;
+		for (int i = 0; i < graphs.Length; i++)
+		{
+			if (graphs[i] is CustomGridGraph customGridGraph2)
+			{
+				customGridGraph = customGridGraph2;
+				break;
+			}
+		}
+		if (customGridGraph == null || customGridGraph.nodes == null)
+		{
+			PFLog.Default.Log(string.Format("FindNearestNodeOnLevel: no CustomGridGraph (graphs.Length={0}, graphs[0]={1})", graphs.Length, (graphs.Length == 0) ? "null" : graphs[0]?.GetType().Name));
+			return default(NNInfo);
+		}
+		Int2 nearestNodeCoords = customGridGraph.GetNearestNodeCoords(pos);
+		int x = nearestNodeCoords.x;
+		int y = nearestNodeCoords.y;
+		CustomGridNode customGridNode = null;
+		float num = float.PositiveInfinity;
+		int num2 = 0;
+		int num3 = 0;
+		float num4 = float.PositiveInfinity;
+		for (int j = -4; j <= 4; j++)
+		{
+			int num5 = y + j;
+			if (num5 < 0 || num5 >= customGridGraph.depth)
+			{
+				continue;
+			}
+			for (int k = -4; k <= 4; k++)
+			{
+				int num6 = x + k;
+				if (num6 < 0 || num6 >= customGridGraph.width)
+				{
+					continue;
+				}
+				CustomGridNode customGridNode2 = customGridGraph.nodes[num5 * customGridGraph.width + num6];
+				if (customGridNode2 == null || !UnwalkableXZConstraint.Suitable(customGridNode2))
+				{
+					continue;
+				}
+				num2++;
+				Vector3 vector3Position = customGridNode2.Vector3Position;
+				float num7 = Mathf.Abs(vector3Position.y - pos.y);
+				if (num7 > yTolerance)
+				{
+					num3++;
+					if (num7 < num4)
+					{
+						num4 = num7;
+					}
+					continue;
+				}
+				float sqrMagnitude = (vector3Position - pos).sqrMagnitude;
+				if (sqrMagnitude < num)
+				{
+					num = sqrMagnitude;
+					customGridNode = customGridNode2;
+				}
+			}
+		}
+		PFLog.Pathfinding.Log($"FindNearestNodeOnLevel: pos={pos} posY={pos.y} tol={yTolerance} " + $"center=({x},{y}) radius={4} " + $"checked={num2} rejectedByY={num3} " + $"bestRejectedDy={num4} " + "bestNode=" + ((customGridNode != null) ? $"Y={customGridNode.Vector3Position.y}" : "null"));
+		if (customGridNode == null)
+		{
+			return default(NNInfo);
+		}
+		NNInfoInternal internalInfo = new NNInfoInternal(customGridNode);
+		internalInfo.clampedPosition = customGridNode.Vector3Position;
+		return new NNInfo(internalInfo);
 	}
 
 	public static Vector3 FindClosestPointToStandOn(Vector3 pos, float corpulence, CustomGridNodeBase hint = null)

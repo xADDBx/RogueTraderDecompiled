@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Code.GameCore.Mics;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.Localization;
 using Kingmaker.Stores.DlcInterfaces;
 using UnityEngine;
@@ -67,6 +68,18 @@ public class BlueprintDlcReward : BlueprintScriptableObject, IBlueprintDlcReward
 	public bool IsAvailable => Dlcs.Any((IBlueprintDlc dlc) => dlc.IsAvailable);
 
 	public bool IsActive => Dlcs.Any((IBlueprintDlc dlc) => dlc.IsActive);
+
+	public bool IsActiveOrAvailable
+	{
+		get
+		{
+			if ((bool)ContextData<DlcExtension.LoadSaveDlcCheck>.Current || !Dlcs.OfType<BlueprintDlc>().Any((BlueprintDlc dlc) => Game.Instance.Player.HasAdditionalContentDlc(dlc)))
+			{
+				return IsAvailable;
+			}
+			return IsActive;
+		}
+	}
 
 	public virtual void RecheckAvailability()
 	{

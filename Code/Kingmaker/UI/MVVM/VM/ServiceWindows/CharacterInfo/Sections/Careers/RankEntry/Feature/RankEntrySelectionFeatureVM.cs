@@ -30,9 +30,11 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 
 	private bool m_IsSelected;
 
-	private bool m_UnitHasFeature;
+	private bool m_UnitCanTakeFeature;
 
 	private static List<BlueprintFact> s_UnitFacts = new List<BlueprintFact>();
+
+	protected virtual bool IsRepeatable => false;
 
 	public int VirtualListTypeId
 	{
@@ -48,7 +50,7 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 
 	public bool IsCommonFeature => RankEntryUtils.IsCommonSelectionItem(SelectionItem);
 
-	public bool UnitHasFeature => m_UnitHasFeature;
+	public bool UnitCanTakeFeature => m_UnitCanTakeFeature;
 
 	public RankEntrySelectionFeatureVM(RankEntrySelectionVM owner, CareerPathVM careerPathVM, FeatureSelectionItem featureSelectionItem, IReadOnlyReactiveProperty<SelectionStateFeature> selectionState, Action<FeatureSelectionItem?> selectFeature)
 		: base(careerPathVM, new UIFeature(featureSelectionItem.Feature))
@@ -94,7 +96,7 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 
 	protected override void UpdateFeatureState()
 	{
-		UpdateUnitHasFeature();
+		UpdateUnitCanTakeFeature();
 		if (m_IsSelected)
 		{
 			if (Owner.EntryState.Value == RankEntryState.NotValid)
@@ -129,7 +131,7 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 		{
 			return;
 		}
-		if (m_UnitHasFeature)
+		if (!m_UnitCanTakeFeature)
 		{
 			FeatureState.Value = RankFeatureState.NotSelectable;
 			return;
@@ -155,9 +157,9 @@ public class RankEntrySelectionFeatureVM : BaseRankEntryFeatureVM, IVirtualListE
 		return true;
 	}
 
-	private void UpdateUnitHasFeature()
+	private void UpdateUnitCanTakeFeature()
 	{
-		m_UnitHasFeature = s_UnitFacts.Contains(base.Feature);
+		m_UnitCanTakeFeature = IsRepeatable || !s_UnitFacts.Contains(base.Feature);
 	}
 
 	public static void UpdateUnitFacts(BaseUnitEntity unit)

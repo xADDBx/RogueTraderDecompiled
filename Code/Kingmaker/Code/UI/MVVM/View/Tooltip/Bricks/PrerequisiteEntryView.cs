@@ -8,6 +8,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.View.Tooltip.PC.Bricks.CombatLog;
+using Kingmaker.UI.Pointer;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -207,7 +208,7 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 		{
 			return Disposable.Empty;
 		}
-		bool entered = TMP_TextUtilities.IsIntersectingRectTransform(m_Text.rectTransform, Input.mousePosition, UICamera.Claim());
+		bool entered = TMP_TextUtilities.IsIntersectingRectTransform(m_Text.rectTransform, CursorController.CursorPosition, UICamera.Claim());
 		IDisposable enter = UniRxExtensionMethods.OnPointerEnterAsObservable(m_Text).Subscribe(delegate
 		{
 			entered = true;
@@ -225,7 +226,7 @@ public class PrerequisiteEntryView : ViewBase<PrerequisiteEntryVM>, IWidgetView
 			}
 			else
 			{
-				int num = TMP_TextUtilities.FindIntersectingLink(m_Text, Input.mousePosition, UICamera.Claim());
+				int num = TMP_TextUtilities.FindIntersectingLink(m_Text, CursorController.CursorPosition, UICamera.Claim());
 				if (num == -1)
 				{
 					ClearFocusIfNeeded();

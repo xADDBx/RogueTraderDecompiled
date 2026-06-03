@@ -35,29 +35,59 @@ public static class ThreadedGameLoader
 				array[i] = ReadFiles(saveInfo, mainSaver, allFiles2, isSmokeTest);
 			}
 			Task<string> statisticsStateTask = LoadStatisticsAsync(saveInfo, mainSaver, "statistic");
-			string text = LoadJson(saveInfo, mainThreadLoader, "settings");
-			string text2 = LoadJson(saveInfo, mainThreadLoader, "player");
-			string text3 = LoadJson(saveInfo, mainThreadLoader, "party");
+			string text = LoadJson(saveInfo, mainThreadLoader, "fogIndex");
+			string text2 = LoadJson(saveInfo, mainThreadLoader, "knownAreas");
+			string text3 = LoadJson(saveInfo, mainThreadLoader, "settings");
+			string text4 = LoadJson(saveInfo, mainThreadLoader, "player");
+			string text5 = LoadJson(saveInfo, mainThreadLoader, "party");
 			string json = LoadJson(saveInfo, mainThreadLoader, "coop");
-			if (text == null)
+			if (text3 == null)
 			{
 				throw new Exception("Save is broken: settings.json was not found");
 			}
-			if (text2 == null)
+			if (text4 == null)
 			{
 				throw new Exception("Save is broken: player.json was not found");
 			}
-			if (text3 == null)
+			if (text5 == null)
 			{
 				throw new Exception("Save is broken: party.json was not found");
 			}
-			Task<InGameSettings> deserializeSettingsTask = DeserializeInGameSettings(text);
-			Task<Player> deserializePlayerTask = DeserializePlayer(text2);
-			Task<SceneEntitiesState> deserializeCrossSceneStateTask = DeserializeCrossSceneState(text3);
+			Task<KnownAreaEntry[]> deserializeKnownAreaListJson = ((text2 != null) ? TryDeserialize<KnownAreaEntry[]>(text2, "known areas") : Task.FromResult(Array.Empty<KnownAreaEntry>()));
+			Task<SavedFogMasks[]> deserializeFogIndexJson = ((text != null) ? Deserialize<SavedFogMasks[]>(text, "fog data") : Task.FromResult(Array.Empty<SavedFogMasks>()));
+			Task<InGameSettings> deserializeSettingsTask = DeserializeInGameSettings(text3);
+			Task<Player> deserializePlayerTask = DeserializePlayer(text4);
+			Task<SceneEntitiesState> deserializeCrossSceneStateTask = DeserializeCrossSceneState(text5);
 			Task<CoopData> deserializeCoopTask = DeserializeCoopSettings(json);
 			await Task.WhenAll(array);
 			string statistics = await statisticsStateTask;
-			CreateStateData(allFiles);
+			KnownAreaEntry[] array2 = await deserializeKnownAreaListJson;
+			if (array2 != null && array2.Length != 0)
+			{
+				CreateKnownAreasState(array2);
+			}
+			else
+			{
+				CreateStateData(allFiles);
+			}
+			SavedFogMasks[] array3 = await deserializeFogIndexJson;
+			if (array3.Length != 0)
+			{
+				SavedFogMasks.AllMasks = array3;
+			}
+			else
+			{
+				foreach (string item in allFiles)
+				{
+					if (item.EndsWith(".fog") && item.Length > 32 + ".fog".Length)
+					{
+						string areaId = item.Substring(0, 32);
+						string text6 = item;
+						string sceneName = text6.Substring(32, text6.Length - 4 - 32);
+						SavedFogMasks.Get(areaId).Register(sceneName);
+					}
+				}
+			}
 			InGameSettings settings = await deserializeSettingsTask;
 			SceneEntitiesState crossSceneState = await deserializeCrossSceneStateTask;
 			Player player = await deserializePlayerTask;
@@ -82,6 +112,16 @@ public static class ThreadedGameLoader
 			await Awaiters.ThreadPoolYield;
 			return LoadJson(saveInfo, saver, fileName);
 		}
+	}
+
+	private static Task<T> Deserialize<T>([NotNull] string json, string displayName) where T : class
+	{
+		return Deserialize<T>("Restore " + displayName, json, SaveSystemJsonSerializer.Serializer);
+	}
+
+	private static Task<T> TryDeserialize<T>([NotNull] string json, string displayName) where T : class
+	{
+		return TryDeserialize<T>("Try restore " + displayName, json, SaveSystemJsonSerializer.Serializer);
 	}
 
 	[NotNull]
@@ -114,6 +154,37 @@ public static class ThreadedGameLoader
 		}
 	}
 
+	private static async Task<T> TryDeserialize<T>(string timer, string json, JsonSerializer serializer) where T : class
+	{
+		await EditorSafeThreading.Awaitable;
+		using (CodeTimer.New(timer))
+		{
+			return (json == null) ? null : serializer.TryDeserializeObject<T>(json);
+		}
+	}
+
+	private static void CreateKnownAreasState(KnownAreaEntry[] knownAreas)
+	{
+		for (int i = 0; i < knownAreas.Length; i++)
+		{
+			KnownAreaEntry knownAreaEntry = knownAreas[i];
+			AreaPersistentState state = GetState(knownAreaEntry.AreaGuid);
+			state.ShouldLoad = true;
+			if (knownAreaEntry.AddStateScenes == null || knownAreaEntry.AddStateScenes.Length == 0)
+			{
+				continue;
+			}
+			string[] addStateScenes = knownAreaEntry.AddStateScenes;
+			foreach (string sceneName in addStateScenes)
+			{
+				if (!state.GetAdditionalSceneStates().HasItem((SceneEntitiesState s) => s.SceneName == sceneName))
+				{
+					state.GetAdditionalSceneStates().Add(new SceneEntitiesState(sceneName));
+				}
+			}
+		}
+	}
+
 	private static void CreateStateData(List<string> allFiles)
 	{
 		foreach (string allFile in allFiles)
@@ -137,13 +208,13 @@ public static class ThreadedGameLoader
 				continue;
 			}
 			string sceneName = ((allFile.Length > 37) ? allFile.Substring(32, allFile.Length - 37) : null);
-			AreaPersistentState state = GetState(allFile);
-			if (state != null)
+			AreaPersistentState areaPersistentState = ((allFile.Length >= 32) ? GetState(allFile.Substring(0, 32)) : null);
+			if (areaPersistentState != null)
 			{
-				state.ShouldLoad = true;
-				if (sceneName != null && state.GetAdditionalSceneStates().FirstOrDefault((SceneEntitiesState s) => s.SceneName == sceneName) == null)
+				areaPersistentState.ShouldLoad = true;
+				if (sceneName != null && areaPersistentState.GetAdditionalSceneStates().FirstOrDefault((SceneEntitiesState s) => s.SceneName == sceneName) == null)
 				{
-					state.GetAdditionalSceneStates().Add(new SceneEntitiesState(sceneName));
+					areaPersistentState.GetAdditionalSceneStates().Add(new SceneEntitiesState(sceneName));
 				}
 			}
 		}
@@ -202,7 +273,6 @@ public static class ThreadedGameLoader
 
 	private static AreaPersistentState GetState(string guid)
 	{
-		guid = guid.Substring(0, 32);
 		AreaPersistentState areaPersistentState = Game.Instance.State.SavedAreaStates.FirstOrDefault((AreaPersistentState s) => s.AreaGuid == guid);
 		if (areaPersistentState == null)
 		{

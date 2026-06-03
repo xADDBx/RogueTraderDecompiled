@@ -6,5 +6,7 @@ public enum FXTarget
 	Target,
 	CasterWeapon,
 	CasterOffHandWeapon,
-	CasterAllWeapon
+	CasterAllWeapon,
+	TargetPoint,
+	EveryNode
 }

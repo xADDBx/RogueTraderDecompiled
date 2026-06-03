@@ -44,6 +44,8 @@ public class UIMeinMenuTexts
 
 	public LocalizedString CargoManagement;
 
+	public LocalizedString Augmentations;
+
 	public LocalizedString LocalMap;
 
 	public LocalizedString ShipCustomization;

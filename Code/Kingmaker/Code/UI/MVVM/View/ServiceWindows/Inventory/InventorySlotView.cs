@@ -1,9 +1,11 @@
 using DG.Tweening;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.GameCommands;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
@@ -31,6 +33,9 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 	[SerializeField]
 	private GameObject m_FavBlock;
 
+	[SerializeField]
+	private GameObject m_AugmentationCanBeOverdrivenBlock;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -50,6 +55,7 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 		AddDisposable(base.ViewModel.Item.Subscribe(CheckChangeSounds));
 		AddDisposable(base.ViewModel.IsFavorite.Subscribe(SetFavoriteIcon));
 		AddDisposable(base.ViewModel.Item.Subscribe(RefreshFavoriteNeed));
+		AddDisposable(base.ViewModel.Item.Subscribe(AugmentationCanBeOverdriven));
 	}
 
 	private void CheckChangeSounds(ItemEntity item)
@@ -79,6 +85,22 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 		{
 			base.ViewModel.IsFavorite.Value = item.IsFavorite;
 			SetFavoriteIcon(item.IsFavorite);
+		}
+	}
+
+	private void AugmentationCanBeOverdriven(ItemEntity item)
+	{
+		if (item == null)
+		{
+			m_AugmentationCanBeOverdrivenBlock.SetActive(value: false);
+		}
+		if (item != null && item.Blueprint is BlueprintItemAugment blueprintItemAugment)
+		{
+			m_AugmentationCanBeOverdrivenBlock.SetActive(blueprintItemAugment.OverdriveAbility != null);
+		}
+		else
+		{
+			m_AugmentationCanBeOverdrivenBlock.SetActive(value: false);
 		}
 	}
 
@@ -116,6 +138,7 @@ public abstract class InventorySlotView : ItemSlotView<ItemSlotVM>
 	protected void OnDoubleClick()
 	{
 		EquipItem();
+		TooltipHelper.HideTooltip();
 		DelayedInvoker.InvokeInFrames(OnHoverStart, 1);
 	}
 

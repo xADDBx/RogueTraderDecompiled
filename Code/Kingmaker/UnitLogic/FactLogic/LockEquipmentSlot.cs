@@ -1,7 +1,10 @@
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Items;
 using Kingmaker.Items.Slots;
+using Kingmaker.Utility.Attributes;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -36,14 +39,31 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 		Weapon8,
 		Glasses,
 		Shirt,
-		PetProtocol
+		PetProtocol,
+		Augment,
+		QuickSlot
 	}
 
 	[SerializeField]
 	private SlotType m_SlotType;
 
+	[ShowIf("IsAugmentSlot")]
+	[SerializeField]
+	private BlueprintAugmentSlotReference m_AugmentSlot;
+
+	[ShowIf("IsQuickSlot")]
+	[SerializeField]
+	private int m_QuickSlotIndex;
+
 	[SerializeField]
 	private bool m_Deactivate;
+
+	[SerializeField]
+	private bool m_Unequip;
+
+	private bool IsAugmentSlot => m_SlotType == SlotType.Augment;
+
+	private bool IsQuickSlot => m_SlotType == SlotType.QuickSlot;
 
 	protected override void OnActivate()
 	{
@@ -65,6 +85,10 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 		ItemSlot slot = GetSlot();
 		if (slot != null)
 		{
+			if (m_Unequip && slot.HasItem && slot.CanRemoveItem())
+			{
+				slot.RemoveItem();
+			}
 			slot.Lock.Retain();
 			if (m_Deactivate)
 			{
@@ -102,6 +126,21 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 			return base.Owner.Body.Shoulders;
 		case SlotType.PetProtocol:
 			return base.Owner.Body.PetProtocol;
+		case SlotType.Augment:
+		{
+			if (m_AugmentSlot == null)
+			{
+				PFLog.Default.Error("AugmentSlot is null!");
+				return null;
+			}
+			UnitAugments augments = base.Owner.Body.Augments;
+			if (augments == null || !augments.Slots.TryGetValue(m_AugmentSlot, out var value))
+			{
+				PFLog.Default.Error($"No augment slot: {m_AugmentSlot}");
+				return null;
+			}
+			return value;
+		}
 		case SlotType.Bracers:
 			return base.Owner.Body.Wrist;
 		case SlotType.Boots:
@@ -136,8 +175,15 @@ public class LockEquipmentSlot : UnitFactComponentDelegate, IHashable
 			return base.Owner.Body.HandsEquipmentSets[3].PrimaryHand;
 		case SlotType.Weapon8:
 			return base.Owner.Body.HandsEquipmentSets[3].SecondaryHand;
+		case SlotType.QuickSlot:
+			if (m_QuickSlotIndex < 0 || m_QuickSlotIndex >= base.Owner.Body.QuickSlots.Length)
+			{
+				PFLog.EntityFact.Error(this, string.Format("{0} Quick slot index out of range: {1}", "LockEquipmentSlot", m_QuickSlotIndex));
+				return null;
+			}
+			return base.Owner.Body.QuickSlots[m_QuickSlotIndex];
 		default:
-			PFLog.Default.Error($"Can't extract slot of type {m_SlotType}");
+			PFLog.EntityFact.Error(this, string.Format("{0} Can't extract slot of type {1}", "LockEquipmentSlot", m_SlotType));
 			return null;
 		}
 	}

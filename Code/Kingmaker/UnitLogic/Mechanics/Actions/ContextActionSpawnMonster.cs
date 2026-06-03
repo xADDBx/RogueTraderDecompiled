@@ -7,7 +7,6 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.Utility;
 using Kingmaker.View;
 using Pathfinding;
 using UnityEngine;
@@ -28,15 +27,9 @@ public class ContextActionSpawnMonster : ContextAction
 	[FormerlySerializedAs("SummonPool")]
 	private BlueprintSummonPoolReference m_SummonPool;
 
-	public ContextDurationValue DurationValue;
-
 	public ContextDiceValue CountValue;
 
-	public ContextValue LevelValue = new ContextValue();
-
 	public bool DoNotLinkToCaster;
-
-	public bool IsDirectlyControllable;
 
 	public bool OnlyOnReachableGround;
 
@@ -46,7 +39,8 @@ public class ContextActionSpawnMonster : ContextAction
 
 	public override string GetCaption()
 	{
-		return $"Summon {Blueprint.name} x {CountValue} for {DurationValue}";
+		string arg = ((Blueprint != null) ? Blueprint.name : "???");
+		return $"Summon {arg} x {CountValue}";
 	}
 
 	protected override void RunAction()
@@ -62,9 +56,11 @@ public class ContextActionSpawnMonster : ContextAction
 			Element.LogError(this, "Target is null");
 			return;
 		}
-		Rounds duration = DurationValue.Calculate(base.Context);
 		int num = CountValue.Calculate(base.Context);
-		int level = LevelValue.Calculate(base.Context);
+		if (num == 0)
+		{
+			return;
+		}
 		Vector3 aroundPoint = base.Target.Point;
 		bool flag = false;
 		IntRect rectForSize = SizePathfindingHelper.GetRectForSize(Blueprint.Size);
@@ -101,7 +97,7 @@ public class ContextActionSpawnMonster : ContextAction
 		for (int i = 0; i < num; i++)
 		{
 			aroundPoint = FreePlaceSelector.GetRelaxedPosition(i, projectOnGround: true);
-			RulePerformSummonUnit rule = new RulePerformSummonUnit(maybeCaster, Blueprint, aroundPoint, duration, level)
+			RulePerformSummonUnit rule = new RulePerformSummonUnit(maybeCaster, Blueprint, aroundPoint)
 			{
 				Context = base.Context,
 				DoNotLinkToCaster = DoNotLinkToCaster

@@ -19,8 +19,6 @@ public class UnitPartFollowedByUnits : BaseUnitPart, IUnitCommandStartHandler<En
 
 	public readonly Dictionary<AbstractUnitEntity, FollowerAction> FollowerDesiredActions = new Dictionary<AbstractUnitEntity, FollowerAction>();
 
-	public readonly Dictionary<AbstractUnitEntity, FollowerActionType> FollowersActionTypesTemp = new Dictionary<AbstractUnitEntity, FollowerActionType>();
-
 	public bool ForceRefresh { get; set; }
 
 	public double LastRefreshTime { get; set; }

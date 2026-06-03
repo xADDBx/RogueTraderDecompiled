@@ -159,6 +159,7 @@ public class EpilogBaseView : ViewBase<EpilogVM>, IInitializable
 
 	private void Hide()
 	{
+		m_BackgroundVideo.Stop();
 		m_WindowAnimator.DisappearAnimation(delegate
 		{
 			base.gameObject.SetActive(value: false);

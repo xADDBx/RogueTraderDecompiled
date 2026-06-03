@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.UnitLogic.Mechanics;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -12,9 +13,9 @@ namespace Kingmaker.UnitLogic.FactLogic;
 [TypeId("a6fb48de4771436fa5d6db25ba686fd1")]
 public class InitiatorHealModifier : UnitFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateHeal>, IRulebookHandler<RuleCalculateHeal>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
-	public int FlatBonus;
+	public ContextValue FlatBonus;
 
-	public int PercentBonus;
+	public ContextValue PercentBonus;
 
 	public bool OnlyAgainstTargetsWithHalfOrLessHealth;
 
@@ -22,8 +23,8 @@ public class InitiatorHealModifier : UnitFactComponentDelegate, IInitiatorRulebo
 	{
 		if (evt.TargetHealth != null && (!OnlyAgainstTargetsWithHalfOrLessHealth || evt.TargetHealth.HitPointsLeft <= evt.TargetHealth.MaxHitPoints / 2))
 		{
-			evt.FlatBonus += FlatBonus;
-			evt.PercentBonus += PercentBonus;
+			evt.FlatBonus += FlatBonus.Calculate(base.Context);
+			evt.PercentBonus += PercentBonus.Calculate(base.Context);
 		}
 	}
 

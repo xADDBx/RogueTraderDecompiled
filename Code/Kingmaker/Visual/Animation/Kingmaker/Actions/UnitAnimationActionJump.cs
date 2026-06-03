@@ -11,10 +11,19 @@ using UnityEngine;
 namespace Kingmaker.Visual.Animation.Kingmaker.Actions;
 
 [CreateAssetMenu(fileName = "UnitAnimationActionJump", menuName = "Animation Manager/Actions/Unit Animation Jump")]
-public class UnitAnimationActionJump : UnitAnimationAction
+public class UnitAnimationActionJump : UnitAnimationAction, UnitAnimationActionJump.IJumpAnimationProvider
 {
+	public interface IJumpAnimationProvider
+	{
+		AnimationClipWrapper JumpIn { get; }
+
+		AnimationClipWrapper JumpOut { get; }
+
+		AnimationClipWrapper JumpFly { get; }
+	}
+
 	[Serializable]
-	public class JumpVariantSettings
+	public class JumpVariantSettings : IJumpAnimationProvider
 	{
 		public WeaponAnimationStyle Style;
 
@@ -34,6 +43,12 @@ public class UnitAnimationActionJump : UnitAnimationAction
 
 		private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
 
+		public AnimationClipWrapper JumpIn => m_JumpIn;
+
+		public AnimationClipWrapper JumpOut => m_JumpOut;
+
+		public AnimationClipWrapper JumpFly => m_JumpFly;
+
 		public IEnumerable<AnimationClipWrapper> ClipWrappers
 		{
 			get
@@ -45,24 +60,6 @@ public class UnitAnimationActionJump : UnitAnimationAction
 				m_ClipWrappersHashSet = new HashSet<AnimationClipWrapper> { m_JumpIn, m_JumpOut, m_JumpFly };
 				return m_ClipWrappersHashSet;
 			}
-		}
-
-		public AnimationClipWrapper GetAnimation(State state, UnitAnimationActionHandle handle)
-		{
-			switch (state)
-			{
-			case State.Fly:
-				return m_JumpFly;
-			case State.In:
-				return m_JumpIn;
-			case State.Out:
-				if (!handle.CastInOffhand)
-				{
-					return m_JumpOut;
-				}
-				break;
-			}
-			throw new ArgumentOutOfRangeException("state", state, null);
 		}
 	}
 
@@ -76,6 +73,8 @@ public class UnitAnimationActionJump : UnitAnimationAction
 	private class ActionData
 	{
 		public State State;
+
+		public bool JumpFinished;
 	}
 
 	[AssetPicker("")]
@@ -93,9 +92,23 @@ public class UnitAnimationActionJump : UnitAnimationAction
 	[ValidateNotNull]
 	private AnimationClipWrapper m_JumpFly;
 
+	[SerializeField]
+	private bool m_LoopedFly;
+
+	[SerializeField]
+	private UnitAnimationJumpSubType m_SubType;
+
 	private HashSet<AnimationClipWrapper> m_ClipWrappersHashSet;
 
 	public List<JumpVariantSettings> WeaponStyleSettings;
+
+	public bool LoopedFly => m_LoopedFly;
+
+	public AnimationClipWrapper JumpIn => m_JumpIn;
+
+	public AnimationClipWrapper JumpOut => m_JumpOut;
+
+	public AnimationClipWrapper JumpFly => m_JumpFly;
 
 	private static float CrossfadeTime => RealTimeController.SystemStepDurationSeconds;
 
@@ -116,20 +129,50 @@ public class UnitAnimationActionJump : UnitAnimationAction
 		}
 	}
 
-	public override UnitAnimationType Type => UnitAnimationType.Jump;
+	public override UnitAnimationType Type => m_SubType.ToAnimationType();
 
 	public override void OnStart(UnitAnimationActionHandle handle)
 	{
 		handle.HasCrossfadePriority = true;
 		handle.SkipFirstTick = false;
-		ActionData actionData = new ActionData
+		handle.SkipFirstTickOnHandle = false;
+		handle.CorrectTransitionOutTime = true;
+		ActionData ad = (ActionData)(handle.ActionData = new ActionData
 		{
 			State = State.In
-		};
-		handle.ActionData = actionData;
-		handle.StartClip(GetAnimation(State.In, handle), ClipDurationType.Oneshot);
-		PFLog.Actions.Log($"Crossfade = {CrossfadeTime}");
-		handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
+		});
+		AnimationClipWrapper animation = GetAnimation(State.In, handle);
+		if (animation != null)
+		{
+			handle.StartClip(animation, ClipDurationType.Oneshot);
+			handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
+		}
+		else
+		{
+			StartFlyAnimation(handle, ad);
+		}
+	}
+
+	public void FinishFly(UnitAnimationActionHandle handle)
+	{
+		if (!m_LoopedFly)
+		{
+			return;
+		}
+		if (!(handle.ActionData is ActionData actionData))
+		{
+			handle.Release();
+		}
+		else if (!actionData.JumpFinished)
+		{
+			actionData.JumpFinished = true;
+			AnimationBase activeAnimation = handle.ActiveAnimation;
+			if (activeAnimation != null)
+			{
+				activeAnimation.StartTransitionOut();
+				activeAnimation.StopEvents();
+			}
+		}
 	}
 
 	public override void OnTransitionOutStarted(UnitAnimationActionHandle handle)
@@ -142,25 +185,39 @@ public class UnitAnimationActionJump : UnitAnimationAction
 		switch (state)
 		{
 		case State.In:
-			handle.StartClip(GetAnimation(State.Fly, handle), ClipDurationType.Oneshot);
-			handle.ActiveAnimation.TransitionIn = CrossfadeTime;
-			if (!handle.NeedAttackAfterJump)
+			if (!actionData.JumpFinished)
 			{
-				handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
-			}
-			actionData.State = State.Fly;
-			return;
-		case State.Fly:
-			if (!handle.NeedAttackAfterJump)
-			{
-				handle.StartClip(GetAnimation(State.Out, handle), ClipDurationType.Oneshot);
+				StartFlyAnimation(handle, actionData);
 				handle.ActiveAnimation.TransitionIn = CrossfadeTime;
-				actionData.State = State.Out;
 				return;
 			}
 			break;
+		case State.Fly:
+		{
+			AnimationClipWrapper animation = GetAnimation(State.Out, handle);
+			if (animation == null)
+			{
+				handle.Release();
+				return;
+			}
+			handle.StartClip(animation, ClipDurationType.Oneshot);
+			handle.ActiveAnimation.TransitionIn = CrossfadeTime;
+			actionData.State = State.Out;
+			return;
+		}
 		}
 		handle.Release();
+	}
+
+	private void StartFlyAnimation(UnitAnimationActionHandle handle, ActionData ad)
+	{
+		ClipDurationType duration = ((!m_LoopedFly) ? ClipDurationType.Oneshot : ClipDurationType.Endless);
+		handle.StartClip(GetAnimation(State.Fly, handle), duration);
+		if (GetAnimation(State.Out, handle) != null)
+		{
+			handle.ActiveAnimation.ChangeTransitionTime(CrossfadeTime);
+		}
+		ad.State = State.Fly;
 	}
 
 	private AnimationClipWrapper GetAnimation(State state, UnitAnimationActionHandle handle)
@@ -172,33 +229,47 @@ public class UnitAnimationActionJump : UnitAnimationAction
 			isOffHand = true;
 			weaponStyle = handle.Manager.ActiveOffHandWeaponStyle;
 		}
-		AnimationClipWrapper animationClipWrapper = WeaponStyleSettings.FirstOrDefault((JumpVariantSettings i) => i.Style == weaponStyle && isOffHand == i.IsOffHand)?.GetAnimation(state, handle);
-		if (animationClipWrapper != null)
+		JumpVariantSettings jumpVariantSettings = WeaponStyleSettings.FirstOrDefault((JumpVariantSettings i) => i.Style == weaponStyle && isOffHand == i.IsOffHand);
+		if (jumpVariantSettings != null)
 		{
-			return animationClipWrapper;
+			AnimationClipWrapper animation = GetAnimation(jumpVariantSettings, state, handle);
+			if (animation != null)
+			{
+				return animation;
+			}
 		}
+		return GetAnimation(this, state, handle);
+	}
+
+	private static AnimationClipWrapper GetAnimation(IJumpAnimationProvider provider, State state, UnitAnimationActionHandle handle)
+	{
 		switch (state)
 		{
 		case State.Fly:
-			return m_JumpFly;
+			return provider.JumpFly;
 		case State.In:
-			return m_JumpIn;
+			return provider.JumpIn;
 		case State.Out:
 			if (!handle.CastInOffhand)
 			{
-				return m_JumpOut;
+				return provider.JumpOut;
 			}
 			break;
 		}
 		throw new ArgumentOutOfRangeException("state", state, null);
 	}
 
-	public float GetInClipLenght()
+	public float GetInClipLength()
 	{
 		return m_JumpIn.Or(null)?.Length ?? 0f;
 	}
 
-	public float GetFlyClipLenght()
+	public float GetOutClipLength()
+	{
+		return m_JumpOut.Or(null)?.Length ?? 0f;
+	}
+
+	public float GetFlyClipLength()
 	{
 		return m_JumpFly.Or(null)?.Length ?? 0f;
 	}

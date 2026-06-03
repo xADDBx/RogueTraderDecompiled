@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 using Kingmaker.Code.UI.MVVM.VM.IngameMenu;
+using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
@@ -19,7 +23,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 
-public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAreaActivationHandler, ISubscriber, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IGameModeHandler, INetRoleSetHandler, INetEvents, IPartyCombatHandler
+public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IAreaActivationHandler, ISubscriber, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, IGameModeHandler, INetRoleSetHandler, INetEvents, IPartyCombatHandler, ISetHuntThePreyMarkBuffsMap
 {
 	public readonly ReactiveProperty<bool> IsTurnBasedActive = new ReactiveProperty<bool>();
 
@@ -39,6 +43,8 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public readonly ReactiveProperty<SurfaceCombatUnitVM> CurrentUnit = new ReactiveProperty<SurfaceCombatUnitVM>();
 
+	public readonly ReactiveProperty<MechanicEntity> Unit = new ReactiveProperty<MechanicEntity>();
+
 	public readonly ReactiveProperty<CombatStartWindowVM> CombatStartWindowVM = new ReactiveProperty<CombatStartWindowVM>();
 
 	public readonly InspectVM InspectVM;
@@ -54,6 +60,8 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 	public readonly SurfaceActionBarVM ActionBarVM;
 
 	private IDisposable m_TrackerSubscription;
+
+	private Dictionary<MechanicEntity, Dictionary<MechanicEntity, BuffVM>> m_HuntThePreyMarkTargetMap = new Dictionary<MechanicEntity, Dictionary<MechanicEntity, BuffVM>>();
 
 	private BaseUnitEntity SingleSelectedUnit => Game.Instance.SelectionCharacter.SingleSelectedUnit.Value;
 
@@ -71,7 +79,7 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		{
 			HandleBeginPreparationTurn(Game.Instance.TurnController.IsDeploymentAllowed);
 		}
-		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			UpdateIsTurnBasedActive();
 		}));
@@ -92,10 +100,19 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 	private void OnUnitChanged()
 	{
 		MechanicEntity mechanicEntity = ((TurnController.IsInTurnBasedCombat() && InitiativeTrackerVM.Value != null && !Game.Instance.TurnController.IsPreparationTurn) ? InitiativeTrackerVM.Value.CurrentUnit.Value.Unit : SingleSelectedUnit);
-		if (mechanicEntity != CurrentUnit.Value?.Unit)
+		if (mechanicEntity == CurrentUnit.Value?.Unit)
 		{
-			CurrentUnit.Value?.Dispose();
-			CurrentUnit.Value = new SurfaceCombatUnitVM(mechanicEntity, isCurrent: true);
+			return;
+		}
+		CurrentUnit.Value?.Dispose();
+		CurrentUnit.Value = new SurfaceCombatUnitVM(mechanicEntity, isCurrent: true);
+		Unit.Value = mechanicEntity;
+		if (m_HuntThePreyMarkTargetMap.Keys.Contains(Unit.Value))
+		{
+			EventBus.RaiseEvent(delegate(IOnUnitChangeSetMarkBuffMap h)
+			{
+				h.HandleUnitChange(m_HuntThePreyMarkTargetMap[Unit.Value]);
+			});
 		}
 	}
 
@@ -138,7 +155,7 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 			}
 			IsTurnBasedActive.Value = turnBasedModeActive;
 			ShowEndTurn.Value = turnController.IsPlayerTurn && turnController.CurrentUnit.IsMyNetRole();
-			CanEndTurn.Value = turnController.CurrentUnit is BaseUnitEntity baseUnitEntity && baseUnitEntity.CombatState.CanEndTurn();
+			CanEndTurn.Value = turnController.CanEndTurn;
 		}
 	}
 
@@ -238,6 +255,37 @@ public class SurfaceHUDVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 		if (!(!DeploymentPhase.Value || inCombat))
 		{
 			Game.Instance.TurnController.RequestEndPreparationTurn();
+		}
+	}
+
+	public void HandleBuffsAdded(MechanicEntity entity, BuffVM vm)
+	{
+		if (m_HuntThePreyMarkTargetMap.Keys.Contains(Unit.Value))
+		{
+			if (!m_HuntThePreyMarkTargetMap[Unit.Value].Keys.Contains(entity))
+			{
+				m_HuntThePreyMarkTargetMap[Unit.Value][entity] = vm;
+			}
+		}
+		else
+		{
+			m_HuntThePreyMarkTargetMap.Add(Unit.Value, new Dictionary<MechanicEntity, BuffVM>());
+			m_HuntThePreyMarkTargetMap[Unit.Value].Add(entity, vm);
+		}
+	}
+
+	public void HandleBuffsRemoved(MechanicEntity entity)
+	{
+		if (m_HuntThePreyMarkTargetMap.Keys.Contains(Unit.Value))
+		{
+			if (m_HuntThePreyMarkTargetMap[Unit.Value].Keys.Contains(entity))
+			{
+				m_HuntThePreyMarkTargetMap[Unit.Value].Remove(entity);
+			}
+			if (m_HuntThePreyMarkTargetMap[Unit.Value].Count == 0)
+			{
+				m_HuntThePreyMarkTargetMap.Remove(Unit.Value);
+			}
 		}
 	}
 }

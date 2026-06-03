@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/RaiseDead")]
+[Group("Actions")]
 [PlayerUpgraderAllowed(false)]
 [TypeId("66dfc08af22a32e4d8d89b367175aee3")]
 public class RaiseDead : GameAction

@@ -65,6 +65,9 @@ public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 	[NotNull]
 	public LocalizedString ServiceMessage;
 
+	[NotNull]
+	public LocalizedString LoadingScreenHint;
+
 	public Dlc Dlc;
 
 	[SerializeField]
@@ -114,6 +117,20 @@ public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 		}
 	}
 
+	public IEnumerable<BlueprintQuestObjective> Clues
+	{
+		get
+		{
+			foreach (BlueprintQuestObjectiveReference objective in m_Objectives)
+			{
+				foreach (BlueprintQuestObjective clue in objective.Get().Clues)
+				{
+					yield return clue;
+				}
+			}
+		}
+	}
+
 	public IEnumerable<BlueprintQuestObjective> Objectives
 	{
 		get
@@ -123,7 +140,7 @@ public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 				if (objective != null)
 				{
 					BlueprintQuestObjective blueprintQuestObjective = objective.Get();
-					if (blueprintQuestObjective != null && !blueprintQuestObjective.IsAddendum)
+					if (blueprintQuestObjective != null && !blueprintQuestObjective.IsAddendum && !blueprintQuestObjective.IsClue)
 					{
 						yield return objective.Get();
 					}
@@ -202,6 +219,11 @@ public class BlueprintQuest : BlueprintFact, IEditorCommentHolder
 		{
 			addendum.SetIsAddendum(isAddendum: true);
 			list.RemoveAll((BlueprintQuestObjectiveReference r) => r.Is(addendum));
+		}
+		foreach (BlueprintQuestObjective clue in Clues)
+		{
+			clue.SetIsClue(isCLue: true);
+			list.RemoveAll((BlueprintQuestObjectiveReference r) => r.Is(clue));
 		}
 		foreach (BlueprintQuestObjectiveReference item in list)
 		{

@@ -18,11 +18,17 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeFindBetterPlace : TaskNode
 {
-	private TileScorer tileScorer;
+	public TileScorer TileScorer { get; }
 
 	public TaskNodeFindBetterPlace(TileScorer tileScorer)
 	{
-		this.tileScorer = tileScorer;
+		TileScorer = tileScorer;
+	}
+
+	public TaskNodeFindBetterPlace(string debugDescription, TileScorer tileScorer)
+		: base(debugDescription)
+	{
+		TileScorer = tileScorer;
 	}
 
 	protected override Status TickInternal(Blackboard blackboard)
@@ -40,17 +46,19 @@ public class TaskNodeFindBetterPlace : TaskNode
 		{
 			AILogger.Instance.Log(new AILogReason(AILogReasonType.AcceptableNodesNotFound));
 			decisionContext.IsMoveCommand = false;
+			base.FailReason = "No enable to end turn nodes was found";
 			return Status.Failure;
 		}
 		if (!unitMoveVariants.cells.TryGetValue(list.First(), out var _))
 		{
 			AILogger.Instance.Log(new AILogReason(AILogReasonType.UnreachableNode, list.First()));
 			decisionContext.IsMoveCommand = false;
+			base.FailReason = $"Unreachable node to end turn: {list.First()}";
 			return Status.Failure;
 		}
 		ScoreOrder scoreOrder = new ScoreOrder(decisionContext.ScoreOrder);
 		scoreOrder.SetFactor(ScoreType.ClosinessScore, ScoreFactor.Ignored);
-		GraphNode highestScoreNode = tileScorer.GetHighestScoreNode(decisionContext, list, scoreOrder);
+		GraphNode highestScoreNode = TileScorer.GetHighestScoreNode(decisionContext, list, scoreOrder);
 		bool num = highestScoreNode != node && highestScoreNode != null;
 		stopwatch.Stop();
 		AILogger.Instance.Log(new AILogElapsed(stopwatch.ElapsedMilliseconds));
@@ -84,6 +92,7 @@ public class TaskNodeFindBetterPlace : TaskNode
 		}
 		AILogger.Instance.Log(new AILogReason(AILogReasonType.BetterPositionNotFound));
 		decisionContext.IsMoveCommand = false;
+		base.FailReason = "No better position was found";
 		return Status.Failure;
 	}
 

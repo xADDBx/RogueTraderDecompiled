@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Localization;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 
 namespace Kingmaker.Blueprints.Root.Strings;
@@ -15,14 +16,17 @@ public class UIAbilityTexts
 
 	public LocalizedString Melee;
 
-	public string GetAttackType(AttackAbilityType? type)
+	public string GetAttackType(AbilityData abilityData)
 	{
-		return type switch
+		if (abilityData.IsMelee)
+		{
+			return Melee;
+		}
+		return abilityData.Blueprint.AttackType switch
 		{
 			AttackAbilityType.SingleShot => SingleShot, 
 			AttackAbilityType.Scatter => Burst, 
 			AttackAbilityType.Pattern => Pattern, 
-			AttackAbilityType.Melee => Melee, 
 			_ => string.Empty, 
 		};
 	}

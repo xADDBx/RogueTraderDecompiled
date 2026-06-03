@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Kingmaker.AreaLogic.TimeSurvival;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.EntitySystem.Entities;
@@ -111,7 +112,7 @@ public abstract class InitiativeTrackerView : ViewBase<InitiativeTrackerVM>, IGa
 		{
 			m_WantUpdateView = true;
 		}));
-		AddDisposable(UniRxExtensionMethods.Subscribe(MainThreadDispatcher.InfrequentUpdateAsObservable(), delegate
+		AddDisposable(UniRxExtensionMethods.Subscribe(MainThreadDispatcher.InfrequentUpdateAsObservable().PauseDuringCutscene(), delegate
 		{
 			if (m_WantUpdateView && !VirtualList.IsAnimating)
 			{

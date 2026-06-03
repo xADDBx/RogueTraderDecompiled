@@ -1,4 +1,6 @@
 using Kingmaker.Mechanics.Entities;
+using Kingmaker.Pathfinding;
+using Pathfinding;
 
 namespace Kingmaker.View;
 
@@ -14,7 +16,8 @@ public class UnitsPlacer
 		{
 			if (allUnit.IsDirectlyControllable)
 			{
-				allUnit.Position = ObstacleAnalyzer.GetNearestNode(allUnit.Position).position;
+				NNInfo nNInfo = ObstacleAnalyzer.FindNearestNodeOnLevel(allUnit.Position, GraphParamsMechanicsCache.GridCellSize);
+				allUnit.Position = ((nNInfo.node != null) ? nNInfo.position : ObstacleAnalyzer.GetNearestNode(allUnit.Position).position);
 			}
 		}
 	}

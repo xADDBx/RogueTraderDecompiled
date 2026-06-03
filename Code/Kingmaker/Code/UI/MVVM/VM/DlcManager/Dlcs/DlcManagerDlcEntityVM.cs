@@ -34,23 +34,23 @@ public class DlcManagerDlcEntityVM : SelectionGroupEntityVM
 
 	public readonly BoolReactiveProperty IsDlcCanBeDeleted = new BoolReactiveProperty();
 
-	private readonly bool m_IsRealConsole;
+	private readonly bool m_SupportsDlcDownloadState;
 
 	private bool CurrentSawValue => PlayerPrefs.GetInt(ICH_HABE_ES_GESEHEN_PREF_KEY, 0) == 1;
 
 	public DlcManagerDlcEntityVM(BlueprintDlc blueprintDlc, Action setDlc)
 		: base(allowSwitchOff: false)
 	{
-		m_IsRealConsole = false;
+		m_SupportsDlcDownloadState = true;
 		BlueprintDlc = blueprintDlc;
 		m_SetDlc = setDlc;
 		Title = blueprintDlc.GetDlcName();
 		Art = ((blueprintDlc.DlcItemArtLink != null) ? blueprintDlc.DlcItemArtLink : UIConfig.Instance.DlcEntityKeyArt);
 		DlcType = blueprintDlc.DlcType;
 		DownloadState downloadState = blueprintDlc.GetDownloadState();
-		DownloadingInProgress.Value = downloadState == DownloadState.Loading && m_IsRealConsole;
-		DlcIsBoughtAndNotInstalled.Value = blueprintDlc.IsPurchased && downloadState == DownloadState.NotLoaded && m_IsRealConsole;
-		DlcIsInstalled.Value = blueprintDlc.IsPurchased && downloadState == DownloadState.Loaded && m_IsRealConsole;
+		DownloadingInProgress.Value = downloadState == DownloadState.Loading && m_SupportsDlcDownloadState;
+		DlcIsBoughtAndNotInstalled.Value = blueprintDlc.IsPurchased && downloadState == DownloadState.NotLoaded && m_SupportsDlcDownloadState;
+		DlcIsInstalled.Value = blueprintDlc.IsPurchased && downloadState == DownloadState.Loaded && m_SupportsDlcDownloadState;
 		IsDlcCanBeDeleted.Value = downloadState == DownloadState.Loaded && blueprintDlc.DlcType == DlcTypeEnum.AdditionalContentDlc;
 		ICH_HABE_ES_GESEHEN_PREF_KEY = "DLCMANAGER_I_SAW_" + blueprintDlc.name;
 		SawThisDlc.Value = CurrentSawValue;
@@ -67,9 +67,9 @@ public class DlcManagerDlcEntityVM : SelectionGroupEntityVM
 	private void HandleOnRefreshDLC()
 	{
 		IDLCStatus iDLCStatus = StoreManager.DLCCache.Get(BlueprintDlc);
-		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && m_IsRealConsole;
-		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && m_IsRealConsole;
-		DlcIsInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.Loaded && m_IsRealConsole;
+		DownloadingInProgress.Value = iDLCStatus.DownloadState == DownloadState.Loading && m_SupportsDlcDownloadState;
+		DlcIsBoughtAndNotInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.NotLoaded && m_SupportsDlcDownloadState;
+		DlcIsInstalled.Value = iDLCStatus.Purchased && iDLCStatus.DownloadState == DownloadState.Loaded && m_SupportsDlcDownloadState;
 		IsDlcCanBeDeleted.Value = iDLCStatus.DownloadState == DownloadState.Loaded && BlueprintDlc.DlcType == DlcTypeEnum.AdditionalContentDlc;
 	}
 

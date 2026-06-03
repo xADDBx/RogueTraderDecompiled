@@ -61,7 +61,7 @@ public static class TransformExtention
 		return transform.Children().FirstOrDefault(predicate);
 	}
 
-	public static string GetHierarchyPath(this Transform transform, bool addInstanceId = false, bool addGlobalObjectId = false)
+	public static string GetHierarchyPath(this Transform transform, bool addInstanceId = false, bool addGlobalObjectId = false, bool addSceneName = true)
 	{
 		return transform.name;
 	}

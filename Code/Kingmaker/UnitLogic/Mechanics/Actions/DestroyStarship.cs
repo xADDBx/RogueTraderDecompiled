@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
@@ -7,6 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("e60b053256f5cf545b5075ee4c00f616")]
 public class DestroyStarship : ContextAction
 {

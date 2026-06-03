@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Encyclopedia;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Settings;
@@ -45,21 +44,21 @@ public class EncyclopediaPageBlockPlanetVM : EncyclopediaPageBlockVM
 		PlanetIcon.Value = UIConfig.Instance.UIIcons.GetPlanetIcon(block.Planet.Type);
 		AdminKnowAboutIt.Value = block.IsReportedToAdministratum;
 		SystemName.Value = block.StarSystem.Name;
-		List<QuestObjective> questsForPlanet = UIUtilitySpaceQuests.GetQuestsForPlanet(block.Planet);
+		List<QuestBookEntityEntry> questsForPlanet = UIUtilitySpaceQuests.GetQuestsForPlanet(block.Planet);
 		HaveQuest.Value = !questsForPlanet.Empty() && questsForPlanet != null;
 		if (HaveQuest.Value)
 		{
-			List<string> list = questsForPlanet?.Where((QuestObjective quest) => !string.IsNullOrWhiteSpace(quest.Blueprint.GetTitile())).Select((QuestObjective quest, int index) => $"{index + 1}. " + quest.Blueprint.GetTitile()).ToList();
+			List<string> list = questsForPlanet?.Where((QuestBookEntityEntry quest) => !string.IsNullOrWhiteSpace(quest.Blueprint.GetTitile())).Select((QuestBookEntityEntry quest, int index) => $"{index + 1}. " + quest.Blueprint.GetTitile()).ToList();
 			if (list != null && list.Any())
 			{
 				QuestObjectiveName.Value = string.Join(Environment.NewLine, list);
 			}
 		}
-		List<QuestObjective> rumoursForPlanet = UIUtilitySpaceQuests.GetRumoursForPlanet(block.Planet);
+		List<QuestBookEntityEntry> rumoursForPlanet = UIUtilitySpaceQuests.GetRumoursForPlanet(block.Planet);
 		HaveRumour.Value = !rumoursForPlanet.Empty() && rumoursForPlanet != null;
 		if (HaveRumour.Value)
 		{
-			List<string> list2 = rumoursForPlanet?.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestObjective rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
+			List<string> list2 = rumoursForPlanet?.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestBookEntityEntry rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
 			if (list2 != null && list2.Any())
 			{
 				RumourObjectiveName.Value = string.Join(Environment.NewLine, list2);

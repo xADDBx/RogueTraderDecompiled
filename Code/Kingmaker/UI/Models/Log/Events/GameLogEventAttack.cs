@@ -135,6 +135,8 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 
 	public bool IsOverpenetrationTrigger { get; private set; }
 
+	public bool IsRicochetTrigger { get; private set; }
+
 	public bool IsPushTrigger { get; private set; }
 
 	public int? AssassinLethality { get; }
@@ -298,6 +300,11 @@ public class GameLogEventAttack : GameLogRuleEvent<RulePerformAttack, GameLogEve
 	public void SetOverpenetrationTrigger(bool value)
 	{
 		IsOverpenetrationTrigger = value;
+	}
+
+	public void SetRicochetTrigger(bool value)
+	{
+		IsRicochetTrigger = value;
 	}
 
 	public void SetPushTrigger(bool value)

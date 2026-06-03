@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
@@ -21,6 +23,11 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("78416892d808478298265d953095c2ae")]
 public class StepOnUnitTrigger : UnitFactComponentDelegate, IUnitMovementHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IHashable
 {
+	private class ComponentData : IEntityFactComponentTransientData
+	{
+		public readonly HashSet<BaseUnitEntity> SteppedOnUnits = new HashSet<BaseUnitEntity>();
+	}
+
 	[SerializeField]
 	protected RestrictionCalculator Restrictions = new RestrictionCalculator();
 
@@ -33,9 +40,14 @@ public class StepOnUnitTrigger : UnitFactComponentDelegate, IUnitMovementHandler
 		{
 			return;
 		}
+		ComponentData componentData = RequestTransientData<ComponentData>();
+		if (index == 1)
+		{
+			componentData.SteppedOnUnits.Clear();
+		}
 		foreach (CustomGridNodeBase occupiedNode in baseUnitEntity.GetOccupiedNodes())
 		{
-			if (!occupiedNode.TryGetUnit(out var unit) || baseUnitEntity == unit)
+			if (!occupiedNode.TryGetUnit(out var unit) || baseUnitEntity == unit || componentData.SteppedOnUnits.Contains(unit))
 			{
 				continue;
 			}
@@ -43,6 +55,7 @@ public class StepOnUnitTrigger : UnitFactComponentDelegate, IUnitMovementHandler
 			{
 				if (Restrictions.IsPassed(base.Fact, base.Owner))
 				{
+					componentData.SteppedOnUnits.Add(unit);
 					MoveThroughUnitActions?.Run();
 				}
 			}
@@ -51,6 +64,7 @@ public class StepOnUnitTrigger : UnitFactComponentDelegate, IUnitMovementHandler
 
 	public void HandleMovementComplete()
 	{
+		RequestTransientData<ComponentData>().SteppedOnUnits.Clear();
 	}
 
 	public override Hash128 GetHash128()

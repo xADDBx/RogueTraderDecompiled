@@ -8,6 +8,8 @@ public class GameSettingsDefaultValues
 {
 	public GameMainSettingsDefaultValues Main;
 
+	public GameSwitchSettingsDefaultValues Switch;
+
 	public GameTutorialSettingsDefaultValues Tutorial;
 
 	[UsedImplicitly]

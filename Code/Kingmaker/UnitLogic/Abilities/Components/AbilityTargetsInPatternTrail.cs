@@ -131,18 +131,23 @@ public class AbilityTargetsInPatternTrail : AbilitySelectTarget, IAbilityAoEPatt
 					}
 				}
 			}
-			if (IsIgnoreLos || LosCalculations.GetWarhammerLos(context.Pattern.ApplicationNode.Vector3Position, context.Caster.SizeRect, mechanicEntity).CoverType != LosCalculations.CoverType.Invisible)
+			if (!IsIgnoreLos)
 			{
-				if (m_Projectile != null)
+				CustomGridNodeBase applicationNode = context.Pattern.ApplicationNode;
+				if (LosCalculations.GetWarhammerLos(applicationNode.Walkable ? applicationNode.Vector3Position : caster.Position, context.Caster.SizeRect, mechanicEntity).CoverType == LosCalculations.CoverType.Invisible)
 				{
-					new ProjectileLauncher(m_Projectile.Get(), anchor, mechanicEntity).Ability(context.Ability).Launch();
+					continue;
 				}
-				yield return new TargetWrapper(mechanicEntity);
-				numberOfTargets--;
-				if (numberOfTargets <= 0)
-				{
-					break;
-				}
+			}
+			if (m_Projectile != null)
+			{
+				new ProjectileLauncher(m_Projectile.Get(), anchor, mechanicEntity).Ability(context.Ability).Launch();
+			}
+			yield return new TargetWrapper(mechanicEntity);
+			numberOfTargets--;
+			if (numberOfTargets <= 0)
+			{
+				break;
 			}
 		}
 	}

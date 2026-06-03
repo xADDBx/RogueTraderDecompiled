@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.Settings;
-using Kingmaker.UnitLogic;
-using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using UnityEngine;
 
@@ -32,14 +29,32 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public int ResultReflected { get; private set; }
 
+	public RuleCalculateOverpenetration ResultRuleOverpenetration { get; private set; }
+
 	[CanBeNull]
-	public DamageData ResultOverpenetration { get; private set; }
+	public DamageData ResultOverpenetration
+	{
+		get
+		{
+			if (ResultRuleOverpenetration != null)
+			{
+				DamageData overpenetrationDamage = ResultRuleOverpenetration.OverpenetrationDamage;
+				if (overpenetrationDamage == null || overpenetrationDamage.OverpenetrationFactorPercents > 0)
+				{
+					return ResultRuleOverpenetration.OverpenetrationDamage;
+				}
+			}
+			return null;
+		}
+	}
 
 	public NullifyInformation NullifyInformation { get; private set; }
 
 	public int UIMinimumDamageValue { get; private set; }
 
 	public int UIMinimumDamagePercent { get; private set; }
+
+	public bool OverpenetrationDisabled { get; private set; }
 
 	public bool IgnoreDeflection { get; set; }
 
@@ -60,15 +75,16 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		}
 	}
 
-	public RuleRollDamage([NotNull] IMechanicEntity initiator, [NotNull] IMechanicEntity target, [NotNull] DamageData damage)
-		: this((MechanicEntity)initiator, (MechanicEntity)target, damage)
+	public RuleRollDamage([NotNull] IMechanicEntity initiator, [NotNull] IMechanicEntity target, [NotNull] DamageData damage, bool overpenetrationDisabled = false)
+		: this((MechanicEntity)initiator, (MechanicEntity)target, damage, overpenetrationDisabled)
 	{
 	}
 
-	public RuleRollDamage([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] DamageData damage)
+	public RuleRollDamage([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] DamageData damage, bool overpenetrationDisabled = false)
 		: base(initiator, target)
 	{
 		Damage = damage;
+		OverpenetrationDisabled = overpenetrationDisabled;
 		IgnoreDeflection = false;
 		IgnoreArmourAbsorption = false;
 		NullifyInformation = NullifyInformation.Create();
@@ -85,7 +101,15 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		}
 		Result = RollDamage(Damage, IgnoreDeflection, IgnoreArmourAbsorption, ReflectPercentDamageModifiers.FlatBonus, ReflectFlatDamageModifiers.Value, out var reflectedDamage);
 		ResultReflected = reflectedDamage;
-		ResultOverpenetration = CalculateOverpenetration(Result.RolledValue);
+		if (!OverpenetrationDisabled && Result.RolledValue > 0)
+		{
+			ResultRuleOverpenetration = new RuleCalculateOverpenetration(base.InitiatorUnit, base.TargetUnit, Damage, base.Reason.Ability);
+			Rulebook.Trigger(ResultRuleOverpenetration);
+			if (ResultRuleOverpenetration.OverpenetrationDamage.OverpenetrationFactorPercents > 0)
+			{
+				ResultRuleOverpenetration.OverpenetrationDamage.CalculatedValue = Result.RolledValue;
+			}
+		}
 		int num = ((Result.Source.Type == DamageType.Direct) ? Result.FinalValue : 0);
 		ResultValue = Result.FinalValue;
 		ResultValueWithoutReduction = Result.ValueWithoutReduction;
@@ -110,11 +134,11 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 	public static DamageValue RollDamage(DamageData damage, bool ignoreDeflection, bool ignoreArmourAbsorption, int reflectPercentDamageModifer, int reflectFlatDamageModifer, out int reflectedDamage)
 	{
 		int num = (damage.CalculatedValue.HasValue ? damage.Modifiers.ApplyPctMulExtra(damage.CalculatedValue.Value) : (damage.Overpenetrating ? (damage.InitialRolledValue + damage.CriticalRolledValue) : RollWithoutArmorReduction(damage)));
-		int num2 = ((damage.Overpenetrating && !damage.UnreducedOverpenetration) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
+		int num2 = ((damage.Overpenetrating && !damage.UnreducedOverpenetrationDamage) ? Mathf.RoundToInt((float)num * damage.EffectiveOverpenetrationFactor) : num);
 		reflectedDamage = Math.Clamp(Mathf.RoundToInt((float)num2 * 0.01f * (float)reflectPercentDamageModifer) + reflectFlatDamageModifer, 0, num2);
 		num2 -= reflectedDamage;
 		int num3 = ((!damage.Immune) ? Math.Max(0, num2) : 0);
-		int num4 = ((!ignoreDeflection) ? damage.Deflection.Value : 0);
+		int num4 = ((!ignoreDeflection) ? damage.DeflectionValue : 0);
 		float num5 = (ignoreArmourAbsorption ? 1f : damage.AbsorptionFactorWithPenetration);
 		int val = (int)((float)(num3 - num4) * num5);
 		int num6 = Math.Max(0, val);
@@ -141,30 +165,6 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 			num = Math.Max(Mathf.CeilToInt((float)(damageBeforeReductions * num3) / 100f), num);
 		}
 		return (damage: num, minDamageValue: num2, minDamagePercent: num3);
-	}
-
-	[CanBeNull]
-	private DamageData CalculateOverpenetration(int damageRoll)
-	{
-		if (damageRoll == 0 && Target is DestructibleEntity)
-		{
-			return null;
-		}
-		if (Target is UnitEntity entity && entity.HasMechanicFeature(MechanicsFeatureType.BlockOverpenetration))
-		{
-			return null;
-		}
-		int overpenetrationFactorPercents = Damage.OverpenetrationFactorPercents;
-		int num = Math.Max(0, overpenetrationFactorPercents - BlueprintWarhammerRoot.Instance.CombatRoot.OverpenetrationReductionPerHit);
-		DamageData damageData = Damage.Copy();
-		damageData.OverpenetrationFactorPercents = num;
-		damageData.Overpenetrating = true;
-		damageData.CalculatedValue = damageRoll;
-		if (num <= 0)
-		{
-			return null;
-		}
-		return damageData;
 	}
 
 	public void NullifyDamage(EntityFact source)

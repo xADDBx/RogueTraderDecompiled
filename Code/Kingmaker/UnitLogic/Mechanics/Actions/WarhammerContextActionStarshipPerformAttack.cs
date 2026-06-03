@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
@@ -7,6 +8,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("b68d691de8d312942ba1cda58b61b720")]
 public class WarhammerContextActionStarshipPerformAttack : ContextAction
 {

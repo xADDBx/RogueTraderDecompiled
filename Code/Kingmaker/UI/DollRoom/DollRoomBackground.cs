@@ -26,6 +26,13 @@ public class DollRoomBackground : MonoBehaviour
 	[Range(0f, 10f)]
 	public float BlurSize = 3f;
 
+	[Header("Static Background")]
+	[Tooltip("If enabled, use static color instead of screenshot. Useful when background is handled by a separate Plane in the prefab.")]
+	public bool UseStaticBackground;
+
+	[Tooltip("Color to fill the background when UseStaticBackground is enabled.")]
+	public Color StaticBackgroundColor = Color.black;
+
 	private RenderTexture m_BackgroundRt;
 
 	private void OnEnable()
@@ -52,10 +59,19 @@ public class DollRoomBackground : MonoBehaviour
 	{
 		EnsureBlurMaterial();
 		EnsureRenderTexture();
-		CameraStackScreenshoter.TakeScreenshot(m_BackgroundRt);
-		if (BlurEnabled)
+		if (UseStaticBackground)
 		{
-			DoBlur();
+			RenderTexture.active = m_BackgroundRt;
+			GL.Clear(clearDepth: true, clearColor: true, StaticBackgroundColor);
+			RenderTexture.active = null;
+		}
+		else
+		{
+			CameraStackScreenshoter.TakeScreenshot(m_BackgroundRt);
+			if (BlurEnabled)
+			{
+				DoBlur();
+			}
 		}
 		backgroundDollPostProcessProperty.TextureValue = m_BackgroundRt;
 		return m_BackgroundRt;

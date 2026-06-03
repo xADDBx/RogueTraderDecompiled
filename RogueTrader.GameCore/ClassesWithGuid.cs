@@ -42,7 +42,6 @@ public static class ClassesWithGuid
 		(typeof(SimpleBlueprint), "0b3cc43201601904bb7eb333c9b646ff"),
 		(typeof(CameraRecorderData), "084826bccf334e3a892863750a393dc1"),
 		(typeof(ActionsHolder), "63bb90208198450095c55997ebc6ae0a"),
-		(typeof(BlueprintActionList), "a80970ca06938034d8c58815e415690e"),
 		(typeof(ConditionsHolder), "b9ea3359b1204b798a61750d6cb4e723"),
 		(typeof(ThrowExceptionAction), "f225557a3df442c0b7f3f8ca4d6fb3b6"),
 		(typeof(ThrowExceptionCondition), "702fcb2beb1849bcb8b878f2dd02e476"),

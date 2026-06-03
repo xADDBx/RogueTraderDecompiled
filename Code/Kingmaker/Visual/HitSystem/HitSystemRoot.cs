@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Sound;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
@@ -80,6 +81,8 @@ public class HitSystemRoot : BlueprintScriptableObject
 
 	private HitCollection[] m_CachedDamageTypes;
 
+	private AkSwitchReference[] m_CachedDamageToSoundSwitch;
+
 	private HitCollection[] m_CachedEnergyTypes;
 
 	private HitCollection[] m_CachedBillboardBloodTypes;
@@ -103,6 +106,7 @@ public class HitSystemRoot : BlueprintScriptableObject
 		{
 			m_Initialized = true;
 			m_CachedDamageTypes = new HitCollection[EnumUtils.GetMaxValue<DamageType>() + 1];
+			m_CachedDamageToSoundSwitch = new AkSwitchReference[EnumUtils.GetMaxValue<DamageType>() + 1];
 			m_CachedBillboardBloodTypes = new HitCollection[EnumUtils.GetMaxValue<SurfaceType>() + 1];
 			m_CachedDirectionalBloodTypes = new HitCollection[EnumUtils.GetMaxValue<SurfaceType>() + 1];
 			m_CachedBillboardAdditiveBloodTypes = new HitCollection[EnumUtils.GetMaxValue<SurfaceType>() + 1];
@@ -112,6 +116,7 @@ public class HitSystemRoot : BlueprintScriptableObject
 			foreach (DamageEntry damageEntry in damageTypes)
 			{
 				m_CachedDamageTypes[(int)damageEntry.Type] = damageEntry.Hits;
+				m_CachedDamageToSoundSwitch[(int)damageEntry.Type] = damageEntry.SoundSwitch;
 			}
 			HitEntry[] hitEffects = HitEffects;
 			foreach (HitEntry hitEntry in hitEffects)
@@ -134,6 +139,12 @@ public class HitSystemRoot : BlueprintScriptableObject
 	{
 		Initialize();
 		return m_CachedDamageTypes[(int)damage.Type];
+	}
+
+	public AkSwitchReference GetDamageSoundSwitch(DamageType type)
+	{
+		Initialize();
+		return m_CachedDamageToSoundSwitch[(int)type];
 	}
 
 	[CanBeNull]
@@ -241,9 +252,9 @@ public class HitSystemRoot : BlueprintScriptableObject
 	private void Warmup(HitCollection c)
 	{
 		GameObjectsPool.Warmup(c.StandardLink.Load()?.GetComponent<PooledGameObject>(), 2);
-		GameObjectsPool.Warmup(c.MinorLink.Load().GetComponent<PooledGameObject>(), 1);
-		GameObjectsPool.Warmup(c.MajorLink.Load().GetComponent<PooledGameObject>(), 1);
-		GameObjectsPool.Warmup(c.CritLink.Load().GetComponent<PooledGameObject>(), 1);
+		GameObjectsPool.Warmup(c.MinorLink.Load()?.GetComponent<PooledGameObject>(), 1);
+		GameObjectsPool.Warmup(c.MajorLink.Load()?.GetComponent<PooledGameObject>(), 1);
+		GameObjectsPool.Warmup(c.CritLink.Load()?.GetComponent<PooledGameObject>(), 1);
 	}
 
 	public Color GetBloodTypeColor(SurfaceType type, bool isDead = false)

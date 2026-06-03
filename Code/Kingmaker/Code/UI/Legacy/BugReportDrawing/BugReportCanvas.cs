@@ -10,6 +10,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.QA.Analytics;
+using Kingmaker.Settings;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.InputSystems.Enums;
 using Kingmaker.Utility;
@@ -57,7 +58,17 @@ public class BugReportCanvas : MonoBehaviour, IBugReportUIHandler, ISubscriber, 
 		}
 		set
 		{
-			if (m_IsShowReportButton != value)
+			if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+			{
+				if (m_IsShowReportButton)
+				{
+					m_IsShowReportButton = false;
+					m_BugreportCanvasGroup.alpha = 0f;
+					m_BugreportCanvasGroup.blocksRaycasts = false;
+					Show(state: false);
+				}
+			}
+			else if (m_IsShowReportButton != value)
 			{
 				m_IsShowReportButton = value;
 				m_BugreportCanvasGroup.alpha = (value ? 1f : 0f);

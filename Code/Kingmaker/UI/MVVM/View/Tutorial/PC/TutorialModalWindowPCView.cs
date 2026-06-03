@@ -1,9 +1,11 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.Common.PageNavigation;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tutorial;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UniRx;
@@ -37,11 +39,16 @@ public class TutorialModalWindowPCView : TutorialWindowPCView<TutorialModalWindo
 	[SerializeField]
 	private float m_EncyclopediaButtonDefaultSize = 18f;
 
+	[SerializeField]
+	private GameObject m_MediaBlock;
+
 	protected override bool IsShowDefaultSprite => true;
 
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		bool flag = ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse && base.ViewModel.Data.Blueprint.HideArtAndVideoInMouseModeOnSwitch2;
+		m_MediaBlock.SetActive(!flag);
 		m_EncyclopediaButtonText.text = UIStrings.Instance.Tutorial.Encyclopedia.Text;
 		AddDisposable(base.ViewModel.CurrentPage.Subscribe(base.SetPage));
 		bool isPossibleGoToEncyclopedia = UIUtility.EntityLinkActions.IsPossibleGoToEncyclopedia;

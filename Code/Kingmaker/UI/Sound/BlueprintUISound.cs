@@ -590,6 +590,48 @@ public class BlueprintUISound : BlueprintScriptableObject
 		public UISound PopUpHide;
 	}
 
+	[Serializable]
+	public class UISoundAugmentationsWindow
+	{
+		public UISound OpenWindow;
+
+		public UISound CloseWindow;
+
+		public UISound AugmentInstalled;
+
+		public UISound AugmentOff;
+
+		public UISound AugmentArmsInstalled;
+
+		public UISound AugmentArmsOff;
+
+		public UISound AugmentOverdrive;
+
+		public UISound AugmentViewOnlyInstall;
+
+		public UISound AugmentBrokenInstall;
+
+		public UISound AugmentOverdriveAbilityHover;
+
+		public UISound AugmentOverdriveAbilityUse;
+
+		public UISound AugmentsInspectOpen;
+
+		public UISound AugmentInspectClose;
+
+		public UISound AugmentBarkShow;
+
+		public UISound AugmentInstallButtonClick;
+
+		public UISound AugmentOverdriveRemove;
+
+		public UISound AugmentMechRestriction;
+
+		public UISound AugmentAmbientLoopStart;
+
+		public UISound AugmentAmbientLoopStop;
+	}
+
 	[Tooltip("This event will be assigned to missing UISounds when \"Fix Missing Events\" button is clicked.")]
 	public UISound DoNothingEvent;
 
@@ -675,4 +717,6 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundVendor Vendor;
 
 	public UISoundDarkHeresyPopUp DarkHeresyPopUp;
+
+	public UISoundAugmentationsWindow AugmentationsWindow;
 }

@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using Owlcat.Runtime.Core.Utility;
+using Owlcat.Runtime.UI.Controls.Button;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -670,6 +671,8 @@ public class ScrollRectExtended : UIBehaviour, IInitializePotentialDragHandler, 
 			m_VerticalScrollbar.onValueChanged.AddListener(SetVerticalNormalizedPosition);
 		}
 		ResetEgesVisibility();
+		AddHandleButton(m_HorizontalScrollbar);
+		AddHandleButton(m_VerticalScrollbar);
 		CanvasUpdateRegistry.RegisterCanvasElementForLayoutRebuild(this);
 	}
 
@@ -689,6 +692,21 @@ public class ScrollRectExtended : UIBehaviour, IInitializePotentialDragHandler, 
 		m_Velocity = Vector2.zero;
 		LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
 		base.OnDisable();
+	}
+
+	private void AddHandleButton(Scrollbar scrollbar)
+	{
+		if (!(scrollbar == null) && !(scrollbar.handleRect == null))
+		{
+			GameObject gameObject = scrollbar.handleRect.gameObject;
+			OwlcatButton owlcatButton = gameObject.GetComponent<OwlcatButton>();
+			if (owlcatButton == null)
+			{
+				owlcatButton = gameObject.AddComponent<OwlcatButton>();
+			}
+			owlcatButton.HoverSoundType = 0;
+			owlcatButton.ClickSoundType = 0;
+		}
 	}
 
 	public override bool IsActive()

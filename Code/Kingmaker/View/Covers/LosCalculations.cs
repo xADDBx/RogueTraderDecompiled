@@ -12,6 +12,12 @@ namespace Kingmaker.View.Covers;
 
 public static class LosCalculations
 {
+	public enum ForcedCoverCheckType
+	{
+		ByTarget,
+		BySource
+	}
+
 	public enum CoverType
 	{
 		None,
@@ -95,16 +101,21 @@ public static class LosCalculations
 
 	private static readonly ThreadLocal<List<DistanceHeight>> DstHeights = new ThreadLocal<List<DistanceHeight>>(() => new List<DistanceHeight>(128));
 
-	public static LosDescription GetCellCoverStatus(CustomGridNodeBase node, int direction)
+	public static LosDescription GetCellCoverStatus(CustomGridNodeBase node, int direction, ForcedCoverCheckType checkType = ForcedCoverCheckType.ByTarget)
 	{
 		CustomGridNodeBase neighbourAlongDirection = node.GetNeighbourAlongDirection(direction, checkConnectivity: false);
 		if (neighbourAlongDirection == null)
 		{
 			return new LosDescription(CoverType.Full);
 		}
-		if (HasForcedCover(neighbourAlongDirection, out var cover))
+		if (HasForcedCover(neighbourAlongDirection, checkType switch
 		{
-			return new LosDescription(cover, new Obstacle(neighbourAlongDirection));
+			ForcedCoverCheckType.ByTarget => node.GetUnit(), 
+			ForcedCoverCheckType.BySource => Game.Instance.SelectionCharacter.SelectedUnit.Value, 
+			_ => Game.Instance.SelectionCharacter.SelectedUnit.Value, 
+		}, out var coverType))
+		{
+			return new LosDescription(coverType, new Obstacle(neighbourAlongDirection));
 		}
 		if (node.GetNeighbourAlongDirection(direction) != null)
 		{
@@ -124,10 +135,10 @@ public static class LosCalculations
 		return new LosDescription(CoverType.None);
 	}
 
-	private static bool HasForcedCover(CustomGridNodeBase node, out CoverType cover)
+	private static bool HasForcedCover(CustomGridNodeBase node, BaseUnitEntity entity, out CoverType coverType)
 	{
-		cover = CoverType.None;
-		return Game.Instance?.ForcedCoversController.TryGetCoverType(node, out cover) ?? false;
+		coverType = CoverType.None;
+		return Game.Instance?.ForcedCoversController.TryGetCover(node, entity, out coverType) ?? false;
 	}
 
 	private static LosDescription GetEffectiveCover(Int2 originPos, CustomGridNodeBase end)

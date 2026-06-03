@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem.Properties.BaseGetter;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Kingmaker.EntitySystem.Properties.Getters;
 
@@ -26,27 +27,32 @@ public class FactRankGetter : PropertyGetter, PropertyContextAccessor.IOptionalT
 	[ValidateNotNull]
 	private BlueprintUnitFactReference m_Fact;
 
+	[Tooltip("Specifies the unit to count the fact ranks on")]
+	public PropertyTargetType CheckTarget;
+
 	public AggregationMode Aggregation;
 
 	public bool BuffWithCasterFromTargetType;
 
 	[ShowIf("BuffWithCasterFromTargetType")]
-	public PropertyTargetType Target;
+	[FormerlySerializedAs("Target")]
+	[Tooltip("Only counts the buffs applied by this target")]
+	public PropertyTargetType BuffCaster;
 
 	public BlueprintUnitFact Fact => m_Fact?.Get();
 
 	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		string text = (BuffWithCasterFromTargetType ? (" cast by " + Target.Colorized()) : "");
-		return "Ranks of " + (Fact?.ToString() ?? "<null>") + " on " + FormulaTargetScope.Current + text;
+		string text = (BuffWithCasterFromTargetType ? (" cast by " + BuffCaster.Colorized()) : "");
+		return "Ranks of " + (Fact?.ToString() ?? "<null>") + " on " + CheckTarget.Colorized() + text;
 	}
 
 	protected override int GetBaseValue()
 	{
-		Entity entity = (BuffWithCasterFromTargetType ? this.GetTargetByType(Target) : null);
+		Entity entity = (BuffWithCasterFromTargetType ? this.GetTargetByType(BuffCaster) : null);
 		BlueprintUnitFact fact = Fact;
 		int num = 0;
-		foreach (EntityFact item in base.CurrentEntity.Facts.GetAll<EntityFact>())
+		foreach (EntityFact item in this.GetTargetByType(CheckTarget).Facts.GetAll<EntityFact>())
 		{
 			if (item.Blueprint == fact && (!BuffWithCasterFromTargetType || item.MaybeContext?.MaybeCaster == entity))
 			{

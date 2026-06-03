@@ -61,6 +61,13 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 					return true;
 				}
 			}
+			foreach (MechanicEntity item in Game.Instance.TurnController.UnitsInCombat)
+			{
+				if (item.HasRunningOrQueuedCommands || item.IsDoingJumping)
+				{
+					return true;
+				}
+			}
 			return false;
 		}
 	}
@@ -121,7 +128,7 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 		if (brainOptional == null)
 		{
 			AILogger.Instance.Error(new AILogReason(AILogReasonType.BrainIsNull));
-			EndUnitTurn(currentUnit);
+			EndUnitTurn(currentUnit, force: true);
 			return;
 		}
 		if (Game.Instance.TimeController.RealTime - CurrentUnitTurnStartTime > AiTimeout)
@@ -130,7 +137,7 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 			PFLog.AI.Error("current unit " + currentUnit.Name + ". Running ability : " + Game.Instance.AbilityExecutor.Abilities.FirstItem()?.Context?.AbilityBlueprint.Name);
 			currentUnit.GetCommandsOptional()?.InterruptAll((AbstractUnitCommand cmd) => true);
 			brainOptional.UpdateIdleRoundsCounter();
-			EndUnitTurn(currentUnit);
+			EndUnitTurn(currentUnit, force: true);
 			return;
 		}
 		brainOptional.Tick();
@@ -149,10 +156,14 @@ public class AiBrainController : IControllerTick, IController, ITurnStartHandler
 		}
 	}
 
-	private static void EndUnitTurn(MechanicEntity unit)
+	private static void EndUnitTurn(MechanicEntity unit, bool force = false)
 	{
-		Game.Instance.TurnController.RequestEndTurn();
-		AILogger.Instance.Log(AILogTurn.EndTurn(unit));
+		TurnController turnController = Game.Instance.TurnController;
+		if (force || turnController.CanEndTurn)
+		{
+			turnController.RequestEndTurn();
+			AILogger.Instance.Log(AILogTurn.EndTurn(unit));
+		}
 	}
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)

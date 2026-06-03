@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Markers;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Utils;
 using Kingmaker.Controllers.Units;
@@ -55,7 +56,7 @@ public class LocalMapVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		SetDrawResult();
 		SetMarkers();
 		AddDisposable(LocalMapLegendBlockVM = new LocalMapLegendBlockVM());
-		AddDisposable(Observable.EveryUpdate().Subscribe(delegate
+		AddDisposable(Observable.EveryUpdate().PauseDuringCutscene().Subscribe(delegate
 		{
 			OnUpdateHandler();
 		}));

@@ -16,7 +16,17 @@ public abstract class BlueprintItemEquipmentSimple : BlueprintItemEquipment
 	[AkEventReference]
 	private string m_InventoryEquipSound;
 
-	public override string InventoryEquipSound => m_InventoryEquipSound;
+	public override string InventoryEquipSound
+	{
+		get
+		{
+			return m_InventoryEquipSound;
+		}
+		set
+		{
+			m_InventoryEquipSound = value;
+		}
+	}
 
 	protected override IEnumerable<BlueprintItemEnchantment> CollectEnchantments()
 	{

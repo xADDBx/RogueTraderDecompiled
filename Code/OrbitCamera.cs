@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.UI.Pointer;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -129,7 +130,7 @@ public class OrbitCamera : MonoBehaviour, IPointerEnterHandler, IEventSystemHand
 		if (Math.Abs(Input.GetAxis("Mouse ScrollWheel")) > 0.01f)
 		{
 			PointerEventData pointerEventData = new PointerEventData(m_EventSystem);
-			pointerEventData.position = Input.mousePosition;
+			pointerEventData.position = CursorController.CursorPosition;
 			List<RaycastResult> list = new List<RaycastResult>();
 			m_EventSystem.RaycastAll(pointerEventData, list);
 			if (list.Count > 0)

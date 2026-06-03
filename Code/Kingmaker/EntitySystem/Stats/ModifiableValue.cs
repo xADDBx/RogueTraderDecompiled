@@ -56,6 +56,8 @@ public class ModifiableValue : IHashable
 
 		public int ModValue;
 
+		public int ModPercentValue;
+
 		[CanBeNull]
 		public EntityFact SourceFact;
 
@@ -82,6 +84,8 @@ public class ModifiableValue : IHashable
 				return ModDescriptor.IsStackable();
 			}
 		}
+
+		public bool IsPercentModifier => ModPercentValue != 0;
 
 		public bool Remove()
 		{
@@ -117,7 +121,7 @@ public class ModifiableValue : IHashable
 			{
 				return true;
 			}
-			if (((AppliedTo == null && other.AppliedTo == null) || (AppliedTo != null && AppliedTo.Type == other.AppliedTo.Type && AppliedTo.Owner == other.AppliedTo.Owner)) && ModDescriptor == other.ModDescriptor && StackMode == other.StackMode && ModValue == other.ModValue && object.Equals(SourceFact, other.SourceFact) && SourceComponent == other.SourceComponent)
+			if (((AppliedTo == null && other.AppliedTo == null) || (AppliedTo != null && AppliedTo.Type == other.AppliedTo.Type && AppliedTo.Owner == other.AppliedTo.Owner)) && ModDescriptor == other.ModDescriptor && StackMode == other.StackMode && ModValue == other.ModValue && ModPercentValue == other.ModPercentValue && object.Equals(SourceFact, other.SourceFact) && SourceComponent == other.SourceComponent)
 			{
 				return object.Equals(SourceItem, other.SourceItem);
 			}
@@ -143,7 +147,7 @@ public class ModifiableValue : IHashable
 
 		public override int GetHashCode()
 		{
-			return (int)(((((((((((uint)(((AppliedTo != null) ? AppliedTo.GetHashCode() : 0) * 397) ^ (uint)ModDescriptor) * 397) ^ (uint)StackMode) * 397) ^ (uint)ModValue) * 397) ^ (uint)((SourceFact != null) ? SourceFact.GetHashCode() : 0)) * 397) ^ (uint)((SourceComponent != null) ? SourceComponent.GetHashCode() : 0)) * 397) ^ ((SourceItem != null) ? SourceItem.GetHashCode() : 0);
+			return (int)(((((((((((((uint)(((AppliedTo != null) ? AppliedTo.GetHashCode() : 0) * 397) ^ (uint)ModDescriptor) * 397) ^ (uint)StackMode) * 397) ^ (uint)ModValue) * 397) ^ (uint)ModPercentValue) * 397) ^ (uint)((SourceFact != null) ? SourceFact.GetHashCode() : 0)) * 397) ^ (uint)((SourceComponent != null) ? SourceComponent.GetHashCode() : 0)) * 397) ^ ((SourceItem != null) ? SourceItem.GetHashCode() : 0);
 		}
 	}
 
@@ -316,7 +320,7 @@ public class ModifiableValue : IHashable
 		List<Modifier> list2 = null;
 		foreach (Modifier item in list)
 		{
-			if (item.SourceFact == mod.SourceFact && item.SourceComponent == mod.SourceComponent && item.ModValue == mod.ModValue && item.ModDescriptor == mod.ModDescriptor)
+			if (item.SourceFact == mod.SourceFact && item.SourceComponent == mod.SourceComponent && item.ModValue == mod.ModValue && item.ModPercentValue == mod.ModPercentValue && item.ModDescriptor == mod.ModDescriptor)
 			{
 				if (list2 == null)
 				{
@@ -482,11 +486,12 @@ public class ModifiableValue : IHashable
 	}
 
 	[CanBeNull]
-	public Modifier AddModifier(int value, [NotNull] EntityFactComponent source, ModifierDescriptor desc = ModifierDescriptor.None)
+	public Modifier AddModifier(int value, [NotNull] EntityFactComponent source, ModifierDescriptor desc = ModifierDescriptor.None, bool isPercentModifier = false)
 	{
 		return AddModifier(new Modifier
 		{
-			ModValue = value,
+			ModValue = ((!isPercentModifier) ? value : 0),
+			ModPercentValue = (isPercentModifier ? value : 0),
 			ModDescriptor = desc,
 			StackMode = StackMode.Default,
 			SourceFact = source.Fact,
@@ -576,7 +581,6 @@ public class ModifiableValue : IHashable
 			ModifiedValue = Math.Max(MinValue, ModifiedValueRaw);
 		}
 		PermanentValue = CalculatePermanentValue();
-		OnUpdate();
 		if (m_UpdateDependentFacts)
 		{
 			return;
@@ -594,10 +598,6 @@ public class ModifiableValue : IHashable
 		{
 			item.UpdateValue();
 		}
-	}
-
-	protected virtual void OnUpdate()
-	{
 	}
 
 	public void AddDependentFact(EntityFact fact)
@@ -759,40 +759,67 @@ public class ModifiableValue : IHashable
 	{
 	}
 
-	protected int ApplyModifiersFiltered(int baseValue, Func<Modifier, bool> filter)
+	private int ApplyModifiersFiltered(int baseValue, Func<Modifier, bool> filter)
 	{
-		int num = baseValue;
 		if (IgnoreModifiers)
 		{
-			return num;
+			return baseValue;
 		}
+		int num = SumModifiersFiltered(filter, skipPercent: true);
+		int baseValue2 = baseValue + num;
+		UpdatePercentModifiersFiltered(baseValue2, filter);
+		int num2 = SumModifiersFiltered(filter);
+		return baseValue + num2;
+	}
+
+	private int SumModifiersFiltered(Func<Modifier, bool> filter, bool skipPercent = false)
+	{
+		int num = 0;
 		foreach (KeyValuePair<ModifierDescriptor, List<Modifier>> modifier in m_ModifierList)
 		{
-			List<Modifier> value = modifier.Value;
-			int num2 = 0;
-			int num3 = 0;
-			int num4 = 0;
-			foreach (Modifier item in value)
-			{
-				if (filter == null || filter(item))
-				{
-					if (item.Stacks)
-					{
-						num2 += item.ModValue;
-					}
-					if (!item.Stacks && item.ModValue > num3)
-					{
-						num3 = item.ModValue;
-					}
-					if (!item.Stacks && item.ModValue < num4)
-					{
-						num4 = item.ModValue;
-					}
-				}
-			}
-			num += num2 + num3 + num4;
+			num += SumModifiersFiltered(modifier.Value, filter, skipPercent);
 		}
 		return num;
+	}
+
+	private int SumModifiersFiltered(List<Modifier> list, Func<Modifier, bool> filter, bool skipPercent = false)
+	{
+		int num = 0;
+		int num2 = 0;
+		int num3 = 0;
+		foreach (Modifier item in list)
+		{
+			if ((!skipPercent || !item.IsPercentModifier) && (filter == null || filter(item)))
+			{
+				if (item.Stacks)
+				{
+					num += item.ModValue;
+				}
+				if (!item.Stacks && item.ModValue > num2)
+				{
+					num2 = item.ModValue;
+				}
+				if (!item.Stacks && item.ModValue < num3)
+				{
+					num3 = item.ModValue;
+				}
+			}
+		}
+		return num + num2 + num3;
+	}
+
+	private void UpdatePercentModifiersFiltered(int baseValue, Func<Modifier, bool> filter)
+	{
+		foreach (KeyValuePair<ModifierDescriptor, List<Modifier>> modifier in m_ModifierList)
+		{
+			foreach (Modifier item in modifier.Value)
+			{
+				if (item.IsPercentModifier && (filter == null || filter(item)))
+				{
+					item.ModValue = baseValue * item.ModPercentValue / 100;
+				}
+			}
+		}
 	}
 
 	public static implicit operator int([CanBeNull] ModifiableValue v)

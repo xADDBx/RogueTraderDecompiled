@@ -102,6 +102,11 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		}
 	}
 
+	public List<MechanicEntity> RicochetPreviewTargets { get; } = new List<MechanicEntity>();
+
+
+	public bool IsRicochetPreview => RicochetPreviewTargets.Any();
+
 	[CanBeNull]
 	private BaseUnitEntity CurrentUnit
 	{
@@ -502,6 +507,7 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 		if (!(m_SelectedAbility == null))
 		{
 			ClearAbilityArea();
+			ClearRicochetPreview();
 			ClearExtraHologramOnly();
 			UpdateVirtualHologramPosition();
 		}
@@ -642,5 +648,21 @@ public class UnitPredictionManager : MonoBehaviour, IUnitCommandEndHandler, ISub
 			FxHelper.Destroy(fx);
 		});
 		m_AttackOfOpportunityEffects.Clear();
+	}
+
+	public void SetRicochetPreview(IEnumerable<MechanicEntity> ricochetPreviewTargets)
+	{
+		RicochetPreviewTargets.Clear();
+		RicochetPreviewTargets.AddRange(ricochetPreviewTargets);
+	}
+
+	public void ClearRicochetPreview()
+	{
+		RicochetPreviewTargets.Clear();
+	}
+
+	public bool IsUnitRicochetTarget(MechanicEntity unit)
+	{
+		return RicochetPreviewTargets.Contains(unit);
 	}
 }

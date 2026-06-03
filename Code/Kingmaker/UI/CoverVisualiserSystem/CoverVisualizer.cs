@@ -134,7 +134,7 @@ public class CoverVisualizer : MonoBehaviour, IUnitMovableAreaHandler, ISubscrib
 						coverCellController.gameObject.SetActive(value: true);
 						coverCellController.transform.position = (Vector3)node.position;
 						m_HasVisibleCovers = true;
-						coverCellController.ChangeCoverIndicator(LosCalculations.GetCellCoverStatus(node, 2), LosCalculations.GetCellCoverStatus(node, 1), LosCalculations.GetCellCoverStatus(node, 0), LosCalculations.GetCellCoverStatus(node, 3));
+						coverCellController.ChangeCoverIndicator(LosCalculations.GetCellCoverStatus(node, 2, LosCalculations.ForcedCoverCheckType.BySource), LosCalculations.GetCellCoverStatus(node, 1, LosCalculations.ForcedCoverCheckType.BySource), LosCalculations.GetCellCoverStatus(node, 0, LosCalculations.ForcedCoverCheckType.BySource), LosCalculations.GetCellCoverStatus(node, 3, LosCalculations.ForcedCoverCheckType.BySource));
 						continue;
 					}
 				}

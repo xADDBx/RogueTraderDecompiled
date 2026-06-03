@@ -10,7 +10,7 @@ public class EditorArbiterEnvironment : IArbiterEnvironment
 
 	public string Revision => Repository.GetRepositoryInfo(null)?.CommitHash ?? "editor";
 
-	public bool IsAvailable => true;
+	public bool IsAvailable => ArbiterIntegration.IsMainMenuActive();
 
 	public bool IsLoggingEnabled => LoggingConfiguration.IsLoggingEnabled;
 

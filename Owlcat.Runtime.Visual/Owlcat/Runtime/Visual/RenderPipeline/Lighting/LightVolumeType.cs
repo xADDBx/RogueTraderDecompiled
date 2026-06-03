@@ -2,7 +2,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.RenderPipeline.Lighting;
 
-[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\RenderPipeline\\Lighting\\LightData.cs")]
+[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@5bdd4ffebc6c\\Runtime\\RenderPipeline\\Lighting\\LightData.cs")]
 public enum LightVolumeType
 {
 	Cone,

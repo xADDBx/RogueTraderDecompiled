@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
 using UnityEngine;
@@ -16,12 +15,4 @@ public class BlueprintItemAugerArray : BlueprintStarshipItem
 	public int critChances;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipAugerArray;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

@@ -80,7 +80,7 @@ public abstract class ScriptableRenderPass<T> : ScriptableRenderPass where T : P
 	protected sealed override void RecordRenderGraph(ref RenderingData renderingData)
 	{
 		T passData;
-		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Passes\\ScriptableRenderPass.cs", 100);
+		using RenderGraphBuilder builder = renderingData.RenderGraph.AddRenderPass<T>(Name, out passData, ".\\Library\\PackageCache\\com.owlcat.visual@5bdd4ffebc6c\\Runtime\\Waaagh\\Passes\\ScriptableRenderPass.cs", 100);
 		passData.Resources = renderingData.CameraData.Renderer.RenderGraphResources;
 		Setup(builder, passData, ref renderingData);
 		builder.SetRenderFunc(m_RenderFunc);

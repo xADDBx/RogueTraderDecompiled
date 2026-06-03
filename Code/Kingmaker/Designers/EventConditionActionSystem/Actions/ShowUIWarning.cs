@@ -20,7 +20,7 @@ public class ShowUIWarning : GameAction
 
 	public override string GetCaption()
 	{
-		return "Show notification (" + (HasType ? Type.ToString() : String.ToString()) + ")";
+		return "Show notification (" + (HasType ? Type.ToString() : ((string)String)) + ")";
 	}
 
 	protected override void RunAction()
@@ -36,7 +36,7 @@ public class ShowUIWarning : GameAction
 		{
 			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
 			{
-				h.HandleWarning(String.ToString());
+				h.HandleWarning(String);
 			});
 		}
 	}

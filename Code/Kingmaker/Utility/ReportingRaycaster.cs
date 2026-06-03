@@ -23,6 +23,7 @@ using Kingmaker.Code.UI.MVVM.VM.Other;
 using Kingmaker.Code.UI.MVVM.VM.Overtips;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.Code.UI.MVVM.VM.SaveLoad;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Augmentations;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
@@ -87,6 +88,7 @@ public class ReportingRaycaster : MonoBehaviour
 		Interchapter,
 		Epilog,
 		Inventory,
+		Augmentations,
 		Journal,
 		Encyclopedia,
 		LevelUp,
@@ -316,7 +318,7 @@ public class ReportingRaycaster : MonoBehaviour
 
 	public string GetFeatureName()
 	{
-		Vector2 position = ((Input.GetJoystickNames().Length != 0) ? new Vector2(Screen.width / 2, Screen.height / 2) : ((Vector2)Input.mousePosition));
+		Vector2 position = ((Input.GetJoystickNames().Length != 0) ? new Vector2(Screen.width / 2, Screen.height / 2) : CursorController.CursorPosition);
 		PointerEventData eventData = new PointerEventData(EventSystem.current)
 		{
 			position = position
@@ -459,6 +461,10 @@ public class ReportingRaycaster : MonoBehaviour
 			{
 				return uifeatureenum.Inventory;
 			}
+			if (IsType(type, typeof(AugmentationsVM)))
+			{
+				return uifeatureenum.Augmentations;
+			}
 			if (IsType(type, typeof(JournalVM)))
 			{
 				return uifeatureenum.Journal;
@@ -572,7 +578,7 @@ public class ReportingRaycaster : MonoBehaviour
 	{
 		PointerEventData eventData = new PointerEventData(EventSystem.current)
 		{
-			position = Input.mousePosition
+			position = CursorController.CursorPosition
 		};
 		List<RaycastResult> list = new List<RaycastResult>();
 		EventSystem.current.RaycastAll(eventData, list);
@@ -648,6 +654,10 @@ public class ReportingRaycaster : MonoBehaviour
 			{
 				return tooltipTemplateBuff.Buff.Blueprint.NameSafe();
 			}
+			if (value is TooltipTemplateItem tooltipTemplateItem)
+			{
+				return tooltipTemplateItem.Item?.Blueprint?.NameSafe();
+			}
 			if (value is TooltipTemplateUIFeature tooltipTemplateUIFeature)
 			{
 				try
@@ -686,7 +696,7 @@ public class ReportingRaycaster : MonoBehaviour
 	{
 		PointerEventData eventData = new PointerEventData(EventSystem.current)
 		{
-			position = Input.mousePosition
+			position = CursorController.CursorPosition
 		};
 		List<RaycastResult> list = new List<RaycastResult>();
 		EventSystem.current.RaycastAll(eventData, list);
@@ -752,7 +762,7 @@ public class ReportingRaycaster : MonoBehaviour
 	{
 		PointerEventData eventData = new PointerEventData(EventSystem.current)
 		{
-			position = Input.mousePosition
+			position = CursorController.CursorPosition
 		};
 		List<RaycastResult> list = new List<RaycastResult>();
 		EventSystem.current.RaycastAll(eventData, list);
@@ -781,7 +791,7 @@ public class ReportingRaycaster : MonoBehaviour
 				RectTransform component = item2.transform.GetChild(0).GetComponent<RectTransform>();
 				if (component != null)
 				{
-					RectTransformUtility.ScreenPointToLocalPointInRectangle(component, Input.mousePosition, UICamera.Instance, out var localPoint);
+					RectTransformUtility.ScreenPointToLocalPointInRectangle(component, CursorController.CursorPosition, UICamera.Instance, out var localPoint);
 					if (Math.Abs(localPoint.x) < component.rect.width && localPoint.y >= 0f && localPoint.y < component.rect.height)
 					{
 						return "Bark";

@@ -15,6 +15,8 @@ public class OverrideDodgeArmorPercentPenalty : MechanicEntityFactComponentDeleg
 	[Range(-1f, 100f)]
 	private int m_DodgeArmorPercentPenalty = 25;
 
+	public int DodgeArmorPercentPenalty => m_DodgeArmorPercentPenalty;
+
 	public void OnEventAboutToTrigger(RuleCalculateDodgeChance evt)
 	{
 		evt.SetOverrideDodgeArmorPercentPenalty(m_DodgeArmorPercentPenalty);

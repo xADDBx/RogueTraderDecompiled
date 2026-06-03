@@ -60,13 +60,17 @@ public class ContextActionApplyDOT : ContextAction
 		{
 			return;
 		}
-		int damage = DamageValue.Calculate(base.Context);
+		int num = DamageValue.Calculate(base.Context);
+		if (num <= 0)
+		{
+			return;
+		}
 		SavingThrowType? saveType = (UseSavingThrowOverride ? new SavingThrowType?(SavingThrowOverride) : null);
 		int? difficulty = (UseDifficultyOverride ? new int?(DifficultyOverride.Calculate(base.Context)) : null);
 		int? penetration = (UsePenetrationOverride ? new int?(PenetrationOverride.Calculate(base.Context)) : null);
 		Rounds? rounds = (UseRoundsDuration ? new Rounds?(RoundsDuration) : null);
 		BuffDuration duration = new BuffDuration(rounds, EndCondition);
-		using (ContextData<DOTLogic.Settings>.Request().Setup(damage, saveType, difficulty, penetration))
+		using (ContextData<DOTLogic.Settings>.Request().Setup(num, saveType, difficulty, penetration))
 		{
 			baseUnitEntity.Buffs.Add(blueprintBuff, base.Caster, base.Context, duration)?.TryAddSource(this);
 		}

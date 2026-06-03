@@ -25,6 +25,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("fb8a35db69c8bee4eb229e8802ffbeff")]
 public class StarshipHoloFieldController : UnitFactComponentDelegate, ITurnStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, IEventTag<IUnitCombatHandler, EntitySubscriber>, ITargetRulebookHandler<RuleStarshipRollAttack>, IRulebookHandler<RuleStarshipRollAttack>, ITargetRulebookSubscriber, ITargetRulebookHandler<RuleStarshipPerformAttack>, IRulebookHandler<RuleStarshipPerformAttack>, IUnitDeathHandler, IDamageHandler, IHashable

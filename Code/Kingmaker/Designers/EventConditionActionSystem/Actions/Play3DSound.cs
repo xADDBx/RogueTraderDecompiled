@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/Play3DSound")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("be3026f011f344f448094a75ed64a9f5")]
 public class Play3DSound : GameAction

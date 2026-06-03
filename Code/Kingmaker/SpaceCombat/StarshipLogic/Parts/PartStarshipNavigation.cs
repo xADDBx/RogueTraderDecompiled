@@ -9,6 +9,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem.Core;
@@ -252,6 +253,28 @@ public class PartStarshipNavigation : StarshipPart, ITurnEndHandler<EntitySubscr
 		else if (SpeedMode == SpeedModeType.LowSpeed)
 		{
 			SpeedMode = SpeedModeType.Normal;
+		}
+	}
+
+	protected override void OnAttachOrPostLoad()
+	{
+		CombatState.WarhammerInitialAPBlue.OnChanged += HandleInitialAPBlueChanged;
+	}
+
+	protected override void OnDetach()
+	{
+		CombatState.WarhammerInitialAPBlue.OnChanged -= HandleInitialAPBlueChanged;
+	}
+
+	private void HandleInitialAPBlueChanged(ModifiableValue stat, int oldValue)
+	{
+		if (base.Owner.IsInCombat)
+		{
+			int num = stat.ModifiedValue - oldValue;
+			if (num != 0)
+			{
+				CombatState.SetBluePoint(Math.Max(0f, CombatState.ActionPointsBlue + (float)num));
+			}
 		}
 	}
 

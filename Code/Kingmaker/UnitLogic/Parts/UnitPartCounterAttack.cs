@@ -94,6 +94,15 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 			UseCount = 0;
 		}
 
+		public bool IsRestored()
+		{
+			if (Owner != null && Fact != null)
+			{
+				return Component != null;
+			}
+			return false;
+		}
+
 		public virtual Hash128 GetHash128()
 		{
 			Hash128 result = default(Hash128);
@@ -165,12 +174,12 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 	}
 
 	[CanBeNull]
-	private Entry FindBestEntry(Func<CounterAttack.TriggerType, bool> triggerFn)
+	private Entry FindBestEntry(Func<Entry, bool> restrictionPassFn, Func<CounterAttack.TriggerType, bool> triggerFn)
 	{
 		Entry entry = null;
 		foreach (Entry entry2 in m_Entries)
 		{
-			if (entry2.Owner != null && entry2.Fact != null && entry2.Component != null)
+			if (entry2.IsRestored() && restrictionPassFn(entry2))
 			{
 				entry = GetBestEntry(entry, entry2, triggerFn);
 			}
@@ -203,14 +212,14 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		return baseUnitEntity;
 	}
 
-	private (Entry, BaseUnitEntity) FindBestEntryWithAlliesOnly(Func<CounterAttack.TriggerType, bool> triggerFn, UnitUseAbility useAbilityCmd)
+	private Entry FindBestEntryWithAlliesOnly(Func<CounterAttack.TriggerType, bool> triggerFn, UnitUseAbility useAbilityCmd)
 	{
 		BaseUnitEntity baseUnitEntity = null;
 		bool flag = false;
 		Entry entry = null;
 		foreach (Entry entry2 in m_Entries)
 		{
-			if (entry2.Owner == null || entry2.Fact == null || entry2.Component == null || !entry2.Component.GuardAllies)
+			if (!entry2.IsRestored() || !entry2.Component.GuardAllies)
 			{
 				continue;
 			}
@@ -222,13 +231,13 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 					baseUnitEntity = ComputeTargetAllyUnit(useAbilityCmd);
 					flag = true;
 				}
-				if (base.Owner.DistanceToInCells(baseUnitEntity) <= value)
+				if (base.Owner.DistanceToInCells(baseUnitEntity) <= value && entry2.Component.GuardAlliesRestriction.IsPassed(new PropertyContext(base.Owner, null, baseUnitEntity)))
 				{
 					entry = GetBestEntry(entry, entry2, triggerFn);
 				}
 			}
 		}
-		return ValueTuple.Create(entry, baseUnitEntity);
+		return entry;
 	}
 
 	public void OnEventAboutToTrigger(RulePerformAttack evt)
@@ -241,18 +250,18 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		{
 			return;
 		}
-		Entry entry = FindBestEntry(ShouldTrigger);
-		if (entry == null || !entry.Component.Restriction.IsPassed(new PropertyContext(entry.Fact, evt.InitiatorUnit, evt, evt.Ability)))
+		Entry entry = FindBestEntry(IsRestrictionPassed, ShouldTrigger);
+		if (entry != null)
 		{
-			return;
-		}
-		m_DelayedCounterAttackFn = delegate
-		{
-			if (Game.Instance.AttackOfOpportunityController.Provoke(evt.InitiatorUnit, base.Owner, entry.Fact, entry.Component.CanUseInRange, canMove: false) != null)
+			m_DelayedCounterAttackFn = delegate
 			{
-				entry.Use();
-			}
-		};
+				ProvokeAttackOfOpportunity(evt.InitiatorUnit, entry);
+			};
+		}
+		bool IsRestrictionPassed(Entry currentEntry)
+		{
+			return currentEntry.Component.Restriction.IsPassed(new PropertyContext(currentEntry.Fact, evt.InitiatorUnit, evt, evt.Ability));
+		}
 		bool ShouldTrigger(CounterAttack.TriggerType componentTrigger)
 		{
 			return componentTrigger switch
@@ -274,14 +283,13 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		}
 		if (cmd.Executor != base.Owner && cmd.Executor is BaseUnitEntity target)
 		{
-			Entry entry2 = FindBestEntry((CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.BeforeAttack);
+			Entry entry2 = FindBestEntry((Entry _) => true, (CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.BeforeAttack);
 			if (entry2 != null && ComputeTargetAllyUnit(unitUseAbility) == base.Owner && Rulebook.Trigger(new RuleCalculateCounterAttackChance(base.Owner, target)).Result > 0)
 			{
-				UnitCommandHandle unitCommandHandle = Game.Instance.AttackOfOpportunityController.Provoke(target, base.Owner, entry2.Fact, entry2.Component.CanUseInRange, canMove: false);
+				UnitCommandHandle unitCommandHandle = ProvokeAttackOfOpportunity(target, entry2);
 				if (unitCommandHandle != null)
 				{
 					cmd.BlockOn(unitCommandHandle.Cmd);
-					entry2.Use();
 				}
 			}
 		}
@@ -289,22 +297,32 @@ public class UnitPartCounterAttack : UnitPart, ITargetRulebookHandler<RulePerfor
 		{
 			return;
 		}
-		var (entry, currentTarget) = FindBestEntryWithAlliesOnly((CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.AfterAnyAttack, unitUseAbility);
-		if (entry == null || !entry.Component.GuardAlliesRestriction.IsPassed(new PropertyContext(base.Owner, null, currentTarget)))
+		Entry entry = FindBestEntryWithAlliesOnly((CounterAttack.TriggerType componentTrigger) => componentTrigger == CounterAttack.TriggerType.AfterAnyAttack, unitUseAbility);
+		if (entry == null)
 		{
 			return;
 		}
 		m_DelayedCounterAttackFn = delegate
 		{
-			if (cmd.Executor is BaseUnitEntity target2 && Game.Instance.AttackOfOpportunityController.Provoke(target2, base.Owner, entry.Fact, entry.Component.CanUseInRange, entry.Component.GuardAlliesCanMove) != null)
+			if (cmd.Executor is BaseUnitEntity target2)
 			{
-				entry.Use();
+				ProvokeAttackOfOpportunity(target2, entry, canMove: true);
 			}
 		};
 		if (entry.Component.Trigger == CounterAttack.TriggerType.BeforeAttack)
 		{
 			m_DelayedCounterAttackFn();
 		}
+	}
+
+	private UnitCommandHandle ProvokeAttackOfOpportunity(BaseUnitEntity target, Entry entry, bool canMove = false)
+	{
+		UnitCommandHandle unitCommandHandle = Game.Instance.AttackOfOpportunityController.Provoke(target, base.Owner, entry.Fact.Blueprint, entry.Component.CanUseInRange, canMove && entry.Component.GuardAlliesCanMove, entry.Component.Ability);
+		if (unitCommandHandle != null)
+		{
+			entry.Use();
+		}
+		return unitCommandHandle;
 	}
 
 	public void HandleUnitCommandDidEnd(AbstractUnitCommand cmd)

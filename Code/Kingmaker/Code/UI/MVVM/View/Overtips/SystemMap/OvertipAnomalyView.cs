@@ -39,6 +39,12 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 	[SerializeField]
 	private RectTransform m_CanvasRectTransform;
 
+	[SerializeField]
+	private RectTransform m_SidePanelRotator;
+
+	[SerializeField]
+	private RectTransform m_SidePanel;
+
 	[Header("Noise")]
 	[SerializeField]
 	private Image m_NoiseAroundImage;
@@ -49,6 +55,12 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 	[Header("Top Information")]
 	[SerializeField]
 	private TextMeshProUGUI m_TopInformation;
+
+	[SerializeField]
+	private RectTransform m_AnomalyNameTransform;
+
+	[SerializeField]
+	private RectTransform m_AnomalyTopIconsTransform;
 
 	[Header("Anomaly Type Identifier")]
 	[SerializeField]
@@ -166,9 +178,28 @@ public abstract class OvertipAnomalyView : BaseOvertipView<OvertipEntityAnomalyV
 	{
 		m_NoiseAroundImage.sprite = m_RandomNoises[UnityEngine.Random.Range(0, m_RandomNoises.Length)];
 		m_TopInformation.text = GetTopInformationText();
-		float num = UnityEngine.Random.Range(15f, 25f);
-		m_TopInformation.transform.parent.transform.rotation *= Quaternion.Euler(0f, 0f, num);
-		m_TopInformation.transform.rotation *= Quaternion.Euler(0f, 0f, 0f - num);
+		bool num = base.ViewModel.AnomalyView?.BlockedObject != null;
+		float num2 = UnityEngine.Random.Range(15f, 25f);
+		m_TopInformation.transform.parent.transform.rotation *= Quaternion.Euler(0f, 0f, num2);
+		m_TopInformation.transform.rotation *= Quaternion.Euler(0f, 0f, 0f - num2);
+		if (num && m_SidePanel != null)
+		{
+			if (m_SidePanelRotator != null)
+			{
+				m_SidePanelRotator.localRotation = Quaternion.Euler(0f, 0f, -50f);
+				m_SidePanel.anchoredPosition = Vector2.zero;
+			}
+			if (m_AnomalyNameTransform != null)
+			{
+				m_AnomalyNameTransform.rotation = Quaternion.identity;
+				m_AnomalyNameTransform.anchoredPosition += Vector2.right * 10f;
+			}
+			if (m_AnomalyTopIconsTransform != null)
+			{
+				m_AnomalyTopIconsTransform.rotation = Quaternion.identity;
+				m_AnomalyTopIconsTransform.anchoredPosition += Vector2.right * 10f;
+			}
+		}
 		SphereCollider component = m_SystemObject.gameObject.GetComponent<SphereCollider>();
 		if (!(component == null))
 		{

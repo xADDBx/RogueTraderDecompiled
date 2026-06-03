@@ -24,12 +24,12 @@ public class MoveAnimator : MonoBehaviour, IUIAnimator
 
 	public bool MoveByX;
 
-	[ConditionalShow("MoveByX")]
+	[ShowIf("MoveByX")]
 	public MovePart MovePartX;
 
 	public bool MoveByY;
 
-	[ConditionalShow("MoveByY")]
+	[ShowIf("MoveByY")]
 	public MovePart MovePartY;
 
 	private RectTransform m_RectTransform;

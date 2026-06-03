@@ -364,115 +364,122 @@ public class WeaponSlot : ItemSlot, IHashable
 	{
 		CustomGridNodeBase customGridNodeBase = overridePosition ?? ObstacleAnalyzer.GetNearestNodeXZUnwalkable(base.Owner.Position);
 		int starshipDirection = overrideDirection ?? CustomGraphHelper.GuessDirection(base.Owner.Forward);
-		CustomGridNodeBase[] array2;
-		if (target.Entity == null)
+		Vector2Int startNodeCoord;
+		CustomGridGraph graph;
+		HashSet<FiringArcSourceNode> arcSourceNodes;
+		Dictionary<FiringArcSourceNode, PooledList<CustomGridNodeBase>> closestNodes;
+		using (NodeList nodeList = ((target.Entity != null) ? target.Entity.GetOccupiedNodes() : NodeList.Empty))
 		{
-			CustomGridNodeBase[] array = new CustomGridNode[1] { ObstacleAnalyzer.GetNearestNodeXZUnwalkable(target.Point) };
-			array2 = array;
-		}
-		else
-		{
-			array2 = target.Entity.GetOccupiedNodes().ToArray();
-		}
-		CustomGridNodeBase[] array3 = array2;
-		if (customGridNodeBase == null || array3.Length == 0)
-		{
-			return false;
-		}
-		Vector2Int startNodeCoord = customGridNodeBase.CoordinatesInGrid;
-		CustomGridGraph graph = (CustomGridGraph)customGridNodeBase.Graph;
-		HashSet<FiringArcSourceNode> arcSourceNodes = TempHashSet.Get<FiringArcSourceNode>();
-		using (ProfileScope.New("Gather FiringArcSourceNodes"))
-		{
-			switch (Type)
-			{
-			case WeaponSlotType.Prow:
-				GetAdjustedSourceNodes(RestrictedFiringArc.Fore);
-				break;
-			case WeaponSlotType.Port:
-				GetAdjustedSourceNodes(RestrictedFiringArc.Port);
-				break;
-			case WeaponSlotType.Starboard:
-				GetAdjustedSourceNodes(RestrictedFiringArc.Starboard);
-				break;
-			case WeaponSlotType.Dorsal:
-				GetAdjustedSourceNodes(RestrictedFiringArc.Fore);
-				GetAdjustedSourceNodes(RestrictedFiringArc.Port);
-				GetAdjustedSourceNodes(RestrictedFiringArc.Starboard);
-				break;
-			}
-		}
-		Dictionary<FiringArcSourceNode, PooledList<CustomGridNodeBase>> value = Nodes.Value;
-		try
-		{
-			using (ProfileScope.New("Exclude not-in-range nodes"))
-			{
-				foreach (FiringArcSourceNode item in arcSourceNodes)
-				{
-					CustomGridNodeBase[] array = array3;
-					foreach (CustomGridNodeBase customGridNodeBase2 in array)
-					{
-						int warhammerCellDistance = CustomGraphHelper.GetWarhammerCellDistance(item.Node, customGridNodeBase2);
-						if (warhammerCellDistance == 0)
-						{
-							if (value.TryGetValue(item, out var value2))
-							{
-								value2.Add(customGridNodeBase2);
-							}
-							else
-							{
-								PooledList<CustomGridNodeBase> pooledList = PooledList<CustomGridNodeBase>.Get();
-								pooledList.Add(customGridNodeBase2);
-								value[item] = pooledList;
-							}
-						}
-						Vector3 direction = customGridNodeBase2.Vector3Position - item.Node.Vector3Position;
-						if (warhammerCellDistance <= range && item.CheckDirection(direction))
-						{
-							if (value.TryGetValue(item, out var value3))
-							{
-								value3.Add(customGridNodeBase2);
-								continue;
-							}
-							PooledList<CustomGridNodeBase> pooledList2 = PooledList<CustomGridNodeBase>.Get();
-							pooledList2.Add(customGridNodeBase2);
-							value[item] = pooledList2;
-						}
-					}
-				}
-			}
-			if (value.Count == 0)
+			CustomGridNode customGridNode = ((target.Entity == null) ? ObstacleAnalyzer.GetNearestNodeXZUnwalkable(target.Point) : null);
+			if (customGridNodeBase == null || (customGridNode == null && nodeList.IsEmpty))
 			{
 				return false;
 			}
-			if (restrictedFiringAreaComponent == null)
+			startNodeCoord = customGridNodeBase.CoordinatesInGrid;
+			graph = (CustomGridGraph)customGridNodeBase.Graph;
+			arcSourceNodes = TempHashSet.Get<FiringArcSourceNode>();
+			using (ProfileScope.New("Gather FiringArcSourceNodes"))
 			{
-				return true;
-			}
-			using (ProfileScope.New("CheckIsInsideFiringArc"))
-			{
-				Vector3 vector3Direction = CustomGraphHelper.GetVector3Direction(starshipDirection);
-				foreach (KeyValuePair<FiringArcSourceNode, PooledList<CustomGridNodeBase>> item2 in value)
+				switch (Type)
 				{
-					HashSet<CustomGridNodeBase> restrictedArea = restrictedFiringAreaComponent.GetRestrictedArea(item2.Key.Node, item2.Key.FiringArc, vector3Direction);
-					foreach (CustomGridNodeBase item3 in item2.Value)
+				case WeaponSlotType.Prow:
+					GetAdjustedSourceNodes(RestrictedFiringArc.Fore);
+					break;
+				case WeaponSlotType.Port:
+					GetAdjustedSourceNodes(RestrictedFiringArc.Port);
+					break;
+				case WeaponSlotType.Starboard:
+					GetAdjustedSourceNodes(RestrictedFiringArc.Starboard);
+					break;
+				case WeaponSlotType.Dorsal:
+					GetAdjustedSourceNodes(RestrictedFiringArc.Fore);
+					GetAdjustedSourceNodes(RestrictedFiringArc.Port);
+					GetAdjustedSourceNodes(RestrictedFiringArc.Starboard);
+					break;
+				}
+			}
+			closestNodes = Nodes.Value;
+			try
+			{
+				using (ProfileScope.New("Exclude not-in-range nodes"))
+				{
+					foreach (FiringArcSourceNode item in arcSourceNodes)
 					{
-						if (restrictedArea.Contains(item3))
+						if (customGridNode != null)
 						{
-							return true;
+							AddIfInRange(item, customGridNode);
+							continue;
+						}
+						foreach (CustomGridNodeBase item2 in nodeList)
+						{
+							AddIfInRange(item, item2);
 						}
 					}
 				}
+				if (closestNodes.Count == 0)
+				{
+					return false;
+				}
+				if (restrictedFiringAreaComponent == null)
+				{
+					return true;
+				}
+				using (ProfileScope.New("CheckIsInsideFiringArc"))
+				{
+					Vector3 vector3Direction = CustomGraphHelper.GetVector3Direction(starshipDirection);
+					foreach (KeyValuePair<FiringArcSourceNode, PooledList<CustomGridNodeBase>> item3 in closestNodes)
+					{
+						HashSet<CustomGridNodeBase> restrictedArea = restrictedFiringAreaComponent.GetRestrictedArea(item3.Key.Node, item3.Key.FiringArc, vector3Direction);
+						foreach (CustomGridNodeBase item4 in item3.Value)
+						{
+							if (restrictedArea.Contains(item4))
+							{
+								return true;
+							}
+						}
+					}
+				}
+				return false;
 			}
-			return false;
-		}
-		finally
-		{
-			foreach (KeyValuePair<FiringArcSourceNode, PooledList<CustomGridNodeBase>> item4 in value)
+			finally
 			{
-				PooledList<CustomGridNodeBase>.Return(item4.Value);
+				foreach (KeyValuePair<FiringArcSourceNode, PooledList<CustomGridNodeBase>> item5 in closestNodes)
+				{
+					PooledList<CustomGridNodeBase>.Return(item5.Value);
+				}
+				closestNodes.Clear();
 			}
-			value.Clear();
+		}
+		void AddIfInRange(FiringArcSourceNode node, CustomGridNodeBase targetNode)
+		{
+			int warhammerCellDistance = CustomGraphHelper.GetWarhammerCellDistance(node.Node, targetNode);
+			if (warhammerCellDistance == 0)
+			{
+				if (closestNodes.TryGetValue(node, out var value))
+				{
+					value.Add(targetNode);
+				}
+				else
+				{
+					PooledList<CustomGridNodeBase> pooledList = PooledList<CustomGridNodeBase>.Get();
+					pooledList.Add(targetNode);
+					closestNodes[node] = pooledList;
+				}
+			}
+			Vector3 direction = targetNode.Vector3Position - node.Node.Vector3Position;
+			if (warhammerCellDistance <= range && node.CheckDirection(direction))
+			{
+				if (closestNodes.TryGetValue(node, out var value2))
+				{
+					value2.Add(targetNode);
+				}
+				else
+				{
+					PooledList<CustomGridNodeBase> pooledList2 = PooledList<CustomGridNodeBase>.Get();
+					pooledList2.Add(targetNode);
+					closestNodes[node] = pooledList2;
+				}
+			}
 		}
 		void GetAdjustedSourceNodes(RestrictedFiringArc arc)
 		{
@@ -480,8 +487,8 @@ public class WeaponSlot : ItemSlot, IHashable
 			foreach (Vector2Int vector2Int in firingArcSourceNodesOffsets)
 			{
 				Vector2Int vector2Int2 = startNodeCoord + vector2Int;
-				CustomGridNodeBase node = FiringArcHelper.AdjustStartNode(graph.GetNode(vector2Int2.x, vector2Int2.y), arc, starshipDirection);
-				arcSourceNodes.Add(new FiringArcSourceNode(node, starshipDirection, arc));
+				CustomGridNodeBase node2 = FiringArcHelper.AdjustStartNode(graph.GetNode(vector2Int2.x, vector2Int2.y), arc, starshipDirection);
+				arcSourceNodes.Add(new FiringArcSourceNode(node2, starshipDirection, arc));
 			}
 		}
 	}

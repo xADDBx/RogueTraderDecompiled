@@ -31,7 +31,7 @@ public class ColonyResourceBaseView : ViewBase<ColonyResourceVM>, IWidgetView
 		{
 			m_Count.text = val.ToString();
 		}));
-		AddDisposable(m_Icon.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, base.ViewModel.Count.Value)));
+		AddDisposable(m_Icon.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, base.ViewModel.Count.Value, base.ViewModel)));
 	}
 
 	protected override void DestroyViewImplementation()

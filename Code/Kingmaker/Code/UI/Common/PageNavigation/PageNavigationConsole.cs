@@ -60,9 +60,13 @@ public class PageNavigationConsole : PageNavigationBase
 
 	public void AddInput()
 	{
-		if (!m_Disposable.Any())
+		if (m_Disposable.Any())
 		{
-			InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
+			return;
+		}
+		InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
+		if (currentInputLayer != null)
+		{
 			m_Disposable.Add(m_PreviousHint.Bind(currentInputLayer.AddButton(delegate
 			{
 				OnPreviousClick();

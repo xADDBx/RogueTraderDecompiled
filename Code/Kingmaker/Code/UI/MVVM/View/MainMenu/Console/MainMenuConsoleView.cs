@@ -8,6 +8,7 @@ using Kingmaker.UI;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.View.CharGen.Console;
 using Kingmaker.UI.Pointer;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using UniRx;
@@ -51,6 +52,16 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 	[SerializeField]
 	private UIFirstLaunchFX m_FirstLaunchFX;
 
+	[Header("Nintendo Switch Welcome Window")]
+	[SerializeField]
+	private GameObject m_WelcomeWindowScroll;
+
+	[SerializeField]
+	private GameObject m_WelcomeWindowScrollbar;
+
+	[SerializeField]
+	private RectTransform m_BackgroundWelcomeWindowRect;
+
 	public void Initialize()
 	{
 		m_TermsOfUseConsoleView.Initialize();
@@ -82,6 +93,14 @@ public class MainMenuConsoleView : ViewBase<MainMenuVM>, IInitializable
 		{
 			m_FadeAnimator.DisappearAnimation();
 		}, m_DelayBeforeShow);
+		m_WelcomeWindowScroll.SetActive(!ApplicationHelper.IsRunningOnAnySwitch);
+		m_WelcomeWindowScrollbar.SetActive(!ApplicationHelper.IsRunningOnAnySwitch);
+		if (ApplicationHelper.IsRunningOnAnySwitch)
+		{
+			Vector2 sizeDelta = m_BackgroundWelcomeWindowRect.sizeDelta;
+			sizeDelta.y = 365f;
+			m_BackgroundWelcomeWindowRect.sizeDelta = sizeDelta;
+		}
 	}
 
 	protected override void DestroyViewImplementation()

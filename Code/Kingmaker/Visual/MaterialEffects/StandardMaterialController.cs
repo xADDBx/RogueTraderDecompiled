@@ -29,6 +29,19 @@ public class StandardMaterialController : UpdateableBehaviour
 		MaterialProperties = 2
 	}
 
+	private readonly struct OwnedMaterial
+	{
+		public readonly Material Material;
+
+		public readonly Renderer Renderer;
+
+		public OwnedMaterial(Material material, Renderer renderer)
+		{
+			Material = material;
+			Renderer = renderer;
+		}
+	}
+
 	[SerializeField]
 	private ColorTintAnimationController m_ColorTintController = new ColorTintAnimationController();
 
@@ -50,6 +63,8 @@ public class StandardMaterialController : UpdateableBehaviour
 	private LayeredMaterialController m_OverlayMaterialController;
 
 	private DirtyFlags m_DirtyFlags;
+
+	private readonly List<OwnedMaterial> m_OwnedMaterialInstances = new List<OwnedMaterial>();
 
 	internal ColorTintAnimationController ColorTintController => m_ColorTintController;
 
@@ -73,6 +88,19 @@ public class StandardMaterialController : UpdateableBehaviour
 	private void OnDestroy()
 	{
 		m_CustomMaterialPropertyAnimationController.Dispose();
+		DestroyOwnedMaterialInstances();
+	}
+
+	private void DestroyOwnedMaterialInstances()
+	{
+		foreach (OwnedMaterial ownedMaterialInstance in m_OwnedMaterialInstances)
+		{
+			if (ownedMaterialInstance.Material != null)
+			{
+				UnityEngine.Object.Destroy(ownedMaterialInstance.Material);
+			}
+		}
+		m_OwnedMaterialInstances.Clear();
 	}
 
 	private void Setup()
@@ -125,32 +153,34 @@ public class StandardMaterialController : UpdateableBehaviour
 							bool flag4 = DissolveMaterial.IsMaterialCompatible(material);
 							bool flag5 = AdditionalAlbedoMaterial.IsMaterialCompatible(material);
 							bool flag6 = ParametersOverrideMaterial.IsMaterialCompatible(material);
-							Material material3 = (value2[i] = new Material(material));
+							Material material2 = new Material(material);
+							m_OwnedMaterialInstances.Add(new OwnedMaterial(material2, item));
+							value2[i] = material2;
 							if (flag2)
 							{
 								ColorTintAnimationController colorTintController = m_ColorTintController;
-								ColorTintMaterial material4 = new ColorTintMaterial(material3);
-								colorTintController.AddMaterial(in material4);
+								ColorTintMaterial material3 = new ColorTintMaterial(material2);
+								colorTintController.AddMaterial(in material3);
 							}
 							if (flag3)
 							{
-								m_RimController.AddMaterial(new RimLightingMaterial(material3));
+								m_RimController.AddMaterial(new RimLightingMaterial(material2));
 							}
 							if (flag4)
 							{
-								m_DissolveController.AddMaterial(new DissolveMaterial(material3));
+								m_DissolveController.AddMaterial(new DissolveMaterial(material2));
 							}
 							if (flag5)
 							{
 								AdditionalAlbedoAnimationController additionalAlbedoController = m_AdditionalAlbedoController;
-								AdditionalAlbedoMaterial material5 = new AdditionalAlbedoMaterial(material3);
-								additionalAlbedoController.AddMaterial(in material5);
+								AdditionalAlbedoMaterial material4 = new AdditionalAlbedoMaterial(material2);
+								additionalAlbedoController.AddMaterial(in material4);
 							}
 							if (flag6)
 							{
-								m_MaterialParametersOverrideController.AddMaterial(new ParametersOverrideMaterial(material3));
+								m_MaterialParametersOverrideController.AddMaterial(new ParametersOverrideMaterial(material2));
 							}
-							m_CustomMaterialPropertyAnimationController.AddMaterial(material3);
+							m_CustomMaterialPropertyAnimationController.AddMaterial(material2);
 							flag = true;
 						}
 					}
@@ -205,8 +235,28 @@ public class StandardMaterialController : UpdateableBehaviour
 		m_AdditionalAlbedoController.RevertToDefaults();
 		m_MaterialParametersOverrideController.RevertToDefaults();
 		m_CustomMaterialPropertyAnimationController.ClearMaterials();
-		Cleanup();
-		Setup();
+		List<Material> value;
+		using (CollectionPool<List<Material>, Material>.Get(out value))
+		{
+			for (int num = m_OwnedMaterialInstances.Count - 1; num >= 0; num--)
+			{
+				OwnedMaterial ownedMaterial = m_OwnedMaterialInstances[num];
+				if (ownedMaterial.Material == null || ownedMaterial.Renderer == null || ownedMaterial.Renderer.gameObject.activeInHierarchy)
+				{
+					value.Add(ownedMaterial.Material);
+					m_OwnedMaterialInstances.RemoveAt(num);
+				}
+			}
+			Cleanup();
+			Setup();
+			foreach (Material item in value)
+			{
+				if (item != null)
+				{
+					UnityEngine.Object.Destroy(item);
+				}
+			}
+		}
 	}
 
 	private void UpdateMaterialProperties()

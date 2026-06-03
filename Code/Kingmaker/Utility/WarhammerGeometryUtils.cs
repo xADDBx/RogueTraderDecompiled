@@ -9,6 +9,34 @@ namespace Kingmaker.Utility;
 
 public static class WarhammerGeometryUtils
 {
+	public readonly struct SquaredFootprint
+	{
+		public readonly IntRect SubRect;
+
+		public readonly int Count;
+
+		public readonly int DirX;
+
+		public readonly int DirZ;
+
+		public readonly int DirIdx;
+
+		public SquaredFootprint(IntRect size, Vector3 forward)
+		{
+			Vector3 vector = forward.ToCellSizedVector();
+			SubRect = new IntRect(size.xmin, size.ymin, size.xmax, size.ymin + size.Width - 1);
+			Count = Math.Max(1, size.Height - size.Width + 1);
+			DirX = Math.Sign(vector.x);
+			DirZ = Math.Sign(vector.z);
+			DirIdx = CustomGraphHelper.GuessDirection(forward);
+		}
+
+		public Vector2Int SubRectOffset(int index)
+		{
+			return new Vector2Int(-DirX * index, -DirZ * index);
+		}
+	}
+
 	public static int DistanceToInCells(Vector2Int delta, IntRect fromSize, IntRect toSize)
 	{
 		delta.x = ((delta.x > 0) ? Math.Max(delta.x - fromSize.xmax + toSize.xmin, 0) : Math.Min(delta.x - fromSize.xmin + toSize.xmax, 0));
@@ -34,16 +62,21 @@ public static class WarhammerGeometryUtils
 	{
 		using (ProfileScope.New("WarhammerGeometryUtils.DistanceToInCells_0"))
 		{
-			fromDir = fromDir.ToCellSizedVector();
-			toDir = toDir.ToCellSizedVector();
+			SquaredFootprint footprint = new SquaredFootprint(fromSize, fromDir);
+			SquaredFootprint footprint2 = new SquaredFootprint(toSize, toDir);
+			from += ComputeCenteringShift(fromSize, footprint);
+			to += ComputeCenteringShift(toSize, footprint2);
+			float gridCellSize = GraphParamsMechanicsCache.GridCellSize;
 			int num = int.MaxValue;
-			IntRect fromSize2 = new IntRect(fromSize.xmin, fromSize.ymin, fromSize.xmax, fromSize.ymin + fromSize.Width - 1);
-			IntRect toSize2 = new IntRect(toSize.xmin, toSize.ymin, toSize.xmax, toSize.ymin + toSize.Width - 1);
-			for (int i = 0; i <= fromSize.Height - fromSize.Width; i++)
+			for (int i = 0; i < footprint.Count; i++)
 			{
-				for (int j = 0; j <= toSize.Height - toSize.Width; j++)
+				Vector2Int vector2Int = footprint.SubRectOffset(i);
+				Vector3 from2 = from + new Vector3((float)vector2Int.x * gridCellSize, 0f, (float)vector2Int.y * gridCellSize);
+				for (int j = 0; j < footprint2.Count; j++)
 				{
-					int val = DistanceToInCells(from - fromDir * i, fromSize2, to - toDir * j, toSize2);
+					Vector2Int vector2Int2 = footprint2.SubRectOffset(j);
+					Vector3 to2 = to + new Vector3((float)vector2Int2.x * gridCellSize, 0f, (float)vector2Int2.y * gridCellSize);
+					int val = DistanceToInCells(from2, footprint.SubRect, to2, footprint2.SubRect);
 					num = Math.Min(num, val);
 				}
 			}
@@ -51,53 +84,32 @@ public static class WarhammerGeometryUtils
 		}
 	}
 
-	private static Vector3 AdjustDirection(Vector3 dir)
+	public static Vector2Int ComputeCenteringShiftCells(IntRect size, SquaredFootprint footprint)
 	{
-		if (dir.sqrMagnitude > 1.1f || dir.sqrMagnitude < 0.9f)
+		if (size.Height <= size.Width)
 		{
-			throw new ArgumentException("Need nonzero vector", "dir");
+			return Vector2Int.zero;
 		}
-		float num = Vector3.Dot(dir, Vector3.right);
-		float num2 = Vector3.Dot(dir, Vector3.forward);
-		if (num > 0.9f)
-		{
-			return Vector3.right;
-		}
-		if (num < -0.9f)
-		{
-			return Vector3.left;
-		}
-		if (num2 > 0.9f)
-		{
-			return Vector3.forward;
-		}
-		if (num2 < -0.9f)
-		{
-			return Vector3.back;
-		}
-		if (num > 0.1f && num2 > 0.1f)
-		{
-			return (Vector3.right + Vector3.forward).normalized;
-		}
-		if (num < -0.1f && num2 > 0.1f)
-		{
-			return (Vector3.left + Vector3.forward).normalized;
-		}
-		if (num < -0.1f && num2 < -0.1f)
-		{
-			return (Vector3.left + Vector3.back).normalized;
-		}
-		if (num > 0.1f && num2 < -0.1f)
-		{
-			return (Vector3.right + Vector3.back).normalized;
-		}
-		return Vector3.forward;
+		Vector2Int vector2Int = footprint.SubRectOffset(footprint.Count - 1);
+		int num = footprint.SubRect.xmin + Math.Min(0, vector2Int.x);
+		int num2 = footprint.SubRect.ymin + Math.Min(0, vector2Int.y);
+		IntRect bounds = GridAreaHelper.GetOffsets(size, footprint.DirIdx).Bounds;
+		return new Vector2Int(bounds.xmin - num, bounds.ymin - num2);
 	}
 
-	private static Vector3 ToCellSizedVector(this Vector3 v)
+	public static Vector2Int ComputeCenteringShiftCells(IntRect size, Vector3 forward)
 	{
-		Vector3 result = AdjustDirection(v);
-		result = new Vector3((Math.Abs(result.x) < 0.0001f) ? 0f : ((float)Math.Sign(result.x) * GraphParamsMechanicsCache.GridCellSize), 0f, (Math.Abs(result.z) < 0.0001f) ? 0f : ((float)Math.Sign(result.z) * GraphParamsMechanicsCache.GridCellSize));
-		return result;
+		return ComputeCenteringShiftCells(size, new SquaredFootprint(size, forward));
+	}
+
+	private static Vector3 ComputeCenteringShift(IntRect size, SquaredFootprint footprint)
+	{
+		Vector2Int vector2Int = ComputeCenteringShiftCells(size, footprint);
+		if (vector2Int == Vector2Int.zero)
+		{
+			return Vector3.zero;
+		}
+		float gridCellSize = GraphParamsMechanicsCache.GridCellSize;
+		return new Vector3((float)vector2Int.x * gridCellSize, 0f, (float)vector2Int.y * gridCellSize);
 	}
 }

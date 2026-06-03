@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.Items;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.Models.Tooltip.Base;
@@ -70,11 +71,15 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 				{
 					if (!(tooltipSource is UIFeature uiFeature))
 					{
-						if (tooltipSource is ActivatableAbility ability2)
+						if (!(tooltipSource is ActivatableAbility ability2))
 						{
-							return new ReactiveProperty<TooltipBaseTemplate>(new TooltipTemplateActivatableAbility(ability2));
+							if (tooltipSource is ItemEntity item)
+							{
+								return new ReactiveProperty<TooltipBaseTemplate>(new TooltipTemplateItem(item));
+							}
+							return new ReactiveProperty<TooltipBaseTemplate>();
 						}
-						return new ReactiveProperty<TooltipBaseTemplate>();
+						return new ReactiveProperty<TooltipBaseTemplate>(new TooltipTemplateActivatableAbility(ability2));
 					}
 					return new ReactiveProperty<TooltipBaseTemplate>(new TooltipTemplateUIFeature(uiFeature));
 				}
@@ -96,6 +101,21 @@ public class CharInfoFeatureVM : SelectionGroupEntityVM, IHasTooltipTemplate, IU
 		FillTimeLeft(buff);
 		FillDescription();
 		m_TooltipSource = buff;
+	}
+
+	public CharInfoFeatureVM(ItemEntity item, MechanicEntity unit)
+		: base(allowSwitchOff: false)
+	{
+		Icon = item.Icon;
+		DisplayName = item.Name;
+		FactDescription = UIUtilityTexts.UpdateDescriptionWithUIProperties(item.Description, unit);
+		Acronym = UIUtility.GetAbilityAcronym(item.Blueprint.Name);
+		m_TooltipSource = item;
+		TalentIconsInfo = new TalentIconInfo
+		{
+			AllGroups = TalentGroup.Augmentation,
+			MainGroup = TalentGroup.Augmentation
+		};
 	}
 
 	public CharInfoFeatureVM(Feature feature, MechanicEntity unit)

@@ -90,6 +90,8 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	private Tween m_PingTween;
 
+	private AbilityData m_SelectedAbility;
+
 	public UnitState([NotNull] MechanicEntity unit)
 	{
 		Unit = new MechanicEntityUIWrapper(unit);
@@ -249,13 +251,25 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	public void HandleAbilityTargetSelectionStart(AbilityData ability)
 	{
+		m_SelectedAbility = ability;
+		SetAbility(ability);
+	}
+
+	public void HandleAbilityTargetSelectionEnd(AbilityData ability)
+	{
+		m_SelectedAbility = null;
+		ClearAbility();
+	}
+
+	public void SetAbility(AbilityData ability)
+	{
 		IsAoETarget.Value = IsAoETarget.Value && ((ability.IsAOE && !ability.IsStarshipAttack) || ability.IsScatter || ability.IsCharge || ability.IsBurstAttack || ability.IsSingleShot || ability.IsChainLighting());
 		Ability.Value = ability;
 		IsStarshipAttack.Value = ability.IsStarshipAttack;
 		IsCaster.Value = ability.Caster == Unit.MechanicEntity;
 	}
 
-	public void HandleAbilityTargetSelectionEnd(AbilityData ability)
+	public void ClearAbility()
 	{
 		IsAoETarget.Value = false;
 		IsStarshipAttack.Value = false;
@@ -390,7 +404,32 @@ public class UnitState : BaseDisposable, IUnitDirectHoverUIHandler, ISubscriber,
 
 	public void HandleAbilityTargetHover(AbilityData ability, bool hover)
 	{
-		if (ability.Caster == Unit.MechanicEntity)
+		if (ability.Caster != Unit.MechanicEntity)
+		{
+			if (ability.TargetAnchor != 0)
+			{
+				return;
+			}
+			if (hover)
+			{
+				if (Ability.Value == null)
+				{
+					SetAbility(ability);
+				}
+			}
+			else if (Ability.Value == ability)
+			{
+				if (m_SelectedAbility != null)
+				{
+					SetAbility(m_SelectedAbility);
+				}
+				else
+				{
+					ClearAbility();
+				}
+			}
+		}
+		else
 		{
 			bool flag = Ability.Value == null && hover && ability.IsAvailable && ability.TargetAnchor == AbilityTargetAnchor.Owner && Game.Instance.SelectionCharacter.IsSelected(Unit.MechanicEntity as BaseUnitEntity);
 			HoverAbilityIcon = (flag ? ability.Icon : null);

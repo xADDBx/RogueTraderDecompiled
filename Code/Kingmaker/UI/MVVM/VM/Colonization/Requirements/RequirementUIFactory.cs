@@ -7,7 +7,7 @@ public static class RequirementUIFactory
 {
 	public static RequirementUI GetRequirement(Requirement requirement)
 	{
-		return TryCreateRequirementBuiltProjectGlobalUI(requirement) ?? TryCreateRequirementBuiltProjectInColonyUI(requirement) ?? TryCreateRequirementNotBuiltProjectInColonyUI(requirement) ?? TryCreateRequirementProfitFactorCostUI(requirement) ?? TryCreateRequirementProfitFactorMinimumUI(requirement) ?? TryCreateRequirementReputationUI(requirement) ?? TryCreateRequirementResourceHaveUI(requirement) ?? TryCreateRequirementResourceUseOrderUI(requirement) ?? TryCreateRequirementResourceUseProjectUI(requirement) ?? TryCreateRequirementStatContentmentUI(requirement) ?? TryCreateRequirementStatEfficiencyUI(requirement) ?? TryCreateRequirementStatSecurityUI(requirement) ?? TryCreateRequirementBuiltAtLeastOneOfProjectsUI(requirement) ?? TryCreateRequirementSoulMarkRankUI(requirement) ?? TryCreateRequirementReputationCostUI(requirement) ?? TryCreateRequirementCargoUI(requirement) ?? TryCreateRequirementScrapUI(requirement) ?? TryCreateRequirementResourceUseDialogUI(requirement) ?? new RequirementUI(requirement);
+		return TryCreateRequirementBuiltProjectGlobalUI(requirement) ?? TryCreateRequirementBuiltProjectInColonyUI(requirement) ?? TryCreateRequirementNotBuiltProjectInColonyUI(requirement) ?? TryCreateRequirementProfitFactorCostUI(requirement) ?? TryCreateRequirementProfitFactorMinimumUI(requirement) ?? TryCreateRequirementReputationUI(requirement) ?? TryCreateRequirementResourceHaveUI(requirement) ?? TryCreateRequirementResourceUseOrderUI(requirement) ?? TryCreateRequirementResourceUseProjectUI(requirement) ?? TryCreateRequirementStatContentmentUI(requirement) ?? TryCreateRequirementStatEfficiencyUI(requirement) ?? TryCreateRequirementStatSecurityUI(requirement) ?? TryCreateRequirementBuiltAtLeastOneOfProjectsUI(requirement) ?? TryCreateRequirementSoulMarkRankUI(requirement) ?? TryCreateRequirementReputationCostUI(requirement) ?? TryCreateRequirementCargoUI(requirement) ?? TryCreateRequirementScrapUI(requirement) ?? TryCreateRequirementResourceUseDialogUI(requirement) ?? TryCreateRequirementCombativityCostUI(requirement) ?? TryCreateRequirementCombativityMinimumUI(requirement) ?? new RequirementUI(requirement);
 	}
 
 	private static RequirementUI TryCreateRequirementBuiltProjectGlobalUI(Requirement requirement)
@@ -53,6 +53,24 @@ public static class RequirementUIFactory
 			return null;
 		}
 		return new RequirementProfitFactorMinimumUI(requirement2);
+	}
+
+	private static RequirementUI TryCreateRequirementCombativityCostUI(Requirement requirement)
+	{
+		if (!(requirement is RequirementCombativityCost requirement2))
+		{
+			return null;
+		}
+		return new RequirementCombativityCostUI(requirement2);
+	}
+
+	private static RequirementUI TryCreateRequirementCombativityMinimumUI(Requirement requirement)
+	{
+		if (!(requirement is RequirementCombativityMinimum requirement2))
+		{
+			return null;
+		}
+		return new RequirementCombativityMinimumUI(requirement2);
 	}
 
 	private static RequirementUI TryCreateRequirementReputationUI(Requirement requirement)

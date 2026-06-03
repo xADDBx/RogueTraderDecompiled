@@ -12,7 +12,7 @@ public class CommandCameraShake : CommandBase
 	private bool m_Continuous;
 
 	[SerializeField]
-	[ConditionalHide("m_Continuous")]
+	[HideIf("m_Continuous")]
 	private float m_Lifetime = 1f;
 
 	[SerializeField]

@@ -29,12 +29,6 @@ public class CheckAbilityAttackTypeGetter : PropertyGetter, PropertyContextAcces
 		}
 		switch (Type)
 		{
-		case AttackAbilityType.Melee:
-			if (!ability.IsMelee)
-			{
-				return 0;
-			}
-			return 1;
 		case AttackAbilityType.Scatter:
 			if (!ability.IsScatter)
 			{

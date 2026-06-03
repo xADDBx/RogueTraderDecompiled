@@ -106,6 +106,8 @@ public class UIStrings : StringsContainer
 
 	public UIProfitFactorTexts ProfitFactorTexts;
 
+	public UICombativityTexts CombativityTexts;
+
 	public UIBugReport UIBugReport;
 
 	public UIFeedbackPopupTexts FeedbackPopupTexts;
@@ -119,6 +121,8 @@ public class UIStrings : StringsContainer
 	public HUDTexts HUDTexts;
 
 	public UIxBoxTexts XBoxTexts;
+
+	public UINintendoSwitchTexts NintendoSwitchTexts;
 
 	public UICombatLogTexts CombatLog;
 

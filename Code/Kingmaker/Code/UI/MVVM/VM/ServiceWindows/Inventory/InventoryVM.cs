@@ -1,10 +1,13 @@
 using System;
+using Kingmaker.Blueprints.Items.Augments;
+using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.LevelClassScores;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.SkillsAndWeapons;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Items;
@@ -71,6 +74,19 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 		}
 	}
 
+	private bool IsBlockedAugmentFromInventory(ItemSlotVM slot)
+	{
+		if (!(slot?.Item.Value?.Blueprint is BlueprintItemAugment))
+		{
+			return false;
+		}
+		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+		{
+			h.HandleWarning(UIStrings.Instance.UIAugmentations.TooltipAugmentNoThroneRestriction.Text, addToLog: false, WarningNotificationFormat.Short);
+		});
+		return true;
+	}
+
 	public void Refresh()
 	{
 		Unit.SetValueAndForceNotify(Unit.Value);
@@ -78,7 +94,10 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 
 	void IInventoryHandler.TryEquip(ItemSlotVM slot)
 	{
-		InventoryHelper.TryEquip(slot, Unit?.Value);
+		if (!IsBlockedAugmentFromInventory(slot))
+		{
+			InventoryHelper.TryEquip(slot, Unit?.Value);
+		}
 	}
 
 	void IInventoryHandler.TryDrop(ItemSlotVM slot)
@@ -118,7 +137,10 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 
 	public void HandleTryMoveSlot(ItemSlotVM from, ItemSlotVM to)
 	{
-		InventoryHelper.TryMoveSlotInInventory(from, to);
+		if (!(to is EquipSlotVM) || !IsBlockedAugmentFromInventory(from))
+		{
+			InventoryHelper.TryMoveSlotInInventory(from, to);
+		}
 	}
 
 	public void HandleTrySplitSlot(ItemSlotVM slot)

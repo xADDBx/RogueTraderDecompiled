@@ -495,12 +495,6 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 		{
 			MarkRemoved();
 		}
-		Cutscene cutscene = Cutscene;
-		if (cutscene != null && cutscene.LockControl && !Game.Instance.IsLoadingFromSave)
-		{
-			PFLog.Cutscene.Error("Removing unexpected lock-control cutscene " + Cutscene.Name + " during post-load");
-			MarkRemoved();
-		}
 		foreach (CutscenePlayerGateData activatedGate in m_ActivatedGates)
 		{
 			SetPlayer(activatedGate);
@@ -675,6 +669,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 				{
 					if (TickGate(m_ActivatedGates[i], list, skipping))
 					{
+						if (m_ActivatedGates.Count <= i)
+						{
+							break;
+						}
 						m_ActivatedGates.RemoveAt(i);
 						i--;
 					}
@@ -709,7 +707,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					SetPaused(value: false, reason);
 				}
 			}
-			if (m_ActivatedGates.Count == 0)
+			if (m_ActivatedGates.Count == 0 && !IsFinished)
 			{
 				IsFinished = true;
 				using (Parameters.RequestContextData())
@@ -981,7 +979,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 				{
 					if (startedTrack.IsPlaying && (bool)startedTrack.Command)
 					{
-						startedTrack.Command.GetControlledUnit()?.ToAbstractUnitEntity().CutsceneControlledUnit?.Release(this);
+						startedTrack.ReleaseControlledUnits(startedTrack.Command);
 						try
 						{
 							startedTrack.Command.Stop(this);
@@ -1048,11 +1046,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 							CommandBase command = startedTrack.Command;
 							if (markControlledObjects)
 							{
-								IAbstractUnitEntity controlledUnit = command.GetControlledUnit();
-								if (controlledUnit != null && !CutsceneControlledUnit.MarkUnit(controlledUnit, this))
-								{
-									LogError($"Cannot restore cutscene {Cutscene} as another cutscene ({controlledUnit.ToAbstractUnitEntity().CutsceneControlledUnit?.GetCurrentlyActive()}) controls an object ({controlledUnit}) ({command})");
-								}
+								startedTrack.MarkControlledUnits(command, logOnFail: true);
 							}
 							if (!Paused)
 							{
@@ -1204,7 +1198,7 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 						{
 							HandleException(e, startedTrack, command);
 						}
-						command.GetControlledUnit()?.ToAbstractUnitEntity().CutsceneControlledUnit?.Release(this);
+						startedTrack.ReleaseControlledUnits(command);
 					}
 				}
 			}
@@ -1274,21 +1268,20 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 			}
 			foreach (CommandBase command in startedTrack.Commands)
 			{
-				if (command != null)
+				if (command == null)
 				{
-					AbstractUnitEntity abstractUnitEntity = null;
-					try
+					continue;
+				}
+				try
+				{
+					foreach (IEntity anchorEntity in command.GetAnchorEntities())
 					{
-						abstractUnitEntity = command.GetAnchorUnit().ToAbstractUnitEntity();
+						result.Add(anchorEntity.Ref);
 					}
-					catch (Exception e)
-					{
-						HandleException(e, null, command);
-					}
-					if (abstractUnitEntity != null)
-					{
-						result.Add(abstractUnitEntity.Ref);
-					}
+				}
+				catch (Exception e)
+				{
+					HandleException(e, null, command);
 				}
 			}
 			if (startedTrack.EndGate != null)
@@ -1314,10 +1307,10 @@ public class CutscenePlayerData : Entity, ICutscenePlayerData, IHashable
 					CommandBase command = startedTrack.Command;
 					try
 					{
-						IAbstractUnitEntity controlledUnit = command.GetControlledUnit();
-						if (controlledUnit != null)
+						IEnumerable<AbstractUnitEntity> controlledUnits = command.GetControlledUnits();
+						if (controlledUnits != null)
 						{
-							list.Add(controlledUnit.ToAbstractUnitEntity());
+							list.AddRange(controlledUnits);
 						}
 					}
 					catch (Exception e)

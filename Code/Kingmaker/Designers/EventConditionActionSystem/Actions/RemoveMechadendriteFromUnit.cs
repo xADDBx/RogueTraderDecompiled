@@ -17,7 +17,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/RemoveMechadendriteFromUnit")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("f2def0549b9944738fe73d6c85d551b1")]

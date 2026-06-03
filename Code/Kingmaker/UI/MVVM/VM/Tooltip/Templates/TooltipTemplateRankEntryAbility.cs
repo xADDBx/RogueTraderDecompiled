@@ -4,13 +4,11 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.ElementsSystem.ContextData;
-using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.UnitLogic;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Selections.Feature;
 using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
@@ -62,7 +60,7 @@ public class TooltipTemplateRankEntryAbility : TooltipTemplateAbility
 		}
 	}
 
-	protected override void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)
+	protected override void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type, bool _ = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -70,16 +68,7 @@ public class TooltipTemplateRankEntryAbility : TooltipTemplateAbility
 			{
 				using (ContextData<UnitHelper.DoNotCreateItems>.Request())
 				{
-					EntityFact entityFact = null;
-					if (m_PreviewUnit.Value.Facts.Get<Ability>(BlueprintAbility) == null)
-					{
-						entityFact = m_PreviewUnit.Value.AddFact(BlueprintAbility);
-					}
-					base.AddDescription(bricks, type);
-					if (entityFact != null)
-					{
-						m_PreviewUnit.Value.Facts.Remove(entityFact);
-					}
+					base.AddDescription(bricks, type, isPreview: true);
 				}
 			}
 		}

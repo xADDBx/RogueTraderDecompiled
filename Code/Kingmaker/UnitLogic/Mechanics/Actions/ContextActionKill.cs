@@ -1,6 +1,8 @@
+using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
@@ -26,6 +28,10 @@ public class ContextActionKill : ContextAction
 			{
 				h.HandleOnContextActionKill(base.Context.MaybeCaster, base.Target.Entity, base.Context.AssociatedBlueprint as BlueprintMechanicEntityFact, base.Context.SavingThrow);
 			});
+			EventBus.RaiseEvent((IBaseUnitEntity)(UnitEntity)base.Target.Entity, (Action<IUnitContextActionKillHandler>)delegate(IUnitContextActionKillHandler h)
+			{
+				h.HandleOnContextActionKill(base.Context.MaybeCaster, base.Target.Entity, base.Context.AssociatedBlueprint as BlueprintMechanicEntityFact, base.Context.SavingThrow);
+			}, isCheckRuntime: true);
 			partLifeState.MarkedForDeath = true;
 			partLifeState.ForceDismember = Dismember;
 		}

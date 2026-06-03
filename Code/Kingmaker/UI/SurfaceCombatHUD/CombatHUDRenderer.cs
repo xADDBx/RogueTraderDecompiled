@@ -20,7 +20,7 @@ using UnityEngine.Pool;
 
 namespace Kingmaker.UI.SurfaceCombatHUD;
 
-public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitMovableAreaHandler, ISubscriber<IMechanicEntity>, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IAreaHandler, INetRoleSetHandler
+public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, IUnitMovableAreaHandler, ISubscriber<IMechanicEntity>, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IAreaHandler, INetRoleSetHandler, IInGameHandler, ISubscriber<IEntity>
 {
 	public struct AbilityAreaHudInfo
 	{
@@ -306,12 +306,39 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 		m_PendingRefresh = true;
 	}
 
+	void IInGameHandler.HandleObjectInGameChanged()
+	{
+		if (EventInvokerExtensions.Entity is AreaEffectEntity areaEffectEntity)
+		{
+			if (areaEffectEntity.IsInGame)
+			{
+				RegisterArea(areaEffectEntity);
+			}
+			else
+			{
+				UnregisterArea(areaEffectEntity);
+			}
+		}
+	}
+
 	void IAreaEffectHandler.HandleAreaEffectSpawned()
 	{
-		if (!(EventInvokerExtensions.Entity is AreaEffectEntity areaEffectEntity))
+		if (EventInvokerExtensions.Entity is AreaEffectEntity areaEffectEntity)
 		{
-			return;
+			RegisterArea(areaEffectEntity);
 		}
+	}
+
+	void IAreaEffectHandler.HandleAreaEffectDestroyed()
+	{
+		if (EventInvokerExtensions.Entity is AreaEffectEntity areaEffectEntity)
+		{
+			UnregisterArea(areaEffectEntity);
+		}
+	}
+
+	private void RegisterArea(AreaEffectEntity areaEffectEntity)
+	{
 		NodeList patternNodes = areaEffectEntity.GetPatternCoveredNodes();
 		if (!patternNodes.IsEmpty)
 		{
@@ -328,19 +355,16 @@ public class CombatHUDRenderer : MonoBehaviour, ITurnBasedModeHandler, ISubscrib
 		}
 	}
 
-	void IAreaEffectHandler.HandleAreaEffectDestroyed()
+	private void UnregisterArea(AreaEffectEntity areaEffectEntity)
 	{
-		if (EventInvokerExtensions.Entity is AreaEffectEntity areaEffectEntity)
+		MechanicEntity maybeCaster = areaEffectEntity.Context.MaybeCaster;
+		if (maybeCaster == null || maybeCaster.IsPlayerFaction)
 		{
-			MechanicEntity maybeCaster = areaEffectEntity.Context.MaybeCaster;
-			if (maybeCaster == null || maybeCaster.IsPlayerFaction)
-			{
-				m_PendingRefresh |= m_AllyStratagemAreas.CleanupArea(areaEffectEntity);
-			}
-			else
-			{
-				m_PendingRefresh |= m_HostileStratagemAreas.CleanupArea(areaEffectEntity);
-			}
+			m_PendingRefresh |= m_AllyStratagemAreas.CleanupArea(areaEffectEntity);
+		}
+		else
+		{
+			m_PendingRefresh |= m_HostileStratagemAreas.CleanupArea(areaEffectEntity);
 		}
 	}
 

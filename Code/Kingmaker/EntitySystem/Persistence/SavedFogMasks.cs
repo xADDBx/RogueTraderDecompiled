@@ -1,63 +1,104 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Kingmaker.Utility.DotNetExtensions;
+using Newtonsoft.Json;
 
 namespace Kingmaker.EntitySystem.Persistence;
 
+[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class SavedFogMasks
 {
-	private readonly Dictionary<string, byte[]> m_Masks = new Dictionary<string, byte[]>();
+	private static Dictionary<string, SavedFogMasks> KnownAreas = new Dictionary<string, SavedFogMasks>();
 
-	public void Add(string key, byte[] data)
-	{
-		File.WriteAllBytes(Path.Combine(AreaDataStash.Folder, "__fog__" + key), data);
-		m_Masks[key] = null;
-	}
+	private readonly HashSet<string> m_KnownMasks = new HashSet<string>();
 
-	public void Add(string key, string file)
+	public static SavedFogMasks[] AllMasks
 	{
-		string destFileName = Path.Combine(AreaDataStash.Folder, "__fog__" + key);
-		File.Copy(file, destFileName, overwrite: true);
-		m_Masks[key] = null;
-	}
-
-	public byte[] Get(string key)
-	{
-		if (m_Masks.ContainsKey(key))
+		get
 		{
-			string path = Path.Combine(AreaDataStash.Folder, "__fog__" + key);
-			if (!File.Exists(path))
-			{
-				return null;
-			}
-			return File.ReadAllBytes(path);
+			return KnownAreas.Values.ToArray();
 		}
-		return m_Masks.Get(key);
+		set
+		{
+			KnownAreas = value.ToDictionary((SavedFogMasks v) => v.AreaGuid, (SavedFogMasks v) => v);
+		}
 	}
 
-	public void Clear()
+	[JsonProperty]
+	private string AreaGuid { get; }
+
+	[JsonProperty]
+	private List<string> SavedFogOfWarMasks
 	{
-		foreach (string key in m_Masks.Keys)
+		get
 		{
-			string path = Path.Combine(AreaDataStash.Folder, "__fog__" + key);
-			if (File.Exists(path))
-			{
-				File.Delete(path);
-			}
+			return m_KnownMasks.ToList();
 		}
-		m_Masks.Clear();
+		set
+		{
+			m_KnownMasks.Clear();
+			m_KnownMasks.AddRange(value);
+		}
 	}
 
-	public void SaveAll(string folder, string prefix)
+	public static SavedFogMasks Get(string areaId)
 	{
-		foreach (KeyValuePair<string, byte[]> mask in m_Masks)
+		if (KnownAreas.TryGetValue(areaId, out var value))
 		{
-			string text = Path.Combine(AreaDataStash.Folder, "__fog__" + mask.Key);
-			string destFileName = Path.Combine(folder, prefix + "." + mask.Key + ".fog");
-			if (File.Exists(text))
-			{
-				File.Copy(text, destFileName, overwrite: true);
-			}
+			return value;
 		}
+		value = new SavedFogMasks(areaId);
+		KnownAreas.Add(areaId, value);
+		return value;
+	}
+
+	[JsonConstructor]
+	private SavedFogMasks(string areaGuid)
+	{
+		AreaGuid = areaGuid;
+	}
+
+	public IEnumerable<string> EnumerateFogMasks()
+	{
+		return m_KnownMasks.Select((string mask) => GenerateFowMaskFileName(AreaGuid, mask));
+	}
+
+	public void Wipe()
+	{
+		foreach (string item in EnumerateFogMasks())
+		{
+			File.Delete(item);
+		}
+		m_KnownMasks.Clear();
+	}
+
+	private static string GenerateFowMaskFileName(string areaGuid, string sceneName)
+	{
+		string text = AreaDataStash.Encode(areaGuid + "." + sceneName);
+		return Path.Combine(AreaDataStash.Folder, text + ".fog");
+	}
+
+	public async Task Save(string sceneName, byte[] data)
+	{
+		m_KnownMasks.Add(sceneName);
+		await File.WriteAllBytesAsync(GenerateFowMaskFileName(AreaGuid, sceneName), data);
+	}
+
+	public async Task<byte[]> Load(string sceneName)
+	{
+		string path = GenerateFowMaskFileName(AreaGuid, sceneName);
+		if (!File.Exists(path))
+		{
+			return null;
+		}
+		m_KnownMasks.Add(sceneName);
+		return await File.ReadAllBytesAsync(path);
+	}
+
+	public void Register(string sceneName)
+	{
+		m_KnownMasks.Add(sceneName);
 	}
 }

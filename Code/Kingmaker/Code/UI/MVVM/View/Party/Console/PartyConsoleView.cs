@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.Party;
@@ -60,6 +61,10 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 
 	private PartyCharacterConsoleView[] m_CharacterViews;
 
+	private IDisposable m_PreviousInput;
+
+	private IDisposable m_NextInput;
+
 	public bool PartySelectorEnabled
 	{
 		set
@@ -97,10 +102,10 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 				UpdateLayout();
 			}));
 		}
-		DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 1);
+		DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 2);
 		AddDisposable(UniRxExtensionMethods.Subscribe(base.ViewModel.UpdateViewLayout, delegate
 		{
-			DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 1);
+			DelayedInvoker.InvokeInFrames(UpdatePartySizeAndLayout, 2);
 		}));
 		UpdateLayout();
 		CheckVisible();
@@ -113,14 +118,24 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 	public void AddInput(InputLayer inputLayer, IReadOnlyReactiveProperty<bool> enable)
 	{
 		ReactiveProperty<bool> property = new ReactiveProperty<bool>(Game.Instance.SelectionCharacter.ActualGroup.Count > 1);
-		AddDisposable(m_PreviousHint.Bind(inputLayer.AddButton(delegate
+		m_PreviousInput = m_PreviousHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.SelectNeighbour(next: false);
-		}, 14, property.And(enable).ToReactiveProperty(), InputActionEventType.ButtonJustReleased)));
-		AddDisposable(m_NextHint.Bind(inputLayer.AddButton(delegate
+		}, 14, property.And(enable).ToReactiveProperty(), InputActionEventType.ButtonJustReleased));
+		m_NextInput = m_NextHint.Bind(inputLayer.AddButton(delegate
 		{
 			base.ViewModel.SelectNeighbour(next: true);
-		}, 15, property.And(enable).ToReactiveProperty(), InputActionEventType.ButtonJustReleased)));
+		}, 15, property.And(enable).ToReactiveProperty(), InputActionEventType.ButtonJustReleased));
+	}
+
+	public void DisposeAdditionalInput()
+	{
+		m_PreviousInput?.Dispose();
+		m_NextInput?.Dispose();
+		m_PreviousInput = null;
+		m_NextInput = null;
+		m_PreviousHint.Dispose();
+		m_NextHint.Dispose();
 	}
 
 	private void UpdateLayout()
@@ -191,44 +206,32 @@ public class PartyConsoleView : ViewBase<PartyVM>, IGameModeHandler, ISubscriber
 
 	private void UpdatePartySizeAndLayout()
 	{
-		m_LeftArrow.SetActive(value: false);
-		m_RightArrow.SetActive(value: false);
-		int num = 6;
-		if (Game.Instance.RootUiContext.FullScreenUIType != FullScreenUIType.Inventory)
+		if (base.ViewModel.ModalWindowUIType != ModalWindowUIType.PartySelector)
 		{
-			num = 12;
-		}
-		int num2 = Game.Instance.SelectionCharacter.ActualGroup.IndexOf(Game.Instance.SelectionCharacter.SelectedUnitInUI.Value);
-		int num3 = num - 1;
-		int num4 = num2 / num * num;
-		if (num2 / num > 0 && num2 % num == 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 >= 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 < 6)
-		{
-			num4 = Game.Instance.SelectionCharacter.ActualGroup.Count - num;
-		}
-		if (num4 < 0)
-		{
-			num4 = 0;
-		}
-		m_LeftArrow.SetActive(num2 > num3);
-		m_RightArrow.SetActive(num2 < Game.Instance.SelectionCharacter.ActualGroup.Count - num - 1);
-		m_Characters.Clear();
-		PartyCharacterConsoleView[] characterViews = m_CharacterViews;
-		foreach (PartyCharacterConsoleView partyCharacterConsoleView in characterViews)
-		{
-			partyCharacterConsoleView.gameObject.SetActive(value: false);
-			partyCharacterConsoleView.Initialize(null);
-			m_Characters.Add(partyCharacterConsoleView);
-		}
-		for (int j = 0; j < num; j++)
-		{
-			PartyCharacterVM partyCharacterVM = base.ViewModel.CharactersVM[num4 + j];
-			m_Characters[j].Bind(partyCharacterVM);
-			AddDisposable(partyCharacterVM.IsEnable.Subscribe(delegate
+			m_LeftArrow.SetActive(value: false);
+			m_RightArrow.SetActive(value: false);
+			FullScreenUIType fullScreenUIType = Game.Instance.RootUiContext.FullScreenUIType;
+			int num = 6;
+			if (fullScreenUIType != FullScreenUIType.Inventory && fullScreenUIType != FullScreenUIType.Augmentations)
 			{
-				UpdateLayout();
-			}));
+				num = 12;
+			}
+			int num2 = Game.Instance.SelectionCharacter.ActualGroup.IndexOf(Game.Instance.SelectionCharacter.SelectedUnitInUI.Value);
+			int num3 = num - 1;
+			int num4 = num2 / num * num;
+			if (num2 / num > 0 && num2 % num == 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 >= 0 && Game.Instance.SelectionCharacter.ActualGroup.Count - num4 < 6)
+			{
+				num4 = Game.Instance.SelectionCharacter.ActualGroup.Count - num;
+			}
+			if (num4 < 0)
+			{
+				num4 = 0;
+			}
+			m_LeftArrow.SetActive(num2 > num3);
+			m_RightArrow.SetActive(num2 < Game.Instance.SelectionCharacter.ActualGroup.Count - num - 1);
+			base.ViewModel.SetStartIndex(num4);
+			UpdateLayout();
+			CheckVisible();
 		}
-		UpdateLayout();
-		CheckVisible();
 	}
 }

@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Sound;
 using Kingmaker.View;
+using Kingmaker.Visual.MaterialEffects;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.VFX;
@@ -89,6 +90,10 @@ public class ShipDollRoom : DollRoomBase, IDollCharacterDragUIHandler, ISubscrib
 		m_SimpleAvatar.transform.localPosition = Vector3.zero;
 		m_SimpleAvatar.transform.localRotation = Quaternion.identity;
 		m_SimpleAvatar.transform.localScale = unitEntityView.transform.localScale;
+		if (m_SimpleAvatar.GetComponent<StandardMaterialController>() == null)
+		{
+			m_SimpleAvatar.AddComponent<StandardMaterialController>();
+		}
 	}
 
 	public void UpdateStarshipRenderers()

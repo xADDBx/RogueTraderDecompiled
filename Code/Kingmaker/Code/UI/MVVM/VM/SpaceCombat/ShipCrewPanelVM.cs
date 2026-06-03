@@ -73,12 +73,12 @@ public class ShipCrewPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	private List<Buff> GetUnitBuffs(BaseUnitEntity unit)
 	{
-		return unit.Buffs.Enumerable.Where((Buff b) => !b.Blueprint.IsHiddenInUI).ToList();
+		return unit.Buffs.Enumerable.Where((Buff b) => !b.Hidden).ToList();
 	}
 
 	public void HandleBuffDidAdded(Buff buff)
 	{
-		if (m_Ship != null && m_Ship == buff.Owner && !buff.Blueprint.IsHiddenInUI)
+		if (m_Ship != null && m_Ship == buff.Owner && !buff.Hidden)
 		{
 			ShipBuffs.Add(new BuffVM(buff));
 		}
@@ -103,5 +103,17 @@ public class ShipCrewPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 
 	public void HandleBuffRankDecreased(Buff buff)
 	{
+	}
+
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
+		if (buff.IsSuppressed)
+		{
+			HandleBuffDidRemoved(buff);
+		}
+		else
+		{
+			HandleBuffDidAdded(buff);
+		}
 	}
 }

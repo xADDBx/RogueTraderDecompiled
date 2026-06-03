@@ -9,12 +9,14 @@ using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.View.Common.InputField;
 using Kingmaker.Code.UI.MVVM.VM.BugReport;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
+using Kingmaker.Code.View.UI;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.View.BugReport;
 using Kingmaker.Utility;
 using Kingmaker.Utility.BuildModeUtils;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -138,6 +140,15 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	[SerializeField]
 	private OwlcatMultiButton m_SendButton;
 
+	[SerializeField]
+	private OwlcatMultiButton m_BlinkButton;
+
+	[SerializeField]
+	private BlinkWidget m_BlinkEmail;
+
+	[SerializeField]
+	private BlinkWidget m_BlinkPrivacy;
+
 	[Header("Issue Type")]
 	[SerializeField]
 	private OwlcatToggleGroup m_IssueTypeToggleGroup;
@@ -213,6 +224,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
+	private ReactiveProperty<bool> m_CanSendReport = new ReactiveProperty<bool>();
+
 	private Dictionary<OwlcatToggle, ReportingUtils.Severity> m_IssueTypes;
 
 	private IDisposable m_FixVersionDropdownDisposable;
@@ -220,6 +233,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 	private IDisposable m_AssigneeDropdownDisposable;
 
 	private IDisposable m_ManualSaveDropdownDisposable;
+
+	private readonly Regex m_EmailRegex = new Regex("^\\w+[\\w-\\.]*\\@\\w+((-\\w+)|(\\w*))\\.[a-z]{2,9}$");
 
 	public static string LabelsDisposableString => "m_LabelsDisposable";
 
@@ -253,7 +268,22 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		AddDisposable(base.ViewModel.BugReportDrawingVM.Subscribe(m_BugReportDrawingView.Bind));
 		AddDisposable(base.ViewModel.BugReportDuplicatesVM.Subscribe(m_BugReportDuplicatesBaseView.Bind));
 		AddDisposable(m_FeedbackToggle.IsOn.Subscribe(OnFeedbackToggleValueChanged));
-		AddDisposable(m_PrivacyToggle.IsOn.Subscribe(RefreshSendButtonInteractable));
+		m_PrivacyToggle.IsOn.Subscribe(delegate
+		{
+			UpdateCanSendReport();
+		}).AddTo(this);
+		m_CanSendReport.Subscribe(delegate(bool value)
+		{
+			RefreshSendButtonInteractable(value);
+			m_BlinkButton.Or(null)?.gameObject.SetActive(!value);
+		}).AddTo(this);
+		if (m_BlinkButton != null && m_BlinkEmail != null && m_BlinkPrivacy != null)
+		{
+			ObservableExtensions.Subscribe(m_BlinkButton.OnLeftClickAsObservable(), delegate
+			{
+				BlinkFieldsIfNeeded();
+			}).AddTo(this);
+		}
 		AddDisposable(m_ContextDropdown.Index.Subscribe(delegate
 		{
 			OnContextDropdownValueChanged();
@@ -427,14 +457,27 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	public void OnSend()
 	{
-		if (!m_PrivacyToggle.IsOn.Value)
+		if (!m_CanSendReport.Value)
 		{
-			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-			{
-				h.HandleWarning(BlueprintRoot.Instance.LocalizedTexts.UserInterfacesText.UIBugReport.SendindIsNotAvailable, addToLog: false, WarningNotificationFormat.Attention);
-			});
-			return;
+			ShowSendNotAvailable();
 		}
+		else
+		{
+			DoSend();
+		}
+	}
+
+	private void ShowSendNotAvailable()
+	{
+		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+		{
+			h.HandleWarning(BlueprintRoot.Instance.LocalizedTexts.UserInterfacesText.UIBugReport.SendindIsNotAvailable, addToLog: false, WarningNotificationFormat.Attention);
+		});
+		BlinkFieldsIfNeeded();
+	}
+
+	private void DoSend()
+	{
 		string issueType = GetIssueType();
 		ReportingUtils.Instance.SendReport(m_MessageInputField.Text, m_EmailInputField.Text, SystemInfo.deviceUniqueIdentifier, issueType, m_DiscordInputField.Text, m_EmailUpdatesToggle.IsOn.Value);
 		EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
@@ -450,6 +493,18 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		ReportingUtils.Instance.PrivacyStuffManage(m_EmailInputField.Text, m_EmailUpdatesToggle.IsOn.Value, m_PrivacyToggle.IsOn.Value, isSend: true);
 		ReportingUtils.Instance.Clear();
 		InputLog.SetLogInput(state: false);
+	}
+
+	private void BlinkFieldsIfNeeded()
+	{
+		if (!m_PrivacyToggle.IsOn.Value)
+		{
+			m_BlinkPrivacy.Blink();
+		}
+		if (!IsEmailMatchRegexp() && BuildModeUtility.IsDevelopment)
+		{
+			m_BlinkEmail.Blink();
+		}
 	}
 
 	public void OnClose()
@@ -635,6 +690,13 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		ReportingUtils.Instance.SelectIsFeedback(isFeedback);
 	}
 
+	private void UpdateCanSendReport()
+	{
+		bool value = m_PrivacyToggle.IsOn.Value;
+		bool flag = IsEmailMatchRegexp() || !BuildModeUtility.IsDevelopment;
+		m_CanSendReport.Value = value && flag;
+	}
+
 	public void OnContextDropdownValueChanged()
 	{
 		ReportingUtils.Instance.SelectContext(m_ContextDropdown.Index.Value);
@@ -747,7 +809,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 
 	private string GetIssueType()
 	{
-		if (BuildModeUtility.IsDevelopment)
+		if (m_DevPriorityGroup.activeSelf)
 		{
 			return m_DevPriorityDropdown.GetCurrentTextValue();
 		}
@@ -761,7 +823,8 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		{
 			return false;
 		}
-		return new Regex("^\\w+[\\w-\\.]*\\@\\w+((-\\w+)|(\\w*))\\.[a-z]{2,9}$").Matches(m_EmailInputField.Text).Count == 1;
+		m_EmailInputField.Text = m_EmailInputField.Text.Replace(" ", "");
+		return m_EmailRegex.Matches(m_EmailInputField.Text).Count == 1;
 	}
 
 	private void ToggleAdditionalContactsVisibility(bool toShow)
@@ -804,6 +867,7 @@ public abstract class BugReportBaseView : ViewBase<BugReportVM>
 		if (m_PrevEmail != m_EmailInputField.Text)
 		{
 			ToggleAdditionalContactsVisibility(IsEmailMatchRegexp());
+			UpdateCanSendReport();
 			(bool, bool) tuple = ReportingUtils.Instance.PrivacyStuffGetEmailAgreements(m_EmailInputField.Text);
 			m_PrivacyToggle.Set(tuple.Item2);
 			ExpandDescriptionOverMarket();

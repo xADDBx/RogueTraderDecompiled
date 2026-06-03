@@ -53,11 +53,11 @@ public abstract class SurfaceCombatUnitOrderView : SurfaceCombatUnitView<Initiat
 	[SerializeField]
 	private bool m_HasRoundBlock = true;
 
-	[ConditionalShow("m_HasRoundBlock")]
+	[ShowIf("m_HasRoundBlock")]
 	[SerializeField]
 	private InitiativeTrackerEndOfRound m_EndOfRound;
 
-	[ConditionalShow("m_HasRoundBlock")]
+	[ShowIf("m_HasRoundBlock")]
 	[SerializeField]
 	private GameObject m_UnitContainer;
 

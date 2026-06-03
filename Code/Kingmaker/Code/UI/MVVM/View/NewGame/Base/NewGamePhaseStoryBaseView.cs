@@ -146,8 +146,8 @@ public class NewGamePhaseStoryBaseView : ViewBase<NewGamePhaseStoryVM>
 		m_OnText.text = UIStrings.Instance.SettingsUI.SettingsToggleOn;
 		m_OffText.text = UIStrings.Instance.SettingsUI.SettingsToggleOff;
 		m_DlcStatusLabel.text = UIStrings.Instance.DlcManager.DlcStatus;
-		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.Purchase;
-		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.Purchased;
+		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.GetPurchaseLabel();
+		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.GetPurchasedLabel();
 		m_ComingSoonLabel.text = UIStrings.Instance.DlcManager.ComingSoon;
 		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
 		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;

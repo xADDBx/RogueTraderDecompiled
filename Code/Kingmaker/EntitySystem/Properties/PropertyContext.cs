@@ -85,7 +85,26 @@ public readonly struct PropertyContext
 	}
 
 	[CanBeNull]
-	public MechanicEntity ContextCaster => MechanicContext?.MaybeCaster;
+	public MechanicEntity ContextOwner => MechanicContext?.MaybeOwner;
+
+	[CanBeNull]
+	public MechanicEntity ContextCaster
+	{
+		get
+		{
+			object obj = MechanicContext?.MaybeCaster;
+			if (obj == null)
+			{
+				PropertyContextPreviewCasterData current = ContextData<PropertyContextPreviewCasterData>.Current;
+				if (current == null)
+				{
+					return null;
+				}
+				obj = current.Caster;
+			}
+			return (MechanicEntity)obj;
+		}
+	}
 
 	[CanBeNull]
 	private TargetWrapper ContextMainTargetWrapper => MechanicContext?.MainTarget;
@@ -107,7 +126,7 @@ public readonly struct PropertyContext
 		Ability = ability ?? Rule?.Reason.Ability;
 	}
 
-	public PropertyContext(AbilityData ability, MechanicEntity currentTarget)
+	public PropertyContext([NotNull] AbilityData ability, [CanBeNull] MechanicEntity currentTarget = null)
 		: this(ability.Caster, ability.Fact, currentTarget, ability.Fact?.Context, null, ability)
 	{
 	}

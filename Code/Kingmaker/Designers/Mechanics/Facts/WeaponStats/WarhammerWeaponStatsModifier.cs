@@ -34,6 +34,8 @@ public abstract class WarhammerWeaponStatsModifier : MechanicEntityFactComponent
 
 	public ContextValueModifierWithType MaxDistance;
 
+	public ContextValueModifierWithType OptimalDistance;
+
 	public ContextValueModifierWithType RateOfFire;
 
 	public ContextValueModifierWithType OverpenetrationFactor;
@@ -43,6 +45,14 @@ public abstract class WarhammerWeaponStatsModifier : MechanicEntityFactComponent
 		if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
 			Apply(rule);
+		}
+	}
+
+	protected void TryApply(RuleCalculateOverpenetration rule)
+	{
+		if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+		{
+			OverpenetrationFactor.TryApply(rule.OverpenetrationFactorModifiers, base.Fact, ModifierDescriptor.Weapon);
 		}
 	}
 
@@ -56,8 +66,8 @@ public abstract class WarhammerWeaponStatsModifier : MechanicEntityFactComponent
 		AdditionalHitChance.TryApply(rule.AdditionalHitChanceModifiers, base.Fact, Descriptor);
 		DodgePenetration.TryApply(rule.DodgePenetrationModifiers, base.Fact, Descriptor);
 		MaxDistance.TryApply(rule.MaxDistanceModifiers, base.Fact, Descriptor);
+		OptimalDistance?.TryApply(rule.OptimalDistanceModifiers, base.Fact, Descriptor);
 		RateOfFire.TryApply(rule.RateOfFireModifiers, base.Fact, Descriptor);
-		OverpenetrationFactor.TryApply(rule.OverpenetrationFactorModifiers, base.Fact, Descriptor);
 	}
 
 	public override Hash128 GetHash128()

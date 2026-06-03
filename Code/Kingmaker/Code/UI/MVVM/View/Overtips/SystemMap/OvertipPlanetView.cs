@@ -15,6 +15,7 @@ using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Blueprints.SystemMap;
 using Kingmaker.Globalmap.Colonization;
+using Kingmaker.Globalmap.Exploration;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
@@ -319,6 +320,9 @@ public abstract class OvertipPlanetView : BaseOvertipView<OvertipEntityPlanetVM>
 		m_NoiseAroundImage.sprite = m_RandomNoises[UnityEngine.Random.Range(0, m_RandomNoises.Length)];
 		m_BottomImage.sprite = m_RandomBottomSprites[UnityEngine.Random.Range(0, m_RandomBottomSprites.Length)];
 		m_TopInformation.text = GetTopInformationText();
+		AnomalyView anomalyView = Game.Instance.State.StarSystemObjects.All.Select((StarSystemObjectEntity e) => e.View?.gameObject.GetComponent<AnomalyView>()).FirstOrDefault((AnomalyView av) => av?.BlockedObject == base.ViewModel.PlanetView.Value);
+		bool flag = anomalyView != null && anomalyView.Data != null && anomalyView.Data.IsInGame && anomalyView.BlueprintAnomaly != null && !anomalyView.BlueprintAnomaly.HideInUI;
+		m_TopInformation.transform.parent.gameObject.SetActive(!flag);
 		float num = UnityEngine.Random.Range(15f, 25f);
 		m_TopInformation.transform.parent.transform.rotation *= Quaternion.Euler(0f, 0f, num);
 		m_TopInformation.transform.rotation *= Quaternion.Euler(0f, 0f, 0f - num);

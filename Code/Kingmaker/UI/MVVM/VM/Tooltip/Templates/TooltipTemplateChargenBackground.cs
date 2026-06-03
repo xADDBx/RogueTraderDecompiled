@@ -2,12 +2,16 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Blueprints.Items.Augments;
+using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.Utility;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Items;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
@@ -76,8 +80,10 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		AddForgeWorldBricks(list);
 		AddDescription(list);
 		AddFeatures(list);
+		TryAddAugmentsListBlock(list);
 		AddStatBonuses(list, StatTypeHelper.Attributes, UIStrings.Instance.CharGen.BackgroundStatsBonuses);
 		AddStatBonuses(list, StatTypeHelper.Skills, UIStrings.Instance.CharGen.BackgroundSkillsBonuses);
 		BlueprintComponentsEnumerator<AddFeaturesToLevelUp> components = m_Feature.GetComponents<AddFeaturesToLevelUp>();
@@ -103,6 +109,28 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 		}
 	}
 
+	private void AddForgeWorldBricks(List<ITooltipBrick> bricks)
+	{
+		if (m_Feature.TryGetComponent<AddAugment>(out var component))
+		{
+			ItemsFilterType augmentType = ItemsFilterType.AugmentationsAll;
+			if (component.AugmentItem.NameForAcronym != null && component.AugmentItem.NameForAcronym.Contains("Analytics"))
+			{
+				augmentType = ItemsFilterType.AugmentationsEyes;
+			}
+			else if (component.AugmentItem.NameForAcronym != null && component.AugmentItem.NameForAcronym.Contains("Locomotion"))
+			{
+				augmentType = ItemsFilterType.AugmentationsLegs;
+			}
+			else if (component.AugmentItem.NameForAcronym != null && component.AugmentItem.NameForAcronym.Contains("Subskin"))
+			{
+				augmentType = ItemsFilterType.AugmentationsTorso;
+			}
+			bricks.Add(new TooltipBrickEntityHeader(component.AugmentItem.Name, UIConfig.Instance.UIAugmentationsSlotDefaultIcons.GetIconBySlotType(augmentType), hasUpgrade: false));
+			AddEffectsDescription(component.AugmentItem, bricks);
+		}
+	}
+
 	private void AddFeatures(List<ITooltipBrick> bricks)
 	{
 		IEnumerable<BlueprintUnitFact> source = m_Feature.GetComponents<AddFacts>().SelectMany((AddFacts i) => i.Facts);
@@ -114,6 +142,31 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 			bricks.AddRange(source.Select((BlueprintUnitFact fact) => new TooltipBrickFeature(fact)));
 			bricks.Add(new TooltipBricksGroupEnd());
 		}
+	}
+
+	private void TryAddAugmentsListBlock(List<ITooltipBrick> bricks)
+	{
+		if (m_Feature.NameForAcronym == null || !m_Feature.NameForAcronym.Contains("Forge") || m_Feature.TryGetComponent<AddAugment>(out var _))
+		{
+			return;
+		}
+		AddFeaturesToLevelUp addFeaturesToLevelUp = m_Feature.GetComponents<AddFeaturesToLevelUp>().FirstOrDefault((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.ChargenForgeWorld);
+		bricks.Add(new TooltipBrickTitle(UIStrings.Instance.UIAugmentations.AugmentationsScreenNameHeaderLabel, TooltipTitleType.H3));
+		TooltipBricksGroupLayoutParams layoutParams = (m_IsInfoWindow ? FeaturesInfoLayout : FeaturesTooltipLayout);
+		bricks.Add(new TooltipBricksGroupStart(hasBackground: false, layoutParams));
+		if (addFeaturesToLevelUp != null)
+		{
+			foreach (BlueprintFeature feature in addFeaturesToLevelUp.Features)
+			{
+				if (feature.TryGetComponent<AddAugment>(out var component2))
+				{
+					ItemEntity itemEntity = component2.AugmentItem.CreateEntity();
+					bricks.Add(new TooltipBrickFeature(itemEntity));
+					itemEntity.Dispose();
+				}
+			}
+		}
+		bricks.Add(new TooltipBricksGroupEnd());
 	}
 
 	private void AddStatBonuses(List<ITooltipBrick> bricks, StatType[] types, string title)
@@ -186,5 +239,42 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 			}
 		}
 		bricks.Add(new TooltipBricksGroupEnd());
+	}
+
+	private void AddEffectsDescription(BlueprintItemAugment blueprint, List<ITooltipBrick> result, bool positive = true)
+	{
+		BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnitInUI.Value;
+		List<AddFactToEquipmentWielder> list = ((blueprint != null) ? blueprint.GetComponents<AddFactToEquipmentWielder>().ToList() : null);
+		if (list == null)
+		{
+			return;
+		}
+		AddFactToEquipmentWielder[] array = list.Where(delegate(AddFactToEquipmentWielder f)
+		{
+			BlueprintUnitFact fact = f.Fact;
+			return fact != null && fact.NameForAcronym != null && !f.Fact.NameForAcronym.Contains("Negative");
+		}).ToArray();
+		if (!array.Any())
+		{
+			return;
+		}
+		List<ITooltipBrick> list2 = new List<ITooltipBrick>();
+		for (int i = 0; i < array.Length; i++)
+		{
+			string description = array[i].Fact.Description;
+			if (description != null && !(description == ""))
+			{
+				description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, value, selectedUnitIsPreview: true);
+				list2.Add(new TooltipBrickText(description, TooltipTextType.Paragraph, isHeader: false, TooltipTextAlignment.Left, needChangeSize: false, 18, value));
+				if (i != array.Length - 1)
+				{
+					list2.Add(new TooltipBrickSpace());
+				}
+			}
+		}
+		if (list2.Any())
+		{
+			result.AddRange(list2);
+		}
 	}
 }

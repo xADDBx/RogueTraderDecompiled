@@ -7,6 +7,7 @@ public enum AILogReasonType
 	BetterPositionNotFound,
 	PositionForRetreatNotFound,
 	AbilityToEscapeFromTreatNotFound,
+	AbilityForSquadTargetNotFound,
 	NoNeedToMove,
 	FoundPathTooShort,
 	NothingToDo,

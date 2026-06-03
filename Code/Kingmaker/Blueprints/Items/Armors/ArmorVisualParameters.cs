@@ -103,6 +103,10 @@ public class ArmorVisualParameters
 			}
 			return Prototype.AnimationFoleySound;
 		}
+		set
+		{
+			m_AnimationFoleySound = value;
+		}
 	}
 
 	public GameObject OverrideMissEffect

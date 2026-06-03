@@ -3,6 +3,7 @@ using Kingmaker.Networking;
 using Kingmaker.Networking.NetGameFsm;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using Rewired;
@@ -47,7 +48,7 @@ public class GamepadConnectDisconnectVM : VMBase
 
 	public GamepadConnectDisconnectVM()
 	{
-		if (!IsControllerOverride)
+		if (!IsControllerOverride && !ApplicationHelper.IsRunningOnSwitch2)
 		{
 			AddDisposable(GamepadConnected);
 			AddDisposable(GamepadDisconnected);

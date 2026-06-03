@@ -1,8 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Kingmaker.Pathfinding.LosCaching;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
 using Pathfinding.Serialization;
@@ -77,7 +77,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 				{
 					ApplyChannel(node, x, z, color.b, channels[2], factors[2]);
 				}
-				node.WalkableErosion = node.StaticWalkable;
+				node.WalkableErosion = node.Walkable;
 			}
 		}
 
@@ -94,7 +94,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 			case ChannelUse.WalkablePenalty:
 				if (value == 0)
 				{
-					node.StaticWalkable = false;
+					node.Walkable = false;
 				}
 				else
 				{
@@ -237,9 +237,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	private bool m_IsScanningNow;
 
-	private LosCache losCache;
-
-	private bool losCacheReady;
+	private BitArray m_UnwalkableNodesFromStart;
 
 	private const float EdgeWalkableCheckOffset = 0.6f;
 
@@ -831,6 +829,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	protected override IEnumerable<Progress> ScanInternal()
 	{
+		m_UnwalkableNodesFromStart = new BitArray(Width * Depth);
 		if (collision == null)
 		{
 			collision = new GraphCollision();
@@ -873,8 +872,6 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	private IEnumerator<Progress> DoScan()
 	{
-		losCache = null;
-		losCacheReady = false;
 		if (nodeSize <= 0f)
 		{
 			yield break;
@@ -942,31 +939,6 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		meshNodes = new CustomGridMeshNodeBaker(this).Bake();
 	}
 
-	public void InitLosCache()
-	{
-		InitLosCache(new IntRect(0, 0, Width - 1, Depth - 1));
-	}
-
-	public void InitLosCache(Bounds bounds)
-	{
-		InitLosCache(GetRectFromBounds(bounds));
-	}
-
-	public void InitLosCache(IntRect rect)
-	{
-	}
-
-	public bool TryCheckLos(CustomGridNodeBase origin, IntRect originSize, CustomGridNodeBase end, IntRect endSize, out bool hasLos)
-	{
-		if (!losCacheReady)
-		{
-			hasLos = false;
-			return false;
-		}
-		hasLos = losCache.CheckLos(origin, originSize, end, endSize);
-		return true;
-	}
-
 	[Obsolete("Use RecalculateCell instead which works both for grid graphs and layered grid graphs")]
 	public virtual void UpdateNodePositionCollision(CustomGridNode node, int x, int z, bool resetPenalty = true)
 	{
@@ -1013,14 +985,14 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		}
 		if (m_NavmeshMasks.IsRemoved(x, z) || (!m_IsScanningNow && m_GridCuts.IsRemoved(x, z)))
 		{
-			customGridNode.StaticWalkable = false;
-			customGridNode.WalkableErosion = customGridNode.StaticWalkable;
+			customGridNode.Walkable = false;
+			customGridNode.WalkableErosion = customGridNode.Walkable;
 			return;
 		}
 		if (m_NavmeshMasks.IsAdded(x, z) || (!m_IsScanningNow && m_GridCuts.IsAdded(x, z)))
 		{
-			customGridNode.StaticWalkable = true;
-			customGridNode.WalkableErosion = customGridNode.StaticWalkable;
+			customGridNode.Walkable = true;
+			customGridNode.WalkableErosion = customGridNode.Walkable;
 			return;
 		}
 		if (walkable && useRaycastNormal && collision.heightCheck && hit.normal != Vector3.zero)
@@ -1037,8 +1009,8 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 			}
 		}
 		walkable = walkable && collision.Check((Vector3)customGridNode.position);
-		customGridNode.StaticWalkable = walkable;
-		customGridNode.WalkableErosion = customGridNode.StaticWalkable;
+		customGridNode.Walkable = walkable;
+		customGridNode.WalkableErosion = customGridNode.Walkable;
 	}
 
 	protected virtual bool ErosionAnyFalseConnections(GraphNode baseNode)
@@ -1069,15 +1041,15 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	private void ErodeNode(GraphNode node)
 	{
-		if (node.StaticWalkable && ErosionAnyFalseConnections(node))
+		if (node.Walkable && ErosionAnyFalseConnections(node))
 		{
-			node.StaticWalkable = false;
+			node.Walkable = false;
 		}
 	}
 
 	private void ErodeNodeWithTagsInit(GraphNode node)
 	{
-		if (node.StaticWalkable && ErosionAnyFalseConnections(node))
+		if (node.Walkable && ErosionAnyFalseConnections(node))
 		{
 			node.Tag = (uint)erosionFirstTag;
 		}
@@ -1090,7 +1062,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 	private void ErodeNodeWithTags(GraphNode node, int iteration)
 	{
 		CustomGridNodeBase customGridNodeBase = node as CustomGridNodeBase;
-		if (!customGridNodeBase.StaticWalkable || customGridNodeBase.Tag < erosionFirstTag || customGridNodeBase.Tag >= erosionFirstTag + iteration)
+		if (!customGridNodeBase.Walkable || customGridNodeBase.Tag < erosionFirstTag || customGridNodeBase.Tag >= erosionFirstTag + iteration)
 		{
 			return;
 		}
@@ -1187,7 +1159,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 
 	public virtual bool IsValidConnection(CustomGridNodeBase node1, CustomGridNodeBase node2)
 	{
-		if (!node1.StaticWalkable || !node2.StaticWalkable)
+		if (!node1.Walkable || !node2.Walkable)
 		{
 			return false;
 		}
@@ -1246,7 +1218,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 	public virtual void CalculateConnections(int x, int z)
 	{
 		CustomGridNode customGridNode = nodes[z * width + x];
-		if (!customGridNode.StaticWalkable)
+		if (!customGridNode.Walkable)
 		{
 			customGridNode.ResetConnectionsInternal();
 			return;
@@ -1797,11 +1769,11 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 					point.y = 0f;
 					if (bounds.Contains(point))
 					{
-						customGridNode.StaticWalkable = customGridNode.WalkableErosion;
+						customGridNode.Walkable = customGridNode.WalkableErosion;
 						o.Apply(customGridNode);
 						customGridNode.WalkableErosion = customGridNode.StaticWalkable;
 					}
-					customGridNode.WalkableErosion = customGridNode.StaticWalkable;
+					customGridNode.WalkableErosion = customGridNode.Walkable;
 				}
 				else
 				{
@@ -1832,11 +1804,11 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 				{
 					int num6 = num5 * width + num4;
 					CustomGridNode customGridNode2 = nodes[num6];
-					bool staticWalkable = customGridNode2.StaticWalkable;
-					customGridNode2.StaticWalkable = customGridNode2.WalkableErosion;
+					bool walkable = customGridNode2.Walkable;
+					customGridNode2.Walkable = customGridNode2.WalkableErosion;
 					if (!a.Contains(num4, num5))
 					{
-						customGridNode2.TmpWalkable = staticWalkable;
+						customGridNode2.TmpWalkable = walkable;
 					}
 				}
 			}
@@ -1856,7 +1828,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 					{
 						int num11 = num10 * width + num9;
 						CustomGridNode obj = nodes[num11];
-						obj.StaticWalkable = obj.TmpWalkable;
+						obj.Walkable = obj.TmpWalkable;
 					}
 				}
 			}
@@ -1868,7 +1840,24 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 				}
 			}
 		}
+		EnsureUnwalkableNodes();
 		o.updating = false;
+	}
+
+	private void EnsureUnwalkableNodes()
+	{
+		if (m_UnwalkableNodesFromStart == null)
+		{
+			return;
+		}
+		for (int i = 0; i < m_UnwalkableNodesFromStart.Count; i++)
+		{
+			if (m_UnwalkableNodesFromStart[i] && nodes[i].Tag != 31)
+			{
+				nodes[i].Walkable = false;
+				nodes[i].SetAllConnectionInternal(0);
+			}
+		}
 	}
 
 	public bool Linecast(Vector3 from, Vector3 to)
@@ -2096,7 +2085,7 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		}
 		CustomGridNode customGridNode = nodes[node.NodeInGridIndex + neighbourOffsets[num]];
 		CustomGridNode customGridNode2 = nodes[node.NodeInGridIndex + neighbourOffsets[num2]];
-		if (!customGridNode.StaticWalkable || !customGridNode2.StaticWalkable)
+		if (!customGridNode.Walkable || !customGridNode2.Walkable)
 		{
 			return false;
 		}
@@ -2240,7 +2229,9 @@ public class CustomGridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRa
 		{
 			if (!validAreas.Contains(customGridNode.Area))
 			{
-				customGridNode.StaticWalkable = false;
+				customGridNode.Walkable = false;
+				customGridNode.SetAllConnectionInternal(0);
+				m_UnwalkableNodesFromStart[customGridNode.NodeInGridIndex] = true;
 			}
 		}
 	}

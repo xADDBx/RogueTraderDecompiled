@@ -21,6 +21,7 @@ using Kingmaker.UI.Models.SettingsUI.SettingAssets;
 using Kingmaker.UI.Models.SettingsUI.SettingAssets.Dropdowns;
 using Kingmaker.UI.MVVM.VM.InfoWindow;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Logging;
@@ -62,6 +63,8 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 
 	public readonly BoolReactiveProperty IsConsoleControls = new BoolReactiveProperty();
 
+	public readonly BoolReactiveProperty IsSwitch2AndJoyConAsMouse = new BoolReactiveProperty();
+
 	public readonly ReactiveCommand OnApplyWindowClose = new ReactiveCommand();
 
 	public readonly ReactiveCommand OnSwitchSettings = new ReactiveCommand();
@@ -80,6 +83,7 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	{
 		UISettingsRoot.Instance.UIGraphicsSettings.UpdateInteractable(initialize: true);
 		UISettingsRoot.Instance.UIGameMainSettings.UpdateInteractable();
+		UISettingsRoot.Instance.UISwitchJoyConAsMouse.UpdateInteractable();
 		m_CloseAction = closeAction;
 		m_IsMainMenu = isMainMenu;
 		CreateMenuEntity(UIStrings.Instance.SettingsUI.SectionNameGame, UISettingsManager.SettingsScreen.Game);
@@ -104,6 +108,7 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		if (settingsScreen == UISettingsManager.SettingsScreen.Game)
 		{
 			UISettingsRoot.Instance.UIGameMainSettings.UpdateInteractable();
+			UISettingsRoot.Instance.UISwitchJoyConAsMouse.UpdateInteractable();
 		}
 		AddDisposable(InfoVM = new InfoSectionVM());
 		AddDisposable(ReactiveTooltipTemplate.Subscribe(InfoVM.SetTemplate));
@@ -154,6 +159,7 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 	{
 		DisposeEntities();
 		IsConsoleControls.Value = Game.Instance.IsControllerGamepad && settingsScreen == UISettingsManager.SettingsScreen.Controls;
+		IsSwitch2AndJoyConAsMouse.Value = ApplicationHelper.IsRunningOnSwitch2 && SettingsRoot.Game.Switch.SwitchJoyConAsMouse.GetValue() && settingsScreen == UISettingsManager.SettingsScreen.Controls;
 		foreach (UISettingsGroup item in from uiSettingsGroup in Game.Instance.UISettingsManager.GetSettingsList(settingsScreen)
 			where uiSettingsGroup.IsVisible
 			select uiSettingsGroup)
@@ -182,6 +188,7 @@ public class SettingsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		if (settingsScreen == UISettingsManager.SettingsScreen.Game)
 		{
 			UISettingsRoot.Instance.UIGameMainSettings.UpdateInteractable();
+			UISettingsRoot.Instance.UISwitchJoyConAsMouse.UpdateInteractable();
 		}
 	}
 

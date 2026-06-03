@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("dee632de035bfdb48b823d7418a3ccd8")]
 public class WarhammerModifyFiringArcRange : UnitFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateAbilityRange>, IRulebookHandler<RuleCalculateAbilityRange>, ISubscriber, IInitiatorRulebookSubscriber, IHashable

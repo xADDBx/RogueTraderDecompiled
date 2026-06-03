@@ -21,5 +21,6 @@ public enum EquipSlotType
 	QuickSlot3,
 	QuickSlot4,
 	QuickSlot5,
-	PetProtocol
+	PetProtocol,
+	Augment
 }

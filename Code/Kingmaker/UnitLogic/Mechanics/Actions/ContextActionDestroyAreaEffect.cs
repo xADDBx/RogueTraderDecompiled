@@ -17,26 +17,54 @@ public class ContextActionDestroyAreaEffect : ContextAction
 	[SerializeField]
 	private bool m_DestroyAreaEffectOnlyFromCaster;
 
+	[SerializeField]
+	private bool m_DestroyAreaEffectOnlyUnderCaster;
+
 	public BlueprintAbilityAreaEffect AreaEffect => m_AreaEffect?.Get();
 
 	public bool DestroyAreaEffectOnlyFromCaster => m_DestroyAreaEffectOnlyFromCaster;
 
+	public bool DestroyAreaEffectOnlyUnderCaster => m_DestroyAreaEffectOnlyUnderCaster;
+
 	public override string GetCaption()
 	{
-		return string.Concat("Destroy " + (m_DestroyAreaEffectOnlyFromCaster ? "only casters " : "all "), (AreaEffect != null) ? AreaEffect.ToString() : "<undefined>");
+		string text = ((AreaEffect != null) ? AreaEffect.ToString() : "<undefined>");
+		bool destroyAreaEffectOnlyFromCaster = m_DestroyAreaEffectOnlyFromCaster;
+		bool destroyAreaEffectOnlyUnderCaster = m_DestroyAreaEffectOnlyUnderCaster;
+		string text2 = (destroyAreaEffectOnlyFromCaster ? ((!destroyAreaEffectOnlyUnderCaster) ? " [created by caster]" : " [created by caster, under caster]") : ((!destroyAreaEffectOnlyUnderCaster) ? "" : " [under caster]"));
+		string text3 = text2;
+		return "Destroy " + text + text3;
 	}
 
 	protected override void RunAction()
 	{
-		MechanicEntity mechanicEntity = (DestroyAreaEffectOnlyFromCaster ? base.Context.MaybeCaster : null);
-		if (DestroyAreaEffectOnlyFromCaster && mechanicEntity == null)
+		int num;
+		object obj;
+		if (!DestroyAreaEffectOnlyFromCaster)
+		{
+			num = (DestroyAreaEffectOnlyUnderCaster ? 1 : 0);
+			if (num == 0)
+			{
+				obj = null;
+				goto IL_0022;
+			}
+		}
+		else
+		{
+			num = 1;
+		}
+		obj = base.Context.MaybeCaster;
+		goto IL_0022;
+		IL_0022:
+		MechanicEntity mechanicEntity = (MechanicEntity)obj;
+		if (num != 0 && mechanicEntity == null)
 		{
 			PFLog.Default.Error("Context.MaybeCaster can't be null!");
 			return;
 		}
 		foreach (AreaEffectEntity areaEffect in Game.Instance.State.AreaEffects)
 		{
-			if (areaEffect.Blueprint == AreaEffect && (!DestroyAreaEffectOnlyFromCaster || areaEffect.Context.MaybeCaster == mechanicEntity))
+			if (areaEffect.Blueprint == AreaEffect && (!DestroyAreaEffectOnlyFromCaster || areaEffect.Context.MaybeCaster == mechanicEntity) && (!DestroyAreaEffectOnlyUnderCaster || areaEffect.Contains(mechanicEntity.Position)))
 			{
 				areaEffect.ForceEnd();
 			}

@@ -30,6 +30,7 @@ public class TextTemplateEngine : BaseTextTemplateEngine
 		AddTemplate("respec_cost", new RespecCostTemplate());
 		AddTemplate("n", new NarratorStartTemplate());
 		AddTemplate("/n", new NarratorEndTemplate());
+		AddTemplate("nc", new DialogueNodeConditionTemplate());
 		AddTemplate("g", new TooltipStartTemplate(TooltipType.Glosary));
 		AddTemplate("/g", new TooltipEndTemplate(TooltipType.Glosary));
 		AddTemplate("d", new TooltipStartTemplate(TooltipType.Decisions));
@@ -80,6 +81,7 @@ public class TextTemplateEngine : BaseTextTemplateEngine
 		AddTemplate("armour.dodge", new UITemplateArmourDodge());
 		AddTemplate("armour.damage_reduce", new UITemplateArmourDamageReduce());
 		AddTemplate("bind", new KeyBindingTemplate());
+		AddTemplate("mouse_icon", new MouseIconOverrideTemplate());
 		AddTemplate("console_bind", new ConsoleBindingTemplate());
 		AddTemplate("empty", new EmptyTemplate());
 		AddTemplate("br", new LineBreakTemplate());
@@ -95,6 +97,7 @@ public class TextTemplateEngine : BaseTextTemplateEngine
 		AddTemplate("momentum_value", new MomentumValue());
 		AddTemplate("push", new PushTemplate());
 		AddTemplate("overpenetration", new OverpenetrationTemplate());
+		AddTemplate("ricochet", new RicochetTemplate());
 		AddTemplate("critical_hit", new CriticalHitTemplate());
 		AddTemplate("damage.type", new DamageTypeTemplate());
 	}

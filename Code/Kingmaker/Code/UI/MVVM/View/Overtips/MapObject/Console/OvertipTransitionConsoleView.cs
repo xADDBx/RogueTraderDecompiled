@@ -17,11 +17,11 @@ public class OvertipTransitionConsoleView : OvertipTransitionView
 	private bool m_NeedHintPositionCorrection;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_UpperY;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_LowerY;
 
 	protected override void BindViewImplementation()

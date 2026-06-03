@@ -14,6 +14,8 @@ public interface IUnitBuffHandler : ISubscriber<IBaseUnitEntity>, ISubscriber
 	void HandleBuffRankIncreased(Buff buff);
 
 	void HandleBuffRankDecreased(Buff buff);
+
+	void HandleBuffIsSuppressedChanged(Buff buff);
 }
 public interface IUnitBuffHandler<TTag> : IEventTag<IUnitBuffHandler, TTag>, IUnitBuffHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEntitySubscriber
 {

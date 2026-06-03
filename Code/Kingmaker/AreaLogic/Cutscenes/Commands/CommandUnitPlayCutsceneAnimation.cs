@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.ResourceLinks;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Visual.Animation;
@@ -102,19 +102,19 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 	private bool m_FiniteLoop;
 
 	[SerializeField]
-	[ConditionalShow("m_FiniteLoop")]
+	[ShowIf("m_FiniteLoop")]
 	private float m_FiniteLoopDuration;
 
 	[SerializeField]
-	[ConditionalShow("m_FiniteLoop")]
+	[ShowIf("m_FiniteLoop")]
 	private bool m_FiniteLoopRandomDuration;
 
 	[SerializeField]
-	[ConditionalShow("m_FiniteLoopRandomDuration")]
+	[ShowIf("m_FiniteLoopRandomDuration")]
 	private float m_FiniteLoorDurationMax;
 
 	[SerializeField]
-	[ConditionalHide("IsContinuous")]
+	[HideIf("IsContinuous")]
 	[Tooltip("Timeout in case something breaks, forces this command to stop after this many seconds")]
 	private float m_Timeout = 20f;
 
@@ -122,7 +122,7 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 	private bool m_UseAvatarMask;
 
 	[SerializeField]
-	[ConditionalShow("m_UseAvatarMask")]
+	[ShowIf("m_UseAvatarMask")]
 	private AvatarMask m_AvatarMask;
 
 	[SerializeField]
@@ -167,6 +167,18 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 
 	public AbstractUnitEvaluator UnitEvaluator => m_Unit;
 
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator
+	{
+		get
+		{
+			if (!m_MarkUnit)
+			{
+				return null;
+			}
+			return m_Unit;
+		}
+	}
+
 	private bool GetIsLooping()
 	{
 		AnimationClipWrapper animationClipWrapper = m_CutsceneClipWrapperLink?.Load();
@@ -180,6 +192,11 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 	public void Preload()
 	{
 		m_CutsceneClipWrapperLink.Load();
+	}
+
+	public override IEnumerable<IEntity> GetAnchorEntities()
+	{
+		return CommandBase.UnitsFromEvaluator(m_Unit);
 	}
 
 	public override bool TrySkip(CutscenePlayerData player)
@@ -406,24 +423,6 @@ public sealed class CommandUnitPlayCutsceneAnimation : CommandBase
 			}
 		}
 		return false;
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!m_MarkUnit || m_Unit == null || !m_Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
-	}
-
-	public override IAbstractUnitEntity GetAnchorUnit()
-	{
-		if (m_Unit == null || !m_Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 
 	public override string GetCaption()

@@ -27,7 +27,7 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 	[JsonProperty]
 	private EntityFactRef<Ability> m_AbilityRef;
 
-	public AbilityData Ability
+	public virtual AbilityData Ability
 	{
 		get
 		{
@@ -78,7 +78,11 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 			}
 			if (IsVariantAbility)
 			{
-				return Ability.IsOnCooldown;
+				if (!Ability.IsOnCooldown)
+				{
+					return !Ability.IsAvailable;
+				}
+				return true;
 			}
 			return !Ability.IsAvailable;
 		}

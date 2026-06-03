@@ -36,6 +36,8 @@ public class GameLogStrings : StringsContainer
 
 	public ColorTextString OverpenetrationColorText;
 
+	public ColorTextString RicochetColorText;
+
 	public ColorTextString CriticalHitColorText;
 
 	[Header("Warhammer Prototype")]
@@ -204,9 +206,15 @@ public class GameLogStrings : StringsContainer
 
 	public GameLogMessage PerilsOfTheWarp;
 
+	public GameLogMessage PsychicPhenomenaAvoided;
+
+	public GameLogMessage PerilsOfTheWarpAvoided;
+
 	public GameLogMessage TemporaryHitPointsAdd;
 
 	public GameLogMessage TemporaryHitPointsRemove;
+
+	public GameLogMessage ImmuneToAbility;
 
 	[Header("Checks")]
 	public GameLogMessage SkillCheckSuccess;
@@ -316,6 +324,10 @@ public class GameLogStrings : StringsContainer
 	public GameLogMessage ProfitFactorGained;
 
 	public GameLogMessage ProfitFactorLost;
+
+	public GameLogMessage CombativityGained;
+
+	public GameLogMessage CombativityLost;
 
 	public GameLogMessage NavigatorResourceGained;
 

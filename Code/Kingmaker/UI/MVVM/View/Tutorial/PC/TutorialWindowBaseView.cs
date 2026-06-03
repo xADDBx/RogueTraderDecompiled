@@ -28,7 +28,7 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 
 	[Space]
 	[SerializeField]
-	private GameObject m_ImageContainer;
+	protected GameObject m_ImageContainer;
 
 	[SerializeField]
 	private Image m_Image;
@@ -65,6 +65,9 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 
 	[SerializeField]
 	private RectTransform m_BodyContentRectTransform;
+
+	[SerializeField]
+	private GameObject m_SwitchAnimation;
 
 	protected virtual bool IsShowDefaultSprite => false;
 
@@ -103,6 +106,10 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 	protected override void DestroyViewImplementation()
 	{
 		OnHide();
+		if (m_VideoPlayerHelper != null)
+		{
+			m_VideoPlayerHelper.Stop();
+		}
 		if (m_DontShowToggle.IsOn.Value)
 		{
 			base.ViewModel.BanTutor();
@@ -130,6 +137,12 @@ public abstract class TutorialWindowBaseView<TViewModel> : ViewBase<TViewModel>,
 
 	protected virtual void OnShow()
 	{
+		if (m_SwitchAnimation != null)
+		{
+			m_SwitchAnimation.gameObject.SetActive(base.ViewModel.Data.Blueprint.Switch2JoyConTutorial);
+			m_Image.gameObject.SetActive(!base.ViewModel.Data.Blueprint.Switch2JoyConTutorial);
+			m_VideoPlayerHelper.gameObject.SetActive(!base.ViewModel.Data.Blueprint.Switch2JoyConTutorial);
+		}
 		AddDisposable(EscHotkeyManager.Instance.Subscribe(OnEscPressed));
 	}
 

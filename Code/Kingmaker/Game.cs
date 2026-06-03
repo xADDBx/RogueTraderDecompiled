@@ -10,6 +10,7 @@ using Code.GameCore.Mics;
 using Core.Cheats;
 using JetBrains.Annotations;
 using Kingmaker.AI;
+using Kingmaker.AreaLogic.Cutscenes;
 using Kingmaker.AreaLogic.Cutscenes.Commands.Timeline;
 using Kingmaker.AreaLogic.SceneControllables;
 using Kingmaker.AreaLogic.SummonPool;
@@ -104,7 +105,6 @@ using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Core.Utility.Locator;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
-using Owlcat.Runtime.Visual.DxtCompressor;
 using Owlcat.Runtime.Visual.Effects.ParticleSumEmitter;
 using UniRx;
 using UnityEngine;
@@ -406,6 +406,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		set
 		{
+			if (m_ControllerMode == value)
+			{
+				return;
+			}
 			m_ControllerMode = value;
 			m_BugReportDisposable?.Dispose();
 			m_BugReportDisposable = null;
@@ -616,8 +620,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public bool IsLoadingProgressPaused { get; private set; }
 
-	public bool IsLoadingFromSave { get; private set; }
-
 	private int[] ModesCount
 	{
 		get
@@ -690,7 +692,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 
 	public void SetIsPauseForce(bool value)
 	{
-		if (value != IsPaused && !m_WillBePaused && !(LoadingProcess.Instance.IsManualLoadingScreenActive && value))
+		if (value != IsPaused && !m_WillBePaused && !((LoadingProcess.Instance.IsManualLoadingScreenActive || LoadingProcess.Instance.IsLoadingScreenActive) && value))
 		{
 			if (value)
 			{
@@ -715,6 +717,15 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 	public bool IsModeActive(GameModeType gameModeType)
 	{
 		return ModesCount[(int)gameModeType] > 0;
+	}
+
+	public bool CanReceiveInput()
+	{
+		if (CurrentMode == GameModeType.BugReport)
+		{
+			return true;
+		}
+		return LoadingProcess.Instance.CanReceiveInput();
 	}
 
 	private TimeController GetTimeController()
@@ -880,9 +891,9 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			Services.RegisterServiceInstance(new SoundState());
 		}
-		if (Services.GetInstance<DxtCompressorService>() == null)
+		if (Services.GetInstance<DxtCompressorServiceNew>() == null)
 		{
-			Services.RegisterServiceInstance(new DxtCompressorService());
+			Services.RegisterServiceInstance(new DxtCompressorServiceNew());
 		}
 		if (Services.GetInstance<CharacterAtlasService>() == null)
 		{
@@ -1004,7 +1015,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			PauseOnLoadPending = false;
 			IsPaused = true;
 		}
-		Services.GetInstance<DxtCompressorService>()?.Update();
 		using (ProfileScope.New("Finish Tick Real Time"))
 		{
 			RealTimeController.FinishTick();
@@ -1322,11 +1332,10 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		if (CurrentlyLoadedArea == areaEnterPoint.Area)
 		{
 			Teleport(areaEnterPoint, includeFollowers: true, callback);
+			return;
 		}
-		else
-		{
-			LoadArea(areaEnterPoint.Area, areaEnterPoint, autoSaveMode, null, callback);
-		}
+		ContextData<CommandAction.PlayerData>.Current?.Player?.Stop();
+		LoadArea(areaEnterPoint.Area, areaEnterPoint, autoSaveMode, null, callback);
 	}
 
 	public bool IsAreaLoaded(BlueprintArea area)
@@ -1495,27 +1504,53 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 	}
 
-	public static void ReloadAreaMechanic(bool clearFx, [CanBeNull] Action callback = null)
+	public static void ReloadAreaMechanics(bool clearFx, bool needNavMeshRescan = false)
 	{
 		EventBus.RaiseEvent(delegate(IReloadMechanicsHandler h)
 		{
 			h.OnBeforeMechanicsReload();
 		});
-		LoadingProcess.Instance.StartLoadingProcess(SceneLoader.Instance.ReloadAreaMechanicsCoroutine(), delegate
+		List<SceneReference> newScenesLoaded = new List<SceneReference>();
+		LoadingProcess.Instance.StartLoadingProcess(SceneLoader.Instance.ReloadAreaMechanicsCoroutine(needNavMeshRescan, newScenesLoaded), delegate
 		{
-			if (clearFx)
-			{
-				PFLog.System.Log("FxHelper.DestroyAll();");
-				FxHelper.DestroyAllBlood();
-			}
-			EventBus.RaiseEvent(delegate(IReloadMechanicsHandler h)
-			{
-				h.OnMechanicsReloaded();
-			});
-			Instance.Player.ApplyUpgrades();
-			ExecuteSafe(callback);
+			OnMechanicsReloaded(clearFx, newScenesLoaded);
 		}, LoadingProcessTag.ReloadMechanics);
 		LoadingProcess.Instance.StartLoadingProcess(AwaitingNetwork(), null, LoadingProcessTag.ReloadMechanics);
+	}
+
+	public static void ReloadAreaMechanic(SceneReference mechanicsScene, bool clearFx, bool loadingScreen = false, [CanBeNull] Action callback = null)
+	{
+		LoadingProcessTag processTag = ((!loadingScreen) ? LoadingProcessTag.ReloadMechanics : LoadingProcessTag.None);
+		EventBus.RaiseEvent(delegate(IReloadMechanicsHandler h)
+		{
+			h.OnBeforeMechanicsReload();
+		});
+		List<SceneReference> newScenesLoaded = new List<SceneReference>();
+		LoadingProcess.Instance.StartLoadingProcess(SceneLoader.Instance.ReloadMechanicCoroutine(mechanicsScene, newScenesLoaded), delegate
+		{
+			OnMechanicsReloaded(clearFx, newScenesLoaded);
+			ExecuteSafe(callback);
+		}, processTag);
+		LoadingProcess.Instance.StartLoadingProcess(AwaitingNetwork(), null, processTag);
+	}
+
+	private static void OnMechanicsReloaded(bool clearFx, List<SceneReference> newScenesLoaded)
+	{
+		if (clearFx)
+		{
+			PFLog.System.Log("FxHelper.DestroyAllBlood();");
+			FxHelper.DestroyAllBlood();
+			MonoSingleton<ParticleSystemCustomSubEmitterDelegate>.Instance.ClearAllParticles();
+		}
+		EventBus.RaiseEvent(delegate(IReloadMechanicsHandler h)
+		{
+			h.OnMechanicsReloaded();
+		});
+		Instance.Player.ApplyUpgrades();
+		if (newScenesLoaded.Count > 0)
+		{
+			Instance.SceneControllables.Rescan();
+		}
 	}
 
 	private static void LoadArea([NotNull] BlueprintArea area, [CanBeNull] BlueprintAreaEnterPoint enterPoint, AutoSaveMode autoSaveMode, [CanBeNull] SaveInfo saveInfo = null, [CanBeNull] Action callback = null)
@@ -1667,11 +1702,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		if (saveInfo != null)
 		{
-			StartLoadingProcessDetached(delegate
-			{
-				Instance.IsLoadingFromSave = true;
-				return Instance.SaveManager.LoadRoutine(saveInfo);
-			}, delegate
+			StartLoadingProcessDetached(() => Instance.SaveManager.LoadRoutine(saveInfo), delegate
 			{
 				Instance.m_LoadingProgress = 0.4f;
 			});
@@ -1717,7 +1748,6 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 			}
 			Instance.m_LoadingProgress = 1f;
 			Instance.m_LoadingScenesProgress = 1f;
-			Instance.IsLoadingFromSave = false;
 		});
 		if (autoSaveMode == AutoSaveMode.AfterEntry)
 		{
@@ -1894,7 +1924,7 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		using (CodeTimerTraceScope.New("Texture compression"))
 		{
 			CharacterAtlasService atlasService = Services.GetInstance<CharacterAtlasService>();
-			DxtCompressorService dxtService = Services.GetInstance<DxtCompressorService>();
+			DxtCompressorServiceNew dxtService = Services.GetInstance<DxtCompressorServiceNew>();
 			double startTime = Time.realtimeSinceStartupAsDouble;
 			bool allDone = false;
 			while (!allDone)
@@ -1943,8 +1973,22 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		{
 			h.OnAreaLoadingComplete();
 		});
-		UpdateNavMesh();
-		UnitsPlacer.MovePartyToNavmesh();
+		if (SceneControllables.HasAwaitingSettle)
+		{
+			Action handler = null;
+			handler = delegate
+			{
+				SceneControllables.AllControllablesSettled -= handler;
+				UpdateNavMesh();
+				UnitsPlacer.MovePartyToNavmesh();
+			};
+			SceneControllables.AllControllablesSettled += handler;
+		}
+		else
+		{
+			UpdateNavMesh();
+			UnitsPlacer.MovePartyToNavmesh();
+		}
 		MaybeSuggestDLCImport();
 		yield return null;
 		ParticleSystemsQualityController.Instance.Init();

@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UnitLogic.Abilities.Visual.Blueprints;
 using Kingmaker.Utility.Attributes;
+using Kingmaker.View.Animation;
 using MemoryPack;
 using UnityEngine;
 
@@ -61,7 +62,7 @@ public class BlueprintAbilityFXSettings : BlueprintScriptableObject
 
 	public Vector3 OffsetTargetPosition => m_OffsetTargetPosition;
 
-	public UnitAnimationActionLink GetAnimation(bool isMainHandAttack, bool isCornerAttack)
+	public UnitAnimationActionLink GetAnimation(bool isMainHandAttack, bool isCornerAttack, WeaponAnimationStyle style = WeaponAnimationStyle.None)
 	{
 		if (!isMainHandAttack)
 		{

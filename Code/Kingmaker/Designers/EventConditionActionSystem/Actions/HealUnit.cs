@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/HealUnit")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("3f63ecc3968426246bd07eec57d34cb4")]
 public class HealUnit : GameAction

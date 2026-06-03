@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("e504ccf75a2139b45a2fb1d50d2dabf0")]

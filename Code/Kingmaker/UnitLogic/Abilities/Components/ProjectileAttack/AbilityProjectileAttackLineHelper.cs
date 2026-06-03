@@ -7,6 +7,7 @@ using Kingmaker.Controllers.Projectiles;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.QA;
@@ -64,12 +65,12 @@ public static class AbilityProjectileAttackLineHelper
 			if (nodes.Count < 1)
 			{
 				PFLog.Default.ErrorWithReport($"Can't make attack {attackLine.Index}: projectile path is empty");
-				break;
+				yield break;
 			}
 			Vector3 vector3Position = fromNode.Vector3Position;
 			Vector3 vector3Position2 = nodes[nodes.Count - 1].Vector3Position;
 			Vector3 position = context.Caster.Position;
-			TargetWrapper projectileTarget = GetProjectileTarget(context, attackLine, hits);
+			TargetWrapper projectileTarget = GetProjectileTarget(context, attackLine, hits, targetWrapper);
 			Vector3 projectileMisdirectionOffset = GetProjectileMisdirectionOffset(position, projectileTarget.Point, 0.15f);
 			bool isCoverHit = false;
 			if (hits.Length != 0)
@@ -101,11 +102,10 @@ public static class AbilityProjectileAttackLineHelper
 					}
 				}
 			}
-			Projectile projectile = new ProjectileLauncher(projectileBlueprint, targetWrapper2, projectileTarget).Ability(context.Ability).MaxRangeCells(value).Index(attackLine.Index)
+			Projectile projectile = (attackLine.Projectile = new ProjectileLauncher(projectileBlueprint, targetWrapper2, projectileTarget).Ability(context.Ability).MaxRangeCells(value).Index(attackLine.Index)
 				.MisdirectionOffset(projectileMisdirectionOffset)
 				.IsCoverHit(isCoverHit)
-				.Launch();
-			attackLine.Projectile = projectile;
+				.Launch());
 			Debug.DrawLine(vector3Position, vector3Position2, Color.yellow);
 			yield return null;
 			AbilityProjectileAttackLine.HitData[] array2 = hits;
@@ -116,41 +116,74 @@ public static class AbilityProjectileAttackLineHelper
 					yield return item;
 				}
 			}
-			if (hits.Length == 0 || !hits.Last().IsRedirecting)
+			if (hits.Length != 0 && hits.Last().IsRicochet)
 			{
-				break;
+				AbilityProjectileAttackLine.HitData hitData4 = hits.Last();
+				if (attackLine.GetOrCreateHitEntities().Count == 0 && hitData4.Entity is UnitEntity)
+				{
+					attackLine.GetOrCreateHitEntities().Add(hitData4.Entity);
+				}
+				List<RicochetHelper.RicochetTargetData> orCreateRicochetTargets = hitData4.RollDamageRule.ResultRuleOverpenetration.GetOrCreateRicochetTargets(hitData4.Node, attackLine.GetOrCreateHitEntities(), projectile.GetTargetPoint());
+				if (!orCreateRicochetTargets.Any())
+				{
+					break;
+				}
+				RicochetHelper.RicochetTargetData ricochetTargetData = orCreateRicochetTargets.Random(PFStatefulRandom.Mechanics);
+				attackLine.GetOrCreateHitEntities().Add(ricochetTargetData.RicochetTargetEntity);
+				(ReadonlyList<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple = AbilityProjectileAttack.CollectNodes(ricochetTargetData.RicochetFromNode, ricochetTargetData.RicochetTargetEntity, context.Ability.RangeCells);
+				attackLine = new AbilityProjectileAttackLine(attackLine.ProjectileAttack, attackLine.Index, tuple.Item2, tuple.Item3, tuple.Item1, attackLine.WeaponAttackDamageDisabled, disableDodgeForAlly: true, attackLine.OverpenetrationDamage, attackLine.GetOrCreateHitEntities());
+				targetWrapper = new TargetWrapper(ricochetTargetData.RicochetFromPoint, null, null);
 			}
-			MechanicEntity deflector = hits.Last().Entity;
-			if (deflector == null)
+			else
 			{
-				break;
-			}
-			List<MechanicEntity> list = (from p in Game.Instance.State.AllUnits
-				where !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && p.Health.HitPointsLeft > 0
-				where p.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == deflector).Any()
-				select p).Cast<MechanicEntity>().ToList();
-			list.Remove(hits.Last().Entity);
-			list.RemoveAll((MechanicEntity p) => !p.IsEnemy(deflector));
-			list.RemoveAll((MechanicEntity p) => !deflector.HasLOS(p));
-			list.RemoveAll((MechanicEntity p) => deflector.DistanceToInCells(p) > context.Ability.RangeCells);
-			if (!list.Empty())
-			{
+				if (hits.Length == 0 || !hits.Last().IsRedirecting)
+				{
+					break;
+				}
+				MechanicEntity deflector = hits.Last().Entity;
+				if (deflector == null)
+				{
+					break;
+				}
+				List<MechanicEntity> list = (from p in Game.Instance.State.AllUnits
+					where !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && p.Health.HitPointsLeft > 0
+					where p.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == deflector).Any()
+					select p).Cast<MechanicEntity>().ToList();
+				list.Remove(hits.Last().Entity);
+				list.RemoveAll((MechanicEntity p) => !p.IsEnemy(deflector));
+				list.RemoveAll((MechanicEntity p) => !deflector.HasLOS(p));
+				list.RemoveAll((MechanicEntity p) => deflector.DistanceToInCells(p) > context.Ability.RangeCells);
+				if (list.Empty())
+				{
+					break;
+				}
+				WeaponParticlesSnapMap weaponParticlesSnapMap = (deflector.GetFirstWeapon()?.HoldingSlot as WeaponSlot)?.FxSnapMap;
+				Vector3 point;
+				if ((bool)weaponParticlesSnapMap)
+				{
+					FxBone fxBone = weaponParticlesSnapMap.Bones.FirstOrDefault();
+					point = ((fxBone == null || !fxBone.Transform) ? deflector.Center : fxBone.Transform.position);
+				}
+				else
+				{
+					point = deflector.Center;
+				}
 				MechanicEntity target = list.MinBy((MechanicEntity p) => deflector.DistanceToInCells(p));
-				(ReadonlyList<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple = AbilityProjectileAttack.CollectNodes((CustomGridNodeBase)deflector.CurrentNode.node, target, context.Ability.RangeCells);
-				attackLine = new AbilityProjectileAttackLine(attackLine.ProjectileAttack, attackLine.Index, tuple.Item2, tuple.Item3, tuple.Item1, attackLine.WeaponAttackDamageDisabled, disableDodgeForAlly: true);
-				targetWrapper = new TargetWrapper(deflector.Center, null, null);
-				hits = null;
-				continue;
+				(ReadonlyList<CustomGridNodeBase>, CustomGridNodeBase, CustomGridNodeBase) tuple2 = AbilityProjectileAttack.CollectNodes((CustomGridNodeBase)deflector.CurrentNode.node, target, context.Ability.RangeCells);
+				attackLine = new AbilityProjectileAttackLine(attackLine.ProjectileAttack, attackLine.Index, tuple2.Item2, tuple2.Item3, tuple2.Item1, attackLine.WeaponAttackDamageDisabled, disableDodgeForAlly: true);
+				targetWrapper = new TargetWrapper(point, null, null);
 			}
-			break;
+			hits = null;
 		}
+		attackLine.ReleaseHitEntities();
 	}
 
-	private static TargetWrapper GetProjectileTarget(AbilityExecutionContext context, AbilityProjectileAttackLine attackLine, AbilityProjectileAttackLine.HitData[] hits)
+	private static TargetWrapper GetProjectileTarget(AbilityExecutionContext context, AbilityProjectileAttackLine attackLine, AbilityProjectileAttackLine.HitData[] hits, [CanBeNull] TargetWrapper alternateLauncher)
 	{
 		CustomGridNodeBase customGridNodeBase = attackLine.Nodes.LastOrDefault((CustomGridNodeBase x) => IsNodeAffected(context.Ability, attackLine.FromNode, x, attackLine.StepHeight)) ?? attackLine.Nodes.Last();
 		AbilityProjectileAttackLine.HitData hitData = hits.LastItem();
-		AbilityProjectileAttackLine.HitData hitData2 = hits.LastItem((AbilityProjectileAttackLine.HitData i) => i.Entity is UnitEntity && i.RollPerformAttackRule.ResultIsHit);
+		bool sourceUnitHasRicochet = context.Caster.Facts.HasComponent<EnableRicochet>();
+		AbilityProjectileAttackLine.HitData hitData2 = hits.LastItem((AbilityProjectileAttackLine.HitData i) => (i.RollPerformAttackRule.ResultIsHit && i.Entity is UnitEntity) || (sourceUnitHasRicochet && i.Entity is DestructibleEntity));
 		Vector3 vector3Position;
 		if (hitData2.Empty)
 		{
@@ -160,23 +193,19 @@ public static class AbilityProjectileAttackLineHelper
 				vector3Position.y = customGridNodeBase.Vector3Position.y + 1f;
 				return vector3Position;
 			}
-			Vector3 eyePosition = context.Caster.EyePosition;
+			Vector3 vector = alternateLauncher?.Point ?? context.Caster.EyePosition;
 			AbilityProjectileAttackLine.HitData hitData3 = hits.LastItem((AbilityProjectileAttackLine.HitData i) => i.Entity is UnitEntity);
-			if (hitData3.Empty)
+			vector3Position = (hitData3.Empty ? customGridNodeBase : hitData3.Node).Vector3Position;
+			vector3Position.y += 1f;
+			vector.y = vector3Position.y;
+			Vector3 normalized = (vector3Position - vector).normalized;
+			Vector3 vector2 = vector + normalized * s_MissTargetDistance;
+			float num = s_MissTargetDistance - Vector3.Distance(vector, vector3Position);
+			if (num > 0f && Physics.Raycast(vector3Position, normalized, out var hitInfo, num, 134742273))
 			{
-				vector3Position = customGridNodeBase.Vector3Position;
-				vector3Position.y = attackLine.ToNode.Vector3Position.y + 1f;
-				eyePosition.y = vector3Position.y;
-				return eyePosition + (vector3Position - eyePosition).normalized * s_MissTargetDistance;
+				return hitInfo.point;
 			}
-			if (TryGetTargetPointByRandomLocator(hitData2.Entity, context, hitData.Node, out vector3Position))
-			{
-				return vector3Position;
-			}
-			vector3Position = customGridNodeBase.Vector3Position;
-			vector3Position.y = hitData3.Node.Vector3Position.y + 1f;
-			eyePosition.y = vector3Position.y;
-			return eyePosition + (vector3Position - eyePosition).normalized * s_MissTargetDistance;
+			return vector2;
 		}
 		if (hitData.RollDamageRule?.ResultOverpenetration == null && hitData.RollPerformAttackRule.ResultIsHit)
 		{
@@ -228,9 +257,13 @@ public static class AbilityProjectileAttackLineHelper
 		Debug.DrawLine(casterPosition, targetPosition, Color.yellow);
 		Debug.DrawLine(node.Vector3Position, node.Vector3Position + Vector3.up * 3f, Color.yellow);
 		MechanicEntity currentTarget = hitData.Entity;
-		if (currentTarget != null)
+		if (currentTarget == null)
 		{
-			AttackResultData attack = MakeAttack(context, attackLine, hitData, projectile);
+			yield break;
+		}
+		AttackResultData attack = MakeAttack(context, attackLine, hitData, projectile);
+		if (attack.IsHit || attack.Rule != null)
+		{
 			if (attack.TargetCoverEntity != null)
 			{
 				Debug.DrawLine(node.Vector3Position, attack.TargetCoverEntity.Position + Vector3.up * 3f, Color.red);
@@ -254,7 +287,7 @@ public static class AbilityProjectileAttackLineHelper
 		if (attackLine.ProjectileAttack.AttacksDisabled || hitData.Entity == null)
 		{
 			AttackResultData result = default(AttackResultData);
-			result.IsHit = true;
+			result.IsHit = hitData.RollPerformAttackRule.ResultIsHit;
 			result.IsTargetPenetrated = !attackLine.ProjectileAttack.OverpenetrationDisabled;
 			return result;
 		}

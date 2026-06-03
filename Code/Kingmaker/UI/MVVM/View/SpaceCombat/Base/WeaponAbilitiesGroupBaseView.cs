@@ -21,11 +21,11 @@ public class WeaponAbilitiesGroupBaseView : ViewBase<AbilitiesGroupVM>
 	[SerializeField]
 	private bool m_HasMultipleSlotsGroups;
 
-	[ConditionalShow("m_HasMultipleSlotsGroups")]
+	[ShowIf("m_HasMultipleSlotsGroups")]
 	[SerializeField]
 	private CanvasGroup m_SingleSlotGroup;
 
-	[ConditionalShow("m_HasMultipleSlotsGroups")]
+	[ShowIf("m_HasMultipleSlotsGroups")]
 	[SerializeField]
 	private CanvasGroup m_DoubleSlotGroup;
 

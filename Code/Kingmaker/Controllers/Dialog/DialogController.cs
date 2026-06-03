@@ -38,6 +38,7 @@ using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
 namespace Kingmaker.Controllers.Dialog;
@@ -795,6 +796,112 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		else if (cue is BlueprintBookPage page)
 		{
 			PlayBookPage(page);
+		}
+	}
+
+	public bool HasNextUnselectedAnswers(BlueprintAnswer currentAnswer)
+	{
+		HashSet<BlueprintCue> hashSet = TempHashSet.Get<BlueprintCue>();
+		HashSet<BlueprintAnswersList> visitedAnswerLists = TempHashSet.Get<BlueprintAnswersList>();
+		if (CurrentCue != null)
+		{
+			hashSet.Add(CurrentCue);
+			MarkAnswerListsVisited(CurrentCue, visitedAnswerLists);
+		}
+		return HasNextUnselectedAnswersInternal(currentAnswer, hashSet, visitedAnswerLists);
+	}
+
+	private static bool MarkAnswerListsVisited(BlueprintCue cue, HashSet<BlueprintAnswersList> visitedAnswerLists)
+	{
+		bool flag = false;
+		bool flag2 = false;
+		foreach (BlueprintAnswerBase item2 in cue.Answers.Dereference())
+		{
+			if (item2 is BlueprintAnswersList item)
+			{
+				flag = true;
+				if (visitedAnswerLists.Add(item))
+				{
+					flag2 = true;
+				}
+			}
+		}
+		if (flag)
+		{
+			return !flag2;
+		}
+		return false;
+	}
+
+	private bool HasNextUnselectedAnswersInternal(BlueprintAnswer currentAnswer, HashSet<BlueprintCue> visitedCues, HashSet<BlueprintAnswersList> visitedAnswerLists)
+	{
+		if (!(currentAnswer.NextCue.Select() is BlueprintCue blueprintCue) || !visitedCues.Add(blueprintCue))
+		{
+			return false;
+		}
+		if (MarkAnswerListsVisited(blueprintCue, visitedAnswerLists))
+		{
+			return false;
+		}
+		foreach (BlueprintAnswer item2 in CollectNextAnswers(currentAnswer))
+		{
+			if (!Game.Instance.Player.Dialog.SelectedAnswersContains(item2))
+			{
+				return true;
+			}
+			if (item2.NextCue.Select() is BlueprintCue item && visitedCues.Contains(item))
+			{
+				return false;
+			}
+			if (HasNextUnselectedAnswersInternal(item2, visitedCues, visitedAnswerLists))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public List<BlueprintAnswer> CollectNextAnswers(BlueprintAnswer currentAnswer)
+	{
+		List<BlueprintAnswer> list = TempList.Get<BlueprintAnswer>();
+		if (!(currentAnswer.NextCue.Select() is BlueprintCue blueprintCue))
+		{
+			return list;
+		}
+		foreach (BlueprintAnswerBase item in blueprintCue.Answers.Dereference())
+		{
+			if (item != currentAnswer && (!(item is BlueprintAnswersList blueprintAnswersList) || !blueprintAnswersList.Answers.Dereference().Contains(currentAnswer)))
+			{
+				CollectAnswersRecursive(item, list);
+			}
+		}
+		list.RemoveAll((BlueprintAnswer a) => !a.CanShow() || !a.CanSelect());
+		return list;
+	}
+
+	private void CollectAnswersRecursive(BlueprintAnswerBase answerBase, List<BlueprintAnswer> result)
+	{
+		if (answerBase == null)
+		{
+			return;
+		}
+		if (answerBase is BlueprintAnswersList blueprintAnswersList)
+		{
+			if (!blueprintAnswersList.CanSelect())
+			{
+				return;
+			}
+			{
+				foreach (BlueprintAnswerBase item2 in blueprintAnswersList.Answers.Dereference())
+				{
+					CollectAnswersRecursive(item2, result);
+				}
+				return;
+			}
+		}
+		if (answerBase is BlueprintAnswer item)
+		{
+			result.Add(item);
 		}
 	}
 

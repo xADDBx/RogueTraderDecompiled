@@ -5,7 +5,6 @@ using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
@@ -82,14 +81,7 @@ public class CommandUnitCastSpell : CommandBase
 
 	public bool UseCustomAbility => m_Type == AbilityType.Custom;
 
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (m_UnitEvaluator == null || !m_UnitEvaluator.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
-	}
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => m_UnitEvaluator;
 
 	private TargetWrapper EvaluateTarget()
 	{

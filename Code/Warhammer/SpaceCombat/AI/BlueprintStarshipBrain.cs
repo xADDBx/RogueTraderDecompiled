@@ -36,13 +36,29 @@ public class BlueprintStarshipBrain : BlueprintBrainBase
 	[SerializeField]
 	private List<BlueprintAbilityReference> m_ExtraMeasures = new List<BlueprintAbilityReference>();
 
-	public List<BlueprintAbility> ExtraMeasures => (from x in m_ExtraMeasures
-		where x?.Get() != null
-		select x?.Get()).ToList();
+	private List<BlueprintAbility> m_CachedExtraMeasures;
+
+	public List<BlueprintAbility> ExtraMeasures
+	{
+		get
+		{
+			if (!Application.isPlaying)
+			{
+				return GetExtraMeasures();
+			}
+			return m_CachedExtraMeasures ?? (m_CachedExtraMeasures = GetExtraMeasures());
+		}
+	}
 
 	public bool IsStrikecraftReturningBrain => m_IsStrikecraftReturningBrain;
 
 	public bool TryToStayBehind => m_TryToStayBehind;
+
+	public override void OnEnable()
+	{
+		base.OnEnable();
+		m_CachedExtraMeasures = null;
+	}
 
 	public StarshipEntity GetOverrideTarget(BaseUnitEntity unit)
 	{
@@ -99,5 +115,19 @@ public class BlueprintStarshipBrain : BlueprintBrainBase
 			}
 		}
 		return null;
+	}
+
+	private List<BlueprintAbility> GetExtraMeasures()
+	{
+		List<BlueprintAbility> list = new List<BlueprintAbility>();
+		foreach (BlueprintAbilityReference extraMeasure in m_ExtraMeasures)
+		{
+			BlueprintAbility blueprintAbility = extraMeasure?.Get();
+			if (blueprintAbility != null)
+			{
+				list.Add(blueprintAbility);
+			}
+		}
+		return list;
 	}
 }

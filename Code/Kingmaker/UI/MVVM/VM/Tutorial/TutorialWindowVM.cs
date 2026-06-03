@@ -53,7 +53,7 @@ public abstract class TutorialWindowVM : VMBase, IGameModeHandler, ISubscriber
 
 	protected override void DisposeImplementation()
 	{
-		Hide();
+		Hide(userInitiated: false);
 	}
 
 	public void BanTutor()
@@ -68,14 +68,22 @@ public abstract class TutorialWindowVM : VMBase, IGameModeHandler, ISubscriber
 		}
 	}
 
-	public void Hide()
+	public void Hide(bool userInitiated = true)
 	{
-		m_CallbackHide?.Invoke();
-		EventBus.RaiseEvent(delegate(ITutorialWindowClosedHandler i)
+		TutorialData data = Game.Instance.Player.Tutorial.ShowingData;
+		if (data != null)
 		{
-			i.HandleHideTutorial(Game.Instance.Player.Tutorial.ShowingData);
-		});
+			if (userInitiated)
+			{
+				EventBus.RaiseEvent(delegate(ITutorialWindowClosedHandler i)
+				{
+					i.HandleHideTutorial(data);
+				});
+			}
+			Game.Instance.Player.Tutorial.Ensure(data.Blueprint).UpdateIsEnabled();
+		}
 		Game.Instance.Player.Tutorial.ShowingData = null;
+		m_CallbackHide?.Invoke();
 	}
 
 	public void TemporarilyHide()
@@ -93,7 +101,7 @@ public abstract class TutorialWindowVM : VMBase, IGameModeHandler, ISubscriber
 	{
 		if (!(gameMode != GameModeType.GameOver))
 		{
-			Hide();
+			Hide(userInitiated: false);
 		}
 	}
 

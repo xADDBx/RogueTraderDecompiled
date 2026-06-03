@@ -9,7 +9,7 @@ namespace Kingmaker.AreaLogic.Cutscenes.Commands;
 public class CommandFadeout : CommandFadeoutBase
 {
 	[SerializeField]
-	[ConditionalHide("m_Continuous")]
+	[HideIf("m_Continuous")]
 	private float m_Lifetime = 1f;
 
 	protected override float Lifetime => m_Lifetime;

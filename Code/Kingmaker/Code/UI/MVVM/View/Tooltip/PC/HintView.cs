@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Text;
 using DG.Tweening;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip;
 using Kingmaker.UI;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Pointer;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
@@ -42,7 +44,7 @@ public class HintView : ViewBase<HintVM>
 	protected override void BindViewImplementation()
 	{
 		SetHintText();
-		AddDisposable(ObservableExtensions.Subscribe(MainThreadDispatcher.UpdateAsObservable(), delegate
+		AddDisposable(ObservableExtensions.Subscribe(MainThreadDispatcher.UpdateAsObservable().PauseDuringCutscene(), delegate
 		{
 			UpdateHintPosition();
 		}));
@@ -91,7 +93,7 @@ public class HintView : ViewBase<HintVM>
 
 	private void UpdateHintPosition()
 	{
-		Vector2 cursorPosition = Game.Instance.CursorController.CursorPosition;
+		Vector2 cursorPosition = CursorController.CursorPosition;
 		RectTransformUtility.ScreenPointToLocalPointInRectangle(m_ParentRectTransform, cursorPosition, UICamera.Instance, out var localPoint);
 		m_RectTransform.localPosition = UIUtility.LimitPositionRectInRect(localPoint, m_ParentRectTransform, m_RectTransform);
 	}

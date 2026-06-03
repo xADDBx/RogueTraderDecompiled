@@ -77,5 +77,9 @@ public enum MechanicsFeatureType
 	DeathAndTraumasDoesNotAffectMomentum = 70,
 	AutoBlock = 71,
 	OldInjuryImmunity = 72,
-	ProvidesHalfCover = 73
+	ProvidesHalfCover = 73,
+	CantHaveTHP = 74,
+	CanAffectMomentumIfOutsideOfParty = 75,
+	CanBlockWithoutShield = 76,
+	CanDeployNearThisUnit = 77
 }

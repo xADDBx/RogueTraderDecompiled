@@ -9,6 +9,7 @@ using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.UnitSettings;
+using Kingmaker.Utility;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -191,6 +192,7 @@ public class ActionBarSlotPCView : ViewBase<ActionBarSlotVM>
 	{
 		if (!(m_HotkeyText == null))
 		{
+			m_HotkeyText.gameObject.SetActive(!ApplicationHelper.IsRunningOnSwitch2);
 			string stringByBinding = UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName(m_BindName));
 			m_HotkeyText.text = stringByBinding;
 		}

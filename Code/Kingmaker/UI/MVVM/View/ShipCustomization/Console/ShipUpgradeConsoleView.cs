@@ -9,6 +9,7 @@ using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
+using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
@@ -225,7 +226,21 @@ public class ShipUpgradeConsoleView : ShipUpgradeBaseView<ShipInventoryStashCons
 		m_CanEquip.Value = entity is InventorySlotConsoleView inventorySlotConsoleView && inventorySlotConsoleView.SlotVM.CanUse.Value;
 		HandleTooltip(entity);
 		m_CurrentEntity = entity as IItemSlotView;
-		bool value = m_CurrentEntity != null && (m_CurrentEntity.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault();
+		IItemSlotView currentEntity = m_CurrentEntity;
+		int num;
+		if (currentEntity != null)
+		{
+			ItemSlotVM slotVM = currentEntity.SlotVM;
+			if (slotVM != null && slotVM.HasItem)
+			{
+				num = ((m_CurrentEntity.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault() ? 1 : 0);
+				goto IL_00c1;
+			}
+		}
+		num = 0;
+		goto IL_00c1;
+		IL_00c1:
+		bool value = (byte)num != 0;
 		m_HasContextMenu.Value = value;
 		m_CanChoose.Value = entity is ShipComponentSlotConsoleView || entity is ShipUpgradeStructureSlotConsoleView || entity is ShipUpgradeProwRamSlotConsoleView;
 		IsRightWindow.Value = entity is InventorySlotConsoleView;

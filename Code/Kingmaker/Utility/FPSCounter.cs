@@ -51,6 +51,10 @@ public class FPSCounter : MonoBehaviour
 
 	private long m_MaxSystemMemory;
 
+	private float m_WarningFps = 30f;
+
+	private float m_ErrorFps = 25f;
+
 	private void Start()
 	{
 		if (!BuildModeUtility.IsDevelopment)
@@ -58,10 +62,15 @@ public class FPSCounter : MonoBehaviour
 			UnityEngine.Object.Destroy(this);
 			return;
 		}
+		if (IsPoorCPUPlatform())
+		{
+			m_WarningFps = 24f;
+			m_ErrorFps = 20f;
+		}
 		m_TickCount = 0;
 		m_DeltaTimeAccumulator = 0f;
 		m_FPS = 0f;
-		Overlay o = new Overlay("FPS", new Label("FPS", () => m_FPS.ToString("0.00")), new Label("FPS MIN", () => m_FPSMin.ToString("0.00")), new Label("FPS MAX", () => m_FPSMax.ToString("0.00")), new Label("FPS MED", () => m_FPSMedian.ToString("0.00"))
+		Overlay o = new Overlay("FPS", new Label("FPS", () => m_FPS.ToString("0.00"), GetFPSLabelSeverity), new Label("FPS MIN", () => m_FPSMin.ToString("0.00")), new Label("FPS MAX", () => m_FPSMax.ToString("0.00")), new Label("FPS MED", () => m_FPSMedian.ToString("0.00"))
 		{
 			AddSeparator = true
 		}, new Label("MS", () => m_MS.ToString("0.00")), new Label("MS MIN", () => m_MSMin.ToString("0.00")), new Label("MS MAX", () => m_MSMax.ToString("0.00")), new Label("MS MED", () => m_MSMedian.ToString("0.00"))
@@ -91,6 +100,24 @@ public class FPSCounter : MonoBehaviour
 			}
 			return (num >= num2 - warnOffset) ? Label.Severity.Warning : Label.Severity.Info;
 		});
+	}
+
+	private Label.Severity GetFPSLabelSeverity()
+	{
+		if (!(m_FPS < m_ErrorFps))
+		{
+			if (!(m_FPS < m_WarningFps))
+			{
+				return Label.Severity.Info;
+			}
+			return Label.Severity.Warning;
+		}
+		return Label.Severity.Error;
+	}
+
+	private bool IsPoorCPUPlatform()
+	{
+		return false;
 	}
 
 	private string GetSystemUsedMemoryText()
@@ -144,7 +171,7 @@ public class FPSCounter : MonoBehaviour
 	private void Update()
 	{
 		m_TickCount++;
-		m_DeltaTimeAccumulator += Time.unscaledDeltaTime;
+		m_DeltaTimeAccumulator += Mathf.Min(Time.unscaledDeltaTime, 1f);
 		if (m_DeltaTimeAccumulator > 1f / (float)updatesPerSecond)
 		{
 			m_FPS = (float)m_TickCount / m_DeltaTimeAccumulator;

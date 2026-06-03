@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
@@ -109,6 +112,10 @@ public class UnitPartBuffSuppress : BaseUnitPart, IHashable
 				{
 					buff.Activate();
 				}
+				EventBus.RaiseEvent((IBaseUnitEntity)base.Owner, (Action<IUnitBuffHandler>)delegate(IUnitBuffHandler h)
+				{
+					h.HandleBuffIsSuppressedChanged(buff);
+				}, isCheckRuntime: true);
 			}
 		}
 	}

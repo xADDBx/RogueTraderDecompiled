@@ -258,7 +258,7 @@ public static class Replay
 
 	public static bool IsPlaying => s_State == State.Playing;
 
-	public static string Folder => ApplicationPaths.persistentDataPath + "/Replays";
+	public static string Folder => ApplicationPaths.temporaryCachePath + "/Replays";
 
 	static Replay()
 	{
@@ -698,7 +698,7 @@ public static class Replay
 
 	public static void RemoveRecords(string replayName)
 	{
-		string path = ApplicationPaths.persistentDataPath + "/Replays/";
+		string path = ApplicationPaths.temporaryCachePath + "/Replays/";
 		if (Directory.Exists(path))
 		{
 			List<string> list = new List<string>(Directory.GetDirectories(path));
@@ -712,7 +712,7 @@ public static class Replay
 
 	public static void RemoveRecord(string replayName, string recordName)
 	{
-		List<string> list = new List<string>(Directory.GetDirectories(ApplicationPaths.persistentDataPath + "/Replays/"));
+		List<string> list = new List<string>(Directory.GetDirectories(ApplicationPaths.temporaryCachePath + "/Replays/"));
 		list.RemoveAll((string d) => !d.Contains("/" + replayName + ".replay." + recordName));
 		list.ForEach(delegate(string s)
 		{

@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
 
@@ -13,7 +14,7 @@ public class TooltipBrickTimerVM : TooltipBaseBrickVM
 	public TooltipBrickTimerVM(Func<string> fs, bool showIcon)
 	{
 		TooltipBrickTimerVM tooltipBrickTimerVM = this;
-		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			tooltipBrickTimerVM.Text.Value = fs?.Invoke();
 		}));

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
@@ -7,6 +8,7 @@ using Kingmaker.UnitLogic.Abilities;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("643f5d612030b3e45ae8775296bbb8d5")]
 public class WarhammerContextActionStarshipPBAEAttack : ContextAction
 {

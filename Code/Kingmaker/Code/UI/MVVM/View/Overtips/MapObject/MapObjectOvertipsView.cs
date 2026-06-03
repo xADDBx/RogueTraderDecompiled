@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject;
 using Kingmaker.QA.Profiling;
 using Kingmaker.Utility.CodeTimer;
@@ -109,6 +110,7 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 
 	public void Update()
 	{
+		bool isForegroundCutsceneActive = CutsceneUIState.IsForegroundCutsceneActive;
 		using (Counters.Overtips?.Measure())
 		{
 			using (ProfileScope.New("VM visibility"))
@@ -117,7 +119,7 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 				{
 					foreach (OvertipTransitionVM overtip in base.ViewModel.TransitionOvertipsCollectionVM.Overtips)
 					{
-						bool flag = overtip.MapObjectEntity != null && overtip.IsVisibleForPlayer.Value && !overtip.HideFromScreen && overtip.IsInCameraFrustum;
+						bool flag = !isForegroundCutsceneActive && overtip.MapObjectEntity != null && overtip.IsVisibleForPlayer.Value && !overtip.HideFromScreen && overtip.IsInCameraFrustum;
 						bool flag2 = m_ActiveOvertips.Get(overtip) != null;
 						if (flag != flag2)
 						{
@@ -136,7 +138,7 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 				{
 					foreach (OvertipMapObjectVM overtip2 in base.ViewModel.MapInteractionObjectOvertipsCollectionVM.Overtips)
 					{
-						bool flag3 = overtip2.MapObjectEntity != null && overtip2.MapObjectEntity.IsVisibleForPlayer && !overtip2.HideFromScreen && overtip2.IsInCameraFrustum;
+						bool flag3 = (!isForegroundCutsceneActive || overtip2.IsBarkActive.Value) && overtip2.MapObjectEntity != null && overtip2.MapObjectEntity.IsVisibleForPlayer && !overtip2.HideFromScreen && overtip2.IsInCameraFrustum;
 						bool flag4 = m_ActiveOvertips.Get(overtip2) != null;
 						if (flag3 != flag4)
 						{
@@ -155,7 +157,7 @@ public abstract class MapObjectOvertipsView<TOvertipTransitionView, TOvertipMapO
 				{
 					foreach (OvertipDestructibleObjectVM overtip3 in base.ViewModel.DestructibleObjectOvertipsCollectionVM.Overtips)
 					{
-						bool flag5 = overtip3.MapObjectEntity != null && overtip3.MapObjectEntity.IsVisibleForPlayer && !overtip3.HideFromScreen;
+						bool flag5 = !isForegroundCutsceneActive && overtip3.MapObjectEntity != null && overtip3.MapObjectEntity.IsVisibleForPlayer && !overtip3.HideFromScreen;
 						bool flag6 = m_ActiveOvertips.Get(overtip3) != null;
 						if (flag5 != flag6)
 						{

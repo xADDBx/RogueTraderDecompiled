@@ -137,6 +137,14 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 
 	private readonly List<BindingPair> m_BindingsToUnbind = new List<BindingPair>();
 
+	private HashSet<Binding> m_ActiveBinding = new HashSet<Binding>();
+
+	private Dictionary<string, string> m_BindToSetOffWhenModKeyUp = new Dictionary<string, string> { 
+	{
+		UISettingsRoot.Instance.UIKeybindGeneralSettings.HighlightObjects.name + UIConsts.SuffixOn,
+		UISettingsRoot.Instance.UIKeybindGeneralSettings.HighlightObjects.name + UIConsts.SuffixOff
+	} };
+
 	public readonly CountingGuard Disabled = new CountingGuard();
 
 	public static readonly KeyCode[] AltCodes = new KeyCode[3]
@@ -210,11 +218,24 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			OnCallbackByBinding(binding);
 		}
+		if (IsAnyModificationButtonUp())
+		{
+			foreach (KeyValuePair<string, string> item in m_BindToSetOffWhenModKeyUp)
+			{
+				Binding bindingByName = GetBindingByName(item.Key);
+				Binding bindingByName2 = GetBindingByName(item.Value);
+				if (bindingByName != null && bindingByName2 != null && m_ActiveBinding.TryGetValue(bindingByName, out var _) && !bindingByName.InputMatched())
+				{
+					OnCallbackByBinding(bindingByName2, force: true);
+					m_ActiveBinding.Remove(bindingByName);
+				}
+			}
+		}
 		using (ProfileScope.New("Do Unbind"))
 		{
-			foreach (BindingPair item in m_BindingsToUnbind)
+			foreach (BindingPair item2 in m_BindingsToUnbind)
 			{
-				DoUnbind(item.BindName, item.Callback);
+				DoUnbind(item2.BindName, item2.Callback);
 			}
 			m_BindingsToUnbind.Clear();
 		}
@@ -233,6 +254,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 				foreach (Action item in value)
 				{
 					item();
+					m_ActiveBinding.Add(binding);
 				}
 			}
 		}
@@ -585,13 +607,49 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		return true;
 	}
 
+	private static bool AnyKeyHold(KeyCode[] keys)
+	{
+		for (int i = 0; i < keys.Length; i++)
+		{
+			if (Input.GetKey(keys[i]))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static bool AnyKeyDown(KeyCode[] keys)
+	{
+		for (int i = 0; i < keys.Length; i++)
+		{
+			if (Input.GetKeyDown(keys[i]))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static bool AnyKeyUp(KeyCode[] keys)
+	{
+		for (int i = 0; i < keys.Length; i++)
+		{
+			if (Input.GetKeyUp(keys[i]))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static bool IsAltHold(ModificationSide side = ModificationSide.Any)
 	{
 		if (IsConsole)
 		{
 			return false;
 		}
-		if ((side != 0 || !AltCodes.Any(Input.GetKey)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftAlt)))
+		if ((side != 0 || !AnyKeyHold(AltCodes)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftAlt)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -608,7 +666,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !CtrlCodes.Any(Input.GetKey)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftControl)))
+		if ((side != 0 || !AnyKeyHold(CtrlCodes)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftControl)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -625,7 +683,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !ShiftCodes.Any(Input.GetKey)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftShift)))
+		if ((side != 0 || !AnyKeyHold(ShiftCodes)) && (side != ModificationSide.Left || !Input.GetKey(KeyCode.LeftShift)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -642,7 +700,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !AltCodes.Any(Input.GetKeyDown)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftAlt)))
+		if ((side != 0 || !AnyKeyDown(AltCodes)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftAlt)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -659,7 +717,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !CtrlCodes.Any(Input.GetKeyDown)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftControl)))
+		if ((side != 0 || !AnyKeyDown(CtrlCodes)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftControl)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -676,7 +734,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !ShiftCodes.Any(Input.GetKeyDown)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftShift)))
+		if ((side != 0 || !AnyKeyDown(ShiftCodes)) && (side != ModificationSide.Left || !Input.GetKeyDown(KeyCode.LeftShift)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -693,7 +751,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !AltCodes.Any(Input.GetKeyUp)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftAlt)))
+		if ((side != 0 || !AnyKeyUp(AltCodes)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftAlt)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -710,7 +768,7 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !CtrlCodes.Any(Input.GetKeyUp)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftControl)))
+		if ((side != 0 || !AnyKeyUp(CtrlCodes)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftControl)))
 		{
 			if (side == ModificationSide.Right)
 			{
@@ -727,13 +785,22 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		{
 			return false;
 		}
-		if ((side != 0 || !ShiftCodes.Any(Input.GetKeyUp)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftShift)))
+		if ((side != 0 || !AnyKeyUp(ShiftCodes)) && (side != ModificationSide.Left || !Input.GetKeyUp(KeyCode.LeftShift)))
 		{
 			if (side == ModificationSide.Right)
 			{
 				return Input.GetKeyUp(KeyCode.RightShift);
 			}
 			return false;
+		}
+		return true;
+	}
+
+	public static bool IsAnyModificationButtonUp(ModificationSide side = ModificationSide.Any)
+	{
+		if (!IsAltUp(side) && !IsCtrlUp(side))
+		{
+			return IsShiftUp(side);
 		}
 		return true;
 	}

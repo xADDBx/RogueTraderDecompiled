@@ -384,7 +384,7 @@ public class BaseItemPart : TooltipBaseTemplate
 				}
 			}
 			text5 = TooltipTemplateUtils.AggregateDescription(text5, additionalDescription);
-			text5 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text5, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+			text5 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text5, currentSelectedUnit, selectedUnitIsPreview: true);
 			bricks.Add(new TooltipBrickText(text5, TooltipTextType.Paragraph));
 			break;
 		}
@@ -396,19 +396,19 @@ public class BaseItemPart : TooltipBaseTemplate
 			if (!string.IsNullOrEmpty(text3))
 			{
 				text3 = TooltipTemplateUtils.AggregateDescription(text3, additionalDescription);
-				text3 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text3, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+				text3 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text3, currentSelectedUnit, selectedUnitIsPreview: true);
 				bricks.Add(new TooltipBrickText(text3, TooltipTextType.Paragraph));
 			}
 			else if (!string.IsNullOrEmpty(text))
 			{
 				text = TooltipTemplateUtils.AggregateDescription(text, additionalDescription);
-				text = UIUtilityTexts.UpdateDescriptionWithUIProperties(text, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+				text = UIUtilityTexts.UpdateDescriptionWithUIProperties(text, currentSelectedUnit, selectedUnitIsPreview: true);
 				bricks.Add(new TooltipBrickText(text, TooltipTextType.Paragraph));
 			}
 			else if (additionalDescription.Count > 0)
 			{
 				string description = TooltipTemplateUtils.AggregateDescription("", additionalDescription);
-				description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, currentSelectedUnit, selectedUnitCalculateInInventory: true);
+				description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, currentSelectedUnit, selectedUnitIsPreview: true);
 				bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
 			}
 			if (!string.IsNullOrEmpty(text4))

@@ -1,4 +1,3 @@
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
@@ -71,22 +70,22 @@ public class SectorMapRumourEntity : Entity, IQuestObjectiveHandler, ISubscriber
 		}
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
+	public void HandleQuestObjectiveStarted(QuestBookEntityEntry objective, bool silentStart = false)
 	{
 		UpdateState(objective.Blueprint);
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
+	public void HandleQuestObjectiveBecameVisible(QuestBookEntityEntry objective, bool silentStart = false)
 	{
 		UpdateState(objective.Blueprint);
 	}
 
-	public void HandleQuestObjectiveCompleted(QuestObjective objective)
+	public void HandleQuestObjectiveCompleted(QuestBookEntityEntry objective)
 	{
 		UpdateState(objective.Blueprint);
 	}
 
-	public void HandleQuestObjectiveFailed(QuestObjective objective)
+	public void HandleQuestObjectiveFailed(QuestBookEntityEntry objective)
 	{
 		UpdateState(objective.Blueprint);
 	}

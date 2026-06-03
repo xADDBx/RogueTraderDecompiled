@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
@@ -60,13 +61,14 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		ItemEntity value = base.ViewModel.Item.Value;
 		m_ToCargoAuto = new ContextMenuCollectionEntity(title, command, condition, isInteractable: true, (value != null && value.ToCargoAutomatically) ? BlueprintRoot.Instance.UIConfig.UIIcons.Check : BlueprintRoot.Instance.UIConfig.UIIcons.NotCheck);
 		bool flag = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintStarshipItem;
+		bool flag2 = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintItemAugment;
 		value = base.ViewModel.Item.Value;
 		LocalizedString title2 = ((value != null && value.IsFavorite) ? UIStrings.Instance.ContextMenu.RemoveFromFav : UIStrings.Instance.ContextMenu.AddToFav);
 		bool isInteractable = base.ViewModel.Item != null;
 		m_AddRemoveFromFavorites = new ContextMenuCollectionEntity(title2, base.AddRemoveFromFavorites, condition: true, isInteractable);
 		List<ContextMenuCollectionEntity> value2 = new List<ContextMenuCollectionEntity>
 		{
-			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !flag),
+			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !(flag || flag2)),
 			new ContextMenuCollectionEntity(UIStrings.Instance.LootWindow.SendToCargo, delegate
 			{
 				MoveToCargo(immediately: true);
@@ -122,7 +124,7 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 	public void OnConfirmClick()
 	{
 		UISounds.Instance.PlayButtonClickSound((int)m_ConfirmSoundClick);
-		if (RootUIContext.Instance.IsInventoryShow || RootUIContext.Instance.IsShipInventoryShown)
+		if (RootUIContext.Instance.IsInventoryShow || RootUIContext.Instance.IsShipInventoryShown || RootUIContext.Instance.IsAugmentationsShown)
 		{
 			m_ItemSlotConsoleView.SetWaitingForSlotState(state: true);
 			EventBus.RaiseEvent(delegate(IEquipSlotHandler h)

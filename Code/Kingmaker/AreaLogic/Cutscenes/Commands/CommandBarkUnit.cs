@@ -1,12 +1,13 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Localization;
 using Kingmaker.Localization.Shared;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Signals;
 using Kingmaker.UI.Common;
 using Kingmaker.Utility.Attributes;
@@ -72,6 +73,23 @@ public class CommandBarkUnit : CommandBase
 	[ShowIf("IsSubText")]
 	[CanBeNull]
 	private LocalizedString m_SpeakerName;
+
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator
+	{
+		get
+		{
+			if (!ControlsUnit)
+			{
+				return null;
+			}
+			return Unit;
+		}
+	}
+
+	public override IEnumerable<IEntity> GetAnchorEntities()
+	{
+		return CommandBase.UnitsFromEvaluator(Unit);
+	}
 
 	protected override bool StopPlaySignalIsReady(CutscenePlayerData player)
 	{
@@ -162,23 +180,5 @@ public class CommandBarkUnit : CommandBase
 			return "No unit";
 		}
 		return null;
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!ControlsUnit || !Unit || !Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
-	}
-
-	public override IAbstractUnitEntity GetAnchorUnit()
-	{
-		if (!Unit || !Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 }

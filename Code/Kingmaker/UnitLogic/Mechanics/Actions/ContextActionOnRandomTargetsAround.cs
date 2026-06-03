@@ -35,6 +35,8 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 
 	public bool AffectDead;
 
+	public bool AffectUnconscious;
+
 	[SerializeField]
 	private BlueprintUnitFactReference m_FilterNoFact;
 
@@ -76,6 +78,10 @@ public class ContextActionOnRandomTargetsAround : ContextAction
 		if (!AffectDead)
 		{
 			list.RemoveAll((BaseUnitEntity p) => p.IsDead);
+		}
+		if (!AffectUnconscious)
+		{
+			list.RemoveAll((BaseUnitEntity p) => !p.IsConscious);
 		}
 		if (list.Empty())
 		{

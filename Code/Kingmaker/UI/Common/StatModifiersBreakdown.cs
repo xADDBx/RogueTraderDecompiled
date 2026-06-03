@@ -83,6 +83,15 @@ public static class StatModifiersBreakdown
 		return string.Empty;
 	}
 
+	public static string GetBonusSourceText([CanBeNull] EntityFact fact)
+	{
+		if (fact == null)
+		{
+			return string.Empty;
+		}
+		return GetBonusSourceText((IUIDataProvider)fact);
+	}
+
 	private static string GetBonusSourceText(IUIDataProvider source)
 	{
 		if (source == null)

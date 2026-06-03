@@ -48,6 +48,14 @@ public class IngameMenuVM : IngameMenuBaseVM, ICanAccessStarshipInventoryHandler
 		});
 	}
 
+	public void OpenAugmentations()
+	{
+		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)
+		{
+			h.HandleOpenAugmentations();
+		});
+	}
+
 	public void OpenCharScreen()
 	{
 		EventBus.RaiseEvent(delegate(INewServiceWindowUIHandler h)

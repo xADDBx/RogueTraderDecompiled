@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using Kingmaker.Code.UI.MVVM.VM.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
+using Kingmaker.UI.Models.UnitSettings;
 using Owlcat.Runtime.UI.MVVM;
 using UnityEngine;
 
@@ -15,5 +18,20 @@ public abstract class SurfaceActionBarPartAbilitiesBaseView : ViewBase<SurfaceAc
 
 	public virtual void UpdateGrayscale()
 	{
+	}
+
+	protected List<ActionBarSlotVM> GetGridSlots(out MechanicActionBarSlot overdriveAbility)
+	{
+		overdriveAbility = ((base.ViewModel.Unit.Entity != null) ? base.ViewModel.Unit.Entity.UISettings.GetAugmentsOverdriveSlotSlot() : new MechanicActionBarSlotEmpty());
+		bool flag = !(overdriveAbility is MechanicActionBarSlotEmpty);
+		List<ActionBarSlotVM> list = new List<ActionBarSlotVM>(base.ViewModel.Slots.Count);
+		foreach (ActionBarSlotVM slot in base.ViewModel.Slots)
+		{
+			if (!flag || !(slot.MechanicActionBarSlot.KeyName == overdriveAbility.KeyName))
+			{
+				list.Add(slot);
+			}
+		}
+		return list;
 	}
 }

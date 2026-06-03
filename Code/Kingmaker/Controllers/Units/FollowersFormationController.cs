@@ -15,6 +15,7 @@ using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.Controllers.Units;
 
@@ -26,111 +27,130 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 
 	protected override void TickOnUnit(AbstractUnitEntity unit)
 	{
-		UnitPartFollowedByUnits optional = unit.GetOptional<UnitPartFollowedByUnits>();
-		if (optional == null || optional.GetActiveFollowers().Count() == 0)
+		UnitPartFollowedByUnits leader = unit.GetOptional<UnitPartFollowedByUnits>();
+		if (leader == null || leader.GetActiveFollowers().Count() == 0)
 		{
 			return;
 		}
 		float repathCooldownSec = Game.Instance.BlueprintRoot.Formations.FollowersFormation.RepathCooldownSec;
-		if (!optional.ForceRefresh && Game.Instance.TimeController.GameTime.TotalSeconds < optional.LastRefreshTime + (double)repathCooldownSec)
+		if (!leader.ForceRefresh && Game.Instance.TimeController.GameTime.TotalSeconds < leader.LastRefreshTime + (double)repathCooldownSec)
 		{
 			return;
 		}
-		optional.LastRefreshTime = Game.Instance.TimeController.GameTime.TotalSeconds;
+		leader.LastRefreshTime = Game.Instance.TimeController.GameTime.TotalSeconds;
 		Vector3 unitDestination = GetUnitDestination(unit);
-		float num = GeometryUtils.SqrMechanicsDistance(unitDestination, optional.LastKnownDestination);
-		if (!optional.ForceRefresh && num < 1f)
+		float num = GeometryUtils.SqrMechanicsDistance(unitDestination, leader.LastKnownDestination);
+		if (!leader.ForceRefresh && num < 1f)
 		{
 			return;
 		}
-		optional.ForceRefresh = false;
-		optional.LastKnownDestination = unitDestination;
-		optional.FollowersActionTypesTemp.Clear();
-		List<AbstractUnitEntity> list = TempList.Get<AbstractUnitEntity>();
-		List<AbstractUnitEntity> list2 = TempList.Get<AbstractUnitEntity>();
-		uint area = ObstacleAnalyzer.GetArea(unit.Position);
-		foreach (AbstractUnitEntity follower in optional.Followers)
+		leader.ForceRefresh = false;
+		leader.LastKnownDestination = unitDestination;
+		Dictionary<AbstractUnitEntity, FollowerActionType> actionTypes;
+		uint leaderNodeArea;
+		using (CollectionPool<Dictionary<AbstractUnitEntity, FollowerActionType>, KeyValuePair<AbstractUnitEntity, FollowerActionType>>.Get(out actionTypes))
+		{
+			List<AbstractUnitEntity> list = TempList.Get<AbstractUnitEntity>();
+			List<AbstractUnitEntity> list2 = TempList.Get<AbstractUnitEntity>();
+			leaderNodeArea = ObstacleAnalyzer.GetArea(unit.Position);
+			foreach (AbstractUnitEntity follower in leader.Followers)
+			{
+				ProcessFollower(follower, list);
+			}
+			foreach (AbstractUnitEntity independentFollower in leader.IndependentFollowers)
+			{
+				UnitMoveTo currentMoveTo = unit.Commands.CurrentMoveTo;
+				if (currentMoveTo == null || !currentMoveTo.Params.LeaveFollowers)
+				{
+					ProcessFollower(independentFollower, list2);
+				}
+			}
+			Vector3 followersFrontPosition = GetFollowersFrontPosition(unit);
+			foreach (List<AbstractUnitEntity> item in list.Slice(20))
+			{
+				PrepareFormation(leader, item, followersFrontPosition, actionTypes);
+			}
+			Quaternion orientationQuaternion = GetOrientationQuaternion(unit);
+			foreach (AbstractUnitEntity item2 in list2)
+			{
+				CreateIndependentFollowerAction(item2, leader, unitDestination, orientationQuaternion, actionTypes[item2]);
+			}
+		}
+		void ProcessFollower(AbstractUnitEntity follower, List<AbstractUnitEntity> resultList)
 		{
 			if (!ShouldSkipProcessing(follower))
 			{
-				FollowerAction? followerAction = optional.GetFollowerAction(follower);
+				FollowerAction? followerAction = leader.GetFollowerAction(follower);
 				if (!followerAction.HasValue || followerAction.Value.Type != FollowerActionType.Teleport || !(followerAction.Value.Position != follower.Position))
 				{
-					uint area2 = ObstacleAnalyzer.GetArea(follower.Position);
-					list.Add(follower);
-					optional.FollowersActionTypesTemp[follower] = ((area != area2) ? FollowerActionType.Teleport : FollowerActionType.Move);
+					resultList.Add(follower);
+					actionTypes[follower] = GetActionType(follower, leaderNodeArea);
 				}
 			}
-		}
-		foreach (AbstractUnitEntity independentFollower in optional.IndependentFollowers)
-		{
-			UnitMoveTo currentMoveTo = unit.Commands.CurrentMoveTo;
-			if ((currentMoveTo == null || !currentMoveTo.Params.LeaveFollowers) && !ShouldSkipProcessing(independentFollower))
-			{
-				FollowerAction? followerAction2 = optional.GetFollowerAction(independentFollower);
-				if (!followerAction2.HasValue || followerAction2.Value.Type != FollowerActionType.Teleport || !(followerAction2.Value.Position != independentFollower.Position))
-				{
-					uint area3 = ObstacleAnalyzer.GetArea(independentFollower.Position);
-					list2.Add(independentFollower);
-					optional.FollowersActionTypesTemp[independentFollower] = ((area != area3) ? FollowerActionType.Teleport : FollowerActionType.Move);
-				}
-			}
-		}
-		Vector3 followersFrontPosition = GetFollowersFrontPosition(unit);
-		foreach (List<AbstractUnitEntity> item in list.Slice(20))
-		{
-			PrepareFormation(optional, item, followersFrontPosition, optional.FollowersActionTypesTemp);
-		}
-		Quaternion orientationQuaternion = GetOrientationQuaternion(unit);
-		foreach (AbstractUnitEntity item2 in list2)
-		{
-			CreateIndependentFollowerAction(item2, optional, unitDestination, orientationQuaternion, optional.FollowersActionTypesTemp);
 		}
 	}
 
-	public Dictionary<AbstractUnitEntity, FollowerAction> CalculateTeleportToLeaderDestinations(UnitPartFollowedByUnits leader)
+	private static FollowerActionType GetActionType(AbstractUnitEntity follower, uint leaderNodeArea)
 	{
-		leader.FollowersActionTypesTemp.Clear();
-		List<AbstractUnitEntity> list = TempList.Get<AbstractUnitEntity>();
-		foreach (AbstractUnitEntity follower in leader.Followers)
+		uint area = ObstacleAnalyzer.GetArea(follower.Position);
+		if (leaderNodeArea != area)
 		{
-			if (!ShouldSkipProcessing(follower))
-			{
-				list.Add(follower);
-				leader.FollowersActionTypesTemp[follower] = FollowerActionType.Teleport;
-			}
+			return FollowerActionType.Teleport;
 		}
-		foreach (AbstractUnitEntity item in list)
-		{
-			leader.FollowerDesiredActions.Remove(item);
-		}
-		Vector3 followersFrontPosition = GetFollowersFrontPosition(leader.Owner);
-		foreach (List<AbstractUnitEntity> item2 in list.Slice(20))
-		{
-			PrepareFormation(leader, item2, followersFrontPosition, leader.FollowersActionTypesTemp);
-		}
-		Dictionary<AbstractUnitEntity, FollowerAction> dictionary = new Dictionary<AbstractUnitEntity, FollowerAction>();
-		foreach (AbstractUnitEntity item3 in list)
-		{
-			dictionary[item3] = leader.FollowerDesiredActions[item3];
-		}
-		List<AbstractUnitEntity> list2 = TempList.Get<AbstractUnitEntity>();
-		foreach (AbstractUnitEntity independentFollower in leader.IndependentFollowers)
-		{
-			if (!ShouldSkipProcessing(independentFollower))
-			{
-				list2.Add(independentFollower);
-				leader.FollowersActionTypesTemp[independentFollower] = FollowerActionType.Teleport;
-				leader.FollowerDesiredActions.Remove(independentFollower);
-				Quaternion orientationQuaternion = GetOrientationQuaternion(leader.Owner);
-				CreateIndependentFollowerAction(independentFollower, leader, leader.Owner.Position, orientationQuaternion, leader.FollowersActionTypesTemp);
-				dictionary[independentFollower] = leader.FollowerDesiredActions[independentFollower];
-			}
-		}
-		return dictionary;
+		return FollowerActionType.Move;
 	}
 
-	private static bool ShouldSkipProcessing(AbstractUnitEntity follower)
+	public Dictionary<AbstractUnitEntity, FollowerAction> CalculateFollowerActions(UnitPartFollowedByUnits leader, Vector3 position, float? orientation = null, bool alwaysTeleport = false, bool isCutsceneCommand = false)
+	{
+		Dictionary<AbstractUnitEntity, FollowerActionType> value;
+		uint leaderNodeArea;
+		using (CollectionPool<Dictionary<AbstractUnitEntity, FollowerActionType>, KeyValuePair<AbstractUnitEntity, FollowerActionType>>.Get(out value))
+		{
+			List<AbstractUnitEntity> list = TempList.Get<AbstractUnitEntity>();
+			leaderNodeArea = ((!alwaysTeleport) ? ObstacleAnalyzer.GetArea(position) : uint.MaxValue);
+			foreach (AbstractUnitEntity follower in leader.Followers)
+			{
+				if (!ShouldSkipProcessing(follower, isCutsceneCommand))
+				{
+					list.Add(follower);
+					value[follower] = ActionType(follower);
+					leader.FollowerDesiredActions.Remove(follower);
+				}
+			}
+			Vector3 followersFrontPosition = GetFollowersFrontPosition(leader.Owner, position, orientation);
+			foreach (List<AbstractUnitEntity> item in list.Slice(20))
+			{
+				PrepareFormation(leader, item, followersFrontPosition, value);
+			}
+			Dictionary<AbstractUnitEntity, FollowerAction> dictionary = new Dictionary<AbstractUnitEntity, FollowerAction>();
+			foreach (AbstractUnitEntity item2 in list)
+			{
+				dictionary[item2] = leader.FollowerDesiredActions[item2];
+			}
+			List<AbstractUnitEntity> list2 = TempList.Get<AbstractUnitEntity>();
+			foreach (AbstractUnitEntity independentFollower in leader.IndependentFollowers)
+			{
+				if (!ShouldSkipProcessing(independentFollower, isCutsceneCommand))
+				{
+					list2.Add(independentFollower);
+					Quaternion orientationQuaternion = GetOrientationQuaternion(leader.Owner);
+					CreateIndependentFollowerAction(independentFollower, leader, position, orientationQuaternion, ActionType(independentFollower));
+					dictionary[independentFollower] = leader.FollowerDesiredActions[independentFollower];
+				}
+			}
+			return dictionary;
+		}
+		FollowerActionType ActionType(AbstractUnitEntity follower)
+		{
+			if (!alwaysTeleport)
+			{
+				return GetActionType(follower, leaderNodeArea);
+			}
+			return FollowerActionType.Teleport;
+		}
+	}
+
+	private static bool ShouldSkipProcessing(AbstractUnitEntity follower, bool isCutsceneCommand = false)
 	{
 		if (follower.LifeState.State == UnitLifeState.Dead)
 		{
@@ -141,7 +161,7 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 		{
 			return false;
 		}
-		if (!optional.FollowWhileCutscene && follower.CutsceneControlledUnit?.GetCurrentlyActive() != null)
+		if (!isCutsceneCommand && !optional.FollowWhileCutscene && follower.CutsceneControlledUnit?.GetCurrentlyActive() != null)
 		{
 			return true;
 		}
@@ -152,7 +172,7 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 		return false;
 	}
 
-	private void PrepareFormation(UnitPartFollowedByUnits leader, IList<AbstractUnitEntity> followers, Vector3 position, Dictionary<AbstractUnitEntity, FollowerActionType> desiredActions)
+	private static void PrepareFormation(UnitPartFollowedByUnits leader, IList<AbstractUnitEntity> followers, Vector3 position, Dictionary<AbstractUnitEntity, FollowerActionType> desiredActions)
 	{
 		if (!followers.Empty())
 		{
@@ -186,17 +206,22 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 		}
 	}
 
-	private static Vector3 GetFollowersFrontPosition(AbstractUnitEntity leader)
+	private static Vector3 GetFollowersFrontPosition(AbstractUnitEntity leader, Vector3? forcePosition = null, float? forceOrientation = null)
 	{
 		Vector2 playerOffset = Game.Instance.BlueprintRoot.Formations.FollowersFormation.PlayerOffset;
-		Vector3 unitDestination = GetUnitDestination(leader);
-		Quaternion orientationQuaternion = GetOrientationQuaternion(leader);
-		return unitDestination + orientationQuaternion * new Vector3(playerOffset.x, 0f, playerOffset.y);
+		Vector3 obj = forcePosition ?? GetUnitDestination(leader);
+		Quaternion quaternion = (forceOrientation.HasValue ? GetOrientationQuaternion(forceOrientation.Value) : GetOrientationQuaternion(leader));
+		return obj + quaternion * new Vector3(playerOffset.x, 0f, playerOffset.y);
 	}
 
 	private static Quaternion GetOrientationQuaternion(AbstractUnitEntity unit)
 	{
-		return Quaternion.Euler(0f, unit.Commands.CurrentMoveTo?.Orientation ?? unit.Orientation, 0f);
+		return GetOrientationQuaternion(unit.Commands.CurrentMoveTo?.Orientation ?? unit.Orientation);
+	}
+
+	private static Quaternion GetOrientationQuaternion(float orientation)
+	{
+		return Quaternion.Euler(0f, orientation, 0f);
 	}
 
 	private static float GetOrientation(BaseUnitEntity unit)
@@ -216,7 +241,7 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 		leader.FollowerDesiredActions[follower] = value;
 	}
 
-	public static void CreateIndependentFollowerAction(AbstractUnitEntity follower, UnitPartFollowedByUnits leader, Vector3 leaderPosition, Quaternion leaderOrientation, Dictionary<AbstractUnitEntity, FollowerActionType> type)
+	public static void CreateIndependentFollowerAction(AbstractUnitEntity follower, UnitPartFollowedByUnits leader, Vector3 leaderPosition, Quaternion leaderOrientation, FollowerActionType type)
 	{
 		NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(leaderPosition);
 		if (nearestNode.node == null)
@@ -228,7 +253,7 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 		Vector3 end = position + leaderOrientation * vector;
 		Linecast.LinecastGrid(nearestNode.node.Graph, position, end, nearestNode.node, out var hit, ObstacleAnalyzer.DefaultXZConstraint, ref Linecast.HasConnectionTransition.Instance);
 		Vector3 position2 = ObstacleAnalyzer.FindClosestPointToStandOn(hit.point, hint: (CustomGridNodeBase)hit.node, corpulence: follower.MovementAgent.Corpulence);
-		FollowerAction value = new FollowerAction(position2, null, type[follower]);
+		FollowerAction value = new FollowerAction(position2, null, type);
 		leader.FollowerDesiredActions[follower] = value;
 	}
 }

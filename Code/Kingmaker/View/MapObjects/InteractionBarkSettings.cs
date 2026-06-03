@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Localization;
 using Kingmaker.Localization.Shared;
@@ -34,6 +35,7 @@ public class InteractionBarkSettings : InteractionSettings
 	[Tooltip("Play Bark VoiceOver.")]
 	public bool BarkPlayVoiceOver;
 
+	[ShowCreator]
 	public ActionsReference? BarkActions;
 
 	public bool RunActionsOnce;
@@ -49,6 +51,7 @@ public class InteractionBarkSettings : InteractionSettings
 	[HideIf("ShowOnUser")]
 	public MapObjectEvaluator? TargetMapObject;
 
+	[ShowCreator]
 	public ConditionsReference? Condition;
 
 	public override bool ShouldShowUseAnimationState => false;

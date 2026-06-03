@@ -14,7 +14,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/ShowBark")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("e164ef6758f918a4abcc3889472a2a3c")]
 public class ShowBark : GameAction

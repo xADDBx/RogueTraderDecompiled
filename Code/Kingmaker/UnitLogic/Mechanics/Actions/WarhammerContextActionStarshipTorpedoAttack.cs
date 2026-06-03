@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
@@ -9,6 +10,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("a2e56ff6906d4314197e5410724905c6")]
 public class WarhammerContextActionStarshipTorpedoAttack : ContextAction
 {

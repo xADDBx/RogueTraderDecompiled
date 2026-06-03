@@ -71,7 +71,15 @@ public class CutscenePlayerGateData : IHashable
 		{
 			foreach (CutscenePlayerTrackData incomingTrack in IncomingTracks)
 			{
-				incomingTrack.ForceStop();
+				try
+				{
+					incomingTrack.ForceStop();
+				}
+				catch (Exception ex)
+				{
+					PFLog.Cutscene.Error($"Failed to force-stop track {incomingTrack.TrackIndex} of gate {Gate.name}");
+					PFLog.Cutscene.Exception(ex);
+				}
 			}
 		}
 		m_PreventSignals = false;

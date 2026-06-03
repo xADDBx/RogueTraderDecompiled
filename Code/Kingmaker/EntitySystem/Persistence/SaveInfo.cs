@@ -283,7 +283,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 	{
 		using (ContextData<DlcExtension.LoadSaveDlcCheck>.Request())
 		{
-			return DlcRewards?.All((BlueprintDlcReward dlcReward) => dlcReward.IsAvailable) ?? true;
+			return DlcRewards?.All((BlueprintDlcReward dlcReward) => dlcReward.IsActiveOrAvailable) ?? true;
 		}
 	}
 
@@ -292,7 +292,7 @@ public class SaveInfo : IDisposable, IMemoryPackable<SaveInfo>, IMemoryPackForma
 		using (ContextData<DlcExtension.LoadSaveDlcCheck>.Request())
 		{
 			List<List<IBlueprintDlc>> list = new List<List<IBlueprintDlc>>();
-			foreach (BlueprintDlcReward item in DlcRewards.Where((BlueprintDlcReward reward) => !reward.IsAvailable))
+			foreach (BlueprintDlcReward item in DlcRewards.Where((BlueprintDlcReward reward) => !reward.IsActiveOrAvailable))
 			{
 				List<IBlueprintDlc> list2 = new List<IBlueprintDlc>();
 				foreach (IBlueprintDlc dlc in item.Dlcs)

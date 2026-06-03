@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/CameraToPosition")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("1a0449d4049c34149a17869dd62dc64a")]
 public class CameraToPosition : GameAction

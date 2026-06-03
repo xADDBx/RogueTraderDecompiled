@@ -13,6 +13,7 @@ using Warhammer.SpaceCombat.Blueprints.Slots;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("08caf9293baf6e54cafcfca35b4a5259")]
 public class WarhammerOverrideAbilityStarshipWeapon : MechanicEntityFactComponentDelegate, IHashable

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Kingmaker.Pathfinding;
 
-public readonly struct NodeList : IEnumerable<CustomGridNodeBase>, IEnumerable, IDisposable
+public readonly struct NodeList : IEnumerable<CustomGridNodeBase>, IEnumerable, IDisposable, IEquatable<NodeList>
 {
 	public struct Enumerator : IEnumerator<CustomGridNodeBase>, IEnumerator, IDisposable
 	{
@@ -88,6 +88,29 @@ public readonly struct NodeList : IEnumerable<CustomGridNodeBase>, IEnumerable, 
 			return false;
 		}
 		return m_Pattern.Contains(item.CoordinatesInGrid);
+	}
+
+	public bool Equals(NodeList other)
+	{
+		if (object.Equals(m_Graph, other.m_Graph))
+		{
+			return m_Pattern.Equals(other.m_Pattern);
+		}
+		return false;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj is NodeList other)
+		{
+			return Equals(other);
+		}
+		return false;
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(m_Graph, m_Pattern);
 	}
 
 	public void Dispose()

@@ -13,6 +13,9 @@ public class TooltipBrickTextView : TooltipBaseBrickView<TooltipBrickTextVM>
 	protected TextMeshProUGUI m_Text;
 
 	[SerializeField]
+	protected TextMeshProUGUI m_InfoTooltipText;
+
+	[SerializeField]
 	private GameObject m_RightDecoration;
 
 	[SerializeField]
@@ -37,10 +40,21 @@ public class TooltipBrickTextView : TooltipBaseBrickView<TooltipBrickTextVM>
 	{
 		base.BindViewImplementation();
 		m_Text.text = base.ViewModel.Text;
+		m_InfoTooltipText.text = base.ViewModel.Text;
 		if ((bool)m_RightDecoration && (bool)m_LeftDecoration)
 		{
 			m_RightDecoration.SetActive(base.ViewModel.IsHeader);
 			m_LeftDecoration.SetActive(base.ViewModel.IsHeader);
+		}
+		if (base.ViewModel.IsInfoText)
+		{
+			m_Text.gameObject.SetActive(value: false);
+			m_InfoTooltipText.gameObject.SetActive(value: true);
+		}
+		else
+		{
+			m_Text.gameObject.SetActive(value: true);
+			m_InfoTooltipText.gameObject.SetActive(value: false);
 		}
 		if ((bool)m_LayoutGroup)
 		{
@@ -118,7 +132,15 @@ public class TooltipBrickTextView : TooltipBaseBrickView<TooltipBrickTextVM>
 
 	protected virtual void ChangeTextSize()
 	{
-		m_Text.enableAutoSizing = false;
-		m_Text.fontSize = (float)base.ViewModel.TextSize * FontMultiplier;
+		if (base.ViewModel.IsInfoText)
+		{
+			m_InfoTooltipText.enableAutoSizing = false;
+			m_InfoTooltipText.fontSize = (float)base.ViewModel.TextSize * FontMultiplier;
+		}
+		else
+		{
+			m_Text.enableAutoSizing = false;
+			m_Text.fontSize = (float)base.ViewModel.TextSize * FontMultiplier;
+		}
 	}
 }

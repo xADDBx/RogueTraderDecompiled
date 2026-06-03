@@ -123,7 +123,7 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 			break;
 		case DialogType.Common:
 		case DialogType.StarSystemEvent:
-			color = ((!answer.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer));
+			color = ((!answer.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem && !base.ViewModel.IsCurrentUnselectedWithNewAnswers) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer));
 			if (hasConditionsForTooltip)
 			{
 				string arg = (answer.CanSelect() ? "UI_Dialog_ConditionSuccess" : "UI_Dialog_ConditionFail");
@@ -198,7 +198,7 @@ public class DialogAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigationEntity
 		}
 		else
 		{
-			m_AnswerText.color = ((!hasAnyFocus) ? ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer)) : ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.FocusDisableAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem) ? m_DialogColors.FocusSelectedAnswer : m_DialogColors.FocusAnswer)));
+			m_AnswerText.color = ((!hasAnyFocus) ? ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.DisabledAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem && !base.ViewModel.IsCurrentUnselectedWithNewAnswers) ? m_DialogColors.SelectedAnswer : m_DialogColors.NormalAnswer)) : ((!base.ViewModel.Answer.Value.CanSelect()) ? m_DialogColors.FocusDisableAnswer : ((base.ViewModel.IsAlreadySelected() && !base.ViewModel.IsSystem && !base.ViewModel.IsCurrentUnselectedWithNewAnswers) ? m_DialogColors.FocusSelectedAnswer : m_DialogColors.FocusAnswer)));
 		}
 	}
 

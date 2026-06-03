@@ -1,15 +1,17 @@
 using System.Collections.Generic;
 using Kingmaker.AI.BehaviourTrees;
+using Kingmaker.AI.DebugUtilities;
 
 namespace Kingmaker.AI.Profiling;
 
-public class AIProfileBTreeNodeData
+public class AIProfileBTreeNodeData : IContextData
 {
-	public BehaviourTreeNode Node;
+	public BehaviourTreeNode Node { get; }
 
-	public AIProfileContextData Data;
+	public List<IContextData> Children { get; } = new List<IContextData>();
 
-	public List<AIProfileBTreeNodeData> Children = new List<AIProfileBTreeNodeData>();
+
+	public AIProfileContextData Data { get; }
 
 	public AIProfileBTreeNodeData(BehaviourTreeNode node)
 	{

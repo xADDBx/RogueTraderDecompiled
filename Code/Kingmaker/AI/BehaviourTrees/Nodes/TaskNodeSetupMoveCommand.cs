@@ -11,51 +11,53 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeSetupMoveCommand : TaskNode
 {
-	private SetupMoveCommandMode m_Mode;
+	public SetupMoveCommandMode Mode { get; }
 
-	public static TaskNodeSetupMoveCommand ToBetterPosition()
+	public static TaskNodeSetupMoveCommand ToBetterPosition(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.BetterPosition);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.BetterPosition, debugDescription);
 	}
 
-	public static TaskNodeSetupMoveCommand ToClosestEnemy()
+	public static TaskNodeSetupMoveCommand ToClosestEnemy(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.ClosestEnemy);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.ClosestEnemy, debugDescription);
 	}
 
-	public static TaskNodeSetupMoveCommand ToLureCaster()
+	public static TaskNodeSetupMoveCommand ToLureCaster(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.LureCaster);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.LureCaster, debugDescription);
 	}
 
-	public static TaskNodeSetupMoveCommand ToSquadLeader()
+	public static TaskNodeSetupMoveCommand ToSquadLeader(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.SquadLeader);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.SquadLeader, debugDescription);
 	}
 
-	public static TaskNodeSetupMoveCommand ToSquadLeaderTarget()
+	public static TaskNodeSetupMoveCommand ToSquadLeaderTarget(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.SquadLeaderTarget);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.SquadLeaderTarget, debugDescription);
 	}
 
-	public static TaskNodeSetupMoveCommand ToHoldPosition()
+	public static TaskNodeSetupMoveCommand ToHoldPosition(string debugDescription = null)
 	{
-		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.HoldPosition);
+		return new TaskNodeSetupMoveCommand(SetupMoveCommandMode.HoldPosition, debugDescription);
 	}
 
-	private TaskNodeSetupMoveCommand(SetupMoveCommandMode mode)
+	private TaskNodeSetupMoveCommand(SetupMoveCommandMode mode, string debugDescription = null)
+		: base(debugDescription)
 	{
-		m_Mode = mode;
+		Mode = mode;
 	}
 
 	protected override Status TickInternal(Blackboard blackboard)
 	{
-		AILogger.Instance.Log(AILogMovement.Intent(m_Mode));
+		AILogger.Instance.Log(AILogMovement.Intent(Mode));
 		DecisionContext decisionContext = blackboard.DecisionContext;
 		decisionContext.IsMoveCommand = true;
 		if (!CreatePath(decisionContext, out var path))
 		{
 			path?.Release(this);
+			base.FailReason = "No path to target according mode";
 			return Status.Failure;
 		}
 		if (path == null)
@@ -67,7 +69,7 @@ public class TaskNodeSetupMoveCommand : TaskNode
 		while (num > 0)
 		{
 			GraphNode graphNode = path.path[num - 1];
-			if (SetupMoveCommandHelper.CanStopAtNode(decisionContext, graphNode, m_Mode))
+			if (SetupMoveCommandHelper.CanStopAtNode(decisionContext, graphNode, Mode))
 			{
 				break;
 			}
@@ -78,6 +80,7 @@ public class TaskNodeSetupMoveCommand : TaskNode
 		{
 			path.Release(decisionContext);
 			decisionContext.IsMoveCommand = false;
+			base.FailReason = "Can't reach target point";
 			return Status.Failure;
 		}
 		float[] resultAPCostPerPoint = ruleCalculateMovementCost.ResultAPCostPerPoint;
@@ -92,14 +95,14 @@ public class TaskNodeSetupMoveCommand : TaskNode
 
 	private bool CreatePath(DecisionContext context, out ForcedPath path)
 	{
-		if (m_Mode == SetupMoveCommandMode.BetterPosition)
+		if (Mode == SetupMoveCommandMode.BetterPosition)
 		{
-			return SetupMoveCommandHelper.CreatePathToBetterPlace(context, m_Mode, out path);
+			return SetupMoveCommandHelper.CreatePathToBetterPlace(context, Mode, out path);
 		}
-		if (m_Mode == SetupMoveCommandMode.HoldPosition)
+		if (Mode == SetupMoveCommandMode.HoldPosition)
 		{
-			return SetupMoveCommandHelper.CreatePathToHoldPosition(context, m_Mode, out path);
+			return SetupMoveCommandHelper.CreatePathToHoldPosition(context, Mode, out path);
 		}
-		return SetupMoveCommandHelper.CreatePathToUnit(context, m_Mode, out path);
+		return SetupMoveCommandHelper.CreatePathToUnit(context, Mode, out path);
 	}
 }

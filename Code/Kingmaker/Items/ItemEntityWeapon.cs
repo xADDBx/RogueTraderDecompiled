@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.EntitySystem;
@@ -12,7 +13,9 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
+using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Animation;
 using Kingmaker.View.Mechadendrites;
@@ -83,9 +86,17 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 	{
 		get
 		{
+			if (!base.Blueprint.IsTwoHanded)
+			{
+				return false;
+			}
 			if (base.Owner is UnitEntity unitEntity)
 			{
 				if (unitEntity.GetOptional<UnitPartMechadendrites>() != null)
+				{
+					return false;
+				}
+				if (unitEntity.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null)
 				{
 					return false;
 				}
@@ -93,26 +104,49 @@ public class ItemEntityWeapon : ItemEntity<BlueprintItemWeapon>, IHashable
 				{
 					return false;
 				}
+				UnitPartTwoHandedInOneHand optional = unitEntity.GetOptional<UnitPartTwoHandedInOneHand>();
+				if (optional != null && optional.GetAnimationStyle(this).HasValue)
+				{
+					return false;
+				}
 			}
-			return base.Blueprint.IsTwoHanded;
+			return true;
 		}
 	}
 
 	public WeaponAnimationStyle GetAnimationStyle(bool forDollRoom = false, MechanicEntity owner = null)
 	{
-		if (IsShield)
+		using (ProfileScope.NewScope("GetAnimationStyle"))
 		{
-			return WeaponAnimationStyle.Shield;
+			if (IsShield)
+			{
+				return WeaponAnimationStyle.Shield;
+			}
+			if (owner == null)
+			{
+				owner = base.Owner;
+			}
+			if (owner != null)
+			{
+				if (base.Blueprint.Classification == WeaponClassification.Shotgun && (bool)owner.Features.CarryShotgunInOneHand)
+				{
+					return WeaponAnimationStyle.ShotgunOneHanded;
+				}
+				if (base.Blueprint.IsTwoHanded)
+				{
+					UnitPartTwoHandedInOneHand optional = owner.GetOptional<UnitPartTwoHandedInOneHand>();
+					if (optional != null)
+					{
+						WeaponAnimationStyle? animationStyle = optional.GetAnimationStyle(this);
+						if (animationStyle.HasValue)
+						{
+							return animationStyle.GetValueOrDefault();
+						}
+					}
+				}
+			}
+			return base.Blueprint.VisualParameters.AnimStyle;
 		}
-		if (owner == null)
-		{
-			owner = base.Owner;
-		}
-		if (owner != null && base.Blueprint.Classification == WeaponClassification.Shotgun && (bool)owner.Features.CarryShotgunInOneHand)
-		{
-			return WeaponAnimationStyle.ShotgunOneHanded;
-		}
-		return base.Blueprint.VisualParameters.AnimStyle;
 	}
 
 	public ItemEntityWeapon([NotNull] BlueprintItemWeapon bpItem, ItemEntityShield shield = null)

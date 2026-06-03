@@ -40,8 +40,8 @@ public class DestructibleEntity : MapObjectEntity, PartStatsContainer.IOwner, IE
 		get
 		{
 			Vector2 vector = View.Or(null)?.Bounds.size ?? default(Vector2);
-			int num = Math.Max(0, Mathf.RoundToInt(vector.x / GraphParamsMechanicsCache.GridCellSize) - 1);
-			int num2 = Math.Max(0, Mathf.RoundToInt(vector.y / GraphParamsMechanicsCache.GridCellSize) - 1);
+			int num = Math.Max(0, Mathf.CeilToInt(vector.x / GraphParamsMechanicsCache.GridCellSize) - 1);
+			int num2 = Math.Max(0, Mathf.CeilToInt(vector.y / GraphParamsMechanicsCache.GridCellSize) - 1);
 			int num3 = ((num >= 2) ? (-(num / 2)) : 0);
 			int num4 = ((num < 2) ? num : (num + num3));
 			int num5 = ((num2 >= 2) ? (-(num2 / 2)) : 0);
@@ -69,12 +69,12 @@ public class DestructibleEntity : MapObjectEntity, PartStatsContainer.IOwner, IE
 	{
 		get
 		{
-			return (View.Or(null)?.Bounds ?? default(Rect)).min.To3D();
+			return (View.Or(null)?.Bounds ?? default(Rect)).center.To3D();
 		}
 		set
 		{
-			Rect rect = View.Or(null)?.Bounds ?? default(Rect);
-			base.Position = value + (base.Position - rect.min.To3D());
+			Vector3 vector = (View.Or(null)?.Bounds ?? default(Rect)).center.To3D();
+			base.Position = value + (base.Position - vector);
 		}
 	}
 

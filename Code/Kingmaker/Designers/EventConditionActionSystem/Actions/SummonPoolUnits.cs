@@ -13,7 +13,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/SummonPoolUnits")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("5e4603a125002e449ba3cfc391334f5c")]

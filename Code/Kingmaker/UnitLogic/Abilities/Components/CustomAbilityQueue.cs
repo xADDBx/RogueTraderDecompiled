@@ -29,7 +29,7 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 [Serializable]
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("a2cb91a2b5d142648acab0e10a1bc6f1")]
-public class CustomAbilityQueue : AbilityCustomLogic
+public class CustomAbilityQueue : AbilityCustomLogic, IAbilityIsValidToCast
 {
 	public bool QueueStart;
 
@@ -38,10 +38,16 @@ public class CustomAbilityQueue : AbilityCustomLogic
 
 	public bool CastOnCasterInsteadOfInitialTarget;
 
+	[Space(8f)]
+	[Tooltip("Conditions that are awaiting after first ability cast while they are true")]
+	public ConditionsChecker AbilityWaitConditions;
+
 	[FormerlySerializedAs("m_QueConditions")]
 	[Space(8f)]
 	[Tooltip("If conditions are passed after resolving first ability the next one gets queued")]
 	public ConditionsChecker QueConditions;
+
+	public ActionList ActionsOnQueueBreak;
 
 	[FormerlySerializedAs("m_AbilityToQue")]
 	public BlueprintAbilityReference AbilityToQue;
@@ -64,16 +70,14 @@ public class CustomAbilityQueue : AbilityCustomLogic
 			yield break;
 		}
 		AbilityData abilityData = CreateAbility(AbilityToCast, context);
-		UnitCommandHandle cmdHandle;
-		AbilityExecutionProcess executionProcess;
 		if (abilityData.IsValid(CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target))
 		{
 			UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, CastOnCasterInsteadOfInitialTarget ? ((TargetWrapper)context.Caster) : target)
 			{
 				FreeAction = true
 			};
-			cmdHandle = commands.AddToQueue(cmdParams);
-			executionProcess = null;
+			UnitCommandHandle cmdHandle = commands.AddToQueue(cmdParams);
+			AbilityExecutionProcess executionProcess = null;
 			while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
 			{
 				executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
@@ -88,43 +92,49 @@ public class CustomAbilityQueue : AbilityCustomLogic
 				yield return null;
 			}
 			yield return null;
-			while (context.Caster.Parts.GetOptional<UnitPartJump>() != null || commands.IsRunning())
+			while (context.Caster.Parts.GetOptional<UnitPartJump>() != null || commands.IsRunning() || IsNeedToWaitAbilityConditions(AbilityWaitConditions))
 			{
 				yield return null;
 			}
 		}
-		if (!IsConditionPassed(QueConditions, context, context.Caster))
+		if (IsConditionPassed(QueConditions, context, context.Caster))
 		{
-			yield break;
-		}
-		TargetWrapper targetWrapper = target;
-		if (QueOnRandomTarget)
-		{
-			targetWrapper = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && IsConditionPassed(ConditionsOnTarget, context, p) && context.Caster.InRangeInCells(p, Range.Calculate(context))).Cast<MechanicEntity>().ToList()
-				.Random(PFStatefulRandom.Mechanics);
-		}
-		AbilityData abilityData2 = CreateAbility(AbilityToQue, context);
-		if (!(targetWrapper != null) || !abilityData2.IsValid(targetWrapper))
-		{
-			yield break;
-		}
-		UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(abilityData2, targetWrapper)
-		{
-			FreeAction = true
-		};
-		cmdHandle = commands.AddToQueue(cmdParams2);
-		executionProcess = null;
-		while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
-		{
-			executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
-			yield return null;
-		}
-		if (executionProcess != null)
-		{
-			while (!executionProcess.IsEnded)
+			TargetWrapper targetWrapper = target;
+			if (QueOnRandomTarget)
 			{
-				yield return null;
+				targetWrapper = Game.Instance.State.AllBaseUnits.Where((BaseUnitEntity p) => !p.Features.IsUntargetable && !p.LifeState.IsDead && p.IsInCombat && IsConditionPassed(ConditionsOnTarget, context, p) && context.Caster.InRangeInCells(p, Range.Calculate(context))).Cast<MechanicEntity>().ToList()
+					.Random(PFStatefulRandom.Mechanics);
 			}
+			AbilityData abilityData2 = CreateAbility(AbilityToQue, context);
+			if (targetWrapper != null && abilityData2.IsValid(targetWrapper))
+			{
+				UnitUseAbilityParams cmdParams2 = new UnitUseAbilityParams(abilityData2, targetWrapper)
+				{
+					FreeAction = true
+				};
+				UnitCommandHandle cmdHandle = commands.AddToQueue(cmdParams2);
+				AbilityExecutionProcess executionProcess = null;
+				while (!cmdHandle.IsFinished && (executionProcess == null || !executionProcess.IsStarted))
+				{
+					executionProcess = ((UnitUseAbility)cmdHandle.Cmd)?.ExecutionProcess;
+					yield return null;
+				}
+				if (executionProcess != null)
+				{
+					while (!executionProcess.IsEnded)
+					{
+						yield return null;
+					}
+				}
+			}
+			else
+			{
+				ActionsOnQueueBreak?.Run();
+			}
+		}
+		else
+		{
+			ActionsOnQueueBreak?.Run();
 		}
 	}
 
@@ -138,6 +148,15 @@ public class CustomAbilityQueue : AbilityCustomLogic
 		{
 			OverrideWeapon = context.Ability.Weapon
 		};
+	}
+
+	private static bool IsNeedToWaitAbilityConditions(ConditionsChecker waitConditions)
+	{
+		if (waitConditions.HasConditions)
+		{
+			return waitConditions.Check();
+		}
+		return false;
 	}
 
 	private bool IsConditionPassed(ConditionsChecker conditions, MechanicsContext context, MechanicEntity entity)

@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using TMPro;
@@ -24,6 +25,10 @@ public class JournalQuestObjectiveAddendumBaseView : ViewBase<JournalQuestObject
 	protected TextMeshProUGUI m_Destination;
 
 	[Header("Completion")]
+	[SerializeField]
+	[UsedImplicitly]
+	private GameObject m_ClueMark;
+
 	[SerializeField]
 	[UsedImplicitly]
 	private GameObject m_FailedMark;
@@ -110,10 +115,30 @@ public class JournalQuestObjectiveAddendumBaseView : ViewBase<JournalQuestObject
 
 	protected virtual void SetupState()
 	{
-		m_FailedMark.gameObject.SetActive(base.ViewModel.IsFailed);
-		m_CompletedMark.gameObject.SetActive(base.ViewModel.IsCompleted);
-		m_AttentionMark.gameObject.SetActive(!base.ViewModel.IsViewed && !base.ViewModel.IsFailed && !base.ViewModel.IsCompleted);
-		m_InProgressMark.gameObject.SetActive(base.ViewModel.IsViewed && !base.ViewModel.IsFailed && !base.ViewModel.IsCompleted);
+		if (base.ViewModel.Addendum.Blueprint.IsClue)
+		{
+			m_AttentionMark.gameObject.SetActive(!base.ViewModel.IsViewed && !base.ViewModel.IsFailed && !base.ViewModel.IsCompleted);
+			GameObject clueMark = m_ClueMark;
+			if ((object)clueMark != null)
+			{
+				clueMark.Or(null).gameObject.SetActive(base.ViewModel.IsViewed || base.ViewModel.IsFailed || base.ViewModel.IsCompleted);
+			}
+			m_FailedMark.gameObject.SetActive(value: false);
+			m_CompletedMark.gameObject.SetActive(value: false);
+			m_InProgressMark.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			GameObject clueMark2 = m_ClueMark;
+			if ((object)clueMark2 != null)
+			{
+				clueMark2.Or(null).gameObject.SetActive(value: false);
+			}
+			m_FailedMark.gameObject.SetActive(base.ViewModel.IsFailed);
+			m_CompletedMark.gameObject.SetActive(base.ViewModel.IsCompleted);
+			m_AttentionMark.gameObject.SetActive(!base.ViewModel.IsViewed && !base.ViewModel.IsFailed && !base.ViewModel.IsCompleted);
+			m_InProgressMark.gameObject.SetActive(base.ViewModel.IsViewed && !base.ViewModel.IsFailed && !base.ViewModel.IsCompleted);
+		}
 	}
 
 	protected string GetHintText()

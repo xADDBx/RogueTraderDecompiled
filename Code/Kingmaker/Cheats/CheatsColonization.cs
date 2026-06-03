@@ -101,6 +101,12 @@ internal static class CheatsColonization
 		Game.Instance.Player.ProfitFactor.AddModifier(value);
 	}
 
+	[Cheat(Name = "add_combativity", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void AddCombativity(int value)
+	{
+		Game.Instance.Player.Combativity.AddModifier(value);
+	}
+
 	[Cheat(Name = "add_colony_stat", ExecutionPolicy = ExecutionPolicy.PlayMode)]
 	public static void AddColonyStat(BlueprintColony colonyBlueprint, string stat, int value)
 	{

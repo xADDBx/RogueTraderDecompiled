@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
+using Kingmaker.Controllers.Clicks.Handlers;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -11,6 +12,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.SurfaceCombatHUD;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
@@ -132,11 +134,9 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 			return;
 		}
 		ClearBurstHitChances();
-		TargetWrapper targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(Unit.View.gameObject, Game.Instance.ClickEventsController.WorldPosition);
-		bool flag = targetForDesiredPosition != null && UnitState.Ability.Value.CanTargetFromDesiredPosition(targetForDesiredPosition) && CanAoETarget(UnitState.Ability.Value.Blueprint.AoETargets);
-		HasHit.Value = flag;
+		HasHit.Value = CalculateCanHit();
 		IsCaster.Value = UnitState.IsCaster.Value;
-		if (!flag)
+		if (!HasHit.Value)
 		{
 			return;
 		}
@@ -162,6 +162,30 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 				BurstHitChancesCollection.Add(hitChanceEntityVM);
 			}
 		}
+	}
+
+	private bool CalculateCanHit()
+	{
+		if (!CanAoETarget(UnitState.Ability.Value.Blueprint.AoETargets))
+		{
+			return false;
+		}
+		if (UnitState.Ability.Value.TargetAnchor == AbilityTargetAnchor.Owner)
+		{
+			return true;
+		}
+		ClickWithSelectedAbilityHandler selectedAbilityHandler = Game.Instance.SelectedAbilityHandler;
+		TargetWrapper targetWrapper = ((selectedAbilityHandler.Ability != null) ? selectedAbilityHandler.GetTargetForDesiredPosition(Unit.View.gameObject, Game.Instance.ClickEventsController.WorldPosition) : ((TargetWrapper)Unit));
+		bool flag = UnitPredictionManager.Instance?.IsUnitRicochetTarget(UnitState.Unit.MechanicEntity) ?? false;
+		if (targetWrapper != null)
+		{
+			if (!flag)
+			{
+				return UnitState.Ability.Value.CanTargetFromDesiredPosition(targetWrapper);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private void ClearProperties()

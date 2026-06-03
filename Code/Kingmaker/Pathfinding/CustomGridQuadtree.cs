@@ -54,7 +54,7 @@ public class CustomGridQuadtree
 	{
 		if (Rect.Width <= 1 && Rect.Height <= 1)
 		{
-			IsFullyNotWalkable = !(Graph.GetNode(Rect.xmin, Rect.ymin)?.StaticWalkable ?? false);
+			IsFullyNotWalkable = !(Graph.GetNode(Rect.xmin, Rect.ymin)?.Walkable ?? false);
 			return;
 		}
 		if (Rect.Width <= 1)

@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -17,7 +18,7 @@ namespace Kingmaker.Code.Designers.Mechanics.Facts;
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("0d72f7816726475599b6790483a3f7c5")]
-public class WarhammerReflectDamage : WarhammerDamageTrigger, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber, IHashable
+public class WarhammerReflectDamage : WarhammerDamageTriggerBase, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber, IHashable
 {
 	[SerializeField]
 	[HideIf("UseValueInstead")]
@@ -44,12 +45,16 @@ public class WarhammerReflectDamage : WarhammerDamageTrigger, ITargetRulebookHan
 		TryTrigger(rule);
 	}
 
-	protected override void OnTrigger(RuleDealDamage rule)
+	protected override void OnTrigger<TEvent>(TEvent abstractRule)
 	{
-		int finalValue = rule.ResultValue.FinalValue;
+		if (!(abstractRule is RuleDealDamage ruleDealDamage))
+		{
+			throw new Exception("Invalid rule type");
+		}
+		int finalValue = ruleDealDamage.ResultValue.FinalValue;
 		int value = ((!UseValueInstead) ? Mathf.RoundToInt(0.01f * (float)m_Percentage.Calculate(base.Context) * (float)finalValue) : ((finalValue >= m_Value.Calculate(base.Context)) ? m_Value.Calculate(base.Context) : finalValue));
-		DamageType type = (ChangeReflectedDamageType ? m_Type : rule.Damage.Type);
-		Rulebook.Trigger(new RuleDealDamage(rule.ConcreteTarget, rule.ConcreteInitiator, new DamageData(type, value)));
+		DamageType type = (ChangeReflectedDamageType ? m_Type : ruleDealDamage.Damage.Type);
+		Rulebook.Trigger(new RuleDealDamage(ruleDealDamage.ConcreteTarget, ruleDealDamage.ConcreteInitiator, new DamageData(type, value)));
 	}
 
 	public override Hash128 GetHash128()

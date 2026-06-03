@@ -2,6 +2,8 @@ using System;
 using JetBrains.Annotations;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Items;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Visual.Blueprints;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
@@ -26,5 +28,10 @@ public static class MechanicEntityHelper
 			return null;
 		}
 		return entity as ILootable;
+	}
+
+	public static bool CanAffectMomentumOutsideParty(this MechanicEntity entity)
+	{
+		return entity.HasMechanicFeature(MechanicsFeatureType.CanAffectMomentumIfOutsideOfParty);
 	}
 }

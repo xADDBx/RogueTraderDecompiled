@@ -78,6 +78,8 @@ public class ContextActionDealDamage : ContextAction
 
 	public bool DoNotUseCrModifier;
 
+	public bool DoNotUseCasterModifiers;
+
 	private bool? m_IsAOE;
 
 	public BlueprintItemWeapon Weapon => m_Weapon?.Get();
@@ -183,14 +185,15 @@ public class ContextActionDealDamage : ContextAction
 			};
 			base.Context.TriggerRule(rulePerformAttackRoll);
 		}
-		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, abilityData, rulePerformAttackRoll, DamageType.CreateDamage(min, max), value, value2, null, DoNotUseCrModifier).Trigger().ResultDamage;
+		DamageData resultDamage = new CalculateDamageParams(maybeCaster, entity, abilityData, rulePerformAttackRoll, DamageType.CreateDamage(min, max), value, value2, null, DoNotUseCrModifier, calculatedOverpenetration: false, doNotUseCrModifier: false, DoNotUseCasterModifiers).Trigger().ResultDamage;
 		resultDamage.CalculatedValue = info.PreRolledValue;
 		RuleDealDamage ruleDealDamage = new RuleDealDamage(maybeCaster, entity, resultDamage)
 		{
 			Projectile = base.Projectile,
 			SourceAbility = (abilityData ?? base.Context.SourceAbilityContext?.Ability),
 			SourceArea = (base.Context.AssociatedBlueprint as BlueprintAbilityAreaEffect),
-			ContextDamageWeapon = Weapon
+			ContextDamageWeapon = Weapon,
+			SourceAttackRule = base.AttackRule
 		};
 		base.Context.TriggerRule(ruleDealDamage);
 		return ruleDealDamage.Result;

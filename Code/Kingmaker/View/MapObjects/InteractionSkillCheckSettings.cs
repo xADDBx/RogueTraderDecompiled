@@ -36,12 +36,13 @@ public class InteractionSkillCheckSettings : InteractionSettings
 	[ShowIf("CanUseWithoutSupply")]
 	public bool NeedSupply = true;
 
+	[ShowIf("ShowDifficulty")]
 	public SkillCheckDifficulty Difficulty;
 
-	[ShowIf("DifficultyIsCustom")]
+	[ShowIf("ShowDC")]
 	public int DC;
 
-	[ShowIf("DifficultyIsCustom")]
+	[ShowIf("ShowDC")]
 	public ViewDCModifier[] DCModifiers = new ViewDCModifier[0];
 
 	public FakeType FakeResult;
@@ -134,7 +135,19 @@ public class InteractionSkillCheckSettings : InteractionSettings
 
 	public BlueprintAreaEnterPoint TeleportOnFail => m_TeleportOnFail?.Get();
 
-	private bool DifficultyIsCustom => Difficulty == SkillCheckDifficulty.Custom;
+	private bool ShowDifficulty => Skill != StatType.Unknown;
+
+	private bool ShowDC
+	{
+		get
+		{
+			if (Skill != 0)
+			{
+				return Difficulty == SkillCheckDifficulty.Custom;
+			}
+			return false;
+		}
+	}
 
 	public int GetDC()
 	{

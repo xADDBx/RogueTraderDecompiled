@@ -144,12 +144,15 @@ public class UnitMechadendriteEquipmentData
 
 	public void DestroyModel()
 	{
-		if (VisualModel.GetComponent<UnitAnimationManager>() != null && Character != null && Character.MechsAnimationManagers.Contains(VisualModel.GetComponent<UnitAnimationManager>()))
+		if (!(VisualModel == null))
 		{
-			Character.MechsAnimationManagers.Remove(VisualModel.GetComponent<UnitAnimationManager>());
+			if (VisualModel.GetComponent<UnitAnimationManager>() != null && Character != null && Character.MechsAnimationManagers.Contains(VisualModel.GetComponent<UnitAnimationManager>()))
+			{
+				Character.MechsAnimationManagers.Remove(VisualModel.GetComponent<UnitAnimationManager>());
+			}
+			UnityEngine.Object.Destroy(VisualModel);
+			VisualModel = null;
 		}
-		UnityEngine.Object.Destroy(VisualModel);
-		VisualModel = null;
 	}
 
 	private GameObject GetFxPrefab()

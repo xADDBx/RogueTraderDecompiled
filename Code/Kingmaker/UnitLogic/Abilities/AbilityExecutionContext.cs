@@ -71,8 +71,6 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 
 	public readonly List<MechanicEntity> RedirectTargets = new List<MechanicEntity>();
 
-	private readonly Vector3 m_CastPosition;
-
 	private Dictionary<CustomGridNodeBase, (WarhammerSingleNodeBlocker Blocker, IntRect Rect, Vector3 Direction)> m_BlockedNodes = new Dictionary<CustomGridNodeBase, (WarhammerSingleNodeBlocker, IntRect, Vector3)>();
 
 	[JsonIgnore]
@@ -107,6 +105,9 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool DoNotClearMovementPoints { get; set; }
+
+	[JsonIgnore]
+	public MechanicEntity BladeDanceTarget { get; set; }
 
 	[CanBeNull]
 	public List<AbilityApproachingEffect> ApproachingEffects { get; private set; }
@@ -150,6 +151,8 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	[NotNull]
 	public MechanicEntity Caster => base.MaybeCaster ?? throw new Exception("Caster is missing. Ability : " + AbilityBlueprint?.Name);
 
+	public Vector3 CastPosition { get; }
+
 	public void TemporarilyBlockNode(Vector3 pos, BaseUnitEntity unit)
 	{
 		TemporarilyBlockNode(pos.GetNearestNodeXZ(), unit);
@@ -185,7 +188,7 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 		{
 			throw new Exception("Can't cast variational ability");
 		}
-		m_CastPosition = casterPosition;
+		CastPosition = casterPosition;
 		m_AbilityFact = ability.Fact;
 		m_Ability = ability;
 		ClickedTarget = clickedTarget;
@@ -208,7 +211,7 @@ public class AbilityExecutionContext : MechanicsContext, IHashable
 	{
 		if (!m_PatternConfigured)
 		{
-			m_Pattern = Ability.GetPattern(ClickedTarget, m_CastPosition);
+			m_Pattern = Ability.GetPattern(ClickedTarget, CastPosition);
 			m_PatternConfigured = true;
 		}
 	}

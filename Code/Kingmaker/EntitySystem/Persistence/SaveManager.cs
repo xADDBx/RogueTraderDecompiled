@@ -1087,14 +1087,17 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 					saveInfo.Saver.SaveBytes("highres.png", m_ScreenshotHighResPNGBytes);
 					saveInfo.Saver.SaveBytes("header.png", m_ScreenshotPNGBytes);
 				}
-				Task playerTask = SerializePlayer(Game.Instance.Player);
-				Task partyTask = SerializeParty(Game.Instance.Player.CrossSceneState);
+				Task<StringBuilder> playerTask = SerializePlayer(Game.Instance.Player);
+				Task<StringBuilder> partyTask = SerializeParty(Game.Instance.Player.CrossSceneState);
 				AreaPersistentState loadedAreaState = Game.Instance.State.LoadedAreaState;
 				Task areaTask = ((saveInfo.Type != SaveInfo.SaveType.ForImport && loadedAreaState != null) ? SerializeLocalAreaState(loadedAreaState) : Task.CompletedTask);
 				AreaDataStash.GameHistoryFile.DisableWrite = true;
 				GameStatistic.AppStatus appStatus = new GameStatistic.AppStatus();
 				Game.Instance.Statistic.PreSave(appStatus);
 				Task<string> statTask = SerializeStatistics(saveInfo, appStatus);
+				Task<string> knownAreasTask = Serialize(Game.Instance.State.SavedAreaStates.Select((AreaPersistentState v) => new KnownAreaEntry(v.AreaGuid, (from s in v.GetAdditionalSceneStates()
+					select s.SceneName).ToArray())).ToArray());
+				Task<string> fogDataTask = Serialize(SavedFogMasks.AllMasks);
 				Task<string> settingsTask = SerializeInGameSettings(Game.Instance.State.InGameSettings);
 				Game.Instance.CoopData.PreSave();
 				Task<string> coopTask = SerializeCoopData(Game.Instance.CoopData);
@@ -1103,7 +1106,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 					await SaveStashedAreas(saveInfo, checksumStringBuilder);
 				}
 				Logger.Log("await Task.WhenAll");
-				await Task.WhenAll(SavePlayer(saveInfo, playerTask, checksumStringBuilder), SaveArea(saveInfo, areaTask, checksumStringBuilder), SaveParty(saveInfo, partyTask, checksumStringBuilder), SaveStatistics(saveInfo, statTask), SaveSettings(saveInfo, settingsTask), SaveCoop(saveInfo, coopTask));
+				await Task.WhenAll(SavePlayer(saveInfo, playerTask, checksumStringBuilder), SaveArea(saveInfo, areaTask, checksumStringBuilder), SaveParty(saveInfo, partyTask, checksumStringBuilder), SaveStatistics(saveInfo, statTask), SaveSettings(saveInfo, settingsTask), SaveCoop(saveInfo, coopTask), Save(saveInfo, "knownAreas", knownAreasTask), Save(saveInfo, "fogIndex", fogDataTask));
 				Logger.Log("Task.WhenAll Done");
 				if (ReportingCheats.IsDebugSaveFileChecksumEnabled)
 				{
@@ -1119,8 +1122,8 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 					saveInfo.Saver.Save();
 				}
 				Logger.Log("Commit done");
-				AreaDataStash.ClearJsonForArea("player", "");
-				AreaDataStash.ClearJsonForArea("party", "");
+				File.Delete(Path.Combine(AreaDataStash.Folder, "player.json"));
+				File.Delete(Path.Combine(AreaDataStash.Folder, "party.json"));
 				originalSave.Saver.Clear();
 				saveInfo.Saver.MoveTo(originalSave.FolderName);
 				saveInfo.FolderName = originalSave.FolderName;
@@ -1151,6 +1154,19 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			LoadingProcess.Instance.ClearLockedNotification();
 		}
 		Logger.Log("SerializeAndSaveThread: finished");
+		static async Task Save(SaveInfo saveInfo, string fileName, Task<string> serializationTask)
+		{
+			Logger.Log("Save.await serialization Task");
+			string data = await serializationTask;
+			Logger.Log("Save.await StartNew");
+			await ExclusiveScheduler.StartNew(delegate
+			{
+				Logger.Log("Save SaveJson");
+				saveInfo.Saver.SaveJson(fileName, data);
+				Logger.Log("Save StartNew Done");
+			});
+			Logger.Log("Save Done");
+		}
 		static async Task SaveArea(SaveInfo saveInfo, Task areaTask, StringBuilder checksum)
 		{
 			Logger.Log("SaveArea.await playerTask");
@@ -1192,38 +1208,32 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 				Logger.Log("SaveCoop Done");
 			}
 		}
-		static async Task SaveParty(SaveInfo saveInfo, Task partyTask, StringBuilder checksum)
+		static async Task SaveParty(SaveInfo saveInfo, Task<StringBuilder> partyTask, StringBuilder checksum)
 		{
 			Logger.Log("SaveParty.await partyTask");
-			await partyTask;
+			string data = (await partyTask).ToString();
 			Logger.Log("SaveParty.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
 				Logger.Log("SaveParty CopyFromStash");
-				if (!saveInfo.Saver.CopyFromStash(AreaDataStash.FileName("party", "")))
-				{
-					throw new Exception("Cant save party.json");
-				}
+				saveInfo.Saver.SaveJson("party", data);
 				Logger.Log("SaveParty AppendSaveFilesMd5");
-				AppendSaveFilesMd5(checksum, "party.json");
+				AppendSaveFilesMd5(checksum, "party.json", data);
 				Logger.Log("SaveParty StartNew Done");
 			});
 			Logger.Log("SaveParty Done");
 		}
-		static async Task SavePlayer(SaveInfo saveInfo, Task playerTask, StringBuilder checksum)
+		static async Task SavePlayer(SaveInfo saveInfo, Task<StringBuilder> playerTask, StringBuilder checksum)
 		{
 			Logger.Log("SavePlayer.await playerTask");
-			await playerTask;
+			string data = (await playerTask).ToString();
 			Logger.Log("SavePlayer.await StartNew");
 			await ExclusiveScheduler.StartNew(delegate
 			{
 				Logger.Log("SavePlayer CopyFromStash");
-				if (!saveInfo.Saver.CopyFromStash(AreaDataStash.FileName("player", "")))
-				{
-					throw new Exception("Cant save player.json");
-				}
+				saveInfo.Saver.SaveJson("player", data);
 				Logger.Log("SavePlayer AppendSaveFilesMd5");
-				AppendSaveFilesMd5(checksum, "player.json");
+				AppendSaveFilesMd5(checksum, "player.json", data);
 				Logger.Log("SavePlayer StartNew Done");
 			});
 			Logger.Log("SavePlayer Done");
@@ -1276,7 +1286,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 		}
 	}
 
-	private static async Task SerializePlayer(Player player)
+	private static async Task<StringBuilder> SerializePlayer(Player player)
 	{
 		await EditorSafeThreading.Awaitable;
 		using (CodeTimer.New("Serializing player state"))
@@ -1284,16 +1294,18 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			GCCollect();
 			JsonSerializer jsonSerializer = JsonSerializer.Create(SaveSystemJsonSerializer.Settings);
 			jsonSerializer.Formatting = AreaDataStash.Formatting;
-			await using (StreamWriter textWriter = new StreamWriter(AreaDataStash.Path("player", "")))
+			StringBuilder sb = new StringBuilder(ISaver.BuffersSize);
+			await using (StringWriter textWriter = new StringWriter(sb))
 			{
 				using JsonTextWriter jsonWriter = new JsonTextWriter(textWriter);
 				jsonSerializer.Serialize(jsonWriter, player);
 			}
 			GCCollect();
+			return sb;
 		}
 	}
 
-	private static async Task SerializeParty(SceneEntitiesState css)
+	private static async Task<StringBuilder> SerializeParty(SceneEntitiesState css)
 	{
 		await EditorSafeThreading.Awaitable;
 		using (CodeTimer.New("Serializing cross-scene state"))
@@ -1301,12 +1313,14 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			GCCollect();
 			JsonSerializer serializer = SaveSystemJsonSerializer.Serializer;
 			serializer.Formatting = AreaDataStash.Formatting;
-			await using (StreamWriter textWriter = new StreamWriter(AreaDataStash.Path("party", "")))
+			StringBuilder sb = new StringBuilder(ISaver.BuffersSize);
+			await using (StringWriter textWriter = new StringWriter(sb))
 			{
 				using JsonTextWriter jsonWriter = new JsonTextWriter(textWriter);
 				serializer.Serialize(jsonWriter, css);
 			}
 			GCCollect();
+			return sb;
 		}
 	}
 
@@ -1325,6 +1339,12 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 	{
 		await EditorSafeThreading.Awaitable;
 		return GameStatistic.Serialize(saveInfo, appStatus);
+	}
+
+	private static async Task<string> Serialize<T>(T obj)
+	{
+		await EditorSafeThreading.Awaitable;
+		return SaveSystemJsonSerializer.Serializer.SerializeObject(obj);
 	}
 
 	private static async Task<string> SerializeInGameSettings(InGameSettings stateInGameSettings)
@@ -1368,7 +1388,7 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			saveInfo.Saver.CopyFromStash(AreaDataStash.FileName(assetGuidThreadSafe, additionalSceneState.SceneName));
 			AppendSaveFilesMd5(checksum, AreaDataStash.FileName(assetGuidThreadSafe, additionalSceneState.SceneName));
 		}
-		foreach (string item in AreaDataStash.EnumerateFogMasks(assetGuidThreadSafe))
+		foreach (string item in SavedFogMasks.Get(assetGuidThreadSafe).EnumerateFogMasks())
 		{
 			saveInfo.Saver.CopyFromStash(Path.GetFileName(item));
 		}
@@ -1517,6 +1537,24 @@ public class SaveManager : IEnumerable<SaveInfo>, IEnumerable, ISaveManagerPostS
 			using MD5 mD = MD5.Create();
 			using FileStream inputStream = File.OpenRead(Path.Combine(AreaDataStash.Folder, fileName));
 			string @string = Encoding.Default.GetString(mD.ComputeHash(inputStream));
+			checksum.AppendFormat("{0}: {1}\n{2}", fileName, @string, "===========\n");
+		}
+		catch (Exception ex)
+		{
+			Logger.Error(ex);
+		}
+	}
+
+	private static void AppendSaveFilesMd5(StringBuilder checksum, string fileName, string data)
+	{
+		if (!ReportingCheats.IsDebugSaveFileChecksumEnabled)
+		{
+			return;
+		}
+		try
+		{
+			using MD5 mD = MD5.Create();
+			string @string = Encoding.Default.GetString(mD.ComputeHash(ISaver.UTF8NoBom.GetBytes(data)));
 			checksum.AppendFormat("{0}: {1}\n{2}", fileName, @string, "===========\n");
 		}
 		catch (Exception ex)

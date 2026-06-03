@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Pointer;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -50,7 +51,7 @@ public class MultiplySelection : MonoBehaviour
 		{
 			return;
 		}
-		m_Outer = Input.mousePosition;
+		m_Outer = CursorController.CursorPosition;
 		if (!m_HasActiveBox)
 		{
 			Vector2 size = m_SelectFrameController.GetSize();

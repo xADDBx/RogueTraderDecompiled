@@ -11,6 +11,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class AsyncTaskNodeInitializeDecisionContext : AsyncTaskNode
 {
+	public AsyncTaskNodeInitializeDecisionContext()
+	{
+	}
+
+	public AsyncTaskNodeInitializeDecisionContext(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override async Task<Status> Process(Blackboard blackboard)
 	{
 		AILogger.Instance.Log(AILogNode.Start(this));

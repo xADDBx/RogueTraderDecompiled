@@ -51,6 +51,8 @@ public class MusicStateHandler
 
 	private bool m_ProlongTillNextCombat;
 
+	private bool m_BlockCombatStateReset;
+
 	private bool m_EventStarted;
 
 	private bool m_OverrideSettingState;
@@ -165,7 +167,7 @@ public class MusicStateHandler
 	public void OnEnemyLeaveCombat(MechanicEntity unit)
 	{
 		UnitVisualSettings.MusicCombatState? combatMusic = unit.GetCombatMusic();
-		if (combatMusic.HasValue && combatMusic == UnitVisualSettings.MusicCombatState.Hard)
+		if (combatMusic.HasValue && combatMusic.GetValueOrDefault() == UnitVisualSettings.MusicCombatState.Hard)
 		{
 			m_ActiveHardUnit.Release();
 		}
@@ -173,14 +175,14 @@ public class MusicStateHandler
 		{
 			SetMusicCombatState(UnitVisualSettings.MusicCombatState.Normal);
 		}
-		if (unit is UnitEntity { MusicBossFightTypeGroup: not null, MusicBossFightTypeGroup: not null, IsDead: not false })
-		{
-			m_ActiveBossFight.Release();
-		}
 	}
 
 	public void HandlePartyCombatStateChange(bool isCombatStarted)
 	{
+		if (m_BlockCombatStateReset)
+		{
+			return;
+		}
 		if (m_ProlongTillNextCombat && m_OverridedStates != null)
 		{
 			m_ProlongTillNextCombat = false;
@@ -193,8 +195,13 @@ public class MusicStateHandler
 		}
 		if (!isCombatStarted)
 		{
+			bool num = m_ActiveBossFight;
 			m_ActiveBossFight.ReleaseAll();
 			m_ActiveHardUnit.ReleaseAll();
+			if (num)
+			{
+				AkSoundEngine.SetState("MusicSettingState", MusicSettingState.Exploration.ToString());
+			}
 			AkSoundEngine.SetState("MusicState", MusicState.Setting.ToString());
 			AkSoundEngine.SetState("MusicCombatState", UnitVisualSettings.MusicCombatState.Normal.ToString());
 		}
@@ -215,7 +222,7 @@ public class MusicStateHandler
 		if (IsOverrideAvailable("MusicSettingState", isMainMenuState: false))
 		{
 			AkSoundEngine.SetState("MusicSettingState", state.ToString());
-			if (state != m_CurrentMusicSettingState && m_CurrentMusicSettingState == MusicSettingState.Combat && state == MusicSettingState.Exploration)
+			if (!m_BlockCombatStateReset && state != m_CurrentMusicSettingState && m_CurrentMusicSettingState == MusicSettingState.Combat && state == MusicSettingState.Exploration)
 			{
 				m_ActiveBossFight.ReleaseAll();
 				m_ActiveHardUnit.ReleaseAll();
@@ -256,7 +263,7 @@ public class MusicStateHandler
 		}
 	}
 
-	public void SetMusicStoryType(AkStateReference state, bool prolongTillNextCombat)
+	public void SetMusicStoryType(AkStateReference state, bool prolongTillNextCombat, bool blockCombatStateReset = false)
 	{
 		AkSoundEngine.SetState(state.Group, state.Value);
 		if (state.Group == "MusicState" && state.Value != "Story")
@@ -265,6 +272,10 @@ public class MusicStateHandler
 		}
 		m_StoryModeActive = true;
 		m_ProlongTillNextCombat = prolongTillNextCombat;
+		if (blockCombatStateReset)
+		{
+			m_BlockCombatStateReset = true;
+		}
 		if (m_OverridedStates == null)
 		{
 			m_OverridedStates = new List<string>();
@@ -291,11 +302,16 @@ public class MusicStateHandler
 		return true;
 	}
 
-	public void ResetStoryMode()
+	public void ResetStoryMode(bool isLoading)
 	{
 		m_StoryModeActive = false;
+		m_BlockCombatStateReset = false;
 		if (!m_ProlongTillNextCombat && m_OverridedStates != null)
 		{
+			if (isLoading)
+			{
+				m_ActiveBossFight.ReleaseAll();
+			}
 			m_OverridedStates.Clear();
 			SetMusicState(m_ActiveBossFight ? MusicState.BossFight : MusicState.Setting);
 			HandleUpdateArea();

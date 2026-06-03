@@ -90,7 +90,7 @@ public class UnitMoveController : IControllerEnable, IController, IControllerTic
 		{
 			agent.TickMovement(dt);
 			unit.Movable.LastMoveTime = Game.Instance.TimeController.GameTime;
-			if (unit.Movable.HasMotionThisSimulationTick && canRotate && agent.IsReallyMoving && !agent.NodeLinkTraverser.IsTraverseNow)
+			if (unit.Movable.HasMotionThisSimulationTick && canRotate && agent.IsReallyMoving && !agent.NodeLinkTraverser.IsTraverseNow && (!unit.View.HasOverriddenRotatablePart || !unit.Blueprint.VisualSettings.KeepTurretOrientation))
 			{
 				Vector3 forward = agent.MoveDirection.To3D();
 				if (forward.sqrMagnitude > 0.01f)
@@ -125,56 +125,46 @@ public class UnitMoveController : IControllerEnable, IController, IControllerTic
 			num = (transform.position - viewPosition).sqrMagnitude;
 			transform.position = viewPosition;
 		}
-		if (!isReallyMoving)
+		if (isReallyMoving)
 		{
-			if (unit.Movable.PreviousSimulationTick.HasMotion || (view.AnimationManager != null && view.AnimationManager.IsGoingProne) || (bool)unit.Features.OnElevator)
+			return;
+		}
+		if (unit.Movable.PreviousSimulationTick.HasMotion || (view.AnimationManager != null && view.AnimationManager.IsGoingProne) || (bool)unit.Features.OnElevator)
+		{
+			if (Game.Instance.SceneControllables.HasAwaitingSettle)
 			{
-				view.ForcePlaceAboveGround();
+				return;
 			}
-			if (num >= 1f)
-			{
-				view.IkController?.GrounderIk?.ResetPosition();
-			}
+			view.ForcePlaceAboveGround();
+		}
+		if (num >= 1f)
+		{
+			view.IkController?.GrounderIk?.ResetPosition();
 		}
 	}
 
 	private static void TryUpdateTransformOrientation(AbstractUnitEntity unit)
 	{
-		if ((Mathf.Approximately(unit.Orientation, unit.Movable.PreviousOrientation) && !unit.Movable.PreviousSimulationTick.HasRotation) || unit.View.ForbidRotation)
+		bool flag = !Mathf.Approximately(unit.Orientation, unit.Movable.PreviousOrientation) || unit.Movable.PreviousSimulationTick.HasRotation;
+		if (unit.View.HasOverriddenRotatablePart)
 		{
-			return;
+			if (flag)
+			{
+				if (!s_IsStartRotate && unit.View.gameObject != null && unit.Blueprint.VisualSettings?.TurettRotateStart != null)
+				{
+					SoundEventsManager.PostEvent(unit.Blueprint.VisualSettings.TurettRotateStart, unit.View.gameObject);
+					s_IsStartRotate = true;
+				}
+				if (Mathf.Approximately(unit.Orientation, unit.DesiredOrientation) && unit.View.gameObject != null && unit.Blueprint.VisualSettings?.TurettRotateStop != null)
+				{
+					SoundEventsManager.PostEvent(unit.Blueprint.VisualSettings.TurettRotateStop, unit.View.gameObject);
+					s_IsStartRotate = false;
+				}
+			}
 		}
-		if (!unit.View.OverrideRotatablePart)
+		else if (flag && !unit.View.ForbidRotation)
 		{
 			unit.View.transform.rotation = Quaternion.Euler(0f, unit.Movable.PreviousOrientation, 0f);
-		}
-		else
-		{
-			unit.View.OverrideRotatablePart.transform.rotation = Quaternion.Euler(0f, unit.Movable.PreviousOrientation, 0f);
-		}
-		if ((bool)unit.View.OverrideRotatablePart && !s_IsStartRotate)
-		{
-			if (unit.View.gameObject != null && unit.Blueprint.VisualSettings?.TurettRotateStart != null)
-			{
-				SoundEventsManager.PostEvent(unit.Blueprint.VisualSettings.TurettRotateStart, unit.View.gameObject);
-				s_IsStartRotate = true;
-			}
-			else
-			{
-				PFLog.TechArt.Warning("unit.View.gameObject or unit.Blueprint.VisualSettings.TurettRotateStart is null");
-			}
-		}
-		if ((bool)unit.View.OverrideRotatablePart && Mathf.Approximately(unit.View.OverrideRotatablePart.transform.rotation.eulerAngles.y, unit.DesiredOrientation))
-		{
-			if (unit.View.gameObject != null && unit.Blueprint.VisualSettings?.TurettRotateStop != null)
-			{
-				SoundEventsManager.PostEvent(unit.Blueprint.VisualSettings.TurettRotateStop, unit.View.gameObject);
-				s_IsStartRotate = false;
-			}
-			else
-			{
-				PFLog.TechArt.Warning("unit.View.gameObject or unit.Blueprint.VisualSettings.TurettRotateStop is null");
-			}
 		}
 	}
 

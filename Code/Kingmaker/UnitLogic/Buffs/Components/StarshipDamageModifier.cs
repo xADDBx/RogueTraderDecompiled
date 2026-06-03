@@ -12,6 +12,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UnitLogic.Buffs.Components;
 
+[Group("Starship")]
 [AllowMultipleComponents]
 [TypeId("f2dd09e9b92aa574097a32a41b7e140e")]
 public class StarshipDamageModifier : UnitBuffComponentDelegate, IInitiatorRulebookHandler<RuleStarshipPerformAttack>, IRulebookHandler<RuleStarshipPerformAttack>, ISubscriber, IInitiatorRulebookSubscriber, ITargetRulebookHandler<RuleStarshipPerformAttack>, ITargetRulebookSubscriber, IHashable

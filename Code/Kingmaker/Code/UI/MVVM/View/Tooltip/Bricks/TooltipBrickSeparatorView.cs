@@ -10,8 +10,21 @@ public class TooltipBrickSeparatorView : TooltipBaseBrickView<TooltipBrickSepara
 	[SerializeField]
 	private List<GameObject> m_SeparatorTypes = new List<GameObject>();
 
+	[SerializeField]
+	private GameObject m_AugmentHeaderSeparator;
+
 	protected override void BindViewImplementation()
 	{
+		if (base.ViewModel.IsAugmentHeader)
+		{
+			m_SeparatorTypes.ForEach(delegate(GameObject s)
+			{
+				s.SetActive(value: false);
+			});
+			m_AugmentHeaderSeparator.SetActive(value: true);
+			return;
+		}
+		m_AugmentHeaderSeparator.SetActive(value: false);
 		for (int i = 0; i < m_SeparatorTypes.Count; i++)
 		{
 			m_SeparatorTypes[i].SetActive(base.ViewModel.Type == (TooltipBrickElementType)i);

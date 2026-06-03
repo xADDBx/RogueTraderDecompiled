@@ -100,10 +100,15 @@ public class AbilityTargetsInPattern : AbilitySelectTarget, IAbilityAoEPatternPr
 					}
 				}
 			}
-			if (IsIgnoreLos || LosCalculations.GetWarhammerLos(context.Pattern.ApplicationNode.Vector3Position, context.Caster.SizeRect, mechanicEntity).CoverType != LosCalculations.CoverType.Invisible)
+			if (!IsIgnoreLos)
 			{
-				yield return new TargetWrapper(mechanicEntity);
+				CustomGridNodeBase applicationNode = context.Pattern.ApplicationNode;
+				if (LosCalculations.GetWarhammerLos(applicationNode.Walkable ? applicationNode.Vector3Position : caster.Position, context.Caster.SizeRect, mechanicEntity).CoverType == LosCalculations.CoverType.Invisible)
+				{
+					continue;
+				}
 			}
+			yield return new TargetWrapper(mechanicEntity);
 		}
 	}
 }

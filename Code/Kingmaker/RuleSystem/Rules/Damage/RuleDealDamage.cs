@@ -25,6 +25,8 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 
 	public bool IsCollisionDamage { get; set; }
 
+	public bool CantKillTarget { get; set; }
+
 	public bool IsDot { get; private set; }
 
 	public bool IsIgnorePeacefulZone { get; set; }
@@ -55,6 +57,9 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 
 	[CanBeNull]
 	public BlueprintAbilityAreaEffect SourceArea { get; set; }
+
+	[CanBeNull]
+	public RulePerformAttack SourceAttackRule { get; set; }
 
 	public bool DisableFxAndSound { get; set; }
 
@@ -121,7 +126,7 @@ public class RuleDealDamage : RulebookTargetEvent, IDamageHolderRule
 			});
 			return;
 		}
-		if (Result >= TargetHealth.HitPointsLeft && TrySaveFromDeath())
+		if (Result >= TargetHealth.HitPointsLeft && (TrySaveFromDeath() || CantKillTarget))
 		{
 			TargetHealth.SetHitPointsLeft(1);
 		}

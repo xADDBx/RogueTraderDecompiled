@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
@@ -13,8 +14,9 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components;
 
+[Serializable]
 [TypeId("66e032e5cf38801428940a1a0d14b946")]
-public class AbilityEffectRunAction : AbilityApplyEffect
+public class AbilityEffectRunAction : AbilityApplyEffect, IAbilityIsValidToCast
 {
 	public SavingThrowType SavingThrowType;
 
@@ -49,12 +51,18 @@ public class AbilityEffectRunAction : AbilityApplyEffect
 		};
 	}
 
-	public bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
+	public bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition, out AbilityData.UnavailabilityReasonType reason)
 	{
+		reason = AbilityData.UnavailabilityReasonType.None;
 		if (Actions.Actions == null || Actions.Actions.Length == 0)
 		{
 			return true;
 		}
-		return Actions.Actions.All((GameAction a) => !(a is ContextAction contextAction) || contextAction.IsValidToCast(target, caster, casterPosition));
+		bool num = Actions.Actions.All((GameAction a) => !(a is ContextAction contextAction) || contextAction.IsValidToCast(target, caster, casterPosition));
+		if (!num)
+		{
+			reason = AbilityData.UnavailabilityReasonType.TargetRestrictionNotPassed;
+		}
+		return num;
 	}
 }

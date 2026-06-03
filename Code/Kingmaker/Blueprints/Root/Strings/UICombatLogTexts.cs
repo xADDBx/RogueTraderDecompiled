@@ -75,4 +75,6 @@ public class UICombatLogTexts
 
 	[Space]
 	public LocalizedString Reflected;
+
+	public LocalizedString PsychicPhenomenaAvoid;
 }

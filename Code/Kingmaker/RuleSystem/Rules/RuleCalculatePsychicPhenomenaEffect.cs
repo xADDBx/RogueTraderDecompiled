@@ -6,6 +6,7 @@ using Kingmaker.Controllers.Enums;
 using Kingmaker.Designers.WarhammerSurfaceCombatPrototype;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.UnitLogic.Parts;
@@ -15,6 +16,42 @@ namespace Kingmaker.RuleSystem.Rules;
 
 public class RuleCalculatePsychicPhenomenaEffect : RulebookEvent
 {
+	public class PhenomenaAvoidResult
+	{
+		public readonly ValueModifiersManager ChanceModifiers = new ValueModifiersManager();
+
+		public RuleRollD100 D100 { get; private set; }
+
+		public int Chance => ChanceModifiers.Value;
+
+		public bool IsAvoided
+		{
+			get
+			{
+				if (D100 != null)
+				{
+					return D100.Result < ChanceModifiers.Value;
+				}
+				return false;
+			}
+		}
+
+		public bool Roll(MechanicEntity caster)
+		{
+			if (Chance <= 0)
+			{
+				return false;
+			}
+			D100 = new RuleRollD100(caster);
+			Rulebook.Trigger(D100);
+			return IsAvoided;
+		}
+	}
+
+	public readonly PhenomenaAvoidResult PsychicPhenomenaAvoid = new PhenomenaAvoidResult();
+
+	public readonly PhenomenaAvoidResult PerilsOfTheWarpAvoid = new PhenomenaAvoidResult();
+
 	private static BlueprintPsychicPhenomenaRoot PsychicPhenomenaRoot => BlueprintRoot.Instance.WarhammerRoot.PsychicPhenomenaRoot;
 
 	private AbilityExecutionContext AbilityContext { get; }
@@ -36,7 +73,7 @@ public class RuleCalculatePsychicPhenomenaEffect : RulebookEvent
 	}
 
 	public RuleCalculatePsychicPhenomenaEffect([NotNull] MechanicEntity initiator, [NotNull] AbilityExecutionContext abilityContext)
-		: base(initiator)
+		: this(initiator)
 	{
 		AbilityContext = abilityContext;
 	}
@@ -100,6 +137,15 @@ public class RuleCalculatePsychicPhenomenaEffect : RulebookEvent
 			{
 				IsPsychicPhenomena = true;
 			}
+		}
+		MechanicEntity caster = AbilityContext.Caster;
+		if (IsPsychicPhenomena && PsychicPhenomenaAvoid.Roll(caster))
+		{
+			IsPsychicPhenomena = false;
+		}
+		if (IsPerilsOfTheWarp && PerilsOfTheWarpAvoid.Roll(caster))
+		{
+			IsPerilsOfTheWarp = false;
 		}
 		if (IsPsychicPhenomena && PsychicPhenomenaRoot.PsychicPhenomena.Length != 0)
 		{

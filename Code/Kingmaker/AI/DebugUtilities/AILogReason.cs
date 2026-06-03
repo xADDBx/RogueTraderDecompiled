@@ -24,6 +24,7 @@ public class AILogReason : AILogObject
 			AILogReasonType.BetterPositionNotFound => "Better position not found", 
 			AILogReasonType.PositionForRetreatNotFound => "Position for retreat not found", 
 			AILogReasonType.AbilityToEscapeFromTreatNotFound => "No appropriate ability to escape from threat", 
+			AILogReasonType.AbilityForSquadTargetNotFound => "No appropriate ability to select squad target", 
 			AILogReasonType.NoNeedToMove => "No need to move", 
 			AILogReasonType.FoundPathTooShort => "Path must contain 2 or more nodes", 
 			AILogReasonType.NothingToDo => "Nothing to do, finish turn", 

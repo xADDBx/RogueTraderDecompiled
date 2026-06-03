@@ -14,7 +14,7 @@ public class TooltipBrickEntityHeaderConsoleView : TooltipBrickEntityHeaderView,
 
 	public IConsoleEntity GetConsoleEntity()
 	{
-		return new SimpleConsoleNavigationEntity(m_MultiButton);
+		return new SimpleConsoleNavigationEntity(m_MultiButton, base.ViewModel?.ItemTooltip);
 	}
 
 	bool IConsoleTooltipBrick.get_IsBinded()

@@ -6,6 +6,7 @@ using Kingmaker.Globalmap.View;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Pointer;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Logging;
 using UnityEngine;
@@ -118,7 +119,7 @@ public class SectorMapView : MonoBehaviour, ISectorMapScanHandler, ISubscriber<I
 		{
 			Vector3 position = HorizontalPointerLine.position;
 			Vector3 position2 = VerticalPointerLine.position;
-			Ray ray = Game.GetCamera().ScreenPointToRay(Game.Instance.CursorController.CursorPosition);
+			Ray ray = Game.GetCamera().ScreenPointToRay(CursorController.CursorPosition);
 			if (MapCollider.Raycast(ray, out var hitInfo, 1000f))
 			{
 				m_PointerWorldPosition = hitInfo.point;

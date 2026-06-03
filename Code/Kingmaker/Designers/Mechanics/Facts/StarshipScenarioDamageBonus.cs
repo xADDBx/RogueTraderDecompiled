@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
-[ComponentName("Reduce damage received from scenario events")]
+[ComponentName("Starship/Reduce damage received from scenario events")]
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintFact))]
 [AllowMultipleComponents]

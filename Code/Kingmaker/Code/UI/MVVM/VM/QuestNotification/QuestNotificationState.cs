@@ -5,6 +5,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.QuestNotification;
 [Flags]
 public enum QuestNotificationState
 {
+	Nothing = 0,
 	New = 1,
 	Completed = 2,
 	Failed = 4,

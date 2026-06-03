@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
@@ -99,11 +98,11 @@ public class OvertipEntityAnomalyVM : OvertipEntityVM, IAnomalyResearchHandler, 
 
 	private void SetPlanetIconsState()
 	{
-		List<QuestObjective> questsForAnomaly = UIUtilitySpaceQuests.GetQuestsForAnomaly(AnomalyView.Data.Blueprint);
+		List<QuestBookEntityEntry> questsForAnomaly = UIUtilitySpaceQuests.GetQuestsForAnomaly(AnomalyView.Data.Blueprint);
 		HasQuest.Value = questsForAnomaly != null && !questsForAnomaly.Empty();
 		if (HasQuest.Value)
 		{
-			List<string> list = questsForAnomaly?.Where((QuestObjective quest) => !string.IsNullOrWhiteSpace(quest.Blueprint.GetTitile())).Select((QuestObjective quest, int index) => $"{index + 1}. " + quest.Blueprint.GetTitile()).ToList();
+			List<string> list = questsForAnomaly?.Where((QuestBookEntityEntry quest) => !string.IsNullOrWhiteSpace(quest.Blueprint.GetTitile())).Select((QuestBookEntityEntry quest, int index) => $"{index + 1}. " + quest.Blueprint.GetTitile()).ToList();
 			if (list != null && list.Any())
 			{
 				QuestObjectiveName.Value = string.Join(Environment.NewLine, list);

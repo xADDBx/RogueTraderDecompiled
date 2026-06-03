@@ -313,4 +313,9 @@ public class UITooltips
 	public LocalizedString PetCanNotEquipOverseerSchismatic;
 
 	public LocalizedString AooDescriptionTooltip;
+
+	[Header("NecronTimer")]
+	public LocalizedString NecronTimerHeader;
+
+	public LocalizedString NecronTimerDescription;
 }

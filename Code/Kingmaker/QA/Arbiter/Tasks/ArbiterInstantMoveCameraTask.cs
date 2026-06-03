@@ -112,8 +112,7 @@ public class ArbiterInstantMoveCameraTask : ArbiterTask
 				yield return null;
 			}
 			CheatsTransfer.LocalTeleport(new Vector3(1000f, 1000f, 1000f));
-			yield return new WaitForCutsceneTask(this);
-			yield return new WaitForDialogTask(this);
+			yield return new WaitForDefaultModeTask(this);
 			Game.Instance.IsPaused = true;
 			ArbiterIntegration.DisableFow();
 			yield return new DelayTask(TimeSpan.FromSeconds(3.0), this);

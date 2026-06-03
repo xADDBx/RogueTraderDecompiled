@@ -14,6 +14,7 @@ using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.GameConst;
 using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using UnityEngine;
 
 namespace Kingmaker.UI.Legacy.MainMenuUI;
@@ -150,9 +151,16 @@ public class SplashScreenController : MonoBehaviour
 
 	private void Update()
 	{
-		if (m_Enabled && !m_FirstTime && Input.anyKey)
+		if (m_Enabled && !m_FirstTime)
 		{
-			Complete();
+			if (Input.anyKey)
+			{
+				Complete();
+			}
+			if (GamePad.Instance.Player != null && (GamePad.Instance.Player.GetAnyButton() || GamePad.Instance.Player.GetAnyButtonDown()))
+			{
+				Complete();
+			}
 		}
 	}
 

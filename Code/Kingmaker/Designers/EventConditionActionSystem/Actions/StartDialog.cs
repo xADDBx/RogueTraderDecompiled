@@ -14,7 +14,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/StartDialog")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("0e0c1fe99d7862d4492bcd1535939a9a")]

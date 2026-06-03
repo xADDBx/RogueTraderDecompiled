@@ -11,7 +11,6 @@ using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -207,9 +206,8 @@ public class WarhammerOverrideGroupCooldown : UnitBuffComponentDelegate, IInitia
 		PartUnitCombatState combatStateOptional = base.Owner.GetCombatStateOptional();
 		if (RefundActionPointCost && combatStateOptional != null)
 		{
-			AbilityData ability2 = new AbilityData(ability.Blueprint, base.Owner);
-			int result = Rulebook.Trigger(new RuleCalculateAbilityActionPointCost(base.Owner, ability2)).Result;
-			combatStateOptional.GainYellowPoint(result, base.Context);
+			int value = ability.CalculateActionPointCost();
+			combatStateOptional.GainYellowPoint(value, base.Context);
 		}
 		using (base.Context.GetDataScope(base.OwnerTargetWrapper))
 		{

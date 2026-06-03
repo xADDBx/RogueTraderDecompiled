@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.PubSubSystem.Core;
+using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.Utility.Attributes;
+using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -48,6 +51,7 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 
 	public ConditionsChecker EntryCondition;
 
+	[InfoBox("Что происходит, если EntryCondition не выполнена:\n• RemoveTrack — трек молча удаляется, сигнал на конечный гейт не отправляется. Использовать только когда несколько параллельных треков ведут в один OR-гейт (гейт сработает от другого трека). ВЫЗЫВАЕТ ДЕДЛОК с AND-гейтами!\n• FinishTrack — трек принудительно останавливается и отправляет сигнал на конечный гейт, как будто отработал до конца. Безопасен для AND-гейтов, но немедленно активирует OR-гейт (может оборвать параллельные треки).\n• SkipCommand — пропускается только эта команда, трек продолжает со следующей.")]
 	[ShowIf("HasConditions")]
 	public EntryFailResult OnFail;
 
@@ -69,6 +73,8 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 	}
 
 	public virtual bool IsContinuous => false;
+
+	protected virtual AbstractUnitEvaluator ControlledUnitEvaluator => null;
 
 	protected abstract void OnRun(CutscenePlayerData player, bool skipping);
 
@@ -106,15 +112,22 @@ public abstract class CommandBase : ElementsScriptableObject, IEvaluationErrorHa
 	}
 
 	[CanBeNull]
-	public virtual IAbstractUnitEntity GetControlledUnit()
+	public virtual IEnumerable<AbstractUnitEntity> GetControlledUnits()
 	{
-		return null;
+		return UnitsFromEvaluator(ControlledUnitEvaluator);
 	}
 
-	[CanBeNull]
-	public virtual IAbstractUnitEntity GetAnchorUnit()
+	protected static IEnumerable<AbstractUnitEntity> UnitsFromEvaluator(AbstractUnitEvaluator evaluator)
 	{
-		return GetControlledUnit();
+		if ((bool)evaluator && evaluator.TryGetValue(out var value))
+		{
+			yield return value;
+		}
+	}
+
+	public virtual IEnumerable<IEntity> GetAnchorEntities()
+	{
+		return GetControlledUnits();
 	}
 
 	public void Run(CutscenePlayerData player, bool skipping = false)

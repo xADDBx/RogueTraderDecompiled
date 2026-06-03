@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.View.Mechadendrites;
 using StateHasher.Core;
@@ -25,15 +24,11 @@ public class ActivateMechadendrites : UnitFactComponentDelegate, IHashable
 	protected override void OnDeactivate()
 	{
 		UnitPartMechadendrites optional = base.Owner.GetOptional<UnitPartMechadendrites>();
-		if (optional == null || base.Owner.View == null)
+		if (optional != null && !(base.Owner.View == null))
 		{
-			return;
+			optional.UnregisterAllMechadendrites();
+			base.Owner.View.Data?.Remove<UnitPartMechadendrites>();
 		}
-		foreach (KeyValuePair<MechadendritesType, MechadendriteSettings> mechadendrite in optional.Mechadendrites)
-		{
-			optional.UnregisterMechadendrite(mechadendrite.Value);
-		}
-		base.Owner.View.Data?.Remove<UnitPartMechadendrites>();
 	}
 
 	protected override void OnViewDidAttach()

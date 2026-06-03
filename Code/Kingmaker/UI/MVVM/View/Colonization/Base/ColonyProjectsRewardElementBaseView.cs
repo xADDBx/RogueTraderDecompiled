@@ -32,36 +32,36 @@ public class ColonyProjectsRewardElementBaseView : ViewBase<ColonyProjectsReward
 
 		public bool HasAcronym;
 
-		[ConditionalShow("HasAcronym")]
+		[ShowIf("HasAcronym")]
 		public TextMeshProUGUI Acronym;
 
 		public bool HasCount;
 
-		[ConditionalShow("HasCount")]
+		[ShowIf("HasCount")]
 		public TextMeshProUGUI CountText;
 
 		public bool HasApplyToAllColonies;
 
-		[ConditionalShow("HasApplyToAllColonies")]
+		[ShowIf("HasApplyToAllColonies")]
 		public GameObject ApplyToAllColoniesContainer;
 
-		[ConditionalShow("HasApplyToAllColonies")]
+		[ShowIf("HasApplyToAllColonies")]
 		public Image ApplyToAllColoniesIcon;
 
 		public bool HasArrows;
 
-		[ConditionalShow("HasArrows")]
+		[ShowIf("HasArrows")]
 		public GameObject ArrowsContainer;
 
-		[ConditionalShow("HasArrows")]
+		[ShowIf("HasArrows")]
 		public GameObject ArrowUp;
 
-		[ConditionalShow("HasArrows")]
+		[ShowIf("HasArrows")]
 		public GameObject ArrowDown;
 
 		public bool HasRefill;
 
-		[ConditionalShow("HasRefill")]
+		[ShowIf("HasRefill")]
 		public TextMeshProUGUI RefillText;
 	}
 

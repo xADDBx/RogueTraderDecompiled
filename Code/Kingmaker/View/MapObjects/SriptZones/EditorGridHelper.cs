@@ -100,7 +100,8 @@ public static class EditorGridHelper
 		if (data == null)
 		{
 			DestructibleEntityView destructibleEntityView = view as DestructibleEntityView;
-			if (destructibleEntityView == null)
+			AreaEffectView areaEffectView = view as AreaEffectView;
+			if (!destructibleEntityView && !areaEffectView)
 			{
 				return null;
 			}
@@ -109,15 +110,27 @@ public static class EditorGridHelper
 			{
 				return null;
 			}
-			Vector3 starterNode = GetStarterNode(destructibleEntityView, graph);
-			int num = Math.Max(0, Mathf.RoundToInt(destructibleEntityView.Bounds.size.x / GraphParamsMechanicsCache.GridCellSize) - 1);
-			int num2 = Math.Max(0, Mathf.RoundToInt(destructibleEntityView.Bounds.size.y / GraphParamsMechanicsCache.GridCellSize) - 1);
+			Vector3 vector = Vector3.zero;
+			Vector2 vector2 = Vector2.zero;
+			if ((bool)destructibleEntityView)
+			{
+				vector = GetStarterNode(destructibleEntityView.Bounds.min, destructibleEntityView.ViewTransform.position.y, graph);
+				vector2 = destructibleEntityView.Bounds.size;
+			}
+			else if ((bool)areaEffectView)
+			{
+				Vector3 vector3 = areaEffectView.Shape.Center();
+				vector = GetStarterNode(new Vector3(vector3.x, vector3.z), areaEffectView.ViewTransform.position.y, graph);
+				vector2 = Vector3.one;
+			}
+			int num = Math.Max(0, Mathf.RoundToInt(vector2.x / GraphParamsMechanicsCache.GridCellSize) - 1);
+			int num2 = Math.Max(0, Mathf.RoundToInt(vector2.y / GraphParamsMechanicsCache.GridCellSize) - 1);
 			List<Vector3> list = new List<Vector3>();
 			for (int j = 0; j < num + 1; j++)
 			{
 				for (int k = 0; k < num2 + 1; k++)
 				{
-					list.Add(new Vector3((float)j * 1.Cells().Meters + starterNode.x, starterNode.y, (float)k * 1.Cells().Meters + starterNode.z));
+					list.Add(new Vector3((float)j * 1.Cells().Meters + vector.x, vector.y, (float)k * 1.Cells().Meters + vector.z));
 				}
 			}
 			return list;
@@ -126,9 +139,8 @@ public static class EditorGridHelper
 			select i.Vector3Position;
 	}
 
-	private static Vector3 GetStarterNode(DestructibleEntityView destructibleEntity, CustomGridGraph graph)
+	private static Vector3 GetStarterNode(Vector3 center, float yPos, CustomGridGraph graph)
 	{
-		Vector2 min = destructibleEntity.Bounds.min;
-		return FindWorldPositionOfNode(ConvertPointToGridCoordinates(new Vector3(min.x, 0f, min.y), graph), graph, destructibleEntity.ViewTransform.position.y);
+		return FindWorldPositionOfNode(ConvertPointToGridCoordinates(new Vector3(center.x, 0f, center.y), graph), graph, yPos);
 	}
 }

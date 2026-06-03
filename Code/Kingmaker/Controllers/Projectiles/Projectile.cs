@@ -29,7 +29,7 @@ namespace Kingmaker.Controllers.Projectiles;
 
 public class Projectile : IInterpolatable
 {
-	private const int LayersMaskForHit = 134742273;
+	internal const int LayersMaskForHit = 134742273;
 
 	private const float UpShiftDistance = 5f;
 

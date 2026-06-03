@@ -104,7 +104,7 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			if (Quest.IsViewed)
 			{
-				return ActiveObjectives.All((QuestObjective x) => x.IsViewed);
+				return ActiveObjectives.All((QuestBookEntityEntry x) => x.IsViewed);
 			}
 			return false;
 		}
@@ -118,7 +118,7 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 
 	private static float FontSizeMultiplier => SettingsRoot.Accessiability.FontSizeMultiplier;
 
-	private IEnumerable<QuestObjective> ActiveObjectives => Quest.Objectives.Where((QuestObjective x) => x.IsActive && !x.Blueprint.IsHidden);
+	private IEnumerable<QuestBookEntityEntry> ActiveObjectives => Quest.Objectives.Where((QuestBookEntityEntry x) => x.IsActive && !x.Blueprint.IsHidden);
 
 	public JournalQuestVM(Quest quest, ReactiveProperty<Quest> selectedQuest = null, Action<Quest> selectQuestCallback = null)
 	{
@@ -151,12 +151,12 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			AddDisposable(selectedQuest.Subscribe(OnSelectedQuestChanged));
 		}
-		List<QuestObjective> list = Quest.Objectives.Where((QuestObjective o) => o.IsVisible && o.State != 0 && !o.Blueprint.IsAddendum && !o.Blueprint.IsErrandObjective && !o.Blueprint.IsHidden).ToList();
+		List<QuestBookEntityEntry> list = Quest.Objectives.Where((QuestBookEntityEntry o) => o.IsVisible && o.State != 0 && !o.Blueprint.IsAddendum && !o.Blueprint.IsErrandObjective && !o.Blueprint.IsHidden).ToList();
 		list.Sort(Comparison);
 		SectorMapObjectEntity currentStarSystem = Game.Instance.SectorMapController.CurrentStarSystem;
 		if (IsRumour && currentStarSystem != null)
 		{
-			foreach (QuestObjective item3 in list.Where((QuestObjective o) => o.State == QuestObjectiveState.Started))
+			foreach (QuestBookEntityEntry item3 in list.Where((QuestBookEntityEntry o) => o.State == QuestObjectiveState.Started))
 			{
 				RumourMapMarker component = item3.Blueprint.GetComponent<RumourMapMarker>();
 				HasDestinationImage = component?.SectorMapDestinationImage != null;
@@ -176,7 +176,7 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			return;
 		}
-		foreach (QuestObjective item4 in list.Where((QuestObjective o) => !o.Blueprint.IsHidden))
+		foreach (QuestBookEntityEntry item4 in list.Where((QuestBookEntityEntry o) => !o.Blueprint.IsHidden && !o.Blueprint.IsClue))
 		{
 			Objectives?.Add(new JournalQuestObjectiveVM(item4));
 		}
@@ -213,9 +213,13 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			GetOrCreateResource(allResource);
 		}
+		BlueprintResource blueprintResource = UIConfig.Instance.CombativityReference.Get();
 		foreach (KeyValuePair<BlueprintResource, int> resource in resources)
 		{
-			GetOrCreateResource(resource.Key).UpdateCount(resource.Value);
+			if (resource.Key != blueprintResource)
+			{
+				GetOrCreateResource(resource.Key).UpdateCount(resource.Value);
+			}
 		}
 		JournalOrderProfitFactorVM.UpdateCount(Game.Instance.Player.ProfitFactor.Total);
 		JournalOrderProfitFactorVM.UpdateArrowDirection();
@@ -276,6 +280,11 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 			}
 		}
 		ColonyResourceVM colonyResourceVM = new ColonyResourceVM(blueprintResource, 0);
+		BlueprintResource blueprintResource2 = UIConfig.Instance.CombativityReference.Get();
+		if (blueprintResource == blueprintResource2)
+		{
+			colonyResourceVM = new CombativityResourceVM(blueprintResource, 0);
+		}
 		AddDisposable(colonyResourceVM);
 		ResourcesVMs.Add(colonyResourceVM);
 		return colonyResourceVM;
@@ -296,10 +305,10 @@ public class JournalQuestVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		IsCompleted = quest.State == QuestState.Completed;
 		IsPostponed = quest.State == QuestState.Postponed;
 		IsFailed = quest.State == QuestState.Failed;
-		IsUpdated = quest.IsViewed && ActiveObjectives.Any((QuestObjective o) => !o.IsViewed) && quest.State != QuestState.Completed && quest.State != QuestState.Failed;
+		IsUpdated = quest.IsViewed && ActiveObjectives.Any((QuestBookEntityEntry o) => !o.IsViewed) && quest.State != QuestState.Completed && quest.State != QuestState.Failed;
 	}
 
-	private static int Comparison(QuestObjective o1, QuestObjective o2)
+	private static int Comparison(QuestBookEntityEntry o1, QuestBookEntityEntry o2)
 	{
 		if (o1.State == o2.State)
 		{

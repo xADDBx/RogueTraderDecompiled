@@ -12,7 +12,12 @@ public class RulebookRollCoverHit : LogThreadBase, IGameLogRuleHandler<RuleRollC
 		GameLogContext.TargetEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)evt.MaybeTarget;
 		if (evt.ResultIsHit)
 		{
-			AddMessage(LogThreadBase.Strings.WarhammerCoverHit.CreateCombatLogMessage(null, null, isPerformAttackMessage: false, evt.ConcreteInitiator));
+			CombatLogMessage combatLogMessage = LogThreadBase.Strings.WarhammerCoverHit.CreateCombatLogMessage(null, null, isPerformAttackMessage: false, evt.ConcreteInitiator);
+			if (evt.AttackRoll != null && evt.AttackRoll.IsOverpenetration)
+			{
+				combatLogMessage.ReplaceMessage(string.Concat(str1: (!evt.AttackRoll.IsRicochet) ? LogThreadBase.Strings.TooltipBrickStrings.TriggersOverpenetration.Text : LogThreadBase.Strings.TooltipBrickStrings.TriggersRicochet.Text, str0: combatLogMessage.Message));
+			}
+			AddMessage(combatLogMessage);
 		}
 	}
 }

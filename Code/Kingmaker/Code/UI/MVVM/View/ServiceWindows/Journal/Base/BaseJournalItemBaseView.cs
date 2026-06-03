@@ -20,6 +20,19 @@ public class BaseJournalItemBaseView : ViewBase<JournalQuestVM>
 	[SerializeField]
 	private RectTransform m_ContentRectTransform;
 
+	[Header("Dlc Icons")]
+	[SerializeField]
+	protected GameObject m_DlcBlock;
+
+	[SerializeField]
+	protected Image m_DlcImage;
+
+	[SerializeField]
+	protected GameObject m_DlcRedLine;
+
+	[SerializeField]
+	protected GameObject m_DlcYellowLine;
+
 	private bool m_IsInit;
 
 	private bool m_ContentRefreshing;

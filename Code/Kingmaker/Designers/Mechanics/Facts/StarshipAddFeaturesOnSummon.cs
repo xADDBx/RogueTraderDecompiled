@@ -12,6 +12,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [AllowMultipleComponents]
 [TypeId("6b4b35d97564c3a4f900256bf0200a09")]

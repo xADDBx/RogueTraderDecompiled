@@ -1,4 +1,5 @@
 using Cinemachine;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Overtips;
 using Kingmaker.UI.Common;
 using Owlcat.Runtime.Core.Utility;
@@ -57,7 +58,7 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 		RectTransform ownRectTransform = m_OwnRectTransform;
 		Vector2 anchorMin = (m_OwnRectTransform.anchorMax = Vector2.zero);
 		ownRectTransform.anchorMin = anchorMin;
-		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			InternalUpdate();
 		}));
@@ -88,6 +89,11 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 		if (base.ViewModel == null)
 		{
 			PFLog.UI.Error(base.gameObject.name + ": ViewModel == null, but View are still not Destroyed");
+			return;
+		}
+		if (CutsceneUIState.IsCutsceneActive.Value)
+		{
+			SetCanvasGroupVisible(isVisible: false);
 			return;
 		}
 		if (!CheckVisibility)

@@ -44,6 +44,17 @@ public class AsyncTaskNodeCreateMoveVariants : AsyncTaskNode
 		this.maxMove = maxMove;
 	}
 
+	public AsyncTaskNodeCreateMoveVariants(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
+	public AsyncTaskNodeCreateMoveVariants(string debugDescription, int maxMove)
+		: base(debugDescription)
+	{
+		this.maxMove = maxMove;
+	}
+
 	protected override async Task<Status> Process(Blackboard blackboard)
 	{
 		DecisionContext decisionContext = blackboard.DecisionContext;
@@ -55,7 +66,7 @@ public class AsyncTaskNodeCreateMoveVariants : AsyncTaskNode
 		return Status.Success;
 	}
 
-	private int GetMaxMove(DecisionContext context)
+	public int GetMaxMove(DecisionContext context)
 	{
 		if (maxMove.HasValue)
 		{

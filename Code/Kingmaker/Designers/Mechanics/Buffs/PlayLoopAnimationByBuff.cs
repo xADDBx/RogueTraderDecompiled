@@ -1,7 +1,5 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.EntitySystem;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -22,68 +20,45 @@ namespace Kingmaker.Designers.Mechanics.Buffs;
 [TypeId("ccdeb99837c64fb79ebc26eb36f2f47b")]
 public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable
 {
-	private class LoopComponentRuntime : UnitBuffComponentRuntime, IHashable
-	{
-		public UnitAnimationManager AnimationManager { get; set; }
-
-		public override Hash128 GetHash128()
-		{
-			Hash128 result = default(Hash128);
-			Hash128 val = base.GetHash128();
-			result.Append(ref val);
-			return result;
-		}
-	}
-
 	public WarhammerBuffLoopAction BuffLoopAction;
+
+	[Tooltip("Анимация, которая проигрывается один раз при снятии баффа (не связана с loop-анимацией)")]
+	[SerializeField]
+	private UnitAnimationAction m_DeactivationAction;
 
 	[SerializeField]
 	private BlueprintBuffReference m_SuppressionBuff;
 
-	private static LoopComponentRuntime CurrentRuntime => (LoopComponentRuntime)ComponentEventContext.CurrentRuntime;
-
 	public BlueprintBuff SuppressionBuff => m_SuppressionBuff?.Get();
-
-	public override EntityFactComponent CreateRuntimeFactComponent()
-	{
-		return new LoopComponentRuntime();
-	}
 
 	protected override void OnActivateOrPostLoad()
 	{
-		LoopComponentRuntime currentRuntime = CurrentRuntime;
-		BaseUnitEntity owner = base.Owner;
-		currentRuntime.AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
-		TrySetAction();
+		TrySetAction(ObjectExtensions.Or(base.Owner.View, null)?.AnimationManager);
 		base.OnActivateOrPostLoad();
 	}
 
 	protected override void OnDeactivate()
 	{
-		TryResetAction();
-		CurrentRuntime.AnimationManager = null;
+		UnitAnimationManager animationManager = ObjectExtensions.Or(base.Owner.View, null)?.AnimationManager;
+		TryResetAction(animationManager);
+		TryPlayDeactivationAction(animationManager);
 		base.OnDeactivate();
 	}
 
 	protected override void OnViewDidAttach()
 	{
-		LoopComponentRuntime currentRuntime = CurrentRuntime;
-		BaseUnitEntity owner = base.Owner;
-		currentRuntime.AnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
-		TrySetAction();
+		TrySetAction(ObjectExtensions.Or(base.Owner.View, null)?.AnimationManager);
 		base.OnViewDidAttach();
 	}
 
 	protected override void OnViewWillDetach()
 	{
-		TryResetAction();
-		CurrentRuntime.AnimationManager = null;
+		TryResetAction(ObjectExtensions.Or(base.Owner.View, null)?.AnimationManager);
 		base.OnViewDidAttach();
 	}
 
-	public void TrySetAction(bool skipEnter = false)
+	public void TrySetAction(UnitAnimationManager animationManager, bool skipEnter = false)
 	{
-		UnitAnimationManager animationManager = CurrentRuntime.AnimationManager;
 		if (animationManager != null)
 		{
 			UnitAnimationActionHandle buffLoopAction = animationManager.BuffLoopAction;
@@ -98,26 +73,33 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandSt
 		}
 	}
 
-	public void TryRequeueAction(bool skipEnter = false)
+	public void TryRequeueAction(UnitAnimationManager animationManager, bool skipEnter = false)
 	{
 		BuffLoopAction.ExecutionMode = ExecutionMode.Sequenced;
-		TrySetAction(skipEnter);
+		TrySetAction(animationManager, skipEnter);
 	}
 
-	public void TryResetAction()
+	public void TryResetAction(UnitAnimationManager animationManager)
 	{
-		BaseUnitEntity owner = base.Owner;
-		UnitAnimationManager unitAnimationManager = ((owner == null) ? null : ObjectExtensions.Or(owner.View, null)?.AnimationManager);
-		if (unitAnimationManager != null && unitAnimationManager.BuffLoopAction != null)
+		if (animationManager != null && animationManager.BuffLoopAction != null)
 		{
-			if (unitAnimationManager.BuffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction)
+			if (animationManager.BuffLoopAction.Action is WarhammerBuffLoopAction warhammerBuffLoopAction)
 			{
-				warhammerBuffLoopAction.SwitchToExit(unitAnimationManager.BuffLoopAction);
+				warhammerBuffLoopAction.SwitchToExit(animationManager.BuffLoopAction);
 			}
 			else
 			{
-				unitAnimationManager.BuffLoopAction.Release();
+				animationManager.BuffLoopAction.Release();
 			}
+		}
+	}
+
+	private void TryPlayDeactivationAction(UnitAnimationManager animationManager)
+	{
+		if (!(animationManager == null) && !(m_DeactivationAction == null))
+		{
+			AnimationActionHandle handle = animationManager.CreateHandle(m_DeactivationAction);
+			animationManager.Execute(handle);
 		}
 	}
 

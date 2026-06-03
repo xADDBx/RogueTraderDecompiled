@@ -20,6 +20,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[Group("Starship")]
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("f332e1a348e0aab40924f7a450d7c484")]

@@ -6,6 +6,7 @@ using Kingmaker.QA;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
+using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
@@ -44,6 +45,14 @@ public class RulePerformAbility : RulebookEvent
 		Spell = spell;
 		SpellTarget = target;
 		Context = spell.CreateExecutionContext(target);
+	}
+
+	public RulePerformAbility([NotNull] AbilityData spell, [NotNull] TargetWrapper target, Vector3 casterPosition)
+		: base(spell.Caster)
+	{
+		Spell = spell;
+		SpellTarget = target;
+		Context = spell.CreateExecutionContext(target, casterPosition);
 	}
 
 	public override IMechanicEntity GetRuleTarget()

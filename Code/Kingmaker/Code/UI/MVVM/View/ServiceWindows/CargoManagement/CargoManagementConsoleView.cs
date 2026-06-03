@@ -179,7 +179,7 @@ public class CargoManagementConsoleView : CargoManagementBaseView<InventoryStash
 		}
 		else
 			_ = 0;
-		bool value = entity != null && entity is IItemSlotView itemSlotView && (itemSlotView.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault();
+		bool value = entity is IItemSlotView { SlotVM: { HasItem: not false } } itemSlotView && (itemSlotView.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault();
 		m_HasContextMenu.Value = value;
 		m_CanSendToCargo.Value = itemSlotVM != null && itemSlotVM.CanTransferToCargo && itemSlotVM.IsInStash;
 		m_CanSendToInventory.Value = itemSlotVM != null && itemSlotVM.CanTransferToInventory && !itemSlotVM.IsInStash;

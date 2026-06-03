@@ -8,5 +8,6 @@ public enum RecoilStrength
 	Plasma,
 	LinearFlamer,
 	CornerFlamer,
-	Laser
+	Laser,
+	MeleeAOE
 }

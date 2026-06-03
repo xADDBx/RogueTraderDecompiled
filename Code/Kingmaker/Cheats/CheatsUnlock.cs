@@ -29,7 +29,7 @@ public class CheatsUnlock
 {
 	private static Quest s_Quest;
 
-	private static QuestObjective s_QuestObjective;
+	private static QuestBookEntityEntry s_QuestObjective;
 
 	public static void RegisterCommands(KeyboardAccess keyboard)
 	{
@@ -174,7 +174,7 @@ public class CheatsUnlock
 			UIUtility.SendWarning("Quest is null");
 			return;
 		}
-		List<QuestObjective> list = new List<QuestObjective>(s_Quest.Objectives);
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>(s_Quest.Objectives);
 		int i;
 		for (i = 0; i < list.Count; i++)
 		{
@@ -198,7 +198,7 @@ public class CheatsUnlock
 			UIUtility.SendWarning("Quest is null");
 			return;
 		}
-		List<QuestObjective> list = new List<QuestObjective>(s_Quest.Objectives);
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>(s_Quest.Objectives);
 		int i;
 		for (i = 0; i < list.Count; i++)
 		{
@@ -330,14 +330,17 @@ public class CheatsUnlock
 	{
 		foreach (Quest quest in Game.Instance.Player.QuestBook.Quests)
 		{
-			foreach (QuestObjective objective in quest.Objectives)
+			foreach (QuestBookEntityEntry objective in quest.Objectives)
 			{
-				BlueprintQuestObjective blueprint = objective.Blueprint;
-				if (targetObjective == blueprint)
+				if (!objective.IsClue)
 				{
-					Game.Instance.Player.QuestBook.CompleteObjective(blueprint);
-					PFLog.SmartConsole.Log("Objective '" + Utilities.GetBlueprintPath(blueprint) + " completed");
-					return;
+					BlueprintQuestObjective blueprint = objective.Blueprint;
+					if (targetObjective == blueprint)
+					{
+						Game.Instance.Player.QuestBook.CompleteObjective(blueprint);
+						PFLog.SmartConsole.Log("Objective '" + Utilities.GetBlueprintPath(blueprint) + " completed");
+						return;
+					}
 				}
 			}
 		}
@@ -349,14 +352,17 @@ public class CheatsUnlock
 		string paramString = Utilities.GetParamString(parameters, 1, "Can't parse objective name from given parameters");
 		foreach (Quest quest in Game.Instance.Player.QuestBook.Quests)
 		{
-			foreach (QuestObjective objective in quest.Objectives)
+			foreach (QuestBookEntityEntry objective in quest.Objectives)
 			{
-				BlueprintQuestObjective blueprint = objective.Blueprint;
-				if (Utilities.GetBlueprintName(blueprint).Equals(paramString) || Utilities.GetBlueprintPath(blueprint).Contains(paramString) || blueprint.AssetGuid.Equals(paramString))
+				if (!objective.IsClue)
 				{
-					Game.Instance.Player.QuestBook.FailObjective(objective.Blueprint);
-					PFLog.SmartConsole.Log("Objective '" + Utilities.GetBlueprintPath(objective.Blueprint) + "' failed");
-					return;
+					BlueprintQuestObjective blueprint = objective.Blueprint;
+					if (Utilities.GetBlueprintName(blueprint).Equals(paramString) || Utilities.GetBlueprintPath(blueprint).Contains(paramString) || blueprint.AssetGuid.Equals(paramString))
+					{
+						Game.Instance.Player.QuestBook.FailObjective(objective.Blueprint);
+						PFLog.SmartConsole.Log("Objective '" + Utilities.GetBlueprintPath(objective.Blueprint) + "' failed");
+						return;
+					}
 				}
 			}
 		}
@@ -482,6 +488,20 @@ public class CheatsUnlock
 		{
 			Game.Instance.Player.DetachPartyMember(baseUnitEntity);
 		}
+	}
+
+	[Cheat(Name = "change_party", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void ChangeParty()
+	{
+		EventBus.RaiseEvent(delegate(IGroupChangerHandler h)
+		{
+			h.HandleCall(delegate
+			{
+				Game.Instance.Player.FixPartyAfterChange();
+			}, delegate
+			{
+			}, Game.Instance.LoadedAreaState.Settings.CapitalPartyMode, sameFinishActions: false, canCancel: true, showRemoteCompanions: true);
+		});
 	}
 
 	private static void ListAllQuest(string parameters)

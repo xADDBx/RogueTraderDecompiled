@@ -9,6 +9,7 @@ using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Internal;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace Kingmaker.GameCommands;
 
@@ -61,15 +62,20 @@ public sealed class FinishRespecGameCommand : GameCommand, IMemoryPackable<Finis
 	protected override void ExecuteInternal()
 	{
 		Player player = Game.Instance.Player;
-		PartUnitProgression progression = m_RespecEntity.Entity.Progression;
+		BaseUnitEntity entity = m_RespecEntity.Entity;
+		PartUnitProgression progression = entity.Progression;
+		Debug.Log("[respec] Starting respec for " + entity.Name);
 		progression.Respec();
+		entity.Body.ResetMechadendritesFromBlueprint();
+		entity.View?.RebuildMechadendritesEquipment();
+		Debug.Log("[respec] Finished respec");
 		if (!m_ForFree)
 		{
 			player.ProfitFactor.AddModifier(-progression.GetRespecCost(), ProfitFactorModifierType.Respec);
 			progression.CountRespecIn();
 		}
 		Game.Instance.AdvanceGameTime(1.Days());
-		EventBus.RaiseEvent((IBaseUnitEntity)m_RespecEntity.Entity, (Action<IRespecHandler>)delegate(IRespecHandler h)
+		EventBus.RaiseEvent((IBaseUnitEntity)entity, (Action<IRespecHandler>)delegate(IRespecHandler h)
 		{
 			h.HandleRespecFinished();
 		}, isCheckRuntime: true);

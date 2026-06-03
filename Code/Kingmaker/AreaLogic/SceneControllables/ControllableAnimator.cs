@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.Networking;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.CodeTimer;
 using Owlcat.Runtime.Core.Logging;
@@ -63,6 +64,14 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 
 	private bool m_NeedUpdate;
 
+	[SerializeField]
+	[Tooltip("Используется если этот контроллабл двигает геометрию, на которой стоят юниты (лифт, движущаяся платформа). На загрузке сейва navmesh-снэп юнитов будет отложен до тех пор, пока аниматор не доедет до сохранённого состояния(т.е его стейт аниматора совпадает со стейтом на момент сохранения).")]
+	private bool m_WaitForStateOnLoad;
+
+	private bool m_HasSettledAfterLoad = true;
+
+	private int m_SettleStartTick;
+
 	private bool m_ObsoleteEventsExist => ActionsOnEvent.Count > 0;
 
 	protected override void Awake()
@@ -102,9 +111,25 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 		}
 	}
 
+	public bool TryArmLoadSettleGate()
+	{
+		if (!m_WaitForStateOnLoad)
+		{
+			return false;
+		}
+		m_HasSettledAfterLoad = false;
+		m_SettleStartTick = Game.Instance.RealTimeController.CurrentNetworkTick;
+		return true;
+	}
+
 	protected override void OnDestroy()
 	{
 		m_Initialized = false;
+		if (m_WaitForStateOnLoad && !m_HasSettledAfterLoad)
+		{
+			m_HasSettledAfterLoad = true;
+			Game.Instance?.SceneControllables.NotifySettled(this);
+		}
 		UnscheduleUpdate();
 		base.OnDestroy();
 	}
@@ -150,9 +175,16 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 		{
 			if (m_Enabled)
 			{
-				for (int i = 0; i < m_SubTicksRemains; i++)
+				if (NetworkingManager.IsActive)
 				{
-					m_Animator.Update(m_SubTickDeltaTime);
+					for (int i = 0; i < m_SubTicksRemains; i++)
+					{
+						m_Animator.Update(m_SubTickDeltaTime);
+					}
+				}
+				else
+				{
+					m_Animator.Update(m_SubTickDeltaTime * (float)m_SubTicksRemains);
 				}
 				HandleEvents();
 			}
@@ -160,11 +192,49 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 			m_Enabled = base.gameObject.activeInHierarchy;
 			if (!m_Enabled)
 			{
+				if (m_WaitForStateOnLoad && !m_HasSettledAfterLoad)
+				{
+					m_HasSettledAfterLoad = true;
+					Game.Instance?.SceneControllables.NotifySettled(this);
+				}
 				Clear();
 				return;
 			}
+			if (NetworkingManager.IsActive)
+			{
+				m_Animator.Update(0f);
+			}
+			if (m_WaitForStateOnLoad)
+			{
+				HandleSettleAndHashUpdate();
+			}
 			m_SubTickDeltaTime = delta / 16f;
 			m_SubTicksRemains = 16;
+		}
+	}
+
+	private void HandleSettleAndHashUpdate()
+	{
+		int fullPathHash = m_Animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+		if (!m_HasSettledAfterLoad)
+		{
+			int? num = GetState()?.SavedAnimatorStateHash;
+			bool num2 = !num.HasValue;
+			bool flag = !num2 && num.Value == fullPathHash;
+			bool flag2 = Game.Instance.RealTimeController.CurrentNetworkTick - m_SettleStartTick >= 40;
+			if (num2 || flag || flag2)
+			{
+				m_HasSettledAfterLoad = true;
+				if (flag2 && !flag)
+				{
+					PFLog.Default.Error("ControllableAnimator '" + base.gameObject.name + "' did not reach saved animator state " + $"within {40} network ticks " + $"(saved={num} current={fullPathHash}). Animator graph may have changed " + "or saved state is unreachable. Releasing settle gate by timeout.");
+				}
+				Game.Instance?.SceneControllables.NotifySettled(this);
+			}
+		}
+		else
+		{
+			Game.Instance?.SceneControllables.UpdateSavedHash(UniqueId, fullPathHash);
 		}
 	}
 
@@ -191,15 +261,23 @@ public class ControllableAnimator : ControllableComponent, IUpdatable, IInterpol
 			int num = 16 - m_SubTicksRemains;
 			int value = Mathf.RoundToInt(16f * progress) - num;
 			value = Mathf.Clamp(value, 0, m_SubTicksRemains);
-			if (value != 0)
+			if (value == 0)
 			{
-				m_SubTicksRemains -= value;
+				return;
+			}
+			m_SubTicksRemains -= value;
+			if (NetworkingManager.IsActive)
+			{
 				for (int i = 0; i < value; i++)
 				{
 					m_Animator.Update(m_SubTickDeltaTime);
-					m_NeedUpdate = true;
 				}
 			}
+			else
+			{
+				m_Animator.Update(m_SubTickDeltaTime * (float)value);
+			}
+			m_NeedUpdate = true;
 		}
 	}
 

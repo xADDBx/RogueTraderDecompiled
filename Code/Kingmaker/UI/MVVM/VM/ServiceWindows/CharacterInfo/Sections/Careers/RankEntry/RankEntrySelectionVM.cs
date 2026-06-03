@@ -24,6 +24,7 @@ using Kingmaker.UnitLogic.Progression.Features.Advancements;
 using Kingmaker.UnitLogic.Progression.Paths;
 using Kingmaker.UnitLogic.Progression.Prerequisites;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
 using UniRx;
@@ -74,6 +75,23 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		FeatureGroup.SecondCareerTalent,
 		FeatureGroup.FirstOrSecondCareerAbility,
 		FeatureGroup.FirstOrSecondCareerTalent
+	};
+
+	public readonly ReactiveProperty<FeatureGroupingMode> GroupingMode = new ReactiveProperty<FeatureGroupingMode>(FeatureGroupingMode.BySource);
+
+	private readonly Dictionary<FeaturesFilter.FeatureFilterType, bool> m_GroupExpansionState = new Dictionary<FeaturesFilter.FeatureFilterType, bool>();
+
+	private readonly Dictionary<string, bool> m_SourceGroupExpansionState = new Dictionary<string, bool>();
+
+	private static readonly FeaturesFilter.FeatureFilterType[] DropdownGroupOrder = new FeaturesFilter.FeatureFilterType[7]
+	{
+		FeaturesFilter.FeatureFilterType.ArchetypeFilter,
+		FeaturesFilter.FeatureFilterType.OriginFilter,
+		FeaturesFilter.FeatureFilterType.WarpFilter,
+		FeaturesFilter.FeatureFilterType.OffenseFilter,
+		FeaturesFilter.FeatureFilterType.DefenseFilter,
+		FeaturesFilter.FeatureFilterType.SupportFilter,
+		FeaturesFilter.FeatureFilterType.UniversalFilter
 	};
 
 	public CharInfoFeatureVM UltimateFeature { get; }
@@ -152,6 +170,23 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	public CareerPathVM CareerPathVM => m_CareerPathVM;
 
+	public bool IsShipContext
+	{
+		get
+		{
+			if (FeatureGroup != FeatureGroup.ShipUpgrade)
+			{
+				CareerPathVM careerPathVM = CareerPathVM;
+				if (careerPathVM != null && careerPathVM.Unit != null)
+				{
+					return CareerPathVM.Unit.IsPlayerShip();
+				}
+				return false;
+			}
+			return true;
+		}
+	}
+
 	public int EntryRank => Rank;
 
 	public BoolReactiveProperty HasUnavailableFeatures { get; } = new BoolReactiveProperty();
@@ -172,10 +207,17 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		if (RankEntryUtils.HasFilter(FeatureGroup))
 		{
 			FeaturesFilterVM = new FeaturesFilterVM();
-			FeaturesFilterVM.CurrentFilter.Subscribe(delegate(FeaturesFilter.FeatureFilterType value)
+			FeaturesFilterVM.CurrentFilter.Subscribe(delegate
 			{
-				HandleFilterChange(value);
+				HandleFilterChange();
 			});
+			if (!IsShipContext)
+			{
+				GroupingMode.Subscribe(delegate
+				{
+					HandleFilterChange();
+				});
+			}
 		}
 		else
 		{
@@ -215,6 +257,13 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			{
 				e.SetHasFavorites(RankEntryUtils.HasFilter(FeatureGroup));
 			});
+			list2.ForEach(delegate(BaseRankEntryFeatureVM e)
+			{
+				e.OnFavoritesStateChanged = delegate
+				{
+					HandleFavoriteStateChanged(e);
+				};
+			});
 			list.Add(new RankEntryFeatureGroupVM(list2, owner));
 		}
 		TryAddEmptyAscensionGroup(list);
@@ -248,7 +297,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			}
 			return (Key: f.Key, $"{arg}_{num}");
 		}).ToDictionary(((RankEntrySelectionFeatureVM Key, string) t) => t.Key, ((RankEntrySelectionFeatureVM Key, string) t) => t.Item2);
-		return features.OrderBy((RankEntrySelectionFeatureVM f) => (!f.IsRecommended) ? 1 : (-1)).ThenBy(NameSort).Cast<BaseRankEntryFeatureVM>()
+		return features.OrderBy((RankEntrySelectionFeatureVM f) => (!f.IsFavorite) ? (f.IsRecommended ? 1 : 2) : 0).ThenBy(NameSort).Cast<BaseRankEntryFeatureVM>()
 			.ToList();
 		string NameSort(RankEntrySelectionFeatureVM rankEntry)
 		{
@@ -398,7 +447,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 	{
 		m_ShowGroupList = CreateGroups();
 		m_SelectAction?.Invoke(this);
-		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
+		HandleFilterChange();
 	}
 
 	public void ClearSelectedFeature()
@@ -476,45 +525,311 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 		return rankEntrySelectionFeatureVM;
 	}
 
-	private void HandleFilterChange(FeaturesFilter.FeatureFilterType? filter)
+	private void HandleFavoriteStateChanged(BaseRankEntryFeatureVM featureVM)
+	{
+		if (IsShipContext)
+		{
+			HandleFilterChange();
+			return;
+		}
+		AvailableTalentsDropDownVM availableTalentsDropDownVM = FindDropdownHeaderForFeature(featureVM);
+		if (availableTalentsDropDownVM == null || !availableTalentsDropDownVM.IsExpanded.Value)
+		{
+			HandleFilterChange();
+		}
+	}
+
+	private AvailableTalentsDropDownVM FindDropdownHeaderForFeature(BaseRankEntryFeatureVM featureVM)
+	{
+		return FilteredGroupList.OfType<AvailableTalentsDropDownVM>().FirstOrDefault((AvailableTalentsDropDownVM h) => h.GroupedFeatures?.Contains(featureVM) ?? false);
+	}
+
+	private void HandleFilterChange()
 	{
 		if (m_ShowGroupList == null)
 		{
 			m_ShowGroupList = CreateGroups();
 		}
-		if (filter == FeaturesFilter.FeatureFilterType.FavoritesFilter)
+		if (IsShipContext)
 		{
-			m_ShowGroupList = CreateGroups();
+			RunLegacyFilterPipeline(FeaturesFilterVM?.CurrentFilter.Value);
+			return;
 		}
 		bool flag = false;
-		bool flag2 = false;
-		FilteredGroupList.Clear();
+		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
 		foreach (RankEntryFeatureGroupVM showGroup in m_ShowGroupList)
 		{
-			List<VirtualListElementVMBase> filtered = showGroup.GetFiltered(filter);
-			flag2 |= filtered.Any(delegate(VirtualListElementVMBase f)
+			List<VirtualListElementVMBase> all = showGroup.GetAll();
+			flag |= all.Any(delegate(VirtualListElementVMBase f)
 			{
 				BaseRankEntryFeatureVM obj2 = f as BaseRankEntryFeatureVM;
 				return obj2 != null && obj2.FeatureState.Value == RankFeatureState.NotSelectable;
 			});
 			if (!Game.Instance.Player.UISettings.ShowUnavailableFeatures)
 			{
-				filtered.RemoveAll(delegate(VirtualListElementVMBase f)
+				all.RemoveAll(delegate(VirtualListElementVMBase f)
 				{
 					BaseRankEntryFeatureVM obj = f as BaseRankEntryFeatureVM;
 					return obj != null && obj.FeatureState.Value == RankFeatureState.NotSelectable;
 				});
 			}
-			filtered.RemoveAll((VirtualListElementVMBase f) => f is BaseRankEntryFeatureVM baseRankEntryFeatureVM && baseRankEntryFeatureVM.FeatureState.Value == RankFeatureState.NotSelectable && baseRankEntryFeatureVM.Feature.HideNotAvailibleInUI && !((RankEntrySelectionFeatureVM)f).UnitHasFeature);
-			if (flag && RankEntryUtils.HasFilter(FeatureGroup) && filtered.Any())
+			all.RemoveAll((VirtualListElementVMBase f) => f is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM && rankEntrySelectionFeatureVM.FeatureState.Value == RankFeatureState.NotSelectable && rankEntrySelectionFeatureVM.Feature.HideNotAvailibleInUI && rankEntrySelectionFeatureVM.UnitCanTakeFeature);
+			list.AddRange(all);
+		}
+		FilteredGroupList.Clear();
+		if (RankEntryUtils.HasFilter(FeatureGroup))
+		{
+			if (GroupingMode.Value == FeatureGroupingMode.BySource)
+			{
+				GroupFeaturesBySource(list);
+			}
+			else
+			{
+				GroupFeaturesByFilterType(list);
+			}
+		}
+		else
+		{
+			FilteredGroupList.AddRange(list);
+		}
+		OnFilterChange?.Execute();
+		HasUnavailableFeatures.Value = flag;
+	}
+
+	private void RunLegacyFilterPipeline(FeaturesFilter.FeatureFilterType? filter)
+	{
+		if (filter == FeaturesFilter.FeatureFilterType.FavoritesFilter)
+		{
+			m_ShowGroupList = CreateGroups();
+		}
+		bool flag = false;
+		bool flag2 = false;
+		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
+		List<VirtualListElementVMBase> list2 = new List<VirtualListElementVMBase>();
+		FilteredGroupList.Clear();
+		foreach (RankEntryFeatureGroupVM showGroup in m_ShowGroupList)
+		{
+			List<VirtualListElementVMBase> filtered = showGroup.GetFiltered(filter);
+			flag2 |= filtered.Any(delegate(VirtualListElementVMBase f)
+			{
+				BaseRankEntryFeatureVM obj3 = f as BaseRankEntryFeatureVM;
+				return obj3 != null && obj3.FeatureState.Value == RankFeatureState.NotSelectable;
+			});
+			filtered.RemoveAll((VirtualListElementVMBase f) => f is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM3 && rankEntrySelectionFeatureVM3.FeatureState.Value == RankFeatureState.NotSelectable && rankEntrySelectionFeatureVM3.Feature.HideNotAvailibleInUI && rankEntrySelectionFeatureVM3.UnitCanTakeFeature);
+			list.AddRange(filtered.Where((VirtualListElementVMBase f) => f is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM2 && !rankEntrySelectionFeatureVM2.UnitCanTakeFeature));
+			filtered.RemoveAll((VirtualListElementVMBase f) => f is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM && !rankEntrySelectionFeatureVM.UnitCanTakeFeature);
+			if (Game.Instance.Player.UISettings.ShowUnavailableFeatures)
+			{
+				list2.AddRange(filtered.Where(delegate(VirtualListElementVMBase f)
+				{
+					BaseRankEntryFeatureVM obj2 = f as BaseRankEntryFeatureVM;
+					return obj2 != null && obj2.FeatureState.Value == RankFeatureState.NotSelectable;
+				}));
+			}
+			filtered.RemoveAll(delegate(VirtualListElementVMBase f)
+			{
+				BaseRankEntryFeatureVM obj = f as BaseRankEntryFeatureVM;
+				return obj != null && obj.FeatureState.Value == RankFeatureState.NotSelectable;
+			});
+			if (flag && filtered.Any())
 			{
 				FilteredGroupList.Add(AddDisposableAndReturn(new SeparatorElementVM()));
 			}
 			FilteredGroupList.AddRange(filtered);
 			flag = filtered.Any();
 		}
+		if (list.Count > 0)
+		{
+			if (FilteredGroupList.Count > 0)
+			{
+				FilteredGroupList.Add(AddDisposableAndReturn(new SeparatorElementVM()));
+			}
+			FilteredGroupList.AddRange(list);
+		}
+		if (list2.Count > 0)
+		{
+			FilteredGroupList.AddRange(list2);
+		}
 		OnFilterChange?.Execute();
 		HasUnavailableFeatures.Value = flag2;
+	}
+
+	private static int GetFeatureSortPriority(VirtualListElementVMBase item)
+	{
+		if (!(item is BaseRankEntryFeatureVM baseRankEntryFeatureVM))
+		{
+			return 0;
+		}
+		if (baseRankEntryFeatureVM.FeatureState.Value != RankFeatureState.NotSelectable)
+		{
+			return 0;
+		}
+		if (item is RankEntrySelectionFeatureVM { UnitCanTakeFeature: false })
+		{
+			return 1;
+		}
+		return 2;
+	}
+
+	private static int GetFavRecSortTier(VirtualListElementVMBase item)
+	{
+		if (!(item is BaseRankEntryFeatureVM baseRankEntryFeatureVM))
+		{
+			return 3;
+		}
+		if (baseRankEntryFeatureVM.IsFavorite)
+		{
+			return 0;
+		}
+		if (baseRankEntryFeatureVM.IsRecommended)
+		{
+			return 1;
+		}
+		return 2;
+	}
+
+	private static int CompareFeatureItems(VirtualListElementVMBase a, VirtualListElementVMBase b)
+	{
+		int num = GetFeatureSortPriority(a).CompareTo(GetFeatureSortPriority(b));
+		if (num != 0)
+		{
+			return num;
+		}
+		int num2 = GetFavRecSortTier(a).CompareTo(GetFavRecSortTier(b));
+		if (num2 != 0)
+		{
+			return num2;
+		}
+		string strA = (a as BaseRankEntryFeatureVM)?.DisplayName ?? string.Empty;
+		string strB = (b as BaseRankEntryFeatureVM)?.DisplayName ?? string.Empty;
+		return string.Compare(strA, strB, StringComparison.CurrentCulture);
+	}
+
+	private void GroupFeaturesByFilterType(List<VirtualListElementVMBase> flatFeatures)
+	{
+		Dictionary<FeaturesFilter.FeatureFilterType, List<VirtualListElementVMBase>> dictionary = new Dictionary<FeaturesFilter.FeatureFilterType, List<VirtualListElementVMBase>>();
+		FeaturesFilter.FeatureFilterType[] dropdownGroupOrder = DropdownGroupOrder;
+		foreach (FeaturesFilter.FeatureFilterType key in dropdownGroupOrder)
+		{
+			dictionary[key] = new List<VirtualListElementVMBase>();
+		}
+		List<VirtualListElementVMBase> list = new List<VirtualListElementVMBase>();
+		HashSet<VirtualListElementVMBase> hashSet = new HashSet<VirtualListElementVMBase>();
+		dropdownGroupOrder = DropdownGroupOrder;
+		foreach (FeaturesFilter.FeatureFilterType featureFilterType in dropdownGroupOrder)
+		{
+			foreach (VirtualListElementVMBase flatFeature in flatFeatures)
+			{
+				if (!hashSet.Contains(flatFeature) && flatFeature is BaseRankEntryFeatureVM baseRankEntryFeatureVM && baseRankEntryFeatureVM.Feature.MeetsFilter(featureFilterType))
+				{
+					dictionary[featureFilterType].Add(flatFeature);
+					hashSet.Add(flatFeature);
+				}
+			}
+		}
+		foreach (VirtualListElementVMBase flatFeature2 in flatFeatures)
+		{
+			if (!hashSet.Contains(flatFeature2))
+			{
+				list.Add(flatFeature2);
+			}
+		}
+		dropdownGroupOrder = DropdownGroupOrder;
+		foreach (FeaturesFilter.FeatureFilterType featureFilterType2 in dropdownGroupOrder)
+		{
+			List<VirtualListElementVMBase> list2 = dictionary[featureFilterType2];
+			if (list2.Count != 0)
+			{
+				list2.Sort(CompareFeatureItems);
+				AddDropdownGroup(featureFilterType2, GetFilterTypeTitle(featureFilterType2), list2);
+			}
+		}
+		if (list.Count > 0)
+		{
+			list.Sort((VirtualListElementVMBase a, VirtualListElementVMBase b) => GetFeatureSortPriority(a).CompareTo(GetFeatureSortPriority(b)));
+			AddDropdownGroup(FeaturesFilter.FeatureFilterType.None, UIStrings.Instance.CharacterSheet.NoneHint, list);
+		}
+	}
+
+	private void GroupFeaturesBySource(List<VirtualListElementVMBase> allFeatures)
+	{
+		HashSet<VirtualListElementVMBase> allFeaturesSet = new HashSet<VirtualListElementVMBase>(allFeatures);
+		foreach (RankEntryFeatureGroupVM showGroup in m_ShowGroupList)
+		{
+			List<VirtualListElementVMBase> list = showGroup.FeatureList.Where((BaseRankEntryFeatureVM f) => allFeaturesSet.Contains(f)).Cast<VirtualListElementVMBase>().ToList();
+			if (list.Count != 0)
+			{
+				list.Sort(CompareFeatureItems);
+				string text = showGroup.Owner?.Name ?? ((string)UIStrings.Instance.CharacterSheet.NoneHint);
+				string sourceKey = showGroup.Owner?.AssetGuid ?? "none";
+				if (text == "")
+				{
+					text = UIStrings.Instance.CharGen.Other;
+				}
+				AddSourceDropdownGroup(sourceKey, text, list);
+			}
+		}
+	}
+
+	private void AddSourceDropdownGroup(string sourceKey, string title, List<VirtualListElementVMBase> features)
+	{
+		bool value2;
+		bool flag = !m_SourceGroupExpansionState.TryGetValue(sourceKey, out value2) || value2;
+		AvailableTalentsDropDownVM availableTalentsDropDownVM = AddDisposableAndReturn(new AvailableTalentsDropDownVM(FeaturesFilter.FeatureFilterType.None, title, flag));
+		availableTalentsDropDownVM.FeatureCount = features.Count;
+		availableTalentsDropDownVM.GroupedFeatures = features;
+		availableTalentsDropDownVM.IsExpanded.Subscribe(delegate(bool value)
+		{
+			m_SourceGroupExpansionState[sourceKey] = value;
+		});
+		FilteredGroupList.Add(availableTalentsDropDownVM);
+		foreach (VirtualListElementVMBase feature in features)
+		{
+			bool flag2 = feature is BaseRankEntryFeatureVM baseRankEntryFeatureVM && baseRankEntryFeatureVM.IsFavorite;
+			feature.Active.Value = flag || flag2;
+			FilteredGroupList.Add(feature);
+		}
+	}
+
+	public void SetGroupingMode(FeatureGroupingMode mode)
+	{
+		GroupingMode.Value = mode;
+	}
+
+	private void AddDropdownGroup(FeaturesFilter.FeatureFilterType filterType, string title, List<VirtualListElementVMBase> features)
+	{
+		bool value2;
+		bool flag = !m_GroupExpansionState.TryGetValue(filterType, out value2) || value2;
+		AvailableTalentsDropDownVM availableTalentsDropDownVM = AddDisposableAndReturn(new AvailableTalentsDropDownVM(filterType, title, flag));
+		availableTalentsDropDownVM.FeatureCount = features.Count;
+		availableTalentsDropDownVM.GroupedFeatures = features;
+		availableTalentsDropDownVM.IsExpanded.Subscribe(delegate(bool value)
+		{
+			m_GroupExpansionState[filterType] = value;
+		});
+		FilteredGroupList.Add(availableTalentsDropDownVM);
+		foreach (VirtualListElementVMBase feature in features)
+		{
+			bool flag2 = feature is BaseRankEntryFeatureVM baseRankEntryFeatureVM && baseRankEntryFeatureVM.IsFavorite;
+			feature.Active.Value = flag || flag2;
+			FilteredGroupList.Add(feature);
+		}
+	}
+
+	private static string GetFilterTypeTitle(FeaturesFilter.FeatureFilterType filterType)
+	{
+		UITextCharSheet characterSheet = UIStrings.Instance.CharacterSheet;
+		return filterType switch
+		{
+			FeaturesFilter.FeatureFilterType.ArchetypeFilter => characterSheet.ArchetypeFilterHint, 
+			FeaturesFilter.FeatureFilterType.OriginFilter => characterSheet.OriginFilterHint, 
+			FeaturesFilter.FeatureFilterType.WarpFilter => characterSheet.WarpFilterHint, 
+			FeaturesFilter.FeatureFilterType.OffenseFilter => characterSheet.OffenseFilterHint, 
+			FeaturesFilter.FeatureFilterType.DefenseFilter => characterSheet.DefenseFilterHint, 
+			FeaturesFilter.FeatureFilterType.SupportFilter => characterSheet.SupportFilterHint, 
+			FeaturesFilter.FeatureFilterType.UniversalFilter => characterSheet.UniversalFilterHint, 
+			_ => filterType.ToString(), 
+		};
 	}
 
 	public string GetHintText()
@@ -544,7 +859,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 	public void UpdateFeatures()
 	{
 		m_ShowGroupList = CreateGroups();
-		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
+		HandleFilterChange();
 		SetSelectedFeature(SelectedFeature.Value?.Feature);
 	}
 
@@ -568,7 +883,7 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 	{
 		PlayerUISettings uISettings = Game.Instance.Player.UISettings;
 		uISettings.ShowUnavailableFeatures = !uISettings.ShowUnavailableFeatures;
-		HandleFilterChange(FeaturesFilterVM?.CurrentFilter.Value);
+		HandleFilterChange();
 	}
 
 	public bool ContainsFeature(string key)

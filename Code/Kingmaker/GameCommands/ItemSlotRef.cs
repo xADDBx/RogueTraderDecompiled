@@ -1,3 +1,5 @@
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.ShipCustomization;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -57,6 +59,10 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 	[MemoryPackInclude]
 	private LootFromPointOfInterestHolderRef m_LootHolderRef;
 
+	[JsonProperty]
+	[MemoryPackInclude]
+	private BlueprintAugmentSlotReference m_isAugment;
+
 	[MemoryPackIgnore]
 	public EquipSlotType EquipSlotType => m_SlotType;
 
@@ -73,6 +79,9 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 	public bool IsEquipment => m_SlotIndex == -1;
 
 	[MemoryPackIgnore]
+	public BlueprintAugmentSlot IsAugment => m_isAugment?.Get();
+
+	[MemoryPackIgnore]
 	public ItemsCollectionRef ItemsCollectionRef => m_CollectionRef;
 
 	[MemoryPackIgnore]
@@ -87,7 +96,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 	}
 
 	[JsonConstructor]
-	public ItemSlotRef(EquipSlotType slotType, int setIndex, int slotIndex, ItemEntity item, ItemsCollection collection, ShipComponentSlotType shipComponentSlotType, LootFromPointOfInterestHolderRef lootHolderRef = null)
+	public ItemSlotRef(EquipSlotType slotType, int setIndex, int slotIndex, ItemEntity item, ItemsCollection collection, ShipComponentSlotType shipComponentSlotType, LootFromPointOfInterestHolderRef lootHolderRef = null, BlueprintAugmentSlot isAugment = null)
 	{
 		m_SlotType = slotType;
 		m_SetIndex = setIndex;
@@ -96,6 +105,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 		m_CollectionRef = collection.ToCollectionRef(lootHolderRef);
 		m_ShipComponentSlotType = shipComponentSlotType;
 		m_LootHolderRef = lootHolderRef;
+		m_isAugment = isAugment?.ToReference<BlueprintAugmentSlotReference>();
 	}
 
 	static ItemSlotRef()
@@ -132,11 +142,12 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(7, in value.m_SlotType, in value.m_SetIndex, in value.m_SlotIndex);
+		writer.WriteUnmanagedWithObjectHeader(8, in value.m_SlotType, in value.m_SetIndex, in value.m_SlotIndex);
 		writer.WritePackable(in value.m_ItemRef);
 		writer.WritePackable(in value.m_CollectionRef);
 		writer.WriteUnmanaged(in value.m_ShipComponentSlotType);
 		writer.WritePackable(in value.m_LootHolderRef);
+		writer.WritePackable(in value.m_isAugment);
 	}
 
 	[Preserve]
@@ -154,7 +165,8 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 		ItemsCollectionRef value6;
 		ShipComponentSlotType value7;
 		LootFromPointOfInterestHolderRef value8;
-		if (memberCount == 7)
+		BlueprintAugmentSlotReference value9;
+		if (memberCount == 8)
 		{
 			if (value != null)
 			{
@@ -165,6 +177,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 				value6 = value.m_CollectionRef;
 				value7 = value.m_ShipComponentSlotType;
 				value8 = value.m_LootHolderRef;
+				value9 = value.m_isAugment;
 				reader.ReadUnmanaged<EquipSlotType>(out value2);
 				reader.ReadUnmanaged<int>(out value3);
 				reader.ReadUnmanaged<int>(out value4);
@@ -172,19 +185,21 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 				reader.ReadPackable(ref value6);
 				reader.ReadUnmanaged<ShipComponentSlotType>(out value7);
 				reader.ReadPackable(ref value8);
-				goto IL_018d;
+				reader.ReadPackable(ref value9);
+				goto IL_01be;
 			}
 			reader.ReadUnmanaged<EquipSlotType, int, int>(out value2, out value3, out value4);
 			value5 = reader.ReadPackable<EntityRef<ItemEntity>>();
 			value6 = reader.ReadPackable<ItemsCollectionRef>();
 			reader.ReadUnmanaged<ShipComponentSlotType>(out value7);
 			value8 = reader.ReadPackable<LootFromPointOfInterestHolderRef>();
+			value9 = reader.ReadPackable<BlueprintAugmentSlotReference>();
 		}
 		else
 		{
-			if (memberCount > 7)
+			if (memberCount > 8)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(ItemSlotRef), 7, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(ItemSlotRef), 8, memberCount);
 				return;
 			}
 			if (value == null)
@@ -196,6 +211,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 				value6 = null;
 				value7 = ShipComponentSlotType.PlasmaDrives;
 				value8 = null;
+				value9 = null;
 			}
 			else
 			{
@@ -206,6 +222,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 				value6 = value.m_CollectionRef;
 				value7 = value.m_ShipComponentSlotType;
 				value8 = value.m_LootHolderRef;
+				value9 = value.m_isAugment;
 			}
 			if (memberCount != 0)
 			{
@@ -228,7 +245,11 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 									if (memberCount != 6)
 									{
 										reader.ReadPackable(ref value8);
-										_ = 7;
+										if (memberCount != 7)
+										{
+											reader.ReadPackable(ref value9);
+											_ = 8;
+										}
 									}
 								}
 							}
@@ -238,7 +259,7 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 			}
 			if (value != null)
 			{
-				goto IL_018d;
+				goto IL_01be;
 			}
 		}
 		value = new ItemSlotRef
@@ -249,10 +270,11 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 			m_ItemRef = value5,
 			m_CollectionRef = value6,
 			m_ShipComponentSlotType = value7,
-			m_LootHolderRef = value8
+			m_LootHolderRef = value8,
+			m_isAugment = value9
 		};
 		return;
-		IL_018d:
+		IL_01be:
 		value.m_SlotType = value2;
 		value.m_SetIndex = value3;
 		value.m_SlotIndex = value4;
@@ -260,5 +282,6 @@ public class ItemSlotRef : IMemoryPackable<ItemSlotRef>, IMemoryPackFormatterReg
 		value.m_CollectionRef = value6;
 		value.m_ShipComponentSlotType = value7;
 		value.m_LootHolderRef = value8;
+		value.m_isAugment = value9;
 	}
 }

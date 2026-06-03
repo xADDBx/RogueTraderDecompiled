@@ -28,13 +28,14 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Mechanics.Entities;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UI.Utility;
 using Owlcat.Runtime.UniRx;
 using Photon.Realtime;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler, IContinueTurnHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler
+public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler, IContinueTurnHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler, IUnitOverdriveAugmentHandler
 {
 	public readonly SurfaceActionBarPartConsumablesVM Consumables;
 
@@ -47,6 +48,8 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	public readonly VeilThicknessVM VeilThickness;
 
 	public readonly ReactiveProperty<SurfaceCombatUnitVM> CurrentCombatUnit;
+
+	private readonly BoolReactiveProperty m_ShouldShow = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_IsVisible = new BoolReactiveProperty();
 
@@ -88,6 +91,8 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public IReadOnlyReactiveProperty<bool> IsVisible => m_IsVisible;
 
+	public IReadOnlyReactiveProperty<bool> IsVisibleAndShown { get; }
+
 	public SurfaceActionBarVM(ReactiveProperty<SurfaceCombatUnitVM> currentUnit)
 	{
 		AddDisposable(Consumables = new SurfaceActionBarPartConsumablesVM());
@@ -95,6 +100,7 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		AddDisposable(Abilities = new SurfaceActionBarPartAbilitiesVM(isInCharScreen: false, IsNotControllableCharacter));
 		AddDisposable(SurfaceMomentumVM = new SurfaceMomentumVM());
 		AddDisposable(VeilThickness = new VeilThicknessVM());
+		IsVisibleAndShown = m_IsVisible.And(m_ShouldShow).ToReactiveProperty();
 		AddDisposable(UniRxExtensionMethods.Subscribe(UpdateSlotsCommand.ObserveLastValueOnLateUpdate(), delegate
 		{
 			UpdateSlotsCommandHandler();
@@ -122,6 +128,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		UpdateFunc(Abilities.Slots);
 		UpdateFunc(SurfaceMomentumVM.DesperateMeasureSlots);
 		UpdateFunc(SurfaceMomentumVM.HeroicActSlots);
+		if (Abilities.OverdriveSlotVM != null)
+		{
+			UpdateFunc(new AutoDisposingList<ActionBarSlotVM> { Abilities.OverdriveSlotVM });
+		}
 		CheckAnotherPlayerTurn();
 		void UpdateFunc(IList<ActionBarSlotVM> slots)
 		{
@@ -157,6 +167,14 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	private void UpdateVisibility()
 	{
 		m_IsVisible.Value = CurrentUnit != null && CurrentUnit.Faction.IsPlayer && m_IsInGame && !m_IsInFullScreenUI && !Game.Instance.TurnController.IsPreparationTurn;
+	}
+
+	public void TriggerVisibility(bool trigger)
+	{
+		if (!(Game.Instance.CursorController.SelectedAbility != null))
+		{
+			m_ShouldShow.Value = trigger;
+		}
 	}
 
 	public void OnGameModeStart(GameModeType gameMode)
@@ -374,6 +392,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 			{
 				OnUnitChanged();
 			}
+			if (fullScreenUIType == FullScreenUIType.Augmentations || fullScreenUIType == FullScreenUIType.Unknown)
+			{
+				UpdateSlotsCommand.Execute();
+			}
 		}
 	}
 
@@ -460,5 +482,21 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	void IInterruptTurnContinueHandler.HandleUnitContinueInterruptTurn()
 	{
 		UpdateSlotsCommand.Execute();
+	}
+
+	public void HandleAugmentActivateOverdrive(BaseUnitEntity owner)
+	{
+		if (CurrentUnit == owner)
+		{
+			UpdateSlotsCommand.Execute();
+		}
+	}
+
+	public void HandleAugmentDeactivateOverdrive(BaseUnitEntity owner)
+	{
+		if (CurrentUnit == owner)
+		{
+			UpdateSlotsCommand.Execute();
+		}
 	}
 }

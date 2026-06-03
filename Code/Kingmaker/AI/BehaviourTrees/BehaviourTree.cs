@@ -8,42 +8,47 @@ namespace Kingmaker.AI.BehaviourTrees;
 
 public class BehaviourTree
 {
-	private Blackboard blackboard = new Blackboard();
+	public Blackboard Blackboard { get; } = new Blackboard();
 
-	private BehaviourTreeNode root;
 
-	public bool IsFinishedTurn => blackboard.IsFinishedTurn;
+	public BehaviourTreeNode Root { get; }
+
+	public bool IsFinishedTurn => Blackboard.IsFinishedTurn;
+
+	public event Action Inited;
 
 	public BehaviourTree(MechanicEntity entity, BehaviourTreeNode rootNode, DecisionContext context)
 	{
-		root = rootNode;
-		root.DebugName = "Root";
-		blackboard.Entity = entity;
-		blackboard.DecisionContext = context;
+		Root = rootNode;
+		Root.DebugName = "Root";
+		Blackboard.Entity = entity;
+		Blackboard.DecisionContext = context;
 	}
 
 	public void Init()
 	{
-		root.Init();
-		blackboard.Reset();
+		Blackboard.Reset();
+		Root.Init();
+		this.Inited?.Invoke();
 	}
 
 	public Status Tick()
 	{
-		if (blackboard.IsFinishedTurn)
+		if (Blackboard.IsFinishedTurn)
 		{
 			return Status.Success;
 		}
 		Status result;
 		try
 		{
-			if (blackboard.Stack.Count == 0)
+			if (Blackboard.Stack.Count == 0)
 			{
-				root.Init();
-				AILogger.Instance.Log(AILogNode.Start(root));
+				Root.Init();
+				this.Inited?.Invoke();
+				AILogger.Instance.Log(AILogNode.Start(Root));
 				AIProfileContext.Flush();
 			}
-			result = root.Tick(blackboard);
+			result = Root.Tick(Blackboard);
 		}
 		catch (Exception ex)
 		{
@@ -57,9 +62,9 @@ public class BehaviourTree
 	private string BuildExceptionInfoMessage()
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append($"Exception occured in node: {blackboard.Stack.Peek()}");
+		stringBuilder.Append($"Exception occured in node: {Blackboard.Stack.Peek()}");
 		stringBuilder.Append("\nTrace:");
-		BehaviourTreeNode[] array = blackboard.Stack.ToArray();
+		BehaviourTreeNode[] array = Blackboard.Stack.ToArray();
 		for (int num = array.Length - 1; num >= 0; num--)
 		{
 			stringBuilder.Append($"\n\t{array[num]}");

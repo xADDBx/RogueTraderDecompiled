@@ -32,8 +32,7 @@ public class UpdatePreviousPositionController : IControllerTick, IController
 		{
 			if (!(unit.View == null))
 			{
-				bool flag = unit.GetOptional<EntityPartStayOnPlatform>()?.IsOnPlatform() ?? false;
-				bool forceUpdatePositions = (bool)unit.Features.OnElevator || flag;
+				bool forceUpdatePositions = unit.Features.OnElevator;
 				unit.View.InterpolationHelper.OnUnitSimulationTickCompleted(forceUpdatePositions);
 				unit.Movable.PreviousSimulationTick = new PartMovable.PreviousSimulationTickInfo
 				{

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -52,6 +53,12 @@ public class LogInfo
 	[SerializeField]
 	public bool IsCompilationError;
 
+	public static string TimeStampFormat = "dd.MM.yyyy HH:mm:ss:fff";
+
+	public static IFormatProvider TimeStampFormatProvider = DateTimeFormatInfo.CurrentInfo;
+
+	public static bool UtcTimeInString = false;
+
 	public string GetTimeStampAsString()
 	{
 		return m_TimeStampAsString;
@@ -70,7 +77,14 @@ public class LogInfo
 		Message = message;
 		Callstack = callstack;
 		TimeStamp = timeStamp;
-		m_TimeStampAsString = timeStamp.ToString("dd.MM.yyyy HH:mm:ss:fff");
+		if (UtcTimeInString)
+		{
+			m_TimeStampAsString = timeStamp.ToUniversalTime().ToString(TimeStampFormat, TimeStampFormatProvider);
+		}
+		else
+		{
+			m_TimeStampAsString = timeStamp.ToString(TimeStampFormat, TimeStampFormatProvider);
+		}
 		IsCompilationError = Severity == LogSeverity.Error && ErrorRegex.IsMatch(Message);
 	}
 
@@ -80,7 +94,7 @@ public class LogInfo
 		{
 			return m_SingleString;
 		}
-		m_SingleString = Message.Replace(Logger.UnityInternalNewLine, " ");
+		m_SingleString = Message.Replace(Logger.UnityInternalNewLine, " ").Replace("\r", " ");
 		if (string.IsNullOrWhiteSpace(m_SingleString) && Callstack != null && Callstack.Count > 0)
 		{
 			m_SingleString = Callstack[0].GetFormattedMethodName().Split(Logger.UnityInternalNewLine)[0];

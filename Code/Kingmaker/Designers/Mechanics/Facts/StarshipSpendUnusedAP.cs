@@ -15,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("68a754d320793344bbf8376833fa27e1")]
 public class StarshipSpendUnusedAP : UnitFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable

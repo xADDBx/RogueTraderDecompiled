@@ -141,7 +141,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 
 	private bool ShouldHandle(AbstractUnitEntity unitEntity)
 	{
-		if (Game.Instance.TurnController.TurnBasedModeActive)
+		if (Game.Instance.TurnController.TurnBasedModeActive && !Game.Instance.PlayerInputInCombatController.IsLocked)
 		{
 			return unitEntity == m_CurrentUnit;
 		}
@@ -251,7 +251,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 			return Enumerable.Empty<GraphNode>();
 		}
 		HashSet<GraphNode> hashSet = TempHashSet.Get<GraphNode>();
-		foreach (BaseUnitEntity item in Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy))
+		foreach (BaseUnitEntity item in Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy && !i.HasMechanicFeature(MechanicsFeatureType.CanDeployNearThisUnit)))
 		{
 			foreach (CustomGridNodeBase item2 in GridAreaHelper.GetNodesSpiralAround(item.Position.GetNearestNodeXZUnwalkable(), item.SizeRect, 1))
 			{
@@ -343,7 +343,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		UnitCommandsRunner.HandleRoleSet(entityId);
 	}
 
-	public void HandleUnitAbilityJumpDidActed(int distanceInCells)
+	public void HandleUnitJumpFinished()
 	{
 		if (ShouldHandle(EventInvokerExtensions.BaseUnitEntity))
 		{
@@ -351,7 +351,7 @@ public class UnitMovableAreaController : IControllerDisable, IController, ITurnB
 		}
 	}
 
-	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity target, MechanicEntity caster, bool useAttack)
+	public void HandleUnitJumpRequested(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity unit, bool skipAnimation, float speed)
 	{
 	}
 

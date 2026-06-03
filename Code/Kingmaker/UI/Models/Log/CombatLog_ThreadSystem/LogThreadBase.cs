@@ -95,6 +95,43 @@ public abstract class LogThreadBase : BaseDisposable
 		m_ThreadMessages.Clear();
 	}
 
+	protected static IEnumerable<ITooltipBrick> CreateBrickArmorLimits(RuleCalculateStatsArmor.ArmorStatLimits limits, bool isAbsorption, int nestedLevel, int baseValue, int actualValue)
+	{
+		RuleCalculateStatsArmor.LimitEntry? limitEntry = (isAbsorption ? limits.MinAbsorptionFlat : limits.MinDeflectionFlat);
+		RuleCalculateStatsArmor.LimitEntry? minPct = (isAbsorption ? limits.MinAbsorptionPct : limits.MinDeflectionPct);
+		RuleCalculateStatsArmor.LimitEntry? maxFlat = (isAbsorption ? limits.MaxAbsorptionFlat : limits.MaxDeflectionFlat);
+		RuleCalculateStatsArmor.LimitEntry? maxPct = (isAbsorption ? limits.MaxAbsorptionPct : limits.MaxDeflectionPct);
+		if (limitEntry.HasValue)
+		{
+			yield return CreateLimitBrick(limitEntry.Value, isMax: false, nestedLevel, limitEntry.Value.Value, actualValue, isAbsorption);
+		}
+		if (minPct.HasValue)
+		{
+			yield return CreateLimitBrick(minPct.Value, isMax: false, nestedLevel, ResolvePct(minPct.Value.Value), actualValue, isAbsorption);
+		}
+		if (maxFlat.HasValue)
+		{
+			yield return CreateLimitBrick(maxFlat.Value, isMax: true, nestedLevel, maxFlat.Value.Value, actualValue, isAbsorption);
+		}
+		if (maxPct.HasValue)
+		{
+			yield return CreateLimitBrick(maxPct.Value, isMax: true, nestedLevel, ResolvePct(maxPct.Value.Value), actualValue, isAbsorption);
+		}
+		int ResolvePct(int pctValue)
+		{
+			return (int)Math.Round((double)(baseValue * pctValue) / 100.0);
+		}
+	}
+
+	private static ITooltipBrick CreateLimitBrick(RuleCalculateStatsArmor.LimitEntry entry, bool isMax, int nestedLevel, int limitValue, int actualValue, bool addPctSuffix)
+	{
+		TooltipBrickStrings tooltipBrickStrings = Strings.TooltipBrickStrings;
+		string bonusSourceText = StatModifiersBreakdown.GetBonusSourceText(entry.Fact.Fact);
+		string text = (isMax ? tooltipBrickStrings.MaxValue.Text : tooltipBrickStrings.MinValue.Text);
+		string text2 = (addPctSuffix ? "%" : "");
+		return new TooltipBrickTextValue(bonusSourceText, $"{text} {limitValue}{text2} ({UIUtility.AddSign(actualValue)}{text2})", nestedLevel, isResultValue: true);
+	}
+
 	protected static IEnumerable<ITooltipBrick> CreateBrickModifiers(IEnumerable<Modifier> allModifiers, bool valueIsPercent = false, string additionText = null, int nestedLevel = 0, bool isResultValue = false, bool isFirstWithoutPlus = false)
 	{
 		foreach (Modifier allModifier in allModifiers)

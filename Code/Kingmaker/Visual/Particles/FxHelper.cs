@@ -250,7 +250,7 @@ public static class FxHelper
 
 	public static GameObject SpawnFxOnEntity(GameObject prefab, MechanicEntityView entity, bool enableFxObject = true, bool overrideOrientationSource = false)
 	{
-		if ((bool)prefab && entity is AbstractUnitEntityView abstractUnitEntityView)
+		if ((bool)prefab && entity != null && entity is AbstractUnitEntityView abstractUnitEntityView)
 		{
 			float coeff = BlueprintRoot.Instance.FxRoot.RaceFxSnapToLocatorScaleSettings.GetCoeff(abstractUnitEntityView.Blueprint.Race?.RaceId);
 			return SpawnFxOnGameObject(prefab, entity.gameObject, coeff, enableFxObject, (overrideOrientationSource && abstractUnitEntityView.HasOverriddenRotatablePart) ? new Quaternion?(abstractUnitEntityView.OverrideRotatablePart.transform.rotation) : null);
@@ -454,12 +454,16 @@ public static class FxHelper
 		}
 	}
 
-	public static GameObject SpawnFxOnPoint(GameObject prefab, Vector3 point, bool enableFxObject = true)
+	public static GameObject SpawnFxOnPoint(GameObject prefab, Vector3 point, Quaternion? rotation = null, bool enableFxObject = true)
 	{
+		if (rotation.HasValue)
+		{
+			return SpawnFxOnPoint(prefab, point, rotation.Value, enableFxObject);
+		}
 		return SpawnFxOnPoint(prefab, point, Quaternion.identity, enableFxObject);
 	}
 
-	public static GameObject SpawnFxOnPoint(GameObject prefab, Vector3 point, Quaternion rotation, bool enableFxObject = true)
+	private static GameObject SpawnFxOnPoint(GameObject prefab, Vector3 point, Quaternion rotation, bool enableFxObject = true)
 	{
 		try
 		{

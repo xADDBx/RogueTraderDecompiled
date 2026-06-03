@@ -140,6 +140,14 @@ public class TutorialSystem : Entity, IHashable
 			}
 			return false;
 		}
+		if (tutorial.IsLimitReached)
+		{
+			EventBus.RaiseEvent(delegate(ITutorialTriggerFailedHandler h)
+			{
+				h.HandleLimitReached(tutorial, context);
+			});
+			return false;
+		}
 		if (!m_TriedToTriggerThisFrame.Contains(tutorial.Blueprint))
 		{
 			tutorial.TriggeredTimes++;
@@ -177,10 +185,6 @@ public class TutorialSystem : Entity, IHashable
 			{
 				h.HandleLowerOrEqualPriorityCooldown(tutorial, context);
 			});
-			return false;
-		}
-		if (m_CandidateForShow?.Trigger != null)
-		{
 			return false;
 		}
 		return true;
@@ -282,14 +286,16 @@ public class TutorialSystem : Entity, IHashable
 		{
 			h.ShowTutorial(data);
 		});
-		Tutorial tutorial;
-		using (ContextData<DisableStatefulRandomContext>.Request())
+		if (ShowingData != null)
 		{
-			tutorial = Ensure(data.Blueprint);
+			Tutorial tutorial;
+			using (ContextData<DisableStatefulRandomContext>.Request())
+			{
+				tutorial = Ensure(data.Blueprint);
+			}
+			tutorial.ShowedTimes++;
+			tutorial.LastShowIndex = ++m_ShowIndex;
 		}
-		tutorial.ShowedTimes++;
-		tutorial.LastShowIndex = ++m_ShowIndex;
-		tutorial.UpdateIsEnabled();
 	}
 
 	[Cheat(Name = "tutorial_unban")]

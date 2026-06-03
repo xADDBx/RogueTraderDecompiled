@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
@@ -30,6 +31,8 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 	protected readonly UIFeature UIFeature;
 
 	protected readonly ReactiveCommand OnUpdateState = new ReactiveCommand();
+
+	public Action OnFavoritesStateChanged;
 
 	private bool m_HasFavorites;
 
@@ -147,17 +150,23 @@ public abstract class BaseRankEntryFeatureVM : CharInfoFeatureVM
 		BlueprintFeature.Reference favoriteFeatureRef = UIFeature.Feature.ToReference<BlueprintFeature.Reference>();
 		if (state)
 		{
+			if (value.Contains(favoriteFeatureRef))
+			{
+				return;
+			}
+			value.Add(favoriteFeatureRef);
+			unitToFavoritesMap[@ref] = value;
+		}
+		else
+		{
 			if (!value.Contains(favoriteFeatureRef))
 			{
-				value.Add(favoriteFeatureRef);
-				unitToFavoritesMap[@ref] = value;
+				return;
 			}
-		}
-		else if (value.Contains(favoriteFeatureRef))
-		{
 			value.RemoveAll((BlueprintFeature.Reference f) => f.Equals(favoriteFeatureRef));
 			unitToFavoritesMap[@ref] = value;
 		}
+		OnFavoritesStateChanged?.Invoke();
 	}
 
 	public void SetFocusOn(BaseRankEntryFeatureVM featureVM)

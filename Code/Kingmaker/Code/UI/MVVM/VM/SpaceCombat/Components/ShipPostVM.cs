@@ -72,6 +72,7 @@ public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 			IsPostBlocked.Value = post.IsBlocked;
 			BlockDuration.Value = post.BlockingBuff?.DurationInRounds.Rounds().ToString();
 			FXActivated.Value = true;
+			UpdateSlots();
 		}
 	}
 
@@ -85,6 +86,7 @@ public class ShipPostVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		{
 			IsPostBlocked.Value = false;
 			BlockDuration.Value = "0";
+			UpdateSlots();
 		}
 	}
 

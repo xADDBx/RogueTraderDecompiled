@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Shields;
 using Kingmaker.Blueprints.Items.Weapons;
@@ -125,11 +126,15 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 			{
 				if (!(blueprintItem is BlueprintItemArmor))
 				{
-					if (blueprintItem is BlueprintItemShield)
+					if (!(blueprintItem is BlueprintItemShield))
 					{
-						return typeof(ShieldItemPart);
+						if (blueprintItem is BlueprintItemAugment)
+						{
+							return typeof(AugmentItemPart);
+						}
+						return typeof(BaseItemPart);
 					}
-					return typeof(BaseItemPart);
+					return typeof(ShieldItemPart);
 				}
 				return typeof(ArmorItemPart);
 			}
@@ -146,11 +151,15 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 			{
 				if (!(blueprintItem is BlueprintItemArmor))
 				{
-					if (blueprintItem is BlueprintItemShield)
+					if (!(blueprintItem is BlueprintItemShield))
 					{
-						return typeof(ShieldItemPart);
+						if (blueprintItem is BlueprintItemAugment)
+						{
+							return typeof(AugmentItemPart);
+						}
+						return typeof(BaseItemPart);
 					}
-					return typeof(BaseItemPart);
+					return typeof(ShieldItemPart);
 				}
 				return typeof(ArmorItemPart);
 			}
@@ -202,14 +211,19 @@ public class TooltipTemplateItem : TooltipBaseTemplate
 		{
 			yield break;
 		}
+		ItemEntity item = m_Item;
+		if (item != null && item.Blueprint is BlueprintItemAugment)
+		{
+			yield return new TooltipBrickSeparator(TooltipBrickElementType.Big, isAugmentHeader: true);
+		}
 		(string, ItemHeaderType) itemHeaderText = UIUtilityTexts.GetItemHeaderText(m_Item);
 		if (!string.IsNullOrEmpty(itemHeaderText.Item1))
 		{
 			yield return new TooltipBrickItemHeader(itemHeaderText.Item1, itemHeaderText.Item2);
 		}
-		foreach (ITooltipBrick item in m_ItemPart.GetHeader(type))
+		foreach (ITooltipBrick item2 in m_ItemPart.GetHeader(type))
 		{
-			yield return item;
+			yield return item2;
 		}
 	}
 

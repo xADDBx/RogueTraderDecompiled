@@ -39,6 +39,8 @@ public class SimpleBlueprint : IScriptableObjectWithAssetId, ICanBeLogContext
 	[SkipValidation]
 	protected List<Element> m_AllElements;
 
+	public string AssetName => name;
+
 	public List<Element> ElementsArray => m_AllElements ?? (m_AllElements = new List<Element>());
 
 	string IScriptableObjectWithAssetId.name

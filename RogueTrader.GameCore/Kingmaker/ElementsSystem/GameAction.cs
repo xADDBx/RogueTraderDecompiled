@@ -12,6 +12,10 @@ public abstract class GameAction : Element, ICanBeLogContext
 {
 	public void Run([CanBeNull] ElementsList list = null)
 	{
+		if (!CanRun())
+		{
+			return;
+		}
 		using ElementsDebugger elementsDebugger = ElementsDebugger.Scope(list, this);
 		try
 		{
@@ -28,6 +32,11 @@ public abstract class GameAction : Element, ICanBeLogContext
 			elementsDebugger?.SetException(exception);
 			throw;
 		}
+	}
+
+	protected virtual bool CanRun()
+	{
+		return true;
 	}
 
 	protected abstract void RunAction();

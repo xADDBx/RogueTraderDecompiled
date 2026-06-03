@@ -22,7 +22,7 @@ public class BlueprintWHFeatureSelection : BlueprintFeature, IFeatureSelection
 		IEnumerable<AddFeaturesToLevelUp> first = ((@class != null) ? (from i in @class.GetComponents<AddFeaturesToLevelUp>()
 			where i.Group == Group
 			select i) : null) ?? Array.Empty<AddFeaturesToLevelUp>();
-		EntityFactManagerComponentsEnumerator<AddFeaturesToLevelUp> components = previewUnit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group);
+		EntityFactManagerComponentsEnumerable<AddFeaturesToLevelUp> components = previewUnit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group);
 		return first.Concat(components).SelectMany((AddFeaturesToLevelUp i) => i.Features);
 	}
 

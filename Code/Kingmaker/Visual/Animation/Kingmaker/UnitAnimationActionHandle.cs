@@ -62,11 +62,7 @@ public class UnitAnimationActionHandle : AnimationActionHandle, ICloneable
 
 	public bool DoesNotPreventMovement { get; set; }
 
-	public bool NeedAttackAfterJump { get; set; }
-
 	public float CastingTime { get; set; }
-
-	public float JumpTime { get; set; }
 
 	public UnitAnimationActionCastSpell.CastAnimationStyle CastStyle { get; set; }
 

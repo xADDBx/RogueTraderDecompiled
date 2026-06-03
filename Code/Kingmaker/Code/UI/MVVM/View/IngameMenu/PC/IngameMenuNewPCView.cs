@@ -1,9 +1,16 @@
+using Code.UI.Common.Animations;
 using Code.UI.Pointer;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.IngameMenu;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -13,7 +20,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.IngameMenu.PC;
 
-public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
+public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>, IAugmentationsButtonAttentionMarkerHandler, ISubscriber, IGameModeHandler
 {
 	[Header("Buttons Part")]
 	[SerializeField]
@@ -21,6 +28,9 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 
 	[SerializeField]
 	private OwlcatMultiButton m_Character;
+
+	[SerializeField]
+	private OwlcatMultiButton m_Augmentations;
 
 	[SerializeField]
 	private OwlcatMultiButton m_Journal;
@@ -42,6 +52,12 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 
 	[SerializeField]
 	private OwlcatMultiButton m_Formation;
+
+	[SerializeField]
+	private ScaleAnimator m_AugmentationsAttentionMarker;
+
+	[SerializeField]
+	private GameObject m_AugmentationsAttentionMarkerObject;
 
 	[Header("Highlighter")]
 	[SerializeField]
@@ -68,6 +84,7 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		base.BindViewImplementation();
 		AddDisposable(EventBus.Subscribe(this));
 		SetPlastickButtonsSoundsTypes();
+		UIConfig.Instance.UIAugmentationsBarkBanters.IsFirstLaunchInSpace();
 		AddDisposable(ObservableExtensions.Subscribe(m_Map.OnLeftClickAsObservable(), delegate
 		{
 			base.ViewModel.OpenMap();
@@ -104,6 +121,10 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		{
 			base.ViewModel.OpenFormation();
 		}));
+		AddDisposable(ObservableExtensions.Subscribe(m_Augmentations.OnLeftClickAsObservable(), delegate
+		{
+			base.ViewModel.OpenAugmentations();
+		}));
 		AddDisposable(m_Map.SetHint(UIStrings.Instance.MainMenu.LocalMap, "OpenMap"));
 		AddDisposable(m_Journal.SetHint(UIStrings.Instance.MainMenu.Journal, "OpenJournal"));
 		AddDisposable(m_Encyclopedia.SetHint(UIStrings.Instance.MainMenu.Encyclopedia, "OpenEncyclopedia"));
@@ -113,6 +134,7 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		AddDisposable(m_ColonyManagement.SetHint(UIStrings.Instance.MainMenu.ColonyManagement, "OpenColonyManagement"));
 		AddDisposable(m_CargoManagement.SetHint(UIStrings.Instance.MainMenu.CargoManagement, "OpenCargoManagement"));
 		AddDisposable(m_Formation.SetHint(UIStrings.Instance.EscapeMenu.EscMenuFormation, "OpenFormation"));
+		AddDisposable(m_Augmentations.SetHint(UIStrings.Instance.MainMenu.Augmentations, "OpenAugmentations"));
 		AddDisposable(base.ViewModel.IsInventoryActive.Subscribe(delegate(bool value)
 		{
 			m_Inventory.SetActiveLayer(value ? 1 : 0);
@@ -149,6 +171,10 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		{
 			m_Formation.SetActiveLayer(value ? 1 : 0);
 		}));
+		AddDisposable(base.ViewModel.IsAugmentationsActive.Subscribe(delegate(bool value)
+		{
+			m_Augmentations.SetActiveLayer(value ? 1 : 0);
+		}));
 		if (m_UIHighlighter != null)
 		{
 			AddDisposable(m_UIHighlighter.Subscribe());
@@ -157,6 +183,7 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		AddDisposable(base.ViewModel.CheckCanAccessStarshipInventoryButtons.Subscribe(CheckEnabledInGameMenuButtons));
 		AddDisposable(base.ViewModel.CheckCanAccessColonizationButton.Subscribe(CheckEnabledColonizationButton));
 		AddDisposable(base.ViewModel.CheckServiceWindowsBlocked.Subscribe(CheckServiceWindowsBlocked));
+		CheckServiceWindowsBlocked();
 	}
 
 	private void CheckEnabledInGameMenuButtons()
@@ -178,10 +205,13 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		bool flag = Game.Instance.Player.ServiceWindowsBlocked;
 		bool flag2 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
 		bool flag3 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
+		bool flag4 = Game.Instance.Player.AugmentationsWindowBlocked;
+		bool flag5 = StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion);
 		m_Inventory.gameObject.SetActive(!flag2);
 		m_Character.gameObject.SetActive(!flag3);
 		m_CargoManagement.gameObject.SetActive(!flag);
 		m_ShipCustomization.gameObject.SetActive(!flag);
+		m_Augmentations.gameObject.SetActive(flag5 && !flag4);
 	}
 
 	private void SetPlastickButtonsSoundsTypes()
@@ -208,5 +238,27 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>
 		AddDisposable(m_ColonyManagement.SetHint(UIStrings.Instance.MainMenu.ColonyManagement, "OpenColonyManagement"));
 		AddDisposable(m_CargoManagement.SetHint(UIStrings.Instance.MainMenu.CargoManagement, "OpenCargoManagement"));
 		AddDisposable(m_Formation.SetHint(UIStrings.Instance.MainMenu.CargoManagement, "OpenFormation"));
+		AddDisposable(m_Augmentations.SetHint(UIStrings.Instance.MainMenu.Augmentations, "OpenAugmentations"));
+	}
+
+	public void HandleAttentionMarker(bool state)
+	{
+		bool flag = Game.Instance.IsModeActive(GameModeType.StarSystem) || Game.Instance.IsModeActive(GameModeType.GlobalMap);
+		bool flag2 = state && flag;
+		m_AugmentationsAttentionMarkerObject.gameObject.SetActive(flag2);
+		if (flag2)
+		{
+			m_AugmentationsAttentionMarker.AppearAnimation();
+		}
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+		UIConfig.Instance.UIAugmentationsBarkBanters.IsFirstLaunchInSpace();
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
+		UIConfig.Instance.UIAugmentationsBarkBanters.IsFirstLaunchInSpace();
 	}
 }

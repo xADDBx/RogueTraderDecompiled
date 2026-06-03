@@ -38,6 +38,10 @@ public class GraphicsSettings
 
 	public readonly SettingsEntityBool Bloom;
 
+	public readonly SettingsEntityBool ReflectionProbes;
+
+	public readonly SettingsEntityEnum<QualityOption> ShadowsUpdateFrequency;
+
 	public readonly SettingsEntityEnum<QualityOptionDisactivatable> SSAOQuality;
 
 	public readonly SettingsEntityEnum<QualityOptionDisactivatable> SSRQuality;
@@ -47,6 +51,8 @@ public class GraphicsSettings
 	public readonly SettingsEntityEnum<QualityOption> AntialiasingQuality;
 
 	public readonly SettingsEntityEnum<FootprintsMode> FootprintsMode;
+
+	public readonly SettingsEntityEnum<UpscalerMode> UpscalerMode;
 
 	public readonly SettingsEntityEnum<FsrMode> FsrMode;
 
@@ -81,11 +87,14 @@ public class GraphicsSettings
 		TexturesQuality = new SettingsEntityEnum<QualityOption>(settingsController, "textures", defaultPreset.TexturesQuality);
 		DepthOfField = new SettingsEntityBool(settingsController, "depth-of-field", defaultPreset.DepthOfField);
 		Bloom = new SettingsEntityBool(settingsController, "bloom", defaultPreset.Bloom);
+		ReflectionProbes = new SettingsEntityBool(settingsController, "reflection-probes", defaultPreset.ReflectionProbes);
+		ShadowsUpdateFrequency = new SettingsEntityEnum<QualityOption>(settingsController, "shadows-update-frequency", defaultPreset.ShadowsUpdateFrequency);
 		SSAOQuality = new SettingsEntityEnum<QualityOptionDisactivatable>(settingsController, "ssao", defaultPreset.SSAOQuality);
 		SSRQuality = new SettingsEntityEnum<QualityOptionDisactivatable>(settingsController, "ssr", defaultPreset.SSRQuality);
 		AntialiasingMode = new SettingsEntityEnum<AntialiasingMode>(settingsController, "antialiasing-option", defaultPreset.AntialiasingMode);
 		AntialiasingQuality = new SettingsEntityEnum<QualityOption>(settingsController, "antialiasing-quality", defaultPreset.AntialiasingQuality);
 		FootprintsMode = new SettingsEntityEnum<FootprintsMode>(settingsController, "footprints-mode", defaultPreset.FootprintsMode);
+		UpscalerMode = new SettingsEntityEnum<UpscalerMode>(settingsController, "upscaler-mode", defaultPreset.UpscalerMode);
 		FsrMode = new SettingsEntityEnum<FsrMode>(settingsController, "fsr-mode", defaultPreset.FsrMode);
 		FsrSharpness = new SettingsEntityFloat(settingsController, "fsr-sharpness", defaultPreset.FsrSharpness);
 		VolumetricLightingQuality = new SettingsEntityEnum<QualityOption>(settingsController, "volumetric-lighting-quality", defaultPreset.VolumetricLightingQuality);
@@ -117,11 +126,14 @@ public class GraphicsSettings
 		AppendSetting("TexturesQuality", TexturesQuality);
 		AppendSetting("DepthOfField", DepthOfField);
 		AppendSetting("Bloom", Bloom);
+		AppendSetting("ReflectionProbes", ReflectionProbes);
+		AppendSetting("ShadowsUpdateFrequency", ShadowsUpdateFrequency);
 		AppendSetting("SSAOQuality", SSAOQuality);
 		AppendSetting("SSRQuality", SSRQuality);
 		AppendSetting("AntialiasingMode", AntialiasingMode);
 		AppendSetting("AntialiasingQuality", AntialiasingQuality);
 		AppendSetting("FootprintsMode", FootprintsMode);
+		AppendSetting("UpscalerMode", UpscalerMode);
 		AppendSetting("FsrMode", FsrMode);
 		AppendSetting("FsrSharpness", FsrSharpness);
 		AppendSetting("VolumetricLightingQuality", VolumetricLightingQuality);
@@ -140,7 +152,7 @@ public class GraphicsSettings
 		}
 	}
 
-	private static GraphicsPreset GetDefaultPreset(SettingsValues settingsValues)
+	public static GraphicsPreset GetDefaultPreset(SettingsValues settingsValues)
 	{
 		if (ShouldUseConsolePreset())
 		{

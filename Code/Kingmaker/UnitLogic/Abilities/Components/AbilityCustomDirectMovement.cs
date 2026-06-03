@@ -7,6 +7,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -37,6 +38,17 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 [TypeId("8cbc9755b89b4a81bf497fb24c1144c0")]
 public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatternProvider, IAbilityTargetRestriction
 {
+	private struct NodeOccupationData
+	{
+		public bool HasEnemy;
+
+		public bool HasAlly;
+
+		public bool HasUnit;
+
+		public bool HasInvisible;
+	}
+
 	public bool StepThroughTarget;
 
 	public bool MustStandInTarget;
@@ -97,8 +109,6 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 
 	public int MinRangeCells => ((BlueprintAbility)base.OwnerBlueprint).MinRange;
 
-	public bool CanTargetPoint => ((BlueprintAbility)base.OwnerBlueprint).CanTargetPoint;
-
 	public override bool IsMoveUnit => true;
 
 	public override bool IsEngageUnit => true;
@@ -115,6 +125,8 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		}
 	}
 
+	private CustomGridNodeController CustomGridNodeController => Game.Instance.CustomGridNodeController;
+
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper clickedTarget)
 	{
 		MechanicEntity caster = context.Caster;
@@ -124,7 +136,7 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 			yield break;
 		}
 		CustomGridNodeBase nearestNode = clickedTarget.NearestNode;
-		if (!CalculatePathAndTargets(context.Ability, nearestNode, caster.CurrentUnwalkableNode, out var pathNodes, out var targets))
+		if (!CalculatePathAndTargets(context.Ability, nearestNode, caster.CurrentUnwalkableNode, ignoreInvisibleInCombat: false, out var pathNodes, out var targets))
 		{
 			PFLog.Ability.ErrorWithReport($"{context.Ability}: can't find path for custom movement");
 			yield break;
@@ -156,15 +168,15 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		}
 	}
 
-	private bool CalculatePathAndTargets(AbilityData ability, CustomGridNodeBase targetNode, CustomGridNodeBase casterNode, out List<CustomGridNodeBase> pathNodes, out MechanicEntity[] targets)
+	private bool CalculatePathAndTargets(AbilityData ability, CustomGridNodeBase targetNode, CustomGridNodeBase casterNode, bool ignoreInvisibleInCombat, out List<CustomGridNodeBase> pathNodes, out MechanicEntity[] targets)
 	{
 		MechanicEntity caster = ability.Caster;
-		(OrientedPatternData Pattern, List<CustomGridNodeBase> Path) orientedPatternAndPath = GetOrientedPatternAndPath(ability, casterNode, targetNode);
+		(OrientedPatternData Pattern, List<CustomGridNodeBase> Path) orientedPatternAndPath = GetOrientedPatternAndPath(ability, casterNode, targetNode, coveredTargetsOnly: false, ignoreInvisibleInCombat);
 		OrientedPatternData item = orientedPatternAndPath.Pattern;
 		List<CustomGridNodeBase> item2 = orientedPatternAndPath.Path;
 		pathNodes = item2;
 		int limit = (DamageAllUnitsInLine ? int.MaxValue : caster.Size.GetLesserSide());
-		targets = GetAllTargetUnits(item, caster, limit);
+		targets = GetAllTargetUnits(item, caster, limit, ignoreInvisibleInCombat);
 		return pathNodes.HasItem((CustomGridNodeBase i) => i != casterNode);
 	}
 
@@ -305,31 +317,36 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 
 	[NotNull]
 	[ItemNotNull]
-	private MechanicEntity[] GetAllTargetUnits(OrientedPatternData pattern, MechanicEntity caster, int limit)
+	private MechanicEntity[] GetAllTargetUnits(OrientedPatternData pattern, MechanicEntity caster, int limit, bool ignoreInvisibleInCombat)
 	{
-		List<CustomGridNodeBase> list = pattern.Nodes.ToTempList();
-		List<MechanicEntity> list2 = TempList.Get<MechanicEntity>();
-		foreach (CustomGridNodeBase item in list)
+		List<CustomGridNodeBase> source = pattern.Nodes.ToTempList();
+		List<MechanicEntity> list = TempList.Get<MechanicEntity>();
+		using (HashSet<CustomGridNodeBase>.Enumerator enumerator = source.SelectMany((CustomGridNodeBase @base) => caster.GetOccupiedNodes(@base)).ToTempHashSet().GetEnumerator())
 		{
-			foreach (CustomGridNodeBase occupiedNode in caster.GetOccupiedNodes(item.Vector3Position))
+			BaseUnitEntity unit;
+			while (enumerator.MoveNext() && (!enumerator.Current.TryGetUnit(out unit) || unit == caster || !TryAddTarget(unit, caster, list, ignoreInvisibleInCombat) || --limit >= 1))
 			{
-				BaseUnitEntity baseUnitEntity = occupiedNode.GetAllUnits()?.FirstOrDefault((BaseUnitEntity u) => u != caster);
-				if (baseUnitEntity != null && !baseUnitEntity.IsDeadOrUnconscious && !baseUnitEntity.Features.IsUntargetable && !list2.Contains(baseUnitEntity) && (!IgnoreAllies || !caster.IsAlly(baseUnitEntity)) && (!IgnoreEnemies || !caster.IsEnemy(baseUnitEntity)))
-				{
-					limit--;
-					list2.Add(baseUnitEntity);
-					if (limit < 1)
-					{
-						break;
-					}
-				}
-			}
-			if (limit < 1)
-			{
-				break;
 			}
 		}
-		return list2.ToArray();
+		return list.ToArray();
+	}
+
+	private bool TryAddTarget(BaseUnitEntity unit, MechanicEntity caster, List<MechanicEntity> targetUnits, bool ignoreInvisibleInCombat)
+	{
+		if (unit == null || unit.IsDeadOrUnconscious || (bool)unit.Features.IsUntargetable || targetUnits.Contains(unit))
+		{
+			return false;
+		}
+		if (ignoreInvisibleInCombat && unit.IsInvisibleInCombat())
+		{
+			return false;
+		}
+		if ((IgnoreAllies && caster.IsAlly(unit)) || (IgnoreEnemies && caster.IsEnemy(unit)))
+		{
+			return false;
+		}
+		targetUnits.Add(unit);
+		return true;
 	}
 
 	public IComparer<CustomGridNodeBase> DistanceComparer(MechanicEntity caster)
@@ -353,75 +370,89 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 
 	public OrientedPatternData GetOrientedPattern(IAbilityDataProviderForPattern ability, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, bool coveredTargetsOnly = false)
 	{
-		return GetOrientedPatternAndPath(ability, casterNode, targetNode, coveredTargetsOnly).Pattern;
+		return GetOrientedPatternAndPath(ability, casterNode, targetNode, coveredTargetsOnly, ignoreInvisibleInCombat: true).Pattern;
 	}
 
-	public (OrientedPatternData Pattern, List<CustomGridNodeBase> Path) GetOrientedPatternAndPath(IAbilityDataProviderForPattern ability, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, bool coveredTargetsOnly = false)
+	public (OrientedPatternData Pattern, List<CustomGridNodeBase> Path) GetOrientedPatternAndPath(IAbilityDataProviderForPattern ability, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, bool coveredTargetsOnly = false, bool ignoreInvisibleInCombat = false)
 	{
 		MechanicEntity caster = ability.Caster;
 		int rangeCells = ability.RangeCells;
-		List<CustomGridNodeBase> path = GetPath(caster, casterNode, targetNode);
-		if (path.Empty() || (!StepThroughTarget && !IsPathToTargetReachDestination(caster, targetNode, path)))
+		List<CustomGridNodeBase> list = GetPath(ability.Data, casterNode, targetNode);
+		if (list.Empty() || (!StepThroughTarget && !IsPathToTargetReachDestination(caster, targetNode, list)))
 		{
-			List<CustomGridNodeBase> list = TempList.Get<CustomGridNodeBase>();
-			list.Add(targetNode);
-			return (Pattern: new OrientedPatternData(list, casterNode), Path: TempList.Get<CustomGridNodeBase>());
+			List<CustomGridNodeBase> list2 = TempList.Get<CustomGridNodeBase>();
+			list2.Add(targetNode);
+			return (Pattern: new OrientedPatternData(list2, casterNode), Path: TempList.Get<CustomGridNodeBase>());
 		}
-		CustomGridNodeBase customGridNodeBase = path[0];
+		CustomGridNodeBase customGridNodeBase = list[0];
 		Vector2Int vector2Int = casterNode.CoordinatesInGrid - customGridNodeBase.CoordinatesInGrid;
-		List<Vector2Int> list2 = (from i in caster.GetSortedNodesByDistanceToTarget(casterNode, targetNode.Vector3Position)
+		List<Vector2Int> list3 = (from i in caster.GetSortedNodesByDistanceToTarget(casterNode, targetNode.Vector3Position)
 			select i.CoordinatesInGrid - casterNode.CoordinatesInGrid).ToTempList();
 		CustomGridGraph g2 = (CustomGridGraph)customGridNodeBase.Graph;
-		List<CustomGridNodeBase> list3 = TempList.Get<CustomGridNodeBase>();
+		List<CustomGridNodeBase> list4 = TempList.Get<CustomGridNodeBase>();
 		HashSet<CustomGridNodeBase> hashSet = TempHashSet.Get<CustomGridNodeBase>();
-		foreach (CustomGridNodeBase item in path)
+		for (int j = 0; j < list.Count; j++)
 		{
-			CustomGridNodeBase customGridNodeBase2 = GetNode(g2, item.CoordinatesInGrid + vector2Int);
-			if (customGridNodeBase2 == null)
+			CustomGridNodeBase customGridNodeBase2 = list[j];
+			CustomGridNodeBase customGridNodeBase3 = GetNode(g2, customGridNodeBase2.CoordinatesInGrid + vector2Int);
+			if (customGridNodeBase3 == null)
 			{
 				break;
 			}
-			int warhammerLength = CustomGraphHelper.GetWarhammerLength(customGridNodeBase2.CoordinatesInGrid - casterNode.CoordinatesInGrid);
+			int warhammerLength = CustomGraphHelper.GetWarhammerLength(customGridNodeBase3.CoordinatesInGrid - casterNode.CoordinatesInGrid);
 			if (!StepThroughTarget && warhammerLength > rangeCells)
 			{
 				break;
 			}
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
 			hashSet.Clear();
-			foreach (Vector2Int item2 in list2)
+			foreach (Vector2Int item in list3)
 			{
-				hashSet.Add(GetNode(g2, customGridNodeBase2.CoordinatesInGrid + item2));
+				hashSet.Add(GetNode(g2, customGridNodeBase3.CoordinatesInGrid + item));
 			}
-			foreach (CustomGridNodeBase item3 in hashSet)
+			NodeOccupationData nodeOccupationData = GetNodeOccupationData(caster, hashSet);
+			if (!coveredTargetsOnly || nodeOccupationData.HasUnit)
 			{
-				BaseUnitEntity unit = item3.GetUnit();
-				flag3 |= unit != null && unit != caster && unit.IsConscious;
-				if (unit != null)
+				list4.AddRange(hashSet);
+			}
+			if (!StepThroughTarget && StopOnFirstEncounter && ((!IgnoreAllies && nodeOccupationData.HasAlly) || (!IgnoreEnemies && nodeOccupationData.HasEnemy)))
+			{
+				if (!nodeOccupationData.HasInvisible)
 				{
-					flag |= flag3 && unit.IsEnemy(caster);
-					flag2 |= flag3 && unit.IsAlly(caster);
+					break;
+				}
+				if (!ignoreInvisibleInCombat)
+				{
+					list = list.Take(j).ToTempList();
+					break;
 				}
 			}
-			if (!coveredTargetsOnly || flag3)
-			{
-				list3.AddRange(hashSet);
-			}
-			if (!StepThroughTarget && StopOnFirstEncounter && ((!IgnoreAllies && flag2) || (!IgnoreEnemies && flag)))
-			{
-				break;
-			}
 		}
-		if (IsCharge && !list3.Contains(targetNode))
+		if (IsCharge && !list4.Contains(targetNode))
 		{
-			list3.Add(targetNode);
+			list4.Add(targetNode);
 		}
-		return (Pattern: new OrientedPatternData(list3, list3.FirstItem()), Path: path);
+		return (Pattern: new OrientedPatternData(list4, list4.FirstItem()), Path: list);
 		static CustomGridNodeBase GetNode(NavGraph g, Vector2Int i)
 		{
 			return ((CustomGridGraph)g).GetNode(i.x, i.y);
 		}
+	}
+
+	private NodeOccupationData GetNodeOccupationData(MechanicEntity caster, HashSet<CustomGridNodeBase> nodesToCheck)
+	{
+		NodeOccupationData result = default(NodeOccupationData);
+		foreach (CustomGridNodeBase item in nodesToCheck)
+		{
+			BaseUnitEntity unit = item.GetUnit();
+			if (unit != null && unit != caster && unit.IsConscious)
+			{
+				result.HasUnit = true;
+				result.HasEnemy |= unit.IsEnemy(caster);
+				result.HasAlly |= unit.IsAlly(caster);
+				result.HasInvisible |= unit.IsInvisibleInCombat();
+			}
+		}
+		return result;
 	}
 
 	public bool IsTargetRestrictionPassed(AbilityData ability, TargetWrapper targetWrapper, Vector3 casterPosition)
@@ -441,7 +472,7 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 	{
 		CustomGridNodeBase nearestNode = target.NearestNode;
 		CustomGridNodeBase nearestNodeXZUnwalkable = casterPosition.GetNearestNodeXZUnwalkable();
-		if (!CalculatePathAndTargets(ability, target.NearestNode, nearestNodeXZUnwalkable, out var pathNodes, out var targets))
+		if (!CalculatePathAndTargets(ability, target.NearestNode, nearestNodeXZUnwalkable, ignoreInvisibleInCombat: true, out var pathNodes, out var targets))
 		{
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.CanNotReachTarget;
 			return false;
@@ -462,15 +493,15 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 					List<CustomGridNodeBase> list2 = pathNodes;
 					if (caster.CanStandHere(list2[list2.Count - 1]))
 					{
-						goto IL_00e3;
+						goto IL_00e4;
 					}
 				}
 			}
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsInvalid;
 			return false;
 		}
-		goto IL_00e3;
-		IL_00e3:
+		goto IL_00e4;
+		IL_00e4:
 		if (!StepThroughTarget && !IsPathToTargetReachDestination(ability.Caster, nearestNode, pathNodes))
 		{
 			failReason = BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsTooFar;
@@ -491,23 +522,23 @@ public class AbilityCustomDirectMovement : AbilityCustomLogic, IAbilityAoEPatter
 		return true;
 	}
 
-	private List<CustomGridNodeBase> GetPath(MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
+	private List<CustomGridNodeBase> GetPath(AbilityData abilityData, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
 	{
 		if (!StepThroughTarget)
 		{
-			return GetPathToTarget(caster, casterNode, targetNode);
+			return GetPathToTarget(abilityData, casterNode, targetNode);
 		}
-		return GetStepThroughTargetPath(caster, casterNode, targetNode);
+		return GetStepThroughTargetPath(abilityData.Caster, casterNode, targetNode);
 	}
 
-	private List<CustomGridNodeBase> GetPathToTarget(MechanicEntity caster, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
+	private List<CustomGridNodeBase> GetPathToTarget(AbilityData abilityData, CustomGridNodeBase casterNode, CustomGridNodeBase targetNode)
 	{
 		BaseUnitEntity baseUnitEntity = targetNode.GetUnit();
-		if (baseUnitEntity != null && baseUnitEntity.IsDeadOrUnconscious && CanTargetPoint)
+		if (baseUnitEntity != null && baseUnitEntity.IsDeadOrUnconscious && abilityData.CanTargetPoint)
 		{
 			baseUnitEntity = null;
 		}
-		return PathfindingService.Instance.FindPathChargeTB_Blocking(caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, !StopOnFirstEncounter || IgnoreEnemies || IgnoreAllies, baseUnitEntity).path.Cast<CustomGridNodeBase>().ToTempList();
+		return PathfindingService.Instance.FindPathChargeTB_Blocking(abilityData.Caster.MaybeMovementAgent, casterNode.Vector3Position, targetNode.Vector3Position, !StopOnFirstEncounter || IgnoreEnemies || IgnoreAllies, baseUnitEntity).path.Cast<CustomGridNodeBase>().ToTempList();
 	}
 
 	private bool IsPathToTargetReachDestination(MechanicEntity caster, CustomGridNodeBase targetNode, List<CustomGridNodeBase> path)

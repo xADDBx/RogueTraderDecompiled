@@ -8,7 +8,7 @@ internal class AreaDataStashDirectoryManager
 {
 	private const string LockFilename = "lock";
 
-	private const string FolderPrefix = "Areas_";
+	private const string FolderPrefix = "A";
 
 	private const FileShare LockFileShare = FileShare.None;
 
@@ -78,8 +78,8 @@ internal class AreaDataStashDirectoryManager
 	private static void DeleteUnusedStashFolders()
 	{
 		string persistentDataPath = ApplicationPaths.persistentDataPath;
-		PFLog.System.Log("Deleting AreaDataStash folders in: " + persistentDataPath + "Areas_*");
-		string[] directories = Directory.GetDirectories(persistentDataPath, "Areas_*");
+		PFLog.System.Log("Deleting AreaDataStash folders in: " + persistentDataPath + "A*");
+		string[] directories = Directory.GetDirectories(persistentDataPath, "A*");
 		foreach (string text in directories)
 		{
 			FileInfo fileInfo = new FileInfo(Path.Combine(text, "lock"));
@@ -93,7 +93,7 @@ internal class AreaDataStashDirectoryManager
 	private static string InitStashFolder()
 	{
 		int id = Process.GetCurrentProcess().Id;
-		string text = Path.Combine(ApplicationPaths.persistentDataPath, string.Format("{0}{1}", "Areas_", id));
+		string text = Path.Combine(ApplicationPaths.persistentDataPath, string.Format("{0}{1}", "A", id));
 		PFLog.System.Log("Set AreaDataStash folder to " + text);
 		Directory.CreateDirectory(text);
 		return text;

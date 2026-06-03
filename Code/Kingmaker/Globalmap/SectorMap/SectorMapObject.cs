@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using JetBrains.Annotations;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -290,8 +289,8 @@ public class SectorMapObject : MechanicEntityView, INetPingEntity, ISubscriber
 
 	public bool CheckQuests()
 	{
-		List<QuestObjective> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(this);
-		List<QuestObjective> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(Data.StarSystemArea);
+		List<QuestBookEntityEntry> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(this);
+		List<QuestBookEntityEntry> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(Data.StarSystemArea);
 		if (questsForSystem == null || !questsForSystem.Any())
 		{
 			return questsForSpaceSystem?.Any() ?? false;

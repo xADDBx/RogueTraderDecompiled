@@ -1,21 +1,27 @@
+using Kingmaker.Code.UI.MVVM.View.BossHPBar;
 using Kingmaker.Code.UI.MVVM.View.Credits;
 using Kingmaker.Code.UI.MVVM.View.Dialog;
 using Kingmaker.Code.UI.MVVM.View.EtudeCounter;
 using Kingmaker.Code.UI.MVVM.View.Formation;
 using Kingmaker.Code.UI.MVVM.View.GameOver;
 using Kingmaker.Code.UI.MVVM.View.Loot.PC;
+using Kingmaker.Code.UI.MVVM.View.NecronTimer;
 using Kingmaker.Code.UI.MVVM.View.Respec;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.View.Subtitle;
 using Kingmaker.Code.UI.MVVM.View.SurfaceCombat.PC;
 using Kingmaker.Code.UI.MVVM.View.Transition.PC;
+using Kingmaker.Code.UI.MVVM.View.TurnTimer;
 using Kingmaker.Code.UI.MVVM.View.UIVisibility;
 using Kingmaker.Code.UI.MVVM.View.Vendor;
+using Kingmaker.Code.UI.MVVM.VM.BossHPBar;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
 using Kingmaker.Code.UI.MVVM.VM.EtudeCounter;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
+using Kingmaker.Code.UI.MVVM.VM.NecronTimer;
 using Kingmaker.Code.UI.MVVM.VM.Surface;
 using Kingmaker.Code.UI.MVVM.VM.Transition;
+using Kingmaker.Code.UI.MVVM.VM.TurnTimer;
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common;
@@ -73,6 +79,15 @@ public class SurfaceStaticPartPCView : ViewBase<SurfaceStaticPartVM>
 	private UIDestroyViewLink<EtudeCounterView, EtudeCounterVM> m_EtudeCounterView;
 
 	[SerializeField]
+	private UIDestroyViewLink<BossHPBarCommonView, BossHPBarVM> m_BossHPBarView;
+
+	[SerializeField]
+	private UIDestroyViewLink<TurnTimerView, TurnTimerVM> m_TurnTimerView;
+
+	[SerializeField]
+	private UIDestroyViewLink<NecronTimerView, NecronTimerVM> m_NecronTimerView;
+
+	[SerializeField]
 	private CharGenContextPCView m_CharGenContextPCView;
 
 	[SerializeField]
@@ -109,6 +124,9 @@ public class SurfaceStaticPartPCView : ViewBase<SurfaceStaticPartVM>
 		SurfaceHUDView.Bind(base.ViewModel.SurfaceHUDVM);
 		m_SubtitleView.Bind(base.ViewModel.SubtitleVM);
 		m_EtudeCounterView.Bind(base.ViewModel.EtudeCounterVM);
+		m_BossHPBarView.Bind(base.ViewModel.BossHPBarVM);
+		m_TurnTimerView.Bind(base.ViewModel.TurnTimerVM);
+		m_NecronTimerView.Bind(base.ViewModel.NecronTimerVM);
 		m_CharGenContextPCView.Bind(base.ViewModel.CharGenContextVM);
 		m_RespecContextCommonView.Bind(base.ViewModel.RespecContextVM);
 		AddDisposable(base.ViewModel.TransitionVM.Subscribe(m_TransitionPCViewLink.Bind));

@@ -36,6 +36,8 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private IDisposable m_DelayedShowHintHandle;
 
+	private IDisposable m_DelayedShowComparativeTooltipHandle;
+
 	private bool m_MussHide;
 
 	public TooltipContextVM()
@@ -117,8 +119,12 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		DisposeComparativeTooltip();
 		if (!data.Empty())
 		{
-			ComparativeTooltipVM disposable = (ComparativeTooltipVM.Value = new ComparativeTooltipVM(data, showScrollbar));
-			AddDisposable(disposable);
+			m_DelayedShowComparativeTooltipHandle = DelayedInvoker.InvokeInTime(delegate
+			{
+				TooltipContextVM tooltipContextVM = this;
+				ComparativeTooltipVM disposable = (ComparativeTooltipVM.Value = new ComparativeTooltipVM(data, showScrollbar));
+				tooltipContextVM.AddDisposable(disposable);
+			}, SettingsRoot.Game.Tooltips.ShowDelay);
 		}
 	}
 
@@ -190,6 +196,8 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 
 	private void DisposeComparativeTooltip()
 	{
+		m_DelayedShowComparativeTooltipHandle?.Dispose();
+		m_DelayedShowComparativeTooltipHandle = null;
 		ComparativeTooltipVM.Value?.Dispose();
 		ComparativeTooltipVM.Value = null;
 	}
@@ -199,6 +207,7 @@ public class TooltipContextVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		TooltipsDataCache.Clear();
 		DisposeTooltip();
 		DisposeHint();
+		DisposeComparativeTooltip();
 		DisposeInfoWindow();
 		DisposeGlossaryInfoWindow();
 	}

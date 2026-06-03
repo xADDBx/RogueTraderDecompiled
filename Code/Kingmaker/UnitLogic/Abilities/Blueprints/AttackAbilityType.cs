@@ -4,6 +4,5 @@ public enum AttackAbilityType
 {
 	SingleShot,
 	Scatter,
-	Pattern,
-	Melee
+	Pattern
 }

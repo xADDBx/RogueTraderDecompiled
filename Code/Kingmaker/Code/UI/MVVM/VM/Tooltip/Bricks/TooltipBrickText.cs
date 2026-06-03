@@ -19,7 +19,9 @@ public class TooltipBrickText : ITooltipBrick
 
 	private readonly MechanicEntity m_MechanicEntity;
 
-	public TooltipBrickText(string text, TooltipTextType type = TooltipTextType.Simple, bool isHeader = false, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool needChangeSize = false, int textSize = 18, MechanicEntity mechanicEntity = null)
+	private readonly bool m_IsInfoText;
+
+	public TooltipBrickText(string text, TooltipTextType type = TooltipTextType.Simple, bool isHeader = false, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool needChangeSize = false, int textSize = 18, MechanicEntity mechanicEntity = null, bool isInfoText = false)
 	{
 		m_Text = text;
 		m_Type = type;
@@ -28,10 +30,11 @@ public class TooltipBrickText : ITooltipBrick
 		m_NeedChangeSize = needChangeSize;
 		m_TextSize = textSize;
 		m_MechanicEntity = mechanicEntity;
+		m_IsInfoText = isInfoText;
 	}
 
 	public virtual TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickTextVM(m_Text, m_Type, m_Alignment, m_IsHeader, m_NeedChangeSize, m_TextSize, m_MechanicEntity);
+		return new TooltipBrickTextVM(m_Text, m_Type, m_Alignment, m_IsHeader, m_NeedChangeSize, m_TextSize, m_MechanicEntity, m_IsInfoText);
 	}
 }

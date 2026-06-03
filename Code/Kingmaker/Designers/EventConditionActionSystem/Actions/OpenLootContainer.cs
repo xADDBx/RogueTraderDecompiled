@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/OpenLootContainer")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("de11b243ffe6dbe449ab5340f716ab26")]
 public class OpenLootContainer : GameAction

@@ -10,6 +10,8 @@ namespace Owlcat.Runtime.Core.Logging;
 
 public class Logger
 {
+	public delegate void LogInfoProcessDelegate(ref LogInfo logInfo);
+
 	private struct IgnoredUnityMethod
 	{
 		public enum Mode
@@ -92,6 +94,9 @@ public class Logger
 			return s_Instance;
 		}
 	}
+
+	[UsedImplicitly]
+	public event LogInfoProcessDelegate OnLogProcess;
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 	private static void InitializeLogger()
@@ -265,21 +270,27 @@ public class Logger
 	[StackTraceIgnore]
 	public void Log([NotNull] LogChannel channel, object source, LogSeverity severity, Exception ex, [CanBeNull] string message, object[] par)
 	{
-		if (Enabled && severity >= channel.MinLevel)
+		if (!Enabled || severity < channel.MinLevel)
 		{
-			List<LogStackFrame> list = new List<LogStackFrame>();
-			if (ex != null)
-			{
-				FormatException(ex, list);
-			}
-			if (severity >= channel.MinStackTraceLevel)
-			{
-				UberLoggerStackTraceUtils2.GetCallstack(list, new StackTrace(fNeedFileInfo: true));
-			}
-			string message2 = ((message == null) ? "" : ((par != null && par.Length > 0) ? string.Format(message, par) : message));
-			LogInfo logInfo = new LogInfo(source, channel, GetTime(), severity, list, message2);
-			Log(logInfo);
+			return;
 		}
+		List<LogStackFrame> list = null;
+		if (ex != null)
+		{
+			list = new List<LogStackFrame>();
+			FormatException(ex, list);
+		}
+		if (severity >= channel.MinStackTraceLevel)
+		{
+			if (list == null)
+			{
+				list = new List<LogStackFrame>();
+			}
+			UberLoggerStackTraceUtils2.GetCallstack(list, new StackTrace(fNeedFileInfo: true));
+		}
+		string message2 = ((message == null) ? "" : ((par != null && par.Length > 0) ? string.Format(message, par) : message));
+		LogInfo logInfo = new LogInfo(source, channel, GetTime(), severity, list, message2);
+		Log(logInfo);
 	}
 
 	[StackTraceIgnore]
@@ -298,6 +309,10 @@ public class Logger
 			m_AlreadyLogging = true;
 			try
 			{
+				if (this.OnLogProcess != null)
+				{
+					this.OnLogProcess(ref logInfo);
+				}
 				m_Loggers.RemoveAll((ILogSink l) => l == null);
 				foreach (ILogSink logger in m_Loggers)
 				{

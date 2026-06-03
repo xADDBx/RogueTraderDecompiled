@@ -1,4 +1,5 @@
 using System.Collections;
+using Kingmaker.UI.Pointer;
 using UnityEngine;
 
 namespace Kingmaker;
@@ -67,7 +68,7 @@ public class LookAtMousePosition : MonoBehaviour
 
 	private void LookAtMouse()
 	{
-		m_RayToMouse = m_Camera.ScreenPointToRay(Input.mousePosition);
+		m_RayToMouse = m_Camera.ScreenPointToRay(CursorController.CursorPosition);
 		if (Physics.Raycast(m_RayToMouse, out m_RayHit, 40f, 2359553))
 		{
 			m_LookAtTargetPoint = m_RayHit.point;

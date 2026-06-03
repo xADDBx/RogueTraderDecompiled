@@ -29,16 +29,16 @@ public class CommandMoveCamera : CommandBase
 
 	public bool Teleport;
 
-	[ConditionalHide("Teleport")]
+	[HideIf("Teleport")]
 	public float CameraSpeed;
 
-	[ConditionalHide("Teleport")]
+	[HideIf("Teleport")]
 	public bool FixedScrollTime;
 
-	[ConditionalShow("FixedScrollTime")]
+	[ShowIf("FixedScrollTime")]
 	public float CameraMaxSpeed;
 
-	[ConditionalShow("FixedScrollTime")]
+	[ShowIf("FixedScrollTime")]
 	public float CameraMaxTravelTime;
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)

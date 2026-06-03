@@ -24,6 +24,7 @@ public enum ItemsItemType
 	PetProtocolRaven = 21,
 	PetProtocolEagle = 22,
 	PetProtocolSkulls = 23,
+	Augment = 30,
 	StarshipItem = 99,
 	StarshipWeapon = 100,
 	StarshipAmmo = 101,

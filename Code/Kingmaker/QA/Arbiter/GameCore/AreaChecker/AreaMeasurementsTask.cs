@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Arbiter.Tasks;
 using UnityEngine;
@@ -47,7 +48,7 @@ public class AreaMeasurementsTask : ArbiterTask
 				ArbiterService.Instance.Integration.MoveCameraToPoint(point.Position, point.Rotation, point.Zoom);
 				m_Revealer.transform.position = point.Position;
 				ArbiterIntegration.AddRevealer(m_Revealer.transform);
-				base.Status = $"Profiling at point {m_AreaCheckerComponent.GetSampleId(point)}";
+				base.Status = $"Profiling at point {m_AreaCheckerComponent.GetSampleId(point)} / {areaPartTest.Points.Count()}";
 				ArbiterService.Logger.Log(base.Status);
 				for (int i = 0; i < 15; i++)
 				{

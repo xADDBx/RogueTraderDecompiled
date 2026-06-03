@@ -33,12 +33,8 @@ public class UnitPartMechadendrites : AbstractUnitPart, IHashable
 		}
 	}
 
-	public void UnregisterMechadendrite(MechadendriteSettings settings)
+	private void ClearEquipment()
 	{
-		if (Mechadendrites.ContainsKey(settings.MechadendritesType) && Mechadendrites[settings.MechadendritesType] == settings)
-		{
-			Mechadendrites.Remove(settings.MechadendritesType);
-		}
 		UnitViewHandsEquipment unitViewHandsEquipment = (base.Owner.View as UnitEntityView)?.HandsEquipment;
 		if (unitViewHandsEquipment?.Sets == null)
 		{
@@ -49,6 +45,21 @@ public class UnitPartMechadendrites : AbstractUnitPart, IHashable
 			weaponSet2.MainHand?.MatchVisuals();
 			weaponSet2.OffHand?.MatchVisuals();
 		}
+	}
+
+	public void UnregisterMechadendrite(MechadendriteSettings settings)
+	{
+		if (Mechadendrites.ContainsKey(settings.MechadendritesType) && Mechadendrites[settings.MechadendritesType] == settings)
+		{
+			Mechadendrites.Remove(settings.MechadendritesType);
+		}
+		ClearEquipment();
+	}
+
+	public void UnregisterAllMechadendrites()
+	{
+		Mechadendrites.Clear();
+		ClearEquipment();
 	}
 
 	public override Hash128 GetHash128()

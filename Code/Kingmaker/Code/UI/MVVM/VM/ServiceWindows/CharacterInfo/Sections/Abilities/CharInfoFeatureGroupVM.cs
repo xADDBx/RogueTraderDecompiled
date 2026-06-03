@@ -9,7 +9,9 @@ public class CharInfoFeatureGroupVM : BaseFeatureGroupVM<CharInfoFeatureVM>
 	{
 		Unknown,
 		Abilities,
-		Talents
+		Talents,
+		OverchargeAugmentsAbilities,
+		Augments
 	}
 
 	public readonly FeatureGroupType GroupType;

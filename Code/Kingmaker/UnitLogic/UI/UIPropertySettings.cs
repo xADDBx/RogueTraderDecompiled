@@ -3,7 +3,6 @@ using JetBrains.Annotations;
 using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
-using Kingmaker.Utility.Attributes;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.UI;
@@ -14,7 +13,6 @@ public class UIPropertySettings
 	public UIPropertyName NameType;
 
 	[SerializeField]
-	[ShowIf("NameIsCustom")]
 	private LocalizedString m_Name;
 
 	public LocalizedString Description;
@@ -26,11 +24,9 @@ public class UIPropertySettings
 	private bool m_LinkProperty;
 
 	[SerializeField]
-	[ShowIf("m_LinkProperty")]
 	private ContextPropertyName m_PropertyName;
 
 	[SerializeField]
-	[ShowIf("m_LinkProperty")]
 	private BlueprintMechanicEntityFact.Reference m_PropertySource;
 
 	[SerializeField]

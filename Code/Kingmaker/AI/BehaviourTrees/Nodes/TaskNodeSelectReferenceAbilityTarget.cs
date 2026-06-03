@@ -6,6 +6,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeSelectReferenceAbilityTarget : TaskNode
 {
+	public TaskNodeSelectReferenceAbilityTarget()
+	{
+	}
+
+	public TaskNodeSelectReferenceAbilityTarget(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		DecisionContext decisionContext = blackboard.DecisionContext;

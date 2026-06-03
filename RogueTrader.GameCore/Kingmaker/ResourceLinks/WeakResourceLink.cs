@@ -22,6 +22,8 @@ public abstract class WeakResourceLink : IEquatable<WeakResourceLink>, IHashable
 
 	public abstract UnityEngine.Object LoadObject();
 
+	public abstract UnityEngine.Object LoadAssetInEditor();
+
 	private static bool Equals(WeakResourceLink l1, WeakResourceLink l2)
 	{
 		if ((object)l1 == l2)
@@ -65,7 +67,7 @@ public abstract class WeakResourceLink : IEquatable<WeakResourceLink>, IHashable
 		return default(Hash128);
 	}
 }
-public abstract class WeakResourceLink<T> : WeakResourceLink, IHashable where T : UnityEngine.Object
+public class WeakResourceLink<T> : WeakResourceLink, IHashable where T : UnityEngine.Object
 {
 	[MemoryPackIgnore]
 	protected BundledResourceHandle<T> m_Handle { get; set; }
@@ -91,6 +93,11 @@ public abstract class WeakResourceLink<T> : WeakResourceLink, IHashable where T 
 	public override UnityEngine.Object LoadObject()
 	{
 		return Load();
+	}
+
+	public override UnityEngine.Object LoadAssetInEditor()
+	{
+		return LoadAsset();
 	}
 
 	public void ForceUnload()

@@ -1,4 +1,5 @@
 using System.Linq;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
@@ -11,6 +12,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[Group("Starship")]
 [TypeId("5aae230dab89cde458108b4b6322d5ad")]
 public class StarshipProwLimiter : UnitFactComponentDelegate, IInitiatorRulebookHandler<RulePerformAbility>, IRulebookHandler<RulePerformAbility>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {

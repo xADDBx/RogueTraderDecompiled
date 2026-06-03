@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using UnityEngine;
 
 namespace Kingmaker.Blueprints.Root;
 
@@ -13,4 +14,7 @@ public class BlueprintSoulMarksRoot : BlueprintScriptableObject
 	}
 
 	public List<SoulMarkToFact> SoulMarksBaseFacts = new List<SoulMarkToFact>();
+
+	[Tooltip("Rank index at which a soul mark direction blocks all other directions from gaining points")]
+	public int BlockingRankIndex = 3;
 }

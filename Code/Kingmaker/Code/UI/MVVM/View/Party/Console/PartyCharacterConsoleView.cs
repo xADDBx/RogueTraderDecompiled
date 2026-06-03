@@ -5,8 +5,6 @@ using Kingmaker.Code.UI.MVVM.View.Party.PC;
 using Kingmaker.Code.UI.MVVM.VM.Party;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
@@ -294,13 +292,5 @@ public class PartyCharacterConsoleView : ViewBase<PartyCharacterVM>, IScrollHand
 	private void UpdateAscendedLabel(bool value)
 	{
 		m_AscendLabel.SetActive(value);
-	}
-
-	public void ShowInspect()
-	{
-		EventBus.RaiseEvent(delegate(IUnitClickUIHandler h)
-		{
-			h.HandleUnitConsoleInvoke(UnitEntityData);
-		});
 	}
 }

@@ -11,39 +11,33 @@ public class RuleRollCoverHit : RulebookOptionalTargetEvent
 	[NotNull]
 	public readonly RuleCalculateCoverHitChance HitChanceRule;
 
+	public readonly RulePerformAttackRoll AttackRoll;
+
 	private readonly bool m_IsAutoMissCover;
 
 	public RuleRollD100 ResultD100 { get; private set; }
 
 	public bool ResultIsHit { get; private set; }
 
-	public LosCalculations.CoverType Los => HitChanceRule.Los;
-
-	[CanBeNull]
-	public MechanicEntity Cover => HitChanceRule.Cover;
-
-	public int BaseChance => HitChanceRule.BaseChance;
-
-	public int ResultChance => HitChanceRule.ResultChance;
-
-	public RuleRollCoverHit([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [CanBeNull] AbilityData ability, LosCalculations.CoverType los, [CanBeNull] MechanicEntity cover)
-		: this(new RuleCalculateCoverHitChance(initiator, target, ability, los, cover))
+	public RuleRollCoverHit([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [CanBeNull] AbilityData ability, LosCalculations.CoverType los, [CanBeNull] MechanicEntity cover, [CanBeNull] RulePerformAttackRoll attackRoll)
+		: this(new RuleCalculateCoverHitChance(initiator, target, ability, los, cover), attackRoll)
 	{
 		base.HasNoTarget = false;
 	}
 
-	public RuleRollCoverHit([NotNull] RuleCalculateCoverHitChance hitChance, bool isAutoMissCover = false)
+	public RuleRollCoverHit([NotNull] RuleCalculateCoverHitChance hitChance, [CanBeNull] RulePerformAttackRoll attackRoll, bool isAutoMissCover = false)
 		: base(hitChance.ConcreteInitiator, hitChance.MaybeTarget)
 	{
 		base.HasNoTarget = hitChance.MaybeTarget == null;
 		m_IsAutoMissCover = isAutoMissCover;
 		HitChanceRule = hitChance;
+		AttackRoll = attackRoll;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
 	{
 		Rulebook.Trigger(HitChanceRule);
 		ResultD100 = Dice.D100;
-		ResultIsHit = !m_IsAutoMissCover && !HitChanceRule.IsAutoMiss && (HitChanceRule.IsAutoHit || (int)ResultD100 <= ResultChance);
+		ResultIsHit = !m_IsAutoMissCover && !HitChanceRule.IsAutoMiss && (HitChanceRule.IsAutoHit || (int)ResultD100 <= HitChanceRule.ResultChance);
 	}
 }

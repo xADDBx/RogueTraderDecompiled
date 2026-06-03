@@ -15,7 +15,7 @@ public class CommandDelay : CommandBase
 
 	public float Time;
 
-	[ConditionalShow("Random")]
+	[ShowIf("Random")]
 	public float MaxTime;
 
 	public bool Random;

@@ -17,7 +17,8 @@ public class EtudeBracketForbidOpenSelectedWindows : EtudeBracketTrigger, IHasha
 	public enum SelectedWindowsTypes
 	{
 		Inventory = 1,
-		CharacterInfo = 2
+		CharacterInfo = 2,
+		Augmentations = 4
 	}
 
 	public class SavableData : IEntityFactComponentSavableData, IHashable
@@ -53,6 +54,11 @@ public class EtudeBracketForbidOpenSelectedWindows : EtudeBracketTrigger, IHasha
 			Game.Instance.Player.CharacterInfoWindowBlocked.Retain();
 			flag = true;
 		}
+		if (HasFlag(savableData.SelectedWindows, SelectedWindowsTypes.Augmentations))
+		{
+			Game.Instance.Player.AugmentationsWindowBlocked.Retain();
+			flag = true;
+		}
 		if (flag)
 		{
 			EventBus.RaiseEvent(delegate(ICanAccessSelectedWindowsHandler h)
@@ -74,6 +80,11 @@ public class EtudeBracketForbidOpenSelectedWindows : EtudeBracketTrigger, IHasha
 		if (HasFlag(savableData.SelectedWindows, SelectedWindowsTypes.CharacterInfo))
 		{
 			Game.Instance.Player.CharacterInfoWindowBlocked.Release();
+			flag = true;
+		}
+		if (HasFlag(savableData.SelectedWindows, SelectedWindowsTypes.Augmentations))
+		{
+			Game.Instance.Player.AugmentationsWindowBlocked.Release();
 			flag = true;
 		}
 		if (flag)

@@ -66,6 +66,8 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 	public AbilityMultiTargetSelectionHandler MultiTargetHandler { get; } = new AbilityMultiTargetSelectionHandler();
 
 
+	public bool IsSelected => Ability != null;
+
 	public PointerMode GetMode()
 	{
 		return PointerMode.Ability;
@@ -107,7 +109,7 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		}
 		if (targetForDesiredPosition?.Entity != null && Ability.CanTargetFromDesiredPosition(targetForDesiredPosition))
 		{
-			float result = (Ability.Blueprint.CanTargetPoint ? 1f : 0f);
+			float result = (Ability.CanTargetPoint ? 1f : 0f);
 			bool isDeadOrUnconscious = targetForDesiredPosition.Entity.IsDeadOrUnconscious;
 			if (isDeadOrUnconscious && Ability.Blueprint.CanCastToAliveTarget())
 			{
@@ -117,11 +119,11 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 			{
 				return result;
 			}
-			if (targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.Blueprint.CanTargetEnemies)
+			if (targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.CanTargetEnemies)
 			{
 				return result;
 			}
-			if (!targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.Blueprint.CanTargetFriends && !Ability.CanRedirectFromTarget(targetForDesiredPosition.Entity))
+			if (!targetForDesiredPosition.Entity.IsEnemy(Ability.Caster) && !Ability.CanTargetFriends && !Ability.CanRedirectFromTarget(targetForDesiredPosition.Entity))
 			{
 				return result;
 			}
@@ -190,12 +192,16 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 			return new TargetWrapper(mechanicEntity);
 		case AbilityTargetAnchor.Point:
 		{
-			CustomGridNodeBase nearestNodeXZUnwalkable = casterPosition.GetNearestNodeXZUnwalkable();
+			CustomGridNodeBase customGridNodeBase = casterPosition.GetNearestNodeXZUnwalkable();
+			if (ability.TryGetCastNodeOverride(customGridNodeBase, out var node))
+			{
+				customGridNodeBase = node;
+			}
 			Vector3 vector = worldPosition;
-			vector = ((ability.GetPatternSettings() == null) ? AoEPatternHelper.GetGridAdjustedPosition(vector) : AoEPatternHelper.GetActualCastPosition(ability.Caster, nearestNodeXZUnwalkable, vector, ability.MinRangeCells, ability.RangeCells));
-			Vector3 vector2 = vector - nearestNodeXZUnwalkable.Vector3Position;
+			vector = ((ability.GetPatternSettings() == null) ? AoEPatternHelper.GetGridAdjustedPosition(vector) : AoEPatternHelper.GetActualCastPosition(ability.Caster, customGridNodeBase, vector, ability.MinRangeCells, ability.RangeCells));
+			Vector3 vector2 = vector - customGridNodeBase.Vector3Position;
 			Quaternion quaternion = ((vector2 != Vector3.zero) ? Quaternion.LookRotation(vector2) : Quaternion.identity);
-			MechanicEntity entity = ((mechanicEntity != null && mechanicEntity.CanBeAttackedDirectly && (ability.IsCharge || !ability.Blueprint.CanTargetPoint)) ? mechanicEntity : null);
+			MechanicEntity entity = ((mechanicEntity != null && mechanicEntity.CanBeAttackedDirectly && (ability.IsCharge || !ability.CanTargetPoint)) ? mechanicEntity : null);
 			return new TargetWrapper(vector, quaternion.eulerAngles.y, entity);
 		}
 		default:
@@ -272,7 +278,7 @@ public class ClickWithSelectedAbilityHandler : IClickEventHandler
 		unavailabilityReason = null;
 		if (target == null)
 		{
-			if (!Ability.Blueprint.CanTargetPoint)
+			if (!Ability.CanTargetPoint)
 			{
 				unavailabilityReason = AbilityData.UnavailabilityReasonType.NullTarget;
 				return true;

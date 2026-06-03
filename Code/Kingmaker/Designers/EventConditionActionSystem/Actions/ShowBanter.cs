@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 [Serializable]
-[ComponentName("Actions/ShowBanter")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("0b9dc26e13a64efe891a0388ebe5d0cd")]
 public class ShowBanter : GameAction

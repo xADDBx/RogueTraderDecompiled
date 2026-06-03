@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.View.ActionBar.Console;
 
-public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilityView, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IHasTooltipTemplate
+public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilityView, IFloatConsoleNavigationEntity, IConsoleNavigationEntity, IConsoleEntity, IConfirmClickHandler, IHasTooltipTemplate
 {
 	[Header("ConsoleSlot")]
 	[SerializeField]
@@ -99,5 +99,15 @@ public class SurfaceActionBarSlotAbilityConsoleView : SurfaceActionBarSlotAbilit
 		{
 			SetLayer();
 		}
+	}
+
+	public Vector2 GetPosition()
+	{
+		return base.transform.position;
+	}
+
+	public List<IFloatConsoleNavigationEntity> GetNeighbours()
+	{
+		return null;
 	}
 }

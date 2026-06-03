@@ -17,6 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("982407ed6d4c4b34c9e135d2d1c79859")]
 public class StarshipActionsOnUnits : AbilityCustomLogic

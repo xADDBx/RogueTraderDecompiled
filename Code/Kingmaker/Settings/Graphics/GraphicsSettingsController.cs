@@ -176,6 +176,14 @@ public class GraphicsSettingsController
 		{
 			OnGraphicsSettingsChanged();
 		};
+		m_Settings.ReflectionProbes.OnValueChanged += delegate
+		{
+			OnGraphicsSettingsChanged();
+		};
+		m_Settings.ShadowsUpdateFrequency.OnValueChanged += delegate
+		{
+			OnGraphicsSettingsChanged();
+		};
 		m_Settings.SSAOQuality.OnValueChanged += delegate
 		{
 			OnGraphicsSettingsChanged();
@@ -193,6 +201,10 @@ public class GraphicsSettingsController
 			OnGraphicsSettingsChanged();
 		};
 		m_Settings.FootprintsMode.OnValueChanged += delegate
+		{
+			OnGraphicsSettingsChanged();
+		};
+		m_Settings.UpscalerMode.OnValueChanged += delegate
 		{
 			OnGraphicsSettingsChanged();
 		};
@@ -232,7 +244,10 @@ public class GraphicsSettingsController
 		m_Height.OnValueChanged += SetPlayerPrefsResolutionHeight;
 		m_Settings.FullScreenMode.OnValueChanged += SetPlayerPrefsFullscreenMode;
 		MonoSingleton<ApplicationFocusObserver>.Instance.OnApplicationChangedFocus += OnApplicationChangedFocus;
-		_ = MonoSingleton<TexturesQualityController>.Instance;
+		if (BuildModeUtility.EnableTextureQualityLoweringToReduceMemoryUsage)
+		{
+			TexturesQualityController.CreateInstance();
+		}
 		m_NeedUpdateGraphics = true;
 		OnSettingsConfirmed();
 		WaaaghPipeline.VolumeManagerUpdated = (Action<Camera>)Delegate.Combine(WaaaghPipeline.VolumeManagerUpdated, new Action<Camera>(OnVolumeManagerUpdated));
@@ -240,6 +255,11 @@ public class GraphicsSettingsController
 		{
 			ApplyAntiAliasingSettings();
 		};
+	}
+
+	public static void SetTargetFrameRate(int targetFrameRate)
+	{
+		Application.targetFrameRate = targetFrameRate;
 	}
 
 	private void OnDisplaySettingsChanged()
@@ -392,29 +412,27 @@ public class GraphicsSettingsController
 
 	private void ApplyGraphicsSettings()
 	{
+		int targetFrameRate = -1;
 		switch (m_Settings.VSyncMode.GetValue())
 		{
 		case VSyncModeOptions.EveryFrame:
 			QualitySettings.vSyncCount = 1;
-			Application.targetFrameRate = -1;
 			break;
 		case VSyncModeOptions.EverySecondFrame:
 			QualitySettings.vSyncCount = 2;
-			Application.targetFrameRate = -1;
 			break;
 		case VSyncModeOptions.EveryThirdFrame:
 			QualitySettings.vSyncCount = 3;
-			Application.targetFrameRate = -1;
 			break;
 		case VSyncModeOptions.EveryFourthFrame:
 			QualitySettings.vSyncCount = 4;
-			Application.targetFrameRate = -1;
 			break;
 		default:
 			QualitySettings.vSyncCount = 0;
-			Application.targetFrameRate = (m_Settings.FrameRateLimitEnabled ? Mathf.Max(m_Settings.FrameRateLimit.GetValue(), 30) : (-1));
+			targetFrameRate = (m_Settings.FrameRateLimitEnabled ? Mathf.Max(m_Settings.FrameRateLimit.GetValue(), 30) : (-1));
 			break;
 		}
+		SetTargetFrameRate(targetFrameRate);
 		if (BuildModeUtility.Data.ForceTextureMipLevel >= 0)
 		{
 			QualitySettings.globalTextureMipmapLimit = BuildModeUtility.Data.ForceTextureMipLevel;
@@ -444,19 +462,61 @@ public class GraphicsSettingsController
 				QualityOptionDisactivatable.High => ShadowQuality.All, 
 				_ => ShadowQuality.Disable, 
 			};
-			result.UpscalingFilter = UpscalingFilterSelection.FSR;
+			WaaaghPipelineAsset waaaghPipelineAsset = result;
+			UpscalerMode value = m_Settings.UpscalerMode.GetValue();
+			UpscalingFilterSelection upscalingFilter = default(UpscalingFilterSelection);
+			switch (value)
+			{
+			case UpscalerMode.Fsr:
+				upscalingFilter = UpscalingFilterSelection.FSR;
+				break;
+			case UpscalerMode.Point:
+				upscalingFilter = UpscalingFilterSelection.Point;
+				break;
+			case UpscalerMode.Linear:
+				upscalingFilter = UpscalingFilterSelection.Linear;
+				break;
+			default:
+				global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(value);
+				break;
+			}
+			waaaghPipelineAsset.UpscalingFilter = upscalingFilter;
 			result.FsrOverrideSharpness = true;
 			result.FsrSharpness = m_Settings.FsrSharpness.GetValue();
-			WaaaghPipelineAsset waaaghPipelineAsset = result;
+			waaaghPipelineAsset = result;
 			waaaghPipelineAsset.RenderScale = m_Settings.FsrMode.GetValue() switch
 			{
 				FsrMode.Off => 1f, 
 				FsrMode.UltraQuality => 0.77f, 
-				FsrMode.Quality => 0.67f, 
+				FsrMode.Quality => 2f / 3f, 
 				FsrMode.Balanced => 0.59f, 
 				FsrMode.Performance => 0.5f, 
 				_ => 1f, 
 			};
+			switch (m_Settings.ShadowsUpdateFrequency.GetValue())
+			{
+			case QualityOption.Low:
+				result.ShadowSettings.ShadowUpdateDistances.Distance0UpdateMode = ShadowUpdateMode.EveryThirdFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance1UpdateMode = ShadowUpdateMode.EveryFourthFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance2UpdateMode = ShadowUpdateMode.EveryFourthFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance3UpdateMode = ShadowUpdateMode.EveryFourthFrame;
+				break;
+			case QualityOption.Medium:
+				result.ShadowSettings.ShadowUpdateDistances.Distance0UpdateMode = ShadowUpdateMode.EveryFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance1UpdateMode = ShadowUpdateMode.EverySecondFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance2UpdateMode = ShadowUpdateMode.EveryThirdFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance3UpdateMode = ShadowUpdateMode.EveryFourthFrame;
+				break;
+			case QualityOption.High:
+				result.ShadowSettings.ShadowUpdateDistances.Distance0UpdateMode = ShadowUpdateMode.EveryFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance1UpdateMode = ShadowUpdateMode.EveryFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance2UpdateMode = ShadowUpdateMode.EveryFrame;
+				result.ShadowSettings.ShadowUpdateDistances.Distance3UpdateMode = ShadowUpdateMode.EveryFrame;
+				break;
+			default:
+				throw new ArgumentOutOfRangeException();
+			}
+			result.UseReflectionProbes = m_Settings.ReflectionProbes.GetValue();
 			ScriptableRendererData[] rendererDataList = result.RendererDataList;
 			for (int i = 0; i < rendererDataList.Length; i++)
 			{
@@ -578,16 +638,6 @@ public class GraphicsSettingsController
 
 	private void CorrectPS5ProGraphicsQualitySetting()
 	{
-		if (m_Width.GetValue() == 3840 && m_Height.GetValue() == 2160)
-		{
-			m_Settings.PS5ProGraphicsQuality.SetTempValue(PS5ProGraphicsQualityOption.Quality);
-		}
-		else
-		{
-			m_Settings.PS5ProGraphicsQuality.SetTempValue(PS5ProGraphicsQualityOption.Performance);
-		}
-		SettingsController.Instance.ConfirmAllTempValues();
-		SettingsController.Instance.SaveAll();
 	}
 
 	private void OnWindowedCursorLockChanged(bool lockCursor)

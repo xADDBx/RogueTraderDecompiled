@@ -59,6 +59,8 @@ public class SettingsController : ISettingsController
 
 	public GameSettingsController GameSettingsController { get; private set; }
 
+	public SwitchJCMSSettingsController SwitchJCMSSettingsController { get; private set; }
+
 	public ISettingsProvider GeneralSettingsProvider { get; private set; }
 
 	public ISettingsProvider InSaveSettingsProvider
@@ -97,6 +99,7 @@ public class SettingsController : ISettingsController
 		DisplaySettingsController = new DisplaySettingsController();
 		AccessiabilitySettingsController = new AccessiabilitySettingsController();
 		GameSettingsController = new GameSettingsController();
+		SwitchJCMSSettingsController = new SwitchJCMSSettingsController();
 		if (m_CanInitializeSoundController && SoundSettingsController == null)
 		{
 			SoundSettingsController = new SoundSettingsController();

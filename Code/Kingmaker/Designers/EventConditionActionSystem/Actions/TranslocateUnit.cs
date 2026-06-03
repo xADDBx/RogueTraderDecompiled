@@ -15,13 +15,17 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/TranslocateUnit")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("38b104786c153ae409ee91b85544a4a5")]
 public class TranslocateUnit : GameAction
 {
 	private const int NOD_SEARCH_RADIUS = 2;
+
+	[SerializeField]
+	[Tooltip("Если true, то целевые ноды будут блокироваться даже если юнит имеет фичу Hidden")]
+	private bool m_ForceBlockTargetPosition;
 
 	[SerializeReference]
 	public AbstractUnitEvaluator Unit;
@@ -111,7 +115,7 @@ public class TranslocateUnit : GameAction
 		{
 			unit2.SnapToGrid();
 		}
-		unit.View.MovementAgent.UpdateBlocker();
+		unit.View.MovementAgent.UpdateBlocker(m_ForceBlockTargetPosition);
 		if (m_CopyRotation && translocateOrientationEvaluator != null)
 		{
 			unit.SetOrientation(translocateOrientationEvaluator.GetValue());

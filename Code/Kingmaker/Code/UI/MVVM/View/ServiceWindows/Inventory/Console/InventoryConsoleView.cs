@@ -428,8 +428,22 @@ public class InventoryConsoleView : InventoryBaseView<InventoryStashConsoleView,
 	private void UpdateHintsValues(IConsoleEntity entity)
 	{
 		m_CurrentItemSlot.Value = entity as IItemSlotView;
-		bool value = m_CurrentItemSlot.Value != null && (m_CurrentItemSlot.Value.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault();
-		m_HasContextMenu.Value = value;
+		IItemSlotView value = m_CurrentItemSlot.Value;
+		int num;
+		if (value != null)
+		{
+			ItemSlotVM slotVM = value.SlotVM;
+			if (slotVM != null && slotVM.HasItem)
+			{
+				num = ((m_CurrentItemSlot.Value.SlotVM?.ContextMenu?.Value.Any((ContextMenuCollectionEntity item) => item.IsEnabled)).GetValueOrDefault() ? 1 : 0);
+				goto IL_00a7;
+			}
+		}
+		num = 0;
+		goto IL_00a7;
+		IL_00a7:
+		bool value2 = (byte)num != 0;
+		m_HasContextMenu.Value = value2;
 		m_CanEquip.Value = !(m_CurrentItemSlot.Value?.SlotVM?.Item.Value?.Blueprint is BlueprintStarshipItem) && (m_CurrentItemSlot.Value?.SlotVM?.IsEquipPossible).GetValueOrDefault() && !m_DollView.IsSlot(entity) && base.ViewModel.Unit.Value.CanBeControlled();
 		m_CanChoose.Value = m_DollView.IsSlot(entity);
 		m_CanSelect.Value = m_NavigationPanelLeft.IsFocused && ((entity as IConfirmClickHandler)?.CanConfirmClick() ?? false);

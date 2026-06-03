@@ -40,7 +40,22 @@ public class BlueprintMechanicEntityFact : BlueprintFact, IUIDataProvider
 
 	public LocalizedString LocalizedDescription => m_Description;
 
-	public virtual string Name => (base.ComponentsArray.FirstOrDefault((BlueprintComponent p) => p is AddStringToFactName) as AddStringToFactName)?.NewString(m_DisplayName) ?? ((string)m_DisplayName);
+	public virtual string Name
+	{
+		get
+		{
+			string text = m_DisplayName;
+			BlueprintComponent[] componentsArray = base.ComponentsArray;
+			for (int i = 0; i < componentsArray.Length; i++)
+			{
+				if (componentsArray[i] is AddStringToFactName addStringToFactName)
+				{
+					text = addStringToFactName.NewString(text);
+				}
+			}
+			return text;
+		}
+	}
 
 	public virtual string Description => (base.ComponentsArray.FirstOrDefault((BlueprintComponent p) => p is AddStringToFactDescription) as AddStringToFactDescription)?.NewString(m_Description) ?? ((string)m_Description);
 

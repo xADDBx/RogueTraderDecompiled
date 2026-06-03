@@ -62,6 +62,11 @@ public class MapObjectProvidesCoverPart : ViewBasedPart<MapObjectForcedCoverSett
 		base.Settings.CoverType = (base.Settings.StageToCoverTypeMap.TryGetValue(m_CurrentDestructionStage, out var value) ? value : LosCalculations.CoverType.None);
 	}
 
+	public bool CanUseCover(BaseUnitEntity entity)
+	{
+		return true;
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

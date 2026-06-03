@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/RestoreAndTurnOnDestructible")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("65bed6f3e3774ca38d8bb85029c810da")]
 public class RestoreAndTurnOnDestructible : GameAction

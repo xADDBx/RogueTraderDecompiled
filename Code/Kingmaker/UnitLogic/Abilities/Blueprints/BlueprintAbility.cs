@@ -16,7 +16,6 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.ResourceLinks.BaseInterfaces;
-using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.Settings;
 using Kingmaker.UI.Common;
@@ -31,6 +30,7 @@ using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Mechadendrites;
@@ -119,6 +119,9 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	[InfoBox("Hidden in panels")]
 	public bool HiddenInUI;
 
+	[InfoBox("Default slot index (0-based) in the action bar when first initialized. -1 = no preference.")]
+	public int DefaultSlotIndex = -1;
+
 	[InfoBox("Disabled in log and overtips", order = -1)]
 	public bool DisableLog;
 
@@ -195,7 +198,7 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 	private IAbilityCasterRestriction[] m_CachedCasterRestrictions;
 
 	[CanBeNull]
-	private IAbilityCanTargetPointRestriction[] m_CachedCanTargetPointRestrictions;
+	private IAbilityAllowTargetingType[] m_CachedTargetTypeExtensions;
 
 	[SerializeField]
 	private AbilityTag m_AbilityTag;
@@ -309,15 +312,15 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		}
 	}
 
-	public IAbilityCanTargetPointRestriction[] CanTargetPointRestrictions
+	public IAbilityAllowTargetingType[] TargetTypeExtensions
 	{
 		get
 		{
-			if (m_CachedCanTargetPointRestrictions == null)
+			if (m_CachedTargetTypeExtensions == null)
 			{
-				m_CachedCanTargetPointRestrictions = this.GetComponents<IAbilityCanTargetPointRestriction>().ToArray();
+				m_CachedTargetTypeExtensions = this.GetComponents<IAbilityAllowTargetingType>().ToArray();
 			}
-			return m_CachedCanTargetPointRestrictions;
+			return m_CachedTargetTypeExtensions;
 		}
 	}
 
@@ -433,50 +436,91 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 
 	private WarhammerAbilityTooltipHelper TooltipHelper => this.GetComponent<WarhammerAbilityTooltipHelper>();
 
-	public bool CanTargetPointAfterRestrictions(AbilityData abilityData)
-	{
-		if (CanTargetPoint)
-		{
-			return CanTargetPointRestrictions.ToList().All((IAbilityCanTargetPointRestriction checker) => checker.IsAbilityCanTargetPointRestrictionPassed(abilityData));
-		}
-		return false;
-	}
-
 	public bool CanCastToAliveTarget()
 	{
 		return this.GetComponent<ICanTargetDeadUnits>()?.CanTargetAlive ?? true;
 	}
 
+	public bool CanTargetPointWithExtensions(AbilityData abilityData)
+	{
+		if (!CanTargetPoint)
+		{
+			return CanTargetViaExtensions(abilityData, IAbilityAllowTargetingType.TargetTypeEnum.CanTargetPoint);
+		}
+		return true;
+	}
+
+	public bool CanTargetEnemiesWithExtensions(AbilityData abilityData)
+	{
+		if (!CanTargetEnemies)
+		{
+			return CanTargetViaExtensions(abilityData, IAbilityAllowTargetingType.TargetTypeEnum.CanTargetEnemies);
+		}
+		return true;
+	}
+
+	public bool CanTargetFriendsWithExtensions(AbilityData abilityData)
+	{
+		if (!CanTargetFriends)
+		{
+			return CanTargetViaExtensions(abilityData, IAbilityAllowTargetingType.TargetTypeEnum.CanTargetFriends);
+		}
+		return true;
+	}
+
+	public bool CanTargetSelfWithExtensions(AbilityData abilityData)
+	{
+		if (!CanTargetSelf)
+		{
+			return CanTargetViaExtensions(abilityData, IAbilityAllowTargetingType.TargetTypeEnum.CanTargetSelf);
+		}
+		return true;
+	}
+
+	public bool CanTargetViaExtensions(AbilityData abilityData, IAbilityAllowTargetingType.TargetTypeEnum targetType)
+	{
+		if (abilityData == null)
+		{
+			return false;
+		}
+		IAbilityAllowTargetingType[] targetTypeExtensions = TargetTypeExtensions;
+		foreach (IAbilityAllowTargetingType abilityAllowTargetingType in targetTypeExtensions)
+		{
+			if (abilityAllowTargetingType.TargetType == targetType && abilityAllowTargetingType.IsRestrictionPassed(abilityData))
+			{
+				return true;
+			}
+		}
+		PartAbilityTargetExtension optional = abilityData.Caster.GetOptional<PartAbilityTargetExtension>();
+		if (optional != null && optional.CanTargetType(abilityData, targetType))
+		{
+			return true;
+		}
+		return false;
+	}
+
 	private AttackAbilityType? GetAttackType()
 	{
-		foreach (FakeAttackType item in base.ComponentsArray.OfType<FakeAttackType>())
+		foreach (FakeAttackType component in this.GetComponents<FakeAttackType>())
 		{
-			if (item.CountAsMelee)
-			{
-				return AttackAbilityType.Melee;
-			}
-			if (item.CountAsScatter)
+			if (component.CountAsScatter)
 			{
 				return AttackAbilityType.Scatter;
 			}
-			if (item.CountAsAoE)
+			if (component.CountAsAoE)
 			{
 				return AttackAbilityType.Pattern;
 			}
-			if (item.CountAsSingleShot)
+			if (component.CountAsSingleShot)
 			{
 				return AttackAbilityType.SingleShot;
 			}
 		}
-		using (IEnumerator<WarhammerAbilityAttackDelivery> enumerator2 = base.ComponentsArray.OfType<WarhammerAbilityAttackDelivery>().GetEnumerator())
+		using (BlueprintComponentsEnumerator<WarhammerAbilityAttackDelivery> blueprintComponentsEnumerator2 = this.GetComponents<WarhammerAbilityAttackDelivery>().GetEnumerator())
 		{
-			if (enumerator2.MoveNext())
+			if (blueprintComponentsEnumerator2.MoveNext())
 			{
-				WarhammerAbilityAttackDelivery current2 = enumerator2.Current;
-				if (current2.IsMelee)
-				{
-					return AttackAbilityType.Melee;
-				}
+				WarhammerAbilityAttackDelivery current2 = blueprintComponentsEnumerator2.Current;
 				if (current2.IsScatter)
 				{
 					return AttackAbilityType.Scatter;
@@ -591,7 +635,7 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		return ShortenedDescription;
 	}
 
-	public string GetTarget(int weaponRange = -1, MechanicEntity caster = null)
+	public string GetTarget(int weaponRange = -1, AbilityData abilityData = null)
 	{
 		AbilityTargetStrings abilityTargets = LocalizedTexts.Instance.AbilityTargets;
 		AbilityRangeStrings abilityTargetRanges = LocalizedTexts.Instance.AbilityTargetRanges;
@@ -649,7 +693,9 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		}
 		else if (Range != 0 && PatternSettings == null)
 		{
-			if (CanTargetPoint)
+			bool flag = CanTargetEnemiesWithExtensions(abilityData);
+			bool flag2 = CanTargetFriendsWithExtensions(abilityData);
+			if (CanTargetPointWithExtensions(abilityData))
 			{
 				stringBuilder.Append(abilityTargets.TargetPoint);
 			}
@@ -667,15 +713,15 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 					stringBuilder.Append(abilityTargets.AllCreatures);
 					break;
 				case null:
-					if (CanTargetEnemies && CanTargetFriends)
+					if (flag && flag2)
 					{
 						stringBuilder.Append(abilityTargets.OneCreature);
 					}
-					else if (CanTargetEnemies && !CanTargetFriends)
+					else if (flag)
 					{
 						stringBuilder.Append(abilityTargets.OneEnemyCreature);
 					}
-					else if (!CanTargetEnemies && CanTargetFriends)
+					else if (flag2)
 					{
 						stringBuilder.Append(abilityTargets.OneFriendlyCreature);
 					}
@@ -712,9 +758,9 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 			if (IsRangeCustom || !abilityTargetRanges.Contains(Range))
 			{
 				int num;
-				if (caster != null)
+				if (abilityData != null)
 				{
-					RuleCalculateAbilityRange ruleCalculateAbilityRange = Rulebook.Trigger(new RuleCalculateAbilityRange(caster, new AbilityData(this, caster)));
+					RuleCalculateAbilityRange ruleCalculateAbilityRange = RuleCalculateAbilityRange.TryGetCachedOrTrigger(abilityData);
 					num = ruleCalculateAbilityRange.OverrideRange ?? ruleCalculateAbilityRange.DefaultRange;
 				}
 				else
@@ -734,15 +780,17 @@ public class BlueprintAbility : BlueprintUnitFact, IBlueprintScanner, IResourceI
 		}
 		else if (IsBurst)
 		{
-			if (CanTargetEnemies && CanTargetFriends)
+			bool flag3 = CanTargetEnemiesWithExtensions(abilityData);
+			bool flag4 = CanTargetFriendsWithExtensions(abilityData);
+			if (flag3 && flag4)
 			{
 				stringBuilder.Append(abilityTargets.FirstCreature);
 			}
-			else if (CanTargetEnemies && !CanTargetFriends)
+			else if (flag3)
 			{
 				stringBuilder.Append(abilityTargets.FirstEnemyCreature);
 			}
-			else if (!CanTargetEnemies && CanTargetFriends)
+			else if (flag4)
 			{
 				stringBuilder.Append(abilityTargets.FirstFriendlyCreature);
 			}

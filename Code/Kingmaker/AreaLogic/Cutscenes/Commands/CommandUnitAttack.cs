@@ -13,7 +13,6 @@ using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -88,7 +87,7 @@ public class CommandUnitAttack : CommandBase
 
 	public bool OverrideSpeed;
 
-	[ConditionalShow("OverrideSpeed")]
+	[ShowIf("OverrideSpeed")]
 	public float Speed = 5f;
 
 	[SerializeReference]
@@ -119,14 +118,7 @@ public class CommandUnitAttack : CommandBase
 
 	public override bool IsContinuous => Continuous;
 
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (Unit == null || !Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
-	}
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => Unit;
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
@@ -526,7 +518,7 @@ public class CommandUnitAttack : CommandBase
 				}
 				flag = flag2;
 			}
-			if (flag || (type == AttackType.BurstFire && attackType.HasValue && attackType.GetValueOrDefault() == AttackAbilityType.Scatter) || (type == AttackType.Melee && attackType.HasValue && attackType.GetValueOrDefault() == AttackAbilityType.Melee) || type == AttackType.Custom)
+			if (flag || (type == AttackType.BurstFire && attackType.HasValue && attackType.GetValueOrDefault() == AttackAbilityType.Scatter) || (type == AttackType.Melee && ability.Data.IsMelee) || type == AttackType.Custom)
 			{
 				return blueprintAbilityFXSettings;
 			}

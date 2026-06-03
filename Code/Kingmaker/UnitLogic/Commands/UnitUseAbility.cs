@@ -66,6 +66,8 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 	[JsonProperty]
 	private bool m_RotateIsDone;
 
+	private MechanicEntity m_BladeDanceFirstTarget;
+
 	[JsonProperty]
 	public static bool TestPauseOnCast { get; set; }
 
@@ -103,7 +105,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			MechanicEntity mechanicEntity = base.Target?.Entity;
 			if (mechanicEntity != null && mechanicEntity.IsDead && !Ability.Blueprint.CanCastToDeadTarget)
 			{
-				return !Ability.Blueprint.CanTargetPoint;
+				return !Ability.CanTargetPoint;
 			}
 			return false;
 		}
@@ -172,9 +174,14 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 			{
 				return true;
 			}
-			if (!base.FromCutscene && !(Ability.TryGetCasterForDistanceCalculation(out var caster) ? caster : base.Executor).InRangeInCells(base.Target, Ability.RangeCells))
+			if (!base.FromCutscene)
 			{
-				return false;
+				MechanicEntity caster;
+				MechanicEntity mechanicEntity = (Ability.TryGetCasterForDistanceCalculation(out caster) ? caster : base.Executor);
+				if (!(Ability.TryGetCastNodeOverride(mechanicEntity.CurrentUnwalkableNode, out var node) ? mechanicEntity.InRangeInCells(node.Vector3Position, base.Target, Ability.RangeCells) : mechanicEntity.InRangeInCells(base.Target, Ability.RangeCells)))
+				{
+					return false;
+				}
 			}
 			CustomGridNode currentUnwalkableNode = base.Executor.CurrentUnwalkableNode;
 			int distance;
@@ -312,16 +319,23 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 
 	protected override void TriggerAnimation()
 	{
-		AbilityData ability = Ability;
-		if ((object)ability != null && !ability.SourceItemIsWeapon && ability.OverrideWeapon == null && Ability.Blueprint.GetComponent<AbilityCustomBladeDance>() == null)
+		if (base.Executor.Blueprint.GetComponent<UniqueEogannCompanionComponent>() == null)
 		{
-			base.Executor.View.HideOffWeapon(hide: true);
+			AbilityData ability = Ability;
+			if ((object)ability != null && !ability.SourceItemIsWeapon && ability.OverrideWeapon == null && Ability.Blueprint.GetComponent<AbilityCustomBladeDance>() == null)
+			{
+				base.Executor.View.HideOffWeapon(hide: true);
+			}
 		}
 		TryStopBuffLoopAction();
 		AbilityCustomBladeDance component = Ability.Blueprint.GetComponent<AbilityCustomBladeDance>();
-		if (component != null && !component.UseOnSourceWeapon)
+		if (component != null)
 		{
-			Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondaryHandWeapon() ?? base.Executor.GetFirstWeapon()) : ((base.Executor.GetFirstWeapon() != null && component.UseSpecificWeaponClassification && base.Executor.GetFirstWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetFirstWeapon() : ((component.UseSpecificWeaponClassification && base.Executor.GetSecondaryHandWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetSecondaryHandWeapon() : base.Executor.GetFirstWeapon())));
+			m_BladeDanceFirstTarget = component.GetFirstTargetToTurnTo(base.Executor);
+			if (!component.UseOnSourceWeapon)
+			{
+				Ability.OverrideWeapon = (component.UseSecondWeapon ? (base.Executor.GetSecondaryHandWeapon() ?? base.Executor.GetFirstWeapon()) : ((base.Executor.GetFirstWeapon() != null && component.UseSpecificWeaponClassification && base.Executor.GetFirstWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetFirstWeapon() : ((component.UseSpecificWeaponClassification && base.Executor.GetSecondaryHandWeapon()?.Blueprint.Classification == component.Classification) ? base.Executor.GetSecondaryHandWeapon() : base.Executor.GetFirstWeapon())));
+			}
 		}
 		if (Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>() != null && Ability.Blueprint.GetComponent<UseCurrentWeaponAnimation>()?.GetWeapon(base.Executor) != null)
 		{
@@ -402,7 +416,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 		else
 		{
-			UnitAnimationActionLink unitAnimationActionLink = Ability.FXSettings?.GetAnimation(IsMainHandAttack(Ability), isCornerAttack);
+			UnitAnimationActionLink unitAnimationActionLink = Ability.FXSettings?.GetAnimation(IsMainHandAttack(Ability), isCornerAttack, WeaponStyle);
 			UnitPartFXSettingOverride optional = base.Executor.GetOptional<UnitPartFXSettingOverride>();
 			if (optional != null && unitAnimationActionLink != null && optional.ActionsOverride.TryGetValue(unitAnimationActionLink, out var value2))
 			{
@@ -469,7 +483,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		{
 			ef.CallComponents(delegate(PlayLoopAnimationByBuff playLoop)
 			{
-				playLoop.TryResetAction();
+				playLoop.TryResetAction(base.Executor.AnimationManager);
 			});
 		});
 	}
@@ -484,7 +498,8 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		h.AttackTargetDistance = (base.Target.Point - base.Executor.Position).magnitude;
 		h.IsBurst = Ability.IsBurstAttack;
 		h.BurstCount = Ability.BurstAttacksCount;
-		h.Recoil = (Ability.FXSettings?.VisualFXSettings?.Recoil).GetValueOrDefault();
+		AbilityData ability = Ability;
+		h.Recoil = (((object)ability != null && ability.IsMelee && ability.IsAOE) ? RecoilStrength.MeleeAOE : (Ability.FXSettings?.VisualFXSettings?.Recoil).GetValueOrDefault());
 	}
 
 	private bool HasTwoMeleeForBladeDance()
@@ -594,6 +609,12 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		if (SyncRotationAndAttack)
 		{
 			m_RotateIsDone = false;
+		}
+		MechanicEntity mechanicEntity = ExecutionProcess?.Context.BladeDanceTarget ?? m_BladeDanceFirstTarget;
+		if (mechanicEntity != null)
+		{
+			base.Executor.LookAt(mechanicEntity.Position);
+			return;
 		}
 		BlueprintAbilityFXSettings fXSettings = Ability.FXSettings;
 		if (fXSettings != null && fXSettings.ShouldOffsetTargetRelativePosition)
@@ -772,7 +793,8 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 		bool isBonusUsage = Ability.IsBonusUsage;
 		int num = Ability.CalculateActionPointCost();
-		RulePerformAbility rulePerformAbility = new RulePerformAbility(Ability, base.Target);
+		Vector3 casterPosition = Ability.OverrideCastPosition ?? Ability.Caster.Position;
+		RulePerformAbility rulePerformAbility = new RulePerformAbility(Ability, base.Target, casterPosition);
 		rulePerformAbility.IsCutscene = base.FromCutscene;
 		rulePerformAbility.Context.DisableLog = DisableLog;
 		rulePerformAbility.Context.HitPolicy = HitPolicy;
@@ -780,6 +802,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		rulePerformAbility.Context.KillTarget = KillTarget;
 		rulePerformAbility.Context.AllTargets = base.Params.AllTargets;
 		rulePerformAbility.Context.DoNotClearMovementPoints = base.Params.DoNotClearMovementPoints;
+		rulePerformAbility.Context.BladeDanceTarget = m_BladeDanceFirstTarget;
 		rulePerformAbility.DisableGameLog = DisableLog;
 		rulePerformAbility.IgnoreCooldown = IgnoreCooldown;
 		rulePerformAbility.ForceFreeAction = base.IsFreeAction;
@@ -797,12 +820,7 @@ public class UnitUseAbility : UnitCommand<UnitUseAbilityParams>
 		}
 		if (!base.FromCutscene)
 		{
-			RuleCalculateNotSpendItemChance ruleCalculateNotSpendItemChance = new RuleCalculateNotSpendItemChance(Ability.Caster, Ability);
-			Rulebook.Trigger(ruleCalculateNotSpendItemChance);
-			if (!ruleCalculateNotSpendItemChance.Success)
-			{
-				Ability.Spend();
-			}
+			Ability.RollAndTrySpend();
 		}
 		if (!rulePerformAbility2.Success)
 		{

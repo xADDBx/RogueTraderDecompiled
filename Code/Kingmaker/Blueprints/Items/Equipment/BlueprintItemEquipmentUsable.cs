@@ -60,7 +60,17 @@ public class BlueprintItemEquipmentUsable : BlueprintItemEquipment
 
 	public override string SubtypeName => Game.Instance.BlueprintRoot.LocalizedTexts.UsableItemTypeNames.GetText(Type);
 
-	public override string InventoryEquipSound => m_InventoryEquipSound;
+	public override string InventoryEquipSound
+	{
+		get
+		{
+			return m_InventoryEquipSound;
+		}
+		set
+		{
+			m_InventoryEquipSound = value;
+		}
+	}
 
 	public GameObject BeltItemPrefab => m_BeltItemPrefab;
 

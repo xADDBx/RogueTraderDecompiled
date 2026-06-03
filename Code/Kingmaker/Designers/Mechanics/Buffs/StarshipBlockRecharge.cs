@@ -15,7 +15,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Designers.Mechanics.Buffs;
 
-[ComponentName("Blocks recharging of selected starship weapon type")]
+[ComponentName("Starship/Blocks recharging of selected starship weapon type")]
 [AllowedOn(typeof(BlueprintBuff))]
 [AllowMultipleComponents]
 [TypeId("92510e08f7ed17544a7bc96d6941fb19")]

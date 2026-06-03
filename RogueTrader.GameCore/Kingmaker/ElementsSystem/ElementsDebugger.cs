@@ -37,6 +37,8 @@ public class ElementsDebugger : ContextData<ElementsDebugger>
 
 	public static ClearExceptionCallbackType ClearExceptionCallback;
 
+	public static bool Enabled;
+
 	public int? Result { get; private set; }
 
 	[CanBeNull]
@@ -48,8 +50,6 @@ public class ElementsDebugger : ContextData<ElementsDebugger>
 	public ElementsList List { get; private set; }
 
 	public Element Element { get; private set; }
-
-	public static bool Enabled { get; set; }
 
 	public static bool IsContextDebugEnabled { get; }
 

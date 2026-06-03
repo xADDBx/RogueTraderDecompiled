@@ -21,7 +21,7 @@ using UniRx;
 
 namespace Kingmaker.Controllers;
 
-public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IUnitBecameVisibleHandler, ISubscriber<IEntity>, IRespecHandler, AbstractUnitEntity.IUnitAsleepHandler
+public class SelectionCharacterController : IControllerStart, IController, IControllerEnable, IControllerTick, IControllerStop, IControllerReset, IFullScreenUIHandler, ISubscriber, IFullScreenUIHandlerWorkaround, IPartyHandler, ISubscriber<IBaseUnitEntity>, IRespecHandler, AbstractUnitEntity.IUnitAsleepHandler, ISubscriber<IEntity>, IForceShowActionBarUIHandler, IActualGroupUpdateEventHandler
 {
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnit = new ReactiveProperty<BaseUnitEntity>();
 
@@ -52,6 +52,8 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	public readonly ReactiveProperty<BaseUnitEntity> SelectedUnitPetsAllowed = new ReactiveProperty<BaseUnitEntity>();
 
 	private bool m_IsResetScheduled;
+
+	private bool m_ExcludePetsAndAugmentationsUnits;
 
 	public ReactiveCollection<BaseUnitEntity> SelectedUnits { get; } = new ReactiveCollection<BaseUnitEntity>();
 
@@ -92,10 +94,19 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			{
 				return true;
 			}
-			if (m_FullScreenState)
+			if (m_FullScreenState && m_FullScreenType == FullScreenUIType.Augmentations)
 			{
 				AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
-				if (loadedAreaState != null && loadedAreaState.Settings.CapitalPartyMode)
+				if (loadedAreaState == null)
+				{
+					return false;
+				}
+				return !loadedAreaState.Settings.IsAugmentsViewOnly();
+			}
+			if (m_FullScreenState)
+			{
+				AreaPersistentState loadedAreaState2 = Game.Instance.LoadedAreaState;
+				if (loadedAreaState2 != null && loadedAreaState2.Settings.CapitalPartyMode)
 				{
 					FullScreenUIType fullScreenType = m_FullScreenType;
 					if ((uint)(fullScreenType - 4) <= 1u || fullScreenType == FullScreenUIType.Vendor)
@@ -199,7 +210,8 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 	{
 		if (m_FullScreenState || forceFullScreenState)
 		{
-			m_FullScreenSelectedUnit = unit;
+			bool flag = m_ExcludePetsAndAugmentationsUnits && UIUtility.IsExcludedFromAugmentations(unit);
+			m_FullScreenSelectedUnit = ((!(!(unit is UnitEntity) || unit.Facts.HasComponent<TransientPartyMemberFlag>() || flag)) ? unit : Game.Instance.Player?.MainCharacterEntity);
 			m_NeedUpdate = true;
 			return;
 		}
@@ -233,15 +245,36 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 
 	private void HandleFullScreenUiChangedInternal(bool state, FullScreenUIType type)
 	{
+		m_ExcludePetsAndAugmentationsUnits = state && type == FullScreenUIType.Augmentations;
 		m_FullScreenState = state;
 		m_FullScreenType = type;
+		ForceUpdateParty = true;
+		m_NeedUpdate = true;
 		if (state)
 		{
+			if (m_ExcludePetsAndAugmentationsUnits)
+			{
+				if (!UIUtility.IsExcludedFromAugmentations(SelectedUnit.Value))
+				{
+					if (m_FullScreenSelectedUnit == null)
+					{
+						m_FullScreenSelectedUnit = SelectedUnit.Value ?? FirstSelectedUnit;
+					}
+				}
+				else if (m_FullScreenSelectedUnit == null)
+				{
+					m_FullScreenSelectedUnit = ActualGroup.FirstOrDefault((BaseUnitEntity u) => !UIUtility.IsExcludedFromAugmentations(u)) ?? FirstSelectedUnit;
+				}
+			}
 			if (m_FullScreenSelectedUnit == null)
 			{
 				m_FullScreenSelectedUnit = SelectedUnit.Value ?? FirstSelectedUnit;
 			}
 			if (!(m_FullScreenSelectedUnit is UnitEntity) || m_FullScreenSelectedUnit.Facts.HasComponent<TransientPartyMemberFlag>())
+			{
+				m_FullScreenSelectedUnit = Game.Instance.Player?.MainCharacterEntity;
+			}
+			if (m_ExcludePetsAndAugmentationsUnits && UIUtility.IsExcludedFromAugmentations(m_FullScreenSelectedUnit))
 			{
 				m_FullScreenSelectedUnit = Game.Instance.Player?.MainCharacterEntity;
 			}
@@ -278,24 +311,30 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 			}
 		}
 		UIAccess.SelectionManager.Or(null)?.RefreshUnitFakeSelectionFlags(SelectedUnitInUI.Value, SingleSelectedUnit.Value, m_FullScreenState);
-		m_NeedUpdate = true;
+		m_NeedUpdate = false;
+		UpdateSelectedUnits();
+		ActualGroupUpdated.Execute();
 	}
 
-	private void UpdateSelectedUnits()
+	private void UpdateSelectedUnits(bool forcedSingleSelection = false)
 	{
 		List<BaseUnitEntity> list = new List<BaseUnitEntity>();
-		UIUtility.GetGroup(list, WithRemote, withPet: true);
+		UIUtility.GetGroup(list, WithRemote, !m_ExcludePetsAndAugmentationsUnits, m_ExcludePetsAndAugmentationsUnits);
 		if (m_ActualGroup.Count != 0)
 		{
 			AreaPersistentState loadedAreaState = Game.Instance.LoadedAreaState;
 			if ((loadedAreaState == null || !loadedAreaState.Settings.CapitalPartyMode) && Game.Instance.IsControllerGamepad && list.Count == m_ActualGroup.Count && !ForceUpdateParty)
 			{
-				goto IL_006b;
+				goto IL_0079;
 			}
 		}
 		m_ActualGroup = list;
-		goto IL_006b;
-		IL_006b:
+		goto IL_0079;
+		IL_0079:
+		if (m_FullScreenState && m_FullScreenSelectedUnit != null && !m_ActualGroup.Contains(m_FullScreenSelectedUnit))
+		{
+			m_FullScreenSelectedUnit = m_ActualGroup.FirstOrDefault((BaseUnitEntity u) => !UIUtility.IsExcludedFromAugmentations(u)) ?? FirstSelectedUnit;
+		}
 		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
 			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
@@ -303,7 +342,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 				UIAccess.SelectionManager.Or(null)?.UnselectUnit(item);
 			}
 		}
-		IsSingleSelected.Value = Game.Instance.IsControllerGamepad || SelectedUnits.Count == 1;
+		IsSingleSelected.Value = Game.Instance.IsControllerGamepad || SelectedUnits.Count == 1 || forcedSingleSelection;
 		if (IsSingleSelected.Value)
 		{
 			SingleSelectedUnit.Value = (Game.Instance.IsControllerMouse ? FirstSelectedUnit : SelectedUnit.Value);
@@ -351,11 +390,6 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		m_NeedUpdate = true;
 	}
 
-	public void OnEntityBecameVisible()
-	{
-		m_NeedUpdate = true;
-	}
-
 	public void SwitchCharacter(BaseUnitEntity unit1, BaseUnitEntity unit2)
 	{
 		if (m_ActualGroup.Contains(unit1) && m_ActualGroup.Contains(unit2))
@@ -398,5 +432,15 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		{
 			m_NeedUpdate = true;
 		}
+	}
+
+	public void HandleForceShowActionBar(bool state)
+	{
+		UpdateSelectedUnits(state);
+	}
+
+	public void HandleActualGroupUpdate()
+	{
+		ActualGroupUpdated.Execute();
 	}
 }

@@ -1,7 +1,10 @@
 using System;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
+using Kingmaker.Settings;
+using Kingmaker.Utility;
 using Owlcat.Runtime.Core.Utility;
+using Rewired.Integration.UnityUI;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -11,6 +14,8 @@ namespace Kingmaker.UI.Pointer;
 
 public abstract class BaseCursor : MonoBehaviour, IDisposable
 {
+	public RewiredStandaloneInputModule StandaloneInputModule;
+
 	protected Vector2 m_Position;
 
 	[SerializeField]
@@ -80,10 +85,12 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 
 	public IDisposable Bind()
 	{
-		m_CursorTransform.gameObject.SetActive(value: false);
+		bool active = ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse;
+		m_CursorTransform.gameObject.SetActive(active);
 		m_Disposable = new CompositeDisposable();
 		OnBind();
 		SetCanFlipZone();
+		SetActive(active);
 		return this;
 	}
 
@@ -109,12 +116,20 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 
 	public void SetActive(bool active)
 	{
-		if (HideCursorAnyWay())
+		if (!ApplicationHelper.IsRunningOnSwitch2 && HideCursorAnyWay())
 		{
 			return;
 		}
 		Cursor.visible = Game.Instance.IsControllerMouse && !active;
-		if (IsActive != active)
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			active = true;
+		}
+		else if (IsActive == active)
+		{
+			return;
+		}
+		if (!(m_CursorTransform == null))
 		{
 			m_CursorTransform.gameObject.SetActive(active);
 			IsActive = active;
@@ -154,7 +169,8 @@ public abstract class BaseCursor : MonoBehaviour, IDisposable
 		{
 			m_CursorImage.sprite = BlueprintRoot.Instance.Cursors.GetSprite(type);
 			Vector2 hotspot = ((type != CursorType.Vertical && type != CursorType.Horizontal && type != CursorType.DiagonalLeft && type != CursorType.DiagonalRight && type != CursorType.RotateCamera) ? Vector2.zero : new Vector2(32f, 32f));
-			Cursor.SetCursor(BlueprintRoot.Instance.Cursors.GetTexture(type), hotspot, CursorMode.Auto);
+			CursorMode cursorMode = (ApplicationHelper.IsRunningOnSwitch2 ? CursorMode.ForceSoftware : CursorMode.Auto);
+			Cursor.SetCursor(BlueprintRoot.Instance.Cursors.GetTexture(type), hotspot, cursorMode);
 			m_AbilityGroup.SetActive(m_CastMode);
 			m_CurrentType = type;
 			OnSetCursor(type);

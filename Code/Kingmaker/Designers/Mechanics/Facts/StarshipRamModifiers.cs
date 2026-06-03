@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintFact))]
 [AllowMultipleComponents]

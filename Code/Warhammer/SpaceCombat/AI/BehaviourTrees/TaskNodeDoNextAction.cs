@@ -26,35 +26,57 @@ namespace Warhammer.SpaceCombat.AI.BehaviourTrees;
 
 public class TaskNodeDoNextAction : TaskNode
 {
+	public GraphNode CurrentNode { get; private set; }
+
+	public int CurrentDir { get; private set; }
+
+	public UnitCommandParams CmdParams { get; private set; }
+
+	public TaskNodeDoNextAction()
+	{
+	}
+
+	public TaskNodeDoNextAction(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		SpaceCombatDecisionContext spaceCombatDecisionContext = (SpaceCombatDecisionContext)blackboard.DecisionContext;
 		spaceCombatDecisionContext.CurrentPathNode = spaceCombatDecisionContext.BestPath.FirstOrDefault();
-		GraphNode node = AstarPath.active.GetNearest(spaceCombatDecisionContext.Unit.Position).node;
-		int num = CustomGraphHelper.GuessDirection(spaceCombatDecisionContext.Unit.Forward);
-		if (spaceCombatDecisionContext.CurrentPathNode == null || spaceCombatDecisionContext.CurrentPathNode.node != node || spaceCombatDecisionContext.CurrentPathNode.direction != num)
+		CurrentNode = AstarPath.active.GetNearest(spaceCombatDecisionContext.Unit.Position).node;
+		CurrentDir = CustomGraphHelper.GuessDirection(spaceCombatDecisionContext.Unit.Forward);
+		if (spaceCombatDecisionContext.CurrentPathNode == null || spaceCombatDecisionContext.CurrentPathNode.node != CurrentNode || spaceCombatDecisionContext.CurrentPathNode.direction != CurrentDir)
 		{
 			AILogger.Instance.Error(new AILogReason(AILogReasonType.StarshipIsOffCource));
+			base.FailReason = "Starship is not on the current path";
 			return Status.Failure;
 		}
-		UnitCommandParams unitCommandParams = CreateCommandParams(spaceCombatDecisionContext);
-		if (unitCommandParams != null)
+		CmdParams = CreateCommandParams(spaceCombatDecisionContext);
+		if (CmdParams != null)
 		{
-			spaceCombatDecisionContext.IsLastActionBrokePlan = IsCommandBreaksPlan(spaceCombatDecisionContext, unitCommandParams);
-			spaceCombatDecisionContext.Unit.Commands.Run(unitCommandParams);
+			spaceCombatDecisionContext.IsLastActionBrokePlan = IsCommandBreaksPlan(spaceCombatDecisionContext, CmdParams);
+			spaceCombatDecisionContext.Unit.Commands.Run(CmdParams);
 			return Status.Success;
 		}
+		base.FailReason = "No ability cast or move command was created";
 		return Status.Failure;
 	}
 
 	private UnitCommandParams CreateCommandParams(SpaceCombatDecisionContext context)
 	{
 		Ability abilityToCast = GetAbilityToCast(context);
-		if (abilityToCast == null)
+		UnitCommandParams unitCommandParams = null;
+		if (abilityToCast != null)
 		{
-			return CreateMoveCommandParams(context);
+			unitCommandParams = CreateCastAbilityCommandParams(context, abilityToCast);
 		}
-		return CreateCastAbilityCommandParams(context, abilityToCast);
+		if (unitCommandParams == null)
+		{
+			unitCommandParams = CreateMoveCommandParams(context);
+		}
+		return unitCommandParams;
 	}
 
 	private Ability GetAbilityToCast(SpaceCombatDecisionContext context)
@@ -122,9 +144,9 @@ public class TaskNodeDoNextAction : TaskNode
 
 	private bool IsSelfTargetAbility(Ability ability)
 	{
-		if (!ability.Blueprint.CanTargetEnemies)
+		if (!ability.Data.CanTargetEnemies)
 		{
-			return ability.Blueprint.CanTargetSelf;
+			return ability.Data.CanTargetSelf;
 		}
 		return false;
 	}

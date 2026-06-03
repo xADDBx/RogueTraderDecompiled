@@ -41,7 +41,7 @@ public class BlueprintScriptableObject : SimpleBlueprint, IHavePrototype
 	public Authors Author;
 
 	[SerializeField]
-	[TextArea(5, 6)]
+	[TextArea(1, 6)]
 	public string Comment;
 
 	public BlueprintComponent[] ComponentsArray

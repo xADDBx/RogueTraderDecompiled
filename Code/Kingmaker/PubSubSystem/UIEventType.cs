@@ -16,5 +16,6 @@ public enum UIEventType
 	LootZoneExitOpen = 14,
 	LootPlayerChestOpen = 15,
 	LootStandardChestOpen = 16,
-	LootOneSlotOpen = 17
+	LootOneSlotOpen = 17,
+	AugmentWindowOpenWithEdit = 18
 }

@@ -1,8 +1,8 @@
 using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
-using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Persistence;
 
 namespace Kingmaker.AreaLogic.Cutscenes;
 
@@ -11,7 +11,7 @@ public class CommandAction : CommandBase
 {
 	private class Data
 	{
-		public int TicksToWait;
+		public bool WasLoadingProcess;
 	}
 
 	public class PlayerData : ContextData<PlayerData>
@@ -36,19 +36,23 @@ public class CommandAction : CommandBase
 	{
 		using (ContextData<PlayerData>.Request().Setup(player))
 		{
-			player.GetCommandData<Data>(this).TicksToWait = (Action.Actions.Any((GameAction action) => action is TeleportParty) ? 2 : 0);
+			player.GetCommandData<Data>(this).WasLoadingProcess = LoadingProcess.Instance.IsLoadingInProcess;
 			Action.Run();
 		}
 	}
 
 	public override bool IsFinished(CutscenePlayerData player)
 	{
-		return player.GetCommandData<Data>(this).TicksToWait <= 0;
+		Data commandData = player.GetCommandData<Data>(this);
+		if (commandData == null || !commandData.WasLoadingProcess)
+		{
+			return !LoadingProcess.Instance.IsLoadingInProcess;
+		}
+		return true;
 	}
 
 	protected override void OnSetTime(double time, CutscenePlayerData player)
 	{
-		player.GetCommandData<Data>(this).TicksToWait--;
 	}
 
 	public override string GetCaption()

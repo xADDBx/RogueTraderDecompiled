@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
@@ -18,6 +19,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Posts;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("4748805e9e9351444a59978e21b7352e")]
 public class StarshipLockEnemyPost : UnitFactComponentDelegate, ITurnBasedModeHandler, ISubscriber, IHashable
 {

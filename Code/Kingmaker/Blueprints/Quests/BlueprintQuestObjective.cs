@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -49,12 +48,17 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 	{
 		Objective,
 		Addendum,
-		AddendumStartingAutomatically
+		AddendumStartingAutomatically,
+		Clue
 	}
 
 	[SerializeField]
 	[HideInInspector]
 	private List<BlueprintQuestObjectiveReference> m_Addendums = new List<BlueprintQuestObjectiveReference>();
+
+	[SerializeField]
+	[HideInInspector]
+	private List<BlueprintQuestObjectiveReference> m_Clues = new List<BlueprintQuestObjectiveReference>();
 
 	[SerializeField]
 	private List<BlueprintAreaReference> m_Areas = new List<BlueprintAreaReference>();
@@ -69,6 +73,9 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 
 	[NotNull]
 	public LocalizedString Destination;
+
+	[NotNull]
+	public LocalizedString LoadingScreenHint;
 
 	public int AutoFailDays;
 
@@ -106,6 +113,8 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 
 	private ReferenceListProxy<BlueprintQuestObjective, BlueprintQuestObjectiveReference> m_AddendumsProxy;
 
+	private ReferenceListProxy<BlueprintQuestObjective, BlueprintQuestObjectiveReference> m_CluesProxy;
+
 	[Header("Etude Range Counter")]
 	public bool UiCounterEtude;
 
@@ -139,6 +148,8 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 
 	public IList<BlueprintQuestObjective> Addendums => m_AddendumsProxy ?? (m_AddendumsProxy = m_Addendums);
 
+	public IList<BlueprintQuestObjective> Clues => m_CluesProxy ?? (m_CluesProxy = m_Clues);
+
 	public string ConfirmationDescription => m_ConfirmationDescription;
 
 	public string RejectionDescription => m_RejectionDescription;
@@ -162,7 +173,19 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 		}
 	}
 
-	public bool IsAddendum => m_Type != Type.Objective;
+	public bool IsAddendum
+	{
+		get
+		{
+			if (m_Type != 0)
+			{
+				return m_Type != Type.Clue;
+			}
+			return false;
+		}
+	}
+
+	public bool IsClue => m_Type == Type.Clue;
 
 	public bool IsAutomaticallyStartingAddendum => m_Type == Type.AddendumStartingAutomatically;
 
@@ -206,6 +229,19 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 		return m_Quest.Get().Description;
 	}
 
+	public LocalizedString GetLoadingScreenHint()
+	{
+		if (!IsErrandObjective)
+		{
+			QuestGroupId? questGroupId = Quest?.Group;
+			if ((!questGroupId.HasValue || questGroupId.GetValueOrDefault() != QuestGroupId.Rumours) && !string.IsNullOrWhiteSpace(LoadingScreenHint))
+			{
+				return LoadingScreenHint;
+			}
+		}
+		return m_Quest.Get().LoadingScreenHint;
+	}
+
 	public bool IsSilentQuestNotification(QuestNotificationState state)
 	{
 		return (m_SilentQuestNotification & state) != 0;
@@ -236,7 +272,7 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 
 	protected override System.Type GetFactType()
 	{
-		return typeof(QuestObjective);
+		return typeof(QuestBookEntityEntry);
 	}
 
 	public void RemoveNullReferences()
@@ -269,6 +305,19 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 			m_Type = Type.Addendum;
 		}
 		else if (!isAddendum)
+		{
+			m_Type = Type.Objective;
+		}
+		SetDirty();
+	}
+
+	public void SetIsClue(bool isCLue)
+	{
+		if (isCLue && m_Type != Type.Clue)
+		{
+			m_Type = Type.Clue;
+		}
+		else if (!isCLue)
 		{
 			m_Type = Type.Objective;
 		}
@@ -370,5 +419,42 @@ public class BlueprintQuestObjective : BlueprintFact, IQuestReference, IQuestObj
 	public void AddAddendumFromMenu(object userdata)
 	{
 		AddAddendum((BlueprintQuestObjective)userdata);
+	}
+
+	public void AddClue(BlueprintQuestObjective objective)
+	{
+		if (objective == this)
+		{
+			PFLog.Default.Error("Objective can't be clue for itself!");
+			return;
+		}
+		if (Clues.Contains(objective))
+		{
+			PFLog.Default.Warning("Clue already added");
+			return;
+		}
+		Clues.Add(objective);
+		objective.SetIsClue(isCLue: true);
+		if (Quest != null)
+		{
+			Quest.LinkObjective(objective);
+		}
+		SetDirty();
+	}
+
+	public void RemoveClue(BlueprintQuestObjective objective)
+	{
+		if (!Clues.Contains(objective))
+		{
+			PFLog.Default.Warning("Clue not found");
+			return;
+		}
+		Clues.Remove(objective);
+		SetDirty();
+	}
+
+	public void AddCluesFromMenu(object userdata)
+	{
+		AddClue((BlueprintQuestObjective)userdata);
 	}
 }

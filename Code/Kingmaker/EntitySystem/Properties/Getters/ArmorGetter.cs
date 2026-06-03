@@ -85,7 +85,7 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 				}
 				return damageRule.ResultDamage.AbsorptionPercentsWithPenetration;
 			}
-			return damageRule.ResultDamage.Deflection.Value;
+			return damageRule.ResultDamage.DeflectionValue;
 		}
 		if (damageRule.TargetArmorStatsRule?.AbsorptionCompositeModifiers.AllModifiersList == null)
 		{
@@ -105,7 +105,7 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 			return ruleCalculateDamage;
 		}
 		AbilityData ability = base.PropertyContext.Ability ?? (base.PropertyContext.MechanicContext as AbilityExecutionContext)?.Ability;
-		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability);
+		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability, null, null, null, null, null, forceCrit: false, calculatedOverpenetration: false, doNotUseCrModifier: false, unmodifiable: false, ignoreDamageTypeArmorReduction: true);
 		calculateDamageParams.FakeRule = true;
 		return calculateDamageParams.Trigger();
 	}
@@ -125,7 +125,7 @@ public class ArmorGetter : MechanicEntityPropertyGetter, PropertyContextAccessor
 			return null;
 		}
 		AbilityData ability = base.PropertyContext.Ability ?? (base.PropertyContext.MechanicContext as AbilityExecutionContext)?.Ability;
-		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability);
+		CalculateDamageParams calculateDamageParams = new CalculateDamageParams(initiator, target, ability, null, null, null, null, null, forceCrit: false, calculatedOverpenetration: false, doNotUseCrModifier: false, unmodifiable: false, ignoreDamageTypeArmorReduction: true);
 		calculateDamageParams.FakeRule = true;
 		return calculateDamageParams.Trigger().TargetArmorStatsRule;
 	}

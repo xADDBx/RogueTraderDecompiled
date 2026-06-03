@@ -34,7 +34,18 @@ public class EntityPartStayOnPlatform : MechanicEntityPart<MechanicEntity>, IHas
 		if (base.Owner is AbstractUnitEntity abstractUnitEntity)
 		{
 			abstractUnitEntity.View.ForcePlaceAboveGround();
+			abstractUnitEntity.GetFamiliarLeaderOptional()?.TeleportFamiliarsToOwner(afterCutscene: true);
 		}
+	}
+
+	public Vector3 GetPlatformDeltaSinceLastUpdate()
+	{
+		Vector3 zero = Vector3.zero;
+		foreach (PlatformObjectEntity platform in m_Platforms)
+		{
+			zero += platform.PlatformPosition - platform.LastUpdatePosition;
+		}
+		return zero;
 	}
 
 	public bool IsOnPlatform()

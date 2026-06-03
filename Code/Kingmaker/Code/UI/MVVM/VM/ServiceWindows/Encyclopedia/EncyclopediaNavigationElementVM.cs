@@ -2,17 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Encyclopedia;
+using Kingmaker.Blueprints.Encyclopedia.Blocks;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Globalmap.SystemMap;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Encyclopedia;
 
-public class EncyclopediaNavigationElementVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
+public class EncyclopediaNavigationElementVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IEncyclopediaNodeViewedHandler, ISubscriber
 {
 	public readonly BoolReactiveProperty IsSelected = new BoolReactiveProperty();
 
@@ -25,6 +27,8 @@ public class EncyclopediaNavigationElementVM : BaseDisposable, IViewModel, IBase
 	public readonly BoolReactiveProperty IsUncommitedPlanetsLittleIcon = new BoolReactiveProperty(initialValue: true);
 
 	public readonly BoolReactiveProperty IsUncommitedPlanetsBigIcon = new BoolReactiveProperty(initialValue: true);
+
+	public readonly BoolReactiveProperty IsViewed = new BoolReactiveProperty(initialValue: true);
 
 	private List<IPage> m_Childs = new List<IPage>();
 
@@ -67,7 +71,77 @@ public class EncyclopediaNavigationElementVM : BaseDisposable, IViewModel, IBase
 	{
 		Page = page;
 		Title = page.GetTitle();
+		AddDisposable(EventBus.Subscribe(this));
 		ShowEncyclopediaPlanetChapterAndPages();
+		IsViewed.Value = GetIsViewed();
+	}
+
+	protected override void DisposeImplementation()
+	{
+	}
+
+	private bool GetIsViewed()
+	{
+		if (Page.IsChilds())
+		{
+			return Page.GetChilds().All(delegate(IPage c)
+			{
+				if (c is GlossaryLetterIndexPage glossaryLetterIndexPage2)
+				{
+					return glossaryLetterIndexPage2.GetBlocks().All((IBlock b) => !(b is GlossaryEntryBlock glossaryEntryBlock2) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(glossaryEntryBlock2.Entry));
+				}
+				if (c is BlueprintEncyclopediaAstropathBriefPage blueprintEncyclopediaAstropathBriefPage2)
+				{
+					return blueprintEncyclopediaAstropathBriefPage2.GetBlocks().All((IBlock b) => !(b is BlueprintEncyclopediaAstropathBriefPage.AstropathBriefBlock astropathBriefBlock2) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(astropathBriefBlock2.Entry));
+				}
+				if (c is BlueprintEncyclopediaPlanetTypePage blueprintEncyclopediaPlanetTypePage2)
+				{
+					return blueprintEncyclopediaPlanetTypePage2.GetBlocks().All((IBlock b) => !(b is BlueprintEncyclopediaPlanetTypePage.PlanetBlock planetBlock2) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(planetBlock2.Entry));
+				}
+				return !(c is BlueprintEncyclopediaNode node2) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(node2);
+			});
+		}
+		IPage page = Page;
+		if (!(page is GlossaryLetterIndexPage glossaryLetterIndexPage))
+		{
+			if (!(page is BlueprintEncyclopediaAstropathBriefPage blueprintEncyclopediaAstropathBriefPage))
+			{
+				if (!(page is BlueprintEncyclopediaPlanetTypePage blueprintEncyclopediaPlanetTypePage))
+				{
+					if (page is BlueprintEncyclopediaNode node)
+					{
+						return Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(node);
+					}
+					return true;
+				}
+				return blueprintEncyclopediaPlanetTypePage.GetBlocks().All((IBlock b) => !(b is BlueprintEncyclopediaPlanetTypePage.PlanetBlock planetBlock) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(planetBlock.Entry));
+			}
+			return blueprintEncyclopediaAstropathBriefPage.GetBlocks().All((IBlock b) => !(b is BlueprintEncyclopediaAstropathBriefPage.AstropathBriefBlock astropathBriefBlock) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(astropathBriefBlock.Entry));
+		}
+		return glossaryLetterIndexPage.GetBlocks().All((IBlock b) => !(b is GlossaryEntryBlock glossaryEntryBlock) || Game.Instance.Player.UISettings.EncyclopediaData.IsViewed(glossaryEntryBlock.Entry));
+	}
+
+	public void SetIsViewed()
+	{
+		IPage page = Page;
+		if (!(page is BlueprintEncyclopediaNode node))
+		{
+			if (!(page is GlossaryLetterIndexPage glossaryLetterIndexPage))
+			{
+				return;
+			}
+			{
+				foreach (IBlock block in glossaryLetterIndexPage.GetBlocks())
+				{
+					if (block is GlossaryEntryBlock glossaryEntryBlock)
+					{
+						Game.Instance.Player.UISettings.EncyclopediaData.MarkViewed(glossaryEntryBlock.Entry);
+					}
+				}
+				return;
+			}
+		}
+		Game.Instance.Player.UISettings.EncyclopediaData.MarkViewed(node);
 	}
 
 	private void ShowEncyclopediaPlanetChapterAndPages()
@@ -134,7 +208,8 @@ public class EncyclopediaNavigationElementVM : BaseDisposable, IViewModel, IBase
 		return flag;
 	}
 
-	protected override void DisposeImplementation()
+	public void HandleEncyclopediaNodeViewed(BlueprintEncyclopediaNode node)
 	{
+		IsViewed.Value = GetIsViewed();
 	}
 }

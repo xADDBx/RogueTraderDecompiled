@@ -8,5 +8,6 @@ public enum TooltipTitleType
 	H4,
 	H5,
 	H6,
-	H7
+	H7,
+	H8
 }

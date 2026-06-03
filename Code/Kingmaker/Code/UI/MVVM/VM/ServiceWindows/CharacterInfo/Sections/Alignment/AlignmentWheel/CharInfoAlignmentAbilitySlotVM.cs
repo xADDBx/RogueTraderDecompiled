@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
@@ -66,7 +67,7 @@ public sealed class CharInfoAlignmentAbilitySlotVM : CharInfoComponentVM
 	public void UpdateMainDirection(SoulMarkDirection? direction)
 	{
 		m_MainDirection = direction;
-		m_IsLocked = direction.HasValue && direction.Value != m_Direction && m_SoulMarkTier > 2;
+		m_IsLocked = direction.HasValue && direction.Value != m_Direction && m_SoulMarkTier >= BlueprintRoot.Instance.WarhammerRoot.SoulMarksRoot.BlockingRankIndex;
 		RefreshData();
 	}
 

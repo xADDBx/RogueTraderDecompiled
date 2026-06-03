@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Encyclopedia;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
@@ -96,29 +97,29 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 		QuestEntities.Remove(quest);
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
+	public void HandleQuestObjectiveStarted(QuestBookEntityEntry objective, bool silentStart = false)
 	{
 		AddObjective(objective, QuestNotificationState.New, silentStart);
 	}
 
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
+	public void HandleQuestObjectiveBecameVisible(QuestBookEntityEntry objective, bool silentStart = false)
 	{
 		AddObjective(objective, QuestNotificationState.New, silentStart);
 	}
 
-	public void HandleQuestObjectiveCompleted(QuestObjective objective)
+	public void HandleQuestObjectiveCompleted(QuestBookEntityEntry objective)
 	{
 		AddObjective(objective, QuestNotificationState.Completed);
 	}
 
-	public void HandleQuestObjectiveFailed(QuestObjective objective)
+	public void HandleQuestObjectiveFailed(QuestBookEntityEntry objective)
 	{
 		AddObjective(objective, QuestNotificationState.Failed);
 	}
 
-	private void AddObjective(QuestObjective objective, QuestNotificationState state, bool silentStart = false)
+	private void AddObjective(QuestBookEntityEntry objective, QuestNotificationState state, bool silentStart = false)
 	{
-		if (!silentStart && objective.IsVisible && !objective.Blueprint.IsSilentQuestNotification(state))
+		if (!silentStart && objective.IsVisible && !objective.Blueprint.IsSilentQuestNotification(state) && objective.Quest != null && objective.Quest.State != 0 && (!objective.Blueprint.IsAddendum || (objective.ParentObjective != null && objective.ParentObjective.State != 0)) && !IsAlreadyQueued(objective, state))
 		{
 			QuestNotificationEntityVM questNotificationEntityVM = new QuestNotificationEntityVM(objective, state);
 			QuestNotificationEntityVM questNotificationEntityVM2 = ObjectiveEntities.FirstOrDefault((QuestNotificationEntityVM o) => !o.IsAddendum && o.Quest == objective.Quest);
@@ -131,6 +132,23 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 				ObjectiveEntities.Add(questNotificationEntityVM);
 			}
 		}
+	}
+
+	private bool IsAlreadyQueued(QuestBookEntityEntry objective, QuestNotificationState state)
+	{
+		foreach (QuestNotificationEntityVM objectiveEntity in ObjectiveEntities)
+		{
+			if (objectiveEntity.Objective == objective && objectiveEntity.State == state)
+			{
+				return true;
+			}
+			QuestNotificationEntityVM value = objectiveEntity.AdditionalObjective.Value;
+			if (value != null && value.Objective == objective && value.State == state)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void HandleObjectiveShowed(QuestNotificationEntityVM objective)
@@ -156,11 +174,15 @@ public class QuestNotificatorVM : VMBase, INewServiceWindowUIHandler, ISubscribe
 	{
 	}
 
-	public void HandleOpenWindowOfType(ServiceWindowsType type)
+	public void HandleOpenWindowOfType(ServiceWindowsType type, Action onClosed = null)
 	{
 	}
 
 	public void HandleOpenInventory()
+	{
+	}
+
+	public void HandleOpenAugmentations()
 	{
 	}
 

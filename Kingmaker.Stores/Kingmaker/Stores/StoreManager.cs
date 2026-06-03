@@ -30,6 +30,8 @@ public static class StoreManager
 
 	private static StoreType s_Store;
 
+	public static Dictionary<DlcNameEnum, IBlueprintDlc> DlcNameMap = new Dictionary<DlcNameEnum, IBlueprintDlc>();
+
 	private static bool? s_EgsSignInResult;
 
 	private static EgsDlcStatus s_EgsDlcStatuses = EgsDlcStatus.None;
@@ -257,6 +259,15 @@ public static class StoreManager
 		}
 	}
 
+	public static bool CheckIfDlcPurchasedAndInstalled(DlcNameEnum dlc)
+	{
+		if (DlcNameMap.TryGetValue(dlc, out var value) && value.IsPurchased && value.IsEnabled)
+		{
+			return true;
+		}
+		return false;
+	}
+
 	public static IEnumerable<IBlueprintDlc> GetAllAvailableAdditionalContentDlc()
 	{
 		foreach (IBlueprintDlc s_Dlc in s_Dlcs)
@@ -277,11 +288,16 @@ public static class StoreManager
 	private static void RefreshDLCs(IEnumerable<IBlueprintDlc> dlcs)
 	{
 		Logger.Log("Refreshing dlc list");
+		DlcNameMap.Clear();
 		foreach (IBlueprintDlc dlc in dlcs)
 		{
 			try
 			{
 				UpdateDLCCache(dlc);
+				if (dlc.DlcNameEnum != 0)
+				{
+					DlcNameMap.TryAdd(dlc.DlcNameEnum, dlc);
+				}
 			}
 			catch (Exception ex)
 			{

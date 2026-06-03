@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -14,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("7b639717dfd57bb469d3b87e09d5f61e")]
 public class WarhammerContextActionSetStarshipDirection : ContextAction
 {
@@ -22,6 +24,10 @@ public class WarhammerContextActionSetStarshipDirection : ContextAction
 		FixedAngle,
 		RandomAngle
 	}
+
+	[Tooltip("If true will rotate the caster instead of the target")]
+	[SerializeField]
+	private bool RotateCaster;
 
 	[SerializeField]
 	private RotationType Rotation;
@@ -67,14 +73,15 @@ public class WarhammerContextActionSetStarshipDirection : ContextAction
 		{
 			return;
 		}
-		int resultOrientation = GetResultOrientation(starshipEntity, out var angle);
+		StarshipEntity starshipEntity3 = (RotateCaster ? starshipEntity2 : starshipEntity);
+		int resultOrientation = GetResultOrientation(starshipEntity3, out var angle);
 		resultOrientation = GetAlignedOrientation(resultOrientation);
-		if (!AbilityTargetCanTurn.CheckPositionAfterRotation(starshipEntity, resultOrientation))
+		if (!AbilityTargetCanTurn.CheckPositionAfterRotation(starshipEntity3, resultOrientation))
 		{
 			PFLog.Default.Error($"Cannot turn {starshipEntity} with WarhammerContextActionSetStarshipDirection by {starshipEntity2}");
 		}
-		starshipEntity.SetOrientation(resultOrientation);
-		starshipEntity.SnapToGrid();
+		starshipEntity3.SetOrientation(resultOrientation);
+		starshipEntity3.SnapToGrid();
 		if (damageBaseMin > 0 && !starshipEntity.Blueprint.IsSoftUnit)
 		{
 			for (int i = 40; i <= Math.Abs(angle); i += 45)
@@ -108,14 +115,14 @@ public class WarhammerContextActionSetStarshipDirection : ContextAction
 		}
 	}
 
-	private int GetResultOrientation(StarshipEntity target, out int angle)
+	private int GetResultOrientation(StarshipEntity rotationTarget, out int angle)
 	{
 		PropertyContext context = new PropertyContext(base.Context.MaybeCaster, null, null, base.Context);
-		angle = (((int)target.Stats.GetStat(StatType.Inertia) > maximalTargetInertiaToApplyLowInertiaAngle) ? Angle.GetValue(context) : LowInertiaAngle.GetValue(context));
+		angle = (((int)rotationTarget.Stats.GetStat(StatType.Inertia) > maximalTargetInertiaToApplyLowInertiaAngle) ? Angle.GetValue(context) : LowInertiaAngle.GetValue(context));
 		return Rotation switch
 		{
-			RotationType.FixedAngle => (int)target.Orientation + angle, 
-			RotationType.RandomAngle => (int)target.Orientation + PFStatefulRandom.Mechanics.Range(0, angle + 1), 
+			RotationType.FixedAngle => (int)rotationTarget.Orientation + angle, 
+			RotationType.RandomAngle => (int)rotationTarget.Orientation + PFStatefulRandom.Mechanics.Range(0, angle + 1), 
 			_ => 0, 
 		};
 	}

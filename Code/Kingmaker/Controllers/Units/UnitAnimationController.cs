@@ -107,7 +107,7 @@ public class UnitAnimationController : BaseUnitController, IControllerStart, ICo
 				manager.IsDead = unit.LifeState.IsDead;
 				manager.IsProne = stateOptional?.IsProne ?? false;
 				manager.IsSleeping = stateOptional?.HasCondition(UnitCondition.Sleeping) ?? false;
-				manager.IsStunned = false;
+				manager.IsStunned = stateOptional?.HasCondition(UnitCondition.Stunned) ?? false;
 				manager.IsAnimating = unit is LightweightUnitEntity || (stateOptional != null && stateOptional.IsAnimating) || manager.IsGoingProne;
 				manager.IsUnconscious = unit.LifeState.IsUnconscious;
 				manager.CoverType = ((manager.IsInCombat && unit is BaseUnitEntity baseUnitEntity) ? baseUnitEntity.GetCoverType() : LosCalculations.CoverType.None);

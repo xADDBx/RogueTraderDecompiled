@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
@@ -13,7 +14,6 @@ using Kingmaker.Items.Slots;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -33,9 +33,6 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	public static readonly HashSet<UnitAttackOfOpportunity> AllActive = new HashSet<UnitAttackOfOpportunity>();
 
 	[JsonProperty]
-	private BlueprintAbility m_AbilityBlueprint;
-
-	[JsonProperty]
 	private bool m_RemoveAbilityAfterAttackEnds;
 
 	private UnitAnimationActionCastSpell.SpecialBehaviourType m_Special;
@@ -47,7 +44,8 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	private PlayLoopAnimationByBuff m_loopingAnimationBuff;
 
 	[JsonProperty]
-	public WeaponSlot Hand { get; private set; }
+	[CanBeNull]
+	private WeaponSlot Hand { get; set; }
 
 	[JsonProperty]
 	public AbilityExecutionProcess ExecutionProcess { get; private set; }
@@ -220,33 +218,8 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	{
 		base.OnInit(executor);
 		AllActive.Add(this);
-		if (base.Params.IsRanged)
-		{
-			Hand = base.Executor.GetThreatHandRangedAnyHand();
-		}
-		else
-		{
-			Hand = base.Executor.GetThreatHand();
-		}
-		if (Hand == null)
-		{
-			throw new Exception($"{base.Executor} can't make attack of opportunity: has no threat hand");
-		}
-		m_AbilityBlueprint = Hand.GetAttackOfOpportunityAbility(base.Executor, base.Params.IsRanged);
-		if (m_AbilityBlueprint == null)
-		{
-			throw new Exception($"{base.Executor} can't make attack of opportunity: weapon in threat hand doesn't have any ability for AOO");
-		}
-		AbilityData abilityData = new AbilityData(m_AbilityBlueprint, base.Executor)
-		{
-			OverrideWeapon = Hand.MaybeWeapon,
-			IsAttackOfOpportunity = true
-		};
-		if (Hand.AttackOfOpportunityAbilityFXSettings != null)
-		{
-			abilityData.FXSettingsOverride = Hand.AttackOfOpportunityAbilityFXSettings;
-		}
-		Ability = abilityData;
+		AbilityData ability = CreateAbilityData();
+		Ability = ability;
 		m_loopingAnimationBuff = base.Executor.Facts.GetComponents<PlayLoopAnimationByBuff>().FirstOrDefault();
 		if (!base.IsOneFrameCommand)
 		{
@@ -269,6 +242,32 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 		{
 			m_CastTime = Math.Min(5f, m_CastTime);
 		}
+	}
+
+	private AbilityData CreateAbilityData()
+	{
+		if (base.Params.AbilityBp != null)
+		{
+			return new AbilityData(base.Params.AbilityBp, base.Executor)
+			{
+				IsAttackOfOpportunity = true
+			};
+		}
+		Hand = (base.Params.IsRanged ? base.Executor.GetThreatHandRangedAnyHand() : base.Executor.GetThreatHand());
+		if (Hand == null)
+		{
+			throw new Exception($"{base.Executor} can't make attack of opportunity: has no threat hand");
+		}
+		AbilityData abilityData = new AbilityData(Hand.GetAttackOfOpportunityAbility(base.Executor, base.Params.IsRanged) ?? throw new Exception($"{base.Executor} can't make attack of opportunity: weapon in threat hand doesn't have any ability for AOO"), base.Executor)
+		{
+			OverrideWeapon = Hand.MaybeWeapon,
+			IsAttackOfOpportunity = true
+		};
+		if (Hand.AttackOfOpportunityAbilityFXSettings != null)
+		{
+			abilityData.FXSettingsOverride = Hand.AttackOfOpportunityAbilityFXSettings;
+		}
+		return abilityData;
 	}
 
 	public override void Clear()
@@ -294,7 +293,7 @@ public sealed class UnitAttackOfOpportunity : UnitCommand<UnitAttackOfOpportunit
 	{
 		if (m_loopingAnimationBuff != null)
 		{
-			m_loopingAnimationBuff.TryRequeueAction();
+			m_loopingAnimationBuff.TryRequeueAction(base.Executor.AnimationManager);
 			m_loopingAnimationBuff = null;
 		}
 	}

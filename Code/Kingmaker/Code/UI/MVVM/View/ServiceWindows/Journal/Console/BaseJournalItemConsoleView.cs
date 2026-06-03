@@ -1,6 +1,5 @@
 using System.Linq;
 using JetBrains.Annotations;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
@@ -54,22 +53,6 @@ public class BaseJournalItemConsoleView : BaseJournalItemBaseView
 	private GameObject m_PostponedMark;
 
 	[SerializeField]
-	[UsedImplicitly]
-	protected GameObject m_DLC1New;
-
-	[SerializeField]
-	[UsedImplicitly]
-	protected GameObject m_DLC2New;
-
-	[SerializeField]
-	[UsedImplicitly]
-	protected GameObject m_DLC1Default;
-
-	[SerializeField]
-	[UsedImplicitly]
-	protected GameObject m_DLC2Default;
-
-	[SerializeField]
 	private Color m_NewColor;
 
 	[SerializeField]
@@ -106,11 +89,11 @@ public class BaseJournalItemConsoleView : BaseJournalItemBaseView
 		{
 			Game.Instance.GameCommandQueue.SetQuestViewed(base.ViewModel.Quest);
 		}
-		base.ViewModel.Quest.Objectives.Where((QuestObjective o) => o.IsActive).ToList().ForEach(delegate(QuestObjective x)
+		base.ViewModel?.Quest?.Objectives?.Where((QuestBookEntityEntry o) => o?.IsActive ?? false).ToList().ForEach(delegate(QuestBookEntityEntry x)
 		{
 			if (!x.IsViewed)
 			{
-				Game.Instance.GameCommandQueue.SetQuestObjectiveViewed(x);
+				Game.Instance?.GameCommandQueue?.SetQuestObjectiveViewed(x);
 			}
 		});
 	}

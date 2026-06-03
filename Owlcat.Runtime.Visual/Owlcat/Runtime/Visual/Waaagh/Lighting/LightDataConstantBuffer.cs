@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Owlcat.Runtime.Visual.Waaagh.Lighting;
 
-[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@94246ccf1d50\\Runtime\\Waaagh\\Lighting\\LightDataConstantBuffer.cs", needAccessors = false, generateCBuffer = true)]
+[GenerateHLSL(PackingRules.Exact, true, false, false, 1, false, false, false, -1, ".\\Library\\PackageCache\\com.owlcat.visual@5bdd4ffebc6c\\Runtime\\Waaagh\\Lighting\\LightDataConstantBuffer.cs", needAccessors = false, generateCBuffer = true)]
 public struct LightDataConstantBuffer
 {
 	public const int MaxVisibleLights = 1024;

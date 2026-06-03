@@ -360,7 +360,9 @@ public class SectorMapTravelController : IControllerEnable, IController, IContro
 
 	private void SetupEncounter(BlueprintDialog encounter, RandomWeightsForSave<BlueprintDialogReference> weights)
 	{
-		m_ShouldProceedRE = (Game.Instance.Player.WarpTravelState.TriggeredEtude = ShouldPlayOncePerTravelEtudeTrigger(m_Passage)) == null && encounter != null;
+		BlueprintComponentReference<EtudeTriggerActionInWarpDelayed> blueprintComponentReference = (Game.Instance.Player.WarpTravelState.TriggeredEtude = ShouldPlayOncePerTravelEtudeTrigger(m_Passage));
+		bool flag = Game.Instance.Player.WarpTravelState.TriggeredEtudeInMiddleOfJump.Count > 0;
+		m_ShouldProceedRE = blueprintComponentReference == null && !flag && encounter != null;
 		m_RandomEncounter = (m_ShouldProceedRE ? encounter : null);
 		Game.Instance.Player.GlobalMapRandomGenerationState.GetRandomEncountersDialogs(m_Passage.CurrentDifficulty).CopyCurrentWeights(weights);
 	}

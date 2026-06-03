@@ -78,7 +78,7 @@ public static class GameHelper
 
 		public static bool IsObjectiveStarted([NotNull] BlueprintQuestObjective objective)
 		{
-			return Game.Instance.Player.QuestBook.Quests.FirstOrDefault((Quest q) => q.IsActive && q.Objectives.FirstOrDefault((QuestObjective o) => o.Blueprint == objective && o.IsVisible && o.State == QuestObjectiveState.Started) != null) != null;
+			return Game.Instance.Player.QuestBook.Quests.FirstOrDefault((Quest q) => q.IsActive && q.Objectives.FirstOrDefault((QuestBookEntityEntry o) => o.Blueprint == objective && o.IsVisible && o.State == QuestObjectiveState.Started) != null) != null;
 		}
 	}
 

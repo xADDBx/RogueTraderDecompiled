@@ -8,6 +8,8 @@ using Kingmaker.Code.UI.MVVM.VM.MainMenu;
 using Kingmaker.UI;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.MVVM.View.CharGen.PC;
+using Kingmaker.UI.Pointer;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using UniRx;
@@ -47,9 +49,22 @@ public class MainMenuPCView : ViewBase<MainMenuVM>, IInitializable
 	[SerializeField]
 	private DarkHeresyPopUpPCView m_DarkHeresyPopUpView;
 
+	[SerializeField]
+	private PCCursor m_PCCursor;
+
 	[Header("First Time Launch FX")]
 	[SerializeField]
 	private UIFirstLaunchFX m_FirstLaunchFX;
+
+	[Header("Nintendo Switch Welcome Window")]
+	[SerializeField]
+	private GameObject m_WelcomeWindowScroll;
+
+	[SerializeField]
+	private GameObject m_WelcomeWindowScrollbar;
+
+	[SerializeField]
+	private RectTransform m_BackgroundWelcomeWindowRect;
 
 	public void Initialize()
 	{
@@ -78,10 +93,20 @@ public class MainMenuPCView : ViewBase<MainMenuVM>, IInitializable
 		AddDisposable(base.ViewModel.FirstLaunchSettings.Subscribe(m_FirstLaunchSettingsPCView.Bind));
 		AddDisposable(base.ViewModel.DarkHeresyPopUpVM.Subscribe(m_DarkHeresyPopUpView.Bind));
 		AddDisposable(base.ViewModel.PlayFirstLaunchFXCommand.Subscribe(PlayFirstLaunchFX));
+		AddDisposable(m_PCCursor.Bind());
+		m_PCCursor.SetActive(active: true);
 		DelayedInvoker.InvokeInTime(delegate
 		{
 			m_FadeAnimator.DisappearAnimation();
 		}, m_DelayBeforeShow);
+		m_WelcomeWindowScroll.SetActive(!ApplicationHelper.IsRunningOnAnySwitch);
+		m_WelcomeWindowScrollbar.SetActive(!ApplicationHelper.IsRunningOnAnySwitch);
+		if (ApplicationHelper.IsRunningOnAnySwitch)
+		{
+			Vector2 sizeDelta = m_BackgroundWelcomeWindowRect.sizeDelta;
+			sizeDelta.y = 365f;
+			m_BackgroundWelcomeWindowRect.sizeDelta = sizeDelta;
+		}
 	}
 
 	protected override void DestroyViewImplementation()

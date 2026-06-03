@@ -13,6 +13,7 @@ using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
@@ -207,20 +208,20 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 					AbstractUnitCommand abstractUnitCommand = unitEntityView.Data?.Commands.Current;
 					if (abstractUnitCommand == null || !abstractUnitCommand.IsOneFrameCommand)
 					{
-						goto IL_00cd;
+						goto IL_00e9;
 					}
 				}
 				if (!unitEntityView.AgentASP.IsCharging)
 				{
 					UnitViewHandsEquipment handsEquipment = unitEntityView.HandsEquipment;
-					if ((handsEquipment == null || !handsEquipment.AreHandsBusyWithAnimation.Value) && CoverType != 0)
+					if ((handsEquipment == null || !handsEquipment.AreHandsBusyWithAnimation.Value) && CoverType != 0 && !AnyActionBlocksCover)
 					{
-						return !AnyActionBlocksCover;
+						return unitEntityView.Data?.Parts.GetOptional<UnitPartJump>() == null;
 					}
 				}
 			}
-			goto IL_00cd;
-			IL_00cd:
+			goto IL_00e9;
+			IL_00e9:
 			return false;
 		}
 	}
@@ -845,7 +846,12 @@ public class UnitAnimationManager : AnimationManager, IEntitySubscriber, IUnitCo
 	public void CreateMainHandAttackHandlerForPrepare()
 	{
 		m_CurrentMainHandAttackForPrepare?.Release();
-		m_CurrentMainHandAttackForPrepare = CreateHandle(UnitAnimationType.MainHandAttack);
+		m_CurrentMainHandAttackForPrepare = CreateHandle(UnitAnimationType.MainHandAttack, errorOnEmpty: false);
+		if (m_CurrentMainHandAttackForPrepare == null)
+		{
+			Logger.Warning(this, "{0} Has no animation of type MainHandAttack, skipping prepare handler", this);
+			return;
+		}
 		m_CurrentMainHandAttackForPrepare.AttackWeaponStyle = ActiveMainHandWeaponStyle;
 		m_CurrentMainHandAttackForPrepare.NeedPreparingForShooting = true;
 		m_CurrentMainHandAttackForPrepare.IsPreparingForShooting = true;

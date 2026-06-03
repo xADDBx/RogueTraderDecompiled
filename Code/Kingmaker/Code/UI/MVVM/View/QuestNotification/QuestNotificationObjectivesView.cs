@@ -18,6 +18,9 @@ public class QuestNotificationObjectivesView : ViewBase<QuestNotificationEntityV
 	private TextMeshProUGUI m_Description;
 
 	[SerializeField]
+	private GameObject m_ClueMark;
+
+	[SerializeField]
 	private GameObject m_FailMark;
 
 	[SerializeField]
@@ -68,11 +71,23 @@ public class QuestNotificationObjectivesView : ViewBase<QuestNotificationEntityV
 
 	private void SetMark()
 	{
-		m_FailMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Failed);
-		m_CompleteMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Completed);
-		m_NewMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.New);
-		m_UpdateMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Updated);
-		m_PostponeMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Postponed);
+		if (base.ViewModel.IsClue)
+		{
+			m_ClueMark.Or(null)?.gameObject.SetActive(value: true);
+			m_FailMark.Or(null)?.gameObject.SetActive(value: false);
+			m_CompleteMark.Or(null)?.gameObject.SetActive(value: false);
+			m_NewMark.Or(null)?.gameObject.SetActive(value: false);
+			m_UpdateMark.Or(null)?.gameObject.SetActive(value: false);
+			m_PostponeMark.Or(null)?.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			m_FailMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Failed);
+			m_CompleteMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Completed);
+			m_NewMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.New);
+			m_UpdateMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Updated);
+			m_PostponeMark.Or(null)?.gameObject.SetActive(base.ViewModel.State == QuestNotificationState.Postponed);
+		}
 	}
 
 	private void BindAdditionalObjective()

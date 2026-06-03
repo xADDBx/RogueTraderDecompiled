@@ -39,7 +39,7 @@ public class JournalOrderResourcesPCView : ColonyResourcePCView
 		}));
 		AddDisposable(base.ViewModel.Count.Subscribe(delegate(int val)
 		{
-			AddDisposable(m_BackgroundImage.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, val)));
+			AddDisposable(m_BackgroundImage.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, val, base.ViewModel)));
 		}));
 	}
 }

@@ -38,8 +38,6 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 	[JsonProperty]
 	private bool m_AiEnabled = true;
 
-	private BehaviourTree m_BehaviourTree;
-
 	[CanBeNull]
 	[JsonProperty]
 	private AiScenario m_CurrentScenario;
@@ -82,6 +80,8 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	public bool EnemyConditionsDirty { get; set; }
 
+	public BehaviourTree BehaviourTree { get; private set; }
+
 	public BaseUnitEntity Unit
 	{
 		get
@@ -106,7 +106,7 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 		}
 	}
 
-	public bool IsFinishedTurn => m_BehaviourTree.IsFinishedTurn;
+	public bool IsFinishedTurn => BehaviourTree.IsFinishedTurn;
 
 	public bool IsAIEnabled
 	{
@@ -187,7 +187,7 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	private void UpdateBehaviourTree()
 	{
-		m_BehaviourTree = (BehaviourTreeBuilder.TryCreateCustom(base.Owner, m_CustomBehaviourType, out var behaviourTree) ? behaviourTree : BehaviourTreeBuilder.Create(base.Owner));
+		BehaviourTree = (BehaviourTreeBuilder.TryCreateCustom(base.Owner, m_CustomBehaviourType, out var behaviourTree) ? behaviourTree : BehaviourTreeBuilder.Create(base.Owner));
 	}
 
 	public void RestoreAvailableActions()
@@ -196,7 +196,7 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	public void Init()
 	{
-		m_BehaviourTree.Init();
+		BehaviourTree.Init();
 		IgnoreAoOThreatOnCast = Blueprint is BlueprintBrain blueprintBrain && blueprintBrain.IgnoreAoOForCasting;
 		TimeSpan turnEndTime = (TurnStartTime = Game.Instance.TimeController.RealTime);
 		TurnEndTime = turnEndTime;
@@ -204,7 +204,7 @@ public class PartUnitBrain : MechanicEntityPart, IHashable
 
 	public void Tick()
 	{
-		m_BehaviourTree.Tick();
+		BehaviourTree.Tick();
 		if (!IsFinishedTurn)
 		{
 			TurnEndTime = Game.Instance.TimeController.RealTime;

@@ -11,7 +11,9 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Console.CareerPathProgression.SelectionTabs;
+using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -22,6 +24,7 @@ using Owlcat.Runtime.UniRx;
 using Rewired;
 using UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Abilities;
 
@@ -50,6 +53,9 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 	[SerializeField]
 	private ConsoleHint m_ChangeTabHint;
 
+	[SerializeField]
+	private ConsoleHint m_ChangeTabHintAdditional;
+
 	private InputLayer m_ChooseAbilityLayer;
 
 	private CharInfoFeatureConsoleView m_MoveModeAbility;
@@ -58,6 +64,7 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 	{
 		m_ActionBarConsoleView = m_ActionBarPartAbilitiesView as SurfaceActionBarPartAbilitiesConsoleView;
 		CreateNavigation();
+		CurrentSelectedTab.Value = CurrentInfoAbilitiesTab.ActiveAbilities;
 		base.BindViewImplementation();
 		AddDisposable(m_ActionBarNavigation = m_ActionBarConsoleView.Or(null)?.NavigationBehaviour);
 		AddDisposable(m_ActionBarNavigation?.DeepestFocusAsObservable.Subscribe(OnActionBarFocused));
@@ -77,13 +84,16 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 	protected override void RefreshView()
 	{
 		base.RefreshView();
-		Action<CharInfoFeatureConsoleView> onAbilityClick = (ActiveAbilitiesSelected.Value ? new Action<CharInfoFeatureConsoleView>(OnAbilityClick) : null);
-		m_WidgetList.Entries.ForEach(delegate(IWidgetView e)
+		Action<CharInfoFeatureConsoleView> onAbilityClick = ((CurrentSelectedTab.Value == CurrentInfoAbilitiesTab.ActiveAbilities) ? new Action<CharInfoFeatureConsoleView>(OnAbilityClick) : null);
+		if (m_WidgetList.Entries != null)
 		{
-			(e as CharInfoFeatureGroupConsoleView)?.SetupChooseModeActions(onAbilityClick, OnAbilityFocus);
-		});
-		UpdateNavigation();
-		m_ScrollRect.ScrollToTop();
+			m_WidgetList.Entries.ForEach(delegate(IWidgetView e)
+			{
+				(e as CharInfoFeatureGroupConsoleView)?.SetupChooseModeActions(onAbilityClick, OnAbilityFocus);
+			});
+			UpdateNavigation();
+			m_ScrollRect.ScrollToTop();
+		}
 	}
 
 	private void CreateNavigation()
@@ -184,16 +194,33 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 		AddDisposable(hintsWidget.BindHint(inputBindStruct, UIStrings.Instance.ContextMenu.ContextMenu));
 		AddDisposable(inputBindStruct);
 		m_ActionBarConsoleView.AddInputToPages(inputLayer, m_ActionBarActive);
-		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
+		if (!base.ViewModel.Unit.Value.IsPet)
 		{
-			ToggleAbilitiesTab();
-		}, 18);
-		AddDisposable(m_ChangeTabHint.Bind(inputBindStruct2));
-		AddDisposable(inputBindStruct2);
+			InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
+			{
+				ToggleAbilitiesTab();
+			}, 18);
+			AddDisposable(m_ChangeTabHint.Bind(inputBindStruct2));
+			AddDisposable(m_ChangeTabHintAdditional.Bind(inputBindStruct2));
+			AddDisposable(inputBindStruct2);
+		}
 		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
 		{
 			m_ChangeTabHint.gameObject.SetActive(!u.IsPet);
 		}));
+		AddDisposable(base.ViewModel.Unit.Subscribe(delegate(BaseUnitEntity u)
+		{
+			m_ChangeTabHintAdditional.gameObject.SetActive(!u.IsPet);
+		}));
+		if (!base.ViewModel.Unit.Value.IsStarship() && !base.ViewModel.Unit.Value.IsPlayerShip())
+		{
+			InputBindStruct inputBindStruct3 = inputLayer.AddButton(delegate
+			{
+				ToggleGroupingMode();
+			}, 17);
+			AddDisposable(hintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.CharGen.OrderByType));
+			AddDisposable(inputBindStruct3);
+		}
 	}
 
 	public List<GridConsoleNavigationBehaviour> GetIgnoreNavigation()
@@ -257,8 +284,16 @@ public class CharInfoAbilitiesConsoleView : CharInfoAbilitiesBaseView, ICharInfo
 
 	private void ToggleAbilitiesTab()
 	{
-		SetActiveAbilitiesState(!ActiveAbilitiesSelected.Value);
+		int activeAbilitiesState = (int)(CurrentSelectedTab.Value + 1) % 3;
+		SetActiveAbilitiesState((CurrentInfoAbilitiesTab)activeAbilitiesState);
 		RefreshFocus();
+	}
+
+	private void ToggleGroupingMode()
+	{
+		FeatureGroupingMode groupingMode = ((base.ViewModel.GroupingMode.Value == FeatureGroupingMode.ByType) ? FeatureGroupingMode.BySource : FeatureGroupingMode.ByType);
+		base.ViewModel.SetGroupingMode(groupingMode);
+		RefreshView();
 	}
 
 	private void RefreshFocus()

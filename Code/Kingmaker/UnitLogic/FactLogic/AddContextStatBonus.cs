@@ -31,6 +31,8 @@ public class AddContextStatBonus : UnitFactComponentDelegate, IHashable
 
 	public ContextValue Value;
 
+	public bool IsPercentModifier;
+
 	[SerializeField]
 	private ActionList m_ActionsOnAdd = new ActionList();
 
@@ -39,7 +41,7 @@ public class AddContextStatBonus : UnitFactComponentDelegate, IHashable
 		if (Restrictions.IsPassed(base.Fact, base.Context, null, base.Context.SourceAbilityContext?.Ability))
 		{
 			int value = CalculateValue(base.Context);
-			base.Owner.Stats.GetStat(Stat, canBeNull: true)?.AddModifier(value, base.Runtime, Descriptor);
+			base.Owner.Stats.GetStat(Stat, canBeNull: true)?.AddModifier(value, base.Runtime, Descriptor, IsPercentModifier);
 			if (m_ActionsOnAdd.HasActions)
 			{
 				base.Fact.RunActionInContext(m_ActionsOnAdd, base.Owner.ToITargetWrapper());

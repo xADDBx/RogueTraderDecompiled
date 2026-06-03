@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -9,6 +10,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [TypeId("aab1d9de84cd4cb5a934ac4d7ab7f1bd")]
 public class StarshipCrewCountBonus : UnitFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateStarshipCrewMaxCount>, IRulebookHandler<RuleCalculateStarshipCrewMaxCount>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {

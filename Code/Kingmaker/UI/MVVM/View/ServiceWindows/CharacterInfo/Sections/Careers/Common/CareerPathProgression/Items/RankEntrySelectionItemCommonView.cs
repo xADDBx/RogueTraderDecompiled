@@ -48,23 +48,23 @@ public class RankEntrySelectionItemCommonView : VirtualListElementViewBase<RankE
 	private bool m_IsListEntry = true;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private TextMeshProUGUI m_SelectionLabel;
 
 	[SerializeField]
-	[ConditionalHide("m_IsListEntry")]
+	[HideIf("m_IsListEntry")]
 	private GameObject m_SelectedMark;
 
 	[SerializeField]
-	[ConditionalHide("m_IsListEntry")]
+	[HideIf("m_IsListEntry")]
 	private RectTransform m_NextItemArrow;
 
 	[SerializeField]
-	[ConditionalHide("m_IsListEntry")]
+	[HideIf("m_IsListEntry")]
 	private GameObject m_AttributeContainer;
 
 	[SerializeField]
-	[ConditionalHide("m_IsListEntry")]
+	[HideIf("m_IsListEntry")]
 	private TextMeshProUGUI m_AttributeName;
 
 	[SerializeField]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Kingmaker.EntitySystem.Persistence;
 using Newtonsoft.Json;
 
 namespace Kingmaker.Settings.Serialization;
@@ -18,7 +19,7 @@ public class SettingsFileStorage
 
 	public void Save(IReadOnlyDictionary<string, object> dictionary)
 	{
-		using StreamWriter textWriter = File.CreateText(m_Path);
+		using StreamWriter textWriter = new StreamWriter(new FileStream(m_Path, FileMode.Create, FileAccess.Write, FileShare.Read, ISaver.BuffersSize), ISaver.UTF8NoBom, ISaver.BuffersSize);
 		Serializer.Serialize(textWriter, dictionary, typeof(Dictionary<string, object>));
 	}
 

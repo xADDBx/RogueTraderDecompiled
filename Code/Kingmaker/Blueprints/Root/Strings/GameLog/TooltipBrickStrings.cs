@@ -7,6 +7,8 @@ namespace Kingmaker.Blueprints.Root.Strings.GameLog;
 [Serializable]
 public class TooltipBrickStrings
 {
+	public LocalizedString TriggersRicochet;
+
 	public LocalizedString TriggersOverpenetration;
 
 	public LocalizedString TriggersPush;
@@ -15,6 +17,8 @@ public class TooltipBrickStrings
 	public LocalizedString HitChance;
 
 	public LocalizedString HitChanceSignature;
+
+	public LocalizedString HitChanceBorder;
 
 	public LocalizedString HitRoll;
 
@@ -125,6 +129,10 @@ public class TooltipBrickStrings
 	public LocalizedString OverpenetrationModifier;
 
 	public LocalizedString Overpenetration;
+
+	public LocalizedString RicochetModifier;
+
+	public LocalizedString Ricochet;
 
 	public LocalizedString ChanceBorder;
 

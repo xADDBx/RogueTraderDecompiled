@@ -24,6 +24,7 @@ using Warhammer.SpaceCombat.AI;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("433d4bafc1ae7c140bfc3dedc8c578c3")]
 public class StarshipStrikecraftLogic : UnitFactComponentDelegate, ITurnEndHandler, ISubscriber<IMechanicEntity>, ISubscriber, IInitiatorRulebookHandler<RuleStarshipPerformAttack>, IRulebookHandler<RuleStarshipPerformAttack>, IInitiatorRulebookSubscriber, IHashable

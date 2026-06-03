@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
-using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.Utility;
-using Kingmaker.Utility.StatefulRandom;
 
 namespace Kingmaker.Controllers.Clicks.Handlers;
 
@@ -14,9 +12,11 @@ public class AbilityMultiTargetSelectionHandler
 
 	private AbilityData m_RootAbilityData;
 
-	private IAbilityMultiTarget m_AbilityMultiTarget;
-
 	public IReadOnlyList<TargetWrapper> Targets => m_Targets;
+
+	public bool IsMultiTargetSelected => AbilityMultiTarget != null;
+
+	public IAbilityMultiTarget AbilityMultiTarget { get; private set; }
 
 	public TargetWrapper GetLastTarget()
 	{
@@ -41,7 +41,7 @@ public class AbilityMultiTargetSelectionHandler
 	public void OnRootAbilitySelected(AbilityData abilityData)
 	{
 		m_RootAbilityData = abilityData;
-		m_AbilityMultiTarget = abilityData?.Blueprint.GetComponent<IAbilityMultiTarget>();
+		AbilityMultiTarget = abilityData?.Blueprint.GetComponent<IAbilityMultiTarget>();
 		if (abilityData == null)
 		{
 			m_Targets.Clear();
@@ -56,7 +56,7 @@ public class AbilityMultiTargetSelectionHandler
 
 	public AbilityData GetAbilityForNextTarget()
 	{
-		if (m_AbilityMultiTarget == null)
+		if (AbilityMultiTarget == null)
 		{
 			if (m_Targets.Count != 0)
 			{
@@ -64,17 +64,10 @@ public class AbilityMultiTargetSelectionHandler
 			}
 			return m_RootAbilityData;
 		}
-		if (!m_AbilityMultiTarget.TryGetNextTargetAbilityAndCaster(m_RootAbilityData, m_Targets.Count, out var ability, out var caster))
+		if (!AbilityMultiTarget.TryGetNextTargetAbility(m_RootAbilityData, m_Targets.Count, out var ability))
 		{
 			return null;
 		}
-		if (ability == m_RootAbilityData.Blueprint && caster == m_RootAbilityData.Caster)
-		{
-			return m_RootAbilityData;
-		}
-		using (ContextData<DisableStatefulRandomContext>.Request())
-		{
-			return new AbilityData(ability ?? m_RootAbilityData.Blueprint, caster ?? m_RootAbilityData.Caster);
-		}
+		return ability;
 	}
 }

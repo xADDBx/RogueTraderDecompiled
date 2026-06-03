@@ -247,6 +247,10 @@ public class BlueprintRoot : BlueprintScriptableObject
 	[SerializeField]
 	private BlueprintFeatureReference m_AssassinCareerPathRef;
 
+	[ValidateNotNull]
+	[SerializeField]
+	private BlueprintAugmentsRoot.Reference m_Augments;
+
 	public static BlueprintRoot Instance
 	{
 		get
@@ -351,6 +355,8 @@ public class BlueprintRoot : BlueprintScriptableObject
 	public PropertyCalculator AssassinLethalityProperty => m_AssassinLethalityPropertyRef?.Get().Value;
 
 	public string AssassinCareerPathGuid => m_AssassinCareerPathRef?.Guid;
+
+	public BlueprintAugmentsRoot Augments => m_Augments;
 
 	public override void OnEnable()
 	{

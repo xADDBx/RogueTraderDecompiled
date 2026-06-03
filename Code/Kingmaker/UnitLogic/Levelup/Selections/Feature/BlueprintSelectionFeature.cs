@@ -42,7 +42,7 @@ public class BlueprintSelectionFeature : BlueprintSelection
 		IEnumerable<AddFeaturesToLevelUp> first = ((path != null) ? (from i in path.GetComponents<AddFeaturesToLevelUp>()
 			where i.Group == Group
 			select i) : null) ?? Array.Empty<AddFeaturesToLevelUp>();
-		EntityFactManagerComponentsEnumerator<AddFeaturesToLevelUp> components = unit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group && !(i.OwnerBlueprint is BlueprintPath));
+		EntityFactManagerComponentsEnumerable<AddFeaturesToLevelUp> components = unit.Facts.GetComponents((AddFeaturesToLevelUp i) => i.Group == Group && !(i.OwnerBlueprint is BlueprintPath));
 		IEnumerable<AddFeaturesToLevelUp> source = first.Concat(components);
 		if (source.Any((AddFeaturesToLevelUp f) => f == null))
 		{

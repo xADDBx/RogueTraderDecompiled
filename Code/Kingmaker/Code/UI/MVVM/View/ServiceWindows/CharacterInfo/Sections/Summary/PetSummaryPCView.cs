@@ -74,4 +74,10 @@ public class PetSummaryPCView : CharInfoComponentView<PetSummaryVM>
 			m_TooltipBrickTextConsoleView.Or(null)?.Bind(new TooltipBrickTextVM(base.ViewModel.StrategyDescription.Value.Text, TooltipTextType.Simple));
 		}
 	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_VideoPlayerHelper.Stop();
+	}
 }

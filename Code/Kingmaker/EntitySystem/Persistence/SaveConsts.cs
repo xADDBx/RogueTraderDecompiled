@@ -22,6 +22,10 @@ public static class SaveConsts
 
 	public const string CoopName = "coop";
 
+	public const string KnownAreaListName = "knownAreas";
+
+	public const string FogIndexName = "fogIndex";
+
 	public const string HeaderJsonName = "header.json";
 
 	public const string PlayerJsonName = "player.json";
@@ -33,6 +37,10 @@ public static class SaveConsts
 	public const string SettingsJsonName = "settings.json";
 
 	public const string CoopJsonName = "coop.json";
+
+	public const string KnownAreaListJsonName = "knownAreas.json";
+
+	public const string FogIndexJsonName = "fogIndex.json";
 
 	public const string ScreenshotHeaderFileName = "header.png";
 

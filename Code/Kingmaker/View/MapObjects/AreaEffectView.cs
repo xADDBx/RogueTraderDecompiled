@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -41,18 +42,24 @@ public class AreaEffectView : MechanicEntityView
 
 	private OverrideAreaEffectPatternData? m_OverridePatternData;
 
-	private GameObject m_SpawnedFx;
+	private readonly List<GameObject> m_SpawnedFxObjects = new List<GameObject>();
+
+	private readonly List<GameObject> m_ManagedFxSettingsEffects = new List<GameObject>();
 
 	private NavmeshCut m_NavmeshCut;
 
 	[CanBeNull]
 	private CustomGridNodeBase m_TargetNode;
 
-	public bool HasSpawnedFx => m_SpawnedFx != null;
+	private IScriptZoneShape m_Shape;
 
-	public IScriptZoneShape Shape { get; private set; }
+	public bool HasSpawnedFx => m_SpawnedFxObjects.Count > 0;
+
+	public IScriptZoneShape Shape => m_Shape ?? GetComponent<IScriptZoneShape>();
 
 	public bool OnUnit { get; set; }
+
+	private TargetWrapper Target => m_Target ?? new TargetWrapper(base.ViewTransform.position);
 
 	public MechanicsContext Context => m_Context;
 
@@ -83,7 +90,7 @@ public class AreaEffectView : MechanicEntityView
 			IScriptZoneShape scriptZoneShape = base.gameObject.AddComponent<ScriptZoneAllArea>();
 			shape = scriptZoneShape;
 		}
-		Shape = shape;
+		m_Shape = shape;
 		new GameObject("Locator_GroundFX").transform.SetParent(base.ViewTransform, worldPositionStays: false);
 	}
 
@@ -186,45 +193,64 @@ public class AreaEffectView : MechanicEntityView
 
 	public override Entity CreateEntityData(bool load)
 	{
-		if ((object)m_Target == null)
-		{
-			m_Target = new TargetWrapper(base.ViewTransform.position);
-		}
-		return Entity.Initialize(new AreaEffectEntity(this, m_Context, m_Blueprint.Get(), m_Target, m_CreationTime, m_Duration, OnUnit));
+		return Entity.Initialize(new AreaEffectEntity(this, m_Context, m_Blueprint.Get(), Target, m_CreationTime, m_Duration, OnUnit));
 	}
 
 	public void SpawnFxs()
 	{
 		GameObject gameObject = m_Blueprint.Get().Fx.Load();
-		if (!(gameObject != null) || (bool)m_SpawnedFx)
+		if (!(gameObject != null) || HasSpawnedFx)
 		{
 			return;
 		}
+		GameObject gameObject2;
 		if (OnUnit)
 		{
 			MechanicEntityView mechanicEntityView = m_Target.Entity?.View;
 			if (mechanicEntityView == null)
 			{
 				LogChannel.Default.Error("Missing target unit view reference during FX spawn. m_Target " + m_Target.EntityRef.Id + ". AreaEffectView " + UniqueId);
+				return;
 			}
-			else
-			{
-				m_SpawnedFx = FxHelper.SpawnFxOnEntity(gameObject, mechanicEntityView);
-			}
+			gameObject2 = FxHelper.SpawnFxOnEntity(gameObject, mechanicEntityView);
 		}
 		else
 		{
-			m_SpawnedFx = FxHelper.SpawnFxOnGameObject(gameObject, base.gameObject);
+			gameObject2 = FxHelper.SpawnFxOnGameObject(gameObject, base.gameObject);
+		}
+		if (gameObject2 != null)
+		{
+			m_SpawnedFxObjects.Add(gameObject2);
+		}
+	}
+
+	public void AttachManagedFx(GameObject[] effects)
+	{
+		if (effects == null || effects.Length == 0)
+		{
+			return;
+		}
+		foreach (GameObject gameObject in effects)
+		{
+			if (gameObject != null && !gameObject.TryGetComponent<AutoDestroy>(out var _))
+			{
+				m_ManagedFxSettingsEffects.Add(gameObject);
+			}
 		}
 	}
 
 	public void RemoveFxs()
 	{
-		if (m_SpawnedFx != null)
+		foreach (GameObject spawnedFxObject in m_SpawnedFxObjects)
 		{
-			FxHelper.Destroy(m_SpawnedFx);
-			m_SpawnedFx = null;
+			FxHelper.Destroy(spawnedFxObject);
 		}
+		m_SpawnedFxObjects.Clear();
+		foreach (GameObject managedFxSettingsEffect in m_ManagedFxSettingsEffects)
+		{
+			FxHelper.Destroy(managedFxSettingsEffect);
+		}
+		m_ManagedFxSettingsEffects.Clear();
 		if (!(m_Blueprint.Get().FxOnEndAreaEffect == null))
 		{
 			GameObject gameObject = m_Blueprint.Get().FxOnEndAreaEffect.Load();
@@ -238,7 +264,7 @@ public class AreaEffectView : MechanicEntityView
 	protected override void Awake()
 	{
 		base.Awake();
-		Shape = GetComponent<IScriptZoneShape>();
+		m_Shape = GetComponent<IScriptZoneShape>();
 	}
 
 	private void LateUpdate()
@@ -247,9 +273,20 @@ public class AreaEffectView : MechanicEntityView
 		{
 			base.ViewTransform.position = m_Target.Point;
 		}
-		else if (m_SpawnedFx != null)
+		else
 		{
-			m_SpawnedFx.transform.position = base.ViewTransform.position;
+			if (m_SpawnedFxObjects.Count <= 0)
+			{
+				return;
+			}
+			Vector3 position = base.ViewTransform.position;
+			foreach (GameObject spawnedFxObject in m_SpawnedFxObjects)
+			{
+				if (spawnedFxObject != null)
+				{
+					spawnedFxObject.transform.position = position;
+				}
+			}
 		}
 	}
 

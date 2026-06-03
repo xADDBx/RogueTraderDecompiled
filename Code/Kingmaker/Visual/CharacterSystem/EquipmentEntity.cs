@@ -144,6 +144,13 @@ public class EquipmentEntity : ScriptableObject, IResource
 		}
 	}
 
+	public enum AugmentArmSide
+	{
+		None,
+		Left,
+		Right
+	}
+
 	public class PaintedTextures
 	{
 		private class PaintIndices
@@ -244,6 +251,13 @@ public class EquipmentEntity : ScriptableObject, IResource
 	public bool ShowLowerMaterials;
 
 	public bool isOnlyRightBP;
+
+	[Header("Augmentation")]
+	[Tooltip("When true, textures go to the secondary augmentation atlas instead of the main atlas")]
+	public bool IsAugmentation;
+
+	[Tooltip("For arm augmentations only: which side to vertex-cut. None = legs and other augmentations (no vertex cutting)")]
+	public AugmentArmSide AugmentationArmSide;
 
 	public List<Skeleton.Bone> SkeletonModifiers;
 

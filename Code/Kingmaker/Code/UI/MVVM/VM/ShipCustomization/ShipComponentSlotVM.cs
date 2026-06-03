@@ -35,7 +35,7 @@ public class ShipComponentSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 
 	public readonly PlayerShipType ShipType;
 
-	public readonly BoolReactiveProperty IsLocked = new BoolReactiveProperty();
+	public new readonly BoolReactiveProperty IsLocked = new BoolReactiveProperty();
 
 	public readonly BoolReactiveProperty HasArsenalAdvancement = new BoolReactiveProperty();
 

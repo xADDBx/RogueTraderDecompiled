@@ -25,6 +25,10 @@ public class GraphicsPresetsList : ScriptableObject
 
 		public bool Bloom;
 
+		public bool ReflectionProbes;
+
+		public bool ShadowsUpdateFrequency;
+
 		public bool SSAOQuality;
 
 		public bool SSRQuality;
@@ -34,6 +38,8 @@ public class GraphicsPresetsList : ScriptableObject
 		public bool AntialiasingQuality;
 
 		public bool FootprintsMode;
+
+		public bool UpscalerMode;
 
 		public bool FsrMode;
 
@@ -64,6 +70,12 @@ public class GraphicsPresetsList : ScriptableObject
 	private GraphicsPresetAsset m_SteamDeckGraphicsPreset;
 
 	[SerializeField]
+	private GraphicsPresetAsset m_Switch2HandheldGraphicsPreset;
+
+	[SerializeField]
+	private GraphicsPresetAsset m_Switch2DockedGraphicsPreset;
+
+	[SerializeField]
 	[InfoBox("If you change the 'Console User Controlled Values' value, then change the 'Settings Platform' value in the corresponding UISetting in 'Assets/Mechanics/Blueprints/Root/Settings/Settings/GraphicsSettings'")]
 	private UserControlledValues m_ConsoleUserControlledValues;
 
@@ -72,6 +84,10 @@ public class GraphicsPresetsList : ScriptableObject
 	public GraphicsPresetAsset ConsoleGraphicsPreset => m_ConsoleGraphicsPreset;
 
 	public GraphicsPresetAsset SteamDeckGraphicsPreset => m_SteamDeckGraphicsPreset;
+
+	public GraphicsPresetAsset Switch2HandheldGraphicsPreset => m_Switch2HandheldGraphicsPreset;
+
+	public GraphicsPresetAsset Switch2DockedGraphicsPreset => m_Switch2DockedGraphicsPreset;
 
 	public UserControlledValues ConsoleUserControlledValues => m_ConsoleUserControlledValues;
 }

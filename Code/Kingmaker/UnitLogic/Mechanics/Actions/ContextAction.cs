@@ -7,8 +7,11 @@ using Kingmaker.Controllers.Projectiles;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using UnityEngine;
 
@@ -35,6 +38,19 @@ public abstract class ContextAction : GameAction
 
 	[CanBeNull]
 	protected RulePerformAttack AttackRule => ContextData<AbilityExecutionContext.Data>.Current?.AttackRule;
+
+	protected override bool CanRun()
+	{
+		EventBus.RaiseEvent(delegate(IUIContextActionRunHandler h)
+		{
+			h.HandleOnContextActionRun(Context, Caster, Target?.Entity);
+		});
+		if ((Target?.Entity?.GetOptional<PartAbilityImmunity>()?.IsImmuneTo(AbilityContext?.AbilityBlueprint)).GetValueOrDefault())
+		{
+			return false;
+		}
+		return base.CanRun();
+	}
 
 	public virtual bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
 	{

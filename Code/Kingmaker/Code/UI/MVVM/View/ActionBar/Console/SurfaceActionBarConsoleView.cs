@@ -68,10 +68,6 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 	[SerializeField]
 	private TextMeshProUGUI m_AnotherPlayerTurnLabel;
 
-	private IReadOnlyReactiveProperty<bool> m_IsVisible;
-
-	private BoolReactiveProperty m_VisibleTrigger;
-
 	public void Initialize()
 	{
 		m_QuickAccessConsoleView.Initialize();
@@ -83,17 +79,15 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		m_VisibleTrigger = new BoolReactiveProperty();
-		m_IsVisible = base.ViewModel.IsVisible.And(m_VisibleTrigger).ToReactiveProperty();
 		m_QuickAccessConsoleView.Bind(base.ViewModel);
 		m_AbilitiesConsoleView.Bind(base.ViewModel.Abilities);
 		m_MomentumConsoleView.Bind(base.ViewModel.SurfaceMomentumVM);
 		m_VeilThicknessConsoleView.Bind(base.ViewModel.VeilThickness);
 		HandleTurnBasedModeSwitched(TurnController.IsInTurnBasedCombat());
-		AddDisposable(m_IsVisible.Subscribe(OnVisibleChanged));
+		AddDisposable(base.ViewModel.IsVisibleAndShown.Subscribe(OnVisibleChanged));
 		AddDisposable(base.ViewModel.CurrentCombatUnit.Subscribe(delegate
 		{
-			if (m_IsVisible.Value)
+			if (base.ViewModel.IsVisibleAndShown.Value)
 			{
 				UISounds.Instance.Sounds.ActionBar.ActionBarSwitch.Play();
 			}
@@ -117,8 +111,8 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 
 	public void AddInput(InputLayer inputLayer, bool inCombat)
 	{
-		m_QuickAccessConsoleView.AddInput(inputLayer, m_IsVisible, inCombat);
-		m_AbilitiesConsoleView.AddInput(inputLayer, m_IsVisible, inCombat);
+		m_QuickAccessConsoleView.AddInput(inputLayer, base.ViewModel.IsVisibleAndShown, inCombat);
+		m_AbilitiesConsoleView.AddInput(inputLayer, base.ViewModel.IsVisibleAndShown, inCombat);
 		AddDisposable(m_InspectHint.Bind(inputLayer.AddButton(delegate
 		{
 			OnInspectUnit();
@@ -128,23 +122,15 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 		{
 			AddDisposable(m_HideActionBarHint.Bind(inputLayer.AddButton(delegate
 			{
-				TriggerVisibility(trigger: false);
-			}, 9, m_IsVisible)));
+				base.ViewModel.TriggerVisibility(trigger: false);
+			}, 9, base.ViewModel.IsVisibleAndShown)));
 			m_HideActionBarHint.SetLabel(UIStrings.Instance.HUDTexts.HideActionBar);
-			IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_IsVisible.Not().ToReactiveProperty();
+			IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = base.ViewModel.IsVisibleAndShown.Not().ToReactiveProperty();
 			AddDisposable(m_ShowActionBarHint.Bind(inputLayer.AddButton(delegate
 			{
-				TriggerVisibility(trigger: true);
+				base.ViewModel.TriggerVisibility(trigger: true);
 			}, 11, readOnlyReactiveProperty)));
 			m_ShowActionBarHint.SetLabel(UIStrings.Instance.HUDTexts.ShowActionBar);
-		}
-	}
-
-	private void TriggerVisibility(bool trigger)
-	{
-		if (!(Game.Instance.CursorController.SelectedAbility != null))
-		{
-			m_VisibleTrigger.Value = trigger;
 		}
 	}
 
@@ -185,7 +171,7 @@ public class SurfaceActionBarConsoleView : ViewBase<SurfaceActionBarVM>, ITurnBa
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
-		TriggerVisibility(isTurnBased);
+		base.ViewModel.TriggerVisibility(isTurnBased);
 	}
 
 	public void HandleTurnBasedModeResumed()

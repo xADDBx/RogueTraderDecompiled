@@ -6,5 +6,6 @@ public enum AuthorDepartment
 	LD,
 	GD,
 	SD,
-	ND
+	ND,
+	CD
 }

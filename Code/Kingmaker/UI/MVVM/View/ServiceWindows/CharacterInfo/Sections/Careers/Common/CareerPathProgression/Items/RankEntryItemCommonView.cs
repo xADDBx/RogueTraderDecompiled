@@ -34,7 +34,7 @@ public class RankEntryItemCommonView : ViewBase<CareerPathRankEntryVM>
 	private RectTransform m_Container;
 
 	[SerializeField]
-	[ConditionalShow("m_IsVoidshipEntry")]
+	[ShowIf("m_IsVoidshipEntry")]
 	private RectTransform m_ForShipContainer;
 
 	[Header("Size values")]

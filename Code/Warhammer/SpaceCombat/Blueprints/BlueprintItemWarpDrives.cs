@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
 
@@ -8,12 +7,4 @@ namespace Warhammer.SpaceCombat.Blueprints;
 public class BlueprintItemWarpDrives : BlueprintStarshipItem
 {
 	public override ItemsItemType ItemType => ItemsItemType.StarshipWarpDrives;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

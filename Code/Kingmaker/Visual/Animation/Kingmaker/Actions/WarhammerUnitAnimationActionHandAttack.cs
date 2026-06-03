@@ -62,6 +62,10 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 
 		public List<ClipSettings> MeleeCornerAttack = new List<ClipSettings>();
 
+		public List<ClipSettings> MeleeAOEAttack = new List<ClipSettings>();
+
+		public List<ClipSettings> MeleeCornerAOEAttack = new List<ClipSettings>();
+
 		public bool UseStrictAnimationOrderInsteadOfRandom;
 
 		[Space(4f)]
@@ -112,21 +116,16 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 			}
 		}
 
-		public ReadonlyList<ClipSettings> GetAttackVariantsList(UnitAnimationActionHandle handle)
+		public IReadOnlyList<ClipSettings> GetAttackVariantsList(RecoilStrength recoil, bool isCorner = false)
 		{
-			if (handle.AlternativeStyle != 0)
+			if (isCorner)
 			{
-				if (!AlternativeAnimations.Empty())
+				List<ClipSettings> list = ((recoil == RecoilStrength.MeleeAOE) ? MeleeCornerAOEAttack : MeleeCornerAttack);
+				if (list != null && list.Count > 0)
 				{
-					return AlternativeAnimations.First((AlternativeAttackVariantSettings alt) => alt.Style == handle.AlternativeStyle)?.Settings?.GetAttackVariantsList(handle) ?? GetAttackVariantsList(handle.Recoil);
+					return list;
 				}
-				return GetAttackVariantsList(handle.Recoil);
 			}
-			return GetAttackVariantsList(handle.Recoil);
-		}
-
-		public ReadonlyList<ClipSettings> GetAttackVariantsList(RecoilStrength recoil)
-		{
 			return recoil switch
 			{
 				RecoilStrength.Low => LowRecoil, 
@@ -136,6 +135,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 				RecoilStrength.CornerFlamer => CornerFlamerRecoil, 
 				RecoilStrength.LinearFlamer => LinearFlamerRecoil, 
 				RecoilStrength.Laser => LaserRecoil, 
+				RecoilStrength.MeleeAOE => MeleeAOEAttack, 
 				_ => throw new ArgumentOutOfRangeException("recoil", recoil, null), 
 			};
 		}
@@ -152,30 +152,31 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 				}
 			}
 			RecoilStrength recoil = handle.Recoil;
-			ClipSettings clipSettings = (UseStrictAnimationOrderInsteadOfRandom ? GetAttackVariantsList(recoil)[count % GetAttackVariantsList(recoil).Count] : GetAttackVariantsList(recoil).Random(PFStatefulRandom.Visuals.Animation1));
+			ClipSettings clipSettings = SelectClip(recoil);
 			if (clipSettings == null)
 			{
 				clipSettings = recoil switch
 				{
-					RecoilStrength.Low => Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.High), 
-					RecoilStrength.Medium => Randomize(RecoilStrength.Low) ?? Randomize(RecoilStrength.High), 
-					RecoilStrength.High => Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.Low), 
-					RecoilStrength.Plasma => Randomize(RecoilStrength.Low) ?? Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.High), 
-					RecoilStrength.LinearFlamer => Randomize(RecoilStrength.Low) ?? Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.High), 
-					RecoilStrength.CornerFlamer => Randomize(RecoilStrength.Low) ?? Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.High), 
-					RecoilStrength.Laser => Randomize(RecoilStrength.Low) ?? Randomize(RecoilStrength.Medium) ?? Randomize(RecoilStrength.High), 
-					_ => throw new ArgumentOutOfRangeException("recoil", recoil, null), 
+					RecoilStrength.Low => SelectClip(RecoilStrength.Medium) ?? SelectClip(RecoilStrength.High), 
+					RecoilStrength.Medium => SelectClip(RecoilStrength.Low) ?? SelectClip(RecoilStrength.High), 
+					RecoilStrength.High => SelectClip(RecoilStrength.Medium) ?? SelectClip(RecoilStrength.Low), 
+					_ => SelectClip(RecoilStrength.Low) ?? SelectClip(RecoilStrength.Medium) ?? SelectClip(RecoilStrength.High), 
 				};
-			}
-			if (handle.IsCornerAttack && MeleeCornerAttack.Count > 0)
-			{
-				clipSettings = (UseStrictAnimationOrderInsteadOfRandom ? MeleeCornerAttack[count % MeleeCornerAttack.Count] : MeleeCornerAttack.Random(PFStatefulRandom.Visuals.Animation1));
 			}
 			return clipSettings;
 			[CanBeNull]
-			ClipSettings Randomize(RecoilStrength r)
+			ClipSettings SelectClip(RecoilStrength r)
 			{
-				return GetAttackVariantsList(r).Random(PFStatefulRandom.Visuals.Animation1);
+				IReadOnlyList<ClipSettings> attackVariantsList = GetAttackVariantsList(r, handle.IsCornerAttack);
+				if (attackVariantsList.Count <= 0)
+				{
+					return null;
+				}
+				if (!UseStrictAnimationOrderInsteadOfRandom)
+				{
+					return attackVariantsList.Random(PFStatefulRandom.Visuals.Animation1);
+				}
+				return attackVariantsList[count % attackVariantsList.Count];
 			}
 		}
 

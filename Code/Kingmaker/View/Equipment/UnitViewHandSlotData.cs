@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Ecnchantments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
@@ -96,9 +97,14 @@ public class UnitViewHandSlotData
 	{
 		get
 		{
-			if (Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null && !Slot.MaybeWeapon.Blueprint.IsMelee)
+			bool flag = Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
+			if (Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null && !Slot.MaybeWeapon.Blueprint.IsMelee && !flag)
 			{
 				m_MainHandTransform = Character.transform.FindChildRecursive("R_MechadendriteWeaponBone");
+			}
+			else if (flag)
+			{
+				m_MainHandTransform = Character.transform.FindChildRecursive("R_WeaponBone");
 			}
 			else
 			{
@@ -117,13 +123,18 @@ public class UnitViewHandSlotData
 	{
 		get
 		{
-			if (Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null && !Slot.MaybeWeapon.Blueprint.IsMelee)
+			bool flag = Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
+			if (!flag && Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null && !Slot.MaybeWeapon.Blueprint.IsMelee)
 			{
 				m_OffHandTransform = Character.transform.FindChildRecursive("R_MechadendriteWeaponBone");
 			}
-			else if (Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null)
+			else if (!flag && Slot.MaybeWeapon != null && Owner.GetOptional<UnitPartMechadendrites>() != null)
 			{
 				m_OffHandTransform = Character.transform.FindChildRecursive("R_WeaponBone");
+			}
+			else if (flag)
+			{
+				m_OffHandTransform = Character.transform.FindChildRecursive("L_WeaponBone");
 			}
 			else
 			{
@@ -328,7 +339,20 @@ public class UnitViewHandSlotData
 
 	public void AttachModel(bool toHand)
 	{
-		IsInHand = toHand || (IsOff && Owner.GetOptional<UnitPartMechadendrites>() != null);
+		bool num = Owner?.Blueprint?.GetComponent<UniqueEogannCompanionComponent>() != null;
+		bool flag = Owner.GetOptional<UnitPartMechadendrites>() != null;
+		if (num)
+		{
+			IsInHand = true;
+		}
+		else if (flag && IsOff)
+		{
+			IsInHand = true;
+		}
+		else
+		{
+			IsInHand = toHand;
+		}
 		AttachModel();
 	}
 
@@ -349,7 +373,8 @@ public class UnitViewHandSlotData
 			}
 			else
 			{
-				if (((VisualSlot == UnitEquipmentVisualSlotType.RightBack01 || VisualSlot == UnitEquipmentVisualSlotType.LeftBack01) && Character.EquipmentEntities.SelectMany((EquipmentEntity ee) => ee.OutfitParts).Any((EquipmentEntity.OutfitPart p) => p.Special == EquipmentEntity.OutfitPartSpecialType.Backpack)) || Owner.GetOptional<UnitPartMechadendrites>() != null)
+				bool flag = Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
+				if (((VisualSlot == UnitEquipmentVisualSlotType.RightBack01 || VisualSlot == UnitEquipmentVisualSlotType.LeftBack01) && Character.EquipmentEntities.SelectMany((EquipmentEntity ee) => ee.OutfitParts).Any((EquipmentEntity.OutfitPart p) => p.Special == EquipmentEntity.OutfitPartSpecialType.Backpack)) || (Owner.GetOptional<UnitPartMechadendrites>() != null && !flag))
 				{
 					VisualModel.SetActive(value: false);
 				}
@@ -363,50 +388,41 @@ public class UnitViewHandSlotData
 			{
 				DestroyModelIfExists();
 				DestroySheathModelIfExists();
-				goto IL_02d2;
 			}
-			if ((bool)VisibleItemBlueprint.VisualParameters.BeltModel)
+			else
 			{
-				RecreateModel();
-			}
-			else if ((bool)VisibleItemBlueprint.VisualParameters.SheathModel)
-			{
-				ReattachSheath();
-			}
-			VisualModel.transform.SetParent(transform, worldPositionStays: false);
-			VisualModel.transform.localPosition = Vector3.zero;
-			VisualModel.transform.localRotation = Quaternion.identity;
-			VisualModel.GetComponentsInChildren(m_VisualModelRenderers);
-			EquipmentOffsets component = VisualModel.GetComponent<EquipmentOffsets>();
-			IkRaceOffsetApply(component);
-			if ((bool)component)
-			{
-				if (VisibleItemBlueprint is BlueprintItemWeapon { IsMelee: false } && Owner.GetOptional<UnitPartMechadendrites>() != null)
+				if ((bool)VisibleItemBlueprint.VisualParameters.BeltModel)
 				{
-					UnitPartMechadendrites optional = Owner.GetOptional<UnitPartMechadendrites>();
-					if (optional != null && optional.Mechadendrites.ContainsKey(MechadendritesType.Ballistic))
+					RecreateModel();
+				}
+				else if ((bool)VisibleItemBlueprint.VisualParameters.SheathModel)
+				{
+					ReattachSheath();
+				}
+				VisualModel.transform.SetParent(transform, worldPositionStays: false);
+				VisualModel.transform.localPosition = Vector3.zero;
+				VisualModel.transform.localRotation = Quaternion.identity;
+				VisualModel.GetComponentsInChildren(m_VisualModelRenderers);
+				EquipmentOffsets component = VisualModel.GetComponent<EquipmentOffsets>();
+				IkRaceOffsetApply(component);
+				bool flag2 = Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() == null && VisibleItemBlueprint is BlueprintItemWeapon { IsMelee: false } && Owner.GetOptional<UnitPartMechadendrites>() != null && (Owner.GetOptional<UnitPartMechadendrites>()?.Mechadendrites.ContainsKey(MechadendritesType.Ballistic) ?? false);
+				if ((bool)component && !flag2)
+				{
+					component.Apply((!IsInHand) ? VisualSlot : UnitEquipmentVisualSlotType.None, IsOff || VisibleItemBlueprint.VisualParameters.IsBow, Character);
+					if ((bool)component.JointsParent)
 					{
-						goto IL_029f;
+						component.JointsParent.SetParent(Character.transform);
+						RigidbodyWeaponParentUpperInDollroom(component);
+						MirrorRigidbodyWeaponForMirroredCharacter(component);
 					}
 				}
-				component.Apply((!IsInHand) ? VisualSlot : UnitEquipmentVisualSlotType.None, IsOff || VisibleItemBlueprint.VisualParameters.IsBow, Character);
-				if ((bool)component.JointsParent)
+				ShowItem(Owner.View.IsVisible);
+				m_Equipment.RaiseModelSpawned();
+				EventBus.RaiseEvent(delegate(IVisualWeaponStateChangeHandle h)
 				{
-					component.JointsParent.SetParent(Character.transform);
-					RigidbodyWeaponParentUpperInDollroom(component);
-					MirrorRigidbodyWeaponForMirroredCharacter(component);
-				}
+					h.VisualWeaponStateChangeHandle((!IsInHand) ? VFXSpeedUpdater.WeaponVisualState.OutHand : VFXSpeedUpdater.WeaponVisualState.InHand, VisualModel);
+				});
 			}
-			goto IL_029f;
-			IL_029f:
-			ShowItem(Owner.View.IsVisible);
-			m_Equipment.RaiseModelSpawned();
-			EventBus.RaiseEvent(delegate(IVisualWeaponStateChangeHandle h)
-			{
-				h.VisualWeaponStateChangeHandle((!IsInHand) ? VFXSpeedUpdater.WeaponVisualState.OutHand : VFXSpeedUpdater.WeaponVisualState.InHand, VisualModel);
-			});
-			goto IL_02d2;
-			IL_02d2:
 			if (m_Equipment.IsDollRoom && VisibleItem is ItemEntityShield && !m_Equipment.IsUsingHologram)
 			{
 				UpdateWeaponEnchantmentFx(isVisible: true);
@@ -491,13 +507,16 @@ public class UnitViewHandSlotData
 
 	public void UpdateWeaponEnchantmentFx(bool isVisible, bool force = false)
 	{
-		string text = VisibleItem?.Blueprint?.name ?? "none";
-		PFLog.Default.Log($"[UpdateWeaponEnchantmentFx] Called for {text}, isVisible={isVisible}, force={force}, IsDollRoom={m_Equipment.IsDollRoom}, IsInHand={IsInHand}, IsActiveSet={IsActiveSet}");
+		if (m_Equipment.IsDollRoom && !m_Equipment.ShouldShowWeaponsInDollRoom)
+		{
+			return;
+		}
+		_ = VisibleItem?.Blueprint?.name;
 		if (VisibleItem == null || VisibleItem.Enchantments == null)
 		{
-			PFLog.Default.Log("[UpdateWeaponEnchantmentFx] Skipping - no item or enchantments");
+			return;
 		}
-		else if (!force && !m_Equipment.IsDollRoom && UIDollRooms.Instance != null && UIDollRooms.Instance.CharacterDollRoom != null && UIDollRooms.Instance.CharacterDollRoom.Unit == Owner)
+		if (!force && !m_Equipment.IsDollRoom && UIDollRooms.Instance != null && UIDollRooms.Instance.CharacterDollRoom != null && UIDollRooms.Instance.CharacterDollRoom.Unit == Owner)
 		{
 			PFLog.Default.Log("[UpdateWeaponEnchantmentFx] Skipping - unit is in DollRoom but slot is not DollRoom");
 		}
@@ -639,7 +658,7 @@ public class UnitViewHandSlotData
 	{
 		if (m_Equipment.IsDollRoom)
 		{
-			isVisible = true;
+			isVisible = m_Equipment.ShouldShowWeaponsInDollRoom;
 		}
 		if ((bool)VisualModel)
 		{

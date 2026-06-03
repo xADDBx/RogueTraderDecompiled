@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 [Serializable]
-[ComponentName("Actions/StartTimer")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("c3f192c81bae4448865ae282bc208bb8")]
 public class StartTimer : GameAction

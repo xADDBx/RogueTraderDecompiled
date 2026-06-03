@@ -45,6 +45,9 @@ public sealed class NintendoSwitch2InputManager : MonoBehaviour, IExternalInputM
 		private bool _initializeJcms;
 
 		[SerializeField]
+		private bool _supportJoyConMouseSensors;
+
+		[SerializeField]
 		private NpadSettings_Internal _npadNo1 = new NpadSettings_Internal(0);
 
 		[SerializeField]
@@ -181,6 +184,18 @@ public sealed class NintendoSwitch2InputManager : MonoBehaviour, IExternalInputM
 			set
 			{
 				_allowJoyConMouseRebindPolling = value;
+			}
+		}
+
+		public bool supportJoyConMouseSensors
+		{
+			get
+			{
+				return _supportJoyConMouseSensors;
+			}
+			set
+			{
+				_supportJoyConMouseSensors = value;
 			}
 		}
 
@@ -401,6 +416,17 @@ public sealed class NintendoSwitch2InputManager : MonoBehaviour, IExternalInputM
 							(Action<bool>)delegate(bool x)
 							{
 								_initializeJcms = x;
+							}
+						}
+					},
+					{
+						20,
+						new object[2]
+						{
+							(Func<bool>)(() => _supportJoyConMouseSensors),
+							(Action<bool>)delegate(bool x)
+							{
+								_supportJoyConMouseSensors = x;
 							}
 						}
 					}

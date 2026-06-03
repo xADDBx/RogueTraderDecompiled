@@ -65,7 +65,7 @@ public class TooltipTemplateRankEntryFeature : TooltipTemplateUIFeature
 							}
 							string fullDescription = TooltipTemplateUtils.GetFullDescription(UIFeature.Feature);
 							fullDescription = UIUtilityTexts.UpdateDescriptionWithUIProperties(fullDescription, m_PreviewUnit.Value);
-							bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(fullDescription, null)));
+							bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(fullDescription, null), TooltipTextType.Paragraph));
 							if (entityFact != null)
 							{
 								m_PreviewUnit.Value.Facts.Remove(entityFact);

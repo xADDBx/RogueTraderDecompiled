@@ -15,7 +15,7 @@ public class SaveToFolderDesyncHandler : IDesyncHandler
 	public void RaiseDesync(HashableState data, DesyncMeta meta)
 	{
 		string contents = JsonSerializer.SerializeObject(data);
-		string text = Path.Combine(ApplicationPaths.persistentDataPath, "Net", "Desync");
+		string text = Path.Combine(ApplicationPaths.temporaryCachePath, "Net", "Desync");
 		Directory.CreateDirectory(text);
 		string text2 = Path.Combine(text, $"{DateTime.Now.ToFileTime()}_{meta.Tick}.json");
 		File.WriteAllText(text2, contents);

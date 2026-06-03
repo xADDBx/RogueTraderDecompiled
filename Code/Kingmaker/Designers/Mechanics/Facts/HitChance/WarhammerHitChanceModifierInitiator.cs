@@ -10,7 +10,7 @@ namespace Kingmaker.Designers.Mechanics.Facts.HitChance;
 
 [Serializable]
 [TypeId("428580af48b84509b97be533f03c7759")]
-public class WarhammerHitChanceModifierInitiator : WarhammerHitChanceModifier, IInitiatorRulebookHandler<RuleCalculateHitChances>, IRulebookHandler<RuleCalculateHitChances>, ISubscriber, IInitiatorRulebookSubscriber, IInitiatorRulebookHandler<RuleCalculateCoverHitChance>, IRulebookHandler<RuleCalculateCoverHitChance>, IInitiatorRulebookHandler<RuleCalculateScatterShotHitDirectionProbability>, IRulebookHandler<RuleCalculateScatterShotHitDirectionProbability>, IInitiatorRulebookHandler<RuleCalculateRighteousFuryChance>, IRulebookHandler<RuleCalculateRighteousFuryChance>, IHashable
+public class WarhammerHitChanceModifierInitiator : WarhammerHitChanceModifier, IInitiatorRulebookHandler<RuleCalculateHitChances>, IRulebookHandler<RuleCalculateHitChances>, ISubscriber, IInitiatorRulebookSubscriber, IInitiatorRulebookHandler<RuleCalculateCoverHitChance>, IRulebookHandler<RuleCalculateCoverHitChance>, IInitiatorRulebookHandler<RuleCalculateScatterShotHitDirectionProbability>, IRulebookHandler<RuleCalculateScatterShotHitDirectionProbability>, IInitiatorRulebookHandler<RuleCalculateRighteousFuryChance>, IRulebookHandler<RuleCalculateRighteousFuryChance>, IInitiatorRulebookHandler<RuleCalculateHitChanceBorder>, IRulebookHandler<RuleCalculateHitChanceBorder>, IHashable
 {
 	public void OnEventAboutToTrigger(RuleCalculateHitChances evt)
 	{
@@ -45,6 +45,15 @@ public class WarhammerHitChanceModifierInitiator : WarhammerHitChanceModifier, I
 	}
 
 	public void OnEventDidTrigger(RuleCalculateScatterShotHitDirectionProbability evt)
+	{
+	}
+
+	public void OnEventAboutToTrigger(RuleCalculateHitChanceBorder evt)
+	{
+		TryApply(evt);
+	}
+
+	public void OnEventDidTrigger(RuleCalculateHitChanceBorder evt)
 	{
 	}
 

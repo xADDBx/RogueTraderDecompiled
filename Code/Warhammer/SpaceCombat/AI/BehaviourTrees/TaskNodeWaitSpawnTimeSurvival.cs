@@ -10,6 +10,15 @@ namespace Warhammer.SpaceCombat.AI.BehaviourTrees;
 
 public class TaskNodeWaitSpawnTimeSurvival : TaskNode
 {
+	public TaskNodeWaitSpawnTimeSurvival()
+	{
+	}
+
+	public TaskNodeWaitSpawnTimeSurvival(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		UnitDoNothingParams cmdParams = new UnitDoNothingParams(Game.Instance.CurrentlyLoadedArea.GetComponent<TimeSurvival>()?.StartingBuff?.GetComponent<StarshipSpawnParameters>()?.SpawnWaitDuration ?? 2.5f);

@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("1441c1c4053751d4ab4d4fa0c107aaef")]
 public class WarhammerContextActionManageVoidShields : ContextAction
 {

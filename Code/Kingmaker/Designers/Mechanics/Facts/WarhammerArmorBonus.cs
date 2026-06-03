@@ -17,6 +17,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 
 [Serializable]
 [AllowedOn(typeof(BlueprintMechanicEntityFact))]
+[AllowMultipleComponents]
 [TypeId("186465aada0f422b966541bbf050c271")]
 public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiatorRulebookHandler<RuleCalculateStatsArmor>, IRulebookHandler<RuleCalculateStatsArmor>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
@@ -42,6 +43,28 @@ public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiat
 	[ShowIf("ForceAbsorptionMinimum")]
 	public int AbsorptionMinimumValue;
 
+	[Space(4f)]
+	public bool ForcePctAbsorptionMaximum;
+
+	[ShowIf("ForcePctAbsorptionMaximum")]
+	public ContextValue PctAbsorptionMaximum;
+
+	public bool ForceAbsorptionMaximum;
+
+	[ShowIf("ForceAbsorptionMaximum")]
+	public ContextValue AbsorptionMaximumValue;
+
+	[Space(4f)]
+	public bool ForcePctDeflectionMaximum;
+
+	[ShowIf("ForcePctDeflectionMaximum")]
+	public ContextValue PctDeflectionMaximum;
+
+	public bool ForceDeflectionMaximum;
+
+	[ShowIf("ForceDeflectionMaximum")]
+	public ContextValue DeflectionMaximumValue;
+
 	public ModifierDescriptor ModifierDescriptor;
 
 	public void OnEventAboutToTrigger(RuleCalculateStatsArmor evt)
@@ -50,13 +73,29 @@ public class WarhammerArmorBonus : MechanicEntityFactComponentDelegate, IInitiat
 		{
 			if (ForceDeflectionMinimum)
 			{
-				evt.MinDeflectionValue = DeflectionMinimumValue;
-				evt.PctMinDeflection = PctDeflectionMinimum;
+				evt.StatLimits.MinDeflectionFlat = new RuleCalculateStatsArmor.LimitEntry(base.Fact, DeflectionMinimumValue);
+				evt.StatLimits.MinDeflectionPct = new RuleCalculateStatsArmor.LimitEntry(base.Fact, PctDeflectionMinimum);
 			}
 			if (ForceAbsorptionMinimum)
 			{
-				evt.MinAbsorptionValue = AbsorptionMinimumValue;
-				evt.PctMinAbsorption = PctAbsorptionMinimum;
+				evt.StatLimits.MinAbsorptionFlat = new RuleCalculateStatsArmor.LimitEntry(base.Fact, AbsorptionMinimumValue);
+				evt.StatLimits.MinAbsorptionPct = new RuleCalculateStatsArmor.LimitEntry(base.Fact, PctAbsorptionMinimum);
+			}
+			if (ForceDeflectionMaximum)
+			{
+				evt.StatLimits.MaxDeflectionFlat = new RuleCalculateStatsArmor.LimitEntry(base.Fact, DeflectionMaximumValue.Calculate(base.Context));
+			}
+			if (ForcePctDeflectionMaximum)
+			{
+				evt.StatLimits.MaxDeflectionPct = new RuleCalculateStatsArmor.LimitEntry(base.Fact, PctDeflectionMaximum.Calculate(base.Context));
+			}
+			if (ForceAbsorptionMaximum)
+			{
+				evt.StatLimits.MaxAbsorptionFlat = new RuleCalculateStatsArmor.LimitEntry(base.Fact, AbsorptionMaximumValue.Calculate(base.Context));
+			}
+			if (ForcePctAbsorptionMaximum)
+			{
+				evt.StatLimits.MaxAbsorptionPct = new RuleCalculateStatsArmor.LimitEntry(base.Fact, PctAbsorptionMaximum.Calculate(base.Context));
 			}
 			BonusDeflectionValue.TryApply(evt.DeflectionCompositeModifiers, base.Fact, ModifierDescriptor);
 			BonusAbsorptionValue.TryApply(evt.AbsorptionCompositeModifiers, base.Fact, ModifierDescriptor);

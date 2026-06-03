@@ -51,6 +51,9 @@ public class Cutscene : Gate, ICutscene
 	[Tooltip("Usually if unit is Marked by cutscene, Roaming is disabled. This option allows Roaming to remain enabled even if unit is Marked by this cutscene (other cutscenes may still prevent unit from roaming).")]
 	public bool AllowRoaming;
 
+	[Tooltip("If set, units can traverse ladders during this cutscene instead of teleporting")]
+	public bool AllowLadderTraversal;
+
 	[HideIf("Sleepless")]
 	[AllowedEntityType(typeof(CutsceneAnchorView))]
 	public EntityReference[] Anchors = new EntityReference[0];

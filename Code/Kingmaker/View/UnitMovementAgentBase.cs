@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace Kingmaker.View;
 
-public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, ISubscriber, IEventTag<IUnitLifeStateChanged, EntitySubscriber>
+public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLifeStateChanged<EntitySubscriber>, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, ISubscriber, IEventTag<IUnitLifeStateChanged, EntitySubscriber>, IUnitFeaturesHandler
 {
 	private GameObject m_Owner;
 
@@ -564,10 +564,13 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		}
 		foreach (UnitGroupMemory.UnitInfo enemy in baseUnitEntity.CombatGroup.Memory.Enemies)
 		{
-			BaseUnitEntity unit = enemy.Unit;
-			if (unit.CanMakeAttackOfOpportunity(baseUnitEntity))
+			if (!enemy.Unit.IsInvisibleInCombat())
 			{
-				hashSet.UnionWith(unit.GetThreateningArea());
+				BaseUnitEntity unit = enemy.Unit;
+				if (unit.CanMakeAttackOfOpportunity(baseUnitEntity))
+				{
+					unit.CollectThreateningArea(hashSet);
+				}
 			}
 		}
 		return hashSet;
@@ -1265,13 +1268,13 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		UpdateBlocker();
 	}
 
-	public void UpdateBlocker()
+	public void UpdateBlocker(bool ignoreHiddenFeature = false)
 	{
 		if (Blocker == null)
 		{
 			return;
 		}
-		bool flag = IsNodeBlockNeeded();
+		bool flag = Game.Instance.Player.IsInCombat && IsNodeBlockNeeded(ignoreHiddenFeature);
 		if (Blocker.IsBlocking != flag)
 		{
 			if (flag)
@@ -1292,11 +1295,15 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		UpdateBlocker();
 	}
 
-	private bool IsNodeBlockNeeded()
+	private bool IsNodeBlockNeeded(bool ignoreHiddenFeature)
 	{
 		if (Unit != null && !Unit.Data.LifeState.IsDeadOrUnconscious)
 		{
-			return !Unit.Data.HasMechanicFeature(MechanicsFeatureType.Hidden);
+			if (!ignoreHiddenFeature)
+			{
+				return !Unit.Data.HasMechanicFeature(MechanicsFeatureType.Hidden);
+			}
+			return true;
 		}
 		return false;
 	}
@@ -1317,5 +1324,27 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 			return Vector3.Distance(end, point);
 		}
 		return Vector3.Cross(start - point, rhs).magnitude / rhs.magnitude;
+	}
+
+	public void HandleFeatureAdded(FeatureCountableFlag feature)
+	{
+		if (IsHiddenFeatureChangedDuringCombat(feature))
+		{
+			(Unit.EntityData as BaseUnitEntity).SnapToGrid();
+		}
+	}
+
+	public void HandleFeatureRemoved(FeatureCountableFlag feature)
+	{
+		if (IsHiddenFeatureChangedDuringCombat(feature))
+		{
+			(Unit.EntityData as BaseUnitEntity).SnapToGrid();
+		}
+	}
+
+	private bool IsHiddenFeatureChangedDuringCombat(FeatureCountableFlag feature)
+	{
+		bool valueOrDefault = (Unit?.EntityData?.IsInCombat).GetValueOrDefault();
+		return feature.Type == MechanicsFeatureType.Hidden && IsValid() && valueOrDefault;
 	}
 }

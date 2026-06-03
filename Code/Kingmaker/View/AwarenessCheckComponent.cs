@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Stats.Base;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.View.MapObjects;
 using UnityEngine;
 
@@ -13,9 +14,12 @@ public class AwarenessCheckComponent : MonoBehaviour
 	public SkillCheckDifficulty Difficulty;
 
 	[SerializeField]
+	[ShowIf("ShowDC")]
 	private int DC;
 
 	public float Radius = 7f;
+
+	private bool ShowDC => Difficulty == SkillCheckDifficulty.Custom;
 
 	public int GetDC()
 	{

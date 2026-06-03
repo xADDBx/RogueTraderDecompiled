@@ -31,12 +31,20 @@ public class TaskNodeSelectAbilityToEscapeFromThreat : TaskNode
 		new Vector2Int(-1, -1)
 	};
 
+	public TaskNodeSelectAbilityToEscapeFromThreat()
+	{
+	}
+
+	public TaskNodeSelectAbilityToEscapeFromThreat(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		AILogger.Instance.Log(AILogAbility.SelectAbilityToEscapeThreat());
 		DecisionContext decisionContext = blackboard.DecisionContext;
-		BaseUnitEntity unit = decisionContext.Unit;
-		foreach (AbilityData sortedEscapeAbility in GetSortedEscapeAbilities(unit))
+		foreach (AbilityData sortedEscapeAbility in GetSortedEscapeAbilities(decisionContext.Unit))
 		{
 			if (HasAppropriateTarget(decisionContext, sortedEscapeAbility, out var target))
 			{
@@ -47,10 +55,11 @@ public class TaskNodeSelectAbilityToEscapeFromThreat : TaskNode
 			}
 		}
 		AILogger.Instance.Log(new AILogReason(AILogReasonType.AbilityToEscapeFromTreatNotFound));
+		base.FailReason = "No ability to escape from threat was found";
 		return Status.Failure;
 	}
 
-	private List<AbilityData> GetSortedEscapeAbilities(BaseUnitEntity unit)
+	public static List<AbilityData> GetSortedEscapeAbilities(BaseUnitEntity unit)
 	{
 		List<AbilityData> list = TempList.Get<AbilityData>();
 		unit.Abilities.RawFacts.ForEach(delegate(Ability ab)
@@ -84,7 +93,7 @@ public class TaskNodeSelectAbilityToEscapeFromThreat : TaskNode
 
 	private TargetWrapper FindAppropriateRetreatPosition(DecisionContext context, AbilityData ability)
 	{
-		if (!ability.Blueprint.CanTargetPointAfterRestrictions(ability))
+		if (!ability.CanTargetPoint)
 		{
 			return null;
 		}
@@ -161,7 +170,7 @@ public class TaskNodeSelectAbilityToEscapeFromThreat : TaskNode
 
 	private TargetWrapper FindAppropriateTargetForPush(DecisionContext context, AbilityData ability)
 	{
-		if (!ability.Blueprint.CanTargetEnemies)
+		if (!ability.CanTargetEnemies)
 		{
 			return null;
 		}

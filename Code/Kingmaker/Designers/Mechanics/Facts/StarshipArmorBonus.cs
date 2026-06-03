@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
-[ComponentName("Add Starship armor bonus")]
+[ComponentName("Starship/Add Starship armor bonus")]
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintFact))]
 [AllowMultipleComponents]

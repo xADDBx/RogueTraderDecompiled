@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
@@ -11,6 +12,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 
+[Group("Starship")]
 [TypeId("a39b89cb076a6ba4eaaf7dbd22494793")]
 [PlayerUpgraderAllowed(false)]
 public class PlayerStarshipHasComponent : Condition

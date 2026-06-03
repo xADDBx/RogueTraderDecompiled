@@ -74,6 +74,10 @@ public class SelectorWindowBaseView<TEntityView, TEntityVM> : ViewBase<SelectorW
 
 	protected bool TakeControllableCharacter()
 	{
+		if (base.ViewModel is AugmentationsSelectorWindowVM)
+		{
+			return ((BaseUnitEntity)(base.ViewModel.AugmentationsSlot?.ItemSlot?.Owner))?.CanBeControlled() ?? true;
+		}
 		return ((BaseUnitEntity)(base.ViewModel.Slot?.ItemSlot?.Owner))?.CanBeControlled() ?? true;
 	}
 

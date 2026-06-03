@@ -242,12 +242,11 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		{
 			PFLog.Default.Error(ex);
 		}
-		m_Target = target;
+		m_Target = (onUnit ? target : new TargetWrapper(target.Point, target.Orientation, target.Entity));
 		m_CreationTime = creationTime;
 		Duration = duration?.ToRounds();
 		m_OnUnit = onUnit;
 		m_Context.Recalculate();
-		base.Blueprint.HandleSpawn(m_Context, this);
 		m_IsMovedFromOutsideToTheVoidDelegate = IsMovedFromOutsideToTheVoid;
 		m_IsMovedFromInsideToTheVoidDelegate = IsMovedFromInsideToTheVoid;
 		m_IsMovedFromInsideToOutsideDelegate = IsMovedFromInsideToOutside;
@@ -285,7 +284,6 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 	{
 		base.OnInitialize();
 		m_Context.Recalculate();
-		base.Blueprint.HandleSpawn(m_Context, this);
 		UpdateCombatInitiative();
 	}
 
@@ -434,7 +432,7 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		m_ForceUpdate = true;
 	}
 
-	private void HandleEnd()
+	public void HandleEnd(bool shouldDestroyEntity = true)
 	{
 		base.Blueprint.HandleEnd(m_Context, this);
 		foreach (UnitInfo item in m_UnitsInside)
@@ -450,7 +448,10 @@ public class AreaEffectEntity : MechanicEntity<BlueprintAbilityAreaEffect>, IAre
 		}
 		m_UnitsInside.Clear();
 		m_UnitsNotInside.Clear();
-		Game.Instance.EntityDestroyer.Destroy(this);
+		if (shouldDestroyEntity)
+		{
+			Game.Instance.EntityDestroyer.Destroy(this);
+		}
 	}
 
 	private void EndEffectIfNecessary()

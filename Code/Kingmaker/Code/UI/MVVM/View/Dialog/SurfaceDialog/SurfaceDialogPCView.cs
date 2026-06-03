@@ -1,5 +1,8 @@
 using Kingmaker.Code.UI.MVVM.View.Dialog.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Owlcat.Runtime.UI.Controls.Button;
+using Owlcat.Runtime.UI.Controls.Other;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UniRx.Triggers;
 using UnityEngine;
@@ -16,9 +19,19 @@ public class SurfaceDialogPCView : SurfaceDialogBaseView<DialogAnswerPCView>
 	[SerializeField]
 	private Image m_AnswererHover;
 
+	[SerializeField]
+	private OwlcatMultiButton m_ScrollToBottomButton;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		if (m_ScrollToBottomButton != null)
+		{
+			AddDisposable(UniRxExtensionMethods.Subscribe(m_ScrollToBottomButton.OnLeftClickAsObservable(), delegate
+			{
+				m_SpeakerScrollRect.ScrollToBottom();
+			}));
+		}
 		AddDisposable(m_SpeakerHover.OnPointerEnterAsObservable().Subscribe(delegate
 		{
 			base.ViewModel.ShowHideBigScreenshotSpeaker(state: true);

@@ -24,7 +24,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/Recruit")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("b90eea06ce91f564e8793832eea02cef")]
 public class Recruit : GameAction

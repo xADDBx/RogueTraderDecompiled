@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Kingmaker.Blueprints;
 using Kingmaker.Code.Enums.Helper;
 using Kingmaker.Enums;
@@ -80,12 +81,30 @@ public static class GridPatterns
 		}
 	}
 
+	private readonly struct CircleKey
+	{
+		public readonly int Radius;
+
+		public readonly Size Size;
+
+		public readonly int Direction;
+
+		public CircleKey(int radius, Size size, int direction)
+		{
+			Radius = radius;
+			Size = size;
+			Direction = direction;
+		}
+	}
+
 	public interface ILineWriter<T> where T : struct
 	{
 		void Write(ref T context, int xBegin, int xEnd, int y);
 	}
 
-	private static BitPattern2D s_BitPattern = new BitPattern2D();
+	private static readonly StaticCache<CircleKey, PatternGridData> CircleCache = new StaticCache<CircleKey, PatternGridData>((CircleKey key) => ConstructCircle(key.Radius, key.Size, key.Direction));
+
+	private static readonly ThreadLocal<BitPattern2D> s_BitPattern = new ThreadLocal<BitPattern2D>(() => new BitPattern2D());
 
 	private static (int left1, int left2, int right1, int right2) GetNeighboursIdx(Int3 origin, Int3 end)
 	{
@@ -149,24 +168,37 @@ public static class GridPatterns
 		return array;
 	}
 
-	public static void AddCircleNodes(BitPattern2D nodes, int radius, Size entitySizeRect = Size.Medium)
+	public static void AddCircleNodes(BitPattern2D nodes, int radius, Size entitySizeRect = Size.Medium, int entityOrientation = 0)
 	{
 		AccumulateNodesInRadius(radius, nodes);
-		ExtendAreaByEntitySize(nodes, entitySizeRect);
+		ExtendAreaByEntitySize(nodes, entitySizeRect, entityOrientation);
 	}
 
-	public static void AddCircleNodes(HashSet<Vector2Int> nodes, int radius, Size entitySizeRect = Size.Medium)
+	public static void AddCircleNodes(HashSet<Vector2Int> nodes, int radius, Size entitySizeRect = Size.Medium, int entityOrientation = 0)
 	{
 		AccumulateNodesInRadius(radius, nodes);
-		ExtendAreaByEntitySize(nodes, entitySizeRect);
+		ExtendAreaByEntitySize(nodes, entitySizeRect, entityOrientation);
+	}
+
+	private static PatternGridData ConstructCircle(int radius, Size entitySizeRect, int entityOrientation)
+	{
+		BitPattern2D value = s_BitPattern.Value;
+		value.Clear();
+		AddCircleNodes(value, radius, entitySizeRect, entityOrientation);
+		return PatternGridData.Create(value, disposable: true);
+	}
+
+	public static PatternGridData GetCircle(int radius, Size size = Size.Medium, int orientation = 0)
+	{
+		return CircleCache.Get(new CircleKey(radius, size, orientation));
 	}
 
 	public static PatternGridData ConstructPattern(PatternType pattern, int radius, int angle, Vector2 direction, Size entitySizeRect)
 	{
-		s_BitPattern.Clear();
-		BitPattern2D bitPattern2D = s_BitPattern;
-		GetOrientedNodes(bitPattern2D, pattern, radius, angle, direction, entitySizeRect);
-		return PatternGridData.Create(bitPattern2D, disposable: true);
+		BitPattern2D value = s_BitPattern.Value;
+		value.Clear();
+		GetOrientedNodes(value, pattern, radius, angle, direction, entitySizeRect);
+		return PatternGridData.Create(value, disposable: true);
 	}
 
 	private static void GetOrientedNodes(BitPattern2D result, PatternType pattern, int radius, int angle, Vector2 direction, Size entitySizeRect)
@@ -195,76 +227,37 @@ public static class GridPatterns
 		}
 	}
 
-	private static void ExtendAreaByEntitySize(BitPattern2D nodes, Size entitySizeRect)
+	private static void ExtendAreaByEntitySize(BitPattern2D nodes, Size entitySizeRect, int entityOrientation = 0)
 	{
 		if (entitySizeRect.Is1x1())
 		{
 			return;
 		}
-		IntRect rectForSize = SizePathfindingHelper.GetRectForSize(entitySizeRect);
-		for (int i = rectForSize.ymin; i <= rectForSize.ymax; i++)
+		PatternGridData offsets = GridAreaHelper.GetOffsets(SizePathfindingHelper.GetRectForSize(entitySizeRect), entityOrientation);
+		foreach (Vector2Int item in nodes.ToList())
 		{
-			if (i == 0)
+			foreach (Vector2Int item2 in offsets)
 			{
-				continue;
-			}
-			foreach (Vector2Int item in nodes.ToList())
-			{
-				if (!nodes.Contains(item + Vector2Int.up * i))
+				if (!nodes.Contains(item + item2))
 				{
-					nodes.Add(item + Vector2Int.up * i);
-				}
-			}
-		}
-		for (int j = rectForSize.xmin; j <= rectForSize.xmax; j++)
-		{
-			if (j == 0)
-			{
-				continue;
-			}
-			foreach (Vector2Int item2 in nodes.ToList())
-			{
-				if (!nodes.Contains(item2 + Vector2Int.right * j))
-				{
-					nodes.Add(item2 + Vector2Int.right * j);
+					nodes.Add(item + item2);
 				}
 			}
 		}
 	}
 
-	private static void ExtendAreaByEntitySize(HashSet<Vector2Int> nodes, Size entitySizeRect)
+	private static void ExtendAreaByEntitySize(HashSet<Vector2Int> nodes, Size entitySizeRect, int entityOrientation)
 	{
 		if (entitySizeRect.Is1x1())
 		{
 			return;
 		}
-		IntRect rectForSize = SizePathfindingHelper.GetRectForSize(entitySizeRect);
-		for (int i = rectForSize.ymin; i <= rectForSize.ymax; i++)
+		PatternGridData offsets = GridAreaHelper.GetOffsets(SizePathfindingHelper.GetRectForSize(entitySizeRect), entityOrientation);
+		foreach (Vector2Int item in nodes.ToList())
 		{
-			if (i == 0)
+			foreach (Vector2Int item2 in offsets)
 			{
-				continue;
-			}
-			foreach (Vector2Int item in nodes.ToList())
-			{
-				if (!nodes.Contains(item + Vector2Int.up * i))
-				{
-					nodes.Add(item + Vector2Int.up * i);
-				}
-			}
-		}
-		for (int j = rectForSize.xmin; j <= rectForSize.xmax; j++)
-		{
-			if (j == 0)
-			{
-				continue;
-			}
-			foreach (Vector2Int item2 in nodes.ToList())
-			{
-				if (!nodes.Contains(item2 + Vector2Int.right * j))
-				{
-					nodes.Add(item2 + Vector2Int.right * j);
-				}
+				nodes.Add(item + item2);
 			}
 		}
 	}
@@ -410,7 +403,7 @@ public static class GridPatterns
 		}
 		foreach (Vector2Int item in new Linecast.Ray2NodeOffsets(Vector2Int.zero, dir))
 		{
-			if (CustomGraphHelper.GetWarhammerLength(item) > length)
+			if (CustomGraphHelper.GetWarhammerLength(item) >= length)
 			{
 				break;
 			}
@@ -427,7 +420,7 @@ public static class GridPatterns
 		}
 		foreach (Vector2Int item in new Linecast.Ray2NodeOffsets(Vector2Int.zero, dir))
 		{
-			if (CustomGraphHelper.GetWarhammerLength(item) > length)
+			if (CustomGraphHelper.GetWarhammerLength(item) >= length)
 			{
 				break;
 			}

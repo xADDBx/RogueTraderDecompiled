@@ -2,7 +2,6 @@ using System.Collections;
 using Cinemachine;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.GameModes;
-using Kingmaker.UI.Selection;
 using Kingmaker.Utility.UnityExtensions;
 using UnityEngine;
 
@@ -91,8 +90,6 @@ public class CameraZoom : MonoBehaviour
 		}
 	}
 
-	public bool IsScrollBusy => KingmakerInputModule.ScrollIsBusy;
-
 	public bool IsOutOfScreen => false;
 
 	public float FovDefaultNormalized => Mathf.InverseLerp(FovMax, FovMin, FovDefault);
@@ -108,7 +105,7 @@ public class CameraZoom : MonoBehaviour
 			GameObject gameObject = GameObject.Find("VcMain");
 			m_VirtualCamera = gameObject.GetComponent<CinemachineVirtualCamera>();
 		}
-		if (!IsScrollBusy && Game.Instance.IsControllerMouse && !IsOutOfScreen && !PointerController.InGui)
+		if (Game.Instance.IsControllerMouse && !IsOutOfScreen && !PointerController.InGui)
 		{
 			m_PlayerScrollPosition += Input.GetAxis("Mouse ScrollWheel");
 		}

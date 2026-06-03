@@ -8,6 +8,7 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Enums;
+using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
@@ -44,6 +45,8 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 	public bool IsControlledScatterAutoMiss { get; set; }
 
 	public bool IsOverpenetration { get; set; }
+
+	public bool IsRicochet { get; set; }
 
 	public bool IsBlockPreviewScatterHit { get; set; }
 
@@ -92,7 +95,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 
 	public bool ShouldHaveBeenRighteousFury { get; private set; }
 
-	public bool IsMelee => Ability.Weapon?.Blueprint.IsMelee ?? false;
+	public bool IsMelee => Ability.IsMelee;
 
 	public RulePerformAttackRoll([NotNull] MechanicEntity initiator, [NotNull] MechanicEntity target, [NotNull] AbilityData ability, int burstIndex, bool disableDodgeForAlly, Vector3? effectiveCasterPosition, Vector3? abilityTargetPosition, float overpenetrationModifier = 1f)
 		: base(initiator, target)
@@ -130,7 +133,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		ResultIsHit = flag2;
 		if (HitChanceRule.ResultCoverHitChanceRule != null)
 		{
-			RuleRollCoverHit ruleRollCoverHit2 = (ResultRollCoverHitRule = Rulebook.Trigger(new RuleRollCoverHit(HitChanceRule.ResultCoverHitChanceRule, HitChanceRule.IsAutoHit)));
+			RuleRollCoverHit ruleRollCoverHit2 = (ResultRollCoverHitRule = Rulebook.Trigger(new RuleRollCoverHit(HitChanceRule.ResultCoverHitChanceRule, this, HitChanceRule.IsAutoHit)));
 			RuleRollCoverHit ruleRollCoverHit3 = ruleRollCoverHit2;
 			ResultIsCoverHit = attackHitPolicyType switch
 			{
@@ -144,6 +147,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		{
 			Result = AttackResult.CoverHit;
 			ResultCoverEntity = HitChanceRule.ResultCoverEntity;
+			CalculateCriticalRoll();
 			return;
 		}
 		if (!ResultIsHit)
@@ -172,18 +176,7 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			num = num * 10 + (int)ResultChanceRule / 10;
 			ResultHitLocation = ((num <= 10) ? HitLocation.Head : ((num <= 30) ? HitLocation.Arms : ((num <= 70) ? HitLocation.Body : HitLocation.Legs)));
 		}
-		if (CanBeCriticalAttack())
-		{
-			ResultRighteousFuryD100 = Dice.D100;
-			ResultIsRighteousFury = ((int)ResultRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance || HitChanceRule.AutoCritModifier.Value) && !ShouldHaveBeenRighteousFury;
-			RighteousFuryAmount += (ResultIsRighteousFury ? 1 : 0);
-		}
-		if ((bool)(base.Initiator as UnitEntity)?.Features.SecondaryCriticalChance)
-		{
-			ResultSecondRighteousFuryD100 = Dice.D100;
-			RighteousFuryAmount += (((int)ResultSecondRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance - 50) ? 0.5f : 0f);
-		}
-		RighteousFuryAmount += base.InitiatorUnit.Facts.GetComponents<IncreaseCriticalHitMultiplier>().Count();
+		CalculateCriticalRoll();
 		Result = ((!IsCritical() || ShouldHaveBeenRighteousFury) ? AttackResult.Hit : AttackResult.RighteousFury);
 	}
 
@@ -222,13 +215,21 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 				}
 			}
 		}
-		if (!defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield || (!IsMelee && Ability.IsAOE))
+		bool hasShield = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.HasShield;
+		bool flag = defender.HasMechanicFeature(MechanicsFeatureType.CanBlockWithoutShield);
+		if ((!hasShield && !flag) || (!IsMelee && Ability.IsAOE))
 		{
 			return;
 		}
-		bool flag = defender.Body.CurrentHandsEquipmentSet.SecondaryHand.MaybeShield?.Blueprint.EnableScatterAutoBlockAfterFirstBlock ?? false;
-		int blockChance = defender.Body.SecondaryHand.MaybeShield?.Blueprint.BlockChance ?? 0;
-		ResultBlockRule = Rulebook.Trigger(new RuleRollBlock(defender, blockChance, unitEntity, Ability, IsBlockPreviewScatterHit && flag));
+		bool flag2 = false;
+		int blockChance = 0;
+		if (hasShield)
+		{
+			ItemEntityShield maybeShield = defender.Body.SecondaryHand.MaybeShield;
+			flag2 = maybeShield.Blueprint.EnableScatterAutoBlockAfterFirstBlock;
+			blockChance = maybeShield.Blueprint.BlockChance;
+		}
+		ResultBlockRule = Rulebook.Trigger(new RuleRollBlock(defender, blockChance, unitEntity, Ability, IsBlockPreviewScatterHit && flag2));
 		resultBlockRule = ResultBlockRule;
 		if (resultBlockRule != null && resultBlockRule.Result)
 		{
@@ -430,6 +431,22 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 			return true;
 		}
 		return false;
+	}
+
+	private void CalculateCriticalRoll()
+	{
+		if (CanBeCriticalAttack())
+		{
+			ResultRighteousFuryD100 = Dice.D100;
+			ResultIsRighteousFury = ((int)ResultRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance || HitChanceRule.AutoCritModifier.Value) && !ShouldHaveBeenRighteousFury;
+			RighteousFuryAmount += (ResultIsRighteousFury ? 1 : 0);
+		}
+		if ((bool)(base.Initiator as UnitEntity)?.Features.SecondaryCriticalChance)
+		{
+			ResultSecondRighteousFuryD100 = Dice.D100;
+			RighteousFuryAmount += (((int)ResultSecondRighteousFuryD100 <= HitChanceRule.ResultRighteousFuryChance - 50) ? 0.5f : 0f);
+		}
+		RighteousFuryAmount += base.InitiatorUnit.Facts.GetComponents<IncreaseCriticalHitMultiplier>().Count();
 	}
 
 	private bool CanBeCriticalAttack()

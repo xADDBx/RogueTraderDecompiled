@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
@@ -14,10 +16,11 @@ using Kingmaker.UnitLogic.Levelup.Selections.Ship;
 using Kingmaker.UnitLogic.Levelup.Selections.Voice;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Paths;
-using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.QA.Validation;
+using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Kingmaker.UnitLogic.Levelup.Components;
 
@@ -60,6 +63,9 @@ public class ApplyCareerPath : UnitFactComponentDelegate, IHashable
 
 	public int Ranks;
 
+	[SerializeField]
+	private bool m_UsePriorityBasedSelection = true;
+
 	public SelectionEntry[] Selections = new SelectionEntry[0];
 
 	public BlueprintPath CareerPath
@@ -94,49 +100,85 @@ public class ApplyCareerPath : UnitFactComponentDelegate, IHashable
 		{
 			return;
 		}
-		foreach (SelectionState selection in new LevelUpManager(base.Owner, CareerPath, autoCommit: true, num3).Selections)
+		Dictionary<FeatureGroup, List<BlueprintFeature>> value;
+		using (CollectionPool<Dictionary<FeatureGroup, List<BlueprintFeature>>, KeyValuePair<FeatureGroup, List<BlueprintFeature>>>.Get(out value))
 		{
-			bool flag;
-			if (!(selection is SelectionStateFeature selectionStateFeature))
+			SelectionEntry[] selections = Selections;
+			foreach (SelectionEntry selectionEntry in selections)
 			{
-				if (!(selection is SelectionStateDoll) && !(selection is SelectionStatePortrait) && !(selection is SelectionStateCharacterName) && !(selection is SelectionStateShip) && !(selection is SelectionStateVoice) && !(selection is SelectionStateGender))
+				if (value.TryGetValue(selectionEntry.Group, out var value2))
 				{
-					throw new ArgumentOutOfRangeException("selection");
+					value2.AddRange(selectionEntry.Items);
+					continue;
 				}
-				flag = true;
+				List<BlueprintFeature> list = TempList.Get<BlueprintFeature>();
+				list.AddRange(selectionEntry.Items);
+				value[selectionEntry.Group] = list;
 			}
-			else
+			foreach (SelectionState selection in new LevelUpManager(base.Owner, CareerPath, autoCommit: true, num3).Selections)
 			{
-				flag = !selectionStateFeature.CanSelectAny || SelectFeature(selectionStateFeature);
+				bool flag;
+				if (!(selection is SelectionStateFeature selectionStateFeature))
+				{
+					if (!(selection is SelectionStateDoll) && !(selection is SelectionStatePortrait) && !(selection is SelectionStateCharacterName) && !(selection is SelectionStateShip) && !(selection is SelectionStateVoice) && !(selection is SelectionStateGender))
+					{
+						throw new ArgumentOutOfRangeException("selection");
+					}
+					flag = true;
+				}
+				else
+				{
+					flag = !selectionStateFeature.CanSelectAny || SelectFeature(selectionStateFeature, value) || SelectDefaultFeature(selectionStateFeature);
+				}
+				if (!flag)
+				{
+					PFLog.LevelUp.ErrorWithReport($"ApplyCareerPath: can't find suitable option for selection ${selection.Blueprint} " + $"in path ${selection.Path}[${selection.PathRank}] " + $"({base.Owner})");
+				}
 			}
-			if (!flag)
+			if (m_UsePriorityBasedSelection)
 			{
-				PFLog.LevelUp.ErrorWithReport($"ApplyCareerPath: can't find suitable option for selection ${selection.Blueprint} " + $"in path ${selection.Path}[${selection.PathRank}] " + $"({base.Owner})");
+				return;
+			}
+			foreach (KeyValuePair<FeatureGroup, List<BlueprintFeature>> item in value)
+			{
+				if (item.Value != null && item.Value.Count > 0)
+				{
+					PFLog.LevelUp.Error($"ApplyCareerPath: Failed to apply features for the group {item.Key} in career {CareerPath?.name} for unit {base.Owner.CharacterName}: " + string.Join(",\n", item.Value.Select((BlueprintFeature f) => f.name)));
+				}
 			}
 		}
 	}
 
-	private bool SelectFeature(SelectionStateFeature selection)
+	private bool SelectFeature(SelectionStateFeature selection, Dictionary<FeatureGroup, List<BlueprintFeature>> presetSelections)
 	{
-		ReferenceArrayProxy<BlueprintFeature>? referenceArrayProxy = Selections.FirstItem((SelectionEntry i) => i.Group == selection.Blueprint.Group)?.Items;
-		if (referenceArrayProxy.HasValue)
+		if (presetSelections.TryGetValue(selection.Blueprint.Group, out var value) && value != null)
 		{
-			foreach (BlueprintFeature feature in referenceArrayProxy.Value)
+			for (int j = 0; j < value.Count; j++)
 			{
-				FeatureSelectionItem selectionItem = selection.Items.FirstItem((FeatureSelectionItem i) => i.Feature == feature && selection.CanSelect(i));
+				BlueprintFeature candidateFeature = value[j];
+				FeatureSelectionItem selectionItem = selection.Items.FirstItem((FeatureSelectionItem i) => i.Feature == candidateFeature && selection.CanSelect(i));
 				if (selectionItem.Feature != null)
 				{
 					selection.Select(selectionItem);
+					if (!m_UsePriorityBasedSelection)
+					{
+						value.RemoveAt(j);
+					}
 					return true;
 				}
 			}
 		}
-		FeatureSelectionItem selectionItem2 = selection.Items.FirstItem(selection.CanSelect);
-		if (selectionItem2.Feature == null)
+		return false;
+	}
+
+	private bool SelectDefaultFeature(SelectionStateFeature selection)
+	{
+		FeatureSelectionItem selectionItem = selection.Items.FirstItem(selection.CanSelect);
+		if (selectionItem.Feature == null)
 		{
 			return false;
 		}
-		selection.Select(selectionItem2);
+		selection.Select(selectionItem);
 		return true;
 	}
 

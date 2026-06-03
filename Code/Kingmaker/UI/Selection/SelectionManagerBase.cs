@@ -25,7 +25,7 @@ using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.UI.Selection;
 
-public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, ISubscriber, IAreaHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, INetStopPlayingHandler
+public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, ISubscriber, IAreaHandler, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, INetStopPlayingHandler, IPartyCombatHandler
 {
 	[SerializeField]
 	protected BaseUnitMark m_SelectionMarkPrefab;
@@ -54,6 +54,10 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 		}
 		IEnumerable<BaseUnitEntity> selectableUnits = GetSelectableUnits(characters);
 		SelectAllImpl(selectableUnits);
+		EventBus.RaiseEvent(delegate(IActualGroupUpdateEventHandler h)
+		{
+			h.HandleActualGroupUpdate();
+		});
 	}
 
 	protected abstract void SelectAllImpl(IEnumerable<BaseUnitEntity> units);
@@ -268,6 +272,14 @@ public abstract class SelectionManagerBase : MonoBehaviour, INetRoleSetHandler, 
 
 	public virtual void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
+	}
+
+	public virtual void HandlePartyCombatStateChanged(bool inCombat)
+	{
+		if (!inCombat)
+		{
+			SelectAll();
+		}
 	}
 
 	public virtual void HandleTurnBasedModeResumed()

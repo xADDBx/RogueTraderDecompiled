@@ -176,6 +176,32 @@ public static class SoundEventPlayer
 				gameObject.AddComponent<AutoDestroy>().Lifetime = 10f;
 				return gameObject;
 			}
+			object obj2 = target?.Entity?.View.Or(null)?.gameObject.Or(null);
+			if (obj2 == null)
+			{
+				MechanicEntityView mechanicEntityView2 = caster.View.Or(null);
+				if ((object)mechanicEntityView2 == null)
+				{
+					return null;
+				}
+				obj2 = mechanicEntityView2.gameObject;
+			}
+			return (GameObject)obj2;
+		}
+		case FXTarget.CasterWeapon:
+			if (caster is SimpleCaster simpleCaster && simpleCaster.TrapParentObject != null)
+			{
+				return simpleCaster.TrapParentObject;
+			}
+			return caster.View.Or(null)?.gameObject;
+		case FXTarget.CasterAllWeapon:
+			return null;
+		case FXTarget.CasterOffHandWeapon:
+			return null;
+		case FXTarget.TargetPoint:
+			return null;
+		case FXTarget.EveryNode:
+		{
 			object obj = target?.Entity?.View.Or(null)?.gameObject.Or(null);
 			if (obj == null)
 			{
@@ -188,16 +214,6 @@ public static class SoundEventPlayer
 			}
 			return (GameObject)obj;
 		}
-		case FXTarget.CasterWeapon:
-			if (caster is SimpleCaster simpleCaster && simpleCaster.TrapParentObject != null)
-			{
-				return simpleCaster.TrapParentObject;
-			}
-			return caster.View.Or(null)?.gameObject;
-		case FXTarget.CasterAllWeapon:
-			return null;
-		case FXTarget.CasterOffHandWeapon:
-			return null;
 		default:
 			throw new ArgumentOutOfRangeException("targetType", targetType, null);
 		}

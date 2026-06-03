@@ -54,10 +54,6 @@ public class TermsOfUseVM : BaseDisposable, IViewModel, IBaseDisposable, IDispos
 
 	public LocalizedString GetLicenceText()
 	{
-		if (!Game.Instance.IsControllerMouse)
-		{
-			return TermsOfUseTexts.LicenceConsole;
-		}
 		return TermsOfUseTexts.Licence;
 	}
 }

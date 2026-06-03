@@ -17,6 +17,7 @@ using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.Utility.DotNetExtensions;
@@ -96,6 +97,13 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	[SerializeField]
 	private Image m_RightOutsidePingFrame;
 
+	[Header("Overdrive")]
+	[SerializeField]
+	private GameObject m_OverdriveAbilityContainer;
+
+	[SerializeField]
+	private WidgetListMVVM m_OverdriveAbilityWidgetList;
+
 	private readonly IntReactiveProperty m_CurrentRowIndex = new IntReactiveProperty();
 
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
@@ -137,6 +145,10 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		AddDisposable(m_CurrentRowIndex.Subscribe(OnIndexChanged));
 		AddDisposable(base.ViewModel.UnitChanged.Subscribe(OnUnitChanged));
 		AddDisposable(base.ViewModel.SlotCountChanged.Subscribe(OnUnitChanged));
+		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.AugmentationsOverdriveAbilityChanged, delegate
+		{
+			DrawSlots();
+		}));
 		AddDisposable(base.ViewModel.IsActive.Subscribe(OnActive));
 		AddDisposable(base.ViewModel.MoveAbilityMode.Subscribe(OnMoveMode));
 		if ((bool)m_AbilitySelectorWindowConsoleView)
@@ -174,6 +186,10 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 		m_ShowTooltip = true;
 		m_InputLayer = null;
 		m_MoveAbilityInputLayer = null;
+		if (m_OverdriveAbilityWidgetList != null)
+		{
+			m_OverdriveAbilityWidgetList.Clear();
+		}
 	}
 
 	private void OnIndexChanged(int newIndex)
@@ -198,16 +214,32 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 	private void DrawPaginator()
 	{
 		m_CurrentRowIndex.SetValueAndForceNotify(base.ViewModel.RowIndex);
-		m_PageNavigation.Initialize(Mathf.CeilToInt((float)base.ViewModel.Slots.Count / (float)base.SlotsInRow), m_CurrentRowIndex);
+		MechanicActionBarSlot overdriveAbility;
+		List<ActionBarSlotVM> gridSlots = GetGridSlots(out overdriveAbility);
+		m_PageNavigation.Initialize(Mathf.CeilToInt((float)gridSlots.Count / (float)base.SlotsInRow), m_CurrentRowIndex);
 	}
 
 	private void DrawSlots()
 	{
 		int num = m_NavigationBehaviour.Entities.IndexOf(m_NavigationBehaviour.Focus.Value);
-		List<ActionBarSlotVM> list = new List<ActionBarSlotVM>();
-		for (int i = base.ViewModel.RowIndex * base.SlotsInRow; i < (base.ViewModel.RowIndex + 1) * base.SlotsInRow; i++)
+		MechanicActionBarSlot overdriveAbility;
+		List<ActionBarSlotVM> gridSlots = GetGridSlots(out overdriveAbility);
+		if (m_OverdriveAbilityContainer != null)
 		{
-			list.Add(base.ViewModel.Slots[i]);
+			m_OverdriveAbilityContainer.gameObject.SetActive(value: false);
+		}
+		List<ActionBarSlotVM> list = new List<ActionBarSlotVM>();
+		int num2 = base.ViewModel.RowIndex * base.SlotsInRow;
+		int num3 = Mathf.Min(num2 + base.SlotsInRow, gridSlots.Count);
+		for (int i = num2; i < num3; i++)
+		{
+			list.Add(gridSlots[i]);
+		}
+		if (m_OverdriveAbilityContainer != null && !(overdriveAbility is MechanicActionBarSlotEmpty))
+		{
+			m_OverdriveAbilityContainer.gameObject.SetActive(value: true);
+			List<ActionBarSlotVM> vmCollection = new List<ActionBarSlotVM> { base.ViewModel.OverdriveSlotVM };
+			AddDisposable(m_OverdriveAbilityWidgetList.DrawEntries(vmCollection, m_SlotView, strictMatching: true));
 		}
 		m_Row.DrawEntries(list, m_SlotView);
 		m_NavigationBehaviour.Clear();
@@ -232,14 +264,31 @@ public class SurfaceActionBarPartAbilitiesConsoleView : SurfaceActionBarPartAbil
 			m_NavigationBehaviour.AddRow(list2);
 			m_NavigationBehaviour.AddRow(new IConsoleNavigationEntity[2] { m_VeilThicknessConsoleView, m_MomentumConsoleView });
 		}
-		m_NavigationBehaviour.AddRow(m_Row.GetConsoleEntities());
-		if (num != -1)
+		List<IConsoleNavigationEntity> consoleEntities = m_Row.GetConsoleEntities();
+		if (consoleEntities == null)
 		{
-			m_NavigationBehaviour.FocusOnEntityManual(m_NavigationBehaviour.Entities.ElementAt(num));
+			return;
 		}
-		else if (base.ViewModel.IsActive.Value)
+		m_NavigationBehaviour.AddRow(consoleEntities);
+		if (!(m_OverdriveAbilityWidgetList != null))
 		{
-			m_NavigationBehaviour.FocusOnEntityManual(m_Row.GetFirstValidEntity());
+			return;
+		}
+		List<IWidgetView> entries = m_OverdriveAbilityWidgetList.Entries;
+		if (entries != null && entries.Count > 0)
+		{
+			m_OverdriveAbilityWidgetList.GetNavigationEntities();
+			List<IConsoleNavigationEntity> navigationEntities = m_OverdriveAbilityWidgetList.GetNavigationEntities();
+			navigationEntities.AddRange(m_Row.GetConsoleEntities());
+			m_NavigationBehaviour.AddRow(navigationEntities);
+			if (num != -1)
+			{
+				m_NavigationBehaviour.FocusOnEntityManual(m_NavigationBehaviour.Entities.ElementAt(num));
+			}
+			else if (base.ViewModel.IsActive.Value)
+			{
+				m_NavigationBehaviour.FocusOnEntityManual(m_Row.GetFirstValidEntity());
+			}
 		}
 	}
 

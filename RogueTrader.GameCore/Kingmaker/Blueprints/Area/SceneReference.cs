@@ -1,6 +1,8 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Kingmaker.Blueprints.Area;
 
@@ -16,6 +18,8 @@ public class SceneReference
 
 	public static Func<string, UnityEngine.Object> GetSceneByName = (string _) => (UnityEngine.Object)null;
 
+	public bool Enabled { get; private set; }
+
 	public string SceneName => m_SceneName;
 
 	public bool IsDefined => !string.IsNullOrEmpty(m_SceneName);
@@ -28,6 +32,33 @@ public class SceneReference
 	{
 		m_SceneName = sceneName;
 		m_SceneAsset = GetSceneByName(sceneName);
+	}
+
+	public void SetEnabled(bool enabled)
+	{
+		if (enabled == Enabled)
+		{
+			return;
+		}
+		Scene sceneByName = SceneManager.GetSceneByName(SceneName);
+		if (sceneByName.IsValid() && sceneByName.isLoaded)
+		{
+			GameObject[] rootGameObjects = sceneByName.GetRootGameObjects();
+			foreach (GameObject gameObject in rootGameObjects)
+			{
+				bool alreadyExists;
+				StaticObjectMark staticObjectMark = gameObject.EnsureComponent<StaticObjectMark>(out alreadyExists);
+				if (!alreadyExists && !gameObject.activeSelf)
+				{
+					staticObjectMark.AlwaysDisabled = true;
+				}
+				if (!staticObjectMark.AlwaysDisabled)
+				{
+					gameObject.SetActive(enabled);
+				}
+			}
+		}
+		Enabled = enabled;
 	}
 
 	protected bool Equals(SceneReference other)

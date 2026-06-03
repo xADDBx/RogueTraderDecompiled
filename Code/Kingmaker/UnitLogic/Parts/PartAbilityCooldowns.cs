@@ -433,13 +433,26 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 		m_GroupCooldowns.Clear();
 	}
 
+	public CooldownsStateSave GetCooldownSaveStateCopy()
+	{
+		CooldownsStateSave result = default(CooldownsStateSave);
+		result.AbilityCooldowns = m_AbilityCooldowns.ToDictionary((KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbility, CooldownData> entry) => new CooldownData(entry.Value.Cooldown, entry.Value.Interrupt));
+		result.GroupCooldowns = m_GroupCooldowns.ToDictionary((KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => new CooldownData(entry.Value.Cooldown, entry.Value.Interrupt));
+		return result;
+	}
+
+	public CooldownsStateSave GetCooldownSaveState()
+	{
+		CooldownsStateSave result = default(CooldownsStateSave);
+		result.AbilityCooldowns = m_AbilityCooldowns.ToDictionary((KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Value);
+		result.GroupCooldowns = m_GroupCooldowns.ToDictionary((KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Value);
+		return result;
+	}
+
 	public void SaveCooldownData()
 	{
-		CooldownsStateSave cooldownsStateSave = default(CooldownsStateSave);
-		cooldownsStateSave.AbilityCooldowns = m_AbilityCooldowns.ToDictionary((KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbility, CooldownData> entry) => entry.Value);
-		cooldownsStateSave.GroupCooldowns = m_GroupCooldowns.ToDictionary((KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Key, (KeyValuePair<BlueprintAbilityGroup, CooldownData> entry) => entry.Value);
-		CooldownsStateSave item = cooldownsStateSave;
-		m_SavedCooldowns.Add(item);
+		CooldownsStateSave cooldownSaveState = GetCooldownSaveState();
+		m_SavedCooldowns.Add(cooldownSaveState);
 	}
 
 	public void RestoreCooldownData(bool ignoreOncePerCombatRestriction = false)
@@ -449,8 +462,15 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 			AILogger.Instance.Error(new AILogMessage("trying to restore cooldowns for " + base.Owner.Name + " but there are none saved"));
 			return;
 		}
-		Dictionary<BlueprintAbility, CooldownData> abilityCooldowns = m_SavedCooldowns.Last().AbilityCooldowns;
-		Dictionary<BlueprintAbilityGroup, CooldownData> groupCooldowns = m_SavedCooldowns.Last().GroupCooldowns;
+		CooldownsStateSave state = m_SavedCooldowns.Last();
+		m_SavedCooldowns.RemoveLast();
+		RestoreCooldownDataFromState(state, ignoreOncePerCombatRestriction);
+	}
+
+	public void RestoreCooldownDataFromState(CooldownsStateSave state, bool ignoreOncePerCombatRestriction = false)
+	{
+		Dictionary<BlueprintAbility, CooldownData> abilityCooldowns = state.AbilityCooldowns;
+		Dictionary<BlueprintAbilityGroup, CooldownData> groupCooldowns = state.GroupCooldowns;
 		if (ignoreOncePerCombatRestriction)
 		{
 			if (abilityCooldowns != null)
@@ -469,37 +489,34 @@ public class PartAbilityCooldowns : MechanicEntityPart, IHashable
 			{
 				m_GroupCooldowns.Clear();
 			}
+			return;
+		}
+		Dictionary<BlueprintAbility, CooldownData> untilEndOfCombatCooldowns = GetUntilEndOfCombatCooldowns();
+		if (abilityCooldowns != null)
+		{
+			m_AbilityCooldowns = abilityCooldowns;
 		}
 		else
 		{
-			Dictionary<BlueprintAbility, CooldownData> untilEndOfCombatCooldowns = GetUntilEndOfCombatCooldowns();
-			if (abilityCooldowns != null)
-			{
-				m_AbilityCooldowns = abilityCooldowns;
-			}
-			else
-			{
-				m_AbilityCooldowns.Clear();
-			}
-			foreach (KeyValuePair<BlueprintAbility, CooldownData> item in untilEndOfCombatCooldowns.Where((KeyValuePair<BlueprintAbility, CooldownData> cooldown) => !m_AbilityCooldowns.ContainsKey(cooldown.Key)))
-			{
-				m_AbilityCooldowns.Add(item.Key, item.Value);
-			}
-			Dictionary<BlueprintAbilityGroup, CooldownData> untilEndOfCombatGroupCooldowns = GetUntilEndOfCombatGroupCooldowns();
-			if (groupCooldowns != null)
-			{
-				m_GroupCooldowns = groupCooldowns;
-			}
-			else
-			{
-				m_GroupCooldowns.Clear();
-			}
-			foreach (KeyValuePair<BlueprintAbilityGroup, CooldownData> item2 in untilEndOfCombatGroupCooldowns.Where((KeyValuePair<BlueprintAbilityGroup, CooldownData> cooldown) => !m_GroupCooldowns.ContainsKey(cooldown.Key)))
-			{
-				m_GroupCooldowns.Add(item2.Key, item2.Value);
-			}
+			m_AbilityCooldowns.Clear();
 		}
-		m_SavedCooldowns.RemoveLast();
+		foreach (KeyValuePair<BlueprintAbility, CooldownData> item in untilEndOfCombatCooldowns.Where((KeyValuePair<BlueprintAbility, CooldownData> cooldown) => !m_AbilityCooldowns.ContainsKey(cooldown.Key)))
+		{
+			m_AbilityCooldowns.Add(item.Key, item.Value);
+		}
+		Dictionary<BlueprintAbilityGroup, CooldownData> untilEndOfCombatGroupCooldowns = GetUntilEndOfCombatGroupCooldowns();
+		if (groupCooldowns != null)
+		{
+			m_GroupCooldowns = groupCooldowns;
+		}
+		else
+		{
+			m_GroupCooldowns.Clear();
+		}
+		foreach (KeyValuePair<BlueprintAbilityGroup, CooldownData> item2 in untilEndOfCombatGroupCooldowns.Where((KeyValuePair<BlueprintAbilityGroup, CooldownData> cooldown) => !m_GroupCooldowns.ContainsKey(cooldown.Key)))
+		{
+			m_GroupCooldowns.Add(item2.Key, item2.Value);
+		}
 	}
 
 	private Dictionary<BlueprintAbility, CooldownData> GetUntilEndOfCombatCooldowns()

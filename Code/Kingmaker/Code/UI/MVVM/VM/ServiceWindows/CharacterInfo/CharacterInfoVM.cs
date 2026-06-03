@@ -131,16 +131,19 @@ public class CharacterInfoVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		}));
 		AddDisposable(m_Unit.Subscribe(delegate(BaseUnitEntity newUnit)
 		{
-			if (newUnit.IsPet != characterInfoVM.m_PetSummaryTypeCache)
+			if (newUnit != null)
 			{
-				characterInfoVM.SetUpPageTabs(selectedPageType);
-			}
-			characterInfoVM.UpdateSelectedPage();
-			if (characterInfoVM.m_CurrentPage.Value.PageType == CharInfoPageType.Biography)
-			{
-				characterInfoVM.UpdateData();
-				characterInfoVM.BiographyUpdated.Execute();
-				characterInfoVM.CheckAnotherPlayerUnit();
+				if (newUnit.IsPet != characterInfoVM.m_PetSummaryTypeCache)
+				{
+					characterInfoVM.SetUpPageTabs(selectedPageType);
+				}
+				characterInfoVM.UpdateSelectedPage();
+				if (characterInfoVM.m_CurrentPage.Value.PageType == CharInfoPageType.Biography)
+				{
+					characterInfoVM.UpdateData();
+					characterInfoVM.BiographyUpdated.Execute();
+					characterInfoVM.CheckAnotherPlayerUnit();
+				}
 			}
 		}));
 	}

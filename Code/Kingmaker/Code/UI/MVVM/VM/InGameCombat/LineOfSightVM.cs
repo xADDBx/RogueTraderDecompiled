@@ -53,6 +53,8 @@ public class LineOfSightVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	private AbilityData m_CurrentAbility;
 
+	private MechanicEntity m_HoveredUnit;
+
 	private LineOfSightVM(Vector3 start, Vector3 endPosition, MechanicEntity currentUnit, MechanicEntity owner)
 	{
 		StartPos.Value = start;
@@ -114,6 +116,7 @@ public class LineOfSightVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
 	{
+		m_HoveredUnit = ((!isHover) ? null : unitEntityView?.EntityData);
 		UpdateVisibility();
 	}
 
@@ -133,7 +136,14 @@ public class LineOfSightVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 				{
 					if (!LoadingProcess.Instance.IsLoadingInProcess)
 					{
-						StartPos.Value = Game.Instance.VirtualPositionController?.GetDesiredPosition(m_CurrentUnit) ?? m_CurrentUnit.Position;
+						if (UnitPredictionManager.Instance.IsRicochetPreview && m_HoveredUnit != null)
+						{
+							StartPos.Value = m_HoveredUnit.Position;
+						}
+						else
+						{
+							StartPos.Value = Game.Instance.VirtualPositionController?.GetDesiredPosition(m_CurrentUnit) ?? m_CurrentUnit.Position;
+						}
 						StartObjectOffset = UnitPathManager.Instance.Or(null)?.GetCellOffsetForUnit(m_CurrentUnit) ?? Vector3.zero;
 						EndPos.Value = Owner.Position;
 						EndObjectOffset = UnitPathManager.Instance.Or(null)?.GetCellOffsetForUnit(Owner) ?? Vector3.zero;
@@ -153,7 +163,16 @@ public class LineOfSightVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		bool flag = itemEntityWeapon?.Blueprint.IsMelee ?? false;
 		bool flag2 = obj?.IsCharge ?? false;
 		bool flag3 = m_CurrentAbility != null || m_UnitState.IsMouseOverUnit.Value || m_UnitState.IsAoETarget.Value || (Game.Instance.VirtualPositionController?.HasVirtualPosition ?? false);
-		IsVisible.Value = !flag && !flag2 && flag3 && HitChance.Value > 0f;
+		bool isPlayerEnemy = Owner.IsPlayerEnemy;
+		if (UnitPredictionManager.Instance.IsRicochetPreview)
+		{
+			bool flag4 = UnitPredictionManager.Instance.IsUnitRicochetTarget(Owner);
+			IsVisible.Value = !flag && !flag2 && flag3 && flag4;
+		}
+		else
+		{
+			IsVisible.Value = !flag && isPlayerEnemy && !flag2 && flag3 && HitChance.Value > 0f;
+		}
 	}
 
 	private void UpdateHitChance()

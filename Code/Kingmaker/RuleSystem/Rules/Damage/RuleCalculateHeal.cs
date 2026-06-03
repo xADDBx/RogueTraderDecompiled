@@ -48,6 +48,8 @@ public class RuleCalculateHeal : RulebookTargetEvent
 
 	public int Bonus { get; }
 
+	public bool Nullify { get; set; }
+
 	public bool UIIsCritical
 	{
 		get
@@ -113,7 +115,7 @@ public class RuleCalculateHeal : RulebookTargetEvent
 			ValueWithoutReduction = Math.Max(0, num);
 			UIValueBase = Math.Min(ValueWithoutReduction, TargetHealth.Damage);
 			UIValueWithoutCriticalBonus = (UIValueBase + FlatBonus) * (100 + PercentBonus - UIPercentCriticalBonus) / 100;
-			Value = (Math.Min(ValueWithoutReduction, TargetHealth.Damage) + FlatBonus) * (100 + PercentBonus) / 100;
+			Value = ((!Nullify) ? ((Math.Min(ValueWithoutReduction, TargetHealth.Damage) + FlatBonus) * (100 + PercentBonus) / 100) : 0);
 		}
 	}
 }

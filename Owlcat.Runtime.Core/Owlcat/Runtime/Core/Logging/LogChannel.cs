@@ -41,9 +41,29 @@ public class LogChannel
 
 	public int SinkBitmap => m_SinkBitmap;
 
-	public LogSeverity MinLevel => m_MinLevel;
+	public LogSeverity MinLevel
+	{
+		get
+		{
+			if (m_MinLevel != LogSeverity.Default)
+			{
+				return m_MinLevel;
+			}
+			return LogChannelDefaults.MinLevel;
+		}
+	}
 
-	public LogSeverity MinStackTraceLevel => m_MinStackTraceLevel;
+	public LogSeverity MinStackTraceLevel
+	{
+		get
+		{
+			if (m_MinStackTraceLevel != LogSeverity.Default)
+			{
+				return m_MinStackTraceLevel;
+			}
+			return LogChannelDefaults.DefaultStackTraceLevel;
+		}
+	}
 
 	public void SetSeverity(LogSeverity severity)
 	{
@@ -327,7 +347,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, null, LogSeverity.Error, ex, messageFormat, Array.Empty<object>());
+			Logger.Instance.Log(this, null, LogSeverity.Exception, ex, messageFormat, Array.Empty<object>());
 		}
 	}
 
@@ -341,7 +361,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, null, LogSeverity.Error, ex, messageFormat, @params);
+			Logger.Instance.Log(this, null, LogSeverity.Exception, ex, messageFormat, @params);
 		}
 	}
 
@@ -354,7 +374,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, ctx, LogSeverity.Error, ex, messageFormat, Array.Empty<object>());
+			Logger.Instance.Log(this, ctx, LogSeverity.Exception, ex, messageFormat, Array.Empty<object>());
 		}
 	}
 
@@ -368,7 +388,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, ctx, LogSeverity.Error, ex, messageFormat, @params);
+			Logger.Instance.Log(this, ctx, LogSeverity.Exception, ex, messageFormat, @params);
 		}
 	}
 
@@ -381,7 +401,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, ctx, LogSeverity.Error, ex, messageFormat, Array.Empty<object>());
+			Logger.Instance.Log(this, ctx, LogSeverity.Exception, ex, messageFormat, Array.Empty<object>());
 		}
 	}
 
@@ -395,7 +415,7 @@ public class LogChannel
 		}
 		else
 		{
-			Logger.Instance.Log(this, ctx, LogSeverity.Error, ex, messageFormat, @params);
+			Logger.Instance.Log(this, ctx, LogSeverity.Exception, ex, messageFormat, @params);
 		}
 	}
 }

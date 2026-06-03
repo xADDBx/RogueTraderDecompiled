@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using Owlcat.Runtime.Visual.DxtCompressor;
+using System.Diagnostics;
+using Owlcat.Runtime.Core.Utility.Locator;
 using RogueTrader.Code.ShaderConsts;
 using UnityEngine;
 
 namespace Kingmaker.Visual.CharacterSystem;
 
-public class CharacterAtlas
+public class CharacterAtlas : IDisposable
 {
 	public bool Destroyed;
 
@@ -30,11 +31,9 @@ public class CharacterAtlas
 
 	private Material m_RoughnessLightenBlend;
 
+	private RenderTexture m_CompressingTexture;
+
 	private RenderTexture m_UncompressedTexture;
-
-	private Action<CharacterAtlas, Texture2D> m_OnTextureCompressed;
-
-	private Action<CharacterAtlas> m_OnTextureNotCompressed;
 
 	private static RenderTexture m_TempLinearTexture;
 
@@ -44,9 +43,11 @@ public class CharacterAtlas
 
 	public static bool MakeAtlasPowerOfTwo { get; set; }
 
+	public static int ForceCpu { get; set; }
+
 	public Dictionary<Texture, Rect> Rects { get; private set; }
 
-	public AtlasTexture AtlasTexture { get; private set; }
+	public Texture2D AtlasTexture { get; private set; }
 
 	public CharacterTextureChannel Channel { get; private set; }
 
@@ -138,53 +139,16 @@ public class CharacterAtlas
 		AddSecondaryTexture(characterTextureDescription, primaryTexture, bodyPartType, material);
 	}
 
-	private void CreateAtlasTexture()
-	{
-		if (AtlasTexture == null || AtlasTexture.Destroyed || !AtlasTexture.CompressionComplete || AtlasTexture.Texture == null || !AtlasTexture.Texture.isReadable)
-		{
-			if (AtlasTexture != null)
-			{
-				if (AtlasTexture.CompressionComplete && AtlasTexture.Texture != null && !AtlasTexture.Texture.isReadable)
-				{
-					UnityEngine.Object.Destroy(AtlasTexture.Texture);
-				}
-				else
-				{
-					AtlasTexture.Destroyed = true;
-				}
-			}
-			bool linear = Channel != CharacterTextureChannel.Diffuse;
-			Texture2D texture = new Texture2D((int)m_Size.x, (int)m_Size.y, TextureFormat.DXT5, mipChain: true, linear)
-			{
-				filterMode = FilterMode.Bilinear,
-				wrapMode = TextureWrapMode.Repeat,
-				anisoLevel = 1,
-				name = $"{Channel}_2D"
-			};
-			AtlasTexture = new AtlasTexture
-			{
-				Texture = texture
-			};
-		}
-		else
-		{
-			AtlasTexture.CompressionComplete = false;
-		}
-	}
-
-	public void Build(EquipmentEntity.PaintedTextures paintedTextures, Material material, bool cleanAtlas, bool delayTextureCreation)
+	public void Build(EquipmentEntity.PaintedTextures paintedTextures, Material material, bool cleanAtlas)
 	{
 		CalculateRects();
-		if (!delayTextureCreation)
-		{
-			CreateAtlasTexture();
-		}
+		bool flag = Application.platform == RuntimePlatform.Switch2;
 		RenderTexture renderTexture = new RenderTexture((int)m_Size.x, (int)m_Size.y, 0, RenderTextureFormat.ARGB32, (Channel != 0) ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
 		renderTexture.filterMode = FilterMode.Bilinear;
 		renderTexture.wrapMode = TextureWrapMode.Repeat;
 		renderTexture.anisoLevel = 1;
-		renderTexture.useMipMap = true;
-		renderTexture.autoGenerateMips = true;
+		renderTexture.useMipMap = !flag;
+		renderTexture.autoGenerateMips = !flag;
 		renderTexture.name = $"{Channel}_RT";
 		RenderTexture active = RenderTexture.active;
 		RenderTexture.active = renderTexture;
@@ -328,7 +292,7 @@ public class CharacterAtlas
 		UpdateMaterial(material, renderTexture);
 		RenderTexture.active = active;
 		m_Baked = true;
-		if (m_UncompressedTexture != null)
+		if (m_UncompressedTexture != null && m_UncompressedTexture != m_CompressingTexture)
 		{
 			m_UncompressedTexture.Release();
 			UnityEngine.Object.Destroy(m_UncompressedTexture);
@@ -336,72 +300,153 @@ public class CharacterAtlas
 		m_UncompressedTexture = renderTexture;
 	}
 
-	public void CompressAsync(DxtCompressorService dxtCompressorService, Action<CharacterAtlas, Texture2D> onTextureCompressed, Action<CharacterAtlas> onTextureNotCompressed)
+	public void CompressAsync(Action<CharacterAtlas, Texture2D> onTextureCompressed, Action<CharacterAtlas> onTextureNotCompressed)
 	{
+		DxtCompressorServiceNew dxtCompressorService = Services.GetInstance<DxtCompressorServiceNew>();
 		if (m_UncompressedTexture == null)
 		{
-			onTextureNotCompressed(this);
-			return;
+			onTextureNotCompressed?.Invoke(this);
 		}
-		CreateAtlasTexture();
-		m_OnTextureCompressed = onTextureCompressed;
-		m_OnTextureNotCompressed = onTextureNotCompressed;
-		if (dxtCompressorService != null)
+		else if (dxtCompressorService != null)
 		{
-			dxtCompressorService.CompressTexture(m_UncompressedTexture, AtlasTexture.Texture, DxtCompressorService.Compression.Dxt5, 0).OnDone += HandleCompressionDone;
+			CompressAndHandle();
 		}
-	}
-
-	private void HandleCompressionDone(DxtCompressorService.Request request)
-	{
-		try
+		else
 		{
-			if (request.TextureOut == null || AtlasTexture.Destroyed || m_UncompressedTexture != request.TextureIn || !request.TextureOut.isReadable)
+			onTextureNotCompressed?.Invoke(this);
+		}
+		async void CompressAndHandle()
+		{
+			RenderTexture textureIn = m_UncompressedTexture;
+			m_CompressingTexture = textureIn;
+			try
 			{
-				m_OnTextureNotCompressed?.Invoke(this);
-				if (request.TextureOut != null)
+				string atlasTypeName = Channel.ToString().ToLower();
+				Texture2D texture2D = null;
+				if (ForceCpu == 0)
 				{
-					UnityEngine.Object.Destroy(request.TextureOut);
+					Stopwatch gpuSw = Stopwatch.StartNew();
+					texture2D = await dxtCompressorService.CompressTextureGPU(textureIn, atlasTypeName);
+					gpuSw.Stop();
+					if (texture2D == null)
+					{
+						PFLog.Default.Warning("GPU compression failed, falling back to CPU");
+						Stopwatch cpuSw = Stopwatch.StartNew();
+						texture2D = await dxtCompressorService.CompressTexture(textureIn);
+						cpuSw.Stop();
+						PFLog.TechArt.Log($"[Atlas Compression] {atlasTypeName}: CPU={cpuSw.ElapsedMilliseconds}ms (fallback)");
+					}
+					else
+					{
+						PFLog.TechArt.Log($"[Atlas Compression] {atlasTypeName}: GPU={gpuSw.ElapsedMilliseconds}ms");
+					}
 				}
-				return;
+				else if (ForceCpu == 1)
+				{
+					Stopwatch gpuSw = Stopwatch.StartNew();
+					texture2D = await dxtCompressorService.CompressTexture(textureIn);
+					gpuSw.Stop();
+					PFLog.TechArt.Log($"[Atlas Compression] {atlasTypeName}: CPU={gpuSw.ElapsedMilliseconds}ms");
+				}
+				else if (ForceCpu == 2)
+				{
+					Stopwatch gpuSw = Stopwatch.StartNew();
+					Texture2D gpuTextureOut = await dxtCompressorService.CompressTextureGPU(textureIn, atlasTypeName);
+					gpuSw.Stop();
+					Stopwatch cpuSw = Stopwatch.StartNew();
+					Texture2D texture2D2 = await dxtCompressorService.CompressTexture(textureIn);
+					cpuSw.Stop();
+					float num = (float)cpuSw.ElapsedMilliseconds / (float)gpuSw.ElapsedMilliseconds;
+					PFLog.TechArt.Log($"[Atlas Compression] {atlasTypeName}: CPU={cpuSw.ElapsedMilliseconds}ms, GPU={gpuSw.ElapsedMilliseconds}ms, Speedup={num:F1}x");
+					if (texture2D2 != null)
+					{
+						UnityEngine.Object.Destroy(texture2D2);
+					}
+					if (gpuTextureOut == null)
+					{
+						PFLog.Default.Warning("GPU compression failed, using CPU result");
+						gpuTextureOut = texture2D2;
+					}
+					else if (texture2D2 != null)
+					{
+						UnityEngine.Object.Destroy(texture2D2);
+					}
+					texture2D = gpuTextureOut;
+				}
+				if (m_UncompressedTexture != textureIn)
+				{
+					UnityEngine.Object.Destroy(texture2D);
+					onTextureNotCompressed?.Invoke(this);
+				}
+				else
+				{
+					if (AtlasTexture != null)
+					{
+						UnityEngine.Object.Destroy(AtlasTexture);
+					}
+					AtlasTexture = texture2D;
+					onTextureCompressed?.Invoke(this, texture2D);
+				}
 			}
-			AtlasTexture.CompressionComplete = true;
-			if (request.HasError)
+			catch (Exception ex)
 			{
-				PFLog.Default.Error("Failed to compress atlas to DXT: " + request.ErrorText);
-				m_OnTextureNotCompressed?.Invoke(this);
+				PFLog.Default.Error(ex, "Failed to compress atlas to DXT");
+				onTextureNotCompressed?.Invoke(this);
 			}
-			else
+			finally
 			{
-				request.TextureOut.Apply(updateMipmaps: false, makeNoLongerReadable: true);
-				m_OnTextureCompressed?.Invoke(this, request.TextureOut);
-			}
-		}
-		finally
-		{
-			request.OnDone -= HandleCompressionDone;
-			if (m_UncompressedTexture == request.TextureIn)
-			{
-				ClearTempValues();
-			}
-			else if (request.TextureIn != null)
-			{
-				((RenderTexture)request.TextureIn).Release();
-				UnityEngine.Object.Destroy(request.TextureIn);
+				m_CompressingTexture = null;
+				if (textureIn != null)
+				{
+					textureIn.Release();
+					UnityEngine.Object.Destroy(textureIn);
+				}
 			}
 		}
 	}
 
 	public void ClearTempValues()
 	{
-		if (m_UncompressedTexture != null)
+		if (m_UncompressedTexture != null && m_UncompressedTexture != m_CompressingTexture)
 		{
 			m_UncompressedTexture.Release();
 			UnityEngine.Object.Destroy(m_UncompressedTexture);
-			m_UncompressedTexture = null;
 		}
-		m_OnTextureCompressed = null;
-		m_OnTextureNotCompressed = null;
+		m_UncompressedTexture = null;
+	}
+
+	public void Dispose()
+	{
+		if (!Destroyed)
+		{
+			Destroyed = true;
+			ClearTempValues();
+			if (AtlasTexture != null)
+			{
+				UnityEngine.Object.Destroy(AtlasTexture);
+				AtlasTexture = null;
+			}
+			if (m_BakeMaterial != null)
+			{
+				UnityEngine.Object.Destroy(m_BakeMaterial);
+				m_BakeMaterial = null;
+			}
+			if (m_ShadowBakeMaterial != null)
+			{
+				UnityEngine.Object.Destroy(m_ShadowBakeMaterial);
+				m_ShadowBakeMaterial = null;
+			}
+			if (m_DiffuseBakeMaterial != null)
+			{
+				UnityEngine.Object.Destroy(m_DiffuseBakeMaterial);
+				m_DiffuseBakeMaterial = null;
+			}
+			if (m_RoughnessLightenBlend != null)
+			{
+				UnityEngine.Object.Destroy(m_RoughnessLightenBlend);
+				m_RoughnessLightenBlend = null;
+			}
+		}
 	}
 
 	public void UpdateMaterial(Material material, Texture tex)

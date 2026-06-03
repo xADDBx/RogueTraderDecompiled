@@ -74,6 +74,11 @@ public class GameCoreArbiterIntegration : IArbiterIntegration
 		}
 		else if (Game.Instance.TurnController.InCombat)
 		{
+			if (Game.Instance.TurnController.IsPreparationTurn)
+			{
+				Game.Instance.TurnController.ForceEndPreparationTurn();
+				return;
+			}
 			Game.Instance.TurnController.OnStart();
 			CheatsCombat.KillAll();
 		}

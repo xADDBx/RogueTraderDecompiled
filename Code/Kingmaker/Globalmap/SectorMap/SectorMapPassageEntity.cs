@@ -97,6 +97,8 @@ public class SectorMapPassageEntity : Entity, ISectorMapPassageEntity, IEntity, 
 		CurrentDifficulty = view.Difficulty;
 		CurvedLinePoints = (from point in view.GetComponentsInChildren<CurvedLinePoint>().EmptyIfNull()
 			select point.transform.position).ToList();
+		StarSystem1Blueprint = view.StarSystem1?.Blueprint;
+		StarSystem2Blueprint = view.StarSystem2?.Blueprint;
 		GenerateParameters();
 	}
 

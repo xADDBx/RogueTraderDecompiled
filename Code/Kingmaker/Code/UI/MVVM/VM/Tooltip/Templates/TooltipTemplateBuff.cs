@@ -6,9 +6,11 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Properties;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
@@ -45,7 +47,7 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 
 	private readonly string m_Stacking;
 
-	private List<Buff> m_AdditionalSources;
+	private readonly IReadOnlyList<Buff> m_AdditionalSources;
 
 	public override void Prepare(TooltipTemplateType type)
 	{
@@ -98,7 +100,7 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 		}
 	}
 
-	public TooltipTemplateBuff(Buff buff, List<Buff> additionalSources = null, IEntity overrideCaster = null)
+	public TooltipTemplateBuff(Buff buff, IReadOnlyList<Buff> additionalSources = null, IEntity overrideCaster = null)
 	{
 		Buff = buff;
 		m_OverrideCaster = new EntityRef(overrideCaster);
@@ -186,16 +188,19 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 	{
 		if (Buff != null)
 		{
-			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, ((IBuff)Buff).Caster), TooltipTextType.Paragraph));
+			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, Buff.Owner), TooltipTextType.Paragraph));
+			return;
 		}
-		else if (BlueprintBuff != null)
+		if (BlueprintBuff != null)
 		{
-			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, m_OverrideCaster.Entity as MechanicEntity), TooltipTextType.Paragraph));
+			MechanicEntity mechanicEntity = m_OverrideCaster.Entity as MechanicEntity;
+			using (ContextData<PropertyContextPreviewCasterData>.Request().Setup(mechanicEntity))
+			{
+				bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, mechanicEntity, selectedUnitIsPreview: true), TooltipTextType.Paragraph));
+				return;
+			}
 		}
-		else
-		{
-			bricks.Add(new TooltipBrickText(m_Desc, TooltipTextType.Paragraph));
-		}
+		bricks.Add(new TooltipBrickText(m_Desc, TooltipTextType.Paragraph));
 	}
 
 	private void AddNonStackBonus(List<ITooltipBrick> bricks)
@@ -209,7 +214,7 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 
 	private void AddSource(List<ITooltipBrick> bricks)
 	{
-		List<Buff> additionalSources = m_AdditionalSources;
+		IReadOnlyList<Buff> additionalSources = m_AdditionalSources;
 		if (additionalSources != null && additionalSources.Count > 0)
 		{
 			AddSources(m_AdditionalSources, bricks);
@@ -240,42 +245,41 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 
 	private void AddSource(Buff buff, List<ITooltipBrick> bricks)
 	{
-		if (buff == null)
+		if (buff != null)
 		{
-			return;
-		}
-		ITooltipBrick tooltipBrick = null;
-		if (buff?.SourceAbilityBlueprint != null)
-		{
-			tooltipBrick = new TooltipBrickIconPattern(buff.SourceAbilityBlueprint.Icon, null, UIStrings.Instance.Tooltips.Source, buff.SourceAbilityBlueprint.Name);
-		}
-		if (buff?.SourceFact != null)
-		{
-			BlueprintBuff blueprintBuff = (BlueprintBuff)buff.SourceFact.Blueprint;
-			if (blueprintBuff == null || !blueprintBuff.IsHiddenInUI)
+			ITooltipBrick tooltipBrick = null;
+			if (buff?.SourceAbilityBlueprint != null)
+			{
+				tooltipBrick = new TooltipBrickIconPattern(buff.SourceAbilityBlueprint.Icon, null, UIStrings.Instance.Tooltips.Source, buff.SourceAbilityBlueprint.Name);
+			}
+			if (buff?.SourceFact != null && !(buff.SourceFact.Blueprint is BlueprintBuff { IsHiddenInUI: not false }))
 			{
 				tooltipBrick = new TooltipBrickIconPattern(buff.SourceFact.Icon, null, UIStrings.Instance.Tooltips.Source, buff.SourceFact.Name);
 			}
-		}
-		if (buff?.SourceItem != null)
-		{
-			tooltipBrick = new TooltipBrickIconPattern(buff.SourceItem.ToItemEntity().Icon, null, UIStrings.Instance.Tooltips.Source, buff.SourceItem.ToItemEntity().Name);
-		}
-		if (tooltipBrick == null && m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity)
-		{
-			tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity.CharacterName);
-		}
-		if (tooltipBrick == null && buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity2)
-		{
-			tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity2.CharacterName);
-		}
-		if (tooltipBrick != null)
-		{
-			bricks.Add(tooltipBrick);
+			if (buff?.SourceItem != null)
+			{
+				tooltipBrick = new TooltipBrickIconPattern(buff.SourceItem.ToItemEntity().Icon, null, UIStrings.Instance.Tooltips.Source, buff.SourceItem.ToItemEntity().Name);
+			}
+			if (tooltipBrick == null && m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity)
+			{
+				tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity.CharacterName);
+			}
+			if (tooltipBrick == null && buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity2)
+			{
+				tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, baseUnitEntity2.CharacterName);
+			}
+			if (buff != null && buff.SourceNameOverride != null && !buff.SourceNameOverride.IsNullOrEmpty())
+			{
+				tooltipBrick = new TooltipBrickIconPattern(UIConfig.Instance.UIIcons.TooltipIcons.Source, null, UIStrings.Instance.Tooltips.Source, buff.SourceNameOverride);
+			}
+			if (tooltipBrick != null)
+			{
+				bricks.Add(tooltipBrick);
+			}
 		}
 	}
 
-	private void AddSources(List<Buff> buffs, List<ITooltipBrick> bricks)
+	private void AddSources(IReadOnlyList<Buff> buffs, List<ITooltipBrick> bricks)
 	{
 		if (buffs == null)
 		{
@@ -285,33 +289,28 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 		string text = string.Empty;
 		foreach (Buff buff in buffs)
 		{
-			if (buff == null)
+			if (buff != null)
 			{
-				continue;
-			}
-			if (buff?.SourceAbilityBlueprint != null)
-			{
-				text = text + " " + buff.SourceAbilityBlueprint.Name + ",";
-			}
-			if (buff?.SourceFact != null)
-			{
-				BlueprintBuff blueprintBuff = (BlueprintBuff)buff.SourceFact.Blueprint;
-				if (blueprintBuff == null || !blueprintBuff.IsHiddenInUI)
+				if (buff?.SourceAbilityBlueprint != null)
+				{
+					text = text + " " + buff.SourceAbilityBlueprint.Name + ",";
+				}
+				if (buff?.SourceFact != null && !(buff.SourceFact.Blueprint is BlueprintBuff { IsHiddenInUI: not false }))
 				{
 					text = text + " " + buff.SourceFact.Name + ",";
 				}
-			}
-			if (buff?.SourceItem != null)
-			{
-				text = text + " " + buff.SourceItem.ToItemEntity().Name + ",";
-			}
-			if (m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity)
-			{
-				text = text + " " + baseUnitEntity.CharacterName + ",";
-			}
-			if (buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity2)
-			{
-				text = text + " " + baseUnitEntity2.CharacterName + ",";
+				if (buff?.SourceItem != null)
+				{
+					text = text + " " + buff.SourceItem.ToItemEntity().Name + ",";
+				}
+				if (m_OverrideCaster.Entity is BaseUnitEntity baseUnitEntity)
+				{
+					text = text + " " + baseUnitEntity.CharacterName + ",";
+				}
+				if (buff?.Context?.MaybeCaster is BaseUnitEntity baseUnitEntity2)
+				{
+					text = text + " " + baseUnitEntity2.CharacterName + ",";
+				}
 			}
 		}
 		text = text.Trim(',');

@@ -37,9 +37,9 @@ public class RulePerformDodge : RulebookTargetEvent<UnitEntity, MechanicEntity>
 
 	public bool Result { get; private set; }
 
-	public bool IsMelee => Ability.Weapon?.Blueprint.IsMelee ?? false;
+	public bool IsMelee => Ability.IsMelee;
 
-	public bool IsRanged => Ability.Weapon?.Blueprint.IsRanged ?? false;
+	public bool IsRanged => !Ability.IsMelee;
 
 	public bool IsJumpAside { get; private set; }
 

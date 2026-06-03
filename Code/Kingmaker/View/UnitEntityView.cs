@@ -299,6 +299,15 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 		SpawnAttachedDroppedLoot();
 	}
 
+	public void RebuildMechadendritesEquipment()
+	{
+		if (!(base.CharacterAvatar == null))
+		{
+			base.MechadendritesEquipment = new UnitViewMechadendritesEquipment(this, base.CharacterAvatar);
+			base.MechadendritesEquipment.UpdateAll();
+		}
+	}
+
 	public override void UpdateViewActive()
 	{
 		base.UpdateViewActive();
@@ -634,7 +643,7 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 				HandsEquipment.HandleEquipmentSlotUpdated(slot2, previousItem);
 				RefreshHighlighters();
 			}
-			if (!(base.CharacterAvatar == null))
+			if (!EntityData.LifeState.IsDead && !(base.CharacterAvatar == null))
 			{
 				IEnumerable<EquipmentEntity> ees = ExtractEquipmentEntities(previousItem);
 				base.CharacterAvatar.RemoveEquipmentEntities(ees);

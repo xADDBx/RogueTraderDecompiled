@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
@@ -9,6 +10,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Enums;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.View;
 using Kingmaker.View.Animation;
 using Kingmaker.View.Mechadendrites;
@@ -138,6 +140,10 @@ public class HandSlot : WeaponSlot, IHashable
 				return false;
 			}
 		}
+		if (itemEntityWeapon != null && base.Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null && IsPrimaryHand && itemEntityWeapon.Blueprint.IsMelee)
+		{
+			return false;
+		}
 		if (itemEntityWeapon != null && base.Owner.Facts.Contains((BlueprintUnitFact)BlueprintWarhammerRoot.Instance.CommonSpaceMarineFact))
 		{
 			if (IsPrimaryHand && itemEntityWeapon.Blueprint.IsMelee)
@@ -149,20 +155,12 @@ public class HandSlot : WeaponSlot, IHashable
 				return false;
 			}
 		}
-		if (itemEntityWeapon == null || !itemEntityWeapon.HoldInTwoHands)
-		{
-			ItemEntityWeapon maybeWeapon = PairSlot.MaybeWeapon;
-			if (maybeWeapon == null || !maybeWeapon.HoldInTwoHands)
-			{
-				goto IL_0105;
-			}
-		}
-		if (PairSlot.HasItem && !PairSlot.CanRemoveItem())
+		bool num = itemEntityWeapon != null && !CanHoldInOneHand(this, itemEntityWeapon);
+		bool flag = PairSlot.MaybeWeapon != null && !CanHoldInOneHand(PairSlot, PairSlot.MaybeWeapon);
+		if ((num || flag) && PairSlot.HasItem && !PairSlot.CanRemoveItem())
 		{
 			return false;
 		}
-		goto IL_0105;
-		IL_0105:
 		return true;
 	}
 
@@ -179,7 +177,7 @@ public class HandSlot : WeaponSlot, IHashable
 	protected override void OnItemInserted()
 	{
 		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
-		if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) && (!IsPrimaryHand || base.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false }) && bodyOptional != null)
+		if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) && (!IsPrimaryHand || (base.MaybeItem is ItemEntityWeapon item && !CanHoldInOneHand(this, item))) && bodyOptional != null)
 		{
 			IList<HandsEquipmentSet> handsEquipmentSets = bodyOptional.HandsEquipmentSets;
 			for (int i = 0; i < handsEquipmentSets.Count; i++)
@@ -190,28 +188,40 @@ public class HandSlot : WeaponSlot, IHashable
 				}
 			}
 		}
-		if (!IsPrimaryHand)
+		if (base.MaybeItem is ItemEntityWeapon item2)
 		{
-			HandSlot primaryHand = HandsEquipmentSet.PrimaryHand;
-			if (primaryHand.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false })
-			{
-				primaryHand.RemoveItem();
-			}
-		}
-		if (base.MaybeItem is ItemEntityWeapon { HoldInTwoHands: not false } itemEntityWeapon3)
-		{
+			bool flag = CanHoldInOneHand(this, item2);
 			if (IsPrimaryHand)
 			{
-				PairSlot.RemoveItem();
+				if (!flag)
+				{
+					PairSlot.RemoveItem();
+				}
+			}
+			else if (flag)
+			{
+				if (!CanHoldInOneHand(PairSlot, PairSlot.MaybeItem))
+				{
+					PairSlot.RemoveItem();
+				}
 			}
 			else
 			{
+				if (PairSlot.HasItem)
+				{
+					PairSlot.RemoveItem();
+				}
 				RemoveItem();
-				PairSlot.InsertItem(itemEntityWeapon3);
+				PairSlot.InsertItem(item2);
 			}
 		}
 		if (base.MaybeItem is ItemEntityShield && bodyOptional != null)
 		{
+			ItemEntityWeapon maybeWeapon = PairSlot.MaybeWeapon;
+			if (maybeWeapon != null && !CanHoldInOneHand(PairSlot, maybeWeapon))
+			{
+				PairSlot.RemoveItem();
+			}
 			IList<HandsEquipmentSet> handsEquipmentSets2 = bodyOptional.HandsEquipmentSets;
 			if (!base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement))
 			{
@@ -248,7 +258,7 @@ public class HandSlot : WeaponSlot, IHashable
 		return false;
 	}
 
-	protected override void OnItemRemoved()
+	protected override void OnBeforeItemRemoved()
 	{
 		PartUnitBody bodyOptional = base.Owner.GetBodyOptional();
 		if (base.MaybeItem is ItemEntityShield && !base.Owner.HasMechanicFeature(MechanicsFeatureType.OverrideShieldWeaponSetsPlacement) && bodyOptional != null)
@@ -290,6 +300,44 @@ public class HandSlot : WeaponSlot, IHashable
 				handsEquipmentSets[i].OverrideSecondaryHand(HandsEquipmentSet.SecondaryHand);
 			}
 		}
+	}
+
+	public bool HeldInTwoHands()
+	{
+		ItemEntityWeapon maybeWeapon = MaybeWeapon;
+		if (maybeWeapon != null)
+		{
+			return !CanHoldInOneHand(this, maybeWeapon);
+		}
+		return false;
+	}
+
+	private bool CanHoldInOneHand(HandSlot slot, ItemEntity item)
+	{
+		if (!(item is ItemEntityWeapon itemEntityWeapon))
+		{
+			return true;
+		}
+		if (itemEntityWeapon == null || !itemEntityWeapon.Blueprint.IsTwoHanded)
+		{
+			return true;
+		}
+		if (base.Owner.HasMechadendrites())
+		{
+			return true;
+		}
+		if (base.Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null)
+		{
+			return true;
+		}
+		foreach (TwoHandedWeaponsInOneHand component in base.Owner.Facts.GetComponents<TwoHandedWeaponsInOneHand>())
+		{
+			if (component.CanHoldInSingleHand(itemEntityWeapon, slot))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public override Hash128 GetHash128()

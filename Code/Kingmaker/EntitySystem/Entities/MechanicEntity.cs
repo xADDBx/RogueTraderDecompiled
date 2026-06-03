@@ -195,14 +195,17 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 	{
 		get
 		{
-			PartUnitCommands commandsOptional = this.GetCommandsOptional();
-			if (commandsOptional == null || commandsOptional.Empty || (commandsOptional.Queue.Empty() && (commandsOptional.Current == null || commandsOptional.Current.IsFinished)))
+			if (!HasRunningOrQueuedCommands && !Game.Instance.AbilityExecutor.Abilities.Contains((AbilityExecutionProcess a) => a.Context.Caster == this && !a.IsEnded))
 			{
-				return Game.Instance.AbilityExecutor.Abilities.Contains((AbilityExecutionProcess a) => a.Context.Caster == this && !a.IsEnded);
+				return IsDoingJumping;
 			}
 			return true;
 		}
 	}
+
+	public bool HasRunningOrQueuedCommands => this.GetCommandsOptional()?.HasRunningOrQueuedCommands ?? false;
+
+	public bool IsDoingJumping => Parts.GetOptional<UnitPartJump>() != null;
 
 	public Size Size => this.GetStateOptional()?.Size ?? OriginalSize;
 
@@ -246,8 +249,7 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 		{
 			if (m_CurrentNode.node == null || m_GraphVersionIndex != GraphParamsMechanicsCache.GraphVersionIndex)
 			{
-				m_CurrentNode = ((AstarPath.active != null) ? ObstacleAnalyzer.GetNearestNode(Position) : default(NNInfo));
-				m_GraphVersionIndex = GraphParamsMechanicsCache.GraphVersionIndex;
+				UpdateNodeCache();
 			}
 			return m_CurrentNode;
 		}
@@ -263,8 +265,7 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 		{
 			if (m_CurrentUnwalkableNode == null || m_GraphVersionIndex != GraphParamsMechanicsCache.GraphVersionIndex)
 			{
-				m_CurrentUnwalkableNode = ((AstarPath.active != null) ? ObstacleAnalyzer.GetNearestNodeXZUnwalkable(Position) : null);
-				m_GraphVersionIndex = GraphParamsMechanicsCache.GraphVersionIndex;
+				UpdateNodeCache();
 			}
 			return m_CurrentUnwalkableNode;
 		}
@@ -355,6 +356,21 @@ public abstract class MechanicEntity : Entity, IEntityPartsManagerDelegate, IIni
 		{
 			throw new Exception(GetType().Name + ": invalid blueprint type " + blueprint.GetType().Name + ", expected type " + requiredBlueprintType.Name);
 		}
+	}
+
+	private void UpdateNodeCache()
+	{
+		if (AstarPath.active != null)
+		{
+			m_CurrentNode = ObstacleAnalyzer.GetNearestNode(Position);
+			m_CurrentUnwalkableNode = ObstacleAnalyzer.GetNearestNodeXZUnwalkable(Position);
+		}
+		else
+		{
+			m_CurrentNode = default(NNInfo);
+			m_CurrentUnwalkableNode = null;
+		}
+		m_GraphVersionIndex = GraphParamsMechanicsCache.GraphVersionIndex;
 	}
 
 	void IEntityPartsManagerDelegate.OnPartAppears(EntityPart part)

@@ -5,6 +5,7 @@ using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Utility;
 using UniRx;
@@ -12,11 +13,13 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.Bark;
 
-public class StarSystemSpaceBarksHolderVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IBarkHandler, ISubscriber<IEntity>, ISubscriber, IGameModeHandler
+public class StarSystemSpaceBarksHolderVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IBarkHandler, ISubscriber<IEntity>, ISubscriber, IBarkForceHideHandler, IGameModeHandler
 {
 	public readonly AutoDisposingReactiveCollection<StarSystemSpaceBarkVM> BarksVMs = new AutoDisposingReactiveCollection<StarSystemSpaceBarkVM>();
 
 	public readonly ReactiveProperty<bool> IsVisible = new ReactiveProperty<bool>(initialValue: false);
+
+	public readonly ReactiveCommand BlockHideRequested = new ReactiveCommand();
 
 	private int m_LastBarkIndex;
 
@@ -81,5 +84,19 @@ public class StarSystemSpaceBarksHolderVM : BaseDisposable, IViewModel, IBaseDis
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
+	}
+
+	public void ForceHideBarkHandle()
+	{
+		IsVisible.Value = false;
+	}
+
+	public void RequestBlockHide()
+	{
+		BarksVMs.ForEach(delegate(StarSystemSpaceBarkVM vm)
+		{
+			vm.HideBark();
+		});
+		BlockHideRequested.Execute();
 	}
 }

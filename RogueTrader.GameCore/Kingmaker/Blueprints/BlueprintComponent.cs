@@ -19,7 +19,7 @@ namespace Kingmaker.Blueprints;
 public class BlueprintComponent : ICanBeLogContext, IHavePrototype
 {
 	[Flags]
-	private enum Flags
+	public enum Flags
 	{
 		Disabled = 1
 	}

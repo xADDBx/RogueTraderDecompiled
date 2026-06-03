@@ -22,6 +22,8 @@ public static class UIConsts
 
 	public const int GroupMaxCount = 6;
 
+	public const int AugmentationsGroupMaxCountPC = 8;
+
 	public const int GroupMaxNavigatorsCount = 1;
 
 	public const int MinStashSlotCount = 120;

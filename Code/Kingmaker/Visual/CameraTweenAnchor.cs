@@ -16,24 +16,24 @@ public class CameraTweenAnchor : MonoBehaviour
 
 		public float RubberBandRotation = 3f;
 
-		[ConditionalShow("ShowAnimtime")]
+		[ShowIf("ShowAnimtime")]
 		public float AnimationTime = 2f;
 
 		public bool UseEasing;
 
-		[ConditionalShow("ShowAnimtime")]
+		[ShowIf("ShowAnimtime")]
 		public bool SeparateCurves;
 
-		[ConditionalHide("UseEasing")]
+		[HideIf("UseEasing")]
 		public VectorSpline PositionTrack;
 
-		[ConditionalShow("ShowAnimtime")]
+		[ShowIf("ShowAnimtime")]
 		public AnimationCurve PositionCurve;
 
-		[ConditionalHide("UseEasing")]
+		[HideIf("UseEasing")]
 		public VectorSpline LootAtTrack;
 
-		[ConditionalShow("ShowLookCurve")]
+		[ShowIf("ShowLookCurve")]
 		public AnimationCurve LookAtCurve;
 
 		private bool ShowAnimtime

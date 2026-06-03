@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 
-[ComponentName("Predicates/Target has fact")]
+[Group("Predicates")]
 [AllowedOn(typeof(BlueprintAbility))]
 [AllowMultipleComponents]
 [TypeId("c593a8b96d9421043b4033b92ea3117c")]

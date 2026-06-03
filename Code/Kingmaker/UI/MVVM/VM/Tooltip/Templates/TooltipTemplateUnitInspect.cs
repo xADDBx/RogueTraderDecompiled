@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
@@ -20,6 +21,7 @@ using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Block;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Models.Tooltip;
 using Kingmaker.UI.MVVM.VM.Inspect;
 using Kingmaker.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.UnitLogic.Abilities;
@@ -38,9 +40,9 @@ namespace Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 
 public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 {
-	private readonly IReadOnlyReactiveProperty<BaseUnitEntity> m_UnitReactiveProperty;
+	protected readonly BaseUnitEntity m_Unit;
 
-	private readonly BaseUnitEntity m_Unit;
+	protected IReadOnlyReactiveProperty<BaseUnitEntity> m_UnitReactiveProperty;
 
 	private readonly UnitInspectInfoByPart m_InspectInfo;
 
@@ -144,6 +146,7 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		result.Add(new TooltipBrickAbilityScoresBlock(m_UnitReactiveProperty));
 		result.Add(new TooltipBrickSpace(2f));
 		AddBuffsAndStatusEffects(result);
+		AddAugmentations(result);
 		result.Add(new TooltipBrickSpace(2f));
 		AddWeapon(result);
 		result.Add(new TooltipBrickSpace(2f));
@@ -194,6 +197,35 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 		{
 			result.Add(new TooltipBrickText(UIStrings.Instance.Inspect.NoAbilities.Text, TooltipTextType.Simple | TooltipTextType.BrightColor, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: true, 16));
 		}
+	}
+
+	private void AddAugmentations(List<ITooltipBrick> result)
+	{
+		UnitAugments augments = m_Unit.Body.Augments;
+		if (augments == null || !augments.Slots.Values.Any((AugmentSlot s) => s.HasItem))
+		{
+			return;
+		}
+		result.Add(new TooltipBrickTitle(UIStrings.Instance.UIAugmentations.UnitInspectAugmentationsHeader, TooltipTitleType.H2));
+		foreach (AugmentSlot value in augments.Slots.Values)
+		{
+			if (value.HasItem)
+			{
+				CreateAugmentationPart(result, value);
+			}
+		}
+	}
+
+	private void CreateAugmentationPart(List<ITooltipBrick> result, AugmentSlot augmentSlot)
+	{
+		ItemTooltipData itemTooltipData = UIUtilityItem.GetItemTooltipData(augmentSlot.Item);
+		BlueprintItemAugment itemBlueprint = augmentSlot.ItemBlueprint;
+		string text = itemTooltipData.GetText(TooltipElement.Name);
+		string text2 = itemTooltipData.GetText(TooltipElement.Subname);
+		Sprite image = ((itemBlueprint.Icon != null) ? itemBlueprint.Icon : SimpleBlueprintExtendAsObject.Or(augmentSlot.ItemBlueprint, null)?.Icon);
+		result.Add(new TooltipBrickEntityHeader(text, image, hasUpgrade: false, text2));
+		UIUtilityItem.AddDescriptionAugment(result, itemTooltipData, augmentSlot.Item, itemBlueprint);
+		UIUtilityItem.AddOverchargeAbility(result, augmentSlot.Item, itemBlueprint, screenWindowTooltip: true);
 	}
 
 	private void AddProtocols(List<ITooltipBrick> result)
@@ -306,7 +338,7 @@ public class TooltipTemplateUnitInspect : TooltipBaseTemplate
 			ModifiableValue statOptional = m_Unit.GetStatOptional(StatType.PsyRating);
 			if (statOptional != null)
 			{
-				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Inspect.PsyRating, $"{statOptional.ModifiedValue}%", null, tooltip: new TooltipTemplateGlossary("PsyRating"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.PsyRating));
+				bricks.Add(new TooltipBrickIconStatValue(UIStrings.Instance.Inspect.PsyRating, $"{statOptional.ModifiedValue}", null, tooltip: new TooltipTemplateGlossary("PsyRating"), icon: BlueprintRoot.Instance.UIConfig.UIIcons.TooltipInspectIcons.PsyRating));
 			}
 		}
 	}

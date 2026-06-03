@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.EntitySystem.Entities;
@@ -13,7 +14,7 @@ namespace Kingmaker.UI.MVVM.VM.Inspect;
 
 public class InGameInspectVM : InspectVM
 {
-	private readonly ReactiveProperty<BaseUnitEntity> m_Unit = new ReactiveProperty<BaseUnitEntity>();
+	protected readonly ReactiveProperty<BaseUnitEntity> m_Unit = new ReactiveProperty<BaseUnitEntity>();
 
 	private readonly InspectReactiveData m_InspectReactiveData = new InspectReactiveData();
 
@@ -21,7 +22,7 @@ public class InGameInspectVM : InspectVM
 
 	private UnitInspectInfoByPart m_InspectInfo;
 
-	private IDisposable m_Disposable;
+	protected IDisposable m_Disposable;
 
 	protected override void HideInspect()
 	{
@@ -34,6 +35,16 @@ public class InGameInspectVM : InspectVM
 		BaseUnitEntity baseUnitEntity = entity as BaseUnitEntity;
 		if (baseUnitEntity == null)
 		{
+			return;
+		}
+		if (RootUIContext.Instance.IsAugmentationsShown)
+		{
+			if (Game.Instance.IsControllerGamepad)
+			{
+				m_Unit.Value = baseUnitEntity;
+				Game.Instance.Player.UISettings.ShowInspect = true;
+				Tooltip.Value = new TooltipTemplateAugmentationsInspect(m_Unit);
+			}
 			return;
 		}
 		m_Unit.Value = baseUnitEntity;

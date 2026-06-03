@@ -26,5 +26,6 @@ public enum SurfaceType
 	ClothEnv,
 	WoodEnv,
 	Demon,
-	Ghost
+	Ghost,
+	Hardlight
 }

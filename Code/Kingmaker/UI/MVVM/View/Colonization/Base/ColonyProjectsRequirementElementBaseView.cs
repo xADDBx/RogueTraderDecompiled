@@ -33,7 +33,7 @@ public class ColonyProjectsRequirementElementBaseView : ViewBase<ColonyProjectsR
 
 		public bool HasCount;
 
-		[ConditionalShow("HasCount")]
+		[ShowIf("HasCount")]
 		public TextMeshProUGUI CountText;
 	}
 

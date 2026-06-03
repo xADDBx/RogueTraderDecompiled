@@ -98,6 +98,10 @@ public class CombatLogPCView : CombatLogBaseView
 		m_IsFiltersVisible = IsPinned.Or(m_IsMoseHovered).ToReadOnlyReactiveProperty();
 		AddDisposable(m_IsFiltersVisible.Subscribe(SwitchFiltersVisibility));
 		UISounds.Instance.SetClickAndHoverSound(m_SwitchPinButton, UISounds.ButtonSoundsEnum.PlastickSound);
+		if (m_ForceScrollToBottomButton != null)
+		{
+			UISounds.Instance.SetClickAndHoverSound(m_ForceScrollToBottomButton, UISounds.ButtonSoundsEnum.PlastickSound);
+		}
 		if (m_ResizePanelButton != null)
 		{
 			UISounds.Instance.SetClickAndHoverSound(m_ResizePanelButton, UISounds.ButtonSoundsEnum.PlastickSound);

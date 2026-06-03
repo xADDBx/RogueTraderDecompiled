@@ -21,15 +21,15 @@ public class RankExpCounterCommonView : ViewBase<CharInfoExperienceVM>
 	private bool n_HasNewRanks = true;
 
 	[SerializeField]
-	[ConditionalShow("n_HasNewRanks")]
+	[ShowIf("n_HasNewRanks")]
 	private GameObject m_RanksContainer;
 
 	[SerializeField]
-	[ConditionalShow("n_HasNewRanks")]
+	[ShowIf("n_HasNewRanks")]
 	private TextMeshProUGUI m_RanksDesc;
 
 	[SerializeField]
-	[ConditionalShow("n_HasNewRanks")]
+	[ShowIf("n_HasNewRanks")]
 	private TextMeshProUGUI m_RanksCount;
 
 	[Header("Exp")]
@@ -37,11 +37,11 @@ public class RankExpCounterCommonView : ViewBase<CharInfoExperienceVM>
 	private bool n_HasExp = true;
 
 	[SerializeField]
-	[ConditionalShow("n_HasExp")]
+	[ShowIf("n_HasExp")]
 	private TextMeshProUGUI m_ExpLabel;
 
 	[SerializeField]
-	[ConditionalShow("n_HasExp")]
+	[ShowIf("n_HasExp")]
 	private Image m_ExpProgressBar;
 
 	[Header("Level")]
@@ -49,7 +49,7 @@ public class RankExpCounterCommonView : ViewBase<CharInfoExperienceVM>
 	private bool n_HasLevel = true;
 
 	[SerializeField]
-	[ConditionalShow("n_HasLevel")]
+	[ShowIf("n_HasLevel")]
 	private TextMeshProUGUI m_CurrentLevelLabel;
 
 	private AccessibilityTextHelper m_TextHelper;

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.ElementsSystem;
-using Kingmaker.PubSubSystem.Core;
+using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.StateHasher.Hashers;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -37,6 +39,9 @@ public class CutscenePlayerTrackData : IHashable
 	[JsonProperty]
 	public bool SignalSent;
 
+	[JsonProperty]
+	public List<EntityRef> ControlledUnits;
+
 	private bool m_Terminated;
 
 	public Track Track => StartGate.Gate.StartedTracks[TrackIndex];
@@ -66,6 +71,26 @@ public class CutscenePlayerTrackData : IHashable
 			CommandIndex = -1,
 			IsPlaying = false
 		};
+	}
+
+	public void MarkControlledUnits(CommandBase command, bool logOnFail = false)
+	{
+		List<AbstractUnitEntity> list = command.GetControlledUnits().ToTempList();
+		if (list != null)
+		{
+			CutsceneControlledUnit.MarkUnits(list, StartGate.Player, command, logOnFail);
+			ControlledUnits = list.Select((AbstractUnitEntity u) => new EntityRef(u)).ToList();
+		}
+	}
+
+	public void ReleaseControlledUnits(CommandBase command)
+	{
+		IEnumerable<AbstractUnitEntity> enumerable = ((ControlledUnits != null) ? ControlledUnits.Select((EntityRef e) => e.Entity as AbstractUnitEntity).NotNull() : command?.GetControlledUnits());
+		if (enumerable != null)
+		{
+			CutsceneControlledUnit.ReleaseUnits(enumerable, StartGate.Player);
+		}
+		ControlledUnits = null;
 	}
 
 	public void Tick(CutscenePlayerData player, [CanBeNull] out CutscenePlayerGateData signalReceiver, bool skipping)
@@ -100,11 +125,7 @@ public class CutscenePlayerTrackData : IHashable
 			}
 			if (!IsPlaying)
 			{
-				IAbstractUnitEntity controlledUnit = commandBase.GetControlledUnit();
-				if (controlledUnit != null)
-				{
-					CutsceneControlledUnit.ReleaseUnit(controlledUnit, StartGate.Player);
-				}
+				ReleaseControlledUnits(commandBase);
 			}
 		}
 		int commandIndex = CommandIndex;
@@ -174,10 +195,9 @@ public class CutscenePlayerTrackData : IHashable
 	private bool StartCommand(bool skipping)
 	{
 		CommandBase command = Command;
-		IAbstractUnitEntity controlledUnit = command.GetControlledUnit();
-		if (controlledUnit != null && StartGate.Player.Paused)
+		if (StartGate.Player.Paused)
 		{
-			CutsceneControlledUnit.MarkUnit(controlledUnit, StartGate.Player);
+			MarkControlledUnits(command);
 			IsPlaying = true;
 			return false;
 		}
@@ -200,9 +220,9 @@ public class CutscenePlayerTrackData : IHashable
 			IsPlaying = false;
 			StartGate.Player.HandleException(e, this, command);
 		}
-		if (controlledUnit != null && IsPlaying && !skipping)
+		if (IsPlaying && !skipping)
 		{
-			CutsceneControlledUnit.MarkUnit(controlledUnit, StartGate.Player);
+			MarkControlledUnits(command);
 		}
 		return true;
 	}
@@ -226,11 +246,7 @@ public class CutscenePlayerTrackData : IHashable
 		{
 			StartGate.Player.HandleException(e, this, command);
 		}
-		IAbstractUnitEntity abstractUnitEntity = (command ? command.GetControlledUnit() : null);
-		if (abstractUnitEntity != null)
-		{
-			CutsceneControlledUnit.ReleaseUnit(abstractUnitEntity, StartGate.Player);
-		}
+		ReleaseControlledUnits(command);
 		CommandIndex = Track.Commands.Count;
 		IsPlaying = false;
 		EndGate.Signal();
@@ -278,6 +294,16 @@ public class CutscenePlayerTrackData : IHashable
 		result.Append(ref TrackIndex);
 		result.Append(ref CommandIndex);
 		result.Append(ref SignalSent);
+		List<EntityRef> controlledUnits = ControlledUnits;
+		if (controlledUnits != null)
+		{
+			for (int i = 0; i < controlledUnits.Count; i++)
+			{
+				EntityRef obj = controlledUnits[i];
+				Hash128 val3 = EntityRefHasher.GetHash128(ref obj);
+				result.Append(ref val3);
+			}
+		}
 		return result;
 	}
 }

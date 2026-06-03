@@ -44,11 +44,11 @@ public class ShipStatsPCView : ViewBase<ShipStatsVM>
 	[Header("Parts Labels")]
 	public bool HasPartsLabels;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_SpeedText;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_InertiaText;
 

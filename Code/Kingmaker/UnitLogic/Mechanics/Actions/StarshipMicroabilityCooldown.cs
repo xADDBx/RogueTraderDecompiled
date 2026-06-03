@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
@@ -14,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("49ad6acf6b67a114da523f8e353e1c25")]
 public class StarshipMicroabilityCooldown : ContextAction
 {

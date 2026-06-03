@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/UnlockFlag")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("4a2be3982ea87e44f8d704b9a6330f57")]

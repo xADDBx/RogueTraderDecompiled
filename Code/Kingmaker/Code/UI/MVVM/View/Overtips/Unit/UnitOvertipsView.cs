@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.View.Overtips.Unit.OvertipSpaceShipUnit;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 using Kingmaker.EntitySystem.Entities;
@@ -90,10 +91,12 @@ public class UnitOvertipsView : ViewBase<UnitOvertipsCollectionVM>
 
 	public void Update()
 	{
-		if (base.ViewModel?.Overtips == null)
+		if (CutsceneUIState.IsCutsceneActive.Value || base.ViewModel?.Overtips == null)
 		{
 			return;
 		}
+		int num = 1;
+		int num2 = 0;
 		using (Counters.Overtips?.Measure())
 		{
 			using (ProfileScope.New("VM visibility"))
@@ -103,16 +106,22 @@ public class UnitOvertipsView : ViewBase<UnitOvertipsCollectionVM>
 					MechanicEntity unit = overtip.Unit;
 					bool flag = unit != null && (!unit.Features.IsUntargetable || overtip.IsBarkActive.Value) && (!(unit is BaseUnitEntity { IsExtra: not false } baseUnitEntity) || ExtraUnitShouldHaveOvertip(baseUnitEntity) || overtip.IsBarkActive.Value || baseUnitEntity.View.IsHighlighted || baseUnitEntity.View.MouseHighlighted || overtip.HasSurrounding.Value) && unit.IsVisibleForPlayer && (overtip.ForceOnScreen || (!overtip.HideFromScreen && overtip.IsInCameraFrustum));
 					bool flag2 = m_ActiveOvertips.Get(overtip) != null;
-					if (flag != flag2)
+					if (flag == flag2)
 					{
-						if (flag)
+						continue;
+					}
+					if (flag)
+					{
+						if (num2 >= num)
 						{
-							AddOvertip(overtip);
+							break;
 						}
-						else
-						{
-							RemoveOvertip(overtip);
-						}
+						num2++;
+						AddOvertip(overtip);
+					}
+					else
+					{
+						RemoveOvertip(overtip);
 					}
 				}
 			}
@@ -168,9 +177,7 @@ public class UnitOvertipsView : ViewBase<UnitOvertipsCollectionVM>
 			widget.transform.SetParent(targetContainer, worldPositionStays: false);
 			return widget;
 		}
-		T obj = (T)queue.Dequeue();
-		obj.transform.SetAsLastSibling();
-		return obj;
+		return (T)queue.Dequeue();
 	}
 
 	private void AddOvertip(OvertipEntityUnitVM vm)

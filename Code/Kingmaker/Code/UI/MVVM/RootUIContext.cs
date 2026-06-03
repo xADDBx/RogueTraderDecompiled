@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Code.Package.Runtime.Extensions.Dependencies;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
@@ -197,6 +198,30 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 		}
 	}
 
+	public bool IsAugmentationsShown
+	{
+		get
+		{
+			if (SurfaceVM?.StaticPartVM.ServiceWindowsVM.AugmentationsVM.Value == null)
+			{
+				return SpaceVM?.StaticPartVM.ServiceWindowsVM.AugmentationsVM.Value != null;
+			}
+			return true;
+		}
+	}
+
+	public bool IsCharacterScreenShown
+	{
+		get
+		{
+			if (SurfaceVM?.StaticPartVM.ServiceWindowsVM.CharacterInfoVM.Value == null)
+			{
+				return SpaceVM?.StaticPartVM.ServiceWindowsVM.CharacterInfoVM.Value != null;
+			}
+			return true;
+		}
+	}
+
 	public bool IsChargenShown
 	{
 		get
@@ -320,6 +345,7 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 	public RootUIContext()
 	{
 		AddDisposable(EventBus.Subscribe(this));
+		AddDisposable(CutsceneUIState.Initialize());
 	}
 
 	public static void InitializeUIKitDependencies()
@@ -335,7 +361,7 @@ public class RootUIContext : BaseDisposable, IFullScreenUIHandler, ISubscriber, 
 			UniRxLogger.SetLogger(logger);
 			UIKitSoundManager.SetSoundManager(UISounds.Instance);
 			UIKitRewiredCursorController.SetRewiredCursorController(ConsoleCursor.Instance);
-			InputLayer.SetCanReceiveInputPredicate(LoadingProcess.Instance.CanReceiveInput);
+			InputLayer.SetCanReceiveInputPredicate(Game.Instance.CanReceiveInput);
 			GamePadIcons.SetInstance(ConsoleRoot.Instance.Icons);
 			if (ApplicationHelper.IsRunOnSteamDeck)
 			{

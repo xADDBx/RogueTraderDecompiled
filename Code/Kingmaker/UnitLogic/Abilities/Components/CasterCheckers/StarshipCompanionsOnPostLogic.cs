@@ -13,6 +13,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Posts;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintFeature))]
 [TypeId("182075e83588f23428cf054eb5f3668f")]
 public class StarshipCompanionsOnPostLogic : UnitFactComponentDelegate, ITurnBasedModeHandler, ISubscriber, IHashable

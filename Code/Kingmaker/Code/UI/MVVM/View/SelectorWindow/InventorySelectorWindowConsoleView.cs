@@ -25,6 +25,8 @@ public class InventorySelectorWindowConsoleView : SelectorWindowConsoleView<Equi
 
 	private InventorySelectorWindowVM InventorySelectorWindowVM => base.ViewModel as InventorySelectorWindowVM;
 
+	private AugmentationsSelectorWindowVM AugmentationsSelectorWindowVM => base.ViewModel as AugmentationsSelectorWindowVM;
+
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
@@ -64,6 +66,7 @@ public class InventorySelectorWindowConsoleView : SelectorWindowConsoleView<Equi
 	protected void Unequip()
 	{
 		InventorySelectorWindowVM?.Unequip();
+		AugmentationsSelectorWindowVM?.Unequip();
 		if (m_NavigationBehaviour.DeepestNestedFocus is EquipSelectionSlotConsoleView equipSelectionSlotConsoleView)
 		{
 			m_UnequippedItemTooltipCo = StartCoroutine(UpdateUnequippedItemTooltipCo(equipSelectionSlotConsoleView.EquipVM.Item));

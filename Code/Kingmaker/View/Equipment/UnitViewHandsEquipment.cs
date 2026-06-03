@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
@@ -91,6 +92,12 @@ public class UnitViewHandsEquipment
 	public WeaponAnimationStyle ActiveOffHandWeaponStyle => GetWeaponStyleForHand(m_ActiveSet?.OffHand?.Slot);
 
 	public bool IsDollRoom => View.HandsEquipment != this;
+
+	public bool ShouldShowWeaponsInDollRoom { get; set; } = true;
+
+
+	public bool ShouldShowConsumablesInDollRoom { get; set; } = true;
+
 
 	public bool IsMainHandMismatched
 	{
@@ -198,10 +205,12 @@ public class UnitViewHandsEquipment
 		return value;
 	}
 
-	public UnitViewHandsEquipment(UnitEntityView owner, Character character)
+	public UnitViewHandsEquipment(UnitEntityView owner, Character character, bool shouldShowWeaponsInDollRoom = true, bool shouldShowConsumablesInDollRoom = true)
 	{
 		View = owner;
 		Character = character;
+		ShouldShowWeaponsInDollRoom = shouldShowWeaponsInDollRoom;
+		ShouldShowConsumablesInDollRoom = shouldShowConsumablesInDollRoom;
 		if (Owner.CombatState.IsInCombat)
 		{
 			m_ShouldBeInCombat.Value = Owner.CombatState.IsInCombat;
@@ -604,7 +613,7 @@ public class UnitViewHandsEquipment
 
 	public void UpdateBeltPrefabs()
 	{
-		if (!m_IsActive)
+		if (!m_IsActive || !ShouldShowConsumablesInDollRoom)
 		{
 			return;
 		}
@@ -956,10 +965,11 @@ public class UnitViewHandsEquipment
 		{
 			return;
 		}
+		bool flag = Owner?.Blueprint?.GetComponent<UniqueEogannCompanionComponent>() != null && Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>().AlwaysShowWeaponsInMechadendrites;
 		foreach (KeyValuePair<HandsEquipmentSet, WeaponSet> set in Sets)
 		{
-			set.Value.MainHand.ShowItem(isVisible && !Character.PeacefulMode);
-			set.Value.OffHand.ShowItem(isVisible && !Character.PeacefulMode);
+			set.Value.MainHand.ShowItem(isVisible && (!Character.PeacefulMode || flag));
+			set.Value.OffHand.ShowItem(isVisible && (!Character.PeacefulMode || flag));
 		}
 		foreach (Light equipmentLight in m_EquipmentLights)
 		{
@@ -1042,5 +1052,27 @@ public class UnitViewHandsEquipment
 	public IEnumerable<Light> GetAllLights()
 	{
 		return m_EquipmentLights;
+	}
+
+	public void HideConsumables()
+	{
+		PFLog.TechArt.Log($"[UnitViewHandsEquipment.HideConsumables] Called. m_IsActive={m_IsActive}, Character={Character?.name}");
+		if (!m_IsActive)
+		{
+			PFLog.TechArt.Log("[UnitViewHandsEquipment.HideConsumables] Not active, skipping");
+			return;
+		}
+		int num = 0;
+		for (int i = 0; i < m_ConsumableSlots.Length; i++)
+		{
+			if ((bool)m_ConsumableSlots[i])
+			{
+				PFLog.TechArt.Log($"[UnitViewHandsEquipment.HideConsumables] Destroying slot {i}: {m_ConsumableSlots[i].name}");
+				UnityEngine.Object.Destroy(m_ConsumableSlots[i]);
+				m_ConsumableSlots[i] = null;
+				num++;
+			}
+		}
+		PFLog.TechArt.Log($"[UnitViewHandsEquipment.HideConsumables] Destroyed {num} consumable slots");
 	}
 }

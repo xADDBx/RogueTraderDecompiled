@@ -30,6 +30,8 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 
 	private readonly StatModifiersBreakdownData m_DodgePercentModifiersData;
 
+	private readonly StatModifiersBreakdownData m_DodgePercentMultiplierModifiersData;
+
 	public TooltipTemplateDodge(RuleCalculateDodgeChance dodgeRule)
 	{
 		m_DodgeRule = dodgeRule;
@@ -38,6 +40,8 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 		m_DodgeValueModifiersData = StatModifiersBreakdown.Build();
 		StatModifiersBreakdown.AddModifiersManager(m_DodgeRule.DodgePercentModifiers);
 		m_DodgePercentModifiersData = StatModifiersBreakdown.Build();
+		StatModifiersBreakdown.AddModifiersManager(m_DodgeRule.DodgePercentMultiplierModifier);
+		m_DodgePercentMultiplierModifiersData = StatModifiersBreakdown.Build();
 	}
 
 	public override IEnumerable<ITooltipBrick> GetHeader(TooltipTemplateType type)
@@ -74,6 +78,7 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 			bricks.Add(new TooltipBricksGroupStart());
 			AddDodgeModifiers(bricks, m_DodgeValueModifiersData, isValueModifiers: true);
 			AddDodgeModifiers(bricks, m_DodgePercentModifiersData, isValueModifiers: false);
+			AddDodgeModifiers(bricks, m_DodgePercentMultiplierModifiersData, isValueModifiers: true, nonInvertPercentMultipliers: true);
 			bricks.Add(new TooltipBricksGroupEnd());
 		}
 	}
@@ -118,7 +123,7 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 		bricks.Add(new TooltipBrickTriggeredAuto(GameLogStrings.Instance.TooltipBrickStrings.AutoHit.Text, list, isSuccess: false));
 	}
 
-	private void AddDodgeModifiers(List<ITooltipBrick> bricks, StatModifiersBreakdownData breakdownData, bool isValueModifiers)
+	private void AddDodgeModifiers(List<ITooltipBrick> bricks, StatModifiersBreakdownData breakdownData, bool isValueModifiers, bool nonInvertPercentMultipliers = false)
 	{
 		foreach (StatBonusEntry sortedBonuse in breakdownData.SortedBonuses)
 		{
@@ -132,8 +137,9 @@ public class TooltipTemplateDodge : TooltipBaseTemplate
 				text = text + " (" + UIStrings.Instance.Tooltips.DifficultyReduceDescription.Text + ")";
 			}
 			TooltipBrickIconStatValueType type = ((sortedBonuse.Bonus >= 0) ? TooltipBrickIconStatValueType.Positive : TooltipBrickIconStatValueType.Negative);
-			string value = (isValueModifiers ? UIConfig.Instance.PercentHelper.AddPercentTo(UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus)) : ("×" + (1f - (float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
-			bricks.Add(new TooltipBrickIconStatValue(text, value, null, null, type));
+			string text2 = (isValueModifiers ? UIConfig.Instance.PercentHelper.AddPercentTo(UIConstsExtensions.GetValueWithSign(sortedBonuse.Bonus)) : ("×" + (1f - (float)Math.Abs(sortedBonuse.Bonus) / 100f).ToString(CultureInfo.InvariantCulture)));
+			text2 = (nonInvertPercentMultipliers ? ("×" + ((float)sortedBonuse.Bonus / 100f).ToString(CultureInfo.InvariantCulture)) : text2);
+			bricks.Add(new TooltipBrickIconStatValue(text, text2, null, null, type));
 		}
 	}
 }

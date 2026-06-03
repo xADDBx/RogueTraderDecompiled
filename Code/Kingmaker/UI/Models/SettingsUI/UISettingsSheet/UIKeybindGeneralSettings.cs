@@ -85,12 +85,15 @@ public class UIKeybindGeneralSettings : IUISettingsSheet
 
 	public UISettingsEntityKeyBinding FlipZoneStrategist;
 
+	public UISettingsEntityKeyBinding OpenAugmentations;
+
 	public void LinkToSettings()
 	{
 		HighlightObjects.LinkSetting(SettingsRoot.Controls.Keybindings.General.HighlightObjects);
 		Hold.LinkSetting(SettingsRoot.Controls.Keybindings.General.Hold);
 		OpenCharacterScreen.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenCharacterScreen);
 		OpenInventory.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenInventory);
+		OpenAugmentations.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenAugmentations);
 		OpenJournal.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenJournal);
 		OpenMap.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenMap);
 		OpenEncyclopedia.LinkSetting(SettingsRoot.Controls.Keybindings.General.OpenEncyclopedia);

@@ -15,14 +15,14 @@ namespace Kingmaker.Designers.Mechanics.Facts.WeaponStats;
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintBuff))]
 [TypeId("7609dc343119477fbeb5e7db815d7c9b")]
-public class OverpenetrationModifierTarget : OverpenetrationModifier, ITargetRulebookHandler<RuleCalculateStatsWeapon>, IRulebookHandler<RuleCalculateStatsWeapon>, ISubscriber, ITargetRulebookSubscriber, IHashable
+public class OverpenetrationModifierTarget : OverpenetrationModifier, ITargetRulebookHandler<RuleCalculateOverpenetration>, IRulebookHandler<RuleCalculateOverpenetration>, ISubscriber, ITargetRulebookSubscriber, IHashable
 {
-	public void OnEventAboutToTrigger(RuleCalculateStatsWeapon rule)
+	public void OnEventAboutToTrigger(RuleCalculateOverpenetration rule)
 	{
 		Apply(rule);
 	}
 
-	public void OnEventDidTrigger(RuleCalculateStatsWeapon evt)
+	public void OnEventDidTrigger(RuleCalculateOverpenetration evt)
 	{
 	}
 

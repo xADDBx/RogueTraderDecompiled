@@ -25,6 +25,19 @@ public class TaskNodeFindBestTrajectory : TaskNode
 
 	private const int AllowedIterations = 100;
 
+	private readonly Dictionary<BlueprintAbility, int> m_abilityValues = new Dictionary<BlueprintAbility, int>();
+
+	private readonly List<StarshipEntity> m_hardEnemies = new List<StarshipEntity>();
+
+	public TaskNodeFindBestTrajectory()
+	{
+	}
+
+	public TaskNodeFindBestTrajectory(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override void InitInternal()
 	{
 		base.InitInternal();
@@ -53,7 +66,7 @@ public class TaskNodeFindBestTrajectory : TaskNode
 	{
 		SpaceCombatDecisionContext context = (SpaceCombatDecisionContext)blackboard.DecisionContext;
 		PartStarshipNavigation navigation = context.Unit.GetOptional<PartStarshipNavigation>();
-		_ = context.Unit.CombatState.ActionPointsBlue;
+		float maxPathLength = context.Unit.CombatState.ActionPointsBlue;
 		AILogger.Instance.Log(AILogNode.Start(this));
 		context.AbilityValueCache = new AbilityValueCache(new AbilityValueCalculator(context));
 		context.IsLastActionBrokePlan = false;
@@ -82,7 +95,7 @@ public class TaskNodeFindBestTrajectory : TaskNode
 		}
 		foreach (ShipPath.DirectionalPathNode rawReachableTile in navigation.RawReachableTiles)
 		{
-			if (CanEndTurnAtNode(context, rawReachableTile) && rawReachableTile.canStand)
+			if (rawReachableTile.canStand && CanEndTurnAtNode(context, rawReachableTile, navigation, maxPathLength))
 			{
 				float num = CalculateTrajectoryScore(context, navigation.RawReachableTiles, rawReachableTile);
 				if (num > maxScore)
@@ -111,19 +124,18 @@ public class TaskNodeFindBestTrajectory : TaskNode
 		else
 		{
 			AILogger.Instance.Log(new AILogReason(AILogReasonType.BetterPositionNotFound));
+			base.FailReason = "No better position was found";
 			yield return Status.Failure;
 		}
 	}
 
-	private bool CanEndTurnAtNode(DecisionContext context, ShipPath.DirectionalPathNode pathNode)
+	private bool CanEndTurnAtNode(DecisionContext context, ShipPath.DirectionalPathNode pathNode, PartStarshipNavigation navigation, float maxPathLength)
 	{
-		PartStarshipNavigation required = context.Unit.GetRequired<PartStarshipNavigation>();
-		float actionPointsBlue = context.Unit.CombatState.ActionPointsBlue;
-		if (required.IsSuicideAttacker && context.HatedTargets.Any((TargetInfo t) => t.Entity.GetOccupiedNodes().Contains(pathNode.node)))
+		if (navigation.IsSuicideAttacker && context.HatedTargets.Any((TargetInfo t) => t.Entity.GetOccupiedNodes().Contains(pathNode.node)))
 		{
 			return true;
 		}
-		return actionPointsBlue - (float)pathNode.lengthFromStart < (float)required.FinishingTilesCount;
+		return maxPathLength - (float)pathNode.lengthFromStart < (float)navigation.FinishingTilesCount;
 	}
 
 	private float CalculateTrajectoryScore(SpaceCombatDecisionContext context, HashSet<ShipPath.DirectionalPathNode> reachableTiles, ShipPath.DirectionalPathNode targetNode)
@@ -133,20 +145,30 @@ public class TaskNodeFindBestTrajectory : TaskNode
 		{
 			return 0f;
 		}
-		List<BlueprintAbility> extraMeasures = blueprintStarshipBrain.ExtraMeasures;
-		Dictionary<BlueprintAbility, int> dictionary = new Dictionary<BlueprintAbility, int>();
+		m_abilityValues.Clear();
 		for (ShipPath.DirectionalPathNode directionalPathNode = targetNode; directionalPathNode != null; directionalPathNode = directionalPathNode.parent)
 		{
-			foreach (Ability item in context.Unit.Abilities.RawFacts.Where((Ability a) => !extraMeasures.Contains(a.Blueprint)))
+			if (!directionalPathNode.canStand)
 			{
-				int value = context.AbilityValueCache.GetValue(directionalPathNode, item);
-				if (!dictionary.TryGetValue(item.Blueprint, out var value2) || value2 < value)
+				return 0f;
+			}
+			foreach (Ability rawFact in context.Unit.Abilities.RawFacts)
+			{
+				if (!blueprintStarshipBrain.ExtraMeasures.Contains(rawFact.Blueprint))
 				{
-					dictionary[item.Blueprint] = value;
+					int value = context.AbilityValueCache.GetValue(directionalPathNode, rawFact);
+					if (!m_abilityValues.TryGetValue(rawFact.Blueprint, out var value2) || value2 < value)
+					{
+						m_abilityValues[rawFact.Blueprint] = value;
+					}
 				}
 			}
 		}
-		int num2 = dictionary.Sum((KeyValuePair<BlueprintAbility, int> x) => x.Value);
+		int num2 = 0;
+		foreach (KeyValuePair<BlueprintAbility, int> abilityValue in m_abilityValues)
+		{
+			num2 += abilityValue.Value;
+		}
 		float num3 = CalculateDestinationThreat(targetNode.node, blueprintStarshipBrain);
 		return num + (float)num2 - num3;
 	}
@@ -157,11 +179,27 @@ public class TaskNodeFindBestTrajectory : TaskNode
 		{
 			return 0f;
 		}
-		IEnumerable<StarshipEntity> enumerable = from enemy in context.Enemies
-			select enemy.Entity as StarshipEntity into enemy
-			where !enemy.Blueprint.IsSoftUnit
-			select enemy;
-		int num = enumerable.Select((StarshipEntity enemy) => enemy.DistanceToInCells(destination)).DefaultIfEmpty(0).Min();
+		m_hardEnemies.Clear();
+		foreach (TargetInfo enemy in context.Enemies)
+		{
+			if (enemy.Entity is StarshipEntity starshipEntity && !starshipEntity.Blueprint.IsSoftUnit)
+			{
+				m_hardEnemies.Add(starshipEntity);
+			}
+		}
+		int num = 0;
+		if (m_hardEnemies.Count > 0)
+		{
+			num = int.MaxValue;
+			foreach (StarshipEntity hardEnemy in m_hardEnemies)
+			{
+				int num2 = hardEnemy.DistanceToInCells(destination);
+				if (num2 < num)
+				{
+					num = num2;
+				}
+			}
+		}
 		if (blueprintStarshipBrain.IsStrikecraftReturningBrain)
 		{
 			StarshipEntity overrideTarget = blueprintStarshipBrain.GetOverrideTarget(context.Unit);
@@ -171,24 +209,24 @@ public class TaskNodeFindBestTrajectory : TaskNode
 			}
 			num = overrideTarget.DistanceToInCells(destination);
 		}
-		float num2 = 1f;
+		float num3 = 1f;
 		if (blueprintStarshipBrain.TryToStayBehind)
 		{
-			foreach (StarshipEntity item in enumerable)
+			foreach (StarshipEntity hardEnemy2 in m_hardEnemies)
 			{
-				float num3 = Mathf.Abs(Vector3.SignedAngle(destination - item.Position, item.Forward, Vector3.up));
-				if (num3 < 90f)
+				float num4 = Mathf.Abs(Vector3.SignedAngle(destination - hardEnemy2.Position, hardEnemy2.Forward, Vector3.up));
+				if (num4 < 90f)
 				{
-					num2 += 10f;
+					num3 += 10f;
 				}
-				else if (num3 < 135f)
+				else if (num4 < 135f)
 				{
-					num2 += 2f;
+					num3 += 2f;
 				}
 			}
 		}
-		float num4 = ((float?)blueprintStarshipBrain?.AiDesiredDistanceToEnemies) ?? 3f;
-		return 0.95f / (1f + Math.Abs((float)num - num4)) / num2;
+		float num5 = ((float?)blueprintStarshipBrain?.AiDesiredDistanceToEnemies) ?? 3f;
+		return 0.95f / (1f + Math.Abs((float)num - num5)) / num3;
 	}
 
 	private float CalculateDestinationThreat(CustomGridNodeBase node, BlueprintStarshipBrain brain)

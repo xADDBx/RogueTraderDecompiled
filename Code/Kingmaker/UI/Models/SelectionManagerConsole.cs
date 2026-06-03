@@ -243,6 +243,7 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 
 	public void OnAreaLoadingComplete()
 	{
+		Game.Instance.SelectionCharacter.OnReset();
 		SelectAll();
 		UpdateLinkedUnits();
 	}
@@ -337,6 +338,19 @@ public sealed class SelectionManagerConsole : SelectionManagerBase, IPartyHandle
 				u.IsLink = false;
 			});
 			UpdateLinkedUnits();
+		}
+	}
+
+	public override void HandlePartyCombatStateChanged(bool inCombat)
+	{
+		if (!inCombat)
+		{
+			Game.Instance.State.AllBaseUnits.ForEach(delegate(BaseUnitEntity u)
+			{
+				u.IsLink = false;
+			});
+			UpdateLinkedUnits();
+			SelectAll();
 		}
 	}
 

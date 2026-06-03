@@ -53,6 +53,10 @@ public class AddItemToPlayer : GameAction
 	[Tooltip("Select weaponset number for a weapon. 0 means first available, 1-2 to select specific slot")]
 	public int PreferredWeaponSet;
 
+	[ShowIf("IsEquippableIntoRingSlot")]
+	[Tooltip("Select ring slot number for a ring item. 0 means first available, 1-2 to select specific slot")]
+	public int PreferredRingSlot;
+
 	[SerializeField]
 	[ShowIf("IsPreferredWeaponSlotSet")]
 	private HandType m_Hand;
@@ -89,6 +93,18 @@ public class AddItemToPlayer : GameAction
 		}
 	}
 
+	private bool IsEquippableIntoRingSlot
+	{
+		get
+		{
+			if (IsEquippable && ItemToGive is BlueprintItemEquipmentRing)
+			{
+				return Equip;
+			}
+			return false;
+		}
+	}
+
 	private bool IsPreferredWeaponSlotSet
 	{
 		get
@@ -96,6 +112,18 @@ public class AddItemToPlayer : GameAction
 			if (IsEquippableIntoWeaponSlot)
 			{
 				return PreferredWeaponSet > 0;
+			}
+			return false;
+		}
+	}
+
+	private bool IsPreferredRingSlotSet
+	{
+		get
+		{
+			if (IsEquippableIntoRingSlot)
+			{
+				return PreferredRingSlot > 0;
 			}
 			return false;
 		}
@@ -186,7 +214,11 @@ public class AddItemToPlayer : GameAction
 					throw new ArgumentOutOfRangeException();
 				}
 			}
-			else if (item is ItemEntityMechadendrite)
+			else if (!(item is ItemEntityMechadendrite))
+			{
+				itemSlot = ((!IsPreferredRingSlotSet) ? (body.EquipmentSlots.FirstOrDefault((ItemSlot s) => s.CanInsertItem(item) && !s.HasItem) ?? body.EquipmentSlots.FirstOrDefault((ItemSlot s) => s.CanInsertItem(item) && s.HasItem && s.CanRemoveItem())) : ((PreferredRingSlot == 1) ? body.Ring1 : body.Ring2));
+			}
+			else
 			{
 				itemSlot = body.EquipmentSlots.FirstOrDefault((ItemSlot s) => s.CanInsertItem(item) && (!s.HasItem || s.CanRemoveItem()) && s.MaybeItem?.Blueprint == item.Blueprint);
 				if (itemSlot == null)
@@ -197,10 +229,6 @@ public class AddItemToPlayer : GameAction
 					baseUnitEntity.Body.Mechadendrites.Add(equipmentSlot);
 					itemSlot = equipmentSlot;
 				}
-			}
-			else
-			{
-				itemSlot = body.EquipmentSlots.FirstOrDefault((ItemSlot s) => s.CanInsertItem(item) && !s.HasItem) ?? body.EquipmentSlots.FirstOrDefault((ItemSlot s) => s.CanInsertItem(item) && s.HasItem && s.CanRemoveItem());
 			}
 			if (itemSlot != null)
 			{

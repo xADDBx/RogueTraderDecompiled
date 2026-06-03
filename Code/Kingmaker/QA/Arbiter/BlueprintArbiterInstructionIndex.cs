@@ -1,4 +1,3 @@
-using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Arbiter.Service.Interfaces;
 using Owlcat.Runtime.Core.Logging;
 
@@ -22,6 +21,6 @@ internal class BlueprintArbiterInstructionIndex : BotInstructionIndex<BlueprintA
 
 	protected override LogChannel GetLogChannel()
 	{
-		return ArbiterService.Logger;
+		return LogChannelFactory.GetOrCreate("Arbiter");
 	}
 }

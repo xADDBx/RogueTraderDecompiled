@@ -1,15 +1,14 @@
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 
 namespace Kingmaker.PubSubSystem;
 
 public interface IQuestObjectiveHandler : ISubscriber
 {
-	void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false);
+	void HandleQuestObjectiveStarted(QuestBookEntityEntry objective, bool silentStart = false);
 
-	void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false);
+	void HandleQuestObjectiveBecameVisible(QuestBookEntityEntry objective, bool silentStart = false);
 
-	void HandleQuestObjectiveCompleted(QuestObjective objective);
+	void HandleQuestObjectiveCompleted(QuestBookEntityEntry objective);
 
-	void HandleQuestObjectiveFailed(QuestObjective objective);
+	void HandleQuestObjectiveFailed(QuestBookEntityEntry objective);
 }

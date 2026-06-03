@@ -7,7 +7,7 @@ namespace Kingmaker.Controllers.Timer;
 
 public class TimerController : IControllerEnable, IController, IControllerTick, ITimerHandler, ISubscriber
 {
-	private readonly List<(ITimer timer, TimeSpan runningTime)> m_Timers = new List<(ITimer, TimeSpan)>();
+	private readonly List<ITimer> m_Timers = new List<ITimer>();
 
 	public void OnEnable()
 	{
@@ -23,17 +23,17 @@ public class TimerController : IControllerEnable, IController, IControllerTick, 
 	{
 		for (int num = m_Timers.Count - 1; num >= 0; num--)
 		{
-			if (!(m_Timers[num].runningTime > Game.Instance.TimeController.GameTime))
+			try
 			{
-				try
+				if (m_Timers[num].Tick() && m_Timers.Count > num)
 				{
-					m_Timers[num].timer.RunCallback();
+					m_Timers.RemoveAt(num);
 				}
-				catch (Exception ex)
-				{
-					PFLog.Default.Exception(ex);
-				}
-				finally
+			}
+			catch (Exception ex)
+			{
+				PFLog.Default.Exception(ex);
+				if (m_Timers.Count > num)
 				{
 					m_Timers.RemoveAt(num);
 				}
@@ -43,6 +43,11 @@ public class TimerController : IControllerEnable, IController, IControllerTick, 
 
 	public void SubscribeTimer(ITimer timer)
 	{
-		m_Timers.Add((timer, Game.Instance.TimeController.GameTime + timer.TimerTime));
+		m_Timers.Add(timer);
+	}
+
+	public void CancelTimer(ITimer timer)
+	{
+		m_Timers.Remove(timer);
 	}
 }

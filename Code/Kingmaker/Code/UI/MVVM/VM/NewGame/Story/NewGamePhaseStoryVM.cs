@@ -44,7 +44,7 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 
 	public readonly BoolReactiveProperty DlcIsBoughtAndNotInstalled = new BoolReactiveProperty();
 
-	public readonly BoolReactiveProperty IsRealConsole = new BoolReactiveProperty();
+	public readonly BoolReactiveProperty SupportsDlcDownloadState = new BoolReactiveProperty();
 
 	public ReactiveProperty<Sprite> Art { get; } = new ReactiveProperty<Sprite>();
 
@@ -102,7 +102,7 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 		AddDisposable(SelectionGroup);
 		m_SelectedEntity.Value = list.First();
 		AddDisposable(CustomUIVideoPlayerVM = new CustomUIVideoPlayerVM());
-		IsRealConsole.Value = false;
+		SupportsDlcDownloadState.Value = true;
 		AddDisposable(EventBus.Subscribe(this));
 		StoreManager.OnRefreshDLC += HandleOnRefreshDLC;
 	}
@@ -134,8 +134,8 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 		DlcIsAvailableToPurchase.Value = blueprintDlc == null || blueprintDlc.GetPurchaseState() != BlueprintDlc.DlcPurchaseState.ComingSoon;
 		DlcIsOn.Value = blueprintDlc?.GetDlcSwitchOnOffState() ?? false;
 		DownloadState? downloadState = blueprintDlc?.GetDownloadState();
-		DownloadingInProgress.Value = downloadState == DownloadState.Loading && IsRealConsole.Value;
-		DlcIsBoughtAndNotInstalled.Value = DlcIsBought.Value && downloadState == DownloadState.NotLoaded && IsRealConsole.Value;
+		DownloadingInProgress.Value = downloadState == DownloadState.Loading && SupportsDlcDownloadState.Value;
+		DlcIsBoughtAndNotInstalled.Value = DlcIsBought.Value && downloadState == DownloadState.NotLoaded && SupportsDlcDownloadState.Value;
 		SetStoreIconVisibility(BlueprintDlc != null);
 		if (CurrentCampaign == campaign)
 		{
@@ -263,12 +263,18 @@ public class NewGamePhaseStoryVM : NewGamePhaseBaseVm, INewGameChangeDlcHandler,
 
 	public void HandleBugReportShow()
 	{
-		SetStoreIconVisibility(visible: false);
+		if (base.IsEnabled.Value)
+		{
+			SetStoreIconVisibility(visible: false);
+		}
 	}
 
 	public void HandleBugReportHide()
 	{
-		SetStoreIconVisibility(BlueprintDlc != null);
+		if (base.IsEnabled.Value)
+		{
+			SetStoreIconVisibility(BlueprintDlc != null);
+		}
 	}
 
 	public void HandleUIElementFeature(string featureName)

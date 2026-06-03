@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/ActivateRagdollForCorpsesInZone")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("616ddb70be13e30438ed9c46aa45e1d1")]
 [PlayerUpgraderAllowed(true)]
@@ -35,12 +35,12 @@ public class ActivateRagdollForCorpsesInZone : GameAction
 	public bool ApplyImpulse = true;
 
 	[SerializeField]
-	[ConditionalShow("ApplyImpulse")]
+	[ShowIf("ApplyImpulse")]
 	[Tooltip("Direction of the impulse (will be normalized). Use Vector3.zero for random direction")]
 	public Vector3 ImpulseDirection = Vector3.zero;
 
 	[SerializeField]
-	[ConditionalShow("ApplyImpulse")]
+	[ShowIf("ApplyImpulse")]
 	[Tooltip("Magnitude of the impulse")]
 	public float ImpulseMagnitude = 15f;
 

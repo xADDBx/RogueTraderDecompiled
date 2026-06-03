@@ -222,7 +222,17 @@ public class BlueprintItemWeapon : BlueprintItemEquipmentHand
 
 	public bool IsRanged => !IsMelee;
 
-	public bool IsMelee => Category == WeaponCategory.Melee;
+	public bool IsMelee
+	{
+		get
+		{
+			if (Category != WeaponCategory.Melee)
+			{
+				return Range == WeaponRange.Melee;
+			}
+			return true;
+		}
+	}
 
 	public override float Weight => m_Weight;
 

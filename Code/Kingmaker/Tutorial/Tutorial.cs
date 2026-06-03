@@ -40,11 +40,11 @@ public class Tutorial : EntityFact<TutorialSystem>, IHashable
 	{
 		get
 		{
-			if (ShowedTimes >= Blueprint.Limit)
+			if (Blueprint.Limit != 0)
 			{
-				return Blueprint.Limit == 0;
+				return ShowedTimes >= Blueprint.Limit;
 			}
-			return true;
+			return false;
 		}
 	}
 
@@ -79,7 +79,7 @@ public class Tutorial : EntityFact<TutorialSystem>, IHashable
 
 	public void UpdateIsEnabled()
 	{
-		m_Enabled = (bool)m_EnabledByEtude && IsLimitReached && !IsBanned(fromTrigger: true);
+		m_Enabled = (bool)m_EnabledByEtude && !IsLimitReached && !IsBanned(fromTrigger: true);
 		UpdateIsActive();
 	}
 

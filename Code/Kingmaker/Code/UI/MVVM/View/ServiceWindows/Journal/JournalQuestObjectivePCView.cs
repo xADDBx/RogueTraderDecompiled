@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Base;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using UnityEngine;
@@ -65,7 +67,10 @@ public class JournalQuestObjectivePCView : JournalQuestObjectiveBaseView
 
 	private void DrawEntities()
 	{
-		m_WidgetList.DrawEntries(base.ViewModel.Addendums.ToArray(), m_AddendumViewPrefab);
+		List<JournalQuestObjectiveAddendumVM> list = new List<JournalQuestObjectiveAddendumVM>();
+		list.AddRange(base.ViewModel.Addendums);
+		list.AddRange(base.ViewModel.Clues);
+		m_WidgetList.DrawEntries(list.ToArray(), m_AddendumViewPrefab);
 	}
 
 	protected override void SetupState()

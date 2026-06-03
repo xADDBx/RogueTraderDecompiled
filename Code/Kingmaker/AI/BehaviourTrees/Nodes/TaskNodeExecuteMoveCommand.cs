@@ -8,6 +8,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeExecuteMoveCommand : CoroutineTaskNode
 {
+	public TaskNodeExecuteMoveCommand()
+	{
+	}
+
+	public TaskNodeExecuteMoveCommand(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override IEnumerator<Status> CreateCoroutine(Blackboard blackboard)
 	{
 		DecisionContext context = blackboard.DecisionContext;

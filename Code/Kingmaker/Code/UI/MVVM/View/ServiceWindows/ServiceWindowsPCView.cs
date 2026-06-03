@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Augmentations.PC;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.NameAndPortrait;
@@ -33,6 +34,9 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 
 	[SerializeField]
 	private InventoryPCView InventoryBaseView;
+
+	[SerializeField]
+	private AugmentationsPCView m_AugmentationsView;
 
 	[SerializeField]
 	private CharacterInfoPCView m_CharacterInfoPCView;
@@ -81,6 +85,7 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 			m_CharacterInfoPCView.Initialize();
 			m_JournalPCView.Initialize();
 			m_LocalMapPCView.Initialize();
+			m_AugmentationsView.Initialize();
 			m_CargoManagementPCView.CustomInitialize = InitializeCargoManagement;
 			m_ShipCustomizationPCView.CustomInitialize = InitializeShipCustomization;
 			m_IsInit = true;
@@ -112,6 +117,7 @@ public class ServiceWindowsPCView : ViewBase<ServiceWindowsVM>
 		AddDisposable(base.ViewModel.ShipCustomizationVM.Subscribe(m_ShipCustomizationPCView.Bind));
 		AddDisposable(base.ViewModel.ColonyManagementVM.Subscribe(m_ColonyManagementPCView.Bind));
 		AddDisposable(base.ViewModel.CargoManagementVM.Subscribe(m_CargoManagementPCView.Bind));
+		AddDisposable(base.ViewModel.AugmentationsVM.Subscribe(m_AugmentationsView.Bind));
 		AddDisposable(base.ViewModel.ServiceWindowsMenuVM.Subscribe(delegate(ServiceWindowsMenuVM vm)
 		{
 			if (vm != null && !base.ViewModel.ForceHideBackground.Value)

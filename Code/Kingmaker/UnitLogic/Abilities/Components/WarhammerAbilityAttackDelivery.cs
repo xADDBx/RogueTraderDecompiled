@@ -80,12 +80,13 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 	private bool m_DisableOverpenetration;
 
 	[SerializeField]
-	[ShowIf("IsWeaponAttack")]
 	private bool m_AutoHit;
 
 	[SerializeField]
 	[ShowIf("IsScatterOrRangedPattern")]
 	private bool m_IsLosDefinedByPattern;
+
+	public AbilityAoEPatternSettings PatternSettings => m_PatternSettings;
 
 	public bool IsScatter
 	{
@@ -143,8 +144,6 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 		}
 	}
 
-	public bool IsProjectile => m_IsProjectile;
-
 	public bool IsMelee => WeaponAttack == WeaponAttackType.Melee;
 
 	public bool IsWeaponAttack => WeaponAttack != WeaponAttackType.None;
@@ -198,21 +197,18 @@ public class WarhammerAbilityAttackDelivery : AbilityCustomLogic, IAbilityAoEPat
 	private AbilityProjectileAttack DeliverScatter(AbilityExecutionContext context, TargetWrapper target)
 	{
 		AbilityProjectileAttack abilityProjectileAttack = (IsBurst ? AbilityProjectileAttack.CreateScatter(context, target, context.Ability.BurstAttacksCount, ControlledScatter) : AbilityProjectileAttack.CreateSingleTarget(context, target.Entity, 1));
-		if (IsWeaponAttack)
-		{
-			if (m_AutoHit)
-			{
-				abilityProjectileAttack.AutoHit();
-			}
-			if (m_DisableOverpenetration)
-			{
-				abilityProjectileAttack.DisableOverpenetration();
-			}
-		}
-		else
+		if (!IsWeaponAttack)
 		{
 			abilityProjectileAttack.DisableAttacks();
 			abilityProjectileAttack.DisableOverpenetration();
+		}
+		else if (m_DisableOverpenetration)
+		{
+			abilityProjectileAttack.DisableOverpenetration();
+		}
+		if (m_AutoHit)
+		{
+			abilityProjectileAttack.AutoHit();
 		}
 		if (m_DisableWeaponAttackDamage)
 		{

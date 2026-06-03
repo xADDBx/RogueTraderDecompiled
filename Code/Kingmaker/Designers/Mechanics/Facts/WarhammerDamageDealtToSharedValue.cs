@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
@@ -24,7 +25,7 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("65a7aea4342031044a5dfb98d710dc20")]
-public class WarhammerDamageDealtToSharedValue : WarhammerDamageTrigger, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber, IHashable
+public class WarhammerDamageDealtToSharedValue : WarhammerDamageTriggerBase, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber, IHashable
 {
 	public AbilitySharedValue SharedValue;
 
@@ -50,17 +51,21 @@ public class WarhammerDamageDealtToSharedValue : WarhammerDamageTrigger, ITarget
 		TryTrigger(rule);
 	}
 
-	protected override void OnTrigger(RuleDealDamage rule)
+	protected override void OnTrigger<TEvent>(TEvent abstractRule)
 	{
+		if (!(abstractRule is RuleDealDamage ruleDealDamage))
+		{
+			throw new Exception("Invalid rule type");
+		}
 		if (OnlyFromSpotWeaknessSide)
 		{
-			MechanicEntity obj = (MechanicEntity)rule.Target;
+			MechanicEntity obj = (MechanicEntity)ruleDealDamage.Target;
 			bool flag = false;
 			foreach (Buff item in obj.Buffs.Enumerable.Where((Buff p) => p.Blueprint == SpotWeaknessBuff))
 			{
 				foreach (WarhammerBonusDamageFromSide item2 in item.SelectComponents<WarhammerBonusDamageFromSide>())
 				{
-					flag |= item2.CheckSide(rule.ConcreteInitiator, rule.ConcreteTarget);
+					flag |= item2.CheckSide(ruleDealDamage.ConcreteInitiator, ruleDealDamage.ConcreteTarget);
 				}
 			}
 			if (!flag)
@@ -68,10 +73,10 @@ public class WarhammerDamageDealtToSharedValue : WarhammerDamageTrigger, ITarget
 				return;
 			}
 		}
-		BlueprintItemWeapon contextDamageWeapon = rule.ContextDamageWeapon;
+		BlueprintItemWeapon contextDamageWeapon = ruleDealDamage.ContextDamageWeapon;
 		if (!SpecificRangeType || (contextDamageWeapon != null && WeaponRangeType.IsSuitableWeapon(contextDamageWeapon)))
 		{
-			base.Context[SharedValue] += rule.Result;
+			base.Context[SharedValue] += ruleDealDamage.Result;
 		}
 	}
 

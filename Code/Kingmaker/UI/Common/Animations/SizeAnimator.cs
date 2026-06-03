@@ -18,12 +18,12 @@ public class SizeAnimator : MonoBehaviour, IUIAnimator
 
 	public bool SizeByX;
 
-	[ConditionalShow("SizeByX")]
+	[ShowIf("SizeByX")]
 	public MovePart PartX;
 
 	public bool SizeByY;
 
-	[ConditionalShow("SizeByY")]
+	[ShowIf("SizeByY")]
 	public MovePart PartY;
 
 	private RectTransform m_RectTransform;

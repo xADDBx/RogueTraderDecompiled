@@ -15,6 +15,6 @@ public class RewardSoulMark : Reward
 
 	public override void ReceiveReward(Colony colony = null)
 	{
-		SoulMarkShiftExtension.ApplyShift(SoulMarkShift, base.OwnerBlueprint);
+		SoulMarkShiftExtension.TryApplyShift(SoulMarkShift, base.OwnerBlueprint);
 	}
 }

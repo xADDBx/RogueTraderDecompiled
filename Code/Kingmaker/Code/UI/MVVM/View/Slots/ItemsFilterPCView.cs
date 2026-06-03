@@ -5,6 +5,8 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.Common.Dropdown;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
@@ -18,6 +20,7 @@ using Rewired;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Slots;
 
@@ -47,6 +50,9 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 
 	[SerializeField]
 	private OwlcatToggle m_ShipItems;
+
+	[SerializeField]
+	private OwlcatToggle m_Augmentations;
 
 	[SerializeField]
 	private OwlcatToggle m_Other;
@@ -79,6 +85,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		ItemsFilterType.Usable,
 		ItemsFilterType.Notable,
 		ItemsFilterType.NonUsable,
+		ItemsFilterType.AugmentationsAll,
 		ItemsFilterType.ShipNoFilter
 	};
 
@@ -101,6 +108,21 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 
 	[SerializeField]
 	private float m_LensOffsetDelta = 54.5f;
+
+	[SerializeField]
+	private GridLayoutGroup m_FiltersGrid;
+
+	[SerializeField]
+	private float m_LensOffsetDeltaWithAugmentations = 48.3f;
+
+	[SerializeField]
+	private float m_LensOffsetDeltaWithoutAugmentations = 56.3f;
+
+	[SerializeField]
+	private Vector2 m_SpacingWithAugmentations = new Vector2(8f, 0f);
+
+	[SerializeField]
+	private Vector2 m_SpacingWithoutAugmentations = new Vector2(16f, 0f);
 
 	[SerializeField]
 	private float FilterSwitchAnimationDuration = 0.55f;
@@ -149,14 +171,38 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 				m_Other
 			},
 			{
+				ItemsFilterType.AugmentationsAll,
+				m_Augmentations
+			},
+			{
 				ItemsFilterType.ShipNoFilter,
 				m_ShipItems
 			}
 		};
+		ApplyAugmentationsAvailability();
 		m_SearchView.Or(null)?.Initialize();
 		m_FirstFilter = m_SortedFiltersList.FirstOrDefault();
 		m_LastFilter = m_SortedFiltersList.LastOrDefault();
 		m_TextHelper = new AccessibilityTextHelper(m_ToggleLabel);
+	}
+
+	private void ApplyAugmentationsAvailability()
+	{
+		if (m_SortedFiltersList.Contains(ItemsFilterType.AugmentationsAll))
+		{
+			bool flag = StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion);
+			m_Augmentations.gameObject.SetActive(flag);
+			if (!flag)
+			{
+				m_SortedFiltersList.Remove(ItemsFilterType.AugmentationsAll);
+				m_FiltersMap.Remove(ItemsFilterType.AugmentationsAll);
+			}
+			m_LensOffsetDelta = (flag ? m_LensOffsetDeltaWithAugmentations : m_LensOffsetDeltaWithoutAugmentations);
+			if (m_FiltersGrid != null)
+			{
+				m_FiltersGrid.spacing = (flag ? m_SpacingWithAugmentations : m_SpacingWithoutAugmentations);
+			}
+		}
 	}
 
 	protected override void BindViewImplementation()
@@ -215,6 +261,7 @@ public class ItemsFilterPCView : ViewBase<ItemsFilterVM>
 		AddDisposable(m_Usable.SetHint(UIStrings.Instance.InventoryScreen.FilterTextUsable));
 		AddDisposable(m_Notable.SetHint(UIStrings.Instance.InventoryScreen.FilterTextNotable));
 		AddDisposable(m_ShipItems.SetHint(UIStrings.Instance.InventoryScreen.FilterTextShipItem));
+		AddDisposable(m_Augmentations.SetHint(UIStrings.Instance.UIAugmentations.FilterAll));
 		AddDisposable(m_Other.SetHint(UIStrings.Instance.InventoryScreen.FilterTextOther));
 	}
 

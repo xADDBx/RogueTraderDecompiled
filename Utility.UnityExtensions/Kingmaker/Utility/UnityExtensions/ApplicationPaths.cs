@@ -50,6 +50,10 @@ public static class ApplicationPaths
 			{
 				return persistentDataPath;
 			}
+			if (!Application.isEditor && Application.platform == RuntimePlatform.Switch2)
+			{
+				return temporaryCachePath;
+			}
 			return DevelopmentDataPath;
 		}
 	}

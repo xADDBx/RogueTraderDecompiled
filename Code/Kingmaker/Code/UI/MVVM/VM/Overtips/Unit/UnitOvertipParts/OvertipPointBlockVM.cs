@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
@@ -76,7 +77,7 @@ public class OvertipPointBlockVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		if (Unit == unit)
 		{
 			UpdateProperties();
-			m_UpdateDispatcher = MainThreadDispatcher.InfrequentUpdateAsObservable().Subscribe(delegate
+			m_UpdateDispatcher = MainThreadDispatcher.InfrequentUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 			{
 				UpdateProperties();
 			});

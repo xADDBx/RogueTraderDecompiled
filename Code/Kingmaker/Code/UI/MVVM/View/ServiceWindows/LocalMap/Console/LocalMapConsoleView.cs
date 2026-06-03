@@ -92,10 +92,14 @@ public class LocalMapConsoleView : LocalMapBaseView
 		}, 10), UIStrings.Instance.LocalMapTexts.CenterOnRogueTrader));
 		AddDisposable(m_InputLayer.AddAxis2D(OnLeftStickMove, 0, 1, repeat: false));
 		AddDisposable(m_InputLayer.AddAxis2D(OnRightStickMove, 2, 3, repeat: false));
+		AddDisposable(m_ConsoleHintsWidget.BindHint(m_InputLayer.AddButton(delegate
+		{
+			ConfirmClick();
+		}, 8, m_CursorActive), UIStrings.Instance.FormationTexts.MoveCharacter));
 		AddDisposable(m_InputLayer.AddButton(delegate
 		{
 			ConfirmClick();
-		}, 8));
+		}, 8, m_CursorActive.Not().ToReactiveProperty()));
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 
@@ -196,7 +200,7 @@ public class LocalMapConsoleView : LocalMapBaseView
 			base.ViewModel.OnClick(m_CameraFollowerVector, state: false);
 			return;
 		}
-		Vector2 viewportPos = GetViewportPos(ConsoleCursor.Instance.Position);
+		Vector2 viewportPos = GetViewportPos(CursorController.CursorPosition);
 		base.ViewModel.OnClick(viewportPos, state: false);
 		base.ViewModel.OnClick(viewportPos, state: true);
 		UIKitSoundManager.PlayButtonClickSound();

@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Mechanics.Actions;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
+[Group("Starship/Actions")]
 [TypeId("08e1e72d39371a242b5c5c88db0f4f75")]
 public class StarshipProbabilisticAction : ContextAction
 {

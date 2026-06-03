@@ -223,7 +223,7 @@ public class InitiativeTrackerVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		}
 		if (!(entity is UnitSquad))
 		{
-			if (!entity.IsVisibleForPlayer && (!(entity is BaseUnitEntity baseUnitEntity) || !baseUnitEntity.IsSummoned()))
+			if (!entity.IsVisibleForPlayer && !entity.GetOptional<PartUnitInvisibleInCombat>() && (!(entity is BaseUnitEntity baseUnitEntity) || !baseUnitEntity.IsSummoned()))
 			{
 				return entity is InitiativePlaceholderEntity;
 			}

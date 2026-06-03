@@ -69,7 +69,9 @@ public class GameLogEventAbility : GameLogEventBrackets<GameLogEventAbility>
 				{
 					if (gameLogEventAttack.RollPerformAttackRule.Ability.Blueprint.AbilityTag != AbilityTag.ThrowingGrenade)
 					{
-						gameLogEventAttack2.SetOverpenetrationTrigger(value: true);
+						bool flag = gameLogEventAttack2.RollRuleDamage.ResultOverpenetration?.IsRicochet ?? false;
+						gameLogEventAttack2.SetRicochetTrigger(flag);
+						gameLogEventAttack2.SetOverpenetrationTrigger(!flag);
 					}
 					break;
 				}

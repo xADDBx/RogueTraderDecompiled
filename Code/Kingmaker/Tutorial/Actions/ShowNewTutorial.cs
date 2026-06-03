@@ -19,6 +19,10 @@ public class ShowNewTutorial : GameAction
 
 	public TutorialContextDataEvaluator[] Evaluators = new TutorialContextDataEvaluator[0];
 
+	[SerializeField]
+	[ValidateNotNull]
+	private bool m_RespectShowLimit;
+
 	public BlueprintTutorial Tutorial => m_Tutorial.Get().GetTutorial();
 
 	public override string GetCaption()
@@ -28,6 +32,10 @@ public class ShowNewTutorial : GameAction
 
 	protected override void RunAction()
 	{
+		if (m_RespectShowLimit && Game.Instance.Player.Tutorial.Ensure(Tutorial).ShowedTimes > Tutorial.Limit)
+		{
+			return;
+		}
 		using TutorialContext tutorialContext = ContextData<TutorialContext>.Request();
 		TutorialContextDataEvaluator[] evaluators = Evaluators;
 		foreach (TutorialContextDataEvaluator tutorialContextDataEvaluator in evaluators)

@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Persistence.Versioning;
@@ -9,6 +10,7 @@ using UnityEngine;
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 [Serializable]
+[Group("Starship")]
 [PlayerUpgraderAllowed(false)]
 [TypeId("106327c1089dd0242b12633b4dc0f8e3")]
 public class ChangeAccessibleStarshipInventory : GameAction

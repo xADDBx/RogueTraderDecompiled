@@ -49,6 +49,14 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 	public ContextValue ParryChanceMultiplierValue = 1;
 
 	[SerializeField]
+	[ShowIf("ParryChanceMultiplier")]
+	private bool PercentParryModifier;
+
+	[SerializeField]
+	[ShowIf("ParryChanceMultiplier")]
+	private bool PercentMultiplierModifier;
+
+	[SerializeField]
 	private bool m_AlwaysParry;
 
 	[SerializeField]
@@ -64,32 +72,44 @@ public abstract class WarhammerParryChanceModifier : MechanicEntityFactComponent
 
 	protected void TryApply(RuleCalculateParryChance rule)
 	{
-		if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+		if (!Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
-			if (ModifyParryChance)
+			return;
+		}
+		if (ModifyParryChance)
+		{
+			rule.ParryValueModifiers.Add(ParryChance.Calculate(base.Context), base.Fact);
+		}
+		if (ModifyAttackerWeaponSkillBonus)
+		{
+			rule.AttackerWeaponSkillValueModifiers.Add(AttackerWeaponSkillBonus.Calculate(base.Context), base.Fact);
+		}
+		if (ModifyDefenderWeaponSkillBonus)
+		{
+			rule.DefenderCurrentAttackSkillValueModifiers.Add(DefenderWeaponSkillBonus.Calculate(base.Context), base.Fact);
+		}
+		if (ParryChanceMultiplier)
+		{
+			if (PercentParryModifier)
 			{
-				rule.ParryValueModifiers.Add(ParryChance.Calculate(base.Context), base.Fact);
+				rule.ParryPercentModifiers.Add(ParryChance.Calculate(base.Context), base.Fact);
 			}
-			if (ModifyAttackerWeaponSkillBonus)
+			else if (PercentMultiplierModifier)
 			{
-				rule.AttackerWeaponSkillValueModifiers.Add(AttackerWeaponSkillBonus.Calculate(base.Context), base.Fact);
+				rule.ParryPercentMultiplierModifier.Add(ModifierType.PctMul_Extra, ParryChance.Calculate(base.Context), base.Fact);
 			}
-			if (ModifyDefenderWeaponSkillBonus)
-			{
-				rule.DefenderCurrentAttackSkillValueModifiers.Add(DefenderWeaponSkillBonus.Calculate(base.Context), base.Fact);
-			}
-			if (ParryChanceMultiplier)
+			else
 			{
 				rule.ParryValueMultipliers.Add(ModifierType.PctMul_Extra, ParryChanceMultiplierValue.Calculate(base.Context), base.Fact);
 			}
-			if (m_AlwaysParry)
-			{
-				rule.AutoParryModifier.Add(base.Fact);
-			}
-			if (m_NeverParry)
-			{
-				rule.NeverParryModifier.Add(base.Fact);
-			}
+		}
+		if (m_AlwaysParry)
+		{
+			rule.AutoParryModifier.Add(base.Fact);
+		}
+		if (m_NeverParry)
+		{
+			rule.NeverParryModifier.Add(base.Fact);
 		}
 	}
 

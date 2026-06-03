@@ -4,6 +4,7 @@ using Core.Cheats;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.GameCommands;
 using Kingmaker.Items;
 using Kingmaker.Items.Slots;
 using Kingmaker.UI.InputSystems;
@@ -11,7 +12,9 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
+using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
@@ -130,5 +133,118 @@ internal class CheatsItems
 				item.Inventory.RemoveAll();
 			}
 		}
+	}
+
+	[Cheat(Name = "equip_item", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void EquipItem(string blueprintName)
+	{
+		BlueprintItem itemBp = GetItemBlueprintByName(blueprintName);
+		if (itemBp == null)
+		{
+			return;
+		}
+		if (!Game.Instance.Player.Inventory.Items.TryFind((ItemEntity ie) => ie.Blueprint == itemBp && ie.Wielder == null, out var result))
+		{
+			PFLog.SmartConsole.Log("No non-equipped item of blueprint {0} in inventory", blueprintName);
+			return;
+		}
+		BaseUnitEntity contextUnitForCheat = GetContextUnitForCheat();
+		if (contextUnitForCheat != null)
+		{
+			GameCommandHelper.EquipItemAutomatically(result, contextUnitForCheat);
+		}
+	}
+
+	[Cheat(Name = "unequip_item", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void UnequipItem(string blueprintName)
+	{
+		BlueprintItem itemBp = GetItemBlueprintByName(blueprintName);
+		if (itemBp == null)
+		{
+			return;
+		}
+		BaseUnitEntity contextUnitForCheat = GetContextUnitForCheat();
+		if (contextUnitForCheat != null)
+		{
+			ItemSlot itemSlot = contextUnitForCheat.Body.AllSlots.FirstItem((ItemSlot slot) => slot.MaybeItem?.Blueprint == itemBp);
+			if (itemSlot == null)
+			{
+				PFLog.SmartConsole.Log("No item of blueprint {0} in equipped slots", blueprintName);
+			}
+			else
+			{
+				itemSlot.RemoveItem(autoMerge: true, force: true);
+			}
+		}
+	}
+
+	[Cheat(Name = "augment_overdrive", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void OverdriveAugment(string blueprintName = null)
+	{
+		BaseUnitEntity contextUnitForCheat = GetContextUnitForCheat();
+		if (contextUnitForCheat == null)
+		{
+			return;
+		}
+		UnitAugments augments = contextUnitForCheat.Body.Augments;
+		if (augments == null)
+		{
+			PFLog.SmartConsole.Log("No UnitAugments on unit");
+			return;
+		}
+		if (string.IsNullOrWhiteSpace(blueprintName))
+		{
+			augments.OverdriveSlot = null;
+			return;
+		}
+		BlueprintItem itemBp = GetItemBlueprintByName(blueprintName);
+		if (itemBp != null)
+		{
+			AugmentSlot augmentSlot = augments.Slots.Values.FirstOrDefault((AugmentSlot slot) => slot.MaybeItem?.Blueprint == itemBp);
+			if (augmentSlot == null)
+			{
+				PFLog.SmartConsole.Log("No item of blueprint {0} in equipped slots", blueprintName);
+			}
+			else
+			{
+				augments.OverdriveSlot = augmentSlot.Blueprint;
+			}
+		}
+	}
+
+	[Cheat(Name = "augments_unlock_t2", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void UnlockAugmentsTier2()
+	{
+		Game.Instance.Player.PartyAugmentManager.SetCurrentAvailableTier(AugmentTier.Tier2);
+		PFLog.SmartConsole.Log("Augment tier 2 unlocked");
+	}
+
+	[Cheat(Name = "augments_lock_t2", ExecutionPolicy = ExecutionPolicy.PlayMode)]
+	public static void LockAugmentsTier2()
+	{
+		Game.Instance.Player.PartyAugmentManager.SetCurrentAvailableTier(AugmentTier.Tier1);
+		PFLog.SmartConsole.Log("Augment tier locked to tier 1");
+	}
+
+	private static BlueprintItem GetItemBlueprintByName(string blueprintName)
+	{
+		BlueprintItem blueprint = Utilities.GetBlueprint<BlueprintItem>(blueprintName);
+		if (blueprint == null)
+		{
+			PFLog.SmartConsole.Log("Cannot find item blueprint by name: {0}", blueprintName);
+			return null;
+		}
+		return blueprint;
+	}
+
+	private static BaseUnitEntity GetContextUnitForCheat()
+	{
+		BaseUnitEntity baseUnitEntity = Utilities.GetUnitUnderMouse() ?? (Game.Instance.Player.MainCharacter.Entity as BaseUnitEntity);
+		if (baseUnitEntity == null)
+		{
+			PFLog.SmartConsole.Log("No unit found to apply cheat to.");
+			return null;
+		}
+		return baseUnitEntity;
 	}
 }

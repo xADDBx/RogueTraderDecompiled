@@ -33,6 +33,8 @@ public class BlueprintCombatRoot : BlueprintScriptableObject
 
 	public int OverpenetrationReductionPerHit = 30;
 
+	public int RicochetRange = 5;
+
 	public int BurstNextBulletDodgePenalty = 20;
 
 	public int BaseActionPointsRegen = 4;

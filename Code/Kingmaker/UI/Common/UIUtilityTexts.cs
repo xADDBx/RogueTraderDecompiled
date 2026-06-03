@@ -5,6 +5,7 @@ using System.Text;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
@@ -25,6 +26,7 @@ using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Levelup.Obsolete.Blueprints.Spells;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Mechanics.Facts;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.UI;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.StatefulRandom;
@@ -232,9 +234,9 @@ public static class UIUtilityTexts
 			}
 			if (abilitydata.Blueprint.Range == AbilityRange.Weapon && abilitydata.Weapon != null)
 			{
-				return abilitydata.Blueprint.GetTarget(abilitydata.Weapon.AttackRange, abilitydata.Caster);
+				return abilitydata.Blueprint.GetTarget(abilitydata.Weapon.AttackRange, abilitydata);
 			}
-			return abilitydata.Blueprint.GetTarget(-1, abilitydata.Caster);
+			return abilitydata.Blueprint.GetTarget(-1, abilitydata);
 		}
 	}
 
@@ -413,7 +415,7 @@ public static class UIUtilityTexts
 		};
 	}
 
-	public static string UpdateDescriptionWithUIProperties(string description, MechanicEntity calculationSource, bool selectedUnitCalculateInInventory = false)
+	public static string UpdateDescriptionWithUIProperties(string description, MechanicEntity calculationSource, bool selectedUnitIsPreview = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -470,13 +472,13 @@ public static class UIUtilityTexts
 							property = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings p) => p.LinkKey == link);
 							if (property != null)
 							{
-								if (!selectedUnitCalculateInInventory)
+								if (!selectedUnitIsPreview)
 								{
 									link = FormatIndent(property.Description);
 								}
 								else
 								{
-									int? num6 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : unitFact.Blueprint)).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
+									int? num6 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : (unitFact?.Blueprint ?? blueprintUnitFact))).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
 									string text3 = ((num6 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
 									string glossaryMechanicsHTML2 = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
 									if (num6.HasValue)
@@ -525,17 +527,37 @@ public static class UIUtilityTexts
 		string itemOwnerName = UIUtilityItem.GetItemOwnerName(item);
 		if (item is ItemEntityWeapon || item is ItemEntityArmor || item is ItemEntityShield || item.Blueprint is BlueprintItemEquipment)
 		{
+			if (item.Blueprint is BlueprintItemAugment blueprint)
+			{
+				if (UIConfig.Instance.UIAugmentationsDefaultAugmentsReferences.IsDefaultAugment(item.Blueprint))
+				{
+					return (UIStrings.Instance.UIAugmentations.TooltipDefaultHeader, ItemHeaderType.CanNotEquip);
+				}
+				EquipmentRestrictionAugmentTier component = blueprint.GetComponent<EquipmentRestrictionAugmentTier>();
+				if (component != null && !component.CanBeEquippedBy(currentSelectedUnit))
+				{
+					return (UIStrings.Instance.UIAugmentations.TooltipAugmentTierRestriction, ItemHeaderType.CanNotEquip);
+				}
+				if (Game.Instance.Player.PartyAugmentManager.CurrentAvailableTier == AugmentTier.None)
+				{
+					return (UIStrings.Instance.UIAugmentations.TooltipAugmentNoThroneRestriction, ItemHeaderType.CanNotEquip);
+				}
+			}
 			if (item.Owner == null)
 			{
+				if (UIUtilityItem.IsTargetEquipmentSlotLocked(item))
+				{
+					return (UITooltips.CannotbeEquip, ItemHeaderType.CanNotEquip);
+				}
 				if (currentSelectedUnit.IsPet)
 				{
 					if (item.Blueprint is BlueprintItemEquipmentPetProtocol && !item.CanBeEquippedBy(currentSelectedUnit))
 					{
 						LocalizedString localizedString = UITooltips.PetCanNotEquip;
-						EquipmentRestrictionMasterHasFacts component = item.Blueprint.GetComponent<EquipmentRestrictionMasterHasFacts>();
-						if (component != null && !component.CanBeEquippedBy(currentSelectedUnit))
+						EquipmentRestrictionMasterHasFacts component2 = item.Blueprint.GetComponent<EquipmentRestrictionMasterHasFacts>();
+						if (component2 != null && !component2.CanBeEquippedBy(currentSelectedUnit))
 						{
-							BlueprintUnitFact blueprintUnitFact = component.Facts.FirstOrDefault((BlueprintUnitFact f) => f is BlueprintSoulMark);
+							BlueprintUnitFact blueprintUnitFact = component2.Facts.FirstOrDefault((BlueprintUnitFact f) => f is BlueprintSoulMark);
 							if (blueprintUnitFact == null || blueprintUnitFact.NameForAcronym == null)
 							{
 								return (localizedString, ItemHeaderType.CanNotEquip);

@@ -239,7 +239,19 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 	}
 
-	private bool CanEndTurn => CurrentUnit.GetCombatStateOptional()?.CanEndTurn() ?? true;
+	public bool CanEndTurn
+	{
+		get
+		{
+			if (CurrentUnit?.GetCombatStateOptional()?.CanEndTurn() ?? true)
+			{
+				return !AnyUnitIsBusy;
+			}
+			return false;
+		}
+	}
+
+	private bool AnyUnitIsBusy => AllUnits.Any((MechanicEntity u) => u.IsInCombat && u.IsBusy);
 
 	public IEnumerable<UnitSquad> UnitSquads => UnitsAndSquadsByInitiativeForCurrentTurn.OfType<UnitSquad>();
 
@@ -300,6 +312,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			{
 				h.HandleTurnBasedModeResumed();
 			});
+			MomentumController.AddUnitsToMomentumGroups(UnitsInCombat);
 		}
 	}
 
@@ -334,7 +347,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			return true;
 		}
-		BaseUnitEntity[] array = Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy).ToArray();
+		BaseUnitEntity[] array = Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy && !i.HasMechanicFeature(MechanicsFeatureType.CanDeployNearThisUnit)).ToArray();
 		foreach (BaseUnitEntity partyAndPet in Game.Instance.Player.PartyAndPets)
 		{
 			if (partyAndPet.CombatState.StartedCombatNearEnemy || partyAndPet.HasMechanicFeature(MechanicsFeatureType.CanDeployNearEnemy) || !partyAndPet.IsInGame || (bool)partyAndPet.Features.Hidden)
@@ -668,7 +681,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			StartUnitTurnInternal(entity, isTurnBased, interruptionData);
 		}
 		IsCurrentUnitHunter = (entity.GetProgressionOptional()?.AllCareerPaths?.Any(((BlueprintCareerPath Blueprint, int Rank) c) => c.Blueprint.IsHunter)).GetValueOrDefault();
-		if (GetInterruptingOrder(entity) > 0)
+		if (entity.Initiative.InterruptingOrder > 0)
 		{
 			if (interruptionData != null)
 			{
@@ -723,7 +736,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			Game.Instance.Player.UISettings.StopSpeedUp();
 		}
-		int interruptingOrder = GetInterruptingOrder(entity);
+		int interruptingOrder = entity.Initiative.InterruptingOrder;
 		if (interruptingOrder < 1 && entity.Initiative.WasPreparedForRound < CombatRound)
 		{
 			PrepareUnitForNewTurn(entity, isTurnBased);
@@ -751,7 +764,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			{
 				unit2.SnapToGrid();
 			}
-			if (unit is UnitSquad { IsInCombat: not false } unitSquad && unit.Initiative.InterruptingOrder == 0)
+			if (unit is UnitSquad { IsInCombat: not false } unitSquad)
 			{
 				unitSquad.Units.ForEach(delegate(UnitReference i)
 				{
@@ -771,7 +784,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 			}
 			foreach (MechanicEntity item in UnitsInCombat)
 			{
-				if (!HandleEntityCommands(item, isEndOfTurnRequested))
+				if (!TryInterruptAllCommands(item, isEndOfTurnRequested))
 				{
 					return;
 				}
@@ -785,7 +798,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		Data.EndTurnRequested = false;
 		if (unit != null)
 		{
-			if (GetInterruptingOrder(unit) > 0)
+			if (unit.Initiative.InterruptingOrder > 0)
 			{
 				unit.Initiative.IsInEndInterrupting = true;
 				unit.GetAbilityCooldownsOptional()?.RestoreCooldownData();
@@ -824,7 +837,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			NextTurnTB();
 		}
-		static bool HandleEntityCommands(MechanicEntity e, bool endOfTurnRequested)
+		static bool TryInterruptAllCommands(MechanicEntity e, bool endOfTurnRequested)
 		{
 			PartUnitCommands partUnitCommands = e?.GetCommandsOptional();
 			if (partUnitCommands != null)
@@ -872,7 +885,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	private void PrepareUnitForNewTurn(MechanicEntity entity, bool isTurnBased, bool setPreparedRound = true)
 	{
 		entity.Initiative.WasPreparedForRound = (setPreparedRound ? CombatRound : (CombatRound - 1));
-		entity.GetCombatStateOptional()?.PrepareForNewTurn(isTurnBased);
+		entity.GetCombatStateOptional()?.PrepareForNewTurn(isTurnBased, entity.Initiative.InterruptingOrder > 0);
 		if (isTurnBased)
 		{
 			entity.GetCommandsOptional()?.InterruptAllInterruptible();
@@ -1020,18 +1033,36 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			return;
 		}
+		Data.EndTurnRequested = false;
 		if (!(unit is UnitSquad) && unit.IsInSquad)
 		{
-			if (!unit.IsSquadLeader)
+			if (unit.IsSquadLeader)
 			{
-				return;
-			}
-			unit = unit.GetSquadOptional()?.Squad;
-			if (unit == null)
-			{
-				return;
+				InterruptCurrentTurnBySquad(unit, source, interruptionData);
 			}
 		}
+		else
+		{
+			InterruptCurrentTurnInternal(unit, source, interruptionData);
+		}
+	}
+
+	private void InterruptCurrentTurnBySquad(MechanicEntity squadLeader, MechanicEntity source, InterruptionData interruptionData)
+	{
+		UnitSquad unitSquad = squadLeader.GetSquadOptional()?.Squad;
+		if (unitSquad != null)
+		{
+			for (int num = unitSquad.Units.Count - 1; num >= 0; num--)
+			{
+				AbstractUnitEntity unit = unitSquad.Units[num].ToAbstractUnitEntity();
+				InterruptCurrentTurnInternal(unit, source, interruptionData);
+			}
+			InterruptCurrentTurnInternal(unitSquad, source, interruptionData);
+		}
+	}
+
+	private void InterruptCurrentTurnInternal(MechanicEntity unit, MechanicEntity source, InterruptionData interruptionData)
+	{
 		using (ContextData<InterruptTurnData>.Request().Setup(unit, source))
 		{
 			EventBus.RaiseEvent((IMechanicEntity)unit, (Action<IInterruptCurrentTurnHandler>)delegate(IInterruptCurrentTurnHandler h)
@@ -1041,7 +1072,6 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		}
 		TurnOrder.InterruptCurrentUnit(unit);
 		StartUnitTurn(unit, isTurnBased: true, interruptionData);
-		Data.EndTurnRequested = false;
 	}
 
 	public static bool IsInTurnBasedCombat()
@@ -1090,7 +1120,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			partyAndPet.GetCombatStateOptional()?.SetBluePoint(BlueprintWarhammerRoot.Instance.CombatRoot.DistanceInPreparationTurn);
 		}
-		BaseUnitEntity[] array = Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy).ToArray();
+		BaseUnitEntity[] array = Game.Instance.State.AllBaseAwakeUnits.Where((BaseUnitEntity i) => i.IsInCombat && i.IsPlayerEnemy && !i.HasMechanicFeature(MechanicsFeatureType.CanDeployNearThisUnit)).ToArray();
 		foreach (BaseUnitEntity partyAndPet2 in Game.Instance.Player.PartyAndPets)
 		{
 			BaseUnitEntity[] array2 = array;
@@ -1216,14 +1246,5 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 		{
 			PFLog.Default.ExceptionWithReport(exception, null);
 		}
-	}
-
-	private static int GetInterruptingOrder(MechanicEntity entity)
-	{
-		if (!entity.IsInSquad)
-		{
-			return entity.Initiative.InterruptingOrder;
-		}
-		return (entity.GetSquadOptional()?.Squad?.Initiative.InterruptingOrder).GetValueOrDefault();
 	}
 }

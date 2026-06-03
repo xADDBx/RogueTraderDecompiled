@@ -25,4 +25,6 @@ public class UIColonyProjectsRequirements
 	public LocalizedString RequireStatSecurity;
 
 	public LocalizedString ProfitFactorInsteadResource;
+
+	public LocalizedString RequirementCombativityCost;
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Enums;
@@ -59,6 +60,17 @@ public static class TypeSorter
 		ItemsItemType.StarshipAugerArray,
 		ItemsItemType.StarshipWeapon,
 		ItemsItemType.StarshipArsenal
+	};
+
+	private static readonly List<ItemsFilterType> AugmentSortingOrder = new List<ItemsFilterType>
+	{
+		ItemsFilterType.AugmentationsEyes,
+		ItemsFilterType.AugmentationsItems,
+		ItemsFilterType.AugmentationsTorso,
+		ItemsFilterType.AugmentationsArms,
+		ItemsFilterType.AugmentationsSystems,
+		ItemsFilterType.AugmentationsMisc,
+		ItemsFilterType.AugmentationsLegs
 	};
 
 	private static readonly List<ItemsItemOrigin> OriginSortingOrder = new List<ItemsItemOrigin>
@@ -129,12 +141,12 @@ public static class TypeSorter
 		case ItemsItemType.Weapon:
 			if (item.Blueprint is BlueprintItemWeapon blueprintItemWeapon)
 			{
-				bool num3 = blueprintItemWeapon.Category == WeaponCategory.Melee;
-				int num4 = (blueprintItemWeapon.IsTwoHanded ? 1 : 0);
-				List<WeaponFamily> list = (num3 ? MeleeWeaponSortingOrder : RangeWeaponSortingOrder);
-				int num5 = (num3 ? (num4 * (MeleeWeaponSortingOrder.Count + 1)) : (num4 * (RangeWeaponSortingOrder.Count + 1) + Enum.GetValues(typeof(WeaponHoldingType)).Length * (MeleeWeaponSortingOrder.Count + 1)));
-				int num6 = list.IndexOf(blueprintItemWeapon.Family);
-				num = ((num6 >= 0) ? (num6 + num5) : (list.Count + num5));
+				bool num7 = blueprintItemWeapon.Category == WeaponCategory.Melee;
+				int num8 = (blueprintItemWeapon.IsTwoHanded ? 1 : 0);
+				List<WeaponFamily> list = (num7 ? MeleeWeaponSortingOrder : RangeWeaponSortingOrder);
+				int num9 = (num7 ? (num8 * (MeleeWeaponSortingOrder.Count + 1)) : (num8 * (RangeWeaponSortingOrder.Count + 1) + Enum.GetValues(typeof(WeaponHoldingType)).Length * (MeleeWeaponSortingOrder.Count + 1)));
+				int num10 = list.IndexOf(blueprintItemWeapon.Family);
+				num = ((num10 >= 0) ? (num10 + num9) : (list.Count + num9));
 			}
 			num2 = 0;
 			break;
@@ -145,8 +157,8 @@ public static class TypeSorter
 		case ItemsItemType.Neck:
 		case ItemsItemType.Shoulders:
 		{
-			int num9 = EquipSortingOrder.IndexOf(itemType);
-			num = ((num9 >= 0) ? num9 : EquipSortingOrder.Count);
+			int num3 = EquipSortingOrder.IndexOf(itemType);
+			num = ((num3 >= 0) ? num3 : EquipSortingOrder.Count);
 			num2 = 2;
 			break;
 		}
@@ -155,9 +167,9 @@ public static class TypeSorter
 		case ItemsItemType.PetProtocolEagle:
 		case ItemsItemType.PetProtocolSkulls:
 		{
-			int num7 = PetProtocolSortingOrder.IndexOf(itemType);
+			int num4 = PetProtocolSortingOrder.IndexOf(itemType);
 			int rarity = (int)item.Blueprint.Rarity;
-			num = ((num7 >= 0) ? (num7 + rarity) : (PetProtocolSortingOrder.Count + rarity));
+			num = ((num4 >= 0) ? (num4 + rarity) : (PetProtocolSortingOrder.Count + rarity));
 			num2 = 3;
 			break;
 		}
@@ -175,17 +187,25 @@ public static class TypeSorter
 		case ItemsItemType.StarshipArmorPlating:
 		case ItemsItemType.StarshipArsenal:
 		{
-			int num8 = ShipSortingOrder.IndexOf(itemType);
-			if (num8 < 0)
+			int num6 = ShipSortingOrder.IndexOf(itemType);
+			if (num6 < 0)
 			{
-				num8 = ShipSortingOrder.Count + Enum.GetNames(typeof(StarshipWeaponType)).Length;
+				num6 = ShipSortingOrder.Count + Enum.GetNames(typeof(StarshipWeaponType)).Length;
 			}
 			if (itemType == ItemsItemType.StarshipWeapon && item.Blueprint is BlueprintStarshipWeapon blueprintStarshipWeapon)
 			{
-				num8 = (int)(num8 + blueprintStarshipWeapon.WeaponType);
+				num6 = (int)(num6 + blueprintStarshipWeapon.WeaponType);
 			}
-			num = num8;
+			num = num6;
 			num2 = 7;
+			break;
+		}
+		case ItemsItemType.Augment:
+		{
+			ItemsFilterType item2 = (item.Blueprint as BlueprintItemAugment)?.AugmentSlot?.AugmentFilterType ?? ItemsFilterType.AugmentationsItems;
+			int num5 = AugmentSortingOrder.IndexOf(item2);
+			num = ((num5 >= 0) ? num5 : AugmentSortingOrder.Count);
+			num2 = 8;
 			break;
 		}
 		default:

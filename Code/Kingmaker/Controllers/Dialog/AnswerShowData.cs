@@ -29,8 +29,8 @@ public class AnswerShowData : IDialogShowData
 		if (dialogType == DialogType.Common || dialogType == DialogType.StarSystemEvent)
 		{
 			string arg = ColorUtility.ToHtmlStringRGB(CharacterBlueprint.Color * colors.NameColorMultiplyer);
-			return string.Format(DialogFormats.AnswerFormatWithColorName, arg, CharacterName, Answer.Text.Text);
+			return string.Format(DialogFormats.AnswerFormatWithColorName, arg, CharacterName, Answer.DisplayText);
 		}
-		return string.Format(DialogFormats.AnswerFormatWithoutName, Answer.Text);
+		return string.Format(DialogFormats.AnswerFormatWithoutName, Answer.DisplayText);
 	}
 }

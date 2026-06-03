@@ -4,6 +4,7 @@ using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.Controllers.Units;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -21,6 +22,7 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Kingmaker;
+using Owlcat.Runtime.Core.Utility.EditorAttributes;
 using Pathfinding;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -52,6 +54,13 @@ public class ContextActionJumpToTarget : ContextActionMove
 	[SerializeField]
 	private bool m_CastOnSelf;
 
+	[SerializeField]
+	private UnitAnimationJumpSubType m_JumpSubType;
+
+	[InfoBox("Used only when animation doesn't exist or animation action has Looped Fly flag set.")]
+	[SerializeField]
+	private float m_Speed = 5f;
+
 	public bool OverrideWeaponOfTheSpellWithCurrentWeapon;
 
 	public bool UseSpecificWeaponClassification;
@@ -69,14 +78,12 @@ public class ContextActionJumpToTarget : ContextActionMove
 	protected override void RunAction()
 	{
 		CustomGridNodeBase startPoint = base.Caster.Position.GetNearestNodeXZ();
-		CustomGridNodeBase endPoint = GetEndNode(m_TargetPoint.GetValue(), base.Caster, base.Caster.Position);
-		EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
-		{
-			h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), endPoint?.Vector3Position ?? m_TargetPoint.GetValue(), m_directJump, base.Caster, base.Caster, useAttack: false);
-		});
+		Vector3 targetPointValue = m_TargetPoint.GetValue();
+		CustomGridNodeBase endPoint = GetEndNode(targetPointValue, base.Caster, base.Caster.Position);
+		UnitJumpMoveController.TryStartJump(base.Caster, startPoint.CellDistanceTo(endPoint), endPoint?.Vector3Position ?? targetPointValue, m_directJump, m_JumpSubType, m_Speed);
 		EventBus.RaiseEvent(delegate(IUnitJumpHandler h)
 		{
-			h.HandleUnitJump(startPoint.CellDistanceTo(endPoint), startPoint?.Vector3Position ?? m_TargetPoint.GetValue(), endPoint?.Vector3Position ?? m_TargetPoint.GetValue(), base.Caster, base.Context.SourceAbility);
+			h.HandleUnitJump(startPoint.CellDistanceTo(endPoint), startPoint?.Vector3Position ?? targetPointValue, endPoint?.Vector3Position ?? targetPointValue, base.Caster, base.Context.SourceAbility);
 		});
 		if (Spell == null)
 		{
@@ -89,16 +96,15 @@ public class ContextActionJumpToTarget : ContextActionMove
 		}
 		PartUnitCommands commandsOptional = baseUnitEntity.GetCommandsOptional();
 		AbilityData abilityData = CreateAbility(m_Spell, base.Context.SourceAbilityContext);
-		ItemEntityWeapon itemEntityWeapon = base.Context.SourceAbilityContext?.Ability?.Weapon;
 		ItemEntityWeapon maybeWeapon = baseUnitEntity.Body.PrimaryHand.MaybeWeapon;
 		ItemEntityWeapon maybeWeapon2 = baseUnitEntity.Body.SecondaryHand.MaybeWeapon;
-		itemEntityWeapon = ((!UseSpecificWeaponClassification) ? (maybeWeapon ?? maybeWeapon2) : ((maybeWeapon?.Blueprint.Classification == Classification) ? maybeWeapon : maybeWeapon2));
+		ItemEntityWeapon overrideWeapon = ((!UseSpecificWeaponClassification) ? (maybeWeapon ?? maybeWeapon2) : ((maybeWeapon?.Blueprint.Classification == Classification) ? maybeWeapon : maybeWeapon2));
 		AnimationActionHandle animationActionHandle = base.Caster.MaybeAnimationManager?.CurrentAction;
 		if (animationActionHandle != null && animationActionHandle.Action is UnitAnimationAction { Type: UnitAnimationType.LocoMotion })
 		{
 			animationActionHandle = null;
 		}
-		abilityData.OverrideWeapon = itemEntityWeapon;
+		abilityData.OverrideWeapon = overrideWeapon;
 		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(abilityData, m_CastOnSelf ? ((TargetWrapper)baseUnitEntity) : base.Context.MainTarget)
 		{
 			FreeAction = true,
@@ -120,19 +126,19 @@ public class ContextActionJumpToTarget : ContextActionMove
 		CustomGridNodeBase startPoint = casterPosition.GetNearestNodeXZ();
 		CustomGridNodeBase nearestNodeXZ = targetPosition.GetNearestNodeXZ();
 		int num = m_Cells.Calculate(base.Context);
-		CustomGridNodeBase customGridNodeBase = (m_directJump ? targetPosition.GetNearestNodeXZ() : (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ()));
+		CustomGridNodeBase customGridNodeBase = (m_directJump ? nearestNodeXZ : (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ()));
 		if (m_EndInTargetPoint && startPoint.CellDistanceTo(nearestNodeXZ) < num)
 		{
 			customGridNodeBase = nearestNodeXZ;
 		}
-		if (!caster.CanStandHere(customGridNodeBase) || (!CanJumpInPlace && customGridNodeBase == startPoint))
+		if (!caster.CanStandHere(customGridNodeBase) || (!CanJumpInPlace && customGridNodeBase == startPoint) || startPoint.Area != customGridNodeBase.Area)
 		{
 			List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
 			IntRect rect = customGridNodeBase.GetUnit()?.SizeRect ?? SizePathfindingHelper.GetRectForSize(Size.Medium);
 			BaseUnitEntity unit = customGridNodeBase.GetUnit();
 			foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(customGridNodeBase, rect, Math.Max(caster.SizeRect.Height, caster.SizeRect.Width)))
 			{
-				if (!caster.CanStandHere(item) || (!CanJumpInPlace && item == startPoint))
+				if (!caster.CanStandHere(item) || (!CanJumpInPlace && item == startPoint) || startPoint.Area != item.Area)
 				{
 					continue;
 				}
@@ -153,7 +159,7 @@ public class ContextActionJumpToTarget : ContextActionMove
 					}
 				}
 			}
-			IOrderedEnumerable<CustomGridNodeBase> source = list.OrderBy((CustomGridNodeBase x) => startPoint.CellDistanceTo(x));
+			IOrderedEnumerable<CustomGridNodeBase> source = list.OrderBy((CustomGridNodeBase x) => (startPoint.Vector3Position - x.Vector3Position).sqrMagnitude);
 			customGridNodeBase = ((source.Count() > 1) ? source.FirstOrDefault((CustomGridNodeBase node) => node != caster.GetNearestNodeXZ()) : source.FirstOrDefault());
 		}
 		return customGridNodeBase;

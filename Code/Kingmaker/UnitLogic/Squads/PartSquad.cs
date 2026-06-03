@@ -16,6 +16,9 @@ public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 	[JsonProperty]
 	private string m_Id;
 
+	[JsonProperty]
+	private bool m_IsLeader;
+
 	private UnitSquad m_Squad;
 
 	public bool SeparateUnitsAfterLeaderDeath;
@@ -51,9 +54,13 @@ public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 		{
 			if (m_Squad != null)
 			{
-				return Leader == base.Owner;
+				return m_Squad.Leader == base.Owner;
 			}
 			return false;
+		}
+		set
+		{
+			m_IsLeader = value;
 		}
 	}
 
@@ -80,7 +87,7 @@ public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 			return m_Squad;
 		}
 		m_Squad = UnitSquad.GetOrCreate(Id);
-		m_Squad.Add(base.Owner);
+		m_Squad.Add(base.Owner, m_IsLeader);
 		return m_Squad;
 	}
 
@@ -114,6 +121,7 @@ public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
 		result.Append(m_Id);
+		result.Append(ref m_IsLeader);
 		return result;
 	}
 }

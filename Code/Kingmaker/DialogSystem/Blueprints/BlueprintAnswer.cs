@@ -11,6 +11,7 @@ using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.DialogSystem.Interfaces;
 using Kingmaker.DialogSystem.State;
 using Kingmaker.ElementsSystem;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Globalmap.Colonization;
@@ -31,8 +32,9 @@ namespace Kingmaker.DialogSystem.Blueprints;
 [TypeId("df78945bb9f434e40b897758499cb714")]
 public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILocalizedStringHolder
 {
+	[SerializeField]
 	[StringCreateWindow(StringCreateWindowAttribute.StringType.ByProperty)]
-	public LocalizedString Text;
+	private LocalizedString Text;
 
 	public CueSelection NextCue;
 
@@ -75,7 +77,16 @@ public class BlueprintAnswer : BlueprintAnswerBase, ISoulMarkShiftProvider, ILoc
 	[NotNull]
 	public SoulMarkShift SoulMarkShift = new SoulMarkShift();
 
-	public string DisplayText => Text;
+	public string DisplayText
+	{
+		get
+		{
+			using (ContextData<AnswerDataContext>.Request().Setup(this))
+			{
+				return Text;
+			}
+		}
+	}
 
 	public bool HasShowCheck => ShowCheck.Type != StatType.Unknown;
 

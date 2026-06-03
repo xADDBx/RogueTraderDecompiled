@@ -1,3 +1,4 @@
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 
@@ -19,11 +20,15 @@ public class TooltipBrickEntityHeaderVM : TooltipBaseBrickVM
 
 	public readonly bool HasUpgrade;
 
+	public readonly bool IsAugment;
+
+	public readonly TooltipTemplateItem ItemTooltip;
+
 	public TooltipBrickEntityHeaderVM()
 	{
 	}
 
-	public TooltipBrickEntityHeaderVM(string mainTitle, Sprite image, bool hasUpgrade, string title, string leftLabel, string rightLabel, string rightLabelClassification)
+	public TooltipBrickEntityHeaderVM(string mainTitle, Sprite image, bool hasUpgrade, string title, string leftLabel, string rightLabel, string rightLabelClassification, bool isAugment = false, TooltipTemplateItem augmentTooltip = null)
 	{
 		MainTitle = mainTitle;
 		Image = image;
@@ -32,5 +37,7 @@ public class TooltipBrickEntityHeaderVM : TooltipBaseBrickVM
 		LeftLabel = leftLabel;
 		RightLabel = rightLabel;
 		RightLabelClassification = rightLabelClassification;
+		IsAugment = isAugment;
+		ItemTooltip = augmentTooltip;
 	}
 }

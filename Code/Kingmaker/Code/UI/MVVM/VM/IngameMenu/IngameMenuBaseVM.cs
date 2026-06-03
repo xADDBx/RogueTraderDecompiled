@@ -35,6 +35,8 @@ public abstract class IngameMenuBaseVM : BaseDisposable, IViewModel, IBaseDispos
 
 	public readonly ReactiveProperty<bool> IsFormationActive = new ReactiveProperty<bool>();
 
+	public readonly ReactiveProperty<bool> IsAugmentationsActive = new ReactiveProperty<bool>();
+
 	private bool m_IsExplorationOpened;
 
 	private bool m_IsWarpTravelInProgress;
@@ -69,6 +71,7 @@ public abstract class IngameMenuBaseVM : BaseDisposable, IViewModel, IBaseDispos
 	{
 		if (Game.Instance.CurrentlyLoadedArea != null)
 		{
+			IsAugmentationsActive.Value = Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.Augmentations;
 			IsInventoryActive.Value = Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.Inventory;
 			IsJournalActive.Value = Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.Journal;
 			IsLocalMapActive.Value = Game.Instance.RootUiContext.CurrentServiceWindow == ServiceWindowsType.LocalMap;

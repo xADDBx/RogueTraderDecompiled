@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.View.Overtips.MapObject;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.MapObject.Collections;
@@ -40,7 +41,7 @@ public class LocatorOvertipsCollectionView : ViewBase<LocatorOvertipsCollectionV
 
 	public void Update()
 	{
-		if (base.ViewModel?.Overtips == null)
+		if (CutsceneUIState.IsCutsceneActive.Value || base.ViewModel?.Overtips == null)
 		{
 			return;
 		}

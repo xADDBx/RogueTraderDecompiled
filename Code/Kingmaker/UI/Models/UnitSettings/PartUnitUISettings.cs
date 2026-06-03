@@ -13,6 +13,7 @@ using Kingmaker.Settings;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UI.Models.UnitSettings.Blueprints;
 using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility.DotNetExtensions;
 using Newtonsoft.Json;
@@ -325,6 +326,28 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		SetSlot(new AbilityWrapper(ability).CreateSlot(abilityOwner), index);
 	}
 
+	private void PlaceAtDefaultSlotWithSwap(MechanicActionBarSlot slot, int targetIndex)
+	{
+		EnsureSlotsTillIndex(targetIndex);
+		MechanicActionBarSlot mechanicActionBarSlot = Slots[targetIndex];
+		if (!(mechanicActionBarSlot is MechanicActionBarSlotEmpty))
+		{
+			for (int i = 0; i < 100; i++)
+			{
+				if (i != targetIndex)
+				{
+					EnsureSlotsTillIndex(i);
+					if (Slots[i] is MechanicActionBarSlotEmpty)
+					{
+						SetSlot(mechanicActionBarSlot, i);
+						break;
+					}
+				}
+			}
+		}
+		SetSlot(slot, targetIndex);
+	}
+
 	private bool TrySetSlotInternal(MechanicActionBarSlot slot)
 	{
 		int i = 0;
@@ -439,7 +462,12 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 				Ability ability = item.Ability;
 				if (ability == null || !ability.Data.SourceItemIsWeapon)
 				{
-					if (!TrySetSlotInternal(item.CreateSlot(base.Owner)))
+					MechanicActionBarSlot mechanicActionBarSlot = item.CreateSlot(base.Owner);
+					if (item.Blueprint is BlueprintAbility { DefaultSlotIndex: >=0 } blueprintAbility && mechanicActionBarSlot.KeyName != null && !PreferredAbilitiesPositions.ContainsKey(mechanicActionBarSlot.KeyName))
+					{
+						PlaceAtDefaultSlotWithSwap(mechanicActionBarSlot, blueprintAbility.DefaultSlotIndex);
+					}
+					else if (!TrySetSlotInternal(mechanicActionBarSlot))
 					{
 						break;
 					}
@@ -497,12 +525,22 @@ public class PartUnitUISettings : BaseUnitPart, IHashable
 		return list.Select((AbilityWrapper a) => a.CreateSlot(base.Owner)).ToList();
 	}
 
+	public MechanicActionBarSlot GetAugmentsOverdriveSlotSlot()
+	{
+		_ = base.Owner.Body.Augments.OverdriveAbility;
+		if (base.Owner.Body.Augments.OverdriveAbility != null)
+		{
+			return new AbilityWrapper(base.Owner.Body.Augments.OverdriveAbility).CreateSlot(base.Owner);
+		}
+		return new MechanicActionBarSlotEmpty();
+	}
+
 	private void CollectNewAbilities(BaseUnitEntity unit, List<AbilityWrapper> results, bool isMomentum)
 	{
 		foreach (Ability item in unit.Abilities.Visible)
 		{
 			IItemEntity sourceItem = item.SourceItem;
-			if (!(sourceItem is ItemEntityWeapon) && !(sourceItem is ItemEntityShield) && item.Blueprint.IsMomentum == isMomentum)
+			if (!(sourceItem is ItemEntityWeapon) && !(sourceItem is ItemEntityShield) && (base.Owner.Body.Augments.OverdriveAbility == null || item != base.Owner.Body.Augments.OverdriveAbility) && item.Blueprint.IsMomentum == isMomentum)
 			{
 				ActionPanelLogic component = item.Blueprint.GetComponent<ActionPanelLogic>();
 				if ((isMomentum || component == null || component.AutoFillConditions.Check()) && (isMomentum || !m_AlreadyAutomaticallyAdded.Contains(item.Blueprint, (ItemEntity)item.SourceItem)) && (isMomentum || !m_RemovedFromActionBar.Contains(item.Blueprint, (ItemEntity)item.SourceItem)))

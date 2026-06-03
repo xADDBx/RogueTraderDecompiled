@@ -11,6 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("dcf580788bcc4b01be0853ad7f2b44cd")]
 public class FakeCover : UnitFactComponentDelegate, ITargetRulebookHandler<RuleCalculateHitChances>, IRulebookHandler<RuleCalculateHitChances>, ISubscriber, ITargetRulebookSubscriber, IHashable

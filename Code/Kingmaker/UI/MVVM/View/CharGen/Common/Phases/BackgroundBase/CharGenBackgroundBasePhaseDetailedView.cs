@@ -4,6 +4,7 @@ using Kingmaker.Code.UI.MVVM.View.InfoWindow;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.MVVM.View.CharGen.Console;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.BackgroundBase;
+using Kingmaker.UI.MVVM.VM.CharGen.Phases.Homeworld.ChildPhases;
 using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -27,6 +28,9 @@ public class CharGenBackgroundBasePhaseDetailedView : CharGenPhaseDetailedView<C
 
 	[SerializeField]
 	private InfoSectionView m_SecondaryInfoView;
+
+	[SerializeField]
+	private GameObject m_HeaderObj;
 
 	[Header("Selector")]
 	[SerializeField]
@@ -85,6 +89,17 @@ public class CharGenBackgroundBasePhaseDetailedView : CharGenPhaseDetailedView<C
 		{
 			CanGoBackOnDecline.Value = !value;
 		}));
+		if (!(m_HeaderObj == null))
+		{
+			if (base.ViewModel is CharGenForgeHomeworldChildPhaseVM)
+			{
+				m_HeaderObj.SetActive(value: false);
+			}
+			else
+			{
+				m_HeaderObj.SetActive(value: true);
+			}
+		}
 	}
 
 	protected override void DestroyViewImplementation()

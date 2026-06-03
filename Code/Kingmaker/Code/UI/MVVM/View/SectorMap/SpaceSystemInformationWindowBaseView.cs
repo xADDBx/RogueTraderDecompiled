@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.SectorMap;
 using Kingmaker.Globalmap.Blueprints.Exploration;
@@ -228,8 +227,8 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 
 	private void AddQuestsInfo()
 	{
-		List<QuestObjective> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(base.ViewModel.SectorMapObjectEntity.Value.View);
-		List<QuestObjective> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(base.ViewModel.Area);
+		List<QuestBookEntityEntry> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(base.ViewModel.SectorMapObjectEntity.Value.View);
+		List<QuestBookEntityEntry> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(base.ViewModel.Area);
 		bool flag = (questsForSystem != null && !questsForSystem.Empty()) || (questsForSpaceSystem != null && !questsForSpaceSystem.Empty());
 		m_QuestsLabel.gameObject.transform.parent.gameObject.SetActive(flag);
 		m_QuestName.gameObject.transform.parent.gameObject.SetActive(flag);
@@ -246,12 +245,12 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 
 	private void AddRumoursInfo()
 	{
-		List<QuestObjective> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(base.ViewModel.SectorMapObjectEntity.Value.View);
+		List<QuestBookEntityEntry> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(base.ViewModel.SectorMapObjectEntity.Value.View);
 		m_RumoursLabel.gameObject.transform.parent.gameObject.SetActive(!rumoursForSystem.Empty() && rumoursForSystem != null);
 		m_RumourName.gameObject.transform.parent.gameObject.SetActive(!rumoursForSystem.Empty() && rumoursForSystem != null);
 		if (rumoursForSystem != null && rumoursForSystem.Any())
 		{
-			List<string> list = rumoursForSystem.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestObjective rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
+			List<string> list = rumoursForSystem.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestBookEntityEntry rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
 			if (list.Any())
 			{
 				string text = string.Join(Environment.NewLine, list);
@@ -262,11 +261,11 @@ public class SpaceSystemInformationWindowBaseView : ViewBase<SpaceSystemInformat
 
 	private void AddSectorMapRumoursInRangeInfo()
 	{
-		List<QuestObjective> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(base.ViewModel.SectorMapObjectEntity.Value.View);
+		List<QuestBookEntityEntry> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(base.ViewModel.SectorMapObjectEntity.Value.View);
 		m_GlobalMapRumourInRange.gameObject.transform.parent.gameObject.SetActive(!rumoursForSectorMap.Empty() && rumoursForSectorMap != null);
 		if (rumoursForSectorMap != null && rumoursForSectorMap.Any())
 		{
-			List<string> list = rumoursForSectorMap.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestObjective rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
+			List<string> list = rumoursForSectorMap.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestBookEntityEntry rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
 			if (list.Any())
 			{
 				string text = string.Join(", ", list);

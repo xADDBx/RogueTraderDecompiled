@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.AreaLogic.SummonPool;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
@@ -356,7 +355,7 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 		if (!GetActiveAdditionalMechanics(Game.Instance.CurrentlyLoadedArea).ToHashSet().SetEquals(equals))
 		{
 			PFLog.Etudes.Log("Etude system causing mechanics reload");
-			Game.ReloadAreaMechanic(clearFx: false);
+			Game.ReloadAreaMechanics(clearFx: false);
 			LoadingProcess.Instance.StartLoadingProcess(delegate
 			{
 				EventBus.RaiseEvent(delegate(IEtudesUpdateHandler h)
@@ -506,26 +505,6 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 	{
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
-	{
-		MarkConditionsDirty();
-	}
-
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
-	{
-		MarkConditionsDirty();
-	}
-
-	public void HandleQuestObjectiveCompleted(QuestObjective objective)
-	{
-		MarkConditionsDirty();
-	}
-
-	public void HandleQuestObjectiveFailed(QuestObjective objective)
-	{
-		MarkConditionsDirty();
-	}
-
 	public void OnTimeOfDayChanged()
 	{
 		MarkConditionsDirty();
@@ -623,6 +602,26 @@ public class EtudesSystem : Entity, IUnlockHandler, ISubscriber, IUnlockValueHan
 			}
 			return true;
 		}
+	}
+
+	public void HandleQuestObjectiveStarted(QuestBookEntityEntry objective, bool silentStart = false)
+	{
+		MarkConditionsDirty();
+	}
+
+	public void HandleQuestObjectiveBecameVisible(QuestBookEntityEntry objective, bool silentStart = false)
+	{
+		MarkConditionsDirty();
+	}
+
+	public void HandleQuestObjectiveCompleted(QuestBookEntityEntry objective)
+	{
+		MarkConditionsDirty();
+	}
+
+	public void HandleQuestObjectiveFailed(QuestBookEntityEntry objective)
+	{
+		MarkConditionsDirty();
 	}
 
 	public override Hash128 GetHash128()

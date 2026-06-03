@@ -198,7 +198,7 @@ public class WaaaghRenderer : ScriptableRenderer
 		m_CameraMotionVectorsPass = new CameraMotionVectorsPass(RenderPassEvent.AfterRenderingSkybox, m_CameraMotionVectorsMaterial);
 		m_ObjectMotionVectorsPass = new ObjectMotionVectorsPass(RenderPassEvent.AfterRenderingSkybox, m_ObjectMotionVectorsMaterial);
 		m_StochasticSSRPass = new StochasticScreenSpaceReflectionsPass(RenderPassEvent.AfterRenderingSkybox, settings.Shaders.StochasticScreenSpaceReflectionsCS, m_BlitMaterial, m_SsrResolveMaterial, WaaaghPipeline.Asset.Textures);
-		m_DeferredReflectionsPass = new DeferredReflectionsPass(RenderPassEvent.AfterRenderingSkybox, m_DeferredReflectionsMaterial, settings.Shaders.BilateralUpsampleCS);
+		m_DeferredReflectionsPass = new DeferredReflectionsPass(RenderPassEvent.AfterRenderingSkybox, m_DeferredReflectionsMaterial, settings.Shaders.BilateralUpsampleCS, WaaaghPipeline.Asset.UseReflectionProbes);
 		m_FogPass = new FogPass(RenderPassEvent.AfterRenderingSkybox, m_FogMaterial);
 		m_DrawTransparentPass = new DrawObjectsPass(RenderPassEvent.BeforeRenderingTransparents, DrawObjectsPass.RendererListType.Transparent);
 		m_DrawColorPyramidAfterTransparentPass = new DrawColorPyramidPass(RenderPassEvent.BeforeRenderingTransparents, ColorPyramidType.TransparentDistortion, m_ColorPyramidMaterial, m_BlitMaterial);

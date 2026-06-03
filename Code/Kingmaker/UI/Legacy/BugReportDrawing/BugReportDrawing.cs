@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.View.BugReport;
+using Kingmaker.UI.Pointer;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.RewiredCursor;
 using UnityEngine;
@@ -46,7 +47,7 @@ public class BugReportDrawing
 		bool flag = (Game.Instance.IsControllerMouse ? Input.GetMouseButton(0) : GamePad.Instance.Player.GetButton(8));
 		if (flag && !m_NoDrawingOnCurrentDrag)
 		{
-			Vector2 vector = (Game.Instance.IsControllerMouse ? Input.mousePosition : UICamera.Instance.WorldToScreenPoint(UIKitRewiredCursorController.Cursor.transform.position));
+			Vector2 vector = (Game.Instance.IsControllerMouse ? CursorController.CursorPosition : ((Vector2)UICamera.Instance.WorldToScreenPoint(UIKitRewiredCursorController.Cursor.transform.position)));
 			if (CheckHitOnImage(vector))
 			{
 				m_CurrentBrush(vector);

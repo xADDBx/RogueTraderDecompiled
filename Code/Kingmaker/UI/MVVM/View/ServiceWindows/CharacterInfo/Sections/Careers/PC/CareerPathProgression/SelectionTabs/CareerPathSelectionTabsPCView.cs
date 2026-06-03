@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.SelectionTabs;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.PC.CareerPathProgression.SelectionTabs;
@@ -51,5 +52,22 @@ public class CareerPathSelectionTabsPCView : CareerPathSelectionTabsCommonView
 			m_RankEntryFeatureSelectionPCView.Bind(currentItem as RankEntrySelectionVM);
 			break;
 		}
+		if (!(currentItem is RankEntrySelectionVM selectionVM))
+		{
+			m_GroupByButtonsObject.SetActive(value: false);
+		}
+		else
+		{
+			m_GroupByButtonsObject?.Or(null).SetActive(GetOrderButtonsState(selectionVM));
+		}
+	}
+
+	private bool GetOrderButtonsState(RankEntrySelectionVM selectionVM)
+	{
+		if (m_RankEntryFeatureSelectionPCView.gameObject.activeInHierarchy)
+		{
+			return selectionVM.FeaturesFilterVM != null;
+		}
+		return false;
 	}
 }

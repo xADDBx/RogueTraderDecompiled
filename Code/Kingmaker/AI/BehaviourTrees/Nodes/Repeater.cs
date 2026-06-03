@@ -2,33 +2,41 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class Repeater : Decorator
 {
-	private readonly int countLimit;
+	public int CountLimit { get; }
 
-	private int count;
+	public int Count { get; private set; }
 
-	private bool shouldInitChild;
+	public bool ShouldInitChild { get; private set; }
 
 	public Repeater(BehaviourTreeNode node, int limit)
 		: base(node)
 	{
-		countLimit = limit;
-		count = 0;
-		shouldInitChild = true;
+		CountLimit = limit;
+		Count = 0;
+		ShouldInitChild = true;
+	}
+
+	public Repeater(string debugDescription, BehaviourTreeNode node, int limit)
+		: base(debugDescription, node)
+	{
+		CountLimit = limit;
+		Count = 0;
+		ShouldInitChild = true;
 	}
 
 	protected override Status TickInternal(Blackboard blackboard)
 	{
-		while (count < countLimit)
+		while (Count < CountLimit)
 		{
-			if (shouldInitChild)
+			if (ShouldInitChild)
 			{
-				shouldInitChild = false;
-				child.Init();
+				ShouldInitChild = false;
+				base.Child.Init();
 			}
-			if (child.Tick(blackboard) != Status.Running)
+			if (base.Child.Tick(blackboard) != Status.Running)
 			{
-				count++;
-				shouldInitChild = true;
+				Count++;
+				ShouldInitChild = true;
 				continue;
 			}
 			return Status.Running;

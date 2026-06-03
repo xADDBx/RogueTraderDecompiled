@@ -14,6 +14,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -88,9 +89,13 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 			AttackOfOpportunityData value = optional.NextAttack.Value;
 			float magnitude = (baseUnitEntity.Position - optional.StartPosition).magnitude;
 			float magnitude2 = (value.Position - optional.StartPosition).magnitude;
-			if (!(magnitude < magnitude2))
+			if (magnitude < magnitude2)
 			{
-				optional.AcceptNextAttack();
+				break;
+			}
+			optional.AcceptNextAttack();
+			if (!unit.GetOptional<PartUnitInvisible>())
+			{
 				UnitCommandHandle unitCommandHandle = null;
 				UnitPartAttackOfOpportunityModifier optional2 = value.Attacker.Parts.GetOptional<UnitPartAttackOfOpportunityModifier>();
 				if (optional2 != null && optional2.EnableAndPrioritizeRangedAttack)
@@ -102,9 +107,7 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 					unitCommandHandle = MakeAttackOfOpportunity(value.Attacker, baseUnitEntity, null, canUseInRange: false, canMove: false);
 				}
 				UpdateAttackOfOpportunityMadeThisTurnCount(value.Attacker, unitCommandHandle != null);
-				continue;
 			}
-			break;
 		}
 	}
 
@@ -118,8 +121,22 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		return null;
 	}
 
-	private static UnitCommandHandle MakeAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason, bool canUseInRange, bool canMove)
+	private static UnitCommandHandle MakeSpellAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason, BlueprintAbility abilityBp)
 	{
+		if (abilityBp == null)
+		{
+			return null;
+		}
+		UnitAttackOfOpportunityParams cmdParams = new UnitAttackOfOpportunityParams(target, reason, abilityBp);
+		return attacker.Commands.Run(cmdParams);
+	}
+
+	private static UnitCommandHandle MakeAttackOfOpportunity(BaseUnitEntity attacker, BaseUnitEntity target, BlueprintFact reason, bool canUseInRange, bool canMove, BlueprintAbility abilityBp = null)
+	{
+		if (abilityBp != null)
+		{
+			return MakeSpellAttackOfOpportunity(attacker, target, reason, abilityBp);
+		}
 		if (attacker.GetThreatHand()?.MaybeWeapon != null)
 		{
 			CustomGridNodeBase customGridNodeBase = FindSuitablePositionForAttackOfOpportunity(attacker, target);
@@ -156,13 +173,13 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		return null;
 	}
 
-	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, BlueprintFact reason, bool canUseInRange, bool canMove)
+	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, BlueprintFact reason, bool canUseInRange, bool canMove, BlueprintAbility abilityBp = null)
 	{
-		if (!attacker.CanMakeAttackOfOpportunity(target, canUseInRange))
+		if (!attacker.CanMakeAttackOfOpportunity(target, canUseInRange, abilityBp != null))
 		{
 			return null;
 		}
-		UnitCommandHandle unitCommandHandle = MakeAttackOfOpportunity(attacker, target, reason, canUseInRange, canMove);
+		UnitCommandHandle unitCommandHandle = MakeAttackOfOpportunity(attacker, target, reason, canUseInRange, canMove, abilityBp);
 		UpdateAttackOfOpportunityMadeThisTurnCount(attacker, unitCommandHandle != null);
 		return unitCommandHandle;
 	}
@@ -179,22 +196,12 @@ public class AttackOfOpportunityController : IController, IUnitRunCommandHandler
 		}
 	}
 
-	public UnitCommandHandle Provoke(BaseUnitEntity target, BaseUnitEntity attacker, EntityFact reason, bool canUseInRange, bool canMove)
-	{
-		return Provoke(target, attacker, reason.Blueprint, canUseInRange, canMove);
-	}
-
 	public void Provoke(BaseUnitEntity target, BlueprintFact reason, bool canUseInRange, bool canMove)
 	{
 		foreach (BaseUnitEntity engagedByUnit in target.GetEngagedByUnits())
 		{
 			Provoke(target, engagedByUnit, reason, canUseInRange, canMove);
 		}
-	}
-
-	public void Provoke(BaseUnitEntity target, EntityFact reason)
-	{
-		Provoke(target, reason.Blueprint, canUseInRange: false, canMove: true);
 	}
 
 	[CanBeNull]

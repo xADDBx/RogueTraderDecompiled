@@ -16,5 +16,6 @@ public enum WarningNotificationType
 	SavingError,
 	NoQuickSaves,
 	SavingFailed,
-	SavingImpossibleIronmanWillSavedAutomaticaly
+	SavingImpossibleIronmanWillSavedAutomaticaly,
+	InteractionIsTooFar
 }

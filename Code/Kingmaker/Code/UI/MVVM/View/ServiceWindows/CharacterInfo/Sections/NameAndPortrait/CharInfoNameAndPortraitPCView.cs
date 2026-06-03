@@ -44,6 +44,9 @@ public class CharInfoNameAndPortraitPCView : CharInfoComponentWithLevelUpView<Ch
 	protected FadeAnimator m_PetSlots;
 
 	[SerializeField]
+	protected GameObject m_WeaponSlots;
+
+	[SerializeField]
 	private ScrambledTMP m_NameFieldScrambled;
 
 	[SerializeField]
@@ -205,5 +208,6 @@ public class CharInfoNameAndPortraitPCView : CharInfoComponentWithLevelUpView<Ch
 		m_Portrait.gameObject.SetActive(value: false);
 		m_PetSlots.gameObject.SetActive(value: false);
 		m_LeftCommonSlots.gameObject.SetActive(value: false);
+		m_WeaponSlots.Or(null)?.SetActive(value: false);
 	}
 }

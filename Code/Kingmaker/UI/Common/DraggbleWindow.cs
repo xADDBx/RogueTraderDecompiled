@@ -1,5 +1,6 @@
 using DG.Tweening;
 using JetBrains.Annotations;
+using Kingmaker.UI.Pointer;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -38,7 +39,7 @@ public class DraggbleWindow : MonoBehaviour, IPointerDownHandler, IEventSystemHa
 		if (eventData.button == PointerEventData.InputButton.Left)
 		{
 			m_MoveMode = true;
-			m_MouseStartPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+			m_MouseStartPos = new Vector2(CursorController.CursorPosition.x, CursorController.CursorPosition.y);
 			m_OwnRectTransform.anchoredPosition += m_TakeDrag;
 			m_OwnRectTransform.DOAnchorPos(m_OwnRectTransform.anchoredPosition + m_TakeDrag, 0.1f).SetUpdate(isIndependentUpdate: true);
 			m_ContainerStartPos = m_OwnRectTransform.anchoredPosition;
@@ -57,7 +58,7 @@ public class DraggbleWindow : MonoBehaviour, IPointerDownHandler, IEventSystemHa
 	{
 		if (m_MoveMode)
 		{
-			Vector2 vector = new Vector2(Input.mousePosition.x - m_MouseStartPos.x, Input.mousePosition.y - m_MouseStartPos.y);
+			Vector2 vector = new Vector2(CursorController.CursorPosition.x - m_MouseStartPos.x, CursorController.CursorPosition.y - m_MouseStartPos.y);
 			if (!(m_LastMausePos == vector))
 			{
 				Vector2 nPos = m_ContainerStartPos + vector - m_TakeDrag;

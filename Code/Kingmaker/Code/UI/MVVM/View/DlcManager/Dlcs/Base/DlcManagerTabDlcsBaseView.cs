@@ -114,9 +114,9 @@ public class DlcManagerTabDlcsBaseView : ViewBase<DlcManagerTabDlcsVM>
 		}));
 		CheckAvailableState(base.ViewModel.DlcIsAvailableToPurchase.Value, base.ViewModel.DlcIsBought.Value);
 		CheckInstallState(base.ViewModel.DownloadingInProgress.Value, base.ViewModel.DlcIsBoughtAndNotInstalled.Value);
-		m_YouDontHaveThisDlc.text = UIStrings.Instance.DlcManager.AvailableForPurchase;
-		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.Purchase;
-		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.Purchased;
+		m_YouDontHaveThisDlc.text = UIStrings.Instance.DlcManager.GetAvailableForPurchaseLabel();
+		m_PurchaseLabel.text = UIStrings.Instance.DlcManager.GetPurchaseLabel();
+		m_PurchasedLabel.text = UIStrings.Instance.DlcManager.GetPurchasedLabel();
 		m_ComingSoonLabel.text = UIStrings.Instance.DlcManager.ComingSoon;
 		m_DownloadingInProgressText.text = UIStrings.Instance.DlcManager.DlcDownloading;
 		m_DlcIsBoughtAndNotInstalledText.text = UIStrings.Instance.DlcManager.DlcBoughtAndNotInstalled;

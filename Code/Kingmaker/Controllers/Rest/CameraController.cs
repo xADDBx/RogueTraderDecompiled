@@ -3,6 +3,7 @@ using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.GameModes;
 using Kingmaker.UI.Models.SettingsUI;
+using Kingmaker.UnitLogic;
 using Kingmaker.View;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -73,7 +74,7 @@ public class CameraController : IControllerEnable, IController, IControllerDisab
 
 		public void ScrollTo(MechanicEntity unit)
 		{
-			if (unit != null)
+			if (unit != null && !unit.IsForceIgnoreCameraFollow())
 			{
 				ScrollTo(unit.Position);
 			}
@@ -96,7 +97,13 @@ public class CameraController : IControllerEnable, IController, IControllerDisab
 				return;
 			}
 			MechanicEntity entity = m_Entity;
-			if (entity == null || !entity.IsInGame)
+			if (entity != null && entity.IsDisposed)
+			{
+				Release();
+				return;
+			}
+			entity = m_Entity;
+			if (entity == null || !entity.IsInGame || m_Entity.IsForceIgnoreCameraFollow())
 			{
 				return;
 			}

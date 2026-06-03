@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/SetDeviceState")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("d1d531364174e9942b14123b6f890f18")]

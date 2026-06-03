@@ -139,7 +139,7 @@ public class AbilityCustomDirectedFirestorm : AbilityCustomLogic
 				}
 				if (DesperateMeasure)
 				{
-					ally.Buffs.Add(DesperateMeasureBuff, context, duration2);
+					ally.Buffs.Add(DesperateMeasureBuff, context, duration);
 				}
 			}
 		}

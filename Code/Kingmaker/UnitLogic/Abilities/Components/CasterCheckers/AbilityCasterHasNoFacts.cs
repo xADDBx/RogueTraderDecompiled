@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
@@ -47,8 +48,13 @@ public class AbilityCasterHasNoFacts : BlueprintComponent, IAbilityCasterRestric
 
 	public string GetAbilityCasterRestrictionUIText(MechanicEntity caster)
 	{
+		return GetCasterRestrictionUIText(caster, Facts);
+	}
+
+	public static string GetCasterRestrictionUIText(MechanicEntity caster, IEnumerable<BlueprintUnitFact> factBlueprints)
+	{
 		LocalizedString hasForbiddenCondition = LocalizedTexts.Instance.Reasons.HasForbiddenCondition;
-		string facts = string.Join(", ", Facts.ToArray().Select(UIUtilityTexts.GetBlueprintUnitFactNameText));
+		string facts = string.Join(", ", factBlueprints.Select(UIUtilityTexts.GetBlueprintUnitFactNameText));
 		return hasForbiddenCondition.ToString(delegate
 		{
 			GameLogContext.Text = facts;

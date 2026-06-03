@@ -7,5 +7,6 @@ public enum QualityPresetOption
 	Medium,
 	High,
 	Ultra,
-	SteamDeck
+	SteamDeck,
+	Switch2
 }

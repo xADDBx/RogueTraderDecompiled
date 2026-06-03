@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using UnityEngine;
@@ -27,6 +28,8 @@ public class BlueprintCareerPath : BlueprintPath
 
 	[SerializeField]
 	private BlueprintDlcRewardReference m_DlcReward;
+
+	public List<BlueprintBuffReference> ImportantCareerBuffs;
 
 	public bool IsAvailable
 	{

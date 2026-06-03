@@ -11,7 +11,6 @@ using Kingmaker.Designers.EventConditionActionSystem.Events;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
-using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.StateHasher.Hashers;
 using Kingmaker.Utility.GuidUtility;
@@ -39,9 +38,21 @@ public class AreaPersistentState : IHashable
 	[JsonProperty]
 	public UnitReference ServiceCaster;
 
-	public readonly SavedFogMasks SavedFogOfWarMasks = new SavedFogMasks();
-
 	public readonly RuntimeAreaSettings Settings = new RuntimeAreaSettings();
+
+	[JsonProperty]
+	private List<string> KnownSceneStates
+	{
+		get
+		{
+			return m_AddStates.Select((SceneEntitiesState v) => v.SceneName).ToList();
+		}
+		set
+		{
+			m_AddStates.Clear();
+			m_AddStates.AddRange(value.Select((string v) => new SceneEntitiesState(v)));
+		}
+	}
 
 	public bool ShouldLoad { get; set; }
 
@@ -66,7 +77,23 @@ public class AreaPersistentState : IHashable
 
 	public SceneEntitiesState MainState => m_MainState;
 
-	public string AreaGuid => m_AreaGuid;
+	public string AreaGuid
+	{
+		get
+		{
+			string text = m_AreaGuid;
+			if (text == null)
+			{
+				Area area = m_Area;
+				if (area == null)
+				{
+					return null;
+				}
+				text = area.UniqueId;
+			}
+			return text;
+		}
+	}
 
 	public AreaPersistentState([NotNull] BlueprintArea blueprint)
 	{
@@ -284,9 +311,18 @@ public class AreaPersistentState : IHashable
 		result.Append(ref val);
 		Hash128 val2 = ClassHasher<SceneEntitiesState>.GetHash128(m_MainState);
 		result.Append(ref val2);
+		List<string> knownSceneStates = KnownSceneStates;
+		if (knownSceneStates != null)
+		{
+			for (int i = 0; i < knownSceneStates.Count; i++)
+			{
+				Hash128 val3 = StringHasher.GetHash128(knownSceneStates[i]);
+				result.Append(ref val3);
+			}
+		}
 		UnitReference obj = ServiceCaster;
-		Hash128 val3 = UnitReferenceHasher.GetHash128(ref obj);
-		result.Append(ref val3);
+		Hash128 val4 = UnitReferenceHasher.GetHash128(ref obj);
+		result.Append(ref val4);
 		return result;
 	}
 }

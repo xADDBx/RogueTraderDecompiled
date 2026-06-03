@@ -27,7 +27,7 @@ namespace Kingmaker.AreaLogic.QuestSystem;
 public class Quest : EntityFact<QuestBook>, IHashable
 {
 	[GameStateInclude]
-	private readonly Dictionary<BlueprintQuestObjective, QuestObjective> m_Objectives = new Dictionary<BlueprintQuestObjective, QuestObjective>();
+	private readonly Dictionary<BlueprintQuestObjective, QuestBookEntityEntry> m_Objectives = new Dictionary<BlueprintQuestObjective, QuestBookEntityEntry>();
 
 	[JsonProperty]
 	private int m_NextObjectiveOrder = 1;
@@ -65,16 +65,16 @@ public class Quest : EntityFact<QuestBook>, IHashable
 	[JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
 	[UsedImplicitly]
 	[GameStateIgnore("This adapter uses LINQ, so original m_Objectives used for serialization")]
-	private List<QuestObjective> PersistentObjectives
+	private List<QuestBookEntityEntry> PersistentObjectives
 	{
 		get
 		{
-			return m_Objectives.Select((KeyValuePair<BlueprintQuestObjective, QuestObjective> objective) => objective.Value).ToList();
+			return m_Objectives.Select((KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> objective) => objective.Value).ToList();
 		}
 		set
 		{
 			m_Objectives.Clear();
-			foreach (QuestObjective item in value)
+			foreach (QuestBookEntityEntry item in value)
 			{
 				if (item.Blueprint == null)
 				{
@@ -127,7 +127,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 			TimeSpan? timeToFail = TimeToFail;
 			if (timeToFail.HasValue)
 			{
-				return Objectives.FirstOrDefault(delegate(QuestObjective o)
+				return Objectives.FirstOrDefault(delegate(QuestBookEntityEntry o)
 				{
 					TimeSpan? timeToFail2 = o.TimeToFail;
 					TimeSpan? timeSpan = timeToFail;
@@ -154,13 +154,13 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		}
 	}
 
-	public bool NeedToAttention => Objectives.Any((QuestObjective o) => o.NeedToAttention && (o.ParentObjective?.NeedToAttention ?? true));
+	public bool NeedToAttention => Objectives.Any((QuestBookEntityEntry o) => o.NeedToAttention && (o.ParentObjective?.NeedToAttention ?? true));
 
-	public IEnumerable<QuestObjective> Objectives
+	public IEnumerable<QuestBookEntityEntry> Objectives
 	{
 		get
 		{
-			foreach (KeyValuePair<BlueprintQuestObjective, QuestObjective> objective in m_Objectives)
+			foreach (KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> objective in m_Objectives)
 			{
 				yield return objective.Value;
 			}
@@ -174,7 +174,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 	{
 		foreach (BlueprintQuestObjective allObjective in blueprintQuest.AllObjectives)
 		{
-			m_Objectives[allObjective] = new QuestObjective(this, allObjective);
+			m_Objectives[allObjective] = new QuestBookEntityEntry(this, allObjective);
 		}
 	}
 
@@ -189,7 +189,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 
 	protected override void OnAttach()
 	{
-		foreach (KeyValuePair<BlueprintQuestObjective, QuestObjective> objective in m_Objectives)
+		foreach (KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> objective in m_Objectives)
 		{
 			base.Owner.Facts.Add(objective.Value);
 		}
@@ -197,7 +197,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 
 	protected override void OnDetach()
 	{
-		foreach (KeyValuePair<BlueprintQuestObjective, QuestObjective> objective in m_Objectives)
+		foreach (KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> objective in m_Objectives)
 		{
 			base.Owner.Facts.Remove(objective.Value);
 		}
@@ -209,8 +209,8 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		{
 			if (!m_Objectives.ContainsKey(allObjective))
 			{
-				QuestObjective questObjective2 = (m_Objectives[allObjective] = new QuestObjective(this, allObjective));
-				QuestObjective fact = questObjective2;
+				QuestBookEntityEntry questBookEntityEntry2 = (m_Objectives[allObjective] = new QuestBookEntityEntry(this, allObjective));
+				QuestBookEntityEntry fact = questBookEntityEntry2;
 				base.Owner.Facts.Add(fact);
 			}
 		}
@@ -222,7 +222,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 	}
 
 	[CanBeNull]
-	public QuestObjective TryGetObjective(BlueprintQuestObjective blueprintObjective)
+	public QuestBookEntityEntry TryGetObjective(BlueprintQuestObjective blueprintObjective)
 	{
 		if (blueprintObjective == null)
 		{
@@ -233,12 +233,12 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		return value;
 	}
 
-	private QuestObjective GetObjective(BlueprintQuestObjective blueprintObjective)
+	private QuestBookEntityEntry GetObjective(BlueprintQuestObjective blueprintObjective)
 	{
 		return TryGetObjective(blueprintObjective) ?? throw new Exception("Can't find objective in quest");
 	}
 
-	public void OnObjectiveStateChange(QuestObjective objective)
+	public void OnObjectiveStateChange(QuestBookEntityEntry objective)
 	{
 		if (m_State == QuestState.Started)
 		{
@@ -278,7 +278,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		}
 	}
 
-	private void OnObjectiveOpened(QuestObjective objective)
+	private void OnObjectiveOpened(QuestBookEntityEntry objective)
 	{
 		switch (objective.State)
 		{
@@ -297,22 +297,25 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		}
 	}
 
-	private void OnObjectiveFinished(QuestObjective objective)
+	private void OnObjectiveFinished(QuestBookEntityEntry objective)
 	{
 		bool flag = objective.State == QuestObjectiveState.Completed;
 		bool flag2 = objective.Blueprint.NextObjectives.Empty();
 		if (objective.Blueprint.IsFinishParent && (!flag || flag2))
 		{
-			QuestObjective parentObjective = objective.ParentObjective;
+			QuestBookEntityEntry parentObjective = objective.ParentObjective;
 			if (objective.Blueprint.IsAddendum && parentObjective != null)
 			{
-				if (flag)
+				if (!parentObjective.IsClue)
 				{
-					parentObjective.Complete();
-				}
-				else
-				{
-					parentObjective.Fail();
+					if (flag)
+					{
+						parentObjective.Complete();
+					}
+					else
+					{
+						parentObjective.Fail();
+					}
 				}
 			}
 			else
@@ -325,7 +328,7 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		{
 			foreach (BlueprintQuestObjective nextObjective in objective.Blueprint.NextObjectives)
 			{
-				QuestObjective objective2 = GetObjective(nextObjective);
+				QuestBookEntityEntry objective2 = GetObjective(nextObjective);
 				if (objective2 != null)
 				{
 					OnObjectiveOpened(objective2);
@@ -378,9 +381,9 @@ public class Quest : EntityFact<QuestBook>, IHashable
 				l.HandleQuestFailed(this);
 			});
 		}
-		m_Objectives.ForEach(delegate(KeyValuePair<BlueprintQuestObjective, QuestObjective> pair)
+		m_Objectives.ForEach(delegate(KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> pair)
 		{
-			QuestObjective value = pair.Value;
+			QuestBookEntityEntry value = pair.Value;
 			if (m_IsSilentFailInProgress)
 			{
 				using (new BlueprintQuestObjective.SilentQuestNotificationOverride(value.Blueprint, QuestNotificationState.Failed))
@@ -393,24 +396,41 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		});
 	}
 
-	public void Uncomplete(BlueprintQuestObjective makeStarted, IEnumerable<BlueprintQuestObjective> remove)
+	public void ResetTo(BlueprintQuestObjective makeStarted, IEnumerable<BlueprintQuestObjective> resetable)
 	{
 		m_State = QuestState.Started;
-		foreach (BlueprintQuestObjective item in remove)
+		foreach (BlueprintQuestObjective item in resetable)
 		{
-			m_Objectives.Get(item)?.Reset();
+			if (m_Objectives.TryGetValue(item, out var value))
+			{
+				value.Reset();
+			}
 		}
-		QuestObjective questObjective = m_Objectives.Get(makeStarted);
-		questObjective.Reset();
-		questObjective.Start();
+		if (m_Objectives.TryGetValue(makeStarted, out var value2))
+		{
+			value2.Reset();
+			value2.Start();
+		}
 	}
 
-	public void Remove()
+	public void Reset(ResetableSubobjectiveTypes types = ResetableSubobjectiveTypes.None)
 	{
 		m_State = QuestState.None;
-		foreach (BlueprintQuestObjective objective in Blueprint.Objectives)
+		IEnumerable<BlueprintQuestObjective> enumerable = Blueprint.Objectives;
+		if (types.HasFlag(ResetableSubobjectiveTypes.Addendum))
 		{
-			m_Objectives.Get(objective)?.Reset();
+			enumerable = enumerable.Concat(Blueprint.Addendums);
+		}
+		if (types.HasFlag(ResetableSubobjectiveTypes.Clue))
+		{
+			enumerable = enumerable.Concat(Blueprint.Clues);
+		}
+		foreach (BlueprintQuestObjective item in enumerable)
+		{
+			if (m_Objectives.TryGetValue(item, out var value))
+			{
+				value.Reset();
+			}
 		}
 	}
 
@@ -419,16 +439,16 @@ public class Quest : EntityFact<QuestBook>, IHashable
 		Hash128 result = default(Hash128);
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
-		Dictionary<BlueprintQuestObjective, QuestObjective> objectives = m_Objectives;
+		Dictionary<BlueprintQuestObjective, QuestBookEntityEntry> objectives = m_Objectives;
 		if (objectives != null)
 		{
 			int val2 = 0;
-			foreach (KeyValuePair<BlueprintQuestObjective, QuestObjective> item in objectives)
+			foreach (KeyValuePair<BlueprintQuestObjective, QuestBookEntityEntry> item in objectives)
 			{
 				Hash128 hash = default(Hash128);
 				Hash128 val3 = Kingmaker.StateHasher.Hashers.SimpleBlueprintHasher.GetHash128(item.Key);
 				hash.Append(ref val3);
-				Hash128 val4 = ClassHasher<QuestObjective>.GetHash128(item.Value);
+				Hash128 val4 = ClassHasher<QuestBookEntityEntry>.GetHash128(item.Value);
 				hash.Append(ref val4);
 				val2 ^= hash.GetHashCode();
 			}

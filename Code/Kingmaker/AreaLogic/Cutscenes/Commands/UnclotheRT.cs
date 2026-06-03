@@ -82,6 +82,8 @@ public class UnclotheRT : CommandBase
 				PFLog.TechArt.Log($"[UnclotheRT] No saved ShowHelmAboveAll state found, current UI: {playerCharacter.UISettings.ShowHelmAboveAll}");
 			}
 			playerCharacter.View.CharacterAvatar.RestoreEquipment();
+			playerCharacter.View.UpdateBodyEquipmentModel();
+			PFLog.TechArt.Log("[UnclotheRT] Rebuilt slot→EE mappings via UpdateBodyEquipmentModel()");
 			playerCharacter.View.CharacterAvatar.IsDirty = true;
 			playerCharacter.View.HandsEquipment.HiddenByCutscene = false;
 			playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: true);
@@ -112,6 +114,8 @@ public class UnclotheRT : CommandBase
 			PFLog.TechArt.Log("[UnclotheRT] Interrupt - No saved ShowHelmAboveAll state found");
 		}
 		playerCharacter.View.CharacterAvatar.RestoreEquipment();
+		playerCharacter.View.UpdateBodyEquipmentModel();
+		PFLog.TechArt.Log("[UnclotheRT] Interrupt - Rebuilt slot→EE mappings via UpdateBodyEquipmentModel()");
 		playerCharacter.View.CharacterAvatar.IsDirty = true;
 		playerCharacter.View.HandsEquipment.UpdateVisibility(isVisible: true);
 	}

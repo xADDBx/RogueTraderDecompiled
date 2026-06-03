@@ -120,26 +120,6 @@ public class GameHistoryLog : IQuestHandler, ISubscriber, IQuestObjectiveHandler
 	{
 	}
 
-	public void HandleQuestObjectiveStarted(QuestObjective objective, bool silentStart = false)
-	{
-		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective started");
-	}
-
-	public void HandleQuestObjectiveBecameVisible(QuestObjective objective, bool silentStart = false)
-	{
-		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective became visible");
-	}
-
-	public void HandleQuestObjectiveCompleted(QuestObjective objective)
-	{
-		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective completed");
-	}
-
-	public void HandleQuestObjectiveFailed(QuestObjective objective)
-	{
-		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective failed");
-	}
-
 	public void HandleUnlock(BlueprintUnlockableFlag flag)
 	{
 		AddMessage(PFLog.History.Unlocks, flag, "unlocked");
@@ -479,5 +459,25 @@ public class GameHistoryLog : IQuestHandler, ISubscriber, IQuestObjectiveHandler
 	{
 		StarSystemObjectEntity starSystemObjectEntity = EventInvokerExtensions.Entity as StarSystemObjectEntity;
 		AddMessage(PFLog.History.StarSystemMap, starSystemObjectEntity?.Blueprint, "sso scanned");
+	}
+
+	public void HandleQuestObjectiveStarted(QuestBookEntityEntry objective, bool silentStart = false)
+	{
+		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective started");
+	}
+
+	public void HandleQuestObjectiveBecameVisible(QuestBookEntityEntry objective, bool silentStart = false)
+	{
+		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective became visible");
+	}
+
+	public void HandleQuestObjectiveCompleted(QuestBookEntityEntry objective)
+	{
+		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective completed");
+	}
+
+	public void HandleQuestObjectiveFailed(QuestBookEntityEntry objective)
+	{
+		AddMessage(PFLog.History.Quests, objective.Blueprint, "objective failed");
 	}
 }

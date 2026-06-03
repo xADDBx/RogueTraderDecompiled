@@ -218,6 +218,7 @@ public class GamesModeFactoryFacade
 		Register(Game.Instance.SyncStateCheckerController, All);
 		Register(Game.Instance.CustomLateUpdateController, All);
 		Register(Game.Instance.InterpolationController, All);
+		Register(new UnitMoveOnPlatformControllerLate(), All);
 		Register(Game.Instance.TimeSpeedController, All);
 		Register(Game.Instance.InteractionFXController, All);
 		Register(new WarpMoveEffectController(), GlobalMap);

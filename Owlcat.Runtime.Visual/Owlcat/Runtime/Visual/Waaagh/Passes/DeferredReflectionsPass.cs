@@ -18,14 +18,17 @@ public class DeferredReflectionsPass : ScriptableRenderPass<DeferredReflectionsP
 
 	private ComputeShaderKernelDescriptor m_BilateralUpSampleColorKernel;
 
+	private bool m_UseReflectionProbes;
+
 	public override string Name => "DeferredReflectionsPass";
 
-	public DeferredReflectionsPass(RenderPassEvent evt, Material deferredReflectionsMaterial, ComputeShader bilateralUpsampleCs)
+	public DeferredReflectionsPass(RenderPassEvent evt, Material deferredReflectionsMaterial, ComputeShader bilateralUpsampleCs, bool useReflectionProbes)
 		: base(evt)
 	{
 		m_DeferredReflectionsMaterial = deferredReflectionsMaterial;
 		m_BilateralUpsampleCs = bilateralUpsampleCs;
 		m_BilateralUpSampleColorKernel = m_BilateralUpsampleCs.GetKernelDescriptor("BilateralUpSampleColor4");
+		m_UseReflectionProbes = useReflectionProbes;
 	}
 
 	public override void ConfigureRendererLists(ref RenderingData renderingData, RenderGraphResources resources)
@@ -102,23 +105,26 @@ public class DeferredReflectionsPass : ScriptableRenderPass<DeferredReflectionsP
 		context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_HDR, ReflectionProbe.defaultTextureHDRDecodeValues);
 		context.cmd.SetGlobalFloat(ShaderPropertyId._UseBoxProjection, 0f);
 		context.cmd.DrawProcedural(Matrix4x4.identity, data.DeferredReflectionsMaterial, 0, MeshTopology.Triangles, 3);
-		NativeArray<VisibleReflectionProbe> visibleReflectionProbes = data.VisibleReflectionProbes;
-		for (int i = 0; i < visibleReflectionProbes.Length; i++)
+		if (m_UseReflectionProbes)
 		{
-			VisibleReflectionProbe visibleReflectionProbe = visibleReflectionProbes[i];
-			if (!(visibleReflectionProbe.reflectionProbe == null))
+			NativeArray<VisibleReflectionProbe> visibleReflectionProbes = data.VisibleReflectionProbes;
+			for (int i = 0; i < visibleReflectionProbes.Length; i++)
 			{
-				Vector3 position = visibleReflectionProbe.reflectionProbe.transform.position;
-				Vector4 value = position;
-				value.w = visibleReflectionProbe.blendDistance;
-				context.cmd.SetGlobalTexture(ShaderPropertyId._SpecCube0, visibleReflectionProbe.texture);
-				context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_HDR, visibleReflectionProbe.hdrData);
-				context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_ProbePosition, value);
-				context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_BoxMin, visibleReflectionProbe.bounds.min);
-				context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_BoxMax, visibleReflectionProbe.bounds.max);
-				context.cmd.SetGlobalFloat(ShaderPropertyId._UseBoxProjection, visibleReflectionProbe.isBoxProjection ? 1 : 0);
-				Matrix4x4 matrix = Matrix4x4.TRS(visibleReflectionProbe.center + position, Quaternion.identity, visibleReflectionProbe.bounds.size);
-				context.cmd.DrawMesh(RenderingUtils.CubeMesh, matrix, data.DeferredReflectionsMaterial, 0, 1);
+				VisibleReflectionProbe visibleReflectionProbe = visibleReflectionProbes[i];
+				if (!(visibleReflectionProbe.reflectionProbe == null))
+				{
+					Vector3 position = visibleReflectionProbe.reflectionProbe.transform.position;
+					Vector4 value = position;
+					value.w = visibleReflectionProbe.blendDistance;
+					context.cmd.SetGlobalTexture(ShaderPropertyId._SpecCube0, visibleReflectionProbe.texture);
+					context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_HDR, visibleReflectionProbe.hdrData);
+					context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_ProbePosition, value);
+					context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_BoxMin, visibleReflectionProbe.bounds.min);
+					context.cmd.SetGlobalVector(ShaderPropertyId._SpecCube0_BoxMax, visibleReflectionProbe.bounds.max);
+					context.cmd.SetGlobalFloat(ShaderPropertyId._UseBoxProjection, visibleReflectionProbe.isBoxProjection ? 1 : 0);
+					Matrix4x4 matrix = Matrix4x4.TRS(visibleReflectionProbe.center + position, Quaternion.identity, visibleReflectionProbe.bounds.size);
+					context.cmd.DrawMesh(RenderingUtils.CubeMesh, matrix, data.DeferredReflectionsMaterial, 0, 1);
+				}
 			}
 		}
 		if (data.SsrEnabled)

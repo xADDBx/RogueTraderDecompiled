@@ -67,27 +67,27 @@ public class OvertipShipHealthBlockView : ViewBase<OvertipHealthBlockVM>
 	[Header("Shields Sliders")]
 	public bool HasShields;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private CanvasGroup m_ShieldsSliderBlock;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private Slider m_ShieldsMaxSlider;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private DelayedSlider m_ShieldsLeftSlider;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private TextMeshProUGUI m_ShieldLabel;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private RangedSlider m_ShieldsMaxDamageSlider;
 
-	[ConditionalShow("HasShields")]
+	[ShowIf("HasShields")]
 	[SerializeField]
 	private RangedSlider m_ShieldsMinDamageSlider;
 

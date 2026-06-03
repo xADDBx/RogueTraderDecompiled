@@ -5,6 +5,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeTryFinishTurn : TaskNode
 {
+	public TaskNodeTryFinishTurn()
+	{
+	}
+
+	public TaskNodeTryFinishTurn(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		if (blackboard.Unit == null || blackboard.Unit.Commands.Empty)

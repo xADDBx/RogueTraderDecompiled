@@ -63,14 +63,19 @@ public class ContextActionRemoveBuff : ContextAction
 		{
 			using (ContextData<CasterUnitData>.RequestIf(m_CasterRanksRemovalPolicy != 0 && mechanicsContext.MaybeCaster is BaseUnitEntity)?.Setup((BaseUnitEntity)mechanicsContext.MaybeCaster))
 			{
-				if (RemoveSeveralRanks)
+				if (RemoveRank)
 				{
-					int count = RankNumber.Calculate(base.Context);
-					mechanicEntity?.Buffs.GetBuff(Buff)?.RemoveRank(count);
-				}
-				else if (m_CasterRanksRemovalPolicy == CasterRanksRemovalPolicy.All)
-				{
-					RemoveAllRanksFromCaster(mechanicEntity, mechanicsContext);
+					if (m_CasterRanksRemovalPolicy == CasterRanksRemovalPolicy.All)
+					{
+						RemoveAllRanksFromCaster(mechanicEntity, mechanicsContext);
+						return;
+					}
+					Buff buff = mechanicEntity?.Buffs.GetBuff(Buff);
+					if (buff != null)
+					{
+						int count = ((!RemoveSeveralRanks) ? 1 : RankNumber.Calculate(base.Context));
+						buff.RemoveRank(count);
+					}
 				}
 				else
 				{

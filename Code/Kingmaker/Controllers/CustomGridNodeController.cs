@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.GameModes;
 using Kingmaker.Pathfinding;
 using Kingmaker.SpaceCombat.StarshipLogic.Parts;
+using Kingmaker.UnitLogic;
 using Kingmaker.Utility.DotNetExtensions;
 
 namespace Kingmaker.Controllers;
@@ -136,11 +137,15 @@ public class CustomGridNodeController : IControllerTick, IController, IControlle
 
 	public static NodeList GetUnitNodes(BaseUnitEntity unit)
 	{
-		if (!unit.CombatState.IsInCombat)
+		if (unit.CombatState.IsInCombat)
 		{
-			return unit.GetOccupiedNodes();
+			if (unit.IsInvisibleInCombat())
+			{
+				return unit.GetOccupiedNodes();
+			}
+			return unit.MovementAgent.Blocker.BlockedNodes;
 		}
-		return unit.MovementAgent.Blocker.BlockedNodes;
+		return unit.GetOccupiedNodes();
 	}
 
 	void IControllerReset.OnReset()

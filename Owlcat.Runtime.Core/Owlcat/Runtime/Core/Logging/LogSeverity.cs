@@ -5,5 +5,7 @@ public enum LogSeverity
 	Message,
 	Warning,
 	Error,
-	Disabled
+	Exception,
+	Disabled,
+	Default
 }

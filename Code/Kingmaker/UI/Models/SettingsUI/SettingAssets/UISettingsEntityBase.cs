@@ -18,7 +18,9 @@ public abstract class UISettingsEntityBase : ScriptableObject, IUISettingsEntity
 		GamepadAndPC,
 		PCMouseOnly,
 		Hide,
-		PCAndNotMSStore
+		PCAndNotMSStore,
+		NintendoSwitch,
+		NotOnSwitch
 	}
 
 	[SerializeField]
@@ -40,7 +42,7 @@ public abstract class UISettingsEntityBase : ScriptableObject, IUISettingsEntity
 	[FormerlySerializedAs("ShowVisualConnection")]
 	private bool m_ShowVisualConnection;
 
-	[ConditionalShow("ShowVisualConnection")]
+	[ShowIf("ShowVisualConnection")]
 	[SerializeField]
 	[FormerlySerializedAs("IAmSetHandler")]
 	private bool m_IAmSetHandler;

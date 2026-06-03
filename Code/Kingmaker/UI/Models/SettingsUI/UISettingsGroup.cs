@@ -36,11 +36,12 @@ public class UISettingsGroup : ScriptableObject
 		}
 		bool flag = false;
 		bool flag2 = false;
-		if (platform != 0 && !(platform == UISettingsEntityBase.UISettingsPlatform.Console && flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PC || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PCAndNotMSStore || flag || flag2) && (platform != UISettingsEntityBase.UISettingsPlatform.GamepadAndPC || !Game.Instance.IsControllerGamepad || flag))
+		bool flag3 = false;
+		if (platform != 0 && !(platform == UISettingsEntityBase.UISettingsPlatform.Console && flag) && !(platform == UISettingsEntityBase.UISettingsPlatform.NintendoSwitch && flag3) && (platform != UISettingsEntityBase.UISettingsPlatform.PC || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PCAndNotMSStore || flag || flag2) && (platform != UISettingsEntityBase.UISettingsPlatform.GamepadAndPC || !Game.Instance.IsControllerGamepad || flag) && (platform != UISettingsEntityBase.UISettingsPlatform.PCMouseOnly || !Game.Instance.IsControllerMouse || flag))
 		{
-			if (platform == UISettingsEntityBase.UISettingsPlatform.PCMouseOnly && Game.Instance.IsControllerMouse)
+			if (platform == UISettingsEntityBase.UISettingsPlatform.NotOnSwitch)
 			{
-				return !flag;
+				return !flag3;
 			}
 			return false;
 		}

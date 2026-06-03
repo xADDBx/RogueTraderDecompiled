@@ -6,13 +6,16 @@ public class TooltipBrickSeparator : ITooltipBrick
 {
 	private readonly TooltipBrickElementType m_Type;
 
-	public TooltipBrickSeparator(TooltipBrickElementType type = TooltipBrickElementType.Big)
+	private readonly bool m_IsAugmentHeader;
+
+	public TooltipBrickSeparator(TooltipBrickElementType type = TooltipBrickElementType.Big, bool isAugmentHeader = false)
 	{
 		m_Type = type;
+		m_IsAugmentHeader = isAugmentHeader;
 	}
 
 	public TooltipBaseBrickVM GetVM()
 	{
-		return new TooltipBrickSeparatorVM(m_Type);
+		return new TooltipBrickSeparatorVM(m_Type, m_IsAugmentHeader);
 	}
 }

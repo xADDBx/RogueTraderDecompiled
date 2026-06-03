@@ -342,40 +342,58 @@ public class SettingsConsoleView : ViewBase<SettingsVM>, IInitializable
 		}
 		if (!(settingsControlConsole == null))
 		{
-			InputLayer currentInputLayer = GamePad.Instance.CurrentInputLayer;
-			AddDisposable(settingsControlConsole.LeftStickButtonHint.BindCustomAction(18, currentInputLayer));
+			InputLayer inputLayer = new InputLayer
+			{
+				ContextName = "ControlsScreenInputLayer"
+			};
+			AddDisposable(settingsControlConsole.LeftStickButtonHint.BindCustomAction(18, inputLayer));
 			settingsControlConsole.LeftStickButtonHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlLeftStickButtonHint);
 			settingsControlConsole.LeftStickButtonHint.SetActive(state: true);
-			AddDisposable(settingsControlConsole.DPadRightHint.BindCustomAction(5, currentInputLayer));
+			AddDisposable(settingsControlConsole.DPadRightHint.BindCustomAction(5, inputLayer));
 			settingsControlConsole.DPadRightHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlDPadRightHint);
-			AddDisposable(settingsControlConsole.DPadDownHint.BindCustomAction(7, currentInputLayer));
+			settingsControlConsole.DPadRightHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.DPadDownHint.BindCustomAction(7, inputLayer));
 			settingsControlConsole.DPadDownHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlDPadDownHint);
-			AddDisposable(settingsControlConsole.DPadLeftHint.BindCustomAction(4, currentInputLayer));
+			settingsControlConsole.DPadDownHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.DPadLeftHint.BindCustomAction(4, inputLayer));
 			settingsControlConsole.DPadLeftHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlDPadLeftHint);
-			AddDisposable(settingsControlConsole.DPadUpHint.BindCustomAction(6, currentInputLayer));
+			settingsControlConsole.DPadLeftHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.DPadUpHint.BindCustomAction(6, inputLayer));
 			settingsControlConsole.DPadUpHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlDPadUpHint);
-			AddDisposable(settingsControlConsole.LeftUpHint.BindCustomAction(14, currentInputLayer));
+			settingsControlConsole.DPadUpHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.LeftUpHint.BindCustomAction(14, inputLayer));
 			settingsControlConsole.LeftUpHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlLeftUpHint);
-			AddDisposable(settingsControlConsole.LeftBottomHint.BindCustomAction(12, currentInputLayer));
+			settingsControlConsole.LeftUpHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.LeftBottomHint.BindCustomAction(12, inputLayer));
 			settingsControlConsole.LeftBottomHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlLeftBottomHint);
-			AddDisposable(settingsControlConsole.FuncAdditionalHint.BindCustomAction(17, currentInputLayer));
+			settingsControlConsole.LeftBottomHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.FuncAdditionalHint.BindCustomAction(17, inputLayer));
 			settingsControlConsole.FuncAdditionalHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlFuncAdditionalHint);
-			AddDisposable(settingsControlConsole.RightBottomHint.BindCustomAction(13, currentInputLayer));
+			settingsControlConsole.FuncAdditionalHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.RightBottomHint.BindCustomAction(13, inputLayer));
 			settingsControlConsole.RightBottomHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlRightBottomHint);
-			AddDisposable(settingsControlConsole.RightUpHint.BindCustomAction(15, currentInputLayer));
+			settingsControlConsole.RightBottomHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.RightUpHint.BindCustomAction(15, inputLayer));
 			settingsControlConsole.RightUpHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlRightUpHint);
-			AddDisposable(settingsControlConsole.OptionsHint.BindCustomAction(16, currentInputLayer));
+			settingsControlConsole.RightUpHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.OptionsHint.BindCustomAction(16, inputLayer));
 			settingsControlConsole.OptionsHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlOptionsHint);
-			AddDisposable(settingsControlConsole.Func02Hint.BindCustomAction(11, currentInputLayer));
+			settingsControlConsole.OptionsHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.Func02Hint.BindCustomAction(11, inputLayer));
 			settingsControlConsole.Func02Hint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlFunc02Hint);
-			AddDisposable(settingsControlConsole.DeclineHint.BindCustomAction(9, currentInputLayer));
+			settingsControlConsole.Func02Hint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.DeclineHint.BindCustomAction(9, inputLayer));
 			settingsControlConsole.DeclineHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlDeclineHint);
-			AddDisposable(settingsControlConsole.ConfirmHint.BindCustomAction(8, currentInputLayer));
+			settingsControlConsole.DeclineHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.ConfirmHint.BindCustomAction(8, inputLayer));
 			settingsControlConsole.ConfirmHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlConfirmHint);
-			AddDisposable(settingsControlConsole.Func01Hint.BindCustomAction(10, currentInputLayer));
+			settingsControlConsole.ConfirmHint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.Func01Hint.BindCustomAction(10, inputLayer));
 			settingsControlConsole.Func01Hint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlFunc01Hint);
-			AddDisposable(settingsControlConsole.RightStickButtonHint.BindCustomAction(19, currentInputLayer));
+			settingsControlConsole.Func01Hint.SetActive(state: true);
+			AddDisposable(settingsControlConsole.RightStickButtonHint.BindCustomAction(19, inputLayer));
 			settingsControlConsole.RightStickButtonHint.SetLabel(UIStrings.Instance.SettingsUI.ConsoleControlRightStickButtonHint);
+			settingsControlConsole.RightStickButtonHint.SetActive(state: true);
 			bool isActive = PhotonManager.Lobby.IsActive;
 			settingsControlConsole.ConsoleCoopPingHint.gameObject.SetActive(isActive);
 			if (isActive)

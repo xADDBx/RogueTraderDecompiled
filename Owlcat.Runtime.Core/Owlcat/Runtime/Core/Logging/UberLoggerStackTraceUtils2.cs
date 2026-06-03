@@ -9,13 +9,30 @@ namespace Owlcat.Runtime.Core.Logging;
 
 public static class UberLoggerStackTraceUtils2
 {
+	public static event Func<StackFrame, bool> CanIgnoreMethodInStacktrace;
+
+	private static bool IgnoreStackTrace(StackFrame stackFrame)
+	{
+		if (UberLoggerStackTraceUtils2.CanIgnoreMethodInStacktrace != null)
+		{
+			return UberLoggerStackTraceUtils2.CanIgnoreMethodInStacktrace(stackFrame);
+		}
+		return false;
+	}
+
 	[StackTraceIgnore]
 	public static void GetCallstack(List<LogStackFrame> callstack, StackTrace stackTrace)
 	{
-		IEnumerable<LogStackFrame> collection = from stackFrame in stackTrace.GetFrames() ?? Array.Empty<StackFrame>()
-			let method = stackFrame.GetMethod()
-			where method != null && !method.IsDefined(typeof(StackTraceIgnore), inherit: true)
-			select new LogStackFrame(stackFrame);
+		IEnumerable<LogStackFrame> collection = from x in stackTrace.GetFrames() ?? Array.Empty<StackFrame>()
+			where !IgnoreStackTrace(x)
+			select x into stackFrame
+			select new
+			{
+				stackFrame = stackFrame,
+				method = stackFrame.GetMethod()
+			} into t
+			where t.method != null && !t.method.IsDefined(typeof(StackTraceIgnore), inherit: true)
+			select new LogStackFrame(t.stackFrame);
 		callstack.AddRange(collection);
 	}
 

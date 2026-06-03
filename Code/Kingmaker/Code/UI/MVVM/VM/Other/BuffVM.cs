@@ -30,7 +30,7 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	public readonly ReactiveProperty<bool> IsDamage = new ReactiveProperty<bool>();
 
-	public List<BuffVM> AdditionalSources = new List<BuffVM>();
+	public List<Buff> AdditionalSources = new List<Buff>();
 
 	private readonly Subject<Unit> m_CalculateDamageSubject = new Subject<Unit>();
 
@@ -80,15 +80,29 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 
 	private void SetGroup()
 	{
-		if (Buff != null)
+		if (Buff == null)
 		{
-			if (Buff.Blueprint.IsDOTVisual)
-			{
-				Group = BuffUIGroup.DOT;
-				return;
-			}
+			return;
+		}
+		if (Buff.Blueprint.IsDOTVisual)
+		{
+			Group = BuffUIGroup.DOT;
+			return;
+		}
+		switch (Buff.UIGroupOverride)
+		{
+		case BuffUIGroupOverride.Ally:
+			Group = BuffUIGroup.Ally;
+			break;
+		case BuffUIGroupOverride.Enemy:
+			Group = BuffUIGroup.Enemy;
+			break;
+		default:
+		{
 			bool flag = Buff.Owner?.IsEnemy(Buff.Context.MaybeCaster) ?? false;
 			Group = (flag ? BuffUIGroup.Enemy : BuffUIGroup.Ally);
+			break;
+		}
 		}
 	}
 
@@ -135,6 +149,10 @@ public class BuffVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 			ShowNonStackNotification.Value = ShowNonStackWarning();
 			UpdateRank();
 		}
+	}
+
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
 	}
 
 	public void HandleBuffRankIncreased(Buff buff)

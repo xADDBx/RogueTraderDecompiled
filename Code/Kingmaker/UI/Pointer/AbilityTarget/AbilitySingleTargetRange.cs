@@ -6,11 +6,14 @@ using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.RuleSystem;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UI.SurfaceCombatHUD;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
+using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
@@ -66,7 +69,8 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		bool hasFiringArc = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
 		Vector3 currentUnitDirection = UnitPredictionManager.Instance.CurrentUnitDirection;
 		bool ignoreRangesByDefault = false;
-		OrientedPatternData pattern = ((target != null && Ability.CanRedirectFromTarget(target)) ? Ability.RedirectPattern.GetOriented(customGridNodeBase, target.NearestNode, currentUnitDirection) : GetPatternData(hasFiringArc, gridAdjustedPosition, currentUnitDirection, target, out ignoreRangesByDefault, customGridNodeBase));
+		RuleCalculateOverpenetration overpenRule = null;
+		OrientedPatternData pattern = ((target != null && Ability.CanRedirectFromTarget(target)) ? Ability.RedirectPattern.GetOriented(customGridNodeBase, target.NearestNode, currentUnitDirection) : GetPatternData(hasFiringArc, gridAdjustedPosition, currentUnitDirection, target, out ignoreRangesByDefault, out overpenRule, customGridNodeBase));
 		NodeList nodes = caster.GetOccupiedNodes(flag ? customGridNodeBase.Vector3Position : desiredCastPosition);
 		if (GridPatterns.TryGetEnclosingRect(in nodes, out var result))
 		{
@@ -84,6 +88,7 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		}
 		UnitPredictionManager.Instance.Or(null)?.SetAbilityPositions(flag ? desiredCastPosition : customGridNodeBase.Vector3Position, actualCastPosition);
 		bool flag2 = false;
+		bool flag3 = false;
 		m_AbilityTargets.Clear();
 		OverpenetrationUIData overpenetrationUIData = default(OverpenetrationUIData);
 		overpenetrationUIData.CountOverpenetration = false;
@@ -102,10 +107,25 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			}
 			else
 			{
-				Ability.GatherAffectedTargetsData(pattern, desiredCastPosition, target, in m_AbilityTargets);
+				DamageData damageData = overpenRule?.OverpenetrationDamage;
+				if (damageData != null && damageData.IsRicochet)
+				{
+					flag3 = true;
+					m_AbilityTargets.Add(new AbilityTargetUIData(Ability, target.Entity, gridAdjustedPosition, ref overpenetrationData));
+					List<RicochetHelper.RicochetTargetData> orCreateRicochetTargets = overpenRule.GetOrCreateRicochetTargets();
+					UnitPredictionManager.Instance.Or(null)?.SetRicochetPreview(orCreateRicochetTargets.Select((RicochetHelper.RicochetTargetData x) => x.RicochetTargetEntity));
+					foreach (RicochetHelper.RicochetTargetData item2 in orCreateRicochetTargets)
+					{
+						m_AbilityTargets.Add(new AbilityTargetUIData(Ability, item2.RicochetTargetEntity, gridAdjustedPosition, ref overpenetrationData));
+					}
+				}
+				else
+				{
+					Ability.GatherAffectedTargetsData(pattern, desiredCastPosition, target, in m_AbilityTargets);
+				}
 			}
 		}
-		if (!flag2 && pattern.IsEmpty)
+		if (!flag2 && !flag3 && pattern.IsEmpty)
 		{
 			MechanicEntity targetEntity = target?.Entity;
 			if (targetEntity != null && !m_AbilityTargets.HasItem((AbilityTargetUIData i) => i.Target == targetEntity))
@@ -119,9 +139,10 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		});
 	}
 
-	private OrientedPatternData GetPatternData(bool hasFiringArc, Vector3 casterPosition, Vector3 casterDirection, TargetWrapper target, out bool ignoreRangesByDefault, CustomGridNodeBase overrideCasterNode = null)
+	private OrientedPatternData GetPatternData(bool hasFiringArc, Vector3 casterPosition, Vector3 casterDirection, TargetWrapper target, out bool ignoreRangesByDefault, out RuleCalculateOverpenetration overpenRule, CustomGridNodeBase overrideCasterNode = null)
 	{
 		ignoreRangesByDefault = false;
+		overpenRule = null;
 		if (hasFiringArc)
 		{
 			HashSet<CustomGridNodeBase> restrictedFiringArcNodes = Ability.GetRestrictedFiringArcNodes(casterPosition.GetNearestNodeXZUnwalkable(), CustomGraphHelper.GuessDirection(casterDirection));
@@ -130,8 +151,14 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		}
 		if (Ability.IsSingleShot)
 		{
-			ReadonlyList<CustomGridNodeBase> singleShotAffectedNodes = Ability.GetSingleShotAffectedNodes(target);
-			return new OrientedPatternData(singleShotAffectedNodes, singleShotAffectedNodes.FirstOrDefault());
+			if (target != null && target.HasEntity)
+			{
+				overpenRule = new RuleCalculateOverpenetration(Ability.Caster, target.Entity, Ability);
+				Rulebook.Trigger(overpenRule);
+			}
+			DamageData damageData = overpenRule?.OverpenetrationDamage;
+			ReadonlyList<CustomGridNodeBase> readonlyList = ((damageData == null || !damageData.IsRicochet) ? Ability.GetSingleShotAffectedNodes(target) : ((ReadonlyList<CustomGridNodeBase>)overpenRule.GetOrCreateRicochetTargets().SelectMany((RicochetHelper.RicochetTargetData x) => x.RicochetTargetEntity.GetOccupiedNodes()).ToTempList()));
+			return new OrientedPatternData(readonlyList, readonlyList.FirstOrDefault());
 		}
 		if (Ability.IsChainLighting())
 		{

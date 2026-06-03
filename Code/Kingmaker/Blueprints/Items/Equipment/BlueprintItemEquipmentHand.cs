@@ -10,7 +10,17 @@ public abstract class BlueprintItemEquipmentHand : BlueprintItemEquipment
 
 	public WeaponVisualParameters VisualParameters => m_VisualParameters;
 
-	public override string InventoryEquipSound => VisualParameters.InventoryEquipSound;
+	public override string InventoryEquipSound
+	{
+		get
+		{
+			return VisualParameters.InventoryEquipSound;
+		}
+		set
+		{
+			VisualParameters.InventoryEquipSound = value;
+		}
+	}
 
 	public override string InventoryPutSound
 	{

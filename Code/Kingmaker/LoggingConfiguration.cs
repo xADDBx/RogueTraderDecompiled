@@ -8,33 +8,7 @@ namespace Kingmaker;
 
 public static class LoggingConfiguration
 {
-	private class LogChannelSettings
-	{
-		public readonly LogChannel Channel;
-
-		public readonly LogSeverity MinLevel;
-
-		public readonly LogSeverity MinStackTraceLevel;
-
-		public LogChannelSettings(LogChannel channel, LogSeverity minLevel, LogSeverity minStackTraceLevel)
-		{
-			Channel = channel;
-			MinLevel = minLevel;
-			MinStackTraceLevel = minStackTraceLevel;
-		}
-	}
-
 	private static ILoggingConfiguration s_Configuration;
-
-	private static readonly LogChannelSettings[] LogChannelsSettings = new LogChannelSettings[6]
-	{
-		new LogChannelSettings(PFLog.Audio, LogSeverity.Message, LogSeverity.Disabled),
-		new LogChannelSettings(PFLog.UI, LogSeverity.Message, LogSeverity.Disabled),
-		new LogChannelSettings(PFLog.Cutscene, LogSeverity.Message, LogSeverity.Disabled),
-		new LogChannelSettings(PFLog.Resources, LogSeverity.Warning, LogSeverity.Disabled),
-		new LogChannelSettings(PFLog.Bundles, LogSeverity.Warning, LogSeverity.Disabled),
-		new LogChannelSettings(PFLog.TechArt, LogSeverity.Message, LogSeverity.Disabled)
-	};
 
 	public static bool IsLoggingEnabled
 	{
@@ -50,6 +24,13 @@ public static class LoggingConfiguration
 
 	public static void Configure()
 	{
+		if (!BuildModeUtility.IsDevelopment)
+		{
+			Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+			Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.None);
+			LogChannelDefaults.DefaultStackTraceLevel = LogSeverity.Exception;
+		}
 		if (s_Configuration != null)
 		{
 			return;
@@ -58,25 +39,12 @@ public static class LoggingConfiguration
 		try
 		{
 			s_Configuration.Configure();
-			ApplyLogChannelsSettings(LogChannelsSettings);
 			CheckCommandLine();
 		}
 		catch (Exception exception)
 		{
 			Debug.LogError("Can't initialize logging subsystem");
 			Debug.LogException(exception);
-		}
-	}
-
-	private static void ApplyLogChannelsSettings(LogChannelSettings[] settings)
-	{
-		if (!Application.isEditor)
-		{
-			foreach (LogChannelSettings logChannelSettings in settings)
-			{
-				logChannelSettings.Channel.SetSeverity(logChannelSettings.MinLevel);
-				logChannelSettings.Channel.SetMinStackTraceLevel(logChannelSettings.MinStackTraceLevel);
-			}
 		}
 	}
 

@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/IncrementFlagValue")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("f4ef63ec9a4741d4bae871a91255f89a")]

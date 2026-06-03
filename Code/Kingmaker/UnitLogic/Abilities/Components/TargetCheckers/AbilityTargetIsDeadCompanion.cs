@@ -12,7 +12,7 @@ namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("cc4b8099545662d4396cbbbe993330b4")]
-public class AbilityTargetIsDeadCompanion : BlueprintComponent, IAbilityTargetRestriction, ICanTargetDeadUnits
+public class AbilityTargetIsDeadCompanion : BlueprintComponent, IAbilityTargetRestriction, ICanTargetDeadUnits, IAbilityIgnoreLOS
 {
 	public bool CanTargetDead => true;
 
@@ -31,5 +31,10 @@ public class AbilityTargetIsDeadCompanion : BlueprintComponent, IAbilityTargetRe
 	public string GetAbilityTargetRestrictionUIText(AbilityData ability, TargetWrapper target, Vector3 casterPosition)
 	{
 		return BlueprintRoot.Instance.LocalizedTexts.Reasons.TargetIsDeadCompanion;
+	}
+
+	public bool ShouldIgnoreLOS(AbilityData abilityData)
+	{
+		return true;
 	}
 }

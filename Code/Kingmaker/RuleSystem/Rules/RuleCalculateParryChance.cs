@@ -27,6 +27,10 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	public readonly ValueModifiersManager ParryValueMultipliers = new ValueModifiersManager();
 
+	public readonly PercentsModifiersManager ParryPercentModifiers = new PercentsModifiersManager();
+
+	public readonly PercentsMultipliersManager ParryPercentMultiplierModifier = new PercentsMultipliersManager();
+
 	public const int BaseMultiplier = 1;
 
 	public const int SuperiorityMultiplier = 10;
@@ -93,13 +97,17 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 			{
 				yield return item;
 			}
-			foreach (Modifier item2 in AttackerWeaponSkillValueModifiers.List)
+			foreach (Modifier item2 in ParryPercentModifiers.List)
 			{
 				yield return item2;
 			}
-			foreach (Modifier item3 in DefenderCurrentAttackSkillValueModifiers.List)
+			foreach (Modifier item3 in AttackerWeaponSkillValueModifiers.List)
 			{
 				yield return item3;
+			}
+			foreach (Modifier item4 in DefenderCurrentAttackSkillValueModifiers.List)
+			{
+				yield return item4;
 			}
 		}
 	}
@@ -167,11 +175,18 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 		{
 			m_ResultSuperiorityNumber = 0;
 		}
-		RawResult = 20 + num - (num2 + m_ResultSuperiorityNumber * 10) + ParryValueModifiers.Value;
+		int num3 = 20 + num - (num2 + m_ResultSuperiorityNumber * 10) + ParryValueModifiers.Value;
+		float value = ParryPercentModifiers.Value;
+		int num4 = (int)((float)num3 * value);
+		if (!ParryPercentMultiplierModifier.Empty)
+		{
+			num4 = (int)((float)num4 * ParryPercentMultiplierModifier.Value);
+		}
 		if (!ParryValueMultipliers.Empty)
 		{
-			RawResult *= ParryValueMultipliers.Value;
+			num4 *= ParryValueMultipliers.Value;
 		}
+		RawResult = num4;
 		DeflectionResult = (IsRangedParry ? (Math.Clamp(RawResult / 2, 0, 100) + DefenderAttackRedirectionChanceModifiers.Value) : 0);
 		Result = Math.Clamp(RawResult, 0, 95);
 		SpecialOverrideWithFeatures();

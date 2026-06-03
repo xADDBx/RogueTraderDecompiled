@@ -409,17 +409,27 @@ public class AbilityExecutionProcess : IDisposable
 			{
 				using (AbilityExecutionContext.GetAbilityDataScope(target.AttackRule, target.Projectile, context.ClickedTarget))
 				{
-					applyEffect?.Apply(context, target.Target);
-					foreach (BlueprintAbilityAdditionalEffect additionalEffect in context.Ability.AdditionalEffects)
+					if (!target.Target.HasEntity || !target.Target.Entity.HasAbilityImmunity(context.AbilityBlueprint))
 					{
-						using (new MechanicsContext(context.Caster, context.MaybeOwner, additionalEffect, context, context.MainTarget).GetDataScope(target.Target))
+						applyEffect?.Apply(context, target.Target);
+						foreach (BlueprintAbilityAdditionalEffect additionalEffect in context.Ability.AdditionalEffects)
 						{
-							additionalEffect.OnHitActions.Run();
+							using (new MechanicsContext(context.Caster, context.MaybeOwner, additionalEffect, context, context.MainTarget).GetDataScope(target.Target))
+							{
+								additionalEffect.OnHitActions.Run();
+							}
 						}
 					}
 				}
 			}
-			SpawnFxs(context, AbilitySpawnFxTime.OnApplyEffect, target.Target);
+			try
+			{
+				SpawnFxs(context, AbilitySpawnFxTime.OnApplyEffect, target.Target);
+			}
+			catch (Exception ex)
+			{
+				PFLog.Ability.Exception(ex);
+			}
 			EventBus.RaiseEvent(delegate(IApplyAbilityEffectHandler h)
 			{
 				h.OnAbilityEffectAppliedToTarget(context, target);

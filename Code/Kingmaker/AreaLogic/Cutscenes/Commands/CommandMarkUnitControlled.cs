@@ -1,6 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.PubSubSystem.Core;
 using UnityEngine;
 
 namespace Kingmaker.AreaLogic.Cutscenes.Commands;
@@ -22,6 +21,8 @@ public class CommandMarkUnitControlled : CommandBase
 
 	public override bool IsContinuous => UnmarkAfter <= 0f;
 
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => Unit;
+
 	public override bool TrySkip(CutscenePlayerData player)
 	{
 		player.GetCommandData<Data>(this).SkippedByPlayer = true;
@@ -30,15 +31,6 @@ public class CommandMarkUnitControlled : CommandBase
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (Unit == null || !Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 
 	public override bool TryPrepareForStop(CutscenePlayerData player)

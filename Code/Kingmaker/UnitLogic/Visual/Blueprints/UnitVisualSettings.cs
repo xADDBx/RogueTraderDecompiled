@@ -53,7 +53,10 @@ public class UnitVisualSettings
 
 	public AkSwitchReference BodySizeSoundSwitch = new AkSwitchReference();
 
-	[Header("Turret rotate sound")]
+	[Header("Turret settings")]
+	[Tooltip("If true, turret keeps its orientation after attack instead of returning to default")]
+	public bool KeepTurretOrientation;
+
 	[Tooltip("Set it only for turrets")]
 	[AkEventReference]
 	public string TurettRotateStart;
@@ -70,6 +73,8 @@ public class UnitVisualSettings
 	public int ImportanceOverride;
 
 	public bool SilentCaster;
+
+	public bool NoHighlight;
 
 	public MusicCombatState CombatMusic;
 

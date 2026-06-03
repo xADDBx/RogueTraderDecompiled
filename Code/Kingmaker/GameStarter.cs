@@ -265,7 +265,7 @@ public class GameStarter : MonoBehaviour
 				UnityEngine.Object.Destroy(EventSystem.current.gameObject);
 				EventSystem.current = null;
 			}
-			Game.Instance.ControllerMode = Game.ControllerModeType.Gamepad;
+			Game.Instance.ControllerMode = ((!ApplicationHelper.IsRunningOnSwitch2 || !SettingsRoot.Game.Switch.SwitchJoyConAsMouse) ? Game.ControllerModeType.Gamepad : Game.ControllerModeType.Mouse);
 		}
 		else if (Game.ControllerOverride.HasValue)
 		{
@@ -315,7 +315,15 @@ public class GameStarter : MonoBehaviour
 		PFLog.System.Log("GameStarter.StartGame: finished loading UI_Common_Scene");
 		Game.Instance.RootUiContext.InitializeCommonScene("UI_Common_Scene");
 		PFLog.System.Log("GameStarter.StartGame: finished loading LoadingScreen");
+		if (ApplicationHelper.IsRunningOnSwitch2)
+		{
+			Game.Instance.ControllerMode = Game.ControllerModeType.Gamepad;
+		}
 		Game.Instance.RootUiContext.InitializeLoadingScreenScene("LoadingScreen");
+		if (ApplicationHelper.IsRunningOnSwitch2)
+		{
+			Game.Instance.ControllerMode = ((!ApplicationHelper.IsRunningOnSwitch2 || !SettingsRoot.Game.Switch.SwitchJoyConAsMouse) ? Game.ControllerModeType.Gamepad : Game.ControllerModeType.Mouse);
+		}
 		CommandLineArguments commandLineArguments = CommandLineArguments.Parse();
 		if (commandLineArguments.Contains("copy-saves"))
 		{

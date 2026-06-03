@@ -19,6 +19,9 @@ public class PayloadEntryData
 	[JsonIgnore]
 	private bool m_ContainsShadowDeletedBlueprints;
 
+	[JsonIgnore]
+	private bool m_HasObsoleteComponents;
+
 	[JsonProperty("id")]
 	public string Id
 	{
@@ -71,26 +74,39 @@ public class PayloadEntryData
 		}
 	}
 
+	public bool HasObsoleteComponents
+	{
+		get
+		{
+			return m_HasObsoleteComponents;
+		}
+		set
+		{
+			m_HasObsoleteComponents = value;
+		}
+	}
+
 	public static PayloadEntryData FromJson(string json)
 	{
 		return JsonConvert.DeserializeObject<PayloadEntryData>(json);
 	}
 
-	public static PayloadEntryData Create(string id, string path, bool isShadowDeleted, bool containsShadowDeletedBlueprints)
+	public static PayloadEntryData Create(string id, string path, bool isShadowDeleted, bool containsShadowDeletedBlueprints, bool containsObsoleteComponents)
 	{
-		return new PayloadEntryData(id, path, isShadowDeleted, containsShadowDeletedBlueprints);
+		return new PayloadEntryData(id, path, isShadowDeleted, containsShadowDeletedBlueprints, containsObsoleteComponents);
 	}
 
 	public PayloadEntryData()
-		: this(string.Empty, string.Empty, isShadowDeleted: false, containsShadowDeletedBlueprints: false)
+		: this(string.Empty, string.Empty, isShadowDeleted: false, containsShadowDeletedBlueprints: false, containsObsoleteComponents: false)
 	{
 	}
 
-	public PayloadEntryData(string id, string path, bool isShadowDeleted, bool containsShadowDeletedBlueprints)
+	public PayloadEntryData(string id, string path, bool isShadowDeleted, bool containsShadowDeletedBlueprints, bool containsObsoleteComponents)
 	{
 		m_Id = id;
 		m_Path = path;
 		m_IsShadowDeleted = isShadowDeleted;
 		m_ContainsShadowDeletedBlueprints = containsShadowDeletedBlueprints;
+		m_HasObsoleteComponents = containsObsoleteComponents;
 	}
 }

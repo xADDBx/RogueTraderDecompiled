@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Sound;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.Utility.Attributes;
 using Kingmaker.View.Animation;
 using Kingmaker.Visual.FX;
 using Kingmaker.Visual.Particles.Blueprints;
@@ -50,6 +51,10 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 
 		public bool OverrideTargetOrientationSource => false;
 
+		public bool OrientationFromCasterToTarget => false;
+
+		public OrientationSnapMode OrientationSnap => OrientationSnapMode.None;
+
 		public FXSettings Settings => m_Settings;
 	}
 
@@ -67,6 +72,14 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 		private bool m_OverrideTargetOrientationSource;
 
 		[SerializeField]
+		private bool m_OrientationFromCasterToTarget;
+
+		[SerializeField]
+		[ShowIf("m_OrientationFromCasterToTarget")]
+		[Tooltip("Snap orientation angle to discrete steps. Only applied when OrientationFromCasterToTarget is enabled.")]
+		private OrientationSnapMode m_OrientationSnap;
+
+		[SerializeField]
 		private FXSettings m_Settings;
 
 		MappedAnimationEventType? IFXSettings.AnimationEvent => null;
@@ -76,6 +89,10 @@ public class BlueprintAbilityVisualFXSettings : BlueprintScriptableObject, IFXSe
 		public FXTarget Target => m_Target;
 
 		public bool OverrideTargetOrientationSource => m_OverrideTargetOrientationSource;
+
+		public bool OrientationFromCasterToTarget => m_OrientationFromCasterToTarget;
+
+		public OrientationSnapMode OrientationSnap => m_OrientationSnap;
 
 		public FXSettings Settings => m_Settings;
 	}

@@ -18,12 +18,18 @@ public class VigilBeyondTime : UnitBuffComponentDelegate, IHashable
 
 	protected override void OnActivate()
 	{
-		base.Context.MaybeCaster?.GetOrCreate<UnitPartVigilBeyondTime>().AddEntry(base.Buff, TeleportAbility);
+		if (!base.Owner.IsPreviewUnit)
+		{
+			base.Context.MaybeCaster?.GetOrCreate<UnitPartVigilBeyondTime>().AddEntry(base.Buff, TeleportAbility);
+		}
 	}
 
 	protected override void OnDeactivate()
 	{
-		base.Context.MaybeCaster?.GetOrCreate<UnitPartVigilBeyondTime>().RemoveEntry(base.Buff);
+		if (!base.Owner.IsPreviewUnit)
+		{
+			base.Context.MaybeCaster?.GetOrCreate<UnitPartVigilBeyondTime>().RemoveEntry(base.Buff);
+		}
 	}
 
 	public override Hash128 GetHash128()

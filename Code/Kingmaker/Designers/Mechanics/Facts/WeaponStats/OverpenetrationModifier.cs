@@ -3,7 +3,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules;
-using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using StateHasher.Core;
@@ -27,23 +26,15 @@ public abstract class OverpenetrationModifier : MechanicEntityFactComponentDeleg
 	[SerializeField]
 	private bool ApplyIgnoreOverpenetrationDamageDecreament;
 
-	public void Apply(RuleCalculateStatsWeapon rule)
+	public void Apply(RuleCalculateOverpenetration rule)
 	{
 		if (m_Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
 			m_OverpenetrationFactor.TryApply(rule.OverpenetrationFactorModifiers, base.Fact, m_Descriptor);
 			if (ApplyIgnoreOverpenetrationDamageDecreament)
 			{
-				rule.BaseDamage.UnreducedOverpenetration = true;
+				rule.OverpenetrationDamage.UnreducedOverpenetrationDamage = true;
 			}
-		}
-	}
-
-	public void ApplyOverpenIgnoreDecreament(RuleCalculateDamage rule)
-	{
-		if (m_Restrictions.IsPassed(base.Fact, rule, rule.Ability) && ApplyIgnoreOverpenetrationDamageDecreament)
-		{
-			rule.ResultDamage.UnreducedOverpenetration = true;
 		}
 	}
 

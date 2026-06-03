@@ -1,4 +1,5 @@
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using TMPro;
 using UnityEngine;
@@ -42,8 +43,17 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 		}
 		base.BindViewImplementation();
 		m_MainTitle.text = base.ViewModel.MainTitle;
-		m_ImageContainer.SetActive(base.ViewModel.Image != null);
-		m_Image.sprite = base.ViewModel.Image;
+		if (base.ViewModel.IsAugment && base.ViewModel.Image == null)
+		{
+			m_ImageContainer.SetActive(value: true);
+			m_Image.color = new Color(0f, 0f, 0f, 0f);
+		}
+		else
+		{
+			m_ImageContainer.SetActive(base.ViewModel.Image != null);
+			m_Image.sprite = base.ViewModel.Image;
+			m_Image.color = new Color(255f, 255f, 255f, 255f);
+		}
 		SetText(m_Title, base.ViewModel.Title);
 		SetText(m_LeftLabel, base.ViewModel.LeftLabel);
 		SetText(m_RightLabel, base.ViewModel.RightLabel);
@@ -53,6 +63,10 @@ public class TooltipBrickEntityHeaderView : TooltipBaseBrickView<TooltipBrickEnt
 			m_UpgradeItemIndicator.SetActive(base.ViewModel.HasUpgrade);
 		}
 		m_TextHelper.UpdateTextSize();
+		if (base.ViewModel.ItemTooltip != null)
+		{
+			this.SetTooltip(base.ViewModel.ItemTooltip);
+		}
 	}
 
 	protected override void DestroyViewImplementation()

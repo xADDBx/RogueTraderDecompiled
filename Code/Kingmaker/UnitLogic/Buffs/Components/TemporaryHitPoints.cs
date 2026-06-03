@@ -2,6 +2,7 @@ using System;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Parts;
 using StateHasher.Core;
@@ -19,7 +20,7 @@ public class TemporaryHitPoints : UnitBuffComponentDelegate, IHashable
 	protected override void OnActivate()
 	{
 		PartHealth healthOptional = base.Owner.GetHealthOptional();
-		if (healthOptional == null)
+		if (healthOptional == null || (bool)base.Owner.GetMechanicFeature(MechanicsFeatureType.CantHaveTHP))
 		{
 			base.Buff.MarkExpired();
 		}

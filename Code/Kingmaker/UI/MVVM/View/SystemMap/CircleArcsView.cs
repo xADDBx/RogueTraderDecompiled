@@ -12,13 +12,13 @@ public class CircleArcsView : ViewBase<BaseCircleArcsVM>
 {
 	public bool HasRandomizeImages;
 
-	[ConditionalShow("HasRandomizeImages")]
+	[ShowIf("HasRandomizeImages")]
 	[SerializeField]
 	private RandomizeImages m_RandomizeImages;
 
 	public bool AnimateShadows;
 
-	[ConditionalShow("AnimateShadows")]
+	[ShowIf("AnimateShadows")]
 	[SerializeField]
 	private CanvasGroup m_Shadows;
 

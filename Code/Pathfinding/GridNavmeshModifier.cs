@@ -1,32 +1,53 @@
 using System.Linq;
 using Kingmaker;
+using Kingmaker.Pathfinding;
 using Owlcat.Runtime.Core.Utility;
 using Pathfinding.Util;
 using UnityEngine;
 
 namespace Pathfinding;
 
-public class GridNavmeshModifier : NavmeshClipper
+public class GridNavmeshModifier : NavmeshClipper, INodesTagProvider
 {
+	private const float MovingEps = 0.0001f;
+
 	private const float UpdateDistance = 0.4f;
 
 	private const float UpdateRotationDistance = 45f;
 
-	protected Collider[] m_Colliders;
+	private const float BoundsPadding = 0.04f;
+
+	[SerializeField]
+	[Tooltip("Мини-оптимизация: Если галка установлена, навмеш будет обновляться каждый кадр при движении объекта. Иначе он будет обновляться только на кадрах, когда объект останавливается после движения.")]
+	private bool m_UpdateDuringMoving;
 
 	private Transform m_Transform;
 
-	private Vector3 m_LastPosition;
+	protected Collider[] m_Colliders;
 
-	private Quaternion m_LastRotation;
+	private Vector3 m_LastUpdatedPosition;
+
+	private Quaternion m_LastUpdatedRotation;
+
+	private Rect m_LastUpdatedBounds;
+
+	private Vector3 m_LastStopCheckPosition;
+
+	private bool m_WasMoving;
+
+	private int m_LastStopCheckFrame = -1;
+
+	private bool m_CachedWasStopped;
+
+	private bool m_ForceUpdatePending;
 
 	private Rect m_CachedBounds;
 
+	private bool m_ForceOverrideWalkability;
+
 	protected virtual bool ShouldFixLayer => true;
 
-	public Rect LastBounds { get; private set; }
-
-	public Rect Bounds
+	private Rect Bounds
 	{
 		get
 		{
@@ -50,11 +71,24 @@ public class GridNavmeshModifier : NavmeshClipper
 		}
 	}
 
+	public int Tag
+	{
+		get
+		{
+			if (!m_ForceOverrideWalkability)
+			{
+				return 0;
+			}
+			return 31;
+		}
+	}
+
 	protected override void Awake()
 	{
 		base.Awake();
 		m_Transform = base.transform;
 		m_Colliders = GetComponentsInChildren<Collider>();
+		m_ForceOverrideWalkability = base.gameObject.layer == 18;
 		if (ShouldFixLayer && base.gameObject.layer != 19 && base.gameObject.layer != 18)
 		{
 			PFLog.Pathfinding.Error(this, $"{base.name}: GridNavmeshModifier has invalid Layer ({(Layers)base.gameObject.layer})");
@@ -64,29 +98,62 @@ public class GridNavmeshModifier : NavmeshClipper
 
 	public override void NotifyUpdated()
 	{
-		m_LastPosition = m_Transform.position;
-		m_LastRotation = m_Transform.rotation;
-		LastBounds = Bounds;
+		m_LastStopCheckPosition = (m_LastUpdatedPosition = m_Transform.position);
+		m_LastUpdatedRotation = m_Transform.rotation;
+		m_LastUpdatedBounds = Bounds;
+		m_ForceUpdatePending = false;
 	}
 
 	public override Rect GetBounds(GraphTransform t)
 	{
-		return Bounds;
+		return CalculateGraphSpaceBounds(t, Bounds);
+	}
+
+	public Rect GetLastUpdatedBounds(GraphTransform t)
+	{
+		if (!(m_LastUpdatedBounds == default(Rect)))
+		{
+			return CalculateGraphSpaceBounds(t, m_LastUpdatedBounds);
+		}
+		return default(Rect);
 	}
 
 	public override bool RequiresUpdate()
 	{
-		if (!((m_Transform.position - m_LastPosition).sqrMagnitude > 0.16000001f))
+		if (m_ForceUpdatePending)
 		{
-			return Quaternion.Angle(m_LastRotation, m_Transform.rotation) > 45f;
+			return true;
 		}
-		return true;
+		if (Quaternion.Angle(m_LastUpdatedRotation, m_Transform.rotation) > 45f)
+		{
+			return true;
+		}
+		if (m_UpdateDuringMoving)
+		{
+			return (m_Transform.position - m_LastUpdatedPosition).sqrMagnitude > 0.16000001f;
+		}
+		return WasStoppedThisFrame();
 	}
 
 	public override void ForceUpdate()
 	{
-		m_LastPosition = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+		m_ForceUpdatePending = true;
 		ForceUpdateColliderBounds();
+	}
+
+	private bool WasStoppedThisFrame()
+	{
+		if (Time.frameCount == m_LastStopCheckFrame)
+		{
+			return m_CachedWasStopped;
+		}
+		m_LastStopCheckFrame = Time.frameCount;
+		Vector3 position = m_Transform.position;
+		bool flag = (position - m_LastStopCheckPosition).sqrMagnitude > 0.0001f;
+		m_LastStopCheckPosition = position;
+		m_CachedWasStopped = m_WasMoving && !flag;
+		m_WasMoving = flag;
+		return m_CachedWasStopped;
 	}
 
 	private void ForceUpdateColliderBounds()
@@ -94,8 +161,17 @@ public class GridNavmeshModifier : NavmeshClipper
 		Collider[] colliders = m_Colliders;
 		foreach (Collider obj in colliders)
 		{
+			bool flag = obj.enabled;
 			obj.enabled = false;
 			obj.enabled = true;
+			obj.enabled = flag;
 		}
+	}
+
+	protected static Rect CalculateGraphSpaceBounds(GraphTransform t, Rect bounds)
+	{
+		Vector3 vector = t.InverseTransform(new Vector3(bounds.xMin, 0f, bounds.yMin));
+		Vector3 vector2 = t.InverseTransform(new Vector3(bounds.xMax, 0f, bounds.yMax));
+		return Rect.MinMaxRect(Mathf.Round(vector.x) - 0.04f, Mathf.Round(vector.z) - 0.04f, Mathf.Round(vector2.x) + 0.04f, Mathf.Round(vector2.z) + 0.04f);
 	}
 }

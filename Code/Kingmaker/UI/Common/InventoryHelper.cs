@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
+using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Code.UI.MVVM.VM.CounterWindow;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.MessageBox;
@@ -52,7 +54,7 @@ public static class InventoryHelper
 		return new ItemSlotRef(EquipSlotType.PrimaryHand, -1, itemEntity.InventorySlotIndex, itemEntity, itemEntity.Collection, ShipComponentSlotType.PlasmaDrives);
 	}
 
-	public static ItemSlotRef ToSlotRef(this ItemSlotVM slotVM)
+	public static ItemSlotRef ToSlotRef(this ItemSlotVM slotVM, bool isAugment = false)
 	{
 		if (slotVM is EquipSlotVM equipSlotVM)
 		{
@@ -61,6 +63,10 @@ public static class InventoryHelper
 		if (slotVM is ShipComponentSlotVM shipComponentSlotVM)
 		{
 			return shipComponentSlotVM.ToSlotRef();
+		}
+		if (slotVM is AugmentationsSlotVM augmentationsSlotVM)
+		{
+			return new ItemSlotRef(EquipSlotType.PrimaryHand, augmentationsSlotVM.SetIndex, -1, augmentationsSlotVM.ItemEntity, slotVM.ItemEntity?.Collection ?? augmentationsSlotVM.ItemSlot?.MaybeOwnerInventory?.Collection, ShipComponentSlotType.PlasmaDrives, null, augmentationsSlotVM.BlueprintAugmentSlot);
 		}
 		ItemsCollection itemsCollection = slotVM.ItemEntity?.Collection ?? slotVM.Group?.MechanicCollection;
 		LootFromPointOfInterestHolderRef lootHolderRef = GetLootHolderRef(itemsCollection);
@@ -89,6 +95,11 @@ public static class InventoryHelper
 	public static ItemSlotRef ToSlotRef(this ShipComponentSlotVM shipComponentSlotVM)
 	{
 		return new ItemSlotRef(EquipSlotType.PrimaryHand, shipComponentSlotVM.SetIndex, -1, shipComponentSlotVM.ItemEntity, shipComponentSlotVM.ItemEntity?.Collection ?? shipComponentSlotVM.ItemSlot?.MaybeOwnerInventory?.Collection, shipComponentSlotVM.SlotType);
+	}
+
+	public static ItemSlotRef ToSlotRef(this AugmentationsSlotVM augmentationsSlotVM)
+	{
+		return new ItemSlotRef(EquipSlotType.PrimaryHand, augmentationsSlotVM.SetIndex, -1, augmentationsSlotVM.ItemEntity, augmentationsSlotVM.ItemEntity?.Collection ?? augmentationsSlotVM.ItemSlot?.MaybeOwnerInventory?.Collection, ShipComponentSlotType.PlasmaDrives, null, augmentationsSlotVM.BlueprintAugmentSlot);
 	}
 
 	public static bool TryUnequip(EquipSlotVM slot)
@@ -148,6 +159,42 @@ public static class InventoryHelper
 			{
 				h.HandleWarning(UIStrings.Instance.ShipCustomization.PlaceEngineSlot.Text, addToLog: false);
 			});
+			return false;
+		}
+		Game.Instance.GameCommandQueue.UnequipItem(baseUnitEntity, slot.ToSlotRef(), null);
+		UISounds.Instance.PlayItemSound(SlotAction.Take, slot.ItemEntity, equipSound: true, baseUnitEntity.IsStarship());
+		return true;
+	}
+
+	public static bool TryUnequip(AugmentationsSlotVM slot)
+	{
+		ItemSlot itemSlot = slot.ItemSlot;
+		if (slot.BlueprintAugmentSlot.IsMechSlot)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.UIAugmentations.CannotRemoveMechAugment.Text, addToLog: false, WarningNotificationFormat.Short);
+			});
+			return false;
+		}
+		if (Game.Instance.Player.IsInCombat)
+		{
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(WarningNotificationType.EquipInCombatIsImpossible, addToLog: false, WarningNotificationFormat.Short);
+			});
+			return false;
+		}
+		if (itemSlot == null || !itemSlot.HasItem || (itemSlot.HasItem && !itemSlot.CanRemoveItem()))
+		{
+			return false;
+		}
+		if (!(itemSlot.Owner is BaseUnitEntity baseUnitEntity))
+		{
+			return false;
+		}
+		if (!baseUnitEntity.CanBeControlled())
+		{
 			return false;
 		}
 		Game.Instance.GameCommandQueue.UnequipItem(baseUnitEntity, slot.ToSlotRef(), null);
@@ -223,7 +270,7 @@ public static class InventoryHelper
 			return;
 		}
 		ItemEntity itemEntity = slot.ItemEntity;
-		if (unit.IsPet && itemEntity.Blueprint.ItemType != ItemsItemType.PetProtocol)
+		if ((unit.IsPet && itemEntity.Blueprint.ItemType != ItemsItemType.PetProtocol) || (itemEntity.Blueprint is BlueprintItemAugment && !RootUIContext.Instance.IsAugmentationsShown))
 		{
 			return;
 		}
@@ -404,6 +451,49 @@ public static class InventoryHelper
 					});
 				}
 				Game.Instance.GameCommandQueue.EquipItem(from.Item.Value, equipSlotVM.ItemSlot.Owner, equipSlotVM.ToSlotRef());
+				return;
+			}
+		}
+		if (to is AugmentationsSlotVM augmentationsSlotVM)
+		{
+			if (!augmentationsSlotVM.ItemSlot.Owner.CanBeControlled())
+			{
+				return;
+			}
+			if (from.Group != to.Group)
+			{
+				if (!augmentationsSlotVM.ItemSlot.CanInsertItem(from.Item.Value))
+				{
+					EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+					{
+						h.HandleWarning(UIStrings.Instance.ShipCustomization.CantInsertInThisWeaponSlot.Text, addToLog: false, WarningNotificationFormat.Short);
+					});
+				}
+				Game.Instance.GameCommandQueue.EquipItem(from.Item.Value, augmentationsSlotVM.ItemSlot.Owner, null);
+				return;
+			}
+		}
+		if (from is AugmentationsSlotVM augmentationsSlotVM2)
+		{
+			if (!augmentationsSlotVM2.ItemSlot.Owner.CanBeControlled())
+			{
+				return;
+			}
+			if (augmentationsSlotVM2.Item != null && augmentationsSlotVM2.Item.Value.Blueprint == augmentationsSlotVM2.BlueprintAugmentSlot.DefaultAugment.Get())
+			{
+				ISlotsGroupVM group = to.Group;
+				if (group != null && group.Type == ItemSlotsGroupType.Inventory)
+				{
+					PFLog.UI.Log("Trying to unequip default augment!");
+					return;
+				}
+			}
+			if (augmentationsSlotVM2.BlueprintAugmentSlot.IsMechSlot && !(to is AugmentationsSlotVM))
+			{
+				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+				{
+					h.HandleWarning(UIStrings.Instance.UIAugmentations.CannotRemoveMechAugment.Text, addToLog: false, WarningNotificationFormat.Short);
+				});
 				return;
 			}
 		}
@@ -602,6 +692,16 @@ public static class InventoryHelper
 		default:
 			throw new ArgumentOutOfRangeException("type", type, null);
 		}
+	}
+
+	public static ItemSlot GetAugmentSlot(this PartUnitBody partUnitBody, BlueprintItemAugment item)
+	{
+		return partUnitBody.Augments.Slots.GetValueOrDefault(item.AugmentSlot);
+	}
+
+	public static ItemSlot GetAugmentSlot(this PartUnitBody partUnitBody, BlueprintAugmentSlot slot)
+	{
+		return partUnitBody.Augments.Slots.GetValueOrDefault(slot);
 	}
 
 	public static ItemSlot GetEquipShipSlot(this HullSlots partUnitBody, ShipComponentSlotType type, int handSetIndex)

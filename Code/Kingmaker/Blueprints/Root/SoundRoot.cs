@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker.Enums;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
@@ -48,4 +49,6 @@ public class SoundRoot
 	};
 
 	public float StarSystemAudioScalingFactor = 1f;
+
+	public List<ItemSoundsSet> ItemSoundsMap = new List<ItemSoundsSet>();
 }

@@ -9,6 +9,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -71,6 +72,10 @@ public class AbilityDeliverChain : AbilityDeliverEffect
 				if (delivery.Current != null)
 				{
 					yield return new AbilityDeliveryTarget(delivery.Current);
+					if (delivery.Current.Entity.HasAbilityImmunity(context.AbilityBlueprint))
+					{
+						yield break;
+					}
 				}
 				else
 				{

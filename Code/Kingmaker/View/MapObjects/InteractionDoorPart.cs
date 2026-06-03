@@ -45,6 +45,8 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 	[JsonProperty]
 	private bool m_Inited;
 
+	private bool WasAnimationFinished = true;
+
 	private bool m_InteractThroughVariants;
 
 	public bool IsOpen => m_State;
@@ -197,12 +199,7 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 		{
 			return null;
 		}
-		all = all.Where((IInteractionVariantActor x) => !(x is KeyRestrictionPart));
-		if (!all.Any())
-		{
-			return null;
-		}
-		return all;
+		return all.Where((IInteractionVariantActor x) => !(x is KeyRestrictionPart)).DefaultIfEmpty();
 	}
 
 	protected override void ConfigureRestrictions()
@@ -234,6 +231,19 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 			m_CurrentTime += ((m_PlayableDirector.playableGraph.GetRootPlayable(0).GetSpeed() > 0.0) ? delta : (0f - delta));
 			m_PlayableDirector.time = m_PreviousTime;
 			m_PlayableDirector.Evaluate();
+			if (WasAnimationFinished && !IsAnimationFinished)
+			{
+				WasAnimationFinished = false;
+			}
+			else if (!WasAnimationFinished && IsAnimationFinished)
+			{
+				WasAnimationFinished = true;
+				m_PlayableDirector.Pause();
+			}
+			if (WasAnimationFinished && IsAnimationFinished)
+			{
+				m_PlayableDirector.Pause();
+			}
 		}
 	}
 
@@ -307,6 +317,7 @@ public class InteractionDoorPart : InteractionPart<InteractionDoorSettings>, IHa
 			m_PlayableDirector.time = Mathf.Clamp((float)m_PlayableDirector.time, 0f, base.Settings.ObstacleAnimation.length);
 			m_CurrentTime = (float)m_PlayableDirector.time;
 			m_PreviousTime = m_CurrentTime;
+			m_PlayableDirector.Play();
 			m_PlayableDirector.playableGraph.GetRootPlayable(0).SetSpeed(num);
 		}
 	}

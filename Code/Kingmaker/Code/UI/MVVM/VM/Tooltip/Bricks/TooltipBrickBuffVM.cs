@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common;
@@ -57,9 +58,9 @@ public class TooltipBrickBuffVM : TooltipBrickFeatureVM
 		IsDOT = m_Buff?.Blueprint?.GetComponent<DOTLogicVisual>() != null;
 		if (IsDOT)
 		{
-			DOTDesc = UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Buff?.Description, ((IBuff)m_Buff)?.Caster);
+			DOTDesc = UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Buff?.Description, m_Buff?.Owner);
 		}
-		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.FrequentUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			Duration.Value = BuffTooltipUtils.GetDuration(m_Buff);
 			if (IsDOT)

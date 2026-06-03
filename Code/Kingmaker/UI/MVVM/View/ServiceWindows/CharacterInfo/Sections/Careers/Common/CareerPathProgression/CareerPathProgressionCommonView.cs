@@ -51,15 +51,15 @@ public class CareerPathProgressionCommonView : ViewBase<CareerPathVM>
 	protected bool m_CanMove = true;
 
 	[SerializeField]
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	protected ScrollRectExtended m_CareerScrollRectExtended;
 
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	[SerializeField]
 	private ContentSizeFitter m_ContentSizeFitter;
 
 	[SerializeField]
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	protected float m_MoveAnimationTime = 0.5f;
 
 	[Header("Scroll")]

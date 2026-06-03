@@ -31,7 +31,13 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 
 	private CustomGridNodeBase m_CachedTargetNode;
 
+	private OrientedPatternData m_SavedPattern = OrientedPatternData.Empty;
+
+	private OrientedPatternData m_CurrentPattern = OrientedPatternData.Empty;
+
 	private readonly List<AbilityTargetUIData> m_AbilityTargets = new List<AbilityTargetUIData>();
+
+	private readonly List<AbilityTargetUIData> m_SavedAbilityTargets = new List<AbilityTargetUIData>();
 
 	private int MinRangeCells => Ability.MinRangeCells;
 
@@ -46,6 +52,37 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 			return PatternProvider != null;
 		}
 		return false;
+	}
+
+	public override void HandleAbilityTargetSelectionStart(AbilityData ability)
+	{
+		base.HandleAbilityTargetSelectionStart(ability);
+		if (Ability.ShouldKeepPreviousAoEPatternOnUi())
+		{
+			m_SavedPattern = m_CurrentPattern;
+			m_CurrentPattern = OrientedPatternData.Empty;
+			for (int i = 0; i < m_AbilityTargets.Count; i++)
+			{
+				if (i < m_SavedAbilityTargets.Count)
+				{
+					m_SavedAbilityTargets[i] = m_AbilityTargets[i].CopyWithOverride(ability);
+				}
+				else
+				{
+					m_SavedAbilityTargets.Add(m_AbilityTargets[i].CopyWithOverride(ability));
+				}
+			}
+		}
+		else
+		{
+			ClearSavedAbilityValues();
+		}
+	}
+
+	public override void HandleAbilityTargetSelectionEnd(AbilityData ability)
+	{
+		base.HandleAbilityTargetSelectionEnd(ability);
+		ClearSavedAbilityValues();
 	}
 
 	protected override void SetRangeToWorldPosition(Vector3 desiredCastPosition, bool ignoreCache = false)
@@ -63,26 +100,40 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 		{
 			node = Ability.GetBestShootingPosition(desiredCastPosition.GetNearestNodeXZUnwalkable(), vector);
 		}
-		CustomGridNodeBase customGridNodeBase = AoEPatternHelper.GetActualCastNode(Ability.Caster, node, vector, MinRangeCells, MaxRangeCells);
+		CustomGridNodeBase node2;
+		CustomGridNodeBase customGridNodeBase = (Ability.TryGetCastNodeOverride(node, out node2) ? node2 : node);
+		CustomGridNodeBase customGridNodeBase2 = AoEPatternHelper.GetActualCastNode(Ability.Caster, customGridNodeBase, vector, MinRangeCells, MaxRangeCells);
 		if (Game.Instance.IsSpaceCombat)
 		{
-			customGridNodeBase = AoEPatternHelper.GetGridNode(AdjustTargetWithAngleRestriction(customGridNodeBase.Vector3Position));
+			customGridNodeBase2 = AoEPatternHelper.GetGridNode(AdjustTargetWithAngleRestriction(customGridNodeBase2.Vector3Position));
 		}
-		if (!(m_CachedCasterNode != node || m_CachedTargetNode != customGridNodeBase || ignoreCache))
+		if (!(m_CachedCasterNode != customGridNodeBase || m_CachedTargetNode != customGridNodeBase2 || ignoreCache))
 		{
 			return;
 		}
-		OrientedPatternData orientedPattern;
+		OrientedPatternData pattern;
 		using (ProfileScope.New("GetOrientedPattern"))
 		{
-			orientedPattern = PatternProvider.GetOrientedPattern(Ability, node, customGridNodeBase);
+			pattern = PatternProvider.GetOrientedPattern(Ability, customGridNodeBase, customGridNodeBase2);
 		}
-		m_CachedCasterNode = node;
-		m_CachedTargetNode = customGridNodeBase;
+		if (!m_SavedPattern.IsEmpty)
+		{
+			using (ProfileScope.New("CombineCurrentPatternWithSaved"))
+			{
+				m_CurrentPattern = CombineCurrentPatternWithSaved(in pattern);
+			}
+		}
+		else
+		{
+			m_CurrentPattern = pattern;
+		}
+		m_CachedCasterNode = customGridNodeBase;
+		m_CachedTargetNode = customGridNodeBase2;
 		m_AbilityTargets.Clear();
 		using (ProfileScope.New("GatherAffectedTargetsData"))
 		{
-			Ability.GatherAffectedTargetsData(orientedPattern, node.Vector3Position, target, in m_AbilityTargets);
+			Ability.GatherAffectedTargetsData(pattern, node.Vector3Position, target, in m_AbilityTargets);
+			CombineAbilityTargetsWithSaved(m_AbilityTargets);
 		}
 		int effectiveRange = ((Ability.Weapon != null) ? (MaxRangeCells / 2 + 1) : 0);
 		Vector3 position = (flag ? node.Vector3Position : desiredCastPosition);
@@ -92,7 +143,7 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 			bool flag2 = Ability.RestrictedFiringArc != RestrictedFiringArc.None;
 			bool flag3 = Ability.Blueprint.ComponentsArray.HasItem((BlueprintComponent c) => c is WarhammerAbilityAttackDelivery warhammerAbilityAttackDelivery && warhammerAbilityAttackDelivery.Special == WarhammerAbilityAttackDelivery.SpecialType.Burst);
 			CombatHUDRenderer.AbilityAreaHudInfo abilityAreaHudInfo = default(CombatHUDRenderer.AbilityAreaHudInfo);
-			abilityAreaHudInfo.pattern = orientedPattern;
+			abilityAreaHudInfo.pattern = m_CurrentPattern;
 			abilityAreaHudInfo.casterRect = result;
 			abilityAreaHudInfo.minRange = MinRangeCells;
 			abilityAreaHudInfo.maxRange = MaxRangeCells;
@@ -104,11 +155,57 @@ public class AbilityPatternRange : AbilityRange, IShowAoEAffectedUIHandler, ISub
 			CombatHUDRenderer.Instance.SetAbilityAreaHUD(abilityAreaHUD);
 		}
 		Vector3 casterPosition = (flag ? desiredCastPosition : node.Vector3Position);
-		ObjectExtensions.Or(UnitPredictionManager.Instance, null)?.SetAbilityPositions(casterPosition, customGridNodeBase.Vector3Position);
+		ObjectExtensions.Or(UnitPredictionManager.Instance, null)?.SetAbilityPositions(casterPosition, customGridNodeBase2.Vector3Position);
 		EventBus.RaiseEvent(delegate(ICellAbilityHandler h)
 		{
 			h.HandleCellAbility(m_AbilityTargets);
 		});
+	}
+
+	private OrientedPatternData CombineCurrentPatternWithSaved(in OrientedPatternData pattern)
+	{
+		HashSet<CustomGridNodeBase> hashSet = TempHashSet.Get<CustomGridNodeBase>();
+		foreach (CustomGridNodeBase node in m_SavedPattern.Nodes)
+		{
+			hashSet.Add(node);
+		}
+		foreach (CustomGridNodeBase node2 in pattern.Nodes)
+		{
+			hashSet.Add(node2);
+		}
+		return new OrientedPatternData(hashSet, m_SavedPattern.ApplicationNode);
+	}
+
+	private void CombineAbilityTargetsWithSaved(List<AbilityTargetUIData> abilityTargets)
+	{
+		foreach (AbilityTargetUIData savedAbilityTarget in m_SavedAbilityTargets)
+		{
+			bool flag = false;
+			for (int i = 0; i < abilityTargets.Count; i++)
+			{
+				AbilityTargetUIData abilityTargetUIData = abilityTargets[i];
+				if (abilityTargetUIData.Target == savedAbilityTarget.Target)
+				{
+					int index = i;
+					int? minDamageOverride = savedAbilityTarget.MinDamage + abilityTargetUIData.MinDamage;
+					int? maxDamageOverride = savedAbilityTarget.MaxDamage + abilityTargetUIData.MaxDamage;
+					abilityTargets[index] = savedAbilityTarget.CopyWithOverride(null, null, null, null, null, null, minDamageOverride, maxDamageOverride);
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				abilityTargets.Add(savedAbilityTarget);
+			}
+		}
+	}
+
+	private void ClearSavedAbilityValues()
+	{
+		m_CurrentPattern = OrientedPatternData.Empty;
+		m_SavedPattern = OrientedPatternData.Empty;
+		m_SavedAbilityTargets.Clear();
 	}
 
 	private Vector3 AdjustTargetWithAngleRestriction(Vector3 target)

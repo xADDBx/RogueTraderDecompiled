@@ -58,6 +58,17 @@ public class TaskNodeTryStarshipExtraMeasures : TaskNode
 		}
 	}
 
+	public UnitUseAbilityParams CmdParams { get; private set; }
+
+	public TaskNodeTryStarshipExtraMeasures()
+	{
+	}
+
+	public TaskNodeTryStarshipExtraMeasures(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		AILogger.Instance.Log(LogMessage.TryUseExtraMeasures());
@@ -79,6 +90,7 @@ public class TaskNodeTryStarshipExtraMeasures : TaskNode
 			}
 		}
 		AILogger.Instance.Log(new AILogReason(AILogReasonType.CantUseExtraMeasures));
+		base.FailReason = "Starship can't use any of extra measures or no appropriate targets was found";
 		return Status.Failure;
 	}
 
@@ -90,8 +102,8 @@ public class TaskNodeTryStarshipExtraMeasures : TaskNode
 			return false;
 		}
 		AILogger.Instance.Log(LogMessage.TryUseAbility(ability.Data));
-		UnitUseAbilityParams cmdParams = new UnitUseAbilityParams(ability.Data, target);
-		context.Unit.Commands.Run(cmdParams);
+		CmdParams = new UnitUseAbilityParams(ability.Data, target);
+		context.Unit.Commands.Run(CmdParams);
 		context.Unit.Brain.IsIdling = false;
 		return true;
 	}

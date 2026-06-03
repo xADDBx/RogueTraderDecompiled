@@ -1,6 +1,5 @@
 using System;
 using JetBrains.Annotations;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Abilities;
@@ -11,6 +10,10 @@ namespace Kingmaker.RuleSystem.Rules;
 
 public class RuleCalculateAbilityActionPointCost : RulebookEvent
 {
+	public class Cache : RuleCache<AbilityData, RuleCalculateAbilityActionPointCost>
+	{
+	}
+
 	private const int TwoWeaponAdditionalPenaltyCost = 1;
 
 	private readonly AbilityData m_AbilityData;
@@ -70,18 +73,10 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 
 	public AbilityData AbilityData => m_AbilityData;
 
-	public RuleCalculateAbilityActionPointCost([NotNull] MechanicEntity initiator, AbilityData ability)
-		: base(initiator)
+	public RuleCalculateAbilityActionPointCost(AbilityData ability)
+		: base(ability.Caster)
 	{
 		m_AbilityData = ability;
-		CostOverride = -1;
-		DefaultCostOverride = -1;
-	}
-
-	public RuleCalculateAbilityActionPointCost([NotNull] MechanicEntity initiator, BlueprintAbility ability)
-		: base(initiator)
-	{
-		m_BlueprintAbility = ability;
 		CostOverride = -1;
 		DefaultCostOverride = -1;
 	}
@@ -91,6 +86,17 @@ public class RuleCalculateAbilityActionPointCost : RulebookEvent
 		int num = ((CostOverride >= 0) ? CostOverride : Math.Max(DefaultCost + CostBonus, Math.Max(CostMinimum, 0)));
 		num += CostBonusAfterMinimum;
 		Result = (HasPenaltyCost() ? (num + 1) : num);
+	}
+
+	public static RuleCalculateAbilityActionPointCost TryGetCachedOrTrigger(AbilityData ability)
+	{
+		RuleCalculateAbilityActionPointCost ruleCalculateAbilityActionPointCost = RuleCache<AbilityData, RuleCalculateAbilityActionPointCost>.Get(ability);
+		if (ruleCalculateAbilityActionPointCost == null)
+		{
+			ruleCalculateAbilityActionPointCost = Rulebook.Trigger(new RuleCalculateAbilityActionPointCost(ability));
+			RuleCache<AbilityData, RuleCalculateAbilityActionPointCost>.Set(ability, ruleCalculateAbilityActionPointCost);
+		}
+		return ruleCalculateAbilityActionPointCost;
 	}
 
 	private bool HasPenaltyCost()

@@ -82,4 +82,10 @@ public class TooltipBrickPetInfoView : TooltipBaseBrickView<TooltipBrickPetInfoV
 			}, 2);
 		}
 	}
+
+	protected override void DestroyViewImplementation()
+	{
+		base.DestroyViewImplementation();
+		m_VideoPlayerHelper.Stop();
+	}
 }

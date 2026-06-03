@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Ecnchantments;
-using Kingmaker.Blueprints.Root;
-using Kingmaker.EntitySystem;
+using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.QA;
 using Kingmaker.RuleSystem.Enum;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UnitLogic.Abilities;
@@ -21,6 +18,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Damage;
 using Kingmaker.Utility.DotNetExtensions;
+using UnityEngine;
 
 namespace Kingmaker.RuleSystem.Rules;
 
@@ -38,9 +36,9 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 
 	public readonly CompositeModifiersManager MaxDistanceModifiers = new CompositeModifiersManager(1);
 
-	public readonly CompositeModifiersManager RateOfFireModifiers = new CompositeModifiersManager(1);
+	public readonly CompositeModifiersManager OptimalDistanceModifiers = new CompositeModifiersManager();
 
-	public readonly CompositeModifiersManager OverpenetrationFactorModifiers = new CompositeModifiersManager();
+	public readonly CompositeModifiersManager RateOfFireModifiers = new CompositeModifiersManager(1);
 
 	public List<StatType> MeleeDamageStats = new List<StatType> { StatType.WarhammerStrength };
 
@@ -68,21 +66,9 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 
 	public int ResultMaxDistance => MaxDistanceModifiers.Value;
 
-	public int ResultOptimalDistance
-	{
-		get
-		{
-			if (Weapon == null || !Weapon.Blueprint.IsRanged)
-			{
-				return ResultMaxDistance;
-			}
-			return ResultMaxDistance / 2;
-		}
-	}
+	public int ResultOptimalDistance { get; private set; }
 
 	public int ResultRateOfFire => RateOfFireModifiers.Value;
-
-	public int ResultOverpenetrationFactor => OverpenetrationFactorModifiers.Value;
 
 	public StatType MeleeDamageStat => MeleeDamageStats.MaxBy((StatType p) => (base.InitiatorUnit?.Stats.GetStat(p)?.ModifiedValue).GetValueOrDefault());
 
@@ -104,40 +90,37 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 		Ability = ability;
 		Weapon = weapon ?? ability?.Weapon;
 		base.HasNoTarget = target == null;
-		BaseDamage = baseDamageOverride?.CopyWithoutModifiers() ?? new DamageData(weapon?.Blueprint.DamageType.Type ?? Ability?.Blueprint.ElementsArray.OfType<ContextActionDealDamage>().FirstOrDefault()?.DamageType.Type ?? DamageType.Direct, weapon?.Blueprint.WarhammerDamage ?? 0, weapon?.Blueprint.WarhammerMaxDamage ?? 0);
-		int num = basePenetrationOverride ?? weapon?.Blueprint.WarhammerPenetration ?? 0;
-		BaseDamage.Penetration.Add(ModifierType.ValAdd, num, this, ModifierDescriptor.BaseValue);
+		BaseDamage = baseDamageOverride?.CopyWithoutModifiers() ?? new DamageData(weapon?.Blueprint.DamageType.Type ?? GetAbilityDamageType(), weapon?.Blueprint.WarhammerDamage ?? 0, weapon?.Blueprint.WarhammerMaxDamage ?? 0);
+		int value = basePenetrationOverride ?? weapon?.Blueprint.WarhammerPenetration ?? 0;
+		BaseDamage.Penetration.Add(ModifierType.ValAdd, value, this, ModifierDescriptor.BaseValue);
 		BaseDamage.Overpenetrating = baseDamageOverride?.Overpenetrating ?? false;
-		if ((bool)initiator.Features.OverpenetrationDoesNotDecreaseDamage)
-		{
-			goto IL_0201;
-		}
-		if (ability != null)
-		{
-			IgnoreOverpenetrationDamageDecreament component = ability.Blueprint.GetComponent<IgnoreOverpenetrationDamageDecreament>();
-			if (component != null && component.Active(ability?.Fact, this, ability))
-			{
-				goto IL_0201;
-			}
-		}
-		goto IL_020d;
-		IL_020d:
-		int? num2 = null;
 		if (Weapon != null)
 		{
 			RecoilModifiers.Add(ModifierType.ValAdd, Weapon.Blueprint.WarhammerRecoil, this, ModifierDescriptor.BaseValue);
 			DodgePenetrationModifiers.Add(ModifierType.ValAdd, Weapon.Blueprint.DodgePenetration, this, ModifierDescriptor.BaseValue);
 			MaxDistanceModifiers.Add(ModifierType.ValAdd, Weapon.Blueprint.WarhammerMaxDistance, this, ModifierDescriptor.BaseValue);
 			RateOfFireModifiers.Add(ModifierType.ValAdd, Weapon.Blueprint.RateOfFire, this, ModifierDescriptor.BaseValue);
-			num2 = Weapon.Blueprint.OverrideOverpenetrationFactorPercents;
 		}
-		int baseOverpenetrationChance = BlueprintWarhammerRoot.Instance.CombatRoot.BaseOverpenetrationChance;
-		int value = baseDamageOverride?.OverpenetrationFactorPercents ?? num2 ?? (baseOverpenetrationChance + num);
-		OverpenetrationFactorModifiers.Add(ModifierType.ValAdd, value, this, ModifierDescriptor.BaseValue);
-		return;
-		IL_0201:
-		BaseDamage.UnreducedOverpenetration = true;
-		goto IL_020d;
+	}
+
+	private DamageType GetAbilityDamageType()
+	{
+		List<Element> list = Ability?.Blueprint.ElementsArray;
+		if (list != null)
+		{
+			foreach (Element item in list)
+			{
+				if (item is ContextActionDealDamage contextActionDealDamage)
+				{
+					if (contextActionDealDamage.DamageType != null)
+					{
+						return contextActionDealDamage.DamageType.Type;
+					}
+					break;
+				}
+			}
+		}
+		return DamageType.Direct;
 	}
 
 	public override void OnTrigger(RulebookEventContext context)
@@ -157,22 +140,22 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 			AbilityData ability = Ability;
 			if ((object)ability != null && ability.Blueprint.IsWeaponAbility)
 			{
-				goto IL_00e5;
+				goto IL_00e8;
 			}
 		}
 		AbilityData ability2 = Ability;
 		if ((object)ability2 != null && ability2.Blueprint?.GetComponent<FakeAttackType>()?.CountAsMelee == true)
 		{
-			goto IL_00e5;
+			goto IL_00e8;
 		}
-		goto IL_010c;
-		IL_00e5:
+		goto IL_010f;
+		IL_00e8:
 		if (!(base.Reason.Fact is Buff))
 		{
 			DamageBonusAttribute = MeleeDamageStat;
 		}
-		goto IL_010c;
-		IL_010c:
+		goto IL_010f;
+		IL_010f:
 		if (Ability != null)
 		{
 			AbilityData ability3 = Ability;
@@ -205,20 +188,10 @@ public class RuleCalculateStatsWeapon : RulebookOptionalTargetEvent
 		{
 			AdditionalHitChanceModifiers.Add(ModifierType.ValAdd, Weapon.Blueprint.AdditionalHitChance, this, ModifierDescriptor.Weapon);
 		}
-		BaseDamage.OverpenetrationFactorPercents = ResultOverpenetrationFactor;
 		ResultDamage = BaseDamage.Copy();
-	}
-
-	public void ReplaceDamageBonusAttribute(StatType attribute, EntityFact source)
-	{
-		if (!attribute.IsAttribute())
-		{
-			PFLog.Default.ErrorWithReport($"Invalid attribute for bonus weapon damage: {attribute}");
-		}
-		else
-		{
-			DamageBonusAttribute = attribute;
-		}
+		int resultMaxDistance = ResultMaxDistance;
+		int value2 = ((Weapon != null && Weapon.Blueprint.IsRanged) ? (resultMaxDistance / 2) : resultMaxDistance);
+		ResultOptimalDistance = Mathf.Clamp(OptimalDistanceModifiers.Apply(value2), 0, resultMaxDistance);
 	}
 
 	private void TryApplyEnchantmentsManually()

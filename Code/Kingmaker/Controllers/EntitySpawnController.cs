@@ -11,6 +11,7 @@ using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.ResourceManagement;
 using Kingmaker.UnitLogic.Customization;
+using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.FlagCountable;
@@ -20,6 +21,7 @@ using Kingmaker.View.Equipment;
 using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.SriptZones;
 using Kingmaker.View.MapObjects.Traps.Detailed;
+using Kingmaker.View.Mechanics.Entities;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
 using WebSocketSharp;
@@ -282,6 +284,22 @@ public class EntitySpawnController : IControllerTick, IController, IDisposable
 		DynamicMapObjectView component = blueprint.Prefab.GetComponent<DynamicMapObjectView>();
 		component.Blueprint = blueprint;
 		return (DynamicMapObjectView.EntityData)SpawnEntityWithView(component, position, rotation, state).Data;
+	}
+
+	public DestructibleEntity SpawnDestructibleObject(BlueprintSpawnableDestructibleObject blueprint, Vector3 position, Quaternion rotation, SceneEntitiesState state)
+	{
+		if (blueprint.Prefab == null)
+		{
+			PFLog.Default.Error("Trying to spawn destructible object without prefab: {0}", blueprint);
+			return null;
+		}
+		DestructibleEntityView destructibleEntityView = blueprint.Prefab.Load();
+		if (destructibleEntityView == null)
+		{
+			PFLog.Default.Error("Error while loading prefab: {0}", destructibleEntityView);
+			return null;
+		}
+		return SpawnEntityWithView(destructibleEntityView, position, rotation, state).Data;
 	}
 
 	public BaseUnitEntity ChangeUnitBlueprint(BaseUnitEntity unit, BlueprintUnit newBlueprint, bool toCrossState, bool keepOld = false)

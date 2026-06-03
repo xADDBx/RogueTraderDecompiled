@@ -253,11 +253,15 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 
 	public ModifiableValue InitiativeBonus => StatsContainer.GetStat(StatType.Initiative);
 
-	public bool CanAttackOfOpportunity(bool canUseInRange)
+	public bool CanAttackOfOpportunity(bool canUseInRange, bool isSpell)
 	{
 		if (!base.Owner.State.HasCondition(UnitCondition.DisableAttacksOfOpportunity) && !base.Owner.Passive && (AttacksOfOpportunityMadeThisTurnCount < MaxAttacksOfOpportunityPerRound || base.Owner.IsPlayerFaction || base.Owner.Blueprint.DifficultyType >= UnitDifficultyType.Elite))
 		{
-			return base.Owner.CanAttackOfOpportunity(canUseInRange);
+			if (!isSpell)
+			{
+				return base.Owner.CanAttackOfOpportunity(canUseInRange);
+			}
+			return true;
 		}
 		return false;
 	}
@@ -319,7 +323,7 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 				base.Owner.Position = ReturnPosition.Value;
 				ReturnOrientation = base.Owner.DesiredOrientation;
 			}
-			if (Game.Instance.TurnController.IsPreparationTurn)
+			if (Game.Instance.TurnController.IsPreparationTurn && !base.Owner.HasMechanicFeature(MechanicsFeatureType.CanDeployNearThisUnit))
 			{
 				UnitGroupEnumerator enumerator = Game.Instance.Player.Group.GetEnumerator();
 				while (enumerator.MoveNext())
@@ -435,26 +439,31 @@ public class PartUnitCombatState : BaseUnitPart, IRoundStartHandler, ISubscriber
 		PartStarshipNavigation starshipNavigationOptional = base.Owner.GetStarshipNavigationOptional();
 		if (starshipNavigationOptional != null)
 		{
-			if (!(ActionPointsBlue < (float)starshipNavigationOptional.FinishingTilesCount))
+			if (!(ActionPointsBlue < (float)starshipNavigationOptional.FinishingTilesCount) && starshipNavigationOptional.HasAnotherPlaceToStand)
 			{
-				return !starshipNavigationOptional.HasAnotherPlaceToStand;
+				return base.Owner.Brain.IsFinishedTurn;
 			}
 			return true;
 		}
-		if (Game.Instance.TurnController.AllUnits.Any((MechanicEntity u) => u.IsInCombat && u.IsBusy))
+		UnitPartForceMove optional = base.Owner.GetOptional<UnitPartForceMove>();
+		if (optional != null)
 		{
-			return false;
+			if (optional.Active != null)
+			{
+				return optional.Active.IsFinished;
+			}
+			return true;
 		}
 		return true;
 	}
 
-	public void PrepareForNewTurn(bool isTurnBased)
+	public void PrepareForNewTurn(bool isTurnBased, bool isInterruptTurn)
 	{
 		LastStraightMoveLength = 0;
 		LastDiagonalCount = 0;
 		ActionPointsBlueSpentThisTurn = 0f;
 		MovedCellsThisTurn = 0f;
-		if (isTurnBased)
+		if (isTurnBased && !isInterruptTurn)
 		{
 			int result = Rulebook.Trigger(new RuleCalculateActionPoints(base.Owner, isTurnBased: true)).Result;
 			int result2 = Rulebook.Trigger(new RuleCalculateMovementPoints(base.Owner)).Result;

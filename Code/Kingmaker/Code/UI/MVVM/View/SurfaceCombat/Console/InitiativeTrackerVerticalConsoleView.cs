@@ -30,11 +30,11 @@ public class InitiativeTrackerVerticalConsoleView : InitiativeTrackerVerticalVie
 	protected bool m_ChangeHintsWidgetPosition;
 
 	[SerializeField]
-	[ConditionalShow("m_ChangeHintsWidgetPosition")]
+	[ShowIf("m_ChangeHintsWidgetPosition")]
 	private Vector3 m_PlayerTurnHintsWidgetPosition;
 
 	[SerializeField]
-	[ConditionalShow("m_ChangeHintsWidgetPosition")]
+	[ShowIf("m_ChangeHintsWidgetPosition")]
 	private Vector3 m_NotPlayerTurnHintsWidgetPosition;
 
 	[SerializeField]

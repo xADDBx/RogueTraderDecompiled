@@ -7,6 +7,8 @@ namespace Kingmaker.Code.UI.MVVM.VM.QuestNotification;
 
 public class QuestNotificationEntityVM : VMBase
 {
+	public readonly QuestBookEntityEntry Objective;
+
 	public readonly Quest Quest;
 
 	public readonly QuestNotificationState State;
@@ -19,16 +21,20 @@ public class QuestNotificationEntityVM : VMBase
 
 	public readonly bool IsAddendum;
 
+	public readonly bool IsClue;
+
 	public readonly bool IsErrandObjective;
 
 	public readonly ReactiveProperty<QuestNotificationEntityVM> AdditionalObjective = new ReactiveProperty<QuestNotificationEntityVM>();
 
-	public QuestNotificationEntityVM(QuestObjective objective, QuestNotificationState state)
+	public QuestNotificationEntityVM(QuestBookEntityEntry objective, QuestNotificationState state)
 	{
+		Objective = objective;
 		Quest = objective.Quest;
 		State = state;
 		QuestName = objective.Quest.Blueprint.Title;
 		IsAddendum = objective.Blueprint.IsAddendum;
+		IsClue = objective.Blueprint.IsClue;
 		IsErrandObjective = objective.Blueprint.IsErrandObjective;
 		Description = objective.Blueprint.GetDescription();
 		Title = objective.Blueprint.GetTitile();

@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
+using Code.UI.Common.Animations;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.VM.IngameMenu;
+using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.MVVM.View.Tutorial.Console;
@@ -54,6 +59,15 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 	[SerializeField]
 	private IngameMenuItemConsoleView m_CargoManagement;
 
+	[SerializeField]
+	private IngameMenuItemConsoleView m_Augmentations;
+
+	[SerializeField]
+	private ScaleAnimator m_AugmentationsAttentionMarker;
+
+	[SerializeField]
+	private GameObject m_AugmentationsAttentionMarkerObject;
+
 	[Space]
 	[SerializeField]
 	private RectTransform m_Content;
@@ -91,6 +105,15 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		m_FirstSelectionButton.gameObject.SetActive(value: true);
 		CreateNavigation();
 		AddDisposable(GamePad.Instance.PushLayer(GetInputLayer()));
+		if ((Game.Instance.IsModeActive(GameModeType.StarSystem) || Game.Instance.IsModeActive(GameModeType.GlobalMap)) && UIConfig.Instance.UIAugmentationsBarkBanters.IsFirstLaunchInSpace())
+		{
+			m_AugmentationsAttentionMarkerObject.gameObject.SetActive(value: true);
+			m_AugmentationsAttentionMarker.AppearAnimation();
+		}
+		else
+		{
+			m_AugmentationsAttentionMarkerObject.gameObject.SetActive(value: false);
+		}
 		m_FadeAnimator.AppearAnimation();
 		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 		EventBus.RaiseEvent(delegate(IModalWindowUIHandler h)
@@ -150,6 +173,7 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		m_LevelUp.Initialize(mainMenu.LevelUp);
 		m_VoidshipLevelUp.Initialize(mainMenu.VoidshipLevelUp);
 		m_CargoManagement.Initialize(mainMenu.CargoManagement);
+		m_Augmentations.Initialize(UIStrings.Instance.UIAugmentations.AugmentationsScreenNameHeaderLabel);
 	}
 
 	private void BindItems()
@@ -157,6 +181,8 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		bool flag = Game.Instance.Player.ServiceWindowsBlocked;
 		bool flag2 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
 		bool flag3 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
+		bool flag4 = Game.Instance.Player.AugmentationsWindowBlocked;
+		bool flag5 = StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion);
 		if (!flag2)
 		{
 			m_Inventory.Bind(base.ViewModel.OpenInventory);
@@ -170,6 +196,10 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 			m_CargoManagement.Bind(base.ViewModel.OpenCargoManagement);
 		}
 		m_Journal.Bind(base.ViewModel.OpenJournal);
+		if (flag5 && !flag4)
+		{
+			m_Augmentations.Bind(base.ViewModel.OpenAugmentations);
+		}
 		if (!base.ViewModel.IsInSpace())
 		{
 			m_Map.Bind(base.ViewModel.OpenMap);
@@ -177,14 +207,14 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		m_Map.gameObject.SetActive(!base.ViewModel.IsInSpace());
 		m_Encyclopedia.Bind(base.ViewModel.OpenEncyclopedia);
 		bool canAccessStarshipInventory = Game.Instance.Player.CanAccessStarshipInventory;
-		bool flag4 = Game.Instance.Player.ColoniesState.ForbidColonization;
+		bool flag6 = Game.Instance.Player.ColoniesState.ForbidColonization;
 		if (canAccessStarshipInventory)
 		{
 			if (!flag)
 			{
 				m_ShipCustomization.Bind(base.ViewModel.OpenShipCustomization);
 			}
-			if (!flag4)
+			if (!flag6)
 			{
 				m_ColonyManagement.Bind(base.ViewModel.OpenColonyManagement);
 			}
@@ -203,6 +233,7 @@ public class IngameMenuConsoleView : ViewBase<IngameMenuVM>
 		m_CargoManagement.gameObject.SetActive(canAccessStarshipInventory && !flag);
 		m_ShipCustomization.gameObject.SetActive(canAccessStarshipInventory && !flag);
 		m_VoidshipLevelUp.gameObject.SetActive(canAccessStarshipInventory && base.ViewModel.HasShipLvlUp());
+		m_Augmentations.gameObject.SetActive(flag5 && !flag4);
 	}
 
 	private void CreateNavigation()

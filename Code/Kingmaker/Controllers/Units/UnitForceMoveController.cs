@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Core.Cheats;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.EntitySystem.Entities;
@@ -17,54 +18,31 @@ using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, ISubscriber, IGlobalRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, IGlobalRulebookSubscriber
+public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, ISubscriber
 {
-	private struct TransitionChecker : Linecast.ICanTransitionBetweenCells
-	{
-		private readonly MechanicEntity m_Unit;
-
-		public BaseUnitEntity StoppedOnUnit;
-
-		public TransitionChecker(MechanicEntity unit)
-		{
-			this = default(TransitionChecker);
-			m_Unit = unit;
-		}
-
-		public bool CanTransitionBetweenCells(CustomGridNodeBase nodeFrom, CustomGridNodeBase nodeTo, Vector3 transitionPosition, float distanceFactor)
-		{
-			if (!nodeTo.Walkable || !nodeFrom.ContainsConnection(nodeTo))
-			{
-				return false;
-			}
-			if (!WarhammerBlockManager.Instance.CanUnitStandOnNode(m_Unit, nodeTo))
-			{
-				return false;
-			}
-			StoppedOnUnit = nodeTo.GetUnit();
-			if (StoppedOnUnit != null && !StoppedOnUnit.IsDeadOrUnconscious)
-			{
-				return StoppedOnUnit == m_Unit;
-			}
-			return true;
-		}
-	}
-
 	private struct TransitionCheckerExceptUnit : Linecast.ICanTransitionBetweenCells
 	{
 		private readonly MechanicEntity m_Unit;
 
+		private readonly NodeList? m_ExcludedFootprint;
+
 		public BaseUnitEntity StoppedOnUnit;
 
-		public TransitionCheckerExceptUnit(MechanicEntity unit)
+		public TransitionCheckerExceptUnit(MechanicEntity unit, NodeList? excludedFootprint = null)
 		{
 			this = default(TransitionCheckerExceptUnit);
 			m_Unit = unit;
+			m_ExcludedFootprint = excludedFootprint;
 		}
 
 		public bool CanTransitionBetweenCells(CustomGridNodeBase nodeFrom, CustomGridNodeBase nodeTo, Vector3 transitionPosition, float distanceFactor)
 		{
 			if (!nodeTo.Walkable || !nodeFrom.ContainsConnection(nodeTo))
+			{
+				return false;
+			}
+			NodeList? excludedFootprint = m_ExcludedFootprint;
+			if (excludedFootprint.HasValue && excludedFootprint.GetValueOrDefault().Contains(nodeTo))
 			{
 				return false;
 			}
@@ -77,18 +55,6 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 			{
 				return StoppedOnUnit == m_Unit;
 			}
-			return true;
-		}
-	}
-
-	private struct NodeCounter : Linecast.ICanTransitionBetweenCells
-	{
-		public int CellsRemaining { get; private set; }
-
-		public bool CanTransitionBetweenCells(CustomGridNodeBase nodeFrom, CustomGridNodeBase nodeTo, Vector3 transitionPosition, float distanceFactor)
-		{
-			int cellsRemaining = CellsRemaining + 1;
-			CellsRemaining = cellsRemaining;
 			return true;
 		}
 	}
@@ -190,28 +156,41 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		{
 			combatStateOptional.ForceMovedDistanceInCells = distanceInCells;
 		}
-		Vector3 vector = unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize);
-		CustomGridNodeBase nearestNodeXZ2 = vector.GetNearestNodeXZ();
-		TransitionCheckerExceptUnit condition = new TransitionCheckerExceptUnit(unit);
-		Linecast.LinecastGrid2(nearestNodeXZ.Graph, unit.Position, vector, nearestNodeXZ, out var hit, NNConstraint.None, ref condition);
-		GraphNode node = hit.node;
-		if (node != nearestNodeXZ && node != null)
+		Vector3 end = unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize);
+		NodeList? movingCasterFootprint = GetMovingCasterFootprint(caster);
+		try
 		{
-			NodeCounter condition2 = default(NodeCounter);
-			if (node != nearestNodeXZ2)
+			TransitionCheckerExceptUnit condition = new TransitionCheckerExceptUnit(unit, movingCasterFootprint);
+			Linecast.LinecastGrid2(nearestNodeXZ.Graph, unit.Position, end, nearestNodeXZ, out var hit, NNConstraint.None, ref condition);
+			GraphNode node = hit.node;
+			if (node != nearestNodeXZ && node != null)
 			{
-				Linecast.LinecastGrid2(nearestNodeXZ.Graph, node.Vector3Position, vector, node, out hit, NNConstraint.None, ref condition2);
+				unit.GetOrCreate<UnitPartForceMove>().Push(node, provokeAttackOfOpportunity: false, distanceInCells * 2, caster, condition.StoppedOnUnit);
 			}
-			unit.GetOrCreate<UnitPartForceMove>().Push(node, provokeAttackOfOpportunity: false, distanceInCells * 2, caster, condition.StoppedOnUnit);
+		}
+		finally
+		{
+			movingCasterFootprint?.Dispose();
 		}
 	}
 
-	public void OnEventAboutToTrigger(RulePerformAttack evt)
+	private static NodeList? GetMovingCasterFootprint(MechanicEntity caster)
 	{
-	}
-
-	public void OnEventDidTrigger(RulePerformAttack evt)
-	{
+		UnitMovementAgentBase unitMovementAgentBase = caster?.MaybeMovementAgent;
+		if ((object)unitMovementAgentBase != null && unitMovementAgentBase.IsReallyMoving)
+		{
+			ForcedPath path = unitMovementAgentBase.Path;
+			if (path != null && path.vectorPath.Count > 0)
+			{
+				List<Vector3> vectorPath = path.vectorPath;
+				CustomGridNodeBase nearestNodeXZ = vectorPath[vectorPath.Count - 1].GetNearestNodeXZ();
+				if (nearestNodeXZ != null)
+				{
+					return GridAreaHelper.GetNodes(nearestNodeXZ, caster.SizeRect, caster.Forward);
+				}
+			}
+		}
+		return null;
 	}
 
 	[Cheat]

@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.Pathfinding;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.Utility;
 using MemoryPack;
@@ -40,6 +41,9 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 	[JsonProperty]
 	public readonly bool IsRanged;
 
+	[JsonProperty]
+	public readonly BlueprintAbility AbilityBp;
+
 	public override int DefaultApproachRadius => 10000;
 
 	protected override bool DefaultFreeAction => true;
@@ -64,6 +68,13 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 	{
 		Reason = reason;
 		IsRanged = isRanged;
+	}
+
+	public UnitAttackOfOpportunityParams([NotNull] BaseUnitEntity target, [CanBeNull] BlueprintFact reason, BlueprintAbility abilityBp)
+		: base((TargetWrapper)target)
+	{
+		Reason = reason;
+		AbilityBp = abilityBp;
 	}
 
 	static UnitAttackOfOpportunityParams()
@@ -116,7 +127,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 			writer.WriteNullObjectHeader();
 			return;
 		}
-		writer.WriteUnmanagedWithObjectHeader(16, in value.Type);
+		writer.WriteUnmanagedWithObjectHeader(17, in value.Type);
 		writer.WritePackable(in value.OwnerRef);
 		TargetWrapper value2 = value.Target;
 		writer.WritePackable(in value2);
@@ -129,6 +140,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 		writer.DangerousWriteUnmanaged(in value.m_MovementType, in value.m_IsOneFrameCommand, in value.m_SlowMotionRequired);
 		writer.WriteValue(in value.Reason);
 		writer.WriteUnmanaged(in value.IsRanged);
+		writer.WriteValue(in value.AbilityBp);
 	}
 
 	[Preserve]
@@ -155,7 +167,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 		bool? value15;
 		BlueprintFact value16;
 		bool value17;
-		if (memberCount == 16)
+		if (memberCount == 17)
 		{
 			if (value == null)
 			{
@@ -167,6 +179,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				reader.DangerousReadUnmanaged<WalkSpeedType?, bool?, bool?>(out value13, out value14, out value15);
 				value16 = reader.ReadValue<BlueprintFact>();
 				reader.ReadUnmanaged<bool>(out value17);
+				BlueprintAbility blueprintAbility = reader.ReadValue<BlueprintAbility>();
 			}
 			else
 			{
@@ -186,6 +199,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Reason;
 				value17 = value.IsRanged;
+				BlueprintAbility blueprintAbility = value.AbilityBp;
 				reader.ReadUnmanaged<CommandType>(out value2);
 				reader.ReadPackable(ref value3);
 				reader.ReadPackable(ref value4);
@@ -202,15 +216,17 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				reader.DangerousReadUnmanaged<bool?>(out value15);
 				reader.ReadValue(ref value16);
 				reader.ReadUnmanaged<bool>(out value17);
+				reader.ReadValue(ref blueprintAbility);
 			}
 		}
 		else
 		{
-			if (memberCount > 16)
+			if (memberCount > 17)
 			{
-				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitAttackOfOpportunityParams), 16, memberCount);
+				MemoryPackSerializationException.ThrowInvalidPropertyCount(typeof(UnitAttackOfOpportunityParams), 17, memberCount);
 				return;
 			}
+			BlueprintAbility blueprintAbility;
 			if (value == null)
 			{
 				value2 = CommandType.None;
@@ -229,6 +245,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value15 = null;
 				value16 = null;
 				value17 = false;
+				blueprintAbility = null;
 			}
 			else
 			{
@@ -248,6 +265,7 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 				value15 = value.m_SlowMotionRequired;
 				value16 = value.Reason;
 				value17 = value.IsRanged;
+				blueprintAbility = value.AbilityBp;
 			}
 			if (memberCount != 0)
 			{
@@ -297,7 +315,11 @@ public sealed class UnitAttackOfOpportunityParams : UnitCommandParams<UnitAttack
 																		if (memberCount != 15)
 																		{
 																			reader.ReadUnmanaged<bool>(out value17);
-																			_ = 16;
+																			if (memberCount != 16)
+																			{
+																				reader.ReadValue(ref blueprintAbility);
+																				_ = 17;
+																			}
 																		}
 																	}
 																}

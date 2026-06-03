@@ -2,6 +2,7 @@ using Kingmaker.Code.UI.MVVM.View.Slots;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.UI.Sound;
 using UniRx;
 using UnityEngine;
 
@@ -39,6 +40,7 @@ public abstract class InsertableLootSlotView : ItemSlotView<InsertableLootSlotVM
 	{
 		if (base.ViewModel.CanInsert.Value)
 		{
+			UISounds.Instance.PlayItemSound(SlotAction.Put, base.ViewModel.ItemEntity, equipSound: false);
 			EventBus.RaiseEvent(delegate(INewSlotsHandler h)
 			{
 				h.HandleTryInsertSlot(base.ViewModel);

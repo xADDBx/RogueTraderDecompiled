@@ -11,7 +11,7 @@ public class LogChannelFactory
 
 	public static List<string> ChannelNames => Channels.Keys.ToList();
 
-	public static LogChannel GetOrCreate([CanBeNull] string name, int sinkBitmap = 0, LogSeverity minLevel = LogSeverity.Message, LogSeverity minStackTraceLevel = LogSeverity.Error)
+	public static LogChannel GetOrCreate([CanBeNull] string name, int sinkBitmap = 0, LogSeverity minLevel = LogSeverity.Default, LogSeverity minStackTraceLevel = LogSeverity.Default)
 	{
 		lock (Channels)
 		{
@@ -27,7 +27,7 @@ public class LogChannelFactory
 		}
 	}
 
-	protected internal static LogChannel Create([NotNull] string name, int sinkBitmap = 0, LogSeverity minLevel = LogSeverity.Message, LogSeverity minStackTraceLevel = LogSeverity.Error)
+	protected internal static LogChannel Create([NotNull] string name, int sinkBitmap = 0, LogSeverity minLevel = LogSeverity.Default, LogSeverity minStackTraceLevel = LogSeverity.Default)
 	{
 		lock (Channels)
 		{

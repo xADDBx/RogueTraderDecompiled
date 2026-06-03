@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -5,6 +6,7 @@ using Kingmaker.RuleSystem.Rules.Damage;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("fafdce45c270d9547b4d6f26518983dc")]
 public class ContextActionHealStarshipMoraleDamage : ContextAction
 {

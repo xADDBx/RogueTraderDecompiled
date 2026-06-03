@@ -57,7 +57,7 @@ public class CareerPathRoundProgressionCommonView : ViewBase<CareerPathVM>, IUIH
 
 	public bool IsShip;
 
-	[ConditionalShow("IsShip")]
+	[ShowIf("IsShip")]
 	[SerializeField]
 	private Image m_ShipIcon;
 

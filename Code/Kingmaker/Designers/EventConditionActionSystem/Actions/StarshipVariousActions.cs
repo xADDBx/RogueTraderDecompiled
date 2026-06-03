@@ -23,7 +23,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/StarshipVariousActions")]
+[ComponentName("Starship/Actions/StarshipVariousActions")]
 [AllowMultipleComponents]
 [TypeId("01f2545a552d7a44aa449aae019d7388")]
 public class StarshipVariousActions : ContextAction

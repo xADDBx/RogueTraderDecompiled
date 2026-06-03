@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/DeleteUnitFromSummonPool")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("34705b1b862f3334aa6499153fbefaf4")]

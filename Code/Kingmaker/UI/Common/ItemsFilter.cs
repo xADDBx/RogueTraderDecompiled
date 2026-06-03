@@ -5,6 +5,7 @@ using Code.Enums;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Shields;
 using Kingmaker.Blueprints.Items.Weapons;
@@ -89,7 +90,7 @@ public static class ItemsFilter
 		case ItemsFilterType.Notable:
 			return UIUtilityItem.IsQuestItem(blueprintItem);
 		case ItemsFilterType.NonUsable:
-			if (!blueprintItem.IsNotable && !(blueprintItem is BlueprintItemEquipmentUsable) && !(blueprintItem is BlueprintItemWeapon) && !(blueprintItem is BlueprintItemArmor) && !(blueprintItem is BlueprintItemShield) && !(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentShirt) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintStarshipItem))
+			if (!blueprintItem.IsNotable && !(blueprintItem is BlueprintItemEquipmentUsable) && !(blueprintItem is BlueprintItemWeapon) && !(blueprintItem is BlueprintItemArmor) && !(blueprintItem is BlueprintItemShield) && !(blueprintItem is BlueprintItemEquipmentNeck) && !(blueprintItem is BlueprintItemEquipmentRing) && !(blueprintItem is BlueprintItemEquipmentShoulders) && !(blueprintItem is BlueprintItemEquipmentGloves) && !(blueprintItem is BlueprintItemEquipmentFeet) && !(blueprintItem is BlueprintItemEquipmentHead) && !(blueprintItem is BlueprintItemEquipmentGlasses) && !(blueprintItem is BlueprintItemEquipmentWrist) && !(blueprintItem is BlueprintItemEquipmentShirt) && !(blueprintItem is BlueprintItemEquipmentBelt) && !(blueprintItem is BlueprintStarshipItem) && !(blueprintItem is BlueprintItemAugment))
 			{
 				return blueprintItem.Tag == ItemTag.None;
 			}
@@ -113,31 +114,70 @@ public static class ItemsFilter
 		case ItemsFilterType.AugerArray:
 			return blueprintItem is BlueprintItemAugerArray;
 		case ItemsFilterType.Dorsal:
-			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon4)
+			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon2)
 			{
-				return blueprintStarshipWeapon4.AllowedSlots.Contains(WeaponSlotType.Dorsal);
+				return blueprintStarshipWeapon2.AllowedSlots.Contains(WeaponSlotType.Dorsal);
 			}
 			return false;
 		case ItemsFilterType.Prow:
-			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon3)
+			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon)
 			{
-				return blueprintStarshipWeapon3.AllowedSlots.Contains(WeaponSlotType.Prow);
+				return blueprintStarshipWeapon.AllowedSlots.Contains(WeaponSlotType.Prow);
 			}
 			return false;
 		case ItemsFilterType.Port:
-			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon2)
+			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon4)
 			{
-				return blueprintStarshipWeapon2.AllowedSlots.Contains(WeaponSlotType.Port);
+				return blueprintStarshipWeapon4.AllowedSlots.Contains(WeaponSlotType.Port);
 			}
 			return false;
 		case ItemsFilterType.Starboard:
-			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon)
+			if (blueprintItem is BlueprintStarshipWeapon blueprintStarshipWeapon3)
 			{
-				return blueprintStarshipWeapon.AllowedSlots.Contains(WeaponSlotType.Starboard);
+				return blueprintStarshipWeapon3.AllowedSlots.Contains(WeaponSlotType.Starboard);
 			}
 			return false;
 		case ItemsFilterType.Arsenal:
 			return blueprintItem is BlueprintItemArsenal;
+		case ItemsFilterType.AugmentationsAll:
+		case ItemsFilterType.AugmentationsItems:
+			return blueprintItem is BlueprintItemAugment;
+		case ItemsFilterType.AugmentationsArms:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment6)
+			{
+				return blueprintItemAugment6.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsArms;
+			}
+			return false;
+		case ItemsFilterType.AugmentationsEyes:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment5)
+			{
+				return blueprintItemAugment5.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsEyes;
+			}
+			return false;
+		case ItemsFilterType.AugmentationsLegs:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment4)
+			{
+				return blueprintItemAugment4.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsLegs;
+			}
+			return false;
+		case ItemsFilterType.AugmentationsSystems:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment3)
+			{
+				return blueprintItemAugment3.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsSystems;
+			}
+			return false;
+		case ItemsFilterType.AugmentationsTorso:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment2)
+			{
+				return blueprintItemAugment2.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsTorso;
+			}
+			return false;
+		case ItemsFilterType.AugmentationsMisc:
+			if (blueprintItem is BlueprintItemAugment blueprintItemAugment)
+			{
+				return blueprintItemAugment.AugmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsMisc;
+			}
+			return false;
 		default:
 			throw new ArgumentOutOfRangeException("filter", filter, null);
 		}
@@ -287,15 +327,15 @@ public static class ItemsFilter
 	{
 		int typeCompareValue = TypeSorter.GetTypeCompareValue(a, filter);
 		int typeCompareValue2 = TypeSorter.GetTypeCompareValue(b, filter);
-		if (typeCompareValue == typeCompareValue2)
+		if (typeCompareValue != typeCompareValue2)
 		{
-			return 0;
+			if (typeCompareValue >= typeCompareValue2)
+			{
+				return 1;
+			}
+			return -1;
 		}
-		if (typeCompareValue >= typeCompareValue2)
-		{
-			return 1;
-		}
-		return -1;
+		return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
 	}
 
 	private static int CompareByCharacteristic(ItemEntity a, ItemEntity b, ItemsFilterType filter)
@@ -377,18 +417,22 @@ public static class ItemsFilter
 																				{
 																					if (!(blueprintItem is BlueprintStarshipWeapon))
 																					{
-																						if (blueprintItem is BlueprintItemEquipmentPetProtocol blueprintItemEquipmentPetProtocol)
+																						if (!(blueprintItem is BlueprintItemAugment))
 																						{
-																							return blueprintItemEquipmentPetProtocol.PetType switch
+																							if (blueprintItem is BlueprintItemEquipmentPetProtocol blueprintItemEquipmentPetProtocol)
 																							{
-																								PetType.Mastiff => ItemsItemType.PetProtocolMastiff, 
-																								PetType.Raven => ItemsItemType.PetProtocolRaven, 
-																								PetType.Eagle => ItemsItemType.PetProtocolEagle, 
-																								PetType.ServoskullSwarm => ItemsItemType.PetProtocolSkulls, 
-																								_ => ItemsItemType.PetProtocol, 
-																							};
+																								return blueprintItemEquipmentPetProtocol.PetType switch
+																								{
+																									PetType.Mastiff => ItemsItemType.PetProtocolMastiff, 
+																									PetType.Raven => ItemsItemType.PetProtocolRaven, 
+																									PetType.Eagle => ItemsItemType.PetProtocolEagle, 
+																									PetType.ServoskullSwarm => ItemsItemType.PetProtocolSkulls, 
+																									_ => ItemsItemType.PetProtocol, 
+																								};
+																							}
+																							return ItemsItemType.NonUsable;
 																						}
-																						return ItemsItemType.NonUsable;
+																						return ItemsItemType.Augment;
 																					}
 																					return ItemsItemType.StarshipWeapon;
 																				}

@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/TranslocatePlayer")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("6981071bc74236f4293f1a19ed2ebb32")]
 public class TranslocatePlayer : GameAction

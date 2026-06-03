@@ -66,27 +66,27 @@ public class ShipHealthAndRepairBaseView : ViewBase<ShipHealthAndRepairVM>
 	[Header("Parts Labels")]
 	public bool HasPartsLabels;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_EngineLabel;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_RamLabel;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_ShieldsLabel;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_RepairLabel;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_DamageReductionLabel;
 
-	[ConditionalShow("HasPartsLabels")]
+	[ShowIf("HasPartsLabels")]
 	[SerializeField]
 	private TextMeshProUGUI m_DamageBonusLabel;
 

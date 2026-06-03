@@ -125,6 +125,8 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 
 	public FeatureCountableFlag CanDeployNearEnemy;
 
+	public FeatureCountableFlag CanDeployNearThisUnit;
+
 	public FeatureCountableFlag CarryShotgunInOneHand;
 
 	public FeatureCountableFlag HasNoStandardTurn;
@@ -132,6 +134,12 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 	public FeatureCountableFlag DeathAndTraumasDoesNotAffectMomentum;
 
 	public FeatureCountableFlag AutoBlock;
+
+	public FeatureCountableFlag CantHaveTHP;
+
+	public FeatureCountableFlag CanAffectMomentumIfOutsideOfParty;
+
+	public FeatureCountableFlag CanBlockWithoutShield;
 
 	public FeatureCountableFlag CantAct;
 
@@ -221,10 +229,14 @@ public class PartMechanicFeatures : MechanicEntityPart, IHashable
 		OverrideShieldWeaponSetsPlacement = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.OverrideShieldWeaponSetsPlacement);
 		ForceAIControl = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.ForceAIControl);
 		CanDeployNearEnemy = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanDeployNearEnemy);
+		CanDeployNearThisUnit = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanDeployNearThisUnit);
 		CarryShotgunInOneHand = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CarryShotgunInOneHand);
 		HasNoStandardTurn = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.HasNoStandardTurn);
 		DeathAndTraumasDoesNotAffectMomentum = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum);
 		AutoBlock = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.AutoBlock);
+		CantHaveTHP = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CantHaveTHP);
+		CanAffectMomentumIfOutsideOfParty = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanAffectMomentumIfOutsideOfParty);
+		CanBlockWithoutShield = new FeatureCountableFlag(base.Owner, MechanicsFeatureType.CanBlockWithoutShield);
 	}
 
 	protected override void OnAttach()

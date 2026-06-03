@@ -189,7 +189,7 @@ public class ActionPointsVM : BaseDisposable, IViewModel, IBaseDisposable, IDisp
 		{
 			CostBlueAP.Value = (ability.ClearMPAfterUse ? BlueAP.Value : 0f);
 			PredictedBlueAP.Value = BlueAP.Value - CostBlueAP.Value;
-			CostYellowAP.Value = ability.CalculateActionPointCost();
+			CostYellowAP.Value = Math.Max(0, ability.CalculateActionPointCost());
 			PredictedYellowAP.Value = YellowAP.Value - CostYellowAP.Value;
 		}
 	}

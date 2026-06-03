@@ -347,6 +347,36 @@ public static class GridAreaHelper
 		}
 	}
 
+	public static NodeList GetNodesCentered(Vector3 worldCenter, float extentX, float extentZ)
+	{
+		CustomGridNodeBase nearestNodeXZUnwalkable = worldCenter.GetNearestNodeXZUnwalkable();
+		if (!(nearestNodeXZUnwalkable?.Graph is CustomGridGraph graph))
+		{
+			return NodeList.Empty;
+		}
+		float gridCellSize = GraphParamsMechanicsCache.GridCellSize;
+		int num = Mathf.FloorToInt(extentX / gridCellSize);
+		int num2 = Mathf.FloorToInt(extentZ / gridCellSize);
+		try
+		{
+			HashSet<Vector2Int> value = RectCache.Value;
+			for (int i = -num; i <= num; i++)
+			{
+				for (int j = -num2; j <= num2; j++)
+				{
+					value.Add(new Vector2Int(i, j));
+				}
+			}
+			PatternGridData patternGridData = PatternGridData.Create(value, disposable: false);
+			PatternGridData pattern = patternGridData.Move(nearestNodeXZUnwalkable.CoordinatesInGrid);
+			return new NodeList(graph, in pattern);
+		}
+		finally
+		{
+			RectCache.Value.Clear();
+		}
+	}
+
 	public static NodeList GetNodes(GraphNode node, IntRect rect, int direction)
 	{
 		if (!(node?.Graph is CustomGridGraph graph) || !(node is CustomGridNodeBase customGridNodeBase))
@@ -356,6 +386,11 @@ public static class GridAreaHelper
 		PatternGridData patternGridData = NodeOffsets.Get(new OffsetsKey(rect, direction));
 		PatternGridData pattern = patternGridData.Move(customGridNodeBase.CoordinatesInGrid);
 		return new NodeList(graph, in pattern);
+	}
+
+	public static PatternGridData GetOffsets(IntRect rect, int direction)
+	{
+		return NodeOffsets.Get(new OffsetsKey(rect, direction));
 	}
 
 	public static NodeList GetBorderNodes(GraphNode node, IntRect rect)

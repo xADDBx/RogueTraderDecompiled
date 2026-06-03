@@ -107,6 +107,8 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			SetAbilityWeapon(Ability);
 			ItemEntityWeapon weapon = Ability.Weapon;
 			ItemEntityStarshipWeapon starshipWeapon = Ability.StarshipWeapon;
+			bool flag = Ability.IsValid(target, casterPosition);
+			bool flag2 = UnitPredictionManager.Instance?.IsUnitRicochetTarget(target) ?? false;
 			if (target != null && starshipWeapon != null && target is StarshipEntity target2)
 			{
 				UpdateWithStarshipWeapon(Ability, target2, casterPosition, starshipWeapon);
@@ -118,20 +120,19 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			}
 			else
 			{
-				bool num = Ability.IsValid(target, casterPosition);
-				float num2 = (Ability.IsValid(target, casterPosition) ? 100f : (-1f));
-				if (num)
+				float num = (flag ? 100f : (-1f));
+				if (flag)
 				{
 					HitAlways = true;
 				}
-				float hitWithAvoidanceChance = (InitialHitChance = num2);
+				float hitWithAvoidanceChance = (InitialHitChance = num);
 				HitWithAvoidanceChance = hitWithAvoidanceChance;
 			}
-			if (!Ability.IsValid(target, casterPosition))
+			if (!flag && !flag2 && !HitAlways)
 			{
 				return;
 			}
-			DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition);
+			DamagePredictionData damagePrediction = Ability.GetDamagePrediction(target, casterPosition, Ability.CreateExecutionContext(target));
 			HealPredictionData healPrediction = Ability.GetHealPrediction(target);
 			MinDamage = damagePrediction?.MinDamage ?? healPrediction?.MinValue ?? 0;
 			MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
@@ -182,6 +183,25 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		MaxDamage = damagePrediction?.MaxDamage ?? healPrediction?.MaxValue ?? 0;
 	}
 
+	public AbilityTargetUIData CopyWithOverride(AbilityData abilityOverride = null, MechanicEntity targetOverride = null, Vector3? casterPositionOverride = null, bool? hitAlwaysOverride = null, float? initialHitChanceOverride = null, float? hitWithAvoidanceChanceOverride = null, int? minDamageOverride = null, int? maxDamageOverride = null, int? linesOverride = null, int? burstIndexOverride = null, List<float> burstHitChancesOverride = null, float? dodgeChanceOverride = null, float? coverChanceOverride = null, float? evasionChanceOverride = null)
+	{
+		AbilityData ability = abilityOverride ?? Ability;
+		MechanicEntity target = targetOverride ?? Target;
+		Vector3 casterPosition = casterPositionOverride ?? CasterPosition;
+		bool hitAlways = hitAlwaysOverride ?? HitAlways;
+		float initialHitChance = initialHitChanceOverride ?? InitialHitChance;
+		float hitWithAvoidanceChance = hitWithAvoidanceChanceOverride ?? HitWithAvoidanceChance;
+		int minDamage = minDamageOverride ?? MinDamage;
+		int maxDamage = maxDamageOverride ?? MaxDamage;
+		int lines = linesOverride ?? Lines;
+		int burstIndex = burstIndexOverride ?? BurstIndex;
+		List<float> burstHitChances = burstHitChancesOverride ?? BurstHitChances;
+		float dodgeChance = dodgeChanceOverride ?? DodgeChance;
+		float coverChance = coverChanceOverride ?? CoverChance;
+		float evasionChance = evasionChanceOverride ?? EvasionChance;
+		return new AbilityTargetUIData(ability, target, casterPosition, hitAlways, initialHitChance, hitWithAvoidanceChance, minDamage, maxDamage, lines, burstIndex, burstHitChances, dodgeChance, coverChance, evasionChance);
+	}
+
 	private void UpdateWithWeapon(AbilityData ability, MechanicEntity target, Vector3 casterPosition, ItemEntityWeapon weapon, int counter = 0)
 	{
 		MechanicEntity caster = ability.Caster;
@@ -220,7 +240,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 		}
 		float initialHitChance = num / (float)BurstIndex;
 		float hitWithAvoidanceChance = num2 / (float)BurstIndex - (float)(counter * 10);
-		if ((LosCalculations.CoverType)warhammerLos2 != LosCalculations.CoverType.Invisible || warhammerLos != LosCalculations.CoverType.Invisible)
+		if (CoverChance < 100f || (LosCalculations.CoverType)warhammerLos2 != LosCalculations.CoverType.Invisible || warhammerLos != LosCalculations.CoverType.Invisible)
 		{
 			HitWithAvoidanceChance = hitWithAvoidanceChance;
 			InitialHitChance = initialHitChance;

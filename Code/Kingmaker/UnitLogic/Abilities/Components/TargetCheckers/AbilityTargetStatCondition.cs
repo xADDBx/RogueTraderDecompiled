@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 
-[ComponentName("Predicates/Target has stat")]
+[Group("Predicates")]
 [AllowedOn(typeof(BlueprintAbility))]
 [AllowMultipleComponents]
 [TypeId("d031c0cbc9462c947a066310de0283e6")]

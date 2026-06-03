@@ -25,6 +25,8 @@ public class TransientPartyMemberFlag : BlueprintComponent, IRuntimeEntityFactCo
 		}
 	}
 
+	public bool AllowOutOfCombatControl;
+
 	public EntityFactComponent CreateRuntimeFactComponent()
 	{
 		return new Runtime();

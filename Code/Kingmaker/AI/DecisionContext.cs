@@ -556,8 +556,8 @@ public class DecisionContext
 		AbilityData data = ability.Data;
 		if (!data.IsAvailable)
 		{
-			List<AbilityData.UnavailabilityReasonType> unavailabilityReasons = data.GetUnavailabilityReasons();
-			if (unavailabilityReasons.Count == 0)
+			IEnumerable<AbilityData.UnavailabilityReasonType> unavailabilityReasons = data.GetUnavailabilityReasons();
+			if (unavailabilityReasons.Count() == 0)
 			{
 				return false;
 			}
@@ -724,17 +724,17 @@ public class DecisionContext
 				break;
 			}
 		}
-		else if (ability.Blueprint.CanTargetEnemies)
+		else if (ability.CanTargetEnemies)
 		{
 			list.AddRange(HatedTargets);
 		}
 		else
 		{
-			if (ability.Blueprint.CanTargetFriends && !ability.IsScatter)
+			if (ability.CanTargetFriends && !ability.IsScatter)
 			{
 				list.AddRange(Allies);
 			}
-			if (ability.Blueprint.CanTargetSelf && !ability.IsScatter)
+			if (ability.CanTargetSelf && !ability.IsScatter)
 			{
 				list.AddRange(Self);
 			}

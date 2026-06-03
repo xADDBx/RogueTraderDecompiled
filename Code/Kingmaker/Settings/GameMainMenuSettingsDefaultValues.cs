@@ -5,5 +5,5 @@ namespace Kingmaker.Settings;
 [Serializable]
 public class GameMainMenuSettingsDefaultValues
 {
-	public MainMenuTheme MainMenuTheme;
+	public MainMenuTheme MainMenuTheme = MainMenuTheme.Dlc3;
 }

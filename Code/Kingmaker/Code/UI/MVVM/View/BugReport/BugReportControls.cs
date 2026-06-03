@@ -1,3 +1,4 @@
+using Core.Cheats;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
@@ -11,6 +12,11 @@ public static class BugReportControls
 	private static bool s_LeftStickBtnPressed;
 
 	private static bool s_RightStickBtnPressed;
+
+	[Cheat(Name = "bug_report_force_disable")]
+	public static bool ForceDisableBugReporter { get; set; }
+
+	public static bool AllowBugReporter => true;
 
 	public static CompositeDisposable AddBugReportControls()
 	{
@@ -52,9 +58,18 @@ public static class BugReportControls
 		};
 	}
 
+	[Cheat(Name = "bug_report_open")]
+	public static void OpenBugReport()
+	{
+		EventBus.RaiseEvent(delegate(IBugReportUIHandler h)
+		{
+			h.HandleBugReportCanvasHotKeyOpen();
+		});
+	}
+
 	private static void TryToOpenBugReport()
 	{
-		if (s_LeftStickBtnPressed && s_RightStickBtnPressed)
+		if (AllowBugReporter && s_LeftStickBtnPressed && s_RightStickBtnPressed)
 		{
 			s_LeftStickBtnPressed = false;
 			s_RightStickBtnPressed = false;

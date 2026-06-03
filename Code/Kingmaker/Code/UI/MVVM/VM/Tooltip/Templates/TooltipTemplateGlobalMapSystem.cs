@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
@@ -84,8 +83,8 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 
 	private void AddQuestsInfo(List<ITooltipBrick> bricks)
 	{
-		List<QuestObjective> list = ((m_SectorMapObject != null) ? UIUtilitySpaceQuests.GetQuestsForSystem(m_SectorMapObject) : UIUtilitySpaceQuests.GetQuestsForSystemWithBlueprint(m_Area));
-		List<QuestObjective> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(m_Area);
+		List<QuestBookEntityEntry> list = ((m_SectorMapObject != null) ? UIUtilitySpaceQuests.GetQuestsForSystem(m_SectorMapObject) : UIUtilitySpaceQuests.GetQuestsForSystemWithBlueprint(m_Area));
+		List<QuestBookEntityEntry> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(m_Area);
 		if ((!list.Empty() && list != null) || (!questsForSpaceSystem.Empty() && questsForSpaceSystem != null))
 		{
 			List<string> questsStringList = UIUtilitySpaceQuests.GetQuestsStringList(list, questsForSpaceSystem);
@@ -100,10 +99,10 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 
 	private void AddRumoursInfo(List<ITooltipBrick> bricks)
 	{
-		List<QuestObjective> list = ((m_SectorMapObject != null) ? UIUtilitySpaceQuests.GetRumoursForSystem(m_SectorMapObject) : UIUtilitySpaceQuests.GetRumoursForSystemWithBlueprint(m_Area));
+		List<QuestBookEntityEntry> list = ((m_SectorMapObject != null) ? UIUtilitySpaceQuests.GetRumoursForSystem(m_SectorMapObject) : UIUtilitySpaceQuests.GetRumoursForSystemWithBlueprint(m_Area));
 		if (list != null && list.Any())
 		{
-			List<string> list2 = list.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestObjective rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
+			List<string> list2 = list.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestBookEntityEntry rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
 			if (list2.Any())
 			{
 				string text = string.Join(Environment.NewLine, list2);
@@ -119,10 +118,10 @@ public class TooltipTemplateGlobalMapSystem : TooltipBaseTemplate
 		{
 			return;
 		}
-		List<QuestObjective> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(m_SectorMapObject);
+		List<QuestBookEntityEntry> rumoursForSectorMap = UIUtilitySpaceQuests.GetRumoursForSectorMap(m_SectorMapObject);
 		if (rumoursForSectorMap != null && rumoursForSectorMap.Any())
 		{
-			List<string> list = rumoursForSectorMap.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestObjective rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
+			List<string> list = rumoursForSectorMap.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile().Text)).Select((QuestBookEntityEntry rumour, int index) => rumour.Blueprint.GetTitile().Text).ToList();
 			if (list.Any())
 			{
 				string text = string.Join(", ", list);

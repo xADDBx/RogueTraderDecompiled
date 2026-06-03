@@ -36,7 +36,7 @@ public class BuffSubstitutionOnApply : UnitFactComponentDelegate, IInitiatorRule
 		if (evt.Blueprint == GainedFact)
 		{
 			evt.CanApply = false;
-			base.Owner.Buffs.Add(SubstituteBuff, evt.ConcreteInitiator, evt.Duration);
+			base.Owner.Buffs.Add(SubstituteBuff, evt.Context.MaybeCaster, evt.Duration);
 		}
 	}
 

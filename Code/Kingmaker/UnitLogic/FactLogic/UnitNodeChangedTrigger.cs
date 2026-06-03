@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers.TurnBased;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Pathfinding;
@@ -30,11 +31,23 @@ public class UnitNodeChangedTrigger : UnitBuffComponentDelegate, IUnitNodeChange
 	[SerializeField]
 	private bool m_AllowNotInCombat;
 
+	[SerializeField]
+	[Tooltip("Trigger actions during preparation turn")]
+	private bool m_TriggerInPreparationTurn;
+
 	public void HandleUnitNodeChanged()
 	{
 		if (!base.Owner.IsInCombat && !m_AllowNotInCombat)
 		{
 			return;
+		}
+		if (!m_TriggerInPreparationTurn && TurnController.IsInTurnBasedCombat())
+		{
+			Game instance = Game.Instance;
+			if (instance != null && instance.TurnController?.IsPreparationTurn == true)
+			{
+				return;
+			}
 		}
 		GraphNode previousNode = base.Owner.PreviousNode;
 		if (base.Fact.Owner.SizeRect.Width == 1)

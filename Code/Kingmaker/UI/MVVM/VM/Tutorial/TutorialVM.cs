@@ -3,7 +3,9 @@ using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
 using Kingmaker.Tutorial;
+using Kingmaker.Utility;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -48,8 +50,8 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 		if ((IsShowingBigWindow && !CanShowBigWindow(gameMode)) || (IsShowingSmallWindow && !CanShowSmallWindow(gameMode)))
 		{
 			m_DataToRestore = BigWindowVM.Value?.Data ?? SmallWindowVM.Value?.Data;
-			BigWindowVM.Value?.Hide();
-			SmallWindowVM.Value?.Hide();
+			BigWindowVM.Value?.Hide(userInitiated: false);
+			SmallWindowVM.Value?.Hide(userInitiated: false);
 		}
 		else if (m_DataToRestore != null && Game.Instance.Player.Tutorial.ShowingData == null && (!IsBigWindowTutorial(m_DataToRestore) || CanShowBigWindow(gameMode)) && (IsBigWindowTutorial(m_DataToRestore) || CanShowSmallWindow(gameMode)))
 		{
@@ -66,7 +68,11 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 	{
 		if (!Game.Instance.IsModeActive(GameModeType.Cutscene) && !Game.Instance.IsModeActive(GameModeType.CutsceneGlobalMap) && !Game.Instance.IsModeActive(GameModeType.Dialog))
 		{
-			return !Game.Instance.RootUiContext.IsIngameMenuShown;
+			if (!Game.IsInMainMenu)
+			{
+				return !Game.Instance.RootUiContext.IsIngameMenuShown;
+			}
+			return true;
 		}
 		return false;
 	}
@@ -113,6 +119,11 @@ public class TutorialVM : VMBase, IGameModeHandler, ISubscriber, INewTutorialUIH
 
 	private void ShowTutorialInternal(TutorialData data)
 	{
+		if (data.Blueprint.HideInMouseModeOnSwitch2 && ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			HideTutorial(data);
+			return;
+		}
 		if (IsBan(data))
 		{
 			UberDebug.LogError("Tutorial is Banned");

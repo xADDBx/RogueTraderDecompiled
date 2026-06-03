@@ -5,7 +5,7 @@ using Kingmaker.Visual.Sound;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/PlayCustomMusic")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("60ce9f50487c58446aad79d52f8e5e54")]
 public class PlayCustomMusic : GameAction

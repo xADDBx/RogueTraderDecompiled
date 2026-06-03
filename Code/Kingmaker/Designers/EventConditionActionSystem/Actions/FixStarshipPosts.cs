@@ -1,3 +1,4 @@
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -9,6 +10,7 @@ using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
+[Group("Starship")]
 [PlayerUpgraderAllowed(false)]
 [TypeId("026c1d19a5304a40ae7322406f9e2cf8")]
 public class FixStarshipPosts : GameAction

@@ -6,6 +6,11 @@ using Kingmaker.AI;
 using Kingmaker.Controllers.Combat;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
+using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.Mechanics.Entities;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.QA;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
@@ -16,7 +21,7 @@ using UnityEngine;
 
 namespace Kingmaker.Pathfinding;
 
-public class PathfindingService : IService
+public class PathfindingService : IService, IDisposable, IUnitMoveHandler, ISubscriber<IAbstractUnitEntity>, ISubscriber, IUnitSpawnHandler
 {
 	public class Options
 	{
@@ -262,7 +267,7 @@ public class PathfindingService : IService
 			path.Claim(this);
 		}
 		path.pathRequestedTick = Game.Instance.Player.GameTime.Ticks;
-		path.enabledTags = 1;
+		path.enabledTags = -2147483647;
 		path.callback = delegate(Path p)
 		{
 			OnForcedPathCompleteInternal<TPath>(p as TPath, data, options, callback);
@@ -278,7 +283,7 @@ public class PathfindingService : IService
 			path.Claim(this);
 		}
 		path.pathRequestedTick = Game.Instance.Player.GameTime.Ticks;
-		path.enabledTags = 1;
+		path.enabledTags = -2147483647;
 		path.callback = delegate(Path p)
 		{
 			OnPathCompleteInternal(p, data, options, callback);
@@ -330,7 +335,7 @@ public class PathfindingService : IService
 
 	private static void FindPath_Blocking(Path path, Options options)
 	{
-		path.enabledTags = 1;
+		path.enabledTags = -2147483647;
 		path.pathRequestedTick = Game.Instance.Player.GameTime.Ticks;
 		PreProcess(path, options);
 		AstarPath.StartPath(path);
@@ -520,9 +525,41 @@ public class PathfindingService : IService
 		}
 	}
 
+	private PathfindingService()
+	{
+		EventBus.Subscribe(this);
+	}
+
+	public void Dispose()
+	{
+		EventBus.Unsubscribe(this);
+	}
+
+	public void HandleUnitMovement(AbstractUnitEntity unit)
+	{
+		ClearChargePathCache();
+	}
+
+	public void HandleUnitSpawned()
+	{
+		ClearChargePathCache();
+	}
+
+	private void ClearChargePathCache()
+	{
+		while (m_ChargePathCache.Count > 0)
+		{
+			PathPool.Pool(m_ChargePathCache.Dequeue().Path);
+		}
+	}
+
 	public WarhammerPathCharge FindPathChargeTB_Blocking(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool ignoreBlockers, [CanBeNull] MechanicEntity targetEntity)
 	{
-		WarhammerPathCharge warhammerPathCharge = ConstructWhChargePath(agent, origin, destination, ignoreBlockers, targetEntity);
+		return FindFullCachedPath(agent, origin, destination, ignoreBlockers, targetEntity) ?? FindPartialCachedPath(agent, origin, destination, ignoreBlockers) ?? ComputeAndCachePath(agent, origin, destination, ignoreBlockers, targetEntity);
+	}
+
+	private WarhammerPathCharge FindFullCachedPath(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool ignoreBlockers, [CanBeNull] MechanicEntity targetEntity)
+	{
 		foreach (WarhammerPathChargeCacheEntry item in m_ChargePathCache)
 		{
 			if (item.Entity.Id == agent.Unit?.UniqueId && item.Origin == origin && item.Destination == destination && item.IgnoreBlockers == ignoreBlockers)
@@ -534,8 +571,30 @@ public class PathfindingService : IService
 				}
 			}
 		}
+		return null;
+	}
+
+	private WarhammerPathCharge FindPartialCachedPath(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool ignoreBlockers)
+	{
+		foreach (WarhammerPathChargeCacheEntry item in m_ChargePathCache)
+		{
+			if (item.Entity.Id == agent.Unit?.UniqueId && item.Origin == origin && item.IgnoreBlockers == ignoreBlockers)
+			{
+				int num = item.Path.path.FindIndex((GraphNode n) => n.Vector3Position == destination);
+				if (num >= 0)
+				{
+					return (WarhammerPathCharge)item.Path.CutPathAtIndex(num);
+				}
+			}
+		}
+		return null;
+	}
+
+	private WarhammerPathCharge ComputeAndCachePath(UnitMovementAgentBase agent, Vector3 origin, Vector3 destination, bool ignoreBlockers, [CanBeNull] MechanicEntity targetEntity)
+	{
 		using (ProfileScope.New("FindPathChargeTB"))
 		{
+			WarhammerPathCharge warhammerPathCharge = ConstructWhChargePath(agent, origin, destination, ignoreBlockers, targetEntity);
 			FindPath_Blocking(warhammerPathCharge, agent.TurnBasedOptions);
 			if (m_ChargePathCache.Count >= 5)
 			{

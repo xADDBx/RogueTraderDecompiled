@@ -18,7 +18,7 @@ public class UnitPlaceOnGroundController : IControllerTick, IController, IAreaPa
 
 	public void Tick()
 	{
-		if (!m_NeedForcedPlace)
+		if (!m_NeedForcedPlace || Game.Instance.SceneControllables.HasAwaitingSettle)
 		{
 			return;
 		}

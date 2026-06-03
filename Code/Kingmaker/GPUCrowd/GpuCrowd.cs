@@ -21,6 +21,10 @@ public class GpuCrowd : MonoBehaviour
 
 	public const string ShadowsEnableFieldName = "Shadows Enable";
 
+	public static int BoundsCenterVector3Id = Shader.PropertyToID("BoundsCenter");
+
+	public static int BoundsSizeVector3Id = Shader.PropertyToID("BoundsSize");
+
 	public VisualEffect CrowdVfx;
 
 	public List<GpuCrowdLocator> CrowdLocators = new List<GpuCrowdLocator>();

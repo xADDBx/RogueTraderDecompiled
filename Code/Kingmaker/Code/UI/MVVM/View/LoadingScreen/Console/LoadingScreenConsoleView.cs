@@ -44,6 +44,54 @@ public class LoadingScreenConsoleView : LoadingScreenBaseView
 			{
 				CloseWait();
 			}, 4));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 8));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 9));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 10));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 11));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 17));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 16));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 18));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 19));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 14));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 15));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 12));
+			AddDisposable(m_InputLayer.AddButton(delegate
+			{
+				CloseWait();
+			}, 13));
 			AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 		}
 		base.ShowUserInputWaiting(state);

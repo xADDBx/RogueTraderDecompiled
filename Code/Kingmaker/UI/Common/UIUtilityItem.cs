@@ -6,13 +6,18 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.Items.Ecnchantments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
+using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Designers;
+using Kingmaker.Designers.Mechanics.Facts.DodgeChance;
 using Kingmaker.DLC;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
@@ -29,6 +34,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Modifiers;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
+using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -44,6 +50,7 @@ using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.StatefulRandom;
 using Kingmaker.Utility.UnitDescription;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 using WebSocketSharp;
 
@@ -262,6 +269,19 @@ public static class UIUtilityItem
 				WarhammerArmorCategory.Medium => 0.75f, 
 				_ => 0f, 
 			};
+			BlueprintItemEquipment blueprintItemEquipment = (BlueprintItemEquipment)(((object)armor?.Blueprint) ?? ((object)shield?.Blueprint));
+			if (blueprintItemEquipment != null)
+			{
+				foreach (AddFactToEquipmentWielder component in blueprintItemEquipment.GetComponents<AddFactToEquipmentWielder>())
+				{
+					OverrideDodgeArmorPercentPenalty overrideDodgeArmorPercentPenalty = component.Fact?.GetComponent<OverrideDodgeArmorPercentPenalty>();
+					if (overrideDodgeArmorPercentPenalty != null)
+					{
+						num = 1f - (float)overrideDodgeArmorPercentPenalty.DodgeArmorPercentPenalty / 100f;
+						break;
+					}
+				}
+			}
 			ArmorData armorData = default(ArmorData);
 			armorData.DamageAbsorption = armor?.Blueprint.DamageAbsorption ?? 0;
 			armorData.DamageDeflection = armor?.Blueprint.DamageDeflection ?? 0;
@@ -314,42 +334,46 @@ public static class UIUtilityItem
 			{
 				return null;
 			}
+			BlueprintItemWeapon blueprintItemWeapon = blueprintAbility.GetComponent<WarhammerOverrideAbilityWeapon>()?.Weapon;
 			AbilityData abilityData = new AbilityData(blueprintAbility, caster)
 			{
-				OverrideWeapon = ((blueprintAbility.GetComponent<WarhammerOverrideAbilityWeapon>()?.Weapon?.CreateEntity() ?? itemEntity) as ItemEntityWeapon)
+				OverrideWeapon = ((blueprintItemWeapon?.CreateEntity() ?? itemEntity) as ItemEntityWeapon)
 			};
 			if (itemEntity is ItemEntityWeapon itemEntityWeapon)
 			{
 				int val = itemEntityWeapon.Blueprint.WeaponAbilities.Select((WeaponAbility i) => i.Ability).IndexOf(blueprintAbility);
 				abilityData.ItemSlotIndex = Math.Max(0, val);
 			}
+			BlueprintAbility blueprint = abilityData.Blueprint;
 			RuleCalculateStatsWeapon weaponStats = abilityData.GetWeaponStats();
-			BlueprintItemWeapon blueprintItemWeapon = abilityData.Weapon?.Blueprint;
-			if (blueprintItemWeapon != null && abilityData.Blueprint.AttackType.HasValue)
+			BlueprintItemWeapon blueprintItemWeapon2 = abilityData.Weapon?.Blueprint;
+			if (blueprintItemWeapon2 != null && (blueprint.AttackType.HasValue || WarhammerOverrideAbilityWeapon.ForceShowDamageInUi(blueprint)))
 			{
-				damageText = (abilityData.Blueprint.IsBurst ? $"({weaponStats.ResultDamage}-{blueprintItemWeapon.WarhammerMaxDamage})x{abilityData.RateOfFire}" : $"{weaponStats.ResultDamage}-{blueprintItemWeapon.WarhammerMaxDamage}");
-				baseDamageText = $"{weaponStats.ResultDamage.MinValueBase}-{weaponStats.ResultDamage.MaxValueBase}";
-				int minValue = weaponStats.ResultDamage.MinValue;
-				int warhammerMaxDamage = blueprintItemWeapon.WarhammerMaxDamage;
-				minDamage = minValue;
-				maxDamage = warhammerMaxDamage;
+				int minValueBase = weaponStats.ResultDamage.MinValueBase;
+				int maxValueBase = weaponStats.ResultDamage.MaxValueBase;
+				string text = ((minValueBase != maxValueBase) ? $"{minValueBase}-{maxValueBase}" : $"{minValueBase}");
+				damageText = (blueprint.IsBurst ? $"({text})x{abilityData.RateOfFire}" : text);
+				baseDamageText = $"{minValueBase}-{maxValueBase}";
+				int num = maxValueBase;
+				minDamage = minValueBase;
+				maxDamage = num;
 				penetration = weaponStats.BaseDamage.Penetration.Value;
 			}
-			if ((bool)AstarPath.active)
+			if ((bool)AstarPath.active && blueprintItemWeapon == null)
 			{
 				DamagePredictionData damagePrediction = abilityData.GetDamagePrediction(Game.Instance.DefaultUnit, Game.Instance.DefaultUnit.Position);
 				if (damagePrediction != null)
 				{
 					damageText = ((damagePrediction.MinDamage != damagePrediction.MaxDamage) ? $"{damagePrediction.MinDamage}-{damagePrediction.MaxDamage}" : $"{damagePrediction.MinDamage}");
-					int minValue = damagePrediction.MinDamage;
+					int num = damagePrediction.MinDamage;
 					int maxDamage2 = damagePrediction.MaxDamage;
-					minDamage = minValue;
+					minDamage = num;
 					maxDamage = maxDamage2;
 					penetration = damagePrediction.Penetration;
 				}
 			}
 			MomentumAbilityType? momentumAbilityType = null;
-			AbilitySpecialMomentumAction component = abilityData.Blueprint.GetComponent<AbilitySpecialMomentumAction>();
+			AbilitySpecialMomentumAction component = blueprint.GetComponent<AbilitySpecialMomentumAction>();
 			if (component != null)
 			{
 				momentumAbilityType = component.MomentumType;
@@ -385,16 +409,16 @@ public static class UIUtilityItem
 				DamageText = damageText,
 				BaseDamageText = baseDamageText,
 				Penetration = penetration,
-				AttackType = UIStrings.Instance.AbilityTexts.GetAttackType(abilityData.Blueprint.AttackType),
-				CostAP = $"{abilityData.CalculateActionPointCost()} {UIStrings.Instance.Tooltips.AP.Text}",
+				AttackType = UIStrings.Instance.AbilityTexts.GetAttackType(abilityData),
+				CostAP = $"{Math.Max(0, abilityData.CalculateActionPointCost())} {UIStrings.Instance.Tooltips.AP.Text}",
 				PatternData = GetAbilityPatternData(abilityData, itemEntity),
 				MomentumAbilityType = momentumAbilityType,
 				HitChance = hitChance,
 				ScatterHitChanceData = scatterHitChanceData,
-				IsRange = (blueprintItemWeapon?.IsRanged ?? false),
+				IsRange = (blueprintItemWeapon2?.IsRanged ?? false),
 				IsScatter = abilityData.IsScatter,
 				BurstAttacksCount = abilityData.BurstAttacksCount,
-				UIProperties = abilityData.Blueprint.GetUIProperties(caster, null, itemEntity),
+				UIProperties = blueprint.GetUIProperties(caster, null, itemEntity),
 				IsSpaceCombatAbility = (Game.Instance.CurrentMode == GameModeType.SpaceCombat),
 				IsReload = IsReload(abilityData),
 				Weapon = abilityData.Weapon
@@ -443,17 +467,21 @@ public static class UIUtilityItem
 			{
 				if (!(component is EquipmentRestrictionStat equipmentRestrictionStat))
 				{
-					if (component is EquipmentRestrictionMachineTrait equipmentRestrictionMachineTrait)
+					if (!(component is EquipmentRestrictionMachineTrait equipmentRestrictionMachineTrait))
 					{
-						string statText = UIUtility.GetStatText(StatType.MachineTrait);
-						RestrictionItem restrictionItem = new RestrictionItem
+						if (component is EquipmentRestrictionAugmentTier)
 						{
-							Key = statText,
-							Value = equipmentRestrictionMachineTrait.MinRank.ToString(),
-							MeetPrerequisite = component.CanBeEquippedBy(unit)
-						};
-						data.Restrictions.Add(new RestrictionData(restrictionItem, inverted: false, equipmentRestrictionMachineTrait.CanBeEquippedBy(unit)));
+						}
+						continue;
 					}
+					string statText = UIUtility.GetStatText(StatType.MachineTrait);
+					RestrictionItem restrictionItem = new RestrictionItem
+					{
+						Key = statText,
+						Value = equipmentRestrictionMachineTrait.MinRank.ToString(),
+						MeetPrerequisite = component.CanBeEquippedBy(unit)
+					};
+					data.Restrictions.Add(new RestrictionData(restrictionItem, inverted: false, equipmentRestrictionMachineTrait.CanBeEquippedBy(unit)));
 				}
 				else
 				{
@@ -572,16 +600,19 @@ public static class UIUtilityItem
 		if (blueprintAbility != null)
 		{
 			UIAbilityData uIAbilityData = GetUIAbilityData(blueprintAbility);
-			data.Texts[TooltipElement.Damage] = uIAbilityData.DamageText;
-			data.CompareData[TooltipElement.Damage] = new CompareData
+			if (uIAbilityData.MinDamage != 0 || uIAbilityData.MaxDamage != 0)
 			{
-				Value = uIAbilityData.MaxDamage + uIAbilityData.MinDamage
-			};
-			data.Texts[TooltipElement.Penetration] = uIAbilityData.Penetration.ToString();
-			data.CompareData[TooltipElement.Penetration] = new CompareData
-			{
-				Value = uIAbilityData.Penetration
-			};
+				data.Texts[TooltipElement.Damage] = uIAbilityData.DamageText;
+				data.CompareData[TooltipElement.Damage] = new CompareData
+				{
+					Value = uIAbilityData.MaxDamage + uIAbilityData.MinDamage
+				};
+				data.Texts[TooltipElement.Penetration] = uIAbilityData.Penetration.ToString();
+				data.CompareData[TooltipElement.Penetration] = new CompareData
+				{
+					Value = uIAbilityData.Penetration
+				};
+			}
 		}
 	}
 
@@ -769,6 +800,10 @@ public static class UIUtilityItem
 
 	public static string GetItemType(ItemEntity item)
 	{
+		if (item.Blueprint is BlueprintItemAugment blueprintItemAugment)
+		{
+			return GetAugmentSlotName(GetAugmentationSlotType(blueprintItemAugment.AugmentSlot));
+		}
 		if (!item.IsIdentified)
 		{
 			ItemsStrings items = LocalizedTexts.Instance.Items;
@@ -993,6 +1028,36 @@ public static class UIUtilityItem
 		return new bool[2] { flag, flag2 };
 	}
 
+	public static bool IsTargetEquipmentSlotLocked(ItemEntity item)
+	{
+		if (item == null)
+		{
+			return false;
+		}
+		if (item.HoldingSlot != null)
+		{
+			return item.HoldingSlot.Lock;
+		}
+		PartUnitBody partUnitBody = (UIUtility.GetCurrentSelectedUnit() ?? Game.Instance?.Player?.MainCharacterEntity)?.Body;
+		if (partUnitBody == null)
+		{
+			return false;
+		}
+		bool result = false;
+		foreach (ItemSlot allSlot in partUnitBody.AllSlots)
+		{
+			if (allSlot.IsItemSupported(item))
+			{
+				result = true;
+				if (!allSlot.Lock)
+				{
+					return false;
+				}
+			}
+		}
+		return result;
+	}
+
 	public static bool IsItemAbilityInSpellListOfUnit(BlueprintItemEquipmentUsable item, BaseUnitEntity unit)
 	{
 		return item.Abilities.Any((BlueprintAbility v) => v?.IsInSpellListOfUnit(unit) ?? false);
@@ -1052,7 +1117,7 @@ public static class UIUtilityItem
 				{
 					string text = Game.Instance.BlueprintRoot.LocalizedTexts.AbilityTargets.Personal;
 					itemTooltipData.Texts[TooltipElement.Cooldown] = blueprintAbility.CooldownRounds.ToString();
-					itemTooltipData.Texts[TooltipElement.Target] = ((usable.Blueprint.Type == UsableItemType.Potion) ? text : blueprintAbility.GetTarget(-1, item.Owner));
+					itemTooltipData.Texts[TooltipElement.Target] = ((usable.Blueprint.Type == UsableItemType.Potion) ? text : blueprintAbility.GetTarget(-1, (item.Owner != null) ? new AbilityData(blueprintAbility, item.Owner) : null));
 					itemTooltipData.BlueprintAbility = blueprintAbility;
 					itemTooltipData.Texts[TooltipElement.ShortDescription] = UpdateAbilityShortenedDescription(usable, blueprintAbility);
 					itemTooltipData.Texts[TooltipElement.LongDescription] = UpdateAbilityDescription(usable, blueprintAbility);
@@ -1303,5 +1368,158 @@ public static class UIUtilityItem
 			return feature.Icon == null;
 		}
 		return false;
+	}
+
+	public static void AddOverchargeAbility(List<ITooltipBrick> bricks, ItemEntity item, BlueprintItemAugment blueprintItemAugment, bool screenWindowTooltip)
+	{
+		BlueprintAbility overdriveAbility = blueprintItemAugment.OverdriveAbility;
+		if (overdriveAbility == null)
+		{
+			return;
+		}
+		BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnitInUI.Value;
+		UIAbilityData uIAbilityData = GetUIAbilityData(overdriveAbility, item, value);
+		if (overdriveAbility.HiddenInUI)
+		{
+			return;
+		}
+		TooltipTemplateAbility tooltip = new TooltipTemplateAbility(uIAbilityData.BlueprintAbility, blueprintItemAugment);
+		TooltipBrickIconPattern.TextFieldValues titleValues = new TooltipBrickIconPattern.TextFieldValues
+		{
+			Text = uIAbilityData.Name
+		};
+		TooltipBrickIconPattern.TextFieldValues textFieldValues = new TooltipBrickIconPattern.TextFieldValues
+		{
+			Text = UIStrings.Instance.Tooltips.CostAP.Text,
+			Value = uIAbilityData.CostAP
+		};
+		if (!screenWindowTooltip)
+		{
+			TooltipBrickIconPattern.TextFieldValues textFieldValues2 = textFieldValues;
+			if (textFieldValues2.TextParams == null)
+			{
+				textFieldValues2.TextParams = new TextFieldParams();
+			}
+			textFieldValues.TextParams.FontColor = UIConfig.Instance.TooltipColors.TooltipValue;
+		}
+		if (!uIAbilityData.UIProperties.Any((UIProperty d) => d.Main))
+		{
+			bricks.Add(new TooltipBrickIconPattern(uIAbilityData.Icon, uIAbilityData.PatternData, titleValues, textFieldValues, null, tooltip));
+			string text = UIUtilityTexts.UpdateDescriptionWithUIProperties(uIAbilityData.BlueprintAbility.Description, value, selectedUnitIsPreview: true);
+			bricks.Add(new TooltipBrickText(text, TooltipTextType.Paragraph, isHeader: false, TooltipTextAlignment.Left));
+			return;
+		}
+		UIProperty uIProperty = uIAbilityData.UIProperties.FirstOrDefault((UIProperty d) => d.Main);
+		string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+		string abilityPropertyValue = "<b><color=" + glossaryMechanicsHTML + ">" + uIProperty.PropertyValue + "</color></b>";
+		bricks.Add(new TooltipBrickIconPattern(uIAbilityData.Icon, uIAbilityData.PatternData, titleValues, textFieldValues, null, tooltip, IconPatternMode.SkillMode, null, null, uIProperty.Name, abilityPropertyValue, uIProperty.Description));
+	}
+
+	public static void AddDescriptionAugment(List<ITooltipBrick> bricks, ItemTooltipData itemTooltipData, ItemEntity item, BlueprintItemAugment blueprintItemAugment)
+	{
+		BaseUnitEntity currentSelectedUnit = UIUtility.GetCurrentSelectedUnit();
+		string text = itemTooltipData.GetText(TooltipElement.ShortDescription);
+		string text2 = itemTooltipData.GetText(TooltipElement.ArtisticDescription);
+		string text3 = itemTooltipData.GetText(TooltipElement.Description) + itemTooltipData.GetText(TooltipElement.LongDescription);
+		string text4 = itemTooltipData.GetText(TooltipElement.EnchantmentsDescription);
+		List<string> additionalDescription = TooltipTemplateUtils.GetAdditionalDescription(blueprintItemAugment);
+		if (!string.IsNullOrEmpty(text2) && !text3.Equals(text2) && !text.Equals(text2))
+		{
+			bricks.Add(new TooltipBrickText(text2, TooltipTextType.Italic));
+		}
+		if (!string.IsNullOrEmpty(text3))
+		{
+			text3 = TooltipTemplateUtils.AggregateDescription(text3, additionalDescription);
+			text3 = UIUtilityTexts.UpdateDescriptionWithUIProperties(text3, currentSelectedUnit, selectedUnitIsPreview: true);
+			bricks.Add(new TooltipBrickText(text3, TooltipTextType.Paragraph));
+		}
+		else if (!string.IsNullOrEmpty(text))
+		{
+			text = TooltipTemplateUtils.AggregateDescription(text, additionalDescription);
+			text = UIUtilityTexts.UpdateDescriptionWithUIProperties(text, currentSelectedUnit, selectedUnitIsPreview: true);
+			bricks.Add(new TooltipBrickText(text, TooltipTextType.Paragraph));
+		}
+		else if (additionalDescription.Count > 0)
+		{
+			string description = TooltipTemplateUtils.AggregateDescription("", additionalDescription);
+			description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, currentSelectedUnit, selectedUnitIsPreview: true);
+			bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph));
+		}
+		if (!string.IsNullOrEmpty(text4))
+		{
+			bricks.Add(new TooltipBrickText(text4, TooltipTextType.Paragraph));
+		}
+		if (item != null && item.HasUniqueSourceDescription)
+		{
+			bricks.Add(new TooltipBrickText(item?.UniqueSourceDescription ?? "", TooltipTextType.Italic));
+		}
+	}
+
+	public static AugmentationsEnum GetAugmentationSlotType(BlueprintAugmentSlot slot)
+	{
+		if (slot == null)
+		{
+			return AugmentationsEnum.NervousSystem;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.ForgeworldSlot.Get())
+		{
+			return AugmentationsEnum.Forgeworld;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsSystems.Get())
+		{
+			return AugmentationsEnum.NervousSystem;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsEye.Get())
+		{
+			return AugmentationsEnum.PreceptionSystem;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsArmsLeft.Get())
+		{
+			return AugmentationsEnum.LeftHand;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsArmsRight.Get())
+		{
+			return AugmentationsEnum.RightHand;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsTorso.Get())
+		{
+			return AugmentationsEnum.InternalSystems;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsLegs.Get())
+		{
+			return AugmentationsEnum.Legs;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsPasqal1.Get() || slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsManipulus1.Get())
+		{
+			return AugmentationsEnum.Mech1;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsPasqal2.Get() || slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsManipulus2.Get())
+		{
+			return AugmentationsEnum.Mech2;
+		}
+		if (slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsPasqal3.Get() || slot == UIConfig.Instance.UIAugmentationsSlotsReferences.AugmentsManipulus3.Get())
+		{
+			return AugmentationsEnum.Mech3;
+		}
+		return AugmentationsEnum.NervousSystem;
+	}
+
+	public static string GetAugmentSlotName(AugmentationsEnum slotType)
+	{
+		UIAugmentations uIAugmentations = UIStrings.Instance.UIAugmentations;
+		return slotType switch
+		{
+			AugmentationsEnum.NervousSystem => uIAugmentations.SlotNervousSystem, 
+			AugmentationsEnum.PreceptionSystem => uIAugmentations.SlotPreceptionSystem, 
+			AugmentationsEnum.LeftHand => uIAugmentations.SlotLeftHand, 
+			AugmentationsEnum.Legs => uIAugmentations.SlotLegs, 
+			AugmentationsEnum.InternalSystems => uIAugmentations.SlotInternalSystems, 
+			AugmentationsEnum.RightHand => uIAugmentations.SlotRightHand, 
+			AugmentationsEnum.Mech1 => uIAugmentations.SlotMech1, 
+			AugmentationsEnum.Mech2 => uIAugmentations.SlotMech2, 
+			AugmentationsEnum.Mech3 => uIAugmentations.SlotMech3, 
+			AugmentationsEnum.Forgeworld => uIAugmentations.SlotForgeWorld, 
+			_ => string.Empty, 
+		};
 	}
 }

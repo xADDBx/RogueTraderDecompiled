@@ -257,11 +257,15 @@ public class BuffsController : IControllerTick, IController, IControllerEnable, 
 		}
 		static bool IsInvalid(Buff buff)
 		{
-			if (buff.Sources.Count > 0)
+			if (buff.Sources.Count == 0)
 			{
-				return buff.Sources.AllItems((EntityFactSource i) => i.IsMissing || (i.Entity is AreaEffectEntity areaEffectEntity && areaEffectEntity.IsEnded));
+				return false;
 			}
-			return false;
+			if (!buff.IsPermanent)
+			{
+				return false;
+			}
+			return buff.Sources.AllItems((EntityFactSource i) => i.IsMissing || (i.Entity is AreaEffectEntity areaEffectEntity && areaEffectEntity.IsEnded));
 		}
 	}
 

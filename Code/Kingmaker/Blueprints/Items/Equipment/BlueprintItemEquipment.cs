@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -75,7 +76,17 @@ public abstract class BlueprintItemEquipment : BlueprintItem
 
 	public abstract override ItemsItemType ItemType { get; }
 
-	public abstract string InventoryEquipSound { get; }
+	public virtual string InventoryEquipSound
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+		set
+		{
+			throw new NotImplementedException();
+		}
+	}
 
 	public virtual bool CanBeEquippedBy(MechanicEntity entity)
 	{

@@ -20,14 +20,15 @@ using Kingmaker.IngameConsole;
 using Kingmaker.Items;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
-using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.ResourceLinks;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
+using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CodeTimer;
@@ -328,22 +329,10 @@ public class SceneLoader
 				}
 			}
 			MatchStaticSceneActiveStatus(null);
-			AstarPath active = AstarPath.active;
-			if ((bool)active)
+			IEnumerator scanNavMesh = ScanNavMesh();
+			while (scanNavMesh.MoveNext())
 			{
-				IEnumerator scan = active.ScanCoroutine();
-				while (scan.MoveNext())
-				{
-					yield return null;
-				}
-			}
-			else if (CurrentlyLoadedArea.IsNavmeshArea)
-			{
-				throw new InvalidOperationException($"AStarPath not found on area {CurrentlyLoadedArea}");
-			}
-			if (area.IsPartyArea)
-			{
-				((CustomGridGraph)AstarPath.active.graphs[0])?.InitLosCache();
+				yield return null;
 			}
 		}
 		PFLog.SceneLoader.Log("Scene set matched");
@@ -417,8 +406,8 @@ public class SceneLoader
 			{
 				using (ProfileScope.New("Match Scene: " + ses.SceneName))
 				{
-					IEnumerator scan = MatchStateWithSceneCoroutine(ses);
-					while (scan.MoveNext())
+					IEnumerator scanNavMesh = MatchStateWithSceneCoroutine(ses);
+					while (scanNavMesh.MoveNext())
 					{
 						yield return null;
 					}
@@ -433,8 +422,8 @@ public class SceneLoader
 			{
 				using (ProfileScope.New("Load Cross Scene Entities"))
 				{
-					IEnumerator scan = LoadSceneEntitiesCoroutine(Game.Instance.State.PlayerState.CrossSceneState, Enumerable.Empty<EntityViewBase>());
-					while (scan.MoveNext())
+					IEnumerator scanNavMesh = LoadSceneEntitiesCoroutine(Game.Instance.State.PlayerState.CrossSceneState, Enumerable.Empty<EntityViewBase>());
+					while (scanNavMesh.MoveNext())
 					{
 						yield return null;
 					}
@@ -579,7 +568,155 @@ public class SceneLoader
 		}
 	}
 
-	public IEnumerator<object> ReloadAreaMechanicsCoroutine()
+	private IEnumerator ScanNavMesh()
+	{
+		AstarPath active = AstarPath.active;
+		if ((bool)active)
+		{
+			IEnumerator scan = active.ScanCoroutine();
+			while (scan.MoveNext())
+			{
+				yield return null;
+			}
+		}
+		else if (CurrentlyLoadedArea.IsNavmeshArea)
+		{
+			throw new InvalidOperationException($"AStarPath not found on area {CurrentlyLoadedArea}");
+		}
+	}
+
+	private async Task LoadMechanics(IEnumerable<SceneReference> mechanicScenes, IProgress<float> progressValueCallback = null)
+	{
+		TasksWithCombinedProgress tasksWithCombinedProgress = new TasksWithCombinedProgress(progressValueCallback);
+		foreach (SceneReference mechanicScene in mechanicScenes)
+		{
+			tasksWithCombinedProgress.Add(LoadSceneCoroutine(mechanicScene));
+		}
+		await tasksWithCombinedProgress;
+	}
+
+	private async Task UnloadMechanics(IEnumerable<SceneReference> mechanicScenes, IProgress<float> progressValueCallback = null)
+	{
+		TasksWithCombinedProgress tasksWithCombinedProgress = new TasksWithCombinedProgress(progressValueCallback);
+		foreach (SceneReference mechanicScene in mechanicScenes)
+		{
+			tasksWithCombinedProgress.Add(UnloadSceneCoroutine(mechanicScene, keepHot: false));
+		}
+		await tasksWithCombinedProgress;
+	}
+
+	private IEnumerator UnloadMechanicsCoroutine(IEnumerable<SceneReference> mechanicScenes)
+	{
+		foreach (SceneReference mechanicScene in mechanicScenes)
+		{
+			Game.Instance.State.LoadedAreaState.GetStateForScene(mechanicScene).Reset();
+		}
+		Task unload = UnloadMechanics(mechanicScenes);
+		while (!unload.IsCompleted)
+		{
+			yield return null;
+		}
+		unload.Wait();
+		Game.Instance.State.ClearAwakeUnits();
+	}
+
+	private IEnumerator SaveAndDisposeUnloadedStatesCoroutine(AreaPersistentState state, List<SceneEntitiesState> oldStates)
+	{
+		foreach (SceneEntitiesState oldState in oldStates)
+		{
+			if (!oldState.IsSceneLoaded)
+			{
+				oldState.Unsubscribe();
+				oldState.PreSave();
+			}
+		}
+		foreach (SceneEntitiesState oldState2 in oldStates)
+		{
+			if (!oldState2.IsSceneLoaded)
+			{
+				AreaDataStash.StashAreaSubState(state, oldState2);
+				oldState2.Dispose();
+			}
+			yield return null;
+		}
+	}
+
+	private void CleanupUnattachedViews()
+	{
+		EntitySpawnController entitySpawner = Game.Instance.EntitySpawner;
+		GameObject[] children = DynamicRoot.Children;
+		for (int i = 0; i < children.Length; i++)
+		{
+			EntityViewBase component = children[i].GetComponent<EntityViewBase>();
+			if ((bool)component && !component.IsInState && !entitySpawner.IsViewWaitToCreate(component))
+			{
+				if (TraceLoading)
+				{
+					PFLog.SceneLoader.Log("Reload: Destroying unattached dynamic view " + component.name + " #" + component.UniqueId);
+				}
+				component.DestroyViewObject();
+			}
+		}
+	}
+
+	public IEnumerator<object> ReloadMechanicCoroutine(SceneReference mechanicScene, List<SceneReference> newScenesLoaded)
+	{
+		if (!Application.isPlaying)
+		{
+			yield break;
+		}
+		if (!CurrentlyLoadedArea.GetActiveDynamicScenes().Contains(mechanicScene))
+		{
+			PFLog.SceneLoader.Error($"Currently loaded area {CurrentlyLoadedArea} doesn't have " + $"{mechanicScene} scene as one of its mechanics scenes.");
+			yield break;
+		}
+		yield return null;
+		Game.Instance.EntitySpawner.Tick();
+		Game.Instance.EntityDestroyer.Tick();
+		SceneReference[] sceneForLoad = new SceneReference[1] { mechanicScene };
+		IEnumerator unload = UnloadMechanicsCoroutine(sceneForLoad);
+		while (unload.MoveNext())
+		{
+			yield return null;
+		}
+		ReloadSoundBanks(CurrentlyLoadedArea, CurrentlyLoadedAreaPart);
+		GameHistoryLog.Instance.AreaLoading(CurrentlyLoadedArea, CurrentlyLoadedArea, sceneForLoad);
+		Task load = LoadMechanics(sceneForLoad);
+		while (!load.IsCompleted)
+		{
+			yield return null;
+		}
+		load.Wait();
+		if (object.Equals(mechanicScene, CurrentlyLoadedArea.DynamicScene))
+		{
+			IEnumerator scanNavMesh = ScanNavMesh();
+			while (scanNavMesh.MoveNext())
+			{
+				yield return null;
+			}
+		}
+		AreaPersistentState loadedAreaState = Game.Instance.State.LoadedAreaState;
+		SceneEntitiesState ses = loadedAreaState.GetStateForScene(mechanicScene);
+		IEnumerator matchState = MatchStateWithSceneCoroutine(ses);
+		while (matchState.MoveNext())
+		{
+			yield return null;
+		}
+		ses.Subscribe();
+		yield return null;
+		Game.Instance.EntitySpawner.SuppressSpawn.Release();
+		yield return null;
+		CleanupUnattachedViews();
+		IEnumerator<object> sp = ProcessSpawnerActivationCoroutine(alsoRaiseDead: true);
+		while (sp.MoveNext())
+		{
+			yield return null;
+		}
+		SoundBanksManager.UnloadNotUsed();
+		newScenesLoaded.Add(mechanicScene);
+	}
+
+	public IEnumerator<object> ReloadAreaMechanicsCoroutine(bool needNavMeshRescan, List<SceneReference> newScenesLoaded)
 	{
 		if (!Application.isPlaying)
 		{
@@ -598,60 +735,48 @@ public class SceneLoader
 			yield return null;
 		}
 		reload.Wait();
+		if (needNavMeshRescan)
+		{
+			IEnumerator scanNavMesh = ScanNavMesh();
+			while (scanNavMesh.MoveNext())
+			{
+				yield return null;
+			}
+		}
 		AreaPersistentState state = Game.Instance.State.LoadedAreaState;
 		Game.Instance.EntitySpawner.SuppressSpawn.Retain();
 		foreach (SceneReference activeDynamicScene in CurrentlyLoadedArea.GetActiveDynamicScenes())
 		{
 			SceneEntitiesState ses = state.GetStateForScene(activeDynamicScene);
-			if (!oldStates.Contains(ses))
+			if (oldStates.Contains(ses))
+			{
+				continue;
+			}
+			newScenesLoaded.Add(activeDynamicScene);
+			if (ses != state.MainState && !ses.HasEntityData)
 			{
 				ses = AreaDataStash.UnstashAreaSubState(state, ses);
 				if (!ses.IsPostLoadExecuted)
 				{
 					ses.PostLoad();
 				}
-				IEnumerator mathcState = MatchStateWithSceneCoroutine(ses);
-				while (mathcState.MoveNext())
-				{
-					yield return null;
-				}
-				ses.Subscribe();
+			}
+			IEnumerator scanNavMesh = MatchStateWithSceneCoroutine(ses);
+			while (scanNavMesh.MoveNext())
+			{
 				yield return null;
 			}
+			ses.Subscribe();
+			yield return null;
 		}
-		foreach (SceneEntitiesState item in oldStates)
+		IEnumerator saveAndDispose = SaveAndDisposeUnloadedStatesCoroutine(state, oldStates);
+		while (saveAndDispose.MoveNext())
 		{
-			if (!item.IsSceneLoaded)
-			{
-				item.Unsubscribe();
-				item.PreSave();
-			}
-		}
-		foreach (SceneEntitiesState item2 in oldStates)
-		{
-			if (!item2.IsSceneLoaded)
-			{
-				AreaDataStash.StashAreaSubState(state, item2);
-				item2.Dispose();
-			}
 			yield return null;
 		}
 		Game.Instance.EntitySpawner.SuppressSpawn.Release();
 		yield return null;
-		EntitySpawnController entitySpawner = Game.Instance.EntitySpawner;
-		GameObject[] children = DynamicRoot.Children;
-		for (int i = 0; i < children.Length; i++)
-		{
-			EntityViewBase component = children[i].GetComponent<EntityViewBase>();
-			if ((bool)component && !component.IsInState && !entitySpawner.IsViewWaitToCreate(component))
-			{
-				if (TraceLoading)
-				{
-					PFLog.SceneLoader.Log("Reload: Destroying unattached dynamic view " + component.name + " #" + component.UniqueId);
-				}
-				component.DestroyViewObject();
-			}
-		}
+		CleanupUnattachedViews();
 		IEnumerator<object> sp = ProcessSpawnerActivationCoroutine(alsoRaiseDead: true);
 		while (sp.MoveNext())
 		{
@@ -847,12 +972,12 @@ public class SceneLoader
 		if (stash && FogOfWarArea.Active != null && (ignoreParts || fowArea != FogOfWarArea.Active))
 		{
 			byte[] data = await FogOfWarArea.Active.RequestData();
-			Game.Instance.LoadedAreaState.SavedFogOfWarMasks.Add(FogOfWarArea.Active.gameObject.scene.name, data);
+			await SavedFogMasks.Get(Game.Instance.LoadedAreaState.AreaGuid).Save(FogOfWarArea.Active.gameObject.scene.name, data);
 		}
 		FogOfWarArea.Active = (fowArea ? fowArea : null);
 		if (fowArea != null)
 		{
-			byte[] array = Game.Instance.LoadedAreaState.SavedFogOfWarMasks.Get(fowArea.gameObject.scene.name);
+			byte[] array = await SavedFogMasks.Get(Game.Instance.LoadedAreaState.AreaGuid).Load(fowArea.gameObject.scene.name);
 			if ((bool)fowArea && array != null)
 			{
 				fowArea.RestoreFogOfWarMask(array);
@@ -1081,37 +1206,19 @@ public class SceneLoader
 	{
 		using (CodeTimer.New(Logger, "Match Light: De/activate static scenes for parts"))
 		{
+			bool flag = currentAreaPart == null || currentAreaPart == CurrentlyLoadedArea;
+			if (flag != CurrentlyLoadedArea.StaticScene.Enabled)
+			{
+				CurrentlyLoadedArea.StaticScene.SetEnabled(flag);
+			}
 			foreach (BlueprintAreaPartReference part in CurrentlyLoadedArea.Parts)
 			{
 				BlueprintAreaPart blueprintAreaPart = part.Get();
-				if ((bool)blueprintAreaPart && blueprintAreaPart.StaticScene.IsDefined)
+				flag = currentAreaPart == null || currentAreaPart == blueprintAreaPart;
+				if ((bool)blueprintAreaPart && blueprintAreaPart.StaticScene.IsDefined && flag != blueprintAreaPart.StaticScene.Enabled)
 				{
-					Scene sceneByName = SceneManager.GetSceneByName(blueprintAreaPart.StaticScene.SceneName);
-					SetSceneEnabled(sceneByName, currentAreaPart == null || blueprintAreaPart == currentAreaPart);
+					blueprintAreaPart.StaticScene.SetEnabled(flag);
 				}
-			}
-			SetSceneEnabled(SceneManager.GetSceneByName(CurrentlyLoadedArea.StaticScene.SceneName), currentAreaPart == null || currentAreaPart == CurrentlyLoadedArea);
-		}
-	}
-
-	private void SetSceneEnabled(Scene scene, bool enabled)
-	{
-		if (!scene.IsValid() || !scene.isLoaded)
-		{
-			return;
-		}
-		GameObject[] rootGameObjects = scene.GetRootGameObjects();
-		foreach (GameObject gameObject in rootGameObjects)
-		{
-			bool alreadyExists;
-			StaticObjectMark staticObjectMark = gameObject.EnsureComponent<StaticObjectMark>(out alreadyExists);
-			if (!alreadyExists && !gameObject.activeSelf)
-			{
-				staticObjectMark.AlwaysDisabled = true;
-			}
-			if (!staticObjectMark.AlwaysDisabled)
-			{
-				gameObject.SetActive(enabled);
 			}
 		}
 	}
@@ -1543,9 +1650,8 @@ public class SceneLoader
 				yield return null;
 			}
 			asyncLoad.Wait();
-			Scene sceneByName = SceneManager.GetSceneByName(sceneRef.SceneName);
 			m_LoadedAreaScenes.Add(sceneRef);
-			SetSceneEnabled(sceneByName, enabled: false);
+			sceneRef.SetEnabled(enabled: false);
 		}
 		m_LoadedAreas.Add(area);
 	}
@@ -1600,8 +1706,7 @@ public class SceneLoader
 		SceneReference[] array = (isSmokeTest ? CurrentlyLoadedArea.GetActiveDynamicScenes() : CurrentlyLoadedArea.GetStaticAndActiveDynamicScenes().Concat(CurrentlyLoadedArea.LightScenes.Where((SceneReference s) => s.IsDefined)).Concat(CurrentlyLoadedArea.AudioScenes.Where((SceneReference s) => s.IsDefined))).Distinct().ToArray();
 		for (int i = 0; i < array.Length; i++)
 		{
-			Scene sceneByName = SceneManager.GetSceneByName(array[i].SceneName);
-			SetSceneEnabled(sceneByName, enabled: false);
+			array[i].SetEnabled(enabled: false);
 		}
 		foreach (BaseUnitEntity item2 in Game.Instance.Player.CrossSceneState.AllEntityData.OfType<BaseUnitEntity>())
 		{
@@ -1640,8 +1745,7 @@ public class SceneLoader
 		{
 			if (m_LoadedAreaScenes.Contains(sceneRef))
 			{
-				Scene sceneByName2 = SceneManager.GetSceneByName(sceneRef.SceneName);
-				SetSceneEnabled(sceneByName2, enabled: true);
+				sceneRef.SetEnabled(enabled: true);
 				continue;
 			}
 			asyncLoader = BundledSceneLoader.LoadSceneAsync(sceneRef.SceneName);
@@ -1966,7 +2070,10 @@ public class SceneLoader
 		}
 		EntityReferenceTracker.DropCached();
 		WeaponStatsHelper.ForceInvalidateCache();
-		CalculateDamageCache.ForceInvalidateCache();
+		RuleCache<CalculateDamageParams, RuleCalculateDamage>.ForceInvalidateCache();
+		RuleCache<AbilityData, RuleCalculateAbilityActionPointCost>.ForceInvalidateCache();
+		RuleCache<AbilityData, RuleCalculateAbilityNeedLOS>.ForceInvalidateCache();
+		RuleCache<AbilityData, RuleCalculateAbilityRange>.ForceInvalidateCache();
 		Game.Instance.CustomGridNodeController.Clear();
 		EntityDataLink.ClearCache();
 	}

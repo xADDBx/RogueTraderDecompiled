@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Quests;
@@ -295,7 +296,7 @@ public static class GameCommandHelper
 			return false;
 		}
 		HandsEquipmentSet currentHandsEquipmentSet = unit.Body.CurrentHandsEquipmentSet;
-		HandSlot targetSlot = ((!unit.HasMechadendrites()) ? (TryGetSlotForWeapon(weapon, unit) ?? currentHandsEquipmentSet.PrimaryHand) : (weapon.Blueprint.IsMelee ? currentHandsEquipmentSet.PrimaryHand : currentHandsEquipmentSet.SecondaryHand));
+		HandSlot targetSlot = ((unit.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null) ? ((!weapon.Blueprint.IsRanged) ? currentHandsEquipmentSet.SecondaryHand : currentHandsEquipmentSet.PrimaryHand) : ((!unit.HasMechadendrites()) ? (TryGetSlotForWeapon(weapon, unit) ?? currentHandsEquipmentSet.PrimaryHand) : (weapon.Blueprint.IsMelee ? currentHandsEquipmentSet.PrimaryHand : currentHandsEquipmentSet.SecondaryHand)));
 		return TryInsertItemTo(weapon, targetSlot);
 	}
 
@@ -303,6 +304,7 @@ public static class GameCommandHelper
 	{
 		HandSlot result = null;
 		bool holdInTwoHands = weapon.HoldInTwoHands;
+		bool flag = unit.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
 		foreach (HandsEquipmentSet handsEquipmentSet in unit.Body.HandsEquipmentSets)
 		{
 			HandSlot primaryHand = handsEquipmentSet.PrimaryHand;
@@ -312,8 +314,28 @@ public static class GameCommandHelper
 			{
 				continue;
 			}
-			bool flag = !primaryHand.HasItem && !secondaryHand.HasItem;
-			if (!holdInTwoHands || flag)
+			bool flag2 = !primaryHand.HasItem && !secondaryHand.HasItem;
+			if (holdInTwoHands && !flag2)
+			{
+				continue;
+			}
+			if (flag)
+			{
+				if (weapon.Blueprint.IsRanged)
+				{
+					if (!primaryHand.HasItem && primaryHand.CanInsertItem(weapon))
+					{
+						result = primaryHand;
+						break;
+					}
+				}
+				else if (!secondaryHand.HasItem && secondaryHand.CanInsertItem(weapon))
+				{
+					result = secondaryHand;
+					break;
+				}
+			}
+			else
 			{
 				if (!primaryHand.HasItem && primaryHand.CanInsertItem(weapon))
 				{
@@ -463,6 +485,7 @@ public static class GameCommandHelper
 			RaiseHandleInsertFail(null);
 			return false;
 		}
+		bool flag = targetSlot.Owner?.Blueprint?.GetComponent<UniqueEogannCompanionComponent>() != null;
 		if (!targetSlot.CanInsertItem(item) || (targetSlot.HasItem && !targetSlot.CanRemoveItem()) || (item.HoldingSlot != null && item.HoldingSlot.Owner != targetSlot.Owner))
 		{
 			RaiseHandleInsertFail(targetSlot.Owner);
@@ -577,14 +600,14 @@ public static class GameCommandHelper
 		}
 		if (currentQuest != null)
 		{
-			foreach (QuestObjective objective in currentQuest.Objectives)
+			foreach (QuestBookEntityEntry objective in currentQuest.Objectives)
 			{
 				if (!objective.IsVisible || objective.State == QuestObjectiveState.None || objective.Blueprint.IsAddendum)
 				{
 					continue;
 				}
 				objective.NeedToAttention = false;
-				foreach (QuestObjective item in (from b in objective?.Blueprint?.Addendums?.Where((BlueprintQuestObjective b) => b != null)
+				foreach (QuestBookEntityEntry item in (from b in objective?.Blueprint?.Addendums?.Where((BlueprintQuestObjective b) => b != null)
 					select objective?.Quest?.TryGetObjective(b) into a
 					where a != null
 					where a.IsVisible
@@ -612,6 +635,11 @@ public static class GameCommandHelper
 		if (entity is StarshipEntity starshipEntity)
 		{
 			itemSlot = starshipEntity.Hull.HullSlots.GetEquipShipSlot(slotRef.ShipComponentSlotType, slotRef.SetIndex);
+		}
+		else if ((bool)slotRef.IsAugment)
+		{
+			PartUnitBody bodyOptional = entity.GetBodyOptional();
+			itemSlot = ((slotRef.IsAugment == null) ? null : bodyOptional?.GetAugmentSlot(slotRef.IsAugment));
 		}
 		else
 		{

@@ -8,7 +8,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Assets.Code.Designers.Mechanics.Facts;
 
-[ComponentName("Modifes number of starship weapon maximum charges")]
+[ComponentName("Starship/Modifes number of starship weapon maximum charges")]
 [AllowedOn(typeof(BlueprintFact))]
 [AllowMultipleComponents]
 [TypeId("47c0913bfcaa42a4da671693b84ef65b")]

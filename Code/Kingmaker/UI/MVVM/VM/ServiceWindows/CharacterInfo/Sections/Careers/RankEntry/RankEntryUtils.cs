@@ -16,7 +16,8 @@ public static class RankEntryUtils
 		FeatureGroup.AscensionTalent,
 		FeatureGroup.FirstCareerTalent,
 		FeatureGroup.SecondCareerTalent,
-		FeatureGroup.FirstOrSecondCareerTalent
+		FeatureGroup.FirstOrSecondCareerTalent,
+		FeatureGroup.ShipUpgrade
 	};
 
 	public static bool HasFilter(FeatureGroup? group)

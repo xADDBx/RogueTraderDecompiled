@@ -27,7 +27,9 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 		HitChance = 1,
 		CoverPenetration = 4,
 		CoverMagnitude = 8,
-		RighteousFury = 0x10
+		RighteousFury = 0x10,
+		MaxHitChance = 0x20,
+		HitToCrit = 0x40
 	}
 
 	public enum ForcedResultType
@@ -45,6 +47,9 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 	[ShowIf("ModifyHitChance")]
 	public ContextValue HitChance;
 
+	[ShowIf("ModifyHitChanceBorder")]
+	public ContextValue MaxHitChance;
+
 	[ShowIf("ModifyRighteousFury")]
 	public ContextValue RighteousFuryChance;
 
@@ -55,6 +60,10 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 	[InfoBox("Used as +CoverMagnitude% to hit cover")]
 	[ShowIf("ModifyCoverMagnitude")]
 	public ContextValue CoverMagnitude;
+
+	[InfoBox("Used as rule.CritChanceOverkillMod * (HitToCritPercentMultiplier / 100f)")]
+	[ShowIf("ModifyOverkill")]
+	public ContextValue HitToCritPercentMultiplier;
 
 	public bool AutoHit;
 
@@ -67,29 +76,29 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 
 	private bool ModifyHitChance => (Properties & PropertyType.HitChance) != 0;
 
+	private bool ModifyHitChanceBorder => (Properties & PropertyType.MaxHitChance) != 0;
+
 	public bool ModifyCoverPenetration => (Properties & PropertyType.CoverPenetration) != 0;
 
 	private bool ModifyCoverMagnitude => (Properties & PropertyType.CoverMagnitude) != 0;
 
 	private bool ModifyRighteousFury => (Properties & PropertyType.RighteousFury) != 0;
 
+	private bool ModifyOverkill => (Properties & PropertyType.HitToCrit) != 0;
+
 	protected void TryApply(RuleCalculateHitChances rule)
 	{
-		if (!ModifyHitChance)
+		if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
 		{
-			if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+			if (ModifyHitChance)
 			{
-				ResolveCrit(rule);
-				if (AutoHit)
-				{
-					rule.AutoHitModifier.Add(base.Fact);
-				}
+				rule.HitChanceValueModifiers.Add(HitChance.Calculate(base.Context), base.Fact);
 			}
-		}
-		else if (Restrictions.IsPassed(base.Fact, rule, rule.Ability))
-		{
+			if (ModifyOverkill)
+			{
+				rule.CritChanceOverkillPercentMultipliers.Add(ModifierType.PctMul, HitToCritPercentMultiplier.Calculate(base.Context), base.Fact);
+			}
 			ResolveCrit(rule);
-			rule.HitChanceValueModifiers.Add(HitChance.Calculate(base.Context), base.Fact);
 			if (AutoHit)
 			{
 				rule.AutoHitModifier.Add(base.Fact);
@@ -125,6 +134,15 @@ public abstract class WarhammerHitChanceModifier : MechanicEntityFactComponentDe
 				ForcedResultType.AutoMiss => rule.AutoMissFlagModifiers, 
 				_ => null, 
 			}))?.Add((EntityFact)base.Fact, ModifierDescriptor.None);
+		}
+	}
+
+	protected void TryApply(RuleCalculateHitChanceBorder rule)
+	{
+		if (ModifyHitChanceBorder && Restrictions.IsPassed(base.Fact, rule, rule.Ability))
+		{
+			int value = Mathf.Min(MaxHitChance.Calculate(base.Context), 0);
+			rule.ValueModifiers.Add(value, base.Fact);
 		}
 	}
 

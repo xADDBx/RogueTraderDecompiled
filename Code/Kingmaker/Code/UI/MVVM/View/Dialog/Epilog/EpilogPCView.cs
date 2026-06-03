@@ -1,5 +1,4 @@
 using System.Linq;
-using Kingmaker.Localization;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using TMPro;
@@ -28,8 +27,7 @@ public class EpilogPCView : EpilogBaseView
 
 	protected override void OnAnswersChanged()
 	{
-		LocalizedString localizedString = base.ViewModel.Answers.Value?.FirstOrDefault()?.Answer.Value?.Text;
-		string text = ((localizedString != null) ? ((string)localizedString) : string.Empty).Replace(".", string.Empty);
+		string text = (base.ViewModel.Answers.Value?.FirstOrDefault()?.Answer.Value?.DisplayText ?? string.Empty).Replace(".", string.Empty);
 		m_ContinueButtonTitle.text = text;
 	}
 }

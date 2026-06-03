@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/DestroyMapObject")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("10b37ccc7a0511b4ba6c4cbf72b22f76")]
 public class DestroyMapObject : GameAction

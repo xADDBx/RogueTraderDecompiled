@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
@@ -14,6 +15,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("00a08a99fe7dc8c4fafa405d328c14c4")]
 public class AbilityCustomStarshipTorpedoControl : AbilityCustomLogic, IAbilityCasterRestriction
 {

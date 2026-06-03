@@ -186,7 +186,7 @@ public class AOETargetSelector : AbilityTargetSelector
 			}
 			hashSet = hashSet2;
 		}
-		if (AbilityInfo.ability.Blueprint.CanTargetSelf)
+		if (AbilityInfo.ability.CanTargetSelf)
 		{
 			hashSet.Add(casterNode);
 		}

@@ -16,31 +16,10 @@ public class UnitPartForbiddenAbilities : BaseUnitPart, IHashable
 {
 	public List<LimitationEntry> Limitations = new List<LimitationEntry>();
 
-	public void AddEntry(List<BlueprintAbility> forbiddenAbilities, List<BlueprintAbilityGroup> forbiddenAbilityGroups, List<BlueprintAbility> abilityExceptions, int lowerCostException, UnitFact reason, BaseUnitEntity target = null)
-	{
-		LimitationEntry limitationEntry = new LimitationEntry();
-		foreach (BlueprintAbility forbiddenAbility in forbiddenAbilities)
-		{
-			limitationEntry.ForbiddenAbilities.Add(forbiddenAbility);
-		}
-		foreach (BlueprintAbilityGroup forbiddenAbilityGroup in forbiddenAbilityGroups)
-		{
-			limitationEntry.ForbiddenAbilityGroups.Add(forbiddenAbilityGroup);
-		}
-		foreach (BlueprintAbility abilityException in abilityExceptions)
-		{
-			limitationEntry.AbilityExceptions.Add(abilityException);
-		}
-		limitationEntry.Target = target;
-		limitationEntry.LowerCostException = lowerCostException;
-		limitationEntry.Reason = reason;
-		Limitations.Add(limitationEntry);
-	}
-
 	public void AddEntry(BlueprintAbilityGroup forbiddenAbilityGroup, int lowerCostException, UnitFact reason, bool cheapestAbilityException, ItemEntityWeapon weapon = null)
 	{
 		LimitationEntry limitationEntry = new LimitationEntry();
-		limitationEntry.ForbiddenAbilityGroups.Add(forbiddenAbilityGroup);
+		limitationEntry.ForbiddenAbilityGroup = forbiddenAbilityGroup;
 		limitationEntry.Reason = reason;
 		limitationEntry.LowerCostException = lowerCostException;
 		limitationEntry.Weapon = weapon;
@@ -48,18 +27,11 @@ public class UnitPartForbiddenAbilities : BaseUnitPart, IHashable
 		Limitations.Add(limitationEntry);
 	}
 
-	public void AddEntry(BlueprintAbilityGroup forbiddenAbilityGroup, UnitFact reason, ItemEntityWeapon weapon = null)
+	public void AddEntry(BlueprintAbilityGroup forbiddenAbilityGroup, BlueprintAbilityGroup exceptionAbilityGroup, UnitFact reason, ItemEntityWeapon weapon = null)
 	{
 		LimitationEntry limitationEntry = new LimitationEntry();
-		limitationEntry.ForbiddenAbilityGroups.Add(forbiddenAbilityGroup);
-		limitationEntry.Reason = reason;
-		limitationEntry.Weapon = weapon;
-		Limitations.Add(limitationEntry);
-	}
-
-	public void AddEntry(ItemEntityWeapon weapon, UnitFact reason)
-	{
-		LimitationEntry limitationEntry = new LimitationEntry();
+		limitationEntry.ForbiddenAbilityGroup = forbiddenAbilityGroup;
+		limitationEntry.AbilityGroupException = exceptionAbilityGroup;
 		limitationEntry.Reason = reason;
 		limitationEntry.Weapon = weapon;
 		Limitations.Add(limitationEntry);
@@ -88,12 +60,33 @@ public class UnitPartForbiddenAbilities : BaseUnitPart, IHashable
 
 	public bool AbilityAllowed(AbilityData ability, TargetWrapper target)
 	{
-		return !Limitations.Any((LimitationEntry p1) => p1.EntryNotPassed(ability, target));
+		foreach (LimitationEntry limitation in Limitations)
+		{
+			if (limitation.EntryNotPassed(ability, target))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public bool AbilityAllowed(AbilityData ability)
 	{
-		return !Limitations.Any((LimitationEntry p1) => p1.EntryNotPassed(ability));
+		foreach (LimitationEntry limitation in Limitations)
+		{
+			if (limitation.EntryNotPassed(ability))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public IEnumerable<UnitFact> GetAllFactsForbiddingAbility(AbilityData ability)
+	{
+		return (from p in Limitations
+			where p.EntryNotPassed(ability)
+			select p.Reason).Distinct();
 	}
 
 	public override Hash128 GetHash128()

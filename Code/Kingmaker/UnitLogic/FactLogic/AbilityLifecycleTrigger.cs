@@ -52,6 +52,7 @@ public abstract class AbilityLifecycleTrigger : MechanicEntityFactComponentDeleg
 		{
 			return;
 		}
+		base.Fact.MaybeContext?.Recalculate();
 		TransientData transientData = RequestTransientData<TransientData>();
 		foreach (BlueprintMechanicEntityFact fact in Facts)
 		{
@@ -70,6 +71,7 @@ public abstract class AbilityLifecycleTrigger : MechanicEntityFactComponentDeleg
 		{
 			return;
 		}
+		base.Fact.MaybeContext?.Recalculate();
 		TransientData transientData = RequestTransientData<TransientData>();
 		MechanicEntity owner = base.Owner;
 		foreach (string appliedFact in transientData.AppliedFacts)

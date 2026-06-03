@@ -85,10 +85,14 @@ public static class PartMechanicFeaturesExtension
 			MechanicsFeatureType.OverrideShieldWeaponSetsPlacement => features.OverrideShieldWeaponSetsPlacement, 
 			MechanicsFeatureType.ForceAIControl => features.ForceAIControl, 
 			MechanicsFeatureType.CanDeployNearEnemy => features.CanDeployNearEnemy, 
+			MechanicsFeatureType.CanDeployNearThisUnit => features.CanDeployNearThisUnit, 
 			MechanicsFeatureType.CarryShotgunInOneHand => features.CarryShotgunInOneHand, 
 			MechanicsFeatureType.HasNoStandardTurn => features.HasNoStandardTurn, 
 			MechanicsFeatureType.DeathAndTraumasDoesNotAffectMomentum => features.DeathAndTraumasDoesNotAffectMomentum, 
 			MechanicsFeatureType.AutoBlock => features.AutoBlock, 
+			MechanicsFeatureType.CantHaveTHP => features.CantHaveTHP, 
+			MechanicsFeatureType.CanAffectMomentumIfOutsideOfParty => features.CanAffectMomentumIfOutsideOfParty, 
+			MechanicsFeatureType.CanBlockWithoutShield => features.CanBlockWithoutShield, 
 			_ => throw new ArgumentOutOfRangeException("type", type, null), 
 		};
 	}

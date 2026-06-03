@@ -50,6 +50,7 @@ public class UnitJumpAsideDodge : UnitCommand<UnitJumpAsideDodgeParams>
 		{
 			PFLog.Ability.Error("Executor for jump dodge is missing");
 			ForceFinish(ResultType.Success);
+			return;
 		}
 		FeatureCountableFlag featureCountableFlag = base.Executor.Features?.CantMove;
 		if (featureCountableFlag != null && (bool)featureCountableFlag)

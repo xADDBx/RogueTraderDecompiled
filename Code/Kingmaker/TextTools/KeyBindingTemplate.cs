@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Kingmaker.Code.UI.MVVM.VM.Settings.KeyBindSetupDialog;
+using Kingmaker.Settings;
 using Kingmaker.Settings.Entities;
 using Kingmaker.TextTools.Base;
 using Kingmaker.UI.Models.SettingsUI.SettingAssets;
+using Kingmaker.Utility;
 
 namespace Kingmaker.TextTools;
 
@@ -16,6 +18,10 @@ public class KeyBindingTemplate : TextTemplate
 
 	public override string Generate(bool capitalized, List<string> parameters)
 	{
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			return string.Empty;
+		}
 		if (parameters.Count < 1)
 		{
 			return "<b><unknown binding></b>";

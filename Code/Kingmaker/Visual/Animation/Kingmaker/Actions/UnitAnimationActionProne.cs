@@ -299,6 +299,10 @@ public class UnitAnimationActionProne : UnitAnimationAction
 	public bool IsActuallyProne(UnitAnimationActionHandle handle)
 	{
 		ActionData actionData = (ActionData)handle.ActionData;
+		if (actionData == null)
+		{
+			return false;
+		}
 		if (actionData.FallingFinished || handle.IsReleased)
 		{
 			return true;

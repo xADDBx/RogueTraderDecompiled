@@ -1,4 +1,6 @@
 using System;
+using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
@@ -34,7 +36,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		DoctrineNextSound,
 		PaperComponentSound,
 		AnalogSound,
-		ServoSkullTwitchDrops
+		ServoSkullTwitchDrops,
+		AugmentationsOverdriveHover,
+		AugmentationsOverdriveClick
 	}
 
 	public static UISounds Instance => Services.GetInstance<UISounds>();
@@ -105,6 +109,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		case 8:
 			Play(Instance.Sounds.TwitchDrops.ServoSkullTwitchDropsHover, isButton: true);
 			break;
+		case 9:
+			Play(Instance.Sounds.AugmentationsWindow.AugmentOverdriveAbilityHover, isButton: true);
+			break;
 		default:
 			LogChannel.Default.Warning("UI sound events in OwlcatButton don't supported in project", new object[0]);
 			break;
@@ -143,6 +150,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 			break;
 		case 8:
 			Play(Instance.Sounds.TwitchDrops.ServoSkullTwitchDropsClick, isButton: true);
+			break;
+		case 10:
+			Play(Instance.Sounds.AugmentationsWindow.AugmentOverdriveAbilityUse, isButton: true);
 			break;
 		default:
 			LogChannel.Default.Warning("UI sound events in OwlcatButton don't supported in project", new object[0]);
@@ -183,22 +193,42 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		string text = string.Empty;
 		if (equipSound)
 		{
-			if (item.Blueprint is BlueprintItemEquipment blueprintItemEquipment)
+			BlueprintItem blueprint = item.Blueprint;
+			if (!(blueprint is BlueprintItemAugment blueprintItemAugment))
 			{
+				if (blueprint is BlueprintItemEquipment blueprintItemEquipment)
+				{
+					switch (action)
+					{
+					case SlotAction.Put:
+						try
+						{
+							text = ((!isStarship) ? blueprintItemEquipment.InventoryEquipSound : Instance.Sounds.Ship.ShipItemDefaultEquip.Id);
+						}
+						catch (NotImplementedException)
+						{
+							text = Instance.Sounds.Ship.ShipItemDefaultEquip.Id;
+						}
+						break;
+					case SlotAction.Take:
+						text = ((!isStarship) ? blueprintItemEquipment.InventoryPutSound : Instance.Sounds.Ship.ShipItemDefaultUnequip.Id);
+						break;
+					}
+				}
+			}
+			else
+			{
+				BlueprintUISound.UISoundAugmentationsWindow augmentationsWindow = Instance.Sounds.AugmentationsWindow;
+				BlueprintAugmentSlot augmentSlot = blueprintItemAugment.AugmentSlot;
+				bool flag = augmentSlot != null && augmentSlot.AugmentFilterType == ItemsFilterType.AugmentationsArms;
+				bool flag2 = Game.Instance.LoadedAreaState?.Settings.IsAugmentsViewOnly() ?? true;
 				switch (action)
 				{
 				case SlotAction.Put:
-					try
-					{
-						text = ((!isStarship) ? blueprintItemEquipment.InventoryEquipSound : Instance.Sounds.Ship.ShipItemDefaultEquip.Id);
-					}
-					catch (NotImplementedException)
-					{
-						text = Instance.Sounds.Ship.ShipItemDefaultEquip.Id;
-					}
+					text = ((!flag2) ? (flag ? augmentationsWindow.AugmentArmsInstalled.Id : augmentationsWindow.AugmentInstalled.Id) : augmentationsWindow.AugmentViewOnlyInstall.Id);
 					break;
 				case SlotAction.Take:
-					text = ((!isStarship) ? blueprintItemEquipment.InventoryPutSound : Instance.Sounds.Ship.ShipItemDefaultUnequip.Id);
+					text = ((!flag2) ? (flag ? augmentationsWindow.AugmentArmsOff.Id : augmentationsWindow.AugmentOff.Id) : augmentationsWindow.AugmentViewOnlyInstall.Id);
 					break;
 				}
 			}

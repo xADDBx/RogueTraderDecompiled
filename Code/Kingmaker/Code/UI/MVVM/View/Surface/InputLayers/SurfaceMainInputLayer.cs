@@ -14,12 +14,14 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Pointer;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Interaction;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Kingmaker.Utility.GameConst;
 using Kingmaker.View;
@@ -246,7 +248,14 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 
 	public void SwitchCursorEnabled()
 	{
-		base.CursorEnabled = !base.CursorEnabled;
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			base.CursorEnabled = true;
+		}
+		else
+		{
+			base.CursorEnabled = !base.CursorEnabled;
+		}
 	}
 
 	protected override void SetupCursor(bool value)

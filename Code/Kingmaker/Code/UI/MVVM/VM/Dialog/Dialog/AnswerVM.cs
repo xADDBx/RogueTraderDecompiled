@@ -48,6 +48,18 @@ public class AnswerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 
 	public float FontSizeMultiplier => SettingsRoot.Accessiability.FontSizeMultiplier;
 
+	public bool IsCurrentUnselectedWithNewAnswers
+	{
+		get
+		{
+			if (!m_DialogController.LocalSelectedAnswers.Contains(Answer.Value))
+			{
+				return m_DialogController.HasNextUnselectedAnswers(Answer.Value);
+			}
+			return false;
+		}
+	}
+
 	public AnswerVM(BlueprintAnswer answer, DialogController dialogController, int index)
 	{
 		Index = index;
@@ -82,7 +94,7 @@ public class AnswerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		{
 			Game.Instance.GameCommandQueue.DialogAnswer(m_DialogController.CurrentCueUpdateTick, Answer.Value.AssetGuid);
 		}
-		ChoosedAnswer.Value = Answer.Value.Text;
+		ChoosedAnswer.Value = Answer.Value.DisplayText;
 		WasChoose.Value = true;
 	}
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
@@ -64,9 +65,10 @@ public class InventorySlotPCView : InventorySlotView
 		bool isInteractable = base.ViewModel.Item != null;
 		m_AddRemoveFromFavorites = new ContextMenuCollectionEntity(title2, base.AddRemoveFromFavorites, condition: true, isInteractable);
 		bool flag = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintStarshipItem;
+		bool flag2 = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintItemAugment;
 		List<ContextMenuCollectionEntity> value2 = new List<ContextMenuCollectionEntity>
 		{
-			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !flag),
+			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !(flag || flag2)),
 			new ContextMenuCollectionEntity(UIStrings.Instance.LootWindow.SendToCargo, delegate
 			{
 				MoveToCargo(immediately: true);

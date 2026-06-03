@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Networking.Serialization;
@@ -17,6 +18,15 @@ public class PartSavedRagdollState : EntityPart, IHashable
 	[JsonProperty]
 	private bool m_Active;
 
+	[JsonProperty]
+	private RigidbodyCreatureController.RagdollState m_State;
+
+	[JsonProperty]
+	private TimeSpan m_StartTime;
+
+	[JsonProperty]
+	private TimeSpan m_StartTimeToStop;
+
 	public bool Active => m_Active;
 
 	public void SaveRagdollState(RigidbodyCreatureController controller)
@@ -25,6 +35,12 @@ public class PartSavedRagdollState : EntityPart, IHashable
 		if (m_Active)
 		{
 			controller.SaveBonesPosition(m_BoneData);
+			m_State = controller.State;
+			if (m_State == RigidbodyCreatureController.RagdollState.Falling)
+			{
+				m_StartTime = controller.StartTime;
+				m_StartTimeToStop = controller.StartTimeToStop;
+			}
 		}
 		else
 		{
@@ -37,7 +53,7 @@ public class PartSavedRagdollState : EntityPart, IHashable
 		if (m_Active)
 		{
 			controller.RagdollCurrentPositions = m_BoneData;
-			controller.RestoreRagdollPositions();
+			controller.RestoreRagdollPositions(m_State, m_StartTime, m_StartTimeToStop);
 		}
 	}
 
@@ -47,6 +63,9 @@ public class PartSavedRagdollState : EntityPart, IHashable
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
 		result.Append(ref m_Active);
+		result.Append(ref m_State);
+		result.Append(ref m_StartTime);
+		result.Append(ref m_StartTimeToStop);
 		return result;
 	}
 }

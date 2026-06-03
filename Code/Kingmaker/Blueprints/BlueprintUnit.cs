@@ -11,6 +11,7 @@ using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Armors;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -153,6 +154,13 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 		[SerializeField]
 		private BlueprintItemMechadendrite.BlueprintItemMechadendriteReference[] m_Mechadendrites = Array.Empty<BlueprintItemMechadendrite.BlueprintItemMechadendriteReference>();
 
+		[SerializeField]
+		private BlueprintItemAugmentReference[] m_Augments;
+
+		[Tooltip("Слот для овердрайва при старте. Только в целях ускорения тестирования")]
+		[SerializeField]
+		private BlueprintItemAugmentReference m_AugmentToOverdrive;
+
 		[JsonProperty]
 		public UnitItemEquipmentHandSettings OverridenUnitItemEquipmentHandSettings { get; set; }
 
@@ -217,6 +225,17 @@ public class BlueprintUnit : BlueprintUnitFact, IBlueprintCreateMechanicEntity<B
 				return mechadendrites;
 			}
 		}
+
+		public ReferenceArrayProxy<BlueprintItemAugment> Augments
+		{
+			get
+			{
+				BlueprintReference<BlueprintItemAugment>[] augments = m_Augments;
+				return augments;
+			}
+		}
+
+		public BlueprintItemAugment AugmentToOverdrive => m_AugmentToOverdrive;
 
 		[CanBeNull]
 		public BlueprintItemEquipmentHand GetHandEquipment(int i, bool main, UnitItemEquipmentHandSettings settings)

@@ -13,5 +13,9 @@ public interface IFXSettings
 
 	bool OverrideTargetOrientationSource { get; }
 
+	bool OrientationFromCasterToTarget { get; }
+
+	OrientationSnapMode OrientationSnap { get; }
+
 	FXSettings Settings { get; }
 }

@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.GameModes;
 using Kingmaker.UnitLogic.Parts;
 using Owlcat.Runtime.UI.MVVM;
@@ -16,7 +17,7 @@ public class OvertipVoidshipHealthVM : BaseDisposable, IViewModel, IBaseDisposab
 	{
 		if (Game.Instance.CurrentMode == GameModeType.StarSystem && Game.Instance.CurrentMode != GameModeType.SpaceCombat)
 		{
-			AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
+			AddDisposable(MainThreadDispatcher.UpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 			{
 				OnUpdate();
 			}));

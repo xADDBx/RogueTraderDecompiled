@@ -102,15 +102,7 @@ public class SceneEntitiesState : IHashable
 	{
 		using (ContextData<DisposeInProgress>.Request())
 		{
-			foreach (Entity item in AllEntityData.ToList())
-			{
-				if (item.HoldingState == this)
-				{
-					RemoveEntityData(item);
-					item.Dispose();
-				}
-			}
-			IsSceneLoadedThreadSafe = false;
+			Reset();
 		}
 	}
 
@@ -194,6 +186,20 @@ public class SceneEntitiesState : IHashable
 				}
 			}
 		}
+	}
+
+	public void Reset()
+	{
+		foreach (Entity item in AllEntityData.ToList())
+		{
+			if (item.HoldingState == this)
+			{
+				RemoveEntityData(item);
+				item.Dispose();
+			}
+		}
+		HasEntityData = false;
+		IsSceneLoadedThreadSafe = false;
 	}
 
 	private void ApplyPostLoadFixes(Entity data)

@@ -14,6 +14,7 @@ namespace Kingmaker.EntitySystem.Properties;
 [AllowedOn(typeof(BlueprintUnitFact))]
 [AllowedOn(typeof(BlueprintPlayerUpgrader))]
 [AllowedOn(typeof(BlueprintAbilityAdditionalEffect))]
+[AllowedOn(typeof(BlueprintAbilityAreaEffect))]
 [AllowMultipleComponents]
 public class PropertyCalculatorComponent : BlueprintComponent
 {
@@ -28,6 +29,7 @@ public class PropertyCalculatorComponent : BlueprintComponent
 
 	public SaveToContextType SaveToContext;
 
+	[VerticalLayout]
 	public PropertyCalculator Value;
 
 	public int GetValue(PropertyContext context)

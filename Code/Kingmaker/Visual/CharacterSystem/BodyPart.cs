@@ -57,9 +57,9 @@ public class BodyPart
 
 	public static string GetPrefix(BodyPartType Type)
 	{
-		if (Type <= BodyPartType.UpperArms)
+		if (Type <= BodyPartType.UpperLegs)
 		{
-			if (Type <= BodyPartType.KneeCops)
+			if (Type <= BodyPartType.LowerLegs)
 			{
 				if (Type <= BodyPartType.Forearms)
 				{
@@ -77,7 +77,7 @@ public class BodyPart
 							case BodyPartType.Belt | BodyPartType.Brows:
 								return "CF";
 							case BodyPartType.Brows:
-								goto IL_0361;
+								goto IL_03a3;
 							}
 						}
 						if (Type == BodyPartType.Eyes)
@@ -108,6 +108,8 @@ public class BodyPart
 						return "HH";
 					case BodyPartType.KneeCops:
 						return "KC";
+					case BodyPartType.LowerLegs:
+						return "LL";
 					}
 				}
 			}
@@ -115,8 +117,6 @@ public class BodyPart
 			{
 				switch (Type)
 				{
-				case BodyPartType.LowerLegs:
-					return "LL";
 				case BodyPartType.MaskBottom:
 					return "MA";
 				case BodyPartType.Goggles:
@@ -133,6 +133,8 @@ public class BodyPart
 					return "TS";
 				case BodyPartType.UpperArms:
 					return "UA";
+				case BodyPartType.UpperLegs:
+					return "UL";
 				}
 			}
 		}
@@ -140,8 +142,6 @@ public class BodyPart
 		{
 			switch (Type)
 			{
-			case BodyPartType.UpperLegs:
-				return "UL";
 			case BodyPartType.MaskTop:
 				return "MA";
 			case BodyPartType.LowerLegsExtra:
@@ -174,10 +174,16 @@ public class BodyPart
 				return "TT";
 			case BodyPartType.Augment1:
 				return "AG1";
+			case BodyPartType.ForearmAugRight:
+				return "FAR";
+			case BodyPartType.HandsAugRight:
+				return "HNR";
+			case BodyPartType.UpperArmsAugRight:
+				return "UAR";
 			}
 		}
-		goto IL_0361;
-		IL_0361:
+		goto IL_03a3;
+		IL_03a3:
 		return "BT";
 	}
 }

@@ -7,6 +7,8 @@ public class GameSettings
 {
 	public readonly GameMainSettings Main;
 
+	public readonly GameSwitchSettings Switch;
+
 	public readonly GameTutorialSettings Tutorial;
 
 	public readonly GameSaveSettings Save;
@@ -28,6 +30,10 @@ public class GameSettings
 		using (new SettingsKeyPrefix("main"))
 		{
 			Main = new GameMainSettings(settingsController, defaultValues.Main);
+		}
+		using (new SettingsKeyPrefix("switch"))
+		{
+			Switch = new GameSwitchSettings(settingsController, defaultValues.Switch);
 		}
 		using (new SettingsKeyPrefix("tutorial"))
 		{

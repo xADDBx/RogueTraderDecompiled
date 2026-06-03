@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.UI.Common;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -15,6 +16,9 @@ public class VendorTransitionWindowConsoleView : VendorTransitionWindowView
 
 	[SerializeField]
 	private ConsoleHintsWidget m_HintsWidget;
+
+	[SerializeField]
+	private ScrollRectExtended m_ScrollRect;
 
 	protected override void BindViewImplementation()
 	{
@@ -50,6 +54,7 @@ public class VendorTransitionWindowConsoleView : VendorTransitionWindowView
 		{
 			Close();
 		}, 9, InputActionEventType.ButtonJustReleased), UIStrings.Instance.CommonTexts.CloseWindow));
+		AddDisposable(m_InputLayer.AddAxis(OnLeftStickY, 1, repeat: true));
 		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 
@@ -62,5 +67,10 @@ public class VendorTransitionWindowConsoleView : VendorTransitionWindowView
 	private void ChangeSliderValue(int value)
 	{
 		m_Slider.value += value;
+	}
+
+	private void OnLeftStickY(InputActionEventData data, float value)
+	{
+		m_ScrollRect.Scroll(value * m_ScrollRect.scrollSensitivity, smooth: true);
 	}
 }

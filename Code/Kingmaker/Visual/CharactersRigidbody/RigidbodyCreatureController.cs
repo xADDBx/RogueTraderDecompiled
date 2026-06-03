@@ -117,13 +117,9 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 
 	public AbstractUnitEntityView EntityView;
 
-	private TimeSpan m_StartTime;
-
 	private Vector3 m_PreviousRootPosition;
 
 	private Vector3 m_CurRootPosition;
-
-	private TimeSpan m_StartTimeToStop;
 
 	private readonly List<BoneData> m_BonesData = new List<BoneData>();
 
@@ -185,6 +181,10 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 			}
 		}
 	}
+
+	public TimeSpan StartTime { get; private set; }
+
+	public TimeSpan StartTimeToStop { get; private set; }
 
 	public bool IsControllingRigidbody
 	{
@@ -387,7 +387,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		SwitchRigidbodies(enable: true);
 		SwitchKinematic(enable: false);
 		SwitchRigidbodiesSleep(enable: true);
-		m_StartTime = Game.Instance.TimeController.GameTime;
+		StartTime = Game.Instance.TimeController.GameTime;
 		base.gameObject.GetComponent<HumanoidRagdollManager>()?.Enabled(flag: true);
 		if (m_LastImpulse != null && Game.Instance.TimeController.GameTime - m_LastImpulse.Time < 0.2f.Seconds())
 		{
@@ -519,7 +519,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		}
 	}
 
-	public void RestoreRagdollPositions()
+	public void RestoreRagdollPositions(RagdollState savedState, TimeSpan savedStartTime, TimeSpan savedStartTimeToStop)
 	{
 		if (RagdollCurrentPositions.Count <= 0)
 		{
@@ -541,8 +541,15 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 				}
 			}
 		}
-		GetComponent<HumanoidRagdollManager>().Or(null)?.CopyPoseFromRagdoll();
-		State = RagdollState.Lying;
+		HumanoidRagdollManager humanoidRagdollManager = GetComponent<HumanoidRagdollManager>().Or(null);
+		humanoidRagdollManager?.CopyPoseFromRagdoll();
+		State = savedState;
+		if (State == RagdollState.Falling)
+		{
+			StartTime = savedStartTime;
+			StartTimeToStop = savedStartTimeToStop;
+			humanoidRagdollManager?.Enabled(flag: true);
+		}
 		SwitchRigidbodies(enable: true);
 		SwitchRigidbodiesSleep(enable: true);
 		SwitchKinematic(enable: false);
@@ -635,7 +642,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 		{
 			State = RagdollState.Off;
 		}
-		if (Game.Instance.TimeController.GameTime > m_StartTime + RagdollTime.Seconds())
+		if (Game.Instance.TimeController.GameTime > StartTime + RagdollTime.Seconds())
 		{
 			MaybeSpawnLootAtDeathPoint();
 			StopRagdoll();
@@ -646,7 +653,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 			m_PreviousRootPosition = RootBone.transform.position;
 			if (num)
 			{
-				if (Game.Instance.TimeController.GameTime > m_StartTimeToStop + MinTimeToStop.Seconds())
+				if (Game.Instance.TimeController.GameTime > StartTimeToStop + MinTimeToStop.Seconds())
 				{
 					MaybeSpawnLootAtDeathPoint();
 					StopRagdoll();
@@ -654,7 +661,7 @@ public class RigidbodyCreatureController : MonoBehaviour, IUpdatable
 			}
 			else
 			{
-				m_StartTimeToStop = Game.Instance.TimeController.GameTime;
+				StartTimeToStop = Game.Instance.TimeController.GameTime;
 			}
 		}
 		if (State == RagdollState.Lying)

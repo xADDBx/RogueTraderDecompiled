@@ -1,3 +1,4 @@
+using System;
 using Kingmaker.Blueprints.Encyclopedia;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
@@ -11,9 +12,11 @@ public interface INewServiceWindowUIHandler : ISubscriber
 {
 	void HandleCloseAll();
 
-	void HandleOpenWindowOfType(ServiceWindowsType type);
+	void HandleOpenWindowOfType(ServiceWindowsType type, Action onClosed = null);
 
 	void HandleOpenInventory();
+
+	void HandleOpenAugmentations();
 
 	void HandleOpenEncyclopedia(INode page = null);
 

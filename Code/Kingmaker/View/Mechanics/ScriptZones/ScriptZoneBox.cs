@@ -20,9 +20,13 @@ public class ScriptZoneBox : ScriptZoneShape
 
 	private List<Vector3> m_NodePositions;
 
+	private NodeList m_Nodes = NodeList.Empty;
+
 	public Bounds Bounds = new Bounds(Vector3.zero, Vector3.one * 3f);
 
 	public bool AlwaysShowPattern;
+
+	public bool m_MatchToAreaView;
 
 	public override NodeList CoveredNodes
 	{
@@ -30,6 +34,16 @@ public class ScriptZoneBox : ScriptZoneShape
 		{
 			int xmax = (int)(Bounds.size.x / GraphParamsMechanicsCache.GridCellSize);
 			int ymax = (int)(Bounds.size.z / GraphParamsMechanicsCache.GridCellSize);
+			if (m_MatchToAreaView)
+			{
+				if (!m_Nodes.IsEmpty)
+				{
+					return m_Nodes;
+				}
+				Vector3 worldCenter = base.transform.TransformPoint(Bounds.center);
+				m_Nodes = GridAreaHelper.GetNodesCentered(worldCenter, Bounds.extents.x, Bounds.extents.z);
+				return m_Nodes;
+			}
 			return GridAreaHelper.GetNodes(base.transform.TransformPoint(Bounds.min), new IntRect(0, 0, xmax, ymax));
 		}
 	}
@@ -43,6 +57,10 @@ public class ScriptZoneBox : ScriptZoneShape
 				return ContainsPoint(point);
 			}
 			CustomGridNodeBase nearestNodeXZUnwalkable = point.GetNearestNodeXZUnwalkable();
+			if (nearestNodeXZUnwalkable == null)
+			{
+				return false;
+			}
 			Vector3 vector = point - nearestNodeXZUnwalkable.Vector3Position;
 			if ((double)forward.sqrMagnitude < 0.01)
 			{

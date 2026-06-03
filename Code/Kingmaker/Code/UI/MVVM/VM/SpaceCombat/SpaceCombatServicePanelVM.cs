@@ -119,7 +119,7 @@ public class SpaceCombatServicePanelVM : BaseDisposable, IViewModel, IBaseDispos
 		IsTurnBasedActive.Value = turnController.TurnBasedModeActive;
 		IsPlayerTurn.Value = turnController.IsPlayerTurn && turnController.CurrentUnit == Game.Instance.Player.PlayerShip;
 		IsTorpedoesTurn.Value = turnController.IsPlayerTurn && turnController.CurrentUnit != Game.Instance.Player.PlayerShip;
-		CanEndTurn.Value = UIUtility.GetCurrentSelectedUnit()?.CombatState.CanEndTurn() ?? false;
+		CanEndTurn.Value = turnController.CanEndTurn;
 		UpdateIsTurnBasedActive();
 		if (CanEndTurnAndNoActing)
 		{

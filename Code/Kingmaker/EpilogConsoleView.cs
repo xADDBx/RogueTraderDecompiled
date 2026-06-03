@@ -1,5 +1,4 @@
 using Kingmaker.Code.UI.MVVM.View.Dialog.Epilog;
-using Kingmaker.Localization;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -33,8 +32,7 @@ public class EpilogConsoleView : EpilogBaseView
 
 	protected override void OnAnswersChanged()
 	{
-		LocalizedString localizedString = base.ViewModel.Answers.Value?.FirstOrDefault()?.Answer.Value?.Text;
-		string label = ((localizedString != null) ? ((string)localizedString) : string.Empty).Replace(".", string.Empty);
+		string label = (base.ViewModel.Answers.Value?.FirstOrDefault()?.Answer.Value?.DisplayText ?? string.Empty).Replace(".", string.Empty);
 		m_Hint.SetLabel(label);
 	}
 

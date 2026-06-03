@@ -24,12 +24,14 @@ public class ScrollbarExtensions : MonoBehaviour
 
 	public void Start()
 	{
-		if (GetComponent<Scrollbar>() == null)
+		Scrollbar component = GetComponent<Scrollbar>();
+		if (component == null)
 		{
 			m_ScrollUpButton.gameObject.SetActive(value: false);
 			m_ScrollDownButton.gameObject.SetActive(value: false);
 		}
 		SetButtonsSounds();
+		AddHandleButton(component);
 	}
 
 	public void OnEnable()
@@ -116,6 +118,21 @@ public class ScrollbarExtensions : MonoBehaviour
 		{
 			m_ScrollDownButton.HoverSoundType = 0;
 			m_ScrollDownButton.ClickSoundType = 0;
+		}
+	}
+
+	private void AddHandleButton(Scrollbar scrollbar)
+	{
+		if (!(scrollbar == null) && !(scrollbar.handleRect == null))
+		{
+			GameObject gameObject = scrollbar.handleRect.gameObject;
+			OwlcatButton owlcatButton = gameObject.GetComponent<OwlcatButton>();
+			if (owlcatButton == null)
+			{
+				owlcatButton = gameObject.AddComponent<OwlcatButton>();
+			}
+			owlcatButton.HoverSoundType = 0;
+			owlcatButton.ClickSoundType = 0;
 		}
 	}
 }

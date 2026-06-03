@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.GameCommands;
@@ -66,10 +67,17 @@ public class CutsceneControlledUnit
 		{
 			cutscene.Anchors.Add(Unit.Ref);
 		}
-		UpdateActiveCutscene();
-		if (cutsceneEntry != null && cutsceneEntry != m_Active)
+		try
 		{
-			cutsceneEntry.PauseOrStop();
+			UpdateActiveCutscene();
+			if (cutsceneEntry != null && cutsceneEntry != m_Active)
+			{
+				cutsceneEntry.PauseOrStop();
+			}
+		}
+		catch (Exception ex)
+		{
+			PFLog.Cutscene.Exception(ex);
 		}
 		if (m_Active != null)
 		{
@@ -97,7 +105,14 @@ public class CutsceneControlledUnit
 				break;
 			}
 		}
-		UpdateActiveCutscene();
+		try
+		{
+			UpdateActiveCutscene();
+		}
+		catch (Exception ex)
+		{
+			PFLog.Cutscene.Exception(ex);
+		}
 	}
 
 	private void UpdateActiveCutscene()
@@ -129,23 +144,50 @@ public class CutsceneControlledUnit
 		m_Active = cutsceneEntry;
 	}
 
-	public static bool MarkUnit(IAbstractUnitEntity unit, CutscenePlayerData player)
+	private static bool MarkUnit(AbstractUnitEntity unit, CutscenePlayerData player)
 	{
-		if (unit.ToAbstractUnitEntity().CutsceneControlledUnit == null)
+		if (unit.CutsceneControlledUnit == null)
 		{
-			unit.ToAbstractUnitEntity().CutsceneControlledUnit = new CutsceneControlledUnit(unit);
+			CutsceneControlledUnit cutsceneControlledUnit2 = (unit.CutsceneControlledUnit = new CutsceneControlledUnit(unit));
 		}
-		return unit.ToAbstractUnitEntity().CutsceneControlledUnit.Mark(player);
+		return unit.CutsceneControlledUnit.Mark(player);
 	}
 
-	public static void ReleaseUnit(IAbstractUnitEntity unit, CutscenePlayerData player)
+	public static void MarkUnits(IEnumerable<AbstractUnitEntity> units, CutscenePlayerData player, CommandBase cmd = null, bool errorOnFail = false)
 	{
-		unit.ToAbstractUnitEntity().CutsceneControlledUnit?.Release(player);
+		if (units == null)
+		{
+			return;
+		}
+		foreach (AbstractUnitEntity unit in units)
+		{
+			if (!MarkUnit(unit, player) && errorOnFail)
+			{
+				player.LogError($"Cannot restore cutscene {player.Cutscene} as another cutscene ({unit.CutsceneControlledUnit?.GetCurrentlyActive()}) controls an object ({unit}) ({cmd})");
+			}
+		}
 	}
 
-	public static void UpdateActiveCutscene(IAbstractUnitEntity unit)
+	private static void ReleaseUnit(AbstractUnitEntity unit, CutscenePlayerData player)
 	{
-		unit.ToAbstractUnitEntity().CutsceneControlledUnit?.UpdateActiveCutscene();
+		unit.CutsceneControlledUnit?.Release(player);
+	}
+
+	public static void ReleaseUnits(IEnumerable<AbstractUnitEntity> units, CutscenePlayerData player)
+	{
+		if (units == null)
+		{
+			return;
+		}
+		foreach (AbstractUnitEntity unit in units)
+		{
+			ReleaseUnit(unit, player);
+		}
+	}
+
+	public static void UpdateActiveCutscene(AbstractUnitEntity unit)
+	{
+		unit.CutsceneControlledUnit?.UpdateActiveCutscene();
 	}
 
 	public static CutscenePlayerData GetControllingPlayer(IAbstractUnitEntity unit)

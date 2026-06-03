@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Components;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Cargo;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
@@ -16,7 +17,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/RemoveItemFromPlayer")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(false)]
 [TypeId("ef95139bce5938c48b2997497ab811af")]
@@ -95,30 +96,99 @@ public class RemoveItemFromPlayer : GameAction
 				Money ? "Coins" : $"Items ({ItemToRemove}"
 			});
 			BlueprintItem itemToRemove = ItemToRemove;
-			long num = ((Money || (bool)ItemToRemove.GetComponent<MoneyReplacement>()) ? Game.Instance.Player.Money : GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == itemToRemove));
-			long num2 = (RemoveAll ? num : (Quantity + (long)((decimal)num / 100.0m * (decimal)Percentage + 0.5m)));
-			if (num < 0)
+			int num;
+			long num2;
+			if (!Money)
 			{
-				Element.LogError(this, "{0}: Player has {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num, Money ? ((object)"Coins") : ((object)itemToRemove));
+				num = (((bool)ItemToRemove.GetComponent<MoneyReplacement>()) ? 1 : 0);
+				if (num == 0)
+				{
+					num2 = GameHelper.GetPlayerCharacter().Inventory.Count((ItemEntity i) => i.Blueprint == itemToRemove);
+					goto IL_00ac;
+				}
+			}
+			else
+			{
+				num = 1;
+			}
+			num2 = Game.Instance.Player.Money;
+			goto IL_00ac;
+			IL_00ac:
+			long num3 = num2;
+			long num4 = ((num == 0) ? CountItemsInCargo(itemToRemove) : 0);
+			long num5 = (RemoveAll ? (num3 + num4) : (Quantity + (long)((decimal)num3 / 100.0m * (decimal)Percentage + 0.5m)));
+			long num6 = num3 + num4;
+			if (num6 < 0)
+			{
+				Element.LogError(this, "{0}: Player has {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num6, Money ? ((object)"Coins") : ((object)itemToRemove));
 				return;
 			}
-			if (num2 < 0)
+			if (num5 < 0)
 			{
-				Element.LogError(this, "{0}: Trying to remove {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num2, Money ? ((object)"Coins") : ((object)itemToRemove));
+				Element.LogError(this, "{0}: Trying to remove {1} {2}, that's a negative amount. Will remove nothing.", "RemoveItemFromPlayer", num5, Money ? ((object)"Coins") : ((object)itemToRemove));
 				return;
 			}
-			if (num2 > num)
+			if (num5 > num6)
 			{
-				Element.LogInfo(this, "{0}: Trying to remove {1} {2}, but player has only {3}. Will remove only the amount the player has.", "RemoveItemFromPlayer", num2, Money ? ((object)"Coins") : ((object)itemToRemove), num);
-				num2 = num;
+				Element.LogInfo(this, "{0}: Trying to remove {1} {2}, but player has only {3}. Will remove only the amount the player has.", "RemoveItemFromPlayer", num5, Money ? ((object)"Coins") : ((object)itemToRemove), num6);
+				num5 = num6;
 			}
-			if (num2 == 0L)
+			if (num5 == 0L)
 			{
 				Element.LogInfo(this, "{0}: Will remove no {1} from the player.", "RemoveItemFromPlayer", Money ? ((object)"Coins") : ((object)itemToRemove));
 			}
 			else
 			{
-				GameHelper.GetPlayerCharacter().Inventory.Remove(itemToRemove, (int)num2);
+				int num7 = (int)Mathf.Min(num3, num5);
+				RemoveFromInventory(itemToRemove, num7);
+				RemoveFromCargo(itemToRemove, (int)(num5 - num7));
+			}
+		}
+	}
+
+	private int CountItemsInCargo(BlueprintItem item)
+	{
+		int num = 0;
+		foreach (CargoEntity cargoEntity in Game.Instance.Player.CargoState.CargoEntities)
+		{
+			foreach (ItemEntity item2 in cargoEntity.Inventory)
+			{
+				if (item2.Blueprint == item)
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	private void RemoveFromInventory(BlueprintItem item, int quantity)
+	{
+		if (quantity > 0)
+		{
+			GameHelper.GetPlayerCharacter().Inventory.Remove(item, quantity);
+		}
+	}
+
+	private void RemoveFromCargo(BlueprintItem item, int quantity)
+	{
+		if (quantity <= 0)
+		{
+			return;
+		}
+		foreach (CargoEntity cargoEntity in Game.Instance.Player.CargoState.CargoEntities)
+		{
+			foreach (ItemEntity item2 in cargoEntity.Inventory)
+			{
+				if (item2.Blueprint == item)
+				{
+					cargoEntity.Inventory.Remove(item2);
+					quantity--;
+					if (quantity <= 0)
+					{
+						return;
+					}
+				}
 			}
 		}
 	}

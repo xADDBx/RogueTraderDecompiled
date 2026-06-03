@@ -32,11 +32,13 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Settings;
 using Kingmaker.UI.MVVM.VM.CharGen.Phases.Appearance.Components.Portrait;
+using Kingmaker.UI.Pointer;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Alignments;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Selections.Prerequisites;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.UnitLogic.Progression;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Paths;
@@ -423,10 +425,14 @@ public static class UIUtility
 		return list;
 	}
 
-	public static void GetGroup(List<BaseUnitEntity> characters, bool withRemote = false, bool withPet = false)
+	public static void GetGroup(List<BaseUnitEntity> characters, bool withRemote = false, bool withPet = false, bool excludeNoAugments = false)
 	{
 		characters.Clear();
-		IEnumerable<BaseUnitEntity> enumerable = Game.Instance.Player.Party.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>());
+		IEnumerable<BaseUnitEntity> enumerable = Game.Instance.Player.Party.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>() || u.Facts.GetComponents((TransientPartyMemberFlag f) => f.AllowOutOfCombatControl).Any());
+		if (excludeNoAugments)
+		{
+			enumerable = enumerable.Where((BaseUnitEntity u) => !IsExcludedFromAugmentations(u));
+		}
 		if (withRemote)
 		{
 			characters.AddRange(enumerable);
@@ -446,32 +452,65 @@ public static class UIUtility
 		{
 			characters.AddRange(enumerable.Where(IsViewActiveUnit));
 		}
-		if (!withPet)
+		if (withPet)
 		{
-			return;
-		}
-		foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet && IsViewActiveUnit(c)))
-		{
-			BaseUnitEntity master = item2.Master;
-			int num = characters.FindIndex((BaseUnitEntity m) => m == master);
-			if (enumerable.Contains(item2.Master))
+			foreach (BaseUnitEntity item2 in Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity c) => c.IsPet))
 			{
-				if (num < 0 || num + 1 >= characters.Count)
+				BaseUnitEntity master = item2.Master;
+				UnitPartPetOwner optional = master.Parts.GetOptional<UnitPartPetOwner>();
+				int num = characters.FindIndex((BaseUnitEntity m) => m == master);
+				if (enumerable.Contains(master) && !optional.PetIsDeactivated)
 				{
-					characters.Add(item2);
-				}
-				else
-				{
-					characters.Insert(num + 1, item2);
+					if (num < 0 || num + 1 >= characters.Count)
+					{
+						characters.Add(item2);
+					}
+					else
+					{
+						characters.Insert(num + 1, item2);
+					}
 				}
 			}
 		}
+		if (excludeNoAugments)
+		{
+			characters.RemoveAll((BaseUnitEntity u) => u.IsPet || IsExcludedFromAugmentations(u));
+		}
+	}
+
+	public static bool IsExcludedFromAugmentations(BaseUnitEntity unit)
+	{
+		if (unit?.Blueprint == null)
+		{
+			return false;
+		}
+		UIConfig instance = UIConfig.Instance;
+		BlueprintUnit blueprint = unit.Blueprint;
+		foreach (BlueprintUnitReference unitReferencesNoAugmentation in instance.UnitReferencesNoAugmentations)
+		{
+			if (unitReferencesNoAugmentation.Get() == blueprint)
+			{
+				return true;
+			}
+		}
+		BlueprintRace race = blueprint.Race;
+		if (race != null)
+		{
+			foreach (BlueprintRaceReference unitRaceNoAugmentation in instance.UnitRaceNoAugmentations)
+			{
+				if (unitRaceNoAugmentation.Get() == race)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public static void GetActualGroup(List<BaseUnitEntity> characters)
 	{
 		characters.Clear();
-		IEnumerable<BaseUnitEntity> collection = Game.Instance.SelectionCharacter.ActualGroup.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>());
+		IEnumerable<BaseUnitEntity> collection = Game.Instance.SelectionCharacter.ActualGroup.Where((BaseUnitEntity u) => !u.Facts.HasComponent<TransientPartyMemberFlag>() || u.Facts.GetComponents((TransientPartyMemberFlag f) => f.AllowOutOfCombatControl).Any());
 		characters.AddRange(collection);
 	}
 
@@ -1169,6 +1208,11 @@ public static class UIUtility
 		return true;
 	}
 
+	public static bool IsCurrentWindowAugmentations()
+	{
+		return RootUIContext.Instance.CurrentServiceWindow == ServiceWindowsType.Augmentations;
+	}
+
 	public static IDisposable SetTextLink(TextMeshProUGUI text, Camera camera = null)
 	{
 		if (text == null)
@@ -1189,7 +1233,7 @@ public static class UIUtility
 		IDisposable update = ObservableExtensions.Subscribe(text.UpdateAsObservable(), delegate
 		{
 			int num;
-			if (!entered || (num = TMP_TextUtilities.FindIntersectingLink(text, Input.mousePosition, (camera != null) ? camera : UICamera.Claim())) == -1)
+			if (!entered || (num = TMP_TextUtilities.FindIntersectingLink(text, CursorController.CursorPosition, (camera != null) ? camera : UICamera.Claim())) == -1)
 			{
 				if (linkIndex.HasValue)
 				{

@@ -8,6 +8,15 @@ public abstract class CoroutineTaskNode : TaskNode
 
 	private IEnumerator<Status> m_Coroutine;
 
+	protected CoroutineTaskNode()
+	{
+	}
+
+	protected CoroutineTaskNode(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override void InitInternal()
 	{
 		base.InitInternal();

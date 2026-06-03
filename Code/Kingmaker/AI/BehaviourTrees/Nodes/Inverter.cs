@@ -7,13 +7,22 @@ public class Inverter : Decorator
 	{
 	}
 
+	public Inverter(string debugDescription, BehaviourTreeNode node)
+		: base(debugDescription, node)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
-		return child.Tick(blackboard) switch
+		switch (base.Child.Tick(blackboard))
 		{
-			Status.Success => Status.Failure, 
-			Status.Failure => Status.Success, 
-			_ => Status.Running, 
-		};
+		case Status.Success:
+			base.FailReason = "Inverted success child";
+			return Status.Failure;
+		case Status.Failure:
+			return Status.Success;
+		default:
+			return Status.Running;
+		}
 	}
 }

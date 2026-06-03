@@ -17,14 +17,14 @@ namespace Kingmaker.UI.Common;
 
 public static class UIUtilitySpaceQuests
 {
-	public static List<QuestObjective> GetQuestsForSystem(SectorMapObject system)
+	public static List<QuestBookEntityEntry> GetQuestsForSystem(SectorMapObject system)
 	{
 		return GetQuestsForSystemWithBlueprint(system.StarSystemBlueprint.StarSystemToTransit?.Get() as BlueprintStarSystemMap);
 	}
 
-	public static List<QuestObjective> GetQuestsForSystemWithBlueprint(BlueprintStarSystemMap blueprintSystem)
+	public static List<QuestBookEntityEntry> GetQuestsForSystemWithBlueprint(BlueprintStarSystemMap blueprintSystem)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<BlueprintStarSystemObject> obj = blueprintSystem?.Planets.EmptyIfNull().Dereference().Select((Func<BlueprintPlanet, BlueprintStarSystemObject>)((BlueprintPlanet planet) => planet));
 		IEnumerable<BlueprintStarSystemObject> list2 = blueprintSystem?.OtherObjects?.EmptyIfNull().Dereference().Select((Func<BlueprintArtificialObject, BlueprintStarSystemObject>)((BlueprintArtificialObject planet) => planet));
 		IEnumerable<BlueprintStarSystemObject> enumerable = Enumerable.Concat(second: ((from anomaly in blueprintSystem?.Anomalies?.EmptyIfNull().Dereference()
@@ -45,7 +45,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -82,9 +82,9 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetQuestsForPlanet(BlueprintPlanet planet)
+	public static List<QuestBookEntityEntry> GetQuestsForPlanet(BlueprintPlanet planet)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<Quest> list2 = GameHelper.Quests.GetList();
 		if (planet != null)
 		{
@@ -100,7 +100,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -134,9 +134,9 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetQuestsForAnomaly(BlueprintAnomaly anomaly)
+	public static List<QuestBookEntityEntry> GetQuestsForAnomaly(BlueprintAnomaly anomaly)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<Quest> list2 = GameHelper.Quests.GetList();
 		if (anomaly != null)
 		{
@@ -152,7 +152,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -186,14 +186,14 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetRumoursForSystem(SectorMapObject system)
+	public static List<QuestBookEntityEntry> GetRumoursForSystem(SectorMapObject system)
 	{
 		return GetRumoursForSystemWithBlueprint(system.StarSystemBlueprint.StarSystemToTransit?.Get() as BlueprintStarSystemMap);
 	}
 
-	public static List<QuestObjective> GetRumoursForSystemWithBlueprint(BlueprintStarSystemMap blueprintSystem)
+	public static List<QuestBookEntityEntry> GetRumoursForSystemWithBlueprint(BlueprintStarSystemMap blueprintSystem)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<BlueprintPlanet> enumerable = blueprintSystem?.Planets.EmptyIfNull().Dereference();
 		IEnumerable<Quest> list2 = GameHelper.Quests.GetList();
 		if (enumerable != null)
@@ -210,7 +210,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -247,14 +247,14 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetRumoursForSectorMap(SectorMapObject system)
+	public static List<QuestBookEntityEntry> GetRumoursForSectorMap(SectorMapObject system)
 	{
 		return GetRumoursForSectorMapWithBlueprint(system.StarSystemBlueprint);
 	}
 
-	public static List<QuestObjective> GetRumoursForSectorMapWithBlueprint(BlueprintSectorMapPointStarSystem blueprintSystem)
+	public static List<QuestBookEntityEntry> GetRumoursForSectorMapWithBlueprint(BlueprintSectorMapPointStarSystem blueprintSystem)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		foreach (Quest item in GameHelper.Quests.GetList())
 		{
 			if (!item.IsActive)
@@ -266,7 +266,7 @@ public static class UIUtilitySpaceQuests
 			{
 				continue;
 			}
-			foreach (QuestObjective objective in item.Objectives)
+			foreach (QuestBookEntityEntry objective in item.Objectives)
 			{
 				if (!objective.IsActive)
 				{
@@ -287,9 +287,9 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetRumoursForPlanet(BlueprintPlanet planet)
+	public static List<QuestBookEntityEntry> GetRumoursForPlanet(BlueprintPlanet planet)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<Quest> list2 = GameHelper.Quests.GetList();
 		if (planet != null)
 		{
@@ -305,7 +305,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -339,9 +339,9 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<QuestObjective> GetQuestsForSpaceSystem(BlueprintStarSystemMap system)
+	public static List<QuestBookEntityEntry> GetQuestsForSpaceSystem(BlueprintStarSystemMap system)
 	{
-		List<QuestObjective> list = new List<QuestObjective>();
+		List<QuestBookEntityEntry> list = new List<QuestBookEntityEntry>();
 		IEnumerable<Quest> list2 = GameHelper.Quests.GetList();
 		if (system != null)
 		{
@@ -357,7 +357,7 @@ public static class UIUtilitySpaceQuests
 				{
 					continue;
 				}
-				foreach (QuestObjective objective in item.Objectives)
+				foreach (QuestBookEntityEntry objective in item.Objectives)
 				{
 					if (flag)
 					{
@@ -391,7 +391,7 @@ public static class UIUtilitySpaceQuests
 		return list;
 	}
 
-	public static List<string> GetQuestsStringList(List<QuestObjective> questsList, List<QuestObjective> questsInSystemList)
+	public static List<string> GetQuestsStringList(List<QuestBookEntityEntry> questsList, List<QuestBookEntityEntry> questsInSystemList)
 	{
 		List<string> list = new List<string>();
 		if (questsList != null && !questsList.Empty())

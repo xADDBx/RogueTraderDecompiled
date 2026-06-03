@@ -161,7 +161,6 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 
 	private static IEnumerator DownloadText(string url, Action<string> callback, string localFileName)
 	{
-		using UnityWebRequest www = UnityWebRequest.Get(url);
 		string text = Path.Combine(ApplicationPaths.streamingAssetsPath, localFileName);
 		string cachedFilePath = Path.Combine(ApplicationPaths.persistentDataPath, localFileName);
 		if (!TryGetIntroductoryLocalFileText(cachedFilePath, out var text2) && !TryGetIntroductoryLocalFileText(text, out text2))
@@ -169,7 +168,13 @@ public class MainMenuSideBarVM : VMBase, ISavesUpdatedHandler, ISubscriber, ILoc
 			PFLog.UI.Error("Failed to load Introductory Text from default path: " + text);
 		}
 		callback?.Invoke(text2);
+		if (Application.internetReachability == NetworkReachability.NotReachable)
+		{
+			PFLog.UI.Warning("Skipping download of introductory text from URL: {0}. Internet is not connected", url);
+			yield break;
+		}
 		PFLog.UI.Log("Downloading introductory text from URL: " + url);
+		using UnityWebRequest www = UnityWebRequest.Get(url);
 		yield return www.SendWebRequest();
 		if (www.result == UnityWebRequest.Result.Success)
 		{

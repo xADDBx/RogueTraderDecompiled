@@ -14,11 +14,13 @@ using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.Settings;
 using Kingmaker.UI;
 using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Pointer;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.Utility;
 using Kingmaker.View;
 using Kingmaker.Visual;
 using Owlcat.Runtime.Core.Utility;
@@ -100,7 +102,7 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 
 	public bool IgnoreUnitsColliders { get; set; }
 
-	private static Vector2 PointerPosition => Game.Instance.CursorController.CursorPosition;
+	private static Vector2 PointerPosition => CursorController.CursorPosition;
 
 	private Camera MainCamera => CameraStackManager.Instance.ActiveMainCamera;
 
@@ -144,6 +146,11 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 
 	public void Tick()
 	{
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			Switch2MouseUITickHandler();
+			return;
+		}
 		TickPointerDebug();
 		if (DebugThisFrame)
 		{
@@ -255,7 +262,7 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 			{
 				if (!Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1))
 				{
-					goto IL_03a8;
+					goto IL_03cc;
 				}
 				num = !InGui;
 			}
@@ -263,17 +270,27 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 			{
 				if (GamePadConfirm)
 				{
-					goto IL_0350;
+					goto IL_0374;
 				}
 				num = GamePadDecline;
 			}
 			if (num)
 			{
-				goto IL_0350;
+				goto IL_0374;
 			}
 		}
-		goto IL_03a8;
-		IL_0350:
+		goto IL_03cc;
+		IL_03cc:
+		if (!isControllerGamepad && m_MouseDown && m_MouseDownButton == 1 && !TurnController.IsInTurnBasedCombat() && m_MouseDownHandler is IDragClickEventHandler dragClickEventHandler3 && m_MouseDownOn != null)
+		{
+			dragClickEventHandler3.OnDrag(m_MouseDownOn, m_MouseDownWorldPosition, worldPosition);
+		}
+		if (!m_MouseDown)
+		{
+			UIAccess.MultiSelection?.Cancel();
+		}
+		return;
+		IL_0374:
 		m_MouseDownButton = (((!isControllerGamepad) ? (!Input.GetMouseButtonDown(0)) : (!GamePadConfirm)) ? 1 : 0);
 		m_MouseDown = true;
 		m_MouseDownOn = resultGameObject;
@@ -281,8 +298,126 @@ public class PointerController : IControllerEnable, IController, IControllerDisa
 		m_MouseDownCoord = pointerPosition;
 		m_MouseDownWorldPosition = WorldPosition;
 		m_MouseButtonTime = Time.unscaledTime;
-		goto IL_03a8;
-		IL_03a8:
+		goto IL_03cc;
+	}
+
+	private void Switch2MouseUITickHandler()
+	{
+		TickPointerDebug();
+		if (DebugThisFrame)
+		{
+			DebugThisFrame = false;
+		}
+		bool isControllerGamepad = Game.Instance.IsControllerGamepad;
+		bool flag = Game.Instance.IsControllerMouse || GamePad.Instance.CursorEnabled || TurnController.IsInTurnBasedCombat();
+		Vector2 pointerPosition = PointerPosition;
+		Vector3 worldPosition = Vector3.zero;
+		GameObject resultGameObject = null;
+		IClickEventHandler resultHandler = null;
+		InteractionHighlightController instance = InteractionHighlightController.Instance;
+		if (instance != null && instance.IsHighlighting && TurnController.IsInTurnBasedCombat())
+		{
+			return;
+		}
+		if (!InGui)
+		{
+			SelectClickObject(pointerPosition, out resultGameObject, out worldPosition, out resultHandler);
+			m_SimulateClickHandler = resultHandler;
+			m_WorldPositionForSimulation = WorldPosition;
+			if (resultGameObject != null && (!m_MouseDown || m_MouseDrag))
+			{
+				WorldPosition = worldPosition;
+			}
+		}
+		if (!((!isControllerGamepad) ? PCCursor.Instance.RewiredMouse.GetButtonDown(m_MouseDownButton) : ((m_MouseDownButton == 0) ? GamePadConfirm : GamePadDecline)) && m_MouseDown)
+		{
+			try
+			{
+				m_MouseDown = false;
+				if (m_MouseDownButton == 1 && Mode != 0)
+				{
+					ClearPointerMode();
+				}
+				else if (m_MouseDrag && Mode == PointerMode.Default)
+				{
+					if (m_MouseDownButton == 0)
+					{
+						if ((bool)UIAccess.MultiSelection)
+						{
+							UIAccess.MultiSelection.SelectEntities();
+						}
+					}
+					else if (m_MouseDownHandler is IDragClickEventHandler dragClickEventHandler && m_MouseDownOn != null && dragClickEventHandler.OnClick(m_MouseDownOn, m_MouseDownWorldPosition, worldPosition))
+					{
+						EventBus.RaiseEvent(delegate(IClickMarkHandler h)
+						{
+							h.OnClickHandled(m_MouseDownWorldPosition);
+						});
+					}
+				}
+				else if (flag && m_MouseDownHandler != null && m_MouseDownOn != null && m_MouseDownHandler.OnClick(m_MouseDownOn, m_MouseDownWorldPosition, m_MouseDownButton))
+				{
+					EventBus.RaiseEvent(delegate(IClickMarkHandler h)
+					{
+						h.OnClickHandled(m_MouseDownWorldPosition);
+					});
+				}
+			}
+			finally
+			{
+				m_MouseDownOn = null;
+				m_MouseDrag = false;
+			}
+		}
+		if (PointerOn != resultGameObject)
+		{
+			try
+			{
+				OnHoverChanged(PointerOn, (!IgnoreUnitsColliders) ? resultGameObject : null);
+			}
+			finally
+			{
+				PointerOn = resultGameObject;
+			}
+		}
+		if (!isControllerGamepad && m_MouseDown && Vector2.Distance(m_MouseDownCoord, pointerPosition) > 4f && !m_MouseDrag && Mode == PointerMode.Default)
+		{
+			if (Time.unscaledTime - m_MouseButtonTime >= 0.07f)
+			{
+				m_DragFrames++;
+			}
+			if (m_DragFrames > 2)
+			{
+				m_MouseDrag = true;
+				m_DragFrames = 0;
+				if (m_MouseDownButton == 0)
+				{
+					if ((bool)UIAccess.MultiSelection && UIAccess.MultiSelection.ShouldMultiSelect)
+					{
+						UIAccess.MultiSelection.CreateBoxSelection(m_MouseDownCoord);
+					}
+				}
+				else if (m_MouseDownHandler is IDragClickEventHandler dragClickEventHandler2)
+				{
+					dragClickEventHandler2.OnStartDrag(m_MouseDownOn, m_MouseDownWorldPosition);
+				}
+			}
+		}
+		if (m_MouseDrag && m_MouseDownButton == 0 && (bool)UIAccess.MultiSelection)
+		{
+			UIAccess.MultiSelection.DragBoxSelection();
+		}
+		if (!m_MouseDown && (PCCursor.Instance.RewiredMouse.GetButtonDown(0) || (PCCursor.Instance.RewiredMouse.GetButtonDown(1) && !InGui)))
+		{
+			m_MouseDownButton = (((!isControllerGamepad) ? (!Input.GetMouseButtonDown(0)) : (!GamePadConfirm)) ? 1 : 0);
+			m_MouseDownButton = ((!PCCursor.Instance.RewiredMouse.GetButtonDown(0)) ? 1 : 0);
+			m_MouseDown = true;
+			m_MouseDownOn = resultGameObject;
+			m_MouseDownHandler = resultHandler;
+			m_MouseDownCoord = pointerPosition;
+			m_MouseDownWorldPosition = WorldPosition;
+			m_MouseButtonTime = Time.unscaledTime;
+		}
 		if (!isControllerGamepad && m_MouseDown && m_MouseDownButton == 1 && !TurnController.IsInTurnBasedCombat() && m_MouseDownHandler is IDragClickEventHandler dragClickEventHandler3 && m_MouseDownOn != null)
 		{
 			dragClickEventHandler3.OnDrag(m_MouseDownOn, m_MouseDownWorldPosition, worldPosition);

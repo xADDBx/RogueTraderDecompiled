@@ -264,7 +264,7 @@ public class DialogNotificationsVM : BaseDisposable, IViewModel, IBaseDisposable
 		owner = fact.Owner;
 		string text = ((owner is StarshipEntity starshipEntity) ? starshipEntity.CharacterName : ((!(owner is BaseUnitEntity baseUnitEntity2)) ? string.Empty : baseUnitEntity2.CharacterName));
 		string value = text;
-		if ((fact is Buff && fact.Blueprint is BlueprintBuff blueprintBuff && (blueprintBuff.IsHiddenInUI || !blueprintBuff.ShowInDialogue)) || (fact is Ability && fact.Blueprint is BlueprintAbility { ShowInDialogue: false }) || (fact is Feature && fact.Blueprint is BlueprintFeature { ShowInDialogue: false }) || string.IsNullOrWhiteSpace(fact.Name) || string.IsNullOrWhiteSpace(value))
+		if ((fact is Buff buff && (buff.Hidden || fact.Blueprint is BlueprintBuff { ShowInDialogue: false })) || (fact is Ability && fact.Blueprint is BlueprintAbility { ShowInDialogue: false }) || (fact is Feature && fact.Blueprint is BlueprintFeature { ShowInDialogue: false }) || string.IsNullOrWhiteSpace(fact.Name) || string.IsNullOrWhiteSpace(value))
 		{
 			return;
 		}

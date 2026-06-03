@@ -1,6 +1,7 @@
 using System;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Items.Ecnchantments;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
@@ -13,17 +14,56 @@ namespace Kingmaker.RuleSystem.Rules;
 
 public class RuleCalculateStatsArmor : RulebookEvent
 {
+	public readonly struct LimitEntry
+	{
+		public readonly EntityFactRef Fact;
+
+		public readonly int Value;
+
+		public LimitEntry(EntityFactRef fact, int value)
+		{
+			Fact = fact;
+			Value = value;
+		}
+	}
+
+	public class ArmorStatLimits
+	{
+		public LimitEntry? MinAbsorptionFlat;
+
+		public LimitEntry? MinAbsorptionPct;
+
+		public LimitEntry? MaxAbsorptionFlat;
+
+		public LimitEntry? MaxAbsorptionPct;
+
+		public LimitEntry? MinDeflectionFlat;
+
+		public LimitEntry? MinDeflectionPct;
+
+		public LimitEntry? MaxDeflectionFlat;
+
+		public LimitEntry? MaxDeflectionPct;
+
+		public void CopyFrom(ArmorStatLimits other)
+		{
+			MinAbsorptionFlat = other.MinAbsorptionFlat;
+			MinAbsorptionPct = other.MinAbsorptionPct;
+			MaxAbsorptionFlat = other.MaxAbsorptionFlat;
+			MaxAbsorptionPct = other.MaxAbsorptionPct;
+			MinDeflectionFlat = other.MinDeflectionFlat;
+			MinDeflectionPct = other.MinDeflectionPct;
+			MaxDeflectionFlat = other.MaxDeflectionFlat;
+			MaxDeflectionPct = other.MaxDeflectionPct;
+		}
+	}
+
 	public readonly CompositeModifiersManager AbsorptionCompositeModifiers = new CompositeModifiersManager();
 
 	public readonly CompositeModifiersManager DeflectionCompositeModifiers = new CompositeModifiersManager();
 
-	public int? PctMinAbsorption;
+	public ArmorStatLimits StatLimits { get; } = new ArmorStatLimits();
 
-	public int? PctMinDeflection;
-
-	public int? MinAbsorptionValue;
-
-	public int? MinDeflectionValue;
 
 	[CanBeNull]
 	private ItemEntityArmor Armor { get; }
@@ -58,25 +98,43 @@ public class RuleCalculateStatsArmor : RulebookEvent
 			ResultBaseDeflection += Armor.Blueprint.DamageDeflection;
 		}
 		int val = 0;
-		if (MinAbsorptionValue.HasValue)
+		if (StatLimits.MinAbsorptionFlat.HasValue)
 		{
-			val = Math.Max(val, MinAbsorptionValue.Value);
+			val = Math.Max(val, StatLimits.MinAbsorptionFlat.Value.Value);
 		}
-		if (PctMinAbsorption.HasValue)
+		if (StatLimits.MinAbsorptionPct.HasValue)
 		{
-			val = Math.Max(val, Mathf.RoundToInt((float)(ResultBaseAbsorption * PctMinAbsorption.Value) / 100f));
+			val = Math.Max(val, Mathf.RoundToInt((float)(ResultBaseAbsorption * StatLimits.MinAbsorptionPct.Value.Value) / 100f));
 		}
 		int val2 = 0;
-		if (MinDeflectionValue.HasValue)
+		if (StatLimits.MinDeflectionFlat.HasValue)
 		{
-			val2 = Math.Max(val2, MinDeflectionValue.Value);
+			val2 = Math.Max(val2, StatLimits.MinDeflectionFlat.Value.Value);
 		}
-		if (PctMinDeflection.HasValue)
+		if (StatLimits.MinDeflectionPct.HasValue)
 		{
-			val2 = Math.Max(val2, Mathf.RoundToInt((float)(ResultBaseAbsorption * PctMinDeflection.Value) / 100f));
+			val2 = Math.Max(val2, Mathf.RoundToInt((float)(ResultBaseDeflection * StatLimits.MinDeflectionPct.Value.Value) / 100f));
 		}
-		ResultAbsorption = Math.Max(val, ResultBaseAbsorption + AbsorptionCompositeModifiers.Value);
-		ResultDeflection = Math.Max(val2, ResultBaseDeflection + DeflectionCompositeModifiers.Value);
+		int val3 = int.MaxValue;
+		if (StatLimits.MaxAbsorptionFlat.HasValue)
+		{
+			val3 = Math.Min(val3, StatLimits.MaxAbsorptionFlat.Value.Value);
+		}
+		if (StatLimits.MaxAbsorptionPct.HasValue)
+		{
+			val3 = Math.Min(val3, Mathf.RoundToInt((float)(ResultBaseAbsorption * StatLimits.MaxAbsorptionPct.Value.Value) / 100f));
+		}
+		int val4 = int.MaxValue;
+		if (StatLimits.MaxDeflectionFlat.HasValue)
+		{
+			val4 = Math.Min(val4, StatLimits.MaxDeflectionFlat.Value.Value);
+		}
+		if (StatLimits.MaxDeflectionPct.HasValue)
+		{
+			val4 = Math.Min(val4, Mathf.RoundToInt((float)(ResultBaseDeflection * StatLimits.MaxDeflectionPct.Value.Value) / 100f));
+		}
+		ResultAbsorption = Math.Max(val, Math.Min(val3, ResultBaseAbsorption + AbsorptionCompositeModifiers.Value));
+		ResultDeflection = Math.Max(val2, Math.Min(val4, ResultBaseDeflection + DeflectionCompositeModifiers.Value));
 	}
 
 	private void TryApplyEnchantmentsManually()

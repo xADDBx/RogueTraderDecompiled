@@ -17,6 +17,9 @@ public class UnitLookAt : GameAction
 	[SerializeReference]
 	public PositionEvaluator Position;
 
+	[SerializeReference]
+	public FloatEvaluator RotationOffset;
+
 	public override string GetCaption()
 	{
 		return Unit?.ToString() + " look at " + Position;
@@ -26,13 +29,10 @@ public class UnitLookAt : GameAction
 	{
 		AbstractUnitEntity value = Unit.GetValue();
 		Vector3 value2 = Position.GetValue();
-		if (value.View.IsVisible)
+		value.DesiredOrientation = value.GetLookAtAngle(value2) + (RotationOffset?.GetValue() ?? 0f);
+		if (!value.View.IsVisible)
 		{
-			value.LookAt(value2);
-		}
-		else
-		{
-			value.ForceLookAt(value2);
+			value.ForceRotateToDesired();
 		}
 	}
 }

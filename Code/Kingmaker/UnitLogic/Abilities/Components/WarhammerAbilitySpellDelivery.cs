@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Projectiles;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
@@ -16,8 +15,12 @@ public class WarhammerAbilitySpellDelivery : AbilityCustomLogic
 {
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper target)
 	{
-		BlueprintProjectile blueprint = context.Ability.ProjectileVariants.Random(PFStatefulRandom.UnitLogic.Abilities);
-		Projectile projectile = new ProjectileLauncher(blueprint, context.Caster, target).Ability(context.Ability).Launch();
+		ProjectileLauncher projectileLauncher = new ProjectileLauncher(context.Ability.ProjectileVariants.Random(PFStatefulRandom.UnitLogic.Abilities), context.Caster, target).Ability(context.Ability);
+		if (context.CastPosition != context.Caster.Position)
+		{
+			projectileLauncher = projectileLauncher.LaunchPosition(context.CastPosition);
+		}
+		Projectile projectile = projectileLauncher.Launch();
 		float distance = projectile.Distance(target.Point, context.Caster.Position);
 		while (!projectile.IsEnoughTimePassedToTraverseDistance(distance))
 		{

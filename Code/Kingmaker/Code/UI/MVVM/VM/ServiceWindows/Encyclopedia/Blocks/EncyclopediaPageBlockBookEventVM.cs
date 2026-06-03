@@ -27,7 +27,7 @@ public class EncyclopediaPageBlockBookEventVM : EncyclopediaPageBlockVM
 		{
 			if (logEntry is BlueprintAnswer blueprintAnswer)
 			{
-				return blueprintAnswer.Text;
+				return blueprintAnswer.DisplayText;
 			}
 			return string.Empty;
 		}

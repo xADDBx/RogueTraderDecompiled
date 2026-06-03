@@ -33,7 +33,7 @@ public static class GizmoHelper
 	public static void ShowPointsInsideScriptZone(IScriptZoneShape shape)
 	{
 		ScriptZonesData scriptZonesData = AllScriptZones[shape];
-		if (scriptZonesData.Position.Equals(shape.Center()) || scriptZonesData.Scale != shape.GetBounds().extents)
+		if (!scriptZonesData.Position.Equals(shape.Center()) || scriptZonesData.Scale != shape.GetBounds().extents)
 		{
 			scriptZonesData.Position = shape.Center();
 			scriptZonesData.Scale = shape.GetBounds().extents;

@@ -14,11 +14,12 @@ public class AbilityGroupLimitation : UnitFactComponentDelegate, IHashable
 	[SerializeField]
 	private BlueprintAbilityGroupReference m_Group;
 
-	public BlueprintAbilityGroup Group => m_Group?.Get();
+	[SerializeField]
+	private BlueprintAbilityGroupReference m_ExceptionGroup;
 
 	protected override void OnActivateOrPostLoad()
 	{
-		base.Fact.Owner.GetOrCreate<UnitPartForbiddenAbilities>().AddEntry(Group, base.Fact);
+		base.Fact.Owner.GetOrCreate<UnitPartForbiddenAbilities>().AddEntry(m_Group, m_ExceptionGroup, base.Fact);
 	}
 
 	protected override void OnDeactivate()

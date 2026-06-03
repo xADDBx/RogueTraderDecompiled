@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -44,7 +45,12 @@ public class EquipSlotVM : ItemSlotVM, IEquipSlotPossibleTarget, ISubscriber<Ite
 		SlotType = slotType;
 		m_ItemSlot = itemSlot;
 		SetIndex = setIndex;
+		bool flag = itemSlot.Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
 		if (itemSlot.Owner.HasMechadendrites() && slotType == EquipSlotType.SecondaryHand)
+		{
+			SlotSubtype = EquipSlotSubtype.Ranged;
+		}
+		else if (flag && slotType == EquipSlotType.PrimaryHand)
 		{
 			SlotSubtype = EquipSlotSubtype.Ranged;
 		}
@@ -65,6 +71,14 @@ public class EquipSlotVM : ItemSlotVM, IEquipSlotPossibleTarget, ISubscriber<Ite
 		{
 			IsNotRemovable.Value = item?.IsNonRemovable ?? false;
 		}));
+		if (itemSlot != null)
+		{
+			IsLocked.Value = itemSlot.Lock.Value;
+		}
+		else
+		{
+			IsLocked.Value = false;
+		}
 	}
 
 	public void InitializeSecondSetSecondaryFakeItem(EquipSlotVM secondSetSecondarySlot)
@@ -91,13 +105,9 @@ public class EquipSlotVM : ItemSlotVM, IEquipSlotPossibleTarget, ISubscriber<Ite
 		{
 			return value.Icon;
 		}
-		if (base.HasItem || !(value is ItemEntityWeapon { HoldInTwoHands: not false } itemEntityWeapon))
+		if (base.HasItem || !(value is ItemEntityWeapon { HoldingSlot: HandSlot holdingSlot } itemEntityWeapon) || !holdingSlot.HeldInTwoHands())
 		{
 			return base.GetIcon();
-		}
-		if (!itemEntityWeapon.HoldInTwoHands)
-		{
-			return value.Icon;
 		}
 		return itemEntityWeapon.Icon;
 	}

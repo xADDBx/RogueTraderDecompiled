@@ -31,6 +31,15 @@ public class TaskNodeFindWhenToCastAbility : TaskNode
 		}
 	}
 
+	public TaskNodeFindWhenToCastAbility()
+	{
+	}
+
+	public TaskNodeFindWhenToCastAbility(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		AILogger.Instance.Log(AILogNode.Start(this));

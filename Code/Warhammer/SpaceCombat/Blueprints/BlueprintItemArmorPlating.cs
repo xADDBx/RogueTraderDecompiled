@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
 
@@ -16,12 +15,4 @@ public class BlueprintItemArmorPlating : BlueprintStarshipItem
 	public int ArmourAft;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipArmorPlating;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

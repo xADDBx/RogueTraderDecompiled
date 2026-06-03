@@ -2,6 +2,7 @@ using System;
 using Kingmaker.DLC;
 using Kingmaker.Localization;
 using Kingmaker.Stores;
+using Kingmaker.Utility;
 
 namespace Kingmaker.Blueprints.Root.Strings;
 
@@ -98,13 +99,36 @@ public class UIDlcManager
 
 	public LocalizedString NewDlcAfterLoadingMessageBoxHint;
 
+	public LocalizedString SwitchAvailableForPurchase;
+
+	public LocalizedString SwitchPurchased;
+
+	public LocalizedString SwitchPurchase;
+
+	public LocalizedString SwitchCosmeticDlc;
+
+	public string GetPurchaseLabel()
+	{
+		return ApplicationHelper.IsRunningOnAnySwitch ? SwitchPurchase : Purchase;
+	}
+
+	public string GetPurchasedLabel()
+	{
+		return ApplicationHelper.IsRunningOnAnySwitch ? SwitchPurchased : Purchased;
+	}
+
+	public string GetAvailableForPurchaseLabel()
+	{
+		return ApplicationHelper.IsRunningOnAnySwitch ? SwitchAvailableForPurchase : AvailableForPurchase;
+	}
+
 	public string GetDlcTypeLabel(DlcTypeEnum type)
 	{
 		return type switch
 		{
 			DlcTypeEnum.StoryDlc => StoryDlc, 
 			DlcTypeEnum.AdditionalContentDlc => AdditionalContentDlc, 
-			DlcTypeEnum.CosmeticDlc => CosmeticDlc, 
+			DlcTypeEnum.CosmeticDlc => ApplicationHelper.IsRunningOnAnySwitch ? SwitchCosmeticDlc : CosmeticDlc, 
 			DlcTypeEnum.PromotionalDlc => PromotionalDlc, 
 			_ => string.Empty, 
 		};
@@ -114,8 +138,8 @@ public class UIDlcManager
 	{
 		return state switch
 		{
-			BlueprintDlc.DlcPurchaseState.Purchased => Purchased, 
-			BlueprintDlc.DlcPurchaseState.AvailableToPurchase => AvailableForPurchase, 
+			BlueprintDlc.DlcPurchaseState.Purchased => GetPurchasedLabel(), 
+			BlueprintDlc.DlcPurchaseState.AvailableToPurchase => GetAvailableForPurchaseLabel(), 
 			BlueprintDlc.DlcPurchaseState.ComingSoon => ComingSoon, 
 			_ => string.Empty, 
 		};

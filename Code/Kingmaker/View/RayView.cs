@@ -42,11 +42,11 @@ public class RayView : MonoBehaviour, IDeactivatableComponent
 	private bool m_FadeOutEnabled;
 
 	[SerializeField]
-	[ConditionalShow("m_FadeOutEnabled")]
+	[ShowIf("m_FadeOutEnabled")]
 	private float m_FadeOutSpeed = 5f;
 
 	[SerializeField]
-	[ConditionalShow("m_FadeOutEnabled")]
+	[ShowIf("m_FadeOutEnabled")]
 	private float m_FadeOutDistance = 1f;
 
 	[SerializeField]

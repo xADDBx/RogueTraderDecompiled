@@ -393,14 +393,14 @@ public class EntityFactsManager : IDisposable, IHashable
 		return HasComponent((pred != null) ? ((Func<EntityFact, EntityFactComponent, TComponent, bool>)((EntityFact f, EntityFactComponent _, TComponent _) => pred(f))) : null);
 	}
 
-	public EntityFactManagerComponentsEnumerator<TComponent> GetComponents<TComponent>() where TComponent : BlueprintComponent
+	public EntityFactManagerComponentsEnumerable<TComponent> GetComponents<TComponent>() where TComponent : BlueprintComponent
 	{
 		return GetComponents<TComponent>(null);
 	}
 
-	public EntityFactManagerComponentsEnumerator<TComponent> GetComponents<TComponent>([CanBeNull] Func<TComponent, bool> pred) where TComponent : BlueprintComponent
+	public EntityFactManagerComponentsEnumerable<TComponent> GetComponents<TComponent>([CanBeNull] Func<TComponent, bool> pred) where TComponent : BlueprintComponent
 	{
-		return new EntityFactManagerComponentsEnumerator<TComponent>(this, pred);
+		return new EntityFactManagerComponentsEnumerable<TComponent>(this, pred);
 	}
 
 	public T EnsureFactProcessor<T>() where T : class, IFactProcessor, new()

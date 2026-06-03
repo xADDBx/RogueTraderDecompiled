@@ -168,18 +168,18 @@ public class LoadingScreenHints : StringsContainer
 	{
 		LoadPurchasedDLCs();
 		List<string> currentPurchasedDLCs = GetCurrentPurchasedDLCs();
-		bool result = false;
+		bool flag = false;
 		foreach (string dlcName in currentPurchasedDLCs)
 		{
 			DLCLoadingScreenInfo dLCLoadingScreenInfo = m_PlayerPurchasedDLCs.Find((DLCLoadingScreenInfo d) => d.DlcName == dlcName);
 			if (dLCLoadingScreenInfo != null && dLCLoadingScreenInfo.DisplayCount < MaxShowDLCHintCount)
 			{
-				result = true;
+				flag = true;
 				dLCLoadingScreenInfo.DisplayCount++;
 			}
 			else if (dLCLoadingScreenInfo == null)
 			{
-				result = true;
+				flag = true;
 				m_PlayerPurchasedDLCs.Add(new DLCLoadingScreenInfo
 				{
 					DlcName = dlcName,
@@ -187,8 +187,11 @@ public class LoadingScreenHints : StringsContainer
 				});
 			}
 		}
-		SavePurchasedDLCs();
-		return result;
+		if (flag)
+		{
+			SavePurchasedDLCs();
+		}
+		return flag;
 	}
 
 	private List<string> GetCurrentPurchasedDLCs()

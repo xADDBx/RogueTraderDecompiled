@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -11,15 +13,19 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Utility.UnityExtensions;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using UniRx;
+using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 
 public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, ITurnBasedModeHandler, ISubscriber, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IInterruptTurnStartHandler, IUnitCommandEndHandler, IUnitCommandStartHandler, IUnitLifeStateChanged, ISubscriber<IAbstractUnitEntity>, IAreaHandler, IInterruptTurnContinueHandler
 {
 	public readonly ReactiveCollection<LineOfSightVM> LinesVMs = new ReactiveCollection<LineOfSightVM>();
+
+	private Coroutine m_SetNewUnitCoroutine;
 
 	public LineOfSightControllerVM()
 	{
@@ -29,6 +35,11 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	protected override void DisposeImplementation()
 	{
+		if (m_SetNewUnitCoroutine != null)
+		{
+			CoroutineRunner.Stop(m_SetNewUnitCoroutine);
+			m_SetNewUnitCoroutine = null;
+		}
 		Clear();
 	}
 
@@ -105,7 +116,7 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 		MechanicEntity currentUnit = Game.Instance.TurnController.CurrentUnit;
 		foreach (MechanicEntity unit in units)
 		{
-			if (unit.IsPlayerEnemy && unit.IsVisibleForPlayer && !unit.IsDisposed)
+			if (unit.IsVisibleForPlayer && !unit.IsDisposed)
 			{
 				LinesVMs.Add(new LineOfSightVM(currentUnit, unit));
 			}
@@ -168,6 +179,21 @@ public class LineOfSightControllerVM : BaseDisposable, IViewModel, IBaseDisposab
 
 	public void OnAreaDidLoad()
 	{
+		if (m_SetNewUnitCoroutine != null)
+		{
+			CoroutineRunner.Stop(m_SetNewUnitCoroutine);
+		}
+		m_SetNewUnitCoroutine = CoroutineRunner.Start(SetNewUnitAfterLoad());
+	}
+
+	private IEnumerator SetNewUnitAfterLoad()
+	{
+		while (LoadingProcess.Instance.IsLoadingInProcess)
+		{
+			yield return null;
+		}
+		yield return null;
+		m_SetNewUnitCoroutine = null;
 		SetNewUnit();
 	}
 }

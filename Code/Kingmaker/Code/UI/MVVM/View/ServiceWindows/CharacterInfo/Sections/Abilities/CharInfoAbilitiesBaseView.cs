@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
@@ -5,6 +6,7 @@ using Kingmaker.Code.UI.MVVM.View.ActionBar;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Abilities;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Utility;
 using TMPro;
@@ -54,6 +56,12 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	private TextMeshProUGUI m_PassiveAbilitiesLabel;
 
 	[SerializeField]
+	protected OwlcatMultiButton m_Augmentations;
+
+	[SerializeField]
+	private TextMeshProUGUI m_AugmentationsLabel;
+
+	[SerializeField]
 	private GameObject m_NoAbilitiesContainer;
 
 	[SerializeField]
@@ -68,7 +76,26 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	[SerializeField]
 	private TextMeshProUGUI m_PassiveAbilitiesPetVariantLabel;
 
+	[SerializeField]
+	protected GameObject m_GroupByButtonsObject;
+
+	[SerializeField]
+	protected OwlcatMultiButton m_GroupByTypeButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_GroupByTypeButtonText;
+
+	[SerializeField]
+	protected OwlcatMultiButton m_GroupBySourceButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_GroupBySourceButtonText;
+
 	protected readonly BoolReactiveProperty ActiveAbilitiesSelected = new BoolReactiveProperty(initialValue: true);
+
+	protected readonly BoolReactiveProperty AugmentationsSelected = new BoolReactiveProperty(initialValue: false);
+
+	protected readonly ReactiveProperty<CurrentInfoAbilitiesTab> CurrentSelectedTab = new ReactiveProperty<CurrentInfoAbilitiesTab>();
 
 	private AccessibilityTextHelper m_TextHelper;
 
@@ -88,11 +115,28 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 	{
 		m_ScrollRect.ScrollToTop();
 		m_ActionBarPartAbilitiesView.Bind(base.ViewModel.ActionBarPartAbilitiesVM);
+		AddDisposable(CurrentSelectedTab.Subscribe(delegate(CurrentInfoAbilitiesTab value)
+		{
+			OnTabSelectedHandler(value);
+		}));
 		AddDisposable(ActiveAbilitiesSelected.Subscribe(delegate
 		{
 			UpdateAbilitiesSelectableView();
 		}));
 		m_TextHelper.UpdateTextSize();
+		if (m_GroupByButtonsObject != null)
+		{
+			m_GroupByTypeButtonText.text = UIStrings.Instance.CharGen.OrderByType;
+			m_GroupBySourceButtonText.text = UIStrings.Instance.CharGen.OrderBySource;
+			AddDisposable(base.ViewModel.GroupingMode.Subscribe(delegate(FeatureGroupingMode mode)
+			{
+				m_GroupByTypeButton.SetActiveLayer((mode == FeatureGroupingMode.ByType) ? "On" : "Off");
+				m_GroupBySourceButton.SetActiveLayer((mode == FeatureGroupingMode.BySource) ? "On" : "Off");
+				DrawEntities();
+				UpdateNoAbilitiesContainerView();
+				m_ScrollRect.ScrollToTop();
+			}));
+		}
 		base.BindViewImplementation();
 	}
 
@@ -114,6 +158,7 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 			ActiveAbilitiesSelected.Value = false;
 			m_AbilitiesTypeSelectorContainer.SetActive(value: false);
 			m_AbilitiesTypeSelectorPetTypeContainer.SetActive(value: true);
+			CurrentSelectedTab.Value = CurrentInfoAbilitiesTab.PassiveAbilities;
 		}
 		else
 		{
@@ -121,6 +166,10 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 			m_PassiveAbilities.Interactable = true;
 			m_AbilitiesTypeSelectorContainer.SetActive(value: true);
 			m_AbilitiesTypeSelectorPetTypeContainer.SetActive(value: false);
+		}
+		if (m_GroupByButtonsObject != null)
+		{
+			m_GroupByButtonsObject.SetActive(CurrentSelectedTab.Value != CurrentInfoAbilitiesTab.Augmentations);
 		}
 		DrawEntities();
 		UpdateNoAbilitiesContainerView();
@@ -130,7 +179,13 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 
 	private void DrawEntities()
 	{
-		AutoDisposingList<CharInfoFeatureGroupVM> source = (ActiveAbilitiesSelected.Value ? base.ViewModel.ActiveAbilities : base.ViewModel.PassiveAbilities);
+		AutoDisposingList<CharInfoFeatureGroupVM> source = CurrentSelectedTab.Value switch
+		{
+			CurrentInfoAbilitiesTab.ActiveAbilities => base.ViewModel.ActiveAbilities, 
+			CurrentInfoAbilitiesTab.PassiveAbilities => base.ViewModel.PassiveAbilities, 
+			CurrentInfoAbilitiesTab.Augmentations => base.ViewModel.Augmentations, 
+			_ => throw new ArgumentOutOfRangeException(), 
+		};
 		m_WidgetList.Entries?.ForEach(delegate(IWidgetView e)
 		{
 			e.MonoBehaviour.gameObject.SetActive(value: false);
@@ -158,9 +213,9 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 		ActionBarContainer.SetActive(value);
 	}
 
-	protected void SetActiveAbilitiesState(bool state)
+	protected void SetActiveAbilitiesState(CurrentInfoAbilitiesTab tab)
 	{
-		ActiveAbilitiesSelected.Value = state;
+		CurrentSelectedTab.Value = tab;
 		RefreshView();
 	}
 
@@ -175,10 +230,37 @@ public abstract class CharInfoAbilitiesBaseView : CharInfoComponentView<CharInfo
 		{
 			m_ActionBarLabel.text = characterSheet.ActionPanelLabel;
 		}
+		m_AugmentationsLabel.text = UIStrings.Instance.UIAugmentations.CharScreenAugmentationsAugmentTabLabel;
 	}
 
 	private void UpdateNoAbilitiesContainerView()
 	{
 		m_NoAbilitiesContainer.SetActive(m_WidgetList.Entries?.All((IWidgetView e) => ((CharInfoFeatureGroupPCView)e).IsEmpty) ?? true);
+	}
+
+	private void OnTabSelectedHandler(CurrentInfoAbilitiesTab value)
+	{
+		base.ViewModel.RefreshAbilitiesList();
+		switch (value)
+		{
+		case CurrentInfoAbilitiesTab.ActiveAbilities:
+			m_ActiveAbilities.SetActiveLayer("Active");
+			m_PassiveAbilities.SetActiveLayer("Normal");
+			m_Augmentations.SetActiveLayer("Normal");
+			break;
+		case CurrentInfoAbilitiesTab.PassiveAbilities:
+			m_ActiveAbilities.SetActiveLayer("Normal");
+			m_PassiveAbilities.SetActiveLayer("Active");
+			m_Augmentations.SetActiveLayer("Normal");
+			break;
+		case CurrentInfoAbilitiesTab.Augmentations:
+			m_ActiveAbilities.SetActiveLayer("Normal");
+			m_PassiveAbilities.SetActiveLayer("Normal");
+			m_Augmentations.SetActiveLayer("Active");
+			break;
+		default:
+			throw new ArgumentOutOfRangeException("value", value, null);
+		}
+		RefreshView();
 	}
 }

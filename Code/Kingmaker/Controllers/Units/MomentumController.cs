@@ -168,6 +168,11 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 
 	private void HandleUnitJoinCombatOrBecameConscious(BaseUnitEntity unit)
 	{
+		AddUnitToMomentumGroup(unit);
+	}
+
+	private MomentumGroup GetOrCreateMomentumGroupFromUnit(MechanicEntity unit)
+	{
 		BlueprintMomentumRoot momentumRoot = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
 		SeparateMomentumGroup component = unit.Blueprint.GetComponent<SeparateMomentumGroup>();
 		BlueprintMomentumGroup momentumGroupBlueprint = ((component != null) ? component.MomentumGroup : (unit.IsPlayerFaction ? momentumRoot.PartyGroup : momentumRoot.DefaultEnemyGroup));
@@ -177,9 +182,27 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 			momentumGroup = new MomentumGroup(momentumGroupBlueprint);
 			Groups.Add(momentumGroup);
 		}
-		if (!momentumGroup.Units.Contains(unit))
+		return momentumGroup;
+	}
+
+	public void AddUnitsToMomentumGroups(IEnumerable<MechanicEntity> units)
+	{
+		foreach (MechanicEntity unit in units)
 		{
-			momentumGroup.Units.Add(unit);
+			AddUnitToMomentumGroup(unit);
+		}
+	}
+
+	public void AddUnitToMomentumGroup(MechanicEntity unit)
+	{
+		AddUnitToMomentumGroup(unit, GetOrCreateMomentumGroupFromUnit(unit));
+	}
+
+	private void AddUnitToMomentumGroup(MechanicEntity unit, MomentumGroup group)
+	{
+		if (!group.Units.Contains(unit))
+		{
+			group.Units.Add(unit);
 		}
 	}
 

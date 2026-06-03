@@ -24,6 +24,7 @@ using Warhammer.SpaceCombat.Blueprints;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintStarship))]
 [TypeId("73cdb42c2d277a446be7489e2676e7ad")]
 public class StarshipNecronLogic : UnitFactComponentDelegate, IUnitCombatHandler<EntitySubscriber>, IUnitCombatHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitCombatHandler, EntitySubscriber>, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ITargetRulebookSubscriber, ITurnStartHandler, ISubscriber<IMechanicEntity>, IHashable

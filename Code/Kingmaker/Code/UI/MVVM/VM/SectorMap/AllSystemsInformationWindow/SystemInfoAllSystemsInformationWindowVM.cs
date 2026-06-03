@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Globalmap.Blueprints;
@@ -61,8 +60,8 @@ public class SystemInfoAllSystemsInformationWindowVM : BaseDisposable, IViewMode
 
 	public bool CheckQuests()
 	{
-		List<QuestObjective> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(SectorMapObject.View);
-		List<QuestObjective> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(StarSystem);
+		List<QuestBookEntityEntry> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(SectorMapObject.View);
+		List<QuestBookEntityEntry> questsForSpaceSystem = UIUtilitySpaceQuests.GetQuestsForSpaceSystem(StarSystem);
 		int num;
 		if (questsForSystem == null || questsForSystem.Empty())
 		{
@@ -95,10 +94,10 @@ public class SystemInfoAllSystemsInformationWindowVM : BaseDisposable, IViewMode
 
 	public bool CheckRumours()
 	{
-		List<QuestObjective> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(SectorMapObject.View);
+		List<QuestBookEntityEntry> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(SectorMapObject.View);
 		if (rumoursForSystem != null && rumoursForSystem.Any())
 		{
-			List<string> list = rumoursForSystem.Where((QuestObjective rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestObjective rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
+			List<string> list = rumoursForSystem.Where((QuestBookEntityEntry rumour) => !string.IsNullOrWhiteSpace(rumour.Blueprint.GetTitile())).Select((QuestBookEntityEntry rumour, int index) => $"{index + 1}. " + rumour.Blueprint.GetTitile()).ToList();
 			if (list.Any())
 			{
 				RumourObjectiveName.Value = string.Join(Environment.NewLine, list);

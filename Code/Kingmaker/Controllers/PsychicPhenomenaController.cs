@@ -29,9 +29,13 @@ public class PsychicPhenomenaController : IController, IAbilityExecutionProcessH
 	{
 		if (context.Ability.Blueprint.IsPsykerAbility && context.MaybeCaster?.GetPsykerOptional() != null)
 		{
-			RuleCalculatePsychicPhenomenaEffect ruleCalculatePsychicPhenomenaEffect = new RuleCalculatePsychicPhenomenaEffect(context.Caster, context);
-			Rulebook.Trigger(ruleCalculatePsychicPhenomenaEffect);
-			RunPsychicPhenomenaEffectOnTarget(ruleCalculatePsychicPhenomenaEffect.OverrideTarget?.Entity ?? context.Caster, context, ruleCalculatePsychicPhenomenaEffect.ResultPerilsEffect, ruleCalculatePsychicPhenomenaEffect.ResultPsychicPhenomena);
+			RuleCalculatePsychicPhenomenaEffect rule = new RuleCalculatePsychicPhenomenaEffect(context.Caster, context);
+			Rulebook.Trigger(rule);
+			RunPsychicPhenomenaEffectOnTarget(rule.OverrideTarget?.Entity ?? context.Caster, context, rule.ResultPerilsEffect, rule.ResultPsychicPhenomena);
+			EventBus.RaiseEvent(delegate(IPsychicPhenomenaHandler h)
+			{
+				h.HandlePsychicPhenomena(rule);
+			});
 		}
 	}
 
@@ -75,7 +79,10 @@ public class PsychicPhenomenaController : IController, IAbilityExecutionProcessH
 				{
 					abstractUnitEntityView.UpdateAsks();
 				}
-				new BarkWrapper(psychicPhenomenaData.Bark, abstractUnitEntityView.Asks).Schedule();
+				if (abstractUnitEntityView.Asks != null)
+				{
+					new BarkWrapper(psychicPhenomenaData.Bark, abstractUnitEntityView.Asks).Schedule();
+				}
 			}
 		}
 		bool flag = false;

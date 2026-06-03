@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.VM.EscMenu;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.DLC;
@@ -115,6 +116,10 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 		}));
 		bool isActive = PhotonManager.Lobby.IsActive;
 		bool flag = SettingsRoot.Difficulty.OnlyOneSave;
+		if (!BugReportControls.AllowBugReporter)
+		{
+			m_BugReportButton.gameObject.SetActive(value: false);
+		}
 		m_MultiplayerButton.gameObject.SetActive(value: true);
 		m_MultiplayerButton.SetInteractable(!flag);
 		if (flag)
@@ -285,7 +290,13 @@ public abstract class EscMenuBaseView : ViewBase<EscMenuVM>
 	private void BuildNavigation()
 	{
 		AddDisposable(NavigationBehaviour = new GridConsoleNavigationBehaviour());
-		List<OwlcatButton> list = new List<OwlcatButton> { m_SaveButton, m_LoadButton, m_FormationButton, m_OptionsButton, m_BugReportButton, m_MainMenuButton, m_QuitButton };
+		List<OwlcatButton> list = new List<OwlcatButton> { m_SaveButton, m_LoadButton, m_FormationButton, m_OptionsButton };
+		if (BugReportControls.AllowBugReporter)
+		{
+			list.Add(m_BugReportButton);
+		}
+		list.Add(m_MainMenuButton);
+		list.Add(m_QuitButton);
 		if (!PhotonManager.Lobby.IsActive)
 		{
 			list.Add(m_ModsButton);

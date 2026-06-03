@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
-[ComponentName("Actions/PlayerStarshipDescriptiveGrantUltResourceAction")]
+[ComponentName("Starship/Actions/PlayerStarshipDescriptiveGrantUltResourceAction")]
 [AllowMultipleComponents]
 [TypeId("75e3029993d72e845986afa840aa24bc")]
 public class PlayerStarshipDescriptiveGrantUltResourceAction : GameAction

@@ -47,7 +47,7 @@ public class ItemEntityMechadendrite : ItemEntity<BlueprintItemMechadendrite>, I
 		{
 			return;
 		}
-		UnitMechadendriteEquipmentData unitMechadendriteEquipmentData = unitEntity.View.MechadendritesEquipment?.MechadendritesDatas.Find((UnitMechadendriteEquipmentData x) => x.VisibleItem.Blueprint == base.Blueprint);
+		UnitMechadendriteEquipmentData unitMechadendriteEquipmentData = unitEntity.View.MechadendritesEquipment?.MechadendritesDatas.Find((UnitMechadendriteEquipmentData x) => x.VisibleItem?.Blueprint == base.Blueprint);
 		if (unitMechadendriteEquipmentData == null)
 		{
 			return;

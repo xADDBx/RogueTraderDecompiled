@@ -21,6 +21,8 @@ public class UIInteractableSettingsReasons
 
 	public LocalizedString CannotChangeAntialiasingQualityBecause;
 
+	public LocalizedString CannotSwitchJoyConInputBecause;
+
 	public string GetLabelByOrigin(SettingsNotInteractableReasonType reasonType)
 	{
 		return reasonType switch

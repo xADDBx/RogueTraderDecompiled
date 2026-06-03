@@ -67,41 +67,47 @@ public class InspectExtensions
 	public static List<TooltipBrickBuff> GetBuffs(BaseUnitEntity unit)
 	{
 		List<Buff> list = unit.Buffs.RawFacts;
-		Dictionary<BlueprintBuff, List<Buff>> dictionary = new Dictionary<BlueprintBuff, List<Buff>>();
 		if (!(unit.Blueprint is BlueprintStarship))
 		{
 			list = list.Where((Buff b) => !b.Blueprint.IsStarshipBuff).ToList();
 		}
+		List<TooltipBrickBuff> list2 = (from b in list
+			where !b.Hidden && !b.Blueprint.NeedCollapseStack
+			select b into buff
+			select new TooltipBrickBuff(buff, GetGroup(buff))).ToList();
+		Dictionary<BlueprintBuff, List<Buff>> dictionary = new Dictionary<BlueprintBuff, List<Buff>>();
 		foreach (Buff item in list)
 		{
-			if (item.Blueprint.NeedCollapseStack)
+			if (!item.Hidden && item.Blueprint.NeedCollapseStack)
 			{
-				dictionary.TryAdd(item.Blueprint, new List<Buff>());
+				if (!dictionary.TryGetValue(item.Blueprint, out var value))
+				{
+					value = (dictionary[item.Blueprint] = new List<Buff>());
+				}
+				value.Add(item);
 			}
 		}
-		foreach (KeyValuePair<BlueprintBuff, List<Buff>> kvp in dictionary)
-		{
-			List<Buff> collection = list.Where((Buff b) => b.Blueprint == kvp.Key && !b.Blueprint.IsHiddenInUI).ToList();
-			if (dictionary.TryGetValue(kvp.Key, out var value))
-			{
-				value.AddRange(collection);
-			}
-		}
-		List<TooltipBrickBuff> list2 = list.Where((Buff b) => !b.Blueprint.IsHiddenInUI && !b.Blueprint.NeedCollapseStack).Select(delegate(Buff buff)
-		{
-			BuffUIGroup group2 = ((!buff.Blueprint.IsDOTVisual) ? (unit.IsEnemy(buff.Context.MaybeCaster) ? BuffUIGroup.Enemy : BuffUIGroup.Ally) : BuffUIGroup.DOT);
-			return new TooltipBrickBuff(buff, group2);
-		}).ToList();
 		foreach (KeyValuePair<BlueprintBuff, List<Buff>> item2 in dictionary)
 		{
 			Buff buff2 = item2.Value.FirstOrDefault();
 			if (buff2 != null)
 			{
-				BuffUIGroup group = ((!buff2.Blueprint.IsDOTVisual) ? (unit.IsEnemy(buff2.Context.MaybeCaster) ? BuffUIGroup.Enemy : BuffUIGroup.Ally) : BuffUIGroup.DOT);
-				list2.Add(new TooltipBrickBuff(buff2, group, item2.Value));
+				list2.Add(new TooltipBrickBuff(buff2, GetGroup(buff2), item2.Value));
 			}
 		}
 		return list2;
+		BuffUIGroup GetGroup(Buff buff)
+		{
+			if (buff.Blueprint.IsDOTVisual)
+			{
+				return BuffUIGroup.DOT;
+			}
+			if (!unit.IsEnemy(buff.Context.MaybeCaster))
+			{
+				return BuffUIGroup.Ally;
+			}
+			return BuffUIGroup.Enemy;
+		}
 	}
 
 	public static ReactiveCollection<ITooltipBrick> GetBuffsTooltipBricks(BaseUnitEntity unit)
@@ -121,13 +127,13 @@ public class InspectExtensions
 		}
 		foreach (KeyValuePair<BlueprintBuff, List<Buff>> kvp in dictionary)
 		{
-			List<Buff> collection = list.Where((Buff b) => b.Blueprint == kvp.Key && !b.Blueprint.IsHiddenInUI).ToList();
+			List<Buff> collection = list.Where((Buff b) => b.Blueprint == kvp.Key && !b.Hidden).ToList();
 			if (dictionary.TryGetValue(kvp.Key, out var value))
 			{
 				value.AddRange(collection);
 			}
 		}
-		ReactiveCollection<ITooltipBrick> reactiveCollection = list.Where((Buff b) => !b.Blueprint.IsHiddenInUI && !b.Blueprint.NeedCollapseStack).Select((Func<Buff, ITooltipBrick>)delegate(Buff buff)
+		ReactiveCollection<ITooltipBrick> reactiveCollection = list.Where((Buff b) => !b.Hidden && !b.Blueprint.NeedCollapseStack).Select((Func<Buff, ITooltipBrick>)delegate(Buff buff)
 		{
 			BuffUIGroup group2 = ((!buff.Blueprint.IsDOTVisual) ? (unit.IsEnemy(buff.Context.MaybeCaster) ? BuffUIGroup.Enemy : BuffUIGroup.Ally) : BuffUIGroup.DOT);
 			return new TooltipBrickBuff(buff, group2);

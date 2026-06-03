@@ -68,9 +68,13 @@ public abstract class BaseSurfaceUnitMark : BaseUnitMark, IUnitDirectHoverUIHand
 
 	private void CheckAndStartAbilitySelectionAnimation(AbilityData ability)
 	{
-		if (ability.Weapon == null && !ability.IsAOE)
+		if (ability.Weapon != null || ability.IsAOE)
 		{
-			TargetWrapper targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(base.Unit.View.gameObject, Game.Instance.ClickEventsController.WorldPosition);
+			return;
+		}
+		TargetWrapper targetForDesiredPosition = Game.Instance.SelectedAbilityHandler.GetTargetForDesiredPosition(base.Unit.View.gameObject, Game.Instance.ClickEventsController.WorldPosition);
+		if (!(targetForDesiredPosition == null))
+		{
 			m_CanTarget = ability.CanTargetFromDesiredPosition(targetForDesiredPosition, out var _);
 			if (m_CanTarget)
 			{

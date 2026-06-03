@@ -10,5 +10,6 @@ public enum ServiceWindowsType
 	Encyclopedia,
 	ShipCustomization,
 	ColonyManagement,
-	CargoManagement
+	CargoManagement,
+	Augmentations
 }

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
-[ComponentName("Add condition")]
+[ComponentName("ReplaceBonusDamageStat")]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [AllowedOn(typeof(BlueprintUnit))]
 [AllowMultipleComponents]

@@ -60,6 +60,30 @@ public enum Authors
 	[Description("dmitriev")]
 	[DescriptionEmail("<dmitriev@owlcat.games>")]
 	IgorDmitriev = 14,
+	[InspectorName("LD/AndreyRepin")]
+	[Description("a.repin")]
+	[DescriptionEmail("<a.repin@owlcat.games>")]
+	AndreyRepin = 15,
+	[InspectorName("LD/TatyanaShalganova")]
+	[Description("t.shalganova")]
+	[DescriptionEmail("<t.shalganova@owlcat.games>")]
+	TatyanaShalganova = 16,
+	[InspectorName("LD/DmitryEmelyanov")]
+	[Description("d.emelyanov")]
+	[DescriptionEmail("<d.emelyanov@owlcat.games>")]
+	DmitryEmelyanov = 17,
+	[InspectorName("LD/AlexeyBelykov")]
+	[Description("belyakov")]
+	[DescriptionEmail("<a.belyakov@owlcat.games>")]
+	AlexeyBelykov = 18,
+	[InspectorName("LD/RomanLebedev")]
+	[Description("lebedev")]
+	[DescriptionEmail("<r.lebedev@owlcat.games>")]
+	RomanLebedev = 19,
+	[InspectorName("LD/DmitryNedostup")]
+	[Description("nedostup")]
+	[DescriptionEmail("<d.nedostup@owlcat.games>")]
+	DmitryNedostup = 20,
 	[InspectorName("GD/AlexanderGusev")]
 	[Description("a.gusev")]
 	[DescriptionEmail("<a.gusev@owlcat.games>")]
@@ -100,10 +124,10 @@ public enum Authors
 	[Description("dzhalilov")]
 	[DescriptionEmail("<dzhalilov@owlcat.games>")]
 	AmirDzhalilov = 109,
-	[InspectorName("GD/YuriyElburih")]
+	[InspectorName("GD/Loogris")]
 	[Description("elburih")]
 	[DescriptionEmail("<elburih@owlcat.games>")]
-	YuriyElburih = 110,
+	Loogris = 110,
 	[InspectorName("GD/VasiliiArkhiplovLinev")]
 	[Description("arhipovlinev")]
 	[DescriptionEmail("<arhipovlinev@owlcat.games>")]
@@ -120,6 +144,26 @@ public enum Authors
 	[Description("solyannikov")]
 	[DescriptionEmail("<solyannikov@owlcat.games>")]
 	VladislavSolyannikov = 114,
+	[InspectorName("GD/Semyon Stenyugin")]
+	[Description("stenyugin")]
+	[DescriptionEmail("<s.stenyugin@owlcat.games>")]
+	SemyonStenyugin = 115,
+	[InspectorName("GD/Andrei Sverkunov")]
+	[Description("sverkunov")]
+	[DescriptionEmail("<sverkunov@owlcat.games>")]
+	AndreiSverkunov = 116,
+	[InspectorName("GD/Egor Mishenko")]
+	[Description("e.mishchenko")]
+	[DescriptionEmail("<e.mishchenko@owlcat.games>")]
+	EgorMishenko = 117,
+	[InspectorName("GD/Nikolai Vechkilev")]
+	[Description("vechkilev")]
+	[DescriptionEmail("<vechkilev@owlcat.games>")]
+	NikolaiVechkilev = 118,
+	[InspectorName("GD/DenisOrlov")]
+	[Description("d.orlov")]
+	[DescriptionEmail("<d.orlov@owlcat.games>")]
+	DenisOrlov = 119,
 	[InspectorName("SD/KonstantinKuzenkov")]
 	[Description("kuzenkov")]
 	[DescriptionEmail("<kuzenkov@owlcat.games>")]
@@ -171,5 +215,29 @@ public enum Authors
 	[InspectorName("ND/MargaritaBeleckaya")]
 	[Description("beleckaya")]
 	[DescriptionEmail("<beleckaya@owlcat.games>")]
-	MargaritaBeleckaya = 307
+	MargaritaBeleckaya = 307,
+	[InspectorName("ND/Sergey Timoshkin")]
+	[Description("s.timoshkin")]
+	[DescriptionEmail("<s.timoshkin@owlcat.games>")]
+	SergeyTimoshkin = 308,
+	[InspectorName("ND/Valentina Vetrova")]
+	[Description("v.vetrova")]
+	[DescriptionEmail("<v.vetrova@owlcat.games>")]
+	ValentinaVetrova = 309,
+	[InspectorName("ND/KseniyaRubanova")]
+	[Description("k.rubanova")]
+	[DescriptionEmail("<k.rubanova@owlcat.games>")]
+	KseniyaRubanova = 310,
+	[InspectorName("CD/DenisPak")]
+	[Description("d.pak")]
+	[DescriptionEmail("<d.pak@owlcat.games>")]
+	DenisPak = 400,
+	[InspectorName("CD/NikitaNazarenko")]
+	[Description("n.nazarenko")]
+	[DescriptionEmail("<n.nazarenko@owlcat.games>")]
+	NikitaNazarenko = 401,
+	[InspectorName("CD/ArseniyKozachenko")]
+	[Description("a.kozachenko")]
+	[DescriptionEmail("<a.kozachenko@owlcat.games>")]
+	ArseniyKozachenko = 402
 }

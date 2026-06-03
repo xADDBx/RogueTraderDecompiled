@@ -8,15 +8,15 @@ public class BodyGuardStrategy : AiStrategy
 {
 	public override BehaviourTreeNode CreateBehaviourTree()
 	{
-		return new Sequence(new Sequence(new Condition((Blackboard b) => b.DecisionContext.Unit.Brain.IsHoldingPosition, new Sequence(new AsyncTaskNodeCreateMoveVariants(50), TaskNodeSetupMoveCommand.ToHoldPosition()), new Sequence(new TaskNodeExecute(delegate(Blackboard b)
+		return new Sequence(new Sequence(new Condition("Удерживает ли юнит позицию?\n", (Blackboard b) => b.DecisionContext.Unit.Brain.IsHoldingPosition, "Unit.Brain.IsHoldingPosition", new Sequence(new AsyncTaskNodeCreateMoveVariants("Рассчет возможных путей на бюджет в 50 МП\n", 50), TaskNodeSetupMoveCommand.ToHoldPosition("Построение пути к удерживаемой позиции\n")), new Sequence(new TaskNodeExecute("Очистка рассматриваемой абилки\n", delegate(Blackboard b)
 		{
 			b.DecisionContext.ConsideringAbility = null;
-		}), new Sequence(new AsyncTaskNodeCreateMoveVariants(50), new TaskNodeFindBetterPlace(new AttackEffectivenessTileScorer()), TaskNodeSetupMoveCommand.ToBetterPosition()))), new Sequence(new TaskNodeExecuteMoveCommand(), new TaskNodeExecute(delegate(Blackboard b)
+		}, "ConsideringAbility = null"), new Sequence(new AsyncTaskNodeCreateMoveVariants("Рассчет возможных путей на бюджет в 50 МП\n", 50), new TaskNodeFindBetterPlace("Построение пути к лучшей позиции\n", new AttackEffectivenessTileScorer()), TaskNodeSetupMoveCommand.ToBetterPosition("Построение пути к лучшей позиции\n")))), new Sequence("Движение и трата всех МП\n", new TaskNodeExecuteMoveCommand("Выполнение команды движения\n"), new TaskNodeExecute("Трата всех МП юнита\n", delegate(Blackboard b)
 		{
 			b.DecisionContext.Unit.CombatState.SpendActionPointsAll(yellow: false, blue: true);
-		}), new TaskNodeWaitCommandsDone()), new Selector(new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.None), new TaskNodeCastAbility()), new Sequence(new TaskNodeSelectAbilityTarget(CastTimepointType.AfterMove), new TaskNodeCastAbility()), new TaskNodeTryFinishTurn())))
+		}, "Spend all move points of current unit"), new TaskNodeWaitCommandsDone("Ожидание завершения команд\n")), new Selector("Выбор цели и каст абилки без перемещения или после него\n", new Sequence("Выбор цели и каст абилки\n", new TaskNodeSelectAbilityTarget("Выбор цели для абилки\n", CastTimepointType.None), new TaskNodeCastAbility("Каст абилки\n")), new Sequence("Выбор цели и каст абилки после движения\n", new TaskNodeSelectAbilityTarget("Выбор цели для абилки после движения\n", CastTimepointType.AfterMove), new TaskNodeCastAbility("Каст абилки после перемещения\n")), new TaskNodeTryFinishTurn("Попытка завершить ход\n"))))
 		{
-			DebugName = "BodyGuardTree"
+			DebugName = "Субдерево - стратегия режима телохранителя"
 		};
 	}
 }

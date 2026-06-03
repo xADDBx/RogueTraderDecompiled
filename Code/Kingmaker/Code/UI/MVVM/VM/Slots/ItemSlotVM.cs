@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Cargo;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu;
@@ -67,6 +68,8 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 	public readonly ReactiveProperty<bool> PossibleTarget = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<bool> IsFavorite = new ReactiveProperty<bool>(initialValue: false);
+
+	public readonly ReactiveProperty<bool> IsLocked = new ReactiveProperty<bool>(initialValue: false);
 
 	public readonly ReactiveProperty<List<TooltipBaseTemplate>> Tooltip = new ReactiveProperty<List<TooltipBaseTemplate>>();
 
@@ -291,7 +294,29 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 		}
 		if (m_CompareEnabled && GetType() == typeof(ItemSlotVM) && !IsUsable.Value)
 		{
-			List<ItemSlot> list2 = ((ItemEntity.Origin != ItemsItemOrigin.ShipComponents) ? Game.Instance.SelectionCharacter.SelectedUnitInUI.Value?.Body.EquipmentSlots.Where(IsSlotAllowedToCompare).EmptyIfNull().ToList() : Game.Instance.Player.PlayerShip?.Hull.HullSlots.EquipmentSlots.Where(IsSlotAllowedToCompare).EmptyIfNull().ToList());
+			List<ItemSlot> list2 = new List<ItemSlot>();
+			if (ItemEntity.Origin == ItemsItemOrigin.ShipComponents)
+			{
+				BaseUnitEntity playerShip = Game.Instance.Player.PlayerShip;
+				list2 = ((StarshipEntity)playerShip)?.Hull.HullSlots.EquipmentSlots.Where(IsSlotAllowedToCompare).EmptyIfNull().ToList();
+			}
+			else
+			{
+				BaseUnitEntity playerShip = Game.Instance.SelectionCharacter.SelectedUnitInUI.Value;
+				if (ItemEntity.Blueprint is BlueprintItemAugment)
+				{
+					PartUnitBody partUnitBody = playerShip?.GetOptional<PartUnitBody>();
+					if (partUnitBody != null)
+					{
+						list2 = partUnitBody.Augments.Slots.Values.Select((Func<AugmentSlot, ItemSlot>)((AugmentSlot s) => s)).Where(IsSlotAllowedToCompare).EmptyIfNull()
+							.ToList();
+					}
+				}
+				else
+				{
+					list2 = playerShip?.Body.EquipmentSlots.Where(IsSlotAllowedToCompare).EmptyIfNull().ToList();
+				}
+			}
 			if (list2 != null && list2.Count > 2)
 			{
 				list2 = list2.Where((ItemSlot i) => i.Active).ToList();
@@ -355,21 +380,19 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 
 	private bool GetCanUse()
 	{
-		if (ItemEntity != null)
+		if (ItemEntity == null)
 		{
-			_ = ItemEntity.Blueprint.IsNotable;
+			return false;
 		}
-		else
-			_ = 0;
-		if (ItemEntity != null)
+		if (UIUtilityItem.IsTargetEquipmentSlotLocked(ItemEntity))
 		{
-			if (!UIUtilityItem.GetEquipPosibility(ItemEntity)[0] && ItemEntity.Blueprint.ItemType != ItemsItemType.Other && ItemEntity.Blueprint.ItemType != ItemsItemType.NonUsable && ItemEntity.Blueprint.ItemType != ItemsItemType.ColonyFoundation)
-			{
-				return ItemEntity.Blueprint.ItemType == ItemsItemType.ResourceMiner;
-			}
-			return true;
+			return false;
 		}
-		return false;
+		if (!UIUtilityItem.GetEquipPosibility(ItemEntity)[0] && ItemEntity.Blueprint.ItemType != ItemsItemType.Other && ItemEntity.Blueprint.ItemType != ItemsItemType.NonUsable && ItemEntity.Blueprint.ItemType != ItemsItemType.ColonyFoundation)
+		{
+			return ItemEntity.Blueprint.ItemType == ItemsItemType.ResourceMiner;
+		}
+		return true;
 	}
 
 	private bool GetIsUsable()

@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic.Parts;
@@ -16,6 +17,8 @@ public class ContextActionPush : ContextAction
 {
 	private const int MaxAnimatedCells = 5;
 
+	private const float CoincidentPositionThresholdSqr = 0.0001f;
+
 	[InfoBox("Max Range is 5")]
 	public ContextValue Cells;
 
@@ -26,6 +29,10 @@ public class ContextActionPush : ContextAction
 
 	[SerializeField]
 	private bool m_PushBack;
+
+	[SerializeField]
+	[InfoBox("Push the target sideways (perpendicular to the caster's facing). Side is chosen randomly per push.")]
+	private bool m_PushPerpendicular;
 
 	public override string GetCaption()
 	{
@@ -68,10 +75,17 @@ public class ContextActionPush : ContextAction
 				return target.Position + (target.Position - optional.PreviousPosition).normalized;
 			}
 		}
-		if (!m_UseFactOwnerAsCaster)
+		MechanicEntity mechanicEntity = (m_UseFactOwnerAsCaster ? base.Context.MaybeOwner : base.Caster);
+		if (m_PushPerpendicular && mechanicEntity is AbstractUnitEntity abstractUnitEntity)
 		{
-			return base.Caster.Position;
+			Vector3 vector = ((abstractUnitEntity.Random.Range(0, 2) == 0) ? mechanicEntity.Right : (-mechanicEntity.Right));
+			return target.Position - vector;
 		}
-		return base.Context.MaybeOwner.Position;
+		Vector3 vector2 = mechanicEntity.Position;
+		if ((target.Position - vector2).sqrMagnitude < 0.0001f)
+		{
+			vector2 = target.Position - mechanicEntity.Forward;
+		}
+		return vector2;
 	}
 }

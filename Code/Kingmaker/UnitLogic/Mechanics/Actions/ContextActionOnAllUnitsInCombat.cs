@@ -6,6 +6,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
@@ -18,6 +19,13 @@ namespace Kingmaker.UnitLogic.Mechanics.Actions;
 [TypeId("7b1d3a11c0f4426a8584738997ebc207")]
 public class ContextActionOnAllUnitsInCombat : ContextAction
 {
+	public enum StatFilterTypeEnum
+	{
+		None,
+		Lowest,
+		Highest
+	}
+
 	public bool OnlyEnemies = true;
 
 	[HideIf("OnlyEnemies")]
@@ -48,6 +56,11 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 
 	public bool IncludeUntargetable;
 
+	public StatFilterTypeEnum StatFilter;
+
+	[ShowIf("ShowStatField")]
+	public StatType Stat;
+
 	public ReferenceArrayProxy<BlueprintUnitFact> FilterNoFacts
 	{
 		get
@@ -65,6 +78,8 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 			return filterHaveAnyFact;
 		}
 	}
+
+	private bool ShowStatField => StatFilter != StatFilterTypeEnum.None;
 
 	public override string GetCaption()
 	{
@@ -111,6 +126,7 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 		{
 			list = list.Where((BaseUnitEntity unit) => unit.Facts.Contains((EntityFact fact) => FilterHaveAnyFact.Contains(fact.Blueprint))).ToList();
 		}
+		list = FilterTargetsByStat(list);
 		if (list.Count <= 0)
 		{
 			return;
@@ -131,5 +147,41 @@ public class ContextActionOnAllUnitsInCombat : ContextAction
 				Actions.Run();
 			}
 		}
+	}
+
+	private List<BaseUnitEntity> FilterTargetsByStat(List<BaseUnitEntity> targets)
+	{
+		switch (StatFilter)
+		{
+		case StatFilterTypeEnum.Lowest:
+		{
+			int lowest = int.MaxValue;
+			foreach (BaseUnitEntity target in targets)
+			{
+				int num2 = target.Stats.GetStat(Stat);
+				if (num2 < lowest)
+				{
+					lowest = num2;
+				}
+			}
+			targets.RemoveAll((BaseUnitEntity p) => (int)p.Stats.GetStat(Stat) > lowest);
+			break;
+		}
+		case StatFilterTypeEnum.Highest:
+		{
+			int highest = 0;
+			foreach (BaseUnitEntity target2 in targets)
+			{
+				int num = target2.Stats.GetStat(Stat);
+				if (num > highest)
+				{
+					highest = num;
+				}
+			}
+			targets.RemoveAll((BaseUnitEntity p) => (int)p.Stats.GetStat(Stat) < highest);
+			break;
+		}
+		}
+		return targets;
 	}
 }

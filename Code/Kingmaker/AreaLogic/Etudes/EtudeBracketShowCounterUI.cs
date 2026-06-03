@@ -19,7 +19,7 @@ public class EtudeBracketShowCounterUI : EtudeBracketTrigger, IHashable
 
 	public bool ShowSubLabel;
 
-	[ConditionalShow("ShowSubLabel")]
+	[ShowIf("ShowSubLabel")]
 	public LocalizedString SubLabel;
 
 	public PropertyCalculator Value;

@@ -77,7 +77,7 @@ public class BlueprintMultiEntranceEntry : BlueprintScriptableObject
 			{
 				continue;
 			}
-			foreach (QuestObjective objective in quest.Objectives)
+			foreach (QuestBookEntityEntry objective in quest.Objectives)
 			{
 				QuestObjectiveState state2 = objective.State;
 				if (state2 == QuestObjectiveState.Completed || state2 == QuestObjectiveState.Failed || state2 == QuestObjectiveState.None || objective.Blueprint.MultiEntranceEntries == null || !objective.IsActive || !objective.IsVisible)

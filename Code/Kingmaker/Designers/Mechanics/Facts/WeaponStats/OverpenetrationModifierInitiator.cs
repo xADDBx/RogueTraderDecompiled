@@ -4,7 +4,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules;
-using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Progression.Features;
 using StateHasher.Core;
@@ -16,24 +15,15 @@ namespace Kingmaker.Designers.Mechanics.Facts.WeaponStats;
 [AllowedOn(typeof(BlueprintFeature))]
 [AllowedOn(typeof(BlueprintBuff))]
 [TypeId("9f491e61b52742b2b04cc7b0fb35f9c0")]
-public class OverpenetrationModifierInitiator : OverpenetrationModifier, IInitiatorRulebookHandler<RuleCalculateStatsWeapon>, IRulebookHandler<RuleCalculateStatsWeapon>, ISubscriber, IInitiatorRulebookSubscriber, IInitiatorRulebookHandler<RuleCalculateDamage>, IRulebookHandler<RuleCalculateDamage>, IHashable
+public class OverpenetrationModifierInitiator : OverpenetrationModifier, IInitiatorRulebookHandler<RuleCalculateOverpenetration>, IRulebookHandler<RuleCalculateOverpenetration>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
 {
-	public void OnEventAboutToTrigger(RuleCalculateStatsWeapon rule)
+	public void OnEventAboutToTrigger(RuleCalculateOverpenetration rule)
 	{
 		Apply(rule);
 	}
 
-	public void OnEventDidTrigger(RuleCalculateStatsWeapon evt)
+	public void OnEventDidTrigger(RuleCalculateOverpenetration evt)
 	{
-	}
-
-	public void OnEventAboutToTrigger(RuleCalculateDamage rule)
-	{
-	}
-
-	public void OnEventDidTrigger(RuleCalculateDamage rule)
-	{
-		ApplyOverpenIgnoreDecreament(rule);
 	}
 
 	public override Hash128 GetHash128()

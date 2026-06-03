@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Kingmaker.Code.UI.MVVM.VM.Bark;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.MVVM;
@@ -14,6 +15,12 @@ public class StarSystemSpaceBarksHolderBaseView<TStarSystemSpaceBarkView> : View
 	[SerializeField]
 	private CanvasGroup m_CanvasGroup;
 
+	[SerializeField]
+	private float m_HideDelay = 3f;
+
+	[SerializeField]
+	private float m_FadeDuration = 0.5f;
+
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(base.ViewModel.BarksVMs.ObserveAdd().Subscribe(delegate(CollectionAddEvent<StarSystemSpaceBarkVM> value)
@@ -21,6 +28,10 @@ public class StarSystemSpaceBarksHolderBaseView<TStarSystemSpaceBarkView> : View
 			AddBarkView(value.Value);
 		}));
 		AddDisposable(base.ViewModel.IsVisible.Subscribe(SetVisibility));
+		AddDisposable(base.ViewModel.BlockHideRequested.Subscribe(delegate
+		{
+			StartBlockHide();
+		}));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -41,6 +52,15 @@ public class StarSystemSpaceBarksHolderBaseView<TStarSystemSpaceBarkView> : View
 
 	private void SetVisibility(bool value)
 	{
+		m_CanvasGroup.DOKill();
 		m_CanvasGroup.alpha = (value ? 1f : 0f);
+	}
+
+	private void StartBlockHide()
+	{
+		DOVirtual.DelayedCall(m_HideDelay, delegate
+		{
+			m_CanvasGroup.DOFade(0f, m_FadeDuration).SetUpdate(isIndependentUpdate: true).SetAutoKill(autoKillOnCompletion: true);
+		}).SetUpdate(isIndependentUpdate: true);
 	}
 }

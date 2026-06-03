@@ -10,6 +10,7 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.UnitSettings;
 using Kingmaker.UnitLogic.Abilities;
 using Owlcat.Runtime.UI.Utility;
@@ -19,13 +20,17 @@ using UnityEngine;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber, ITurnBasedModeHandler, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler
+public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActionBarPartAbilitiesHandler, ISubscriber, IClickMechanicActionBarSlotHandler, IEntityGainFactHandler, ISubscriber<IMechanicEntity>, IEntityLostFactHandler, IEntitySubscriber, ITurnBasedModeHandler, ICanAccessServiceWindowsHandler, ICanAccessSelectedWindowsHandler, IFullScreenUIHandler, IUnitOverdriveAugmentHandler
 {
 	public readonly bool IsInCharScreen;
 
 	public readonly AutoDisposingList<ActionBarSlotVM> Slots = new AutoDisposingList<ActionBarSlotVM>();
 
+	public ActionBarSlotVM OverdriveSlotVM;
+
 	public readonly ReactiveCommand SlotCountChanged = new ReactiveCommand();
+
+	public readonly ReactiveCommand AugmentationsOverdriveAbilityChanged = new ReactiveCommand();
 
 	public readonly ReactiveProperty<ActionBarSlotVM> ChooseAbilitySlot = new ReactiveProperty<ActionBarSlotVM>();
 
@@ -78,6 +83,7 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 	{
 		IsInCharScreen = isInCharScreen;
 		IsNotControllableCharacter = isNotControllableCharacter;
+		OverdriveSlotVM = new ActionBarSlotVM(new MechanicActionBarSlotEmpty());
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -97,6 +103,7 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 			ActionBarSlotVM item = new ActionBarSlotVM(Unit.Entity.UISettings.GetSlot(i, Unit.Entity), i, IsInCharScreen, MoveAbilityMode);
 			Slots.Add(item);
 		}
+		OverdriveSlotVM = new ActionBarSlotVM(Unit.Entity.UISettings.GetAugmentsOverdriveSlotSlot());
 	}
 
 	private void UpdateSlots()
@@ -119,6 +126,7 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 			ActionBarSlotVM item = new ActionBarSlotVM(slot, i, IsInCharScreen, MoveAbilityMode);
 			Slots.Add(item);
 		}
+		OverdriveSlotVM?.UpdateResources();
 		if (Slots.Count > count)
 		{
 			Slots.RemoveRangeAndDispose(count, Slots.Count - count);
@@ -131,6 +139,7 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 
 	protected override void ClearSlots()
 	{
+		OverdriveSlotVM = null;
 		Slots.Clear();
 	}
 
@@ -301,5 +310,28 @@ public class SurfaceActionBarPartAbilitiesVM : SurfaceActionBarBasePartVM, IActi
 	public void HandleSelectedWindowsBlocked()
 	{
 		CheckServiceWindowsBlocked.Execute();
+	}
+
+	public void HandleFullScreenUiChanged(bool state, FullScreenUIType fullScreenUIType)
+	{
+		AugmentationsOverdriveAbilityChanged.Execute();
+	}
+
+	public void HandleAugmentActivateOverdrive(BaseUnitEntity owner)
+	{
+		if (Unit.Entity == owner)
+		{
+			OverdriveSlotVM = new ActionBarSlotVM(Unit.Entity.UISettings.GetAugmentsOverdriveSlotSlot());
+			AugmentationsOverdriveAbilityChanged.Execute();
+		}
+	}
+
+	public void HandleAugmentDeactivateOverdrive(BaseUnitEntity owner)
+	{
+		if (Unit.Entity == owner)
+		{
+			OverdriveSlotVM = new ActionBarSlotVM(Unit.Entity.UISettings.GetAugmentsOverdriveSlotSlot());
+			AugmentationsOverdriveAbilityChanged.Execute();
+		}
 	}
 }

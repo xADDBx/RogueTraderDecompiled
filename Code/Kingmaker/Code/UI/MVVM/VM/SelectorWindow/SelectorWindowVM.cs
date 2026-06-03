@@ -19,6 +19,8 @@ public class SelectorWindowVM<TEntityVM> : SelectionGroupRadioVM<TEntityVM> wher
 
 	public readonly EquipSlotVM Slot;
 
+	public readonly AugmentationsSlotVM AugmentationsSlot;
+
 	public SelectorWindowVM(Action<TEntityVM> onConfirm, Action onDecline, ReactiveCollection<TEntityVM> entitiesCollection, ReactiveProperty<TEntityVM> entity = null, EquipSlotVM equippedSlot = null)
 		: base(entitiesCollection, entity, cyclical: false)
 	{
@@ -34,6 +36,15 @@ public class SelectorWindowVM<TEntityVM> : SelectionGroupRadioVM<TEntityVM> wher
 		m_OnConfirm = onConfirm;
 		m_OnDecline = onDecline;
 		Slot = equippedSlot;
+		AddDisposable(InfoSectionVM = new InfoSectionVM());
+	}
+
+	public SelectorWindowVM(Action<TEntityVM> onConfirm, Action onDecline, List<TEntityVM> visibleCollection, bool isAugment, ReactiveProperty<TEntityVM> entity = null, AugmentationsSlotVM equippedSlot = null)
+		: base(visibleCollection, entity, cyclical: false)
+	{
+		m_OnConfirm = onConfirm;
+		m_OnDecline = onDecline;
+		AugmentationsSlot = equippedSlot;
 		AddDisposable(InfoSectionVM = new InfoSectionVM());
 	}
 

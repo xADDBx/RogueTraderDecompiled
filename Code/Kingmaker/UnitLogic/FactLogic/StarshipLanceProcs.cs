@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.FactLogic;
 
+[Group("Starship")]
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("7c2b3991e33fb6640b4f4680441de4be")]

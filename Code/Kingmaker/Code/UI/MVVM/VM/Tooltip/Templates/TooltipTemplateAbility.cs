@@ -10,7 +10,6 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.Controllers.Enums;
-using Kingmaker.DLC;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Properties;
@@ -20,6 +19,7 @@ using Kingmaker.Items;
 using Kingmaker.Localization;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Stores;
+using Kingmaker.Stores.DlcInterfaces;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Log.GameLogCntxt;
 using Kingmaker.UI.Models.Tooltip;
@@ -31,6 +31,7 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
+using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Parts;
@@ -239,7 +240,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private void TryAddRetargetableIconBrick(List<ITooltipBrick> result, TooltipTemplateType type)
 	{
-		if (StoreManager.GetPurchasableDLCs().OfType<BlueprintDlc>().FirstOrDefault((BlueprintDlc dlc) => dlc.DlcType == DlcTypeEnum.AdditionalContentDlc && dlc.IsPurchased && dlc.IsEnabled && dlc.name == "DLC2LexImperialis") == null || BlueprintAbility == null)
+		if (!StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC2LexImperialis) || BlueprintAbility == null)
 		{
 			return;
 		}
@@ -394,7 +395,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private string GetCost(AbilityData abilityData)
 	{
-		int cost = abilityData.CalculateActionPointCost();
+		int cost = Math.Max(0, abilityData.CalculateActionPointCost());
 		return GetCost(cost, abilityData.Blueprint);
 	}
 
@@ -457,11 +458,20 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private static IEnumerable<(string, Sprite)> GetTargets(BlueprintAbility blueprintAbility, BlueprintItemWeapon weaponBlueprint)
 	{
-		if (!blueprintAbility.TryGetComponent<IAbilityMultiTarget>(out var component))
+		(string, Sprite)[] result = new(string, Sprite)[1] { (UIUtilityTexts.GetAbilityTarget(blueprintAbility, weaponBlueprint), UIUtilityTexts.GetTargetImage(blueprintAbility)) };
+		if (!blueprintAbility.TryGetComponent<IAbilityGetTooltipTarget>(out var component))
 		{
-			return new(string, Sprite)[1] { (UIUtilityTexts.GetAbilityTarget(blueprintAbility, weaponBlueprint), UIUtilityTexts.GetTargetImage(blueprintAbility)) };
+			return result;
 		}
-		return component.GetAllTargetsForTooltip(new AbilityData(blueprintAbility, UIUtility.GetCurrentSelectedUnit())).Select(AbilityToTargetInfo);
+		if (!(component is IAbilityGetAllTargetsForTooltip abilityGetAllTargetsForTooltip))
+		{
+			if (component is IAbilityGetFirstSingleTargetForTooltip abilityGetFirstSingleTargetForTooltip)
+			{
+				return abilityGetFirstSingleTargetForTooltip.TooltipSingleTarget(new AbilityData(blueprintAbility, UIUtility.GetCurrentSelectedUnit())).Select(AbilityToTargetInfo);
+			}
+			return result;
+		}
+		return abilityGetAllTargetsForTooltip.TooltipMultipleTargets(new AbilityData(blueprintAbility, UIUtility.GetCurrentSelectedUnit())).Select(AbilityToTargetInfo);
 	}
 
 	private static IEnumerable<(string, Sprite)> GetTargets(AbilityData abilityData)
@@ -476,11 +486,20 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private static IEnumerable<AbilityData> GetTargetsFromAbility(AbilityData abilityData)
 	{
-		if (!abilityData.Blueprint.TryGetComponent<IAbilityMultiTarget>(out var component))
+		AbilityData[] result = new AbilityData[1] { abilityData };
+		if (!abilityData.Blueprint.TryGetComponent<IAbilityGetTooltipTarget>(out var component))
 		{
-			return new AbilityData[1] { abilityData };
+			return result;
 		}
-		return component.GetAllTargetsForTooltip(abilityData);
+		if (!(component is IAbilityGetAllTargetsForTooltip abilityGetAllTargetsForTooltip))
+		{
+			if (component is IAbilityGetFirstSingleTargetForTooltip abilityGetFirstSingleTargetForTooltip)
+			{
+				return abilityGetFirstSingleTargetForTooltip.TooltipSingleTarget(abilityData);
+			}
+			return result;
+		}
+		return abilityGetAllTargetsForTooltip.TooltipMultipleTargets(abilityData);
 	}
 
 	private void AddTargets(List<ITooltipBrick> bricks)
@@ -647,13 +666,17 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 
 	private void AddAttackOfOpportunity(List<ITooltipBrick> bricks)
 	{
-		if (!(AbilityData == null) && ((BaseUnitEntity)AbilityData.Caster).CalculateAttackOfOpportunity(AbilityData).Count() != 0)
+		if (!(AbilityData == null))
 		{
-			bricks.Add(new TooltipBrickAttackOfOpportunityPaper());
+			BaseUnitEntity entity = (BaseUnitEntity)AbilityData.Caster;
+			if (AbilityData.UsingInThreateningArea == BlueprintAbility.UsingInThreateningAreaType.WillCauseAOO && (!entity.HasMechanicFeature(MechanicsFeatureType.PsychicPowersDoNotProvokeAoO) || AbilityData.Blueprint.AbilityParamsSource != WarhammerAbilityParamsSource.PsychicPower))
+			{
+				bricks.Add(new TooltipBrickAttackOfOpportunityPaper());
+			}
 		}
 	}
 
-	protected virtual void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type)
+	protected virtual void AddDescription(List<ITooltipBrick> bricks, TooltipTemplateType type, bool isPreview = false)
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
@@ -674,7 +697,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 					description = TooltipTemplateUtils.AggregateDescription(description, TooltipTemplateUtils.GetAdditionalDescription(BlueprintAbility));
 					if (!string.IsNullOrEmpty(description))
 					{
-						description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, PreviewEntity);
+						description = UIUtilityTexts.UpdateDescriptionWithUIProperties(description, PreviewEntity, isPreview);
 						description = UpdateDescriptionWithUICommonProperties(description);
 						bricks.Add(new TooltipBrickText(description, TooltipTextType.Paragraph, isHeader: false, TooltipTextAlignment.Midl, needChangeSize: false, 18, PreviewEntity));
 					}

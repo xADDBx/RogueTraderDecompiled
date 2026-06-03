@@ -34,7 +34,7 @@ public class ExpandableTitleView : VirtualListElementViewBase<ExpandableTitleVM>
 	[SerializeField]
 	private bool m_HasNavigation = true;
 
-	[ConditionalShow("m_HasNavigation")]
+	[ShowIf("m_HasNavigation")]
 	[SerializeField]
 	private OwlcatMultiButton m_ConsoleFocusButton;
 

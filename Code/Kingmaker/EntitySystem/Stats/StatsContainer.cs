@@ -200,10 +200,16 @@ public class StatsContainer : IHashable
 
 	public StatType GetBaseStatType(StatType stat)
 	{
-		Dictionary<StatType, StatType> overridenBaseStat = Owner.GetRequired<PartStatsContainer>().OverridenBaseStat;
+		IReadOnlyDictionary<StatType, List<PartStatsContainer.StatOverrideData>> overridenBaseStat = Owner.GetRequired<PartStatsContainer>().OverridenBaseStat;
 		if (overridenBaseStat != null && overridenBaseStat.ContainsKey(stat))
 		{
-			return overridenBaseStat[stat].TryGetOverride(Owner);
+			foreach (PartStatsContainer.StatOverrideData item in overridenBaseStat[stat])
+			{
+				if (item.CanBeUsed(Owner))
+				{
+					return item.OverrideType.TryGetOverride(Owner);
+				}
+			}
 		}
 		if (!BaseTypes[(int)stat].HasValue)
 		{
@@ -236,10 +242,16 @@ public class StatsContainer : IHashable
 		return (TModifiableValue)obj;
 		TModifiableValue TryGetOverridenBaseType()
 		{
-			Dictionary<StatType, StatType> overridenBaseStat = Owner.GetRequired<PartStatsContainer>().OverridenBaseStat;
+			IReadOnlyDictionary<StatType, List<PartStatsContainer.StatOverrideData>> overridenBaseStat = Owner.GetRequired<PartStatsContainer>().OverridenBaseStat;
 			if (overridenBaseStat != null && overridenBaseStat.ContainsKey(type))
 			{
-				return GetStatOptional<TModifiableValue>(overridenBaseStat[type]);
+				foreach (PartStatsContainer.StatOverrideData item in overridenBaseStat[type])
+				{
+					if (item.CanBeUsed(Owner))
+					{
+						return GetStatOptional<TModifiableValue>(item.OverrideType);
+					}
+				}
 			}
 			return null;
 		}
@@ -318,7 +330,8 @@ public class StatsContainer : IHashable
 	[CanBeNull]
 	public ModifiableValue GetStatOptional(StatType type)
 	{
-		return m_Container.Get((int)type.TryGetOverride(Owner));
+		int index = (int)type.TryGetOverride(Owner);
+		return m_Container.Get(index);
 	}
 
 	[CanBeNull]

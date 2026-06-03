@@ -45,7 +45,7 @@ public class SystemMapSpaceResourceView : ColonyResourceBaseView, IConsoleNaviga
 		AddDisposable(base.ViewModel.CountAdditional.Subscribe(SetCountAdditional));
 		AddDisposable(base.ViewModel.Count.Subscribe(delegate(int val)
 		{
-			AddDisposable(m_BackgroundImage.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, val), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace)));
+			AddDisposable(m_BackgroundImage.SetTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, val, base.ViewModel), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace)));
 		}));
 		AddDisposable(base.ViewModel.IsNegative.Subscribe(SetNegativeEffect));
 		SetRandomPins();
@@ -103,7 +103,7 @@ public class SystemMapSpaceResourceView : ColonyResourceBaseView, IConsoleNaviga
 		m_Selectable.SetFocus(value);
 		if (value)
 		{
-			this.ShowTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, base.ViewModel.Count.Value), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace));
+			this.ShowTooltip(new TooltipTemplateColonyResource(base.ViewModel.BlueprintResource.Value, base.ViewModel.Count.Value, base.ViewModel), new TooltipConfig(InfoCallPCMethod.RightMouseButton, InfoCallConsoleMethod.LongRightStickButton, isGlossary: false, isEncyclopedia: false, m_TooltipPlace));
 		}
 	}
 

@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -31,14 +30,6 @@ public class BlueprintStarshipAmmo : BlueprintItemEquipment
 	public BlueprintBuffReference[] CriticalHitEffects;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipAmmo;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 
 	public BlueprintProjectile ShotProjectile => m_ShotProjectile?.Get();
 }

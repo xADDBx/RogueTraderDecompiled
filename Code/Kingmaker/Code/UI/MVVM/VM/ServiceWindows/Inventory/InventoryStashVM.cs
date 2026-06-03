@@ -48,6 +48,10 @@ public class InventoryStashVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(ItemSlotsGroup));
+			if (Game.Instance.Player.UISettings.InventorySorter != 0)
+			{
+				ItemSlotsGroup.SortItems();
+			}
 			AddDisposable(ObservableExtensions.Subscribe(ItemSlotsGroup.CollectionChangedCommand, delegate
 			{
 				UpdateValues();

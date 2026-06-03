@@ -1,6 +1,9 @@
+using Kingmaker.Blueprints.Items.Augments;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.EntitySystem.Entities;
+using Kingmaker.Items;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -166,6 +169,24 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 			Icon = dataProvider.Icon;
 			IconColor = Color.white;
 		}
+		else if (dataProvider is ItemEntity { Blueprint: BlueprintItemAugment blueprint })
+		{
+			ItemsFilterType augmentType = ItemsFilterType.AugmentationsAll;
+			if (blueprint.NameForAcronym != null && blueprint.NameForAcronym.Contains("Analytics"))
+			{
+				augmentType = ItemsFilterType.AugmentationsEyes;
+			}
+			else if (blueprint.NameForAcronym != null && blueprint.NameForAcronym.Contains("Locomotion"))
+			{
+				augmentType = ItemsFilterType.AugmentationsLegs;
+			}
+			else if (blueprint.NameForAcronym != null && blueprint.NameForAcronym.Contains("Subskin"))
+			{
+				augmentType = ItemsFilterType.AugmentationsTorso;
+			}
+			Icon = UIConfig.Instance.UIAugmentationsSlotDefaultIcons.GetIconBySlotType(augmentType);
+			IconColor = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+		}
 		else
 		{
 			Icon = UIUtility.GetIconByText(dataProvider.NameForAcronym);
@@ -179,6 +200,12 @@ public class TooltipBrickFeatureVM : TooltipBaseBrickVM
 		else if (dataProvider is BlueprintAbility blueprintAbility)
 		{
 			Tooltip = new TooltipTemplateAbility(blueprintAbility);
+		}
+		else if (dataProvider is ItemEntity { Blueprint: BlueprintItemAugment blueprint2 })
+		{
+			ItemEntity itemEntity3 = blueprint2.CreateEntity();
+			Tooltip = new TooltipTemplateItem(itemEntity3);
+			itemEntity3.Dispose();
 		}
 		else
 		{

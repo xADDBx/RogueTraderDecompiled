@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Inventory.Console;
 using Kingmaker.Code.UI.MVVM.VM.SelectorWindow;
@@ -171,7 +172,8 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 		}
 		for (int k = 0; k < WeaponSets.Count; k++)
 		{
-			WeaponSets[k].SetEnabled(!Unit.Value.HasMechadendrites() || k == 0);
+			bool flag = Unit.Value.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
+			WeaponSets[k].SetEnabled((!Unit.Value.HasMechadendrites() && !flag) || k == 0);
 			WeaponSets[k].SetMainHand(isUnitComissar);
 			WeaponSets[k].Primary?.Dispose();
 			EquipSlotVM disposable = (WeaponSets[k].Primary = new EquipSlotVM(EquipSlotType.PrimaryHand, body.HandsEquipmentSets[k].PrimaryHand, -1, null, k));
@@ -244,6 +246,15 @@ public class InventoryDollVM : CharInfoComponentVM, IInventoryItemHandler, ISubs
 				h.Refresh();
 			});
 			ChooseSlotMode.Value = false;
+			return;
+		}
+		if ((bool)slot.ItemSlot.Lock)
+		{
+			UISounds.Instance.Sounds.Combat.CombatGridCantPerformActionClick.Play();
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.ShipCustomization.NothingToInsertInThisSlot.Text, addToLog: false, WarningNotificationFormat.Attention, withSound: false);
+			});
 			return;
 		}
 		List<EquipSelectorSlotVM> list = SetupSlots(Game.Instance.Player.Inventory, slot);

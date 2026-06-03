@@ -59,6 +59,16 @@ public class BlueprintTutorial : BlueprintFact, ITutorialPage
 
 	public UISettingsEntityBase.UISettingsPlatform VisibilitySetting;
 
+	[Space]
+	[Space]
+	public bool Switch2JoyConTutorial;
+
+	[Space]
+	public bool HideInMouseModeOnSwitch2;
+
+	[Space]
+	public bool HideArtAndVideoInMouseModeOnSwitch2;
+
 	public BlueprintEncyclopediaPageReference EncyclopediaReference;
 
 	private bool HasTrigger => this.GetComponent<TutorialTrigger>();
@@ -74,6 +84,8 @@ public class BlueprintTutorial : BlueprintFact, ITutorialPage
 	public VisualOverride XBox => m_VisualSettings?.XBox;
 
 	public VisualOverride PS4 => m_VisualSettings?.PS4;
+
+	public VisualOverride Switch => m_VisualSettings?.Switch;
 
 	public LocalizedString TitleText => m_TitleText;
 

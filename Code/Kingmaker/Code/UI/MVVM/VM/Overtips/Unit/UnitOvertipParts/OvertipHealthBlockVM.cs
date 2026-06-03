@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
@@ -69,7 +70,7 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 		UnitState = unitState;
 		AddDisposable(EventBus.Subscribe(this));
 		UpdateProperties(initial: true);
-		AddDisposable(MainThreadDispatcher.InfrequentUpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.InfrequentUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			UpdateProperties();
 		}));
@@ -126,16 +127,16 @@ public class OvertipHealthBlockVM : BaseDisposable, IViewModel, IBaseDisposable,
 			if (num == 0)
 			{
 				obj = null;
-				goto IL_00c4;
+				goto IL_00d9;
 			}
 		}
 		else
 		{
 			num = 1;
 		}
-		obj = m_Ability.GetDamagePrediction(Unit, Game.Instance.VirtualPositionController.GetDesiredPosition(m_Ability.Caster));
-		goto IL_00c4;
-		IL_00c4:
+		obj = m_Ability.GetDamagePrediction(Unit, Game.Instance.VirtualPositionController.GetDesiredPosition(m_Ability.Caster), m_Ability.CreateExecutionContext(Unit));
+		goto IL_00d9;
+		IL_00d9:
 		DamagePredictionData damagePredictionData = (DamagePredictionData)obj;
 		HealPredictionData healPredictionData = ((num != 0) ? m_Ability.GetHealPrediction(Unit) : null);
 		if (damagePredictionData != null)

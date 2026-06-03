@@ -51,7 +51,7 @@ public class SpawnerCustomization : MonoBehaviour, ICustomizationRequirements
 
 	public bool HasGenderRequirement;
 
-	[ConditionalShow("HasGenderRequirement")]
+	[ShowIf("HasGenderRequirement")]
 	public Gender GenderRequirement;
 
 	public UnitCustomizationPreset Preset

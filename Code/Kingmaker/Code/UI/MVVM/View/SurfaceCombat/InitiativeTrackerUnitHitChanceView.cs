@@ -26,61 +26,61 @@ public class InitiativeTrackerUnitHitChanceView : ViewBase<OvertipHitChanceBlock
 
 	[Header("Sum Hit Chance")]
 	[SerializeField]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	private GameObject m_SumChanceBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	private TextMeshProUGUI m_SumChanceLabel;
 
 	[Header("Burst")]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	[SerializeField]
 	private GameObject m_BurstBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	private TextMeshProUGUI m_BurstIndexLabel;
 
 	[Header("Hit")]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	[SerializeField]
 	private GameObject m_HitBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	private TextMeshProUGUI m_HitLabel;
 
 	[Header("Push")]
 	[SerializeField]
-	[ConditionalShow("m_HasAttackParams")]
+	[ShowIf("m_HasAttackParams")]
 	private GameObject m_PushBlock;
 
 	[Header("Dodge")]
 	[SerializeField]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	private GameObject m_DodgeBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	private TextMeshProUGUI m_DodgeLabel;
 
 	[Header("Parry")]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	[SerializeField]
 	private GameObject m_ParryBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	private TextMeshProUGUI m_ParryLabel;
 
 	[Header("Cover")]
 	[SerializeField]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	private GameObject m_CoverBlock;
 
 	[SerializeField]
-	[ConditionalShow("m_HasDefenceParams")]
+	[ShowIf("m_HasDefenceParams")]
 	private TextMeshProUGUI m_CoverLabel;
 
 	protected override void BindViewImplementation()

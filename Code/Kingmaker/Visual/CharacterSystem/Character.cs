@@ -28,8 +28,8 @@ using Owlcat.Runtime.Core.Registry;
 using Owlcat.Runtime.Core.Updatables;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Core.Utility.Locator;
-using Owlcat.Runtime.Visual.DxtCompressor;
 using RogueTrader.Code.ShaderConsts;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Jobs;
@@ -75,11 +75,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 		public EquipmentEntity Ee;
 
-		public OutfitPartInfo(EquipmentEntity.OutfitPart outfitPart, GameObject gameObject, EquipmentEntity ee)
+		public Material[] OwnedMaterials;
+
+		public OutfitPartInfo(EquipmentEntity.OutfitPart outfitPart, GameObject gameObject, EquipmentEntity ee, Material[] ownedMaterials)
 		{
 			OutfitPart = outfitPart;
 			GameObject = gameObject;
 			Ee = ee;
+			OwnedMaterials = ownedMaterials;
 		}
 	}
 
@@ -110,17 +113,23 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private List<BodyPart> m_OverlayBodyParts;
 
+	private List<BodyPart> m_AugOverlayBodyParts;
+
 	private readonly List<CharacterAtlas> m_Atlases = new List<CharacterAtlas>();
 
 	private SkinnedMeshRenderer m_AtlasRenderer;
 
 	private Material m_AtlasMaterial;
 
+	private Material m_AugmentationMaterial;
+
 	private readonly HashSet<Skeleton.Bone> m_EquipmentBoneModifiers = new HashSet<Skeleton.Bone>();
 
 	private BoneUpdateJob m_BoneUpdateJob;
 
 	private TransformAccessArray m_BonesForJob;
+
+	private NativeArray<Skeleton.BoneData> m_FilteredBoneDataForJob;
 
 	private readonly List<OutfitPartInfo> m_OutfitObjectsSpawned = new List<OutfitPartInfo>();
 
@@ -168,8 +177,6 @@ public class Character : RegisteredBehaviour, IUpdatable
 	public AtlasSize MaxAtlasSize = AtlasSize.AtlasSize2048;
 
 	public BakedCharacter BakedCharacter;
-
-	private DxtCompressorService m_DxtService;
 
 	[SerializeField]
 	private CharacterBonesList m_BonesList;
@@ -234,10 +241,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private Dictionary<string, Transform> m_AttachBonesCache = new Dictionary<string, Transform>();
 
+	private const BodyPartType LegCoverageMask = BodyPartType.Feet | BodyPartType.KneeCops | BodyPartType.LowerLegs;
+
+	private static readonly BodyPartType[] _AuxArmTypes = new BodyPartType[1] { BodyPartType.LowerArmsExtra };
+
 	public bool OverlaysMerged { get; private set; } = true;
 
 
-	private Material AtlasMaterial
+	public Material AtlasMaterial
 	{
 		get
 		{
@@ -248,6 +259,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 			return m_AtlasRenderer.sharedMaterial;
 		}
 	}
+
+	public AugmentationAtlasController AugmentationAtlas { get; private set; }
 
 	public IReadOnlyList<OutfitPartInfo> OutfitObjectsSpawned => m_OutfitObjectsSpawned;
 
@@ -395,7 +408,6 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return;
 		}
-		m_DxtService = Services.GetInstance<DxtCompressorService>();
 		Animator = GetComponentInChildren<Animator>();
 		if (BakedCharacter == null && Animator != null)
 		{
@@ -484,12 +496,32 @@ public class Character : RegisteredBehaviour, IUpdatable
 			UnityEngine.Object.Destroy(m_AtlasMaterial);
 			m_AtlasMaterial = null;
 		}
+		if (m_AugmentationMaterial != null)
+		{
+			UnityEngine.Object.Destroy(m_AugmentationMaterial);
+			m_AugmentationMaterial = null;
+		}
+		AugmentationAtlas?.Dispose();
+		AugmentationAtlas = null;
 		ClearAtlases();
 		ClearMeshes();
+		foreach (OutfitPartInfo item in m_OutfitObjectsSpawned)
+		{
+			DestroyOwnedOutfitMaterials(item);
+			if (item?.GameObject != null)
+			{
+				UnityEngine.Object.Destroy(item.GameObject);
+			}
+		}
+		m_OutfitObjectsSpawned.Clear();
 		m_EquipmentEntitiesTextures.Clear();
 		if (m_BonesForJob.isCreated)
 		{
 			m_BonesForJob.Dispose();
+		}
+		if (m_FilteredBoneDataForJob.IsCreated)
+		{
+			m_FilteredBoneDataForJob.Dispose();
 		}
 	}
 
@@ -568,7 +600,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 					IsDirty = false;
 				}
 			}
-			if (!OverlaysMerged && m_OverlayBodyParts != null && Services.GetInstance<CharacterAtlasService>().RequestsCount == 0 && Services.GetInstance<DxtCompressorService>().RequestsCount == 0)
+			if (!OverlaysMerged && m_OverlayBodyParts != null && Services.GetInstance<CharacterAtlasService>().RequestsCount == 0 && Services.GetInstance<DxtCompressorServiceNew>().RequestsCount == 0)
 			{
 				MergeOverlays(m_OverlayBodyParts);
 			}
@@ -626,14 +658,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 		foreach (CharacterAtlas atlase in m_Atlases)
 		{
-			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true, delayTextureCreation: true);
+			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true);
 		}
 		StandardMaterialController component = base.gameObject.GetComponent<StandardMaterialController>();
 		if (component != null)
 		{
 			component.InvalidateMaterialsTextures();
 		}
-		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(m_Atlases, AtlasMaterial, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
+		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(this, m_Atlases, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
 		m_EquipmentEntitiesTextures.Clear();
 	}
 
@@ -700,23 +732,43 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			m_BonesForJob.Dispose();
 		}
-		Transform[] array = new Transform[Skeleton.Bones.Count];
+		if (m_FilteredBoneDataForJob.IsCreated)
+		{
+			m_FilteredBoneDataForJob.Dispose();
+		}
+		if (m_BonesList == null)
+		{
+			PFLog.Default.Error(base.gameObject, base.gameObject?.name + ": m_BonesList is null, Character.OnStart() has not been called or failed?");
+			m_BonesForJob = new TransformAccessArray(0);
+			m_FilteredBoneDataForJob = new NativeArray<Skeleton.BoneData>(0, Allocator.Persistent);
+			m_BoneUpdateJob = new BoneUpdateJob
+			{
+				Scales = m_FilteredBoneDataForJob
+			};
+			m_SkeletonChanged = false;
+			return;
+		}
+		NativeArray<Skeleton.BoneData> boneData = Skeleton.GetBoneData();
+		List<Transform> list = new List<Transform>(Skeleton.Bones.Count);
+		List<Skeleton.BoneData> list2 = new List<Skeleton.BoneData>(Skeleton.Bones.Count);
 		for (int i = 0; i < Skeleton.Bones.Count; i++)
 		{
-			Skeleton.Bone bone2 = Skeleton.Bones[i];
-			if (m_BonesList == null)
+			Transform byName = m_BonesList.GetByName(Skeleton.Bones[i].Name);
+			if (byName != null)
 			{
-				PFLog.Default.Error(base.gameObject, base.gameObject?.name + ": m_BonesList is null, Character.OnStart() has not been called or failed?");
-			}
-			else
-			{
-				array[i] = m_BonesList.GetByName(bone2.Name);
+				list.Add(byName);
+				list2.Add(boneData[i]);
 			}
 		}
-		m_BonesForJob = new TransformAccessArray(array);
+		m_BonesForJob = new TransformAccessArray(list.ToArray());
+		m_FilteredBoneDataForJob = new NativeArray<Skeleton.BoneData>(list2.Count, Allocator.Persistent);
+		for (int j = 0; j < list2.Count; j++)
+		{
+			m_FilteredBoneDataForJob[j] = list2[j];
+		}
 		m_BoneUpdateJob = new BoneUpdateJob
 		{
-			Scales = Skeleton.GetBoneData()
+			Scales = m_FilteredBoneDataForJob
 		};
 		if (!BakedCharacter || IsCharacterStudio)
 		{
@@ -1256,77 +1308,101 @@ public class Character : RegisteredBehaviour, IUpdatable
 	private void UpdateCharacter()
 	{
 		m_ProxyEquipmentEntities.Clear();
-		foreach (EquipmentEntity equipmentEntity2 in EquipmentEntities)
+		foreach (EquipmentEntity equipmentEntity in EquipmentEntities)
 		{
-			m_ProxyEquipmentEntities.Add(equipmentEntity2);
+			m_ProxyEquipmentEntities.Add(equipmentEntity);
 		}
+		PFLog.TechArt.Log($"[UpdateCharacter] START: ProxyEEs count={m_ProxyEquipmentEntities.Count}, ShowHelmet={m_ShowHelmet}, ShowArmor={m_ShowArmor}, ShowHelmetAboveAll={m_ShowHelmetAboveAll}");
 		if (EquippedItemsEntities != null)
 		{
-			string.Join(", ", EquippedItemsEntities.Select((EquipmentEntity e) => e?.name + ":" + ((!m_EquipmentEntityToSlot.TryGetValue(e, out var value)) ? "NO_SLOT" : value?.GetType().Name)));
+			string.Join(", ", EquippedItemsEntities.Select((EquipmentEntity e) => e?.name + ":" + ((!m_EquipmentEntityToSlot.TryGetValue(e, out var value2)) ? "NO_SLOT" : value2?.GetType().Name)));
 		}
 		SetAlwaysVisibleHelmet();
 		Dictionary<BodyPart, EquipmentEntity> dictionary = new Dictionary<BodyPart, EquipmentEntity>();
-		foreach (EquipmentEntity item in (from ee in m_ProxyEquipmentEntities
+		List<EquipmentEntity> list = (from ee in m_ProxyEquipmentEntities
 			where ee != null && ee.BodyParts.Count > 0 && !ShouldHideEquipmentEntity(ee) && !IsHelmetThatShouldBeHidden(ee)
 			orderby ee.Layer
-			select ee).ToList())
+			select ee).ToList();
+		foreach (EquipmentEntity item in list)
 		{
-			if (ShouldHideEquipmentEntity(item) || IsHelmetThatShouldBeHidden(item))
+			if (!(item == null))
+			{
+				string text = string.Join(",", from bp in item.BodyParts
+					where bp != null
+					select (!(bp.SkinnedRenderer == null)) ? ((!(bp.Material == null)) ? bp.Type.ToString() : $"{bp.Type}(no-material)") : $"{bp.Type}(no-renderer)");
+				PFLog.TechArt.Log($"[UpdateCharacter] RenderEE: '{item.name}', Layer={item.Layer}, IsAug={item.IsAugmentation}, HideBP={(long)item.HideBodyParts}, Types=[{text}]");
+			}
+		}
+		foreach (EquipmentEntity item2 in list)
+		{
+			if (ShouldHideEquipmentEntity(item2) || IsHelmetThatShouldBeHidden(item2))
 			{
 				continue;
 			}
 			BodyPartType bodyPartType = (BodyPartType)0L;
 			foreach (EquipmentEntity proxyEquipmentEntity in m_ProxyEquipmentEntities)
 			{
-				if (!(proxyEquipmentEntity == null) && !(item == proxyEquipmentEntity) && !ShouldHideEquipmentEntity(proxyEquipmentEntity) && !IsHelmetThatShouldBeHidden(proxyEquipmentEntity))
+				if (!(proxyEquipmentEntity == null) && !(item2 == proxyEquipmentEntity) && !ShouldHideEquipmentEntity(proxyEquipmentEntity) && !IsHelmetThatShouldBeHidden(proxyEquipmentEntity))
 				{
 					bodyPartType |= proxyEquipmentEntity.HideBodyParts;
+					if (proxyEquipmentEntity.IsAugmentation && proxyEquipmentEntity.AugmentationArmSide == EquipmentEntity.AugmentArmSide.None)
+					{
+						bodyPartType |= ComputeAugmentAutoHideMask(proxyEquipmentEntity);
+					}
 				}
 			}
-			foreach (BodyPart bodyPart in item.BodyParts)
+			foreach (BodyPart bodyPart in item2.BodyParts)
 			{
-				if (bodyPart == null || ShouldHideBodyPartFromEquippedItem(bodyPart, item) || (bodyPartType & bodyPart.Type) != 0 || bodyPart.SkinnedRenderer == null || bodyPart.Material == null)
+				if (bodyPart == null || ShouldHideBodyPartFromEquippedItem(bodyPart, item2) || (bodyPartType & bodyPart.Type) != 0 || bodyPart.SkinnedRenderer == null || bodyPart.Material == null)
 				{
 					continue;
 				}
+				bool flag = bodyPart.Type == BodyPartType.Forearms || bodyPart.Type == BodyPartType.Hands || bodyPart.Type == BodyPartType.UpperArms || bodyPart.Type == BodyPartType.ForearmAugRight || bodyPart.Type == BodyPartType.HandsAugRight || bodyPart.Type == BodyPartType.UpperArmsAugRight;
+				bool flag2 = item2.IsAugmentation && item2.AugmentationArmSide != EquipmentEntity.AugmentArmSide.None && flag;
 				KeyValuePair<BodyPart, EquipmentEntity> keyValuePair = dictionary.FirstOrDefault((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == bodyPart.Type);
 				if (keyValuePair.Key != null)
 				{
-					bool flag = bodyPart.Type == BodyPartType.Forearms;
-					if (!flag || (flag && !item.isOnlyRightBP))
+					bool flag3 = bodyPart.Type == BodyPartType.Forearms;
+					if ((!flag3 || (flag3 && !item2.isOnlyRightBP && !flag2)) && !flag2)
 					{
 						dictionary.Remove(keyValuePair.Key);
 					}
 				}
-				dictionary[bodyPart] = item;
+				dictionary[bodyPart] = item2;
 			}
 		}
 		m_OverlayBodyParts = new List<BodyPart>();
-		foreach (KeyValuePair<BodyPart, EquipmentEntity> item2 in dictionary)
+		m_AugOverlayBodyParts = new List<BodyPart>();
+		foreach (KeyValuePair<BodyPart, EquipmentEntity> item3 in dictionary)
 		{
-			var (bodyPart3, entity) = (KeyValuePair<BodyPart, EquipmentEntity>)(ref item2);
+			item3.Deconstruct(out var key, out var value);
+			BodyPart bodyPart2 = key;
+			EquipmentEntity entity = value;
+			List<BodyPart> bodyParts = (entity.IsAugmentation ? m_AugOverlayBodyParts : m_OverlayBodyParts);
 			if (entity.ShowLowerMaterials)
 			{
-				foreach (EquipmentEntity item3 in from ee in m_ProxyEquipmentEntities
+				foreach (EquipmentEntity item4 in from ee in m_ProxyEquipmentEntities
 					where ee != null && ee != entity && ee.Layer < entity.Layer && !IsHelmetThatShouldBeHidden(ee)
 					orderby ee.Layer
 					select ee)
 				{
-					if (!ShouldHideEquipmentEntity(item3) && !IsHelmetThatShouldBeHidden(item3))
+					if (!ShouldHideEquipmentEntity(item4) && !IsHelmetThatShouldBeHidden(item4))
 					{
-						AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item3);
+						List<BodyPart> bodyParts2 = (item4.IsAugmentation ? m_AugOverlayBodyParts : m_OverlayBodyParts);
+						AddBodyParts(bodyParts2, bodyPart2.Type, item4);
 					}
 				}
 			}
-			AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, entity);
-			foreach (EquipmentEntity item4 in from ee in m_ProxyEquipmentEntities
+			AddBodyParts(bodyParts, bodyPart2.Type, entity);
+			foreach (EquipmentEntity item5 in from ee in m_ProxyEquipmentEntities
 				where ee != null && ee != entity && ee.Layer > entity.Layer && !IsHelmetThatShouldBeHidden(ee)
 				orderby ee.Layer
 				select ee)
 			{
-				if (!ShouldHideEquipmentEntity(item4) && !IsHelmetThatShouldBeHidden(item4))
+				if (!ShouldHideEquipmentEntity(item5) && !IsHelmetThatShouldBeHidden(item5))
 				{
-					AddBodyParts(m_OverlayBodyParts, bodyPart3.Type, item4);
+					List<BodyPart> bodyParts3 = (item5.IsAugmentation ? m_AugOverlayBodyParts : m_OverlayBodyParts);
+					AddBodyParts(bodyParts3, bodyPart2.Type, item5);
 				}
 			}
 		}
@@ -1357,24 +1433,25 @@ public class Character : RegisteredBehaviour, IUpdatable
 		BuildMesh(dictionary);
 		RebuildOutfit();
 		SetUpCharacterRenderingLayerMask();
+		PFLog.TechArt.Log(string.Format("[UpdateCharacter] COMPLETED: Renderers count={0}, m_AtlasRenderer={1}", Renderers.Count, m_AtlasRenderer?.name ?? "null"));
 	}
 
 	private void AddBodyParts(List<BodyPart> bodyParts, BodyPartType type, EquipmentEntity entity)
 	{
-		foreach (BodyPart bodyPart2 in entity.BodyParts)
+		foreach (BodyPart bodyPart3 in entity.BodyParts)
 		{
-			if (ShouldHideBodyPartFromEquippedItem(bodyPart2, entity))
+			if (ShouldHideBodyPartFromEquippedItem(bodyPart3, entity))
 			{
 				continue;
 			}
-			if (bodyPart2.Type == BodyPartType.Forearms && entity.isOnlyRightBP)
+			if (bodyPart3.Type == BodyPartType.Forearms && entity.isOnlyRightBP)
 			{
 				BodyPart bodyPart = new BodyPart
 				{
 					Type = BodyPartType.Augment1,
-					RendererPrefab = bodyPart2.RendererPrefab,
-					Material = bodyPart2.Material,
-					Textures = bodyPart2.Textures
+					RendererPrefab = bodyPart3.RendererPrefab,
+					Material = bodyPart3.Material,
+					Textures = bodyPart3.Textures
 				};
 				bool flag = true;
 				foreach (CharacterTextureDescription texture in bodyPart.Textures)
@@ -1396,26 +1473,64 @@ public class Character : RegisteredBehaviour, IUpdatable
 			}
 			else
 			{
-				if (bodyPart2.Type != type)
+				if (bodyPart3.Type != type)
 				{
 					continue;
 				}
-				bool flag2 = true;
-				foreach (CharacterTextureDescription texture2 in bodyPart2.Textures)
+				if (entity.IsAugmentation && entity.AugmentationArmSide == EquipmentEntity.AugmentArmSide.Right)
 				{
-					if (texture2.GetSourceTexture() == null)
+					BodyPartType bodyPartType = bodyPart3.Type switch
+					{
+						BodyPartType.Forearms => BodyPartType.ForearmAugRight, 
+						BodyPartType.Hands => BodyPartType.HandsAugRight, 
+						BodyPartType.UpperArms => BodyPartType.UpperArmsAugRight, 
+						_ => bodyPart3.Type, 
+					};
+					if (bodyPartType != bodyPart3.Type)
+					{
+						BodyPart bodyPart2 = new BodyPart
+						{
+							Type = bodyPartType,
+							RendererPrefab = bodyPart3.RendererPrefab,
+							Material = bodyPart3.Material,
+							Textures = bodyPart3.Textures
+						};
+						bool flag2 = true;
+						foreach (CharacterTextureDescription texture2 in bodyPart2.Textures)
+						{
+							if (texture2.GetSourceTexture() == null)
+							{
+								if (Application.isEditor)
+								{
+									PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
+								}
+								flag2 = false;
+								break;
+							}
+						}
+						if (flag2)
+						{
+							bodyParts.Add(bodyPart2);
+						}
+						continue;
+					}
+				}
+				bool flag3 = true;
+				foreach (CharacterTextureDescription texture3 in bodyPart3.Textures)
+				{
+					if (texture3.GetSourceTexture() == null)
 					{
 						if (Application.isEditor)
 						{
 							PFLog.TechArt.Error($"Missing texture in {type} body part in {entity} when merging overlays for {this}");
 						}
-						flag2 = false;
+						flag3 = false;
 						break;
 					}
 				}
-				if (flag2)
+				if (flag3)
 				{
-					bodyParts.Add(bodyPart2);
+					bodyParts.Add(bodyPart3);
 				}
 			}
 		}
@@ -1427,6 +1542,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			if (!IsInDollRoom || item.GameObject.GetComponent<MechadendriteSettings>() == null)
 			{
+				DestroyOwnedOutfitMaterials(item);
 				UnityEngine.Object.Destroy(item.GameObject);
 			}
 		}
@@ -1440,38 +1556,56 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 	}
 
-	public void ColorizeOutfitPart(GameObject newOutfitObject, EquipmentEntity ee, EquipmentEntity.OutfitPart outfitPart)
+	private static void DestroyOwnedOutfitMaterials(OutfitPartInfo info)
+	{
+		if (info?.OwnedMaterials == null)
+		{
+			return;
+		}
+		Material[] ownedMaterials = info.OwnedMaterials;
+		foreach (Material material in ownedMaterials)
+		{
+			if (material != null)
+			{
+				UnityEngine.Object.Destroy(material);
+			}
+		}
+		info.OwnedMaterials = null;
+	}
+
+	public Material[] ColorizeOutfitPart(GameObject newOutfitObject, EquipmentEntity ee, EquipmentEntity.OutfitPart outfitPart)
 	{
 		if (outfitPart.ColorMask == null)
 		{
-			return;
+			return null;
 		}
 		SelectedRampIndices selectedRampIndices = RampIndices.FirstOrDefault((SelectedRampIndices i) => i.EquipmentEntity == ee);
 		if (selectedRampIndices == null)
 		{
-			return;
+			return null;
 		}
 		if (ee.PrimaryRamps.Count < selectedRampIndices.PrimaryIndex)
 		{
 			PFLog.TechArt.Error("Character " + base.gameObject.name + ". Can't find color ramp index " + selectedRampIndices.PrimaryIndex + " in EE: " + ee.name);
-			return;
+			return null;
 		}
 		if (ee.SecondaryRamps.Count < selectedRampIndices.SecondaryIndex)
 		{
 			PFLog.TechArt.Error("Character " + base.gameObject.name + ". Can't find color ramp index " + selectedRampIndices.SecondaryIndex + " in EE: " + ee.name);
-			return;
+			return null;
 		}
 		Renderer componentInChildren = newOutfitObject.GetComponentInChildren<Renderer>();
 		if (componentInChildren == null)
 		{
 			PFLog.TechArt.Error("No renderer in " + newOutfitObject);
-			return;
+			return null;
 		}
-		List<Material> list = new List<Material>();
+		int num = componentInChildren.sharedMaterials.Length;
+		Material[] array = new Material[num];
 		Shader equipmentColorizerShader = BlueprintRoot.Instance.CharGenRoot.EquipmentColorizerShader;
-		Material[] sharedMaterials = componentInChildren.sharedMaterials;
-		foreach (Material material in sharedMaterials)
+		for (int j = 0; j < num; j++)
 		{
+			Material material = componentInChildren.sharedMaterials[j];
 			Material material2 = new Material(equipmentColorizerShader);
 			material2.SetTexture(ShaderProps._BaseMap, material.GetTexture(ShaderProps._BaseMap));
 			material2.SetTexture(ShaderProps._BumpMap, material.GetTexture(ShaderProps._BumpMap));
@@ -1480,13 +1614,14 @@ public class Character : RegisteredBehaviour, IUpdatable
 			material2.SetTexture(ShaderProps._Ramp1, ee.PrimaryRamps[selectedRampIndices.PrimaryIndex]);
 			material2.SetTexture(ShaderProps._Ramp2, ee.SecondaryRamps[selectedRampIndices.SecondaryIndex]);
 			material2.name = newOutfitObject.name + "_material";
-			list.Add(material2);
+			array[j] = material2;
 		}
-		if (list.Count > 0)
+		if (array.Length != 0)
 		{
-			componentInChildren.sharedMaterials = list.ToArray();
+			componentInChildren.sharedMaterials = array;
 		}
 		ColorizedOutfitParts.Add(componentInChildren);
+		return array;
 	}
 
 	public void SetupCloakPhysics(GameObject newOutfitObject)
@@ -1601,8 +1736,8 @@ public class Character : RegisteredBehaviour, IUpdatable
 				{
 					SetupCloakPhysics(tuple.Item1);
 				}
-				ColorizeOutfitPart(tuple.Item1, outfit.Value, outfit.Key);
-				m_OutfitObjectsSpawned.Add(new OutfitPartInfo(outfit.Key, tuple.Item1, outfit.Value));
+				Material[] ownedMaterials = ColorizeOutfitPart(tuple.Item1, outfit.Value, outfit.Key);
+				m_OutfitObjectsSpawned.Add(new OutfitPartInfo(outfit.Key, tuple.Item1, outfit.Value, ownedMaterials));
 			}
 		}
 		FilterOutfit();
@@ -1808,25 +1943,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 	{
 		foreach (CharacterAtlas atlase in m_Atlases)
 		{
-			if (atlase.AtlasTexture != null)
-			{
-				if (atlase.AtlasTexture.CompressionComplete)
-				{
-					Texture2D texture = atlase.AtlasTexture.Texture;
-					if ((bool)texture)
-					{
-						UnityEngine.Object.Destroy(texture);
-					}
-				}
-				else
-				{
-					atlase.AtlasTexture.Destroyed = true;
-				}
-			}
-			else
-			{
-				atlase.Destroyed = true;
-			}
+			atlase.Dispose();
 		}
 		m_Atlases.Clear();
 	}
@@ -1849,76 +1966,209 @@ public class Character : RegisteredBehaviour, IUpdatable
 
 	private void BuildMesh(Dictionary<BodyPart, EquipmentEntity> geometryBodyParts)
 	{
+		PFLog.TechArt.Log(string.Format("[BuildMesh] START: geometryBodyParts count={0}, m_AtlasMaterial={1}", geometryBodyParts.Count, m_AtlasMaterial?.name ?? "null"));
 		ClearMeshes();
 		Renderers.Clear();
 		m_AtlasRenderer = null;
+		if (m_AugmentationMaterial != null)
+		{
+			UnityEngine.Object.Destroy(m_AugmentationMaterial);
+			m_AugmentationMaterial = null;
+		}
 		List<Transform> list = new List<Transform>();
 		List<BoneWeight> list2 = new List<BoneWeight>();
 		List<Matrix4x4> list3 = new List<Matrix4x4>();
 		Dictionary<string, Transform> cachedBones = CacheHierarchy();
-		if (!(m_AtlasMaterial != null))
+		if (m_AtlasMaterial != null)
 		{
-			return;
-		}
-		List<CombineInstance> list4 = new List<CombineInstance>();
-		List<Vector2> list5 = new List<Vector2>();
-		GameObject obj = new GameObject("Renderer_" + m_AtlasMaterial.name);
-		obj.transform.parent = Animator.transform;
-		obj.transform.localPosition = Vector3.zero;
-		obj.transform.localScale = Vector3.one;
-		obj.transform.localRotation = Quaternion.identity;
-		SkinnedMeshRenderer skinnedMeshRenderer = obj.AddComponent<SkinnedMeshRenderer>();
-		Mesh mesh = new Mesh
-		{
-			name = "Character"
-		};
-		mesh.Clear();
-		GameObject gameObject = null;
-		if (geometryBodyParts.Count((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == BodyPartType.Forearms) > 1)
-		{
-			gameObject = EditForearmRightMesh(geometryBodyParts);
-		}
-		foreach (KeyValuePair<BodyPart, EquipmentEntity> geometryBodyPart in geometryBodyParts)
-		{
-			SkinnedMeshRenderer skinnedRenderer = geometryBodyPart.Key.SkinnedRenderer;
-			if (!(skinnedRenderer == null))
+			List<CombineInstance> list4 = new List<CombineInstance>();
+			List<Vector2> list5 = new List<Vector2>();
+			GameObject obj = new GameObject("Renderer_" + m_AtlasMaterial.name);
+			obj.transform.parent = Animator.transform;
+			obj.transform.localPosition = Vector3.zero;
+			obj.transform.localScale = Vector3.one;
+			obj.transform.localRotation = Quaternion.identity;
+			SkinnedMeshRenderer skinnedMeshRenderer = obj.AddComponent<SkinnedMeshRenderer>();
+			Mesh mesh = new Mesh
 			{
+				name = "Character"
+			};
+			mesh.Clear();
+			GameObject gameObject = null;
+			if (geometryBodyParts.Count((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == BodyPartType.Forearms && !kvp.Value.IsAugmentation) > 1)
+			{
+				gameObject = EditForearmRightMesh(geometryBodyParts);
+			}
+			foreach (KeyValuePair<BodyPart, EquipmentEntity> geometryBodyPart in geometryBodyParts)
+			{
+				PFLog.TechArt.Log($"[BuildMesh PRE-CUT] Type={geometryBodyPart.Key.Type}, EE='{geometryBodyPart.Value?.name}', IsAug={geometryBodyPart.Value?.IsAugmentation}, ArmSide={geometryBodyPart.Value?.AugmentationArmSide}, Renderer={geometryBodyPart.Key.RendererPrefab?.name}");
+			}
+			List<GameObject> list6 = EditAugmentationArmMesh(geometryBodyParts);
+			foreach (KeyValuePair<BodyPart, EquipmentEntity> geometryBodyPart2 in geometryBodyParts)
+			{
+				PFLog.TechArt.Log($"[BuildMesh POST-CUT] Type={geometryBodyPart2.Key.Type}, EE='{geometryBodyPart2.Value?.name}', IsAug={geometryBodyPart2.Value?.IsAugmentation}, Renderer={geometryBodyPart2.Key.RendererPrefab?.name}");
+			}
+			List<CombineInstance> list7 = new List<CombineInstance>();
+			List<Vector2> list8 = new List<Vector2>();
+			List<BoneWeight> list9 = new List<BoneWeight>();
+			bool flag = false;
+			foreach (KeyValuePair<BodyPart, EquipmentEntity> geometryBodyPart3 in geometryBodyParts)
+			{
+				SkinnedMeshRenderer skinnedRenderer = geometryBodyPart3.Key.SkinnedRenderer;
+				if (skinnedRenderer == null)
+				{
+					continue;
+				}
 				if (skinnedMeshRenderer.rootBone == null && skinnedRenderer.rootBone != null)
 				{
 					skinnedMeshRenderer.rootBone = Animator.transform;
 				}
 				int[] bonesMapping = new int[skinnedRenderer.sharedMesh.bindposes.Length];
-				EnsureBones(geometryBodyPart.Key, list, list3, bonesMapping, cachedBones);
+				EnsureBones(geometryBodyPart3.Key, list, list3, bonesMapping, cachedBones);
 				Vector2[] uv = skinnedRenderer.sharedMesh.uv;
+				int num;
+				List<CombineInstance> list10;
+				if (geometryBodyPart3.Value != null)
+				{
+					num = (geometryBodyPart3.Value.IsAugmentation ? 1 : 0);
+					if (num != 0)
+					{
+						list10 = list7;
+						goto IL_03d9;
+					}
+				}
+				else
+				{
+					num = 0;
+				}
+				list10 = list4;
+				goto IL_03d9;
+				IL_03d9:
+				List<CombineInstance> list11 = list10;
+				List<Vector2> list12 = ((num != 0) ? list8 : list5);
+				List<BoneWeight> boneWeights = ((num != 0) ? list9 : list2);
+				if (num != 0)
+				{
+					flag = true;
+				}
 				for (int i = 0; i < uv.Length; i++)
 				{
-					list5.Add(uv[i]);
+					list12.Add(uv[i]);
 				}
 				CombineInstance combineInstance = default(CombineInstance);
 				combineInstance.mesh = skinnedRenderer.sharedMesh;
 				combineInstance.transform = Matrix4x4.identity;
 				CombineInstance item = combineInstance;
-				InsertBoneWeights(list2, bonesMapping, skinnedRenderer);
-				list4.Add(item);
+				InsertBoneWeights(boneWeights, bonesMapping, skinnedRenderer);
+				list11.Add(item);
+			}
+			if (flag && AugmentationAtlas != null && AugmentationAtlas.IsInitialized)
+			{
+				Mesh mesh2 = new Mesh
+				{
+					name = "Character_Base"
+				};
+				mesh2.CombineMeshes(list4.ToArray());
+				mesh2.boneWeights = list2.ToArray();
+				mesh2.uv = list5.ToArray();
+				Mesh mesh3 = new Mesh
+				{
+					name = "Character_Aug"
+				};
+				mesh3.CombineMeshes(list7.ToArray());
+				mesh3.boneWeights = list9.ToArray();
+				mesh3.uv = list8.ToArray();
+				CombineInstance[] combine = new CombineInstance[2]
+				{
+					new CombineInstance
+					{
+						mesh = mesh2,
+						transform = Matrix4x4.identity
+					},
+					new CombineInstance
+					{
+						mesh = mesh3,
+						transform = Matrix4x4.identity
+					}
+				};
+				mesh.CombineMeshes(combine, mergeSubMeshes: false);
+				mesh.bindposes = list3.ToArray();
+				List<BoneWeight> list13 = new List<BoneWeight>(list2.Count + list9.Count);
+				list13.AddRange(list2);
+				list13.AddRange(list9);
+				mesh.boneWeights = list13.ToArray();
+				mesh.RecalculateBounds();
+				mesh.UploadMeshData(markNoLongerReadable: true);
+				skinnedMeshRenderer.sharedMesh = mesh;
+				skinnedMeshRenderer.bones = list.ToArray();
+				Material material = new Material(m_AtlasMaterial);
+				material.name = "AugmentationAtlas_Material";
+				m_AugmentationMaterial = material;
+				if (AugmentationAtlas.DiffuseAtlas != null)
+				{
+					material.SetTexture(ShaderProps._BaseMap, AugmentationAtlas.DiffuseAtlas);
+				}
+				if (AugmentationAtlas.NormalAtlas != null)
+				{
+					material.EnableKeyword("_NORMALMAP");
+					material.SetTexture(ShaderProps._BumpMap, AugmentationAtlas.NormalAtlas);
+				}
+				if (AugmentationAtlas.MasksAtlas != null)
+				{
+					material.EnableKeyword("_MASKSMAP");
+					material.SetTexture(ShaderProps._MasksMap, AugmentationAtlas.MasksAtlas);
+				}
+				skinnedMeshRenderer.sharedMaterials = new Material[2] { m_AtlasMaterial, material };
+				UnityEngine.Object.Destroy(mesh2);
+				UnityEngine.Object.Destroy(mesh3);
+				PFLog.TechArt.Log($"[BuildMesh] Created 2 sub-meshes: base={list4.Count} parts, aug={list7.Count} parts");
+			}
+			else
+			{
+				if (flag)
+				{
+					list4.AddRange(list7);
+					list5.AddRange(list8);
+					list2.AddRange(list9);
+				}
+				mesh.CombineMeshes(list4.ToArray());
+				mesh.bindposes = list3.ToArray();
+				mesh.boneWeights = list2.ToArray();
+				mesh.uv = list5.ToArray();
+				mesh.RecalculateBounds();
+				mesh.UploadMeshData(markNoLongerReadable: true);
+				skinnedMeshRenderer.sharedMesh = mesh;
+				skinnedMeshRenderer.bones = list.ToArray();
+			}
+			m_AtlasRenderer = skinnedMeshRenderer;
+			Renderers.Add(skinnedMeshRenderer);
+			skinnedMeshRenderer.gameObject.layer = 9;
+			if (!flag || AugmentationAtlas == null || !AugmentationAtlas.IsInitialized)
+			{
+				skinnedMeshRenderer.sharedMaterial = m_AtlasMaterial;
+			}
+			Animator.Rebind();
+			PFLog.TechArt.Log($"[BuildMesh] Created SkinnedMeshRenderer: {skinnedMeshRenderer.name}, mesh={mesh.name}, bones={list.Count}");
+			if (gameObject != null)
+			{
+				UnityEngine.Object.DestroyImmediate(gameObject);
+			}
+			if (list6 != null)
+			{
+				foreach (GameObject item2 in list6)
+				{
+					if (item2 != null)
+					{
+						UnityEngine.Object.DestroyImmediate(item2);
+					}
+				}
 			}
 		}
-		mesh.CombineMeshes(list4.ToArray());
-		mesh.bindposes = list3.ToArray();
-		mesh.boneWeights = list2.ToArray();
-		mesh.uv = list5.ToArray();
-		mesh.RecalculateBounds();
-		mesh.UploadMeshData(markNoLongerReadable: true);
-		skinnedMeshRenderer.sharedMesh = mesh;
-		skinnedMeshRenderer.bones = list.ToArray();
-		m_AtlasRenderer = skinnedMeshRenderer;
-		Renderers.Add(skinnedMeshRenderer);
-		skinnedMeshRenderer.gameObject.layer = 9;
-		skinnedMeshRenderer.sharedMaterial = m_AtlasMaterial;
-		Animator.Rebind();
-		if (gameObject != null)
+		else
 		{
-			UnityEngine.Object.DestroyImmediate(gameObject);
+			PFLog.TechArt.Warning("[BuildMesh] m_AtlasMaterial is null!");
 		}
+		PFLog.TechArt.Log($"[BuildMesh] COMPLETED: Renderers count={Renderers.Count}");
 	}
 
 	private GameObject EditForearmRightMesh(Dictionary<BodyPart, EquipmentEntity> geometryBodyParts)
@@ -2040,6 +2290,163 @@ public class Character : RegisteredBehaviour, IUpdatable
 		return newRendererPrefab;
 	}
 
+	private static bool IsArmType(BodyPartType t)
+	{
+		if (t != BodyPartType.Forearms && t != BodyPartType.Hands && t != BodyPartType.UpperArms && t != BodyPartType.ForearmAugRight && t != BodyPartType.HandsAugRight)
+		{
+			return t == BodyPartType.UpperArmsAugRight;
+		}
+		return true;
+	}
+
+	private static BodyPartType ComputeAugmentAutoHideMask(EquipmentEntity aug)
+	{
+		BodyPartType bodyPartType = (BodyPartType)0L;
+		bool flag = false;
+		foreach (BodyPart bodyPart in aug.BodyParts)
+		{
+			if (bodyPart != null && !IsArmType(bodyPart.Type))
+			{
+				bodyPartType |= bodyPart.Type;
+				if ((bodyPart.Type & (BodyPartType.Feet | BodyPartType.KneeCops | BodyPartType.LowerLegs)) != (BodyPartType)0L)
+				{
+					flag = true;
+				}
+			}
+		}
+		if (flag)
+		{
+			bodyPartType |= BodyPartType.Feet | BodyPartType.KneeCops | BodyPartType.LowerLegs;
+		}
+		return bodyPartType;
+	}
+
+	private List<GameObject> EditAugmentationArmMesh(Dictionary<BodyPart, EquipmentEntity> geometryBodyParts)
+	{
+		List<GameObject> list = new List<GameObject>();
+		bool flag = false;
+		bool flag2 = false;
+		foreach (EquipmentEntity proxyEquipmentEntity in m_ProxyEquipmentEntities)
+		{
+			if (!(proxyEquipmentEntity == null) && proxyEquipmentEntity.IsAugmentation)
+			{
+				if (proxyEquipmentEntity.AugmentationArmSide == EquipmentEntity.AugmentArmSide.Left)
+				{
+					flag = true;
+				}
+				if (proxyEquipmentEntity.AugmentationArmSide == EquipmentEntity.AugmentArmSide.Right)
+				{
+					flag2 = true;
+				}
+			}
+		}
+		if (!flag2)
+		{
+			flag2 = geometryBodyParts.Any((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == BodyPartType.ForearmAugRight || kvp.Key.Type == BodyPartType.HandsAugRight || kvp.Key.Type == BodyPartType.UpperArmsAugRight);
+		}
+		if (!flag && !flag2)
+		{
+			return list;
+		}
+		BodyPartType[] array = new BodyPartType[3]
+		{
+			BodyPartType.Forearms,
+			BodyPartType.Hands,
+			BodyPartType.UpperArms
+		};
+		foreach (BodyPartType armType in array)
+		{
+			BodyPartType augRightType = ((armType == BodyPartType.Forearms) ? BodyPartType.ForearmAugRight : ((armType == BodyPartType.Hands) ? BodyPartType.HandsAugRight : BodyPartType.UpperArmsAugRight));
+			bool flag3 = geometryBodyParts.Any((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Value.IsAugmentation && kvp.Value.AugmentationArmSide == EquipmentEntity.AugmentArmSide.Left && kvp.Key.Type == armType);
+			bool flag4 = geometryBodyParts.Any((KeyValuePair<BodyPart, EquipmentEntity> kvp) => (kvp.Value.IsAugmentation && kvp.Value.AugmentationArmSide == EquipmentEntity.AugmentArmSide.Right && kvp.Key.Type == armType) || kvp.Key.Type == augRightType);
+			if (!flag3 && !flag4)
+			{
+				PFLog.TechArt.Log($"[EditAugmentationArmMesh] Type={armType}: no aug coverage for this type — non-aug body parts kept intact");
+			}
+			else
+			{
+				CutArmBodyPartsOfType(geometryBodyParts, armType, flag3, flag4, list);
+			}
+		}
+		array = _AuxArmTypes;
+		foreach (BodyPartType armType2 in array)
+		{
+			if (flag || flag2)
+			{
+				CutArmBodyPartsOfType(geometryBodyParts, armType2, flag, flag2, list);
+			}
+		}
+		return list;
+	}
+
+	private void CutArmBodyPartsOfType(Dictionary<BodyPart, EquipmentEntity> geometryBodyParts, BodyPartType armType, bool cutLeft, bool cutRight, List<GameObject> createdPrefabs)
+	{
+		List<KeyValuePair<BodyPart, EquipmentEntity>> list = geometryBodyParts.Where((KeyValuePair<BodyPart, EquipmentEntity> kvp) => kvp.Key.Type == armType && !kvp.Value.IsAugmentation && kvp.Key.SkinnedRenderer != null).ToList();
+		if (list.Count == 0)
+		{
+			return;
+		}
+		PFLog.TechArt.Log($"[EditAugmentationArmMesh] Type={armType}: cutLeft={cutLeft}, cutRight={cutRight}, non-aug entries={list.Count}");
+		foreach (KeyValuePair<BodyPart, EquipmentEntity> item in list)
+		{
+			BodyPart bodyPart = item.Key;
+			EquipmentEntity value = item.Value;
+			string arg = value?.name;
+			bool flag = false;
+			if (cutLeft)
+			{
+				GameObject gameObject = AugmentationBodyPartReplacer.CutVerticesByBonePrefix(bodyPart, value, "L_");
+				if (gameObject != null)
+				{
+					createdPrefabs.Add(gameObject);
+					BodyPart bodyPart2 = new BodyPart
+					{
+						Type = armType,
+						RendererPrefab = gameObject,
+						Material = bodyPart.Material,
+						Textures = new List<CharacterTextureDescription>(bodyPart.Textures)
+					};
+					geometryBodyParts.Remove(bodyPart);
+					geometryBodyParts[bodyPart2] = value;
+					bodyPart = bodyPart2;
+					flag = true;
+					PFLog.TechArt.Log($"[EditAugmentationArmMesh] Cut 'L_' from {armType} of '{arg}'");
+				}
+				else
+				{
+					PFLog.TechArt.Log($"[EditAugmentationArmMesh] Cut 'L_' produced no mesh for {armType} of '{arg}' (no L_ geometry on this side)");
+				}
+			}
+			if (cutRight)
+			{
+				GameObject gameObject2 = AugmentationBodyPartReplacer.CutVerticesByBonePrefix(bodyPart, value, "R_");
+				if (gameObject2 != null)
+				{
+					createdPrefabs.Add(gameObject2);
+					BodyPart key = new BodyPart
+					{
+						Type = armType,
+						RendererPrefab = gameObject2,
+						Material = bodyPart.Material,
+						Textures = new List<CharacterTextureDescription>(bodyPart.Textures)
+					};
+					geometryBodyParts.Remove(bodyPart);
+					geometryBodyParts[key] = value;
+					PFLog.TechArt.Log($"[EditAugmentationArmMesh] Cut 'R_' from {armType} of '{arg}'");
+				}
+				else if (flag)
+				{
+					geometryBodyParts.Remove(bodyPart);
+					PFLog.TechArt.Log($"[EditAugmentationArmMesh] Removed {armType} of '{arg}' — both sides augmented");
+				}
+				else
+				{
+					PFLog.TechArt.Log($"[EditAugmentationArmMesh] Cut 'R_' produced no mesh for {armType} of '{arg}' (no R_ geometry on this side)");
+				}
+			}
+		}
+	}
+
 	internal Dictionary<string, Transform> CacheHierarchy()
 	{
 		Dictionary<string, Transform> dictionary = new Dictionary<string, Transform>();
@@ -2134,15 +2541,59 @@ public class Character : RegisteredBehaviour, IUpdatable
 		}
 		foreach (CharacterAtlas atlase in m_Atlases)
 		{
-			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true, delayTextureCreation: true);
+			atlase.Build(m_EquipmentEntitiesTextures, AtlasMaterial, cleanAtlas: true);
 		}
 		StandardMaterialController component = base.gameObject.GetComponent<StandardMaterialController>();
 		if (component != null)
 		{
 			component.InvalidateMaterialsTextures();
 		}
-		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(m_Atlases, AtlasMaterial, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
+		Services.GetInstance<CharacterAtlasService>().QueueAtlasRebuild(this, m_Atlases, OnAtlasCompressed, OnAtlasNotCompressed, base.name);
 		m_EquipmentEntitiesTextures.Clear();
+		if (m_AugOverlayBodyParts != null && m_AugOverlayBodyParts.Count > 0)
+		{
+			if (AugmentationAtlas == null || !AugmentationAtlas.IsInitialized)
+			{
+				CharacterAtlasData characterAtlasData = UIConfig.Instance?.AugmentationAtlasData;
+				if (characterAtlasData != null)
+				{
+					AugmentationAtlas?.Dispose();
+					AugmentationAtlas = new AugmentationAtlasController();
+					AugmentationAtlas.Initialize(characterAtlasData);
+					PFLog.TechArt.Log("[MergeOverlays] Lazy-created augmentation atlas from UIConfig");
+				}
+				else
+				{
+					PFLog.TechArt.Warning("[MergeOverlays] Cannot create augmentation atlas: UIConfig.AugmentationAtlasData is null");
+				}
+			}
+			if (AugmentationAtlas != null && AugmentationAtlas.IsInitialized)
+			{
+				foreach (BodyPart augOverlayBodyPart in m_AugOverlayBodyParts)
+				{
+					foreach (CharacterTextureDescription texture2 in augOverlayBodyPart.Textures)
+					{
+						Texture2D diffuseTexture2 = texture2.DiffuseTexture;
+						Texture2D normalTexture = texture2.NormalTexture;
+						Texture2D maskTexture = texture2.MaskTexture;
+						PFLog.TechArt.Log($"[AugAtlas] Slot={augOverlayBodyPart.Type}, Diffuse={diffuseTexture2?.name}({diffuseTexture2?.format}|{diffuseTexture2?.width}x{diffuseTexture2?.height}), Normal={normalTexture?.name}({normalTexture?.format}), Mask={maskTexture?.name}({maskTexture?.format})");
+						AugmentationAtlas.UpdateSlot(augOverlayBodyPart.Type, diffuseTexture2, normalTexture, maskTexture);
+					}
+				}
+				if (AugmentationAtlasController.ShouldDownscale)
+				{
+					AugmentationAtlas.DownscaleAtlases();
+				}
+				AugmentationAtlas.ApplyToMaterial(AtlasMaterial);
+				PFLog.TechArt.Log($"[MergeOverlays] Baked {m_AugOverlayBodyParts.Count} augmentation body parts to augmentation atlas");
+			}
+		}
+		else if (AugmentationAtlas != null)
+		{
+			AugmentationAtlas.Dispose();
+			AugmentationAtlas = null;
+			PFLog.TechArt.Log("[MergeOverlays] Disposed augmentation atlas (no aug body parts)");
+		}
 		IsAtlasesDirty = false;
 	}
 

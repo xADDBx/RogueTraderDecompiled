@@ -15,6 +15,7 @@ using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
+using Kingmaker.UI.Pointer;
 using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View;
 using Kingmaker.View.Mechanics;
@@ -308,7 +309,7 @@ public class Utilities
 		{
 			return false;
 		}
-		Vector2 cursorPosition = Game.Instance.CursorController.CursorPosition;
+		Vector2 cursorPosition = CursorController.CursorPosition;
 		RaycastHit[] array = (Game.Instance.IsModeActive(GameModeType.SpaceCombat) ? Physics.RaycastAll(camera.ScreenPointToRay(cursorPosition)) : Physics.RaycastAll(camera.ScreenPointToRay(cursorPosition), camera.farClipPlane, 70014209));
 		foreach (RaycastHit raycastHit in array)
 		{
@@ -466,7 +467,7 @@ public class Utilities
 	public static void CreateGameHistoryLog()
 	{
 		using AreaDataStashFileAccessor areaDataStashFileAccessor = AreaDataStash.AccessFile("history");
-		File.Copy(areaDataStashFileAccessor.Path, Path.Combine(ApplicationPaths.persistentDataPath, "game-history.txt"), overwrite: true);
+		File.Copy(areaDataStashFileAccessor.Path, Path.Combine(ApplicationPaths.temporaryCachePath, "game-history.txt"), overwrite: true);
 	}
 
 	public static string BetaStatus()

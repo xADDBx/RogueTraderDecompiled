@@ -67,7 +67,7 @@ public class TacticalAdvantagePassive : UnitFactComponentDelegate, IGlobalRulebo
 
 	public void OnEventDidTrigger(RulePerformMomentumChange evt)
 	{
-		if (!evt.Initiator.IsPlayerFaction || !base.Owner.IsInPlayerParty || base.Owner.IsDead)
+		if ((!evt.ConcreteInitiator.IsPlayerFaction && !evt.ConcreteInitiator.IsHelpingPlayerFaction) || (!base.Owner.IsInPlayerParty && !base.Owner.CanAffectMomentumOutsideParty()) || base.Owner.IsDead)
 		{
 			return;
 		}

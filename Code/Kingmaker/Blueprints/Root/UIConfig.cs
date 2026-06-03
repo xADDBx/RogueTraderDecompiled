@@ -1,22 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kingmaker.BarkBanters;
 using Kingmaker.Blueprints.Camera;
 using Kingmaker.Blueprints.Encyclopedia;
+using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Blueprints.Quests;
 using Kingmaker.Code.UI.MVVM.View.Overtips.SystemMap;
 using Kingmaker.Code.UI.MVVM.VM.FeedbackPopup;
 using Kingmaker.Code.UI.MVVM.VM.QuestNotification;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Enums;
+using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.Globalmap.Blueprints.Exploration;
 using Kingmaker.Interaction;
 using Kingmaker.Localization;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.DebugInformation;
 using Kingmaker.UI.Common.UIConfigComponents;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.MapObjects;
 using TMPro;
@@ -285,6 +294,229 @@ public class UIConfig : BlueprintScriptableObject
 		public List<SpriteLink> BackgroundSprites = new List<SpriteLink>();
 	}
 
+	[Serializable]
+	public class AugmentationsSlotsReferences
+	{
+		public BlueprintAugmentSlotReference ForgeworldSlot;
+
+		public BlueprintAugmentSlotReference AugmentsSystems;
+
+		public BlueprintAugmentSlotReference AugmentsEye;
+
+		public BlueprintAugmentSlotReference AugmentsArmsLeft;
+
+		public BlueprintAugmentSlotReference AugmentsArmsRight;
+
+		public BlueprintAugmentSlotReference AugmentsTorso;
+
+		public BlueprintAugmentSlotReference AugmentsLegs;
+
+		public BlueprintAugmentSlotReference AugmentsManipulus1;
+
+		public BlueprintAugmentSlotReference AugmentsManipulus2;
+
+		public BlueprintAugmentSlotReference AugmentsManipulus3;
+
+		public BlueprintAugmentSlotReference AugmentsPasqal1;
+
+		public BlueprintAugmentSlotReference AugmentsPasqal2;
+
+		public BlueprintAugmentSlotReference AugmentsPasqal3;
+	}
+
+	[Serializable]
+	public class QuestDlcConfig
+	{
+		[SerializeField]
+		private Sprite Dlc1New;
+
+		[SerializeField]
+		private Sprite Dlc1Default;
+
+		[SerializeField]
+		private Sprite Dlc2New;
+
+		[SerializeField]
+		private Sprite Dlc2Default;
+
+		[SerializeField]
+		private Sprite Dlc3New;
+
+		[SerializeField]
+		private Sprite Dlc3Default;
+
+		[SerializeField]
+		private Sprite Dlc4New;
+
+		[SerializeField]
+		private Sprite Dlc4Default;
+
+		[SerializeField]
+		private Sprite Dlc1ListIcon;
+
+		[SerializeField]
+		private Sprite Dlc2ListIcon;
+
+		[SerializeField]
+		private Sprite Dlc3ListIcon;
+
+		[SerializeField]
+		private Sprite Dlc4ListIcon;
+
+		public Sprite GetListIcon(Dlc dlc)
+		{
+			return dlc switch
+			{
+				Dlc.Dlc1 => Dlc1ListIcon, 
+				Dlc.Dlc2 => Dlc2ListIcon, 
+				Dlc.Dlc3 => Dlc3ListIcon, 
+				Dlc.Dlc4 => Dlc4ListIcon, 
+				Dlc.None => null, 
+				_ => null, 
+			};
+		}
+
+		public Sprite GetNew(Dlc dlc)
+		{
+			return dlc switch
+			{
+				Dlc.Dlc1 => Dlc1New, 
+				Dlc.Dlc2 => Dlc2New, 
+				Dlc.Dlc3 => Dlc3New, 
+				Dlc.Dlc4 => Dlc4New, 
+				Dlc.None => null, 
+				_ => null, 
+			};
+		}
+
+		public Sprite GetDefault(Dlc dlc)
+		{
+			return dlc switch
+			{
+				Dlc.Dlc1 => Dlc1Default, 
+				Dlc.Dlc2 => Dlc2Default, 
+				Dlc.Dlc3 => Dlc3Default, 
+				Dlc.Dlc4 => Dlc4Default, 
+				Dlc.None => null, 
+				_ => null, 
+			};
+		}
+	}
+
+	[Serializable]
+	public class AugmentationsSpaceBarkBanters
+	{
+		public BlueprintBarkBanter FirstLaunchBarkBanter;
+
+		public BlueprintBarkBanterList BanterList;
+
+		public bool IsFirstLaunchInSpace()
+		{
+			bool result = Game.Instance.Player.PartyAugmentManager.ShouldShowAttentionMarker;
+			EventBus.RaiseEvent(delegate(IAugmentationsButtonAttentionMarkerHandler h)
+			{
+				h.HandleAttentionMarker(result);
+			});
+			return result;
+		}
+
+		public void SetFirstAugmentationsLaunchInSpace()
+		{
+			EventBus.RaiseEvent(delegate(IAugmentationsButtonAttentionMarkerHandler h)
+			{
+				h.HandleAttentionMarker(state: false);
+			});
+			Game.Instance.Player.PartyAugmentManager.MarkAttentionMarkerSeen();
+		}
+	}
+
+	[Serializable]
+	public class AugmentationsSlotDefaultIcons
+	{
+		public Sprite Default;
+
+		public Sprite IconEye;
+
+		public Sprite IconCranial;
+
+		public Sprite IconTorso;
+
+		public Sprite IconArms;
+
+		public Sprite IconLegs;
+
+		public Sprite IconInternal;
+
+		public Sprite GetIconBySlotType(ItemsFilterType augmentType)
+		{
+			return augmentType switch
+			{
+				ItemsFilterType.AugmentationsSystems => IconCranial, 
+				ItemsFilterType.AugmentationsArms => IconArms, 
+				ItemsFilterType.AugmentationsLegs => IconLegs, 
+				ItemsFilterType.AugmentationsEyes => IconEye, 
+				ItemsFilterType.AugmentationsTorso => IconTorso, 
+				_ => Default, 
+			};
+		}
+	}
+
+	[Serializable]
+	public class NecronTimerConfigurations
+	{
+		public Color TimerMilestoneOff;
+
+		public Color TimerMilestoneOn;
+
+		public Color Slider;
+
+		public Color SliderHandle;
+
+		[Range(8f, 15f)]
+		public int MaxTimerValue = 12;
+
+		public int MiddleMilestoneIndex;
+
+		public BlueprintUnlockableFlagReference TimeLoopBlueprintReference;
+	}
+
+	[Serializable]
+	public class AugmentationsDefaultAugmentsReferences
+	{
+		[SerializeField]
+		private List<BlueprintItemAugmentReference> DefaultAugments;
+
+		public bool IsDefaultAugment(BlueprintItem itemBlueprint)
+		{
+			BlueprintItemAugment itemAugment = itemBlueprint as BlueprintItemAugment;
+			if (itemAugment != null)
+			{
+				return DefaultAugments.Any((BlueprintItemAugmentReference i) => i.Get() == itemAugment);
+			}
+			return false;
+		}
+	}
+
+	[Serializable]
+	public class AugmentationsSlotTraumaLockerReferences
+	{
+		[SerializeField]
+		private List<SlotToTraumaMap> TraumaMap;
+
+		public List<BlueprintBuff> GetTraumaList(BlueprintAugmentSlot slotBlueprint)
+		{
+			return TraumaMap.FirstOrDefault((SlotToTraumaMap t) => t.AugmentSlot.Get() == slotBlueprint)?.Traumas.Select((BlueprintBuffReference b) => b.Get()).ToList();
+		}
+	}
+
+	[Serializable]
+	public class SlotToTraumaMap
+	{
+		public BlueprintAugmentSlotReference AugmentSlot;
+
+		public List<BlueprintBuffReference> Traumas;
+	}
+
 	[SerializeField]
 	private UIViewConfigs.Reference m_ViewConfigs;
 
@@ -431,6 +663,8 @@ public class UIConfig : BlueprintScriptableObject
 
 	public BlueprintEncyclopediaChapterReference AstropathBriefsChapter;
 
+	public BlueprintCareerPathReference HunterCareerPath;
+
 	[SerializeField]
 	private BlueprintAbilityReference m_ReloadAbility;
 
@@ -469,6 +703,41 @@ public class UIConfig : BlueprintScriptableObject
 	[SerializeField]
 	private BlueprintDlcRewardReference m_DlcRewardForVoidshipArsenalAvailable;
 
+	public List<BlueprintUnitReference> UnitReferencesNoAugmentations;
+
+	public List<BlueprintRaceReference> UnitRaceNoAugmentations;
+
+	public BlueprintFeatureReference ManipulusOccupationReference;
+
+	public BlueprintFeatureReference PasqalOccupationReference;
+
+	public BlueprintFeatureReference ForgeworldHomeworldReference;
+
+	public BlueprintAreaReference MedicareAreaReference;
+
+	public BlueprintAreaReference VoidshipBridgeAreaReference;
+
+	public BlueprintResourceReference CombativityReference;
+
+	public List<BlueprintAbilityReference> ManipulusMagnarailAbilities = new List<BlueprintAbilityReference>();
+
+	public QuestDlcConfig DlcIconConfig;
+
+	public AugmentationsSlotsReferences UIAugmentationsSlotsReferences;
+
+	public AugmentationsSlotDefaultIcons UIAugmentationsSlotDefaultIcons;
+
+	public AugmentationsSpaceBarkBanters UIAugmentationsBarkBanters;
+
+	public AugmentationsDefaultAugmentsReferences UIAugmentationsDefaultAugmentsReferences;
+
+	public AugmentationsSlotTraumaLockerReferences UIAugmentationsTraumaSlotReferences;
+
+	[Header("Augmentation Atlas")]
+	public CharacterAtlasData AugmentationAtlasData;
+
+	public NecronTimerConfigurations NecronTimer;
+
 	public static UIConfig Instance => BlueprintRoot.Instance.UIConfig;
 
 	public BlueprintUISound BlueprintUISound => m_BlueprintUISound?.Get();
@@ -493,5 +762,10 @@ public class UIConfig : BlueprintScriptableObject
 			}
 			return false;
 		}
+	}
+
+	public bool IsManipulusMagnarail(BlueprintAbility ability)
+	{
+		return ManipulusMagnarailAbilities.Any((BlueprintAbilityReference a) => a.Get() == ability);
 	}
 }

@@ -40,6 +40,10 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 
 	public static CombatLogMessage CreateMessage(RuleDealDamage rule)
 	{
+		if (rule.SourceAttackRule != null)
+		{
+			return PerformAttackLogThread.CreateMessage(new GameLogEventAttack(rule.SourceAttackRule), rule);
+		}
 		GameLogContext.Text = rule.Reason.Name;
 		GameLogContext.SourceEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)(rule.Reason.Name.IsNullOrEmpty() ? rule.ConcreteInitiator : null);
 		GameLogContext.TargetEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)rule.ConcreteTarget;
@@ -50,7 +54,7 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 			GameLogContext.DamageType = UIUtilityTexts.GetTextByKey(rule.Damage.Type);
 		}
 		GameLogContext.Absorption = rule.Damage?.AbsorptionPercentsWithoutPenetration ?? 0;
-		GameLogContext.Deflection = rule.Damage?.Deflection.Value ?? 0;
+		GameLogContext.Deflection = rule.Damage?.DeflectionValue ?? 0;
 		GameLogContext.Penetration = rule.Damage?.Penetration.Value ?? 0;
 		CombatLogMessage combatLogMessage = GetMessage(rule).CreateCombatLogMessage(null, null, isPerformAttackMessage: false, rule.ConcreteTarget);
 		if (combatLogMessage?.Tooltip is TooltipTemplateCombatLogMessage tooltipTemplateCombatLogMessage)
@@ -102,10 +106,11 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 				}
 			}
 		}
-		if (damage.Overpenetrating && !damage.UnreducedOverpenetration)
+		if (damage.Overpenetrating && !damage.UnreducedOverpenetrationDamage)
 		{
 			effectiveRolledValue = Mathf.RoundToInt((float)result.RolledValue * damage.EffectiveOverpenetrationFactor);
-			yield return new TooltipBrickIconTextValue(s.OverpenetrationModifier.Text, "<b>×" + damage.EffectiveOverpenetrationFactor.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
+			DamageData resultOverpenetration = rule.RollDamageRule.ResultOverpenetration;
+			yield return new TooltipBrickIconTextValue((resultOverpenetration != null && resultOverpenetration.IsRicochet) ? s.RicochetModifier.Text : s.OverpenetrationModifier.Text, "<b>×" + damage.EffectiveOverpenetrationFactor.ToString(CultureInfo.InvariantCulture) + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 		}
 		int resultReflected = rule.RollDamageRule.ResultReflected;
 		if (resultReflected > 0)
@@ -121,16 +126,21 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 				}
 			}
 		}
-		if (!rule.RollDamageRule.IgnoreDeflection && damage.Deflection.Value != 0)
+		int deflectionValue = damage.DeflectionValue;
+		if (!rule.RollDamageRule.IgnoreDeflection && deflectionValue != 0)
 		{
-			effectiveRolledValue = Mathf.Max(0, effectiveRolledValue - damage.Deflection.Value);
-			yield return new TooltipBrickIconTextValue(s.DamageDeflection.Text, "<b>-" + damage.Deflection.Value + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
+			effectiveRolledValue = Mathf.Max(0, effectiveRolledValue - deflectionValue);
+			yield return new TooltipBrickIconTextValue(s.DamageDeflection.Text, "<b>-" + deflectionValue + "</b>", 2, isResultValue: true, "=" + effectiveRolledValue, isProtectionIcon: true, isTargetHitIcon: false, isBorderChanceIcon: false, isGrayBackground: true);
 			if (isInfotip)
 			{
 				IEnumerable<ITooltipBrick> enumerable3 = LogThreadBase.CreateBrickModifiers(damage.Deflection.AllModifiersList, valueIsPercent: false, null, 2, isResultValue: false, isFirstWithoutPlus: true);
 				foreach (ITooltipBrick item4 in enumerable3)
 				{
 					yield return item4;
+				}
+				foreach (ITooltipBrick item5 in LogThreadBase.CreateBrickArmorLimits(damage.ArmorStatLimits, isAbsorption: false, 2, damage.DeflectionBaseValue, damage.Deflection.Value))
+				{
+					yield return item5;
 				}
 			}
 		}
@@ -148,19 +158,23 @@ public class RulebookDealDamageLogThread : LogThreadBase, IGameLogRuleHandler<Ru
 				IEnumerable<ITooltipBrick> enumerable4 = LogThreadBase.CreateBrickModifiers(damage.Absorption.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
 				if (enumerable4.Count() > 1)
 				{
-					foreach (ITooltipBrick item5 in enumerable4)
+					foreach (ITooltipBrick item6 in enumerable4)
 					{
-						yield return item5;
+						yield return item6;
 					}
+				}
+				foreach (ITooltipBrick item7 in LogThreadBase.CreateBrickArmorLimits(damage.ArmorStatLimits, isAbsorption: true, 3, damage.AbsorptionBaseValue, damage.Absorption.Value))
+				{
+					yield return item7;
 				}
 			}
 			yield return new TooltipBrickIconTextValue("<b>" + s.Penetration.Text + "</b>", "<b>+" + GameLogContext.Penetration.ToString() + "%</b>", 3, isResultValue: true, null, isProtectionIcon: false, isTargetHitIcon: true, isBorderChanceIcon: false, isGrayBackground: true);
 			IEnumerable<ITooltipBrick> enumerable5 = LogThreadBase.CreateBrickModifiers(damage.Penetration.AllModifiersList, valueIsPercent: true, null, 3, isResultValue: true, isFirstWithoutPlus: true);
 			if (enumerable5.Count() > 1)
 			{
-				foreach (ITooltipBrick item6 in enumerable5)
+				foreach (ITooltipBrick item8 in enumerable5)
 				{
-					yield return item6;
+					yield return item8;
 				}
 			}
 		}

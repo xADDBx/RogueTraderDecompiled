@@ -347,7 +347,7 @@ public class LoadingProcess : MonoBehaviour
 		m_OnLoadCallback = callback;
 		m_CurrentLoadingProcess = process;
 		CurrentProcessTag = processTag;
-		SoundState.Instance.ResetState(SoundStateType.LoadingScreen);
+		SoundState.Instance.ResetState(SoundStateType.LoadingScreen, isLoadingProcess: true);
 		m_OneTaskStopwatch = new Stopwatch();
 		m_OneTaskStopwatch.Start();
 		PFLog.System.Log("Start loading process: {0}", process.GetType().Name);

@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
 using Kingmaker.UnitLogic.Mechanics.Damage;
@@ -31,12 +30,4 @@ public class BlueprintItemVoidShieldGenerator : BlueprintStarshipItem
 	public bool HasExtraResistance => damageExtraResistance != DamageType.Direct;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipVoidShieldGenerator;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

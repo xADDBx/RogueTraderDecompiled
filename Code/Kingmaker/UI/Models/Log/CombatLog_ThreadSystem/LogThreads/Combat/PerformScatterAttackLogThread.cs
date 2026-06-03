@@ -105,7 +105,15 @@ public class PerformScatterAttackLogThread : LogThreadBase, IGameLogEventHandler
 				isAttack = true;
 				GameLogContext.ResultDamage = gameLogEventAttack.Rule.ResultDamageValue;
 				GameLogContext.TargetEntity = (GameLogContext.Property<IMechanicEntity>)(IMechanicEntity)(MechanicEntity)gameLogEventAttack.Rule.Target;
-				GameLogContext.Description = (gameLogEventAttack.IsOverpenetrationTrigger ? LogThreadBase.Strings.TooltipBrickStrings.TriggersOverpenetration.Text : null);
+				GameLogContext.Description = null;
+				if (gameLogEventAttack.IsRicochetTrigger)
+				{
+					GameLogContext.Description = LogThreadBase.Strings.TooltipBrickStrings.TriggersRicochet.Text;
+				}
+				else if (gameLogEventAttack.IsOverpenetrationTrigger)
+				{
+					GameLogContext.Description = LogThreadBase.Strings.TooltipBrickStrings.TriggersOverpenetration.Text;
+				}
 				AttackResult result = gameLogEventAttack.Rule.Result;
 				string text = ((result == AttackResult.Hit || result == AttackResult.CoverHit || result == AttackResult.RighteousFury) ? LogThreadBase.Strings.TooltipBrickStrings.ScatterAttackHit.Text : LogThreadBase.Strings.TooltipBrickStrings.ScatterAttackMiss.Text) + " " + GetAttackResultText(gameLogEventAttack.Rule.Result);
 				yield return new TooltipBrickIconText(text);

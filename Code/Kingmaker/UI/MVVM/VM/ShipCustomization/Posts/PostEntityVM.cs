@@ -61,6 +61,10 @@ public class PostEntityVM : SelectionGroupEntityVM, IStarshipPostHandler, ISubsc
 
 	public void HandlePostBlocked(Post post)
 	{
+		if (post == Post)
+		{
+			IsPostBlocked.Value = post.IsBlocked;
+		}
 	}
 
 	public void HandleBuffDidAdded(Post post, Buff buff)
@@ -69,6 +73,10 @@ public class PostEntityVM : SelectionGroupEntityVM, IStarshipPostHandler, ISubsc
 
 	public void HandleBuffDidRemoved(Post post, Buff buff)
 	{
+		if (post == Post)
+		{
+			IsPostBlocked.Value = post.IsBlocked;
+		}
 	}
 
 	public void HandleNewUnit()

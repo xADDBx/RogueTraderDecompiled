@@ -175,6 +175,26 @@ public class LocalizedStringData
 		return result;
 	}
 
+	public bool UpdateVOComment(LocaleData localeData, string text, bool updateDate = true)
+	{
+		if (localeData == null)
+		{
+			return false;
+		}
+		text = ApplyFixups(localeData.Locale, text);
+		bool result = false;
+		if (localeData.VOComment != text)
+		{
+			localeData.VOComment = text;
+			if (updateDate)
+			{
+				localeData.ModificationDate = DateTime.UtcNow;
+			}
+			result = true;
+		}
+		return result;
+	}
+
 	public bool ReapplyFixups()
 	{
 		bool result = false;

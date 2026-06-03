@@ -186,7 +186,7 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 		}
 	}
 
-	public void ResetState(SoundStateType state)
+	public void ResetState(SoundStateType state, bool isLoadingProcess = false)
 	{
 		if (state != m_State)
 		{
@@ -213,7 +213,7 @@ public class SoundState : IService, IUnitCombatHandler, ISubscriber<IBaseUnitEnt
 			}
 			if ((m_State == SoundStateType.Dialog && m_UIType != FullScreenUIType.Chargen) || m_State == SoundStateType.CutScene || state == SoundStateType.LoadingScreen)
 			{
-				MusicStateHandler.ResetStoryMode();
+				MusicStateHandler.ResetStoryMode(state == SoundStateType.LoadingScreen);
 			}
 			UpdateDialogState(state, m_State);
 			m_State = state;

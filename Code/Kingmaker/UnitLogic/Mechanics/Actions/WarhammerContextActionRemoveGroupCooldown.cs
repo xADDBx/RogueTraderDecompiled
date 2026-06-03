@@ -8,6 +8,7 @@ using UnityEngine;
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
 [TypeId("a5d7b924bf7743f483c173754bdc072a")]
+[KDB("Сбрасывает кулдаун у AbilityGroup (и только у него!). Если необходимо дополнительно сбросить кулдаун у абилки с этой группой, то необходимо дополнительно использовать WarhammerContextActionRemoveAbilityCooldown")]
 public class WarhammerContextActionRemoveGroupCooldown : ContextAction
 {
 	[SerializeField]

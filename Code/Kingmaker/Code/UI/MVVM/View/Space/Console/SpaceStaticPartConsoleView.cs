@@ -25,7 +25,9 @@ using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.Controllers.MapObjects;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models;
@@ -51,7 +53,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.Space.Console;
 
-public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
+public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>, IPartySelectorAugmentationHintsAndInputHandler, ISubscriber
 {
 	[SerializeField]
 	private UIVisibilityView m_UIVisibilityView;
@@ -389,7 +391,7 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 			return;
 		}
 		FullScreenUIType fullScreenUIType = RootUIContext.Instance.FullScreenUIType;
-		if (fullScreenUIType == FullScreenUIType.Inventory || fullScreenUIType == FullScreenUIType.CharacterScreen || fullScreenUIType == FullScreenUIType.Vendor)
+		if (fullScreenUIType == FullScreenUIType.Inventory || fullScreenUIType == FullScreenUIType.CharacterScreen || fullScreenUIType == FullScreenUIType.Vendor || fullScreenUIType == FullScreenUIType.Augmentations)
 		{
 			m_PartySelectorConsoleView.Bind(base.ViewModel.PartyVM);
 			TooltipHelper.HideTooltip();
@@ -402,6 +404,16 @@ public class SpaceStaticPartConsoleView : ViewBase<SpaceStaticPartVM>
 		{
 			InteractionHighlightController.Instance.Highlight(isOn);
 		}
+	}
+
+	public void CreateInputImpl(InputLayer inputLayer, ReactiveProperty<bool> enable)
+	{
+		m_PartyConsoleView.AddInput(inputLayer, enable);
+	}
+
+	public void DisposeInputImpl()
+	{
+		m_PartyConsoleView.DisposeAdditionalInput();
 	}
 
 	protected override void DestroyViewImplementation()

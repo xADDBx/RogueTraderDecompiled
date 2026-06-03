@@ -33,6 +33,8 @@ public class RankEntrySelectionStatVM : RankEntrySelectionFeatureVM
 
 	public ModifiableValue UnitStat => m_UnitStat;
 
+	protected override bool IsRepeatable => true;
+
 	public RankEntrySelectionStatVM(RankEntrySelectionVM owner, CareerPathVM careerPathVM, FeatureSelectionItem featureSelectionItem, IReadOnlyReactiveProperty<SelectionStateFeature> selectionState, Action<FeatureSelectionItem?> selectFeature)
 		: base(owner, careerPathVM, featureSelectionItem, selectionState, selectFeature)
 	{

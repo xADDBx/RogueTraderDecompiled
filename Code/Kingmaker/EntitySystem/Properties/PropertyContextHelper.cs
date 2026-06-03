@@ -19,6 +19,8 @@ public static class PropertyContextHelper
 			return context.CurrentEntity;
 		case PropertyTargetType.CurrentTarget:
 			return context.CurrentTarget;
+		case PropertyTargetType.ContextOwner:
+			return context.ContextOwner;
 		case PropertyTargetType.ContextCaster:
 			return context.ContextCaster;
 		case PropertyTargetType.ContextMainTarget:
@@ -50,6 +52,7 @@ public static class PropertyContextHelper
 		{
 			PropertyTargetType.CurrentEntity => context.CurrentEntity.Position, 
 			PropertyTargetType.CurrentTarget => context.CurrentTargetPosition, 
+			PropertyTargetType.ContextOwner => context.ContextOwner?.Position, 
 			PropertyTargetType.ContextCaster => context.ContextCaster?.Position, 
 			PropertyTargetType.ContextMainTarget => context.ContextMainTargetPosition, 
 			PropertyTargetType.RuleInitiator => context.RuleInitiator?.Position, 
@@ -80,6 +83,7 @@ public static class PropertyContextHelper
 		{
 			PropertyTargetType.CurrentEntity => "CE", 
 			PropertyTargetType.CurrentTarget => "CT", 
+			PropertyTargetType.ContextOwner => "CO", 
 			PropertyTargetType.ContextCaster => "CC", 
 			PropertyTargetType.ContextMainTarget => "CMT", 
 			PropertyTargetType.RuleInitiator => "RI", 

@@ -60,6 +60,9 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 
 	private bool m_ForceRecalculateBounds = true;
 
+	[field: SerializeField]
+	public bool VisibleInExploration { get; private set; }
+
 	public GridNavmeshModifier GridNavmeshModifier { get; private set; }
 
 	public bool UseCustomBlueprint => m_UseCustomBlueprint;
@@ -89,6 +92,8 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 	}
 
 	public Rect Bounds => CalculateBounds();
+
+	public Bounds RenderersBounds { get; private set; }
 
 	public new DestructibleEntity Data => (DestructibleEntity)base.Data;
 
@@ -122,7 +127,7 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 				Collider[] colliders = m_Colliders;
 				foreach (Collider collider in colliders)
 				{
-					if (collider.enabled && collider.gameObject.activeInHierarchy)
+					if (!(collider == null) && collider.enabled && collider.gameObject.activeInHierarchy)
 					{
 						if (!bounds.HasValue)
 						{
@@ -141,6 +146,7 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 				valueOrDefault = new Bounds(base.ViewTransform.position, Vector3.one);
 				bounds = valueOrDefault;
 			}
+			RenderersBounds = bounds.Value;
 			m_OvertipPosition = bounds.Value.center + new Vector3(0f, bounds.Value.extents.y, 0f);
 			return m_OvertipPosition.Value;
 		}
@@ -195,7 +201,7 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 			for (int i = 0; i < m_Colliders.Length; i++)
 			{
 				Collider collider = m_Colliders[i];
-				if (collider.enabled && collider.gameObject.activeInHierarchy)
+				if (!(collider == null) && collider.enabled && collider.gameObject.activeInHierarchy)
 				{
 					if (!bounds.HasValue)
 					{
@@ -243,7 +249,7 @@ public class DestructibleEntityView : MapObjectView, IDestructionStagesManager
 		UpdateHighlight();
 		DestructionStageSettings destructionStageSettings = m_DestructionStages.FirstItem((DestructionStageSettings i) => i.Type == stage);
 		GridNavmeshModifier gridNavmeshModifier = destructionStageSettings?.NavmeshModifier;
-		if (destructionStageSettings != null && gridNavmeshModifier != null && gridNavmeshModifier != GridNavmeshModifier)
+		if (destructionStageSettings != null && gridNavmeshModifier != GridNavmeshModifier)
 		{
 			if (GridNavmeshModifier != null)
 			{

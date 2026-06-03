@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.FX;
@@ -8,6 +9,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Sound;
+using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
@@ -18,6 +20,7 @@ using Kingmaker.Sound.Base;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
+using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.UnitLogic.Abilities.Visual.Blueprints;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Commands;
@@ -25,35 +28,48 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.View.MapObjects;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using Kingmaker.Visual.FX;
 using Kingmaker.Visual.HitSystem;
 using Kingmaker.Visual.Particles;
 using Kingmaker.Visual.Sound;
+using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
 
 namespace Kingmaker.Controllers;
 
 public class VisualEffectsController : IController, IAnimationEventHandler, ISubscriber<IMechanicEntity>, ISubscriber, IAbilityExecutionProcessHandler, IApplyAbilityEffectHandler, IProjectileLaunchedHandler, IProjectileHitHandler, IDamageFXHandler, IDodgeHandler, IAreaEffectHandler, ISubscriber<IAreaEffectEntity>, IGlobalRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, IGlobalRulebookSubscriber, IBuffEffectHandler, IUnitCommandStartHandler, IAbilityExecutionProcessRedirectHandler
 {
-	private static void TryPlayVisualFX([NotNull] MechanicEntity caster, [CanBeNull] TargetWrapper target, [CanBeNull] AbilityData ability, MappedAnimationEventType? animationEvent, AbilityEventType? abilityEvent)
+	private static void TryPlayVisualFX([NotNull] MechanicEntity caster, [CanBeNull] TargetWrapper target, [CanBeNull] AbilityData ability, MappedAnimationEventType? animationEvent, AbilityEventType? abilityEvent, AbilityExecutionContext context = null)
 	{
 		if (ability == null)
 		{
 			ability = (caster.GetCommandsOptional()?.Current as UnitUseAbility)?.Ability;
 		}
 		BlueprintAbilityVisualFXSettings blueprintAbilityVisualFXSettings = ability?.FXSettings?.VisualFXSettings;
-		if (blueprintAbilityVisualFXSettings != null)
+		if (blueprintAbilityVisualFXSettings == null)
 		{
-			if (animationEvent.HasValue)
+			return;
+		}
+		List<Vector3> list = null;
+		OrientedPatternData? orientedPatternData = context?.Pattern;
+		if (orientedPatternData.HasValue && !orientedPatternData.GetValueOrDefault().IsEmpty)
+		{
+			list = TempList.Get<Vector3>();
+			foreach (CustomGridNodeBase node in orientedPatternData.Value.Nodes)
 			{
-				FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, animationEvent.Value, ability);
+				list.Add(node.Vector3Position);
 			}
-			if (abilityEvent.HasValue)
-			{
-				FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, target ?? ((TargetWrapper)caster), abilityEvent.Value, ability);
-			}
+		}
+		if (animationEvent.HasValue)
+		{
+			FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, animationEvent.Value, ability, list);
+		}
+		if (abilityEvent.HasValue)
+		{
+			FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, target ?? ((TargetWrapper)caster), abilityEvent.Value, ability, list);
 		}
 	}
 
@@ -113,15 +129,34 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 	private static void TryPlayAreaEffectFX([NotNull] MechanicEntity caster, [CanBeNull] TargetWrapper target, [NotNull] AreaEffectEntity areaEffect, MappedAnimationEventType? animationEvent, AbilityEventType? abilityEvent)
 	{
 		BlueprintAbilityVisualFXSettings blueprintAbilityVisualFXSettings = areaEffect?.FXSettings?.VisualFXSettings;
-		if (blueprintAbilityVisualFXSettings != null)
+		if (blueprintAbilityVisualFXSettings == null)
 		{
-			if (animationEvent.HasValue)
+			return;
+		}
+		List<Vector3> list = null;
+		AreaEffectView view = areaEffect.View;
+		if (view != null)
+		{
+			NodeList nodeList = view.Shape?.CoveredNodes ?? NodeList.Empty;
+			if (!nodeList.IsEmpty)
 			{
-				FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, animationEvent.Value);
+				list = TempList.Get<Vector3>();
+				foreach (CustomGridNodeBase item in nodeList)
+				{
+					list.Add(item.Vector3Position);
+				}
 			}
-			if (abilityEvent.HasValue)
+		}
+		if (animationEvent.HasValue)
+		{
+			FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, animationEvent.Value, null, list);
+		}
+		if (abilityEvent.HasValue)
+		{
+			GameObject[] effects = FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, target ?? ((TargetWrapper)caster), abilityEvent.Value, null, list);
+			if (abilityEvent == AbilityEventType.Start)
 			{
-				FXPlayer.Play(blueprintAbilityVisualFXSettings, caster, target ?? ((TargetWrapper)caster), abilityEvent.Value);
+				areaEffect.View?.AttachManagedFx(effects);
 			}
 		}
 	}
@@ -140,9 +175,9 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		TryPlayVisualFX(caster, null, null, eventType, null);
 	}
 
-	private static void TryPlayVisualFX([NotNull] MechanicEntity caster, [NotNull] TargetWrapper target, [NotNull] AbilityData ability, AbilityEventType eventType)
+	private static void TryPlayVisualFX([NotNull] MechanicEntity caster, [NotNull] TargetWrapper target, [NotNull] AbilityData ability, AbilityEventType eventType, AbilityExecutionContext context = null)
 	{
-		TryPlayVisualFX(caster, target, ability, null, eventType);
+		TryPlayVisualFX(caster, target, ability, null, eventType, context);
 	}
 
 	private static void TryPlayProjectileFX(Projectile projectile, TargetWrapper target, AbilityEventType eventType)
@@ -201,19 +236,19 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 
 	void IAbilityExecutionProcessHandler.HandleExecutionProcessStart(AbilityExecutionContext context)
 	{
-		TryPlayVisualFX(context.Caster, context.MainTarget, context.Ability, AbilityEventType.Start);
+		TryPlayVisualFX(context.Caster, context.MainTarget, context.Ability, AbilityEventType.Start, context);
 		TryPlaySoundFX(context, context.MainTarget, context.Ability, AbilityEventType.Start);
 	}
 
 	void IAbilityExecutionProcessHandler.HandleExecutionProcessEnd(AbilityExecutionContext context)
 	{
-		TryPlayVisualFX(context.Caster, context.MainTarget, context.Ability, AbilityEventType.End);
+		TryPlayVisualFX(context.Caster, context.MainTarget, context.Ability, AbilityEventType.End, context);
 		TryPlaySoundFX(context, context.MainTarget, context.Ability, AbilityEventType.End);
 	}
 
 	void IApplyAbilityEffectHandler.OnAbilityEffectAppliedToTarget(AbilityExecutionContext context, AbilityDeliveryTarget target)
 	{
-		TryPlayVisualFX(context.Caster, target.Target, context.Ability, AbilityEventType.HitTarget);
+		TryPlayVisualFX(context.Caster, target.Target, context.Ability, AbilityEventType.HitTarget, context);
 		TryPlaySoundFX(context, target.Target, context.Ability, AbilityEventType.HitTarget);
 	}
 
@@ -325,7 +360,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 						AkSoundEngine.SetSwitch(muffledTypeSwitch.Group, muffledTypeSwitch.Value, unitEntity.View.gameObject);
 					}
 				}
-				else
+				else if (dealDamage.SourceAbility?.Weapon?.Blueprint.VisualParameters != null)
 				{
 					try
 					{
@@ -343,6 +378,14 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 					catch
 					{
 						PFLog.Default.Error($"{dealDamage.SourceAbility?.Weapon} don't have sound type switch");
+					}
+				}
+				else if (dealDamage.Damage != null)
+				{
+					AkSwitchReference damageSoundSwitch = BlueprintRoot.Instance.HitSystemRoot.GetDamageSoundSwitch(dealDamage.Damage.Type);
+					if (damageSoundSwitch.IsValid())
+					{
+						AkSoundEngine.SetSwitch(damageSoundSwitch.Group, damageSoundSwitch.Value, unitEntity.View.gameObject);
 					}
 				}
 				SoundEventPlayer.PlaySound(BlueprintRoot.Instance.HitSystemRoot.GlobalHitEffect.HitMarkSoundSettings, dealDamage.ConcreteTarget.View.gameObject);
@@ -446,7 +489,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		AbilityExecutionContext sourceAbilityContext = areaEffectEntity.Context.SourceAbilityContext;
 		if (sourceAbilityContext != null)
 		{
-			TryPlayVisualFX(sourceAbilityContext.Caster, sourceAbilityContext.MainTarget, sourceAbilityContext.Ability, AbilityEventType.EndAreaEffect);
+			TryPlayVisualFX(sourceAbilityContext.Caster, sourceAbilityContext.MainTarget, sourceAbilityContext.Ability, AbilityEventType.EndAreaEffect, sourceAbilityContext);
 			TryPlaySoundFX(sourceAbilityContext, sourceAbilityContext.MainTarget, sourceAbilityContext.Ability, AbilityEventType.EndAreaEffect);
 			TryPlayAreaEffectFX(sourceAbilityContext.Caster, sourceAbilityContext.MainTarget, areaEffectEntity, null, AbilityEventType.EndAreaEffect);
 			TryPlaySoundFX(sourceAbilityContext, sourceAbilityContext.MainTarget, areaEffectEntity, AbilityEventType.EndAreaEffect);
@@ -482,6 +525,7 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		if (command is UnitUseAbility unitUseAbility && unitUseAbility.Target != null)
 		{
 			TryPlayVisualFX(unitUseAbility.Executor, unitUseAbility.Target, unitUseAbility.Ability, AbilityEventType.StarUseAbilityCommand);
+			TryPlaySoundFX(unitUseAbility.Executor, unitUseAbility.Target, unitUseAbility.Ability, AbilityEventType.StarUseAbilityCommand);
 		}
 	}
 
@@ -492,6 +536,6 @@ public class VisualEffectsController : IController, IAnimationEventHandler, ISub
 		{
 			FxHelper.SpawnFxOnPoint(gameObject, context.ClickedTarget.Point);
 		}
-		TryPlayVisualFX(context.Caster, context.ClickedTarget, context.Ability, AbilityEventType.Redirected);
+		TryPlayVisualFX(context.Caster, context.ClickedTarget, context.Ability, AbilityEventType.Redirected, context);
 	}
 }

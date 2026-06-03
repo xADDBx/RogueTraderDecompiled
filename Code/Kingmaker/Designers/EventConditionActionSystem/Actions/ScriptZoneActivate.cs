@@ -8,7 +8,7 @@ using Owlcat.QA.Validation;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/ScriptZoneActivate")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("c99aa15b0ad07ce4db8044f7adfccaa5")]

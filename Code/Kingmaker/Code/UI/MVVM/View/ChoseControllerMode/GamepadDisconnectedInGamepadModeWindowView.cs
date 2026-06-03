@@ -6,6 +6,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -63,7 +64,7 @@ public class GamepadDisconnectedInGamepadModeWindowView : ViewBase<GamepadConnec
 
 	protected override void BindViewImplementation()
 	{
-		if (!base.ViewModel.IsControllerOverride)
+		if (!base.ViewModel.IsControllerOverride && !ApplicationHelper.IsRunningOnSwitch2)
 		{
 			m_BodyLabel.text = UIStrings.Instance.ControllerModeTexts.GamepadDisconnectedHeaderText;
 			m_HintLabel.text = UIStrings.Instance.ControllerModeTexts.GamepadDisconnectedText;

@@ -54,6 +54,10 @@ public class WarhammerExtendBuffWithChild : UnitFactComponentDelegate, IUnitBuff
 	{
 	}
 
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
+	}
+
 	public override Hash128 GetHash128()
 	{
 		Hash128 result = default(Hash128);

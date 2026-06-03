@@ -1,4 +1,5 @@
 using System.IO;
+using Kingmaker.EntitySystem.Persistence;
 
 namespace Kingmaker;
 
@@ -61,7 +62,8 @@ public class GameHistoryFile
 	{
 		lock (m_Lock)
 		{
-			m_Writer = new StreamWriter(m_Path, append: true);
+			FileStream stream = new FileStream(m_Path, FileMode.Append, FileAccess.Write, FileShare.Read, ISaver.BuffersSize, FileOptions.SequentialScan);
+			m_Writer = new StreamWriter(stream, ISaver.UTF8NoBom, ISaver.BuffersSize);
 		}
 	}
 }

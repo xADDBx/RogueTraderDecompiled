@@ -4,6 +4,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
@@ -11,6 +12,7 @@ using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
+using Kingmaker.Utility.StatefulRandom;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Abilities.Components;
@@ -18,7 +20,7 @@ namespace Kingmaker.UnitLogic.Abilities.Components;
 [Serializable]
 [AllowedOn(typeof(BlueprintAbility))]
 [TypeId("32c217123d704c0385778db3f29d2496")]
-public class AbilityMultiTarget : AbilityDeliverEffect, IAbilityMultiTarget
+public class AbilityMultiTarget : AbilityDeliverEffect, IAbilityMultiTarget, IAbilityGetAllTargetsForTooltip, IAbilityGetTooltipTarget
 {
 	public enum CasterType
 	{
@@ -67,40 +69,39 @@ public class AbilityMultiTarget : AbilityDeliverEffect, IAbilityMultiTarget
 
 	public override bool IsEngageUnit => true;
 
-	public bool TryGetNextTargetAbilityAndCaster(AbilityData rootAbility, int targetIndex, out BlueprintAbility ability, out MechanicEntity caster)
-	{
-		if (m_UseSelfAsFirstTarget)
-		{
-			if (targetIndex <= 0)
-			{
-				ability = rootAbility.Blueprint;
-				caster = rootAbility.Caster;
-				return true;
-			}
-			targetIndex--;
-		}
-		if (targetIndex >= m_Targets.Count || targetIndex < 0)
-		{
-			ability = null;
-			caster = null;
-			return false;
-		}
-		TargetItem targetItem = m_Targets[targetIndex];
-		ability = targetItem.Ability.Get() ?? rootAbility.Blueprint;
-		caster = GetDelegateUnit(rootAbility.Caster, targetItem.Caster);
-		return true;
-	}
+	public int TargetAbilityCount => m_Targets.Count;
 
-	public IEnumerable<AbilityData> GetAllTargetsForTooltip(AbilityData rootAbility)
+	public bool TryGetNextTargetAbility(AbilityData rootAbility, int targetIndex, out AbilityData ability)
 	{
-		if (m_UseSelfAsFirstTarget)
+		BlueprintAbility blueprintAbility = null;
+		MechanicEntity mechanicEntity = null;
+		ability = null;
+		if (m_UseSelfAsFirstTarget && targetIndex <= 0)
 		{
-			yield return rootAbility;
+			blueprintAbility = rootAbility.Blueprint;
+			mechanicEntity = rootAbility.Caster;
 		}
-		foreach (TargetItem target in m_Targets)
+		else
 		{
-			yield return new AbilityData(target.Ability.Get(), GetDelegateUnit(rootAbility.Caster, target.Caster));
+			if (m_UseSelfAsFirstTarget)
+			{
+				targetIndex--;
+			}
+			if (targetIndex >= 0 && targetIndex < m_Targets.Count)
+			{
+				TargetItem targetItem = m_Targets[targetIndex];
+				blueprintAbility = targetItem.Ability.Get() ?? rootAbility.Blueprint;
+				mechanicEntity = GetDelegateUnit(rootAbility.Caster, targetItem.Caster);
+			}
 		}
+		if (blueprintAbility != null && mechanicEntity != null)
+		{
+			using (ContextData<DisableStatefulRandomContext>.Request())
+			{
+				ability = new AbilityData(blueprintAbility, mechanicEntity);
+			}
+		}
+		return ability != null;
 	}
 
 	public override IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, TargetWrapper target)
@@ -161,5 +162,17 @@ public class AbilityMultiTarget : AbilityDeliverEffect, IAbilityMultiTarget
 			return caster.GetOptional<UnitPartPetOwner>()?.PetUnit ?? (caster as BaseUnitEntity);
 		}
 		return caster as BaseUnitEntity;
+	}
+
+	public IEnumerable<AbilityData> TooltipMultipleTargets(AbilityData rootAbility)
+	{
+		if (m_UseSelfAsFirstTarget)
+		{
+			yield return rootAbility;
+		}
+		foreach (TargetItem target in m_Targets)
+		{
+			yield return new AbilityData(target.Ability.Get(), GetDelegateUnit(rootAbility.Caster, target.Caster));
+		}
 	}
 }

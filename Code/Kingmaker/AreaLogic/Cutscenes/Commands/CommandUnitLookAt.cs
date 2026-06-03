@@ -1,7 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility.Attributes;
 using Owlcat.QA.Validation;
@@ -44,11 +43,11 @@ public class CommandUnitLookAt : CommandBase
 	private bool m_Continuous;
 
 	[SerializeField]
-	[ConditionalShow("m_Continuous")]
+	[ShowIf("m_Continuous")]
 	private bool m_RestoreOrientation;
 
 	[SerializeField]
-	[ConditionalShow("m_Continuous")]
+	[ShowIf("m_Continuous")]
 	private bool m_FreezeAfterTurn = true;
 
 	[SerializeField]
@@ -56,6 +55,8 @@ public class CommandUnitLookAt : CommandBase
 	{
 		Name = "OnTurned"
 	};
+
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => m_Unit;
 
 	public override bool IsContinuous => m_Continuous;
 
@@ -192,14 +193,5 @@ public class CommandUnitLookAt : CommandBase
 	public override string GetCaption()
 	{
 		return m_Unit?.GetCaptionShort() + " <b>look at</b> " + m_Position?.GetCaptionShort();
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!m_Unit || !m_Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 }

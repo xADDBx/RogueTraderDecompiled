@@ -27,11 +27,11 @@ public class SlideSelectorCommonView : BaseCharGenAppearancePageComponentView<Sl
 	private bool m_CalculateHandleSize = true;
 
 	[SerializeField]
-	[ConditionalShow("m_CalculateHandleSize")]
+	[ShowIf("m_CalculateHandleSize")]
 	private RectTransform m_SliderRect;
 
 	[SerializeField]
-	[ConditionalShow("m_CalculateHandleSize")]
+	[ShowIf("m_CalculateHandleSize")]
 	private RectTransform m_SliderSlideArea;
 
 	[SerializeField]

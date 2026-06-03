@@ -153,7 +153,7 @@ public class UnitAnimationActionCastSpell : UnitAnimationAction
 	{
 		handle.Unit.Data.Facts.GetAll((EntityFact ef) => ef.GetComponent<PlayLoopAnimationByBuff>() != null).FirstOrDefault()?.CallComponents(delegate(PlayLoopAnimationByBuff playLoop)
 		{
-			playLoop.TrySetAction(skipEnter: true);
+			playLoop.TrySetAction(handle.Unit.AnimationManager, skipEnter: true);
 		});
 	}
 

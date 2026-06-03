@@ -1,5 +1,7 @@
 using System;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.Items;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using UnityEngine;
 
@@ -28,7 +30,7 @@ public class CounterWindowVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 		if (item != null)
 		{
 			ItemName = item.Name;
-			ItemIcon = item.Icon;
+			ItemIcon = item.Icon.Or(UIConfig.Instance.UIIcons.DefaultItemIcon);
 			ItemCount = item.Count.ToString();
 			OperationType = type;
 			switch (OperationType)

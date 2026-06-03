@@ -15,8 +15,10 @@ using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Cargo;
 using Kingmaker.Cheats;
+using Kingmaker.Code.UI.MVVM.View.BugReport;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.FirstLaunchSettings;
+using Kingmaker.Console.NintendoSwitch2;
 using Kingmaker.Controllers;
 using Kingmaker.Controllers.Clicks;
 using Kingmaker.Controllers.Dialog;
@@ -30,6 +32,7 @@ using Kingmaker.Designers.EventConditionActionSystem.Evaluators.BarkBanters;
 using Kingmaker.Designers.WarhammerSurfaceCombatPrototype.PsychicPowers;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.DLC;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.Enums;
@@ -254,6 +257,15 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action<int>(CheatsColonization.AddPF), "void AddPF(int value)", "add_pf", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "value",
+				Type = "System.Int32",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<int>(CheatsColonization.AddCombativity), "void AddCombativity(int value)", "add_combativity", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
 			{
@@ -926,6 +938,35 @@ public static class AllCheats
 		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.TogglePBDEnabled), "string TogglePBDEnabled()", "gl_togglepbdenabled", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
 		new CheatMethodInfoInternal(new Func<string>(CheatsGraphics.TogglePBDCameraCullingEnabled), "string TogglePBDCameraCullingEnabled()", "gl_togglepbdcameracullingenabled", "", "", ExecutionPolicy.All, new CheatParameter[0], "string"),
 		new CheatMethodInfoInternal(new Action(CheatsItems.AoeLoot), "void AoeLoot()", "aoe_loot", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsItems.EquipItem), "void EquipItem(string blueprintName)", "equip_item", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "blueprintName",
+				Type = "System.String",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsItems.UnequipItem), "void UnequipItem(string blueprintName)", "unequip_item", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "blueprintName",
+				Type = "System.String",
+				HasDefaultValue = false
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action<string>(CheatsItems.OverdriveAugment), "void OverdriveAugment(string blueprintName = null)", "augment_overdrive", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
+		{
+			new CheatParameter
+			{
+				Name = "blueprintName",
+				Type = "System.String",
+				HasDefaultValue = true
+			}
+		}, "void"),
+		new CheatMethodInfoInternal(new Action(CheatsItems.UnlockAugmentsTier2), "void UnlockAugmentsTier2()", "augments_unlock_t2", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(CheatsItems.LockAugmentsTier2), "void LockAugmentsTier2()", "augments_lock_t2", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<string, string, string>(CheatsRE.StartRE), "void StartRE(string areaBlueprintName, string areaEnterPointBlueprintName = null, string enemyGroupBlueprintName = null)", "start_re", "", "", ExecutionPolicy.PlayMode, new CheatParameter[3]
 		{
 			new CheatParameter
@@ -1196,6 +1237,7 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(CheatsUnlock.ChangeParty), "void ChangeParty()", "change_party", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(DlcCheats.RefreshAllDLCStatuses), "void RefreshAllDLCStatuses()", "refresh_all_dlc_statuses", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<BlueprintDlc>(DlcCheats.SetDlcAvailable), "void SetDlcAvailable(BlueprintDlc dlc)", "set_dlc_available", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
@@ -1254,6 +1296,7 @@ public static class AllCheats
 				HasDefaultValue = false
 			}
 		}, "object"),
+		new CheatMethodInfoInternal(new Func<Task<string>>(Switch2NetworkManager.GetTokenCheat), "Task<string> GetTokenCheat()", "get_nsa_token_cheat", "", "", ExecutionPolicy.All, new CheatParameter[0], "Task<string>"),
 		new CheatMethodInfoInternal(new Action<BlueprintDialog>(DialogController.StartDialogCheat), "void StartDialogCheat(BlueprintDialog dialog)", "dialog_force", "", "", ExecutionPolicy.PlayMode, new CheatParameter[1]
 		{
 			new CheatParameter
@@ -1368,6 +1411,7 @@ public static class AllCheats
 			}
 		}, "void"),
 		new CheatMethodInfoInternal(new Action(VeilThicknessCounter.ClearVeil), "void ClearVeil()", "veil_clear", "Clears all veil thickness", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
+		new CheatMethodInfoInternal(new Action(RuntimeAreaSettings.CheatViewOnlyIgnoreHandler), "void CheatViewOnlyIgnoreHandler()", "augments_ignore_viewonly", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(PartyAutoFormationHelper.UpdateAutoFormation), "void UpdateAutoFormation()", "update_auto_formation", "", "", ExecutionPolicy.PlayMode, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action<long>(GameRamInsufficiencyDetector.DebugRamInsufficiency), "void DebugRamInsufficiency(long sizeInMbs)", "debug_ram_insufficiency", "", "", ExecutionPolicy.All, new CheatParameter[1]
 		{
@@ -1992,6 +2036,7 @@ public static class AllCheats
 				HasDefaultValue = true
 			}
 		}, "void"),
+		new CheatMethodInfoInternal(new Action(BugReportControls.OpenBugReport), "void OpenBugReport()", "bug_report_open", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CommonVM.ClearCanSwitchDlcAfterPurchasePrefs), "void ClearCanSwitchDlcAfterPurchasePrefs()", "clear_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(CommonVM.SetCanSwitchDlcAfterPurchasePrefs), "void SetCanSwitchDlcAfterPurchasePrefs()", "set_can_switch_dlc_after_purchase", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
 		new CheatMethodInfoInternal(new Action(FirstLaunchSettingsVM.ClearFirstLaunchPrefs), "void ClearFirstLaunchPrefs()", "clear_first_launch", "", "", ExecutionPolicy.All, new CheatParameter[0], "void"),
@@ -2264,6 +2309,14 @@ public static class AllCheats
 		}, "steam_force_full_download", "", "", ExecutionPolicy.All, "bool"),
 		new CheatPropertyInfoInternal(new CheatPropertyMethods
 		{
+			Getter = (Func<bool>)(() => BugReportControls.ForceDisableBugReporter),
+			Setter = (Action<bool>)delegate(bool value)
+			{
+				BugReportControls.ForceDisableBugReporter = value;
+			}
+		}, "bug_report_force_disable", "", "", ExecutionPolicy.All, "bool"),
+		new CheatPropertyInfoInternal(new CheatPropertyMethods
+		{
 			Getter = (Func<float>)(() => UnitJumpAsideDodgeParams.Speed),
 			Setter = (Action<float>)delegate(float value)
 			{
@@ -2278,6 +2331,14 @@ public static class AllCheats
 				IgnorePrerequisites.IgnorePrerequisitesAlways = value;
 			}
 		}, "ignore_prereq", "When true, prerequisites will be ignored", "", ExecutionPolicy.All, "bool"),
+		new CheatPropertyInfoInternal(new CheatPropertyMethods
+		{
+			Getter = (Func<bool>)(() => SirenClient.SendAsSwitch),
+			Setter = (Action<bool>)delegate(bool value)
+			{
+				SirenClient.SendAsSwitch = value;
+			}
+		}, "send_reports_as_switch", "", "", ExecutionPolicy.All, "bool"),
 		new CheatPropertyInfoInternal(new CheatPropertyMethods
 		{
 			Getter = (Func<bool>)(() => CameraRig.DebugCameraScroll),

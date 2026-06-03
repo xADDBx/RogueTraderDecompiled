@@ -32,7 +32,7 @@ public class ColonyProjectsRequirementElementVM : BaseDisposable, IViewModel, IB
 		RequirementUI requirement2 = RequirementUIFactory.GetRequirement(requirement);
 		SetVisualType(requirement2);
 		Icon.Value = requirement2.Icon;
-		Description.Value = ((requirement2 is RequirementProfitFactorCostUI && isJournal) ? requirement2.Name : requirement2.Description);
+		Description.Value = (((requirement2 is RequirementProfitFactorCostUI || requirement2 is RequirementCombativityCostUI) && isJournal) ? requirement2.Name : requirement2.Description);
 		CountText.Value = requirement2.CountText;
 		IsChecked.Value = requirement.Check(colony);
 	}
@@ -52,7 +52,7 @@ public class ColonyProjectsRequirementElementVM : BaseDisposable, IViewModel, IB
 		{
 			if (!(requirementUI is RequirementBuiltProjectInColonyUI) && !(requirementUI is RequirementBuiltProjectGlobalUI) && !(requirementUI is RequirementBuiltAtLeastOneOfProjectsUI))
 			{
-				if (requirementUI is RequirementProfitFactorCostUI || requirementUI is RequirementProfitFactorMinimumUI || requirementUI is RequirementReputationUI || requirementUI is RequirementResourceHaveUI || requirementUI is RequirementResourceUseOrderUI || requirementUI is RequirementResourceUseProjectUI || requirementUI is RequirementSoulMarkRankUI || requirementUI is RequirementStatContentmentUI || requirementUI is RequirementStatEfficiencyUI || requirementUI is RequirementStatSecurityUI || requirementUI is RequirementCargoUI || requirementUI is RequirementReputationCostUI || requirementUI is RequirementResourceUseDialogUI || requirementUI is RequirementScrapUI)
+				if (requirementUI is RequirementProfitFactorCostUI || requirementUI is RequirementProfitFactorMinimumUI || requirementUI is RequirementReputationUI || requirementUI is RequirementResourceHaveUI || requirementUI is RequirementResourceUseOrderUI || requirementUI is RequirementResourceUseProjectUI || requirementUI is RequirementSoulMarkRankUI || requirementUI is RequirementStatContentmentUI || requirementUI is RequirementStatEfficiencyUI || requirementUI is RequirementStatSecurityUI || requirementUI is RequirementCargoUI || requirementUI is RequirementReputationCostUI || requirementUI is RequirementResourceUseDialogUI || requirementUI is RequirementScrapUI || requirementUI is RequirementCombativityCostUI || requirementUI is RequirementCombativityMinimumUI)
 				{
 					VisualType = RequirementElementVisualType.Default;
 				}

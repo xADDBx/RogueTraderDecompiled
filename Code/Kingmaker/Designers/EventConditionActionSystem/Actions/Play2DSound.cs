@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/Play2DSound")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("12f52f92a7d3efe47b69ba8b41d4e47d")]
 public class Play2DSound : GameAction

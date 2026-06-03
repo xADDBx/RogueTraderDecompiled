@@ -46,4 +46,10 @@ public static class EntityFactsManagerHelper
 	{
 		return manager.List.Where((EntityFact f) => f.IsFrom(fact, component));
 	}
+
+	public static bool TryGetComponent<TComponent>(this EntityFactsManager manager, out TComponent component) where TComponent : BlueprintComponent
+	{
+		component = manager.GetComponents<TComponent>().FirstOrDefault();
+		return component != null;
+	}
 }

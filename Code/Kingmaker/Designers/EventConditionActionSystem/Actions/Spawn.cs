@@ -10,7 +10,7 @@ using Kingmaker.View.Spawners;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/Spawn")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("0652c1b85291c994f8411a22deb2b6ec")]
 [PlayerUpgraderAllowed(true)]

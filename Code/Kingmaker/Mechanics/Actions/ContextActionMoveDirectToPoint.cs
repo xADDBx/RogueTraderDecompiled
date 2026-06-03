@@ -1,4 +1,5 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Controllers.Units;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
@@ -58,10 +59,7 @@ public class ContextActionMoveDirectToPoint : ContextActionMove
 		}
 		if (m_UseJump)
 		{
-			EventBus.RaiseEvent(delegate(IUnitGetAbilityJump h)
-			{
-				h.HandleUnitResultJump(startPoint.CellDistanceTo(endPoint), m_TargetPoint.GetValue(), directJump: true, base.Caster, base.Caster, useAttack: false);
-			});
+			UnitJumpMoveController.TryStartJump(base.Caster, startPoint.CellDistanceTo(endPoint), m_TargetPoint.GetValue());
 			return;
 		}
 		if (m_UseForceMove)

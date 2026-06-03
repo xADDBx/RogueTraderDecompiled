@@ -8,7 +8,6 @@ using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
@@ -56,7 +55,7 @@ public class CommandMoveUnit : CommandBase
 
 	public bool OverrideSpeed;
 
-	[ConditionalShow("OverrideSpeed")]
+	[ShowIf("OverrideSpeed")]
 	public float Speed = 5f;
 
 	public bool DisableAvoidance = true;
@@ -71,6 +70,8 @@ public class CommandMoveUnit : CommandBase
 	[SerializeField]
 	[Tooltip("Hotfix WH-118691")]
 	private bool m_SnapToGridInCombat;
+
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => Unit;
 
 	protected override void OnRun(CutscenePlayerData player, bool skipping)
 	{
@@ -226,15 +227,6 @@ public class CommandMoveUnit : CommandBase
 		{
 			(unit as UnitEntity)?.SnapToGrid();
 		}
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!Unit || !Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 
 	public override string GetCaption()

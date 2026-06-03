@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
@@ -13,7 +12,7 @@ namespace Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Journal;
 
 public class JournalQuestObjectiveAddendumVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 {
-	public readonly QuestObjective Addendum;
+	public readonly QuestBookEntityEntry Addendum;
 
 	public readonly string Description;
 
@@ -41,12 +40,12 @@ public class JournalQuestObjectiveAddendumVM : BaseDisposable, IViewModel, IBase
 
 	public bool IsViewed => Addendum.IsViewed;
 
-	public JournalQuestObjectiveAddendumVM(QuestObjective addendum)
+	public JournalQuestObjectiveAddendumVM(QuestBookEntityEntry addendum)
 	{
 		Addendum = addendum;
 		Description = Addendum?.Blueprint?.GetDescription();
 		string text = string.Empty;
-		QuestObjective addendum2 = Addendum;
+		QuestBookEntityEntry addendum2 = Addendum;
 		if (addendum2 != null)
 		{
 			BlueprintQuestObjective blueprint = addendum2.Blueprint;
@@ -58,11 +57,11 @@ public class JournalQuestObjectiveAddendumVM : BaseDisposable, IViewModel, IBase
 			}
 		}
 		Destination = ((!string.IsNullOrWhiteSpace(Addendum?.Blueprint?.Destination)) ? ((string)Addendum?.Blueprint?.Destination) : ((!string.IsNullOrWhiteSpace(text)) ? text : string.Empty));
-		QuestObjective addendum3 = Addendum;
+		QuestBookEntityEntry addendum3 = Addendum;
 		IsFailed = addendum3 != null && addendum3.State == QuestObjectiveState.Failed;
-		QuestObjective addendum4 = Addendum;
+		QuestBookEntityEntry addendum4 = Addendum;
 		IsCompleted = addendum4 != null && addendum4.State == QuestObjectiveState.Completed;
-		QuestObjective addendum5 = Addendum;
+		QuestBookEntityEntry addendum5 = Addendum;
 		IsPostponed = addendum5 != null && addendum5.State == QuestObjectiveState.Postponed;
 		BlueprintQuestObjective blueprintQuestObjective = addendum?.Blueprint;
 		if (blueprintQuestObjective != null)

@@ -24,5 +24,6 @@ public enum WeaponAnimationStyle
 	EldarHeavyOnShoulder = 23,
 	OneHandedHammer = 24,
 	TwoHandedHammer = 25,
-	ShotgunOneHanded = 26
+	ShotgunOneHanded = 26,
+	BrutalTwoHandedInOneHand = 27
 }

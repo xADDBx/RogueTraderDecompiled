@@ -61,11 +61,11 @@ public class TooltipBrickFeatureView : TooltipBaseBrickView<TooltipBrickFeatureV
 	[SerializeField]
 	private bool m_HasHiddenPart;
 
-	[ConditionalShow("m_HasHiddenPart")]
+	[ShowIf("m_HasHiddenPart")]
 	[SerializeField]
 	private CanvasGroup m_HiddenBlock;
 
-	[ConditionalShow("m_HasHiddenPart")]
+	[ShowIf("m_HasHiddenPart")]
 	[SerializeField]
 	private CanvasGroup m_DefaultBlock;
 

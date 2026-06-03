@@ -49,15 +49,11 @@ public sealed class LightweightUnitEntityView : AbstractUnitEntityView
 	{
 		base.OnWillDetachFromData();
 		UnitPartMechadendrites optional = Data.GetOptional<UnitPartMechadendrites>();
-		if (optional == null)
+		if (optional != null)
 		{
-			return;
+			optional.UnregisterAllMechadendrites();
+			Data?.Remove<UnitPartMechadendrites>();
 		}
-		foreach (KeyValuePair<MechadendritesType, MechadendriteSettings> mechadendrite in optional.Mechadendrites)
-		{
-			optional.UnregisterMechadendrite(mechadendrite.Value);
-		}
-		Data?.Remove<UnitPartMechadendrites>();
 	}
 
 	private void CollectMechadendrites()

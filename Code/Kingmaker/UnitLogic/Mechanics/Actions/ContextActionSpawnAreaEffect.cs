@@ -31,9 +31,6 @@ public class ContextActionSpawnAreaEffect : ContextAction
 	[Tooltip("Set FactData ContextData as SourceFact")]
 	public bool SetSourceFact;
 
-	[Tooltip("Will focus camera on area effect when it will start")]
-	public bool FocusCameraOnEffect;
-
 	public BlueprintAbilityAreaEffect AreaEffect => m_AreaEffect?.Get();
 
 	public override string GetCaption()

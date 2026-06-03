@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.LocalMap.Utils;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.Networking;
@@ -33,7 +34,7 @@ public abstract class LocalMapMarkerVM : BaseDisposable, IViewModel, IBaseDispos
 
 	protected LocalMapMarkerVM()
 	{
-		AddDisposable(Observable.EveryUpdate().Subscribe(delegate
+		AddDisposable(Observable.EveryUpdate().PauseDuringCutscene().Subscribe(delegate
 		{
 			OnUpdateHandler();
 		}));

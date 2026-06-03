@@ -42,6 +42,14 @@ public class DollRoomTargetController : MonoBehaviour, IBeginDragHandler, IEvent
 
 	public RawImage RawImage => m_RawImage;
 
+	private void Awake()
+	{
+		if ((bool)RawImage && RawImage.texture == null)
+		{
+			RawImage.texture = Texture2D.blackTexture;
+		}
+	}
+
 	public Vector2 GetRawImageSize(CanvasScalerWorkaround defaultCanvasScaler)
 	{
 		RectTransform rectTransform = (RectTransform)m_RawImage.transform;

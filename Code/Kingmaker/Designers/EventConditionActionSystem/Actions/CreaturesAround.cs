@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/CreaturesAround")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("64da7ddec4b0d684fb685bc810669a23")]
 public class CreaturesAround : GameAction

@@ -235,6 +235,7 @@ internal sealed class CustomMaterialPropertyAnimationController : IDisposable
 		{
 			propertyAnimator.ClearMaterials();
 		}
+		m_Materials.Clear();
 	}
 
 	public int AddAnimation(CustomMaterialPropertyAnimationSetup animationSetup)

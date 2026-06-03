@@ -34,10 +34,10 @@ public class ReplaceBaseStatValue : ReplaceStat, IHashable
 		{
 			if (required.OverridenBaseStat.ContainsKey(m_OriginalStat))
 			{
-				required.OverridenBaseStat.Remove(m_OriginalStat);
+				required.RemoveBaseStatOverride(m_OriginalStat, this);
 				PFLog.Default.Log($"ReplaceBaseStatValue: overriding base stat of {m_OriginalStat} to {statType}");
 			}
-			required.OverridenBaseStat[m_OriginalStat] = statType;
+			required.AddBaseStatOverride(m_OriginalStat, statType, this, base.Fact);
 			base.Owner.GetStatOptional(m_OriginalStat)?.UpdateValue();
 		}
 	}
@@ -46,7 +46,7 @@ public class ReplaceBaseStatValue : ReplaceStat, IHashable
 	{
 		if (!m_OriginalStat.IsAttribute() && m_OriginalBaseStat.IsAttribute() && m_OriginalBaseStat != ReplaceStat.GetStat(m_NewAttribute))
 		{
-			base.Owner.GetRequired<PartStatsContainer>().OverridenBaseStat.Remove(m_OriginalStat);
+			base.Owner.GetRequired<PartStatsContainer>().RemoveBaseStatOverride(m_OriginalStat, this);
 			base.Owner.GetStatOptional(m_OriginalStat)?.UpdateValue();
 		}
 	}

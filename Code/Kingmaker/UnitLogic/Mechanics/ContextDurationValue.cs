@@ -1,15 +1,11 @@
 using System;
 using Kingmaker.Utility;
-using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics;
 
 [Serializable]
 public class ContextDurationValue
 {
-	[HideInInspector]
-	public ContextValue BonusValue;
-
 	public ContextValue RoundsValue;
 
 	public Rounds Calculate(MechanicsContext context)

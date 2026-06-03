@@ -34,7 +34,8 @@ public class OverrideCostData
 
 	public bool IsCorrectUnit(BaseUnitEntity unitEntity)
 	{
-		PropertyContext context = new PropertyContext(unitEntity, null, Source.Entity as AreaEffectEntity);
+		AreaEffectEntity areaEffectEntity = Source.Entity as AreaEffectEntity;
+		PropertyContext context = new PropertyContext(unitEntity, null, areaEffectEntity, areaEffectEntity?.Context);
 		return m_Restrictions?.Get()?.IsPassed(context) ?? true;
 	}
 

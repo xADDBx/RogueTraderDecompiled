@@ -35,7 +35,7 @@ public static class CombatEngagementHelper
 			ReleaseList(item2.Value);
 		}
 		EngagedBy.Clear();
-		s_SystemStepIndex = Time.frameCount;
+		s_SystemStepIndex = Game.Instance.RealTimeController.CurrentSystemStepIndex;
 	}
 
 	public static IEnumerable<BaseUnitEntity> GetEngagedUnits(this BaseUnitEntity unit)

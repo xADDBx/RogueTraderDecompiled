@@ -21,13 +21,23 @@ public class DlcManagerSwitchOnDlcEntityVM : SelectionGroupEntityVM
 
 	public readonly BoolReactiveProperty NeedSwitchOnWarning = new BoolReactiveProperty();
 
-	public readonly bool IsSaveAllowed;
-
 	private readonly ReactiveCommand<bool> m_CheckModNeedToResaveCommand;
 
 	public readonly bool ItIsLateToSwitchDlcOn;
 
 	public readonly string ToLateReason;
+
+	public bool IsSaveAllowed
+	{
+		get
+		{
+			if (!LoadingProcess.Instance.IsLoadingInProcess && Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual))
+			{
+				return !Game.Instance.Player.IsInCombat;
+			}
+			return false;
+		}
+	}
 
 	public DlcManagerSwitchOnDlcEntityVM(BlueprintDlc blueprintDlc, ReactiveCommand<bool> checkModNeedToResaveCommand)
 		: base(allowSwitchOff: false)
@@ -36,7 +46,6 @@ public class DlcManagerSwitchOnDlcEntityVM : SelectionGroupEntityVM
 		Title = blueprintDlc.GetDlcName();
 		m_CheckModNeedToResaveCommand = checkModNeedToResaveCommand;
 		SetTempDlcState(GetActualDlcState());
-		IsSaveAllowed = !LoadingProcess.Instance.IsLoadingInProcess && Game.Instance.SaveManager.IsSaveAllowed(SaveInfo.SaveType.Manual) && !Game.Instance.Player.IsInCombat;
 		if (ItIsLateToSwitchDlcOn = BlueprintDlc.CheckIsLateToSwitch())
 		{
 			ToLateReason = BlueprintDlc.ToLateReason;

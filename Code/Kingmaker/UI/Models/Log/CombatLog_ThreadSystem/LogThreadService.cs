@@ -36,7 +36,8 @@ public class LogThreadService : IService, IDisposable
 				new NavigatorResourceLogThread(),
 				new ColonyResourcesLogThread(),
 				new ColonyProjectLogThread(),
-				new ColonyChronicleLogThread()
+				new ColonyChronicleLogThread(),
+				new CombativityLogThread()
 			}
 		},
 		{
@@ -51,10 +52,12 @@ public class LogThreadService : IService, IDisposable
 				new RollSkillCheckLogThread(),
 				new RulebookCastSpellLogThread(),
 				new PartyUseAbilityLogThread(),
+				new AbilityImmunityLogThread(),
 				new RulebookSavingThrowLogThread(),
 				new RulePerformMomentumChangeLogThread(),
 				new AddSeparatorLogThread(),
-				new MergeRulePerformSavingThrowLogThread()
+				new MergeRulePerformSavingThrowLogThread(),
+				new PsychicPhenomenaAvoidedLogThread()
 			}
 		},
 		{

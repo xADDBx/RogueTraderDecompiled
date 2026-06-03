@@ -54,6 +54,16 @@ public class DlcStoreSteam : DlcStore, IDLCStoreSteam
 					m_LoadingCoroutine = Game.Instance.CoroutinesController.InvokeInTime(StoreManager.RefreshAllDLCStatuses, 10.Seconds());
 					PFLog.System.Log($"DLC {base.OwnerBlueprint} is available but not downloaded through Steam (ID {SteamId}).");
 				}
+				else if (SteamApps.BIsSubscribedApp(appId_t))
+				{
+					value = new DLCStatus
+					{
+						Purchased = true,
+						DownloadState = DownloadState.NotLoaded,
+						IsMounted = false
+					};
+					PFLog.System.Log($"DLC {base.OwnerBlueprint} is owned but not installed through Steam (ID {SteamId}).");
+				}
 				else
 				{
 					PFLog.System.Log($"DLC {base.OwnerBlueprint} is not available through Steam (ID {SteamId}).");

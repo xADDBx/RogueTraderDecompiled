@@ -28,7 +28,7 @@ public class DialogSystemAnswerBaseView : ViewBase<AnswerVM>, IConsoleNavigation
 		base.gameObject.SetActive(value: true);
 		AddDisposable(base.ViewModel.Answer.Subscribe(delegate(BlueprintAnswer value)
 		{
-			m_Text.text = value.Text;
+			m_Text.text = value.DisplayText;
 		}));
 	}
 

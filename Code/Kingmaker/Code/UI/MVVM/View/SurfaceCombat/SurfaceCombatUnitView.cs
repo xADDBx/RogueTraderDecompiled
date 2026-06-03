@@ -53,15 +53,15 @@ public abstract class SurfaceCombatUnitView<TCombatUnitVM> : ViewBase<TCombatUni
 	[Header("Markers")]
 	public bool HasMarkers = true;
 
-	[ConditionalShow("HasMarkers")]
+	[ShowIf("HasMarkers")]
 	[SerializeField]
 	protected GameObject m_WillLossTurn;
 
-	[ConditionalShow("HasMarkers")]
+	[ShowIf("HasMarkers")]
 	[SerializeField]
 	protected GameObject m_HasLossControlEffectsIcon;
 
-	[ConditionalShow("HasMarkers")]
+	[ShowIf("HasMarkers")]
 	[SerializeField]
 	protected GameObject m_UnableToActNormaly;
 

@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
@@ -28,6 +29,7 @@ public class AbilityAreaEffectBuff : AbilityAreaEffectLogic
 
 	public bool ReduceAndAddRanks;
 
+	[CanBeNull]
 	public BlueprintBuff Buff => m_Buff?.Get();
 
 	protected override void OnUnitEnter(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
@@ -61,7 +63,7 @@ public class AbilityAreaEffectBuff : AbilityAreaEffectLogic
 
 	private void TryApplyBuff(MechanicsContext context, AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
-		if ((FindAppliedBuff(areaEffect, unit) == null || ReduceAndAddRanks) && IsConditionPassed(context, unit))
+		if (!m_Buff.IsEmpty() && (FindAppliedBuff(areaEffect, unit) == null || ReduceAndAddRanks) && IsConditionPassed(context, unit))
 		{
 			unit.Buffs.Add(Buff, context)?.AddSource(areaEffect);
 		}
@@ -93,6 +95,10 @@ public class AbilityAreaEffectBuff : AbilityAreaEffectLogic
 
 	private Buff FindAppliedBuff(AreaEffectEntity areaEffect, BaseUnitEntity unit)
 	{
+		if (m_Buff.IsEmpty())
+		{
+			return null;
+		}
 		if (!ReduceAndAddRanks)
 		{
 			return unit.Facts.FindBySource(Buff, areaEffect) as Buff;

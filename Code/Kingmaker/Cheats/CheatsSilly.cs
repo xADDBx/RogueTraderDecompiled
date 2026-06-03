@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI.InputSystems;
@@ -59,19 +58,6 @@ internal class CheatsSilly
 				{
 					allCharacter.View.CharacterAvatar.RemoveEquipmentEntities(ees);
 				}
-			}
-		}
-	}
-
-	private static void UpdatePartyNoArmor(bool b)
-	{
-		foreach (BaseUnitEntity allCharacter in Game.Instance.Player.AllCharacters)
-		{
-			if (allCharacter.IsInGame && allCharacter.View != null && allCharacter.View.CharacterAvatar != null)
-			{
-				IEnumerable<EquipmentEntity> ees = allCharacter.Body.AllSlots.SelectMany(allCharacter.View.ExtractEquipmentEntities);
-				allCharacter.View.CharacterAvatar.RemoveEquipmentEntities(ees);
-				allCharacter.View.UpdateBodyEquipmentModel();
 			}
 		}
 	}

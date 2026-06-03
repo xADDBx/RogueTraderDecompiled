@@ -1,14 +1,17 @@
+using Kingmaker.Code.UI.MVVM.View.BossHPBar;
 using Kingmaker.Code.UI.MVVM.View.Credits;
 using Kingmaker.Code.UI.MVVM.View.Dialog.Dialog.Console;
 using Kingmaker.Code.UI.MVVM.View.EtudeCounter.Console;
 using Kingmaker.Code.UI.MVVM.View.Formation.Console;
 using Kingmaker.Code.UI.MVVM.View.GameOver;
 using Kingmaker.Code.UI.MVVM.View.Loot.Console;
+using Kingmaker.Code.UI.MVVM.View.NecronTimer.Console;
 using Kingmaker.Code.UI.MVVM.View.Respec;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.View.Subtitle;
 using Kingmaker.Code.UI.MVVM.View.SurfaceCombat.Console;
 using Kingmaker.Code.UI.MVVM.View.Transition.Console;
+using Kingmaker.Code.UI.MVVM.View.TurnTimer.Console;
 using Kingmaker.Code.UI.MVVM.View.UIVisibility;
 using Kingmaker.Code.UI.MVVM.View.Vendor;
 using Kingmaker.Code.UI.MVVM.View.Vendor.Console;
@@ -69,6 +72,15 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	private EtudeCounterConsoleView m_EtudeCounterView;
 
 	[SerializeField]
+	private BossHPBarCommonView m_BossHPBarView;
+
+	[SerializeField]
+	private TurnTimerConsoleView m_TurnTimerView;
+
+	[SerializeField]
+	private NecronTimerConsoleView m_NecronTimerView;
+
+	[SerializeField]
 	private CharGenContextConsoleView m_CharGenContextConsoleView;
 
 	[SerializeField]
@@ -109,6 +121,9 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 		m_SurfaceHUDConsoleView.Bind(base.ViewModel.SurfaceHUDVM);
 		m_SubtitleView.Bind(base.ViewModel.SubtitleVM);
 		m_EtudeCounterView.Bind(base.ViewModel.EtudeCounterVM);
+		m_BossHPBarView.Bind(base.ViewModel.BossHPBarVM);
+		m_TurnTimerView.Bind(base.ViewModel.TurnTimerVM);
+		m_NecronTimerView.Bind(base.ViewModel.NecronTimerVM);
 		m_CharGenContextConsoleView.Bind(base.ViewModel.CharGenContextVM);
 		m_RespecContextCommonView.Bind(base.ViewModel.RespecContextVM);
 		AddDisposable(base.ViewModel.FormationVM.Subscribe(m_FormationConsoleView.Bind));
@@ -131,6 +146,7 @@ public class SurfaceStaticPartConsoleView : ViewBase<SurfaceStaticPartVM>
 	public void AddMainInput(InputLayer inputLayer)
 	{
 		m_SurfaceHUDConsoleView.AddMainInput(inputLayer);
+		m_NecronTimerView.AddInput(inputLayer, base.ViewModel.SurfaceHUDVM.ActionBarVM.IsVisibleAndShown);
 	}
 
 	public void AddCombatInput(InputLayer inputLayer)

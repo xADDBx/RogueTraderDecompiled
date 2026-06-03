@@ -21,6 +21,19 @@ public static class JsonExtensions
 		return (T)serializer.Deserialize(reader, typeof(T));
 	}
 
+	public static T TryDeserializeObject<T>(this JsonSerializer serializer, string source)
+	{
+		try
+		{
+			return serializer.DeserializeObject<T>(source);
+		}
+		catch (JsonSerializationException)
+		{
+			PFLog.Default.Warning("Failed to deserialize " + typeof(T).Name + " from " + source);
+			return default(T);
+		}
+	}
+
 	public static string SerializeObject<T>(this JsonSerializer serializer, T source)
 	{
 		using StringWriter stringWriter = new StringWriter(CultureInfo.InvariantCulture);

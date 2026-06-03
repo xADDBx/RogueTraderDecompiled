@@ -64,6 +64,8 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 
 	private List<PartySelectorItemConsoleView> m_Characters = new List<PartySelectorItemConsoleView>();
 
+	private List<BaseUnitEntity> m_BoundGroup = new List<BaseUnitEntity>();
+
 	private GridConsoleNavigationBehaviour m_NavigationBehaviour;
 
 	private InputLayer m_InputLayer;
@@ -71,6 +73,8 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 	private IReadOnlyReactiveProperty<PartySelectorItemConsoleView> m_SelectedEntity;
 
 	private readonly BoolReactiveProperty m_IsLevelUp = new BoolReactiveProperty();
+
+	private CompositeDisposable m_NavDisposables;
 
 	private bool IsInHub
 	{
@@ -102,26 +106,20 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 	protected override void BindViewImplementation()
 	{
 		AddDisposable(EventBus.Subscribe(this));
-		base.ViewModel.UpdateConsoleGroup();
-		for (int i = 0; i < base.ViewModel.CharactersVM.Count - m_CreatedItems.Count; i++)
-		{
-			PartySelectorItemConsoleView partySelectorItemConsoleView = Object.Instantiate(m_ItemPrefab, m_Content.transform, worldPositionStays: false);
-			partySelectorItemConsoleView.Initialize();
-			m_CreatedItems.Add(partySelectorItemConsoleView);
-		}
-		m_Characters.Clear();
-		m_Characters = m_CreatedItems.GetRange(0, base.ViewModel.CharactersVM.Count);
-		for (int j = 0; j < m_Characters.Count; j++)
-		{
-			if (base.ViewModel.CharactersVM[j].UnitEntityData != null)
-			{
-				m_Characters[j].Bind(base.ViewModel.CharactersVM[j]);
-			}
-		}
+		AddDisposable(m_NavDisposables = new CompositeDisposable());
+		RefreshItems();
 		AddDisposable(m_CanvasSortingComponent.PushView());
 		m_FadeAnimator.AppearAnimation();
 		UISounds.Instance.Sounds.MessageBox.MessageBoxShow.Play();
 		CreateNavigation();
+		AddDisposable(ObservableExtensions.Subscribe(Game.Instance.SelectionCharacter.ActualGroupUpdated, delegate
+		{
+			if (!m_BoundGroup.SequenceEqual(Game.Instance.SelectionCharacter.ActualGroup))
+			{
+				RefreshItems();
+				CreateNavigation();
+			}
+		}));
 		EventBus.RaiseEvent(delegate(IModalWindowUIHandler h)
 		{
 			h.HandleModalWindowUiChanged(state: true, ModalWindowUIType.PartySelector);
@@ -130,6 +128,28 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 		{
 			h.HandleRemoveFocus();
 		});
+	}
+
+	private void RefreshItems()
+	{
+		base.ViewModel.UpdateConsoleGroup();
+		m_BoundGroup = new List<BaseUnitEntity>(Game.Instance.SelectionCharacter.ActualGroup);
+		List<PartyCharacterVM> list = base.ViewModel.CharactersVM.Where((PartyCharacterVM vm) => vm.UnitEntityData != null).ToList();
+		for (int i = m_CreatedItems.Count; i < list.Count; i++)
+		{
+			PartySelectorItemConsoleView partySelectorItemConsoleView = Object.Instantiate(m_ItemPrefab, m_Content.transform, worldPositionStays: false);
+			partySelectorItemConsoleView.Initialize();
+			m_CreatedItems.Add(partySelectorItemConsoleView);
+		}
+		foreach (PartySelectorItemConsoleView character in m_Characters)
+		{
+			character.Unbind();
+		}
+		m_Characters = m_CreatedItems.GetRange(0, list.Count);
+		for (int j = 0; j < m_Characters.Count; j++)
+		{
+			m_Characters[j].Bind(list[j]);
+		}
 	}
 
 	protected override void DestroyViewImplementation()
@@ -158,7 +178,10 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 
 	private void CreateNavigation()
 	{
-		AddDisposable(m_NavigationBehaviour = new GridConsoleNavigationBehaviour(null, null, Vector2Int.one));
+		m_NavigationBehaviour?.Clear();
+		m_NavDisposables.Clear();
+		m_NavigationBehaviour = new GridConsoleNavigationBehaviour(null, null, Vector2Int.one);
+		m_NavDisposables.Add(m_NavigationBehaviour);
 		m_InputLayer = m_NavigationBehaviour.GetInputLayer(new InputLayer
 		{
 			ContextName = "PartySelectorConsoleView"
@@ -179,7 +202,7 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 			m_NavigationBehaviour.FocusOnEntityManual(partySelectorItemConsoleView, fullReset: false);
 		}
 		m_SelectedEntity = m_NavigationBehaviour.DeepestFocusAsObservable.Select((IConsoleEntity e) => e as PartySelectorItemConsoleView).ToReactiveProperty();
-		AddDisposable(m_SelectedEntity.Subscribe(delegate
+		m_NavDisposables.Add(m_SelectedEntity.Subscribe(delegate
 		{
 			OnFocusChanged();
 		}));
@@ -201,32 +224,32 @@ public class PartySelectorConsoleView : ViewBase<PartyVM>, ISwitchPartyCharacter
 		List<PartySelectorItemConsoleView> range = m_Characters.GetRange(0, num2);
 		List<PartySelectorItemConsoleView> range2 = m_Characters.GetRange(num2, m_Characters.Count - num2);
 		m_NavigationBehaviour.AddRow(range.Where((PartySelectorItemConsoleView item) => item.IsBinded && item.UnitEntityData.InPartyAndControllable()).ToList());
-		m_NavigationBehaviour.AddRow(range2.ToList());
+		m_NavigationBehaviour.AddRow(range2.Where((PartySelectorItemConsoleView item) => item.IsBinded).ToList());
 	}
 
 	private void CreateInput()
 	{
 		if (IsInHub || m_Characters.Count <= 0)
 		{
-			AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
+			m_NavDisposables.Add(GamePad.Instance.PushLayer(m_InputLayer));
 			return;
 		}
 		if (m_Characters.Any((PartySelectorItemConsoleView c) => c.UnitEntityData.IsDirectlyControllable()))
 		{
-			AddDisposable(m_LinkHint.Bind(m_InputLayer.AddButton(SetLink, 11, InputActionEventType.ButtonJustReleased)));
-			AddDisposable(m_LinkAllHint.Bind(m_InputLayer.AddButton(SetMassLink, 11, InputActionEventType.ButtonJustLongPressed)));
-			AddDisposable(m_LevelUpHint.Bind(m_InputLayer.AddButton(LevelUp, 10, m_IsLevelUp)));
+			m_NavDisposables.Add(m_LinkHint.Bind(m_InputLayer.AddButton(SetLink, 11, InputActionEventType.ButtonJustReleased)));
+			m_NavDisposables.Add(m_LinkAllHint.Bind(m_InputLayer.AddButton(SetMassLink, 11, InputActionEventType.ButtonJustLongPressed)));
+			m_NavDisposables.Add(m_LevelUpHint.Bind(m_InputLayer.AddButton(LevelUp, 10, m_IsLevelUp)));
 			m_LevelUpHint.SetLabel(UIStrings.Instance.MainMenu.LevelUp);
-			AddDisposable(m_MoveToNextHint.Bind(m_InputLayer.AddButton(delegate
+			m_NavDisposables.Add(m_MoveToNextHint.Bind(m_InputLayer.AddButton(delegate
 			{
 				MoveCharacter(next: true);
 			}, 15)));
-			AddDisposable(m_MoveToPreviousHint.Bind(m_InputLayer.AddButton(delegate
+			m_NavDisposables.Add(m_MoveToPreviousHint.Bind(m_InputLayer.AddButton(delegate
 			{
 				MoveCharacter(next: false);
 			}, 14)));
 		}
-		AddDisposable(GamePad.Instance.PushLayer(m_InputLayer));
+		m_NavDisposables.Add(GamePad.Instance.PushLayer(m_InputLayer));
 	}
 
 	private void SetLink(InputActionEventData data)

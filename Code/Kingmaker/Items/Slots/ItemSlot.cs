@@ -217,7 +217,7 @@ public class ItemSlot : IHashable
 		return true;
 	}
 
-	public void InsertItem(ItemEntity item, bool force = false)
+	public virtual void InsertItem(ItemEntity item, bool force = false)
 	{
 		if (!force && !CanInsertItem(item))
 		{
@@ -255,17 +255,25 @@ public class ItemSlot : IHashable
 		{
 			RemoveItem(raiseEvent: false, autoMerge: true, force);
 			prevItem.SetSlotIndex(item.InventorySlotIndex);
+			if (this is AugmentSlot augmentSlot && augmentSlot.Blueprint.DefaultAugment.Get() == prevItem.Blueprint)
+			{
+				Game.Instance.Player.Inventory.Remove(prevItem);
+			}
+		}
+		ItemSlot oldSlot = null;
+		if (item.Wielder == Owner && TryGetOwnerEquipmentSlots(out var equipmentSlots))
+		{
+			oldSlot = equipmentSlots.FirstOrDefault((ItemSlot s) => s != this && s.HasItem && s.Item == item);
 		}
 		m_ItemRef = item;
 		item.UpdateSlotIndex();
-		if (item.Wielder == Owner && TryGetOwnerEquipmentSlots(out var equipmentSlots))
+		if (oldSlot != null)
 		{
-			ItemSlot slot = equipmentSlots.First((ItemSlot s) => s.HasItem && s.Item == item);
-			ItemEntity pi = slot.MaybeItem;
-			slot.m_ItemRef = null;
+			ItemEntity pi = oldSlot.MaybeItem;
+			oldSlot.m_ItemRef = null;
 			EventBus.RaiseEvent((IMechanicEntity)Owner, (Action<IUnitEquipmentHandler>)delegate(IUnitEquipmentHandler h)
 			{
-				h.HandleEquipmentSlotUpdated(slot, pi);
+				h.HandleEquipmentSlotUpdated(oldSlot, pi);
 			}, isCheckRuntime: true);
 		}
 		else if (Active || (bool)ContextData<GameCommandHelper.PreviewItem>.Current)
@@ -306,8 +314,8 @@ public class ItemSlot : IHashable
 		{
 			return false;
 		}
-		OnItemRemoved();
-		if (Active)
+		OnBeforeItemRemoved();
+		if (Active || item.Wielder == Owner)
 		{
 			item.OnWillUnequip();
 		}
@@ -333,7 +341,7 @@ public class ItemSlot : IHashable
 	{
 	}
 
-	protected virtual void OnItemRemoved()
+	protected virtual void OnBeforeItemRemoved()
 	{
 	}
 

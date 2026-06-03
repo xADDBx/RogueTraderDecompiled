@@ -8,6 +8,10 @@ public static class TransformExtensions
 {
 	public static string GetPath(this Transform transform, bool asSiblingIndex = false)
 	{
+		if (transform == null)
+		{
+			return "(null)";
+		}
 		Stack<Transform> stack = new Stack<Transform>();
 		stack.Push(transform);
 		while (transform.parent != null)

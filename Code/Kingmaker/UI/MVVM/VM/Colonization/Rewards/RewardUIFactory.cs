@@ -7,7 +7,7 @@ public class RewardUIFactory
 {
 	public static RewardUI GetReward(Reward reward)
 	{
-		return TryCreateRewardActivateSpawnersUI(reward) ?? TryCreateRewardAddFeatureUI(reward) ?? TryCreateRewardCargoUI(reward) ?? TryCreateRewardChangeStatContentmentUI(reward) ?? TryCreateRewardChangeStatEfficiencyUI(reward) ?? TryCreateRewardChangeStatSecurityUI(reward) ?? TryCreateRewardColonyTraitUI(reward) ?? TryCreateRewardConsumableUI(reward) ?? TryCreateRewardItemUI(reward) ?? TryCreateRewardModifyOldWoundsDelayRoundsUI(reward) ?? TryCreateRewardModifyWoundDamagePerTurnThresholdHPFractionUI(reward) ?? TryCreateRewardModifyWoundsStackForTraumaUI(reward) ?? TryCreateRewardProfitFactorUI(reward) ?? TryCreateRewardReputationUI(reward) ?? TryCreateRewardResourceNotFromColonyUI(reward) ?? TryCreateRewardResourceProjectUI(reward) ?? TryCreateRewardStartContractUI(reward) ?? TryCreateRewardUnhideUnitsOnSceneREUI(reward) ?? TryCreateRewardScrapUI(reward) ?? TryCreateRewardSoulMarkUI(reward) ?? TryCreateRewardVendorDiscountUI(reward) ?? TryCreateRewardAllRotesNotDeadlyUI(reward) ?? TryCreateRewardChangeNewPassageCostUI(reward) ?? TryCreateRewardNavigatorResourceUI(reward) ?? new RewardUI(reward);
+		return TryCreateRewardActivateSpawnersUI(reward) ?? TryCreateRewardAddFeatureUI(reward) ?? TryCreateRewardCargoUI(reward) ?? TryCreateRewardChangeStatContentmentUI(reward) ?? TryCreateRewardChangeStatEfficiencyUI(reward) ?? TryCreateRewardChangeStatSecurityUI(reward) ?? TryCreateRewardColonyTraitUI(reward) ?? TryCreateRewardConsumableUI(reward) ?? TryCreateRewardItemUI(reward) ?? TryCreateRewardModifyOldWoundsDelayRoundsUI(reward) ?? TryCreateRewardModifyWoundDamagePerTurnThresholdHPFractionUI(reward) ?? TryCreateRewardModifyWoundsStackForTraumaUI(reward) ?? TryCreateRewardProfitFactorUI(reward) ?? TryCreateRewardReputationUI(reward) ?? TryCreateRewardResourceNotFromColonyUI(reward) ?? TryCreateRewardResourceProjectUI(reward) ?? TryCreateRewardStartContractUI(reward) ?? TryCreateRewardUnhideUnitsOnSceneREUI(reward) ?? TryCreateRewardScrapUI(reward) ?? TryCreateRewardSoulMarkUI(reward) ?? TryCreateRewardVendorDiscountUI(reward) ?? TryCreateRewardAllRotesNotDeadlyUI(reward) ?? TryCreateRewardChangeNewPassageCostUI(reward) ?? TryCreateRewardNavigatorResourceUI(reward) ?? TryCreateRewardCombativityUI(reward) ?? new RewardUI(reward);
 	}
 
 	private static RewardUI TryCreateRewardActivateSpawnersUI(Reward reward)
@@ -134,6 +134,15 @@ public class RewardUIFactory
 			return null;
 		}
 		return new RewardProfitFactorUI(reward2);
+	}
+
+	private static RewardUI TryCreateRewardCombativityUI(Reward reward)
+	{
+		if (!(reward is RewardCombativity reward2))
+		{
+			return null;
+		}
+		return new RewardCombativityUI(reward2);
 	}
 
 	private static RewardUI TryCreateRewardReputationUI(Reward reward)

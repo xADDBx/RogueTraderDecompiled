@@ -207,7 +207,7 @@ public class AbilityCustomTeleport : AbilityCustomLogic, IAbilityTargetRestricti
 		{
 			FreePlaceSelector.RelaxPoints(pointsArray, radiusArray, targets.Count);
 		}
-		if (target.NearestNode == caster.CurrentUnwalkableNode && context.Ability.Blueprint.CanTargetSelf)
+		if (target.NearestNode == caster.CurrentUnwalkableNode && context.Ability.CanTargetSelf)
 		{
 			pointsArray[0] = target.Point;
 		}

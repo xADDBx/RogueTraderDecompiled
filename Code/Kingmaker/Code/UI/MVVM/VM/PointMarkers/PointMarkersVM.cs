@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Async;
 using Kingmaker.Blueprints;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Common;
 using Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 using Kingmaker.EntitySystem.Entities;
@@ -41,7 +42,7 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 	protected PointMarkersVM()
 	{
 		SetEntities();
-		AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.UpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			UpdateHandler();
 		}));

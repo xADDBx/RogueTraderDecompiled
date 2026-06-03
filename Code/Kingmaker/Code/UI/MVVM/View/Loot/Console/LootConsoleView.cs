@@ -280,7 +280,7 @@ public class LootConsoleView : LootView<InventoryCargoConsoleView, LootCollector
 			AddDisposable(m_MiddleHintsWidget.BindHint(inputBindStruct2, UIStrings.Instance.ContextMenu.ContextMenu));
 			AddDisposable(inputBindStruct2);
 		}
-		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CanTransfer.Select((bool value) => value || base.ViewModel.IsPlayerStash).Or(m_CanTransferFromOneSlot).And(m_LootFocus)
+		IReadOnlyReactiveProperty<bool> readOnlyReactiveProperty = m_CanTransfer.Select((bool value) => value).Or(m_CanTransferFromOneSlot).And(m_LootFocus)
 			.ToReactiveProperty();
 		InputBindStruct inputBindStruct3 = m_InputLayer.AddButton(delegate
 		{

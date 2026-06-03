@@ -18,7 +18,7 @@ public class HideAwayStrategy : AiStrategy
 			{
 				decisionContext.AbilityTarget = decisionContext.Unit;
 			}
-		}), new TaskNodeCastAbility())
+		}, "Set ability target to unit"), new TaskNodeCastAbility())
 		{
 			DebugName = "HideAwayStrategy"
 		};

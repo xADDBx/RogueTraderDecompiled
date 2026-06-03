@@ -128,6 +128,8 @@ public class UIIcons
 
 	public Sprite ColonyEvent;
 
+	public Sprite Combativity;
+
 	[Header("Factions")]
 	public Sprite Drusians;
 

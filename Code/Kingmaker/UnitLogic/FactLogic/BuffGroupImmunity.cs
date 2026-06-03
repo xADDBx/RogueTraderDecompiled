@@ -39,7 +39,6 @@ public class BuffGroupImmunity : UnitFactComponentDelegate, IInitiatorRulebookHa
 	{
 		if (IsImmune(evt))
 		{
-			Debug.Log("Immunity to " + evt.Blueprint.name);
 			evt.Immunity = true;
 			evt.DisableGameLog = m_DisableGameLog;
 		}

@@ -9,9 +9,11 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Globalmap.Blueprints.Colonization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
+using Kingmaker.UI.Pointer;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Alignments;
@@ -314,7 +316,7 @@ public static class TooltipHelper
 		{
 			return Disposable.Empty;
 		}
-		bool entered = TMP_TextUtilities.IsIntersectingRectTransform(text.rectTransform, Input.mousePosition, UICamera.Claim());
+		bool entered = TMP_TextUtilities.IsIntersectingRectTransform(text.rectTransform, CursorController.CursorPosition, UICamera.Claim());
 		int? linkIndex = null;
 		string[] linkKeys = null;
 		IDisposable enter = text.OnPointerEnterAsObservable().Subscribe(delegate
@@ -328,7 +330,7 @@ public static class TooltipHelper
 		IDisposable update = ObservableExtensions.Subscribe(text.UpdateAsObservable(), delegate
 		{
 			int num2;
-			if (!entered || (num2 = TMP_TextUtilities.FindIntersectingLink(text, Input.mousePosition, UICamera.Claim())) == -1)
+			if (!entered || (num2 = TMP_TextUtilities.FindIntersectingLink(text, CursorController.CursorPosition, UICamera.Claim())) == -1)
 			{
 				if (linkIndex.HasValue)
 				{
@@ -609,6 +611,10 @@ public static class TooltipHelper
 		if (text.IsNullOrEmpty())
 		{
 			return Disposable.Empty;
+		}
+		if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			bindingName = null;
 		}
 		HintData hintData = new HintData
 		{

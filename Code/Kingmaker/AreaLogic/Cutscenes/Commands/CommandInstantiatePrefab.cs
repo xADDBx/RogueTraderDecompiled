@@ -20,7 +20,7 @@ public class CommandInstantiatePrefab : CommandBase
 	private bool m_Continuous;
 
 	[SerializeField]
-	[ConditionalHide("IsContinuous")]
+	[HideIf("IsContinuous")]
 	private float m_Lifetime;
 
 	private bool m_Finished;

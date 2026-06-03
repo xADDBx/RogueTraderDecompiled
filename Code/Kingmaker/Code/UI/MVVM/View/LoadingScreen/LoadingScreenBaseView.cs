@@ -7,9 +7,11 @@ using JetBrains.Annotations;
 using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
+using Kingmaker.Blueprints.Quests;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.LoadingScreen;
+using Kingmaker.Designers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.GameModes;
@@ -18,10 +20,12 @@ using Kingmaker.Mechanics.Entities;
 using Kingmaker.Networking;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Legacy.LoadingScreen;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
 using Owlcat.Runtime.Core.Utility;
@@ -300,7 +304,14 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 		{
 			if (!value.me)
 			{
-				m_WaitForUserInputText.text = (Game.Instance.IsControllerMouse ? UIStrings.Instance.CommonTexts.PressAnyKey : UIStrings.Instance.CommonTexts.PressAnyKeyConsole);
+				if (ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+				{
+					m_WaitForUserInputText.text = UIStrings.Instance.CommonTexts.PressAnyKeyConsole;
+				}
+				else
+				{
+					m_WaitForUserInputText.text = (Game.Instance.IsControllerMouse ? UIStrings.Instance.CommonTexts.PressAnyKey : UIStrings.Instance.CommonTexts.PressAnyKeyConsole);
+				}
 			}
 			else
 			{
@@ -530,6 +541,24 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 	private void ShowClassicAreaScreen(BlueprintArea area)
 	{
 		LoadingScreenImage mainSprites = (area.LoadingScreenSprites.Any() ? new LoadingScreenImage?(area.LoadingScreenSprites.Random(PFStatefulRandom.UI)) : ((area.ArtSetting == BlueprintArea.SettingType.Unspecified) ? new LoadingScreenImage?(m_KeyArtTuple) : m_SettingTypeScreensList.FirstItem((SettingTypeScreens s) => s.Type == area.ArtSetting)?.Sprites.Random(PFStatefulRandom.UI))) ?? m_KeyArtTuple;
+		QuestBookEntityEntry questBookEntityEntry = GameHelper.Quests.GetList()?.Where((Quest q) => q?.IsActive ?? false).SelectMany((Quest q) => q.Objectives).FirstOrDefault(delegate(QuestBookEntityEntry o)
+		{
+			if (o != null && o.IsActive)
+			{
+				BlueprintQuestObjective blueprint = o.Blueprint;
+				if (blueprint != null && blueprint.Areas != null)
+				{
+					return o.Blueprint.Areas.Any((BlueprintArea a) => a != null && a == area);
+				}
+			}
+			return false;
+		});
+		if (questBookEntityEntry != null)
+		{
+			LocationScreen(area, m_KeyArtTuple);
+			SetObjectiveHint(questBookEntityEntry, area);
+			return;
+		}
 		StandartDescriptionOrHint(area, m_LocationHints);
 		if (area.LoadingScreenSprites.Any() || area.ArtSetting != 0)
 		{
@@ -586,6 +615,22 @@ public class LoadingScreenBaseView : ViewBase<LoadingScreenVM>
 		m_BottomTitleText.gameObject.SetActive(value: false);
 		m_BottomDescriptionObject.SetActive(value: true);
 		m_BottomDescriptionText.text = ((!flag && !flag2) ? area.Description : m_Hints.TakeHint(locationEnum, base.ViewModel.Random));
+	}
+
+	private void SetObjectiveHint(QuestBookEntityEntry objective, BlueprintArea area)
+	{
+		string text = objective.Blueprint.GetLoadingScreenHint();
+		m_BottomTitleObject.SetActive(value: false);
+		m_BottomTitleText.gameObject.SetActive(value: false);
+		m_BottomDescriptionObject.SetActive(value: true);
+		if (string.IsNullOrWhiteSpace(text))
+		{
+			StandartDescriptionOrHint(area, m_LocationHints);
+		}
+		else
+		{
+			m_BottomDescriptionText.text = text;
+		}
 	}
 
 	private void ShowCompanionScreen(LoadingScreenHints.LocationEnum locationEnum)

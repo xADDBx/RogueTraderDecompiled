@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Kingmaker.Cheats;
 using Kingmaker.EntitySystem.Entities;
@@ -8,8 +9,10 @@ using Kingmaker.QA.Arbiter.Service;
 using Kingmaker.QA.Profiling;
 using Kingmaker.Settings;
 using Kingmaker.Utility.Performance;
+using Kingmaker.Utility.UnityExtensions;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
 using Kingmaker.View.MapObjects.Traps;
+using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.ProfilingCounters;
 using UnityEngine;
 
@@ -59,6 +62,8 @@ public class GameCoreArbiterConfigurationProvider : IArbiterServiceConfiguration
 		}
 	}
 
+	private const string ArbiterLogFile = "arbiter.log";
+
 	public ArbiterServiceConfiguration GetConfiguration()
 	{
 		IArbiterEnvironment arbiterEnvironment2;
@@ -98,6 +103,7 @@ public class GameCoreArbiterConfigurationProvider : IArbiterServiceConfiguration
 			gameCoreMeasures.Add(new Measure("Limit." + text + ".Warning", () => x.Threshold));
 			gameCoreMeasures.Add(new Measure("Limit." + text + ".Failed", () => (float)x.Threshold * 1.1f));
 		});
+		IArbiterLogger logger = GetLogger();
 		return new ArbiterServiceConfiguration
 		{
 			Environment = environment,
@@ -107,7 +113,29 @@ public class GameCoreArbiterConfigurationProvider : IArbiterServiceConfiguration
 			InstructionIndex = new BlueprintArbiterInstructionIndex(),
 			LocalMapRenderer = new GameCoreArbiterLocalMapRenderer(),
 			SceneBoundary = new GameCoreSceneBoundary(),
-			ClientIntegration = new GameCoreArbiterIntegration()
+			ClientIntegration = new GameCoreArbiterIntegration(),
+			Logger = logger
 		};
+	}
+
+	private IArbiterLogger GetLogger()
+	{
+		if (!LoggingConfiguration.IsLoggingEnabled)
+		{
+			return null;
+		}
+		string logsDir = ApplicationPaths.LogsDir;
+		string text = Path.Combine(logsDir, "arbiter.log");
+		if (File.Exists(text))
+		{
+			string text2 = Path.Combine(logsDir, Path.GetFileName(text) + ".bak");
+			if (File.Exists(text2))
+			{
+				File.Delete(text2);
+			}
+			File.Move(text, text2);
+		}
+		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ArbiterUberLoggerFilter(new UberLoggerFile("arbiter.log", null, includeCallStacks: false)));
+		return new GameCoreArbiterLogger(LogChannelFactory.GetOrCreate("Arbiter"));
 	}
 }

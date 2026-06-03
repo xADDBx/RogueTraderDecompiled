@@ -5,6 +5,7 @@ using Code.Visual.Animation;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Controllers.Clicks.Handlers;
+using Kingmaker.Controllers.Units;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -16,10 +17,12 @@ using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.QA.Validation;
 using Owlcat.Runtime.Core.Logging;
+using Owlcat.Runtime.Core.Utility;
 using Pathfinding;
 using UnityEngine;
 
@@ -44,9 +47,11 @@ public class CommandMoveParty : CommandBase
 
 		public Vector3 TargetPosition;
 
-		public Quaternion TargetRotation;
+		public float? TargetOrientation;
 
 		public bool Interrupt;
+
+		public readonly Dictionary<AbstractUnitEntity, UnitCommandHandle> FollowerCommands = new Dictionary<AbstractUnitEntity, UnitCommandHandle>();
 	}
 
 	private static readonly LogChannel Logger = PFLog.Cutscene;
@@ -68,7 +73,7 @@ public class CommandMoveParty : CommandBase
 
 	public bool OverrideSpeed;
 
-	[ConditionalShow("OverrideSpeed")]
+	[ShowIf("OverrideSpeed")]
 	public float Speed = 5f;
 
 	public bool DisableAvoidance = true;
@@ -79,6 +84,8 @@ public class CommandMoveParty : CommandBase
 	public float FormationSpaceFactor = 1f;
 
 	private readonly double m_Timeout = 20.0;
+
+	private const float FOLLOWER_POSITION_TOLERANCE = 0.5f;
 
 	private bool True => true;
 
@@ -95,28 +102,50 @@ public class CommandMoveParty : CommandBase
 		}
 	}
 
-	protected override void OnRun(CutscenePlayerData player, bool skipping)
+	private IEnumerable<BaseUnitEntity> GetDirectlyMovedUnits()
 	{
-		Data commandData = player.GetCommandData<Data>(this);
-		int num = 0;
 		AbstractUnitEntity value;
-		IEnumerable<BaseUnitEntity> enumerable = from x in Game.Instance.Player.GetCharactersList(m_UnitsList)
+		return from x in Game.Instance.Player.GetCharactersList(m_UnitsList)
 			where !x.HasMechanicFeature(MechanicsFeatureType.Hidden) && x.IsInGame
 			where !ElementExtendAsObject.Valid(ExceptThese).Any((AbstractUnitEvaluator y) => y != null && y.TryGetValue(out value) && x == value)
 			select x;
+	}
+
+	public override IEnumerable<AbstractUnitEntity> GetControlledUnits()
+	{
+		List<BaseUnitEntity> list = GetDirectlyMovedUnits().ToTempList();
+		HashSet<AbstractUnitEntity> hashSet = ((IEnumerable<AbstractUnitEntity>)list).ToTempHashSet();
+		foreach (BaseUnitEntity item in list)
+		{
+			UnitPartFollowedByUnits optional = item.GetOptional<UnitPartFollowedByUnits>();
+			if (optional != null)
+			{
+				hashSet.AddRange(optional.Followers);
+				hashSet.AddRange(optional.IndependentFollowers);
+			}
+		}
+		return hashSet;
+	}
+
+	protected override void OnRun(CutscenePlayerData player, bool skipping)
+	{
+		Data commandData = player.GetCommandData<Data>(this);
+		WarhammerNodeLinkTraverser.AllowLadderTraversalForCurrentMovement = (player?.Cutscene?.AllowLadderTraversal).GetValueOrDefault();
+		int num = 0;
+		HashSet<BaseUnitEntity> directlyMovedUnits = GetDirectlyMovedUnits().ToTempHashSet();
 		if (MoveWithFormation)
 		{
 			Vector3[] formationPositions = GetFormationPositions();
 			{
-				foreach (BaseUnitEntity item in enumerable)
+				foreach (BaseUnitEntity item in directlyMovedUnits)
 				{
 					Vector3 targetPosition2 = formationPositions[num++ % formationPositions.Length];
-					Move(item, targetPosition2);
+					Move(item, targetPosition2, null);
 				}
 				return;
 			}
 		}
-		CommandTranslocateParty.Distribute(enumerable, TargetsV2, delegate(BaseUnitEntity character, EntityReference targetRef, int characterIndex)
+		CommandTranslocateParty.Distribute(directlyMovedUnits, TargetsV2, delegate(BaseUnitEntity character, EntityReference targetRef, int characterIndex)
 		{
 			IEntityViewBase entityViewBase = targetRef.FindView();
 			if (entityViewBase == null)
@@ -125,10 +154,10 @@ public class CommandMoveParty : CommandBase
 			}
 			else
 			{
-				Move(character, entityViewBase.ViewTransform.position, entityViewBase.ViewTransform.rotation);
+				Move(character, entityViewBase.ViewTransform.position, entityViewBase.ViewTransform.rotation.eulerAngles.y);
 			}
 		});
-		UnitData Move(BaseUnitEntity character, Vector3 targetPosition, Quaternion? targetRotation = null)
+		void Move(BaseUnitEntity character, Vector3 targetPosition, float? targetOrientation)
 		{
 			UnitData affectedUnit = new UnitData
 			{
@@ -136,9 +165,9 @@ public class CommandMoveParty : CommandBase
 				TargetPosition = targetPosition,
 				Interrupt = skipping
 			};
-			if (targetRotation.HasValue)
+			if (targetOrientation.HasValue)
 			{
-				affectedUnit.TargetRotation = targetRotation.Value;
+				affectedUnit.TargetOrientation = targetOrientation.Value;
 			}
 			commandData.AffectedUnits.Add(affectedUnit);
 			if (!skipping)
@@ -156,7 +185,7 @@ public class CommandMoveParty : CommandBase
 						{
 							OverrideSpeed = (OverrideSpeed ? new float?(Speed) : null),
 							MovementType = Animation,
-							Orientation = targetRotation?.eulerAngles.y
+							Orientation = targetOrientation
 						};
 						BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
 						if (baseUnitEntity == null)
@@ -174,8 +203,28 @@ public class CommandMoveParty : CommandBase
 						}
 					}
 				});
+				MoveFollowers(character, affectedUnit, directlyMovedUnits);
 			}
-			return affectedUnit;
+		}
+	}
+
+	private void MoveFollowers(BaseUnitEntity unit, UnitData unitData, HashSet<BaseUnitEntity> directlyMovedUnits)
+	{
+		UnitPartFollowedByUnits optional = unit.GetOptional<UnitPartFollowedByUnits>();
+		if (optional == null)
+		{
+			return;
+		}
+		foreach (KeyValuePair<AbstractUnitEntity, FollowerAction> item in Game.Instance.FollowersFormationController.CalculateFollowerActions(optional, unitData.TargetPosition, unitData.TargetOrientation, alwaysTeleport: false, isCutsceneCommand: true))
+		{
+			var (follower, action) = (KeyValuePair<AbstractUnitEntity, FollowerAction>)(ref item);
+			if (!directlyMovedUnits.Contains(follower))
+			{
+				UnitFollowUnitController.RunAction(follower, action, alwaysRun: true, delegate(UnitCommandHandle handle)
+				{
+					unitData.FollowerCommands.Add(follower, handle);
+				});
+			}
 		}
 	}
 
@@ -197,10 +246,18 @@ public class CommandMoveParty : CommandBase
 			{
 				return false;
 			}
-			UnitCommandHandle command = affectedUnit.Command;
-			if (command != null && !command.IsFinished)
+			UnitCommandHandle value = affectedUnit.Command;
+			if (value != null && !value.IsFinished)
 			{
 				return false;
+			}
+			foreach (KeyValuePair<AbstractUnitEntity, UnitCommandHandle> followerCommand in affectedUnit.FollowerCommands)
+			{
+				followerCommand.Deconstruct(out var _, out value);
+				if (!value.IsFinished)
+				{
+					return false;
+				}
 			}
 		}
 		return true;
@@ -233,11 +290,17 @@ public class CommandMoveParty : CommandBase
 			{
 				command.Interrupt();
 			}
+			foreach (KeyValuePair<AbstractUnitEntity, UnitCommandHandle> followerCommand in affectedUnit.FollowerCommands)
+			{
+				followerCommand.Deconstruct(out var _, out var value);
+				value.Interrupt();
+			}
 		}
 	}
 
 	protected override void OnStop(CutscenePlayerData player)
 	{
+		WarhammerNodeLinkTraverser.AllowLadderTraversalForCurrentMovement = false;
 		Data commandData = player.GetCommandData<Data>(this);
 		TeleportEveryoneFailedToArrive(commandData);
 		if (DisableAvoidance)
@@ -257,7 +320,11 @@ public class CommandMoveParty : CommandBase
 		}
 		foreach (UnitData affectedUnit2 in commandData.AffectedUnits)
 		{
-			((BaseUnitEntity)affectedUnit2.Unit).SetOrientation(affectedUnit2.TargetRotation.eulerAngles.y);
+			BaseUnitEntity baseUnitEntity2 = affectedUnit2.Unit;
+			if (affectedUnit2.TargetOrientation.HasValue)
+			{
+				baseUnitEntity2.SetOrientation(affectedUnit2.TargetOrientation.Value);
+			}
 		}
 	}
 
@@ -270,18 +337,33 @@ public class CommandMoveParty : CommandBase
 	{
 		foreach (UnitData affectedUnit in commandData.AffectedUnits)
 		{
+			BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
+			if (baseUnitEntity == null)
+			{
+				CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
+				continue;
+			}
+			TeleportFollowersFailedToArrive(affectedUnit);
 			UnitCommandHandle command = affectedUnit.Command;
 			if (command == null || command.Result != AbstractUnitCommand.ResultType.Success)
 			{
-				BaseUnitEntity baseUnitEntity = affectedUnit.Unit;
-				if (baseUnitEntity == null)
-				{
-					CutscenePlayerData.Logger.Error("Lost unit {0} while executing {1}", affectedUnit.Unit, this);
-				}
-				else
-				{
-					baseUnitEntity.Translocate(affectedUnit.TargetPosition, null);
-				}
+				baseUnitEntity.Translocate(affectedUnit.TargetPosition, null);
+			}
+		}
+	}
+
+	private void TeleportFollowersFailedToArrive(UnitData unitData)
+	{
+		UnitPartFollowedByUnits optional = unitData.Unit.Entity.ToBaseUnitEntity().GetOptional<UnitPartFollowedByUnits>();
+		if (optional == null)
+		{
+			return;
+		}
+		foreach (var (abstractUnitEntity2, followerAction2) in Game.Instance.FollowersFormationController.CalculateFollowerActions(optional, unitData.TargetPosition, unitData.TargetOrientation, alwaysTeleport: true, isCutsceneCommand: true))
+		{
+			if ((!unitData.FollowerCommands.TryGetValue(abstractUnitEntity2, out var value) || (value.Result != AbstractUnitCommand.ResultType.Success && (value.Result != AbstractUnitCommand.ResultType.Interrupt || unitData.Interrupt))) && (abstractUnitEntity2.Position - followerAction2.Position).magnitude > 0.5f)
+			{
+				abstractUnitEntity2.Translocate(followerAction2.Position, followerAction2.Orientation);
 			}
 		}
 	}

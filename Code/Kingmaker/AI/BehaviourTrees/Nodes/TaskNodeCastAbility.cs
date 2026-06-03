@@ -9,12 +9,22 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeCastAbility : CoroutineTaskNode
 {
+	public TaskNodeCastAbility()
+	{
+	}
+
+	public TaskNodeCastAbility(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override IEnumerator<Status> CreateCoroutine(Blackboard blackboard)
 	{
 		DecisionContext context = blackboard.DecisionContext;
 		if (context.Ability == null || context.AbilityTarget == null)
 		{
 			AILogger.Instance.Log(AILogAbility.CastFailed(context.Ability, context.AbilityTarget));
+			base.FailReason = "Ability or target was not set";
 			yield return Status.Failure;
 		}
 		AbilityTargetingCache.Instance.SetInactive();
@@ -30,7 +40,17 @@ public class TaskNodeCastAbility : CoroutineTaskNode
 			yield return Status.Running;
 		}
 		context.Unit.Brain.IsIdling = false;
-		yield return (commandHandle != null && commandHandle.Result == AbstractUnitCommand.ResultType.Success) ? Status.Success : Status.Failure;
+		Status status;
+		if (commandHandle != null && commandHandle.Result == AbstractUnitCommand.ResultType.Success)
+		{
+			status = Status.Success;
+		}
+		else
+		{
+			base.FailReason = "Command run failed";
+			status = Status.Failure;
+		}
+		yield return status;
 	}
 
 	private GraphNode GetTargetNode(DecisionContext context)

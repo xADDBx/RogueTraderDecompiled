@@ -428,6 +428,10 @@ public sealed class ActivatableAbility : UnitFact<BlueprintActivatableAbility>, 
 	{
 	}
 
+	public void HandleBuffIsSuppressedChanged(Buff buff)
+	{
+	}
+
 	private void OnDidTurnOn()
 	{
 		if (IsWaitingForTarget)

@@ -90,12 +90,13 @@ public class AreaEffectsController : IControllerTick, IController, ITeleportHand
 		areaEffectView.UniqueId = Uuid.Instance.CreateString();
 		areaEffectView.OnUnit = onUnit;
 		areaEffectView.InitAtRuntime(parentContext.CloneFor(blueprint, null, null, target), blueprint, target, Game.Instance.TimeController.GameTime, duration, overridenPattern, getOrientationFromCaster);
-		AreaEffectEntity obj = (AreaEffectEntity)Game.Instance.EntitySpawner.SpawnEntityWithView(areaEffectView, state);
-		EventBus.RaiseEvent((IAreaEffectEntity)obj, (Action<IAreaEffectHandler>)delegate(IAreaEffectHandler h)
+		AreaEffectEntity areaEffectEntity = (AreaEffectEntity)Game.Instance.EntitySpawner.SpawnEntityWithView(areaEffectView, state);
+		EventBus.RaiseEvent((IAreaEffectEntity)areaEffectEntity, (Action<IAreaEffectHandler>)delegate(IAreaEffectHandler h)
 		{
 			h.HandleAreaEffectSpawned();
 		}, isCheckRuntime: true);
-		return obj;
+		blueprint.HandleSpawn(parentContext, areaEffectEntity);
+		return areaEffectEntity;
 	}
 
 	public static bool CheckConcussionEffect(CustomGridNodeBase node)

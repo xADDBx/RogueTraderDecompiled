@@ -29,7 +29,6 @@ using Kingmaker.StateHasher.Hashers;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Models.Tooltip.Base;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Blueprints;
 using Kingmaker.UnitLogic.Mechanics.Facts;
@@ -1104,75 +1103,6 @@ public abstract class ItemEntity : MechanicEntity<BlueprintItem>, IUIDataProvide
 			return !unit.IsDetached;
 		}
 		return false;
-	}
-
-	public bool TryUseFromInventory(BaseUnitEntity user, TargetWrapper target)
-	{
-		if (!IsUsableFromInventory)
-		{
-			PFLog.Default.Error($"Can't use item from inventory now: {this}");
-			return false;
-		}
-		if (!IsSuitableUnitForUseAbility(user))
-		{
-			PFLog.Default.Error($"Invalid user: {user} (item: {this})");
-			return false;
-		}
-		BlueprintAbility blueprintAbility = (base.Blueprint as BlueprintItemEquipment)?.Abilities.FirstOrDefault();
-		if (!blueprintAbility)
-		{
-			PFLog.Default.Error($"Can't use item {this}");
-			return false;
-		}
-		Ability ability = user.Abilities.Add(blueprintAbility);
-		if (ability == null)
-		{
-			PFLog.Default.Error($"Invalid ability blueprint: {blueprintAbility}");
-			return false;
-		}
-		ability.AddSource(this);
-		try
-		{
-			if (!ability.Data.IsAvailable)
-			{
-				PFLog.Default.Error($"Ability is not available: {ability}");
-				return false;
-			}
-			if (!ability.Data.CanTarget(target, out var unavailableReason))
-			{
-				PFLog.Default.Error($"Invalid target for ability: {ability} (target; {target}) because of {unavailableReason}");
-				return false;
-			}
-			RulePerformAbility rulePerformAbility = Rulebook.Trigger(new RulePerformAbility(ability, target));
-			if (rulePerformAbility.Success)
-			{
-				rulePerformAbility.Result.InstantDeliver();
-				rulePerformAbility.Result.Detach();
-				int num = 0;
-				while (!rulePerformAbility.Result.IsEnded && num++ < 1000)
-				{
-					rulePerformAbility.Result.Tick();
-				}
-				if (num >= 1000)
-				{
-					PFLog.Default.Error($"Hang up execution process when using {base.Blueprint} from inventory.");
-				}
-			}
-			else
-			{
-				PFLog.Default.Error(ability.Blueprint, $"Spell casting failed: {ability}");
-			}
-			return true;
-		}
-		catch (Exception ex)
-		{
-			PFLog.Default.Exception(ex);
-			return false;
-		}
-		finally
-		{
-			user.Abilities.Remove(ability);
-		}
 	}
 
 	public override Hash128 GetHash128()

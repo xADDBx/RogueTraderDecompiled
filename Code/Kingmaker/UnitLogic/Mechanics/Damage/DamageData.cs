@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Enums;
 using Kingmaker.QA;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.RuleSystem.Rules.Modifiers;
@@ -26,6 +27,8 @@ public class DamageData
 
 	public readonly CompositeModifiersManager Penetration = new CompositeModifiersManager(0);
 
+	public readonly RuleCalculateStatsArmor.ArmorStatLimits ArmorStatLimits = new RuleCalculateStatsArmor.ArmorStatLimits();
+
 	public DamageType Type { get; }
 
 	public float? PredefinedRoll { get; set; }
@@ -40,7 +43,11 @@ public class DamageData
 
 	public bool Overpenetrating { get; set; }
 
-	public bool UnreducedOverpenetration { get; set; }
+	public bool UnreducedOverpenetrationDamage { get; set; }
+
+	public bool IsRicochet { get; set; }
+
+	public bool IsRicochetFriendlyFireDisabled { get; set; }
 
 	public int? CalculatedValue { get; set; }
 
@@ -143,11 +150,17 @@ public class DamageData
 
 	public int AverageValueWithoutArmorReduction => Mathf.RoundToInt((float)(MinValueWithoutArmorReduction + MaxValueWithoutArmorReduction) / 2f);
 
-	public int AbsorptionPercentsWithPenetration => Math.Min(Math.Max(0, Absorption.Value - Penetration.Value), 90);
+	public int AbsorptionPercentsWithPenetration => Math.Min(Math.Max(0, AbsorptionPercentsWithoutPenetration - Penetration.Value), 90);
 
 	public float AbsorptionFactorWithPenetration => (float)(100 - AbsorptionPercentsWithPenetration) / 100f;
 
-	public int AbsorptionPercentsWithoutPenetration => Absorption.Value;
+	public int DeflectionBaseValue => GetArmorBaseValue(Deflection, ModifierDescriptor.ArmorDeflection);
+
+	public int AbsorptionBaseValue => GetArmorBaseValue(Absorption, ModifierDescriptor.ArmorAbsorption);
+
+	public int AbsorptionPercentsWithoutPenetration => GetLimitedValue(Absorption.Value, AbsorptionBaseValue, ArmorStatLimits.MinAbsorptionFlat, ArmorStatLimits.MinAbsorptionPct, ArmorStatLimits.MaxAbsorptionFlat, ArmorStatLimits.MaxAbsorptionPct);
+
+	public int DeflectionValue => GetLimitedValue(Deflection.Value, DeflectionBaseValue, ArmorStatLimits.MinDeflectionFlat, ArmorStatLimits.MinDeflectionPct, ArmorStatLimits.MaxDeflectionFlat, ArmorStatLimits.MaxDeflectionPct);
 
 	public float AbsorptionFactorWithoutPenetration => (float)(100 - AbsorptionPercentsWithoutPenetration) / 100f;
 
@@ -235,13 +248,14 @@ public class DamageData
 		Absorption.CopyFrom(source.Absorption);
 		Deflection.CopyFrom(source.Deflection);
 		Penetration.CopyFrom(source.Penetration);
+		ArmorStatLimits.CopyFrom(source.ArmorStatLimits);
 	}
 
 	private int GetMinValue(bool withArmorReduction)
 	{
 		int num = Mathf.Max(0, MinInitialValue + MinCriticalBonus);
 		num = Mathf.RoundToInt((float)num * OverpenetrationModifier);
-		num = (withArmorReduction ? ((int)((float)(num - Deflection.Value) * AbsorptionFactorWithPenetration)) : num);
+		num = (withArmorReduction ? ((int)((float)(num - DeflectionValue) * AbsorptionFactorWithPenetration)) : num);
 		return Mathf.Max(0, num);
 	}
 
@@ -249,7 +263,7 @@ public class DamageData
 	{
 		int num = Mathf.Max(0, MaxInitialValue + MaxCriticalBonus);
 		num = Mathf.RoundToInt((float)num * OverpenetrationModifier);
-		num = (withArmorReduction ? ((int)((float)(num - Deflection.Value) * AbsorptionFactorWithPenetration)) : num);
+		num = (withArmorReduction ? ((int)((float)(num - DeflectionValue) * AbsorptionFactorWithPenetration)) : num);
 		return Mathf.Max(0, num);
 	}
 
@@ -261,5 +275,28 @@ public class DamageData
 	public void MarkCalculated()
 	{
 		IsCalculated = true;
+	}
+
+	private static int GetArmorBaseValue(CompositeModifiersManager manager, ModifierDescriptor descriptor)
+	{
+		foreach (Modifier allModifiers in manager.AllModifiersList)
+		{
+			if (allModifiers.Descriptor == descriptor)
+			{
+				return allModifiers.Value;
+			}
+		}
+		return 0;
+	}
+
+	private int GetLimitedValue(int value, int baseValue, RuleCalculateStatsArmor.LimitEntry? minFlat, RuleCalculateStatsArmor.LimitEntry? minPct, RuleCalculateStatsArmor.LimitEntry? maxFlat, RuleCalculateStatsArmor.LimitEntry? maxPct)
+	{
+		int a = (minFlat.HasValue ? minFlat.Value.Value : 0);
+		int b = (minPct.HasValue ? Mathf.RoundToInt((float)baseValue * (float)minPct.Value.Value / 100f) : 0);
+		int min = Mathf.Max(a, b);
+		int a2 = (maxFlat.HasValue ? maxFlat.Value.Value : int.MaxValue);
+		int b2 = (maxPct.HasValue ? Mathf.RoundToInt((float)baseValue * (float)maxPct.Value.Value / 100f) : int.MaxValue);
+		int max = Mathf.Min(a2, b2);
+		return Mathf.Clamp(value, min, max);
 	}
 }

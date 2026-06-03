@@ -33,6 +33,11 @@ public class ColonyResourceVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		Count.Value += delta;
 	}
 
+	public void SetCount(int value)
+	{
+		Count.Value = value;
+	}
+
 	public void UpdateCountAdditional(int delta)
 	{
 		CountAdditional.Value += delta;

@@ -92,6 +92,8 @@ public class PartyPetSpawner : UnitSpawnerBase, IAddInspectorGUI, IEtudesUpdateH
 			unitPartPetOwner.StopFollowing();
 			IsInControl = true;
 			base.Data.SpawnedUnit = existingPet;
+			existingPet.IsInGame = existingPet.Master.IsInGame;
+			unitPartPetOwner.PetIsInGame = existingPet.Master.IsInGame;
 			existingPet.Position = base.ViewTransform.position;
 			existingPet.SetOrientation(base.ViewTransform.rotation.eulerAngles.y);
 			existingPet.PetCanDialogInteract = true;
@@ -101,6 +103,8 @@ public class PartyPetSpawner : UnitSpawnerBase, IAddInspectorGUI, IEtudesUpdateH
 		{
 			unitPartPetOwner.StartFollowing();
 			IsInControl = false;
+			existingPet.IsInGame = existingPet.Master.IsInGame;
+			unitPartPetOwner.PetIsInGame = existingPet.Master.IsInGame;
 			existingPet.PetCanDialogInteract = true;
 			base.Data.SpawnedUnit = default(EntityRef<AbstractUnitEntity>);
 			base.HasSpawned = false;
@@ -110,7 +114,7 @@ public class PartyPetSpawner : UnitSpawnerBase, IAddInspectorGUI, IEtudesUpdateH
 
 	private BaseUnitEntity GetExistingPet()
 	{
-		List<BaseUnitEntity> list = Game.Instance.Player.PartyAndPets.Where((BaseUnitEntity u) => u.Blueprint.CheckEqualsWithPrototype(base.Blueprint)).ToList();
+		List<BaseUnitEntity> list = Game.Instance.Player.AllCharacters.Where((BaseUnitEntity u) => u.Blueprint.CheckEqualsWithPrototype(base.Blueprint)).ToList();
 		if (list.Count == 0)
 		{
 			return null;

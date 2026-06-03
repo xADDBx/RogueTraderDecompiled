@@ -43,6 +43,11 @@ public class LocaleData
 	public string TranslationComment = "";
 
 	[CanBeNull]
+	[JsonProperty(PropertyName = "vo_comment", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+	[DefaultValue("")]
+	public string VOComment = "";
+
+	[CanBeNull]
 	[JsonProperty(PropertyName = "traits", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
 	[DefaultValue(null)]
 	public List<TraitData> Traits;

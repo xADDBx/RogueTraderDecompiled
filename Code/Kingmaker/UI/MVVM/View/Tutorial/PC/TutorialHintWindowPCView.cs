@@ -1,9 +1,11 @@
 using System.Collections;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.MVVM.VM.Tutorial;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -36,6 +38,8 @@ public class TutorialHintWindowPCView : TutorialWindowPCView<TutorialHintWindowV
 	protected override void BindViewImplementation()
 	{
 		base.BindViewImplementation();
+		bool flag = ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse && base.ViewModel.Data.Blueprint.HideArtAndVideoInMouseModeOnSwitch2;
+		m_ImageContainer.SetActive(!flag);
 		m_ConfirmButtonText.text = UIStrings.Instance.Tutorial.GotIt.Text;
 		AddDisposable(m_ConfirmButton.OnLeftClickAsObservable().Subscribe(delegate
 		{

@@ -1,25 +1,22 @@
 using System;
-using Kingmaker.Controllers.Combat;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.Mechanics.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
-using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.Visual.Animation.Kingmaker;
 using UnityEngine;
 
 namespace Kingmaker.Controllers.Units;
 
-public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, ISubscriber<IBaseUnitEntity>, ISubscriber, IGlobalRulebookHandler<RulePerformAttack>, IRulebookHandler<RulePerformAttack>, IGlobalRulebookSubscriber
+public class UnitJumpMoveController : BaseUnitController
 {
-	private void Notify(BaseUnitEntity unit)
+	private static void NotifyFinished(BaseUnitEntity unit)
 	{
 		EventBus.RaiseEvent((IBaseUnitEntity)unit, (Action<IUnitGetAbilityJump>)delegate(IUnitGetAbilityJump h)
 		{
-			h.HandleUnitAbilityJumpDidActed(unit.CombatState.ForceMovedDistanceInCells);
+			h.HandleUnitJumpFinished();
 		}, isCheckRuntime: true);
 	}
 
@@ -40,71 +37,43 @@ public class UnitJumpMoveController : BaseUnitController, IUnitGetAbilityJump, I
 		{
 			baseUnitEntity.Position = baseUnitEntity.CurrentNode.position;
 			baseUnitEntity.Remove<UnitPartJump>();
-			Notify(baseUnitEntity);
+			NotifyFinished(baseUnitEntity);
 			return;
 		}
-		Vector3 vector = (active.TargetPosition - baseUnitEntity.Position).normalized * Math.Min(active.Speed * deltaTime, Vector3.Distance(active.TargetPosition, baseUnitEntity.Position));
-		Vector3 vector2 = baseUnitEntity.Position + vector;
-		bool flag = false;
-		float num = Vector3.Distance(baseUnitEntity.Position, vector2);
 		active.PassedTime += deltaTime;
-		if (!(active.PassedTime < active.InClipTime))
+		if (!(active.PassedTime < active.InClipTime) && (!active.IsMaxFlyTimePassed || active.JumpPhase != UnitPartJump.JumpPhaseType.Out))
 		{
-			active.PrepareForJump = false;
+			active.JumpPhase = UnitPartJump.JumpPhaseType.Fly;
 			baseUnitEntity.ForceLookAt(active.TargetPosition - 2f * (baseUnitEntity.Position - active.TargetPosition));
+			Vector3 vector = (active.TargetPosition - baseUnitEntity.Position).normalized * Math.Min(active.Speed * deltaTime, Vector3.Distance(active.TargetPosition, baseUnitEntity.Position));
+			Vector3 vector2 = baseUnitEntity.Position + vector;
+			float num = Vector3.Distance(baseUnitEntity.Position, vector2);
 			baseUnitEntity.Position = vector2;
-			if (flag || num == 0f)
+			if (num == 0f)
 			{
-				active.PassedTime = active.MaxTime;
+				active.PassedTime = active.MaxPassedFlyTime;
 			}
-			if (active.IsFinished)
+			if (active.IsMaxFlyTimePassed)
 			{
+				active.JumpPhase = UnitPartJump.JumpPhaseType.Out;
+				optional.FinishJumpFlyAnimation();
 				baseUnitEntity.Position = active.TargetPosition;
 			}
 		}
 	}
 
-	public void HandleUnitResultJump(int distanceInCells, Vector3 targetPoint, bool directJump, MechanicEntity target, MechanicEntity caster, bool useAttack)
-	{
-		HandleResult(caster, target, targetPoint, directJump, -distanceInCells, useAttack);
-	}
-
-	public void HandleUnitAbilityJumpDidActed(int distanceInCells)
-	{
-	}
-
-	private static void HandleResult(MechanicEntity caster, MechanicEntity unit, Vector3 fromPoint, bool directJump, int distanceInCells, bool useAttack)
+	public static bool TryStartJump(MechanicEntity unit, int distanceInCells, Vector3 targetPoint, bool directJump = true, UnitAnimationJumpSubType jumpSubType = UnitAnimationJumpSubType.Jump, float speed = 0f)
 	{
 		CustomGridNodeBase nearestNodeXZ = unit.Position.GetNearestNodeXZ();
 		if (nearestNodeXZ == null)
 		{
-			return;
+			return false;
 		}
-		CustomGridNodeBase nearestNodeXZ2;
-		if (!directJump)
+		CustomGridNodeBase customGridNodeBase = (directJump ? targetPoint.GetNearestNodeXZ() : (unit.Position + (unit.Position - targetPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ());
+		if (customGridNodeBase == nearestNodeXZ || customGridNodeBase == null)
 		{
-			PartUnitCombatState combatStateOptional = unit.GetCombatStateOptional();
-			if (combatStateOptional != null)
-			{
-				combatStateOptional.ForceMovedDistanceInCells = distanceInCells;
-			}
-			nearestNodeXZ2 = (unit.Position + (unit.Position - fromPoint).normalized * ((float)distanceInCells * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ();
+			return false;
 		}
-		else
-		{
-			nearestNodeXZ2 = fromPoint.GetNearestNodeXZ();
-		}
-		if (nearestNodeXZ2 != nearestNodeXZ && nearestNodeXZ2 != null)
-		{
-			unit.GetOrCreate<UnitPartJump>().Jump(nearestNodeXZ2, provokeAttackOfOpportunity: false, distanceInCells * 2, caster, useAttack);
-		}
-	}
-
-	public void OnEventAboutToTrigger(RulePerformAttack evt)
-	{
-	}
-
-	public void OnEventDidTrigger(RulePerformAttack evt)
-	{
+		return unit.GetOrCreate<UnitPartJump>().Jump(customGridNodeBase, distanceInCells * 2, jumpSubType, speed) != null;
 	}
 }

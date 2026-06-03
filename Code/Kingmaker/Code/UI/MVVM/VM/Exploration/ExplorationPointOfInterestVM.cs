@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
@@ -132,10 +131,10 @@ public class ExplorationPointOfInterestVM : BaseDisposable, IViewModel, IBaseDis
 			PFLog.UI.Log("ExplorationPointOfInterestVM.CheckQuests - current planet is null!");
 			return;
 		}
-		List<QuestObjective> questsForPlanet = UIUtilitySpaceQuests.GetQuestsForPlanet(planetView.Data.Blueprint);
+		List<QuestBookEntityEntry> questsForPlanet = UIUtilitySpaceQuests.GetQuestsForPlanet(planetView.Data.Blueprint);
 		StringBuilder stringBuilder = new StringBuilder();
 		int num = 1;
-		foreach (QuestObjective item in questsForPlanet)
+		foreach (QuestBookEntityEntry item in questsForPlanet)
 		{
 			foreach (BlueprintArea area in item.Blueprint.Areas)
 			{

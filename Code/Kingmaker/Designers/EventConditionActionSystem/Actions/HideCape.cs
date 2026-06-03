@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/HideCape")]
+[Group("Actions")]
 [TypeId("6fc6344b19b30e34bb65773bddd7980a")]
 public class HideCape : GameAction
 {

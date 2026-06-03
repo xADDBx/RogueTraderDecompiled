@@ -40,11 +40,7 @@ public class ThinCover : GridNavmeshModifier
 
 	public override Rect GetBounds(GraphTransform t)
 	{
-		Vector3 point = new Vector3(m_Bounds.min.x, 0f, m_Bounds.min.y);
-		Vector3 point2 = new Vector3(m_Bounds.max.x, 0f, m_Bounds.max.y);
-		Vector3 vector = t.InverseTransform(point);
-		Vector3 vector2 = t.InverseTransform(point2);
-		return Rect.MinMaxRect(Mathf.Round(vector.x) - 0.04f, Mathf.Round(vector.z) - 0.04f, Mathf.Round(vector2.x) + 0.04f, Mathf.Round(vector2.z) + 0.04f);
+		return GridNavmeshModifier.CalculateGraphSpaceBounds(t, m_Bounds);
 	}
 
 	public override void NotifyUpdated()

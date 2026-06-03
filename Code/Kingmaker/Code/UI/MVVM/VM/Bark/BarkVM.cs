@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.UI.Sound.Base;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
@@ -19,7 +20,7 @@ public class BarkVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, 
 	{
 		Text = text;
 		m_DisposeAction = disposeAction;
-		AddDisposable(MainThreadDispatcher.UpdateAsObservable().Subscribe(delegate
+		AddDisposable(MainThreadDispatcher.UpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
 		{
 			Tick();
 		}));

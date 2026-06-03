@@ -127,14 +127,20 @@ public class FxProjectileLauncherRepeat : MonoBehaviour
 
 	private void OnDisable()
 	{
-		Game.Instance.CoroutinesController.Stop(ref m_Coroutine);
-		CheckFinishedProjectiles();
-		Projectiles.Clear();
+		StopAndCleanup();
 	}
 
 	private void OnDestroy()
 	{
-		Game.Instance.CoroutinesController.Stop(ref m_Coroutine);
+		StopAndCleanup();
+	}
+
+	private void StopAndCleanup()
+	{
+		if (m_Coroutine.IsRunning)
+		{
+			Game.Instance.CoroutinesController.Stop(ref m_Coroutine);
+		}
 		CheckFinishedProjectiles();
 		Projectiles.Clear();
 	}

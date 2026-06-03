@@ -13,6 +13,8 @@ public class SoundSplineMover : MonoBehaviour
 
 	private float maxDistance = 25f;
 
+	public float seekSpeed = 5f;
+
 	private void Start()
 	{
 		m_ThisTransform = base.transform;
@@ -45,7 +47,8 @@ public class SoundSplineMover : MonoBehaviour
 		if (m_Camera != null && spline != null)
 		{
 			Vector3 point = m_Camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)).GetPoint(maxDistance);
-			m_ThisTransform.position = spline.WhereOnSpline(point);
+			Vector3 b = spline.WhereOnSpline(point);
+			m_ThisTransform.position = Vector3.Lerp(m_ThisTransform.position, b, Time.deltaTime * seekSpeed);
 		}
 	}
 }

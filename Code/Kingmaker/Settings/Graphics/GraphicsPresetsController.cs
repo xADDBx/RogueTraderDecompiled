@@ -106,6 +106,14 @@ public class GraphicsPresetsController
 			{
 				TryCorrectGraphicsQuality();
 			};
+			m_Settings.ReflectionProbes.OnTempValueChanged += delegate
+			{
+				TryCorrectGraphicsQuality();
+			};
+			m_Settings.ShadowsUpdateFrequency.OnTempValueChanged += delegate
+			{
+				TryCorrectGraphicsQuality();
+			};
 			m_Settings.SSAOQuality.OnTempValueChanged += delegate
 			{
 				TryCorrectGraphicsQuality();
@@ -123,6 +131,10 @@ public class GraphicsPresetsController
 				TryCorrectGraphicsQuality();
 			};
 			m_Settings.FootprintsMode.OnTempValueChanged += delegate
+			{
+				TryCorrectGraphicsQuality();
+			};
+			m_Settings.UpscalerMode.OnTempValueChanged += delegate
 			{
 				TryCorrectGraphicsQuality();
 			};
@@ -192,28 +204,7 @@ public class GraphicsPresetsController
 		private void SetTempValuesFromPreset(GraphicsPreset preset)
 		{
 			m_LastAppliedPreset = null;
-			m_Settings.GraphicsQuality.SetTempValue(preset.GraphicsQuality);
-			m_Settings.VSyncMode.SetTempValue(preset.VSyncMode);
-			m_Settings.FrameRateLimitEnabled.SetTempValue(preset.FrameRateLimitEnabled);
-			m_Settings.FrameRateLimit.SetTempValue(preset.FrameRateLimit);
-			m_Settings.ShadowsQuality.SetTempValue(preset.ShadowsQuality);
-			m_Settings.TexturesQuality.SetTempValue(preset.TexturesQuality);
-			m_Settings.DepthOfField.SetTempValue(preset.DepthOfField);
-			m_Settings.Bloom.SetTempValue(preset.Bloom);
-			m_Settings.SSAOQuality.SetTempValue(preset.SSAOQuality);
-			m_Settings.SSRQuality.SetTempValue(preset.SSRQuality);
-			m_Settings.AntialiasingMode.SetTempValue(preset.AntialiasingMode);
-			m_Settings.AntialiasingQuality.SetTempValue(preset.AntialiasingQuality);
-			m_Settings.FootprintsMode.SetTempValue(preset.FootprintsMode);
-			m_Settings.FsrMode.SetTempValue(preset.FsrMode);
-			m_Settings.FsrSharpness.SetTempValue(preset.FsrSharpness);
-			m_Settings.VolumetricLightingQuality.SetTempValue(preset.VolumetricLightingQuality);
-			m_Settings.ParticleSystemsLightingEnabled.SetTempValue(preset.ParticleSystemsLightingEnabled);
-			m_Settings.ParticleSystemsShadowsEnabled.SetTempValue(preset.ParticleSystemsShadowsEnabled);
-			m_Settings.FilmGrainEnabled.SetTempValue(preset.FilmGrainEnabled);
-			m_Settings.UIFrequentTimerInterval.SetTempValue(preset.UIFrequentTimerInterval);
-			m_Settings.UIInfrequentTimerInterval.SetTempValue(preset.UIInfrequentTimerInterval);
-			m_Settings.CrowdQuality.SetTempValue(preset.CrowdQuality);
+			GraphicsPresetsController.SetTempValuesFromPreset(m_Settings, preset);
 			m_LastAppliedPreset = preset;
 		}
 
@@ -228,7 +219,7 @@ public class GraphicsPresetsController
 
 		private bool AreTempValuesMatchesPreset(GraphicsPreset preset)
 		{
-			if (preset.GraphicsQuality == m_Settings.GraphicsQuality.GetTempValue() && preset.VSyncMode == m_Settings.VSyncMode.GetTempValue() && preset.FrameRateLimitEnabled == m_Settings.FrameRateLimitEnabled.GetTempValue() && preset.FrameRateLimit == m_Settings.FrameRateLimit.GetTempValue() && preset.ShadowsQuality == m_Settings.ShadowsQuality.GetTempValue() && preset.TexturesQuality == m_Settings.TexturesQuality.GetTempValue() && preset.DepthOfField == m_Settings.DepthOfField.GetTempValue() && preset.Bloom == m_Settings.Bloom.GetTempValue() && preset.SSAOQuality == m_Settings.SSAOQuality.GetTempValue() && preset.SSRQuality == m_Settings.SSRQuality.GetTempValue() && preset.AntialiasingMode == m_Settings.AntialiasingMode.GetTempValue() && preset.AntialiasingQuality == m_Settings.AntialiasingQuality.GetTempValue() && preset.FootprintsMode == m_Settings.FootprintsMode.GetTempValue() && preset.FsrMode == m_Settings.FsrMode.GetTempValue() && Mathf.Approximately(preset.FsrSharpness, m_Settings.FsrSharpness.GetTempValue()) && preset.VolumetricLightingQuality == m_Settings.VolumetricLightingQuality.GetTempValue() && preset.ParticleSystemsLightingEnabled == m_Settings.ParticleSystemsLightingEnabled.GetTempValue() && preset.ParticleSystemsShadowsEnabled == m_Settings.ParticleSystemsShadowsEnabled.GetTempValue() && preset.FilmGrainEnabled == m_Settings.FilmGrainEnabled.GetTempValue() && Mathf.Approximately(preset.UIFrequentTimerInterval, m_Settings.UIFrequentTimerInterval.GetTempValue()) && Mathf.Approximately(preset.UIInfrequentTimerInterval, m_Settings.UIInfrequentTimerInterval.GetTempValue()))
+			if (preset.GraphicsQuality == m_Settings.GraphicsQuality.GetTempValue() && preset.VSyncMode == m_Settings.VSyncMode.GetTempValue() && preset.FrameRateLimitEnabled == m_Settings.FrameRateLimitEnabled.GetTempValue() && preset.FrameRateLimit == m_Settings.FrameRateLimit.GetTempValue() && preset.ShadowsQuality == m_Settings.ShadowsQuality.GetTempValue() && preset.TexturesQuality == m_Settings.TexturesQuality.GetTempValue() && preset.DepthOfField == m_Settings.DepthOfField.GetTempValue() && preset.Bloom == m_Settings.Bloom.GetTempValue() && preset.ReflectionProbes == m_Settings.ReflectionProbes.GetTempValue() && preset.ShadowsUpdateFrequency == m_Settings.ShadowsUpdateFrequency.GetTempValue() && preset.SSAOQuality == m_Settings.SSAOQuality.GetTempValue() && preset.SSRQuality == m_Settings.SSRQuality.GetTempValue() && preset.AntialiasingMode == m_Settings.AntialiasingMode.GetTempValue() && preset.AntialiasingQuality == m_Settings.AntialiasingQuality.GetTempValue() && preset.FootprintsMode == m_Settings.FootprintsMode.GetTempValue() && preset.UpscalerMode == m_Settings.UpscalerMode.GetTempValue() && preset.FsrMode == m_Settings.FsrMode.GetTempValue() && Mathf.Approximately(preset.FsrSharpness, m_Settings.FsrSharpness.GetTempValue()) && preset.VolumetricLightingQuality == m_Settings.VolumetricLightingQuality.GetTempValue() && preset.ParticleSystemsLightingEnabled == m_Settings.ParticleSystemsLightingEnabled.GetTempValue() && preset.ParticleSystemsShadowsEnabled == m_Settings.ParticleSystemsShadowsEnabled.GetTempValue() && preset.FilmGrainEnabled == m_Settings.FilmGrainEnabled.GetTempValue() && Mathf.Approximately(preset.UIFrequentTimerInterval, m_Settings.UIFrequentTimerInterval.GetTempValue()) && Mathf.Approximately(preset.UIInfrequentTimerInterval, m_Settings.UIInfrequentTimerInterval.GetTempValue()))
 			{
 				return preset.CrowdQuality == m_Settings.CrowdQuality.GetTempValue();
 			}
@@ -299,6 +290,14 @@ public class GraphicsPresetsController
 			{
 				settings.Bloom.ResetToDefault();
 			}
+			if (!m_UserControlledValues.ReflectionProbes)
+			{
+				settings.ReflectionProbes.ResetToDefault();
+			}
+			if (!m_UserControlledValues.ShadowsUpdateFrequency)
+			{
+				settings.ShadowsUpdateFrequency.ResetToDefault();
+			}
 			if (!m_UserControlledValues.SSAOQuality)
 			{
 				settings.SSAOQuality.ResetToDefault();
@@ -318,6 +317,10 @@ public class GraphicsPresetsController
 			if (!m_UserControlledValues.FootprintsMode)
 			{
 				settings.FootprintsMode.ResetToDefault();
+			}
+			if (!m_UserControlledValues.UpscalerMode)
+			{
+				settings.UpscalerMode.ResetToDefault();
 			}
 			if (!m_UserControlledValues.FsrMode)
 			{
@@ -442,6 +445,14 @@ public class GraphicsPresetsController
 				{
 					AppendSetting("Bloom");
 				}
+				if (controlledByUser == m_UserControlledValues.ReflectionProbes)
+				{
+					AppendSetting("ReflectionProbes");
+				}
+				if (controlledByUser == m_UserControlledValues.ShadowsUpdateFrequency)
+				{
+					AppendSetting("ShadowsUpdateFrequency");
+				}
 				if (controlledByUser == m_UserControlledValues.SSAOQuality)
 				{
 					AppendSetting("SSAOQuality");
@@ -461,6 +472,10 @@ public class GraphicsPresetsController
 				if (controlledByUser == m_UserControlledValues.FootprintsMode)
 				{
 					AppendSetting("FootprintsMode");
+				}
+				if (controlledByUser == m_UserControlledValues.UpscalerMode)
+				{
+					AppendSetting("UpscalerMode");
 				}
 				if (controlledByUser == m_UserControlledValues.FsrMode)
 				{
@@ -514,5 +529,34 @@ public class GraphicsPresetsController
 	public void Initialize()
 	{
 		m_Implementation.Initialize();
+	}
+
+	public static void SetTempValuesFromPreset(GraphicsSettings settings, GraphicsPreset preset)
+	{
+		settings.GraphicsQuality.SetTempValue(preset.GraphicsQuality);
+		settings.VSyncMode.SetTempValue(preset.VSyncMode);
+		settings.FrameRateLimitEnabled.SetTempValue(preset.FrameRateLimitEnabled);
+		settings.FrameRateLimit.SetTempValue(preset.FrameRateLimit);
+		settings.ShadowsQuality.SetTempValue(preset.ShadowsQuality);
+		settings.TexturesQuality.SetTempValue(preset.TexturesQuality);
+		settings.DepthOfField.SetTempValue(preset.DepthOfField);
+		settings.Bloom.SetTempValue(preset.Bloom);
+		settings.ReflectionProbes.SetTempValue(preset.ReflectionProbes);
+		settings.ShadowsUpdateFrequency.SetTempValue(preset.ShadowsUpdateFrequency);
+		settings.SSAOQuality.SetTempValue(preset.SSAOQuality);
+		settings.SSRQuality.SetTempValue(preset.SSRQuality);
+		settings.AntialiasingMode.SetTempValue(preset.AntialiasingMode);
+		settings.AntialiasingQuality.SetTempValue(preset.AntialiasingQuality);
+		settings.FootprintsMode.SetTempValue(preset.FootprintsMode);
+		settings.UpscalerMode.SetTempValue(preset.UpscalerMode);
+		settings.FsrMode.SetTempValue(preset.FsrMode);
+		settings.FsrSharpness.SetTempValue(preset.FsrSharpness);
+		settings.VolumetricLightingQuality.SetTempValue(preset.VolumetricLightingQuality);
+		settings.ParticleSystemsLightingEnabled.SetTempValue(preset.ParticleSystemsLightingEnabled);
+		settings.ParticleSystemsShadowsEnabled.SetTempValue(preset.ParticleSystemsShadowsEnabled);
+		settings.FilmGrainEnabled.SetTempValue(preset.FilmGrainEnabled);
+		settings.UIFrequentTimerInterval.SetTempValue(preset.UIFrequentTimerInterval);
+		settings.UIInfrequentTimerInterval.SetTempValue(preset.UIInfrequentTimerInterval);
+		settings.CrowdQuality.SetTempValue(preset.CrowdQuality);
 	}
 }

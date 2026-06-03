@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem;
@@ -21,6 +22,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("90148a340eede5946ade283656c21fe1")]
 public class AbilityCustomStarshipShallowJump : AbilityCustomLogic, ICustomShipPathProvider, IAbilityCasterRestriction
 {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Code.Globalmap.Colonization;
+using Kingmaker.Code.UI.MVVM.VM.BossHPBar;
 using Kingmaker.Code.UI.MVVM.VM.Credits;
 using Kingmaker.Code.UI.MVVM.VM.Dialog;
 using Kingmaker.Code.UI.MVVM.VM.EtudeCounter;
@@ -8,12 +9,14 @@ using Kingmaker.Code.UI.MVVM.VM.Formation;
 using Kingmaker.Code.UI.MVVM.VM.GameOver;
 using Kingmaker.Code.UI.MVVM.VM.GroupChanger;
 using Kingmaker.Code.UI.MVVM.VM.Loot;
+using Kingmaker.Code.UI.MVVM.VM.NecronTimer;
 using Kingmaker.Code.UI.MVVM.VM.Retrain;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Code.UI.MVVM.VM.Subtitle;
 using Kingmaker.Code.UI.MVVM.VM.SurfaceCombat;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Transition;
+using Kingmaker.Code.UI.MVVM.VM.TurnTimer;
 using Kingmaker.Code.UI.MVVM.VM.UIVisibility;
 using Kingmaker.Code.UI.MVVM.VM.Vendor;
 using Kingmaker.ElementsSystem.ContextData;
@@ -50,6 +53,12 @@ public class SurfaceStaticPartVM : BaseDisposable, IViewModel, IBaseDisposable, 
 
 	public readonly EtudeCounterVM EtudeCounterVM;
 
+	public readonly BossHPBarVM BossHPBarVM;
+
+	public readonly TurnTimerVM TurnTimerVM;
+
+	public readonly NecronTimerVM NecronTimerVM;
+
 	public readonly CharGenContextVM CharGenContextVM;
 
 	public readonly RespecContextVM RespecContextVM;
@@ -80,6 +89,9 @@ public class SurfaceStaticPartVM : BaseDisposable, IViewModel, IBaseDisposable, 
 		AddDisposable(SurfaceHUDVM = new SurfaceHUDVM());
 		AddDisposable(SubtitleVM = new SubtitleVM());
 		AddDisposable(EtudeCounterVM = new EtudeCounterVM());
+		AddDisposable(BossHPBarVM = new BossHPBarVM());
+		AddDisposable(TurnTimerVM = new TurnTimerVM());
+		AddDisposable(NecronTimerVM = new NecronTimerVM());
 		AddDisposable(CharGenContextVM = new CharGenContextVM());
 		AddDisposable(RespecContextVM = new RespecContextVM());
 		AddDisposable(UIVisibilityVM = new UIVisibilityVM());

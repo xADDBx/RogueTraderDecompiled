@@ -61,7 +61,10 @@ public class CharInfoBaseAbilityScoresBlockVM : CharInfoComponentWithLevelUpVM
 	protected override void RefreshData()
 	{
 		base.RefreshData();
-		FillStats(Unit.Value.Stats.Container, PreviewUnit.Value?.Stats.Container);
+		if (Unit.Value != null)
+		{
+			FillStats(Unit.Value.Stats.Container, PreviewUnit.Value?.Stats.Container);
+		}
 	}
 
 	protected void FillStats(StatsContainer stats, StatsContainer previewStats)

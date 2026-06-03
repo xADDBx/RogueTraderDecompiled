@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -64,7 +65,14 @@ public class PointMarkerVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void Update()
 	{
-		UpdateVisibility();
+		if (CutsceneUIState.IsCutsceneActive.Value)
+		{
+			IsVisible.Value = false;
+		}
+		else
+		{
+			UpdateVisibility();
+		}
 	}
 
 	public void ScrollToUnit()
@@ -93,9 +101,13 @@ public class PointMarkerVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 			}
 			if ((!obj) ?? false)
 			{
-				m_PositionInUI = Game.GetCamera().WorldToScreenPoint(Position);
-				IsVisible.Value = m_PositionInUI.x <= 0f || m_PositionInUI.x >= (float)Game.GetCamera().pixelWidth || m_PositionInUI.y <= 0f || m_PositionInUI.y >= (float)Game.GetCamera().pixelHeight;
-				return;
+				BaseUnitEntity unit2 = Unit;
+				if (unit2 == null || !unit2.IsInvisible)
+				{
+					m_PositionInUI = Game.GetCamera().WorldToScreenPoint(Position);
+					IsVisible.Value = m_PositionInUI.x <= 0f || m_PositionInUI.x >= (float)Game.GetCamera().pixelWidth || m_PositionInUI.y <= 0f || m_PositionInUI.y >= (float)Game.GetCamera().pixelHeight;
+					return;
+				}
 			}
 		}
 		IsVisible.Value = false;

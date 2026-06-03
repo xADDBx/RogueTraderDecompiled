@@ -34,24 +34,31 @@ public static class UnityInternalListener
 		}
 		using (UnityUberLogJointSuppressor.Suppress())
 		{
-			List<LogStackFrame> list;
+			LogSeverity logSeverity = logType.FromUnity();
+			List<LogStackFrame> list = null;
 			if (string.IsNullOrWhiteSpace(unityCallStack))
 			{
-				list = new List<LogStackFrame>();
-				UberLoggerStackTraceUtils2.GetCallstack(list, new StackTrace(fNeedFileInfo: true));
+				if (logSeverity >= LogChannel.Unity.MinStackTraceLevel)
+				{
+					list = new List<LogStackFrame>();
+					UberLoggerStackTraceUtils2.GetCallstack(list, new StackTrace(fNeedFileInfo: true));
+				}
 			}
 			else
 			{
 				list = GetCallstackFromUnityLog(unityCallStack);
 			}
-			LogSeverity severity = logType.FromUnity();
 			string filename = "";
 			int lineNumber = 0;
 			if (ExtractInfoFromUnityMessage(unityMessage, ref filename, ref lineNumber))
 			{
+				if (list == null)
+				{
+					list = new List<LogStackFrame>();
+				}
 				list.Insert(0, new LogStackFrame(unityMessage, filename, lineNumber));
 			}
-			LogInfo logInfo = new LogInfo(null, LogChannel.Unity, Logger.GetTime(), severity, list, unityMessage);
+			LogInfo logInfo = new LogInfo(null, LogChannel.Unity, Logger.GetTime(), logSeverity, list, unityMessage);
 			Logger.Instance.Log(logInfo);
 		}
 	}

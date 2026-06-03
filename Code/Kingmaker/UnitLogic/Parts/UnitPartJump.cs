@@ -1,6 +1,7 @@
 using System.Collections.Generic;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Animation.Actions;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using Newtonsoft.Json;
@@ -13,6 +14,13 @@ namespace Kingmaker.UnitLogic.Parts;
 
 public class UnitPartJump : BaseUnitPart, IHashable
 {
+	public enum JumpPhaseType
+	{
+		In,
+		Fly,
+		Out
+	}
+
 	public class Chunk : IHashable
 	{
 		[JsonProperty]
@@ -25,26 +33,24 @@ public class UnitPartJump : BaseUnitPart, IHashable
 		public float InClipTime;
 
 		[JsonProperty]
+		public float OutClipTime;
+
+		[JsonProperty]
 		public float Speed;
 
 		[JsonProperty]
-		public bool ProvokeAttackOfOpportunity;
-
-		[JsonProperty]
-		public bool IgnoreNavmesh;
-
-		[JsonProperty]
-		public bool PrepareForJump;
+		public JumpPhaseType JumpPhase;
 
 		[JsonProperty(IsReference = false)]
 		public Vector3 TargetPosition;
 
-		[JsonProperty]
-		public MechanicEntity Pusher;
+		public bool IsMaxTimePassed => PassedTime >= MaxPassedTime;
 
-		public bool IsFinished => PassedTime >= MaxTime;
+		public bool IsMaxFlyTimePassed => PassedTime >= MaxPassedFlyTime;
 
-		public float RemainingDistance => Mathf.Max(0f, MaxTime - PassedTime);
+		public float MaxPassedFlyTime => MaxTime + InClipTime;
+
+		public float MaxPassedTime => MaxTime + InClipTime + OutClipTime;
 
 		public virtual Hash128 GetHash128()
 		{
@@ -52,13 +58,10 @@ public class UnitPartJump : BaseUnitPart, IHashable
 			result.Append(ref MaxTime);
 			result.Append(ref PassedTime);
 			result.Append(ref InClipTime);
+			result.Append(ref OutClipTime);
 			result.Append(ref Speed);
-			result.Append(ref ProvokeAttackOfOpportunity);
-			result.Append(ref IgnoreNavmesh);
-			result.Append(ref PrepareForJump);
+			result.Append(ref JumpPhase);
 			result.Append(ref TargetPosition);
-			Hash128 val = ClassHasher<MechanicEntity>.GetHash128(Pusher);
-			result.Append(ref val);
 			return result;
 		}
 	}
@@ -73,7 +76,7 @@ public class UnitPartJump : BaseUnitPart, IHashable
 			Chunk result;
 			while (m_Chunks.TryPeek(out result))
 			{
-				if (!result.IsFinished)
+				if (!result.IsMaxTimePassed)
 				{
 					return result;
 				}
@@ -83,14 +86,18 @@ public class UnitPartJump : BaseUnitPart, IHashable
 		}
 	}
 
-	public Chunk Jump(GraphNode targetNode, bool provokeAttackOfOpportunity, int cellsRemaining = 0, MechanicEntity pusher = null, bool useAttack = false)
+	public Chunk Jump(GraphNode targetNode, int cellsRemaining = 0, UnitAnimationJumpSubType jumpSubType = UnitAnimationJumpSubType.Jump, float speed = 5f)
 	{
 		if (base.Owner.View.AnimationManager == null)
 		{
 			return null;
 		}
-		Vector3 vector = targetNode.Vector3Position - base.Owner.Position;
-		float num = vector.magnitude / 5f;
+		float magnitude = (targetNode.Vector3Position - base.Owner.Position).magnitude;
+		if (speed.Approximately(0f))
+		{
+			speed = 5f;
+		}
+		float num = magnitude / speed;
 		if (num == 0f)
 		{
 			PFLog.Default.Error("Push time is zero");
@@ -101,26 +108,59 @@ public class UnitPartJump : BaseUnitPart, IHashable
 		Chunk chunk = new Chunk
 		{
 			MaxTime = num,
-			ProvokeAttackOfOpportunity = provokeAttackOfOpportunity,
 			TargetPosition = targetNode.Vector3Position,
-			Pusher = pusher,
-			PrepareForJump = true,
-			Speed = 5f
+			Speed = speed
 		};
-		UnitAnimationActionHandle unitAnimationActionHandle = base.Owner?.View?.EntityData?.MaybeAnimationManager?.CreateHandle(UnitAnimationType.Jump, errorOnEmpty: false);
-		if (base.Owner?.View?.AnimationManager?.GetAction(UnitAnimationType.Jump) is UnitAnimationActionJump unitAnimationActionJump)
-		{
-			chunk.InClipTime = unitAnimationActionJump.GetInClipLenght();
-			chunk.MaxTime = unitAnimationActionJump.GetFlyClipLenght() + unitAnimationActionJump.GetInClipLenght();
-			chunk.Speed = vector.magnitude / unitAnimationActionJump.GetFlyClipLenght();
-		}
-		if (unitAnimationActionHandle != null)
-		{
-			unitAnimationActionHandle.NeedAttackAfterJump = useAttack;
-			base.Owner.View.EntityData.MaybeAnimationManager.Execute(unitAnimationActionHandle);
-		}
+		ExecuteJumpAnimationAction(chunk, magnitude, jumpSubType);
 		m_Chunks.Enqueue(chunk);
 		return chunk;
+	}
+
+	protected override void OnDetach()
+	{
+		FinishJumpFlyAnimation();
+	}
+
+	private void ExecuteJumpAnimationAction(Chunk chunk, float shift, UnitAnimationJumpSubType jumpSubType)
+	{
+		UnitAnimationManager unitAnimationManager = base.Owner?.View?.AnimationManager;
+		if (unitAnimationManager == null || base.Owner.State.IsProne)
+		{
+			return;
+		}
+		UnitAnimationAction action = unitAnimationManager.GetAction(jumpSubType.ToAnimationType());
+		if (action == null)
+		{
+			return;
+		}
+		AnimationActionHandle animationActionHandle = unitAnimationManager.CreateHandle(action);
+		if (animationActionHandle == null)
+		{
+			return;
+		}
+		if (action is UnitAnimationActionJump unitAnimationActionJump)
+		{
+			chunk.InClipTime = unitAnimationActionJump.GetInClipLength();
+			if (jumpSubType != 0)
+			{
+				chunk.OutClipTime = unitAnimationActionJump.GetOutClipLength();
+			}
+			if (!unitAnimationActionJump.LoopedFly)
+			{
+				chunk.MaxTime = unitAnimationActionJump.GetFlyClipLength();
+				chunk.Speed = shift / unitAnimationActionJump.GetFlyClipLength();
+			}
+		}
+		unitAnimationManager.Execute(animationActionHandle);
+	}
+
+	public void FinishJumpFlyAnimation()
+	{
+		UnitAnimationManager unitAnimationManager = base.Owner?.View?.AnimationManager;
+		if (!(unitAnimationManager == null) && unitAnimationManager.CurrentAction is UnitAnimationActionHandle { Action: UnitAnimationActionJump action } unitAnimationActionHandle)
+		{
+			action.FinishFly(unitAnimationActionHandle);
+		}
 	}
 
 	public override Hash128 GetHash128()

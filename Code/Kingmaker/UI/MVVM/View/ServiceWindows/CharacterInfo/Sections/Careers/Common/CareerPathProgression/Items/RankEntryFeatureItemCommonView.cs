@@ -43,30 +43,30 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 	private bool m_IsListEntry = true;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private GameObject m_FocusedMark;
 
 	[SerializeField]
 	private GameObject m_SelectedMark;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private Image m_RecommendMark;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private OwlcatToggle m_FavoritesToggle;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private CanvasGroup m_FavoritesCanvasGroup;
 
 	[SerializeField]
-	[ConditionalShow("m_IsListEntry")]
+	[ShowIf("m_IsListEntry")]
 	private OwlcatMultiSelectable m_UnitHasFeature;
 
 	[SerializeField]
-	[ConditionalHide("m_IsListEntry")]
+	[HideIf("m_IsListEntry")]
 	private RectTransform m_NextItemArrow;
 
 	[SerializeField]
@@ -96,7 +96,7 @@ public class RankEntryFeatureItemCommonView : VirtualListElementViewBase<BaseRan
 		m_TalentGroupView.Or(null)?.SetupView(iconsInfo);
 		if (m_IsListEntry && base.ViewModel is RankEntrySelectionFeatureVM rankEntrySelectionFeatureVM && (bool)m_UnitHasFeature)
 		{
-			string activeLayer = (rankEntrySelectionFeatureVM.UnitHasFeature ? "HasFeature" : "Restricted");
+			string activeLayer = (rankEntrySelectionFeatureVM.UnitCanTakeFeature ? "Restricted" : "HasFeature");
 			m_UnitHasFeature.SetActiveLayer(activeLayer);
 		}
 		if ((bool)m_RecommendMark)

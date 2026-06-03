@@ -37,6 +37,7 @@ using Kingmaker.Utility.StatefulRandom;
 using Owlcat.Runtime.Core.Logging;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
+using UnityEngine.Pool;
 using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
@@ -133,7 +134,7 @@ public static class AbilityDataHelper
 			return TempHashSet.Get<CustomGridNodeBase>();
 		}
 		MechanicEntity mechanicEntity = target?.Entity;
-		if (mechanicEntity == null)
+		if (mechanicEntity == null || mechanicEntity.HasAbilityImmunity(ability.Blueprint))
 		{
 			return TempHashSet.Get<CustomGridNodeBase>();
 		}
@@ -148,12 +149,17 @@ public static class AbilityDataHelper
 		while (num < value)
 		{
 			num++;
-			if (num < value)
+			if (num >= value)
 			{
-				mechanicEntity = SelectNextTarget(ability, component, target, hashSet);
-				if (mechanicEntity != null)
+				continue;
+			}
+			mechanicEntity = SelectNextTarget(ability, component, target, hashSet);
+			if (mechanicEntity != null)
+			{
+				hashSet.Add(mechanicEntity);
+				if (mechanicEntity.HasAbilityImmunity(ability.Blueprint))
 				{
-					hashSet.Add(mechanicEntity);
+					break;
 				}
 			}
 		}
@@ -270,77 +276,82 @@ public static class AbilityDataHelper
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-			DamagePredictionData damagePredictionData = new DamagePredictionData
+			using (context?.GetDataScope())
 			{
-				MinDamage = 0,
-				MaxDamage = 0,
-				Penetration = 0
-			};
-			if (target is StarshipEntity && (ability.StarshipWeapon != null || (bool)ability.Blueprint.GetComponent<AbilityCustomStarshipRam>()))
-			{
-				return GetStarshipDamagePrediction(target as StarshipEntity, casterPosition, ability, ability.StarshipWeapon).resultDamage;
-			}
-			WarhammerAbilityAttackDelivery.WeaponAttackType? weaponAttackType = ability.Blueprint.GetComponent<WarhammerAbilityAttackDelivery>()?.WeaponAttack;
-			if (weaponAttackType.HasValue && weaponAttackType.GetValueOrDefault() != 0 && ability.Weapon != null)
-			{
-				bool flag = Rulebook.Trigger(new RuleCalculateHitChances(ability.Caster, target, ability, 0)).RighteousFuryChanceRule.ResultChance >= 100;
-				int enemyTargetCountInPattern = GetEnemyTargetCountInPattern(ability);
-				using (ContextData<EnemyTargetsInPatternData>.Request().Setup(enemyTargetCountInPattern))
+				DamagePredictionData damagePredictionData = new DamagePredictionData
 				{
-					MechanicEntity caster = ability.Caster;
-					bool forceCrit = flag;
-					DamageData resultDamage = new CalculateDamageParams(caster, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
-					if (resultDamage == null)
+					MinDamage = 0,
+					MaxDamage = 0,
+					Penetration = 0
+				};
+				if (target is StarshipEntity && (ability.StarshipWeapon != null || (bool)ability.Blueprint.GetComponent<AbilityCustomStarshipRam>()))
+				{
+					return GetStarshipDamagePrediction(target as StarshipEntity, casterPosition, ability, ability.StarshipWeapon).resultDamage;
+				}
+				WarhammerAbilityAttackDelivery component = ability.Blueprint.GetComponent<WarhammerAbilityAttackDelivery>();
+				bool num = component != null && component.WeaponAttack != 0 && ability.Weapon != null;
+				bool flag = component != null && (!component.IsPattern || component.PatternProvider.CanTargetDueToType(ability.Caster, target));
+				if (num && flag)
+				{
+					bool flag2 = Rulebook.Trigger(new RuleCalculateHitChances(ability.Caster, target, ability, 0)).RighteousFuryChanceRule.ResultChance >= 100;
+					int enemyTargetCountInPattern = GetEnemyTargetCountInPattern(ability);
+					using (ContextData<EnemyTargetsInPatternData>.Request().Setup(enemyTargetCountInPattern))
 					{
-						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
-						return null;
+						MechanicEntity caster = ability.Caster;
+						bool forceCrit = flag2;
+						DamageData resultDamage = new CalculateDamageParams(caster, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
+						if (resultDamage == null)
+						{
+							Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
+							return null;
+						}
+						DamagePredictionData damagePredictionData2 = new DamagePredictionData
+						{
+							MinDamage = resultDamage.MinValue,
+							MaxDamage = resultDamage.MaxValue,
+							Penetration = resultDamage.Penetration.Value
+						};
+						damagePredictionData += damagePredictionData2;
 					}
-					DamagePredictionData damagePredictionData2 = new DamagePredictionData
-					{
-						MinDamage = resultDamage.MinValue,
-						MaxDamage = resultDamage.MaxValue,
-						Penetration = resultDamage.Penetration.Value
-					};
-					damagePredictionData += damagePredictionData2;
 				}
-			}
-			else if (ability.Blueprint.GetComponent<AbilityMeleeBurst>() != null)
-			{
-				bool flag2 = Rulebook.Trigger(new RuleCalculateHitChances(ability.Caster, target, ability, 0)).RighteousFuryChanceRule.ResultChance >= 100;
-				int enemyTargetCountInPattern2 = GetEnemyTargetCountInPattern(ability);
-				using (ContextData<EnemyTargetsInPatternData>.Request().Setup(enemyTargetCountInPattern2))
+				else if (ability.Blueprint.GetComponent<AbilityMeleeBurst>() != null)
 				{
-					MechanicEntity caster2 = ability.Caster;
-					bool forceCrit = flag2;
-					DamageData resultDamage2 = new CalculateDamageParams(caster2, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
-					if (resultDamage2 == null)
+					bool flag3 = Rulebook.Trigger(new RuleCalculateHitChances(ability.Caster, target, ability, 0)).RighteousFuryChanceRule.ResultChance >= 100;
+					int enemyTargetCountInPattern2 = GetEnemyTargetCountInPattern(ability);
+					using (ContextData<EnemyTargetsInPatternData>.Request().Setup(enemyTargetCountInPattern2))
 					{
-						Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
-						return null;
+						MechanicEntity caster2 = ability.Caster;
+						bool forceCrit = flag3;
+						DamageData resultDamage2 = new CalculateDamageParams(caster2, target, ability, null, null, null, null, null, forceCrit).Trigger().ResultDamage;
+						if (resultDamage2 == null)
+						{
+							Debug.LogError("Weapon calculate damage is broken: RuleCalculateDamage == NULL");
+							return null;
+						}
+						int rateOfFire = ability.Blueprint.GetComponent<AbilityMeleeBurst>().GetRateOfFire(ability.CreateExecutionContext(target));
+						DamagePredictionData damagePredictionData3 = new DamagePredictionData
+						{
+							MinDamage = resultDamage2.MinValue * rateOfFire,
+							MaxDamage = resultDamage2.MaxValue * rateOfFire,
+							Penetration = resultDamage2.Penetration.Value
+						};
+						damagePredictionData += damagePredictionData3;
 					}
-					int rateOfFire = ability.Blueprint.GetComponent<AbilityMeleeBurst>().GetRateOfFire(ability.CreateExecutionContext(target));
-					DamagePredictionData damagePredictionData3 = new DamagePredictionData
+				}
+				foreach (AbilityEffectRunAction component2 in ability.Blueprint.GetComponents<AbilityEffectRunAction>())
+				{
+					try
 					{
-						MinDamage = resultDamage2.MinValue * rateOfFire,
-						MaxDamage = resultDamage2.MaxValue * rateOfFire,
-						Penetration = resultDamage2.Penetration.Value
-					};
-					damagePredictionData += damagePredictionData3;
+						DamagePredictionData actionsDamage = GetActionsDamage(ability, component2.Actions, context, casterPosition, target ?? Game.Instance.DefaultUnit);
+						damagePredictionData += actionsDamage;
+					}
+					catch (Exception ex)
+					{
+						LogChannel.Default.Error(ex);
+					}
 				}
+				return (damagePredictionData.MaxDamage == 0) ? null : damagePredictionData;
 			}
-			foreach (AbilityEffectRunAction component in ability.Blueprint.GetComponents<AbilityEffectRunAction>())
-			{
-				try
-				{
-					DamagePredictionData actionsDamage = GetActionsDamage(ability, component.Actions, context, casterPosition, target ?? Game.Instance.DefaultUnit);
-					damagePredictionData += actionsDamage;
-				}
-				catch (Exception ex)
-				{
-					LogChannel.Default.Error(ex);
-				}
-			}
-			return (damagePredictionData.MaxDamage == 0) ? null : damagePredictionData;
 		}
 	}
 
@@ -565,15 +576,17 @@ public static class AbilityDataHelper
 		overpenetrationUIData.OverpenetrationDamagePercent = 100;
 		overpenetrationUIData.OverpenetrationHitChance = 100f;
 		OverpenetrationUIData overpenetrationData = overpenetrationUIData;
+		HashSet<MechanicEntity> value;
 		if (ability.IsSingleShot)
 		{
-			pattern.Nodes.OrderBy((CustomGridNodeBase node) => node.CellDistanceTo(casterPosition.GetNearestNodeXZ()));
+			using (CollectionPool<HashSet<MechanicEntity>, MechanicEntity>.Get(out value))
 			{
 				foreach (CustomGridNodeBase item in pattern.Nodes.OrderBy((CustomGridNodeBase node) => node.CellDistanceTo(casterPosition.GetNearestNodeXZ())))
 				{
-					BaseUnitEntity entity = item.GetUnit();
-					if (entity != null && !listToFill.Contains((AbilityTargetUIData data) => data.Target == entity) && (targetEntity == null || targetEntity == entity) && !entity.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, entity, out var uiData, ref overpenetrationData))
+					BaseUnitEntity unit = item.GetUnit();
+					if (unit != null && !value.Contains(unit) && (targetEntity == null || targetEntity == unit) && !unit.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, unit, out var uiData, ref overpenetrationData))
 					{
+						value.Add(unit);
 						listToFill.Add(uiData);
 						ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData);
 					}
@@ -581,9 +594,12 @@ public static class AbilityDataHelper
 				return;
 			}
 		}
-		foreach (BaseUnitEntity allBaseAwakeUnit in Game.Instance.State.AllBaseAwakeUnits)
+		foreach (BaseUnitEntity item2 in from u in Game.Instance.State.AllBaseUnits
+			where u != null
+			orderby u.SqrDistanceTo(casterPosition) descending
+			select u)
 		{
-			if ((targetEntity == null || targetEntity == allBaseAwakeUnit) && !allBaseAwakeUnit.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, allBaseAwakeUnit, out var uiData2, ref overpenetrationData))
+			if ((targetEntity == null || targetEntity == item2) && !item2.IsExtra && CheckAffectedEntity(context, pattern, casterPosition, item2, out var uiData2, ref overpenetrationData))
 			{
 				listToFill.Add(uiData2);
 				ObjectExtensions.Or(AbilityTargetUIDataCache.Instance, null)?.AddOrReplace(uiData2);
@@ -629,7 +645,10 @@ public static class AbilityDataHelper
 		}
 		if (ability.IsAOE || ability.IsCharge || ability.IsStarshipAttack)
 		{
-			uiData = new AbilityTargetUIData(ability, entity, casterPosition, ref overpenetrationData);
+			using (context.GetDataScope())
+			{
+				uiData = new AbilityTargetUIData(ability, entity, casterPosition, ref overpenetrationData);
+			}
 			return true;
 		}
 		if (ability.IsSingleShot)
@@ -653,26 +672,26 @@ public static class AbilityDataHelper
 		NodeList occupiedNodes = entity.GetOccupiedNodes();
 		foreach (CustomGridNodeBase item in occupiedNodes)
 		{
-			if (!pattern.TryGet(item, out var data))
+			if (!pattern.TryGet(item, out var data2))
 			{
 				continue;
 			}
 			if (ability.IsScatter)
 			{
-				num += data.ProbabilitiesSum;
-				num2 += data.InitialAverageProbability;
-				if (data.Lines > num3)
+				num += data2.ProbabilitiesSum;
+				num2 += data2.InitialAverageProbability;
+				if (data2.Lines > num3)
 				{
-					num3 = data.Lines;
+					num3 = data2.Lines;
 				}
 			}
-			flag = flag || data.AlwaysHit;
-			num4 += data.DodgeProbability;
-			num5 += data.CoverProbability;
-			num6 += data.EvasionProbability;
-			for (int i = 0; i < data.InitialProbabilities.Length; i++)
+			flag = flag || data2.AlwaysHit;
+			num4 += data2.DodgeProbability;
+			num5 += data2.CoverProbability;
+			num6 += data2.EvasionProbability;
+			for (int i = 0; i < data2.InitialProbabilities.Length; i++)
 			{
-				float num7 = data.InitialProbabilities[i];
+				float num7 = data2.InitialProbabilities[i];
 				if (list.Count <= i)
 				{
 					list.Add(num7 * 100f);
@@ -693,6 +712,18 @@ public static class AbilityDataHelper
 		int minDamage = damagePrediction?.MinDamage ?? 0;
 		int maxDamage = damagePrediction?.MaxDamage ?? 0;
 		uiData = new AbilityTargetUIData(ability, entity, casterPosition, flag, num2, num, minDamage, maxDamage, num3, ability.BurstAttacksCount, list, num4, num5, num6);
+		return true;
+	}
+
+	public static bool RollAndTrySpend(this AbilityData abilityData)
+	{
+		RuleCalculateNotSpendItemChance ruleCalculateNotSpendItemChance = new RuleCalculateNotSpendItemChance(abilityData.Caster, abilityData);
+		Rulebook.Trigger(ruleCalculateNotSpendItemChance);
+		if (ruleCalculateNotSpendItemChance.Success)
+		{
+			return false;
+		}
+		abilityData.Spend();
 		return true;
 	}
 }

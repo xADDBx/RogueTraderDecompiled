@@ -183,6 +183,7 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 
 	protected override void DestroyViewImplementation()
 	{
+		m_BackgroundVideo.Stop();
 	}
 
 	private void SetTextMessageOfTheDay()

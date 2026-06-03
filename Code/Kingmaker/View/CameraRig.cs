@@ -26,6 +26,7 @@ using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Models.SettingsUI.UISettingsSheet;
+using Kingmaker.UI.Pointer;
 using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Utility.CountingGuard;
@@ -592,28 +593,33 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 		}
 	}
 
-	private void AddLeft()
+	public void AddLeft()
 	{
-		float num = (float)SettingsRoot.Controls.CameraScrollSpeedKeyboard * 0.02f;
-		m_ScrollOffset += new Vector2(0f - num, 0f);
+		AddScroll(Vector2.left);
 	}
 
-	private void AddRight()
+	public void AddRight()
 	{
-		float x = (float)SettingsRoot.Controls.CameraScrollSpeedKeyboard * 0.02f;
-		m_ScrollOffset += new Vector2(x, 0f);
+		AddScroll(Vector2.right);
 	}
 
-	private void AddUp()
+	public void AddUp()
 	{
-		float y = (float)SettingsRoot.Controls.CameraScrollSpeedKeyboard * 0.02f;
-		m_ScrollOffset += new Vector2(0f, y);
+		AddScroll(Vector2.up);
 	}
 
-	private void AddDown()
+	public void AddDown()
 	{
-		float num = (float)SettingsRoot.Controls.CameraScrollSpeedKeyboard * 0.02f;
-		m_ScrollOffset += new Vector2(0f, 0f - num);
+		AddScroll(Vector2.down);
+	}
+
+	private void AddScroll(Vector2 direction)
+	{
+		if (!m_HandScrollLock && !m_RecordLock)
+		{
+			float num = (float)SettingsRoot.Controls.CameraScrollSpeedKeyboard * 0.02f;
+			m_ScrollOffset += direction * num;
+		}
 	}
 
 	public void RotateLeft()
@@ -772,30 +778,30 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 
 	private Vector2 GetCameraScrollShiftByMouse()
 	{
-		Vector2 vector = Input.mousePosition;
+		Vector2 cursorPosition = CursorController.CursorPosition;
 		float num = (float)SettingsRoot.Controls.CameraScrollSpeedEdge * 0.02f;
 		bool flag = (bool)SettingsRoot.Controls.CameraScrollOutOfScreenEnabled && m_FullScreenUIType == FullScreenUIType.Unknown;
-		Vector2 vector2 = vector;
+		Vector2 vector = cursorPosition;
 		int num2;
-		if (vector2.x < ScrollScreenThreshold && (flag || vector2.x >= 0f))
+		if (vector.x < ScrollScreenThreshold && (flag || vector.x >= 0f))
 		{
 			num2 = -1;
 		}
 		else
 		{
-			Vector2 vector3 = vector2;
-			num2 = ((vector3.x > (float)Screen.width - ScrollScreenThreshold && (flag || vector3.x <= (float)Screen.width)) ? 1 : 0);
+			Vector2 vector2 = vector;
+			num2 = ((vector2.x > (float)Screen.width - ScrollScreenThreshold && (flag || vector2.x <= (float)Screen.width)) ? 1 : 0);
 		}
 		int num3 = num2;
-		Vector2 vector4 = vector;
-		if (vector4.y < ScrollScreenThreshold && (flag || vector4.y >= 0f))
+		Vector2 vector3 = cursorPosition;
+		if (vector3.y < ScrollScreenThreshold && (flag || vector3.y >= 0f))
 		{
 			num2 = -1;
 		}
 		else
 		{
-			Vector2 vector5 = vector4;
-			num2 = ((vector5.y > (float)Screen.height - ScrollScreenThreshold && (flag || vector5.y <= (float)Screen.height)) ? 1 : 0);
+			Vector2 vector4 = vector3;
+			num2 = ((vector4.y > (float)Screen.height - ScrollScreenThreshold && (flag || vector4.y <= (float)Screen.height)) ? 1 : 0);
 		}
 		int num4 = num2;
 		if (num3 != 0 || num4 != 0)
@@ -887,9 +893,9 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 	{
 		if (!MainCanvas.Instance)
 		{
-			return Input.mousePosition;
+			return CursorController.CursorPosition;
 		}
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(MainCanvas.Instance.RectTransform, Input.mousePosition, UICamera.Instance, out var localPoint);
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(MainCanvas.Instance.RectTransform, CursorController.CursorPosition, UICamera.Instance, out var localPoint);
 		return localPoint;
 	}
 
@@ -1538,10 +1544,14 @@ public class CameraRig : MonoBehaviour, IAreaHandler, ISubscriber, IAdditiveArea
 	void IDialogFinishHandler.HandleDialogFinished(BlueprintDialog dialog, bool success)
 	{
 		m_HandRotationLock = false;
+		m_HandScrollLock = false;
+		m_ScrollOffset = Vector2.zero;
 	}
 
 	void IDialogStartHandler.HandleDialogStarted(BlueprintDialog dialog)
 	{
+		m_HandScrollLock = true;
+		m_ScrollOffset = Vector2.zero;
 		if (dialog.IsLockCameraRotationButtons)
 		{
 			m_HandRotationLock = true;

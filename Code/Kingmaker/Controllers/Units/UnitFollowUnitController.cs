@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Code.Visual.Animation;
 using Kingmaker.EntitySystem.Entities;
@@ -42,7 +43,6 @@ public class UnitFollowUnitController : BaseUnitController
 	private static void Tick(AbstractUnitEntity unit, FollowerAction action, UnitPartFollowUnit followerPart)
 	{
 		BaseUnitEntity leader = followerPart.Leader;
-		FollowerActionType type = action.Type;
 		Vector3 position = action.Position;
 		UnitMoveTo currentMoveTo = unit.Commands.CurrentMoveTo;
 		bool alwaysRun = followerPart.AlwaysRun;
@@ -71,15 +71,20 @@ public class UnitFollowUnitController : BaseUnitController
 		}
 		if (!unit.IsInCombat && ShouldAct(unit, position))
 		{
-			float? orientation = action.Orientation;
-			if (type == FollowerActionType.Teleport)
-			{
-				Teleport(unit, action.Position, orientation);
-			}
-			else
-			{
-				Move(unit, action.Position, orientation, alwaysRun);
-			}
+			RunAction(unit, action, alwaysRun);
+		}
+	}
+
+	public static void RunAction(AbstractUnitEntity unit, FollowerAction action, bool alwaysRun, Action<UnitCommandHandle> commandCallback = null)
+	{
+		float? orientation = action.Orientation;
+		if (action.Type == FollowerActionType.Teleport)
+		{
+			Teleport(unit, action.Position, orientation);
+		}
+		else
+		{
+			Move(unit, action.Position, orientation, alwaysRun, commandCallback);
 		}
 	}
 
@@ -139,7 +144,7 @@ public class UnitFollowUnitController : BaseUnitController
 		}
 	}
 
-	private static void Move(AbstractUnitEntity unit, Vector3 targetPoint, float? orientation, bool canRun)
+	private static void Move(AbstractUnitEntity unit, Vector3 targetPoint, float? orientation, bool canRun, Action<UnitCommandHandle> commandCallback = null)
 	{
 		PathfindingService.Instance.FindPathRT_Delayed(unit.MovementAgent, targetPoint, 0.1f, 1, delegate(ForcedPath path)
 		{
@@ -158,7 +163,8 @@ public class UnitFollowUnitController : BaseUnitController
 				{
 					unitMoveToParams.MovementType = WalkSpeedType.Run;
 				}
-				unit.Commands.Run(unitMoveToParams);
+				UnitCommandHandle obj = unit.Commands.Run(unitMoveToParams);
+				commandCallback?.Invoke(obj);
 			}
 		});
 	}

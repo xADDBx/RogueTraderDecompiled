@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Persistence.Versioning;
+using Kingmaker.Localization;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -16,7 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/AttachBuff")]
+[Group("Actions")]
 [PlayerUpgraderAllowed(false)]
 [AllowMultipleComponents]
 [TypeId("0c996f778c13abb408bdd05f7f6fe317")]
@@ -41,6 +42,12 @@ public class AttachBuff : GameAction
 	[Tooltip("If action runs in AbilityExecutionContext - add ability fact as source")]
 	public bool AddFactSource;
 
+	[Tooltip("Overrides the source name shown in the buff tooltip (e.g. \"Cast by ...\"). Leave empty to use default detection.")]
+	public LocalizedString SourceNameOverride;
+
+	[Tooltip("Forces the buff into the Ally or Enemy UI group. Auto keeps the default detection by Caster.IsEnemy.")]
+	public BuffUIGroupOverride UIGroupOverride;
+
 	public BlueprintBuff Buff => m_Buff?.Get();
 
 	public override string GetDescription()
@@ -59,7 +66,23 @@ public class AttachBuff : GameAction
 		Rounds? rounds = (Duration ? new Rounds?(Duration.GetValue().Rounds()) : null);
 		BuffDuration duration = new BuffDuration(rounds, endCondition);
 		Buff buff = Target.GetValue().Buffs.Add(Buff, duration);
+		ApplyOverrides(buff);
 		AddSource(buff);
+	}
+
+	private void ApplyOverrides(Buff buff)
+	{
+		if (buff != null)
+		{
+			if (SourceNameOverride != null && !SourceNameOverride.IsEmpty())
+			{
+				buff.SourceNameOverride = SourceNameOverride.Text;
+			}
+			if (UIGroupOverride != 0)
+			{
+				buff.UIGroupOverride = UIGroupOverride;
+			}
+		}
 	}
 
 	private void AddSource(Buff buff)

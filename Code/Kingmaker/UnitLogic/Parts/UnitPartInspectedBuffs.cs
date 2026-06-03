@@ -78,7 +78,7 @@ public class UnitPartInspectedBuffs : BaseUnitPart, IHashable
 		Dictionary<MechanicEntity, List<Buff>> dictionary = new Dictionary<MechanicEntity, List<Buff>>();
 		foreach (Buff buff in base.Owner.Buffs)
 		{
-			if (buff.Name.Empty() || buff.Blueprint.IsHiddenInUI)
+			if (buff.Name.Empty() || buff.Hidden)
 			{
 				continue;
 			}

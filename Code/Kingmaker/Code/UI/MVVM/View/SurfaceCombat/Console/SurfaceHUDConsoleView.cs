@@ -34,7 +34,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.SurfaceCombat.Console;
 
-public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubscriber, IDialogStartHandler
+public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, ISubscriber, IDialogStartHandler, IPartySelectorAugmentationHintsAndInputHandler
 {
 	[SerializeField]
 	private IngameMenuConsoleView m_IngameMenuConsoleView;
@@ -574,5 +574,15 @@ public class SurfaceHUDConsoleView : ViewBase<SurfaceHUDVM>, IGameModeHandler, I
 	public void HandleDialogStarted(BlueprintDialog dialog)
 	{
 		SwitchPartySelector(isEnabled: false);
+	}
+
+	public void CreateInputImpl(InputLayer inputLayer, ReactiveProperty<bool> enable)
+	{
+		m_PartyConsoleView.AddInput(inputLayer, enable);
+	}
+
+	public void DisposeInputImpl()
+	{
+		m_PartyConsoleView.DisposeAdditionalInput();
 	}
 }

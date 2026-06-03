@@ -9,6 +9,8 @@ public class CharacterStudioRebakeAllConfig : ScriptableObject
 
 	public string[] ExcludePaths = new string[1] { "Assets/Mechanics/Bundles/Prefabs/Characters/BakedCharacters/!Obsolete" };
 
+	public GameObject[] IncludeOnlyPrefabs;
+
 	public string[] IncludeOnlyCharacters;
 
 	public string[] SkipCharacters;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Controllers.Projectiles;
@@ -15,6 +16,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship")]
 [TypeId("1be3e39bdea40cc4a8a1322ad5166eba")]
 public class AbilityCustomStarshipBoardingTeam : AbilityCustomLogic, IAbilityTargetRestriction
 {

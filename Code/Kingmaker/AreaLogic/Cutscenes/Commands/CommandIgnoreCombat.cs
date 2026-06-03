@@ -3,7 +3,6 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Mechanics.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.QA;
 using Kingmaker.Utility.GuidUtility;
 using Kingmaker.Utility.UnityExtensions;
@@ -29,6 +28,8 @@ public class CommandIgnoreCombat : CommandBase
 	public AbstractUnitEvaluator Unit;
 
 	public bool KeepWeaponsOut;
+
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => Unit;
 
 	public override bool IsContinuous => true;
 
@@ -88,15 +89,6 @@ public class CommandIgnoreCombat : CommandBase
 
 	protected override void OnSetTime(double time, CutscenePlayerData player)
 	{
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!Unit.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 
 	public override string GetCaption()

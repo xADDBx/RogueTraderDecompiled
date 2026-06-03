@@ -9,6 +9,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.UnityExtensions;
@@ -65,6 +66,10 @@ public class UnitAnimationCallbackReceiver : MonoBehaviour
 		if (m_UnitView == null)
 		{
 			m_UnitView = GetComponentInParent<UnitEntityView>();
+		}
+		if (GetComponentInParent<UnitHologram>() != null)
+		{
+			return 0u;
 		}
 		if (m_UnitView != null)
 		{

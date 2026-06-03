@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/Kill")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("abb0dcfdb51f3594ab0d2b1d28ecc782")]
 public class Kill : GameAction

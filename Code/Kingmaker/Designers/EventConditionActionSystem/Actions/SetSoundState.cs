@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/SetSoundState")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("b416216a964543c4e89e50cd51b22cf7")]
 public class SetSoundState : GameAction

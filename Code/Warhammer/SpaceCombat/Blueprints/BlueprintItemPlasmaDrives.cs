@@ -1,4 +1,3 @@
-using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.UI.Common;
@@ -32,12 +31,4 @@ public class BlueprintItemPlasmaDrives : BlueprintStarshipItem
 	public BlueprintStarshipAmmo ExplosionAmmo => m_ExplosionAmmo?.Get();
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipPlasmaDrives;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

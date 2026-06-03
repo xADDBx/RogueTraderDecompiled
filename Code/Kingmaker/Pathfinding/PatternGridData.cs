@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Kingmaker.Pathfinding;
 
-public readonly struct PatternGridData : IDisposable, IReadOnlyCollection<Vector2Int>, IEnumerable<Vector2Int>, IEnumerable
+public readonly struct PatternGridData : IDisposable, IReadOnlyCollection<Vector2Int>, IEnumerable<Vector2Int>, IEnumerable, IEquatable<PatternGridData>
 {
 	public struct Enumerator : IEnumerator<Vector2Int>, IEnumerator, IDisposable
 	{
@@ -265,5 +265,48 @@ public readonly struct PatternGridData : IDisposable, IReadOnlyCollection<Vector
 	IEnumerator IEnumerable.GetEnumerator()
 	{
 		return GetEnumerator();
+	}
+
+	private static bool BitArrayEqual(BitArray b1, BitArray b2)
+	{
+		if (b1 == b2)
+		{
+			return true;
+		}
+		if (b1.Length != b2.Length)
+		{
+			return false;
+		}
+		for (int i = 0; i < b1.Length; i++)
+		{
+			if (b1[i] != b2[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public bool Equals(PatternGridData other)
+	{
+		if (BitArrayEqual(m_Data, other.m_Data))
+		{
+			return m_Bounds.Equals(other.m_Bounds);
+		}
+		return false;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj is PatternGridData other)
+		{
+			return Equals(other);
+		}
+		return false;
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(m_Data, m_Bounds);
 	}
 }

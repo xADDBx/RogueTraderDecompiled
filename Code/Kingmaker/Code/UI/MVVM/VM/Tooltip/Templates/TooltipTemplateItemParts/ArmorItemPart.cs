@@ -107,8 +107,11 @@ public class ArmorItemPart : BaseItemPart
 
 	private void AddDodgePenalty(List<ITooltipBrick> bricks)
 	{
-		Sprite dodgePenalty = BlueprintRoot.Instance.UIConfig.UIIcons.TooltipIcons.DodgePenalty;
-		TryAddIconStatValue(bricks, TooltipElement.ArmorDodgePenalty, dodgePenalty, TooltipBrickIconStatValueType.Negative, TooltipBrickIconStatValueType.Negative);
+		if (!string.IsNullOrEmpty(ItemTooltipData.GetText(TooltipElement.ArmorDodgePenalty)))
+		{
+			Sprite dodgePenalty = BlueprintRoot.Instance.UIConfig.UIIcons.TooltipIcons.DodgePenalty;
+			TryAddIconStatValue(bricks, TooltipElement.ArmorDodgePenalty, dodgePenalty, TooltipBrickIconStatValueType.Negative, TooltipBrickIconStatValueType.Negative);
+		}
 	}
 
 	private void AddDeflection(List<ITooltipBrick> bricks)

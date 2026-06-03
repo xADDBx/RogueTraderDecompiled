@@ -35,6 +35,8 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public bool Unmodifiable;
 
+	public bool IgnoreDamageTypeArmorReduction;
+
 	public CompositeModifiersManager ValueModifiers => m_DamageModifiersHolder.Modifiers;
 
 	public ValueModifiersManager MinValueModifiers => m_DamageModifiersHolder.MinValueModifiers;
@@ -70,7 +72,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public DamageType DamageType => InitiatorWeaponStatsRule.BaseDamage.Type;
 
-	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] OverpenetrationData? overpenetrationData = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
+	private RuleCalculateDamage([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] OverpenetrationData? overpenetrationData = null, [CanBeNull] int? distance = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false, bool ignoreDamageTypeArmorReduction = false)
 		: base(initiator, target)
 	{
 		InitiatorWeaponStatsRule = ((baseDamageOverride == null && !basePenetrationOverride.HasValue) ? WeaponStatsHelper.GetWeaponStats(ability, ability?.Weapon, (MechanicEntity)base.Initiator, MaybeTarget) : new RuleCalculateStatsWeapon(initiator, target, ability, baseDamageOverride, basePenetrationOverride));
@@ -84,10 +86,11 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		DistanceToTarget = distance.GetValueOrDefault();
 		base.HasNoTarget = target == null;
 		Unmodifiable = unmodifiable;
+		IgnoreDamageTypeArmorReduction = ignoreDamageTypeArmorReduction;
 	}
 
 	private RuleCalculateDamage(CalculateDamageParams @params)
-		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.OverpenetrationData, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier, @params.Unmodifiable)
+		: this(@params.Initiator, @params.Target, @params.Ability, @params.PerformAttackRoll, @params.BaseDamageOverride, @params.BasePenetrationOverride, @params.OverpenetrationData, @params.Distance, @params.ForceCrit, @params.CalculatedOverpenetration, @params.DoNotUseCrModifier, @params.Unmodifiable, @params.IgnoreDamageTypeArmorReduction)
 	{
 		base.FakeRule = @params.FakeRule;
 		base.HasNoTarget = @params.HasNoTarget;
@@ -158,8 +161,9 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 			damageData.Absorption.CopyFrom(TargetArmorStatsRule.AbsorptionCompositeModifiers);
 			damageData.Deflection.Add(ModifierType.ValAdd, TargetArmorStatsRule.ResultBaseDeflection, this, ModifierDescriptor.ArmorDeflection);
 			damageData.Deflection.CopyFrom(TargetArmorStatsRule.DeflectionCompositeModifiers);
+			damageData.ArmorStatLimits.CopyFrom(TargetArmorStatsRule.StatLimits);
 		}
-		if (damageData.Type.GetInfo().IgnoreArmor)
+		if (!IgnoreDamageTypeArmorReduction && damageData.Type.GetInfo().IgnoreArmor)
 		{
 			damageData.Absorption.Add(ModifierType.PctMul_Extra, 0, this, ModifierDescriptor.Weapon);
 			damageData.Deflection.Add(ModifierType.PctMul_Extra, 0, this, ModifierDescriptor.Weapon);
@@ -168,13 +172,13 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 		ResultDamage = damageData;
 	}
 
-	public static RuleCalculateDamage Trigger(CalculateDamageParams @params)
+	public static RuleCalculateDamage TryGetCachedOrTrigger(CalculateDamageParams @params)
 	{
-		RuleCalculateDamage ruleCalculateDamage = CalculateDamageCache.Get(@params);
+		RuleCalculateDamage ruleCalculateDamage = RuleCache<CalculateDamageParams, RuleCalculateDamage>.Get(@params);
 		if (ruleCalculateDamage == null)
 		{
 			ruleCalculateDamage = Rulebook.Trigger(new RuleCalculateDamage(@params));
-			CalculateDamageCache.Set(@params, ruleCalculateDamage);
+			RuleCache<CalculateDamageParams, RuleCalculateDamage>.Set(@params, ruleCalculateDamage);
 		}
 		return ruleCalculateDamage;
 	}

@@ -80,15 +80,27 @@ public class ClickMapObjectHandler : IClickEventHandler
 
 	private bool CheckDestructible(MapObjectView mapObj)
 	{
-		if (mapObj is DestructibleEntityView)
+		if (mapObj is DestructibleEntityView destructibleEntityView)
 		{
-			return TurnController.IsInTurnBasedCombat();
+			if (!destructibleEntityView.VisibleInExploration)
+			{
+				return TurnController.IsInTurnBasedCombat();
+			}
+			return true;
 		}
 		return false;
 	}
 
 	public bool OnClick(GameObject gameObject, Vector3 worldPosition, int button, bool simulate = false, bool muteEvents = false)
 	{
+		DestructibleEntityView destructibleEntityView = gameObject.Or(null)?.GetComponent<DestructibleEntityView>();
+		if (destructibleEntityView != null && destructibleEntityView.VisibleInExploration)
+		{
+			EventBus.RaiseEvent(delegate(IForceShowActionBarUIHandler h)
+			{
+				h.HandleForceShowActionBar(state: true);
+			});
+		}
 		MapObjectView mapObject = ((gameObject != null) ? gameObject.GetComponent<MapObjectView>() : null);
 		if (VariativeInteractionVM.HasVariativeInteraction(mapObject))
 		{

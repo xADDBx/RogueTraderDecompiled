@@ -5,7 +5,7 @@ using Kingmaker.Code.UI.MVVM.VM.Overtips.Unit.UnitOvertipParts;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.Common.Animations;
-using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
@@ -97,12 +97,13 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 	{
 		m_HitChanceBlock.alpha = 0f;
 		m_AbilityBlock.alpha = 0f;
-		AddDisposable(base.ViewModel.IsVisibleTrigger.CombineLatest(base.ViewModel.HasHit, base.ViewModel.HitAlways, base.ViewModel.UnitState.HoverSelfTargetAbility, base.ViewModel.UnitState.Ability, (bool isVisible, bool hasHit, bool hitAlways, bool hoverSelf, AbilityData ability) => new { isVisible, hasHit, hitAlways, hoverSelf, ability }).ObserveLastValueOnLateUpdate().Subscribe(value =>
+		AddDisposable(base.ViewModel.IsVisibleTrigger.CombineLatest(base.ViewModel.HasHit, base.ViewModel.UnitState.HoverSelfTargetAbility, (bool isVisible, bool hasHit, bool hoverSelf) => new { isVisible, hasHit, hoverSelf }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{
-			bool flag2 = (value.isVisible && value.hasHit) || value.hoverSelf;
-			m_FadeAnimator.PlayAnimation(flag2);
-			m_DamageObject.alpha = ((flag2 && (base.ViewModel.MinDamage.Value > 0 || base.ViewModel.MaxDamage.Value > 0)) ? 1 : 0);
-			UpdateIconAndGlitchVisual(flag2);
+			bool flag2 = UnitPredictionManager.Instance?.IsUnitRicochetTarget(base.ViewModel.UnitState.Unit.MechanicEntity) ?? false;
+			bool flag3 = (value.isVisible && (value.hasHit || flag2)) || value.hoverSelf;
+			m_FadeAnimator.PlayAnimation(flag3);
+			m_DamageObject.alpha = ((flag3 && (base.ViewModel.MinDamage.Value > 0 || base.ViewModel.MaxDamage.Value > 0)) ? 1 : 0);
+			UpdateIconAndGlitchVisual(flag3);
 		}));
 		if ((bool)m_DamageLine)
 		{
@@ -113,7 +114,15 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 		}
 		AddDisposable(base.ViewModel.HitChance.Subscribe(delegate(float value)
 		{
-			m_HitChance.text = Mathf.Round(value).ToString();
+			UnitPredictionManager instance = UnitPredictionManager.Instance;
+			if ((object)instance != null && instance.IsUnitRicochetTarget(base.ViewModel.UnitState.Unit.MechanicEntity))
+			{
+				m_HitChance.text = "???";
+			}
+			else
+			{
+				m_HitChance.text = Mathf.Round(value).ToString();
+			}
 		}));
 		AddDisposable(base.ViewModel.HitChance.CombineLatest(base.ViewModel.InitialHitChance, base.ViewModel.DodgeChance, base.ViewModel.ParryChance, base.ViewModel.CoverChance, base.ViewModel.BlockChance, (float hitChance, float initHitChance, float dodge, float parry, float cover, float block) => new { hitChance, initHitChance, dodge, parry, cover, block }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{

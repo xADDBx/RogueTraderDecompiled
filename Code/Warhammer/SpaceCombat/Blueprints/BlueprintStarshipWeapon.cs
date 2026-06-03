@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
@@ -45,14 +44,6 @@ public class BlueprintStarshipWeapon : BlueprintStarshipItem
 	private BlueprintStarshipAmmoReference m_AlternateAmmo;
 
 	public override ItemsItemType ItemType => ItemsItemType.StarshipWeapon;
-
-	public override string InventoryEquipSound
-	{
-		get
-		{
-			throw new NotImplementedException();
-		}
-	}
 
 	public bool AllowSeries => WeaponType == StarshipWeaponType.Macrobatteries;
 

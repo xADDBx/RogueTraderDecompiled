@@ -1,7 +1,9 @@
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.Settings;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -43,7 +45,12 @@ public class LootCollectorPCView : LootCollectorView
 	public override void Initialize()
 	{
 		base.Initialize();
-		m_CollectAllButtonLabel.text = UIStrings.Instance.LootWindow.CollectAll.Text + " [" + UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("CollectAllLoot")) + "]";
+		string text = UIStrings.Instance.LootWindow.CollectAll.Text ?? "";
+		if (!ApplicationHelper.IsRunningOnSwitch2 || !SettingsRoot.Game.Switch.SwitchJoyConAsMouse)
+		{
+			text = text + " [" + UIKeyboardTexts.Instance.GetStringByBinding(Game.Instance.Keyboard.GetBindingByName("CollectAllLoot")) + "]";
+		}
+		m_CollectAllButtonLabel.text = text;
 	}
 
 	protected override void BindViewImplementation()

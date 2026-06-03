@@ -11,6 +11,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeFindPositionForRetreat : TaskNode
 {
+	public TaskNodeFindPositionForRetreat()
+	{
+	}
+
+	public TaskNodeFindPositionForRetreat(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		AILogger.Instance.Log(AILogNode.Start(this));
@@ -22,6 +31,7 @@ public class TaskNodeFindPositionForRetreat : TaskNode
 		if (list.Count == 0)
 		{
 			AILogger.Instance.Log(new AILogReason(AILogReasonType.PositionForRetreatNotFound));
+			base.FailReason = "No engaging enemies";
 			return Status.Failure;
 		}
 		GraphNode graphNode = null;
@@ -71,6 +81,7 @@ public class TaskNodeFindPositionForRetreat : TaskNode
 			return Status.Success;
 		}
 		AILogger.Instance.Log(new AILogReason(AILogReasonType.PositionForRetreatNotFound));
+		base.FailReason = "No position for retreat was found";
 		return Status.Failure;
 	}
 

@@ -13,6 +13,8 @@ public class ControlsKeybindingsGeneralSettings
 
 	public readonly SettingsEntityKeyBindingPair OpenInventory;
 
+	public readonly SettingsEntityKeyBindingPair OpenAugmentations;
+
 	public readonly SettingsEntityKeyBindingPair OpenJournal;
 
 	public readonly SettingsEntityKeyBindingPair OpenMap;
@@ -89,6 +91,7 @@ public class ControlsKeybindingsGeneralSettings
 		Hold = new SettingsEntityKeyBindingPair(settingsController, "hold", defaultValues.Hold);
 		OpenCharacterScreen = new SettingsEntityKeyBindingPair(settingsController, "open-character-screen", defaultValues.OpenCharacterScreen);
 		OpenInventory = new SettingsEntityKeyBindingPair(settingsController, "open-inventory", defaultValues.OpenInventory);
+		OpenAugmentations = new SettingsEntityKeyBindingPair(settingsController, "open-augmentations", defaultValues.OpenAugmentations);
 		OpenJournal = new SettingsEntityKeyBindingPair(settingsController, "open-journal", defaultValues.OpenJournal);
 		OpenMap = new SettingsEntityKeyBindingPair(settingsController, "open-map", defaultValues.OpenMap);
 		OpenEncyclopedia = new SettingsEntityKeyBindingPair(settingsController, "open-encyclopedia", defaultValues.OpenEncyclopedia);

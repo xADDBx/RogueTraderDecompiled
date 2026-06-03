@@ -9,10 +9,16 @@ public static class StatTypeExtensions
 {
 	public static StatType TryGetOverride(this StatType type, MechanicEntity owner)
 	{
-		Dictionary<StatType, StatType> overridenStats = owner.GetRequired<PartStatsContainer>().OverridenStats;
+		IReadOnlyDictionary<StatType, List<PartStatsContainer.StatOverrideData>> overridenStats = owner.GetRequired<PartStatsContainer>().OverridenStats;
 		if (overridenStats != null && overridenStats.ContainsKey(type))
 		{
-			return overridenStats[type];
+			foreach (PartStatsContainer.StatOverrideData item in overridenStats[type])
+			{
+				if (item.CanBeUsed(owner))
+				{
+					return item.OverrideType;
+				}
+			}
 		}
 		return type;
 	}

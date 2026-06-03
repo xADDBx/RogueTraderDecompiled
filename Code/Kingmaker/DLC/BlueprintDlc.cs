@@ -14,6 +14,7 @@ using Kingmaker.Settings;
 using Kingmaker.Sound;
 using Kingmaker.Stores;
 using Kingmaker.Stores.DlcInterfaces;
+using Kingmaker.Utility;
 using Kingmaker.Utility.Attributes;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
@@ -32,6 +33,9 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	}
 
 	[SerializeField]
+	private DlcNameEnum m_DlcNameEnum;
+
+	[SerializeField]
 	private LocalizedString m_DisplayName;
 
 	[SerializeField]
@@ -39,6 +43,13 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	[SerializeField]
 	private LocalizedString m_ConsoleDescription;
+
+	[SerializeField]
+	private bool m_NeedSwitchDescription;
+
+	[SerializeField]
+	[ShowIf("m_NeedSwitchDescription")]
+	private LocalizedString m_SwitchDescription;
 
 	[SerializeField]
 	private BlueprintDlcRewardReference[] m_RewardReferences;
@@ -49,6 +60,10 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	[SerializeField]
 	private SpriteLink m_DefaultConsoleKeyArtLink;
+
+	[SerializeField]
+	[ShowIf("m_NeedSwitchDescription")]
+	private SpriteLink m_DefaultSwitchKeyArtLink;
 
 	[SerializeField]
 	private SpriteLink m_DlcItemArtLink;
@@ -109,6 +124,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public string DlcConsoleDescription => m_ConsoleDescription?.Text;
 
+	public string DlcSwitchDescription => m_SwitchDescription?.Text;
+
 	public string Id => base.AssetGuidThreadSafe;
 
 	public IEnumerable<IBlueprintDlcReward> Rewards
@@ -123,6 +140,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 	public Sprite DefaultKeyArt => m_DefaultKeyArtLink?.Load();
 
 	public Sprite DefaultConsoleKeyArt => m_DefaultConsoleKeyArtLink?.Load();
+
+	public Sprite DefaultSwitchKeyArt => m_DefaultSwitchKeyArtLink?.Load();
 
 	public Sprite DlcItemArtLink => m_DlcItemArtLink?.Load();
 
@@ -190,6 +209,8 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public DlcTypeEnum DlcType => m_DlcType;
 
+	public DlcNameEnum DlcNameEnum => m_DlcNameEnum;
+
 	public BlueprintDlc ParentDlc => m_ParentDlc;
 
 	public bool HideWhoNotBuyDlc
@@ -236,7 +257,12 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public string GetDescription()
 	{
-		if (0 == 0 || string.IsNullOrWhiteSpace(DlcConsoleDescription))
+		bool flag = false;
+		if (ApplicationHelper.IsRunningOnAnySwitch && m_NeedSwitchDescription)
+		{
+			return DlcSwitchDescription;
+		}
+		if (!flag || string.IsNullOrWhiteSpace(DlcConsoleDescription))
 		{
 			return DlcDescription;
 		}
@@ -250,6 +276,14 @@ public class BlueprintDlc : BlueprintScriptableObject, IBlueprintDlc
 
 	public Sprite GetKeyArt()
 	{
+		if (ApplicationHelper.IsRunningOnAnySwitch && m_NeedSwitchDescription)
+		{
+			if (!(DefaultSwitchKeyArt != null))
+			{
+				return UIConfig.Instance.KeyArt;
+			}
+			return DefaultSwitchKeyArt;
+		}
 		if (!IsConsole() || !(DefaultConsoleKeyArt != null))
 		{
 			if (!(DefaultKeyArt != null))

@@ -11,7 +11,6 @@ using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Abilities.Components.Patterns;
-using Kingmaker.UnitLogic.Groups;
 using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Utility.Random;
@@ -57,6 +56,11 @@ public class AbilityAoEPatternAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 	private IEnumerator<AbilityDeliveryTarget> Deliver(AbilityExecutionContext context, WarhammerAbilityAttackDelivery attackSettings, CustomGridNodeBase fromNode, CustomGridNodeBase toNode)
 	{
 		BlueprintProjectile blueprintProjectile = context.Ability.ProjectileVariants.Random(PFStatefulRandom.UnitLogic.Abilities);
+		if (Context.PassedAreaEffects == null)
+		{
+			RuleCalculatePassedAreaEffects evt = new RuleCalculatePassedAreaEffects(Context.Caster, fromNode, toNode);
+			Context.PassedAreaEffects = Rulebook.Trigger(evt).PassedAreas;
+		}
 		if (context.AbilityBlueprint.IsCustomProjectileDistribution)
 		{
 			return DeliverWithCustomProjectileDistribution(context, blueprintProjectile);
@@ -126,7 +130,7 @@ public class AbilityAoEPatternAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 				{
 					continue;
 				}
-				if ((LosCalculations.CoverType)los != 0 && Rulebook.Trigger(new RuleRollCoverHit(context.Caster, mechanicEntity, context.Ability, los, los.ObstacleEntity)).ResultIsHit)
+				if ((LosCalculations.CoverType)los != 0 && Rulebook.Trigger(new RuleRollCoverHit(context.Caster, mechanicEntity, context.Ability, los, los.ObstacleEntity, null)).ResultIsHit)
 				{
 					if (los.ObstacleEntity != null)
 					{
@@ -166,13 +170,14 @@ public class AbilityAoEPatternAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 			}
 			foreach (MechanicEntity mechanicEntity in Game.Instance.State.MechanicEntities)
 			{
-				if (!IsValidTarget(context, mechanicEntity))
+				if (!IsValidTarget(context, mechanicEntity, checkTargetType: true))
 				{
 					continue;
 				}
 				bool isIgnoreLos = Settings.IsIgnoreLos;
-				LosDescription warhammerLos = LosCalculations.GetWarhammerLos(context.Pattern.ApplicationNode.Vector3Position, default(IntRect), mechanicEntity);
-				if (!isIgnoreLos && (LosCalculations.CoverType)warhammerLos != 0 && Rulebook.Trigger(new RuleRollCoverHit(context.Caster, mechanicEntity, context.Ability, warhammerLos, warhammerLos.ObstacleEntity)).ResultIsHit)
+				CustomGridNodeBase applicationNode = context.Pattern.ApplicationNode;
+				LosDescription warhammerLos = LosCalculations.GetWarhammerLos(applicationNode.Walkable ? applicationNode.Vector3Position : fromNode.Vector3Position, default(IntRect), mechanicEntity);
+				if (!isIgnoreLos && (LosCalculations.CoverType)warhammerLos != 0 && Rulebook.Trigger(new RuleRollCoverHit(context.Caster, mechanicEntity, context.Ability, warhammerLos, warhammerLos.ObstacleEntity, null)).ResultIsHit)
 				{
 					if (warhammerLos.ObstacleEntity != null)
 					{
@@ -251,26 +256,11 @@ public class AbilityAoEPatternAttack : IEnumerator<AbilityDeliveryTarget>, IEnum
 		{
 			return true;
 		}
-		if (Settings.Targets == TargetType.Any)
+		if (!Settings.CanTargetDueToType(context.Caster, entity))
 		{
-			return true;
-		}
-		PartCombatGroup combatGroupOptional = entity.GetCombatGroupOptional();
-		TargetType targets = Settings.Targets;
-		if (targets != 0)
-		{
-			if (targets == TargetType.Ally && (combatGroupOptional == null || !combatGroupOptional.IsAlly(context.Caster)))
-			{
-				goto IL_009a;
-			}
-		}
-		else if (combatGroupOptional != null && !combatGroupOptional.IsEnemy(context.Caster))
-		{
-			goto IL_009a;
+			return false;
 		}
 		return true;
-		IL_009a:
-		return false;
 	}
 
 	public void DisableWeaponAttackDamage()

@@ -19,15 +19,21 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 		[Tooltip("MipMap groups from Project Quality Settings Mipmap Limit Groups to use in automatic mip limit control. Groups will be processed in the order of the list.")]
 		public List<string> MipMapGroups;
 
-		[Tooltip("If available system memory is lower than this value, mip limit bias will be increased (no higher than MaxMipmapLimit).")]
-		public int MipLimitBiasIncreaseThresholdMb = 500;
-
-		[Tooltip("If available system memory is higher than this value, mip limit bias will be decreased (no lower than 0).")]
-		public int MipLimitBiasDecreaseThresholdMb = 1500;
-
 		[Tooltip("Maximum mip limit bias for each group.")]
 		[Range(1f, 8f)]
 		public int MaxMipmapLimit = 2;
+
+		[Tooltip("If available system memory is lower than this value, mip limit bias will be increased (no higher than MaxMipmapLimit).")]
+		public int MipLimitIncreaseThresholdMb = 500;
+
+		[Tooltip("If available system memory is higher than this value, mip limit bias will be decreased (no lower than 0).")]
+		public int MipLimitDecreaseThresholdMb = 1500;
+
+		[Tooltip("Minimum time to wait to increase mip level after the last mip level change.")]
+		public float MipLimitIncreaseTimeout = 1f;
+
+		[Tooltip("Minimum time to wait to decrease mip level after the last mip level change.")]
+		public float MipLimitDecreaseTimeout = 1f;
 	}
 
 	private readonly struct MemoryUsageStatus
@@ -51,52 +57,75 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 
 		private int m_LastChangedGroup = -1;
 
+		private float m_LastChangeTime = -1f;
+
 		private static int MaxMipmapLimit => ControllerSettings.MaxMipmapLimit;
 
 		private static IReadOnlyList<string> MipmapLimitGroups => ControllerSettings.MipMapGroups;
 
-		public bool CanDecreaseTexturesQuality()
+		public bool CanIncreaseMipLimit
 		{
-			if (m_LastChangedGroup + 1 >= MipmapLimitGroups.Count)
+			get
 			{
-				return m_CurrentMipmapLimit < MaxMipmapLimit;
+				if (m_LastChangedGroup < MipmapLimitGroups.Count - 1 || m_CurrentMipmapLimit < MaxMipmapLimit)
+				{
+					return !IsWaitingForTimeout(ControllerSettings.MipLimitIncreaseTimeout);
+				}
+				return false;
 			}
-			return true;
 		}
 
-		public bool CanIncreaseTexturesQuality()
+		public bool CanDecreaseMipLimit
 		{
-			return m_CurrentMipmapLimit > 0;
-		}
-
-		public void DecreaseTexturesQuality()
-		{
-			if (m_LastChangedGroup + 1 >= MipmapLimitGroups.Count && m_CurrentMipmapLimit >= MaxMipmapLimit)
+			get
 			{
-				Logger.Warning("Can't decrease textures quality, permitted mipmap limit maximum reached");
+				if (m_CurrentMipmapLimit > 0)
+				{
+					return !IsWaitingForTimeout(ControllerSettings.MipLimitDecreaseTimeout);
+				}
+				return false;
+			}
+		}
+
+		private bool IsWaitingForTimeout(float timeout)
+		{
+			if (m_LastChangeTime >= 0f)
+			{
+				return Time.realtimeSinceStartup < m_LastChangeTime + timeout;
+			}
+			return false;
+		}
+
+		public void IncreaseMipLimit()
+		{
+			if (m_LastChangedGroup >= MipmapLimitGroups.Count - 1 && m_CurrentMipmapLimit >= MaxMipmapLimit)
+			{
+				Logger.Warning($"Can't increase mipmap limit, permitted maximum of {MaxMipmapLimit} reached");
 				return;
 			}
-			if (m_LastChangedGroup + 1 == MipmapLimitGroups.Count)
+			if (m_LastChangedGroup < 0 || m_LastChangedGroup == MipmapLimitGroups.Count - 1)
 			{
 				m_CurrentMipmapLimit++;
 			}
 			m_LastChangedGroup = (m_LastChangedGroup + 1) % MipmapLimitGroups.Count;
-			SetMipmapLevelForTextureMipmapLimitGroup(MipmapLimitGroups[m_LastChangedGroup], m_CurrentMipmapLimit);
+			SetMipLimitBiasForGroup(MipmapLimitGroups[m_LastChangedGroup], m_CurrentMipmapLimit);
+			m_LastChangeTime = Time.realtimeSinceStartup;
 		}
 
-		public void IncreaseTexturesQuality()
+		public void DecreaseMipLimit()
 		{
 			if (m_CurrentMipmapLimit == 0)
 			{
-				Logger.Warning("Can't increase textures quality, maximum quality reached");
+				Logger.Warning("Can't decrease mipmap limit, already at 0");
 				return;
 			}
-			SetMipmapLevelForTextureMipmapLimitGroup(MipmapLimitGroups[m_LastChangedGroup], m_CurrentMipmapLimit - 1);
+			SetMipLimitBiasForGroup(MipmapLimitGroups[m_LastChangedGroup], m_CurrentMipmapLimit - 1);
 			if (m_LastChangedGroup == 0)
 			{
 				m_CurrentMipmapLimit--;
 			}
 			m_LastChangedGroup = (m_LastChangedGroup + MipmapLimitGroups.Count - 1) % MipmapLimitGroups.Count;
+			m_LastChangeTime = Time.realtimeSinceStartup;
 		}
 
 		[Cheat(Name = "set_mipmap_level", ExecutionPolicy = ExecutionPolicy.PlayMode)]
@@ -104,7 +133,7 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 		{
 			if (groupName != null && TextureMipmapLimitGroups.HasGroup(groupName))
 			{
-				SetMipmapLevelForTextureMipmapLimitGroup(groupName, level);
+				SetMipLimitBiasForGroup(groupName, level);
 			}
 			else
 			{
@@ -112,7 +141,7 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 			}
 		}
 
-		private static void SetMipmapLevelForTextureMipmapLimitGroup(string groupName, int mipmapLevel)
+		private static void SetMipLimitBiasForGroup(string groupName, int mipmapLevel)
 		{
 			if (string.IsNullOrEmpty(groupName) || !TextureMipmapLimitGroups.HasGroup(groupName))
 			{
@@ -138,14 +167,19 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 		return new MemoryUsageStatus(MemoryUsageHelper.Stats.SystemMemoryLimit, MemoryUsageHelper.Stats.SystemMemoryUsed);
 	}
 
-	private static bool ShouldDecreaseTexturesQuality(MemoryUsageStatus memoryUsageStatus)
+	private static bool ShouldIncreaseMipLimit(MemoryUsageStatus memoryUsageStatus)
 	{
-		return memoryUsageStatus.MemoryLeftMb < ControllerSettings.MipLimitBiasIncreaseThresholdMb;
+		return memoryUsageStatus.MemoryLeftMb < ControllerSettings.MipLimitIncreaseThresholdMb;
 	}
 
-	private static bool ShouldIncreaseTexturesQuality(MemoryUsageStatus memoryUsageStatus)
+	private static bool ShouldDecreaseMipLimit(MemoryUsageStatus memoryUsageStatus)
 	{
-		return memoryUsageStatus.MemoryLeftMb > ControllerSettings.MipLimitBiasDecreaseThresholdMb;
+		return memoryUsageStatus.MemoryLeftMb > ControllerSettings.MipLimitDecreaseThresholdMb;
+	}
+
+	public static void CreateInstance()
+	{
+		_ = MonoSingleton<TexturesQualityController>.Instance;
 	}
 
 	public void Update()
@@ -153,15 +187,15 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 		if (BuildModeUtility.EnableTextureQualityLoweringToReduceMemoryUsage && BlueprintRoot.Instance != null)
 		{
 			MemoryUsageStatus memoryUsingStatus = GetMemoryUsingStatus();
-			if (ShouldDecreaseTexturesQuality(memoryUsingStatus) && m_TexturesMipmapLevelController.CanDecreaseTexturesQuality())
+			if (ShouldIncreaseMipLimit(memoryUsingStatus) && m_TexturesMipmapLevelController.CanIncreaseMipLimit)
 			{
-				Logger.Log($"Memory usage increased to {memoryUsingStatus.MemoryUsedMb} Mb/{memoryUsingStatus.TotalMemoryMb} Mb ({memoryUsingStatus.MemoryLeftMb} Mb left), decrease textures quality");
-				m_TexturesMipmapLevelController.DecreaseTexturesQuality();
+				Logger.Log($"Memory usage increased to {memoryUsingStatus.MemoryUsedMb} Mb/{memoryUsingStatus.TotalMemoryMb} Mb ({memoryUsingStatus.MemoryLeftMb} Mb left), increase mipmap limit");
+				m_TexturesMipmapLevelController.IncreaseMipLimit();
 			}
-			else if (ShouldIncreaseTexturesQuality(memoryUsingStatus) && m_TexturesMipmapLevelController.CanIncreaseTexturesQuality())
+			else if (ShouldDecreaseMipLimit(memoryUsingStatus) && m_TexturesMipmapLevelController.CanDecreaseMipLimit)
 			{
-				Logger.Log($"Memory usage dropped to {memoryUsingStatus.MemoryUsedMb} Mb/{memoryUsingStatus.TotalMemoryMb} Mb ({memoryUsingStatus.MemoryLeftMb} Mb left), increase textures quality");
-				m_TexturesMipmapLevelController.IncreaseTexturesQuality();
+				Logger.Log($"Memory usage dropped to {memoryUsingStatus.MemoryUsedMb} Mb/{memoryUsingStatus.TotalMemoryMb} Mb ({memoryUsingStatus.MemoryLeftMb} Mb left), decrease mipmap limit");
+				m_TexturesMipmapLevelController.DecreaseMipLimit();
 			}
 		}
 	}
@@ -169,6 +203,7 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 	[Cheat(Name = "enable_texture_quality_lowering_to_reduce_memory_usage")]
 	public static void EnableTextureQualityLoweringToReduceMemoryUsage()
 	{
+		CreateInstance();
 		BuildModeUtility.Data.EnableTextureQualityLoweringToReduceMemoryUsage = true;
 	}
 
@@ -176,9 +211,9 @@ public class TexturesQualityController : MonoSingleton<TexturesQualityController
 	public static void DisableTextureQualityLoweringToReduceMemoryUsage()
 	{
 		BuildModeUtility.Data.EnableTextureQualityLoweringToReduceMemoryUsage = false;
-		while (MonoSingleton<TexturesQualityController>.Instance.m_TexturesMipmapLevelController.CanIncreaseTexturesQuality())
+		while (MonoSingleton<TexturesQualityController>.Instance.m_TexturesMipmapLevelController.CanDecreaseMipLimit)
 		{
-			MonoSingleton<TexturesQualityController>.Instance.m_TexturesMipmapLevelController.IncreaseTexturesQuality();
+			MonoSingleton<TexturesQualityController>.Instance.m_TexturesMipmapLevelController.DecreaseMipLimit();
 		}
 	}
 }

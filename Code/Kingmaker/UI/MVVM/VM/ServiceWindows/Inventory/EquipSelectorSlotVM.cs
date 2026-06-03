@@ -1,6 +1,7 @@
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.SelectionGroup;
 using Owlcat.Runtime.UI.Tooltips;
 using Owlcat.Runtime.UniRx;
@@ -28,7 +29,7 @@ public class EquipSelectorSlotVM : SelectionGroupEntityVM
 	{
 		AddDisposable(EventBus.Subscribe(this));
 		Item = item;
-		Icon = item.Icon;
+		Icon = item.Icon.Or(Game.Instance.BlueprintRoot.UIConfig.UIIcons.DefaultItemIcon);
 		UsableCount.Value = item.Charges;
 		DisplayName = item.Name;
 		AddDisposable(RefreshView.Subscribe(UnSelect));

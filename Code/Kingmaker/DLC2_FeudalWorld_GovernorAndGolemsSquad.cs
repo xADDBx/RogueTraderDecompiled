@@ -39,19 +39,19 @@ public class DLC2_FeudalWorld_GovernorAndGolemsSquad : ICustomBehaviourTreeBuild
 	public BehaviourTree Create(MechanicEntity entity)
 	{
 		BaseUnitEntity leadingGolem = null;
-		Sequence rootNode = new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new Loop(InitEnumerationOverSquadUnits, (Blackboard b) => ConsiderNextSquadUnitExcept(b, GetGovernor(b)), new Sequence(new AsyncTaskNodeCreateMoveVariants(50), new TaskNodeExecute(StorePathToClosestEnemyForCurrentSquadUnit))), new TaskNodeExecute(delegate(Blackboard b)
+		Sequence rootNode = new Sequence(new AsyncTaskNodeInitializeDecisionContext(), new Loop(InitEnumerationOverSquadUnits, (Blackboard b) => ConsiderNextSquadUnitExcept(b, GetGovernor(b)), "Iterate all squad units except leader", new Sequence(new AsyncTaskNodeCreateMoveVariants(50), new TaskNodeExecute(StorePathToClosestEnemyForCurrentSquadUnit, "Store path to closest enemy for current squad unit"))), new TaskNodeExecute(delegate(Blackboard b)
 		{
 			leadingGolem = SelectLeadingGolem(b);
-		}), new TaskNodeExecute(delegate(Blackboard b)
+		}, "leadingGolem = closest golem to Squad Leader"), new TaskNodeExecute(delegate(Blackboard b)
 		{
 			MakePreparatoryMoveOfLeadingGolem(b, leadingGolem);
-		}), new TaskNodeWaitCommandsDone(), new TaskNodeExecute(delegate(Blackboard b)
+		}, "Make preparations for leading golem"), new TaskNodeWaitCommandsDone(), new TaskNodeExecute(delegate(Blackboard b)
 		{
 			PrepareSquadForMovementCalculations(b, leadingGolem);
-		}), new AsyncTaskNodeCreateMoveVariants(50), new Succeeder(TaskNodeSetupMoveCommand.ToClosestEnemy()), new TaskNodeExecute(StoreMoveCommandForCurrentSquadUnit), new Loop(InitEnumerationOverSquadUnits, (Blackboard b) => ConsiderNextSquadUnitExcept(b, leadingGolem), new Sequence(new AsyncTaskNodeCreateMoveVariants(50), new Condition((Blackboard b) => b.DecisionContext.CurrentSquadUnit == GetGovernor(b), new TaskNodeExecute(delegate(Blackboard b)
+		}, "Prepare squad for movement calculations"), new AsyncTaskNodeCreateMoveVariants(50), new Succeeder(TaskNodeSetupMoveCommand.ToClosestEnemy()), new TaskNodeExecute(StoreMoveCommandForCurrentSquadUnit, "Store move command for current squad unit"), new Loop(InitEnumerationOverSquadUnits, (Blackboard b) => ConsiderNextSquadUnitExcept(b, leadingGolem), "Iterate all squad units except leading golem", new Sequence(new AsyncTaskNodeCreateMoveVariants(50), new Condition((Blackboard b) => b.DecisionContext.CurrentSquadUnit == GetGovernor(b), "CurrentSquadUnit is Governor", new TaskNodeExecute(delegate(Blackboard b)
 		{
 			SetupGovernorMoveCommand(b, leadingGolem);
-		}), TaskNodeSetupMoveCommand.ToSquadLeader()), new TaskNodeExecute(StoreMoveCommandForCurrentSquadUnit))), new Loop(InitEnumerationOverSquadUnits, ConsiderNextSquadUnit, new Sequence(new TaskNodeExecuteMoveCommand(), new TaskNodeExecute(SpendAllMovePointsOfCurrentSquadUnit))), new TaskNodeWaitCommandsDone(), new TaskNodeTryFinishTurn());
+		}, "Setup Governor move command"), TaskNodeSetupMoveCommand.ToSquadLeader()), new TaskNodeExecute(StoreMoveCommandForCurrentSquadUnit, "Store move command for current squad unit"))), new Loop(InitEnumerationOverSquadUnits, ConsiderNextSquadUnit, "Iterate all squad units", new Sequence(new TaskNodeExecuteMoveCommand(), new TaskNodeExecute(SpendAllMovePointsOfCurrentSquadUnit, "Spend all move points of current squad unit"))), new TaskNodeWaitCommandsDone(), new TaskNodeTryFinishTurn());
 		return new BehaviourTree(entity, rootNode, new DecisionContext());
 	}
 
@@ -132,7 +132,7 @@ public class DLC2_FeudalWorld_GovernorAndGolemsSquad : ICustomBehaviourTreeBuild
 		PFLog.AI.Log($"<Governor&Golems> Governor moves to {unitMoveToProperParams.ForcedPath.path.Last()}");
 	}
 
-	private static BaseUnitEntity SelectLeadingGolem(Blackboard b)
+	public static BaseUnitEntity SelectLeadingGolem(Blackboard b)
 	{
 		DecisionContext decisionContext = b.DecisionContext;
 		BaseUnitEntity governor = GetGovernor(b);

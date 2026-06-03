@@ -16,7 +16,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/TeleportParty")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [PlayerUpgraderAllowed(true)]
 [TypeId("8072988edd00cce40bc433869828e6b3")]
@@ -27,7 +27,7 @@ public class TeleportParty : GameAction, IAreaEnterPointReference
 	[FormerlySerializedAs("exitPositon")]
 	private BlueprintAreaEnterPointReference m_exitPositon;
 
-	public AutoSaveMode AutoSaveMode = AutoSaveMode.BeforeExit;
+	public AutoSaveMode AutoSaveMode = AutoSaveMode.AfterEntry;
 
 	public bool ForcePauseAfterTeleport;
 
@@ -40,13 +40,13 @@ public class TeleportParty : GameAction, IAreaEnterPointReference
 
 	protected override void RunAction()
 	{
+		BaseUnitEntity baseUnitEntity = ContextData<AreaTransitionPartGameCommand.TransitionExecutorEntity>.Current?.EntityRef.Entity;
+		if (baseUnitEntity != null && !baseUnitEntity.IsAlsoControlMainCharacterWithWarning())
+		{
+			return;
+		}
 		if (exitPositon.Area == Game.Instance.CurrentlyLoadedArea)
 		{
-			BaseUnitEntity baseUnitEntity = ContextData<AreaTransitionPartGameCommand.TransitionExecutorEntity>.Current?.EntityRef.Entity;
-			if (baseUnitEntity != null && !baseUnitEntity.IsAlsoControlMainCharacterWithWarning())
-			{
-				return;
-			}
 			if (AutoSaveMode == AutoSaveMode.BeforeExit)
 			{
 				Save();
@@ -59,11 +59,6 @@ public class TeleportParty : GameAction, IAreaEnterPointReference
 		}
 		else
 		{
-			BaseUnitEntity baseUnitEntity2 = ContextData<AreaTransitionPartGameCommand.TransitionExecutorEntity>.Current?.EntityRef.Entity;
-			if (baseUnitEntity2 != null && !baseUnitEntity2.IsAlsoControlMainCharacterWithWarning())
-			{
-				return;
-			}
 			Game.Instance.LoadArea(exitPositon, AutoSaveMode);
 		}
 		LoadingProcess.Instance.StartLoadingProcess(delegate

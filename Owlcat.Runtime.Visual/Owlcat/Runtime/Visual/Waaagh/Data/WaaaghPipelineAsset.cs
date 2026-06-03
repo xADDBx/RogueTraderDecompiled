@@ -83,6 +83,9 @@ public class WaaaghPipelineAsset : RenderPipelineAsset<WaaaghPipeline>
 	[Range(0f, 1f)]
 	private float m_FsrSharpness = 0.92f;
 
+	[SerializeField]
+	private bool m_UseReflectionProbes = true;
+
 	[Header("Shadows")]
 	[SerializeField]
 	private ShadowSettings m_ShadowSettings = new ShadowSettings();
@@ -204,6 +207,18 @@ public class WaaaghPipelineAsset : RenderPipelineAsset<WaaaghPipeline>
 		set
 		{
 			m_UpscalingFilter = value;
+		}
+	}
+
+	public bool UseReflectionProbes
+	{
+		get
+		{
+			return m_UseReflectionProbes;
+		}
+		set
+		{
+			m_UseReflectionProbes = value;
 		}
 	}
 

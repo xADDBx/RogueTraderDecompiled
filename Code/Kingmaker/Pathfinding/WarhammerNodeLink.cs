@@ -207,6 +207,7 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	protected override void OnEnable()
 	{
 		base.OnEnable();
+		AddConnection();
 		Initialize();
 	}
 
@@ -252,10 +253,8 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 		{
 			PFLog.Default.Error("WarhammerNodeLink is not setup properly or doesn't belong to mechanic scene");
 		}
-		NNConstraint @default = NNConstraint.Default;
-		@default.constrainWalkability = NNConstraint.WalkableConstraintType.StaticWalkabale;
-		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_StartPosition, null, @default).node;
-		CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_EndPosition, null, @default).node;
+		CustomGridNodeBase customGridNodeBase = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_StartPosition).node;
+		CustomGridNodeBase customGridNodeBase2 = (CustomGridNodeBase)ObstacleAnalyzer.GetNearestNode(m_EndPosition).node;
 		if (customGridNodeBase == null)
 		{
 			PFLog.Default.Error("WarhammerNodeLink not found startNode");
@@ -270,9 +269,6 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 			m_EndNode = customGridNodeBase2;
 			NodeLinksCache.Add(m_StartNode, this);
 			NodeLinksCache.Add(m_EndNode, this);
-			NNConstraint none = NNConstraint.None;
-			int graphIndex = (int)m_StartNode.GraphIndex;
-			none.graphMask = ~(1 << graphIndex);
 			uint cost = (uint)Mathf.RoundToInt((float)((Int3)(m_StartPosition - m_EndPosition)).costMagnitude * m_Cost);
 			m_StartNode.AddConnection(m_EndNode, cost, this);
 			m_EndNode.AddConnection(m_StartNode, cost, this);
@@ -283,10 +279,12 @@ public class WarhammerNodeLink : GraphModifier, INodeLink
 	{
 		if (m_StartNode != null)
 		{
+			m_StartNode.RemoveConnection(m_EndNode);
 			NodeLinksCache.Remove(m_StartNode);
 		}
 		if (m_EndNode != null)
 		{
+			m_EndNode.RemoveConnection(m_StartNode);
 			NodeLinksCache.Remove(m_EndNode);
 		}
 	}

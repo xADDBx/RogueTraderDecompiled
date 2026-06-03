@@ -22,6 +22,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Abilities;
 
 namespace Warhammer.SpaceCombat.StarshipLogic;
 
+[Group("Starship")]
 [AllowedOn(typeof(BlueprintFeature))]
 [TypeId("292931bf836afcd4a801b15afc72d51c")]
 public class StarshipSoulmarksLogic : UnitFactComponentDelegate, IAbilityExecutionProcessHandler, ISubscriber<IMechanicEntity>, ISubscriber, ITurnBasedModeHandler, IRoundStartHandler, ITurnStartHandler, IHashable

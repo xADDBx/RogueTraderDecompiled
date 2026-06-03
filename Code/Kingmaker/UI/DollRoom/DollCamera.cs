@@ -1,4 +1,5 @@
 using System.Collections;
+using Kingmaker.Code.UI.MVVM;
 using Kingmaker.Settings.Graphics;
 using Owlcat.Runtime.Core.Utility;
 using UnityEngine;
@@ -41,6 +42,9 @@ public class DollCamera : MonoBehaviour
 	private DollRoomCameraZoomPreset m_CharacterZoomPreset;
 
 	[SerializeField]
+	private bool m_TurnOffZoomOverride;
+
+	[SerializeField]
 	private Transform m_DefaultTargetTransform;
 
 	private Transform m_CharacterTargetTransform;
@@ -48,6 +52,12 @@ public class DollCamera : MonoBehaviour
 	private Camera m_Camera;
 
 	private bool m_CameraEnabled;
+
+	private Vector3 m_OriginalStartPosition;
+
+	private bool m_OriginalPositionCaptured;
+
+	private Vector3 m_PendingCameraOffset;
 
 	protected float m_DeltaZoom;
 
@@ -101,9 +111,9 @@ public class DollCamera : MonoBehaviour
 	{
 		get
 		{
-			if (m_CharacterZoomPreset != null && m_CharacterTargetTransform != null)
+			if (m_CharacterZoomPreset != null && m_CharacterTargetTransform != null && m_CharacterZoomPreset.CanZoom)
 			{
-				return m_CharacterZoomPreset.CanZoom;
+				return !m_TurnOffZoomOverride;
 			}
 			return false;
 		}
@@ -113,10 +123,21 @@ public class DollCamera : MonoBehaviour
 	{
 		EnsureCamera();
 		UpdateCameraState();
-		m_StartPosition = base.transform.position;
+		EnsureOriginalPosition();
+		m_StartPosition = m_OriginalStartPosition + m_PendingCameraOffset;
 		m_StartRotation = base.transform.rotation;
 		m_CurrentSmoothZoom = m_CurrentZoom;
 		m_IsInit = true;
+	}
+
+	private void EnsureOriginalPosition()
+	{
+		if (!m_OriginalPositionCaptured)
+		{
+			m_OriginalStartPosition = base.transform.position;
+			m_StartPosition = m_OriginalStartPosition;
+			m_OriginalPositionCaptured = true;
+		}
 	}
 
 	private void UpdateCameraState()
@@ -135,7 +156,10 @@ public class DollCamera : MonoBehaviour
 
 	protected void Update()
 	{
-		DirtyZoom();
+		if (!RootUIContext.Instance.IsAugmentationsShown)
+		{
+			DirtyZoom();
+		}
 	}
 
 	protected void DirtyZoom()
@@ -195,6 +219,21 @@ public class DollCamera : MonoBehaviour
 	{
 		m_CharacterTargetTransform = targetTransform;
 		m_CharacterZoomPreset = zoomPreset;
+		ApplyCameraOffset();
+	}
+
+	public void ApplyCameraOffset(Vector3 offset)
+	{
+		m_PendingCameraOffset = offset;
+		EnsureOriginalPosition();
+		m_StartPosition = m_OriginalStartPosition + offset;
+		base.transform.position = m_StartPosition;
+	}
+
+	private void ApplyCameraOffset()
+	{
+		Vector3 offset = ((m_CharacterZoomPreset != null) ? m_CharacterZoomPreset.CameraOffset : Vector3.zero);
+		ApplyCameraOffset(offset);
 	}
 
 	public void BeginZoom()
@@ -241,6 +280,12 @@ public class DollCamera : MonoBehaviour
 		m_CharacterZoomPreset = null;
 		m_CurrentZoom = 0f;
 		m_DeltaZoom = 0f;
+		m_PendingCameraOffset = Vector3.zero;
+		if (m_OriginalPositionCaptured)
+		{
+			m_StartPosition = m_OriginalStartPosition;
+			base.transform.position = m_StartPosition;
+		}
 		if (m_IsInit)
 		{
 			DirtyZoom();

@@ -15,6 +15,7 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.CodeTimer;
+using Kingmaker.Utility.DotNetExtensions;
 using StateHasher.Core;
 using UnityEngine;
 
@@ -47,6 +48,19 @@ public sealed class PartUnitCommands : EntityPart<AbstractUnitEntity>, IUnitCond
 	public LinkedList<UnitCommandParams> Queue => m_Queue;
 
 	public bool Empty => m_Current == null;
+
+	public bool HasRunningOrQueuedCommands
+	{
+		get
+		{
+			AbstractUnitCommand current = Current;
+			if (current == null || current.IsFinished)
+			{
+				return !Queue.Empty();
+			}
+			return true;
+		}
+	}
 
 	public bool HasAiCommand => false;
 

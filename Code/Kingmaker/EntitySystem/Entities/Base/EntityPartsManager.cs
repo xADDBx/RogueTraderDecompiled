@@ -298,9 +298,11 @@ public class EntityPartsManager : IDisposable, IHashable
 
 	public void ViewWillDetach()
 	{
-		foreach (EntityPart part in m_Parts)
+		List<EntityPart> list = TempList.Get<EntityPart>();
+		list.AddRange(m_Parts);
+		foreach (EntityPart item in list)
 		{
-			part.ViewWillDetach();
+			item.ViewWillDetach();
 		}
 	}
 

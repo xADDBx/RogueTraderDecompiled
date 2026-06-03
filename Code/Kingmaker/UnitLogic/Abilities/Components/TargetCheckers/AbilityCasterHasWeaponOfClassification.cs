@@ -13,7 +13,7 @@ using UnityEngine.Serialization;
 
 namespace Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
 
-[ComponentName("Predicates/Target has fact")]
+[Group("Predicates")]
 [AllowedOn(typeof(BlueprintAbility))]
 [AllowMultipleComponents]
 [TypeId("68b70115a9624633af295d7e88c188ab")]

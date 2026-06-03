@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.SelectionTabs;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
+using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
 using Owlcat.Runtime.UI.ConsoleTools.NavigationTool;
@@ -54,7 +55,27 @@ public class CareerPathSelectionTabsConsoleView : CareerPathSelectionTabsCommonV
 			m_RankEntryFeatureSelectionConsoleView.Bind(currentItem as RankEntrySelectionVM);
 			break;
 		}
-		DelayedInvoker.InvokeInFrames(UpdateNavigation, 1);
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			if (!(currentItem is RankEntrySelectionVM selectionVM))
+			{
+				m_GroupByButtonsObject.SetActive(value: false);
+			}
+			else
+			{
+				m_GroupByButtonsObject?.Or(null).SetActive(GetOrderButtonsState(selectionVM));
+			}
+			UpdateNavigation();
+		}, 1);
+	}
+
+	private bool GetOrderButtonsState(RankEntrySelectionVM selectionVM)
+	{
+		if (m_RankEntryFeatureSelectionConsoleView.gameObject.activeInHierarchy)
+		{
+			return selectionVM.FeaturesFilterVM != null;
+		}
+		return false;
 	}
 
 	private void CreateNavigation()

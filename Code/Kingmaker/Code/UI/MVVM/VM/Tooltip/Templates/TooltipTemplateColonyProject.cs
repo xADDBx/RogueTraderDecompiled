@@ -54,7 +54,7 @@ public class TooltipTemplateColonyProject : TooltipBaseTemplate
 				{
 					if (!(component is RewardChangeStatContentment) && !(component is RewardChangeStatEfficiency) && !(component is RewardChangeStatSecurity))
 					{
-						if (component is RewardProfitFactor)
+						if (component is RewardProfitFactor || component is RewardCombativity)
 						{
 							list.Add(new TooltipBrickPFIconAndName(reward.Icon, reward.Description));
 						}

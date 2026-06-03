@@ -238,6 +238,10 @@ public class WeaponVisualParameters
 			}
 			return Prototype.EquipSound;
 		}
+		set
+		{
+			m_EquipSound = value;
+		}
 	}
 
 	public string UnequipSound
@@ -249,6 +253,10 @@ public class WeaponVisualParameters
 				return m_UnequipSound;
 			}
 			return Prototype.UnequipSound;
+		}
+		set
+		{
+			m_UnequipSound = value;
 		}
 	}
 

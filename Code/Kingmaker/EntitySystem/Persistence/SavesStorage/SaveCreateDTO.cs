@@ -73,7 +73,7 @@ public class SaveCreateDTO : IMemoryPackable<SaveCreateDTO>, IMemoryPackFormatte
 			foreach (Quest quest in player.QuestBook.Quests)
 			{
 				saveCreateDTO.Elements.Add(new GameElementData(GameElementType.Quest, quest.Blueprint, quest.State.ToString()));
-				foreach (QuestObjective objective in quest.Objectives)
+				foreach (QuestBookEntityEntry objective in quest.Objectives)
 				{
 					saveCreateDTO.Elements.Add(new GameElementData(GameElementType.Objective, objective.Blueprint, objective.State.ToString()));
 				}

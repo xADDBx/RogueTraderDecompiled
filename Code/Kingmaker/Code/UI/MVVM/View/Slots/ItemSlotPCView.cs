@@ -99,12 +99,12 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 	{
 		AddDisposable(OnSingleLeftClickAsObservable.Subscribe(OnClick));
 		AddDisposable(OnDoubleClickAsObservable.Subscribe(OnDoubleClick));
+		AddDisposable(this.OnDropAsObservable().Subscribe(OnDrop));
 		if (IsDraggable)
 		{
 			AddDisposable(this.OnBeginDragAsObservable().Subscribe(OnBeginDrag));
 			AddDisposable(this.OnDragAsObservable().Subscribe(OnDrag));
 			AddDisposable(this.OnEndDragAsObservable().Subscribe(OnEndDrag));
-			AddDisposable(this.OnDropAsObservable().Subscribe(OnDrop));
 		}
 	}
 
@@ -211,7 +211,8 @@ public class ItemSlotPCView : ItemSlotBaseView, IDraggableElement
 		bool isNotable = base.ViewModel.Item.Value.Blueprint.IsNotable;
 		if (UIUtilityItem.GetEquipPosibility(base.ViewModel.Item.Value)[0] || isNotable || base.ViewModel.Item.Value is ItemEntitySimple || !(targetSlot is EquipSlotVM))
 		{
-			UISounds.Instance.PlayItemSound(SlotAction.Put, base.ViewModel.Item.Value, targetSlot is EquipSlotVM);
+			bool equipSound = targetSlot is EquipSlotVM || targetSlot is AugmentationsSlotVM;
+			UISounds.Instance.PlayItemSound(SlotAction.Put, base.ViewModel.Item.Value, equipSound);
 		}
 		else
 		{

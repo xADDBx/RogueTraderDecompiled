@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.Unit;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.QA.Profiling;
@@ -51,7 +52,7 @@ public class LightweightUnitOvertipsCollectionView : ViewBase<LightweightUnitOve
 
 	public void Update()
 	{
-		if (base.ViewModel?.Overtips == null)
+		if (CutsceneUIState.IsCutsceneActive.Value || base.ViewModel?.Overtips == null)
 		{
 			return;
 		}

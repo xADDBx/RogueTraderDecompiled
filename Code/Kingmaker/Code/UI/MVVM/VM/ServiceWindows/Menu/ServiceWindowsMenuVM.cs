@@ -23,6 +23,8 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 
 	public readonly ReactiveProperty<bool> IsDialogActive = new ReactiveProperty<bool>();
 
+	private Action m_OnCloseOnce;
+
 	public ReactiveProperty<ServiceWindowsMenuEntityVM> SelectedEntity { get; }
 
 	public ServiceWindowsMenuVM(Action<ServiceWindowsType> onSelect)
@@ -39,12 +41,13 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 	{
 	}
 
-	public void SelectWindow(ServiceWindowsType type)
+	public void SelectWindow(ServiceWindowsType type, Action onClosed = null)
 	{
 		ReactiveProperty<bool> isAdditionalBackgroundNeeded = IsAdditionalBackgroundNeeded;
 		ServiceWindowsType currentServiceWindow = Game.Instance.RootUiContext.CurrentServiceWindow;
 		isAdditionalBackgroundNeeded.Value = currentServiceWindow == ServiceWindowsType.Encyclopedia || currentServiceWindow == ServiceWindowsType.Journal || currentServiceWindow == ServiceWindowsType.LocalMap;
 		SelectedEntity.SetValueAndForceNotify(m_EntitiesList.FirstOrDefault((ServiceWindowsMenuEntityVM e) => e.ServiceWindowsType == type));
+		m_OnCloseOnce = (Action)Delegate.Combine(m_OnCloseOnce, onClosed);
 	}
 
 	private void CreateEntities()
@@ -70,6 +73,11 @@ public class ServiceWindowsMenuVM : BaseDisposable, IViewModel, IBaseDisposable,
 	{
 		if (!Game.Instance.RootUiContext.ServiceWindowNowIsOpening)
 		{
+			if (m_OnCloseOnce != null)
+			{
+				m_OnCloseOnce();
+				m_OnCloseOnce = null;
+			}
 			m_OnSelect?.Invoke(ServiceWindowsType.None);
 		}
 	}

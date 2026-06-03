@@ -253,6 +253,8 @@ public class NetLobbyVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		m_DifferentDlcWithSaveProblems?.Clear();
 		DeactivateNetHandlers();
 		PhotonManager.IdleConnection.LobbyViewOpened = false;
+		NetLobbyTutorialPartVM.Value?.Dispose();
+		NetLobbyTutorialPartVM.Value = null;
 	}
 
 	private void SetUserTypesDropdowns()

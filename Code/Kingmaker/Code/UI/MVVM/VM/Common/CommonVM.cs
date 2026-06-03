@@ -325,6 +325,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 	{
 		if (NetLobbyVM.Value == null)
 		{
+			DisposeNetRoles();
 			NetLobbyVM.Value = new NetLobbyVM(delegate
 			{
 				DisposeNetLobby(isMainMenu);
@@ -477,6 +478,7 @@ public class CommonVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable
 		DisposeSettings();
 		HandleBugReportHide();
 		DisposeNetLobby();
+		DisposeNetRoles();
 		DisposeSaveLoad();
 		DisposeContextMenu();
 		EventBus.RaiseEvent(delegate(IBugReportUIHandler h)

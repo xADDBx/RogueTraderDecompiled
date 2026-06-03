@@ -21,19 +21,19 @@ public class OvertipMapObjectTwitchDropsConsoleView : OvertipMapObjectTwitchDrop
 	private bool m_NeedHintPositionCorrection;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_ConfirmUpperY;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_ConfirmLowerY;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_PaginatorUpperY;
 
 	[SerializeField]
-	[ConditionalShow("m_NeedHintPositionCorrection")]
+	[ShowIf("m_NeedHintPositionCorrection")]
 	private float m_PaginatorLowerY;
 
 	protected override void BindViewImplementation()

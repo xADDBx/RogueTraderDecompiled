@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Blueprints.Root.Strings;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.CommonOvertipParts;
 using Kingmaker.Code.UI.MVVM.VM.VariativeInteraction;
 using Kingmaker.Code.UI.MVVM.VM.WarningNotification;
@@ -26,6 +27,7 @@ using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View;
 using Kingmaker.View.MapObjects;
 using Kingmaker.View.MapObjects.InteractionComponentBase;
+using Owlcat.Plugins.DotNetExtensions;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UniRx;
 using UniRx;
@@ -79,7 +81,21 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 
 	private IDisposable m_SelectedUnitsSubscription;
 
-	protected override bool UpdateEnabled => MapObjectEntity.IsVisibleForPlayer;
+	protected override bool UpdateEnabled
+	{
+		get
+		{
+			if (MapObjectEntity.IsInCameraFrustum && MapObjectEntity.IsVisibleForPlayer)
+			{
+				if (CutsceneUIState.IsForegroundCutsceneActive)
+				{
+					return IsBarkActive.Value;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
 
 	public bool IsTwitchDrops { get; private set; }
 
@@ -330,7 +346,8 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 								{
 									if (interactionPart is InteractionActionPart interactionActionPart)
 									{
-										Name.Value = GetString(interactionActionPart.Settings.DisplayName, string.Empty);
+										string @string = GetString(interactionActionPart.Settings.DisplayName, string.Empty);
+										Name.Value = ((interactionActionPart.Settings.IsFakeLoot && StringUtility.IsNullOrInvisible(@string)) ? ((string)UIStrings.Instance.LootWindow.Loot) : @string);
 									}
 								}
 								else

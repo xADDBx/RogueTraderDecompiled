@@ -1,4 +1,5 @@
 using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem;
@@ -68,6 +69,8 @@ public class CounterAttack : UnitFactComponentDelegate, IHashable
 	public ContextValue UsageLimit;
 
 	public bool CanUseInRange;
+
+	public BlueprintAbilityReference Ability;
 
 	protected override void OnActivateOrPostLoad()
 	{

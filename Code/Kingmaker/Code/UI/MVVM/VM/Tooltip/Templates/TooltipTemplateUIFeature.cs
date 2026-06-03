@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks.Utils;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Owlcat.Runtime.UI.Tooltips;
 using TMPro;
@@ -48,7 +49,8 @@ public class TooltipTemplateUIFeature : TooltipBaseTemplate
 
 	protected virtual void AddDescription(List<ITooltipBrick> bricks)
 	{
-		bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(UIFeature.Description, null)));
+		string description = ((UIFeature.Feature != null) ? TooltipTemplateUtils.GetFullDescription(UIFeature.Feature) : UIFeature.Description);
+		bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(description, null), TooltipTextType.Paragraph));
 	}
 
 	private void AddSource(List<ITooltipBrick> bricks)

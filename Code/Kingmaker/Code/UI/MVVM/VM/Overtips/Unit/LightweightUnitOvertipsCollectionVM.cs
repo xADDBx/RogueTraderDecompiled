@@ -126,6 +126,14 @@ public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<Lightwei
 	public void OnGameModeStart(GameModeType gameMode)
 	{
 		IsCutscene.Value = gameMode == GameModeType.Cutscene;
+		if (!IsCutscene.Value)
+		{
+			return;
+		}
+		foreach (LightweightUnitOvertipVM overtip in Overtips)
+		{
+			overtip.HideBark();
+		}
 	}
 
 	public void OnGameModeStop(GameModeType gameMode)

@@ -15,4 +15,9 @@ public static class PartUnitInvisibleExtension
 	{
 		return entity.GetInvisibilityOptional() != null;
 	}
+
+	public static bool IsUseAttackOfOpportunityWhileInvisible(this MechanicEntity entity)
+	{
+		return entity.GetOptional<PartUnitInvisible>()?.UseAttackOfOpportunity ?? false;
+	}
 }

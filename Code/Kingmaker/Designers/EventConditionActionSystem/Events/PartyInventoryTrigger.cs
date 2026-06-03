@@ -2,6 +2,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Cargo;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
@@ -17,7 +18,7 @@ namespace Kingmaker.Designers.EventConditionActionSystem.Events;
 [ComponentName("Events/ItemTrigger")]
 [AllowMultipleComponents]
 [TypeId("2692cd97dff261b40b530d7b25e425cd")]
-public class PartyInventoryTrigger : EntityFactComponentDelegate, IItemsCollectionHandler, ISubscriber, IHashable
+public class PartyInventoryTrigger : EntityFactComponentDelegate, IItemsCollectionHandler, ISubscriber, ICargoStateChangedHandler, IHashable
 {
 	[SerializeField]
 	[FormerlySerializedAs("Item")]
@@ -58,6 +59,30 @@ public class PartyInventoryTrigger : EntityFactComponentDelegate, IItemsCollecti
 				OnRemoveActions.Run();
 				break;
 			}
+		}
+	}
+
+	public void HandleCreateNewCargo(CargoEntity entity)
+	{
+	}
+
+	public void HandleRemoveCargo(CargoEntity entity, bool fromMassSell)
+	{
+	}
+
+	public void HandleAddItemToCargo(ItemEntity item, ItemsCollection from, CargoEntity to, int oldIndex)
+	{
+		if (item.Blueprint == Item)
+		{
+			OnAddActions.Run();
+		}
+	}
+
+	public void HandleRemoveItemFromCargo(ItemEntity item, CargoEntity from)
+	{
+		if (item.Blueprint == Item)
+		{
+			OnRemoveActions.Run();
 		}
 	}
 

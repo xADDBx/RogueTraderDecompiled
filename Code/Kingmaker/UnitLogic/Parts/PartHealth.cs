@@ -32,7 +32,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, IInGameHandler, ISubscriber<IEntity>, ISubscriber, IEventTag<IInGameHandler, EntitySubscriber>, IHashable
+public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, IInGameHandler, ISubscriber<IEntity>, ISubscriber, IEventTag<IInGameHandler, EntitySubscriber>, IUnitFeaturesHandler<EntitySubscriber>, IUnitFeaturesHandler, ISubscriber<IAbstractUnitEntity>, IEventTag<IUnitFeaturesHandler, EntitySubscriber>, IHashable
 {
 	public interface IOwner : IEntityPartOwner<PartHealth>, IEntityPartOwner
 	{
@@ -58,6 +58,13 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 		public TemporaryHitPointsData([NotNull] Buff source)
 		{
 			Source = source;
+		}
+
+		public TemporaryHitPointsData(TemporaryHitPointsData copy)
+		{
+			Source = copy.Source;
+			Round = copy.Round;
+			Value = copy.Value;
 		}
 
 		public virtual Hash128 GetHash128()
@@ -126,8 +133,6 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 	public int WoundFreshStacks => base.Owner.Buffs.Get(Root.WH.BlueprintTraumaRoot.FreshWound)?.Rank ?? 0;
 
 	public int WoundOldStacks => base.Owner.Buffs.Get(Root.WH.BlueprintTraumaRoot.OldWound)?.Rank ?? 0;
-
-	public int TraumaStacks => base.Owner.Buffs.Get(Root.WH.BlueprintTraumaRoot.Trauma)?.Rank ?? 0;
 
 	public bool TraumaIsAvailable
 	{
@@ -262,6 +267,10 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public void DealTraumas(int count)
 	{
+		if (base.Owner is BaseUnitEntity { IsPet: not false })
+		{
+			return;
+		}
 		if ((bool)base.Owner.Features.OldInjuryImmunity)
 		{
 			EventBus.RaiseEvent((IMechanicEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
@@ -275,22 +284,41 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 		}
 	}
 
+	public void DealTraumas(IReadOnlyCollection<BlueprintBuffReference> traumaBuffs)
+	{
+		int num = 0;
+		foreach (BlueprintBuffReference traumaBuff in traumaBuffs)
+		{
+			BlueprintBuff blueprintBuff = traumaBuff;
+			if (blueprintBuff != null && !base.Owner.Buffs.Contains(blueprintBuff))
+			{
+				base.Owner.Buffs.Add(blueprintBuff);
+				num++;
+			}
+		}
+		if (num != 0)
+		{
+			DealTraumasImpl(num);
+		}
+	}
+
 	private void DealTraumasImpl(int count)
 	{
-		if (!(base.Owner is BaseUnitEntity { IsPet: not false }))
+		base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.FreshWound);
+		base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.OldWound);
+		base.Owner.Buffs.Add(Root.WH.BlueprintTraumaRoot.Trauma)?.AddRank(count - 1);
+		EventBus.RaiseEvent((IMechanicEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
 		{
-			base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.FreshWound);
-			base.Owner.Buffs.Remove(Root.WH.BlueprintTraumaRoot.OldWound);
-			base.Owner.Buffs.Add(Root.WH.BlueprintTraumaRoot.Trauma)?.AddRank(count - 1);
-			EventBus.RaiseEvent((IMechanicEntity)(IBaseUnitEntity)base.Owner, (Action<IUnitTraumaHandler>)delegate(IUnitTraumaHandler h)
-			{
-				h.HandleTraumaReceived();
-			}, isCheckRuntime: true);
-		}
+			h.HandleTraumaReceived();
+		}, isCheckRuntime: true);
 	}
 
 	private void AddWoundsAndTraumasIfNecessary(int prevHPLeft, int prevDamage)
 	{
+		if (!Game.Instance.Player.AllCharacters.Contains(base.ConcreteOwner))
+		{
+			return;
+		}
 		if (!DiscardTrauma && prevHPLeft > 0 && HitPointsLeft <= 0)
 		{
 			DealTraumas(1);
@@ -494,7 +522,7 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public void AddTemporaryHitPoints(int amount, Buff sourceBuff)
 	{
-		if (!m_TemporaryHitPoints.HasItem((TemporaryHitPointsData i) => i.Source == sourceBuff) && amount > 0)
+		if (!m_TemporaryHitPoints.HasItem((TemporaryHitPointsData i) => i.Source == sourceBuff) && amount > 0 && !base.Owner.GetMechanicFeature(MechanicsFeatureType.CantHaveTHP))
 		{
 			TemporaryHitPointsData item = new TemporaryHitPointsData(sourceBuff)
 			{
@@ -511,6 +539,25 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 				h.HandleOnAddTemporaryHitPoints(amount, sourceBuff);
 			}, isCheckRuntime: true);
 		}
+	}
+
+	public List<TemporaryHitPointsData> GetTemporaryHitPointsCopy()
+	{
+		List<TemporaryHitPointsData> list = new List<TemporaryHitPointsData>();
+		if (m_TemporaryHitPoints == null)
+		{
+			return list;
+		}
+		foreach (TemporaryHitPointsData temporaryHitPoint in m_TemporaryHitPoints)
+		{
+			list.Add(new TemporaryHitPointsData(temporaryHitPoint));
+		}
+		return list;
+	}
+
+	public void SetTemporaryHits(List<TemporaryHitPointsData> temporaryHitPointsData)
+	{
+		m_TemporaryHitPoints = temporaryHitPointsData;
 	}
 
 	public void RemoveTemporaryHitPoints(Buff sourceBuff)
@@ -541,6 +588,18 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 	public void CleanupTemporaryHitPoints()
 	{
 		m_TemporaryHitPoints?.Clear();
+	}
+
+	public void HandleFeatureAdded(FeatureCountableFlag feature)
+	{
+		if (feature.Type == MechanicsFeatureType.CantHaveTHP)
+		{
+			CleanupTemporaryHitPoints();
+		}
+	}
+
+	public void HandleFeatureRemoved(FeatureCountableFlag feature)
+	{
 	}
 
 	public static void RestUnit(BaseUnitEntity unit)

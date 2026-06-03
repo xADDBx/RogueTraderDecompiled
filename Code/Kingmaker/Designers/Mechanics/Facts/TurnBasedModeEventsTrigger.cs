@@ -20,6 +20,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.Mechanics.Facts;
 
+[AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("0cdbc172cfe945e3818c0d49fbd7d65f")]
 public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedModeHandler, ISubscriber, IRoundStartHandler, IRoundEndHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, ITurnEndHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, IHashable
@@ -86,22 +87,11 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 
 	public void HandleTurnBasedModeSwitched(bool isTurnBased)
 	{
-		if (!base.Owner.IsInGame)
+		if (!base.Owner.IsInGame || !CheckRestrictions() || base.Owner.IsPreviewUnit)
 		{
 			return;
-		}
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
-		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
 		}
 		ComponentData componentData = RequestTransientData<ComponentData>();
-		if (base.Owner.IsPreviewUnit)
-		{
-			return;
-		}
 		if (isTurnBased)
 		{
 			if (IsInCorrectCombatState)
@@ -136,189 +126,93 @@ public class TurnBasedModeEventsTrigger : UnitFactComponentDelegate, ITurnBasedM
 		}
 	}
 
+	protected override void OnActivateOrPostLoad()
+	{
+		if (!base.Owner.IsPreviewUnit && IsInCorrectCombatState)
+		{
+			RequestTransientData<ComponentData>().WasParticipantInLastFight = true;
+		}
+	}
+
 	void IRoundStartHandler.HandleRoundStart(bool isTurnBased)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
-		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit || !isTurnBased || !IsInCorrectCombatState)
-		{
-			return;
-		}
-		using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
-		{
-			base.Fact.RunActionInContext(RoundStartActions, base.OwnerTargetWrapper);
-		}
+		HandleRoundEvent(isTurnBased, RoundStartActions);
 	}
 
 	void IRoundEndHandler.HandleRoundEnd(bool isTurnBased, bool isFirst)
 	{
-		if (isFirst)
+		if (!isFirst)
 		{
-			return;
+			HandleRoundEvent(isTurnBased, RoundEndActions);
 		}
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+	}
+
+	private void HandleRoundEvent(bool isTurnBased, ActionList actionList)
+	{
+		if (isTurnBased && !base.Owner.IsPreviewUnit && IsInCorrectCombatState && CheckRestrictions())
 		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit || !isTurnBased || !IsInCorrectCombatState)
-		{
-			return;
-		}
-		using (base.Fact.MaybeContext?.GetDataScope(base.OwnerTargetWrapper))
-		{
-			base.Fact.RunActionInContext(RoundEndActions, base.OwnerTargetWrapper);
+			base.Fact.RunActionInContext(actionList, base.OwnerTargetWrapper);
 		}
 	}
 
 	public void HandleUnitStartTurn(bool isTurnBased)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+		if (isTurnBased)
 		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit)
-		{
-			return;
-		}
-		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || !isTurnBased || (mechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(mechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
-		{
-			return;
-		}
-		ITargetWrapper targetWrapper;
-		if (!ActionsOnTheTurnOwner || !(mechanicEntity is UnitEntity entity))
-		{
-			targetWrapper = base.OwnerTargetWrapper;
-		}
-		else
-		{
-			ITargetWrapper targetWrapper2 = entity.ToTargetWrapper();
-			targetWrapper = targetWrapper2;
-		}
-		ITargetWrapper target = targetWrapper;
-		using (base.Fact.MaybeContext?.GetDataScope(target))
-		{
-			base.Fact.RunActionInContext(UnitTurnStartActions, target);
+			HandleUnitTurnEvent(UnitTurnStartActions);
 		}
 	}
 
 	public void HandleUnitEndTurn(bool isTurnBased)
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
+		if (isTurnBased)
 		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit)
-		{
-			return;
-		}
-		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || !isTurnBased || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns) || !IsInCorrectCombatState)
-		{
-			return;
-		}
-		ITargetWrapper targetWrapper;
-		if (!ActionsOnTheTurnOwner || !(mechanicEntity is UnitEntity entity))
-		{
-			targetWrapper = base.OwnerTargetWrapper;
-		}
-		else
-		{
-			ITargetWrapper targetWrapper2 = entity.ToTargetWrapper();
-			targetWrapper = targetWrapper2;
-		}
-		ITargetWrapper target = targetWrapper;
-		using (base.Fact.MaybeContext?.GetDataScope(target))
-		{
-			base.Fact.RunActionInContext(UnitTurnEndActions, target);
+			HandleUnitTurnEvent(UnitTurnEndActions);
 		}
 	}
 
 	public void HandleUnitStartInterruptTurn(InterruptionData interruptionData)
 	{
-		if (DoNotApplyOnInterrupts && !interruptionData.AsExtraTurn)
+		if (!DoNotApplyOnInterrupts || interruptionData.AsExtraTurn)
 		{
-			return;
-		}
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
-		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit)
-		{
-			return;
-		}
-		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns) || (base.Owner.IsAlly(EventInvokerExtensions.MechanicEntity) && OnlyEnemyTurns))
-		{
-			return;
-		}
-		ITargetWrapper targetWrapper;
-		if (!ActionsOnTheTurnOwner || !(mechanicEntity is UnitEntity entity))
-		{
-			targetWrapper = base.OwnerTargetWrapper;
-		}
-		else
-		{
-			ITargetWrapper targetWrapper2 = entity.ToTargetWrapper();
-			targetWrapper = targetWrapper2;
-		}
-		ITargetWrapper target = targetWrapper;
-		using (base.Fact.MaybeContext?.GetDataScope(target))
-		{
-			base.Fact.RunActionInContext(UnitInterruptTurnStartActions, target);
+			HandleUnitTurnEvent(UnitInterruptTurnStartActions);
 		}
 	}
 
 	public void HandleUnitEndInterruptTurn()
 	{
-		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
-		{
-			if (!Restrictions.IsPassed(base.Fact, base.Owner))
-			{
-				return;
-			}
-		}
-		if (base.Owner.IsPreviewUnit)
+		HandleUnitTurnEvent(UnitInterruptTurnEndActions);
+	}
+
+	private void HandleUnitTurnEvent(ActionList actionList)
+	{
+		if (base.Owner.IsPreviewUnit || !IsInCorrectCombatState)
 		{
 			return;
 		}
 		MechanicEntity mechanicEntity = EventInvokerExtensions.MechanicEntity;
-		if (((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit || (EventInvokerExtensions.MechanicEntity != base.Owner && !AnyUnitTurns))
+		if (!((ActionsOnTheTurnOwner && mechanicEntity is UnitEntity unitEntity) ? unitEntity : base.Owner).IsPreviewUnit && (AnyUnitTurns || mechanicEntity == base.Owner) && (!OnlyEnemyTurns || !base.Owner.IsAlly(mechanicEntity)) && CheckRestrictions())
 		{
-			return;
+			ITargetWrapper targetWrapper;
+			if (!ActionsOnTheTurnOwner || !(mechanicEntity is UnitEntity entity))
+			{
+				targetWrapper = base.OwnerTargetWrapper;
+			}
+			else
+			{
+				ITargetWrapper targetWrapper2 = entity.ToTargetWrapper();
+				targetWrapper = targetWrapper2;
+			}
+			ITargetWrapper target = targetWrapper;
+			base.Fact.RunActionInContext(actionList, target);
 		}
-		ITargetWrapper targetWrapper;
-		if (!ActionsOnTheTurnOwner || !(mechanicEntity is UnitEntity entity))
+	}
+
+	private bool CheckRestrictions()
+	{
+		using (ContextData<SavableTriggerData>.Request().Setup(base.ExecutesCount))
 		{
-			targetWrapper = base.OwnerTargetWrapper;
-		}
-		else
-		{
-			ITargetWrapper targetWrapper2 = entity.ToTargetWrapper();
-			targetWrapper = targetWrapper2;
-		}
-		ITargetWrapper target = targetWrapper;
-		using (base.Fact.MaybeContext?.GetDataScope(target))
-		{
-			base.Fact.RunActionInContext(UnitInterruptTurnEndActions, target);
+			return Restrictions.IsPassed(base.Fact, base.Owner);
 		}
 	}
 

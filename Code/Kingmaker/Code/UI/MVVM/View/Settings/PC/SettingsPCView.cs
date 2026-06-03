@@ -21,6 +21,7 @@ using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.Models;
 using Kingmaker.UI.Models.SettingsUI;
 using Kingmaker.UI.Sound;
+using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
@@ -125,6 +126,25 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 
 	private bool m_IsShowed;
 
+	[Header("SwitchConsoleControlGroup")]
+	[SerializeField]
+	private GameObject m_SwitchConsoleControlObject;
+
+	[SerializeField]
+	private GameObject m_PCControlObject;
+
+	[SerializeField]
+	private SettingsControlSwitchMouseOverride m_SwitchControlConsole;
+
+	[SerializeField]
+	private GameObject m_PCScreen;
+
+	[SerializeField]
+	private GameObject m_PCScreenScrollbar;
+
+	[SerializeField]
+	private GameObject m_SwitchBigScreen;
+
 	public void Initialize()
 	{
 		base.gameObject.SetActive(value: false);
@@ -176,6 +196,7 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 		{
 			m_MenuSelector.OnNext();
 		}));
+		AddDisposable(base.ViewModel.IsSwitch2AndJoyConAsMouse.Subscribe(HandleSwitchControlsOverride));
 		Show();
 	}
 
@@ -249,5 +270,39 @@ public class SettingsPCView : ViewBase<SettingsVM>, IInitializable
 	{
 		int index = base.ViewModel.MenuEntitiesList.IndexOf(base.ViewModel.MenuEntitiesList.FirstOrDefault((SettingsMenuEntityVM e) => e == base.ViewModel.SelectedMenuEntity.Value));
 		m_SelectorView.ChangeTab(index);
+	}
+
+	private void HandleSwitchControlsOverride(bool value)
+	{
+		m_SwitchConsoleControlObject.gameObject.SetActive(value);
+		m_PCControlObject.gameObject.SetActive(!value);
+		m_SwitchBigScreen.gameObject.SetActive(value);
+		m_PCScreen.gameObject.SetActive(!value);
+		m_PCScreenScrollbar.gameObject.SetActive(!value);
+		SetUpSwitchJoyConAsMouseControls(value);
+	}
+
+	private void SetUpSwitchJoyConAsMouseControls(bool value)
+	{
+		SettingsControlSwitchMouseOverride switchControlConsole = m_SwitchControlConsole;
+		if (value)
+		{
+			InputLayer inputLayer = new InputLayer();
+			AddDisposable(switchControlConsole.LeftUpHint.BindCustomAction(14, inputLayer));
+			switchControlConsole.LeftUpHint.SetLabel(UIStrings.Instance.NintendoSwitchTexts.ConsoleControlLeftUpHint);
+			switchControlConsole.LeftUpHint.SetActive(state: true);
+			AddDisposable(switchControlConsole.LeftBottomHint.BindCustomAction(12, inputLayer));
+			switchControlConsole.LeftBottomHint.SetLabel(UIStrings.Instance.NintendoSwitchTexts.ConsoleControlLeftBottomHint);
+			switchControlConsole.LeftBottomHint.SetActive(state: true);
+			AddDisposable(switchControlConsole.RightBottomHint.BindCustomAction(13, inputLayer));
+			switchControlConsole.RightBottomHint.SetLabel(UIStrings.Instance.NintendoSwitchTexts.ConsoleControlRightBottomHint);
+			switchControlConsole.RightBottomHint.SetActive(state: true);
+			AddDisposable(switchControlConsole.RightUpHint.BindCustomAction(15, inputLayer));
+			switchControlConsole.RightUpHint.SetLabel(UIStrings.Instance.NintendoSwitchTexts.ConsoleControlRightUpHint);
+			switchControlConsole.RightUpHint.SetActive(state: true);
+			AddDisposable(switchControlConsole.RightStickButtonHint.BindCustomAction(19, inputLayer));
+			switchControlConsole.RightStickButtonHint.SetLabel(UIStrings.Instance.NintendoSwitchTexts.ConsoleControlRightStickButtonHint);
+			switchControlConsole.RightStickButtonHint.SetActive(state: true);
+		}
 	}
 }

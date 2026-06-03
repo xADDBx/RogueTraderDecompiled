@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
@@ -112,7 +113,13 @@ public class SurfaceActionBarPartWeaponsVM : SurfaceActionBarBasePartVM, IUnitEq
 
 	private void RefreshCanSwitchSets()
 	{
-		CanSwitchSets.Value = Unit.Entity.IsDirectlyControllable() && !Unit.Entity.HasMechadendrites() && (!TurnController.IsInTurnBasedCombat() || !(Unit.Entity?.IsBusy ?? false));
+		if (Unit == null || Unit.Entity == null)
+		{
+			CanSwitchSets.Value = false;
+			return;
+		}
+		bool flag = Unit.Entity.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null;
+		CanSwitchSets.Value = Unit.Entity.IsDirectlyControllable() && !Unit.Entity.HasMechadendrites() && !flag && (!TurnController.IsInTurnBasedCombat() || !(Unit.Entity?.IsBusy ?? false));
 	}
 
 	public void HandleExecutionProcessStart(AbilityExecutionContext context)

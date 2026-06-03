@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/ResetInteractionSkillCheck")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("92f1b65b092f4e599036b28efc5bbeb0")]
 [PlayerUpgraderAllowed(true)]

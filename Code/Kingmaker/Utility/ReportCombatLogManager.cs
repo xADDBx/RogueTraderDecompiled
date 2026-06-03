@@ -44,6 +44,12 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 
 	private readonly StringBuilder m_StringBuilder = new StringBuilder();
 
+	private readonly ManualResetEventSlim m_CloseFileRequest = new ManualResetEventSlim(initialState: false);
+
+	private readonly ManualResetEventSlim m_FileClosedSignal = new ManualResetEventSlim(initialState: false);
+
+	private readonly ManualResetEventSlim m_ReopenFileSignal = new ManualResetEventSlim(initialState: false);
+
 	private static readonly string[] Delimiters = new string[2] { "\r\n", "\n" };
 
 	public void Dispose()
@@ -54,6 +60,9 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 		{
 			d.Dispose();
 		});
+		m_CloseFileRequest.Dispose();
+		m_FileClosedSignal.Dispose();
+		m_ReopenFileSignal.Dispose();
 		EventBus.Unsubscribe(this);
 	}
 
@@ -83,27 +92,40 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 				AutoFlush = true
 			};
 		}
-		catch (AccessViolationException)
+		catch (IOException ex)
 		{
+			Logger.Log("Combat log {0} is locked ({1}), falling back to numbered slot", fileName, ex.Message);
 		}
 		catch (Exception ex2)
 		{
 			m_ReportingUtils?.LogReporterError(ex2.StackTrace);
 			throw;
 		}
-		try
+		string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+		string extension = Path.GetExtension(fileName);
+		IOException ex3 = null;
+		for (int i = 1; i <= 16; i++)
 		{
-			m_FilePath = Path.Combine(fileFolder, Guid.NewGuid().ToString() + "_" + fileName);
-			return new StreamWriter(m_FilePath, append: false)
+			try
 			{
-				AutoFlush = true
-			};
+				m_FilePath = Path.Combine(fileFolder, $"{fileNameWithoutExtension}_{i}{extension}");
+				return new StreamWriter(m_FilePath, append: false)
+				{
+					AutoFlush = true
+				};
+			}
+			catch (IOException ex4)
+			{
+				ex3 = ex4;
+			}
+			catch (Exception ex5)
+			{
+				m_ReportingUtils?.LogReporterError(ex5.StackTrace);
+				throw;
+			}
 		}
-		catch (Exception ex3)
-		{
-			m_ReportingUtils?.LogReporterError(ex3.StackTrace);
-			throw;
-		}
+		m_ReportingUtils?.LogReporterError(ex3?.StackTrace);
+		throw ex3 ?? new IOException("Failed to open " + fileName);
 	}
 
 	private async Task InitAsync(string fileFolder, string fileName, CancellationToken ct)
@@ -122,40 +144,54 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 			m_ReportingUtils?.LogReporterError(ex2.StackTrace);
 			throw;
 		}
-		finally
-		{
-			if (logFileWriter != null)
-			{
-				await ((IAsyncDisposable)logFileWriter).DisposeAsync();
-			}
-		}
 	}
 
 	private async Task AsyncFileWrite(StreamWriter logFileWriter, CancellationToken ct)
 	{
-		while (!ct.IsCancellationRequested)
+		try
 		{
-			await Task.Delay(TimeSpan.FromSeconds(1.0), ct);
-			try
+			while (!ct.IsCancellationRequested)
 			{
-				string text;
-				lock (m_StringBuilder)
+				await Task.Delay(TimeSpan.FromSeconds(1.0), ct);
+				if (m_CloseFileRequest.IsSet)
 				{
-					if (m_StringBuilder.Length == 0)
+					await logFileWriter.FlushAsync();
+					await logFileWriter.DisposeAsync();
+					m_FileClosedSignal.Set();
+					m_ReopenFileSignal.Wait(ct);
+					m_ReopenFileSignal.Reset();
+					m_CloseFileRequest.Reset();
+					m_FileClosedSignal.Reset();
+					logFileWriter = new StreamWriter(m_FilePath, append: true)
 					{
-						continue;
-					}
-					text = m_StringBuilder.ToString();
-					m_StringBuilder.Clear();
-					goto IL_0142;
+						AutoFlush = true
+					};
 				}
-				IL_0142:
-				await logFileWriter.WriteAsync(text.AsMemory(), ct);
+				try
+				{
+					string text;
+					lock (m_StringBuilder)
+					{
+						if (m_StringBuilder.Length == 0)
+						{
+							continue;
+						}
+						text = m_StringBuilder.ToString();
+						m_StringBuilder.Clear();
+						goto IL_029a;
+					}
+					IL_029a:
+					await logFileWriter.WriteAsync(text.AsMemory(), ct);
+				}
+				catch (Exception ex)
+				{
+					Logger.Exception(ex);
+				}
 			}
-			catch (Exception ex)
-			{
-				Logger.Exception(ex);
-			}
+		}
+		finally
+		{
+			await logFileWriter.DisposeAsync();
 		}
 	}
 
@@ -165,16 +201,25 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 		{
 			lock (m_StringBuilder)
 			{
-				File.Copy(m_FilePath, path, overwrite: true);
+				m_CloseFileRequest.Set();
+				m_FileClosedSignal.Wait();
 				try
 				{
-					string input = File.ReadAllText(path);
-					input = Regex.Replace(input, "<(color|/color|b|/b)[^>]{0,}>", "");
-					File.WriteAllText(path, input);
+					File.Copy(m_FilePath, path, overwrite: true);
+					try
+					{
+						string input = File.ReadAllText(path);
+						input = Regex.Replace(input, "<(color|/color|b|/b)[^>]{0,}>", "");
+						File.WriteAllText(path, input);
+					}
+					catch (Exception ex)
+					{
+						Logger.Exception(ex);
+					}
 				}
-				catch (Exception ex)
+				finally
 				{
-					Logger.Exception(ex);
+					m_ReopenFileSignal.Set();
 				}
 			}
 		}
@@ -202,7 +247,9 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 		{
 			m_IsCombatActive = true;
 			m_CurrentCombatId++;
-			m_StringBuilder.Append("Combat Started [").Append(m_CurrentCombatId).Append("]")
+			m_StringBuilder.Append(Timestamp()).Append(' ').Append("Combat Started [")
+				.Append(m_CurrentCombatId)
+				.Append("]")
 				.AppendLine();
 			m_StringBuilder.AppendLine();
 			m_StringBuilder.Append("PlayerCharacter Name: ").Append(Game.Instance.Player.MainCharacter.Entity.CharacterName);
@@ -237,7 +284,9 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 			m_IsCombatActive = false;
 			m_StringBuilder.AppendLine();
 			m_StringBuilder.AppendLine();
-			m_StringBuilder.Append("Combat Ended [").Append(m_CurrentCombatId).Append("]");
+			m_StringBuilder.Append(Timestamp()).Append(' ').Append("Combat Ended [")
+				.Append(m_CurrentCombatId)
+				.Append("]");
 		}
 	}
 
@@ -266,7 +315,14 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 				tooltipHeader = ManageTooltipHeader(tooltipHeader, source, target);
 				lock (m_StringBuilder)
 				{
-					m_StringBuilder.AppendLine(tooltipHeader);
+					if (string.IsNullOrWhiteSpace(tooltipHeader))
+					{
+						m_StringBuilder.AppendLine(tooltipHeader);
+					}
+					else
+					{
+						m_StringBuilder.Append(Timestamp()).Append(' ').AppendLine(tooltipHeader);
+					}
 					if (!string.IsNullOrWhiteSpace(text))
 					{
 						ManageTooltipDescription(m_StringBuilder, text);
@@ -306,6 +362,11 @@ public class ReportCombatLogManager : IDisposable, IPartyCombatHandler, ISubscri
 				sb.Append('\t').AppendLine(value);
 			}
 		}
+	}
+
+	private static string Timestamp()
+	{
+		return DateTime.Now.ToString("[HH:mm:ss]");
 	}
 
 	private static string ReplaceNameWithBlueprint(string str, MechanicEntity entity, string name)

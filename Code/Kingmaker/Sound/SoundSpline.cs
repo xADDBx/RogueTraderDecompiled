@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Kingmaker.Sound;
@@ -8,45 +9,52 @@ public class SoundSpline : MonoBehaviour
 
 	private int m_SplineCount;
 
-	public bool DebugDrawSpline = true;
-
 	public bool ShouldUpdatePosition = true;
+
+	private void Awake()
+	{
+		UpdateSplinePoints();
+	}
 
 	private void Start()
 	{
-		m_SplineCount = base.transform.childCount;
-		m_SplinePoint = new Vector3[m_SplineCount];
-		for (int i = 0; i < m_SplineCount; i++)
-		{
-			m_SplinePoint[i] = base.transform.GetChild(i).position;
-		}
+		UpdateSplinePoints();
 	}
 
 	private void Update()
 	{
 		if (ShouldUpdatePosition)
 		{
-			UpdateSplinePosition();
-		}
-		if (m_SplineCount > 1)
-		{
-			for (int i = 0; i < m_SplineCount - 1; i++)
-			{
-				Debug.DrawLine(m_SplinePoint[i], m_SplinePoint[i + 1], Color.green);
-			}
+			UpdateSplinePoints();
 		}
 	}
 
-	private void UpdateSplinePosition()
+	private void OnTransformChildrenChanged()
 	{
-		for (int i = 0; i < m_SplineCount; i++)
+		UpdateSplinePoints();
+	}
+
+	private void UpdateSplinePoints()
+	{
+		List<Vector3> list = new List<Vector3>();
+		for (int i = 0; i < base.transform.childCount; i++)
 		{
-			m_SplinePoint[i] = base.transform.GetChild(i).position;
+			Transform child = base.transform.GetChild(i);
+			if (child.gameObject.name != "Sound")
+			{
+				list.Add(child.position);
+			}
 		}
+		m_SplineCount = list.Count;
+		m_SplinePoint = list.ToArray();
 	}
 
 	public Vector3 WhereOnSpline(Vector3 pos)
 	{
+		if (m_SplineCount < 2)
+		{
+			return base.transform.position;
+		}
 		int closestSplinePoint = GetClosestSplinePoint(pos);
 		if (closestSplinePoint == 0)
 		{
@@ -68,11 +76,11 @@ public class SoundSpline : MonoBehaviour
 	private int GetClosestSplinePoint(Vector3 pos)
 	{
 		int result = -1;
-		float num = 0f;
+		float num = float.MaxValue;
 		for (int i = 0; i < m_SplineCount; i++)
 		{
 			float sqrMagnitude = (m_SplinePoint[i] - pos).sqrMagnitude;
-			if (num == 0f || sqrMagnitude < num)
+			if (sqrMagnitude < num)
 			{
 				num = sqrMagnitude;
 				result = i;

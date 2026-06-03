@@ -7,7 +7,7 @@ namespace Kingmaker.AreaLogic.QuestSystem;
 
 public class OrdersManager
 {
-	public static bool CanCompleteOrder(QuestObjective objective)
+	public static bool CanCompleteOrder(QuestBookEntityEntry objective)
 	{
 		OrderObjectiveInfo orderObjectiveInfo = objective?.Blueprint.GetComponent<OrderObjectiveInfo>();
 		if (orderObjectiveInfo == null)

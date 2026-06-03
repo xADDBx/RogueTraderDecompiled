@@ -7,6 +7,7 @@ using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Journal.Console;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.LocalMap.Console;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.Menu;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
+using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Augmentations;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.CargoManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.ColonyManagement;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Encyclopedia;
@@ -58,6 +59,9 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 	private UIDestroyViewLink<CargoManagementConsoleView, CargoManagementVM> m_CargoManagementConsoleView;
 
 	[SerializeField]
+	private UIDestroyViewLink<AugmentationsConsoleView, AugmentationsVM> m_AugmentationsBaseView;
+
+	[SerializeField]
 	private CanvasScalerWorkaround m_CanvasScaler;
 
 	[SerializeField]
@@ -71,7 +75,8 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 	private List<ServiceWindowsType> m_WindowsWithoutBgr = new List<ServiceWindowsType>
 	{
 		ServiceWindowsType.ShipCustomization,
-		ServiceWindowsType.Inventory
+		ServiceWindowsType.Inventory,
+		ServiceWindowsType.Augmentations
 	};
 
 	public void Initialize()
@@ -81,6 +86,7 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 			m_ServiceWindowMenuPcView.Initialize();
 			m_CharacterInfoConsoleView.Initialize();
 			m_ShipCustomizationConsoleView.CustomInitialize = InitializeDollRoomScale;
+			m_AugmentationsBaseView.CustomInitialize = InitializeDollRoomScale;
 			InventoryBaseView.CustomInitialize = InitializeInventory;
 			m_IsInit = true;
 		}
@@ -108,6 +114,7 @@ public class ServiceWindowsConsoleView : ViewBase<ServiceWindowsVM>
 		AddDisposable(base.ViewModel.ShipCustomizationVM.Subscribe(m_ShipCustomizationConsoleView.Bind));
 		AddDisposable(base.ViewModel.ColonyManagementVM.Subscribe(m_ColonyManagementConsoleView.Bind));
 		AddDisposable(base.ViewModel.CargoManagementVM.Subscribe(m_CargoManagementConsoleView.Bind));
+		AddDisposable(base.ViewModel.AugmentationsVM.Subscribe(m_AugmentationsBaseView.Bind));
 		AddDisposable(base.ViewModel.ServiceWindowsMenuVM.Subscribe(delegate(ServiceWindowsMenuVM vm)
 		{
 			if (vm != null && !base.ViewModel.ForceHideBackground.Value)

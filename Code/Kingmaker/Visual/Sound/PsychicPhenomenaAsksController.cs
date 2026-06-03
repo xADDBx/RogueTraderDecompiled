@@ -5,11 +5,11 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
-using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.RuleSystem.Rules;
 
 namespace Kingmaker.Visual.Sound;
 
-public class PsychicPhenomenaAsksController : IUnitAsksController, IDisposable, IAbilityExecutionProcessHandler, ISubscriber<IMechanicEntity>, ISubscriber
+public class PsychicPhenomenaAsksController : IUnitAsksController, IDisposable, IGlobalRulebookHandler<RuleCalculatePsychicPhenomenaEffect>, IRulebookHandler<RuleCalculatePsychicPhenomenaEffect>, ISubscriber, IGlobalRulebookSubscriber, IFakePsychicPhenomenaTrigger, ISubscriber<IBaseUnitEntity>
 {
 	public PsychicPhenomenaAsksController()
 	{
@@ -21,30 +21,58 @@ public class PsychicPhenomenaAsksController : IUnitAsksController, IDisposable, 
 		EventBus.Unsubscribe(this);
 	}
 
-	void IAbilityExecutionProcessHandler.HandleExecutionProcessStart(AbilityExecutionContext context)
+	public BarkWrapper GetPhenomenaBark(BaseUnitEntity unit, EffectsState effectsState)
+	{
+		if (!(unit?.View == null) && unit.View.Asks != null)
+		{
+			switch (effectsState)
+			{
+			case EffectsState.None:
+				break;
+			case EffectsState.PsychicPhenomena:
+				return unit.View.Asks.PsychicPhenomena;
+			case EffectsState.PerilsOfTheWarp:
+				return unit.View.Asks.PerilsOfTheWarp;
+			default:
+				throw new NotImplementedException();
+			}
+		}
+		return null;
+	}
+
+	public void OnEventAboutToTrigger(RuleCalculatePsychicPhenomenaEffect evt)
 	{
 	}
 
-	void IAbilityExecutionProcessHandler.HandleExecutionProcessEnd(AbilityExecutionContext context)
+	public void OnEventDidTrigger(RuleCalculatePsychicPhenomenaEffect evt)
 	{
-		MechanicEntity caster = context.Caster;
-		if (caster is BaseUnitEntity)
-		{
-			_ = caster.IsPlayerFaction;
-		}
+		TryTriggerAsk(evt.IsPsychicPhenomena, evt.IsPerilsOfTheWarp);
 	}
 
-	private static BarkWrapper GetPhenomenaBark(BaseUnitEntity unit, EffectsState effectsState)
+	public void HandleFakePsychicPhenomena(bool isPsychicPhenomena, bool isPerilsOfTheWarp)
 	{
-		if (unit?.View == null || unit.View.Asks == null)
+		TryTriggerAsk(isPsychicPhenomena, isPerilsOfTheWarp);
+	}
+
+	private void TryTriggerAsk(bool isPsychicPhenomena, bool isPerilsOfTheWarp)
+	{
+		EffectsState phenomenaState = (isPsychicPhenomena ? EffectsState.PsychicPhenomena : (isPerilsOfTheWarp ? EffectsState.PerilsOfTheWarp : EffectsState.None));
+		BaseUnitEntity randomPartyEntity = UnitAsksHelper.GetRandomPartyEntity(delegate(BaseUnitEntity x)
 		{
-			return null;
+			if (x.LifeState.IsConscious)
+			{
+				BarkWrapper phenomenaBark = GetPhenomenaBark(x, phenomenaState);
+				if (phenomenaBark != null && phenomenaBark.HasBarks)
+				{
+					return !phenomenaBark.IsOnCooldown;
+				}
+				return false;
+			}
+			return false;
+		});
+		if (randomPartyEntity != null && randomPartyEntity.View.Asks != null)
+		{
+			GetPhenomenaBark(randomPartyEntity, phenomenaState)?.Schedule();
 		}
-		return effectsState switch
-		{
-			EffectsState.PsychicPhenomena => unit.View.Asks.PsychicPhenomena, 
-			EffectsState.PerilsOfTheWarp => unit.View.Asks.PerilsOfTheWarp, 
-			_ => throw new NotImplementedException(), 
-		};
 	}
 }

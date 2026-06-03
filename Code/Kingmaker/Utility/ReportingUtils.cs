@@ -228,7 +228,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 	{
 		EventBus.Subscribe(this);
 		m_ReportCombatLogManager = new ReportCombatLogManager(ApplicationPaths.temporaryCachePath, "combatLog.txt", this);
-		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ReportingUberLoggerFilter(new UberLoggerFile(GetPlatform().ToLower() + "_reporting_util.txt", ApplicationPaths.temporaryCachePath, includeCallStacks: false, 5248000, append: true)));
+		Owlcat.Runtime.Core.Logging.Logger.Instance.AddLogger(new ReportingUberLoggerFilter(new UberLoggerFile(GetPlatform().ToLower() + "_" + Guid.NewGuid().ToString() + "_reporting_util.txt", ApplicationPaths.temporaryCachePath, includeCallStacks: false, 5248000, append: true)));
 		Logger.Log("");
 		Logger.Log("Instantiate ReportingUtils");
 		m_ReportFilesMd5Manager = new ReportFilesMd5Manager();
@@ -872,7 +872,7 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			(Path.Combine(ApplicationPaths.LogsDir, "GameLog.txt"), Path.Combine(CurrentReportFolder, "GameLog.txt")),
 			(Path.Combine(ApplicationPaths.LogsDir, "GameLogFullPrev.txt"), Path.Combine(CurrentReportFolder, "GameLogFullPrev.txt")),
 			(Path.Combine(ApplicationPaths.LogsDir, "GameLogFull.txt"), Path.Combine(CurrentReportFolder, "GameLogFull.txt")),
-			(Path.Combine(ApplicationPaths.persistentDataPath, "game-history.txt"), Path.Combine(CurrentReportFolder, "game-history.txt")),
+			(Path.Combine(ApplicationPaths.temporaryCachePath, "game-history.txt"), Path.Combine(CurrentReportFolder, "game-history.txt")),
 			(Path.Combine(Application.dataPath, "..", "EditorLogFull.txt"), Path.Combine(CurrentReportFolder, "EditorLogFull.txt")),
 			(Path.Combine(Application.dataPath, "..", "EditorLog.txt"), Path.Combine(CurrentReportFolder, "EditorLog.txt")),
 			(Path.Combine(SettingsController.Instance.GeneralSettingsProviderPath), Path.Combine(CurrentReportFolder, "general_settings.json")),
@@ -1347,26 +1347,27 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 			{
 				Utilities.CreateGameHistoryLog();
 				string text = CreateSaveFileForBugReport(CurrentReportFolder);
-				List<string> historyLog = new List<string>();
+				List<string> list = new List<string>();
 				try
 				{
-					string fullName = new DirectoryInfo(text).FullName;
-					fullName = fullName.Substring(0, fullName.LastIndexOf(Path.DirectorySeparatorChar));
-					fullName = Path.Combine(fullName, "history");
 					if (!string.IsNullOrEmpty(text))
 					{
-						using (ZipArchive zipArchive = ZipFile.OpenRead(text))
+						using ZipArchive zipArchive = ZipFile.OpenRead(text);
+						using IEnumerator<ZipArchiveEntry> enumerator = zipArchive.Entries.Where((ZipArchiveEntry e) => e.Name.Equals("history")).GetEnumerator();
+						if (enumerator.MoveNext())
 						{
-							using IEnumerator<ZipArchiveEntry> enumerator = zipArchive.Entries.Where((ZipArchiveEntry e) => e.Name.Equals("history")).GetEnumerator();
-							if (enumerator.MoveNext())
+							using Stream stream = enumerator.Current.Open();
+							using StreamReader streamReader = new StreamReader(stream);
+							while (true)
 							{
-								enumerator.Current.ExtractToFile(fullName);
+								string text2 = streamReader.ReadLine();
+								if (text2 != null)
+								{
+									list.Add(text2);
+									continue;
+								}
+								break;
 							}
-						}
-						if (File.Exists(fullName))
-						{
-							historyLog = File.ReadAllLines(fullName).ToList();
-							File.Delete(fullName);
 						}
 					}
 				}
@@ -1382,20 +1383,20 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 				{
 					CopySaveFile(m_SelectedManualSave, CurrentReportFolder, m_SelectedManualSave.FileName);
 				}
-				string message2 = CreateParametersFile(email, uniqueIdentifier, issueType, message, historyLog, additionalContacts, isSendMarketing);
+				string message2 = CreateParametersFile(email, uniqueIdentifier, issueType, message, list, additionalContacts, isSendMarketing);
 				CreateMessageFile(message2);
 				CreateReporterErrorLog();
 				CreateCombatLogFile();
 				m_DiscordContacts = additionalContacts;
-				string text2 = CurrentReportFolder + ".zks";
-				ZipFile.CreateFromDirectory(CurrentReportFolder, text2);
-				Logger.Log("Create " + text2);
+				string text3 = CurrentReportFolder + ".zks";
+				ZipFile.CreateFromDirectory(CurrentReportFolder, text3);
+				Logger.Log("Create " + text3);
 				if (Directory.Exists(CurrentReportFolder))
 				{
 					Directory.Delete(CurrentReportFolder, recursive: true);
 				}
 				Logger.Log("Delete folder '" + CurrentReportFolder + "'");
-				LastEntry = ReportSender?.Enqueue(text2);
+				LastEntry = ReportSender?.Enqueue(text3);
 				CurrentReportFolder = string.Empty;
 				PlayerPrefs.SetInt("BugReportMarketingMaterialsToggle", isSendMarketing ? 1 : 0);
 			}
@@ -1896,55 +1897,32 @@ public class ReportingUtils : IDisposable, IFullScreenUIHandler, ISubscriber, IP
 					continue;
 				}
 				string fileName = Path.GetFileName(text);
-				string directoryName = Path.GetDirectoryName(text);
-				string text2 = Path.Combine(directoryName, "_tempChap");
-				string archiveFileName = Path.Combine(directoryName, fileName);
+				string archiveFileName = Path.Combine(Path.GetDirectoryName(text), fileName);
 				try
 				{
-					if (Directory.Exists(text2))
-					{
-						Directory.Delete(text2, recursive: true);
-					}
-					Directory.CreateDirectory(text2);
+					string text2 = null;
 					using (ZipArchive zipArchive = ZipFile.OpenRead(archiveFileName))
 					{
 						foreach (ZipArchiveEntry item in zipArchive.Entries.Where((ZipArchiveEntry e) => e.Name == "player.json"))
 						{
-							item.ExtractToFile(Path.Combine(text2, item.Name));
+							using Stream stream = item.Open();
+							using StreamReader streamReader = new StreamReader(stream);
+							text2 = streamReader.ReadToEnd();
 						}
 					}
-					string[] files2 = Directory.GetFiles(text2);
-					foreach (string text3 in files2)
+					if (text2 != null)
 					{
-						if (text3.EndsWith("player.json"))
+						MatchCollection matchCollection = new Regex("\"Chapter\":([0-10]|[1-9][0-9]),").Matches(text2);
+						if (matchCollection.Count < 1)
 						{
-							string input = File.ReadAllText(text3);
-							MatchCollection matchCollection = new Regex("\"Chapter\":([0-10]|[1-9][0-9]),").Matches(input);
-							if (matchCollection.Count >= 1)
-							{
-								return int.Parse(matchCollection[0].Groups[1].Value);
-							}
 							break;
 						}
+						return int.Parse(matchCollection[0].Groups[1].Value);
 					}
 				}
 				catch (Exception ex)
 				{
 					LogReporterError("Report Getting Chapter Exception: " + ex.Message + "\n" + ex.StackTrace);
-				}
-				finally
-				{
-					try
-					{
-						if (Directory.Exists(text2))
-						{
-							Directory.Delete(text2, recursive: true);
-						}
-					}
-					catch (Exception ex2)
-					{
-						LogReporterError("Report Remove temp folder Exception: " + ex2.Message + "\n" + ex2.StackTrace);
-					}
 				}
 			}
 			return -1;

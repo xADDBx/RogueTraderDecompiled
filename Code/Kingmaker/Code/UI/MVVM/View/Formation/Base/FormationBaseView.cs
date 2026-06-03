@@ -1,8 +1,10 @@
 using JetBrains.Annotations;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Formation;
+using Kingmaker.Settings;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
 using UniRx;
@@ -15,6 +17,9 @@ public class FormationBaseView : ViewBase<FormationVM>
 	[SerializeField]
 	[UsedImplicitly]
 	private TextMeshProUGUI m_FormationLabel;
+
+	[SerializeField]
+	private GameObject m_Hint;
 
 	[Header("Selector")]
 	[SerializeField]
@@ -48,6 +53,8 @@ public class FormationBaseView : ViewBase<FormationVM>
 		AddDisposable(base.ViewModel.SelectedFormationPresetIndex.Subscribe(OnFormationPresetIndexChanged));
 		m_FormationLabel.text = UIStrings.Instance.FormationTexts.FormationLabel;
 		m_UneditableFormationText.text = UIStrings.Instance.FormationTexts.UneditableFormation;
+		bool flag = ApplicationHelper.IsRunningOnSwitch2 && (bool)SettingsRoot.Game.Switch.SwitchJoyConAsMouse;
+		m_Hint.SetActive(!flag);
 		Game.Instance.RequestPauseUi(isPaused: true);
 	}
 

@@ -26,11 +26,11 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 	private TextMeshProUGUI m_ReturnLabel;
 
 	[Header("ExpandButtons")]
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	[SerializeField]
 	private OwlcatMultiButton m_StatsButton;
 
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	[SerializeField]
 	private OwlcatMultiButton m_TooltipButton;
 
@@ -39,14 +39,14 @@ public class CareerPathProgressionPCView : CareerPathProgressionCommonView
 	private bool m_HasButtons;
 
 	[SerializeField]
-	[ConditionalShow("m_HasButtons")]
+	[ShowIf("m_HasButtons")]
 	private CareerButtonsBlock m_ButtonsBlock;
 
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	[SerializeField]
 	private OwlcatMultiButton m_ToTooltipsButton;
 
-	[ConditionalShow("m_CanMove")]
+	[ShowIf("m_CanMove")]
 	[SerializeField]
 	private OwlcatMultiButton m_ToStatsButton;
 

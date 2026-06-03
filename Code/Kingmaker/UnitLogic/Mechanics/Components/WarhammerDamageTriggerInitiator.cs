@@ -3,11 +3,6 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.UnitLogic.FactLogic;
-using Kingmaker.Designers.Mechanics.Facts;
-using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Enums;
-using Kingmaker.Mechanics.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.RuleSystem.Rules.Damage;
@@ -20,63 +15,29 @@ namespace Kingmaker.UnitLogic.Mechanics.Components;
 [AllowMultipleComponents]
 [AllowedOn(typeof(BlueprintUnitFact))]
 [TypeId("a5cbfd1546727ec418590630a6ea2400")]
-public class WarhammerDamageTriggerInitiator : WarhammerDamageTrigger, IInitiatorRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, IInitiatorRulebookSubscriber, IHashable
+public class WarhammerDamageTriggerInitiator : WarhammerDamageTrigger, IInitiatorRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, IInitiatorRulebookSubscriber, IInitiatorRulebookHandler<RuleRollDamage>, IRulebookHandler<RuleRollDamage>, IHashable
 {
-	public ActionList Actions;
-
-	public ActionList ActionsOnAttacker;
-
-	public ContextPropertyName ContextPropertyName;
-
-	public WarhammerKillTrigger.PropertyParameter PropertyToSave;
-
-	void IRulebookHandler<RuleDealDamage>.OnEventAboutToTrigger(RuleDealDamage rule)
+	public void OnEventAboutToTrigger(RuleDealDamage rule)
 	{
 	}
 
-	void IRulebookHandler<RuleDealDamage>.OnEventDidTrigger(RuleDealDamage rule)
+	public void OnEventDidTrigger(RuleDealDamage rule)
 	{
-		TryTrigger(rule);
-	}
-
-	protected override void OnTrigger(RuleDealDamage rule)
-	{
-		if (base.Fact.MaybeContext != null)
+		if (!TriggerBeforeDamageHappens)
 		{
-			if (PropertyToSave != 0)
-			{
-				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.EnemyDifficulty)
-				{
-					base.Context[ContextPropertyName] = ((int?)(rule.Target as UnitEntity)?.Blueprint.DifficultyType).GetValueOrDefault();
-				}
-				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.Damage)
-				{
-					base.Context[ContextPropertyName] = rule.Result;
-				}
-				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.DamageOverflow)
-				{
-					int hPBeforeDamage = rule.HPBeforeDamage;
-					base.Context[ContextPropertyName] = Math.Max(rule.Result - hPBeforeDamage, 0);
-				}
-				if (PropertyToSave == WarhammerKillTrigger.PropertyParameter.Penetration)
-				{
-					base.Context[ContextPropertyName] = Math.Max(rule.Damage.Penetration.Value, 0);
-				}
-			}
-			ActionList actions = Actions;
-			if (actions != null && actions.HasActions)
-			{
-				base.Fact.RunActionInContext(Actions, rule.ConcreteTarget.ToITargetWrapper());
-			}
-			actions = ActionsOnAttacker;
-			if (actions != null && actions.HasActions)
-			{
-				base.Fact.RunActionInContext(ActionsOnAttacker, rule.ConcreteInitiator.ToITargetWrapper());
-			}
+			TryTrigger(rule);
 		}
-		else
+	}
+
+	public void OnEventAboutToTrigger(RuleRollDamage rule)
+	{
+	}
+
+	public void OnEventDidTrigger(RuleRollDamage rule)
+	{
+		if (TriggerBeforeDamageHappens)
 		{
-			Actions?.Run();
+			TryTrigger(rule);
 		}
 	}
 

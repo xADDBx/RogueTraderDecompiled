@@ -41,6 +41,9 @@ public class VendorTransitionWindowView : ViewBase<VendorTransitionWindowVM>
 	[SerializeField]
 	protected GameObject m_MultipleSlots;
 
+	[SerializeField]
+	protected GameObject m_MultipleSlotsScroll;
+
 	private const string ResultTextFormat = "{0}/{1}";
 
 	public void Initialize()
@@ -55,12 +58,14 @@ public class VendorTransitionWindowView : ViewBase<VendorTransitionWindowVM>
 		if (slot != null && slot.HasItem)
 		{
 			m_MultipleSlots.SetActive(value: false);
+			m_MultipleSlotsScroll.SetActive(value: false);
 			m_SingleSlot.SetActive(value: true);
 			m_Slot.Bind(base.ViewModel.Slot);
 		}
 		if (base.ViewModel.Slots != null && base.ViewModel.Slots.Items.Count > 0)
 		{
 			m_MultipleSlots.SetActive(value: true);
+			m_MultipleSlotsScroll.SetActive(value: true);
 			m_SingleSlot.SetActive(value: false);
 			m_SlotsGroup.Bind(base.ViewModel.Slots);
 		}

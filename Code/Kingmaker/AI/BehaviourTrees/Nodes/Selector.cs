@@ -7,6 +7,11 @@ public class Selector : Composite
 	{
 	}
 
+	public Selector(string debugDescription, params BehaviourTreeNode[] nodes)
+		: base(debugDescription, nodes)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		while (currentChildIndex < children.Length)
@@ -18,6 +23,7 @@ public class Selector : Composite
 			}
 			currentChildIndex++;
 		}
+		base.FailReason = "All children failed";
 		return Status.Failure;
 	}
 }

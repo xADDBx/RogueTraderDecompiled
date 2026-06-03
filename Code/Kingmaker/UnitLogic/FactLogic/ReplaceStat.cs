@@ -1,5 +1,6 @@
 using System;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using Kingmaker.Utility.Attributes;
@@ -28,6 +29,10 @@ public abstract class ReplaceStat : MechanicEntityFactComponentDelegate, IHashab
 	}
 
 	[SerializeField]
+	[Tooltip("Рестрикшн не предотвращает добавление оверрайда юниту. Он проверяется при каждой попытке использовать этот оверрайд и не использует его, если рестрикшн не пройден.")]
+	private RestrictionCalculator m_RestrictionCalculator;
+
+	[SerializeField]
 	protected StatType m_OriginalStat;
 
 	[SerializeField]
@@ -39,6 +44,8 @@ public abstract class ReplaceStat : MechanicEntityFactComponentDelegate, IHashab
 	[SerializeField]
 	[ShowIf("m_OnlyIfHigher")]
 	protected Attributes m_PreviousAttributeToCompare;
+
+	public RestrictionCalculator RestrictionCalculator => m_RestrictionCalculator;
 
 	protected StatType PreviousAttributeToCompare => GetStat(m_PreviousAttributeToCompare);
 

@@ -7,6 +7,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Cargo;
 using Kingmaker.Blueprints.Items;
+using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Quests;
 using Kingmaker.Cargo;
 using Kingmaker.Controllers.Dialog;
@@ -116,6 +117,16 @@ public static class GameCommandQueueExtensions
 	public static void DropItem([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] ItemEntity item, bool split, int splitCount)
 	{
 		gameCommandQueue.AddCommand(new DropItemGameCommand(item, split, splitCount));
+	}
+
+	public static void SetAugmentOverdrive([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BaseUnitEntity unit, BlueprintAugmentSlot slot)
+	{
+		gameCommandQueue.AddCommand(new SetAugmentOverdriveGameCommand(unit, slot));
+	}
+
+	public static void ApplyAugmentInsertion([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] BaseUnitEntity unit, [NotNull] BlueprintAugmentSlot slot)
+	{
+		gameCommandQueue.AddCommand(new ApplyAugmentInsertionGameCommand(unit, slot));
 	}
 
 	public static void EquipItem([NotNull] this GameCommandQueue gameCommandQueue, [NotNull] ItemEntity item, [NotNull] MechanicEntity unit, ItemSlotRef to)
@@ -447,7 +458,7 @@ public static class GameCommandQueueExtensions
 		gameCommandQueue.AddCommand(new SetQuestViewedGameCommand(quest));
 	}
 
-	public static void SetQuestObjectiveViewed([NotNull] this GameCommandQueue gameCommandQueue, QuestObjective questObjective)
+	public static void SetQuestObjectiveViewed([NotNull] this GameCommandQueue gameCommandQueue, QuestBookEntityEntry questObjective)
 	{
 		gameCommandQueue.AddCommand(new SetQuestObjectiveViewedGameCommand(questObjective));
 	}

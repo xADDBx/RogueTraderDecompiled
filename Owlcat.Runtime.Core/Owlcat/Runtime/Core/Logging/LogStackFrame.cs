@@ -8,6 +8,8 @@ namespace Owlcat.Runtime.Core.Logging;
 [Serializable]
 public class LogStackFrame
 {
+	public static IStackTraceFormatter StackTraceFormatter;
+
 	public string MethodName;
 
 	public string DeclaringType;
@@ -23,10 +25,10 @@ public class LogStackFrame
 	public LogStackFrame(StackFrame frame)
 	{
 		MethodBase method = frame.GetMethod();
-		MethodName = method.Name;
-		DeclaringType = ((method.DeclaringType == null) ? "<None>" : method.DeclaringType.FullName);
+		MethodName = GetMethodName(method);
+		DeclaringType = ((method.DeclaringType == null) ? "<None>" : GetTypeName(method.DeclaringType));
 		ParameterInfo[] parameters = method.GetParameters();
-		ParameterSig = string.Join(",", parameters.Select((ParameterInfo p) => p.ParameterType.ToString()).ToArray());
+		ParameterSig = GetParameterNames(parameters);
 		FileName = frame.GetFileName();
 		LineNumber = frame.GetFileLineNumber();
 		m_FormattedMethodName = MakeFormattedMethodName();
@@ -55,6 +57,33 @@ public class LogStackFrame
 		m_FormattedMethodName = message;
 	}
 
+	private static string GetTypeName(Type type)
+	{
+		if (StackTraceFormatter != null)
+		{
+			return StackTraceFormatter.ToString(type);
+		}
+		return type.FullName;
+	}
+
+	private static string GetMethodName(MethodBase method)
+	{
+		if (StackTraceFormatter != null)
+		{
+			return StackTraceFormatter.ToString(method);
+		}
+		return method.Name;
+	}
+
+	private static string GetParameterNames(ParameterInfo[] parameterInfos)
+	{
+		if (StackTraceFormatter != null)
+		{
+			return StackTraceFormatter.ToString(parameterInfos);
+		}
+		return string.Join(",", parameterInfos.Select((ParameterInfo info) => info.ParameterType.ToString()).ToArray());
+	}
+
 	public string GetFormattedMethodName()
 	{
 		return m_FormattedMethodName;
@@ -71,7 +100,16 @@ public class LogStackFrame
 				text = FileName.Substring(num);
 			}
 		}
-		return $"   at {DeclaringType}.{MethodName}({ParameterSig}) (in {text}:{LineNumber})";
+		string text2 = null;
+		if (StackTraceFormatter != null)
+		{
+			text2 = StackTraceFormatter.Format(DeclaringType, MethodName, ParameterSig, text, LineNumber);
+		}
+		if (text2 == null)
+		{
+			text2 = $"   at {DeclaringType}.{MethodName}({ParameterSig}) (in {text}:{LineNumber})";
+		}
+		return text2;
 	}
 
 	public override int GetHashCode()

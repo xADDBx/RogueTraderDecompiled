@@ -4,6 +4,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
+using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -56,7 +57,7 @@ public class GamepadConnectedInKeyboardModeWindowView : ViewBase<GamepadConnectD
 
 	protected override void BindViewImplementation()
 	{
-		if (!base.ViewModel.IsControllerOverride)
+		if (!base.ViewModel.IsControllerOverride && !ApplicationHelper.IsRunningOnSwitch2)
 		{
 			m_HeaderLabel.text = UIStrings.Instance.ControllerModeTexts.GamepadConnectedHeaderText;
 			m_HintLabel.text = UIStrings.Instance.ControllerModeTexts.GamepadConnectedText;

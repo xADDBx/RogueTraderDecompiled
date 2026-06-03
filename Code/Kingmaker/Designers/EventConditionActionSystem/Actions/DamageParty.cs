@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/DamageParty")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("2379c20c25ff18a49ac676292ec98e7a")]
 public class DamageParty : GameAction

@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
-[ComponentName("Actions/KillEnemiesInScriptZone")]
+[Group("Actions")]
 [AllowMultipleComponents]
 [TypeId("3d6f2d92ec4464347beed431c0f755ff")]
 public class KillEnemiesInScriptZone : GameAction

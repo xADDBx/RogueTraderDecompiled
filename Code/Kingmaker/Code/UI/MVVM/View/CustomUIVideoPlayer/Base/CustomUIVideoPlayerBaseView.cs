@@ -77,8 +77,8 @@ public class CustomUIVideoPlayerBaseView : ViewBase<CustomUIVideoPlayerVM>
 			if (!(m_Video.Or(null)?.VideoClip == base.ViewModel.Video))
 			{
 				m_Video.Or(null)?.Stop();
-				m_Video.Or(null)?.SetClip(base.ViewModel.Video, SoundStateType.VideoDLCManager, prepareVideo: true, base.ViewModel.SoundStart, base.ViewModel.SoundStop);
-				ResetVideo();
+				m_Video.Or(null)?.SetClip(base.ViewModel.Video, SoundStateType.VideoDLCManager, prepareVideo: false, base.ViewModel.SoundStart, base.ViewModel.SoundStop);
+				ResetVideoUi();
 			}
 		}));
 		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.ResetVideoCommand, delegate
@@ -103,6 +103,7 @@ public class CustomUIVideoPlayerBaseView : ViewBase<CustomUIVideoPlayerVM>
 	{
 		m_VideoProgressTweener?.Kill();
 		m_VideoProgressTweener = null;
+		m_Video.Or(null)?.Stop();
 		if (m_Video.Or(null)?.VideoPlayer != null)
 		{
 			m_Video.VideoPlayer.loopPointReached -= ResetVideo;
@@ -112,6 +113,11 @@ public class CustomUIVideoPlayerBaseView : ViewBase<CustomUIVideoPlayerVM>
 	private void ResetVideo(VideoPlayer vp = null)
 	{
 		m_Video.Or(null)?.Stop();
+		ResetVideoUi();
+	}
+
+	private void ResetVideoUi()
+	{
 		m_VideoProgressTweener?.Kill();
 		m_VideoProgressTweener = null;
 		m_VidePreview.sprite = base.ViewModel.PreviewArt;

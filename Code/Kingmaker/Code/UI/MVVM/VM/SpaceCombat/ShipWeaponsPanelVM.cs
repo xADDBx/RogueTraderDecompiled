@@ -28,7 +28,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.Code.UI.MVVM.VM.SpaceCombat;
 
-public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IClickMechanicActionBarSlotHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IStarshipLevelUpHandler, ISubscriber<IStarshipEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitDirectHoverUIHandler, IInterruptTurnContinueHandler
+public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IClickMechanicActionBarSlotHandler, ISubscriber, ITurnBasedModeHandler, ITurnBasedModeResumeHandler, ITurnStartHandler, ISubscriber<IMechanicEntity>, IContinueTurnHandler, IStarshipLevelUpHandler, ISubscriber<IStarshipEntity>, IInterruptTurnStartHandler, IUnitCommandStartHandler, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitDirectHoverUIHandler, IInterruptTurnContinueHandler, IPlayerInputLockHandler
 {
 	public readonly ReactiveProperty<bool> IsPlayerTurn = new ReactiveProperty<bool>();
 
@@ -269,5 +269,14 @@ public class ShipWeaponsPanelVM : BaseDisposable, IViewModel, IBaseDisposable, I
 	public void HandleHoverChange(AbstractUnitEntityView unitEntityView, bool isHover)
 	{
 		HighlightedUnit.Value = (isHover ? (unitEntityView as UnitEntityView) : null);
+	}
+
+	public void HandlePlayerInputLocked()
+	{
+	}
+
+	public void HandlePlayerInputUnlocked()
+	{
+		UpdateSlots();
 	}
 }

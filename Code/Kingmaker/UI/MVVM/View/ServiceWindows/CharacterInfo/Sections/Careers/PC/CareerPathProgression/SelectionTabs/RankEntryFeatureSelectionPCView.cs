@@ -39,6 +39,18 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 	private OwlcatMultiButton m_ShowUnavailableButton;
 
 	[SerializeField]
+	private OwlcatMultiButton m_GroupByTypeButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_GroupByTypeButtonText;
+
+	[SerializeField]
+	private OwlcatMultiButton m_GroupBySourceButton;
+
+	[SerializeField]
+	private TextMeshProUGUI m_GroupBySourceButtonText;
+
+	[SerializeField]
 	private TextMeshProUGUI m_NoFeaturesText;
 
 	[Header("Selector")]
@@ -59,6 +71,9 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 	private RankEntryUltimateFeatureUpgradeItemCommonView m_RankEntryUltimateFeatureUpgradeItemCommonView;
 
 	[SerializeField]
+	private AvailableTalentsDropDownCommonView m_AvailableTalentsDropDown;
+
+	[SerializeField]
 	private RankEntryDescriptionView m_RankEntryDescriptionView;
 
 	private Action<bool> m_ReturnAction;
@@ -72,7 +87,7 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 	public override void Initialize()
 	{
 		base.Initialize();
-		m_VirtualList.Initialize(new VirtualListElementTemplate<RankEntrySelectionFeatureVM>(m_RankEntryFeatureItemCommonView, 0), new VirtualListElementTemplate<RankEntrySelectionFeatureVM>(m_RankEntryUltimateFeatureUpgradeItemCommonView, 1), new VirtualListElementTemplate<RankEntrySelectionStatVM>(m_RankEntryStatItemCommonView, 0), new VirtualListElementTemplate<SeparatorElementVM>(m_SeparatorElementView), new VirtualListElementTemplate<RankEntryDescriptionVM>(m_RankEntryDescriptionView));
+		m_VirtualList.Initialize(new VirtualListElementTemplate<RankEntrySelectionFeatureVM>(m_RankEntryFeatureItemCommonView, 0), new VirtualListElementTemplate<RankEntrySelectionFeatureVM>(m_RankEntryUltimateFeatureUpgradeItemCommonView, 1), new VirtualListElementTemplate<RankEntrySelectionStatVM>(m_RankEntryStatItemCommonView, 0), new VirtualListElementTemplate<SeparatorElementVM>(m_SeparatorElementView), new VirtualListElementTemplate<AvailableTalentsDropDownVM>(m_AvailableTalentsDropDown), new VirtualListElementTemplate<RankEntryDescriptionVM>(m_RankEntryDescriptionView));
 		m_FeaturesFilter.Or(null)?.Initialize();
 	}
 
@@ -87,14 +102,32 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		}));
 		AddDisposable(m_VirtualList.Subscribe(m_VMCollection));
 		m_FeaturesFilter.Or(null)?.Bind(base.ViewModel.FeaturesFilterVM);
-		if ((bool)m_ShowUnavailableButton)
+		m_ShowUnavailableButton.gameObject.SetActive(value: false);
+		if (base.ViewModel.IsShipContext)
 		{
-			m_ShowUnavailableButton.gameObject.SetActive(base.ViewModel.FeaturesFilterVM != null);
-			UpdateUnavailableFeaturesButtonHint();
-			AddDisposable(ObservableExtensions.Subscribe(m_ShowUnavailableButton.OnLeftClickAsObservable(), delegate
+			m_FeaturesFilter.gameObject.SetActive(base.ViewModel.FeaturesFilterVM != null);
+			m_GroupByTypeButton.gameObject.SetActive(value: false);
+			m_GroupBySourceButton.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			m_FeaturesFilter.gameObject.SetActive(value: false);
+			m_GroupByTypeButton.gameObject.SetActive(value: true);
+			m_GroupBySourceButton.gameObject.SetActive(value: true);
+			m_GroupByTypeButtonText.text = UIStrings.Instance.CharGen.OrderByType;
+			m_GroupBySourceButtonText.text = UIStrings.Instance.CharGen.OrderBySource;
+			AddDisposable(ObservableExtensions.Subscribe(m_GroupByTypeButton.OnLeftClickAsObservable(), delegate
 			{
-				base.ViewModel.ToggleShowUnavailableFeatures();
-				UpdateUnavailableFeaturesButtonHint();
+				base.ViewModel.SetGroupingMode(FeatureGroupingMode.ByType);
+			}));
+			AddDisposable(ObservableExtensions.Subscribe(m_GroupBySourceButton.OnLeftClickAsObservable(), delegate
+			{
+				base.ViewModel.SetGroupingMode(FeatureGroupingMode.BySource);
+			}));
+			AddDisposable(base.ViewModel.GroupingMode.Subscribe(delegate(FeatureGroupingMode mode)
+			{
+				m_GroupByTypeButton.SetActiveLayer((mode == FeatureGroupingMode.ByType) ? "On" : "Off");
+				m_GroupBySourceButton.SetActiveLayer((mode == FeatureGroupingMode.BySource) ? "On" : "Off");
 			}));
 		}
 		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.OnFilterChange, delegate

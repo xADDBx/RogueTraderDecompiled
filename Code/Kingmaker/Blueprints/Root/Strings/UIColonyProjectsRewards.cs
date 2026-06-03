@@ -51,4 +51,6 @@ public class UIColonyProjectsRewards
 	public LocalizedString AllColonies;
 
 	public LocalizedString Rechargeable;
+
+	public LocalizedString RewardCombativity;
 }

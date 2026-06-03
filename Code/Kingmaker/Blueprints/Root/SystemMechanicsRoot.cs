@@ -70,6 +70,10 @@ public class SystemMechanicsRoot
 
 	[SerializeField]
 	[ValidateNotNull]
+	private BlueprintBuffReference m_MetallicizationBuff;
+
+	[SerializeField]
+	[ValidateNotNull]
 	private BlueprintFeatureReference m_TwoWeaponFightingBasicMechanics;
 
 	[SerializeField]
@@ -254,6 +258,8 @@ public class SystemMechanicsRoot
 	public BlueprintBuff DirtyTrickSickenedBuff => m_DirtyTrickSickenedBuff?.Get();
 
 	public BlueprintBuff SummonedUnitAppearBuff => m_SummonedUnitAppearBuff?.Get();
+
+	public BlueprintBuff MetallicizationBuff => m_MetallicizationBuff?.Get();
 
 	public BlueprintItemWeapon RayWeapon => m_RayWeapon?.Get();
 

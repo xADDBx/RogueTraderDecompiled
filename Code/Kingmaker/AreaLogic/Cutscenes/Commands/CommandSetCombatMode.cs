@@ -1,7 +1,6 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem.Core;
 using Kingmaker.View;
 using Kingmaker.View.Equipment;
 using Owlcat.QA.Validation;
@@ -32,6 +31,8 @@ public class CommandSetCombatMode : CommandBase
 	{
 		Name = "On Switched"
 	};
+
+	protected override AbstractUnitEvaluator ControlledUnitEvaluator => Target;
 
 	public override bool IsContinuous => Continuous;
 
@@ -112,14 +113,5 @@ public class CommandSetCombatMode : CommandBase
 			return "Switch <b>combat mode</b> for " + (Target ? Target.GetCaptionShort() : "???");
 		}
 		return "Set <b>combat mode</b> for " + (Target ? Target.GetCaptionShort() : "???");
-	}
-
-	public override IAbstractUnitEntity GetControlledUnit()
-	{
-		if (!Target || !Target.TryGetValue(out var value))
-		{
-			return null;
-		}
-		return value;
 	}
 }

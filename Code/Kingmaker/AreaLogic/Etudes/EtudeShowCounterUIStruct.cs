@@ -13,7 +13,7 @@ public struct EtudeShowCounterUIStruct
 
 	public bool ShowSubLabel;
 
-	[ConditionalShow("ShowSubLabel")]
+	[ShowIf("ShowSubLabel")]
 	public string SubLabel;
 
 	public Func<int> ValueGetter;

@@ -11,7 +11,7 @@ public abstract class BaseSystemMapNotificationConsoleView<TViewModel> : BaseSys
 {
 	public bool HasActionHint;
 
-	[ConditionalShow("HasActionHint")]
+	[ShowIf("HasActionHint")]
 	[SerializeField]
 	protected ConsoleHint m_ActionHint;
 

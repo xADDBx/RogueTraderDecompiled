@@ -12,6 +12,8 @@ public class UIDollRooms : MonoBehaviour
 	[FormerlySerializedAs("DollRoom")]
 	public CharacterDollRoom CharacterDollRoom;
 
+	public AugmentationsDollRoom AugmentationsDollRoom;
+
 	public CharGenDollRoom CharGenDollRoom;
 
 	public ShipDollRoom ShipDollRoom;

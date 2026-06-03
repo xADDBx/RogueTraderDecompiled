@@ -424,11 +424,14 @@ public class DOTLogic : UnitBuffComponentDelegate, ITickEachRound, IHashable
 			{
 				return null;
 			}
-			MechanicEntity mechanicEntity = dotEffect.Buff.Context.MaybeCaster ?? base.Owner;
-			DamageData baseDamageOverride = dotEffect.Logic.DamageType.CreateDamage(damage);
-			CalculateDamageParams calculateDamageParams = new CalculateDamageParams(mechanicEntity, base.Owner, dotEffect.Buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity.DistanceToInCells(base.Owner));
-			calculateDamageParams.Reason = dotEffect.Buff;
-			return calculateDamageParams.Trigger().ResultDamage;
+			using (ContextData<Buff.Data>.Request().Setup(dotEffect.Buff))
+			{
+				MechanicEntity mechanicEntity = dotEffect.Buff.Context.MaybeCaster ?? base.Owner;
+				DamageData baseDamageOverride = dotEffect.Logic.DamageType.CreateDamage(damage);
+				CalculateDamageParams calculateDamageParams = new CalculateDamageParams(mechanicEntity, base.Owner, dotEffect.Buff.Context.SourceAbilityContext?.Ability, null, baseDamageOverride, penetration, mechanicEntity.DistanceToInCells(base.Owner));
+				calculateDamageParams.Reason = dotEffect.Buff;
+				return calculateDamageParams.Trigger().ResultDamage;
+			}
 		}
 
 		public override Hash128 GetHash128()

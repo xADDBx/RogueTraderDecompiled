@@ -19,7 +19,9 @@ public class TooltipBrickTextVM : TooltipBaseBrickVM
 
 	public readonly MechanicEntity MechanicEntity;
 
-	public TooltipBrickTextVM(string text, TooltipTextType type, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool isHeader = false, bool needChangeSize = false, int textSize = 18, MechanicEntity mechanicEntity = null)
+	public readonly bool IsInfoText;
+
+	public TooltipBrickTextVM(string text, TooltipTextType type, TooltipTextAlignment alignment = TooltipTextAlignment.Midl, bool isHeader = false, bool needChangeSize = false, int textSize = 18, MechanicEntity mechanicEntity = null, bool isInfoText = false)
 	{
 		Text = text;
 		Type = type;
@@ -28,5 +30,6 @@ public class TooltipBrickTextVM : TooltipBaseBrickVM
 		NeedChangeSize = needChangeSize;
 		TextSize = textSize;
 		MechanicEntity = mechanicEntity;
+		IsInfoText = isInfoText;
 	}
 }

@@ -9,6 +9,15 @@ public abstract class AsyncTaskNode : TaskNode
 
 	private Exception CaughtException;
 
+	protected AsyncTaskNode()
+	{
+	}
+
+	protected AsyncTaskNode(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override void InitInternal()
 	{
 		base.InitInternal();
@@ -24,6 +33,7 @@ public abstract class AsyncTaskNode : TaskNode
 		}
 		if (CaughtException != null)
 		{
+			base.FailReason = CaughtException.Message;
 			throw CaughtException;
 		}
 		return ProcessStatus;

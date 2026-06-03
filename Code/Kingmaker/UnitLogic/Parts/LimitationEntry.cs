@@ -1,11 +1,8 @@
-using System.Collections.Generic;
 using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
-using Kingmaker.RuleSystem;
-using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.Utility;
@@ -14,11 +11,9 @@ namespace Kingmaker.UnitLogic.Parts;
 
 public class LimitationEntry
 {
-	public List<BlueprintAbility> ForbiddenAbilities = new List<BlueprintAbility>();
+	public BlueprintAbilityGroup ForbiddenAbilityGroup;
 
-	public List<BlueprintAbilityGroup> ForbiddenAbilityGroups = new List<BlueprintAbilityGroup>();
-
-	public List<BlueprintAbility> AbilityExceptions = new List<BlueprintAbility>();
+	public BlueprintAbilityGroup AbilityGroupException;
 
 	public WarhammerAbilityParamsSource AbilityParamsSource = WarhammerAbilityParamsSource.None;
 
@@ -44,20 +39,77 @@ public class LimitationEntry
 
 	public bool EntryNotPassed(AbilityData ability, MechanicEntity unit)
 	{
-		bool num = ForbiddenAbilities.Contains(ability.Blueprint);
-		bool flag = ForbiddenAbilityGroups.Any((BlueprintAbilityGroup p) => ability.Blueprint.AbilityGroups.Contains(p));
-		bool flag2 = AbilityParamsSource != WarhammerAbilityParamsSource.None && (ability.Blueprint.AbilityParamsSource & AbilityParamsSource) != 0;
-		bool flag3 = num || flag || flag2;
-		RuleCalculateAbilityActionPointCost ruleCalculateAbilityActionPointCost = Rulebook.Trigger(new RuleCalculateAbilityActionPointCost(ability.Caster, ability));
-		bool flag4 = LowerCostException > 0 && ruleCalculateAbilityActionPointCost.Result > LowerCostException;
-		bool flag5 = CheapestAbilityException && ability.Weapon?.Blueprint.WeaponAbilities.FirstOrDefault((WeaponAbility p) => p.Ability == ability.Blueprint)?.AP > ability.Weapon?.Blueprint.WeaponAbilities.Ability1.AP;
-		bool flag6 = AbilityExceptions.Contains(ability.Blueprint);
-		bool num2 = Target != null && unit != null && unit != ability.Caster && unit != Target;
-		bool flag7 = ability.Weapon != null && Weapon != null && ability.Weapon != Weapon;
-		if (num2 || flag3 || flag7 || flag4 || flag5)
+		if (IsExceptionGroup(ability))
 		{
-			return !flag6;
+			return false;
+		}
+		if (!ForbiddenByBlueprint(ability) && !TargetIncorrect(ability, unit) && !WeaponIncorrect(ability) && !NotCheapestAbility(ability))
+		{
+			return OverLimitCost(ability);
+		}
+		return true;
+	}
+
+	private bool IsExceptionGroup(AbilityData ability)
+	{
+		return IsInAbilityGroups(ability, AbilityGroupException);
+	}
+
+	private bool ForbiddenByBlueprint(AbilityData ability)
+	{
+		if (!IsInAbilityGroups(ability, ForbiddenAbilityGroup))
+		{
+			if (AbilityParamsSource != WarhammerAbilityParamsSource.None)
+			{
+				return (ability.Blueprint.AbilityParamsSource & AbilityParamsSource) != 0;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	private static bool IsInAbilityGroups(AbilityData ability, BlueprintAbilityGroup group)
+	{
+		if (group != null)
+		{
+			return ability.Blueprint.AbilityGroups.Contains(group);
 		}
 		return false;
+	}
+
+	private bool TargetIncorrect(AbilityData ability, MechanicEntity unit)
+	{
+		if (Target != null && unit != null && unit != ability.Caster)
+		{
+			return unit != Target;
+		}
+		return false;
+	}
+
+	private bool WeaponIncorrect(AbilityData ability)
+	{
+		if (Weapon != null && ability.Weapon != null)
+		{
+			return ability.Weapon != Weapon;
+		}
+		return false;
+	}
+
+	private bool NotCheapestAbility(AbilityData ability)
+	{
+		if (CheapestAbilityException)
+		{
+			return ability.Weapon?.Blueprint.WeaponAbilities.FirstOrDefault((WeaponAbility p) => p.Ability == ability.Blueprint)?.AP > ability.Weapon?.Blueprint.WeaponAbilities.Ability1.AP;
+		}
+		return false;
+	}
+
+	private bool OverLimitCost(AbilityData ability)
+	{
+		if (LowerCostException <= 0)
+		{
+			return false;
+		}
+		return ability.CalculateActionPointCost() > LowerCostException;
 	}
 }

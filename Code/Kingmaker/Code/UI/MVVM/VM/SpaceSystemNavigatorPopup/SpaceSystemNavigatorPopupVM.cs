@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kingmaker.AreaLogic.QuestSystem;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Code.UI.MVVM.VM.NavigatorResource;
 using Kingmaker.Code.UI.MVVM.VM.Overtips.SectorMap;
@@ -68,13 +67,13 @@ public class SpaceSystemNavigatorPopupVM : BaseDisposable, IViewModel, IBaseDisp
 
 	private void CheckQuests()
 	{
-		List<QuestObjective> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(SectorMapObject.View);
+		List<QuestBookEntityEntry> questsForSystem = UIUtilitySpaceQuests.GetQuestsForSystem(SectorMapObject.View);
 		IsQuest.Value = !questsForSystem.Empty() && questsForSystem != null;
 	}
 
 	private void CheckRumours()
 	{
-		List<QuestObjective> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(SectorMapObject.View);
+		List<QuestBookEntityEntry> rumoursForSystem = UIUtilitySpaceQuests.GetRumoursForSystem(SectorMapObject.View);
 		IsRumour.Value = !rumoursForSystem.Empty() && rumoursForSystem != null;
 	}
 

@@ -218,17 +218,17 @@ public static class PropertyContextAccessor
 	[NotNull]
 	public static Entity GetTargetByType(this ITargetByType accessor, PropertyTargetType type)
 	{
-		return PropertyContext?.GetTargetEntity(type) ?? throw accessor.BuildException();
+		return PropertyContext?.GetTargetEntity(type) ?? throw new Exception($"Failed to get target entity by type: {type}");
 	}
 
 	public static Vector3 GetTargetPositionByType(this ITargetByType accessor, PropertyTargetType type)
 	{
-		return PropertyContext?.GetTargetPosition(type) ?? throw accessor.BuildException();
+		return PropertyContext?.GetTargetPosition(type) ?? throw new Exception($"Failed to get target position by type: {type}");
 	}
 
 	public static IntRect GetTargetRectByType(this ITargetByType accessor, PropertyTargetType type)
 	{
-		return PropertyContext?.GetTargetRectByType(type) ?? throw accessor.BuildException();
+		return PropertyContext?.GetTargetRectByType(type) ?? throw new Exception($"Failed to get target rect by type {type}");
 	}
 
 	public static BlueprintScriptableObject GetOwnerBlueprint(this IOwnerBlueprint accessor)

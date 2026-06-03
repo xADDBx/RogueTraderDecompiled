@@ -1,5 +1,6 @@
 using DG.Tweening;
 using Kingmaker.Blueprints.Quests;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.TMPExtention.ScrambledTextMeshPro;
 using Rewired;
@@ -84,35 +85,7 @@ public class JournalQuestConsoleView : BaseJournalItemConsoleView
 		m_NomosTag.SetActive(base.ViewModel.IsAffectedByNomos);
 		SetupStatuses();
 		m_NewMark.SetActive(value: false);
-		m_DLC1New.SetActive(value: false);
-		m_DLC2New.SetActive(value: false);
-		switch (base.ViewModel.Quest.Blueprint.Dlc)
-		{
-		case Dlc.None:
-			m_NewMark.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
-			break;
-		case Dlc.Dlc1:
-			m_DLC1New.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
-			break;
-		case Dlc.Dlc2:
-			m_DLC2New.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
-			break;
-		}
-		m_DefaultMark.SetActive(value: false);
-		m_DLC1Default.SetActive(value: false);
-		m_DLC2Default.SetActive(value: false);
-		switch (base.ViewModel.Quest.Blueprint.Dlc)
-		{
-		case Dlc.None:
-			m_DefaultMark.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
-			break;
-		case Dlc.Dlc1:
-			m_DLC1Default.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
-			break;
-		case Dlc.Dlc2:
-			m_DLC2Default.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
-			break;
-		}
+		SetUpIcon();
 	}
 
 	private void PlayEagleAnimation()
@@ -139,5 +112,33 @@ public class JournalQuestConsoleView : BaseJournalItemConsoleView
 		PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
 		pointerEventData.scrollDelta = new Vector2(0f, x * m_ScrollRect.scrollSensitivity);
 		m_ScrollRect.OnSmoothlyScroll(pointerEventData);
+	}
+
+	private void SetUpIcon()
+	{
+		m_NewMark.SetActive(value: false);
+		m_DefaultMark.SetActive(value: false);
+		m_DlcBlock.gameObject.SetActive(value: false);
+		if (base.ViewModel.Quest.Blueprint.Dlc != 0)
+		{
+			m_DlcBlock.SetActive((base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed) || (base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated));
+		}
+		if (base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed)
+		{
+			m_DlcImage.sprite = UIConfig.Instance.DlcIconConfig.GetNew(base.ViewModel.Quest.Blueprint.Dlc);
+			m_DlcRedLine.gameObject.SetActive(value: false);
+			m_DlcYellowLine.gameObject.SetActive(value: true);
+		}
+		if (base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated)
+		{
+			m_DlcImage.sprite = UIConfig.Instance.DlcIconConfig.GetDefault(base.ViewModel.Quest.Blueprint.Dlc);
+			m_DlcRedLine.gameObject.SetActive(value: false);
+			m_DlcYellowLine.gameObject.SetActive(value: false);
+		}
+		if (base.ViewModel.Quest.Blueprint.Dlc == Dlc.None)
+		{
+			m_NewMark.SetActive(base.ViewModel.IsNew && !base.ViewModel.QuestIsViewed);
+			m_DefaultMark.SetActive(base.ViewModel.IsNew && base.ViewModel.QuestIsViewed && !base.ViewModel.IsUpdated);
+		}
 	}
 }

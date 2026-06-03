@@ -40,13 +40,15 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 
 	public readonly bool Unmodifiable;
 
+	public readonly bool IgnoreDamageTypeArmorReduction;
+
 	public bool FakeRule { get; set; }
 
 	public bool HasNoTarget { get; set; }
 
 	public RuleReason? Reason { get; set; }
 
-	public CalculateDamageParams([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, [CanBeNull] OverpenetrationData? overpenetrationData = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false)
+	public CalculateDamageParams([NotNull] MechanicEntity initiator, [CanBeNull] MechanicEntity target, [CanBeNull] AbilityData ability, [CanBeNull] RulePerformAttackRoll performAttackRoll = null, [CanBeNull] DamageData baseDamageOverride = null, [CanBeNull] int? basePenetrationOverride = null, [CanBeNull] int? distance = null, [CanBeNull] OverpenetrationData? overpenetrationData = null, bool forceCrit = false, bool calculatedOverpenetration = false, bool doNotUseCrModifier = false, bool unmodifiable = false, bool ignoreDamageTypeArmorReduction = false)
 	{
 		Initiator = initiator;
 		Target = target;
@@ -63,6 +65,7 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 		HasNoTarget = false;
 		Reason = null;
 		Unmodifiable = unmodifiable;
+		IgnoreDamageTypeArmorReduction = ignoreDamageTypeArmorReduction;
 	}
 
 	public bool Equals(CalculateDamageParams other)
@@ -102,6 +105,6 @@ public struct CalculateDamageParams : IEquatable<CalculateDamageParams>
 
 	public RuleCalculateDamage Trigger()
 	{
-		return RuleCalculateDamage.Trigger(this);
+		return RuleCalculateDamage.TryGetCachedOrTrigger(this);
 	}
 }

@@ -1,5 +1,6 @@
 using System.Linq;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Entities;
@@ -10,6 +11,7 @@ using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.UnitLogic.Mechanics.Actions;
 
+[Group("Starship/Actions")]
 [TypeId("044aea76c9fc23843b947396486cb518")]
 public class StarshipReloadByAmmo : ContextAction
 {

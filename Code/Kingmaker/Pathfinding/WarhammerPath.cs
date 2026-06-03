@@ -328,4 +328,34 @@ public abstract class WarhammerPath<TIntermediateMetric, TFinalMetric> : Path, I
 			}
 		}
 	}
+
+	public WarhammerPath<TIntermediateMetric, TFinalMetric> CutPathAtIndex(int cutIndex)
+	{
+		if (path == null || vectorPath == null || CalculatedPath == null)
+		{
+			throw new InvalidOperationException("Path is not calculated or is invalid.");
+		}
+		if (cutIndex < 0 || cutIndex >= path.Count)
+		{
+			throw new ArgumentOutOfRangeException("cutIndex", "CutIndex is out of range of the path.");
+		}
+		WarhammerPath<TIntermediateMetric, TFinalMetric> warhammerPath = (WarhammerPath<TIntermediateMetric, TFinalMetric>)MemberwiseClone();
+		if (cutIndex + 1 == path.Count)
+		{
+			warhammerPath.path = path;
+			warhammerPath.vectorPath = vectorPath;
+			warhammerPath.m_Path = CalculatedPath;
+		}
+		else
+		{
+			warhammerPath.path = path.GetRange(0, cutIndex + 1);
+			warhammerPath.vectorPath = vectorPath.GetRange(0, cutIndex + 1);
+			TFinalMetric[] calculatedPath = CalculatedPath;
+			TFinalMetric[] destinationArray = new TFinalMetric[cutIndex + 1];
+			Array.Copy(calculatedPath, destinationArray, cutIndex + 1);
+			warhammerPath.m_Path = destinationArray;
+		}
+		warhammerPath.CompleteState = base.CompleteState;
+		return warhammerPath;
+	}
 }

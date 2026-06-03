@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Root;
+using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.View.ServiceWindows.CharacterInfo;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows;
 using Kingmaker.Controllers;
@@ -19,6 +20,7 @@ using Kingmaker.UI.Models;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View;
@@ -140,7 +142,7 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 			}
 			CharacterName.Value = value?.CharacterName;
 		}));
-		AddDisposable(UniRxExtensionMethods.Subscribe(MainThreadDispatcher.FrequentUpdateAsObservable(), delegate
+		AddDisposable(UniRxExtensionMethods.Subscribe(MainThreadDispatcher.FrequentUpdateAsObservable().PauseDuringCutscene(), delegate
 		{
 			if (IsEnable.Value)
 			{
@@ -250,7 +252,7 @@ public class PartyCharacterVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			return;
 		}
-		IsLevelUp.Value = !IsInCombat.Value && UnitEntityData.Progression.CanLevelUp;
+		IsLevelUp.Value = !IsInCombat.Value && UnitEntityData.Progression.CanLevelUp && !unit.Facts.HasComponent<TransientPartyMemberFlag>();
 		if (levelUpSound && IsLevelUp.Value)
 		{
 			m_IsNewLevel.Execute();

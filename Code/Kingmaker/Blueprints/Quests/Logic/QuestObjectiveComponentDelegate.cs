@@ -11,7 +11,7 @@ namespace Kingmaker.Blueprints.Quests.Logic;
 [TypeId("a175e554d3ec9624f8f4075ca17036dd")]
 public abstract class QuestObjectiveComponentDelegate : EntityFactComponentDelegate<QuestBook>, INodeEditorDescriptionProvider, IHashable
 {
-	protected QuestObjective Objective => (QuestObjective)base.Fact;
+	protected QuestBookEntityEntry Objective => (QuestBookEntityEntry)base.Fact;
 
 	public abstract string GetDescription();
 

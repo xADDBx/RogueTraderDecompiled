@@ -4,6 +4,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.UI.Common;
 using Kingmaker.UI.DragNDrop;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.Core.Utility;
 using UniRx;
 using UnityEngine;
@@ -76,5 +77,15 @@ public class SurfaceActionBarSlotAbilityPCView : SurfaceActionBarSlotAbilityView
 	public void UpdateDragAndDropStateNet()
 	{
 		m_DragNDropHandler.CanDrag = !base.ViewModel.IsEmpty.Value && base.ViewModel.MechanicActionBarSlot?.Unit != null && base.ViewModel.MechanicActionBarSlot.Unit.IsMyNetRole();
+	}
+
+	public void SetHoverSound(UISounds.ButtonSoundsEnum soundType)
+	{
+		UISounds.Instance.SetHoverSound(MainButton, soundType);
+	}
+
+	public void SetClickSound(UISounds.ButtonSoundsEnum soundType)
+	{
+		UISounds.Instance.SetClickSound(MainButton, soundType);
 	}
 }

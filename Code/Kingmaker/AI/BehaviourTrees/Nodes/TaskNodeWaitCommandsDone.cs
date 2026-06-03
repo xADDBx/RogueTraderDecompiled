@@ -8,6 +8,15 @@ namespace Kingmaker.AI.BehaviourTrees.Nodes;
 
 public class TaskNodeWaitCommandsDone : TaskNode
 {
+	public TaskNodeWaitCommandsDone()
+	{
+	}
+
+	public TaskNodeWaitCommandsDone(string debugDescription)
+		: base(debugDescription)
+	{
+	}
+
 	protected override Status TickInternal(Blackboard blackboard)
 	{
 		if (Game.Instance.AiBrainController.IsBusy)
@@ -21,7 +30,7 @@ public class TaskNodeWaitCommandsDone : TaskNode
 		return Status.Success;
 	}
 
-	private IEnumerable<BaseUnitEntity> GetActingUnits(Blackboard blackboard)
+	public static IEnumerable<BaseUnitEntity> GetActingUnits(Blackboard blackboard)
 	{
 		if (blackboard.DecisionContext.SquadPhase != SquadPhase.Move)
 		{
