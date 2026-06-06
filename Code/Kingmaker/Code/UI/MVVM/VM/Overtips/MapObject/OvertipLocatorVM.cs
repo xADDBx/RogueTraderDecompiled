@@ -36,7 +36,7 @@ public class OvertipLocatorVM : OvertipEntityVM
 
 	public bool IsInCameraFrustum => LocatorEntity.IsInCameraFrustum;
 
-	public bool ForceOnScreen => IsBarkActive.Value;
+	public override bool ForceOnScreen => IsBarkActive.Value;
 
 	protected override Vector3 GetEntityPosition()
 	{

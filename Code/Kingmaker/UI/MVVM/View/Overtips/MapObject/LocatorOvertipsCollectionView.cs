@@ -41,16 +41,25 @@ public class LocatorOvertipsCollectionView : ViewBase<LocatorOvertipsCollectionV
 
 	public void Update()
 	{
-		if (CutsceneUIState.IsCutsceneActive.Value || base.ViewModel?.Overtips == null)
+		if (base.ViewModel?.Overtips == null)
 		{
 			return;
 		}
+		bool value = CutsceneUIState.IsCutsceneActive.Value;
 		using (Counters.Overtips?.Measure())
 		{
 			using (ProfileScope.New("VM visibility"))
 			{
 				foreach (OvertipLocatorVM overtip in base.ViewModel.Overtips)
 				{
+					if (value && !overtip.ForceOnScreen)
+					{
+						if (m_ActiveOvertips.ContainsKey(overtip))
+						{
+							RemoveOvertip(overtip);
+						}
+						continue;
+					}
 					LocatorEntity locatorEntity = overtip.LocatorEntity;
 					bool flag = locatorEntity != null && overtip.IsBarkActive.Value && locatorEntity.IsVisibleForPlayer && (overtip.ForceOnScreen || (!overtip.HideFromScreen && overtip.IsInCameraFrustum));
 					bool flag2 = m_ActiveOvertips.Get(overtip) != null;

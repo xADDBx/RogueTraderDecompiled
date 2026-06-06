@@ -283,7 +283,7 @@ public class OvertipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IPointerEnt
 			Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;
 		}
-		if (!CheckVisibility || base.ViewModel.IsCutscene || base.ViewModel.IsInDialog)
+		if (!CheckVisibility || (base.ViewModel.IsCutscene && !base.ViewModel.ForceOnScreen) || base.ViewModel.IsInDialog)
 		{
 			Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;

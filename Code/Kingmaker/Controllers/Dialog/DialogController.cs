@@ -1012,7 +1012,7 @@ public class DialogController : IControllerTick, IController, IControllerStart, 
 		{
 			if (baseUnitEntity != null)
 			{
-				return new SkillCheckResult(GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(baseUnitEntity, check.Type, Dialog.OverrideCRForSkillChecks ? check.GetDCByCR(Dialog.OverridenCR) : check.GetDC()), null, allowPartyCheckInCamp: false), baseUnitEntity);
+				return new SkillCheckResult(GameHelper.TriggerSkillCheck(new RulePerformSkillCheck(baseUnitEntity, check.Type, check.GetDC()), null, allowPartyCheckInCamp: false), baseUnitEntity);
 			}
 			RulePerformPartySkillCheck rulePerformPartySkillCheck = new RulePerformPartySkillCheck(check.Type, check.GetDC(), m_CapitalPartyChecksEnabled);
 			Game.Instance.Rulebook.TriggerEvent(rulePerformPartySkillCheck);

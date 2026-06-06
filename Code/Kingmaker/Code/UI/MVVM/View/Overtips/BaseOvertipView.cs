@@ -91,7 +91,7 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 			PFLog.UI.Error(base.gameObject.name + ": ViewModel == null, but View are still not Destroyed");
 			return;
 		}
-		if (CutsceneUIState.IsCutsceneActive.Value)
+		if (CutsceneUIState.IsCutsceneActive.Value && !base.ViewModel.ForceOnScreen)
 		{
 			SetCanvasGroupVisible(isVisible: false);
 			return;

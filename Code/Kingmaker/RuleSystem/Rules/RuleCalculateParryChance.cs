@@ -229,9 +229,9 @@ public class RuleCalculateParryChance : RulebookOptionalTargetEvent<UnitEntity, 
 
 	private bool CanParryRanged(BaseUnitEntity unit)
 	{
-		if (unit.CanAct && unit.HasMechanicFeature(MechanicsFeatureType.RangedParry))
+		if (unit.CanAct && unit.HasMechanicFeature(MechanicsFeatureType.RangedParry) && MaybeAttacker != null)
 		{
-			return base.ConcreteInitiator.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == unit).Any();
+			return MaybeAttacker.Facts.GetComponents((WarhammerDeflectionTarget c) => c.Caster == unit).Any();
 		}
 		return false;
 	}

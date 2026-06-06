@@ -24,6 +24,8 @@ public abstract class OvertipEntityVM : BaseDisposable, IViewModel, IBaseDisposa
 
 	public bool IsInDialog => Game.Instance.CurrentMode == GameModeType.Dialog;
 
+	public virtual bool ForceOnScreen => false;
+
 	protected virtual bool UpdateEnabled => !IsCutscene;
 
 	protected abstract Vector3 GetEntityPosition();

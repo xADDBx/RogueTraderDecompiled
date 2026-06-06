@@ -17,6 +17,10 @@ public class AugmentationAtlasController : IDisposable
 
 	private int _atlasSize;
 
+	private int _fullAtlasSize;
+
+	private DxtCompressorServiceNew _compressor;
+
 	private readonly Dictionary<BodyPartType, RectInt> _slotRects = new Dictionary<BodyPartType, RectInt>();
 
 	private readonly Dictionary<BodyPartType, Texture2D> _currentDiffuse = new Dictionary<BodyPartType, Texture2D>();
@@ -29,6 +33,8 @@ public class AugmentationAtlasController : IDisposable
 
 	private const int DownscaledAtlasSize = 1024;
 
+	public static bool ShouldDownscale = true;
+
 	public Texture2D DiffuseAtlas => _diffuseAtlas;
 
 	public Texture2D NormalAtlas => _normalAtlas;
@@ -36,18 +42,6 @@ public class AugmentationAtlasController : IDisposable
 	public Texture2D MasksAtlas => _masksAtlas;
 
 	public bool IsInitialized => _isInitialized;
-
-	public static bool ShouldDownscale
-	{
-		get
-		{
-			if (Application.platform != RuntimePlatform.WindowsPlayer)
-			{
-				return Application.isEditor;
-			}
-			return true;
-		}
-	}
 
 	public void Initialize(CharacterAtlasData atlasData)
 	{
@@ -57,18 +51,19 @@ public class AugmentationAtlasController : IDisposable
 			return;
 		}
 		_atlasData = atlasData;
-		_atlasSize = (int)atlasData.targetResolution;
-		_atlasSize = _atlasSize / 4 * 4;
+		_fullAtlasSize = (int)atlasData.targetResolution / 4 * 4;
+		int num = (ShouldDownscale ? Mathf.Min(_fullAtlasSize, 1024) : _fullAtlasSize);
+		_atlasSize = num / 4 * 4;
 		_slotRects.Clear();
 		foreach (CharacterAtlasData.BodyPartCoords bodyPartsCoord in atlasData.BodyPartsCoords)
 		{
 			BodyPartType bodyPart = (BodyPartType)bodyPartsCoord.bodyPart;
 			RectInt textureRectCoords = bodyPartsCoord.textureRectCoords;
-			int xMin = textureRectCoords.x / 4 * 4;
-			int width = textureRectCoords.width / 4 * 4;
-			int height = textureRectCoords.height / 4 * 4;
-			int yMin = (_atlasSize - textureRectCoords.y - textureRectCoords.height) / 4 * 4;
-			_slotRects[bodyPart] = new RectInt(xMin, yMin, width, height);
+			int xMin = ScaleToAtlas(textureRectCoords.x);
+			int width = ScaleToAtlas(textureRectCoords.width);
+			int num2 = ScaleToAtlas(textureRectCoords.height);
+			int yMin = (_atlasSize - ScaleToAtlas(textureRectCoords.y) - num2) / 4 * 4;
+			_slotRects[bodyPart] = new RectInt(xMin, yMin, width, num2);
 		}
 		_diffuseAtlas = CreateBlackDXT5Texture(_atlasSize, _atlasSize, linear: false, "AugmentationAtlas_Diffuse");
 		_normalAtlas = CreateBlackDXT5Texture(_atlasSize, _atlasSize, linear: true, "AugmentationAtlas_Normal");
@@ -147,46 +142,18 @@ public class AugmentationAtlasController : IDisposable
 		}
 	}
 
-	public void DownscaleAtlases(int targetSize = 1024)
+	private int ScaleToAtlas(int fullValue)
 	{
-		if (!_isInitialized)
-		{
-			return;
-		}
-		targetSize = targetSize / 4 * 4;
-		if (targetSize > 0 && targetSize < _atlasSize)
-		{
-			DxtCompressorServiceNew instance = Services.GetInstance<DxtCompressorServiceNew>();
-			if (instance == null)
-			{
-				PFLog.TechArt.Error("[AugmentationAtlas] DxtCompressorServiceNew unavailable, skipping downscale");
-				return;
-			}
-			_diffuseAtlas = ReplaceWithDownscaled(instance, _diffuseAtlas, targetSize, "AugmentationAtlas_Diffuse");
-			_normalAtlas = ReplaceWithDownscaled(instance, _normalAtlas, targetSize, "AugmentationAtlas_Normal");
-			_masksAtlas = ReplaceWithDownscaled(instance, _masksAtlas, targetSize, "AugmentationAtlas_Masks");
-			_atlasSize = targetSize;
-			PFLog.TechArt.Log($"[AugmentationAtlas] Downscaled atlases to {targetSize}x{targetSize}");
-		}
+		return (int)((long)fullValue * (long)_atlasSize / _fullAtlasSize / 4) * 4;
 	}
 
-	private static Texture2D ReplaceWithDownscaled(DxtCompressorServiceNew compressor, Texture2D source, int targetSize, string name)
+	private DxtCompressorServiceNew GetCompressor()
 	{
-		if (source == null)
+		if (_compressor == null)
 		{
-			return null;
+			_compressor = Services.GetInstance<DxtCompressorServiceNew>();
 		}
-		Texture2D texture2D = compressor.CompressTextureGPUSync(source, targetSize, targetSize, name);
-		if (texture2D == null)
-		{
-			PFLog.TechArt.Error("[AugmentationAtlas] Downscale failed for " + name + ", keeping original");
-			return source;
-		}
-		texture2D.name = name;
-		texture2D.filterMode = source.filterMode;
-		texture2D.wrapMode = source.wrapMode;
-		UnityEngine.Object.Destroy(source);
-		return texture2D;
+		return _compressor;
 	}
 
 	private static Texture2D CreateBlackDXT5Texture(int width, int height, bool linear, string name)
@@ -215,6 +182,36 @@ public class AugmentationAtlasController : IDisposable
 			PFLog.TechArt.Error($"[AugmentationAtlas] {channel} texture for {slot} is {source.format}, expected DXT5");
 			return false;
 		}
+		Texture2D source2 = source;
+		Texture2D texture2D = null;
+		if (_atlasSize != _fullAtlasSize)
+		{
+			int targetWidth = Mathf.Max(4, ScaleToAtlas(source.width));
+			int targetHeight = Mathf.Max(4, ScaleToAtlas(source.height));
+			DxtCompressorServiceNew compressor = GetCompressor();
+			if (compressor == null)
+			{
+				PFLog.TechArt.Error("[AugmentationAtlas] DxtCompressorServiceNew unavailable, cannot downscale slot texture");
+				return false;
+			}
+			texture2D = compressor.CompressTextureGPUSync(source, targetWidth, targetHeight, channel);
+			if (texture2D == null)
+			{
+				PFLog.TechArt.Error($"[AugmentationAtlas] {channel} downscale failed for {slot}");
+				return false;
+			}
+			source2 = texture2D;
+		}
+		bool result = CopyBlocks(source2, atlas, rect, channel, slot);
+		if (texture2D != null)
+		{
+			UnityEngine.Object.Destroy(texture2D);
+		}
+		return result;
+	}
+
+	private static bool CopyBlocks(Texture2D source, Texture2D atlas, RectInt rect, string channel, BodyPartType slot)
+	{
 		if (source.width > rect.width || source.height > rect.height)
 		{
 			PFLog.TechArt.Error($"[AugmentationAtlas] {channel} texture for {slot} ({source.width}x{source.height}) exceeds slot ({rect.width}x{rect.height})");

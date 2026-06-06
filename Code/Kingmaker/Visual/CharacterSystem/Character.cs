@@ -2580,10 +2580,6 @@ public class Character : RegisteredBehaviour, IUpdatable
 						AugmentationAtlas.UpdateSlot(augOverlayBodyPart.Type, diffuseTexture2, normalTexture, maskTexture);
 					}
 				}
-				if (AugmentationAtlasController.ShouldDownscale)
-				{
-					AugmentationAtlas.DownscaleAtlases();
-				}
 				AugmentationAtlas.ApplyToMaterial(AtlasMaterial);
 				PFLog.TechArt.Log($"[MergeOverlays] Baked {m_AugOverlayBodyParts.Count} augmentation body parts to augmentation atlas");
 			}

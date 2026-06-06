@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.Utility;
 using StateHasher.Core;
@@ -86,6 +87,13 @@ public class UnitPartForbiddenAbilities : BaseUnitPart, IHashable
 	{
 		return (from p in Limitations
 			where p.EntryNotPassed(ability)
+			select p.Reason).Distinct();
+	}
+
+	public IEnumerable<UnitFact> GetGroupLimitationBuffsForbidding(AbilityData ability)
+	{
+		return (from p in Limitations
+			where p.EntryNotPassed(ability) && p.Reason?.Blueprint.GetComponent<AbilityGroupLimitation>() != null
 			select p.Reason).Distinct();
 	}
 

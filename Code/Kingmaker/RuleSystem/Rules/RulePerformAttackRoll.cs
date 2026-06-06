@@ -296,16 +296,20 @@ public class RulePerformAttackRoll : RulebookTargetEvent
 		{
 			Result = AttackResult.Parried;
 			ResultIsHit = false;
-			if (IsMelee && !targetUnit.HasMechanicFeature(MechanicsFeatureType.RangedParry) && targetUnit.View != null && targetUnit.View.AnimationManager != null)
+			if (!IsMelee || targetUnit.HasMechanicFeature(MechanicsFeatureType.RangedParry) || !(targetUnit.View != null) || !(targetUnit.View.AnimationManager != null))
 			{
-				UnitAnimationActionHandle unitAnimationActionHandle = targetUnit.View.AnimationManager.CreateHandle(UnitAnimationType.Parry);
+				return;
+			}
+			UnitAnimationActionHandle unitAnimationActionHandle = targetUnit.View.AnimationManager.CreateHandle(UnitAnimationType.Parry);
+			if (unitAnimationActionHandle != null)
+			{
 				if ((targetUnit.GetThreatHandMelee() != null || (targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRangedAnyHand() != null)) && ((targetUnit.GetThreatHandMelee() != null) ? targetUnit.GetThreatHandMelee() : ((targetUnit.Features.CanUseBallisticSkillToParry.Value && targetUnit.GetThreatHandRangedAnyHand() != null) ? targetUnit.GetThreatHandRangedAnyHand() : null)) is HandSlot handSlot)
 				{
 					unitAnimationActionHandle.CastInOffhand = !handSlot.IsPrimaryHand;
 				}
 				targetUnit.View.AnimationManager.Execute(unitAnimationActionHandle);
-				targetUnit.SetOrientation(targetUnit.GetLookAtAngle(base.ConcreteInitiator.Position));
 			}
+			targetUnit.SetOrientation(targetUnit.GetLookAtAngle(base.ConcreteInitiator.Position));
 			return;
 		}
 		List<EntityRef<BaseUnitEntity>> list = CombatEngagementHelper.CollectUnitsAround(targetUnit, (BaseUnitEntity entity) => entity.IsAlly(targetUnit) && entity.Facts.HasComponent<WarhammerAllyParry>());

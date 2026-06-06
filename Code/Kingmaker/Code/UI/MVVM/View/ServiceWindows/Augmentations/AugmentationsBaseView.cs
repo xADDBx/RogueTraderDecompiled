@@ -2,7 +2,6 @@ using System;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ContextMenu.Utils;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Augmentations;
-using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
@@ -14,6 +13,7 @@ using Kingmaker.UI.Models;
 using Kingmaker.UI.MVVM.View.ShipCustomization;
 using Kingmaker.UI.Sound;
 using Kingmaker.UnitLogic.Levelup.Obsolete;
+using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using TMPro;
@@ -102,6 +102,9 @@ public abstract class AugmentationsBaseView<TInventoryStash, TInventorySlot> : V
 	protected GameObject m_ViewOnlyGameobject;
 
 	[SerializeField]
+	protected OwlcatMultiButton m_OverdriveLabelGameObject;
+
+	[SerializeField]
 	protected TextMeshProUGUI m_OverdriveLabel;
 
 	[SerializeField]
@@ -109,8 +112,6 @@ public abstract class AugmentationsBaseView<TInventoryStash, TInventorySlot> : V
 
 	[SerializeField]
 	protected DollRoomTargetController m_CharacterController;
-
-	private TooltipTemplateGlossary m_GalvanizeTooltipTemplate;
 
 	private bool m_IsInit;
 
@@ -244,6 +245,7 @@ public abstract class AugmentationsBaseView<TInventoryStash, TInventorySlot> : V
 		if (base.ViewModel.Unit.Value.Body.Augments.OverdriveAbility == null)
 		{
 			m_OverdriveLabel.text = UIStrings.Instance.UIAugmentations.NoOverchargedLabel;
+			AddDisposable(m_OverdriveLabelGameObject.SetHint(UIStrings.Instance.UIAugmentations.AbilityGranted, null, default(Color), shouldShow: false));
 			if (m_OverchargeSlot is AugmentationsEquipSlotPCView component)
 			{
 				AddDisposable(component.SetHint(UIStrings.Instance.UIAugmentations.SelectAugment));
@@ -252,6 +254,7 @@ public abstract class AugmentationsBaseView<TInventoryStash, TInventorySlot> : V
 		else
 		{
 			m_OverdriveLabel.text = UIStrings.Instance.UIAugmentations.OverchargedLabel;
+			AddDisposable(m_OverdriveLabelGameObject.SetHint(UIStrings.Instance.UIAugmentations.AbilityGranted));
 			if (m_OverchargeSlot is AugmentationsEquipSlotPCView component2)
 			{
 				AddDisposable(component2.SetHint(UIStrings.Instance.UIAugmentations.SelectAugment, null, default(Color), shouldShow: false));

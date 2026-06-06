@@ -52,16 +52,25 @@ public class LightweightUnitOvertipsCollectionView : ViewBase<LightweightUnitOve
 
 	public void Update()
 	{
-		if (CutsceneUIState.IsCutsceneActive.Value || base.ViewModel?.Overtips == null)
+		if (base.ViewModel?.Overtips == null)
 		{
 			return;
 		}
+		bool value = CutsceneUIState.IsCutsceneActive.Value;
 		using (Counters.Overtips?.Measure())
 		{
 			using (ProfileScope.New("VM visibility"))
 			{
 				foreach (LightweightUnitOvertipVM overtip in base.ViewModel.Overtips)
 				{
+					if (value && !overtip.ForceOnScreen)
+					{
+						if (m_ActiveOvertips.ContainsKey(overtip))
+						{
+							RemoveOvertip(overtip);
+						}
+						continue;
+					}
 					MechanicEntity unit = overtip.Unit;
 					bool flag = unit != null && (!unit.Features.IsUntargetable || overtip.IsBarkActive.Value) && (!(unit is BaseUnitEntity { IsExtra: not false } baseUnitEntity) || ExtraUnitShouldHaveOvertip(baseUnitEntity) || overtip.IsBarkActive.Value || baseUnitEntity.View.IsHighlighted || baseUnitEntity.View.MouseHighlighted || overtip.HasSurrounding.Value) && unit.IsVisibleForPlayer && (overtip.ForceOnScreen || (!overtip.HideFromScreen && overtip.IsInCameraFrustum));
 					bool flag2 = m_ActiveOvertips.Get(overtip) != null;

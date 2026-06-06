@@ -152,7 +152,7 @@ public class LightweightUnitOvertipView : BaseOvertipView<LightweightUnitOvertip
 		{
 			return;
 		}
-		if (!CheckVisibility || base.ViewModel.IsCutscene || base.ViewModel.IsInDialog)
+		if (!CheckVisibility || (base.ViewModel.IsCutscene && !base.ViewModel.ForceOnScreen) || base.ViewModel.IsInDialog)
 		{
 			m_Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;

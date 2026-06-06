@@ -91,6 +91,10 @@ public class ForcedCullingRadius : MonoBehaviour
 			}
 		}
 		GetComponentsInChildren(m_Lights);
+		if (m_LightsDefaultEnabledStatus.Count == m_Lights.Count)
+		{
+			return;
+		}
 		m_LightsDefaultEnabledStatus.Clear();
 		foreach (Light light in m_Lights)
 		{

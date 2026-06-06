@@ -169,6 +169,10 @@ public class UnitBuffPartPCView : ViewBase<UnitBuffPartVM>
 
 	private void DrawBuffs()
 	{
+		if (m_MainContainer == null || m_AdditionalTrigger == null)
+		{
+			return;
+		}
 		if (!m_PartyCharacter)
 		{
 			if (base.ViewModel.EntityIsDeadOrUnconscious())

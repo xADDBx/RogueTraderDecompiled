@@ -111,7 +111,7 @@ public class OvertipMapObjectVM : BaseOvertipMapObjectVM
 
 	public UIInteractionType Type => FirstInteractionPart?.UIInteractionType ?? UIInteractionType.None;
 
-	public bool ForceOnScreen
+	public override bool ForceOnScreen
 	{
 		get
 		{

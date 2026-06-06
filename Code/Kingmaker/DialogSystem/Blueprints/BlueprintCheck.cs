@@ -55,11 +55,16 @@ public class BlueprintCheck : BlueprintCueBase
 
 	public int GetDC()
 	{
-		if (Difficulty != 0)
+		if (Difficulty == SkillCheckDifficulty.Custom)
 		{
-			return Difficulty.GetDC(Type);
+			return GetCustomDC();
 		}
-		return GetCustomDC();
+		BlueprintDialog blueprintDialog = Game.Instance?.DialogController?.Dialog;
+		if (blueprintDialog != null && blueprintDialog.OverrideCRForSkillChecks)
+		{
+			return GetDCByCR(blueprintDialog.OverridenCR);
+		}
+		return Difficulty.GetDC(Type);
 	}
 
 	public int GetDCByCR(int cr)

@@ -23,6 +23,7 @@ using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.Visual.Effects;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Kingmaker.Controllers.Projectiles;
 
@@ -144,7 +145,7 @@ public class ProjectileController : IControllerTick, IController, IControllerSto
 				PFLog.Default.Error("Projectile's view prefab is missing ({0}, {1})", projectile.Blueprint.name, projectile.Blueprint.View.AssetId);
 				return;
 			}
-			if (!m_ViewParent)
+			if (!m_ViewParent || m_ViewParent.gameObject.scene != SceneManager.GetActiveScene())
 			{
 				m_ViewParent = new GameObject("__Projectiles__").transform;
 			}

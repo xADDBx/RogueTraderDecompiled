@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Controllers.TurnBased;
@@ -11,8 +12,10 @@ using Kingmaker.UI.Models.UnitSettings.Blueprints;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components.CasterCheckers;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.StatefulRandom;
 using Newtonsoft.Json;
 using Owlcat.Runtime.UI.Tooltips;
@@ -277,11 +280,16 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 	protected override string WarningMessage(Vector3 castPosition)
 	{
 		string text = base.WarningMessage(castPosition);
-		if (string.IsNullOrEmpty(text))
+		if (!string.IsNullOrEmpty(text))
 		{
-			return Ability?.GetUnavailableReason(castPosition);
+			return text;
 		}
-		return text;
+		List<UnitFact> list = Ability.Caster.GetRequired<UnitPartForbiddenAbilities>().GetGroupLimitationBuffsForbidding(Ability).ToList();
+		if (list.Count > 0)
+		{
+			return AbilityCasterHasNoFacts.GetCasterRestrictionUIText(Ability.Caster, list.Select((UnitFact f) => f.Blueprint));
+		}
+		return Ability?.GetUnavailableReason(castPosition);
 	}
 
 	public override IEnumerable<AbilityData> GetConvertedAbilityData()

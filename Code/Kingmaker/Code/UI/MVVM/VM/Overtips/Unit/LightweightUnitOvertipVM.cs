@@ -39,7 +39,7 @@ public class LightweightUnitOvertipVM : OvertipEntityVM
 
 	public ReactiveProperty<bool> IsBarkActive => BarkBlockVM?.IsBarkActive;
 
-	public bool ForceOnScreen => IsBarkActive.Value;
+	public override bool ForceOnScreen => IsBarkActive.Value;
 
 	public bool HideFromScreen
 	{

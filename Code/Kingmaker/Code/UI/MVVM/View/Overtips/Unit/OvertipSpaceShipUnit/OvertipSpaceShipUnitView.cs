@@ -195,7 +195,7 @@ public class OvertipSpaceShipUnitView : BaseOvertipView<OvertipEntityUnitVM>, IP
 		{
 			return;
 		}
-		if (!CheckCanBeVisible || base.ViewModel.IsCutscene)
+		if (!CheckCanBeVisible || (base.ViewModel.IsCutscene && !base.ViewModel.ForceOnScreen))
 		{
 			m_Visibility.Value = UnitOvertipVisibility.Invisible;
 			return;
