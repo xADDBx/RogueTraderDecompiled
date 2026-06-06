@@ -1,3 +1,4 @@
+using Kingmaker.UI.InputSystems;
 using Kingmaker.UI.MVVM.View.Exploration.Base;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
@@ -83,6 +84,7 @@ public class ExplorationPCView : ExplorationBaseView
 		m_ExplorationSpaceBarksHolderPCView.Bind(base.ViewModel.ExplorationSpaceBarksHolderVM);
 		AddDisposable(m_CloseButton.OnLeftClickAsObservable().Subscribe(base.OnCloseClickDelegate));
 		AddDisposable(m_CloseButton.OnConfirmClickAsObservable().Subscribe(base.OnCloseClickDelegate));
+		AddDisposable(KeyboardAccess.Instance.Bind("ExplorationBeginScan", OnBeginScanHotkey));
 	}
 
 	protected override void BuildNavigationImpl()
@@ -113,6 +115,14 @@ public class ExplorationPCView : ExplorationBaseView
 	{
 		m_CloseButton.Interactable = value;
 		m_ExplorationScanButtonWrapperPCView.SetButtonInteractable(value);
+	}
+
+	private void OnBeginScanHotkey()
+	{
+		if (m_ExplorationScanButtonWrapperPCView.gameObject.activeInHierarchy)
+		{
+			base.ViewModel.ExplorationScanButtonWrapperVM.Interact();
+		}
 	}
 
 	protected override void SetLockUIForDialogImpl(bool value)
