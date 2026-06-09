@@ -153,15 +153,15 @@ public abstract class MainMenuSideBarView<TContextMenuEntityView> : ViewBase<Mai
 			m_ExitView.Bind(base.ViewModel.ExitVm);
 		}
 		SetTextMessageOfTheDay();
-		AddDisposable(ObservableExtensions.Subscribe(m_WebsiteButton.OnLeftClickAsObservable(), delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_WebsiteButton.OnLeftClickAsObservable().Merge(m_WebsiteButton.OnConfirmClickAsObservable()), delegate
 		{
 			base.ViewModel.OpenUrl(FeedbackPopupItemType.Website);
 		}));
-		AddDisposable(ObservableExtensions.Subscribe(m_LicenceButton.OnLeftClickAsObservable(), delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_LicenceButton.OnLeftClickAsObservable().Merge(m_LicenceButton.OnConfirmClickAsObservable()), delegate
 		{
 			base.ViewModel.ShowLicense();
 		}));
-		AddDisposable(ObservableExtensions.Subscribe(m_DiscordButton.OnLeftClickAsObservable(), delegate
+		AddDisposable(ObservableExtensions.Subscribe(m_DiscordButton.OnLeftClickAsObservable().Merge(m_DiscordButton.OnConfirmClickAsObservable()), delegate
 		{
 			base.ViewModel.OpenUrl(FeedbackPopupItemType.Discord);
 		}));

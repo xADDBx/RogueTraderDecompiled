@@ -8,6 +8,7 @@ using Kingmaker.Blueprints.Root;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
+using Kingmaker.Enums;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.FactLogic;
@@ -327,6 +328,10 @@ public class HandSlot : WeaponSlot, IHashable
 			return true;
 		}
 		if (base.Owner.Blueprint.GetComponent<UniqueEogannCompanionComponent>() != null)
+		{
+			return true;
+		}
+		if (base.Owner.HasMechanicFeature(MechanicsFeatureType.CarryShotgunInOneHand) && itemEntityWeapon.Blueprint.Classification == WeaponClassification.Shotgun)
 		{
 			return true;
 		}

@@ -337,7 +337,7 @@ public class SelectionCharacterController : IControllerStart, IController, ICont
 		}
 		if (RootUIContext.Instance.IsSurface && !TurnController.IsInTurnBasedCombat())
 		{
-			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u)).ToTempList())
+			foreach (BaseUnitEntity item in SelectedUnits.Where((BaseUnitEntity u) => !m_ActualGroup.Contains(u) && (!m_ExcludePetsAndAugmentationsUnits || !UIUtility.IsExcludedFromAugmentations(u))).ToTempList())
 			{
 				UIAccess.SelectionManager.Or(null)?.UnselectUnit(item);
 			}

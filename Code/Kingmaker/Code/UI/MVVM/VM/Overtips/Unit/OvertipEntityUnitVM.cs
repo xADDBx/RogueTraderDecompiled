@@ -61,7 +61,7 @@ public class OvertipEntityUnitVM : OvertipEntityVM
 
 	public ReactiveProperty<bool> IsBarkActive => BarkBlockVM?.IsBarkActive;
 
-	public override bool ForceOnScreen => IsBarkActive.Value;
+	protected override bool IsBarkingNow => IsBarkActive.Value;
 
 	public float? DeathDelay
 	{

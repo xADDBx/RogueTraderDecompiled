@@ -58,7 +58,9 @@ public abstract class BaseOvertipView<TViewModel> : ViewBase<TViewModel> where T
 		RectTransform ownRectTransform = m_OwnRectTransform;
 		Vector2 anchorMin = (m_OwnRectTransform.anchorMax = Vector2.zero);
 		ownRectTransform.anchorMin = anchorMin;
-		AddDisposable(MainThreadDispatcher.LateUpdateAsObservable().PauseDuringCutscene().Subscribe(delegate
+		AddDisposable((from _ in MainThreadDispatcher.LateUpdateAsObservable()
+			where !CutsceneUIState.IsCutsceneActive.Value || (base.ViewModel?.ForceOnScreen ?? false)
+			select _).Subscribe(delegate
 		{
 			InternalUpdate();
 		}));
