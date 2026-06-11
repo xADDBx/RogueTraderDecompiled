@@ -5,6 +5,10 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.NecronTimer;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Utils;
+using Kingmaker.GameModes;
+using Kingmaker.PubSubSystem;
+using Kingmaker.PubSubSystem.Core;
+using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common.Animations;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.Tooltips;
@@ -14,7 +18,7 @@ using UnityEngine.UI;
 
 namespace Kingmaker.Code.UI.MVVM.View.NecronTimer;
 
-public class NecronTimerView : ViewBase<NecronTimerVM>
+public class NecronTimerView : ViewBase<NecronTimerVM>, IGameModeHandler, ISubscriber
 {
 	[SerializeField]
 	private Image SliderHead;
@@ -39,6 +43,9 @@ public class NecronTimerView : ViewBase<NecronTimerVM>
 
 	[SerializeField]
 	private MoveAnimator Animator;
+
+	[SerializeField]
+	private CanvasGroup m_CutsceneCanvasGroup;
 
 	[SerializeField]
 	private float m_FillAnimationDuration = 0.3f;
@@ -90,6 +97,8 @@ public class NecronTimerView : ViewBase<NecronTimerVM>
 		};
 		TooltipConfig config = tooltipConfig;
 		AddDisposable(this.SetTooltip(new TooltipTemplateSimple(tooltips.NecronTimerHeader, tooltips.NecronTimerDescription), config));
+		AddDisposable(EventBus.Subscribe(this));
+		SetHiddenByCutscene(Game.Instance.IsModeActive(GameModeType.Cutscene));
 	}
 
 	protected override void DestroyViewImplementation()
@@ -219,5 +228,24 @@ public class NecronTimerView : ViewBase<NecronTimerVM>
 		}
 		SetInitialColors();
 		UpdateTimerValue(base.ViewModel.CurrentTimerValue.Value, instant: true);
+	}
+
+	public void OnGameModeStart(GameModeType gameMode)
+	{
+		SetHiddenByCutscene(gameMode == GameModeType.Cutscene);
+	}
+
+	public void OnGameModeStop(GameModeType gameMode)
+	{
+	}
+
+	private void SetHiddenByCutscene(bool hidden)
+	{
+		if (!(m_CutsceneCanvasGroup == null))
+		{
+			m_CutsceneCanvasGroup.alpha = (hidden ? 0f : 1f);
+			m_CutsceneCanvasGroup.blocksRaycasts = !hidden;
+			m_CutsceneCanvasGroup.interactable = !hidden;
+		}
 	}
 }

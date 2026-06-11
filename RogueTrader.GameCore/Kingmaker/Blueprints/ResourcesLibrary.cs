@@ -42,18 +42,6 @@ public static class ResourcesLibrary
 
 		public int HandleCounter;
 
-		public bool IsResourceDestroyed
-		{
-			get
-			{
-				if ((object)Resource != null)
-				{
-					return !Resource;
-				}
-				return false;
-			}
-		}
-
 		public LoadedResource([NotNull] UnityEngine.Object resource)
 		{
 			Resource = resource;
@@ -65,11 +53,7 @@ public static class ResourcesLibrary
 
 		public void Unload()
 		{
-			if (IsResourceDestroyed)
-			{
-				Resource = null;
-			}
-			else if (!string.IsNullOrEmpty(AssetId))
+			if (!string.IsNullOrEmpty(AssetId))
 			{
 				BundlesLoadService.Instance.UnloadBundleForAsset(AssetId);
 			}
@@ -194,19 +178,11 @@ public static class ResourcesLibrary
 			if (loadedResource != null)
 			{
 				loadedResource.RequestCounter++;
-				if (!loadedResource.IsResourceDestroyed)
-				{
-					return;
-				}
-				PFLog.Resources.Warning("Cached resource " + assetId + " is destroyed (its bundle was unloaded), reloading");
-				loadedResource.Resource = null;
+				return;
 			}
-			else
-			{
-				loadedResource = new LoadedResource();
-				loadedResource.RequestCounter++;
-				s_LoadedResources[assetId] = loadedResource;
-			}
+			loadedResource = new LoadedResource();
+			loadedResource.RequestCounter++;
+			s_LoadedResources[assetId] = loadedResource;
 			if (s_SynchronousPreloading)
 			{
 				LoadResource<TResource>(assetId, loadedResource);
@@ -267,12 +243,6 @@ public static class ResourcesLibrary
 			{
 			}
 		}
-		else if (loadedResource.IsResourceDestroyed)
-		{
-			PFLog.Resources.Warning("Cached resource " + assetId + " is destroyed (its bundle was unloaded), reloading");
-			loadedResource.Resource = null;
-			LoadResource<TResource>(assetId, loadedResource);
-		}
 		loadedResource.RequestCounter++;
 		if (hold)
 		{
@@ -311,12 +281,6 @@ public static class ResourcesLibrary
 			{
 				_ = 0;
 			}
-		}
-		else if (loaded.IsResourceDestroyed)
-		{
-			PFLog.Resources.Warning("Cached resource " + assetId + " is destroyed (its bundle was unloaded), reloading");
-			loaded.Resource = null;
-			await LoadResourceAsync<TResource>(assetId, loaded);
 		}
 		loaded.RequestCounter++;
 		if (hold)
@@ -461,7 +425,7 @@ public static class ResourcesLibrary
 	{
 		try
 		{
-			if (string.IsNullOrEmpty(assetId) || (bool)loaded.Resource)
+			if (string.IsNullOrEmpty(assetId))
 			{
 				return;
 			}
@@ -515,7 +479,7 @@ public static class ResourcesLibrary
 		_ = 2;
 		try
 		{
-			if (string.IsNullOrEmpty(assetId) || (bool)loaded.Resource)
+			if (string.IsNullOrEmpty(assetId))
 			{
 				return;
 			}

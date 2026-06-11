@@ -29,7 +29,6 @@ using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.Sound;
 using Kingmaker.Sound.Base;
 using Kingmaker.UnitLogic.Abilities;
-using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility.BuildModeUtils;
 using Kingmaker.Utility.CodeTimer;
@@ -438,11 +437,6 @@ public class SceneLoader
 				if (allEntityDatum?.View?.GO == null)
 				{
 					allEntityDatum.AttachToViewOnLoad(null);
-					if (allEntityDatum.View == null)
-					{
-						Logger.ErrorWithReport("Cross-scene entity {0} still has no view on area change", allEntityDatum);
-						continue;
-					}
 					Game.Instance.CrossSceneRoot.Add(allEntityDatum.View.ViewTransform);
 					Logger.Warning("Cross-scene entity {0} had no view on area change. Created {1}", allEntityDatum, allEntityDatum.View);
 				}
@@ -1435,11 +1429,6 @@ public class SceneLoader
 		}
 		foreach (Entity item in state.AllEntityData.Where((Entity d) => d.View == null && d.NeedsView).ToList())
 		{
-			if (IsVitalPersistentEntity(item))
-			{
-				PFLog.SceneLoader.ErrorWithReport("Entity {0} failed to create a view on load; keeping it in the state", item);
-				continue;
-			}
 			if (TraceLoading)
 			{
 				PFLog.SceneLoader.Log("Removed entity " + item?.ToString() + " #" + item.UniqueId);
@@ -1447,23 +1436,6 @@ public class SceneLoader
 			state.RemoveEntityData(item);
 			item.Dispose();
 		}
-	}
-
-	private static bool IsVitalPersistentEntity(Entity data)
-	{
-		if (!(data is BaseUnitEntity baseUnitEntity))
-		{
-			return false;
-		}
-		if (baseUnitEntity.IsPet)
-		{
-			return true;
-		}
-		if (baseUnitEntity.GetOptional<UnitPartCompanion>() != null)
-		{
-			return !baseUnitEntity.Facts.HasComponent<TransientPartyMemberFlag>();
-		}
-		return false;
 	}
 
 	public IEnumerator<object> UnloadAreaCoroutine(bool forDispose = false, bool leaveStatics = false, bool unloadUi = true, [CanBeNull] HashSet<string> hotScenes = null)
@@ -1896,11 +1868,6 @@ public class SceneLoader
 				if (allEntityDatum?.View?.GO == null)
 				{
 					allEntityDatum.AttachToViewOnLoad(null);
-					if (allEntityDatum.View == null)
-					{
-						Logger.ErrorWithReport("Cross-scene entity {0} still has no view on area change", allEntityDatum);
-						continue;
-					}
 					Game.Instance.CrossSceneRoot.Add(allEntityDatum.View.ViewTransform);
 					Logger.Warning("Cross-scene entity {0} had no view on area change. Created {1}", allEntityDatum, allEntityDatum.View);
 				}
