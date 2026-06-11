@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Items.Augments;
 using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.ServiceWindows.Inventory;
 using Kingmaker.Code.UI.MVVM.VM.Slots;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.GameCommands;
@@ -136,6 +137,10 @@ public class AugmentationsSlotVM : ItemSlotVM, IInsertItemHandler, ISubscriber, 
 
 	private void RefreshItem()
 	{
+		if ((bool)ContextData<GameCommandHelper.PreviewItem>.Current)
+		{
+			return;
+		}
 		if (IsOverchargeSlot)
 		{
 			RefreshOverchargeAbility.Execute();

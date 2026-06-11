@@ -250,7 +250,7 @@ public class ColonizationController : IControllerEnable, IController, IControlle
 		{
 			EventBus.RaiseEvent(delegate(IColonizationResourcesHandler h)
 			{
-				h.HandleColonyResourcesUpdated(resource, initialCount - resourceCount);
+				h.HandleColonyResourcesUpdated(resource, resourceCount - initialCount);
 			});
 		}
 		if (resourceCount > 0)
@@ -592,7 +592,7 @@ public class ColonizationController : IControllerEnable, IController, IControlle
 		}
 		EventBus.RaiseEvent(delegate(IColonizationResourcesHandler h)
 		{
-			h.HandleColonyResourcesUpdated(resource, count);
+			h.HandleColonyResourcesUpdated(resource, -count);
 		});
 	}
 

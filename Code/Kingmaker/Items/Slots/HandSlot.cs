@@ -157,7 +157,7 @@ public class HandSlot : WeaponSlot, IHashable
 			}
 		}
 		bool num = itemEntityWeapon != null && !CanHoldInOneHand(this, itemEntityWeapon);
-		bool flag = PairSlot.MaybeWeapon != null && !CanHoldInOneHand(PairSlot, PairSlot.MaybeWeapon);
+		bool flag = PairSlot.MaybeItem is ItemEntityWeapon item2 && !CanHoldInOneHand(PairSlot, item2);
 		if ((num || flag) && PairSlot.HasItem && !PairSlot.CanRemoveItem())
 		{
 			return false;
@@ -218,8 +218,7 @@ public class HandSlot : WeaponSlot, IHashable
 		}
 		if (base.MaybeItem is ItemEntityShield && bodyOptional != null)
 		{
-			ItemEntityWeapon maybeWeapon = PairSlot.MaybeWeapon;
-			if (maybeWeapon != null && !CanHoldInOneHand(PairSlot, maybeWeapon))
+			if (PairSlot.MaybeItem is ItemEntityWeapon item3 && !CanHoldInOneHand(PairSlot, item3))
 			{
 				PairSlot.RemoveItem();
 			}
@@ -305,10 +304,9 @@ public class HandSlot : WeaponSlot, IHashable
 
 	public bool HeldInTwoHands()
 	{
-		ItemEntityWeapon maybeWeapon = MaybeWeapon;
-		if (maybeWeapon != null)
+		if (base.MaybeItem is ItemEntityWeapon item)
 		{
-			return !CanHoldInOneHand(this, maybeWeapon);
+			return !CanHoldInOneHand(this, item);
 		}
 		return false;
 	}

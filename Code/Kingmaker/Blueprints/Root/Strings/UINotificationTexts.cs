@@ -12,6 +12,8 @@ public class UINotificationTexts
 
 	public LocalizedString ColonyResourceReceivedFormat;
 
+	public LocalizedString ColonyResourceLostFormat;
+
 	public LocalizedString XPGainedFormat;
 
 	public LocalizedString CargoAddedFormat;

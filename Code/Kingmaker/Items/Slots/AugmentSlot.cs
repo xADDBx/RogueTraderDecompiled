@@ -25,7 +25,7 @@ public class AugmentSlot : EquipmentSlot<BlueprintItemAugment>, IHashable
 
 	private UnitAugments Augments => base.Owner.GetBodyOptional().Augments;
 
-	private BlueprintItemAugment DefaultAugment => Blueprint.DefaultAugment;
+	private BlueprintItemAugment DefaultAugment => Blueprint?.DefaultAugment;
 
 	public bool WasAugmentedBefore => m_WasAugmentedBefore;
 

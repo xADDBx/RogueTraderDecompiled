@@ -50,10 +50,13 @@ public class BuffPCView : ViewBase<BuffVM>, IPointerEnterHandler, IEventSystemHa
 		}));
 		AddDisposable(base.ViewModel.Rank.CombineLatest(base.ViewModel.IsDamage, (int rank, bool isDamage) => new { rank, isDamage }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{
-			m_Rank.gameObject.SetActive(value.rank > 1 && !value.isDamage);
-			m_Rank.text = value.rank.ToString();
-			m_Damage.gameObject.SetActive(value.isDamage);
-			m_Damage.text = value.rank.ToString();
+			if (!(this == null) && !(m_Rank == null) && !(m_Damage == null))
+			{
+				m_Rank.gameObject.SetActive(value.rank > 1 && !value.isDamage);
+				m_Rank.text = value.rank.ToString();
+				m_Damage.gameObject.SetActive(value.isDamage);
+				m_Damage.text = value.rank.ToString();
+			}
 		}));
 		if (IsHovered != null)
 		{

@@ -646,7 +646,7 @@ public class Colony : IHashable
 			}
 			EventBus.RaiseEvent(delegate(IColonizationResourcesHandler h)
 			{
-				h.HandleColonyResourcesUpdated(resource, resourceCount);
+				h.HandleColonyResourcesUpdated(resource, -resourceCount);
 			});
 		}
 		else

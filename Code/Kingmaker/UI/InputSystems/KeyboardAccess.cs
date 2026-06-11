@@ -503,7 +503,6 @@ public class KeyboardAccess : IFocusHandler, ISubscriber, IService, IDisposable
 		RegisterBinding("RapidKingdomBugNoSave", KeyCode.K, gameModesArray, ctrl: true, alt: true, shift: true, TriggerType.KeyDown, ModificationSide.Right);
 		RegisterBinding("RapidBugReportWindowOpen", KeyCode.B, gameModesArray, ctrl: false, alt: true, shift: false);
 		RegisterBinding("BrowserOpenLastReport", KeyCode.F12, gameModesArray, ctrl: true, alt: true, shift: false);
-		RegisterBinding("ExplorationBeginScan", KeyCode.S, new GameModeType[1] { GameModeType.StarSystem });
 	}
 
 	public static GameModeType[] GetGameModesArray(GameModesGroup gameModesGroup)
