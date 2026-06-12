@@ -439,6 +439,11 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 	{
 		foreach (MechanicEntity joinedThisTickEntity in m_JoinedThisTickEntities)
 		{
+			if (joinedThisTickEntity.IsDisposed)
+			{
+				Logger.Error($"Disposed entity in joined-this-tick combat entities, skipping: {joinedThisTickEntity}");
+				continue;
+			}
 			PrepareUnitForNewTurn(joinedThisTickEntity, isTurnBased: true, setPreparedRound: false);
 			EventBus.RaiseEvent((IMechanicEntity)joinedThisTickEntity, (Action<IEntityJoinTBCombat>)delegate(IEntityJoinTBCombat h)
 			{

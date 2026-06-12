@@ -35,7 +35,7 @@ using UniRx;
 
 namespace Kingmaker.Code.UI.MVVM.VM.ActionBar.Surface;
 
-public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler, IContinueTurnHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler, IUnitOverdriveAugmentHandler
+public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposable, IGameModeHandler, ISubscriber, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, IWarhammerAttackHandler, IUnitCommandActHandler, IUnitCommandEndHandler, IUnitActiveEquipmentSetHandler, ISubscriber<IBaseUnitEntity>, IDeliverAbilityEffectHandler, IUnitAbilityCooldownHandler, IAbilityExecutionProcessHandler, ILevelUpCompleteUIHandler, ILevelUpManagerUIHandler, IDialogInteractionHandler, IHoverActionBarSlotHandler, IAbilityTargetSelectionUIHandler, IAreaActivationHandler, IUnitDirectHoverUIHandler, IFullScreenUIHandler, IPreparationTurnBeginHandler, IPreparationTurnEndHandler, INetLobbyPlayersHandler, INetRoleSetHandler, IInterruptTurnStartHandler, IInterruptTurnEndHandler, ITurnStartHandler, IContinueTurnHandler, IAbilityExecutionProcessClearedHandler, IInterruptTurnContinueHandler, IUnitOverdriveAugmentHandler, IPlayerInputLockHandler
 {
 	public readonly SurfaceActionBarPartConsumablesVM Consumables;
 
@@ -185,6 +185,10 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
+		if (gameMode == GameModeType.Cutscene)
+		{
+			UpdateSlotsCommand.Execute();
+		}
 	}
 
 	private void CheckAnotherPlayerTurn()
@@ -498,5 +502,15 @@ public class SurfaceActionBarVM : BaseDisposable, IViewModel, IBaseDisposable, I
 		{
 			UpdateSlotsCommand.Execute();
 		}
+	}
+
+	public void HandlePlayerInputLocked()
+	{
+		UpdateSlotsCommand.Execute();
+	}
+
+	public void HandlePlayerInputUnlocked()
+	{
+		UpdateSlotsCommand.Execute();
 	}
 }

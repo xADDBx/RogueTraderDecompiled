@@ -152,7 +152,7 @@ public class FollowersFormationController : BaseUnitController, IControllerEnabl
 
 	private static bool ShouldSkipProcessing(AbstractUnitEntity follower, bool isCutsceneCommand = false)
 	{
-		if (follower.LifeState.State == UnitLifeState.Dead)
+		if (!follower.IsInGame || follower.LifeState.State == UnitLifeState.Dead)
 		{
 			return true;
 		}

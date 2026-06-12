@@ -39,6 +39,11 @@ public class PartSquad : BaseUnitPart, IUnitDeathHandler, ISubscriber, IHashable
 		}
 		set
 		{
+			if (value == m_Id)
+			{
+				UpdateSquad();
+				return;
+			}
 			Drop();
 			m_Id = value;
 			UpdateSquad();

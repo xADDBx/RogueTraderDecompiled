@@ -54,8 +54,8 @@ public class UnitSquad : MechanicEntity, IHashable
 			{
 				value.Parts.GetRequired<PartSquad>().IsLeader = true;
 			}
-			CustomBehaviourType customBehaviour = m_Leader.ToBaseUnitEntity().Blueprint.GetComponent<AiCustomBehaviourForSquad>()?.BehaviourType ?? CustomBehaviourType.None;
-			GetRequired<PartUnitBrain>().SetCustomBehaviour(customBehaviour);
+			CustomBehaviourType valueOrDefault = (m_Leader.ToBaseUnitEntity()?.Blueprint.GetComponent<AiCustomBehaviourForSquad>()?.BehaviourType).GetValueOrDefault();
+			GetRequired<PartUnitBrain>().SetCustomBehaviour(valueOrDefault);
 		}
 	}
 
