@@ -35,7 +35,7 @@ public class GridNavmeshModifier : NavmeshClipper, INodesTagProvider
 
 	private bool m_WasMoving;
 
-	private int m_LastStopCheckFrame = -1;
+	private int m_LastStopCheckStep = -1;
 
 	private bool m_CachedWasStopped;
 
@@ -143,11 +143,12 @@ public class GridNavmeshModifier : NavmeshClipper, INodesTagProvider
 
 	private bool WasStoppedThisFrame()
 	{
-		if (Time.frameCount == m_LastStopCheckFrame)
+		int currentSystemStepIndex = Game.Instance.RealTimeController.CurrentSystemStepIndex;
+		if (currentSystemStepIndex == m_LastStopCheckStep)
 		{
 			return m_CachedWasStopped;
 		}
-		m_LastStopCheckFrame = Time.frameCount;
+		m_LastStopCheckStep = currentSystemStepIndex;
 		Vector3 position = m_Transform.position;
 		bool flag = (position - m_LastStopCheckPosition).sqrMagnitude > 0.0001f;
 		m_LastStopCheckPosition = position;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
-using Kingmaker.Networking;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using UnityEngine;
@@ -130,7 +129,7 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 
 	public void UpdateSavedHash(string objectId, int hash)
 	{
-		if ((!NetworkingManager.IsMultiplayer || NetworkingManager.IsGameOwner) && CurrentState != null)
+		if (CurrentState != null)
 		{
 			if (CurrentState.TryGetValue(objectId, out var state) && state != null)
 			{

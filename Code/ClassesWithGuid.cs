@@ -1341,6 +1341,7 @@ public static class ClassesWithGuid
 		(typeof(RespawnNewUnit), "5091aab5196133c489dda4066af8d1fc"),
 		(typeof(SetSharedVendorTable), "76052fdfe674cfd41988bb8e4fd1f815"),
 		(typeof(StartEtudeForced), "546c217ec8c177f4cb25b4b4b6ca35e8"),
+		(typeof(UnRevealStarSystems), "967a4c112a2392944bbd212d4fb9fd91"),
 		(typeof(UnStartEtude), "9834963f1a257bc4e9134d8ed2ffe2c2"),
 		(typeof(UpdateUnitBaseAttributes), "40099302b74e604419bf2107c9a4103a"),
 		(typeof(UnitUpgraderComponent), "afdb9910a3164c2ab7a573983b2bd959"),

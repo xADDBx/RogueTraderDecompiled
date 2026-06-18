@@ -1,5 +1,4 @@
 using System;
-using Kingmaker.Code.UI.MVVM.Utils;
 using Kingmaker.Code.UI.MVVM.VM.InGameCombat;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -65,14 +64,7 @@ public class PointMarkerVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void Update()
 	{
-		if (CutsceneUIState.IsCutsceneActive.Value)
-		{
-			IsVisible.Value = false;
-		}
-		else
-		{
-			UpdateVisibility();
-		}
+		UpdateVisibility();
 	}
 
 	public void ScrollToUnit()

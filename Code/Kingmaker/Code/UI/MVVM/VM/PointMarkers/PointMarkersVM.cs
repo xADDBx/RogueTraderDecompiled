@@ -46,6 +46,10 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 		{
 			UpdateHandler();
 		}));
+		AddDisposable(CutsceneUIState.IsCutsceneActive.Where((bool isActive) => isActive).Subscribe(delegate
+		{
+			HideAllMarkers();
+		}));
 		AddDisposable(EventBus.Subscribe(this));
 	}
 
@@ -75,6 +79,14 @@ public class PointMarkersVM : CommonStaticComponentVM, ILineOfSightHandler, ISub
 		PointMarkers.ForEach(delegate(PointMarkerVM markerVm)
 		{
 			markerVm.Update();
+		});
+	}
+
+	private void HideAllMarkers()
+	{
+		PointMarkers.ForEach(delegate(PointMarkerVM markerVm)
+		{
+			markerVm.IsVisible.Value = false;
 		});
 	}
 
