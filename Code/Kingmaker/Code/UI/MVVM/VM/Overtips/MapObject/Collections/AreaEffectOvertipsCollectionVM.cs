@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem.Core;
@@ -38,7 +39,7 @@ public class AreaEffectOvertipsCollectionVM : OvertipsCollectionVM<OvertipAreaEf
 		Clear();
 	}
 
-	void IReloadMechanicsHandler.OnMechanicsReloaded()
+	void IReloadMechanicsHandler.OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		RescanEntities();
 	}

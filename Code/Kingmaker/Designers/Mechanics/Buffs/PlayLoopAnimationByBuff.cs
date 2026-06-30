@@ -1,5 +1,6 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
@@ -14,12 +15,25 @@ using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using Owlcat.Runtime.Core.Utility;
 using StateHasher.Core;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Kingmaker.Designers.Mechanics.Buffs;
 
 [TypeId("ccdeb99837c64fb79ebc26eb36f2f47b")]
 public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandStartHandler, ISubscriber<IMechanicEntity>, ISubscriber, IHashable
 {
+	[Preserve]
+	private class LoopComponentRuntime : UnitBuffComponentRuntime, IHashable
+	{
+		public override Hash128 GetHash128()
+		{
+			Hash128 result = default(Hash128);
+			Hash128 val = base.GetHash128();
+			result.Append(ref val);
+			return result;
+		}
+	}
+
 	public WarhammerBuffLoopAction BuffLoopAction;
 
 	[Tooltip("Анимация, которая проигрывается один раз при снятии баффа (не связана с loop-анимацией)")]
@@ -30,6 +44,11 @@ public class PlayLoopAnimationByBuff : UnitBuffComponentDelegate, IUnitCommandSt
 	private BlueprintBuffReference m_SuppressionBuff;
 
 	public BlueprintBuff SuppressionBuff => m_SuppressionBuff?.Get();
+
+	public override EntityFactComponent CreateRuntimeFactComponent()
+	{
+		return new LoopComponentRuntime();
+	}
 
 	protected override void OnActivateOrPostLoad()
 	{

@@ -1,4 +1,7 @@
+using System.Linq;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items.Augments;
+using Kingmaker.Blueprints.Items.Equipment;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
 using Kingmaker.PubSubSystem;
@@ -28,6 +31,20 @@ public class AugmentSlot : EquipmentSlot<BlueprintItemAugment>, IHashable
 	private BlueprintItemAugment DefaultAugment => Blueprint?.DefaultAugment;
 
 	public bool WasAugmentedBefore => m_WasAugmentedBefore;
+
+	public BlueprintItemEquipment GetVisualItemBlueprint()
+	{
+		if (base.Owner is BaseUnitEntity baseUnitEntity && Blueprint != null && Blueprint.ShouldSkipVisualUpdate(baseUnitEntity))
+		{
+			BlueprintUnit blueprintUnit = baseUnitEntity.OriginalBlueprint ?? baseUnitEntity.Blueprint;
+			if (blueprintUnit?.Body == null)
+			{
+				return null;
+			}
+			return blueprintUnit.Body.Augments.FirstOrDefault((BlueprintItemAugment a) => a != null && a.AugmentSlot == Blueprint);
+		}
+		return base.MaybeItem?.Blueprint as BlueprintItemEquipment;
+	}
 
 	public AugmentSlot(BaseUnitEntity owner, BlueprintAugmentSlot blueprint)
 		: base(owner)

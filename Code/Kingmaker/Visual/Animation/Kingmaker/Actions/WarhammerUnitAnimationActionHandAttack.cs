@@ -511,7 +511,7 @@ public class WarhammerUnitAnimationActionHandAttack : UnitAnimationAction, IUnit
 		{
 			handle.SpeedScale = Game.CombatAnimSpeedUp;
 		}
-		if (activeAnimation != null && !(handle.GetTime() < GetNextClipStartTime(handle)) && (!handle.NeedPreparingForShooting || !handle.IsPreparingForShooting) && (!handle.NeedPreparingForShooting || !(Math.Abs(handle.Manager.Orientation - handle.Manager.UseAbilityDirection) > 10f)) && !Next(handle))
+		if (activeAnimation != null && !(handle.GetTime() < GetNextClipStartTime(handle)) && (!handle.NeedPreparingForShooting || !handle.IsPreparingForShooting) && (!handle.NeedPreparingForShooting || handle.IsActed || !(Math.Abs(handle.Manager.Orientation - handle.Manager.UseAbilityDirection) > 10f)) && !Next(handle))
 		{
 			handle.Release();
 		}

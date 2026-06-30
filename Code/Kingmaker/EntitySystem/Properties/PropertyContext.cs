@@ -85,7 +85,23 @@ public readonly struct PropertyContext
 	}
 
 	[CanBeNull]
-	public MechanicEntity ContextOwner => MechanicContext?.MaybeOwner;
+	public MechanicEntity ContextOwner
+	{
+		get
+		{
+			object obj = MechanicContext?.MaybeOwner;
+			if (obj == null)
+			{
+				PropertyContextPreviewCasterData current = ContextData<PropertyContextPreviewCasterData>.Current;
+				if (current == null)
+				{
+					return null;
+				}
+				obj = current.Caster;
+			}
+			return (MechanicEntity)obj;
+		}
+	}
 
 	[CanBeNull]
 	public MechanicEntity ContextCaster

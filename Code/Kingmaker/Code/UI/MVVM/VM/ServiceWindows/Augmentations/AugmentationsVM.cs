@@ -149,6 +149,7 @@ public class AugmentationsVM : BaseDisposable, IViewModel, IBaseDisposable, IDis
 	protected override void DisposeImplementation()
 	{
 		TooltipHelper.HideTooltip();
+		TooltipHelper.HideInfo();
 		AugmentationsInspectVM inspectVM = InspectVM;
 		if (inspectVM != null && inspectVM.IsShown)
 		{

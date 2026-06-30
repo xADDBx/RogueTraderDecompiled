@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Controllers.Interfaces;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Owlcat.Plugins.DotNetExtensions;
 using UnityEngine;
 
 namespace Kingmaker.AreaLogic.SceneControllables;
 
-public class SceneControllablesController : IControllerStop, IController, IAreaLoadingStagesHandler, ISubscriber
+public class SceneControllablesController : IControllerStop, IController, IAreaLoadingStagesHandler, ISubscriber, IReloadMechanicsHandler
 {
 	private const string STATE_PREFIX = "scene_controllables_";
 
@@ -19,6 +21,8 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 
 	private readonly HashSet<ControllableAnimator> m_AwaitingSettle = new HashSet<ControllableAnimator>();
 
+	private Dictionary<string, ControllableState> m_OnMechanicsReloadControllablesCopy;
+
 	private SceneControllablesState m_CurrentState;
 
 	public bool HasAwaitingSettle => m_AwaitingSettle.Count > 0;
@@ -27,7 +31,7 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 	{
 		get
 		{
-			if (m_CurrentState == null || m_CurrentState.UniqueId != StateName)
+			if (m_CurrentState == null || m_CurrentState.IsDisposed || m_CurrentState.UniqueId != StateName)
 			{
 				InitState();
 			}
@@ -61,7 +65,19 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 			controllable.ResetUniqueId();
 		}
 		m_Components[controllable.UniqueId] = controllable;
-		ControllableState state = (CurrentState.TryGetValue(controllable.UniqueId, out state) ? controllable.GetDefaultState().MergeWith(state) : controllable.GetDefaultState());
+		if (!CurrentState.TryGetValue(controllable.UniqueId, out var state))
+		{
+			state = controllable.GetDefaultState();
+		}
+		else
+		{
+			ControllableState controllableState = state;
+			if (controllableState.SceneName == null)
+			{
+				controllableState.SceneName = controllable.gameObject.scene.name;
+			}
+			state = controllable.GetDefaultState().MergeWith(state);
+		}
 		controllable.SetState(state);
 	}
 
@@ -75,6 +91,10 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 		if (!m_Components.TryGetValue(idOfObject, out var value))
 		{
 			PFLog.Entity.Warning("Cant find controllable with id " + idOfObject);
+		}
+		if (state.SceneName.IsNullOrEmpty() && value != null)
+		{
+			state.SceneName = value.gameObject.scene.name;
 		}
 		if (!Game.Instance.SceneControllables.TryGetState(idOfObject, out var state2))
 		{
@@ -156,8 +176,44 @@ public class SceneControllablesController : IControllerStop, IController, IAreaL
 		CurrentState = sceneControllablesState;
 	}
 
+	public void OnBeforeMechanicsReload()
+	{
+		m_OnMechanicsReloadControllablesCopy = CurrentState?.CopyStates();
+	}
+
+	public void OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
+	{
+		if (reloadedScenes != null && reloadedScenes.Count > 0)
+		{
+			RestoreStatesForNotReloadedScenes(reloadedScenes);
+			Rescan();
+		}
+		m_OnMechanicsReloadControllablesCopy = null;
+	}
+
+	private void RestoreStatesForNotReloadedScenes(IReadOnlyList<SceneReference> reloadedScenes)
+	{
+		if (m_OnMechanicsReloadControllablesCopy == null || m_OnMechanicsReloadControllablesCopy.Count == 0)
+		{
+			return;
+		}
+		HashSet<string> hashSet = new HashSet<string>(reloadedScenes.Count);
+		foreach (SceneReference reloadedScene in reloadedScenes)
+		{
+			hashSet.Add(reloadedScene.SceneName);
+		}
+		foreach (var (id, controllableState2) in m_OnMechanicsReloadControllablesCopy)
+		{
+			if (controllableState2 != null && (controllableState2.SceneName == null || !hashSet.Contains(controllableState2.SceneName)))
+			{
+				CurrentState.SetState(id, controllableState2);
+			}
+		}
+	}
+
 	public void OnStop()
 	{
+		m_OnMechanicsReloadControllablesCopy = null;
 		m_Components.Clear();
 		m_AwaitingSettle.Clear();
 		this.AllControllablesSettled = null;

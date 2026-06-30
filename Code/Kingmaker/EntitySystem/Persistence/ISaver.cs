@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Kingmaker.Utility.UnityExtensions;
+using UnityEngine;
 
 namespace Kingmaker.EntitySystem.Persistence;
 
@@ -69,6 +70,6 @@ public interface ISaver : IDisposable
 	static ISaver()
 	{
 		UTF8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-		BuffersSize = 2097152;
+		BuffersSize = ((Application.platform == RuntimePlatform.Switch2) ? 2097152 : 4096);
 	}
 }

@@ -87,7 +87,7 @@ public class AbilityMomentumLogic : BlueprintComponent, IAbilityOnCastLogic, IAb
 			{
 				return false;
 			}
-			int num = ((!HeroicAct) ? ((HasCostReducingFact && caster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!caster.Facts.GetComponents((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost).Any()) ? (group.Units.Count((EntityRef<MechanicEntity> p) => p.Entity.Facts.Contains(root.HeroicActBuff)) * 25 + 75) : 0));
+			int num = ((!HeroicAct) ? ((HasCostReducingFact && caster.Facts.Contains(CostReducingFact)) ? (Cost - CostReduction) : Cost) : ((!caster.Facts.GetComponents((WarhammerFreeUltimateBuff buff) => buff.NoMomentumCost).Any()) ? (group.Units.Count((EntityRef<MechanicEntity> r) => r.Entity?.Facts.Contains(root.HeroicActBuff) ?? false) * 25 + 75) : 0));
 			return p.Units.Contains(caster) && p.Momentum >= num;
 		});
 	}

@@ -235,6 +235,10 @@ public class ExplorationVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
+		if (gameMode == GameModeType.Dialog)
+		{
+			IsLockUIForDialog.Value = false;
+		}
 	}
 
 	public void HandleColonyProjectsUIOpen(Colony colony)

@@ -150,22 +150,24 @@ public class PlayerTimersManager : IAreaHandler, ISubscriber, IPartyCombatHandle
 
 	private void StopAllTimersByScope(PlayerTimer.ScopeType scope)
 	{
-		foreach (PlayerTimer timer in m_Timers)
+		for (int num = m_Timers.Count - 1; num >= 0; num--)
 		{
-			if (timer.Scope == scope)
+			PlayerTimer playerTimer = m_Timers[num];
+			if (playerTimer.Scope == scope)
 			{
-				StopTimer(timer);
+				StopTimer(playerTimer);
 			}
 		}
 	}
 
 	private void StopAllTimersByBlueprint(BlueprintPlayerTimer timerBp)
 	{
-		foreach (PlayerTimer timer in m_Timers)
+		for (int num = m_Timers.Count - 1; num >= 0; num--)
 		{
-			if (timer.Blueprint == timerBp)
+			PlayerTimer playerTimer = m_Timers[num];
+			if (playerTimer.Blueprint == timerBp)
 			{
-				StopTimer(timer);
+				StopTimer(playerTimer);
 			}
 		}
 	}

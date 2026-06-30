@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Enums.Helper;
@@ -46,6 +44,10 @@ public class ContextActionJumpToTarget : ContextActionMove
 
 	[SerializeField]
 	private bool CanJumpInPlace;
+
+	[KDB("Поведение в случае, если целевая точка занята: по-умолчанию ищется ближайшая незанятая клетка. С включенной галочкой ищется ближайшая незанятая клетка, которая еще будет соединена напрямую по навмешу с целевой.")]
+	[SerializeField]
+	private bool m_TryTakeConnectedNode;
 
 	[SerializeField]
 	[FormerlySerializedAs("Spell")]
@@ -123,50 +125,114 @@ public class ContextActionJumpToTarget : ContextActionMove
 
 	private CustomGridNodeBase GetEndNode(Vector3 targetPosition, MechanicEntity caster, Vector3 casterPosition)
 	{
-		CustomGridNodeBase startPoint = casterPosition.GetNearestNodeXZ();
-		CustomGridNodeBase nearestNodeXZ = targetPosition.GetNearestNodeXZ();
+		CustomGridNodeBase nearestNodeXZ = casterPosition.GetNearestNodeXZ();
+		CustomGridNodeBase nearestNodeXZ2 = targetPosition.GetNearestNodeXZ();
 		int num = m_Cells.Calculate(base.Context);
-		CustomGridNodeBase customGridNodeBase = (m_directJump ? nearestNodeXZ : (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ()));
-		if (m_EndInTargetPoint && startPoint.CellDistanceTo(nearestNodeXZ) < num)
+		CustomGridNodeBase customGridNodeBase = (m_directJump ? nearestNodeXZ2 : (m_FromPoint ? (targetPosition + (casterPosition - targetPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ() : (casterPosition + (targetPosition - casterPosition).normalized * ((float)num * GraphParamsMechanicsCache.GridCellSize)).GetNearestNodeXZ()));
+		if (m_EndInTargetPoint && nearestNodeXZ.CellDistanceTo(nearestNodeXZ2) < num)
 		{
-			customGridNodeBase = nearestNodeXZ;
+			customGridNodeBase = nearestNodeXZ2;
 		}
-		if (!caster.CanStandHere(customGridNodeBase) || (!CanJumpInPlace && customGridNodeBase == startPoint) || startPoint.Area != customGridNodeBase.Area)
+		if (!CanLandOn(caster, nearestNodeXZ, customGridNodeBase))
 		{
-			List<CustomGridNodeBase> list = new List<CustomGridNodeBase>();
-			IntRect rect = customGridNodeBase.GetUnit()?.SizeRect ?? SizePathfindingHelper.GetRectForSize(Size.Medium);
-			BaseUnitEntity unit = customGridNodeBase.GetUnit();
-			foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(customGridNodeBase, rect, Math.Max(caster.SizeRect.Height, caster.SizeRect.Width)))
-			{
-				if (!caster.CanStandHere(item) || (!CanJumpInPlace && item == startPoint) || startPoint.Area != item.Area)
-				{
-					continue;
-				}
-				foreach (CustomGridNodeBase node in GridAreaHelper.GetNodes(item, caster.SizeRect))
-				{
-					if (unit == null)
-					{
-						if (node.CellDistanceTo(customGridNodeBase) <= 1)
-						{
-							list.Add(item);
-							break;
-						}
-					}
-					else if (unit.DistanceToInCells(node.Vector3Position) <= 1)
-					{
-						list.Add(item);
-						break;
-					}
-				}
-			}
-			IOrderedEnumerable<CustomGridNodeBase> source = list.OrderBy((CustomGridNodeBase x) => (startPoint.Vector3Position - x.Vector3Position).sqrMagnitude);
-			customGridNodeBase = ((source.Count() > 1) ? source.FirstOrDefault((CustomGridNodeBase node) => node != caster.GetNearestNodeXZ()) : source.FirstOrDefault());
+			customGridNodeBase = FindAvailableEndNode(caster, nearestNodeXZ, customGridNodeBase);
 		}
 		return customGridNodeBase;
+	}
+
+	private CustomGridNodeBase FindAvailableEndNode(MechanicEntity caster, CustomGridNodeBase startPoint, CustomGridNodeBase targetNode)
+	{
+		CustomGridNodeBase nearestNodeXZ = caster.GetNearestNodeXZ();
+		BaseUnitEntity unit = targetNode.GetUnit();
+		IntRect rect = unit?.SizeRect ?? SizePathfindingHelper.GetRectForSize(Size.Medium);
+		NodeList targetNodes = (m_TryTakeConnectedNode ? GridAreaHelper.GetNodes(targetNode, rect) : NodeList.Empty);
+		bool flag = false;
+		CustomGridNodeBase customGridNodeBase = null;
+		CustomGridNodeBase customGridNodeBase2 = null;
+		float num = float.MaxValue;
+		float num2 = float.MaxValue;
+		foreach (CustomGridNodeBase item in GridAreaHelper.GetNodesSpiralAround(targetNode, rect, Math.Max(caster.SizeRect.Height, caster.SizeRect.Width)))
+		{
+			if (!CanLandOn(caster, startPoint, item))
+			{
+				continue;
+			}
+			NodeList nodes = GridAreaHelper.GetNodes(item, caster.SizeRect);
+			if (!IsAdjacentToTarget(nodes, unit, targetNode))
+			{
+				continue;
+			}
+			if (item == nearestNodeXZ)
+			{
+				flag = true;
+				continue;
+			}
+			float sqrMagnitude = (startPoint.Vector3Position - item.Vector3Position).sqrMagnitude;
+			if (sqrMagnitude < num)
+			{
+				customGridNodeBase = item;
+				num = sqrMagnitude;
+			}
+			if (m_TryTakeConnectedNode && sqrMagnitude < num2 && IsConnectedToTarget(nodes, targetNodes))
+			{
+				customGridNodeBase2 = item;
+				num2 = sqrMagnitude;
+			}
+		}
+		CustomGridNodeBase customGridNodeBase3 = customGridNodeBase2;
+		if (customGridNodeBase3 == null)
+		{
+			customGridNodeBase3 = customGridNodeBase;
+			if (customGridNodeBase3 == null)
+			{
+				if (!flag)
+				{
+					return null;
+				}
+				customGridNodeBase3 = nearestNodeXZ;
+			}
+		}
+		return customGridNodeBase3;
+	}
+
+	private static bool IsAdjacentToTarget(NodeList candidateNodes, MechanicEntity unitAtTarget, CustomGridNodeBase targetNode)
+	{
+		foreach (CustomGridNodeBase item in candidateNodes)
+		{
+			if ((unitAtTarget == null) ? (item.CellDistanceTo(targetNode) <= 1) : (unitAtTarget.DistanceToInCells(item.Vector3Position) <= 1))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private bool CanLandOn(MechanicEntity caster, CustomGridNodeBase startPoint, CustomGridNodeBase node)
+	{
+		if (caster.CanStandHere(node) && (CanJumpInPlace || node != startPoint))
+		{
+			return startPoint.Area == node.Area;
+		}
+		return false;
 	}
 
 	public override bool IsValidToCast(TargetWrapper target, MechanicEntity caster, Vector3 casterPosition)
 	{
 		return GetEndNode(target.HasEntity ? target.Entity.Position : target.Point, caster, casterPosition) != null;
+	}
+
+	private static bool IsConnectedToTarget(NodeList candidateNodes, NodeList targetNodes)
+	{
+		foreach (CustomGridNodeBase item in candidateNodes)
+		{
+			foreach (CustomGridNodeBase item2 in targetNodes)
+			{
+				if (item.ContainsConnection(item2))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

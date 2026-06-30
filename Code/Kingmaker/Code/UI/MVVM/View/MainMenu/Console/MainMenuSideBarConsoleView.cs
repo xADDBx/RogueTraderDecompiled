@@ -7,6 +7,7 @@ using Kingmaker.EntitySystem.Persistence;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.Utility.BuildModeUtils;
+using Owlcat.Runtime.UI.ConsoleTools;
 using Owlcat.Runtime.UI.ConsoleTools.ClickHandlers;
 using Owlcat.Runtime.UI.ConsoleTools.GamepadInput;
 using Owlcat.Runtime.UI.ConsoleTools.HintTool;
@@ -42,6 +43,8 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 
 	private InputLayer m_LinkInputLayer;
 
+	private List<IConsoleNavigationEntity> m_FooterEntities;
+
 	private readonly BoolReactiveProperty m_InputEnabled = new BoolReactiveProperty();
 
 	private readonly BoolReactiveProperty m_HasLinks = new BoolReactiveProperty();
@@ -69,6 +72,7 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 		m_LinkNavigation.Clear();
 		m_LinkNavigation = null;
 		m_LinkInputLayer = null;
+		m_FooterEntities = null;
 		m_HintsWidget.Dispose();
 	}
 
@@ -118,15 +122,17 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 	private void CalculateGlossary()
 	{
 		AddDisposable(m_LinkNavigation = new GridConsoleNavigationBehaviour(null, null, Vector2Int.one, lineGrid: true));
+		AddDisposable(m_LinkNavigation.DeepestFocusAsObservable.Subscribe(OnLinkFocusChanged));
 		List<IFloatConsoleNavigationEntity> list = TMPLinkNavigationGenerator.GenerateEntityList(m_MotivationText, m_FirstGlossaryFocus, m_SecondGlossaryFocus, OnClickLink, OnFocusLink, null);
-		List<IConsoleNavigationEntity> entities = new List<IConsoleNavigationEntity> { m_LicenceButton, m_WebsiteButton, m_DiscordButton };
+		m_FooterEntities = new List<IConsoleNavigationEntity> { m_LicenceButton, m_WebsiteButton, m_DiscordButton };
 		m_LinkNavigation.SetEntitiesVertical(list);
-		m_LinkNavigation.AddRow(entities);
-		m_HasLinks.Value = list.Any();
+		m_LinkNavigation.AddRow(m_FooterEntities);
+		m_HasLinks.Value = list.Any() || m_FooterEntities.Any((IConsoleNavigationEntity e) => e.IsValid());
 		m_LinkInputLayer = m_LinkNavigation.GetInputLayer(new InputLayer
 		{
 			ContextName = "MainMenuLinks"
 		});
+		AddDisposable(m_LinkInputLayer.AddAxis(Scroll, 3, repeat: true));
 		AddDisposable(m_HintsWidget.BindHint(m_LinkInputLayer.AddButton(ExitLinks, 9, m_IsLinkMode), UIStrings.Instance.CommonTexts.Back, ConsoleHintsWidget.HintPosition.Left));
 		AddDisposable(m_LinkInputLayer.AddButton(ExitLinks, 11, m_IsLinkMode));
 		AddDisposable(m_HintsWidget.BindHint(m_LinkInputLayer.AddButton(delegate
@@ -141,6 +147,33 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 
 	private void OnFocusLink(string key)
 	{
+	}
+
+	private void OnLinkFocusChanged(IConsoleEntity focus)
+	{
+		RectTransform entityRect = GetEntityRect(focus);
+		if (!(entityRect == null) && entityRect.IsChildOf(m_ScrollRect.content) && !m_ScrollRect.IsInViewport(entityRect))
+		{
+			m_ScrollRect.ScrollToRectCenter(entityRect, entityRect);
+		}
+	}
+
+	private void RefocusFooterIfLinkOffscreen()
+	{
+		RectTransform entityRect = GetEntityRect(m_LinkNavigation?.CurrentEntity);
+		if (!(entityRect == null) && entityRect.IsChildOf(m_ScrollRect.content) && !m_ScrollRect.IsInViewport(entityRect))
+		{
+			IConsoleNavigationEntity consoleNavigationEntity = m_FooterEntities?.FirstOrDefault((IConsoleNavigationEntity e) => e?.IsValid() ?? false);
+			if (consoleNavigationEntity != null)
+			{
+				m_LinkNavigation.FocusOnEntityManual(consoleNavigationEntity);
+			}
+		}
+	}
+
+	private static RectTransform GetEntityRect(IConsoleEntity entity)
+	{
+		return ((entity as MonoBehaviour) ?? (entity as IMonoBehaviour)?.MonoBehaviour)?.transform as RectTransform;
 	}
 
 	private void EnterLinks(InputActionEventData data)
@@ -180,6 +213,10 @@ public class MainMenuSideBarConsoleView : MainMenuSideBarView<ContextMenuEntityC
 		PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
 		pointerEventData.scrollDelta = new Vector2(0f, x * m_ScrollRect.scrollSensitivity);
 		m_ScrollRect.OnSmoothlyScroll(pointerEventData);
+		if (m_IsLinkMode.Value)
+		{
+			RefocusFooterIfLinkOffscreen();
+		}
 	}
 
 	protected override void UpdateMessageOfTheDay()

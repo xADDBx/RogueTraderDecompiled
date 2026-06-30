@@ -68,7 +68,7 @@ public class InventorySlotPCView : InventorySlotView
 		bool flag2 = RootUIContext.Instance.IsInventoryShow && base.ViewModel.ItemEntity?.Blueprint is BlueprintItemAugment;
 		List<ContextMenuCollectionEntity> value2 = new List<ContextMenuCollectionEntity>
 		{
-			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !(flag || flag2)),
+			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !(flag || flag2), base.ViewModel.IsEquipToUnlockedSlotPossible),
 			new ContextMenuCollectionEntity(UIStrings.Instance.LootWindow.SendToCargo, delegate
 			{
 				MoveToCargo(immediately: true);

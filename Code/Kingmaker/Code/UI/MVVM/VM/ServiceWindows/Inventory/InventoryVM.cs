@@ -16,6 +16,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
 using Kingmaker.UI.Common;
+using Kingmaker.UI.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UniRx;
 using UniRx;
@@ -94,7 +95,19 @@ public class InventoryVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposa
 
 	void IInventoryHandler.TryEquip(ItemSlotVM slot)
 	{
-		if (!IsBlockedAugmentFromInventory(slot))
+		if (IsBlockedAugmentFromInventory(slot))
+		{
+			return;
+		}
+		if (slot != null && slot.HasItem && !UIUtilityItem.HasUnlockedEquipSlot(slot.ItemEntity, Unit?.Value))
+		{
+			UISounds.Instance.Sounds.Combat.CombatGridCantPerformActionClick.Play();
+			EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
+			{
+				h.HandleWarning(UIStrings.Instance.ShipCustomization.CantInsertInThisWeaponSlot.Text, addToLog: false, WarningNotificationFormat.Short);
+			});
+		}
+		else
 		{
 			InventoryHelper.TryEquip(slot, Unit?.Value);
 		}

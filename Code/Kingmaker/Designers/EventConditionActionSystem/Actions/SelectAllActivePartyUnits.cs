@@ -1,12 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UI;
-using Kingmaker.UI.Selection;
-using Kingmaker.View;
-using Owlcat.Runtime.Core.Utility;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
@@ -20,10 +14,6 @@ public class SelectAllActivePartyUnits : GameAction
 
 	protected override void RunAction()
 	{
-		if (UIAccess.SelectionManager is SelectionManagerPC selectionManagerPC)
-		{
-			List<UnitEntityView> views = Game.Instance.Player.Party.Select((BaseUnitEntity character) => character.View).ToTempList();
-			selectionManagerPC.MultiSelect(views);
-		}
+		UIAccess.SelectionManager?.SelectAll();
 	}
 }

@@ -16,6 +16,26 @@ public class ProtectionTileScorer : TileScorer
 {
 	private static readonly float[] hideCoverValues = new float[4] { 0f, 0.0004f, 0.02f, 1f };
 
+	private readonly Dictionary<LosCalculations.CoverType, int> m_EnsuredCovers = new Dictionary<LosCalculations.CoverType, int>
+	{
+		{
+			LosCalculations.CoverType.None,
+			0
+		},
+		{
+			LosCalculations.CoverType.Half,
+			0
+		},
+		{
+			LosCalculations.CoverType.Full,
+			0
+		},
+		{
+			LosCalculations.CoverType.Invisible,
+			0
+		}
+	};
+
 	protected override Score CalculateThreatsScore(DecisionContext context, CustomGridNodeBase node)
 	{
 		AiBrainHelper.ThreatsInfo threatsInfo = context.FindThreats(context.Unit, node);
@@ -33,9 +53,9 @@ public class ProtectionTileScorer : TileScorer
 
 	protected override Score CalculateHideScore(DecisionContext context, CustomGridNodeBase node)
 	{
-		Dictionary<LosCalculations.CoverType, float> ensuredCovers = GetEnsuredCovers(node, context.Unit.SizeRect, context.Enemies);
+		CalculateEnsuredCovers(node, context.Unit.SizeRect, context.Enemies);
 		float hideValue = GetHideValue(node, context.Unit.SizeRect, context.Enemies);
-		return new Score((ensuredCovers[LosCalculations.CoverType.Invisible] + ensuredCovers[LosCalculations.CoverType.Full] == (float)context.Enemies.Count) ? 1 : 0, (ensuredCovers[LosCalculations.CoverType.Invisible] + ensuredCovers[LosCalculations.CoverType.Full] + ensuredCovers[LosCalculations.CoverType.Half] == (float)context.Enemies.Count) ? 1 : 0, (ensuredCovers[LosCalculations.CoverType.Invisible] + ensuredCovers[LosCalculations.CoverType.Full] + ensuredCovers[LosCalculations.CoverType.Half]) / (float)context.Enemies.Count, (ensuredCovers[LosCalculations.CoverType.Invisible] + ensuredCovers[LosCalculations.CoverType.Full]) / (float)context.Enemies.Count, hideValue);
+		return new Score((m_EnsuredCovers[LosCalculations.CoverType.Invisible] + m_EnsuredCovers[LosCalculations.CoverType.Full] == context.Enemies.Count) ? 1 : 0, (m_EnsuredCovers[LosCalculations.CoverType.Invisible] + m_EnsuredCovers[LosCalculations.CoverType.Full] + m_EnsuredCovers[LosCalculations.CoverType.Half] == context.Enemies.Count) ? 1 : 0, (float)(m_EnsuredCovers[LosCalculations.CoverType.Invisible] + m_EnsuredCovers[LosCalculations.CoverType.Full] + m_EnsuredCovers[LosCalculations.CoverType.Half]) / (float)context.Enemies.Count, (float)(m_EnsuredCovers[LosCalculations.CoverType.Invisible] + m_EnsuredCovers[LosCalculations.CoverType.Full]) / (float)context.Enemies.Count, hideValue);
 	}
 
 	protected override Score CalculateStayingAwayScore(DecisionContext context, CustomGridNodeBase node)
@@ -61,27 +81,12 @@ public class ProtectionTileScorer : TileScorer
 		return num;
 	}
 
-	private Dictionary<LosCalculations.CoverType, float> GetEnsuredCovers(CustomGridNodeBase node, IntRect unitSizeRect, List<TargetInfo> enemies)
+	private void CalculateEnsuredCovers(CustomGridNodeBase node, IntRect unitSizeRect, List<TargetInfo> enemies)
 	{
-		Dictionary<LosCalculations.CoverType, float> dictionary = new Dictionary<LosCalculations.CoverType, float>
-		{
-			{
-				LosCalculations.CoverType.None,
-				0f
-			},
-			{
-				LosCalculations.CoverType.Half,
-				0f
-			},
-			{
-				LosCalculations.CoverType.Full,
-				0f
-			},
-			{
-				LosCalculations.CoverType.Invisible,
-				0f
-			}
-		};
+		m_EnsuredCovers[LosCalculations.CoverType.None] = 0;
+		m_EnsuredCovers[LosCalculations.CoverType.Half] = 0;
+		m_EnsuredCovers[LosCalculations.CoverType.Full] = 0;
+		m_EnsuredCovers[LosCalculations.CoverType.Invisible] = 0;
 		foreach (TargetInfo enemy in enemies)
 		{
 			if (enemy.AiConsideredMoveVariants == null)
@@ -96,9 +101,12 @@ public class ProtectionTileScorer : TileScorer
 				{
 					coverType = warhammerLos;
 				}
+				if (coverType == LosCalculations.CoverType.None)
+				{
+					break;
+				}
 			}
-			dictionary[coverType] += 1f;
+			m_EnsuredCovers[coverType]++;
 		}
-		return dictionary;
 	}
 }

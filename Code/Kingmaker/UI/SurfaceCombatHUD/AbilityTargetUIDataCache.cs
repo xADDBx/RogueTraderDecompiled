@@ -5,6 +5,7 @@ using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.PubSubSystem;
 using Kingmaker.PubSubSystem.Core;
 using Kingmaker.PubSubSystem.Core.Interfaces;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Buffs;
 using UnityEngine;
@@ -86,7 +87,11 @@ public class AbilityTargetUIDataCache : MonoBehaviour, IAbilityTargetSelectionUI
 			overpenetrationUIData.OverpenetrationHitChance = 100f;
 			OverpenetrationUIData overpenetrationData = overpenetrationUIData;
 			value = new AbilityTargetUIData(ability, target, casterPosition, ref overpenetrationData);
-			m_UIDataCache.Add((ability, target, casterPosition), value);
+			UnitPredictionManager instance = UnitPredictionManager.Instance;
+			if ((object)instance == null || !instance.IsUnitRicochetTarget(target))
+			{
+				m_UIDataCache.Add((ability, target, casterPosition), value);
+			}
 		}
 		if (flag)
 		{

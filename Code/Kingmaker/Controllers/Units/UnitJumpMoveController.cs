@@ -20,6 +20,15 @@ public class UnitJumpMoveController : BaseUnitController
 		}, isCheckRuntime: true);
 	}
 
+	protected override bool ShouldTickOnUnit(AbstractUnitEntity unit)
+	{
+		if (!unit.IsDisposed)
+		{
+			return unit.GetOptional<UnitPartJump>() != null;
+		}
+		return false;
+	}
+
 	protected override void TickOnUnit(AbstractUnitEntity entity)
 	{
 		if (!(entity is BaseUnitEntity baseUnitEntity))
@@ -33,7 +42,7 @@ public class UnitJumpMoveController : BaseUnitController
 		}
 		float deltaTime = Game.Instance.TimeController.DeltaTime;
 		UnitPartJump.Chunk active = optional.Active;
-		if (active == null)
+		if (active == null || baseUnitEntity.LifeState.IsDead)
 		{
 			baseUnitEntity.Position = baseUnitEntity.CurrentNode.position;
 			baseUnitEntity.Remove<UnitPartJump>();

@@ -4,7 +4,6 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
 using Kingmaker.EntitySystem.Interfaces;
 using Kingmaker.EntitySystem.Persistence.JsonUtility;
-using Kingmaker.Networking.Serialization;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.View.Mechanics.Entities;
 using StateHasher.Core;
@@ -18,7 +17,6 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 
 	public Vector3 LastUpdatePosition { get; private set; }
 
-	[GameStateInclude]
 	public Vector3 PlatformPosition => base.View?.ViewTransform.position ?? Vector3.zero;
 
 	public PlatformObjectEntity(string uniqueId, bool isInGame)
@@ -92,8 +90,6 @@ public class PlatformObjectEntity : Entity, IUpdatable, IHashable
 		Hash128 result = default(Hash128);
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
-		Vector3 val2 = PlatformPosition;
-		result.Append(ref val2);
 		return result;
 	}
 }

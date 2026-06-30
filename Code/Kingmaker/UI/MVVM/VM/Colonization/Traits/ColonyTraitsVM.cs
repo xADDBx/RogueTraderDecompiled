@@ -49,18 +49,9 @@ public class ColonyTraitsVM : ColonyUIComponentVM, IColonizationTraitHandler, IS
 		{
 			return;
 		}
-		int num = 0;
-		foreach (var (blueprintColonyTrait2, _) in m_Colony.ColonyTraits)
+		foreach (var (trait, _) in m_Colony.ColonyTraits)
 		{
-			if (blueprintColonyTrait2.IsHistorical)
-			{
-				AddTraitVM(blueprintColonyTrait2, num);
-				num++;
-			}
-			else
-			{
-				AddTraitVM(blueprintColonyTrait2);
-			}
+			AddTraitVM(trait);
 		}
 		UpdateTraits.Execute();
 	}
@@ -68,13 +59,6 @@ public class ColonyTraitsVM : ColonyUIComponentVM, IColonizationTraitHandler, IS
 	private void AddTraitVM(BlueprintColonyTrait trait)
 	{
 		ColonyTraitVM colonyTraitVM = new ColonyTraitVM(trait);
-		AddDisposable(colonyTraitVM);
-		TraitsVMs.Add(colonyTraitVM);
-	}
-
-	private void AddTraitVM(BlueprintColonyTrait trait, int index)
-	{
-		ColonyTraitVM colonyTraitVM = new ColonyTraitVM(trait, index);
 		AddDisposable(colonyTraitVM);
 		TraitsVMs.Add(colonyTraitVM);
 	}

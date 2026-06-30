@@ -159,18 +159,22 @@ public class ColonyProjectsNavigationVM : BaseDisposable, IViewModel, IBaseDispo
 
 	private void UpdateProjects()
 	{
-		bool flag = false;
+		ColonyProjectVM colonyProjectVM = null;
+		int num = 0;
+		int hiddenIndex = -1;
 		foreach (ColonyProjectVM navigationElement in NavigationElements)
 		{
 			navigationElement.SetShouldShow(m_IsStartingProjects, m_ShowBlockedProjects, m_ShowFinishedProjects);
-			if (!flag)
+			if (colonyProjectVM == null && navigationElement.IsSelected.Value && !navigationElement.IsVisible)
 			{
-				flag = navigationElement.IsSelected.Value && !navigationElement.IsVisible;
+				colonyProjectVM = navigationElement;
+				hiddenIndex = num;
 			}
+			num++;
 		}
-		if (flag)
+		if (colonyProjectVM != null)
 		{
-			CheckSelectedProjectVisible();
+			SelectNearestVisibleProject(colonyProjectVM, hiddenIndex);
 		}
 		ProjectsUpdated.Execute();
 	}
@@ -196,11 +200,44 @@ public class ColonyProjectsNavigationVM : BaseDisposable, IViewModel, IBaseDispo
 		}
 	}
 
-	private void CheckSelectedProjectVisible()
+	private void SelectNearestVisibleProject(ColonyProjectVM hidden, int hiddenIndex)
 	{
-		ColonyProjectVM colonyProjectVM = NavigationElements.FirstOrDefault((ColonyProjectVM elem) => elem.IsVisible);
-		SetSelection(colonyProjectVM?.BlueprintColonyProject);
-		colonyProjectVM?.SelectPage();
+		int rank = (int)hidden.Rank;
+		ColonyProjectVM colonyProjectVM = null;
+		int num = int.MaxValue;
+		int num2 = int.MaxValue;
+		ColonyProjectVM colonyProjectVM2 = null;
+		int num3 = int.MinValue;
+		int num4 = int.MinValue;
+		int num5 = 0;
+		foreach (ColonyProjectVM navigationElement in NavigationElements)
+		{
+			if (navigationElement == hidden || !navigationElement.IsVisible)
+			{
+				num5++;
+				continue;
+			}
+			int rank2 = (int)navigationElement.Rank;
+			if (rank2 > rank || (rank2 == rank && num5 > hiddenIndex))
+			{
+				if (rank2 < num || (rank2 == num && num5 < num2))
+				{
+					colonyProjectVM = navigationElement;
+					num = rank2;
+					num2 = num5;
+				}
+			}
+			else if (rank2 > num3 || (rank2 == num3 && num5 > num4))
+			{
+				colonyProjectVM2 = navigationElement;
+				num3 = rank2;
+				num4 = num5;
+			}
+			num5++;
+		}
+		ColonyProjectVM colonyProjectVM3 = colonyProjectVM ?? colonyProjectVM2;
+		SetSelection(colonyProjectVM3?.BlueprintColonyProject);
+		colonyProjectVM3?.SelectPage();
 	}
 
 	private void UpdateStartingProjectsState()

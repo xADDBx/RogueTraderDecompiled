@@ -83,7 +83,7 @@ public class RewardChangeStatEfficiency : Reward
 		{
 			h.HandleEfficiencyInAllColoniesChanged(m_EfficiencyModifier);
 		});
-		coloniesState.ContentmentModifiersForAllColonies.Add(new ColonyStatModifier
+		coloniesState.EfficiencyModifiersForAllColonies.Add(new ColonyStatModifier
 		{
 			ModifierType = modifierType,
 			Value = m_EfficiencyModifier,

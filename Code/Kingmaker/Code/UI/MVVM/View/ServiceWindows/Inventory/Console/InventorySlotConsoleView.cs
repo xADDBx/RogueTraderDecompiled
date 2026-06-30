@@ -68,7 +68,7 @@ public class InventorySlotConsoleView : InventorySlotView, IConfirmClickHandler,
 		m_AddRemoveFromFavorites = new ContextMenuCollectionEntity(title2, base.AddRemoveFromFavorites, condition: true, isInteractable);
 		List<ContextMenuCollectionEntity> value2 = new List<ContextMenuCollectionEntity>
 		{
-			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipPossible && !(flag || flag2)),
+			new ContextMenuCollectionEntity(contextMenu.Equip, base.EquipItem, base.ViewModel.IsEquipToUnlockedSlotPossible && !(flag || flag2)),
 			new ContextMenuCollectionEntity(UIStrings.Instance.LootWindow.SendToCargo, delegate
 			{
 				MoveToCargo(immediately: true);

@@ -20,6 +20,7 @@ using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Enums;
 using Kingmaker.UnitLogic.Parts;
+using Kingmaker.UnitLogic.Squads;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Particles;
 
@@ -189,7 +190,10 @@ public class MomentumController : IControllerEnable, IController, IControllerDis
 	{
 		foreach (MechanicEntity unit in units)
 		{
-			AddUnitToMomentumGroup(unit);
+			if (!(unit is UnitSquad))
+			{
+				AddUnitToMomentumGroup(unit);
+			}
 		}
 	}
 

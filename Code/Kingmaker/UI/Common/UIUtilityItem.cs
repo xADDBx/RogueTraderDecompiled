@@ -999,6 +999,68 @@ public static class UIUtilityItem
 		return false;
 	}
 
+	public static bool HasUnlockedEquipSlot(ItemEntity item, BaseUnitEntity unit)
+	{
+		if (item == null || unit == null)
+		{
+			return false;
+		}
+		PartUnitBody optional = unit.GetOptional<PartUnitBody>();
+		if (optional == null)
+		{
+			return false;
+		}
+		foreach (ItemSlot equipmentSlot in optional.EquipmentSlots)
+		{
+			if (equipmentSlot.PossibleEquipItem(item) && !equipmentSlot.Lock)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool HasUnlockedEquipSlot(ItemEntity item)
+	{
+		return HasUnlockedEquipSlot(item, UIUtility.GetCurrentSelectedUnit() ?? Game.Instance.Player.MainCharacterEntity);
+	}
+
+	public static bool IsAugmentSuitable(ItemEntity item)
+	{
+		if (!(item?.Blueprint is BlueprintItemAugment))
+		{
+			return IsEquipPossible(item);
+		}
+		BlueprintItemAugment blueprintItemAugment = (BlueprintItemAugment)item.Blueprint;
+		BaseUnitEntity baseUnitEntity = UIUtility.GetCurrentSelectedUnit() ?? Game.Instance.Player.MainCharacterEntity;
+		PartUnitBody partUnitBody = baseUnitEntity?.GetOptional<PartUnitBody>();
+		if (partUnitBody == null || (bool)partUnitBody.Augments.Disabled)
+		{
+			return false;
+		}
+		bool flag = false;
+		foreach (BlueprintAugmentSlot key in partUnitBody.Augments.Slots.Keys)
+		{
+			if (blueprintItemAugment.AugmentSlot == key)
+			{
+				flag = true;
+				break;
+			}
+		}
+		if (!flag)
+		{
+			return false;
+		}
+		foreach (EquipmentRestriction component in blueprintItemAugment.GetComponents<EquipmentRestriction>())
+		{
+			if (!(component is EquipmentRestrictionAugmentTier) && !component.CanBeEquippedBy(baseUnitEntity))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static bool IsQuestItem(BlueprintItem blueprintItem)
 	{
 		if (!blueprintItem.IsNotable)

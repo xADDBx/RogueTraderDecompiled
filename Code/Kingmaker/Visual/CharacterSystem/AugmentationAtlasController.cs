@@ -52,7 +52,7 @@ public class AugmentationAtlasController : IDisposable
 		}
 		_atlasData = atlasData;
 		_fullAtlasSize = (int)atlasData.targetResolution / 4 * 4;
-		int num = (ShouldDownscale ? Mathf.Min(_fullAtlasSize, 1024) : _fullAtlasSize);
+		int num = ((ShouldDownscale && GetCompressor() != null) ? Mathf.Min(_fullAtlasSize, 1024) : _fullAtlasSize);
 		_atlasSize = num / 4 * 4;
 		_slotRects.Clear();
 		foreach (CharacterAtlasData.BodyPartCoords bodyPartsCoord in atlasData.BodyPartsCoords)

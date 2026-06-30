@@ -142,6 +142,10 @@ public class AugmentationsConsoleView : AugmentationsBaseView<AugmentationsInven
 		UpdateSlots();
 		UpdateNavigation();
 		AddDisposable(m_NavigationBehaviour?.DeepestFocusAsObservable.Subscribe(OnFocusEntity));
+		if (!m_IsCulled)
+		{
+			FocusOnStashNextFrame();
+		}
 		AddDisposable(base.ViewModel.Unit?.Subscribe(delegate
 		{
 			RefreshView();
@@ -679,6 +683,19 @@ public class AugmentationsConsoleView : AugmentationsBaseView<AugmentationsInven
 			UpdateNavigation();
 		}
 		OnFocusEntity(m_NavigationBehaviour.DeepestNestedFocus);
+	}
+
+	private void FocusOnStashNextFrame()
+	{
+		DelayedInvoker.InvokeInFrames(delegate
+		{
+			if (!m_IsCulled && m_NavigationBehaviour != null && m_StashView.SlotsNavigation != null)
+			{
+				m_StashView.SlotsNavigation.FocusOnFirstValidEntity();
+				m_NavigationBehaviour.FocusOnEntityManual(m_StashView.SlotsNavigation.DeepestNestedFocus);
+				m_NavigationBehaviour.UpdateDeepestFocusObserve();
+			}
+		}, 1);
 	}
 
 	private void Refocus()

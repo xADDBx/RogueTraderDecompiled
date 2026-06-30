@@ -536,8 +536,24 @@ public class UnitEntityView : AbstractUnitEntityView, IUnitEquipmentHandler<Enti
 	{
 		using (ProfileScope.NewScope("ExtractEquipmentEntities"))
 		{
+			if (slot is AugmentSlot slot2)
+			{
+				return ExtractAugmentVisualEntities(slot2);
+			}
 			return (!slot.HasItem) ? Enumerable.Empty<EquipmentEntity>() : ExtractEquipmentEntities(slot.Item);
 		}
+	}
+
+	private IEnumerable<EquipmentEntity> ExtractAugmentVisualEntities(AugmentSlot slot)
+	{
+		BlueprintItemEquipment visualItemBlueprint = slot.GetVisualItemBlueprint();
+		if (visualItemBlueprint?.EquipmentEntity == null)
+		{
+			return Enumerable.Empty<EquipmentEntity>();
+		}
+		Gender gender = EntityData.Gender;
+		Race race = EntityData.Progression.Race?.RaceId ?? Race.Human;
+		return visualItemBlueprint.EquipmentEntity.Load(gender, race);
 	}
 
 	public void TryForceRampIndicesFromDollRoom(ItemSlot slot, Character dollRoomCharacter)

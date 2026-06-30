@@ -90,6 +90,11 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 		bool flag2 = false;
 		bool flag3 = false;
 		m_AbilityTargets.Clear();
+		DamageData damageData = overpenRule?.OverpenetrationDamage;
+		if (damageData == null || !damageData.IsRicochet)
+		{
+			UnitPredictionManager.Instance.Or(null)?.ClearRicochetPreview();
+		}
 		OverpenetrationUIData overpenetrationUIData = default(OverpenetrationUIData);
 		overpenetrationUIData.CountOverpenetration = false;
 		overpenetrationUIData.OverpenetrationDamagePercent = 100;
@@ -107,13 +112,13 @@ public class AbilitySingleTargetRange : AbilityRange, IShowAoEAffectedUIHandler,
 			}
 			else
 			{
-				DamageData damageData = overpenRule?.OverpenetrationDamage;
+				damageData = overpenRule?.OverpenetrationDamage;
 				if (damageData != null && damageData.IsRicochet)
 				{
 					flag3 = true;
-					m_AbilityTargets.Add(new AbilityTargetUIData(Ability, target.Entity, gridAdjustedPosition, ref overpenetrationData));
 					List<RicochetHelper.RicochetTargetData> orCreateRicochetTargets = overpenRule.GetOrCreateRicochetTargets();
 					UnitPredictionManager.Instance.Or(null)?.SetRicochetPreview(orCreateRicochetTargets.Select((RicochetHelper.RicochetTargetData x) => x.RicochetTargetEntity));
+					m_AbilityTargets.Add(new AbilityTargetUIData(Ability, target.Entity, gridAdjustedPosition, ref overpenetrationData));
 					foreach (RicochetHelper.RicochetTargetData item2 in orCreateRicochetTargets)
 					{
 						m_AbilityTargets.Add(new AbilityTargetUIData(Ability, item2.RicochetTargetEntity, gridAdjustedPosition, ref overpenetrationData));

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Progression.Features;
+using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.Visual.Sound;
 using UnityEngine;
 
@@ -69,6 +71,8 @@ public class BlueprintPsychicPhenomenaRoot : BlueprintScriptableObject
 
 	public BlueprintFeature UnsanctionedPsyker => m_UnsanctionedPsyker;
 
+	public bool IsFullWarpUnlocked => Game.Instance.Player.UnlockableFlags.IsUnlocked(PerilRestrictingFlag);
+
 	public IEnumerable<BlueprintAbilityReference> GetAllPerils()
 	{
 		BlueprintAbilityReference[] perilsOfTheWarpMajor = PerilsOfTheWarpMajor;
@@ -81,5 +85,28 @@ public class BlueprintPsychicPhenomenaRoot : BlueprintScriptableObject
 		{
 			yield return perilsOfTheWarpMajor[i];
 		}
+	}
+
+	public BlueprintAbilityReference[] GetAllowedPerilsMinor()
+	{
+		if (!IsFullWarpUnlocked)
+		{
+			return PerilsOfTheWarpMinor.Where((BlueprintAbilityReference peril) => !RestrictedPerilsOfTheWarpMinor.Contains(peril)).ToArray();
+		}
+		return PerilsOfTheWarpMinor;
+	}
+
+	public BlueprintAbilityReference[] GetAllowedPerilsMajor()
+	{
+		if (!IsFullWarpUnlocked)
+		{
+			return PerilsOfTheWarpMajor.Where((BlueprintAbilityReference peril) => !RestrictedPerilsOfTheWarpMajor.Contains(peril)).ToArray();
+		}
+		return PerilsOfTheWarpMajor;
+	}
+
+	public IEnumerable<BlueprintAbilityReference> GetAllowedPerils()
+	{
+		return GetAllowedPerilsMajor().Concat(GetAllowedPerilsMinor());
 	}
 }

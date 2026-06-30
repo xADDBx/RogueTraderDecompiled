@@ -63,6 +63,8 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 
 	public DamageType? CheckDamageType { get; set; }
 
+	public bool IgnoreDifficultyMinimumDamage { get; set; }
+
 	public DamageData ResultDamage { get; private set; }
 
 	DamageData IDamageHolderRule.Damage => ResultDamage ?? InitiatorWeaponStatsRule.ResultDamage ?? InitiatorWeaponStatsRule.BaseDamage;
@@ -168,6 +170,7 @@ public class RuleCalculateDamage : RulebookOptionalTargetEvent, IDamageHolderRul
 			damageData.Absorption.Add(ModifierType.PctMul_Extra, 0, this, ModifierDescriptor.Weapon);
 			damageData.Deflection.Add(ModifierType.PctMul_Extra, 0, this, ModifierDescriptor.Weapon);
 		}
+		damageData.IgnoreDifficultyMinimumDamage = IgnoreDifficultyMinimumDamage;
 		damageData.MarkCalculated();
 		ResultDamage = damageData;
 	}

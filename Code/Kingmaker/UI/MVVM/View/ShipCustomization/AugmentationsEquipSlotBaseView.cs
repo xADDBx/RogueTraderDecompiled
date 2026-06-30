@@ -119,14 +119,13 @@ public class AugmentationsEquipSlotBaseView<TItemSlotView> : ItemSlotView<Augmen
 		if (!m_IsOverchargeSlotView)
 		{
 			UIContextMenu contextMenu = UIStrings.Instance.ContextMenu;
-			bool flag = base.ViewModel.ItemSlot.HasItem && base.ViewModel.BlueprintAugmentSlot.DefaultAugment != null && base.ViewModel.ItemSlot.Item.Blueprint == base.ViewModel.BlueprintAugmentSlot.DefaultAugment.Get();
-			bool value = base.ViewModel.IsLocked.Value;
+			bool isInteractable = CanTakeOffAugment() && base.ViewModel.IsEquipPossible;
 			base.ViewModel.ContextMenu.Value = new List<ContextMenuCollectionEntity>
 			{
 				new ContextMenuCollectionEntity(contextMenu.TakeOff, delegate
 				{
 					TryUnequip();
-				}, base.ViewModel.IsEquipPossible && !flag && !value),
+				}, base.ViewModel.HasItem, isInteractable),
 				new ContextMenuCollectionEntity(contextMenu.Information, base.ViewModel.ShowInfo, base.ViewModel.HasItem)
 			};
 		}
@@ -179,10 +178,6 @@ public class AugmentationsEquipSlotBaseView<TItemSlotView> : ItemSlotView<Augmen
 
 	protected void SetSlotState(bool isActive)
 	{
-		if (base.ViewModel.IsLocked.Value)
-		{
-			m_ItemSlotView.SetLockState();
-		}
 		m_SlotCanvasGroup.interactable = isActive;
 		m_SlotCanvasGroup.alpha = (isActive ? 1f : 0.3f);
 		isActive = base.ViewModel.IsOverchargeSlot || isActive;
@@ -239,6 +234,35 @@ public class AugmentationsEquipSlotBaseView<TItemSlotView> : ItemSlotView<Augmen
 		{
 			InventoryHelper.TrySplitSlot(slot, isLoot: false);
 		}
+	}
+
+	protected bool CanTakeOffAugment()
+	{
+		if (!base.ViewModel.HasItem)
+		{
+			return false;
+		}
+		if (base.ViewModel.IsDefault)
+		{
+			return false;
+		}
+		if (base.ViewModel.BlueprintAugmentSlot != null && base.ViewModel.BlueprintAugmentSlot.IsMechSlot)
+		{
+			return false;
+		}
+		if (base.ViewModel.IsLocked.Value)
+		{
+			return false;
+		}
+		if (base.ViewModel.HasTrauma.Value)
+		{
+			return false;
+		}
+		if (base.ViewModel.ItemSlot == null || !base.ViewModel.ItemSlot.CanRemoveItem())
+		{
+			return false;
+		}
+		return true;
 	}
 
 	private bool TryUnequip()

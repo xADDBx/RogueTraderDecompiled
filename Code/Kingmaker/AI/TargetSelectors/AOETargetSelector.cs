@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Pathfinding;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
-using Kingmaker.UnitLogic.Abilities.Components.Patterns;
 using Kingmaker.Utility;
 using Kingmaker.Utility.CodeTimer;
 using Owlcat.Runtime.Core.Utility;
@@ -16,6 +14,62 @@ namespace Kingmaker.AI.TargetSelectors;
 
 public class AOETargetSelector : AbilityTargetSelector
 {
+	private interface INodeVisitor
+	{
+		bool ShouldSkip(CustomGridNodeBase node);
+
+		void OnNodeEnter(CustomGridNodeBase node);
+
+		bool ShouldMoveNext();
+	}
+
+	private readonly struct GatherNodeVisitor : INodeVisitor
+	{
+		private readonly HashSet<CustomGridNodeBase> m_Nodes;
+
+		public GatherNodeVisitor(HashSet<CustomGridNodeBase> nodes)
+		{
+			m_Nodes = nodes;
+		}
+
+		public bool ShouldSkip(CustomGridNodeBase node)
+		{
+			return m_Nodes.Contains(node);
+		}
+
+		public void OnNodeEnter(CustomGridNodeBase node)
+		{
+			m_Nodes.Add(node);
+		}
+
+		public bool ShouldMoveNext()
+		{
+			return true;
+		}
+	}
+
+	private struct HasAnyNodeVisitor : INodeVisitor
+	{
+		public bool Found;
+
+		public bool ShouldSkip(CustomGridNodeBase node)
+		{
+			return false;
+		}
+
+		public void OnNodeEnter(CustomGridNodeBase node)
+		{
+			Found = true;
+		}
+
+		public bool ShouldMoveNext()
+		{
+			return !Found;
+		}
+	}
+
+	private const int MaxNodeToCheckCount = 200;
+
 	public AOETargetSelector(AbilityInfo abilityInfo)
 		: base(abilityInfo)
 	{
@@ -23,7 +77,7 @@ public class AOETargetSelector : AbilityTargetSelector
 
 	public override bool HasPossibleTarget(DecisionContext context, CustomGridNodeBase casterNode)
 	{
-		return GatherNodesToCheck(context, casterNode).Count > 0;
+		return HasNodesToCheck(context, casterNode);
 	}
 
 	public override TargetWrapper SelectTarget(DecisionContext context, CustomGridNodeBase casterNode)
@@ -108,6 +162,15 @@ public class AOETargetSelector : AbilityTargetSelector
 		return GatherGrenadeAOENodesToCheck(context, casterNode);
 	}
 
+	private bool HasNodesToCheck(DecisionContext context, CustomGridNodeBase casterNode)
+	{
+		if (AbilityInfo.isCharge)
+		{
+			return GatherChargeAOENodesToCheck(context, casterNode).Count > 0;
+		}
+		return HasGrenadeAOENodesToCheck(context, casterNode);
+	}
+
 	private HashSet<CustomGridNodeBase> GatherChargeAOENodesToCheck(DecisionContext context, CustomGridNodeBase casterNode)
 	{
 		HashSet<CustomGridNodeBase> hashSet = new HashSet<CustomGridNodeBase>();
@@ -126,63 +189,33 @@ public class AOETargetSelector : AbilityTargetSelector
 		return hashSet;
 	}
 
+	private bool HasGrenadeAOENodesToCheck(DecisionContext context, CustomGridNodeBase casterNode)
+	{
+		HasAnyNodeVisitor visitor = default(HasAnyNodeVisitor);
+		ScanGrenadeAOENodes(context, casterNode, ref visitor);
+		if (!visitor.Found)
+		{
+			return AbilityInfo.ability.CanTargetSelf;
+		}
+		return true;
+	}
+
 	private HashSet<CustomGridNodeBase> GatherGrenadeAOENodesToCheck(DecisionContext context, CustomGridNodeBase casterNode)
 	{
 		HashSet<CustomGridNodeBase> hashSet = new HashSet<CustomGridNodeBase>();
-		IntRect sizeRect = context.Unit.SizeRect;
-		CustomGridGraph customGridGraph = (CustomGridGraph)casterNode.Graph;
-		AoEPattern pattern = AbilityInfo.pattern;
-		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
-		NodeList nodes = GridAreaHelper.GetNodes(casterNode, sizeRect);
-		foreach (TargetInfo intendedTarget in GetIntendedTargets(context))
-		{
-			if (!IsValidTarget(intendedTarget.Entity))
-			{
-				continue;
-			}
-			if (flag)
-			{
-				if (AbilityInfo.ability.CanTargetFromNode(casterNode, intendedTarget.Node, new TargetWrapper(intendedTarget.Entity), out var _, out var _))
-				{
-					hashSet.Add(intendedTarget.Node);
-				}
-				continue;
-			}
-			for (int i = AbilityInfo.patternBounds.xmin; i <= AbilityInfo.patternBounds.xmax; i++)
-			{
-				for (int j = AbilityInfo.patternBounds.ymin; j <= AbilityInfo.patternBounds.ymax; j++)
-				{
-					CustomGridNodeBase node = customGridGraph.GetNode(intendedTarget.Node.XCoordinateInGrid - i, intendedTarget.Node.ZCoordinateInGrid - j);
-					if (hashSet.Contains(node) || node == null || nodes.Contains(node) || !node.Walkable || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) > AbilityInfo.maxRange || WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, sizeRect, node.Vector3Position, default(IntRect)) < AbilityInfo.minRange)
-					{
-						continue;
-					}
-					PatternGridData gridData = pattern.GetGridData((node.Vector3Position - casterNode.Vector3Position).To2D().normalized);
-					try
-					{
-						if (gridData.Contains(new Vector2Int(i, j)) && CountTargetsInPattern(context, node, in gridData) >= (AbilityInfo.settings?.MustHitTargetsCount ?? 1))
-						{
-							hashSet.Add(node);
-						}
-					}
-					finally
-					{
-						((IDisposable)gridData).Dispose();
-					}
-				}
-			}
-		}
+		GatherNodeVisitor visitor = new GatherNodeVisitor(hashSet);
+		ScanGrenadeAOENodes(context, casterNode, ref visitor);
 		while (hashSet.Count > 200)
 		{
-			HashSet<CustomGridNodeBase> hashSet2 = new HashSet<CustomGridNodeBase>();
-			bool flag2 = true;
+			HashSet<CustomGridNodeBase> hashSet2 = new HashSet<CustomGridNodeBase>(hashSet.Count / 2);
+			bool flag = true;
 			foreach (CustomGridNodeBase item in hashSet)
 			{
-				if (flag2)
+				if (flag)
 				{
 					hashSet2.Add(item);
 				}
-				flag2 = !flag2;
+				flag = !flag;
 			}
 			hashSet = hashSet2;
 		}
@@ -191,6 +224,92 @@ public class AOETargetSelector : AbilityTargetSelector
 			hashSet.Add(casterNode);
 		}
 		return hashSet;
+	}
+
+	private void ScanGrenadeAOENodes<TVisitor>(DecisionContext context, CustomGridNodeBase casterNode, ref TVisitor visitor) where TVisitor : struct, INodeVisitor
+	{
+		IntRect sizeRect = context.Unit.SizeRect;
+		CustomGridGraph graph = (CustomGridGraph)casterNode.Graph;
+		bool flag = AbilityInfo.ability.TargetAnchor != AbilityTargetAnchor.Point;
+		NodeList nodes = GridAreaHelper.GetNodes(casterNode, sizeRect);
+		List<TargetInfo> intendedTargets = GetIntendedTargets(context);
+		for (int i = 0; i < intendedTargets.Count; i++)
+		{
+			if (!visitor.ShouldMoveNext())
+			{
+				break;
+			}
+			TargetInfo targetInfo = intendedTargets[i];
+			if (!IsValidTarget(targetInfo.Entity))
+			{
+				continue;
+			}
+			if (flag)
+			{
+				if (AbilityInfo.ability.CanTargetFromNode(casterNode, targetInfo.Node, new TargetWrapper(targetInfo.Entity), out var _, out var _))
+				{
+					visitor.OnNodeEnter(targetInfo.Node);
+				}
+			}
+			else if (IsTargetWithinPatternReach(casterNode, sizeRect, targetInfo.Node))
+			{
+				ScanPatternNodesAroundTarget(context, casterNode, sizeRect, nodes, graph, targetInfo.Node, ref visitor);
+			}
+		}
+	}
+
+	private void ScanPatternNodesAroundTarget<TVisitor>(DecisionContext context, CustomGridNodeBase casterNode, IntRect casterSize, NodeList casterNodes, CustomGridGraph graph, CustomGridNodeBase targetNode, ref TVisitor visitor) where TVisitor : struct, INodeVisitor
+	{
+		for (int i = AbilityInfo.patternBounds.xmin; i <= AbilityInfo.patternBounds.xmax; i++)
+		{
+			if (!visitor.ShouldMoveNext())
+			{
+				break;
+			}
+			for (int j = AbilityInfo.patternBounds.ymin; j <= AbilityInfo.patternBounds.ymax; j++)
+			{
+				if (!visitor.ShouldMoveNext())
+				{
+					break;
+				}
+				CustomGridNodeBase node = graph.GetNode(targetNode.XCoordinateInGrid - i, targetNode.ZCoordinateInGrid - j);
+				if (!visitor.ShouldSkip(node) && IsNodeValid(context, casterNode, casterSize, casterNodes, node, i, j))
+				{
+					visitor.OnNodeEnter(node);
+				}
+			}
+		}
+	}
+
+	private bool IsTargetWithinPatternReach(CustomGridNodeBase casterNode, IntRect casterSize, CustomGridNodeBase targetNode)
+	{
+		using (ProfileScope.NewScope("IsTargetWithinPatternReach"))
+		{
+			IntRect patternBounds = AbilityInfo.patternBounds;
+			int num = Mathf.Max(patternBounds.xmax, -patternBounds.xmin) + Mathf.Max(patternBounds.ymax, -patternBounds.ymin);
+			return WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, casterSize, targetNode.Vector3Position, default(IntRect)) <= AbilityInfo.maxRange + num;
+		}
+	}
+
+	private bool IsNodeValid(DecisionContext context, CustomGridNodeBase casterNode, IntRect casterSize, NodeList casterNodes, CustomGridNodeBase node, int offsetX, int offsetY)
+	{
+		if (node == null || casterNodes.Contains(node) || !node.Walkable)
+		{
+			return false;
+		}
+		int num = WarhammerGeometryUtils.DistanceToInCells(casterNode.Vector3Position, casterSize, node.Vector3Position, default(IntRect));
+		if (num > AbilityInfo.maxRange || num < AbilityInfo.minRange)
+		{
+			return false;
+		}
+		Vector2 normalized = (node.Vector3Position - casterNode.Vector3Position).To2D().normalized;
+		(int, int) key = (node.XCoordinateInGrid - casterNode.XCoordinateInGrid, node.ZCoordinateInGrid - casterNode.ZCoordinateInGrid);
+		PatternGridData gridData = AbilityInfo.GetOrientedPatternGridDataCached(key, normalized);
+		if (!gridData.Contains(new Vector2Int(offsetX, offsetY)))
+		{
+			return false;
+		}
+		return CountTargetsInPattern(context, node, in gridData) >= (AbilityInfo.settings?.MustHitTargetsCount ?? 1);
 	}
 
 	private List<TargetInfo> GetIntendedTargets(DecisionContext context)

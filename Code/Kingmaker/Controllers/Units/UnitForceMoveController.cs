@@ -67,6 +67,15 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		});
 	}
 
+	protected override bool ShouldTickOnUnit(AbstractUnitEntity unit)
+	{
+		if (!unit.IsDisposed)
+		{
+			return unit.GetOptional<UnitPartForceMove>() != null;
+		}
+		return false;
+	}
+
 	protected override void TickOnUnit(AbstractUnitEntity entity)
 	{
 		if (!(entity is BaseUnitEntity baseUnitEntity))
@@ -80,7 +89,7 @@ public class UnitForceMoveController : BaseUnitController, IUnitGetAbilityPush, 
 		}
 		float deltaTime = Game.Instance.TimeController.DeltaTime;
 		UnitPartForceMove.Chunk active = optional.Active;
-		if (active == null)
+		if (active == null || baseUnitEntity.LifeState.IsDead)
 		{
 			baseUnitEntity.Position = baseUnitEntity.CurrentNode.position;
 			baseUnitEntity.Remove<UnitPartForceMove>();

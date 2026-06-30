@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Interfaces;
@@ -65,7 +66,7 @@ public class SurfacePointMarkersVM : PointMarkersVM, IAreaHandler, ISubscriber, 
 		Clear();
 	}
 
-	void IReloadMechanicsHandler.OnMechanicsReloaded()
+	void IReloadMechanicsHandler.OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		UpdateUnits();
 	}

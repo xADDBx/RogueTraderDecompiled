@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -60,7 +61,7 @@ public class BaseMapObjectOvertipsCollectionVM<TOvertipVM> : OvertipsCollectionV
 		Clear();
 	}
 
-	void IReloadMechanicsHandler.OnMechanicsReloaded()
+	void IReloadMechanicsHandler.OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		RescanEntities();
 	}

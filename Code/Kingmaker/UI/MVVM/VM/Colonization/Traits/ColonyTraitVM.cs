@@ -26,14 +26,6 @@ public class ColonyTraitVM : BaseDisposable, IViewModel, IBaseDisposable, IDispo
 		Tooltip.Value = new TooltipTemplateColonyTrait(trait.Name, trait.MechanicString, trait.Description, trait.EfficiencyModifier, trait.ContentmentModifier, trait.SecurityModifier);
 	}
 
-	public ColonyTraitVM(BlueprintColonyTrait trait, int index)
-	{
-		Name.Value = $"{trait.Name} #{index + 1}";
-		MechanicString.Value = trait.MechanicString;
-		Icon.Value = trait.Icon;
-		Tooltip.Value = new TooltipTemplateColonyTrait($"{trait.Name} #{index + 1}", trait.MechanicString, trait.Description, trait.EfficiencyModifier, trait.ContentmentModifier, trait.SecurityModifier);
-	}
-
 	protected override void DisposeImplementation()
 	{
 	}

@@ -26,12 +26,15 @@ public class ContextActionRunPsychicPhenomena : ContextAction
 	{
 		if (UsePerilsEffect)
 		{
-			BlueprintAbilityReference abilityReference = PsychicPhenomenaRoot.GetAllPerils().Random(PFStatefulRandom.Mechanics);
-			PsychicPhenomenaController.TriggerFakePsychicPhenomenaEffectOnTarget(base.TargetEntity, base.Context, abilityReference, null);
-			EventBus.RaiseEvent(delegate(IFakePsychicPhenomenaTrigger h)
+			BlueprintAbilityReference blueprintAbilityReference = PsychicPhenomenaRoot.GetAllowedPerils().Random(PFStatefulRandom.Mechanics);
+			if (blueprintAbilityReference != null)
 			{
-				h.HandleFakePsychicPhenomena(isPsychicPhenomena: false, isPerilsOfTheWarp: true);
-			});
+				PsychicPhenomenaController.TriggerFakePsychicPhenomenaEffectOnTarget(base.TargetEntity, base.Context, blueprintAbilityReference, null);
+				EventBus.RaiseEvent(delegate(IFakePsychicPhenomenaTrigger h)
+				{
+					h.HandleFakePsychicPhenomena(isPsychicPhenomena: false, isPerilsOfTheWarp: true);
+				});
+			}
 		}
 		else
 		{

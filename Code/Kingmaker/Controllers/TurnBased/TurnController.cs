@@ -889,7 +889,7 @@ public class TurnController : IControllerEnable, IController, IControllerDisable
 
 	private void PrepareUnitForNewTurn(MechanicEntity entity, bool isTurnBased, bool setPreparedRound = true)
 	{
-		entity.Initiative.WasPreparedForRound = (setPreparedRound ? CombatRound : (CombatRound - 1));
+		entity.Initiative.WasPreparedForRound = ((setPreparedRound || entity.Initiative.ActedThisRound) ? CombatRound : (CombatRound - 1));
 		entity.GetCombatStateOptional()?.PrepareForNewTurn(isTurnBased, entity.Initiative.InterruptingOrder > 0);
 		if (isTurnBased)
 		{

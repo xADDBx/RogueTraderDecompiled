@@ -41,6 +41,8 @@ public class DamageData
 
 	public int OverpenetrationFactorPercents { get; set; }
 
+	public bool IgnoreDifficultyMinimumDamage { get; set; }
+
 	public bool Overpenetrating { get; set; }
 
 	public bool UnreducedOverpenetrationDamage { get; set; }
@@ -228,7 +230,8 @@ public class DamageData
 			CalculatedValue = CalculatedValue,
 			CausedByCheckFail = CausedByCheckFail,
 			Overpenetrating = Overpenetrating,
-			OverpenetrationFactorPercents = OverpenetrationFactorPercents
+			OverpenetrationFactorPercents = OverpenetrationFactorPercents,
+			IgnoreDifficultyMinimumDamage = IgnoreDifficultyMinimumDamage
 		};
 		if (withModifiers)
 		{

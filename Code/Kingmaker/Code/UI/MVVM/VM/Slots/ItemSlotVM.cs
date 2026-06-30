@@ -131,6 +131,18 @@ public class ItemSlotVM : VirtualListElementVMBase, ICargoStateChangedHandler, I
 		}
 	}
 
+	public bool IsEquipToUnlockedSlotPossible
+	{
+		get
+		{
+			if (IsEquipPossible)
+			{
+				return UIUtilityItem.HasUnlockedEquipSlot(Item.Value);
+			}
+			return false;
+		}
+	}
+
 	public bool IsPosibleSplit
 	{
 		get

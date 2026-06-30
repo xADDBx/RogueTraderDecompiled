@@ -124,16 +124,16 @@ public class AbilitySpecialMomentumAction : BlueprintComponent, IAbilityOnCastLo
 		return Game.Instance.TurnController.MomentumController.Groups.Any((MomentumGroup p) => p.Blueprint == root.PartyGroup && p.Momentum <= threshold);
 	}
 
-	public bool CheckDesperateMeasureBuff(MechanicEntity caster)
+	public static bool CheckDesperateMeasureBuff(MechanicEntity caster)
 	{
 		BlueprintMomentumRoot root = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
-		return !Game.Instance.TurnController.MomentumController.Groups.Any((MomentumGroup p1) => p1.Units.Contains(caster) && p1.Units.Any((EntityRef<MechanicEntity> p2) => p2.Entity.Facts.Contains(root.DesperateMeasureBuff)));
+		return !Game.Instance.TurnController.MomentumController.Groups.Any((MomentumGroup p1) => p1.Units.Contains(caster) && p1.Units.Any((EntityRef<MechanicEntity> p2) => p2.Entity?.Facts.Contains(root.DesperateMeasureBuff) ?? false));
 	}
 
-	public bool CheckDesperateMeasureBuffPlayer()
+	public static bool CheckDesperateMeasureBuffPlayer()
 	{
 		BlueprintMomentumRoot root = Game.Instance.BlueprintRoot.WarhammerRoot.MomentumRoot;
-		return !Game.Instance.TurnController.MomentumController.Groups.Any((MomentumGroup p1) => p1.Blueprint == root.PartyGroup && p1.Units.Any((EntityRef<MechanicEntity> p2) => p2.Entity.Facts.Contains(root.DesperateMeasureBuff)));
+		return !Game.Instance.TurnController.MomentumController.Groups.Any((MomentumGroup p1) => p1.Blueprint == root.PartyGroup && p1.Units.Any((EntityRef<MechanicEntity> p2) => p2.Entity?.Facts.Contains(root.DesperateMeasureBuff) ?? false));
 	}
 
 	public bool CheckHeroicAct(MechanicEntity caster)

@@ -50,7 +50,7 @@ public class AugmentationsInventoryStashVM : BaseDisposable, IViewModel, IBaseDi
 		Unit = unit;
 		if (canInsertItem == null)
 		{
-			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory));
+			AddDisposable(ItemSlotsGroup = new ItemSlotsGroupVM(ItemsCollection, inventory ? 6 : 9, inventory ? 120 : 81, sorter: Game.Instance.Player.UISettings.InventorySorter, filter: Game.Instance.Player.UISettings.InventoryFilter, showUnavailableItems: Game.Instance.Player.UISettings.ShowUnavailableItems, showSlotHoldItemsInSlots: false, type: ItemSlotsGroupType.Inventory, needMaximumLimit: false, maxSlots: 0, availabilityPredicate: UIUtilityItem.IsAugmentSuitable));
 			AddDisposable(ItemsFilter = new ItemsFilterVM(ItemSlotsGroup));
 			AddDisposable(ItemSlotsGroup.CollectionChangedCommand.Subscribe(delegate
 			{

@@ -3,5 +3,6 @@ namespace Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.Ran
 public enum FeatureGroupingMode
 {
 	ByType,
-	BySource
+	BySource,
+	Favourites
 }

@@ -1274,7 +1274,7 @@ public class UnitMovementAgentBase : MonoBehaviour, IEntitySubscriber, IUnitLife
 		{
 			return;
 		}
-		bool flag = Game.Instance.Player.IsInCombat && IsNodeBlockNeeded(ignoreHiddenFeature);
+		bool flag = (Game.Instance.Player.IsInCombat || (Unit?.Data?.IsInCombat).GetValueOrDefault()) && IsNodeBlockNeeded(ignoreHiddenFeature);
 		if (Blocker.IsBlocking != flag)
 		{
 			if (flag)

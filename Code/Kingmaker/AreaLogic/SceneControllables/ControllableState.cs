@@ -17,13 +17,17 @@ public class ControllableState : IHashable
 	[JsonProperty]
 	public int? SavedAnimatorStateHash;
 
+	[JsonProperty]
+	public string SceneName;
+
 	public ControllableState MergeWith(ControllableState otherState)
 	{
 		return new ControllableState
 		{
 			Active = (otherState.Active ?? Active),
 			State = (otherState.State ?? State),
-			SavedAnimatorStateHash = (otherState.SavedAnimatorStateHash ?? SavedAnimatorStateHash)
+			SavedAnimatorStateHash = (otherState.SavedAnimatorStateHash ?? SavedAnimatorStateHash),
+			SceneName = (otherState.SceneName ?? SceneName)
 		};
 	}
 
@@ -45,6 +49,7 @@ public class ControllableState : IHashable
 			int val3 = SavedAnimatorStateHash.Value;
 			result.Append(ref val3);
 		}
+		result.Append(SceneName);
 		return result;
 	}
 }

@@ -53,6 +53,7 @@ public class CommandTranslocateParty : CommandBase
 
 	[ValidateNotEmpty]
 	[ValidateNoNullEntries]
+	[MultiEntityReferenceDrop]
 	public Target[] TargetsV2;
 
 	private bool True => true;

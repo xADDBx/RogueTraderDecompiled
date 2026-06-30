@@ -25,6 +25,6 @@ public class CheckAbilityWeaponTwoHandedGetter : PropertyGetter, PropertyContext
 
 	protected override string GetInnerCaption(bool useLineBreaks)
 	{
-		return "Ability Weapon Family";
+		return "Ability Weapon is two handed";
 	}
 }

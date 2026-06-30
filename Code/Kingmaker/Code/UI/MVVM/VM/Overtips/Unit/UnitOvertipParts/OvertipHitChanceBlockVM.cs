@@ -143,10 +143,11 @@ public class OvertipHitChanceBlockVM : BaseDisposable, IViewModel, IBaseDisposab
 		HitAlways.Value = m_AbilityTargetUIData.Value.HitAlways;
 		CanDie = m_AbilityTargetUIData.Value.MaxDamage >= UnitUIWrapper.Health.HitPointsLeft + UnitUIWrapper.Health.TemporaryHitPoints;
 		BurstIndex.Value = m_AbilityTargetUIData.Value.BurstIndex;
-		HitChance.Value = m_AbilityTargetUIData.Value.HitWithAvoidanceChance;
+		HitChance.SetValueAndForceNotify(m_AbilityTargetUIData.Value.HitWithAvoidanceChance);
 		InitialHitChance.Value = m_AbilityTargetUIData.Value.InitialHitChance;
-		MinDamage.Value = ((!m_AbilityTargetUIData.Value.IsAbilityRedirected) ? m_AbilityTargetUIData.Value.MinDamage : 0);
-		MaxDamage.Value = ((!m_AbilityTargetUIData.Value.IsAbilityRedirected) ? m_AbilityTargetUIData.Value.MaxDamage : 0);
+		bool flag = m_AbilityTargetUIData.Value.IsAbilityRedirected || (UnitPredictionManager.Instance?.IsUnitRicochetTarget(Unit) ?? false);
+		MinDamage.Value = ((!flag) ? m_AbilityTargetUIData.Value.MinDamage : 0);
+		MaxDamage.Value = ((!flag) ? m_AbilityTargetUIData.Value.MaxDamage : 0);
 		DodgeChance.Value = m_AbilityTargetUIData.Value.DodgeChance;
 		ParryChance.Value = m_AbilityTargetUIData.Value.ParryChance;
 		CoverChance.Value = m_AbilityTargetUIData.Value.CoverChance;

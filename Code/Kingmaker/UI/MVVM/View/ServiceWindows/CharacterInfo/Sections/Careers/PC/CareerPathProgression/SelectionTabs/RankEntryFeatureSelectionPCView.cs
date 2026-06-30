@@ -51,6 +51,9 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 	private TextMeshProUGUI m_GroupBySourceButtonText;
 
 	[SerializeField]
+	private OwlcatMultiButton m_FavouriteGroupingButton;
+
+	[SerializeField]
 	private TextMeshProUGUI m_NoFeaturesText;
 
 	[Header("Selector")]
@@ -108,12 +111,20 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 			m_FeaturesFilter.gameObject.SetActive(base.ViewModel.FeaturesFilterVM != null);
 			m_GroupByTypeButton.gameObject.SetActive(value: false);
 			m_GroupBySourceButton.gameObject.SetActive(value: false);
+			if (m_FavouriteGroupingButton != null)
+			{
+				m_FavouriteGroupingButton.gameObject.SetActive(value: false);
+			}
 		}
 		else
 		{
 			m_FeaturesFilter.gameObject.SetActive(value: false);
 			m_GroupByTypeButton.gameObject.SetActive(value: true);
 			m_GroupBySourceButton.gameObject.SetActive(value: true);
+			if (m_FavouriteGroupingButton != null)
+			{
+				m_FavouriteGroupingButton.gameObject.SetActive(value: true);
+			}
 			m_GroupByTypeButtonText.text = UIStrings.Instance.CharGen.OrderByType;
 			m_GroupBySourceButtonText.text = UIStrings.Instance.CharGen.OrderBySource;
 			AddDisposable(ObservableExtensions.Subscribe(m_GroupByTypeButton.OnLeftClickAsObservable(), delegate
@@ -124,10 +135,22 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 			{
 				base.ViewModel.SetGroupingMode(FeatureGroupingMode.BySource);
 			}));
+			if (m_FavouriteGroupingButton != null)
+			{
+				AddDisposable(ObservableExtensions.Subscribe(m_FavouriteGroupingButton.OnLeftClickAsObservable(), delegate
+				{
+					base.ViewModel.ToggleFavouritesMode();
+				}));
+				AddDisposable(m_FavouriteGroupingButton.SetHint(UIStrings.Instance.InventoryScreen.FavoriteCategory));
+			}
 			AddDisposable(base.ViewModel.GroupingMode.Subscribe(delegate(FeatureGroupingMode mode)
 			{
 				m_GroupByTypeButton.SetActiveLayer((mode == FeatureGroupingMode.ByType) ? "On" : "Off");
 				m_GroupBySourceButton.SetActiveLayer((mode == FeatureGroupingMode.BySource) ? "On" : "Off");
+				if (m_FavouriteGroupingButton != null)
+				{
+					m_FavouriteGroupingButton.SetActiveLayer((mode == FeatureGroupingMode.Favourites) ? "On" : "Off");
+				}
 			}));
 		}
 		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.OnFilterChange, delegate

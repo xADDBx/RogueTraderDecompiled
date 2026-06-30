@@ -1,4 +1,3 @@
-using System.Linq;
 using JetBrains.Annotations;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root;
@@ -155,24 +154,18 @@ public class RuleCalculatePsychicPhenomenaEffect : RulebookEvent
 		{
 			return;
 		}
-		bool num3 = Game.Instance.Player.UnlockableFlags.IsUnlocked(PsychicPhenomenaRoot.PerilRestrictingFlag);
-		BlueprintAbilityReference[] array = PsychicPhenomenaRoot.PerilsOfTheWarpMinor;
-		BlueprintAbilityReference[] array2 = PsychicPhenomenaRoot.PerilsOfTheWarpMajor;
-		if (!num3)
-		{
-			array = array.Where((BlueprintAbilityReference peril) => !PsychicPhenomenaRoot.RestrictedPerilsOfTheWarpMinor.Contains(peril)).ToArray();
-			array2 = array2.Where((BlueprintAbilityReference peril) => !PsychicPhenomenaRoot.RestrictedPerilsOfTheWarpMajor.Contains(peril)).ToArray();
-		}
+		BlueprintAbilityReference[] allowedPerilsMinor = PsychicPhenomenaRoot.GetAllowedPerilsMinor();
+		BlueprintAbilityReference[] allowedPerilsMajor = PsychicPhenomenaRoot.GetAllowedPerilsMajor();
 		if (PFStatefulRandom.UnitRandom.Range(0, 100) < 90)
 		{
-			if (array.Length != 0)
+			if (allowedPerilsMinor.Length != 0)
 			{
-				ResultPerilsEffect = array[PFStatefulRandom.UnitRandom.Range(0, array.Length)];
+				ResultPerilsEffect = allowedPerilsMinor[PFStatefulRandom.UnitRandom.Range(0, allowedPerilsMinor.Length)];
 			}
 		}
-		else if (array2.Length != 0)
+		else if (allowedPerilsMajor.Length != 0)
 		{
-			ResultPerilsEffect = array2[PFStatefulRandom.UnitRandom.Range(0, array2.Length)];
+			ResultPerilsEffect = allowedPerilsMajor[PFStatefulRandom.UnitRandom.Range(0, allowedPerilsMajor.Length)];
 		}
 	}
 }

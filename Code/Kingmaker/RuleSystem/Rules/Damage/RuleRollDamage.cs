@@ -157,7 +157,7 @@ public class RuleRollDamage : RulebookTargetEvent, IDamageHolderRule
 		int num = ((damage > 0) ? Math.Max(1, damage) : 0);
 		int num2 = num;
 		int num3 = 0;
-		if (base.Initiator.IsPlayerFaction && !Target.IsPlayerFaction)
+		if (base.Initiator.IsPlayerFaction && !Target.IsPlayerFaction && !Damage.IgnoreDifficultyMinimumDamage)
 		{
 			num2 = ((!(base.Initiator is StarshipEntity)) ? ((int)SettingsRoot.Difficulty.MinPartyDamage) : ((Target as StarshipEntity).IsSoftUnit ? 1 : ((int)SettingsRoot.Difficulty.MinPartyStarshipDamage)));
 			num3 = ((!(base.Initiator is StarshipEntity)) ? ((int)SettingsRoot.Difficulty.MinPartyDamageFraction) : ((Target as StarshipEntity).IsSoftUnit ? 1 : ((int)SettingsRoot.Difficulty.MinPartyStarshipDamageFraction)));

@@ -2,6 +2,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.DarkHeresyPopUp;
 using Kingmaker.UI.Common.Animations;
 using Kingmaker.UI.Sound;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using TMPro;
@@ -64,7 +65,7 @@ public class DarkHeresyPopUpView : ViewBase<DarkHeresyPopUpVM>
 	{
 		if (m_IsShowed)
 		{
-			AkSoundEngine.SetState("MusicState", "MainMenu");
+			SoundState.Instance?.MusicStateHandler.SetMusicState(MusicStateHandler.MusicState.MainMenu);
 			UISounds.Instance.Sounds.DarkHeresyPopUp.PopUpHide.Play();
 			SetStoreIconVisibility(visible: false);
 			m_MainContainer.DisappearAnimation(delegate

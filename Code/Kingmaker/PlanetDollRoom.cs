@@ -29,11 +29,11 @@ public class PlanetDollRoom : DollRoomBase
 		m_SimpleAvatar.transform.rotation = m_TargetPlaceholder.rotation;
 		m_SimpleAvatar.transform.localScale = m_TargetPlaceholder.localScale;
 		ChangeLayer(m_SimpleAvatar);
-		Material material = m_SimpleAvatar.GetComponentInChildren<MeshRenderer>().material;
-		if (material != null)
+		MeshRenderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+		foreach (MeshRenderer obj in componentsInChildren)
 		{
-			material.SetInt("_Rim_light", 0);
-			material.SetInt("_IsPlanetDollRoom", 1);
+			obj.material.SetInt("_Rim_light", 0);
+			obj.material.SetInt("_IsPlanetDollRoom", 1);
 		}
 	}
 
@@ -42,15 +42,21 @@ public class PlanetDollRoom : DollRoomBase
 		base.Hide();
 		if (!(m_SimpleAvatar == null))
 		{
+			MeshRenderer[] componentsInChildren = m_SimpleAvatar.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+			for (int i = 0; i < componentsInChildren.Length; i++)
+			{
+				Object.Destroy(componentsInChildren[i].material);
+			}
 			Object.Destroy(m_SimpleAvatar);
 		}
 	}
 
 	private void ChangeLayer(GameObject avatar)
 	{
-		foreach (Transform item in avatar.transform)
+		Transform[] componentsInChildren = avatar.GetComponentsInChildren<Transform>(includeInactive: true);
+		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			item.gameObject.layer = 15;
+			componentsInChildren[i].gameObject.layer = 15;
 		}
 	}
 }

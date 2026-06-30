@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Blueprints.Root;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
+using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Properties;
@@ -54,6 +55,9 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 	public bool ModifyEvenDirectDamage;
 
 	public bool ModifyEvenDamageOverTime;
+
+	[KDB("Если галочка установлена - модификатор также будет игнорировать зачения настроек сложности для ограничения минимального урона снизу")]
+	public bool IgnoreDifficultyMinimumDamage;
 
 	protected void TryApply(RuleCalculateDamage rule)
 	{
@@ -110,6 +114,10 @@ public abstract class WarhammerDamageModifier : MechanicEntityFactComponentDeleg
 			{
 				rule.ValueModifiers.Add(ModifierType.PctMul_Extra, UnmodifiablePercentDamageModifier.Calculate(base.Context), base.Fact, ModifierDescriptor);
 			}
+		}
+		if (IgnoreDifficultyMinimumDamage)
+		{
+			rule.IgnoreDifficultyMinimumDamage = true;
 		}
 		OnApply();
 	}

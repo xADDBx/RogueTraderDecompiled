@@ -97,12 +97,12 @@ public class OvertipHitChanceBlockView : ViewBase<OvertipHitChanceBlockVM>
 	{
 		m_HitChanceBlock.alpha = 0f;
 		m_AbilityBlock.alpha = 0f;
-		AddDisposable(base.ViewModel.IsVisibleTrigger.CombineLatest(base.ViewModel.HasHit, base.ViewModel.UnitState.HoverSelfTargetAbility, (bool isVisible, bool hasHit, bool hoverSelf) => new { isVisible, hasHit, hoverSelf }).ObserveLastValueOnLateUpdate().Subscribe(value =>
+		AddDisposable(base.ViewModel.IsVisibleTrigger.CombineLatest(base.ViewModel.HasHit, base.ViewModel.UnitState.HoverSelfTargetAbility, base.ViewModel.MinDamage, base.ViewModel.MaxDamage, (bool isVisible, bool hasHit, bool hoverSelf, int minDamage, int maxDamage) => new { isVisible, hasHit, hoverSelf, minDamage, maxDamage }).ObserveLastValueOnLateUpdate().Subscribe(value =>
 		{
 			bool flag2 = UnitPredictionManager.Instance?.IsUnitRicochetTarget(base.ViewModel.UnitState.Unit.MechanicEntity) ?? false;
 			bool flag3 = (value.isVisible && (value.hasHit || flag2)) || value.hoverSelf;
 			m_FadeAnimator.PlayAnimation(flag3);
-			m_DamageObject.alpha = ((flag3 && (base.ViewModel.MinDamage.Value > 0 || base.ViewModel.MaxDamage.Value > 0)) ? 1 : 0);
+			m_DamageObject.alpha = ((flag3 && (value.minDamage > 0 || value.maxDamage > 0)) ? 1 : 0);
 			UpdateIconAndGlitchVisual(flag3);
 		}));
 		if ((bool)m_DamageLine)

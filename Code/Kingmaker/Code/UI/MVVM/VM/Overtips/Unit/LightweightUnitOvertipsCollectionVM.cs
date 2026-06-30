@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Code.UI.MVVM.VM.Common.UnitState;
 using Kingmaker.Controllers.TurnBased;
 using Kingmaker.EntitySystem;
@@ -155,7 +156,7 @@ public class LightweightUnitOvertipsCollectionVM : OvertipsCollectionVM<Lightwei
 		RescanEntities();
 	}
 
-	void IReloadMechanicsHandler.OnMechanicsReloaded()
+	void IReloadMechanicsHandler.OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		RescanEntities();
 	}

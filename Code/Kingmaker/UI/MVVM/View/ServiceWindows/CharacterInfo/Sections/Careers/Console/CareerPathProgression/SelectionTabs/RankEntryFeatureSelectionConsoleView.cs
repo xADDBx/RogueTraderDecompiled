@@ -23,6 +23,7 @@ using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.MVVM;
 using Owlcat.Runtime.UI.VirtualListSystem;
 using Owlcat.Runtime.UniRx;
+using Rewired;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -69,6 +70,9 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 
 	[SerializeField]
 	private TextMeshProUGUI m_GroupBySourceButtonText;
+
+	[SerializeField]
+	private OwlcatMultiButton m_FavouriteGroupingButton;
 
 	[SerializeField]
 	private RankEntryStatItemCommonView m_RankEntryStatItemCommonView;
@@ -125,18 +129,30 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 			m_FeaturesFilter.gameObject.SetActive(base.ViewModel.FeaturesFilterVM != null);
 			m_GroupByTypeButton.gameObject.SetActive(value: false);
 			m_GroupBySourceButton.gameObject.SetActive(value: false);
+			if (m_FavouriteGroupingButton != null)
+			{
+				m_FavouriteGroupingButton.gameObject.SetActive(value: false);
+			}
 		}
 		else
 		{
 			m_FeaturesFilter.gameObject.SetActive(value: false);
 			m_GroupByTypeButton.gameObject.SetActive(value: true);
 			m_GroupBySourceButton.gameObject.SetActive(value: true);
+			if (m_FavouriteGroupingButton != null)
+			{
+				m_FavouriteGroupingButton.gameObject.SetActive(value: true);
+			}
 			m_GroupByTypeButtonText.text = UIStrings.Instance.CharGen.OrderByType;
 			m_GroupBySourceButtonText.text = UIStrings.Instance.CharGen.OrderBySource;
 			AddDisposable(base.ViewModel.GroupingMode.Subscribe(delegate(FeatureGroupingMode mode)
 			{
 				m_GroupByTypeButton.SetActiveLayer((mode == FeatureGroupingMode.ByType) ? "On" : "Off");
 				m_GroupBySourceButton.SetActiveLayer((mode == FeatureGroupingMode.BySource) ? "On" : "Off");
+				if (m_FavouriteGroupingButton != null)
+				{
+					m_FavouriteGroupingButton.SetActiveLayer((mode == FeatureGroupingMode.Favourites) ? "On" : "Off");
+				}
 			}));
 		}
 		AddDisposable(ObservableExtensions.Subscribe(base.ViewModel.OnFilterChange, delegate
@@ -183,7 +199,7 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 		{
 			InputBindStruct inputBindStruct = inputLayer.AddButton(delegate
 			{
-				bool isFocused2 = m_Navigation.IsFocused;
+				bool isFocused3 = m_Navigation.IsFocused;
 				if (base.ViewModel.IsShipContext)
 				{
 					m_FeaturesFilter.Or(null)?.SetPrevFilter();
@@ -192,7 +208,7 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 				{
 					base.ViewModel.SetGroupingMode(FeatureGroupingMode.BySource);
 				}
-				if (isFocused2)
+				if (isFocused3)
 				{
 					UpdateFocus();
 				}
@@ -200,28 +216,42 @@ public class RankEntryFeatureSelectionConsoleView : BaseCareerPathSelectionTabCo
 			AddDisposable(m_PrevFilterHint.Bind(inputBindStruct));
 			AddDisposable(inputBindStruct);
 		}
-		if (!m_NextFilterHint)
+		if ((bool)m_NextFilterHint)
+		{
+			InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
+			{
+				bool isFocused2 = m_Navigation.IsFocused;
+				if (base.ViewModel.IsShipContext)
+				{
+					m_FeaturesFilter.Or(null)?.SetNextFilter();
+				}
+				else
+				{
+					base.ViewModel.SetGroupingMode(FeatureGroupingMode.ByType);
+				}
+				if (isFocused2)
+				{
+					UpdateFocus();
+				}
+			}, 15);
+			AddDisposable(m_NextFilterHint.Bind(inputBindStruct2));
+			AddDisposable(inputBindStruct2);
+		}
+		if (base.ViewModel.IsShipContext)
 		{
 			return;
 		}
-		InputBindStruct inputBindStruct2 = inputLayer.AddButton(delegate
+		InputBindStruct inputBindStruct3 = inputLayer.AddButton(delegate
 		{
 			bool isFocused = m_Navigation.IsFocused;
-			if (base.ViewModel.IsShipContext)
-			{
-				m_FeaturesFilter.Or(null)?.SetNextFilter();
-			}
-			else
-			{
-				base.ViewModel.SetGroupingMode(FeatureGroupingMode.ByType);
-			}
+			base.ViewModel.ToggleFavouritesMode();
 			if (isFocused)
 			{
 				UpdateFocus();
 			}
-		}, 15);
-		AddDisposable(m_NextFilterHint.Bind(inputBindStruct2));
-		AddDisposable(inputBindStruct2);
+		}, 17, InputActionEventType.ButtonJustLongPressed);
+		AddDisposable(hintsWidget.BindHint(inputBindStruct3, UIStrings.Instance.InventoryScreen.FavoriteCategory));
+		AddDisposable(inputBindStruct3);
 		void UpdateFocus()
 		{
 			DelayedInvoker.InvokeInFrames(delegate

@@ -13,11 +13,14 @@ internal class CutsceneEntry
 
 	private bool m_Paused;
 
+	public readonly string CutsceneName;
+
 	public CutscenePlayerData Cutscene => m_Cutscene.Entity;
 
 	public CutsceneEntry([NotNull] CutscenePlayerData cutscene)
 	{
 		m_Cutscene = cutscene;
+		CutsceneName = cutscene.Cutscene?.name;
 		OwnersCount = 1;
 	}
 

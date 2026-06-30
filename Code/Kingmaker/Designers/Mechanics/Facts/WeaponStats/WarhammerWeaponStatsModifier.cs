@@ -3,6 +3,7 @@ using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Facts;
 using StateHasher.Core;
@@ -58,16 +59,19 @@ public abstract class WarhammerWeaponStatsModifier : MechanicEntityFactComponent
 
 	protected void Apply(RuleCalculateStatsWeapon rule)
 	{
-		Damage.TryApply(rule.BaseDamage.Modifiers, base.Fact, Descriptor);
-		DamageMin.TryApply(rule.BaseDamage.MinValueModifiers, base.Fact, Descriptor);
-		DamageMax.TryApply(rule.BaseDamage.MaxValueModifiers, base.Fact, Descriptor);
-		Penetration.TryApply(rule.BaseDamage.Penetration, base.Fact, Descriptor);
-		Recoil.TryApply(rule.RecoilModifiers, base.Fact, Descriptor);
-		AdditionalHitChance.TryApply(rule.AdditionalHitChanceModifiers, base.Fact, Descriptor);
-		DodgePenetration.TryApply(rule.DodgePenetrationModifiers, base.Fact, Descriptor);
-		MaxDistance.TryApply(rule.MaxDistanceModifiers, base.Fact, Descriptor);
-		OptimalDistance?.TryApply(rule.OptimalDistanceModifiers, base.Fact, Descriptor);
-		RateOfFire.TryApply(rule.RateOfFireModifiers, base.Fact, Descriptor);
+		if (!(rule.Reason.Fact is Buff))
+		{
+			Damage.TryApply(rule.BaseDamage.Modifiers, base.Fact, Descriptor);
+			DamageMin.TryApply(rule.BaseDamage.MinValueModifiers, base.Fact, Descriptor);
+			DamageMax.TryApply(rule.BaseDamage.MaxValueModifiers, base.Fact, Descriptor);
+			Penetration.TryApply(rule.BaseDamage.Penetration, base.Fact, Descriptor);
+			Recoil.TryApply(rule.RecoilModifiers, base.Fact, Descriptor);
+			AdditionalHitChance.TryApply(rule.AdditionalHitChanceModifiers, base.Fact, Descriptor);
+			DodgePenetration.TryApply(rule.DodgePenetrationModifiers, base.Fact, Descriptor);
+			MaxDistance.TryApply(rule.MaxDistanceModifiers, base.Fact, Descriptor);
+			OptimalDistance?.TryApply(rule.OptimalDistanceModifiers, base.Fact, Descriptor);
+			RateOfFire.TryApply(rule.RateOfFireModifiers, base.Fact, Descriptor);
+		}
 	}
 
 	public override Hash128 GetHash128()

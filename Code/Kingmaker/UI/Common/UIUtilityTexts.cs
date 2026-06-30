@@ -419,92 +419,95 @@ public static class UIUtilityTexts
 	{
 		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-			int num = 0;
-			string text = string.Empty;
-			try
+			using (selectedUnitIsPreview ? ContextData<PropertyContextPreviewCasterData>.Request().Setup(calculationSource) : null)
 			{
-				while (num < description.Length)
+				int num = 0;
+				string text = string.Empty;
+				try
 				{
-					int num2 = description.IndexOf("{" + EntityLink.GetTag(EntityLink.Type.UIProperty) + "|", num);
-					if (num2 == -1)
+					while (num < description.Length)
 					{
-						text += description.Substring(num);
-						break;
-					}
-					_ = description[num2];
-					text += description.Substring(num, num2 - num);
-					num = num2;
-					num2 += 5;
-					int num3 = description.Substring(num2).IndexOf('|');
-					int num4 = description.Substring(num2).IndexOf('}');
-					if (num3 == -1 || num4 == -1 || num3 > num4)
-					{
-						return description;
-					}
-					num2 += num3;
-					string link = description.Substring(num + 5, num2 - num - 5);
-					num = num2 + 1;
-					num2 += description.Substring(num2).IndexOf('}');
-					string assetId = description.Substring(num, num2 - num);
-					num = num2 + 1;
-					BlueprintUnitFact blueprintUnitFact = ResourcesLibrary.TryGetBlueprint<BlueprintUnitFact>(assetId);
-					if (calculationSource != null)
-					{
-						Ability ability = calculationSource.Facts.Get<Ability>(blueprintUnitFact);
-						UnitFact unitFact = null;
-						if (ability == null)
+						int num2 = description.IndexOf("{" + EntityLink.GetTag(EntityLink.Type.UIProperty) + "|", num);
+						if (num2 == -1)
 						{
-							unitFact = calculationSource.Facts.Get<UnitFact>(blueprintUnitFact);
+							text += description.Substring(num);
+							break;
 						}
-						UIPropertySettings property = ((ability != null) ? ability.GetComponent<UIPropertiesComponent>() : unitFact?.GetComponent<UIPropertiesComponent>())?.Properties.FirstOrDefault((UIPropertySettings property) => property.LinkKey == link);
-						if (property != null)
+						_ = description[num2];
+						text += description.Substring(num, num2 - num);
+						num = num2;
+						num2 += 5;
+						int num3 = description.Substring(num2).IndexOf('|');
+						int num4 = description.Substring(num2).IndexOf('}');
+						if (num3 == -1 || num4 == -1 || num3 > num4)
 						{
-							int? num5 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : unitFact.Blueprint)).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
-							string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
-							string text2 = ((num5 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
-							if (num5.HasValue)
+							return description;
+						}
+						num2 += num3;
+						string link = description.Substring(num + 5, num2 - num - 5);
+						num = num2 + 1;
+						num2 += description.Substring(num2).IndexOf('}');
+						string assetId = description.Substring(num, num2 - num);
+						num = num2 + 1;
+						BlueprintUnitFact blueprintUnitFact = ResourcesLibrary.TryGetBlueprint<BlueprintUnitFact>(assetId);
+						if (calculationSource != null)
+						{
+							Ability ability = calculationSource.Facts.Get<Ability>(blueprintUnitFact);
+							UnitFact unitFact = null;
+							if (ability == null)
 							{
-								link = $"<b><color={glossaryMechanicsHTML}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>{text2}";
+								unitFact = calculationSource.Facts.Get<UnitFact>(blueprintUnitFact);
 							}
-						}
-						else
-						{
-							property = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings p) => p.LinkKey == link);
+							UIPropertySettings property = ((ability != null) ? ability.GetComponent<UIPropertiesComponent>() : unitFact?.GetComponent<UIPropertiesComponent>())?.Properties.FirstOrDefault((UIPropertySettings property) => property.LinkKey == link);
 							if (property != null)
 							{
-								if (!selectedUnitIsPreview)
+								int? num5 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : unitFact.Blueprint)).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
+								string glossaryMechanicsHTML = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+								string text2 = ((num5 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
+								if (num5.HasValue)
 								{
-									link = FormatIndent(property.Description);
+									link = $"<b><color={glossaryMechanicsHTML}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num5.Value)}</link></color></b>{text2}";
 								}
-								else
+							}
+							else
+							{
+								property = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings p) => p.LinkKey == link);
+								if (property != null)
 								{
-									int? num6 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : (unitFact?.Blueprint ?? blueprintUnitFact))).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
-									string text3 = ((num6 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
-									string glossaryMechanicsHTML2 = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
-									if (num6.HasValue)
+									if (!selectedUnitIsPreview)
 									{
-										link = $"<b><color={glossaryMechanicsHTML2}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num6.Value)}</link></color></b>{text3}";
+										link = FormatIndent(property.Description);
+									}
+									else
+									{
+										int? num6 = (property.PropertySource ?? ((ability != null) ? ability.Blueprint : (unitFact?.Blueprint ?? blueprintUnitFact))).GetComponents<PropertyCalculatorComponent>().FirstOrDefault((PropertyCalculatorComponent c) => c.Name == property.PropertyName)?.GetValue(new PropertyContext(calculationSource, (ability == null) ? ((MechanicEntityFact)unitFact) : ((MechanicEntityFact)ability)));
+										string text3 = ((num6 == 0) ? (" [" + property.Description.Text + "]") : string.Empty);
+										string glossaryMechanicsHTML2 = UIConfig.Instance.PaperGlossaryColors.GlossaryMechanicsHTML;
+										if (num6.HasValue)
+										{
+											link = $"<b><color={glossaryMechanicsHTML2}><link=\"{EntityLink.GetTag(EntityLink.Type.UIProperty)}:{blueprintUnitFact.AssetGuid}:{link}\">{Mathf.Abs(num6.Value)}</link></color></b>{text3}";
+										}
 									}
 								}
 							}
 						}
-					}
-					else
-					{
-						UIPropertySettings uIPropertySettings = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings property) => property.LinkKey == link);
-						if (uIPropertySettings != null)
+						else
 						{
-							link = FormatIndent(uIPropertySettings.Description);
+							UIPropertySettings uIPropertySettings = blueprintUnitFact.GetComponent<UIPropertiesComponent>()?.Properties.FirstOrDefault((UIPropertySettings property) => property.LinkKey == link);
+							if (uIPropertySettings != null)
+							{
+								link = FormatIndent(uIPropertySettings.Description);
+							}
 						}
+						text += link;
 					}
-					text += link;
 				}
+				catch (Exception arg)
+				{
+					PFLog.UI.Error($"{arg}");
+				}
+				return text;
 			}
-			catch (Exception arg)
-			{
-				PFLog.UI.Error($"{arg}");
-			}
-			return text;
 		}
 	}
 

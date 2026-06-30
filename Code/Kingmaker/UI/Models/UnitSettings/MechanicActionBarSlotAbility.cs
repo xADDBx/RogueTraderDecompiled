@@ -284,8 +284,8 @@ public class MechanicActionBarSlotAbility : MechanicActionBarSlot, IHashable
 		{
 			return text;
 		}
-		List<UnitFact> list = Ability.Caster.GetRequired<UnitPartForbiddenAbilities>().GetGroupLimitationBuffsForbidding(Ability).ToList();
-		if (list.Count > 0)
+		List<UnitFact> list = Ability.Caster.GetOptional<UnitPartForbiddenAbilities>()?.GetGroupLimitationBuffsForbidding(Ability).ToList();
+		if (list != null && list.Count > 0)
 		{
 			return AbilityCasterHasNoFacts.GetCasterRestrictionUIText(Ability.Caster, list.Select((UnitFact f) => f.Blueprint));
 		}

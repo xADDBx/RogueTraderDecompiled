@@ -97,5 +97,9 @@ public class ColonyManagementVM : BaseDisposable, IViewModel, IBaseDisposable, I
 
 	public void OnGameModeStop(GameModeType gameMode)
 	{
+		if (gameMode == GameModeType.Dialog)
+		{
+			IsLockUIForDialog.Value = false;
+		}
 	}
 }

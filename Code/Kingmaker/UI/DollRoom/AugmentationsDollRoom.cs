@@ -352,18 +352,18 @@ public class AugmentationsDollRoom : CharacterDollRoom
 			foreach (KeyValuePair<BlueprintAugmentSlot, AugmentSlot> item2 in readOnlyDictionary)
 			{
 				AugmentSlot value = item2.Value;
-				if (value?.MaybeItem == null)
+				if (value == null)
 				{
 					continue;
 				}
-				BlueprintItemEquipment blueprintItemEquipment = value.MaybeItem.Blueprint as BlueprintItemEquipment;
-				if (blueprintItemEquipment?.EquipmentEntity == null)
+				BlueprintItemEquipment visualItemBlueprint = value.GetVisualItemBlueprint();
+				if (visualItemBlueprint?.EquipmentEntity == null)
 				{
 					continue;
 				}
-				foreach (EquipmentEntity item3 in blueprintItemEquipment.EquipmentEntity.Load(gender, valueOrDefault))
+				foreach (EquipmentEntity item3 in visualItemBlueprint.EquipmentEntity.Load(gender, valueOrDefault))
 				{
-					AddEquipmentWithRamps(item3);
+					AddEquipmentWithRamps(item3, value);
 				}
 				PFLog.TechArt.Log("[AugmentationsDollRoom] Added augmentation EEs from slot " + item2.Key?.name);
 			}
@@ -378,11 +378,11 @@ public class AugmentationsDollRoom : CharacterDollRoom
 		dollState.ApplyRamps(avatar);
 		avatar.gameObject.SetActive(value: true);
 		PFLog.TechArt.Log($"[AugmentationsDollRoom] UpdateDoll completed. Avatar has {avatar.EquipmentEntities.Count} EquipmentEntities");
-		void AddEquipmentWithRamps(EquipmentEntity ee)
+		void AddEquipmentWithRamps(EquipmentEntity ee, ItemSlot sourceSlot = null)
 		{
 			if (!(ee == null) && !avatar.EquipmentEntities.Contains(ee))
 			{
-				avatar.AddEquipmentEntity(ee);
+				avatar.AddEquipmentEntity(ee, saved: false, sourceSlot != null, sourceSlot);
 				Character.SelectedRampIndices selectedRampIndices = avatar.SavedBeforeCutsceneRampIndices.FirstOrDefault((Character.SelectedRampIndices r) => r.EquipmentEntity == ee);
 				if (selectedRampIndices != null)
 				{

@@ -78,8 +78,8 @@ public class CutscenePlayerTrackData : IHashable
 		List<AbstractUnitEntity> list = command.GetControlledUnits().ToTempList();
 		if (list != null)
 		{
-			CutsceneControlledUnit.MarkUnits(list, StartGate.Player, command, logOnFail);
 			ControlledUnits = list.Select((AbstractUnitEntity u) => new EntityRef(u)).ToList();
+			CutsceneControlledUnit.MarkUnits(list, StartGate.Player, command, logOnFail);
 		}
 	}
 

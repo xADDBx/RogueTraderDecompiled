@@ -83,6 +83,8 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 
 	private readonly Dictionary<string, bool> m_SourceGroupExpansionState = new Dictionary<string, bool>();
 
+	private FeatureGroupingMode m_LastNonFavouriteGroupingMode = FeatureGroupingMode.BySource;
+
 	private static readonly FeaturesFilter.FeatureFilterType[] DropdownGroupOrder = new FeaturesFilter.FeatureFilterType[7]
 	{
 		FeaturesFilter.FeatureFilterType.ArchetypeFilter,
@@ -577,7 +579,19 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 			list.AddRange(all);
 		}
 		FilteredGroupList.Clear();
-		if (RankEntryUtils.HasFilter(FeatureGroup))
+		if (GroupingMode.Value == FeatureGroupingMode.Favourites)
+		{
+			List<VirtualListElementVMBase> list2 = (from f in list.OfType<BaseRankEntryFeatureVM>()
+				where f.IsFavorite
+				select f).Cast<VirtualListElementVMBase>().ToList();
+			list2.Sort(CompareFeatureItems);
+			foreach (VirtualListElementVMBase item in list2)
+			{
+				item.Active.Value = true;
+			}
+			FilteredGroupList.AddRange(list2);
+		}
+		else if (RankEntryUtils.HasFilter(FeatureGroup))
 		{
 			if (GroupingMode.Value == FeatureGroupingMode.BySource)
 			{
@@ -794,6 +808,17 @@ public class RankEntrySelectionVM : VirtualListElementVMBase, IRankEntrySelectIt
 	public void SetGroupingMode(FeatureGroupingMode mode)
 	{
 		GroupingMode.Value = mode;
+	}
+
+	public void ToggleFavouritesMode()
+	{
+		if (GroupingMode.Value == FeatureGroupingMode.Favourites)
+		{
+			GroupingMode.Value = m_LastNonFavouriteGroupingMode;
+			return;
+		}
+		m_LastNonFavouriteGroupingMode = GroupingMode.Value;
+		GroupingMode.Value = FeatureGroupingMode.Favourites;
 	}
 
 	private void AddDropdownGroup(FeaturesFilter.FeatureFilterType filterType, string title, List<VirtualListElementVMBase> features)

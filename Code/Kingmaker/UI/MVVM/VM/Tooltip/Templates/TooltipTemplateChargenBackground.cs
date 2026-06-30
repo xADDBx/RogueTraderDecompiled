@@ -9,6 +9,7 @@ using Kingmaker.Blueprints.Root.Strings;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Bricks;
 using Kingmaker.Code.UI.MVVM.VM.Tooltip.Templates;
 using Kingmaker.Code.Utility;
+using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats.Base;
 using Kingmaker.Items;
@@ -20,6 +21,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Levelup.Selections;
 using Kingmaker.UnitLogic.Progression.Features;
 using Kingmaker.UnitLogic.Progression.Features.Advancements;
+using Kingmaker.Utility.StatefulRandom;
 using Owlcat.Runtime.UI.Tooltips;
 using UnityEngine;
 
@@ -79,23 +81,26 @@ public class TooltipTemplateChargenBackground : TooltipBaseTemplate
 
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
-		List<ITooltipBrick> list = new List<ITooltipBrick>();
-		AddForgeWorldBricks(list);
-		AddDescription(list);
-		AddFeatures(list);
-		TryAddAugmentsListBlock(list);
-		AddStatBonuses(list, StatTypeHelper.Attributes, UIStrings.Instance.CharGen.BackgroundStatsBonuses);
-		AddStatBonuses(list, StatTypeHelper.Skills, UIStrings.Instance.CharGen.BackgroundSkillsBonuses);
-		BlueprintComponentsEnumerator<AddFeaturesToLevelUp> components = m_Feature.GetComponents<AddFeaturesToLevelUp>();
-		if (components.Any())
+		using (ContextData<DisableStatefulRandomContext>.Request())
 		{
-			list.Add(new TooltipBrickText(UIStrings.Instance.CharGen.BackgroundUnlockedFeaturesForLevelUp, TooltipTextType.Centered));
-			AddLevelUpStats(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Attribute), UIStrings.Instance.CharGen.BackgroundStatsForLevelUp);
-			AddLevelUpStats(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Skill), UIStrings.Instance.CharGen.BackgroundSkillsForLevelUp);
-			AddLevelUpFeatures(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.ActiveAbility), UIStrings.Instance.CharacterSheet.Abilities);
-			AddLevelUpFeatures(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Talent), UIStrings.Instance.CharGen.BackgroundTalentsForLevelUp);
+			List<ITooltipBrick> list = new List<ITooltipBrick>();
+			AddForgeWorldBricks(list);
+			AddDescription(list);
+			AddFeatures(list);
+			TryAddAugmentsListBlock(list);
+			AddStatBonuses(list, StatTypeHelper.Attributes, UIStrings.Instance.CharGen.BackgroundStatsBonuses);
+			AddStatBonuses(list, StatTypeHelper.Skills, UIStrings.Instance.CharGen.BackgroundSkillsBonuses);
+			BlueprintComponentsEnumerator<AddFeaturesToLevelUp> components = m_Feature.GetComponents<AddFeaturesToLevelUp>();
+			if (components.Any())
+			{
+				list.Add(new TooltipBrickText(UIStrings.Instance.CharGen.BackgroundUnlockedFeaturesForLevelUp, TooltipTextType.Centered));
+				AddLevelUpStats(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Attribute), UIStrings.Instance.CharGen.BackgroundStatsForLevelUp);
+				AddLevelUpStats(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Skill), UIStrings.Instance.CharGen.BackgroundSkillsForLevelUp);
+				AddLevelUpFeatures(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.ActiveAbility), UIStrings.Instance.CharacterSheet.Abilities);
+				AddLevelUpFeatures(list, components.Where((AddFeaturesToLevelUp i) => i.Group == FeatureGroup.Talent), UIStrings.Instance.CharGen.BackgroundTalentsForLevelUp);
+			}
+			return list;
 		}
-		return list;
 	}
 
 	private void AddDescription(List<ITooltipBrick> bricks)

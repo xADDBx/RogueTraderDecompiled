@@ -83,7 +83,7 @@ public class RewardChangeStatSecurity : Reward
 		{
 			h.HandleSecurityInAllColoniesChanged(m_SecurityModifier);
 		});
-		coloniesState.ContentmentModifiersForAllColonies.Add(new ColonyStatModifier
+		coloniesState.SecurityModifiersForAllColonies.Add(new ColonyStatModifier
 		{
 			ModifierType = modifierType,
 			Value = m_SecurityModifier,

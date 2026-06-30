@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Code.UI.MVVM.VM.PointMarkers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Entities.Base;
@@ -60,7 +61,7 @@ public class SpacePointMarkersVM : PointMarkersVM, IAreaHandler, ISubscriber, IA
 		Clear();
 	}
 
-	void IReloadMechanicsHandler.OnMechanicsReloaded()
+	void IReloadMechanicsHandler.OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		UpdateUnits();
 	}

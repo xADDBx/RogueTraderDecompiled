@@ -39,6 +39,8 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	private readonly bool m_NeedMaximumLimit;
 
+	private readonly Func<ItemEntity, bool> m_AvailabilityPredicate;
+
 	private ItemsSorterType m_SorterTypeCache;
 
 	public ItemsCollection MechanicCollection { get; }
@@ -67,12 +69,13 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	public ItemSlotsGroupType Type { get; }
 
-	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0, bool forceSort = false)
+	protected SlotsGroupVM(ItemsCollection collection, int slotsInRow, int minSlots, IEnumerable<ItemEntity> items = null, ItemsFilterType filter = ItemsFilterType.NoFilter, ItemsSorterType sorter = ItemsSorterType.NotSorted, bool showUnavailableItems = true, bool showSlotHoldItemsInSlots = false, ItemSlotsGroupType type = ItemSlotsGroupType.Unknown, Func<ItemEntity, bool> showPredicate = null, bool needMaximumLimit = false, int maxSlots = 0, bool forceSort = false, Func<ItemEntity, bool> availabilityPredicate = null)
 	{
 		MechanicCollection = collection;
 		m_ItemEntities = items;
 		Type = type;
 		m_ShowPredicate = showPredicate;
+		m_AvailabilityPredicate = availabilityPredicate;
 		m_MinSlots = minSlots;
 		m_MaxSlots = maxSlots;
 		m_SlotsInRow = slotsInRow;
@@ -134,7 +137,7 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		list2.RemoveAll((ItemEntity item) => item != null && !ItemsFilter.ShouldShowItem(item, SorterType.Value));
 		if (!ShowUnavailable.Value)
 		{
-			list2.RemoveAll((ItemEntity i) => !UIUtilityItem.IsEquipPossible(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
+			list2.RemoveAll((ItemEntity i) => !IsItemAvailable(i) && !UIUtilityItem.IsQuestItem(i?.Blueprint));
 		}
 		if ((SorterType.Value != 0 && m_SorterTypeCache != SorterType.Value) || force || (RootUIContext.Instance.IsLootShow && Type == ItemSlotsGroupType.Loot))
 		{
@@ -193,6 +196,11 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 		InternalUpdate(force: true);
 	}
 
+	private bool IsItemAvailable(ItemEntity item)
+	{
+		return m_AvailabilityPredicate?.Invoke(item) ?? UIUtilityItem.IsEquipPossible(item);
+	}
+
 	private bool ShouldShowItem(ItemEntity item)
 	{
 		if (item != null)
@@ -241,6 +249,10 @@ public abstract class SlotsGroupVM<TViewModel> : BaseDisposable, IViewModel, IBa
 
 	private bool NeedRemoveEmptySlot()
 	{
+		if (!ShowUnavailable.Value && m_AvailabilityPredicate != null)
+		{
+			return true;
+		}
 		if (m_SorterTypeCache == SorterType.Value)
 		{
 			return false;

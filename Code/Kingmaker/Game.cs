@@ -1544,13 +1544,9 @@ public class Game : IGameDoStartMode, IGameDoStopMode, IGameDoSwitchCutsceneLock
 		}
 		EventBus.RaiseEvent(delegate(IReloadMechanicsHandler h)
 		{
-			h.OnMechanicsReloaded();
+			h.OnMechanicsReloaded(newScenesLoaded);
 		});
 		Instance.Player.ApplyUpgrades();
-		if (newScenesLoaded.Count > 0)
-		{
-			Instance.SceneControllables.Rescan();
-		}
 	}
 
 	private static void LoadArea([NotNull] BlueprintArea area, [CanBeNull] BlueprintAreaEnterPoint enterPoint, AutoSaveMode autoSaveMode, [CanBeNull] SaveInfo saveInfo = null, [CanBeNull] Action callback = null)

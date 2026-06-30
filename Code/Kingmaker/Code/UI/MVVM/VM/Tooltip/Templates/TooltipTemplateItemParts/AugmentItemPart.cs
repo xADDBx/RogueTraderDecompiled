@@ -49,6 +49,10 @@ public class AugmentItemPart : WeaponItemPart
 	public override IEnumerable<ITooltipBrick> GetBody(TooltipTemplateType type)
 	{
 		List<ITooltipBrick> list = new List<ITooltipBrick>();
+		if (!string.IsNullOrEmpty(Item?.Blueprint.FlavorText))
+		{
+			list.Add(new TooltipBrickText(Item?.Blueprint.FlavorText, TooltipTextType.Paragraph, isHeader: false, TooltipTextAlignment.Left, needChangeSize: false, 18, Game.Instance.SelectionCharacter.SelectedUnitInUI.Value));
+		}
 		AddEffectsDescription(list);
 		AddEffectsDescription(list, positive: false);
 		if (Item?.Blueprint is BlueprintItemAugment blueprintItemAugment)

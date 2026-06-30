@@ -16,6 +16,7 @@ using Kingmaker.Utility;
 using Kingmaker.Utility.DotNetExtensions;
 using Kingmaker.View.Covers;
 using Pathfinding;
+using UnityEngine;
 using Warhammer.SpaceCombat.StarshipLogic.Weapon;
 
 namespace Kingmaker.AI;
@@ -53,6 +54,8 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 	private Dictionary<(UnitEntity, LosCalculations.CoverType), float> m_CachedDodgeChances = new Dictionary<(UnitEntity, LosCalculations.CoverType), float>();
 
 	private Dictionary<(CustomGridNodeBase, CustomGridNodeBase), bool> m_CachedNodeLOS = new Dictionary<(CustomGridNodeBase, CustomGridNodeBase), bool>();
+
+	private readonly Dictionary<(int, int), PatternGridData> m_OrientedPatternGridDataCache = new Dictionary<(int, int), PatternGridData>();
 
 	public MechanicEntity Caster => ability.Caster;
 
@@ -108,6 +111,21 @@ public class AbilityInfo : IAbilityDataProviderForPattern
 			return new AOETargetSelector(this);
 		}
 		return new SingleTargetSelector(this);
+	}
+
+	public PatternGridData GetOrientedPatternGridDataCached((int, int) key, Vector2 direction)
+	{
+		if (pattern == null)
+		{
+			return PatternGridData.Empty;
+		}
+		if (m_OrientedPatternGridDataCache.TryGetValue(key, out var value))
+		{
+			return value;
+		}
+		value = pattern.GetGridData(direction);
+		m_OrientedPatternGridDataCache[key] = value;
+		return value;
 	}
 
 	public bool CanTargetFromNodeCached(CustomGridNodeBase casterNode, CustomGridNodeBase targetNode, TargetWrapper target, out int distance, out LosCalculations.CoverType los)

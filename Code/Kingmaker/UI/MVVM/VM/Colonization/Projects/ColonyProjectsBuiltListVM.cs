@@ -69,10 +69,13 @@ public class ColonyProjectsBuiltListVM : ColonyUIComponentVM, IColonizationHandl
 		}
 		foreach (ColonyProject project in m_Colony.Projects)
 		{
-			ColonyProjectVM colonyProjectVM = new ColonyProjectVM(project.Blueprint, m_Colony);
-			colonyProjectVM.FullUpdate();
-			AddDisposable(colonyProjectVM);
-			ProjectsVMs.Add(colonyProjectVM);
+			if (project.IsFinished)
+			{
+				ColonyProjectVM colonyProjectVM = new ColonyProjectVM(project.Blueprint, m_Colony);
+				colonyProjectVM.FullUpdate();
+				AddDisposable(colonyProjectVM);
+				ProjectsVMs.Add(colonyProjectVM);
+			}
 		}
 		UpdateProjectsCommand.Execute();
 	}

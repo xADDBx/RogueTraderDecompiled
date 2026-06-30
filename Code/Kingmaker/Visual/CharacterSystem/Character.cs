@@ -1233,7 +1233,7 @@ public class Character : RegisteredBehaviour, IUpdatable
 		{
 			return true;
 		}
-		if (!m_ShowBoots && IsBootsType(bodyPart))
+		if (!m_ShowBoots && IsBootsType(bodyPart) && !fromEntity.IsAugmentation)
 		{
 			return true;
 		}

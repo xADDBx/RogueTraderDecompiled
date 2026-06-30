@@ -28,6 +28,11 @@ public class SceneControllablesState : Entity, IHashable
 	{
 	}
 
+	public Dictionary<string, ControllableState> CopyStates()
+	{
+		return new Dictionary<string, ControllableState>(m_States);
+	}
+
 	public void SetState(string id, ControllableState state)
 	{
 		m_States[id] = state;

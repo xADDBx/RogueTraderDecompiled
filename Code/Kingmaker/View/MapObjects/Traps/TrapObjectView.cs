@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem.Core;
@@ -187,7 +189,7 @@ public abstract class TrapObjectView : MapObjectView, IReloadMechanicsHandler, I
 	{
 	}
 
-	public void OnMechanicsReloaded()
+	public void OnMechanicsReloaded(IReadOnlyList<SceneReference> reloadedScenes)
 	{
 		if ((bool)Settings.ScriptZoneTrigger && m_ScriptZoneOriginalParent == null)
 		{

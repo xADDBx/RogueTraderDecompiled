@@ -92,7 +92,8 @@ public class LocalMapVM : BaseDisposable, IViewModel, IBaseDisposable, IDisposab
 		LocalMapModel.Markers.RemoveWhere((ILocalMapMarker m) => m.GetMarkerType() == LocalMapMarkType.Invalid);
 		foreach (ILocalMapMarker marker in LocalMapModel.Markers)
 		{
-			if (LocalMapModel.IsInCurrentArea(marker.GetPosition()))
+			Entity entity = marker.GetEntity();
+			if ((entity == null || !entity.Suppressed) && LocalMapModel.IsInCurrentArea(marker.GetPosition()))
 			{
 				MarkersVm.Add(new LocalMapCommonMarkerVM(marker));
 			}

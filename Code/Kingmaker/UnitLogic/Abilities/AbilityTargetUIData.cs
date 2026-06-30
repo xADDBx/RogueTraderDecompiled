@@ -108,7 +108,11 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 			ItemEntityWeapon weapon = Ability.Weapon;
 			ItemEntityStarshipWeapon starshipWeapon = Ability.StarshipWeapon;
 			bool flag = Ability.IsValid(target, casterPosition);
-			bool flag2 = UnitPredictionManager.Instance?.IsUnitRicochetTarget(target) ?? false;
+			UnitPredictionManager instance = UnitPredictionManager.Instance;
+			if ((object)instance != null && instance.IsUnitRicochetTarget(target))
+			{
+				return;
+			}
 			if (target != null && starshipWeapon != null && target is StarshipEntity target2)
 			{
 				UpdateWithStarshipWeapon(Ability, target2, casterPosition, starshipWeapon);
@@ -128,7 +132,7 @@ public struct AbilityTargetUIData : IEquatable<AbilityTargetUIData>
 				float hitWithAvoidanceChance = (InitialHitChance = num);
 				HitWithAvoidanceChance = hitWithAvoidanceChance;
 			}
-			if (!flag && !flag2 && !HitAlways)
+			if (!flag && !HitAlways)
 			{
 				return;
 			}

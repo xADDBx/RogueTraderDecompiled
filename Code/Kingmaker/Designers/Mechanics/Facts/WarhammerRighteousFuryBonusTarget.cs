@@ -4,6 +4,7 @@ using Kingmaker.Blueprints.Attributes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.Code.Enums.Helper;
+using Kingmaker.Designers.Mechanics.Facts.Restrictions;
 using Kingmaker.Enums;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem.Core;
@@ -25,6 +26,8 @@ namespace Kingmaker.Designers.Mechanics.Facts;
 [TypeId("655d56d2a908e0846928313013cf0fc9")]
 public class WarhammerRighteousFuryBonusTarget : UnitFactComponentDelegate, ITargetRulebookHandler<RuleCalculateRighteousFuryChance>, IRulebookHandler<RuleCalculateRighteousFuryChance>, ISubscriber, ITargetRulebookSubscriber, IHashable
 {
+	public RestrictionCalculator Restrictions = new RestrictionCalculator();
+
 	public ContextValue Value;
 
 	public ContextValue Multiplier;
@@ -44,6 +47,10 @@ public class WarhammerRighteousFuryBonusTarget : UnitFactComponentDelegate, ITar
 
 	public void OnEventAboutToTrigger(RuleCalculateRighteousFuryChance evt)
 	{
+		if (!Restrictions.IsPassed(base.Fact, evt, evt.Ability))
+		{
+			return;
+		}
 		ItemEntityWeapon weapon = evt.Ability.Weapon;
 		if (OnlyFromSpotWeaknessSide && evt.MaybeTarget != null)
 		{

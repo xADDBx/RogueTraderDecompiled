@@ -67,6 +67,7 @@ public class CommandMoveParty : CommandBase
 
 	[ValidateNotEmpty]
 	[ValidateNoNullEntries]
+	[MultiEntityReferenceDrop]
 	public CommandTranslocateParty.Target[] TargetsV2;
 
 	public WalkSpeedType Animation = WalkSpeedType.Walk;
