@@ -35,7 +35,7 @@ public class FeatureAllowAdditionalTargetTypes : UnitFactComponentDelegate, IAbi
 
 	public IAbilityAllowTargetingType.TargetTypeEnum TargetType => m_TargetType;
 
-	protected override void OnActivate()
+	protected override void OnActivateOrPostLoad()
 	{
 		base.Owner.GetOrCreate<PartAbilityTargetExtension>().Register(base.Fact, this);
 	}

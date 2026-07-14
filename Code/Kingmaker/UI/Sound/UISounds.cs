@@ -38,7 +38,8 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 		AnalogSound,
 		ServoSkullTwitchDrops,
 		AugmentationsOverdriveHover,
-		AugmentationsOverdriveClick
+		AugmentationsOverdriveClick,
+		LevelupNextPress
 	}
 
 	public static UISounds Instance => Services.GetInstance<UISounds>();
@@ -153,6 +154,9 @@ public class UISounds : IUIKitSoundManager, IService, IDropItemHandler, ISubscri
 			break;
 		case 10:
 			Play(Instance.Sounds.AugmentationsWindow.AugmentOverdriveAbilityUse, isButton: true);
+			break;
+		case 11:
+			Play(Instance.Sounds.LevelupBottomButtons.OnNextPress, isButton: true);
 			break;
 		default:
 			LogChannel.Default.Warning("UI sound events in OwlcatButton don't supported in project", new object[0]);

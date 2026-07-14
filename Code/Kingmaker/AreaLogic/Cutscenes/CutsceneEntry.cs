@@ -24,7 +24,7 @@ internal class CutsceneEntry
 		OwnersCount = 1;
 	}
 
-	public void PauseOrStop()
+	public void PauseOrStop(CutsceneEntry interceptor = null)
 	{
 		if (!m_Paused)
 		{
@@ -33,6 +33,7 @@ internal class CutsceneEntry
 			{
 			case Kingmaker.AreaLogic.Cutscenes.Cutscene.MarkedUnitHandlingType.Pause:
 			case Kingmaker.AreaLogic.Cutscenes.Cutscene.MarkedUnitHandlingType.PauseAndRestart:
+				PFLog.Cutscene.Log("[Cutscene] '" + CutsceneName + "' paused: unit is controlled by cutscene '" + (interceptor?.CutsceneName ?? "unknown") + "'");
 				Cutscene.SetPaused(value: true, CutscenePauseReason.MarkedUnitControlledByOtherCutscene);
 				break;
 			case Kingmaker.AreaLogic.Cutscenes.Cutscene.MarkedUnitHandlingType.Stop:

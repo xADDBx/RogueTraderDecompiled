@@ -27,7 +27,7 @@ public class CareerPathDescriptionPCView : BaseCareerPathSelectionTabPCView<Care
 		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
 		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
 		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
-		SetButtonSound(UISounds.ButtonSoundsEnum.DoctrineNextSound);
+		SetButtonSound(UISounds.ButtonSoundsEnum.LevelupNextPress);
 		base.ViewModel.OnUpdateData.Subscribe(delegate
 		{
 			if (base.ViewModel != null)

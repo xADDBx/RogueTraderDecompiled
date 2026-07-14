@@ -3,11 +3,13 @@ using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
+using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.Mechanics.Entities;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 
 [TypeId("108c71e06af64dc8a69cb1290889fb18")]
+[PlayerUpgraderAllowed(false)]
 public class UnitGroupUnit : AbstractUnitEvaluator
 {
 	protected override AbstractUnitEntity GetAbstractUnitEntityInternal()

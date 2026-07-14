@@ -188,8 +188,11 @@ public class TooltipTemplateBuff : TooltipBaseTemplate
 	{
 		if (Buff != null)
 		{
-			bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, Buff.Owner), TooltipTextType.Paragraph));
-			return;
+			using (ContextData<PropertyContextPreviewCasterData>.Request().Setup(Buff.Context?.MaybeCaster))
+			{
+				bricks.Add(new TooltipBrickText(UIUtilityTexts.UpdateDescriptionWithUIProperties(m_Desc, Buff.Owner, selectedUnitIsPreview: true), TooltipTextType.Paragraph));
+				return;
+			}
 		}
 		if (BlueprintBuff != null)
 		{

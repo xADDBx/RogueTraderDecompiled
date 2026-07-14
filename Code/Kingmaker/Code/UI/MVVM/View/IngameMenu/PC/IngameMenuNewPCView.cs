@@ -205,7 +205,7 @@ public class IngameMenuNewPCView : IngameMenuBasePCView<IngameMenuVM>, IAugmenta
 		bool flag = Game.Instance.Player.ServiceWindowsBlocked;
 		bool flag2 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.InventoryWindowBlocked;
 		bool flag3 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.CharacterInfoWindowBlocked;
-		bool flag4 = Game.Instance.Player.AugmentationsWindowBlocked;
+		bool flag4 = (bool)Game.Instance.Player.ServiceWindowsBlocked || (bool)Game.Instance.Player.AugmentationsWindowBlocked;
 		bool flag5 = StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion);
 		m_Inventory.gameObject.SetActive(!flag2);
 		m_Character.gameObject.SetActive(!flag3);

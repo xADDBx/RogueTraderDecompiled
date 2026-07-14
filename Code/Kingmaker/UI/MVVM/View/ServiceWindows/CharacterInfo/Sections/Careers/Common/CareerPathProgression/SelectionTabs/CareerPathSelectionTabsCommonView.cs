@@ -4,9 +4,11 @@ using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.CareerP
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry;
 using Kingmaker.UI.MVVM.VM.ServiceWindows.CharacterInfo.Sections.Careers.RankEntry.Feature;
 using Kingmaker.Utility.DotNetExtensions;
+using Kingmaker.Visual.Sound;
 using Owlcat.Runtime.UI.MVVM;
 using UniRx;
 using UnityEngine;
+using Warhammer.SpaceCombat.StarshipLogic;
 
 namespace Kingmaker.UI.MVVM.View.ServiceWindows.CharacterInfo.Sections.Careers.Common.CareerPathProgression.SelectionTabs;
 
@@ -42,6 +44,14 @@ public abstract class CareerPathSelectionTabsCommonView : ViewBase<CareerPathVM>
 		{
 			UpdateActiveTab();
 		}));
+		if ((m_GroupByButtonsObject != null && base.ViewModel.Unit.IsStarship()) || base.ViewModel.Unit.IsPlayerShip())
+		{
+			m_GroupByButtonsObject.SetActive(value: false);
+		}
+		else
+		{
+			m_GroupByButtonsObject.SetActive(value: true);
+		}
 	}
 
 	protected override void DestroyViewImplementation()

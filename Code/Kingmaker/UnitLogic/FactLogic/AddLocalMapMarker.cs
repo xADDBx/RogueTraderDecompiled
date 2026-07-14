@@ -38,6 +38,10 @@ public class AddLocalMapMarker : BlueprintComponent, IRuntimeEntityFactComponent
 
 		public LocalMapMarkType GetMarkerType()
 		{
+			if (base.Owner == null)
+			{
+				return LocalMapMarkType.Invalid;
+			}
 			return base.Settings.Type;
 		}
 

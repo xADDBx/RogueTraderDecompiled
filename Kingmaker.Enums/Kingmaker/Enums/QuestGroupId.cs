@@ -14,5 +14,6 @@ public enum QuestGroupId
 	CompanionQuests,
 	Errands,
 	Rumours,
-	Orders
+	Orders,
+	Global
 }

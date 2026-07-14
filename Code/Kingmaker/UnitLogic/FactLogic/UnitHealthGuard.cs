@@ -17,7 +17,7 @@ public class UnitHealthGuard : UnitFactComponentDelegate, IHashable
 
 	protected override void OnActivateOrPostLoad()
 	{
-		int value = Math.Max(1, (int)(0.01 * (double)HealthPercent * (double)base.Owner.Health.MaxHitPoints));
+		int value = Math.Max(1, base.Owner.Health.PercentToHitPoints(HealthPercent));
 		base.Owner.Features.Immortality.Retain();
 		base.Owner.Health.AddHealthGuard(base.Fact, this, value);
 		base.Owner.Health.HitPoints.AddDependentComponent(base.Runtime);

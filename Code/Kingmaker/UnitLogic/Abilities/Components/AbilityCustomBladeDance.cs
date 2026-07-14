@@ -121,13 +121,6 @@ public class AbilityCustomBladeDance : AbilityCustomLogic
 			WeaponAbility weaponAbility = weapon?.Blueprint.WeaponAbilities.FirstOrDefault();
 			if ((abilityDeliveryTarget.AttackRule?.ResultIsHit ?? false) && weaponAbility != null)
 			{
-				if (weaponAbility.OnHitActions != null)
-				{
-					using (context.GetDataScope(currentTarget))
-					{
-						weaponAbility.OnHitActions?.OnHitActions.Run();
-					}
-				}
 				AbilityEffectRunAction component = weaponAbility.Ability.GetComponent<AbilityEffectRunAction>();
 				if (component != null)
 				{

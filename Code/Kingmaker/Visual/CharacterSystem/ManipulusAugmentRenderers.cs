@@ -489,6 +489,7 @@ public class ManipulusAugmentRenderers : MonoBehaviour, IEntitySubscriber, IView
 			if (skinnedMeshRenderer != null)
 			{
 				skinnedMeshRenderer.gameObject.SetActive(active);
+				skinnedMeshRenderer.enabled = active;
 			}
 		}
 	}

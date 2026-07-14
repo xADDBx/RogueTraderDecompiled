@@ -33,7 +33,7 @@ public class SendToRemoteDesyncHandler : IDesyncHandler
 		}
 	}
 
-	private const string RemoteEndpoint = "http://89.17.52.236:5060/api/desync/upload";
+	private const string RemoteEndpoint = "https://report.owlcat.games/desync/upload";
 
 	private static readonly HttpClient Client = new HttpClient();
 
@@ -81,7 +81,7 @@ public class SendToRemoteDesyncHandler : IDesyncHandler
 		string content = JsonConvert.SerializeObject(new RemoteDesyncMeta(meta, m_PropsCollector.Collect()));
 		multipartFormDataContent.Add(new StringContent(content, Encoding.UTF8, "application/json"), "files", "meta.json");
 		multipartFormDataContent.Add(new StringContent(state, Encoding.UTF8, "application/json"), "files", "state.json");
-		using HttpResponseMessage response = await Client.PostAsync("http://89.17.52.236:5060/api/desync/upload", multipartFormDataContent);
+		using HttpResponseMessage response = await Client.PostAsync("https://report.owlcat.games/desync/upload", multipartFormDataContent);
 		HttpStatusCode statusCode = response.StatusCode;
 		return (statusCode, await response.Content.ReadAsStringAsync());
 	}

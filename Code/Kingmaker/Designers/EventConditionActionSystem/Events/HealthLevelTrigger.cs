@@ -64,7 +64,7 @@ public class HealthLevelTrigger : MechanicEntityFactComponentDelegate, IDamageHa
 		{
 			return false;
 		}
-		int num = (UseValueInstead ? Value : ((Percentage != 0) ? Math.Max(1, (int)(0.01f * (float)Percentage * (float)healthOptional.MaxHitPoints)) : 0));
+		int num = (UseValueInstead ? Value : ((Percentage != 0) ? Math.Max(1, healthOptional.PercentToHitPoints(Percentage)) : 0));
 		int hitPointsLeft = healthOptional.HitPointsLeft;
 		bool flag = hitPointsLeft + dealDamage.Result > num;
 		bool flag2 = hitPointsLeft <= num;
@@ -83,7 +83,7 @@ public class HealthLevelTrigger : MechanicEntityFactComponentDelegate, IDamageHa
 			RuleDealDamage rule2 = new RuleDealDamage(caster, target, new DamageData(DamageType.Direct, healthOptional.MaxHitPoints));
 			if (m_Restrictions.IsPassed(base.Fact, rule2))
 			{
-				int num = (UseValueInstead ? Value : ((int)(0.01 * (double)Percentage * (double)healthOptional.MaxHitPoints)));
+				int num = (UseValueInstead ? Value : healthOptional.PercentToHitPoints(Percentage));
 				_ = healthOptional.HitPointsLeft;
 				if (num > healthOptional.HitPointsLeft)
 				{

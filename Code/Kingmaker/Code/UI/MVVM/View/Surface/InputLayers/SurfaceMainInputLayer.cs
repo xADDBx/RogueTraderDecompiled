@@ -162,7 +162,7 @@ public class SurfaceMainInputLayer : InputLayer, IDisposable, IAbilityTargetSele
 				return;
 			}
 			BaseUnitEntity value = Game.Instance.SelectionCharacter.SelectedUnit.Value;
-			if (value == null || !value.IsDirectlyControllable())
+			if (value == null || !value.IsDirectlyControllable() || !value.CanMove)
 			{
 				return;
 			}

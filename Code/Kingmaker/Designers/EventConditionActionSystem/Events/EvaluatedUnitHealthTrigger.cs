@@ -38,7 +38,7 @@ public class EvaluatedUnitHealthTrigger : EntityFactComponentDelegate, IDamageHa
 		}
 		else if (baseUnitEntity == dealDamage.Target)
 		{
-			int num = Math.Max((int)(0.01 * (double)Percentage * (double)baseUnitEntity.Health.MaxHitPoints), baseUnitEntity.Health.MinHitPoints);
+			int num = Math.Max(baseUnitEntity.Health.PercentToHitPoints(Percentage), baseUnitEntity.Health.MinHitPoints);
 			int hitPointsLeft = baseUnitEntity.Health.HitPointsLeft;
 			bool flag = hitPointsLeft + dealDamage.Result > num;
 			bool flag2 = hitPointsLeft <= num;

@@ -133,14 +133,6 @@ public class UnitOvertipsCollectionVM : OvertipsCollectionVM<OvertipEntityUnitVM
 	public void OnGameModeStart(GameModeType gameMode)
 	{
 		IsCutscene.Value = gameMode == GameModeType.Cutscene;
-		if (!IsCutscene.Value)
-		{
-			return;
-		}
-		foreach (OvertipEntityUnitVM overtip in Overtips)
-		{
-			overtip.HideBark();
-		}
 	}
 
 	public void OnGameModeStop(GameModeType gameMode)

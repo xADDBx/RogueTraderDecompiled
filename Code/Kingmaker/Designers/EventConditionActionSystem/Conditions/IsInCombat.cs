@@ -1,10 +1,12 @@
 using Kingmaker.Blueprints.JsonSystem.Helpers;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Persistence.Versioning;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Conditions;
 
 [TypeId("95ab8455743b4254580bb0adfaf3be54")]
+[PlayerUpgraderAllowed(false)]
 public class IsInCombat : Condition
 {
 	[SerializeReference]

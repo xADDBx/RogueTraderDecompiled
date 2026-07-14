@@ -72,7 +72,7 @@ public class CutsceneControlledUnit
 			UpdateActiveCutscene();
 			if (cutsceneEntry != null && cutsceneEntry != m_Active)
 			{
-				cutsceneEntry.PauseOrStop();
+				cutsceneEntry.PauseOrStop(m_Active);
 			}
 		}
 		catch (Exception ex)
@@ -137,7 +137,7 @@ public class CutsceneControlledUnit
 			CutsceneEntry active = m_Active;
 			if (active != null && active.OwnersCount > 0)
 			{
-				m_Active?.PauseOrStop();
+				m_Active?.PauseOrStop(cutsceneEntry);
 			}
 		}
 		cutsceneEntry?.Resume();

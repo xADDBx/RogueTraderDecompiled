@@ -150,6 +150,11 @@ public class PartHealth : MechanicEntityPart, IInGameHandler<EntitySubscriber>, 
 
 	public int MinHitPoints => Math.Max(m_MinHitPoints, base.Owner.HasMechanicFeature(MechanicsFeatureType.Undying) ? 1 : 0);
 
+	public int PercentToHitPoints(int percent)
+	{
+		return (int)(0.01 * (double)percent * (double)MaxHitPoints);
+	}
+
 	protected override void OnAttach()
 	{
 		Initialize();

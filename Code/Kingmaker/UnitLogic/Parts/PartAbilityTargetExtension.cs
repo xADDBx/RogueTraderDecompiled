@@ -5,16 +5,14 @@ using Kingmaker.EntitySystem;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Mechanics;
-using Newtonsoft.Json;
 using StateHasher.Core;
-using StateHasher.Core.Hashers;
 using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
 public class PartAbilityTargetExtension : BaseUnitPart, IHashable
 {
-	private readonly struct Entry : IEquatable<Entry>, IHashable
+	private readonly struct Entry : IEquatable<Entry>
 	{
 		private readonly EntityFactRef _factRef;
 
@@ -52,21 +50,20 @@ public class PartAbilityTargetExtension : BaseUnitPart, IHashable
 		{
 			return HashCode.Combine(_factRef, _componentRef);
 		}
-
-		public Hash128 GetHash128()
-		{
-			return default(Hash128);
-		}
 	}
 
-	[JsonProperty]
 	private readonly HashSet<Entry> Entries = new HashSet<Entry>();
 
 	public bool CanTargetType(AbilityData abilityData, IAbilityAllowTargetingType.TargetTypeEnum targetType)
 	{
 		foreach (Entry entry in Entries)
 		{
-			if (entry.Component.TargetType == targetType && entry.Component.IsRestrictionPassed(abilityData))
+			FeatureAllowAdditionalTargetTypes component = entry.Component;
+			if (component == null)
+			{
+				PFLog.Ability.Error($"Failed to resolve component for entry with fact {entry.Fact}. Skipping it");
+			}
+			else if (component.TargetType == targetType && component.IsRestrictionPassed(abilityData))
 			{
 				return true;
 			}
@@ -92,17 +89,6 @@ public class PartAbilityTargetExtension : BaseUnitPart, IHashable
 		Hash128 result = default(Hash128);
 		Hash128 val = base.GetHash128();
 		result.Append(ref val);
-		HashSet<Entry> entries = Entries;
-		if (entries != null)
-		{
-			int num = 0;
-			foreach (Entry item in entries)
-			{
-				Entry obj = item;
-				num ^= StructHasher<Entry>.GetHash128(ref obj).GetHashCode();
-			}
-			result.Append(num);
-		}
 		return result;
 	}
 }

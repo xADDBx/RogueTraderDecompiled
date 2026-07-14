@@ -164,7 +164,7 @@ public class RankEntryFeatureSelectionPCView : BaseCareerPathSelectionTabPCView<
 		SetNextButtonLabel(UIStrings.Instance.CharGen.Next);
 		SetBackButtonLabel(UIStrings.Instance.CharGen.Back);
 		SetFinishButtonLabel(UIStrings.Instance.Tutorial.Complete);
-		SetButtonSound(UISounds.ButtonSoundsEnum.DoctrineNextSound);
+		SetButtonSound(UISounds.ButtonSoundsEnum.LevelupNextPress);
 		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.Subscribe(base.SetFinishInteractable));
 		AddDisposable(base.ViewModel.CareerPathVM.CanCommit.CombineLatest(base.ViewModel.CareerPathVM.PointerItem, (bool canCommit, IRankEntrySelectItem pointerItem) => canCommit && pointerItem == null).Subscribe(delegate(bool value)
 		{

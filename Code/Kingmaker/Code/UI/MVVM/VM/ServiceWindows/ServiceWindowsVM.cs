@@ -300,7 +300,7 @@ public class ServiceWindowsVM : BaseDisposable, IViewModel, IBaseDisposable, IDi
 		{
 			h.HandleCloseFormation();
 		});
-		bool flag = type == ServiceWindowsType.Inventory || type == ServiceWindowsType.CargoManagement || type == ServiceWindowsType.CharacterInfo || type == ServiceWindowsType.ShipCustomization;
+		bool flag = type == ServiceWindowsType.Inventory || type == ServiceWindowsType.CargoManagement || type == ServiceWindowsType.CharacterInfo || type == ServiceWindowsType.ShipCustomization || type == ServiceWindowsType.Augmentations;
 		if (((bool)Game.Instance.Player.ServiceWindowsBlocked && flag) || (type == ServiceWindowsType.Augmentations && !StoreManager.CheckIfDlcPurchasedAndInstalled(DlcNameEnum.DLC3TheInfiniteMuseion)) || ((bool)Game.Instance.Player.InventoryWindowBlocked && type == ServiceWindowsType.Inventory) || ((bool)Game.Instance.Player.CharacterInfoWindowBlocked && type == ServiceWindowsType.CharacterInfo) || ((bool)Game.Instance.Player.AugmentationsWindowBlocked && type == ServiceWindowsType.Augmentations) || ServiceWindowNowIsOpening || RootUIContext.Instance.IsVendorShow)
 		{
 			return;

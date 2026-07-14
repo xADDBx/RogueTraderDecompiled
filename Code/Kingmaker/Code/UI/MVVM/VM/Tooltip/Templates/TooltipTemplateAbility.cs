@@ -231,7 +231,7 @@ public class TooltipTemplateAbility : TooltipBaseTemplate
 		AddCooldown(list);
 		AddHitChances(list);
 		AddAttackOfOpportunity(list);
-		AddDescription(list, type);
+		AddDescription(list, type, isPreview: true);
 		AddMovementActionVeil(list, type);
 		TryAddRetargetableIconBrick(list, type);
 		TryAddRedirectDrivenBrick(list);

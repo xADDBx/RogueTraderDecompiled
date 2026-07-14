@@ -4,12 +4,14 @@ using Kingmaker.Designers.EventConditionActionSystem.ContextData;
 using Kingmaker.ElementsSystem;
 using Kingmaker.ElementsSystem.ContextData;
 using Kingmaker.EntitySystem.Interfaces;
+using Kingmaker.EntitySystem.Persistence.Versioning;
 using Kingmaker.View.Spawners;
 using UnityEngine;
 
 namespace Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 [TypeId("d6438d31eff349d4bf1ec872cfc0a001")]
+[PlayerUpgraderAllowed(true)]
 public class UnitsFromSpawnersInUnitGroup : GameAction
 {
 	public class UnitData : AbstractUnitData<UnitData>

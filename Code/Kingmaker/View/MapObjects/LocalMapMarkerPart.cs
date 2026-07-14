@@ -31,6 +31,10 @@ public class LocalMapMarkerPart : ViewBasedPart<LocalMapMarkerSettings>, ILocalM
 
 	public LocalMapMarkType GetMarkerType()
 	{
+		if (base.Owner == null)
+		{
+			return LocalMapMarkType.Invalid;
+		}
 		return base.Settings.Type;
 	}
 

@@ -7,6 +7,7 @@ using Owlcat.Runtime.Core.Utility;
 using Owlcat.Runtime.UI.Controls.Button;
 using Owlcat.Runtime.UI.Controls.Other;
 using Owlcat.Runtime.UI.MVVM;
+using Owlcat.Runtime.UniRx;
 using UniRx;
 using UnityEngine;
 
@@ -50,18 +51,29 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 		base.BindViewImplementation();
 		if (!(m_ButtonsBlock == null))
 		{
-			AddDisposable(m_ButtonsBlock.NextButton.OnLeftClickAsObservable().Subscribe(delegate
+			UISounds.Instance.SetHoverSound(m_ButtonsBlock.BackButton, UISounds.ButtonSoundsEnum.NoSound);
+			UISounds.Instance.SetHoverSound(m_ButtonsBlock.NextButton, UISounds.ButtonSoundsEnum.NoSound);
+			UISounds.Instance.SetHoverSound(m_HighlightButton, UISounds.ButtonSoundsEnum.NoSound);
+			AddDisposable(m_ButtonsBlock.BackButton.OnPointerEnterAsObservable().Subscribe(delegate
+			{
+				PlayBackHoverSound();
+			}));
+			AddDisposable(m_ButtonsBlock.NextButton.OnPointerEnterAsObservable().Subscribe(delegate
+			{
+				PlayNextHoverSound();
+			}));
+			AddDisposable(ObservableExtensions.Subscribe(m_ButtonsBlock.NextButton.OnLeftClickAsObservable(), delegate
 			{
 				HandleClickNext();
 			}));
 			AddDisposable(m_ButtonsBlock.NextButton.SetHint(HintText));
-			AddDisposable(m_ButtonsBlock.FinishButton.OnLeftClickAsObservable().Subscribe(delegate
+			AddDisposable(ObservableExtensions.Subscribe(m_ButtonsBlock.FinishButton.OnLeftClickAsObservable(), delegate
 			{
 				HandleClickFinish();
 			}));
 			AddDisposable(m_NextButtonInteractable.Subscribe(m_ButtonsBlock.NextButton.SetInteractable));
 			AddDisposable(m_BackButtonInteractable.Subscribe(m_ButtonsBlock.BackButton.SetInteractable));
-			AddDisposable(m_ButtonsBlock.BackButton.OnLeftClickAsObservable().Subscribe(delegate
+			AddDisposable(ObservableExtensions.Subscribe(m_ButtonsBlock.BackButton.OnLeftClickAsObservable(), delegate
 			{
 				HandleClickBack();
 			}));
@@ -77,7 +89,7 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 			{
 				m_ButtonsBlock.FinishButtonLabel.text = value;
 			}));
-			m_HighlightButton.Or(null)?.OnLeftClickAsObservable().Subscribe(delegate
+			ObservableExtensions.Subscribe(m_HighlightButton.Or(null)?.OnLeftClickAsObservable(), delegate
 			{
 				OnHighlightButtonClick();
 			});
@@ -118,6 +130,22 @@ public abstract class BaseCareerPathSelectionTabPCView<TViewModel> : BaseCareerP
 		if ((bool)m_ButtonsBlock)
 		{
 			UISounds.Instance.SetClickSound(m_ButtonsBlock.NextButton, soundType);
+		}
+	}
+
+	private void PlayBackHoverSound()
+	{
+		if (m_ButtonsBlock.BackButton.Interactable)
+		{
+			UISounds.Instance.Sounds.LevelupBottomButtons.OnBackHover.Play();
+		}
+	}
+
+	private void PlayNextHoverSound()
+	{
+		if (m_ButtonsBlock.NextButton.Interactable)
+		{
+			UISounds.Instance.Sounds.LevelupBottomButtons.OnNextHover.Play();
 		}
 	}
 

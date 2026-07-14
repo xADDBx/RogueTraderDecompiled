@@ -1324,6 +1324,7 @@ public static class ClassesWithGuid
 		(typeof(EnsureUniqueItems), "0cc48d89e2226fe4a9da4a2d43ae1f8f"),
 		(typeof(FixAddingChapterLootToVendorTables), "4ffd0b6c9d8e49ab8236f8877261ca6e"),
 		(typeof(FixColonyStatModifiersForAllColonies), "303b28e33e627074b85af6c6a4d05c26"),
+		(typeof(FixCompanionSharedInventory), "7ba7d7f47b052584f94c332181e45805"),
 		(typeof(FixDuplicateVendorItems), "4254059cf496468383e01f1c6efb982d"),
 		(typeof(FixItemFromVendorTable), "985e067863e44b01a2a495e951cccdff"),
 		(typeof(MarkCuesUnSeen), "0231c8c2024742d6934ce8f5af4e6341"),

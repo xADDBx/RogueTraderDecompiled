@@ -591,6 +591,16 @@ public class BlueprintUISound : BlueprintScriptableObject
 	}
 
 	[Serializable]
+	public class UILevelupBottomButtons
+	{
+		public UISound OnBackHover;
+
+		public UISound OnNextHover;
+
+		public UISound OnNextPress;
+	}
+
+	[Serializable]
 	public class UISoundAugmentationsWindow
 	{
 		public UISound OpenWindow;
@@ -719,4 +729,6 @@ public class BlueprintUISound : BlueprintScriptableObject
 	public UISoundDarkHeresyPopUp DarkHeresyPopUp;
 
 	public UISoundAugmentationsWindow AugmentationsWindow;
+
+	public UILevelupBottomButtons LevelupBottomButtons;
 }

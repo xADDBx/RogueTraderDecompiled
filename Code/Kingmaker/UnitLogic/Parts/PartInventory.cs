@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Kingmaker.UnitLogic.Parts;
 
-public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubscriber>, IUnitFactionHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitFactionHandler, EntitySubscriber>, ILevelUpCompleteUIHandler<EntitySubscriber>, ILevelUpCompleteUIHandler, IEventTag<ILevelUpCompleteUIHandler, EntitySubscriber>, ICompanionChangeHandler<EntitySubscriber>, ICompanionChangeHandler, IEventTag<ICompanionChangeHandler, EntitySubscriber>, IPartyHandler<EntitySubscriber>, IPartyHandler, IEventTag<IPartyHandler, EntitySubscriber>, IHashable
+public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubscriber>, IUnitFactionHandler, ISubscriber<IBaseUnitEntity>, ISubscriber, IEventTag<IUnitFactionHandler, EntitySubscriber>, ILevelUpCompleteUIHandler<EntitySubscriber>, ILevelUpCompleteUIHandler, IEventTag<ILevelUpCompleteUIHandler, EntitySubscriber>, ICompanionChangeHandler<EntitySubscriber>, ICompanionChangeHandler, IEventTag<ICompanionChangeHandler, EntitySubscriber>, IPartyHandler<EntitySubscriber>, IPartyHandler, IEventTag<IPartyHandler, EntitySubscriber>, ICompanionStateChanged<EntitySubscriber>, ICompanionStateChanged, ISubscriber<IMechanicEntity>, IEventTag<ICompanionStateChanged, EntitySubscriber>, IHashable
 {
 	public interface IOwner : IEntityPartOwner<PartInventory>, IEntityPartOwner
 	{
@@ -107,6 +107,10 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 	{
 		base.OnApplyPostLoadFixes();
 		base.Collection?.ApplyPostLoadFixes();
+		if (base.OwnerUnit != null && Game.Instance.Player.PartyAndPets.Contains(base.OwnerUnit))
+		{
+			RestoreSharedInventory();
+		}
 	}
 
 	protected override ItemsCollection SetupInternal(ItemsCollection currentCollection)
@@ -227,6 +231,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 	void IUnitFactionHandler.HandleFactionChanged()
 	{
 		Setup();
+		RestoreSharedInventory();
 	}
 
 	void ILevelUpCompleteUIHandler.HandleLevelUpComplete(bool isChargen)
@@ -251,6 +256,7 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 
 	void IPartyHandler.HandleAddCompanion()
 	{
+		RestoreSharedInventory();
 	}
 
 	void IPartyHandler.HandleCompanionActivated()
@@ -266,6 +272,11 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 	{
 	}
 
+	void ICompanionStateChanged.HandleCompanionStateChanged()
+	{
+		RestoreSharedInventory();
+	}
+
 	public void MakeSharedInventory()
 	{
 		if (base.OwnerUnit != null && base.OwnerUnit.Faction.IsPlayer)
@@ -273,6 +284,55 @@ public class PartInventory : PartItemsCollection, IUnitFactionHandler<EntitySubs
 			HasOwnInventory = false;
 		}
 		Setup();
+	}
+
+	public void RestoreSharedInventory()
+	{
+		string text = base.OwnerUnit?.Blueprint?.name ?? "<null>";
+		if (base.OwnerUnit == null)
+		{
+			PFLog.Items.Log("RestoreSharedInventory: skip (OwnerUnit == null)");
+			return;
+		}
+		if (!HasOwnInventory)
+		{
+			PFLog.Items.Log("RestoreSharedInventory: skip " + text + " (HasOwnInventory == false, already shared)");
+			return;
+		}
+		if (!base.OwnerUnit.Faction.IsPlayer)
+		{
+			PFLog.Items.Log("RestoreSharedInventory: skip " + text + " (faction not player)");
+			return;
+		}
+		if (base.OwnerUnit.IsPet)
+		{
+			PFLog.Items.Log("RestoreSharedInventory: skip " + text + " (is pet)");
+			return;
+		}
+		ItemsCollection sharedStash = Game.Instance.Player.Inventory;
+		if (sharedStash == null)
+		{
+			PFLog.Items.Log("RestoreSharedInventory: skip " + text + " (shared stash == null)");
+			return;
+		}
+		int num = 0;
+		if (base.Collection != sharedStash)
+		{
+			using (ContextData<ItemSlot.IgnoreLock>.Request())
+			{
+				using (ContextData<ItemsCollection.DoNotRemoveFromSlot>.Request())
+				{
+					ItemEntity[] array = base.Collection.Items.ToArray();
+					num = array.Length;
+					array.ForEach(delegate(ItemEntity item)
+					{
+						Transfer(item, sharedStash);
+					});
+				}
+			}
+		}
+		PFLog.Items.Log($"RestoreSharedInventory: FIXED {text} — moved {num} item(s) own->shared, resetting HasOwnInventory");
+		MakeSharedInventory();
 	}
 
 	public override Hash128 GetHash128()
